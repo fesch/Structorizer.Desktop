@@ -33,6 +33,7 @@
  *      ------		----			-----------
  *      Bob Fisch       2008.01.14      First Issue
  *      Kay Gürtzig		2014.12.02		ExportOptionDialoge and further messages added
+ *      Kay Gürtzig 	2015.10.06		altPadRight added to Preferences dialog
  *
  ******************************************************************************************************
  *
@@ -316,6 +317,7 @@ Preferences.lblAltF.text=Label FALSE
 Preferences.lblAltF.tooltip=The label fir the right side.
 Preferences.lblAltContent.text=Default content
 Preferences.lblAltContent.tooltip=The default content of an IF statement.
+Preferences.altPadRight.text=Enlarge FALSE
 Preferences.pnlCase.border=CASE statement
 Preferences.pnlCase.tooltip=
 Preferences.lblCase.text=Default content

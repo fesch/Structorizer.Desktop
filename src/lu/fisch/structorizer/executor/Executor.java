@@ -20,7 +20,39 @@
 
 package lu.fisch.structorizer.executor;
 
+/******************************************************************************************************
+*
+*      Author:         Bob Fisch
+*
+*      Description:    This class controls the execution of a diagram.
+*
+******************************************************************************************************
+*
+*      Revision List
+*
+*      Author          Date			Description
+*      ------			----			-----------
+*      Bob Fisch                       First Issue
+*      Kay Gürtzig     2015.10.11      Method execute() now ensures that all elements get unselected
+*      Kay Gürtzig     2015.10.13      Method step decomposed into separate subroutines, missing
+*                                      support for Forever loops and Parallel sections added;
+*                                      delay mechanism reorganised in order to integrate breakpoint
+*                                      handling in a sound way
+*      Kay Gürtzig     2015.10.15      stepParallel() revised (see comment) 
+*
+******************************************************************************************************
+*
+*      Comment:
+*      2015.10.15 Improved simulation of Parallel execution
+*      Instead of running entire "threads" of the parallel section in just random order, the "threads"
+*      will now only progress by one instruction when randomly chosen, so they alternate in an
+*      unpredictable way)
+*
+******************************************************************************************************///
+
 import java.awt.Color;
+import java.util.Iterator;
+import java.util.Random;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,9 +64,12 @@ import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Instruction;
+import lu.fisch.structorizer.elements.Parallel;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.elements.Forever;
 import lu.fisch.structorizer.generators.CGenerator;
 import lu.fisch.structorizer.gui.Diagram;
 import lu.fisch.structorizer.parsers.D7Parser;
@@ -299,6 +334,12 @@ public class Executor implements Runnable
 
 		boolean analyserState = diagram.getAnalyser();
 		diagram.setAnalyser(false);
+		// START KGU 2015-10-11/13:
+		// Unselect all elements before start!
+		diagram.unselectAll();
+		// ...and reset all execution state remnants (just for sure)
+		diagram.clearExecutionStatus();
+		// END KGU 2015-10-11/13
 		initInterpreter();
 		String result = "";
 		returned = false;
@@ -357,7 +398,9 @@ public class Executor implements Runnable
 
 		if (result.equals(""))
 		{
+			// Actual start of execution 
 			result = step(root);
+			
 			if (result.equals("") && (stop == true))
 			{
 				result = "Manual break!";
@@ -414,6 +457,9 @@ public class Executor implements Runnable
 			}
 
 		}
+		// START KGU 2015-10-13: Unsets all execution flags in the diagram
+		diagram.clearExecutionStatus();
+		// END KGU 2015-10-13
 		diagram.setAnalyser(analyserState);
 	}
 
@@ -582,6 +628,18 @@ public class Executor implements Runnable
 	 */
 	public void setPaus(boolean aPaus)
 	{
+		// START KGU 2015-10-13: In "turbo" mode, too, we want to see were the algorithm is hovering.
+		if (delay == 0)
+		{
+			diagram.redraw();
+			try {
+				updateVariableDisplay();
+			}
+			catch (EvalError e)
+			{
+			}
+		}
+		// END KGU 2015-10-13
 		synchronized (this)
 		{
 			paus = aPaus;
@@ -599,6 +657,7 @@ public class Executor implements Runnable
 	 */
 	public void setStop(boolean aStop)
 	{
+		diagram.clearExecutionStatus();
 		synchronized (this)
 		{
 			stop = aStop;
@@ -751,22 +810,48 @@ public class Executor implements Runnable
 			this.interpreter.eval(name + " = " + content);
 			this.variables.addIfNew(name);
 		}
-		if (this.delay != 0)
-
+		
+		// START KGU 2015-10-13: In step mode, variable should be updated even if delay is set to 0
+//		if (this.delay != 0)
+//		{
+//			Vector<Vector> vars = new Vector();
+//			for (int i = 0; i < this.variables.count(); i++)
+//
+//			{
+//				Vector myVar = new Vector();
+//				myVar.add(this.variables.get(i));
+//				myVar.add(this.interpreter.get(this.variables.get(i)));
+//				vars.add(myVar);
+//			}
+//			this.control.updateVars(vars);
+//		}
+		if (this.delay != 0 || step)
 		{
-			Vector<Vector> vars = new Vector();
-			for (int i = 0; i < this.variables.count(); i++)
-
-			{
-				Vector myVar = new Vector();
-				myVar.add(this.variables.get(i));
-				myVar.add(this.interpreter.get(this.variables.get(i)));
-				vars.add(myVar);
-			}
-			this.control.updateVars(vars);
+			updateVariableDisplay();
 		}
+		// END KGU 2015-10-13
 	}
 
+	// START KGU 2015-10-13: Code from above moved hitherto and formed to a method
+	/**
+	 * Prepares an editable variable table and has the Control update the display
+	 * of variables with it
+	 */
+	private void updateVariableDisplay() throws EvalError
+	{
+		Vector<Vector> vars = new Vector();
+		for (int i = 0; i < this.variables.count(); i++)
+		{
+			Vector myVar = new Vector();
+			myVar.add(this.variables.get(i));
+			// TODO (KGU 2015-10-13): Find a solution to display arrays in a sensible way!
+			myVar.add(this.interpreter.get(this.variables.get(i)));
+			vars.add(myVar);
+		}
+		this.control.updateVars(vars);
+	}
+	// END KGU 2015-10-13
+	
 	public void start(boolean useSteps)
 	{
 		running = true;
@@ -779,656 +864,825 @@ public class Executor implements Runnable
 		Thread runner = new Thread(this, "Player");
 		runner.start();
 	}
+	
+	// START KGU 2015-10-12 New method for breakpoint support
+	private boolean checkBreakpoint(Element element)
+	{
+		boolean atBreakpoint = element.isBreakpoint(); 
+		if (atBreakpoint) {
+			control.setButtonsForPause();	// FIXME
+			this.setPaus(true);	//	FIXME
+		}
+		return atBreakpoint;
+	}
+	// END KGU 2015-10-12
 
+	// START KGU 2015-10-13: Decomposed this "monster" method into Element-type-specific subroutines
 	private String step(Element element)
 	{
 		String result = new String();
+		element.executed = true;
+		if (delay != 0 || step)
+		{
+			diagram.redraw();
+		}
+		// START KGU 2015-10-12: If there is a breakpoint switch to step mode before delay
+		checkBreakpoint(element);
+		// END KGU 2015-10-12
+		
+		// The Root element and the REPEAT loop won't be delayed or halted in the beginning except by their members
 		if (element instanceof Root)
 		{
-			element.selected = true;
-
-			int i = 0;
-			getExec("init(" + delay + ")");
-
-			element.waited = true;
-
-			while ((i < ((Root) element).children.children.size())
-					&& result.equals("") && (stop == false))
+			result = stepRoot((Root)element);
+		} else if (element instanceof Repeat)
+		{
+			result = stepRepeat((Repeat)element);
+		}
+		else 
+		{
+			// Delay or wait (in case of step mode or breakpoint) before
+			delay();	// does the delaying or waits in case of step mode or breakpoint
+			
+			if (element instanceof Instruction)
 			{
-				result = step(((Root) element).children.getElement(i));
-				i++;
+				result = stepInstruction((Instruction)element);
+			} else if (element instanceof Case)
+			{
+				result = stepCase((Case)element);
+			} else if (element instanceof Alternative)
+			{
+				result = stepAlternative((Alternative)element);
+			} else if (element instanceof While)
+			{
+				result = stepWhile(element, false);
+			} else if (element instanceof For)
+			{
+				result = stepFor((For)element);
 			}
+			// KGU 2015-10-13: Obviously, the execution code for Forever loops had been forgotten
+			else if (element instanceof Forever)
+			{
+				result = stepWhile(element, true);
+			}
+			else if (element instanceof Parallel)
+			{
+				result = stepParallel((Parallel)element);
+			}
+		}
+		if (result.equals("")) {
+			element.executed = false;
+		}
+		return result;
+	}
 
+	private String stepRoot(Root element)
+	{
+		String result = new String();
+
+		int i = 0;
+		getExec("init(" + delay + ")");
+
+		element.waited = true;
+
+		while ((i < element.children.children.size())
+				&& result.equals("") && (stop == false))
+		{
+			result = step(element.children.getElement(i));
+			i++;
+		}
+
+		delay();// FIXME Specific for root after the last instruction of the program/function
+		if (result.equals(""))
+		{
+			element.clearExecutionStatus();
+		}
+		return result;
+	}
+
+	private String stepInstruction(Instruction element)
+	{
+		String result = new String();
+
+		StringList sl = element.getText();
+		int i = 0;
+
+		while ((i < sl.count()) && result.equals("") && (stop == false))
+		{
+			String cmd = sl.get(i);
+			// cmd=cmd.replace(":=", "<-");
+			cmd = convert(cmd);
+			try
+			{
+				// START KGU 2015-10-12
+				if (i > 0)
+				{
+					delay();
+				}
+				// END KGU 2015-10-12
+				
+				// assignment
+				if (cmd.indexOf("<-") >= 0)
+				{
+					String varName = cmd.substring(0, cmd.indexOf("<-"))
+							.trim();
+					String expression = cmd.substring(
+							cmd.indexOf("<-") + 2, cmd.length()).trim();
+					cmd = cmd.replace("<-", "=");
+					// evaluate the expression
+					Object n = interpreter.eval(expression);
+					if (n == null)
+					{
+						result = "<"
+								+ expression
+								+ "> is not a correct or existing expression.";
+					} else
+					{
+						setVar(varName, n);
+					}
+//					delay();
+				}
+				// input
+				else if (cmd.indexOf(D7Parser.input) >= 0)
+				{
+					String in = cmd.substring(
+							cmd.indexOf(D7Parser.input)
+									+ D7Parser.input.length()).trim();
+					// START KGU 2014-12-05: We ought to show the index value
+					// if the variable is indeed an array element
+					if (in.contains("[") && in.contains("]")) {
+						try {
+							// Try to replace the index expression by its current value
+							int index = getIndexValue(in);
+							in = in.substring(0, in.indexOf('[')+1) + index
+									+ in.substring(in.indexOf(']'));
+						}
+						catch (Exception e)
+						{
+							// Is bound to fail anyway!
+						}
+					}
+					// END KGU 2014-12-05
+					String str = JOptionPane.showInputDialog(null,
+							"Please enter a value for <" + in + ">", null);
+					// first add as string
+					setVar(in, str);
+					// try adding as char
+					try
+					{
+						if (str.length() == 1)
+						{
+							Character strc = str.charAt(0);
+							setVar(in, strc);
+						}
+					} catch (Exception e)
+					{
+					}
+					// try adding as double
+					try
+					{
+						double strd = Double.parseDouble(str);
+						setVar(in, strd);
+					} catch (Exception e)
+					{
+					}
+					// finally try adding as integer
+					try
+					{
+						int stri = Integer.parseInt(str);
+						setVar(in, stri);
+					} catch (Exception e)
+					{
+					}
+				}
+				// output
+				else if (cmd.indexOf(D7Parser.output) >= 0)
+				{
+					String out = cmd.substring(
+							cmd.indexOf(D7Parser.output)
+									+ D7Parser.output.length()).trim();
+					Object n = interpreter.eval(out);
+					if (n == null)
+					{
+						result = "<"
+								+ out
+								+ "> is not a correct or existing expression.";
+					} else
+					{
+						String s = unconvert(n.toString());
+						JOptionPane.showMessageDialog(diagram, s, "Output",
+								0);
+					}
+				}
+				// return statement
+				else if (cmd.indexOf("return") >= 0)
+				{
+					String out = cmd.substring(cmd.indexOf("return") + 6)
+							.trim();
+					Object n = interpreter.eval(out);
+					if (n == null)
+					{
+						result = "<"
+								+ out
+								+ "> is not a correct or existing expression.";
+					} else
+					{
+						String s = unconvert(n.toString());
+						JOptionPane.showMessageDialog(diagram, s,
+								"Returned result", 0);
+					}
+					returned = true;
+				} else
+				{
+					Function f = new Function(cmd);
+					if (f.isFunction())
+					{
+						// TODO KGU 2015-10-13 for the future case that either the Arranger or the Editor itself may
+						// administer a set of diagrams: If this element is of class Call and the extracted function name
+						// corresponds to one of the NSD diagrams currently opened then try a sub-execution of that diagram.
+						// Parts of the parsing code for diagramController will apply for this project as well.
+						if (diagramController != null)
+						{
+							String params = new String();
+							for (int p = 0; p < f.paramCount(); p++)
+							{
+								try
+								{
+									Object n = interpreter.eval(f
+											.getParam(p));
+									if (n == null)
+									{
+										result = "<"
+												+ f.getParam(p)
+												+ "> is not a correct or existing expression.";
+									} else
+									{
+										params += "," + n.toString();
+									}
+								} catch (EvalError ex)
+								{
+									System.out.println("PARAM: "
+											+ f.getParam(p));
+									result = ex.getMessage();
+								}
+							}
+							if (result.equals(""))
+							{
+								if (f.paramCount() > 0)
+								{
+									params = params.substring(1);
+								}
+								cmd = f.getName() + "(" + params + ")";
+								result = getExec(cmd, element.getColor());
+							}
+							//delay();
+						} else
+						{
+							interpreter.eval(cmd);
+						}
+					} else
+					{
+						result = "<" + cmd + "> is not a correct function!";
+					}
+				}
+			} catch (EvalError ex)
+			{
+				result = ex.getMessage();
+			}
+			i++;
+			// Among the lines of a single instruction element there is no further breakpoint check!
+		}
+		if (result.equals(""))
+		{
+			element.executed = false;
+		}
+		return result;
+	}
+	
+	private String stepCase(Case element)
+	{
+		String result = new String();
+		try
+		{
+			StringList text = element.getText();
+			String expression = text.get(0) + "==";
+			boolean done = false;
+			int last = text.count() - 1;
+			if (text.get(last).trim().equals("%"))
+			{
+				last--;
+			}
+			for (int q = 1; (q <= last) && (done == false); q++)
+			{
+				String test = convert(expression + text.get(q));
+				boolean go = false;
+				if ((q == last)
+						&& !text.get(text.count() - 1).trim().equals("%"))
+				{
+					go = true;
+				}
+				if (go == false)
+				{
+					Object n = interpreter.eval(test);
+					go = n.toString().equals("true");
+				}
+				if (go)
+				{
+					done = true;
+					element.waited = true;
+					int i = 0;
+					while ((i < element.qs.get(q - 1).children.size())
+							&& result.equals("") && (stop == false))
+					{
+						result = step(element.qs.get(q - 1).getElement(i));
+						i++;
+					}
+					if (result.equals(""))
+					{
+						element.waited = false;
+					}
+				}
+
+			}
 			if (result.equals(""))
 			{
-				element.selected = false;
+				element.executed = false;
 				element.waited = false;
 			}
-		} else if (element instanceof Instruction)
+		} catch (EvalError ex)
 		{
-			element.selected = true;
-			if (delay != 0)
+			result = ex.getMessage();
+		}
+		
+		return result;
+	}
+	
+	private String stepAlternative(Alternative element)
+	{
+		String result = new String();
+		try
+		{
+			String s = element.getText().getText();
+			if (!D7Parser.preAlt.equals(""))
+			{
+				s = BString.replace(s, D7Parser.preAlt, "");
+			}
+			if (!D7Parser.postAlt.equals(""))
+			{
+				s = BString.replace(s, D7Parser.postAlt, "");
+			}
+			// s=s.replace("==", "=");
+			// s=s.replace("=", "==");
+			// s=s.replace("<==", "<=");
+			// s=s.replace(">==", ">=");
+			s = convert(s);
+
+			System.out.println("C=  " + interpreter.get("C"));
+			System.out.println("IF: " + s);
+			Object n = interpreter.eval(s);
+			System.out.println("Res= " + n);
+			if (n == null)
+			{
+				result = "<" + s
+						+ "> is not a correct or existing expression.";
+			}
+			// if(getExec(s).equals("OK"))
+			else 
+			{
+				Subqueue branch;
+				if (n.toString().equals("true"))
+				{
+					branch = element.qTrue;
+				}
+				else
+				{
+					branch = element.qFalse;
+				}
+				element.executed = false;
+				element.waited = true;
+				int i = 0;
+				while ((i < branch.children.size())
+						&& result.equals("") && (stop == false))
+				{
+					result = step(branch.getElement(i));
+					i++;
+				}
+				if (result.equals(""))
+				{
+					element.waited = false;
+				}
+			}
+			if (result.equals(""))
+			{
+				element.executed = false;
+				element.waited = false;
+			}
+		} catch (EvalError ex)
+		{
+			result = ex.getMessage();
+		}
+		return result;
+	}
+	
+	// This executes While and Forever loops
+	private String stepWhile(Element element, boolean eternal)
+	{
+		String result = new String();
+		try
+		{
+			String condStr = "true";
+			if (!eternal) {
+				condStr = ((While) element).getText().getText();
+				if (!D7Parser.preWhile.equals(""))
+				{
+					condStr = BString.replace(condStr, D7Parser.preWhile, "");
+				}
+				if (!D7Parser.postWhile.equals(""))
+				{
+					condStr = BString.replace(condStr, D7Parser.postWhile, "");
+				}
+				condStr = convert(condStr);
+				// System.out.println("WHILE: "+condStr);
+			}
+
+			int cw = 0;
+			Object cond = interpreter.eval(condStr);
+
+			if (cond == null)
+			{
+				result = "<" + condStr
+						+ "> is not a correct or existing expression.";
+			} else
+			{
+				while (cond.toString().equals("true") && result.equals("")
+						&& (stop == false))
+				{
+
+					element.executed = false;
+					element.waited = true;
+
+					int i = 0;
+					Subqueue body;
+					if (eternal)
+					{
+						body = ((Forever)element).q;
+					}
+					else
+					{
+						body = ((While) element).q;
+					}
+					while ((i < body.children.size())
+							&& result.equals("") && (stop == false))
+					{
+						result = step(body.getElement(i));
+						i++;
+					}
+
+					element.executed = true;
+					element.waited = false;
+					if (result.equals(""))
+					{
+						cw++;
+						// START KGU 2015-10-13: Symbolizes the loop condition check 
+						checkBreakpoint(element);
+						delay();
+						// END KGU 2015-10-13
+					}
+					cond = interpreter.eval(condStr);
+					if (cond == null)
+					{
+						result = "<"
+								+ condStr
+								+ "> is not a correct or existing expression.";
+					}
+				}
+			}
+			if (result.equals(""))
+			{
+				element.executed = false;
+				element.waited = false;
+			}
+			/*
+			 * if (cw > 1000000) { element.selected = true; result =
+			 * "Your loop ran a million times. I think there is a problem!";
+			 * }
+			 */
+		} catch (EvalError ex)
+		{
+			result = ex.getMessage();
+		}
+		return result;
+	}
+	
+	private String stepRepeat(Repeat element)
+	{
+		String result = new String();
+		try
+		{
+			element.waited = true;
+			if (delay != 0 || step)
 			{
 				diagram.redraw();
 			}
 
-			StringList sl = ((Instruction) element).getText();
-			int i = 0;
-
-			while ((i < sl.count()) && result.equals("") && (stop == false))
+			String s = element.getText().getText();
+			if (!D7Parser.preRepeat.equals(""))
 			{
-				String cmd = sl.get(i);
-				// cmd=cmd.replace(":=", "<-");
-				cmd = convert(cmd);
-				try
-				{
-					// assignment
-					if (cmd.indexOf("<-") >= 0)
-					{
-						String varName = cmd.substring(0, cmd.indexOf("<-"))
-								.trim();
-						String expression = cmd.substring(
-								cmd.indexOf("<-") + 2, cmd.length()).trim();
-						cmd = cmd.replace("<-", "=");
-						// evaluate the expression
-						Object n = interpreter.eval(expression);
-						if (n == null)
-						{
-							result = "<"
-									+ expression
-									+ "> is not a correct or existing expression.";
-						} else
-						{
-							setVar(varName, n);
-						}
-						delay();
-					}
-					// input
-					else if (cmd.indexOf(D7Parser.input) >= 0)
-					{
-						String in = cmd.substring(
-								cmd.indexOf(D7Parser.input)
-										+ D7Parser.input.length()).trim();
-						// START KGU 2014-12-05: We ought to show the index value
-						// if the variable is indeed an array element
-						if (in.contains("[") && in.contains("]")) {
-							try {
-								// Try to replace the index expression by its current value
-								int index = getIndexValue(in);
-								in = in.substring(0, in.indexOf('[')+1) + index
-										+ in.substring(in.indexOf(']'));
-							}
-							catch (Exception e)
-							{
-								// Is bound to fail anyway!
-							}
-						}
-						// END KGU 2014-12-05
-						String str = JOptionPane.showInputDialog(null,
-								"Please enter a value for <" + in + ">", null);
-						// first add as string
-						setVar(in, str);
-						// try adding as char
-						try
-						{
-							if (str.length() == 1)
-							{
-								Character strc = str.charAt(0);
-								setVar(in, strc);
-							}
-						} catch (Exception e)
-						{
-						}
-						// try adding as double
-						try
-						{
-							double strd = Double.parseDouble(str);
-							setVar(in, strd);
-						} catch (Exception e)
-						{
-						}
-						// finally try adding as integer
-						try
-						{
-							int stri = Integer.parseInt(str);
-							setVar(in, stri);
-						} catch (Exception e)
-						{
-						}
-					}
-					// output
-					else if (cmd.indexOf(D7Parser.output) >= 0)
-					{
-						String out = cmd.substring(
-								cmd.indexOf(D7Parser.output)
-										+ D7Parser.output.length()).trim();
-						Object n = interpreter.eval(out);
-						if (n == null)
-						{
-							result = "<"
-									+ out
-									+ "> is not a correct or existing expression.";
-						} else
-						{
-							String s = unconvert(n.toString());
-							JOptionPane.showMessageDialog(diagram, s, "Output",
-									0);
-						}
-					}
-					// return statement
-					else if (cmd.indexOf("return") >= 0)
-					{
-						String out = cmd.substring(cmd.indexOf("return") + 6)
-								.trim();
-						Object n = interpreter.eval(out);
-						if (n == null)
-						{
-							result = "<"
-									+ out
-									+ "> is not a correct or existing expression.";
-						} else
-						{
-							String s = unconvert(n.toString());
-							JOptionPane.showMessageDialog(diagram, s,
-									"Returned result", 0);
-						}
-						returned = true;
-					} else
-					{
-						Function f = new Function(cmd);
-						if (f.isFunction())
-						{
-							if (diagramController != null)
-							{
-								String params = new String();
-								for (int p = 0; p < f.paramCount(); p++)
-								{
-									try
-									{
-										Object n = interpreter.eval(f
-												.getParam(p));
-										if (n == null)
-										{
-											result = "<"
-													+ f.getParam(p)
-													+ "> is not a correct or existing expression.";
-										} else
-										{
-											params += "," + n.toString();
-										}
-									} catch (EvalError ex)
-									{
-										System.out.println("PARAM: "
-												+ f.getParam(p));
-										result = ex.getMessage();
-									}
-								}
-								if (result.equals(""))
-								{
-									if (f.paramCount() > 0)
-									{
-										params = params.substring(1);
-									}
-									cmd = f.getName() + "(" + params + ")";
-									result = getExec(cmd, element.getColor());
-								}
-								delay();
-							} else
-							{
-								interpreter.eval(cmd);
-							}
-						} else
-						{
-							result = "<" + cmd + "> is not a correct function!";
-						}
-					}
-				} catch (EvalError ex)
-				{
-					result = ex.getMessage();
-				}
-				i++;
+				s = BString.replace(s, D7Parser.preRepeat, "");
 			}
-			if (result.equals(""))
+			if (!D7Parser.postRepeat.equals(""))
 			{
-				element.selected = false;
+				s = BString.replace(s, D7Parser.postRepeat, "");
 			}
-		} else if (element instanceof Case)
-		{
-			try
+			// s=s.replace("==", "=");
+			// s=s.replace("=", "==");
+			// s=s.replace("<==", "<=");
+			// s=s.replace(">==", ">=");
+			s = convert(s);
+			// System.out.println("REPEAT: "+s
+
+			int cw = 0;
+			Object n = interpreter.eval(s);
+			if (n == null)
 			{
-				// select the element
-				element.selected = true;
-				if (delay != 0)
-				{
-					diagram.redraw();
-				}
-				// delay for this element!
-				element.waited = false;
-				delay();
-
-				Case c = (Case) element;
-				StringList text = c.getText();
-				String expression = text.get(0) + "==";
-				boolean done = false;
-				int last = text.count() - 1;
-				if (text.get(last).trim().equals("%"))
-				{
-					last--;
-				}
-				for (int q = 1; (q <= last) && (done == false); q++)
-				{
-					String test = convert(expression + text.get(q));
-					boolean go = false;
-					if ((q == last)
-							&& !text.get(text.count() - 1).trim().equals("%"))
-					{
-						go = true;
-					}
-					if (go == false)
-					{
-						Object n = interpreter.eval(test);
-						go = n.toString().equals("true");
-					}
-					if (go)
-					{
-						done = true;
-						element.waited = true;
-						int i = 0;
-						while ((i < c.qs.get(q - 1).children.size())
-								&& result.equals("") && (stop == false))
-						{
-							result = step(c.qs.get(q - 1).getElement(i));
-							i++;
-						}
-						if (result.equals(""))
-						{
-							element.selected = false;
-						}
-					}
-
-				}
-				if (result.equals(""))
-				{
-					element.selected = false;
-					element.waited = false;
-				}
-			} catch (EvalError ex)
+				result = "<" + s
+						+ "> is not a correct or existing expression.";
+			} else
 			{
-				result = ex.getMessage();
-			}
-		} else if (element instanceof Alternative)
-		{
-			try
-			{
-				element.selected = true;
-				if (delay != 0)
+				do
 				{
-					diagram.redraw();
-				}
-				// delay for this element!
-				element.waited = false;
-				delay();
-
-				String s = ((Alternative) element).getText().getText();
-				if (!D7Parser.preAlt.equals(""))
-				{
-					s = BString.replace(s, D7Parser.preAlt, "");
-				}
-				if (!D7Parser.postAlt.equals(""))
-				{
-					s = BString.replace(s, D7Parser.postAlt, "");
-				}
-				// s=s.replace("==", "=");
-				// s=s.replace("=", "==");
-				// s=s.replace("<==", "<=");
-				// s=s.replace(">==", ">=");
-				s = convert(s);
-
-				System.out.println("C=  " + interpreter.get("C"));
-				System.out.println("IF: " + s);
-				Object n = interpreter.eval(s);
-				System.out.println("Res= " + n);
-				if (n == null)
-				{
-					result = "<" + s
-							+ "> is not a correct or existing expression.";
-				}
-				// if(getExec(s).equals("OK"))
-				else if (n.toString().equals("true"))
-				{
-					element.waited = true;
 					int i = 0;
-					while ((i < ((Alternative) element).qTrue.children.size())
-							&& result.equals("") && (stop == false))
-					{
-						result = step(((Alternative) element).qTrue
-								.getElement(i));
-						i++;
-					}
-					if (result.equals(""))
-					{
-						element.selected = false;
-					}
-				} else
-				{
-					element.waited = true;
-					int i = 0;
-					while ((i < ((Alternative) element).qFalse.children.size())
-							&& result.equals("") && (stop == false))
-					{
-						result = step(((Alternative) element).qFalse
-								.getElement(i));
-						i++;
-					}
-					if (result.equals(""))
-					{
-						element.selected = false;
-					}
-				}
-				if (result.equals(""))
-				{
-					element.selected = false;
-					element.waited = false;
-				}
-			} catch (EvalError ex)
-			{
-				result = ex.getMessage();
-			}
-		} else if (element instanceof While)
-		{
-			try
-			{
-				element.selected = true;
-				if (delay != 0)
-				{
-					diagram.redraw();
-				}
-
-				String s = ((While) element).getText().getText();
-				if (!D7Parser.preWhile.equals(""))
-				{
-					s = BString.replace(s, D7Parser.preWhile, "");
-				}
-				if (!D7Parser.postWhile.equals(""))
-				{
-					s = BString.replace(s, D7Parser.postWhile, "");
-				}
-				// s=s.replace("==", "=");
-				// s=s.replace("=", "==");
-				// s=s.replace("<==", "<=");
-				// s=s.replace(">==", ">=");
-				s = convert(s);
-				// System.out.println("WHILE: "+s);
-
-				int cw = 0;
-				Object n = interpreter.eval(s);
-				if (n == null)
-				{
-					result = "<" + s
-							+ "> is not a correct or existing expression.";
-				} else
-				{
-					while (n.toString().equals("true") && result.equals("")
-							&& (stop == false))
-					{
-
-						// delay this element
-						element.waited = false;
-						delay();
-						element.waited = true;
-
-						int i = 0;
-						// START KGU 2010-09-14 The limitation of cw CAUSED
-						// eternal loops (rather then preventing them)
-						// while (i < ((While) element).q.children.size() &&
-						// result.equals("") && stop == false && cw < 100)
-						while ((i < ((While) element).q.children.size())
-								&& result.equals("") && (stop == false))
-						// END KGU 2010-09-14
-						{
-							result = step(((While) element).q.getElement(i));
-							i++;
-						}
-						if (result.equals(""))
-						{
-							cw++;
-							element.selected = true;
-						}
-						n = interpreter.eval(s);
-						if (n == null)
-						{
-							result = "<"
-									+ s
-									+ "> is not a correct or existing expression.";
-						}
-					}
-				}
-				if (result.equals(""))
-				{
-					element.selected = false;
-					element.waited = false;
-				}
-				/*
-				 * if (cw > 1000000) { element.selected = true; result =
-				 * "Your loop ran a million times. I think there is a problem!";
-				 * }
-				 */
-			} catch (EvalError ex)
-			{
-				result = ex.getMessage();
-			}
-		} else if (element instanceof Repeat)
-		{
-			try
-			{
-				element.selected = true;
-				element.waited = true;
-				if (delay != 0)
-				{
-					diagram.redraw();
-				}
-
-				String s = ((Repeat) element).getText().getText();
-				if (!D7Parser.preRepeat.equals(""))
-				{
-					s = BString.replace(s, D7Parser.preRepeat, "");
-				}
-				if (!D7Parser.postRepeat.equals(""))
-				{
-					s = BString.replace(s, D7Parser.postRepeat, "");
-				}
-				// s=s.replace("==", "=");
-				// s=s.replace("=", "==");
-				// s=s.replace("<==", "<=");
-				// s=s.replace(">==", ">=");
-				s = convert(s);
-				// System.out.println("REPEAT: "+s
-
-				int cw = 0;
-				Object n = interpreter.eval(s);
-				if (n == null)
-				{
-					result = "<" + s
-							+ "> is not a correct or existing expression.";
-				} else
-				{
-					do
-					{
-						int i = 0;
-						// START KGU 2010-09-14 The limitation of cw CAUSED
-						// eternal loops (rather then preventing them)
-						// while (i < ((Repeat) element).q.children.size() &&
-						// result.equals("") && stop == false && cw < 100)
-						while ((i < ((Repeat) element).q.children.size())
-								&& result.equals("") && (stop == false))
-						// END KGU 2010-09-14
-						{
-							result = step(((Repeat) element).q.getElement(i));
-							i++;
-						}
-
-						if (result.equals(""))
-						{
-							cw++;
-							element.selected = true;
-						}
-						n = interpreter.eval(s);
-						if (n == null)
-						{
-							result = "<"
-									+ s
-									+ "> is not a correct or existing expression.";
-						}
-
-						// delay this element
-						element.waited = false;
-						delay();
-						element.waited = true;
-
-					} while (!(n.toString().equals("true") && result.equals("") && (stop == false)));
-				}
-
-				if (result.equals(""))
-				{
-					element.selected = false;
-					element.waited = false;
-				}
-				/*
-				 * if (cw > 100) { element.selected = true; result = "Problem!";
-				 * }
-				 */
-			} catch (EvalError ex)
-			{
-				result = ex.getMessage();
-			}
-		} else if (element instanceof For)
-		{
-			try
-			{
-				element.selected = true;
-				if (delay != 0)
-				{
-					diagram.redraw();
-				}
-
-				String str = ((For) element).getText().getText();
-                                
-                                String pas = "1";
-                                if(str.contains(", pas ="))
-                                {
-                                    String[] pieces = str.split(", pas =");
-                                    str=pieces[0];
-                                    pas = pieces[1].trim();
-                                }
-                                
-				// cut of the start of the expression
-				if (!D7Parser.preFor.equals(""))
-				{
-					str = BString.replace(str, D7Parser.preFor, "");
-				}
-				// trim blanks
-				str = str.trim();
-				// modify the later word
-				if (!D7Parser.postFor.equals(""))
-				{
-					str = BString.replace(str, D7Parser.postFor, "<=");
-				}
-				// do other transformations
-				str = CGenerator.transform(str);
-				String counter = str.substring(0, str.indexOf("="));
-				// complete
-
-				String s = str.substring(str.indexOf("=") + 1,
-						str.indexOf("<=")).trim();
-				s = convert(s);
-				Object n = interpreter.eval(s);
-				if (n == null)
-				{
-					result = "<"+s+"> is not a correct or existing expression.";
-				}
-				int ival = 0;
-				if (n instanceof Integer)
-				{
-					ival = (Integer) n;
-				}
-				if (n instanceof Long)
-				{
-					ival = ((Long) n).intValue();
-				}
-				if (n instanceof Float)
-				{
-					ival = ((Float) n).intValue();
-				}
-				if (n instanceof Double)
-				{
-					ival = ((Double) n).intValue();
-				}
-
-				s = str.substring(str.indexOf("<=") + 2, str.length()).trim();
-				s = convert(s);
-				n = interpreter.eval(s);
-				if (n == null)
-				{
-					result = "<"+s+ "> is not a correct or existing expression.";
-				}
-				int fval = 0;
-				if (n instanceof Integer)
-				{
-					fval = (Integer) n;
-				}
-				if (n instanceof Long)
-				{
-					fval = ((Long) n).intValue();
-				}
-				if (n instanceof Float)
-				{
-					fval = ((Float) n).intValue();
-				}
-				if (n instanceof Double)
-				{
-					fval = ((Double) n).intValue();
-				}
-
-				int cw = ival;
-				while ((cw <= fval) && result.equals("") && (stop == false))
-				{
-					setVar(counter, cw);
-					// delay for this element!
-					element.waited = false;
-					delay();
-					element.waited = true;
-
-					int i = 0;
-					// START KGU 2010-09-14 The limitation of cw CAUSED eternal
-					// loops (rather then preventing them)
-					// while (i < ((For) element).q.children.size() &&
+					// START KGU 2010-09-14 The limitation of cw CAUSED
+					// eternal loops (rather then preventing them)
+					// while (i < ((Repeat) element).q.children.size() &&
 					// result.equals("") && stop == false && cw < 100)
-					while ((i < ((For) element).q.children.size())
+					while ((i < element.q.children.size())
 							&& result.equals("") && (stop == false))
 					// END KGU 2010-09-14
 					{
-						result = step(((For) element).q.getElement(i));
+						result = step(element.q.getElement(i));
 						i++;
 					}
-                                        
-                                        try
-                                        {
-                                            cw+=Integer.valueOf(pas);
-                                        }
-                                        catch(Exception e)
-                                        {
-                                            cw++;
-                                        }
-				}
-				if (result.equals(""))
-				{
-					element.selected = false;
+
+					if (result.equals(""))
+					{
+						cw++;
+						element.executed = true;
+					}
+					n = interpreter.eval(s);
+					if (n == null)
+					{
+						result = "<"
+								+ s
+								+ "> is not a correct or existing expression.";
+					}
+
+					// delay this element
+					// START KGU 2015-10-12: This remains an important breakpoint position
+					checkBreakpoint(element);
+					// END KGU 2015-10-12
 					element.waited = false;
-				}
-			} catch (EvalError ex)
-			{
-				result = ex.getMessage();
+					delay();	// Symbolizes the loop condition check time
+					element.waited = true;
+
+				} while (!(n.toString().equals("true") && result.equals("") && (stop == false)));
 			}
+
+			if (result.equals(""))
+			{
+				element.executed = false;
+				element.waited = false;
+			}
+			/*
+			 * if (cw > 100) { element.selected = true; result = "Problem!";
+			 * }
+			 */
+		} catch (EvalError ex)
+		{
+			result = ex.getMessage();
+		}
+		return result;
+	}
+	
+	private String stepFor(For element)
+	{
+		String result = new String();
+		try
+		{
+			String str = element.getText().getText();
+            
+			String pas = "1";
+			if(str.contains(", pas ="))	// FIXME: Ought to be replaced by a properly configurable string
+			{
+				String[] pieces = str.split(", pas =");
+				str=pieces[0];
+				pas = pieces[1].trim();
+			}
+			// START KGU 2015-10-13: The above mechanism has/had several flaws:
+			// 1. The parsing works only for the hard-code french keyword (ought to be a preference).
+			// 2. the while condition didn't work for negative pas values.
+			// 3. the pas value was parsed again and again in every loop.
+			// 4. It's certainly not consistent with code export
+			// To solve 2 and 3 we provide the Integer conversion once in advance
+			int sval = 1;	// step width
+			try
+			{
+				sval = Integer.valueOf(pas);
+			}
+			catch(Exception e)
+			{
+				// Try it in a different way
+				Object n = interpreter.eval(pas);
+				if (n != null) 
+				{
+					if (n instanceof Integer)
+					{
+						sval = (Integer) n;
+					}
+					else if (n instanceof Long)
+					{
+						sval = ((Long) n).intValue();
+					}
+					else if (n instanceof Float)
+					{
+						sval = ((Float) n).intValue();
+					}
+					else if (n instanceof Double)
+					{
+						sval = ((Double) n).intValue();
+					}
+				}
+			}
+			// END KGU 2015-10-13
+                            
+			// cut off the start of the expression
+			if (!D7Parser.preFor.equals(""))
+			{
+				str = BString.replace(str, D7Parser.preFor, "");
+			}
+			// trim blanks
+			str = str.trim();
+			// modify the later word
+			if (!D7Parser.postFor.equals(""))
+			{
+				str = BString.replace(str, D7Parser.postFor, "<=");
+			}
+			// do other transformations
+			str = CGenerator.transform(str);
+			String counter = str.substring(0, str.indexOf("="));
+			// complete
+
+			String s = str.substring(str.indexOf("=") + 1,
+					str.indexOf("<=")).trim();
+			s = convert(s);
+			Object n = interpreter.eval(s);
+			if (n == null)
+			{
+				result = "<"+s+"> is not a correct or existing expression.";
+			}
+			int ival = 0;
+			if (n instanceof Integer)
+			{
+				ival = (Integer) n;
+			}
+			else if (n instanceof Long)
+			{
+				ival = ((Long) n).intValue();
+			}
+			else if (n instanceof Float)
+			{
+				ival = ((Float) n).intValue();
+			}
+			else if (n instanceof Double)
+			{
+				ival = ((Double) n).intValue();
+			}
+
+			s = str.substring(str.indexOf("<=") + 2, str.length()).trim();
+			s = convert(s);
+			n = interpreter.eval(s);
+			if (n == null)
+			{
+				result = "<"+s+ "> is not a correct or existing expression.";
+			}
+			int fval = 0;
+			if (n instanceof Integer)
+			{
+				fval = (Integer) n;
+			}
+			else if (n instanceof Long)
+			{
+				fval = ((Long) n).intValue();
+			}
+			else if (n instanceof Float)
+			{
+				fval = ((Float) n).intValue();
+			}
+			else if (n instanceof Double)
+			{
+				fval = ((Double) n).intValue();
+			}
+
+			int cw = ival;
+			// START KGU 2015-10-13: For negative cw this didn't work properly
+			//while ((cw <= fval) && result.equals("") && (stop == false))
+			while (((sval >= 0) ? (cw <= fval) : (cw >= fval)) && result.equals("") && (stop == false))
+			// END KGU 2015-10-13
+			{
+				setVar(counter, cw);
+				element.waited = true;
+
+				int i = 0;
+				// START KGU 2010-09-14 The limitation of cw CAUSED eternal
+				// loops (rather then preventing them)
+				// while (i < ((For) element).q.children.size() &&
+				// result.equals("") && stop == false && cw < 100)
+				while ((i < element.q.children.size())
+						&& result.equals("") && (stop == false))
+				// END KGU 2010-09-14
+				{
+					result = step(element.q.getElement(i));
+					i++;
+				}
+                
+				// At this point, we symbolize the time for the incrementing and condition checking
+				element.waited = false;
+				element.executed = true;
+				if (delay != 0 || step)
+				{
+					diagram.redraw();
+				}
+				checkBreakpoint(element);
+				delay();
+				element.executed = false;
+				element.waited = true;
+				
+				// START KGU 2015-10-13: The step value is now calculated in advance
+//				try
+//				{
+//					cw+=Integer.valueOf(pas);
+//				}
+//				catch(Exception e)
+//				{
+//					cw++;
+//				}
+				cw += sval;
+				// END KGU 2015-10-13
+			}
+			if (result.equals(""))
+			{
+				element.executed = false;
+				element.waited = false;
+			}
+		} catch (EvalError ex)
+		{
+			result = ex.getMessage();
+		}
+		return result;
+	}
+	
+	private String stepParallel(Parallel element)
+	{
+		String result = new String();
+		try
+		{
+			int nThreads = element.qs.size();
+			// For each of the parallel "threads" fetch a subqueue's Element iterator...
+			Vector<Iterator<Element> > undoneThreads = new Vector<Iterator<Element>>();
+			for (int thr = 0; thr < nThreads; thr++)
+			{
+				undoneThreads.add(element.qs.get(thr).children.iterator());
+			}
+
+			element.waited = true;
+			// Since we can hardly really execute this in parallel here, the workaround is to run all the "threads"
+			// in a randomly chosen order...
+			Random rdmGenerator = new Random(System.currentTimeMillis());
+
+			// The first condition holds if there is at least one unexhausted "thread"
+			while (!undoneThreads.isEmpty() && result.equals("") && (stop == false))
+			{
+				// Pick one of the "threads" by chance
+				int threadNr = rdmGenerator.nextInt(undoneThreads.size());
+				Iterator<Element> iter = undoneThreads.get(threadNr);
+				if (!iter.hasNext())
+				{
+					// Thread is exhausted - drop it
+					undoneThreads.remove(threadNr);
+				}
+				else 
+				{
+					// Run the next instruction of the chosen thread
+					result = step(iter.next());
+				}                
+			}
+			if (result.equals(""))
+			{
+				element.executed = false;
+				element.waited = false;
+			}
+		} catch (Error ex)
+		{
+			result = ex.getMessage();
 		}
 		return result;
 	}

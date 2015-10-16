@@ -31,17 +31,20 @@ package lu.fisch.structorizer.gui;
  *      Revision List
  *
  *      Author          Date			Description
- *      ------		----			-----------
+ *      ------			----			-----------
  *      Bob Fisch       2007.12.09      First Issue
+ *      Kay Gürtzig     2015.07.18      URL launch added in updateNSD() - requires Java >= 1.6
+ *      Kay Gürtzig     2015.10.09      Colour setting will now duly be registered as diagram modification
+ *                      2015.10.11      Comment popping repaired by proper subclassing of getElementByCoord
+ *                                      Listener method MouseExited now enabled to drop the sticky comment popup
  *
  ******************************************************************************************************
  *
  *      Comment:		/
-     *
+ *
  ******************************************************************************************************///
 
 import java.awt.*;
-import java.awt.Font;
 import java.awt.image.*;
 import java.awt.event.*;
 import java.awt.print.*;
@@ -58,7 +61,6 @@ import javax.imageio.*;
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
 import org.freehep.graphicsio.swf.*;
-//import org.freehep.graphicsio.svg.*;	// => does not work!
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
@@ -123,7 +125,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 		this.addMouseListener(this);
 		this.addMouseMotionListener(this);
-                this.addMouseWheelListener(this);
+		this.addMouseWheelListener(this);
 
 
 		new  FileDrop( this, new FileDrop.Listener()
@@ -213,8 +215,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			if (Element.E_SHOWCOMMENTS==true && ((Editor) NSDControl).popup.isVisible()==false)
 			{
-				Element selEle = root.getElementByCoord(e.getX(),e.getY());
-
+				// START KGU 2015-10-11: Method merged with selectElemetByCoord
+				//Element selEle = root.getElementByCoord(e.getX(),e.getY());
+				Element selEle = root.getElementByCoord(e.getX(), e.getY(), false);
+				// END KGU 2015-10-11
+				
 				if (selEle!=null)
 				{
 					if (!selEle.getComment().getText().trim().equals(""))
@@ -264,7 +269,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		if(e.getSource()==this)
 		{
-			Element bSome = root.selectElementByCoord(e.getX(),e.getY());
+			// START KGU 2015-10-11: Method merged with getElementByCoord(int,int)
+			//Element bSome = root.selectElementByCoord(e.getX(),e.getY());
+			Element bSome = root.getElementByCoord(e.getX(), e.getY(), true);
+			// END KGU 2015-10-11
 
 			if(bSome!=null)
 			{
@@ -324,17 +332,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			mouseY = e.getY();
 
 			Element.E_DRAWCOLOR=Color.YELLOW;
-			Element ele = root.selectElementByCoord(e.getX(),e.getY());
+			// START KGU 2015-10-11: Method merged with getElementByCoord(int,int)
+			//Element ele = root.selectElementByCoord(e.getX(),e.getY());
+			Element ele = root.getElementByCoord(e.getX(), e.getY(), true);
+			// END KGU 2015-10-11
 
-                        if(ele!=null)
-                        {
-                            mX = mouseX;
-                            mY = mouseY;
-                            selX = mouseX-ele.getRect().left;
-                            selY = mouseY-ele.getRect().top;
-                        }
+			if(ele!=null)
+			{
+				mX = mouseX;
+				mY = mouseY;
+				selX = mouseX-ele.getRect().left;
+				selY = mouseY-ele.getRect().top;
+			}
 
-                        if (ele!=null && ele!=selected)
+			if (ele!=null && ele!=selected)
 			{
 				ele.setSelected(true);
 				selected=ele;
@@ -379,7 +390,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if ( !selectedDown.getClass().getSimpleName().equals("Subqueue") &&
 					!selectedDown.getClass().getSimpleName().equals("Root"))
 				{
-					selectedUp = root.selectElementByCoord(e.getX(),e.getY());
+					// START KGU 2015-10-11: Method merged with getElementByCoord(int,int)
+					//selectedUp = root.selectElementByCoord(e.getX(),e.getY());
+					selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
+					// END KGU 2015-10-11
 					if(selectedUp!=null)
 					{
 						selectedUp.setSelected(false);
@@ -407,8 +421,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				else
 				{
-					selectedUp = root.selectElementByCoord(e.getX(),e.getY());
-                                        if(selectedUp!=null) selectedUp.setSelected(false);
+					// START KGU 2015-10-11: Method merged with getElementByCoord(int,int)
+					//selectedUp = root.selectElementByCoord(e.getX(),e.getY());
+					selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
+					if(selectedUp!=null) selectedUp.setSelected(false);
 					doDraw=true;
 				}
 			}
@@ -431,6 +447,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
     public void mouseExited(MouseEvent e)
 	{
+    	// START KGU 2015-10-11: We ought to get rid of that sticky popped comment!
+    	this.hideComments();
+    	// END KGU 2015-10-11
 	}
 
     public void mouseClicked(MouseEvent e)
@@ -441,6 +460,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (e.getSource()==this)
 			{
                                 //System.out.println("Clicked");
+                                // KGU 2015-10-11: In case of reactivation replace the following by ...root.getElementByCoord(e.getX(),e.getY(),true); !
                                 /*Element selly = root.selectElementByCoord(e.getX(),e.getY());
                                 if(selly!=selected && selected!=null) 
                                 {
@@ -448,7 +468,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                                 }
                                 selected=selly;
 
-                                // redra the diagram
+                                // redraw the diagram
                                 //redraw();
                                 // do the button thing
                                 if(NSDControl!=null) NSDControl.doButtons();
@@ -601,6 +621,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		return selected;
 	}
+	
+    // START KGU 2015-10-11: Unselecting, e.g. before export, had left the diagram status inconsistent:
+    // Though the selected status of the elements was unset, the references of the formerly selected
+    // elements invisibly remained in the respective diagram attributes, possibly causing unwanted effects.
+    // So this new method was introduced to replace the selectElementByCoord(-1,-1) calls.
+    public void unselectAll()
+    {
+    	root.selectElementByCoord(-1, -1);
+    	selected = selectedUp = selectedDown = selectedMoved = null;
+    	redraw();
+    }
+	
 
 	/**
 	* Method: print <p>
@@ -984,6 +1016,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			getSelected().setColor(_color);
 			//getSelected().setSelected(false);
 			//selected=null;
+			// START KGU 2015-10-09 Setting of colour hadn't been regarded as diagram modification
+			root.hasChanged = true;
+			// END KGU 2015-10-09
 			redraw();
 		}
 	}
@@ -1050,7 +1085,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				EditData data = new EditData();
 				data.title="Add new instruction ...";
 
-				showInputBox(data);
+				// START KGU 2015-10-14: Enhancement for easier title localisation
+				//showInputBox(data);
+				showInputBox(data, "instruction", true);
+				// END KGU 2015-10-14
 
 				if(data.result==true)
 				{
@@ -1070,8 +1108,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				data.title="Edit element ...";
 				data.text.setText(element.getText().getText());
 				data.comment.setText(element.getComment().getText());
+				// START KGU 2015-10-12
+				data.breakpoint = element.isBreakpoint();
+				// END KGU 2015-10-12
 
-				showInputBox(data);
+				// START KGU 2015-10-14: Enhancement for easier title localisation
+				//showInputBox(data);
+				showInputBox(data, element.getClass().getSimpleName(), false);
+				// END KGU 2015-10-14
 
 				if(data.result==true)
 				{
@@ -1084,6 +1128,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						element.setText(data.text.getText());
 					}
 					element.setComment(data.comment.getText());
+					// START KGU 2015-10-12
+					if (element.isBreakpoint() != data.breakpoint) {
+						element.toggleBreakpoint();
+					}
+					// END KGU 2015-10-12
 					root.hasChanged=true;
 					redraw();
 				}
@@ -1126,6 +1175,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		analyse();
 	}
 
+	/*****************************************
+	 * add method
+	 *****************************************/
 	public void addNewElement(Element _ele, String _title, String _pre, boolean _after)
 	{
 		if (getSelected()!=null)
@@ -1133,7 +1185,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			EditData data = new EditData();
 			data.title=_title;
 			data.text.setText(_pre);
-			showInputBox(data);
+			// START KGU 2015-10-14: More information to ease title localisation
+			//showInputBox(data);
+			showInputBox(data, _ele.getClass().getSimpleName(), true);
+			// END KGU 2015-10-14
 			if(data.result == true)
 			{
 				if (!(_ele instanceof Forever))
@@ -1158,6 +1213,32 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
+	// START KGU 2015-10-12
+	/*****************************************
+	 * breakpoint methods
+	 *****************************************/
+	public void toggleBreakpoint()
+	{
+		Element ele = getSelected();
+		if (ele != null)
+		{
+			ele.toggleBreakpoint();
+			redraw();
+		}
+	}
+	
+	public void clearBreakpoints()
+	{
+		root.clearBreakpoints();
+		redraw();
+	}
+
+	public void clearExecutionStatus()
+	{
+		root.clearExecutionStatus();
+		redraw();
+	}
+	// END KGU 2015-10-12
 
 	/*****************************************
 	 * print method
@@ -1220,8 +1301,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         public void exportPNGmulti()
         {
 
-		root.selectElementByCoord(-1,-1);
-		redraw();
+        	// START KGU 2015-10-11
+        	//root.selectElementByCoord(-1,-1);	// Unselect all elements
+        	//redraw();
+        	unselectAll();
+        	// END KGU 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as Multi-PNG ...");
 		// set directory
@@ -1329,8 +1413,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         
 	public void exportPNG()
 	{
-		root.selectElementByCoord(-1,-1);
-		redraw();
+    	// START KGU 2015-10-11
+    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
+    	//redraw();
+    	unselectAll();
+    	// END KGU 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as PNG ...");
 		// set directory
@@ -1396,8 +1483,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void exportEMF()
 	{
-		root.selectElementByCoord(-1,-1);
-		redraw();
+    	// START KGU 2015-10-11
+    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
+    	//redraw();
+    	unselectAll();
+    	// END KGU 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as EMF ...");
 		// set directory
@@ -1469,8 +1559,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void exportSVG() // does not work!!
 	{
-		root.selectElementByCoord(-1,-1);
-		redraw();
+    	// START KGU 2015-10-11
+    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
+    	//redraw();
+    	unselectAll();
+    	// END KGU 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as SVG ...");
 		// set directory
@@ -1555,14 +1648,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                        }
 		}
 
-                root.selectElementByCoord(-1,-1);
-		redraw();
+    	// START KGU 2015-10-11
+    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
+    	//redraw();
+    	unselectAll();
+    	// END KGU 2015-10-11
 	}
 
 	public void exportSWF()
 	{
-		root.selectElementByCoord(-1,-1);
-		redraw();
+    	// START KGU 2015-10-11
+    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
+    	//redraw();
+    	unselectAll();
+    	// END KGU 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as SWF ...");
 		// set directory
@@ -1634,8 +1733,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void exportPDF()
 	{
-		root.selectElementByCoord(-1,-1);
-		redraw();
+    	// START KGU 2015-10-11
+    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
+    	//redraw();
+    	unselectAll();
+    	// END KGU 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as PDF ...");
 		// set directory
@@ -1781,10 +1883,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		//Desktop desk = Desktop.getDesktop();
 		// java.awt.Desktop (since 1.6 !!)
-
-		JOptionPane.showOptionDialog(this,"<html>Goto <a href=\"http://structorizer.fisch.lu\">http://structorizer.fisch.lu</a> to look for updates<br>and news about Structorizer.</html>",
+		
+		// START KGU 2015-07-18 If the above comment was an idea how to open the homepage, here's the code now 
+		String home = "http://structorizer.fisch.lu";
+		int chosen = JOptionPane.showOptionDialog(this,"<html>Goto <a href=\"" + home + "\">" + home + "</a> to look for updates<br>and news about Structorizer.</html>",
 									 "Update",
-								 	 JOptionPane.OK_OPTION,JOptionPane.INFORMATION_MESSAGE,null,null,null);
+								 	 JOptionPane.YES_NO_OPTION,JOptionPane.INFORMATION_MESSAGE,null,null,null);
+		if (chosen == JOptionPane.YES_OPTION && Desktop.isDesktopSupported())
+		{
+			try 
+			{
+				Desktop.getDesktop().browse(new java.net.URI(home));
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+			}
+		}
+		// END KGU 2015-07-18
 	}
 
 	/*****************************************
@@ -2147,7 +2263,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/*****************************************
 	 * inputbox methods
 	 *****************************************/
-	public void showInputBox(EditData _data)
+	// START KGU 2015-10-14: additional parameters for title customisation
+	//public void showInputBox(EditData _data)
+	public void showInputBox(EditData _data, String elementType, boolean isInsertion)
+	// END KGU 2015-10-14
 	{
             if(NSDControl!=null)
             {
@@ -2160,33 +2279,51 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
                 inputbox.setLocationRelativeTo(NSDControl.getFrame());
 
-		// set title
+		// set title (as default)
 		inputbox.setTitle(_data.title);
 
 		// set field
 		inputbox.txtText.setText(_data.text.getText());
 		inputbox.txtComment.setText(_data.comment.getText());
+		// START KGU 2015-10-12
+		inputbox.chkBreakpoint.setEnabled(getSelected() != root);
+		inputbox.chkBreakpoint.setSelected(_data.breakpoint);
+		// END KGU 2015-10-12
 
 		inputbox.OK=false;
+		// START KGU 2015-10-14: Pass the additional information for title translation control
+		if (elementType.equals("Root") && !this.isProgram())
+		{
+			elementType = "Function";
+		}
+		inputbox.elementType = elementType;
+		inputbox.forInsertion = isInsertion;
+		// END KGU 2015-10-14
 		inputbox.setLang(NSDControl.getLang());
 		inputbox.setVisible(true);
 
 		// get fields
 		_data.text.setText(inputbox.txtText.getText());
 		_data.comment.setText(inputbox.txtComment.getText());
+		// START KGU 2015-10-12
+		_data.breakpoint = inputbox.chkBreakpoint.isSelected();
+		// END KGU 2015-10-12
 		_data.result=inputbox.OK;
 
                 inputbox.dispose();
              }
 	}
-
+	
 	/*****************************************
 	 * CLIPBOARD INTERACTIONS
      *****************************************/
 	public void copyToClipboardPNG()
 	{
-                root.selectElementByCoord(-1,-1);
-		redraw();
+    	// START KGU 2015-10-11
+    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
+    	//redraw();
+    	unselectAll();
+    	// END KGU 2015-10-11
 
                 Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		//DataFlavor pngFlavor = new DataFlavor("image/png","Portable Network Graphics");
@@ -2202,8 +2339,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void copyToClipboardEMF()
 	{
-                root.selectElementByCoord(-1,-1);
-		redraw();
+    	// START KGU 2015-10-11
+    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
+    	//redraw();
+    	unselectAll();
+    	// END KGU 2015-10-11
 
                 Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
@@ -2452,4 +2592,5 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 */
 
     }
+    
 }

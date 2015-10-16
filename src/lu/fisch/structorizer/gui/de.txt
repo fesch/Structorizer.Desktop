@@ -23,7 +23,7 @@
  *
  *      Author:         Klaus-Peter Reimers
  *
- *      Description:    The german language file
+ *      Description:    The German language file
  *
  ******************************************************************************************************
  *
@@ -34,6 +34,8 @@
  *      Klaus-Peter Reimers 	2008.01.14      	First Issue
  *      Kay Gürtzig		2014.10.18		Linguistic flaws corrected
  *      Kay Gürtzig		2014.12.02		ExportOptionDialoge and further messages added
+ *      Kay Gürtzig 	2015.10.06		altPadRight added to Preferences dialog
+ *      Kay Gürtzig		2015.10.14		InputBox.class_specific stuff added
  *
  ******************************************************************************************************
  *
@@ -120,7 +122,7 @@ Menu.menuPreferencesOptions.text=Strukturen ...
 Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesAnalyser.text=Überprüfungen ...
 Menu.menuPreferencesExport.text=Export ...
-Menu.menuPreferencesLanguage.text=Sprachen
+Menu.menuPreferencesLanguage.text=Sprache
 Menu.menuPreferencesLanguageEnglish.text=Englisch
 Menu.menuPreferencesLanguageGerman.text=Deutsch
 Menu.menuPreferencesLanguageFrench.text=Französisch
@@ -241,6 +243,10 @@ Editor.btnFontUp.tooltip=Erhöhen der Zeichensatz-Größe.
 Editor.btnFontDown.tooltip=Verringern der Zeichensatz-Größe.
 // copyright 
 Editor.btnAbout.tooltip=Zeigen eines Informationsfensters über den Structorizer.
+// execution 
+Editor.btnTurtle.tooltip=Öffnen des Turtleizer-Fensters zum Test.
+Editor.btnMake.tooltip=Öffnen des Debuggers zum Test
+Editor.btnDropBrk.tooltip=Entfernen aller Haltepunkte
 // colors
 Editor.btnColor0.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
 Editor.btnColor1.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
@@ -288,10 +294,12 @@ Editor.popupEdit.text=Bearbeiten
 Editor.popupDelete.text=Löschen
 Editor.popupMoveUp.text=Nach oben bewegen
 Editor.popupMoveDown.text=Nach unten bewegen
+// Breakpoint
+Editor.popupBreakpoint.text=Haltepunkt setzen/löschen
 
 
 -----[ InputBox ]-----
-InputBox.title=Element bearbeiten
+//InputBox.title=Element bearbeiten
 InputBox.lblText.text=Einzugebender Text
 InputBox.lblText.tooltip=Eingabe des Textes an dieser Stelle.
 InputBox.lblComment.text=Einzugebender Kommentar
@@ -302,6 +310,29 @@ InputBox.btnOK.text=Speichern
 InputBox.btnOK.tooltip=Speichern der Eintragungen.
 InputBox.btnCancel.text=Abbruch
 InputBox.btnCancel.tooltip=Verwerfen der Eintragungen.
+InputBox.chkBreakpoint.text=Haltepunkt
+InputBox.class_specific.Root=Programmnamen bearbeiten...
+InputBox.class_specific.Function=Funktionssignatur bearbeiten...
+InputBox.class_specific.Instruction.insert=Neue Anweisungen hinzufügen...
+InputBox.class_specific.Alternative.insert=Neue Verzweigung hinzufügen...
+InputBox.class_specific.Case.insert=Neue Fallauswahl hinzufügen...
+InputBox.class_specific.For.insert=Neue FOR-Schleife hinzufügen...
+InputBox.class_specific.Forever.insert=Neue ENDLOS-Schleife hinzufügen...
+InputBox.class_specific.Repeat.insert=Neue REPEAT-Schleife hinzufügen...
+InputBox.class_specific.While.insert=Neue WHILE-Schleife hinzufügen...
+InputBox.class_specific.Call.insert=Unterprogramm-CALL hinzufügen...
+InputBox.class_specific.Jump.insert=Sprung- bzw. Austrittstrittsanweisung hinzufügen...
+InputBox.class_specific.Parallel.insert=Neues PARALLEL-Element hinzufügen...
+InputBox.class_specific.Instruction.update=Anweisungen bearbeiten...
+InputBox.class_specific.Alternative.update=Verzweigung bearbeiten...
+InputBox.class_specific.Case.update=Fallauswahl bearbeiten...
+InputBox.class_specific.For.update=FOR-Schleife bearbeiten...
+InputBox.class_specific.Forever.update=ENDLOS-Schleife bearbeiten...
+InputBox.class_specific.Repeat.update=REPEAT-Schleife bearbeiten...
+InputBox.class_specific.While.update=WHILE-Schleife bearbeiten...
+InputBox.class_specific.Call.update=Unterprogramm-CALL bearbeiten...
+InputBox.class_specific.Jump.update=Sprung- bzw. Austrittstrittsanweisung bearbeiten...
+InputBox.class_specific.Parallel.update=PARALLEL-Element bearbeiten...
 
 
 -----[ Preferences ]-----
@@ -314,6 +345,7 @@ Preferences.lblAltF.text=FALSCH
 Preferences.lblAltF.tooltip=Die Markierung für den (rechten) FALSCH-Zweig.
 Preferences.lblAltContent.text=Voreinstellungs-Text
 Preferences.lblAltContent.tooltip=Der Voreinstellungs-Text im IF-Anweisungs-Kopf.
+Preferences.altPadRight.text=Verbreitere FALSCH-Zweig
 Preferences.pnlCase.border=CASE-Anweisung
 Preferences.pnlCase.tooltip=Einstellungen zur CASE-Anweisung.
 Preferences.lblCase.text=Voreinstellungs-Text

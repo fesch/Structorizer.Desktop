@@ -33,6 +33,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.23      First Issue
+ *      Kay Gürtzig     2015-10-12      A checkbox added for breakpoint control 
  *
  ******************************************************************************************************
  *
@@ -47,11 +48,13 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
 
+import lu.fisch.utils.StringList;
+
 
 public class InputBox extends LangDialog implements ActionListener, KeyListener
 {
     public boolean OK = false;
-
+    
     // Buttons
     protected JButton btnOK = new JButton("OK"); 
     protected JButton btnCancel = new JButton("Cancel"); 
@@ -67,6 +70,17 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
     // Scrollpanes
     protected JScrollPane scrText = new JScrollPane(txtText);
     protected JScrollPane scrComment = new JScrollPane(txtComment);
+    
+    // Checkbox
+    // START GU 2015-10-12: Additional possibility to control the breakpoint setting
+    protected JCheckBox chkBreakpoint = new JCheckBox("Breakpoint");
+    // END KGU 2015-10-12
+    
+    // START KGU 2015-10-14: Additional information for data-specific title translation
+    public String elementType = new String();	// The (lower-case) class name of the element type to be edited here
+    public boolean forInsertion = false;		// If this dialog is used to setup a new element (in contrast to updating an existing element)
+    private boolean gotSpecificTitle = false;	// class-specific title translation already done? (prevents setTitle() from spoiling it)
+    // END KGU 2015-10-14
 
 
     private void create()
@@ -146,10 +160,21 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
             gbPanel0.setConstraints( lblComment, gbcPanel0 );
             pnPanel0.add( lblComment );
 
+            gbcPanel0.gridx = 1;
+            gbcPanel0.gridy = 18;
+            gbcPanel0.gridwidth = 18;
+            gbcPanel0.gridheight = 1;
+            gbcPanel0.fill = GridBagConstraints.BOTH;
+            gbcPanel0.weightx = 1;
+            gbcPanel0.weighty = 0;
+            gbcPanel0.anchor = GridBagConstraints.NORTH;
+            gbPanel0.setConstraints( chkBreakpoint, gbcPanel0 );
+            pnPanel0.add( chkBreakpoint );
+
             gbcPanel0.insets=new Insets(10,10,10,10);
 
             gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = 18;
+            gbcPanel0.gridy = 19;
             gbcPanel0.gridwidth = 7;
             gbcPanel0.gridheight = 1;
             gbcPanel0.fill = GridBagConstraints.BOTH;
@@ -160,7 +185,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
             pnPanel0.add( btnCancel );
 
             gbcPanel0.gridx = 12;
-            gbcPanel0.gridy = 18;
+            gbcPanel0.gridy = 19;
             gbcPanel0.gridwidth = 7;
             gbcPanel0.gridheight = 1;
             gbcPanel0.fill = GridBagConstraints.BOTH;
@@ -230,4 +255,39 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
         create();
     }*/
 
+    // START KGU 2015-10-14: data-specific title localisation
+    /**
+     * Replaces the title string by translation if keys match some internal state information
+     * @see lu.fisch.structorizer.gui.LangDialog#setLangSpecific(lu.fisch.utils.StringList, java.lang.String)
+     */
+    @Override
+	protected void setLangSpecific(StringList keys, String translation)
+	{
+		if (!keys.get(2).isEmpty() && keys.get(2).equalsIgnoreCase(this.elementType))
+		{
+			String discriminator = keys.get(3);
+			if (discriminator.isEmpty() ||
+					discriminator.equals("insert") && this.forInsertion ||
+					discriminator.equals("update") && !this.forInsertion)
+			{
+				this.setTitle(translation);
+				this.gotSpecificTitle = true;
+			}
+		}
+	}
+    
+    /**
+     * Sets the title of the Dialog if no specific translation had already taken place
+	 * @param title - the title to be displayed in the dialog's border; a null value is ignored here
+     */
+    @Override
+    public void setTitle(String title)
+    {
+    	if (title != null && !this.gotSpecificTitle)
+    	{
+    		super.setTitle(title);
+    	}
+    }
+    // END KGU 2015-10-14
+    
 }

@@ -33,6 +33,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2008.01.14      First Issue
+ *      Kay Gürtzig     2015.10.14      Hook for customizable class-specific translation activities added
  *
  ******************************************************************************************************
  *
@@ -115,7 +116,13 @@ public class LangDialog extends JDialog
 						((JDialog) _com).setTitle(parts.get(1));
 					}
 				}
-				else 
+				// START KGU 2015-10-14: Hook for some more sophisticated class-specific stuff added
+				else if (pieces.get(1).equals("class_specific") && _com instanceof LangDialog)
+				{
+					((LangDialog)_com).setLangSpecific(pieces, parts.get(1));
+				}
+				// END KGU 2015-10-14
+				else
 				{
 					try
 					{
@@ -159,6 +166,20 @@ public class LangDialog extends JDialog
 			}
 		}
 	}	
+	
+	
+	// START KGU 2015-10-14
+	/**
+	 * Hook to do some subclass-specific language translation for possibly data-dependent GUI stuff.
+	 * This is just a dummy to be overridden if required.
+	 * @param keys = a list of identifying strings (like of a domain name), starting with the class name, for matching purposes
+	 * @param translation = the text to be used if the ids matched
+	 * @return true if the matching succeeded and no further matching attempts with these keys ought to be done
+	 */
+	protected void setLangSpecific(StringList keys, String translation)
+	{
+	}
+	// END KGU 2015-10-14
 
 	public LangDialog() 
 	{

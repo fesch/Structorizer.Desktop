@@ -33,6 +33,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.28      First Issue
+ *      Kay Gürtzig     2015.10.12      New icons (103_breakpt, 104_nobreakpt) introduced
  *
  ******************************************************************************************************
  *
@@ -128,6 +129,11 @@ public class IconLoader {
 	public static ImageIcon ico094 = getIconImage(getURI(from+"icons/094_tw.png"));
 
 	public static ImageIcon ico102 = getIconImage(getURI(from+"icons/102_switch.png"));
+	
+	// START KGU 2015-10-12: New checkpoint icon
+	public static ImageIcon ico103 = getIconImage(getURI(from+"icons/103_breakpt.png"));
+	public static ImageIcon ico104 = getIconImage(getURI(from+"icons/104_nobreakpt.png"));
+	// END KGU 2015-10-12
 
         public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
 
@@ -201,6 +207,10 @@ public class IconLoader {
             ico093 = getIconImage(getURI(from+"icons/093_pl.png"));
             ico094 = getIconImage(getURI(from+"icons/094_tw.png"));
 
+            // START KGU 2015-10-12: Whatever this might be good for...(?)
+        	ico103 = getIconImage(getURI(from+"icons/103_breakpt.png"));
+        	ico104 = getIconImage(getURI(from+"icons/104_nobreakpt.png"));
+        	// END KGU 2015-10-12
 
             turtle = getIconImage(getURI(from+"icons/turtle.png"));
         }

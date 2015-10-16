@@ -33,6 +33,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.28      First Issue
+ *      Kay Gürtzig     2015.10.12      control elements for breakpoint handling added. 
  *
  ******************************************************************************************************
  *
@@ -118,15 +119,19 @@ public class Editor extends JPanel implements NSDController, ComponentListener
     protected JButton btnDelete = new JButton(IconLoader.ico005); 
     protected JButton btnMoveUp = new JButton(IconLoader.ico019); 
     protected JButton btnMoveDown = new JButton(IconLoader.ico020); 
-	//printing
+	// printing
     protected JButton btnPrint = new JButton(IconLoader.ico041); 
 	// font
     protected JButton btnFontUp = new JButton(IconLoader.ico033); 
     protected JButton btnFontDown = new JButton(IconLoader.ico034);
 	// copyright 
     protected JButton btnAbout = new JButton(IconLoader.ico017);
+    // executing / testing
     protected JButton btnMake = new JButton(IconLoader.ico004);
     protected JButton btnTurtle = new JButton(IconLoader.turtle);
+    // START KGU 2015-10-12: Breakpoint wiping
+    protected JButton btnDropBrk = new JButton(IconLoader.ico104);
+    // END KGU 2015-10-12
 	// colors
     protected ColorButton btnColor0 = new ColorButton(Element.color0);
     protected ColorButton btnColor1 = new ColorButton(Element.color1);
@@ -177,6 +182,9 @@ public class Editor extends JPanel implements NSDController, ComponentListener
     protected JMenuItem popupDelete = new JMenuItem("Delete",IconLoader.ico005);
     protected JMenuItem popupMoveUp = new JMenuItem("Move up",IconLoader.ico019);
     protected JMenuItem popupMoveDown = new JMenuItem("Move down",IconLoader.ico020);
+    // START KGU 2015-10-12: Breakpoint toggle
+    protected JMenuItem popupBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
+    // END KGU 2015-10-12
 
     
     private MyToolbar newToolBar(String name)
@@ -291,6 +299,13 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 
         popup.add(popupMoveDown);
         popupMoveDown.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.moveDownNSD(); doButtons(); } } );
+        
+        // START KGU 2015-10-12 Add a possibility to set or unset a checkpoint on the selected Element
+        popup.addSeparator();
+
+        popup.add(popupBreakpoint);
+        popupBreakpoint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleBreakpoint(); doButtons(); } }); 
+        // END KGU 2015-10-12
 
         // add toolbars
         //toolbar.setLayout(new FlowLayout(FlowLayout.LEFT,0,0));
@@ -505,6 +520,9 @@ public class Editor extends JPanel implements NSDController, ComponentListener
         toolbar.add(btnMake);
 		btnMake.setFocusable(false);
 		btnMake.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.goRun(); } } );
+        toolbar.add(btnDropBrk);
+		btnDropBrk.setFocusable(false);
+		btnDropBrk.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.clearBreakpoints(); } } );
 
 		toolbar=newToolBar("Font ...");
 
@@ -570,16 +588,16 @@ public class Editor extends JPanel implements NSDController, ComponentListener
                 //scrollarea.setViewportView(diagram);
 
 		// conditions
-		boolean condition =  diagram.getSelected()!=null && diagram.getSelected()!=diagram.root;
-		boolean conditionAny =  diagram.getSelected()!=null;
+		boolean conditionAny =  diagram.getSelected() != null;
+		boolean condition =  conditionAny && diagram.getSelected() != diagram.root;
 		int i = -1;
 		boolean conditionCanMoveUp = false;
 		boolean conditionCanMoveDown = false;
-		if(diagram.getSelected()!=null)
+		if (conditionAny)
 		{
-			if(diagram.getSelected().parent!=null)
+			if (diagram.getSelected().parent!=null)
 			{
-				// make shure parent is a subqueue, which is not the case if somebody clicks on a subqueue!
+				// make sure parent is a subqueue, which is not the case if somebody clicks on a subqueue!
 				if (diagram.getSelected().parent.getClass().getSimpleName().equals("Subqueue"))
 				{
 					i = ((Subqueue) diagram.getSelected().parent).getIndexOf(diagram.getSelected());
@@ -588,7 +606,7 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 				}
 			}
 		}
-	    
+		
 		// undo & redo
 		btnUndo.setEnabled(diagram.root.canUndo());
 		btnRedo.setEnabled(diagram.root.canRedo());
@@ -658,7 +676,10 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		popupEdit.setEnabled(conditionAny);
 		popupDelete.setEnabled(condition);
 		popupMoveUp.setEnabled(conditionCanMoveUp);
-		popupMoveDown.setEnabled(conditionCanMoveDown);		
+		popupMoveDown.setEnabled(conditionCanMoveDown);
+		
+		// executor
+		popupBreakpoint.setEnabled(diagram.canCutCopy());	// KGU 2015-10-12: added
 		
 		// copy & paste
 		btnCopy.setEnabled(diagram.canCutCopy());
