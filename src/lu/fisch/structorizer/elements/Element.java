@@ -34,6 +34,9 @@ package lu.fisch.structorizer.elements;
  *      ------			----			-----------
  *      Bob Fisch       2007.12.09      First Issue
  *      Kay Gürtzig     2014.11.11      Operator highlighting modified (sse comment)
+ *      Kay Gürtzig     2015.10.09      Methods selectElementByCoord(x,y) and getElementByCoord() merged
+ *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
+ *      Kay Gürtzig     2015.10.13      Execution state separated from selected state
  *
  ******************************************************************************************************
  *
@@ -43,6 +46,15 @@ package lu.fisch.structorizer.elements;
  *      - Additions for highlighting of logical operators (both C and Pascal style) in methods
  *        writeOutVariables() and getWidthOutVariables(),
  *        minor code revision respecting 2- and 3-character operator symbols
+ *      2015.10.09
+ *      - In E_SHOWCOMMENTS mode, substructures had been eclipsed by the top-level elements popping their
+ *        comments. This was due to an incomplete subclassing of method getElementByCoord (in contrast
+ *        to the nearly identical method selectElementByCoord), both methods were merged by means of a
+ *        discriminating additional parameter to identifyElementByCoord(_x, _y, _forSelection)
+ *      20015.10.11 / 2015.10.13
+ *      - New field breakpoint and specific drawing extension for setting and drawing breakpoints
+ *      - The new breakpoint mechanism made clear that the execution status had to be logically separated
+ *        from selection status, which required a new field and an additional drawing mechanism 
  *
  ******************************************************************************************************///
 
@@ -50,13 +62,13 @@ package lu.fisch.structorizer.elements;
 import java.awt.Color;
 import java.awt.Font;
 
-
 import lu.fisch.utils.*;
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.io.*;
 
 import com.stevesoft.pat.*;  //http://www.javaregex.com/
+
 import java.awt.Point;
 
 public abstract class Element {
@@ -83,7 +95,7 @@ public abstract class Element {
 	" - Marcus Radisch <radischm@googlemail.com>\n"+
 	" - Stephan <clauwn@freenet.de>\n"+
 	"\n"+
-	"Usermanuel edited by\n"+
+	"User manual edited by\n"+
 	" - David Morais <narutodc@hotmail.com>\n"+
 	" - Praveen Kumar <praveen_sonal@yahoo.com>\n"+
 	" - Jan Ollmann <bkgmjo@gmx.net>\n"+
@@ -142,8 +154,14 @@ public abstract class Element {
 	static int E_INDENT = 2;
 	public static Color E_DRAWCOLOR = Color.YELLOW;
 	public static Color E_COLLAPSEDCOLOR = Color.LIGHT_GRAY;
+	// START KGU 2015-10-13: Executing status now independent from selection
+	public static Color E_RUNNINGCOLOR = Color.ORANGE;		// used for Elements currently (to be) executed 
+	// END KGU 2015-10-13
 	public static Color E_WAITCOLOR = new Color(255,255,210);
 	static Color E_COMMENTCOLOR = Color.LIGHT_GRAY;
+	// START KGU 2015-10-11: New fix color for breakpoint marking
+	static Color E_BREAKPOINTCOLOR = Color.RED;
+	// END KGU 2015-10-11
 	public static boolean E_VARHIGHLIGHT = false;
 	public static boolean E_SHOWCOMMENTS = true;
 	public static boolean E_TOGGLETC = false;
@@ -185,10 +203,17 @@ public abstract class Element {
 
 	public Element parent = null;
 	public boolean selected = false;
-	public boolean waited = false;
+	// START KGU 2015-10-13: Execution mark had to be separated from selection
+	public boolean executed = false;	// Is set while being executed
+	// END KGU 2015-10-13
+	public boolean waited = false;		// Is set while a substructure Element is under execution
 	private Color color = Color.WHITE;
 
-        private boolean collapsed = false;
+	private boolean collapsed = false;
+	
+	// START KGU 2015-10-11: States whether the element serves as breakpoint for execution (stop before!)
+	protected boolean breakpoint = false;
+	// END KGU 2015-10-11
 
 	// used for drawing
 	public Rect rect = new Rect();
@@ -315,37 +340,155 @@ public abstract class Element {
 	{
 		color = _color;
 	}
+	
+	// START KGU 2015-10-13: The highlighting rules are getting complex
+	// but are more ore less the same for all kinds of elements
+	protected Color getFillColor()
+	{
+		// This priority might be arguable but represents more or less what was found in the draw methods before
+		if (this.waited) {
+			return Element.E_WAITCOLOR; 
+		}
+		else if (this.executed) {
+			return Element.E_RUNNINGCOLOR;
+		}
+		else if (this.selected) {
+			return Element.E_DRAWCOLOR;
+		}
+		else if (this.collapsed) {
+			return Element.E_COLLAPSEDCOLOR;
+		}
+		return getColor();
+	}
+	// END KGU 2015-10-13
+	
+	// START KGU 2015-10-12: Methods to control the new breakpoint property
+	public void toggleBreakpoint()
+	{
+		this.breakpoint = !this.breakpoint;
+	}
+	
+	// Returns whether this Element works as breakpoint on execution
+	public boolean isBreakpoint()
+	{
+		return this.breakpoint;
+	}
+	
+	// Recursively clears all breakpoints in this branch
+	public void clearBreakpoints()
+	{
+		this.breakpoint = false;
+	}
+	// END KGU 2015-10-12
 
+	// START KGU 2015-10-13
+	// Recursively clears all execution flags in this branch
+	public void clearExecutionStatus()
+	{
+		this.executed = false;
+		this.waited = false;
+	}
+	// END KGU 2015-10-13
+
+	// START KGU 2015-10-09 Methods selectElementByCoord(int, int) and getElementByCoord(int, int) merged
 	public Element selectElementByCoord(int _x, int _y)
 	{
-            Point pt=getDrawPoint();
-
-            if ((rect.left-pt.x<_x)&&(_x<rect.right-pt.x)&&
-                    (rect.top-pt.y<_y)&&(_y<rect.bottom-pt.y))
-            {
-                    return this;
-            }
-            else
-            {
-                    selected=false;
-                    return null;
-            }
+//            Point pt=getDrawPoint();
+//
+//            if ((rect.left-pt.x<_x)&&(_x<rect.right-pt.x)&&
+//                    (rect.top-pt.y<_y)&&(_y<rect.bottom-pt.y))
+//            {
+//                    return this;
+//            }
+//            else
+//            {
+//                    selected=false;
+//                    return null;
+//            }
+		return this.getElementByCoord(_x, _y, true);
 	}
 
+	// deprecated: use getElementByCoord(_x, _y, false) instead
 	public Element getElementByCoord(int _x, int _y)
 	{
-            Point pt=getDrawPoint();
-
-            if ((rect.left-pt.x<_x)&&(_x<rect.right-pt.x)&&
-                    (rect.top-pt.y<_y)&&(_y<rect.bottom-pt.y))
-            {
-                    return this;
-            }
-            else
-            {
-                    return null;
-            }
+//            Point pt=getDrawPoint();
+//
+//            if ((rect.left-pt.x<_x)&&(_x<rect.right-pt.x)&&
+//                    (rect.top-pt.y<_y)&&(_y<rect.bottom-pt.y))
+//            {
+//                    return this;
+//            }
+//            else
+//            {
+//                    return null;
+//            }
+		return this.getElementByCoord(_x, _y, false);
 	}
+
+	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
+	{
+		Point pt=getDrawPoint();
+
+		if ((rect.left-pt.x < _x) && (_x < rect.right-pt.x) &&
+				(rect.top-pt.y < _y) && (_y < rect.bottom-pt.y))
+		{
+			return this;         
+		}
+		else 
+		{
+			if (_forSelection)	
+			{
+				selected = false;	
+			}
+			return null;    
+		}
+	}
+	// END KGU 2015-10-09
+	
+	// START KGU 2015-10-11: Helper methods for all Element types' drawing
+	
+	// Draws the marker bar on the left-hand side of the given _rect (supposed to be the Element's rectangle)
+	protected void drawCommentMark(Canvas _canvas, Rect _rect)
+	{
+		_canvas.setBackground(E_COMMENTCOLOR);
+		_canvas.setColor(E_COMMENTCOLOR);
+		
+		Rect markerRect = _rect.copy();
+		
+		markerRect.left += 2;
+		if (breakpoint)
+		{
+			// spare the area of the breakpoint bar
+			markerRect.top += 7;
+		}
+		else
+		{
+			markerRect.top += 2;
+		}
+		markerRect.right = markerRect.left+4;
+		markerRect.bottom -= 2;
+		
+		_canvas.fillRect(markerRect);
+	}
+
+	// Draws the marker bar on the top side of the given _rect (supposed to be the Element's rectangle)
+	protected void drawBreakpointMark(Canvas _canvas, Rect _rect)
+	{
+		if (breakpoint) {
+			_canvas.setBackground(E_BREAKPOINTCOLOR);
+			_canvas.setColor(E_BREAKPOINTCOLOR);
+
+			Rect markerRect = _rect.copy();
+
+			markerRect.left += 2;
+			markerRect.top += 2;
+			markerRect.right -= 2;
+			markerRect.bottom = markerRect.top+4;
+
+			_canvas.fillRect(markerRect);
+		}
+	}
+	// END KGU 2015-10-11
 
         public Rect getRect()
         {
