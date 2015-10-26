@@ -35,6 +35,7 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2007.12.09      First Issue
  *		Bob Fisch	2008.04.18		Added analyser
  *		Kay Gürtzig	2014.10.18		Var name search unified and false detection of "as" within var names mended 
+ *		Kay Gürtzig	2015.10.12		new toggleCheckpoint() method overridden.
  *
  ******************************************************************************************************
  *
@@ -133,6 +134,23 @@ public class Root extends Element {
 		children.parent=this;
 	}
 
+	// START KGU 2015-10-13: This follows a code snippet found in Root.draw(Canvas, Rect), which had been ineffective though
+	@Override
+	public Color getColor()
+	{
+		if (isNice)	// KGU 2015-10-13 condition inverted because it hadn't made sense the way it was
+		{
+			// The surrounding box is obvious - so it can't be mistaken for an instruction
+			return Color.WHITE;
+		}
+		else
+		{
+			// The grey colour helps to distinguish the header from instructions
+			return Color.LIGHT_GRAY;
+		}
+	}
+	// END KGU 2015-10-13
+	
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		Rect subrect = new Rect();
@@ -213,7 +231,10 @@ public class Root extends Element {
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
 		Rect myrect = new Rect();
-		Color drawColor = getColor();
+		// START KGU 2015-10-13: Encapsulates all fundamental colouring and highlighting strategy
+		//Color drawColor = getColor();
+		Color drawColor = getFillColor();
+		// END KGU 2015-10-13
 
 		if(getText().count()==0)
 		{
@@ -227,23 +248,27 @@ public class Root extends Element {
 
 		rect=_top_left.copy();
 
-		if(isNice==false)
-		{
-			drawColor=Color.WHITE;
-		}
-		else
-		{
-			drawColor=Color.LIGHT_GRAY;
-		}
-
-		drawColor=getColor();
-
-		if(selected==true)
-		{
-                if(waited==true) { drawColor=Element.E_WAITCOLOR; }
-                else { drawColor=Element.E_DRAWCOLOR; }
-		}
-
+		// FIXME KGU 2015-10-13: What the heck was this good for? Next line overrode it again!
+		// --> Put into an override version of getColor()
+		// Remaining stuff replaced by new method getFillColor()
+//		if(isNice==false)
+//		{
+//			drawColor=Color.WHITE;
+//		}
+//		else
+//		{
+//			drawColor=Color.LIGHT_GRAY;
+//		}
+//
+//		drawColor=getColor();
+//
+//		if(selected==true)
+//		{
+//                if(waited==true) { drawColor=Element.E_WAITCOLOR; }
+//                else { drawColor=Element.E_DRAWCOLOR; }
+//		}
+		// END KGU 2015-10-13
+		
 		// draw background
 		myrect=_top_left.copy();
 
@@ -355,29 +380,46 @@ public class Root extends Element {
 		rect=_top_left.copy();
 	}
 
-    @Override
-    public Element selectElementByCoord(int _x, int _y)
-    {
-            Element selMe = super.selectElementByCoord(_x,_y);
-            Element selCh = children.selectElementByCoord(_x,_y);
-            if(selCh!=null)
-            {
-                    selected=false;
-                    return selCh;
-            }
-            else
-            {
-                    return selMe;
-            }
-    }
+	// START KGU 2015-10-11: Methods merged into getElementByCoord(int _x, int _y, boolean _forSelection
+//    @Override
+//    public Element selectElementByCoord(int _x, int _y)
+//    {
+//            Element selMe = super.selectElementByCoord(_x,_y);
+//            Element selCh = children.selectElementByCoord(_x,_y);
+//            if(selCh!=null)
+//            {
+//                    selected=false;
+//                    return selCh;
+//            }
+//            else
+//            {
+//                    return selMe;
+//            }
+//    }
+//
+//    @Override
+//    public Element getElementByCoord(int _x, int _y)
+//    {
+//            Element selMe = super.getElementByCoord(_x,_y);
+//            Element selCh = children.getElementByCoord(_x,_y);
+//            if(selCh!=null)
+//            {
+//                    return selCh;
+//            }
+//            else
+//            {
+//                    return selMe;
+//            }
+//    }
 
     @Override
-    public Element getElementByCoord(int _x, int _y)
+    public Element getElementByCoord(int _x, int _y, boolean _forSelection)
     {
-            Element selMe = super.getElementByCoord(_x,_y);
-            Element selCh = children.getElementByCoord(_x,_y);
+            Element selMe = super.getElementByCoord(_x, _y, _forSelection);
+            Element selCh = children.getElementByCoord(_x, _y, _forSelection);
             if(selCh!=null)
             {
+                    if (_forSelection) selected = false;
                     return selCh;
             }
             else
@@ -385,6 +427,7 @@ public class Root extends Element {
                     return selMe;
             }
     }
+    // END KGU 2015-10-11
 
     public boolean checkChild(Element _child, Element _parent)
     {
@@ -475,6 +518,32 @@ public class Root extends Element {
 
             }
     }
+    
+    
+    // START KGU 2015-10-12
+    @Override
+    public void toggleBreakpoint()
+    {
+    	// root may never have a breakpoint!
+    	breakpoint = false;
+    }
+    
+    public void clearBreakpoints()
+    {
+            super.clearBreakpoints();
+            children.clearBreakpoints();
+    }
+    // END KGU 2015-10-12
+
+    // START KGU 2015-10-13
+	// Recursively clears all execution flags in this branch
+	public void clearExecutionStatus()
+	{
+		super.clearExecutionStatus();
+		children.clearExecutionStatus();
+	}
+	// END KGU 2015-10-13
+
 
     public Rect prepareDraw(Graphics _g)
     {
@@ -1879,7 +1948,7 @@ public class Root extends Element {
 
 public StringList getParameterNames()
 {
-    this.getVarNames();
+    //this.getVarNames();
     StringList vars = getVarNames(this,true,false);
     return vars;
 }
