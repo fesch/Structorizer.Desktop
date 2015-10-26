@@ -33,6 +33,8 @@ package lu.fisch.structorizer.elements;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.10      First Issue
+ *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
+ *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
  *
  ******************************************************************************************************
  *
@@ -46,7 +48,6 @@ import java.awt.FontMetrics;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.geom.Point2D.Double;
-
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
@@ -182,7 +183,10 @@ public class Alternative extends Element {
                 }
                 
 		Rect myrect = new Rect();
-		Color drawColor = getColor();
+		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
+		//Color drawColor = getColor();
+		Color drawColor = getFillColor();
+		// END KGU 2015-10-13
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 		int a;
 		int b;
@@ -193,12 +197,14 @@ public class Alternative extends Element {
 		int wmax;
 		int p;
 		int w;
-		
-		if (selected==true)
-		{
-                if(waited==true) { drawColor=Element.E_WAITCOLOR; }
-                else { drawColor=Element.E_DRAWCOLOR; }
-		}
+
+		// START KGU 2015-10-13: Already done by new method getFillColor() now
+//		if (selected==true)
+//		{
+//                if(waited==true) { drawColor=Element.E_WAITCOLOR; }
+//                else { drawColor=Element.E_DRAWCOLOR; }
+//		}
+		// END KGU 2015-10-13
 	
 		Canvas canvas = _canvas;
 		canvas.setBackground(drawColor);
@@ -306,18 +312,25 @@ public class Alternative extends Element {
 		// draw comment
 		if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
 		{
-			canvas.setBackground(E_COMMENTCOLOR);
-			canvas.setColor(E_COMMENTCOLOR);
-			
-			Rect someRect = myrect.copy();
-			
-			someRect.left+=2;
-			someRect.top+=2;
-			someRect.right=someRect.left+4;
-			someRect.bottom-=2;
-			
-			canvas.fillRect(someRect);
+			// START KGU 2015-10-11: Use an inherited helper method now
+//			canvas.setBackground(E_COMMENTCOLOR);
+//			canvas.setColor(E_COMMENTCOLOR);
+//			
+//			Rect someRect = myrect.copy();
+//			
+//			someRect.left+=2;
+//			someRect.top+=2;
+//			someRect.right=someRect.left+4;
+//			someRect.bottom-=2;
+//			
+//			canvas.fillRect(someRect);
+			this.drawCommentMark(canvas, myrect);
+			// END KGU 2015-10-11
 		}
+		// START KGU 2015-10-11
+		// draw breakpoint bar if necessary
+		this.drawBreakpointMark(canvas, myrect);
+		// END KGU 2015-10-11
 		
                 // draw triangle
 		canvas.setColor(Color.BLACK);
@@ -343,32 +356,44 @@ public class Alternative extends Element {
 		canvas.drawRect(myrect);
 	}
 
-	public Element selectElementByCoord(int _x, int _y)
+	// START KGU 2015-10-09: On moving the cursor, substructures had been eclipsed
+	// by their containing box wrt. comment popping etc. This correction, however,
+	// might significantly slow down the mouse tracking on enabled comment popping.
+    // Just give it a try... 
+	//public Element selectElementByCoord(int _x, int _y)
+	@Override
+	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
-		Element selMe = super.selectElementByCoord(_x,_y);
-		Element selT = qTrue.selectElementByCoord(_x,_y);
-		Element selF = qFalse.selectElementByCoord(_x,_y);
+//		Element selMe = super.selectElementByCoord(_x,_y);
+//		Element selT = qTrue.selectElementByCoord(_x,_y);
+//		Element selF = qFalse.selectElementByCoord(_x,_y);
+		Element selMe = super.getElementByCoord(_x,_y, _forSelection);
+		Element selT = qTrue.getElementByCoord(_x,_y, _forSelection);
+		Element selF = qFalse.getElementByCoord(_x,_y, _forSelection);
 		if(selT!=null) 
 		{
-		 selected=false;
-		 selMe = selT;
+			selected=false;
+			selMe = selT;
 		}
 		else if (selF != null)
 		{
-		 selected=false;
-		 selMe=selF;
+			//selected=false
+			if (_forSelection) selected = false;
+			selMe=selF;
 		}
-		
+
 		return selMe;
 	}
+	// END KGU 2015.10.09
 	
+/*	@Override
 	public void setSelected(boolean _sel)
 	{
 		selected=_sel;
 		//qFalse.setSelected(_sel);
 		//qTrue.setSelected(_sel);
 	}
-	
+*/		
 	public Element copy()
 	{
 		Element ele = new Alternative(this.getText().copy());
@@ -390,7 +415,25 @@ public class Alternative extends Element {
     }*/
 	
 	
+	// START KGU 2015-11-12
+	@Override
+	public void clearBreakpoints()
+	{
+		super.clearBreakpoints();
+		this.qFalse.clearBreakpoints();
+		this.qTrue.clearBreakpoints();
+	}
+	// END KGU 2015-10-12
 	
+	// START KGU 2015-10-13
+	// Recursively clears all execution flags in this branch
+	public void clearExecutionStatus()
+	{
+		super.clearExecutionStatus();
+		this.qFalse.clearExecutionStatus();
+		this.qTrue.clearExecutionStatus();
+	}
+	// END KGU 2015-10-13
 		
 	
 	
