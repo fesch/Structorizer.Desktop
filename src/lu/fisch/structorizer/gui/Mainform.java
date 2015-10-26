@@ -132,12 +132,17 @@ public class Mainform  extends JFrame implements NSDController
 		/******************************
 		 * Set onClose event
 		 ******************************/
+                setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		addWindowListener(new WindowAdapter() 
 		{  
                           @Override
 						  public void windowClosing(WindowEvent e) 
 						  {  
-                                                    diagram.saveNSD(true);
+                                                    if(diagram.saveNSD(true))
+                                                    {
+                                                        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+                                                        System.exit(0);
+                                                    }
                                                     saveToINI();
 						  }  
 						  

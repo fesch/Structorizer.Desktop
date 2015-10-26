@@ -818,7 +818,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/*****************************************
 	 * Save method
 	 *****************************************/
-	public void saveNSD(boolean _checkChanged)
+	public boolean saveNSD(boolean _checkChanged)
 	{
 		// only save if something has been changed
 		if(root.hasChanged==true)
@@ -926,9 +926,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					{
 						JOptionPane.showOptionDialog(this,"Error while saving the file!\n"+e.getMessage(),"Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
 					}
+                                        return true;
 				}
+                                else return false;
 			}
+                        else
+                            return true;
 		}
+                return true;
 	}
 
 	/*****************************************
