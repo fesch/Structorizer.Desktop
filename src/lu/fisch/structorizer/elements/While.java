@@ -33,6 +33,8 @@ package lu.fisch.structorizer.elements;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.12      First Issue
+ *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
+ *      Kay Gürtzig     2015.10.12      Breakpoint support prepared
  *
  ******************************************************************************************************
  *
@@ -41,7 +43,6 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.util.Vector;
-
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -121,16 +122,21 @@ public class While extends Element {
                 }
                 
 		Rect myrect = new Rect();
-		Color drawColor = getColor();
+		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
+		//Color drawColor = getColor();
+		Color drawColor = getFillColor();
+		// END KGU 2015-10-13
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
-		int p;
-		int w;
+//		int p;
+//		int w;
 		
-		if (selected==true)
-		{
-                if(waited==true) { drawColor=Element.E_WAITCOLOR; }
-                else { drawColor=Element.E_DRAWCOLOR; }
-		}
+		// START KGU 2015-10-13: Became obsolete by new method getFillColor() applied above now
+//		if (selected==true)
+//		{
+//			if(waited==true) { drawColor=Element.E_WAITCOLOR; }
+//			else { drawColor=Element.E_DRAWCOLOR; }
+//		}
+		// END KGU 2015-10-13
 		
 		Canvas canvas = _canvas;
 		canvas.setBackground(drawColor);
@@ -167,18 +173,25 @@ public class While extends Element {
 		// draw comment
 		if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
 		{
-			canvas.setBackground(E_COMMENTCOLOR);
-			canvas.setColor(E_COMMENTCOLOR);
-			
-			Rect someRect = _top_left.copy();
-			
-			someRect.left+=2;
-			someRect.top+=2;
-			someRect.right=someRect.left+4;
-			someRect.bottom-=1;
-			
-			canvas.fillRect(someRect);
+			// START KGU 2015-10-11: Use an inherited helper method now
+//			canvas.setBackground(E_COMMENTCOLOR);
+//			canvas.setColor(E_COMMENTCOLOR);
+//			
+//			Rect someRect = _top_left.copy();
+//			
+//			someRect.left+=2;
+//			someRect.top+=2;
+//			someRect.right=someRect.left+4;
+//			someRect.bottom-=1;
+//			
+//			canvas.fillRect(someRect);
+			this.drawCommentMark(canvas, _top_left);
+			// END KGU 2015-10-11
 		}
+		// START KGU 2015-10-11
+		// draw breakpoint bar if necessary
+		this.drawBreakpointMark(canvas, _top_left);
+		// END KGU 2015-10-11
 		
 		
 		myrect=_top_left.copy();
@@ -203,18 +216,33 @@ public class While extends Element {
 		
 	}
 	
-	public Element selectElementByCoord(int _x, int _y)
+	// START KGU 2015-10-11: Merged with getElementByCoord, which had to be overridden as well for proper Comment popping
+//	public Element selectElementByCoord(int _x, int _y)
+//	{
+//		Element selMe = super.selectElementByCoord(_x,_y);
+//		Element sel = q.selectElementByCoord(_x,_y);
+//		if(sel!=null) 
+//		{
+//			selected=false;
+//			selMe = sel;
+//		}
+//		
+//		return selMe;
+//	}
+	@Override
+	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
-		Element selMe = super.selectElementByCoord(_x,_y);
-		Element sel = q.selectElementByCoord(_x,_y);
+		Element selMe = super.getElementByCoord(_x, _y, _forSelection);
+		Element sel = q.getElementByCoord(_x, _y, _forSelection);
 		if(sel!=null) 
 		{
-			selected=false;
+			if (_forSelection) selected=false;
 			selMe = sel;
 		}
 		
 		return selMe;
 	}
+	// END KGU 2015-10-11
 	
 	public void setSelected(boolean _sel)
 	{
@@ -239,5 +267,13 @@ public class While extends Element {
         q.setColor(_color);
     }*/
 	
+	// START KGU 2015-11-12
+	@Override
+	public void clearBreakpoints()
+	{
+		super.clearBreakpoints();
+		this.q.clearBreakpoints();
+	}
+	// END KGU 2015-10-12
 
 }
