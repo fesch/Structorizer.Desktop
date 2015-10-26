@@ -1,0 +1,438 @@
+/*
+    Structorizer german language file
+
+    Copyright (C) 2009  Klaus-Peter Reimers
+
+    This file is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or any
+    later version.
+
+    This file is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    
+    This file is part of the "Structorizer" project.     
+*/
+
+/******************************************************************************************************
+ *
+ *      Author:         Klaus-Peter Reimers
+ *
+ *      Description:    The german language file
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          	Date			Description
+ *      ------			----			-----------
+ *      Klaus-Peter Reimers 	2008.01.14      	First Issue
+ *      Kay Gürtzig		2014.10.18		Linguistic flaws corrected
+ *      Kay Gürtzig		2014.12.02		ExportOptionDialoge and further messages added
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:	
+ *
+ ******************************************************************************************************/
+
+-----[ Menu ]-----
+//Menu File
+Menu.menuFile.text=Datei
+// Submenus of "File"
+Menu.menuFileNew.text=Neu
+Menu.menuFileOpen.text=Öffnen ...
+Menu.menuFileSave.text=Speichern
+Menu.menuFileSaveAs.text=Speichern unter ...
+Menu.menuFileExport.text=Exportieren
+// Submenu of "File -> Export"
+Menu.menuFileExportPicture.text=Bild ...
+Menu.menuFileExportCode.text=Quellcode ...
+Menu.menuFileImport.text=Importieren
+// Submenu of "File -> Import"
+Menu.menuFileImportPascal.text=Pascal Code ...
+Menu.menuFilePrint.text=Drucken ...
+Menu.menuFileQuit.text=Beenden
+// Menu "Edit"
+Menu.menuEdit.text=Bearbeiten
+// Submenu of "Edit"
+Menu.menuEditUndo.text=Rückgängig machen
+Menu.menuEditRedo.text=Wiederholen
+Menu.menuEditCut.text=Ausschneiden
+Menu.menuEditCopy.text=Kopieren
+Menu.menuEditPaste.text=Einfügen
+Menu.menuEditCopyDiagramPNG.text=Als PNG Grafik kopieren
+Menu.menuEditCopyDiagramEMF.text=Als EMF Grafik kopieren
+// Menu "Diagram"
+Menu.menuDiagram.text=Diagramme
+// Submenus of "Diagram"
+Menu.menuDiagramAdd.text=Hinzufügen
+// Submenu "Diagram -> Add -> Before"
+Menu.menuDiagramAddBefore.text=Davor
+// Submenus for adding Elements "Before"
+Menu.menuDiagramAddBeforeInst.text=Anweisungen
+Menu.menuDiagramAddBeforeAlt.text=IF-Anweisung
+Menu.menuDiagramAddBeforeCase.text=CASE-Anweisung
+Menu.menuDiagramAddBeforeFor.text=FOR-Schleife
+Menu.menuDiagramAddBeforeWhile.text=WHILE-Schleife
+Menu.menuDiagramAddBeforeRepeat.text=REPEAT-Schleife
+Menu.menuDiagramAddBeforeForever.text=ENDLOS-Schleife
+Menu.menuDiagramAddBeforeCall.text=Aufruf-Anweisung
+Menu.menuDiagramAddBeforeJump.text=Sprung-Anweisung
+Menu.menuDiagramAddBeforePara.text=Parallel-Abschnitt
+// Submenu "Diagram -> Add -> After"
+Menu.menuDiagramAddAfter.text=Danach
+// Submenus for adding Elements "After"
+Menu.menuDiagramAddAfterInst.text=Anweisungen
+Menu.menuDiagramAddAfterAlt.text=IF-Anweisung
+Menu.menuDiagramAddAfterCase.text=CASE-Anweisung
+Menu.menuDiagramAddAfterFor.text=FOR-Schleife
+Menu.menuDiagramAddAfterWhile.text=WHILE-Schleife
+Menu.menuDiagramAddAfterRepeat.text=REPEAT-Schleife
+Menu.menuDiagramAddAfterForever.text=ENDLOS-Schleife
+Menu.menuDiagramAddAfterCall.text=Aufruf-Anweisung
+Menu.menuDiagramAddAfterJump.text=Sprung-Anweisung
+Menu.menuDiagramAddAfterPara.text=Parallel-Abschnitt
+Menu.menuDiagramEdit.text=Bearbeiten
+Menu.menuDiagramDelete.text=Löschen
+Menu.menuDiagramMoveUp.text=Nach oben
+Menu.menuDiagramMoveDown.text=Nach unten
+Menu.menuDiagramType.text=Typ
+Menu.menuDiagramTypeProgram.text=Hauptprogramm
+Menu.menuDiagramTypeFunction.text=Unterprogramm
+Menu.menuDiagramNice.text=Umrahmtes Diagramm?
+Menu.menuDiagramComment.text=Zeige Kommentare?
+Menu.menuDiagramSwitchComments.text=Tausche Text/Kommentare?
+Menu.menuDiagramMarker.text=Hervorheben von Variablen?
+Menu.menuDiagramDIN.text=DIN?
+Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
+// Menu "Help"
+Menu.menuPreferences.text=Einstellungen
+// Submenu of "Help"
+Menu.menuPreferencesFont.text=Zeichensätze ...
+Menu.menuPreferencesColors.text=Farben ...
+Menu.menuPreferencesOptions.text=Strukturen ...
+Menu.menuPreferencesParser.text=Parser ...
+Menu.menuPreferencesAnalyser.text=Überprüfungen ...
+Menu.menuPreferencesExport.text=Export ...
+Menu.menuPreferencesLanguage.text=Sprachen
+Menu.menuPreferencesLanguageEnglish.text=Englisch
+Menu.menuPreferencesLanguageGerman.text=Deutsch
+Menu.menuPreferencesLanguageFrench.text=Französisch
+Menu.menuPreferencesLanguageDutch.text=Holländisch
+Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburgisch
+Menu.menuPreferencesLanguageItalian.text=Italienisch
+Menu.menuPreferencesLanguageSpanish.text=Spanisch
+Menu.menuPreferencesLanguagePortugalBrazil.text=Portugiesisch (Brasilien)
+Menu.menuPreferencesLanguageSimplifiedChinese.text=Chinesisch (vereinfacht)
+Menu.menuPreferencesLanguageTraditionalChinese.text=Chinesisch (traditionell)
+Menu.menuPreferencesLanguageCzech.text=Tschechisch
+Menu.menuPreferencesLanguageRussian.text=Russisch
+Menu.menuPreferencesLanguagePolish.text=Polnisch
+
+Menu.menuPreferencesLookAndFeel.text=Aussehen & Bedienung
+
+Menu.menuPreferencesSave.text=Alle Einstellungen ...
+Menu.menuPreferencesSaveAll.text=Abspeichern
+Menu.menuPreferencesSaveDump.text=Abspeichern unter ...
+Menu.menuPreferencesSaveLoad.text=Laden ...
+
+
+// Menu "Help"
+Menu.menuHelp.text=Hilfe
+// Submenu of "Help"
+Menu.menuHelpAbout.text=Über Structorizer ...
+Menu.menuHelpUpdate.text=Neue Versionen ...
+// Error messages for analyser
+Menu.error01_1.text=ACHTUNG: Keine Kontrollvariable gefunden!
+Menu.error01_2.text=ACHTUNG: Mehrere Kontrollvariablen gefunden!
+Menu.error01_3.text=Es ist nicht zulässig, die Kontrollvariable «%» im Körper der Schleife zu verändern!
+Menu.error02.text=Es wurde keine Veränderung der Kontrollvariablen festgestellt. Wahrscheinlich handelt es sich um eine Endlosschleife ...
+Menu.error03_1.text=Die Variable «%» wurde nicht initialisiert!
+Menu.error03_2.text=Die Variable «%» wurde nicht in jedem Fall initialisiert!
+Menu.error04.text=Der linke Zweig einer Alternativenstruktur darf nicht leer sein!
+Menu.error05.text=Die Variable «%» muss großgeschrieben werden!
+Menu.error06.text=Der Programmname «%» muss großgeschrieben werden!
+Menu.error07_1.text=«%» ist kein korrekter Name für ein Programm oder eine Funktion/Methode!
+Menu.error07_2.text=«%» ist kein korrekter Name für einen Parameter!
+Menu.error07_3.text=«%» ist kein korrekter Name für eine Variable!
+Menu.error08.text=In einer Bedingung darf keine Wertzuweisung erfolgen!
+Menu.error09.text=Der Programmname («%») darf nicht identisch mit dem Namen einer Variablen oder eines Parameters sein!
+Menu.error10_1.text=Eine Anweisung darf nicht zugleich Eingaben, Ausgaben und Wertzuweisungen beinhalten!
+Menu.error10_2.text=Eine Anweisung darf nicht zugleich Eingaben und Ausgaben beinhalten!
+Menu.error10_3.text=Eine Anweisung darf nicht zugleich Eingaben und Wertzuweisungen beinhalten!
+Menu.error10_4.text=Eine Anweisung darf nicht zugleich Ausgaben und Wertzuweisungen beinhalten!
+Menu.error11.text=Wertzuweisung scheint fehlerhaft. Anweisung überprüfen ...
+Menu.error12.text=Der Parameter «%» muss mit dem Buchstaben "p" anfangen, gefolgt nur von Großbuchstaben!
+Menu.error13_1.text=Die Funktion hat keinen Rückgabewert!
+Menu.error13_2.text=Die Funktion hat nicht in jedem Fall einen Rückgabewert!
+
+-----[ AnalyserPreferences ]-----
+AnalyserPreferences.title=Überprüfungs-Einstellungen
+AnalyserPreferences.check1.text=Nach Wertveränderungen der Kontrollvariablen von FOR-Schleifen suchen.
+AnalyserPreferences.check2.text=Nach Endlosschleifen suchen. (So weit möglich!)
+AnalyserPreferences.check3.text=Nach nicht initialisierten Variablen suchen.
+AnalyserPreferences.check4.text=Nach nicht korrekt verwendeten Alternativenstrukturen suchen.
+AnalyserPreferences.check5.text=Testen, ob alle Variablenamen großgeschrieben sind. (LUX/MEN)
+AnalyserPreferences.check6.text=Testen, ob der Programmname großgeschrieben ist. (LUX/MEN)
+AnalyserPreferences.check7.text=Nach nicht korrekt benannten Identifikatoren suchen.
+AnalyserPreferences.check8.text=Nach Wertzuweisungen innerhalb von Bedingungen suchen.
+AnalyserPreferences.check9.text=Testen, ob der Programmname einzigartig ist.
+AnalyserPreferences.check10.text=Nach fehlerhaften mehrzeiligen Anweisungen suchen.
+AnalyserPreferences.check11.text=Nach fehlerhaften Wertzuweisungen suchen.
+AnalyserPreferences.check12.text=Testen, ob die Parameternamen korrekt sind. (LUX/MEN)
+AnalyserPreferences.check13.text=Testen, ob, im Falle einer Funktion, diese auch einen Rückgabewert hat.
+AnalyserPreferences.okButton.text=OK
+
+
+-----[ Diagram ]-----
+// Buttons
+// I/O
+Editor.btnNew.tooltip=Erzeugen eines neuen, leeren Diagrammes.
+Editor.btnOpen.tooltip=Öffnen eines bestehenden Diagrammes.
+Editor.btnSave.tooltip=Speichern des aktuellen Diagrammmes.
+// InsertBefore
+Editor.btnBeforeInst.tooltip=Einfügen einer neuen Anweisung vor dem ausgewählten Element. 
+Editor.btnBeforeAlt.tooltip=Einfügen einer neuen IF-Anweisung vor dem ausgewählten Element.
+Editor.btnBeforeFor.tooltip=Einfügen einer neuen FOR-Schleife vor dem ausgewählten Element.
+Editor.btnBeforeWhile.tooltip=Einfügen einer neuen WHILE-Schleife vor dem ausgewählten Element.
+Editor.btnBeforeRepeat.tooltip=Einfügen einer neuen REPEAT-Schleife vor dem ausgewählten Element.
+Editor.btnBeforeForever.tooltip=Einfügen einer neuen ENDLOS-Schleife vor dem ausgewählten Element.
+Editor.btnBeforeCall.tooltip=Einfügen einer neuen Aufruf-Anweisung vor dem ausgewählten Element.
+Editor.btnBeforeJump.tooltip=Einfügen einer neuen Sprung-Anweisung vor dem ausgewählten Element.
+Editor.btnBeforeCase.tooltip=Einfügen einer neuen CASE-Anweisung vor dem ausgewählten Element.
+Editor.btnBeforePara.tooltip=Einfügen einer neuen PARALLEL-Anweisung vor dem ausgewählten Element.
+// InsertAfter
+Editor.btnAfterInst.tooltip=Einfügen einer neuen Anweisung nach dem ausgewählten Element.
+Editor.btnAfterAlt.tooltip=Einfügen einer neuen IF-Anweisung nach dem ausgewählten Element.
+Editor.btnAfterFor.tooltip=Einfügen einer neuen FOR-Schleife nach dem ausgewählten Element.
+Editor.btnAfterWhile.tooltip=Einfügen einer neuen WHILE-Schleife nach dem ausgewählten Element.
+Editor.btnAfterRepeat.tooltip=Einfügen einer neuen REPEAT-Schleife nach dem ausgewählten Element.
+Editor.btnAfterForever.tooltip=Einfügen einer neuen ENDLOS-Schleife nach dem ausgewählten Element.
+Editor.btnAfterCall.tooltip=Einfügen einer neuen Aufruf-Anweisung nach dem ausgewählten Element.
+Editor.btnAfterJump.tooltip=Einfügen einer neuen Sprung-Anweisung nach dem ausgewählten Element.
+Editor.btnAfterCase.tooltip=Einfügen einer neuen CASE-Anweisung nach dem ausgewählten Element.
+Editor.btnAfterPara.tooltip=Einfügen einer neuen PARALLEL-Anweisung nach dem ausgewählten Element.
+// undo & redo
+Editor.btnUndo.tooltip=Rückgängigmachen der letzten Aktion.
+Editor.btnRedo.tooltip=Wiederholen der letzen Aktion.
+// copy & paste
+Editor.btnCut.tooltip=Ausschneiden des ausgewählten Elements.
+Editor.btnCopy.tooltip=Kopieren des ausgewählten Elements.
+Editor.btnPaste.tooltip=Einfügen des kopierten oder ausgeschnittenen Elements nach dem ausgewählten Element.
+// style 
+Editor.btnNice.tooltip=Umschalten des visuellen Stils des Diagramms.
+Editor.btnFunction.tooltip=Unterprogramm-Diagramm (gerundete Ecken).
+Editor.btnProgram.tooltip=Hauptprogramm-Diagram (kantige Ecken).
+// editing
+Editor.btnEdit.tooltip=Bearbeiten des ausgewählten Elements.
+Editor.btnDelete.tooltip=Löschen des ausgewählten Elements.
+Editor.btnMoveUp.tooltip=Bewegen des ausgewählten Elements um eine Position nach oben.
+Editor.btnMoveDown.tooltip=Bewegen des ausgewählten Elements um eine Position nach unten.
+//printing
+Editor.btnPrint.tooltip=Drucken des Diagramms.
+// font
+Editor.btnFontUp.tooltip=Erhöhen der Zeichensatz-Größe.
+Editor.btnFontDown.tooltip=Verringern der Zeichensatz-Größe.
+// copyright 
+Editor.btnAbout.tooltip=Zeigen eines Informationsfensters über den Structorizer.
+// colors
+Editor.btnColor0.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
+Editor.btnColor1.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
+Editor.btnColor2.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
+Editor.btnColor3.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
+Editor.btnColor4.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
+Editor.btnColor5.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
+Editor.btnColor6.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
+Editor.btnColor7.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
+Editor.btnColor8.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
+Editor.btnColor9.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
+// Popup menu
+Editor.popupCut.text=Ausschneiden
+Editor.popupCopy.text=Kopieren
+Editor.popupPaste.text=Einfügen
+Editor.popupAdd.text=Hinzufügen
+// Submenu of "Add"
+Editor.popupAddBefore.text=Davor
+// Submenus of "Add -> Before"
+Editor.popupAddBeforeInst.text=Anweisungen
+Editor.popupAddBeforeAlt.text=IF-Anweisung
+Editor.popupAddBeforeCase.text=CASE-Anweisung
+Editor.popupAddBeforeFor.text=FOR-Schleife
+Editor.popupAddBeforeWhile.text=WHILE-Schleife
+Editor.popupAddBeforeRepeat.text=REPEAT-Schleife
+Editor.popupAddBeforeForever.text=ENDLOS-Schleife
+Editor.popupAddBeforeCall.text=Aufruf-Anweisung
+Editor.popupAddBeforeJump.text=Sprung-Anweisung
+Editor.popupAddBeforePara.text=PARALLEL-Abschnitt
+// After
+Editor.popupAddAfter.text=Danach
+// Submenus of "Add -> After"
+Editor.popupAddAfterInst.text=Anweisungen
+Editor.popupAddAfterAlt.text=IF-Anweisung
+Editor.popupAddAfterCase.text=CASE-Anweisung
+Editor.popupAddAfterFor.text=FOR-Schleife
+Editor.popupAddAfterWhile.text=WHILE-Schleife
+Editor.popupAddAfterRepeat.text=REPEAT-Schleife
+Editor.popupAddAfterForever.text=ENDLOS-Schleife
+Editor.popupAddAfterCall.text=Aufruf-Anweisung
+Editor.popupAddAfterJump.text=Sprung-Anweisung
+Editor.popupAddAfterPara.text=PARALLEL-Abschnitt
+// Edit	
+Editor.popupEdit.text=Bearbeiten
+Editor.popupDelete.text=Löschen
+Editor.popupMoveUp.text=Nach oben bewegen
+Editor.popupMoveDown.text=Nach unten bewegen
+
+
+-----[ InputBox ]-----
+InputBox.title=Element bearbeiten
+InputBox.lblText.text=Einzugebender Text
+InputBox.lblText.tooltip=Eingabe des Textes an dieser Stelle.
+InputBox.lblComment.text=Einzugebender Kommentar
+InputBox.lblComment.tooltip=Eingabe eines Kommentars an dieser Stelle.
+InputBox.txtText.tooltip=Der Inhalt dieses Elementes.
+InputBox.txtComment.tooltip=Der Kommentar zu diesem Element.
+InputBox.btnOK.text=Speichern
+InputBox.btnOK.tooltip=Speichern der Eintragungen.
+InputBox.btnCancel.text=Abbruch
+InputBox.btnCancel.tooltip=Verwerfen der Eintragungen.
+
+
+-----[ Preferences ]-----
+Preferences.title=Struktogramm-Einstellungen
+Preferences.pnlAlt.border=IF-Anweisung
+Preferences.pnlAlt.tooltip=Einstellungen zur IF-Anweisung.
+Preferences.lblAltT.text=WAHR
+Preferences.lblAltT.tooltip=Die Markierung für den (linken) WAHR-Zweig.
+Preferences.lblAltF.text=FALSCH
+Preferences.lblAltF.tooltip=Die Markierung für den (rechten) FALSCH-Zweig.
+Preferences.lblAltContent.text=Voreinstellungs-Text
+Preferences.lblAltContent.tooltip=Der Voreinstellungs-Text im IF-Anweisungs-Kopf.
+Preferences.pnlCase.border=CASE-Anweisung
+Preferences.pnlCase.tooltip=Einstellungen zur CASE-Anweisung.
+Preferences.lblCase.text=Voreinstellungs-Text
+Preferences.lblCase.tooltip=Der Voreinstellungs-Text im CASE-Anweisungs-Kopf.
+Preferences.pnlFor.border=FOR-Schleife
+Preferences.pnlFor.tooltip=Einstellungen zur FOR-Schleife
+Preferences.lblFor.text=Voreinstellungs-Text
+Preferences.lblFor.tooltip=Der Voreinstellungs-Text im FOR-Schleifen-Kopf.
+Preferences.pnlWhile.border=WHILE-Schleife
+Preferences.pnlWhile.tooltip=Einstellungen zur WHILE-Schleife.
+Preferences.lblWhile.text=Voreinstellungs-Text
+Preferences.lblWhile.tooltip=Der Voreinstellungs-Text im WHILE-Schleifen-Kopf.
+Preferences.pnlRepeat.border=REPEAT-Schleife
+Preferences.pnlRepeat.tooltip=Einstellungen zur REPEAT-Schleife.
+Preferences.lblRepeat.text=Voreinstellungs-Text
+Preferences.lblRepeat.tooltip=Der Voreinstellungs-Text im REPEAT-Schleifen-Kopf.
+Preferences.btnOK.text=Speichern
+Preferences.btnOK.tooltip=Speichern der Einstellungen.
+
+
+-----[ About ]-----
+About.title=Über Structorizer
+About.pnlTabbed.tab.0=Beteiligte Personen
+About.pnlTabbed.tab.1=Änderungs-Protokoll
+About.btnOK.text=Schließen
+About.btnOK.tooltip=Schließen des Fensters.
+
+
+-----[ FontChooser ]-----
+FontChooser.title=Zeichensatz-Einstellungen
+FontChooser.lblTest.tooltip=Ein Probe-Text für die zukünftige Zeichen-Darstellung im Editor.
+FontChooser.lblName.text=Name
+FontChooser.lblName.tooltip=Der Name des gewählten Zeichensatzes.
+FontChooser.lblSize.text=Größe
+FontChooser.lblSize.tooltip=Die Größe des gewählten Zeichensatzes.
+FontChooser.btnOK.text=Speichern
+FontChooser.btnOK.tooltip=Speichern der gewählten Einstellungen.
+
+
+-----[ Colors ]-----
+Colors.title=Farb-Einstellungen
+Colors.lblColor0.text=Farbe Nr. 0
+Colors.lblColor1.text=Farbe Nr. 1
+Colors.lblColor2.text=Farbe Nr. 2
+Colors.lblColor3.text=Farbe Nr. 3
+Colors.lblColor4.text=Farbe Nr. 4
+Colors.lblColor5.text=Farbe Nr. 5
+Colors.lblColor6.text=Farbe Nr. 6
+Colors.lblColor7.text=Farbe Nr. 7
+Colors.lblColor8.text=Farbe Nr. 8
+Colors.lblColor9.text=Farbe Nr. 9
+Colors.lblColor0.tooltip=Die gewählte Farbe Nr. 0.
+Colors.lblColor1.tooltip=Die gewählte Farbe Nr. 1.
+Colors.lblColor2.tooltip=Die gewählte Farbe Nr. 2.
+Colors.lblColor3.tooltip=Die gewählte Farbe Nr. 3.
+Colors.lblColor4.tooltip=Die gewählte Farbe Nr. 4.
+Colors.lblColor5.tooltip=Die gewählte Farbe Nr. 5.
+Colors.lblColor6.tooltip=Die gewählte Farbe Nr. 6.
+Colors.lblColor7.tooltip=Die gewählte Farbe Nr. 7.
+Colors.lblColor8.tooltip=Die gewählte Farbe Nr. 8.
+Colors.lblColor9.tooltip=Die gewählte Farbe Nr. 9.
+Colors.color0.tooltip=Zum Bearbeiten: Anklicken ...
+Colors.color1.tooltip=Zum Bearbeiten: Anklicken ...
+Colors.color2.tooltip=Zum Bearbeiten: Anklicken ...
+Colors.color3.tooltip=Zum Bearbeiten: Anklicken ...
+Colors.color4.tooltip=Zum Bearbeiten: Anklicken ...
+Colors.color5.tooltip=Zum Bearbeiten: Anklicken ...
+Colors.color6.tooltip=Zum Bearbeiten: Anklicken ...
+Colors.color7.tooltip=Zum Bearbeiten: Anklicken ...
+Colors.color8.tooltip=Zum Bearbeiten: Anklicken ...
+Colors.color9.tooltip=Zum Bearbeiten: Anklicken ...
+Colors.btnOK.text=Speichern
+Colors.btnOK.tooltip=Speichern der gewählten Einstellungen.
+
+
+-----[ ColorChooser ]-----
+ColorChooser.title=Farb-Einstellungen
+ColorChooser.btnCancel.text=Abbruch
+ColorChooser.btnCancel.tooltip=Verwerfen der neuen Einstellungen.
+ColorChooser.btnOK.text=Speichern
+ColorChooser.btnOK.tooltip=Speichern der gewählten Einstellungen.
+
+
+-----[ ParserPreferences ]-----
+ParserPreferences.title=Parser-Einstellungen
+ParserPreferences.lblPre.text=Vor
+ParserPreferences.lblPre.tooltip=Einzufügen (im Anweisungskopf) vor der Haupteintragung.
+ParserPreferences.lblPost.text=Nach
+ParserPreferences.lblPost.tooltip=Einzufügen (im Anweisungskopf) nach der Haupteintragung.
+ParserPreferences.lblAlt.text=IF-Anweisung
+ParserPreferences.lblAlt.tooltip=Einfügungen im IF-Anweisungskopf.
+ParserPreferences.lblCase.text=CASE-Anweisung
+ParserPreferences.lblCase.tooltip=Einfügungen im CASE-Anweisungskopf.
+ParserPreferences.lblFor.text=FOR-Anweisung
+ParserPreferences.lblFor.tooltip=Einfügungen im FOR-Anweisungskopf.
+ParserPreferences.lblWhile.text=WHILE-Schleife
+ParserPreferences.lblWhile.tooltip=Einfügungen im WHILE-Anweisungskopf.
+ParserPreferences.lblRepeat.text=REPEAT-Schleife
+ParserPreferences.lblRepeat.tooltip=Einfügungen im REPEAT-Anweisungskopf.
+ParserPreferences.lblInput.text=Eingabe
+ParserPreferences.lblInput.tooltip=Einfügungen für Eingabe-Anweisungen.
+ParserPreferences.lblOutput.text=Ausgabe
+ParserPreferences.lblOutput.tooltip=Einfügungen für Ausgabe-Einweisungen.
+ParserPreferences.btnOK.text=Speichern
+ParserPreferences.btnOK.tooltip=Speichern der gewählten Einstellungen.
+ParserPreferences.lblErrorSign.text=Der Doppelpunkt ':' darf in keiner der Parser-Einstellungen vorkommen!
+
+-----[ PrintPreview ]-----
+PrintPreview.title=Druckvoransicht
+PrintPreview.btnOrientation.text=Seite drehen
+PrintPreview.btnOrientation.tooltip=Die Seite um 90° drehen.
+PrintPreview.btnCancel.text=Abbruch
+PrintPreview.btnCancel.tooltip=Druckvorgang abbrechen.
+PrintPreview.btnOK.text=Drucken.
+PrintPreview.btnOK.tooltip=Das Diagram ausdrucken.
+
+-----[ ExportOptionDialoge ]-----
+ExportOptionDialoge.title=Einstellungen für den Code-Export
+ExportOptionDialoge.commentsCheckBox.text=Anweisungen als Kommentare exportieren.
+ExportOptionDialoge.jLabel1.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
+ExportOptionDialoge.jButton1.text=OK
+ExportOptionDialoge.jButton1.tooltip=Speichern der gewählten Einstellungen.

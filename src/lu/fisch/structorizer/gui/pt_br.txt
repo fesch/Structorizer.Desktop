@@ -1,0 +1,883 @@
+/*
+    Structorizer brazilian portuguese language file
+
+    Copyright (C)  2009  Theldo Cruz (PUC-Minas).
+    Permission is granted to copy, distribute and/or modify this document
+    under the terms of the GNU Free Documentation License, Version 1.3
+    or any later version published by the Free Software Foundation;
+    with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+    A copy of the license is included in the section entitled "GNU
+    Free Documentation License".
+    
+    This file is part of the "Structorizer" project.
+*/
+
+/******************************************************************************************************
+ *
+ *      Author:         PUC-Minas, MG - Brasil
+ *
+ *      Description:    The Brazilian portuguese (PT-BR) language file
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date			Description
+ *      ------		----			-----------
+ *      PUC-Minas     2009.08.20        	First Issue
+ *      PUC-Minas     2009.10.20        	Revised
+ *
+ *****************************************************************************************************
+ *
+ *      Comment:
+ *
+ ******************************************************************************************************/
+
+-----[ Menu ]-----
+//Menu File
+Menu.menuFile.text=Arquivo
+// Submenus of "File"
+Menu.menuFileNew.text=Novo
+Menu.menuFileOpen.text=Abrir ...
+Menu.menuFileOpenRecent=Abrir arquivo recente ...
+Menu.menuFileSave.text=Salvar
+Menu.menuFileSaveAs.text=Salvar Como ...
+Menu.menuFileExport.text=Exportar
+
+// Submenu of "File -> Export"
+Menu.menuFileExportPicture.text=Figura ...
+Menu.menuFileExportCode.text=Código ...
+Menu.menuFileImport.text=Importar
+
+// Submenu of "File -> Import"
+Menu.menuFileImportPascal.text=Pascal ...
+Menu.menuFilePrint.text=Imprimir ...
+Menu.menuFileQuit.text=Sair
+
+// Menu "Edit"
+Menu.menuEdit.text=Editar
+
+// Submenu of "Edit"
+Menu.menuEditUndo.text=Desfazer
+Menu.menuEditRedo.text=Refazer
+Menu.menuEditCut.text=Recortar
+Menu.menuEditCopy.text=Copiar
+Menu.menuEditPaste.text=Colar
+Menu.menuEditCopyDiagramPNG.text=Copiar imagem PNG
+Menu.menuEditCopyDiagramEMF.text=Copiar imagem EMF
+
+// Menu "Diagram"
+Menu.menuDiagram.text=Diagrama
+
+// Submenus of "Diagram"
+Menu.menuDiagramAdd.text=Inserir
+
+// Submenu "Diagram -> Add -> Before"
+Menu.menuDiagramAddBefore.text=Antes
+
+// Submenus for adding Elements "Before"
+Menu.menuDiagramAddBeforeInst.text=Instrução
+Menu.menuDiagramAddBeforeAlt.text=alternativa (IF)
+Menu.menuDiagramAddBeforeCase.text=alternativa (CASE)
+Menu.menuDiagramAddBeforeFor.text=repetição (FOR)
+Menu.menuDiagramAddBeforeWhile.text=repetição (WHILE)
+Menu.menuDiagramAddBeforeRepeat.text=repetição (REPEAT)
+Menu.menuDiagramAddBeforeForever.text=repetição (FOREVER)
+Menu.menuDiagramAddBeforeCall.text=CALL
+Menu.menuDiagramAddBeforeJump.text=JUMP
+
+// Submenu "Diagram -> Add -> After"
+Menu.menuDiagramAddAfter.text=Depois
+
+// Submenus for adding Elements "After"
+Menu.menuDiagramAddAfterInst.text=Instrução
+Menu.menuDiagramAddAfterAlt.text=alternativa (IF)
+Menu.menuDiagramAddAfterCase.text=alternativa (CASE)
+Menu.menuDiagramAddAfterFor.text=repetição (FOR)
+Menu.menuDiagramAddAfterWhile.text=repetição (WHILE)
+Menu.menuDiagramAddAfterRepeat.text=repetição (REPEAT)
+Menu.menuDiagramAddAfterForever.text=repetição (FOREVER)
+Menu.menuDiagramAddAfterCall.text=CALL
+Menu.menuDiagramAddAfterJump.text=JUMP
+Menu.menuDiagramEdit.text=Editar
+Menu.menuDiagramDelete.text=Apagar
+Menu.menuDiagramMoveUp.text=Para cima
+Menu.menuDiagramMoveDown.text=Para baixo
+Menu.menuDiagramType.text=Tipo
+Menu.menuDiagramTypeProgram.text=Principal
+Menu.menuDiagramTypeFunction.text=Sub
+Menu.menuDiagramNice.text=Diagrama encaixado?
+Menu.menuDiagramComment.text=Mostrar comentários?
+Menu.menuDiagramMarker.text=Destacar variáveis?
+Menu.menuDiagramDIN.text=DIN?
+Menu.menuDiagramAnalyser.text=Analisar diagrama?
+
+// Menu "Help"
+Menu.menuPreferences.text=Preferências
+
+// Submenu of "Help"
+Menu.menuPreferencesFont.text=Fonte ...
+Menu.menuPreferencesColors.text=Cores ...
+Menu.menuPreferencesOptions.text=Estruturas ...
+Menu.menuPreferencesParser.text=Parser ...
+Menu.menuPreferencesAnalyser.text=Analisador
+Menu.menuPreferencesLanguageEnglish.text=Inglês
+Menu.menuPreferencesLanguageGerman.text=Alemão
+Menu.menuPreferencesLanguageFrench.text=Francês
+Menu.menuPreferencesLanguageDutch.text=Holandês
+Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburguês
+Menu.menuPreferencesLanguageItalian.text=Italian
+Menu.menuPreferencesLanguagePortugalBRazil.text=Português (BR) 
+Menu.menuPreferencesLookAndFeel.text=Aspecto
+Menu.menuPreferencesSave.text=Salvar preferências agora
+
+// Menu "Help"
+Menu.menuHelp.text=Ajuda
+
+// Submenu of "Help"
+Menu.menuHelpAbout.text=Sobre ...
+Menu.menuHelpUpdate.text=Atualizar ...
+
+// Error messages for analyser
+Menu.error01_1.text=AVISO: Variável de controle não detectada ...
+Menu.error01_2.text=AVISO: Mais de uma variável de controle detectada ...
+Menu.error01_3.text=Não é permitido modificar a variável de controle "%" dentro da repetição!
+Menu.error02.text=Nenhuma variação detectada nas variáveis na condição. Possível repetição infita ...
+Menu.error03_1.text=A variável "%" ainda não recebeu valor inicial!
+Menu.error03_2.text=A variável "%" pode não ter recebido valor inicial!
+Menu.error04.text=Não é permitido usar uma alternativa vazia (IF) sem instrução!
+Menu.error05.text=A variável "%" deve ser escrita em maiúsculas!
+Menu.error06.text=O nome do programa "%" deve ser escrito em maiúsculas!
+Menu.error07_1.text="%" não é um nome válido para um programa ou método!
+Menu.error07_2.text="%" não é um nome válido para um parâmetro!
+Menu.error07_3.text="%" não é um nome válido para uma variável!
+Menu.error08.text=Não é permitido fazer uma atribuição dentro de uma condição.
+Menu.error09.text=Seu programa ("%") não pode ter o mesmo nome que uma variável or parâmetro!
+Menu.error10_1.text=Uma instrução simples não deverá conter entradas/saídas ou atribuições!
+Menu.error10_2.text=Uma instrução simples não deverá conter entradas ou saídas!
+Menu.error10_3.text=Uma instrução simples não deverá conter entradas ou atribuições!
+Menu.error10_4.text=Uma instrução simples não deverá conter saídas ou atribuições!
+Menu.error11.text=Provavelmente houve um erro de atribuição. Favor verificar a instrução!
+Menu.error12.text=O parâmetro "%" deve iniciar-se pela letra "p" seguida por letras maiúsculas apenas!
+Menu.error13_1.text=A função não retorna qualquer resultado!
+Menu.error13_2.text=A função pode não ter retorno!
+
+
+-----[ AnalyserPreferences ]-----
+AnalyserPreferences.check1.text=Verificar se variável de controle é modificada.
+AnalyserPreferences.check2.text=Verificar se repetição infinita (tanto quanto detectável!)
+AnalyserPreferences.check3.text=Verificar se há variáveis sem valores iniciais.
+AnalyserPreferences.check4.text=Verificar se há uso incorreto de alternativa (IF).
+AnalyserPreferences.check5.text=Verificar se há nomes de variáveis em MAIÚSCULAS. (LUX/MEN)
+AnalyserPreferences.check6.text=Verificar se há nomes de programas / subprogramas em MAIÚSCULAS. (LUX/MEN)
+AnalyserPreferences.check7.text=Verificar se há identificadores válidos.
+AnalyserPreferences.check8.text=Verificar se há atribuições em condições.
+AnalyserPreferences.check9.text=Verificar se há nome de programa / subprograma não é igual a qualquer outro identificador.
+AnalyserPreferences.check10.text=Verificar se há instruções com múltiplos comandos.
+AnalyserPreferences.check11.text=Verificar se há erros em atribuições.
+AnalyserPreferences.check12.text=Verificar se há nomes de parâmetros padronizados. (LUX/MEN)
+AnalyserPreferences.check13.text=Verificar se há retorno, no caso de uma função.
+AnalyserPreferences.okButton.text=OK
+
+-----[ Diagram ]-----
+
+
+// Buttons
+
+
+// I/O
+
+
+Editor.btnNew.tooltip=Criar um diagrama em branco.
+
+
+Editor.btnOpen.tooltip=Abrir um diagrama existente.
+
+
+Editor.btnSave.tooltip=Salvar o diagrama atual.
+
+
+// InsertBefore
+
+
+Editor.btnBeforeInst.tooltip=Inserir uma nova instrução antes do elemento selecionado.
+
+
+Editor.btnBeforeAlt.tooltip=Inserir uma nova alternativa (IF) antes do elemento selecionado.
+
+
+Editor.btnBeforeFor.tooltip=Inserir uma nova repetição (FOR) antes do elemento selecionado.
+
+
+Editor.btnBeforeWhile.tooltip=Inserir uma nova repetição (WHILE) antes do elemento selecionado.
+
+
+Editor.btnBeforeRepeat.tooltip=Inserir uma nova repetição (REPEAT) antes do elemento selecionado.
+
+
+Editor.btnBeforeForever.tooltip=Inserir uma nova repetição (FOREVER) antes do elemento selecionado.
+
+
+Editor.btnBeforeCall.tooltip=Inserir uma nova chamada (CALL) antes do elemento selecionado.
+
+
+Editor.btnBeforeJump.tooltip=Inserir um novo desvio (JUMP) antes do elemento selecionado.
+
+
+Editor.btnBeforeCase.tooltip=Inserir uma nova alternativa (CASE) antes do elemento selecionado.
+
+
+// InsertAfter
+
+
+Editor.btnAfterInst.tooltip=Inserir uma nova instrução após o elemento selecionado.
+
+
+Editor.btnAfterAlt.tooltip=Inserir uma nova alternativa (IF) após o elemento selecionado.
+
+
+Editor.btnAfterFor.tooltip=Inserir uma nova repetição (FOR) após o elemento selecionado.
+
+
+Editor.btnAfterWhile.tooltip=Inserir uma nova repetição (WHILE) após o elemento selecionado.
+
+
+Editor.btnAfterRepeat.tooltip=Inserir uma nova repetição (REPEAT) após o elemento selecionado.
+
+
+Editor.btnAfterForever.tooltip=Inserir uma nova repetição (FOREVER) após o elemento selecionado.
+
+
+Editor.btnAfterCall.tooltip=Inserir uma nova chamada (CALL) após o elemento selecionado.
+
+
+Editor.btnAfterJump.tooltip=Inserir um novo desvio (JUMP) após o elemento selecionado.
+
+
+Editor.btnAfterCase.tooltip=Inserir uma nova alternativa (CASE) após o elemento selecionado.
+
+
+// undo & redo
+
+
+Editor.btnUndo.tooltip=Desfazer a última ação.
+
+
+Editor.btnRedo.tooltip=Refazer a última ação.
+
+
+// copy & paste
+
+
+Editor.btnCut.tooltip=Recortar o elemento selecionado.
+
+
+Editor.btnCopy.tooltip=Copiar o elemento selecionado.
+
+
+Editor.btnPaste.tooltip=Colar ou recortar após o elemento selecionado.
+
+
+// style
+
+
+Editor.btnNice.tooltip=Mudar o estilo visual do diagrama.
+
+
+Editor.btnFunction.tooltip=Sub diagrama (cantos arredondados).
+
+
+Editor.btnProgram.tooltip=Diagrama principal (cantos quadrados).
+
+
+// editing
+
+
+Editor.btnEdit.tooltip=Editar o elemento selecionado.
+
+
+Editor.btnDelete.tooltip=Apagar o elemento selecionado.
+
+
+Editor.btnMoveUp.tooltip=Mover o elemento selecionado uma posição para cima.
+
+
+Editor.btnMoveDown.tooltip=Mover o elemento selecionado uma posição para baixo.
+
+
+//printing
+
+
+Editor.btnPrint.tooltip=Imprimir o diagrama.
+
+
+// font
+
+
+Editor.btnFontUp.tooltip=Aumentar o tamanho da fonte.
+
+
+Editor.btnFontDown.tooltip=Diminuir o tamanho da fonte.
+
+
+// copyright
+
+
+Editor.btnAbout.tooltip=Mostrar informações sobre Structorizer.
+
+
+// colors
+
+
+Editor.btnColor0.tooltip=Colorir o elemento selecionado com esta cor.
+
+
+Editor.btnColor1.tooltip=Colorir o elemento selecionado com esta cor.
+
+
+Editor.btnColor2.tooltip=Colorir o elemento selecionado com esta cor.
+
+
+Editor.btnColor3.tooltip=Colorir o elemento selecionado com esta cor.
+
+
+Editor.btnColor4.tooltip=Colorir o elemento selecionado com esta cor.
+
+
+Editor.btnColor5.tooltip=Colorir o elemento selecionado com esta cor.
+
+
+Editor.btnColor6.tooltip=Colorir o elemento selecionado com esta cor.
+
+
+Editor.btnColor7.tooltip=Colorir o elemento selecionado com esta cor.
+
+
+Editor.btnColor8.tooltip=Colorir o elemento selecionado com esta cor.
+
+
+Editor.btnColor9.tooltip=Colorir o elemento selecionado com esta cor.
+
+
+// Popup menu
+
+
+Editor.popupCut.text=Recortar
+
+
+Editor.popupCopy.text=Copiar
+
+
+Editor.popupPaste.text=Colar
+
+
+Editor.popupAdd.text=Inserir
+
+
+// Submenu of "Add"
+
+
+Editor.popupAddBefore.text=Antes
+
+
+// Submenus of "Add -> Before"
+
+
+Editor.popupAddBeforeInst.text=Instrução
+
+
+Editor.popupAddBeforeAlt.text=alternativa (IF)
+
+
+Editor.popupAddBeforeCase.text=alternativa (CASE)
+
+
+Editor.popupAddBeforeFor.text=repetição (FOR)
+
+
+Editor.popupAddBeforeWhile.text=repetição (WHILE)
+
+
+Editor.popupAddBeforeRepeat.text=repetição (REPEAT)
+
+
+Editor.popupAddBeforeForever.text=repetição (FOREVER)
+
+
+Editor.popupAddBeforeCall.text=CALL
+
+
+Editor.popupAddBeforeJump.text=JUMP
+
+
+// After
+
+
+Editor.popupAddAfter.text=Depois
+
+
+// Submenus of "Add -> After"
+
+
+Editor.popupAddAfterInst.text=Instrução
+
+
+Editor.popupAddAfterAlt.text=alternativa (IF)
+
+
+Editor.popupAddAfterCase.text=alternativa (CASE)
+
+
+Editor.popupAddAfterFor.text=repetição (FOR)
+
+
+Editor.popupAddAfterWhile.text=repetição (WHILE)
+
+
+Editor.popupAddAfterRepeat.text=repetição (REPEAT)
+
+
+Editor.popupAddAfterForever.text=repetição (FOREVER)
+
+
+Editor.popupAddAfterCall.text=CALL
+
+
+Editor.popupAddAfterJump.text=JUMP
+
+
+// Edxit
+
+
+Editor.popupEdit.text=Editar
+
+
+Editor.popupDelete.text=Apagar
+
+
+Editor.popupMoveUp.text=Para cima
+
+
+Editor.popupMoveDown.text=Para baixo
+
+
+
+
+
+
+
+
+-----[ InputBox ]-----
+
+
+InputBox.lblText.text=Favor inserir texto
+
+
+InputBox.lblText.tooltip=
+
+
+InputBox.lblComment.text=Comentário
+
+
+InputBox.lblComment.tooltip=
+
+
+InputBox.txtText.tooltip=O conteúdo de um elemento.
+
+
+InputBox.txtComment.tooltip=O comentário de um elemento.
+
+
+InputBox.btnOK.text=OK
+
+
+InputBox.btnOK.tooltip=Confirmar sua escolha.
+
+
+InputBox.btnCancel.text=Cancelar
+
+
+InputBox.btnCancel.tooltip=Cancelar sua escolha.
+
+
+
+
+
+
+
+
+-----[ Preferences ]-----
+
+
+Preferences.title=Preferências de estruturas
+
+
+Preferences.pnlAlt.border=Alternativa (IF)
+
+
+Preferences.pnlAlt.tooltip=
+
+
+Preferences.lblAltT.text=Rótulo (TRUE)
+
+
+Preferences.lblAltT.tooltip=O rótulo para o lado esquerdo.
+
+
+Preferences.lblAltF.text=Rótulo (FALSE)
+
+
+Preferences.lblAltF.tooltip=O rótulo para o lado direito.
+
+
+Preferences.lblAltContent.text=Conteúdo padrão
+
+
+Preferences.lblAltContent.tooltip=O conteúdo padrão de uma alternativa (IF).
+
+
+Preferences.pnlCase.border=Alternativa (CASE)
+
+
+Preferences.pnlCase.tooltip=
+
+
+Preferences.lblCase.text=Conteúdo padrão
+
+
+Preferences.lblCase.tooltip=O conteúdo padrão de uma alternativa (CASE).
+
+
+Preferences.pnlFor.border=Repetição (FOR)
+
+
+Preferences.pnlFor.tooltip=
+
+
+Preferences.lblFor.text=Conteúdo padrão
+
+
+Preferences.lblFor.tooltip=Conteúdo padrão de uma repetição (FOR).
+
+
+Preferences.pnlWhile.border=Repetição (WHILE)
+
+
+Preferences.pnlWhile.tooltip=
+
+
+Preferences.lblWhile.text=Conteúdo padrão
+
+
+Preferences.lblWhile.tooltip=Conteúdo padrão de uma repetição (WHILE).
+
+
+Preferences.pnlRepeat.border=Repetição (REPEAT)
+
+
+Preferences.pnlRepeat.tooltip=
+
+
+Preferences.lblRepeat.text=Conteúdo padrão
+
+
+Preferences.lblRepeat.tooltip=Conteúdo padrão de uma repetição (REPEAT).
+
+
+Preferences.btnOK.text=OK
+
+
+Preferences.btnOK.tooltip=Confirmar sua escolha.
+
+
+
+
+
+
+
+
+-----[ About ]-----
+
+
+About.title=About
+
+
+About.pnlTabbed.tab.0=Pessoas envolvidas
+
+
+About.pnlTabbed.tab.1=Registro de alterações
+
+
+About.btnOK.text=OK
+
+
+About.btnOK.tooltip=Confirmar sua escolha.
+
+
+
+
+
+
+
+
+-----[ FontChooser ]-----
+
+
+FontChooser.title=Font
+
+
+FontChooser.lblTest.tooltip=Uma amostra de texto para se verificar como ficará no Editor.
+
+
+FontChooser.lblName.text=Nome
+
+
+FontChooser.lblName.tooltip=O nome das fontes selecionáveis.
+
+
+FontChooser.lblSize.text=Tamanho
+
+
+FontChooser.lblSize.tooltip=Os tamanhos das fontes selecionáveis.
+
+
+FontChooser.btnOK.text=OK
+
+
+FontChooser.btnOK.tooltip=Confirmar sua escolha.
+
+
+
+
+
+
+
+
+-----[ Colors ]-----
+
+
+Colors.title=Preferências de cor
+
+
+Colors.lblColor0.text=Cor 0
+
+
+Colors.lblColor1.text=Cor 1
+
+
+Colors.lblColor2.text=Cor 2
+
+
+Colors.lblColor3.text=Cor 3
+
+
+Colors.lblColor4.text=Cor 4
+
+
+Colors.lblColor5.text=Cor 5
+
+
+Colors.lblColor6.text=Cor 6
+
+
+Colors.lblColor7.text=Cor 7
+
+
+Colors.lblColor8.text=Cor 8
+
+
+Colors.lblColor9.text=Cor 9
+
+
+Colors.lblColor0.tooltip=Sua escolha para a cor 0.
+
+
+Colors.lblColor1.tooltip=Sua escolha para a cor 1.
+
+
+Colors.lblColor2.tooltip=Sua escolha para a cor 2.
+
+
+Colors.lblColor3.tooltip=Sua escolha para a cor 3.
+
+
+Colors.lblColor4.tooltip=Sua escolha para a cor 4.
+
+
+Colors.lblColor5.tooltip=Sua escolha para a cor 5.
+
+
+Colors.lblColor6.tooltip=Sua escolha para a cor 6.
+
+
+Colors.lblColor7.tooltip=Sua escolha para a cor 7.
+
+
+Colors.lblColor8.tooltip=Sua escolha para a cor 8.
+
+
+Colors.lblColor9.tooltip=Sua escolha para a cor 9.
+
+
+Colors.color0.tooltip=Clicar para editar ...
+
+
+Colors.color1.tooltip=Clicar para editar ...
+
+
+Colors.color2.tooltip=Clicar para editar ...
+
+
+Colors.color3.tooltip=Clicar para editar ...
+
+
+Colors.color4.tooltip=Clicar para editar ...
+
+
+Colors.color5.tooltip=Clicar para editar ...
+
+
+Colors.color6.tooltip=Clicar para editar ...
+
+
+Colors.color7.tooltip=Clicar para editar ...
+
+
+Colors.color8.tooltip=Clicar para editar ...
+
+
+Colors.color9.tooltip=Clicar para editar ...
+
+
+Colors.btnOK.text=OK
+
+
+Colors.btnOK.tooltip=Confirmar sua escolha.
+
+
+
+
+
+
+
+
+-----[ ColorChooser ]-----
+
+
+ColorChooser.title=Cores
+
+
+ColorChooser.btnCancel.text=Cancelar
+
+
+ColorChooser.btnCancel.tooltip=Cancelar sua escolha.
+
+
+ColorChooser.btnOK.text=OK
+
+
+ColorChooser.btnOK.tooltip=Confirmar sua escolha.
+
+
+
+
+
+
+
+
+-----[ ParserPreferences ]-----
+
+
+ParserPreferences.title=Preferências do parser 
+
+
+ParserPreferences.lblPre.text=Pre
+
+
+ParserPreferences.lblPre.tooltip=
+
+
+ParserPreferences.lblPost.text=Pós
+
+
+ParserPreferences.lblPost.tooltip=
+
+
+ParserPreferences.lblAlt.text=alternativa (IF)
+
+
+ParserPreferences.lblAlt.tooltip=
+
+
+ParserPreferences.lblCase.text=alternativa (CASE)
+
+
+ParserPreferences.lblCase.tooltip=
+
+
+ParserPreferences.lblFor.text=repetição (FOR)
+
+
+ParserPreferences.lblFor.tooltip=
+
+
+ParserPreferences.lblWhile.text=repetição (WHILE)
+
+
+ParserPreferences.lblWhile.tooltip=
+
+
+ParserPreferences.lblRepeat.text=repetição (REPEAT)
+
+
+ParserPreferences.lblRepeat.tooltip=
+
+
+ParserPreferences.lblInput.text=Entrada
+
+
+ParserPreferences.lblInput.tooltip=
+
+
+ParserPreferences.lblOutput.text=Saída
+
+
+ParserPreferences.lblOutput.tooltip=
+
+
+ParserPreferences.btnOK.text=OK
+
+
+ParserPreferences.btnOK.tooltip=Confirmar sua escolha.
+
+
+
+
+
+-----[ PrintPreview ]-----
+
+
+PrintPreview.title=Imprimir Visualização
+
+
+PrintPreview.btnOrientation.text=Mudar orientação
+
+
+PrintPreview.btnOrientation.tooltip=Rotacionar a página 90°.
+
+
+PrintPreview.btnCancel.text=Cancelar
+
+
+PrintPreview.btnCancel.tooltip=Cancelar impressão.
+
+
+PrintPreview.btnOK.text=Imprimir
+
+
+PrintPreview.btnOK.tooltip=Imprimir o diagrama.
+
+
+
+
+

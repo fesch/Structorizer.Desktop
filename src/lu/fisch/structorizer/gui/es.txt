@@ -1,0 +1,438 @@
+/*
+    Structorizer spanish language file
+
+    Copyright (C) 2009  Andrés Cabrera
+
+    This file is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or any
+    later version.
+
+    This file is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    This file is part of the "Structorizer" project.     
+*/
+
+/******************************************************************************************************
+ *
+ *      Author:         Andrés Cabrera
+ *
+ *      Description:    The spanish language file
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date                    Description
+ *      ------          ----                    -----------
+ *      Andrés Cabrera  2008.09.27              First Issue
+ *      Kay Gürtzig		2014.12.02              ExportOptionDialoge messages added, language names translated
+ *
+ ******************************************************************************************************
+ *
+ *      Comment: IF..etc, CASE statements must be translated? No "beautiful" single word for CASE & ENDLESS.
+ *
+ ******************************************************************************************************/
+
+-----[ Menu ]-----
+//Menu File
+Menu.menuFile.text=Archivo
+// Submenus of "File"
+Menu.menuFileNew.text=Archivo
+Menu.menuFileOpen.text=Abrir ...
+Menu.menuFileSave.text=Guardar
+Menu.menuFileSaveAs.text=Guardar como ...
+Menu.menuFileExport.text=Exportar
+// Submenu of "File -> Export"
+Menu.menuFileExportPicture.text=Imagen ...
+Menu.menuFileExportCode.text=Código ...
+Menu.menuFileImport.text=Importar
+// Submenu of "File -> Import"
+Menu.menuFileImportPascal.text=Código Pascal ...
+Menu.menuFilePrint.text=Imprimir ...
+Menu.menuFileQuit.text=Salir
+// Menu "Edit"
+Menu.menuEdit.text=Editar
+// Submenu of "Edit"
+Menu.menuEditUndo.text=Deshacer
+Menu.menuEditRedo.text=Rehacer
+Menu.menuEditCut.text=Cortar
+Menu.menuEditCopy.text=Copiar
+Menu.menuEditPaste.text=Pegar
+Menu.menuEditCopyDiagramPNG.text=Copiar Imagen PNG
+Menu.menuEditCopyDiagramEMF.text=Copiar Imagen EMF
+// Menu "Diagram"
+Menu.menuDiagram.text=Diagrama
+// Submenus of "Diagram"
+Menu.menuDiagramAdd.text=Agregar
+// Submenu "Diagram -> Add -> Before"
+Menu.menuDiagramAddBefore.text=Antes
+// Submenus for adding Elements "Before"
+Menu.menuDiagramAddBeforeInst.text=Instrucción
+Menu.menuDiagramAddBeforeAlt.text=declaración SI
+Menu.menuDiagramAddBeforeCase.text=declaración CASE
+Menu.menuDiagramAddBeforeFor.text=bucle PARA
+Menu.menuDiagramAddBeforeWhile.text=bucle MIENTRAS
+Menu.menuDiagramAddBeforeRepeat.text=bucle REPETIR
+Menu.menuDiagramAddBeforeForever.text=bucle SINFIN
+Menu.menuDiagramAddBeforeCall.text=LLAMADA
+Menu.menuDiagramAddBeforeJump.text=SALTO
+Menu.menuDiagramAddBeforePara.text=sección PARALELA
+// Submenu "Diagram -> Add -> After"
+Menu.menuDiagramAddAfter.text=Después
+// Submenus for adding Elements "After"
+Menu.menuDiagramAddAfterInst.text=Instrucción
+Menu.menuDiagramAddAfterAlt.text=declaración SI
+Menu.menuDiagramAddAfterCase.text=declaración CASE
+Menu.menuDiagramAddAfterFor.text=bucle PARA
+Menu.menuDiagramAddAfterWhile.text=bucle MIENTRAS
+Menu.menuDiagramAddAfterRepeat.text=bucle REPETIR
+Menu.menuDiagramAddAfterForever.text=bucle SINFIN
+Menu.menuDiagramAddAfterCall.text=LLAMADA
+Menu.menuDiagramAddAfterJump.text=SALTO
+Menu.menuDiagramAddAfterPara.text=sección PARALELA
+Menu.menuDiagramEdit.text=Editar
+Menu.menuDiagramDelete.text=Borrar
+Menu.menuDiagramMoveUp.text=Desplazar arriba
+Menu.menuDiagramMoveDown.text=Desplazar abajo
+Menu.menuDiagramType.text=Tipo
+Menu.menuDiagramTypeProgram.text=Main
+Menu.menuDiagramTypeFunction.text=Sub
+Menu.menuDiagramNice.text=Diagrama en caja?
+Menu.menuDiagramComment.text=Mostrar comentarios?
+Menu.menuDiagramSwitchComments.text=Intercambiar textos/comentarios?
+Menu.menuDiagramMarker.text=Resaltar variables?
+Menu.menuDiagramDIN.text=DIN?
+Menu.menuDiagramAnalyser.text=Comprobar diagrama?
+// Menu "Help"
+Menu.menuPreferences.text=Preferencias
+// Submenu of "Help"
+Menu.menuPreferencesFont.text=Fuente ...
+Menu.menuPreferencesColors.text=Colores ...
+Menu.menuPreferencesOptions.text=Estructuras ...
+Menu.menuPreferencesParser.text=Analizador ...
+Menu.menuPreferencesAnalyser.text=Comprobador ...
+Menu.menuPreferencesExport.text=Exportación ...
+Menu.menuPreferencesLanguage.text=Idioma
+Menu.menuPreferencesLanguageEnglish.text=Inglés
+Menu.menuPreferencesLanguageGerman.text=Alemán
+Menu.menuPreferencesLanguageFrench.text=Francés
+Menu.menuPreferencesLanguageDutch.text=Holandés
+Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburgés
+Menu.menuPreferencesLanguageItalian.text=Italiano
+Menu.menuPreferencesLanguageSpanish.text=Espaniol
+Menu.menuPreferencesLanguagePortugalBrazil.text=Portugés (Brazil)
+//Menu.menuPreferencesLanguageChinese.text=Chino
+Menu.menuPreferencesLanguageSimplifiedChinese.text=Chino (simplificado)
+Menu.menuPreferencesLanguageTraditionalChinese.text=Chino (tradicional)
+Menu.menuPreferencesLanguageCzech.text=Checo
+Menu.menuPreferencesLanguageRussian.text=Ruso
+Menu.menuPreferencesLanguagePolish.text=Polaco
+
+Menu.menuPreferencesLookAndFeel.text=Aspecto & Ambiente
+
+Menu.menuPreferencesSave.text=Todas las preferencias ...
+Menu.menuPreferencesSaveAll.text=Guardar
+Menu.menuPreferencesSaveDump.text=Guardar como ...
+Menu.menuPreferencesSaveLoad.text=Importar de un archivo ...
+
+// Menu "Help"
+Menu.menuHelp.text=Ayuda
+// Submenu of "Help"
+Menu.menuHelpAbout.text=Acerca de ...
+Menu.menuHelpUpdate.text=Actualizar ...
+// Error messages for analyser
+Menu.error01_1.text=ADVERTENCIA: Ninguna variable de bucle detectada ...
+Menu.error01_2.text=ADVERTENCIA: Más de una variable de bucle detectada ...
+Menu.error01_3.text=¡No tienes permiso modificar la variable del bucle «%» dentro del bucle!
+Menu.error02.text=¡Sin cambio de las variables de la condición! Posible bucle sin fin ... 
+Menu.error03_1.text=¡La variable «%» no ha sido inicializada!
+Menu.error03_2.text=¡La variable «%» no debe ser inicializada!
+Menu.error04.text=¡No tienes permiso usar una declaración IF con un bloque de verdad vacío!
+Menu.error05.text=¡La variable «%» debe ser escrita en mayusculas!
+Menu.error06.text=¡El programa «%» debe ser escrita en mayusculas!
+Menu.error07_1.text=¡«%» no es un nombre valido para el programa o método!
+Menu.error07_2.text=¡«%» no es un nombre valido para el parámetro!
+Menu.error07_3.text=¡«%» no es un nombre valido para la variable!
+Menu.error08.text=No esta permitido hacer una asignacion dentro de una condición.
+Menu.error09.text=¡Tu programa («%») no puede tener el mismo nombre que una variable o parametro!
+Menu.error10_1.text=¡Un unico elemento de instrucción no debe contener instrucciones de entrada/salida y asignaciones!
+Menu.error10_2.text=¡Un unico elemento de instrucción no debe contener instrucciones de entrada y salida!
+Menu.error10_3.text=¡Un unico elemento de instrucción no debe contener instrucciones de entrada y asignaciones!
+Menu.error10_4.text=¡Un unico elemento de instrucción no debe contener instrucciones de salida y asignaciones!
+Menu.error11.text=Probablemente has hecho un error de asignación. ¡Por favor comprueba esta instrucción!
+Menu.error12.text=¡El parámetro «%» debe comenzar con la letra "p" seguido unicamente de letras MAYUSCULAS!
+Menu.error13_1.text=¡La función no retorna ningún resultado!
+Menu.error13_2.text=¡Su función no puede retornar ningún resultado!
+
+-----[ AnalyserPreferences ]-----
+AnalyserPreferences.title=Preferencias del Comprobador
+AnalyserPreferences.check1.text=Comprobar modificación de la variable del bucle.
+AnalyserPreferences.check2.text=Comprobar bucle sin fin (¡en la medida de lo detectable!)
+AnalyserPreferences.check3.text=Comprobar si hay variables no inicializadas.
+AnalyserPreferences.check4.text=Comprobar uso correcto de la declaración IF.
+AnalyserPreferences.check5.text=Comprobar nombres de variables en MAYUSCULAS. (LUX/MEN)
+AnalyserPreferences.check6.text=Comprobar MAYUSCULAS en el nombre de programa / subrutina. (LUX/MEN)
+AnalyserPreferences.check7.text=Comprobación de validez de los identificadores.
+AnalyserPreferences.check8.text=Comprobar asignaciones en condiciones.
+AnalyserPreferences.check9.text=Comprobar que el nombre de programa / subrutina no sea igual que algún identificador.
+AnalyserPreferences.check10.text=Comprobar instrucciones con multiples comandos.
+AnalyserPreferences.check11.text=Comprobar errores en asignaciones.
+AnalyserPreferences.check12.text=Comprobar por nombre de parámetro estándar. (LUX/MEN)
+AnalyserPreferences.check13.text=Comprobar si, en caso de una función, ésta devuelve un resultado.
+AnalyserPreferences.okButton.text=Aceptar
+
+
+
+-----[ Diagram ]-----
+// Buttons
+// I/O
+Editor.btnNew.tooltip=Crear un nuevo diagrama en blanco.
+Editor.btnOpen.tooltip=Abrir un diagrama existente.
+Editor.btnSave.tooltip=Guardar diagrama actual.
+// InsertBefore
+Editor.btnBeforeInst.tooltip=Insertar nueva instrucción antes del elemento seleccionado.
+Editor.btnBeforeAlt.tooltip=Insertar nueva declaración SI antes del elemento seleccionado.
+Editor.btnBeforeFor.tooltip=Insertar nuevo bucle PARA antes del elemento seleccionado.
+Editor.btnBeforeWhile.tooltip=Insertar nuevo bucle MIENTRAS antes del elemento seleccionado.
+Editor.btnBeforeRepeat.tooltip=Insertar nuevo bucle REPETIR antes del elemento seleccionado.
+Editor.btnBeforeForever.tooltip=Insertar nuevo bucle SINFIN antes del elemento seleccionado.
+Editor.btnBeforeCall.tooltip=Insertar nueva LLAMADA antes del elemento seleccionado.
+Editor.btnBeforeJump.tooltip=Insertar nuevo SALTO antes del elemento seleccionado.
+Editor.btnBeforeCase.tooltip=Insertar nueva declaración CASE antes del elemento seleccionado.
+Editor.btnBeforePara.tooltip=Insertar nueva sección PARALELA antes del elemento seleccionado.
+// InsertAfter
+Editor.btnAfterInst.tooltip=Insertar nueva instrucción después del elemento seleccionado.
+Editor.btnAfterAlt.tooltip=Insertar nueva declaración SI después del elemento seleccionado.
+Editor.btnAfterFor.tooltip=Insertar nuevo bucle PARA después del elemento seleccionado.
+Editor.btnAfterWhile.tooltip=Insertar nuevo bucle MIENTRAS después del elemento seleccionado.
+Editor.btnAfterRepeat.tooltip=Insertar nuevo bucle REPETIR después del elemento seleccionado.
+Editor.btnAfterForever.tooltip=Insertar nuevo bucle SINFIN después del elemento seleccionado.
+Editor.btnAfterCall.tooltip=Insertar nueva LLAMADA después del elemento seleccionado.
+Editor.btnAfterJump.tooltip=Insertar nuevo SALTO después del elemento seleccionado.
+Editor.btnAfterCase.tooltip=Insertar nueva instrucción CASE después del elemento seleccionado.
+Editor.btnBeforePara.tooltip=Insertar nueva sección PARALELA después del elemento seleccionado.
+// undo & redo
+Editor.btnUndo.tooltip=Deshacer la ultima acción.
+Editor.btnRedo.tooltip=Rehacer la ultima acción.
+// copy & paste
+Editor.btnCut.tooltip=Cortar elemento seleccionado.
+Editor.btnCopy.tooltip=Copiar elemento seleccionado.
+Editor.btnPaste.tooltip=Pega el elemento cortado o copiado después del elemento seleccionado.
+// style
+Editor.btnNice.tooltip=Cambiar estilo visual del diagrama.
+Editor.btnFunction.tooltip=Sub diagrama (esquinas redondeadas).
+Editor.btnProgram.tooltip=Main diagrama (esquinas cuadradas).
+// editing
+Editor.btnEdit.tooltip=Editar elemento seleccionado.
+Editor.btnDelete.tooltip=Borrar elemento seleccionado.
+Editor.btnMoveUp.tooltip=Desplazar elemento seleccionado una posición arriba.
+Editor.btnMoveDown.tooltip=Desplazar elemento seleccionado una posición abajo.
+//printing
+Editor.btnPrint.tooltip=Imprimir el diagrama.
+// font
+Editor.btnFontUp.tooltip=Aumentar tamaño de fuente.
+Editor.btnFontDown.tooltip=Disminuir tamaño de fuente.
+// copyright
+Editor.btnAbout.tooltip=Mostrar mensaje de información acerca de Structorizer.
+// colors
+Editor.btnColor0.tooltip=Colorear el elemento seleccionado con este color.
+Editor.btnColor1.tooltip=Colorear el elemento seleccionado con este color.
+Editor.btnColor2.tooltip=Colorear el elemento seleccionado con este color.
+Editor.btnColor3.tooltip=Colorear el elemento seleccionado con este color.
+Editor.btnColor4.tooltip=Colorear el elemento seleccionado con este color.
+Editor.btnColor5.tooltip=Colorear el elemento seleccionado con este color.
+Editor.btnColor6.tooltip=Colorear el elemento seleccionado con este color.
+Editor.btnColor7.tooltip=Colorear el elemento seleccionado con este color.
+Editor.btnColor8.tooltip=Colorear el elemento seleccionado con este color.
+Editor.btnColor9.tooltip=Colorear el elemento seleccionado con este color.
+// Popup menu
+Editor.popupCut.text=Cortar
+Editor.popupCopy.text=Copiar
+Editor.popupPaste.text=Pegar
+Editor.popupAdd.text=Agregar
+// Submenu of "Add"
+Editor.popupAddBefore.text=Antes
+// Submenus of "Add -> Before"
+Editor.popupAddBeforeInst.text=Instrucción
+Editor.popupAddBeforeAlt.text=declaración SI
+Editor.popupAddBeforeCase.text=declaración CASE
+Editor.popupAddBeforeFor.text=bucle PARA
+Editor.popupAddBeforeWhile.text=bucle MIENTRAS
+Editor.popupAddBeforeRepeat.text=bucle REPETIR
+Editor.popupAddBeforeForever.text=bucle SINFIN
+Editor.popupAddBeforeCall.text=LLAMADA
+Editor.popupAddBeforeJump.text=SALTO
+Editor.popupAddBeforePara.text=sección PARALELA
+// After
+Editor.popupAddAfter.text=Después
+// Submenus of "Add -> After"
+Editor.popupAddAfterInst.text=Instrucción
+Editor.popupAddAfterAlt.text=declaración SI
+Editor.popupAddAfterCase.text=declaración CASE
+Editor.popupAddAfterFor.text=bucle PARA
+Editor.popupAddAfterWhile.text=bucle MIENTRAS
+Editor.popupAddAfterRepeat.text=bucle REPETIR
+Editor.popupAddAfterForever.text=bucle SINFIN
+Editor.popupAddAfterCall.text=LLAMADA
+Editor.popupAddAfterJump.text=SALTO
+Editor.popupAddAfterPara.text=sección PARALELA
+// Edit
+Editor.popupEdit.text=Editar
+Editor.popupDelete.text=Borrar
+Editor.popupMoveUp.text=Desplazar Arriba
+Editor.popupMoveDown.text=Desplazar Abajo
+
+
+-----[ InputBox ]-----
+InputBox.title=Editar elemento
+InputBox.lblText.text=Por favor ingresa un texto
+InputBox.lblText.tooltip=
+InputBox.lblComment.text=Comentario
+InputBox.lblComment.tooltip=
+InputBox.txtText.tooltip=El contenido del elemento.
+InputBox.txtComment.tooltip=El comentario del elemento.
+InputBox.btnOK.text=Aceptar
+InputBox.btnOK.tooltip=Aceptar los cambios.
+InputBox.btnCancel.text=Cancelar
+InputBox.btnCancel.tooltip=Cancelar los cambios.
+
+
+-----[ Preferences ]-----
+Preferences.title=Preferencias de estructura
+Preferences.pnlAlt.border=declaración SI
+Preferences.pnlAlt.tooltip=
+Preferences.lblAltT.text=Etiqueta VERDADERO
+Preferences.lblAltT.tooltip=La etiqueta de la izquierda.
+Preferences.lblAltF.text=Etiqueta FALSO
+Preferences.lblAltF.tooltip=La etiqueta de la derecha.
+Preferences.lblAltContent.text=Contenido por defecto
+Preferences.lblAltContent.tooltip=El contenido por defecto de una declaración SI.
+Preferences.pnlCase.border=declaración CASE
+Preferences.pnlCase.tooltip=
+Preferences.lblCase.text=Contenido por defecto
+Preferences.lblCase.tooltip=El contenido por defecto de una declaración CASE.
+Preferences.pnlFor.border=bucle PARA
+Preferences.pnlFor.tooltip=
+Preferences.lblFor.text=Contenido por defecto
+Preferences.lblFor.tooltip=El contenido por defecto de un bucle FOR.
+Preferences.pnlWhile.border=bucle MIENTRAS
+Preferences.pnlWhile.tooltip=
+Preferences.lblWhile.text=Contenido por defecto
+Preferences.lblWhile.tooltip=El contenido por defecto de un bucle WHILE.
+Preferences.pnlRepeat.border=bucle REPETIR
+Preferences.pnlRepeat.tooltip=
+Preferences.lblRepeat.text=Contenido por defecto
+Preferences.lblRepeat.tooltip=El contenido por defecto de un bucle REPEAT
+Preferences.btnOK.text=Aceptar
+Preferences.btnOK.tooltip=Aceptar los cambios.
+
+
+-----[ About ]-----
+About.title=Acerca de
+About.pnlTabbed.tab.0=Personas implicadas
+About.pnlTabbed.tab.1=Cambios
+About.btnOK.text=Aceptar
+About.btnOK.tooltip=Aceptar los cambios.
+
+
+-----[ FontChooser ]-----
+FontChooser.title=Fuente
+FontChooser.lblTest.tooltip=Un texto de prueba para que usted pueda ver cómo se verá más tarde en su Editor.
+FontChooser.lblName.text=Nombre
+FontChooser.lblName.tooltip=El nombre de la fuente a seleccionar.
+FontChooser.lblSize.text=Tamaño
+FontChooser.lblSize.tooltip=El tamaño de la fuente a seleccionar.
+FontChooser.btnOK.text=Aceptar
+FontChooser.btnOK.tooltip=Aceptar los cambios.
+
+
+-----[ Colors ]-----
+Colors.title=Preferencias de Color
+Colors.lblColor0.text=Color 0
+Colors.lblColor1.text=Color 1
+Colors.lblColor2.text=Color 2
+Colors.lblColor3.text=Color 3
+Colors.lblColor4.text=Color 4
+Colors.lblColor5.text=Color 5
+Colors.lblColor6.text=Color 6
+Colors.lblColor7.text=Color 7
+Colors.lblColor8.text=Color 8
+Colors.lblColor9.text=Color 9
+Colors.lblColor0.tooltip=Su elección de color n? 0.
+Colors.lblColor1.tooltip=Su elección de color n? 1.
+Colors.lblColor2.tooltip=Se elección de color n? 2.
+Colors.lblColor3.tooltip=Se elección de color n? 3.
+Colors.lblColor4.tooltip=Se elección de color n? 4.
+Colors.lblColor5.tooltip=Se elección de color n? 5.
+Colors.lblColor6.tooltip=Se elección de color n? 6.
+Colors.lblColor7.tooltip=Se elección de color n? 7.
+Colors.lblColor8.tooltip=Se elección de color n? 8.
+Colors.lblColor9.tooltip=Se elección de color n? 9.
+Colors.color0.tooltip=Click para editar ...
+Colors.color1.tooltip=Click para editar ...
+Colors.color2.tooltip=Click para editar ...
+Colors.color3.tooltip=Click para editar ...
+Colors.color4.tooltip=Click para editar ...
+Colors.color5.tooltip=Click para editar ...
+Colors.color6.tooltip=Click para editar ...
+Colors.color7.tooltip=Click para editar ...
+Colors.color8.tooltip=Click para editar ...
+Colors.color9.tooltip=Click para editar ...
+Colors.btnOK.text=Aceptar
+Colors.btnOK.tooltip=Aceptar los cambios.
+
+
+-----[ ColorChooser ]-----
+ColorChooser.title=Colores
+ColorChooser.btnCancel.text=Cancelar
+ColorChooser.btnCancel.tooltip=Cancelar los cambios.
+ColorChooser.btnOK.text=Aceptar
+ColorChooser.btnOK.tooltip=Aceptar los cambios.
+
+
+-----[ ParserPreferences ]-----
+ParserPreferences.title=Preferencias del Analizador
+ParserPreferences.lblPre.text=Pre
+ParserPreferences.lblPre.tooltip=
+ParserPreferences.lblPost.text=Post
+ParserPreferences.lblPost.tooltip=
+ParserPreferences.lblAlt.text=declaración SI
+ParserPreferences.lblAlt.tooltip=
+ParserPreferences.lblCase.text=declaración CASE
+ParserPreferences.lblCase.tooltip=
+ParserPreferences.lblFor.text=bucle PARA
+ParserPreferences.lblFor.tooltip=
+ParserPreferences.lblWhile.text=bucle MIENTRAS
+ParserPreferences.lblWhile.tooltip=
+ParserPreferences.lblRepeat.text=bucle REPETIR
+ParserPreferences.lblRepeat.tooltip=
+ParserPreferences.lblInput.text=Entrada
+ParserPreferences.lblInput.tooltip=
+ParserPreferences.lblOutput.text=Salida
+ParserPreferences.lblOutput.tooltip=
+ParserPreferences.btnOK.text=Aceptar
+ParserPreferences.btnOK.tooltip=Aceptar los cambios.
+ParserPreferences.lblErrorSign.text=¡No es permitido usar el carácter ':' dentro de un texto del Analizador!
+
+-----[ PrintPreview ]-----
+PrintPreview.title=Previsualizar impresión
+PrintPreview.btnOrientation.text=Cambiar orientación
+PrintPreview.btnOrientation.tooltip=Voltear la pagina 90º.
+PrintPreview.btnCancel.text=Cancelar
+PrintPreview.btnCancel.tooltip=Cancelar impresión.
+PrintPreview.btnOK.text=Imprimir
+PrintPreview.btnOK.tooltip=Imprimir el diagrama.
+
+-----[ ExportOptionDialoge ]-----
+ExportOptionDialoge.title=Preferencias de Exportación de código
+ExportOptionDialoge.commentsCheckBox.text=Exportar instrucciones como comentarios.
+ExportOptionDialoge.jLabel1.text=Eleccione las preferencias, que quieres activar...
+ExportOptionDialoge.jButton1.text=Aceptar
+ExportOptionDialoge.jButton1.tooltip=Aceptar los cambios.
