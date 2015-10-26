@@ -33,6 +33,8 @@ package lu.fisch.structorizer.elements;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.12      First Issue
+ *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
+ *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
  *
  ******************************************************************************************************
  *
@@ -41,10 +43,8 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.util.Vector;
-
 import java.awt.Color;
 import java.awt.FontMetrics;
-
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
@@ -214,16 +214,21 @@ public class Case extends Element
             }
                 
             Rect myrect = new Rect();
-            Color drawColor = getColor();
+    		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
+    		//Color drawColor = getColor();
+    		Color drawColor = getFillColor();
+    		// END KGU 2015-10-13
             FontMetrics fm = _canvas.getFontMetrics(Element.font);
-            int p;
-            int w;
+//            int p;
+//            int w;
 
-            if (selected==true)
-            {
-            if(waited==true) { drawColor=Element.E_WAITCOLOR; }
-            else { drawColor=Element.E_DRAWCOLOR; }
-            }
+            // START KGU 2015-10-13: Already done by new method getFillColor() now
+//            if (selected==true)
+//            {
+//                if(waited==true) { drawColor=Element.E_WAITCOLOR; }
+//                else { drawColor=Element.E_DRAWCOLOR; }
+//            }
+            // END KGU 2015-10-13
 
             Canvas canvas = _canvas;
             canvas.setBackground(drawColor);
@@ -279,18 +284,25 @@ public class Case extends Element
             // draw comment
             if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
             {
-                    canvas.setBackground(E_COMMENTCOLOR);
-                    canvas.setColor(E_COMMENTCOLOR);
-
-                    Rect someRect = myrect.copy();
-
-                    someRect.left+=2;
-                    someRect.top+=2;
-                    someRect.right=someRect.left+4;
-                    someRect.bottom-=2;
-
-                    canvas.fillRect(someRect);
-            }
+                // START KGU 2015-10-11: Use an inherited helper method now
+//                    canvas.setBackground(E_COMMENTCOLOR);
+//                    canvas.setColor(E_COMMENTCOLOR);
+//
+//                    Rect someRect = myrect.copy();
+//
+//                    someRect.left+=2;
+//                    someRect.top+=2;
+//                    someRect.right=someRect.left+4;
+//                    someRect.bottom-=2;
+//
+//                    canvas.fillRect(someRect);
+    			this.drawCommentMark(canvas, myrect);
+        		// END KGU 2015-10-11
+    		}
+            // START KGU 2015-10-11
+    		// draw breakpoint bar if necessary
+    		this.drawBreakpointMark(canvas, myrect);
+    		// END KGU 2015-10-11
 
 
             // draw lines
@@ -394,29 +406,58 @@ public class Case extends Element
             canvas.drawRect(_top_left);
     }
 
-    public Element selectElementByCoord(int _x, int _y)
+	// START KGU 2015-10-09: On moving the cursor, substructures had been eclipsed
+	// by their containing box wrt. comment popping etc. This correction, however,
+	// might significantly slow down the mouse tracking on enabled comment popping.
+    // Just give it a try... 
+//    public Element selectElementByCoord(int _x, int _y)
+//    {
+//            Element selMe = super.selectElementByCoord(_x,_y);
+//            Element selCh = null;
+//
+//            for(int i = 0;i<qs.size();i++)
+//            {
+//                    Element pre = ((Subqueue) qs.get(i)).selectElementByCoord(_x,_y);
+//                    if(pre!=null)
+//                    {
+//                            selCh = pre;
+//                    }
+//            }
+//
+//            if(selCh!=null)
+//            {
+//                    selected=false;
+//                    selMe = selCh;
+//            }
+//
+//            return selMe;
+//    }
+
+    @Override
+    public Element getElementByCoord(int _x, int _y, boolean _forSelection)
     {
-            Element selMe = super.selectElementByCoord(_x,_y);
-            Element selCh = null;
+    	Element selMe = super.getElementByCoord(_x, _y, _forSelection);
+    	Element selCh = null;
 
-            for(int i = 0;i<qs.size();i++)
-            {
-                    Element pre = ((Subqueue) qs.get(i)).selectElementByCoord(_x,_y);
-                    if(pre!=null)
-                    {
-                            selCh = pre;
-                    }
-            }
+    	for(int i = 0; i<qs.size(); i++)
+    	{
+    		Element pre = ((Subqueue) qs.get(i)).getElementByCoord(_x,_y, _forSelection);
+    		if(pre!=null)
+    		{
+    			selCh = pre;
+    		}
+    	}
 
-            if(selCh!=null)
-            {
-                    selected=false;
-                    selMe = selCh;
-            }
+    	if(selCh!=null)
+    	{
+    		if (_forSelection) selected = false;
+    		selMe = selCh;
+    	}
 
-            return selMe;
+    	return selMe;
     }
-
+    // END KGU 2015-10-09
+    
     public void setSelected(boolean _sel)
     {
             selected=_sel;
@@ -445,14 +486,35 @@ public class Case extends Element
             return ele;
     }
 
-    /*@Override
-    public void setColor(Color _color) 
+    // START KGU 2015-10-12
+    @Override
+    public void clearBreakpoints()
     {
-        super.setColor(_color);
-        for(int i=0;i<qs.size();i++)
-        {
-            qs.get(i).setColor(_color);
-        }
-    }*/
+    	super.clearBreakpoints();
+    	if (qs!= null)
+    	{
+    		for (int i = 0; i < qs.size(); i++)
+    		{
+    			qs.get(i).clearBreakpoints();
+    		}
+    	}
+    }
+    // END KGU 2015-10-12
+
+    // START KGU 2015-10-13
+    @Override
+    public void clearExecutionStatus()
+    {
+    	super.clearExecutionStatus();
+    	if (qs!= null)
+    	{
+    		for (int i = 0; i < qs.size(); i++)
+    		{
+    			qs.get(i).clearExecutionStatus();
+    		}
+    	}
+    }
+    // END KGU 2015-10-13
+
 
 }
