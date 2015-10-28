@@ -35,6 +35,7 @@ package lu.fisch.structorizer.generators;
  *      Bob Fisch       2007.12.27		First Issue
  *      Bob Fisch       2008.04.12		Plugin Interface
  *      Kay Gürtzig     2014.11.16		comment generation revised (see comment below)
+ *      Kay Gürtzig     2015.10.18		File name proposal in exportCode(Root, File, Frame) delegated to Root
  *
  ******************************************************************************************************
  *
@@ -58,70 +59,113 @@ import lu.fisch.structorizer.io.Ini;
 
 public abstract class Generator extends javax.swing.filechooser.FileFilter
 {
-        private ExportOptionDialoge eod = null;
+	/************ Fields ***********************/
+	private ExportOptionDialoge eod = null;
 	protected StringList code = new StringList();
 
-	/************ Fields ***********************/
+	/************ Abstract Methods *************/
 	protected abstract String getDialogTitle();
 	protected abstract String getFileDescription();
 	protected abstract String getIndent();
 	protected abstract String[] getFileExtensions();
+	// START KGU 2015-10-18: It seemed sensible to store the comment specification permanently
+	/**
+	 * left comment delimiter, e.g. "/*", "//", "(*", or "{"
+	 */
+	protected abstract String commentSymbolLeft();
+	/**
+	 * right comment delimiter if required, e.g. "*\/", "}", "*)"
+	 */
+	protected String commentSymbolRight() { return ""; }
+	// END KGU 2015-10-18
 	
 	
 	/************ Code Generation **************/
+	
 	// KGU 2014-11-16: Method renamed (formerly: insertComment)
-	protected boolean insertAsComment(Element _element, String _indent, String _symbol)
+	// START KGU 2015-11-18: Method parameter list reduced by a comment symbol configuration
+	/**
+	 * Inserts the text of _element as comments into the code, using delimiters this.commentSymbolLeft
+	 * and this.commentSymbolRight (if given) to enclose the comment lines, with indentation _indent 
+	 * @param _element current NSD element
+	 * @param _indent indentation string
+	 */
+	protected boolean insertAsComment(Element _element, String _indent)
 	{
-		if(eod.commentsCheckBox.isSelected())
-		{
-			for(int i=0;i<_element.getText().count();i++)
-			{
-				code.add(_indent+_symbol+_element.getText().get(i));
-			}
+		if(eod.commentsCheckBox.isSelected()) {
+			insertComment(_element.getText(), _indent);
 			return true;
 		}
 		return false;
 	}
-    
-	// START KGU 2014-11-16:
+
 	/**
-	 * Inserts the comment part of _element into the code, using delimiters _symbolLeft
-	 * and _symbolRight (if given) to enclose the comment lines, with indentation _indent 
+	 * Inserts the comment part of _element into the code, using delimiters this.commentSymbolLeft
+	 * and this.commentSymbolRight (if given) to enclose the comment lines, with indentation _indent
 	 * @param _element current NSD element
 	 * @param _indent indentation string
-	 * @oaram _symbolLeft left comment delimiter, e.g. "/*", "//", "(*", or "{"
-	 * @param _symbolRight right comment delimiter if required, e.g. "}", "*)"
 	 */
-	protected void insertComment(Element _element, String _indent, String _symbolLeft, String _symbolRight)
+	protected void insertComment(Element _element, String _indent)
 	{
-		if (_symbolRight == null) {
-			_symbolRight = "";
+		this.insertComment(_element.getComment(), _indent);
+	}
+
+	/**
+	 * Inserts all lines of the given StringList as a series of single comment lines to the exported code
+	 * @param _text - the text to be inserted as comment
+	 * @param _indent - indentation string
+	 */
+	protected void insertComment(String _text, String _indent)
+	{
+		String[] lines = _text.split("\n");
+		for (int i = 0; i < lines.length; i++)
+		{
+			code.add(_indent + commentSymbolLeft() + " " + lines[i] + " " + commentSymbolRight());
 		}
-        for(int i = 0; i < _element.getComment().count(); i++)
-        {
+	}
+
+	/**
+	 * Inserts all lines of the given StringList as a series of single comment lines to the exported code
+	 * @param _sl - the text to be inserted as comment
+	 * @param _indent - indentation string
+	 */
+	protected void insertComment(StringList _sl, String _indent)
+	{
+		for (int i = 0; i < _sl.count(); i++)
+		{
         	// The following splitting is just to avoid empty comment lines and broken
         	// comment lines (though the latter shouldn't be possible here)
-        	String commentLine = _element.getComment().get(i);
+        	String commentLine = _sl.get(i);
         	// Skip an initial empty comment line
        		if (i > 0 || !commentLine.isEmpty()) {
-       			code.add(_indent + _symbolLeft + commentLine + _symbolRight);
+       			insertComment(commentLine, _indent);
        		}
-        }
+		}
 	}
 	
-	/**
-	 * Inserts the comment part of _element into the code, using line comment symbol
-	 * _symbol with indentation _indent 
-	 * @param _element current NSD element
-	 * @param _indent indentation string
-	 * @oaram _symbol language-dependent line comment symbol, e.g. "//" or "#"
-	 */
-	protected void insertComment(Element _element, String _indent, String _symbol)
+	protected void insertBlockComment(StringList _sl, String _indent, String _start, String _cont, String _end)
 	{
-		this.insertComment(_element, _indent, _symbol, null);
+		if (_start != null)
+		{
+			code.add(_indent + _start);
+		}
+		for (int i = 0; i < _sl.count(); i++)
+		{
+        	// The following splitting is just to avoid empty comment lines and broken
+        	// comment lines (though the latter shouldn't be possible here)
+        	String commentLine = _sl.get(i);
+        	// Skip an initial empty comment line
+       		if (i > 0 || !commentLine.isEmpty()) {
+       			code.add(_indent + _cont + commentLine);
+       		}
+		}
+		if (_end != null)
+		{
+			code.add(_indent + _end);
+		}
 	}
-	// END KGU 2014-11-16
-        
+// END KGU 2015-10-18
+    
 	protected void generateCode(Instruction _inst, String _indent)
 	{
             //
@@ -291,10 +335,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		}
 		
 		// propose name
-		String nsdName = _root.getText().get(0);
-		nsdName.replace(':', '_');
-		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
-		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		// START KGU 2015-10-18: Root has got a mechanism for this!
+//		String nsdName = _root.getText().get(0);
+//		nsdName.replace(':', '_');
+//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
+//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		String nsdName = _root.getMethodName();
+		// END KGU 2015-10-18
 		dlgSave.setSelectedFile(new File(nsdName));
 		
 		dlgSave.addChoosableFileFilter((javax.swing.filechooser.FileFilter) this);
@@ -354,7 +401,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 
                             try
                             {
-                                    String code = BString.replace(generateCode(_root,"\t"),"\t",getIndent());
+                            	// START KGU 2015-10-18: This didn't make much sense: Why first insert characters that will be replaced afterwards?
+                            	// (And with possibly any such characters that had not been there for indentation!)
+                                //    String code = BString.replace(generateCode(_root,"\t"),"\t",getIndent());
+                            	String code = generateCode(_root, "");
+                            	// END KGU 2015-10-18
 
                                     BTextfile outp = new BTextfile(filename);
                                     outp.rewrite();

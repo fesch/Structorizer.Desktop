@@ -20,9 +20,32 @@
 
 package lu.fisch.structorizer.arranger;
 
+/******************************************************************************************************
+ *
+ *      Author:         Bob Fisch
+ *
+ *      Description:    This class represents an Element-related Analyser issue for the error list.
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date			Description
+ *      ------			----			-----------
+ *      Bob Fisch       				First Issue
+ *		Kay Gürtzig     2015.10.18		Transient WindowsListener added enabling Surface to have dirty diagrams saved before exit
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:		/
+ *
+ ******************************************************************************************************///
+
 import java.awt.Point;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+
 import lu.fisch.structorizer.elements.Root;
 
 /**
@@ -96,6 +119,35 @@ public class Arranger extends javax.swing.JFrame implements WindowListener
         );
 
         getContentPane().add(surface, java.awt.BorderLayout.CENTER);
+
+        // START KGU#49 2015-10-18: On closing the Arranger window the dependent Mainforms must get a chance to save their stuff!
+        /******************************
+         * Set onClose event
+         ******************************/
+        addWindowListener(new WindowAdapter() 
+        {  
+        	@Override
+        	public void windowClosing(WindowEvent e) 
+        	{  
+        		surface.saveDiagrams();	// Allow user to save dirty diagrams
+        	}  
+
+        	@Override
+        	public void windowOpened(WindowEvent e) 
+        	{  
+        	}  
+
+        	@Override
+        	public void windowActivated(WindowEvent e)
+        	{  
+        	}
+
+        	@Override
+        	public void windowGainedFocus(WindowEvent e) 
+        	{  
+        	}  
+        });
+        // END KGU#49 2015-10-18
 
         pack();
     }// </editor-fold>//GEN-END:initComponents

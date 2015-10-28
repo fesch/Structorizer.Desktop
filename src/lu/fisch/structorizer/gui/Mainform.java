@@ -33,6 +33,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.11      First Issue
+ *      Kay Gürtzig     2015.10.18      Methods getRoot(), setRoot() introduced to ease Arranger handling (KGU#48)
  *
  ******************************************************************************************************
  *
@@ -472,16 +473,17 @@ public class Mainform  extends JFrame implements NSDController
     public void doButtonsLocal()
     {
         boolean done=false;
-        if(diagram!=null)
-            if(diagram.root!=null)
-                if(diagram.root.filename!=null)
-                    if(!diagram.root.filename.equals(""))
-                 {
-                    File f = new File(diagram.root.filename);
-                    this.setTitle("Structorizer - "+f.getName());
-                    done=true;
-                 }
-        if(done==false) this.setTitle("Structorizer");
+        if (diagram != null)
+        {
+        	Root root = diagram.getRoot();
+        	if (root != null && root.filename != null && !root.filename.isEmpty())
+        	{
+        		File f = new File(root.filename);
+        		this.setTitle("Structorizer - " + f.getName());
+        		done = true;
+        	}
+        }
+        if (!done) this.setTitle("Structorizer");
     }
 
     public void updateColors() 
@@ -510,6 +512,25 @@ public class Mainform  extends JFrame implements NSDController
     public JFrame getFrame()
     {
         return this;
+    }
+    
+    public Root getRoot()
+    {
+    	if (this.diagram == null)
+    		return null;
+    	
+    	return this.diagram.getRoot();
+    }
+    
+    public boolean setRoot(Root root)
+    {
+    	boolean done = false;
+    	if (this.diagram != null)	// May look somewhat paranoid, but diagram is public...
+    	{
+    		this.diagram.setRoot(root);
+    		done = true;
+    	}
+    	return done;
     }
 	
 }

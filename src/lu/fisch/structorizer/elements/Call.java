@@ -33,6 +33,8 @@ package lu.fisch.structorizer.elements;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.13      First Issue
+ *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
+ *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared
  *
  ******************************************************************************************************
  *
@@ -63,7 +65,7 @@ public class Call extends Instruction {
 	public Call(String _strings)
 	{
 		super(_strings);
-		setText(_strings);
+		setText(_strings);	// FIXME (KGU 2015-10-13): What is this good for? This has already been done by both the super and its super constructor!
 	}
 	
 	public Call(StringList _strings)
@@ -99,13 +101,18 @@ public class Call extends Instruction {
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
 		Rect myrect = new Rect();
-		Color drawColor = getColor();
+		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
+		//Color drawColor = getColor();
+		Color drawColor = getFillColor();
+		// END KGU 2015-10-13
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
-		
-		if (selected==true)
-		{
-			drawColor=E_DRAWCOLOR;
-		}
+
+		// START KGU 2015-10-13: Became obsolete by new method getFillColor() applied above now
+//		if (selected==true)
+//		{
+//			drawColor=E_DRAWCOLOR;
+//		}
+		// END KGU 2015-10-13
 		
 		rect=_top_left.copy();
 		
@@ -120,18 +127,25 @@ public class Call extends Instruction {
 		// draw comment
 		if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
 		{
-			canvas.setBackground(E_COMMENTCOLOR);
-			canvas.setColor(E_COMMENTCOLOR);
-			
-			Rect someRect = _top_left.copy();
-			
-			someRect.left+=2;
-			someRect.top+=2;
-			someRect.right=someRect.left+4;
-			someRect.bottom-=1;
-			
-			canvas.fillRect(someRect);
+			// START KGU 2015-10-11: Use an inherited helper method now
+//			canvas.setBackground(E_COMMENTCOLOR);
+//			canvas.setColor(E_COMMENTCOLOR);
+//			
+//			Rect someRect = _top_left.copy();
+//			
+//			someRect.left+=2;
+//			someRect.top+=2;
+//			someRect.right=someRect.left+4;
+//			someRect.bottom-=1;
+//			
+//			canvas.fillRect(someRect);
+			this.drawCommentMark(canvas, _top_left);
+			// END KGU 2015-10-11
 		}
+		// START KGU 2015-10-11
+		// draw breakpoint bar if necessary
+		this.drawBreakpointMark(canvas, _top_left);
+		// END KGU 2015-10-11
 		
 		
 		for(int i=0;i<getText().count();i++)

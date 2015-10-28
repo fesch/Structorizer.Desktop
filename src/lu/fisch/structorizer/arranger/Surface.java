@@ -21,6 +21,32 @@
 
 package lu.fisch.structorizer.arranger;
 
+/******************************************************************************************************
+ *
+ *      Author:         Bob Fisch
+ *
+ *      Description:    This class represents the interactive drawing area for arranging several diagrams
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date			Description
+ *      ------			----			-----------
+ *      Bob Fisch       				First Issue
+ *		Kay Gürtzig     2015.10.18		Several enhancements to improve Arranger usability (see comments)
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:
+ *      2015.10.18 (KGU)
+ *      - New interface method replaced() implemented that allows to keep track of NSD replacement in a
+ *        related Mainform (KGU#48)
+ *      - New interface method findSourcesByName() to prepare subroutine execution in a future effort (KGU#2)
+ *      - Method saveDiagrams() added, enabling the Mainforms to save dirty diagrams before exit (KGU#49)
+ *
+ ******************************************************************************************************/
+
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Point;
@@ -31,11 +57,14 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.Iterator;
 import java.util.Vector;
+
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+
 import lu.fisch.graphics.Rect;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
@@ -65,12 +94,12 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
         super.paint(g);
         if(diagrams!=null)
         {
-            for(int d=0;d<diagrams.size();d++)
+            for(int d=0; d<diagrams.size(); d++)
             {
                 Diagram diagram = diagrams.get(d);
                 Root root = diagram.root;
                 Point point = diagram.point;
-
+                
                 root.draw(g, point, this);
             }
         }
@@ -115,7 +144,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
         int result = dlgSave.showSaveDialog(frame);
         if (result == JFileChooser.APPROVE_OPTION)
         {
-            // correct the filename, if necessaray
+            // correct the filename, if necessary
             String filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
             if(!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".png"))
             {
@@ -125,7 +154,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
             // deselect any diagram
             if(diagrams!=null)
             {
-                for(int d=0;d<diagrams.size();d++)
+                for(int d=0; d<diagrams.size(); d++)
                 {
                     diagrams.get(d).root.setSelected(false);
                 }
@@ -240,6 +269,30 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     {
         this.diagrams = diagrams;
     }
+    
+    // START KGU#49 2015-10-18: When the window is going to be closed we have to give the diagrams a chance to store their stuff
+    // FIXME (KGU): Quick-and-dirty version. More convenient should be a list view with all unsaved diagrams for checkbox selection
+    /**
+     * Loops over all administered diagrams and has their respective Mainform (if still alive) save them in case they are dirty 
+     */
+    public void saveDiagrams()
+    {
+    	if (this.diagrams != null)
+    	{
+    		Iterator<Diagram> iter = this.diagrams.iterator();
+    		while (iter.hasNext())
+    		{
+    			Diagram diagram = iter.next();
+    			Mainform form = diagram.mainform;
+    			if (form != null)
+    			{
+    				form.diagram.saveNSD(true);
+    			}
+    		}
+    	}
+    }
+    // END KGU#49 2015-10-18
+    
 
     public void mouseClicked(MouseEvent e)
     {
@@ -264,9 +317,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
             mouseSelected.root.addUpdater(this);
 
             // affect the new diagram to the editor
-            form.diagram.root=mouseSelected.root;
-            // redraw the diagram
-            form.diagram.redraw();
+            form.setRoot(mouseSelected.root);
             form.setVisible(true);
 
             mouseSelected=null;
@@ -338,6 +389,60 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
         this.repaint();
     }
 
+    // START KGU#48 2015-10-17: As soon as a new NSD was loaded by some Mainform instance, Surface had lost track
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.elements.Updater#replace(lu.fisch.structorizer.elements.Root, lu.fisch.structorizer.elements.Root)
+     */
+    @Override
+    public void replaced(Root oldRoot, Root newRoot)
+    {
+    	// Try to find the appropriate diagram holding oldRoot
+    	Diagram owner = null;
+    	if (this.diagrams != null) {
+    		for(int d = 0; owner == null && d < this.diagrams.size(); d++)
+    		{
+    			Diagram diagram = this.diagrams.get(d);
+    			if (diagram.root == oldRoot)
+    			{
+    				owner = diagram;	// Will leave the loop
+    				oldRoot.removeUpdater(this);
+    				if (owner.mainform != null) {
+    					owner.root = owner.mainform.getRoot();
+    					owner.root.addUpdater(this);
+    				}
+    				else if (newRoot != null)
+    				{
+    					owner.root = newRoot;
+    					owner.root.addUpdater(this);
+    				}
+    				this.repaint();
+    			}
+    		}
+    	}
+    }
+    // END KGU#48 2015-10-17
+    
+    // START KGU#2 2015-10-17: Prepares the execution of a registered NSD as subroutine
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.elements.Updater#findFunctionSources(java.lang.String)
+     */
+    @Override
+    public Vector<Root> findSourcesByName(String rootName)
+    {
+    	Vector<Root> functions = new Vector<Root>();
+    	if (this.diagrams != null) {
+    		for(int d=0; d < this.diagrams.size(); d++)
+    		{
+    			Diagram diagram = this.diagrams.get(d);
+    			if (rootName.equalsIgnoreCase(diagram.root.getMethodName()))
+    			{
+    				functions.add(diagram.root);
+    			}
+    		}
+    	}
+    	return functions;
+    }
+    // END KGU#2 2015-10-17
 
     
     // Windows listener for the mainform
@@ -348,25 +453,28 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
 
     public void windowClosing(WindowEvent e)
     {
-         if(e.getSource() instanceof Mainform)
-        {
-            Mainform mainform = (Mainform) e.getSource();
-            // unregister updater
-            mainform.diagram.root.removeUpdater(this);
-            // remove mainform reference
-            if(diagrams!=null)
-            {
-                for(int d=0;d<diagrams.size();d++)
-                {
-                    Diagram diagram = diagrams.get(d);
-                    Root root = diagram.root;
-                    Point point = diagram.point;
+    	if (e.getSource() instanceof Mainform)
+    	{
+    		Mainform mainform = (Mainform) e.getSource();
+    		// unregister updater
+    		mainform.getRoot().removeUpdater(this);
+    		// remove mainform reference
+    		if (diagrams!=null)
+    		{
+    			for (int d=0; d<diagrams.size(); d++)
+    			{
+    				Diagram diagram = diagrams.get(d);
+    				Root root = diagram.root;
+    				//Point point = diagram.point;
 
-                   if(mainform.diagram.root==root) diagram.mainform=null;
-                }
-            }
-        }
-   }
+    				if (mainform.getRoot() == root)
+    				{
+    					diagram.mainform = null;
+    				}
+    			}
+    		}
+    	}
+    }
 
     public void windowClosed(WindowEvent e)
     {

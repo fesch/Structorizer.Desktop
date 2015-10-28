@@ -24,7 +24,7 @@ package lu.fisch.structorizer.elements;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    This class represents an "FOR loop" in a diagram.
+ *      Description:    This class represents an Element-related Analyser issue for the error list.
  *
  ******************************************************************************************************
  *

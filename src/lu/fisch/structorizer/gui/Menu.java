@@ -690,7 +690,7 @@ public class Menu extends JMenuBar implements NSDController
                         */
 
 			// conditions
-			boolean condition =  diagram.getSelected()!=null && diagram.getSelected()!=diagram.root;
+			boolean condition =  diagram.getSelected()!=null && diagram.getSelected()!=diagram.getRoot();
 			boolean conditionAny =  diagram.getSelected()!=null;
 			int i = -1;
 			boolean conditionCanMoveUp = false;
@@ -710,13 +710,13 @@ public class Menu extends JMenuBar implements NSDController
 			}
 
 			// undo & redo
-			menuEditUndo.setEnabled(diagram.root.canUndo());
-			menuEditRedo.setEnabled(diagram.root.canRedo());
+			menuEditUndo.setEnabled(diagram.getRoot().canUndo());
+			menuEditRedo.setEnabled(diagram.getRoot().canRedo());
 
 			// style
 			menuDiagramTypeFunction.setSelected(!diagram.isProgram());
 			menuDiagramTypeProgram.setSelected(diagram.isProgram());
-			menuDiagramNice.setSelected(diagram.root.isNice);
+			menuDiagramNice.setSelected(diagram.getRoot().isNice);
 			menuDiagramComment.setSelected(Element.E_SHOWCOMMENTS);
 			menuDiagramAnalyser.setSelected(Element.E_ANALYSER);
 
@@ -762,7 +762,7 @@ public class Menu extends JMenuBar implements NSDController
 			menuDiagramComment.setSelected(diagram.drawComments());
 
 			// variable hightlighting
-			menuDiagramMarker.setSelected(diagram.root.hightlightVars);
+			menuDiagramMarker.setSelected(diagram.getRoot().hightlightVars);
 
 			menuDiagramSwitchComments.setSelected(Element.E_TOGGLETC);
                         
