@@ -47,7 +47,7 @@ Current development version: 3.22-28 (2015.01.19)
 - 27: array variables improvements in executor <Kay Gürtzig>
 - 27: updated language files (RU,DE,EN,ES) <Kay Gürtzig>
 - 28: minor change in executor for comp. with Unimozer [Bob Fisch]
-- 29: https://github.com/fesch/Structorizer.Desktop/pull/7
+- 29: Complex changes and enhancements as described (pull-request #7) <codemanyak>
 
 Version 3.22 (2011.11.21)
 - 01: Some fixes in Executor.java & Control.java [Kay Gürtzig]
