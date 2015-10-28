@@ -175,7 +175,7 @@ Menu.error13_2.text=Ваша функция может не вернуть ре�
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Настройки анализатора 
 AnalyserPreferences.check1.text=Проверять изменение переменной цикла.
-AnalyserPreferences.check2.text=Проверять конец цикла(возможен бесконечный цикл!).
+AnalyserPreferences.check2.text=Проверять конец цикла (возможен бесконечный цикл!).
 AnalyserPreferences.check3.text=Проверять неинициализированные переменные.
 AnalyserPreferences.check4.text=Проверять неправильное использлование оператора IF.
 AnalyserPreferences.check5.text=Проверять переменные на наличие имен в верхнем регистре. (LUX/MEN)
@@ -253,6 +253,11 @@ Editor.btnColor6.tooltip=Окрасить выбранный элемент эт
 Editor.btnColor7.tooltip=Окрасить выбранный элемент этим цветом.
 Editor.btnColor8.tooltip=Окрасить выбранный элемент этим цветом.
 Editor.btnColor9.tooltip=Окрасить выбранный элемент этим цветом.
+// execution 
+Editor.btnTurtle.tooltip=Открыть Turtleizer ...
+Editor.btnMake.tooltip=Выполнить ...
+Editor.btnDropBrk.tooltip=Удалить все остановочные пункты
+
 // Popup menu
 Editor.popupCut.text=Вырезать
 Editor.popupCopy.text=Копировать
@@ -289,7 +294,8 @@ Editor.popupEdit.text=Изменить
 Editor.popupDelete.text=Удалить
 Editor.popupMoveUp.text=Переместить вверх
 Editor.popupMoveDown.text=Переместить вниз
-
+// Breakpoint
+Editor.popupBreakpoint.text=Сменить остановочный пункт
 
 -----[ InputBox ]-----
 //InputBox.title=Изменение элемента
@@ -303,6 +309,7 @@ InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=Подтвердить ваш выбор.
 InputBox.btnCancel.text=Отменить
 InputBox.btnCancel.tooltip=Отменить ваш выбор.
+InputBox.chkBreakpoint.text=Остановочный пункт?
 InputBox.class_specific.Root=Изменить название Программы... 
 InputBox.class_specific.Function=Изменить название и парaметры Подпрограммы... 
 InputBox.class_specific.Alternative.update=Изменить оператор IF...
@@ -326,6 +333,10 @@ InputBox.class_specific.Call.update=Изменить вызов процедур
 InputBox.class_specific.Jump.update=Изменить JUMP...
 InputBox.class_specific.Case.update=Изменить оператор CASE...
 InputBox.class_specific.Parallel.update=Изменить "Параллельный процесс"...
+InputBox.class_specific.Alternative.lblText=Пожалуйста, введите условие
+InputBox.class_specific.While.lblText=Пожалуйста, введите условие входа
+InputBox.class_specific.Repeat.lblText=Пожалуйста, введите условие выхода
+InputBox.class_specific.Case.lblText=Пожалуйста, введите выражение выбора и случайные константы (построчно)
 
 
 -----[ Preferences ]-----
@@ -338,7 +349,7 @@ Preferences.lblAltF.text=Метка FALSE
 Preferences.lblAltF.tooltip=Метка правой стороны.
 Preferences.lblAltContent.text=Содержимое по умолчанию
 Preferences.lblAltContent.tooltip=Содержимое по умолчанию для IF.
-Preferences.altPadRight.text=Расширя́ть FALSE
+Preferences.altPadRight.text=Расширять FALSE
 Preferences.pnlCase.border=Оператор CASE
 Preferences.pnlCase.tooltip=
 Preferences.lblCase.text=Содержимое по умолчанию

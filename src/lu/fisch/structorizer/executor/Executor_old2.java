@@ -282,7 +282,7 @@ public class Executor_old2 implements Runnable
 
     public void execute()
     {
-        Root root = diagram.root;
+        Root root = diagram.getRoot();
 
         boolean analyserState = diagram.getAnalyser();
         diagram.setAnalyser(false);

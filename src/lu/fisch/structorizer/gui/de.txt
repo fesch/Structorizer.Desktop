@@ -244,8 +244,8 @@ Editor.btnFontDown.tooltip=Verringern der Zeichensatz-Größe.
 // copyright 
 Editor.btnAbout.tooltip=Zeigen eines Informationsfensters über den Structorizer.
 // execution 
-Editor.btnTurtle.tooltip=Öffnen des Turtleizer-Fensters zum Test.
-Editor.btnMake.tooltip=Öffnen des Debuggers zum Test
+Editor.btnTurtle.tooltip=Öffnen des Turtleizer-Fensters zum Test ...
+Editor.btnMake.tooltip=Öffnen des Debuggers zum Test ...
 Editor.btnDropBrk.tooltip=Entfernen aller Haltepunkte
 // colors
 Editor.btnColor0.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
@@ -333,7 +333,11 @@ InputBox.class_specific.While.update=WHILE-Schleife bearbeiten...
 InputBox.class_specific.Call.update=Unterprogramm-CALL bearbeiten...
 InputBox.class_specific.Jump.update=Sprung- bzw. Austrittstrittsanweisung bearbeiten...
 InputBox.class_specific.Parallel.update=PARALLEL-Element bearbeiten...
-
+InputBox.class_specific.Alternative.lblText=Eingabe der Bedingung an dieser Stelle.
+InputBox.class_specific.While.lblText=Eingabe der (Wieder-)Eintrittsbedingung an dieser Stelle.
+InputBox.class_specific.Repeat.lblText=Eingabe der Austrittsbedingung an dieser Stelle.
+InputBox.class_specific.Case.lblText=Eingabe des Auswahlausdrucks und der Fallkonstanten (eine je Zeile)
+InputBox.class_specific.Parallel.lblText=Anzahl der nebenläufigen Pfade
 
 -----[ Preferences ]-----
 Preferences.title=Struktogramm-Einstellungen

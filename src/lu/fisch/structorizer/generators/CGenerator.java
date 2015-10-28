@@ -41,11 +41,18 @@ package lu.fisch.structorizer.generators;
  *      Bob Fisch                       2011.11.07              Fixed an issue while doing replacements
  *      Kay Gürtzig                     2014.11.06              Support for logical Pascal operators added
  *      Kay Gürtzig                     2014.11.16              Bugfixes in operator conversion
+ *      Kay Gürtzig                     2015.10.18              Indentation and comment mechanisms revised, bugfix
  *
  ******************************************************************************************************
  *
  *      Comment:
- *      2014.11.16 - Bugfixes
+ *      2015.10.18 - Bugfixes and modificatons (Kay Gürtzig)
+ *      - Bugfix: The export option "export instructions as comments" had been ignored before
+ *      - An empty Jump element will now be translated into a break; instruction by default.
+ *      - Comment method signature simplified
+ *      - Indentation mechanism revised
+ *      
+ *      2014.11.16 - Bugfixes (Kay Gürtzig)
  *      - conversion of comparison and logical operators had still been flawed
  *      - comment generation unified by new inherited generic method insertComment 
  *      
@@ -85,26 +92,39 @@ public class CGenerator extends Generator
 {
 
     /************ Fields ***********************/
+    @Override
     protected String getDialogTitle()
     {
             return "Export ANSI C ...";
     }
 
+    @Override
     protected String getFileDescription()
     {
             return "ANSI C Source Code";
     }
 
+    @Override
     protected String getIndent()
     {
             return "\t";
     }
 
+    @Override
     protected String[] getFileExtensions()
     {
             String[] exts = {"c"};
             return exts;
     }
+
+    // START KGU 2015-10-18: New pseudo field
+    @Override
+    protected String commentSymbolLeft()
+    {
+    	// In ANCI C99, line comments are already allowed
+    	return "//";
+    }
+    // END KGU 2015-10-18
 
     /************ Code Generation **************/
     public static String transform(String _input)
@@ -213,21 +233,30 @@ public class CGenerator extends Generator
     @Override
     protected void generateCode(Instruction _inst, String _indent)
     {
-        // START KGU 2014-11-16
-        insertComment(_inst, _indent, "// ");
-        // END KGU 2014-11-16
+    	// START KGU 2015-10-18: The "export instructions as comments" configuration had been ignored here
+//		insertComment(_inst, _indent);
+//		for(int i=0;i<_inst.getText().count();i++)
+//		{
+//			code.add(_indent+transform(_inst.getText().get(i))+";");
+//		}
+		if (!insertAsComment(_inst, _indent)) {
+			
+			insertComment(_inst, _indent);
 
-        for(int i=0;i<_inst.getText().count();i++)
-        {
-                code.add(_indent+transform(_inst.getText().get(i))+";");
-        }
+			for (int i=0; i<_inst.getText().count(); i++)
+			{
+				code.add(_indent+transform(_inst.getText().get(i))+";");
+			}
+
+		}
+		// END KGU 2015-10-18
     }
 
     @Override
     protected void generateCode(Alternative _alt, String _indent)
     {
         // START KGU 2014-11-16
-        insertComment(_alt, _indent, "// ");
+        insertComment(_alt, _indent);
         // END KGU 2014-11-16
 
         String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
@@ -250,7 +279,7 @@ public class CGenerator extends Generator
     protected void generateCode(Case _case, String _indent)
     {
         // START KGU 2014-11-16
-        insertComment(_case, _indent, "// ");
+        insertComment(_case, _indent);
         // END KGU 2014-11-16
 
         String condition = transform(_case.getText().get(0));
@@ -261,15 +290,15 @@ public class CGenerator extends Generator
 
         for(int i=0;i<_case.qs.size()-1;i++)
         {
-                code.add(_indent+_indent.substring(0,1)+"case "+_case.getText().get(i+1).trim()+":");
-                generateCode((Subqueue) _case.qs.get(i),_indent+_indent.substring(0,1)+_indent.substring(0,1)+_indent.substring(0,1));
-                code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1)+"break;");
+                code.add(_indent+"case "+_case.getText().get(i+1).trim()+":");
+                generateCode((Subqueue) _case.qs.get(i),_indent+_indent.substring(0,1));
+                code.add(_indent+_indent.substring(0,1)+"break;");
         }
 
         if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
         {
-                code.add(_indent+_indent.substring(0,1)+"default:");
-                generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+_indent.substring(0,1)+_indent.substring(0,1));
+                code.add(_indent+"default:");
+                generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+_indent.substring(0,1));
         }
         code.add(_indent+"}");
     }
@@ -278,7 +307,7 @@ public class CGenerator extends Generator
     protected void generateCode(For _for, String _indent)
     {
         // START KGU 2014-11-16
-        insertComment(_for, _indent, "// ");
+        insertComment(_for, _indent);
         // END KGU 2014-11-16
 
         String startValueStr="";
@@ -333,7 +362,7 @@ public class CGenerator extends Generator
     protected void generateCode(While _while, String _indent)
     {
         // START KGU 2014-11-16
-        insertComment(_while, _indent, "// ");
+        insertComment(_while, _indent);
         // END KGU 2014-11-16
 
         String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
@@ -349,7 +378,7 @@ public class CGenerator extends Generator
     protected void generateCode(Repeat _repeat, String _indent)
     {
         // START KGU 2014-11-16
-        insertComment(_repeat, _indent, "// ");
+        insertComment(_repeat, _indent);
         // END KGU 2014-11-16
 
         code.add(_indent+"do");
@@ -362,7 +391,7 @@ public class CGenerator extends Generator
     protected void generateCode(Forever _forever, String _indent)
     {
         // START KGU 2014-11-16
-        insertComment(_forever, _indent, "// ");
+        insertComment(_forever, _indent);
         // END KGU 2014-11-16
 
         code.add(_indent+"while (true)");
@@ -374,40 +403,62 @@ public class CGenerator extends Generator
     @Override
     protected void generateCode(Call _call, String _indent)
     {
-        // START KGU 2014-11-16
-        insertComment(_call, _indent, "// ");
-        // END KGU 2014-11-16
+    	// START KGU 2015-10-18: The "export instructions as comments" configuration had been ignored here
+//		insertComment(_call, _indent);
+//		for(int i=0;i<_call.getText().count();i++)
+//		{
+//			code.add(_indent+transform(_call.getText().get(i))+";");
+//		}
+		if (!insertAsComment(_call, _indent)) {
+			
+			insertComment(_call, _indent);
 
-        for(int i=0;i<_call.getText().count();i++)
-        {
-                code.add(_indent+transform(_call.getText().get(i))+";");
-        }
+			for (int i=0; i<_call.getText().count(); i++)
+			{
+				code.add(_indent+transform(_call.getText().get(i))+";");
+			}
+
+		}
+		// END KGU 2015-10-18
     }
 
     @Override
     protected void generateCode(Jump _jump, String _indent)
     {
-        // START KGU 2014-11-16
-        insertComment(_jump, _indent, "// ");
-        // END KGU 2014-11-16
+    	// START KGU 2015-10-18: The "export instructions as comments" configuration had been ignored here
+//		insertComment(_jump, _indent);
+//		for(int i=0;i<_jump.getText().count();i++)
+//		{
+//			code.add(_indent+transform(_jump.getText().get(i))+";");
+//		}
+		if (!insertAsComment(_jump, _indent)) {
+			
+			insertComment(_jump, _indent);
 
-        for(int i=0;i<_jump.getText().count();i++)
-        {
-                code.add(_indent+transform(_jump.getText().get(i))+";");
-        }
+			// KGU 2015-10-18: In case of an empty text generate a break instruction by default.
+			boolean isEmpty = true;
+			for (int i=0; i<_jump.getText().count(); i++)
+			{
+				String line = transform(_jump.getText().get(i));
+				if (!line.trim().isEmpty()) isEmpty = false;
+				code.add(_indent + line + ";");
+			}
+			if (isEmpty)
+			{
+				code.add(_indent + "break;");
+			}
+
+		}
+		// END KGU 2015-10-18
     }
 
     @Override
     protected void generateCode(Subqueue _subqueue, String _indent)
     {
-        // START KGU 2014-11-16
-        insertComment(_subqueue, _indent, "// ");
-        // END KGU 2014-11-16
-
         // code.add(_indent+"");
-        for(int i=0;i<_subqueue.children.size();i++)
+        for(int i=0; i<_subqueue.children.size(); i++)
         {
-                generateCode((Element) _subqueue.children.get(i),_indent);
+                generateCode((Element) _subqueue.children.get(i), _indent);
         }
         // code.add(_indent+"");
     }
@@ -415,44 +466,46 @@ public class CGenerator extends Generator
     @Override
     public String generateCode(Root _root, String _indent)
     {
-        String pr = "program";
-        if(_root.isProgram == false) {pr="function";}
+        String pr = (_root.isProgram) ? "program" : "function";
 
         //code.add(pr+" "+_root.getText().get(0)+";");
-        code.add("// "+pr+" "+_root.getText().get(0)+";");
+        insertComment(pr + " " + _root.getText().get(0), "");
         code.add("#include <stdio.h>");
         code.add("");
         // START KGU 2014-11-16
-        insertComment(_root, "", "// ");
+        insertComment(_root, "");
         // END KGU 2014-11-16
 
         // START Kay Gürtzig 2010-09-10
         //code.add("int main(void)");
-        if (_root.isProgram == true)
+        if (_root.isProgram)
         	code.add("int main(void)");
         else {
             String fnHeader = _root.getText().get(0).trim();
             if(fnHeader.indexOf('(')==-1 || !fnHeader.endsWith(")")) fnHeader=fnHeader+"(void)";
+            // START KGU 2015-10-18: Hint to accomplish the function signature
+            insertComment("TODO Revise the return type and declare the parameters.", "");
+            // END KGU 2015-10-18
         	code.add("int " + fnHeader);
         }
         // END Kay Gürtzig 2010-09-10
         code.add("{");
-        code.add(_indent+"// declare your variables here");
-        code.add(_indent);
-        code.add(_indent+"// For any input using the 'scanf' function you need to fill the first parameter.");
-        code.add(_indent+"// http://en.wikipedia.org/wiki/Scanf#Format_string_specifications");
-        code.add(_indent);
-        code.add(_indent+"// For any output using the 'printf' function you need to fill the first parameter.");
-        code.add(_indent+"// http://en.wikipedia.org/wiki/Printf#printf_format_placeholders");
-        code.add(_indent);
+        insertComment("TODO declare your variables here", this.getIndent());
+        code.add(this.getIndent());
+        insertComment("TODO For any input using the 'scanf' function you need to fill the first argument:", this.getIndent());
+        insertComment(this.getIndent() + "http://en.wikipedia.org/wiki/Scanf#Format_string_specifications", this.getIndent());
+        code.add(this.getIndent());
+        insertComment("TODO For any output using the 'printf' function you need to fill the first argument:", this.getIndent());
+        insertComment(this.getIndent() + "http://en.wikipedia.org/wiki/Printf#printf_format_placeholders", this.getIndent());
+        code.add(this.getIndent());
 
-        code.add(_indent+"");
-        generateCode(_root.children,_indent);
-        // Kay Gürtzig 2010.09.10: A function will already have got a return statement
-        if(_root.isProgram == true)
+        code.add(this.getIndent());
+        generateCode(_root.children, this.getIndent());
+        // Kay Gürtzig 2010.09.10: A function will already have got a return statement (if it needs one)
+        if (_root.isProgram)
         {
-        	code.add(_indent+"");
-        	code.add(_indent+"return 0;");
+        	code.add(this.getIndent());
+        	code.add(this.getIndent()+"return 0;");
         }
         code.add("}");
 

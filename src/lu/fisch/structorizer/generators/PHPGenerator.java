@@ -43,10 +43,17 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig                     2014.11.11              Fixed some replacement flaws (see comment)
  *      Kay Gürtzig                     2014.11.16              Comment generation revised (now inherited)
  *      Kay Gürtzig                     2014.12.02              Additional replacement of "<--" by "<-"
+ *      Kay Gürtzig                     2015.10.18              Indentation and comment mechanisms revised, bugfix
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *
+ *      2015.10.18 - Bugfixes and modifications (Kay Gürtzig)
+ *      - Comment method signature simplified
+ *      - Bugfix: The export option "export instructions as comments" had been ignored before
+ *      - The indentation logic was somehow inconsistent
+ *
  *      2014.11.11
  *      - Replacement of rather unlikely comparison operator " >== " mended
  *      - Correction of the output instruction replacement ("echo " instead of "printf(...)")
@@ -110,6 +117,14 @@ public class PHPGenerator extends Generator
             return exts;
     }
 
+    // START KGU 2015-10-18: New pseudo field
+    @Override
+    protected String commentSymbolLeft()
+    {
+    	return "//";
+    }
+    // END KGU 2015-10-18
+    
     /************ Code Generation **************/
     public static String transform(String _input)
     {
@@ -222,21 +237,30 @@ public class PHPGenerator extends Generator
     @Override
     protected void generateCode(Instruction _inst, String _indent)
     {
-		// START KGU 2014-11-16
-		insertComment(_inst, _indent, "// ");
-		// END KGU 2014-11-16
+    	// START KGU 2015-10-18: The "export instructions as comments" configuration had been ignored here
+//		insertComment(_inst, _indent);
+//		for(int i=0;i<_inst.getText().count();i++)
+//		{
+//			code.add(_indent+transform(_inst.getText().get(i))+";");
+//		}
+		if (!insertAsComment(_inst, _indent)) {
+			
+			insertComment(_inst, _indent);
 
-        for(int i=0;i<_inst.getText().count();i++)
-        {
-                code.add(_indent+transform(_inst.getText().get(i))+";");
-        }
+			for (int i=0; i<_inst.getText().count(); i++)
+			{
+				code.add(_indent+transform(_inst.getText().get(i))+";");
+			}
+
+		}
+		// END KGU 2015-10-18
     }
 
     @Override
     protected void generateCode(Alternative _alt, String _indent)
     {
 		// START KGU 2014-11-16
-		insertComment(_alt, _indent, "// ");
+		insertComment(_alt, _indent);
 		// END KGU 2014-11-16
 
         String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
@@ -244,13 +268,13 @@ public class PHPGenerator extends Generator
 
         code.add(_indent+"if "+condition+"");
         code.add(_indent+"{");
-        generateCode(_alt.qTrue,_indent+_indent.substring(0,1));
+        generateCode(_alt.qTrue,_indent+this.getIndent());
         if(_alt.qFalse.getSize()!=0)
         {
                 code.add(_indent+"}");
                 code.add(_indent+"else");
                 code.add(_indent+"{");
-                generateCode(_alt.qFalse,_indent+_indent.substring(0,1));
+                generateCode(_alt.qFalse,_indent+this.getIndent());
         }
         code.add(_indent+"}");
     }
@@ -259,7 +283,7 @@ public class PHPGenerator extends Generator
     protected void generateCode(Case _case, String _indent)
     {
 		// START KGU 2014-11-16
-		insertComment(_case, _indent, "// ");
+		insertComment(_case, _indent);
 		// END KGU 2014-11-16
 
         String condition = transform(_case.getText().get(0));
@@ -270,15 +294,15 @@ public class PHPGenerator extends Generator
 
         for(int i=0;i<_case.qs.size()-1;i++)
         {
-                code.add(_indent+_indent.substring(0,1)+"case "+_case.getText().get(i+1).trim()+":");
-                generateCode((Subqueue) _case.qs.get(i),_indent+_indent.substring(0,1)+_indent.substring(0,1)+_indent.substring(0,1));
-                code.add(_indent+_indent.substring(0,1)+"break;");
+                code.add(_indent+this.getIndent()+"case "+_case.getText().get(i+1).trim()+":");
+                generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent());
+                code.add(_indent+this.getIndent()+this.getIndent()+"break;");
         }
 
         if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
         {
-                code.add(_indent+_indent.substring(0,1)+"default:");
-                generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+_indent.substring(0,1)+_indent.substring(0,1));
+                code.add(_indent+this.getIndent()+"default:");
+                generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());
         }
         code.add(_indent+"}");
     }
@@ -287,7 +311,7 @@ public class PHPGenerator extends Generator
     protected void generateCode(For _for, String _indent)
     {
 		// START KGU 2014-11-16
-		insertComment(_for, _indent, "// ");
+		insertComment(_for, _indent);
 		// END KGU 2014-11-16
 
         String startValueStr="";
@@ -309,7 +333,7 @@ public class PHPGenerator extends Generator
                         counterStr+" = "+startValueStr+"; "+counterStr+" <= "+endValueStr+"; "+counterStr+" = "+counterStr+" + ("+stepValueStr+") "+
                         ")");
         code.add(_indent+"{");
-        generateCode(_for.q,_indent+_indent.substring(0,1));
+        generateCode(_for.q,_indent+this.getIndent());
         code.add(_indent+"}");
     }
     /* Version 2009.01.18 by Bob Fisch
@@ -342,7 +366,7 @@ public class PHPGenerator extends Generator
     protected void generateCode(While _while, String _indent)
     {
 		// START KGU 2014-11-16
-		insertComment(_while, _indent, "// ");
+		insertComment(_while, _indent);
 		// END KGU 2014-11-16
 
         String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
@@ -350,7 +374,7 @@ public class PHPGenerator extends Generator
 
         code.add(_indent+"while "+condition+" ");
         code.add(_indent+"{");
-        generateCode(_while.q,_indent+_indent.substring(0,1));
+        generateCode(_while.q,_indent+this.getIndent());
         code.add(_indent+"}");
     }
 
@@ -358,12 +382,12 @@ public class PHPGenerator extends Generator
     protected void generateCode(Repeat _repeat, String _indent)
     {
 		// START KGU 2014-11-16
-		insertComment(_repeat, _indent, "// ");
+		insertComment(_repeat, _indent);
 		// END KGU 2014-11-16
 
         code.add(_indent+"do");
         code.add(_indent+"{");
-        generateCode(_repeat.q,_indent+_indent.substring(0,1));
+        generateCode(_repeat.q,_indent+this.getIndent());
         code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+"));");
     }
 
@@ -371,12 +395,12 @@ public class PHPGenerator extends Generator
     protected void generateCode(Forever _forever, String _indent)
     {
 		// START KGU 2014-11-16
-		insertComment(_forever, _indent, "// ");
+		insertComment(_forever, _indent);
 		// END KGU 2014-11-16
 
         code.add(_indent+"while (true)");
         code.add(_indent+"{");
-        generateCode(_forever.q,_indent+_indent.substring(0,1));
+        generateCode(_forever.q,_indent+this.getIndent());
         code.add(_indent+"}");
     }
 
@@ -384,7 +408,7 @@ public class PHPGenerator extends Generator
     protected void generateCode(Call _call, String _indent)
     {
 		// START KGU 2014-11-16
-		insertComment(_call, _indent, "// ");
+		insertComment(_call, _indent);
 		// END KGU 2014-11-16
 
         for(int i=0;i<_call.getText().count();i++)
@@ -397,7 +421,7 @@ public class PHPGenerator extends Generator
     protected void generateCode(Jump _jump, String _indent)
     {
 		// START KGU 2014-11-16
-		insertComment(_jump, _indent, "// ");
+		insertComment(_jump, _indent);
 		// END KGU 2014-11-16
 
         for(int i=0;i<_jump.getText().count();i++)
@@ -410,7 +434,7 @@ public class PHPGenerator extends Generator
     protected void generateCode(Subqueue _subqueue, String _indent)
     {
 		// START KGU 2014-11-16
-		insertComment(_subqueue, _indent, "// ");
+		insertComment(_subqueue, _indent);
 		// END KGU 2014-11-16
 
         // code.add(_indent+"");
@@ -425,20 +449,18 @@ public class PHPGenerator extends Generator
     public String generateCode(Root _root, String _indent)
     {
         code.add("<?php");
-		// START KGU 2014-11-16
-		insertComment(_root, "", "// ");
-		// END KGU 2014-11-16
-
         String pr = "program";
         if(_root.isProgram == false) {pr="function";}
-        code.add("// "+pr+" "+_root.getText().get(0)+";");
-        code.add("");
-
+        insertComment(pr+" "+_root.getMethodName() + " (generated by Structorizer)", _indent);
+		// START KGU 2014-11-16
+		insertComment(_root, "");
+		// END KGU 2014-11-16
         if (_root.isProgram == true)
         {
-            code.add("// declare your variables here");
+        	code.add("");
+            insertComment("TODO declare your variables here if necessary", _indent);
             code.add("");
-            generateCode(_root.children,_indent);
+            generateCode(_root.children, _indent);
         }
         else
         {
@@ -446,13 +468,9 @@ public class PHPGenerator extends Generator
             if(fnHeader.indexOf('(')==-1 || !fnHeader.endsWith(")")) fnHeader=fnHeader+"()";
                 code.add("function " + fnHeader);
             code.add("{");
-            code.add(_indent+"// declare your variables here");
+            insertComment("TODO declare your variables here if necessary", _indent + this.getIndent());
             code.add(_indent+"");
-            generateCode(_root.children,_indent);
-        }
-
-        if (!_root.isProgram == true)
-        {
+            generateCode(_root.children, _indent + this.getIndent());
             code.add("}");
         }
 

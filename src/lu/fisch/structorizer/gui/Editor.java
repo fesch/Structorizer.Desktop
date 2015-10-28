@@ -33,7 +33,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.28      First Issue
- *      Kay Gürtzig     2015.10.12      control elements for breakpoint handling added. 
+ *      Kay Gürtzig     2015.10.12      control elements for breakpoint handling added (KGU#43). 
  *
  ******************************************************************************************************
  *
@@ -182,9 +182,9 @@ public class Editor extends JPanel implements NSDController, ComponentListener
     protected JMenuItem popupDelete = new JMenuItem("Delete",IconLoader.ico005);
     protected JMenuItem popupMoveUp = new JMenuItem("Move up",IconLoader.ico019);
     protected JMenuItem popupMoveDown = new JMenuItem("Move down",IconLoader.ico020);
-    // START KGU 2015-10-12: Breakpoint toggle
+    // START KGU#43 2015-10-12: Breakpoint toggle
     protected JMenuItem popupBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
-    // END KGU 2015-10-12
+    // END KGU#43 2015-10-12
 
     
     private MyToolbar newToolBar(String name)
@@ -300,12 +300,12 @@ public class Editor extends JPanel implements NSDController, ComponentListener
         popup.add(popupMoveDown);
         popupMoveDown.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.moveDownNSD(); doButtons(); } } );
         
-        // START KGU 2015-10-12 Add a possibility to set or unset a checkpoint on the selected Element
+        // START KGU#43 2015-10-12 Add a possibility to set or unset a checkpoint on the selected Element
         popup.addSeparator();
 
         popup.add(popupBreakpoint);
         popupBreakpoint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleBreakpoint(); doButtons(); } }); 
-        // END KGU 2015-10-12
+        // END KGU#43 2015-10-12
 
         // add toolbars
         //toolbar.setLayout(new FlowLayout(FlowLayout.LEFT,0,0));
@@ -589,7 +589,7 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 
 		// conditions
 		boolean conditionAny =  diagram.getSelected() != null;
-		boolean condition =  conditionAny && diagram.getSelected() != diagram.root;
+		boolean condition =  conditionAny && diagram.getSelected() != diagram.getRoot();
 		int i = -1;
 		boolean conditionCanMoveUp = false;
 		boolean conditionCanMoveDown = false;
@@ -608,8 +608,8 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		}
 		
 		// undo & redo
-		btnUndo.setEnabled(diagram.root.canUndo());
-		btnRedo.setEnabled(diagram.root.canRedo());
+		btnUndo.setEnabled(diagram.getRoot().canUndo());
+		btnRedo.setEnabled(diagram.getRoot().canRedo());
 		
 		// elements
 		btnBeforeInst.setEnabled(condition);

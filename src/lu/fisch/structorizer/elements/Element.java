@@ -374,7 +374,11 @@ public abstract class Element {
 		return this.breakpoint;
 	}
 	
-	// Recursively clears all breakpoints in this branch
+	// 
+	/**
+	 * Recursively clears all breakpoints in this branch
+	 * (To be overridden by structured sub-classes!)
+	 */
 	public void clearBreakpoints()
 	{
 		this.breakpoint = false;
@@ -382,7 +386,10 @@ public abstract class Element {
 	// END KGU 2015-10-12
 
 	// START KGU 2015-10-13
-	// Recursively clears all execution flags in this branch
+	/**
+	 * Recursively clears all execution flags in this branch
+	 * (To be overridden by structured sub-classes!)
+	 */
 	public void clearExecutionStatus()
 	{
 		this.executed = false;
@@ -391,6 +398,12 @@ public abstract class Element {
 	// END KGU 2015-10-13
 
 	// START KGU 2015-10-09 Methods selectElementByCoord(int, int) and getElementByCoord(int, int) merged
+	/**
+	 * Retrieves the smallest (deepest) Element containing coordinate (_x, _y) and flags it as selected
+	 * @param _x
+	 * @param _y
+	 * @return the selected Element (if any)
+	 */
 	public Element selectElementByCoord(int _x, int _y)
 	{
 //            Point pt=getDrawPoint();
@@ -408,7 +421,13 @@ public abstract class Element {
 		return this.getElementByCoord(_x, _y, true);
 	}
 
-	// deprecated: use getElementByCoord(_x, _y, false) instead
+	// 
+	/**
+	 * Retrieves the smallest (deepest) Element containing coordinate (_x, _y)
+	 * @param _x
+	 * @param _y
+	 * @return the (sub-)Element at the given coordinate (if there is none, returns null)
+	 */
 	public Element getElementByCoord(int _x, int _y)
 	{
 //            Point pt=getDrawPoint();
@@ -447,7 +466,11 @@ public abstract class Element {
 	
 	// START KGU 2015-10-11: Helper methods for all Element types' drawing
 	
-	// Draws the marker bar on the left-hand side of the given _rect (supposed to be the Element's rectangle)
+	/**
+	 * Draws the marker bar on the left-hand side of the given _rect 
+	 * @param _canvas - the canvas to be drawn in
+	 * @param _rect - supposed to be the Element's surrounding rectangle
+	 */
 	protected void drawCommentMark(Canvas _canvas, Rect _rect)
 	{
 		_canvas.setBackground(E_COMMENTCOLOR);
@@ -470,8 +493,12 @@ public abstract class Element {
 		
 		_canvas.fillRect(markerRect);
 	}
-
-	// Draws the marker bar on the top side of the given _rect (supposed to be the Element's rectangle)
+ 
+	/**
+	 * Draws the marker bar on the top side of the given _rect
+	 * @param _canvas - the canvas to be drawn in
+	 * @param _rect - the surrounding rectangle of the Element (or relevant part of it)
+	 */
 	protected void drawBreakpointMark(Canvas _canvas, Rect _rect)
 	{
 		if (breakpoint) {
@@ -1080,4 +1107,37 @@ public abstract class Element {
         this.collapsed = collapsed;
     }
 
+    // START KGU 2015-10-16: Some Root stuff properly delegated to the Element subclasses
+    // (The obvious disadvantage is slightly reduced performance, of course)
+    /**
+     * Returns the serialised texts held within this element and its substructure.
+     * The argument _instructionsOnly controls whether mere expressions like logical conditions or
+     * even call statements are included. As a rule, no lines that may not potentially introduce new
+     * variables are added if true (which not only reduces time and space requirements but also avoids
+     * "false positives" in variable detection). 
+     * Uses addFullText() - so possibly better override that method if necessary.
+     * @param _instructionsOnly - if true then texts not possibly containing variable declarations are omitted
+     * @return the composed StringList
+     */
+    public StringList getFullText(boolean _instructionsOnly)
+    {
+    	// The default...
+    	StringList sl = new StringList();
+    	this.addFullText(sl, _instructionsOnly);
+    	return sl;
+    }
+    
+    /**
+     * Appends all the texts held within this element and its substructure to the given StringList.
+     * The argument _instructionsOnly controls whether mere expressions like logical conditions or
+     * even call statements are included. As a rule, no lines that may not potentially introduce new
+     * variables are added if true (which not only reduces time and space requirements but also avoids
+     * "false positives" in variable detection). 
+     * (To be overridden by structured subclasses)
+     * @param _lines - the StringList to append to 
+     * @param _instructionsOnly - if true then texts not possibly containing variable declarations are omitted
+     */
+    protected abstract void addFullText(StringList _lines, boolean _instructionsOnly);
+    // END KGU 2015-10-16
+    
 }

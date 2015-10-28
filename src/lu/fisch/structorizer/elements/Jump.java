@@ -173,6 +173,21 @@ public class Jump extends Instruction {
 		return ele;
 	}
 	
+	// START KGU 2015-10-16
+	/* (non-Javadoc)
+	 * Only adds anything if _instructionsOnly is set false (because no new variables ought to occur here).
+	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
+	 */
+	@Override
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    {
+		// In a jump instruction no variables ought to be introduced - so we ignore this text on _instructionsOnly
+		if (!_instructionsOnly)
+		{
+			_lines.add(this.getText());
+		}
+    }
+    // END KGU 2015-10-16
 	
 	
 }

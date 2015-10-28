@@ -516,5 +516,24 @@ public class Case extends Element
     }
     // END KGU 2015-10-13
 
+	// START KGU 2015-10-16
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
+	 */
+	@Override
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    {
+    	if (!_instructionsOnly) {
+    		_lines.add(this.getText());	// Text of the condition
+    	}
+    	if (qs!= null)
+    	{
+    		for (int i = 0; i < qs.size(); i++)
+    		{
+    			qs.get(i).addFullText(_lines, _instructionsOnly);
+    		}
+    	}
+    }
+    // END KGU 2015-10-16
 
 }

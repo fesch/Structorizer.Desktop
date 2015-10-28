@@ -35,6 +35,7 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2010.11.26      First Issue
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
+ *      Kay Gürtzig     2015.10.16      Method clearExecutionStatus() duly overridden.
  *
  ******************************************************************************************************
  *
@@ -445,6 +446,9 @@ public class Parallel extends Element
     }
 
     // START KGU 2015-10-12
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.elements.Element#clearBreakpoints()
+     */
     @Override
     public void clearBreakpoints()
     {
@@ -458,5 +462,46 @@ public class Parallel extends Element
     	}
     }
     // END KGU 2015-10-12
+    
+    // START KGU 2015-10-16
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.elements.Element#clearExecutionStatus()
+     */
+    @Override
+    public void clearExecutionStatus()
+    {
+    	super.clearExecutionStatus();
+    	if (qs!= null)
+    	{
+    		for (int i = 0; i < qs.size(); i++)
+    		{
+    			qs.get(i).clearExecutionStatus();
+    		}
+    	}
+    }
+    // END KGU 2015-10-16
+    
+	// START KGU 2015-10-16
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
+	 */
+	@Override
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    {
+		// Under no circumstances, the text may contain an instruction or even variable declaration (it's just the number of threads) 
+		if (!_instructionsOnly)
+		{
+			_lines.add(this.getText());
+		}
+    	if (qs!= null)
+    	{
+    		for (int i = 0; i < qs.size(); i++)
+    		{
+    			qs.get(i).addFullText(_lines, _instructionsOnly);
+    		}
+    	}		
+    }
+    // END KGU 2015-10-16
+    
     
 }

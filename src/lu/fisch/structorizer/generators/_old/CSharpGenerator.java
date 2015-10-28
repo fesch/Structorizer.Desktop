@@ -73,7 +73,15 @@ public class CSharpGenerator extends Generator
 			String[] exts = {"cs"};
 			return exts;
 		}
-		// TODO
+
+	    // START KGU 2015-10-18: New pseudo field
+	    protected String commentSymbolLeft()
+	    {
+	    	return "//";
+	    }
+	    // END KGU 2015-10-18
+
+	    // TODO
 		/************ Code Generation **************/
 		public static String transform(String _input)
 		{

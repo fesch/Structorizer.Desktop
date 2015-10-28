@@ -38,16 +38,31 @@ package lu.fisch.structorizer.executor;
 *                                      support for Forever loops and Parallel sections added;
 *                                      delay mechanism reorganised in order to integrate breakpoint
 *                                      handling in a sound way
-*      Kay Gürtzig     2015.10.15      stepParallel() revised (see comment) 
+*      Kay Gürtzig     2015.10.15      stepParallel() revised (see comment)
+*      Kay Gürtzig     2015.10.17/18   First preparations for a subroutine retrieval via Arranger
 *
 ******************************************************************************************************
 *
 *      Comment:
-*      2015.10.15 Improved simulation of Parallel execution
-*      Instead of running entire "threads" of the parallel section in just random order, the "threads"
-*      will now only progress by one instruction when randomly chosen, so they alternate in an
-*      unpredictable way)
-*
+*      2015.10.15 (KGU#47) Improved simulation of Parallel execution
+*          Instead of running entire "threads" of the parallel section in just random order, the "threads"
+*          will now only progress by one instruction when randomly chosen, so they alternate in an
+*          unpredictable way)
+*      2015.10.17/18 (KGU#2) Two successful (though somewhat makeshift) subroutine retrieval attempts
+*          in stepInstruction() via Arranger and by means of Bob's Function class.
+*          We can be glad that Executor is already a Singleton - on the one hand...
+*          Towards an actually working approach several challenges must therefore be addressed:
+*          1. a Stack with tuples of root, variable values, return value, and the like.
+*          2. Reentrance of the Elements or replication of entire Element hierarchies.
+*          3. Recursion on the user algorithm level (see above) - if deep copies of the diagrams are
+*             temporarily created and pushed into the Arranger then either an additional "busy" flag
+*             will be necessary on Root or a second, volatile diagram vector (not be searched!) on
+*             Surface. By design, volatile subroutine copies should never be associated with a Mainform,
+*             not even on double-clicking! By design, they should partially overlap on the Surface
+*             (in the stack order i.e. top on top).
+*          4. The trouble is going to get really nasty with Parallel elements involved, particularly if
+*             their threads use identical subroutines.   
+*         
 ******************************************************************************************************///
 
 import java.awt.Color;
@@ -60,6 +75,7 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 import lu.fisch.structorizer.elements.Alternative;
+import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
@@ -330,7 +346,7 @@ public class Executor implements Runnable
 
 	public void execute()
 	{
-		Root root = diagram.root;
+		Root root = diagram.getRoot();
 
 		boolean analyserState = diagram.getAnalyser();
 		diagram.setAnalyser(false);
@@ -344,57 +360,64 @@ public class Executor implements Runnable
 		String result = "";
 		returned = false;
 
-		StringList params = root.getParameterNames();
-                //System.out.println("Having: "+params.getCommaText());
-		params=params.reverse();
-                //System.out.println("Having: "+params.getCommaText());
-		for (int i = 0; i < params.count(); i++)
+		// START KGU#39 2015-10-16 (1/2): It made absolutely no sense to look for parameters if root is a program
+		if (!root.isProgram)
 		{
-			String in = params.get(i);
-			String str = JOptionPane.showInputDialog(null,
-					"Please enter a value for <" + in + ">", null);
-			if (str == null)
+		// END KGU#39 2015-10-16 (1/2)
+			StringList params = root.getParameterNames();
+			//System.out.println("Having: "+params.getCommaText());
+			params=params.reverse();
+			//System.out.println("Having: "+params.getCommaText());
+			for (int i = 0; i < params.count(); i++)
 			{
-				i = params.count();
-				result = "Manual break!";
-				break;
-			}
-			try
-			{
-				// first add as string
-				setVar(in, str);
-				// try adding as char
+				String in = params.get(i);
+				String str = JOptionPane.showInputDialog(null,
+						"Please enter a value for <" + in + ">", null);
+				if (str == null)
+				{
+					i = params.count();
+					result = "Manual break!";
+					break;
+				}
 				try
 				{
-					if (str.length() == 1)
+					// first add as string
+					setVar(in, str);
+					// try adding as char
+					try
 					{
-						Character strc = str.charAt(0);
-						setVar(in, strc);
+						if (str.length() == 1)
+						{
+							Character strc = str.charAt(0);
+							setVar(in, strc);
+						}
+					} catch (Exception e)
+					{
 					}
-				} catch (Exception e)
+					// try adding as double
+					try
+					{
+						double strd = Double.parseDouble(str);
+						setVar(in, strd);
+					} catch (Exception e)
+					{
+					}
+					// finally try adding as integer
+					try
+					{
+						int stri = Integer.parseInt(str);
+						setVar(in, stri);
+					} catch (Exception e)
+					{
+					}
+				} catch (EvalError ex)
 				{
+					result = ex.getMessage();
 				}
-				// try adding as double
-				try
-				{
-					double strd = Double.parseDouble(str);
-					setVar(in, strd);
-				} catch (Exception e)
-				{
-				}
-				// finally try adding as integer
-				try
-				{
-					int stri = Integer.parseInt(str);
-					setVar(in, stri);
-				} catch (Exception e)
-				{
-				}
-			} catch (EvalError ex)
-			{
-				result = ex.getMessage();
 			}
+		// START KGU#39 2015-10-16
 		}
+		// END KGU#39 2015-10-16
 
 		if (result.equals(""))
 		{
@@ -973,7 +996,7 @@ public class Executor implements Runnable
 			cmd = convert(cmd);
 			try
 			{
-				// START KGU 2015-10-12
+				// START KGU 2015-10-12: But do we really want to step within an instruction block? 
 				if (i > 0)
 				{
 					delay();
@@ -983,10 +1006,32 @@ public class Executor implements Runnable
 				// assignment
 				if (cmd.indexOf("<-") >= 0)
 				{
+					// TODO KGU#2: In case of a Call element, do we just allow a procedure call or an assignment with just the
+					// subroute call on the right-hand side? In a way this makes sense. Then it would be relatively easy to
+					// detect and prepare the very subroutine call, in contrast to the occurrence of such a function call to
+					// another NSD being allowed at any expression depth?
 					String varName = cmd.substring(0, cmd.indexOf("<-"))
 							.trim();
 					String expression = cmd.substring(
 							cmd.indexOf("<-") + 2, cmd.length()).trim();
+					// START KGU#2 2015-10-18: Just a preliminary check for the applicability of a cross-NSD subroutine execution!
+					if (element instanceof Call)
+					{
+						Function f = new Function(expression);
+						if (f.isFunction())
+						{
+							System.out.println("Looking for SUBROUTINE NSD:");
+							System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
+							Root sub = this.diagram.getRoot().findSubroutineWithSignature(f.getName(), f.paramCount());
+							if (sub != null)
+							{
+								System.out.println("HEUREKA: Matching sub-NSD found for SUBROUTINE CALL!");
+								System.out.println("--> " + varName + " <- " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
+							}
+						}
+					}
+					// END KGU#2 2015-10-17
+
 					cmd = cmd.replace("<-", "=");
 					// evaluate the expression
 					Object n = interpreter.eval(expression);
@@ -1100,6 +1145,21 @@ public class Executor implements Runnable
 						// administer a set of diagrams: If this element is of class Call and the extracted function name
 						// corresponds to one of the NSD diagrams currently opened then try a sub-execution of that diagram.
 						// Parts of the parsing code for diagramController will apply for this project as well.
+						// But it seems to get more tricky. A function CALL might hide in any expression - so we may have
+						// to check interpreter.eval() or write an adapter.
+						// START KGU#2 2015-10-17: Just a preliminary check for the applicability of a cross-NSD subroutine execution!
+						if (element instanceof Call)
+						{
+							System.out.println("Looking for SUBROUTINE NSD:");
+							System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
+							Root sub = this.diagram.getRoot().findSubroutineWithSignature(f.getName(), f.paramCount());
+							if (sub != null)
+							{
+								System.out.println("HEUREKA: Matching sub-NSD found for SUBROUTINE CALL!");
+								System.out.println("--> " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
+							}
+						}
+						// END KGU#2 2015-10-17
 						if (diagramController != null)
 						{
 							String params = new String();
@@ -1672,13 +1732,16 @@ public class Executor implements Runnable
 				else 
 				{
 					// Run the next instruction of the chosen thread
-					result = step(iter.next());
+					Element instr = iter.next();
+					result = step(instr);
+					// In order to allow better tracking we put the executed instructions into `waited´ state...
+					instr.waited = true;
 				}                
 			}
 			if (result.equals(""))
 			{
-				element.executed = false;
-				element.waited = false;
+				// Recursively reset all `waited´ flags of the subqueues now finished
+				element.clearExecutionStatus();
 			}
 		} catch (Error ex)
 		{
@@ -1686,6 +1749,8 @@ public class Executor implements Runnable
 		}
 		return result;
 	}
+
+
 
 	private String unconvert(String s)
 	{

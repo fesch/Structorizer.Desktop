@@ -1,11 +1,11 @@
 Todo
-- options allowing to have symetric or asymetric alternatives [Matthias Paul]
+- options allowing to have symmetric or asymmetric alternatives [Matthias Paul]
 - "default" button to set the parser preferences [Benjamin Bartsch]
-  The default values filled should be dependent on the select GUI language,
+  The default values filled should be dependent on the selected GUI language,
   e.g. GUI=EN, Input will be "IN"
        GUI=LU, Input will be "lire" ...
 - allow text formating of elements --> must also be saved to the NSD file [David Tremain]
-- allow multiple elements to be seleced and moved/formated at once [David Tremain]
+- allow multiple elements to be selected and moved/formatted at once [David Tremain]
 
 Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
@@ -32,11 +32,11 @@ Current development version: 3.22-28 (2015.01.19)
 - 16: removed a bug when double clicking en element [Bob Fisch]
 - 16: variable highlighting did not work anymore [Andreas Schwierz]
 - 17: executor: array support [Gennaro Donnarumma]
-- 18: added traditional chinese translation [Joe Chem]
+- 18: added traditional Chinese translation [Joe Chem]
 - 19: multiple improvements <Kay Gürtzig>
 - 20: DE: linguistic flaws corrected <Kay Gürtzig>
 - 21: major revision of generators files <Kay Gürtzig>
-- 22: possiblity to switch text/comment in diagram [Samuel Schmidt]
+- 22: possibility to switch text/comment in diagram [Samuel Schmidt]
 - 23: bug while parsing NSD files [Benedict Thienpont]
 - 24: fine tuning the ExportOptionDialoge <Kay Gürtzig>
 - 24: updated language files (RU,DE,EN,ES) <Kay Gürtzig>
@@ -52,7 +52,7 @@ Current development version: 3.22-28 (2015.01.19)
 Version 3.22 (2011.11.21)
 - 01: Some fixes in Executor.java & Control.java [Kay Gürtzig]
 - 02: Save & load INI configuration to and from external file [Dirk Wilhelmi]
-- 03: Added russian translation [Юра Лебедев]
+- 03: Added Russian translation [Юра Лебедев]
 - 04: double clicking save files now also works for JWS [David Mancini]
 - 05: fixed a replacement issue while exporting to code [Sylvio Tabor]
 - 06: implemented show/hideTurtle in Turtleizer [Sylvio Tabor]

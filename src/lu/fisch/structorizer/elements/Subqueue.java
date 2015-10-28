@@ -24,7 +24,7 @@ package lu.fisch.structorizer.elements;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    This class represents a "subqueue" of another element.
+ *      Description:    This class represents an "subqueue" of another element.
  *						A subqueue can contain other elements.
  *
  ******************************************************************************************************
@@ -260,6 +260,9 @@ public class Subqueue extends Element{
     }*/
 
 	// START KGU 2015-11-12
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#clearBreakpoints()
+	 */
 	@Override
 	public void clearBreakpoints()
 	{
@@ -270,6 +273,9 @@ public class Subqueue extends Element{
         }
 	}
 
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#clearExecutionStatus()
+	 */
 	@Override
 	public void clearExecutionStatus()
 	{
@@ -280,5 +286,20 @@ public class Subqueue extends Element{
         }
 	}
 	// END KGU 2015-10-12
-		
+
+	// START KGU 2015-10-16
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
+	 */
+	@Override
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    {
+		// No own text is to be considered here
+        for(int i = 0; i < children.size(); i++)
+        {      
+            children.get(i).addFullText(_lines, _instructionsOnly);
+        }
+    }
+    // END KGU 2015-10-16
+	
 }

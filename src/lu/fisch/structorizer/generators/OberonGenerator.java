@@ -45,10 +45,15 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig				2014.11.10		Operator conversion modified (see comment)
  *      Kay Gürtzig				2014.11.16		Operator conversion corrected (see comment)
  *      Kay Gürtzig				2014.12.02		Additional replacement of long assignment operator "<--" by "<-"
+ *      Kay Gürtzig				2015.10.18		Indentation issue fixed and comment generation revised
  *
  ******************************************************************************************************
  *
  *      Comment:		Based on "PasGenerator.java" from Bob Fisch
+ *      
+ *      2015.10.18 - Bugfix / Code revision (Kay Gürtzig)
+ *      - Indentation had worked in an exponential way (duplicated every level: _indent+_indent)
+ *      - Interface of comment insertion methods modified
  *      
  *      2014.11.16 - Bugfix / Enhancements
  *      - operator conversion had to be adjusted to comply with Oberon2 syntax
@@ -88,6 +93,20 @@ public class OberonGenerator extends Generator {
 		String[] exts = {"Mod"};
 		return exts;
 	}
+
+    // START KGU 2015-10-18: New pseudo field
+    @Override
+    protected String commentSymbolLeft()
+    {
+    	return "(*";
+    }
+
+    @Override
+    protected String commentSymbolRight()
+    {
+    	return "*)";
+    }
+    // END KGU 2015-10-18
 	
 	/************ Code Generation **************/
 	private String transform(String _input)
@@ -170,27 +189,37 @@ public class OberonGenerator extends Generator {
 	
 	protected void generateCode(Instruction _inst, String _indent)
 	{
-        // START KGU 2014-11-16
-        insertComment(_inst, _indent, "(* ", " *)");
-        // END KGU 2014-11-16
-		for(int i=0;i<_inst.getText().count();i++)
-		{
-			code.add(_indent+transform(_inst.getText().get(i))+";");
+    	// START KGU 2015-10-18: The "export instructions as comments" configuration had been ignored here
+//		insertComment(_inst, _indent);
+//		for(int i=0;i<_inst.getText().count();i++)
+//		{
+//			code.add(_indent+transform(_inst.getText().get(i))+";");
+//		}
+		if (!insertAsComment(_inst, _indent)) {
+			
+			insertComment(_inst, _indent);
+
+			for (int i=0; i<_inst.getText().count(); i++)
+			{
+				code.add(_indent+transform(_inst.getText().get(i))+";");
+			}
+
 		}
+		// END KGU 2015-10-18
 	}
 	
 	protected void generateCode(Alternative _alt, String _indent)
 	{
         // START KGU 2014-11-16
-        insertComment(_alt, _indent, "(* ", " *)");
+        insertComment(_alt, _indent);
         // END KGU 2014-11-16
 		code.add(_indent+"IF "+BString.replace(transform(_alt.getText().getText()),"\n","")+" THEN");
-		generateCode(_alt.qTrue,_indent+_indent);
+		generateCode(_alt.qTrue,_indent+this.getIndent());
 		if(_alt.qFalse.getSize()!=0)
 		{
 			code.add(_indent+"END");
 			code.add(_indent+"ELSE");
-			generateCode(_alt.qFalse,_indent+_indent);
+			generateCode(_alt.qFalse,_indent+this.getIndent());
 		}
 		code.add(_indent+"END;");
 	}
@@ -198,14 +227,14 @@ public class OberonGenerator extends Generator {
 	protected void generateCode(Case _case, String _indent)
 	{
         // START KGU 2014-11-16
-        insertComment(_case, _indent, "(* ", " *)");
+        insertComment(_case, _indent);
         // END KGU 2014-11-16
 		code.add(_indent+"CASE "+transform(_case.getText().get(0))+" OF");
 		
 		for(int i=0;i<_case.qs.size()-1;i++)
 		{
-			code.add(_indent+_indent.substring(0,1)+_case.getText().get(i+1).trim()+":");
-			generateCode((Subqueue) _case.qs.get(i),_indent+_indent);
+			code.add(_indent+this.getIndent()+_case.getText().get(i+1).trim()+":");
+			generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent());
 			// START KGU 2014-11-16: Wrong case separator replaced
 			//code.add(_indent+"END;");
 			code.add(_indent+"|");
@@ -214,11 +243,11 @@ public class OberonGenerator extends Generator {
 		
 		if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
 		{
-			code.add(_indent+_indent.substring(0,1)+"ELSE");
-			generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+_indent.substring(0,1)+_indent.substring(0,1));
+			code.add(_indent+this.getIndent()+"ELSE");
+			generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());
 		}
 		// START KGU 2014-11-16: Wrong indentation mended
-		//code.add(_indent+_indent.substring(0,1)+"END;");
+		//code.add(_indent+this.getIndent()+"END;");
 		code.add(_indent+"END;");
 		// END KGU 2014-11-16
 	}
@@ -226,47 +255,47 @@ public class OberonGenerator extends Generator {
 	protected void generateCode(For _for, String _indent)
 	{
         // START KGU 2014-11-16
-        insertComment(_for, _indent, "(* ", " *)");
+        insertComment(_for, _indent);
         // END KGU 2014-11-16
 		code.add(_indent+"FOR "+BString.replace(transform(_for.getText().getText()),"\n","")+" DO");
-		generateCode(_for.q,_indent+_indent);
+		generateCode(_for.q,_indent+this.getIndent());
 		code.add(_indent+"END;");
 	}
 	
 	protected void generateCode(While _while, String _indent)
 	{
         // START KGU 2014-11-16
-        insertComment(_while, _indent, "(* ", " *)");
+        insertComment(_while, _indent);
         // END KGU 2014-11-16
 		code.add(_indent+"WHILE "+BString.replace(transform(_while.getText().getText()),"\n","")+" DO");
-		generateCode(_while.q,_indent+_indent);
+		generateCode(_while.q, _indent + this.getIndent());
 		code.add(_indent+"END;");
 	}
 	
 	protected void generateCode(Repeat _repeat, String _indent)
 	{
         // START KGU 2014-11-16
-        insertComment(_repeat, _indent, "(* ", " *)");
+        insertComment(_repeat, _indent);
         // END KGU 2014-11-16
 		code.add(_indent+"REPEAT");
-		generateCode(_repeat.q,_indent+_indent);
+		generateCode(_repeat.q,_indent+this.getIndent());
 		code.add(_indent+"UNTIL "+BString.replace(transform(_repeat.getText().getText()),"\n","")+";");
 	}
 	
 	protected void generateCode(Forever _forever, String _indent)
 	{
         // START KGU 2014-11-16
-        insertComment(_forever, _indent, "(* ", " *)");
+        insertComment(_forever, _indent);
         // END KGU 2014-11-16
 		code.add(_indent+"LOOP");
-		generateCode(_forever.q,_indent+_indent);
+		generateCode(_forever.q,_indent+this.getIndent());
 		code.add(_indent+"END;");
 	}
 	
 	protected void generateCode(Call _call, String _indent)
 	{
         // START KGU 2014-11-16
-        insertComment(_call, _indent, "(* ", " *)");
+        insertComment(_call, _indent);
         // END KGU 2014-11-16
 		for(int i=0;i<_call.getText().count();i++)
 		{
@@ -277,7 +306,7 @@ public class OberonGenerator extends Generator {
 	protected void generateCode(Jump _jump, String _indent)
 	{
         // START KGU 2014-11-16
-        insertComment(_jump, _indent, "(* ", " *)");
+        insertComment(_jump, _indent);
         // END KGU 2014-11-16
 		for(int i=0;i<_jump.getText().count();i++)
 		{
@@ -313,7 +342,7 @@ public class OberonGenerator extends Generator {
 			}
 	        // START KGU 2014-11-16: Don't get the comments get lost
 			else {
-				code.add("(* " + _root.getComment().get(i).substring(1) + " *)");
+				insertComment(_root.getComment().get(i).substring(1), "");
 			}
 	        // END KGU 2014-11-16
 			
@@ -322,7 +351,7 @@ public class OberonGenerator extends Generator {
 		//code.add("// declare your variables here");
 		code.add("");
 		code.add("BEGIN");
-		generateCode(_root.children,_indent);
+		generateCode(_root.children,_indent+this.getIndent());
 		code.add("END "+modname+".");
 		
 		return code.getText();

@@ -234,6 +234,10 @@ Editor.btnColor6.tooltip=Colora l'elemento selezionato con questo colore.
 Editor.btnColor7.tooltip=Colora l'elemento selezionato con questo colore.
 Editor.btnColor8.tooltip=Colora l'elemento selezionato con questo colore.
 Editor.btnColor9.tooltip=Colora l'elemento selezionato con questo colore.
+// turtleizer & executor
+Editor.btnTurtle.tooltip=Apri Turtleizer ...
+Editor.btnMake.tooltip=Apri debugger (controllo di esecuzione) ...
+Editor.btnDropBrk.tooltip=Cancella tutti breakpoint.
 // Popup menu
 Editor.popupCut.text=Taglia
 Editor.popupCopy.text=Copia
@@ -268,6 +272,8 @@ Editor.popupEdit.text=Modifica
 Editor.popupDelete.text=Cancella
 Editor.popupMoveUp.text=Sposta in alto
 Editor.popupMoveDown.text=Sposta in basso
+// Breakpoint
+Editor.popupBreakpoint.text=Alterna breakpoint
 
 
 -----[ InputBox ]-----
@@ -303,6 +309,11 @@ InputBox.class_specific.While.update=Modificare Ciclo WHILE...
 InputBox.class_specific.Call.update=Modificare Chiamata...
 InputBox.class_specific.Jump.update=Modificare Salto...
 InputBox.class_specific.Parallel.update=Modificare passaggio Parallelo...
+InputBox.class_specific.Alternative.lblText=Inserisci la condicione
+InputBox.class_specific.While.lblText=Inserisci la condicione para entrar y quedar
+InputBox.class_specific.Repeat.lblText=Inserisci la conditione para salir
+InputBox.class_specific.Case.lblText=Inserisci l'espressione e le constanti della selezione
+InputBox.class_specific.Parallel.lblText=Nummero dei rami paraleli
 
 
 -----[ Preferences ]-----

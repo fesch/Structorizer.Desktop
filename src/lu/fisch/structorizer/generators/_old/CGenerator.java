@@ -90,6 +90,13 @@ public class CGenerator extends Generator
             return exts;
     }
 
+    // START KGU 2015-10-18: New pseudo field
+    protected String commentSymbolLeft()
+    {
+    	return "//";
+    }
+    // END KGU 2015-10-18
+
     /************ Code Generation **************/
     public static String transform(String _input)
     {

@@ -245,4 +245,16 @@ public class Instruction extends Element {
 		ele.setColor(this.getColor());
 		return ele;
 	}
-} 
+
+	// START KGU 2015-10-16
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
+	 */
+	@Override
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    {
+   		_lines.add(this.getText());
+    }
+    // END KGU 2015-10-16
+
+}

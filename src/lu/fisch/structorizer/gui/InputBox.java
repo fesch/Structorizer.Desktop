@@ -273,6 +273,10 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
 				this.setTitle(translation);
 				this.gotSpecificTitle = true;
 			}
+			if (discriminator.equalsIgnoreCase("lblText"))
+			{
+				this.lblText.setText(translation);
+			}
 		}
 	}
     

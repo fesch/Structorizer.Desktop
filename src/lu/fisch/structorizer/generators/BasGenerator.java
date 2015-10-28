@@ -33,6 +33,7 @@ package lu.fisch.structorizer.generators;
  *      Author              Date            Description
  *      ------              ----            -----------
  *      Jacek Dzieniewicz   2013.03.02      First Issue
+ *      Kay Gürtzig         2015.10.18      Comment generation revised
  *
  ******************************************************************************************************
  *
@@ -48,6 +49,7 @@ import lu.fisch.structorizer.elements.*;
 
 public class BasGenerator extends Generator 
 {
+	
 	
     /************ Fields ***********************/
     @Override
@@ -74,6 +76,14 @@ public class BasGenerator extends Generator
             String[] exts = {"bas"};
             return exts;
     }
+
+    // START KGU 2015-10-18: New pseudo field
+    @Override
+    protected String commentSymbolLeft()
+    {
+    	return "REM";
+    }
+    // END KGU 2015-10-18
 
     /************ Code Generation **************/
     private String transform(String _input)
@@ -132,8 +142,8 @@ public class BasGenerator extends Generator
             r = new Regex(BString.breakup(D7Parser.output)+"(.*?)","writeln($1)"); _input=r.replaceAll(_input);*/
 
 
-            if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input+" ")>=0){_input=BString.replace(_input,D7Parser.input+" ","INPUT");}
-            if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output+" ")>=0){_input=BString.replace(_input,D7Parser.output+" ","PRINT");}
+            if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input+" ")>=0){_input=BString.replace(_input,D7Parser.input+" ","INPUT ");}
+            if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output+" ")>=0){_input=BString.replace(_input,D7Parser.output+" ","PRINT ");}
             if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input)>=0){_input=BString.replace(_input,D7Parser.input,"INPUT");}
             if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output)>=0){_input=BString.replace(_input,D7Parser.output,"PRINT");}
 
@@ -144,9 +154,9 @@ public class BasGenerator extends Generator
     protected void generateCode(Instruction _inst, String _indent)
     {
 
-		if(!insertAsComment(_inst, _indent, "REM")) {
+		if(!insertAsComment(_inst, _indent)) {
 			// START KGU 2014-11-16
-			insertComment(_inst, _indent, "REM ");
+			insertComment(_inst, _indent);
 			// END KGU 2014-11-16
 			for(int i=0;i<_inst.getText().count();i++)
 			{
@@ -162,11 +172,11 @@ public class BasGenerator extends Generator
             String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
 
             code.add(_indent+"IF "+condition+" THEN");
-            generateCode(_alt.qTrue,_indent+_indent.substring(0,1));
+            generateCode(_alt.qTrue,_indent+this.getIndent());
             if(_alt.qFalse.getSize()!=0)
             {
                     code.add(_indent+"ELSE");
-                    generateCode(_alt.qFalse,_indent+_indent.substring(0,1));
+                    generateCode(_alt.qFalse,_indent+this.getIndent());
             }
             code.add(_indent+"END IF");
     }
@@ -181,16 +191,16 @@ public class BasGenerator extends Generator
 
             for(int i=0;i<_case.qs.size()-1;i++)
             {
-                    code.add(_indent+_indent.substring(0,1)+_case.getText().get(i+1).trim());
+                    code.add(_indent+this.getIndent()+_case.getText().get(i+1).trim());
                 //    code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1));
-                    generateCode((Subqueue) _case.qs.get(i),_indent+_indent.substring(0,1)+_indent.substring(0,1));
+                    generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent());
                 //    code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1));
             }
 
             if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
             {
-                    code.add(_indent+_indent.substring(0,1)+"CASE ELSE");
-                    generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+_indent.substring(0,1)+_indent.substring(0,1));
+                    code.add(_indent+this.getIndent()+"CASE ELSE");
+                    generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());
             }
             code.add(_indent+"END SELECT");
     }
@@ -200,7 +210,7 @@ public class BasGenerator extends Generator
     {
 
             code.add(_indent+"FOR "+BString.replace(transform(_for.getText().getText()),"\n","").trim()+"");
-            generateCode(_for.q,_indent+_indent.substring(0,1));
+            generateCode(_for.q,_indent+this.getIndent());
             code.add(_indent+"NEXT");
     }
 
@@ -211,7 +221,7 @@ public class BasGenerator extends Generator
             String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
 
             code.add(_indent+"DO WHILE "+condition+"");
-            generateCode(_while.q,_indent+_indent.substring(0,1));
+            generateCode(_while.q,_indent+this.getIndent());
             code.add(_indent+"LOOP");
     }
 
@@ -222,7 +232,7 @@ public class BasGenerator extends Generator
             String condition = BString.replace(transform(_repeat.getText().getText()),"\n","").trim();
 
             code.add(_indent+"DO");
-            generateCode(_repeat.q,_indent+_indent.substring(0,1));
+            generateCode(_repeat.q,_indent+this.getIndent());
             code.add(_indent+"LOOP UNTIL "+condition);
     }
 
@@ -231,16 +241,16 @@ public class BasGenerator extends Generator
     {
 
             code.add(_indent+"DO");
-            generateCode(_forever.q,_indent+_indent.substring(0,1));
+            generateCode(_forever.q,_indent+this.getIndent());
             code.add(_indent+"LOOP");
     }
 	
     @Override
     protected void generateCode(Call _call, String _indent)
     {
-		if(!insertAsComment(_call, _indent, "REM")) {
+		if(!insertAsComment(_call, _indent)) {
 			// START KGU 2014-11-16
-			insertComment(_call, _indent, "REM ");
+			insertComment(_call, _indent);
 			// END KGU 2014-11-16
 			for(int i=0;i<_call.getText().count();i++)
 			{
@@ -252,15 +262,15 @@ public class BasGenerator extends Generator
     @Override
     protected void generateCode(Jump _jump, String _indent)
     {
-                if(!insertAsComment(_jump, _indent, "REM")) {
-			// START KGU 2014-11-16
-			insertComment(_jump, _indent, "REM");
-			// END KGU 2014-11-16
-			for(int i=0;i<_jump.getText().count();i++)
-			{
-				code.add(_indent+transform(_jump.getText().get(i)));
-			}
-		}
+    	if(!insertAsComment(_jump, _indent)) {
+    		// START KGU 2014-11-16
+    		insertComment(_jump, _indent);
+    		// END KGU 2014-11-16
+    		for(int i=0;i<_jump.getText().count();i++)
+    		{
+    			code.add(_indent+transform(_jump.getText().get(i)));
+    		}
+    	}
     }
 
     @Override
@@ -282,14 +292,13 @@ public class BasGenerator extends Generator
             String pr = "REM program";
             if(_root.isProgram==false) {pr="FUNCTION";}
             code.add(pr+" "+_root.getText().get(0));
-            code.add("REM declare variables here: DIM AS type variable1, variable2, ...");
+            insertComment("TODO declare variables here: DIM AS type variable1, variable2, ...", _indent + this.getIndent());
             code.add("");
-            generateCode(_root.children,_indent);
+            generateCode(_root.children, _indent + this.getIndent());
             code.add("");
             if(_root.isProgram==false) {code.add("END FUNCTION");} else {code.add("REM END");}
 
             return code.getText();
     }
-	
 	
 }

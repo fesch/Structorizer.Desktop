@@ -434,7 +434,21 @@ public class Alternative extends Element {
 		this.qTrue.clearExecutionStatus();
 	}
 	// END KGU 2015-10-13
-		
+
+	// START KGU 2015-10-16
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
+	 */
+	@Override
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    {
+    	if (!_instructionsOnly) {
+    		_lines.add(this.getText());	// Text of the condition
+    	}
+    	this.qTrue.addFullText(_lines, _instructionsOnly);
+    	this.qFalse.addFullText(_lines, _instructionsOnly);
+    }
+    // END KGU 2015-10-16
 	
 	
 }

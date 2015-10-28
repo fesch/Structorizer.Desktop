@@ -1208,12 +1208,12 @@ public class Root extends Element {
                             }
                     }
 
-/*                    // FIXME (KGU) Disable this after testing
+                    /*
                     System.out.println("Lines: "+lines.getCommaText());
                     System.out.println("Parts: "+parts.getCommaText());
                     System.out.println("Vars:  "+variables.getCommaText());
                     System.out.println("Used:  "+varNames.getCommaText());
-*/                    
+                    /**/
             }
 
             varNames=varNames.reverse();

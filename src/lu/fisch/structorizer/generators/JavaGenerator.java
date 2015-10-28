@@ -40,10 +40,15 @@ package lu.fisch.structorizer.generators;
  *      Bob Fisch                  2011.11.07      Fixed an issue while doing replacements
  *      Kay Gürtzig                2014.10.22      Workarounds and Enhancements (see comment)
  *      Kay Gürtzig                2014.11.16      Several fixes and enhancements (see comment)
+ *      Kay Gürtzig                2015.10.18      Comment generation and indentation revised
  *
  ******************************************************************************************************
  *
  *      Comments:
+ *      2015-10-18 - Bugfix / Code revision
+ *      - Indentation increment with +_indent.substring(0,1) worked only for single-character indentation units
+ *      - Interface of comment insertion methods modified
+ *      
  *      2014.11.16 - Bugfixes
  *      - conversion of comparison and logical operators had still been flawed
  *      - comment generation unified by new inherited generic method insertComment 
@@ -97,7 +102,15 @@ public class JavaGenerator extends Generator
 			return exts;
 		}
 		
-		/************ Code Generation **************/
+	    // START KGU 2015-10-18: New pseudo field
+	    @Override
+	    protected String commentSymbolLeft()
+	    {
+	    	return "//";
+	    }
+	    // END KGU 2015-10-18
+
+	    /************ Code Generation **************/
 		private String transform(String _input)
 		{
 			// et => and
@@ -231,31 +244,41 @@ public class JavaGenerator extends Generator
 		
 		protected void generateCode(Instruction _inst, String _indent)
 		{
-	        // START KGU 2014-11-16
-	        insertComment(_inst, _indent, "// ");
-	        // END KGU 2014-11-16
-			for(int i=0;i<_inst.getText().count();i++)
-			{
-				code.add(_indent+transform(_inst.getText().get(i))+";");
+	    	// START KGU 2015-10-18: The "export instructions as comments" configuration had been ignored here
+//			insertComment(_inst, _indent);
+//			for(int i=0;i<_inst.getText().count();i++)
+//			{
+//				code.add(_indent+transform(_inst.getText().get(i))+";");
+//			}
+			if (!insertAsComment(_inst, _indent)) {
+				
+				insertComment(_inst, _indent);
+
+				for (int i=0; i<_inst.getText().count(); i++)
+				{
+					code.add(_indent+transform(_inst.getText().get(i))+";");
+				}
+
 			}
+			// END KGU 2015-10-18
 		}
 		
 		protected void generateCode(Alternative _alt, String _indent)
 		{
 	        // START KGU 2014-11-16
-	        insertComment(_alt, _indent, "// ");
+	        insertComment(_alt, _indent);
 	        // END KGU 2014-11-16
 	        
 	        String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
 	        if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 	        
 	        code.add(_indent+"if "+condition+" {");
-			generateCode(_alt.qTrue,_indent+_indent.substring(0,1));
+			generateCode(_alt.qTrue,_indent+this.getIndent());
 			if(_alt.qFalse.getSize()!=0)
 			{
 				code.add(_indent+"}");
 				code.add(_indent+"else {");
-				generateCode(_alt.qFalse,_indent+_indent.substring(0,1));
+				generateCode(_alt.qFalse,_indent+this.getIndent());
 			}
 			code.add(_indent+"}");
 		}
@@ -263,7 +286,7 @@ public class JavaGenerator extends Generator
 		protected void generateCode(Case _case, String _indent)
 		{
 	        // START KGU 2014-11-16
-	        insertComment(_case, _indent, "// ");
+	        insertComment(_case, _indent);
 	        // END KGU 2014-11-16
 
 	        String condition = transform(_case.getText().get(0));
@@ -273,16 +296,16 @@ public class JavaGenerator extends Generator
 			
 			for(int i=0;i<_case.qs.size()-1;i++)
 			{
-				code.add(_indent+_indent.substring(0,1)+"case "+_case.getText().get(i+1).trim()+":");
-				generateCode((Subqueue) _case.qs.get(i),_indent+_indent.substring(0,1)+_indent.substring(0,1)+_indent.substring(0,1));
-				code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1)+"break;\n");
+				code.add(_indent+this.getIndent()+"case "+_case.getText().get(i+1).trim()+":");
+				generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent());
+				code.add(_indent+this.getIndent()+this.getIndent()+"break;\n");
 			}
 			
 			if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
 			{
-				code.add(_indent+_indent.substring(0,1)+"default:");
-				generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+_indent.substring(0,1)+_indent.substring(0,1));
-				code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1)+"break;");
+				code.add(_indent+this.getIndent()+"default:");
+				generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());
+				code.add(_indent+this.getIndent()+this.getIndent()+"break;");
 			}
 			code.add(_indent+"}");
 		}
@@ -290,7 +313,7 @@ public class JavaGenerator extends Generator
 		protected void generateCode(For _for, String _indent)
 		{
 	        // START KGU 2014-11-16
-	        insertComment(_for, _indent, "// ");
+	        insertComment(_for, _indent);
 	        // END KGU 2014-11-16
 
 	        String startValueStr="";
@@ -312,21 +335,21 @@ public class JavaGenerator extends Generator
 			code.add(_indent+"for ("+
 					counterStr+" = "+startValueStr+"; "+counterStr+" <= "+endValueStr+"; "+counterStr+" = "+counterStr+" + ("+stepValueStr+") "+
 					") {");
-			generateCode(_for.q,_indent+_indent.substring(0,1));
+			generateCode(_for.q,_indent+this.getIndent());
 			code.add(_indent+"}");
 		}
 		
 		protected void generateCode(While _while, String _indent)
 		{
 	        // START KGU 2014-11-16
-	        insertComment(_while, _indent, "// ");
+	        insertComment(_while, _indent);
 	        // END KGU 2014-11-16
 
 	        String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
 	        if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 	        
 	        code.add(_indent+"while "+condition+" {");
-			generateCode(_while.q,_indent+_indent.substring(0,1));
+			generateCode(_while.q,_indent+this.getIndent());
 			code.add(_indent+"}");
 		}
 		
@@ -334,7 +357,7 @@ public class JavaGenerator extends Generator
                  protected void generateCode(Repeat _repeat, String _indent)
 		{
 			code.add(_indent+"do {");
-			generateCode(_repeat.q,_indent+_indent.substring(0,1));
+			generateCode(_repeat.q,_indent+this.getIndent());
 			code.add(_indent+"} while !("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+");");
 		}*/
 
@@ -343,46 +366,55 @@ public class JavaGenerator extends Generator
     protected void generateCode(Repeat _repeat, String _indent)
     {
         // START KGU 2014-11-16
-        insertComment(_repeat, _indent, "// ");
+        insertComment(_repeat, _indent);
         // END KGU 2014-11-16
 
         code.add(_indent+"do {");
-        generateCode(_repeat.q,_indent+_indent.substring(0,1));
+        generateCode(_repeat.q,_indent+this.getIndent());
         code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+"));");
     }
 		
 		protected void generateCode(Forever _forever, String _indent)
 		{
 	        // START KGU 2014-11-16
-	        insertComment(_forever, _indent, "// ");
+	        insertComment(_forever, _indent);
 	        // END KGU 2014-11-16
 
 	        code.add(_indent+"while (true) {");
-			generateCode(_forever.q,_indent+_indent.substring(0,1));
+			generateCode(_forever.q,_indent+this.getIndent());
 			code.add(_indent+"}");
 		}
 		
 		protected void generateCode(Call _call, String _indent)
 		{
-	        // START KGU 2014-11-16
-	        insertComment(_call, _indent, "// ");
-	        // END KGU 2014-11-16
+	    	// START KGU 2015-10-18: The "export instructions as comments" configuration had been ignored here
+//			insertComment(_call, _indent);
+//			for(int i=0;i<_call.getText().count();i++)
+//			{
+//				code.add(_indent+transform(_call.getText().get(i))+"();");
+//			}
+			if (!insertAsComment(_call, _indent)) {
+				
+				insertComment(_call, _indent);
 
-	        for(int i=0;i<_call.getText().count();i++)
-			{
-				code.add(_indent+transform(_call.getText().get(i))+"();");
+				for (int i=0; i<_call.getText().count(); i++)
+				{
+					code.add(_indent+transform(_call.getText().get(i))+"();");
+				}
+
 			}
+			// END KGU 2015-10-18
 		}
 		
 		protected void generateCode(Jump _jump, String _indent)
 		{
 	        // START KGU 2014-11-16
-	        insertComment(_jump, _indent, "// ");
+	        insertComment(_jump, _indent);
 	        // END KGU 2014-11-16
 
 	        for(int i=0;i<_jump.getText().count();i++)
 			{
-				code.add(_indent+"// "+transform(_jump.getText().get(i))+" // goto-instruction not allowed in Java");
+				code.add(_indent+"// "+transform(_jump.getText().get(i))+" // FIXME goto instructions not allowed in Java");
 			}
 		}
 		
@@ -401,41 +433,36 @@ public class JavaGenerator extends Generator
 			if(_root.isProgram==true) {
 				code.add("import java.util.Scanner;");
 				code.add("");
-				// START KGU 2014-11-16
-				code.add("/**");
-				insertComment(_root, "", " * ");
-				code.add(" */");
-				// END KGU 2014-11-16
+				// START KGU 2015-10-18
+				insertBlockComment(_root.getComment(), "", "/**", " * ", " */");
+				// END KGU 2014-10-18
 				code.add("public class "+_root.getText().get(0)+" {");
 				code.add("");
-				code.add(_indent+"// Declare and initialise global variables here");
+				insertComment("TODO Declare and initialise class variables here", this.getIndent());
 				code.add("");
-				code.add(_indent+"/**");
-				code.add(_indent+" * @param args");
-				code.add(_indent+" */");
-				code.add(_indent+"public static void main(String[] args) {");
-				code.add(_indent+_indent+"// Declare local variables here");
-				code.add(_indent+_indent+"");
-				code.add(_indent+_indent+"// Initialise local variables here");
-				code.add(_indent+_indent+"");
-				generateCode(_root.children,_indent+_indent);
-				code.add(_indent+"}");
+				code.add(this.getIndent() + "/**");
+				code.add(this.getIndent() + " * @param args");
+				code.add(this.getIndent() + " */");
+				code.add(this.getIndent() + "public static void main(String[] args) {");
+				insertComment("TODO Declare local variables here", this.getIndent() + this.getIndent());
+				code.add(this.getIndent() + this.getIndent() + "");
+				insertComment("TODO Initialise local variables here", this.getIndent() + this.getIndent());
+				code.add(this.getIndent()+ this.getIndent() +"");
+				generateCode(_root.children, this.getIndent()+this.getIndent());
+				code.add(this.getIndent()+"}");
 				code.add("");
 				code.add("}");
 			}
 			else {
-				code.add(_indent+"/**");
-		        // START KGU 2014-11-16
-				//code.add(_indent+" * This method ...");
-		        insertComment(_root, _indent, " * ");
-		        // END KGU 2014-11-16
-				code.add(_indent+" */");
-				code.add(_indent+"private static void "+_root.getText().get(0)+"() {");
-				code.add(_indent+_indent+"// declare local variables here");
+		        // START KGU 2014-10-18
+		        insertBlockComment(_root.getComment(), _indent+this.getIndent(), "/**", " * ", null);
+		        insertBlockComment(_root.getParameterNames(), _indent+this.getIndent(), null, " * @param ", " */");
+				code.add(_indent+this.getIndent()+"public static void "+_root.getText().get(0)+" {");
+				insertComment("TODO declare parameters and local variables!", _indent+this.getIndent()+this.getIndent());
 				code.add("");
-				generateCode(_root.children,_indent+_indent);
+				generateCode(_root.children,_indent+this.getIndent()+this.getIndent());
 				code.add("");
-				code.add(_indent+"}");
+				code.add(_indent+this.getIndent()+"}");
 			}
 			
 			return code.getText();
