@@ -35,7 +35,9 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2007.12.09      First Issue
  *		Bob Fisch	2008.04.18		Added analyser
  *		Kay Gürtzig	2014.10.18		Var name search unified and false detection of "as" within var names mended 
- *		Kay Gürtzig	2015.10.12		new toggleCheckpoint() method overridden.
+ *		Kay Gürtzig	2015.10.12		new methods toggleBreakpoint() and clearBreakpoints() (KGU#43).
+ *		Kay Gürtzig	2015.10.16		getFullText methods redesigned/replaced, changes in getVarNames().
+ *		Kay Gürtzig	2015.10.17		improved Arranger support by method notifyReplaced (KGU#48)
  *
  ******************************************************************************************************
  *
@@ -44,12 +46,12 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 
+import java.util.Iterator;
 import java.util.Vector;
 import java.util.Stack;
 import java.util.Hashtable;
 import java.util.Enumeration;
 import java.io.File;
-
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -66,9 +68,13 @@ import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.gui.*;
 
 import com.stevesoft.pat.*;
+
 import java.awt.Point;
 
 public class Root extends Element {
+	
+	// KGU 2015-10-16: Just for testing purposes
+	//private static int fileCounter = 1;
 
 	// some fields
 	public boolean isNice = true;
@@ -105,20 +111,9 @@ public class Root extends Element {
 	public static boolean check12 = false;
 	public static boolean check13 = false;
 
-        private Vector<Updater> updaters = new Vector<Updater>();
+	private Vector<Updater> updaters = new Vector<Updater>();
                 
-        private boolean switchTextAndComments = false;
-
-        public void addUpdater(Updater updater)
-        {
-            updaters.add(updater);
-        }
-
-        public void removeUpdater(Updater updater)
-        {
-            updaters.remove(updater);
-        }
-
+	private boolean switchTextAndComments = false;
 
 	public Root()
 	{
@@ -133,6 +128,36 @@ public class Root extends Element {
 		setText(_strings);
 		children.parent=this;
 	}
+	
+    public void addUpdater(Updater updater)
+    {
+    	// START KGU#48 2015-10-17: While this.updaters is only a Vector, we must avoid multiple registration...
+        //updaters.add(updater);
+    	if (!updaters.contains(updater))
+    	{
+    		updaters.add(updater);
+    	}
+    	// END KGU#48 2015-10-17
+    }
+
+    public void removeUpdater(Updater updater)
+    {
+        updaters.remove(updater);
+    }
+
+    // START KGU#48 2015-10-17: Arranger support on Root replacement (e.g. by loading a new file)
+    public void notifyReplaced(Root newRoot)
+    {
+    	System.out.println("Trying to notify my replacement to " + updaters.size() + " Updaters..."); // FIXME (KGU) Remove after successful test!
+    	Iterator<Updater> iter = updaters.iterator();
+    	while (iter.hasNext())
+    	{
+    		System.out.println(this.getMethodName() + " notifying an Updater about replacement.");
+    		iter.next().replaced(this, newRoot);
+    	}
+    	updaters.clear();
+    }
+    // END KGU#48 2015-10-17
 
 	// START KGU 2015-10-13: This follows a code snippet found in Root.draw(Canvas, Rect), which had been ineffective though
 	@Override
@@ -248,9 +273,9 @@ public class Root extends Element {
 
 		rect=_top_left.copy();
 
-		// FIXME KGU 2015-10-13: What the heck was this good for? Next line overrode it again!
-		// --> Put into an override version of getColor()
-		// Remaining stuff replaced by new method getFillColor()
+		// START KGU 2015-10-13: 
+		// Root-specific part put into an override version of getColor()
+		// Remaining stuff replaced by new method getFillColor(), which hence comprises both
 //		if(isNice==false)
 //		{
 //			drawColor=Color.WHITE;
@@ -520,7 +545,7 @@ public class Root extends Element {
     }
     
     
-    // START KGU 2015-10-12
+    // START KGU#43 2015-10-12: Breakpoint support
     @Override
     public void toggleBreakpoint()
     {
@@ -535,7 +560,7 @@ public class Root extends Element {
     }
     // END KGU 2015-10-12
 
-    // START KGU 2015-10-13
+    // START KGU#43 2015-10-13
 	// Recursively clears all execution flags in this branch
 	public void clearExecutionStatus()
 	{
@@ -752,42 +777,67 @@ public class Root extends Element {
      * Extract full text of all Elements
      *************************************/
 
+    // START KGU 2015-10-16
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
+     */
+    @Override
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    {
+    	// This is somewhat tricky - a subroutine diagram is likely to hold parameter declarations in the header, so we ought to
+    	// deliver it for the variable detection
+    	if (!this.isProgram)
+    	{
+    		_lines.add(this.getText());
+    	}
+    	this.children.addFullText(_lines, _instructionsOnly);
+    }
+    // END KGU 2015-10-16
+
+    /**
+     * @deprecated Use _node.addFullText(_lines, _instructionsOnly) instead, where the argument
+     * _instructionsOnly specifies whether only lines potentially introducing new variables are of interest.
+     * @param _node - the instruction sequence to be evaluated
+     * @param _lines - the StringList to append to
+     */
     private void getFullText(Subqueue _node, StringList _lines)
     {
-            if(_node.children.size()>0)
-            {
-                    for(int i=0;i<_node.children.size();i++)
-                    {
-                            _lines.add(((Element)_node.children.get(i)).getText());
-                            if(_node.children.get(i).getClass().getSimpleName().equals("While"))
-                            {
-                                    getFullText(((While) _node.children.get(i)).q,_lines);
-                            }
-                            else if(_node.children.get(i).getClass().getSimpleName().equals("For"))
-                            {
-                                    getFullText(((For) _node.children.get(i)).q,_lines);
-                            }
-                            else if(_node.children.get(i).getClass().getSimpleName().equals("Repeat"))
-                            {
-                                    getFullText(((Repeat) _node.children.get(i)).q,_lines);
-                            }
-                            else if(_node.children.get(i).getClass().getSimpleName().equals("Alternative"))
-                            {
-                                    getFullText(((Alternative) _node.children.get(i)).qTrue,_lines);
-                                    getFullText(((Alternative) _node.children.get(i)).qFalse,_lines);
-                            }
-                            else if(_node.children.get(i).getClass().getSimpleName().equals("Case"))
-                            {
-                                    Case c = ((Case) _node.children.get(i));
-                                    for (int j=0;j<c.qs.size();j++)
-                                    {
-                                            getFullText((Subqueue) c.qs.get(j),_lines);
-                                    }
-                            }
-                    }
-            }
+    	for(int i=0;i<_node.children.size();i++)
+    	{
+    		_lines.add(((Element)_node.children.get(i)).getText());
+    		if(_node.children.get(i).getClass().getSimpleName().equals("While"))
+    		{
+    			getFullText(((While) _node.children.get(i)).q,_lines);
+    		}
+    		else if(_node.children.get(i).getClass().getSimpleName().equals("For"))
+    		{
+    			getFullText(((For) _node.children.get(i)).q,_lines);
+    		}
+    		else if(_node.children.get(i).getClass().getSimpleName().equals("Repeat"))
+    		{
+    			getFullText(((Repeat) _node.children.get(i)).q,_lines);
+    		}
+    		else if(_node.children.get(i).getClass().getSimpleName().equals("Alternative"))
+    		{
+    			getFullText(((Alternative) _node.children.get(i)).qTrue,_lines);
+    			getFullText(((Alternative) _node.children.get(i)).qFalse,_lines);
+    		}
+    		else if(_node.children.get(i).getClass().getSimpleName().equals("Case"))
+    		{
+    			Case c = ((Case) _node.children.get(i));
+    			for (int j=0;j<c.qs.size();j++)
+    			{
+    				getFullText((Subqueue) c.qs.get(j),_lines);
+    			}
+    		}
+    	}
     }
 
+    /**
+     * @deprecated Use getFullText(_instructionsOnly) instead, where argument _instructionsOnly
+     * specifies whether only lines potentially introducing new variables are of interest. 
+     * @return
+     */
     public StringList getFullText()
     {
             StringList sl = getText().copy();
@@ -795,6 +845,12 @@ public class Root extends Element {
             return sl;
     }
 
+    /**
+     * @deprecated Use _el.getFullText(_instructionsOnly) instead, where argument _instructionsOnly
+     * specifies whether only lines potentially introducing new variables are of interest.
+     * @param _el
+     * @return the composed StringList
+     */
     public StringList getFullText(Element _el)
     {
             StringList sl = _el.getText().copy();
@@ -881,10 +937,13 @@ public class Root extends Element {
                     }
                     else
                     {
-                            lines = getFullText(_ele);
-                            if(_includeSelf==false)
+                            // START KGU#39 2015-10-16: What exactly is expected here?
+                            //lines = getFullText(_ele);
+                            lines = _ele.getFullText(false);
+                            // END KGU#39 2015-10-16
+                            if (_includeSelf==false)
                             {
-                                    for(int i=0;i<_ele.getText().count();i++)
+                                    for(int i=0; i<_ele.getText().count(); i++)
                                     {
                                             lines.delete(0);
                                     }
@@ -892,9 +951,13 @@ public class Root extends Element {
                     }
                     //System.out.println(lines);
 
-                    for(int i=0;i<lines.count();i++)
+                    for(int i=0; i<lines.count(); i++)
                     {
                             String allText = lines.get(i);
+                            // START KGU#23 2015-10-16: We better make sure the line is trimmed (for more precise keyword detection)
+                            allText = allText.trim();
+                            // END KGU#23 2015-10-16
+                            
                             Regex r;
 
                             // modify "inc" and "dec" function (Pascal)
@@ -918,17 +981,44 @@ public class Root extends Element {
                             r = new Regex(BString.breakup(D7Parser.input.trim())+"[ ](.*?)",D7Parser.input.trim()+" $1"); allText=r.replaceAll(allText);
                             // output
                             r = new Regex(BString.breakup(D7Parser.output.trim())+"[ ](.*?)",D7Parser.output.trim()+" $1"); allText=r.replaceAll(allText);
+                            // START KGU#23 2015-10-16: there must be a gap between the keyword and the variable name!
                             // for
-                            r = new Regex(BString.breakup(D7Parser.preFor.trim())+"(.*?)"+D7Parser.postFor.trim()+"(.*?)",D7Parser.preFor.trim()+"$1"+D7Parser.postFor.trim()+"$2"); allText=r.replaceAll(allText);
+                            //r = new Regex(BString.breakup(D7Parser.preFor.trim())+"(.*?)"+D7Parser.postFor.trim()+"(.*?)",D7Parser.preFor.trim()+"$1"+D7Parser.postFor.trim()+"$2"); allText=r.replaceAll(allText);
                             // while
-                            r = new Regex(BString.breakup(D7Parser.preWhile.trim())+"(.*?)",D7Parser.preWhile.trim()+"$1"); allText=r.replaceAll(allText);
+                            //r = new Regex(BString.breakup(D7Parser.preWhile.trim())+"(.*?)",D7Parser.preWhile.trim()+"$1"); allText=r.replaceAll(allText);
                             // repeat
-                            r = new Regex(BString.breakup(D7Parser.preRepeat.trim())+"(.*?)",D7Parser.preRepeat.trim()); allText=r.replaceAll(allText);
+                            //r = new Regex(BString.breakup(D7Parser.preRepeat.trim())+"(.*?)",D7Parser.preRepeat.trim()); allText=r.replaceAll(allText);
                             // for
-                            if(allText.indexOf(D7Parser.preFor.trim())>=0)
-                            {
-                                    allText=allText.substring(allText.indexOf(D7Parser.preFor.trim())+D7Parser.preFor.trim().length()).trim();
+                            //if(allText.indexOf(D7Parser.preFor.trim())>=0)
+                            //{
+                            //        allText=allText.substring(allText.indexOf(D7Parser.preFor.trim())+D7Parser.preFor.trim().length()).trim();
+                            //}
+                            // REPLACEMENT STARTS HERE:
+                            // for
+                            if (!D7Parser.preFor.trim().isEmpty()) {
+                            	r = new Regex(BString.breakup(D7Parser.preFor.trim())+"[ ](.*?\\W)"+D7Parser.postFor.trim()+"(\\W.*?)",D7Parser.preFor.trim()+" $1 "+D7Parser.postFor.trim()+" $2");
                             }
+                            else {
+                            	r = new Regex("(.*?\\W)"+D7Parser.postFor.trim()+"(\\W.*?)","$1 "+D7Parser.postFor.trim()+" $2");
+                            }
+                            allText=r.replaceAll(allText);
+                            // while
+                            if (!D7Parser.preWhile.trim().isEmpty())
+                            {
+                            	r = new Regex(BString.breakup(D7Parser.preWhile.trim())+"(\\W.*?)",D7Parser.preWhile.trim()+"$1"); allText=r.replaceAll(allText);
+                            }
+                            // repeat
+                            if (!D7Parser.preRepeat.trim().isEmpty())
+                            {
+                            	// FIXME (KGU) Why is the expression after the preRepeat keyword dropped here?
+                            	r = new Regex(BString.breakup(D7Parser.preRepeat.trim())+"(.*?)",D7Parser.preRepeat.trim()); allText=r.replaceAll(allText);
+                            }
+                            // for
+                            if(allText.indexOf(D7Parser.preFor.trim())==0)	// Must be at the line's very beginning
+                            {
+                                    allText=allText.substring(D7Parser.preFor.trim().length()).trim();
+                            }
+                            // END KGU 2015-10-16
 
                             // get names from assignments
                             if(allText.indexOf("<--")>=0)
@@ -972,10 +1062,16 @@ public class Root extends Element {
                             }
 
                             // cutoff output keyword
-                            if(allText.indexOf(D7Parser.output.trim())>=0)
+                            // START KGU#23 2015-10-16: Must start at the very beginning 
+                            //if(allText.indexOf(D7Parser.output.trim())>=0)
+                            //{
+                            //    allText=allText.substring(allText.indexOf(D7Parser.output.trim())+D7Parser.output.trim().length()).trim();
+                            //}
+                            if(allText.indexOf(D7Parser.output.trim()) == 0)
                             {
-                                    allText=allText.substring(allText.indexOf(D7Parser.output.trim())+D7Parser.output.trim().length()).trim();
+                            	allText=allText.substring(D7Parser.output.trim().length()).trim();
                             }
+                            // END KGU#23 2015-10-16
 
                             // and constant strings
                             if(allText.indexOf("'")>=0)
@@ -1112,15 +1208,16 @@ public class Root extends Element {
                             }
                     }
 
-                    /*
+/*                    // FIXME (KGU) Disable this after testing
                     System.out.println("Lines: "+lines.getCommaText());
                     System.out.println("Parts: "+parts.getCommaText());
                     System.out.println("Vars:  "+variables.getCommaText());
                     System.out.println("Used:  "+varNames.getCommaText());
-                    /**/
+*/                    
             }
 
             varNames=varNames.reverse();
+            //varNames.saveToFile("D:\\SW-Produkte\\Structorizer\\tests\\Variables_" + Root.fileCounter++ + ".txt");
             return varNames;
     }
 
@@ -1458,13 +1555,23 @@ public class Root extends Element {
             }
             else if(_entireProg)
             {
-                    lines = getFullText();
+                    // START KGU#39 2015-10-16: Use object methods now
+                    //lines = getFullText();
+                    lines = this.getFullText(true);
+                    // END KGU#39 2015-10-16
             }
             else
             {
-                    lines = getFullText(_ele);
+                    // START KGU#39 2015-10-16: Use object methods now
+                    //lines = getFullText(_ele);
+                    lines = _ele.getFullText(true);
+                    // START KGU#39 2015-10-16
             }
-
+            
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //lines.saveToFile("D:\\SW-Produkte\\Structorizer\\tests\\" + getMethodName() + fileCounter++ + ".txt");	// FIXME (KGU): Remove this after test!
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
             if(_onlyBody==true)
             {
                     for(int l=0;l<_ele.getText().count();l++)
@@ -1955,19 +2062,23 @@ public StringList getParameterNames()
 
 public String getMethodName()
 {
-            String rootText = getText().getLongString();
-            int pos;
+	String rootText = getText().getLongString();
+	int pos;
 
-            pos = rootText.indexOf("(");
-            if (pos!=-1) rootText=rootText.substring(0,pos);
-            pos = rootText.indexOf("[");
-            if (pos!=-1) rootText=rootText.substring(0,pos);
-            pos = rootText.indexOf(":");
-            if (pos!=-1) rootText=rootText.substring(0,pos);
+	pos = rootText.indexOf("(");
+	if (pos!=-1) rootText=rootText.substring(0,pos);
+	pos = rootText.indexOf("[");
+	if (pos!=-1) rootText=rootText.substring(0,pos);
+	pos = rootText.indexOf(":");
+	if (pos!=-1) rootText=rootText.substring(0,pos);
 
-            String programName = rootText.trim();
+	String programName = rootText.trim();
 
-    return programName;
+	// START KGU 2015-10-16: Just in case...
+	programName = programName.replace(' ', '_');
+	// END KGU 2015-10-16
+	
+	return programName;
 }
 
     public Vector analyse()
@@ -2123,4 +2234,35 @@ public String getMethodName()
     public void setSwitchTextAndComments(boolean switchTextAndComments) {
         this.switchTextAndComments = switchTextAndComments;
     }
+    
+    // START KGU#2 2015-10-17: First tentative approach to exploit the Arranger for NSD subroutine calls
+    /**
+     * Searches all known reservoires for subroutines with a signature compatible to name(arg1, arg2, ..., arg_nArgs) 
+     * @param name - function name
+     * @param nArgs - number of parameters of the requested function
+     * @return a Root that matches the specification if uniquely found, null otherwise
+     */
+    public Root findSubroutineWithSignature(String name, int nArgs)
+    {
+    	Root subroutine = null;
+    	if (this.updaters != null)
+    	{
+    		// TODO Check for ambiguity (multiple matches) and raise e.g. an exception in that case
+    		for (int u = 0; subroutine == null && u < this.updaters.size(); u++)
+    		{
+    			Vector<Root> candidates = this.updaters.get(u).findSourcesByName(name);
+    			for (int c = 0; subroutine == null && c < candidates.size(); c++)
+    			{
+    				Root cand = candidates.get(c);
+    				// Check argument number (a type check is not of course possible)
+    				if (!cand.isProgram && cand.getParameterNames().count() == nArgs)
+    				{
+    					subroutine = cand;
+    				}
+    			}
+    		}
+    	}
+    	return subroutine;
+    }
+    // END KGU#2 2015-10-17
 }
