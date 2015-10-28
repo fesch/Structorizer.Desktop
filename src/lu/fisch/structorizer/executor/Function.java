@@ -26,6 +26,7 @@ import lu.fisch.utils.StringList;
  *
  * @author robertfisch
  */
+// TODO KGU 2015-10-13: For performance reasons, this class should hold the name and the list of parsed parameters as fields
 public class Function
 {
     private String str = new String();

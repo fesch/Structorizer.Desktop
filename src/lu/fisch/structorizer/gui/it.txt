@@ -31,7 +31,9 @@
  *
  *      Author          Date			Description
  *      ------		----			-----------
- *      Andrea Maiani   2009.12.01      	Created
+ *      Andrea Maiani   2009.12.01		Created
+ *      Kay Gürtzig		2015.10.06		Obvious mis-spellings mended (cilc -> ciclo, contenuro -> contenuto etc.)
+ *      Kay Gürtzig     2015.10.14		InputBox-specific part enhanced
  *
  ******************************************************************************************************
  *
@@ -112,7 +114,7 @@ Menu.menuPreferencesFont.text=Caratteri ...
 Menu.menuPreferencesColors.text=Colori ...
 Menu.menuPreferencesOptions.text=Strutture ...
 Menu.menuPreferencesParser.text=Parser ...
-Menu.menuPreferencesLanguage.text=Language
+Menu.menuPreferencesLanguage.text=Lingua
 Menu.menuPreferencesLanguageEnglish.text=English
 Menu.menuPreferencesLanguageGerman.text=German
 Menu.menuPreferencesLanguageFrench.text=French
@@ -186,6 +188,7 @@ Editor.btnBeforeForever.tooltip=Inserisci un nuovo ciclo ENDLESS prima dell'elem
 Editor.btnBeforeCall.tooltip=Inserisci una nuova chiamata prima dell'elemento selezionato.
 Editor.btnBeforeJump.tooltip=Inserisci un nuovo salto prima dell'elemento selezionato.
 Editor.btnBeforeCase.tooltip=Inserisci una nuova Selezione Multipla prima dell'elemento selezionato.
+Editor.btnBeforePara.tooltip=Inserisci un nuovo passaggio Parallelo prima dell'elemento selezionato.
 // InsertAfter
 Editor.btnAfterInst.tooltip=Inserisci una nuova istruzione dopo l'elemento selezionato.
 Editor.btnAfterAlt.tooltip=Inserisci una nuova Selezione dopo l'elemento selezionato.
@@ -196,6 +199,7 @@ Editor.btnAfterForever.tooltip=Inserisci un nuovo ciclo ENDLESS dopo l'elemento 
 Editor.btnAfterCall.tooltip=Inserisci una nuova Chiamata dopo l'elemento selezionato.
 Editor.btnAfterJump.tooltip=Inserisci un nuovo Salto dopo l'elemento selezionato.
 Editor.btnAfterCase.tooltip=Inserisci una nuova Selezione Multipla dopo l'elemento selezionato.
+Editor.btnAfterPara.tooltip=Inserisci un nuovo passaggio Parallelo dopo l'elemento selezionato.
 // undo & redo
 Editor.btnUndo.tooltip=Annulla l'ultima azione.
 Editor.btnRedo.tooltip=Ripeti l'ultima azione.
@@ -230,6 +234,10 @@ Editor.btnColor6.tooltip=Colora l'elemento selezionato con questo colore.
 Editor.btnColor7.tooltip=Colora l'elemento selezionato con questo colore.
 Editor.btnColor8.tooltip=Colora l'elemento selezionato con questo colore.
 Editor.btnColor9.tooltip=Colora l'elemento selezionato con questo colore.
+// turtleizer & executor
+Editor.btnTurtle.tooltip=Apri Turtleizer ...
+Editor.btnMake.tooltip=Apri debugger (controllo di esecuzione) ...
+Editor.btnDropBrk.tooltip=Cancella tutti breakpoint.
 // Popup menu
 Editor.popupCut.text=Taglia
 Editor.popupCopy.text=Copia
@@ -264,6 +272,8 @@ Editor.popupEdit.text=Modifica
 Editor.popupDelete.text=Cancella
 Editor.popupMoveUp.text=Sposta in alto
 Editor.popupMoveDown.text=Sposta in basso
+// Breakpoint
+Editor.popupBreakpoint.text=Alterna breakpoint
 
 
 -----[ InputBox ]-----
@@ -277,6 +287,33 @@ InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=Valida la tua scelta.
 InputBox.btnCancel.text=Annulla
 InputBox.btnCancel.tooltip=Annulla la tua scelta.
+InputBox.class_specific.Root=Modificare il nome dello programma...
+InputBox.class_specific.Function=Modificare la signatura della funzione...
+InputBox.class_specific.Instruction.insert=Inseriscire istruzioni...
+InputBox.class_specific.Alternative.insert=Inseriscire Selezione...
+InputBox.class_specific.Case.insert=Inseriscire Selecione Multipla...
+InputBox.class_specific.For.insert=Inseriscire Ciclo FOR...
+InputBox.class_specific.Forever.insert=Inseriscire Ciclo FOREVER...
+InputBox.class_specific.Repeat.insert=Inseriscire Ciclo REPEAT...
+InputBox.class_specific.While.insert=Inseriscire Ciclo WHILE...
+InputBox.class_specific.Call.insert=Inseriscire Chiamata...
+InputBox.class_specific.Jump.insert=Inseriscire Salto...
+InputBox.class_specific.Parallel.insert=Inseriscire passaggio Parallelo...
+InputBox.class_specific.Instruction.update=Modificare istruzioni...
+InputBox.class_specific.Alternative.update=Modificare Selezione...
+InputBox.class_specific.Case.update=Modificare Selezioe Multipla...
+InputBox.class_specific.For.update=Modificare Ciclo FOR...
+InputBox.class_specific.Forever.update=Modificare Ciclo FOREVER...
+InputBox.class_specific.Repeat.update=Modificare Ciclo REPEAT...
+InputBox.class_specific.While.update=Modificare Ciclo WHILE...
+InputBox.class_specific.Call.update=Modificare Chiamata...
+InputBox.class_specific.Jump.update=Modificare Salto...
+InputBox.class_specific.Parallel.update=Modificare passaggio Parallelo...
+InputBox.class_specific.Alternative.lblText=Inserisci la condicione
+InputBox.class_specific.While.lblText=Inserisci la condicione para entrar y quedar
+InputBox.class_specific.Repeat.lblText=Inserisci la conditione para salir
+InputBox.class_specific.Case.lblText=Inserisci l'espressione e le constanti della selezione
+InputBox.class_specific.Parallel.lblText=Nummero dei rami paraleli
 
 
 -----[ Preferences ]-----
@@ -296,15 +333,15 @@ Preferences.lblCase.tooltip=Il contenuto di default di una Selezione Multipla.
 Preferences.pnlFor.border=Ciclo FOR
 Preferences.pnlFor.tooltip=
 Preferences.lblFor.text=Contenuto di default
-Preferences.lblFor.tooltip=Il contenuto di default per il cilo FOR.
+Preferences.lblFor.tooltip=Il contenuto di default per il ciclo FOR.
 Preferences.pnlWhile.border=Ciclp WHILE
 Preferences.pnlWhile.tooltip=
 Preferences.lblWhile.text=Contenuto di default
 Preferences.lblWhile.tooltip=Il contenuto di default del ciclo WHILE
 Preferences.pnlRepeat.border=Ciclo REPEAT
 Preferences.pnlRepeat.tooltip=
-Preferences.lblRepeat.text=Contenuro di default
-Preferences.lblRepeat.tooltip=Il contenuto di default del cilo REPEAT.
+Preferences.lblRepeat.text=Contenuto di default
+Preferences.lblRepeat.tooltip=Il contenuto di default del ciclo REPEAT.
 Preferences.btnOK.text=OK
 Preferences.btnOK.tooltip=Valida le tue scelte.
 

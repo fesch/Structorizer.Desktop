@@ -162,8 +162,11 @@ public class Control extends javax.swing.JFrame {
                         .add(btnPause)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(btnStep))
-                    .add(slSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 83, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-            .add(jScrollPane1, 0, 0, Short.MAX_VALUE)
+                        // START KGU 2015-10-12: preferred size enhanced from 83 to 150
+                    //.add(slSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 83, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                    .add(slSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 125, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                    	// END KGU 2015-0-12
+                .add(jScrollPane1, 0, 0, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -215,12 +218,24 @@ public class Control extends javax.swing.JFrame {
             Executor.getInstance().setPaus(false);
         }
     }//GEN-LAST:event_btnPlayActionPerformed
+    
+    // START KGU 2015-10-12: Must be possible on breakpoints
+    public void setButtonsForPause()
+    {
+        btnPause.setEnabled(false);
+        btnPlay.setEnabled(true);
+        btnStep.setEnabled(true);    	
+    }
+    // END KGU 2015-10-12
 
     private void btnPauseActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnPauseActionPerformed
     {//GEN-HEADEREND:event_btnPauseActionPerformed
-        btnPause.setEnabled(false);
-        btnPlay.setEnabled(true);
-        btnStep.setEnabled(true);
+    	// START KGU 2015-10-12
+//        btnPause.setEnabled(false);
+//        btnPlay.setEnabled(true);
+//        btnStep.setEnabled(true);
+    	setButtonsForPause();
+    	// END KGU 2015-10-12
         Executor.getInstance().setPaus(!Executor.getInstance().getPaus());
     }//GEN-LAST:event_btnPauseActionPerformed
 

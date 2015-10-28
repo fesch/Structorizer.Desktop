@@ -90,7 +90,15 @@ public class KSHGenerator extends Generator {
 		return exts;
 	}
 	
-	/************ Code Generation **************/
+    // START KGU 2015-10-18: New pseudo field
+    @Override
+    protected String commentSymbolLeft()
+    {
+    	return "#";
+    }
+    // END KGU 2015-10-18
+
+    /************ Code Generation **************/
 	
 	private String transform(String _input)
 	{
@@ -140,14 +148,14 @@ public class KSHGenerator extends Generator {
 	}
 	
 	protected void generateCode(Instruction _inst, String _indent) {
-            if(!insertAsComment(_inst, _indent, "#"))
-		for(int i=0;i<_inst.getText().count();i++)
-		{
-			
-			code.add(_indent+transform(_inst.getText().get(i))+";");
-			
-		}
-		
+		if(!insertAsComment(_inst, _indent))
+			for(int i=0;i<_inst.getText().count();i++)
+			{
+
+				code.add(_indent+transform(_inst.getText().get(i))+";");
+
+			}
+
 	}
 	
 	protected void generateCode(Alternative _alt, String _indent) {
@@ -155,13 +163,13 @@ public class KSHGenerator extends Generator {
 		code.add("");
 		code.add(_indent+"if "+BString.replace(transform(_alt.getText().getText()),"\n","").trim());
 		code.add(_indent+"then");
-		generateCode(_alt.qTrue,_indent+_indent.substring(0,1));
+		generateCode(_alt.qTrue,_indent+this.getIndent());
 		
 		if(_alt.qFalse.getSize()!=0) {
 			
 			code.add(_indent+"");
 			code.add(_indent+"else");			
-			generateCode(_alt.qFalse,_indent+_indent.substring(0,1));
+			generateCode(_alt.qFalse,_indent+this.getIndent());
 			
 		}
 		
@@ -178,18 +186,18 @@ public class KSHGenerator extends Generator {
 		for(int i=0;i<_case.qs.size()-1;i++)
 		{
 			code.add("");
-			code.add(_indent+_indent.substring(0,1)+_case.getText().get(i+1).trim()+")");
-			//code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1)+"begin");
-			generateCode((Subqueue) _case.qs.get(i),_indent+_indent.substring(0,1)+_indent.substring(0,1)+_indent.substring(0,1));
-			code.add(_indent+_indent.substring(0,1)+";;");
+			code.add(_indent+this.getIndent()+_case.getText().get(i+1).trim()+")");
+			//code.add(_indent+this.getIndent()+this.getIndent()+"begin");
+			generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent()+this.getIndent());
+			code.add(_indent+this.getIndent()+";;");
 		}
 		
 		if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
 		{
 			code.add("");
-			code.add(_indent+_indent.substring(0,1)+"*)");
-			generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+_indent.substring(0,1)+_indent.substring(0,1));
-			code.add(_indent+_indent.substring(0,1)+";;");
+			code.add(_indent+this.getIndent()+"*)");
+			generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());
+			code.add(_indent+this.getIndent()+";;");
 		}
 		code.add(_indent+"esac");
 		code.add("");
@@ -202,7 +210,7 @@ public class KSHGenerator extends Generator {
 		code.add("");
 		code.add(_indent+"for "+BString.replace(BString.replace(transform(_for.getText().getText()),"=", " in "),"\n","").trim());
 		code.add(_indent+"do");
-		generateCode(_for.q,_indent+_indent.substring(0,1));
+		generateCode(_for.q,_indent+this.getIndent());
 		code.add(_indent+"done");	
 		code.add("");
 		
@@ -212,7 +220,7 @@ public class KSHGenerator extends Generator {
 		code.add("");
 		code.add(_indent+"while "+BString.replace(transform(_while.getText().getText()),"\n","").trim());
 		code.add(_indent+"do");
-		generateCode(_while.q,_indent+_indent.substring(0,1));
+		generateCode(_while.q,_indent+this.getIndent());
 		code.add(_indent+"done");
 		code.add("");
 		
@@ -223,7 +231,7 @@ public class KSHGenerator extends Generator {
 		code.add("");
 		code.add(_indent+"until "+BString.replace(transform(_repeat.getText().getText()),"\n","").trim());
 		code.add(_indent+"do");
-		generateCode(_repeat.q,_indent+_indent.substring(0,1));
+		generateCode(_repeat.q,_indent+this.getIndent());
 		code.add(_indent+"done");
 		code.add("");
 		
@@ -233,28 +241,28 @@ public class KSHGenerator extends Generator {
 		code.add("");
 		code.add(_indent+"while [1]");
 		code.add(_indent+"do");
-		generateCode(_forever.q,_indent+_indent.substring(0,1));
+		generateCode(_forever.q,_indent+this.getIndent());
 		code.add(_indent+"done");
 		code.add("");
 		
 	}
 	
 	protected void generateCode(Call _call, String _indent) {
-            if(!insertAsComment(_call, _indent, "#"))
-		for(int i=0;i<_call.getText().count();i++)
-		{
-			code.add(_indent+transform(_call.getText().get(i))+";");
-		}
-		
+		if(!insertAsComment(_call, _indent))
+			for(int i=0;i<_call.getText().count();i++)
+			{
+				code.add(_indent+transform(_call.getText().get(i))+";");
+			}
+
 	}
 	
 	protected void generateCode(Jump _jump, String _indent) {
-            if(!insertAsComment(_jump, _indent, "#"))	
-		for(int i=0;i<_jump.getText().count();i++)
-		{
-			code.add(_indent+transform(_jump.getText().get(i))+";");
-		}
-		
+		if(!insertAsComment(_jump, _indent))	
+			for(int i=0;i<_jump.getText().count();i++)
+			{
+				code.add(_indent+transform(_jump.getText().get(i))+";");
+			}
+
 	}
 	
 	protected void generateCode(Subqueue _subqueue, String _indent) {
@@ -279,11 +287,11 @@ public class KSHGenerator extends Generator {
 			
 		}
 		
-		code.add("# generated by structorizer");
+		insertComment("generated by structorizer", "");
 		code.add("");
-		code.add("// declare your variables here");
+		insertComment("TODO declare your variables here", "");
 		code.add("");
-		generateCode(_root.children,_indent);
+		generateCode(_root.children, _root.isProgram ? _indent : _indent + this.getIndent());
 		
 		if( ! _root.isProgram ) {
 			code.add("}");

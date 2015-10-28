@@ -24,7 +24,7 @@ package lu.fisch.structorizer.elements;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    This class represents an "parallel statement" in a diagram.
+ *      Description:    This class represents a "parallel statement" in a diagram.
  *
  ******************************************************************************************************
  *
@@ -32,7 +32,10 @@ package lu.fisch.structorizer.elements;
  *
  *      Author          Date			Description
  *      ------		----			-----------
- *      Bob Fisch       2010.11.26              First Issue
+ *      Bob Fisch       2010.11.26      First Issue
+ *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
+ *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
+ *      Kay Gürtzig     2015.10.16      Method clearExecutionStatus() duly overridden.
  *
  ******************************************************************************************************
  *
@@ -41,11 +44,10 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.util.Vector;
-
 import java.awt.Color;
 import java.awt.FontMetrics;
-import javax.swing.JOptionPane;
 
+import javax.swing.JOptionPane;
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
@@ -215,16 +217,21 @@ public class Parallel extends Element
             int tasks = Integer.valueOf(getText().get(0));
 
             Rect myrect = new Rect();
-            Color drawColor = getColor();
+    		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
+    		//Color drawColor = getColor();
+    		Color drawColor = getFillColor();
+    		// END KGU 2015-10-13
             FontMetrics fm = _canvas.getFontMetrics(Element.font);
-            int p;
-            int w;
+//            int p;
+//            int w;
 
-            if (selected==true)
-            {
-                if(waited==true) { drawColor=Element.E_WAITCOLOR; }
-                else { drawColor=Element.E_DRAWCOLOR; }
-            }
+    		// START KGU 2015-10-13: Became obsolete by new method getFillColor() applied above now
+//    		if (selected==true)
+//    		{
+//    			if(waited==true) { drawColor=Element.E_WAITCOLOR; }
+//    			else { drawColor=Element.E_DRAWCOLOR; }
+//    		}
+    		// END KGU 2015-10-13
 
             Canvas canvas = _canvas;
             canvas.setBackground(drawColor);
@@ -254,18 +261,25 @@ public class Parallel extends Element
             // draw comment
             if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
             {
-                    canvas.setBackground(E_COMMENTCOLOR);
-                    canvas.setColor(E_COMMENTCOLOR);
-
-                    Rect someRect = myrect.copy();
-
-                    someRect.left+=2;
-                    someRect.top+=2;
-                    someRect.right=someRect.left+4;
-                    someRect.bottom-=2;
-
-                    canvas.fillRect(someRect);
-            }
+                // START KGU 2015-10-11: Use an inherited helper method now
+//                    canvas.setBackground(E_COMMENTCOLOR);
+//                    canvas.setColor(E_COMMENTCOLOR);
+//
+//                    Rect someRect = myrect.copy();
+//
+//                    someRect.left+=2;
+//                    someRect.top+=2;
+//                    someRect.right=someRect.left+4;
+//                    someRect.bottom-=2;
+//
+//                    canvas.fillRect(someRect);
+    			this.drawCommentMark(canvas, myrect);
+        		// END KGU 2015-10-11
+    		}
+            // START KGU 2015-10-11
+    		// draw breakpoint bar if necessary
+    		this.drawBreakpointMark(canvas, myrect);
+    		// END KGU 2015-10-11
 
 
             // draw lines
@@ -354,15 +368,39 @@ public class Parallel extends Element
             canvas.drawRect(_top_left);
     }
 
+    // START KGU 2015-10-11: Merged with getElementByCoord, which had to be overridden as well for proper Comment popping
+//    @Override
+//    public Element selectElementByCoord(int _x, int _y)
+//    {
+//            Element selMe = super.selectElementByCoord(_x,_y);
+//            Element selCh = null;
+//
+//            for(int i = 0;i<qs.size();i++)
+//            {
+//                    Element pre = ((Subqueue) qs.get(i)).selectElementByCoord(_x,_y);
+//                    if(pre!=null)
+//                    {
+//                            selCh = pre;
+//                    }
+//            }
+//
+//            if(selCh!=null)
+//            {
+//                    selected=false;
+//                    selMe = selCh;
+//            }
+//
+//            return selMe;
+//    }
     @Override
-    public Element selectElementByCoord(int _x, int _y)
+    public Element getElementByCoord(int _x, int _y, boolean _forSelection)
     {
-            Element selMe = super.selectElementByCoord(_x,_y);
+            Element selMe = super.getElementByCoord(_x, _y, _forSelection);
             Element selCh = null;
 
-            for(int i = 0;i<qs.size();i++)
+            for(int i = 0; i < qs.size(); i++)
             {
-                    Element pre = ((Subqueue) qs.get(i)).selectElementByCoord(_x,_y);
+                    Element pre = ((Subqueue) qs.get(i)).getElementByCoord(_x, _y, _forSelection);
                     if(pre!=null)
                     {
                             selCh = pre;
@@ -371,13 +409,14 @@ public class Parallel extends Element
 
             if(selCh!=null)
             {
-                    selected=false;
+                    if (_forSelection) selected=false;
                     selMe = selCh;
             }
 
             return selMe;
     }
-
+    // END KGU 2015-10-11
+    
     public void setSelected(boolean _sel)
     {
             selected=_sel;
@@ -406,14 +445,63 @@ public class Parallel extends Element
             return ele;
     }
 
-    /*@Override
-    public void setColor(Color _color) 
+    // START KGU 2015-10-12
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.elements.Element#clearBreakpoints()
+     */
+    @Override
+    public void clearBreakpoints()
     {
-        super.setColor(_color);
-        for(int i=0;i<qs.size();i++)
-        {
-            qs.get(i).setColor(_color);
-        }
-    }*/
+    	super.clearBreakpoints();
+    	if (qs!= null)
+    	{
+    		for (int i = 0; i < qs.size(); i++)
+    		{
+    			qs.get(i).clearBreakpoints();
+    		}
+    	}
+    }
+    // END KGU 2015-10-12
+    
+    // START KGU 2015-10-16
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.elements.Element#clearExecutionStatus()
+     */
+    @Override
+    public void clearExecutionStatus()
+    {
+    	super.clearExecutionStatus();
+    	if (qs!= null)
+    	{
+    		for (int i = 0; i < qs.size(); i++)
+    		{
+    			qs.get(i).clearExecutionStatus();
+    		}
+    	}
+    }
+    // END KGU 2015-10-16
+    
+	// START KGU 2015-10-16
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
+	 */
+	@Override
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    {
+		// Under no circumstances, the text may contain an instruction or even variable declaration (it's just the number of threads) 
+		if (!_instructionsOnly)
+		{
+			_lines.add(this.getText());
+		}
+    	if (qs!= null)
+    	{
+    		for (int i = 0; i < qs.size(); i++)
+    		{
+    			qs.get(i).addFullText(_lines, _instructionsOnly);
+    		}
+    	}		
+    }
+    // END KGU 2015-10-16
+    
     
 }

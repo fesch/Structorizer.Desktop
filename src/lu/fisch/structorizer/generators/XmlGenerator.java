@@ -68,6 +68,20 @@ public class XmlGenerator extends Generator {
 		return exts;
 	}
 	
+    // START KGU 2015-10-18: New pseudo field
+    @Override
+    protected String commentSymbolLeft()
+    {
+    	return "<!--";
+    }
+
+    @Override
+    protected String commentSymbolRight()
+    {
+    	return "-->";
+    }
+    // END KGU 2015-10-18
+    
 	/************ Code Generation **************/
     @Override
 	protected void generateCode(Instruction _inst, String _indent)
@@ -85,12 +99,12 @@ public class XmlGenerator extends Generator {
 		code.add(_indent+"<alternative text=\""+BString.encodeToHtml(_alt.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_alt.getComment().getCommaText())+"\" color=\""+
 				 _alt.getHexColor()+"\">");
-		code.add(_indent+_indent.substring(0,1)+"<qTrue>");
-		generateCode(_alt.qTrue,_indent+_indent.substring(0,1)+_indent.substring(0,1));
-		code.add(_indent+_indent.substring(0,1)+"</qTrue>");
-		code.add(_indent+_indent.substring(0,1)+"<qFalse>");
-		generateCode(_alt.qFalse,_indent+_indent.substring(0,1)+_indent.substring(0,1));
-		code.add(_indent+_indent.substring(0,1)+"</qFalse>");
+		code.add(_indent+this.getIndent()+"<qTrue>");
+		generateCode(_alt.qTrue,_indent+this.getIndent()+this.getIndent());
+		code.add(_indent+this.getIndent()+"</qTrue>");
+		code.add(_indent+this.getIndent()+"<qFalse>");
+		generateCode(_alt.qFalse,_indent+this.getIndent()+this.getIndent());
+		code.add(_indent+this.getIndent()+"</qFalse>");
 		code.add(_indent+"</alternative>");
 	}
 	
@@ -102,9 +116,9 @@ public class XmlGenerator extends Generator {
 				 _case.getHexColor()+"\">");
 		for(int i=0;i<_case.qs.size();i++)
 		{
-			code.add(_indent+_indent.substring(0,1)+"<qCase>");
-			generateCode((Subqueue) _case.qs.get(i),_indent+_indent.substring(0,1)+_indent.substring(0,1));
-			code.add(_indent+_indent.substring(0,1)+"</qCase>");
+			code.add(_indent+this.getIndent()+"<qCase>");
+			generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent());
+			code.add(_indent+this.getIndent()+"</qCase>");
 		}
 		code.add(_indent+"</case>");
 	}
@@ -117,9 +131,9 @@ public class XmlGenerator extends Generator {
 				 _para.getHexColor()+"\">");
 		for(int i=0;i<_para.qs.size();i++)
 		{
-			code.add(_indent+_indent.substring(0,1)+"<qPara>");
-			generateCode((Subqueue) _para.qs.get(i),_indent+_indent.substring(0,1)+_indent.substring(0,1));
-			code.add(_indent+_indent.substring(0,1)+"</qPara>");
+			code.add(_indent+this.getIndent()+"<qPara>");
+			generateCode((Subqueue) _para.qs.get(i),_indent+this.getIndent()+this.getIndent());
+			code.add(_indent+this.getIndent()+"</qPara>");
 		}
 		code.add(_indent+"</parallel>");
 	}
@@ -130,9 +144,9 @@ public class XmlGenerator extends Generator {
 		code.add(_indent+"<for text=\""+BString.encodeToHtml(_for.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_for.getComment().getCommaText())+"\" color=\""+
 				 _for.getHexColor()+"\">");
-		code.add(_indent+_indent.substring(0,1)+"<qFor>");
-		generateCode(_for.q,_indent+_indent.substring(0,1)+_indent.substring(0,1));
-		code.add(_indent+_indent.substring(0,1)+"</qFor>");
+		code.add(_indent+this.getIndent()+"<qFor>");
+		generateCode(_for.q,_indent+this.getIndent()+this.getIndent());
+		code.add(_indent+this.getIndent()+"</qFor>");
 		code.add(_indent+"</for>");
 	}
 	
@@ -142,9 +156,9 @@ public class XmlGenerator extends Generator {
 		code.add(_indent+"<while text=\""+BString.encodeToHtml(_while.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_while.getComment().getCommaText())+"\" color=\""+
 				 _while.getHexColor()+"\">");
-		code.add(_indent+_indent.substring(0,1)+"<qWhile>");
-		generateCode(_while.q,_indent+_indent.substring(0,1)+_indent.substring(0,1));
-		code.add(_indent+_indent.substring(0,1)+"</qWhile>");
+		code.add(_indent+this.getIndent()+"<qWhile>");
+		generateCode(_while.q,_indent+this.getIndent()+this.getIndent());
+		code.add(_indent+this.getIndent()+"</qWhile>");
 		code.add(_indent+"</while>");
 	}
 	
@@ -154,9 +168,9 @@ public class XmlGenerator extends Generator {
 		code.add(_indent+"<repeat text=\""+BString.encodeToHtml(_repeat.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_repeat.getComment().getCommaText())+"\" color=\""+
 				 _repeat.getHexColor()+"\">");
-		code.add(_indent+_indent.substring(0,1)+"<qRepeat>");
-		generateCode(_repeat.q,_indent+_indent.substring(0,1)+_indent.substring(0,1));
-		code.add(_indent+_indent.substring(0,1)+"</qRepeat>");
+		code.add(_indent+this.getIndent()+"<qRepeat>");
+		generateCode(_repeat.q,_indent+this.getIndent()+this.getIndent());
+		code.add(_indent+this.getIndent()+"</qRepeat>");
 		code.add(_indent+"</repeat>");
 	}
 	
@@ -166,9 +180,9 @@ public class XmlGenerator extends Generator {
 		code.add(_indent+"<forever text=\""+BString.encodeToHtml(_forever.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_forever.getComment().getCommaText())+"\" color=\""+
 				 _forever.getHexColor()+"\">");
-		code.add(_indent+_indent.substring(0,1)+"<qForever>");
-		generateCode(_forever.q,_indent+_indent.substring(0,1)+_indent.substring(0,1));
-		code.add(_indent+_indent.substring(0,1)+"</qForever>");
+		code.add(_indent+this.getIndent()+"<qForever>");
+		generateCode(_forever.q,_indent+this.getIndent()+this.getIndent());
+		code.add(_indent+this.getIndent()+"</qForever>");
 		code.add(_indent+"</forever>");
 	}
 	
@@ -213,7 +227,7 @@ public class XmlGenerator extends Generator {
 								BString.encodeToHtml(_root.getComment().getCommaText())+"\" color=\""+
 								_root.getHexColor()+"\" type=\""+pr+"\" style=\""+ni+"\">");
 		code.add(_indent+"<children>");
-		generateCode(_root.children,_indent+_indent.substring(0,1));
+		generateCode(_root.children,_indent+this.getIndent());
 		code.add(_indent+"</children>");
 		code.add("</root>");
 		

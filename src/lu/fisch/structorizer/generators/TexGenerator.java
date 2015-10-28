@@ -68,6 +68,14 @@ public class TexGenerator extends Generator {
 		return exts;
 	}
 	
+    // START KGU 2015-10-18: New pseudo field
+    @Override
+    protected String commentSymbolLeft()
+    {
+    	return "%";
+    }
+    // END KGU 2015-10-18
+	
 	/************ Code Generation **************/
 	private String transform(String _input)
 	{
@@ -225,7 +233,7 @@ public class TexGenerator extends Generator {
 		code.add("\\begin{document}");
 		code.add("");
 		code.add("\\begin{struktogramm}("+Math.round(_root.width/72*25.4)+","+Math.round(_root.height/75*25.4)+")["+transform(_root.getText().get(0))+"]");
-		generateCode(_root.children,_indent);
+		generateCode(_root.children, this.getIndent());
 		code.add("\\end{struktogramm}");
 		code.add("");
 		code.add("\\end{document}");

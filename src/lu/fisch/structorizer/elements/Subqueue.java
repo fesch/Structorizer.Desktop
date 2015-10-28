@@ -34,6 +34,8 @@ package lu.fisch.structorizer.elements;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.09      First Issue
+ *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,true)
+ *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared.
  *
  ******************************************************************************************************
  *
@@ -42,7 +44,6 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.util.Vector;
-
 import java.awt.Color;
 import java.awt.FontMetrics;
 
@@ -96,23 +97,28 @@ public class Subqueue extends Element{
 	{
 		Rect myrect;
 		Rect subrect;
-		Color drawColor = getColor();
+		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
+		//Color drawColor = getColor();
+		Color drawColor = getFillColor();
+		// END KGU 2015-10-13
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 		Canvas canvas = _canvas;		
-		if(selected==true) 
-		{
-			drawColor=Element.E_DRAWCOLOR;
-		}
+		// START KGU 2015-10-13: Became obsolete by new method getFillColor() applied above now
+//		if (selected==true)
+//		{
+//			drawColor=Element.E_DRAWCOLOR;
+//		}
+		// END KGU 2015-10-13
 		
 		rect = _top_left.copy();
 		
 		myrect = _top_left.copy();
 		myrect.bottom = myrect.top;
 		
-		if (children.size()>0)
+		if (children.size() > 0)
 		{
 			// draw children
-			for(int i=0;i<children.size();i++)
+			for(int i=0; i<children.size(); i++)
 			{
 				subrect = ((Element) children.get(i)).prepareDraw(_canvas);
 				myrect.bottom+=subrect.bottom;
@@ -179,44 +185,63 @@ public class Subqueue extends Element{
 		children.removeElement(children.get(_index));
 	}
 	
-        @Override
-	public Element selectElementByCoord(int _x, int _y)
+	// START KGU 2015-10-15: Methods merged to Element getElementByCoord(int _x, int _y, _boolean _forSelection)
+//	@Override
+//	public Element selectElementByCoord(int _x, int _y)
+//	{
+//		Element res = super.selectElementByCoord(_x,_y);
+//		Element sel = null;
+//		for(int i=0;i<children.size();i++)
+//		{
+//			sel=((Element) children.get(i)).selectElementByCoord(_x, _y);
+//			if (sel != null)
+//			{
+//				selected=false;
+//				res = sel;
+//			}
+//		}
+//		return res;
+//	}
+//
+//	@Override
+//	public Element getElementByCoord(int _x, int _y)
+//	{
+//		Element res = super.getElementByCoord(_x,_y);
+//		Element sel = null;
+//		for(int i=0;i<children.size();i++)
+//		{
+//			sel=((Element) children.get(i)).getElementByCoord(_x, _y);
+//			if (sel != null)
+//			{
+//				res = sel;
+//			}
+//		}
+//		return res;
+//	}
+
+	@Override
+	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
-		Element res = super.selectElementByCoord(_x,_y);
+		Element res = super.getElementByCoord(_x, _y, _forSelection);
 		Element sel = null;
-		for(int i=0;i<children.size();i++)
+		for (int i = 0; i < children.size(); i++)
 		{
-			sel=((Element) children.get(i)).selectElementByCoord(_x, _y);
+			sel = ((Element) children.get(i)).getElementByCoord(_x, _y, _forSelection);
 			if (sel != null)
 			{
-				selected=false;
+				if (_forSelection) selected = false;
 				res = sel;
 			}
 		}
 		return res;
 	}
-
-        @Override
-	public Element getElementByCoord(int _x, int _y)
-	{
-		Element res = super.getElementByCoord(_x,_y);
-		Element sel = null;
-		for(int i=0;i<children.size();i++)
-		{
-			sel=((Element) children.get(i)).getElementByCoord(_x, _y);
-			if (sel != null)
-			{
-				res = sel;
-			}
-		}
-		return res;
-	}
-
+	// END KGU 2015-10-11
+	
 	public Element copy()
 	{
 		Element ele = new Subqueue();
 		ele.setColor(this.getColor());
-		for(int i = 0;i<children.size();i++)
+		for(int i = 0; i < children.size(); i++)
 		{
 			((Subqueue) ele).addElement(((Element) children.get(i)).copy());
 		}
@@ -234,5 +259,47 @@ public class Subqueue extends Element{
         }
     }*/
 
-		
+	// START KGU 2015-11-12
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#clearBreakpoints()
+	 */
+	@Override
+	public void clearBreakpoints()
+	{
+		super.clearBreakpoints();
+        for(int i = 0; i < children.size(); i++)
+        {      
+            children.get(i).clearBreakpoints();
+        }
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#clearExecutionStatus()
+	 */
+	@Override
+	public void clearExecutionStatus()
+	{
+        for(int i = 0; i < children.size(); i++)
+        {      
+        	super.clearExecutionStatus();	// FIXME: Is this necessary at all?
+            children.get(i).clearExecutionStatus();
+        }
+	}
+	// END KGU 2015-10-12
+
+	// START KGU 2015-10-16
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
+	 */
+	@Override
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    {
+		// No own text is to be considered here
+        for(int i = 0; i < children.size(); i++)
+        {      
+            children.get(i).addFullText(_lines, _instructionsOnly);
+        }
+    }
+    // END KGU 2015-10-16
+	
 }

@@ -31,17 +31,20 @@ package lu.fisch.structorizer.gui;
  *      Revision List
  *
  *      Author          Date			Description
- *      ------		----			-----------
+ *      ------			----			-----------
  *      Bob Fisch       2007.12.09      First Issue
+ *      Kay Gürtzig     2015.07.18      URL launch added in updateNSD() - requires Java >= 1.6
+ *      Kay Gürtzig     2015.10.09      Colour setting will now duly be registered as diagram modification
+ *                      2015.10.11      Comment popping repaired by proper subclassing of getElementByCoord
+ *                                      Listener method MouseExited now enabled to drop the sticky comment popup
  *
  ******************************************************************************************************
  *
  *      Comment:		/
-     *
+ *
  ******************************************************************************************************///
 
 import java.awt.*;
-import java.awt.Font;
 import java.awt.image.*;
 import java.awt.event.*;
 import java.awt.print.*;
@@ -61,7 +64,6 @@ import javax.swing.event.HyperlinkListener;
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
 import org.freehep.graphicsio.swf.*;
-//import org.freehep.graphicsio.svg.*;	// => does not work!
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
@@ -76,7 +78,10 @@ import org.freehep.graphicsio.svg.SVGGraphics2D;
 
 public class Diagram extends JPanel implements MouseMotionListener, MouseListener, Printable, MouseWheelListener {
 
-    public Root root = new Root();
+	// START KGU#48 2015-10-18: We must be capable of preserving consistency when root is replaced by the Arranger
+    //public Root root = new Root();
+    private Root root = new Root();
+    // END KGU 2015-10-18
     private TurtleBox turtle = null; //
 
     private Element selected = null;
@@ -112,6 +117,55 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     public Vector<MyToolbar> toolbars = new Vector<MyToolbar>();
 
 
+	/*****************************************
+	 * CONSTRUCTOR
+     *****************************************/
+    public Diagram(Editor _editor, String _string)
+    {
+        super(true);
+        this.setDoubleBuffered(true);	// we don't need double buffering, because the drawing
+                                                                        // itself does it allready!
+        this.setBackground(Color.LIGHT_GRAY);
+
+        if(_editor!=null)
+        {
+            errorlist=_editor.errorlist;
+            NSDControl = _editor;
+        }
+        create(_string);
+    }
+
+
+    // START KGU#48,KGU#49 2015-10-19: Make sure that replacing root by Arranger doesn't harm anything or risks losses
+	/**
+	 * @return the currently managed Root
+	 */
+	public Root getRoot() {
+		return root;
+	}
+
+	/**
+	 * @param root the Root to set
+	 */
+	public void setRoot(Root root) {
+		if (root != null)
+		{
+			// Save if something has been changed
+			saveNSD(true);
+			this.unselectAll();
+
+			boolean hil = this.root.hightlightVars;
+			this.root = root;
+			root.hightlightVars = hil;
+			//System.out.println(root.getFullText().getText());
+			root.getVarNames();
+			root.hasChanged = true;
+			redraw();
+			analyse();
+		}
+	}
+	// END KGU#48,KGU#49 2015-10-18
+
     public boolean getAnalyser()
     {
         return Element.E_ANALYSER;
@@ -125,7 +179,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 		this.addMouseListener(this);
 		this.addMouseMotionListener(this);
-                this.addMouseWheelListener(this);
+		this.addMouseWheelListener(this);
 
 
 		new  FileDrop( this, new FileDrop.Listener()
@@ -168,13 +222,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					  Root rootNew = d7.parse(filename);
 					  if (d7.error.equals(""))
 					  {
-						boolean hil = root.hightlightVars;
-						root = rootNew;
-						root.hightlightVars=hil;
-						currentDirectory = new File(filename);
-						//System.out.println(root.getFullText().getText());
-						root.getVarNames();
-						analyse();
+						  setRoot(rootNew);
+						  currentDirectory = new File(filename);
+						  //System.out.println(root.getFullText().getText());
 					  }
 					  else
 					  {
@@ -215,8 +265,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			if (Element.E_SHOWCOMMENTS==true && ((Editor) NSDControl).popup.isVisible()==false)
 			{
-				Element selEle = root.getElementByCoord(e.getX(),e.getY());
-
+				// START KGU#25 2015-10-11: Method merged with selectElemetByCoord
+				//Element selEle = root.getElementByCoord(e.getX(),e.getY());
+				Element selEle = root.getElementByCoord(e.getX(), e.getY(), false);
+				// END KGU#25 2015-10-11
+				
 				if (selEle!=null)
 				{
 					if (!selEle.getComment().getText().trim().equals(""))
@@ -266,7 +319,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		if(e.getSource()==this)
 		{
-			Element bSome = root.selectElementByCoord(e.getX(),e.getY());
+			// START KGU#25 2015-10-11: Method merged with getElementByCoord(int,int)
+			//Element bSome = root.selectElementByCoord(e.getX(),e.getY());
+			Element bSome = root.getElementByCoord(e.getX(), e.getY(), true);
+			// END KGU#25 2015-10-11
 
 			if(bSome!=null)
 			{
@@ -326,17 +382,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			mouseY = e.getY();
 
 			Element.E_DRAWCOLOR=Color.YELLOW;
-			Element ele = root.selectElementByCoord(e.getX(),e.getY());
+			// START KGU#25 2015-10-11: Method merged with getElementByCoord(int,int)
+			//Element ele = root.selectElementByCoord(e.getX(),e.getY());
+			Element ele = root.getElementByCoord(e.getX(), e.getY(), true);
+			// END KGU#25 2015-10-11
 
-                        if(ele!=null)
-                        {
-                            mX = mouseX;
-                            mY = mouseY;
-                            selX = mouseX-ele.getRect().left;
-                            selY = mouseY-ele.getRect().top;
-                        }
+			if(ele!=null)
+			{
+				mX = mouseX;
+				mY = mouseY;
+				selX = mouseX-ele.getRect().left;
+				selY = mouseY-ele.getRect().top;
+			}
 
-                        if (ele!=null && ele!=selected)
+			if (ele!=null && ele!=selected)
 			{
 				ele.setSelected(true);
 				selected=ele;
@@ -381,7 +440,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if ( !selectedDown.getClass().getSimpleName().equals("Subqueue") &&
 					!selectedDown.getClass().getSimpleName().equals("Root"))
 				{
-					selectedUp = root.selectElementByCoord(e.getX(),e.getY());
+					// START KGU#25 2015-10-11: Method merged with getElementByCoord(int,int)
+					//selectedUp = root.selectElementByCoord(e.getX(),e.getY());
+					selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
+					// END KGU#25 2015-10-11
 					if(selectedUp!=null)
 					{
 						selectedUp.setSelected(false);
@@ -409,8 +471,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				else
 				{
-					selectedUp = root.selectElementByCoord(e.getX(),e.getY());
-                                        if(selectedUp!=null) selectedUp.setSelected(false);
+					// START KGU#25 2015-10-11: Method merged with getElementByCoord(int,int)
+					//selectedUp = root.selectElementByCoord(e.getX(),e.getY());
+					selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
+					// END KGU#25 2015-10-11
+					if(selectedUp!=null) selectedUp.setSelected(false);
 					doDraw=true;
 				}
 			}
@@ -433,6 +498,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
     public void mouseExited(MouseEvent e)
 	{
+    	// START KGU#1 2015-10-11: We ought to get rid of that sticky popped comment!
+    	this.hideComments();
+    	// END KGU#1 2015-10-11
 	}
 
     public void mouseClicked(MouseEvent e)
@@ -443,6 +511,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (e.getSource()==this)
 			{
                                 //System.out.println("Clicked");
+                                // KGU 2015-10-11: In case of reactivation replace the following by ...root.getElementByCoord(e.getX(),e.getY(),true); !
                                 /*Element selly = root.selectElementByCoord(e.getX(),e.getY());
                                 if(selly!=selected && selected!=null) 
                                 {
@@ -450,7 +519,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                                 }
                                 selected=selly;
 
-                                // redra the diagram
+                                // redraw the diagram
                                 //redraw();
                                 // do the button thing
                                 if(NSDControl!=null) NSDControl.doButtons();
@@ -527,27 +596,27 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
 
-	public void redraw()
-	{
-                if (root.hightlightVars==true)
-		{
-			root.getVarNames();
-		}
-                
-                Rect rect = root.prepareDraw(this.getGraphics());
-                Dimension d = new Dimension(rect.right-rect.left,rect.bottom-rect.top);
-		this.setPreferredSize(d);
-		//this.setSize(d);
-		this.setMaximumSize(d);
-		this.setMinimumSize(d);
-		//this.setSize(new Dimension(rect.right-rect.left,rect.bottom-rect.top));
-		//this.validate();
+    public void redraw()
+    {
+    	if (root.hightlightVars==true)
+    	{
+    		root.getVarNames();
+    	}
 
-                ((JViewport) this.getParent()).revalidate();
-                
-		//redraw(this.getGraphics());
-                this.repaint();
-	}
+    	Rect rect = root.prepareDraw(this.getGraphics());
+    	Dimension d = new Dimension(rect.right-rect.left,rect.bottom-rect.top);
+    	this.setPreferredSize(d);
+    	//this.setSize(d);
+    	this.setMaximumSize(d);
+    	this.setMinimumSize(d);
+    	//this.setSize(new Dimension(rect.right-rect.left,rect.bottom-rect.top));
+    	//this.validate();
+
+    	((JViewport) this.getParent()).revalidate();
+
+    	//redraw(this.getGraphics());
+    	this.repaint();
+    }
 
 	public void redraw(Graphics _g)
 	{
@@ -603,6 +672,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		return selected;
 	}
+	
+    // START KGU#41 2015-10-11: Unselecting, e.g. before export, had left the diagram status inconsistent:
+    // Though the selected status of the elements was unset, the references of the formerly selected
+    // elements invisibly remained in the respective diagram attributes, possibly causing unwanted effects.
+    // So this new method was introduced to replace the selectElementByCoord(-1,-1) calls.
+    public void unselectAll()
+    {
+    	if (root != null)
+    	{
+    		root.selectElementByCoord(-1, -1);
+    	}
+    	selected = selectedUp = selectedDown = selectedMoved = null;
+    	redraw();
+    }
+	// END KGU#41 2015-10-11
 
 	/**
 	* Method: print <p>
@@ -656,16 +740,25 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 	public void newNSD()
 	{
+		// START KGU#48 2015-10-17: Arranger support
+		Root oldRoot = root;
+		// END KGU#48 2015-10-17
 		// only save if something has been changed
 		saveNSD(true);
 
-		// create en empty diagram
+		// create an empty diagram
 		boolean HV = root.hightlightVars;
 		root = new Root();
 		root.hightlightVars=HV;
 		root.hasChanged=true;
 		redraw();
 		analyse();
+		// START KGU#48 2015-10-17: Arranger support
+		if (oldRoot != null)
+		{
+			oldRoot.notifyReplaced(root);
+		}
+		// END KGU#48 2015-10-17
 	}
 
 
@@ -674,8 +767,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 	public void openNSD()
 	{
+		// START KGU 2015-10-17: This will be done by openNSD(String) anyway - once is enough!
 		// only save if something has been changed
-		saveNSD(true);
+		//saveNSD(true);
+		// END KGU 2015-10-17
 
 		// open an existing file
 		// create dialog
@@ -710,6 +805,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void openNSD(String _filename)
 	{
+		// START KGU#48 2015-10-17: Arranger support
+		Root oldRoot = this.root;
+		// END KGU#48 2015-10-17
 		try
 		{
 			File f = new File(_filename);
@@ -729,6 +827,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				addRecentFile(root.filename);
 				redraw();
 				analyse();
+				// START KGU#48 2015-10-17: Arranger support
+				if (oldRoot != null)
+				{
+					oldRoot.notifyReplaced(root);
+				}
+				// END KGU#48 2015-10-17
 			}
 		}
 		catch (Exception e)
@@ -756,10 +860,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 
 		// propose name
-		String nsdName = root.getText().get(0);
-		nsdName.replace(':', '_');
-		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
-		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		// START KGU 2015-10-16: D.R.Y. - there is already a suitable method
+//		String nsdName = root.getText().get(0);
+//		nsdName.replace(':', '_');
+//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
+//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		String nsdName = root.getMethodName();
+		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
 		dlgSave.addChoosableFileFilter(new StructogramFilter());
@@ -829,8 +936,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 			if(_checkChanged==true)
 			{
+				// START KGU#49 2015-10-18: For the Arranger it's less ambiguous to see the NSD name
+				//res = JOptionPane.showOptionDialog(this,
+				//		   "Do you want to save the current NSD-File?",
+				String filename = root.filename;
+				if (filename == null || filename.isEmpty())
+				{
+					filename = root.getMethodName();
+				}
 				res = JOptionPane.showOptionDialog(this,
-												   "Do you want to save the current NSD-File?",
+												   "Do you want to save the current NSD-File?\n\"" + filename + "\"",
+				// END KGU#49 2015-10-18
 												   "Question",
 												   JOptionPane.YES_NO_OPTION,
 												   JOptionPane.QUESTION_MESSAGE,
@@ -857,11 +973,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 
 					// propose name
-					String nsdName = root.getText().get(0);
-					nsdName.replace(':', '_');
-					if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
-					if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
-					dlgSave.setSelectedFile(new File(nsdName));
+					dlgSave.setSelectedFile(new File(root.getMethodName()));
 
 					dlgSave.addChoosableFileFilter(new StructogramFilter());
 					int result = dlgSave.showSaveDialog(this);
@@ -991,6 +1103,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			getSelected().setColor(_color);
 			//getSelected().setSelected(false);
 			//selected=null;
+			// START KGU#38 2015-10-09 Setting of colour hadn't been regarded as diagram modification
+			root.hasChanged = true;
+			// END KGU#38 2015-10-09
 			redraw();
 		}
 	}
@@ -1057,12 +1172,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				EditData data = new EditData();
 				data.title="Add new instruction ...";
 
-				showInputBox(data);
+				// START KGU#42 2015-10-14: Enhancement for easier title localisation
+				//showInputBox(data);
+				showInputBox(data, "instruction", true);
+				// END KGU#42 2015-10-14
 
 				if(data.result==true)
 				{
 					Element ele = new Instruction(data.text.getText());
 					ele.setComment(data.comment.getText());
+					// START KGU#43 2015-10-17
+					if (data.breakpoint) {
+						ele.toggleBreakpoint();
+					}
+					// END KGU#43 2015-10-17
 					root.addUndo();
 					root.hasChanged=true;
 					((Subqueue) element).addElement(ele);
@@ -1077,8 +1200,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				data.title="Edit element ...";
 				data.text.setText(element.getText().getText());
 				data.comment.setText(element.getComment().getText());
+				// START KGU#43 2015-10-12
+				data.breakpoint = element.isBreakpoint();
+				// END KGU#43 2015-10-12
 
-				showInputBox(data);
+				// START KGU#42 2015-10-14: Enhancement for easier title localisation
+				//showInputBox(data);
+				showInputBox(data, element.getClass().getSimpleName(), false);
+				// END KGU#42 2015-10-14
 
 				if(data.result==true)
 				{
@@ -1091,6 +1220,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						element.setText(data.text.getText());
 					}
 					element.setComment(data.comment.getText());
+					// START KGU#43 2015-10-12
+					if (element.isBreakpoint() != data.breakpoint) {
+						element.toggleBreakpoint();
+					}
+					// END KGU#43 2015-10-12
 					root.hasChanged=true;
 					redraw();
 				}
@@ -1133,6 +1267,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		analyse();
 	}
 
+	/*****************************************
+	 * add method
+	 *****************************************/
 	public void addNewElement(Element _ele, String _title, String _pre, boolean _after)
 	{
 		if (getSelected()!=null)
@@ -1140,7 +1277,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			EditData data = new EditData();
 			data.title=_title;
 			data.text.setText(_pre);
-			showInputBox(data);
+			// START KGU 2015-10-14: More information to ease title localisation
+			//showInputBox(data);
+			showInputBox(data, _ele.getClass().getSimpleName(), true);
+			// END KGU 2015-10-14
 			if(data.result == true)
 			{
 				if (!(_ele instanceof Forever))
@@ -1148,6 +1288,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					_ele.setText(data.text.getText());
 				}
 				_ele.setComment(data.comment.getText());
+				// START KGU 2015-10-17
+				if (_ele.isBreakpoint() != data.breakpoint) {
+					_ele.toggleBreakpoint();
+				}
+				// END KGU 2015-10-17
 				root.addUndo();
 				if(_after==true)
 				{
@@ -1165,6 +1310,32 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
+	// START KGU#43 2015-10-12
+	/*****************************************
+	 * breakpoint methods
+	 *****************************************/
+	public void toggleBreakpoint()
+	{
+		Element ele = getSelected();
+		if (ele != null)
+		{
+			ele.toggleBreakpoint();
+			redraw();
+		}
+	}
+	
+	public void clearBreakpoints()
+	{
+		root.clearBreakpoints();
+		redraw();
+	}
+
+	public void clearExecutionStatus()
+	{
+		root.clearExecutionStatus();
+		redraw();
+	}
+	// END KGU#43 2015-10-12
 
 	/*****************************************
 	 * print method
@@ -1227,8 +1398,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         public void exportPNGmulti()
         {
 
-		root.selectElementByCoord(-1,-1);
-		redraw();
+        	// START KGU#41 2015-10-11
+        	//root.selectElementByCoord(-1,-1);	// Unselect all elements
+        	//redraw();
+        	unselectAll();
+        	// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as Multi-PNG ...");
 		// set directory
@@ -1245,10 +1419,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			dlgSave.setCurrentDirectory(currentDirectory);
 		}
 		// propose name
-		String nsdName = root.getText().get(0);
-		nsdName.replace(':', '_');
-		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
-		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		// START KGU 2015-10-16: There is already a suitable method on root
+//		String nsdName = root.getText().get(0);
+//		nsdName.replace(':', '_');
+//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
+//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		String nsdName = root.getMethodName();
+		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
 		dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.PNGFilter());
@@ -1304,7 +1481,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                                 int count = 0;
                                 BufferedImage imgs[] = new BufferedImage[chunks];
 
-                                // 4. Fill the Image array with splitted image parts
+                                // 4. Fill the Image array with split image parts
                                 for (int x = 0; x < rows; x++)
                                 {
                                     for (int y = 0; y < cols; y++)
@@ -1336,8 +1513,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         
 	public void exportPNG()
 	{
-		root.selectElementByCoord(-1,-1);
-		redraw();
+    	// START KGU#41 2015-10-11
+    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
+    	//redraw();
+    	unselectAll();
+    	// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as PNG ...");
 		// set directory
@@ -1354,10 +1534,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			dlgSave.setCurrentDirectory(currentDirectory);
 		}
 		// propose name
-		String nsdName = root.getText().get(0);
-		nsdName.replace(':', '_');
-		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
-		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		// START KGU 2015-10-16: There is already a suitable method
+//		String nsdName = root.getText().get(0);
+//		nsdName.replace(':', '_');
+//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
+//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		String nsdName = root.getMethodName();
+		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
 		dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.PNGFilter());
@@ -1403,16 +1586,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void exportEMF()
 	{
-		root.selectElementByCoord(-1,-1);
-		redraw();
+		// START KGU#41 2015-10-11
+		//root.selectElementByCoord(-1,-1);	// Unselect all elements
+		//redraw();
+		unselectAll();
+		// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as EMF ...");
 		// set directory
-                if (lastExportDir!=null)
-                {
-                    dlgSave.setCurrentDirectory(lastExportDir);
-                }
-                else if(root.getFile() != null)
+		if (lastExportDir!=null)
+		{
+			dlgSave.setCurrentDirectory(lastExportDir);
+		}
+		else if(root.getFile() != null)
 		{
 			dlgSave.setCurrentDirectory(root.getFile());
 		}
@@ -1421,17 +1607,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			dlgSave.setCurrentDirectory(currentDirectory);
 		}
 		// propose name
-		String nsdName = root.getText().get(0);
-		nsdName.replace(':', '_');
-		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
-		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		// START KGU 2015-10-16: D.R.Y. - There is already a suitable method
+		//		String nsdName = root.getText().get(0);
+		//		nsdName.replace(':', '_');
+		//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
+		//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		String nsdName = root.getMethodName();
+		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
 		dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.EMFFilter());
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
-                    lastExportDir=dlgSave.getSelectedFile().getParentFile();
+			lastExportDir=dlgSave.getSelectedFile().getParentFile();
 			String filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
 			if(!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".emf"))
 			{
@@ -1439,45 +1628,48 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 
 			File file = new File(filename);
-                        boolean writeDown = true;
+			boolean writeDown = true;
 
-                        if(file.exists())
+			if(file.exists())
 			{
-                            int response = JOptionPane.showConfirmDialog (null,
-                                            "Overwrite existing file?","Confirm Overwrite",
-                                            JOptionPane.YES_NO_OPTION,
-                                            JOptionPane.QUESTION_MESSAGE);
-                            if (response == JOptionPane.NO_OPTION)
-                            {
-				writeDown=false;
-                            }
-                        }
-                        if(writeDown==true)
-                        {
-                            try
-                            {
-                                    EMFGraphics2D emf = new EMFGraphics2D(new FileOutputStream(filename),new Dimension(root.width+12, root.height+12)) ;
+				int response = JOptionPane.showConfirmDialog (null,
+						"Overwrite existing file?","Confirm Overwrite",
+						JOptionPane.YES_NO_OPTION,
+						JOptionPane.QUESTION_MESSAGE);
+				if (response == JOptionPane.NO_OPTION)
+				{
+					writeDown=false;
+				}
+			}
+			if(writeDown==true)
+			{
+				try
+				{
+					EMFGraphics2D emf = new EMFGraphics2D(new FileOutputStream(filename),new Dimension(root.width+12, root.height+12)) ;
 
-                                    emf.startExport();
-                                    lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(emf);
-                                    lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
-                                    myrect.left+=6;
-                                    myrect.top+=6;
-                                    root.draw(c,myrect);
-                                    emf.endExport();
-                            }
-                            catch (Exception e)
-                            {
-                                    e.printStackTrace();
-                            }
-                        }
+					emf.startExport();
+					lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(emf);
+					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
+					myrect.left+=6;
+					myrect.top+=6;
+					root.draw(c,myrect);
+					emf.endExport();
+				}
+				catch (Exception e)
+				{
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 
 	public void exportSVG() // does not work!!
 	{
-		root.selectElementByCoord(-1,-1);
-		redraw();
+    	// START KGU#41 2015-10-11
+    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
+    	//redraw();
+    	unselectAll();
+    	// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as SVG ...");
 		// set directory
@@ -1494,10 +1686,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			dlgSave.setCurrentDirectory(currentDirectory);
 		}
 		// propose name
-		String nsdName = root.getText().get(0);
-		nsdName.replace(':', '_');
-		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
-		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		// START KGU 2015-10-16: D.R.Y. - there is already a suitable method
+//		String nsdName = root.getText().get(0);
+//		nsdName.replace(':', '_');
+//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
+//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		String nsdName = root.getMethodName();
+		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
 		dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.SVGFilter());
@@ -1562,14 +1757,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                        }
 		}
 
-                root.selectElementByCoord(-1,-1);
-		redraw();
+    	// START KGU 2015-10-11
+    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
+    	//redraw();
+    	unselectAll();
+    	// END KGU 2015-10-11
 	}
 
 	public void exportSWF()
 	{
-		root.selectElementByCoord(-1,-1);
-		redraw();
+    	// START KGU 2015-10-11
+    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
+    	//redraw();
+    	unselectAll();
+    	// END KGU 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as SWF ...");
 		// set directory
@@ -1586,10 +1787,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			dlgSave.setCurrentDirectory(currentDirectory);
 		}
 		// propose name
-		String nsdName = root.getText().get(0);
-		nsdName.replace(':', '_');
-		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
-		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		// START KGU 2015-10-16: D.R.Y. - there is already a suitable method
+//		String nsdName = root.getText().get(0);
+//		nsdName.replace(':', '_');
+//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
+//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		String nsdName = root.getMethodName();
+		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
 		dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.SWFFilter());
@@ -1641,8 +1845,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void exportPDF()
 	{
-		root.selectElementByCoord(-1,-1);
-		redraw();
+    	// START KGU 2015-10-11
+    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
+    	//redraw();
+    	unselectAll();
+    	// END KGU 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as PDF ...");
 		// set directory
@@ -1659,10 +1866,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			dlgSave.setCurrentDirectory(currentDirectory);
 		}
 		// propose name
-		String nsdName = root.getText().get(0);
-		nsdName.replace(':', '_');
-		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
-		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		// START KGU 2015-10-16: D.R.Y. - there is already a suitable method
+//		String nsdName = root.getText().get(0);
+//		nsdName.replace(':', '_');
+//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
+//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		String nsdName = root.getMethodName();
+		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
 		dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.PDFFilter());
@@ -1825,6 +2035,27 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								 	 JOptionPane.INFORMATION_MESSAGE);            
             /**/
         }
+/*
+		
+		// START KGU#35 2015-07-18 If the above comment was an idea how to open the homepage, here's the code now 
+		String home = "http://structorizer.fisch.lu";
+		int chosen = JOptionPane.showOptionDialog(this,"<html>Goto <a href=\"" + home + "\">" + home + "</a> to look for updates<br>and news about Structorizer.</html>",
+									 "Update",
+								 	 JOptionPane.YES_NO_OPTION,JOptionPane.INFORMATION_MESSAGE,null,null,null);
+		if (chosen == JOptionPane.YES_OPTION && Desktop.isDesktopSupported())
+		{
+			try 
+			{
+				Desktop.getDesktop().browse(new java.net.URI(home));
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+			}
+		}
+		// END KGU#35 2015-07-18
+	}
+*/
 
 	/*****************************************
 	 * the preferences dialog methods
@@ -2112,7 +2343,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void setNice(boolean _nice)
 	{
 		root.isNice=_nice;
-                root.hasChanged=true;
+		root.hasChanged=true;
 		redraw();
 	}
 
@@ -2124,14 +2355,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void setFunction()
 	{
 		root.isProgram=false;
-                root.hasChanged=true;
+		root.hasChanged=true;
 		redraw();
 	}
 
 	public void setProgram()
 	{
 		root.isProgram=true;
-                root.hasChanged=true;
+		root.hasChanged=true;
 		redraw();
 	}
 
@@ -2186,7 +2417,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/*****************************************
 	 * inputbox methods
 	 *****************************************/
-	public void showInputBox(EditData _data)
+	// START KGU 2015-10-14: additional parameters for title customisation
+	//public void showInputBox(EditData _data)
+	public void showInputBox(EditData _data, String elementType, boolean isInsertion)
+	// END KGU 2015-10-14
 	{
             if(NSDControl!=null)
             {
@@ -2199,33 +2433,56 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
                 inputbox.setLocationRelativeTo(NSDControl.getFrame());
 
-		// set title
+		// set title (as default)
 		inputbox.setTitle(_data.title);
 
 		// set field
 		inputbox.txtText.setText(_data.text.getText());
 		inputbox.txtComment.setText(_data.comment.getText());
+		// START KGU 2015-10-12
+		inputbox.chkBreakpoint.setEnabled(getSelected() != root);
+		inputbox.chkBreakpoint.setSelected(_data.breakpoint);
+		// END KGU 2015-10-12
 
 		inputbox.OK=false;
+		// START KGU 2015-10-14: Pass the additional information for title translation control
+		if (elementType.equals("Root") && !this.isProgram())
+		{
+			elementType = "Function";
+		}
+		else if (elementType.equals("Forever"))
+		{
+			inputbox.lblText.setVisible(false);
+			inputbox.txtText.setVisible(false);
+		}
+		inputbox.elementType = elementType;
+		inputbox.forInsertion = isInsertion;
+		// END KGU 2015-10-14
 		inputbox.setLang(NSDControl.getLang());
 		inputbox.setVisible(true);
 
 		// get fields
 		_data.text.setText(inputbox.txtText.getText());
 		_data.comment.setText(inputbox.txtComment.getText());
+		// START KGU 2015-10-12
+		_data.breakpoint = inputbox.chkBreakpoint.isSelected();
+		// END KGU 2015-10-12
 		_data.result=inputbox.OK;
 
                 inputbox.dispose();
              }
 	}
-
+	
 	/*****************************************
 	 * CLIPBOARD INTERACTIONS
      *****************************************/
 	public void copyToClipboardPNG()
 	{
-                root.selectElementByCoord(-1,-1);
-		redraw();
+    	// START KGU 2015-10-11
+    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
+    	//redraw();
+    	unselectAll();
+    	// END KGU 2015-10-11
 
                 Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		//DataFlavor pngFlavor = new DataFlavor("image/png","Portable Network Graphics");
@@ -2241,8 +2498,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void copyToClipboardEMF()
 	{
-                root.selectElementByCoord(-1,-1);
-		redraw();
+    	// START KGU 2015-10-11
+    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
+    	//redraw();
+    	unselectAll();
+    	// END KGU 2015-10-11
 
                 Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
@@ -2383,25 +2643,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 
 	/*****************************************
-	 * CONSTRUCTOR
-     *****************************************/
-    public Diagram(Editor _editor, String _string)
-    {
-        super(true);
-        this.setDoubleBuffered(true);	// we don't need double buffering, because the drawing
-                                                                        // itself does it allready!
-        this.setBackground(Color.LIGHT_GRAY);
-
-        if(_editor!=null)
-        {
-            errorlist=_editor.errorlist;
-            NSDControl = _editor;
-        }
-        create(_string);
-    }
-
-
-	/*****************************************
 	 * ANALYSER
      *****************************************/
 	protected void analyse()
@@ -2491,4 +2732,5 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 */
 
     }
+    
 }

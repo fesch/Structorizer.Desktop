@@ -57,7 +57,7 @@ public class Instruction extends Element {
 	public Instruction(String _strings)
 	{
 		super(_strings);
-		setText(_strings);
+		setText(_strings);	// FIXME (KGU 2015-10-13): What is this good for? This has already been done by the super constructor!
 	}
 	
 	public Instruction(StringList _strings)
@@ -65,7 +65,7 @@ public class Instruction extends Element {
 		super(_strings);
 		setText(_strings);
 	}
-	
+
         public static Rect prepareDraw(Canvas _canvas, StringList _text, Element _element)
         {
                 Rect rect = new Rect(0,0,0,0);
@@ -112,17 +112,22 @@ public class Instruction extends Element {
         public static void draw(Canvas _canvas, Rect _top_left, StringList _text, Element _element)
 	{
 		Rect myrect = new Rect();
-		Color drawColor = _element.getColor();
+		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
+		//Color drawColor = _element.getColor();
+		Color drawColor = _element.getFillColor();
+		// END KGU 2015-10-13
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 			
-		if (_element.isCollapsed())
-		{
-			drawColor=Element.E_COLLAPSEDCOLOR;
-		}
-		if (_element.selected==true)
-		{
-			drawColor=Element.E_DRAWCOLOR;
-		}
+		// START KGU 2015-10-13: Became obsolete by new method getFillColor() applied above now
+//		if (_element.isCollapsed())
+//		{
+//			drawColor=Element.E_COLLAPSEDCOLOR;
+//		}
+//		if (_element.selected==true)
+//		{
+//			drawColor=Element.E_DRAWCOLOR;
+//		}
+		// END KGU 2015-10-13
 		
 		_element.rect=_top_left.copy();
 		
@@ -137,16 +142,23 @@ public class Instruction extends Element {
 		// draw comment
 		if(Element.E_SHOWCOMMENTS==true && !_element.comment.getText().trim().equals(""))
 		{
-			canvas.setBackground(E_COMMENTCOLOR);
-			canvas.setColor(E_COMMENTCOLOR);
-			
-			myrect.left+=2;
-			myrect.top+=2;
-			myrect.right=myrect.left+4;
-			myrect.bottom-=1;
-			
-			canvas.fillRect(myrect);
+			// START KGU 2015-10-11
+//			canvas.setBackground(E_COMMENTCOLOR);
+//			canvas.setColor(E_COMMENTCOLOR);
+//			
+//			myrect.left+=2;
+//			myrect.top+=2;
+//			myrect.right=myrect.left+4;
+//			myrect.bottom-=1;
+//			
+//			canvas.fillRect(myrect);
+			_element.drawCommentMark(canvas, myrect);
+			// END KGU 2015-10-11
 		}
+		
+		// START KGU 2015-10-11: If _element is a breakpoint, mark it
+		_element.drawBreakpointMark(canvas, _top_left);
+		// END KGU 2015-10-11
 		
 		for(int i=0;i<_text.count();i++)
 		{
@@ -167,9 +179,13 @@ public class Instruction extends Element {
                 
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
+		// Now delegates all stuff to the static method above, which may also
+		// be called from Elements of different types when those are collapsed
+		
 		/*Rect myrect = new Rect();
 		Color drawColor = getColor();
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
+		boolean hasCommentMark = false;
 			
 		if (selected==true)
 		{
@@ -189,17 +205,21 @@ public class Instruction extends Element {
 		// draw comment
 		if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
 		{
-			canvas.setBackground(E_COMMENTCOLOR);
-			canvas.setColor(E_COMMENTCOLOR);
-			
-			myrect.left+=2;
-			myrect.top+=2;
-			myrect.right=myrect.left+4;
-			myrect.bottom-=1;
-			
-			canvas.fillRect(myrect);
+//			canvas.setBackground(E_COMMENTCOLOR);
+//			canvas.setColor(E_COMMENTCOLOR);
+//			
+//			myrect.left+=2;
+//			myrect.top+=2;
+//			myrect.right=myrect.left+4;
+//			myrect.bottom-=1;
+//			
+//			canvas.fillRect(myrect);
+			drawCommentMark(canvas, myrect);
+			hasCommentMark = true
 		}
 		
+		drawBreakpointMark(canvas, _top_left, hasCommentMark);
+				
 		for(int i=0;i<text.count();i++)
 		{
 			String text = this.text.get(i);
@@ -225,4 +245,16 @@ public class Instruction extends Element {
 		ele.setColor(this.getColor());
 		return ele;
 	}
+
+	// START KGU 2015-10-16
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
+	 */
+	@Override
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    {
+   		_lines.add(this.getText());
+    }
+    // END KGU 2015-10-16
+
 }

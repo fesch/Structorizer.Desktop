@@ -33,6 +33,8 @@
  *      ------		----			-----------
  *      Bob Fisch       2008.01.14      First Issue
  *      Kay Gürtzig		2014.12.02		ExportOptionDialoge and further messages added
+ *      Kay Gürtzig 	2015.10.06		altPadRight added to Preferences dialog
+ *      Kay Gürtzig 	2015.10.16		Several additions to Editor and InputBox
  *
  ******************************************************************************************************
  *
@@ -255,6 +257,7 @@ Editor.btnColor9.tooltip=Colorize the selected element with this color.
 // turtleizer & executor
 Editor.btnTurtle.tooltip=Open Turtleizer ...
 Editor.btnMake.tooltip=Open Executor ...
+Editor.btnDropBrk.tooltip=Remove all breakpoints.
 // Popup menu
 Editor.popupCut.text=Cut
 Editor.popupCopy.text=Copy
@@ -291,6 +294,8 @@ Editor.popupEdit.text=Edit
 Editor.popupDelete.text=Delete
 Editor.popupMoveUp.text=Move up
 Editor.popupMoveDown.text=Move down
+// Breakpoint
+Editor.popupBreakpoint.text=Toggle breakpoint
 
 
 -----[ InputBox ]-----
@@ -304,7 +309,11 @@ InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=Validate your choice.
 InputBox.btnCancel.text=Cancel
 InputBox.btnCancel.tooltip=Cancel your choice.
-
+InputBox.class_specific.Alternative.lblText=Please enter the condition
+InputBox.class_specific.While.lblText=Please enter the entry condition
+InputBox.class_specific.Repeat.lblText=Please enter the condition to leave
+InputBox.class_specific.Case.lblText=Please enter the choice expression and the case constants (one per line)
+InputBox.class_specific.Parallel.lblText=Number of parallel threads
 
 -----[ Preferences ]-----
 Preferences.title=Structure Preferences
@@ -316,6 +325,7 @@ Preferences.lblAltF.text=Label FALSE
 Preferences.lblAltF.tooltip=The label fir the right side.
 Preferences.lblAltContent.text=Default content
 Preferences.lblAltContent.tooltip=The default content of an IF statement.
+Preferences.altPadRight.text=Enlarge FALSE
 Preferences.pnlCase.border=CASE statement
 Preferences.pnlCase.tooltip=
 Preferences.lblCase.text=Default content

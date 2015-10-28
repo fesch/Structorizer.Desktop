@@ -33,6 +33,7 @@ package lu.fisch.structorizer.elements;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.12      First Issue
+ *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *
  ******************************************************************************************************
  *
@@ -41,7 +42,6 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.util.Vector;
-
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -120,16 +120,21 @@ public class Repeat extends Element {
                 }
                 
 		Rect myrect = new Rect();
-		Color drawColor = getColor();
+		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
+		//Color drawColor = getColor();
+		Color drawColor = getFillColor();
+		// END KGU 2015-10-13
 		FontMetrics fm = _canvas.getFontMetrics(font);
-		int p;
-		int w;
+//		int p;
+//		int w;
 		
-		if (selected==true)
-		{
-                    if(waited==true) { drawColor=Element.E_WAITCOLOR; }
-                    else { drawColor=Element.E_DRAWCOLOR; }
-		}
+		// START KGU 2015-10-13: Became obsolete by new method getFillColor() applied above now
+//		if (selected==true)
+//		{
+//			if(waited==true) { drawColor=Element.E_WAITCOLOR; }
+//			else { drawColor=Element.E_DRAWCOLOR; }
+//		}
+		// END KGU 2015-10-13
 		
 		Canvas canvas = _canvas;
 		canvas.setBackground(drawColor);
@@ -138,15 +143,18 @@ public class Repeat extends Element {
 		rect=_top_left.copy();
 		
 		// draw shape
-		myrect=_top_left.copy();
+		Rect cprect=_top_left.copy();
 		canvas.setColor(Color.BLACK);
-		myrect.bottom=_top_left.bottom;
-		myrect.top=myrect.bottom-fm.getHeight()*getText().count()-2*Math.round(E_PADDING / 2);
-		canvas.drawRect(myrect);
+		cprect.bottom=_top_left.bottom;
+		cprect.top=cprect.bottom-fm.getHeight()*getText().count()-2*Math.round(E_PADDING / 2);
+		canvas.drawRect(cprect);
 		
 		myrect=_top_left.copy();
 		myrect.right=myrect.left+Element.E_PADDING;
 		canvas.drawRect(myrect);
+
+		cprect.top += 1;
+		cprect.left = myrect.right;
 		
 		// fill shape
 		canvas.setColor(drawColor);
@@ -161,25 +169,32 @@ public class Repeat extends Element {
 		myrect.top=myrect.bottom-fm.getHeight()*getText().count()-2*Math.round(E_PADDING / 2);
 		myrect.left=myrect.left+1;
 		myrect.top=myrect.top+1;
-		myrect.bottom=myrect.bottom;
-		myrect.right=myrect.right;
+		//myrect.bottom=myrect.bottom;
+		//myrect.right=myrect.right;
 		canvas.fillRect(myrect);
 		
 		// draw comment
 		if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
 		{
-			canvas.setBackground(E_COMMENTCOLOR);
-			canvas.setColor(E_COMMENTCOLOR);
-			
-			Rect someRect = _top_left.copy();
-			
-			someRect.left+=2;
-			someRect.top+=2;
-			someRect.right=someRect.left+4;
-			someRect.bottom-=1;
-			
-			canvas.fillRect(someRect);
+			// START KGU 2015-10-11: Use an inherited helper method now
+//			canvas.setBackground(E_COMMENTCOLOR);
+//			canvas.setColor(E_COMMENTCOLOR);
+//			
+//			Rect someRect = _top_left.copy();
+//			
+//			someRect.left+=2;
+//			someRect.top+=2;
+//			someRect.right=someRect.left+4;
+//			someRect.bottom-=1;
+//			
+//			canvas.fillRect(someRect);
+			this.drawCommentMark(canvas, _top_left);
+			// END KGU 2015-10-11
 		}
+		// START KGU 2015-10-11
+		// draw breakpoint bar if necessary
+		this.drawBreakpointMark(canvas, cprect);
+		// END KGU 2015-10-11
 		
 		
 		// draw text
@@ -204,18 +219,33 @@ public class Repeat extends Element {
 		
 	}
 	
-	public Element selectElementByCoord(int _x, int _y)
+	// START KGU 2015-10-11: Merged with getElementByCoord, which had to be overridden as well for proper Comment popping
+//	public Element selectElementByCoord(int _x, int _y)
+//	{
+//		Element selMe = super.selectElementByCoord(_x,_y);
+//		Element sel = q.selectElementByCoord(_x,_y);
+//		if(sel!=null) 
+//		{
+//			selected=false;
+//			selMe = sel;
+//		}
+//		
+//		return selMe;
+//	}
+	@Override
+	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
-		Element selMe = super.selectElementByCoord(_x,_y);
-		Element sel = q.selectElementByCoord(_x,_y);
+		Element selMe = super.getElementByCoord(_x, _y, _forSelection);
+		Element sel = q.getElementByCoord(_x, _y, _forSelection);
 		if(sel!=null) 
 		{
-			selected=false;
+			if (_forSelection) selected=false;
 			selMe = sel;
 		}
 		
 		return selMe;
 	}
+	// END KGU 2015-10-11
 	
 	public void setSelected(boolean _sel)
 	{
@@ -239,6 +269,30 @@ public class Repeat extends Element {
         super.setColor(_color);
         q.setColor(_color);
     }*/
-	
+
+	// START KGU 2015-11-12
+	@Override
+	public void clearBreakpoints()
+	{
+		super.clearBreakpoints();
+		this.q.clearBreakpoints();
+	}
+	// END KGU 2015-10-12
+
+	// START KGU 2015-10-16
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
+	 */
+	@Override
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    {
+		// The own text contains just a condition (i.e. a logical expression), not an instruction
+		if (!_instructionsOnly)
+		{
+			_lines.add(this.getText());
+		}
+		this.q.addFullText(_lines, _instructionsOnly);
+    }
+    // END KGU 2015-10-16
 	
 }

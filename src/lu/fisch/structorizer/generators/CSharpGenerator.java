@@ -39,10 +39,14 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2014.11.06              Support for logical Pascal operators added
  *      Kay Gürtzig             2014.11.16              Bugfixes and enhancements (see comment)
  *      Kay Gürtzig             2014.12.02              Additional replacement of long assignment operator "<--" by "<-"
+ *      Kay Gürtzig             2015.10.18              Indentation fixed, comment insertion interface modified
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2015.10.18 - Bugfix
+ *      - Indentation wasn't done properly (_indent+this.getIndent() works only for single-character indents)
+ *      
  *      2014.11.16 - Bugfixes / Enhancements
  *      - conversion of comparison and logical operators had still been flawed
  *      - element comment export added
@@ -91,6 +95,15 @@ public class CSharpGenerator extends Generator
                 String[] exts = {"cs"};
                 return exts;
         }
+
+        // START KGU 2015-10-18: New pseudo field
+        @Override
+        protected String commentSymbolLeft()
+        {
+        	return "//";
+        }
+        // END KGU 2015-10-18
+
         // TODO
         /************ Code Generation **************/
         public static String transform(String _input)
@@ -196,21 +209,30 @@ public class CSharpGenerator extends Generator
         // Instruction
         protected void generateCode(Instruction _inst, String _indent)
         {
-                // START KGU 2014-11-16:
-                insertComment(_inst, _indent, "// ");
-                // END KGU 2014-11-16
-                
-                for(int i=0;i<_inst.getText().count();i++)
-                {
-                        code.add(_indent+transform(_inst.getText().get(i))+";");
-                }
+        	// START KGU 2015-10-18: The "export instructions as comments" configuration had been ignored here
+//    		insertComment(_inst, _indent);
+//    		for(int i=0;i<_inst.getText().count();i++)
+//    		{
+//    			code.add(_indent+transform(_inst.getText().get(i))+";");
+//    		}
+    		if (!insertAsComment(_inst, _indent)) {
+    			
+    			insertComment(_inst, _indent);
+
+    			for (int i=0; i<_inst.getText().count(); i++)
+    			{
+    				code.add(_indent+transform(_inst.getText().get(i))+";");
+    			}
+
+    		}
+    		// END KGU 2015-10-18
         }
 
         // IF statement
         protected void generateCode(Alternative _alt, String _indent)
         {
                 // START KGU 2014-11-16:
-                insertComment(_alt, _indent, "// ");
+                insertComment(_alt, _indent);
                 // END KGU 2014-11-16
                 
                 String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
@@ -218,13 +240,13 @@ public class CSharpGenerator extends Generator
 
                 code.add(_indent+"if "+condition+"");
                 code.add(_indent+"{");
-                generateCode(_alt.qTrue,_indent+_indent.substring(0,1));
+                generateCode(_alt.qTrue,_indent+this.getIndent());
                 if(_alt.qFalse.getSize()!=0)
                 {
                         code.add(_indent+"}");
                         code.add(_indent+"else");
                         code.add(_indent+"{");
-                        generateCode(_alt.qFalse,_indent+_indent.substring(0,1));
+                        generateCode(_alt.qFalse,_indent+this.getIndent());
                 }
                 code.add(_indent+"}");
         }
@@ -233,7 +255,7 @@ public class CSharpGenerator extends Generator
         protected void generateCode(Case _case, String _indent)
         {
                 // START KGU 2014-11-16:
-                insertComment(_case, _indent, "// ");
+                insertComment(_case, _indent);
                 // END KGU 2014-11-16
                 
                 String condition = transform(_case.getText().get(0));
@@ -244,16 +266,16 @@ public class CSharpGenerator extends Generator
 
                 for(int i=0;i<_case.qs.size()-1;i++)
                 {
-                        code.add(_indent+_indent.substring(0,1)+"case "+_case.getText().get(i+1).trim()+":");
-                        generateCode((Subqueue) _case.qs.get(i),_indent+_indent.substring(0,1)+_indent.substring(0,1)+_indent.substring(0,1));
-                        code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1)+"break;");
+                        code.add(_indent+this.getIndent()+"case "+_case.getText().get(i+1).trim()+":");
+                        generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent());
+                        code.add(_indent+this.getIndent()+this.getIndent()+"break;");
                 }
 
                 if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
                 {
-                        code.add(_indent+_indent.substring(0,1)+"default:");
-                        generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+_indent.substring(0,1)+_indent.substring(0,1));
-                        code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1)+"break;");
+                        code.add(_indent+this.getIndent()+"default:");
+                        generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());
+                        code.add(_indent+this.getIndent()+this.getIndent()+"break;");
                 }
                 code.add(_indent+"}");
         }
@@ -290,7 +312,7 @@ public class CSharpGenerator extends Generator
 //			// Perl only
 //			code.add(_indent+"foreach $"+itemStr+" ($"+setStr+") {");
 //		
-//			generateCode(_foreach.q,_indent+_indent.substring(0,1));
+//			generateCode(_foreach.q,_indent+this.getIndent());
 //			code.add(_indent+"}");
 //		}
 
@@ -299,7 +321,7 @@ public class CSharpGenerator extends Generator
         protected void generateCode(For _for, String _indent)
         {
                 // START KGU 2014-11-16
-                insertComment(_for, _indent, "// ");
+                insertComment(_for, _indent);
                 // END KGU 2014-11-16
                 
                 String startValueStr="";
@@ -321,7 +343,7 @@ public class CSharpGenerator extends Generator
                                 counterStr+" = "+startValueStr+"; "+counterStr+" <= "+endValueStr+"; "+counterStr+" = "+counterStr+" + ("+stepValueStr+") "+
                                 ")");
                 code.add(_indent+"{");
-                generateCode(_for.q,_indent+_indent.substring(0,1));
+                generateCode(_for.q,_indent+this.getIndent());
                 code.add(_indent+"}");
         }
 
@@ -329,7 +351,7 @@ public class CSharpGenerator extends Generator
         protected void generateCode(While _while, String _indent)
         {
                 // START KGU 2014-11-16
-                insertComment(_while, _indent, "// ");
+                insertComment(_while, _indent);
                 // END KGU 2014-11-16
                 
                 String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
@@ -337,7 +359,7 @@ public class CSharpGenerator extends Generator
 
                 code.add(_indent+"while "+condition+" ");
                 code.add(_indent+"{");
-                generateCode(_while.q,_indent+_indent.substring(0,1));
+                generateCode(_while.q,_indent+this.getIndent());
                 code.add(_indent+"}");
         }
 
@@ -345,11 +367,11 @@ public class CSharpGenerator extends Generator
         protected void generateCode(Repeat _repeat, String _indent)
         {
                 // START KGU 2014-11-16
-                insertComment(_repeat, _indent, "// ");
+                insertComment(_repeat, _indent);
                 // END KGU 2014-11-16
                 code.add(_indent+"do");
                 code.add(_indent+"{");
-                generateCode(_repeat.q,_indent+_indent.substring(0,1));
+                generateCode(_repeat.q,_indent+this.getIndent());
                 code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+"));");
         }
 
@@ -357,11 +379,11 @@ public class CSharpGenerator extends Generator
         protected void generateCode(Forever _forever, String _indent)
         {
                 // START KGU 2014-11-16
-                insertComment(_forever, _indent, "// ");
+                insertComment(_forever, _indent);
                 // END KGU 2014-11-16
                 code.add(_indent+"while (true)");
                 code.add(_indent+"{");
-                generateCode(_forever.q,_indent+_indent.substring(0,1));
+                generateCode(_forever.q,_indent+this.getIndent());
                 code.add(_indent+"}");
         }
 
@@ -369,7 +391,7 @@ public class CSharpGenerator extends Generator
         protected void generateCode(Call _call, String _indent)
         {
                 // START KGU 2014-11-16
-                insertComment(_call, _indent, "// ");
+                insertComment(_call, _indent);
                 // END KGU 2014-11-16
                 for(int i=0;i<_call.getText().count();i++)
                 {
@@ -381,7 +403,7 @@ public class CSharpGenerator extends Generator
         protected void generateCode(Jump _jump, String _indent)
         {
                 // START KGU 2014-11-16
-                insertComment(_jump, _indent, "// ");
+                insertComment(_jump, _indent);
                 // END KGU 2014-11-16
                 for(int i=0;i<_jump.getText().count();i++)
                 {
@@ -394,7 +416,7 @@ public class CSharpGenerator extends Generator
         protected void generateCode(Subqueue _subqueue, String _indent)
         {
                 // START KGU 2014-11-16
-                insertComment(_subqueue, _indent, "// ");
+                insertComment(_subqueue, _indent);
                 // END KGU 2014-11-16
                 // code.add(_indent+"");
                 for(int i=0;i<_subqueue.children.size();i++)
@@ -406,44 +428,41 @@ public class CSharpGenerator extends Generator
 
         public String generateCode(Root _root, String _indent)
         {
-                if(_root.isProgram==true) {
-                        code.add("using System;");
-                        code.add("");
-                        // START KGU 2014-11-16
-                        code.add("/**");
-                        insertComment(_root, "", " * ");
-                        code.add(" */");
-                        // END KGU 2014-11-16
-                        code.add("public class "+_root.getText().get(0)+" {");
-                        code.add("");
-                        code.add(_indent+"// Declare and initialise global variables here");
-                        code.add("");
-                        code.add(_indent+"/**");
-                        code.add(_indent+" * @param args");
-                        code.add(_indent+" */");
-                        code.add(_indent+"public static void Main(string[] args) {");
-                        code.add(_indent+_indent+"// Declare local variables here");
-                        code.add(_indent+_indent+"");
-                        code.add(_indent+_indent+"// Initialise local variables here");
-                        code.add(_indent+_indent+"");
-                        generateCode(_root.children,_indent+_indent);
-                        code.add(_indent+"}");
-                        code.add("");
-                        code.add("}");
+        	StringList paramNames = _root.getParameterNames();
+        	if(_root.isProgram==true) {
+                        code.add(_indent + "using System;");
+                        code.add(_indent + "");
+                        // START KGU 2015-10-18
+                        insertBlockComment(_root.getComment(), _indent, "/**", " * ", " */");
+                        // END KGU 2015-10-18
+                        code.add(_indent + "public class "+_root.getText().get(0)+" {");
+                        code.add(_indent);
+                        insertComment("TODO Declare and initialise global variables here", _indent + this.getIndent());
+                        code.add(_indent);
+                        code.add(_indent + this.getIndent()+"/**");
+                        code.add(_indent + this.getIndent()+" * @param args");
+                        code.add(_indent + this.getIndent()+" */");
+                        code.add(_indent + this.getIndent()+"public static void Main(string[] args) {");
+                        insertComment("TODO Declare local variables here", _indent + this.getIndent()+this.getIndent());
+                        code.add(_indent + this.getIndent()+this.getIndent());
+                        insertComment("TODO Initialise local variables here", _indent + this.getIndent()+this.getIndent());
+                        code.add(_indent + this.getIndent()+this.getIndent());
+                        generateCode(_root.children, _indent + this.getIndent()+this.getIndent());
+                        code.add(_indent + this.getIndent()+"}");
+                        code.add(_indent);
+                        code.add(_indent + "}");
                         }
                 else {
-                        code.add(_indent+"/**");
-                        // START KGU 2014-11-16
-                        insertComment(_root, _indent, " * ");
-                        code.add(_indent+" * @param args");
-                        // END KGU 2014-11-16
-                        code.add(_indent+" */");
-                        code.add(_indent+"private static void "+_root.getText().get(0)+"() {");
-                        code.add(_indent+_indent+"// Declare local variables here");
-                        code.add("");
-                        generateCode(_root.children,_indent+_indent);
-                        code.add("");
-                        code.add(_indent+"}");
+                        // START KGU 2015-10-18
+                        insertBlockComment(_root.getComment(), _indent + this.getIndent(), "/**", " * ", null);
+                        insertBlockComment(paramNames, _indent+this.getIndent(), null, " * @param ", " */");
+                        // END KGU 2014-10-18
+                        code.add(_indent+this.getIndent() + "private static void " + _root.getText().get(0) + " {");
+                        insertComment("TODO Declare local variables here", _indent+this.getIndent() + this.getIndent());
+                        code.add(_indent);
+                        generateCode(_root.children, _indent+this.getIndent() + this.getIndent());
+                        code.add(_indent);
+                        code.add(_indent+this.getIndent() + "}");
                 }
 
                 return code.getText();

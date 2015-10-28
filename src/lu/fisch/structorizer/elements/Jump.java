@@ -24,7 +24,7 @@ package lu.fisch.structorizer.elements;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    This class represents an "jump" in a diagram.
+ *      Description:    This class represents a "jump" in a diagram.
  *
  ******************************************************************************************************
  *
@@ -33,6 +33,7 @@ package lu.fisch.structorizer.elements;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.13      First Issue
+ *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared
  *
  ******************************************************************************************************
  *
@@ -41,7 +42,6 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.util.Vector;
-
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -98,13 +98,18 @@ public class Jump extends Instruction {
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
 		Rect myrect = new Rect();
-		Color drawColor = getColor();
+		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
+		//Color drawColor = getColor();
+		Color drawColor = getFillColor();
+		// END KGU 2015-10-13
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 		
-		if (selected==true)
-		{
-			drawColor=E_DRAWCOLOR;
-		}
+		// START KGU 2015-10-13: Became obsolete by new method getFillColor() applied above now
+//		if (selected==true)
+//		{
+//			drawColor=Element.E_DRAWCOLOR;
+//		}
+		// END KGU 2015-10-13
 		
 		rect=_top_left.copy();
 		
@@ -117,20 +122,27 @@ public class Jump extends Instruction {
 		canvas.fillRect(myrect);
 		
 		// draw comment
-		if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
-		{
-			canvas.setBackground(E_COMMENTCOLOR);
-			canvas.setColor(E_COMMENTCOLOR);
-			
-			Rect someRect = _top_left.copy();
-			
-			someRect.left+=2;
-			someRect.top+=2;
-			someRect.right=someRect.left+4;
-			someRect.bottom-=1;
-			
-			canvas.fillRect(someRect);
+        if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
+        {
+            // START KGU 2015-10-11: Use an inherited helper method now
+//                canvas.setBackground(E_COMMENTCOLOR);
+//                canvas.setColor(E_COMMENTCOLOR);
+//
+//                Rect someRect = _top_left.copy();
+//
+//                someRect.left+=2;
+//                someRect.top+=2;
+//                someRect.right=someRect.left+4;
+//                someRect.bottom-=1;
+//
+//                canvas.fillRect(someRect);
+			this.drawCommentMark(canvas, _top_left);
+    		// END KGU 2015-10-11
 		}
+        // START KGU 2015-10-11
+		// draw breakpoint bar if necessary
+		this.drawBreakpointMark(canvas, _top_left);
+		// END KGU 2015-10-11
 		
 		
 		for(int i=0;i<getText().count();i++)
@@ -161,6 +173,21 @@ public class Jump extends Instruction {
 		return ele;
 	}
 	
+	// START KGU 2015-10-16
+	/* (non-Javadoc)
+	 * Only adds anything if _instructionsOnly is set false (because no new variables ought to occur here).
+	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
+	 */
+	@Override
+    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    {
+		// In a jump instruction no variables ought to be introduced - so we ignore this text on _instructionsOnly
+		if (!_instructionsOnly)
+		{
+			_lines.add(this.getText());
+		}
+    }
+    // END KGU 2015-10-16
 	
 	
 }

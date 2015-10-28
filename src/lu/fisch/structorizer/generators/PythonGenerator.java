@@ -41,10 +41,18 @@ package lu.fisch.structorizer.generators;
  *      Daniel Spittank            2014.02.01      Python Generator starting from Java Generator
  *      Kay Gürtzig                2014.11.16      Conversion of C-like logical operators and arcus functions (see comment)
  *      Kay Gürtzig                2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
+ *      Kay Gürtzig                2015.10.18      Indentation and comment mechanisms revised, bugfix
  *
  ******************************************************************************************************
  *
  *      Comments:
+ *
+ *      2015.10.18 - Bugfixes and modifications (Kay Gürtzig)
+ *      - Comment method signature simplified
+ *      - Bugfix: The export option "export instructions as comments" had been ignored before
+ *      - Bugfix KGU#54: generateCode(Repeat,String) ate the last two lines of the loop body!
+ *      - The indentation logic was somehow inconsistent
+ *
  *      2014.11.16 - Bugfixes / Enhancement
  *      - Conversion of C-style logical operators to the Python-conform ones added
  *      - assignment operator conversion now preserves or ensures surrounding spaces
@@ -99,7 +107,15 @@ public class PythonGenerator extends Generator
 			return exts;
 		}
 		
-		/************ Code Generation **************/
+	    // START KGU 2015-10-18: New pseudo field
+	    @Override
+	    protected String commentSymbolLeft()
+	    {
+	    	return "#";
+	    }
+	    // END KGU 2015-10-18
+
+	    /************ Code Generation **************/
 		private String transform(String _input)
 		{
 			// et => and
@@ -233,9 +249,9 @@ public class PythonGenerator extends Generator
 		
 		protected void generateCode(Instruction _inst, String _indent)
 		{
-			if(!insertAsComment(_inst, _indent, "#")) {
+			if(!insertAsComment(_inst, _indent)) {
 				// START KGU 2014-11-16
-				insertComment(_inst, _indent, "# ");
+				insertComment(_inst, _indent);
 				// END KGU 2014-11-16
 				for(int i=0;i<_inst.getText().count();i++)
 				{
@@ -247,7 +263,7 @@ public class PythonGenerator extends Generator
 		protected void generateCode(Alternative _alt, String _indent)
 		{
 			// START KGU 2014-11-16
-			insertComment(_alt, _indent, "# ");
+			insertComment(_alt, _indent);
 			// END KGU 2014-11-16
 
 			String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
@@ -260,13 +276,19 @@ public class PythonGenerator extends Generator
 				code.add(_indent+"else:");
 				generateCode((Subqueue) _alt.qFalse, _indent);
 			}
-			code.add("");
+			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
+			//code.add("");
+			if (code.count() > 0 && !code.get(code.count()-1).isEmpty())
+			{
+				code.add("");
+			}
+			// END KGU#54 2015-10-19
 		}
 		
 		protected void generateCode(Case _case, String _indent)
 		{
 			// START KGU 2014-11-16
-			insertComment(_case, _indent, "# ");
+			insertComment(_case, _indent);
 			// END KGU 2014-11-16
 
 			String condition = transform(_case.getText().get(0));
@@ -285,13 +307,19 @@ public class PythonGenerator extends Generator
 				code.add(_indent+"else:");
 				generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent);
 			}
-			code.add("");
+			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
+			//code.add("");
+			if (code.count() > 0 && !code.get(code.count()-1).isEmpty())
+			{
+				code.add("");
+			}
+			// END KGU#54 2015-10-19
 		}
 		
 		protected void generateCode(For _for, String _indent)
 		{
 			// START KGU 2014-11-16
-			insertComment(_for, _indent, "# ");
+			insertComment(_for, _indent);
 			// END KGU 2014-11-16
 
 			String startValueStr="";
@@ -312,13 +340,19 @@ public class PythonGenerator extends Generator
 			}
 			code.add(_indent+"for "+counterStr+" in range("+startValueStr+", "+endValueStr+", "+stepValueStr+"):");
 			generateCode((Subqueue) _for.q,_indent);
-			code.add("");
+			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
+			//code.add("");
+			if (code.count() > 0 && !code.get(code.count()-1).isEmpty())
+			{
+				code.add("");
+			}
+			// END KGU#54 2015-10-19
 		}
 		
 		protected void generateCode(While _while, String _indent)
 		{
 			// START KGU 2014-11-16
-			insertComment(_while, _indent, "# ");
+			insertComment(_while, _indent);
 			// END KGU 2014-11-16
 			
 			String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
@@ -326,38 +360,58 @@ public class PythonGenerator extends Generator
 			
 			code.add(_indent+"while "+condition+":");
 			generateCode((Subqueue) _while.q,_indent);
-			code.add("");
+			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
+			//code.add("");
+			if (code.count() > 0 && !code.get(code.count()-1).isEmpty())
+			{
+				code.add("");
+			}
+			// END KGU#54 2015-10-19
 		}
 
         protected void generateCode(Repeat _repeat, String _indent)
         {
 			// START KGU 2014-11-16
-			insertComment(_repeat, _indent, "# ");
+			insertComment(_repeat, _indent);
 			// END KGU 2014-11-16
             code.add(_indent+"while True:");
             generateCode((Subqueue) _repeat.q,_indent);
-            code.delete(code.count()-1); // delete empty row
-            code.delete(code.count()-1); // delete empty row
+            // START KGU#54 2015-10-19: Why should the last two rows be empty? They aren't! This strange behaviour ate code lines! 
+            //code.delete(code.count()-1); // delete empty row
+            //code.delete(code.count()-1); // delete empty row
+            // END KGU#54 2015-10-19
             code.add(_indent+this.getIndent()+"if "+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+":");
             code.add(_indent+this.getIndent()+this.getIndent()+"break");
+			// START KGU#54 2015-10-19: Add an empty line, but void accumulation of empty lines!
+			if (code.count() > 0 && !code.get(code.count()-1).isEmpty())
+			{
+				code.add("");
+			}
+			// END KGU#54 2015-10-19
         }
 		
 		protected void generateCode(Forever _forever, String _indent)
 		{
 			// START KGU 2014-11-16
-			insertComment(_forever, _indent, "# ");
+			insertComment(_forever, _indent);
 			// END KGU 2014-11-16
 			code.add(_indent+"while True:");
 			generateCode((Subqueue) _forever.q,_indent);
-			code.add("");
+			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
+			//code.add("");
+			if (code.count() > 0 && !code.get(code.count()-1).isEmpty())
+			{
+				code.add("");
+			}
+			// END KGU#54 2015-10-19
 		}
 		
 		protected void generateCode(Call _call, String _indent)
 		{
-			if(!insertAsComment(_call, _indent, "#"))
+			if(!insertAsComment(_call, _indent))
 			{
 				// START KGU 2014-11-16
-				insertComment(_call, _indent, "# ");
+				insertComment(_call, _indent);
 				// END KGU 2014-11-16
 				for(int i=0;i<_call.getText().count();i++)
 				{
@@ -368,14 +422,14 @@ public class PythonGenerator extends Generator
 		
 		protected void generateCode(Jump _jump, String _indent)
 		{
-			if(!insertAsComment(_jump, _indent, "#"))
+			if(!insertAsComment(_jump, _indent))
 			{
 				// START KGU 2014-11-16
-				insertComment(_jump, _indent, "# ");
+				insertComment(_jump, _indent);
 				// END KGU 2014-11-16
 				for(int i=0;i<_jump.getText().count();i++)
 				{
-					code.add(_indent+"# "+transform(_jump.getText().get(i))+" # goto-instruction not allowed in Python");
+					insertComment(transform(_jump.getText().get(i))+" # FIXME goto instructions not allowed in Python", _indent);
 				}
 			}
 		}
@@ -394,12 +448,12 @@ public class PythonGenerator extends Generator
 		{
 			if(_root.isProgram==true) {
 				code.add("#!/usr/bin/env python");
-				code.add("# "+_root.getText().get(0));
+				insertComment(_root.getText().get(0), _indent);
 				code.add("");
-		        // START KGU 2014-11-16
+		        // START KGU 2015-10-18
 				//code.add("\"\"\"This script ...\"\"\"");
-		        insertComment(_root, "", "# ");
-		        // END KGU 2014-11-16
+		        insertComment(_root, "");
+		        // END KGU 2015-10-18
 				code.add("");
 					
 				Subqueue _subqueue = _root.children;
@@ -413,7 +467,7 @@ public class PythonGenerator extends Generator
 				code.add("def "+_root.getText().get(0)+"() :");
 		        // START KGU 2014-11-16
 				//code.add(this.getIndent()+"\"\"\"This method ...\"\"\"");
-		        insertComment(_root, this.getIndent(), "# ");
+		        insertComment(_root, this.getIndent());
 		        // END KGU 2014-11-16
 
 				generateCode(_root.children,"");
