@@ -925,12 +925,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/*****************************************
 	 * Save method
 	 *****************************************/
+	// returns false iff a popped-up file save dialog was cancelled by the user rather than decided
 	public void saveNSD(boolean _checkChanged)
 	{
+		int res = 0;	// Save decision: 0 = do save, 1 = don't save, -1 = cancelled (don't leave)
+		
 		// only save if something has been changed
 		if(root.hasChanged==true)
 		{
-			int res = 0;
 
 			if(_checkChanged==true)
 			{
@@ -1041,6 +1043,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 		}
+		return res != -1;	// true if not cancelled
 	}
 
 	/*****************************************
