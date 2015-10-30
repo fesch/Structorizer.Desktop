@@ -148,20 +148,26 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @param root the Root to set
 	 */
 	public void setRoot(Root root) {
-		if (root != null)
+            setRoot(root,true);
+        }
+        
+	public void setRoot(Root root, boolean askToSave) {
+        	if (root != null)
 		{
+                    if(askToSave){
 			// Save if something has been changed
 			saveNSD(true);
 			this.unselectAll();
+                    }
 
-			boolean hil = this.root.hightlightVars;
-			this.root = root;
-			root.hightlightVars = hil;
-			//System.out.println(root.getFullText().getText());
-			root.getVarNames();
-			root.hasChanged = true;
-			redraw();
-			analyse();
+                    boolean hil = this.root.hightlightVars;
+                    this.root = root;
+                    root.hightlightVars = hil;
+                    //System.out.println(root.getFullText().getText());
+                    root.getVarNames();
+                    root.hasChanged = true;
+                    redraw();
+                    analyse();
 		}
 	}
 	// END KGU#48,KGU#49 2015-10-18
