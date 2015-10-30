@@ -141,10 +141,11 @@ public class Mainform  extends JFrame implements NSDController
 						  {  
                                                     if(diagram.saveNSD(true))
                                                     {
-                                                        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-                                                        System.exit(0);
+                                                        saveToINI();
+                                                        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                                                        Mainform.this.setVisible(false);
+                                                        Mainform.this.dispose();
                                                     }
-                                                    saveToINI();
 						  }  
 						  
                           @Override
