@@ -11,7 +11,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.22-28 (2015.01.19)
+Current development version: 3.22-29 (2015.10.29)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
 - 02: executor: fixed a bug while interpreting the title [Benjamin Bartsch]
 - 03: export: split PNG export into multiple images [Moritz Schulze]
@@ -47,7 +47,18 @@ Current development version: 3.22-28 (2015.01.19)
 - 27: array variables improvements in executor <Kay Gürtzig>
 - 27: updated language files (RU,DE,EN,ES) <Kay Gürtzig>
 - 28: minor change in executor for comp. with Unimozer [Bob Fisch]
-
+- 29: Complex changes and enhancements as described (pull-request #7) <codemanyak>
+- 29: executor: breakpoints may now be placed throughout the diagram <Kay Gürtzig>
+- 29: executor: implementation for Endless loops and Parallel elements <Kay Gürtzig>
+- 29: executor: element highlighting separated from selection <Kay Gürtzig>
+- 29: executor: variable list now updated on every pause even with delay 0 <Kay Gürtzig>
+- 29: gui: More localisation support for element editor (InputBox) <Kay Gürtzig>
+- 29: updated language files (DE,EN,ES,RU,IT) <Kay Gürtzig>
+- 29: export: indentation mechanism revised, BASH export corrected <Kay Gürtzig>
+- 29: export: Python export no longer "eats" lines within Repeat loops <Kay Gürtzig>
+- 29: comment popup: sticky popups eliminated, no element level limit <Kay Gürtzig>
+- 29: Arranger: No longer loses track when related Structorizer reloads <Kay Gürtzig>
+- 29: Known NEW ISSUE: Closing a dependent Structorizer kills the owning Arranger!
 
 Version 3.22 (2011.11.21)
 - 01: Some fixes in Executor.java & Control.java [Kay Gürtzig]
