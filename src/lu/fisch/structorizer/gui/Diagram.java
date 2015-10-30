@@ -53,10 +53,13 @@ import java.awt.datatransfer.*;
 import net.iharder.dnd.*; //http://iharder.sourceforge.net/current/java/filedrop/
 
 import java.io.*;
+import java.net.URI;
 import java.util.*;
 
 import javax.swing.*;
 import javax.imageio.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
@@ -68,7 +71,6 @@ import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.generators.*;
 import lu.fisch.structorizer.elements.*;
-import static lu.fisch.structorizer.elements.Element.E_TOGGLETC;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.turtle.TurtleBox;
 
@@ -146,20 +148,26 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @param root the Root to set
 	 */
 	public void setRoot(Root root) {
-		if (root != null)
+            setRoot(root,true);
+        }
+        
+	public void setRoot(Root root, boolean askToSave) {
+        	if (root != null)
 		{
+                    if(askToSave){
 			// Save if something has been changed
 			saveNSD(true);
 			this.unselectAll();
+                    }
 
-			boolean hil = this.root.hightlightVars;
-			this.root = root;
-			root.hightlightVars = hil;
-			//System.out.println(root.getFullText().getText());
-			root.getVarNames();
-			root.hasChanged = true;
-			redraw();
-			analyse();
+                    boolean hil = this.root.hightlightVars;
+                    this.root = root;
+                    root.hightlightVars = hil;
+                    //System.out.println(root.getFullText().getText());
+                    root.getVarNames();
+                    root.hasChanged = true;
+                    redraw();
+                    analyse();
 		}
 	}
 	// END KGU#48,KGU#49 2015-10-18
@@ -1992,8 +2000,46 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void updateNSD()
 	{
+            
 		//Desktop desk = Desktop.getDesktop();
 		// java.awt.Desktop (since 1.6 !!)
+            try {
+                JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\">Goto <a href=\"http://structorizer.fisch.lu\">http://structorizer.fisch.lu</a> to look for updates<br>and news about Structorizer.</font></html>");
+                ep.addHyperlinkListener(new HyperlinkListener()
+                {
+                    @Override
+                    public void hyperlinkUpdate(HyperlinkEvent e)
+                    {
+                        if (e.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED))
+                        {
+                            try {
+                            Desktop.getDesktop().browse(e.getURL().toURI());
+                            }
+                            catch(Exception ee)
+                            {
+                                ee.printStackTrace();
+                            }
+                        }
+                    }
+                });
+                ep.setEditable(false);
+                JLabel label = new JLabel();
+                ep.setBackground(label.getBackground());
+                
+                JOptionPane.showMessageDialog(this, ep);
+            }
+            catch(Exception e)
+            {
+                e.printStackTrace();
+            }
+            /**/
+            /*
+            JOptionPane.showMessageDialog(this,"<html>Goto <a href=\"http://structorizer.fisch.lu\">http://structorizer.fisch.lu</a> to look for updates<br>and news about Structorizer.</html>",
+									 "Update",
+								 	 JOptionPane.INFORMATION_MESSAGE);            
+            /**/
+        }
+/*
 		
 		// START KGU#35 2015-07-18 If the above comment was an idea how to open the homepage, here's the code now 
 		String home = "http://structorizer.fisch.lu";
@@ -2013,6 +2059,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		// END KGU#35 2015-07-18
 	}
+*/
 
 	/*****************************************
 	 * the preferences dialog methods
