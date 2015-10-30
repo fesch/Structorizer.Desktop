@@ -935,10 +935,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 	public boolean saveNSD(boolean _checkChanged)
 	{
+		int res = 0;	// Save decision: 0 = do save, 1 = don't save, -1 = cancelled (don't leave)
+		
 		// only save if something has been changed
 		if(root.hasChanged==true)
 		{
-			int res = 0;
 
 			if(_checkChanged==true)
 			{
@@ -1053,7 +1054,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                         else
                             return true;
 		}
-                return true;
+		return res != -1;	// true if not cancelled
 	}
 
 	/*****************************************

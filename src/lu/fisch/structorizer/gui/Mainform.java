@@ -34,10 +34,16 @@ package lu.fisch.structorizer.gui;
  *      ------			----			-----------
  *      Bob Fisch       2007.12.11      First Issue
  *      Kay Gürtzig     2015.10.18      Methods getRoot(), setRoot() introduced to ease Arranger handling (KGU#48)
+ *      Kay Gürtzig     2015.10.30      Issue #6 fixed properly (see comment)
  *
  ******************************************************************************************************
  *
  *      Comment:		/
+ *      2015.10.30 (Kay Gürtzig)
+ *      - if on closing the window the user cancels an option dialog asking him or her whether or not to save
+ *        the diagram changes then the Mainform is to be prevented from closing. If the Mainform runs as
+ *        a thread of the Arranger, however, this might not help a lot because it is going to be killed
+ *        anyway if the Arranger was pushing the event.
  *
  ******************************************************************************************************///
 
@@ -136,42 +142,46 @@ public class Mainform  extends JFrame implements NSDController
                 setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		addWindowListener(new WindowAdapter() 
 		{  
-                          @Override
-						  public void windowClosing(WindowEvent e) 
-						  {  
-                                                    if(diagram.saveNSD(true))
-                                                    {
-                                                        saveToINI();
-                                                        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                                                        Mainform.this.setVisible(false);
-                                                        Mainform.this.dispose();
-                                                    }
-						  }  
-						  
-                          @Override
-						  public void windowOpened(WindowEvent e) 
-						  {  
-						  //editor.componentResized(null);
-						  //editor.revalidate();
-						  //repaint();
-						  }  
+			@Override
+			public void windowClosing(WindowEvent e) 
+			{
+				if (diagram.saveNSD(true))
+				{
+					// Close (and make sure that this keeps standard behaviour)
+					setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+					saveToINI();
+				}
+				else
+				{
+					// User cancelled the action, so don't close
+					setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);                                                    	
+				}
+			}
+			
+			@Override
+			public void windowOpened(WindowEvent e) 
+			{  
+				//editor.componentResized(null);
+				//editor.revalidate();
+				//repaint();
+			}
+			
+			@Override
+			public void windowActivated(WindowEvent e)
+			{  
+				//editor.componentResized(null);
+				//editor.revalidate();
+				//repaint();
+        		}
 
-                          @Override
-                          public void windowActivated(WindowEvent e)
-						  {  
-						  //editor.componentResized(null);
-						  //editor.revalidate();
-						  //repaint();
-        					  }
-
-                          @Override
-						  public void windowGainedFocus(WindowEvent e) 
-						  {  
-						  //editor.componentResized(null);
-						  //editor.revalidate();
-						  //repaint();
-						  }  
-						  }); 
+			@Override
+			public void windowGainedFocus(WindowEvent e) 
+			{  
+				//editor.componentResized(null);
+				//editor.revalidate();
+				//repaint();
+			}  
+		}); 
 
 		/******************************
 		 * Load values from INI
