@@ -148,20 +148,26 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @param root the Root to set
 	 */
 	public void setRoot(Root root) {
-		if (root != null)
+            setRoot(root,true);
+        }
+        
+	public void setRoot(Root root, boolean askToSave) {
+        	if (root != null)
 		{
+                    if(askToSave){
 			// Save if something has been changed
 			saveNSD(true);
 			this.unselectAll();
+                    }
 
-			boolean hil = this.root.hightlightVars;
-			this.root = root;
-			root.hightlightVars = hil;
-			//System.out.println(root.getFullText().getText());
-			root.getVarNames();
-			root.hasChanged = true;
-			redraw();
-			analyse();
+                    boolean hil = this.root.hightlightVars;
+                    this.root = root;
+                    root.hightlightVars = hil;
+                    //System.out.println(root.getFullText().getText());
+                    root.getVarNames();
+                    root.hasChanged = true;
+                    redraw();
+                    analyse();
 		}
 	}
 	// END KGU#48,KGU#49 2015-10-18
@@ -929,10 +935,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 	public boolean saveNSD(boolean _checkChanged)
 	{
+		int res = 0;	// Save decision: 0 = do save, 1 = don't save, -1 = cancelled (don't leave)
+		
 		// only save if something has been changed
 		if(root.hasChanged==true)
 		{
-			int res = 0;
 
 			if(_checkChanged==true)
 			{
@@ -1047,7 +1054,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                         else
                             return true;
 		}
-                return true;
+		return res != -1;	// true if not cancelled
 	}
 
 	/*****************************************
