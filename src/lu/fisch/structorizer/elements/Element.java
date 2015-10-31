@@ -73,7 +73,7 @@ import java.awt.Point;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.22-29";
+	public static String E_VERSION = "3.22-30";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
