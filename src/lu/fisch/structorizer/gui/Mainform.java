@@ -139,7 +139,6 @@ public class Mainform  extends JFrame implements NSDController
 		/******************************
 		 * Set onClose event
 		 ******************************/
-                setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		addWindowListener(new WindowAdapter() 
 		{  
 			@Override
