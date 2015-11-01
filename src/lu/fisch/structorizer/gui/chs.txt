@@ -141,9 +141,15 @@ Menu.menuPreferencesLanguageGerman.text=德语
 Menu.menuPreferencesLanguageFrench.text=法语
 Menu.menuPreferencesLanguageDutch.text=荷兰语
 Menu.menuPreferencesLanguageLuxemburgish.text=卢森堡语
+Menu.menuPreferencesLanguageSpanish.text=西班牙语
+Menu.menuPreferencesLanguagePortugalBrazil.text=葡萄牙语（巴西）
 Menu.menuPreferencesLanguageItalian.text=意大利语
 Menu.menuPreferencesLanguageSimplifiedChinese.text=简体中文
 Menu.menuPreferencesLanguageTraditionalChinese.text=繁体中文
+Menu.menuPreferencesLanguageCzech.text=捷克语
+Menu.menuPreferencesLanguageRussian.text=俄罗斯语
+Menu.menuPreferencesLanguagePolish.text=波兰语
+
 Menu.menuPreferencesLookAndFeel.text=外观
 Menu.menuPreferencesSave.text=所有偏好设置 ...
 Menu.menuPreferencesSaveAll.text=保存
@@ -336,7 +342,8 @@ Preferences.btnOK.tooltip=确认你的选择。
 -----[ About ]-----
 About.title=关于
 About.pnlTabbed.tab.0=相关人员
-About.pnlTabbed.tab.1=改变日志
+About.pnlTabbed.tab.1=更新日志
+About.pnlTabbed.tab.2=许可证
 About.btnOK.text=确定
 About.btnOK.tooltip=确认你的选择。
 
@@ -352,26 +359,26 @@ FontChooser.btnOK.tooltip=确认你的选择。
 
 -----[ Colors ]-----
 Colors.title=颜色参数设置
-Colors.lblColor0.text=Color 0
-Colors.lblColor1.text=Color 1
-Colors.lblColor2.text=Color 2
-Colors.lblColor3.text=Color 3
-Colors.lblColor4.text=Color 4
-Colors.lblColor5.text=Color 5
-Colors.lblColor6.text=Color 6
-Colors.lblColor7.text=Color 7
-Colors.lblColor8.text=Color 8
-Colors.lblColor9.text=Color 9
-Colors.lblColor0.tooltip=选择 Color 0。
-Colors.lblColor1.tooltip=选择 Color 1。
-Colors.lblColor2.tooltip=选择 Color 2。
-Colors.lblColor3.tooltip=选择 Color 3。
-Colors.lblColor4.tooltip=选择 Color 4。
-Colors.lblColor5.tooltip=选择 Color 5。
-Colors.lblColor6.tooltip=选择 Color 6。
-Colors.lblColor7.tooltip=选择 Color 7。
-Colors.lblColor8.tooltip=选择 Color 8。
-Colors.lblColor9.tooltip=选择 Color 9。
+Colors.lblColor0.text=颜色 0
+Colors.lblColor1.text=颜色 1
+Colors.lblColor2.text=颜色 2
+Colors.lblColor3.text=颜色 3
+Colors.lblColor4.text=颜色 4
+Colors.lblColor5.text=颜色 5
+Colors.lblColor6.text=颜色 6
+Colors.lblColor7.text=颜色 7
+Colors.lblColor8.text=颜色 8
+Colors.lblColor9.text=颜色 9
+Colors.lblColor0.tooltip=选择颜色 0。
+Colors.lblColor1.tooltip=选择颜色 1。
+Colors.lblColor2.tooltip=选择颜色 2。
+Colors.lblColor3.tooltip=选择颜色 3。
+Colors.lblColor4.tooltip=选择颜色 4。
+Colors.lblColor5.tooltip=选择颜色 5。
+Colors.lblColor6.tooltip=选择颜色 6。
+Colors.lblColor7.tooltip=选择颜色 7。
+Colors.lblColor8.tooltip=选择颜色 8。
+Colors.lblColor9.tooltip=选择颜色 9。
 Colors.color0.tooltip=点击编辑 ...
 Colors.color1.tooltip=点击编辑 ...
 Colors.color2.tooltip=点击编辑 ...
@@ -393,7 +400,7 @@ ColorChooser.btnOK.text=确定
 ColorChooser.btnOK.tooltip=确认你的选择。
 
 -----[ ParserPreferences ]-----
-ParserPreferences.title=分析器参数设置
+ParserPreferences.title=解析器参数设置
 ParserPreferences.lblPre.text=之前
 ParserPreferences.lblPre.tooltip=
 ParserPreferences.lblPost.text=之后
@@ -423,6 +430,15 @@ PrintPreview.btnCancel.text=取消
 PrintPreview.btnCancel.tooltip=取消打印。
 PrintPreview.btnOK.text=打印
 PrintPreview.btnOK.tooltip=打印此图。
+
+-----[ AnalyserPreferences ]-----
+AnalyserPreferences.title=分析器参数设置
+
+-----[ ExportOptionDialoge ]-----
+ExportOptionDialoge.title=导出选项 ...
+ExportOptionDialoge.jButton1.text=确定
+ExportOptionDialoge.commentsCheckBox.text=把说明作为注释导出
+ExportOptionDialoge.jLabel1.text=请选择你想激活的选项 ...
 
 -----[ Element ]-----
 // text "constants"
