@@ -70,6 +70,9 @@ public class D7Parser implements GPMessageConstants
 	public static String postCase = "";
 	public static String preFor = "for ";
 	public static String postFor = "to";
+	// START KGU#18/#23 2015-10-20
+	public static String stepFor = " step ";	// For consistent analysis of for loops
+	// END KGU#18/#23 2015-10-20;
 	public static String preWhile = "while ";
 	public static String postWhile = "";
 	public static String preRepeat = "until ";

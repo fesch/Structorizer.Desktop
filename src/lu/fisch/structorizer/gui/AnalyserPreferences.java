@@ -33,6 +33,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2008.05.23      First Issue
+ *      Kay Gürtzig     2015.11.03      check14 added (enhanced FOR loop support, issue #10 = KGU#3)
  *
  ******************************************************************************************************
  *
@@ -68,8 +69,11 @@ public class AnalyserPreferences extends LangDialog {
 	public JCheckBox check11;
 	public JCheckBox check12;
 	public JCheckBox check13;
+	// START KGU#3 2015-11-03: Additional For loop checks
+	public JCheckBox check14;
+	// END KGU#3 2015-11-03
 	private JPanel buttonBar;
-	private JButton okButton;
+	protected JButton okButton;
 	// JFormDesigner - End of variables declaration  //GEN-END:variables
 	
 	/*public AnalyserPreferences()
@@ -108,6 +112,9 @@ public class AnalyserPreferences extends LangDialog {
 		check11 = new JCheckBox();
 		check12 = new JCheckBox();
 		check13 = new JCheckBox();
+		// START KGU#3 2015-11-03: Additional For loop checks
+		check14 = new JCheckBox();
+		// END KGU#3 2015-11-03
 		buttonBar = new JPanel();
 		okButton = new JButton();
 
@@ -132,11 +139,17 @@ public class AnalyserPreferences extends LangDialog {
 			
 			//======== contentPanel ========
 			{
-				contentPanel.setLayout(new GridLayout(13, 1));
+				contentPanel.setLayout(new GridLayout(14, 1));
 
 				//---- check1 ----
 				check1.setText("Check for modified loop variable.");
 				contentPanel.add(check1);
+
+				// START KGU#3 2015-11-03: Additional For loop checks
+				//---- check14----
+				check14.setText("Check for consistency of FOR loop parameters.");
+				contentPanel.add(check14);
+				// END KGU#3 2015-11-03
 
 				//---- check2 ----
 				check2.setText("Check for endless loop (as far as detectable!).");
@@ -182,7 +195,7 @@ public class AnalyserPreferences extends LangDialog {
 				check12.setText("Check for standardized parameter name. (LUX/MEN)");
 				contentPanel.add(check12);
 				
-				//---- check123----
+				//---- check13----
 				check13.setText("Check if, in case of a function, it returns a result.");
 				contentPanel.add(check13);
 			}

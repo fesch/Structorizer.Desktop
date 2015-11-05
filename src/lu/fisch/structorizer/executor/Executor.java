@@ -40,10 +40,23 @@ package lu.fisch.structorizer.executor;
 *                                      handling in a sound way
 *      Kay Gürtzig     2015.10.15      stepParallel() revised (see comment)
 *      Kay Gürtzig     2015.10.17/18   First preparations for a subroutine retrieval via Arranger
+*      Kay Gürtzig     2015.10.21      Support for multiple constants per CASE branch added
+*      Kay Gürtzig     2015.10.26/27   Language conversion and FOR loop parameter analysis delegated to the elements
+*      Kay Gürtzig     2015.11.04      Bugfix in stepInstruction() w.r.t. input/output (KGU#65)
 *
 ******************************************************************************************************
 *
 *      Comment:
+*      2015.11.04 (KGU#65) Input/output execution mended
+*          The configured input / output parser settings triggered input or output action also if found
+*          deep in a line, even within a string literal. This was mended.
+*      2015.10.26/27 (KGU#3) Language conversion (in method convert) partially delegated to Element
+*          The aim was to share this functionality with generators
+*          Analysis of FOR loop parameters also delegated to the For class instance.
+*      2015.10.21 (KGU#15) Common branch for multiple constants in Case structure enabled
+*          A modification in stepCase() now allows to test against a comma-separated list of case constants
+*          (though it would fail with complex expressions, accidently containing commas but this would anyway
+*          produce nonsense on code export)
 *      2015.10.15 (KGU#47) Improved simulation of Parallel execution
 *          Instead of running entire "threads" of the parallel section in just random order, the "threads"
 *          will now only progress by one instruction when randomly chosen, so they alternate in an
@@ -71,6 +84,7 @@ import java.util.Random;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.PatternSyntaxException;
 
 import javax.swing.JOptionPane;
 
@@ -162,38 +176,42 @@ public class Executor implements Runnable
 	{
 		Regex r;
 
-		// variable assignment
-		// START KGU 2014-12-02: To achieve consistency with operator highlighting
-		s = s.replace("<--", "<-");
-		// END KGU 2014-12-02
-		s = s.replace(":=", "<-");
+		// START KGU#18/KGU#23 2015-10-26: Replaced by new unifying method on Element class
+//		// variable assignment
+//		// START KGU 2014-12-02: To achieve consistency with operator highlighting
+//		s = s.replace("<--", "<-");
+//		// END KGU 2014-12-02
+//		s = s.replace(":=", "<-");
+//
+//		// testing
+//		s = s.replace("==", "=");
+//		s = s.replace("!=", "<>");
+//		s = s.replace("=", "==");
+//		s = s.replace("<==", "<=");
+//		s = s.replace(">==", ">=");
+//		s = s.replace("<>", "!=");
+//
+//		s = s.replace(" mod ", " % ");
+//		s = s.replace(" div ", " / ");
+//        // START KGU 2014-11-14: Logical operators, too
+//        s=s.replace(" and ", " && ");
+//        s=s.replace(" or ", " || ");
+//        s=s.replace(" not ", " !");
+//        s=s.replace("(not ", "(!");
+//        s=s.replace(" not(", " !(");
+//        s=s.replace("(not(", "(!(");
+//       	if (s.startsWith("not ")) {
+//       		s = "!" + s.substring(4);
+//       	}
+//       	if (s.startsWith("not(")) {
+//       		s = "!(" + s.substring(4);
+//       	}
+//        s=s.replace(" xor ", " ^ "); // This might cause some operator preference trouble, though       
+//        // END KGU 2014-11-14
+		s = Element.unifyOperators(s);
+		// END KGU#18/KGU#23 2015-10-26
 
-		// testing
-		s = s.replace("==", "=");
-		s = s.replace("!=", "<>");
-		s = s.replace("=", "==");
-		s = s.replace("<==", "<=");
-		s = s.replace(">==", ">=");
-		s = s.replace("<>", "!=");
-
-		s = s.replace(" mod ", " % ");
-		s = s.replace(" div ", " / ");
-        // START KGU 2014-11-14: Logical operators, too
-        s=s.replace(" and ", " && ");
-        s=s.replace(" or ", " || ");
-        s=s.replace(" not ", " !");
-        s=s.replace("(not ", "(!");
-        s=s.replace(" not(", " !(");
-        s=s.replace("(not(", "(!(");
-       	if (s.startsWith("not ")) {
-       		s = "!" + s.substring(4);
-       	}
-       	if (s.startsWith("not(")) {
-       		s = "!(" + s.substring(4);
-       	}
-        s=s.replace(" xor ", " ^ "); // This might cause some operator preference trouble, though       
-        // END KGU 2014-11-14
-
+		// Convert built-in mathematical functions
 		s = s.replace("cos(", "Math.cos(");
 		s = s.replace("sin(", "Math.sin(");
 		s = s.replace("tan(", "Math.tan(");
@@ -221,8 +239,8 @@ public class Executor implements Runnable
 		// s=s.replace("random(", "Math.random(");
 
 		// pascal notation to access a character inside a string
-		r = new Regex("(.*)\\[(.*)\\](.*)", "$1.charAt($2-1)$3");
-		r = new Regex("(.*)\\[(.*)\\](.*)", "$1.substring($2-1,$2)$3");
+		//r = new Regex("(.*)\\[(.*)\\](.*)", "$1.charAt($2-1)$3");
+		//r = new Regex("(.*)\\[(.*)\\](.*)", "$1.substring($2-1,$2)$3");
 		// MODIFIED BY GENNARO DONNARUMMA, NEXT LINE COMMENTED -->
 		// NO REPLACE ANY MORE! CHARAT AND SUBSTRING MUST BE CALLED MANUALLY
 		// s = r.replaceAll(s);
@@ -243,73 +261,188 @@ public class Executor implements Runnable
 		// clean up ... if needed
 		s = s.replace("Math.Math.", "Math.");
 
-		if (s.indexOf("==") >= 0)
-		{
-			r = new Regex("(.*)==(.*)", "$1");
-			String left = r.replaceAll(s).trim();
-			while (Function.countChar(left, '(') > Function
-					.countChar(left, ')'))
-			{
-				left += ')';
-			}
-			r = new Regex("(.*)==(.*)", "$2");
-			String right = r.replaceAll(s).trim();
-			while (Function.countChar(right, ')') > Function.countChar(right,
-					'('))
-			{
-				right = '(' + right;
-			}
-			// ---- thanks to autoboxing, we can alway use the "equals" method
-			// ---- to compare things ...
-			// addendum: sorry, doesn't always work.
-			try
-			{
-				Object leftO = interpreter.eval(left);
-				Object rightO = interpreter.eval(right);
-				if ((leftO instanceof String) || (rightO instanceof String))
-				{
-					s = left + ".equals(" + right + ")";
-				}
-			} catch (EvalError ex)
-			{
-				System.err.println(ex.getMessage());
-			}
-		}
-		if (s.indexOf("!=") >= 0)
-		{
-			r = new Regex("(.*)!=(.*)", "$1");
-			String left = r.replaceAll(s).trim();
-			while (Function.countChar(left, '(') > Function
-					.countChar(left, ')'))
-			{
-				left += ')';
-			}
-			r = new Regex("(.*)!=(.*)", "$2");
-			String right = r.replaceAll(s).trim();
-			while (Function.countChar(right, ')') > Function.countChar(right,
-					'('))
-			{
-				right = '(' + right;
-			}
-			// ---- thanks to autoboxing, we can always use the "equals" method
-			// ---- to compare things ...
-			// addendum: sorry, doesn't always work.
-			try
-			{
-				Object leftO = interpreter.eval(left);
-				Object rightO = interpreter.eval(right);
-				if ((leftO instanceof String) || (rightO instanceof String))
-				{
-					s = "!" + left + ".equals(" + right + ")";
-				}
-			} catch (EvalError ex)
-			{
-				System.err.println(ex.getMessage());
-			}
-		}
+		// FIXME (KGU#57 2015-10-27): The following mechanism doesn't work in composed expressions like
+		//       answer == "J" || answer == "j"
+//		if (s.indexOf("==") >= 0)
+//		{
+//			r = new Regex("(.*)==(.*)", "$1");
+//			String left = r.replaceAll(s).trim();
+//			while (Function.countChar(left, '(') > Function
+//					.countChar(left, ')'))
+//			{
+//				left += ')';
+//			}
+//			r = new Regex("(.*)==(.*)", "$2");
+//			String right = r.replaceAll(s).trim();
+//			while (Function.countChar(right, ')') > Function.countChar(right,
+//					'('))
+//			{
+//				right = '(' + right;
+//			}
+//			// ---- thanks to autoboxing, we can alway use the "equals" method
+//			// ---- to compare things ...
+//			// addendum: sorry, doesn't always work.
+//			try
+//			{
+//				Object leftO = interpreter.eval(left);
+//				Object rightO = interpreter.eval(right);
+//				if ((leftO instanceof String) || (rightO instanceof String))
+//				{
+//					s = left + ".equals(" + right + ")";
+//				}
+//			} catch (EvalError ex)
+//			{
+//				System.err.println(ex.getMessage());
+//			}
+//		}
+//		if (s.indexOf("!=") >= 0)
+//		{
+//			r = new Regex("(.*)!=(.*)", "$1");
+//			String left = r.replaceAll(s).trim();
+//			while (Function.countChar(left, '(') > Function
+//					.countChar(left, ')'))
+//			{
+//				left += ')';
+//			}
+//			r = new Regex("(.*)!=(.*)", "$2");
+//			String right = r.replaceAll(s).trim();
+//			while (Function.countChar(right, ')') > Function.countChar(right,
+//					'('))
+//			{
+//				right = '(' + right;
+//			}
+//			// ---- thanks to autoboxing, we can always use the "equals" method
+//			// ---- to compare things ...
+//			// addendum: sorry, doesn't always work.
+//			try
+//			{
+//				Object leftO = interpreter.eval(left);
+//				Object rightO = interpreter.eval(right);
+//				if ((leftO instanceof String) || (rightO instanceof String))
+//				{
+//					s = "!" + left + ".equals(" + right + ")";
+//				}
+//			} catch (EvalError ex)
+//			{
+//				System.err.println(ex.getMessage());
+//			}
+//		}
+		s = convertStringComparison(s);
 
 		// System.out.println(s);
 		return s;
+	}
+	
+	// START KGU#57
+	private String convertStringComparison(String str)
+	{
+		// Is there any equality test at all?
+		if (str.indexOf(" == ") >= 0 || str.indexOf(" != ") >= 0)
+		{
+			StringList exprs = StringList.explodeWithDelimiter(str, " \\|\\| ");	// '|' is a regex metasymbol!
+			exprs = StringList.explodeWithDelimiter(exprs, " && ");
+			boolean replaced = false;
+			for (int i = 0; i < exprs.count(); i++)
+			{
+				String s = exprs.get(i);
+				if (!s.equals(" == ") && !s.equalsIgnoreCase(" != "))
+				{
+					Regex r = null;
+					if (s.indexOf("==") >= 0)
+					{
+						String leftParenth = "";
+						String rightParenth = "";
+						r = new Regex("(.*)==(.*)", "$1");
+						String left = r.replaceAll(s).trim();	// All? Really?
+						while (Function.countChar(left, '(') > Function.countChar(left, ')') &&
+								left.startsWith("("))
+						{
+							leftParenth = leftParenth + "(";
+							left = left.substring(1).trim();
+						}
+						r = new Regex("(.*)==(.*)", "$2");
+						String right = r.replaceAll(s).trim();
+						
+						while (Function.countChar(right, ')') > Function.countChar(right, '(') &&
+								right.endsWith(")"))
+						{
+							rightParenth = rightParenth + ")";
+							right = right.substring(0, right.length()-1).trim();
+						}
+						// ---- thanks to autoboxing, we can always use the "equals" method
+						// ---- to compare things ...
+						// addendum: sorry, doesn't always work.
+						try
+						{
+							Object leftO = interpreter.eval(left);
+							Object rightO = interpreter.eval(right);
+							if ((leftO instanceof String))
+							{
+								exprs.set(i, leftParenth + left + ".equals(" + right + ")" + rightParenth);
+								replaced = true;
+							}
+							else if (rightO instanceof String)
+							{
+								exprs.set(i, leftParenth + right + ".equals(" + left + ")" + rightParenth);
+								replaced = true;
+							}
+						} catch (EvalError ex)
+						{
+							System.err.println(ex.getMessage());
+						}
+					}
+					if (s.indexOf("!=") >= 0)
+					{
+						String leftParenth = "";
+						String rightParenth = "";
+						r = new Regex("(.*)!=(.*)", "$1");
+						String left = r.replaceAll(s).trim();	// All? Really?
+						while (Function.countChar(left, '(') > Function.countChar(left, ')') &&
+								left.startsWith("("))
+						{
+							leftParenth = leftParenth + "(";
+							left = left.substring(1).trim();
+						}
+						r = new Regex("(.*)!=(.*)", "$2");
+						String right = r.replaceAll(s).trim();
+						while (Function.countChar(right, ')') > Function.countChar(right, '(') &&
+								right.endsWith(")"))
+						{
+							rightParenth = rightParenth + ")";
+							right = right.substring(0, right.length()-1).trim();
+						}
+						// ---- thanks to autoboxing, we can always use the "equals" method
+						// ---- to compare things ...
+						// addendum: sorry, doesn't always work.
+						try
+						{
+							Object leftO = interpreter.eval(left);
+							Object rightO = interpreter.eval(right);
+							if ((leftO instanceof String))
+							{
+								exprs.set(i, leftParenth + left + ".equals(" + right + ")" + rightParenth);
+								replaced = true;
+							}
+							else if (rightO instanceof String)
+							{
+								exprs.set(i, leftParenth + right + ".equals(" + left + ")" + rightParenth);
+								replaced = true;
+							}
+						} catch (EvalError ex)
+						{
+							System.err.println(ex.getMessage());
+						}
+					}
+				}
+				if (replaced)
+				{
+					// Compose the partial expressions and undo the regex escaping for the initial split
+					str = BString.replace(exprs.getLongString(), " \\|\\| ", " || ");
+					str.replace("  ", " ");
+				}
+			}
+		}
+		return str;
 	}
 
 	private void delay()
@@ -913,7 +1046,7 @@ public class Executor implements Runnable
 		checkBreakpoint(element);
 		// END KGU 2015-10-12
 		
-		// The Root element and the REPEAT loop won't be delayed or halted in the beginning except by their members
+		// The Root,  element and the REPEAT loop won't be delayed or halted in the beginning except by their members
 		if (element instanceof Root)
 		{
 			result = stepRoot((Root)element);
@@ -1047,7 +1180,10 @@ public class Executor implements Runnable
 //					delay();
 				}
 				// input
-				else if (cmd.indexOf(D7Parser.input) >= 0)
+				// START KGU#65 2015-11-04: Input keyword should only trigger this if positioned at line start
+				//else if (cmd.indexOf(D7Parser.input) >= 0)
+				else if (cmd.trim().startsWith(D7Parser.input))
+				// END KGU#65 2015-11-04
 				{
 					String in = cmd.substring(
 							cmd.indexOf(D7Parser.input)
@@ -1100,7 +1236,10 @@ public class Executor implements Runnable
 					}
 				}
 				// output
-				else if (cmd.indexOf(D7Parser.output) >= 0)
+				// START KGU#65 2015-11-04: Output keyword should only trigger this if positioned at line start
+				//else if (cmd.indexOf(D7Parser.output) >= 0)
+				else if (cmd.trim().startsWith(D7Parser.output))
+				// END KGU#65 2015-11-04
 				{
 					String out = cmd.substring(
 							cmd.indexOf(D7Parser.output)
@@ -1233,7 +1372,10 @@ public class Executor implements Runnable
 			}
 			for (int q = 1; (q <= last) && (done == false); q++)
 			{
-				String test = convert(expression + text.get(q));
+				// START KGU#15 2015-10-21: Support for multiple constants per branch
+				//String test = convert(expression + text.get(q));
+				String[] constants = text.get(q).split(",");
+				// END KGU#15 2015-10-21
 				boolean go = false;
 				if ((q == last)
 						&& !text.get(text.count() - 1).trim().equals("%"))
@@ -1242,8 +1384,16 @@ public class Executor implements Runnable
 				}
 				if (go == false)
 				{
-					Object n = interpreter.eval(test);
-					go = n.toString().equals("true");
+					// START KGU#15 2015-10-21: Test against a list of constants now
+					//Object n = interpreter.eval(test);
+					//go = n.toString().equals("true");
+					for (int c = 0; !go && c < constants.length; c++)
+					{
+						String test = convert(expression + constants[c]);
+						Object n = interpreter.eval(test);
+						go = n.toString().equals("true");
+					}
+					// END KGU#15 2015-10-21
 				}
 				if (go)
 				{
@@ -1296,10 +1446,10 @@ public class Executor implements Runnable
 			// s=s.replace(">==", ">=");
 			s = convert(s);
 
-			System.out.println("C=  " + interpreter.get("C"));
-			System.out.println("IF: " + s);
+			//System.out.println("C=  " + interpreter.get("C"));
+			//System.out.println("IF: " + s);
 			Object n = interpreter.eval(s);
-			System.out.println("Res= " + n);
+			//System.out.println("Res= " + n);
 			if (n == null)
 			{
 				result = "<" + s
@@ -1444,6 +1594,10 @@ public class Executor implements Runnable
 				diagram.redraw();
 			}
 
+			// The exit condition is converted and parsed once in advance!
+			// Hence, syntactic errors will be reported before the loop has been started at all.
+			// And, of course, variables only introduced within the loop won't be recognised--
+			// which is sound with scope rules in C or Java.
 			String s = element.getText().getText();
 			if (!D7Parser.preRepeat.equals(""))
 			{
@@ -1473,8 +1627,8 @@ public class Executor implements Runnable
 					int i = 0;
 					// START KGU 2010-09-14 The limitation of cw CAUSED
 					// eternal loops (rather then preventing them)
-					// while (i < ((Repeat) element).q.children.size() &&
-					// result.equals("") && stop == false && cw < 100)
+					//while (i < ((Repeat) element).q.children.size() &&
+					//		result.equals("") && stop == false && cw < 100)
 					while ((i < element.q.children.size())
 							&& result.equals("") && (stop == false))
 					// END KGU 2010-09-14
@@ -1528,71 +1682,50 @@ public class Executor implements Runnable
 		String result = new String();
 		try
 		{
-			String str = element.getText().getText();
-            
-			String pas = "1";
-			if(str.contains(", pas ="))	// FIXME: Ought to be replaced by a properly configurable string
-			{
-				String[] pieces = str.split(", pas =");
-				str=pieces[0];
-				pas = pieces[1].trim();
-			}
-			// START KGU 2015-10-13: The above mechanism has/had several flaws:
-			// 1. The parsing works only for the hard-code french keyword (ought to be a preference).
-			// 2. the while condition didn't work for negative pas values.
-			// 3. the pas value was parsed again and again in every loop.
-			// 4. It's certainly not consistent with code export
-			// To solve 2 and 3 we provide the Integer conversion once in advance
-			int sval = 1;	// step width
-			try
-			{
-				sval = Integer.valueOf(pas);
-			}
-			catch(Exception e)
-			{
-				// Try it in a different way
-				Object n = interpreter.eval(pas);
-				if (n != null) 
-				{
-					if (n instanceof Integer)
-					{
-						sval = (Integer) n;
-					}
-					else if (n instanceof Long)
-					{
-						sval = ((Long) n).intValue();
-					}
-					else if (n instanceof Float)
-					{
-						sval = ((Float) n).intValue();
-					}
-					else if (n instanceof Double)
-					{
-						sval = ((Double) n).intValue();
-					}
-				}
-			}
-			// END KGU 2015-10-13
+			// START KGU#3 2015-10-31: Now it's time for the new intrinsic mechanism
+//			String str = element.getText().getText();
+//            
+//			String pas = "1";
+//			if(str.contains(", pas ="))	// FIXME: Ought to be replaced by a properly configurable string
+//			{
+//				String[] pieces = str.split(", pas =");
+//				str=pieces[0];
+//				pas = pieces[1].trim();
+//			}
+//			// START KGU 2015-10-13: The above mechanism has/had several flaws:
+//			// 1. The parsing works only for the hard-coded french keyword (ought to be a preference).
+//			// 2. the while condition didn't work for negative pas values.
+//			// 3. the pas value was parsed again and again in every loop.
+//			// 4. It's certainly not consistent with code export
+//			// To solve 2 and 3 we provide the Integer conversion once in advance
+			int sval = element.getStepConst();
+			// END KGU#3 2015-10-31
                             
-			// cut off the start of the expression
-			if (!D7Parser.preFor.equals(""))
-			{
-				str = BString.replace(str, D7Parser.preFor, "");
-			}
-			// trim blanks
-			str = str.trim();
-			// modify the later word
-			if (!D7Parser.postFor.equals(""))
-			{
-				str = BString.replace(str, D7Parser.postFor, "<=");
-			}
-			// do other transformations
-			str = CGenerator.transform(str);
-			String counter = str.substring(0, str.indexOf("="));
+			// START KGU#3 2015-10-27: Now replaced by For-intrinsic mechanisms
+//			// cut off the start of the expression
+//			if (!D7Parser.preFor.equals(""))
+//			{
+//				str = BString.replace(str, D7Parser.preFor, "");
+//			}
+//			// trim blanks
+//			str = str.trim();
+//			// modify the later word
+//			if (!D7Parser.postFor.equals(""))
+//			{
+//				str = BString.replace(str, D7Parser.postFor, "<=");
+//			}
+//			// do other transformations
+//			str = CGenerator.transform(str);
+//			String counter = str.substring(0, str.indexOf("="));
+			String counter = element.getCounterVar();
+			// END KGU#3 2015-10-27
 			// complete
 
-			String s = str.substring(str.indexOf("=") + 1,
-					str.indexOf("<=")).trim();
+			// START KGU#3 2015-10-27: Now replaced by For-intrinsic mechanisms
+//			String s = str.substring(str.indexOf("=") + 1,
+//					str.indexOf("<=")).trim();
+			String s = element.getStartValue(); 
+			// END KGU#3 2015-10-27
 			s = convert(s);
 			Object n = interpreter.eval(s);
 			if (n == null)
@@ -1617,8 +1750,12 @@ public class Executor implements Runnable
 				ival = ((Double) n).intValue();
 			}
 
-			s = str.substring(str.indexOf("<=") + 2, str.length()).trim();
+			// START KGU#3 2015-10-27: Now replaced by For-intrinsic mechanisms
+//			s = str.substring(str.indexOf("<=") + 2, str.length()).trim();
+			s = element.getEndValue();
+			// END KGU#3 2015-10-27
 			s = convert(s);
+			
 			n = interpreter.eval(s);
 			if (n == null)
 			{

@@ -36,6 +36,7 @@ package lu.fisch.structorizer.generators;
  *      Bob Fisch       2008.04.12		Plugin Interface
  *      Kay Gürtzig     2014.11.16		comment generation revised (see comment below)
  *      Kay Gürtzig     2015.10.18		File name proposal in exportCode(Root, File, Frame) delegated to Root
+ *      Kay Gürtzig     2015.11.01		transform methods reorganised (KGU#18/KGU23) using subclassing
  *
  ******************************************************************************************************
  *
@@ -48,13 +49,17 @@ package lu.fisch.structorizer.generators;
 
 import java.awt.Frame;
 import java.io.*;
+import java.util.regex.Matcher;
 
 import javax.swing.*;
+
+import com.stevesoft.pat.Regex;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.gui.ExportOptionDialoge;
 import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.parsers.D7Parser;
 
 
 public abstract class Generator extends javax.swing.filechooser.FileFilter
@@ -70,15 +75,30 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected abstract String[] getFileExtensions();
 	// START KGU 2015-10-18: It seemed sensible to store the comment specification permanently
 	/**
-	 * left comment delimiter, e.g. "/*", "//", "(*", or "{"
+	 * @return left comment delimiter, e.g. "/*", "//", "(*", or "{"
 	 */
 	protected abstract String commentSymbolLeft();
 	/**
-	 * right comment delimiter if required, e.g. "*\/", "}", "*)"
+	 * @return right comment delimiter if required, e.g. "*\/", "}", "*)"
 	 */
 	protected String commentSymbolRight() { return ""; }
 	// END KGU 2015-10-18
 	
+	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
+	/**
+	 * A pattern how to embed the variable (right-hand side of an input instruction)
+	 * into the target code
+	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
+	 */
+	protected abstract String getInputReplacer();
+
+	/**
+	 * A pattern how to embed the expression (right-hand side of an output instruction)
+	 * into the target code
+	 * @return a regex replacement pattern, e.g. "System.out.println($1);"
+	 */
+	protected abstract String getOutputReplacer();
+	// END KGU#18/KGU#23 2015-11-01
 	
 	/************ Code Generation **************/
 	
@@ -164,9 +184,121 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			code.add(_indent + _end);
 		}
 	}
-// END KGU 2015-10-18
-    
-	protected void generateCode(Instruction _inst, String _indent)
+	// END KGU 2015-10-18
+
+	/**
+	 * Overridable general text transformation routine, performing the following steps:
+	 * 1. Eliminates parser preference keywords listed below and unifies all operators
+	 *    @see lu.fisch.Structorizer.elements.Element#unifyOperators(java.lang.String)
+	 *         preAlt, preCase, preWhile, preRepeat,
+	 *         postAlt, postCase, postWhile, postRepeat
+	 * 2. Replaces assignments by a call of overridable method transformAssignment(String)
+	 * 3. Transforms Input and Output lines according to regular replacement expressions defined
+	 *    by getInputReplacer() and getOutPutReplacer, respectively. This is done by overridable
+	 *    methods transformInput(String) and transformOutput(), respectively.
+	 *    This is only done if _input starts with one of the configured Input and Output keywords 
+	 * @param _input a line or the concatenated lines of an Element's text
+	 * @return the transformed line (target language line)
+	 */
+	protected String transform(String _input)
+	{
+		return transform(_input, true);
+	}
+
+	/**
+	 * Overridable general text transformation routine, performing the following steps:
+	 * 1. Eliminates parser preference keywords listed below and unifies all operators
+	 *    @see lu.fisch.Structorizer.elements.Element#unifyOperators(java.lang.String)
+	 *         preAlt, preCase, preWhile, preRepeat,
+	 *         postAlt, postCase, postWhile, postRepeat
+	 * 2. Replaces assignments by a call of overridable method transformAssignment(String)
+	 * 3. Transforms Input and Output lines if _doInput and/or _doOutput are true, respectively
+	 *    This is only done if _input starts with one of the configured Input and Output keywords 
+	 * @param _input - a line or the concatenated lines of an Element's text
+	 * @param _doInputOutput - whether the third transforms are to be performed
+	 * @return the transformed line (target language line)
+	 */
+	protected String transform(String _input, boolean _doInputOutput)
+	{
+
+		// General operator unification and dummy keyword elimination
+		_input = Element.transformIntermediate(_input);
+
+		// assignment transformation
+		_input = transformAssignment(_input);
+
+		if (_doInputOutput)
+		{
+			// input instruction transformation
+			_input = transformInput(_input);
+
+			// output instruction transformation
+			_input = transformOutput(_input);
+		}
+
+		return _input.trim();
+	}
+	
+	/**
+	 * Transforms assignments in the given intermediate-language code line.
+	 * OVERRIDE this! (Method just returns _interm without changes)
+	 * @param _interm - a code line in intermediate syntax
+	 * @return transformed string
+	 */
+	protected String transformAssignment(String _interm)
+	{
+		return _interm;
+	}
+	
+	/**
+	 * Detects whether the given code line starts with the configured input keystring
+	 * and if so replaces it according to the regex pattern provided by getInputReplacer()
+	 * @param _interm - a code line in intermediate syntax
+	 * @return transformed input instruction or _interm unchanged
+	 */
+	protected String transformInput(String _interm)
+	{
+		String subst = getInputReplacer();
+		// Between the input keyword and the variable name there MUST be some blank...
+		String keyword = D7Parser.input.trim();
+		if (!keyword.isEmpty() && _interm.startsWith(keyword))
+		{
+			String matcher = Matcher.quoteReplacement(keyword);
+			if (Character.isJavaIdentifierPart(keyword.charAt(keyword.length()-1)))
+			{
+				matcher = matcher + "[ ]";
+			}
+			_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+		}
+		return _interm;
+	}
+
+	/**
+	 * Detects whether the given code line starts with the configured output keystring
+	 * and if so replaces it according to the regex pattern provided by getOutputReplacer()
+	 * @param _interm - a code line in intermediate syntax
+	 * @return transformed output instruction or _interm unchanged
+	 */
+	protected String transformOutput(String _interm)
+	{
+		String subst = getOutputReplacer();
+		// Between the input keyword and the variable name there MUST be some blank...
+		String keyword = D7Parser.output.trim();
+		if (!keyword.isEmpty() && _interm.startsWith(keyword))
+		{
+			String matcher = Matcher.quoteReplacement(keyword);
+			if (Character.isJavaIdentifierPart(keyword.charAt(keyword.length()-1)))
+			{
+				matcher = matcher + "[ ]";
+			}
+			_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+		}
+		return _interm;
+	}
+	// END KGU#18/KGU#23 2015-11-01
+
+ 	
+    protected void generateCode(Instruction _inst, String _indent)
 	{
             //
 	}
@@ -174,19 +306,19 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected void generateCode(Alternative _alt, String _indent)
 	{
 		// code.add(_indent+"");
-		generateCode(_alt.qTrue,_indent+_indent.substring(0,1));
+		generateCode(_alt.qTrue,_indent+this.getIndent());
 		// code.add(_indent+"");
-		generateCode(_alt.qFalse,_indent+_indent.substring(0,1));
+		generateCode(_alt.qFalse,_indent+this.getIndent());
 		// code.add(_indent+"");
 	}
 
 	protected void generateCode(Case _case, String _indent)
 	{
 		// code.add(_indent+"");
-		for(int i=0;i<_case.qs.size();i++)
+		for(int i=0; i < _case.qs.size(); i++)
 		{
 			// code.add(_indent+"");
-			generateCode((Subqueue) _case.qs.get(i),_indent+_indent.substring(0,1));
+			generateCode((Subqueue) _case.qs.get(i), _indent+this.getIndent());
 			// code.add(_indent+"");
 		}
 		// code.add(_indent+"");
@@ -195,28 +327,28 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected void generateCode(For _for, String _indent)
 	{
 		// code.add(_indent+"");
-		generateCode(_for.q,_indent+_indent.substring(0,1));
+		generateCode(_for.q, _indent + this.getIndent());
 		// code.add(_indent+"");
 	}
 
 	protected void generateCode(While _while, String _indent)
 	{
 		// code.add(_indent+"");
-		generateCode(_while.q,_indent+_indent.substring(0,1));
+		generateCode(_while.q, _indent + this.getIndent());
 		// code.add(_indent+"");
 	}
 
 	protected void generateCode(Repeat _repeat, String _indent)
 	{
 		// code.add(_indent+"");
-		generateCode(_repeat.q,_indent+_indent.substring(0,1));
+		generateCode(_repeat.q, _indent + this.getIndent());
 		// code.add(_indent+"");
 	}
 
 	protected void generateCode(Forever _forever, String _indent)
 	{
 		// code.add(_indent+"");
-		generateCode(_forever.q,_indent+_indent.substring(0,1));
+		generateCode(_forever.q, _indent + this.getIndent());
 		// code.add(_indent+"");
 	}
 	
@@ -239,7 +371,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	{
 		if(_ele.getClass().getSimpleName().equals("Instruction"))
 		{
-			generateCode((Instruction) _ele,_indent);
+			generateCode((Instruction) _ele, _indent);
 		}
 		else if(_ele.getClass().getSimpleName().equals("Alternative"))
 		{
@@ -255,7 +387,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		}
 		else if(_ele.getClass().getSimpleName().equals("For"))
 		{
-			generateCode((For) _ele,_indent);
+			generateCode((For) _ele, _indent);
 		}
 		else if(_ele.getClass().getSimpleName().equals("While"))
 		{
@@ -294,7 +426,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	public String generateCode(Root _root, String _indent)
 	{
 		// code.add("");
-		generateCode(_root.children,_indent+_indent.substring(0,1));
+		generateCode(_root.children,_indent+this.getIndent());
 		// code.add("");
 
 		return code.getText();

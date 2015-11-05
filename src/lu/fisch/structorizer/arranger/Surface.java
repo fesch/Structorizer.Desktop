@@ -32,9 +32,9 @@ package lu.fisch.structorizer.arranger;
  *      Revision List
  *
  *      Author          Date			Description
- *      ------			----			-----------
- *      Bob Fisch       				First Issue
- *		Kay Gürtzig     2015.10.18		Several enhancements to improve Arranger usability (see comments)
+ *      ------          ----			-----------
+ *      Bob Fisch           			First Issue
+ *      Kay Gürtzig     2015.10.18		Several enhancements to improve Arranger usability (see comments)
  *
  ******************************************************************************************************
  *
@@ -431,10 +431,10 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     {
     	Vector<Root> functions = new Vector<Root>();
     	if (this.diagrams != null) {
-    		for(int d=0; d < this.diagrams.size(); d++)
+    		for (int d = 0; d < this.diagrams.size(); d++)
     		{
     			Diagram diagram = this.diagrams.get(d);
-    			if (rootName.equalsIgnoreCase(diagram.root.getMethodName()))
+    			if (rootName.equals(diagram.root.getMethodName()))
     			{
     				functions.add(diagram.root);
     			}

@@ -33,7 +33,9 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.23      First Issue
- *      Kay Gürtzig     2015-10-12      A checkbox added for breakpoint control 
+ *      Kay Gürtzig     2015-10-12      A checkbox added for breakpoint control (KGU#43)
+ *      Kay Gürtzig     2015-10-14      Element-class-specific language support (KGU#42)
+ *      Kay Gürtzig     2015-10-25      Hook for subclassing added to method create() (KGU#3)
  *
  ******************************************************************************************************
  *
@@ -55,26 +57,27 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
 {
     public boolean OK = false;
     
+    // KGU#3 2015-11-03: Some of the controls had to be made public in order to allow language support for subclasses 
     // Buttons
-    protected JButton btnOK = new JButton("OK"); 
-    protected JButton btnCancel = new JButton("Cancel"); 
+    public JButton btnOK = new JButton("OK"); 
+    public JButton btnCancel = new JButton("Cancel"); 
 	
     // Labels
-    protected JLabel lblText = new JLabel("Please enter a text");
-    protected JLabel lblComment = new JLabel("Comment");
+    public JLabel lblText = new JLabel("Please enter a text");
+    public JLabel lblComment = new JLabel("Comment");
 
     // Textarea
-    protected JTextArea txtText = new JTextArea();
-    protected JTextArea txtComment = new JTextArea();
+    public JTextArea txtText = new JTextArea();
+    public JTextArea txtComment = new JTextArea();
 
     // Scrollpanes
     protected JScrollPane scrText = new JScrollPane(txtText);
     protected JScrollPane scrComment = new JScrollPane(txtComment);
     
     // Checkbox
-    // START GU 2015-10-12: Additional possibility to control the breakpoint setting
-    protected JCheckBox chkBreakpoint = new JCheckBox("Breakpoint");
-    // END KGU 2015-10-12
+    // START KGU#43 2015-10-12: Additional possibility to control the breakpoint setting
+    public JCheckBox chkBreakpoint = new JCheckBox("Breakpoint");
+    // END KGU#43 2015-10-12
     
     // START KGU 2015-10-14: Additional information for data-specific title translation
     public String elementType = new String();	// The (lower-case) class name of the element type to be edited here
@@ -96,7 +99,6 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
             // set action to perfom if closed
             setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             // set icon
-
             btnOK.addActionListener(this);
             btnCancel.addActionListener(this);
 
@@ -115,9 +117,14 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
             GridBagConstraints gbcPanel0 = new GridBagConstraints();
             gbcPanel0.insets=new Insets(10,10,0,10);
             pnPanel0.setLayout( gbPanel0 );
-
+            
+            // START KGU#3 2015-10-24: Open opportunities for subclasses
+            int gridBaseY = 0;
+            gridBaseY += createPanelTop(pnPanel0, gbPanel0, gbcPanel0);
+            // END KGU#3 2015-10-24
+            
             gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = 3;
+            gbcPanel0.gridy = gridBaseY + 2;
             gbcPanel0.gridwidth = 18;
             gbcPanel0.gridheight = 7;
             gbcPanel0.fill = GridBagConstraints.BOTH;
@@ -128,7 +135,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
             pnPanel0.add( scrText );
 
             gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = 13;
+            gbcPanel0.gridy = gridBaseY + 12;
             gbcPanel0.gridwidth = 18;
             gbcPanel0.gridheight = 4;
             gbcPanel0.fill = GridBagConstraints.BOTH;
@@ -138,19 +145,21 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
             gbPanel0.setConstraints( scrComment, gbcPanel0 );
             pnPanel0.add( scrComment );
 
+            // START KGU#3 2015-10-25: Moved to addCreating() - such that it may be replaced by subclasses
+//            gbcPanel0.gridx = 1;
+//            gbcPanel0.gridy = 1;
+//            gbcPanel0.gridwidth = 18;
+//            gbcPanel0.gridheight = 1;
+//            gbcPanel0.fill = GridBagConstraints.BOTH;
+//            gbcPanel0.weightx = 1;
+//            gbcPanel0.weighty = 0;
+//            gbcPanel0.anchor = GridBagConstraints.NORTH;
+//            gbPanel0.setConstraints( lblText, gbcPanel0 );
+//            pnPanel0.add( lblText );
+            // END KGU#3 2015-10-25
+            
             gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = 1;
-            gbcPanel0.gridwidth = 18;
-            gbcPanel0.gridheight = 1;
-            gbcPanel0.fill = GridBagConstraints.BOTH;
-            gbcPanel0.weightx = 1;
-            gbcPanel0.weighty = 0;
-            gbcPanel0.anchor = GridBagConstraints.NORTH;
-            gbPanel0.setConstraints( lblText, gbcPanel0 );
-            pnPanel0.add( lblText );
-
-            gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = 11;
+            gbcPanel0.gridy = gridBaseY + 10;
             gbcPanel0.gridwidth = 18;
             gbcPanel0.gridheight = 1;
             gbcPanel0.fill = GridBagConstraints.BOTH;
@@ -161,7 +170,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
             pnPanel0.add( lblComment );
 
             gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = 18;
+            gbcPanel0.gridy = gridBaseY + 17;
             gbcPanel0.gridwidth = 18;
             gbcPanel0.gridheight = 1;
             gbcPanel0.fill = GridBagConstraints.BOTH;
@@ -173,8 +182,9 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
 
             gbcPanel0.insets=new Insets(10,10,10,10);
 
+            //createExitButtons(gridbase)
             gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = 19;
+            gbcPanel0.gridy = gridBaseY + 18;
             gbcPanel0.gridwidth = 7;
             gbcPanel0.gridheight = 1;
             gbcPanel0.fill = GridBagConstraints.BOTH;
@@ -184,9 +194,15 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
             gbPanel0.setConstraints( btnCancel, gbcPanel0 );
             pnPanel0.add( btnCancel );
 
-            gbcPanel0.gridx = 12;
-            gbcPanel0.gridy = 19;
-            gbcPanel0.gridwidth = 7;
+            // START KGU#3 2015-10-31: The new gridx causes no difference here but fits better for InputBoxFor
+            //gbcPanel0.gridx = 12;
+            gbcPanel0.gridx = 8;
+            // END KGU#3 2015-10-31
+            gbcPanel0.gridy = gridBaseY + 18;
+            // START KGU#3 2015-10-31: The new gridwidth causes no difference here but fits better for InputBoxFor
+            //gbcPanel0.gridwidth = 7;
+    		gbcPanel0.gridwidth = GridBagConstraints.REMAINDER;
+    		// END KGU#3 2015-10-31
             gbcPanel0.gridheight = 1;
             gbcPanel0.fill = GridBagConstraints.BOTH;
             gbcPanel0.weightx = 1;
@@ -201,6 +217,30 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
 
             txtText.requestFocus(true);
     }
+    
+    // START KGU#3 2015-10-24: Hook for subclasses
+    /**
+     * Subclassable method to add specific stuff to the Panel top
+     * @param _panel the panel to be enhanced
+     * @param _gbc the layout constraints
+     * @return number of lines (y units) inserted
+     */
+    protected int createPanelTop(JPanel _panel, GridBagLayout _gb, GridBagConstraints _gbc)
+    {
+        _gbc.gridx = 1;
+        _gbc.gridy = 1;
+        _gbc.gridwidth = 18;
+        _gbc.gridheight = 1;
+        _gbc.fill = GridBagConstraints.BOTH;
+        _gbc.weightx = 1;
+        _gbc.weighty = 0;
+        _gbc.anchor = GridBagConstraints.NORTH;
+        _gb.setConstraints( lblText, _gbc );
+        _panel.add( lblText );
+        // Return the number of used grid lines such that the calling method may go on there
+    	return 1;
+    }
+    // END KGU#3 2015-10-24
 
     // listen to actions
     public void actionPerformed(ActionEvent event)
@@ -255,7 +295,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
         create();
     }*/
 
-    // START KGU 2015-10-14: data-specific title localisation
+    // START KGU#42 2015-10-14: data-specific title localisation
     /**
      * Replaces the title string by translation if keys match some internal state information
      * @see lu.fisch.structorizer.gui.LangDialog#setLangSpecific(lu.fisch.utils.StringList, java.lang.String)
@@ -292,6 +332,6 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
     		super.setTitle(title);
     	}
     }
-    // END KGU 2015-10-14
+    // END KGU#42 2015-10-14
     
 }

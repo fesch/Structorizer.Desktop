@@ -24,7 +24,7 @@ package lu.fisch.structorizer.elements;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    This class represents an "subqueue" of another element.
+ *      Description:    This class represents a "subqueue" of another element.
  *						A subqueue can contain other elements.
  *
  ******************************************************************************************************
@@ -63,6 +63,25 @@ public class Subqueue extends Element{
 	}
 	
 	public Vector<Element> children = new Vector<Element>();
+	
+	// START KGU#64 2015-11-03: Is to improve drawing performance
+	/**
+	 * Recursively clears all drawing info this subtree down
+	 * (To be overridden by structured sub-classes!)
+	 */
+	@Override
+	public void resetDrawingInfoDown()
+	{
+		this.resetDrawingInfo();
+		if (this.children != null)
+		{
+			for (int i = 0; i < this.children.size(); i++)
+			{
+				this.children.get(i).resetDrawingInfoDown();
+			}
+		}
+	}
+	// END KGU#64 2015-11-03
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{

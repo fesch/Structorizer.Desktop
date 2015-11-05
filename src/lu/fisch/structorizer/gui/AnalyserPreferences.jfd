@@ -72,6 +72,18 @@
             <string>javax.swing.JRadioButton</string> 
             <void method="setProperty"> 
              <string>text</string> 
+             <string>Check 14</string> 
+            </void> 
+            <void property="name"> 
+             <string>check14</string> 
+            </void> 
+           </object> 
+          </void> 
+          <void method="add"> 
+           <object class="com.jformdesigner.model.FormComponent"> 
+            <string>javax.swing.JRadioButton</string> 
+            <void method="setProperty"> 
+             <string>text</string> 
              <string>Check 2</string> 
             </void> 
             <void property="name"> 

@@ -83,6 +83,41 @@ public class XmlGenerator extends Generator {
     // END KGU 2015-10-18
     
 	/************ Code Generation **************/
+    
+	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
+	/**
+	 * A pattern how to embed the variable (right-hand side of an input instruction)
+	 * into the target code
+	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
+	 */
+	protected String getInputReplacer()
+	{
+		return "";
+	}
+
+	/**
+	 * A pattern how to embed the expression (right-hand side of an output instruction)
+	 * into the target code
+	 * @return a regex replacement pattern, e.g. "System.out.println($1);"
+	 */
+	protected String getOutputReplacer()
+	{
+		return "";
+	}
+
+	/**
+	 * Transforms assignments in the given intermediate-language code line.
+	 * Replaces "<-" by "="
+	 * @param _interm - a code line in intermediate syntax
+	 * @return transformed string
+	 */
+	protected String transformAssignment(String _interm)
+	{
+		return _interm;
+	}
+	// END KGU#18/KGU#23 2015-11-01
+    
+    
     @Override
 	protected void generateCode(Instruction _inst, String _indent)
 	{
@@ -141,9 +176,15 @@ public class XmlGenerator extends Generator {
     @Override
 	protected void generateCode(For _for, String _indent)
 	{
-		code.add(_indent+"<for text=\""+BString.encodeToHtml(_for.getText().getCommaText())+"\" comment=\""+
-				 BString.encodeToHtml(_for.getComment().getCommaText())+"\" color=\""+
-				 _for.getHexColor()+"\">");
+		code.add(_indent+"<for text=\""+BString.encodeToHtml(_for.getText().getCommaText()) +
+				"\" comment=\"" + BString.encodeToHtml(_for.getComment().getCommaText()) +
+				// START KGU#3 2015-10-28: Insert new dedicated information fields
+				"\" counterVar=\"" + BString.encodeToHtml(_for.getCounterVar()) +
+				"\" startValue=\"" + BString.encodeToHtml(_for.getStartValue()) +
+				"\" endValue=\"" + BString.encodeToHtml(_for.getEndValue()) +
+				"\" stepConst=\"" + BString.encodeToHtml(_for.getStepString()) +
+				// END KGU#3 2015-10-28
+				"\" color=\"" + _for.getHexColor()+"\">");
 		code.add(_indent+this.getIndent()+"<qFor>");
 		generateCode(_for.q,_indent+this.getIndent()+this.getIndent());
 		code.add(_indent+this.getIndent()+"</qFor>");

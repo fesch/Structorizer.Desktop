@@ -38,6 +38,7 @@ package lu.fisch.structorizer.elements;
  *		Kay Gürtzig	2015.10.12		new methods toggleBreakpoint() and clearBreakpoints() (KGU#43).
  *		Kay Gürtzig	2015.10.16		getFullText methods redesigned/replaced, changes in getVarNames().
  *		Kay Gürtzig	2015.10.17		improved Arranger support by method notifyReplaced (KGU#48)
+ *		Kay Gürtzig	2015.11.03		New error14 field and additions to analyse for FOR loop checks (KGU#3)
  *
  ******************************************************************************************************
  *
@@ -110,6 +111,9 @@ public class Root extends Element {
 	public static boolean check11 = false;
 	public static boolean check12 = false;
 	public static boolean check13 = false;
+	// START KGU#3 2015-11-03: New check for enhanced FOR loop
+	public static boolean check14 = false;
+	// END KGU#3 2015-11-03
 
 	private Vector<Updater> updaters = new Vector<Updater>();
                 
@@ -558,17 +562,29 @@ public class Root extends Element {
             super.clearBreakpoints();
             children.clearBreakpoints();
     }
-    // END KGU 2015-10-12
+    // END KGU#43 2015-10-12
 
-    // START KGU#43 2015-10-13
+	// START KGU#43 2015-10-13
 	// Recursively clears all execution flags in this branch
 	public void clearExecutionStatus()
 	{
 		super.clearExecutionStatus();
 		children.clearExecutionStatus();
 	}
-	// END KGU 2015-10-13
+	// END KGU#43 2015-10-13
 
+	// START KGU#64 2015-11-03: Is to improve drawing performance
+	/**
+	 * Recursively clears all drawing info this subtree down
+	 * (To be overridden by structured sub-classes!)
+	 */
+	@Override
+	public void resetDrawingInfoDown()
+	{
+		this.resetDrawingInfo();
+		this.children.resetDrawingInfoDown();
+	}
+	// END KGU#64 2015-11-03
 
     public Rect prepareDraw(Graphics _g)
     {
@@ -1105,93 +1121,97 @@ public class Root extends Element {
                     }
 
                     // Analyse for used variables
-                    StringList parts = new StringList();
-                    parts.add(lines.getLongString());
-
-                    // split
-                    parts=StringList.explodeWithDelimiter(parts," ");
-                    parts=StringList.explodeWithDelimiter(parts,".");
-                    parts=StringList.explodeWithDelimiter(parts,",");
-                    parts=StringList.explodeWithDelimiter(parts,"(");
-                    parts=StringList.explodeWithDelimiter(parts,")");
-                    parts=StringList.explodeWithDelimiter(parts,"[");
-                    parts=StringList.explodeWithDelimiter(parts,"]");
-                    parts=StringList.explodeWithDelimiter(parts,"-");
-                    parts=StringList.explodeWithDelimiter(parts,"+");
-                    parts=StringList.explodeWithDelimiter(parts,"/");
-                    parts=StringList.explodeWithDelimiter(parts,"*");
-                    parts=StringList.explodeWithDelimiter(parts,"mod");
-                    parts=StringList.explodeWithDelimiter(parts,"div");
-                    parts=StringList.explodeWithDelimiter(parts,">");
-                    parts=StringList.explodeWithDelimiter(parts,"<");
-                    parts=StringList.explodeWithDelimiter(parts,"=");
-                    parts=StringList.explodeWithDelimiter(parts,"!");
-                    parts=StringList.explodeWithDelimiter(parts,":");
-                    parts=StringList.explodeWithDelimiter(parts,"'");
-                    parts=StringList.explodeWithDelimiter(parts,"\"");
-
-                    //reassamble
-                    int i = 0;
-                    while (i<parts.count())
-                    {
-                            if(i<parts.count()-2)
-                            {
-                                    if(parts.get(i).equals("<") && parts.get(i+1).equals("-") && parts.get(i+2).equals("-") )
-                                    {
-                                            parts.set(i,"<-");
-                                            parts.delete(i+1);
-                                            parts.delete(i+1);
-                                    }
-                                    else if(parts.get(i).equals("<") && parts.get(i+1).equals("-"))
-                                    {
-                                            parts.set(i,"<-");
-                                            parts.delete(i+1);
-                                    }
-                                    else if(parts.get(i).equals(":") && parts.get(i+1).equals("="))
-                                    {
-                                            parts.set(i,":=");
-                                            parts.delete(i+1);
-                                    }
-                                    else if(parts.get(i).equals("!") && parts.get(i+1).equals("="))
-                                    {
-                                            parts.set(i,"!=");
-                                            parts.delete(i+1);
-                                    }
-                                    else if(parts.get(i).equals("<") && parts.get(i+1).equals(">"))
-                                    {
-                                            parts.set(i,"<>");
-                                            parts.delete(i+1);
-                                    }
-                            }
-                            else if(i<parts.count()-1)
-                            {
-                                    if(parts.get(i).equals("<") && parts.get(i+1).equals("-"))
-                                    {
-                                            parts.set(i,"<-");
-                                            parts.delete(i+1);
-                                    }
-                                    else if(parts.get(i).equals(":") && parts.get(i+1).equals("="))
-                                    {
-                                            parts.set(i,":=");
-                                            parts.delete(i+1);
-                                    }
-                                    else if(parts.get(i).equals("!") && parts.get(i+1).equals("="))
-                                    {
-                                            parts.set(i,"!=");
-                                            parts.delete(i+1);
-                                    }
-                                    else if(parts.get(i).equals("<") && parts.get(i+1).equals(">"))
-                                    {
-                                            parts.set(i,"<>");
-                                            parts.delete(i+1);
-                                    }
-                            }
-                            i++;
-                    }
+                    // START KGU#26/KGU#65 2015-11-04: This code was practically identical to that in Element.writeOutVariables
+                    // Moreover, we solve the erroneous in-String analysis (i.e. string literals had been scrutinized, too!) 
+//                    StringList parts = new StringList();
+//                    parts.add(lines.getLongString());
+//
+//                    // split
+//                    parts=StringList.explodeWithDelimiter(parts," ");
+//                    parts=StringList.explodeWithDelimiter(parts,".");
+//                    parts=StringList.explodeWithDelimiter(parts,",");
+//                    parts=StringList.explodeWithDelimiter(parts,"(");
+//                    parts=StringList.explodeWithDelimiter(parts,")");
+//                    parts=StringList.explodeWithDelimiter(parts,"[");
+//                    parts=StringList.explodeWithDelimiter(parts,"]");
+//                    parts=StringList.explodeWithDelimiter(parts,"-");
+//                    parts=StringList.explodeWithDelimiter(parts,"+");
+//                    parts=StringList.explodeWithDelimiter(parts,"/");
+//                    parts=StringList.explodeWithDelimiter(parts,"*");
+//                    parts=StringList.explodeWithDelimiter(parts,"mod");
+//                    parts=StringList.explodeWithDelimiter(parts,"div");
+//                    parts=StringList.explodeWithDelimiter(parts,">");
+//                    parts=StringList.explodeWithDelimiter(parts,"<");
+//                    parts=StringList.explodeWithDelimiter(parts,"=");
+//                    parts=StringList.explodeWithDelimiter(parts,"!");
+//                    parts=StringList.explodeWithDelimiter(parts,":");
+//                    parts=StringList.explodeWithDelimiter(parts,"'");
+//                    parts=StringList.explodeWithDelimiter(parts,"\"");
+//
+//                    //reassamble
+//                    int i = 0;
+//                    while (i<parts.count())
+//                    {
+//                            if(i<parts.count()-2)
+//                            {
+//                                    if(parts.get(i).equals("<") && parts.get(i+1).equals("-") && parts.get(i+2).equals("-") )
+//                                    {
+//                                            parts.set(i,"<-");
+//                                            parts.delete(i+1);
+//                                            parts.delete(i+1);
+//                                    }
+//                                    else if(parts.get(i).equals("<") && parts.get(i+1).equals("-"))
+//                                    {
+//                                            parts.set(i,"<-");
+//                                            parts.delete(i+1);
+//                                    }
+//                                    else if(parts.get(i).equals(":") && parts.get(i+1).equals("="))
+//                                    {
+//                                            parts.set(i,":=");
+//                                            parts.delete(i+1);
+//                                    }
+//                                    else if(parts.get(i).equals("!") && parts.get(i+1).equals("="))
+//                                    {
+//                                            parts.set(i,"!=");
+//                                            parts.delete(i+1);
+//                                    }
+//                                    else if(parts.get(i).equals("<") && parts.get(i+1).equals(">"))
+//                                    {
+//                                            parts.set(i,"<>");
+//                                            parts.delete(i+1);
+//                                    }
+//                            }
+//                            else if(i<parts.count()-1)
+//                            {
+//                                    if(parts.get(i).equals("<") && parts.get(i+1).equals("-"))
+//                                    {
+//                                            parts.set(i,"<-");
+//                                            parts.delete(i+1);
+//                                    }
+//                                    else if(parts.get(i).equals(":") && parts.get(i+1).equals("="))
+//                                    {
+//                                            parts.set(i,":=");
+//                                            parts.delete(i+1);
+//                                    }
+//                                    else if(parts.get(i).equals("!") && parts.get(i+1).equals("="))
+//                                    {
+//                                            parts.set(i,"!=");
+//                                            parts.delete(i+1);
+//                                    }
+//                                    else if(parts.get(i).equals("<") && parts.get(i+1).equals(">"))
+//                                    {
+//                                            parts.set(i,"<>");
+//                                            parts.delete(i+1);
+//                                    }
+//                            }
+//                            i++;
+//                    }
+                    StringList parts = Element.splitLexically(lines.getLongString(), true);
+                    // END KGU#26/KGU#65 2015-11-04
 
                     //this.getVarNames(); // needed?  // CHECKITfile://localhost/Users/robertfisch/Desktop/TEST.nsd
 
-                    for(i=0;i<parts.count();i++)
+                    for(int i=0; i<parts.count(); i++)
                     {
                             String display = parts.get(i);
 
@@ -1208,12 +1228,12 @@ public class Root extends Element {
                             }
                     }
 
-                    /*
+/*                    // FIXME (KGU) Disable this after testing
                     System.out.println("Lines: "+lines.getCommaText());
                     System.out.println("Parts: "+parts.getCommaText());
                     System.out.println("Vars:  "+variables.getCommaText());
                     System.out.println("Used:  "+varNames.getCommaText());
-                    /**/
+*/                    
             }
 
             varNames=varNames.reverse();
@@ -1318,72 +1338,7 @@ public class Root extends Element {
     //
     public StringList getVarNames()
     {
-            // START KGU 2014-10-18: This stuff was nearly a specialized copy of that in
-            // public StringList getVarNames(Element, boolean, boolean),
-            // hence delegated to a common private subroutine
-            /*
-            StringList varNames = new StringList();
-
-            // check root text for variable names
-            // !!
-            // !! This works only for Pascal-like syntax: functionname (<name>, <name>, ..., <name>:<type>; ...)
-            // !! or VBA like syntax: functionname(<name>, <name> as <type>; ...)
-            // !!
-            try
-            {
-                    if(this.isProgram==false)
-                    {
-                            String rootText = this.getText().getText();
-                            rootText = rootText.replace("var ", "");
-                            if(rootText.indexOf("(")>=0)
-                            {
-                                    rootText=rootText.substring(rootText.indexOf("(")+1).trim();
-                                    rootText=rootText.substring(0,rootText.indexOf(")")).trim();
-                            }
-
-                            StringList params = StringList.explode(rootText,";");
-                            if(params.count()>0)
-                            {
-                                    for(int i=0;i<params.count();i++)
-                                    {
-                                            String S = params.get(i);
-                                            if(S.indexOf(":")>=0)
-                                            {
-                                                    S=S.substring(0,S.indexOf(":")).trim();
-                                            }
-                                            if(S.indexOf("as")>=0)
-                                            {
-                                                    S=S.substring(0,S.indexOf("as")).trim();
-                                            }
-                                            StringList vars = StringList.explode(S,",");
-                                            for(int j=0;j<vars.count();j++)
-                                            {
-                                                    if(!vars.get(j).trim().equals(""))
-                                                    {
-                                                            varNames.add(vars.get(j).trim());
-                                                    }
-                                            }
-                                    }
-                            }
-                    }
-            }
-            catch (Exception e)
-            {
-                    // do nothing
-            }
-
-            // get body text
-            StringList lines = getFullText();
-
-            varNames.add(getVarnames(lines));
-
-            varNames=varNames.reverse();
-            this.variables=varNames;
-            //System.out.println(varNames.getCommaText());
-            return varNames;
- 			/**/
             return getVarNames(this, false, false, true);
-            // END KGU 2014-10-18
     }
 
     //
@@ -1401,86 +1356,7 @@ public class Root extends Element {
 
     public StringList getVarNames(Element _ele, boolean _onlyMe, boolean _onlyBody)
     {
-            // START KGU 2014-10-18: Code was nearly identical to getVarNames(), hence delegated to a common subroutine 
-            /*
-            StringList varNames = new StringList();
-
-            // check root text for variable names
-            // !!
-            // !! This works only for Pascal-like syntax: functionname (<name>, <name>, ..., <name>:<type>; ...)
-            // !! or VBA like syntax: functionname(<name>, <name> as <type>; ...)
-            // !!
-            try
-            {
-                    if(this.isProgram==false && _ele==this)
-                    {
-                            String rootText = this.getText().getText();
-                            rootText = rootText.replace("var ", "");
-                            if(rootText.indexOf("(")>=0)
-                            {
-                                    rootText=rootText.substring(rootText.indexOf("(")+1).trim();
-                                    rootText=rootText.substring(0,rootText.indexOf(")")).trim();
-                            }
-
-                            StringList params = StringList.explode(rootText,";");
-                            if(params.count()>0)
-                            {
-                                    for(int i=0;i<params.count();i++)
-                                    {
-                                            String S = params.get(i);
-                                            if(S.indexOf(":")>=0)
-                                            {
-                                                    S=S.substring(0,S.indexOf(":")).trim();
-                                            }
-                                            if(S.indexOf("as")>=0)
-                                            {
-                                                    S=S.substring(0,S.indexOf("as")).trim();
-                                            }
-                                            StringList vars = StringList.explode(S,",");
-                                            for(int j=0;j<vars.count();j++)
-                                            {
-                                                    if(!vars.get(j).trim().equals(""))
-                                                    {
-                                                            varNames.add(vars.get(j).trim());
-                                                    }
-                                            }
-                                    }
-                            }
-                    }
-            }
-            catch (Exception e)
-            {
-                    System.out.println(e.getMessage());
-            }
-
-            // get body text
-            StringList lines;
-            if(_onlyMe==true)
-            {
-                    lines = _ele.text.copy();
-            }
-            else
-            {
-                    lines = getFullText(_ele);
-            }
-
-            if(_onlyBody==true)
-            {
-                    for(int l=0;l<_ele.text.count();l++)
-                    {
-                            lines.delete(0);
-                    }
-            }
-
-            varNames.add(getVarnames(lines));
-
-            varNames=varNames.reverse();
-            //this.variables=varNames;
-            //System.out.println(varNames.getCommaText());
-            return varNames;
-            /**/
             return getVarNames(_ele, _onlyMe, _onlyBody, false);
-            // END KGU 2014-10-18
     }
 
     private StringList getVarNames(Element _ele, boolean _onlyMe, boolean _onlyBody, boolean _entireProg)
@@ -1663,11 +1539,6 @@ public class Root extends Element {
                                     {
                                             // CHECK: wrong affection (#11 - new!)
                                             String myTest = test.get(l);
-                                            /*Regex r1 = new Regex("(.*?)['](.*?)['](.*?)","$1$3");
-                                            myTest=r1.replaceAll(myTest);
-
-                                            Regex r2 = new Regex("(.*?)[\"](.*?)[\"](.*?)","$1$3");
-                                            myTest=r2.replaceAll(myTest);*/
 
                                             myTest=myTest.replaceAll("(.*?)['](.*?)['](.*?)","$1$3");
                                             myTest=myTest.replaceAll("(.*?)[\"](.*?)[\"](.*?)","$1$3");
@@ -1686,6 +1557,22 @@ public class Root extends Element {
                                             if (myText.contains(D7Parser.input.trim())) {isInput=1;}
                                             if (myText.contains(D7Parser.output.trim())) {isOutput=1;}
                                             if ( myText.contains("<-") || myText.contains(":=") || myText.contains("<--")) {isAssignment=1;}
+
+                                            // START KGU#65 2015-11-04: Possible replacement (though expensive, hence not activated)
+                                            //StringList lexemes = splitLexically(myTest, true);
+                                            //if((lexemes.contains("=") || lexemes.contains("==")) && !lexemes.contains("<-") && !lexemes.contains(":="))
+                                            //{
+                                            //        //error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.children.get(i));
+                                            //        error  = new DetectedError(errorMsg(Menu.error11,""),(Element) _node.children.get(i));
+                                            //        addError(_errors,error,11);
+                                            //}
+                                            //
+                                            //// CHECK: wrong multi-line instruction (#10 - new!)
+                                            //if (lexemes.contains(D7Parser.input.trim())) {isInput=1;}
+                                            //if (lexemes.contains(D7Parser.output.trim())) {isOutput=1;}
+                                            //if (lexemes.contains("<-") || lexemes.contains(":=")) {isAssignment=1;}
+                                            // END KGU#65 2015-11-04
+
                                     }
                                     // CHECK: wrong multi-line instruction (#10 - new!)
                                     if (isInput+isOutput+isAssignment==3)
@@ -1796,7 +1683,7 @@ public class Root extends Element {
                                     }
                             }
 
-                            // CHECK: loop var modified (#1)
+                            // CHECK: loop var modified (#1) and loop parameter concistency (#14 new!)
                             if(_node.children.get(i).getClass().getSimpleName().equals("For"))
                             {
                                     // get used variable from inside the FOR-loop
@@ -1831,6 +1718,37 @@ public class Root extends Element {
                                                addError(_errors,error,1);
                                             }
                                     }
+                                    
+                                    // START KGU#3 2015-11-03: New check for consistency of the loop header
+                                    For elem = (For)_node.children.get(i);
+                                    if (!elem.checkConsistency()) {
+                                        //error  = new DetectedError("FOR loop parameters are not consistent to the loop heading text!", elem);
+                                    	error = new DetectedError(errorMsg(Menu.error14_1,""), elem);
+                                        addError(_errors, error, 14);
+                                    }
+                                    String stepStr = elem.splitForClause()[4];
+                                    if (!stepStr.isEmpty())
+                                    {
+                                    	// Just in case...
+                                        //error  = new DetectedError("FOR loop step parameter «"+stepStr+"» is no legal integer constant!", elem);
+                                    	error = new DetectedError(errorMsg(Menu.error14_2, stepStr), elem);
+                                    	try {
+                                    		int stepVal = Integer.parseInt(stepStr);
+                                    		if (stepVal == 0)
+                                    		{
+                                    			// Two kinds of error at the same time
+                                                addError(_errors, error, 14);
+                                                //error  = new DetectedError("No change of the variables in the condition detected. Possible endless loop ...",(Element) _node.children.get(i));
+                                                error  = new DetectedError(errorMsg(Menu.error02,""), elem);
+                                                addError(_errors, error, 2);
+                                    		}
+                                    	}
+                                    	catch (NumberFormatException ex)
+                                    	{
+                                            addError(_errors, error, 14);                                    		
+                                    	}
+                                    }
+                                    // END KGU#3 2015-11-03
                             }
 
                             // CHECK: if with empty T-block (#4)
@@ -2047,6 +1965,11 @@ public class Root extends Element {
                     case 13:
                             if (Root.check13) errors.add(error);
                             break;
+                    // START KGU#3 2015-11-03: New checks for enhanced FOR loop        
+                    case 14:
+                            if (Root.check14) errors.add(error);
+                            break;
+                    // END KGU#3 2015-11-03    
                     default:
                             errors.add(error);
                             break;
@@ -2217,6 +2140,9 @@ public String getMethodName()
                     ini.setProperty("check11",(check11?"1":"0"));
                     ini.setProperty("check12",(check12?"1":"0"));
                     ini.setProperty("check13",(check13?"1":"0"));
+                    // START KGU#3 2015-11-03: New check for enhanced FOR loop
+                    ini.setProperty("check14",(check14?"1":"0"));
+                    // END KGU#3 2015-11-03
 
                     ini.save();
             }

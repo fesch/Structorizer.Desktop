@@ -46,8 +46,12 @@ package lu.fisch.structorizer.elements;
 
 import java.awt.Color;
 import java.awt.FontMetrics;
+import java.util.regex.Matcher;
 
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.executor.Executor;
+import lu.fisch.structorizer.generators.Generator;
+import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.*;
 
 public class For extends Element{
@@ -55,6 +59,19 @@ public class For extends Element{
 	public Subqueue q = new Subqueue();
 	
 	private Rect r = new Rect();
+	
+	// START KGU#3 2015-10-24
+	private static String forSeparatorPre = "§FOR§";
+	private static String forSeparatorTo = "§TO§";
+	private static String forSeparatorBy = "§BY§";
+	// The following fields are dedicated for unambiguous semantics representation. If and only if the
+	// structured information of these fielda is consistent field isConsistent shall be true.
+	private String counterVar = "";			// name of the counter variable
+	private String startValue = "1";		// expression determining the start value of the loop
+	private String endValue = "";			// expression determining the end value of the loop
+	private int stepConst = 1;				// an integer value defining the increment/decrement
+	public boolean isConsistent = false;	// flag determining whether the semantics is consistently defined by the dedicated fields
+	// END KGU#3 2015-10-24
 
 	public For()
 	{
@@ -75,6 +92,20 @@ public class For extends Element{
 		q.parent=this;
 		setText(_strings);
 	}
+	
+	// START KGU#64 2015-11-03: Is to improve drawing performance
+	/**
+	 * Recursively clears all drawing info this subtree down
+	 * (To be overridden by structured sub-classes!)
+	 */
+	@Override
+	public void resetDrawingInfoDown()
+	{
+		this.resetDrawingInfo();
+		this.q.resetDrawingInfoDown();
+	}
+	// END KGU#64 2015-11-03
+	
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
@@ -470,5 +501,298 @@ public class For extends Element{
 		this.q.addFullText(_lines, _instructionsOnly);
     }
     // END KGU 2015-10-16
+
+	// START KGU#3 2015-10-24
 	
+	/**
+	 * Retrieves the counter variable name either from stored value or from text
+	 * @return name of the counter variable
+	 */
+	public String getCounterVar()
+	{
+		if (!this.isConsistent)
+		{
+			return this.counterVar;
+		}
+		return this.splitForClause()[0];
+	}
+	
+	/**
+	 * Retrieves the start value expression either from stored value or from text
+	 * @return expression to compute the start value
+	 */
+	public String getStartValue()
+	{
+		if (!this.isConsistent)
+		{
+			return this.startValue;
+		}
+		return this.splitForClause()[1];
+	}
+	
+	/**
+	 * Retrieves the end value expression either from stored value or from text
+	 * @return expression to compute the end value
+	 */
+	public String getEndValue()
+	{
+		if (!this.isConsistent)
+		{
+			return this.endValue;
+		}
+		return this.splitForClause()[2];
+	}
+	
+	/**
+	 * Retrieves the counter increment either from stored value or from text
+	 * @return the constant increment (or decrement)
+	 */
+	public int getStepConst()
+	{
+		int step = 1;
+		if (this.isConsistent)
+		{
+			step = this.stepConst;
+		}
+		else
+		{
+			String stepStr = this.splitForClause()[3]; 
+			step = Integer.valueOf(stepStr);
+		}
+		return step;
+	}
+	
+	/**
+	 * Retrieves the counter increment either from stored value or from text
+	 * @return string representing the constant increment (or decrement)
+	 */
+	public String getStepString()
+	{
+		if (this.isConsistent)
+		{
+			return Integer.toString(this.stepConst);
+		}
+		else
+		{
+			return this.splitForClause()[3]; // Or should we provide this.splitClause()[4]?
+		}
+	}
+	
+    
+	/**
+	 * @param counterVar the counterVar to set
+	 */
+	public void setCounterVar(String counterVar) {
+		this.counterVar = counterVar;
+	}
+
+	/**
+	 * @param startValue the startValue to set
+	 */
+	public void setStartValue(String startValue) {
+		this.startValue = startValue;
+	}
+
+	/**
+	 * @param endValue the endValue to set
+	 */
+	public void setEndValue(String endValue) {
+		this.endValue = endValue;
+	}
+
+	/**
+	 * @param stepConst the stepConst to set
+	 */
+	public void setStepConst(int stepConst) {
+		this.stepConst = stepConst;
+	}
+
+	public void setStepConst(String stepConst) {
+		if (stepConst == null || stepConst.isEmpty())
+		{
+			this.stepConst = 1;
+		}
+		else 
+		{
+			try
+			{
+				this.stepConst = Integer.valueOf(stepConst);
+			}
+			catch (Exception ex) {}
+		}
+	}
+	// END KGU#3 2015-10-24
+
+	// START KGU#3 2015-10-19 We need a transformation to a common intermediate language
+	private static String disambiguateForClause(String _text)
+	{
+		// Pad the string to ease the key word detection
+		String interm = " " + _text + " ";
+
+		// First collect the placemarkers of the for loop header ...
+		String[] forMarkers = {D7Parser.preFor, D7Parser.postFor, D7Parser.stepFor};
+		// ... and their replacements (in same order!)
+		String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy};
+
+		// The configured markers for the For loop are not at all redundant but the only sensible
+		// hint how to split the line into the counter variable, the initial and the final value (and possibly the step).
+		// FIXME The composition of the regular expressions here conveys some risk since we may not know
+		// what the user might have configured (see above)
+		for (int i = 0; i < forMarkers.length; i++)
+		{
+			//String marker = forMarkers[i];
+			String marker = Matcher.quoteReplacement(forMarkers[i]);
+			String separator = forSeparators[i];
+			if (!marker.isEmpty())
+			{
+				String pattern = "(.*?)" + marker + "(.*)";
+				// If it is not padded, then ensure it is properly isolated
+				if (marker.equals(marker.trim()))
+				{
+					pattern = "(.*?\\W)" + marker + "(\\W.*)";
+				}
+				interm = interm.replaceFirst(pattern, "$1 " + separator + " $2");
+				// Eliminate possibly remaining occurrences if padded (preserve name substrings!)
+				interm = interm.replaceAll(pattern, "$1 " + separator + " $2");
+			}
+			// eliminate multiple blanks
+			interm = BString.replace(interm, "  ", " ");
+		}
+
+		return interm;
+
+	}
+	
+
+	public String[] splitForClause()
+	{
+		return splitForClause(this.getText().getText());
+	}
+	
+	/**
+	 * Splits a potential FOR clause (after operator unification, see unifyOperators for details)
+	 * into an array consisting of five strings meant to have following meaning:
+	 * 1. counter variable name 
+	 * 2. expression representing the initial value
+	 * 3. expression representing the final value
+	 * 4. Integer literal representing the increment value ("1" if the substring can't be parsed)
+	 * 5. Substring for increment section as found on splitting (no integer coercion done)
+	 * 
+	 * @param _text the FOR clause to be split (something like "for i <- 1 to n")
+	 * @return String array consisting of the four parts explained above
+	 */
+	public static String[] splitForClause(String _text)
+	{
+		String[] forParts = { "dummy_counter", "1", null, "1", ""};
+		// Set some defaults
+		String init = "";	// Initialisation instruction
+		
+		// Do some pre-processing to disambiguate the key words
+		String _intermediate = disambiguateForClause(_text);		
+		System.out.println("Disambiguated For clause: \"" + _intermediate + "\"");
+		
+		_intermediate = _intermediate.replace('\n', ' '); // Concatenate the lines
+		int posFor = _intermediate.indexOf(forSeparatorPre);
+		int lenFor = forSeparatorPre.length();
+		int posTo = _intermediate.indexOf(forSeparatorTo);
+		int lenTo = forSeparatorTo.length();
+		int posBy = _intermediate.indexOf(forSeparatorBy);
+		int lenBy = forSeparatorBy.length();
+		if (posFor < 0) { posFor = -lenFor; }	// Fictitious position such that posFor+lenFor becomes 0
+		int posIni = posFor + lenFor;
+		int[] positions = { posFor, posTo, posBy };
+		int pastIni = _intermediate.length();
+		int pastTo = pastIni, pastBy = pastIni;
+		for (int i = 0; i < positions.length; i++) 
+		{
+			if (i > 0 && positions[i] >= posIni && positions[i] < pastIni) pastIni = positions[i];
+			if (positions[i] >= posTo+lenTo && positions[i] < pastTo) pastTo = positions[i];
+			if (positions[i] >= posBy+lenBy && positions[i] < pastBy) pastBy = positions[i];
+		}
+		System.out.println("FOR from " + posIni + " to " + pastIni + "...");
+		init = _intermediate.substring(posIni, pastIni).trim();
+		System.out.println("FOR --> \"" + init + "\"");
+		if (posTo >= 0)
+		{
+			System.out.println("TO from " + (posTo + lenTo) + " to " + pastTo + "...");
+			forParts[2] = _intermediate.substring(posTo + lenTo, pastTo).trim();
+			System.out.println("TO --> \"" + forParts[2] + "\"");
+		}
+		if (posBy >= 0)
+		{
+			System.out.println("BY from " + (posBy + lenBy) + " to " + pastBy + "...");
+			forParts[4] = _intermediate.substring(posBy + lenBy, pastBy).trim();
+			System.out.println("BY --> \"" + forParts[4] + "\"");
+		}
+		if (forParts[4].isEmpty())
+		{
+			forParts[3] = "1";
+		}
+		else
+		{
+			try
+			{
+				forParts[3] = Integer.valueOf(forParts[4]).toString();
+			}
+			catch (NumberFormatException ex)
+			{
+				forParts[3] = "1";
+			}
+		}
+		init = unifyOperators(init);	// 
+		String[] initParts = init.split(" <- ");
+		if (initParts.length < 2)
+		{
+			forParts[1] = initParts[0].trim();
+		}
+		else
+		{
+			forParts[0] = initParts[0].trim();
+			forParts[1] = initParts[1].trim();
+		}
+		return forParts;
+	}
+	
+	public String composeForClause()
+	{
+		return composeForClause(this.counterVar, this.startValue, this.endValue, this.stepConst);
+	}
+	
+	public static String composeForClause(String _counter, String _start, String _end, String _step)
+	{
+		int step = 1;
+		try
+		{
+			step = Integer.valueOf(_step);
+		}
+		catch (Exception ex)
+		{}
+		return composeForClause(_counter, _start, _end, step);
+	}
+	
+	public static String composeForClause(String _counter, String _start, String _end, int _step)
+	{
+		String asgnmtOpr = " <- ";	// default assignment operator
+		// If the preset text prefers the Pascal assignment operator then we will use this instead
+		if (Element.preFor.indexOf("<-") < 0 && Element.preFor.indexOf(":=") >= 0)
+		{
+			asgnmtOpr = " := ";
+		}
+		String forClause = D7Parser.preFor.trim() + " " + _counter + asgnmtOpr + _start + " " +
+				D7Parser.postFor.trim() + " " + _end;
+		if (_step != 1)
+		{
+			forClause = forClause + " " + D7Parser.stepFor.trim() + " " + Integer.toString(_step);
+		}
+		// Now get rid of multiple blanks
+		forClause = BString.replace(forClause, "  ", " ");
+		forClause = BString.replace(forClause, "  ", " ");
+		return forClause;
+	}
+	
+	public boolean checkConsistency()
+	{
+		return this.getText().getLongString().equals(this.composeForClause());
+	}
+	// END KGU#3 2015-10-24
 }

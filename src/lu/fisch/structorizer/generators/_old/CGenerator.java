@@ -98,7 +98,41 @@ public class CGenerator extends Generator
     // END KGU 2015-10-18
 
     /************ Code Generation **************/
-    public static String transform(String _input)
+    
+	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
+	/**
+	 * A pattern how to embed the variable (right-hand side of an input instruction)
+	 * into the target code
+	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
+	 */
+	protected String getInputReplacer()
+	{
+		return "scanf(\"\", &$1)";
+	}
+
+	/**
+	 * A pattern how to embed the expression (right-hand side of an output instruction)
+	 * into the target code
+	 * @return a regex replacement pattern, e.g. "System.out.println($1);"
+	 */
+	protected String getOutputReplacer()
+	{
+		return "printf(\"\\n\", $1)";
+	}
+
+	/**
+	 * Transforms assignments in the given intermediate-language code line.
+	 * Replaces "<-" by "="
+	 * @param _interm - a code line in intermediate syntax
+	 * @return transformed string
+	 */
+	protected String transformAssignment(String _interm)
+	{
+		return _interm.replace(" <- ", " = ");
+	}
+	// END KGU#18/KGU#23 2015-11-01
+    
+    protected String transform(String _input)
     {
             // et => and
             // ou => or

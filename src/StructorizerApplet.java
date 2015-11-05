@@ -253,6 +253,9 @@ public class StructorizerApplet extends JApplet  implements NSDController
 			Root.check11 = ini.getProperty("check11","1").equals("1");
 			Root.check12 = ini.getProperty("check12","1").equals("1");
 			Root.check13 = ini.getProperty("check13","1").equals("1");
+			// START KGU#3 2015-11-03: New check for enhanced FOR loops
+			Root.check14 = ini.getProperty("check14","1").equals("1");
+			// END KGU#3 2015-11-03
 
 
 			

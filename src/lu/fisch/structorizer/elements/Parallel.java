@@ -159,6 +159,25 @@ public class Parallel extends Element
             setText(_strings);
     }
 
+	// START KGU#64 2015-11-03: Is to improve drawing performance
+	/**
+	 * Recursively clears all drawing info this subtree down
+	 * (To be overridden by structured sub-classes!)
+	 */
+	@Override
+	public void resetDrawingInfoDown()
+	{
+		this.resetDrawingInfo();
+		if (this.qs != null)
+		{
+			for (int i = 0; i < this.qs.size(); i++)
+			{
+				this.qs.get(i).resetDrawingInfoDown();
+			}
+		}
+	}
+	// END KGU#64 2015-11-03
+    
     public Rect prepareDraw(Canvas _canvas)
     {
             if(isCollapsed()) 

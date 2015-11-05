@@ -34,6 +34,7 @@ package lu.fisch.utils;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.09      First Issue
+ *      Kay Gürtzig     2015.11.04      Methods indexOf added.
  *
  ******************************************************************************************************
  *
@@ -55,7 +56,7 @@ import java.util.Vector;
 
 public class StringList {
 
-	private Vector strings = new Vector();
+	private Vector<String> strings = new Vector<String>();
 
 	public static StringList getNew(String _string)
 	{
@@ -147,7 +148,7 @@ public class StringList {
 			boolean inserted = false;
 			for(int i=0;i<strings.size();i++)
 			{
-				if (((String) strings.get(i)).compareTo(_string)>0)
+				if ((strings.get(i)).compareTo(_string)>0)
 				{
 					strings.insertElementAt(_string,i);
 					inserted = true;
@@ -174,7 +175,7 @@ public class StringList {
 			boolean inserted = false;
 			for(int i=0;i<strings.size();i++)
 			{
-				if (((String) strings.get(i)).length()<_string.length())
+				if ((strings.get(i)).length()<_string.length())
 				{
 					strings.insertElementAt(_string,i);
 					inserted = true;
@@ -216,7 +217,7 @@ public class StringList {
 		boolean found = false;
 		for(int i=0;i<strings.size();i++)
 		{
-			if(((String) strings.get(i)).equals(_string))
+			if((strings.get(i)).equals(_string))
 			{
 				found=true;
 			}
@@ -232,7 +233,7 @@ public class StringList {
 		boolean found = false;
 		for(int i=0;i<strings.size();i++)
 		{
-			if(((String) strings.get(i)).equals(_string))
+			if((strings.get(i)).equals(_string))
 			{
 				found=true;
 			}
@@ -262,40 +263,106 @@ public class StringList {
 		}
 	}
 
-	public boolean contains(String _string)
+	// START KGU 2015-11-04: New, more performant and informative searchers 
+	public int indexOf(String _string)
 	{
-		boolean found = false;
-		for(int i=0;i<strings.size();i++)
-		{
-			if(((String) strings.get(i)).equals(_string))
-			{
-				found=true;
-			}
-		}
-		return found;
+		return this.strings.indexOf(_string);
 	}
 
-	public boolean contains(String _string, boolean matchCase)
+	public int indexOf(String _string, int _from)
 	{
-		boolean found = false;
-		for(int i=0;i<strings.size();i++)
+		return this.strings.indexOf(_string, _from);
+	}
+
+	public int indexOf(String _string, boolean _matchCase)
+	{
+		return indexOf(_string, 0, _matchCase);
+	}
+	
+	public int indexOf(String _string, int _from, boolean _matchCase)
+	{
+		if (_matchCase)
+			return this.strings.indexOf(_string, _from);
+
+		_string = _string.toLowerCase();
+		for (int i=_from; i<strings.size(); i++)
 		{
-			if(matchCase==false)
+			if ((strings.get(i)).toLowerCase().equals(_string))
 			{
-				if(((String) strings.get(i)).toLowerCase().equals(_string.toLowerCase()))
-				{
-					found=true;
-				}
-			}
-			else
-			{
-				if(((String) strings.get(i)).equals(_string))
-				{
-					found=true;
-				}
+				return i;
 			}
 		}
-		return found;
+		return -1;
+	}
+
+	public int indexOf(StringList _subList, int _from, boolean _matchCase)
+	{
+		int foundAt = -1;
+		int foundFirst = -1;
+		while ((foundFirst = indexOf(_subList.get(0), _from, _matchCase)) >= 0 && foundFirst + _subList.count() <= this.count())
+		{
+			for (int i = 1; foundFirst >= 0 && i < _subList.count(); i++)
+			{
+				String str1 = _subList.get(i);
+				String str2 = this.strings.get(foundFirst + i);
+				if (!_matchCase) {
+					str1 = str1.toLowerCase();
+					str2 = str2.toLowerCase();
+				}
+				if (!(str1.equals(str2)))
+				{
+					_from = foundFirst + 1;
+					foundFirst = -1;
+				}
+			}
+			if (foundFirst >= 0)
+			{
+				foundAt = foundFirst;
+			}
+		}
+		return foundAt;
+	}
+
+	public boolean contains(String _string)
+	{
+		// START KGU 2015-11-04: Just use the more performant and informative find method 
+//		boolean found = false;
+//		for(int i=0;i<strings.size();i++)
+//		{
+//			if(((String) strings.get(i)).equals(_string))
+//			{
+//				found=true;
+//			}
+//		}
+//		return found;
+		return indexOf(_string) != -1;
+		// END KGU 2015-11-04
+	}
+
+	public boolean contains(String _string, boolean _matchCase)
+	{
+		// START KGU 2015-11-04: Just use the more performant and informative find method 
+//		boolean found = false;
+//		for(int i=0;i<strings.size();i++)
+//		{
+//			if(_matchCase==false)
+//			{
+//				if(((String) strings.get(i)).toLowerCase().equals(_string.toLowerCase()))
+//				{
+//					found=true;
+//				}
+//			}
+//			else
+//			{
+//				if(((String) strings.get(i)).equals(_string))
+//				{
+//					found=true;
+//				}
+//			}
+//		}
+//		return found;
+		return indexOf(_string, _matchCase) != -1;
+		// END KGU 2015-11-04
 	}
 
 
@@ -325,7 +392,7 @@ public class StringList {
 	{
 		if(_index<strings.size() && _index>=0)
 		{
-			return (String) strings.get(_index);
+			return strings.get(_index);
 		}
 		else
 		{
@@ -361,11 +428,11 @@ public class StringList {
 		{
 			if(i==0)
 			{
-				text=(String) strings.get(i);
+				text = strings.get(i);
 			}
 			else
 			{
-				text+="\n"+(String) strings.get(i);
+				text += "\n" + strings.get(i);
 			}
 		}
 
@@ -380,11 +447,11 @@ public class StringList {
 		{
 			if(i==0)
 			{
-				text=(String) strings.get(i);
+				text = strings.get(i);
 			}
 			else
 			{
-				text+=" "+(String) strings.get(i);
+				text += " " + strings.get(i);
 			}
 		}
 
