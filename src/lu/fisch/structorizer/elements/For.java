@@ -36,6 +36,7 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2008.02.06      Modified for DIN / not DIN
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared.
+ *      Kay Gürtzig     2015.11.04      New mechanism to split and compose the FOR clause into/from dedicated fields
  *
  ******************************************************************************************************
  *
@@ -65,12 +66,12 @@ public class For extends Element{
 	private static String forSeparatorTo = "§TO§";
 	private static String forSeparatorBy = "§BY§";
 	// The following fields are dedicated for unambiguous semantics representation. If and only if the
-	// structured information of these fielda is consistent field isConsistent shall be true.
+	// structured information of these fields is consistent field isConsistent shall be true.
 	private String counterVar = "";			// name of the counter variable
 	private String startValue = "1";		// expression determining the start value of the loop
 	private String endValue = "";			// expression determining the end value of the loop
 	private int stepConst = 1;				// an integer value defining the increment/decrement
-	public boolean isConsistent = false;	// flag determining whether the semantics is consistently defined by the dedicated fields
+	public boolean isConsistent = false;		// flag determining whether the semantics is consistently defined by the dedicated fields
 	// END KGU#3 2015-10-24
 
 	public For()
@@ -472,23 +473,23 @@ public class For extends Element{
 	}
 	
 	
-	// START KGU 2015-11-12
+	// START KGU#43 2015-10-12
 	@Override
 	public void clearBreakpoints()
 	{
 		super.clearBreakpoints();
 		this.q.clearBreakpoints();
 	}
-	// END KGU 2015-10-12
+	// END KGU#43 2015-10-12
 
-	// START KGU 2015-11-13
+	// START KGU#43 2015-10-13
 	@Override
 	public void clearExecutionStatus()
 	{
 		super.clearExecutionStatus();
 		this.q.clearExecutionStatus();
 	}
-	// END KGU 2015-10-13
+	// END KGU#43 2015-10-13
 
 	// START KGU 2015-10-16
 	/* (non-Javadoc)
@@ -510,7 +511,7 @@ public class For extends Element{
 	 */
 	public String getCounterVar()
 	{
-		if (!this.isConsistent)
+		if (this.isConsistent)
 		{
 			return this.counterVar;
 		}
@@ -523,7 +524,7 @@ public class For extends Element{
 	 */
 	public String getStartValue()
 	{
-		if (!this.isConsistent)
+		if (this.isConsistent)
 		{
 			return this.startValue;
 		}
@@ -536,7 +537,7 @@ public class For extends Element{
 	 */
 	public String getEndValue()
 	{
-		if (!this.isConsistent)
+		if (this.isConsistent)
 		{
 			return this.endValue;
 		}
@@ -623,7 +624,7 @@ public class For extends Element{
 	}
 	// END KGU#3 2015-10-24
 
-	// START KGU#3 2015-10-19 We need a transformation to a common intermediate language
+	// START KGU#3 2015-11-04 We need a transformation to a common intermediate language
 	private static String disambiguateForClause(String _text)
 	{
 		// Pad the string to ease the key word detection
@@ -689,7 +690,7 @@ public class For extends Element{
 		
 		// Do some pre-processing to disambiguate the key words
 		String _intermediate = disambiguateForClause(_text);		
-		System.out.println("Disambiguated For clause: \"" + _intermediate + "\"");
+		//System.out.println("Disambiguated For clause: \"" + _intermediate + "\"");
 		
 		_intermediate = _intermediate.replace('\n', ' '); // Concatenate the lines
 		int posFor = _intermediate.indexOf(forSeparatorPre);
@@ -709,20 +710,20 @@ public class For extends Element{
 			if (positions[i] >= posTo+lenTo && positions[i] < pastTo) pastTo = positions[i];
 			if (positions[i] >= posBy+lenBy && positions[i] < pastBy) pastBy = positions[i];
 		}
-		System.out.println("FOR from " + posIni + " to " + pastIni + "...");
+		//System.out.println("FOR section from " + posIni + " to " + pastIni + "...");
 		init = _intermediate.substring(posIni, pastIni).trim();
-		System.out.println("FOR --> \"" + init + "\"");
+		//System.out.println("FOR --> \"" + init + "\"");
 		if (posTo >= 0)
 		{
-			System.out.println("TO from " + (posTo + lenTo) + " to " + pastTo + "...");
+			//System.out.println("TO section from " + (posTo + lenTo) + " to " + pastTo + "...");
 			forParts[2] = _intermediate.substring(posTo + lenTo, pastTo).trim();
-			System.out.println("TO --> \"" + forParts[2] + "\"");
+			//System.out.println("TO --> \"" + forParts[2] + "\"");
 		}
 		if (posBy >= 0)
 		{
-			System.out.println("BY from " + (posBy + lenBy) + " to " + pastBy + "...");
+			//System.out.println("BY section from " + (posBy + lenBy) + " to " + pastBy + "...");
 			forParts[4] = _intermediate.substring(posBy + lenBy, pastBy).trim();
-			System.out.println("BY --> \"" + forParts[4] + "\"");
+			//System.out.println("BY --> \"" + forParts[4] + "\"");
 		}
 		if (forParts[4].isEmpty())
 		{
@@ -794,5 +795,5 @@ public class For extends Element{
 	{
 		return this.getText().getLongString().equals(this.composeForClause());
 	}
-	// END KGU#3 2015-10-24
+	// END KGU#3 2015-11-04
 }

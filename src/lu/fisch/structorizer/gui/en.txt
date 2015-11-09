@@ -36,6 +36,7 @@
  *      Kay Gürtzig 	2015.10.06		altPadRight added to Preferences dialog
  *      Kay Gürtzig 	2015.10.16		Several additions to Editor and InputBox
  *      Kay Gürtzig 	2015.11.03		Additions to Menu (errors) and AnalyserPreferences
+ *      Kay Gürtzig 	2015.11.09		Additions for ParserPreferences
  *
  ******************************************************************************************************
  *
@@ -49,6 +50,7 @@ Menu.menuFile.text=File
 // Submenus of "File"
 Menu.menuFileNew.text=New
 Menu.menuFileOpen.text=Open ...
+Menu.menuFileOpenRecent.text=Open Recent File
 Menu.menuFileSave.text=Save
 Menu.menuFileSaveAs.text=Save As ...
 Menu.menuFileExport.text=Export
@@ -425,6 +427,7 @@ ParserPreferences.lblCase.text=CASE statement
 ParserPreferences.lblCase.tooltip=
 ParserPreferences.lblFor.text=FOR loop
 ParserPreferences.lblFor.tooltip=
+ParserPreferences.lblForStep.text=Step separator
 ParserPreferences.lblWhile.text=WHILE loop
 ParserPreferences.lblWhile.tooltip=
 ParserPreferences.lblRepeat.text=REPEAT loop

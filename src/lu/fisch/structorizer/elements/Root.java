@@ -152,11 +152,11 @@ public class Root extends Element {
     // START KGU#48 2015-10-17: Arranger support on Root replacement (e.g. by loading a new file)
     public void notifyReplaced(Root newRoot)
     {
-    	System.out.println("Trying to notify my replacement to " + updaters.size() + " Updaters..."); // FIXME (KGU) Remove after successful test!
+    	//System.out.println("Trying to notify my replacement to " + updaters.size() + " Updaters..."); // FIXME (KGU) Remove after successful test!
     	Iterator<Updater> iter = updaters.iterator();
     	while (iter.hasNext())
     	{
-    		System.out.println(this.getMethodName() + " notifying an Updater about replacement.");
+    		//System.out.println(this.getMethodName() + " notifying an Updater about replacement.");
     		iter.next().replaced(this, newRoot);
     	}
     	updaters.clear();
@@ -1333,30 +1333,35 @@ public class Root extends Element {
     }
 
 
-    //
-    // Extract all the variable names of the entire program.
-    //
+    /**
+     * Extract all variable names of the entire program.
+     * @return list of variable names
+     */
     public StringList getVarNames()
     {
             return getVarNames(this, false, false, true);
     }
 
-    //
-    // Extract all the variable names of the selected element.
-    //
+    /**
+     * Extract all variable names of the passed-in element _ele.
+     * @return list of variable names
+     */
     public StringList getVarNames(Element _ele)
     {
-            return getVarNames(_ele, true, false);
+    	// Only the own variables, not recursively
+    	return getVarNames(_ele, true, false);
     }
 
     public StringList getVarNames(Element _ele, boolean _onlyMe)
     {
-            return getVarNames(_ele, _onlyMe, false);
+    	// All variables, not only those from body (sub-structure)
+    	return getVarNames(_ele, _onlyMe, false);
     }
 
     public StringList getVarNames(Element _ele, boolean _onlyMe, boolean _onlyBody)
     {
-            return getVarNames(_ele, _onlyMe, _onlyBody, false);
+    	
+    	return getVarNames(_ele, _onlyMe, _onlyBody, false);
     }
 
     private StringList getVarNames(Element _ele, boolean _onlyMe, boolean _onlyBody, boolean _entireProg)
@@ -1368,6 +1373,8 @@ public class Root extends Element {
             // !!
             // !! This works only for Pascal-like syntax: functionname (<name>, <name>, ..., <name>:<type>; ...)
             // !! or VBA like syntax: functionname(<name>, <name> as <type>; ...)
+            // !!
+            // !! This will also detect the functionname itself if the parentheses are missing (bug?)
             // !!
             try
             {
@@ -1391,7 +1398,7 @@ public class Root extends Element {
                                             {
                                                     S=S.substring(0,S.indexOf(":")).trim();
                                             }
-// START KGU 2014-10-18 "as" must not be detected if it's a substring of the identifier name
+// START KGU#18 2014-10-18 "as" must not be detected if it's a substring of some identifier
 //                                            if(S.indexOf("as")>=0)
 //                                            {
 //                                                    S=S.substring(0,S.indexOf("as")).trim();
@@ -1401,7 +1408,7 @@ public class Root extends Element {
                                             {
                                                     S=S.substring(0,S.indexOf(" as ")).trim();
                                             }
-// END KGU 2014-10-18                                            
+// END KGU#18 2014-10-18                                            
                                             StringList vars = StringList.explode(S,",");
                                             for(int j=0;j<vars.count();j++)
                                             {

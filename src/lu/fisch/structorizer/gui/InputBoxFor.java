@@ -119,10 +119,10 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		// END optional labels
 		lblParserWarnings = new JLabel("");
 		lblParserWarnings.setForeground(Color.RED);
-		txtVariable = new JTextField(20);
-		txtStartVal = new JTextField(10);
-		txtEndVal = new JTextField(20);
-		txtIncr = new JTextField(10);	// Width 10
+		txtVariable = new JTextField(50);
+		txtStartVal = new JTextField(20);
+		txtEndVal = new JTextField(50);
+		txtIncr = new JTextField(20);	// Width 10
 		chkTextInput = new JCheckBox("Full Text Editing");
 
 		txtVariable.addKeyListener(this);
@@ -133,7 +133,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		chkTextInput.addItemListener(this);
 		txtText.addKeyListener(this);
 
-		setSize(600, 400);
+		//setSize(600, 400);
 		
 		int lineNo = 1;
 
@@ -211,6 +211,9 @@ public class InputBoxFor extends InputBox implements ItemListener {
 
 		// START KGU 2015-10-30: Design study 2
 		// TODO (KGU 2015-11-01) Grid configuration halfway works under both Windows and KDE but's still not pleasant 
+		
+		_gbc.insets = new Insets(10, 5, 0, 5);
+		
 		_gbc.gridx = 2;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
@@ -220,7 +223,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(lblVariable, _gbc);
 		_panel.add(lblVariable);
 
-		_gbc.gridx = 5;
+		_gbc.gridx = 8;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
 		_gbc.gridwidth = 1;
@@ -229,7 +232,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(lblStartVal, _gbc);
 		_panel.add(lblStartVal);
 
-		_gbc.gridx = 10;
+		_gbc.gridx = 11;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
 		_gbc.gridwidth = 1;
@@ -238,7 +241,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(lblEndVal, _gbc);
 		_panel.add(lblEndVal);
 
-		_gbc.gridx = 15;
+		_gbc.gridx = 17;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
 		_gbc.gridwidth = 1;
@@ -248,6 +251,8 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_panel.add(lblIncr);
 
 		lineNo++;
+
+		_gbc.insets = new Insets(10, 10, 0, 5);
 		
 		_gbc.gridx = 1;
 		_gbc.gridy = lineNo;
@@ -258,15 +263,18 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(lblPreFor, _gbc);
 		_panel.add(lblPreFor);
 
+		_gbc.insets = new Insets(10, 5, 0, 5);
+
 		_gbc.gridx = 2;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
-		_gbc.gridwidth = 2;
+		_gbc.gridwidth = 5;
+		_gbc.weightx = 20;
 		_gbc.fill = GridBagConstraints.HORIZONTAL;
 		_gb.setConstraints(txtVariable, _gbc);
 		_panel.add(txtVariable);
 
-		_gbc.gridx = 4;
+		_gbc.gridx = 7;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
 		_gbc.gridwidth = 1;
@@ -275,15 +283,16 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(lblAsgnmt, _gbc);
 		_panel.add(lblAsgnmt);
 
-		_gbc.gridx = 5;
+		_gbc.gridx = 8;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
 		_gbc.gridwidth = 2;
+		_gbc.weightx = 10;
 		_gbc.fill = GridBagConstraints.HORIZONTAL;
 		_gb.setConstraints(txtStartVal, _gbc);
 		_panel.add(txtStartVal);
 
-		_gbc.gridx = 8;
+		_gbc.gridx = 10;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
 		_gbc.gridwidth = 1;
@@ -292,15 +301,16 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(lblPostFor, _gbc);
 		_panel.add(lblPostFor);
 
-		_gbc.gridx = 10;
+		_gbc.gridx = 11;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
-		_gbc.gridwidth = 2;
+		_gbc.gridwidth = 5;
+		_gbc.weightx = 20;
 		_gbc.fill = GridBagConstraints.HORIZONTAL;
 		_gb.setConstraints(txtEndVal, _gbc);
 		_panel.add(txtEndVal);
 
-		_gbc.gridx = 12;
+		_gbc.gridx = 16;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
 		_gbc.gridwidth = 1;
@@ -309,10 +319,13 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(lblStepFor, _gbc);
 		_panel.add(lblStepFor);
 
-		_gbc.gridx = 15;
+		_gbc.insets = new Insets(10, 5, 0, 10);
+
+		_gbc.gridx = 17;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
-		_gbc.gridwidth = GridBagConstraints.REMAINDER;
+		_gbc.gridwidth = 4;
+		_gbc.weightx = 10;
 		_gbc.fill = GridBagConstraints.HORIZONTAL;
 		_gb.setConstraints(txtIncr, _gbc);
 		_panel.add(txtIncr);
@@ -320,19 +333,21 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		
 		lineNo++;
 
+		_gbc.insets = new Insets(10, 10, 0, 10);
+
 		_gbc.gridx = 1;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
-		_gbc.gridwidth = 18;
-		_gbc.fill = GridBagConstraints.NONE;
+		_gbc.gridwidth = 9;
+		_gbc.fill = GridBagConstraints.HORIZONTAL;
 		_gb.setConstraints(chkTextInput, _gbc);
 		_panel.add(chkTextInput);
 
-		_gbc.gridx = 5;
+		_gbc.gridx = 10;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
 		_gbc.gridwidth = GridBagConstraints.REMAINDER;
-		_gbc.fill = GridBagConstraints.NONE;
+		_gbc.fill = GridBagConstraints.HORIZONTAL;
 		_gbc.anchor = GridBagConstraints.WEST;
 		_gb.setConstraints(lblParserWarnings, _gbc);
 		_panel.add(lblParserWarnings);
@@ -372,7 +387,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
     			txtEndVal.setText(forFractions[2]);
     			txtIncr.setText(forFractions[3]);
     		}
-    		if (forFractions[3].equals(forFractions[4]))
+    		if (forFractions[4].isEmpty() || forFractions[3].equals(forFractions[4]))
     		{
     			lblParserWarnings.setText("");
     		}

@@ -115,105 +115,111 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
             JPanel pnPanel0 = new JPanel();
             GridBagLayout gbPanel0 = new GridBagLayout();
             GridBagConstraints gbcPanel0 = new GridBagConstraints();
-            gbcPanel0.insets=new Insets(10,10,0,10);
+            gbcPanel0.insets=new Insets(10,10, 0,10);
             pnPanel0.setLayout( gbPanel0 );
             
             // START KGU#3 2015-10-24: Open opportunities for subclasses
-            int gridBaseY = 0;
-            gridBaseY += createPanelTop(pnPanel0, gbPanel0, gbcPanel0);
+            createPanelTop(pnPanel0, gbPanel0, gbcPanel0);
+            
+            JPanel pnPanel1 = new JPanel();
+            GridBagLayout gbPanel1 = new GridBagLayout();
+            GridBagConstraints gbcPanel1 = new GridBagConstraints();
+            gbcPanel1.insets=new Insets(10,10,0,10);
+            pnPanel1.setLayout( gbPanel1 );
             // END KGU#3 2015-10-24
             
-            gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = gridBaseY + 2;
-            gbcPanel0.gridwidth = 18;
-            gbcPanel0.gridheight = 7;
-            gbcPanel0.fill = GridBagConstraints.BOTH;
-            gbcPanel0.weightx = 1;
-            gbcPanel0.weighty = 1;
-            gbcPanel0.anchor = GridBagConstraints.NORTH;
-            gbPanel0.setConstraints( scrText, gbcPanel0 );
-            pnPanel0.add( scrText );
+            gbcPanel1.gridx = 1;
+            gbcPanel1.gridy = 2;
+            gbcPanel1.gridwidth = 18;
+            gbcPanel1.gridheight = 7;
+            gbcPanel1.fill = GridBagConstraints.BOTH;
+            gbcPanel1.weightx = 1;
+            gbcPanel1.weighty = 1;
+            gbcPanel1.anchor = GridBagConstraints.NORTH;
+            gbPanel1.setConstraints( scrText, gbcPanel1 );
+            pnPanel1.add( scrText );
 
-            gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = gridBaseY + 12;
-            gbcPanel0.gridwidth = 18;
-            gbcPanel0.gridheight = 4;
-            gbcPanel0.fill = GridBagConstraints.BOTH;
-            gbcPanel0.weightx = 1;
-            gbcPanel0.weighty = 1;
-            gbcPanel0.anchor = GridBagConstraints.NORTH;
-            gbPanel0.setConstraints( scrComment, gbcPanel0 );
-            pnPanel0.add( scrComment );
+            gbcPanel1.gridx = 1;
+            gbcPanel1.gridy = 12;
+            gbcPanel1.gridwidth = 18;
+            gbcPanel1.gridheight = 4;
+            gbcPanel1.fill = GridBagConstraints.BOTH;
+            gbcPanel1.weightx = 1;
+            gbcPanel1.weighty = 1;
+            gbcPanel1.anchor = GridBagConstraints.NORTH;
+            gbPanel1.setConstraints( scrComment, gbcPanel1 );
+            pnPanel1.add( scrComment );
 
             // START KGU#3 2015-10-25: Moved to addCreating() - such that it may be replaced by subclasses
-//            gbcPanel0.gridx = 1;
-//            gbcPanel0.gridy = 1;
-//            gbcPanel0.gridwidth = 18;
-//            gbcPanel0.gridheight = 1;
-//            gbcPanel0.fill = GridBagConstraints.BOTH;
-//            gbcPanel0.weightx = 1;
-//            gbcPanel0.weighty = 0;
-//            gbcPanel0.anchor = GridBagConstraints.NORTH;
-//            gbPanel0.setConstraints( lblText, gbcPanel0 );
-//            pnPanel0.add( lblText );
+//            gbcPanel1.gridx = 1;
+//            gbcPanel1.gridy = 1;
+//            gbcPanel1.gridwidth = 18;
+//            gbcPanel1.gridheight = 1;
+//            gbcPanel1.fill = GridBagConstraints.BOTH;
+//            gbcPanel1.weightx = 1;
+//            gbcPanel1.weighty = 0;
+//            gbcPanel1.anchor = GridBagConstraints.NORTH;
+//            gbPanel1.setConstraints( lblText, gbcPanel1 );
+//            pnPanel1.add( lblText );
             // END KGU#3 2015-10-25
             
-            gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = gridBaseY + 10;
-            gbcPanel0.gridwidth = 18;
-            gbcPanel0.gridheight = 1;
-            gbcPanel0.fill = GridBagConstraints.BOTH;
-            gbcPanel0.weightx = 1;
-            gbcPanel0.weighty = 0;
-            gbcPanel0.anchor = GridBagConstraints.NORTH;
-            gbPanel0.setConstraints( lblComment, gbcPanel0 );
-            pnPanel0.add( lblComment );
+            gbcPanel1.gridx = 1;
+            gbcPanel1.gridy = 10;
+            gbcPanel1.gridwidth = 18;
+            gbcPanel1.gridheight = 1;
+            gbcPanel1.fill = GridBagConstraints.BOTH;
+            gbcPanel1.weightx = 1;
+            gbcPanel1.weighty = 0;
+            gbcPanel1.anchor = GridBagConstraints.NORTH;
+            gbPanel1.setConstraints( lblComment, gbcPanel1 );
+            pnPanel1.add( lblComment );
 
-            gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = gridBaseY + 17;
-            gbcPanel0.gridwidth = 18;
-            gbcPanel0.gridheight = 1;
-            gbcPanel0.fill = GridBagConstraints.BOTH;
-            gbcPanel0.weightx = 1;
-            gbcPanel0.weighty = 0;
-            gbcPanel0.anchor = GridBagConstraints.NORTH;
-            gbPanel0.setConstraints( chkBreakpoint, gbcPanel0 );
-            pnPanel0.add( chkBreakpoint );
+            gbcPanel1.gridx = 1;
+            gbcPanel1.gridy = 17;
+            gbcPanel1.gridwidth = 18;
+            gbcPanel1.gridheight = 1;
+            gbcPanel1.fill = GridBagConstraints.BOTH;
+            gbcPanel1.weightx = 1;
+            gbcPanel1.weighty = 0;
+            gbcPanel1.anchor = GridBagConstraints.NORTH;
+            gbPanel1.setConstraints( chkBreakpoint, gbcPanel1 );
+            pnPanel1.add( chkBreakpoint );
 
-            gbcPanel0.insets=new Insets(10,10,10,10);
+            gbcPanel1.insets=new Insets(10,10,10,10);
 
             //createExitButtons(gridbase)
-            gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = gridBaseY + 18;
-            gbcPanel0.gridwidth = 7;
-            gbcPanel0.gridheight = 1;
-            gbcPanel0.fill = GridBagConstraints.BOTH;
-            gbcPanel0.weightx = 1;
-            gbcPanel0.weighty = 0;
-            gbcPanel0.anchor = GridBagConstraints.NORTH;
-            gbPanel0.setConstraints( btnCancel, gbcPanel0 );
-            pnPanel0.add( btnCancel );
+            gbcPanel1.gridx = 1;
+            gbcPanel1.gridy = 18;
+            gbcPanel1.gridwidth = 7;
+            gbcPanel1.gridheight = 1;
+            gbcPanel1.fill = GridBagConstraints.BOTH;
+            gbcPanel1.weightx = 1;
+            gbcPanel1.weighty = 0;
+            gbcPanel1.anchor = GridBagConstraints.NORTH;
+            gbPanel1.setConstraints( btnCancel, gbcPanel1 );
+            pnPanel1.add( btnCancel );
 
             // START KGU#3 2015-10-31: The new gridx causes no difference here but fits better for InputBoxFor
-            //gbcPanel0.gridx = 12;
-            gbcPanel0.gridx = 8;
+            gbcPanel1.gridx = 12;
+            //gbcPanel1.gridx = 8;
             // END KGU#3 2015-10-31
-            gbcPanel0.gridy = gridBaseY + 18;
+            gbcPanel1.gridy = 18;
             // START KGU#3 2015-10-31: The new gridwidth causes no difference here but fits better for InputBoxFor
-            //gbcPanel0.gridwidth = 7;
-    		gbcPanel0.gridwidth = GridBagConstraints.REMAINDER;
+            gbcPanel1.gridwidth = 7;
+    		//gbcPanel1.gridwidth = GridBagConstraints.REMAINDER;
     		// END KGU#3 2015-10-31
-            gbcPanel0.gridheight = 1;
-            gbcPanel0.fill = GridBagConstraints.BOTH;
-            gbcPanel0.weightx = 1;
-            gbcPanel0.weighty = 0;
-            gbcPanel0.anchor = GridBagConstraints.NORTH;
-            gbPanel0.setConstraints( btnOK, gbcPanel0 );
-            pnPanel0.add( btnOK );
+            gbcPanel1.gridheight = 1;
+            gbcPanel1.fill = GridBagConstraints.BOTH;
+            gbcPanel1.weightx = 1;
+            gbcPanel1.weighty = 0;
+            gbcPanel1.anchor = GridBagConstraints.NORTH;
+            gbPanel1.setConstraints( btnOK, gbcPanel1 );
+            pnPanel1.add( btnOK );
 
             Container container = getContentPane();
             container.setLayout(new BorderLayout());
-            container.add(pnPanel0,BorderLayout.CENTER);
+            container.add(pnPanel0,BorderLayout.NORTH);
+            container.add(pnPanel1,BorderLayout.CENTER);
 
             txtText.requestFocus(true);
     }
@@ -241,6 +247,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
     	return 1;
     }
     // END KGU#3 2015-10-24
+
 
     // listen to actions
     public void actionPerformed(ActionEvent event)

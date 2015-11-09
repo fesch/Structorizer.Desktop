@@ -34,6 +34,7 @@ package lu.fisch.structorizer.generators;
  *      ------		----			-----------
  *      Bob Fisch       2007.12.27              First Issue
  *	Bob Fisch	2008.04.12		Added "Fields" section for generator to be used as plugin
+ *      Kay Gürtzig     2015.11.08              Additional information with FOR loops (KGU#3)
  *
  ******************************************************************************************************
  *
@@ -184,6 +185,9 @@ public class XmlGenerator extends Generator {
 				"\" endValue=\"" + BString.encodeToHtml(_for.getEndValue()) +
 				"\" stepConst=\"" + BString.encodeToHtml(_for.getStepString()) +
 				// END KGU#3 2015-10-28
+				// START KGU#3 2015-11-08: The reliability of the structured fields must be stored, too.
+				"\" reliable=\"" + BString.encodeToHtml(_for.checkConsistency() ? "true" : "false") +
+				// END KGU#3 2015-11-08
 				"\" color=\"" + _for.getHexColor()+"\">");
 		code.add(_indent+this.getIndent()+"<qFor>");
 		generateCode(_for.q,_indent+this.getIndent()+this.getIndent());

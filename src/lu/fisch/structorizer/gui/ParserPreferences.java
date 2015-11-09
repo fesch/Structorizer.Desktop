@@ -36,7 +36,7 @@ package lu.fisch.structorizer.gui;
  *
  ******************************************************************************************************
  *
- *      Comment:		I used JFormDesigner to desin this window graphically.
+ *      Comment:		I used JFormDesigner to design this window graphically.
  *
  ******************************************************************************************************///
 
@@ -82,6 +82,11 @@ public class ParserPreferences extends LangDialog {
 	protected JLabel lblFor;
 	protected JTextField edtForPre;
 	protected JTextField edtForPost;
+	// START KGU# 2015-11-08
+	protected JLabel lblNothing4;
+	protected JLabel lblForStep;
+	protected JTextField edtForStep;
+	// END KGU#3 2015-11-08
 	protected JLabel lblWhile;
 	protected JTextField edtWhilePre;
 	protected JTextField edtWhilePost;
@@ -132,6 +137,11 @@ public class ParserPreferences extends LangDialog {
 		lblFor = new JLabel();
 		edtForPre = new JTextField();
 		edtForPost = new JTextField();
+		// START KGU# 2015-11-08
+		lblNothing4 = new JLabel();
+		lblForStep = new JLabel();
+		edtForStep = new JTextField();
+		// END KGU#3 2015-11-08
 		lblWhile = new JLabel();
 		edtWhilePre = new JTextField();
 		edtWhilePost = new JTextField();
@@ -168,7 +178,10 @@ public class ParserPreferences extends LangDialog {
 
 			//======== contentPanel ========
 			{
-				contentPanel.setLayout(new GridLayout(8, 3, 8, 8));
+				// START KGU#3 2015-11-08: Need an additional line for For
+				//contentPanel.setLayout(new GridLayout(8, 3, 8, 8));
+				contentPanel.setLayout(new GridLayout(9, 3, 8, 8));
+				// END KGU#3 2015-11-08
 				contentPanel.add(lblNothing);
 
 				//---- lblPre ----
@@ -196,6 +209,12 @@ public class ParserPreferences extends LangDialog {
 				contentPanel.add(lblFor);
 				contentPanel.add(edtForPre);
 				contentPanel.add(edtForPost);
+				// START KGU#3 2015-11-08
+				lblForStep.setText("Step separator");
+				contentPanel.add(lblNothing4);
+				contentPanel.add(lblForStep);
+				contentPanel.add(edtForStep);
+				// END KGU#3 20155-11-08
 
 				//---- lblWhile ----
 				lblWhile.setText("WHILE loop");
@@ -268,6 +287,9 @@ public class ParserPreferences extends LangDialog {
 		edtCasePost.addKeyListener(keyListener);
 		edtForPre.addKeyListener(keyListener);
 		edtForPost.addKeyListener(keyListener);
+		// START KGU#3 2015-11-08
+		edtForStep.addKeyListener(keyListener);
+		// END KGU#3 2015-11-08
 		edtWhilePre.addKeyListener(keyListener);
 		edtWhilePost.addKeyListener(keyListener);
 		edtRepeatPre.addKeyListener(keyListener);
@@ -296,6 +318,9 @@ public class ParserPreferences extends LangDialog {
                     edtCasePost.getText().contains(":") ||
                     edtForPre.getText().contains(":") ||
                     edtForPost.getText().contains(":") ||
+                    // START KGU#3 2015-11-08
+                    edtForStep.getText().contains(":") ||
+                    // START KGU#3 2015-11-08
                     edtWhilePre.getText().contains(":") ||
                     edtWhilePost.getText().contains(":") ||
                     edtRepeatPre.getText().contains(":") ||

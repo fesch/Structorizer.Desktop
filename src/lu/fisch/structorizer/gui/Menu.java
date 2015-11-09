@@ -34,6 +34,7 @@ package lu.fisch.structorizer.gui;
  *      ------			----			-----------
  *      Bob Fisch       2007.12.30      First Issue
  *		Bob Fisch		2008.04.12		Adapted for Generator plugin
+ *		Kay Gürtzig		2015.11.03		Additions for FOR loop enhancement (KGU#3)
  *
  ******************************************************************************************************
  *
@@ -318,8 +319,19 @@ public class Menu extends JMenuBar implements NSDController
 
 		menuFile.add(menuFileQuit);
 		menuFileQuit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		menuFileQuit.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { System.exit(0); } } );
-
+		// START KGU#66 2015-11-05: hard exiting here fails to induce the file save dialog in case of unsaved changes and will kill a related Arranger!
+		//menuFileQuit.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { System.exit(0); } } );
+		menuFileQuit.addActionListener(
+				new ActionListener() {
+					public void actionPerformed(ActionEvent event)
+					{
+						// We ought at least solve the dirty diagram problem...
+						NSDControl.savePreferences();
+						if (diagram.saveNSD(true)) 
+							System.exit(0);	// FIXME KGU#66 2015-11-05: This is still lethal for a possibly owning Arranger
+					}
+				} );
+		// KGU#66 2015-11-05
 
 		// Setting up Menu "Edit" with all submenus and shortcuts and actions
 		menubar.add(menuEdit);

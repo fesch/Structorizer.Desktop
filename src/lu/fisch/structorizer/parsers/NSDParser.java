@@ -34,6 +34,7 @@ package lu.fisch.structorizer.parsers;
  *      ------		----			-----------
  *      Bob Fisch       2007.12.13              First Issue
  *      Kay Gürtzig     2015.10.29              Enhancement on For loop (new attributes KGU#3)
+ *      Kay Gürtzig     2015.10.29              Modification on For loop (new attribute KGU#3)
  *
  ******************************************************************************************************
  *
@@ -208,12 +209,17 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
 			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(ele.getColor().decode("0x"+attributes.getValue("color")));}}
 			// START KGU#3 2015-10-29: New attributes for cleaner loop parameter analysis
-			if(attributes.getIndex("counterVar")!=-1)  {ele.setCounterVar(attributes.getValue("counterVar"));}
-			if(attributes.getIndex("startValue")!=-1)  {ele.setStartValue(attributes.getValue("startValue"));}
-			if(attributes.getIndex("endValue")!=-1)  {ele.setEndValue(attributes.getValue("endValue"));}
+			boolean gotAll = true;
+			if(attributes.getIndex("counterVar")!=-1)  {ele.setCounterVar(attributes.getValue("counterVar"));} else {gotAll = false;}
+			if(attributes.getIndex("startValue")!=-1)  {ele.setStartValue(attributes.getValue("startValue"));} else {gotAll = false;}
+			if(attributes.getIndex("endValue")!=-1)  {ele.setEndValue(attributes.getValue("endValue"));} else {gotAll = false;}
 			if(attributes.getIndex("stepConst")!=-1)  {ele.setStepConst(attributes.getValue("stepConst"));}
-			ele.isConsistent = ele.checkConsistency();
+			//ele.isConsistent = ele.checkConsistency();
 			// END KGU#3 2015-10-29
+			// START KGU#3 2015-11-08: Better management of reliability of structured fields
+			boolean reliable = attributes.getIndex("reliable")!=-1 && attributes.getValue("reliable").equals("true");
+			ele.isConsistent = gotAll && (reliable || ele.checkConsistency());
+			// END KGU#3 2015-11-08
 			
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}

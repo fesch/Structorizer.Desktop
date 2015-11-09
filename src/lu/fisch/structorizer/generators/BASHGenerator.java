@@ -310,7 +310,7 @@ public class BASHGenerator extends Generator {
 	
 	
 	protected void generateCode(For _for, String _indent) {
-		
+
 		code.add("");
 		// START KGU 2014-11-16
 		insertComment(_for, _indent);
@@ -320,25 +320,25 @@ public class BASHGenerator extends Generator {
 		// START KGU#3 2015-11-02: And now we have a competent splitting mechanism...
 		String counterStr = _for.getCounterVar();
 		String startValueStr = _for.getStartValue();
-        String endValueStr = _for.getEndValue();
-        int stepValue = _for.getStepConst();
-        String incrStr = counterStr + "++";
-        if (stepValue == -1) {
-        	incrStr = counterStr + "--";
-        }
-        else if (stepValue != 1) {
-        	incrStr = "(( " + counterStr + "=" + counterStr + "+(" + stepValue + ") ))";
-        }
-        // END KGU#3 2015-11-02
-        code.add(_indent+"for (("+counterStr+"="+startValueStr+"; "+
-        		counterStr + ((stepValue > 0) ? "<=" : "<=") + endValueStr + "; " +
-        		incrStr + " ))");
+		String endValueStr = _for.getEndValue();
+		int stepValue = _for.getStepConst();
+		String incrStr = counterStr + "++";
+		if (stepValue == -1) {
+			incrStr = counterStr + "--";
+		}
+		else if (stepValue != 1) {
+			incrStr = "(( " + counterStr + "=" + counterStr + "+(" + stepValue + ") ))";
+		}
+		// END KGU#3 2015-11-02
+		code.add(_indent+"for (("+counterStr+"="+startValueStr+"; "+
+				counterStr + ((stepValue > 0) ? "<=" : "<=") + endValueStr + "; " +
+				incrStr + " ))");
 		// END KGU#30 2015-10-18
 		code.add(_indent+"do");
 		generateCode(_for.q,_indent+this.getIndent());
 		code.add(_indent+"done");	
 		code.add("");
-		
+
 	}
 	protected void generateCode(While _while, String _indent) {
 		

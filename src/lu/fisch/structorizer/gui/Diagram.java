@@ -33,10 +33,10 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.09      First Issue
- *      Kay Gürtzig     2015.07.18      URL launch added in updateNSD() - requires Java >= 1.6
  *      Kay Gürtzig     2015.10.09      Colour setting will now duly be registered as diagram modification
  *                      2015.10.11      Comment popping repaired by proper subclassing of getElementByCoord
  *                                      Listener method MouseExited now enabled to drop the sticky comment popup
+ *      Kay Gürtzig     2015.11.08      Parser preferences for FOR loops enhanced (KGU#3)
  *
  ******************************************************************************************************
  *
@@ -1213,11 +1213,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#3 2015-10-25: Allow more sophisticated For loop editing
 				if (element instanceof For)
 				{
+					boolean wasConsistent = ((For)element).isConsistent;
+					// START KGU#3 2015-11-08: We must support backward compatibility
+					// For the first display show the real contents
+					((For)element).isConsistent = true;
+					// END KGU#3 2015-11-08
 					data.forParts.add(((For)element).getCounterVar());
 					data.forParts.add(((For)element).getStartValue());
 					data.forParts.add(((For)element).getEndValue());
 					data.forParts.add(Integer.toString(((For)element).getStepConst()));
-					data.forPartsConsistent = ((For)element).isConsistent;
+					data.forPartsConsistent = ((For)element).isConsistent = wasConsistent;
 				}
 				// END KGU#3 2015-10-25
 
@@ -1323,11 +1328,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#3 2015-10-25
 				if (_ele instanceof For)
 				{
-					((For)_ele).isConsistent = data.forPartsConsistent;
 					((For)_ele).setCounterVar(data.forParts.get(0));
 					((For)_ele).setStartValue(data.forParts.get(1));
 					((For)_ele).setEndValue(data.forParts.get(2));
 					((For)_ele).setStepConst(data.forParts.get(3));
+					//((For)_ele).isConsistent = data.forPartsConsistent;
+					((For)_ele).isConsistent = ((For)_ele).checkConsistency();
 				}
 				// END KGU#3 2015-10-25
 				root.addUndo();
@@ -2163,6 +2169,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		parserPreferences.edtCasePost.setText(D7Parser.postCase);
 		parserPreferences.edtForPre.setText(D7Parser.preFor);
 		parserPreferences.edtForPost.setText(D7Parser.postFor);
+		// START KGU#3 2015-11-08: New configurable separator for FOR loop step const
+		parserPreferences.edtForStep.setText(D7Parser.stepFor);
+		// END KGU#3 2015-11-08
 		parserPreferences.edtWhilePre.setText(D7Parser.preWhile);
 		parserPreferences.edtWhilePost.setText(D7Parser.postWhile);
 		parserPreferences.edtRepeatPre.setText(D7Parser.preRepeat);
@@ -2184,6 +2193,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                     D7Parser.postCase=parserPreferences.edtCasePost.getText();
                     D7Parser.preFor=parserPreferences.edtForPre.getText();
                     D7Parser.postFor=parserPreferences.edtForPost.getText();
+            		// START KGU#3 2015-11-08: New configurable separator for FOR loop step const
+                    D7Parser.stepFor=parserPreferences.edtForStep.getText();
+            		// END KGU#3 2015-11-08
                     D7Parser.preWhile=parserPreferences.edtWhilePre.getText();
                     D7Parser.postWhile=parserPreferences.edtWhilePost.getText();
                     D7Parser.preRepeat=parserPreferences.edtRepeatPre.getText();

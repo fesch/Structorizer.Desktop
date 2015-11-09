@@ -33,7 +33,7 @@ package lu.fisch.structorizer.arranger;
  *
  *      Author          Date			Description
  *      ------          ----			-----------
- *      Bob Fisch           			First Issue
+ *      Bob Fisch       2009.08.18		First Issue
  *      Kay Gürtzig     2015.10.18		Several enhancements to improve Arranger usability (see comments)
  *
  ******************************************************************************************************

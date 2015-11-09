@@ -20,15 +20,42 @@
 
 package lu.fisch.structorizer.executor;
 
+/******************************************************************************************************
+ *
+ *      Author:         Bob Fisch
+ *
+ *      Description:    This class represents the GUI controlling the execution of a diagram.
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date			Description
+ *      ------			----			-----------
+ *      Bob Fisch       2009.05.18      First Issue
+ *      Kay Gürtzig     2015.11.05      Enhancement allowing to adopt edited values from Control (KGU#68)
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:  /
+ *         
+ ******************************************************************************************************///
+
+
+
 import java.awt.Color;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Vector;
+
 import javax.swing.table.DefaultTableModel;
+
 
 /**
  *
  * @author robertfisch
  */
-public class Control extends javax.swing.JFrame {
+public class Control extends javax.swing.JFrame implements PropertyChangeListener {
 
     /** Creates new form Control */
     public Control() {
@@ -94,6 +121,7 @@ public class Control extends javax.swing.JFrame {
                 slSpeedMouseWheelMoved(evt);
             }
         });
+        tblVar.addPropertyChangeListener(this);
 
         lblSpeed.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         lblSpeed.setText(" Speed: 50");
@@ -162,10 +190,10 @@ public class Control extends javax.swing.JFrame {
                         .add(btnPause)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(btnStep))
-                        // START KGU 2015-10-12: preferred size enhanced from 83 to 150
+// START KGU 2015-10-12: preferred size enhanced from 83 to 150
                     //.add(slSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 83, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                     .add(slSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 125, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                    	// END KGU 2015-0-12
+// END KGU 2015-0-12
                 .add(jScrollPane1, 0, 0, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
@@ -209,6 +237,13 @@ public class Control extends javax.swing.JFrame {
         btnPause.setEnabled(true);
         btnPlay.setEnabled(false);
         btnStep.setEnabled(false);
+        // START KGU#68 205-11-06: Enhancement - update edited values
+    	if (varsUpdated)
+    	{
+    		Executor.getInstance().adoptVarChanges(varUpdates);
+    	}
+    	varsUpdated = false;
+    	// END KGU#68 2015-11-06
         if(Executor.getInstance().isRunning()==false)
         {
             Executor.getInstance().start(false);
@@ -241,6 +276,13 @@ public class Control extends javax.swing.JFrame {
 
     private void btnStepActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnStepActionPerformed
     {//GEN-HEADEREND:event_btnStepActionPerformed
+    	// START KGU#68 2015-11-06: Enhancement - update edited values
+    	if (varsUpdated)
+    	{
+    		Executor.getInstance().adoptVarChanges(varUpdates);
+    		varsUpdated = false;
+    	}
+    	// END KGU#68 2015-11-06
         if(Executor.getInstance().isRunning()==false)
         {
             Executor.getInstance().start(true);
@@ -303,12 +345,23 @@ public class Control extends javax.swing.JFrame {
 
     public void updateVars(Vector<Vector> vars)
     {
+    	// START KGU#68 2015-11-06: We want to keep track of changed variables
+    	this.varsUpdated = false;
+    	// END KGU#68 2015-11-06
         tblVar.setGridColor(Color.LIGHT_GRAY);
         tblVar.setShowGrid(true);
         DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
         // emtpy table
         while(tm.getRowCount()>0) tm.removeRow(0);
-        for(int i=0;i<vars.size();i++) tm.addRow(vars.get(i));
+        // START KGU#68 2015-11-06: Preparation for variable editing
+        //for(int i=0;i<vars.size();i++) tm.addRow(vars.get(i));
+        varUpdates = new Object[vars.size()];
+        for(int i=0; i<vars.size(); i++)
+        {
+        	tm.addRow(vars.get(i));
+        	varUpdates[i] = null;
+        }
+        // END KGU#68 2015-11-06
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -321,5 +374,28 @@ public class Control extends javax.swing.JFrame {
     private javax.swing.JSlider slSpeed;
     private javax.swing.JTable tblVar;
     // End of variables declaration//GEN-END:variables
+    
+    // START KGU#68 2015-11-06: Register variable value editing events
+    private Object[] varUpdates = null;
+    private boolean varsUpdated = false;
+
+    @Override
+	public void propertyChange(PropertyChangeEvent pcEv) {
+		// Check if it was triggered by the termination of some editing activity (i.e. the cell editor was dropped)
+    	if (pcEv.getSource() == this.tblVar && pcEv.getPropertyName().equals("tableCellEditor") && pcEv.getNewValue() == null)
+    	{
+    		int rowNr = tblVar.getSelectedRow();
+            DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
+            Object val = tm.getValueAt(rowNr, 1);
+            if (val != null)
+            {
+            	varsUpdated = true;
+            	varUpdates[rowNr] = val;
+            	System.out.println(tm.getValueAt(rowNr, 0).toString() + " <- " + val.toString());
+            }
+    	}
+		
+	}
+    // END KGU#68 2015-11-06
 
 }
