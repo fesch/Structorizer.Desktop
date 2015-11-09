@@ -342,7 +342,7 @@ InputBox.class_specific.Parallel.update=PARALLEL-Element bearbeiten...
 InputBox.class_specific.Alternative.lblText=Eingabe der Bedingung an dieser Stelle.
 InputBox.class_specific.While.lblText=Eingabe der (Wieder-)Eintrittsbedingung an dieser Stelle.
 InputBox.class_specific.Repeat.lblText=Eingabe der Austrittsbedingung an dieser Stelle.
-InputBox.class_specific.Case.lblText=Eingabe des Auswahlausdrucks und der Fallkonstanten (eine je Zeile)
+InputBox.class_specific.Case.lblText=Eingabe des Auswahlausdrucks und der Fallkonstanten
 InputBox.class_specific.Parallel.lblText=Anzahl der nebenläufigen Pfade
 -----[ InputBoxFor ]-----
 InputBoxFor.class_specific.For.insert=Neue FOR-Schleife hinzufügen...

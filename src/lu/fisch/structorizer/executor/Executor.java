@@ -45,7 +45,8 @@ package lu.fisch.structorizer.executor;
 *      Kay Gürtzig     2015.11.04      Bugfix in stepInstruction() w.r.t. input/output (KGU#65)
 *      Kay Gürtzig     2015.11.05      Enhancement allowing to adopt edited values from Control (KGU#68)
 *      Kay Gürtzig     2015.11.08      Array assignments and variable setting deeply revised (KGU#69)
-*      Kay Gürtzig     2015.11.09      Bugfix: div operator had gone, wrong exit condition in stepRepeat (KGU#70)
+*      Kay Gürtzig     2015.11.09      Bugfix: div operator had gone, wrong exit condition in stepRepeat (KGU#70),
+*                                      wrong equality operator in stepCase().
 *
 ******************************************************************************************************
 *
@@ -1440,7 +1441,10 @@ public class Executor implements Runnable
 		try
 		{
 			StringList text = element.getText();
-			String expression = text.get(0) + "==";
+			// START KGU 2015-11-09 New unified conversion strategy, so use Structorizer syntax
+			//String expression = text.get(0) + "==";
+			String expression = text.get(0) + " = ";
+			// END KGU 2015-11-09
 			boolean done = false;
 			int last = text.count() - 1;
 			if (text.get(last).trim().equals("%"))
