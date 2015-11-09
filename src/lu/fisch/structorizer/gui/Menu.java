@@ -325,10 +325,8 @@ public class Menu extends JMenuBar implements NSDController
 				new ActionListener() {
 					public void actionPerformed(ActionEvent event)
 					{
-						// We ought at least solve the dirty diagram problem...
-						NSDControl.savePreferences();
-						if (diagram.saveNSD(true)) 
-							System.exit(0);	// FIXME KGU#66 2015-11-05: This is still lethal for a possibly owning Arranger
+						// Simulate the [x] button - this is the best we can do, Mainform will handle it properly
+						getFrame().dispatchEvent(new WindowEvent(getFrame(), WindowEvent.WINDOW_CLOSING));
 					}
 				} );
 		// KGU#66 2015-11-05
