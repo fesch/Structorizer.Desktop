@@ -505,7 +505,7 @@ public class Case extends Element
             return ele;
     }
 
-    // START KGU 2015-10-12
+    // START KGU#43 2015-10-12
     @Override
     public void clearBreakpoints()
     {
@@ -518,9 +518,9 @@ public class Case extends Element
     		}
     	}
     }
-    // END KGU 2015-10-12
+    // END KGU#43 2015-10-12
 
-    // START KGU 2015-10-13
+    // START KGU#43 2015-10-13
     @Override
     public void clearExecutionStatus()
     {
@@ -533,7 +533,7 @@ public class Case extends Element
     		}
     	}
     }
-    // END KGU 2015-10-13
+    // END KGU#43 2015-10-13
 
 	// START KGU 2015-10-16
 	/* (non-Javadoc)

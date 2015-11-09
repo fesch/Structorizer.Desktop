@@ -31,7 +31,7 @@ import lu.fisch.utils.StringList;
 public class Function
 {
     private String str = new String();
-    // START KGU#56 2015-10-27: Performance improvement approach
+    // START KGU#56 2015-10-27: Performance improvement approach (bug fixed 2015-11-09)
     private StringList parameters = null;	// parameter strings as split by commas
     private boolean isFunc = false;			// basic syntactic plausibility check result
     private String name = null;				// The string before the opening parenthesis
@@ -41,15 +41,15 @@ public class Function
     {
         this.str = exp.trim();
         // START KGU#56 2015-10-27
+        int posLP = str.indexOf("(");
         this.isFunc =
-        		str.indexOf("(") < str.indexOf(")") &&
-                str.indexOf("(") >=0 &&
+        		posLP < str.indexOf(")") && posLP >=0 &&
                 countChar(str,'(') == countChar(str,')') &&
                 str.endsWith(")");
         if (this.isFunc)
         {
-        	this.name = this.getName();
-        	String params = str.trim().substring(str.trim().indexOf("(")+1, str.length()-1).trim();
+        	this.name = str.substring(0, posLP).trim().toLowerCase();
+        	String params = str.substring(posLP+1, str.length()-1).trim();
         	if (!params.equals(""))
         	{
         		this.parameters = StringList.explode(params, ",");

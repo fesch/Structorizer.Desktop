@@ -1,4 +1,4 @@
-Todo
+﻿Todo
 - options allowing to have symmetric or asymmetric alternatives [Matthias Paul]
 - "default" button to set the parser preferences [Benjamin Bartsch]
   The default values filled should be dependent on the selected GUI language,
@@ -11,7 +11,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.22-30 (2015.10.31)
+Current development version: 3.22-31 (2015.11.09)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
 - 02: executor: fixed a bug while interpreting the title [Benjamin Bartsch]
 - 03: export: split PNG export into multiple images [Moritz Schulze]
@@ -59,7 +59,18 @@ Current development version: 3.22-30 (2015.10.31)
 - 29: comment popup: sticky popups eliminated, no element level limit <Kay Gürtzig>
 - 29: Arranger: No longer loses track when related Structorizer reloads <Kay Gürtzig>
 - 29: Known NEW ISSUE: Closing a dependent Structorizer kills the owning Arranger!
-- 30: Closing a Structorizer and cancelling the file update question work again.
+- 30: Issue on closing a Structorizer fixed, file update question may be cancelled. <Kay Gürtzig>
+- 31: Major enhancement supporting cleaner For loop evaluation (issue #10) <Kay Gürtzig>
+- 31: Enhancement to allow lists of constants controlling a Case branch (issue #13) <Kay Gürtzig>
+- 31: Code export process decomposed, less redundant Generator classes <Kay Gürtzig>
+- 31: String handling improved (comparison, empty strings, quote consistency) <Kay Gürtzig>
+- 31: Variables, function names etc. within strings no longer executed <Kay Gürtzig>
+- 31: Newly created empty diagrams are no longer flagged as changed <Kay Gürtzig>
+- 31: Content of array variables now sensibly displayed on execution (issue #14) <Kay Gürtzig>
+- 31: Variable content may now effectively be edited on excution pauses (issue #15) <Kay Gürtzig>
+- 31: Menu item File > Quit acts consistent to the [x] button now (bug #16) <Kay Gürtzig>
+- 31: Phenomenon of stalling execution on syntax errors within loops fixed (bug #17) <Kay Gürtzig>
+- 31: Several fixes induced by wide-spread code rebuilding in versions 29...30 <Kay Gürtzig>
 
 Version 3.22 (2011.11.21)
 - 01: Some fixes in Executor.java & Control.java [Kay Gürtzig]

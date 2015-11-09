@@ -44,7 +44,8 @@ package lu.fisch.structorizer.executor;
 *      Kay Gürtzig     2015.10.26/27   Language conversion and FOR loop parameter analysis delegated to the elements
 *      Kay Gürtzig     2015.11.04      Bugfix in stepInstruction() w.r.t. input/output (KGU#65)
 *      Kay Gürtzig     2015.11.05      Enhancement allowing to adopt edited values from Control (KGU#68)
-*      KAY Gürtzig     2015.11.08      Array assignments and variable setting deeply revised (KGU#69)
+*      Kay Gürtzig     2015.11.08      Array assignments and variable setting deeply revised (KGU#69)
+*      Kay Gürtzig     2015.11.09      Bugfix: div operator had gone, wrong exit condition in stepRepeat (KGU#70)
 *
 ******************************************************************************************************
 *
@@ -216,6 +217,7 @@ public class Executor implements Runnable
 //        s=s.replace(" xor ", " ^ "); // This might cause some operator preference trouble, though       
 //        // END KGU 2014-11-14
 		s = Element.unifyOperators(s);
+		s = s.replace(" div ", " / ");		// FIXME: Operands should be coerced to integer...
 		// END KGU#18/KGU#23 2015-10-26
 
 		// Convert built-in mathematical functions
@@ -557,9 +559,9 @@ public class Executor implements Runnable
 		if (!result.equals(""))
 		{
 			// MODIFIED BY GENNARO DONNARUMMA, ADDED ARRAY ERROR MSG
-
+			
 			String modifiedResult = result;
-			if ((result != null) && result.contains("Not an array"))
+			if (result.contains("Not an array"))
 			{
 				modifiedResult = modifiedResult.concat(" or the index "
 						+ modifiedResult.substring(
@@ -1733,7 +1735,10 @@ public class Executor implements Runnable
 					delay();	// Symbolizes the loop condition check time
 					element.waited = true;
 
-				} while (!(n.toString().equals("true") && result.equals("") && (stop == false)));
+				// START KGU#70 2015-11-09: Condition logically - execution often got stuck here 
+				//} while (!(n.toString().equals("true") && result.equals("") && (stop == false)));
+				} while (!(n.toString().equals("true")) && result.equals("") && (stop == false));
+				// END KGU#70 2015-11-09
 			}
 
 			if (result.equals(""))
