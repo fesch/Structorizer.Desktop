@@ -34,7 +34,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.29      First Issue
- *      Kay Gürtzig     2015.10.12      Field for breakpoint control added 
+ *      Kay Gürtzig     2015.10.12      Field for breakpoint control added (KGU#43)
  *
  ******************************************************************************************************
  *
@@ -50,10 +50,14 @@ public class EditData {
 
 	public StringList text = new StringList();
 	public StringList comment = new StringList();
+	// START KGU#3 2015-10-25
+	public StringList forParts = new StringList();
+	public boolean forPartsConsistent = false;
+	// END KGU#3 2015-10-25
 	
-	// START KGU 2015-10-12
+	// START KGU#43 2015-10-12
 	public boolean breakpoint = false;
-	// END KGU 2015-10-12
+	// END KGU#43 2015-10-12
 	
 	public boolean result = false;
 	

@@ -24,7 +24,7 @@ package lu.fisch.structorizer.elements;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    This class represents an "REPEAT loop" in a diagram.
+ *      Description:    This class represents a "REPEAT loop" in a diagram.
  *
  ******************************************************************************************************
  *
@@ -78,6 +78,19 @@ public class Repeat extends Element {
 		setText(_strings);
 	}
 	
+	// START KGU#64 2015-11-03: Is to improve drawing performance
+	/**
+	 * Recursively clears all drawing info this subtree down
+	 * (To be overridden by structured sub-classes!)
+	 */
+	@Override
+	public void resetDrawingInfoDown()
+	{
+		this.resetDrawingInfo();
+		this.q.resetDrawingInfoDown();
+	}
+	// END KGU#64 2015-11-03
+
 	public Rect prepareDraw(Canvas _canvas)
 	{
                 if(isCollapsed()) 

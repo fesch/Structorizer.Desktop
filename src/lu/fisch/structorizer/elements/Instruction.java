@@ -65,6 +65,19 @@ public class Instruction extends Element {
 		super(_strings);
 		setText(_strings);
 	}
+	
+	// START KGU#64 2015-11-03: Is to improve drawing performance
+	/**
+	 * Recursively clears all drawing info this subtree down
+	 * (To be overridden by structured sub-classes!)
+	 */
+	@Override
+	public void resetDrawingInfoDown()
+	{
+		this.resetDrawingInfo();
+	}
+	// END KGU#64 2015-11-03
+	
 
         public static Rect prepareDraw(Canvas _canvas, StringList _text, Element _element)
         {

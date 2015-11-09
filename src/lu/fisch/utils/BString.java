@@ -34,6 +34,7 @@ package lu.fisch.utils;
  *      ------			----			-----------
  *      Bob Fisch       2003.05.10      First Issue
  *		Bob Fisch		2007.12.09		Moved to another package and adapted for Structorizer
+ *		Kay Gürtzig		2015.10.31		Performance improvements
  *
  ******************************************************************************************************
  *
@@ -129,14 +130,13 @@ public abstract class BString
 		}
 		
 		/**
-		 * Checks wheater a string contains any non-blank caracters
-		 *@return The result
+		 * Checks whether a string contains any non-blank characters
+		 *@return true iff there is at least one non-blank character
 		 *@param str The string to check
 		 */
 		public static boolean containsSomething(String str)
 		{
 			boolean result = false;
-			Character chr;
 			
 			for (int i=0;i<str.length();i++)
 			{
@@ -185,17 +185,18 @@ public abstract class BString
 		 *@param substr The substring to be replaced
 		 *@param with The substring to put in
 		 */
-		public static String replaceInsensitive(String str,String substr, String with)
+		public static String replaceInsensitive(String str, String substr, String with)
 		{
 			String outi = new String("");
 			int width = str.length();
 			int count = 0;
 			do
 			{
-				if (str.toLowerCase().indexOf(substr.toLowerCase(),count)!=-1)
+				int index = str.toLowerCase().indexOf(substr.toLowerCase(),count); 
+				if (index != -1)
 				{
-					outi=outi+str.substring(count,str.toLowerCase().indexOf(substr.toLowerCase(),count))+with;
-					count=str.toLowerCase().indexOf(substr.toLowerCase(),count)+substr.length();
+					outi = outi + str.substring(count,index) + with;
+					count = index + substr.length();
 				}
 				else
 				{
@@ -296,5 +297,6 @@ public abstract class BString
 			
 			return result;
 		}
+		
 		
 	}

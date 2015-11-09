@@ -33,7 +33,9 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.23      First Issue
- *      Kay Gürtzig     2015-10-12      A checkbox added for breakpoint control 
+ *      Kay Gürtzig     2015-10-12      A checkbox added for breakpoint control (KGU#43)
+ *      Kay Gürtzig     2015-10-14      Element-class-specific language support (KGU#42)
+ *      Kay Gürtzig     2015-10-25      Hook for subclassing added to method create() (KGU#3)
  *
  ******************************************************************************************************
  *
@@ -55,26 +57,27 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
 {
     public boolean OK = false;
     
+    // KGU#3 2015-11-03: Some of the controls had to be made public in order to allow language support for subclasses 
     // Buttons
-    protected JButton btnOK = new JButton("OK"); 
-    protected JButton btnCancel = new JButton("Cancel"); 
+    public JButton btnOK = new JButton("OK"); 
+    public JButton btnCancel = new JButton("Cancel"); 
 	
     // Labels
-    protected JLabel lblText = new JLabel("Please enter a text");
-    protected JLabel lblComment = new JLabel("Comment");
+    public JLabel lblText = new JLabel("Please enter a text");
+    public JLabel lblComment = new JLabel("Comment");
 
     // Textarea
-    protected JTextArea txtText = new JTextArea();
-    protected JTextArea txtComment = new JTextArea();
+    public JTextArea txtText = new JTextArea();
+    public JTextArea txtComment = new JTextArea();
 
     // Scrollpanes
     protected JScrollPane scrText = new JScrollPane(txtText);
     protected JScrollPane scrComment = new JScrollPane(txtComment);
     
     // Checkbox
-    // START GU 2015-10-12: Additional possibility to control the breakpoint setting
-    protected JCheckBox chkBreakpoint = new JCheckBox("Breakpoint");
-    // END KGU 2015-10-12
+    // START KGU#43 2015-10-12: Additional possibility to control the breakpoint setting
+    public JCheckBox chkBreakpoint = new JCheckBox("Breakpoint");
+    // END KGU#43 2015-10-12
     
     // START KGU 2015-10-14: Additional information for data-specific title translation
     public String elementType = new String();	// The (lower-case) class name of the element type to be edited here
@@ -96,7 +99,6 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
             // set action to perfom if closed
             setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             // set icon
-
             btnOK.addActionListener(this);
             btnCancel.addActionListener(this);
 
@@ -113,94 +115,139 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
             JPanel pnPanel0 = new JPanel();
             GridBagLayout gbPanel0 = new GridBagLayout();
             GridBagConstraints gbcPanel0 = new GridBagConstraints();
-            gbcPanel0.insets=new Insets(10,10,0,10);
+            gbcPanel0.insets=new Insets(10,10, 0,10);
             pnPanel0.setLayout( gbPanel0 );
+            
+            // START KGU#3 2015-10-24: Open opportunities for subclasses
+            createPanelTop(pnPanel0, gbPanel0, gbcPanel0);
+            
+            JPanel pnPanel1 = new JPanel();
+            GridBagLayout gbPanel1 = new GridBagLayout();
+            GridBagConstraints gbcPanel1 = new GridBagConstraints();
+            gbcPanel1.insets=new Insets(10,10,0,10);
+            pnPanel1.setLayout( gbPanel1 );
+            // END KGU#3 2015-10-24
+            
+            gbcPanel1.gridx = 1;
+            gbcPanel1.gridy = 2;
+            gbcPanel1.gridwidth = 18;
+            gbcPanel1.gridheight = 7;
+            gbcPanel1.fill = GridBagConstraints.BOTH;
+            gbcPanel1.weightx = 1;
+            gbcPanel1.weighty = 1;
+            gbcPanel1.anchor = GridBagConstraints.NORTH;
+            gbPanel1.setConstraints( scrText, gbcPanel1 );
+            pnPanel1.add( scrText );
 
-            gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = 3;
-            gbcPanel0.gridwidth = 18;
-            gbcPanel0.gridheight = 7;
-            gbcPanel0.fill = GridBagConstraints.BOTH;
-            gbcPanel0.weightx = 1;
-            gbcPanel0.weighty = 1;
-            gbcPanel0.anchor = GridBagConstraints.NORTH;
-            gbPanel0.setConstraints( scrText, gbcPanel0 );
-            pnPanel0.add( scrText );
+            gbcPanel1.gridx = 1;
+            gbcPanel1.gridy = 12;
+            gbcPanel1.gridwidth = 18;
+            gbcPanel1.gridheight = 4;
+            gbcPanel1.fill = GridBagConstraints.BOTH;
+            gbcPanel1.weightx = 1;
+            gbcPanel1.weighty = 1;
+            gbcPanel1.anchor = GridBagConstraints.NORTH;
+            gbPanel1.setConstraints( scrComment, gbcPanel1 );
+            pnPanel1.add( scrComment );
 
-            gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = 13;
-            gbcPanel0.gridwidth = 18;
-            gbcPanel0.gridheight = 4;
-            gbcPanel0.fill = GridBagConstraints.BOTH;
-            gbcPanel0.weightx = 1;
-            gbcPanel0.weighty = 1;
-            gbcPanel0.anchor = GridBagConstraints.NORTH;
-            gbPanel0.setConstraints( scrComment, gbcPanel0 );
-            pnPanel0.add( scrComment );
+            // START KGU#3 2015-10-25: Moved to addCreating() - such that it may be replaced by subclasses
+//            gbcPanel1.gridx = 1;
+//            gbcPanel1.gridy = 1;
+//            gbcPanel1.gridwidth = 18;
+//            gbcPanel1.gridheight = 1;
+//            gbcPanel1.fill = GridBagConstraints.BOTH;
+//            gbcPanel1.weightx = 1;
+//            gbcPanel1.weighty = 0;
+//            gbcPanel1.anchor = GridBagConstraints.NORTH;
+//            gbPanel1.setConstraints( lblText, gbcPanel1 );
+//            pnPanel1.add( lblText );
+            // END KGU#3 2015-10-25
+            
+            gbcPanel1.gridx = 1;
+            gbcPanel1.gridy = 10;
+            gbcPanel1.gridwidth = 18;
+            gbcPanel1.gridheight = 1;
+            gbcPanel1.fill = GridBagConstraints.BOTH;
+            gbcPanel1.weightx = 1;
+            gbcPanel1.weighty = 0;
+            gbcPanel1.anchor = GridBagConstraints.NORTH;
+            gbPanel1.setConstraints( lblComment, gbcPanel1 );
+            pnPanel1.add( lblComment );
 
-            gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = 1;
-            gbcPanel0.gridwidth = 18;
-            gbcPanel0.gridheight = 1;
-            gbcPanel0.fill = GridBagConstraints.BOTH;
-            gbcPanel0.weightx = 1;
-            gbcPanel0.weighty = 0;
-            gbcPanel0.anchor = GridBagConstraints.NORTH;
-            gbPanel0.setConstraints( lblText, gbcPanel0 );
-            pnPanel0.add( lblText );
+            gbcPanel1.gridx = 1;
+            gbcPanel1.gridy = 17;
+            gbcPanel1.gridwidth = 18;
+            gbcPanel1.gridheight = 1;
+            gbcPanel1.fill = GridBagConstraints.BOTH;
+            gbcPanel1.weightx = 1;
+            gbcPanel1.weighty = 0;
+            gbcPanel1.anchor = GridBagConstraints.NORTH;
+            gbPanel1.setConstraints( chkBreakpoint, gbcPanel1 );
+            pnPanel1.add( chkBreakpoint );
 
-            gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = 11;
-            gbcPanel0.gridwidth = 18;
-            gbcPanel0.gridheight = 1;
-            gbcPanel0.fill = GridBagConstraints.BOTH;
-            gbcPanel0.weightx = 1;
-            gbcPanel0.weighty = 0;
-            gbcPanel0.anchor = GridBagConstraints.NORTH;
-            gbPanel0.setConstraints( lblComment, gbcPanel0 );
-            pnPanel0.add( lblComment );
+            gbcPanel1.insets=new Insets(10,10,10,10);
 
-            gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = 18;
-            gbcPanel0.gridwidth = 18;
-            gbcPanel0.gridheight = 1;
-            gbcPanel0.fill = GridBagConstraints.BOTH;
-            gbcPanel0.weightx = 1;
-            gbcPanel0.weighty = 0;
-            gbcPanel0.anchor = GridBagConstraints.NORTH;
-            gbPanel0.setConstraints( chkBreakpoint, gbcPanel0 );
-            pnPanel0.add( chkBreakpoint );
+            //createExitButtons(gridbase)
+            gbcPanel1.gridx = 1;
+            gbcPanel1.gridy = 18;
+            gbcPanel1.gridwidth = 7;
+            gbcPanel1.gridheight = 1;
+            gbcPanel1.fill = GridBagConstraints.BOTH;
+            gbcPanel1.weightx = 1;
+            gbcPanel1.weighty = 0;
+            gbcPanel1.anchor = GridBagConstraints.NORTH;
+            gbPanel1.setConstraints( btnCancel, gbcPanel1 );
+            pnPanel1.add( btnCancel );
 
-            gbcPanel0.insets=new Insets(10,10,10,10);
-
-            gbcPanel0.gridx = 1;
-            gbcPanel0.gridy = 19;
-            gbcPanel0.gridwidth = 7;
-            gbcPanel0.gridheight = 1;
-            gbcPanel0.fill = GridBagConstraints.BOTH;
-            gbcPanel0.weightx = 1;
-            gbcPanel0.weighty = 0;
-            gbcPanel0.anchor = GridBagConstraints.NORTH;
-            gbPanel0.setConstraints( btnCancel, gbcPanel0 );
-            pnPanel0.add( btnCancel );
-
-            gbcPanel0.gridx = 12;
-            gbcPanel0.gridy = 19;
-            gbcPanel0.gridwidth = 7;
-            gbcPanel0.gridheight = 1;
-            gbcPanel0.fill = GridBagConstraints.BOTH;
-            gbcPanel0.weightx = 1;
-            gbcPanel0.weighty = 0;
-            gbcPanel0.anchor = GridBagConstraints.NORTH;
-            gbPanel0.setConstraints( btnOK, gbcPanel0 );
-            pnPanel0.add( btnOK );
+            // START KGU#3 2015-10-31: The new gridx causes no difference here but fits better for InputBoxFor
+            gbcPanel1.gridx = 12;
+            //gbcPanel1.gridx = 8;
+            // END KGU#3 2015-10-31
+            gbcPanel1.gridy = 18;
+            // START KGU#3 2015-10-31: The new gridwidth causes no difference here but fits better for InputBoxFor
+            gbcPanel1.gridwidth = 7;
+    		//gbcPanel1.gridwidth = GridBagConstraints.REMAINDER;
+    		// END KGU#3 2015-10-31
+            gbcPanel1.gridheight = 1;
+            gbcPanel1.fill = GridBagConstraints.BOTH;
+            gbcPanel1.weightx = 1;
+            gbcPanel1.weighty = 0;
+            gbcPanel1.anchor = GridBagConstraints.NORTH;
+            gbPanel1.setConstraints( btnOK, gbcPanel1 );
+            pnPanel1.add( btnOK );
 
             Container container = getContentPane();
             container.setLayout(new BorderLayout());
-            container.add(pnPanel0,BorderLayout.CENTER);
+            container.add(pnPanel0,BorderLayout.NORTH);
+            container.add(pnPanel1,BorderLayout.CENTER);
 
             txtText.requestFocus(true);
     }
+    
+    // START KGU#3 2015-10-24: Hook for subclasses
+    /**
+     * Subclassable method to add specific stuff to the Panel top
+     * @param _panel the panel to be enhanced
+     * @param _gbc the layout constraints
+     * @return number of lines (y units) inserted
+     */
+    protected int createPanelTop(JPanel _panel, GridBagLayout _gb, GridBagConstraints _gbc)
+    {
+        _gbc.gridx = 1;
+        _gbc.gridy = 1;
+        _gbc.gridwidth = 18;
+        _gbc.gridheight = 1;
+        _gbc.fill = GridBagConstraints.BOTH;
+        _gbc.weightx = 1;
+        _gbc.weighty = 0;
+        _gbc.anchor = GridBagConstraints.NORTH;
+        _gb.setConstraints( lblText, _gbc );
+        _panel.add( lblText );
+        // Return the number of used grid lines such that the calling method may go on there
+    	return 1;
+    }
+    // END KGU#3 2015-10-24
+
 
     // listen to actions
     public void actionPerformed(ActionEvent event)
@@ -255,7 +302,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
         create();
     }*/
 
-    // START KGU 2015-10-14: data-specific title localisation
+    // START KGU#42 2015-10-14: data-specific title localisation
     /**
      * Replaces the title string by translation if keys match some internal state information
      * @see lu.fisch.structorizer.gui.LangDialog#setLangSpecific(lu.fisch.utils.StringList, java.lang.String)
@@ -292,6 +339,6 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
     		super.setTitle(title);
     	}
     }
-    // END KGU 2015-10-14
+    // END KGU#42 2015-10-14
     
 }

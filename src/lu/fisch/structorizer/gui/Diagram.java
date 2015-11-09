@@ -33,10 +33,10 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.09      First Issue
- *      Kay Gürtzig     2015.07.18      URL launch added in updateNSD() - requires Java >= 1.6
  *      Kay Gürtzig     2015.10.09      Colour setting will now duly be registered as diagram modification
  *                      2015.10.11      Comment popping repaired by proper subclassing of getElementByCoord
  *                                      Listener method MouseExited now enabled to drop the sticky comment popup
+ *      Kay Gürtzig     2015.11.08      Parser preferences for FOR loops enhanced (KGU#3)
  *
  ******************************************************************************************************
  *
@@ -148,26 +148,26 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @param root the Root to set
 	 */
 	public void setRoot(Root root) {
-            setRoot(root,true);
-        }
-        
+		setRoot(root, true);
+	}
+	
 	public void setRoot(Root root, boolean askToSave) {
-        	if (root != null)
+		if (root != null)
 		{
-                    if(askToSave){
-			// Save if something has been changed
-			saveNSD(true);
-			this.unselectAll();
-                    }
+			if(askToSave){
+				// Save if something has been changed
+				saveNSD(true);
+				this.unselectAll();
+			}
 
-                    boolean hil = this.root.hightlightVars;
-                    this.root = root;
-                    root.hightlightVars = hil;
-                    //System.out.println(root.getFullText().getText());
-                    root.getVarNames();
-                    root.hasChanged = true;
-                    redraw();
-                    analyse();
+			boolean hil = this.root.hightlightVars;
+			this.root = root;
+			root.hightlightVars = hil;
+			//System.out.println(root.getFullText().getText());
+			root.getVarNames();
+			root.hasChanged = true;
+			redraw();
+			analyse();
 		}
 	}
 	// END KGU#48,KGU#49 2015-10-18
@@ -756,7 +756,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		boolean HV = root.hightlightVars;
 		root = new Root();
 		root.hightlightVars=HV;
-		root.hasChanged=true;
+		// START KGU 2015-10-29: This didn't actually make sense
+		//root.hasChanged=true;
+		// END KGU 2015-10-29
 		redraw();
 		analyse();
 		// START KGU#48 2015-10-17: Arranger support
@@ -933,11 +935,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/*****************************************
 	 * Save method
 	 *****************************************/
-	// returns false iff a popped-up file save dialog was cancelled by the user rather than decided
+	
+	// Returns false iff a popped-up file save dialog was cancelled by the user rather than decided 
 	public boolean saveNSD(boolean _checkChanged)
 	{
 		int res = 0;	// Save decision: 0 = do save, 1 = don't save, -1 = cancelled (don't leave)
-		
 		// only save if something has been changed
 		if(root.hasChanged==true)
 		{
@@ -960,7 +962,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 												   JOptionPane.QUESTION_MESSAGE,
 												   null,null,null);
 			}
-
+			
 			if (res==0)
 			{
 				// if root has not yet been saved
@@ -1051,7 +1053,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 		}
-		return res != -1;	// true if not cancelled
+		return res != -1; // true if not cancelled
 	}
 
 	/*****************************************
@@ -1207,6 +1209,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#43 2015-10-12
 				data.breakpoint = element.isBreakpoint();
 				// END KGU#43 2015-10-12
+				
+				// START KGU#3 2015-10-25: Allow more sophisticated For loop editing
+				if (element instanceof For)
+				{
+					boolean wasConsistent = ((For)element).isConsistent;
+					// START KGU#3 2015-11-08: We must support backward compatibility
+					// For the first display show the real contents
+					((For)element).isConsistent = true;
+					// END KGU#3 2015-11-08
+					data.forParts.add(((For)element).getCounterVar());
+					data.forParts.add(((For)element).getStartValue());
+					data.forParts.add(((For)element).getEndValue());
+					data.forParts.add(Integer.toString(((For)element).getStepConst()));
+					data.forPartsConsistent = ((For)element).isConsistent = wasConsistent;
+				}
+				// END KGU#3 2015-10-25
 
 				// START KGU#42 2015-10-14: Enhancement for easier title localisation
 				//showInputBox(data);
@@ -1229,6 +1247,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						element.toggleBreakpoint();
 					}
 					// END KGU#43 2015-10-12
+					// START KGU#3 2015-10-25
+					if (element instanceof For)
+					{
+						((For)element).isConsistent = data.forPartsConsistent;
+						((For)element).setCounterVar(data.forParts.get(0));
+						((For)element).setStartValue(data.forParts.get(1));
+						((For)element).setEndValue(data.forParts.get(2));
+						((For)element).setStepConst(data.forParts.get(3));
+					}
+					// END KGU#3 2015-10-25
 					root.hasChanged=true;
 					redraw();
 				}
@@ -1297,6 +1325,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					_ele.toggleBreakpoint();
 				}
 				// END KGU 2015-10-17
+				// START KGU#3 2015-10-25
+				if (_ele instanceof For)
+				{
+					((For)_ele).setCounterVar(data.forParts.get(0));
+					((For)_ele).setStartValue(data.forParts.get(1));
+					((For)_ele).setEndValue(data.forParts.get(2));
+					((For)_ele).setStepConst(data.forParts.get(3));
+					//((For)_ele).isConsistent = data.forPartsConsistent;
+					((For)_ele).isConsistent = ((For)_ele).checkConsistency();
+				}
+				// END KGU#3 2015-10-25
 				root.addUndo();
 				if(_after==true)
 				{
@@ -2000,66 +2039,38 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void updateNSD()
 	{
-            
-		//Desktop desk = Desktop.getDesktop();
-		// java.awt.Desktop (since 1.6 !!)
-            try {
-                JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\">Goto <a href=\"http://structorizer.fisch.lu\">http://structorizer.fisch.lu</a> to look for updates<br>and news about Structorizer.</font></html>");
-                ep.addHyperlinkListener(new HyperlinkListener()
-                {
-                    @Override
-                    public void hyperlinkUpdate(HyperlinkEvent e)
-                    {
-                        if (e.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED))
-                        {
-                            try {
-                            Desktop.getDesktop().browse(e.getURL().toURI());
-                            }
-                            catch(Exception ee)
-                            {
-                                ee.printStackTrace();
-                            }
-                        }
-                    }
-                });
-                ep.setEditable(false);
-                JLabel label = new JLabel();
-                ep.setBackground(label.getBackground());
-                
-                JOptionPane.showMessageDialog(this, ep);
-            }
-            catch(Exception e)
-            {
-                e.printStackTrace();
-            }
-            /**/
-            /*
-            JOptionPane.showMessageDialog(this,"<html>Goto <a href=\"http://structorizer.fisch.lu\">http://structorizer.fisch.lu</a> to look for updates<br>and news about Structorizer.</html>",
-									 "Update",
-								 	 JOptionPane.INFORMATION_MESSAGE);            
-            /**/
-        }
-/*
-		
-		// START KGU#35 2015-07-18 If the above comment was an idea how to open the homepage, here's the code now 
+		// KGU#35 2015-07-29: Bob's code adopted with slight modification (Homepage URL put into a variable) 
 		String home = "http://structorizer.fisch.lu";
-		int chosen = JOptionPane.showOptionDialog(this,"<html>Goto <a href=\"" + home + "\">" + home + "</a> to look for updates<br>and news about Structorizer.</html>",
-									 "Update",
-								 	 JOptionPane.YES_NO_OPTION,JOptionPane.INFORMATION_MESSAGE,null,null,null);
-		if (chosen == JOptionPane.YES_OPTION && Desktop.isDesktopSupported())
-		{
-			try 
+		try {
+			JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\">Goto <a href=\"" + home + "\">" + home + "</a> to look for updates<br>and news about Structorizer.</font></html>");
+			ep.addHyperlinkListener(new HyperlinkListener()
 			{
-				Desktop.getDesktop().browse(new java.net.URI(home));
-			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
+				@Override
+				public void hyperlinkUpdate(HyperlinkEvent e)
+				{
+					if (e.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED))
+					{
+						try {
+							Desktop.getDesktop().browse(e.getURL().toURI());
+						}
+						catch(Exception ee)
+						{
+							ee.printStackTrace();
+						}
+					}
+				}
+			});
+			ep.setEditable(false);
+			JLabel label = new JLabel();
+			ep.setBackground(label.getBackground());
+
+			JOptionPane.showMessageDialog(this, ep);
 		}
-		// END KGU#35 2015-07-18
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}		
 	}
-*/
 
 	/*****************************************
 	 * the preferences dialog methods
@@ -2158,6 +2169,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		parserPreferences.edtCasePost.setText(D7Parser.postCase);
 		parserPreferences.edtForPre.setText(D7Parser.preFor);
 		parserPreferences.edtForPost.setText(D7Parser.postFor);
+		// START KGU#3 2015-11-08: New configurable separator for FOR loop step const
+		parserPreferences.edtForStep.setText(D7Parser.stepFor);
+		// END KGU#3 2015-11-08
 		parserPreferences.edtWhilePre.setText(D7Parser.preWhile);
 		parserPreferences.edtWhilePost.setText(D7Parser.postWhile);
 		parserPreferences.edtRepeatPre.setText(D7Parser.preRepeat);
@@ -2179,6 +2193,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                     D7Parser.postCase=parserPreferences.edtCasePost.getText();
                     D7Parser.preFor=parserPreferences.edtForPre.getText();
                     D7Parser.postFor=parserPreferences.edtForPost.getText();
+            		// START KGU#3 2015-11-08: New configurable separator for FOR loop step const
+                    D7Parser.stepFor=parserPreferences.edtForStep.getText();
+            		// END KGU#3 2015-11-08
                     D7Parser.preWhile=parserPreferences.edtWhilePre.getText();
                     D7Parser.postWhile=parserPreferences.edtWhilePost.getText();
                     D7Parser.preRepeat=parserPreferences.edtRepeatPre.getText();
@@ -2213,6 +2230,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		analyserPreferences.check11.setSelected(Root.check11);
 		analyserPreferences.check12.setSelected(Root.check12);
 		analyserPreferences.check13.setSelected(Root.check13);
+		// START KGU#3 2015-11-03: New check type for enhanced FOR loops
+		analyserPreferences.check14.setSelected(Root.check14);
+		// END KGU#3 2015-11-03
 
 		analyserPreferences.setLang(NSDControl.getLang());
 		analyserPreferences.pack();
@@ -2232,6 +2252,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Root.check11=analyserPreferences.check11.isSelected();
 		Root.check12=analyserPreferences.check12.isSelected();
 		Root.check13=analyserPreferences.check13.isSelected();
+		// START KGU#3 2015-11-03: New check type for enhanced FOR loops
+		Root.check14=analyserPreferences.check14.isSelected();
+		// END KGU#3 2015-11-03
 
 		// save fields to ini-file
 		Root.saveToINI();
@@ -2423,58 +2446,93 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 	// START KGU 2015-10-14: additional parameters for title customisation
 	//public void showInputBox(EditData _data)
-	public void showInputBox(EditData _data, String elementType, boolean isInsertion)
+	public void showInputBox(EditData _data, String _elementType, boolean _isInsertion)
 	// END KGU 2015-10-14
 	{
-            if(NSDControl!=null)
-            {
-		InputBox inputbox = new InputBox(NSDControl.getFrame(),true);
-		//Point p = getLocationOnScreen();
-		// position inputbox in the middle of this component
-
-		//inputbox.setLocation(Math.round(p.x+(this.getVisibleRect().width-inputbox.getWidth())/2+this.getVisibleRect().x),
-		//					 Math.round(p.y+(this.getVisibleRect().height-inputbox.getHeight())/2+this.getVisibleRect().y));
-
-                inputbox.setLocationRelativeTo(NSDControl.getFrame());
-
-		// set title (as default)
-		inputbox.setTitle(_data.title);
-
-		// set field
-		inputbox.txtText.setText(_data.text.getText());
-		inputbox.txtComment.setText(_data.comment.getText());
-		// START KGU 2015-10-12
-		inputbox.chkBreakpoint.setEnabled(getSelected() != root);
-		inputbox.chkBreakpoint.setSelected(_data.breakpoint);
-		// END KGU 2015-10-12
-
-		inputbox.OK=false;
-		// START KGU 2015-10-14: Pass the additional information for title translation control
-		if (elementType.equals("Root") && !this.isProgram())
+		if(NSDControl!=null)
 		{
-			elementType = "Function";
-		}
-		else if (elementType.equals("Forever"))
-		{
-			inputbox.lblText.setVisible(false);
-			inputbox.txtText.setVisible(false);
-		}
-		inputbox.elementType = elementType;
-		inputbox.forInsertion = isInsertion;
-		// END KGU 2015-10-14
-		inputbox.setLang(NSDControl.getLang());
-		inputbox.setVisible(true);
+			// START KGU#3 2015-10-25: Dedicated support for For loops
+			//InputBox inputbox = new InputBox(NSDControl.getFrame(),true);
+			InputBox inputbox = null;
+			if (_elementType.equals("For"))
+			{
+				InputBoxFor ipbFor = new InputBoxFor(NSDControl.getFrame(), true);
+				if (!_isInsertion)
+				{
+					ipbFor.txtVariable.setText(_data.forParts.get(0));
+					ipbFor.txtStartVal.setText(_data.forParts.get(1));
+					ipbFor.txtEndVal.setText(_data.forParts.get(2));
+					ipbFor.txtIncr.setText(_data.forParts.get(3));
+					ipbFor.chkTextInput.setSelected(!_data.forPartsConsistent);
+					ipbFor.enableTextFields(!_data.forPartsConsistent);
+				}
+				else {
+					ipbFor.enableTextFields(false);
+				}
+				inputbox = ipbFor;
+			}
+			else
+			{
+				inputbox = new InputBox(NSDControl.getFrame(), true);
+			}
+			// END KGU#3 2015-10-25
+			//Point p = getLocationOnScreen();
+			// position inputbox in the middle of this component
 
-		// get fields
-		_data.text.setText(inputbox.txtText.getText());
-		_data.comment.setText(inputbox.txtComment.getText());
-		// START KGU 2015-10-12
-		_data.breakpoint = inputbox.chkBreakpoint.isSelected();
-		// END KGU 2015-10-12
-		_data.result=inputbox.OK;
+			//inputbox.setLocation(Math.round(p.x+(this.getVisibleRect().width-inputbox.getWidth())/2+this.getVisibleRect().x),
+			//					 Math.round(p.y+(this.getVisibleRect().height-inputbox.getHeight())/2+this.getVisibleRect().y));
 
-                inputbox.dispose();
-             }
+			inputbox.setLocationRelativeTo(NSDControl.getFrame());
+
+			// set title (as default)
+			inputbox.setTitle(_data.title);
+
+			// set field
+			inputbox.txtText.setText(_data.text.getText());
+			inputbox.txtComment.setText(_data.comment.getText());
+			// START KGU#43 2015-10-12: Breakpoint support
+			inputbox.chkBreakpoint.setEnabled(getSelected() != root);
+			inputbox.chkBreakpoint.setSelected(_data.breakpoint);
+			// END KGU#43 2015-10-12
+
+			inputbox.OK=false;
+			// START KGU#42 2015-10-14: Pass the additional information for title translation control
+			if (_elementType.equals("Root") && !this.isProgram())
+			{
+				_elementType = "Function";
+			}
+			else if (_elementType.equals("Forever"))
+			{
+				inputbox.lblText.setVisible(false);
+				inputbox.txtText.setVisible(false);
+			}
+			inputbox.elementType = _elementType;
+			inputbox.forInsertion = _isInsertion;
+			// END KGU#42 2015-10-14
+			inputbox.setLang(NSDControl.getLang());
+			inputbox.setVisible(true);
+
+			// get fields
+			_data.text.setText(inputbox.txtText.getText());
+			_data.comment.setText(inputbox.txtComment.getText());
+			// START KGU#43 2015-10-12: Breakpoint support
+			_data.breakpoint = inputbox.chkBreakpoint.isSelected();
+			// END KGU#43 2015-10-12
+			// START KGU#3 2015-10-25: Dedicated support for For loops
+			if (inputbox instanceof InputBoxFor)
+			{
+				_data.forParts = new StringList();
+				_data.forParts.add(((InputBoxFor)inputbox).txtVariable.getText());
+				_data.forParts.add(((InputBoxFor)inputbox).txtStartVal.getText());
+				_data.forParts.add(((InputBoxFor)inputbox).txtEndVal.getText());
+				_data.forParts.add(((InputBoxFor)inputbox).txtIncr.getText());
+				_data.forPartsConsistent = !((InputBoxFor)inputbox).chkTextInput.isSelected();
+			}
+			// END KGU#3 2015-10-25
+			_data.result=inputbox.OK;
+
+			inputbox.dispose();
+		}
 	}
 	
 	/*****************************************

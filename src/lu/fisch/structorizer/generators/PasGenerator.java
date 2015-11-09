@@ -45,6 +45,12 @@ package lu.fisch.structorizer.generators;
  ******************************************************************************************************
  *
  *      Comments:
+ *      
+ *      2015-11-01 - Code revision / enhancements
+ *      - Most of the transform stuff delegated to Element and Generator (KGU#18/KGU23)
+ *      - Enhancement #10 (KGU#3): FOR loops now provide more reliable loop parameters detection  
+ *
+ *      2015.10.18
  *      - Indentation increment with +_indent.substring(0,1) worked only for single-character indentation units
  *      - Interface of comment insertion methods modified
  *
@@ -110,8 +116,44 @@ public class PasGenerator extends Generator
     // END KGU 2015-10-18
 
     /************ Code Generation **************/
-    private String transform(String _input)
-    {
+    
+	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
+	/**
+	 * A pattern how to embed the variable (right-hand side of an input instruction)
+	 * into the target code
+	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
+	 */
+	protected String getInputReplacer()
+	{
+		return "readln($1)";
+	}
+
+	/**
+	 * A pattern how to embed the expression (right-hand side of an output instruction)
+	 * into the target code
+	 * @return a regex replacement pattern, e.g. "System.out.println($1);"
+	 */
+	protected String getOutputReplacer()
+	{
+		return "writeln($1)";
+	}
+
+	/**
+	 * Transforms assignments in the given intermediate-language code line.
+	 * Replaces "<-" by "="
+	 * @param _interm - a code line in intermediate syntax
+	 * @return transformed string
+	 */
+	protected String transformAssignment(String _interm)
+	{
+		return _interm.replace(" <- ", " := ");
+	}
+	// END KGU#18/KGU#23 2015-11-01
+    
+	@Override
+	protected String transform(String _input)
+	{
+		_input = super.transform(_input);
             // et => and
             // ou => or
             // lire => readln()
@@ -121,24 +163,25 @@ public class PasGenerator extends Generator
             // jusqu'à => ""
             // à => "to"
 
-            // START KGU 2014-12-02: To achieve consistency with operator highlighting
-            _input=BString.replace(_input, "<--", "<-");
-            // END KGU 2014-12-02
-            _input=BString.replace(_input," <- "," := ");
-            _input=BString.replace(_input,"<- "," := ");
-            _input=BString.replace(_input," <-"," := ");
-            _input=BString.replace(_input,"<-"," := ");
+//            // START KGU 2014-12-02: To achieve consistency with operator highlighting
+//            _input=BString.replace(_input, "<--", "<-");
+//            // END KGU 2014-12-02
+//            _input=BString.replace(_input," <- "," := ");
+//            _input=BString.replace(_input,"<- "," := ");
+//            _input=BString.replace(_input," <-"," := ");
+//            _input=BString.replace(_input,"<-"," := ");
 
             // START KGU 2014-11-16: C comparison operator required transformation, too
-            _input=BString.replace(_input,"!=","<>");
+            _input=BString.replace(_input," != "," <> ");
+            _input=BString.replace(_input," == "," = ");
             // END KGU 2014-11-16
             // START KGU 2014-11-10: logical operators required transformation, too
             _input=BString.replace(_input," && "," and ");
             _input=BString.replace(_input," || "," or ");
             _input=BString.replace(_input," ! "," not ");
-            _input=BString.replace(_input,"&&"," and ");
-            _input=BString.replace(_input,"||"," or ");
-            _input=BString.replace(_input,"!"," not ");
+//            _input=BString.replace(_input,"&&"," and ");
+//            _input=BString.replace(_input,"||"," or ");
+//            _input=BString.replace(_input,"!"," not ");
             // END KGU 2014-11-10
             // START KGU 2014-11-16: C bit operators required transformation, too
             _input=BString.replace(_input," ~ "," not ");
@@ -152,52 +195,57 @@ public class PasGenerator extends Generator
             _input=BString.replace(_input,"<<"," shl ");
             _input=BString.replace(_input,">>"," shr ");
             // END KGU 2014-11-16
+            // START KGU 2015-11-02
+            _input = _input.replace(" % ", " mod ");
+            // END KGU 2015-11-02
             
-            StringList empty = new StringList();
-            empty.addByLength(D7Parser.preAlt);
-            empty.addByLength(D7Parser.postAlt);
-            empty.addByLength(D7Parser.preCase);
-            empty.addByLength(D7Parser.postCase);
-            empty.addByLength(D7Parser.preFor);
-            empty.addByLength(D7Parser.preWhile);
-            empty.addByLength(D7Parser.postWhile);
-            empty.addByLength(D7Parser.postRepeat);
-            empty.addByLength(D7Parser.preRepeat);
-            //System.out.println(empty);
-            for(int i=0;i<empty.count();i++)
-            {
-                _input=BString.replace(_input,empty.get(i),"");
-                //System.out.println(_input);
-                //System.out.println(i);
-            }
-            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
+//            StringList empty = new StringList();
+//            empty.addByLength(D7Parser.preAlt);
+//            empty.addByLength(D7Parser.postAlt);
+//            empty.addByLength(D7Parser.preCase);
+//            empty.addByLength(D7Parser.postCase);
+//            empty.addByLength(D7Parser.preFor);
+//            empty.addByLength(D7Parser.preWhile);
+//            empty.addByLength(D7Parser.postWhile);
+//            empty.addByLength(D7Parser.postRepeat);
+//            empty.addByLength(D7Parser.preRepeat);
+//            //System.out.println(empty);
+//            for(int i=0;i<empty.count();i++)
+//            {
+//                _input=BString.replace(_input,empty.get(i),"");
+//                //System.out.println(_input);
+//                //System.out.println(i);
+//            }
+//            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
+//
+//            
+///*
+//            if(!D7Parser.preAlt.equals("")){_input=BString.replace(_input,D7Parser.preAlt,"");}
+//            if(!D7Parser.postAlt.equals("")){_input=BString.replace(_input,D7Parser.postAlt,"");}
+//            if(!D7Parser.preCase.equals("")){_input=BString.replace(_input,D7Parser.preCase,"");}
+//            if(!D7Parser.postCase.equals("")){_input=BString.replace(_input,D7Parser.postCase,"");}
+//            if(!D7Parser.preFor.equals("")){_input=BString.replace(_input,D7Parser.preFor,"");}
+//            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
+//            if(!D7Parser.preWhile.equals("")){_input=BString.replace(_input,D7Parser.preWhile,"");}
+//            if(!D7Parser.postWhile.equals("")){_input=BString.replace(_input,D7Parser.postWhile,"");}
+//            if(!D7Parser.preRepeat.equals("")){_input=BString.replace(_input,D7Parser.preRepeat,"");}
+//            if(!D7Parser.postRepeat.equals("")){_input=BString.replace(_input,D7Parser.postRepeat,"");}
+//*/
+//
+//            /*Regex r;
+//            r = new Regex(BString.breakup(D7Parser.input)+"[ ](.*?)","readln($1)"); _input=r.replaceAll(_input);
+//            r = new Regex(BString.breakup(D7Parser.output)+"[ ](.*?)","writeln($1)"); _input=r.replaceAll(_input);
+//            r = new Regex(BString.breakup(D7Parser.input)+"(.*?)","readln($1)"); _input=r.replaceAll(_input);
+//            r = new Regex(BString.breakup(D7Parser.output)+"(.*?)","writeln($1)"); _input=r.replaceAll(_input);*/
+//
+//
+//            if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input+" ")>=0){_input=BString.replace(_input,D7Parser.input+" ","readln(")+")";}
+//            if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output+" ")>=0){_input=BString.replace(_input,D7Parser.output+" ","writeln(")+")";}
+//            if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input)>=0){_input=BString.replace(_input,D7Parser.input,"readln(")+")";}
+//            if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output)>=0){_input=BString.replace(_input,D7Parser.output,"writeln(")+")";}
 
-            
-/*
-            if(!D7Parser.preAlt.equals("")){_input=BString.replace(_input,D7Parser.preAlt,"");}
-            if(!D7Parser.postAlt.equals("")){_input=BString.replace(_input,D7Parser.postAlt,"");}
-            if(!D7Parser.preCase.equals("")){_input=BString.replace(_input,D7Parser.preCase,"");}
-            if(!D7Parser.postCase.equals("")){_input=BString.replace(_input,D7Parser.postCase,"");}
-            if(!D7Parser.preFor.equals("")){_input=BString.replace(_input,D7Parser.preFor,"");}
-            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
-            if(!D7Parser.preWhile.equals("")){_input=BString.replace(_input,D7Parser.preWhile,"");}
-            if(!D7Parser.postWhile.equals("")){_input=BString.replace(_input,D7Parser.postWhile,"");}
-            if(!D7Parser.preRepeat.equals("")){_input=BString.replace(_input,D7Parser.preRepeat,"");}
-            if(!D7Parser.postRepeat.equals("")){_input=BString.replace(_input,D7Parser.postRepeat,"");}
-*/
-
-            /*Regex r;
-            r = new Regex(BString.breakup(D7Parser.input)+"[ ](.*?)","readln($1)"); _input=r.replaceAll(_input);
-            r = new Regex(BString.breakup(D7Parser.output)+"[ ](.*?)","writeln($1)"); _input=r.replaceAll(_input);
-            r = new Regex(BString.breakup(D7Parser.input)+"(.*?)","readln($1)"); _input=r.replaceAll(_input);
-            r = new Regex(BString.breakup(D7Parser.output)+"(.*?)","writeln($1)"); _input=r.replaceAll(_input);*/
-
-
-            if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input+" ")>=0){_input=BString.replace(_input,D7Parser.input+" ","readln(")+")";}
-            if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output+" ")>=0){_input=BString.replace(_input,D7Parser.output+" ","writeln(")+")";}
-            if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input)>=0){_input=BString.replace(_input,D7Parser.input,"readln(")+")";}
-            if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output)>=0){_input=BString.replace(_input,D7Parser.output,"writeln(")+")";}
-
+            _input.replace("  ", " ");
+            _input.replace("  ", " ");
             return _input.trim();
     }
 
@@ -281,10 +329,33 @@ public class PasGenerator extends Generator
             insertComment(_for, _indent);
             // END KGU 2014-11-16
 
-            code.add(_indent+"for "+BString.replace(transform(_for.getText().getText()),"\n","").trim()+" do");
-            code.add(_indent+"begin");
-            generateCode(_for.q,_indent+this.getIndent());
-            code.add(_indent+"end;");
+            // START KGU#3 2015-11-02: New reliable loop parameter mechanism
+    		//code.add(_indent+"for "+BString.replace(transform(_for.getText().getText()),"\n","").trim()+" do");
+            //code.add(_indent + "begin");
+            //generateCode(_for.q, _indent+this.getIndent());
+        	String counter = _for.getCounterVar();
+            int step = _for.getStepConst();
+            if (Math.abs(step) == 1)
+            {
+            	// We may employ a For loop
+                String incr = (step == 1) ? " to " : " downto ";
+        		code.add(_indent + "for " + counter + " := " + transform(_for.getStartValue(), false) +
+        				incr + transform(_for.getEndValue(), false) + " do");
+            }
+            else
+            {
+            	// While loop required
+            	code.add(_indent + counter + " := " + transform(_for.getStartValue(), false));
+            	code.add(_indent + "while " + counter + ((step > 0) ? " <= " : " >= ") + transform(_for.getEndValue(), false) + " do");
+            }
+            code.add(_indent + "begin");
+            generateCode(_for.q, _indent+this.getIndent());
+            if (Math.abs(step) != 1)
+            {
+            	code.add(_indent + this.getIndent() + counter + " := " + counter + ((step > 0) ? " + " : " ") + step ); 
+            }
+            // END KGU#3 2015-11-02
+            code.add(_indent + "end;");
     }
 
     @Override

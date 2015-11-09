@@ -116,8 +116,50 @@ public class PythonGenerator extends Generator
 	    // END KGU 2015-10-18
 
 	    /************ Code Generation **************/
-		private String transform(String _input)
+	    
+		// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
+		/**
+		 * A pattern how to embed the variable (right-hand side of an input instruction)
+		 * into the target code
+		 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
+		 */
+		protected String getInputReplacer()
 		{
+			return "$1 = input(\"$1\")";
+		}
+
+		/**
+		 * A pattern how to embed the expression (right-hand side of an output instruction)
+		 * into the target code
+		 * @return a regex replacement pattern, e.g. "System.out.println($1);"
+		 */
+		protected String getOutputReplacer()
+		{
+			return "print($1)";
+		}
+
+		/**
+		 * Transforms assignments in the given intermediate-language code line.
+		 * Replaces "<-" by "="
+		 * @param _interm - a code line in intermediate syntax
+		 * @return transformed string
+		 */
+		protected String transformAssignment(String _interm)
+		{
+			return _interm.replace(" <- ", " = ");
+		}
+		// END KGU#18/KGU#23 2015-11-01
+	    
+	// START KGU#18/KGU#23 2015-11-01: Obsolete    
+//	    private String transform(String _input)
+		/* (non-Javadoc)
+		 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String)
+		 */
+		@Override
+		protected String transform(String _input)
+		{
+			
+			_input = super.transform(_input);
 			// et => and
 			// ou => or
 			// lire => readln()
@@ -128,28 +170,28 @@ public class PythonGenerator extends Generator
 			// à => "to"
 
                         String s = _input;
-                        
-                        // variable assignment
-                        // START KGU 2014-12-02: To achieve consistency with operator highlighting
-                        s=s.replace("<--", "<-");
-                        // END KGU 2014-12-02
-                        s=s.replace(":=", "<-");
-                        
-                        // testing
-                        // START KGU 2014-11-16: Otherwise this would end as "!=="
-                		s=s.replace("!=", "<>");
-                		// END 2014-11-16
-                        s=s.replace("=", "==");
-                        s=s.replace("<==", "<=");
-                        s=s.replace(">==", ">=");
-                        s=s.replace("<>", "!=");
-                        _input=s;
-
-                        // variable assignment
-			_input=BString.replace(_input," <- "," = ");
-			_input=BString.replace(_input,"<- "," = ");
-			_input=BString.replace(_input," <-"," = ");
-			_input=BString.replace(_input,"<-"," = ");
+//                        
+//                        // variable assignment
+//                        // START KGU 2014-12-02: To achieve consistency with operator highlighting
+//                        s=s.replace("<--", "<-");
+//                        // END KGU 2014-12-02
+//                        s=s.replace(":=", "<-");
+//                        
+//                        // testing
+//                        // START KGU 2014-11-16: Otherwise this would end as "!=="
+//                		s=s.replace("!=", "<>");
+//                		// END 2014-11-16
+//                        s=s.replace("=", "==");
+//                        s=s.replace("<==", "<=");
+//                        s=s.replace(">==", ">=");
+//                        s=s.replace("<>", "!=");
+//                        _input=s;
+//
+//                        // variable assignment
+//			_input=BString.replace(_input," <- "," = ");
+//			_input=BString.replace(_input,"<- "," = ");
+//			_input=BString.replace(_input," <-"," = ");
+//			_input=BString.replace(_input,"<-"," = ");
 
             // START KGU 2014-11-16: C comparison operator required conversion before logical ones
             _input=BString.replace(_input,"!="," <> ");
@@ -164,8 +206,8 @@ public class PythonGenerator extends Generator
             _input=BString.replace(_input," xor "," ^ ");            
             // END KGU 2014-11-16
             
-                        // convert Pascal operators
-                        _input=BString.replace(_input," mod "," % ");
+//                        // convert Pascal operators
+//                        _input=BString.replace(_input," mod "," % ");
                         _input=BString.replace(_input," div "," / ");
 
                         s = _input;
@@ -199,50 +241,50 @@ public class PythonGenerator extends Generator
 
                         _input = s;
 
-            StringList empty = new StringList();
-            empty.addByLength(D7Parser.preAlt);
-            empty.addByLength(D7Parser.postAlt);
-            empty.addByLength(D7Parser.preCase);
-            empty.addByLength(D7Parser.postCase);
-            empty.addByLength(D7Parser.preFor);
-            empty.addByLength(D7Parser.postFor);
-            empty.addByLength(D7Parser.preWhile);
-            empty.addByLength(D7Parser.postWhile);
-            empty.addByLength(D7Parser.postRepeat);
-            empty.addByLength(D7Parser.preRepeat);
-            //System.out.println(empty);
-            for(int i=0;i<empty.count();i++)
-            {
-                _input=BString.replace(_input,empty.get(i),"");
-                //System.out.println(i);
-            }
-            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
-
-            
-/*
-			if(!D7Parser.preAlt.equals("")){_input=BString.replace(_input,D7Parser.preAlt,"");}
-			if(!D7Parser.postAlt.equals("")){_input=BString.replace(_input,D7Parser.postAlt,"");}
-			if(!D7Parser.preCase.equals("")){_input=BString.replace(_input,D7Parser.preCase,"");}
-			if(!D7Parser.postCase.equals("")){_input=BString.replace(_input,D7Parser.postCase,"");}
-			if(!D7Parser.preFor.equals("")){_input=BString.replace(_input,D7Parser.preFor,"");}
-//			if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
-			if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"");}
-			if(!D7Parser.preWhile.equals("")){_input=BString.replace(_input,D7Parser.preWhile,"");}
-			if(!D7Parser.postWhile.equals("")){_input=BString.replace(_input,D7Parser.postWhile,"");}
-			if(!D7Parser.preRepeat.equals("")){_input=BString.replace(_input,D7Parser.preRepeat,"");}
-			if(!D7Parser.postRepeat.equals("")){_input=BString.replace(_input,D7Parser.postRepeat,"");}
-*/			
-			/*Regex r;
-			 r = new Regex(BString.breakup(D7Parser.input)+"[ ](.*?)","readln($1)"); _input=r.replaceAll(_input);
-			 r = new Regex(BString.breakup(D7Parser.output)+"[ ](.*?)","writeln($1)"); _input=r.replaceAll(_input);
-			 r = new Regex(BString.breakup(D7Parser.input)+"(.*?)","readln($1)"); _input=r.replaceAll(_input);
-			 r = new Regex(BString.breakup(D7Parser.output)+"(.*?)","writeln($1)"); _input=r.replaceAll(_input);*/
-			
-			
-			//if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input+" ")>=0){_input=BString.replace(_input,D7Parser.input+" ","")+" = input()";}
-			//if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output+" ")>=0){_input=BString.replace(_input,D7Parser.output+" ","print(")+")";}
-			if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input)>=0){_input=BString.replace(_input,D7Parser.input,"")+" = input('Eingabe: ')";}
-			if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output)>=0){_input=BString.replace(_input,D7Parser.output,"print(")+")";}
+//            StringList empty = new StringList();
+//            empty.addByLength(D7Parser.preAlt);
+//            empty.addByLength(D7Parser.postAlt);
+//            empty.addByLength(D7Parser.preCase);
+//            empty.addByLength(D7Parser.postCase);
+//            empty.addByLength(D7Parser.preFor);
+//            empty.addByLength(D7Parser.postFor);
+//            empty.addByLength(D7Parser.preWhile);
+//            empty.addByLength(D7Parser.postWhile);
+//            empty.addByLength(D7Parser.postRepeat);
+//            empty.addByLength(D7Parser.preRepeat);
+//            //System.out.println(empty);
+//            for(int i=0;i<empty.count();i++)
+//            {
+//                _input=BString.replace(_input,empty.get(i),"");
+//                //System.out.println(i);
+//            }
+//            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
+//
+//            
+///*
+//			if(!D7Parser.preAlt.equals("")){_input=BString.replace(_input,D7Parser.preAlt,"");}
+//			if(!D7Parser.postAlt.equals("")){_input=BString.replace(_input,D7Parser.postAlt,"");}
+//			if(!D7Parser.preCase.equals("")){_input=BString.replace(_input,D7Parser.preCase,"");}
+//			if(!D7Parser.postCase.equals("")){_input=BString.replace(_input,D7Parser.postCase,"");}
+//			if(!D7Parser.preFor.equals("")){_input=BString.replace(_input,D7Parser.preFor,"");}
+////			if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
+//			if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"");}
+//			if(!D7Parser.preWhile.equals("")){_input=BString.replace(_input,D7Parser.preWhile,"");}
+//			if(!D7Parser.postWhile.equals("")){_input=BString.replace(_input,D7Parser.postWhile,"");}
+//			if(!D7Parser.preRepeat.equals("")){_input=BString.replace(_input,D7Parser.preRepeat,"");}
+//			if(!D7Parser.postRepeat.equals("")){_input=BString.replace(_input,D7Parser.postRepeat,"");}
+//*/			
+//			/*Regex r;
+//			 r = new Regex(BString.breakup(D7Parser.input)+"[ ](.*?)","readln($1)"); _input=r.replaceAll(_input);
+//			 r = new Regex(BString.breakup(D7Parser.output)+"[ ](.*?)","writeln($1)"); _input=r.replaceAll(_input);
+//			 r = new Regex(BString.breakup(D7Parser.input)+"(.*?)","readln($1)"); _input=r.replaceAll(_input);
+//			 r = new Regex(BString.breakup(D7Parser.output)+"(.*?)","writeln($1)"); _input=r.replaceAll(_input);*/
+//			
+//			
+//			//if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input+" ")>=0){_input=BString.replace(_input,D7Parser.input+" ","")+" = input()";}
+//			//if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output+" ")>=0){_input=BString.replace(_input,D7Parser.output+" ","print(")+")";}
+//			if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input)>=0){_input=BString.replace(_input,D7Parser.input,"")+" = input('Eingabe: ')";}
+//			if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output)>=0){_input=BString.replace(_input,D7Parser.output,"print(")+")";}
 			
 			return _input.trim();
 		}
@@ -270,11 +312,11 @@ public class PythonGenerator extends Generator
 			if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 
 			code.add(_indent+"if "+condition+":");
-			generateCode((Subqueue) _alt.qTrue,_indent);
+			generateCode((Subqueue) _alt.qTrue,_indent + this.getIndent());
 			if(_alt.qFalse.getSize()!=0)
 			{
 				code.add(_indent+"else:");
-				generateCode((Subqueue) _alt.qFalse, _indent);
+				generateCode((Subqueue) _alt.qFalse, _indent + this.getIndent());
 			}
 			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
 			//code.add("");
@@ -291,21 +333,28 @@ public class PythonGenerator extends Generator
 			insertComment(_case, _indent);
 			// END KGU 2014-11-16
 
-			String condition = transform(_case.getText().get(0));
+			StringList lines = _case.getText();
+			String condition = transform(lines.get(0));
 
-			code.add(_indent+"if ("+condition+" == "+_case.getText().get(1).trim()+"):");
-			generateCode((Subqueue) _case.qs.get(0),_indent);
-			
-			for(int i=1;i<_case.qs.size()-1;i++)
-			{ 
-				code.add(_indent+"elif ("+condition+" == "+_case.getText().get(i+1).trim()+"):");
-				generateCode((Subqueue) _case.qs.get(i),_indent);
+			for(int i=0; i<_case.qs.size()-1; i++)
+			{
+				String caseline = _indent + ((i == 0) ? "if" : "elif") + " (";
+	    		// START KGU#15 2015-10-21: Support for multiple constants per branch
+	    		StringList constants = StringList.explode(lines.get(i+1), ",");
+	    		for (int j = 0; j < constants.count(); j++)
+	    		{
+	    			if (j > 0) caseline = caseline + " or ";
+	    			caseline = caseline + "(" + condition + ") == " + constants.get(j).trim();
+	    		}
+	    		// END KGU#15 2015-10-21
+				code.add(caseline + ") :");
+				generateCode((Subqueue) _case.qs.get(i), _indent + this.getIndent());
 			}
 			
 			if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
 			{
-				code.add(_indent+"else:");
-				generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent);
+				code.add(_indent + "else:");
+				generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent + this.getIndent());
 			}
 			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
 			//code.add("");
@@ -339,7 +388,7 @@ public class PythonGenerator extends Generator
 				stepValueStr = "1";
 			}
 			code.add(_indent+"for "+counterStr+" in range("+startValueStr+", "+endValueStr+", "+stepValueStr+"):");
-			generateCode((Subqueue) _for.q,_indent);
+			generateCode((Subqueue) _for.q,_indent + this.getIndent());
 			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
 			//code.add("");
 			if (code.count() > 0 && !code.get(code.count()-1).isEmpty())
@@ -359,7 +408,7 @@ public class PythonGenerator extends Generator
 			if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 			
 			code.add(_indent+"while "+condition+":");
-			generateCode((Subqueue) _while.q,_indent);
+			generateCode((Subqueue) _while.q, _indent + this.getIndent());
 			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
 			//code.add("");
 			if (code.count() > 0 && !code.get(code.count()-1).isEmpty())
@@ -375,7 +424,7 @@ public class PythonGenerator extends Generator
 			insertComment(_repeat, _indent);
 			// END KGU 2014-11-16
             code.add(_indent+"while True:");
-            generateCode((Subqueue) _repeat.q,_indent);
+            generateCode((Subqueue) _repeat. q,_indent + this.getIndent());
             // START KGU#54 2015-10-19: Why should the last two rows be empty? They aren't! This strange behaviour ate code lines! 
             //code.delete(code.count()-1); // delete empty row
             //code.delete(code.count()-1); // delete empty row
@@ -396,7 +445,7 @@ public class PythonGenerator extends Generator
 			insertComment(_forever, _indent);
 			// END KGU 2014-11-16
 			code.add(_indent+"while True:");
-			generateCode((Subqueue) _forever.q,_indent);
+			generateCode((Subqueue) _forever.q, _indent + this.getIndent());
 			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
 			//code.add("");
 			if (code.count() > 0 && !code.get(code.count()-1).isEmpty())
@@ -434,15 +483,17 @@ public class PythonGenerator extends Generator
 			}
 		}
 		
-		protected void generateCode(Subqueue _subqueue, String _indent)
-		{
-			// code.add(_indent+"");
-			for(int i=0;i<_subqueue.children.size();i++)
-			{
-				generateCode((Element) _subqueue.children.get(i),_indent+this.getIndent());
-			}
-			// code.add(_indent+"");
-		}
+		// START KGU#18/KGU#23 2015-11-02: Use inhherited method
+//		protected void generateCode(Subqueue _subqueue, String _indent)
+//		{
+//			// code.add(_indent+"");
+//			for(int i=0;i<_subqueue.children.size();i++)
+//			{
+//				generateCode((Element) _subqueue.children.get(i),_indent);
+//			}
+//			// code.add(_indent+"");
+//		}
+		// END KGU#18/KGU#23 2015-11-02
 		
 		public String generateCode(Root _root, String _indent)
 		{
