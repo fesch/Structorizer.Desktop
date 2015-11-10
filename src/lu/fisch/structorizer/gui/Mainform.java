@@ -41,6 +41,9 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************
  *
  *      Comment:		/
+ *      2015.11.10 Window Closing problem (Kay Gürtzig, KGU#49/KGU#66)
+ *      - Issues #6/#17 hadn't been solved in the intended way since the default action had still been
+ *        EXIT_ON_CLOSE instead of just disposing.
  *      2015.10.30 (Kay Gürtzig)
  *      - if on closing the window the user cancels an option dialog asking him or her whether or not to save
  *        the diagram changes then the Mainform is to be prevented from closing. If the Mainform runs as
@@ -141,6 +144,7 @@ public class Mainform  extends JFrame implements NSDController
 		/******************************
 		 * Set onClose event
 		 ******************************/
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);                                                    	
 		addWindowListener(new WindowAdapter() 
 		{  
 			@Override
@@ -148,12 +152,11 @@ public class Mainform  extends JFrame implements NSDController
 			{
 				if (diagram.saveNSD(true))
 				{
-					// Close (and make sure that this keeps standard behaviour)
-					// START KGU#66 #6/#17 2015-11-10: EXIT killed any owners
-					//setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-					setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-					// END KGU#66 #6/#17 2015-11-10
 					saveToINI();
+					// START KGU#66 #6/#17 2015-11-10: EXIT killed any owners as well
+					//System.exit(0);
+					dispose();
+					// END KGU#66 #6/#17 2015-11-10
 				}
 				else
 				{
