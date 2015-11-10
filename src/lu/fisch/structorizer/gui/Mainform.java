@@ -36,6 +36,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.10.18      Methods getRoot(), setRoot() introduced to ease Arranger handling (KGU#48)
  *      Kay Gürtzig     2015.10.30      Issue #6 fixed properly (see comment)
  *      Kay Gürtzig     2015.11.03      check_14 property added (For loop enhancement, #10 = KGU#3)
+ *      Kay Gürtzig     2015.11.10      Issues #6 and #17 finally fixed by appropriate default window behaviour
  *
  ******************************************************************************************************
  *
@@ -148,7 +149,10 @@ public class Mainform  extends JFrame implements NSDController
 				if (diagram.saveNSD(true))
 				{
 					// Close (and make sure that this keeps standard behaviour)
-					setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+					// START KGU#66 #6/#17 2015-11-10: EXIT killed any owners
+					//setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+					setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+					// END KGU#66 #6/#17 2015-11-10
 					saveToINI();
 				}
 				else
