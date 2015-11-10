@@ -43,7 +43,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2014.11.16		Bugfixes in operator conversion
  *      Kay Gürtzig             2015.10.18		Indentation and comment mechanisms revised, bugfix
  *      Kay Gürtzig             2015.10.21		New generator now supports multiple-case branches
- *      Kay Gürtzig             2015.11.01      Language transforming reorganised, FOR loop revision
+ *      Kay Gürtzig             2015.11.01		Language transforming reorganised, FOR loop revision
+ *      Kay Gürtzig             2015.11.10		Bugfixes KGU#71, KGU#72
  *
  ******************************************************************************************************
  *
@@ -179,117 +180,14 @@ public class CGenerator extends Generator
 	protected String transform(String _input)
 	{
 		_input = super.transform(_input);
-//    	// START KGU#18/KGU#23 2015-11-01: unified pre-processing
-//            // et => and
-//            // ou => or
-//            // lire => readln()
-//            // écrire => writeln()
-//            // tant que => ""
-//            // pour => ""
-//            // jusqu'à => ""
-//            // à => "to"
-//    	
-//            String s = _input.trim();	// KGU#54
-//            // variable assignment
-//            // START KGU 2014-12-02: To achieve consistency with operator highlighting
-//            s=s.replace("<--", "<-");
-//            // END KGU 2014-12-02
-//            s=s.replace(":=", "<-");
-//            // testing
-//            s=s.replace("==", "=");
-//            // START KGU 2014-11-16: Otherwise this would end as "!=="
-//    		s=s.replace("!=", "<>");
-//    		// END 2014-11-16
-//            s=s.replace("=", "==");
-//            s=s.replace("<==", "<=");
-//            s=s.replace(">==", ">=");
-//            s=s.replace("<>", "!=");
-//            _input=s;
-//
-//            // variable assignment
-//            _input=BString.replace(_input," <- "," = ");
-//            _input=BString.replace(_input,"<- "," = ");
-//            _input=BString.replace(_input," <-"," = ");
-//            _input=BString.replace(_input,"<-"," = ");
-//
-//            // convert Pascal operators
-//            _input=BString.replace(_input," mod "," % ");
-//            _input=BString.replace(_input," div "," / ");
-//            // START KGU 2014-11-06 Support for Pascal-style logical operators as well
-//            _input=BString.replace(_input," and "," && ");
-//            _input=BString.replace(_input," or "," || ");
-//            _input=BString.replace(_input," not "," !");
-//            // START KGU 2014-11-16: Was too simple in the first place, but now it's clumsy...
-//            _input=BString.replace(_input,"(not ", "(!");
-//            _input=BString.replace(_input," not(", " !(");
-//            _input=BString.replace(_input,"(not(", "(!(");
-//           	if (_input.startsWith("not ") || _input.startsWith("not(")) {
-//           		_input = "!" + _input.substring(3);
-//           	}
-//            _input=BString.replace(_input," xor "," ^ ");	// Might cause some operator preference trouble
-//           	// END KGU 2014-11-16
-//            // END KGU 2014-11-06
-//
-//            StringList empty = new StringList();
-//            empty.addByLength(D7Parser.preAlt);
-//            empty.addByLength(D7Parser.postAlt);
-//            empty.addByLength(D7Parser.preCase);
-//            empty.addByLength(D7Parser.postCase);
-//            empty.addByLength(D7Parser.preFor);
-//            //empty.addByLength(D7Parser.postFor);
-//            empty.addByLength(D7Parser.preWhile);
-//            empty.addByLength(D7Parser.postWhile);
-//            empty.addByLength(D7Parser.postRepeat);
-//            empty.addByLength(D7Parser.preRepeat);
-//            //System.out.println(empty);
-//            //System.out.println(_input);
-//            for(int i=0;i<empty.count();i++)
-//            {
-//                _input=BString.replace(_input,empty.get(i),"");
-//                //System.out.println(_input);
-//                //System.out.println(i);
-//            }
-//            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor," to ");}
-//
-//            
-///*            
-//            if(!D7Parser.preAlt.equals("")){_input=BString.replace(_input,D7Parser.preAlt,"");}
-//            if(!D7Parser.postAlt.equals("")){_input=BString.replace(_input,D7Parser.postAlt,"");}
-//            if(!D7Parser.preCase.equals("")){_input=BString.replace(_input,D7Parser.preCase,"");}
-//            if(!D7Parser.postCase.equals("")){_input=BString.replace(_input,D7Parser.postCase,"");}
-//            if(!D7Parser.preFor.equals("")){_input=BString.replace(_input,D7Parser.preFor,"");}
-//            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
-//            if(!D7Parser.preWhile.equals("")){_input=BString.replace(_input,D7Parser.preWhile,"");}
-//            if(!D7Parser.postWhile.equals("")){_input=BString.replace(_input,D7Parser.postWhile,"");}
-//            if(!D7Parser.preRepeat.equals("")){_input=BString.replace(_input,D7Parser.preRepeat,"");}
-//            if(!D7Parser.postRepeat.equals("")){_input=BString.replace(_input,D7Parser.postRepeat,"");}
-//*/
-//            
-//            /*Regex r;
-//             r = new Regex(BString.breakup(D7Parser.input)+"[ ](.*?)","readln($1)"); _input=r.replaceAll(_input);
-//             r = new Regex(BString.breakup(D7Parser.output)+"[ ](.*?)","writeln($1)"); _input=r.replaceAll(_input);
-//             r = new Regex(BString.breakup(D7Parser.input)+"(.*?)","readln($1)"); _input=r.replaceAll(_input);
-//             r = new Regex(BString.breakup(D7Parser.output)+"(.*?)","writeln($1)"); _input=r.replaceAll(_input);*/
-//     	
-//    	_input = _input.trim();
-//    	// Between the input keyword and the variable name there MUST be some blank...
-//    	String marker = D7Parser.input.trim();
-//    	if (!marker.isEmpty() && _input.startsWith(marker+" "))
-//    	{
-//    		_input = BString.replace(_input, marker + " ", "scanf(\"\", &") + ")";
-//    	}
-//
-//    	marker = D7Parser.output.trim();
-//    	if (!marker.isEmpty() && _input.startsWith(marker) &&
-//    			_input.length() > marker.length() &&
-//    			!Character.isJavaIdentifierPart(_input.charAt(marker.length())))
-//    	{
-//    		_input = BString.replace(_input, marker + " ", "printf(\"\",") + "); printf(\"\\n\")";
-//    	}
-// END KGU#18/KGU#23 2015-11-01
-    	_input.replace(" div ", " / ");
-    	return _input.trim();
-    }
+
+		// START KGU#72 2015-11-10: Replacement was done but ineffective
+		//_input.replace(" div ", " / ");
+		_input = _input.replace(" div ", " / ");
+		// END KGU#72 2015-11-10
+		
+		return _input.trim();
+	}
     
     
     @Override
@@ -371,7 +269,13 @@ public class CGenerator extends Generator
     	if (!lines.get(_case.qs.size()).trim().equals("%"))
     	{
     		code.add(_indent + "default:");
-    		generateCode((Subqueue)_case.qs.get(_case.qs.size()-1), _indent+this.getIndent());
+    		Subqueue squeue = (Subqueue)_case.qs.get(_case.qs.size()-1);
+    		generateCode(squeue, _indent+this.getIndent());
+    		// START KGU#71 2015-11-10: For an empty default branch, at least a semicolon is required
+    		if (squeue.children.size() == 0) {
+    			code.add(_indent + this.getIndent() + ";");
+    		}
+    		// END KGU#71 2015-11-10
     	}
     	code.add(_indent+"}");
     }
