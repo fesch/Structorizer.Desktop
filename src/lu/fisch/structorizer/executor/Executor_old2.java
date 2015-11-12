@@ -1027,7 +1027,7 @@ public class Executor_old2 implements Runnable
                     str = BString.replace(str, D7Parser.postFor, "<=");
                 }
                 // do other transformations
-                str = CGenerator.transform(str);
+//                str = CGenerator.transform(str);
                 String counter = str.substring(0, str.indexOf("="));
                 // complete
 
