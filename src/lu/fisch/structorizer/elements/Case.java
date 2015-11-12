@@ -149,6 +149,25 @@ public class Case extends Element
             setText(_strings);
     }
 
+	// START KGU#64 2015-11-03: Is to improve drawing performance
+	/**
+	 * Recursively clears all drawing info this subtree down
+	 * (To be overridden by structured sub-classes!)
+	 */
+	@Override
+	public void resetDrawingInfoDown()
+	{
+		this.resetDrawingInfo();
+		if (qs != null)
+		{
+			for (int i = 0; i < qs.size(); i++)
+			{
+				qs.get(i).resetDrawingInfoDown();
+			}
+		}
+	}
+	// END KGU#64 2015-11-03    
+    
     public Rect prepareDraw(Canvas _canvas)
     {
             if(isCollapsed()) 
@@ -486,7 +505,7 @@ public class Case extends Element
             return ele;
     }
 
-    // START KGU 2015-10-12
+    // START KGU#43 2015-10-12
     @Override
     public void clearBreakpoints()
     {
@@ -499,9 +518,9 @@ public class Case extends Element
     		}
     	}
     }
-    // END KGU 2015-10-12
+    // END KGU#43 2015-10-12
 
-    // START KGU 2015-10-13
+    // START KGU#43 2015-10-13
     @Override
     public void clearExecutionStatus()
     {
@@ -514,7 +533,7 @@ public class Case extends Element
     		}
     	}
     }
-    // END KGU 2015-10-13
+    // END KGU#43 2015-10-13
 
 	// START KGU 2015-10-16
 	/* (non-Javadoc)

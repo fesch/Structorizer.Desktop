@@ -35,6 +35,8 @@
  *      Kay Gürtzig		2014.12.02		ExportOptionDialoge and further messages added
  *      Kay Gürtzig 	2015.10.06		altPadRight added to Preferences dialog
  *      Kay Gürtzig 	2015.10.16		Several additions to Editor and InputBox
+ *      Kay Gürtzig 	2015.11.03		Additions to Menu (errors) and AnalyserPreferences
+ *      Kay Gürtzig 	2015.11.09		Additions for ParserPreferences
  *
  ******************************************************************************************************
  *
@@ -48,6 +50,7 @@ Menu.menuFile.text=File
 // Submenus of "File"
 Menu.menuFileNew.text=New
 Menu.menuFileOpen.text=Open ...
+Menu.menuFileOpenRecent.text=Open Recent File
 Menu.menuFileSave.text=Save
 Menu.menuFileSaveAs.text=Save As ...
 Menu.menuFileExport.text=Export
@@ -172,6 +175,8 @@ Menu.error11.text=You probably made an assignment error. Please check this instr
 Menu.error12.text=The parameter «%» must start with the letter "p" followed by only uppercase letters!
 Menu.error13_1.text=Your function does not return any result!
 Menu.error13_2.text=Your function may not return a result!
+Menu.error14_1.text=The FOR loop parameters are not consistent to the loop heading text!
+Menu.error14_2.text=The FOR loop step value («%») is not a legal integer constant!
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Analyser preferences
@@ -188,6 +193,7 @@ AnalyserPreferences.check10.text=Check for instructions with multiple commands.
 AnalyserPreferences.check11.text=Check for assignment errors.
 AnalyserPreferences.check12.text=Check for standardized parameter name. (LUX/MEN)
 AnalyserPreferences.check13.text=Check if, in case of a function, it returns a result.
+AnalyserPreferences.check14.text=Check for consistency of FOR loop parameters.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -421,6 +427,7 @@ ParserPreferences.lblCase.text=CASE statement
 ParserPreferences.lblCase.tooltip=
 ParserPreferences.lblFor.text=FOR loop
 ParserPreferences.lblFor.tooltip=
+ParserPreferences.lblForStep.text=Step separator
 ParserPreferences.lblWhile.text=WHILE loop
 ParserPreferences.lblWhile.tooltip=
 ParserPreferences.lblRepeat.text=REPEAT loop

@@ -36,7 +36,7 @@ package lu.fisch.structorizer.gui;
  *
  ******************************************************************************************************
  *
- *      Comment:		I used JFormDesigner to desin this window graphically.
+ *      Comment:		I used JFormDesigner to design this window graphically.
  *
  ******************************************************************************************************///
 

@@ -35,10 +35,15 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2007.12.11      First Issue
  *      Kay Gürtzig     2015.10.18      Methods getRoot(), setRoot() introduced to ease Arranger handling (KGU#48)
  *      Kay Gürtzig     2015.10.30      Issue #6 fixed properly (see comment)
+ *      Kay Gürtzig     2015.11.03      check_14 property added (For loop enhancement, #10 = KGU#3)
+ *      Kay Gürtzig     2015.11.10      Issues #6 and #17 finally fixed by appropriate default window behaviour
  *
  ******************************************************************************************************
  *
  *      Comment:		/
+ *      2015.11.10 Window Closing problem (Kay Gürtzig, KGU#49/KGU#66)
+ *      - Issues #6/#17 hadn't been solved in the intended way since the default action had still been
+ *        EXIT_ON_CLOSE instead of just disposing.
  *      2015.10.30 (Kay Gürtzig)
  *      - if on closing the window the user cancels an option dialog asking him or her whether or not to save
  *        the diagram changes then the Mainform is to be prevented from closing. If the Mainform runs as
@@ -139,6 +144,7 @@ public class Mainform  extends JFrame implements NSDController
 		/******************************
 		 * Set onClose event
 		 ******************************/
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);                                                    	
 		addWindowListener(new WindowAdapter() 
 		{  
 			@Override
@@ -146,9 +152,11 @@ public class Mainform  extends JFrame implements NSDController
 			{
 				if (diagram.saveNSD(true))
 				{
-					// Close (and make sure that this keeps standard behaviour)
-					setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 					saveToINI();
+					// START KGU#66 #6/#17 2015-11-10: EXIT killed any owners as well
+					//System.exit(0);
+					dispose();
+					// END KGU#66 #6/#17 2015-11-10
 				}
 				else
 				{
@@ -315,6 +323,9 @@ public class Mainform  extends JFrame implements NSDController
 			Root.check11 = ini.getProperty("check11","1").equals("1");
 			Root.check12 = ini.getProperty("check12","1").equals("1");
 			Root.check13 = ini.getProperty("check13","1").equals("1");
+			// START KGU#3 2015-11-03: New check for enhanced FOR loops
+			Root.check14 = ini.getProperty("check14","1").equals("1");
+			// END KGU#3 2015-11-03
 
 			
 			doButtons();

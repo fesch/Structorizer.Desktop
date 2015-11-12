@@ -34,6 +34,7 @@ package lu.fisch.structorizer.gui;
  *      ------			----			-----------
  *      Bob Fisch       2007.12.30      First Issue
  *		Bob Fisch		2008.04.12		Adapted for Generator plugin
+ *		Kay Gürtzig		2015.11.03		Additions for FOR loop enhancement (KGU#3)
  *
  ******************************************************************************************************
  *
@@ -212,8 +213,10 @@ public class Menu extends JMenuBar implements NSDController
 	public static JLabel error12 = new JLabel("The parameter «%» must start with the letter \"p\" followed by only uppercase letters!");
 	public static JLabel error13_1 = new JLabel("Your function does not return any result!");
 	public static JLabel error13_2 = new JLabel("Your function may not return a result!");
-
-
+	// START KGU#3 2015-11-03: New checks for the enhanced For loop
+	public static JLabel error14_1 = new JLabel("The FOR loop parameters are not consistent to the loop heading text!");
+	public static JLabel error14_2 = new JLabel("The FOR loop step value («%») is not a legal integer constant!");
+	// END KGU#3 2015-11-03
 
 
 	public void create()
@@ -316,8 +319,17 @@ public class Menu extends JMenuBar implements NSDController
 
 		menuFile.add(menuFileQuit);
 		menuFileQuit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		menuFileQuit.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { System.exit(0); } } );
-
+		// START KGU#66 2015-11-05: hard exiting here fails to induce the file save dialog in case of unsaved changes and will kill a related Arranger!
+		//menuFileQuit.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { System.exit(0); } } );
+		menuFileQuit.addActionListener(
+				new ActionListener() {
+					public void actionPerformed(ActionEvent event)
+					{
+						// Simulate the [x] button - this is the best we can do, Mainform will handle it properly
+						getFrame().dispatchEvent(new WindowEvent(getFrame(), WindowEvent.WINDOW_CLOSING));
+					}
+				} );
+		// KGU#66 2015-11-05
 
 		// Setting up Menu "Edit" with all submenus and shortcuts and actions
 		menubar.add(menuEdit);

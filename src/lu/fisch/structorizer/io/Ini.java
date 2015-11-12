@@ -215,7 +215,7 @@ public class Ini
 			System.out.println(e.getMessage());
 		}
 
-		// does the alternatve file exists?
+		// does the alternative file exist?
 		try
 		{
 			file = new File(filename2);
@@ -232,7 +232,7 @@ public class Ini
 		// JOptionPane.showMessageDialog(null,
 		// filename2+" ==> "+alternateExists);
 
-		// if ano file has been found
+		// if no file has been found
 		if (!regularExists & !alternateExists)
 		{
 			// create the regular one

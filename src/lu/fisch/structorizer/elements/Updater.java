@@ -34,7 +34,7 @@ public interface Updater
      */
     public void update(Root source);
     
-    // START KGU 2015-10-17: This offers a way to keep track of a Root replacement in an associated form
+    // START KGU#48 2015-10-17: This offers a way to keep track of a Root replacement in an associated form
     /**
      * When a registered Root has been be replaced in its Mainform, here is the method to be called in
      * order to allow the Updater to keep track of the replacement and to register updater with the new Root.
@@ -49,6 +49,6 @@ public interface Updater
      * @return a collection of Root objects responding to the passed-in name
      */
     public Vector<Root> findSourcesByName(String rootName);
-    // END KGU 2015-10-17
+    // END KGU#48 2015-10-17
 }
 

@@ -24,7 +24,10 @@ package lu.fisch.structorizer.arranger;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    This class represents an Element-related Analyser issue for the error list.
+ *      Description:    This class offers an opportunity to graphically arrange several NSD diagrams
+ *                      within one and the same drawing area. While related to owned Structorizers, the
+ *                      diagrams will fully and synchronously reflect all status changes (selection,
+ *                      execution, ...)
  *
  ******************************************************************************************************
  *
@@ -32,7 +35,7 @@ package lu.fisch.structorizer.arranger;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       				First Issue
+ *      Bob Fisch       2009.08.18		First Issue
  *		Kay Gürtzig     2015.10.18		Transient WindowsListener added enabling Surface to have dirty diagrams saved before exit
  *
  ******************************************************************************************************

@@ -109,8 +109,45 @@ public class OberonGenerator extends Generator {
     // END KGU 2015-10-18
 	
 	/************ Code Generation **************/
-	private String transform(String _input)
+
+	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
+	/**
+	 * A pattern how to embed the variable (right-hand side of an input instruction)
+	 * into the target code
+	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
+	 */
+	protected String getInputReplacer()
 	{
+		return "In.TYPE($1);";
+	}
+
+	/**
+	 * A pattern how to embed the expression (right-hand side of an output instruction)
+	 * into the target code
+	 * @return a regex replacement pattern, e.g. "System.out.println($1);"
+	 */
+	protected String getOutputReplacer()
+	{
+		return "Out.TYPE($1);";
+	}
+
+	/**
+	 * Transforms assignments in the given intermediate-language code line.
+	 * Replaces "<-" by "="
+	 * @param _interm - a code line in intermediate syntax
+	 * @return transformed string
+	 */
+	protected String transformAssignment(String _interm)
+	{
+		return _interm.replace(" <- ", " := ");
+	}
+	// END KGU#18/KGU#23 2015-11-01
+    
+	protected String transform(String _input)
+	{
+		// START KGU#18/KGU#23 2015-11-02
+		_input = super.transform(_input);
+		// END KGU#18/KGU#23 2015-11-02
 		// et => and
 		// ou => or
 		// lire => readln()
@@ -121,51 +158,52 @@ public class OberonGenerator extends Generator {
 		// à => "to"
 	
         // START KGU 2014-12-02: To achieve consistency with operator highlighting
-        _input=BString.replace(_input,"<--", "<-");
+        //nput=BString.replace(_input,"<--", "<-");
         // END KGU 2014-12-02
-		_input=BString.replace(_input," <- "," := ");
-		_input=BString.replace(_input,"<- "," := ");
-		_input=BString.replace(_input," <-"," := ");
-		_input=BString.replace(_input,"<-"," := ");
+		//_input=BString.replace(_input," <- "," := ");
+		//_input=BString.replace(_input,"<- "," := ");
+		//_input=BString.replace(_input," <-"," := ");
+		//_input=BString.replace(_input,"<-"," := ");
 		// START KGU 2014-11-16: Comparison operator had to be converted properly first
-        _input=BString.replace(_input,"!=","#");
-        _input=BString.replace(_input,"<>","#");
+        _input=BString.replace(_input," == "," = ");
+        _input=BString.replace(_input," != "," # ");
+        _input=BString.replace(_input," <> "," # ");
         // C and Pascal division operators
         _input=BString.replace(_input," div "," DIV ");
-        _input=BString.replace(_input," mod "," MOD ");
+        //_input=BString.replace(_input," mod "," MOD ");
         _input=BString.replace(_input," % "," MOD ");
-        _input=BString.replace(_input,"%"," MOD ");
+        //_input=BString.replace(_input,"%"," MOD ");
         // logical operators required transformation, too
-        _input=BString.replace(_input," and "," & ");
+        //_input=BString.replace(_input," and "," & ");
         _input=BString.replace(_input," && "," & ");
-        _input=BString.replace(_input," or "," OR ");
+        //_input=BString.replace(_input," or "," OR ");
         _input=BString.replace(_input," || "," OR ");
-        _input=BString.replace(_input," not "," ~ ");
+        //_input=BString.replace(_input," not "," ~ ");
         _input=BString.replace(_input," ! "," ~ ");
-        _input=BString.replace(_input,"&&"," & ");
-        _input=BString.replace(_input,"||"," OR ");
+        //_input=BString.replace(_input,"&&"," & ");
+        //_input=BString.replace(_input,"||"," OR ");
         _input=BString.replace(_input,"!"," ~ ");
         // END KGU 2014-11-16
 
-            // BEGIN: Added 2011.11.07 by Bob Fisch
-            StringList empty = new StringList();
-            empty.addByLength(D7Parser.preAlt);
-            empty.addByLength(D7Parser.postAlt);
-            empty.addByLength(D7Parser.preCase);
-            empty.addByLength(D7Parser.postCase);
-            empty.addByLength(D7Parser.preFor);
-            empty.addByLength(D7Parser.postFor);
-            empty.addByLength(D7Parser.preWhile);
-            empty.addByLength(D7Parser.postWhile);
-            empty.addByLength(D7Parser.postRepeat);
-            empty.addByLength(D7Parser.preRepeat);
-            //System.out.println(empty);
-            for(int i=0;i<empty.count();i++)
-            {
-                _input=BString.replace(_input,empty.get(i),"");
-                //System.out.println(i);
-            }
-            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"TO");}
+//            // BEGIN: Added 2011.11.07 by Bob Fisch
+//            StringList empty = new StringList();
+//            empty.addByLength(D7Parser.preAlt);
+//            empty.addByLength(D7Parser.postAlt);
+//            empty.addByLength(D7Parser.preCase);
+//            empty.addByLength(D7Parser.postCase);
+//            empty.addByLength(D7Parser.preFor);
+//            empty.addByLength(D7Parser.postFor);
+//            empty.addByLength(D7Parser.preWhile);
+//            empty.addByLength(D7Parser.postWhile);
+//            empty.addByLength(D7Parser.postRepeat);
+//            empty.addByLength(D7Parser.preRepeat);
+//            //System.out.println(empty);
+//            for(int i=0;i<empty.count();i++)
+//            {
+//                _input=BString.replace(_input,empty.get(i),"");
+//                //System.out.println(i);
+//            }
+//            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"TO");}
 
             
 /*		
@@ -213,9 +251,9 @@ public class OberonGenerator extends Generator {
         // START KGU 2014-11-16
         insertComment(_alt, _indent);
         // END KGU 2014-11-16
-		code.add(_indent+"IF "+BString.replace(transform(_alt.getText().getText()),"\n","")+" THEN");
-		generateCode(_alt.qTrue,_indent+this.getIndent());
-		if(_alt.qFalse.getSize()!=0)
+		code.add(_indent+"IF "+ transform(_alt.getText().getLongString()) + " THEN");
+		generateCode(_alt.qTrue, _indent+this.getIndent());
+		if (_alt.qFalse.getSize()!=0)
 		{
 			code.add(_indent+"END");
 			code.add(_indent+"ELSE");
@@ -257,7 +295,13 @@ public class OberonGenerator extends Generator {
         // START KGU 2014-11-16
         insertComment(_for, _indent);
         // END KGU 2014-11-16
-		code.add(_indent+"FOR "+BString.replace(transform(_for.getText().getText()),"\n","")+" DO");
+        // START KGU#3 2015-11-02: New reliable loop parameter mechanism
+		//code.add(_indent+"FOR "+BString.replace(transform(_for.getText().getText()),"\n","")+" DO");
+        int step = _for.getStepConst();
+        String incr = (step == 1) ? "" : " BY "+ step;
+		code.add(_indent + "FOR " + _for.getCounterVar() + " := " + transform(_for.getStartValue(), false) +
+				" TO " + transform(_for.getEndValue(), false) + incr +" DO");
+		// END KGU#3 2015-11-02
 		generateCode(_for.q,_indent+this.getIndent());
 		code.add(_indent+"END;");
 	}

@@ -31,21 +31,31 @@ package lu.fisch.structorizer.generators;
  *      Revision List
  *
  *      Author          		Date			Description
- *      ------				----			-----------
- *      Bob Fisch       		2008.11.17              First Issue
- *      Gunter Schillebeeckx            2009.08.10		Bugfixes (see comment)
- *      Bob Fisch                       2009.08.17              Bugfixes (see comment)
- *      Bob Fisch                       2010.08-30              Different fixes asked by Kay Gürtzig
- *                                                              and Peter Ehrlich
- *      Kay Gürtzig                     2010.09.10              Bugfixes and cosmetics (see comment)
- *      Bob Fisch                       2011.11.07              Fixed an issue while doing replacements
- *      Kay Gürtzig                     2014.11.06              Support for logical Pascal operators added
- *      Kay Gürtzig                     2014.11.16              Bugfixes in operator conversion
- *      Kay Gürtzig                     2015.10.18              Indentation and comment mechanisms revised, bugfix
+ *      ------					----			-----------
+ *      Bob Fisch       	    2008.11.17		First Issue
+ *      Gunter Schillebeeckx    2009.08.10		Bugfixes (see comment)
+ *      Bob Fisch               2009.08.17		Bugfixes (see comment)
+ *      Bob Fisch               2010.08-30		Different fixes asked by Kay Gürtzig
+ *                                        		and Peter Ehrlich
+ *      Kay Gürtzig             2010.09.10		Bugfixes and cosmetics (see comment)
+ *      Bob Fisch               2011.11.07		Fixed an issue while doing replacements
+ *      Kay Gürtzig             2014.11.06		Support for logical Pascal operators added
+ *      Kay Gürtzig             2014.11.16		Bugfixes in operator conversion
+ *      Kay Gürtzig             2015.10.18		Indentation and comment mechanisms revised, bugfix
+ *      Kay Gürtzig             2015.10.21		New generator now supports multiple-case branches
+ *      Kay Gürtzig             2015.11.01		Language transforming reorganised, FOR loop revision
+ *      Kay Gürtzig             2015.11.10		Bugfixes KGU#71, KGU#72
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      
+ *      2015-11-01 - Code revision / enhancements
+ *      - Most of the transform stuff delegated to Element and Generator (KGU#18/KGU23)
+ *      - Enhancement #10 (KGU#3): FOR loops now provide themselves more reliable loop parameters  
+ *      
+ *      2015.10.21 - Enhancement KGU#15: Case element with comma-separated constant list per branch
+ *      
  *      2015.10.18 - Bugfixes and modificatons (Kay Gürtzig)
  *      - Bugfix: The export option "export instructions as comments" had been ignored before
  *      - An empty Jump element will now be translated into a break; instruction by default.
@@ -121,119 +131,69 @@ public class CGenerator extends Generator
     @Override
     protected String commentSymbolLeft()
     {
-    	// In ANCI C99, line comments are already allowed
+    	// In ANSI C99, line comments are already allowed
     	return "//";
     }
     // END KGU 2015-10-18
 
     /************ Code Generation **************/
-    public static String transform(String _input)
-    {
-            // et => and
-            // ou => or
-            // lire => readln()
-            // écrire => writeln()
-            // tant que => ""
-            // pour => ""
-            // jusqu'à => ""
-            // à => "to"
 
-            String s = _input;
-            // variable assignment
-            // START KGU 2014-12-02: To achieve consistency with operator highlighting
-            s=s.replace("<--", "<-");
-            // END KGU 2014-12-02
-            s=s.replace(":=", "<-");
-            // testing
-            s=s.replace("==", "=");
-            // START KGU 2014-11-16: Otherwise this would end as "!=="
-    		s=s.replace("!=", "<>");
-    		// END 2014-11-16
-            s=s.replace("=", "==");
-            s=s.replace("<==", "<=");
-            s=s.replace(">==", ">=");
-            s=s.replace("<>", "!=");
-            _input=s;
+	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
+	/**
+	 * A pattern how to embed the variable (right-hand side of an input instruction)
+	 * into the target code
+	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
+	 */
+	protected String getInputReplacer()
+	{
+		return "scanf(\"\", &$1)";
+	}
 
-            // variable assignment
-            _input=BString.replace(_input," <- "," = ");
-            _input=BString.replace(_input,"<- "," = ");
-            _input=BString.replace(_input," <-"," = ");
-            _input=BString.replace(_input,"<-"," = ");
+	/**
+	 * A pattern how to embed the expression (right-hand side of an output instruction)
+	 * into the target code
+	 * @return a regex replacement pattern, e.g. "System.out.println($1);"
+	 */
+	protected String getOutputReplacer()
+	{
+		return "printf(\"\", $1); printf(\"\\\\n\")";
+	}
 
-            // convert Pascal operators
-            _input=BString.replace(_input," mod "," % ");
-            _input=BString.replace(_input," div "," / ");
-            // START KGU 2014-11-06 Support for Pascal-style logical operators as well
-            _input=BString.replace(_input," and "," && ");
-            _input=BString.replace(_input," or "," || ");
-            _input=BString.replace(_input," not "," !");
-            // START KGU 2014-11-16: Was too simple in the first place, but now it's clumsy...
-            _input=BString.replace(_input,"(not ", "(!");
-            _input=BString.replace(_input," not(", " !(");
-            _input=BString.replace(_input,"(not(", "(!(");
-           	if (_input.startsWith("not ") || _input.startsWith("not(")) {
-           		_input = "!" + _input.substring(3);
-           	}
-            _input=BString.replace(_input," xor "," ^ ");	// Might cause some operator preference trouble
-           	// END KGU 2014-11-16
-            // END KGU 2014-11-06
+	/**
+	 * Transforms assignments in the given intermediate-language code line.
+	 * Replaces "<-" by "="
+	 * @param _interm - a code line in intermediate syntax
+	 * @return transformed string
+	 */
+	protected String transformAssignment(String _interm)
+	{
+		return _interm.replace(" <- ", " = ");
+	}
+	// END KGU#18/KGU#23 2015-11-01
+    
+// START KGU#18/KGU#23 2015-11-01: Obsolete    
+//    public static String transform(String _input)
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String)
+	 */
+	@Override
+	protected String transform(String _input)
+	{
+		_input = super.transform(_input);
 
-            StringList empty = new StringList();
-            empty.addByLength(D7Parser.preAlt);
-            empty.addByLength(D7Parser.postAlt);
-            empty.addByLength(D7Parser.preCase);
-            empty.addByLength(D7Parser.postCase);
-            empty.addByLength(D7Parser.preFor);
-            empty.addByLength(D7Parser.postFor);
-            empty.addByLength(D7Parser.preWhile);
-            empty.addByLength(D7Parser.postWhile);
-            empty.addByLength(D7Parser.postRepeat);
-            empty.addByLength(D7Parser.preRepeat);
-            //System.out.println(empty);
-            //System.out.println(_input);
-            for(int i=0;i<empty.count();i++)
-            {
-                _input=BString.replace(_input,empty.get(i),"");
-                //System.out.println(_input);
-                //System.out.println(i);
-            }
-            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
-
-            
-/*            
-            if(!D7Parser.preAlt.equals("")){_input=BString.replace(_input,D7Parser.preAlt,"");}
-            if(!D7Parser.postAlt.equals("")){_input=BString.replace(_input,D7Parser.postAlt,"");}
-            if(!D7Parser.preCase.equals("")){_input=BString.replace(_input,D7Parser.preCase,"");}
-            if(!D7Parser.postCase.equals("")){_input=BString.replace(_input,D7Parser.postCase,"");}
-            if(!D7Parser.preFor.equals("")){_input=BString.replace(_input,D7Parser.preFor,"");}
-            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
-            if(!D7Parser.preWhile.equals("")){_input=BString.replace(_input,D7Parser.preWhile,"");}
-            if(!D7Parser.postWhile.equals("")){_input=BString.replace(_input,D7Parser.postWhile,"");}
-            if(!D7Parser.preRepeat.equals("")){_input=BString.replace(_input,D7Parser.preRepeat,"");}
-            if(!D7Parser.postRepeat.equals("")){_input=BString.replace(_input,D7Parser.postRepeat,"");}
-*/
-            
-            /*Regex r;
-             r = new Regex(BString.breakup(D7Parser.input)+"[ ](.*?)","readln($1)"); _input=r.replaceAll(_input);
-             r = new Regex(BString.breakup(D7Parser.output)+"[ ](.*?)","writeln($1)"); _input=r.replaceAll(_input);
-             r = new Regex(BString.breakup(D7Parser.input)+"(.*?)","readln($1)"); _input=r.replaceAll(_input);
-             r = new Regex(BString.breakup(D7Parser.output)+"(.*?)","writeln($1)"); _input=r.replaceAll(_input);*/
-
-
-            if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input+" ")>=0){_input=BString.replace(_input,D7Parser.input+" ","scanf(\"\",&")+")";}
-            if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input)>=0){_input=BString.replace(_input,D7Parser.input,"scanf(\"\",&")+")";}
-
-            if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output+" ")>=0){_input=BString.replace(_input,D7Parser.output+" ","printf(\"\",")+"); printf(\"\\n\")";}
-            if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output)>=0){_input=BString.replace(_input,D7Parser.output,"printf(\"\",")+"); printf(\"\\n\")";}
-
-            return _input.trim();
-    }
-
+		// START KGU#72 2015-11-10: Replacement was done but ineffective
+		//_input.replace(" div ", " / ");
+		_input = _input.replace(" div ", " / ");
+		// END KGU#72 2015-11-10
+		
+		return _input.trim();
+	}
+    
+    
     @Override
     protected void generateCode(Instruction _inst, String _indent)
     {
-    	// START KGU 2015-10-18: The "export instructions as comments" configuration had been ignored here
+    	// START KGU#18/KGU#23 2015-10-18: The "export instructions as comments" configuration had been ignored here
 //		insertComment(_inst, _indent);
 //		for(int i=0;i<_inst.getText().count();i++)
 //		{
@@ -243,9 +203,10 @@ public class CGenerator extends Generator
 			
 			insertComment(_inst, _indent);
 
-			for (int i=0; i<_inst.getText().count(); i++)
+			StringList lines = _inst.getText();
+			for (int i = 0; i < lines.count(); i++)
 			{
-				code.add(_indent+transform(_inst.getText().get(i))+";");
+				code.add(_indent + transform(lines.get(i)) + ";");
 			}
 
 		}
@@ -255,24 +216,24 @@ public class CGenerator extends Generator
     @Override
     protected void generateCode(Alternative _alt, String _indent)
     {
-        // START KGU 2014-11-16
-        insertComment(_alt, _indent);
-        // END KGU 2014-11-16
+    	// START KGU 2014-11-16
+    	insertComment(_alt, _indent);
+    	// END KGU 2014-11-16
 
-        String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
-        if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+    	String condition = transform(_alt.getText().getLongString(), false).trim();
+    	if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 
-        code.add(_indent+"if "+condition+"");
-        code.add(_indent+"{");
-        generateCode(_alt.qTrue,_indent+_indent.substring(0,1));
-        if(_alt.qFalse.getSize()!=0)
-        {
-                code.add(_indent+"}");
-                code.add(_indent+"else");
-                code.add(_indent+"{");
-                generateCode(_alt.qFalse,_indent+_indent.substring(0,1));
-        }
-        code.add(_indent+"}");
+    	code.add(_indent + "if " + condition);
+    	code.add(_indent + "{");
+    	generateCode(_alt.qTrue, _indent + this.getIndent());
+    	if(_alt.qFalse.getSize() != 0)
+    	{
+    		code.add(_indent+"}");
+    		code.add(_indent+"else");
+    		code.add(_indent+"{");
+    		generateCode(_alt.qFalse, _indent + this.getIndent());
+    	}
+    	code.add(_indent+"}");
     }
 
     @Override
@@ -282,81 +243,64 @@ public class CGenerator extends Generator
         insertComment(_case, _indent);
         // END KGU 2014-11-16
 
-        String condition = transform(_case.getText().get(0));
-        if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
-
-        code.add(_indent+"switch "+condition+" ");
-        code.add(_indent+"{");
-
-        for(int i=0;i<_case.qs.size()-1;i++)
+        StringList lines = _case.getText();
+        String condition = transform(lines.get(0), false);
+        if(!condition.startsWith("(") || !condition.endsWith(")"))
         {
-                code.add(_indent+"case "+_case.getText().get(i+1).trim()+":");
-                generateCode((Subqueue) _case.qs.get(i),_indent+_indent.substring(0,1));
-                code.add(_indent+_indent.substring(0,1)+"break;");
+        	condition= "(" + condition + ")";
         }
 
-        if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
-        {
-                code.add(_indent+"default:");
-                generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+_indent.substring(0,1));
-        }
-        code.add(_indent+"}");
+        code.add(_indent + "switch " + condition + " ");
+    	code.add(_indent + "{");
+
+    	for(int i = 0; i < _case.qs.size()-1; i++)
+    	{
+    		// START KGU#15 2015-10-21: Support for multiple constants per branch
+    		StringList constants = StringList.explode(lines.get(i+1), ",");
+    		for (int j = 0; j < constants.count(); j++)
+    		{
+    			code.add(_indent + "case " + constants.get(j).trim() + ":");
+    		}
+    		// END KGU#15 2015-10-21
+    		generateCode((Subqueue)_case.qs.get(i), _indent + this.getIndent());
+    		code.add(_indent + this.getIndent() + "break;");
+    	}
+
+    	if (!lines.get(_case.qs.size()).trim().equals("%"))
+    	{
+    		code.add(_indent + "default:");
+    		Subqueue squeue = (Subqueue)_case.qs.get(_case.qs.size()-1);
+    		generateCode(squeue, _indent+this.getIndent());
+    		// START KGU#71 2015-11-10: For an empty default branch, at least a semicolon is required
+    		if (squeue.children.size() == 0) {
+    			code.add(_indent + this.getIndent() + ";");
+    		}
+    		// END KGU#71 2015-11-10
+    	}
+    	code.add(_indent+"}");
     }
+    // END KGU#18/#23 2015-10-20
+    
 
     @Override
     protected void generateCode(For _for, String _indent)
     {
-        // START KGU 2014-11-16
-        insertComment(_for, _indent);
-        // END KGU 2014-11-16
+    	insertComment(_for, _indent);
 
-        String startValueStr="";
-        String endValueStr="";
-        String stepValueStr="";
-        String editStr = BString.replace(transform(_for.getText().getText()),"\n","").trim();
-        String[] word = editStr.split(" ");
-        int nbrWords = word.length;
-        String counterStr = word[0];
-        if ((nbrWords-1) >= 2) startValueStr = word[2];
-        if ((nbrWords-1) >= 4) endValueStr = word[4];
-        if ((nbrWords-1) >= 6) {
-                stepValueStr = word[6];
-        }
-        else {
-                stepValueStr = "1";
-        }
-        code.add(_indent+"for ("+
-                        counterStr+" = "+startValueStr+"; "+counterStr+" <= "+endValueStr+"; "+counterStr+" = "+counterStr+" + ("+stepValueStr+") "+
-                        ")");
-        code.add(_indent+"{");
-        generateCode(_for.q,_indent+_indent.substring(0,1));
-        code.add(_indent+"}");
+    	String var = _for.getCounterVar();
+    	int step = _for.getStepConst();
+    	String compOp = (step > 0) ? " <= " : " >= ";
+    	String increment = var + " += (" + step + ")";
+    	code.add(_indent + "for (" +
+    			var + " = " + transform(_for.getStartValue(), false) + "; " +
+    			var + compOp + transform(_for.getEndValue(), false) + "; " +
+    			increment +
+    			")");
+    	code.add(_indent + "{");
+    	generateCode(_for.q, _indent + this.getIndent());
+    	code.add(_indent + "}");
     }
-    /* Version 2009.01.18 by Bob Fisch
-    protected void generateCode(For _for, String _indent)
-    {
-            String str = _for.getText().getText();
-            // cut of the start of the expression
-            if(!D7Parser.preFor.equals("")){str=BString.replace(str,D7Parser.preFor,"");}
-            // trim blanks
-            str=str.trim();
-            // modify the later word
-            if(!D7Parser.postFor.equals("")){str=BString.replace(str,D7Parser.postFor,"<=");}
-            // do other transformations
-            str=transform(str);
-            String counter = str.substring(0,str.indexOf("="));
-            // insert the middle
-            str=BString.replace(str,"<=",";"+counter+"<=");
-            // complete
-            str="for("+str+";"+counter+"++)";
 
-
-            code.add(_indent+str);
-            // needs some work here!
-            code.add(_indent+"{");
-            generateCode(_for.q,_indent+_indent.substring(0,1));
-            code.add(_indent+"}");
-    }/**/
 
     @Override
     protected void generateCode(While _while, String _indent)
@@ -365,13 +309,16 @@ public class CGenerator extends Generator
         insertComment(_while, _indent);
         // END KGU 2014-11-16
 
-        String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
-        if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+        String condition = transform(_while.getText().getLongString(), false).trim();
+        if(!condition.startsWith("(") || !condition.endsWith(")"))
+        {
+        	condition = "(" + condition + ")";
+        }
 
-        code.add(_indent+"while "+condition+" ");
-        code.add(_indent+"{");
-        generateCode(_while.q,_indent+_indent.substring(0,1));
-        code.add(_indent+"}");
+        code.add(_indent + "while " + condition + " ");
+        code.add(_indent + "{");
+        generateCode(_while.q, _indent+this.getIndent());
+        code.add(_indent + "}");
     }
 
     @Override
@@ -381,10 +328,10 @@ public class CGenerator extends Generator
         insertComment(_repeat, _indent);
         // END KGU 2014-11-16
 
-        code.add(_indent+"do");
-        code.add(_indent+"{");
-        generateCode(_repeat.q,_indent+_indent.substring(0,1));
-        code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+"));");
+        code.add(_indent + "do");
+        code.add(_indent + "{");
+        generateCode(_repeat.q, _indent + this.getIndent());
+        code.add(_indent + "} while (!(" + transform(_repeat.getText().getLongString()).trim() + "));");
     }
 
     @Override
@@ -394,10 +341,10 @@ public class CGenerator extends Generator
         insertComment(_forever, _indent);
         // END KGU 2014-11-16
 
-        code.add(_indent+"while (true)");
-        code.add(_indent+"{");
-        generateCode(_forever.q,_indent+_indent.substring(0,1));
-        code.add(_indent+"}");
+        code.add(_indent + "while (true)");
+        code.add(_indent + "{");
+        generateCode(_forever.q, _indent + this.getIndent());
+        code.add(_indent + "}");
     }
 
     @Override
@@ -413,11 +360,12 @@ public class CGenerator extends Generator
 			
 			insertComment(_call, _indent);
 
-			for (int i=0; i<_call.getText().count(); i++)
+			StringList lines = _call.getText();
+			for (int i = 0; i < lines.count(); i++)
 			{
-				code.add(_indent+transform(_call.getText().get(i))+";");
+				// Input or Output should not occur here
+				code.add(_indent + transform(lines.get(i), false) + ";");
 			}
-
 		}
 		// END KGU 2015-10-18
     }
@@ -437,9 +385,10 @@ public class CGenerator extends Generator
 
 			// KGU 2015-10-18: In case of an empty text generate a break instruction by default.
 			boolean isEmpty = true;
-			for (int i=0; i<_jump.getText().count(); i++)
+			StringList lines = _jump.getText();
+			for (int i = 0; i < lines.count(); i++)
 			{
-				String line = transform(_jump.getText().get(i));
+				String line = transform(lines.get(i));
 				if (!line.trim().isEmpty()) isEmpty = false;
 				code.add(_indent + line + ";");
 			}
@@ -452,16 +401,18 @@ public class CGenerator extends Generator
 		// END KGU 2015-10-18
     }
 
-    @Override
-    protected void generateCode(Subqueue _subqueue, String _indent)
-    {
-        // code.add(_indent+"");
-        for(int i=0; i<_subqueue.children.size(); i++)
-        {
-                generateCode((Element) _subqueue.children.get(i), _indent);
-        }
-        // code.add(_indent+"");
-    }
+    // START KGU 2015-11-01: This is exactly was the inherited method does...
+//    @Override
+//    protected void generateCode(Subqueue _subqueue, String _indent)
+//    {
+//        // code.add(_indent+"");
+//        for(int i=0; i<_subqueue.children.size(); i++)
+//        {
+//                generateCode((Element) _subqueue.children.get(i), _indent);
+//        }
+//        // code.add(_indent+"");
+//    }
+    // END KGU 2015-11-01
 
     @Override
     public String generateCode(Root _root, String _indent)
@@ -492,11 +443,13 @@ public class CGenerator extends Generator
         code.add("{");
         insertComment("TODO declare your variables here", this.getIndent());
         code.add(this.getIndent());
-        insertComment("TODO For any input using the 'scanf' function you need to fill the first argument:", this.getIndent());
-        insertComment(this.getIndent() + "http://en.wikipedia.org/wiki/Scanf#Format_string_specifications", this.getIndent());
+        insertComment("TODO", this.getIndent());
+        insertComment("For any input using the 'scanf' function you need to fill the first argument.", this.getIndent());
+        insertComment("http://en.wikipedia.org/wiki/Scanf#Format_string_specifications", this.getIndent());
         code.add(this.getIndent());
-        insertComment("TODO For any output using the 'printf' function you need to fill the first argument:", this.getIndent());
-        insertComment(this.getIndent() + "http://en.wikipedia.org/wiki/Printf#printf_format_placeholders", this.getIndent());
+        insertComment("TODO", this.getIndent());
+        insertComment("For any output using the 'printf' function you need to fill the first argument:", this.getIndent());
+        insertComment("http://en.wikipedia.org/wiki/Printf#printf_format_placeholders", this.getIndent());
         code.add(this.getIndent());
 
         code.add(this.getIndent());

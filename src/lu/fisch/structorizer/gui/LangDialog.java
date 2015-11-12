@@ -124,10 +124,40 @@ public class LangDialog extends JDialog
 				// END KGU 2015-10-14
 				else
 				{
+					Field field = null;
+					String errorMessage = null;
 					try
 					{
-						Field field = _com.getClass().getDeclaredField(pieces.get(1));
-						
+						// First try on own fields - whatever access level they might have
+						field = _com.getClass().getDeclaredField(pieces.get(1));
+					// START KGU#3 2015-11-03: Addition to enable the access to inherited fields
+					}
+					catch (Exception e)
+					{
+						errorMessage = e.getMessage();
+					}
+					if (field == null)
+					{
+						// Now try on inherited PUBLIC fields, too (unfortunately, a retrieval of protected inherited fields seems to be missing)
+						try
+						{
+							field = _com.getClass().getField(pieces.get(1));
+							// If this works then cancel the previously obtained error message
+							errorMessage = null;
+						}
+						catch (Exception e)
+						{
+							errorMessage = e.getMessage();
+						}
+					}
+					if (errorMessage != null)
+					{
+						System.out.println("LANG: Error accessing element <" + 
+								pieces.get(0) + "." + pieces.get(1) + ">!\n" + errorMessage);						
+					}
+					else try {
+					// END KGU#3 2015-11-03
+
 						if(field!=null)
 						{
 							Class fieldClass = field.getType();
@@ -155,12 +185,19 @@ public class LangDialog extends JDialog
 						}
 						else
 						{
-							System.out.println("LANG: Field not found <"+pieces.get(1)+">");
+							// START KGU 2015-11-03: Better add the class name for more precision
+							//System.out.println("LANG: Field not found <"+pieces.get(1)+">");
+							System.out.println("LANG: Field not found <" + pieces.get(0) + "." + pieces.get(1) + ">");
+							// END KGU 2015-11-03
 						}
 					}
 					catch (Exception e)
 					{
-						System.out.println("LANG: Error while setting field <"+pieces.get(2)+"> for element <"+pieces.get(1)+">!\n"+e.getMessage());
+						// START KGU 2015-11-03: Better add the class name for more precision
+						//System.out.println("LANG: Error while setting field <"+pieces.get(2)+"> for element <"+pieces.get(1)+">!\n"+e.getMessage());
+						System.out.println("LANG: Error while setting field <" + pieces.get(2) + "> for element <" + 
+								pieces.get(0) + "." + pieces.get(1) + ">!\n" + e.getMessage());
+						// END KGU 2015-11-03
 					}
 				}
 			}

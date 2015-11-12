@@ -83,94 +83,108 @@ public class Alternative extends Element {
 		setText(_strings);
 	}
 	
+	// START KGU#64 2015-11-03: Is to improve drawing performance
+	/**
+	 * Recursively clears all drawing info this subtree down
+	 * (To be overridden by structured sub-classes!)
+	 */
+	@Override
+	public void resetDrawingInfoDown()
+	{
+		this.resetDrawingInfo();
+		qFalse.resetDrawingInfoDown();
+		qTrue.resetDrawingInfoDown();
+	}
+	// END KGU#64 2015-11-03
+
 	public Rect prepareDraw(Canvas _canvas)
 	{
-                if(isCollapsed()) 
-                {
-                    rect = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
-                    return rect;
-                }
-            
+		if(isCollapsed()) 
+		{
+			rect = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
+			return rect;
+		}
+
 		rect.top=0;
 		rect.left=0;
-		
+
 		rect.right=2*Math.round(E_PADDING/2);
 
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
-		
+
 		rect.right=Math.round(2*(E_PADDING));
 
-                // prepare the sub-queues
+		// prepare the sub-queues
 		rFalse=qFalse.prepareDraw(_canvas);
 		rTrue=qTrue.prepareDraw(_canvas);
 
-                // the upper left point of the corner
-                double cx = 0;
-                double cy = getText().count()*fm.getHeight()+4*Math.round(E_PADDING/2);
-                // the the lowest point of the triangle
-                double ax =  rTrue.right-rTrue.left;
-                //System.out.println("AX : "+ax);
-                double ay =  0;
-                // coefficient of the left droite
-                double coeffleft = (cy-ay)/(cx-ax);
+		// the upper left point of the corner
+		double cx = 0;
+		double cy = getText().count()*fm.getHeight()+4*Math.round(E_PADDING/2);
+		// the the lowest point of the triangle
+		double ax =  rTrue.right-rTrue.left;
+		//System.out.println("AX : "+ax);
+		double ay =  0;
+		// coefficient of the left droite
+		double coeffleft = (cy-ay)/(cx-ax);
 
 
-                // init
-                int choice = -1;
-                double lowest = 100000;
-                
+		// init
+		int choice = -1;
+		double lowest = 100000;
+
 		for(int i=0;i<getText().count();i++)
 		{
 
-                        /* old code
+			/* old code
                         if(rect.right<_canvas.stringWidth((String) text.get(i))+4*Math.round(E_PADDING))
 			{
 				rect.right=_canvas.stringWidth((String) text.get(i))+4*Math.round(E_PADDING);
 			}
-                        */
-                    
-                        // bottom line of the text
-                        double by = 4*Math.round(E_PADDING/2)-Math.round(E_PADDING/3)+(getText().count()-i-1)*fm.getHeight();
-                        // part on the left side
-                        double leftside = by/coeffleft+ax-ay/coeffleft;
-                        // the the bottom right point of this text line
-                        int textWidth = getWidthOutVariables(_canvas,getText().get(i),this);
-                        double bx = textWidth+2*Math.round(E_PADDING/2) + leftside;
-                        //System.out.println("LS : "+leftside);
-                        
-                        // check if this is the one we need to do calculations
-                        double coeff = (by-ay)/(bx-ax);
+			 */
 
-                        // the point height we need
-                        double y = getText().count()*fm.getHeight()+4*Math.round(E_PADDING/2);
-                        double x = y/coeff + ax - ay/coeff;
-                        //System.out.println(i+" => "+coeff+" --> "+String.valueOf(x));
+			// bottom line of the text
+			double by = 4*Math.round(E_PADDING/2)-Math.round(E_PADDING/3)+(getText().count()-i-1)*fm.getHeight();
+			// part on the left side
+			double leftside = by/coeffleft+ax-ay/coeffleft;
+			// the the bottom right point of this text line
+			int textWidth = getWidthOutVariables(_canvas,getText().get(i),this);
+			double bx = textWidth+2*Math.round(E_PADDING/2) + leftside;
+			//System.out.println("LS : "+leftside);
 
-                        if (coeff<lowest && coeff>0)
-                        {
-                            // remember it
-                            lowest = coeff;
-                            choice = i;
-                        }
+			// check if this is the one we need to do calculations
+			double coeff = (by-ay)/(bx-ax);
+
+			// the point height we need
+			double y = getText().count()*fm.getHeight()+4*Math.round(E_PADDING/2);
+			double x = y/coeff + ax - ay/coeff;
+			//System.out.println(i+" => "+coeff+" --> "+String.valueOf(x));
+
+			if (coeff<lowest && coeff>0)
+			{
+				// remember it
+				lowest = coeff;
+				choice = i;
+			}
 		}
-                if (lowest!=100000)
-                {
-                    // the point height we need
-                    double y = getText().count()*fm.getHeight()+4*Math.round(E_PADDING/2);
-                    double x = y/lowest + ax - ay/lowest;
-                    rect.right = (int) Math.round(x);
-                    //System.out.println("C => "+lowest+" ---> "+rect.right);
-                }
-                else
-                {
-                    rect.right=4*Math.round(E_PADDING/2);
-                }
-		
+		if (lowest!=100000)
+		{
+			// the point height we need
+			double y = getText().count()*fm.getHeight()+4*Math.round(E_PADDING/2);
+			double x = y/lowest + ax - ay/lowest;
+			rect.right = (int) Math.round(x);
+			//System.out.println("C => "+lowest+" ---> "+rect.right);
+		}
+		else
+		{
+			rect.right=4*Math.round(E_PADDING/2);
+		}
+
 		rect.bottom=4*Math.round(E_PADDING/2)+getText().count()*fm.getHeight();
-		
+
 		rect.right=Math.max(rect.right,rTrue.right+rFalse.right);
 		rect.bottom+=Math.max(rTrue.bottom,rFalse.bottom);
-		
+
 		return rect;
 	}
 	

@@ -37,15 +37,29 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.09      Methods selectElementByCoord(x,y) and getElementByCoord() merged
  *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
  *      Kay Gürtzig     2015.10.13      Execution state separated from selected state
+ *      Kay Gürtzig     2015.11.01      operator unification and intermediate syntax transformation ready
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      
+ *      2015.11.03 (KGU#18/KGU#23/KGU#63)
+ *      - Methods writeOutVariables() and getWidthOutVariables re-merged, lexical splitter extracted from
+ *        them.
+ *      2015.11.01 (KGU#18/KGU#23)
+ *      - Methods unifyOperators(), transformIntermediate() and getIntermediateText() now support different
+ *        activities like code generation and execution in a unique way.
+ *      2015.10.11/13 (KGU#41 + KGU#43)
+ *      - New fields added to distinguish states of selection from those of current execution, this way
+ *        inducing more stable colouring and execution path tracking
+ *      - a field and several methods introduced to support the setting of breakpoints for execution (it had
+ *        always been extremely annoying that for the investigation of some issues near the end of the diagram
+ *        either the entire execution had to be started in step more or you had to be utterly quick to pause
+ *        in the right moment. Now breakpoints allow to catch the execution wherever necessary.
  *      2014.10.18 / 2014.11.11
  *      - Additions for highlighting of logical operators (both C and Pascal style) in methods
  *        writeOutVariables() and getWidthOutVariables(),
- *        minor code revision respecting 2- and 3-character operator symbols
+ *      - minor code revision respecting 2- and 3-character operator symbols
  *      2015.10.09
  *      - In E_SHOWCOMMENTS mode, substructures had been eclipsed by the top-level elements popping their
  *        comments. This was due to an incomplete subclassing of method getElementByCoord (in contrast
@@ -65,6 +79,7 @@ import java.awt.Font;
 import lu.fisch.utils.*;
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.parsers.*;
+import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.io.*;
 
 import com.stevesoft.pat.*;  //http://www.javaregex.com/
@@ -73,7 +88,7 @@ import java.awt.Point;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.22-30";
+	public static String E_VERSION = "3.22-31";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -154,14 +169,14 @@ public abstract class Element {
 	static int E_INDENT = 2;
 	public static Color E_DRAWCOLOR = Color.YELLOW;
 	public static Color E_COLLAPSEDCOLOR = Color.LIGHT_GRAY;
-	// START KGU 2015-10-13: Executing status now independent from selection
+	// START KGU#41 2015-10-13: Executing status now independent from selection
 	public static Color E_RUNNINGCOLOR = Color.ORANGE;		// used for Elements currently (to be) executed 
-	// END KGU 2015-10-13
+	// END KGU#41 2015-10-13
 	public static Color E_WAITCOLOR = new Color(255,255,210);
 	static Color E_COMMENTCOLOR = Color.LIGHT_GRAY;
-	// START KGU 2015-10-11: New fix color for breakpoint marking
+	// START KGU#43 2015-10-11: New fix color for breakpoint marking
 	static Color E_BREAKPOINTCOLOR = Color.RED;
-	// END KGU 2015-10-11
+	// END KGU#43 2015-10-11
 	public static boolean E_VARHIGHLIGHT = false;
 	public static boolean E_SHOWCOMMENTS = true;
 	public static boolean E_TOGGLETC = false;
@@ -188,7 +203,7 @@ public abstract class Element {
 	public static String preFor = "for ? <- ? to ?";
 	public static String preWhile = "while (?)";
 	public static String preRepeat = "until (?)";
-
+	
 	// used font
 	static Font font = new Font("Helvetica", Font.PLAIN, 12);
 	
@@ -203,9 +218,9 @@ public abstract class Element {
 
 	public Element parent = null;
 	public boolean selected = false;
-	// START KGU 2015-10-13: Execution mark had to be separated from selection
+	// START KGU#41 2015-10-13: Execution mark had to be separated from selection
 	public boolean executed = false;	// Is set while being executed
-	// END KGU 2015-10-13
+	// END KGU#41 2015-10-13
 	public boolean waited = false;		// Is set while a substructure Element is under execution
 	private Color color = Color.WHITE;
 
@@ -217,6 +232,33 @@ public abstract class Element {
 
 	// used for drawing
 	public Rect rect = new Rect();
+	// START KGU#64 2015-11-03: Is to improve drawing performance
+	protected boolean isRectUpToDate = false;		// Will be set and used by prepareDraw() - to be reset on changes
+	private static StringList specialSigns = null;					// Strings to be highlighted in the text (lazy initialisation)
+	/**
+	 * Resets my cached drawing info
+	 */
+	protected final void resetDrawingInfo()
+	{
+		this.isRectUpToDate = false;
+	}
+	/**
+	 * Resets my drawing info and that of all of my ancestors
+	 */
+	public final void resetDrawingInfoUp()
+	{
+		// If this element is touched then all ancestry information must be invalidated
+		Element ancestor = this;
+		do {
+			ancestor.resetDrawingInfo();
+		} while ((ancestor = ancestor.parent) != null);
+	}
+	/**
+	 * Recursively clears all drawing info this subtree down
+	 * (To be overridden by structured sub-classes!)
+	 */
+	public abstract void resetDrawingInfoDown();
+	// END KGU#64 2015-11-03
 
 	// abstract things
 	public abstract Rect prepareDraw(Canvas _canvas);
@@ -341,7 +383,7 @@ public abstract class Element {
 		color = _color;
 	}
 	
-	// START KGU 2015-10-13: The highlighting rules are getting complex
+	// START KGU#41 2015-10-13: The highlighting rules are getting complex
 	// but are more ore less the same for all kinds of elements
 	protected Color getFillColor()
 	{
@@ -360,9 +402,9 @@ public abstract class Element {
 		}
 		return getColor();
 	}
-	// END KGU 2015-10-13
+	// END KGU#41 2015-10-13
 	
-	// START KGU 2015-10-12: Methods to control the new breakpoint property
+	// START KGU#43 2015-10-12: Methods to control the new breakpoint property
 	public void toggleBreakpoint()
 	{
 		this.breakpoint = !this.breakpoint;
@@ -383,9 +425,9 @@ public abstract class Element {
 	{
 		this.breakpoint = false;
 	}
-	// END KGU 2015-10-12
+	// END KGU#43 2015-10-12
 
-	// START KGU 2015-10-13
+	// START KGU#41 2015-10-13
 	/**
 	 * Recursively clears all execution flags in this branch
 	 * (To be overridden by structured sub-classes!)
@@ -395,7 +437,7 @@ public abstract class Element {
 		this.executed = false;
 		this.waited = false;
 	}
-	// END KGU 2015-10-13
+	// END KGU#41 2015-10-13
 
 	// START KGU 2015-10-09 Methods selectElementByCoord(int, int) and getElementByCoord(int, int) merged
 	/**
@@ -631,176 +673,337 @@ public abstract class Element {
 		System.out.println(_s);
 		return _s;
 	}
+	
+	// START KGU#18/KGU#23 2015-11-04: Lexical splitter extracted from writeOutVariables
+	/**
+	 * Splits the given _text into lexical morphemes (lexemes). This will possibly overdo
+	 * somewhat (e. g. split float literal 123.45 into "123", ".", "45").
+	 * By setting _restoreStrings true, at least string literals can be reassambled again,
+	 * consuming more time, of course. 
+	 * @param _text - String to be exploded into lexical units
+	 * @param _restoreLiterals - if true then accidently split numeric and string literals will be reassembled 
+	 * @return StringList consisting ofvthe separated lexemes including isolated spaces etc.
+	 */
+	public static StringList splitLexically(String _text, boolean _restoreStrings)
+	{
+		StringList parts = new StringList();
+		parts.add(_text);
+		
+		// split
+		parts=StringList.explodeWithDelimiter(parts," ");
+		parts=StringList.explodeWithDelimiter(parts,"\t");
+		parts=StringList.explodeWithDelimiter(parts,"\n");
+		parts=StringList.explodeWithDelimiter(parts,".");
+		parts=StringList.explodeWithDelimiter(parts,",");
+		parts=StringList.explodeWithDelimiter(parts,";");
+		parts=StringList.explodeWithDelimiter(parts,"(");
+		parts=StringList.explodeWithDelimiter(parts,")");
+		parts=StringList.explodeWithDelimiter(parts,"[");
+		parts=StringList.explodeWithDelimiter(parts,"]");
+		parts=StringList.explodeWithDelimiter(parts,"-");
+		parts=StringList.explodeWithDelimiter(parts,"+");
+		parts=StringList.explodeWithDelimiter(parts,"/");
+		parts=StringList.explodeWithDelimiter(parts,"*");
+		parts=StringList.explodeWithDelimiter(parts,">");
+		parts=StringList.explodeWithDelimiter(parts,"<");
+		parts=StringList.explodeWithDelimiter(parts,"=");
+		parts=StringList.explodeWithDelimiter(parts,":");
+		parts=StringList.explodeWithDelimiter(parts,"!");
+		parts=StringList.explodeWithDelimiter(parts,"'");
+		parts=StringList.explodeWithDelimiter(parts,"\"");
 
+		parts=StringList.explodeWithDelimiter(parts,"\\");
+		parts=StringList.explodeWithDelimiter(parts,"%");
+
+		// reassamble symbols
+		int i = 0;
+		while (i < parts.count())
+		{
+			if (i < parts.count()-1)
+			{
+				if (parts.get(i).equals("<") && parts.get(i+1).equals("-"))
+				{
+					parts.set(i,"<-");
+					parts.delete(i+1);
+					// START KGU 2014-10-18 potential three-character assignment symbol?
+					if (i < parts.count()-1 && parts.get(i+1).equals("-"))
+					{
+						parts.delete(i+1);
+					}
+					// END KGU 2014-10-18
+				}
+				else if (parts.get(i).equals(":") && parts.get(i+1).equals("="))
+				{
+					parts.set(i,":=");
+					parts.delete(i+1);
+				}
+				else if (parts.get(i).equals("!") && parts.get(i+1).equals("="))
+				{
+					parts.set(i,"!=");
+					parts.delete(i+1);
+				}
+				// START KGU 2015-11-04
+				else if (parts.get(i).equals("=") && parts.get(i+1).equals("="))
+				{
+					parts.set(i,"==");
+					parts.delete(i+1);
+				}
+				// END KGU 2015-11-04
+				else if (parts.get(i).equals("<"))
+				{
+					if (parts.get(i+1).equals(">"))
+					{
+						parts.set(i,"<>");
+						parts.delete(i+1);
+					}
+					else if (parts.get(i+1).equals("="))
+					{
+						parts.set(i,"<=");
+						parts.delete(i+1);
+					}
+				}
+				else if (parts.get(i).equals(">") && parts.get(i+1).equals("="))
+				{
+					parts.set(i,">=");
+					parts.delete(i+1);
+				}
+				// START KGU#24 2014-10-18: Logical two-character operators should be detected, too ...
+				else if (parts.get(i).equals("&") && parts.get(i+1).equals("&"))
+				{
+					parts.set(i,"&&");
+					parts.delete(i+1);
+				}
+				else if (parts.get(i).equals("|") && parts.get(i+1).equals("|"))
+				{
+					parts.set(i,"||");
+					parts.delete(i+1);
+				}
+				// END KGU#24 2014-10-18
+				// START KGU#26 2015-11-04: Find escaped quotes
+				else if (parts.get(i).equals("\\"))
+				{
+					if (parts.get(i+1).equals("\""))
+					{
+						parts.set(i, "\\\"");
+						parts.delete(i+1);					}
+					else if (parts.get(i+1).equals("\\"))
+					{
+						parts.set(i, "\\\\");
+						parts.delete(i+1);					}
+				}
+				// END KGU#26 2015-11-04
+			}
+			i++;
+		}
+		
+		if (_restoreStrings)
+		{
+			String[] delimiters = {"\"", "'"};
+			for (int d = 0; d < delimiters.length; d++)
+			{
+				boolean withinString = false;
+				String composed = "";
+				i = 0;
+				while (i < parts.count())
+				{
+					String lexeme = parts.get(i);
+					if (withinString)
+					{
+						composed = composed + lexeme;
+						if (lexeme.equals(delimiters[d]))
+						{
+							parts.set(i, composed+"");
+							composed = "";
+							withinString = false;
+							i++;
+						}
+						else
+						{
+							parts.delete(i);
+						}
+					}
+					else if (lexeme.equals(delimiters[d]))
+					{
+						withinString = true;
+						composed = lexeme+"";
+						parts.delete(i);
+					}
+					else
+					{
+						i++;
+					}
+				}
+			}
+		}
+		return parts;
+	}
+	// END KGU#18/KGU#23
+	
+
+	// START KGU#63 2015-11-03: getWidthOutVariables and writeOutVariables were nearly identical (and had to be!)
+	// Now it's two wrappers and a common algorithm -> ought to avoid duplicate work and prevents from divergence
 	public static int getWidthOutVariables(Canvas _canvas, String _text, Element _this)
+	{
+		return writeOutVariables(_canvas, 0, 0, _text, _this, false);
+	}
+
+	public static void writeOutVariables(Canvas _canvas, int _x, int _y, String _text, Element _this)
+	{
+		writeOutVariables(_canvas, _x, _y, _text, _this, true);
+	}
+	
+	private static int writeOutVariables(Canvas _canvas, int _x, int _y, String _text, Element _this, boolean _actuallyDraw)
+	// END KGU#63 2015-11-03
 	{
 		// init total
 		int total = 0;
 
-		StringList parts = new StringList();
-		parts.add(_text);
-
-		StringList splits = new StringList();
 		Root root = getRoot(_this);
 
 		if(root!=null)
 		{
 			if (root.hightlightVars==true)
 			{
-                        	// split
-				parts=StringList.explodeWithDelimiter(parts," ");
-				parts=StringList.explodeWithDelimiter(parts,".");
-				parts=StringList.explodeWithDelimiter(parts,",");
-				parts=StringList.explodeWithDelimiter(parts,"(");
-				parts=StringList.explodeWithDelimiter(parts,")");
-				parts=StringList.explodeWithDelimiter(parts,"[");
-				parts=StringList.explodeWithDelimiter(parts,"]");
-				parts=StringList.explodeWithDelimiter(parts,"-");
-				parts=StringList.explodeWithDelimiter(parts,"+");
-				parts=StringList.explodeWithDelimiter(parts,"/");
-				parts=StringList.explodeWithDelimiter(parts,"*");
-				parts=StringList.explodeWithDelimiter(parts," mod ");
-				parts=StringList.explodeWithDelimiter(parts," div ");
-				// START KGU 2014-11-11 Should do the same with Pascal logical operators
-				parts=StringList.explodeWithDelimiter(parts," and ");
-				parts=StringList.explodeWithDelimiter(parts," or ");
-				parts=StringList.explodeWithDelimiter(parts," xor ");
-				parts=StringList.explodeWithDelimiter(parts," not ");				
-				// END KGU 2014-11-11
-				parts=StringList.explodeWithDelimiter(parts,">");
-				parts=StringList.explodeWithDelimiter(parts,"<");
-				parts=StringList.explodeWithDelimiter(parts,"=");
-				parts=StringList.explodeWithDelimiter(parts,":");
-				parts=StringList.explodeWithDelimiter(parts,"!");
-				parts=StringList.explodeWithDelimiter(parts,"'");
-				parts=StringList.explodeWithDelimiter(parts,"\"");
-
-				parts=StringList.explodeWithDelimiter(parts,"\\");
-				parts=StringList.explodeWithDelimiter(parts,"%");
-
-				//reassamble
-				int i = 0;
-				while (i<parts.count())
-				{
-					/* KGU 2014-10-18: Redundant code disabled
-					if(i<parts.count()-2)
-					{
-						if(parts.get(i).equals("<") && parts.get(i+1).equals("-") && parts.get(i+2).equals("-") )
-						{
-							parts.set(i,"<-");
-							parts.delete(i+1);
-							parts.delete(i+1);
-						}
-						else if(parts.get(i).equals("<") && parts.get(i+1).equals("-"))
-						{
-							parts.set(i,"<-");
-							parts.delete(i+1);
-						}
-						else if(parts.get(i).equals(":") && parts.get(i+1).equals("="))
-						{
-							parts.set(i,":=");
-							parts.delete(i+1);
-						}
-                                                else if(parts.get(i).equals("!") && parts.get(i+1).equals("="))
-                                                {
-                                                        parts.set(i,"!=");
-                                                        parts.delete(i+1);
-                                                }
-                                                else if(parts.get(i).equals("<") && parts.get(i+1).equals(">"))
-                                                {
-                                                        parts.set(i,"<>");
-                                                        parts.delete(i+1);
-                                                }
-					}
-					else*/ if(i<parts.count()-1)
-					{
-						if(parts.get(i).equals("<") && parts.get(i+1).equals("-"))
-						{
-							parts.set(i,"<-");
-							parts.delete(i+1);
-							// START KGU 2014-10-18 potential three-character assignment symbol?
-							if (i<parts.count()-1 && parts.get(i+1).equals("-"))
-							{
-								parts.delete(i+1);
-							}
-							// END KGU 2014-10-18
-						}
-						else if(parts.get(i).equals(":") && parts.get(i+1).equals("="))
-						{
-							parts.set(i,":=");
-							parts.delete(i+1);
-						}
-						// FIXME KGU Why have the following ones been added? Further below they won't be handled as a unit
-                                                else if(parts.get(i).equals("!") && parts.get(i+1).equals("="))
-                                                {
-                                                        parts.set(i,"!=");
-                                                        parts.delete(i+1);
-                                                }
-                                                else if(parts.get(i).equals("<") && parts.get(i+1).equals(">"))
-                                                {
-                                                        parts.set(i,"<>");
-                                                        parts.delete(i+1);
-                                                }
-						// START KGU 2014-10-18: Logical two-character operators should be highlighted, too ...
-                                                else if(parts.get(i).equals("&") && parts.get(i+1).equals("&"))
-                                                {
-                                                        parts.set(i,"&&");
-                                                        parts.delete(i+1);
-                                                }
-                                                else if(parts.get(i).equals("|") && parts.get(i+1).equals("|"))
-                                                {
-                                                        parts.set(i,"||");
-                                                        parts.delete(i+1);
-                                                }
-						// END KGU 2014-10-18
-					}
-					i++;
-				}
+				// START KGU#18/KGU#23 2015-11-04: This code extracted to splitLexically()
+//				StringList parts = new StringList();
+//				parts.add(_text);
+//
+//				// split
+//				parts=StringList.explodeWithDelimiter(parts," ");
+//				parts=StringList.explodeWithDelimiter(parts,".");
+//				parts=StringList.explodeWithDelimiter(parts,",");
+//				parts=StringList.explodeWithDelimiter(parts,"(");
+//				parts=StringList.explodeWithDelimiter(parts,")");
+//				parts=StringList.explodeWithDelimiter(parts,"[");
+//				parts=StringList.explodeWithDelimiter(parts,"]");
+//				parts=StringList.explodeWithDelimiter(parts,"-");
+//				parts=StringList.explodeWithDelimiter(parts,"+");
+//				parts=StringList.explodeWithDelimiter(parts,"/");
+//				parts=StringList.explodeWithDelimiter(parts,"*");
+//				parts=StringList.explodeWithDelimiter(parts," mod ");
+//				parts=StringList.explodeWithDelimiter(parts," div ");
+//				// START KGU#24 2014-11-11 Should do the same with Pascal logical operators
+//				parts=StringList.explodeWithDelimiter(parts," and ");
+//				parts=StringList.explodeWithDelimiter(parts," or ");
+//				parts=StringList.explodeWithDelimiter(parts," xor ");
+//				parts=StringList.explodeWithDelimiter(parts," not ");				
+//				// END KGU#24 2014-11-11
+//				parts=StringList.explodeWithDelimiter(parts,">");
+//				parts=StringList.explodeWithDelimiter(parts,"<");
+//				parts=StringList.explodeWithDelimiter(parts,"=");
+//				parts=StringList.explodeWithDelimiter(parts,":");
+//				parts=StringList.explodeWithDelimiter(parts,"!");
+//				parts=StringList.explodeWithDelimiter(parts,"'");
+//				parts=StringList.explodeWithDelimiter(parts,"\"");
+//
+//				parts=StringList.explodeWithDelimiter(parts,"\\");
+//				parts=StringList.explodeWithDelimiter(parts,"%");
+//
+//				//reassamble
+//				int i = 0;
+//				while (i<parts.count())
+//				{
+//					if (i < parts.count()-1)
+//					{
+//						if (parts.get(i).equals("<") && parts.get(i+1).equals("-"))
+//						{
+//							parts.set(i,"<-");
+//							parts.delete(i+1);
+//							// START KGU 2014-10-18 potential three-character assignment symbol?
+//							if (i<parts.count()-1 && parts.get(i+1).equals("-"))
+//							{
+//								parts.delete(i+1);
+//							}
+//							// END KGU 2014-10-18
+//						}
+//						else if (parts.get(i).equals(":") && parts.get(i+1).equals("="))
+//						{
+//							parts.set(i,":=");
+//							parts.delete(i+1);
+//						}
+//						else if (parts.get(i).equals("!") && parts.get(i+1).equals("="))
+//						{
+//							parts.set(i,"!=");
+//							parts.delete(i+1);
+//						}
+//						else if (parts.get(i).equals("<") && parts.get(i+1).equals(">"))
+//						{
+//							parts.set(i,"<>");
+//							parts.delete(i+1);
+//						}
+//						// START KGU#24 2014-10-18: Logical two-character operators should be highlighted, too ...
+//						else if (parts.get(i).equals("&") && parts.get(i+1).equals("&"))
+//						{
+//							parts.set(i,"&&");
+//							parts.delete(i+1);
+//						}
+//						else if (parts.get(i).equals("|") && parts.get(i+1).equals("|"))
+//						{
+//							parts.set(i,"||");
+//							parts.delete(i+1);
+//						}
+//						// END KGU#24 2014-10-18
+//					}
+//					i++;
+//				}
+				StringList parts = Element.splitLexically(_text, true);
+				// END KGU#18/KGU#23 2015-11-04
 
 				// bold font
 				Font boldFont = new Font(Element.font.getName(),Font.BOLD,Element.font.getSize());
 				// backup the original font
 				Font backupFont = _canvas.getFont();
 
-				StringList specialSigns = new StringList();
-				specialSigns.add(".");
-				specialSigns.add("[");
-				specialSigns.add("]");
-				specialSigns.add("\u2190");
-				specialSigns.add(":=");
+				// START KGU#64 2015-11-03: Not to be done again and again. Private static field now!
+				//StringList specialSigns = new StringList();
+				if (specialSigns == null)	// lazy initialisiation
+				{
+					specialSigns = new StringList();
+					// ENDU KGU#64 2015-11-03
+					specialSigns.add(".");
+					specialSigns.add("[");
+					specialSigns.add("]");
+					specialSigns.add("\u2190");
+					specialSigns.add(":=");
 
-				specialSigns.add("+");
-				specialSigns.add("/");
-				specialSigns.add("*");
-				specialSigns.add("-");
-				specialSigns.add("var");
-				specialSigns.add("mod");
-				specialSigns.add("div");
-				specialSigns.add("<");
-				specialSigns.add(">");
-				specialSigns.add("=");
-				specialSigns.add("!");
-				// START KGU 2014-10-18
-				specialSigns.add("&&");
-				specialSigns.add("||");
-				specialSigns.add("and");
-				specialSigns.add("or");
-				specialSigns.add("xor");
-				specialSigns.add("not");
-				// END KGU 2014-10-18
+					specialSigns.add("+");
+					specialSigns.add("/");
+					// START KGU 2015-11-03: This operator had been missing
+					specialSigns.add("%");
+					// END KGU 2015-11-03
+					specialSigns.add("*");
+					specialSigns.add("-");
+					specialSigns.add("var");
+					specialSigns.add("mod");
+					specialSigns.add("div");
+					specialSigns.add("<");
+					specialSigns.add(">");
+					specialSigns.add("=");
+					specialSigns.add("!");
+					// START KGU#24 2014-10-18
+					specialSigns.add("&&");
+					specialSigns.add("||");
+					specialSigns.add("and");
+					specialSigns.add("or");
+					specialSigns.add("xor");
+					specialSigns.add("not");
+					// END KGU#24 2014-10-18
 
-				specialSigns.add("'");
-				specialSigns.add("\"");
+					specialSigns.add("'");
+					specialSigns.add("\"");
+				// START KGU#64 2015-11-03: See above
+				}
+				// END KGU#64 2015-11-03
 
+				// These might have changed by configuration, so don't cache them
 				StringList ioSigns = new StringList();
-				ioSigns.add(D7Parser.input);
-				ioSigns.add(D7Parser.output);
-
-				for(i=0;i<parts.count();i++)
+				ioSigns.add(D7Parser.input.trim());
+				ioSigns.add(D7Parser.output.trim());
+				
+				for(int i=0; i < parts.count(); i++)
 				{
 					String display = parts.get(i);
 
-					display = BString.replace(display, "<--","<-");
 					display = BString.replace(display, "<-","\u2190");
 
 					if(!display.equals(""))
@@ -829,272 +1032,39 @@ public abstract class Element {
 							// set font
 							_canvas.setFont(boldFont);
 						}
-
-                                                // add to the total
-                                                total+=_canvas.stringWidth(display);
-
-						// reset color
-						_canvas.setColor(Color.BLACK);
-						// reset font
-						_canvas.setFont(backupFont);
-
 					}
-				}
-				//System.out.println(parts.getCommaText());
-			}
-			else
-			{
-                            // add to the total
-                            total+=_canvas.stringWidth(_text);
-			}
-		}
 
-
-            // return value
-            return total;
-        }
-
-	public static void writeOutVariables(Canvas _canvas, int _x, int _y, String _text, Element _this)
-	{
-		StringList parts = new StringList();
-		parts.add(_text);
-
-		StringList splits = new StringList();
-		Root root = getRoot(_this);
-
-		if(root!=null)
-		{
-			if (root.hightlightVars==true)
-			{
-
-				// split
-				parts=StringList.explodeWithDelimiter(parts," ");
-				parts=StringList.explodeWithDelimiter(parts,".");
-				parts=StringList.explodeWithDelimiter(parts,",");
-				parts=StringList.explodeWithDelimiter(parts,"(");
-				parts=StringList.explodeWithDelimiter(parts,")");
-				parts=StringList.explodeWithDelimiter(parts,"[");
-				parts=StringList.explodeWithDelimiter(parts,"]");
-				parts=StringList.explodeWithDelimiter(parts,"-");
-				parts=StringList.explodeWithDelimiter(parts,"+");
-				parts=StringList.explodeWithDelimiter(parts,"/");
-				parts=StringList.explodeWithDelimiter(parts,"*");
-				parts=StringList.explodeWithDelimiter(parts," mod ");
-				parts=StringList.explodeWithDelimiter(parts," div ");
-				// START KGU 2014-11-11 Should do the same with Pascal logical operators
-				parts=StringList.explodeWithDelimiter(parts," and ");
-				parts=StringList.explodeWithDelimiter(parts," or ");
-				parts=StringList.explodeWithDelimiter(parts," xor ");
-				parts=StringList.explodeWithDelimiter(parts," not ");				
-				// END KGU 2014-11-11
-				parts=StringList.explodeWithDelimiter(parts,">");
-				parts=StringList.explodeWithDelimiter(parts,"<");
-				parts=StringList.explodeWithDelimiter(parts,"=");
-				parts=StringList.explodeWithDelimiter(parts,":");
-				parts=StringList.explodeWithDelimiter(parts,"!");
-				parts=StringList.explodeWithDelimiter(parts,"'");
-				parts=StringList.explodeWithDelimiter(parts,"\"");
-
-				parts=StringList.explodeWithDelimiter(parts,"\\");
-				parts=StringList.explodeWithDelimiter(parts,"%");
-
-				/*
-				String s = parts.getCommaText();
-				//s=cutOut(s,",");
-				s=cutOut(s," ");
-				s=cutOut(s,".");
-				s=cutOut(s,"(");
-				s=cutOut(s,")");
-				s=cutOut(s,"[");
-				s=cutOut(s,"]");
-				s=cutOut(s,"-");
-				s=cutOut(s,"+");
-				s=cutOut(s,"/");
-				s=cutOut(s,"*");
-				s=cutOut(s,"mod");
-				s=cutOut(s,"div");
-				s=cutOut(s,"<");
-				s=cutOut(s,">");
-				s=cutOut(s,"=");
-				s=cutOut(s,":");
-				s=cutOut(s,"'");
-				s=cutOut(s,"\"");
-				parts.setCommaText(s);*/
-
-				//reassamble
-				int i = 0;
-				while (i<parts.count())
-				{
-					// KGU 2014-10-18 Code redundancy reduced 
-					/*
-					if(i<parts.count()-2)
+					if (_actuallyDraw)
 					{
-						if(parts.get(i).equals("<") && parts.get(i+1).equals("-") && parts.get(i+2).equals("-") )
-						{
-							parts.set(i,"<-");
-							parts.delete(i+1);
-							parts.delete(i+1);
-						}
-						else if(parts.get(i).equals("<") && parts.get(i+1).equals("-"))
-						{
-							parts.set(i,"<-");
-							parts.delete(i+1);
-						}
-						else if(parts.get(i).equals(":") && parts.get(i+1).equals("="))
-						{
-							parts.set(i,":=");
-							parts.delete(i+1);
-						}
-                                                else if(parts.get(i).equals("!") && parts.get(i+1).equals("="))
-                                                {
-                                                        parts.set(i,"!=");
-                                                        parts.delete(i+1);
-                                                }
-                                                else if(parts.get(i).equals("<") && parts.get(i+1).equals(">"))
-                                                {
-                                                        parts.set(i,"<>");
-                                                        parts.delete(i+1);
-                                                }
-					}
-					else */ if(i<parts.count()-1)
-					{
-						if(parts.get(i).equals("<") && parts.get(i+1).equals("-"))
-						{
-							parts.set(i,"<-");
-							parts.delete(i+1);
-							// START KGU 2014-10-18 potential three-character assignment symbol?
-							if (i<parts.count()-1 && parts.get(i+1).equals("-"))
-							{
-								parts.delete(i+1);
-							}
-							// END KGU 2014-10-18
-						}
-						else if(parts.get(i).equals(":") && parts.get(i+1).equals("="))
-						{
-							parts.set(i,":=");
-							parts.delete(i+1);
-						}
-                                                else if(parts.get(i).equals("!") && parts.get(i+1).equals("="))
-                                                {
-                                                        parts.set(i,"!=");
-                                                        parts.delete(i+1);
-                                                }
-                                                else if(parts.get(i).equals("<") && parts.get(i+1).equals(">"))
-                                                {
-                                                        parts.set(i,"<>");
-                                                        parts.delete(i+1);
-                                                }
-						// START KGU 2014-10-18: Logical two-character operators should be highlighted, too ...
-                                                else if(parts.get(i).equals("&") && parts.get(i+1).equals("&"))
-                                                {
-                                                        parts.set(i,"&&");
-                                                        parts.delete(i+1);
-                                                }
-                                                else if(parts.get(i).equals("|") && parts.get(i+1).equals("|"))
-                                                {
-                                                        parts.set(i,"||");
-                                                        parts.delete(i+1);
-                                                }
-						// END KGU 2014-10-18
-					}
-					i++;
-				}
-
-				// bold font
-				Font boldFont = new Font(Element.font.getName(),Font.BOLD,Element.font.getSize());
-				// backup the original font
-				Font backupFont = _canvas.getFont();
-
-				StringList specialSigns = new StringList();
-				specialSigns.add(".");
-				specialSigns.add("[");
-				specialSigns.add("]");
-				//specialSigns.add("<-");
-				//specialSigns.add("<--");
-				specialSigns.add("\u2190");
-				specialSigns.add(":=");
-
-				specialSigns.add("+");
-				specialSigns.add("/");
-				specialSigns.add("*");
-				specialSigns.add("-");
-				specialSigns.add("var");
-				specialSigns.add("mod");
-				specialSigns.add("div");
-				specialSigns.add("<");
-				specialSigns.add(">");
-				specialSigns.add("=");
-				specialSigns.add("!");
-				// START KGU 2014-10-18
-				specialSigns.add("&&");
-				specialSigns.add("||");
-				specialSigns.add("and");
-				specialSigns.add("or");
-				specialSigns.add("xor");
-				specialSigns.add("not");
-				// END KGU 2014-10-18
-
-				specialSigns.add("'");
-				specialSigns.add("\"");
-
-				StringList ioSigns = new StringList();
-				ioSigns.add(D7Parser.input);
-				ioSigns.add(D7Parser.output);
-
-				for(i=0;i<parts.count();i++)
-				{
-					String display = parts.get(i);
-
-					display = BString.replace(display, "<--","<-");
-					display = BString.replace(display, "<-","\u2190");
-
-					if(!display.equals(""))
-					{
-						// if this part has to be colored
-						if(root.variables.contains(display))
-						{
-							// set color
-							_canvas.setColor(Color.decode("0x000099"));
-							// set font
-							_canvas.setFont(boldFont);
-						}
-						// if this part has to be colored with special color
-						else if(specialSigns.contains(display))
-						{
-							// set color
-							_canvas.setColor(Color.decode("0x990000"));
-							// set font
-							_canvas.setFont(boldFont);
-						}
-						// if this part has to be colored with io color
-						else if(ioSigns.contains(display))
-						{
-							// set color
-							_canvas.setColor(Color.decode("0x007700"));
-							// set font
-							_canvas.setFont(boldFont);
-						}
-
 						// write out text
-						_canvas.writeOut(_x,_y,display);
-
-						// update width
-						_x+=_canvas.stringWidth(display);
-
-						// reset color
-						_canvas.setColor(Color.BLACK);
-						// reset font
-						_canvas.setFont(backupFont);
-
+						_canvas.writeOut(_x + total, _y, display);
 					}
+
+					// add to the total
+					total += _canvas.stringWidth(display);
+
+					// reset color
+					_canvas.setColor(Color.BLACK);
+					// reset font
+					_canvas.setFont(backupFont);
+
 				}
 				//System.out.println(parts.getCommaText());
 			}
 			else
 			{
-				_canvas.writeOut(_x,_y,_text);
+				if (_actuallyDraw)
+				{
+					_canvas.writeOut(_x + total, _y, _text);
+				}
+
+                // add to the total
+                total += _canvas.stringWidth(_text);
+
 			}
 		}
+		
+		return total;
 	}
 
 
@@ -1140,4 +1110,225 @@ public abstract class Element {
     protected abstract void addFullText(StringList _lines, boolean _instructionsOnly);
     // END KGU 2015-10-16
     
+    // START KGU#18/KGU#23 2015-10-24 intermediate transformation added and decomposed
+    /**
+     * Converts the operator symbols accepted by Structorizer into padded Java operators
+     * (note the surrounding spaces - no double spaces will exist):
+     * - Assignment:		" <- "
+     * - Comparison:		" == ", " < ", " > ", " <= ", " >= ", " != "
+     * - Logic:				" && ", " || ", " ! ", " ^ "
+     * - Arithmetics:		" div " and usual Java operators with or without padding
+     * @param _expression an Element's text in practically unknown syntax
+     * @return an equivalent of the _expression String with replaced operators
+     */
+    public static String unifyOperators(String _expression)
+    {
+    	return unifyOperators(_expression, false);
+    }
+    
+    // START KGU#18/KGU#23 2015-10-24 intermediate transformation added and decomposed
+    /**
+     * Converts the operator symbols accepted by Structorizer into padded Java operators
+     * (note the surrounding spaces - no double spaces will exist):
+     * - Assignment:		" <- "
+     * - Comparison*:		" == ", " < ", " > ", " <= ", " >= ", " != "
+     * - Logic*:			" && ", " || ", " ! ", " ^ "
+     * - Arithmetics*:		" div " and usual Java operators without padding (e. g. " mod " -> " % ")
+     * @param _expression an Element's text in practically unknown syntax
+     * @param _assignmentOnly if true then only assignment operator will be unified
+     * @return an equivalent of the _expression String with replaced operators
+     */
+    public static String unifyOperators(String _expression, boolean _assignmentOnly)
+    {
+        String interm = _expression.trim();	// KGU#54
+        // variable assignment
+        interm = interm.replace("<--", " §ASGN§ ");
+        interm = interm.replace("<-", " §ASGN§ ");
+        interm = interm.replace(":=", " §ASGN§ ");
+        
+        if (!_assignmentOnly)
+        {
+        	// testing
+        	interm = interm.replace("!=", " §UNEQ§ ");
+        	interm = interm.replace("=", " §EQU§ ");
+        	interm = interm.replace("<=", " §LE§ ");
+        	interm = interm.replace(">=", " §GE§ ");
+        	interm = interm.replace("<>", " §UNEQ§ ");
+        	interm = interm.replace("<", " < ");
+        	interm = interm.replace(">", " > ");
+
+        	// Parenthesis/bracket padding as preparation for the following replacements
+        	interm = interm.replace(")", " ) ");
+        	interm = interm.replace("(", "( ");
+        	interm = interm.replace("]", "] ");	// Do NOT pad '[' (would spoil the array detection)
+        	// arithmetics and signs
+        	interm = interm.replace("+", " +");	// Fortunately, ++ isn't accepted as working operator by the Structorizer
+        	interm = interm.replace("-", " -");	// Fortunately, -- isn't accepted as working operator by the Structorizer
+        	//interm = interm.replace(" div "," / ");	// We must still distinguish integer division
+        	interm = interm.replace(" mod ", " % ");
+        	interm = interm.replace(" MOD ", " % ");
+        	interm = interm.replace(" mod(", " % (");
+        	interm = interm.replace(" MOD(", " % (");
+        	interm = interm.replace(" div(", " div (");
+        	interm = interm.replace(" DIV ", " div ");
+        	interm = interm.replace(" DIV(", " div (");
+        	// Logic
+        	interm = interm.replace( "&&", " && ");
+        	interm = interm.replace( "||", " || ");
+        	interm = interm.replace( " and ", " && ");
+        	interm = interm.replace( " AND ", " && ");
+        	interm = interm.replace( " and(", " && (");
+        	interm = interm.replace( " AND(", " && (");
+        	interm = interm.replace( " or ", " || ");
+        	interm = interm.replace( " OR ", " || ");
+        	interm = interm.replace( " or(", " || (");
+        	interm = interm.replace( " OR(", " || (");
+        	interm = interm.replace( " not ", " §NOT§ ");
+        	interm = interm.replace( " NOT ", " §NOT§ ");
+        	interm = interm.replace( " not(", " §NOT§ (");
+        	interm = interm.replace( " NOT(", " §NOT§ (");
+        	String lower = interm.toLowerCase();
+        	if (lower.startsWith("not ") || lower.startsWith("not(")) {
+        		interm = " §NOT§ " + interm.substring(3);
+        	}
+        	interm = interm.replace( "!", " §NOT§ ");
+        	interm = interm.replace( " xor ", " ^ ");	// Might cause some operator preference trouble
+        	interm = interm.replace( " XOR ", " ^ ");	// Might cause some operator preference trouble
+        }
+
+        String unified = interm.replace(" §ASGN§ ", " <- ");
+        if (!_assignmentOnly)
+        {
+        	unified = unified.replace(" §EQU§ ", " == ");
+        	unified = unified.replace(" §UNEQ§ ", " != ");
+        	unified = unified.replace(" §LE§ ", " <= ");
+        	unified = unified.replace(" §GE§ ", " >= ");
+        	unified = unified.replace(" §NOT§ ", " ! ");
+        }
+        unified = BString.replace(unified, "  ", " ");	// shrink multiple blanks
+        unified = BString.replace(unified, "  ", " ");	// do it again to catch odd-numbered blanks as well
+        
+        return unified;
+    }
+
+
+    /**
+     * Returns a (hopefully) lossless representation of the stored text as a
+     * StringList in a common intermediate language (code generation phase 1).
+     * This allows the language-specific Generator subclasses to concentrate on the translation
+     * into their respective target languages (code generation phase 2).
+     * Conventions of the intermediate language:
+     * Operators (note the surrounding spaces - no double spaces will exist):
+     * - Assignment:		" <- "
+     * - Comparison:		" = ", " < ", " > ", " <= ", " >= ", " <> "
+     * - Logic:				" && ", " || ", " §NOT§ ", " ^ "
+     * - Arithmetics:		usual Java operators without padding
+     * - Control key words:
+     * -	If, Case:		none (wiped off)
+     * -	While, Repeat:	none (wiped off)
+     * -	For:			unchanged
+     * -	Forever:		none (wiped off)
+     * 
+     * @return a padded intermediate language equivalent of the stored text
+     */
+    
+    public StringList getIntermediateText()
+    {
+    	StringList interSl = new StringList();
+    	for (int i = 0; i < text.count(); i++)
+    	{
+    		interSl.add(transformIntermediate(text.get(i)));
+    	}
+    	return interSl;
+    }
+    
+    /**
+     * Creates a (hopefully) lossless representation of the _text String as a
+     * line of a common intermediate language (code generation phase 1).
+     * This allows the language-specific Generator subclasses to concentrate on the translation into their
+     * target language (code generation phase 2).
+     * Conventions of the intermediate language:
+     * Operators (note the surrounding spaces - no double spaces will exist):
+     * - Assignment:		" <- "
+     * - Comparison:		" = ", " < ", " > ", " <= ", " >= ", " <> "
+     * - Logic:				" && ", " || ", " §NOT§ ", " ^ "
+     * - Arithmetics:		usual Java operators without padding
+     * - Control key words:
+     * -	If, Case:		none (wiped off)
+     * -	While, Repeat:	none (wiped off)
+     * -	For:			unchanged
+     * -	Forever:		none (wiped off)
+     * 
+     * @return a padded intermediate language equivalent of the stored text
+     */
+    public static String transformIntermediate(String _text)
+    {
+    	//final String regexMatchers = ".?*+[](){}\\^$";
+    	
+    	// Collect redundant placemarkers to be deleted from the text
+        StringList redundantMarkers = new StringList();
+        redundantMarkers.addByLength(D7Parser.preAlt);
+        redundantMarkers.addByLength(D7Parser.preCase);
+        //redundantMarkers.addByLength(D7Parser.preFor);	// will be handled separately
+        redundantMarkers.addByLength(D7Parser.preWhile);
+        redundantMarkers.addByLength(D7Parser.preRepeat);
+
+        redundantMarkers.addByLength(D7Parser.postAlt);
+        redundantMarkers.addByLength(D7Parser.postCase);
+        //redundantMarkers.addByLength(D7Parser.postFor);	// will be handled separately
+        //redundantMarkers.addByLength(D7Parser.stepFor);	// will be handled separately
+        redundantMarkers.addByLength(D7Parser.postWhile);
+        redundantMarkers.addByLength(D7Parser.postRepeat);
+       
+        String interm = " " + _text + " ";
+
+        //System.out.println(interm);
+        // Now, we eliminate redundant keywords according to the Parser configuration
+        // Unfortunately, regular expressions are of little use here, because the prefix and infix keywords may
+        // consist of or contain Regex matchers like '?' and hence aren't suitable as part of the pattern
+        // The harmful characters to be inhibited or masked are: .?*+[](){}\^$
+        //System.out.println(interm);
+        for (int i=0; i < redundantMarkers.count(); i++)
+        {
+        	String marker = redundantMarkers.get(i);
+        	if (!marker.isEmpty())
+        	{
+        		// If the marker has not been padded then we must care for proper isolation
+        		if (marker.equals(marker.trim()))
+        		{
+        			int len = marker.length();
+        			int pos = 0;
+        			while ((pos = interm.indexOf(marker, pos)) >= 0)
+        			{
+        				if (!Character.isJavaIdentifierPart(interm.charAt(pos-1)) &&
+        						(pos + len) < interm.length() &&
+        						!Character.isJavaIdentifierPart(interm.charAt(pos + len)))
+        				{
+        					interm = interm.substring(0, pos) + interm.substring(pos + len);
+        				}
+        			}
+        		}
+        		else
+        		{
+        			// Already padded, so just replace it everywhere
+        			interm = interm.replace( marker, ""); 
+        		}
+        		interm = " " + interm + " ";	// Ensure the string being padded for easier matching
+                interm = interm.replace( "  ", " ");
+        		System.out.println("transformIntermediate: " + interm);	// FIXME (KGU): Remove or deactivate after test!
+        	}
+        }
+        
+        interm = unifyOperators(interm);
+        //interm = interm.replace( " <- ", " = ");	// Adapt to Java
+        
+        // Reduce multiple space characters
+        interm = interm.replace("  ", " ");
+        interm = interm.replace("  ", " ");	// By repetition we eliminate the remnants of odd-number space sequences
+
+        return interm/*.trim()*/;
+    }
+    
+    // END KGU#18/KGU#23 2015-10-24
+   
 }

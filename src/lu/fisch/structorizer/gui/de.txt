@@ -36,6 +36,8 @@
  *      Kay Gürtzig		2014.12.02		ExportOptionDialoge and further messages added
  *      Kay Gürtzig 	2015.10.06		altPadRight added to Preferences dialog
  *      Kay Gürtzig		2015.10.14		InputBox.class_specific stuff added
+ *      Kay Gürtzig		2015.11.01		InputBoxFor captions and Analyzer messages for FOR loops added
+ *      Kay Gürtzig 	2015.11.09		Additions for ParserPreferences (KGU#3 FOR loop enhancement)
  *
  ******************************************************************************************************
  *
@@ -51,6 +53,7 @@ Menu.menuFileNew.text=Neu
 Menu.menuFileOpen.text=Öffnen ...
 Menu.menuFileSave.text=Speichern
 Menu.menuFileSaveAs.text=Speichern unter ...
+Menu.menuFileOpenRecent.text=Zuletzt verwendet
 Menu.menuFileExport.text=Exportieren
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Bild ...
@@ -173,6 +176,8 @@ Menu.error11.text=Wertzuweisung scheint fehlerhaft. Anweisung überprüfen ...
 Menu.error12.text=Der Parameter «%» muss mit dem Buchstaben "p" anfangen, gefolgt nur von Großbuchstaben!
 Menu.error13_1.text=Die Funktion hat keinen Rückgabewert!
 Menu.error13_2.text=Die Funktion hat nicht in jedem Fall einen Rückgabewert!
+Menu.error14_1.text=Die Einzelangaben der Zählschleife und der Text passen nicht zusammen!
+Menu.error14_2.text=Die Schrittweite «%» der Zählschleife ist keine konstante Ganzzahl!
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Überprüfungs-Einstellungen
@@ -180,15 +185,16 @@ AnalyserPreferences.check1.text=Nach Wertveränderungen der Kontrollvariablen vo
 AnalyserPreferences.check2.text=Nach Endlosschleifen suchen. (So weit möglich!)
 AnalyserPreferences.check3.text=Nach nicht initialisierten Variablen suchen.
 AnalyserPreferences.check4.text=Nach nicht korrekt verwendeten Alternativenstrukturen suchen.
-AnalyserPreferences.check5.text=Testen, ob alle Variablenamen großgeschrieben sind. (LUX/MEN)
-AnalyserPreferences.check6.text=Testen, ob der Programmname großgeschrieben ist. (LUX/MEN)
+AnalyserPreferences.check5.text=Prüfen, ob alle Variablenamen großgeschrieben sind. (LUX/MEN)
+AnalyserPreferences.check6.text=Prüfen, ob der Programmname großgeschrieben ist. (LUX/MEN)
 AnalyserPreferences.check7.text=Nach nicht korrekt benannten Identifikatoren suchen.
 AnalyserPreferences.check8.text=Nach Wertzuweisungen innerhalb von Bedingungen suchen.
 AnalyserPreferences.check9.text=Testen, ob der Programmname einzigartig ist.
 AnalyserPreferences.check10.text=Nach fehlerhaften mehrzeiligen Anweisungen suchen.
 AnalyserPreferences.check11.text=Nach fehlerhaften Wertzuweisungen suchen.
-AnalyserPreferences.check12.text=Testen, ob die Parameternamen korrekt sind. (LUX/MEN)
-AnalyserPreferences.check13.text=Testen, ob, im Falle einer Funktion, diese auch einen Rückgabewert hat.
+AnalyserPreferences.check12.text=Prüfen, ob die Parameternamen korrekt sind. (LUX/MEN)
+AnalyserPreferences.check13.text=Prüfen, ob im Falle einer Funktion diese auch einen Rückgabewert hat.
+AnalyserPreferences.check14.text=Prüfen, ob die Angaben von FOR-Schleifen konsistent sind.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -336,8 +342,26 @@ InputBox.class_specific.Parallel.update=PARALLEL-Element bearbeiten...
 InputBox.class_specific.Alternative.lblText=Eingabe der Bedingung an dieser Stelle.
 InputBox.class_specific.While.lblText=Eingabe der (Wieder-)Eintrittsbedingung an dieser Stelle.
 InputBox.class_specific.Repeat.lblText=Eingabe der Austrittsbedingung an dieser Stelle.
-InputBox.class_specific.Case.lblText=Eingabe des Auswahlausdrucks und der Fallkonstanten (eine je Zeile)
+InputBox.class_specific.Case.lblText=Eingabe des Auswahlausdrucks und der Fallkonstanten
 InputBox.class_specific.Parallel.lblText=Anzahl der nebenläufigen Pfade
+-----[ InputBoxFor ]-----
+InputBoxFor.class_specific.For.insert=Neue FOR-Schleife hinzufügen...
+InputBoxFor.class_specific.For.update=FOR-Schleife bearbeiten...
+InputBoxFor.lblVariable.text=Zählvariable
+InputBoxFor.lblStartVal.text=Anfangswert
+InputBoxFor.lblEndVal.text=Endwert
+InputBoxFor.lblIncr.text=Schrittweite
+InputBoxFor.chkTextInput.text=Als Textzeile editieren
+InputBoxFor.chkTextInput.tooltip=Falls gesetzt, werden die obigen Felder beim Eingeben aus dem Text extrahiert, sonst wird der Text aus obigen Feldern zusammengestellt.
+InputBoxFor.lblComment.text=Einzugebender Kommentar
+InputBoxFor.lblComment.tooltip=Eingabe eines Kommentars an dieser Stelle.
+InputBoxFor.txtText.tooltip=Zählschleifenkopf als Textzeile.
+InputBoxFor.txtComment.tooltip=Der Kommentar zu diesem Element.
+InputBoxFor.btnOK.text=Speichern
+InputBoxFor.btnOK.tooltip=Speichern der Eintragungen.
+InputBoxFor.btnCancel.text=Abbruch
+InputBoxFor.btnCancel.tooltip=Verwerfen der Eintragungen.
+InputBoxFor.chkBreakpoint.text=Haltepunkt
 
 -----[ Preferences ]-----
 Preferences.title=Struktogramm-Einstellungen
@@ -445,6 +469,7 @@ ParserPreferences.lblCase.text=CASE-Anweisung
 ParserPreferences.lblCase.tooltip=Einfügungen im CASE-Anweisungskopf.
 ParserPreferences.lblFor.text=FOR-Anweisung
 ParserPreferences.lblFor.tooltip=Einfügungen im FOR-Anweisungskopf.
+ParserPreferences.lblForStep.text=Schrittweite
 ParserPreferences.lblWhile.text=WHILE-Schleife
 ParserPreferences.lblWhile.tooltip=Einfügungen im WHILE-Anweisungskopf.
 ParserPreferences.lblRepeat.text=REPEAT-Schleife

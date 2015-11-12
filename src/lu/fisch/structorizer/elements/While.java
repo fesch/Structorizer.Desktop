@@ -24,7 +24,7 @@ package lu.fisch.structorizer.elements;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    This class represents an "WHILE loop" in a diagram.
+ *      Description:    This class represents a "WHILE loop" in a diagram.
  *
  ******************************************************************************************************
  *
@@ -80,6 +80,19 @@ public class While extends Element {
 		setText(_strings);
 	}
 	
+	// START KGU#64 2015-11-03: Is to improve drawing performance
+	/**
+	 * Recursively clears all drawing info this subtree down
+	 * (To be overridden by structured sub-classes!)
+	 */
+	@Override
+	public void resetDrawingInfoDown()
+	{
+		this.resetDrawingInfo();
+		this.q.resetDrawingInfoDown();
+	}
+	// END KGU#64 2015-11-03
+
 	public Rect prepareDraw(Canvas _canvas)
 	{
                 if(isCollapsed()) 
@@ -98,9 +111,10 @@ public class While extends Element {
 		rect.right=Math.round(2*(E_PADDING/2));
 		for(int i=0;i<getText().count();i++)
 		{
-			if(rect.right<getWidthOutVariables(_canvas,getText().get(i),this)+2*Math.round(E_PADDING/2))
+			int width = getWidthOutVariables(_canvas,getText().get(i),this)+2*Math.round(E_PADDING/2);
+			if (rect.right < width)
 			{
-				rect.right=getWidthOutVariables(_canvas,getText().get(i),this)+2*Math.round(E_PADDING/2);
+				rect.right = width;
 			}
 		}
 		
@@ -267,14 +281,24 @@ public class While extends Element {
         q.setColor(_color);
     }*/
 	
-	// START KGU 2015-11-12
+	// START KGU#43 2015-10-12
 	@Override
 	public void clearBreakpoints()
 	{
 		super.clearBreakpoints();
 		this.q.clearBreakpoints();
 	}
-	// END KGU 2015-10-12
+	// END KGU#43 2015-10-12
+	
+	// START KGU#43 2015-11-09
+	@Override
+	public void clearExecutionStatus()
+	{
+		super.clearExecutionStatus();
+		this.q.clearExecutionStatus();
+	}
+	// END KGU#43 2015-11-09
+	
 
 	// START KGU 2015-10-16
 	/* (non-Javadoc)

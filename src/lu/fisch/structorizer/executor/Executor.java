@@ -40,10 +40,27 @@ package lu.fisch.structorizer.executor;
 *                                      handling in a sound way
 *      Kay Gürtzig     2015.10.15      stepParallel() revised (see comment)
 *      Kay Gürtzig     2015.10.17/18   First preparations for a subroutine retrieval via Arranger
+*      Kay Gürtzig     2015.10.21      Support for multiple constants per CASE branch added
+*      Kay Gürtzig     2015.10.26/27   Language conversion and FOR loop parameter analysis delegated to the elements
+*      Kay Gürtzig     2015.11.04      Bugfix in stepInstruction() w.r.t. input/output (KGU#65)
+*      Kay Gürtzig     2015.11.05      Enhancement allowing to adopt edited values from Control (KGU#68)
+*      Kay Gürtzig     2015.11.08      Array assignments and variable setting deeply revised (KGU#69)
+*      Kay Gürtzig     2015.11.09      Bugfix: div operator had gone, wrong exit condition in stepRepeat (KGU#70),
+*                                      wrong equality operator in stepCase().
 *
 ******************************************************************************************************
 *
 *      Comment:
+*      2015.11.04 (KGU#65) Input/output execution mended
+*          The configured input / output parser settings triggered input or output action also if found
+*          deep in a line, even within a string literal. This was mended.
+*      2015.10.26/27 (KGU#3) Language conversion (in method convert) partially delegated to Element
+*          The aim was to share this functionality with generators
+*          Analysis of FOR loop parameters also delegated to the For class instance.
+*      2015.10.21 (KGU#15) Common branch for multiple constants in Case structure enabled
+*          A modification in stepCase() now allows to test against a comma-separated list of case constants
+*          (though it would fail with complex expressions, accidently containing commas but this would anyway
+*          produce nonsense on code export)
 *      2015.10.15 (KGU#47) Improved simulation of Parallel execution
 *          Instead of running entire "threads" of the parallel section in just random order, the "threads"
 *          will now only progress by one instruction when randomly chosen, so they alternate in an
@@ -71,6 +88,7 @@ import java.util.Random;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.PatternSyntaxException;
 
 import javax.swing.JOptionPane;
 
@@ -160,40 +178,50 @@ public class Executor implements Runnable
 
 	private String convert(String s)
 	{
+		return convert(s, true);
+	}
+	
+	private String convert(String s, boolean convertComparisons)
+	{
 		Regex r;
 
-		// variable assignment
-		// START KGU 2014-12-02: To achieve consistency with operator highlighting
-		s = s.replace("<--", "<-");
-		// END KGU 2014-12-02
-		s = s.replace(":=", "<-");
+		// START KGU#18/KGU#23 2015-10-26: Replaced by new unifying method on Element class
+//		// variable assignment
+//		// START KGU 2014-12-02: To achieve consistency with operator highlighting
+//		s = s.replace("<--", "<-");
+//		// END KGU 2014-12-02
+//		s = s.replace(":=", "<-");
+//
+//		// testing
+//		s = s.replace("==", "=");
+//		s = s.replace("!=", "<>");
+//		s = s.replace("=", "==");
+//		s = s.replace("<==", "<=");
+//		s = s.replace(">==", ">=");
+//		s = s.replace("<>", "!=");
+//
+//		s = s.replace(" mod ", " % ");
+//		s = s.replace(" div ", " / ");
+//        // START KGU 2014-11-14: Logical operators, too
+//        s=s.replace(" and ", " && ");
+//        s=s.replace(" or ", " || ");
+//        s=s.replace(" not ", " !");
+//        s=s.replace("(not ", "(!");
+//        s=s.replace(" not(", " !(");
+//        s=s.replace("(not(", "(!(");
+//       	if (s.startsWith("not ")) {
+//       		s = "!" + s.substring(4);
+//       	}
+//       	if (s.startsWith("not(")) {
+//       		s = "!(" + s.substring(4);
+//       	}
+//        s=s.replace(" xor ", " ^ "); // This might cause some operator preference trouble, though       
+//        // END KGU 2014-11-14
+		s = Element.unifyOperators(s);
+		s = s.replace(" div ", " / ");		// FIXME: Operands should be coerced to integer...
+		// END KGU#18/KGU#23 2015-10-26
 
-		// testing
-		s = s.replace("==", "=");
-		s = s.replace("!=", "<>");
-		s = s.replace("=", "==");
-		s = s.replace("<==", "<=");
-		s = s.replace(">==", ">=");
-		s = s.replace("<>", "!=");
-
-		s = s.replace(" mod ", " % ");
-		s = s.replace(" div ", " / ");
-        // START KGU 2014-11-14: Logical operators, too
-        s=s.replace(" and ", " && ");
-        s=s.replace(" or ", " || ");
-        s=s.replace(" not ", " !");
-        s=s.replace("(not ", "(!");
-        s=s.replace(" not(", " !(");
-        s=s.replace("(not(", "(!(");
-       	if (s.startsWith("not ")) {
-       		s = "!" + s.substring(4);
-       	}
-       	if (s.startsWith("not(")) {
-       		s = "!(" + s.substring(4);
-       	}
-        s=s.replace(" xor ", " ^ "); // This might cause some operator preference trouble, though       
-        // END KGU 2014-11-14
-
+		// Convert built-in mathematical functions
 		s = s.replace("cos(", "Math.cos(");
 		s = s.replace("sin(", "Math.sin(");
 		s = s.replace("tan(", "Math.tan(");
@@ -221,8 +249,8 @@ public class Executor implements Runnable
 		// s=s.replace("random(", "Math.random(");
 
 		// pascal notation to access a character inside a string
-		r = new Regex("(.*)\\[(.*)\\](.*)", "$1.charAt($2-1)$3");
-		r = new Regex("(.*)\\[(.*)\\](.*)", "$1.substring($2-1,$2)$3");
+		//r = new Regex("(.*)\\[(.*)\\](.*)", "$1.charAt($2-1)$3");
+		//r = new Regex("(.*)\\[(.*)\\](.*)", "$1.substring($2-1,$2)$3");
 		// MODIFIED BY GENNARO DONNARUMMA, NEXT LINE COMMENTED -->
 		// NO REPLACE ANY MORE! CHARAT AND SUBSTRING MUST BE CALLED MANUALLY
 		// s = r.replaceAll(s);
@@ -234,6 +262,7 @@ public class Executor implements Runnable
 		s = r.replaceAll(s);
 		// pascal: quotes
 		r = new Regex("([^']*?)'(([^']|'')*)'", "$1\"$2\"");
+		//r = new Regex("([^']*?)'(([^']|''){2,})'", "$1\"$2\"");
 		s = r.replaceAll(s);
 		s = s.replace("''", "'");
 		// pascal: randomize
@@ -243,74 +272,168 @@ public class Executor implements Runnable
 		// clean up ... if needed
 		s = s.replace("Math.Math.", "Math.");
 
-		if (s.indexOf("==") >= 0)
+		// FIXME (KGU#57 2015-10-27): The following mechanism doesn't work in composed expressions like
+		//       answer == "J" || answer == "j"
+//		if (s.indexOf("==") >= 0)
+//		{
+//			r = new Regex("(.*)==(.*)", "$1");
+//			String left = r.replaceAll(s).trim();
+//			while (Function.countChar(left, '(') > Function
+//					.countChar(left, ')'))
+//			{
+//				left += ')';
+//			}
+//			r = new Regex("(.*)==(.*)", "$2");
+//			String right = r.replaceAll(s).trim();
+//			while (Function.countChar(right, ')') > Function.countChar(right,
+//					'('))
+//			{
+//				right = '(' + right;
+//			}
+//			// ---- thanks to autoboxing, we can always use the "equals" method
+//			// ---- to compare things ...
+//			// addendum: sorry, doesn't always work.
+//			try
+//			{
+//				Object leftO = interpreter.eval(left);
+//				Object rightO = interpreter.eval(right);
+//				if ((leftO instanceof String) || (rightO instanceof String))
+//				{
+//					s = left + ".equals(" + right + ")";
+//				}
+//			} catch (EvalError ex)
+//			{
+//				System.err.println(ex.getMessage());
+//			}
+//		}
+//		if (s.indexOf("!=") >= 0)
+//		{
+//			r = new Regex("(.*)!=(.*)", "$1");
+//			String left = r.replaceAll(s).trim();
+//			while (Function.countChar(left, '(') > Function
+//					.countChar(left, ')'))
+//			{
+//				left += ')';
+//			}
+//			r = new Regex("(.*)!=(.*)", "$2");
+//			String right = r.replaceAll(s).trim();
+//			while (Function.countChar(right, ')') > Function.countChar(right,
+//					'('))
+//			{
+//				right = '(' + right;
+//			}
+//			// ---- thanks to autoboxing, we can always use the "equals" method
+//			// ---- to compare things ...
+//			// addendum: sorry, doesn't always work.
+//			try
+//			{
+//				Object leftO = interpreter.eval(left);
+//				Object rightO = interpreter.eval(right);
+//				if ((leftO instanceof String) || (rightO instanceof String))
+//				{
+//					s = "!" + left + ".equals(" + right + ")";
+//				}
+//			} catch (EvalError ex)
+//			{
+//				System.err.println(ex.getMessage());
+//			}
+//		}
+		if (convertComparisons)
 		{
-			r = new Regex("(.*)==(.*)", "$1");
-			String left = r.replaceAll(s).trim();
-			while (Function.countChar(left, '(') > Function
-					.countChar(left, ')'))
-			{
-				left += ')';
-			}
-			r = new Regex("(.*)==(.*)", "$2");
-			String right = r.replaceAll(s).trim();
-			while (Function.countChar(right, ')') > Function.countChar(right,
-					'('))
-			{
-				right = '(' + right;
-			}
-			// ---- thanks to autoboxing, we can alway use the "equals" method
-			// ---- to compare things ...
-			// addendum: sorry, doesn't always work.
-			try
-			{
-				Object leftO = interpreter.eval(left);
-				Object rightO = interpreter.eval(right);
-				if ((leftO instanceof String) || (rightO instanceof String))
-				{
-					s = left + ".equals(" + right + ")";
-				}
-			} catch (EvalError ex)
-			{
-				System.err.println(ex.getMessage());
-			}
-		}
-		if (s.indexOf("!=") >= 0)
-		{
-			r = new Regex("(.*)!=(.*)", "$1");
-			String left = r.replaceAll(s).trim();
-			while (Function.countChar(left, '(') > Function
-					.countChar(left, ')'))
-			{
-				left += ')';
-			}
-			r = new Regex("(.*)!=(.*)", "$2");
-			String right = r.replaceAll(s).trim();
-			while (Function.countChar(right, ')') > Function.countChar(right,
-					'('))
-			{
-				right = '(' + right;
-			}
-			// ---- thanks to autoboxing, we can always use the "equals" method
-			// ---- to compare things ...
-			// addendum: sorry, doesn't always work.
-			try
-			{
-				Object leftO = interpreter.eval(left);
-				Object rightO = interpreter.eval(right);
-				if ((leftO instanceof String) || (rightO instanceof String))
-				{
-					s = "!" + left + ".equals(" + right + ")";
-				}
-			} catch (EvalError ex)
-			{
-				System.err.println(ex.getMessage());
-			}
+			s = convertStringComparison(s);
 		}
 
 		// System.out.println(s);
 		return s;
 	}
+	
+	// START KGU#57 2015-11-07
+	private String convertStringComparison(String str)
+	{
+//		Character chA = 'a';
+//		Character chB = 'a';
+//		System.out.println("Zeichen sind " + ((chA == chB) ? "" : "NICHT ") + "identisch!");
+//		System.out.println("Zeichen sind " + ((chA.equals(chB)) ? "" : "NICHT ") + "gleich!");
+		// Is there any equality test at all?
+		if (str.indexOf(" == ") >= 0 || str.indexOf(" != ") >= 0)
+		{
+			StringList exprs = StringList.explodeWithDelimiter(str, " \\|\\| ");	// '|' is a regex metasymbol!
+			exprs = StringList.explodeWithDelimiter(exprs, " && ");
+			boolean replaced = false;
+			for (int i = 0; i < exprs.count(); i++)
+			{
+				String s = exprs.get(i);
+				String[] eqOps = {"==", "!="};
+				for (int op = 0; op < eqOps.length; op++)
+				{
+					Regex r = null;
+					if (!s.equals(" " + eqOps[op] + " ") && s.indexOf(eqOps[op]) >= 0)
+					{
+						String leftParenth = "";
+						String rightParenth = "";
+						// Get the left operand expression
+						r = new Regex("(.*)"+eqOps[op]+"(.*)", "$1");
+						String left = r.replaceAll(s).trim();	// All? Really? And what is the result supposed to be then?
+						// Re-balance parentheses
+						while (Function.countChar(left, '(') > Function.countChar(left, ')') &&
+								left.startsWith("("))
+						{
+							leftParenth = leftParenth + "(";
+							left = left.substring(1).trim();
+						}
+						// Get the right operand expression
+						r = new Regex("(.*)"+eqOps[op]+"(.*)", "$2");
+						String right = r.replaceAll(s).trim();
+						// Re-balance parentheses
+						while (Function.countChar(right, ')') > Function.countChar(right, '(') &&
+								right.endsWith(")"))
+						{
+							rightParenth = rightParenth + ")";
+							right = right.substring(0, right.length()-1).trim();
+						}
+						// ---- thanks to autoboxing, we can always use the "equals" method
+						// ---- to compare things ...
+						// addendum: sorry, doesn't always work.
+						try
+						{
+							Object leftO = interpreter.eval(left);
+							Object rightO = interpreter.eval(right);
+							String neg = (op > 0) ? "!" : "";
+							// First the obvious case: two String expressions
+							if ((leftO instanceof String) && (rightO instanceof String))
+							{
+								exprs.set(i, leftParenth + neg + left + ".equals(" + right + ")" + rightParenth);
+								replaced = true;
+							}
+							// We must make single-char strings comparable with characters, since it
+							// doesn't work automatically and several conversions have been performed 
+							else if ((leftO instanceof String) && (rightO instanceof Character))
+							{
+								exprs.set(i, leftParenth + neg + left + ".equals(\"" + (Character)rightO + "\")" + rightParenth);
+								replaced = true;								
+							}
+							else if ((leftO instanceof Character) && (rightO instanceof String))
+							{
+								exprs.set(i, leftParenth + neg + right + ".equals(\"" + (Character)leftO + "\")" + rightParenth);
+								replaced = true;								
+							}
+						} catch (EvalError ex)
+						{
+							System.err.println(ex.getMessage());
+						}
+					} // if (!s.equals(" " + eqOps[op] + " ") && (s.indexOf(eqOps[op]) >= 0))
+				} // for (int op = 0; op < eqOps.length; op++)
+				if (replaced)
+				{
+					// Compose the partial expressions and undo the regex escaping for the initial split
+					str = BString.replace(exprs.getLongString(), " \\|\\| ", " || ");
+					str.replace("  ", " ");	// Get rid of multiple spaces
+				}
+			}
+		}
+		return str;
+	}
+	// END KGU#57 2015-11-07
 
 	private void delay()
 	{
@@ -381,35 +504,38 @@ public class Executor implements Runnable
 				}
 				try
 				{
-					// first add as string
-					setVar(in, str);
-					// try adding as char
-					try
-					{
-						if (str.length() == 1)
-						{
-							Character strc = str.charAt(0);
-							setVar(in, strc);
-						}
-					} catch (Exception e)
-					{
-					}
-					// try adding as double
-					try
-					{
-						double strd = Double.parseDouble(str);
-						setVar(in, strd);
-					} catch (Exception e)
-					{
-					}
-					// finally try adding as integer
-					try
-					{
-						int stri = Integer.parseInt(str);
-						setVar(in, stri);
-					} catch (Exception e)
-					{
-					}
+					// START KGU#69 2015-11-08 What we got here is to be regarded as raw input
+//					// first add as string
+//					setVar(in, str);
+//					// try adding as char: FIXME Spoils comparison
+//					try
+//					{
+//						if (str.length() == 1)
+//						{
+//							Character strc = str.charAt(0);
+//							setVar(in, strc);
+//						}
+//					} catch (Exception e)
+//					{
+//					}
+//					// try adding as double
+//					try
+//					{
+//						double strd = Double.parseDouble(str);
+//						setVar(in, strd);
+//					} catch (Exception e)
+//					{
+//					}
+//					// finally try adding as integer
+//					try
+//					{
+//						int stri = Integer.parseInt(str);
+//						setVar(in, stri);
+//					} catch (Exception e)
+//					{
+//					}
+					setVarRaw(in, str);
+					// END KGU#69 2015-11-08
 				} catch (EvalError ex)
 				{
 					result = ex.getMessage();
@@ -434,9 +560,9 @@ public class Executor implements Runnable
 		if (!result.equals(""))
 		{
 			// MODIFIED BY GENNARO DONNARUMMA, ADDED ARRAY ERROR MSG
-
+			
 			String modifiedResult = result;
-			if ((result != null) && result.contains("Not an array"))
+			if (result.contains("Not an array"))
 			{
 				modifiedResult = modifiedResult.concat(" or the index "
 						+ modifiedResult.substring(
@@ -554,7 +680,7 @@ public class Executor implements Runnable
 			pascalFunction = "public void randomize() {  }";
 			interpreter.eval(pascalFunction);
 			// square
-			pascalFunction = "public double sqr(Double d) { return Math.pow(d,2); }";
+			pascalFunction = "public double sqr(Double d) { return (d) * (d); }";
 			interpreter.eval(pascalFunction);
 			// square root
 			pascalFunction = "public double sqrt(Double d) { return Math.sqrt(d); }";
@@ -583,13 +709,21 @@ public class Executor implements Runnable
 			interpreter.eval(pascalFunction);
 			pascalFunction = "public String trim(String s) { return s.trim(); }";
 			interpreter.eval(pascalFunction);
+			// START KGU#57 2015-11-07: More interoperability for characters and Strings
+			pascalFunction = "public Character lowercase(Character ch) { return (Character)Character.toLowerCase(ch); }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public Character uppercase(Character ch) { return (Character)Character.toUpperCase(ch); }";
+			interpreter.eval(pascalFunction);
+			// char transformation
+			
+			// END KGU#57 2015-11-07
 		} catch (EvalError ex)
 		{
 			System.out.println(ex.getMessage());
 		}
 	}
 
-	public boolean isNumneric(String input)
+	public boolean isNumeric(String input)
 	{
 		try
 		{
@@ -630,7 +764,7 @@ public class Executor implements Runnable
 	 * private void setVar(String name, Object content) throws EvalError {
 	 * //interpreter.set(name,content);
 	 * 
-	 * if(content instanceof String) { if(!isNumneric((String) content)) {
+	 * if(content instanceof String) { if(!isNumeric((String) content)) {
 	 * content = "\""+ ((String) content) + "\""; } }
 	 * 
 	 * interpreter.set(name,content); interpreter.eval(name+" = "+content);
@@ -690,18 +824,66 @@ public class Executor implements Runnable
 		}
 	}
 
-	// METHOD MODIFIED BY GENNARO DONNARUMMA
-
+	
+	// START KGU#67/KGU#68/KGU#69 2015-11-08: We must distinguish between raw input and evaluated objects
+	private void setVarRaw(String name, String rawInput) throws EvalError
+	{
+		// first add as string (lest we should end with nothing at all...)
+		setVar(name, rawInput);
+		// Try some refinement if possible
+		if (rawInput instanceof String && !isNumeric(rawInput) )
+		{
+			try
+			{
+				String strInput = rawInput.trim();
+				// Maybe the string or character is already quoted, then get the content
+				if (strInput.startsWith("\"") && strInput.endsWith("\"") ||
+						strInput.startsWith("'") && strInput.endsWith("'"))
+				{
+					this.interpreter.eval(name + " = " + rawInput);
+				}
+				// try adding as char (only if it's not a digit)
+				else if (rawInput.length() == 1)
+				{
+					Character charInput = rawInput.charAt(0);
+					setVar(name, charInput);
+				}
+			}
+			catch (Exception ex)
+			{
+			}
+		}
+		// try adding as double
+		try
+		{
+			double dblInput = Double.parseDouble(rawInput);
+			setVar(name, dblInput);
+		} catch (Exception e)
+		{
+		}
+		// finally try adding as integer
+		try
+		{
+			int intInput = Integer.parseInt(rawInput);
+			setVar(name, intInput);
+		} catch (Exception e)
+		{
+		}
+	}
+	
+	// METHOD MODIFIED BY GENNARO DONNARUMMA and revised by Kay Gürtzig
 	private void setVar(String name, Object content) throws EvalError
 
 	{
-		if ((content instanceof String))
-		{
-			if (!isNumneric((String) content))
-			{
-				content = "\"" + (String) content + "\"";
-			}
-		}
+		// START KGU#69 2015-11-09: This is only a god idea in case of raw input
+		//if (content instanceof String)
+		//{
+		//	if (!isNumeric((String) content))
+		//	{
+		//		content = "\"" + (String) content + "\"";
+		//	}
+		//}
+		// END KGU#69 2015-11-08
 
 		// MODIFIED BY GENNARO DONNARUMMA
 
@@ -715,126 +897,68 @@ public class Executor implements Runnable
 		}
 
 		// MODIFIED BY GENNARO DONNARUMMA, ARRAY SUPPORT ADDED
+		// Fundamentally revised by Kay Gürtzig 2015-11-08
 
-		String arraynname = null;
+		String arrayname = null;
 		if ((name.contains("[")) && (name.contains("]")))
 		{
-			arraynname = name.substring(0, name.indexOf("["));
-			boolean arrayFound = false;
-			for (int i = 0; i < this.variables.count(); i++)
-
+			arrayname = name.substring(0, name.indexOf("["));
+			boolean arrayFound = this.variables.contains(arrayname);
+			int index = this.getIndexValue(name);
+			Object[] objectArray = null;
+			int oldSize = 0;
+			if (arrayFound)
 			{
-				String s = this.variables.get(i);
-				if ((s != null) && (s.equals(arraynname)))
-
+				try {
+					// If it hasn't been an array then we'll get an error here
+					objectArray = (Object[]) this.interpreter.get(arrayname);
+					oldSize = objectArray.length;
+				}
+				catch (Exception ex)
 				{
-					arrayFound = true;
-					Object[] objectArray = (Object[]) this.interpreter.get(s);
-
-					// START KGU 2014-12-05: Delegated to a new method (bug fixed)
-//					String ind = name.substring(name.indexOf("[") + 1,
-//							name.indexOf("]"));
-//
-//					int index = -1;
-//
-//					try
-//					{
-//						index = Integer.parseInt(ind);
-//					} catch (Exception e)
-//					{
-//						index = (Integer) this.interpreter.get(ind);
-//					}
-					int index = this.getIndexValue(name);
-					// END KGU 2014-12-05
-
-					if (index < objectArray.length)
-
-					{
-						this.interpreter.set(arraynname, objectArray);
-						this.interpreter.set("temp", content);
-						this.interpreter.eval(arraynname + "[" + index
-								+ "] = temp");
-					} else
-					{
-						Object[] objectArrayTemp = new Object[index + 1];
-
-						this.interpreter.set(arraynname, objectArrayTemp);
-						for (int j = 0; j < objectArrayTemp.length; j++)
-						{
-							if (j < objectArray.length)
-
-							{
-								this.interpreter.set("temp", objectArray[j]);
-								this.interpreter.eval(arraynname + "[" + j
-										+ "] = temp");
-							} else if (j < index)
-
-							{
-								this.interpreter.set("temp", new Integer(0));
-								this.interpreter.eval(arraynname + "[" + j
-										+ "] = temp");
-							} else
-							{
-								this.interpreter.set("temp", content);
-								this.interpreter.eval(arraynname + "[" + j
-										+ "] = temp");
-							}
-						}
-					}
+					// Produce a meaningful EvalError instead
+					this.interpreter.eval(arrayname + "[" + index + "] = " + prepareValueForDisplay(content));
 				}
 			}
-			if (!arrayFound)
-
+			if (index > oldSize - 1) // This includes the case of oldSize = 0
 			{
-				String indexInArrayAssign = name.substring(
-						name.indexOf("[") + 1, name.indexOf("]"));
-				// START KGU 2014-12-05: Delegated to a new method (bug fixed)
-//
-//				int index = -1;
-//				try
-//				{
-//					index = Integer.parseInt(indexInArrayAssign);
-//				} catch (Exception e)
-//				{
-//					index = (Integer) this.interpreter.get(indexInArrayAssign);
-//				}
-				int index = getIndexValue(name);
-				// END KGU 2014-12-05
-
-				Object[] arrayNew = new Object[index + 1];
-
-				this.interpreter.set(arraynname, arrayNew);
-				this.interpreter.set("temp", content);
-
-				int indexInArrayAssignAsInt = index;
-				for (int i = 0; i < (indexInArrayAssignAsInt - 1); i++)
+				Object[] oldObjectArray = objectArray;
+				objectArray = new Object[index + 1];
+				for (int i = 0; i < oldSize; i++)
 				{
-					this.interpreter.eval(arraynname + "[" + i + "] = 0");
+					objectArray[i] = oldObjectArray[i];
 				}
-				// KGU 2014-12-05: Why isn't just the already extracted index value used here?
-				this.interpreter.eval(arraynname + "[" + indexInArrayAssign
-						+ "] = temp");
+				for (int i = oldSize; i < index; i++)
+				{
+					objectArray[i] = new Integer(0);
+				}
 			}
-			this.variables.addIfNew(arraynname);
-		} else
+			objectArray[index] = content;
+			this.interpreter.set(arrayname, objectArray);
+			this.variables.addIfNew(arrayname);
+		} else // if ((name.contains("[")) && (name.contains("]")))
 		{
 			this.interpreter.set(name, content);
 
 			// MODIFIED BY GENNARO DONNARUMMA
 			// PREVENTING DAMAGED STRING AND CHARS
-			if ((content != null) && (content instanceof String))
-			{
-				content = ((String) content).replaceAll("\"\"", "\"");
-			}
-			if ((content != null) && (content instanceof Character))
-			{
-				content = new String("'" + content + "'");
-			}
-			this.interpreter.eval(name + " = " + content);
+			// FIXME (KGU): Seems superfluous or even dangerous
+//			if (content != null)
+//			{
+//				if (content instanceof String)
+//				{
+//					content = ((String) content).replaceAll("\"\"", "\"");
+//				}
+//				else if (content instanceof Character)
+//				{
+//					content = new String("'" + content + "'");
+//				}
+//			}
+//			this.interpreter.eval(name + " = " + content);	// What the heck is this good for, now?
 			this.variables.addIfNew(name);
 		}
 		
-		// START KGU 2015-10-13: In step mode, variable should be updated even if delay is set to 0
+		// START KGU#20 2015-10-13: In step mode, variable display should be updated even if delay is set to 0
 //		if (this.delay != 0)
 //		{
 //			Vector<Vector> vars = new Vector();
@@ -852,10 +976,10 @@ public class Executor implements Runnable
 		{
 			updateVariableDisplay();
 		}
-		// END KGU 2015-10-13
+		// END KGU#20 2015-10-13
 	}
 
-	// START KGU 2015-10-13: Code from above moved hitherto and formed to a method
+	// START KGU#20 2015-10-13: Code from above moved hitherto and formed to a method
 	/**
 	 * Prepares an editable variable table and has the Control update the display
 	 * of variables with it
@@ -866,15 +990,94 @@ public class Executor implements Runnable
 		for (int i = 0; i < this.variables.count(); i++)
 		{
 			Vector myVar = new Vector();
-			myVar.add(this.variables.get(i));
-			// TODO (KGU 2015-10-13): Find a solution to display arrays in a sensible way!
-			myVar.add(this.interpreter.get(this.variables.get(i)));
+			myVar.add(this.variables.get(i));	// Variable name
+			// START KGU#67 2015-11-08: We had to find a solution for displaying arrays in a sensible way
+			//myVar.add(this.interpreter.get(this.variables.get(i)));
+			Object val = this.interpreter.get(this.variables.get(i));
+			String valStr = prepareValueForDisplay(val);
+			myVar.add(valStr);					// Variable value as string
+			// END KGU#67 2015-11-08
 			vars.add(myVar);
 		}
 		this.control.updateVars(vars);
 	}
-	// END KGU 2015-10-13
+	// END KGU#20 2015-10-13
 	
+	// START KGU#67/KGU#68 2015-11-08: We have to present values in an editable way (recursively!)
+	private String prepareValueForDisplay(Object val)
+	{
+		String valStr = "";
+		if (val != null)
+		{
+			valStr = val.toString();
+			if (val.getClass().getSimpleName().equals("Object[]"))
+			{
+				valStr = "{";
+				Object[] valArray = (Object[]) val;
+				for (int j = 0; j < valArray.length; j++)
+				{
+					String elementStr = prepareValueForDisplay(valArray[j]);
+					valStr = valStr + ((j > 0) ? ", " : "") + elementStr;
+				}
+				valStr = valStr + "}";
+			}
+			else if (val instanceof String)
+			{
+				valStr = "\"" + valStr + "\"";
+			}
+			else if (val instanceof Character)
+			{
+				valStr = "'" + valStr + "'";
+			}
+		}
+		return valStr;
+	}
+	// END KGU#67/KGU#68 2015-11-08
+	
+	// START KGU#68 2015-11-06
+	public void adoptVarChanges(Object[] newValues)
+	{
+		for (int i = 0; i < newValues.length; i++)
+		{
+			if (newValues[i] != null)
+			{
+				try {
+					String varName = this.variables.get(i);
+					Object oldValue = interpreter.get(varName);
+					if (oldValue.getClass().getSimpleName().equals("Object[]"))
+					{
+						// In this case an initialisation expression ("{ ..., ..., ...}") is expected
+						String asgnmt = "Object[] " + varName + " = " + newValues[i];
+						System.out.println(asgnmt);	// FIXME (KGU) Remove this debug info after test
+						// FIXME: Nested initializers (as produced for nested arrays before) won't work here!
+						interpreter.eval(asgnmt);
+//						// Okay, but now we have to sort out some un-boxed strings
+//						Object[] objectArray = (Object[]) interpreter.get(varName);
+//						for (int j = 0; j < objectArray.length; j++)
+//						{
+//							Object content = objectArray[j];
+//							if (content != null)
+//							{
+//								System.out.println("Updating " + varName + "[" + j + "] = " + content.toString());
+//								this.interpreter.set("structorizer_temp", content);
+//								this.interpreter.eval(varName + "[" + j + "] = structorizer_temp");
+//							}
+//						}
+						
+					}
+					else
+					{
+						setVarRaw(varName, (String)newValues[i]);
+					}
+				}
+				catch (EvalError err) {
+					System.err.println(err.getMessage());
+				}
+			}
+		}
+	}
+	// END KGU#68 2015-11-06
+
 	public void start(boolean useSteps)
 	{
 		running = true;
@@ -883,22 +1086,25 @@ public class Executor implements Runnable
 		stop = false;
 		variables = new StringList();
 		control.updateVars(new Vector<Vector>());
+		
+		// FIXME (KGU 2015-11-07) Should we replace the interpreter in order to avoid the frequently
+		// observed "freezing" after some severe syntax errors in a previous run attempt?
 
 		Thread runner = new Thread(this, "Player");
 		runner.start();
 	}
 	
-	// START KGU 2015-10-12 New method for breakpoint support
+	// START KGU#43 2015-10-12 New method for breakpoint support
 	private boolean checkBreakpoint(Element element)
 	{
 		boolean atBreakpoint = element.isBreakpoint(); 
 		if (atBreakpoint) {
-			control.setButtonsForPause();	// FIXME
-			this.setPaus(true);	//	FIXME
+			control.setButtonsForPause();
+			this.setPaus(true);
 		}
 		return atBreakpoint;
 	}
-	// END KGU 2015-10-12
+	// END KGU#43 2015-10-12
 
 	// START KGU 2015-10-13: Decomposed this "monster" method into Element-type-specific subroutines
 	private String step(Element element)
@@ -909,11 +1115,11 @@ public class Executor implements Runnable
 		{
 			diagram.redraw();
 		}
-		// START KGU 2015-10-12: If there is a breakpoint switch to step mode before delay
+		// START KGU#43 2015-10-12: If there is a breakpoint switch to step mode before delay
 		checkBreakpoint(element);
-		// END KGU 2015-10-12
+		// END KGU#43 2015-10-12
 		
-		// The Root element and the REPEAT loop won't be delayed or halted in the beginning except by their members
+		// The Root,  element and the REPEAT loop won't be delayed or halted in the beginning except by their members
 		if (element instanceof Root)
 		{
 			result = stepRoot((Root)element);
@@ -942,7 +1148,7 @@ public class Executor implements Runnable
 			{
 				result = stepFor((For)element);
 			}
-			// KGU 2015-10-13: Obviously, the execution code for Forever loops had been forgotten
+			// START KGU#44/KGU#47 2015-10-13: Obviously, Forever loops and Parallel sections had been forgotten
 			else if (element instanceof Forever)
 			{
 				result = stepWhile(element, true);
@@ -951,6 +1157,7 @@ public class Executor implements Runnable
 			{
 				result = stepParallel((Parallel)element);
 			}
+			// END KGU#44/KGU#47 2015-10-13
 		}
 		if (result.equals("")) {
 			element.executed = false;
@@ -974,7 +1181,7 @@ public class Executor implements Runnable
 			i++;
 		}
 
-		delay();// FIXME Specific for root after the last instruction of the program/function
+		delay(); // FIXME Specific pause for root after the last instruction of the program/function
 		if (result.equals(""))
 		{
 			element.clearExecutionStatus();
@@ -996,7 +1203,7 @@ public class Executor implements Runnable
 			cmd = convert(cmd);
 			try
 			{
-				// START KGU 2015-10-12: But do we really want to step within an instruction block? 
+				// START KGU 2015-10-12: Allow to step within an instruction block (but no breakpoint here!) 
 				if (i > 0)
 				{
 					delay();
@@ -1042,17 +1249,21 @@ public class Executor implements Runnable
 								+ "> is not a correct or existing expression.";
 					} else
 					{
+						// FIXME: Here setVar is used with already interpreted object...
 						setVar(varName, n);
 					}
 //					delay();
 				}
 				// input
-				else if (cmd.indexOf(D7Parser.input) >= 0)
+				// START KGU#65 2015-11-04: Input keyword should only trigger this if positioned at line start
+				//else if (cmd.indexOf(D7Parser.input) >= 0)
+				else if (cmd.trim().startsWith(D7Parser.input))
+				// END KGU#65 2015-11-04
 				{
 					String in = cmd.substring(
 							cmd.indexOf(D7Parser.input)
 									+ D7Parser.input.length()).trim();
-					// START KGU 2014-12-05: We ought to show the index value
+					// START KGU#33 2014-12-05: We ought to show the index value
 					// if the variable is indeed an array element
 					if (in.contains("[") && in.contains("]")) {
 						try {
@@ -1066,41 +1277,47 @@ public class Executor implements Runnable
 							// Is bound to fail anyway!
 						}
 					}
-					// END KGU 2014-12-05
+					// END KGU33 2014-12-05
 					String str = JOptionPane.showInputDialog(null,
 							"Please enter a value for <" + in + ">", null);
-					// first add as string
-					setVar(in, str);
-					// try adding as char
-					try
-					{
-						if (str.length() == 1)
-						{
-							Character strc = str.charAt(0);
-							setVar(in, strc);
-						}
-					} catch (Exception e)
-					{
-					}
-					// try adding as double
-					try
-					{
-						double strd = Double.parseDouble(str);
-						setVar(in, strd);
-					} catch (Exception e)
-					{
-					}
-					// finally try adding as integer
-					try
-					{
-						int stri = Integer.parseInt(str);
-						setVar(in, stri);
-					} catch (Exception e)
-					{
-					}
+					// START KGU#69 2015-11-08: Use specific method for raw input
+//					// first add as string
+//					setVar(in, str);
+//					// try adding as char
+//					try
+//					{
+//						if (str.length() == 1)
+//						{
+//							Character strc = str.charAt(0);
+//							setVar(in, strc);
+//						}
+//					} catch (Exception e)
+//					{
+//					}
+//					// try adding as double
+//					try
+//					{
+//						double strd = Double.parseDouble(str);
+//						setVar(in, strd);
+//					} catch (Exception e)
+//					{
+//					}
+//					// finally try adding as integer
+//					try
+//					{
+//						int stri = Integer.parseInt(str);
+//						setVar(in, stri);
+//					} catch (Exception e)
+//					{
+//					}
+					setVarRaw(in, str);
+					// END KGU#69 2015-11-08
 				}
 				// output
-				else if (cmd.indexOf(D7Parser.output) >= 0)
+				// START KGU#65 2015-11-04: Output keyword should only trigger this if positioned at line start
+				//else if (cmd.indexOf(D7Parser.output) >= 0)
+				else if (cmd.trim().startsWith(D7Parser.output))
+				// END KGU#65 2015-11-04
 				{
 					String out = cmd.substring(
 							cmd.indexOf(D7Parser.output)
@@ -1224,7 +1441,10 @@ public class Executor implements Runnable
 		try
 		{
 			StringList text = element.getText();
-			String expression = text.get(0) + "==";
+			// START KGU 2015-11-09 New unified conversion strategy, so use Structorizer syntax
+			//String expression = text.get(0) + "==";
+			String expression = text.get(0) + " = ";
+			// END KGU 2015-11-09
 			boolean done = false;
 			int last = text.count() - 1;
 			if (text.get(last).trim().equals("%"))
@@ -1233,7 +1453,10 @@ public class Executor implements Runnable
 			}
 			for (int q = 1; (q <= last) && (done == false); q++)
 			{
-				String test = convert(expression + text.get(q));
+				// START KGU#15 2015-10-21: Support for multiple constants per branch
+				//String test = convert(expression + text.get(q));
+				String[] constants = text.get(q).split(",");
+				// END KGU#15 2015-10-21
 				boolean go = false;
 				if ((q == last)
 						&& !text.get(text.count() - 1).trim().equals("%"))
@@ -1242,8 +1465,16 @@ public class Executor implements Runnable
 				}
 				if (go == false)
 				{
-					Object n = interpreter.eval(test);
-					go = n.toString().equals("true");
+					// START KGU#15 2015-10-21: Test against a list of constants now
+					//Object n = interpreter.eval(test);
+					//go = n.toString().equals("true");
+					for (int c = 0; !go && c < constants.length; c++)
+					{
+						String test = convert(expression + constants[c]);
+						Object n = interpreter.eval(test);
+						go = n.toString().equals("true");
+					}
+					// END KGU#15 2015-10-21
 				}
 				if (go)
 				{
@@ -1296,10 +1527,10 @@ public class Executor implements Runnable
 			// s=s.replace(">==", ">=");
 			s = convert(s);
 
-			System.out.println("C=  " + interpreter.get("C"));
-			System.out.println("IF: " + s);
+			//System.out.println("C=  " + interpreter.get("C"));
+			//System.out.println("IF: " + s);
 			Object n = interpreter.eval(s);
-			System.out.println("Res= " + n);
+			//System.out.println("Res= " + n);
 			if (n == null)
 			{
 				result = "<" + s
@@ -1349,7 +1580,7 @@ public class Executor implements Runnable
 		String result = new String();
 		try
 		{
-			String condStr = "true";
+			String condStr = "true";	// Condition expression
 			if (!eternal) {
 				condStr = ((While) element).getText().getText();
 				if (!D7Parser.preWhile.equals(""))
@@ -1360,12 +1591,12 @@ public class Executor implements Runnable
 				{
 					condStr = BString.replace(condStr, D7Parser.postWhile, "");
 				}
-				condStr = convert(condStr);
+				convert(condStr, false);
 				// System.out.println("WHILE: "+condStr);
 			}
 
 			int cw = 0;
-			Object cond = interpreter.eval(condStr);
+			Object cond = interpreter.eval(convertStringComparison(condStr));
 
 			if (cond == null)
 			{
@@ -1407,7 +1638,7 @@ public class Executor implements Runnable
 						delay();
 						// END KGU 2015-10-13
 					}
-					cond = interpreter.eval(condStr);
+					cond = interpreter.eval(convertStringComparison(condStr));
 					if (cond == null)
 					{
 						result = "<"
@@ -1444,27 +1675,31 @@ public class Executor implements Runnable
 				diagram.redraw();
 			}
 
-			String s = element.getText().getText();
+			// The exit condition is converted and parsed once in advance!
+			// Hence, syntactic errors will be reported before the loop has been started at all.
+			// And, of course, variables only introduced within the loop won't be recognised--
+			// which is sound with scope rules in C or Java.
+			String condStr = element.getText().getText();
 			if (!D7Parser.preRepeat.equals(""))
 			{
-				s = BString.replace(s, D7Parser.preRepeat, "");
+				condStr = BString.replace(condStr, D7Parser.preRepeat, "");
 			}
 			if (!D7Parser.postRepeat.equals(""))
 			{
-				s = BString.replace(s, D7Parser.postRepeat, "");
+				condStr = BString.replace(condStr, D7Parser.postRepeat, "");
 			}
 			// s=s.replace("==", "=");
 			// s=s.replace("=", "==");
 			// s=s.replace("<==", "<=");
 			// s=s.replace(">==", ">=");
-			s = convert(s);
+			condStr = convert(condStr, false);
 			// System.out.println("REPEAT: "+s
 
 			int cw = 0;
-			Object n = interpreter.eval(s);
+			Object n = interpreter.eval(condStr);
 			if (n == null)
 			{
-				result = "<" + s
+				result = "<" + condStr
 						+ "> is not a correct or existing expression.";
 			} else
 			{
@@ -1473,8 +1708,8 @@ public class Executor implements Runnable
 					int i = 0;
 					// START KGU 2010-09-14 The limitation of cw CAUSED
 					// eternal loops (rather then preventing them)
-					// while (i < ((Repeat) element).q.children.size() &&
-					// result.equals("") && stop == false && cw < 100)
+					//while (i < ((Repeat) element).q.children.size() &&
+					//		result.equals("") && stop == false && cw < 100)
 					while ((i < element.q.children.size())
 							&& result.equals("") && (stop == false))
 					// END KGU 2010-09-14
@@ -1488,11 +1723,11 @@ public class Executor implements Runnable
 						cw++;
 						element.executed = true;
 					}
-					n = interpreter.eval(s);
+					n = interpreter.eval(convertStringComparison(condStr));
 					if (n == null)
 					{
 						result = "<"
-								+ s
+								+ condStr
 								+ "> is not a correct or existing expression.";
 					}
 
@@ -1504,7 +1739,10 @@ public class Executor implements Runnable
 					delay();	// Symbolizes the loop condition check time
 					element.waited = true;
 
-				} while (!(n.toString().equals("true") && result.equals("") && (stop == false)));
+				// START KGU#70 2015-11-09: Condition logically - execution often got stuck here 
+				//} while (!(n.toString().equals("true") && result.equals("") && (stop == false)));
+				} while (!(n.toString().equals("true")) && result.equals("") && (stop == false));
+				// END KGU#70 2015-11-09
 			}
 
 			if (result.equals(""))
@@ -1528,71 +1766,50 @@ public class Executor implements Runnable
 		String result = new String();
 		try
 		{
-			String str = element.getText().getText();
-            
-			String pas = "1";
-			if(str.contains(", pas ="))	// FIXME: Ought to be replaced by a properly configurable string
-			{
-				String[] pieces = str.split(", pas =");
-				str=pieces[0];
-				pas = pieces[1].trim();
-			}
-			// START KGU 2015-10-13: The above mechanism has/had several flaws:
-			// 1. The parsing works only for the hard-code french keyword (ought to be a preference).
-			// 2. the while condition didn't work for negative pas values.
-			// 3. the pas value was parsed again and again in every loop.
-			// 4. It's certainly not consistent with code export
-			// To solve 2 and 3 we provide the Integer conversion once in advance
-			int sval = 1;	// step width
-			try
-			{
-				sval = Integer.valueOf(pas);
-			}
-			catch(Exception e)
-			{
-				// Try it in a different way
-				Object n = interpreter.eval(pas);
-				if (n != null) 
-				{
-					if (n instanceof Integer)
-					{
-						sval = (Integer) n;
-					}
-					else if (n instanceof Long)
-					{
-						sval = ((Long) n).intValue();
-					}
-					else if (n instanceof Float)
-					{
-						sval = ((Float) n).intValue();
-					}
-					else if (n instanceof Double)
-					{
-						sval = ((Double) n).intValue();
-					}
-				}
-			}
-			// END KGU 2015-10-13
+			// START KGU#3 2015-10-31: Now it's time for the new intrinsic mechanism
+//			String str = element.getText().getText();
+//            
+//			String pas = "1";
+//			if(str.contains(", pas ="))	// FIXME: Ought to be replaced by a properly configurable string
+//			{
+//				String[] pieces = str.split(", pas =");
+//				str=pieces[0];
+//				pas = pieces[1].trim();
+//			}
+//			// START KGU 2015-10-13: The above mechanism has/had several flaws:
+//			// 1. The parsing works only for the hard-coded french keyword (ought to be a preference).
+//			// 2. the while condition didn't work for negative pas values.
+//			// 3. the pas value was parsed again and again in every loop.
+//			// 4. It's certainly not consistent with code export
+//			// To solve 2 and 3 we provide the Integer conversion once in advance
+			int sval = element.getStepConst();
+			// END KGU#3 2015-10-31
                             
-			// cut off the start of the expression
-			if (!D7Parser.preFor.equals(""))
-			{
-				str = BString.replace(str, D7Parser.preFor, "");
-			}
-			// trim blanks
-			str = str.trim();
-			// modify the later word
-			if (!D7Parser.postFor.equals(""))
-			{
-				str = BString.replace(str, D7Parser.postFor, "<=");
-			}
-			// do other transformations
-			str = CGenerator.transform(str);
-			String counter = str.substring(0, str.indexOf("="));
+			// START KGU#3 2015-10-27: Now replaced by For-intrinsic mechanisms
+//			// cut off the start of the expression
+//			if (!D7Parser.preFor.equals(""))
+//			{
+//				str = BString.replace(str, D7Parser.preFor, "");
+//			}
+//			// trim blanks
+//			str = str.trim();
+//			// modify the later word
+//			if (!D7Parser.postFor.equals(""))
+//			{
+//				str = BString.replace(str, D7Parser.postFor, "<=");
+//			}
+//			// do other transformations
+//			str = CGenerator.transform(str);
+//			String counter = str.substring(0, str.indexOf("="));
+			String counter = element.getCounterVar();
+			// END KGU#3 2015-10-27
 			// complete
 
-			String s = str.substring(str.indexOf("=") + 1,
-					str.indexOf("<=")).trim();
+			// START KGU#3 2015-10-27: Now replaced by For-intrinsic mechanisms
+//			String s = str.substring(str.indexOf("=") + 1,
+//					str.indexOf("<=")).trim();
+			String s = element.getStartValue(); 
+			// END KGU#3 2015-10-27
 			s = convert(s);
 			Object n = interpreter.eval(s);
 			if (n == null)
@@ -1617,8 +1834,12 @@ public class Executor implements Runnable
 				ival = ((Double) n).intValue();
 			}
 
-			s = str.substring(str.indexOf("<=") + 2, str.length()).trim();
+			// START KGU#3 2015-10-27: Now replaced by For-intrinsic mechanisms
+//			s = str.substring(str.indexOf("<=") + 2, str.length()).trim();
+			s = element.getEndValue();
+			// END KGU#3 2015-10-27
 			s = convert(s);
+			
 			n = interpreter.eval(s);
 			if (n == null)
 			{
@@ -1786,7 +2007,7 @@ public class Executor implements Runnable
 		}
 	}
 	
-	// START KGU 2014-12-05
+	// START KGU#33/KGU#34 2014-12-05
 	// Method tries to extract the index value from an expression formed like
 	// a array element access, i.e. "<arrayname>[<expression>]"
 	private int getIndexValue(String varname) throws EvalError
@@ -1808,5 +2029,6 @@ public class Executor implements Runnable
 		}
 		return index;
 	}
-	// END KGU 2014-12-05
+	// END KGU#33/KGU#34 2014-12-05
+	
 }

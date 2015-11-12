@@ -75,6 +75,19 @@ public class Forever extends Element{
 		setText(_strings);
 	}
 	
+	// START KGU#64 2015-11-03: Is to improve drawing performance
+	/**
+	 * Recursively clears all drawing info this subtree down
+	 * (To be overridden by structured sub-classes!)
+	 */
+	@Override
+	public void resetDrawingInfoDown()
+	{
+		this.resetDrawingInfo();
+		this.q.resetDrawingInfoDown();
+	}
+	// END KGU#64 2015-11-03
+	
 	public Rect prepareDraw(Canvas _canvas)
 	{
                 if(isCollapsed()) 
@@ -272,23 +285,23 @@ public class Forever extends Element{
 	}
 	
 	
-	// START KGU 2015-11-12
+	// START KGU#43 2015-10-12
 	@Override
 	public void clearBreakpoints()
 	{
 		super.clearBreakpoints();
 		this.q.clearBreakpoints();
 	}
-	// END KGU 2015-10-12
+	// END KGU#43 2015-10-12
 	
-	// START KGU 2015-11-13
+	// START KGU#43 2015-10-13
 	@Override
 	public void clearExecutionStatus()
 	{
 		super.clearExecutionStatus();
 		this.q.clearExecutionStatus();
 	}
-	// END KGU 2015-10-12
+	// END KGU#43 2015-10-13
 	
 	// START KGU 2015-10-16
 	/* (non-Javadoc)

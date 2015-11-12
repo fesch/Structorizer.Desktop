@@ -32,6 +32,7 @@
  *      Author          Date				Description
  *      ------			----				-----------
  *      Wang Lei        2010.05.14          First Issue
+ *      Zijun Ke        2015.10.29          Several additions
  *
  ******************************************************************************************************
  *
@@ -44,16 +45,23 @@
 Menu.menuFile.text=文件
 // Submenus of "File"
 Menu.menuFileNew.text=新建
-Menu.menuFileOpen.text=打开 ...
+Menu.menuFileOpen.text=打开 ...	
 Menu.menuFileSave.text=保存
 Menu.menuFileSaveAs.text=另存为 ...
+Menu.menuFileOpenRecent.text=打开最近使用的文件
 Menu.menuFileExport.text=导出
 // Submenu of "File -> Export"
-Menu.menuFileExportPicture.text=图片 ...
+Menu.menuFileExportPicture.text=图片
+Menu.menuFileExportPicturePNG.text=PNG ...
+Menu.menuFileExportPicturePNGmulti.text=PNG (multiple) ...
+Menu.menuFileExportPictureEMF.text=EMF ...
+Menu.menuFileExportPictureSWF.text=SWF ...
+Menu.menuFileExportPicturePDF.text=PDF ...
+Menu.menuFileExportPictureSVG.text=SVG ...
 Menu.menuFileExportCode.text=代码 ...
 Menu.menuFileImport.text=导入
 // Submenu of "File -> Import"
-Menu.menuFileImportPascal.text=Pascal代码 ...
+Menu.menuFileImportPascal.text=Pascal 代码 ...
 Menu.menuFilePrint.text=打印 ...
 Menu.menuFileQuit.text=退出
 // Menu "Edit"
@@ -62,26 +70,30 @@ Menu.menuEdit.text=编辑
 Menu.menuEditUndo.text=撤销
 Menu.menuEditRedo.text=重做
 Menu.menuEditCut.text=剪切
-Menu.menuEditCopy.text=拷贝
+Menu.menuEditCopy.text=复制
 Menu.menuEditPaste.text=粘贴
-Menu.menuEditCopyDiagramPNG.text=拷贝 PNG 图像
-Menu.menuEditCopyDiagramEMF.text=拷贝 EMF 图像
+Menu.menuEditCopyDiagramPNG.text=复制 PNG 图像到剪贴板
+Menu.menuEditCopyDiagramEMF.text=复制 EMF 图像到剪贴板
+
+Menu.menuView.text=视图
+
 // Menu "Diagram"
 Menu.menuDiagram.text=图
 // Submenus of "Diagram"
-Menu.menuDiagramAdd.text=增加
+Menu.menuDiagramAdd.text=添加
 // Submenu "Diagram -> Add -> Before"
 Menu.menuDiagramAddBefore.text=之前
 // Submenus for adding Elements "Before"
 Menu.menuDiagramAddBeforeInst.text=指令
-Menu.menuDiagramAddBeforeAlt.text=IF语句
-Menu.menuDiagramAddBeforeCase.text=CASE语句
-Menu.menuDiagramAddBeforeFor.text=FOR循环
-Menu.menuDiagramAddBeforeWhile.text=WHILE循环
-Menu.menuDiagramAddBeforeRepeat.text=REPEAT循环
+Menu.menuDiagramAddBeforeAlt.text=IF 语句
+Menu.menuDiagramAddBeforeCase.text=CASE 语句
+Menu.menuDiagramAddBeforeFor.text=FOR 循环
+Menu.menuDiagramAddBeforeWhile.text=WHILE 循环
+Menu.menuDiagramAddBeforeRepeat.text=REPEAT 循环
 Menu.menuDiagramAddBeforeForever.text=无限循环
 Menu.menuDiagramAddBeforeCall.text=调用
 Menu.menuDiagramAddBeforeJump.text=跳转
+Menu.menuDiagramAddBeforePara.text=并行
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=之后
 // Submenus for adding Elements "After"
@@ -94,35 +106,48 @@ Menu.menuDiagramAddAfterRepeat.text=REPEAT循环
 Menu.menuDiagramAddAfterForever.text=无限循环
 Menu.menuDiagramAddAfterCall.text=调用
 Menu.menuDiagramAddAfterJump.text=跳转
+Menu.menuDiagramAddAfterPara.text=并行
 Menu.menuDiagramEdit.text=编辑
 Menu.menuDiagramDelete.text=删除
 Menu.menuDiagramMoveUp.text=向上移动
-Menu.menuDiagramMoveDown.text=向下移动
+Menu.menuDiagramMoveDown.text=向下移动`
 Menu.menuDiagramType.text=类型
 Menu.menuDiagramTypeProgram.text=主程序
 Menu.menuDiagramTypeFunction.text=子程序
-Menu.menuDiagramNice.text=有横隔的图?
-Menu.menuDiagramComment.text=显示注释?
-Menu.menuDiagramMarker.text=变量高亮显示?
-Menu.menuDiagramDIN.text=DIN?
+Menu.menuDiagramNice.text=有横隔的图？
+Menu.menuDiagramComment.text=显示注释？
+Menu.menuDiagramMarker.text=变量高亮显示？
+Menu.menuDiagramDIN.text=DIN？
+Menu.menuDiagramAnalyser.text=分析程序结构？
+Menu.menuDiagramSwitchComments.text=切换显示文本/注释？
 // Menu "Help"
 Menu.menuPreferences.text=参数设置
 // Submenu of "Help"
 Menu.menuPreferencesFont.text=字体 ...
 Menu.menuPreferencesColors.text=颜色 ...
 Menu.menuPreferencesOptions.text=结构 ...
-Menu.menuPreferencesParser.text=分析器 ...
+Menu.menuPreferencesParser.text=解析器 ...
+Menu.menuPreferencesAnalyser.text=分析器 ...
+Menu.menuPreferencesExport.text=导出 ...
 Menu.menuPreferencesLanguage.text=语言
 Menu.menuPreferencesLanguageEnglish.text=英语
 Menu.menuPreferencesLanguageGerman.text=德语
 Menu.menuPreferencesLanguageFrench.text=法语
 Menu.menuPreferencesLanguageDutch.text=荷兰语
 Menu.menuPreferencesLanguageLuxemburgish.text=卢森堡语
+Menu.menuPreferencesLanguageSpanish.text=西班牙语
+Menu.menuPreferencesLanguagePortugalBrazil.text=葡萄牙语（巴西）
 Menu.menuPreferencesLanguageItalian.text=意大利语
-Menu.menuPreferencesLanguageSimplifiedChinese.text=簡體中文
-Menu.menuPreferencesLanguageTraditionalChinese.text=繁體中文
+Menu.menuPreferencesLanguageSimplifiedChinese.text=简体中文
+Menu.menuPreferencesLanguageTraditionalChinese.text=繁体中文
+Menu.menuPreferencesLanguageCzech.text=捷克语
+Menu.menuPreferencesLanguageRussian.text=俄罗斯语
+Menu.menuPreferencesLanguagePolish.text=波兰语
 Menu.menuPreferencesLookAndFeel.text=外观
-Menu.menuPreferencesSave.text=保存当前所有参数设置
+Menu.menuPreferencesSave.text=所有偏好设置 ...
+Menu.menuPreferencesSaveAll.text=保存
+Menu.menuPreferencesSaveLoad.text=从文件读取 ...
+Menu.menuPreferencesSaveDump.text=导出到文件 ...
 // Menu "Help"
 Menu.menuHelp.text=帮助
 // Submenu of "Help"
@@ -131,41 +156,41 @@ Menu.menuHelpUpdate.text=更新 ...
 // Error messages for analyser
 Menu.error01_1.text=WARNING: 未检测到循环变量 ...
 Menu.error01_2.text=WARNING: 检测到多于一个循环变量 ...
-Menu.error01_3.text=循环体内不允许修改循环变量!
+Menu.error01_3.text=循环体内不允许修改循环变量！
 Menu.error02.text=检测到循环条件中未更改循环变量, 可能导致死循环 ...
-Menu.error03_1.text=变量未初始化!
-Menu.error03_2.text=变量可能未初始化!
-Menu.error04.text=IF语句中不能使用空的TRUE块!
-Menu.error05.text=变量必须大写!
-Menu.error06.text=程序名必须大写!
-Menu.error07_1.text=无效的程序名或方法名!
-Menu.error07_2.text=无效的参数名!
-Menu.error07_3.text=无效的变量名!
-Menu.error08.text=在条件中不允许做赋值.
-Menu.error09.text=程序名不能与变量名或参数名同名!
-Menu.error10_1.text=单一指令不应该包括输入/输出指令或赋值!
-Menu.error10_2.text=单一指令不应该包括输入/输出指令!
-Menu.error10_3.text=单一指令不应该包括输入指令和赋值!
-Menu.error10_4.text=单一指令不应该包括输出指令和赋值!
-Menu.error11.text=可能的赋值错误. 请检查该指令!
-Menu.error12.text=参数必须以字母p开头并且后面是大写字母!
-Menu.error13_1.text=你的函数没有任何返回值!
-Menu.error13_2.text=你的函数可能没有返回值!
+Menu.error03_1.text=变量未初始化！
+Menu.error03_2.text=变量可能未初始化！
+Menu.error04.text=IF语句中不能使用空的TRUE块！
+Menu.error05.text=变量必须大写！
+Menu.error06.text=程序名必须大写！
+Menu.error07_1.text=无效的程序名或方法名！
+Menu.error07_2.text=无效的参数名！
+Menu.error07_3.text=无效的变量名！
+Menu.error08.text=在条件中不允许做赋值。
+Menu.error09.text=程序名不能与变量名或参数名同名！
+Menu.error10_1.text=单一指令不应该包括输入/输出指令或赋值！
+Menu.error10_2.text=单一指令不应该包括输入/输出指令！
+Menu.error10_3.text=单一指令不应该包括输入指令和赋值！
+Menu.error10_4.text=单一指令不应该包括输出指令和赋值！
+Menu.error11.text=可能的赋值错误. 请检查该指令！
+Menu.error12.text=参数必须以字母p开头并且后面是大写字母！
+Menu.error13_1.text=你的函数没有任何返回值！
+Menu.error13_2.text=你的函数可能没有返回值！
 
 -----[ AnalyserPreferences ]-----
-AnalyserPreferences.check1.text=检查被修改的循环变量.
-AnalyserPreferences.check2.text=检查无限循环(尽可能检测!)
-AnalyserPreferences.check3.text=检查未初始化的变量.
-AnalyserPreferences.check4.text=检查不正确的使用IF语句.
-AnalyserPreferences.check5.text=检查大写的变量名. (LUX/MEN)
-AnalyserPreferences.check6.text=检查大写的程序名/子程序名. (LUX/MEN)
-AnalyserPreferences.check7.text=检查有效的标识符.
-AnalyserPreferences.check8.text=检查条件中的赋值.
-AnalyserPreferences.check9.text=检查程序名/子程序名不等于其他标识符.
-AnalyserPreferences.check10.text=检查带多个命令的指令.
-AnalyserPreferences.check11.text=检查赋值错误.
-AnalyserPreferences.check12.text=检查标准化的参数名. (LUX/MEN)
-AnalyserPreferences.check13.text=检查函数中四方返回结果.
+AnalyserPreferences.check1.text=检查被修改的循环变量。
+AnalyserPreferences.check2.text=检查无限循环(尽可能检测！)
+AnalyserPreferences.check3.text=检查未初始化的变量。
+AnalyserPreferences.check4.text=检查不正确的使用IF语句。
+AnalyserPreferences.check5.text=检查大写的变量名。(LUX/MEN)
+AnalyserPreferences.check6.text=检查大写的程序名/子程序名。(LUX/MEN)
+AnalyserPreferences.check7.text=检查有效的标识符。
+AnalyserPreferences.check8.text=检查条件中的赋值。
+AnalyserPreferences.check9.text=检查程序名/子程序名不等于其他标识符。
+AnalyserPreferences.check10.text=检查带多个命令的指令。
+AnalyserPreferences.check11.text=检查赋值错误。
+AnalyserPreferences.check12.text=检查标准化的参数名。(LUX/MEN)
+AnalyserPreferences.check13.text=检查函数中是否返回结果。
 AnalyserPreferences.okButton.text=确定
 
 
@@ -173,97 +198,100 @@ AnalyserPreferences.okButton.text=确定
 -----[ Diagram ]-----
 // Buttons
 // I/O
-Editor.btnNew.tooltip=创建一个空的图.
-Editor.btnOpen.tooltip=打开一个存在的图.
-Editor.btnSave.tooltip=保存实际的图.
+Editor.btnNew.tooltip=创建一个空的图。
+Editor.btnOpen.tooltip=打开一个存在的图。
+Editor.btnSave.tooltip=保存实际的图。
 // InsertBefore
-Editor.btnBeforeInst.tooltip=在选中的元素前插入一个新的指令. 
-Editor.btnBeforeAlt.tooltip=在选中的元素前插入一个新的IF语句.
-Editor.btnBeforeFor.tooltip=在选中的元素前插入一个新的FOR循环.
-Editor.btnBeforeWhile.tooltip=在选中的元素前插入一个新的WHILE循环.
-Editor.btnBeforeRepeat.tooltip=在选中的元素前插入一个新的REPEAT循环.
-Editor.btnBeforeForever.tooltip=在选中的元素前插入一个新的无限循环.
-Editor.btnBeforeCall.tooltip=在选中的元素前插入一个新的调用.
-Editor.btnBeforeJump.tooltip=在选中的元素前插入一个新的跳转.
-Editor.btnBeforeCase.tooltip=在选中的元素前插入一个新的CASE语句.
+Editor.btnBeforeInst.tooltip=在选中的元素前插入一个新的指令。
+Editor.btnBeforeAlt.tooltip=在选中的元素前插入一个新的IF语句。
+Editor.btnBeforeFor.tooltip=在选中的元素前插入一个新的FOR循环。
+Editor.btnBeforeWhile.tooltip=在选中的元素前插入一个新的WHILE循环。
+Editor.btnBeforeRepeat.tooltip=在选中的元素前插入一个新的REPEAT循环。
+Editor.btnBeforeForever.tooltip=在选中的元素前插入一个新的无限循环。
+Editor.btnBeforeCall.tooltip=在选中的元素前插入一个新的调用。
+Editor.btnBeforeJump.tooltip=在选中的元素前插入一个新的跳转。
+Editor.btnBeforeCase.tooltip=在选中的元素前插入一个新的CASE语句。
 // InsertAfter
-Editor.btnAfterInst.tooltip=在选中的元素后插入一个新的指令.
-Editor.btnAfterAlt.tooltip=在选中的元素后插入一个新的IF语句.
-Editor.btnAfterFor.tooltip=在选中的元素后插入一个新的FOR循环.
-Editor.btnAfterWhile.tooltip=在选中的元素后插入一个新的WHILE循环.
-Editor.btnAfterRepeat.tooltip=在选中的元素后插入一个新的REPEAT循环.
-Editor.btnAfterForever.tooltip=在选中的元素后插入一个新的无限循环.
-Editor.btnAfterCall.tooltip=在选中的元素后插入一个新的调用.
-Editor.btnAfterJump.tooltip=在选中的元素后插入一个新的跳转.
-Editor.btnAfterCase.tooltip=在选中的元素后插入一个新的CASE语句.
+Editor.btnAfterInst.tooltip=在选中的元素后插入一个新的指令。
+Editor.btnAfterAlt.tooltip=在选中的元素后插入一个新的IF语句。
+Editor.btnAfterFor.tooltip=在选中的元素后插入一个新的FOR循环。
+Editor.btnAfterWhile.tooltip=在选中的元素后插入一个新的WHILE循环。
+Editor.btnAfterRepeat.tooltip=在选中的元素后插入一个新的REPEAT循环。
+Editor.btnAfterForever.tooltip=在选中的元素后插入一个新的无限循环。
+Editor.btnAfterCall.tooltip=在选中的元素后插入一个新的调用。
+Editor.btnAfterJump.tooltip=在选中的元素后插入一个新的跳转。
+Editor.btnAfterCase.tooltip=在选中的元素后插入一个新的CASE语句。
 // undo & redo
-Editor.btnUndo.tooltip=撤销上一次动作.
-Editor.btnRedo.tooltip=重做上一次动作.
+Editor.btnUndo.tooltip=撤销上一次动作。
+Editor.btnRedo.tooltip=重做上一次动作。
 // copy & paste
-Editor.btnCut.tooltip=剪切选中的元素.
-Editor.btnCopy.tooltip=拷贝选中的元素.
-Editor.btnPaste.tooltip=在选中的元素后粘贴.
+Editor.btnCut.tooltip=剪切选中的元素。
+Editor.btnCopy.tooltip=拷贝选中的元素。
+Editor.btnPaste.tooltip=在选中的元素后粘贴。
 // style 
-Editor.btnNice.tooltip=切换图的可视化风格.
-Editor.btnFunction.tooltip=子程序图 (圆角).
-Editor.btnProgram.tooltip=主程序图 (方角).
+Editor.btnNice.tooltip=切换图的可视化风格。
+Editor.btnFunction.tooltip=子程序图 (圆角)。
+Editor.btnProgram.tooltip=主程序图 (方角)。
 // editing
-Editor.btnEdit.tooltip=编辑选中的元素.
-Editor.btnDelete.tooltip=删除选中的元素.
-Editor.btnMoveUp.tooltip=向上移动选中的元素.
-Editor.btnMoveDown.tooltip=向下移动选中的元素.
+Editor.btnEdit.tooltip=编辑选中的元素。
+Editor.btnDelete.tooltip=删除选中的元素。
+Editor.btnMoveUp.tooltip=向上移动选中的元素。
+Editor.btnMoveDown.tooltip=向下移动选中的元素。
 //printing
-Editor.btnPrint.tooltip=打印该图.
+Editor.btnPrint.tooltip=打印该图。
 // font
-Editor.btnFontUp.tooltip=增加字体大小.
-Editor.btnFontDown.tooltip=减小字体大小.
+Editor.btnFontUp.tooltip=增加字体大小。
+Editor.btnFontDown.tooltip=减小字体大小。
 // copyright 
-Editor.btnAbout.tooltip=显示Structorizer的相关信息.
+Editor.btnAbout.tooltip=显示Structorizer的相关信息。
 // colors
-Editor.btnColor0.tooltip=用该颜色着色选种的元素.
-Editor.btnColor1.tooltip=用该颜色着色选种的元素.
-Editor.btnColor2.tooltip=用该颜色着色选种的元素.
-Editor.btnColor3.tooltip=用该颜色着色选种的元素.
-Editor.btnColor4.tooltip=用该颜色着色选种的元素.
-Editor.btnColor5.tooltip=用该颜色着色选种的元素.
-Editor.btnColor6.tooltip=用该颜色着色选种的元素.
-Editor.btnColor7.tooltip=用该颜色着色选种的元素.
-Editor.btnColor8.tooltip=用该颜色着色选种的元素.
-Editor.btnColor9.tooltip=用该颜色着色选种的元素.
+Editor.btnColor0.tooltip=用该颜色着色选中的元素。
+Editor.btnColor1.tooltip=用该颜色着色选中的元素。
+Editor.btnColor2.tooltip=用该颜色着色选中的元素。
+Editor.btnColor3.tooltip=用该颜色着色选中的元素。
+Editor.btnColor4.tooltip=用该颜色着色选中的元素。
+Editor.btnColor5.tooltip=用该颜色着色选中的元素。
+Editor.btnColor6.tooltip=用该颜色着色选中的元素。
+Editor.btnColor7.tooltip=用该颜色着色选中的元素。
+Editor.btnColor8.tooltip=用该颜色着色选中的元素。
+Editor.btnColor9.tooltip=用该颜色着色选中的元素。
 // Popup menu
 Editor.popupCut.text=剪切
-Editor.popupCopy.text=拷贝
+Editor.popupCopy.text=复制
 Editor.popupPaste.text=粘贴
-Editor.popupAdd.text=增加
+Editor.popupAdd.text=添加
 // Submenu of "Add"
 Editor.popupAddBefore.text=之前
 // Submenus of "Add -> Before"
 Editor.popupAddBeforeInst.text=指令
-Editor.popupAddBeforeAlt.text=IF语句
-Editor.popupAddBeforeCase.text=CASE语句
-Editor.popupAddBeforeFor.text=FOR循环
-Editor.popupAddBeforeWhile.text=WHILE循环
-Editor.popupAddBeforeRepeat.text=REPEAT循环
+Editor.popupAddBeforeAlt.text=IF 语句
+Editor.popupAddBeforeCase.text=CASE 语句
+Editor.popupAddBeforeFor.text=FOR 循环
+Editor.popupAddBeforeWhile.text=WHILE 循环
+Editor.popupAddBeforeRepeat.text=REPEAT 循环
 Editor.popupAddBeforeForever.text=无限循环
 Editor.popupAddBeforeCall.text=调用
 Editor.popupAddBeforeJump.text=跳转
+Editor.popupAddBeforePara.text=并行
 // After
 Editor.popupAddAfter.text=之后
 // Submenus of "Add -> After"
 Editor.popupAddAfterInst.text=指令
-Editor.popupAddAfterAlt.text=IF语句
-Editor.popupAddAfterCase.text=CASE语句
-Editor.popupAddAfterFor.text=FOR循环
-Editor.popupAddAfterWhile.text=WHILE循环
-Editor.popupAddAfterRepeat.text=REPEAT循环
+Editor.popupAddAfterAlt.text=IF 语句
+Editor.popupAddAfterCase.text=CASE 语句
+Editor.popupAddAfterFor.text=FOR 循环
+Editor.popupAddAfterWhile.text=WHILE 循环
+Editor.popupAddAfterRepeat.text=REPEAT 循环
 Editor.popupAddAfterForever.text=无限循环
 Editor.popupAddAfterCall.text=调用
 Editor.popupAddAfterJump.text=跳转
+Editor.popupAddAfterPara.text=并行
 // Edxit	
 Editor.popupEdit.text=编辑
 Editor.popupDelete.text=删除
 Editor.popupMoveUp.text=向上移动
 Editor.popupMoveDown.text=向下移动
+Editor.popupBreakpoint.text=切换断点
 
 
 -----[ InputBox ]-----
@@ -271,85 +299,86 @@ InputBox.lblText.text=请输入文本
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=注释
 InputBox.lblComment.tooltip=
-InputBox.txtText.tooltip=元素的内容.
-InputBox.txtComment.tooltip=元素的注释.
+InputBox.txtText.tooltip=元素的内容。
+InputBox.txtComment.tooltip=元素的注释。
 InputBox.btnOK.text=确定
-InputBox.btnOK.tooltip=确认你的选择.
+InputBox.btnOK.tooltip=确认你的选择。
 InputBox.btnCancel.text=取消
-InputBox.btnCancel.tooltip=取消你的选择.
-
+InputBox.btnCancel.tooltip=取消你的选择。
 
 -----[ Preferences ]-----
 Preferences.title=结构参数设置
-Preferences.pnlAlt.border=IF语句
+Preferences.pnlAlt.border=IF 语句
 Preferences.pnlAlt.tooltip=
-Preferences.lblAltT.text=标签TRUE
-Preferences.lblAltT.tooltip=左侧标签.
-Preferences.lblAltF.text=标签FALSE
-Preferences.lblAltF.tooltip=右侧标签.
+Preferences.lblAltT.text=标签 TRUE
+Preferences.lblAltT.tooltip=左侧标签。
+Preferences.lblAltF.text=标签 FALSE
+Preferences.lblAltF.tooltip=右侧标签。
 Preferences.lblAltContent.text=默认内容
-Preferences.lblAltContent.tooltip=IF语句的默认内容.
-Preferences.pnlCase.border=CASE语句
+Preferences.altPadRight.text=扩大 TRUE 标签
+Preferences.lblAltContent.tooltip=IF 语句的默认内容。
+Preferences.pnlCase.border=CASE 语句
 Preferences.pnlCase.tooltip=
 Preferences.lblCase.text=默认内容
-Preferences.lblCase.tooltip=CASE语句的默认内容.
-Preferences.pnlFor.border=FOR循环
+Preferences.lblCase.tooltip=CASE 语句的默认内容。
+Preferences.pnlFor.border=FOR 循环
 Preferences.pnlFor.tooltip=
 Preferences.lblFor.text=默认内容
-Preferences.lblFor.tooltip=FOR循环的默认内容.
-Preferences.pnlWhile.border=WHILE循环
+Preferences.lblFor.tooltip=FOR 循环的默认内容。
+Preferences.pnlWhile.border=WHILE 循环
 Preferences.pnlWhile.tooltip=
 Preferences.lblWhile.text=默认内容
-Preferences.lblWhile.tooltip=WHILE循环的默认内容.
-Preferences.pnlRepeat.border=REPEAT循环
+Preferences.lblWhile.tooltip=WHILE 循环的默认内容。
+Preferences.pnlRepeat.border=REPEAT 循环
 Preferences.pnlRepeat.tooltip=
 Preferences.lblRepeat.text=默认内容
-Preferences.lblRepeat.tooltip=REPEAT循环的默认内容.
+Preferences.lblRepeat.tooltip=REPEAT 循环的默认内容。
 Preferences.btnOK.text=确定
-Preferences.btnOK.tooltip=确认你的选择.
+Preferences.btnOK.tooltip=确认你的选择。
 
 
 -----[ About ]-----
 About.title=关于
 About.pnlTabbed.tab.0=相关人员
-About.pnlTabbed.tab.1=改变日志
+About.pnlTabbed.tab.1=更新日志
+About.pnlTabbed.tab.2=许可证
 About.btnOK.text=确定
-About.btnOK.tooltip=确认你的选择.
+About.btnOK.tooltip=确认你的选择。
 
 
 -----[ FontChooser ]-----
 FontChooser.title=字体
-FontChooser.lblTest.tooltip=测试字符串,你可以看到它在你的编辑器中的显示情况.
+FontChooser.lblTest.tooltip=测试字符串,你可以看到它在你的编辑器中的显示情况。
 FontChooser.lblName.text=名字
-FontChooser.lblName.tooltip=选择的字体名字.
+FontChooser.lblName.tooltip=选择的字体名字。
 FontChooser.lblSize.text=字号
-FontChooser.lblSize.tooltip=选择的字体字号.
+FontChooser.lblSize.tooltip=选择的字体字号。
 FontChooser.btnOK.text=确定
-FontChooser.btnOK.tooltip=确认你的选择.
+FontChooser.btnOK.tooltip=确认你的选择。
 
 
 -----[ Colors ]-----
 Colors.title=颜色参数设置
-Colors.lblColor0.text=Color 0
-Colors.lblColor1.text=Color 1
-Colors.lblColor2.text=Color 2
-Colors.lblColor3.text=Color 3
-Colors.lblColor4.text=Color 4
-Colors.lblColor5.text=Color 5
-Colors.lblColor6.text=Color 6
-Colors.lblColor7.text=Color 7
-Colors.lblColor8.text=Color 8
-Colors.lblColor9.text=Color 9
-Colors.lblColor0.tooltip=选择color 0.
-Colors.lblColor1.tooltip=选择color  1.
-Colors.lblColor2.tooltip=选择color  2.
-Colors.lblColor3.tooltip=选择color  3.
-Colors.lblColor4.tooltip=选择color  4.
-Colors.lblColor5.tooltip=选择color  5.
-Colors.lblColor6.tooltip=选择color  6.
-Colors.lblColor7.tooltip=选择color  7.
-Colors.lblColor8.tooltip=选择color  8.
-Colors.lblColor9.tooltip=选择color  9.
+Colors.lblColor0.text=颜色 0
+Colors.lblColor1.text=颜色 1
+Colors.lblColor2.text=颜色 2
+Colors.lblColor3.text=颜色 3
+Colors.lblColor4.text=颜色 4
+Colors.lblColor5.text=颜色 5
+Colors.lblColor6.text=颜色 6
+Colors.lblColor7.text=颜色 7
+Colors.lblColor8.text=颜色 8
+Colors.lblColor9.text=颜色 9
+Colors.lblColor0.tooltip=选择颜色 0。
+Colors.lblColor1.tooltip=选择颜色 1。
+Colors.lblColor2.tooltip=选择颜色 2。
+Colors.lblColor3.tooltip=选择颜色 3。
+Colors.lblColor4.tooltip=选择颜色 4。
+Colors.lblColor5.tooltip=选择颜色 5。
+Colors.lblColor6.tooltip=选择颜色 6。
+Colors.lblColor7.tooltip=选择颜色 7。
+Colors.lblColor8.tooltip=选择颜色 8。
+Colors.lblColor9.tooltip=选择颜色 9。
 Colors.color0.tooltip=点击编辑 ...
 Colors.color1.tooltip=点击编辑 ...
 Colors.color2.tooltip=点击编辑 ...
@@ -361,46 +390,68 @@ Colors.color7.tooltip=点击编辑 ...
 Colors.color8.tooltip=点击编辑 ...
 Colors.color9.tooltip=点击编辑 ...
 Colors.btnOK.text=确定
-Colors.btnOK.tooltip=确认你的选择.
+Colors.btnOK.tooltip=确认你的选择。
 
 
 -----[ ColorChooser ]-----
 ColorChooser.title=颜色
 ColorChooser.btnCancel.text=取消
-ColorChooser.btnCancel.tooltip=取消你的选择.
+ColorChooser.btnCancel.tooltip=取消你的选择。
 ColorChooser.btnOK.text=确定
-ColorChooser.btnOK.tooltip=确认你的选择.
+ColorChooser.btnOK.tooltip=确认你的选择。
 
 
 -----[ ParserPreferences ]-----
-ParserPreferences.title=分析器参数设置
+ParserPreferences.title=解析器参数设置
 ParserPreferences.lblPre.text=之前
 ParserPreferences.lblPre.tooltip=
 ParserPreferences.lblPost.text=之后
 ParserPreferences.lblPost.tooltip=
-ParserPreferences.lblAlt.text=IF语句
+ParserPreferences.lblAlt.text=IF 语句
 ParserPreferences.lblAlt.tooltip=
-ParserPreferences.lblCase.text=CASE语句
+ParserPreferences.lblCase.text=CASE 语句
 ParserPreferences.lblCase.tooltip=
-ParserPreferences.lblFor.text=FOR循环
+ParserPreferences.lblFor.text=FOR 循环
 ParserPreferences.lblFor.tooltip=
-ParserPreferences.lblWhile.text=WHILE循环
+ParserPreferences.lblWhile.text=WHILE 循环
 ParserPreferences.lblWhile.tooltip=
-ParserPreferences.lblRepeat.text=REPEAT循环
+ParserPreferences.lblRepeat.text=REPEAT 循环
 ParserPreferences.lblRepeat.tooltip=
 ParserPreferences.lblInput.text=输入
 ParserPreferences.lblInput.tooltip=
 ParserPreferences.lblOutput.text=输出
 ParserPreferences.lblOutput.tooltip=
 ParserPreferences.btnOK.text=确定
-ParserPreferences.btnOK.tooltip=确认你的选择.
+ParserPreferences.btnOK.tooltip=确认你的选择。
+
 
 -----[ PrintPreview ]-----
 PrintPreview.title=打印预览
 PrintPreview.btnOrientation.text=改变方向
-PrintPreview.btnOrientation.tooltip=旋转页面90度.
+PrintPreview.btnOrientation.tooltip=旋转页面90度。
 PrintPreview.btnCancel.text=取消
-PrintPreview.btnCancel.tooltip=取消打印.
+PrintPreview.btnCancel.tooltip=取消打印。
 PrintPreview.btnOK.text=打印
-PrintPreview.btnOK.tooltip=打印此图.
+PrintPreview.btnOK.tooltip=打印此图。
 
+
+-----[ AnalyserPreferences ]-----
+AnalyserPreferences.title=分析器参数设置
+
+
+-----[ ExportOptionDialoge ]-----
+ExportOptionDialoge.title=导出选项 ...
+ExportOptionDialoge.jButton1.text=确定
+ExportOptionDialoge.commentsCheckBox.text=把说明作为注释导出
+ExportOptionDialoge.jLabel1.text=请选择你想激活的选项 ...
+
+
+-----[ Element ]-----
+// text "constants"
+preAlt = (?)
+preAltT = T
+preAltF = F
+preCase = (?)\n?\n?\nelse
+preFor = for ? <- ? to ?
+preWhile = while (?)
+preRepeat = until (?)
