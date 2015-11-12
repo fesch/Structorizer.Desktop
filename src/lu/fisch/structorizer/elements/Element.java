@@ -38,7 +38,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
  *      Kay Gürtzig     2015.10.13      Execution state separated from selected state
  *      Kay Gürtzig     2015.11.01      operator unification and intermediate syntax transformation ready
- *      Kay Gürtzig     2015.11.12      Issue #25 (= KGU#80) fixed in unifyOperators
+ *      Kay Gürtzig     2015.11.12      Issue #25 (= KGU#80) fixed in unifyOperators, highlighting corrected
  *
  ******************************************************************************************************
  *
@@ -865,90 +865,7 @@ public abstract class Element {
 		{
 			if (root.hightlightVars==true)
 			{
-				// START KGU#18/KGU#23 2015-11-04: This code extracted to splitLexically()
-//				StringList parts = new StringList();
-//				parts.add(_text);
-//
-//				// split
-//				parts=StringList.explodeWithDelimiter(parts," ");
-//				parts=StringList.explodeWithDelimiter(parts,".");
-//				parts=StringList.explodeWithDelimiter(parts,",");
-//				parts=StringList.explodeWithDelimiter(parts,"(");
-//				parts=StringList.explodeWithDelimiter(parts,")");
-//				parts=StringList.explodeWithDelimiter(parts,"[");
-//				parts=StringList.explodeWithDelimiter(parts,"]");
-//				parts=StringList.explodeWithDelimiter(parts,"-");
-//				parts=StringList.explodeWithDelimiter(parts,"+");
-//				parts=StringList.explodeWithDelimiter(parts,"/");
-//				parts=StringList.explodeWithDelimiter(parts,"*");
-//				parts=StringList.explodeWithDelimiter(parts," mod ");
-//				parts=StringList.explodeWithDelimiter(parts," div ");
-//				// START KGU#24 2014-11-11 Should do the same with Pascal logical operators
-//				parts=StringList.explodeWithDelimiter(parts," and ");
-//				parts=StringList.explodeWithDelimiter(parts," or ");
-//				parts=StringList.explodeWithDelimiter(parts," xor ");
-//				parts=StringList.explodeWithDelimiter(parts," not ");				
-//				// END KGU#24 2014-11-11
-//				parts=StringList.explodeWithDelimiter(parts,">");
-//				parts=StringList.explodeWithDelimiter(parts,"<");
-//				parts=StringList.explodeWithDelimiter(parts,"=");
-//				parts=StringList.explodeWithDelimiter(parts,":");
-//				parts=StringList.explodeWithDelimiter(parts,"!");
-//				parts=StringList.explodeWithDelimiter(parts,"'");
-//				parts=StringList.explodeWithDelimiter(parts,"\"");
-//
-//				parts=StringList.explodeWithDelimiter(parts,"\\");
-//				parts=StringList.explodeWithDelimiter(parts,"%");
-//
-//				//reassamble
-//				int i = 0;
-//				while (i<parts.count())
-//				{
-//					if (i < parts.count()-1)
-//					{
-//						if (parts.get(i).equals("<") && parts.get(i+1).equals("-"))
-//						{
-//							parts.set(i,"<-");
-//							parts.delete(i+1);
-//							// START KGU 2014-10-18 potential three-character assignment symbol?
-//							if (i<parts.count()-1 && parts.get(i+1).equals("-"))
-//							{
-//								parts.delete(i+1);
-//							}
-//							// END KGU 2014-10-18
-//						}
-//						else if (parts.get(i).equals(":") && parts.get(i+1).equals("="))
-//						{
-//							parts.set(i,":=");
-//							parts.delete(i+1);
-//						}
-//						else if (parts.get(i).equals("!") && parts.get(i+1).equals("="))
-//						{
-//							parts.set(i,"!=");
-//							parts.delete(i+1);
-//						}
-//						else if (parts.get(i).equals("<") && parts.get(i+1).equals(">"))
-//						{
-//							parts.set(i,"<>");
-//							parts.delete(i+1);
-//						}
-//						// START KGU#24 2014-10-18: Logical two-character operators should be highlighted, too ...
-//						else if (parts.get(i).equals("&") && parts.get(i+1).equals("&"))
-//						{
-//							parts.set(i,"&&");
-//							parts.delete(i+1);
-//						}
-//						else if (parts.get(i).equals("|") && parts.get(i+1).equals("|"))
-//						{
-//							parts.set(i,"||");
-//							parts.delete(i+1);
-//						}
-//						// END KGU#24 2014-10-18
-//					}
-//					i++;
-//				}
 				StringList parts = Element.splitLexically(_text, true);
-				// END KGU#18/KGU#23 2015-11-04
 
 				// bold font
 				Font boldFont = new Font(Element.font.getName(),Font.BOLD,Element.font.getSize());
@@ -977,8 +894,13 @@ public abstract class Element {
 					specialSigns.add("var");
 					specialSigns.add("mod");
 					specialSigns.add("div");
+					specialSigns.add("<=");
+					specialSigns.add(">=");
+					specialSigns.add("<>");
 					specialSigns.add("<");
 					specialSigns.add(">");
+					specialSigns.add("==");
+					specialSigns.add("!=");
 					specialSigns.add("=");
 					specialSigns.add("!");
 					// START KGU#24 2014-10-18
@@ -991,7 +913,7 @@ public abstract class Element {
 					// END KGU#24 2014-10-18
 
 					specialSigns.add("'");
-					specialSigns.add("\"");
+					specialSigns.add("\"");	// KGU 2015-11-12: Quotes alone will hardly occur anymore
 				// START KGU#64 2015-11-03: See above
 				}
 				// END KGU#64 2015-11-03
@@ -1033,6 +955,15 @@ public abstract class Element {
 							// set font
 							_canvas.setFont(boldFont);
 						}
+						// START KGU 2015-11-12
+						// if it's a String or Character literal color it as such
+						else if (display.startsWith("\"") && display.endsWith("\"") ||
+								display.startsWith("'") && display.endsWith("'"))
+						{
+							// set colour
+							_canvas.setColor(Color.decode("0x770077"));
+						}
+						// END KGU 2015-11-12
 					}
 
 					if (_actuallyDraw)
@@ -1151,6 +1082,7 @@ public abstract class Element {
         {
         	// testing
         	interm = interm.replace("!=", " §UNEQ§ ");
+        	interm = interm.replace("==", " §EQU§ ");
         	interm = interm.replace("<=", " §LE§ ");
         	interm = interm.replace(">=", " §GE§ ");
         	interm = interm.replace("<>", " §UNEQ§ ");
