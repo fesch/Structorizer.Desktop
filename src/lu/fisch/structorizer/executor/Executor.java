@@ -47,6 +47,8 @@ package lu.fisch.structorizer.executor;
 *      Kay Gürtzig     2015.11.08      Array assignments and variable setting deeply revised (KGU#69)
 *      Kay Gürtzig     2015.11.09      Bugfix: div operator had gone, wrong exit condition in stepRepeat (KGU#70),
 *                                      wrong equality operator in stepCase().
+*      Kay Gürtzig     2015.11.11      Issue #21 KGU#77 fixed: return instructions didn't terminate the execution.
+*      Kay Gürtzig     2015.11.12      Bugfix KGU#79: WHILE condition wasn't effectively converted.
 *
 ******************************************************************************************************
 *
@@ -1174,8 +1176,12 @@ public class Executor implements Runnable
 
 		element.waited = true;
 
+		// START KGU#77 2015-11-11: Leave if a return statement has been executed
+		//while ((i < element.children.children.size())
+		//		&& result.equals("") && (stop == false))
 		while ((i < element.children.children.size())
-				&& result.equals("") && (stop == false))
+				&& result.equals("") && (stop == false) && !returned)
+		// END KGU#77 2015-11-11
 		{
 			result = step(element.children.getElement(i));
 			i++;
@@ -1196,7 +1202,10 @@ public class Executor implements Runnable
 		StringList sl = element.getText();
 		int i = 0;
 
-		while ((i < sl.count()) && result.equals("") && (stop == false))
+		// START KGU#77 2015-11-11: Leave if a return statement has been executed
+		//while ((i < sl.count()) && result.equals("") && (stop == false))
+		while ((i < sl.count()) && result.equals("") && (stop == false) && !returned)
+		// END KGU#77 2015-11-11
 		{
 			String cmd = sl.get(i);
 			// cmd=cmd.replace(":=", "<-");
@@ -1213,213 +1222,35 @@ public class Executor implements Runnable
 				// assignment
 				if (cmd.indexOf("<-") >= 0)
 				{
-					// TODO KGU#2: In case of a Call element, do we just allow a procedure call or an assignment with just the
-					// subroute call on the right-hand side? In a way this makes sense. Then it would be relatively easy to
-					// detect and prepare the very subroutine call, in contrast to the occurrence of such a function call to
-					// another NSD being allowed at any expression depth?
-					String varName = cmd.substring(0, cmd.indexOf("<-"))
-							.trim();
-					String expression = cmd.substring(
-							cmd.indexOf("<-") + 2, cmd.length()).trim();
-					// START KGU#2 2015-10-18: Just a preliminary check for the applicability of a cross-NSD subroutine execution!
-					if (element instanceof Call)
-					{
-						Function f = new Function(expression);
-						if (f.isFunction())
-						{
-							System.out.println("Looking for SUBROUTINE NSD:");
-							System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
-							Root sub = this.diagram.getRoot().findSubroutineWithSignature(f.getName(), f.paramCount());
-							if (sub != null)
-							{
-								System.out.println("HEUREKA: Matching sub-NSD found for SUBROUTINE CALL!");
-								System.out.println("--> " + varName + " <- " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
-							}
-						}
-					}
-					// END KGU#2 2015-10-17
-
-					cmd = cmd.replace("<-", "=");
-					// evaluate the expression
-					Object n = interpreter.eval(expression);
-					if (n == null)
-					{
-						result = "<"
-								+ expression
-								+ "> is not a correct or existing expression.";
-					} else
-					{
-						// FIXME: Here setVar is used with already interpreted object...
-						setVar(varName, n);
-					}
-//					delay();
+					result = tryAssignment(cmd, element instanceof Call && sl.count() == 1);
 				}
 				// input
 				// START KGU#65 2015-11-04: Input keyword should only trigger this if positioned at line start
 				//else if (cmd.indexOf(D7Parser.input) >= 0)
-				else if (cmd.trim().startsWith(D7Parser.input))
+				else if (cmd.trim().startsWith(D7Parser.input.trim()))
 				// END KGU#65 2015-11-04
 				{
-					String in = cmd.substring(
-							cmd.indexOf(D7Parser.input)
-									+ D7Parser.input.length()).trim();
-					// START KGU#33 2014-12-05: We ought to show the index value
-					// if the variable is indeed an array element
-					if (in.contains("[") && in.contains("]")) {
-						try {
-							// Try to replace the index expression by its current value
-							int index = getIndexValue(in);
-							in = in.substring(0, in.indexOf('[')+1) + index
-									+ in.substring(in.indexOf(']'));
-						}
-						catch (Exception e)
-						{
-							// Is bound to fail anyway!
-						}
-					}
-					// END KGU33 2014-12-05
-					String str = JOptionPane.showInputDialog(null,
-							"Please enter a value for <" + in + ">", null);
-					// START KGU#69 2015-11-08: Use specific method for raw input
-//					// first add as string
-//					setVar(in, str);
-//					// try adding as char
-//					try
-//					{
-//						if (str.length() == 1)
-//						{
-//							Character strc = str.charAt(0);
-//							setVar(in, strc);
-//						}
-//					} catch (Exception e)
-//					{
-//					}
-//					// try adding as double
-//					try
-//					{
-//						double strd = Double.parseDouble(str);
-//						setVar(in, strd);
-//					} catch (Exception e)
-//					{
-//					}
-//					// finally try adding as integer
-//					try
-//					{
-//						int stri = Integer.parseInt(str);
-//						setVar(in, stri);
-//					} catch (Exception e)
-//					{
-//					}
-					setVarRaw(in, str);
-					// END KGU#69 2015-11-08
+					result = tryInput(cmd);
 				}
 				// output
 				// START KGU#65 2015-11-04: Output keyword should only trigger this if positioned at line start
 				//else if (cmd.indexOf(D7Parser.output) >= 0)
-				else if (cmd.trim().startsWith(D7Parser.output))
+				else if (cmd.trim().startsWith(D7Parser.output.trim()))
 				// END KGU#65 2015-11-04
 				{
-					String out = cmd.substring(
-							cmd.indexOf(D7Parser.output)
-									+ D7Parser.output.length()).trim();
-					Object n = interpreter.eval(out);
-					if (n == null)
-					{
-						result = "<"
-								+ out
-								+ "> is not a correct or existing expression.";
-					} else
-					{
-						String s = unconvert(n.toString());
-						JOptionPane.showMessageDialog(diagram, s, "Output",
-								0);
-					}
+					result = tryOutput(cmd);
 				}
 				// return statement
-				else if (cmd.indexOf("return") >= 0)
+				// START KGU 2015-11-11: "return" ought to be the first word of the instruction,
+				// comparison should not be case-sensitive, but a separator would be fine
+				//else if (cmd.indexOf("return") >= 0)
+				else if (cmd.trim().toLowerCase().matches("return([\\W].*|$)"))
+				// END KGU 2015-11-11
 				{
-					String out = cmd.substring(cmd.indexOf("return") + 6)
-							.trim();
-					Object n = interpreter.eval(out);
-					if (n == null)
-					{
-						result = "<"
-								+ out
-								+ "> is not a correct or existing expression.";
-					} else
-					{
-						String s = unconvert(n.toString());
-						JOptionPane.showMessageDialog(diagram, s,
-								"Returned result", 0);
-					}
-					returned = true;
+					result = tryReturn(cmd);
 				} else
 				{
-					Function f = new Function(cmd);
-					if (f.isFunction())
-					{
-						// TODO KGU 2015-10-13 for the future case that either the Arranger or the Editor itself may
-						// administer a set of diagrams: If this element is of class Call and the extracted function name
-						// corresponds to one of the NSD diagrams currently opened then try a sub-execution of that diagram.
-						// Parts of the parsing code for diagramController will apply for this project as well.
-						// But it seems to get more tricky. A function CALL might hide in any expression - so we may have
-						// to check interpreter.eval() or write an adapter.
-						// START KGU#2 2015-10-17: Just a preliminary check for the applicability of a cross-NSD subroutine execution!
-						if (element instanceof Call)
-						{
-							System.out.println("Looking for SUBROUTINE NSD:");
-							System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
-							Root sub = this.diagram.getRoot().findSubroutineWithSignature(f.getName(), f.paramCount());
-							if (sub != null)
-							{
-								System.out.println("HEUREKA: Matching sub-NSD found for SUBROUTINE CALL!");
-								System.out.println("--> " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
-							}
-						}
-						// END KGU#2 2015-10-17
-						if (diagramController != null)
-						{
-							String params = new String();
-							for (int p = 0; p < f.paramCount(); p++)
-							{
-								try
-								{
-									Object n = interpreter.eval(f
-											.getParam(p));
-									if (n == null)
-									{
-										result = "<"
-												+ f.getParam(p)
-												+ "> is not a correct or existing expression.";
-									} else
-									{
-										params += "," + n.toString();
-									}
-								} catch (EvalError ex)
-								{
-									System.out.println("PARAM: "
-											+ f.getParam(p));
-									result = ex.getMessage();
-								}
-							}
-							if (result.equals(""))
-							{
-								if (f.paramCount() > 0)
-								{
-									params = params.substring(1);
-								}
-								cmd = f.getName() + "(" + params + ")";
-								result = getExec(cmd, element.getColor());
-							}
-							//delay();
-						} else
-						{
-							interpreter.eval(cmd);
-						}
-					} else
-					{
-						result = "<" + cmd + "> is not a correct function!";
-					}
+					result = trySubroutine(cmd, element);
 				}
 			} catch (EvalError ex)
 			{
@@ -1435,13 +1266,210 @@ public class Executor implements Runnable
 		return result;
 	}
 	
+	// START KGU 2015-11-11: Aquivalent decomposition of method stepInstruction
+	// Submethod of stepInstruction(Instruction element), handling an assignment
+	private String tryAssignment(String cmd, boolean isCall) throws EvalError
+	{
+		String result = "";
+		// TODO KGU#2: In case of a Call element, do we just allow a procedure call or an assignment with just the
+		// subroute call on the right-hand side? In a way this makes sense. Then it would be relatively easy to
+		// detect and prepare the very subroutine call, in contrast to the occurrence of such a function call to
+		// another NSD being allowed at any expression depth?
+		String varName = cmd.substring(0, cmd.indexOf("<-"))
+				.trim();
+		String expression = cmd.substring(
+				cmd.indexOf("<-") + 2, cmd.length()).trim();
+		// START KGU#2 2015-10-18: Just a preliminary check for the applicability of a cross-NSD subroutine execution!
+		if (isCall)
+		{
+			Function f = new Function(expression);
+			if (f.isFunction())
+			{
+				System.out.println("Looking for SUBROUTINE NSD:");
+				System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
+				Root sub = this.diagram.getRoot().findSubroutineWithSignature(f.getName(), f.paramCount());
+				if (sub != null)
+				{
+					System.out.println("HEUREKA: Matching sub-NSD found for SUBROUTINE CALL!");
+					System.out.println("--> " + varName + " <- " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
+				}
+			}
+		}
+		// END KGU#2 2015-10-17
+
+		cmd = cmd.replace("<-", "=");
+		// evaluate the expression
+		Object n = interpreter.eval(expression);
+		if (n == null)
+		{
+			result = "<"
+					+ expression
+					+ "> is not a correct or existing expression.";
+		} else
+		{
+			// FIXME: Here setVar is used with already interpreted object...
+			setVar(varName, n);
+		}
+
+		return result;
+		
+	}
+	
+	// Submethod of stepInstruction(Instruction element), handling an input instruction
+	private String tryInput(String cmd) throws EvalError
+	{
+		String result = "";
+		String in = cmd.substring(
+				cmd.indexOf(D7Parser.input)
+						+ D7Parser.input.length()).trim();
+		// START KGU#33 2014-12-05: We ought to show the index value
+		// if the variable is indeed an array element
+		if (in.contains("[") && in.contains("]")) {
+			try {
+				// Try to replace the index expression by its current value
+				int index = getIndexValue(in);
+				in = in.substring(0, in.indexOf('[')+1) + index
+						+ in.substring(in.indexOf(']'));
+			}
+			catch (Exception e)
+			{
+				// Is bound to fail anyway!
+			}
+		}
+		// END KGU33 2014-12-05
+		String str = JOptionPane.showInputDialog(null,
+				"Please enter a value for <" + in + ">", null);
+		// START KGU#69 2015-11-08: Use specific method for raw input
+		// (obsolete code lines removed)
+		setVarRaw(in, str);
+		// END KGU#69 2015-11-08
+		return result;
+	}
+
+	// Submethod of stepInstruction(Instruction element), handling an output instruction
+	private String tryOutput(String cmd) throws EvalError
+	{
+		String result = "";
+		String out = cmd.substring(
+				cmd.indexOf(D7Parser.output)
+						+ D7Parser.output.length()).trim();
+		Object n = interpreter.eval(out);
+		if (n == null)
+		{
+			result = "<"
+					+ out
+					+ "> is not a correct or existing expression.";
+		} else
+		{
+			String s = unconvert(n.toString());
+			JOptionPane.showMessageDialog(diagram, s, "Output",
+					0);
+		}
+		return result;
+	}
+
+	// Submethod of stepInstruction(Instruction element), handling an output instruction
+	private String tryReturn(String cmd) throws EvalError
+	{
+		String result = "";
+		String out = cmd.substring(cmd.indexOf("return") + 6)
+				.trim();
+		Object n = interpreter.eval(out);
+		if (n == null)
+		{
+			result = "<"
+					+ out
+					+ "> is not a correct or existing expression.";
+		} else
+		{
+			String s = unconvert(n.toString());
+			JOptionPane.showMessageDialog(diagram, s,
+					"Returned result", 0);
+		}
+		returned = true;
+		return result;
+	}
+
+	// Submethod of stepInstruction(Instruction element), handling an output instruction
+	private String trySubroutine(String cmd, Instruction element) throws EvalError
+	{
+		String result = "";
+		Function f = new Function(cmd);
+		if (f.isFunction())
+		{
+			// TODO KGU 2015-10-13 for the future case that either the Arranger or the Editor itself may
+			// administer a set of diagrams: If this element is of class Call and the extracted function name
+			// corresponds to one of the NSD diagrams currently opened then try a sub-execution of that diagram.
+			// Parts of the parsing code for diagramController will apply for this project as well.
+			// But it seems to get more tricky. A function CALL might hide in any expression - so we may have
+			// to check interpreter.eval() or write an adapter.
+			// START KGU#2 2015-10-17: Just a preliminary check for the applicability of a cross-NSD subroutine execution!
+			if (element instanceof Call)
+			{
+				System.out.println("Looking for SUBROUTINE NSD:");
+				System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
+				Root sub = this.diagram.getRoot().findSubroutineWithSignature(f.getName(), f.paramCount());
+				if (sub != null)
+				{
+					System.out.println("HEUREKA: Matching sub-NSD found for SUBROUTINE CALL!");
+					System.out.println("--> " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
+				}
+			}
+			// END KGU#2 2015-10-17
+			if (diagramController != null)
+			{
+				String params = new String();
+				for (int p = 0; p < f.paramCount(); p++)
+				{
+					try
+					{
+						Object n = interpreter.eval(f
+								.getParam(p));
+						if (n == null)
+						{
+							result = "<"
+									+ f.getParam(p)
+									+ "> is not a correct or existing expression.";
+						} else
+						{
+							params += "," + n.toString();
+						}
+					} catch (EvalError ex)
+					{
+						System.out.println("PARAM: "
+								+ f.getParam(p));
+						result = ex.getMessage();
+					}
+				}
+				if (result.equals(""))
+				{
+					if (f.paramCount() > 0)
+					{
+						params = params.substring(1);
+					}
+					cmd = f.getName() + "(" + params + ")";
+					result = getExec(cmd, element.getColor());
+				}
+				//delay();
+			} else
+			{
+				interpreter.eval(cmd);
+			}
+		} else
+		{
+			result = "<" + cmd + "> is not a correct function!";
+		}
+		return result;
+	}
+	// END KGU 2015-11-11
+
 	private String stepCase(Case element)
 	{
 		String result = new String();
 		try
 		{
 			StringList text = element.getText();
-			// START KGU 2015-11-09 New unified conversion strategy, so use Structorizer syntax
+			// START KGU 2015-11-09 New unified conversion strategy ahead, so use Structorizer syntax
 			//String expression = text.get(0) + "==";
 			String expression = text.get(0) + " = ";
 			// END KGU 2015-11-09
@@ -1481,8 +1509,12 @@ public class Executor implements Runnable
 					done = true;
 					element.waited = true;
 					int i = 0;
+					// START KGU#77 2015-11-11: Leave if a return statement has been executed
+					//while ((i < element.qs.get(q - 1).children.size())
+					//		&& result.equals("") && (stop == false))
 					while ((i < element.qs.get(q - 1).children.size())
-							&& result.equals("") && (stop == false))
+							&& result.equals("") && (stop == false) && !returned)
+					// END KGU#77 2015-11-11
 					{
 						result = step(element.qs.get(q - 1).getElement(i));
 						i++;
@@ -1515,16 +1547,15 @@ public class Executor implements Runnable
 			String s = element.getText().getText();
 			if (!D7Parser.preAlt.equals(""))
 			{
+				// FIXME: might damage variable names
 				s = BString.replace(s, D7Parser.preAlt, "");
 			}
 			if (!D7Parser.postAlt.equals(""))
 			{
+				// FIXME: might damage variable names
 				s = BString.replace(s, D7Parser.postAlt, "");
 			}
-			// s=s.replace("==", "=");
-			// s=s.replace("=", "==");
-			// s=s.replace("<==", "<=");
-			// s=s.replace(">==", ">=");
+
 			s = convert(s);
 
 			//System.out.println("C=  " + interpreter.get("C"));
@@ -1551,8 +1582,12 @@ public class Executor implements Runnable
 				element.executed = false;
 				element.waited = true;
 				int i = 0;
+				// START KGU#77 2015-11-11: Leave if a return statement has been executed
+				//while ((i < branch.children.size())
+				//		&& result.equals("") && (stop == false))
 				while ((i < branch.children.size())
-						&& result.equals("") && (stop == false))
+						&& result.equals("") && (stop == false) && !returned)
+				// END KGU#77 2015-11-11
 				{
 					result = step(branch.getElement(i));
 					i++;
@@ -1585,13 +1620,18 @@ public class Executor implements Runnable
 				condStr = ((While) element).getText().getText();
 				if (!D7Parser.preWhile.equals(""))
 				{
+					// FIXME: might damage variable names
 					condStr = BString.replace(condStr, D7Parser.preWhile, "");
 				}
 				if (!D7Parser.postWhile.equals(""))
 				{
+					// FIXME: might damage variable names
 					condStr = BString.replace(condStr, D7Parser.postWhile, "");
 				}
-				convert(condStr, false);
+				// START KGU#79 2015-11-12: Forgotten zu write back the result!
+				//convert(condStr, false);
+				condStr = convert(condStr, false);
+				// END KGU#79 2015-11-12
 				// System.out.println("WHILE: "+condStr);
 			}
 
@@ -1604,8 +1644,12 @@ public class Executor implements Runnable
 						+ "> is not a correct or existing expression.";
 			} else
 			{
+				// START KGU#77 2015-11-11: Leave if a return statement has been executed
+				//while (cond.toString().equals("true") && result.equals("")
+				//		&& (stop == false))
 				while (cond.toString().equals("true") && result.equals("")
-						&& (stop == false))
+						&& (stop == false) && !returned)
+				// END KGU#77 2015-11-11
 				{
 
 					element.executed = false;
@@ -1621,8 +1665,12 @@ public class Executor implements Runnable
 					{
 						body = ((While) element).q;
 					}
+					// START KGU#77 2015-11-11: Leave if a return statement has been executed
+					//while ((i < body.children.size())
+					//		&& result.equals("") && (stop == false))
 					while ((i < body.children.size())
-							&& result.equals("") && (stop == false))
+							&& result.equals("") && (stop == false) && !returned)
+					// END KGU#77 2015-11-11
 					{
 						result = step(body.getElement(i));
 						i++;
@@ -1682,10 +1730,12 @@ public class Executor implements Runnable
 			String condStr = element.getText().getText();
 			if (!D7Parser.preRepeat.equals(""))
 			{
+				// FIXME: might damage variable names
 				condStr = BString.replace(condStr, D7Parser.preRepeat, "");
 			}
 			if (!D7Parser.postRepeat.equals(""))
 			{
+				// FIXME: might damage variable names
 				condStr = BString.replace(condStr, D7Parser.postRepeat, "");
 			}
 			// s=s.replace("==", "=");
@@ -1706,13 +1756,12 @@ public class Executor implements Runnable
 				do
 				{
 					int i = 0;
-					// START KGU 2010-09-14 The limitation of cw CAUSED
-					// eternal loops (rather then preventing them)
-					//while (i < ((Repeat) element).q.children.size() &&
-					//		result.equals("") && stop == false && cw < 100)
+					// START KGU#77 2015-11-11: Leave if a return statement has been executed
+					//while ((i < element.q.children.size())
+					//		&& result.equals("") && (stop == false))
 					while ((i < element.q.children.size())
-							&& result.equals("") && (stop == false))
-					// END KGU 2010-09-14
+							&& result.equals("") && (stop == false) && !returned)
+					// END KGU#77 2015-11-11
 					{
 						result = step(element.q.getElement(i));
 						i++;
@@ -1739,9 +1788,12 @@ public class Executor implements Runnable
 					delay();	// Symbolizes the loop condition check time
 					element.waited = true;
 
-				// START KGU#70 2015-11-09: Condition logically - execution often got stuck here 
+				// START KGU#70 2015-11-09: Condition logically incorrect - execution often got stuck here 
 				//} while (!(n.toString().equals("true") && result.equals("") && (stop == false)));
-				} while (!(n.toString().equals("true")) && result.equals("") && (stop == false));
+				// START KGU#77 2015-11-11: Leave if a return statement has been executed
+				//} while (!(n.toString().equals("true")) && result.equals("") && (stop == false))
+				} while (!(n.toString().equals("true")) && result.equals("") && (stop == false) && !returned);
+				// END KGU#77 2015-11-11
 				// END KGU#70 2015-11-09
 			}
 
@@ -1864,22 +1916,21 @@ public class Executor implements Runnable
 			}
 
 			int cw = ival;
-			// START KGU 2015-10-13: For negative cw this didn't work properly
-			//while ((cw <= fval) && result.equals("") && (stop == false))
-			while (((sval >= 0) ? (cw <= fval) : (cw >= fval)) && result.equals("") && (stop == false))
-			// END KGU 2015-10-13
+			// START KGU#77 2015-11-11: Leave if a return statement has been executed
+			//while (((sval >= 0) ? (cw <= fval) : (cw >= fval)) && result.equals("") && (stop == false))
+			while (((sval >= 0) ? (cw <= fval) : (cw >= fval)) && result.equals("") && (stop == false) && !returned)
+			// END KGU#77 2015-11-11
 			{
 				setVar(counter, cw);
 				element.waited = true;
 
 				int i = 0;
-				// START KGU 2010-09-14 The limitation of cw CAUSED eternal
-				// loops (rather then preventing them)
-				// while (i < ((For) element).q.children.size() &&
-				// result.equals("") && stop == false && cw < 100)
+				// START KGU#77 2015-11-11: Leave if a return statement has been executed
+				//while ((i < element.q.children.size())
+				//		&& result.equals("") && (stop == false))
 				while ((i < element.q.children.size())
-						&& result.equals("") && (stop == false))
-				// END KGU 2010-09-14
+						&& result.equals("") && (stop == false) && !returned)
+				// END KGU#77 2015-11-11
 				{
 					result = step(element.q.getElement(i));
 					i++;
@@ -1935,12 +1986,15 @@ public class Executor implements Runnable
 			}
 
 			element.waited = true;
-			// Since we can hardly really execute this in parallel here, the workaround is to run all the "threads"
-			// in a randomly chosen order...
+			// Since we can hardly really execute this in parallel here,
+			// the workaround is to run all the "threads" in a randomly chosen order...
 			Random rdmGenerator = new Random(System.currentTimeMillis());
 
 			// The first condition holds if there is at least one unexhausted "thread"
-			while (!undoneThreads.isEmpty() && result.equals("") && (stop == false))
+			// START KGU#77 2015-11-11: Leave if a return statement has been executed
+			//while (!undoneThreads.isEmpty() && result.equals("") && (stop == false))
+			while (!undoneThreads.isEmpty() && result.equals("") && (stop == false) && !returned)
+			// END KGU#77 2015-11-11
 			{
 				// Pick one of the "threads" by chance
 				int threadNr = rdmGenerator.nextInt(undoneThreads.size());

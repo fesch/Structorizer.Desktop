@@ -38,6 +38,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
  *      Kay Gürtzig     2015.10.13      Execution state separated from selected state
  *      Kay Gürtzig     2015.11.01      operator unification and intermediate syntax transformation ready
+ *      Kay Gürtzig     2015.11.12      Issue #25 (= KGU#80) fixed in unifyOperators
  *
  ******************************************************************************************************
  *
@@ -88,7 +89,7 @@ import java.awt.Point;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.22-31";
+	public static String E_VERSION = "3.22-32";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -1150,12 +1151,12 @@ public abstract class Element {
         {
         	// testing
         	interm = interm.replace("!=", " §UNEQ§ ");
-        	interm = interm.replace("=", " §EQU§ ");
         	interm = interm.replace("<=", " §LE§ ");
         	interm = interm.replace(">=", " §GE§ ");
         	interm = interm.replace("<>", " §UNEQ§ ");
         	interm = interm.replace("<", " < ");
         	interm = interm.replace(">", " > ");
+        	interm = interm.replace("=", " §EQU§ ");
 
         	// Parenthesis/bracket padding as preparation for the following replacements
         	interm = interm.replace(")", " ) ");
