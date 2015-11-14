@@ -76,6 +76,7 @@ Current development version: 3.22-32 (2015.11.12)
 - 32: Issue #21 (=KGU#77) fixed: return instructions now terminate the execution <Kay Gürtzig>
 - 32: Operator highlighting fixed, new colouring for string and character literals <Kay Gürtzig>
 - 32: Bugs #28, #31, and #32 fixed, all concerning element degrading on undoing/copying <Kay Gürtzig>
+- 32: More adaptive approach to either exit or dispose a Structorizer on closing <Kay Gürtzig>
 
 Version 3.22 (2011.11.21)
 - 01: Some fixes in Executor.java & Control.java [Kay Gürtzig]

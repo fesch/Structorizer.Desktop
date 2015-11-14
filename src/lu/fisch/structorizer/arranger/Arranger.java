@@ -123,7 +123,7 @@ public class Arranger extends javax.swing.JFrame implements WindowListener
 
         getContentPane().add(surface, java.awt.BorderLayout.CENTER);
 
-        // START KGU#49 2015-10-18: On closing the Arranger window the dependent Mainforms must get a chance to save their stuff!
+        // START KGU#49 2015-10-18: On closing the Arranger window, the dependent Mainforms must get a chance to save their stuff!
         /******************************
          * Set onClose event
          ******************************/
