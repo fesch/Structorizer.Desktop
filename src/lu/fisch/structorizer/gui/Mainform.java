@@ -105,7 +105,7 @@ public class Mainform  extends JFrame implements NSDController
 		//setSize(550, 550);
 		// show form
 		setVisible(true);
-		// set action to perfom if closed
+		// set action to perform if closed
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		// set icon depending on OS ;-)
@@ -144,9 +144,9 @@ public class Mainform  extends JFrame implements NSDController
 		/******************************
 		 * Set onClose event
 		 ******************************/
-		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);                                                    	
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		addWindowListener(new WindowAdapter() 
-		{  
+		{
 			@Override
 			public void windowClosing(WindowEvent e) 
 			{
@@ -157,11 +157,6 @@ public class Mainform  extends JFrame implements NSDController
 					//System.exit(0);
 					dispose();
 					// END KGU#49/KGU#66 (#6/#16) 2015-11-10
-				}
-				else
-				{
-					// User cancelled the action, so don't close
-					setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);                                                    	
 				}
 			}
 			

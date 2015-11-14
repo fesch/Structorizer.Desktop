@@ -36,6 +36,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
  *      Kay Gürtzig     2015.10.16      Method clearExecutionStatus() duly overridden.
+ *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy()
  *
  ******************************************************************************************************
  *
@@ -449,17 +450,20 @@ public class Parallel extends Element
 
     public Element copy() // Problem here???
     {
-            Element ele = new Parallel(this.getText().getText());
+            Parallel ele = new Parallel(this.getText().getText());
             //ele.setText(this.getText().copy());
             ele.setComment(this.getComment().copy());
             ele.setColor(this.getColor());
-            ((Parallel) ele).qs.clear();
-            for(int i=0;i<qs.size();i++)
+            ele.qs.clear();
+            for(int i=0; i<qs.size(); i++)
             {
                     Subqueue ss = (Subqueue) ((Subqueue) this.qs.get(i)).copy();
-                    ss.parent=ele;
-                    ((Parallel) ele).qs.add(ss);
+                    ss.parent = ele;
+                    ele.qs.add(ss);
             }
+    		// START KGU#82 (bug #31) 2015-11-14
+    		ele.breakpoint = this.breakpoint;
+    		// END KGU#82 (bug #31) 2015-11-14
 
             return ele;
     }

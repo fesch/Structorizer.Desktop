@@ -35,6 +35,7 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2007.12.12      First Issue
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015.10.12      Breakpoint support prepared
+ *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy()
  *
  ******************************************************************************************************
  *
@@ -271,6 +272,9 @@ public class While extends Element {
 		ele.setColor(this.getColor());
 		((While) ele).q=(Subqueue) this.q.copy();
 		((While) ele).q.parent=ele;
+		// START KGU#82 (bug #31) 2015-11-14
+		ele.breakpoint = this.breakpoint;
+		// END KGU#82 (bug #31) 2015-11-14
 		return ele;
 	}
 	

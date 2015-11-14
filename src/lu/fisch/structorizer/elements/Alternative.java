@@ -35,6 +35,7 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2007.12.10      First Issue
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
+ *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy
  *
  ******************************************************************************************************
  *
@@ -410,13 +411,16 @@ public class Alternative extends Element {
 */		
 	public Element copy()
 	{
-		Element ele = new Alternative(this.getText().copy());
+		Alternative ele = new Alternative(this.getText().copy());
 		ele.setComment(this.getComment().copy());
 		ele.setColor(this.getColor());
-		((Alternative) ele).qTrue=(Subqueue) this.qTrue.copy();
-		((Alternative) ele).qFalse=(Subqueue) this.qFalse.copy();
-		((Alternative) ele).qTrue.parent=ele;
-		((Alternative) ele).qFalse.parent=ele;
+		ele.qTrue=(Subqueue) this.qTrue.copy();
+		ele.qFalse=(Subqueue) this.qFalse.copy();
+		ele.qTrue.parent=ele;
+		ele.qFalse.parent=ele;
+		// START KGU#82 (bug #31) 2015-11-14
+		ele.breakpoint = this.breakpoint;
+		// END KGU#82 (bug #31) 2015-11-14
 		return ele;
 	}
 

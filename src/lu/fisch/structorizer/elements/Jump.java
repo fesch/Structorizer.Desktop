@@ -34,6 +34,7 @@ package lu.fisch.structorizer.elements;
  *      ------			----			-----------
  *      Bob Fisch       2007.12.13      First Issue
  *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared
+ *      Kay Gürtzig     2015.11.14      Bugfix #31 = KGU#82 in method copy()
  *
  ******************************************************************************************************
  *
@@ -170,6 +171,9 @@ public class Jump extends Instruction {
 		Element ele = new Jump(this.getText().copy());
 		ele.setComment(this.getComment().copy());
 		ele.setColor(this.getColor());
+		// START KGU#82 (bug #31) 2015-11-14
+		ele.breakpoint = this.breakpoint;
+		// END KGU#82 (bug #31) 2015-11-14
 		return ele;
 	}
 	
