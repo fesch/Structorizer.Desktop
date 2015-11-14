@@ -36,11 +36,17 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.10.18      Methods getRoot(), setRoot() introduced to ease Arranger handling (KGU#48)
  *      Kay Gürtzig     2015.10.30      Issue #6 fixed properly (see comment)
  *      Kay Gürtzig     2015.11.03      check_14 property added (For loop enhancement, #10 = KGU#3)
- *      Kay Gürtzig     2015.11.10      Issues #6 and #16 finally fixed by appropriate default window behaviour
+ *      Kay Gürtzig     2015.11.10      Issues #6 and #16 fixed by appropriate default window behaviour
+ *      Kay Gürtzig     2015.11.14      Yet another improved approach to #6 / #16: see comment
  *
  ******************************************************************************************************
  *
  *      Comment:		/
+ *      2015.11.14 New approach to solve the Window Closing problem (Kay Gürtzig, #6 = KGU#49 / #16 = KGU#66)
+ *      - A new boolean field isStandalone (addressed by a new parameterized constructor) is introduced in
+ *        order to decide whether to exit or only to dispose on Window Closing event. So if the Mainform is
+ *        opened as a dependent frame, it should be opened as new Mainform(false) from now on. In this case
+ *        it will only dispose when closing, otherwise it will exit. 
  *      2015.11.10 Window Closing problem (Kay Gürtzig, KGU#49/KGU#66)
  *      - Issues #6/#16 hadn't been solved in the intended way since the default action had still been
  *        EXIT_ON_CLOSE instead of just disposing.
@@ -72,6 +78,10 @@ public class Mainform  extends JFrame implements NSDController
 	
 	private String lang = "en.txt";
 	private String laf = null;
+	
+	// START KGU#49/KGU#66 2015-11-14: This decides whether to exit or just to dispose when being closed
+	private boolean isStandalone = true;	// The default is to exit...
+	// END KGU#49/KGU#66 2015-11-14
 		
 	/******************************
  	 * Setup the Mainform
@@ -153,10 +163,12 @@ public class Mainform  extends JFrame implements NSDController
 				if (diagram.saveNSD(true))
 				{
 					saveToINI();
-					// START KGU#49/KGU#66 (#6/#16) 2015-11-10: EXIT killed any owners as well
-					//System.exit(0);
-					dispose();
-					// END KGU#49/KGU#66 (#6/#16) 2015-11-10
+					// START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
+					if (isStandalone)
+						System.exit(0);	// This kills all related frames and threads as well!
+					else
+						dispose();
+					// END KGU#49/KGU#66 (#6/#16) 2015-11-14
 				}
 			}
 			
@@ -511,11 +523,25 @@ public class Mainform  extends JFrame implements NSDController
     /******************************
      * Constructor
      ******************************/
+    // START KGU#49/KGU#66 2015-11-14: We want to distinguish whether we may exit on close
+//    public Mainform()
+//    {
+//        super();
+//        create();
+//    }
+
     public Mainform()
     {
+    	this(true);
+    }
+    
+    public Mainform(boolean standalone)
+    {
         super();
+        this.isStandalone = standalone;
         create();
     }
+    // END KGU#49/KGU#66
 
     /**
      * @return the editor

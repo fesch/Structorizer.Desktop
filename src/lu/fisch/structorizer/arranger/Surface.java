@@ -35,10 +35,14 @@ package lu.fisch.structorizer.arranger;
  *      ------          ----			-----------
  *      Bob Fisch       2009.08.18		First Issue
  *      Kay Gürtzig     2015.10.18		Several enhancements to improve Arranger usability (see comments)
+ *      Kay Gürtzig     2015.11.14      Parameterized creation of dependent Mainforms (to solve issues #6, #16)
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2015.11.14 (Kay Gürtzig)
+ *      - The creation of dependant Mainforms is now done via a parameterized constructor in order to
+ *        inform the Mainform that it must not exit on closing but may only dispose.
  *      2015.10.18 (KGU)
  *      - New interface method replaced() implemented that allows to keep track of NSD replacement in a
  *        related Mainform (KGU#48)
@@ -303,7 +307,10 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
             Mainform form = mouseSelected.mainform;
             if(form==null)
             {
-                form=new Mainform();
+            	// START KGU#49/KGU#66 2015-11-14: Start a dependent Mainform not willing to kill us
+                //form=new Mainform();
+                form=new Mainform(false);
+            	// END KGU#49/KGU#66 2015-11-14
                 form.addWindowListener(this);
             }
 

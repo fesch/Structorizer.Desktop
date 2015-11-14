@@ -1180,7 +1180,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 				// START KGU#42 2015-10-14: Enhancement for easier title localisation
 				//showInputBox(data);
-				showInputBox(data, "instruction", true);
+				showInputBox(data, "Instruction", true);
 				// END KGU#42 2015-10-14
 
 				if(data.result==true)
