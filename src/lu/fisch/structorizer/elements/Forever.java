@@ -35,6 +35,7 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2008.02.06      First Issue
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015.10.12      Breakpoint support prepared
+ *      Kay Gürtzig     2015.11.14      Bugfixes #31 (= KGU#82) and #32 (= KGU#83) in method copy() 
  *
  ******************************************************************************************************
  *
@@ -276,11 +277,15 @@ public class Forever extends Element{
 	
 	public Element copy()
 	{
-		Element ele = new For(this.getText().copy());
+		// Bugfix KGU#83 (bug #32) 2015-11-14: Instead of a Forever loop, a For loop had been created!
+		Forever ele = new Forever(new StringList());
 		ele.setComment(this.getComment().copy());
 		ele.setColor(this.getColor());
-		((For) ele).q=(Subqueue) this.q.copy();
-		((For) ele).q.parent=ele;
+		ele.q=(Subqueue) this.q.copy();
+		ele.q.parent=ele;
+		// START KGU#82 (bug #31) 2015-11-14
+		ele.breakpoint = this.breakpoint;
+		// END KGU#82 (bug #31) 2015-11-14
 		return ele;
 	}
 	

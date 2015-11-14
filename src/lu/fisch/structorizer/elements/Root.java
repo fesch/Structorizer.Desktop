@@ -82,6 +82,11 @@ public class Root extends Element {
 	public boolean isProgram = true;
 	public boolean hasChanged = false;
 	public boolean hightlightVars = false;
+	// START KGU#2 (#9) 2015-11-13:
+	// Is this routine currently waiting for a called subroutine?
+	public boolean isCalling = false;
+	// END KG#2 (#9) 2015-11-13
+	
 	public Subqueue children = new Subqueue();
 
 	public int height = 0;
@@ -672,6 +677,10 @@ public class Root extends Element {
             ele.isNice=this.isNice;
             ele.isProgram=this.isProgram;
             ele.children=(Subqueue) this.children.copy();
+            // START KGU#2 (#9) 2015-11-13: By the above replacement the new children were orphans
+            ele.children.parent = ele;
+            //ele.updaters = this.updaters;	// FIXME: Risks of this?
+            // END KGU#2 (#9) 2015-11-13
             return ele;
     }
 
@@ -1123,89 +1132,6 @@ public class Root extends Element {
                     // Analyse for used variables
                     // START KGU#26/KGU#65 2015-11-04: This code was practically identical to that in Element.writeOutVariables
                     // Moreover, we solve the erroneous in-String analysis (i.e. string literals had been scrutinized, too!) 
-//                    StringList parts = new StringList();
-//                    parts.add(lines.getLongString());
-//
-//                    // split
-//                    parts=StringList.explodeWithDelimiter(parts," ");
-//                    parts=StringList.explodeWithDelimiter(parts,".");
-//                    parts=StringList.explodeWithDelimiter(parts,",");
-//                    parts=StringList.explodeWithDelimiter(parts,"(");
-//                    parts=StringList.explodeWithDelimiter(parts,")");
-//                    parts=StringList.explodeWithDelimiter(parts,"[");
-//                    parts=StringList.explodeWithDelimiter(parts,"]");
-//                    parts=StringList.explodeWithDelimiter(parts,"-");
-//                    parts=StringList.explodeWithDelimiter(parts,"+");
-//                    parts=StringList.explodeWithDelimiter(parts,"/");
-//                    parts=StringList.explodeWithDelimiter(parts,"*");
-//                    parts=StringList.explodeWithDelimiter(parts,"mod");
-//                    parts=StringList.explodeWithDelimiter(parts,"div");
-//                    parts=StringList.explodeWithDelimiter(parts,">");
-//                    parts=StringList.explodeWithDelimiter(parts,"<");
-//                    parts=StringList.explodeWithDelimiter(parts,"=");
-//                    parts=StringList.explodeWithDelimiter(parts,"!");
-//                    parts=StringList.explodeWithDelimiter(parts,":");
-//                    parts=StringList.explodeWithDelimiter(parts,"'");
-//                    parts=StringList.explodeWithDelimiter(parts,"\"");
-//
-//                    //reassamble
-//                    int i = 0;
-//                    while (i<parts.count())
-//                    {
-//                            if(i<parts.count()-2)
-//                            {
-//                                    if(parts.get(i).equals("<") && parts.get(i+1).equals("-") && parts.get(i+2).equals("-") )
-//                                    {
-//                                            parts.set(i,"<-");
-//                                            parts.delete(i+1);
-//                                            parts.delete(i+1);
-//                                    }
-//                                    else if(parts.get(i).equals("<") && parts.get(i+1).equals("-"))
-//                                    {
-//                                            parts.set(i,"<-");
-//                                            parts.delete(i+1);
-//                                    }
-//                                    else if(parts.get(i).equals(":") && parts.get(i+1).equals("="))
-//                                    {
-//                                            parts.set(i,":=");
-//                                            parts.delete(i+1);
-//                                    }
-//                                    else if(parts.get(i).equals("!") && parts.get(i+1).equals("="))
-//                                    {
-//                                            parts.set(i,"!=");
-//                                            parts.delete(i+1);
-//                                    }
-//                                    else if(parts.get(i).equals("<") && parts.get(i+1).equals(">"))
-//                                    {
-//                                            parts.set(i,"<>");
-//                                            parts.delete(i+1);
-//                                    }
-//                            }
-//                            else if(i<parts.count()-1)
-//                            {
-//                                    if(parts.get(i).equals("<") && parts.get(i+1).equals("-"))
-//                                    {
-//                                            parts.set(i,"<-");
-//                                            parts.delete(i+1);
-//                                    }
-//                                    else if(parts.get(i).equals(":") && parts.get(i+1).equals("="))
-//                                    {
-//                                            parts.set(i,":=");
-//                                            parts.delete(i+1);
-//                                    }
-//                                    else if(parts.get(i).equals("!") && parts.get(i+1).equals("="))
-//                                    {
-//                                            parts.set(i,"!=");
-//                                            parts.delete(i+1);
-//                                    }
-//                                    else if(parts.get(i).equals("<") && parts.get(i+1).equals(">"))
-//                                    {
-//                                            parts.set(i,"<>");
-//                                            parts.delete(i+1);
-//                                    }
-//                            }
-//                            i++;
-//                    }
                     StringList parts = Element.splitLexically(lines.getLongString(), true);
                     // END KGU#26/KGU#65 2015-11-04
 
@@ -2168,7 +2094,7 @@ public String getMethodName()
         this.switchTextAndComments = switchTextAndComments;
     }
     
-    // START KGU#2 2015-10-17: First tentative approach to exploit the Arranger for NSD subroutine calls
+    // START KGU#2 2015-10-17: Inserted for enhancement request #9 subroutine calls
     /**
      * Searches all known reservoires for subroutines with a signature compatible to name(arg1, arg2, ..., arg_nArgs) 
      * @param name - function name
@@ -2178,6 +2104,12 @@ public String getMethodName()
     public Root findSubroutineWithSignature(String name, int nArgs)
     {
     	Root subroutine = null;
+    	// START KGU#2 2015-11-14: First test whether myself is applicable (recursion)
+    	if (name.equals(this.getMethodName()) && nArgs == this.getParameterNames().count())
+    	{
+    		subroutine = this;
+    	}
+    	// END KGU#2 2015-11-14
     	if (this.updaters != null)
     	{
     		// TODO Check for ambiguity (multiple matches) and raise e.g. an exception in that case

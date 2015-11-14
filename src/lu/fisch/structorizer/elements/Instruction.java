@@ -33,6 +33,8 @@ package lu.fisch.structorizer.elements;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.09      First Issue
+ *      Kay Gürtzig     2015.10.11/13   Comment drawing unified, breakpoints supported, colouring modified
+ *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy
  *
  ******************************************************************************************************
  *
@@ -256,6 +258,9 @@ public class Instruction extends Element {
 		Instruction ele = new Instruction(this.getText().copy());
 		ele.setComment(this.getComment().copy());
 		ele.setColor(this.getColor());
+		// START KGU#82 (bug #31) 2015-11-14
+		ele.breakpoint = this.breakpoint;
+		// END KGU#82 (bug #31) 2015-11-14
 		return ele;
 	}
 

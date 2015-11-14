@@ -35,6 +35,7 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2007.12.13      First Issue
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared
+ *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy
  *
  ******************************************************************************************************
  *
@@ -43,7 +44,6 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.util.Vector;
-
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -174,10 +174,12 @@ public class Call extends Instruction {
 		Element ele = new Call(this.getText().copy());
 		ele.setComment(this.getComment().copy());
 		ele.setColor(this.getColor());
+		// START KGU#82 (bug #31) 2015-11-14
+		ele.breakpoint = this.breakpoint;
+		// END KGU#82 (bug #31) 2015-11-14
 		return ele;
 	}
 	
 
-	
 	
 }
