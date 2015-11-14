@@ -689,7 +689,7 @@ public class Executor_old implements Runnable
                                 if(result.equals(""))
                                 {
                                     if(f.paramCount()>0) params=params.substring(1);
-                                    cmd = f.getName()+"("+params+")";
+                                    cmd = f.getName().toLowerCase() +"("+params+")";
                                     result = getExec(cmd, element.getColor());
                                 }
                                 delay();
@@ -958,7 +958,7 @@ public class Executor_old implements Runnable
                     str = BString.replace(str, D7Parser.postFor, "<=");
                 }
                 // do other transformations
-//                str = CGenerator.transform(str);
+                //str = CGenerator.transform(str);
                 String counter = str.substring(0, str.indexOf("="));
                 // complete
 

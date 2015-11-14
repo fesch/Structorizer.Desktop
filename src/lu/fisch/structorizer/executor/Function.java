@@ -48,10 +48,15 @@ public class Function
                 str.endsWith(")");
         if (this.isFunc)
         {
-        	this.name = str.substring(0, posLP).trim().toLowerCase();
+        	// START KGU#2 (#9) 2015-11-13: In general, we don't want to level the case!
+        	//this.name = str.substring(0, posLP).trim().toLowerCase();
+        	this.name = str.substring(0, posLP).trim();
+        	// END KGU#2 (#9) 2015-11-13
         	String params = str.substring(posLP+1, str.length()-1).trim();
         	if (!params.equals(""))
         	{
+        		// FIXME (KGU 2015-11-14): This seems to be a little bit too simple
+        		// (Face nested function calls with comma-separated arguments!)
         		this.parameters = StringList.explode(params, ",");
             }
         }
