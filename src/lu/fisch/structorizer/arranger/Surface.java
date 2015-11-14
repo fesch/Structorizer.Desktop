@@ -315,7 +315,9 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
             }
 
             // change the default closing behaviour
-            form.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            // START KGU#49/KGU#66 2015-11-14 Now already achieved by constructor argument false  
+            //form.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            // END KGU#49/#66 2015-11-14
 
             // store mainform in diagram
             mouseSelected.mainform=form;

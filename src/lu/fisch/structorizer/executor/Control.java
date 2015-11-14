@@ -34,6 +34,7 @@ package lu.fisch.structorizer.executor;
  *      ------			----			-----------
  *      Bob Fisch       2009.05.18      First Issue
  *      Kay Gürtzig     2015.11.05      Enhancement allowing to adopt edited values from Control (KGU#68)
+ *      Kay Gürtzig     2015.11.14      New controls to display the call level for enhancement #9 (KGU#2)
  *
  ******************************************************************************************************
  *
@@ -80,6 +81,11 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         btnStep = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblVar = new javax.swing.JTable();
+        // START KGU#2 (#9) 2015-11-14: Additional display of subroutine call level
+        lblCallLevel = new javax.swing.JLabel(" Subroutine level:");
+        txtCallLevel = new javax.swing.JTextField("0");
+        txtCallLevel.setEditable(false);
+        // END KGU#2 (#9) 2015-11-14
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -124,7 +130,7 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         tblVar.addPropertyChangeListener(this);
 
         lblSpeed.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        lblSpeed.setText(" Speed: 50");
+        lblSpeed.setText(" Delay: 50");
 
         btnStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/stop.png"))); // NOI18N
         btnStop.addActionListener(new java.awt.event.ActionListener() {
@@ -183,16 +189,22 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
                     .add(layout.createSequentialGroup()
                         .add(btnStop)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(btnPlay)))
+                        .add(btnPlay))
+                // START KGU#2 (#9) 2015-11-14
+                        .add(lblCallLevel))
+                // END KGU#2 (#9) 2015-11-14
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
                         .add(btnPause)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(btnStep))
-// START KGU 2015-10-12: preferred size enhanced from 83 to 150
+                // START KGU#2 (#9) 2015-11-14
+                		.add(txtCallLevel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 120, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                // END KGU#2 (#9) 2015-11-14
+// START KGU 2015-10-12: preferred size enhanced from 83 to 120
                     //.add(slSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 83, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                    .add(slSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 125, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                    .add(slSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 120, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
 // END KGU 2015-0-12
                 .add(jScrollPane1, 0, 0, Short.MAX_VALUE)
         );
@@ -209,6 +221,11 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
                     .add(btnPause)
                     .add(btnStep))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                // START KGU#2 (#9) 2015-11-14
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                		.add(lblCallLevel)
+                		.add(txtCallLevel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                // END KGU#2 (#9) 2015-11-14
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 236, Short.MAX_VALUE))
         );
 
@@ -363,6 +380,13 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         }
         // END KGU#68 2015-11-06
     }
+    
+    // START KGU#2 (#9) 2015-11-14: Update method for subroutine level display
+    public void updateCallLevel(int level)
+    {
+    	this.txtCallLevel.setText(Integer.toString(level));
+    }
+    // END KGU#2 (#9) 2015-11-14
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnPause;
@@ -374,6 +398,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     private javax.swing.JSlider slSpeed;
     private javax.swing.JTable tblVar;
     // End of variables declaration//GEN-END:variables
+    // START KGU#2 (#9) 2015-11-14: Additional display of subroutine call level
+    private javax.swing.JLabel lblCallLevel;
+    private javax.swing.JTextField txtCallLevel;
+    // END KGU#2 (#9) 2015-11-14
     
     // START KGU#68 2015-11-06: Register variable value editing events
     private Object[] varUpdates = null;

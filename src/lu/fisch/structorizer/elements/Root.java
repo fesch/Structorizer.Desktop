@@ -39,6 +39,7 @@ package lu.fisch.structorizer.elements;
  *		Kay Gürtzig	2015.10.16		getFullText methods redesigned/replaced, changes in getVarNames().
  *		Kay Gürtzig	2015.10.17		improved Arranger support by method notifyReplaced (KGU#48)
  *		Kay Gürtzig	2015.11.03		New error14 field and additions to analyse for FOR loop checks (KGU#3)
+ *      Kay Gürtzig 2015.11.13/14   Method copy() accomplished, modifications for subroutine calls KGU#2 (#9)
  *
  ******************************************************************************************************
  *
@@ -153,6 +154,13 @@ public class Root extends Element {
     {
         updaters.remove(updater);
     }
+    
+    // START KGU#2 (#9) 2015-11-14: We need a way to get the Updaters
+    public Iterator<Updater> getUpdateIterator()
+    {
+    	return updaters.iterator();
+    }
+    // END KGU#2 (#9) 2015-11-14
 
     // START KGU#48 2015-10-17: Arranger support on Root replacement (e.g. by loading a new file)
     public void notifyReplaced(Root newRoot)
@@ -2094,40 +2102,4 @@ public String getMethodName()
         this.switchTextAndComments = switchTextAndComments;
     }
     
-    // START KGU#2 2015-10-17: Inserted for enhancement request #9 subroutine calls
-    /**
-     * Searches all known reservoires for subroutines with a signature compatible to name(arg1, arg2, ..., arg_nArgs) 
-     * @param name - function name
-     * @param nArgs - number of parameters of the requested function
-     * @return a Root that matches the specification if uniquely found, null otherwise
-     */
-    public Root findSubroutineWithSignature(String name, int nArgs)
-    {
-    	Root subroutine = null;
-    	// START KGU#2 2015-11-14: First test whether myself is applicable (recursion)
-    	if (name.equals(this.getMethodName()) && nArgs == this.getParameterNames().count())
-    	{
-    		subroutine = this;
-    	}
-    	// END KGU#2 2015-11-14
-    	if (this.updaters != null)
-    	{
-    		// TODO Check for ambiguity (multiple matches) and raise e.g. an exception in that case
-    		for (int u = 0; subroutine == null && u < this.updaters.size(); u++)
-    		{
-    			Vector<Root> candidates = this.updaters.get(u).findSourcesByName(name);
-    			for (int c = 0; subroutine == null && c < candidates.size(); c++)
-    			{
-    				Root cand = candidates.get(c);
-    				// Check argument number (a type check is not of course possible)
-    				if (!cand.isProgram && cand.getParameterNames().count() == nArgs)
-    				{
-    					subroutine = cand;
-    				}
-    			}
-    		}
-    	}
-    	return subroutine;
-    }
-    // END KGU#2 2015-10-17
 }

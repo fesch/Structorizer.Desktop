@@ -164,8 +164,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			this.root = root;
 			root.hightlightVars = hil;
 			//System.out.println(root.getFullText().getText());
-			root.getVarNames();
-			root.hasChanged = true;
+			//root.getVarNames();
+			//root.hasChanged = true;
 			redraw();
 			analyse();
 		}
