@@ -38,6 +38,7 @@
  *      Kay Gürtzig		2015.10.14		InputBox.class_specific stuff added
  *      Kay Gürtzig		2015.11.01		InputBoxFor captions and Analyzer messages for FOR loops added
  *      Kay Gürtzig 	2015.11.09		Additions for ParserPreferences (KGU#3 FOR loop enhancement)
+ *      Kay Gürtzig 	2015.11.15		Messages for Jump element modified or corrected 
  *
  ******************************************************************************************************
  *
@@ -88,7 +89,7 @@ Menu.menuDiagramAddBeforeWhile.text=WHILE-Schleife
 Menu.menuDiagramAddBeforeRepeat.text=REPEAT-Schleife
 Menu.menuDiagramAddBeforeForever.text=ENDLOS-Schleife
 Menu.menuDiagramAddBeforeCall.text=Aufruf-Anweisung
-Menu.menuDiagramAddBeforeJump.text=Sprung-Anweisung
+Menu.menuDiagramAddBeforeJump.text=Aussprung-Anweisung
 Menu.menuDiagramAddBeforePara.text=Parallel-Abschnitt
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Danach
@@ -101,7 +102,7 @@ Menu.menuDiagramAddAfterWhile.text=WHILE-Schleife
 Menu.menuDiagramAddAfterRepeat.text=REPEAT-Schleife
 Menu.menuDiagramAddAfterForever.text=ENDLOS-Schleife
 Menu.menuDiagramAddAfterCall.text=Aufruf-Anweisung
-Menu.menuDiagramAddAfterJump.text=Sprung-Anweisung
+Menu.menuDiagramAddAfterJump.text=Aussprung-Anweisung
 Menu.menuDiagramAddAfterPara.text=Parallel-Abschnitt
 Menu.menuDiagramEdit.text=Bearbeiten
 Menu.menuDiagramDelete.text=Löschen
@@ -212,7 +213,7 @@ Editor.btnBeforeWhile.tooltip=Einfügen einer neuen WHILE-Schleife vor dem ausge
 Editor.btnBeforeRepeat.tooltip=Einfügen einer neuen REPEAT-Schleife vor dem ausgewählten Element.
 Editor.btnBeforeForever.tooltip=Einfügen einer neuen ENDLOS-Schleife vor dem ausgewählten Element.
 Editor.btnBeforeCall.tooltip=Einfügen einer neuen Aufruf-Anweisung vor dem ausgewählten Element.
-Editor.btnBeforeJump.tooltip=Einfügen einer neuen Sprung-Anweisung vor dem ausgewählten Element.
+Editor.btnBeforeJump.tooltip=Einfügen einer neuen Aussprung-Anweisung vor dem ausgewählten Element.
 Editor.btnBeforeCase.tooltip=Einfügen einer neuen CASE-Anweisung vor dem ausgewählten Element.
 Editor.btnBeforePara.tooltip=Einfügen einer neuen PARALLEL-Anweisung vor dem ausgewählten Element.
 // InsertAfter
@@ -223,7 +224,7 @@ Editor.btnAfterWhile.tooltip=Einfügen einer neuen WHILE-Schleife nach dem ausge
 Editor.btnAfterRepeat.tooltip=Einfügen einer neuen REPEAT-Schleife nach dem ausgewählten Element.
 Editor.btnAfterForever.tooltip=Einfügen einer neuen ENDLOS-Schleife nach dem ausgewählten Element.
 Editor.btnAfterCall.tooltip=Einfügen einer neuen Aufruf-Anweisung nach dem ausgewählten Element.
-Editor.btnAfterJump.tooltip=Einfügen einer neuen Sprung-Anweisung nach dem ausgewählten Element.
+Editor.btnAfterJump.tooltip=Einfügen einer neuen Aussprung-Anweisung nach dem ausgewählten Element.
 Editor.btnAfterCase.tooltip=Einfügen einer neuen CASE-Anweisung nach dem ausgewählten Element.
 Editor.btnAfterPara.tooltip=Einfügen einer neuen PARALLEL-Anweisung nach dem ausgewählten Element.
 // undo & redo
@@ -280,7 +281,7 @@ Editor.popupAddBeforeWhile.text=WHILE-Schleife
 Editor.popupAddBeforeRepeat.text=REPEAT-Schleife
 Editor.popupAddBeforeForever.text=ENDLOS-Schleife
 Editor.popupAddBeforeCall.text=Aufruf-Anweisung
-Editor.popupAddBeforeJump.text=Sprung-Anweisung
+Editor.popupAddBeforeJump.text=Aussprung-Anweisung
 Editor.popupAddBeforePara.text=PARALLEL-Abschnitt
 // After
 Editor.popupAddAfter.text=Danach
@@ -293,7 +294,7 @@ Editor.popupAddAfterWhile.text=WHILE-Schleife
 Editor.popupAddAfterRepeat.text=REPEAT-Schleife
 Editor.popupAddAfterForever.text=ENDLOS-Schleife
 Editor.popupAddAfterCall.text=Aufruf-Anweisung
-Editor.popupAddAfterJump.text=Sprung-Anweisung
+Editor.popupAddAfterJump.text=Aussprung-Anweisung
 Editor.popupAddAfterPara.text=PARALLEL-Abschnitt
 // Edit	
 Editor.popupEdit.text=Bearbeiten
@@ -327,7 +328,7 @@ InputBox.class_specific.Forever.insert=Neue ENDLOS-Schleife hinzufügen...
 InputBox.class_specific.Repeat.insert=Neue REPEAT-Schleife hinzufügen...
 InputBox.class_specific.While.insert=Neue WHILE-Schleife hinzufügen...
 InputBox.class_specific.Call.insert=Unterprogramm-CALL hinzufügen...
-InputBox.class_specific.Jump.insert=Sprung- bzw. Austrittstrittsanweisung hinzufügen...
+InputBox.class_specific.Jump.insert=Aussprung- bzw. Austrittsanweisung hinzufügen...
 InputBox.class_specific.Parallel.insert=Neues PARALLEL-Element hinzufügen...
 InputBox.class_specific.Instruction.update=Anweisungen bearbeiten...
 InputBox.class_specific.Alternative.update=Verzweigung bearbeiten...
@@ -337,7 +338,7 @@ InputBox.class_specific.Forever.update=ENDLOS-Schleife bearbeiten...
 InputBox.class_specific.Repeat.update=REPEAT-Schleife bearbeiten...
 InputBox.class_specific.While.update=WHILE-Schleife bearbeiten...
 InputBox.class_specific.Call.update=Unterprogramm-CALL bearbeiten...
-InputBox.class_specific.Jump.update=Sprung- bzw. Austrittstrittsanweisung bearbeiten...
+InputBox.class_specific.Jump.update=Aussprung- bzw. Austrittsanweisung bearbeiten...
 InputBox.class_specific.Parallel.update=PARALLEL-Element bearbeiten...
 InputBox.class_specific.Alternative.lblText=Eingabe der Bedingung an dieser Stelle.
 InputBox.class_specific.While.lblText=Eingabe der (Wieder-)Eintrittsbedingung an dieser Stelle.
