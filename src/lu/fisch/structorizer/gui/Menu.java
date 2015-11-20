@@ -92,6 +92,9 @@ public class Menu extends JMenuBar implements NSDController
 	// Submenu of "File -> Import"
 	protected JMenuItem menuFileImportPascal = new JMenuItem("Pascal Code ...",IconLoader.ico004);
 
+	// START KGU#2 2015-11-19: New menu item to have the Arranger present the diagram
+	protected JMenuItem menuFileArrange = new JMenuItem("Arrange", IconLoader.ico105);
+	// END KGU#2 2015-11-19
 	protected JMenuItem menuFilePrint = new JMenuItem("Print ...",IconLoader.ico041);
 	protected JMenuItem menuFileQuit = new JMenuItem("Quit");
 
@@ -314,6 +317,12 @@ public class Menu extends JMenuBar implements NSDController
 		menuFile.add(menuFilePrint);
 		menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		menuFilePrint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.printNSD(); doButtons(); } } );
+
+		// START KGU#2 2015-11-19
+		menuFile.add(menuFileArrange);
+		//menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuFileArrange.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.arrangeNSD(); doButtons(); } } );
+		// END KGU#2 2015-11-19
 
 		menuFile.addSeparator();
 

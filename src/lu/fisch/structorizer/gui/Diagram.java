@@ -70,6 +70,7 @@ import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.generators.*;
+import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.turtle.TurtleBox;
@@ -1420,6 +1421,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		pp.setLocation(Math.round(p.x+(getVisibleRect().width-pp.getWidth())/2+this.getVisibleRect().x),
 					   Math.round(p.y)+(getVisibleRect().height-pp.getHeight())/2+this.getVisibleRect().y);
 		pp.setVisible(true);
+	}
+
+	/*****************************************
+	 * arrange method
+	 *****************************************/
+	public void arrangeNSD()
+	{
+		System.out.println("Arranger button pressed!");
+		Arranger arr = Arranger.getInstance();
+		arr.addToPool(root, NSDControl.getFrame());
+		arr.setVisible(true);
 	}
 
 	/*****************************************

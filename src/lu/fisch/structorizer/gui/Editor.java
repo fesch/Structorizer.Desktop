@@ -120,7 +120,10 @@ public class Editor extends JPanel implements NSDController, ComponentListener
     protected JButton btnMoveUp = new JButton(IconLoader.ico019); 
     protected JButton btnMoveDown = new JButton(IconLoader.ico020); 
 	// printing
-    protected JButton btnPrint = new JButton(IconLoader.ico041); 
+    protected JButton btnPrint = new JButton(IconLoader.ico041);
+    // START KGU#2 2015-11-19: Arranger launch added
+    protected JButton btnArranger = new JButton(IconLoader.ico105);
+    // END KGU#2 2015-11-19
 	// font
     protected JButton btnFontUp = new JButton(IconLoader.ico033); 
     protected JButton btnFontDown = new JButton(IconLoader.ico034);
@@ -332,6 +335,11 @@ public class Editor extends JPanel implements NSDController, ComponentListener
         toolbar.add(btnPrint);
 		btnPrint.setFocusable(false);
 		btnPrint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.printNSD(); doButtons(); } } );
+		// START KGU#2 2015-11-19: Arranger launcher
+        toolbar.add(btnArranger);
+		btnPrint.setFocusable(false);
+		btnPrint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.arrangeNSD(); doButtons(); } } );
+		// END KGU#2 2015-11-19
 		
 		toolbar=newToolBar("Undo, redo");
 

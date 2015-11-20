@@ -36,7 +36,9 @@ package lu.fisch.structorizer.arranger;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2009.08.18		First Issue
- *		Kay Gürtzig     2015.10.18		Transient WindowsListener added enabling Surface to have dirty diagrams saved before exit
+ *      Kay Gürtzig     2015.10.18		Transient WindowsListener added enabling Surface to have dirty diagrams saved before exit
+ *      Kay Gürtzig     2015.11.17		Remove button added (issue #35 = KGU#85)
+ *      Kay Gürtzig     2015.11.19		Converted into a singleton (enhancement request #9 = KGU#2)
  *
  ******************************************************************************************************
  *
@@ -44,12 +46,18 @@ package lu.fisch.structorizer.arranger;
  *
  ******************************************************************************************************///
 
+import java.awt.Color;
 import java.awt.Point;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
+import javax.swing.BorderFactory;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.gui.Mainform;
 
 /**
  *
@@ -57,10 +65,55 @@ import lu.fisch.structorizer.elements.Root;
  */
 public class Arranger extends javax.swing.JFrame implements WindowListener
 {
+    // START KGU#2 2015-11-19: Converted into a singleton class
+    //** Creates new form Arranger */
+    //public Arranger() {
+    //    initComponents();
+    //}
+	private static Arranger mySelf = null;
+    /** Returns the Arranger instance (if it is to be created then it will be as a dependent frame)
+     */
+	public static Arranger getInstance()
+	{
+		return getInstance(false);
+	}
+    /** Returns the Arranger instance
+     * @param standalone - if true then the instance will exit on close otherwise only dispose (works only on actual creation)
+     */
+	public static Arranger getInstance(boolean standalone)
+	{
+		if (mySelf == null)
+		{
+			mySelf = new Arranger(standalone);
+		}
+		return mySelf;
+	}
+	
     /** Creates new form Arranger */
-    public Arranger() {
+    private Arranger(boolean standalone) {
         initComponents();
+        setDefaultCloseOperation(standalone ? JFrame.EXIT_ON_CLOSE : JFrame.DISPOSE_ON_CLOSE);
     }
+    
+    /**
+     * Places the passed-in root at a free space on the Arranger surface if it hasn't been placed there
+     * already. Relates the given frame to it if it is a Mainform instance.
+     * @param root - The diagram root to be added to the Arranger
+     * @param frame - potentially an associable Mainform (Structorizer)
+     */
+    public void addToPool(Root root, JFrame frame)
+    {
+    	if (frame instanceof Mainform)
+    	{
+    		surface.addDiagram(root, (Mainform) frame);
+    	}
+    	else
+    	{
+    		surface.addDiagram(root);
+    	}
+    }
+    // END KGU#2 2015-11-19
+	
 
     /** This method is called from within the constructor to
      * initialize the form.
@@ -74,6 +127,9 @@ public class Arranger extends javax.swing.JFrame implements WindowListener
         toolbar = new javax.swing.JToolBar();
         btnExportPNG = new javax.swing.JButton();
         btnAddDiagram = new javax.swing.JButton();
+        // START KGU#85 2015-11-17
+        btnRemoveDiagram = new javax.swing.JButton();
+        // END KGU#85 2015-11-17
         surface = new lu.fisch.structorizer.arranger.Surface();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -106,22 +162,50 @@ public class Arranger extends javax.swing.JFrame implements WindowListener
         });
         toolbar.add(btnAddDiagram);
 
+        // START KGU#85 2015-11-17: FIXME: Need a different icon
+        btnRemoveDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/100_diagram_drop.png"))); // NOI18N
+        btnRemoveDiagram.setText("Drop Diagram");
+        btnRemoveDiagram.setFocusable(false);
+        btnRemoveDiagram.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnRemoveDiagram.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnRemoveDiagram.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRemoveDiagramActionPerformed(evt);
+            }
+        });
+        toolbar.add(btnRemoveDiagram);
+        // END KGU#85 2015-11-17
+
         getContentPane().add(toolbar, java.awt.BorderLayout.NORTH);
 
         surface.setBackground(new java.awt.Color(255, 255, 255));
 
-        org.jdesktop.layout.GroupLayout surfaceLayout = new org.jdesktop.layout.GroupLayout(surface);
-        surface.setLayout(surfaceLayout);
-        surfaceLayout.setHorizontalGroup(
-            surfaceLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 420, Short.MAX_VALUE)
-        );
-        surfaceLayout.setVerticalGroup(
-            surfaceLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 254, Short.MAX_VALUE)
-        );
+//        org.jdesktop.layout.GroupLayout surfaceLayout = new org.jdesktop.layout.GroupLayout(surface);
+//        surface.setLayout(surfaceLayout);
+//        surfaceLayout.setHorizontalGroup(
+//            surfaceLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+//            .add(0, 420, Short.MAX_VALUE)
+//        );
+//        surfaceLayout.setVerticalGroup(
+//            surfaceLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+//            .add(0, 254, Short.MAX_VALUE)
+//        );
+        
+        // START KGU#85 2015-11-18
+        //getContentPane().add(surface, java.awt.BorderLayout.CENTER);
+        scrollarea = new JScrollPane(surface);
+        //scrollarea.setBackground(Color.LIGHT_GRAY);
+        scrollarea.getViewport().putClientProperty("EnableWindowBlit", Boolean.TRUE);
+        scrollarea.setWheelScrollingEnabled(true);
+        scrollarea.setDoubleBuffered(true);
+        scrollarea.setBorder(BorderFactory.createEmptyBorder());
+        //scrollarea.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        //scrollarea.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        //scrollarea.setViewportView(surface);
+        getContentPane().add(scrollarea, java.awt.BorderLayout.CENTER);
+        // END KGU#85 2015-11-18
 
-        getContentPane().add(surface, java.awt.BorderLayout.CENTER);
+
 
         // START KGU#49 2015-10-18: On closing the Arranger window, the dependent Mainforms must get a chance to save their stuff!
         /******************************
@@ -131,8 +215,11 @@ public class Arranger extends javax.swing.JFrame implements WindowListener
         {  
         	@Override
         	public void windowClosing(WindowEvent e) 
-        	{  
-        		surface.saveDiagrams();	// Allow user to save dirty diagrams
+        	{
+        		// START KGU#2 2015-11-19: Only necessary if I am going to exit
+        		if (mySelf.getDefaultCloseOperation() == JFrame.EXIT_ON_CLOSE)
+        		// END KGU# 2015-11-19
+        			surface.saveDiagrams();	// Allow user to save dirty diagrams
         	}  
 
         	@Override
@@ -165,23 +252,40 @@ public class Arranger extends javax.swing.JFrame implements WindowListener
         surface.addDiagram(new Root());
     }//GEN-LAST:event_btnAddDiagramActionPerformed
 
+    // START KGU#85 2015-11-17
+    private void btnRemoveDiagramActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnAddDiagramActionPerformed
+    {
+        surface.removeDiagram();
+    }
+    // END KGU#85 2015-11-17
+
     /**
-    * @param args the command line arguments
-    */
+     * Starts the Arranger as application
+     * @param args the command line arguments
+     */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Arranger().setVisible(true);
+            	// START KGU#2 2015-11-19: Converted into a singleton
+                //new Arranger().setVisible(true);
+                getInstance(true).setVisible(true);
+                // END KGU#2 2015-11-19
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAddDiagram;
+    // START KGU#85 2015-11-17
+    private javax.swing.JButton btnRemoveDiagram;
+    // END KGU#85 2015-11-17
     private javax.swing.JButton btnExportPNG;
     private lu.fisch.structorizer.arranger.Surface surface;
     private javax.swing.JToolBar toolbar;
     // End of variables declaration//GEN-END:variables
+    // START KGU#85 2015-11-18
+    private JScrollPane scrollarea;
+    // END KGU#85 2015-11-18
 
     public void windowOpened(WindowEvent e)
     {

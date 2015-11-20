@@ -36,10 +36,18 @@ package lu.fisch.structorizer.arranger;
  *      Bob Fisch       2009.08.18		First Issue
  *      Kay Gürtzig     2015.10.18		Several enhancements to improve Arranger usability (see comments)
  *      Kay Gürtzig     2015.11.14      Parameterized creation of dependent Mainforms (to solve issues #6, #16)
+ *      Kay Gürtzig     2015.11.18      Several changes to get scrollbars working (issue #35 = KGU#85)
+ *                                      removal mechanism added, selection mechanisms revised
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2015.11.18 (Kay Gürtzig)
+ *      - In order to achieve scrollability, autoscroll mode (on dragging) had to be enabled, used area has
+ *        to be communicated (nothing better than resetting the layout found - see adapt_layout())
+ *      - Method removeDiagram() added,
+ *      - selection consistency improved (never select or unselect a diagram element other than root, don't
+ *        select eclipsed diagrams, don't leave selection flag on diagrams no longer selected).
  *      2015.11.14 (Kay Gürtzig)
  *      - The creation of dependant Mainforms is now done via a parameterized constructor in order to
  *        inform the Mainform that it must not exit on closing but may only dispose.
@@ -54,6 +62,7 @@ package lu.fisch.structorizer.arranger;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -111,29 +120,33 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
 
     private void create()
     {
-        new  FileDrop(this, new FileDrop.Listener()
-        {
-            public void  filesDropped( java.io.File[] files )
-            {
-                boolean found = false;
-                for (int i = 0; i < files.length; i++)
-                {
-                    String filename = files[i].toString();
-                    if(filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".nsd"))
-                    {
-                        // open an existing file
-                        NSDParser parser = new NSDParser();
-                        File f = new File(filename);
-                        Root root = parser.parse(f.toURI().toString());
-                        root.filename=filename;
-                        addDiagram(root);
-                    }
-                }
-            }
-	});
+    	new  FileDrop(this, new FileDrop.Listener()
+    	{
+    		public void  filesDropped( java.io.File[] files )
+    		{
+    			//boolean found = false;
+    			for (int i = 0; i < files.length; i++)
+    			{
+    				String filename = files[i].toString();
+    				if(filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".nsd"))
+    				{
+    					// open an existing file
+    					NSDParser parser = new NSDParser();
+    					File f = new File(filename);
+    					Root root = parser.parse(f.toURI().toString());
+    					root.filename=filename;
+    					addDiagram(root);
+    				}
+    			}
+    		}
+    	});
 
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
+
+        // START KGI#85 2015-11-18
+        this.setAutoscrolls(true);
+        // END KGU#85 2015-11-18
 
     }
 
@@ -189,45 +202,114 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
 
         if(diagrams!=null)
         {
+        	//System.out.println("--------getDrawingRect()---------");
             if(diagrams.size()>0)
             for(int d=0;d<diagrams.size();d++)
             {
                 Diagram diagram = diagrams.get(d);
                 Root root = diagram.root;
-                Rect rect = root.getRect();
-                r.left=Math.min(rect.left,r.left);
-                r.top=Math.min(rect.top,r.top);
-                r.right=Math.max(rect.right,r.right);
-                r.bottom=Math.max(rect.bottom,r.bottom);
+                // FIXME (KGU 2015-11-18) This does not necessarily return a Rect within this surface!
+                Rect rect = root.getRect();	// Beware! Rect of last drawing - possibly in Structorizer!
+                // START KGU#85 2015-11-18: Didn't work properly, hence
+                //r.left=Math.min(rect.left,r.left);
+                //r.top=Math.min(rect.top,r.top);
+                //r.right=Math.max(rect.right,r.right);
+                //r.bottom=Math.max(rect.bottom,r.bottom);
+                // empirical minimum width of an empty diagram 
+                int width = Math.max(rect.right - rect.left, 80); 
+                // empirical minimum height of an empty diagram 
+                int height = Math.max(rect.bottom - rect.top, 118);
+                // empirical minimum height of an empty diagram 
+                //System.out.println(root.getMethodName() + ": (" + rect.left + ", " + rect.top + ", " + rect.right + ", " + rect.bottom +")");
+                r.left = Math.min(diagram.point.x, r.left);
+                r.top = Math.min(diagram.point.y, r.top);
+                r.right = Math.max(diagram.point.x + width, r.right);
+                r.bottom = Math.max(diagram.point.y + height, r.bottom);
+                //END KGU#85 2015-11-18
             }
             else  r = new Rect(0,0,0,0);
         }
         else r = new Rect(0,0,0,0);
 
+        //System.out.println("drawingRect: (" + r.left + ", " + r.top + ", " + r.right + ", " + r.bottom +")");
+
         return r;
+    }
+    
+    private Rect adaptLayout()
+    {
+    	Rect rect = getDrawingRect();
+    	// Didn't find anything else to effectively inform the scrollbars about current extension
+        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+        		layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+        		.add(0, rect.right, Short.MAX_VALUE)
+        		);
+        layout.setVerticalGroup(
+        		layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+        		.add(0, rect.bottom, Short.MAX_VALUE)
+        		);
+    	return rect;	// Just in case someone might need it
     }
 
     public void addDiagram(Root root)
+    // START KGU#2 2015-11-19: Needed a possibility to register a related Mainform
     {
-        Rect rect = getDrawingRect();
-
-        int top = 0;
-        int left = 0;
-
-        top  = rect.top+10;
-        left = rect.right+10;
-
-        if(left>this.getWidth())
-        {
-            top = rect.bottom+10;
-            left = rect.left+10;
-        }
-
-        Point point = new Point(left,top);
-        Diagram diagram = new Diagram(root,point);
-        diagrams.add(diagram);
-        repaint();
+    	addDiagram(root, null);
     }
+    public void addDiagram(Root root, Mainform form)
+    // END KGU#2 2015-11-19
+    {
+    	// START KGU#2 2015-11-19: Don't add a diagram that is already held here
+    	Diagram diagram = findDiagram(root);
+    	if (diagram == null) {
+    	// END KGU#2 2015-11-19
+    		Rect rect = getDrawingRect();
+
+    		int top = 10;
+    		int left = 10;
+
+    		top  = Math.max(rect.top, top);
+    		left = Math.max(rect.right+10, left);
+
+    		if (left>this.getWidth())
+    		{
+    			// FIXME (KGU 2015-11-19) This isn't really sensible - might find a free space by means of a quadtree?
+    			top = rect.bottom+10;
+    			left = rect.left;
+    		}
+    		Point point = new Point(left,top);
+    		/*Diagram*/ diagram = new Diagram(root,point);
+    		diagrams.add(diagram);
+    		// START KGU#85 2015-11-18
+    		adaptLayout();
+    		// END KGU#85 2015-11-18
+    		repaint();
+    		getDrawingRect();
+    	// START KGU#2 2015-11-19
+    	}
+    	if (form != null)
+    	{
+    		diagram.mainform = form;
+    		root.addUpdater(this);
+    	}
+    	// END KGU#2 2015-11-19
+    }
+
+    // START KGU#85 2015-11-17
+    public void removeDiagram()
+    {
+    	if (this.mouseSelected != null)
+    	{
+    		this.mouseSelected.root.removeUpdater(this);
+    		diagrams.remove(this.mouseSelected);
+    		this.mouseSelected = null;
+    		adaptLayout();
+            repaint();
+    	}
+    }
+    // END KGU#85 2015-11-17
 
 
     /** Creates new form Surface */
@@ -331,6 +413,9 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
 
             mouseSelected=null;
             mousePressed=false;
+            // START KGU#85 2015-11-18
+            adaptLayout();
+            // END KGU#85 2015-11-18
             this.repaint();
         }
     }
@@ -339,30 +424,54 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     {
         mousePoint = e.getPoint();
         mousePressed = true;
-        if(diagrams!=null)
+        // START KGU 2015-11-18: First unselect the selected diagram (if any)
+        if (mouseSelected != null && mouseSelected.root != null)
+        {
+        	mouseSelected.root.setSelected(false);
+        	mouseSelected = null;
+        }
+        // END KGU 2015-11-18
         for(int d=0;d<diagrams.size();d++)
         {
             Diagram diagram = diagrams.get(d);
             Root root = diagram.root;
-
-            Element ele = root.selectElementByCoord(mousePoint.x-diagram.point.x,
-                                                    mousePoint.y-diagram.point.y);
-            if(ele!=null)
+   
+            // START KGU 2015-11-18 No need to select something (may have side-effects!) 
+            //Element ele = root.selectElementByCoord(mousePoint.x-diagram.point.x,
+            //                                        mousePoint.y-diagram.point.y);
+            Element ele = root.getElementByCoord(mousePoint.x-diagram.point.x,
+                                                 mousePoint.y-diagram.point.y);
+            // END KGU 2015-11-18
+            if (ele != null)
             {
-                mouseSelected=diagram;
+                // START KGU 2015-11-18: Avoid the impression of multiple selections
+                if (mouseSelected != null && mouseSelected.root != null)
+                {
+                	mouseSelected.root.setSelected(false);
+                }
+                // END KGU 2015-11-18
+                mouseSelected = diagram;
                 mouseRelativePoint = new Point(mousePoint.x-mouseSelected.point.x,
                                                mousePoint.y-mouseSelected.point.y);
-                root.selectElementByCoord(-1, -1);
+                // START KGU 2015-11-18: We didn't select anything, so there is nothing to unselect 
+                //root.selectElementByCoord(-1, -1);
+                // END KGU 2015-11-18
                 root.setSelected(true);
-                repaint();
             }
 
         }
+        repaint();
     }
 
     public void mouseReleased(MouseEvent e)
     {
         mousePressed = false;
+        // START KGU 2015-11-18: For consistency reasons, the selected diagram has to be unselected, too
+        if (mouseSelected != null && mouseSelected.root != null)
+        {
+        	mouseSelected.root.setSelected(false);
+        }
+        // END KGU 2015-11-18
         mouseSelected = null;
     }
 
@@ -376,27 +485,59 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
 
     public void mouseDragged(MouseEvent e)
     {
-        if (mousePressed == true)
+    	// START KGU#85 2015-11-18
+        Rectangle rect = new Rectangle(e.getX(), e.getY(), 1, 1);
+        if (e.getX() > 0 && e.getY() > 0)	// Don't let drag beyond the scrollable area
         {
-            if(mouseSelected!=null)
-            {
-                mouseSelected.point.setLocation(e.getPoint().x-mouseRelativePoint.x,
-                                                e.getPoint().y-mouseRelativePoint.y);
-                repaint();
-            }
+        	scrollRectToVisible(rect);
+        // END KGU#85 2015-11-18
+
+        	if (mousePressed == true)
+        	{
+        		if (mouseSelected!=null)
+        		{
+        			mouseSelected.point.setLocation(e.getPoint().x-mouseRelativePoint.x,
+        					e.getPoint().y-mouseRelativePoint.y);
+        			// START KGU#85 2015-11-18
+        			adaptLayout();
+        			// END KGU#85 2015-11-18
+        			repaint();
+        		}
+        	}
+        // START KGU#85 2015-11-18
         }
+        // END KGU#85 2015-11-18
     }
 
     public void mouseMoved(MouseEvent e)
     {
     }
 
-
-
     public void update(Root source)
     {
+        // START KGU#85 2015-11-18
+        adaptLayout();
+        // END KGU#85 2015-11-18
         this.repaint();
     }
+    
+    // START KGU#2 2015-11-19: We now need a way to identify a diagram - a root should not be twice here
+    private Diagram findDiagram(Root root)
+    {
+    	Diagram owner = null;
+    	if (this.diagrams != null) {
+    		for(int d = 0; owner == null && d < this.diagrams.size(); d++)
+    		{
+    			Diagram diagram = this.diagrams.get(d);
+    			if (diagram.root == root)
+    			{
+    				owner = diagram;	// Will leave the loop
+    			}
+    		}
+    	}
+    	return owner;
+    }
+    // END KGU#2 2015-11-19
 
     // START KGU#48 2015-10-17: As soon as a new NSD was loaded by some Mainform instance, Surface had lost track
     /* (non-Javadoc)
@@ -406,27 +547,22 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     public void replaced(Root oldRoot, Root newRoot)
     {
     	// Try to find the appropriate diagram holding oldRoot
-    	Diagram owner = null;
-    	if (this.diagrams != null) {
-    		for(int d = 0; owner == null && d < this.diagrams.size(); d++)
-    		{
-    			Diagram diagram = this.diagrams.get(d);
-    			if (diagram.root == oldRoot)
-    			{
-    				owner = diagram;	// Will leave the loop
-    				oldRoot.removeUpdater(this);
-    				if (owner.mainform != null) {
-    					owner.root = owner.mainform.getRoot();
-    					owner.root.addUpdater(this);
-    				}
-    				else if (newRoot != null)
-    				{
-    					owner.root = newRoot;
-    					owner.root.addUpdater(this);
-    				}
-    				this.repaint();
-    			}
+    	Diagram owner = findDiagram(oldRoot);
+    	if (owner != null) {
+    		oldRoot.removeUpdater(this);
+    		if (owner.mainform != null) {
+    			owner.root = owner.mainform.getRoot();
+    			owner.root.addUpdater(this);
     		}
+    		else if (newRoot != null)
+    		{
+    			owner.root = newRoot;
+    			owner.root.addUpdater(this);
+    		}
+    		// START KGU#85 2015-11-18
+    		adaptLayout();
+    		// END KGU#85 2015-11-18
+    		this.repaint();
     	}
     }
     // END KGU#48 2015-10-17
