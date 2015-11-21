@@ -50,6 +50,8 @@ package lu.fisch.structorizer.executor;
 *      Kay Gürtzig     2015.11.11      Issue #21 KGU#77 fixed: return instructions didn't terminate the execution.
 *      Kay Gürtzig     2015.11.12      Bugfix KGU#79: WHILE condition wasn't effectively converted.
 *      Kay Gürtzig     2015.11.13/14   Enhancement #9 (KGU#2) to allow the execution of subroutine calls
+*      Kay Gürtzig     2015.11.20      Bugfix KGU#86: Interpreter was improperly set up for functions sqr, sqrt;
+*                                      Message types for output and return value information corrected
 *
 ******************************************************************************************************
 *
@@ -510,7 +512,8 @@ public class Executor implements Runnable
 				result = modifiedResult;
 			}
 
-			JOptionPane.showMessageDialog(diagram, result, "Error", 0);
+			JOptionPane.showMessageDialog(diagram, result, "Error",
+					JOptionPane.ERROR_MESSAGE);
 		} else
 		{
 			if ((root.isProgram == false) && (returned == false))
@@ -716,10 +719,10 @@ public class Executor implements Runnable
 			pascalFunction = "public void randomize() {  }";
 			interpreter.eval(pascalFunction);
 			// square
-			pascalFunction = "public double sqr(Double d) { return (d) * (d); }";
+			pascalFunction = "public double sqr(double d) { return (d) * (d); }";
 			interpreter.eval(pascalFunction);
 			// square root
-			pascalFunction = "public double sqrt(Double d) { return Math.sqrt(d); }";
+			pascalFunction = "public double sqrt(double d) { return Math.sqrt(d); }";
 			interpreter.eval(pascalFunction);
 			// length of a string
 			pascalFunction = "public int length(String s) { return s.length(); }";
@@ -1474,7 +1477,7 @@ public class Executor implements Runnable
 		{
 			String s = unconvert(n.toString());
 			JOptionPane.showMessageDialog(diagram, s, "Output",
-					0);
+					JOptionPane.INFORMATION_MESSAGE);
 		}
 		return result;
 	}
@@ -1514,7 +1517,7 @@ public class Executor implements Runnable
 				{
 					String s = unconvert(n.toString());
 					JOptionPane.showMessageDialog(diagram, s,
-							"Returned result", 0);
+							"Returned result", JOptionPane.INFORMATION_MESSAGE);
 				}
 			}
 		}
