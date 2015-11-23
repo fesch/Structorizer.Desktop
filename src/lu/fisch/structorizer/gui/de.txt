@@ -34,11 +34,11 @@
  *      Klaus-Peter Reimers 	2008.01.14      	First Issue
  *      Kay Gürtzig		2014.10.18		Linguistic flaws corrected
  *      Kay Gürtzig		2014.12.02		ExportOptionDialoge and further messages added
- *      Kay Gürtzig 	2015.10.06		altPadRight added to Preferences dialog
+ *      Kay Gürtzig	 	2015.10.06		altPadRight added to Preferences dialog
  *      Kay Gürtzig		2015.10.14		InputBox.class_specific stuff added
  *      Kay Gürtzig		2015.11.01		InputBoxFor captions and Analyzer messages for FOR loops added
- *      Kay Gürtzig 	2015.11.09		Additions for ParserPreferences (KGU#3 FOR loop enhancement)
- *      Kay Gürtzig 	2015.11.15		Messages for Jump element modified or corrected
+ *      Kay Gürtzig		2015.11.09		Additions for ParserPreferences (KGU#3 FOR loop enhancement)
+ *      Kay Gürtzig		2015.11.15		Messages for Jump element modified or corrected
  *
  ******************************************************************************************************
  *

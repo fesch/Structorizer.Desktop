@@ -52,10 +52,15 @@ package lu.fisch.structorizer.executor;
 *      Kay Gürtzig     2015.11.13/14   Enhancement #9 (KGU#2) to allow the execution of subroutine calls
 *      Kay Gürtzig     2015.11.20      Bugfix KGU#86: Interpreter was improperly set up for functions sqr, sqrt;
 *                                      Message types for output and return value information corrected
+*      Kay Gürtzig     2015.11.23      Enhancement #36 (KGU#84) allowing to pause from input and output dialogs.
 *
 ******************************************************************************************************
 *
 *      Comment:
+*      2015.11.23 (KGU#84) Pausing from input and output dialogs enabled (Enhancement issue #36)
+*          On cancelling input now first a warning box opens and after having quit the execution is in pause
+*          mode such that the user may edit values, abort or continue in either run oder step mode.
+*          Output and result message dialogs now provide a Pause button to allow to pause mode (see above).
 *      2015.11.13 (KGU#2) Subroutine call mechanisms introduced
 *          Recursively callable submethod of execute(Root) added plus new call-handling method executeCall()
 *          Error handling in some subroutine level still neither prepared nor tested
@@ -449,7 +454,7 @@ public class Executor implements Runnable
 							"Please enter a value for <" + in + ">", null);
 					if (str == null)
 					{
-						i = params.count();
+						i = params.count();	// leave the loop
 						result = "Manual break!";
 						break;
 					}
@@ -483,7 +488,9 @@ public class Executor implements Runnable
 
 		if (result.equals(""))
 		{
+			/////////////////////////////////////////////////////
 			// Actual start of execution 
+			/////////////////////////////////////////////////////
 			result = step(root);
 			
 			if (result.equals("") && (stop == true))
@@ -538,8 +545,18 @@ public class Executor implements Runnable
 							this.returnedValue = n;
 							if (arguments == null)
 							{
-								JOptionPane.showMessageDialog(diagram, n,
-										"Returned result", JOptionPane.INFORMATION_MESSAGE);
+								// START KGU#84 2015-11-23: Enhancement to give a chance to pause
+								//JOptionPane.showMessageDialog(diagram, n,
+								//		"Returned result", JOptionPane.INFORMATION_MESSAGE);
+								Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
+								int pressed = JOptionPane.showOptionDialog(diagram, n, "Returned result",
+										JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
+								if (pressed == 1)
+								{
+									step = true;
+									control.setButtonsForPause();
+								}
+								// END KGU#84 2015-11-23
 							}
 							// END KGU#2 (#9) 2015-11-13
 							returned = true;
@@ -1090,7 +1107,7 @@ public class Executor implements Runnable
 					{
 						// In this case an initialisation expression ("{ ..., ..., ...}") is expected
 						String asgnmt = "Object[] " + varName + " = " + newValues[i];
-						System.out.println(asgnmt);	// FIXME (KGU) Remove this debug info after test
+						//System.out.println(asgnmt);	// FIXME (KGU) Remove this debug info after test
 						// FIXME: Nested initializers (as produced for nested arrays before) won't work here!
 						interpreter.eval(asgnmt);
 //						// Okay, but now we have to sort out some un-boxed strings
@@ -1161,7 +1178,7 @@ public class Executor implements Runnable
 		checkBreakpoint(element);
 		// END KGU#43 2015-10-12
 		
-		// The Root,  element and the REPEAT loop won't be delayed or halted in the beginning except by their members
+		// The Root element and the REPEAT loop won't be delayed or halted in the beginning except by their members
 		if (element instanceof Root)
 		{
 			result = stepRoot((Root)element);
@@ -1453,10 +1470,24 @@ public class Executor implements Runnable
 		// END KGU33 2014-12-05
 		String str = JOptionPane.showInputDialog(null,
 				"Please enter a value for <" + in + ">", null);
-		// START KGU#69 2015-11-08: Use specific method for raw input
-		// (obsolete code lines removed)
-		setVarRaw(in, str);
-		// END KGU#69 2015-11-08
+		// START KGU#84 2015-11-23: Allow a controlled continuation on cancelled input
+		//setVarRaw(in, str);
+		if (str == null)
+		{
+			// Switch to step mode such that the user may enter the variable in the display and go on
+			JOptionPane.showMessageDialog(diagram, "Execution paused - you may enter the value in the variable display.",
+					"Input cancelled", JOptionPane.WARNING_MESSAGE);
+			step = true;
+			this.control.setButtonsForPause();
+		}
+		else
+		{
+			// START KGU#69 2015-11-08: Use specific method for raw input
+			setVarRaw(in, str);
+			// END KGU#69 2015-11-08
+		}
+		// END KGU#84 2015-11-23
+		
 		return result;
 	}
 
@@ -1476,8 +1507,18 @@ public class Executor implements Runnable
 		} else
 		{
 			String s = unconvert(n.toString());
-			JOptionPane.showMessageDialog(diagram, s, "Output",
-					JOptionPane.INFORMATION_MESSAGE);
+			// START KGU#84 2015-11-23: Enhancement to give a chance to pause
+			//JOptionPane.showMessageDialog(diagram, s, "Output",
+			//		JOptionPane.INFORMATION_MESSAGE);
+			Object[] options = {"OK", "Pause"};	// FIXME: Provide a translation
+			int pressed = JOptionPane.showOptionDialog(diagram, s, "Output",
+					JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
+			if (pressed == 1)
+			{
+				step = true;
+				control.setButtonsForPause();
+			}
+			// END KGU#84 2015-11-23
 		}
 		return result;
 	}
@@ -1516,8 +1557,18 @@ public class Executor implements Runnable
 				} else
 				{
 					String s = unconvert(n.toString());
-					JOptionPane.showMessageDialog(diagram, s,
-							"Returned result", JOptionPane.INFORMATION_MESSAGE);
+					// START KGU#84 2015-11-23: Enhancement to give a chance to pause
+					//JOptionPane.showMessageDialog(diagram, s,
+					//		"Returned result", JOptionPane.INFORMATION_MESSAGE);
+					Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
+					int pressed = JOptionPane.showOptionDialog(diagram, s, "Returned result",
+							JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
+					if (pressed == 1)
+					{
+						step = true;
+						control.setButtonsForPause();
+					}
+					// END KGU#84 2015-11-23
 				}
 			}
 		}

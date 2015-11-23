@@ -35,6 +35,7 @@
  *      Kay Gürtzig     2014.12.02              ExportOptionDialoge messages added, language names translated
  *      Kay Gürtzig     2015.10.06              altPadRight added to Preferences dialog
  *      Kay Gürtzig     2015.10.14              InputBox-specific part enhanced
+ *      Kay Gürtzig     2015.11.22              Additions for InputBoxFor, Analyser, and AnalyserPreferences
  *
  ******************************************************************************************************
  *
@@ -171,7 +172,9 @@ Menu.error10_4.text=¡Un unico elemento de instrucción no debe contener instruc
 Menu.error11.text=Probablemente has hecho un error de asignación. ¡Por favor comprueba esta instrucción!
 Menu.error12.text=¡El parámetro «%» debe comenzar con la letra "p" seguido unicamente de letras MAYUSCULAS!
 Menu.error13_1.text=¡La función no retorna ningún resultado!
-Menu.error13_2.text=¡Su función no puede retornar ningún resultado!
+Menu.error13_2.text=¡Su función no siempre retorna un resultado!
+Menu.error14_1.text=Los componentes separados so se convienen con el texto de lencabiezamiento!
+Menu.error14_2.text=El paso «%» del bucle FOR no es una constante entera!
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferencias del Comprobador
@@ -188,6 +191,7 @@ AnalyserPreferences.check10.text=Comprobar instrucciones con multiples comandos.
 AnalyserPreferences.check11.text=Comprobar errores en asignaciones.
 AnalyserPreferences.check12.text=Comprobar por nombre de parámetro estándar. (LUX/MEN)
 AnalyserPreferences.check13.text=Comprobar si, en caso de una función, ésta devuelve un resultado.
+AnalyserPreferences.check14.text=Comprobar si los parametros de bucles FOR están consistentes.
 AnalyserPreferences.okButton.text=Aceptar
 
 
@@ -310,6 +314,7 @@ InputBox.btnOK.text=Aceptar
 InputBox.btnOK.tooltip=Aceptar los cambios.
 InputBox.btnCancel.text=Cancelar
 InputBox.btnCancel.tooltip=Cancelar los cambios.
+InputBox.chkBreakpoint.text=Breakpoint
 InputBox.class_specific.Root=Editar nombre de programa...
 InputBox.class_specific.Function=Editar signatura de función...
 InputBox.class_specific.Instruction.insert=Insertar instrucciones...
@@ -337,6 +342,24 @@ InputBox.class_specific.While.lblText=Por favor ingresa la condición para entra
 InputBox.class_specific.Repeat.lblText=Por favor ingresa la condición para salir
 InputBox.class_specific.Case.lblText=Ingresa la expresión y las constantes de selección (cada en nueva linea)
 InputBox.class_specific.Parallel.lblText=Número de brazos paralelos
+-----[ InputBoxFor ]-----
+InputBoxFor.class_specific.For.insert=Insertar bucle PARA...
+InputBoxFor.class_specific.For.update=Editar bucle PARA...
+InputBoxFor.lblVariable.text=Variable contadora
+InputBoxFor.lblStartVal.text=Valor inicial
+InputBoxFor.lblEndVal.text=Valor final
+InputBoxFor.lblIncr.text=Paso
+InputBoxFor.chkTextInput.text=Editar como texto pleno
+InputBoxFor.chkTextInput.tooltip=Si puesto, los componentes de arriba serán extraído del texto, de otro modo el texto será compuesto de los componentes.
+InputBoxFor.lblComment.text=Comentario
+InputBoxFor.lblComment.tooltip=
+InputBoxFor.txtText.tooltip=Encabezamiento del bucle como texto.
+InputBoxFor.txtComment.tooltip=El comentario del bucle.
+InputBoxFor.btnOK.text=Aceptar
+InputBoxFor.btnOK.tooltip=Aceptar los cambios.
+InputBoxFor.btnCancel.text=Cancelar
+InputBoxFor.btnCancel.tooltip=Cancelar los Cambios.
+InputBoxFor.chkBreakpoint.text=Breakpoint
 
 
 -----[ Preferences ]-----
@@ -445,6 +468,7 @@ ParserPreferences.lblCase.text=declaración CASE
 ParserPreferences.lblCase.tooltip=
 ParserPreferences.lblFor.text=bucle PARA
 ParserPreferences.lblFor.tooltip=
+ParserPreferences.lblForStep.text=Paso
 ParserPreferences.lblWhile.text=bucle MIENTRAS
 ParserPreferences.lblWhile.tooltip=
 ParserPreferences.lblRepeat.text=bucle REPETIR

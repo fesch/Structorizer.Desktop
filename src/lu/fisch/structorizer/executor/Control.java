@@ -419,7 +419,7 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
             {
             	varsUpdated = true;
             	varUpdates[rowNr] = val;
-            	System.out.println(tm.getValueAt(rowNr, 0).toString() + " <- " + val.toString());
+            	//System.out.println(tm.getValueAt(rowNr, 0).toString() + " <- " + val.toString());
             }
     	}
 		
