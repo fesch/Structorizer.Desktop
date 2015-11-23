@@ -147,60 +147,6 @@ public class PerlGenerator extends Generator {
     protected String transform(String _input)
 	{
     	_input = super.transform(_input);
-//		// et => and => &&
-//		// ou => or => ||
-//		// lire => readln() => 
-//		// écrire => writeln() => print 
-//		// tant que => "" 
-//		// pour => ""
-//		// jusqu'à => ""
-//		// à => "to"
-//	
-//        // START KGU 2014-12-02: To achieve consistency with operator highlighting
-//        _input=BString.replace(_input, "<--", "<-");
-//        // END KGU 2014-12-02
-//		_input=BString.replace(_input, " <- ", "=");
-//		_input=BString.replace(_input, "<- ", "=");
-//		_input=BString.replace(_input, " <-", "=");
-//		_input=BString.replace(_input, "<-", "=");
-//		
-//            StringList empty = new StringList();
-//            empty.addByLength(D7Parser.preAlt);
-//            empty.addByLength(D7Parser.postAlt);
-//            empty.addByLength(D7Parser.preCase);
-//            empty.addByLength(D7Parser.postCase);
-//            empty.addByLength(D7Parser.preFor);
-//            empty.addByLength(D7Parser.postFor);
-//            empty.addByLength(D7Parser.preWhile);
-//            empty.addByLength(D7Parser.postWhile);
-//            empty.addByLength(D7Parser.postRepeat);
-//            empty.addByLength(D7Parser.preRepeat);
-//            //System.out.println(empty);
-//            for(int i=0;i<empty.count();i++)
-//            {
-//                _input=BString.replace(_input,empty.get(i),"");
-//                //System.out.println(i);
-//            }
-//            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
-//
-//            
-///*		
-//		if(!D7Parser.preAlt.equals("")){_input=BString.replace(_input,D7Parser.preAlt,"");}
-//		if(!D7Parser.postAlt.equals("")){_input=BString.replace(_input,D7Parser.postAlt,"");}
-//		if(!D7Parser.preCase.equals("")){_input=BString.replace(_input,D7Parser.preCase,"");}
-//		if(!D7Parser.postCase.equals("")){_input=BString.replace(_input,D7Parser.postCase,"");}
-//		if(!D7Parser.preFor.equals("")){_input=BString.replace(_input,D7Parser.preFor,"");}
-//		if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"");}
-//		if(!D7Parser.preWhile.equals("")){_input=BString.replace(_input,D7Parser.preWhile,"");}
-//		if(!D7Parser.postWhile.equals("")){_input=BString.replace(_input,D7Parser.postWhile,"");}
-//		if(!D7Parser.preRepeat.equals("")){_input=BString.replace(_input,D7Parser.preRepeat,"");}
-//		if(!D7Parser.postRepeat.equals("")){_input=BString.replace(_input,D7Parser.postRepeat,"");}
-//*/
-//            
-//		if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input+" ")>=0){_input=BString.replace(_input,D7Parser.input+" ","readln(")+")";}
-//		if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output+" ")>=0){_input=BString.replace(_input,D7Parser.output+" ","writeln(")+")";}
-//		if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input)>=0){_input=BString.replace(_input,D7Parser.input,"readln(")+")";}
-//		if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output)>=0){_input=BString.replace(_input,D7Parser.output,"writeln(")+")";}
     	
     	// START KGU#62 2015-11-02: Identify and adapt variable names
 		System.out.println("Perl - text to be transformed: \"" + _input + "\"");
@@ -415,9 +361,9 @@ public class PerlGenerator extends Generator {
 //	protected void generateCode(Subqueue _subqueue, String _indent) {
 //		
 //		// code.add(_indent+"");
-//		for(int i=0;i<_subqueue.children.size();i++)
+//		for(int i=0;i<_subqueue.getSize();i++)
 //		{
-//			generateCode((Element) _subqueue.children.get(i),_indent);
+//			generateCode((Element) _subqueue.getElement(i),_indent);
 //		}
 //		// code.add(_indent+"");
 //		

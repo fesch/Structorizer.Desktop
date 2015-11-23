@@ -40,7 +40,8 @@ package lu.fisch.structorizer.elements;
  *		Kay Gürtzig	2015.10.17		improved Arranger support by method notifyReplaced (KGU#48)
  *		Kay Gürtzig	2015.11.03		New error14 field and additions to analyse for FOR loop checks (KGU#3)
  *      Kay Gürtzig 2015.11.13/14   Method copy() accomplished, modifications for subroutine calls (KGU#2 = #9)
- *      Kay Gürtzig 2015.11.22      Modifications to support selection of non-empty Subqueues (KGU#87)
+ *      Kay Gürtzig 2015.11.22/23   Modifications to support selection of Element sequences (KGU#87),
+ *                                  Code revision in Analyser (field Subqueue.children now private).
  *
  ******************************************************************************************************
  *
@@ -504,10 +505,10 @@ public class Root extends Element {
                     // START KGU#87 2015-11-22: Allow to remove entire non-empty Subqueues
                     //if ( !_ele.getClass().getSimpleName().equals("Subqueue") &&
                     //         !_ele.getClass().getSimpleName().equals("Root"))
-                    if ( _ele.getClass().getSimpleName().equals("Subqueue"))
+                    if ( _ele instanceof IElementSequence)
                     {
-                    	hasChanged = ((Subqueue)_ele).getSize() > 0;
-                    	((Subqueue)_ele).clear();
+                    	hasChanged = ((IElementSequence)_ele).getSize() > 0;
+                    	((IElementSequence)_ele).removeElements();
                     }
                     else if (!_ele.getClass().getSimpleName().equals("Root"))
                     // END KGU#87 2015-11-22
@@ -1413,26 +1414,26 @@ public class Root extends Element {
     {
             DetectedError error;
 
-            if(_node.children.size()>0)
+            if(_node.getSize()>0)
             {
-                    for(int i=0;i<_node.children.size();i++)
+                    for(int i=0;i<_node.getSize();i++)
                     {
                             // get var from actual instruction
-                            StringList myVars = getVarNames((Element) _node.children.get(i));
+                            StringList myVars = getVarNames((Element) _node.getElement(i));
 
 
                             // CHECK: assignment in condition (#8)
-                            if(_node.children.get(i).getClass().getSimpleName().equals("While")
+                            if(_node.getElement(i).getClass().getSimpleName().equals("While")
                                ||
-                               _node.children.get(i).getClass().getSimpleName().equals("Repeat")
+                               _node.getElement(i).getClass().getSimpleName().equals("Repeat")
                                ||
-                               _node.children.get(i).getClass().getSimpleName().equals("Alternative"))
+                               _node.getElement(i).getClass().getSimpleName().equals("Alternative"))
                             {
-                                    String text = ((Element) _node.children.get(i)).getText().getLongString();
+                                    String text = ((Element) _node.getElement(i)).getText().getLongString();
                                     if ( text.contains("<-") || text.contains(":=") || text.contains("<--"))
                                     {
-                                            //error  = new DetectedError("It is not allowed to make an assignment inside a condition.",(Element) _node.children.get(i));
-                                            error  = new DetectedError(errorMsg(Menu.error08,""),(Element) _node.children.get(i));
+                                            //error  = new DetectedError("It is not allowed to make an assignment inside a condition.",(Element) _node.getElement(i));
+                                            error  = new DetectedError(errorMsg(Menu.error08,""),(Element) _node.getElement(i));
                                             addError(_errors,error,8);
                                     }
                             }
@@ -1444,10 +1445,10 @@ public class Root extends Element {
                                     // CHECK: non uppercase var (#5)
                                     if(!myVars.get(j).toUpperCase().equals(myVars.get(j)) && !rootVars.contains(myVars.get(j)))
                                     {
-                                            //error  = new DetectedError("The variable «"+myVars.get(j)+"» must be written in uppercase!",(Element) _node.children.get(i));
+                                            //error  = new DetectedError("The variable «"+myVars.get(j)+"» must be written in uppercase!",(Element) _node.getElement(i));
                                             if(!((myVars.get(j).toLowerCase().equals("result") && this.isProgram==false)))
                                             {
-                                                error  = new DetectedError(errorMsg(Menu.error05,myVars.get(j)),(Element) _node.children.get(i));
+                                                error  = new DetectedError(errorMsg(Menu.error05,myVars.get(j)),(Element) _node.getElement(i));
                                                 addError(_errors,error,5);
                                             }
                                     }
@@ -1455,16 +1456,16 @@ public class Root extends Element {
                                     // CHECK: correkt identifiers (#7)
                                     if(testidentifier(myVars.get(j))==false)
                                     {
-                                            //error  = new DetectedError("«"+myVars.get(j)+"» is not a valid name for a variable!",(Element) _node.children.get(i));
-                                            error  = new DetectedError(errorMsg(Menu.error07_3,myVars.get(j)),(Element) _node.children.get(i));
+                                            //error  = new DetectedError("«"+myVars.get(j)+"» is not a valid name for a variable!",(Element) _node.getElement(i));
+                                            error  = new DetectedError(errorMsg(Menu.error07_3,myVars.get(j)),(Element) _node.getElement(i));
                                             addError(_errors,error,7);
                                     }
                             }
 
                             // CHECK: two checks with the same input condition
-                            if(_node.children.get(i).getClass().getSimpleName().equals("Instruction"))
+                            if(_node.getElement(i).getClass().getSimpleName().equals("Instruction"))
                             {
-                                    StringList test = ((Element) _node.children.get(i)).getText();
+                                    StringList test = ((Element) _node.getElement(i)).getText();
 
                                     // CHECK: wrong multi-line instruction (#10 - new!)
                                     int isInput = 0;
@@ -1483,8 +1484,8 @@ public class Root extends Element {
 
                                             if((myTest.contains("=") || myTest.contains("==")) && !myTest.contains("<--") && !myTest.contains("<-") && !myTest.contains(":="))
                                             {
-                                                    //error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.children.get(i));
-                                                    error  = new DetectedError(errorMsg(Menu.error11,""),(Element) _node.children.get(i));
+                                                    //error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
+                                                    error  = new DetectedError(errorMsg(Menu.error11,""),(Element) _node.getElement(i));
                                                     addError(_errors,error,11);
                                             }
 
@@ -1498,8 +1499,8 @@ public class Root extends Element {
                                             //StringList lexemes = splitLexically(myTest, true);
                                             //if((lexemes.contains("=") || lexemes.contains("==")) && !lexemes.contains("<-") && !lexemes.contains(":="))
                                             //{
-                                            //        //error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.children.get(i));
-                                            //        error  = new DetectedError(errorMsg(Menu.error11,""),(Element) _node.children.get(i));
+                                            //        //error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
+                                            //        error  = new DetectedError(errorMsg(Menu.error11,""),(Element) _node.getElement(i));
                                             //        addError(_errors,error,11);
                                             //}
                                             //
@@ -1513,47 +1514,47 @@ public class Root extends Element {
                                     // CHECK: wrong multi-line instruction (#10 - new!)
                                     if (isInput+isOutput+isAssignment==3)
                                     {
-                                            //error  = new DetectedError("A single instruction element should not contain input/output instructions and assignments!",(Element) _node.children.get(i));
-                                            error  = new DetectedError(errorMsg(Menu.error10_1,""),(Element) _node.children.get(i));
+                                            //error  = new DetectedError("A single instruction element should not contain input/output instructions and assignments!",(Element) _node.getElement(i));
+                                            error  = new DetectedError(errorMsg(Menu.error10_1,""),(Element) _node.getElement(i));
                                             addError(_errors,error,10);
                                     }
                                     else if (isInput+isOutput==2)
                                     {
-                                            //error  = new DetectedError("A single instruction element should not contain input and output instructions!",(Element) _node.children.get(i));
-                                            error  = new DetectedError(errorMsg(Menu.error10_2,""),(Element) _node.children.get(i));
+                                            //error  = new DetectedError("A single instruction element should not contain input and output instructions!",(Element) _node.getElement(i));
+                                            error  = new DetectedError(errorMsg(Menu.error10_2,""),(Element) _node.getElement(i));
                                             addError(_errors,error,10);
                                     }
                                     else if (isInput+isAssignment==2)
                                     {
-                                            //error  = new DetectedError("A single instruction element should not contain input instructions and assignments!",(Element) _node.children.get(i));
-                                            error  = new DetectedError(errorMsg(Menu.error10_3,""),(Element) _node.children.get(i));
+                                            //error  = new DetectedError("A single instruction element should not contain input instructions and assignments!",(Element) _node.getElement(i));
+                                            error  = new DetectedError(errorMsg(Menu.error10_3,""),(Element) _node.getElement(i));
                                             addError(_errors,error,10);
                                     }
                                     else if (isOutput+isAssignment==2)
                                     {
-                                            //error  = new DetectedError("A single instruction element should not contain ouput instructions and assignments!",(Element) _node.children.get(i));
-                                            error  = new DetectedError(errorMsg(Menu.error10_4,""),(Element) _node.children.get(i));
+                                            //error  = new DetectedError("A single instruction element should not contain ouput instructions and assignments!",(Element) _node.getElement(i));
+                                            error  = new DetectedError(errorMsg(Menu.error10_4,""),(Element) _node.getElement(i));
                                             addError(_errors,error,10);
                                     }
                             }
 
 
                             // CHECK: non init var (no REPEAT)  (#3)
-                            StringList myUsed = getUsedVarNames((Element) _node.children.get(i),true,true);
-                            if(!_node.children.get(i).getClass().getSimpleName().equals("Repeat"))
+                            StringList myUsed = getUsedVarNames((Element) _node.getElement(i),true,true);
+                            if(!_node.getElement(i).getClass().getSimpleName().equals("Repeat"))
                             {
                                     for(int j=0;j<myUsed.count();j++)
                                     {
                                             if(!_vars.contains(myUsed.get(j)) && !_uncertainVars.contains(myUsed.get(j)))
                                             {
-                                                    //error  = new DetectedError("The variable «"+myUsed.get(j)+"» has not yet been initialized!",(Element) _node.children.get(i));
-                                                    error  = new DetectedError(errorMsg(Menu.error03_1,myUsed.get(j)),(Element) _node.children.get(i));
+                                                    //error  = new DetectedError("The variable «"+myUsed.get(j)+"» has not yet been initialized!",(Element) _node.getElement(i));
+                                                    error  = new DetectedError(errorMsg(Menu.error03_1,myUsed.get(j)),(Element) _node.getElement(i));
                                                     addError(_errors,error,3);
                                             }
                                             else if(_uncertainVars.contains(myUsed.get(j)))
                                             {
-                                                    //error  = new DetectedError("The variable «"+myUsed.get(j)+"» may not have been initialized!",(Element) _node.children.get(i));
-                                                    error  = new DetectedError(errorMsg(Menu.error03_2,myUsed.get(j)),(Element) _node.children.get(i));
+                                                    //error  = new DetectedError("The variable «"+myUsed.get(j)+"» may not have been initialized!",(Element) _node.getElement(i));
+                                                    error  = new DetectedError(errorMsg(Menu.error03_2,myUsed.get(j)),(Element) _node.getElement(i));
                                                     addError(_errors,error,3);
                                             }
                                     }
@@ -1566,10 +1567,10 @@ public class Root extends Element {
                             detected at all!
                             */
                             /*
-                            if(_node.children.get(i).getClass().getSimpleName().equals("Instruction"))
+                            if(_node.getElement(i).getClass().getSimpleName().equals("Instruction"))
                             {
                                     System.out.println("----------------------------");
-                                    System.out.println(((Element) _node.children.get(i)).getText());
+                                    System.out.println(((Element) _node.getElement(i)).getText());
                                     System.out.println("----------------------------");
                                     System.out.println("Vars : "+myVars);
                                     System.out.println("Init : "+_vars);
@@ -1578,7 +1579,7 @@ public class Root extends Element {
                             }
                             /**/
 
-            StringList sl =((Element) _node.children.get(i)).getText();
+            StringList sl =((Element) _node.getElement(i)).getText();
             for(int ls=0;ls<sl.count();ls++)
             {
                 if(sl.get(ls).trim().toLowerCase().indexOf("return")==0)
@@ -1592,14 +1593,14 @@ public class Root extends Element {
 
 
                             // CHECK: endless loop (#2)
-                            if(_node.children.get(i).getClass().getSimpleName().equals("While")
+                            if(_node.getElement(i).getClass().getSimpleName().equals("While")
                                ||
-                               _node.children.get(i).getClass().getSimpleName().equals("Repeat"))
+                               _node.getElement(i).getClass().getSimpleName().equals("Repeat"))
                             {
                                     // get used variable from inside the loop
-                                    StringList usedVars = getVarNames((Element) _node.children.get(i),false);
+                                    StringList usedVars = getVarNames((Element) _node.getElement(i),false);
                                     // get loop variables
-                                    StringList loopVars = getUsedVarNames((Element) _node.children.get(i),true,true);
+                                    StringList loopVars = getUsedVarNames((Element) _node.getElement(i),true,true);
 
                                     /*
                                     System.out.println("Used : "+usedVars);
@@ -1613,19 +1614,19 @@ public class Root extends Element {
                                     }
                                     if (check==false)
                                     {
-                                            //error  = new DetectedError("No change of the variables in the condition detected. Possible endless loop ...",(Element) _node.children.get(i));
-                                            error  = new DetectedError(errorMsg(Menu.error02,""),(Element) _node.children.get(i));
+                                            //error  = new DetectedError("No change of the variables in the condition detected. Possible endless loop ...",(Element) _node.getElement(i));
+                                            error  = new DetectedError(errorMsg(Menu.error02,""),(Element) _node.getElement(i));
                                             addError(_errors,error,2);
                                     }
                             }
 
                             // CHECK: loop var modified (#1) and loop parameter concistency (#14 new!)
-                            if(_node.children.get(i).getClass().getSimpleName().equals("For"))
+                            if(_node.getElement(i).getClass().getSimpleName().equals("For"))
                             {
                                     // get used variable from inside the FOR-loop
-                                    StringList usedVars = getVarNames((Element) _node.children.get(i),false,true);
+                                    StringList usedVars = getVarNames((Element) _node.getElement(i),false,true);
                                     // get loop variable (that should be only one!!!)
-                                    StringList loopVars = getVarNames((Element) _node.children.get(i),true);
+                                    StringList loopVars = getVarNames((Element) _node.getElement(i),true);
 
                                     /*
                                     System.out.println("USED : "+usedVars);
@@ -1634,29 +1635,29 @@ public class Root extends Element {
 
                                     if(loopVars.count()==0)
                                     {
-                                            //error  = new DetectedError("WARNING: No loop variable detected ...",(Element) _node.children.get(i));
-                                            error  = new DetectedError(errorMsg(Menu.error01_1,""),(Element) _node.children.get(i));
+                                            //error  = new DetectedError("WARNING: No loop variable detected ...",(Element) _node.getElement(i));
+                                            error  = new DetectedError(errorMsg(Menu.error01_1,""),(Element) _node.getElement(i));
                                             addError(_errors,error,1);
                                     }
                                     else
                                     {
                                             if(loopVars.count()>1)
                                             {
-                                                    //error  = new DetectedError("WARNING: More than one loop variable detected ...",(Element) _node.children.get(i));
-                                                    error  = new DetectedError(errorMsg(Menu.error01_2,""),(Element) _node.children.get(i));
+                                                    //error  = new DetectedError("WARNING: More than one loop variable detected ...",(Element) _node.getElement(i));
+                                                    error  = new DetectedError(errorMsg(Menu.error01_2,""),(Element) _node.getElement(i));
                                                     addError(_errors,error,1);
                                             }
 
                                             if(usedVars.contains(loopVars.get(0)))
                                             {
-                                               //error  = new DetectedError("You are not allowed to modify the loop variable «"+loopVars.get(0)+"» inside the loop!",(Element) _node.children.get(i));
-                                               error  = new DetectedError(errorMsg(Menu.error01_3,loopVars.get(0)),(Element) _node.children.get(i));
+                                               //error  = new DetectedError("You are not allowed to modify the loop variable «"+loopVars.get(0)+"» inside the loop!",(Element) _node.getElement(i));
+                                               error  = new DetectedError(errorMsg(Menu.error01_3,loopVars.get(0)),(Element) _node.getElement(i));
                                                addError(_errors,error,1);
                                             }
                                     }
                                     
                                     // START KGU#3 2015-11-03: New check for consistency of the loop header
-                                    For elem = (For)_node.children.get(i);
+                                    For elem = (For)_node.getElement(i);
                                     if (!elem.checkConsistency()) {
                                         //error  = new DetectedError("FOR loop parameters are not consistent to the loop heading text!", elem);
                                     	error = new DetectedError(errorMsg(Menu.error14_1,""), elem);
@@ -1674,7 +1675,7 @@ public class Root extends Element {
                                     		{
                                     			// Two kinds of error at the same time
                                                 addError(_errors, error, 14);
-                                                //error  = new DetectedError("No change of the variables in the condition detected. Possible endless loop ...",(Element) _node.children.get(i));
+                                                //error  = new DetectedError("No change of the variables in the condition detected. Possible endless loop ...",(Element) _node.getElement(i));
                                                 error  = new DetectedError(errorMsg(Menu.error02,""), elem);
                                                 addError(_errors, error, 2);
                                     		}
@@ -1688,28 +1689,28 @@ public class Root extends Element {
                             }
 
                             // CHECK: if with empty T-block (#4)
-                            if(_node.children.get(i).getClass().getSimpleName().equals("Alternative"))
+                            if(_node.getElement(i).getClass().getSimpleName().equals("Alternative"))
                             {
-                                    if(((Alternative) _node.children.get(i)).qTrue.children.size()==0)
+                                    if(((Alternative) _node.getElement(i)).qTrue.getSize()==0)
                                     {
-                                            //error  = new DetectedError("You are not allowed to use an IF-statement with an empty TRUE-block!",(Element) _node.children.get(i));
-                                            error  = new DetectedError(errorMsg(Menu.error04,""),(Element) _node.children.get(i));
+                                            //error  = new DetectedError("You are not allowed to use an IF-statement with an empty TRUE-block!",(Element) _node.getElement(i));
+                                            error  = new DetectedError(errorMsg(Menu.error04,""),(Element) _node.getElement(i));
                                             addError(_errors,error,4);
                                     }
                             }
 
                             // continue analysis for subelements
-                            if(_node.children.get(i).getClass().getSimpleName().equals("While"))
+                            if(_node.getElement(i).getClass().getSimpleName().equals("While"))
                             {
-                                    analyse(((While) _node.children.get(i)).q,_errors,_vars,_uncertainVars);
+                                    analyse(((While) _node.getElement(i)).q,_errors,_vars,_uncertainVars);
                             }
-                            else if(_node.children.get(i).getClass().getSimpleName().equals("For"))
+                            else if(_node.getElement(i).getClass().getSimpleName().equals("For"))
                             {
-                                    analyse(((For) _node.children.get(i)).q,_errors,_vars,_uncertainVars);
+                                    analyse(((For) _node.getElement(i)).q,_errors,_vars,_uncertainVars);
                             }
-                            else if(_node.children.get(i).getClass().getSimpleName().equals("Repeat"))
+                            else if(_node.getElement(i).getClass().getSimpleName().equals("Repeat"))
                             {
-                                    analyse(((Repeat) _node.children.get(i)).q,_errors,_vars,_uncertainVars);
+                                    analyse(((Repeat) _node.getElement(i)).q,_errors,_vars,_uncertainVars);
 
                                     // CHECK: non init var (REPEAT only, because it must be analysed _after_ the body!)  (#3)
                                     /*
@@ -1718,31 +1719,31 @@ public class Root extends Element {
                                     System.out.println("Used : "+myUsed);
                                     */
 
-                                    //myUsed = getUsedVarNames((Element) _node.children.get(i),true,true);
+                                    //myUsed = getUsedVarNames((Element) _node.getElement(i),true,true);
                                     for(int j=0;j<myUsed.count();j++)
                                     {
                                             if(!_vars.contains(myUsed.get(j)) && !_uncertainVars.contains(myUsed.get(j)))
                                             {
-                                                    //error  = new DetectedError("The variable «"+myUsed.get(j)+"» has not yet been initialized!",(Element) _node.children.get(i));
-                                                    error  = new DetectedError(errorMsg(Menu.error03_1,myUsed.get(j)),(Element) _node.children.get(i));
+                                                    //error  = new DetectedError("The variable «"+myUsed.get(j)+"» has not yet been initialized!",(Element) _node.getElement(i));
+                                                    error  = new DetectedError(errorMsg(Menu.error03_1,myUsed.get(j)),(Element) _node.getElement(i));
                                                     addError(_errors,error,3);
                                             }
                                             else if(_uncertainVars.contains(myUsed.get(j)))
                                             {
-                                                    //error  = new DetectedError("The variable «"+myUsed.get(j)+"» may not have been initialized!",(Element) _node.children.get(i));
-                                                    error  = new DetectedError(errorMsg(Menu.error03_2,myUsed.get(j)),(Element) _node.children.get(i));
+                                                    //error  = new DetectedError("The variable «"+myUsed.get(j)+"» may not have been initialized!",(Element) _node.getElement(i));
+                                                    error  = new DetectedError(errorMsg(Menu.error03_2,myUsed.get(j)),(Element) _node.getElement(i));
                                                     addError(_errors,error,3);
                                             }
                                     }
 
                             }
-                            else if(_node.children.get(i).getClass().getSimpleName().equals("Alternative"))
+                            else if(_node.getElement(i).getClass().getSimpleName().equals("Alternative"))
                             {
                                     StringList tVars = _vars.copy();
                                     StringList fVars = _vars.copy();
 
-                                    analyse(((Alternative) _node.children.get(i)).qTrue,_errors,tVars,_uncertainVars);
-                                    analyse(((Alternative) _node.children.get(i)).qFalse,_errors,fVars,_uncertainVars);
+                                    analyse(((Alternative) _node.getElement(i)).qTrue,_errors,tVars,_uncertainVars);
+                                    analyse(((Alternative) _node.getElement(i)).qFalse,_errors,fVars,_uncertainVars);
 
                                     for(int v=0;v<tVars.count();v++)
                                     {
@@ -1760,9 +1761,9 @@ public class Root extends Element {
                                     //
                                     // => use a second list with variable that "may not have been initialised"
                             }
-                            else if(_node.children.get(i).getClass().getSimpleName().equals("Case"))
+                            else if(_node.getElement(i).getClass().getSimpleName().equals("Case"))
                             {
-                                    Case c = ((Case) _node.children.get(i));
+                                    Case c = ((Case) _node.getElement(i));
                                     StringList initialVars = _vars.copy();
                                     Hashtable myInitVars = new Hashtable();
                                     for (int j=0;j<c.qs.size();j++)

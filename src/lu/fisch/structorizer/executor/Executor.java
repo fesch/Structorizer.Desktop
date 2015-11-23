@@ -1243,7 +1243,7 @@ public class Executor implements Runnable
 		// START KGU#77 2015-11-11: Leave if a return statement has been executed
 		//while ((i < element.children.children.size())
 		//		&& result.equals("") && (stop == false))
-		while ((i < element.children.children.size())
+		while ((i < element.children.getSize())
 				&& result.equals("") && (stop == false) && !returned)
 		// END KGU#77 2015-11-11
 		{
@@ -1708,7 +1708,7 @@ public class Executor implements Runnable
 					// START KGU#77 2015-11-11: Leave if a return statement has been executed
 					//while ((i < element.qs.get(q - 1).children.size())
 					//		&& result.equals("") && (stop == false))
-					while ((i < element.qs.get(q - 1).children.size())
+					while ((i < element.qs.get(q - 1).getSize())
 							&& result.equals("") && (stop == false) && !returned)
 					// END KGU#77 2015-11-11
 					{
@@ -1781,7 +1781,7 @@ public class Executor implements Runnable
 				// START KGU#77 2015-11-11: Leave if a return statement has been executed
 				//while ((i < branch.children.size())
 				//		&& result.equals("") && (stop == false))
-				while ((i < branch.children.size())
+				while ((i < branch.getSize())
 						&& result.equals("") && (stop == false) && !returned)
 				// END KGU#77 2015-11-11
 				{
@@ -1864,7 +1864,7 @@ public class Executor implements Runnable
 					// START KGU#77 2015-11-11: Leave if a return statement has been executed
 					//while ((i < body.children.size())
 					//		&& result.equals("") && (stop == false))
-					while ((i < body.children.size())
+					while ((i < body.getSize())
 							&& result.equals("") && (stop == false) && !returned)
 					// END KGU#77 2015-11-11
 					{
@@ -1955,7 +1955,7 @@ public class Executor implements Runnable
 					// START KGU#77 2015-11-11: Leave if a return statement has been executed
 					//while ((i < element.q.children.size())
 					//		&& result.equals("") && (stop == false))
-					while ((i < element.q.children.size())
+					while ((i < element.q.getSize())
 							&& result.equals("") && (stop == false) && !returned)
 					// END KGU#77 2015-11-11
 					{
@@ -2124,7 +2124,7 @@ public class Executor implements Runnable
 				// START KGU#77 2015-11-11: Leave if a return statement has been executed
 				//while ((i < element.q.children.size())
 				//		&& result.equals("") && (stop == false))
-				while ((i < element.q.children.size())
+				while ((i < element.q.getSize())
 						&& result.equals("") && (stop == false) && !returned)
 				// END KGU#77 2015-11-11
 				{
@@ -2178,7 +2178,7 @@ public class Executor implements Runnable
 			Vector<Iterator<Element> > undoneThreads = new Vector<Iterator<Element>>();
 			for (int thr = 0; thr < nThreads; thr++)
 			{
-				undoneThreads.add(element.qs.get(thr).children.iterator());
+				undoneThreads.add(element.qs.get(thr).getIterator());
 			}
 
 			element.waited = true;

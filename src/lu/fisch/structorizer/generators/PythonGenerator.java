@@ -158,135 +158,57 @@ public class PythonGenerator extends Generator
 		@Override
 		protected String transform(String _input)
 		{
-			
+
 			_input = super.transform(_input);
-			// et => and
-			// ou => or
-			// lire => readln()
-			// écrire => writeln()
-			// tant que => ""
-			// pour => ""
-			// jusqu'à => ""
-			// à => "to"
 
-                        String s = _input;
-//                        
-//                        // variable assignment
-//                        // START KGU 2014-12-02: To achieve consistency with operator highlighting
-//                        s=s.replace("<--", "<-");
-//                        // END KGU 2014-12-02
-//                        s=s.replace(":=", "<-");
-//                        
-//                        // testing
-//                        // START KGU 2014-11-16: Otherwise this would end as "!=="
-//                		s=s.replace("!=", "<>");
-//                		// END 2014-11-16
-//                        s=s.replace("=", "==");
-//                        s=s.replace("<==", "<=");
-//                        s=s.replace(">==", ">=");
-//                        s=s.replace("<>", "!=");
-//                        _input=s;
-//
-//                        // variable assignment
-//			_input=BString.replace(_input," <- "," = ");
-//			_input=BString.replace(_input,"<- "," = ");
-//			_input=BString.replace(_input," <-"," = ");
-//			_input=BString.replace(_input,"<-"," = ");
+			String s = _input;
 
-            // START KGU 2014-11-16: C comparison operator required conversion before logical ones
-            _input=BString.replace(_input,"!="," <> ");
-            // convert C logical operators
-            _input=BString.replace(_input," && "," and ");
-            _input=BString.replace(_input," || "," or ");
-            _input=BString.replace(_input," ! "," not ");
-            _input=BString.replace(_input,"&&"," and ");
-            _input=BString.replace(_input,"||"," or ");
-            _input=BString.replace(_input,"!"," not ");
-            _input=BString.replace(_input,"!"," not ");
-            _input=BString.replace(_input," xor "," ^ ");            
-            // END KGU 2014-11-16
-            
-//                        // convert Pascal operators
-//                        _input=BString.replace(_input," mod "," % ");
-                        _input=BString.replace(_input," div "," / ");
+			// START KGU 2014-11-16: C comparison operator required conversion before logical ones
+			_input=BString.replace(_input,"!="," <> ");
+			// convert C logical operators
+			_input=BString.replace(_input," && "," and ");
+			_input=BString.replace(_input," || "," or ");
+			_input=BString.replace(_input," ! "," not ");
+			_input=BString.replace(_input,"&&"," and ");
+			_input=BString.replace(_input,"||"," or ");
+			_input=BString.replace(_input,"!"," not ");
+			_input=BString.replace(_input,"!"," not ");
+			_input=BString.replace(_input," xor "," ^ ");            
+			// END KGU 2014-11-16
 
-                        s = _input;
-                        // Math function
-                        s=s.replace("cos(", "math.cos(");
-                        s=s.replace("sin(", "math.sin(");
-                        s=s.replace("tan(", "math.tan(");
-                        // START KGU 2014-11-16: After the previous replacements the following 3 strings would never be found!
-                        //s=s.replace("acos(", "math.acos(");
-                        //s=s.replace("asin(", "math.asin(");
-                        //s=s.replace("atan(", "math.atan(");
-                        // This is just a workaround; A clean approach would require a genuine lexical scanning in advance
-                        s=s.replace("amath.cos(", "math.acos(");
-                        s=s.replace("amath.sin(", "math.asin(");
-                        s=s.replace("amath.tan(", "math.atan(");
-                        // END KGU 2014-11-16
-                        s=s.replace("abs(", "abs(");
-                        s=s.replace("round(", "round(");
-                        s=s.replace("min(", "min(");
-                        s=s.replace("max(", "max(");
-                        s=s.replace("ceil(", "math.ceil(");
-                        s=s.replace("floor(", "math.floor(");
-                        s=s.replace("exp(", "math.exp(");
-                        s=s.replace("log(", "math.log(");
-                        s=s.replace("sqrt(", "math.sqrt(");
-                        s=s.replace("pow(", "math.pow(");
-                        s=s.replace("toRadians(", "math.radians(");
-                        s=s.replace("toDegrees(", "math.degrees(");
-                        // clean up ... if needed
-                        //s=s.replace("Math.Math.", "math.");
+            // convert Pascal operators
+			_input=BString.replace(_input," div "," / ");
 
-                        _input = s;
+			s = _input;
+			// Math function
+			s=s.replace("cos(", "math.cos(");
+			s=s.replace("sin(", "math.sin(");
+			s=s.replace("tan(", "math.tan(");
+			// START KGU 2014-11-16: After the previous replacements the following 3 strings would never be found!
+			//s=s.replace("acos(", "math.acos(");
+			//s=s.replace("asin(", "math.asin(");
+			//s=s.replace("atan(", "math.atan(");
+			// This is just a workaround; A clean approach would require a genuine lexical scanning in advance
+			s=s.replace("amath.cos(", "math.acos(");
+			s=s.replace("amath.sin(", "math.asin(");
+			s=s.replace("amath.tan(", "math.atan(");
+			// END KGU 2014-11-16
+			s=s.replace("abs(", "abs(");
+			s=s.replace("round(", "round(");
+			s=s.replace("min(", "min(");
+			s=s.replace("max(", "max(");
+			s=s.replace("ceil(", "math.ceil(");
+			s=s.replace("floor(", "math.floor(");
+			s=s.replace("exp(", "math.exp(");
+			s=s.replace("log(", "math.log(");
+			s=s.replace("sqrt(", "math.sqrt(");
+			s=s.replace("pow(", "math.pow(");
+			s=s.replace("toRadians(", "math.radians(");
+			s=s.replace("toDegrees(", "math.degrees(");
+			// clean up ... if needed
+			//s=s.replace("Math.Math.", "math.");
 
-//            StringList empty = new StringList();
-//            empty.addByLength(D7Parser.preAlt);
-//            empty.addByLength(D7Parser.postAlt);
-//            empty.addByLength(D7Parser.preCase);
-//            empty.addByLength(D7Parser.postCase);
-//            empty.addByLength(D7Parser.preFor);
-//            empty.addByLength(D7Parser.postFor);
-//            empty.addByLength(D7Parser.preWhile);
-//            empty.addByLength(D7Parser.postWhile);
-//            empty.addByLength(D7Parser.postRepeat);
-//            empty.addByLength(D7Parser.preRepeat);
-//            //System.out.println(empty);
-//            for(int i=0;i<empty.count();i++)
-//            {
-//                _input=BString.replace(_input,empty.get(i),"");
-//                //System.out.println(i);
-//            }
-//            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
-//
-//            
-///*
-//			if(!D7Parser.preAlt.equals("")){_input=BString.replace(_input,D7Parser.preAlt,"");}
-//			if(!D7Parser.postAlt.equals("")){_input=BString.replace(_input,D7Parser.postAlt,"");}
-//			if(!D7Parser.preCase.equals("")){_input=BString.replace(_input,D7Parser.preCase,"");}
-//			if(!D7Parser.postCase.equals("")){_input=BString.replace(_input,D7Parser.postCase,"");}
-//			if(!D7Parser.preFor.equals("")){_input=BString.replace(_input,D7Parser.preFor,"");}
-////			if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
-//			if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"");}
-//			if(!D7Parser.preWhile.equals("")){_input=BString.replace(_input,D7Parser.preWhile,"");}
-//			if(!D7Parser.postWhile.equals("")){_input=BString.replace(_input,D7Parser.postWhile,"");}
-//			if(!D7Parser.preRepeat.equals("")){_input=BString.replace(_input,D7Parser.preRepeat,"");}
-//			if(!D7Parser.postRepeat.equals("")){_input=BString.replace(_input,D7Parser.postRepeat,"");}
-//*/			
-//			/*Regex r;
-//			 r = new Regex(BString.breakup(D7Parser.input)+"[ ](.*?)","readln($1)"); _input=r.replaceAll(_input);
-//			 r = new Regex(BString.breakup(D7Parser.output)+"[ ](.*?)","writeln($1)"); _input=r.replaceAll(_input);
-//			 r = new Regex(BString.breakup(D7Parser.input)+"(.*?)","readln($1)"); _input=r.replaceAll(_input);
-//			 r = new Regex(BString.breakup(D7Parser.output)+"(.*?)","writeln($1)"); _input=r.replaceAll(_input);*/
-//			
-//			
-//			//if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input+" ")>=0){_input=BString.replace(_input,D7Parser.input+" ","")+" = input()";}
-//			//if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output+" ")>=0){_input=BString.replace(_input,D7Parser.output+" ","print(")+")";}
-//			if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input)>=0){_input=BString.replace(_input,D7Parser.input,"")+" = input('Eingabe: ')";}
-//			if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output)>=0){_input=BString.replace(_input,D7Parser.output,"print(")+")";}
-			
-			return _input.trim();
+			return s.trim();
 		}
 		
 		protected void generateCode(Instruction _inst, String _indent)
@@ -483,13 +405,13 @@ public class PythonGenerator extends Generator
 			}
 		}
 		
-		// START KGU#18/KGU#23 2015-11-02: Use inhherited method
+		// START KGU#18/KGU#23 2015-11-02: Use inherited method
 //		protected void generateCode(Subqueue _subqueue, String _indent)
 //		{
 //			// code.add(_indent+"");
-//			for(int i=0;i<_subqueue.children.size();i++)
+//			for(int i=0;i<_subqueue.getSize();i++)
 //			{
-//				generateCode((Element) _subqueue.children.get(i),_indent);
+//				generateCode((Element) _subqueue.getElement(i),_indent);
 //			}
 //			// code.add(_indent+"");
 //		}
@@ -508,8 +430,8 @@ public class PythonGenerator extends Generator
 				code.add("");
 					
 				Subqueue _subqueue = _root.children;
-				for(int i=0;i<_subqueue.children.size();i++) {
-					generateCode((Element) _subqueue.children.get(i),"");
+				for(int i=0;i<_subqueue.getSize();i++) {
+					generateCode((Element) _subqueue.getElement(i),"");
 				}
 				
 				code.add("");

@@ -37,6 +37,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,true)
  *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared.
  *      Kay Gürtzig     2015.11.22      New and modified methods to support operations on non-empty Subqueues (KGU#87).
+ *      Kay Gürtzig     2015.11.23      Inheritance extended to IElementSequence (KGU#87), children now private.
  *
  ******************************************************************************************************
  *
@@ -44,14 +45,16 @@ package lu.fisch.structorizer.elements;
  *
  ******************************************************************************************************///
 
+import java.util.Iterator;
 import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
 
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.gui.SelectedSequence;
 import lu.fisch.utils.*;
 
-public class Subqueue extends Element{
+public class Subqueue extends Element implements IElementSequence {
 
 	public Subqueue()
 	{
@@ -63,7 +66,7 @@ public class Subqueue extends Element{
 		super(_strings);
 	}
 	
-	public Vector<Element> children = new Vector<Element>();
+	private Vector<Element> children = new Vector<Element>();
 	
 	// START KGU#64 2015-11-03: Is to improve drawing performance
 	/**
@@ -201,18 +204,18 @@ public class Subqueue extends Element{
 	// START KGU#87 2015-11-22: Allow the insertion of all children of another Subqueue
 	/**
 	 * Inserts the given _element before child no. _where (if 0 <= _where <= this.getSize()).
-	 * If _element is another Suqueue, however, all children of _element will be inserted before
-	 * the child _where, instead.
+	 * If _element is another implementor of IElementSequence, however, all children of _element
+	 * will be inserted before the child _where, instead.
 	 * @param _element - an Element to be inserted (or the children of which are to be inserted here)
 	 * @param _where - index of the child, which _element (or _element's children) is to inserted before  
 	 */
 	public void insertElementAt(Element _element, int _where)
 	{
-		if (_element instanceof Subqueue)
+		if (_element instanceof IElementSequence)
 		{
-			for (int i = 0; i < ((Subqueue)_element).getSize(); i++)
+			for (int i = 0; i < ((IElementSequence)_element).getSize(); i++)
 			{
-				insertElementAt(((Subqueue)_element).getElement(i), _where + i);
+				insertElementAt(((IElementSequence)_element).getElement(i), _where + i);
 			}
 		}
 		else
@@ -240,6 +243,19 @@ public class Subqueue extends Element{
 		//children.removeElement(children.get(_index));
 		children.removeElementAt(_index);
 		// END KGU 2015-11-22
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.IElementContainer#removeElements()
+	 */
+	@Override
+	public void removeElements() {
+		clear();
+	}
+	
+	public Iterator<Element> getIterator()
+	{
+		return children.iterator();
 	}
 	
 	// START KGU 2015-10-15: Methods merged to Element getElementByCoord(int _x, int _y, _boolean _forSelection)
@@ -373,5 +389,5 @@ public class Subqueue extends Element{
 		}
 	}
 	// END KGU#87 2015-11-22
-	
+
 }
