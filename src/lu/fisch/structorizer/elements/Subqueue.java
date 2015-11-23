@@ -24,7 +24,7 @@ package lu.fisch.structorizer.elements;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    This class represents a "subqueue" of another element.
+ *      Description:    This class represents a sequence of simple and structured elements.
  *						A subqueue can contain other elements.
  *
  ******************************************************************************************************
@@ -36,6 +36,7 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2007.12.09      First Issue
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,true)
  *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared.
+ *      Kay Gürtzig     2015.11.22      New and modified methods to support operations on non-empty Subqueues (KGU#87).
  *
  ******************************************************************************************************
  *
@@ -153,7 +154,7 @@ public class Subqueue extends Element{
 		}
 		else
 		{
-			// draw nothing
+			// draw empty set symbol
 			rect=_top_left.copy();
 			
 			canvas.setBackground(drawColor);
@@ -190,9 +191,43 @@ public class Subqueue extends Element{
 	
 	public void addElement(Element _element)
 	{
-		children.add(_element);
-		_element.parent=this;
+		// START KGU#87 2015-11-22: We must make sure a Subqueue as _element is properly appended
+//		children.add(_element);
+//		_element.parent=this;
+		insertElementAt(_element, children.size());
+		// END KGU#87 2015-11-22
 	}
+
+	// START KGU#87 2015-11-22: Allow the insertion of all children of another Subqueue
+	/**
+	 * Inserts the given _element before child no. _where (if 0 <= _where <= this.getSize()).
+	 * If _element is another Suqueue, however, all children of _element will be inserted before
+	 * the child _where, instead.
+	 * @param _element - an Element to be inserted (or the children of which are to be inserted here)
+	 * @param _where - index of the child, which _element (or _element's children) is to inserted before  
+	 */
+	public void insertElementAt(Element _element, int _where)
+	{
+		if (_element instanceof Subqueue)
+		{
+			for (int i = 0; i < ((Subqueue)_element).getSize(); i++)
+			{
+				insertElementAt(((Subqueue)_element).getElement(i), _where + i);
+			}
+		}
+		else
+		{
+			children.insertElementAt(_element, _where);
+			_element.parent=this;
+		}
+	}
+
+	public void clear()
+	{
+		children.clear();
+	}
+	// END KGU#87 2015-11-22
+	
 	
 	public void removeElement(Element _element)
 	{
@@ -201,7 +236,10 @@ public class Subqueue extends Element{
 	
 	public void removeElement(int _index)
 	{
-		children.removeElement(children.get(_index));
+		// START KGU 2015-11-22: Why search if we got the index?
+		//children.removeElement(children.get(_index));
+		children.removeElementAt(_index);
+		// END KGU 2015-11-22
 	}
 	
 	// START KGU 2015-10-15: Methods merged to Element getElementByCoord(int _x, int _y, _boolean _forSelection)
@@ -252,6 +290,7 @@ public class Subqueue extends Element{
 				res = sel;
 			}
 		}
+		//System.out.println(this + ".getElementByCoord("+_x + ", " + _y + ") returning " + (res == null ? "null" : res));
 		return res;
 	}
 	// END KGU 2015-10-11
@@ -267,16 +306,17 @@ public class Subqueue extends Element{
 		return ele;
 	}
         
-        
-    /*@Override
+    // START KGU#87 2015-11-22: Re-enabled for multiple selection (selected non-empty subqueues)    
+    @Override
     public void setColor(Color _color) 
     {
         super.setColor(_color);
-        for(int i=0;i<children.size();i++)
+        for(int i=0; i<children.size(); i++)
         {      
             children.get(i).setColor(_color);
         }
-    }*/
+    }
+	// END KGU#87 2015-11-22
 
 	// START KGU 2015-11-12
 	/* (non-Javadoc)
@@ -320,5 +360,18 @@ public class Subqueue extends Element{
         }
     }
     // END KGU 2015-10-16
+
+	// START KGU#87 2015-11-22: Allow the selection flagging of all immediate children
+	@Override
+	public void setSelected(boolean _sel)
+	{
+		selected=_sel;
+		for (int i = 0; i < getSize(); i++)
+		{
+			// This must not be recursive!
+			children.get(i).selected = _sel;
+		}
+	}
+	// END KGU#87 2015-11-22
 	
 }

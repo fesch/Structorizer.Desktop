@@ -39,7 +39,8 @@ package lu.fisch.structorizer.elements;
  *		Kay Gürtzig	2015.10.16		getFullText methods redesigned/replaced, changes in getVarNames().
  *		Kay Gürtzig	2015.10.17		improved Arranger support by method notifyReplaced (KGU#48)
  *		Kay Gürtzig	2015.11.03		New error14 field and additions to analyse for FOR loop checks (KGU#3)
- *      Kay Gürtzig 2015.11.13/14   Method copy() accomplished, modifications for subroutine calls KGU#2 (#9)
+ *      Kay Gürtzig 2015.11.13/14   Method copy() accomplished, modifications for subroutine calls (KGU#2 = #9)
+ *      Kay Gürtzig 2015.11.22      Modifications to support selection of non-empty Subqueues (KGU#87)
  *
  ******************************************************************************************************
  *
@@ -471,6 +472,12 @@ public class Root extends Element {
     }
     // END KGU 2015-10-11
 
+    /**
+     * Checks if _child is a descendant of _parent in the tree
+     * @param _child - Element to be verified as descendant of _parent
+     * @param _parent - Element to be verified as ancestor of _child
+     * @return true iff _cild is a descendant of _parent
+     */
     public boolean checkChild(Element _child, Element _parent)
     {
             Element tmp = _child;
@@ -494,8 +501,16 @@ public class Root extends Element {
             if(_ele != null)
             {
                     _ele.selected=false;
-                    if ( !_ele.getClass().getSimpleName().equals("Subqueue") &&
-                             !_ele.getClass().getSimpleName().equals("Root"))
+                    // START KGU#87 2015-11-22: Allow to remove entire non-empty Subqueues
+                    //if ( !_ele.getClass().getSimpleName().equals("Subqueue") &&
+                    //         !_ele.getClass().getSimpleName().equals("Root"))
+                    if ( _ele.getClass().getSimpleName().equals("Subqueue"))
+                    {
+                    	hasChanged = ((Subqueue)_ele).getSize() > 0;
+                    	((Subqueue)_ele).clear();
+                    }
+                    else if (!_ele.getClass().getSimpleName().equals("Root"))
+                    // END KGU#87 2015-11-22
                     {
                             ((Subqueue) _ele.parent).removeElement(_ele);
                             hasChanged=true;
@@ -503,23 +518,22 @@ public class Root extends Element {
             }
     }
 
-    public void addAfter(Element _ele, Element _new)
+    private void insertElement(Element _ele, Element _new, boolean _after)
     {
             if(_ele!=null && _new!=null)
             {
                     if (_ele.getClass().getSimpleName().equals("Subqueue"))
                     {
                             ((Subqueue) _ele).addElement(_new);
-                            _new.parent=_ele;
                             _ele.selected=false;
                             _new.selected=true;
                             hasChanged=true;
                     }
                     else if (_ele.parent.getClass().getSimpleName().equals("Subqueue"))
                     {
-                            int i = ((Subqueue) _ele.parent).children.indexOf(_ele);
-                            ((Subqueue) _ele.parent).children.insertElementAt(_new, i+1);
-                            _new.parent=_ele.parent;
+                            int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
+                            if (_after) i++;
+                            ((Subqueue) _ele.parent).insertElementAt(_new, i);
                             _ele.selected=false;
                             _new.selected=true;
                             hasChanged=true;
@@ -531,34 +545,15 @@ public class Root extends Element {
 
             }
     }
-
+    
+    public void addAfter(Element _ele, Element _new)
+    {
+    	insertElement(_ele, _new, true);
+    }
+    
     public void addBefore(Element _ele, Element _new)
     {
-            if(_ele!=null && _new!=null)
-            {
-                    if (_ele.getClass().getSimpleName().equals("Subqueue"))
-                    {
-                            ((Subqueue) _ele).addElement(_new);
-                            _new.parent=_ele;
-                            _ele.selected=false;
-                            _new.selected=true;
-                            hasChanged=true;
-                    }
-                    else if (_ele.parent.getClass().getSimpleName().equals("Subqueue"))
-                    {
-                            int i = ((Subqueue) _ele.parent).children.indexOf(_ele);
-                            ((Subqueue) _ele.parent).children.insertElementAt(_new, i);
-                            _new.parent=_ele.parent;
-                            _ele.selected=false;
-                            _new.selected=true;
-                            hasChanged=true;
-                    }
-                    else
-                    {
-                            // this case should never happen!
-                    }
-
-            }
+    	insertElement(_ele, _new, false);
     }
     
     
@@ -746,13 +741,13 @@ public class Root extends Element {
             boolean res = false;
             if(_ele!=null)
             {
-                    int i = ((Subqueue) _ele.parent).children.indexOf(_ele);
+                    int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
                     if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
                             !_ele.getClass().getSimpleName().equals("Root") &&
-                            ((i+1)<((Subqueue) _ele.parent).children.size()))
+                            ((i+1)<((Subqueue) _ele.parent).getSize()))
                     {
-                            ((Subqueue) _ele.parent).children.removeElementAt(i);
-                            ((Subqueue) _ele.parent).children.insertElementAt(_ele, i+1);
+                            ((Subqueue) _ele.parent).removeElement(i);
+                            ((Subqueue) _ele.parent).insertElementAt(_ele, i+1);
                             this.hasChanged=true;
                             _ele.setSelected(true);
                             res=true;
@@ -766,13 +761,13 @@ public class Root extends Element {
             boolean res = false;
             if(_ele!=null)
             {
-                    int i = ((Subqueue) _ele.parent).children.indexOf(_ele);
+                    int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
                     if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
                             !_ele.getClass().getSimpleName().equals("Root") &&
                             ((i-1>=0)))
                     {
                             ((Subqueue) _ele.parent).removeElement(i);
-                            ((Subqueue) _ele.parent).children.insertElementAt(_ele, i-1);
+                            ((Subqueue) _ele.parent).insertElementAt(_ele, i-1);
                             this.hasChanged=true;
                             _ele.setSelected(true);
                             res=true;
@@ -835,29 +830,29 @@ public class Root extends Element {
      */
     private void getFullText(Subqueue _node, StringList _lines)
     {
-    	for(int i=0;i<_node.children.size();i++)
+    	for(int i=0; i<_node.getSize(); i++)
     	{
-    		_lines.add(((Element)_node.children.get(i)).getText());
-    		if(_node.children.get(i).getClass().getSimpleName().equals("While"))
+    		_lines.add(((Element)_node.getElement(i)).getText());
+    		if(_node.getElement(i).getClass().getSimpleName().equals("While"))
     		{
-    			getFullText(((While) _node.children.get(i)).q,_lines);
+    			getFullText(((While) _node.getElement(i)).q,_lines);
     		}
-    		else if(_node.children.get(i).getClass().getSimpleName().equals("For"))
+    		else if(_node.getElement(i).getClass().getSimpleName().equals("For"))
     		{
-    			getFullText(((For) _node.children.get(i)).q,_lines);
+    			getFullText(((For) _node.getElement(i)).q,_lines);
     		}
-    		else if(_node.children.get(i).getClass().getSimpleName().equals("Repeat"))
+    		else if(_node.getElement(i).getClass().getSimpleName().equals("Repeat"))
     		{
-    			getFullText(((Repeat) _node.children.get(i)).q,_lines);
+    			getFullText(((Repeat) _node.getElement(i)).q,_lines);
     		}
-    		else if(_node.children.get(i).getClass().getSimpleName().equals("Alternative"))
+    		else if(_node.getElement(i).getClass().getSimpleName().equals("Alternative"))
     		{
-    			getFullText(((Alternative) _node.children.get(i)).qTrue,_lines);
-    			getFullText(((Alternative) _node.children.get(i)).qFalse,_lines);
+    			getFullText(((Alternative) _node.getElement(i)).qTrue,_lines);
+    			getFullText(((Alternative) _node.getElement(i)).qFalse,_lines);
     		}
-    		else if(_node.children.get(i).getClass().getSimpleName().equals("Case"))
+    		else if(_node.getElement(i).getClass().getSimpleName().equals("Case"))
     		{
-    			Case c = ((Case) _node.children.get(i));
+    			Case c = ((Case) _node.getElement(i));
     			for (int j=0;j<c.qs.size();j++)
     			{
     				getFullText((Subqueue) c.qs.get(j),_lines);

@@ -287,7 +287,7 @@ public class NSDParser extends DefaultHandler {
 			Case ele = new Case(StringList.getNew("???"));
 
 			// read attributes
-			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text")); System.out.println(attributes.getValue("text"));}
+			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text")); /*System.out.println(attributes.getValue("text"));*/}
 			ele.qs.clear();
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
 			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(ele.getColor().decode("0x"+attributes.getValue("color")));}}
