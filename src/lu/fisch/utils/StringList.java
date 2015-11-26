@@ -644,6 +644,62 @@ public class StringList {
         return ret;
     }
 
+    // START KGU 2015-11-25
+    /**
+     * Returns a multi-line String composed of the sub-StringList from element
+     * _start to element _end (excluded)
+     * @param _start - index of first element to include
+     * @param _end - index after last element to include
+     * @return a string with newlines as separator
+     */
+    public String getText(int _start, int _end)
+    {
+        String ret = "";
+        for(int i = Math.min(_start, count()); i < Math.min(_end, count()); i++)
+        {
+            String line = get(i);
+            //System.err.println(i+") "+line);
+            ret += "\n" + line;
+        }
+        //System.err.println("Res = "+ret);
+        return ret;
+    }
+    
+    /**
+     * Returns a multi-line String composed of the sub-StringList from element
+     * _start to the end
+     * @param _start - index of first element to include
+     * @return a string with newlines as separator
+     */
+    public String getText(int _start)
+    {
+    	return getText(_start, count());
+    }
+    
+    /**
+     * Removes all elements being equal to the given string _string
+     * @param _string - the searched string
+     * @return number of deletions
+     */
+    public int removeAll(String _string)
+    {
+    	int nRemoved = 0;
+    	int i = 0;
+    	while (i < count())
+    	{
+    		if (strings.get(i).equals(_string))
+    		{
+    			strings.removeElementAt(i);
+    			nRemoved++;
+    		}
+    		else
+    		{
+        		i++;    			
+    		}
+    	}
+    	return nRemoved;
+    }
+    // END KGU 2015-11-25
 
     @Override
 	public String toString()

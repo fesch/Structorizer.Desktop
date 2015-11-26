@@ -38,6 +38,7 @@ import lu.fisch.utils.StringList;
  *      Author			Date			Description
  *      ------			----			-----------
  *      Kay Gürtzig		2015.11.13		First Issue
+ *      Kay Gürtzig		2015.11.26		Extended by loopDepth (needed for the JUMP execution)
  *
  ******************************************************************************************************
  *
@@ -50,12 +51,22 @@ public class ExecutionStackEntry {
 	public Root root;					// The caller root itself (only necessary to preserve flags?)
 	public StringList variables;		// The variable names used up to the suspending call
 	public Interpreter interpreter;		// The execution context (containing variable values etc.)
+	// START KGU#78 2015-11-25
+	public int loopDepth;				// The current nesting level of loops
+	// END KGU#78 2015-11-25
 
-	public ExecutionStackEntry(Root _root, StringList _variables, Interpreter _interpreter) {
+	// START KGU#78 2015-11-25
+	//public ExecutionStackEntry(Root _root, StringList _variables, Interpreter _interpreter)
+	public ExecutionStackEntry(Root _root, StringList _variables, Interpreter _interpreter, int _loopDepth)
+	// END KGU#78 2015-11-25
+	{
 		_root.isCalling = true;
 		this.root = _root;
 		this.variables = _variables;
 		this.interpreter = _interpreter;
+		// START KGU#78 2015-11-25
+		this.loopDepth = _loopDepth;
+		// END KGU#78 2015-11-25
 	}
 
 }

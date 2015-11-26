@@ -34,6 +34,7 @@ package lu.fisch.structorizer.gui;
  *      ------			----			-----------
  *      Bob Fisch       2008.05.23      First Issue
  *      Kay Gürtzig     2015.11.03      check14 added (enhanced FOR loop support, issue #10 = KGU#3)
+ *      Kay Gürtzig     2015.11.25      check15 (issue #9 = KGU#2) and check16 (issue #23 = KGU#78) added
  *
  ******************************************************************************************************
  *
@@ -69,9 +70,15 @@ public class AnalyserPreferences extends LangDialog {
 	public JCheckBox check11;
 	public JCheckBox check12;
 	public JCheckBox check13;
-	// START KGU#3 2015-11-03: Additional For loop checks
+	// START KGU#3 2015-11-03: Additional FOR loop checks
 	public JCheckBox check14;
 	// END KGU#3 2015-11-03
+	// START KGU#2 2015-11-25: Additional CALL syntax check
+	public JCheckBox check15;
+	// END KGU#2 2015-11-25
+	// START KGU#78 2015-11-25: Additional JUMP syntax check
+	public JCheckBox check16;
+	// END KGU#78 2015-11-25
 	private JPanel buttonBar;
 	protected JButton okButton;
 	// JFormDesigner - End of variables declaration  //GEN-END:variables
@@ -115,6 +122,12 @@ public class AnalyserPreferences extends LangDialog {
 		// START KGU#3 2015-11-03: Additional For loop checks
 		check14 = new JCheckBox();
 		// END KGU#3 2015-11-03
+		// START KGU#2 2015-11-25: Additional CALL syntax check
+		check15 = new JCheckBox();;
+		// END KGU#2 2015-11-25
+		// START KGU#78 2015-11-25: Additional JUMP syntax check
+		check16 = new JCheckBox();;
+		// END KGU#78 2015-11-25
 		buttonBar = new JPanel();
 		okButton = new JButton();
 
@@ -139,7 +152,7 @@ public class AnalyserPreferences extends LangDialog {
 			
 			//======== contentPanel ========
 			{
-				contentPanel.setLayout(new GridLayout(14, 1));
+				contentPanel.setLayout(new GridLayout(16, 1));
 
 				//---- check1 ----
 				check1.setText("Check for modified loop variable.");
@@ -195,9 +208,20 @@ public class AnalyserPreferences extends LangDialog {
 				check12.setText("Check for standardized parameter name. (LUX/MEN)");
 				contentPanel.add(check12);
 				
-				//---- check13----
+				//---- check13 ----
 				check13.setText("Check if, in case of a function, it returns a result.");
 				contentPanel.add(check13);
+
+				// START KGU#2/KGU#78 2015-11-25: Additional checks for CALL and JUMP elements
+				//---- check15 ----
+				check15.setText("Check for inappropriate subroutine CALLs.");
+				contentPanel.add(check15);
+
+				//---- check16 ----
+				check16.setText("Check for incorrect JUMP element usage.");
+				contentPanel.add(check16);
+				// END KGU#2/KGU#78 2015-11-25
+
 			}
 			dialogPane.add(contentPanel, BorderLayout.CENTER);
 

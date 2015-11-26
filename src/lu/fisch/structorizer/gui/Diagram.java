@@ -2371,6 +2371,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#3 2015-11-03: New check type for enhanced FOR loops
 		analyserPreferences.check14.setSelected(Root.check14);
 		// END KGU#3 2015-11-03
+		// START KGU 2015-11-25: New check type for enabled subroutine calls / JUMP instructions
+		analyserPreferences.check15.setSelected(Root.check15);	// KGU#2
+		analyserPreferences.check16.setSelected(Root.check16);	// KGU#78
+		// END KGU 2015-11-25
 
 		analyserPreferences.setLang(NSDControl.getLang());
 		analyserPreferences.pack();
@@ -2393,6 +2397,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#3 2015-11-03: New check type for enhanced FOR loops
 		Root.check14=analyserPreferences.check14.isSelected();
 		// END KGU#3 2015-11-03
+		// START KGU 2015-11-25: New check type for enabled subroutine calls / JUMP instructions
+		Root.check15=analyserPreferences.check15.isSelected();	// KGU#2
+		Root.check16=analyserPreferences.check16.isSelected();	// KGU#78
+		// END KGU 2015-11-25
 
 		// save fields to ini-file
 		Root.saveToINI();

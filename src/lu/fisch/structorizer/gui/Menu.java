@@ -36,6 +36,7 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2008.04.12      Adapted for Generator plugin
  *      Kay Gürtzig     2015.11.03      Additions for FOR loop enhancement (KGU#3)
  *      Kay Gürtzig     2015.11.22      Adaptations for handling selected non-empty Subqueues (KGU#87)
+ *      Kay Gürtzig     2015.11.25      New error labels error13_3 (KGU#78) and error15 (KGU#2) added
  *
  ******************************************************************************************************
  *
@@ -217,10 +218,20 @@ public class Menu extends JMenuBar implements NSDController
 	public static JLabel error12 = new JLabel("The parameter «%» must start with the letter \"p\" followed by only uppercase letters!");
 	public static JLabel error13_1 = new JLabel("Your function does not return any result!");
 	public static JLabel error13_2 = new JLabel("Your function may not return a result!");
+	// START KGU#78 (#23) 2015-11-25: Check for competitive return mechanisms
+	public static JLabel error13_3 = new JLabel("Your functions seems to use several competitive return mechanisms: «%»!");
+	// END KGU#78 (#23) 2015-11-25
 	// START KGU#3 2015-11-03: New checks for the enhanced For loop
 	public static JLabel error14_1 = new JLabel("The FOR loop parameters are not consistent to the loop heading text!");
 	public static JLabel error14_2 = new JLabel("The FOR loop step value («%») is not a legal integer constant!");
 	// END KGU#3 2015-11-03
+	// START KGU#2 2015-11-25: New check for call element syntax
+	public static JLabel error15 = new JLabel("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
+	public static JLabel error16_1 = new JLabel("A JUMP element may be empty or must contain exactly one of «exit n», «return <expr>», «break», or «leave [n]»!");	
+	public static JLabel error16_2 = new JLabel("A return instruction not at final position ought to be a JUMP element!");
+	public static JLabel error16_3 = new JLabel("An exit, leave or break instruction is only allowed as JUMP element!");
+	public static JLabel error16_4 = new JLabel("Cannot leave or break more loop levels than being nested in («%»)!");
+	// END KGU#2 2015-11-25
 
 
 	public void create()

@@ -123,6 +123,7 @@ import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Instruction;
+import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Parallel;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
@@ -209,6 +210,10 @@ public class Executor implements Runnable
 	private boolean running = false;
 	private boolean step = false;
 	private boolean stop = false;
+	// START KGU#78 2015-11-25: JUMP enhancement (#35)
+	private int loopDepth = 0;	// Level of nested loops
+	private int leave = 0;		// Number of loop levels to unwind
+	// END KGU#78 2015-11-25
 	private StringList variables = new StringList();
 	// START KGU#2 2015-11-24: It is crucial to know whether an error had been reported on a lower level
 	private boolean isErrorReported = false;
@@ -428,9 +433,9 @@ public class Executor implements Runnable
 		}
 		this.isErrorReported = false;
 		this.diagram.getRoot().isCalling = false;
-		
-		this.execute(null);
-		
+		/////////////////////////////////////////////////////////
+		this.execute(null);	// The actual top-level execution
+		/////////////////////////////////////////////////////////
 		this.callers.clear();
 		this.stackTrace.clear();
 		//System.out.println("stackTrace size: " + stackTrace.count());
@@ -470,6 +475,10 @@ public class Executor implements Runnable
 		initInterpreter();
 		String result = "";
 		returned = false;
+		// START KGU#78 2015-11-25
+		loopDepth = 0;
+		leave = 0;
+		// END KGU#78 2015-11-25
 
 		// START KGU#39 2015-10-16 (1/2): It made absolutely no sense to look for parameters if root is a program
 		if (!root.isProgram)
@@ -578,7 +587,7 @@ public class Executor implements Runnable
 				paus = false;
 				step = false;
 			}
-			else if (isErrorReported)
+			else if (isErrorReported && stackTrace.count() > 0)
 			{
 				addToStackTrace(root, arguments);
 				showStackTrace();
@@ -643,7 +652,11 @@ public class Executor implements Runnable
 		ExecutionStackEntry entry = new ExecutionStackEntry(
 				oldRoot,
 				this.variables, 
-				this.interpreter);
+				this.interpreter,
+				// START KGU#78 2015-11-25
+				this.loopDepth
+				// END KGU#78 2015-11-25
+				);
 		this.callers.push(entry);
 		this.interpreter = new Interpreter();
 		this.initInterpreter();
@@ -672,6 +685,9 @@ public class Executor implements Runnable
 					
 		this.variables = entry.variables;
 		this.interpreter = entry.interpreter;
+		// START KGU#78 2015-11-25
+		this.loopDepth = entry.loopDepth;
+		// END KGU#78 2015-11-25
 		this.diagram.setRoot(entry.root);
 		entry.root.isCalling = false;
 
@@ -1200,7 +1216,7 @@ public class Executor implements Runnable
 				try {
 					String varName = this.variables.get(i);
 					Object oldValue = interpreter.get(varName);
-					if (oldValue.getClass().getSimpleName().equals("Object[]"))
+					if (oldValue != null && oldValue.getClass().getSimpleName().equals("Object[]"))
 					{
 						// In this case an initialisation expression ("{ ..., ..., ...}") is expected
 						String asgnmt = "Object[] " + varName + " = " + newValues[i];
@@ -1294,6 +1310,12 @@ public class Executor implements Runnable
 			{
 				result = stepCall((Call)element);
 			}
+			// START KGU#78 2015-11-25: Separate handling of JUMP instructions
+			else if (element instanceof Jump)
+			{
+				result = stepJump((Jump)element);
+			}
+			// END KGU#78 2015-11-25
 			else if (element instanceof Instruction)
 			// END KGU#2 2015-11-14
 			{
@@ -1333,7 +1355,11 @@ public class Executor implements Runnable
 		String result = new String();
 
 		int i = 0;
-		getExec("init(" + delay + ")");
+		// KGU 2015-11-5: It had been very annoying having to wait here
+		if (diagramController != null || !step)
+		{
+			getExec("init(" + delay + ")");
+		}
 
 		element.waited = true;
 
@@ -1363,10 +1389,11 @@ public class Executor implements Runnable
 		StringList sl = element.getText();
 		int i = 0;
 
-		// START KGU#77 2015-11-11: Leave if a return statement has been executed
+		// START KGU#77/KGU#78 2015-11-25: Leave if some kind of leave statement has been executed
 		//while ((i < sl.count()) && result.equals("") && (stop == false))
-		while ((i < sl.count()) && result.equals("") && (stop == false) && !returned)
-		// END KGU#77 2015-11-11
+		while ((i < sl.count()) && result.equals("") && (stop == false) &&
+				!returned && leave == 0)
+		// END KGU#77/KGU#78 2015-11-25
 		{
 			String cmd = sl.get(i);
 			// cmd=cmd.replace(":=", "<-");
@@ -1409,7 +1436,8 @@ public class Executor implements Runnable
 				// END KGU 2015-11-11
 				{
 					result = tryReturn(cmd);
-				} else
+				}
+				else
 				{
 					result = trySubroutine(cmd, element);
 				}
@@ -1475,6 +1503,75 @@ public class Executor implements Runnable
 		return result;
 	}
 	// END KGU#2 2015-11-14
+
+	// START KGU#78 2015-11-25: Separate dedicated implementation for JUMPS
+	private String stepJump(Jump element)
+	{
+		String result = new String();
+
+		StringList sl = element.getText();
+		int i = 0;
+		boolean done = false;
+
+		while ((i < sl.count()) && !done && result.equals("") && (stop == false) && !returned)
+		{
+			String cmd = sl.get(i).trim();
+			StringList tokens = Element.splitLexically(cmd.toLowerCase(), true);
+			tokens.removeAll(" ");
+			try
+			{
+				// Single-level break? (An empty Jump is also a break!)
+				if (tokens.indexOf("break") == 0 || cmd.isEmpty() && i == sl.count() - 1)
+				{
+					this.leave++;
+					done = true;
+				}
+				// Multi-level leave?
+				else if (tokens.indexOf("leave") == 0)
+				{
+					int nLevels = 1;
+					if (tokens.count() > 1)
+					{
+						nLevels = Integer.parseUnsignedInt(tokens.get(1));
+					}
+					this.leave += nLevels;
+					done = true;
+				}
+				// Unstructured return from the routine?
+				else if (tokens.indexOf("return") == 0)
+				{
+					result = tryReturn(convert(sl.get(i)));
+					done = true;
+				}
+				// Exit from the entire program - simply handled like an error here.
+				else if (tokens.indexOf("exit") == 0)
+				{
+					int exitValue = Integer.parseInt(tokens.get(1));
+					result = "Program exited with code " + exitValue + "!";
+					done = true;
+				}
+				// Anything else is an error
+				else if (!cmd.isEmpty())
+				{
+					result = "Illegal content of a Jump (i.e. exit) instruction: <" + cmd + ">!";
+				}
+			} catch (Exception ex)
+			{
+				result = ex.getMessage();
+			}
+			i++;
+		}
+		if (done && leave > loopDepth)
+		{
+			result = "Too many levels to leave (actual depth: " + loopDepth + " / specified: " + leave + ")!";
+		}			
+		if (result.equals(""))
+		{
+			element.executed = false;
+		}
+		return result;
+	}
+	// END KGU#78 2015-11-25
 	
 	// START KGU 2015-11-11: Equivalent decomposition of method stepInstruction
 	// Submethod of stepInstruction(Instruction element), handling an assignment
@@ -1579,6 +1676,11 @@ public class Executor implements Runnable
 					"Input cancelled", JOptionPane.WARNING_MESSAGE);
 			step = true;
 			this.control.setButtonsForPause();
+			if (!variables.contains(in))
+			{
+				// If the variable hasn't been used before, we must create it now
+				setVar(in, null);
+			}
 		}
 		else
 		{
@@ -1805,6 +1907,7 @@ public class Executor implements Runnable
 					done = true;
 					element.waited = true;
 					int i = 0;
+					// START KGU#78 2015-11-25: Leave if a loop exit is open
 					// START KGU#77 2015-11-11: Leave if a return statement has been executed
 					//while ((i < element.qs.get(q - 1).children.size())
 					//		&& result.equals("") && (stop == false))
@@ -1878,12 +1981,12 @@ public class Executor implements Runnable
 				element.executed = false;
 				element.waited = true;
 				int i = 0;
-				// START KGU#77 2015-11-11: Leave if a return statement has been executed
+				// START KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
 				//while ((i < branch.children.size())
 				//		&& result.equals("") && (stop == false))
 				while ((i < branch.getSize())
-						&& result.equals("") && (stop == false) && !returned)
-				// END KGU#77 2015-11-11
+						&& result.equals("") && (stop == false) && !returned && leave == 0)
+				// END KGU#78 2015-11-25
 				{
 					result = step(branch.getElement(i));
 					i++;
@@ -1940,12 +2043,13 @@ public class Executor implements Runnable
 						+ "> is not a correct or existing expression.";
 			} else
 			{
-				// START KGU#77 2015-11-11: Leave if a return statement has been executed
+				// START KGU#77/KGU#78 2015-11-25: Leave if any kind of Jump statement has been executed
 				//while (cond.toString().equals("true") && result.equals("")
 				//		&& (stop == false))
+				loopDepth++;
 				while (cond.toString().equals("true") && result.equals("")
-						&& (stop == false) && !returned)
-				// END KGU#77 2015-11-11
+						&& (stop == false) && !returned && leave == 0)
+				// END KGU#77/KGU#78 2015-11-25
 				{
 
 					element.executed = false;
@@ -1961,12 +2065,12 @@ public class Executor implements Runnable
 					{
 						body = ((While) element).q;
 					}
-					// START KGU#77 2015-11-11: Leave if a return statement has been executed
+					// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
 					//while ((i < body.children.size())
 					//		&& result.equals("") && (stop == false))
 					while ((i < body.getSize())
-							&& result.equals("") && (stop == false) && !returned)
-					// END KGU#77 2015-11-11
+							&& result.equals("") && (stop == false) && !returned && leave == 0)
+					// END KGU#77/KGU#78 2015-11-25
 					{
 						result = step(body.getElement(i));
 						i++;
@@ -1990,6 +2094,13 @@ public class Executor implements Runnable
 								+ "> is not a correct or existing expression.";
 					}
 				}
+				// START KGU#78 2015-11-25: If there are open leave requests then nibble 1 off
+				if (leave > 0)
+				{
+					leave--;
+				}
+				loopDepth--;
+				// END KGU#78 2015-11-25
 			}
 			if (result.equals(""))
 			{
@@ -2049,15 +2160,18 @@ public class Executor implements Runnable
 						+ "> is not a correct or existing expression.";
 			} else
 			{
+				// START KGU#78 2015-11-25: In order to handle exits we must know the nesting depth
+				loopDepth++;
+				// END KGU#78
 				do
 				{
 					int i = 0;
-					// START KGU#77 2015-11-11: Leave if a return statement has been executed
+					// START KGU#77/KGU#78 2015-11-25: Leave if some Jump statement has been executed
 					//while ((i < element.q.children.size())
 					//		&& result.equals("") && (stop == false))
 					while ((i < element.q.getSize())
-							&& result.equals("") && (stop == false) && !returned)
-					// END KGU#77 2015-11-11
+							&& result.equals("") && (stop == false) && !returned && leave == 0)
+					// END KGU#77/KGU#78 2015-11-25
 					{
 						result = step(element.q.getElement(i));
 						i++;
@@ -2086,11 +2200,19 @@ public class Executor implements Runnable
 
 				// START KGU#70 2015-11-09: Condition logically incorrect - execution often got stuck here 
 				//} while (!(n.toString().equals("true") && result.equals("") && (stop == false)));
-				// START KGU#77 2015-11-11: Leave if a return statement has been executed
+				// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
 				//} while (!(n.toString().equals("true")) && result.equals("") && (stop == false))
-				} while (!(n.toString().equals("true")) && result.equals("") && (stop == false) && !returned);
-				// END KGU#77 2015-11-11
+				} while (!(n.toString().equals("true")) && result.equals("") && (stop == false) &&
+						!returned && leave == 0);
+				// END KGU#77/KGU#78 2015-11-25
 				// END KGU#70 2015-11-09
+				// START KGU#78 2015-11-25: If there are open leave requests then nibble 1 off
+				if (leave > 0)
+				{
+					leave--;
+				}
+				loopDepth--;
+				// END KGU#78 2015-11-25
 			}
 
 			if (result.equals(""))
@@ -2212,21 +2334,23 @@ public class Executor implements Runnable
 			}
 
 			int cw = ival;
-			// START KGU#77 2015-11-11: Leave if a return statement has been executed
+			// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
 			//while (((sval >= 0) ? (cw <= fval) : (cw >= fval)) && result.equals("") && (stop == false))
-			while (((sval >= 0) ? (cw <= fval) : (cw >= fval)) && result.equals("") && (stop == false) && !returned)
-			// END KGU#77 2015-11-11
+			loopDepth++;
+			while (((sval >= 0) ? (cw <= fval) : (cw >= fval)) && result.equals("") &&
+					(stop == false) && !returned && leave == 0)
+			// END KGU#77/KGU#78 2015-11-25
 			{
 				setVar(counter, cw);
 				element.waited = true;
 
 				int i = 0;
-				// START KGU#77 2015-11-11: Leave if a return statement has been executed
+				// START KGU#77/KGU#78 2015-11-25: Leave if a return statement has been executed
 				//while ((i < element.q.children.size())
 				//		&& result.equals("") && (stop == false))
 				while ((i < element.q.getSize())
-						&& result.equals("") && (stop == false) && !returned)
-				// END KGU#77 2015-11-11
+						&& result.equals("") && (stop == false) && !returned && leave == 0)
+				// END KGU#77/KGU#78 2015-11-25
 				{
 					result = step(element.q.getElement(i));
 					i++;
@@ -2256,6 +2380,13 @@ public class Executor implements Runnable
 				cw += sval;
 				// END KGU 2015-10-13
 			}
+			// START KGU#78 2015-11-25
+			if (leave > 0)
+			{
+				leave--;
+			}
+			loopDepth--;
+			// END KGU#78 2015-11-25
 			if (result.equals(""))
 			{
 				element.executed = false;
@@ -2287,10 +2418,11 @@ public class Executor implements Runnable
 			Random rdmGenerator = new Random(System.currentTimeMillis());
 
 			// The first condition holds if there is at least one unexhausted "thread"
-			// START KGU#77 2015-11-11: Leave if a return statement has been executed
+			// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
 			//while (!undoneThreads.isEmpty() && result.equals("") && (stop == false))
-			while (!undoneThreads.isEmpty() && result.equals("") && (stop == false) && !returned)
-			// END KGU#77 2015-11-11
+			while (!undoneThreads.isEmpty() && result.equals("") && (stop == false) &&
+					!returned && leave == 0)
+			// END KGU#77/KGU#78 2015-11-25
 			{
 				// Pick one of the "threads" by chance
 				int threadNr = rdmGenerator.nextInt(undoneThreads.size());
@@ -2307,6 +2439,18 @@ public class Executor implements Runnable
 					result = step(instr);
 					// In order to allow better tracking we put the executed instructions into `waited´ state...
 					instr.waited = true;
+					// START KGU#78 2015-11-25: What to do with leave requests here?
+					if (leave > 0)
+					{
+						// At least we will kill the causing thread...
+						undoneThreads.remove(threadNr);
+						// ...and then forget the remaining requests
+						leave = 0;
+						JOptionPane.showMessageDialog(diagram, "Jump attempt out a parallel thread:\n\n" + 
+								instr.getText().getText().replace("\n",  "\n\t") + "\n\nThread killed!",
+								"Parallel Execution Problem", JOptionPane.WARNING_MESSAGE);
+					}
+					// END KGU#78 2015-11-25
 				}                
 			}
 			if (result.equals(""))

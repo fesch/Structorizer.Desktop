@@ -83,14 +83,18 @@ public class Jump extends Instruction {
 		
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 		
+		// FIXME (KGU): What is the rounding of an integer division result good for?
 		rect.right=Math.round(2*(E_PADDING/2));
 		for(int i=0;i<getText().count();i++)
 		{
-			if(rect.right<getWidthOutVariables(_canvas,getText().get(i),this)+3*E_PADDING)
+			// FIXME (KGU): The width parameters differ from the ones in draw()!
+			int width = getWidthOutVariables(_canvas,getText().get(i),this)+3*E_PADDING;
+			if(rect.right < width)
 			{
-				rect.right=getWidthOutVariables(_canvas,getText().get(i),this)+3*E_PADDING;
+				rect.right = width;
 			}
 		}
+		// FIXME (KGU): What is the rounding of an integer division result good for?
 		rect.bottom=2*Math.round(Element.E_PADDING/2)+getText().count()*fm.getHeight();
 		
 		return rect;
@@ -158,6 +162,7 @@ public class Jump extends Instruction {
 							);  	
 		}
 
+		// FIXME (KGU): What is the rounding of an integer division result good for?
 		canvas.moveTo(_top_left.left+Math.round(E_PADDING / 2),_top_left.top);
 		canvas.lineTo(_top_left.left,_top_left.bottom+((_top_left.top-_top_left.bottom) / 2));
 		canvas.lineTo(_top_left.left+Math.round(E_PADDING / 2),_top_left.bottom);

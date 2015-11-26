@@ -69,6 +69,7 @@ import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.io.*;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.*;
 
 import com.stevesoft.pat.*;
@@ -122,6 +123,12 @@ public class Root extends Element {
 	// START KGU#3 2015-11-03: New check for enhanced FOR loop
 	public static boolean check14 = false;
 	// END KGU#3 2015-11-03
+	// START KGU#2 2015-11-25: New check for subroutine CALL syntax
+	public static boolean check15 = false;
+	// END KGU#2 2015-11-25
+	// START KGU#78 2015-11-25: New check for incorrect JUMP element
+	public static boolean check16 = false;
+	// END KGU#78 2015-11-25
 
 	private Vector<Updater> updaters = new Vector<Updater>();
                 
@@ -1381,10 +1388,6 @@ public class Root extends Element {
                     // START KGU#39 2015-10-16
             }
             
-            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            //lines.saveToFile("D:\\SW-Produkte\\Structorizer\\tests\\" + getMethodName() + fileCounter++ + ".txt");	// FIXME (KGU): Remove this after test!
-            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            
             if(_onlyBody==true)
             {
                     for(int l=0;l<_ele.getText().count();l++)
@@ -1410,163 +1413,204 @@ public class Root extends Element {
             return res;
     }
 
-    private void analyse(Subqueue _node, Vector _errors, StringList _vars, StringList _uncertainVars)
+    // START KGU#78 2015-11-25: We additionally supervise return mechanisms
+    //private void analyse(Subqueue _node, Vector _errors, StringList _vars, StringList _uncertainVars)
+    /**
+     * Analyses the subtree, which _node is local root of
+     * @param _node - subtree root
+     * @param _errors - the collected errors (may be enhanced by the call)
+     * @param _vars - names of variables being set within the subtree
+     * @param _uncertainVars - names of variables being set in some branch of the subtree 
+     * @param _resultFlags - a boolean array: {usesReturn?, usesResult?, usesProcName?}
+     */
+    private void analyse(Subqueue _node, Vector _errors, StringList _vars, StringList _uncertainVars, boolean[] _resultFlags)
     {
-            DetectedError error;
+    	DetectedError error;
 
-            if(_node.getSize()>0)
-            {
-                    for(int i=0;i<_node.getSize();i++)
-                    {
-                            // get var from actual instruction
-                            StringList myVars = getVarNames((Element) _node.getElement(i));
-
-
-                            // CHECK: assignment in condition (#8)
-                            if(_node.getElement(i).getClass().getSimpleName().equals("While")
-                               ||
-                               _node.getElement(i).getClass().getSimpleName().equals("Repeat")
-                               ||
-                               _node.getElement(i).getClass().getSimpleName().equals("Alternative"))
-                            {
-                                    String text = ((Element) _node.getElement(i)).getText().getLongString();
-                                    if ( text.contains("<-") || text.contains(":=") || text.contains("<--"))
-                                    {
-                                            //error  = new DetectedError("It is not allowed to make an assignment inside a condition.",(Element) _node.getElement(i));
-                                            error  = new DetectedError(errorMsg(Menu.error08,""),(Element) _node.getElement(i));
-                                            addError(_errors,error,8);
-                                    }
-                            }
+    	for(int i=0;i<_node.getSize();i++)
+    	{
+    		Element ele = _node.getElement(i);
+    		
+    		// get var from actual instruction
+    		StringList myVars = getVarNames(ele);
 
 
-                            // CHECK: two checks in one loop: (#5) & (#7)
-                            for(int j=0;j<myVars.count();j++)
-                            {
-                                    // CHECK: non uppercase var (#5)
-                                    if(!myVars.get(j).toUpperCase().equals(myVars.get(j)) && !rootVars.contains(myVars.get(j)))
-                                    {
-                                            //error  = new DetectedError("The variable «"+myVars.get(j)+"» must be written in uppercase!",(Element) _node.getElement(i));
-                                            if(!((myVars.get(j).toLowerCase().equals("result") && this.isProgram==false)))
-                                            {
-                                                error  = new DetectedError(errorMsg(Menu.error05,myVars.get(j)),(Element) _node.getElement(i));
-                                                addError(_errors,error,5);
-                                            }
-                                    }
-
-                                    // CHECK: correkt identifiers (#7)
-                                    if(testidentifier(myVars.get(j))==false)
-                                    {
-                                            //error  = new DetectedError("«"+myVars.get(j)+"» is not a valid name for a variable!",(Element) _node.getElement(i));
-                                            error  = new DetectedError(errorMsg(Menu.error07_3,myVars.get(j)),(Element) _node.getElement(i));
-                                            addError(_errors,error,7);
-                                    }
-                            }
-
-                            // CHECK: two checks with the same input condition
-                            if(_node.getElement(i).getClass().getSimpleName().equals("Instruction"))
-                            {
-                                    StringList test = ((Element) _node.getElement(i)).getText();
-
-                                    // CHECK: wrong multi-line instruction (#10 - new!)
-                                    int isInput = 0;
-                                    int isOutput = 0;
-                                    int isAssignment = 0;
-
-                                    for(int l=0;l<test.count();l++)
-                                    {
-                                            // CHECK: wrong affection (#11 - new!)
-                                            String myTest = test.get(l);
-
-                                            myTest=myTest.replaceAll("(.*?)['](.*?)['](.*?)","$1$3");
-                                            myTest=myTest.replaceAll("(.*?)[\"](.*?)[\"](.*?)","$1$3");
-
-                                            //System.out.println(" -- "+myTest);
-
-                                            if((myTest.contains("=") || myTest.contains("==")) && !myTest.contains("<--") && !myTest.contains("<-") && !myTest.contains(":="))
-                                            {
-                                                    //error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
-                                                    error  = new DetectedError(errorMsg(Menu.error11,""),(Element) _node.getElement(i));
-                                                    addError(_errors,error,11);
-                                            }
-
-                                            // CHECK: wrong multi-line instruction (#10 - new!)
-                                            String myText = test.get(l);
-                                            if (myText.contains(D7Parser.input.trim())) {isInput=1;}
-                                            if (myText.contains(D7Parser.output.trim())) {isOutput=1;}
-                                            if ( myText.contains("<-") || myText.contains(":=") || myText.contains("<--")) {isAssignment=1;}
-
-                                            // START KGU#65 2015-11-04: Possible replacement (though expensive, hence not activated)
-                                            //StringList lexemes = splitLexically(myTest, true);
-                                            //if((lexemes.contains("=") || lexemes.contains("==")) && !lexemes.contains("<-") && !lexemes.contains(":="))
-                                            //{
-                                            //        //error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
-                                            //        error  = new DetectedError(errorMsg(Menu.error11,""),(Element) _node.getElement(i));
-                                            //        addError(_errors,error,11);
-                                            //}
-                                            //
-                                            //// CHECK: wrong multi-line instruction (#10 - new!)
-                                            //if (lexemes.contains(D7Parser.input.trim())) {isInput=1;}
-                                            //if (lexemes.contains(D7Parser.output.trim())) {isOutput=1;}
-                                            //if (lexemes.contains("<-") || lexemes.contains(":=")) {isAssignment=1;}
-                                            // END KGU#65 2015-11-04
-
-                                    }
-                                    // CHECK: wrong multi-line instruction (#10 - new!)
-                                    if (isInput+isOutput+isAssignment==3)
-                                    {
-                                            //error  = new DetectedError("A single instruction element should not contain input/output instructions and assignments!",(Element) _node.getElement(i));
-                                            error  = new DetectedError(errorMsg(Menu.error10_1,""),(Element) _node.getElement(i));
-                                            addError(_errors,error,10);
-                                    }
-                                    else if (isInput+isOutput==2)
-                                    {
-                                            //error  = new DetectedError("A single instruction element should not contain input and output instructions!",(Element) _node.getElement(i));
-                                            error  = new DetectedError(errorMsg(Menu.error10_2,""),(Element) _node.getElement(i));
-                                            addError(_errors,error,10);
-                                    }
-                                    else if (isInput+isAssignment==2)
-                                    {
-                                            //error  = new DetectedError("A single instruction element should not contain input instructions and assignments!",(Element) _node.getElement(i));
-                                            error  = new DetectedError(errorMsg(Menu.error10_3,""),(Element) _node.getElement(i));
-                                            addError(_errors,error,10);
-                                    }
-                                    else if (isOutput+isAssignment==2)
-                                    {
-                                            //error  = new DetectedError("A single instruction element should not contain ouput instructions and assignments!",(Element) _node.getElement(i));
-                                            error  = new DetectedError(errorMsg(Menu.error10_4,""),(Element) _node.getElement(i));
-                                            addError(_errors,error,10);
-                                    }
-                            }
+    		// CHECK: assignment in condition (#8)
+    		if(ele.getClass().getSimpleName().equals("While")
+    				||
+    				ele.getClass().getSimpleName().equals("Repeat")
+    				||
+    				ele.getClass().getSimpleName().equals("Alternative"))
+    		{
+    			String text = ele.getText().getLongString();
+    			if ( text.contains("<-") || text.contains(":=") )
+    			{
+    				//error  = new DetectedError("It is not allowed to make an assignment inside a condition.",(Element) _node.getElement(i));
+    				error  = new DetectedError(errorMsg(Menu.error08,""), ele);
+    				addError(_errors,error,8);
+    			}
+    		}
 
 
-                            // CHECK: non init var (no REPEAT)  (#3)
-                            StringList myUsed = getUsedVarNames((Element) _node.getElement(i),true,true);
-                            if(!_node.getElement(i).getClass().getSimpleName().equals("Repeat"))
-                            {
-                                    for(int j=0;j<myUsed.count();j++)
-                                    {
-                                            if(!_vars.contains(myUsed.get(j)) && !_uncertainVars.contains(myUsed.get(j)))
-                                            {
-                                                    //error  = new DetectedError("The variable «"+myUsed.get(j)+"» has not yet been initialized!",(Element) _node.getElement(i));
-                                                    error  = new DetectedError(errorMsg(Menu.error03_1,myUsed.get(j)),(Element) _node.getElement(i));
-                                                    addError(_errors,error,3);
-                                            }
-                                            else if(_uncertainVars.contains(myUsed.get(j)))
-                                            {
-                                                    //error  = new DetectedError("The variable «"+myUsed.get(j)+"» may not have been initialized!",(Element) _node.getElement(i));
-                                                    error  = new DetectedError(errorMsg(Menu.error03_2,myUsed.get(j)),(Element) _node.getElement(i));
-                                                    addError(_errors,error,3);
-                                            }
-                                    }
-                            }
+    		// CHECK: two checks in one loop: (#5) & (#7)
+    		for(int j=0;j<myVars.count();j++)
+    		{
+    			// CHECK: non-uppercase var (#5)
+    			if(!myVars.get(j).toUpperCase().equals(myVars.get(j)) && !rootVars.contains(myVars.get(j)))
+    			{
+    				if(!((myVars.get(j).toLowerCase().equals("result") && this.isProgram==false)))
+    				{
+    					//error  = new DetectedError("The variable «"+myVars.get(j)+"» must be written in uppercase!",(Element) _node.getElement(i));
+    					error  = new DetectedError(errorMsg(Menu.error05,myVars.get(j)), ele);
+    					addError(_errors,error,5);
+    				}
+    			}
 
-                            /*////// AHHHHHHHH ////////
+    			// CHECK: correct identifiers (#7)
+    			if(testidentifier(myVars.get(j))==false)
+    			{
+    				//error  = new DetectedError("«"+myVars.get(j)+"» is not a valid name for a variable!",(Element) _node.getElement(i));
+    				error  = new DetectedError(errorMsg(Menu.error07_3,myVars.get(j)), ele);
+    				addError(_errors,error,7);
+    			}
+
+    			// START KGU#78 2015-11-25
+    			if (!this.isProgram && myVars.get(j).toLowerCase().equals("result"))
+    			{
+    				_resultFlags[1] = true;
+    				if (_resultFlags[0] || _resultFlags[2])
+
+    				{
+    					//error  = new DetectedError("Your functions seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
+    					error  = new DetectedError(errorMsg(Menu.error13_3, myVars.get(j)), ele);
+    					addError(_errors,error,13);                                            	
+    				}
+    			}
+    			else if (!this.isProgram && myVars.get(j).equals(getMethodName()))
+    			{
+    				_resultFlags[2] = true;
+    				if (_resultFlags[0] || _resultFlags[1])
+
+    				{
+    					//error  = new DetectedError("Your functions seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
+    					error  = new DetectedError(errorMsg(Menu.error13_3, myVars.get(j)), ele);
+    					addError(_errors,error,13);                                            	
+    				}
+    			}
+    			// END KGU#78 2015-11-25
+
+    		}
+
+    		// CHECK: two checks with the same input condition
+    		if(ele.getClass().getSimpleName().equals("Instruction"))
+    		{
+    			StringList test = ele.getText();
+
+    			// CHECK: wrong multi-line instruction (#10 - new!)
+    			int isInput = 0;
+    			int isOutput = 0;
+    			int isAssignment = 0;
+
+    			// Check every instruction line...
+    			for(int l=0;l<test.count();l++)
+    			{
+    				// CHECK: wrong affection (#11 - new!)
+    				String myTest = test.get(l);
+
+    				// FIXME (KGU): Shouldn't we better do a lexical splitting here (see below)? 
+    				// Remove all strings delimited by '
+    				myTest=myTest.replaceAll("(.*?)['](.*?)['](.*?)","$1$3");
+    				// Remove all strings delimited by "
+    				myTest=myTest.replaceAll("(.*?)[\"](.*?)[\"](.*?)","$1$3");
+
+    				//System.out.println(" -- "+myTest);
+
+    				// FIXME (KGU): condition is not sound
+    				if((myTest.contains("=") || myTest.contains("==")) && !myTest.contains("<--") && !myTest.contains("<-") && !myTest.contains(":="))
+    				{
+    					//error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
+    					error  = new DetectedError(errorMsg(Menu.error11,""), ele);
+    					addError(_errors,error,11);
+    				}
+
+    				// CHECK: wrong multi-line instruction (#10 - new!)
+    				String myText = test.get(l);
+    				if (myText.contains(D7Parser.input.trim())) {isInput=1;}
+    				if (myText.contains(D7Parser.output.trim())) {isOutput=1;}
+    				if ( myText.contains("<-") || myText.contains(":=") || myText.contains("<--")) {isAssignment=1;}
+
+    				// START KGU#65 2015-11-04: Possible replacement (though expensive, hence not activated)
+    				//StringList tokens = splitLexically(myTest, true);
+    				//if((tokens.contains("=") || tokens.contains("==")) && !tokens.contains("<-") && !tokens.contains(":="))
+    				//{
+    				//        //error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
+    				//        error  = new DetectedError(errorMsg(Menu.error11,""), _node.getElement(i));
+    				//        addError(_errors,error,11);
+    				//}
+    				//
+    				//// CHECK: wrong multi-line instruction (#10 - new!)
+    				//if (tokens.contains(D7Parser.input.trim())) {isInput=1;}
+    				//if (tokens.contains(D7Parser.output.trim())) {isOutput=1;}
+    				//if (tokens.contains("<-") || tokens.contains(":=")) {isAssignment=1;}
+    				// END KGU#65 2015-11-04
+
+    			}
+    			// CHECK: wrong multi-line instruction (#10 - new!)
+    			if (isInput+isOutput+isAssignment==3)
+    			{
+    				//error  = new DetectedError("A single instruction element should not contain input/output instructions and assignments!",(Element) _node.getElement(i));
+    				error  = new DetectedError(errorMsg(Menu.error10_1,""), ele);
+    				addError(_errors,error,10);
+    			}
+    			else if (isInput+isOutput==2)
+    			{
+    				//error  = new DetectedError("A single instruction element should not contain input and output instructions!",(Element) _node.getElement(i));
+    				error  = new DetectedError(errorMsg(Menu.error10_2,""), ele);
+    				addError(_errors,error,10);
+    			}
+    			else if (isInput+isAssignment==2)
+    			{
+    				//error  = new DetectedError("A single instruction element should not contain input instructions and assignments!",(Element) _node.getElement(i));
+    				error  = new DetectedError(errorMsg(Menu.error10_3,""), ele);
+    				addError(_errors,error,10);
+    			}
+    			else if (isOutput+isAssignment==2)
+    			{
+    				//error  = new DetectedError("A single instruction element should not contain ouput instructions and assignments!",(Element) _node.getElement(i));
+    				error  = new DetectedError(errorMsg(Menu.error10_4,""), ele);
+    				addError(_errors,error,10);
+    			}
+    		}
+
+
+    		// CHECK: non-initialised var (no REPEAT)  (#3)
+    		StringList myUsed = getUsedVarNames(_node.getElement(i),true,true);
+    		if(!ele.getClass().getSimpleName().equals("Repeat"))
+    		{
+    			for(int j=0;j<myUsed.count();j++)
+    			{
+    				if(!_vars.contains(myUsed.get(j)) && !_uncertainVars.contains(myUsed.get(j)))
+    				{
+    					//error  = new DetectedError("The variable «"+myUsed.get(j)+"» has not yet been initialized!",(Element) _node.getElement(i));
+    					error  = new DetectedError(errorMsg(Menu.error03_1,myUsed.get(j)), ele);
+    					addError(_errors,error,3);
+    				}
+    				else if(_uncertainVars.contains(myUsed.get(j)))
+    				{
+    					//error  = new DetectedError("The variable «"+myUsed.get(j)+"» may not have been initialized!",(Element) _node.getElement(i));
+    					error  = new DetectedError(errorMsg(Menu.error03_2,myUsed.get(j)), ele);
+    					addError(_errors,error,3);
+    				}
+    			}
+    		}
+
+    		/*////// AHHHHHHHH ////////
                             getUsedVarNames should also parse for new variable names,
                             because any element that uses a variable that has never been
                             assigned, this variable will not be known and thus not
                             detected at all!
-                            */
-                            /*
+    		 */
+    		/*
                             if(_node.getElement(i).getClass().getSimpleName().equals("Instruction"))
                             {
                                     System.out.println("----------------------------");
@@ -1579,242 +1623,335 @@ public class Root extends Element {
                             }
                             /**/
 
-            StringList sl =((Element) _node.getElement(i)).getText();
-            for(int ls=0;ls<sl.count();ls++)
-            {
-                if(sl.get(ls).trim().toLowerCase().indexOf("return")==0)
-                {
-                    myVars.addIfNew("result");
-                }
-            }
+    		// START KGU#78 2015-11-25: This analysis doesn't make sense in e.g. a Case element
+    		if (ele instanceof Call)
+    		{
+    			String text = ele.getText().getLongString();
+    			text = ele.unifyOperators(text);
+    			if ( text.contains(" <- ") )
+    			{
+    				text = text.substring(text.indexOf(" <- ") + 4);
+    			}
+    			Function func = new Function(text);
+    			if (!func.isFunction())
+    			{
+    				//error  = new DetectedError("It is not allowed to make an assignment inside a condition.",(Element) _node.getElement(i));
+    				error  = new DetectedError(errorMsg(Menu.error15,""), ele);
+    				addError(_errors,error,15);
+    			}
+    			
+    		}
+    		if (ele instanceof Instruction)	// May also be a subclass!
+    		{
+    		// END KGU#78 2015-11-25
+    			StringList sl =((Element) _node.getElement(i)).getText();
+    			for(int ls=0; ls<sl.count(); ls++)
+    			{
+    				String line = sl.get(ls).trim().toLowerCase();
+    				// START KGU#78 2015-11-25: Make sure a potential result is following 
+    				//if(line.toLowerCase().indexOf("return")==0)
+    				boolean isReturn = line.startsWith("return");
+    				boolean isLeave = line.startsWith("leave");
+    				boolean isJump = isLeave ||
+    						line.startsWith("exit") ||
+							line.startsWith("break");
+    				if (isReturn && !line.substring("return".length()).isEmpty())
+    				// END KGU#78 2015-11-25
+    				{
+    					_resultFlags[0] = true;
+    					myVars.addIfNew("result");
+    					// START KGU#78 2015-11-25: Different result mechanisms?
+    					if (_resultFlags[1] || _resultFlags[2])
+    					{
+    						//error = new DetectedError("Your functions seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
+    						error = new DetectedError(errorMsg(Menu.error13_3, "return"), ele);
+    						addError(_errors, error, 13);                                            	
+    					}
+    				}
+    				// START KGU#78 2015-11-25: New test (#16)
+    				if (!(ele instanceof Jump) &&
+    						(isJump || isReturn && !(_node.parent instanceof Root &&
+    								ls == sl.count()-1 && i == _node.getSize()-1))
+    								)
+    				{
+    					//error = new DetectedError("A return instruction not at final position must be a JUMP element!",(Element) _node.getElement(i));
+    					error = new DetectedError(errorMsg((isReturn ? Menu.error16_2 : Menu.error16_3), line), ele);
+    					addError(_errors, error, 16);
+    				}
+    				else if (ele instanceof Jump && (ls > 0 || !(isJump || isReturn || line.isEmpty())))
+    				{
+    					//error = new DetectedError("A JUMP element must contain exactly one of «exit n», «return <expr>», or «leave [n]»!",(Element) _node.getElement(i));
+    					error = new DetectedError(errorMsg(Menu.error16_1, line), ele);
+    					addError(_errors, error, 16);    					
+    				}
+    				else if (ele instanceof Jump && isLeave)
+    				{
+    					if (line.length() > "leave".length())
+    					{
+    						try
+    						{
+    							int levelsUp = Integer.parseInt(line.substring("leave".length()));
+    	    					// Count the nested loop levels and compare it with the given number
+    							Element parent = ele.parent;
+    							int levelsDown = 0;
+    							while (parent != null && !(parent instanceof Root))
+    							{
+    								if (parent instanceof While ||
+    										parent instanceof Repeat ||
+    										parent instanceof For)
+    								{
+    									levelsDown++;
+    								}
+    								parent = parent.parent;
+    							}
+    							if (levelsUp < 1 || levelsUp > levelsDown)
+    							{
+        	    					//error = new DetectedError(""Cannot leave or break more loop levels than being nested in!",(Element) _node.getElement(i));
+        	    					error = new DetectedError(errorMsg(Menu.error16_4, String.valueOf(levelsDown)), ele);
+        	    					addError(_errors, error, 16);    								
+    							}
+    						}
+    						catch (Exception ex)
+    						{
+    	    					//error = new DetectedError("A JUMP element must contain exactly one of «exit n», «return <expr>», or «leave [n]»!",(Element) _node.getElement(i));
+    	    					error = new DetectedError(errorMsg(Menu.error16_1, line), ele);
+    	    					addError(_errors, error, 16);    					    							
+    						}
+    					}
+    				}
+    				// END KGU#78 2015-11-25
 
-                            // add detected var to initialised vars
-                            _vars.addIfNew(myVars);
+    			}
+    		// START KGU#78 2015-11-25
+    		}
+    		// END KGU#78 2015-11-25
+
+    		// add detected var to initialised vars
+    		_vars.addIfNew(myVars);
 
 
-                            // CHECK: endless loop (#2)
-                            if(_node.getElement(i).getClass().getSimpleName().equals("While")
-                               ||
-                               _node.getElement(i).getClass().getSimpleName().equals("Repeat"))
-                            {
-                                    // get used variable from inside the loop
-                                    StringList usedVars = getVarNames((Element) _node.getElement(i),false);
-                                    // get loop variables
-                                    StringList loopVars = getUsedVarNames((Element) _node.getElement(i),true,true);
+    		// CHECK: endless loop (#2)
+    		if(ele.getClass().getSimpleName().equals("While")
+    				||
+    				ele.getClass().getSimpleName().equals("Repeat"))
+    		{
+    			// get used variable from inside the loop
+    			StringList usedVars = getVarNames(ele, false);
+    			// get loop variables
+    			StringList loopVars = getUsedVarNames(ele, true, true);
 
-                                    /*
+    			/*
                                     System.out.println("Used : "+usedVars);
                                     System.out.println("Loop : "+loopVars);
-                                    */
+    			 */
 
-                                    boolean check = false;
-                                    for(int j=0;j<loopVars.count();j++)
-                                    {
-                                            check = check || usedVars.contains(loopVars.get(j));
-                                    }
-                                    if (check==false)
-                                    {
-                                            //error  = new DetectedError("No change of the variables in the condition detected. Possible endless loop ...",(Element) _node.getElement(i));
-                                            error  = new DetectedError(errorMsg(Menu.error02,""),(Element) _node.getElement(i));
-                                            addError(_errors,error,2);
-                                    }
-                            }
+    			boolean check = false;
+    			for(int j=0; j<loopVars.count(); j++)
+    			{
+    				check = check || usedVars.contains(loopVars.get(j));
+    			}
+    			if (check==false)
+    			{
+    				//error  = new DetectedError("No change of the variables in the condition detected. Possible endless loop ...",(Element) _node.getElement(i));
+    				error  = new DetectedError(errorMsg(Menu.error02,""), ele);
+    				addError(_errors,error,2);
+    			}
+    		}
 
-                            // CHECK: loop var modified (#1) and loop parameter concistency (#14 new!)
-                            if(_node.getElement(i).getClass().getSimpleName().equals("For"))
-                            {
-                                    // get used variable from inside the FOR-loop
-                                    StringList usedVars = getVarNames((Element) _node.getElement(i),false,true);
-                                    // get loop variable (that should be only one!!!)
-                                    StringList loopVars = getVarNames((Element) _node.getElement(i),true);
+    		// CHECK: loop var modified (#1) and loop parameter consistency (#14 new!)
+    		if(ele.getClass().getSimpleName().equals("For"))
+    		{
+    			// get assigned variables from inside the FOR-loop
+    			StringList usedVars = getVarNames(ele, false, true);
+    			// get loop variable (that should be only one!!!)
+    			StringList loopVars = getVarNames(ele, true);
 
-                                    /*
+    			/*
                                     System.out.println("USED : "+usedVars);
                                     System.out.println("LOOP : "+loopVars);
                                     /**/
 
-                                    if(loopVars.count()==0)
-                                    {
-                                            //error  = new DetectedError("WARNING: No loop variable detected ...",(Element) _node.getElement(i));
-                                            error  = new DetectedError(errorMsg(Menu.error01_1,""),(Element) _node.getElement(i));
-                                            addError(_errors,error,1);
-                                    }
-                                    else
-                                    {
-                                            if(loopVars.count()>1)
-                                            {
-                                                    //error  = new DetectedError("WARNING: More than one loop variable detected ...",(Element) _node.getElement(i));
-                                                    error  = new DetectedError(errorMsg(Menu.error01_2,""),(Element) _node.getElement(i));
-                                                    addError(_errors,error,1);
-                                            }
+    			if(loopVars.count()==0)
+    			{
+    				//error  = new DetectedError("WARNING: No loop variable detected ...",(Element) _node.getElement(i));
+    				error  = new DetectedError(errorMsg(Menu.error01_1,""), ele);
+    				addError(_errors,error,1);
+    			}
+    			else
+    			{
+    				if(loopVars.count()>1)
+    				{
+    					//error  = new DetectedError("WARNING: More than one loop variable detected ...",(Element) _node.getElement(i));
+    					error  = new DetectedError(errorMsg(Menu.error01_2,""), ele);
+    					addError(_errors,error,1);
+    				}
 
-                                            if(usedVars.contains(loopVars.get(0)))
-                                            {
-                                               //error  = new DetectedError("You are not allowed to modify the loop variable «"+loopVars.get(0)+"» inside the loop!",(Element) _node.getElement(i));
-                                               error  = new DetectedError(errorMsg(Menu.error01_3,loopVars.get(0)),(Element) _node.getElement(i));
-                                               addError(_errors,error,1);
-                                            }
-                                    }
-                                    
-                                    // START KGU#3 2015-11-03: New check for consistency of the loop header
-                                    For elem = (For)_node.getElement(i);
-                                    if (!elem.checkConsistency()) {
-                                        //error  = new DetectedError("FOR loop parameters are not consistent to the loop heading text!", elem);
-                                    	error = new DetectedError(errorMsg(Menu.error14_1,""), elem);
-                                        addError(_errors, error, 14);
-                                    }
-                                    String stepStr = elem.splitForClause()[4];
-                                    if (!stepStr.isEmpty())
-                                    {
-                                    	// Just in case...
-                                        //error  = new DetectedError("FOR loop step parameter «"+stepStr+"» is no legal integer constant!", elem);
-                                    	error = new DetectedError(errorMsg(Menu.error14_2, stepStr), elem);
-                                    	try {
-                                    		int stepVal = Integer.parseInt(stepStr);
-                                    		if (stepVal == 0)
-                                    		{
-                                    			// Two kinds of error at the same time
-                                                addError(_errors, error, 14);
-                                                //error  = new DetectedError("No change of the variables in the condition detected. Possible endless loop ...",(Element) _node.getElement(i));
-                                                error  = new DetectedError(errorMsg(Menu.error02,""), elem);
-                                                addError(_errors, error, 2);
-                                    		}
-                                    	}
-                                    	catch (NumberFormatException ex)
-                                    	{
-                                            addError(_errors, error, 14);                                    		
-                                    	}
-                                    }
-                                    // END KGU#3 2015-11-03
-                            }
+    				if(usedVars.contains(loopVars.get(0)))
+    				{
+    					//error  = new DetectedError("You are not allowed to modify the loop variable «"+loopVars.get(0)+"» inside the loop!",(Element) _node.getElement(i));
+    					error  = new DetectedError(errorMsg(Menu.error01_3, loopVars.get(0)), ele);
+    					addError(_errors,error,1);
+    				}
+    			}
 
-                            // CHECK: if with empty T-block (#4)
-                            if(_node.getElement(i).getClass().getSimpleName().equals("Alternative"))
-                            {
-                                    if(((Alternative) _node.getElement(i)).qTrue.getSize()==0)
-                                    {
-                                            //error  = new DetectedError("You are not allowed to use an IF-statement with an empty TRUE-block!",(Element) _node.getElement(i));
-                                            error  = new DetectedError(errorMsg(Menu.error04,""),(Element) _node.getElement(i));
-                                            addError(_errors,error,4);
-                                    }
-                            }
+    			// START KGU#3 2015-11-03: New check for consistency of the loop header
+    			For forEle = (For)ele;
+    			if (!forEle.checkConsistency()) {
+    				//error  = new DetectedError("FOR loop parameters are not consistent to the loop heading text!", elem);
+    				error = new DetectedError(errorMsg(Menu.error14_1,""), ele);
+    				addError(_errors, error, 14);
+    			}
+    			String stepStr = forEle.splitForClause()[4];
+    			if (!stepStr.isEmpty())
+    			{
+    				// Just in case...
+    				//error  = new DetectedError("FOR loop step parameter «"+stepStr+"» is no legal integer constant!", elem);
+    				error = new DetectedError(errorMsg(Menu.error14_2, stepStr), ele);
+    				try {
+    					int stepVal = Integer.parseInt(stepStr);
+    					if (stepVal == 0)
+    					{
+    						// Two kinds of error at the same time
+    						addError(_errors, error, 14);
+    						//error  = new DetectedError("No change of the variables in the condition detected. Possible endless loop ...",(Element) _node.getElement(i));
+    						error  = new DetectedError(errorMsg(Menu.error02,""), ele);
+    						addError(_errors, error, 2);
+    					}
+    				}
+    				catch (NumberFormatException ex)
+    				{
+    					addError(_errors, error, 14);                                    		
+    				}
+    			}
+    			// END KGU#3 2015-11-03
+    		}
 
-                            // continue analysis for subelements
-                            if(_node.getElement(i).getClass().getSimpleName().equals("While"))
-                            {
-                                    analyse(((While) _node.getElement(i)).q,_errors,_vars,_uncertainVars);
-                            }
-                            else if(_node.getElement(i).getClass().getSimpleName().equals("For"))
-                            {
-                                    analyse(((For) _node.getElement(i)).q,_errors,_vars,_uncertainVars);
-                            }
-                            else if(_node.getElement(i).getClass().getSimpleName().equals("Repeat"))
-                            {
-                                    analyse(((Repeat) _node.getElement(i)).q,_errors,_vars,_uncertainVars);
+    		// CHECK: if with empty T-block (#4)
+    		if(ele.getClass().getSimpleName().equals("Alternative"))
+    		{
+    			if(((Alternative) _node.getElement(i)).qTrue.getSize()==0)
+    			{
+    				//error  = new DetectedError("You are not allowed to use an IF-statement with an empty TRUE-block!",(Element) _node.getElement(i));
+    				error  = new DetectedError(errorMsg(Menu.error04,""), ele);
+    				addError(_errors,error,4);
+    			}
+    		}
 
-                                    // CHECK: non init var (REPEAT only, because it must be analysed _after_ the body!)  (#3)
-                                    /*
+    		// continue analysis for subelements
+    		if(ele.getClass().getSimpleName().equals("While"))
+    		{
+    			analyse(((While) ele).q,_errors,_vars,_uncertainVars, _resultFlags);
+    		}
+    		else if(ele.getClass().getSimpleName().equals("For"))
+    		{
+    			analyse(((For) ele).q,_errors,_vars,_uncertainVars, _resultFlags);
+    		}
+    		else if(ele.getClass().getSimpleName().equals("Repeat"))
+    		{
+    			analyse(((Repeat) ele).q,_errors,_vars,_uncertainVars, _resultFlags);
+
+    			// CHECK: non init var (REPEAT only, because it must be analysed _after_ the body!)  (#3)
+    			/*
                                     System.out.println("----------------------------");
                                     System.out.println("Init : "+_vars);
                                     System.out.println("Used : "+myUsed);
-                                    */
+    			 */
 
-                                    //myUsed = getUsedVarNames((Element) _node.getElement(i),true,true);
-                                    for(int j=0;j<myUsed.count();j++)
-                                    {
-                                            if(!_vars.contains(myUsed.get(j)) && !_uncertainVars.contains(myUsed.get(j)))
-                                            {
-                                                    //error  = new DetectedError("The variable «"+myUsed.get(j)+"» has not yet been initialized!",(Element) _node.getElement(i));
-                                                    error  = new DetectedError(errorMsg(Menu.error03_1,myUsed.get(j)),(Element) _node.getElement(i));
-                                                    addError(_errors,error,3);
-                                            }
-                                            else if(_uncertainVars.contains(myUsed.get(j)))
-                                            {
-                                                    //error  = new DetectedError("The variable «"+myUsed.get(j)+"» may not have been initialized!",(Element) _node.getElement(i));
-                                                    error  = new DetectedError(errorMsg(Menu.error03_2,myUsed.get(j)),(Element) _node.getElement(i));
-                                                    addError(_errors,error,3);
-                                            }
-                                    }
+    			//myUsed = getUsedVarNames((Element) _node.getElement(i),true,true);
+    			for(int j=0;j<myUsed.count();j++)
+    			{
+    				if(!_vars.contains(myUsed.get(j)) && !_uncertainVars.contains(myUsed.get(j)))
+    				{
+    					//error  = new DetectedError("The variable «"+myUsed.get(j)+"» has not yet been initialized!",(Element) _node.getElement(i));
+    					error  = new DetectedError(errorMsg(Menu.error03_1,myUsed.get(j)), ele);
+    					addError(_errors,error,3);
+    				}
+    				else if(_uncertainVars.contains(myUsed.get(j)))
+    				{
+    					//error  = new DetectedError("The variable «"+myUsed.get(j)+"» may not have been initialized!",(Element) _node.getElement(i));
+    					error  = new DetectedError(errorMsg(Menu.error03_2,myUsed.get(j)), ele);
+    					addError(_errors,error,3);
+    				}
+    			}
 
-                            }
-                            else if(_node.getElement(i).getClass().getSimpleName().equals("Alternative"))
-                            {
-                                    StringList tVars = _vars.copy();
-                                    StringList fVars = _vars.copy();
+    		}
+    		else if(ele.getClass().getSimpleName().equals("Alternative"))
+    		{
+    			StringList tVars = _vars.copy();
+    			StringList fVars = _vars.copy();
 
-                                    analyse(((Alternative) _node.getElement(i)).qTrue,_errors,tVars,_uncertainVars);
-                                    analyse(((Alternative) _node.getElement(i)).qFalse,_errors,fVars,_uncertainVars);
+    			analyse(((Alternative) ele).qTrue,_errors,tVars,_uncertainVars, _resultFlags);
+    			analyse(((Alternative) ele).qFalse,_errors,fVars,_uncertainVars, _resultFlags);
 
-                                    for(int v=0;v<tVars.count();v++)
-                                    {
-                                            if(fVars.contains(tVars.get(v))) {_vars.addIfNew(tVars.get(v)); }
-                                            else if(!_vars.contains(tVars.get(v))) {_uncertainVars.add(tVars.get(v));}
-                                    }
-                                    for(int v=0;v<fVars.count();v++)
-                                    {
-                                            if(tVars.contains(fVars.get(v))) {_vars.addIfNew(fVars.get(v)); }
-                                            else if(!_vars.contains(fVars.get(v))) {_uncertainVars.addIfNew(fVars.get(v));}
-                                    }
+    			for(int v=0;v<tVars.count();v++)
+    			{
+    				if(fVars.contains(tVars.get(v))) {_vars.addIfNew(tVars.get(v)); }
+    				else if(!_vars.contains(tVars.get(v))) {_uncertainVars.add(tVars.get(v));}
+    			}
+    			for(int v=0;v<fVars.count();v++)
+    			{
+    				if(tVars.contains(fVars.get(v))) {_vars.addIfNew(fVars.get(v)); }
+    				else if(!_vars.contains(fVars.get(v))) {_uncertainVars.addIfNew(fVars.get(v));}
+    			}
 
-                                    // if a variable is not being initialised on both of the lists,
-                                    // it could be considered ass not being always initialised
-                                    //
-                                    // => use a second list with variable that "may not have been initialised"
-                            }
-                            else if(_node.getElement(i).getClass().getSimpleName().equals("Case"))
-                            {
-                                    Case c = ((Case) _node.getElement(i));
-                                    StringList initialVars = _vars.copy();
-                                    Hashtable myInitVars = new Hashtable();
-                                    for (int j=0;j<c.qs.size();j++)
-                                    {
-                                            StringList caseVars = initialVars.copy();
-                                            analyse((Subqueue) c.qs.get(j),_errors,caseVars,_uncertainVars);
-                                            for(int v = 0;v<caseVars.count();v++)
-                                            {
-                                                    if(myInitVars.containsKey(caseVars.get(v)))
-                                                    {
-                                                            myInitVars.put(caseVars.get(v), ((String) myInitVars.get(caseVars.get(v)))+"1");
-                                                    }
-                                                    else
-                                                    {
-                                                            myInitVars.put(caseVars.get(v), "1");
-                                                    }
-                                            }
-                                            //_vars.addIfNew(caseVars);
-                                    }
-                                    //System.out.println(myInitVars);
-                                    // walk trought the hashtable and check
-                                    Enumeration keys = myInitVars.keys();
-                                    while ( keys.hasMoreElements() )
-                                    {
-                                            String key = (String) keys.nextElement();
-                                            String value = (String) myInitVars.get(key);
+    			// if a variable is not being initialised on both of the lists,
+    			// it could be considered ass not being always initialised
+    			//
+    			// => use a second list with variable that "may not have been initialised"
+    		}
+    		else if(ele.getClass().getSimpleName().equals("Case"))
+    		{
+    			Case caseEle = ((Case) ele);
+    			StringList initialVars = _vars.copy();
+    			Hashtable myInitVars = new Hashtable();
+    			for (int j=0; j<caseEle.qs.size(); j++)
+    			{
+    				StringList caseVars = initialVars.copy();
+    				analyse((Subqueue) caseEle.qs.get(j),_errors,caseVars,_uncertainVars,_resultFlags);
+    				for(int v = 0; v<caseVars.count(); v++)
+    				{
+    					if(myInitVars.containsKey(caseVars.get(v)))
+    					{
+    						myInitVars.put(caseVars.get(v), ((String) myInitVars.get(caseVars.get(v)))+"1");
+    					}
+    					else
+    					{
+    						myInitVars.put(caseVars.get(v), "1");
+    					}
+    				}
+    				//_vars.addIfNew(caseVars);
+    			}
+    			//System.out.println(myInitVars);
+    			// walk trought the hashtable and check
+    			Enumeration keys = myInitVars.keys();
+    			while ( keys.hasMoreElements() )
+    			{
+    				String key = (String) keys.nextElement();
+    				String value = (String) myInitVars.get(key);
 
-                                            int si = c.qs.size();
-                                            // adapt size if no "default"
-                                            if(((String)c.getText().get(c.getText().count()-1)).equals("%"))
-                                            {
-                                                    si-=1;
-                                            }
-                                            //System.out.println("SI = "+si+" = "+c.text.get(c.text.count()-1));
+    				int si = caseEle.qs.size();
+    				// adapt size if no "default"
+    				if (((String)caseEle.getText().get(caseEle.getText().count()-1)).equals("%"))
+    				{
+    					si--;
+    				}
+    				//System.out.println("SI = "+si+" = "+c.text.get(c.text.count()-1));
 
-                                            if(value.length()==si)
-                                            {
-                                                    _vars.addIfNew(key);
-                                            }
-                                            else
-                                            {
-                                                    if(!_vars.contains(key))
-                                                    {
-                                                            _uncertainVars.addIfNew(key);
-                                                    }
-                                            }
-                                    }
-                                    // look at the comment for the IF-structure
-                            }
-                    }
-            }
+    				if(value.length()==si)
+    				{
+    					_vars.addIfNew(key);
+    				}
+    				else
+    				{
+    					if(!_vars.contains(key))
+    					{
+    						_uncertainVars.addIfNew(key);
+    					}
+    				}
+    			}
+    			// look at the comment for the IF-structure
+    		}
+    	} // for(int i=0; i < _node.size(); i++)...
     }
 
     private boolean testidentifier(String _str)
@@ -1827,33 +1964,45 @@ public class Root extends Element {
             }
             else
             {
-                    if(
-                       ('a'<=_str.toLowerCase().charAt(0) && _str.toLowerCase().charAt(0)<='z')
-                       ||
-                       (_str.toLowerCase().charAt(0)=='_')
-                      )
-                    {
-                            if (_str.length()>1)
-                            {
-                                    for(int i=0;i<_str.length();i++)
-                                    {
-                                            if(!(
-                                               ('a'<=_str.toLowerCase().charAt(0) && _str.toLowerCase().charAt(0)<='z')
-                                               ||
-                                               ('0'<=_str.charAt(0) && _str.charAt(0)<='9')
-                                               ||
-                                               (_str.toLowerCase().charAt(0)=='_')
-                                               ))
-                                            {
-                                                    result = false;
-                                            }
-                                    }
-                            }
-                    }
-                    else
-                    {
-                            result = false;
-                    }
+            	if(
+            			('a'<=_str.toLowerCase().charAt(0) && _str.toLowerCase().charAt(0)<='z')
+            			||
+            			(_str.toLowerCase().charAt(0)=='_')
+            			)
+            	{
+            		if (_str.length()>1)
+            		{
+            			// START KGU 2015-11-25: This loop and condition were obviously wrong
+            			//for(int i=0;i<_str.length();i++)
+            			//{
+            			//	if(!(
+            			//			('a'<=_str.toLowerCase().charAt(0) && _str.toLowerCase().charAt(0)<='z')
+            			//			||
+            			//			('0'<=_str.charAt(0) && _str.charAt(0)<='9')
+            			//			||
+            			//			(_str.charAt(0)=='_')
+            			//			))
+            			String strLower = _str.toLowerCase();
+            			for (int i = 1; i < _str.length(); i++)
+            			{
+            				if (!(
+            						('a' <= strLower.charAt(i) && strLower.charAt(i) <= 'z')
+            						||
+            						('0' <= strLower.charAt(i) && strLower.charAt(i) <= '9')
+            						||
+            						(strLower.charAt(i) == '_')
+            						))
+            			// END KGU 2015-11-25
+            				{
+            					result = false;
+            				}
+            			}
+            		}
+            	}
+            	else
+            	{
+            		result = false;
+            	}
 
             }
             return result;
@@ -1906,62 +2055,134 @@ public class Root extends Element {
                     case 14:
                             if (Root.check14) errors.add(error);
                             break;
-                    // END KGU#3 2015-11-03    
+                    // END KGU#3 2015-11-03
+                    // START KGU#2 2015-11-25: New checks for subroutine CALLs        
+                    case 15:
+                            if (Root.check15) errors.add(error);
+                            break;
+                    // END KGU#2 2015-11-25
+                    // START KGU#78 2015-11-25: New checks for JUMP
+                    case 16:
+                            if (Root.check16) errors.add(error);
+                            break;
+                    // END KGU#78 2015-11-25
                     default:
                             errors.add(error);
                             break;
             }
     }
 
-public StringList getParameterNames()
-{
-    //this.getVarNames();
-    StringList vars = getVarNames(this,true,false);
-    return vars;
-}
+    public StringList getParameterNames()
+    {
+    	//this.getVarNames();
+    	StringList vars = getVarNames(this,true,false);
+    	return vars;
+    }
 
-public String getMethodName()
-{
-	String rootText = getText().getLongString();
-	int pos;
+    public String getMethodName()
+    {
+    	String rootText = getText().getLongString();
+    	int pos;
 
-	pos = rootText.indexOf("(");
-	if (pos!=-1) rootText=rootText.substring(0,pos);
-	pos = rootText.indexOf("[");
-	if (pos!=-1) rootText=rootText.substring(0,pos);
-	pos = rootText.indexOf(":");
-	if (pos!=-1) rootText=rootText.substring(0,pos);
+    	pos = rootText.indexOf("(");
+    	if (pos!=-1) rootText=rootText.substring(0,pos);
+    	pos = rootText.indexOf("[");	// FIXME: this might be part of a return type specification!
+    	if (pos!=-1) rootText=rootText.substring(0,pos);
+    	pos = rootText.indexOf(":");	// Omitted argument list?
+    	if (pos!=-1) rootText=rootText.substring(0,pos);
 
-	String programName = rootText.trim();
+    	String programName = rootText.trim();
 
-	// START KGU 2015-10-16: Just in case...
-	programName = programName.replace(' ', '_');
-	// END KGU 2015-10-16
-	
-	return programName;
-}
+    	// START KGU#2 2015-11-25: Type-specific handling:
+    	// In case of a function, the last identifier will be the name, preceding ones may be type specifiers
+    	// With a program, we just concatenate the strings by underscores
+    	if (!isProgram)
+    	{
+    		String[] tokens = rootText.split(" ");
+    		// It won't be that many strings, so we just go forward and keep the last acceptable one
+    		for (int i = 0; i < tokens.length; i++)
+    		{
+    			if (testidentifier(tokens[i]))
+    			{
+    				programName = tokens[i];
+    			}
+    		}
+    	}
+    	// END KGU#2 2015-11-25
+    	// START KGU 2015-10-16: Just in case...
+    	programName = programName.replace(' ', '_');
+    	// END KGU 2015-10-16
 
-    public Vector analyse()
+    	return programName;
+    }
+    
+    // START KGU#78 2015-11-25: Extracted from analyse() and rewritten
+    // FIXME: This is not consistent to getMethodName()!
+    public String getResultType()
+    {
+    	String rootText = getText().getLongString();
+    	String resultType = null;
+    	StringList tokens = Element.splitLexically(rootText, true);
+    	tokens.removeAll(" ");
+    	int posOpenParenth = tokens.indexOf("(");
+		int posCloseParenth = tokens.indexOf(")");
+		int posColon = tokens.indexOf(":");
+    	if (!this.isProgram && posOpenParenth >= 0 && posOpenParenth < posCloseParenth)
+    	{
+    		// First attempt: Something after parameter list and "as" or ":"
+    		if (tokens.count() > posCloseParenth + 1 &&
+    				(tokens.get(posCloseParenth + 1).toLowerCase().equals("as")) ||
+    				(tokens.get(posCloseParenth + 1).equals(":"))
+    				)
+    		{
+    			resultType = tokens.getText(posCloseParenth + 2);
+    		}
+    		// Second attempt: A keyword sequence preceding the routine name
+    		else if (posOpenParenth > 1 && testidentifier(tokens.get(posOpenParenth-1)))
+    		{
+    			// We assume that the last token is the procedure name, the previous strings
+    			// may be the type
+    			resultType = tokens.getText(0, posOpenParenth - 1);
+    		}
+    	}
+    	else if (posColon != -1)
+    	{
+    		// Third attempt: In case of an omitted parenthesis, the part behind the colon may be the type 
+    		resultType = tokens.getText(posColon+1);
+    	}
+    	if (resultType != null)
+    	{
+    		resultType = resultType.replace('\n', ' ').trim();
+    	}
+    	return resultType;
+    }
+    // END KGU#78 2015-11-25
+
+    public Vector<DetectedError> analyse()
     {
             this.getVarNames();
 
-            Vector errors = new Vector();
+            Vector<DetectedError> errors = new Vector<DetectedError>();
             StringList vars = getVarNames(this,true,false);
             rootVars = getVarNames(this,true,false);
             StringList uncertainVars = new StringList();
 
-            String rootText = getText().getLongString();
-            Regex r;
-            int pos;
-
-            pos = rootText.indexOf("(");
-            if (pos!=-1) rootText=rootText.substring(0,pos);
-            pos = rootText.indexOf("[");
-            if (pos!=-1) rootText=rootText.substring(0,pos);
-            pos = rootText.indexOf(":");
-            if (pos!=-1) rootText=rootText.substring(0,pos);
-
-            String programName = rootText.trim();
+            // START KGU 2015-11-25: This was practically what getMethodName() does
+            //String rootText = getText().getLongString();
+            //Regex r;
+            
+            //int pos;
+            //
+            //pos = rootText.indexOf("(");
+            //if (pos!=-1) rootText=rootText.substring(0,pos);
+            //pos = rootText.indexOf("[");
+            //if (pos!=-1) rootText=rootText.substring(0,pos);
+            //pos = rootText.indexOf(":");
+            //if (pos!=-1) rootText=rootText.substring(0,pos);
+            //
+            //String programName = rootText.trim();
+            String programName = getMethodName();
+            // ENDGU 2015-11-25
 
             DetectedError error;
 
@@ -1984,7 +2205,7 @@ public String getMethodName()
             // CHECK: two checks in one loop: (#12 - new!) & (#7)
             for(int j=0;j<vars.count();j++)
             {
-                    // CHECK: non conform parameter name (#12 - new!)
+                    // CHECK: non-conform parameter name (#12 - new!)
                     if( !(vars.get(j).charAt(0)=='p' && vars.get(j).substring(1).toUpperCase().equals(vars.get(j).substring(1))) )
                     {
                             //error  = new DetectedError("The parameter «"+vars.get(j)+"» must start with the letter \"p\" followed by only uppercase letters!",this);
@@ -1992,7 +2213,7 @@ public String getMethodName()
                             addError(errors,error,12);
                     }
 
-                    // CHECK: correkt identifiers (#7)
+                    // CHECK: correct identifiers (#7)
                     if(testidentifier(vars.get(j))==false)
                     {
                             //error  = new DetectedError("«"+vars.get(j)+"» is not a valid name for a parameter!",this);
@@ -2003,47 +2224,78 @@ public String getMethodName()
 
 
             // CHECK: the content of the diagram
-            analyse(this.children,errors,vars,uncertainVars);
+            boolean[] resultFlags = {false, false, false};
+            analyse(this.children,errors,vars,uncertainVars, resultFlags);
 
             // Test if we have a function (return value) or not
-            String first = this.getText().get(0).trim();
-            boolean haveFunction = first.contains(") as") || first.contains(") AS")  || first.contains(") As") || first.contains(") aS") || first.contains(") :") || first.contains("):");
+            // START KGU#78 2015-11-25: Delegated to a more general function
+            //String first = this.getText().get(0).trim();
+            //boolean haveFunction = first.toLowerCase().contains(") as ") || first.contains(") :") || first.contains("):");
+            boolean haveFunction = getResultType() != null;
+            // END KGU#78 2015-11-25
 
             // CHECK: var = programname (#9)
-            if(variables.contains(programName) && haveFunction==false)
+            if (!haveFunction && variables.contains(programName))
             {
-                    //error  = new DetectedError("Your program («"+programName+"») cannot have the same name as a variable!",this);
+                    //error  = new DetectedError("Your program («"+programName+"») may not have the same name as a variable!",this);
                     error  = new DetectedError(errorMsg(Menu.error09,programName),this);
                     addError(errors,error,9);
             }
 
             // CHECK: sub does not return any result (#13 - new!)
-            // pre-requirement: we have a sub that return something ...  FUNCTIONNAME () <return type>
-            // check to see if the name of the sub (proposed filename)
-            // is contained in the name of the assigned variablename
+            // pre-requirement: we have a sub that returns something ...  FUNCTIONNAME () <return type>
+            // check to see if
+            // _ EITHER _
+            // the name of the sub (proposed filename) is contained in the name of the assigned variablename
             // _ OR _
-            // the list of initialized variables contains "RESULT"
-            if(haveFunction==true)
+            // the list of initialized variables contains one of "RESULT", "Result", or "Result"
+            // _ OR _
+            // every path through the algorithm end with a return instruction (with expression!)
+            if (haveFunction==true)
             {
-                    if (!vars.contains("result",false) && !vars.contains(programName,false)
-                        &&
-                            !uncertainVars.contains("result",false) && !uncertainVars.contains(programName,false)
-                       )
-                    {
-                            //error  = new DetectedError("Your function does not return any result!",this);
-                            error  = new DetectedError(errorMsg(Menu.error13_1,""),this);
-                            addError(errors,error,13);
-                    }
-                    else if (
-                                     (!vars.contains("result",false) && !vars.contains(programName,false))
-                                     &&
-                                     (uncertainVars.contains("result",false) || uncertainVars.contains(programName,false))
-                                     )
-                    {
-                            //error  = new DetectedError("Your function may not return a result!",this);
-                            error  = new DetectedError(errorMsg(Menu.error13_2,""),this);
-                            addError(errors,error,13);
-                    }
+            	// START KGU#78 2015-11-25: Let's first gather all necessary information
+            	boolean setsResultCi = vars.contains("result", false);
+//            	boolean setsResultLc = false, setsResultUc = false, setsResultWc = false;
+//            	if (setsResultCi)
+//            	{
+//            		setsResultLc = vars.contains("result", true);
+//            		setsResultUc = vars.contains("RESULT", true);
+//            		setsResultWc = vars.contains("Result", true);
+//            	}
+            	boolean setsProcNameCi = vars.contains(programName,false);	// Why case-independent?
+            	boolean maySetResultCi = uncertainVars.contains("result", false);
+//            	boolean maySetResultLc = false, maySetResultUc = false, maySetResultWc = false;
+//            	if (maySetResultCi)
+//            	{
+//            		maySetResultLc = uncertainVars.contains("result", true);
+//            		maySetResultUc = uncertainVars.contains("RESULT", true);
+//            		maySetResultWc = uncertainVars.contains("Result", true);
+//            	}
+            	boolean maySetProcNameCi = uncertainVars.contains(programName,false);	// Why case-independent?
+            	// END KHU#78 2015-11-25
+            	
+            	if (!setsResultCi && !setsProcNameCi &&
+            			!maySetResultCi && !setsProcNameCi)
+            	{
+            		//error  = new DetectedError("Your function does not return any result!",this);
+            		error  = new DetectedError(errorMsg(Menu.error13_1,""),this);
+            		addError(errors,error,13);
+            	}
+            	else if (!setsResultCi && !setsProcNameCi &&
+            			(maySetResultCi || setsProcNameCi))
+            	{
+            		//error  = new DetectedError("Your function may not return a result!",this);
+            		error  = new DetectedError(errorMsg(Menu.error13_2,""),this);
+            		addError(errors,error,13);
+            	}
+            	// START KGU#78 2015-11-25: Check competitive approaches
+            	else if (maySetResultCi && maySetProcNameCi)
+            	{
+            		//error  = new DetectedError("Your functions seems to use several competitive return mechanisms!",this);
+            		error  = new DetectedError(errorMsg(Menu.error13_3,"RESULT <-> " + programName),this);
+            		addError(errors,error,13);            		
+            	}
+            	// END KGU#78 2015-11-25
             }
 
             /*
