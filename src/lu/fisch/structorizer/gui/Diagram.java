@@ -39,6 +39,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.11.08      Parser preferences for FOR loops enhanced (KGU#3)
  *      Kay Gürtzig     2015.11.22      Selection of Subqueue subsequences or entire Subqueues enabled
  *                                      thus allowing collective operations like delete/cut/copy/paste (KGU#87).
+ *      Kay Gürtzig     2015.11.24      Method setRoot() may now refuse the replacement (e.g. on cancelling
+ *                                      the request to save recent changes)
  *
  ******************************************************************************************************
  *
@@ -101,6 +103,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     private int mY = -1;
 
     private NSDController NSDControl = null;
+    
+    // START KGU#2 2015-11-24
+    public boolean isArrangerOpen = false;
+    // END KGU#2 2015-11-24
 
     private JList errorlist = null;
 
@@ -149,17 +155,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	/**
 	 * @param root the Root to set
+	 * @return false if the user refuses to adopt the Root
 	 */
-	public void setRoot(Root root) {
-		setRoot(root, true);
+	public boolean setRoot(Root root) {
+		return setRoot(root, true);
 	}
 	
-	public void setRoot(Root root, boolean askToSave) {
+	public boolean setRoot(Root root, boolean askToSave) {
 		if (root != null)
 		{
 			if(askToSave){
 				// Save if something has been changed
-				saveNSD(true);
+				if (!saveNSD(true))
+				{
+					// Abort this if the user cancels the save request
+					return false;
+				}
 				this.unselectAll();
 			}
 
@@ -172,9 +183,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			redraw();
 			analyse();
 		}
+		return true;
 	}
 	// END KGU#48,KGU#49 2015-10-18
 
+	// START KGU#2 2015-11-24: Allows the Executor to localize the Control frame
+	public String getLang()
+	{
+		return NSDControl.getLang();
+	}
+	// END KGU#2 2015-11-24
+	
     public boolean getAnalyser()
     {
         return Element.E_ANALYSER;
@@ -1527,6 +1546,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		pp.setVisible(true);
 	}
 
+	// START KGU #2 2015-11-19
 	/*****************************************
 	 * arrange method
 	 *****************************************/
@@ -1536,7 +1556,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Arranger arr = Arranger.getInstance();
 		arr.addToPool(root, NSDControl.getFrame());
 		arr.setVisible(true);
+		isArrangerOpen = true;	// Gives the Executor a hint where to find a subroutine pool
 	}
+	// END KGU#2 2015-11-19
 
 	/*****************************************
 	 * about method

@@ -63,6 +63,7 @@ Menu.menuFileImport.text=Importieren
 // Submenu of "File -> Import"
 Menu.menuFileImportPascal.text=Pascal Code ...
 Menu.menuFilePrint.text=Drucken ...
+Menu.menuFileArrange.text=Im Arranger anordnen
 Menu.menuFileQuit.text=Beenden
 // Menu "Edit"
 Menu.menuEdit.text=Bearbeiten
@@ -190,7 +191,7 @@ AnalyserPreferences.check5.text=Prüfen, ob alle Variablenamen großgeschrieben 
 AnalyserPreferences.check6.text=Prüfen, ob der Programmname großgeschrieben ist. (LUX/MEN)
 AnalyserPreferences.check7.text=Nach nicht korrekt benannten Identifikatoren suchen.
 AnalyserPreferences.check8.text=Nach Wertzuweisungen innerhalb von Bedingungen suchen.
-AnalyserPreferences.check9.text=Testen, ob der Programmname einzigartig ist.
+AnalyserPreferences.check9.text=Testen, ob der Programmname einmalig ist.
 AnalyserPreferences.check10.text=Nach fehlerhaften mehrzeiligen Anweisungen suchen.
 AnalyserPreferences.check11.text=Nach fehlerhaften Wertzuweisungen suchen.
 AnalyserPreferences.check12.text=Prüfen, ob die Parameternamen korrekt sind. (LUX/MEN)
@@ -245,6 +246,7 @@ Editor.btnMoveUp.tooltip=Bewegen des ausgewählten Elements um eine Position nac
 Editor.btnMoveDown.tooltip=Bewegen des ausgewählten Elements um eine Position nach unten.
 //printing
 Editor.btnPrint.tooltip=Drucken des Diagramms.
+Editor.btnArrange.tooltip=Diagram zum Arranger-Tableau hinzufügen.
 // font
 Editor.btnFontUp.tooltip=Erhöhen der Zeichensatz-Größe.
 Editor.btnFontDown.tooltip=Verringern der Zeichensatz-Größe.

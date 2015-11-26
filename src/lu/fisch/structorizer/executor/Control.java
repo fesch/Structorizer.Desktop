@@ -51,6 +51,8 @@ import java.util.Vector;
 
 import javax.swing.table.DefaultTableModel;
 
+import lu.fisch.structorizer.gui.IconLoader;
+
 
 /**
  *
@@ -73,8 +75,14 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+    	// START KGU#89 2015-11-25
+    	this.setIconImage(IconLoader.ico004.getImage());
+    	// END KGU#89 2015-11-25
         slSpeed = new javax.swing.JSlider();
         lblSpeed = new javax.swing.JLabel();
+        // START KGU#89 2015-11-25
+        lblSpeedValue = new javax.swing.JLabel();
+        // END KGU#89 2015-11-25
         btnStop = new javax.swing.JButton();
         btnPlay = new javax.swing.JButton();
         btnPause = new javax.swing.JButton();
@@ -130,7 +138,11 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         tblVar.addPropertyChangeListener(this);
 
         lblSpeed.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        lblSpeed.setText(" Delay: 50");
+        // START KGU#89 2015-11-25
+        //lblSpeed.setText(" Delay: 50");
+        lblSpeed.setText(" Delay: ");
+        lblSpeedValue.setText("50");
+        // END KGU#89 2015-11-25
 
         btnStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/stop.png"))); // NOI18N
         btnStop.addActionListener(new java.awt.event.ActionListener() {
@@ -185,7 +197,11 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(lblSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 86, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                		// START KGU#89 2015-11-25: Speed label decomposed
+                    .add(layout.createSequentialGroup()
+                    	.add(lblSpeed /*, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 86, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE*/)
+                    	.add(lblSpeedValue/*, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE*/))
+                    	// END KGU#89 2015-11-25
                     .add(layout.createSequentialGroup()
                         .add(btnStop)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -213,6 +229,9 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
             .add(layout.createSequentialGroup()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                     .add(lblSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                		// START KGU#89 2015-11-25: New, separate value label
+                    .add(lblSpeedValue, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                		// END KGU#89 2015-11-25
                     .add(slSpeed, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
@@ -316,8 +335,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         {
             Executor.getInstance().setDelay(slSpeed.getValue());
         }
-        // FIXED KGU 2010-10-14 Misleading caption "Speed" --> "Delay"
-        lblSpeed.setText(" Delay: "+slSpeed.getValue());
+        // START KGU#89 2015-11-25
+        //lblSpeed.setText(" Delay: "+slSpeed.getValue());
+        lblSpeedValue.setText("" + slSpeed.getValue());
+        // END KGU#89 2015-11-25
     }
 
     private void slSpeedCaretPositionChanged(java.awt.event.InputMethodEvent evt)//GEN-FIRST:event_slSpeedCaretPositionChanged
@@ -394,12 +415,15 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     private javax.swing.JButton btnStep;
     private javax.swing.JButton btnStop;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JLabel lblSpeed;
+    public javax.swing.JLabel lblSpeed;
+    // START KGU#89 2015-11-25: Is to ease localization (separate text and value)
+    private javax.swing.JLabel lblSpeedValue;
+    // END KGU#49 2015-11-25
     private javax.swing.JSlider slSpeed;
     private javax.swing.JTable tblVar;
     // End of variables declaration//GEN-END:variables
     // START KGU#2 (#9) 2015-11-14: Additional display of subroutine call level
-    private javax.swing.JLabel lblCallLevel;
+    public javax.swing.JLabel lblCallLevel;
     private javax.swing.JTextField txtCallLevel;
     // END KGU#2 (#9) 2015-11-14
     

@@ -179,7 +179,7 @@ public class CGenerator extends Generator
 	{
 		_input = super.transform(_input);
 
-		// START KGU#72 2015-11-10: Relacement was done but ineffective
+		// START KGU#72 2015-11-10: Replacement was done but ineffective
 		//_input.replace(" div ", " / ");
 		_input = _input.replace(" div ", " / ");
 		// END KGU#72 2015-11-10

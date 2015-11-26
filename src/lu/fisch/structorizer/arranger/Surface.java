@@ -61,6 +61,8 @@ package lu.fisch.structorizer.arranger;
 
 import java.awt.Frame;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
@@ -74,14 +76,17 @@ import java.util.Iterator;
 import java.util.Vector;
 
 import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
+import lu.fisch.graphics.Canvas;
 import lu.fisch.graphics.Rect;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Updater;
+import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.io.PNGFilter;
 import lu.fisch.structorizer.parsers.NSDParser;
@@ -91,7 +96,7 @@ import net.iharder.dnd.FileDrop;
  *
  * @author robertfisch
  */
-public class Surface extends javax.swing.JPanel implements MouseListener, MouseMotionListener, Updater, WindowListener {
+public class Surface extends javax.swing.JPanel implements MouseListener, MouseMotionListener, WindowListener, Updater, IRoutinePool {
 
     private Vector<Diagram> diagrams = new Vector<Diagram>();
 
@@ -99,6 +104,9 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     private Point mouseRelativePoint = null;
     private boolean mousePressed = false;
     private Diagram mouseSelected = null;
+    // START KGU#88 2015-11-24: We may often need the pin icon
+    public static Image pinIcon = null;
+    // END KGU#88 2015-11-24
 
 
     @Override
@@ -113,7 +121,22 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
                 Root root = diagram.root;
                 Point point = diagram.point;
                 
-                root.draw(g, point, this);
+                // START KGU#88 2015-11-24
+                //root.draw(g, point, this);
+                Rect rect = root.draw(g, point, this);
+                if (diagram.isPinned)
+                {
+                	if (pinIcon == null)
+                	{
+                		pinIcon = new ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png")).getImage();
+                	}
+                	int x = rect.right - pinIcon.getWidth(null)*3/4;
+                	int y = rect.top - pinIcon.getHeight(null)/4;
+                	
+                	((Graphics2D)g).drawImage(pinIcon, x, y, null);
+                	//((Graphics2D)g).drawOval(rect.right - 15, rect.top + 5, 10, 10);
+                }
+                // END KGU#88 2015_11-24
             }
         }
     }
@@ -311,6 +334,16 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     }
     // END KGU#85 2015-11-17
 
+    // START KGU#88 2015-11-24: Provide a possibility to protect diagrams against replacement
+    public void togglePinned()
+    {
+    	if (this.mouseSelected != null)
+    	{
+    		this.mouseSelected.isPinned = !this.mouseSelected.isPinned;
+    		repaint();
+    	}
+    }
+    // END KGU#88 2015-11-24
 
     /** Creates new form Surface */
     public Surface()
@@ -387,13 +420,18 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
         {
             // create editor
             Mainform form = mouseSelected.mainform;
-            if(form==null)
+            // START KGU#88 2015-11-24: An atteched Mainform might refuse to re-adopt the root
+            //if(form==null)
+            if(form==null || !form.setRoot(mouseSelected.root))
+            // END KGU#88 2015-11-24
             {
             	// START KGU#49/KGU#66 2015-11-14: Start a dependent Mainform not willing to kill us
                 //form=new Mainform();
                 form=new Mainform(false);
             	// END KGU#49/KGU#66 2015-11-14
                 form.addWindowListener(this);
+                // With a new Mainform, refusal is not possible 
+                form.setRoot(mouseSelected.root);
             }
 
             // change the default closing behaviour
@@ -407,8 +445,10 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
             // register this as "updater"
             mouseSelected.root.addUpdater(this);
 
-            // affect the new diagram to the editor
-            form.setRoot(mouseSelected.root);
+            // attach the new diagram to the editor
+            // START KGU#88 2015-11-24: Now already done above
+            //form.setRoot(mouseSelected.root);
+            // END KGU#88 2015-11-24
             form.setVisible(true);
 
             mouseSelected=null;
@@ -550,6 +590,11 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     	Diagram owner = findDiagram(oldRoot);
     	if (owner != null) {
     		oldRoot.removeUpdater(this);
+    	// START KGU#88 2015-11-24: Protect the Root if diagram is pinned
+    	}
+    	if (owner != null && !owner.isPinned)
+    	{
+    	// END KGU#88 2015-11-24
     		if (owner.mainform != null) {
     			owner.root = owner.mainform.getRoot();
     			owner.root.addUpdater(this);
@@ -569,10 +614,10 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     
     // START KGU#2 2015-10-17: Prepares the execution of a registered NSD as subroutine
     /* (non-Javadoc)
-     * @see lu.fisch.structorizer.elements.Updater#findFunctionSources(java.lang.String)
+     * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesByName(java.lang.String)
      */
     @Override
-    public Vector<Root> findSourcesByName(String rootName)
+    public Vector<Root> findRoutinesByName(String rootName)
     {
     	Vector<Root> functions = new Vector<Root>();
     	if (this.diagrams != null) {
@@ -588,6 +633,27 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     	return functions;
     }
     // END KGU#2 2015-10-17
+    
+    // START KGU#2 2015-11-24
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesBySignature(java.lang.String, int)
+     */
+    @Override
+    public Vector<Root> findRoutinesBySignature(String rootName, int argCount)
+    {
+    	Vector<Root> functionsAny = findRoutinesByName(rootName);
+    	Vector<Root> functions = new Vector<Root>();
+    	for (int i = 0; i < functionsAny.size(); i++)
+    	{
+    		Root root = functionsAny.get(i);
+   			if (!root.isProgram && root.getParameterNames().count() == argCount)
+   			{
+   				functions.add(root);
+    		}
+    	}
+    	return functions;
+    }
+    // END KGU#2 2015-11-24
 
     
     // Windows listener for the mainform

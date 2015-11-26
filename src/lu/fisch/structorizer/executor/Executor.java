@@ -53,6 +53,7 @@ package lu.fisch.structorizer.executor;
 *      Kay Gürtzig     2015.11.20      Bugfix KGU#86: Interpreter was improperly set up for functions sqr, sqrt;
 *                                      Message types for output and return value information corrected
 *      Kay Gürtzig     2015.11.23      Enhancement #36 (KGU#84) allowing to pause from input and output dialogs.
+*      Kay Gürtzig     2015.11.24/25   Enhancement #9 (KGU#2) enabling the execution of calls accomplished.
 *
 ******************************************************************************************************
 *
@@ -95,7 +96,12 @@ package lu.fisch.structorizer.executor;
 *         
 ******************************************************************************************************///
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dialog.ModalityType;
+import java.awt.List;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Stack;
@@ -104,8 +110,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.PatternSyntaxException;
 
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 
+import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Case;
@@ -121,6 +132,8 @@ import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.elements.Forever;
 import lu.fisch.structorizer.generators.CGenerator;
 import lu.fisch.structorizer.gui.Diagram;
+import lu.fisch.structorizer.gui.IconLoader;
+import lu.fisch.structorizer.gui.LangDialog;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
@@ -161,6 +174,15 @@ public class Executor implements Runnable
 		mySelf.control.init();
 		mySelf.control.setLocationRelativeTo(diagram);
 		mySelf.control.validate();
+		// START KGU#89 2015-11-25: Language support (we don't force the existence of all languages)
+		try {
+		LangDialog.setLang(mySelf.control, mySelf.diagram.getLang());
+		}
+		catch (Exception ex)
+		{
+			System.err.println(ex.getMessage());
+		}
+		// END KGU#89 2015-11-25
 		mySelf.control.setVisible(true);
 		mySelf.control.repaint();
 
@@ -176,7 +198,7 @@ public class Executor implements Runnable
 	// START KGU#2 (#9) 2015-11-13: We need a stack of calling parents
 	private Stack<ExecutionStackEntry> callers = new Stack<ExecutionStackEntry>();
 	private Object returnedValue = null;
-	private Vector<Updater> routinePools = new Vector<Updater>();
+	private Vector<IRoutinePool> routinePools = new Vector<IRoutinePool>();
 	// END KGU#2 (#9) 2015-11-13
 
 	private DiagramController diagramController = null;
@@ -188,6 +210,10 @@ public class Executor implements Runnable
 	private boolean step = false;
 	private boolean stop = false;
 	private StringList variables = new StringList();
+	// START KGU#2 2015-11-24: It is crucial to know whether an error had been reported on a lower level
+	private boolean isErrorReported = false;
+	private StringList stackTrace = new StringList();
+	// END KGU#2 2015-11-22
 
 	private Executor(Diagram diagram, DiagramController diagramController)
 	{
@@ -393,10 +419,21 @@ public class Executor implements Runnable
 	public void execute()
 	// START KGU#2 (#9) 2015-11-13: We need a recursively applicable version
 	{
-		this.execute(null);
 		this.callers.clear();
+		this.stackTrace.clear();
 		this.routinePools.clear();
+		if (diagram.isArrangerOpen)
+		{
+			this.routinePools.addElement(Arranger.getInstance());
+		}
+		this.isErrorReported = false;
 		this.diagram.getRoot().isCalling = false;
+		
+		this.execute(null);
+		
+		this.callers.clear();
+		this.stackTrace.clear();
+		//System.out.println("stackTrace size: " + stackTrace.count());
 	}
 	
 	/**
@@ -415,9 +452,9 @@ public class Executor implements Runnable
 		while (iter.hasNext())
 		{
 			Updater pool = iter.next();
-			if (!this.routinePools.contains(pool))
+			if (pool instanceof IRoutinePool && !this.routinePools.contains(pool))
 			{
-				this.routinePools.addElement(pool);
+				this.routinePools.addElement((IRoutinePool)pool);
 			}
 		}
 		// END KGU#2 (#9) 2015-11-14
@@ -442,19 +479,23 @@ public class Executor implements Runnable
 			//System.out.println("Having: "+params.getCommaText());
 			params=params.reverse();
 			//System.out.println("Having: "+params.getCommaText());
+			// START KGU#2 2015-11-24
+			boolean noArguments = arguments == null;
+			if (noArguments) arguments = new Object[params.count()];
+			// END KGU#2 2015-11-24
 			for (int i = 0; i < params.count(); i++)
 			{
 				String in = params.get(i);
 				
 				// START KGU#2 (#9) 2015-11-13: If root was not called then ask the user for values
-				if (arguments == null)
+				if (noArguments)
 				{
 				// END KGU#2 (#9) 2015-11-13
 					String str = JOptionPane.showInputDialog(null,
 							"Please enter a value for <" + in + ">", null);
 					if (str == null)
 					{
-						i = params.count();	// leave the loop
+						//i = params.count();	// leave the loop
 						result = "Manual break!";
 						break;
 					}
@@ -463,6 +504,9 @@ public class Executor implements Runnable
 						// START KGU#69 2015-11-08 What we got here is to be regarded as raw input
 						setVarRaw(in, str);
 						// END KGU#69 2015-11-08
+						// START KGU#2 2015-11-24: We might need the values for a stacktrace
+						arguments[i] = interpreter.get(in);
+						// END KGU#2 2015-11-24
 					} catch (EvalError ex)
 					{
 						result = ex.getMessage();
@@ -519,8 +563,27 @@ public class Executor implements Runnable
 				result = modifiedResult;
 			}
 
-			JOptionPane.showMessageDialog(diagram, result, "Error",
-					JOptionPane.ERROR_MESSAGE);
+			// START KGU#2 2015-11-22: If we are on a subroutine level, then we must stop the show
+			//JOptionPane.showMessageDialog(diagram, result, "Error",
+			//		JOptionPane.ERROR_MESSAGE);
+			if (!isErrorReported)
+			{
+				JOptionPane.showMessageDialog(diagram, result, "Error",
+						JOptionPane.ERROR_MESSAGE);
+				isErrorReported = true;
+			}
+			if (!this.callers.isEmpty())
+			{
+				stop = true;
+				paus = false;
+				step = false;
+			}
+			else if (isErrorReported)
+			{
+				addToStackTrace(root, arguments);
+				showStackTrace();
+			}
+			// END KGU#2 2015-11-24	
 		} else
 		{
 			if ((root.isProgram == false) && (returned == false))
@@ -543,20 +606,10 @@ public class Executor implements Runnable
 							//JOptionPane.showMessageDialog(diagram, n,
 							//		"Returned result", 0);
 							this.returnedValue = n;
-							if (arguments == null)
+							if (this.callers.isEmpty())
 							{
-								// START KGU#84 2015-11-23: Enhancement to give a chance to pause
-								//JOptionPane.showMessageDialog(diagram, n,
-								//		"Returned result", JOptionPane.INFORMATION_MESSAGE);
-								Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
-								int pressed = JOptionPane.showOptionDialog(diagram, n, "Returned result",
-										JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
-								if (pressed == 1)
-								{
-									step = true;
-									control.setButtonsForPause();
-								}
-								// END KGU#84 2015-11-23
+								JOptionPane.showMessageDialog(diagram, n,
+										"Returned result", JOptionPane.INFORMATION_MESSAGE);
 							}
 							// END KGU#2 (#9) 2015-11-13
 							returned = true;
@@ -585,7 +638,7 @@ public class Executor implements Runnable
 	// START KGU#2 (#9) 2015-11-13: New method to execute a called subroutine
 	private Object executeCall(Root root, Object[] arguments)
 	{
-		Object result = null;
+		Object resultObject = null;
 		Root oldRoot = this.diagram.getRoot();
 		ExecutionStackEntry entry = new ExecutionStackEntry(
 				oldRoot,
@@ -607,32 +660,81 @@ public class Executor implements Runnable
 		this.diagram.setRoot(root);
 		
 		boolean done = this.execute(arguments);
+
+		// START KGU#2 2015-11-24
+		if (!done || stop)
+		{
+			addToStackTrace(root, arguments);
+		}
+		// END KGU#2 2015-11-24
 		
-//		if (done)
-//		{
-			this.callers.pop();	// Should be the entry still held by variable entry
-//		}
-//		else 
-//		{
-//			while (!callers.empty())
-//			{
-//				entry = callers.pop();
-//			}
-//		}
-		
+		this.callers.pop();	// Should be the entry still held by variable entry
+					
 		this.variables = entry.variables;
 		this.interpreter = entry.interpreter;
 		this.diagram.setRoot(entry.root);
 		entry.root.isCalling = false;
 
 		// The called subroutine will certainly have returned a value...
-		result = this.returnedValue;
+		resultObject = this.returnedValue;
 		// ... but definitively not THIS calling routine!
 		this.returned = false;
 		this.returnedValue = null;
 		
-		return result;
+		try 
+		{
+			updateVariableDisplay();
+		}
+		catch (EvalError ex) {}
+		
+		return resultObject;
 	}
+	
+	// START KGU#2 2015-11-24: Stack trace support for execution errors
+	private void addToStackTrace(Root _root, Object[] _arguments)
+	{
+		String argumentString = "";
+		if (_arguments != null)
+		{
+			for (int i = 0; i < _arguments.length; i++)
+			{
+				argumentString = argumentString + (i>0 ? ", " : "") + prepareValueForDisplay(_arguments[i]);					
+			}
+			argumentString = "(" + argumentString + ")";
+		}
+		this.stackTrace.add(_root.getMethodName() + argumentString);
+	}
+
+	/**
+	 * Pops up a dialog displaying the call trace with argument values
+	 */
+	private void showStackTrace()
+	{
+		if (stackTrace.count() <= 20)
+		{
+			// Okay, keep it simple
+			JOptionPane.showMessageDialog(diagram, this.stackTrace.getText(), "Stack trace",
+					JOptionPane.INFORMATION_MESSAGE);
+		}
+		else
+		{
+			JDialog stackView = new JDialog();
+			stackView.setTitle("Stack trace");
+			stackView.setIconImage(IconLoader.ico004.getImage());
+			List stackContent = new List(10);
+			for (int i = 0; i < stackTrace.count(); i++)
+			{
+				stackContent.add(stackTrace.get(i));
+			}
+			stackView.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		    stackView.getContentPane().add(stackContent, BorderLayout.CENTER);
+		    stackView.setSize(300, 300);
+		    stackView.setLocationRelativeTo(control);
+		    stackView.setModalityType(ModalityType.APPLICATION_MODAL);
+		    stackView.setVisible(true);
+		}		
+	}
+	// END KGU#2 2015-11-24
 
     /**
      * Searches all known pools for subroutines with a signature compatible to name(arg1, arg2, ..., arg_nArgs) 
@@ -649,19 +751,14 @@ public class Executor implements Runnable
     	{
     		subroutine = root;
     	}
-    	// TODO Check for ambiguity (multiple matches) and raise e.g. an exception in that case
-    	Iterator<Updater> iter = this.routinePools.iterator();
+    	Iterator<IRoutinePool> iter = this.routinePools.iterator();
     	while (subroutine == null && iter.hasNext())
     	{
-    		Vector<Root> candidates = iter.next().findSourcesByName(name);
+    		Vector<Root> candidates = iter.next().findRoutinesBySignature(name, nArgs);
     		for (int c = 0; subroutine == null && c < candidates.size(); c++)
     		{
-    			Root cand = candidates.get(c);
-    			// Check argument number (a type check is not of course possible)
-    			if (!cand.isProgram && cand.getParameterNames().count() == nArgs)
-    			{
-    				subroutine = cand;
-    			}
+    	    	// TODO Check for ambiguity (multiple matches) and raise e.g. an exception in that case
+    			subroutine = candidates.get(c);
     		}
     	}
     	return subroutine;
@@ -1435,7 +1532,10 @@ public class Executor implements Runnable
 		{
 			setVar(varName, value);
 		}
-		else if (result.isEmpty())
+		// START KGU#2 2015-11-24: In case of an already detected problem don't fill the result
+		//else if (result.isEmpty())
+		else if (result.isEmpty() && !stop)
+		// END KGU#2 2015-11-24
 		{
 			result = "<"
 					+ expression

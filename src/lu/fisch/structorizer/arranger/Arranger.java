@@ -39,6 +39,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2015.10.18		Transient WindowsListener added enabling Surface to have dirty diagrams saved before exit
  *      Kay Gürtzig     2015.11.17		Remove button added (issue #35 = KGU#85)
  *      Kay Gürtzig     2015.11.19		Converted into a singleton (enhancement request #9 = KGU#2)
+ *      Kay Gürtzig     2015-11-24		Pin button added (issue #35, KGU#88)
  *
  ******************************************************************************************************
  *
@@ -51,19 +52,22 @@ import java.awt.Point;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.executor.IRoutinePool;
+import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
 
 /**
  *
  * @author robertfisch
  */
-public class Arranger extends javax.swing.JFrame implements WindowListener
+public class Arranger extends javax.swing.JFrame implements WindowListener, IRoutinePool
 {
     // START KGU#2 2015-11-19: Converted into a singleton class
     //** Creates new form Arranger */
@@ -130,10 +134,23 @@ public class Arranger extends javax.swing.JFrame implements WindowListener
         // START KGU#85 2015-11-17
         btnRemoveDiagram = new javax.swing.JButton();
         // END KGU#85 2015-11-17
+        // START KGU#88 2015-11-24
+        btnPinDiagram = new javax.swing.JButton();
+        // END KGU#88 2015-11-24
         surface = new lu.fisch.structorizer.arranger.Surface();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Structorizer Arranger");
+        // START KGU#2 2015-11-24: Replace the Java default icon
+        try
+        {
+        setIconImage(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/arranger48.png")).getImage());
+        }
+        catch (Error error)
+        {
+        	System.err.println(error.getMessage());
+        }
+        // END KGU#2 2015-11-24
 
         toolbar.setFloatable(false);
         toolbar.setRollover(true);
@@ -162,7 +179,22 @@ public class Arranger extends javax.swing.JFrame implements WindowListener
         });
         toolbar.add(btnAddDiagram);
 
-        // START KGU#85 2015-11-17: FIXME: Need a different icon
+        // START KGU#88 2015-11-24: FIXME: Need a different icon
+        btnPinDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png"))); // NOI18N
+        btnPinDiagram.setText("Pin Diagram");
+        btnPinDiagram.setToolTipText("Pin a diagram to make it immune against replacement.");
+        btnPinDiagram.setFocusable(false);
+        btnPinDiagram.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnPinDiagram.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnPinDiagram.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnPinDiagramActionPerformed(evt);
+            }
+        });
+        toolbar.add(btnPinDiagram);
+        // END KGU#88 2015-11-24
+
+        // START KGU#85 2015-11-17: New opportunity to drop the selected diagram 
         btnRemoveDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/100_diagram_drop.png"))); // NOI18N
         btnRemoveDiagram.setText("Drop Diagram");
         btnRemoveDiagram.setFocusable(false);
@@ -259,6 +291,13 @@ public class Arranger extends javax.swing.JFrame implements WindowListener
     }
     // END KGU#85 2015-11-17
 
+    // START KGU#88 2015-11-24
+    private void btnPinDiagramActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnAddDiagramActionPerformed
+    {
+        surface.togglePinned();
+    }
+    // END KGU#88 2015-11-24
+
     /**
      * Starts the Arranger as application
      * @param args the command line arguments
@@ -279,6 +318,9 @@ public class Arranger extends javax.swing.JFrame implements WindowListener
     // START KGU#85 2015-11-17
     private javax.swing.JButton btnRemoveDiagram;
     // END KGU#85 2015-11-17
+    // START KGU#88 2015-11-24
+    private javax.swing.JButton btnPinDiagram;
+    // END KGU#88 2015-11-24
     private javax.swing.JButton btnExportPNG;
     private lu.fisch.structorizer.arranger.Surface surface;
     private javax.swing.JToolBar toolbar;
@@ -315,5 +357,16 @@ public class Arranger extends javax.swing.JFrame implements WindowListener
     public void windowDeactivated(WindowEvent e)
     {
     }
+    
+    // START KGU#2 2015-11-24
+	@Override
+	public Vector<Root> findRoutinesByName(String rootName) {
+		return surface.findRoutinesByName(rootName);
+	}
+	@Override
+	public Vector<Root> findRoutinesBySignature(String rootName, int argCount) {
+		return surface.findRoutinesBySignature(rootName, argCount);
+	}
+	// END KGU#2 2015-11-24
 
 }

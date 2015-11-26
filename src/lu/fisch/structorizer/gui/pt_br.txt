@@ -127,7 +127,7 @@ Menu.menuPreferencesLanguageFrench.text=Francês
 Menu.menuPreferencesLanguageDutch.text=Holandês
 Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburguês
 Menu.menuPreferencesLanguageItalian.text=Italian
-Menu.menuPreferencesLanguagePortugalBRazil.text=Português (BR) 
+Menu.menuPreferencesLanguagePortugalBrazil.text=Português (BR) 
 Menu.menuPreferencesLookAndFeel.text=Aspecto
 Menu.menuPreferencesSave.text=Salvar preferências agora
 
