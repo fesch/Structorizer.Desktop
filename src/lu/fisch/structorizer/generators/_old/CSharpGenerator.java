@@ -329,16 +329,16 @@ public class CSharpGenerator extends Generator
 			}
 		}
 		
-		// nested structure 
-		protected void generateCode(Subqueue _subqueue, String _indent)
-		{
-			// code.add(_indent+"");
-			for(int i=0;i<_subqueue.children.size();i++)
-			{
-				generateCode((Element) _subqueue.children.get(i),_indent);
-			}
-			// code.add(_indent+"");
-		}
+//		// nested structure 
+//		protected void generateCode(Subqueue _subqueue, String _indent)
+//		{
+//			// code.add(_indent+"");
+//			for(int i=0;i<_subqueue.getSize();i++)
+//			{
+//				generateCode((Element) _subqueue.getElement(i),_indent);
+//			}
+//			// code.add(_indent+"");
+//		}
 		
 		public String generateCode(Root _root, String _indent)
 		{

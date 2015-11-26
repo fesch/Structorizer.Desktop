@@ -38,6 +38,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.11.03      check_14 property added (For loop enhancement, #10 = KGU#3)
  *      Kay Gürtzig     2015.11.10      Issues #6 and #16 fixed by appropriate default window behaviour
  *      Kay Gürtzig     2015.11.14      Yet another improved approach to #6 / #16: see comment
+ *      Kay Gürtzig     2015.11.24      KGU#88: The decision according to #6 / #16 is now returned on setRoot()
  *
  ******************************************************************************************************
  *
@@ -569,8 +570,8 @@ public class Mainform  extends JFrame implements NSDController
     	boolean done = false;
     	if (this.diagram != null)	// May look somewhat paranoid, but diagram is public...
     	{
-    		this.diagram.setRoot(root);
-    		done = true;
+    		// KGU#88: We now reflect if the user refuses to override the former diagram
+    		done = this.diagram.setRoot(root);
     	}
     	return done;
     }

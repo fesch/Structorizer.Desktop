@@ -43,8 +43,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2014.11.16		Bugfixes in operator conversion
  *      Kay Gürtzig             2015.10.18		Indentation and comment mechanisms revised, bugfix
  *      Kay Gürtzig             2015.10.21		New generator now supports multiple-case branches
- *      Kay Gürtzig             2015.11.01		Language transforming reorganised, FOR loop revision
- *      Kay Gürtzig             2015.11.10		Bugfixes KGU#71, KGU#72
+ *      Kay Gürtzig             2015.11.01      Language transformation reorganised, FOR loop revision
+ *      Kay Gürtzig             2015.11.10      Bugfixes KGU#71, KGU#72
  *
  ******************************************************************************************************
  *
@@ -171,8 +171,6 @@ public class CGenerator extends Generator
 	}
 	// END KGU#18/KGU#23 2015-11-01
     
-// START KGU#18/KGU#23 2015-11-01: Obsolete    
-//    public static String transform(String _input)
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String)
 	 */
@@ -185,9 +183,9 @@ public class CGenerator extends Generator
 		//_input.replace(" div ", " / ");
 		_input = _input.replace(" div ", " / ");
 		// END KGU#72 2015-11-10
-		
+
 		return _input.trim();
-	}
+    }
     
     
     @Override
@@ -272,7 +270,7 @@ public class CGenerator extends Generator
     		Subqueue squeue = (Subqueue)_case.qs.get(_case.qs.size()-1);
     		generateCode(squeue, _indent+this.getIndent());
     		// START KGU#71 2015-11-10: For an empty default branch, at least a semicolon is required
-    		if (squeue.children.size() == 0) {
+    		if (squeue.getSize() == 0) {
     			code.add(_indent + this.getIndent() + ";");
     		}
     		// END KGU#71 2015-11-10
@@ -400,19 +398,6 @@ public class CGenerator extends Generator
 		}
 		// END KGU 2015-10-18
     }
-
-    // START KGU 2015-11-01: This is exactly was the inherited method does...
-//    @Override
-//    protected void generateCode(Subqueue _subqueue, String _indent)
-//    {
-//        // code.add(_indent+"");
-//        for(int i=0; i<_subqueue.children.size(); i++)
-//        {
-//                generateCode((Element) _subqueue.children.get(i), _indent);
-//        }
-//        // code.add(_indent+"");
-//    }
-    // END KGU 2015-11-01
 
     @Override
     public String generateCode(Root _root, String _indent)

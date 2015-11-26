@@ -243,13 +243,13 @@ public class TexGenerator extends Generator {
 		}
 	}
 	
-	protected void generateCode(Subqueue _subqueue, String _indent)
-	{
-		for(int i=0;i<_subqueue.children.size();i++)
-		{
-			generateCode((Element) _subqueue.children.get(i),_indent);
-		}
-	}
+//	protected void generateCode(Subqueue _subqueue, String _indent)
+//	{
+//		for(int i=0;i<_subqueue.getSize();i++)
+//		{
+//			generateCode((Element) _subqueue.getElement(i),_indent);
+//		}
+//	}
 	
 	public String generateCode(Root _root, String _indent)
 	{

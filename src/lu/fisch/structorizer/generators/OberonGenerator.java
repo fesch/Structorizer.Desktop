@@ -148,79 +148,19 @@ public class OberonGenerator extends Generator {
 		// START KGU#18/KGU#23 2015-11-02
 		_input = super.transform(_input);
 		// END KGU#18/KGU#23 2015-11-02
-		// et => and
-		// ou => or
-		// lire => readln()
-		// écrire => writeln()
-		// tant que => ""
-		// pour => ""
-		// jusqu'à => ""
-		// à => "to"
-	
-        // START KGU 2014-12-02: To achieve consistency with operator highlighting
-        //nput=BString.replace(_input,"<--", "<-");
-        // END KGU 2014-12-02
-		//_input=BString.replace(_input," <- "," := ");
-		//_input=BString.replace(_input,"<- "," := ");
-		//_input=BString.replace(_input," <-"," := ");
-		//_input=BString.replace(_input,"<-"," := ");
 		// START KGU 2014-11-16: Comparison operator had to be converted properly first
         _input=BString.replace(_input," == "," = ");
         _input=BString.replace(_input," != "," # ");
         _input=BString.replace(_input," <> "," # ");
         // C and Pascal division operators
         _input=BString.replace(_input," div "," DIV ");
-        //_input=BString.replace(_input," mod "," MOD ");
         _input=BString.replace(_input," % "," MOD ");
-        //_input=BString.replace(_input,"%"," MOD ");
         // logical operators required transformation, too
-        //_input=BString.replace(_input," and "," & ");
         _input=BString.replace(_input," && "," & ");
-        //_input=BString.replace(_input," or "," OR ");
         _input=BString.replace(_input," || "," OR ");
-        //_input=BString.replace(_input," not "," ~ ");
         _input=BString.replace(_input," ! "," ~ ");
-        //_input=BString.replace(_input,"&&"," & ");
-        //_input=BString.replace(_input,"||"," OR ");
         _input=BString.replace(_input,"!"," ~ ");
         // END KGU 2014-11-16
-
-//            // BEGIN: Added 2011.11.07 by Bob Fisch
-//            StringList empty = new StringList();
-//            empty.addByLength(D7Parser.preAlt);
-//            empty.addByLength(D7Parser.postAlt);
-//            empty.addByLength(D7Parser.preCase);
-//            empty.addByLength(D7Parser.postCase);
-//            empty.addByLength(D7Parser.preFor);
-//            empty.addByLength(D7Parser.postFor);
-//            empty.addByLength(D7Parser.preWhile);
-//            empty.addByLength(D7Parser.postWhile);
-//            empty.addByLength(D7Parser.postRepeat);
-//            empty.addByLength(D7Parser.preRepeat);
-//            //System.out.println(empty);
-//            for(int i=0;i<empty.count();i++)
-//            {
-//                _input=BString.replace(_input,empty.get(i),"");
-//                //System.out.println(i);
-//            }
-//            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"TO");}
-
-            
-/*		
-                
-		// BEGIN: Added 2008.01.07 by Bob Fisch
-		if(!D7Parser.preAlt.equals("")){_input=BString.replace(_input,D7Parser.preAlt,"");}
-		if(!D7Parser.postAlt.equals("")){_input=BString.replace(_input,D7Parser.postAlt,"");}
-		if(!D7Parser.preCase.equals("")){_input=BString.replace(_input,D7Parser.preCase,"");}
-		if(!D7Parser.postCase.equals("")){_input=BString.replace(_input,D7Parser.postCase,"");}
-		if(!D7Parser.preFor.equals("")){_input=BString.replace(_input,D7Parser.preFor,"");}
-		if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"TO");}
-		if(!D7Parser.preWhile.equals("")){_input=BString.replace(_input,D7Parser.preWhile,"");}
-		if(!D7Parser.postWhile.equals("")){_input=BString.replace(_input,D7Parser.postWhile,"");}
-		if(!D7Parser.preRepeat.equals("")){_input=BString.replace(_input,D7Parser.preRepeat,"");}
-		if(!D7Parser.postRepeat.equals("")){_input=BString.replace(_input,D7Parser.postRepeat,"");}
-		// END: Added 2008.01.07 by Bob Fisch
-*/
             
 		return _input.trim();
 	}
@@ -358,15 +298,15 @@ public class OberonGenerator extends Generator {
 		}
 	}
 	
-	protected void generateCode(Subqueue _subqueue, String _indent)
-	{
-		// code.add(_indent+"");
-		for(int i=0;i<_subqueue.children.size();i++)
-		{
-			generateCode((Element) _subqueue.children.get(i),_indent);
-		}
-		// code.add(_indent+"");
-	}
+//	protected void generateCode(Subqueue _subqueue, String _indent)
+//	{
+//		// code.add(_indent+"");
+//		for(int i=0;i<_subqueue.getSize();i++)
+//		{
+//			generateCode((Element) _subqueue.getElement(i),_indent);
+//		}
+//		// code.add(_indent+"");
+//	}
 	
 	public String generateCode(Root _root, String _indent)
 	{

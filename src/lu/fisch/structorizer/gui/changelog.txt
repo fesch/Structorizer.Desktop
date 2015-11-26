@@ -59,6 +59,7 @@ Current development version: 3.22-32 (2015.11.12)
 - 29: comment popup: sticky popups eliminated, no element level limit <Kay Gürtzig>
 - 29: Arranger: No longer loses track when related Structorizer reloads <Kay Gürtzig>
 - 29: Known NEW ISSUE: Closing a dependent Structorizer kills the owning Arranger!
+- 30: Several Chinese (CHS) translations added and typos eliminated <Zijun Ke>
 - 30: Issue on closing a Structorizer fixed, file update question may be cancelled. <Kay Gürtzig>
 - 31: Major enhancement supporting cleaner For loop evaluation (issue #10) <Kay Gürtzig>
 - 31: Enhancement to allow lists of constants controlling a Case branch (issue #13) <Kay Gürtzig>

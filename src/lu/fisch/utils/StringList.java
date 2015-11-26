@@ -35,6 +35,7 @@ package lu.fisch.utils;
  *      ------			----			-----------
  *      Bob Fisch       2007.12.09      First Issue
  *      Kay Gürtzig     2015.11.04      Methods indexOf added.
+ *      Kay Gürtzig     2015.11.24      Method clear added.
  *
  ******************************************************************************************************
  *
@@ -649,6 +650,13 @@ public class StringList {
 	{
 		return getCommaText();
 	}
+    
+    // START KGU 2015-11-24
+    public void clear()
+    {
+    	this.strings.clear();
+    }
+    // END KGU 2015-11-24
 
         
         public static void main(String[] args)

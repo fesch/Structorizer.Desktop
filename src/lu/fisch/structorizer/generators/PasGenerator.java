@@ -154,22 +154,6 @@ public class PasGenerator extends Generator
 	protected String transform(String _input)
 	{
 		_input = super.transform(_input);
-            // et => and
-            // ou => or
-            // lire => readln()
-            // écrire => writeln()
-            // tant que => ""
-            // pour => ""
-            // jusqu'à => ""
-            // à => "to"
-
-//            // START KGU 2014-12-02: To achieve consistency with operator highlighting
-//            _input=BString.replace(_input, "<--", "<-");
-//            // END KGU 2014-12-02
-//            _input=BString.replace(_input," <- "," := ");
-//            _input=BString.replace(_input,"<- "," := ");
-//            _input=BString.replace(_input," <-"," := ");
-//            _input=BString.replace(_input,"<-"," := ");
 
             // START KGU 2014-11-16: C comparison operator required transformation, too
             _input=BString.replace(_input," != "," <> ");
@@ -179,9 +163,6 @@ public class PasGenerator extends Generator
             _input=BString.replace(_input," && "," and ");
             _input=BString.replace(_input," || "," or ");
             _input=BString.replace(_input," ! "," not ");
-//            _input=BString.replace(_input,"&&"," and ");
-//            _input=BString.replace(_input,"||"," or ");
-//            _input=BString.replace(_input,"!"," not ");
             // END KGU 2014-11-10
             // START KGU 2014-11-16: C bit operators required transformation, too
             _input=BString.replace(_input," ~ "," not ");
@@ -198,51 +179,6 @@ public class PasGenerator extends Generator
             // START KGU 2015-11-02
             _input = _input.replace(" % ", " mod ");
             // END KGU 2015-11-02
-            
-//            StringList empty = new StringList();
-//            empty.addByLength(D7Parser.preAlt);
-//            empty.addByLength(D7Parser.postAlt);
-//            empty.addByLength(D7Parser.preCase);
-//            empty.addByLength(D7Parser.postCase);
-//            empty.addByLength(D7Parser.preFor);
-//            empty.addByLength(D7Parser.preWhile);
-//            empty.addByLength(D7Parser.postWhile);
-//            empty.addByLength(D7Parser.postRepeat);
-//            empty.addByLength(D7Parser.preRepeat);
-//            //System.out.println(empty);
-//            for(int i=0;i<empty.count();i++)
-//            {
-//                _input=BString.replace(_input,empty.get(i),"");
-//                //System.out.println(_input);
-//                //System.out.println(i);
-//            }
-//            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
-//
-//            
-///*
-//            if(!D7Parser.preAlt.equals("")){_input=BString.replace(_input,D7Parser.preAlt,"");}
-//            if(!D7Parser.postAlt.equals("")){_input=BString.replace(_input,D7Parser.postAlt,"");}
-//            if(!D7Parser.preCase.equals("")){_input=BString.replace(_input,D7Parser.preCase,"");}
-//            if(!D7Parser.postCase.equals("")){_input=BString.replace(_input,D7Parser.postCase,"");}
-//            if(!D7Parser.preFor.equals("")){_input=BString.replace(_input,D7Parser.preFor,"");}
-//            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
-//            if(!D7Parser.preWhile.equals("")){_input=BString.replace(_input,D7Parser.preWhile,"");}
-//            if(!D7Parser.postWhile.equals("")){_input=BString.replace(_input,D7Parser.postWhile,"");}
-//            if(!D7Parser.preRepeat.equals("")){_input=BString.replace(_input,D7Parser.preRepeat,"");}
-//            if(!D7Parser.postRepeat.equals("")){_input=BString.replace(_input,D7Parser.postRepeat,"");}
-//*/
-//
-//            /*Regex r;
-//            r = new Regex(BString.breakup(D7Parser.input)+"[ ](.*?)","readln($1)"); _input=r.replaceAll(_input);
-//            r = new Regex(BString.breakup(D7Parser.output)+"[ ](.*?)","writeln($1)"); _input=r.replaceAll(_input);
-//            r = new Regex(BString.breakup(D7Parser.input)+"(.*?)","readln($1)"); _input=r.replaceAll(_input);
-//            r = new Regex(BString.breakup(D7Parser.output)+"(.*?)","writeln($1)"); _input=r.replaceAll(_input);*/
-//
-//
-//            if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input+" ")>=0){_input=BString.replace(_input,D7Parser.input+" ","readln(")+")";}
-//            if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output+" ")>=0){_input=BString.replace(_input,D7Parser.output+" ","writeln(")+")";}
-//            if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input)>=0){_input=BString.replace(_input,D7Parser.input,"readln(")+")";}
-//            if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output)>=0){_input=BString.replace(_input,D7Parser.output,"writeln(")+")";}
 
             _input.replace("  ", " ");
             _input.replace("  ", " ");
@@ -438,16 +374,16 @@ public class PasGenerator extends Generator
 		// END KGU 2015-10-18
     }
 
-    @Override
-    protected void generateCode(Subqueue _subqueue, String _indent)
-    {
-            // code.add(_indent+"");
-            for(int i=0;i<_subqueue.children.size();i++)
-            {
-                    generateCode((Element) _subqueue.children.get(i),_indent);
-            }
-            // code.add(_indent+"");
-    }
+//    @Override
+//    protected void generateCode(Subqueue _subqueue, String _indent)
+//    {
+//            // code.add(_indent+"");
+//            for(int i=0;i<_subqueue.getSize();i++)
+//            {
+//                    generateCode((Element) _subqueue.getElement(i),_indent);
+//            }
+//            // code.add(_indent+"");
+//    }
 	
     @Override
     public String generateCode(Root _root, String _indent)

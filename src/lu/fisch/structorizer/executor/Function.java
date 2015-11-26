@@ -48,7 +48,7 @@ public class Function
                 str.endsWith(")");
         if (this.isFunc)
         {
-        	// START KGU#2 (#9) 2015-11-13: In general, we don't want to level the case!
+        	// START KGU#2 (#9) 2015-11-13: In general, we don't want to flatten the case!
         	//this.name = str.substring(0, posLP).trim().toLowerCase();
         	this.name = str.substring(0, posLP).trim();
         	// END KGU#2 (#9) 2015-11-13

@@ -30,11 +30,12 @@ package lu.fisch.structorizer.gui;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2007.12.30      First Issue
- *		Bob Fisch		2008.04.12		Adapted for Generator plugin
- *		Kay Gürtzig		2015.11.03		Additions for FOR loop enhancement (KGU#3)
+ *      Bob Fisch       2008.04.12      Adapted for Generator plugin
+ *      Kay Gürtzig     2015.11.03      Additions for FOR loop enhancement (KGU#3)
+ *      Kay Gürtzig     2015.11.22      Adaptations for handling selected non-empty Subqueues (KGU#87)
  *
  ******************************************************************************************************
  *
@@ -92,6 +93,9 @@ public class Menu extends JMenuBar implements NSDController
 	// Submenu of "File -> Import"
 	protected JMenuItem menuFileImportPascal = new JMenuItem("Pascal Code ...",IconLoader.ico004);
 
+	// START KGU#2 2015-11-19: New menu item to have the Arranger present the diagram
+	protected JMenuItem menuFileArrange = new JMenuItem("Arrange", IconLoader.ico105);
+	// END KGU#2 2015-11-19
 	protected JMenuItem menuFilePrint = new JMenuItem("Print ...",IconLoader.ico041);
 	protected JMenuItem menuFileQuit = new JMenuItem("Quit");
 
@@ -314,6 +318,12 @@ public class Menu extends JMenuBar implements NSDController
 		menuFile.add(menuFilePrint);
 		menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		menuFilePrint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.printNSD(); doButtons(); } } );
+
+		// START KGU#2 2015-11-19
+		menuFile.add(menuFileArrange);
+		//menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuFileArrange.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.arrangeNSD(); doButtons(); } } );
+		// END KGU#2 2015-11-19
 
 		menuFile.addSeparator();
 
@@ -702,16 +712,19 @@ public class Menu extends JMenuBar implements NSDController
                         */
 
 			// conditions
-			boolean condition =  diagram.getSelected()!=null && diagram.getSelected()!=diagram.getRoot();
 			boolean conditionAny =  diagram.getSelected()!=null;
+			boolean condition =  conditionAny && diagram.getSelected()!=diagram.getRoot();
+			// START KGU#87 2015-11-22: For most operations, multiple selections are not suported
+			boolean conditionNoMult = condition && !diagram.selectedIsMultiple();
+			// END KGU#87 2015-11-22
 			int i = -1;
 			boolean conditionCanMoveUp = false;
 			boolean conditionCanMoveDown = false;
-			if(diagram.getSelected()!=null)
+			if (conditionAny)
 			{
 				if(diagram.getSelected().parent!=null)
 				{
-					// make shure parent is a subqueue, which is not the case if somebody clicks on a subqueue!
+					// make sure parent is a subqueue, which is not the case if somebody clicks on a subqueue!
 					if (diagram.getSelected().parent.getClass().getSimpleName().equals("Subqueue"))
 					{
 						i = ((Subqueue) diagram.getSelected().parent).getIndexOf(diagram.getSelected());
@@ -733,31 +746,37 @@ public class Menu extends JMenuBar implements NSDController
 			menuDiagramAnalyser.setSelected(Element.E_ANALYSER);
 
 			// elements
-			menuDiagramAddBeforeInst.setEnabled(condition);
-			menuDiagramAddBeforeAlt.setEnabled(condition);
-			menuDiagramAddBeforeCase.setEnabled(condition);
-			menuDiagramAddBeforeFor.setEnabled(condition);
-			menuDiagramAddBeforeWhile.setEnabled(condition);
-			menuDiagramAddBeforeRepeat.setEnabled(condition);
-			menuDiagramAddBeforeForever.setEnabled(condition);
-			menuDiagramAddBeforeCall.setEnabled(condition);
-			menuDiagramAddBeforeJump.setEnabled(condition);
-			menuDiagramAddBeforePara.setEnabled(condition);
+			// START KGU#87 2015-11-22: Why enable the main entry if no action is enabled?
+			menuDiagramAdd.setEnabled(conditionNoMult);
+			// END KGU#87 2015-11-22
+			menuDiagramAddBeforeInst.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeAlt.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeCase.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeFor.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeWhile.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeRepeat.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeForever.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeCall.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeJump.setEnabled(conditionNoMult);
+			menuDiagramAddBeforePara.setEnabled(conditionNoMult);
 
-			menuDiagramAddAfterInst.setEnabled(condition);
-			menuDiagramAddAfterAlt.setEnabled(condition);
-			menuDiagramAddAfterCase.setEnabled(condition);
-			menuDiagramAddAfterFor.setEnabled(condition);
-			menuDiagramAddAfterWhile.setEnabled(condition);
-			menuDiagramAddAfterRepeat.setEnabled(condition);
-			menuDiagramAddAfterForever.setEnabled(condition);
-			menuDiagramAddAfterCall.setEnabled(condition);
-			menuDiagramAddAfterJump.setEnabled(condition);
-			menuDiagramAddAfterPara.setEnabled(condition);
+			menuDiagramAddAfterInst.setEnabled(conditionNoMult);
+			menuDiagramAddAfterAlt.setEnabled(conditionNoMult);
+			menuDiagramAddAfterCase.setEnabled(conditionNoMult);
+			menuDiagramAddAfterFor.setEnabled(conditionNoMult);
+			menuDiagramAddAfterWhile.setEnabled(conditionNoMult);
+			menuDiagramAddAfterRepeat.setEnabled(conditionNoMult);
+			menuDiagramAddAfterForever.setEnabled(conditionNoMult);
+			menuDiagramAddAfterCall.setEnabled(conditionNoMult);
+			menuDiagramAddAfterJump.setEnabled(conditionNoMult);
+			menuDiagramAddAfterPara.setEnabled(conditionNoMult);
 
 
 			// editing
-			menuDiagramEdit.setEnabled(conditionAny);
+			// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
+			//menuDiagramEdit.setEnabled(conditionAny);
+			menuDiagramEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
+			// END KGU#87 2015-11-22
 			menuDiagramDelete.setEnabled(diagram.canCutCopy());
 			menuDiagramMoveUp.setEnabled(conditionCanMoveUp);
 			menuDiagramMoveDown.setEnabled(conditionCanMoveDown);

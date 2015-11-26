@@ -34,6 +34,7 @@ package lu.fisch.structorizer.gui;
  *      ------			----			-----------
  *      Bob Fisch       2007.12.28      First Issue
  *      Kay Gürtzig     2015.10.12      New icons (103_breakpt, 104_nobreakpt) introduced
+ *      Kay Gürtzig     2015.11.19      New Arranger icon (icoArr) introduced
  *
  ******************************************************************************************************
  *
@@ -134,6 +135,9 @@ public class IconLoader {
 	public static ImageIcon ico103 = getIconImage(getURI(from+"icons/103_breakpt.png"));
 	public static ImageIcon ico104 = getIconImage(getURI(from+"icons/104_nobreakpt.png"));
 	// END KGU 2015-10-12
+	// START KGU#2 2015-11-19: Arranger icon
+	public static ImageIcon ico105 = getIconImage(getURI(from+"icons/105_arranger.png"));
+	// END KGU 2015-10-12
 
         public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
 
@@ -211,6 +215,9 @@ public class IconLoader {
         	ico103 = getIconImage(getURI(from+"icons/103_breakpt.png"));
         	ico104 = getIconImage(getURI(from+"icons/104_nobreakpt.png"));
         	// END KGU 2015-10-12
+        	// START KGU#2 2015-11-19
+        	ico105 = getIconImage(getURI(from+"icons/105_arranger.png"));
+        	// END KGU#2 2015-11-19
 
             turtle = getIconImage(getURI(from+"icons/turtle.png"));
         }

@@ -49,12 +49,22 @@ package lu.fisch.structorizer.executor;
 *                                      wrong equality operator in stepCase().
 *      Kay Gürtzig     2015.11.11      Issue #21 KGU#77 fixed: return instructions didn't terminate the execution.
 *      Kay Gürtzig     2015.11.12      Bugfix KGU#79: WHILE condition wasn't effectively converted.
+*      Kay Gürtzig     2015.11.13/14   Enhancement #9 (KGU#2) to allow the execution of subroutine calls
 *      Kay Gürtzig     2015.11.20      Bugfix KGU#86: Interpreter was improperly set up for functions sqr, sqrt;
 *                                      Message types for output and return value information corrected
+*      Kay Gürtzig     2015.11.23      Enhancement #36 (KGU#84) allowing to pause from input and output dialogs.
+*      Kay Gürtzig     2015.11.24/25   Enhancement #9 (KGU#2) enabling the execution of calls accomplished.
 *
 ******************************************************************************************************
 *
 *      Comment:
+*      2015.11.23 (KGU#84) Pausing from input and output dialogs enabled (Enhancement issue #36)
+*          On cancelling input now first a warning box opens and after having quit the execution is in pause
+*          mode such that the user may edit values, abort or continue in either run oder step mode.
+*          Output and result message dialogs now provide a Pause button to allow to pause mode (see above).
+*      2015.11.13 (KGU#2) Subroutine call mechanisms introduced
+*          Recursively callable submethod of execute(Root) added plus new call-handling method executeCall()
+*          Error handling in some subroutine level still neither prepared nor tested
 *      2015.11.04 (KGU#65) Input/output execution mended
 *          The configured input / output parser settings triggered input or output action also if found
 *          deep in a line, even within a string literal. This was mended.
@@ -65,10 +75,6 @@ package lu.fisch.structorizer.executor;
 *          A modification in stepCase() now allows to test against a comma-separated list of case constants
 *          (though it would fail with complex expressions, accidently containing commas but this would anyway
 *          produce nonsense on code export)
-*      2015.10.15 (KGU#47) Improved simulation of Parallel execution
-*          Instead of running entire "threads" of the parallel section in just random order, the "threads"
-*          will now only progress by one instruction when randomly chosen, so they alternate in an
-*          unpredictable way)
 *      2015.10.17/18 (KGU#2) Two successful (though somewhat makeshift) subroutine retrieval attempts
 *          in stepInstruction() via Arranger and by means of Bob's Function class.
 *          We can be glad that Executor is already a Singleton - on the one hand...
@@ -83,19 +89,34 @@ package lu.fisch.structorizer.executor;
 *             (in the stack order i.e. top on top).
 *          4. The trouble is going to get really nasty with Parallel elements involved, particularly if
 *             their threads use identical subroutines.   
+*      2015.10.15 (KGU#47) Improved simulation of Parallel execution
+*          Instead of running entire "threads" of the parallel section in just random order, the "threads"
+*          will now only progress by one instruction when randomly chosen, so they alternate in an
+*          unpredictable way)
 *         
 ******************************************************************************************************///
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dialog.ModalityType;
+import java.awt.List;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.Iterator;
 import java.util.Random;
+import java.util.Stack;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.PatternSyntaxException;
 
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 
+import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Case;
@@ -106,10 +127,13 @@ import lu.fisch.structorizer.elements.Parallel;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.Updater;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.elements.Forever;
 import lu.fisch.structorizer.generators.CGenerator;
 import lu.fisch.structorizer.gui.Diagram;
+import lu.fisch.structorizer.gui.IconLoader;
+import lu.fisch.structorizer.gui.LangDialog;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
@@ -150,6 +174,15 @@ public class Executor implements Runnable
 		mySelf.control.init();
 		mySelf.control.setLocationRelativeTo(diagram);
 		mySelf.control.validate();
+		// START KGU#89 2015-11-25: Language support (we don't force the existence of all languages)
+		try {
+		LangDialog.setLang(mySelf.control, mySelf.diagram.getLang());
+		}
+		catch (Exception ex)
+		{
+			System.err.println(ex.getMessage());
+		}
+		// END KGU#89 2015-11-25
 		mySelf.control.setVisible(true);
 		mySelf.control.repaint();
 
@@ -161,16 +194,26 @@ public class Executor implements Runnable
 	private int delay = 50;
 
 	private Diagram diagram = null;
+	
+	// START KGU#2 (#9) 2015-11-13: We need a stack of calling parents
+	private Stack<ExecutionStackEntry> callers = new Stack<ExecutionStackEntry>();
+	private Object returnedValue = null;
+	private Vector<IRoutinePool> routinePools = new Vector<IRoutinePool>();
+	// END KGU#2 (#9) 2015-11-13
 
 	private DiagramController diagramController = null;
 	private Interpreter interpreter;
 
 	private boolean paus = false;
-	boolean returned = false;
+	private boolean returned = false;
 	private boolean running = false;
 	private boolean step = false;
 	private boolean stop = false;
 	private StringList variables = new StringList();
+	// START KGU#2 2015-11-24: It is crucial to know whether an error had been reported on a lower level
+	private boolean isErrorReported = false;
+	private StringList stackTrace = new StringList();
+	// END KGU#2 2015-11-22
 
 	private Executor(Diagram diagram, DiagramController diagramController)
 	{
@@ -189,38 +232,6 @@ public class Executor implements Runnable
 	{
 		Regex r;
 
-		// START KGU#18/KGU#23 2015-10-26: Replaced by new unifying method on Element class
-//		// variable assignment
-//		// START KGU 2014-12-02: To achieve consistency with operator highlighting
-//		s = s.replace("<--", "<-");
-//		// END KGU 2014-12-02
-//		s = s.replace(":=", "<-");
-//
-//		// testing
-//		s = s.replace("==", "=");
-//		s = s.replace("!=", "<>");
-//		s = s.replace("=", "==");
-//		s = s.replace("<==", "<=");
-//		s = s.replace(">==", ">=");
-//		s = s.replace("<>", "!=");
-//
-//		s = s.replace(" mod ", " % ");
-//		s = s.replace(" div ", " / ");
-//        // START KGU 2014-11-14: Logical operators, too
-//        s=s.replace(" and ", " && ");
-//        s=s.replace(" or ", " || ");
-//        s=s.replace(" not ", " !");
-//        s=s.replace("(not ", "(!");
-//        s=s.replace(" not(", " !(");
-//        s=s.replace("(not(", "(!(");
-//       	if (s.startsWith("not ")) {
-//       		s = "!" + s.substring(4);
-//       	}
-//       	if (s.startsWith("not(")) {
-//       		s = "!(" + s.substring(4);
-//       	}
-//        s=s.replace(" xor ", " ^ "); // This might cause some operator preference trouble, though       
-//        // END KGU 2014-11-14
 		s = Element.unifyOperators(s);
 		s = s.replace(" div ", " / ");		// FIXME: Operands should be coerced to integer...
 		// END KGU#18/KGU#23 2015-10-26
@@ -276,72 +287,6 @@ public class Executor implements Runnable
 		// clean up ... if needed
 		s = s.replace("Math.Math.", "Math.");
 
-		// FIXME (KGU#57 2015-10-27): The following mechanism doesn't work in composed expressions like
-		//       answer == "J" || answer == "j"
-//		if (s.indexOf("==") >= 0)
-//		{
-//			r = new Regex("(.*)==(.*)", "$1");
-//			String left = r.replaceAll(s).trim();
-//			while (Function.countChar(left, '(') > Function
-//					.countChar(left, ')'))
-//			{
-//				left += ')';
-//			}
-//			r = new Regex("(.*)==(.*)", "$2");
-//			String right = r.replaceAll(s).trim();
-//			while (Function.countChar(right, ')') > Function.countChar(right,
-//					'('))
-//			{
-//				right = '(' + right;
-//			}
-//			// ---- thanks to autoboxing, we can always use the "equals" method
-//			// ---- to compare things ...
-//			// addendum: sorry, doesn't always work.
-//			try
-//			{
-//				Object leftO = interpreter.eval(left);
-//				Object rightO = interpreter.eval(right);
-//				if ((leftO instanceof String) || (rightO instanceof String))
-//				{
-//					s = left + ".equals(" + right + ")";
-//				}
-//			} catch (EvalError ex)
-//			{
-//				System.err.println(ex.getMessage());
-//			}
-//		}
-//		if (s.indexOf("!=") >= 0)
-//		{
-//			r = new Regex("(.*)!=(.*)", "$1");
-//			String left = r.replaceAll(s).trim();
-//			while (Function.countChar(left, '(') > Function
-//					.countChar(left, ')'))
-//			{
-//				left += ')';
-//			}
-//			r = new Regex("(.*)!=(.*)", "$2");
-//			String right = r.replaceAll(s).trim();
-//			while (Function.countChar(right, ')') > Function.countChar(right,
-//					'('))
-//			{
-//				right = '(' + right;
-//			}
-//			// ---- thanks to autoboxing, we can always use the "equals" method
-//			// ---- to compare things ...
-//			// addendum: sorry, doesn't always work.
-//			try
-//			{
-//				Object leftO = interpreter.eval(left);
-//				Object rightO = interpreter.eval(right);
-//				if ((leftO instanceof String) || (rightO instanceof String))
-//				{
-//					s = "!" + left + ".equals(" + right + ")";
-//				}
-//			} catch (EvalError ex)
-//			{
-//				System.err.println(ex.getMessage());
-//			}
-//		}
 		if (convertComparisons)
 		{
 			s = convertStringComparison(s);
@@ -472,14 +417,53 @@ public class Executor implements Runnable
 	// METHOD MODIFIED BY GENNARO DONNARUMMA
 
 	public void execute()
+	// START KGU#2 (#9) 2015-11-13: We need a recursively applicable version
 	{
+		this.callers.clear();
+		this.stackTrace.clear();
+		this.routinePools.clear();
+		if (diagram.isArrangerOpen)
+		{
+			this.routinePools.addElement(Arranger.getInstance());
+		}
+		this.isErrorReported = false;
+		this.diagram.getRoot().isCalling = false;
+		
+		this.execute(null);
+		
+		this.callers.clear();
+		this.stackTrace.clear();
+		//System.out.println("stackTrace size: " + stackTrace.count());
+	}
+	
+	/**
+	 * Executes the current diagram held by this.diagram, applicable for main or sub routines 
+	 * @param arguments - list of interpreted argument values or null (if main program)
+	 * @return the result value of the algorithm (if not being a program)
+	 */
+	private boolean execute(Object[] arguments)
+	{
+		boolean successful = true;
+	// END KGU#2 (#9) 2015-11-13
+		
 		Root root = diagram.getRoot();
+		// START KGU#2 (#9) 2015-11-14
+		Iterator<Updater> iter = root.getUpdateIterator();
+		while (iter.hasNext())
+		{
+			Updater pool = iter.next();
+			if (pool instanceof IRoutinePool && !this.routinePools.contains(pool))
+			{
+				this.routinePools.addElement((IRoutinePool)pool);
+			}
+		}
+		// END KGU#2 (#9) 2015-11-14
 
 		boolean analyserState = diagram.getAnalyser();
 		diagram.setAnalyser(false);
 		// START KGU 2015-10-11/13:
 		// Unselect all elements before start!
-		diagram.unselectAll();
+		diagram.unselectAll();	// Is this still needed?
 		// ...and reset all execution state remnants (just for sure)
 		diagram.clearExecutionStatus();
 		// END KGU 2015-10-11/13
@@ -495,55 +479,52 @@ public class Executor implements Runnable
 			//System.out.println("Having: "+params.getCommaText());
 			params=params.reverse();
 			//System.out.println("Having: "+params.getCommaText());
+			// START KGU#2 2015-11-24
+			boolean noArguments = arguments == null;
+			if (noArguments) arguments = new Object[params.count()];
+			// END KGU#2 2015-11-24
 			for (int i = 0; i < params.count(); i++)
 			{
 				String in = params.get(i);
-				String str = JOptionPane.showInputDialog(null,
-						"Please enter a value for <" + in + ">", null);
-				if (str == null)
+				
+				// START KGU#2 (#9) 2015-11-13: If root was not called then ask the user for values
+				if (noArguments)
 				{
-					i = params.count();
-					result = "Manual break!";
-					break;
+				// END KGU#2 (#9) 2015-11-13
+					String str = JOptionPane.showInputDialog(null,
+							"Please enter a value for <" + in + ">", null);
+					if (str == null)
+					{
+						//i = params.count();	// leave the loop
+						result = "Manual break!";
+						break;
+					}
+					try
+					{
+						// START KGU#69 2015-11-08 What we got here is to be regarded as raw input
+						setVarRaw(in, str);
+						// END KGU#69 2015-11-08
+						// START KGU#2 2015-11-24: We might need the values for a stacktrace
+						arguments[i] = interpreter.get(in);
+						// END KGU#2 2015-11-24
+					} catch (EvalError ex)
+					{
+						result = ex.getMessage();
+					}
+				// START KGU#2 (#9) 2015-11-13: If root was called then just assign the arguments
 				}
-				try
+				else
 				{
-					// START KGU#69 2015-11-08 What we got here is to be regarded as raw input
-//					// first add as string
-//					setVar(in, str);
-//					// try adding as char: FIXME Spoils comparison
-//					try
-//					{
-//						if (str.length() == 1)
-//						{
-//							Character strc = str.charAt(0);
-//							setVar(in, strc);
-//						}
-//					} catch (Exception e)
-//					{
-//					}
-//					// try adding as double
-//					try
-//					{
-//						double strd = Double.parseDouble(str);
-//						setVar(in, strd);
-//					} catch (Exception e)
-//					{
-//					}
-//					// finally try adding as integer
-//					try
-//					{
-//						int stri = Integer.parseInt(str);
-//						setVar(in, stri);
-//					} catch (Exception e)
-//					{
-//					}
-					setVarRaw(in, str);
-					// END KGU#69 2015-11-08
-				} catch (EvalError ex)
-				{
-					result = ex.getMessage();
+					try
+					{
+						setVar(in, arguments[i]);
+					}
+					catch (EvalError ex)
+					{
+						result = ex.getMessage();
+					}
 				}
+				// END KGU#2 (#9) 2015-11-13
 			}
 		// START KGU#39 2015-10-16
 		}
@@ -551,7 +532,9 @@ public class Executor implements Runnable
 
 		if (result.equals(""))
 		{
+			/////////////////////////////////////////////////////
 			// Actual start of execution 
+			/////////////////////////////////////////////////////
 			result = step(root);
 			
 			if (result.equals("") && (stop == true))
@@ -563,6 +546,10 @@ public class Executor implements Runnable
 		diagram.redraw();
 		if (!result.equals(""))
 		{
+			// START KGU#2 (#9) 2015-11-13
+			successful = false;
+			// END KGU#2 (#9) 2015-11-13
+			
 			// MODIFIED BY GENNARO DONNARUMMA, ADDED ARRAY ERROR MSG
 			
 			String modifiedResult = result;
@@ -576,8 +563,27 @@ public class Executor implements Runnable
 				result = modifiedResult;
 			}
 
-			JOptionPane.showMessageDialog(diagram, result, "Error",
-					JOptionPane.ERROR_MESSAGE);
+			// START KGU#2 2015-11-22: If we are on a subroutine level, then we must stop the show
+			//JOptionPane.showMessageDialog(diagram, result, "Error",
+			//		JOptionPane.ERROR_MESSAGE);
+			if (!isErrorReported)
+			{
+				JOptionPane.showMessageDialog(diagram, result, "Error",
+						JOptionPane.ERROR_MESSAGE);
+				isErrorReported = true;
+			}
+			if (!this.callers.isEmpty())
+			{
+				stop = true;
+				paus = false;
+				step = false;
+			}
+			else if (isErrorReported)
+			{
+				addToStackTrace(root, arguments);
+				showStackTrace();
+			}
+			// END KGU#2 2015-11-24	
 		} else
 		{
 			if ((root.isProgram == false) && (returned == false))
@@ -591,13 +597,21 @@ public class Executor implements Runnable
 				try
 				{
 					int i = 0;
-					while ((i < posres.count()) && (returned == false))
+					while ((i < posres.count()) && (!returned))
 					{
 						Object n = interpreter.get(posres.get(i));
 						if (n != null)
 						{
-							JOptionPane.showMessageDialog(diagram, n,
-									"Returned result", JOptionPane.INFORMATION_MESSAGE);
+							// START KGU#2 (#9) 2015-11-13: Only tell the user if this wasn't called
+							//JOptionPane.showMessageDialog(diagram, n,
+							//		"Returned result", 0);
+							this.returnedValue = n;
+							if (this.callers.isEmpty())
+							{
+								JOptionPane.showMessageDialog(diagram, n,
+										"Returned result", JOptionPane.INFORMATION_MESSAGE);
+							}
+							// END KGU#2 (#9) 2015-11-13
 							returned = true;
 						}
 						i++;
@@ -615,7 +629,141 @@ public class Executor implements Runnable
 		diagram.clearExecutionStatus();
 		// END KGU 2015-10-13
 		diagram.setAnalyser(analyserState);
+
+		// START KGU#2 (#9) 2015-11-13: Need the status
+		return successful;
+		// END KGU# (#9) 2015-11-13
 	}
+	
+	// START KGU#2 (#9) 2015-11-13: New method to execute a called subroutine
+	private Object executeCall(Root root, Object[] arguments)
+	{
+		Object resultObject = null;
+		Root oldRoot = this.diagram.getRoot();
+		ExecutionStackEntry entry = new ExecutionStackEntry(
+				oldRoot,
+				this.variables, 
+				this.interpreter);
+		this.callers.push(entry);
+		this.interpreter = new Interpreter();
+		this.initInterpreter();
+		this.variables = new StringList();
+		
+		// If the found subroutine is already an active caller, then we need a new instance of it
+		if (root.isCalling)
+		{
+			root = (Root)root.copy();
+			root.isCalling = false;
+			// Remaining initialisations will be done by this.execute(...).
+		}
+		
+		this.diagram.setRoot(root);
+		
+		boolean done = this.execute(arguments);
+
+		// START KGU#2 2015-11-24
+		if (!done || stop)
+		{
+			addToStackTrace(root, arguments);
+		}
+		// END KGU#2 2015-11-24
+		
+		this.callers.pop();	// Should be the entry still held by variable entry
+					
+		this.variables = entry.variables;
+		this.interpreter = entry.interpreter;
+		this.diagram.setRoot(entry.root);
+		entry.root.isCalling = false;
+
+		// The called subroutine will certainly have returned a value...
+		resultObject = this.returnedValue;
+		// ... but definitively not THIS calling routine!
+		this.returned = false;
+		this.returnedValue = null;
+		
+		try 
+		{
+			updateVariableDisplay();
+		}
+		catch (EvalError ex) {}
+		
+		return resultObject;
+	}
+	
+	// START KGU#2 2015-11-24: Stack trace support for execution errors
+	private void addToStackTrace(Root _root, Object[] _arguments)
+	{
+		String argumentString = "";
+		if (_arguments != null)
+		{
+			for (int i = 0; i < _arguments.length; i++)
+			{
+				argumentString = argumentString + (i>0 ? ", " : "") + prepareValueForDisplay(_arguments[i]);					
+			}
+			argumentString = "(" + argumentString + ")";
+		}
+		this.stackTrace.add(_root.getMethodName() + argumentString);
+	}
+
+	/**
+	 * Pops up a dialog displaying the call trace with argument values
+	 */
+	private void showStackTrace()
+	{
+		if (stackTrace.count() <= 20)
+		{
+			// Okay, keep it simple
+			JOptionPane.showMessageDialog(diagram, this.stackTrace.getText(), "Stack trace",
+					JOptionPane.INFORMATION_MESSAGE);
+		}
+		else
+		{
+			JDialog stackView = new JDialog();
+			stackView.setTitle("Stack trace");
+			stackView.setIconImage(IconLoader.ico004.getImage());
+			List stackContent = new List(10);
+			for (int i = 0; i < stackTrace.count(); i++)
+			{
+				stackContent.add(stackTrace.get(i));
+			}
+			stackView.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		    stackView.getContentPane().add(stackContent, BorderLayout.CENTER);
+		    stackView.setSize(300, 300);
+		    stackView.setLocationRelativeTo(control);
+		    stackView.setModalityType(ModalityType.APPLICATION_MODAL);
+		    stackView.setVisible(true);
+		}		
+	}
+	// END KGU#2 2015-11-24
+
+    /**
+     * Searches all known pools for subroutines with a signature compatible to name(arg1, arg2, ..., arg_nArgs) 
+     * @param name - function name
+     * @param nArgs - number of parameters of the requested function
+     * @return a Root that matches the specification if uniquely found, null otherwise
+     */
+    public Root findSubroutineWithSignature(String name, int nArgs)
+    {
+    	Root subroutine = null;
+    	// First test whether the current root calls itself recursively
+    	Root root = diagram.getRoot();
+    	if (name.equals(root.getMethodName()) && nArgs == root.getParameterNames().count())
+    	{
+    		subroutine = root;
+    	}
+    	Iterator<IRoutinePool> iter = this.routinePools.iterator();
+    	while (subroutine == null && iter.hasNext())
+    	{
+    		Vector<Root> candidates = iter.next().findRoutinesBySignature(name, nArgs);
+    		for (int c = 0; subroutine == null && c < candidates.size(); c++)
+    		{
+    	    	// TODO Check for ambiguity (multiple matches) and raise e.g. an exception in that case
+    			subroutine = candidates.get(c);
+    		}
+    	}
+    	return subroutine;
+    }
+	// END KGU#2 (#9) 2015-11-13
 
 	public String getExec(String cmd)
 	{
@@ -1005,6 +1153,9 @@ public class Executor implements Runnable
 			vars.add(myVar);
 		}
 		this.control.updateVars(vars);
+		// START KGU#2 (#9) 2015-11-14
+		this.control.updateCallLevel(this.callers.size());
+		// END#2 (#9) KGU 2015-11-14
 	}
 	// END KGU#20 2015-10-13
 	
@@ -1053,7 +1204,7 @@ public class Executor implements Runnable
 					{
 						// In this case an initialisation expression ("{ ..., ..., ...}") is expected
 						String asgnmt = "Object[] " + varName + " = " + newValues[i];
-						System.out.println(asgnmt);	// FIXME (KGU) Remove this debug info after test
+						//System.out.println(asgnmt);	// FIXME (KGU) Remove this debug info after test
 						// FIXME: Nested initializers (as produced for nested arrays before) won't work here!
 						interpreter.eval(asgnmt);
 //						// Okay, but now we have to sort out some un-boxed strings
@@ -1124,7 +1275,7 @@ public class Executor implements Runnable
 		checkBreakpoint(element);
 		// END KGU#43 2015-10-12
 		
-		// The Root,  element and the REPEAT loop won't be delayed or halted in the beginning except by their members
+		// The Root element and the REPEAT loop won't be delayed or halted in the beginning except by their members
 		if (element instanceof Root)
 		{
 			result = stepRoot((Root)element);
@@ -1137,7 +1288,14 @@ public class Executor implements Runnable
 			// Delay or wait (in case of step mode or breakpoint) before
 			delay();	// does the delaying or waits in case of step mode or breakpoint
 			
-			if (element instanceof Instruction)
+			// START KGU#2 2015-11-14: Separate execution for CALL elements to keep things clearer
+			//if (element instanceof Instruction)
+			if (element instanceof Call)
+			{
+				result = stepCall((Call)element);
+			}
+			else if (element instanceof Instruction)
+			// END KGU#2 2015-11-14
 			{
 				result = stepInstruction((Instruction)element);
 			} else if (element instanceof Case)
@@ -1182,7 +1340,7 @@ public class Executor implements Runnable
 		// START KGU#77 2015-11-11: Leave if a return statement has been executed
 		//while ((i < element.children.children.size())
 		//		&& result.equals("") && (stop == false))
-		while ((i < element.children.children.size())
+		while ((i < element.children.getSize())
 				&& result.equals("") && (stop == false) && !returned)
 		// END KGU#77 2015-11-11
 		{
@@ -1225,7 +1383,7 @@ public class Executor implements Runnable
 				// assignment
 				if (cmd.indexOf("<-") >= 0)
 				{
-					result = tryAssignment(cmd, element instanceof Call && sl.count() == 1);
+					result = tryAssignment(cmd, false);
 				}
 				// input
 				// START KGU#65 2015-11-04: Input keyword should only trigger this if positioned at line start
@@ -1269,17 +1427,66 @@ public class Executor implements Runnable
 		return result;
 	}
 	
-	// START KGU 2015-11-11: Aquivalent decomposition of method stepInstruction
+	// START KGU#2 2015-11-14: Separate dedicated implementation for "foreign calls"
+	private String stepCall(Call element)
+	{
+		String result = new String();
+
+		StringList sl = element.getText();
+		int i = 0;
+
+		// START KGU#77 2015-11-11: Leave if a return statement has been executed
+		//while ((i < sl.count()) && result.equals("") && (stop == false))
+		while ((i < sl.count()) && result.equals("") && (stop == false) && !returned)
+		// END KGU#77 2015-11-11
+		{
+			String cmd = sl.get(i);
+			// cmd=cmd.replace(":=", "<-");
+			cmd = convert(cmd);
+			try
+			{
+				// START KGU 2015-10-12: Allow to step within an instruction block (but no breakpoint here!) 
+				if (i > 0)
+				{
+					delay();
+				}
+				// END KGU 2015-10-12
+				
+				// assignment
+				if (cmd.indexOf("<-") >= 0)
+				{
+					result = tryAssignment(cmd, true);
+				}
+				else
+				{
+					result = trySubroutine(cmd, element);
+				}
+			} catch (EvalError ex)
+			{
+				result = ex.getMessage();
+			}
+			i++;
+			// Among the lines of a single instruction element there is no further breakpoint check!
+		}
+		if (result.equals(""))
+		{
+			element.executed = false;
+		}
+		return result;
+	}
+	// END KGU#2 2015-11-14
+	
+	// START KGU 2015-11-11: Equivalent decomposition of method stepInstruction
 	// Submethod of stepInstruction(Instruction element), handling an assignment
 	private String tryAssignment(String cmd, boolean isCall) throws EvalError
 	{
 		String result = "";
-		// TODO KGU#2: In case of a Call element, do we just allow a procedure call or an assignment with just the
-		// subroute call on the right-hand side? In a way this makes sense. Then it would be relatively easy to
-		// detect and prepare the very subroutine call, in contrast to the occurrence of such a function call to
-		// another NSD being allowed at any expression depth?
-		String varName = cmd.substring(0, cmd.indexOf("<-"))
-				.trim();
+		Object value = null;
+		// KGU#2: In case of a Call element, we allow an assignment with just the subroutine call on the
+		// right-hand side. This makes it relatively easy to detect and prepare the very subroutine call,
+		// in contrast to possible occurrences of such foreign function calls at arbitrary expression depths,
+		// combined, nested etc.
+		String varName = cmd.substring(0, cmd.indexOf("<-")).trim();
 		String expression = cmd.substring(
 				cmd.indexOf("<-") + 2, cmd.length()).trim();
 		// START KGU#2 2015-10-18: Just a preliminary check for the applicability of a cross-NSD subroutine execution!
@@ -1290,28 +1497,49 @@ public class Executor implements Runnable
 			{
 				System.out.println("Looking for SUBROUTINE NSD:");
 				System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
-				Root sub = this.diagram.getRoot().findSubroutineWithSignature(f.getName(), f.paramCount());
+				Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
 				if (sub != null)
 				{
-					System.out.println("HEUREKA: Matching sub-NSD found for SUBROUTINE CALL!");
+					System.out.println("Matching sub-NSD found for SUBROUTINE CALL!");
 					System.out.println("--> " + varName + " <- " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
+					Object[] args = new Object[f.paramCount()];
+					for (int p = 0; p < f.paramCount(); p++)
+					{
+						args[p] = interpreter.eval(f.getParam(p));
+					}
+					value = executeCall(sub, args);
 				}
+				else
+				{
+					result = "A function diagram " + f.getName() + " (" + f.paramCount() + 
+							" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first."; 
+				}
+			}
+			else
+			{
+				result = "<" + expression + "> is not a correct function!";
 			}
 		}
 		// END KGU#2 2015-10-17
-
-		cmd = cmd.replace("<-", "=");
-		// evaluate the expression
-		Object n = interpreter.eval(expression);
-		if (n == null)
+		else		
+		{
+			cmd = cmd.replace("<-", "=");
+			// evaluate the expression
+			value = interpreter.eval(expression);
+		}
+		
+		if (value != null)
+		{
+			setVar(varName, value);
+		}
+		// START KGU#2 2015-11-24: In case of an already detected problem don't fill the result
+		//else if (result.isEmpty())
+		else if (result.isEmpty() && !stop)
+		// END KGU#2 2015-11-24
 		{
 			result = "<"
 					+ expression
 					+ "> is not a correct or existing expression.";
-		} else
-		{
-			// FIXME: Here setVar is used with already interpreted object...
-			setVar(varName, n);
 		}
 
 		return result;
@@ -1342,10 +1570,24 @@ public class Executor implements Runnable
 		// END KGU33 2014-12-05
 		String str = JOptionPane.showInputDialog(null,
 				"Please enter a value for <" + in + ">", null);
-		// START KGU#69 2015-11-08: Use specific method for raw input
-		// (obsolete code lines removed)
-		setVarRaw(in, str);
-		// END KGU#69 2015-11-08
+		// START KGU#84 2015-11-23: Allow a controlled continuation on cancelled input
+		//setVarRaw(in, str);
+		if (str == null)
+		{
+			// Switch to step mode such that the user may enter the variable in the display and go on
+			JOptionPane.showMessageDialog(diagram, "Execution paused - you may enter the value in the variable display.",
+					"Input cancelled", JOptionPane.WARNING_MESSAGE);
+			step = true;
+			this.control.setButtonsForPause();
+		}
+		else
+		{
+			// START KGU#69 2015-11-08: Use specific method for raw input
+			setVarRaw(in, str);
+			// END KGU#69 2015-11-08
+		}
+		// END KGU#84 2015-11-23
+		
 		return result;
 	}
 
@@ -1365,8 +1607,18 @@ public class Executor implements Runnable
 		} else
 		{
 			String s = unconvert(n.toString());
-			JOptionPane.showMessageDialog(diagram, s, "Output",
-					JOptionPane.INFORMATION_MESSAGE);
+			// START KGU#84 2015-11-23: Enhancement to give a chance to pause
+			//JOptionPane.showMessageDialog(diagram, s, "Output",
+			//		JOptionPane.INFORMATION_MESSAGE);
+			Object[] options = {"OK", "Pause"};	// FIXME: Provide a translation
+			int pressed = JOptionPane.showOptionDialog(diagram, s, "Output",
+					JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
+			if (pressed == 1)
+			{
+				step = true;
+				control.setButtonsForPause();
+			}
+			// END KGU#84 2015-11-23
 		}
 		return result;
 	}
@@ -1377,18 +1629,51 @@ public class Executor implements Runnable
 		String result = "";
 		String out = cmd.substring(cmd.indexOf("return") + 6)
 				.trim();
-		Object n = interpreter.eval(out);
-		if (n == null)
+		// START KGU#77 (#21) 2015-11-13: We out to allow an empty return
+		//Object n = interpreter.eval(out);
+		//if (n == null)
+		//{
+		//	result = "<"
+		//			+ out
+		//			+ "> is not a correct or existing expression.";
+		//} else
+		//{
+		//	String s = unconvert(n.toString());
+		//	JOptionPane.showMessageDialog(diagram, s,
+		//			"Returned result", 0);
+		//}
+		Object n = null;
+		if (!out.isEmpty())
 		{
-			result = "<"
-					+ out
-					+ "> is not a correct or existing expression.";
-		} else
-		{
-			String s = unconvert(n.toString());
-			JOptionPane.showMessageDialog(diagram, s,
-					"Returned result", JOptionPane.INFORMATION_MESSAGE);
+			n = interpreter.eval(out);
+			// If this diagram is executed at top level then show the return value
+			if (this.callers.empty())
+			{
+				if (n == null)
+				{
+					result = "<"
+							+ out
+							+ "> is not a correct or existing expression.";
+				} else
+				{
+					String s = unconvert(n.toString());
+					// START KGU#84 2015-11-23: Enhancement to give a chance to pause
+					//JOptionPane.showMessageDialog(diagram, s,
+					//		"Returned result", JOptionPane.INFORMATION_MESSAGE);
+					Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
+					int pressed = JOptionPane.showOptionDialog(diagram, s, "Returned result",
+							JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
+					if (pressed == 1)
+					{
+						step = true;
+						control.setButtonsForPause();
+					}
+					// END KGU#84 2015-11-23
+				}
+			}
 		}
+		this.returnedValue = n;
+		// END KGU#77 (#21) 2015-11-13
 		returned = true;
 		return result;
 	}
@@ -1398,65 +1683,73 @@ public class Executor implements Runnable
 	{
 		String result = "";
 		Function f = new Function(cmd);
+		boolean done = false;
 		if (f.isFunction())
 		{
-			// TODO KGU 2015-10-13 for the future case that either the Arranger or the Editor itself may
-			// administer a set of diagrams: If this element is of class Call and the extracted function name
-			// corresponds to one of the NSD diagrams currently opened then try a sub-execution of that diagram.
-			// Parts of the parsing code for diagramController will apply for this project as well.
-			// But it seems to get more tricky. A function CALL might hide in any expression - so we may have
-			// to check interpreter.eval() or write an adapter.
-			// START KGU#2 2015-10-17: Just a preliminary check for the applicability of a cross-NSD subroutine execution!
-			if (element instanceof Call)
+			String params = new String();
+			Object[] args = new Object[f.paramCount()];
+			for (int p = 0; p < f.paramCount(); p++)
 			{
+				try
+				{
+					args[p] = interpreter.eval(f.getParam(p));
+					if (args[p] == null)
+					{
+						if (!result.isEmpty())
+						{
+							result = result + "\n";
+						}
+						result = result + "PARAM " + p + ": <"
+								+ f.getParam(p)
+								+ "> is not a correct or existing expression.";
+					} else
+					{
+						params += "," + args[p].toString();
+					}
+				} catch (EvalError ex)
+				{
+					result = result + (!result.isEmpty() ? "\n" : "") +
+							"PARAM " + p + ": " + ex.getMessage();
+				}
+			}
+			// If this element is of class Call and the extracted function name
+			// corresponds to one of the NSD diagrams currently opened then try
+			// a sub-execution of that diagram.
+			// START KGU#2 2015-10-17: Check foreign call
+			if (result.isEmpty() && element instanceof Call)
+			{
+				// FIXME: Disable the output instructions for the release version
 				System.out.println("Looking for SUBROUTINE NSD:");
 				System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
-				Root sub = this.diagram.getRoot().findSubroutineWithSignature(f.getName(), f.paramCount());
+				Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
 				if (sub != null)
 				{
-					System.out.println("HEUREKA: Matching sub-NSD found for SUBROUTINE CALL!");
+					// FIXME: Disable the output instructions for the release version
+					System.out.println("Matching sub-NSD found for SUBROUTINE CALL!");
 					System.out.println("--> " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
+					executeCall(sub, args);
+				}
+				else
+				{
+					result = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
+							" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";					
 				}
 			}
 			// END KGU#2 2015-10-17
-			if (diagramController != null)
+			else if (result.isEmpty())
 			{
-				String params = new String();
-				for (int p = 0; p < f.paramCount(); p++)
-				{
-					try
-					{
-						Object n = interpreter.eval(f
-								.getParam(p));
-						if (n == null)
-						{
-							result = "<"
-									+ f.getParam(p)
-									+ "> is not a correct or existing expression.";
-						} else
-						{
-							params += "," + n.toString();
-						}
-					} catch (EvalError ex)
-					{
-						System.out.println("PARAM: "
-								+ f.getParam(p));
-						result = ex.getMessage();
-					}
-				}
-				if (result.equals(""))
+				if (diagramController != null)
 				{
 					if (f.paramCount() > 0)
 					{
 						params = params.substring(1);
 					}
-					cmd = f.getName() + "(" + params + ")";
+					cmd = f.getName().toLowerCase() + "(" + params + ")";
 					result = getExec(cmd, element.getColor());
+				} else
+				{
+					interpreter.eval(cmd);
 				}
-				//delay();
-			} else
-			{
-				interpreter.eval(cmd);
 			}
 		} else
 		{
@@ -1515,7 +1808,7 @@ public class Executor implements Runnable
 					// START KGU#77 2015-11-11: Leave if a return statement has been executed
 					//while ((i < element.qs.get(q - 1).children.size())
 					//		&& result.equals("") && (stop == false))
-					while ((i < element.qs.get(q - 1).children.size())
+					while ((i < element.qs.get(q - 1).getSize())
 							&& result.equals("") && (stop == false) && !returned)
 					// END KGU#77 2015-11-11
 					{
@@ -1588,7 +1881,7 @@ public class Executor implements Runnable
 				// START KGU#77 2015-11-11: Leave if a return statement has been executed
 				//while ((i < branch.children.size())
 				//		&& result.equals("") && (stop == false))
-				while ((i < branch.children.size())
+				while ((i < branch.getSize())
 						&& result.equals("") && (stop == false) && !returned)
 				// END KGU#77 2015-11-11
 				{
@@ -1671,7 +1964,7 @@ public class Executor implements Runnable
 					// START KGU#77 2015-11-11: Leave if a return statement has been executed
 					//while ((i < body.children.size())
 					//		&& result.equals("") && (stop == false))
-					while ((i < body.children.size())
+					while ((i < body.getSize())
 							&& result.equals("") && (stop == false) && !returned)
 					// END KGU#77 2015-11-11
 					{
@@ -1762,7 +2055,7 @@ public class Executor implements Runnable
 					// START KGU#77 2015-11-11: Leave if a return statement has been executed
 					//while ((i < element.q.children.size())
 					//		&& result.equals("") && (stop == false))
-					while ((i < element.q.children.size())
+					while ((i < element.q.getSize())
 							&& result.equals("") && (stop == false) && !returned)
 					// END KGU#77 2015-11-11
 					{
@@ -1931,7 +2224,7 @@ public class Executor implements Runnable
 				// START KGU#77 2015-11-11: Leave if a return statement has been executed
 				//while ((i < element.q.children.size())
 				//		&& result.equals("") && (stop == false))
-				while ((i < element.q.children.size())
+				while ((i < element.q.getSize())
 						&& result.equals("") && (stop == false) && !returned)
 				// END KGU#77 2015-11-11
 				{
@@ -1985,7 +2278,7 @@ public class Executor implements Runnable
 			Vector<Iterator<Element> > undoneThreads = new Vector<Iterator<Element>>();
 			for (int thr = 0; thr < nThreads; thr++)
 			{
-				undoneThreads.add(element.qs.get(thr).children.iterator());
+				undoneThreads.add(element.qs.get(thr).getIterator());
 			}
 
 			element.waited = true;

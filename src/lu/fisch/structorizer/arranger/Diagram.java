@@ -33,6 +33,9 @@ public class Diagram
     Root root = null;
     Point point = null;
     Mainform mainform = null;
+    // START KGU#88 2015-11-24
+    boolean isPinned = false;
+    // END KGU#88 2015-11-24
 
     public Diagram(Root root, Point point)
     {

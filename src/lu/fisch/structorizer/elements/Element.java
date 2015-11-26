@@ -166,7 +166,7 @@ public abstract class Element {
 	public final static String E_CHANGELOG = "";
 
 	// some static constants
-	static int E_PADDING = 20;
+	protected static int E_PADDING = 20;
 	static int E_INDENT = 2;
 	public static Color E_DRAWCOLOR = Color.YELLOW;
 	public static Color E_COLLAPSEDCOLOR = Color.LIGHT_GRAY;
@@ -206,10 +206,10 @@ public abstract class Element {
 	public static String preRepeat = "until (?)";
 	
 	// used font
-	static Font font = new Font("Helvetica", Font.PLAIN, 12);
-	
-        public static final String COLLAPSED =  "...";
-        public static boolean altPadRight = true;
+	protected static Font font = new Font("Helvetica", Font.PLAIN, 12);
+
+	public static final String COLLAPSED =  "...";
+	public static boolean altPadRight = true;
 
 	// element attributes
 	protected StringList text = new StringList();
@@ -235,7 +235,7 @@ public abstract class Element {
 	public Rect rect = new Rect();
 	// START KGU#64 2015-11-03: Is to improve drawing performance
 	protected boolean isRectUpToDate = false;		// Will be set and used by prepareDraw() - to be reset on changes
-	private static StringList specialSigns = null;					// Strings to be highlighted in the text (lazy initialisation)
+	private static StringList specialSigns = null;	// Strings to be highlighted in the text (lazy initialisation)
 	/**
 	 * Resets my cached drawing info
 	 */

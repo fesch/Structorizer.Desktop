@@ -414,9 +414,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected void generateCode(Subqueue _subqueue, String _indent)
 	{
 		// code.add(_indent+"");
-		for(int i=0;i<_subqueue.children.size();i++)
+		for(int i=0;i<_subqueue.getSize();i++)
 		{
-			generateCode((Element) _subqueue.children.get(i),_indent);
+			generateCode((Element) _subqueue.getElement(i),_indent);
 		}
 		// code.add(_indent+"");
 	}

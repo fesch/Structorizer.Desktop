@@ -163,81 +163,11 @@ public class BASHGenerator extends Generator {
 	{
 		_input = super.transform(_input);
 		
-//		// START KGU 2014-11-16: comparison and assignment have to be handled more carefully
-//        String s = _input;
-//        // variable assignment
-//        s=s.replace(":=", "<-");
-//        // testing
-//        s=s.replace("==", "=");
-//		s=s.replace("!=", "<>");
-//        s=s.replace("=", "==");
-//        s=s.replace("<==", "<=");
-//        s=s.replace(">==", ">=");
-//        s=s.replace("<>", "!=");
-//        _input=s;
-//        // END KGU 2014-11-16
-//	
-//		_input=BString.replace(_input, " <- ", "=");
-//		_input=BString.replace(_input, "<- ", "=");
-//		_input=BString.replace(_input, " <-", "=");
-//		_input=BString.replace(_input, "<-", "=");
-		
         // START KGU 2014-11-16 Support for Pascal-style operators		
-        // convert Pascal operators
-//        _input=BString.replace(_input," mod "," % ");
         _input=BString.replace(_input," div "," / ");
-//        _input=BString.replace(_input," and "," && ");
-//        _input=BString.replace(_input," or "," || ");
-//        _input=BString.replace(_input," not "," !");
-//        _input=BString.replace(_input,"(not ", "(!");
-//        _input=BString.replace(_input," not(", " !(");
-//        _input=BString.replace(_input,"(not(", "(!(");
-//        if (_input.startsWith("not ") || _input.startsWith("not(")) {
-//        	_input = "!" + _input.substring(3);
-//        }
-//        _input=BString.replace(_input," xor "," ^ ");	// Might cause some operator preference trouble
-//        // END KGU 2014-11-06
-//
-//        StringList empty = new StringList();
-//            empty.addByLength(D7Parser.preAlt);
-//            empty.addByLength(D7Parser.postAlt);
-//            empty.addByLength(D7Parser.preCase);
-//            empty.addByLength(D7Parser.postCase);
-//            empty.addByLength(D7Parser.preFor);
-//            empty.addByLength(D7Parser.postFor);
-//            empty.addByLength(D7Parser.preWhile);
-//            empty.addByLength(D7Parser.postWhile);
-//            empty.addByLength(D7Parser.postRepeat);
-//            empty.addByLength(D7Parser.preRepeat);
-//            //System.out.println(empty);
-//            for(int i=0;i<empty.count();i++)
-//            {
-//                _input=BString.replace(_input,empty.get(i),"");
-//                //System.out.println(i);
-//            }
-//            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
-//
-//            
-///*
-//
-//                if(!D7Parser.preAlt.equals("")){_input=BString.replace(_input,D7Parser.preAlt,"");}
-//		if(!D7Parser.postAlt.equals("")){_input=BString.replace(_input,D7Parser.postAlt,"");}
-//		if(!D7Parser.preCase.equals("")){_input=BString.replace(_input,D7Parser.preCase,"");}
-//		if(!D7Parser.postCase.equals("")){_input=BString.replace(_input,D7Parser.postCase,"");}
-//		if(!D7Parser.preFor.equals("")){_input=BString.replace(_input,D7Parser.preFor,"");}
-//		if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"");}
-//		if(!D7Parser.preWhile.equals("")){_input=BString.replace(_input,D7Parser.preWhile,"");}
-//		if(!D7Parser.postWhile.equals("")){_input=BString.replace(_input,D7Parser.postWhile,"");}
-//		if(!D7Parser.preRepeat.equals("")){_input=BString.replace(_input,D7Parser.preRepeat,"");}
-//		if(!D7Parser.postRepeat.equals("")){_input=BString.replace(_input,D7Parser.postRepeat,"");}
-//*/
-//            
-//		if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input+" ")>=0){_input=BString.replace(_input,D7Parser.input+" ","read ");}
-//		if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output+" ")>=0){_input=BString.replace(_input,D7Parser.output+" ","echo ");}
-//		if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input)>=0){_input=BString.replace(_input,D7Parser.input,"read ");}
-//		if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output)>=0){_input=BString.replace(_input,D7Parser.output,"echo ");}
-// START KGU#18/KGU#23 2015-11-02: Most of the stuff became obsolete by subclassing
-		return _input.trim();
+        // END KGU 2014-11-06
+
+        return _input.trim();
 	}
 	
 	protected void generateCode(Instruction _inst, String _indent) {
@@ -410,17 +340,6 @@ public class BASHGenerator extends Generator {
 		}
 	}
 
-// START KGU 2015-11-02: Identical to the inherited method	
-//	protected void generateCode(Subqueue _subqueue, String _indent) {
-//		
-//		for(int i=0;i<_subqueue.children.size();i++)
-//		{
-//			generateCode((Element) _subqueue.children.get(i),_indent);
-//		}
-//		
-//	}
-// END KGU 2015-11-02
-	
 	public String generateCode(Root _root, String _indent) {
 		
 		code.add("#!/bin/bash");

@@ -31,9 +31,10 @@ package lu.fisch.structorizer.gui;
  *      Revision List
  *
  *      Author          Date			Description
- *      ------			----			-----------
+ *      ------          ----            -----------
  *      Bob Fisch       2007.12.28      First Issue
  *      Kay Gürtzig     2015.10.12      control elements for breakpoint handling added (KGU#43). 
+ *      Kay Gürtzig     2015.11.22      Adaptations for handling selected non-empty Subqueues (KGU#87)
  *
  ******************************************************************************************************
  *
@@ -120,7 +121,10 @@ public class Editor extends JPanel implements NSDController, ComponentListener
     protected JButton btnMoveUp = new JButton(IconLoader.ico019); 
     protected JButton btnMoveDown = new JButton(IconLoader.ico020); 
 	// printing
-    protected JButton btnPrint = new JButton(IconLoader.ico041); 
+    protected JButton btnPrint = new JButton(IconLoader.ico041);
+    // START KGU#2 2015-11-19: Arranger launch added
+    protected JButton btnArrange = new JButton(IconLoader.ico105);
+    // END KGU#2 2015-11-19
 	// font
     protected JButton btnFontUp = new JButton(IconLoader.ico033); 
     protected JButton btnFontDown = new JButton(IconLoader.ico034);
@@ -332,6 +336,12 @@ public class Editor extends JPanel implements NSDController, ComponentListener
         toolbar.add(btnPrint);
 		btnPrint.setFocusable(false);
 		btnPrint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.printNSD(); doButtons(); } } );
+		// START KGU#2 2015-11-24: Arranger launcher (now action correctly attached)
+        toolbar.add(btnArrange);
+        btnArrange.setToolTipText("Add the diagram to the Arranger panel");
+		btnArrange.setFocusable(false);
+		btnArrange.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.arrangeNSD(); doButtons(); } } );
+		// END KGU#2 2015-11-24
 		
 		toolbar=newToolBar("Undo, redo");
 
@@ -589,7 +599,10 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 
 		// conditions
 		boolean conditionAny =  diagram.getSelected() != null;
-		boolean condition =  conditionAny && diagram.getSelected() != diagram.getRoot();
+		boolean condition =  conditionAny && diagram.getSelected()!=diagram.getRoot();
+		// START KGU#87 2015-11-22: For most operations, multiple selections are not supported
+		boolean conditionNoMult = condition && !diagram.selectedIsMultiple();
+		// END KGU#87 2015-11-22
 		int i = -1;
 		boolean conditionCanMoveUp = false;
 		boolean conditionCanMoveDown = false;
@@ -612,49 +625,52 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		btnRedo.setEnabled(diagram.getRoot().canRedo());
 		
 		// elements
-		btnBeforeInst.setEnabled(condition);
-		btnBeforeAlt.setEnabled(condition);
-		btnBeforeCase.setEnabled(condition);
-		btnBeforeFor.setEnabled(condition);
-		btnBeforeWhile.setEnabled(condition);
-		btnBeforeRepeat.setEnabled(condition);
-		btnBeforeForever.setEnabled(condition);
-		btnBeforeCall.setEnabled(condition);
-		btnBeforeJump.setEnabled(condition);
-		btnBeforePara.setEnabled(condition);
+		btnBeforeInst.setEnabled(conditionNoMult);
+		btnBeforeAlt.setEnabled(conditionNoMult);
+		btnBeforeCase.setEnabled(conditionNoMult);
+		btnBeforeFor.setEnabled(conditionNoMult);
+		btnBeforeWhile.setEnabled(conditionNoMult);
+		btnBeforeRepeat.setEnabled(conditionNoMult);
+		btnBeforeForever.setEnabled(conditionNoMult);
+		btnBeforeCall.setEnabled(conditionNoMult);
+		btnBeforeJump.setEnabled(conditionNoMult);
+		btnBeforePara.setEnabled(conditionNoMult);
 
-		btnAfterInst.setEnabled(condition);
-		btnAfterAlt.setEnabled(condition);
-		btnAfterCase.setEnabled(condition);
-		btnAfterFor.setEnabled(condition);
-		btnAfterWhile.setEnabled(condition);
-		btnAfterRepeat.setEnabled(condition);
-		btnAfterForever.setEnabled(condition);
-		btnAfterCall.setEnabled(condition);
-		btnAfterJump.setEnabled(condition);
-		btnAfterPara.setEnabled(condition);
+		btnAfterInst.setEnabled(conditionNoMult);
+		btnAfterAlt.setEnabled(conditionNoMult);
+		btnAfterCase.setEnabled(conditionNoMult);
+		btnAfterFor.setEnabled(conditionNoMult);
+		btnAfterWhile.setEnabled(conditionNoMult);
+		btnAfterRepeat.setEnabled(conditionNoMult);
+		btnAfterForever.setEnabled(conditionNoMult);
+		btnAfterCall.setEnabled(conditionNoMult);
+		btnAfterJump.setEnabled(conditionNoMult);
+		btnAfterPara.setEnabled(conditionNoMult);
 
-		popupAddBeforeInst.setEnabled(condition);
-		popupAddBeforeAlt.setEnabled(condition);
-		popupAddBeforeCase.setEnabled(condition);
-		popupAddBeforeFor.setEnabled(condition);
-		popupAddBeforeWhile.setEnabled(condition);
-		popupAddBeforeRepeat.setEnabled(condition);
-		popupAddBeforeForever.setEnabled(condition);
-		popupAddBeforeCall.setEnabled(condition);
-		popupAddBeforeJump.setEnabled(condition);
-		popupAddBeforePara.setEnabled(condition);
+		// START KGU#87 2015-11-22: Why enable the main entry if no action is enabled?
+		popupAdd.setEnabled(conditionNoMult);
+		// END KGU#87 2015-11-22
+		popupAddBeforeInst.setEnabled(conditionNoMult);
+		popupAddBeforeAlt.setEnabled(conditionNoMult);
+		popupAddBeforeCase.setEnabled(conditionNoMult);
+		popupAddBeforeFor.setEnabled(conditionNoMult);
+		popupAddBeforeWhile.setEnabled(conditionNoMult);
+		popupAddBeforeRepeat.setEnabled(conditionNoMult);
+		popupAddBeforeForever.setEnabled(conditionNoMult);
+		popupAddBeforeCall.setEnabled(conditionNoMult);
+		popupAddBeforeJump.setEnabled(conditionNoMult);
+		popupAddBeforePara.setEnabled(conditionNoMult);
 
-		popupAddAfterInst.setEnabled(condition);
-		popupAddAfterAlt.setEnabled(condition);
-		popupAddAfterCase.setEnabled(condition);
-		popupAddAfterFor.setEnabled(condition);
-		popupAddAfterWhile.setEnabled(condition);
-		popupAddAfterRepeat.setEnabled(condition);
-		popupAddAfterForever.setEnabled(condition);
-		popupAddAfterCall.setEnabled(condition);
-		popupAddAfterJump.setEnabled(condition);
-		popupAddAfterPara.setEnabled(condition);
+		popupAddAfterInst.setEnabled(conditionNoMult);
+		popupAddAfterAlt.setEnabled(conditionNoMult);
+		popupAddAfterCase.setEnabled(conditionNoMult);
+		popupAddAfterFor.setEnabled(conditionNoMult);
+		popupAddAfterWhile.setEnabled(conditionNoMult);
+		popupAddAfterRepeat.setEnabled(conditionNoMult);
+		popupAddAfterForever.setEnabled(conditionNoMult);
+		popupAddAfterCall.setEnabled(conditionNoMult);
+		popupAddAfterJump.setEnabled(conditionNoMult);
+		popupAddAfterPara.setEnabled(conditionNoMult);
 		
 		// colors
 		btnColor0.setEnabled(condition);
@@ -669,11 +685,17 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		btnColor9.setEnabled(condition);
 		
 		// editing
-		btnEdit.setEnabled(conditionAny);
+		// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
+		//btnEdit.setEnabled(conditionAny);
+		btnEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
+		// END KGU#87 2015-11-22
 		btnDelete.setEnabled(diagram.canCutCopy());
 		btnMoveUp.setEnabled(conditionCanMoveUp);
 		btnMoveDown.setEnabled(conditionCanMoveDown);
-		popupEdit.setEnabled(conditionAny);
+		// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
+		//popuEdit.setEnabled(conditionAny);
+		popupEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
+		// END KGU#87 2015-11-22
 		popupDelete.setEnabled(condition);
 		popupMoveUp.setEnabled(conditionCanMoveUp);
 		popupMoveDown.setEnabled(conditionCanMoveDown);

@@ -37,6 +37,10 @@ package lu.fisch.structorizer.gui;
  *                      2015.10.11      Comment popping repaired by proper subclassing of getElementByCoord
  *                                      Listener method MouseExited now enabled to drop the sticky comment popup
  *      Kay Gürtzig     2015.11.08      Parser preferences for FOR loops enhanced (KGU#3)
+ *      Kay Gürtzig     2015.11.22      Selection of Subqueue subsequences or entire Subqueues enabled
+ *                                      thus allowing collective operations like delete/cut/copy/paste (KGU#87).
+ *      Kay Gürtzig     2015.11.24      Method setRoot() may now refuse the replacement (e.g. on cancelling
+ *                                      the request to save recent changes)
  *
  ******************************************************************************************************
  *
@@ -70,6 +74,7 @@ import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.generators.*;
+import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.turtle.TurtleBox;
@@ -98,6 +103,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     private int mY = -1;
 
     private NSDController NSDControl = null;
+    
+    // START KGU#2 2015-11-24
+    public boolean isArrangerOpen = false;
+    // END KGU#2 2015-11-24
 
     private JList errorlist = null;
 
@@ -146,17 +155,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	/**
 	 * @param root the Root to set
+	 * @return false if the user refuses to adopt the Root
 	 */
-	public void setRoot(Root root) {
-		setRoot(root, true);
+	public boolean setRoot(Root root) {
+		return setRoot(root, true);
 	}
 	
-	public void setRoot(Root root, boolean askToSave) {
+	public boolean setRoot(Root root, boolean askToSave) {
 		if (root != null)
 		{
 			if(askToSave){
 				// Save if something has been changed
-				saveNSD(true);
+				if (!saveNSD(true))
+				{
+					// Abort this if the user cancels the save request
+					return false;
+				}
 				this.unselectAll();
 			}
 
@@ -164,14 +178,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			this.root = root;
 			root.hightlightVars = hil;
 			//System.out.println(root.getFullText().getText());
-			root.getVarNames();
-			root.hasChanged = true;
+			//root.getVarNames();
+			//root.hasChanged = true;
 			redraw();
 			analyse();
 		}
+		return true;
 	}
 	// END KGU#48,KGU#49 2015-10-18
 
+	// START KGU#2 2015-11-24: Allows the Executor to localize the Control frame
+	public String getLang()
+	{
+		return NSDControl.getLang();
+	}
+	// END KGU#2 2015-11-24
+	
     public boolean getAnalyser()
     {
         return Element.E_ANALYSER;
@@ -271,7 +293,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			if (Element.E_SHOWCOMMENTS==true && ((Editor) NSDControl).popup.isVisible()==false)
 			{
-				// START KGU#25 2015-10-11: Method merged with selectElemetByCoord
+				// START KGU#25 2015-10-11: Method merged with selectElementByCoord
 				//Element selEle = root.getElementByCoord(e.getX(),e.getY());
 				Element selEle = root.getElementByCoord(e.getX(), e.getY(), false);
 				// END KGU#25 2015-10-11
@@ -332,21 +354,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 			if(bSome!=null)
 			{
-                                mX = e.getX();
-                                mY = e.getY();
-                                //System.out.println("DRAGGED "+mX+" "+mY);
-                            
-				bSome.setSelected(true);
-				selectedDown.setSelected(true);
+				mX = e.getX();
+				mY = e.getY();
+				//System.out.println("DRAGGED "+mX+" "+mY);
 
-                                boolean doRedraw = false;
-                                
+				bSome.setSelected(true);
+				if (selectedDown != null) selectedDown.setSelected(true);
+
+				boolean doRedraw = false;
+                
 				if((selectedDown!=null) && (e.getX()!=mouseX) && (e.getY()!=mouseY) && (selectedMoved!=bSome))
 				{
 					mouseMove=true;
 					if(selectedDown.getClass().getSimpleName().equals("Root") ||
 					   selectedDown.getClass().getSimpleName().equals("Subqueue") ||
-					   bSome.getClass().getSimpleName().equals("Root")||
+					   bSome.getClass().getSimpleName().equals("Root") ||
 					   root.checkChild(bSome, selectedDown))
 					{
 						Element.E_DRAWCOLOR=Color.RED;
@@ -365,14 +387,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					 */
 					doRedraw= true;
 				}
-                                
-                                if(selX!=-1 && selY!=-1)
-                                {
-                                    doRedraw= true;
-                                }
-                                
-                                if(doRedraw)
-                                    redraw();
+
+				if(selX!=-1 && selY!=-1)
+				{
+					doRedraw= true;
+				}
+
+				if(doRedraw)
+					redraw();
 
 			}
 			selectedMoved = bSome;
@@ -383,8 +405,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		if(e.getSource()==this)
 		{
-			//System.out.println("PRessed");
-                        mouseX = e.getX();
+			//System.out.println("Pressed");
+			mouseX = e.getX();
 			mouseY = e.getY();
 
 			Element.E_DRAWCOLOR=Color.YELLOW;
@@ -393,24 +415,79 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Element ele = root.getElementByCoord(e.getX(), e.getY(), true);
 			// END KGU#25 2015-10-11
 
+			// START KGU#87 2015-11-22: Maintain a selected sequence on right mouse button click 
+			if (e.getButton() == MouseEvent.BUTTON3 && selected instanceof IElementSequence &&
+					(ele == null || ((IElementSequence)selected).getIndexOf(ele) >= 0))
+			{
+				// Restore the selection flags (which have been reduced to ele by root.getElementByCoord(...))
+				ele.setSelected(false);
+				selected.setSelected(true);
+				redraw();
+			}
+			else
+			// END KGU#87 2015-11-23	
 			if(ele!=null)
 			{
 				mX = mouseX;
 				mY = mouseY;
 				selX = mouseX-ele.getRect().left;
 				selY = mouseY-ele.getRect().top;
-			}
 
-			if (ele!=null && ele!=selected)
-			{
-				ele.setSelected(true);
-				selected=ele;
-				if(selectedDown!=ele)
+				// START KGU#87 2015-11-23
+				if (e.isAltDown() && ele.parent instanceof Subqueue &&
+						((Subqueue)ele.parent).getSize() > 1)
 				{
-					redraw();
+					((Subqueue)ele.parent).setSelected(true);
+					selected = ele.parent;
+					// In case someone wants to drag then let it just be done for the single element
+					// (we don't allow dynamically to move a sequence - the user may better cut and paste)
+					selectedDown = ele;
+					selectedUp = ele;
+					redraw();						
 				}
-				selectedDown=ele;
-				selectedUp=ele;
+				else
+				// END KGU#87 2015-11-23
+				if (ele != selected)
+				{
+					// START KGU#87 2015-11-23: If an entire Subqueue had been selected, reset the flags 
+					if (selected instanceof Subqueue)
+					{
+						selected.setSelected(false);
+					}
+					if (e.isShiftDown() && selected != null &&
+							ele.parent instanceof Subqueue &&
+							ele.parent == selected.parent)
+					{
+						// Select the subrange
+						//System.out.println("Selected range of " + ele.parent + " " +
+						//((Subqueue)ele.parent).getIndexOf(ele) + " - " +
+						//((Subqueue)ele.parent).getIndexOf(selected));
+						selected.setSelected(false);
+						selected = new SelectedSequence(selected, ele);
+						selected.setSelected(true);
+						redraw();
+						selectedDown = ele;
+						selectedUp = ele;
+					}
+					else
+					{
+					// END KGU#87 2015-11-23
+						ele.setSelected(true);
+						// START KGU#87 2015-11-23: Ensure a redrawing after a Subqueue had been selected 
+						//selected=ele;
+						//if(selectedDown!=ele) 
+						if(selectedDown != ele || selected instanceof Subqueue || selected instanceof SelectedSequence)
+							// END KGU#87 2015-11-23
+						{
+							redraw();
+						}
+						selected = ele;
+						selectedDown = ele;
+						selectedUp = ele;
+					// START KGU#87 2015-11-23: Original code just part of the else branch
+					}
+					// END KGU#87 2015-11-23
+				}
 			}
 
 			if(selected!=null)
@@ -428,23 +505,23 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
     public void mouseReleased(MouseEvent e)
 	{
-		if(e.getSource()==this)
-		{
-                        //System.out.println("Released");
-			boolean doDraw = false;
+    	if(e.getSource()==this)
+    	{
+    		//System.out.println("Released");
+    		boolean doDraw = false;
 
-                        if(selX!=-1 && selY!=-1 && selectedDown!=null)
-                        {
-                            selX = -1;
-                            selY = -1;
-                            doDraw=true;
-                        }
+    		if(selX!=-1 && selY!=-1 && selectedDown!=null)
+    		{
+    			selX = -1;
+    			selY = -1;
+    			doDraw=true;
+    		}
 
-                        if ((mouseMove==true) && (selectedDown!=null))
+    		if ((mouseMove==true) && (selectedDown!=null))
 			{
 				Element.E_DRAWCOLOR=Color.YELLOW;
 				if ( !selectedDown.getClass().getSimpleName().equals("Subqueue") &&
-					!selectedDown.getClass().getSimpleName().equals("Root"))
+						!selectedDown.getClass().getSimpleName().equals("Root"))
 				{
 					// START KGU#25 2015-10-11: Method merged with getElementByCoord(int,int)
 					//selectedUp = root.selectElementByCoord(e.getX(),e.getY());
@@ -461,10 +538,27 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							root.addUndo();
 							NSDControl.doButtons();
 
-							root.removeElement(selectedDown);
+							// START KGU#87 2015-11-22: Subqueues should never be moved but better prevent...
+							//root.removeElement(selectedDown);
+							if (!(selectedDown instanceof Subqueue))
+							{
+								root.removeElement(selectedDown);
+							}
+							// END KGU#87 2015-11-22
 							selectedUp.setSelected(false);
 							root.addAfter(selectedUp,selectedDown);
-							selectedDown.setSelected(true);
+							// START KGU'87 2015-11-22: See above
+							//selectedDown.setSelected(true);
+							if (!(selectedDown instanceof Subqueue))
+							{
+								selectedDown.setSelected(true);
+							}
+							else
+							{
+								((Subqueue)selectedDown).clear();
+								selectedDown.setSelected(false);
+							}
+							// END KGU#87 2015-11-22
 							doDraw=true;
 						}
 						else
@@ -573,17 +667,26 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			if(e.getSource()==this)
 			{
-                                // selected the right element
+				// selected the right element
 				//selected = root.selectElementByCoord(e.getX(),e.getY());
-                                if(selected!=null)
-                                {
-                                    // edit it
-                                    editNSD();
-                                    selected.setSelected(true);
-                                    redraw();
-                                    // do the button thing
-                                    if(NSDControl!=null) NSDControl.doButtons();
-                                }
+				// START KGU#87 2015-11-22: Don't edit non-empty Subqueues, reselect single element
+				//if (selected != null)
+//				if ((selected instanceof Subqueue) && ((Subqueue)selected).getSize() > 0)
+//				{
+//					selected = root.selectElementByCoord(e.getX(), e.getY());	// Is of little effect - often subqueues don't detect properly
+//					redraw();
+//					//System.out.println("Re-selected on double-click: " + selected + ((selected instanceof Subqueue) ? ((Subqueue)selected).getSize() : ""));
+//				}
+				if (selected != null && !((selected instanceof Subqueue) && ((Subqueue)selected).getSize() > 0))
+				// END KGU#87 2015-11-22
+				{
+					// edit it
+					editNSD();
+					selected.setSelected(true);
+					redraw();
+					// do the button thing
+					if(NSDControl!=null) NSDControl.doButtons();
+				}
 			}
 			else
 			{
@@ -678,6 +781,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		return selected;
 	}
+	
+	// START KGU#87 2015-11-22: 
+	public boolean selectedIsMultiple()
+	{
+		return (selected instanceof IElementSequence && ((IElementSequence)selected).getSize() > 0);
+	}
+	// END KGU#87 2015-11-22
 	
     // START KGU#41 2015-10-11: Unselecting, e.g. before export, had left the diagram status inconsistent:
     // Though the selected status of the elements was unset, the references of the formerly selected
@@ -1093,7 +1203,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if(selected!=null)
 		{
 			cond = cond && !selected.getClass().getSimpleName().equals("Root");
-			cond = cond && !selected.getClass().getSimpleName().equals("Subqueue");
+			// START KGU#87 2015-11-22: Allow to cut or copy a non-empty Subqueue
+			//cond = cond && !selected.getClass().getSimpleName().equals("Subqueue");
+			cond = cond && (!selected.getClass().getSimpleName().equals("Subqueue") || ((Subqueue)selected).getSize() > 0);
+			// END KGU#87 2015-11-22
 		}
 
 		return cond;
@@ -1156,10 +1269,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			root.addUndo();
 			selected.setSelected(false);
 			Element nE = eCopy.copy();
-			nE.setSelected(true);
+			nE.setSelected(true);	// FIXME (KGU#87): Looks fine but is misleading with a pasted Subqueue
 			root.addAfter(selected,nE);
 			root.hasChanged=true;
-			selected=nE;
+			// START KGU#87 2015-11-22: In case of a copied Subqueue the copy shouldn't be selected!
+			if (nE instanceof Subqueue)
+			{
+				// If the target was a Subqueue then it had been empty and contains all nE had contained,
+				// hence we may leave it selected, otherwise the minimum risk is to clear the selection
+				if (!(selected instanceof Subqueue))
+					selected = null;
+				((Subqueue)nE).clear();
+			}
+			else
+			// END KGU#87 2015-11-22
+				selected=nE;
 			redraw();
 			analyse();
 		}
@@ -1421,6 +1545,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					   Math.round(p.y)+(getVisibleRect().height-pp.getHeight())/2+this.getVisibleRect().y);
 		pp.setVisible(true);
 	}
+
+	// START KGU #2 2015-11-19
+	/*****************************************
+	 * arrange method
+	 *****************************************/
+	public void arrangeNSD()
+	{
+		//System.out.println("Arranger button pressed!");
+		Arranger arr = Arranger.getInstance();
+		arr.addToPool(root, NSDControl.getFrame());
+		arr.setVisible(true);
+		isArrangerOpen = true;	// Gives the Executor a hint where to find a subroutine pool
+	}
+	// END KGU#2 2015-11-19
 
 	/*****************************************
 	 * about method
