@@ -65,6 +65,8 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -308,6 +310,13 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     		// START KGU#85 2015-11-18
     		adaptLayout();
     		// END KGU#85 2015-11-18
+    		// START KGU 2015-11-30
+    		Rectangle rec = root.getRect().getRectangle();
+    		rec.setLocation(left, top);
+    		if (rec.width == 0)	rec.width = 120;
+    		if (rec.height == 0) rec.height = 150;
+    		this.scrollRectToVisible(rec);
+    		// END KGU 2015-11-30
     		repaint();
     		getDrawingRect();
     	// START KGU#2 2015-11-19
@@ -706,6 +715,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     public void windowDeactivated(WindowEvent e)
     {
     }
+
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

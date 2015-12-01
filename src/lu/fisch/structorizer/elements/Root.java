@@ -42,6 +42,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig 2015.11.13/14   Method copy() accomplished, modifications for subroutine calls (KGU#2 = #9)
  *      Kay Gürtzig 2015.11.22/23   Modifications to support selection of Element sequences (KGU#87),
  *                                  Code revision in Analyser (field Subqueue.children now private).
+ *      Kay Gürtzig 2015.11.28      Several additions to analyser (KGU#2 = #9, KGU#47, KGU#78 = #23) and
+ *                                  saveToIni()
  *
  ******************************************************************************************************
  *
@@ -55,6 +57,7 @@ import java.util.Vector;
 import java.util.Stack;
 import java.util.Hashtable;
 import java.util.Enumeration;
+import java.util.regex.Matcher;
 import java.io.File;
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -103,10 +106,10 @@ public class Root extends Element {
 
 	// variables
 	public StringList variables = new StringList();
-	public Vector errors = new Vector();
+	public Vector<DetectedError> errors = new Vector<DetectedError>();
 	private StringList rootVars = new StringList();
 
-	// error checks for analyser
+	// error checks for analyser (see also addError(), saveToIni(), Diagram.analyserNSD() and Mainform.loadFromIni())
 	public static boolean check1 = false;
 	public static boolean check2 = false;
 	public static boolean check3 = false;
@@ -129,6 +132,9 @@ public class Root extends Element {
 	// START KGU#78 2015-11-25: New check for incorrect JUMP element
 	public static boolean check16 = false;
 	// END KGU#78 2015-11-25
+	// START KGU#78 2015-11-28: New check for races in PARALLEL sections
+	public static boolean check17 = false;
+	// END KGU#78 2015-11-28
 
 	private Vector<Updater> updaters = new Vector<Updater>();
                 
@@ -820,9 +826,10 @@ public class Root extends Element {
     @Override
     protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
-    	// This is somewhat tricky - a subroutine diagram is likely to hold parameter declarations in the header, so we ought to
-    	// deliver it for the variable detection
-    	if (!this.isProgram)
+    	// Whereas a subroutine diagram is likely to hold parameter declarations in the header,
+    	// (such that we ought to deliver its header for the variable detection), this doesn't
+    	// hold for programs.
+    	if (!this.isProgram && !_instructionsOnly)
     	{
     		_lines.add(this.getText());
     	}
@@ -954,12 +961,33 @@ public class Root extends Element {
             return getUsedVarNames(_ele,true,false);
     }
 
+    /**
+     * Extract used variable names from an element (and its substructure), where the text lines
+     * of the element itself are NOT included if _includeSelf is set false.
+     * HYP 1: (?) <- <used>
+     * HYP 2: (?)[<used>] <- <used>
+     * HYP 3: [output] <used>
+     * @param _ele - the element to be searched
+     * @param _includeSelf - whether or not the own text lines of _ele are to be included
+     * @return The StringList of passively used variable names
+     */
     private StringList getUsedVarNames(Element _ele, boolean _includeSelf)
     {
             return getUsedVarNames(_ele,_includeSelf,false);
     }
 
-    public StringList getUsedVarNames(Element _ele, boolean _includeSelf, boolean _onlyMe)
+    /**
+     * Gathers the names of all variables that are used by Element _ele in expressions:
+     * HYP 1: (?) <- <used>
+     * HYP 2: (?)[<used>] <- <used>
+     * HYP 3: [output] <used>
+     * This works only if _ele is different from this.
+     * @param _ele - the element to be searched
+     * @param _includeSelf - whether or not the own text of _ele is to be considered (otherwise only substructure)
+     * @param _onlyEle - if true then only the text of _ele itself is searched (no substructure)
+     * @return StringList of variable names according to the above specification
+     */
+    public StringList getUsedVarNames(Element _ele, boolean _includeSelf, boolean _onlyEle)
     {
             StringList varNames = new StringList();
 
@@ -967,7 +995,7 @@ public class Root extends Element {
             {
                     // get body text
                     StringList lines = new StringList();
-                    if(_onlyMe==true)
+                    if(_onlyEle==true)
                     {
                             lines.add(_ele.getText());
                     }
@@ -1003,7 +1031,10 @@ public class Root extends Element {
                             r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); allText=r.replaceAll(allText);
 
                             // modify mathematically correct assignments
-                            r = new Regex("(.*?)[:][=](.*?)","$1<-$2"); allText=r.replaceAll(allText);     // 1.29
+                            // START KGU 2015-11-28: Disambiguate the operator symbols all at once now
+                            //r = new Regex("(.*?)[:][=](.*?)","$1 <- $2"); allText=r.replaceAll(allText);     // 1.29
+                            allText = Element.unifyOperators(allText);
+                            // END KGU 2015-11-28
 
                             //
                             // Should use PARAMETERS HERE!!!
@@ -1057,9 +1088,23 @@ public class Root extends Element {
                             // END KGU 2015-10-16
 
                             // get names from assignments
-                            if(allText.indexOf("<--")>=0)
+                            // START KGU 2015-11-28: Operators are already unified now
+//                            if(allText.indexOf("<--")>=0)
+//                            {
+//                                    int pos = allText.indexOf("<--");
+//
+//                                    String s = allText.substring(0, pos);
+//                                    if(allText.indexOf("[")>=0)
+//                                    {
+//                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
+//                                            s=r.replaceAll(s);
+//                                    } else { s=""; }
+//
+//                                    allText=s+" "+allText.substring(pos+2,allText.length());
+//                            }
+                            if(allText.indexOf(" <- ")>=0)
                             {
-                                    int pos = allText.indexOf("<--");
+                                    int pos = allText.indexOf(" <- ");
 
                                     String s = allText.substring(0, pos);
                                     if(allText.indexOf("[")>=0)
@@ -1068,34 +1113,22 @@ public class Root extends Element {
                                             s=r.replaceAll(s);
                                     } else { s=""; }
 
-                                    allText=s+" "+allText.substring(pos+2,allText.length());
+                                    allText=s+" "+allText.substring(pos + " <- ".length(), allText.length());
                             }
-                            if(allText.indexOf("<-")>=0)
-                            {
-                                    int pos = allText.indexOf("<-");
-
-                                    String s = allText.substring(0, pos);
-                                    if(allText.indexOf("[")>=0)
-                                    {
-                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-                                            s=r.replaceAll(s);
-                                    } else { s=""; }
-
-                                    allText=s+" "+allText.substring(pos+2,allText.length());
-                            }
-                            if(allText.indexOf(":=")>=0)
-                            {
-                                    int pos = allText.indexOf(":=");
-
-                                    String s = allText.substring(0, pos);
-                                    if(allText.indexOf("[")>=0)
-                                    {
-                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-                                            s=r.replaceAll(s);
-                                    } else { s=""; }
-
-                                    allText=s+" "+allText.substring(pos+2,allText.length());
-                            }
+//                            if(allText.indexOf(":=")>=0)
+//                            {
+//                                    int pos = allText.indexOf(":=");
+//
+//                                    String s = allText.substring(0, pos);
+//                                    if(allText.indexOf("[")>=0)
+//                                    {
+//                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
+//                                            s=r.replaceAll(s);
+//                                    } else { s=""; }
+//
+//                                    allText=s+" "+allText.substring(pos+2,allText.length());
+//                            }
+                            // END KGU 2015-11-28
 
                             // cutoff output keyword
                             // START KGU#23 2015-10-16: Must start at the very beginning 
@@ -1145,6 +1178,9 @@ public class Root extends Element {
                     // Moreover, we solve the erroneous in-String analysis (i.e. string literals had been scrutinized, too!) 
                     StringList parts = Element.splitLexically(lines.getLongString(), true);
                     // END KGU#26/KGU#65 2015-11-04
+                    // START KGU 2015-11-29: Get rid of spaces
+                    parts.removeAll(" ");
+                    // END KGU 2015-11-29
 
                     //this.getVarNames(); // needed?  // CHECKITfile://localhost/Users/robertfisch/Desktop/TEST.nsd
 
@@ -1152,14 +1188,19 @@ public class Root extends Element {
                     {
                             String display = parts.get(i);
 
-                            display = BString.replace(display, "<--","<-");
-                            display = BString.replace(display, "<-","\u2190");
-
-                            if(!display.equals(""))
+                            //display = BString.replace(display, "<--","<-");	// No longer necessary, operators already unified
+                            //display = BString.replace(display, "<-","\u2190");	// Not needed to identify variables
+                            
+                            // START KGU 2015-11-29: we would have got a more precise test (testidentifier(display)) but
+                            // using it here would disable the analyser to detect incorrect variable names
+                            display = display.trim();
+                            // END KGU 2015-11-29
+                            
+                            if (!display.equals(""))
                             {
                                     if(this.variables.contains(display) && !varNames.contains(display))
                                     {
-                                            //System.out.println("Adding: "+display);
+                                            //System.out.println("Adding to used var names: " + display);
                                             varNames.add(display);
                                     }
                             }
@@ -1198,8 +1239,11 @@ public class Root extends Element {
                     r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); allText=r.replaceAll(allText);
                     r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); allText=r.replaceAll(allText);
 
+                    // START KGU 2015-11-28:Disambiguate all operators at once
                     // modify mathematically correct assignments
-                    r = new Regex("(.*?)[:][=](.*?)","$1<-$2"); allText=r.replaceAll(allText);     // 1.29
+                    //r = new Regex("(.*?)[:][=](.*?)","$1<-$2"); allText=r.replaceAll(allText);     // 1.29
+                    allText = Element.unifyOperators(allText);
+                    // END KGU 2015-11-28
 
                     //
                     // Should use PARAMETERS HERE!!!
@@ -1221,25 +1265,28 @@ public class Root extends Element {
                             allText=allText.substring(allText.indexOf(D7Parser.preFor.trim())+D7Parser.preFor.trim().length()).trim();
                     }
 
+                    // START KGU 2015-11-28: Operators have already been unified above 
                     // get names from assignments
-                    if(allText.indexOf("<--")>=0)
+//                    if(allText.indexOf("<--")>=0)
+//                    {
+//                            int pos = allText.indexOf("<--");
+//                        allText=allText.substring(0,pos);
+//                            varNames.addOrderedIfNew(cleanup(allText.trim()));
+//                    }
+                    if(allText.indexOf(" <- ")>=0)
                     {
-                            int pos = allText.indexOf("<--");
-                        allText=allText.substring(0,pos);
+                            int pos = allText.indexOf(" <- ");
+                            allText = allText.substring(0,pos);
+                            //System.out.println("Adding to initialised var names: " + cleanup(allText.trim()));
                             varNames.addOrderedIfNew(cleanup(allText.trim()));
                     }
-                    if(allText.indexOf("<-")>=0)
-                    {
-                            int pos = allText.indexOf("<-");
-                        allText=allText.substring(0,pos);
-                            varNames.addOrderedIfNew(cleanup(allText.trim()));
-                    }
-                    if(allText.indexOf(":=")>=0)
-                    {
-                            int pos = allText.indexOf(":=");
-                        allText=allText.substring(0,pos);
-                            varNames.addOrderedIfNew(cleanup(allText.trim()));
-                    }
+//                    if(allText.indexOf(":=")>=0)
+//                    {
+//                            int pos = allText.indexOf(":=");
+//                        allText=allText.substring(0,pos);
+//                            varNames.addOrderedIfNew(cleanup(allText.trim()));
+//                    }
+                    // END KGU 2015-11-28
 
                     // get names from read statements
                     if(allText.indexOf(D7Parser.input.trim())>=0)
@@ -1256,6 +1303,7 @@ public class Root extends Element {
 
                                             if(!s.trim().equals(""))
                                             {
+                                                    //System.out.println("Adding to initialised var names: " + s.trim());
                                                     varNames.addOrderedIfNew(s.trim());
                                             }
                                     }
@@ -1289,19 +1337,19 @@ public class Root extends Element {
     	return getVarNames(_ele, true, false);
     }
 
-    public StringList getVarNames(Element _ele, boolean _onlyMe)
+    public StringList getVarNames(Element _ele, boolean _onlyEle)
     {
     	// All variables, not only those from body (sub-structure)
-    	return getVarNames(_ele, _onlyMe, false);
+    	return getVarNames(_ele, _onlyEle, false);
     }
 
-    public StringList getVarNames(Element _ele, boolean _onlyMe, boolean _onlyBody)
+    public StringList getVarNames(Element _ele, boolean _onlyEle, boolean _onlyBody)
     {
     	
-    	return getVarNames(_ele, _onlyMe, _onlyBody, false);
+    	return getVarNames(_ele, _onlyEle, _onlyBody, false);
     }
 
-    private StringList getVarNames(Element _ele, boolean _onlyMe, boolean _onlyBody, boolean _entireProg)
+    private StringList getVarNames(Element _ele, boolean _onlyEle, boolean _onlyBody, boolean _entireProg)
     {
 
             StringList varNames = new StringList();
@@ -1313,63 +1361,68 @@ public class Root extends Element {
             // !!
             // !! This will also detect the functionname itself if the parentheses are missing (bug?)
             // !!
-            try
-            {
-                    if(this.isProgram==false && _ele==this)
-                    {
-                            String rootText = this.getText().getText();
-                            rootText = rootText.replace("var ", "");
-                            if(rootText.indexOf("(")>=0)
-                            {
-                                    rootText=rootText.substring(rootText.indexOf("(")+1).trim();
-                                    rootText=rootText.substring(0,rootText.indexOf(")")).trim();
-                            }
-
-                            StringList params = StringList.explode(rootText,";");
-                            if(params.count()>0)
-                            {
-                                    for(int i=0;i<params.count();i++)
-                                    {
-                                            String S = params.get(i);
-                                            if(S.indexOf(":")>=0)
-                                            {
-                                                    S=S.substring(0,S.indexOf(":")).trim();
-                                            }
-// START KGU#18 2014-10-18 "as" must not be detected if it's a substring of some identifier
-//                                            if(S.indexOf("as")>=0)
+        	// START KGU 2015-11-29: Decomposed -> new method collectParameters
+//            try
+//            {
+//                    if(this.isProgram==false && _ele==this)
+//                    {
+//                            String rootText = this.getText().getText();
+//                            rootText = rootText.replace("var ", "");
+//                            if(rootText.indexOf("(")>=0)
+//                            {
+//                                    rootText=rootText.substring(rootText.indexOf("(")+1).trim();
+//                                    rootText=rootText.substring(0,rootText.indexOf(")")).trim();
+//                            }
+//
+//                            StringList params = StringList.explode(rootText,";");
+//                            if(params.count()>0)
+//                            {
+//                                    for(int i=0;i<params.count();i++)
+//                                    {
+//                                            String S = params.get(i);
+//                                            if(S.indexOf(":")>=0)
 //                                            {
-//                                                    S=S.substring(0,S.indexOf("as")).trim();
+//                                                    S=S.substring(0,S.indexOf(":")).trim();
 //                                            }
-                                            // Actually, a sensible approach should consider any kinds of white space and delimiters...
-                                            if(S.indexOf(" as ")>=0)
-                                            {
-                                                    S=S.substring(0,S.indexOf(" as ")).trim();
-                                            }
-// END KGU#18 2014-10-18                                            
-                                            StringList vars = StringList.explode(S,",");
-                                            for(int j=0;j<vars.count();j++)
-                                            {
-                                                    if(!vars.get(j).trim().equals(""))
-                                                    {
-                                                        //System.out.println("Adding: "+vars.get(j).trim());
-                                                        varNames.add(vars.get(j).trim());
-                                                    }
-                                            }
-                                    }
-                            }
-                    }
-            }
-            catch (Exception e)
+//// START KGU#18 2014-10-18 "as" must not be detected if it's a substring of some identifier
+////                                            if(S.indexOf("as")>=0)
+////                                            {
+////                                                    S=S.substring(0,S.indexOf("as")).trim();
+////                                            }
+//                                            // Actually, a sensible approach should consider any kinds of white space and delimiters...
+//                                            if(S.indexOf(" as ")>=0)
+//                                            {
+//                                                    S=S.substring(0,S.indexOf(" as ")).trim();
+//                                            }
+//// END KGU#18 2014-10-18                                            
+//                                            StringList vars = StringList.explode(S,",");
+//                                            for(int j=0;j<vars.count();j++)
+//                                            {
+//                                                    if(!vars.get(j).trim().equals(""))
+//                                                    {
+//                                                        //System.out.println("Adding: "+vars.get(j).trim());
+//                                                        varNames.add(vars.get(j).trim());
+//                                                    }
+//                                            }
+//                                    }
+//                            }
+//                    }
+//            }
+//            catch (Exception e)
+//            {
+//                    // Don't do anything if this is the entire program
+//                    if (!_entireProg) {	
+//                            System.out.println(e.getMessage());
+//                    }
+//            }
+            if (this.isProgram==false && _ele==this && !_onlyBody)
             {
-                    // Don't do anything if this is the entire program
-                    if (!_entireProg) {	
-                            System.out.println(e.getMessage());
-                    }
+            	collectParameters(varNames, null);
             }
 
             // get body text
             StringList lines;
-            if(_onlyMe==true)
+            if(_onlyEle==true && !_onlyBody)
             {
                     lines = _ele.getText().copy();
             }
@@ -1377,7 +1430,7 @@ public class Root extends Element {
             {
                     // START KGU#39 2015-10-16: Use object methods now
                     //lines = getFullText();
-                    lines = this.getFullText(true);
+                    lines = this.getFullText(_onlyBody);
                     // END KGU#39 2015-10-16
             }
             else
@@ -1388,13 +1441,16 @@ public class Root extends Element {
                     // START KGU#39 2015-10-16
             }
             
-            if(_onlyBody==true)
-            {
-                    for(int l=0;l<_ele.getText().count();l++)
-                    {
-                            lines.delete(0);
-                    }
-            }
+//            // KGU 2015-11-30: Turned out to be too simple: getFullText(true) already omits the
+//            // own "header" text unless _ele is this and this is no program
+//            if(_onlyBody==true)
+//            	
+//            {
+//                    for(int l=0;l<_ele.getText().count();l++)
+//                    {
+//                            lines.delete(0);
+//                    }
+//            }
 
             varNames.add(getVarnames(lines));
 
@@ -1423,7 +1479,7 @@ public class Root extends Element {
      * @param _uncertainVars - names of variables being set in some branch of the subtree 
      * @param _resultFlags - a boolean array: {usesReturn?, usesResult?, usesProcName?}
      */
-    private void analyse(Subqueue _node, Vector _errors, StringList _vars, StringList _uncertainVars, boolean[] _resultFlags)
+    private void analyse(Subqueue _node, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, boolean[] _resultFlags)
     {
     	DetectedError error;
 
@@ -1431,7 +1487,7 @@ public class Root extends Element {
     	{
     		Element ele = _node.getElement(i);
     		
-    		// get var from actual instruction
+    		// get all set variables from actual instruction (just this level, no substructre)
     		StringList myVars = getVarNames(ele);
 
 
@@ -1481,7 +1537,7 @@ public class Root extends Element {
     				if (_resultFlags[0] || _resultFlags[2])
 
     				{
-    					//error  = new DetectedError("Your functions seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
+    					//error  = new DetectedError("Your function seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
     					error  = new DetectedError(errorMsg(Menu.error13_3, myVars.get(j)), ele);
     					addError(_errors,error,13);                                            	
     				}
@@ -1526,7 +1582,8 @@ public class Root extends Element {
     				//System.out.println(" -- "+myTest);
 
     				// FIXME (KGU): condition is not sound
-    				if((myTest.contains("=") || myTest.contains("==")) && !myTest.contains("<--") && !myTest.contains("<-") && !myTest.contains(":="))
+    				String unified = ele.unifyOperators(myTest);
+    				if (unified.contains(" == ") && !unified.contains(" <- "))
     				{
     					//error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
     					error  = new DetectedError(errorMsg(Menu.error11,""), ele);
@@ -1623,11 +1680,12 @@ public class Root extends Element {
                             }
                             /**/
 
-    		// START KGU#78 2015-11-25: This analysis doesn't make sense in e.g. a Case element
+    		// START KGU#2/KGU#78 2015-11-25: New checks for Call and Jump elements
+    		// CHECK: Correct syntax of Call elements (#15) New!
     		if (ele instanceof Call)
     		{
     			String text = ele.getText().getLongString();
-    			text = ele.unifyOperators(text);
+    			text = Element.unifyOperators(text);
     			if ( text.contains(" <- ") )
     			{
     				text = text.substring(text.indexOf(" <- ") + 4);
@@ -1635,27 +1693,125 @@ public class Root extends Element {
     			Function func = new Function(text);
     			if (!func.isFunction())
     			{
-    				//error  = new DetectedError("It is not allowed to make an assignment inside a condition.",(Element) _node.getElement(i));
-    				error  = new DetectedError(errorMsg(Menu.error15,""), ele);
+    				//error  = new DetectedError("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!",(Element) _node.getElement(i));
+    				error  = new DetectedError(errorMsg(Menu.error15, ""), ele);
     				addError(_errors,error,15);
     			}
     			
     		}
-    		if (ele instanceof Instruction)	// May also be a subclass!
+    		// CHECK: Correct usage of Jump, including return (#16) New!
+			else if (ele instanceof Jump)
+			{
+    			StringList sl = _node.getElement(i).getText();
+    			String jumpKeywords = "«" + D7Parser.preLeave + "», «" + D7Parser.preReturn +
+    					"», «" + D7Parser.preExit + "»";
+				String line = sl.get(0).trim().toLowerCase();
+				
+				// Preparation
+				boolean isReturn = line.matches(Matcher.quoteReplacement(D7Parser.preReturn) + "([\\W].*|$)");
+				boolean isLeave = line.matches(Matcher.quoteReplacement(D7Parser.preLeave) + "([\\W].*|$)");
+				boolean isExit = line.matches(Matcher.quoteReplacement(D7Parser.preExit) + "([\\W].*|$)");
+				boolean isJump = isLeave || isExit ||
+						line.matches("exit([\\W].*|$)") ||	// Also check hard-coded keywords
+						line.matches("break([\\W].*|$)");	// Also check hard-coded keywords
+				Element parent = ele.parent;
+				// Count the nested loops
+				int levelsDown = 0;
+				// Routines and Parallel sections cannot be penetrated by leave or break
+				while (parent != null && !(parent instanceof Root) && !(parent instanceof Parallel))
+				{
+					if (parent instanceof While ||
+							parent instanceof Repeat ||
+							parent instanceof For ||
+							parent instanceof Forever)
+					{
+						levelsDown++;
+					}
+					parent = parent.parent;
+				}
+				boolean insideParallel = parent instanceof Parallel;
+				
+				// CHECK: Incorrect Jump syntax?
+				if (sl.count() > 1 || !(isJump || isReturn || line.isEmpty()))
+				{
+					//error = new DetectedError("A JUMP element must contain exactly one of «exit n», «return <expr>», or «leave [n]»!",(Element) _node.getElement(i));
+					error = new DetectedError(errorMsg(Menu.error16_1, jumpKeywords), ele);
+					addError(_errors, error, 16);
+				}
+				// CHECK: Correct usage of return (nearby check result mechanisms) (#13, #16)
+				else if (isReturn)
+				{
+					_resultFlags[0] = true;
+					myVars.addIfNew("result");
+					// START KGU#78 2015-11-25: Different result mechanisms?
+					if (_resultFlags[1] || _resultFlags[2])
+					{
+						//error = new DetectedError("Your function seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
+						error = new DetectedError(errorMsg(Menu.error13_3, D7Parser.preReturn), ele);
+						addError(_errors, error, 13);                                            	
+					}
+					// Check if we are inside a Parallel construct
+					if (insideParallel)
+					{
+						//error = new DetectedError("You must not directly return out of a parallel thread!",(Element) _node.getElement(i));
+						error = new DetectedError(errorMsg(Menu.error16_5, ""), ele);
+						addError(_errors, error, 16);                                            							
+					}
+				}
+				else if (isLeave)
+				{
+					int levelsUp = 1;
+					if (line.length() > D7Parser.preLeave.length())
+					{
+						try
+						{
+							levelsUp = Integer.parseInt(line.substring(D7Parser.preLeave.length()).trim());
+						}
+						catch (Exception ex)
+						{
+							//error = new DetectedError("Wrong argument for this kind of JUMP (should be an integer constant)!",(Element) _node.getElement(i));
+							error = new DetectedError(errorMsg(Menu.error16_6, ""), ele);
+							addError(_errors, error, 16);    					    							
+						}
+					}
+					// Compare the number of nested loops we are in with the requested jump levels
+					if (levelsUp < 1 || levelsUp > levelsDown)
+					{
+						//error = new DetectedError("Cannot leave or break more loop levels than being nested in!",(Element) _node.getElement(i));
+						error = new DetectedError(errorMsg(Menu.error16_4, String.valueOf(levelsDown)), ele);
+						addError(_errors, error, 16);    								
+					}
+				}
+				else if (isExit && line.length() > D7Parser.preExit.length())
+				{
+					try
+					{
+						Integer.parseInt(line.substring(D7Parser.preExit.length()).trim());
+					}
+					catch (Exception ex)
+					{
+						//error = new DetectedError("Wrong argument for this kind of JUMP (should be an integer constant)!",(Element) _node.getElement(i));
+						error = new DetectedError(errorMsg(Menu.error16_6, ""), ele);
+						addError(_errors, error, 16);    					    							
+					}
+				}
+			}
+			else if (ele instanceof Instruction)	// May also be a subclass (except Call and Jump)!
     		{
     		// END KGU#78 2015-11-25
-    			StringList sl =((Element) _node.getElement(i)).getText();
+    			StringList sl = _node.getElement(i).getText();
     			for(int ls=0; ls<sl.count(); ls++)
     			{
     				String line = sl.get(ls).trim().toLowerCase();
     				// START KGU#78 2015-11-25: Make sure a potential result is following 
     				//if(line.toLowerCase().indexOf("return")==0)
-    				boolean isReturn = line.startsWith("return");
-    				boolean isLeave = line.startsWith("leave");
-    				boolean isJump = isLeave ||
-    						line.startsWith("exit") ||
-							line.startsWith("break");
-    				if (isReturn && !line.substring("return".length()).isEmpty())
+    				boolean isReturn = line.matches(Matcher.quoteReplacement(D7Parser.preReturn) + "([\\W].*|$)");
+    				boolean isLeave = line.matches(Matcher.quoteReplacement(D7Parser.preLeave) + "([\\W].*|$)");
+    				boolean isExit = line.matches(Matcher.quoteReplacement(D7Parser.preExit) + "([\\W].*|$)");
+    				boolean isJump = isLeave || isExit ||
+    						line.matches("exit([\\W].*|$)") ||	// Also check hard-coded keywords
+							line.matches("break([\\W].*|$)");	// Also check hard-coded keywords
+    				if (isReturn && !line.substring(D7Parser.preReturn.length()).isEmpty())
     				// END KGU#78 2015-11-25
     				{
     					_resultFlags[0] = true;
@@ -1663,61 +1819,22 @@ public class Root extends Element {
     					// START KGU#78 2015-11-25: Different result mechanisms?
     					if (_resultFlags[1] || _resultFlags[2])
     					{
-    						//error = new DetectedError("Your functions seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
-    						error = new DetectedError(errorMsg(Menu.error13_3, "return"), ele);
+    						//error = new DetectedError("Your function seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
+    						error = new DetectedError(errorMsg(Menu.error13_3, D7Parser.preReturn), ele);
     						addError(_errors, error, 13);                                            	
     					}
+    					// END KGU#78 2015-11-25
     				}
     				// START KGU#78 2015-11-25: New test (#16)
     				if (!(ele instanceof Jump) &&
-    						(isJump || isReturn && !(_node.parent instanceof Root &&
-    								ls == sl.count()-1 && i == _node.getSize()-1))
+    						(isJump || (isReturn && !(_node.parent instanceof Root &&
+    								ls == sl.count()-1 && i == _node.getSize()-1)))
     								)
     				{
-    					//error = new DetectedError("A return instruction not at final position must be a JUMP element!",(Element) _node.getElement(i));
+    					//error = new DetectedError("An exit, leave or break instruction is only allowed as JUMP element!",(Element) _node.getElement(i));
+    					//error = new DetectedError("A return instruction, unless at final position, must form a JUMP element!",(Element) _node.getElement(i));
     					error = new DetectedError(errorMsg((isReturn ? Menu.error16_2 : Menu.error16_3), line), ele);
     					addError(_errors, error, 16);
-    				}
-    				else if (ele instanceof Jump && (ls > 0 || !(isJump || isReturn || line.isEmpty())))
-    				{
-    					//error = new DetectedError("A JUMP element must contain exactly one of «exit n», «return <expr>», or «leave [n]»!",(Element) _node.getElement(i));
-    					error = new DetectedError(errorMsg(Menu.error16_1, line), ele);
-    					addError(_errors, error, 16);    					
-    				}
-    				else if (ele instanceof Jump && isLeave)
-    				{
-    					if (line.length() > "leave".length())
-    					{
-    						try
-    						{
-    							int levelsUp = Integer.parseInt(line.substring("leave".length()));
-    	    					// Count the nested loop levels and compare it with the given number
-    							Element parent = ele.parent;
-    							int levelsDown = 0;
-    							while (parent != null && !(parent instanceof Root))
-    							{
-    								if (parent instanceof While ||
-    										parent instanceof Repeat ||
-    										parent instanceof For)
-    								{
-    									levelsDown++;
-    								}
-    								parent = parent.parent;
-    							}
-    							if (levelsUp < 1 || levelsUp > levelsDown)
-    							{
-        	    					//error = new DetectedError(""Cannot leave or break more loop levels than being nested in!",(Element) _node.getElement(i));
-        	    					error = new DetectedError(errorMsg(Menu.error16_4, String.valueOf(levelsDown)), ele);
-        	    					addError(_errors, error, 16);    								
-    							}
-    						}
-    						catch (Exception ex)
-    						{
-    	    					//error = new DetectedError("A JUMP element must contain exactly one of «exit n», «return <expr>», or «leave [n]»!",(Element) _node.getElement(i));
-    	    					error = new DetectedError(errorMsg(Menu.error16_1, line), ele);
-    	    					addError(_errors, error, 16);    					    							
-    						}
-    					}
     				}
     				// END KGU#78 2015-11-25
 
@@ -1726,7 +1843,7 @@ public class Root extends Element {
     		}
     		// END KGU#78 2015-11-25
 
-    		// add detected var to initialised vars
+    		// add detected vars to initialised vars
     		_vars.addIfNew(myVars);
 
 
@@ -1735,15 +1852,16 @@ public class Root extends Element {
     				||
     				ele.getClass().getSimpleName().equals("Repeat"))
     		{
-    			// get used variable from inside the loop
+    			// get used variables from inside the loop
     			StringList usedVars = getVarNames(ele, false);
-    			// get loop variables
+    			// get loop condition variables
     			StringList loopVars = getUsedVarNames(ele, true, true);
 
     			/*
-                                    System.out.println("Used : "+usedVars);
-                                    System.out.println("Loop : "+loopVars);
-    			 */
+    			System.out.println(ele.getClass().getSimpleName() + " : " + ele.getText().getLongString());
+    			System.out.println("Used : "+usedVars);
+    			System.out.println("Loop : "+loopVars);
+    			/**/
 
     			boolean check = false;
     			for(int j=0; j<loopVars.count(); j++)
@@ -1836,6 +1954,83 @@ public class Root extends Element {
     				addError(_errors,error,4);
     			}
     		}
+    		
+    		// CHECK: Inconsistency risk due to concurent variable access by parallel threads (#17) New!
+    		if (ele.getClass().getSimpleName().equals("Parallel"))
+    		{
+    			// These hash tables will contain a binary pattern per variable name indicating
+    			// which threads will set or use the respective veriable name. If more than
+    			// Integer.SIZE (supposed to be 32) parallel branches exist (pretty unlikely)
+    			// than analysis will just give up beyond the Interger.SIZEth thread.
+    			Hashtable<String,Integer> myInitVars = new Hashtable<String,Integer>();
+    			Hashtable<String,Integer> myUsedVars = new Hashtable<String,Integer>();
+    			Iterator<Subqueue> iter = ((Parallel)ele).qs.iterator();
+    			int threadNo = 0;
+    			while (iter.hasNext() && threadNo < Integer.SIZE)
+    			{
+    				Subqueue sq = iter.next();
+    				// Get all variables initialised or otherwise set within the thread
+    				StringList threadSetVars = getVarNames(sq,false,false);
+    				// Get all variables used within the thread
+    				StringList threadUsedVars = getUsedVarNames(sq,false,false);        				
+    				// First register all variables being an assignment target
+    				for (int v = 0; v < threadSetVars.count(); v++)
+    				{
+    					String varName = threadSetVars.get(v);
+    					Integer count = myInitVars.putIfAbsent(varName, 1 << threadNo);
+    					if (count != null) { myInitVars.put(varName, count.intValue() | (1 << threadNo)); }
+    				}
+    				// Then register all used variables
+    				for (int v = 0; v < threadUsedVars.count(); v++)
+    				{
+    					String varName = threadSetVars.get(v);
+    					Integer count = myUsedVars.putIfAbsent(varName, 1 << threadNo);
+    					if (count != null) { myUsedVars.put(varName, count.intValue() | (1 << threadNo)); }
+    				}
+    				threadNo++;
+    			}
+    			// walk trough the hashtables and check for conflicts
+    			Enumeration<String> keys = myInitVars.keys();
+    			while ( keys.hasMoreElements() )
+    			{
+    				String key = keys.nextElement();
+    				int initPattern = myInitVars.get(key);
+   					// Trouble may arize if several branches access the same variable (races,
+   					// inconsistency). So we must report these cases.
+    				Integer usedPattern = myUsedVars.get(key);
+    				// Do other threads than those setting the variable access it?
+    				boolean isConflict = usedPattern != null && (usedPattern.intValue() | initPattern) != initPattern;
+    				// Do several threads assign values to variable key?
+    				if (!isConflict)
+    				{
+    					int count = 0;
+    					for (int bit = 0; bit < Integer.SIZE && count < 2; bit++)
+    					{
+    						if ((initPattern & 1) != 0) count++;
+    						initPattern >>= 1;
+    					}
+    					isConflict = count > 1;
+    				}
+    				// Do several threads access the variable assigned in some of them?
+    				if (!isConflict && usedPattern != null)
+    				{
+    					int count = 0;
+    					for (int bit = 0; bit < Integer.SIZE && count < 2; bit++)
+    					{
+    						if ((usedPattern.intValue() & 1) != 0) count++;
+    						usedPattern >>= 1;
+    					}
+    					isConflict = count > 1;
+    				}
+   					if (isConflict)
+   					{
+   						//error  = new DetectedError("Consistency risk due to concurrent access to variable «%» by several parallel threads!",(Element) _node.getElement(i));
+   						error  = new DetectedError(errorMsg(Menu.error17, key), ele);
+   						addError(_errors, error, 17);
+   					}
+    			}
+    			
+    		}
 
     		// continue analysis for subelements
     		if(ele.getClass().getSimpleName().equals("While"))
@@ -1875,6 +2070,25 @@ public class Root extends Element {
     			}
 
     		}
+    		// START KGU#90 2015-11-28: Analysis ignored the internals of Forever loops and Parallel elements
+    		else if (ele.getClass().getSimpleName().equals("Forever"))
+    		{
+    			analyse(((Forever) ele).q, _errors, _vars, _uncertainVars, _resultFlags);    			
+    		}
+    		else if (ele.getClass().getSimpleName().equals("Parallel"))
+    		{
+    			StringList initialVars = _vars.copy();
+    			Iterator<Subqueue> iter = ((Parallel)ele).qs.iterator();
+    			while (iter.hasNext())
+    			{
+    				// For the thread, propagate only variables known before the parallel section
+    				StringList threadVars = initialVars.copy();
+    				analyse(iter.next(), _errors, threadVars, _uncertainVars, _resultFlags);
+    				// Any variable introduced by one of the threads will be known after all threads have terminated
+    				_vars.addIfNew(threadVars);
+    			}
+    		}
+    		// END KGU#90 2015-11-28
     		else if(ele.getClass().getSimpleName().equals("Alternative"))
     		{
     			StringList tVars = _vars.copy();
@@ -1883,19 +2097,21 @@ public class Root extends Element {
     			analyse(((Alternative) ele).qTrue,_errors,tVars,_uncertainVars, _resultFlags);
     			analyse(((Alternative) ele).qFalse,_errors,fVars,_uncertainVars, _resultFlags);
 
-    			for(int v=0;v<tVars.count();v++)
+    			for(int v = 0; v < tVars.count(); v++)
     			{
-    				if(fVars.contains(tVars.get(v))) {_vars.addIfNew(tVars.get(v)); }
-    				else if(!_vars.contains(tVars.get(v))) {_uncertainVars.add(tVars.get(v));}
+    				String varName = tVars.get(v);
+    				if (fVars.contains(varName)) { _vars.addIfNew(varName); }
+    				else if (!_vars.contains(varName)) { _uncertainVars.add(varName); }
     			}
-    			for(int v=0;v<fVars.count();v++)
+    			for(int v = 0; v < fVars.count(); v++)
     			{
-    				if(tVars.contains(fVars.get(v))) {_vars.addIfNew(fVars.get(v)); }
-    				else if(!_vars.contains(fVars.get(v))) {_uncertainVars.addIfNew(fVars.get(v));}
+    				String varName = fVars.get(v);
+    				if (tVars.contains(varName)) { _vars.addIfNew(varName); }
+    				else if (!_vars.contains(varName)) { _uncertainVars.addIfNew(varName); }
     			}
 
     			// if a variable is not being initialised on both of the lists,
-    			// it could be considered ass not being always initialised
+    			// it could be considered as not always being initialised
     			//
     			// => use a second list with variable that "may not have been initialised"
     		}
@@ -1903,35 +2119,39 @@ public class Root extends Element {
     		{
     			Case caseEle = ((Case) ele);
     			StringList initialVars = _vars.copy();
-    			Hashtable myInitVars = new Hashtable();
-    			for (int j=0; j<caseEle.qs.size(); j++)
+    			// This Hashtable will contain strings composed of as many '1' characters as
+    			// branches initialise the respective new variable - so in the end we can see
+    			// which variables aren't always initialised.
+    			Hashtable<String, String> myInitVars = new Hashtable<String, String>();
+    			for (int j=0; j < caseEle.qs.size(); j++)
     			{
     				StringList caseVars = initialVars.copy();
     				analyse((Subqueue) caseEle.qs.get(j),_errors,caseVars,_uncertainVars,_resultFlags);
     				for(int v = 0; v<caseVars.count(); v++)
     				{
-    					if(myInitVars.containsKey(caseVars.get(v)))
+    					String varName = caseVars.get(v);
+    					if(myInitVars.containsKey(varName))
     					{
-    						myInitVars.put(caseVars.get(v), ((String) myInitVars.get(caseVars.get(v)))+"1");
+    						myInitVars.put(varName, myInitVars.get(varName) + "1");
     					}
     					else
     					{
-    						myInitVars.put(caseVars.get(v), "1");
+    						myInitVars.put(varName, "1");
     					}
     				}
     				//_vars.addIfNew(caseVars);
     			}
     			//System.out.println(myInitVars);
     			// walk trought the hashtable and check
-    			Enumeration keys = myInitVars.keys();
+    			Enumeration<String> keys = myInitVars.keys();
     			while ( keys.hasMoreElements() )
     			{
-    				String key = (String) keys.nextElement();
-    				String value = (String) myInitVars.get(key);
+    				String key = keys.nextElement();
+    				String value = myInitVars.get(key);
 
-    				int si = caseEle.qs.size();
+    				int si = caseEle.qs.size();	// Number of branches
     				// adapt size if no "default"
-    				if (((String)caseEle.getText().get(caseEle.getText().count()-1)).equals("%"))
+    				if ( caseEle.getText().get(caseEle.getText().count()-1).equals("%") )
     				{
     					si--;
     				}
@@ -2008,7 +2228,7 @@ public class Root extends Element {
             return result;
     }
 
-    private void addError(Vector errors, DetectedError error, int errorNo)
+    private void addError(Vector<DetectedError> errors, DetectedError error, int errorNo)
     {
             switch (errorNo)
             {
@@ -2066,6 +2286,11 @@ public class Root extends Element {
                             if (Root.check16) errors.add(error);
                             break;
                     // END KGU#78 2015-11-25
+                    // START KGU#47 2015-11-28: New checks for PARALLEL
+                    case 17:
+                           if (Root.check17) errors.add(error);
+                           break;
+                    // END KGU#47 2015-11-28
                     default:
                             errors.add(error);
                             break;
@@ -2075,10 +2300,21 @@ public class Root extends Element {
     public StringList getParameterNames()
     {
     	//this.getVarNames();
-    	StringList vars = getVarNames(this,true,false);
+    	StringList vars = new StringList();
+    	collectParameters(vars, null);
     	return vars;
     }
 
+    // START KGU 2015-11-29
+    public StringList getParameterTypes()
+    {
+    	//this.getVarNames();
+    	StringList types = new StringList();
+    	collectParameters(null, types);
+    	return types;
+    }
+    // END KGU 2015-11-29
+    
     public String getMethodName()
     {
     	String rootText = getText().getLongString();
@@ -2156,6 +2392,60 @@ public class Root extends Element {
     	}
     	return resultType;
     }
+
+    // Extracts parameter names and types from the parenthesis content of the Root text
+    // and adds them synchronously to paramNames and paramTypes (if not null).
+    public void collectParameters(StringList paramNames, StringList paramTypes)
+    {
+        if (!this.isProgram)
+        {
+        	try
+        	{
+        		String rootText = this.getText().getText();
+        		rootText = rootText.replace("var ", "");
+        		if(rootText.indexOf("(")>=0)
+        		{
+        			rootText=rootText.substring(rootText.indexOf("(")+1).trim();
+        			rootText=rootText.substring(0,rootText.indexOf(")")).trim();
+        		}
+
+        		StringList params = StringList.explode(rootText,";");
+        		for(int i = 0; i < params.count(); i++)
+        		{
+        			// common type for parameter group
+        			String type = null;
+        			String decl = params.get(i);
+        			int posColon = decl.indexOf(":");
+        			if (posColon >= 0)
+        			{
+        				type = decl.substring(posColon + 1).trim();
+        				decl = decl.substring(0, posColon).trim();
+        			}
+        			else if ((posColon = decl.indexOf(" as ")) >= 0)
+        			{
+        				type = decl.substring(posColon + " as ".length()).trim();
+        				decl = decl.substring(0, posColon).trim();
+        			}
+        			StringList vars = StringList.explode(decl,",");
+        			for (int j=0; j < vars.count(); j++)
+        			{
+        				String varName = vars.get(j).trim();
+        				if (!varName.isEmpty())
+        				{
+        					//System.out.println("Adding parameter: " + vars.get(j).trim());
+        					if (paramNames != null)	paramNames.add(varName);
+        					if (paramTypes != null)	paramTypes.add(type);
+        				}
+        			}
+        		}
+        	}
+        	catch (Exception ex)
+        	{
+        		System.out.println(ex.getMessage());
+        	}
+        }
+    	
+    }
     // END KGU#78 2015-11-25
 
     public Vector<DetectedError> analyse()
@@ -2164,7 +2454,7 @@ public class Root extends Element {
 
             Vector<DetectedError> errors = new Vector<DetectedError>();
             StringList vars = getVarNames(this,true,false);
-            rootVars = getVarNames(this,true,false);
+            rootVars = vars.copy();
             StringList uncertainVars = new StringList();
 
             // START KGU 2015-11-25: This was practically what getMethodName() does
@@ -2315,7 +2605,7 @@ public class Root extends Element {
             {
                     Ini ini = Ini.getInstance();
                     ini.load();
-                    // elements
+                    // analyser (see also Mainform.loadFromIni(), Diagram.analyserNSD()) 
                     ini.setProperty("check1",(check1?"1":"0"));
                     ini.setProperty("check2",(check2?"1":"0"));
                     ini.setProperty("check3",(check3?"1":"0"));
@@ -2332,6 +2622,11 @@ public class Root extends Element {
                     // START KGU#3 2015-11-03: New check for enhanced FOR loop
                     ini.setProperty("check14",(check14?"1":"0"));
                     // END KGU#3 2015-11-03
+        			// START KGU#2/KGU#78 2015-11-28: New checks for CALL and JUMP elements
+                    ini.setProperty("check15",(check15?"1":"0"));
+                    ini.setProperty("check16",(check16?"1":"0"));
+                    ini.setProperty("check17",(check17?"1":"0"));
+        			// END KGU#2/KGU#78 2015-11-28
 
                     ini.save();
             }

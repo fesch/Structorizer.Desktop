@@ -40,6 +40,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2015.11.17		Remove button added (issue #35 = KGU#85)
  *      Kay Gürtzig     2015.11.19		Converted into a singleton (enhancement request #9 = KGU#2)
  *      Kay Gürtzig     2015-11-24		Pin button added (issue #35, KGU#88)
+ *      Kay Gürtzig     2015-11-30		Remove action now also achievable by pressing del button (issue #35, KGU#88)
  *
  ******************************************************************************************************
  *
@@ -49,6 +50,8 @@ package lu.fisch.structorizer.arranger;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
@@ -67,7 +70,7 @@ import lu.fisch.structorizer.gui.Mainform;
  *
  * @author robertfisch
  */
-public class Arranger extends javax.swing.JFrame implements WindowListener, IRoutinePool
+public class Arranger extends javax.swing.JFrame implements WindowListener, KeyListener, IRoutinePool
 {
     // START KGU#2 2015-11-19: Converted into a singleton class
     //** Creates new form Arranger */
@@ -236,8 +239,8 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, IRou
         //scrollarea.setViewportView(surface);
         getContentPane().add(scrollarea, java.awt.BorderLayout.CENTER);
         // END KGU#85 2015-11-18
-
-
+        
+        this.addKeyListener(this);
 
         // START KGU#49 2015-10-18: On closing the Arranger window, the dependent Mainforms must get a chance to save their stuff!
         /******************************
@@ -358,7 +361,30 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, IRou
     {
     }
     
-    // START KGU#2 2015-11-24
+    // START KGU#85 2015-11-30: For convenience, the delete button may also be used to drop a diagram now
+	@Override
+	public void keyPressed(KeyEvent ev) {
+		// TODO Auto-generated method stub
+		if (ev.getSource() == this && ev.getKeyCode() == KeyEvent.VK_DELETE)
+		{
+			surface.removeDiagram();
+		}
+	}
+	// END KGU#85 2015-11-30
+
+	@Override
+	public void keyReleased(KeyEvent ev) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyTyped(KeyEvent ev) {
+		// TODO Auto-generated method stub
+	}
+	// END KGU#2 2015-11-30
+
+	// START KGU#2 2015-11-24
 	@Override
 	public Vector<Root> findRoutinesByName(String rootName) {
 		return surface.findRoutinesByName(rootName);

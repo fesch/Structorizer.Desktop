@@ -224,14 +224,22 @@ public class Menu extends JMenuBar implements NSDController
 	// START KGU#3 2015-11-03: New checks for the enhanced For loop
 	public static JLabel error14_1 = new JLabel("The FOR loop parameters are not consistent to the loop heading text!");
 	public static JLabel error14_2 = new JLabel("The FOR loop step value («%») is not a legal integer constant!");
+	// START KGU#3 2015-11-26: More clarity if e.g. a counter variable is named "step" and so is the stepFor parser preference
+	public static JLabel error14_3 = new JLabel("Variable name «%» may collide with one of the configured FOR loop heading keywords!");
+	// END KGU#3 2015-11-26
 	// END KGU#3 2015-11-03
 	// START KGU#2 2015-11-25: New check for call element syntax
 	public static JLabel error15 = new JLabel("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
-	public static JLabel error16_1 = new JLabel("A JUMP element may be empty or must contain exactly one of «exit n», «return <expr>», «break», or «leave [n]»!");	
-	public static JLabel error16_2 = new JLabel("A return instruction not at final position ought to be a JUMP element!");
+	public static JLabel error16_1 = new JLabel("A JUMP element may be empty or start with one of %, possibly followed by an argument!");	
+	public static JLabel error16_2 = new JLabel("A return instruction, unless at final position, must form a JUMP element!");
 	public static JLabel error16_3 = new JLabel("An exit, leave or break instruction is only allowed as JUMP element!");
 	public static JLabel error16_4 = new JLabel("Cannot leave or break more loop levels than being nested in («%»)!");
+	public static JLabel error16_5 = new JLabel("You must not directly return out of a parallel thread!");
+	public static JLabel error16_6 = new JLabel("Wrong argument for this kind of JUMP (should be an integer constant)!");
 	// END KGU#2 2015-11-25
+	// START KGU#47 2015-11-28: New check for concurrency problems
+	public static JLabel error17 = new JLabel("Consistency risk due to concurrent access to variable «%» by several parallel threads!");
+	// END KGU#47 2015-11-28
 
 
 	public void create()
@@ -847,13 +855,13 @@ public class Menu extends JMenuBar implements NSDController
 			menuPreferencesLanguageDutch.setSelected(getLang().equals("nl.txt"));
 			menuPreferencesLanguageLuxemburgish.setSelected(getLang().equals("lu.txt"));
 			menuPreferencesLanguageSpanish.setSelected(getLang().equals("es.txt"));
-                        menuPreferencesLanguagePortugalBrazil.setSelected(getLang().equals("pt_br.txt"));
-                        menuPreferencesLanguageItalian.setSelected(getLang().equals("it.txt"));
-                        menuPreferencesLanguageSimplifiedChinese.setSelected(getLang().equals("chs.txt"));
-                        menuPreferencesLanguageTraditionalChinese.setSelected(getLang().equals("cht.txt"));
-                        menuPreferencesLanguageCzech.setSelected(getLang().equals("cz.txt"));
-                        menuPreferencesLanguageRussian.setSelected(getLang().equals("ru.txt"));
-                        menuPreferencesLanguagePolish.setSelected(getLang().equals("pl.txt"));
+			menuPreferencesLanguagePortugalBrazil.setSelected(getLang().equals("pt_br.txt"));
+			menuPreferencesLanguageItalian.setSelected(getLang().equals("it.txt"));
+			menuPreferencesLanguageSimplifiedChinese.setSelected(getLang().equals("chs.txt"));
+			menuPreferencesLanguageTraditionalChinese.setSelected(getLang().equals("cht.txt"));
+			menuPreferencesLanguageCzech.setSelected(getLang().equals("cz.txt"));
+			menuPreferencesLanguageRussian.setSelected(getLang().equals("ru.txt"));
+			menuPreferencesLanguagePolish.setSelected(getLang().equals("pl.txt"));
 
 			// Recentl file
 			menuFileOpenRecent.removeAll();

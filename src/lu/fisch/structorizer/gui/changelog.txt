@@ -11,7 +11,21 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.22-32 (2015.11.12)
+Current development version: 3.23-01 (2015.11.30)
+- 01: executor: Subroutine call now supported via Arranger as pool (#9) <Kay Gürtzig>
+- 01: executor: Control panel shows subdiagram call depth and (on error) stacktrace <Kay Gürtzig>
+- 01: executor: Jump execution according to enhancement request (#10) <Kay Gürtzig>
+- 01: arranger: Arranger can now be opened from Structorizer, diagrams sent there. <Kay Gürtzig>
+- 01: arranger: diagrams may be pinned (protected against replacement) and dropped <Kay Gürtzig>
+- 01: arranger: Display now has got scrollbars and moves to a just added diagram <Kay Gürtzig>
+- 01: generator: Export to C, C++, C#, Java, and Pascal now supports Jumps <Kay Gürtzig>
+- 01: analyser: New checks for calls, jumps, return mechanisms and concurrency risks <Kay Gürtzig>
+- 01: analyser: Analyser hadn't checked within Forever loops and Parallel sections <Kay Gürtzig>
+- 01: editor: Multiple element selection (all of subqueue on Alt, a sequence on shift) <Kay Gürtzig>
+- 01: executor: Dialog boxes for input / output now switch to step mode on Cancel/Pause <Kay Gürtzig>
+- 01: updated language files (DE,EN,ES) <Kay Gürtzig>
+
+Version 3.23 (2015.11.14)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
 - 02: executor: fixed a bug while interpreting the title [Benjamin Bartsch]
 - 03: export: split PNG export into multiple images [Moritz Schulze]

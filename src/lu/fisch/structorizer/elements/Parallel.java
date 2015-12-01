@@ -512,10 +512,10 @@ public class Parallel extends Element
     protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
 		// Under no circumstances, the text may contain an instruction or even variable declaration (it's just the number of threads) 
-		if (!_instructionsOnly)
-		{
-			_lines.add(this.getText());
-		}
+//		if (!_instructionsOnly)
+//		{
+//			_lines.add(this.getText());
+//		}
     	if (qs!= null)
     	{
     		for (int i = 0; i < qs.size(); i++)

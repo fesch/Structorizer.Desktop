@@ -35,6 +35,7 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2008.05.23      First Issue
  *      Kay Gürtzig     2015.11.03      check14 added (enhanced FOR loop support, issue #10 = KGU#3)
  *      Kay Gürtzig     2015.11.25      check15 (issue #9 = KGU#2) and check16 (issue #23 = KGU#78) added
+ *      Kay Gürtzig     2015.11.28      check17 (KGU#47) for inconsistency risks in Parallel sections added
  *
  ******************************************************************************************************
  *
@@ -79,6 +80,9 @@ public class AnalyserPreferences extends LangDialog {
 	// START KGU#78 2015-11-25: Additional JUMP syntax check
 	public JCheckBox check16;
 	// END KGU#78 2015-11-25
+	// START KGU#47 2015-11-28: Additional PARALLEL consistency check
+	public JCheckBox check17;
+	// END KGU#47 2015-11-28
 	private JPanel buttonBar;
 	protected JButton okButton;
 	// JFormDesigner - End of variables declaration  //GEN-END:variables
@@ -128,6 +132,9 @@ public class AnalyserPreferences extends LangDialog {
 		// START KGU#78 2015-11-25: Additional JUMP syntax check
 		check16 = new JCheckBox();;
 		// END KGU#78 2015-11-25
+		// START KGU#47 2015-11-28: Additional PARALLEL consistency check
+		check17 = new JCheckBox();
+		// END KGU#47 2015-11-28
 		buttonBar = new JPanel();
 		okButton = new JButton();
 
@@ -152,7 +159,7 @@ public class AnalyserPreferences extends LangDialog {
 			
 			//======== contentPanel ========
 			{
-				contentPanel.setLayout(new GridLayout(16, 1));
+				contentPanel.setLayout(new GridLayout(17, 1));
 
 				//---- check1 ----
 				check1.setText("Check for modified loop variable.");
@@ -222,6 +229,12 @@ public class AnalyserPreferences extends LangDialog {
 				contentPanel.add(check16);
 				// END KGU#2/KGU#78 2015-11-25
 
+				// START KGU#47 2015-11-28: Additional checks for PARALLEL elements
+				//---- check17 ----
+				check17.setText("Check for inconsistency risks in PARALLEL sections.");
+				contentPanel.add(check17);
+				// END KGU#47 2015-11-28
+				
 			}
 			dialogPane.add(contentPanel, BorderLayout.CENTER);
 

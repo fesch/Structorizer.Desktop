@@ -35,6 +35,7 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2007.12.12      First Issue
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy()
+ *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
  *
  ******************************************************************************************************
  *
@@ -53,7 +54,7 @@ import javax.swing.JPanel;
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
 
-public class Repeat extends Element {
+public class Repeat extends Element implements ILoop {
 	
 	public Subqueue q = new Subqueue();
 	
@@ -322,4 +323,11 @@ public class Repeat extends Element {
     }
     // END KGU 2015-10-16
 	
+	// START KGU 2015-11-30
+	@Override
+	public Subqueue getBody() {
+		return this.q;
+	}
+	// END KGU 2015-11-30
+
 }

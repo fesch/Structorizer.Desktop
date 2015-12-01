@@ -40,6 +40,33 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************
  *
  *      Comment:		/
+ *      Until 2015, this class had not had any specific effect on execution and code export. This was
+ *      changed by enhancement requests #9.
+ *      Though chiefly the Executor (and perhaps some code generators) is concerned, this class file
+ *      seems to be a good place to state the general ideas behind the Call element as now being handled.
+ *      1. In order to get a Call working, it must refer to a function defined by another Nassi-
+ *         Shneiderman diagram or just the diagram itself (recursive routine).
+ *      2. The called diagram is required to be a function diagram and must match the "method name"
+ *         (case-sensitive!) and parameter count of the call.
+ *      3. To keep things simple, the call text must consist of a single instruction line,
+ *         either being a procedure call:
+ *             <proc_name> ( <value1>, <value2>, ... , <value_n> )
+ *         or a variable assignment with a single function call as expression:
+ *             <var_name> <- <func_name> ( <value1>, <value2>, ... , <value_n> )
+ *      4. A direct output instruction is not supported like in:
+ *             OUT foreign(something).
+ *         Hence to use the results of a foreign call, first assign the value to a variable within
+ *         a Call element, then use the variable as part of some expression in an ordinary
+ *         Instruction element.
+ *      5. Nested or multiple subroutine calls as in the following examples are not allowed
+ *             foreign(x, foreign(y, a))
+ *             result <- foreign(a) + foreign(b)
+ *         Workaround: analogous to 4.)
+ *      6. The called diagram must be opened and held in a container accessible by the Structorizer
+ *         (e.g. Arranger surface or a tab list of the Structorizer itself) in order to make the call
+ *         work on execution.
+ *      7. Whether a returned value is required and in this case of what type will only dynamically be
+ *         relevant on execution (interpreted code). There is no check in advance.
  *
  ******************************************************************************************************///
 
