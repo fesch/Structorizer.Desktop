@@ -38,6 +38,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared.
  *      Kay Gürtzig     2015.11.04      New mechanism to split and compose the FOR clause into/from dedicated fields
  *      Kay Gürtzig     2015.11.14      Bugfixes (#28 = KGU#80 and #31 = KGU#82) in Method copy
+ *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
  *
  ******************************************************************************************************
  *
@@ -56,7 +57,7 @@ import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.*;
 
-public class For extends Element{
+public class For extends Element implements ILoop {
 
 	public Subqueue q = new Subqueue();
 	
@@ -509,7 +510,13 @@ public class For extends Element{
 	@Override
     protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
-   		_lines.add(this.getText()); // TODO (KGU): This is roughly okay (an assignment is to be expected), but might need more sophisticated analysis
+		// START KGU#3 2015-11-30: Fine tuning
+		//_lines.add(this.getText());
+		if (!_instructionsOnly)
+		{
+			_lines.add(this.getText());
+		}
+		// END KGU#3 2015-11-30
 		this.q.addFullText(_lines, _instructionsOnly);
     }
     // END KGU 2015-10-16
@@ -807,4 +814,11 @@ public class For extends Element{
 		return this.getText().getLongString().equals(this.composeForClause());
 	}
 	// END KGU#3 2015-11-04
+
+	// START KGU 2015-11-30
+	@Override
+	public Subqueue getBody() {
+		return this.q;
+	}
+	// END KGU 2015-11-30
 }

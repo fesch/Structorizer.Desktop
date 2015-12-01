@@ -41,6 +41,7 @@ package lu.fisch.structorizer.gui;
  *                                      thus allowing collective operations like delete/cut/copy/paste (KGU#87).
  *      Kay Gürtzig     2015.11.24      Method setRoot() may now refuse the replacement (e.g. on cancelling
  *                                      the request to save recent changes)
+ *      Kay Gürtzig     2015.11.29      New check options added to analyserNSD()
  *
  ******************************************************************************************************
  *
@@ -2371,6 +2372,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#3 2015-11-03: New check type for enhanced FOR loops
 		analyserPreferences.check14.setSelected(Root.check14);
 		// END KGU#3 2015-11-03
+		// START KGU#2/KGU#78 2015-11-25: New check type for enabled subroutine calls / JUMP instructions
+		analyserPreferences.check15.setSelected(Root.check15);	// KGU#2
+		analyserPreferences.check16.setSelected(Root.check16);	// KGU#78
+		// END KGU#2/KGU#78 2015-11-25
+		// START KGU#47 2015-11-29: New check type for PARALLEL sections
+		analyserPreferences.check17.setSelected(Root.check17);	// KGU#47
+		// END KGU#47 2015-11-29
 
 		analyserPreferences.setLang(NSDControl.getLang());
 		analyserPreferences.pack();
@@ -2393,6 +2401,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#3 2015-11-03: New check type for enhanced FOR loops
 		Root.check14=analyserPreferences.check14.isSelected();
 		// END KGU#3 2015-11-03
+		// START KGU#2/KGU#78 2015-11-25: New check type for enabled subroutine calls / JUMP instructions
+		Root.check15=analyserPreferences.check15.isSelected();	// KGU#2
+		Root.check16=analyserPreferences.check16.isSelected();	// KGU#78
+		// END KGU#2/KGU#78 2015-11-25
+		// START KGU#47 2015-11-29: New check type for PARALLEL sections
+		Root.check17=analyserPreferences.check17.isSelected();	// KGU#47
+		// END KGU#47 2015-11-29
 
 		// save fields to ini-file
 		Root.saveToINI();

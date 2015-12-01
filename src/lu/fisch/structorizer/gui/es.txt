@@ -36,6 +36,7 @@
  *      Kay Gürtzig     2015.10.06              altPadRight added to Preferences dialog
  *      Kay Gürtzig     2015.10.14              InputBox-specific part enhanced
  *      Kay Gürtzig     2015.11.22              Additions for InputBoxFor, Analyser, and AnalyserPreferences
+ *      Kay Gürtzig     2015.11.30              Further additions for Analyser and AnalyserPreferences
  *
  ******************************************************************************************************
  *
@@ -163,21 +164,30 @@ Menu.error03_2.text=¡La variable «%» no siempre será inicializada!
 Menu.error04.text=¡No tienes permiso usar una declaración IF con un bloque de verdad vacío!
 Menu.error05.text=¡La variable «%» debe ser escrita en mayusculas!
 Menu.error06.text=¡El programa «%» debe ser escrita en mayusculas!
-Menu.error07_1.text=¡«%» no es un nombre valido para el programa o método!
-Menu.error07_2.text=¡«%» no es un nombre valido para el parámetro!
-Menu.error07_3.text=¡«%» no es un nombre valido para la variable!
+Menu.error07_1.text=¡«%» no es un nombre válido para el programa o método!
+Menu.error07_2.text=¡«%» no es un nombre válido para el parámetro!
+Menu.error07_3.text=¡«%» no es un nombre válido para la variable!
 Menu.error08.text=¡No está permitido hacer una asignación dentro de una condición!
 Menu.error09.text=¡Tu programa («%») no debe tener el mismo nombre que una variable o parametro!
-Menu.error10_1.text=¡Un unico elemento de instrucción no debe contener instrucciones de entrada/salida y asignaciones!
-Menu.error10_2.text=¡Un unico elemento de instrucción no debe contener instrucciones de entrada y salida!
-Menu.error10_3.text=¡Un unico elemento de instrucción no debe contener instrucciones de entrada y asignaciones!
-Menu.error10_4.text=¡Un unico elemento de instrucción no debe contener instrucciones de salida y asignaciones!
+Menu.error10_1.text=¡Un solo elemento de instrucción no debe contener instrucciones de entrada/salida y asignaciones!
+Menu.error10_2.text=¡Un solo elemento de instrucción no debe contener instrucciones de entrada y salida!
+Menu.error10_3.text=¡Un solo elemento de instrucción no debe contener instrucciones de entrada y asignaciones!
+Menu.error10_4.text=¡Un solo elemento de instrucción no debe contener instrucciones de salida y asignaciones!
 Menu.error11.text=Probablemente has hecho un error de asignación. ¡Por favor comprueba esta instrucción!
 Menu.error12.text=¡El parámetro «%» debe comenzar con la letra "p" seguido únicamente de letras MAYUSCULAS!
 Menu.error13_1.text=¡La función no retorna ningún resultado!
 Menu.error13_2.text=¡Su función no siempre retorna un resultado!
-Menu.error14_1.text=Los componentes separados no se convienen con el texto del encabiezamiento!
-Menu.error14_2.text=El paso «%» del bucle FOR no es una constante entera!
+Menu.error13_3.text=¡La función emplea diferentes métodos para retornar un valor a la vez: «%»!
+Menu.error14_1.text=¡Los componentes separados no se convienen con el texto del encabiezamiento!
+Menu.error14_2.text=¡El paso «%» del bucle FOR no es una constante entera!
+Menu.error15.text=¡La LLAMADA no tiene ninguna de las formas aceptadas: [ <var> <- ] <routine_name>(<arg_list>)!
+Menu.error16_1.text=¡Un elemento de salto (salida) debe ser vacío o empezar con uno de los comandos %!
+Menu.error16_2.text=¡Una instrucción de retorno debe ser colocado en un elemento SALTO si no es la última instrucción del diagrama!
+Menu.error16_3.text=¡Instrucciones de salida (exit, leave, o break) solo están permitidos en elementos del tipo SALTO!
+Menu.error16_4.text=¡Un elemento de salto (salida) no puede salir más ciclos que está anidado en (%)!
+Menu.error16_5.text=¡Una instrucción de retorno no está permitida desde una sección paralela!
+Menu.error16_6.text=¡Parámetro inadecuado para este tipo de SALTO - debería ser una constante entera.
+Menu.error17.text=¡Varios hilos de ejecución compiten por el acceso a la variable «%» y así riesgan la consistencia! 
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferencias del Comprobador
@@ -195,6 +205,9 @@ AnalyserPreferences.check11.text=Comprobar errores en asignaciones.
 AnalyserPreferences.check12.text=Comprobar por nombre de parámetro estándar. (LUX/MEN)
 AnalyserPreferences.check13.text=Comprobar si, en caso de una función, ésta devuelve un resultado.
 AnalyserPreferences.check14.text=Comprobar si los parámetros de bucles FOR están consistentes.
+AnalyserPreferences.check15.text=Comprobar que llamadas contengan una sola linea de código llamando una subrutina.
+AnalyserPreferences.check16.text=Comprobar si el uso de elementos SALTO es corrrecto.
+AnalyserPreferences.check17.text=Comprobar que hilos paralelos no pongan a riesgo la consistencia de variables.
 AnalyserPreferences.okButton.text=Aceptar
 
 
@@ -226,7 +239,7 @@ Editor.btnAfterForever.tooltip=Insertar nuevo bucle SINFIN después del elemento
 Editor.btnAfterCall.tooltip=Insertar nueva LLAMADA después del elemento seleccionado.
 Editor.btnAfterJump.tooltip=Insertar nuevo SALTO después del elemento seleccionado.
 Editor.btnAfterCase.tooltip=Insertar nueva instrucción CASE después del elemento seleccionado.
-Editor.btnBeforePara.tooltip=Insertar nueva sección PARALELA después del elemento seleccionado.
+Editor.btnAfterPara.tooltip=Insertar nueva sección PARALELA después del elemento seleccionado.
 // undo & redo
 Editor.btnUndo.tooltip=Deshacer la ultima acción.
 Editor.btnRedo.tooltip=Rehacer la ultima acción.

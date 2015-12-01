@@ -1018,7 +1018,7 @@ public abstract class Element {
      * variables are added if true (which not only reduces time and space requirements but also avoids
      * "false positives" in variable detection). 
      * Uses addFullText() - so possibly better override that method if necessary.
-     * @param _instructionsOnly - if true then texts not possibly containing variable declarations are omitted
+     * @param _instructionsOnly - if true then only the texts of Instruction elements are included
      * @return the composed StringList
      */
     public StringList getFullText(boolean _instructionsOnly)
@@ -1247,13 +1247,23 @@ public abstract class Element {
         			interm = interm.replace( marker, ""); 
         		}
         		interm = " " + interm + " ";	// Ensure the string being padded for easier matching
-                interm = interm.replace( "  ", " ");
-        		System.out.println("transformIntermediate: " + interm);	// FIXME (KGU): Remove or deactivate after test!
+                interm = interm.replace("  ", " ");
+        		//System.out.println("transformIntermediate: " + interm);	// FIXME (KGU): Remove or deactivate after test!
         	}
         }
         
         interm = unifyOperators(interm);
-        //interm = interm.replace( " <- ", " = ");	// Adapt to Java
+
+		// START KGU 2015-11-30: Adopted from Root.getVarNames(): 
+        // pascal: convert "inc" and "dec" procedures
+        // (Of course we could omit it for Pascal, and for C offsprings there are more efficient translations, but this
+        // works for all, and so we avoid trouble. 
+        Regex r;
+        r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); interm = r.replaceAll(interm);
+        r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); interm = r.replaceAll(interm);
+        r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); interm = r.replaceAll(interm);
+        r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); interm = r.replaceAll(interm);
+        // END KGU 2015-11-30
         
         // Reduce multiple space characters
         interm = interm.replace("  ", " ");
@@ -1263,5 +1273,5 @@ public abstract class Element {
     }
     
     // END KGU#18/KGU#23 2015-10-24
-   
+       
 }
