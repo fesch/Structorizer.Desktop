@@ -36,10 +36,38 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy
+ *		Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
  *
  ******************************************************************************************************
  *
  *      Comment:		/
+ *      Until 2015, this class had not had any specific effect on execution and code export. This was
+ *      changed by enhancement requests #9.
+ *      Though chiefly the Executor (and perhaps some code generators) is concerned, this class file
+ *      seems to be a good place to state the general ideas behind the Call element as now being handled.
+ *      1. In order to get a Call working, it must refer to a function defined by another Nassi-
+ *         Shneiderman diagram or just the diagram itself (recursive routine).
+ *      2. The called diagram is required to be a function diagram and must match the "method name"
+ *         (case-sensitive!) and parameter count of the call.
+ *      3. To keep things simple, the call text must consist of a single instruction line,
+ *         either being a procedure call:
+ *             <proc_name> ( <value1>, <value2>, ... , <value_n> )
+ *         or a variable assignment with a single function call as expression:
+ *             <var_name> <- <func_name> ( <value1>, <value2>, ... , <value_n> )
+ *      4. A direct output instruction is not supported like in:
+ *             OUT foreign(something).
+ *         Hence to use the results of a foreign call, first assign the value to a variable within
+ *         a Call element, then use the variable as part of some expression in an ordinary
+ *         Instruction element.
+ *      5. Nested or multiple subroutine calls as in the following examples are not allowed
+ *             foreign(x, foreign(y, a))
+ *             result <- foreign(a) + foreign(b)
+ *         Workaround: analogous to 4.)
+ *      6. The called diagram must be opened and held in a container accessible by the Structorizer
+ *         (e.g. Arranger surface or a tab list of the Structorizer itself) in order to make the call
+ *         work on execution.
+ *      7. Whether a returned value is required and in this case of what type will only dynamically be
+ *         relevant on execution (interpreted code). There is no check in advance.
  *
  ******************************************************************************************************///
 
@@ -84,16 +112,20 @@ public class Call extends Instruction {
 		
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 		
-		rect.right=Math.round(2*(E_PADDING/2));
+		// START KGU#91 2015-12-02: The minimum width must allow to show both vertical lines
+		//rect.right = 2*(E_PADDING/2);
+		rect.right = 8*(E_PADDING/2);
+		// END KGU#91 2015-12-02
 		
-		for(int i=0;i<getText().count();i++)
+		for(int i=0;i<getText(false).count();i++)
 		{
-			if(rect.right<getWidthOutVariables(_canvas,getText().get(i),this)+4*E_PADDING)
+			int lineWidth = getWidthOutVariables(_canvas,getText(false).get(i),this)+4*E_PADDING;
+			if (rect.right < lineWidth)
 			{
-				rect.right=getWidthOutVariables(_canvas,getText().get(i),this)+4*E_PADDING;
+				rect.right = lineWidth;
 			}
 		}
-		rect.bottom=2*Math.round(E_PADDING/2)+getText().count()*fm.getHeight();
+		rect.bottom = 2 * (E_PADDING/2) + getText(false).count() * fm.getHeight();
 
 		return rect;
 	}
@@ -125,7 +157,7 @@ public class Call extends Instruction {
 		canvas.fillRect(myrect);
 		
 		// draw comment
-		if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
+		if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 		{
 			// START KGU 2015-10-11: Use an inherited helper method now
 //			canvas.setBackground(E_COMMENTCOLOR);
@@ -148,22 +180,23 @@ public class Call extends Instruction {
 		// END KGU 2015-10-11
 		
 		
-		for(int i=0;i<getText().count();i++)
+		for(int i=0;i<getText(false).count();i++)
 		{
-			String text = this.getText().get(i);
+			String text = this.getText(false).get(i);
 			text = BString.replace(text, "<--","<-");
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
-							  _top_left.left+2*Math.round(E_PADDING / 2),
-							_top_left.top+Math.round(E_PADDING / 2)+(i+1)*fm.getHeight(),
-							text,this
-							);  	
+					_top_left.left + 2 * (E_PADDING / 2),
+					_top_left.top + (E_PADDING / 2) + (i+1) * fm.getHeight(),
+					text,this
+					);  	
 		}
 		
-		canvas.moveTo(_top_left.left+Math.round(E_PADDING / 2),_top_left.top);
-		canvas.lineTo(_top_left.left+Math.round(E_PADDING / 2),_top_left.bottom);
-		canvas.moveTo(_top_left.right-Math.round(E_PADDING / 2),_top_left.top);
-		canvas.lineTo(_top_left.right-Math.round(E_PADDING / 2),_top_left.bottom);
+		canvas.setColor(Color.BLACK);
+		canvas.moveTo(_top_left.left  + (E_PADDING / 2), _top_left.top);
+		canvas.lineTo(_top_left.left  + (E_PADDING / 2), _top_left.bottom);
+		canvas.moveTo(_top_left.right - (E_PADDING / 2), _top_left.top);
+		canvas.lineTo(_top_left.right - (E_PADDING / 2), _top_left.bottom);
 		
 		canvas.setColor(Color.BLACK);
 		canvas.drawRect(_top_left);

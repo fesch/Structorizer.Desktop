@@ -37,6 +37,7 @@ package lu.fisch.structorizer.gui;
  *                      2015.10.11      Comment popping repaired by proper subclassing of getElementByCoord
  *                                      Listener method MouseExited now enabled to drop the sticky comment popup
  *      Kay Gürtzig     2015.11.08      Parser preferences for FOR loops enhanced (KGU#3)
+ *      Kay Gürtzig     2015.12.02      Bugfix #39 (KGU#91)
  *
  ******************************************************************************************************
  *
@@ -269,54 +270,49 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         if(Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
 		if(e.getSource()==this && NSDControl!=null)
 		{
-			if (Element.E_SHOWCOMMENTS==true && ((Editor) NSDControl).popup.isVisible()==false)
-			{
-				// START KGU#25 2015-10-11: Method merged with selectElemetByCoord
-				//Element selEle = root.getElementByCoord(e.getX(),e.getY());
-				Element selEle = root.getElementByCoord(e.getX(), e.getY(), false);
-				// END KGU#25 2015-10-11
-				
-				if (selEle!=null)
-				{
-					if (!selEle.getComment().getText().trim().equals(""))
-					{
-						if(!lblPop.getText().equals("<html>"+BString.replace(BString.encodeToHtml(selEle.getComment().getText()),"\n","<br>")+"</html>"))
-						{
-							lblPop.setText("<html>"+BString.replace(BString.encodeToHtml(selEle.getComment().getText()),"\n","<br>")+"</html>");
-						}
-						int maxWidth = 0;
-						int si = 0;
-						for(int i=0;i<selEle.getComment().count();i++)
-						{
-							if(maxWidth<selEle.getComment().get(i).length())
-							{
-								maxWidth=selEle.getComment().get(i).length();
-								si=i;
-							}
-						}
-						lblPop.setPreferredSize(new Dimension(8+lblPop.getFontMetrics(lblPop.getFont()).stringWidth(selEle.getComment().get(si)),
-															  selEle.getComment().count()*16));
+        	boolean popVisible = false;
+        	if (Element.E_SHOWCOMMENTS==true && ((Editor) NSDControl).popup.isVisible()==false)
+        	{
+        		// START KGU#25 2015-10-11: Method merged with selectElementByCoord
+        		//Element selEle = root.getElementByCoord(e.getX(),e.getY());
+        		Element selEle = root.getElementByCoord(e.getX(), e.getY(), false);
+        		// END KGU#25 2015-10-11
 
-						int x = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().x;
-						int y = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().y;
-						pop.setLocation(x+e.getX(),
-										y+e.getY()+16);
-						pop.setVisible(true);
-					}
-					else
-					{
-						pop.setVisible(false);
-					}
-				}
-				else
-				{
-					pop.setVisible(false);
-				}
-			}
-			else
-			{
-				pop.setVisible(false);
-			}
+        		if (selEle != null &&
+        				!selEle.getComment(false).getText().trim().isEmpty())
+        		{
+        			StringList comment = selEle.getComment(false);
+        			String htmlComment = "<html>"+BString.replace(BString.encodeToHtml(comment.getText()),"\n","<br>")+"</html>";
+        			if(!lblPop.getText().equals(htmlComment))
+        			{
+        				lblPop.setText(htmlComment);
+        			}
+        			int maxWidth = 0;
+        			int si = 0;
+        			for (int i = 0; i < comment.count(); i++)
+        			{
+        				if (maxWidth < comment.get(i).length())
+        				{
+        					maxWidth = comment.get(i).length();
+        					si=i;
+        				}
+        			}
+        			lblPop.setPreferredSize(
+        					new Dimension(
+        							8 + lblPop.getFontMetrics(lblPop.getFont()).
+        							stringWidth(comment.get(si)),
+        							comment.count()*16
+        							)
+        					);
+
+        			int x = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().x;
+        			int y = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().y;
+        			pop.setLocation(x+e.getX(),
+        					y+e.getY()+16);
+        			popVisible = true;
+        		}
+        	}
+        	pop.setVisible(popVisible);
 		}
         if(Element.E_TOGGLETC) root.setSwitchTextAndComments(false);
 	}

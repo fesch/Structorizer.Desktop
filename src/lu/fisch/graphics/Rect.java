@@ -20,6 +20,8 @@
 
 package lu.fisch.graphics;
 
+import java.awt.Rectangle;
+
 /******************************************************************************************************
  *
  *      Author:         Bob Fisch
@@ -34,6 +36,7 @@ package lu.fisch.graphics;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.09      First Issue
+ *      Kay Gürtzig     2015.11.24      Conversions to and from java.awt.Rectangle
  *
  ******************************************************************************************************
  *
@@ -65,16 +68,29 @@ public class Rect{
 		this.right=0;
 	}
 	
+	/**
+	 * @param rect - a java.awt.Rectangle proving the dimensions
+	 */
+	public Rect(Rectangle _rect)
+	{
+		this.left = _rect.x;
+		this.top = _rect.y;
+		this.bottom = _rect.height + _rect.y;
+		this.right = _rect.width + _rect.x;
+	}
+	
 	public Rect copy()
 	{
-		Rect rect= new Rect();
-		
-		rect.left=this.left;
-		rect.top=this.top;
-		rect.bottom=this.bottom;
-		rect.right=this.right;
-		
-		return rect;
+		return new Rect(this.left, this.top, this.right, this.bottom);
+	}
+	
+	/**
+	 * Convert myself into a java.awt.Rectangle
+	 * @return an equivalent java.awt.Rectangle
+	 */
+	public Rectangle getRectangle()
+	{
+		return new Rectangle(left, top, right-left, bottom - top);
 	}
 
         public String toString()

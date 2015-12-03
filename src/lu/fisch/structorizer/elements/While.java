@@ -36,6 +36,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015.10.12      Breakpoint support prepared
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy()
+ *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
+ *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false))
  *
  ******************************************************************************************************
  *
@@ -55,7 +57,7 @@ import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
 
 
-public class While extends Element {
+public class While extends Element implements ILoop {
 
 	public Subqueue q = new Subqueue();
 	
@@ -110,21 +112,21 @@ public class While extends Element {
 		FontMetrics fm = _canvas.getFontMetrics(font);
 		
 		rect.right=Math.round(2*(E_PADDING/2));
-		for(int i=0;i<getText().count();i++)
+		for(int i=0;i<getText(false).count();i++)
 		{
-			int width = getWidthOutVariables(_canvas,getText().get(i),this)+2*Math.round(E_PADDING/2);
-			if (rect.right < width)
+			int lineWidth = getWidthOutVariables(_canvas,getText(false).get(i),this)+2*(E_PADDING/2);
+			if (rect.right < lineWidth)
 			{
-				rect.right = width;
+				rect.right = lineWidth;
 			}
 		}
 		
-		rect.bottom=2*Math.round(E_PADDING/2)+getText().count()*fm.getHeight();
+		rect.bottom = 2*(E_PADDING/2) + getText(false).count() * fm.getHeight();
 		
 		r=q.prepareDraw(_canvas);
 		
-		rect.right=Math.max(rect.right,r.right+E_PADDING);
-		rect.bottom+=r.bottom;		
+		rect.right = Math.max(rect.right,r.right+E_PADDING);
+		rect.bottom += r.bottom;		
 		return rect;
 	}
 	
@@ -159,10 +161,12 @@ public class While extends Element {
 		
 		rect=_top_left.copy();
 		
+		int headerHeight = fm.getHeight() * getText(false).count() + 2*(E_PADDING / 2);
+		
 		// draw shape
 		myrect=_top_left.copy();
 		canvas.setColor(Color.BLACK);
-		myrect.bottom=_top_left.top+fm.getHeight()*getText().count()+2*Math.round(E_PADDING / 2);
+		myrect.bottom=_top_left.top + headerHeight;
 		canvas.drawRect(myrect);
 		
 		myrect=_top_left.copy();
@@ -178,7 +182,7 @@ public class While extends Element {
 		canvas.fillRect(myrect);
 	
 		myrect=_top_left.copy();
-		myrect.bottom=_top_left.top+fm.getHeight()*getText().count()+2*Math.round(E_PADDING / 2);
+		myrect.bottom=_top_left.top + headerHeight;
 		myrect.left=myrect.left+1;
 		myrect.top=myrect.top+1;
 		myrect.bottom=myrect.bottom;
@@ -186,7 +190,7 @@ public class While extends Element {
 		canvas.fillRect(myrect);
 		
 		// draw comment
-		if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
+		if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 		{
 			// START KGU 2015-10-11: Use an inherited helper method now
 //			canvas.setBackground(E_COMMENTCOLOR);
@@ -211,9 +215,9 @@ public class While extends Element {
 		
 		myrect=_top_left.copy();
 		// draw text
-		for(int i=0;i<getText().count();i++)
+		for(int i=0;i<getText(false).count();i++)
 		{
-			String text = this.getText().get(i);
+			String text = this.getText(false).get(i);
 			
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
@@ -226,7 +230,7 @@ public class While extends Element {
 		// draw children
 		myrect=_top_left.copy();
 		myrect.left=myrect.left+Element.E_PADDING-1;
-		myrect.top=_top_left.top+fm.getHeight()*getText().count()+2*Math.round(E_PADDING / 2)-1;
+		myrect.top=_top_left.top+fm.getHeight()*getText(false).count()+2*Math.round(E_PADDING / 2)-1;
 		q.draw(_canvas,myrect);
 		
 	}
@@ -319,5 +323,12 @@ public class While extends Element {
 		this.q.addFullText(_lines, _instructionsOnly);
     }
     // END KGU 2015-10-16
-	
+
+	// START KGU 2015-11-30
+	@Override
+	public Subqueue getBody() {
+		return this.q;
+	}
+	// END KGU 2015-11-30
+
 }

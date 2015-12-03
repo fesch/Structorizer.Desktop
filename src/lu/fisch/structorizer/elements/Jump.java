@@ -35,10 +35,69 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2007.12.13      First Issue
  *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared
  *      Kay Gürtzig     2015.11.14      Bugfix #31 = KGU#82 in method copy()
+ *		Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
  *
  ******************************************************************************************************
  *
- *      Comment:		/
+ *      Comment:	Kay Gürtzig	/ 2015.11.27
+ *      Until 2015, this class had not had any specific effect on execution and code export. This was
+ *      changed by enhancement requests #23 and #22, respectively.
+ *      Though chiefly the Executor and the code generators are concerned, this class file seems to be
+ *      a good place to state the general ideas behind the Jump element as being handled here.
+ *      First of all, any kind of jump severely compromises the concept of structured programming. So
+ *      jumps ought to be avoided. Full stop.
+ *      On the other hand, the DIN 66261 standard includes this kind of element (titled "termination")
+ *      without specifying into detail its semantics. Roughly, it means a jump to the end of an
+ *      enclosing construct.
+ *      The following cases of enclosing constructs obviously make sense to terminate:
+ *      - loop of any type (leave, break)
+ *      - routine (return, with or without result)
+ *      - program (exit, possibly with status value)
+ *      The following cases of enclosing constructs clearly don't make sense to terminate:
+ *      - sequence: an unconditioned termination would make all subsequent instructions useless, a
+ *           conditional termination of a sequence could easily be avoided by inverting the condition
+ *           and putting the subsequent elements into the conditional branch instead.
+ *      - alternative: In order to get to the end of an alternative just don't add more instructions
+ *           to the branch. Alternatives must be "transparent" for break/leave, return, and exit,
+ *           otherwise "conditional termination" would be a meaningless concept.
+ *      - case switch: see alternative. It might be confusing, though, that in C-like languages a
+ *           break instruction is needed to end a case branch. In a Nassi-Shneiderman diagram, however,
+ *           there is obviously no need for such a workaround, the branch ends where it ends.
+ *           Hence, a selection element ought to transparent for termination as well.
+ *      - parallel section: No single thread may steal off the flock or even stop the entire show.
+ *           Only to exit the entire process may be allowed, not even a return out of a parallel branch
+ *           seems tolerable. In no case a loop enclosing the parallel element may be terminated from
+ *           within one of the concurrent branches. So, a parallel section is opaque and impenetrable
+ *           for leave attempts and will only end when the last of its threads has reached the barrier.
+ *      So this is the design specification derived from the above analysis:
+ *      1. Jumps may terminate:
+ *         a) the innermost enclosing loop - standard behaviour of an empty Jump element, a keyword
+ *            is optional (e.g. "break" or "leave");
+ *         b) the current (sub-)routine - requires a keyword (e.g. "return"), possibly with a return value;
+ *         c) the process - requires a keyword (e.g. "exit"), possibly with an integral exit code.
+ *      2. Alternatives and Case elements are transparent for termination.
+ *      3. Parallel sections are impermeable for termination except exit.
+ *      4. Routines are impermeable for terminations of type a).
+ *      5. Multi-level loop termination is a particularly critical breach of structured programming,
+ *         but might be granted here by specifying the number of loop levels to leave as Jump text,
+ *         optionally prefixed by a keyword (preferably "leave" rather than "break").
+ *      6. Any attempt to leave more levels than the current depth of nested loops is a syntax error
+ *         and immediately aborts execution.
+ *      7. An attempt to leave or return from the inside of a parallel section is regarded as syntax
+ *         error but will raise a warning on execution and continue after having killed just the causing
+ *         thread.
+ *      8. Structorizer will NOT allow any kind of goto to a label.
+ *      
+ *      Notes on code export
+ *      1. It is to be dealt with languages lacking support for jumps, premature leave or return.
+ *      2. Multi-level termination is hardly supported by most programming languages but may perhaps
+ *         be translated to a goto statement with a generated target label immediately behind the loop
+ *         to be left - if goto is available like in C. In Java, however, a labeled break statement
+ *         might do the job but requires the code generator to know in advance that such a break
+ *         statement will occur within the nested substructure (because the label is to be placed at
+ *         the beginning of the complex instruction to be left).
+ *      3. A Jump element inside a Case instruction actually means a two-level break in C-like languages
+ *         and hence requires a goto or a labeled break instruction.
  *
  ******************************************************************************************************///
 
@@ -83,15 +142,19 @@ public class Jump extends Instruction {
 		
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 		
+		// FIXME (KGU): What is the rounding of an integer division result good for?
 		rect.right=Math.round(2*(E_PADDING/2));
-		for(int i=0;i<getText().count();i++)
+		for(int i=0;i<getText(false).count();i++)
 		{
-			if(rect.right<getWidthOutVariables(_canvas,getText().get(i),this)+3*E_PADDING)
+			// FIXME (KGU): The width parameters differ from the ones in draw()!
+			int lineWidth = getWidthOutVariables(_canvas, getText(false).get(i), this) + 3*E_PADDING;
+			if(rect.right < lineWidth)
 			{
-				rect.right=getWidthOutVariables(_canvas,getText().get(i),this)+3*E_PADDING;
+				rect.right = lineWidth;
 			}
 		}
-		rect.bottom=2*Math.round(Element.E_PADDING/2)+getText().count()*fm.getHeight();
+		// FIXME (KGU): What is the rounding of an integer division result good for?
+		rect.bottom=2*Math.round(Element.E_PADDING/2)+getText(false).count()*fm.getHeight();
 		
 		return rect;
 	}
@@ -123,7 +186,7 @@ public class Jump extends Instruction {
 		canvas.fillRect(myrect);
 		
 		// draw comment
-        if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
+        if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
         {
             // START KGU 2015-10-11: Use an inherited helper method now
 //                canvas.setBackground(E_COMMENTCOLOR);
@@ -146,21 +209,22 @@ public class Jump extends Instruction {
 		// END KGU 2015-10-11
 		
 		
-		for(int i=0;i<getText().count();i++)
+		for(int i=0;i<getText(false).count();i++)
 		{
-			String text = this.getText().get(i);
-			text = BString.replace(text, "<--","<-");
+			String text = this.getText(false).get(i);
+			text = BString.replace(text, "<--", "<-");
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
-							  _top_left.left+2*Math.round(E_PADDING / 2),
-							_top_left.top+Math.round(E_PADDING / 2)+(i+1)*fm.getHeight(),
-							text,this
-							);  	
+					_top_left.left + 2 * (E_PADDING / 2),
+					_top_left.top + (E_PADDING / 2) + (i+1)*fm.getHeight(),
+					text, this
+					);  	
 		}
 
-		canvas.moveTo(_top_left.left+Math.round(E_PADDING / 2),_top_left.top);
-		canvas.lineTo(_top_left.left,_top_left.bottom+((_top_left.top-_top_left.bottom) / 2));
-		canvas.lineTo(_top_left.left+Math.round(E_PADDING / 2),_top_left.bottom);
+		canvas.setColor(Color.BLACK);	// With an empty text, the decoration often was invisible.
+		canvas.moveTo(_top_left.left + (E_PADDING / 2), _top_left.top);
+		canvas.lineTo(_top_left.left, _top_left.bottom + ((_top_left.top-_top_left.bottom) / 2));
+		canvas.lineTo(_top_left.left + (E_PADDING / 2), _top_left.bottom);
 		
 		canvas.setColor(Color.BLACK);
 		canvas.drawRect(_top_left);

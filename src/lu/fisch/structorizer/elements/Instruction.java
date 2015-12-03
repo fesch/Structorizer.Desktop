@@ -35,6 +35,7 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2007.12.09      First Issue
  *      Kay Gürtzig     2015.10.11/13   Comment drawing unified, breakpoints supported, colouring modified
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy
+ *		Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
  *
  ******************************************************************************************************
  *
@@ -81,24 +82,26 @@ public class Instruction extends Element {
 	// END KGU#64 2015-11-03
 	
 
-        public static Rect prepareDraw(Canvas _canvas, StringList _text, Element _element)
-        {
-                Rect rect = new Rect(0,0,0,0);
-            
+	public static Rect prepareDraw(Canvas _canvas, StringList _text, Element _element)
+	{
+		Rect rect = new Rect(0,0,0,0);
+
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
+
+		rect.right = 2*(Element.E_PADDING/2);
 		
-                rect.right=Math.round(2*(Element.E_PADDING/2));
-                for(int i=0;i<_text.count();i++)
-                {
-                        if(rect.right<getWidthOutVariables(_canvas,_text.get(i),_element)+1*Element.E_PADDING)
-                        {
-                                rect.right=getWidthOutVariables(_canvas,_text.get(i),_element)+1*Element.E_PADDING;
-                        }
-                }
-                rect.bottom=2*Math.round(Element.E_PADDING/2)+_text.count()*fm.getHeight();
-		
+		for(int i=0;i<_text.count();i++)
+		{
+			int lineWidth = getWidthOutVariables(_canvas, _text.get(i), _element) + Element.E_PADDING;
+			if (rect.right < lineWidth)
+			{
+				rect.right = lineWidth;
+			}
+		}
+		rect.bottom = 2*(Element.E_PADDING/2) + _text.count() * fm.getHeight();
+
 		return rect;
-        }
+	}
         
 	public Rect prepareDraw(Canvas _canvas)
 	{
@@ -120,11 +123,11 @@ public class Instruction extends Element {
                 rect.bottom=2*Math.round(Element.E_PADDING/2)+text.count()*fm.getHeight();
 		
 		return rect;*/
-                rect = prepareDraw(_canvas, getText(), this);
+                rect = prepareDraw(_canvas, getText(false), this);
                 return rect;
 	}
 
-        public static void draw(Canvas _canvas, Rect _top_left, StringList _text, Element _element)
+	public static void draw(Canvas _canvas, Rect _top_left, StringList _text, Element _element)
 	{
 		Rect myrect = new Rect();
 		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
@@ -155,7 +158,7 @@ public class Instruction extends Element {
 		canvas.fillRect(myrect);
 				
 		// draw comment
-		if(Element.E_SHOWCOMMENTS==true && !_element.comment.getText().trim().equals(""))
+		if(Element.E_SHOWCOMMENTS==true && !_element.getComment(false).getText().trim().equals(""))
 		{
 			// START KGU 2015-10-11
 //			canvas.setBackground(E_COMMENTCOLOR);
@@ -175,17 +178,17 @@ public class Instruction extends Element {
 		_element.drawBreakpointMark(canvas, _top_left);
 		// END KGU 2015-10-11
 		
-		for(int i=0;i<_text.count();i++)
+		for (int i = 0; i < _text.count(); i++)
 		{
 			String text = _text.get(i);
 			text = BString.replace(text, "<--","<-");
-                        canvas.setColor(Color.BLACK);
-                        writeOutVariables(canvas,
-                                                          _top_left.left+Math.round(Element.E_PADDING / 2),
-                                                          _top_left.top+Math.round(Element.E_PADDING / 2)+(i+1)*fm.getHeight(),
-                                                          text,
-                                                          _element
-                                                          );  	
+			canvas.setColor(Color.BLACK);
+			writeOutVariables(canvas,
+					_top_left.left + (Element.E_PADDING / 2),
+					_top_left.top + (Element.E_PADDING / 2) + (i+1)*fm.getHeight(),
+					text,
+					_element
+					);  	
 
 		}
 		canvas.setColor(Color.BLACK);
@@ -197,60 +200,7 @@ public class Instruction extends Element {
 		// Now delegates all stuff to the static method above, which may also
 		// be called from Elements of different types when those are collapsed
 		
-		/*Rect myrect = new Rect();
-		Color drawColor = getColor();
-		FontMetrics fm = _canvas.getFontMetrics(Element.font);
-		boolean hasCommentMark = false;
-			
-		if (selected==true)
-		{
-			drawColor=Element.E_DRAWCOLOR;
-		}
-		
-		rect=_top_left.copy();
-		
-		Canvas canvas = _canvas;
-		canvas.setBackground(drawColor);
-		canvas.setColor(drawColor);
-		
-		myrect=_top_left.copy();
-		
-		canvas.fillRect(myrect);
-				
-		// draw comment
-		if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
-		{
-//			canvas.setBackground(E_COMMENTCOLOR);
-//			canvas.setColor(E_COMMENTCOLOR);
-//			
-//			myrect.left+=2;
-//			myrect.top+=2;
-//			myrect.right=myrect.left+4;
-//			myrect.bottom-=1;
-//			
-//			canvas.fillRect(myrect);
-			drawCommentMark(canvas, myrect);
-			hasCommentMark = true
-		}
-		
-		drawBreakpointMark(canvas, _top_left, hasCommentMark);
-				
-		for(int i=0;i<text.count();i++)
-		{
-			String text = this.text.get(i);
-			text = BString.replace(text, "<--","<-");
-                        canvas.setColor(Color.BLACK);
-                        writeOutVariables(canvas,
-                                                          _top_left.left+Math.round(Element.E_PADDING / 2),
-                                                          _top_left.top+Math.round(Element.E_PADDING / 2)+(i+1)*fm.getHeight(),
-                                                          text,
-                                                          this
-                                                          );  	
-
-		}
-		canvas.setColor(Color.BLACK);
-		canvas.drawRect(_top_left);*/
-            draw(_canvas, _top_left, getText(), this);
+		draw(_canvas, _top_left, getText(false), this);
 	}
 	
 	public Element copy()
