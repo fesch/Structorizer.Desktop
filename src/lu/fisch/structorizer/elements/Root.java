@@ -397,7 +397,7 @@ public class Root extends Element {
 		// draw thick line
 		if(isNice==false)
 		{
-			rect.top=_top_left.top+fm.getHeight()*getText().count()+2*Math.round(E_PADDING/2)-1;
+			rect.top=_top_left.top+fm.getHeight()*getText(false).count()+2*Math.round(E_PADDING/2)-1;
 			rect.left=_top_left.left;
 			canvas.drawRect(rect);
 		}
