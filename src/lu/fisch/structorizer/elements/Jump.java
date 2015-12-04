@@ -35,6 +35,7 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2007.12.13      First Issue
  *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared
  *      Kay Gürtzig     2015.11.14      Bugfix #31 = KGU#82 in method copy()
+ *		Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
  *
  ******************************************************************************************************
  *
@@ -62,7 +63,7 @@ package lu.fisch.structorizer.elements;
  *      - case switch: see alternative. It might be confusing, though, that in C-like languages a
  *           break instruction is needed to end a case branch. In a Nassi-Shneiderman diagram, however,
  *           there is obviously no need for such a workaround, the branch ends where it ends.
- *           Hence, a selection element ought to transparent for termination as well.
+ *           Hence, a selection element ought to be transparent for termination as well.
  *      - parallel section: No single thread may steal off the flock or even stop the entire show.
  *           Only to exit the entire process may be allowed, not even a return out of a parallel branch
  *           seems tolerable. In no case a loop enclosing the parallel element may be terminated from
@@ -96,8 +97,7 @@ package lu.fisch.structorizer.elements;
  *         statement will occur within the nested substructure (because the label is to be placed at
  *         the beginning of the complex instruction to be left).
  *      3. A Jump element inside a Case instruction actually means a two-level break in C-like languages
- *         and hence requires a goto or a labeled break instruction.
- *
+ *         and hence requires a goto or a labeled break instruction. *
  ******************************************************************************************************///
 
 import java.util.Vector;
@@ -143,18 +143,15 @@ public class Jump extends Instruction {
 		
 		// FIXME (KGU): What is the rounding of an integer division result good for?
 		rect.right=Math.round(2*(E_PADDING/2));
-		for(int i=0;i<getText().count();i++)
+		for(int i=0;i<getText(false).count();i++)
 		{
 			// FIXME (KGU): The width parameters differ from the ones in draw()!
-			int width = getWidthOutVariables(_canvas,getText().get(i),this)+3*E_PADDING;
-			if(rect.right < width)
-			{
-				rect.right = width;
-			}
+			int lineWidth = getWidthOutVariables(_canvas, getText(false).get(i), this) + 3*E_PADDING;
+			if(rect.right < lineWidth)			{
+				rect.right = lineWidth;			}
 		}
 		// FIXME (KGU): What is the rounding of an integer division result good for?
-		rect.bottom=2*Math.round(Element.E_PADDING/2)+getText().count()*fm.getHeight();
-		
+		rect.bottom=2*Math.round(Element.E_PADDING/2)+getText(false).count()*fm.getHeight();		
 		return rect;
 	}
 	
@@ -185,7 +182,7 @@ public class Jump extends Instruction {
 		canvas.fillRect(myrect);
 		
 		// draw comment
-        if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
+        if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
         {
             // START KGU 2015-10-11: Use an inherited helper method now
 //                canvas.setBackground(E_COMMENTCOLOR);
@@ -208,17 +205,16 @@ public class Jump extends Instruction {
 		// END KGU 2015-10-11
 		
 		
-		for(int i=0;i<getText().count();i++)
+		for(int i=0;i<getText(false).count();i++)
 		{
-			String text = this.getText().get(i);
-			text = BString.replace(text, "<--","<-");
+			String text = this.getText(false).get(i);
+			text = BString.replace(text, "<--", "<-");
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
 					_top_left.left + 2 * (E_PADDING / 2),
 					_top_left.top + (E_PADDING / 2) + (i+1)*fm.getHeight(),
-					text,this
-					);  	
-		}
+					text, this
+					);  			}
 
 		canvas.setColor(Color.BLACK);	// With an empty text, the decoration often was invisible.
 		canvas.moveTo(_top_left.left + (E_PADDING / 2), _top_left.top);

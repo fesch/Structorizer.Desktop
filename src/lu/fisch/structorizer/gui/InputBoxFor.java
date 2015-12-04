@@ -34,6 +34,7 @@ package lu.fisch.structorizer.gui;
 *      ------			----			-----------
 *      Kay Gürtzig      2015-10-12		First Issue
 *      Kay Gürtzig      2015-11-01		Mutual text field update and error detection accomplished
+*      Kay Gürtzig      2015-12-04		frame width increased (-> 600)
 *
 ******************************************************************************************************
 *
@@ -133,7 +134,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		chkTextInput.addItemListener(this);
 		txtText.addKeyListener(this);
 
-		//setSize(600, 400);
+		setSize(600, 400);	// We need more width, at least on Linux
 		
 		int lineNo = 1;
 

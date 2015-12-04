@@ -36,6 +36,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy
+ *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in drawing methods
  *
  ******************************************************************************************************
  *
@@ -121,7 +122,7 @@ public class Alternative extends Element {
 
 		// the upper left point of the corner
 		double cx = 0;
-		double cy = getText().count()*fm.getHeight()+4*Math.round(E_PADDING/2);
+		double cy = getText(false).count()*fm.getHeight()+4*Math.round(E_PADDING/2);
 		// the the lowest point of the triangle
 		double ax =  rTrue.right-rTrue.left;
 		//System.out.println("AX : "+ax);
@@ -134,7 +135,7 @@ public class Alternative extends Element {
 		int choice = -1;
 		double lowest = 100000;
 
-		for(int i=0;i<getText().count();i++)
+		for(int i=0;i<getText(false).count();i++)
 		{
 
 			/* old code
@@ -145,19 +146,19 @@ public class Alternative extends Element {
 			 */
 
 			// bottom line of the text
-			double by = 4*Math.round(E_PADDING/2)-Math.round(E_PADDING/3)+(getText().count()-i-1)*fm.getHeight();
+			double by = 4*Math.round(E_PADDING/2)-Math.round(E_PADDING/3)+(getText(false).count()-i-1)*fm.getHeight();
 			// part on the left side
 			double leftside = by/coeffleft+ax-ay/coeffleft;
 			// the the bottom right point of this text line
-			int textWidth = getWidthOutVariables(_canvas,getText().get(i),this);
-			double bx = textWidth+2*Math.round(E_PADDING/2) + leftside;
+			int textWidth = getWidthOutVariables(_canvas,getText(false).get(i),this);
+			double bx = textWidth + 2*Math.round(E_PADDING/2) + leftside;
 			//System.out.println("LS : "+leftside);
 
 			// check if this is the one we need to do calculations
 			double coeff = (by-ay)/(bx-ax);
 
 			// the point height we need
-			double y = getText().count()*fm.getHeight()+4*Math.round(E_PADDING/2);
+			double y = getText(false).count() * fm.getHeight() + 4*Math.round(E_PADDING/2);
 			double x = y/coeff + ax - ay/coeff;
 			//System.out.println(i+" => "+coeff+" --> "+String.valueOf(x));
 
@@ -171,7 +172,7 @@ public class Alternative extends Element {
 		if (lowest!=100000)
 		{
 			// the point height we need
-			double y = getText().count()*fm.getHeight()+4*Math.round(E_PADDING/2);
+			double y = getText(false).count() * fm.getHeight() + 4*Math.round(E_PADDING/2);
 			double x = y/lowest + ax - ay/lowest;
 			rect.right = (int) Math.round(x);
 			//System.out.println("C => "+lowest+" ---> "+rect.right);
@@ -181,7 +182,7 @@ public class Alternative extends Element {
 			rect.right=4*Math.round(E_PADDING/2);
 		}
 
-		rect.bottom=4*Math.round(E_PADDING/2)+getText().count()*fm.getHeight();
+		rect.bottom=4*Math.round(E_PADDING/2)+getText(false).count()*fm.getHeight();
 
 		rect.right=Math.max(rect.right,rTrue.right+rFalse.right);
 		rect.bottom+=Math.max(rTrue.bottom,rFalse.bottom);
@@ -230,7 +231,7 @@ public class Alternative extends Element {
 		canvas.fillRect(myrect);
 
 		rect=_top_left.copy();
-		myrect.bottom=_top_left.top+getText().count()*fm.getHeight()+4*Math.round(E_PADDING / 2);
+		myrect.bottom=_top_left.top+getText(false).count()*fm.getHeight()+4*Math.round(E_PADDING / 2);
 		y=myrect.top+E_PADDING;
 		a=myrect.left+Math.round((myrect.right-myrect.left) / 2);
 		b=myrect.top;
@@ -254,7 +255,7 @@ public class Alternative extends Element {
                 
                 // the upper left point of the corner
                 double cx = 0;
-                double cy = getText().count()*fm.getHeight()+4*Math.round(E_PADDING/2);
+                double cy = getText(false).count()*fm.getHeight()+4*Math.round(E_PADDING/2);
                 // upper right corner
                 double dx = _top_left.right-_top_left.left;
                 double dy = cy;
@@ -266,12 +267,12 @@ public class Alternative extends Element {
                 double coeffright = (dy-ay)/(dx-ax);
 
                 // draw text
-		for(int i=0;i<getText().count();i++)
+		for(int i=0;i<getText(false).count();i++)
 		{
-			String mytext = this.getText().get(i);
+			String mytext = this.getText(false).get(i);
 
                         // bottom line of the text
-                        double by = 4*Math.round(E_PADDING/2)-Math.round(E_PADDING/3)+(getText().count()-i-1)*fm.getHeight();
+                        double by = 4*Math.round(E_PADDING/2)-Math.round(E_PADDING/3)+(getText(false).count()-i-1)*fm.getHeight();
                         // part on the left side
                         double leftside = by/coeffleft+ax-ay/coeffleft;
                         // the the bottom right point of this text line
@@ -286,7 +287,7 @@ public class Alternative extends Element {
                         canvas.lineTo(myrect.left+(int) bx, myrect.bottom-(int) by);
                         */
                         int boxWidth = (int) (bx-leftside);
-                        int textWidth = getWidthOutVariables(_canvas,getText().get(i),this);
+                        int textWidth = getWidthOutVariables(_canvas,getText(false).get(i),this);
 
                         canvas.setColor(Color.BLACK);
                         writeOutVariables(canvas,
@@ -325,7 +326,7 @@ public class Alternative extends Element {
 		
 		
 		// draw comment
-		if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
+		if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 		{
 			// START KGU 2015-10-11: Use an inherited helper method now
 //			canvas.setBackground(E_COMMENTCOLOR);
@@ -356,7 +357,7 @@ public class Alternative extends Element {
 		// draw children
 		myrect=_top_left.copy();
                 
-		myrect.top=_top_left.top+fm.getHeight()*getText().count()+4*Math.round(E_PADDING / 2)-1;
+		myrect.top=_top_left.top+fm.getHeight()*getText(false).count()+4*Math.round(E_PADDING / 2)-1;
 		myrect.right=myrect.left+rTrue.right-1+remain;
 		
 		qTrue.draw(_canvas,myrect);

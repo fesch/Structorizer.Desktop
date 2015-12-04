@@ -36,6 +36,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy
+ *      Kay Gürtzig     2015.11.14      Bugfix #39 (= KGU#91) in method draw()
  *
  ******************************************************************************************************
  *
@@ -60,40 +61,68 @@ public class Case extends Element
     private int fullWidth = 0;
     private int maxHeight = 0;
 	
+    // START KGU#91 2015-12-01: Bugfix #39 - Case may NEVER EVER interchange text and comment!
+	/**
+	 * Returns the content of the text field Full stop. No swapping here!
+	 * @return the text StringList
+	 */
+    @Override
+	public StringList getText(boolean _ignored)
+	{
+		return getText();
+	}
+
+	/**
+	 * Returns the content of the comment field. Full stop. No swapping here!
+	 * @return the comment StringList
+	 */
+    @Override
+	public StringList getComment(boolean _ignored)
+	{
+		return getComment();
+	}
+    // END KGU#91 2015-12-01
+    
+    
     @Override
     public void setText(String _text)
     {
-
-            Subqueue s = null;
-
-            getText().setText(_text);
-
-            if(qs==null)
-            {
-                    qs = new Vector();
-            }
-
-            if(getText().count()>1)
-            {
-                    while(getText().count()-1>qs.size())
-                    {
-                            s=new Subqueue();
-                            s.parent=this;
-                            qs.add(s);
-                    }
-                    while(getText().count()-1<qs.size())
-                    {
-                            qs.removeElementAt(qs.size()-1);
-                    }/**/
-                    /*
-                    for(int i=0;i<text.count()-1;i++)
-                    {
-                            s=new Subqueue();
-                            s.parent=this;
-                            qs.add(s);
-                    }
-                    /**/
-            }
+// START KGU#91 2015-12-01: D.R.Y. - just employ setText(StringList)
+    	text.setText(_text);
+    	this.setText(text);
+    	
+//            Subqueue s = null;
+//
+//            getText().setText(_text);
+//
+//            if(qs==null)
+//            {
+//                    qs = new Vector();
+//            }
+//
+//            // FIXME (KGU#91 2015-12-01): Don't allow sizes below 2 branches!
+//            if(getText().count()>1)
+//            {
+//                    while(getText().count()-1>qs.size())
+//                    {
+//                            s=new Subqueue();
+//                            s.parent=this;
+//                            qs.add(s);
+//                    }
+//                    while(getText().count()-1<qs.size())
+//                    {
+//                            qs.removeElementAt(qs.size()-1);
+//                    }/**/
+//                    /*
+//                    for(int i=0;i<text.count()-1;i++)
+//                    {
+//                            s=new Subqueue();
+//                            s.parent=this;
+//                            qs.add(s);
+//                    }
+//                    /**/
+//            }
+// END KGU#91 2015-12-01
 
     }
 
@@ -104,32 +133,46 @@ public class Case extends Element
 
             text=_textList;
 
-            if(qs==null)
+            if (qs==null)
             {
-                    qs = new Vector();
+                    qs = new Vector<Subqueue>();
             }
 
-            if(getText().count()>1)
+            // START KGU#91 2015-12-01: Bugfix #39: Don't allow sizes below 2 branches!
+            // And don't use method getText() here!
+            //if (getText().count() > 1)
+            //{
+            //        while (getText().count()-1 > qs.size())
+            //        {
+            //      	  s = new Subqueue();
+            //      	  s.parent = this;
+            //      	  qs.add(s);
+            //        }
+            //        while (getText().count()-1 < qs.size())
+            //        {
+            //      	  qs.removeElementAt(qs.size()-1);
+            //        }
+            //}
+            while (text.count() < 3)
             {
-                    while(getText().count()-1>qs.size())
-                    {
-                            s=new Subqueue();
-                            s.parent=this;
-                            qs.add(s);
-                    }
-                    while(getText().count()-1<qs.size())
-                    {
-                            qs.removeElementAt(qs.size()-1);
-                    }/**/
-                    /*
-                     for(int i=0;i<text.count()-1;i++)
-                     {
-                     s=new Subqueue();
-                     s.parent=this;
-                     qs.add(s);
-                     }
-                     /**/
+            	text.add("?");
             }
+            if (text.get(0).isEmpty())
+            {
+            	text.set(0, "???");
+            }
+            // END KGU#91 2015-12-01
+            while (text.count()-1 > qs.size())
+            {
+            	s = new Subqueue();
+            	s.parent = this;
+            	qs.add(s);
+            }
+            while (text.count()-1 < qs.size())
+            {
+            	qs.removeElementAt(qs.size()-1);
+            }
+            // END KGU#91 2015-12-01
 
     }
 
@@ -173,8 +216,8 @@ public class Case extends Element
     {
             if(isCollapsed()) 
             {
-                rect = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
-                return rect;
+            	rect = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
+            	return rect;
             }
 
             rect.top=0;
@@ -182,45 +225,56 @@ public class Case extends Element
 
             FontMetrics fm = _canvas.getFontMetrics(font);
 
-            rect.right=Math.round(2*(E_PADDING/2));
+            // Lest the sum of the paddings per branch should gather too many lost remainders 
+            int padding = 2 * (E_PADDING/2);
+            rect.right = padding;
 
-            for(int i=0;i<getText().count();i++)
+            int nBranches = getText().count() - 1;
+
+            // Width of the header
+            // KGU#91 2015-12-01: Bugfix #39. Though an empty Case text doesn't make sense, the code shouldn't run havoc
+            if (nBranches > 0)
             {
-                    if(rect.right<getWidthOutVariables(_canvas,getText().get(i),this)+2*Math.round(E_PADDING/2))
-                    {
-                            rect.right=getWidthOutVariables(_canvas,getText().get(i),this)+2*Math.round(E_PADDING/2);
-                    }
+            	if (getText().get(nBranches).equals("%")) nBranches--;
+            	rect.right = Math.max(padding, getWidthOutVariables(_canvas, getText().get(0), this) + padding);
             }
+            // Total width of the branches
+            int width = 0;
+            int[] textWidths = new int[nBranches];
+            for(int i = 0; i < nBranches; i++)
+            {
+            	// Instead of computing the text width three times (!?) we just store the result the first time
+            	// FIXME (KGU): By the way, why don't we do it right (i.e. including substructure) in the first place?
+            	textWidths[i] = getWidthOutVariables(_canvas, getText().get(i+1), this) + padding/2; 
+            	width += textWidths[i];
+            }
+        	if (rect.right < width)
+        	{
+        		rect.right = width;
+        	}
 
-            rect.bottom=4*Math.round(E_PADDING/2)+2*fm.getHeight();
+            rect.bottom = 2 * (padding) + 2 * fm.getHeight();
 
-            int count = 0;
-            Rect rtt = null;
+            //Rect rtt = null;
 
             fullWidth=0;
             maxHeight=0;
 
-            if (qs.size()!=0)
+            if (qs.size() > 0)
             {
-                    count=getText().count()-1;
-                    if(((String)getText().get(count)).equals("%"))
-                    {
-                       count-=1;
-                    }
-
-                    for (int i=0;i<count;i++)
-                    {
-                       rtt=((Subqueue) qs.get(i)).prepareDraw(_canvas);
-                       fullWidth=fullWidth+Math.max(rtt.right,getWidthOutVariables(_canvas,getText().get(i+1),this)+Math.round(E_PADDING / 2));
-                       if(maxHeight<rtt.bottom)
-                       {
-                            maxHeight=rtt.bottom;
-                       }
-                    }
+            	for (int i = 0; i < nBranches; i++)
+            	{
+            		Rect rtt = qs.get(i).prepareDraw(_canvas);
+            		fullWidth = fullWidth + Math.max(rtt.right, textWidths[i]);
+            		if (maxHeight < rtt.bottom)
+            		{
+            			maxHeight = rtt.bottom;
+            		}
+            	}
             }
 
-            rect.right=Math.max(rect.right,fullWidth);
-            rect.bottom=rect.bottom+maxHeight;
+            rect.right = Math.max(rect.right, fullWidth);
+            rect.bottom = rect.bottom + maxHeight;
 
             return rect;
     }
@@ -254,50 +308,66 @@ public class Case extends Element
             canvas.setBackground(drawColor);
             canvas.setColor(drawColor);
 
-            rect=_top_left.copy();
+            rect = _top_left.copy();
 
+            int minHeight = 2 * fm.getHeight() + 4 * (E_PADDING / 2);
+            
             // fill shape
             canvas.setColor(drawColor);
-            myrect=_top_left.copy();
-            myrect.left+=1;
-            myrect.top+=1;
-            myrect.bottom-=1;
-            myrect.bottom=_top_left.top+2*fm.getHeight()+4*Math.round(E_PADDING / 2);
+            myrect = _top_left.copy();
+            myrect.left += 1;
+            myrect.top += 1;
+            //myrect.bottom -= 1;
+            myrect.bottom = _top_left.top + minHeight;
             //myrect.right-=1;
             canvas.fillRect(myrect);
 
             // draw shape
-            myrect=_top_left.copy();
-            myrect.bottom=_top_left.top+2*fm.getHeight()+4*Math.round(E_PADDING / 2);
+            myrect = _top_left.copy();
+            myrect.bottom = _top_left.top + minHeight;
 
-            int y=myrect.top+E_PADDING;
-            int a=myrect.left+Math.round((myrect.right-myrect.left) / 2);
-            int b=myrect.top;
-            int c=myrect.left+fullWidth-1;
-            int d=myrect.bottom-1;
-            int x=Math.round(((y-b)*(c-a)+a*(d-b))/(d-b));
+            int y = myrect.top + E_PADDING;
+            int a = myrect.left + (myrect.right - myrect.left) / 2;
+            int b = myrect.top;
+            int c = myrect.left + fullWidth-1;
+            int d = myrect.bottom-1;
+            int x = ((y-b)*(c-a) + a*(d-b)) / (d-b);	
 
-            // draw text
-            for(int i=0;i<1;i++)
+            // draw the selection expression (text 0)
+            // START KGU#91 2015-12-01: Bugfix #39 Nonsense replaced
+            //for(int i=0;i<1;i++)
+            int nLines = this.getText().count();
+            if (nLines > 0)
+            // END KGU#91 2015-12-01
             {
-                    String text = this.getText().get(i);
+                    String text = this.getText().get(0);	// FIXME (KGU): What if this.getText() were empty?
                     canvas.setColor(Color.BLACK);
-                    if(((String) this.getText().get(this.getText().count()-1)).equals("%"))
-                    {
-                            writeOutVariables(canvas,
-                                                              x-Math.round(getWidthOutVariables(canvas,text,this) / this.getText().count()),
-                                                            myrect.top+Math.round(E_PADDING / 3)+(i+1)*fm.getHeight(),
-                                                            text,this
-                                                            );
-                    }
-                    else
-                    {
-                            writeOutVariables(canvas,
-                                                              x-Math.round(getWidthOutVariables(_canvas,text,this) /2),
-                                                            myrect.top+Math.round(E_PADDING / 3)+(i+1)*fm.getHeight(),
-                                                            text,this
-                                                            );
-                    }
+                    // START KGU#91 2015-12-01 Bugfix #39: An empty text produced a divide/0 exception
+                    // (and an index exception, I should say)
+                    //if(((String) this.getText().get(this.getText().count()-1)).equals("%"))
+                    //{
+                    //        writeOutVariables(canvas,
+                    //                                          x-Math.round(getWidthOutVariables(canvas,text,this) / this.getText().count()),
+                    //                                        myrect.top+Math.round(E_PADDING / 3)+(i+1)*fm.getHeight(),
+                    //                                        text,this
+                    //                                        );
+                    //}
+                    //else
+                    //{
+                    //        writeOutVariables(canvas,
+                    //                                          x-Math.round(getWidthOutVariables(_canvas,text,this) /2),
+                    //                                        myrect.top+Math.round(E_PADDING / 3)+(i+1)*fm.getHeight(),
+                    //                                        text,this
+                    //                                        );
+                    //}
+                    int divisor = 2;
+                    if (nLines > 1 && this.getText().get(nLines-1).equals("%")) divisor = nLines;
+                    writeOutVariables(canvas,
+                    		x - getWidthOutVariables(_canvas, text, this) / divisor,
+                    		myrect.top + E_PADDING / 3 + fm.getHeight(),
+                    		text,this
+                    		);
+                    // END KGU#91 2015-12-01
             }
 
 
@@ -329,72 +399,96 @@ public class Case extends Element
             canvas.setColor(Color.BLACK);
             int lineWidth=0;
             // if the last line is '%', do not draw an else part
-            int count=getText().count()-2;
+            int count = nLines - 2;
             Rect rtt = null;
 
-            for(int i = 0; i<count;i++)
+            // START KGU#91 2015-12-01: Performance optimisation on occasion of bugfix #39
+            int[] textWidths = new int[count+1];
+            // END KGU#91 2015-12-01
+            
+            for(int i = 0; i < count; i++)
             {
                     rtt=((Subqueue) qs.get(i)).prepareDraw(_canvas);
-                    lineWidth=lineWidth+Math.max(rtt.right,getWidthOutVariables(_canvas,getText().get(i+1),this)+Math.round(E_PADDING / 2));
+                    // START KGU#91 2015-12-01: Once to calculate it is enough
+                    //lineWidth = lineWidth + Math.max(rtt.right, getWidthOutVariables(_canvas, getText().get(i+1), this) + Math.round(E_PADDING / 2));
+                    textWidths[i] = getWidthOutVariables(_canvas, getText().get(i+1), this);
+                    lineWidth += Math.max(rtt.right, textWidths[i] + E_PADDING / 2);
+                    // END KGU#91 2015-12-01
             }
 
-            if( ((String) getText().get(getText().count()-1)).equals("%"))
+            // START KGU#91 2015-12-01: Bugfix #39: We should be aware of pathological cases...
+            //if(  ((String) getText().get(getText().count()-1)).equals("%") )
+            boolean hasDefaultBranch = nLines > 1 && !getText().get(nLines-1).equals("%");
+            if( !hasDefaultBranch )
+            // END KGU#91 2015-12-01
             {
-                    lineWidth=_top_left.right;
+                    lineWidth = _top_left.right;
             }
+            // START KGU#91 2015-12-01
+            else {
+            	textWidths[count] = getWidthOutVariables(_canvas, getText().get(count+1), this);
+            }
+            // END KGU#91 2015-12-01
 
-            int ax=myrect.left;
-            int ay=myrect.top;
-            int bx=myrect.left+lineWidth;
-            int by=myrect.bottom-1-fm.getHeight()-Math.round(E_PADDING / 2);
+            int ax = myrect.left;
+            int ay = myrect.top;
+            int bx = myrect.left + lineWidth;
+            int by = myrect.bottom-1 - fm.getHeight() - E_PADDING / 2;
 
-            if(  ((String) getText().get(getText().count()-1)).equals("%") )
+            // START KGU#91 2015-12-01: Bugfix #39: We should be aware of pathological cases...
+            //if(  ((String) getText().get(getText().count()-1)).equals("%") )
+            if( !hasDefaultBranch )
+            // END KGU#91 2015-12-01
             {
-                    bx=myrect.right;
+                    bx = myrect.right;
             }
 
             canvas.moveTo(ax,ay);
             canvas.lineTo(bx,by);
 
-            if( ! ((String) text.get(text.count()-1)).equals("%") )
+            // START KGU#91 2015-12-01: Bugfix #39
+            //if( ! ((String) text.get(text.count()-1)).equals("%") )
+            if ( hasDefaultBranch )
+            // END KGU#91 2015-12-01
             {
-                    canvas.lineTo(bx,myrect.bottom-1);
-                    canvas.lineTo(bx,by);
-                    canvas.lineTo(myrect.right,myrect.top);
+                    canvas.lineTo(bx, myrect.bottom-1);
+                    canvas.lineTo(bx, by);
+                    canvas.lineTo(myrect.right, myrect.top);
             }
 
 
             // draw children
-            myrect=_top_left.copy();
-            myrect.top=_top_left.top+fm.getHeight()*2+4*Math.round(E_PADDING / 2)-1;
+            myrect = _top_left.copy();
+            myrect.top = _top_left.top + minHeight -1;
 
             if (qs.size()!=0)
             {
 
-                    // if the last line is '%', do not draw an else part
-                    count=qs.size()-1;
-                    if( ((String) getText().get(getText().count()-1)).equals("%"))
+                    // if the last line isn't '%', then draw an else part
+                    //count = qs.size()-1;	// FIXME: On editing, this might be greater than nLines!
+                    // START KGU#91 2015-12-01: Bugfix #39
+                    //if( ((String) getText().get(getText().count()-1)).equals("%"))
+                    if (hasDefaultBranch)
+                    // END KGU 2015-12-01
                     {
-                            count-=1;
+                            count++;
                     }
 
-                    for(int i = 0;i <=count ; i++)
+                    for(int i = 0; i < count ; i++)
                     {
+                    	
                             rtt=((Subqueue) qs.get(i)).prepareDraw(_canvas);
 
-                            if(i==count)
+                            if (i==count-1)
                             {
                                     myrect.right=_top_left.right;
                             }
-/*
-                            else if((i!=qs.size()-1) || (!(this.parent.parent.getClass().getCanonicalName().equals("Root"))))
-                            {
-                                    myrect.right=myrect.left+Math.max(rtt.right,_canvas.stringWidth(text.get(i+1)+Math.round(E_PADDING / 2)));
-                            }
-*/
                             else
                             {
-                                    myrect.right=myrect.left+Math.max(rtt.right,getWidthOutVariables(_canvas,getText().get(i+1),this)+Math.round(E_PADDING / 2))+1;
+                            	// START KGU#91 2015-12-01
+                                //myrect.right=myrect.left+Math.max(rtt.right,getWidthOutVariables(_canvas,getText().get(i+1),this)+Math.round(E_PADDING / 2))+1;
+                                myrect.right = myrect.left + Math.max(rtt.right, textWidths[i] + E_PADDING / 2) + 1;
+                            	// END KGU#91-12-01
                             }
 
                             // draw child
@@ -402,22 +496,25 @@ public class Case extends Element
 
                             // draw text
                             writeOutVariables(canvas,
-                                                              myrect.right+Math.round((myrect.left-myrect.right) / 2)-Math.round(getWidthOutVariables(_canvas,getText().get(i+1),this) / 2),
-                                                            myrect.top-Math.round(E_PADDING / 4), //+fm.getHeight(),
-                                                            getText().get(i+1),this);
+                            		// START KGU#91 2015-12-01: Performance may be improved here
+                            		//myrect.right + (myrect.left-myrect.right) / 2 - Math.round(getWidthOutVariables(_canvas,getText().get(i+1),this) / 2),
+                            		myrect.right + (myrect.left-myrect.right) / 2 - textWidths[i] / 2,
+                            		// END KGU#91 2915-12-01
+                            		myrect.top - E_PADDING / 4, //+fm.getHeight(),
+                            		getText().get(i+1),this);
 
                             // draw bottom up line
-                            if((i!=qs.size()-2)&&(i!=count))
+                            if((i != qs.size()-2) && (i != count-1))
                             {
                                     canvas.moveTo(myrect.right-1,myrect.top);
-                                    int mx=myrect.right-1;
-                                    int my=myrect.top-fm.getHeight();
-                                    int sx=mx;
-                                    int sy=Math.round((sx*(by-ay)-ax*by+ay*bx)/(bx-ax));
+                                    int mx = myrect.right-1;
+                                    int my = myrect.top-fm.getHeight();
+                                    int sx = mx;
+                                    int sy = (sx*(by-ay) - ax*by + ay*bx) / (bx-ax);
                                     canvas.lineTo(sx,sy+1);
                             }
 
-                            myrect.left=myrect.right-1;
+                            myrect.left = myrect.right-1;
 
                     }
             }

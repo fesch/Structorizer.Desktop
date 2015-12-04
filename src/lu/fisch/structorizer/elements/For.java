@@ -39,7 +39,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.04      New mechanism to split and compose the FOR clause into/from dedicated fields
  *      Kay Gürtzig     2015.11.14      Bugfixes (#28 = KGU#80 and #31 = KGU#82) in Method copy
  *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
- *
+ *      Kay Gürtzig     2015.12.01      Bugfix #39 (=KGU#91) -> getText(false), prepareDraw() optimised *
  ******************************************************************************************************
  *
  *      Comment:		/
@@ -73,7 +73,7 @@ public class For extends Element implements ILoop {
 	private String startValue = "1";		// expression determining the start value of the loop
 	private String endValue = "";			// expression determining the end value of the loop
 	private int stepConst = 1;				// an integer value defining the increment/decrement
-	public boolean isConsistent = false;		// flag determining whether the semantics is consistently defined by the dedicated fields
+	public boolean isConsistent = false;	// flag determining whether the semantics is consistently defined by the dedicated fields
 	// END KGU#3 2015-10-24
 
 	public For()
@@ -112,64 +112,91 @@ public class For extends Element implements ILoop {
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
-                if(isCollapsed()) 
-                {
-                    rect = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
-                    return rect;
-                }
-            
+		if(isCollapsed()) 
+		{
+			rect = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
+			return rect;
+		}
+
+        // START KGU 2015-12-02: Obviously redundant stuff merged        
+		rect.top=0;
+		rect.left=0;
+
+		rect.right=2*Math.round(E_PADDING/2);
+
+		FontMetrics fm = _canvas.getFontMetrics(Element.font);
+
+		rect.right=Math.round(2*(Element.E_PADDING/2));
+		for(int i=0;i<getText(false).count();i++)
+		{
+			if(rect.right<getWidthOutVariables(_canvas,getText(false).get(i),this)+2*Math.round(E_PADDING/2))
+			{
+				rect.right=getWidthOutVariables(_canvas,getText(false).get(i),this)+2*Math.round(E_PADDING/2);
+			}
+		}
+
+		rect.bottom = 2 * (E_PADDING/2) + getText(false).count() * fm.getHeight();
+
+		r=q.prepareDraw(_canvas);
+
+		rect.right=Math.max(rect.right,r.right+E_PADDING);
+
 		if(Element.E_DIN==false)
 		{
-			rect.top=0;
-			rect.left=0;
-			
-			rect.right=2*Math.round(E_PADDING/2);
-			
-			FontMetrics fm = _canvas.getFontMetrics(Element.font);
-			
-			rect.right=Math.round(2*(Element.E_PADDING/2));
-			for(int i=0;i<getText().count();i++)
-			{
-				if(rect.right<getWidthOutVariables(_canvas,getText().get(i),this)+2*Math.round(E_PADDING/2))
-				{
-					rect.right=getWidthOutVariables(_canvas,getText().get(i),this)+2*Math.round(E_PADDING/2);
-				}
-			}
-			
-			rect.bottom=2*Math.round(E_PADDING/2)+getText().count()*fm.getHeight();
-			
-			r=q.prepareDraw(_canvas);
-			
-			rect.right=Math.max(rect.right,r.right+E_PADDING);
-			rect.bottom+=r.bottom+E_PADDING;		
-			return rect;
+//			rect.top=0;
+//			rect.left=0;
+//			
+//			rect.right=2*Math.round(E_PADDING/2);
+//			
+//			FontMetrics fm = _canvas.getFontMetrics(Element.font);
+//			
+//			rect.right=Math.round(2*(Element.E_PADDING/2));
+//			for(int i=0;i<getText(false).count();i++)
+//			{
+//				int lineWidth = getWidthOutVariables(_canvas,getText(false).get(i),this)+2*Math.round(E_PADDING/2);
+//				if(rect.right < lineWidth)
+//				{
+//					rect.right = lineWidth;
+//				}
+//			}
+//			
+//			rect.bottom = 2 * (E_PADDING/2) + getText(false).count() * fm.getHeight();
+//			
+//			r=q.prepareDraw(_canvas);
+//			
+//			rect.right=Math.max(rect.right,r.right+E_PADDING);
+			rect.bottom += r.bottom+E_PADDING;		
+//			return rect;
 		}
 		else
 		{
-			rect.top=0;
-			rect.left=0;
-			
-			rect.right=2*Math.round(E_PADDING/2);
-			
-			FontMetrics fm = _canvas.getFontMetrics(font);
-			
-			rect.right=Math.round(2*(E_PADDING/2));
-			for(int i=0;i<getText().count();i++)
-			{
-				if(rect.right<getWidthOutVariables(_canvas,getText().get(i),this)+2*Math.round(E_PADDING/2))
-				{
-					rect.right=getWidthOutVariables(_canvas,getText().get(i),this)+2*Math.round(E_PADDING/2);
-				}
-			}
-			
-			rect.bottom=2*Math.round(E_PADDING/2)+getText().count()*fm.getHeight();
-			
-			r=q.prepareDraw(_canvas);
-			
-			rect.right=Math.max(rect.right,r.right+E_PADDING);
-			rect.bottom+=r.bottom;		
-			return rect;
+//			rect.top=0;
+//			rect.left=0;
+//			
+//			rect.right=2*Math.round(E_PADDING/2);
+//			
+//			FontMetrics fm = _canvas.getFontMetrics(font);
+//			
+//			rect.right=Math.round(2*(E_PADDING/2));
+//			for(int i=0;i<getText(false).count();i++)
+//			{
+//				int lineWidth = getWidthOutVariables(_canvas,getText(false).get(i),this)+2*Math.round(E_PADDING/2);
+//				if(rect.right < lineWidth)
+//				{
+//					rect.right = lineWidth;
+//				}
+//			}
+//			
+//			rect.bottom= 2 * (E_PADDING/2) + getText(false).count() * fm.getHeight();
+//			
+//			r=q.prepareDraw(_canvas);
+//			
+//			rect.right=Math.max(rect.right,r.right+E_PADDING);
+			rect.bottom += r.bottom;		
+//			return rect;
 		}
+		return rect;
+		// END KGU 2015-12-02
 	}
 	
 	public void draw(Canvas _canvas, Rect _top_left)
@@ -202,27 +229,11 @@ public class For extends Element implements ILoop {
 		Canvas canvas = _canvas;
 		canvas.setBackground(drawColor);
 		canvas.setColor(drawColor);
-    			
+
+		int headerHeight = fm.getHeight() * getText(false).count() + 2 * (Element.E_PADDING / 2);
 
 		if(Element.E_DIN==false)
 		{
-			// START KGU 2015-10-12: D.R.Y. - obviously common beginning of both branches, hence moved to top
-//			Rect myrect = new Rect();
-//			Color drawColor = getColor();
-//			FontMetrics fm = _canvas.getFontMetrics(font);
-//			int p;
-//			int w;
-//			
-//			if (selected==true)
-//			{
-//                if(waited==true) { drawColor=Element.E_WAITCOLOR; }
-//                else { drawColor=Element.E_DRAWCOLOR; }
-//			}
-//			
-//			Canvas canvas = _canvas;
-//			canvas.setBackground(drawColor);
-//			canvas.setColor(drawColor);
-			// END KGU 2015-10-12
 
 			// draw background
 			myrect=_top_left.copy();
@@ -234,7 +245,7 @@ public class For extends Element implements ILoop {
 			canvas.drawRect(_top_left);
 			
 			myrect=_top_left.copy();
-			myrect.bottom=_top_left.top+fm.getHeight()*getText().count()+2*Math.round(Element.E_PADDING / 2);
+			myrect.bottom=_top_left.top + headerHeight;
 			canvas.drawRect(myrect);
 			
 			myrect.bottom=_top_left.bottom;
@@ -254,7 +265,7 @@ public class For extends Element implements ILoop {
 			canvas.fillRect(myrect);
 			
 			myrect=_top_left.copy();
-			myrect.bottom=_top_left.top+fm.getHeight()*getText().count()+2*Math.round(E_PADDING / 2);
+			myrect.bottom=_top_left.top + headerHeight;
 			myrect.left=myrect.left+1;
 			myrect.top=myrect.top+1;
 			myrect.bottom=myrect.bottom;
@@ -268,72 +279,17 @@ public class For extends Element implements ILoop {
 			myrect.bottom=myrect.bottom;
 			myrect.right=myrect.right;
 			canvas.fillRect(myrect);
-			
-// START KGU 2015-10-12: This part was nearly identical to the other branch, hence moved out of the branches 
-//			// draw comment
-//			if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
-//			{
-//				canvas.setBackground(E_COMMENTCOLOR);
-//				canvas.setColor(E_COMMENTCOLOR);
-//				
-//				Rect someRect = _top_left.copy();
-//				
-//				someRect.left+=2;
-//				someRect.top+=2;
-//				someRect.right=someRect.left+4;
-//				someRect.bottom-=1;
-//				
-//				canvas.fillRect(someRect);
-//    		}
-//			
-//			// draw text
-//			for(int i=0;i<getText().count();i++)
-//			{
-//				String text = this.getText().get(i);
-//				text = BString.replace(text, "<--","<-");
-//				
-//				canvas.setColor(Color.BLACK);
-//				writeOutVariables(canvas,
-//								  _top_left.left+Math.round(E_PADDING / 2),
-//								  _top_left.top+Math.round(E_PADDING / 2)+(i+1)*fm.getHeight(),
-//								  text,this
-//								  );  	
-//			}
-//			
-//			// draw children
-//			myrect=_top_left.copy();
-//			myrect.left=myrect.left+Element.E_PADDING-1;
-//			myrect.top=_top_left.top+fm.getHeight()*getText().count()+2*Math.round(E_PADDING / 2)-1;
-//			myrect.bottom=myrect.bottom-E_PADDING+1;
-//			q.draw(_canvas,myrect);
-// END KGU 2015-10-12
-		
+	
 		}
 		else
 		{
-// START KGU 2015-10-12: D.R.Y. - This was part of both branches and already started to diverge
-//			Rect myrect = new Rect();
-//			Color drawColor = getColor();
-//			FontMetrics fm = _canvas.getFontMetrics(Element.font);
-//			int p;
-//			int w;
-//			
-//			if (selected==true)
-//			{
-//				drawColor=E_DRAWCOLOR;
-//			}
-//			
-//			Canvas canvas = _canvas;
-//			canvas.setBackground(drawColor);
-//			canvas.setColor(drawColor);
-// END KGU 2015-10-12
 			
 			rect=_top_left.copy();
 			
 			// draw shape
 			myrect=_top_left.copy();
 			canvas.setColor(Color.BLACK);
-			myrect.bottom=_top_left.top+fm.getHeight()*getText().count()+2*Math.round(E_PADDING / 2);
+			myrect.bottom=_top_left.top + headerHeight;
 			canvas.drawRect(myrect);
 			
 			myrect=_top_left.copy();
@@ -349,54 +305,17 @@ public class For extends Element implements ILoop {
 			canvas.fillRect(myrect);
 			
 			myrect=_top_left.copy();
-			myrect.bottom=_top_left.top+fm.getHeight()*getText().count()+2*Math.round(E_PADDING / 2);
+			myrect.bottom=_top_left.top + headerHeight;
 			myrect.left=myrect.left+1;
 			myrect.top=myrect.top+1;
 			myrect.bottom=myrect.bottom;
 			myrect.right=myrect.right;
 			canvas.fillRect(myrect);
 			
-// START KGU 2015-10-12: D.R.Y. - this part was nearly identical to that above, hence moved out of the branches
-//			// draw comment
-//			if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
-//			{
-//				canvas.setBackground(E_COMMENTCOLOR);
-//				canvas.setColor(E_COMMENTCOLOR);
-//				
-//				Rect someRect = _top_left.copy();
-//				
-//				someRect.left+=2;
-//				someRect.top+=2;
-//				someRect.right=someRect.left+4;
-//				someRect.bottom-=1;
-//				
-//				canvas.fillRect(someRect);
-//    		}
-//			
-//			myrect=_top_left.copy();
-//			// draw text
-//			for(int i=0;i<getText().count();i++)
-//			{
-//				String text = this.getText().get(i);
-//				
-//				canvas.setColor(Color.BLACK);
-//				writeOutVariables(canvas,
-//								  _top_left.left+Math.round(E_PADDING / 2),
-//								  _top_left.top+Math.round(E_PADDING / 2)+(i+1)*fm.getHeight(),
-//								  text,this
-//								  );  	
-//			}
-//			
-//			// draw children
-//			myrect=_top_left.copy();
-//			myrect.left=myrect.left+Element.E_PADDING-1;
-//			myrect.top=_top_left.top+fm.getHeight()*getText().count()+2*Math.round(E_PADDING / 2)-1;
-//			q.draw(_canvas,myrect);
-// END KGU 2015-10-12
 		}
 		
 		// START KGU 2015-10-12: D.R.Y. - common tail of both branches re-united here
-		if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
+		if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 		{
 			this.drawCommentMark(canvas, _top_left);
 		}
@@ -404,9 +323,9 @@ public class For extends Element implements ILoop {
 		this.drawBreakpointMark(canvas, _top_left);
 
 		// draw text
-		for(int i=0;i<getText().count();i++)
+		for(int i=0;i<getText(false).count();i++)
 		{
-			String text = this.getText().get(i);
+			String text = this.getText(false).get(i);
 			text = BString.replace(text, "<--","<-");
 			
 			canvas.setColor(Color.BLACK);
@@ -420,7 +339,7 @@ public class For extends Element implements ILoop {
 		// draw children
 		myrect=_top_left.copy();
 		myrect.left=myrect.left+Element.E_PADDING-1;
-		myrect.top=_top_left.top+fm.getHeight()*getText().count()+2*Math.round(E_PADDING / 2)-1;
+		myrect.top=_top_left.top + headerHeight-1;
 		if (Element.E_DIN == false)
 		{
 			myrect.bottom=myrect.bottom-E_PADDING+1;
@@ -430,20 +349,6 @@ public class For extends Element implements ILoop {
 	}
 	
 	@Override
-	// START KGU 2015-10-11: Merged with getElementByCoord, which had to be overridden as well for proper Comment popping
-//	public Element selectElementByCoord(int _x, int _y)
-//	{
-//		Element selMe = super.selectElementByCoord(_x,_y);
-//		Element sel = q.selectElementByCoord(_x,_y);
-//		if(sel!=null) 
-//		{
-//			selected=false;
-//			selMe = sel;
-//		}
-//		
-//		return selMe;
-//	}
-
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
 		Element selMe = super.getElementByCoord(_x, _y, _forSelection);
@@ -456,7 +361,6 @@ public class For extends Element implements ILoop {
 		
 		return selMe;
 	}
-	// END KGU 2015-10-11
 
 	public void setSelected(boolean _sel)
 	{
