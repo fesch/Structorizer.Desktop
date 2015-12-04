@@ -1066,7 +1066,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#94 2015-12-04: Common file writing routine (on occasion of bugfix #40)
 	private boolean doSaveNSD()
 	{
-		String[] EnvVariablesToCheck = { "MUELL"/*, "TEMP", "TMP", "TMPDIR", "HOME", "HOMEPATH"*/ };
+		String[] EnvVariablesToCheck = { "TEMP", "TMP", "TMPDIR", "HOME", "HOMEPATH" };
 		boolean done = false;
         try
         {
