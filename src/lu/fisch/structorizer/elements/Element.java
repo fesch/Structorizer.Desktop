@@ -46,7 +46,7 @@ package lu.fisch.structorizer.elements;
  *      Comment:
  *      
  *      2015.12.01 (KGU#91/KGU#92)
- *      - Methods setText() were inconsistent and caused nasty effects including data losses.
+ *      - Methods setText() were inconsistent and caused nasty effects including data losses (bug #39).
  *      - Operator unification enhanced (issue #41)
  *      2015.11.03 (KGU#18/KGU#23/KGU#63)
  *      - Methods writeOutVariables() and getWidthOutVariables re-merged, lexical splitter extracted from
@@ -93,7 +93,7 @@ import java.awt.Point;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.22-32";
+	public static String E_VERSION = "3.22-33";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -329,7 +329,7 @@ public abstract class Element {
 	// START KGU#91 2015-12-01: We need a way to get the true value
 	/**
 	 * Returns the content of the text field no matter if mode isSwitchedTextAndComment
-	 * is active, use getText(boolean) for a mode-sensive effect.
+	 * is active, use getText(boolean) for a mode-sensitive effect.
 	 * @return the text StringList (in normal mode) the comment StringList otherwise
 	 */
 	public StringList getText()
@@ -337,7 +337,7 @@ public abstract class Element {
 		return text;
 	}
 	/**
-	 * Returns the content of the text field unless _alwaysTrueText is true and
+	 * Returns the content of the text field unless _alwaysTrueText is false and
 	 * mode isSwitchedTextAndComment is active, in which case the comment field
 	 * is returned instead 
 	 * @param _alwaysTrueText - if true then mode isSwitchTextAndComment is ignored
@@ -347,8 +347,11 @@ public abstract class Element {
 	// END KGU#91 2015-12-01
 	{
             Root root = null;
+            // START KGU#91 2015-12-01: Bugfix #39
+    		//if ((root = getRoot(this))!=null && root.isSwitchTextAndComments())
             if (!_alwaysTrueText && 
             		(root = getRoot(this))!=null && root.isSwitchTextAndComments())
+            // START KGU#91 2015-12-01
             {
             	return comment;
             }
@@ -371,7 +374,7 @@ public abstract class Element {
 	// START KGU#91 2015-12-01: We need a way to get the true value
 	/**
 	 * Returns the content of the comment field no matter if mode isSwitchedTextAndComment
-	 * is active, use getComment(boolean) for a mode-sensive effect.
+	 * is active, use getComment(boolean) for a mode-sensitive effect.
 	 * @return the text StringList (in normal mode) the comment StringList otherwise
 	 */
 	public StringList getComment()
@@ -379,7 +382,7 @@ public abstract class Element {
 		return comment;
 	}
 	/**
-	 * Returns the content of the text field unless _alwaysTrueComment is true and
+	 * Returns the content of the text field unless _alwaysTrueComment is false and
 	 * mode isSwitchedTextAndComment is active, in which case the comment field
 	 * is returned instead 
 	 * @param _alwaysTrueText - if true then mode isSwitchTextAndComment is ignored
@@ -389,8 +392,11 @@ public abstract class Element {
 	// END KGU#91 2015-12-01
 	{
             Root root = null;
+            // START KGU#91 2015-12-01: Bugfix #39
+      		//if ((root = getRoot(this))!=null && root.isSwitchTextAndComments())
             if (!_alwaysTrueComment && 
             		(root = getRoot(this))!=null && root.isSwitchTextAndComments())
+            // END KGU#91 2015-12-01
             {
             	return text;
             }

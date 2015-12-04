@@ -67,14 +67,14 @@ public class Forever extends Element implements ILoop {
 	
 	public Forever(String _strings)
 	{
-		super();	// Forever elmenets aren't supposed to have text
+		super();	// Forever elements aren't supposed to have text
 		q.parent=this;
 		//setText(_strings);
 	}
 	
 	public Forever(StringList _strings)
 	{
-		super();	// Forever elmenets aren't supposed to have text
+		super();	// Forever elements aren't supposed to have text
 		q.parent=this;
 		//setText(_strings);
 	}

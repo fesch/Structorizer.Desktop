@@ -122,8 +122,9 @@ public class Root extends Element {
 	// END KGU#3 2015-11-03
 
 	private Vector<Updater> updaters = new Vector<Updater>();
-                
-	private boolean switchTextAndComments = false;
+
+	// KGU#91 2015-12-04: No longer needed
+	//private boolean switchTextAndComments = false;
 
 	public Root()
 	{
@@ -2088,13 +2089,36 @@ public String getMethodName()
 
 
     public boolean isSwitchTextAndComments() {
-        return switchTextAndComments;
-    }
+// START KGU#91 2015-12-04: Bugfix #39 drawing has directly to follow the set mode
+//      return switchTextAndComments;
+  	return Element.E_TOGGLETC;
+// END KGU#91 2015-12-04
+  }
 
-    public void setSwitchTextAndComments(boolean switchTextAndComments) {
-        this.switchTextAndComments = switchTextAndComments;
-    }
-    
+// START KGU#91 2015-12-04: No longer needed
+//  public void setSwitchTextAndComments(boolean switchTextAndComments) {
+//      this.switchTextAndComments = switchTextAndComments;
+//  }
+
+	/**
+	 * Returns the content of the text field unless _alwaysTrueText is false and
+	 * mode isSwitchedTextAndComment is active, in which case the comment field
+	 * is returned instead, if it is not empty.
+	 * @param _alwaysTrueText - if true then mode isSwitchTextAndComment is ignored
+	 * @return either the text or the comment
+	 */
+    @Override
+	public StringList getText(boolean _alwaysTrueText)
+	{
+		StringList textToShow = super.getText(_alwaysTrueText);
+		if (textToShow.getText().trim().isEmpty())
+		{
+			textToShow = comment;
+		}
+		return textToShow;
+	}
+// END KGU#91 2015-12-04
+  
     // START KGU#2 2015-10-17: Inserted for enhancement request #9 subroutine calls
     /**
      * Searches all known reservoires for subroutines with a signature compatible to name(arg1, arg2, ..., arg_nArgs) 
