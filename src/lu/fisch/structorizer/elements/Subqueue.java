@@ -58,12 +58,18 @@ public class Subqueue extends Element implements IElementSequence {
 
 	public Subqueue()
 	{
-		super("");
+		// START KGU#91 2015-12-01: A Subqueue has no own text, not even an empty line
+		//super("");
+		super();
+		// END KGU#91 2015-12-01
 	}
 	
 	public Subqueue(StringList _strings)
 	{
-		super(_strings);
+		// START KGU#91 2015-12-01: A Subqueue has no own text, not even an empty line
+		//super(_strings);
+		super();
+		// END KGU#91 2015-12-01
 	}
 	
 	private Vector<Element> children = new Vector<Element>();

@@ -36,6 +36,7 @@ package lu.fisch.utils;
  *      Bob Fisch       2007.12.09      First Issue
  *      Kay Gürtzig     2015.11.04      Methods indexOf added.
  *      Kay Gürtzig     2015.11.24      Method clear added.
+ *      Kay Gürtzig     2015.12.01      Methods replaceAll, replaceAllCi added.
  *
  ******************************************************************************************************
  *
@@ -700,6 +701,60 @@ public class StringList {
     	return nRemoved;
     }
     // END KGU 2015-11-25
+    
+    // START KGU#92 2015-12-01: New method to facilitate bugfix #41
+    /**
+     * Replaces all elements being equal to the given string _stringOld by
+     * _stringNew
+     * @param _stringOld - the searched string
+     * @param _stringNew - the string to replace occurrences of _stringOld
+     * @return number of deletions
+     */
+    public int replaceAll(String _stringOld, String _stringNew)
+    {
+    	int nReplaced = 0;
+    	int i = 0;
+    	while (i < count())
+    	{
+    		if (strings.get(i).equals(_stringOld))
+    		{
+    			strings.setElementAt(_stringNew, i);
+    			nReplaced++;
+    		}
+    		else
+    		{
+        		i++;    			
+    		}
+    	}
+    	return nReplaced;
+    }
+
+    /**
+     * Replaces all elements being case-independently equal to the given string
+     * _stringOld by _stringNew
+     * @param _stringOld - the searched string
+     * @param _stringNew - the string to replace occurrences of _stringOld
+     * @return number of deletions
+     */
+    public int replaceAllCi(String _stringOld, String _stringNew)
+    {
+    	int nReplaced = 0;
+    	int i = 0;
+    	while (i < count())
+    	{
+    		if (strings.get(i).equalsIgnoreCase(_stringOld))
+    		{
+    			strings.setElementAt(_stringNew, i);
+    			nReplaced++;
+    		}
+    		else
+    		{
+        		i++;    			
+    		}
+    	}
+    	return nReplaced;
+    }
+    // END KGU#92 2015-12-01
 
     @Override
 	public String toString()

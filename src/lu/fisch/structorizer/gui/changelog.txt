@@ -25,7 +25,7 @@ Current development version: 3.23-01 (2015.11.30)
 - 01: executor: Dialog boxes for input / output now switch to step mode on Cancel/Pause <Kay Gürtzig>
 - 01: updated language files (DE,EN,ES) <Kay Gürtzig>
 
-Version 3.23 (2015.11.14)
+Version 3.23 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
 - 02: executor: fixed a bug while interpreting the title [Benjamin Bartsch]
 - 03: export: split PNG export into multiple images [Moritz Schulze]
@@ -92,6 +92,10 @@ Version 3.23 (2015.11.14)
 - 32: Operator highlighting fixed, new colouring for string and character literals <Kay Gürtzig>
 - 32: Bugs #28, #31, and #32 fixed, all concerning element degrading on undoing/copying <Kay Gürtzig>
 - 32: More adaptive approach to either exit or dispose a Structorizer on closing <Kay Gürtzig>
+- 33: Bugfix #39 - Errors on drawing empty Case structures, confused texts and comments <Kay Gürtzig>
+- 33: Bugfix #41 - shift operators <<, >>, shl, shr haven't been supported <Kay Gürtzig>
+- 33: Bugfix #40 - Recent nsd files got truncated on saving errors <Kay Gürtzig>
+- 33: Bugfix #42 - Default saving directory should not be root (/) but home <Kay Gürtzig>
 
 Version 3.22 (2011.11.21)
 - 01: Some fixes in Executor.java & Control.java [Kay Gürtzig]

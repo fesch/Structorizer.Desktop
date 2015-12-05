@@ -37,6 +37,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.12      Breakpoint support prepared
  *      Kay Gürtzig     2015.11.14      Bugfixes #31 (= KGU#82) and #32 (= KGU#83) in method copy() 
  *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
+ *		Kay Gürtzig     2015.12.02      Bugfix #39 (KGU#91) -> getText(false) on drawing, constructors
+ *                                      and methods setText() now ensure field text being empty
  *
  ******************************************************************************************************
  *
@@ -65,17 +67,31 @@ public class Forever extends Element implements ILoop {
 	
 	public Forever(String _strings)
 	{
-		super(_strings);
+		super();	// Forever elements aren't supposed to have text
 		q.parent=this;
-		setText(_strings);
+		//setText(_strings);
 	}
 	
 	public Forever(StringList _strings)
 	{
-		super(_strings);
+		super();	// Forever elements aren't supposed to have text
 		q.parent=this;
-		setText(_strings);
+		//setText(_strings);
 	}
+	
+	// START KGU#91 2015-12-02
+    @Override
+    public void setText(String _text)
+    {
+    	text.clear();
+    }
+	
+    @Override
+    public void setText(StringList _text)
+    {
+    	text.clear();
+    }
+    // END KGU#91 2015-12-02
 	
 	// START KGU#64 2015-11-03: Is to improve drawing performance
 	/**
@@ -101,20 +117,20 @@ public class Forever extends Element implements ILoop {
 		rect.top=0;
 		rect.left=0;
 		
-		rect.right=2*Math.round(E_PADDING/2);
+		rect.right = 2 * (E_PADDING/2);
 		
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 		
-		rect.right=Math.round(2*(Element.E_PADDING/2));
-		for(int i=0;i<getText().count();i++)
+		for (int i = 0; i < getText(false).count(); i++)
 		{
-			if(rect.right<getWidthOutVariables(_canvas,getText().get(i),this)+2*Math.round(E_PADDING/2))
+			int lineWidth = getWidthOutVariables(_canvas, getText(false).get(i), this) + 2*(E_PADDING/2);
+			if (rect.right < lineWidth)
 			{
-				rect.right=getWidthOutVariables(_canvas,getText().get(i),this)+2*Math.round(E_PADDING/2);
+				rect.right = lineWidth;
 			}
 		}
 		
-		rect.bottom=2*Math.round(E_PADDING/2)+getText().count()*fm.getHeight();
+		rect.bottom = 2*(E_PADDING/2) + getText(false).count() * fm.getHeight();
 		
 		r=q.prepareDraw(_canvas);
 		
@@ -147,6 +163,8 @@ public class Forever extends Element implements ILoop {
 //		}
 		// END KGU 2015-10-13
 		
+		int headerHeight = fm.getHeight() * getText(false).count() + 2*(Element.E_PADDING / 2);
+		
 		Canvas canvas = _canvas;
 		canvas.setBackground(drawColor);
 		canvas.setColor(drawColor);
@@ -161,7 +179,7 @@ public class Forever extends Element implements ILoop {
 		canvas.drawRect(_top_left);
 		
 		myrect=_top_left.copy();
-		myrect.bottom=_top_left.top+fm.getHeight()*getText().count()+2*Math.round(Element.E_PADDING / 2);
+		myrect.bottom=_top_left.top + headerHeight;
 		canvas.drawRect(myrect);
 		
 		myrect.bottom=_top_left.bottom;
@@ -181,7 +199,7 @@ public class Forever extends Element implements ILoop {
 		canvas.fillRect(myrect);
 		
 		myrect=_top_left.copy();
-		myrect.bottom=_top_left.top+fm.getHeight()*getText().count()+2*Math.round(E_PADDING / 2);
+		myrect.bottom=_top_left.top + headerHeight;
 		myrect.left=myrect.left+1;
 		myrect.top=myrect.top+1;
 		myrect.bottom=myrect.bottom;
@@ -197,7 +215,7 @@ public class Forever extends Element implements ILoop {
 		canvas.fillRect(myrect);
 		
 		// draw comment
-		if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
+		if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 		{
 			// START KGU 2015-10-11: Use an inherited helper method now
 //			canvas.setBackground(E_COMMENTCOLOR);
@@ -221,9 +239,9 @@ public class Forever extends Element implements ILoop {
 		
 		
 		// draw text
-		for(int i=0;i<getText().count();i++)
+		for(int i=0;i<getText(false).count();i++)
 		{
-			String text = this.getText().get(i);
+			String text = this.getText(false).get(i);
 			text = BString.replace(text, "<--","<-");
 			
 			canvas.setColor(Color.BLACK);
@@ -237,7 +255,7 @@ public class Forever extends Element implements ILoop {
 		// draw children
 		myrect=_top_left.copy();
 		myrect.left=myrect.left+Element.E_PADDING-1;
-		myrect.top=_top_left.top+fm.getHeight()*getText().count()+2*Math.round(E_PADDING / 2)-1;
+		myrect.top=_top_left.top + headerHeight-1;
 		myrect.bottom=myrect.bottom-E_PADDING+1;
 		q.draw(_canvas,myrect);
 	}
@@ -279,7 +297,7 @@ public class Forever extends Element implements ILoop {
 	public Element copy()
 	{
 		// Bugfix KGU#83 (bug #32) 2015-11-14: Instead of a Forever loop, a For loop had been created!
-		Forever ele = new Forever(new StringList());
+		Forever ele = new Forever();
 		ele.setComment(this.getComment().copy());
 		ele.setColor(this.getColor());
 		ele.q=(Subqueue) this.q.copy();

@@ -496,7 +496,9 @@ public class Executor implements Runnable
 		// END KGU#39 2015-10-16 (1/2)
 			StringList params = root.getParameterNames();
 			//System.out.println("Having: "+params.getCommaText());
-			params=params.reverse();
+			// START KGU#2 2015-12-05: New mechanism of getParameterNames() made reverting wrong
+			//params=params.reverse();
+			// END KGU#2 2015-12-05
 			//System.out.println("Having: "+params.getCommaText());
 			// START KGU#2 2015-11-24
 			boolean noArguments = arguments == null;

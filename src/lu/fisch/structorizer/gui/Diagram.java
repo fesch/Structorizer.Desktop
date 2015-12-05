@@ -42,6 +42,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.11.24      Method setRoot() may now refuse the replacement (e.g. on cancelling
  *                                      the request to save recent changes)
  *      Kay Gürtzig     2015.11.29      New check options added to analyserNSD()
+ *      Kay Gürtzig     2015.12.04      Bugfix #40 (KGU#94): With an error on saving, the recent file was destroyed
  *
  ******************************************************************************************************
  *
@@ -109,7 +110,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     public boolean isArrangerOpen = false;
     // END KGU#2 2015-11-24
 
-    private JList errorlist = null;
+    private JList<DetectedError> errorlist = null;
 
     private Element eCopy = null;
 
@@ -215,7 +216,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								{
 									public void  filesDropped( java.io.File[] files )
 									{
-										boolean found = false;
+										//boolean found = false;
 										for (int i = 0; i < files.length; i++)
 										{
 											String filename = files[i].toString();
@@ -244,7 +245,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							   (filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".lpr"))
 							   )
 					  {
-					  // only save if something has been changed
+					  // save (only if something has been changed)
 					  saveNSD(true);
 					  // load and parse source-code
 					  D7Parser d7 = new D7Parser("D7Grammar.cgt");
@@ -289,59 +290,54 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void mouseMoved(MouseEvent e)
 	{
-        if(Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
-		if(e.getSource()==this && NSDControl!=null)
-		{
-			if (Element.E_SHOWCOMMENTS==true && ((Editor) NSDControl).popup.isVisible()==false)
-			{
-				// START KGU#25 2015-10-11: Method merged with selectElementByCoord
-				//Element selEle = root.getElementByCoord(e.getX(),e.getY());
-				Element selEle = root.getElementByCoord(e.getX(), e.getY(), false);
-				// END KGU#25 2015-10-11
-				
-				if (selEle!=null)
-				{
-					if (!selEle.getComment().getText().trim().equals(""))
-					{
-						if(!lblPop.getText().equals("<html>"+BString.replace(BString.encodeToHtml(selEle.getComment().getText()),"\n","<br>")+"</html>"))
-						{
-							lblPop.setText("<html>"+BString.replace(BString.encodeToHtml(selEle.getComment().getText()),"\n","<br>")+"</html>");
-						}
-						int maxWidth = 0;
-						int si = 0;
-						for(int i=0;i<selEle.getComment().count();i++)
-						{
-							if(maxWidth<selEle.getComment().get(i).length())
-							{
-								maxWidth=selEle.getComment().get(i).length();
-								si=i;
-							}
-						}
-						lblPop.setPreferredSize(new Dimension(8+lblPop.getFontMetrics(lblPop.getFont()).stringWidth(selEle.getComment().get(si)),
-															  selEle.getComment().count()*16));
+        //if(Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
+        if(e.getSource()==this && NSDControl!=null)
+        {
+        	boolean popVisible = false;
+        	if (Element.E_SHOWCOMMENTS==true && ((Editor) NSDControl).popup.isVisible()==false)
+        	{
+        		// START KGU#25 2015-10-11: Method merged with selectElementByCoord
+        		//Element selEle = root.getElementByCoord(e.getX(),e.getY());
+        		Element selEle = root.getElementByCoord(e.getX(), e.getY(), false);
+        		// END KGU#25 2015-10-11
 
-						int x = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().x;
-						int y = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().y;
-						pop.setLocation(x+e.getX(),
-										y+e.getY()+16);
-						pop.setVisible(true);
-					}
-					else
-					{
-						pop.setVisible(false);
-					}
-				}
-				else
-				{
-					pop.setVisible(false);
-				}
-			}
-			else
-			{
-				pop.setVisible(false);
-			}
+        		if (selEle != null &&
+        				!selEle.getComment(false).getText().trim().isEmpty())
+        		{
+        			StringList comment = selEle.getComment(false);
+        			String htmlComment = "<html>"+BString.replace(BString.encodeToHtml(comment.getText()),"\n","<br>")+"</html>";
+        			if(!lblPop.getText().equals(htmlComment))
+        			{
+        				lblPop.setText(htmlComment);
+        			}
+        			int maxWidth = 0;
+        			int si = 0;
+        			for (int i = 0; i < comment.count(); i++)
+        			{
+        				if (maxWidth < comment.get(i).length())
+        				{
+        					maxWidth = comment.get(i).length();
+        					si=i;
+        				}
+        			}
+        			lblPop.setPreferredSize(
+        					new Dimension(
+        							8 + lblPop.getFontMetrics(lblPop.getFont()).
+        							stringWidth(comment.get(si)),
+        							comment.count()*16
+        							)
+        					);
+
+        			int x = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().x;
+        			int y = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().y;
+        			pop.setLocation(x+e.getX(),
+        					y+e.getY()+16);
+        			popVisible = true;
+        		}
+        	}
+        	pop.setVisible(popVisible);
 		}
-        if(Element.E_TOGGLETC) root.setSwitchTextAndComments(false);
+        //if(Element.E_TOGGLETC) root.setSwitchTextAndComments(false);
 	}
 
 	public void mouseDragged(MouseEvent e)
@@ -647,7 +643,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if(errorlist.getSelectedIndex()!=-1)
 				{
                                         // get the selected error
-					Element ele = ((DetectedError) root.errors.get(errorlist.getSelectedIndex())).getElement();
+					Element ele = (root.errors.get(errorlist.getSelectedIndex())).getElement();
 					if(ele!=null)
 					{
                                                 // deselect any previous selected element
@@ -695,7 +691,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if(errorlist.getSelectedIndex()!=-1)
 				{
                                         // select the right element
-					selected = ((DetectedError) root.errors.get(errorlist.getSelectedIndex())).getElement();
+					selected = (root.errors.get(errorlist.getSelectedIndex())).getElement();
                                         // edit it
 					editNSD();
                                         // do the button things
@@ -730,7 +726,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void redraw(Graphics _g)
 	{
-        if (Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
+        //if (Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
 		root.draw(_g);
                 
 		lu.fisch.graphics.Canvas canvas = new lu.fisch.graphics.Canvas((Graphics2D) _g);
@@ -765,7 +761,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                     //_g.drawRect(mX-selX, mY-selY, w, h);
                 }/**/
 
-                if (Element.E_TOGGLETC) root.setSwitchTextAndComments(false);
+                //if (Element.E_TOGGLETC) root.setSwitchTextAndComments(false);
 }
 
         @Override
@@ -1015,30 +1011,33 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                         }
                         else
                         {
-
-                            try
-                            {
-                                    FileOutputStream fos = new FileOutputStream(root.filename);
-                                    Writer out = new OutputStreamWriter(fos, "UTF8");
-                                    XmlGenerator xmlgen = new XmlGenerator();
-                                    out.write(xmlgen.generateCode(root,"\t"));
-                                    out.close();
-                                    /*
-                                    BTextfile outp = new BTextfile(root.filename);
-                                    outp.rewrite();
-                                    XmlGenerator xmlgen = new XmlGenerator();
-                                    outp.write(xmlgen.generateCode(root,"\t"));
-                                    //outp.write(diagram.root.getXML());
-                                    outp.close();
-                                    /**/
-
-                                    root.hasChanged=false;
-                                    addRecentFile(root.filename);
-                            }
-                            catch(Exception e)
-                            {
-                                    JOptionPane.showOptionDialog(this,"Error while saving the file!","Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
-                            }
+                        	// START KGU#94 2015.12.04: out-sourced to auxiliary method
+//                            try
+//                            {
+//                            	
+//                                    FileOutputStream fos = new FileOutputStream(root.filename);
+//                                    Writer out = new OutputStreamWriter(fos, "UTF8");
+//                                    XmlGenerator xmlgen = new XmlGenerator();
+//                                    out.write(xmlgen.generateCode(root,"\t"));
+//                                    out.close();
+//                                    /*
+//                                    BTextfile outp = new BTextfile(root.filename);
+//                                    outp.rewrite();
+//                                    XmlGenerator xmlgen = new XmlGenerator();
+//                                    outp.write(xmlgen.generateCode(root,"\t"));
+//                                    //outp.write(diagram.root.getXML());
+//                                    outp.close();
+//                                    /**/
+//
+//                                    root.hasChanged=false;
+//                                    addRecentFile(root.filename);
+//                            }
+//                            catch(Exception e)
+//                            {
+//                                    JOptionPane.showOptionDialog(this,"Error while saving the file!","Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+//                            }
+                        	doSaveNSD();
+                        	// END KGU#94 2015-12-04
                          }
 		}
 	}
@@ -1057,7 +1056,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 			if(_checkChanged==true)
 			{
-				// START KGU#49 2015-10-18: For the Arranger it's less ambiguous to see the NSD name
+				// START KGU#49 2015-10-18: If induced by Arranger then it's less ambiguous to see the NSD name
 				//res = JOptionPane.showOptionDialog(this,
 				//		   "Do you want to save the current NSD-File?",
 				String filename = root.filename;
@@ -1079,6 +1078,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// if root has not yet been saved
 				boolean saveIt = true;
 
+				//System.out.println(this.currentDirectory.getAbsolutePath());
+				
 				if(root.filename.equals(""))
 				{
 					JFileChooser dlgSave = new JFileChooser();
@@ -1094,38 +1095,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 
 					// propose name
+
 					dlgSave.setSelectedFile(new File(root.getMethodName()));
 
 					dlgSave.addChoosableFileFilter(new StructogramFilter());
 					int result = dlgSave.showSaveDialog(this);
 
-					/***** file_exists check here!
-					/*
-					 if (exportFile.exists()) {
-					 returnval = JOptionPane.showConfirmDialog(frame, "File "
-					 + exportFile.getName()
-					 + " exists. Do you want to continue ?", "File exists",
-					 JOptionPane.OK_CANCEL_OPTION,
-					 JOptionPane.WARNING_MESSAGE);
-					 }
-
-					 if(file.exists())
-					 {
-					 JOptionPane.showMessageDialog(null,file);
-					 int response = JOptionPane.showConfirmDialog (null,
-					 "Overwrite existing file?","Confirm Overwrite",
-					 JOptionPane.OK_CANCEL_OPTION,
-					 JOptionPane.QUESTION_MESSAGE);
-					 if (response == JOptionPane.CANCEL_OPTION)
-					 {
-					 return;
-					 }
-					 else
-					 */
-
 					if (result == JFileChooser.APPROVE_OPTION)
 					{
-						root.filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
+						root.filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
 						if(!root.filename.substring(root.filename.length()-4, root.filename.length()).toLowerCase().equals(".nsd"))
 						{
 							root.filename+=".nsd";
@@ -1139,33 +1117,106 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 				if (saveIt == true)
 				{
-					try
-					{
-                                                FileOutputStream fos = new FileOutputStream(root.filename);
-                                                Writer out = new OutputStreamWriter(fos, "UTF8");
-                                                XmlGenerator xmlgen = new XmlGenerator();
-                                                out.write(xmlgen.generateCode(root,"\t"));
-                                                out.close();
-                                                /*
-                                                BTextfile outp = new BTextfile(root.filename);
-						outp.rewrite();
-						XmlGenerator xmlgen = new XmlGenerator();
-						outp.write(xmlgen.generateCode(root,"\t"));
-						//outp.write(diagram.root.getXML());
-						outp.close();/**/
-
-						root.hasChanged=false;
-						addRecentFile(root.filename);
-					}
-					catch(Exception e)
-					{
-						JOptionPane.showOptionDialog(this,"Error while saving the file!\n"+e.getMessage(),"Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
-					}
+					// START KGU#94 2015-12-04: Out-sourced to auxiliary method
+//					try
+//					{
+//                                                FileOutputStream fos = new FileOutputStream(root.filename);
+//                                                Writer out = new OutputStreamWriter(fos, "UTF8");
+//                                                XmlGenerator xmlgen = new XmlGenerator();
+//                                                out.write(xmlgen.generateCode(root,"\t"));
+//                                                out.close();
+//                                                /*
+//                                                BTextfile outp = new BTextfile(root.filename);
+//						outp.rewrite();
+//						XmlGenerator xmlgen = new XmlGenerator();
+//						outp.write(xmlgen.generateCode(root,"\t"));
+//						//outp.write(diagram.root.getXML());
+//						outp.close();/**/
+//
+//						root.hasChanged=false;
+//						addRecentFile(root.filename);
+//					}
+//					catch(Exception e)
+//					{
+//						JOptionPane.showOptionDialog(this,"Error while saving the file!\n"+e.getMessage(),"Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+//					}
+					doSaveNSD();
+					// END KGU#94 2015-12-04
 				}
 			}
 		}
 		return res != -1; // true if not cancelled
 	}
+	
+	// START KGU#94 2015-12-04: Common file writing routine (on occasion of bugfix #40)
+	private boolean doSaveNSD()
+	{
+		String[] EnvVariablesToCheck = { "TEMP", "TMP", "TMPDIR", "HOME", "HOMEPATH" };
+		boolean done = false;
+        try
+        {
+        	// START KGU#94 2015.12.04: Bugfix #40 part 1
+        	// A failed saving attempt should not leave a truncated file!
+        	//FileOutputStream fos = new FileOutputStream(root.filename);
+        	String filename = root.filename;
+        	File f = new File(filename);
+        	boolean fileExisted = f.exists(); 
+        	if (fileExisted)
+        	{
+        		String tempDir = "";
+        		for (int i = 0; (tempDir == null || tempDir.isEmpty()) && i < EnvVariablesToCheck.length; i++)
+        		{
+        			tempDir = System.getenv(EnvVariablesToCheck[i]);
+        		}
+        		if ((tempDir == null || tempDir.isEmpty()) && this.currentDirectory != null)
+        		{
+        			File dir = this.currentDirectory;
+        			if (dir.isFile())
+        			{
+        				tempDir = dir.getParent();
+        			}
+        			else
+        			{
+        				tempDir = dir.getAbsolutePath();
+        			}
+        		}
+        		filename = tempDir + System.getProperty("file.separator") + "Structorizer.tmp";
+        	}
+        	FileOutputStream fos = new FileOutputStream(filename);
+        	// END KGU#94 2015-12-04
+        	Writer out = new OutputStreamWriter(fos, "UTF8");
+        	XmlGenerator xmlgen = new XmlGenerator();
+        	out.write(xmlgen.generateCode(root,"\t"));
+        	out.close();
+
+        	// START KGU#94 2015-12-04: Bugfix #40 part 2
+        	// If the NSD file had existed then replace it by the output file after having created a backup
+        	if (fileExisted)
+        	{
+        		File backUp = new File(root.filename + ".bak");
+        		if (backUp.exists())
+        		{
+        			backUp.delete();
+        		}
+        		f.renameTo(backUp);
+        		f = new File(root.filename);
+            	File tmpFile = new File(filename);
+            	tmpFile.renameTo(f);
+        	}
+        	// END KGU#94 2015.12.04
+        	
+        	root.hasChanged=false;
+        	addRecentFile(root.filename);
+        	done = true;
+        }
+        catch(Exception ex)
+        {
+        	JOptionPane.showMessageDialog(this, "Error on saving the file:" + ex.getMessage() + "!", "Error",
+        			JOptionPane.ERROR_MESSAGE, null);
+        }
+        return done;
+	}
+	// END KGU#94 2015-12-04
 
 	/*****************************************
 	 * Undo method
@@ -1924,6 +1975,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                                     {
                                         buffer.append((char)ch);
                                     }
+                                    // START KGU 2015-12-04
+                                    in.close();
+                                    // END KGU 2015-12-04
 
                                     // ... and encode it UTF-8
                                     FileOutputStream fos = new FileOutputStream(filename);
@@ -2662,6 +2716,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			inputbox.elementType = _elementType;
 			inputbox.forInsertion = _isInsertion;
 			// END KGU#42 2015-10-14
+			// START KGU#91 2015-12-04: Issue #39 - Attempt to set focus - always fails
+			//if (Element.E_TOGGLETC || _elementType.equals("Forever"))
+			//{
+			//	boolean ok = inputbox.txtComment.requestFocusInWindow();
+			//	//if (ok) System.out.println("Comment will get focus");
+			//}
+			//else
+			//{
+			//	boolean ok = inputbox.txtText.requestFocusInWindow();
+			//	//if (ok) System.out.println("Text will get focus");
+			//}
+			// END KGU KGU#91 2015-12-04
 			inputbox.setLang(NSDControl.getLang());
 			inputbox.setVisible(true);
 
@@ -2876,13 +2942,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			 /**/
 
 			//System.out.println("Working ...");
-			Vector vec = root.analyse();
-			DefaultListModel errors = (DefaultListModel) errorlist.getModel();
+			Vector<DetectedError> vec = root.analyse();
+			DefaultListModel<DetectedError> errors = 
+					(DefaultListModel<DetectedError>) errorlist.getModel();
 			errors.clear();
 
 			for(int i=0;i<vec.size();i++)
 			{
-				errors.addElement((DetectedError) vec.get(i));
+				errors.addElement(vec.get(i));
 			}
 
 			errorlist.repaint();
@@ -2918,33 +2985,35 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
     public void goRun()
     {
-                Executor executor = Executor.getInstance(this,null);
-                /*
+    	// Activate he executor (getInstance() is supposed to do that)
+    	/*Executor executor =*/ Executor.getInstance(this,null);
+    	/*
                 String str = JOptionPane.showInputDialog(null, "Please enter the animation delay!", "50");
                 if(str!=null)
                 {
                     executor.setDelay(Integer.valueOf(str));
                     executor.execute(this.root);
                 }
-                */
+    	 */
     }
 
     public void goTurtle()
     {
-                if(turtle==null)
-				{
-					turtle= new TurtleBox(500,500);
-				}
-				turtle.setVisible(true);
-                Executor executor = Executor.getInstance(this,turtle);
-                /*
+    	if(turtle==null)
+    	{
+    		turtle= new TurtleBox(500,500);
+    	}
+    	turtle.setVisible(true);
+    	// Activate the executor (getInstance() is supposed to do that)
+    	/*Executor executor =*/ Executor.getInstance(this,turtle);
+    	/*
                  String str = JOptionPane.showInputDialog(null, "Please enter the animation delay!", "50");
                 if(str!=null)
                 {
                     executor.setDelay(Integer.valueOf(str));
                     executor.execute(this.root);
                 }
-                */
+    	 */
 
     }
     

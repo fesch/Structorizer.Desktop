@@ -40,6 +40,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.11.14      Yet another improved approach to #6 / #16: see comment
  *      Kay Gürtzig     2015.11.24      KGU#88: The decision according to #6 / #16 is now returned on setRoot()
  *      Kay Gürtzig     2015.11.28      KGU#2/KGU#78/KGU#47: New checks 15, 16, and 17 registered for loading
+ *      Kay Gürtzig     2015.12.04      KGU#95: Bugfix #42 - wrong default current directory mended
  *
  ******************************************************************************************************
  *
@@ -265,7 +266,10 @@ public class Mainform  extends JFrame implements NSDController
 			if(diagram!=null) 
 			{
 				// current directory
-				diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("file.separator")));
+				// START KGU#95 2015-12-04: Fix #42 Don't propose the System root but the user home
+				//diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("file.separator")));
+				diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("user.home")));
+				// END KGU#95 2015-12-04
 				
 				// din
 				if (ini.getProperty("DIN","0").equals("1")) // default = 0

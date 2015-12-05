@@ -35,6 +35,7 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2007.12.13      First Issue
  *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared
  *      Kay Gürtzig     2015.11.14      Bugfix #31 = KGU#82 in method copy()
+ *		Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
  *
  ******************************************************************************************************
  *
@@ -143,17 +144,17 @@ public class Jump extends Instruction {
 		
 		// FIXME (KGU): What is the rounding of an integer division result good for?
 		rect.right=Math.round(2*(E_PADDING/2));
-		for(int i=0;i<getText().count();i++)
+		for(int i=0;i<getText(false).count();i++)
 		{
 			// FIXME (KGU): The width parameters differ from the ones in draw()!
-			int width = getWidthOutVariables(_canvas,getText().get(i),this)+3*E_PADDING;
-			if(rect.right < width)
+			int lineWidth = getWidthOutVariables(_canvas, getText(false).get(i), this) + 3*E_PADDING;
+			if(rect.right < lineWidth)
 			{
-				rect.right = width;
+				rect.right = lineWidth;
 			}
 		}
 		// FIXME (KGU): What is the rounding of an integer division result good for?
-		rect.bottom=2*Math.round(Element.E_PADDING/2)+getText().count()*fm.getHeight();
+		rect.bottom=2*Math.round(Element.E_PADDING/2)+getText(false).count()*fm.getHeight();
 		
 		return rect;
 	}
@@ -185,7 +186,7 @@ public class Jump extends Instruction {
 		canvas.fillRect(myrect);
 		
 		// draw comment
-        if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
+        if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
         {
             // START KGU 2015-10-11: Use an inherited helper method now
 //                canvas.setBackground(E_COMMENTCOLOR);
@@ -208,15 +209,15 @@ public class Jump extends Instruction {
 		// END KGU 2015-10-11
 		
 		
-		for(int i=0;i<getText().count();i++)
+		for(int i=0;i<getText(false).count();i++)
 		{
-			String text = this.getText().get(i);
-			text = BString.replace(text, "<--","<-");
+			String text = this.getText(false).get(i);
+			text = BString.replace(text, "<--", "<-");
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
 					_top_left.left + 2 * (E_PADDING / 2),
 					_top_left.top + (E_PADDING / 2) + (i+1)*fm.getHeight(),
-					text,this
+					text, this
 					);  	
 		}
 

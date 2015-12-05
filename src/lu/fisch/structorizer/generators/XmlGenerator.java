@@ -268,7 +268,11 @@ public class XmlGenerator extends Generator {
 
 		code.add("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		//code.add("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");
-		code.add("<root xmlns:nsd=\"http://structorizer.fisch.lu/\" text=\""+BString.encodeToHtml(_root.getText().getCommaText())+"\" comment=\""+
+		// START KGU 2015-12-04: Might not be so bad an idea to write the product version into the file
+		//code.add("<root xmlns:nsd=\"http://structorizer.fisch.lu/\" text=\""+BString.encodeToHtml(_root.getText().getCommaText())+"\" comment=\""+
+		code.add("<root xmlns:nsd=\"http://structorizer.fisch.lu/\" version=\"" + Element.E_VERSION + "\" text=\"" + 
+								BString.encodeToHtml(_root.getText().getCommaText()) + "\" comment=\"" +
+		// END KGU 2015-12-04
 								BString.encodeToHtml(_root.getComment().getCommaText())+"\" color=\""+
 								_root.getHexColor()+"\" type=\""+pr+"\" style=\""+ni+"\">");
 		code.add(_indent+"<children>");
