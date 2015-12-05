@@ -67,8 +67,8 @@ public class Editor extends JPanel implements NSDController, ComponentListener
     JSplitPane sp;
 
     // list
-    DefaultListModel errors = new DefaultListModel();
-    protected JList errorlist = new JList(errors);
+    DefaultListModel<DetectedError> errors = new DefaultListModel<DetectedError>();
+    protected JList<DetectedError> errorlist = new JList<DetectedError>(errors);
 
     // Panels
     public Diagram diagram = new Diagram(this, "???");

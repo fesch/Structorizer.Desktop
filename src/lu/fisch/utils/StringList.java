@@ -36,7 +36,8 @@ package lu.fisch.utils;
  *      Bob Fisch       2007.12.09      First Issue
  *      Kay Gürtzig     2015.11.04      Methods indexOf added.
  *      Kay Gürtzig     2015.11.24      Method clear added.
- *      Kay Gürtzig     2015.12.01      Methods replaceAll, replaceAllCi added. *
+ *      Kay Gürtzig     2015.12.01      Methods replaceAll, replaceAllCi added.
+ *
  ******************************************************************************************************
  *
  *      Comment:		/
@@ -727,6 +728,7 @@ public class StringList {
     	}
     	return nReplaced;
     }
+
     /**
      * Replaces all elements being case-independently equal to the given string
      * _stringOld by _stringNew

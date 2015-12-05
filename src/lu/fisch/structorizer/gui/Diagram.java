@@ -41,8 +41,9 @@ package lu.fisch.structorizer.gui;
  *                                      thus allowing collective operations like delete/cut/copy/paste (KGU#87).
  *      Kay Gürtzig     2015.11.24      Method setRoot() may now refuse the replacement (e.g. on cancelling
  *                                      the request to save recent changes)
- *      Kay Gürtzig     2015.11.29      New check options added to analyserNSD() *      Kay Gürtzig     2015.12.02      Bugfix #39 (KGU#91)
- *      Kay Gürtzig     2015.12.04      Bugfix #40 (KGU#94): With an error on saving, the recent file was destroyed *
+ *      Kay Gürtzig     2015.11.29      New check options added to analyserNSD()
+ *      Kay Gürtzig     2015.12.04      Bugfix #40 (KGU#94): With an error on saving, the recent file was destroyed
+ *
  ******************************************************************************************************
  *
  *      Comment:		/
@@ -109,7 +110,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     public boolean isArrangerOpen = false;
     // END KGU#2 2015-11-24
 
-    private JList errorlist = null;
+    private JList<DetectedError> errorlist = null;
 
     private Element eCopy = null;
 
@@ -215,7 +216,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								{
 									public void  filesDropped( java.io.File[] files )
 									{
-										boolean found = false;
+										//boolean found = false;
 										for (int i = 0; i < files.length; i++)
 										{
 											String filename = files[i].toString();
@@ -244,7 +245,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							   (filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".lpr"))
 							   )
 					  {
-					  // only save if something has been changed
+					  // save (only if something has been changed)
 					  saveNSD(true);
 					  // load and parse source-code
 					  D7Parser d7 = new D7Parser("D7Grammar.cgt");
@@ -289,10 +290,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void mouseMoved(MouseEvent e)
 	{
-		// KGU#91 2015-12-04: Bugfix #39 - Disabled
         //if(Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
-		if(e.getSource()==this && NSDControl!=null)
-		{
+        if(e.getSource()==this && NSDControl!=null)
+        {
         	boolean popVisible = false;
         	if (Element.E_SHOWCOMMENTS==true && ((Editor) NSDControl).popup.isVisible()==false)
         	{
@@ -300,6 +300,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         		//Element selEle = root.getElementByCoord(e.getX(),e.getY());
         		Element selEle = root.getElementByCoord(e.getX(), e.getY(), false);
         		// END KGU#25 2015-10-11
+
         		if (selEle != null &&
         				!selEle.getComment(false).getText().trim().isEmpty())
         		{
@@ -336,7 +337,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         	}
         	pop.setVisible(popVisible);
 		}
-		// KGU#91 2015-12-04: Bugfix #39 - Disabled
         //if(Element.E_TOGGLETC) root.setSwitchTextAndComments(false);
 	}
 
@@ -643,7 +643,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if(errorlist.getSelectedIndex()!=-1)
 				{
                                         // get the selected error
-					Element ele = ((DetectedError) root.errors.get(errorlist.getSelectedIndex())).getElement();
+					Element ele = (root.errors.get(errorlist.getSelectedIndex())).getElement();
 					if(ele!=null)
 					{
                                                 // deselect any previous selected element
@@ -691,7 +691,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if(errorlist.getSelectedIndex()!=-1)
 				{
                                         // select the right element
-					selected = ((DetectedError) root.errors.get(errorlist.getSelectedIndex())).getElement();
+					selected = (root.errors.get(errorlist.getSelectedIndex())).getElement();
                                         // edit it
 					editNSD();
                                         // do the button things
@@ -726,7 +726,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void redraw(Graphics _g)
 	{
-		// KGU#91 2015-12-04: Bugfix #39 - Disabled
         //if (Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
 		root.draw(_g);
                 
@@ -762,7 +761,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                     //_g.drawRect(mX-selX, mY-selY, w, h);
                 }/**/
 
-                // KGU#91 2015-12-04: Bugfix #39 - Disabled
                 //if (Element.E_TOGGLETC) root.setSwitchTextAndComments(false);
 }
 
@@ -1014,32 +1012,32 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                         else
                         {
                         	// START KGU#94 2015.12.04: out-sourced to auxiliary method
-//                          try
-//                          {
-//                          	
-//                                  FileOutputStream fos = new FileOutputStream(root.filename);
-//                                  Writer out = new OutputStreamWriter(fos, "UTF8");
-//                                  XmlGenerator xmlgen = new XmlGenerator();
-//                                  out.write(xmlgen.generateCode(root,"\t"));
-//                                  out.close();
-//                                  /*
-//                                  BTextfile outp = new BTextfile(root.filename);
-//                                  outp.rewrite();
-//                                  XmlGenerator xmlgen = new XmlGenerator();
-//                                  outp.write(xmlgen.generateCode(root,"\t"));
-//                                  //outp.write(diagram.root.getXML());
-//                                  outp.close();
-//                                  /**/
+//                            try
+//                            {
+//                            	
+//                                    FileOutputStream fos = new FileOutputStream(root.filename);
+//                                    Writer out = new OutputStreamWriter(fos, "UTF8");
+//                                    XmlGenerator xmlgen = new XmlGenerator();
+//                                    out.write(xmlgen.generateCode(root,"\t"));
+//                                    out.close();
+//                                    /*
+//                                    BTextfile outp = new BTextfile(root.filename);
+//                                    outp.rewrite();
+//                                    XmlGenerator xmlgen = new XmlGenerator();
+//                                    outp.write(xmlgen.generateCode(root,"\t"));
+//                                    //outp.write(diagram.root.getXML());
+//                                    outp.close();
+//                                    /**/
 //
-//                                  root.hasChanged=false;
-//                                  addRecentFile(root.filename);
-//                          }
-//                          catch(Exception e)
-//                          {
-//                                  JOptionPane.showOptionDialog(this,"Error while saving the file!","Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
-//                          }
-                      	doSaveNSD();
-                      	// END KGU#94 2015-12-04
+//                                    root.hasChanged=false;
+//                                    addRecentFile(root.filename);
+//                            }
+//                            catch(Exception e)
+//                            {
+//                                    JOptionPane.showOptionDialog(this,"Error while saving the file!","Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+//                            }
+                        	doSaveNSD();
+                        	// END KGU#94 2015-12-04
                          }
 		}
 	}
@@ -1080,6 +1078,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// if root has not yet been saved
 				boolean saveIt = true;
 
+				//System.out.println(this.currentDirectory.getAbsolutePath());
+				
 				if(root.filename.equals(""))
 				{
 					JFileChooser dlgSave = new JFileChooser();
@@ -1095,38 +1095,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 
 					// propose name
+
 					dlgSave.setSelectedFile(new File(root.getMethodName()));
 
 					dlgSave.addChoosableFileFilter(new StructogramFilter());
 					int result = dlgSave.showSaveDialog(this);
 
-					/***** file_exists check here!
-					/*
-					 if (exportFile.exists()) {
-					 returnval = JOptionPane.showConfirmDialog(frame, "File "
-					 + exportFile.getName()
-					 + " exists. Do you want to continue ?", "File exists",
-					 JOptionPane.OK_CANCEL_OPTION,
-					 JOptionPane.WARNING_MESSAGE);
-					 }
-
-					 if(file.exists())
-					 {
-					 JOptionPane.showMessageDialog(null,file);
-					 int response = JOptionPane.showConfirmDialog (null,
-					 "Overwrite existing file?","Confirm Overwrite",
-					 JOptionPane.OK_CANCEL_OPTION,
-					 JOptionPane.QUESTION_MESSAGE);
-					 if (response == JOptionPane.CANCEL_OPTION)
-					 {
-					 return;
-					 }
-					 else
-					 */
-
 					if (result == JFileChooser.APPROVE_OPTION)
 					{
-						root.filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
+						root.filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
 						if(!root.filename.substring(root.filename.length()-4, root.filename.length()).toLowerCase().equals(".nsd"))
 						{
 							root.filename+=".nsd";
@@ -1170,7 +1147,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		return res != -1; // true if not cancelled
 	}
-
+	
 	// START KGU#94 2015-12-04: Common file writing routine (on occasion of bugfix #40)
 	private boolean doSaveNSD()
 	{
@@ -1240,7 +1217,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         return done;
 	}
 	// END KGU#94 2015-12-04
-	
+
 	/*****************************************
 	 * Undo method
 	 *****************************************/
@@ -2965,13 +2942,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			 /**/
 
 			//System.out.println("Working ...");
-			Vector vec = root.analyse();
-			DefaultListModel errors = (DefaultListModel) errorlist.getModel();
+			Vector<DetectedError> vec = root.analyse();
+			DefaultListModel<DetectedError> errors = 
+					(DefaultListModel<DetectedError>) errorlist.getModel();
 			errors.clear();
 
 			for(int i=0;i<vec.size();i++)
 			{
-				errors.addElement((DetectedError) vec.get(i));
+				errors.addElement(vec.get(i));
 			}
 
 			errorlist.repaint();
@@ -3007,33 +2985,35 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
     public void goRun()
     {
-                Executor executor = Executor.getInstance(this,null);
-                /*
+    	// Activate he executor (getInstance() is supposed to do that)
+    	/*Executor executor =*/ Executor.getInstance(this,null);
+    	/*
                 String str = JOptionPane.showInputDialog(null, "Please enter the animation delay!", "50");
                 if(str!=null)
                 {
                     executor.setDelay(Integer.valueOf(str));
                     executor.execute(this.root);
                 }
-                */
+    	 */
     }
 
     public void goTurtle()
     {
-                if(turtle==null)
-				{
-					turtle= new TurtleBox(500,500);
-				}
-				turtle.setVisible(true);
-                Executor executor = Executor.getInstance(this,turtle);
-                /*
+    	if(turtle==null)
+    	{
+    		turtle= new TurtleBox(500,500);
+    	}
+    	turtle.setVisible(true);
+    	// Activate the executor (getInstance() is supposed to do that)
+    	/*Executor executor =*/ Executor.getInstance(this,turtle);
+    	/*
                  String str = JOptionPane.showInputDialog(null, "Please enter the animation delay!", "50");
                 if(str!=null)
                 {
                     executor.setDelay(Integer.valueOf(str));
                     executor.execute(this.root);
                 }
-                */
+    	 */
 
     }
     

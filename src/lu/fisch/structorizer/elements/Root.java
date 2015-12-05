@@ -32,18 +32,20 @@ package lu.fisch.structorizer.elements;
  *
  *      Author          Date		Description
  *      ------		----		-----------
- *      Bob Fisch       2007.12.09      First Issue
- *		Bob Fisch	2008.04.18		Added analyser
- *		Kay Gürtzig	2014.10.18		Var name search unified and false detection of "as" within var names mended 
- *		Kay Gürtzig	2015.10.12		new methods toggleBreakpoint() and clearBreakpoints() (KGU#43).
- *		Kay Gürtzig	2015.10.16		getFullText methods redesigned/replaced, changes in getVarNames().
- *		Kay Gürtzig	2015.10.17		improved Arranger support by method notifyReplaced (KGU#48)
- *		Kay Gürtzig	2015.11.03		New error14 field and additions to analyse for FOR loop checks (KGU#3)
- *      Kay Gürtzig 2015.11.13/14   Method copy() accomplished, modifications for subroutine calls (KGU#2 = #9)
- *      Kay Gürtzig 2015.11.22/23   Modifications to support selection of Element sequences (KGU#87),
- *                                  Code revision in Analyser (field Subqueue.children now private).
- *      Kay Gürtzig 2015.11.28      Several additions to analyser (KGU#2 = #9, KGU#47, KGU#78 = #23) and
- *                                  saveToIni() *		Kay Gürtzig	2015.12.01		Bugfix #39 (KGU#91) -> getText(false) on drawing *
+ *      Bob Fisch	2007.12.09      First Issue
+ *		Bob Fisch	2008.04.18      Added analyser
+ *		Kay Gürtzig	2014.10.18      Var name search unified and false detection of "as" within var names mended
+ *		Kay Gürtzig	2015.10.12      new methods toggleBreakpoint() and clearBreakpoints() (KGU#43).
+ *		Kay Gürtzig	2015.10.16      getFullText methods redesigned/replaced, changes in getVarNames()
+ *		Kay Gürtzig	2015.10.17      improved Arranger support by method notifyReplaced (KGU#48)
+ *		Kay Gürtzig	2015.11.03      New error14 field and additions to analyse for FOR loop checks (KGU#3)
+ *      Kay Gürtzig	2015.11.13/14   Method copy() accomplished, modifications for subroutine calls (KGU#2 = #9)
+ *      Kay Gürtzig	2015.11.22/23   Modifications to support selection of Element sequences (KGU#87),
+ *                 	                Code revision in Analyser (field Subqueue.children now private).
+ *      Kay Gürtzig	2015.11.28      Several additions to analyser (KGU#2 = #9, KGU#47, KGU#78 = #23) and
+ *                 	                saveToIni()
+ *      Kay Gürtzig	2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *
  ******************************************************************************************************
  *
  *      Comment:		/
@@ -98,8 +100,8 @@ public class Root extends Element {
 	public int height = 0;
 	public int width = 0;
 
-	private Stack undoList = new Stack();
-	private Stack redoList = new Stack();
+	private Stack<Subqueue> undoList = new Stack<Subqueue>();
+	private Stack<Subqueue> redoList = new Stack<Subqueue>();
 
 	public String filename = "";
 
@@ -387,6 +389,7 @@ public class Root extends Element {
 			for(int i=0;i<getText(false).count();i++)
 			{
 				canvas.setColor(Color.BLACK);
+				// FIXME (KGU): Why aren't the variables highlighted here? (forgotten?)
 				canvas.writeOut(  rect.left+Math.round(E_PADDING/2),
 								rect.top+(i+1)*fm.getHeight()+Math.round(E_PADDING/2),
 								(String) getText(false).get(i)
@@ -394,18 +397,22 @@ public class Root extends Element {
 			}
 		}
 		canvas.setFont(Element.font);
+		
+		int headerHeight = fm.getHeight()*getText(false).count();
 
 		if(isNice==true)
 		{
-			rect.top=_top_left.top+fm.getHeight()*getText(false).count()+2*E_PADDING;
-			rect.bottom-=E_PADDING;
-			rect.left=_top_left.left+E_PADDING;
-			rect.right-=E_PADDING;
+			headerHeight += 2*E_PADDING;
+			rect.top = _top_left.top + headerHeight;
+			rect.bottom -= E_PADDING;
+			rect.left = _top_left.left + E_PADDING;
+			rect.right -= E_PADDING;
 		}
 		else
 		{
-			rect.top=_top_left.top+fm.getHeight()*getText(false).count()+2*Math.round(E_PADDING/2);
-			rect.left=_top_left.left;
+			headerHeight += 2*(E_PADDING/2);
+			rect.top = _top_left.top + headerHeight;
+			rect.left = _top_left.left;
 		}
 
 		children.draw(_canvas,rect);
@@ -418,23 +425,23 @@ public class Root extends Element {
 		// draw thick line
 		if(isNice==false)
 		{
-			rect.top=_top_left.top+fm.getHeight()*getText().count()+2*Math.round(E_PADDING/2)-1;
-			rect.left=_top_left.left;
+			rect.top = _top_left.top + headerHeight - 1;
+			rect.left = _top_left.left;
 			canvas.drawRect(rect);
 		}
 
 
-		if(isProgram==false)
+		if (isProgram==false)
 		{
-			rect=_top_left.copy();
+			rect = _top_left.copy();
 			canvas.setColor(Color.WHITE);
 			canvas.drawRect(rect);
 			canvas.setColor(Color.BLACK);
-			rect=_top_left.copy();
+			rect = _top_left.copy();
 			canvas.roundRect(rect);
 		}
 
-		rect=_top_left.copy();
+		rect = _top_left.copy();
 	}
 
 	// START KGU 2015-10-11: Methods merged into getElementByCoord(int _x, int _y, boolean _forSelection
@@ -498,7 +505,7 @@ public class Root extends Element {
             boolean res = false;
             if(tmp != null)
             {
-                    while ((tmp.parent!=null)&&(res==false))
+                    while ((tmp.parent!=null) && (res==false))
                     {
                             if(tmp.parent==_parent)
                             {
@@ -703,7 +710,7 @@ public class Root extends Element {
 
     public void addUndo()
     {
-            undoList.add(children.copy());
+            undoList.add((Subqueue)children.copy());
             clearRedo();
     }
 
@@ -719,12 +726,12 @@ public class Root extends Element {
 
     public void clearRedo()
     {
-            redoList = new Stack();
+            redoList = new Stack<Subqueue>();
     }
 
     public void clearUndo()
     {
-            undoList = new Stack();
+            undoList = new Stack<Subqueue>();
     }
 
     public void undo()
@@ -732,8 +739,8 @@ public class Root extends Element {
             if (undoList.size()>0)
             {
                     this.hasChanged=true;
-                    redoList.add(children.copy());
-                    children = (Subqueue) undoList.pop();
+                    redoList.add((Subqueue)children.copy());
+                    children = undoList.pop();
                     children.parent=this;
             }
     }
@@ -743,8 +750,8 @@ public class Root extends Element {
             if (redoList.size()>0)
             {
                     this.hasChanged=true;
-                    undoList.add(children.copy());
-                    children = (Subqueue) redoList.pop();
+                    undoList.add((Subqueue)children.copy());
+                    children = redoList.pop();
                     children.parent=this;
             }
     }
@@ -2299,16 +2306,18 @@ public class Root extends Element {
 
     public StringList getParameterNames()
     {
-    	//this.getVarNames();
-    	StringList vars = new StringList();
+    	// this.getVarNames();
+    	// START KGU#2 2015-11-29
+        //StringList vars = getVarNames(this,true,false);
+        StringList vars = new StringList();
     	collectParameters(vars, null);
     	return vars;
+    	// END KGU#2 2015-11-29 
     }
 
     // START KGU 2015-11-29
     public StringList getParameterTypes()
     {
-    	//this.getVarNames();
     	StringList types = new StringList();
     	collectParameters(null, types);
     	return types;

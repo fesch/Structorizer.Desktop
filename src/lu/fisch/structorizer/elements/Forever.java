@@ -38,7 +38,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.14      Bugfixes #31 (= KGU#82) and #32 (= KGU#83) in method copy() 
  *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
  *		Kay Gürtzig     2015.12.02      Bugfix #39 (KGU#91) -> getText(false) on drawing, constructors
- *                                      and methods setText() now ensure field text being empty *
+ *                                      and methods setText() now ensure field text being empty
+ *
  ******************************************************************************************************
  *
  *      Comment:		/

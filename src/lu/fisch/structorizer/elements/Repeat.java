@@ -36,7 +36,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy()
  *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
- *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false)) *
+ *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false))
+ *
  ******************************************************************************************************
  *
  *      Comment:		/

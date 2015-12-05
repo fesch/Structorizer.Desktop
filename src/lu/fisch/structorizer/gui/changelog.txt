@@ -25,7 +25,8 @@ Current development version: 3.23-01 (2015.11.30)
 - 01: executor: Dialog boxes for input / output now switch to step mode on Cancel/Pause <Kay Gürtzig>
 - 01: updated language files (DE,EN,ES) <Kay Gürtzig>
 
-Version 3.23 (2015.11.14)- 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
+Version 3.23 (2015.12.04)
+- 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
 - 02: executor: fixed a bug while interpreting the title [Benjamin Bartsch]
 - 03: export: split PNG export into multiple images [Moritz Schulze]
 - 04: executor: logical operator in CASE-statement [Lies Callemeyn]

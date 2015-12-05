@@ -39,7 +39,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.11.10      Issues #6 and #16 fixed by appropriate default window behaviour
  *      Kay Gürtzig     2015.11.14      Yet another improved approach to #6 / #16: see comment
  *      Kay Gürtzig     2015.11.24      KGU#88: The decision according to #6 / #16 is now returned on setRoot()
- *      Kay Gürtzig     2015.11.28      KGU#2/KGU#78/KGU#47: New checks 15, 16, a *      Kay Gürtzig     2015.12.04      KGU#95: Bugfix #42 - wrong default current directory mended *
+ *      Kay Gürtzig     2015.11.28      KGU#2/KGU#78/KGU#47: New checks 15, 16, and 17 registered for loading
+ *      Kay Gürtzig     2015.12.04      KGU#95: Bugfix #42 - wrong default current directory mended
+ *
  ******************************************************************************************************
  *
  *      Comment:		/

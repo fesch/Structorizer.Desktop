@@ -63,7 +63,7 @@ package lu.fisch.structorizer.elements;
  *      - case switch: see alternative. It might be confusing, though, that in C-like languages a
  *           break instruction is needed to end a case branch. In a Nassi-Shneiderman diagram, however,
  *           there is obviously no need for such a workaround, the branch ends where it ends.
- *           Hence, a selection element ought to be transparent for termination as well.
+ *           Hence, a selection element ought to transparent for termination as well.
  *      - parallel section: No single thread may steal off the flock or even stop the entire show.
  *           Only to exit the entire process may be allowed, not even a return out of a parallel branch
  *           seems tolerable. In no case a loop enclosing the parallel element may be terminated from
@@ -97,7 +97,8 @@ package lu.fisch.structorizer.elements;
  *         statement will occur within the nested substructure (because the label is to be placed at
  *         the beginning of the complex instruction to be left).
  *      3. A Jump element inside a Case instruction actually means a two-level break in C-like languages
- *         and hence requires a goto or a labeled break instruction. *
+ *         and hence requires a goto or a labeled break instruction.
+ *
  ******************************************************************************************************///
 
 import java.util.Vector;
@@ -147,11 +148,14 @@ public class Jump extends Instruction {
 		{
 			// FIXME (KGU): The width parameters differ from the ones in draw()!
 			int lineWidth = getWidthOutVariables(_canvas, getText(false).get(i), this) + 3*E_PADDING;
-			if(rect.right < lineWidth)			{
-				rect.right = lineWidth;			}
+			if(rect.right < lineWidth)
+			{
+				rect.right = lineWidth;
+			}
 		}
 		// FIXME (KGU): What is the rounding of an integer division result good for?
-		rect.bottom=2*Math.round(Element.E_PADDING/2)+getText(false).count()*fm.getHeight();		
+		rect.bottom=2*Math.round(Element.E_PADDING/2)+getText(false).count()*fm.getHeight();
+		
 		return rect;
 	}
 	
@@ -214,7 +218,8 @@ public class Jump extends Instruction {
 					_top_left.left + 2 * (E_PADDING / 2),
 					_top_left.top + (E_PADDING / 2) + (i+1)*fm.getHeight(),
 					text, this
-					);  			}
+					);  	
+		}
 
 		canvas.setColor(Color.BLACK);	// With an empty text, the decoration often was invisible.
 		canvas.moveTo(_top_left.left + (E_PADDING / 2), _top_left.top);

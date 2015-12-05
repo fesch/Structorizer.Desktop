@@ -82,12 +82,24 @@ public class NSDParser extends DefaultHandler {
 				*/
 			}
 			
+			// START KGU 2015-12-04: Prepared for future use...
+//			String version = Element.E_VERSION;
+//			if (attributes.getIndex("version") != -1) { version = attributes.getValue("version"); }
+//			// So we might react to some incompatibility... 
+//			if (version.indexOf("dev") != 0)
+//			{
+//				// Unstable version ...
+//			}
+			// END KGU 2015-12-04
+			
 			// read attributes
 			root.isProgram = true;
 			if(attributes.getIndex("type")!=-1)  {if (attributes.getValue("type").equals("sub")) {root.isProgram=false;}}
 			root.isNice=true;
 			if(attributes.getIndex("style")!=-1)  {if (!attributes.getValue("style").equals("nice")) {root.isNice=false;}}
-			if(attributes.getIndex("style")!=-1)  {if (attributes.getValue("type").equals(" ")) {root.isNice=true;}}
+			// START KGU 2015-12-04: The following line was nonsense
+			//if(attributes.getIndex("style")!=-1)  {if (attributes.getValue("type").equals(" ")) {root.isNice=true;}}
+			// END KGU 2015-12-04
 			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {root.setColor(root.getColor().decode("0x"+attributes.getValue("color")));}}
 			if(attributes.getIndex("text")!=-1)  {root.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {root.getComment().setCommaText(attributes.getValue("comment"));}
