@@ -682,7 +682,7 @@ public class Executor implements Runnable
 			pascalFunction = "public void randomize() {  }";
 			interpreter.eval(pascalFunction);
 			// square
-			pascalFunction = "public double sqr(Double d) { return (d) * (d); }";
+			pascalFunction = "public double sqr(double d) { return (d) * (d); }";
 			interpreter.eval(pascalFunction);
 			// square root
 			pascalFunction = "public double sqrt(Double d) { return Math.sqrt(d); }";
