@@ -37,6 +37,8 @@ package lu.fisch.structorizer.gui;
  *                      2015.10.11      Comment popping repaired by proper subclassing of getElementByCoord
  *                                      Listener method MouseExited now enabled to drop the sticky comment popup
  *      Kay Gürtzig     2015.11.08      Parser preferences for FOR loops enhanced (KGU#3)
+ *      Kay Gürtzig     2015.12.02      Bugfix #39 (KGU#91)
+ *      Kay Gürtzig     2015.12.04      Bugfix #40 (KGU#94): With an error on saving, the recent file was destroyed
  *
  ******************************************************************************************************
  *
@@ -266,59 +268,56 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void mouseMoved(MouseEvent e)
 	{
-        if(Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
+		// KGU#91 2015-12-04: Bugfix #39 - Disabled
+        //if(Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
 		if(e.getSource()==this && NSDControl!=null)
 		{
-			if (Element.E_SHOWCOMMENTS==true && ((Editor) NSDControl).popup.isVisible()==false)
-			{
-				// START KGU#25 2015-10-11: Method merged with selectElemetByCoord
-				//Element selEle = root.getElementByCoord(e.getX(),e.getY());
-				Element selEle = root.getElementByCoord(e.getX(), e.getY(), false);
-				// END KGU#25 2015-10-11
-				
-				if (selEle!=null)
-				{
-					if (!selEle.getComment().getText().trim().equals(""))
-					{
-						if(!lblPop.getText().equals("<html>"+BString.replace(BString.encodeToHtml(selEle.getComment().getText()),"\n","<br>")+"</html>"))
-						{
-							lblPop.setText("<html>"+BString.replace(BString.encodeToHtml(selEle.getComment().getText()),"\n","<br>")+"</html>");
-						}
-						int maxWidth = 0;
-						int si = 0;
-						for(int i=0;i<selEle.getComment().count();i++)
-						{
-							if(maxWidth<selEle.getComment().get(i).length())
-							{
-								maxWidth=selEle.getComment().get(i).length();
-								si=i;
-							}
-						}
-						lblPop.setPreferredSize(new Dimension(8+lblPop.getFontMetrics(lblPop.getFont()).stringWidth(selEle.getComment().get(si)),
-															  selEle.getComment().count()*16));
+        	boolean popVisible = false;
+        	if (Element.E_SHOWCOMMENTS==true && ((Editor) NSDControl).popup.isVisible()==false)
+        	{
+        		// START KGU#25 2015-10-11: Method merged with selectElementByCoord
+        		//Element selEle = root.getElementByCoord(e.getX(),e.getY());
+        		Element selEle = root.getElementByCoord(e.getX(), e.getY(), false);
+        		// END KGU#25 2015-10-11
 
-						int x = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().x;
-						int y = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().y;
-						pop.setLocation(x+e.getX(),
-										y+e.getY()+16);
-						pop.setVisible(true);
-					}
-					else
-					{
-						pop.setVisible(false);
-					}
-				}
-				else
-				{
-					pop.setVisible(false);
-				}
-			}
-			else
-			{
-				pop.setVisible(false);
-			}
+        		if (selEle != null &&
+        				!selEle.getComment(false).getText().trim().isEmpty())
+        		{
+        			StringList comment = selEle.getComment(false);
+        			String htmlComment = "<html>"+BString.replace(BString.encodeToHtml(comment.getText()),"\n","<br>")+"</html>";
+        			if(!lblPop.getText().equals(htmlComment))
+        			{
+        				lblPop.setText(htmlComment);
+        			}
+        			int maxWidth = 0;
+        			int si = 0;
+        			for (int i = 0; i < comment.count(); i++)
+        			{
+        				if (maxWidth < comment.get(i).length())
+        				{
+        					maxWidth = comment.get(i).length();
+        					si=i;
+        				}
+        			}
+        			lblPop.setPreferredSize(
+        					new Dimension(
+        							8 + lblPop.getFontMetrics(lblPop.getFont()).
+        							stringWidth(comment.get(si)),
+        							comment.count()*16
+        							)
+        					);
+
+        			int x = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().x;
+        			int y = ((JComponent) e.getSource()).getLocationOnScreen().getLocation().y;
+        			pop.setLocation(x+e.getX(),
+        					y+e.getY()+16);
+        			popVisible = true;
+        		}
+        	}
+        	pop.setVisible(popVisible);
 		}
-        if(Element.E_TOGGLETC) root.setSwitchTextAndComments(false);
+		// KGU#91 2015-12-04: Bugfix #39 - Disabled
+        //if(Element.E_TOGGLETC) root.setSwitchTextAndComments(false);
 	}
 
 	public void mouseDragged(MouseEvent e)
@@ -626,7 +625,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void redraw(Graphics _g)
 	{
-        if (Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
+		// KGU#91 2015-12-04: Bugfix #39 - Disabled
+        //if (Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
 		root.draw(_g);
                 
 		lu.fisch.graphics.Canvas canvas = new lu.fisch.graphics.Canvas((Graphics2D) _g);
@@ -661,7 +661,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                     //_g.drawRect(mX-selX, mY-selY, w, h);
                 }/**/
 
-                if (Element.E_TOGGLETC) root.setSwitchTextAndComments(false);
+                // KGU#91 2015-12-04: Bugfix #39 - Disabled
+                //if (Element.E_TOGGLETC) root.setSwitchTextAndComments(false);
 }
 
         @Override
@@ -904,30 +905,33 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                         }
                         else
                         {
-
-                            try
-                            {
-                                    FileOutputStream fos = new FileOutputStream(root.filename);
-                                    Writer out = new OutputStreamWriter(fos, "UTF8");
-                                    XmlGenerator xmlgen = new XmlGenerator();
-                                    out.write(xmlgen.generateCode(root,"\t"));
-                                    out.close();
-                                    /*
-                                    BTextfile outp = new BTextfile(root.filename);
-                                    outp.rewrite();
-                                    XmlGenerator xmlgen = new XmlGenerator();
-                                    outp.write(xmlgen.generateCode(root,"\t"));
-                                    //outp.write(diagram.root.getXML());
-                                    outp.close();
-                                    /**/
-
-                                    root.hasChanged=false;
-                                    addRecentFile(root.filename);
-                            }
-                            catch(Exception e)
-                            {
-                                    JOptionPane.showOptionDialog(this,"Error while saving the file!","Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
-                            }
+                        	// START KGU#94 2015.12.04: out-sourced to auxiliary method
+//                          try
+//                          {
+//                          	
+//                                  FileOutputStream fos = new FileOutputStream(root.filename);
+//                                  Writer out = new OutputStreamWriter(fos, "UTF8");
+//                                  XmlGenerator xmlgen = new XmlGenerator();
+//                                  out.write(xmlgen.generateCode(root,"\t"));
+//                                  out.close();
+//                                  /*
+//                                  BTextfile outp = new BTextfile(root.filename);
+//                                  outp.rewrite();
+//                                  XmlGenerator xmlgen = new XmlGenerator();
+//                                  outp.write(xmlgen.generateCode(root,"\t"));
+//                                  //outp.write(diagram.root.getXML());
+//                                  outp.close();
+//                                  /**/
+//
+//                                  root.hasChanged=false;
+//                                  addRecentFile(root.filename);
+//                          }
+//                          catch(Exception e)
+//                          {
+//                                  JOptionPane.showOptionDialog(this,"Error while saving the file!","Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+//                          }
+                      	doSaveNSD();
+                      	// END KGU#94 2015-12-04
                          }
 		}
 	}
@@ -946,7 +950,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 			if(_checkChanged==true)
 			{
-				// START KGU#49 2015-10-18: For the Arranger it's less ambiguous to see the NSD name
+				// START KGU#49 2015-10-18: If induced by Arranger then it's less ambiguous to see the NSD name
 				//res = JOptionPane.showOptionDialog(this,
 				//		   "Do you want to save the current NSD-File?",
 				String filename = root.filename;
@@ -1028,34 +1032,107 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 				if (saveIt == true)
 				{
-					try
-					{
-                                                FileOutputStream fos = new FileOutputStream(root.filename);
-                                                Writer out = new OutputStreamWriter(fos, "UTF8");
-                                                XmlGenerator xmlgen = new XmlGenerator();
-                                                out.write(xmlgen.generateCode(root,"\t"));
-                                                out.close();
-                                                /*
-                                                BTextfile outp = new BTextfile(root.filename);
-						outp.rewrite();
-						XmlGenerator xmlgen = new XmlGenerator();
-						outp.write(xmlgen.generateCode(root,"\t"));
-						//outp.write(diagram.root.getXML());
-						outp.close();/**/
-
-						root.hasChanged=false;
-						addRecentFile(root.filename);
-					}
-					catch(Exception e)
-					{
-						JOptionPane.showOptionDialog(this,"Error while saving the file!\n"+e.getMessage(),"Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
-					}
+					// START KGU#94 2015-12-04: Out-sourced to auxiliary method
+//					try
+//					{
+//                                                FileOutputStream fos = new FileOutputStream(root.filename);
+//                                                Writer out = new OutputStreamWriter(fos, "UTF8");
+//                                                XmlGenerator xmlgen = new XmlGenerator();
+//                                                out.write(xmlgen.generateCode(root,"\t"));
+//                                                out.close();
+//                                                /*
+//                                                BTextfile outp = new BTextfile(root.filename);
+//						outp.rewrite();
+//						XmlGenerator xmlgen = new XmlGenerator();
+//						outp.write(xmlgen.generateCode(root,"\t"));
+//						//outp.write(diagram.root.getXML());
+//						outp.close();/**/
+//
+//						root.hasChanged=false;
+//						addRecentFile(root.filename);
+//					}
+//					catch(Exception e)
+//					{
+//						JOptionPane.showOptionDialog(this,"Error while saving the file!\n"+e.getMessage(),"Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+//					}
+					doSaveNSD();
+					// END KGU#94 2015-12-04
 				}
 			}
 		}
 		return res != -1; // true if not cancelled
 	}
 
+	// START KGU#94 2015-12-04: Common file writing routine (on occasion of bugfix #40)
+	private boolean doSaveNSD()
+	{
+		String[] EnvVariablesToCheck = { "TEMP", "TMP", "TMPDIR", "HOME", "HOMEPATH" };
+		boolean done = false;
+        try
+        {
+        	// START KGU#94 2015.12.04: Bugfix #40 part 1
+        	// A failed saving attempt should not leave a truncated file!
+        	//FileOutputStream fos = new FileOutputStream(root.filename);
+        	String filename = root.filename;
+        	File f = new File(filename);
+        	boolean fileExisted = f.exists(); 
+        	if (fileExisted)
+        	{
+        		String tempDir = "";
+        		for (int i = 0; (tempDir == null || tempDir.isEmpty()) && i < EnvVariablesToCheck.length; i++)
+        		{
+        			tempDir = System.getenv(EnvVariablesToCheck[i]);
+        		}
+        		if ((tempDir == null || tempDir.isEmpty()) && this.currentDirectory != null)
+        		{
+        			File dir = this.currentDirectory;
+        			if (dir.isFile())
+        			{
+        				tempDir = dir.getParent();
+        			}
+        			else
+        			{
+        				tempDir = dir.getAbsolutePath();
+        			}
+        		}
+        		filename = tempDir + System.getProperty("file.separator") + "Structorizer.tmp";
+        	}
+        	FileOutputStream fos = new FileOutputStream(filename);
+        	// END KGU#94 2015-12-04
+        	Writer out = new OutputStreamWriter(fos, "UTF8");
+        	XmlGenerator xmlgen = new XmlGenerator();
+        	out.write(xmlgen.generateCode(root,"\t"));
+        	out.close();
+
+        	// START KGU#94 2015-12-04: Bugfix #40 part 2
+        	// If the NSD file had existed then replace it by the output file after having created a backup
+        	if (fileExisted)
+        	{
+        		File backUp = new File(root.filename + ".bak");
+        		if (backUp.exists())
+        		{
+        			backUp.delete();
+        		}
+        		f.renameTo(backUp);
+        		f = new File(root.filename);
+            	File tmpFile = new File(filename);
+            	tmpFile.renameTo(f);
+        	}
+        	// END KGU#94 2015.12.04
+        	
+        	root.hasChanged=false;
+        	addRecentFile(root.filename);
+        	done = true;
+        }
+        catch(Exception ex)
+        {
+        	JOptionPane.showMessageDialog(this, "Error on saving the file:" + ex.getMessage() + "!", "Error",
+        			JOptionPane.ERROR_MESSAGE, null);
+        }
+        return done;
+	}
+	// END KGU#94 2015-12-04
+	
 	/*****************************************
 	 * Undo method
 	 *****************************************/
@@ -1785,6 +1862,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                                     {
                                         buffer.append((char)ch);
                                     }
+                                    // START KGU 2015-12-04
+                                    in.close();
+                                    // END KGU 2015-12-04
 
                                     // ... and encode it UTF-8
                                     FileOutputStream fos = new FileOutputStream(filename);
@@ -2509,6 +2589,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			inputbox.elementType = _elementType;
 			inputbox.forInsertion = _isInsertion;
 			// END KGU#42 2015-10-14
+			// START KGU#91 2015-12-04: Issue #39 - Attempt to set focus - always fails
+			//if (Element.E_TOGGLETC || _elementType.equals("Forever"))
+			//{
+			//	boolean ok = inputbox.txtComment.requestFocusInWindow();
+			//	//if (ok) System.out.println("Comment will get focus");
+			//}
+			//else
+			//{
+			//	boolean ok = inputbox.txtText.requestFocusInWindow();
+			//	//if (ok) System.out.println("Text will get focus");
+			//}
+			// END KGU KGU#91 2015-12-04
 			inputbox.setLang(NSDControl.getLang());
 			inputbox.setVisible(true);
 

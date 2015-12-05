@@ -39,11 +39,15 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.13      Execution state separated from selected state
  *      Kay Gürtzig     2015.11.01      operator unification and intermediate syntax transformation ready
  *      Kay Gürtzig     2015.11.12      Issue #25 (= KGU#80) fixed in unifyOperators, highlighting corrected
+ *      Kay Gürtzig     2015.12.01      Bugfixes #39 (= KGU#91) and #41 (= KGU#92)
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      
+ *      2015.12.01 (KGU#91/KGU#92)
+ *      - Methods setText() were inconsistent and caused nasty effects including data losses (bug #39).
+ *      - Operator unification enhanced (issue #41)
  *      2015.11.03 (KGU#18/KGU#23/KGU#63)
  *      - Methods writeOutVariables() and getWidthOutVariables re-merged, lexical splitter extracted from
  *        them.
@@ -166,17 +170,17 @@ public abstract class Element {
 	public final static String E_CHANGELOG = "";
 
 	// some static constants
-	static int E_PADDING = 20;
+	protected static int E_PADDING = 20;
 	static int E_INDENT = 2;
 	public static Color E_DRAWCOLOR = Color.YELLOW;
 	public static Color E_COLLAPSEDCOLOR = Color.LIGHT_GRAY;
 	// START KGU#41 2015-10-13: Executing status now independent from selection
 	public static Color E_RUNNINGCOLOR = Color.ORANGE;		// used for Elements currently (to be) executed 
 	// END KGU#41 2015-10-13
-	public static Color E_WAITCOLOR = new Color(255,255,210);
+	public static Color E_WAITCOLOR = new Color(255,255,210);	// used for Elements with pending execution
 	static Color E_COMMENTCOLOR = Color.LIGHT_GRAY;
 	// START KGU#43 2015-10-11: New fix color for breakpoint marking
-	static Color E_BREAKPOINTCOLOR = Color.RED;
+	static Color E_BREAKPOINTCOLOR = Color.RED;				// Colour of the breakpoint bar at element top
 	// END KGU#43 2015-10-11
 	public static boolean E_VARHIGHLIGHT = false;
 	public static boolean E_SHOWCOMMENTS = true;
@@ -206,10 +210,10 @@ public abstract class Element {
 	public static String preRepeat = "until (?)";
 	
 	// used font
-	static Font font = new Font("Helvetica", Font.PLAIN, 12);
-	
-        public static final String COLLAPSED =  "...";
-        public static boolean altPadRight = true;
+	protected static Font font = new Font("Helvetica", Font.PLAIN, 12);
+
+	public static final String COLLAPSED =  "...";
+	public static boolean altPadRight = true;
 
 	// element attributes
 	protected StringList text = new StringList();
@@ -235,7 +239,7 @@ public abstract class Element {
 	public Rect rect = new Rect();
 	// START KGU#64 2015-11-03: Is to improve drawing performance
 	protected boolean isRectUpToDate = false;		// Will be set and used by prepareDraw() - to be reset on changes
-	private static StringList specialSigns = null;					// Strings to be highlighted in the text (lazy initialisation)
+	private static StringList specialSigns = null;	// Strings to be highlighted in the text (lazy initialisation)
 	/**
 	 * Resets my cached drawing info
 	 */
@@ -272,7 +276,10 @@ public abstract class Element {
         public StringList getCollapsedText()
         {
             StringList sl = new StringList();
-            if(getText().count()>0) sl.add(getText().get(0));
+            // START KGU#91 2015-12-01: Bugfix #39: This is for drawing, so use switch-sensitive methods
+            //if(getText().count()>0) sl.add(getText().get(0));
+            if(getText(false).count()>0) sl.add(getText(false).get(0));
+            // END KGU#91 2015-12-01
             sl.add(COLLAPSED);
             return sl;
         }
@@ -296,9 +303,9 @@ public abstract class Element {
 	{
 	}
 
-	public Element(String _strings)
+	public Element(String _string)
 	{
-		setText(_strings);
+		setText(_string);
 	}
 
 	public Element(StringList _strings)
@@ -308,25 +315,50 @@ public abstract class Element {
 
 	public void setText(String _text)
 	{
-		getText().setText(_text);
+		// START KGU#91 2015-12-01: Should never set in swapped mode!
+		//getText().setText(_text);
+		text.setText(_text);
+		// END KGU#91 2015-12-01
 	}
 
 	public void setText(StringList _text)
 	{
-		text=_text;
+		text = _text;
 	}
 
+	// START KGU#91 2015-12-01: We need a way to get the true value
+	/**
+	 * Returns the content of the text field no matter if mode isSwitchedTextAndComment
+	 * is active, use getText(boolean) for a mode-sensitive effect.
+	 * @return the text StringList (in normal mode) the comment StringList otherwise
+	 */
 	public StringList getText()
 	{
-            Root root = getRoot(this);
-            if(root!=null)
+		return text;
+	}
+	/**
+	 * Returns the content of the text field unless _alwaysTrueText is false and
+	 * mode isSwitchedTextAndComment is active, in which case the comment field
+	 * is returned instead 
+	 * @param _alwaysTrueText - if true then mode isSwitchTextAndComment is ignored
+	 * @return either the text or the comment
+	 */
+	public StringList getText(boolean _alwaysTrueText)
+	// END KGU#91 2015-12-01
+	{
+            Root root = null;
+            // START KGU#91 2015-12-01: Bugfix #39
+    		//if ((root = getRoot(this))!=null && root.isSwitchTextAndComments())
+            if (!_alwaysTrueText && 
+            		(root = getRoot(this))!=null && root.isSwitchTextAndComments())
+            // START KGU#91 2015-12-01
             {
-                if(root.isSwitchTextAndComments())
-                    return comment;
-                else
-                    return text;
+            	return comment;
             }
-            else return text;
+            else
+            {
+            	return text;
+            }
 	}
 
 	public void setComment(String _comment)
@@ -336,20 +368,42 @@ public abstract class Element {
 
 	public void setComment(StringList _comment)
 	{
-		comment=_comment;
+		comment = _comment;
 	}
 
+	// START KGU#91 2015-12-01: We need a way to get the true value
+	/**
+	 * Returns the content of the comment field no matter if mode isSwitchedTextAndComment
+	 * is active, use getComment(boolean) for a mode-sensitive effect.
+	 * @return the text StringList (in normal mode) the comment StringList otherwise
+	 */
 	public StringList getComment()
 	{
-            Root root = getRoot(this);
-            if(root!=null)
+		return comment;
+	}
+	/**
+	 * Returns the content of the text field unless _alwaysTrueComment is false and
+	 * mode isSwitchedTextAndComment is active, in which case the comment field
+	 * is returned instead 
+	 * @param _alwaysTrueText - if true then mode isSwitchTextAndComment is ignored
+	 * @return either the text or the comment
+	 */
+	public StringList getComment(boolean _alwaysTrueComment)
+	// END KGU#91 2015-12-01
+	{
+            Root root = null;
+            // START KGU#91 2015-12-01: Bugfix #39
+      		//if ((root = getRoot(this))!=null && root.isSwitchTextAndComments())
+            if (!_alwaysTrueComment && 
+            		(root = getRoot(this))!=null && root.isSwitchTextAndComments())
+            // END KGU#91 2015-12-01
             {
-                if(root.isSwitchTextAndComments())
-                    return text;
-                else
-                    return comment;
+            	return text;
             }
-            else return comment;
+            else
+            {
+            	return comment;
+            }
 	}
 
 	public boolean getSelected()
@@ -762,11 +816,28 @@ public abstract class Element {
 						parts.set(i,"<=");
 						parts.delete(i+1);
 					}
+					// START KGU#92 2015-12-01: Bugfix #41
+					else if (parts.get(i+1).equals("<"))
+					{
+						parts.set(i,"<<");
+						parts.delete(i+1);
+					}					
+					// END KGU#92 2015-12-01
 				}
-				else if (parts.get(i).equals(">") && parts.get(i+1).equals("="))
+				else if (parts.get(i).equals(">"))
 				{
-					parts.set(i,">=");
-					parts.delete(i+1);
+					if (parts.get(i+1).equals("="))
+					{
+						parts.set(i,">=");
+						parts.delete(i+1);
+					}
+					// START KGU#92 2015-12-01: Bugfix #41
+					else if (parts.get(i+1).equals(">"))
+					{
+						parts.set(i,">>");
+						parts.delete(i+1);
+					}					
+					// END KGU#92 2015-12-01
 				}
 				// START KGU#24 2014-10-18: Logical two-character operators should be detected, too ...
 				else if (parts.get(i).equals("&") && parts.get(i+1).equals("&"))
@@ -897,6 +968,8 @@ public abstract class Element {
 					specialSigns.add("<=");
 					specialSigns.add(">=");
 					specialSigns.add("<>");
+					specialSigns.add("<<");
+					specialSigns.add(">>");
 					specialSigns.add("<");
 					specialSigns.add(">");
 					specialSigns.add("==");
@@ -1018,7 +1091,7 @@ public abstract class Element {
      * variables are added if true (which not only reduces time and space requirements but also avoids
      * "false positives" in variable detection). 
      * Uses addFullText() - so possibly better override that method if necessary.
-     * @param _instructionsOnly - if true then texts not possibly containing variable declarations are omitted
+     * @param _instructionsOnly - if true then only the texts of Instruction elements are included
      * @return the composed StringList
      */
     public StringList getFullText(boolean _instructionsOnly)
@@ -1072,6 +1145,7 @@ public abstract class Element {
      */
     public static String unifyOperators(String _expression, boolean _assignmentOnly)
     {
+    	
         String interm = _expression.trim();	// KGU#54
         // variable assignment
         interm = interm.replace("<--", " §ASGN§ ");
@@ -1086,6 +1160,10 @@ public abstract class Element {
         	interm = interm.replace("<=", " §LE§ ");
         	interm = interm.replace(">=", " §GE§ ");
         	interm = interm.replace("<>", " §UNEQ§ ");
+        	// START KGU#92 2015-12-01: Bugfix #41
+        	interm = interm.replace("<<", " §SHL§ ");
+        	interm = interm.replace(">>", " §SHR§ ");
+        	// END KGU#92 2015-12-01
         	interm = interm.replace("<", " < ");
         	interm = interm.replace(">", " > ");
         	interm = interm.replace("=", " §EQU§ ");
@@ -1105,6 +1183,12 @@ public abstract class Element {
         	interm = interm.replace(" div(", " div (");
         	interm = interm.replace(" DIV ", " div ");
         	interm = interm.replace(" DIV(", " div (");
+        	// START KGU#92 2015-12-01: Bugfix #41
+        	interm = interm.replace(" shl ", " §SHL§ ");
+        	interm = interm.replace(" shr ", " §SHR§ ");
+        	interm = interm.replace(" SHL ", " §SHL§ ");
+        	interm = interm.replace(" SHR ", " §SHR§ ");
+        	// END KGU#92 2015-12-01
         	// Logic
         	interm = interm.replace( "&&", " && ");
         	interm = interm.replace( "||", " || ");
@@ -1137,6 +1221,10 @@ public abstract class Element {
         	unified = unified.replace(" §LE§ ", " <= ");
         	unified = unified.replace(" §GE§ ", " >= ");
         	unified = unified.replace(" §NOT§ ", " ! ");
+        	// START KGU#92 2015-12-01: Bugfix #41
+        	unified = unified.replace(" §SHL§ ", " << ");
+        	unified = unified.replace(" §SHR§ ", " >> ");
+        	// END KGU#92 2015-12-01
         }
         unified = BString.replace(unified, "  ", " ");	// shrink multiple blanks
         unified = BString.replace(unified, "  ", " ");	// do it again to catch odd-numbered blanks as well
@@ -1144,6 +1232,43 @@ public abstract class Element {
         return unified;
     }
 
+	// START KGU#92 2015-12-01: Bugfix #41 Okay now, here is the new approach (still a sketch)
+    /**
+     * Converts the operator symbols accepted by Structorizer into intermediate operators
+     * (mostly Java operators), mostly padded:
+     * - Assignment:		" <- "
+     * - Comparison*:		" == ", " < ", " > ", " <= ", " >= ", " != "
+     * - Logic*:			" && ", " || ", " ! ", " ^ "
+     * - Arithmetics*:		" div " and usual Java operators (e. g. " mod " -> " % ")
+     * @param _tokens a tokenised line of an Element's text (in practically unknown syntax)
+     * @param _assignmentOnly if true then only assignment operator will be unified
+     * @return an equivalent of the _expression String with replaced operators
+     */
+    public static int unifyOperators(StringList _tokens, boolean _assignmentOnly)
+    {
+    	int count = 0;
+        count += _tokens.replaceAll(":=", " <- ");
+        if (_assignmentOnly)
+        {
+        	count += _tokens.replaceAll("=", " == ");
+        	count += _tokens.replaceAll("<", " < ");
+        	count += _tokens.replaceAll(">", " > ");
+        	count += _tokens.replaceAll("<=", " <= ");
+        	count += _tokens.replaceAll(">=", " >= ");
+        	count += _tokens.replaceAll("<>", " != ");
+        	count += _tokens.replaceAll("%", " % ");
+        	count += _tokens.replaceAllCi("mod", " % ");
+        	count += _tokens.replaceAllCi("div", " div ");
+        	count += _tokens.replaceAllCi("shl", " << ");
+        	count += _tokens.replaceAllCi("shr", " >> ");
+        	count += _tokens.replaceAllCi("and", " && ");
+        	count += _tokens.replaceAllCi("or", " || ");
+        	count += _tokens.replaceAllCi("not", " ! ");
+        	count += _tokens.replaceAllCi("xor", " ^ ");
+        }
+    	return count;
+    }
+	// END KGU#92 2015-12-01
 
     /**
      * Returns a (hopefully) lossless representation of the stored text as a
@@ -1247,13 +1372,23 @@ public abstract class Element {
         			interm = interm.replace( marker, ""); 
         		}
         		interm = " " + interm + " ";	// Ensure the string being padded for easier matching
-                interm = interm.replace( "  ", " ");
-        		System.out.println("transformIntermediate: " + interm);	// FIXME (KGU): Remove or deactivate after test!
+                interm = interm.replace("  ", " ");
+        		//System.out.println("transformIntermediate: " + interm);	// FIXME (KGU): Remove or deactivate after test!
         	}
         }
         
         interm = unifyOperators(interm);
-        //interm = interm.replace( " <- ", " = ");	// Adapt to Java
+
+		// START KGU 2015-11-30: Adopted from Root.getVarNames(): 
+        // pascal: convert "inc" and "dec" procedures
+        // (Of course we could omit it for Pascal, and for C offsprings there are more efficient translations, but this
+        // works for all, and so we avoid trouble. 
+        Regex r;
+        r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); interm = r.replaceAll(interm);
+        r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); interm = r.replaceAll(interm);
+        r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); interm = r.replaceAll(interm);
+        r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); interm = r.replaceAll(interm);
+        // END KGU 2015-11-30
         
         // Reduce multiple space characters
         interm = interm.replace("  ", " ");
@@ -1263,5 +1398,5 @@ public abstract class Element {
     }
     
     // END KGU#18/KGU#23 2015-10-24
-   
+       
 }

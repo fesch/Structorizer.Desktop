@@ -35,6 +35,8 @@ package lu.fisch.utils;
  *      ------			----			-----------
  *      Bob Fisch       2007.12.09      First Issue
  *      Kay Gürtzig     2015.11.04      Methods indexOf added.
+ *      Kay Gürtzig     2015.11.24      Method clear added.
+ *      Kay Gürtzig     2015.12.01      Methods replaceAll, replaceAllCi added.
  *
  ******************************************************************************************************
  *
@@ -643,12 +645,129 @@ public class StringList {
         return ret;
     }
 
+    // START KGU 2015-11-25
+    /**
+     * Returns a multi-line String composed of the sub-StringList from element
+     * _start to element _end (excluded)
+     * @param _start - index of first element to include
+     * @param _end - index after last element to include
+     * @return a string with newlines as separator
+     */
+    public String getText(int _start, int _end)
+    {
+        String ret = "";
+        for(int i = Math.min(_start, count()); i < Math.min(_end, count()); i++)
+        {
+            String line = get(i);
+            //System.err.println(i+") "+line);
+            ret += "\n" + line;
+        }
+        //System.err.println("Res = "+ret);
+        return ret;
+    }
+    
+    /**
+     * Returns a multi-line String composed of the sub-StringList from element
+     * _start to the end
+     * @param _start - index of first element to include
+     * @return a string with newlines as separator
+     */
+    public String getText(int _start)
+    {
+    	return getText(_start, count());
+    }
+    
+    /**
+     * Removes all elements being equal to the given string _string
+     * @param _string - the searched string
+     * @return number of deletions
+     */
+    public int removeAll(String _string)
+    {
+    	int nRemoved = 0;
+    	int i = 0;
+    	while (i < count())
+    	{
+    		if (strings.get(i).equals(_string))
+    		{
+    			strings.removeElementAt(i);
+    			nRemoved++;
+    		}
+    		else
+    		{
+        		i++;    			
+    		}
+    	}
+    	return nRemoved;
+    }
+    // END KGU 2015-11-25
+    
+    // START KGU#92 2015-12-01: New method to facilitate bugfix #41
+    /**
+     * Replaces all elements being equal to the given string _stringOld by
+     * _stringNew
+     * @param _stringOld - the searched string
+     * @param _stringNew - the string to replace occurrences of _stringOld
+     * @return number of deletions
+     */
+    public int replaceAll(String _stringOld, String _stringNew)
+    {
+    	int nReplaced = 0;
+    	int i = 0;
+    	while (i < count())
+    	{
+    		if (strings.get(i).equals(_stringOld))
+    		{
+    			strings.setElementAt(_stringNew, i);
+    			nReplaced++;
+    		}
+    		else
+    		{
+        		i++;    			
+    		}
+    	}
+    	return nReplaced;
+    }
+
+    /**
+     * Replaces all elements being case-independently equal to the given string
+     * _stringOld by _stringNew
+     * @param _stringOld - the searched string
+     * @param _stringNew - the string to replace occurrences of _stringOld
+     * @return number of deletions
+     */
+    public int replaceAllCi(String _stringOld, String _stringNew)
+    {
+    	int nReplaced = 0;
+    	int i = 0;
+    	while (i < count())
+    	{
+    		if (strings.get(i).equalsIgnoreCase(_stringOld))
+    		{
+    			strings.setElementAt(_stringNew, i);
+    			nReplaced++;
+    		}
+    		else
+    		{
+        		i++;    			
+    		}
+    	}
+    	return nReplaced;
+    }
+    // END KGU#92 2015-12-01
 
     @Override
 	public String toString()
 	{
 		return getCommaText();
 	}
+    
+    // START KGU 2015-11-24
+    public void clear()
+    {
+    	this.strings.clear();
+    }
+    // END KGU 2015-11-24
 
         
         public static void main(String[] args)

@@ -11,7 +11,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.22-32 (2015.11.12)
+Version 3.23 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
 - 02: executor: fixed a bug while interpreting the title [Benjamin Bartsch]
 - 03: export: split PNG export into multiple images [Moritz Schulze]
@@ -59,6 +59,7 @@ Current development version: 3.22-32 (2015.11.12)
 - 29: comment popup: sticky popups eliminated, no element level limit <Kay Gürtzig>
 - 29: Arranger: No longer loses track when related Structorizer reloads <Kay Gürtzig>
 - 29: Known NEW ISSUE: Closing a dependent Structorizer kills the owning Arranger!
+- 30: Several Chinese (CHS) translations added and typos eliminated <Zijun Ke>
 - 30: Issue on closing a Structorizer fixed, file update question may be cancelled. <Kay Gürtzig>
 - 31: Major enhancement supporting cleaner For loop evaluation (issue #10) <Kay Gürtzig>
 - 31: Enhancement to allow lists of constants controlling a Case branch (issue #13) <Kay Gürtzig>
@@ -77,6 +78,10 @@ Current development version: 3.22-32 (2015.11.12)
 - 32: Operator highlighting fixed, new colouring for string and character literals <Kay Gürtzig>
 - 32: Bugs #28, #31, and #32 fixed, all concerning element degrading on undoing/copying <Kay Gürtzig>
 - 32: More adaptive approach to either exit or dispose a Structorizer on closing <Kay Gürtzig>
+- 33: Bugfix #39 - Errors on drawing empty Case structures, confused texts and comments <Kay Gürtzig>
+- 33: Bugfix #41 - shift operators <<, >>, shl, shr haven't been supported <Kay Gürtzig>
+- 33: Bugfix #40 - Recent nsd files got truncated on saving errors <Kay Gürtzig>
+- 33: Bugfix #42 - Default saving directory should not be root (/) but home <Kay Gürtzig>
 
 Version 3.22 (2011.11.21)
 - 01: Some fixes in Executor.java & Control.java [Kay Gürtzig]

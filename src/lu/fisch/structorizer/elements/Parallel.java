@@ -37,6 +37,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
  *      Kay Gürtzig     2015.10.16      Method clearExecutionStatus() duly overridden.
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy()
+ *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false))
  *
  ******************************************************************************************************
  *
@@ -63,49 +64,76 @@ public class Parallel extends Element
     private int fullWidth = 0;
     private int maxHeight = 0;
 	
+    // START KGU#91 2015-12-01: Bugfix #39 - Parallel may NEVER EVER interchange text and comment!
+	/**
+	 * Returns the content of the text field Full stop. No swapping here!
+	 * @return the text StringList
+	 */
+    @Override
+	public StringList getText(boolean _ignored)
+	{
+		return getText();
+	}
+
+	/**
+	 * Returns the content of the comment field. Full stop. No swapping here!
+	 * @return the comment StringList
+	 */
+    @Override
+	public StringList getComment(boolean _ignored)
+	{
+		return getComment();
+	}
+    // END KGU#91 2015-12-01
+
     @Override
     public void setText(String _text)
     {
 
-            Subqueue s = null;
-
-            getText().setText(_text);
-
-            if(qs==null)
-            {
-                    qs = new Vector();
-            }
-
-            // we need at least one line
-            if(getText().count()>0)
-            {
-                int count = 10;
-                try
-                {
-                    // retrieve the number of parallel tasks
-                    count = Integer.valueOf(getText().get(0).trim());
-                }
-                catch (java.lang.NumberFormatException e)
-                {
-                    JOptionPane.showMessageDialog(null, "Unknonw number <"+getText().get(0).trim()+">.\nSetting number of tasks to 10!", "Error", JOptionPane.ERROR_MESSAGE);
-                    setText(new StringList());
-                    getText().add("10");
-                    count = 10;
-                }
-
-                // add subqueues
-                while(count>qs.size())
-                {
-                        s=new Subqueue();
-                        s.parent=this;
-                        qs.add(s);
-                }
-                // remove subqueues
-                while(count<qs.size())
-                {
-                        qs.removeElementAt(qs.size()-1);
-                }
-            }
+// START KGU#91 2015-12-01: Bugfix #39, D.R.Y. - employ setText(StringList) for the rest
+    	text.setText(_text);
+    	this.setText(text);
+            
+//            Subqueue s = null;
+//
+//            getText().setText(_text);
+//
+//            if(qs==null)
+//            {
+//                    qs = new Vector();
+//            }
+//
+//            // we need at least one line
+//            if(getText().count()>0)
+//            {
+//                int count = 10;
+//                try
+//                {
+//                    // retrieve the number of parallel tasks
+//                    count = Integer.valueOf(getText().get(0).trim());
+//                }
+//                catch (java.lang.NumberFormatException e)
+//                {
+//                    JOptionPane.showMessageDialog(null, "Unknown number <"+getText().get(0).trim()+">.\nSetting number of tasks to 10!", "Error", JOptionPane.ERROR_MESSAGE);
+//                    setText(new StringList());
+//                    getText().add("10");
+//                    count = 10;
+//                }
+//
+//                // add subqueues
+//                while(count>qs.size())
+//                {
+//                        s=new Subqueue();
+//                        s.parent=this;
+//                        qs.add(s);
+//                }
+//                // remove subqueues
+//                while(count<qs.size())
+//                {
+//                        qs.removeElementAt(qs.size()-1);
+//                }
+//            }
+// END KGU#91 2015-12-01            
 
     }
 
@@ -119,14 +147,29 @@ public class Parallel extends Element
 
             if(qs==null)
             {
-                    qs = new Vector();
+                    qs = new Vector<Subqueue>();
             }
 
             // we need at least one line
-            if(getText().count()>0)
+            if(text.count()>0)
             {
+                int count = 10;
+                try
+                {
                     // retrieve the number of parallel tasks
-                    int count = Integer.valueOf(getText().get(0));
+                    count = Integer.valueOf(text.get(0).trim());
+                }
+                catch (java.lang.NumberFormatException e)
+                {
+                    count = 10;
+                    JOptionPane.showMessageDialog(null,
+                    		"Unknown number <" + text.get(0).trim() +
+                    		">.\nSetting number of tasks to " + count + "!",
+                    		"Error", JOptionPane.ERROR_MESSAGE);
+                    setText(new StringList());
+                    text.add(Integer.toString(count));
+                }
+
                     // add subqueues
                     while(count>qs.size())
                     {
@@ -148,16 +191,16 @@ public class Parallel extends Element
             super();
     }
 
-    public Parallel(String _strings)
+    public Parallel(String _string)
     {
-            super(_strings);
-            setText(_strings);
+            super(_string);
+            //setText(_string);	// Already done by super
     }
 
     public Parallel(StringList _strings)
     {
             super(_strings);
-            setText(_strings);
+            //setText(_strings);	// Already done by super
     }
 
 	// START KGU#64 2015-11-03: Is to improve drawing performance
@@ -188,17 +231,16 @@ public class Parallel extends Element
             }
 
 
-            rect.top=0;
-            rect.left=0;
+            rect.top = 0;
+            rect.left = 0;
 
             FontMetrics fm = _canvas.getFontMetrics(font);
 
-            rect.right=Math.round(3*(E_PADDING/2));
-            rect.bottom=4*Math.round(E_PADDING/2);
+            rect.right  = 3 * (E_PADDING/2);
+            rect.bottom = 4 * (E_PADDING/2);
 
             // retrieve the number of parallel tasks
             int tasks = Integer.valueOf(getText().get(0));
-
 
             Rect rtt = null;
 
@@ -207,20 +249,19 @@ public class Parallel extends Element
 
             if (qs.size()!=0)
             {
-
                     for (int i=0;i<tasks;i++)
                     {
-                       rtt=((Subqueue) qs.get(i)).prepareDraw(_canvas);
-                       fullWidth=fullWidth+Math.max(rtt.right,getWidthOutVariables(_canvas,getText().get(i+1),this)+Math.round(E_PADDING / 2));
-                       if(maxHeight<rtt.bottom)
+                       rtt = qs.get(i).prepareDraw(_canvas);
+                       fullWidth += Math.max(rtt.right, getWidthOutVariables(_canvas, getText(false).get(i+1), this) + (E_PADDING / 2));
+                       if (maxHeight < rtt.bottom)
                        {
-                            maxHeight=rtt.bottom;
+                            maxHeight = rtt.bottom;
                        }
                     }
             }
 
-            rect.right=Math.max(rect.right,fullWidth)+1;
-            rect.bottom=rect.bottom+maxHeight;
+            rect.right = Math.max(rect.right, fullWidth)+1;
+            rect.bottom = rect.bottom+maxHeight;
 
             return rect;
     }
@@ -269,14 +310,14 @@ public class Parallel extends Element
 
             // draw shape
             myrect=_top_left.copy();
-            myrect.bottom=_top_left.top+2*fm.getHeight()+4*Math.round(E_PADDING / 2);
+            myrect.bottom = _top_left.top + 2*fm.getHeight() + 4*(E_PADDING / 2);
 
-            int y=myrect.top+E_PADDING;
-            int a=myrect.left+Math.round((myrect.right-myrect.left) / 2);
-            int b=myrect.top;
-            int c=myrect.left+fullWidth-1;
-            int d=myrect.bottom-1;
-            int x=Math.round(((y-b)*(c-a)+a*(d-b))/(d-b));
+            int y = myrect.top+E_PADDING;
+            int a = myrect.left + (myrect.right-myrect.left) / 2;
+            int b = myrect.top;
+            int c = myrect.left+fullWidth-1;
+            int d = myrect.bottom-1;
+            int x = ((y-b)*(c-a) + a*(d-b)) / (d-b);
 
             // draw comment
             if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
@@ -310,46 +351,46 @@ public class Parallel extends Element
             for(int i = 0; i<tasks;i++)
             {
                     rtt=((Subqueue) qs.get(i)).prepareDraw(_canvas);
-                    lineWidth=lineWidth+Math.max(rtt.right,getWidthOutVariables(_canvas,getText().get(i+1),this)+Math.round(E_PADDING / 2));
+                    lineWidth += Math.max(rtt.right, getWidthOutVariables(_canvas,getText(false).get(i+1),this) + (E_PADDING / 2));
             }
 
             // corners
-            myrect=_top_left.copy();
+            myrect = _top_left.copy();
 
-            canvas.moveTo(myrect.left,myrect.bottom-2*Math.round(E_PADDING/2));
-            canvas.lineTo(myrect.left+2*Math.round(E_PADDING/2),myrect.bottom);
+            canvas.moveTo(myrect.left, myrect.bottom - 2*(E_PADDING/2));
+            canvas.lineTo(myrect.left + 2*(E_PADDING/2), myrect.bottom);
 
-            canvas.moveTo(myrect.left,myrect.top+2*Math.round(E_PADDING/2));
-            canvas.lineTo(myrect.left+2*Math.round(E_PADDING/2),myrect.top);
+            canvas.moveTo(myrect.left, myrect.top + 2*(E_PADDING/2));
+            canvas.lineTo(myrect.left + 2*(E_PADDING/2), myrect.top);
 
-            canvas.moveTo(myrect.right-2*Math.round(E_PADDING/2),myrect.top);
-            canvas.lineTo(myrect.right,myrect.top+2*Math.round(E_PADDING/2));
+            canvas.moveTo(myrect.right - 2*(E_PADDING/2), myrect.top);
+            canvas.lineTo(myrect.right, myrect.top + 2*(E_PADDING/2));
 
-            canvas.moveTo(myrect.right-2*Math.round(E_PADDING/2),myrect.bottom);
-            canvas.lineTo(myrect.right,myrect.bottom-2*Math.round(E_PADDING/2));
+            canvas.moveTo(myrect.right - 2*(E_PADDING/2), myrect.bottom);
+            canvas.lineTo(myrect.right, myrect.bottom - 2*(E_PADDING/2));
 
             // horizontal lines
-            canvas.moveTo(myrect.left,myrect.top+2*Math.round(E_PADDING/2));
-            canvas.lineTo(myrect.right,myrect.top+2*Math.round(E_PADDING/2));
+            canvas.moveTo(myrect.left, myrect.top + 2*(E_PADDING/2));
+            canvas.lineTo(myrect.right, myrect.top + 2*(E_PADDING/2));
 
-            canvas.moveTo(myrect.left,myrect.bottom-2*Math.round(E_PADDING/2));
-            canvas.lineTo(myrect.right,myrect.bottom-2*Math.round(E_PADDING/2));
+            canvas.moveTo(myrect.left, myrect.bottom - 2*(E_PADDING/2));
+            canvas.lineTo(myrect.right, myrect.bottom - 2*(E_PADDING/2));
 
             // draw children
-            myrect=_top_left.copy();
-            myrect.top=_top_left.top+2*Math.round(E_PADDING/2);
-            myrect.bottom=_top_left.bottom-2*Math.round(E_PADDING/2);
+            myrect = _top_left.copy();
+            myrect.top = _top_left.top + 2*(E_PADDING/2);
+            myrect.bottom = _top_left.bottom - 2*(E_PADDING/2);
 
-            if (qs.size()!=0)
+            if (qs.size() != 0)
             {
 
-                    for(int i = 0;i <tasks ; i++)
+                    for(int i = 0; i <tasks; i++)
                     {
-                            rtt=((Subqueue) qs.get(i)).prepareDraw(_canvas);
+                            rtt = qs.get(i).prepareDraw(_canvas);
 
-                            if(i==tasks-1)
+                            if (i==tasks-1)
                             {
-                                    myrect.right=_top_left.right;
+                                    myrect.right = _top_left.right;
                             }
 /*
                             else if((i!=qs.size()-1) || (!(this.parent.parent.getClass().getCanonicalName().equals("Root"))))
@@ -359,11 +400,11 @@ public class Parallel extends Element
 */
                             else
                             {
-                                    myrect.right=myrect.left+Math.max(rtt.right,getWidthOutVariables(_canvas,getText().get(i+1),this)+Math.round(E_PADDING / 2))+1;
+                                    myrect.right = myrect.left + Math.max(rtt.right,getWidthOutVariables(_canvas,getText(false).get(i+1),this)+Math.round(E_PADDING / 2))+1;
                             }
 
                             // draw child
-                            ((Subqueue) qs.get(i)).draw(_canvas,myrect);
+                            qs.get(i).draw(_canvas,myrect);
 
                             // draw bottom up line
                             /*
@@ -379,7 +420,7 @@ public class Parallel extends Element
                              *
                              */
 
-                            myrect.left=myrect.right-1;
+                            myrect.left = myrect.right-1;
 
                     }
             }
@@ -420,7 +461,7 @@ public class Parallel extends Element
 
             for(int i = 0; i < qs.size(); i++)
             {
-                    Element pre = ((Subqueue) qs.get(i)).getElementByCoord(_x, _y, _forSelection);
+                    Element pre = qs.get(i).getElementByCoord(_x, _y, _forSelection);
                     if(pre!=null)
                     {
                             selCh = pre;
@@ -429,7 +470,7 @@ public class Parallel extends Element
 
             if(selCh!=null)
             {
-                    if (_forSelection) selected=false;
+                    if (_forSelection) selected = false;
                     selMe = selCh;
             }
 
@@ -512,10 +553,10 @@ public class Parallel extends Element
     protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
 		// Under no circumstances, the text may contain an instruction or even variable declaration (it's just the number of threads) 
-		if (!_instructionsOnly)
-		{
-			_lines.add(this.getText());
-		}
+//		if (!_instructionsOnly)
+//		{
+//			_lines.add(this.getText());
+//		}
     	if (qs!= null)
     	{
     		for (int i = 0; i < qs.size(); i++)

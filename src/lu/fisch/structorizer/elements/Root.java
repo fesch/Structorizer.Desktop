@@ -39,6 +39,7 @@ package lu.fisch.structorizer.elements;
  *		Kay Gürtzig	2015.10.16		getFullText methods redesigned/replaced, changes in getVarNames().
  *		Kay Gürtzig	2015.10.17		improved Arranger support by method notifyReplaced (KGU#48)
  *		Kay Gürtzig	2015.11.03		New error14 field and additions to analyse for FOR loop checks (KGU#3)
+ *		Kay Gürtzig	2015.12.01		Bugfix #39 (KGU#91) -> getText(false) on drawing
  *
  ******************************************************************************************************
  *
@@ -121,8 +122,9 @@ public class Root extends Element {
 	// END KGU#3 2015-11-03
 
 	private Vector<Updater> updaters = new Vector<Updater>();
-                
-	private boolean switchTextAndComments = false;
+
+	// KGU#91 2015-12-04: No longer needed
+	//private boolean switchTextAndComments = false;
 
 	public Root()
 	{
@@ -199,27 +201,27 @@ public class Root extends Element {
 		if(isNice==true)
 		{
 			rect.right=2*E_PADDING;
-			for(int i=0;i<getText().count();i++)
+			for(int i=0;i<getText(false).count();i++)
 			{
-				int w = getWidthOutVariables(_canvas,getText().get(i),this);
+				int w = getWidthOutVariables(_canvas,getText(false).get(i),this);
 				if(rect.right<w+2*E_PADDING)
 				{
 					rect.right=w+2*E_PADDING;
 				}
 			}
-			rect.bottom=3*E_PADDING+getText().count()*fm.getHeight();
+			rect.bottom=3*E_PADDING+getText(false).count()*fm.getHeight();
 		}
 		else
 		{
 			rect.right=2*E_PADDING;
-			for(int i=0;i<getText().count();i++)
+			for(int i=0;i<getText(false).count();i++)
 			{
-				if(rect.right<getWidthOutVariables(_canvas,getText().get(i),this)+2*Math.round(E_PADDING/2))
+				if(rect.right<getWidthOutVariables(_canvas,getText(false).get(i),this)+2*Math.round(E_PADDING/2))
 				{
-					rect.right=getWidthOutVariables(_canvas,getText().get(i),this)+2*Math.round(E_PADDING/2);
+					rect.right=getWidthOutVariables(_canvas,getText(false).get(i),this)+2*Math.round(E_PADDING/2);
 				}
 			}
-			rect.bottom=2*Math.round(E_PADDING/2)+getText().count()*fm.getHeight();
+			rect.bottom=2*Math.round(E_PADDING/2)+getText(false).count()*fm.getHeight();
 		}
 
 		_canvas.setFont(Element.font);
@@ -329,7 +331,7 @@ public class Root extends Element {
 		 */
 
 		// draw comment
-		if(E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
+		if(E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 		{
 			canvas.setBackground(E_COMMENTCOLOR);
 			canvas.setColor(E_COMMENTCOLOR);
@@ -349,24 +351,24 @@ public class Root extends Element {
 		// draw text
 		if(isNice==true)
 		{
-			for(int i=0;i<getText().count();i++)
+			for(int i=0;i<getText(false).count();i++)
 			{
 				canvas.setColor(Color.BLACK);
 				writeOutVariables(canvas,
 								  rect.left+E_PADDING,
 							      rect.top+(i+1)*fm.getHeight()+E_PADDING,
-								  (String) getText().get(i)
+								  (String) getText(false).get(i)
 								  ,this);
 			}
 		}
 		else
 		{
-			for(int i=0;i<getText().count();i++)
+			for(int i=0;i<getText(false).count();i++)
 			{
 				canvas.setColor(Color.BLACK);
 				canvas.writeOut(  rect.left+Math.round(E_PADDING/2),
 								rect.top+(i+1)*fm.getHeight()+Math.round(E_PADDING/2),
-								(String) getText().get(i)
+								(String) getText(false).get(i)
 								);
 			}
 		}
@@ -374,14 +376,14 @@ public class Root extends Element {
 
 		if(isNice==true)
 		{
-			rect.top=_top_left.top+fm.getHeight()*getText().count()+2*E_PADDING;
+			rect.top=_top_left.top+fm.getHeight()*getText(false).count()+2*E_PADDING;
 			rect.bottom-=E_PADDING;
 			rect.left=_top_left.left+E_PADDING;
 			rect.right-=E_PADDING;
 		}
 		else
 		{
-			rect.top=_top_left.top+fm.getHeight()*getText().count()+2*Math.round(E_PADDING/2);
+			rect.top=_top_left.top+fm.getHeight()*getText(false).count()+2*Math.round(E_PADDING/2);
 			rect.left=_top_left.left;
 		}
 
@@ -395,7 +397,7 @@ public class Root extends Element {
 		// draw thick line
 		if(isNice==false)
 		{
-			rect.top=_top_left.top+fm.getHeight()*getText().count()+2*Math.round(E_PADDING/2)-1;
+			rect.top=_top_left.top+fm.getHeight()*getText(false).count()+2*Math.round(E_PADDING/2)-1;
 			rect.left=_top_left.left;
 			canvas.drawRect(rect);
 		}
@@ -2087,13 +2089,36 @@ public String getMethodName()
 
 
     public boolean isSwitchTextAndComments() {
-        return switchTextAndComments;
-    }
+// START KGU#91 2015-12-04: Bugfix #39 drawing has directly to follow the set mode
+//      return switchTextAndComments;
+  	return Element.E_TOGGLETC;
+// END KGU#91 2015-12-04
+  }
 
-    public void setSwitchTextAndComments(boolean switchTextAndComments) {
-        this.switchTextAndComments = switchTextAndComments;
-    }
-    
+// START KGU#91 2015-12-04: No longer needed
+//  public void setSwitchTextAndComments(boolean switchTextAndComments) {
+//      this.switchTextAndComments = switchTextAndComments;
+//  }
+
+	/**
+	 * Returns the content of the text field unless _alwaysTrueText is false and
+	 * mode isSwitchedTextAndComment is active, in which case the comment field
+	 * is returned instead, if it is not empty.
+	 * @param _alwaysTrueText - if true then mode isSwitchTextAndComment is ignored
+	 * @return either the text or the comment
+	 */
+    @Override
+	public StringList getText(boolean _alwaysTrueText)
+	{
+		StringList textToShow = super.getText(_alwaysTrueText);
+		if (textToShow.getText().trim().isEmpty())
+		{
+			textToShow = comment;
+		}
+		return textToShow;
+	}
+// END KGU#91 2015-12-04
+  
     // START KGU#2 2015-10-17: Inserted for enhancement request #9 subroutine calls
     /**
      * Searches all known reservoires for subroutines with a signature compatible to name(arg1, arg2, ..., arg_nArgs) 

@@ -35,6 +35,8 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2007.12.12      First Issue
  *      Kay Gürtzig     2015.10.11      Method selectElementByCoord(int,int) replaced by getElementByCoord(int,int,boolean)
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy()
+ *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
+ *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false))
  *
  ******************************************************************************************************
  *
@@ -53,7 +55,7 @@ import javax.swing.JPanel;
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
 
-public class Repeat extends Element {
+public class Repeat extends Element implements ILoop {
 	
 	public Subqueue q = new Subqueue();
 	
@@ -108,15 +110,15 @@ public class Repeat extends Element {
 		FontMetrics fm = _canvas.getFontMetrics(font);
 		
 		rect.right=Math.round(2*(E_PADDING/2));
-		for(int i=0;i<getText().count();i++)
+		for(int i=0;i<getText(false).count();i++)
 		{
-			if(rect.right<getWidthOutVariables(_canvas,getText().get(i),this)+2*Math.round(E_PADDING/2))
+			if(rect.right<getWidthOutVariables(_canvas,getText(false).get(i),this)+2*Math.round(E_PADDING/2))
 			{
-				rect.right=getWidthOutVariables(_canvas,getText().get(i),this)+2*Math.round(E_PADDING/2);
+				rect.right=getWidthOutVariables(_canvas,getText(false).get(i),this)+2*Math.round(E_PADDING/2);
 			}
 		}
 		
-		rect.bottom=2*Math.round(E_PADDING/2)+getText().count()*fm.getHeight();
+		rect.bottom=2*Math.round(E_PADDING/2)+getText(false).count()*fm.getHeight();
 		
 		r=q.prepareDraw(_canvas);
 		
@@ -156,11 +158,13 @@ public class Repeat extends Element {
 		
 		rect=_top_left.copy();
 		
+		int footerHeight = fm.getHeight() * getText(false).count() + 2*(E_PADDING / 2);
+		
 		// draw shape
 		Rect cprect=_top_left.copy();
 		canvas.setColor(Color.BLACK);
 		cprect.bottom=_top_left.bottom;
-		cprect.top=cprect.bottom-fm.getHeight()*getText().count()-2*Math.round(E_PADDING / 2);
+		cprect.top=cprect.bottom - footerHeight;
 		canvas.drawRect(cprect);
 		
 		myrect=_top_left.copy();
@@ -180,7 +184,7 @@ public class Repeat extends Element {
 		
 		myrect=_top_left.copy();
 		myrect.bottom=_top_left.bottom;
-		myrect.top=myrect.bottom-fm.getHeight()*getText().count()-2*Math.round(E_PADDING / 2);
+		myrect.top=myrect.bottom - footerHeight;
 		myrect.left=myrect.left+1;
 		myrect.top=myrect.top+1;
 		//myrect.bottom=myrect.bottom;
@@ -188,7 +192,7 @@ public class Repeat extends Element {
 		canvas.fillRect(myrect);
 		
 		// draw comment
-		if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
+		if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 		{
 			// START KGU 2015-10-11: Use an inherited helper method now
 //			canvas.setBackground(E_COMMENTCOLOR);
@@ -212,9 +216,9 @@ public class Repeat extends Element {
 		
 		
 		// draw text
-		for(int i=0;i<getText().count();i++)
+		for(int i=0;i<getText(false).count();i++)
 		{
-			String text = this.getText().get(i);
+			String text = this.getText(false).get(i);
 			
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
@@ -322,4 +326,11 @@ public class Repeat extends Element {
     }
     // END KGU 2015-10-16
 	
+	// START KGU 2015-11-30
+	@Override
+	public Subqueue getBody() {
+		return this.q;
+	}
+	// END KGU 2015-11-30
+
 }
