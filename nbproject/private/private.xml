@@ -4,11 +4,17 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+            <file>file:/Users/robertfisch/Programs/Structorizer/src/lu/fisch/structorizer/elements/Parallel.java</file>
+            <file>file:/Users/robertfisch/Programs/Structorizer/src/lu/fisch/structorizer/elements/Alternative.java</file>
+            <file>file:/Users/robertfisch/Programs/Structorizer/src/lu/fisch/structorizer/elements/Case.java</file>
+            <file>file:/Users/robertfisch/Programs/Structorizer/src/lu/fisch/structorizer/elements/Forever.java</file>
+            <file>file:/Users/robertfisch/Programs/Structorizer/src/lu/fisch/structorizer/elements/For.java</file>
             <file>file:/Users/robertfisch/Programs/Structorizer/src/lu/fisch/structorizer/elements/Element.java</file>
-            <file>file:/Users/robertfisch/Programs/Structorizer/src/lu/fisch/structorizer/executor/Executor_old2.java</file>
-            <file>file:/Users/robertfisch/Programs/Structorizer/src/lu/fisch/structorizer/gui/changelog.txt</file>
-            <file>file:/Users/robertfisch/Programs/Structorizer/src/lu/fisch/structorizer/generators/CGenerator.java</file>
-            <file>file:/Users/robertfisch/Programs/Structorizer/src/lu/fisch/structorizer/executor/Executor_old.java</file>
+            <file>file:/Users/robertfisch/Programs/Structorizer/src/lu/fisch/structorizer/elements/Repeat.java</file>
+            <file>file:/Users/robertfisch/Programs/Structorizer/src/lu/fisch/structorizer/gui/Diagram.java</file>
+            <file>file:/Users/robertfisch/Programs/Structorizer/src/lu/fisch/structorizer/elements/Root.java</file>
+            <file>file:/Users/robertfisch/Programs/Structorizer/src/lu/fisch/structorizer/elements/Call.java</file>
+            <file>file:/Users/robertfisch/Programs/Structorizer/src/lu/fisch/structorizer/elements/Instruction.java</file>
         </group>
     </open-files>
 </project-private>

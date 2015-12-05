@@ -12,6 +12,8 @@ Legend:
 <Foo>   -->     idea AND coding done by Foo
 
 Version 3.23 (2015.12.04)
+
+Version 3.22 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
 - 02: executor: fixed a bug while interpreting the title [Benjamin Bartsch]
 - 03: export: split PNG export into multiple images [Moritz Schulze]
