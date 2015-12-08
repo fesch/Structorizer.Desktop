@@ -415,12 +415,12 @@ public class For extends Element implements ILoop {
 	@Override
     protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
-		// START KGU#3 2015-11-30: Fine tuning
+		// START KGU#3 2015-11-30: Fine tuning (temporarily undone as issue #46 workaround)
 		//_lines.add(this.getText());
-		if (!_instructionsOnly)
-		{
+	//	if (!_instructionsOnly)
+	//	{
 			_lines.add(this.getText());
-		}
+	//	}
 		// END KGU#3 2015-11-30
 		this.q.addFullText(_lines, _instructionsOnly);
     }
