@@ -11,7 +11,8 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Version 3.23 (2015.12.04)
+Version 3.23 (2015.12.10)
+- 01:  Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
 
 Version 3.22 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]

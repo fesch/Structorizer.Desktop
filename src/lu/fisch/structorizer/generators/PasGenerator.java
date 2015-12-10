@@ -41,6 +41,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2014.11.16      Conversion of C-like comparison operator, comment export
  *      Kay Gürtzig         2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
  *      Kay Gürtzig         2015.10.18      Comment generation and indentation revised
+ *      Bob Fisch           2015.12.10      Bugfix #50 --> grep & export function parameter types
  *
  ******************************************************************************************************
  *
@@ -67,6 +68,7 @@ package lu.fisch.structorizer.generators;
  *
  ******************************************************************************************************///
 
+import java.util.ArrayList;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.elements.*;
@@ -466,9 +468,25 @@ public class PasGenerator extends Generator
             //code.add(_indent + pr+" "+_root.getText().get(0)+";");
             String signature = _root.getMethodName();
             if (!_root.isProgram) {
-            	insertComment("TODO declare the parameters and specify the result type!", _indent);
+                // START BFI 2015-12-10
+            	//insertComment("TODO declare the parameters and specify the result type!", _indent);
+                /*
                 StringList paraNames = _root.getParameterNames();
                 signature = signature + "(" + BString.replace(paraNames.getText(), "\n", "; ") + ")";
+                */
+                ArrayList<Param> params = _root.getParams();
+                signature += "(";
+                for(int i=0; i<params.size();i++)
+                {
+                    Param param = params.get(i);
+                    signature += param.getName()+":"+param.getType()+"; ";
+                }
+                signature += ")";
+                // return type
+                String rt = _root.getReturnType();
+                if(rt!=null)
+                    signature+=": "+rt;
+                // END BFI 2015-12-10
             }
             code.add(_indent + pr + " " + signature + ";");
             // END KGU 2015-10-18
