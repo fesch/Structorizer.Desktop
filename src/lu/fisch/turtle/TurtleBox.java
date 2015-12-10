@@ -29,7 +29,7 @@ import java.util.Vector;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import lu.fisch.structorizer.executor.DiagramController;
+import lu.fisch.structorizer.executor.DelayableDiagramController;
 import lu.fisch.turtle.elements.Element;
 import lu.fisch.turtle.elements.Line;
 import lu.fisch.turtle.elements.Move;
@@ -39,7 +39,10 @@ import lu.fisch.utils.StringList;
  *
  * @author robertfisch
  */
-public class TurtleBox extends JFrame implements DiagramController
+// START KGU#97 2015-12-10: Inheritance change for enhancement request #48
+//public class TurtleBox extends JFrame implements DiagramController
+public class TurtleBox extends JFrame implements DelayableDiagramController
+// END KGU#97 2015-12-10
 {
     private final String TITLE = "Turtleizer";
 
