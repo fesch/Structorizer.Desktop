@@ -37,6 +37,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2014.11.16		comment generation revised (see comment below)
  *      Kay Gürtzig     2015.10.18		File name proposal in exportCode(Root, File, Frame) delegated to Root
  *      Kay Gürtzig     2015.11.01		transform methods reorganised (KGU#18/KGU23) using subclassing
+ *      Bob Fisch       2015.12.10              Bugfix #51: when input identifier is alone, it was not converted
  *
  ******************************************************************************************************
  *
@@ -268,7 +269,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			{
 				matcher = matcher + "[ ]";
 			}
-			_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+                        
+                        // Start - BFI (#51)
+                        if(_interm.matches("^" + matcher + "(.*)"))
+                        {
+                            _interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+                        }
+                        else
+                        {
+                            _interm+=" ";
+                            _interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+                        }
+                        // End - BFI (#51)
 		}
 		return _interm;
 	}
@@ -291,7 +303,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			{
 				matcher = matcher + "[ ]";
 			}
-			_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+                        
+                        // Start - BFI (#51)
+                        if(_interm.matches("^" + matcher + "(.*)"))
+                        {
+                            _interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+                        }
+                        else
+                        {
+                            _interm+=" ";
+                            _interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+                        }
+                        // End - BFI (#51)
 		}
 		return _interm;
 	}

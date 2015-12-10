@@ -33,13 +33,14 @@ package lu.fisch.structorizer.elements;
  *      Author          Date		Description
  *      ------		----		-----------
  *      Bob Fisch       2007.12.09      First Issue
- *		Bob Fisch	2008.04.18		Added analyser
- *		Kay Gürtzig	2014.10.18		Var name search unified and false detection of "as" within var names mended 
- *		Kay Gürtzig	2015.10.12		new methods toggleBreakpoint() and clearBreakpoints() (KGU#43).
- *		Kay Gürtzig	2015.10.16		getFullText methods redesigned/replaced, changes in getVarNames().
- *		Kay Gürtzig	2015.10.17		improved Arranger support by method notifyReplaced (KGU#48)
- *		Kay Gürtzig	2015.11.03		New error14 field and additions to analyse for FOR loop checks (KGU#3)
- *		Kay Gürtzig	2015.12.01		Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *	Bob Fisch	2008.04.18		Added analyser
+ *	Kay Gürtzig	2014.10.18		Var name search unified and false detection of "as" within var names mended 
+ *	Kay Gürtzig	2015.10.12		new methods toggleBreakpoint() and clearBreakpoints() (KGU#43).
+ *	Kay Gürtzig	2015.10.16		getFullText methods redesigned/replaced, changes in getVarNames().
+ *	Kay Gürtzig	2015.10.17		improved Arranger support by method notifyReplaced (KGU#48)
+ *	Kay Gürtzig	2015.11.03		New error14 field and additions to analyse for FOR loop checks (KGU#3)
+ *	Kay Gürtzig	2015.12.01		Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *      Bob Fisch       2015.12.10              Bugfix #50 -> grep parameter types (Method getParams(...))
  *
  ******************************************************************************************************
  *
@@ -72,6 +73,7 @@ import lu.fisch.structorizer.gui.*;
 import com.stevesoft.pat.*;
 
 import java.awt.Point;
+import java.util.ArrayList;
 
 public class Root extends Element {
 	
@@ -1400,7 +1402,139 @@ public class Root extends Element {
             //System.out.println(varNames.getCommaText());
             return varNames;
     }
+    
+    // START BFI 2015-12-10
+    public String getReturnType()
+    {
+        try 
+        {
+            // stop and return null if this is not a function
+            if(this.isProgram) return null;
+            // get the root text
+            String rootText = this.getText().getText(); 
+            // stop if there is no closing braket
+            if(rootText.indexOf(")")<0) return null;
+            // get part after closing braket
+            rootText = rootText.substring(rootText.indexOf(")")+1);
+            // replace eventually ":"
+            rootText = rootText.replaceAll(":", "");
+            
+            return rootText.trim();
+        }
+        catch(Exception e)
+        {
+            return null;
+        }
+    }
+    
+    /*
+    // test getReturnType()
+    public static void main(String[] args)
+    {
+        StringList sl = new StringList();
+        sl.add("test(a,b:integer; c:real): string");
+        Root root = new Root(sl);
+        root.isProgram=false;
 
+        System.out.println("Starting ...");
+        System.out.println(root.getReturnType());
+        System.out.println("- end -");
+    }
+    */
+            
+    public ArrayList<Param> getParams()
+    {
+            ArrayList<Param> resultVars = new ArrayList<Param>();
+
+            // check root text for variable names
+            // !!
+            // !! This works only for Pascal-like syntax: functionname (<name>, <name>, ..., <name>:<type>; ...)
+            // !! or VBA like syntax: functionname(<name>, <name> as <type>; ...)
+            // !!
+            // !! This will also detect the functionname itself if the parentheses are missing (bug?)
+            // !!
+            try
+            {
+                    if(this.isProgram==false)
+                    {
+                            String rootText = this.getText().getText();
+                            rootText = rootText.replace("var ", "");
+                            if(rootText.indexOf("(")>=0)
+                            {
+                                    rootText=rootText.substring(rootText.indexOf("(")+1).trim();
+                                    rootText=rootText.substring(0,rootText.indexOf(")")).trim();
+                            }
+
+                            StringList params = StringList.explode(rootText,";");
+                            if(params.count()>0)
+                            {
+                                    for(int i=0;i<params.count();i++)
+                                    {
+                                            String S = params.get(i);
+                                            String varType = "";
+                                            if(S.indexOf(":")>=0)
+                                            {
+                                                // retrieve types
+                                                varType=S.substring(S.indexOf(":")+1).trim();
+                                                S=S.substring(0,S.indexOf(":")).trim();
+                                            }
+// START KGU#18 2014-10-18 "as" must not be detected if it's a substring of some identifier
+//                                            if(S.indexOf("as")>=0)
+//                                            {
+//                                                    S=S.substring(0,S.indexOf("as")).trim();
+//                                            }
+                                            // Actually, a sensible approach should consider any kinds of white space and delimiters...
+                                            if(S.indexOf(" as ")>=0)
+                                            {
+                                                    S=S.substring(0,S.indexOf(" as ")).trim();
+                                            }
+// END KGU#18 2014-10-18                                            
+                                            StringList vars = StringList.explode(S,",");
+                                            for(int j=0;j<vars.count();j++)
+                                            {
+                                                    if(!vars.get(j).trim().equals(""))
+                                                    {
+                                                        //System.out.println("Adding: "+vars.get(j).trim());
+                                                        resultVars.add(new Param(vars.get(j).trim(), varType));
+                                                    }
+                                            }
+                                    }
+                            }
+                    }
+            }
+            catch (Exception e)
+            {
+            }
+
+            // reverse
+            /*ArrayList<Param> reversedResultVars = new ArrayList<Param>();
+            for(int i=resultVars.size()-1; i>=0; i--)
+                reversedResultVars.add(resultVars.get(i));
+            */
+            
+            return resultVars;
+    }    
+    
+    /*
+    // test getParams()
+    public static void main(String[] args)
+    {
+        StringList sl = new StringList();
+        sl.add("a,b:integer; c:real");
+        Root root = new Root(sl);
+        root.isProgram=false;
+
+        System.out.println("Starting ...");
+        ArrayList<Param> vars = root.getParams();
+        for(int i=0; i<vars.size(); i++)
+        {
+           System.out.println(i+") "+vars.get(i).name+" = "+vars.get(i).type);
+        }
+        System.out.println("- end -");
+    }
+    */
+    // END BFI 2015-12-10
+    
     private String errorMsg(JLabel _label, String _rep)
     {
             String res = _label.getText();
