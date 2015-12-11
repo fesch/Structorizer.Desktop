@@ -55,10 +55,21 @@ package lu.fisch.structorizer.executor;
 *      Kay Gürtzig     2015.11.23      Enhancement #36 (KGU#84) allowing to pause from input and output dialogs.
 *      Kay Gürtzig     2015.11.24/25   Enhancement #9 (KGU#2) enabling the execution of calls accomplished.
 *      Kay Gürtzig     2015.11.25/27   Enhancement #23 (KGU#78) to handle Jump elements properly.
+*      Kay Gürtzig     2015.12.10      Bugfix #49 (KGU#99): wrapper objects in variables obstructed comparison,
+*                                      ER #48 (KGU#97) w.r.t. delay control of diagramControllers
 *
 ******************************************************************************************************
 *
 *      Comment:
+*      2015.12.10 (KGU#97, KGU#99)
+*          Bug/ER #48: An attached diagramController (usually the TurtleBox) had not immediately been
+*            informed about a delay change, such that e.g. the Turtleizer still crept in slow motion
+*            while the Executor had no delay anymore. Now a suitable diagramController will be informed.
+*          Bug 49: Equality test had failed between variables, particularly between array elements,
+*            because they presented Wrapper objects (e. g. Intege) rather than primitive values. 
+*            For scalar variables, values are now assigned as primitive type if possible (via
+*            interpreter.eval()). For array elements, in contrast, the comparison expression  will be
+*            converted, such that == and != will be replaced by .equals() calls.
 *      2015.11.23 (KGU#84) Pausing from input and output dialogs enabled (Enhancement issue #36)
 *          On cancelling input now first a warning box opens and after having quit the execution is in pause
 *          mode such that the user may edit values, abort or continue in either run oder step mode.
@@ -321,8 +332,11 @@ public class Executor implements Runnable
 		// Is there any equality test at all?
 		if (str.indexOf(" == ") >= 0 || str.indexOf(" != ") >= 0)
 		{
+			// We are looking for || operators and split the expression by them (if present) 
 			StringList exprs = StringList.explodeWithDelimiter(str, " \\|\\| ");	// '|' is a regex metasymbol!
+			// Now we do the same with && operators
 			exprs = StringList.explodeWithDelimiter(exprs, " && ");
+			// Now we should have some atomic assertions, among them comparisons
 			boolean replaced = false;
 			for (int i = 0; i < exprs.count(); i++)
 			{
@@ -331,6 +345,7 @@ public class Executor implements Runnable
 				for (int op = 0; op < eqOps.length; op++)
 				{
 					Regex r = null;
+					// The comparison operators should have been padded within the string by former conversion steps
 					if (!s.equals(" " + eqOps[op] + " ") && s.indexOf(eqOps[op]) >= 0)
 					{
 						String leftParenth = "";
@@ -360,6 +375,7 @@ public class Executor implements Runnable
 						// addendum: sorry, doesn't always work.
 						try
 						{
+							int pos = -1;	// some character position
 							Object leftO = interpreter.eval(left);
 							Object rightO = interpreter.eval(right);
 							String neg = (op > 0) ? "!" : "";
@@ -381,6 +397,14 @@ public class Executor implements Runnable
 								exprs.set(i, leftParenth + neg + right + ".equals(\"" + (Character)leftO + "\")" + rightParenth);
 								replaced = true;								
 							}
+							// START KGU#99 2015-12-10: Bugfix #49 (also replace if both operands are array elements (objects!)
+							else if ((pos = left.indexOf('[')) > -1 && left.indexOf(']', pos) > -1 && 
+									(pos = right.indexOf('[')) > -1 && right.indexOf(']', pos) > -1)
+							{
+								exprs.set(i, leftParenth + neg + left + ".equals(" + right + ")" + rightParenth);
+								replaced = true;								
+							}
+							// END KGU#99 2015-12-10
 						} catch (EvalError ex)
 						{
 							System.err.println(ex.getMessage());
@@ -936,7 +960,18 @@ public class Executor implements Runnable
 	 */
 	public void setDelay(int aDelay)
 	{
+		// START KGU#97 2015-12-20: Enh.Req. #48: Only inform if it's worth
+		boolean delayChanged = aDelay != delay;
+		// END KGU#97 2015-12-10
 		delay = aDelay;
+		// START KGU#97 2015-12-10: Enh.Req. #48: Inform a delay-aware DiaramController A.S.A.P.
+		if (delayChanged && 
+				diagramController != null &&
+				diagramController instanceof DelayableDiagramController)
+		{
+			((DelayableDiagramController) diagramController).setAnimationDelay(aDelay);
+		}
+		// END KGU#97 2015-12-20
 	}
 
 	/*
@@ -1128,7 +1163,7 @@ public class Executor implements Runnable
 
 			// MODIFIED BY GENNARO DONNARUMMA
 			// PREVENTING DAMAGED STRING AND CHARS
-			// FIXME (KGU): Seems superfluous or even dangerous
+			// FIXME (KGU): Seems superfluous or even dangerous (Addendum 2015-12-10: Now the aim became clear by issue #49)
 //			if (content != null)
 //			{
 //				if (content instanceof String)
@@ -1141,6 +1176,16 @@ public class Executor implements Runnable
 //				}
 //			}
 //			this.interpreter.eval(name + " = " + content);	// What the heck is this good for, now?
+			// START KGU#99 2015-12-10: Bugfix #49 - for later comparison etc. we try to replace wrapper objects by simple values
+			if (! (content instanceof String || content instanceof Character || content instanceof Object[]))
+			{
+				try {
+					this.interpreter.eval(name + " = " + content);	// Avoid the variable content to be an object
+				}
+				catch (EvalError ex)	// Just ignore an error (if we may rely on the previously set content to survive)
+				{}
+			}
+			// END KGU#99 2015-12-10
 			this.variables.addIfNew(name);
 		}
 		

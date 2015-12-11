@@ -31,13 +31,14 @@ package lu.fisch.structorizer.generators;
  *      Revision List
  *
  *      Author          Date			Description
- *      ------			----			-----------
+ *      ------          ----			-----------
  *      Bob Fisch       2007.12.27		First Issue
  *      Bob Fisch       2008.04.12		Plugin Interface
  *      Kay Gürtzig     2014.11.16		comment generation revised (see comment below)
  *      Kay Gürtzig     2015.10.18		File name proposal in exportCode(Root, File, Frame) delegated to Root
  *      Kay Gürtzig     2015.11.01		transform methods reorganised (KGU#18/KGU23) using subclassing
  *      Kay Gürtzig     2015.11.30		General preprocessing for generateCode(Root, String) (KGU#47)
+ *      Bob Fisch       2015.12.10		Bugfix #51: when input identifier is alone, it was not converted
  *
  ******************************************************************************************************
  *
@@ -311,7 +312,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			{
 				matcher = matcher + "[ ]";
 			}
-			_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+                        
+                        // Start - BFI (#51)
+                        if(_interm.matches("^" + matcher + "(.*)"))
+                        {
+                            _interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+                        }
+                        else
+                        {
+                            _interm+=" ";
+                            _interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+                        }
+                        // End - BFI (#51)
 		}
 		return _interm;
 	}
@@ -334,7 +346,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			{
 				matcher = matcher + "[ ]";
 			}
-			_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+                        
+                        // Start - BFI (#51)
+                        if(_interm.matches("^" + matcher + "(.*)"))
+                        {
+                            _interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+                        }
+                        else
+                        {
+                            _interm+=" ";
+                            _interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+                        }
+                        // End - BFI (#51)
 		}
 		return _interm;
 	}

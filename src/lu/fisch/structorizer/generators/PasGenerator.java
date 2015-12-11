@@ -43,6 +43,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2015.10.18      Comment generation and indentation revised
  *      Kay Gürtzig         2015.11.30      Jump generation modified, Parallel generation added, Root
  *                                          generation fundamentally redesigned (decomposed)  
+ *      Bob Fisch           2015.12.10      Bugfix #50 --> grep & export function parameter types
  *
  ******************************************************************************************************
  *
@@ -69,6 +70,7 @@ package lu.fisch.structorizer.generators;
  *
  ******************************************************************************************************///
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
