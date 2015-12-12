@@ -20,6 +20,7 @@ Version 3.23-04 (2015.12.12)
 - 04: Enh. #54 - Output instruction with expression list (executor, most generators) <Kay Gürtzig>
 - 04: Bugfix #55 - highlighting of variables with keywords as substring mended <Kay Gürtzig>
 - 04: Bugfix #57 - Risk of endless loops and other flaws on Perl export <Kay Gürtzig>
+- 04: Bugfix #59 - For loop export to Python was defective <Kay Gürtzig>
 
 Version 3.22 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
