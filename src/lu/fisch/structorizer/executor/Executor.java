@@ -49,8 +49,10 @@ package lu.fisch.structorizer.executor;
 *                                      wrong equality operator in stepCase().
 *      Kay Gürtzig     2015.11.11      Issue #21 KGU#77 fixed: return instructions didn't terminate the execution.
 *      Kay Gürtzig     2015.11.12      Bugfix KGU#79: WHILE condition wasn't effectively converted.
+*      Kay Gürtzig     2015.11.23      Enhancement #36 (KGU#84) allowing to pause from input and output dialogs.
 *      Kay Gürtzig     2015.12.10      Bugfix #49 (KGU#99): wrapper objects in variables obstructed comparison,
 *                                      ER #48 (KGU#97) w.r.t. delay control of diagramControllers
+*      Kay Gürtzig     2015.12.11      Enhancement #54 KGU#101: List of output expressions
 *
 ******************************************************************************************************
 *
@@ -64,6 +66,10 @@ package lu.fisch.structorizer.executor;
 *            For scalar variables, values are now assigned as primitive type if possible (via
 *            interpreter.eval()). For array elements, in contrast, the comparison expression  will be
 *            converted, such that == and != will be replaced by .equals() calls.
+*      2015.11.23 (KGU#84) Pausing from input and output dialogs enabled (Enhancement issue #36)
+*          On cancelling input now first a warning box opens and after having quit the execution is in pause
+*          mode such that the user may edit values, abort or continue in either run oder step mode.
+*          Output and result message dialogs now provide a Pause button to allow to pause mode (see above).
 *      2015.11.04 (KGU#65) Input/output execution mended
 *          The configured input / output parser settings triggered input or output action also if found
 *          deep in a line, even within a string literal. This was mended.
@@ -1384,10 +1390,30 @@ public class Executor implements Runnable
 		// END KGU33 2014-12-05
 		String str = JOptionPane.showInputDialog(null,
 				"Please enter a value for <" + in + ">", null);
-		// START KGU#69 2015-11-08: Use specific method for raw input
-		// (obsolete code lines removed)
-		setVarRaw(in, str);
-		// END KGU#69 2015-11-08
+		// START KGU#84 2015-11-23: ER #36 - Allow a controlled continuation on cancelled input
+		//setVarRaw(in, str);
+		if (str == null)
+		{
+			// Switch to step mode such that the user may enter the variable in the display and go on
+			JOptionPane.showMessageDialog(diagram, "Execution paused - you may enter the value in the variable display.",
+					"Input cancelled", JOptionPane.WARNING_MESSAGE);
+			paus = true;
+			step = true;
+			this.control.setButtonsForPause();
+			if (!variables.contains(in))
+			{
+				// If the variable hasn't been used before, we must create it now
+				setVar(in, null);
+			}
+		}
+		else
+		{
+			// START KGU#69 2015-11-08: Use specific method for raw input
+			setVarRaw(in, str);
+			// END KGU#69 2015-11-08
+		}
+		// END KGU#84 2015-11-23
+		
 		return result;
 	}
 
@@ -1395,20 +1421,58 @@ public class Executor implements Runnable
 	private String tryOutput(String cmd) throws EvalError
 	{
 		String result = "";
-		String out = cmd.substring(
-				cmd.indexOf(D7Parser.output)
-						+ D7Parser.output.length()).trim();
-		Object n = interpreter.eval(out);
-		if (n == null)
+		// KGU 2015-12-11: Instruction is supposed to start with the output keyword!
+		String out = cmd.substring(/*cmd.indexOf(D7Parser.output) +*/
+						D7Parser.output.trim().length()).trim();
+		// START KGU#101 2015-12-11: Fix #54 - Allow several expressions to be output in a line
+		StringList outExpressions = Element.splitExpressionList(out, ",");
+		String str = "";
+		for (int i = 0; i < outExpressions.count() && result.isEmpty(); i++)
 		{
-			result = "<"
-					+ out
-					+ "> is not a correct or existing expression.";
-		} else
+			out = outExpressions.get(i);
+		// END KGU#101 2015-12-11
+			Object n = interpreter.eval(out);
+			if (n == null)
+			{
+				result = "<"
+						+ out
+						+ "> is not a correct or existing expression.";
+			} else
+			{
+		// START KGU#101 2015-12-11
+		//	String s = unconvert(n.toString());
+				str += n.toString();
+			}
+		}
+		if (result.isEmpty())
 		{
-			String s = unconvert(n.toString());
-			JOptionPane.showMessageDialog(diagram, s, "Output",
-					0);
+			String s = unconvert(str);
+		// END KGU#101 2015-12-11
+			// START KGU#84 2015-11-23: Enhancement #36 to give a chance to pause
+			//JOptionPane.showMessageDialog(diagram, s, "Output",
+			//		0);
+			//System.out.println("running/step/paus/stop: " +
+			//		running + " / " + step + " / " + paus + " / " + " / " + stop);
+			if (step)
+			{
+				// In step mode, there is no use to offer pausing
+				JOptionPane.showMessageDialog(diagram, s, "Output",
+						JOptionPane.INFORMATION_MESSAGE);
+			}
+			else
+			{
+				// In run mode, give the user a chance to intervene
+				Object[] options = {"OK", "Pause"};	// FIXME: Provide a translation
+				int pressed = JOptionPane.showOptionDialog(diagram, s, "Output",
+						JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
+				if (pressed == 1)
+				{
+					paus = true;
+					step = true;
+					control.setButtonsForPause();
+				}
+			}
+			// END KGU#84 2015-11-23
 		}
 		return result;
 	}
@@ -1428,8 +1492,19 @@ public class Executor implements Runnable
 		} else
 		{
 			String s = unconvert(n.toString());
-			JOptionPane.showMessageDialog(diagram, s,
-					"Returned result", 0);
+			// START KGU#84 2015-11-23: Enhancement #36 to give a chance to pause
+			//JOptionPane.showMessageDialog(diagram, s,
+			//		"Returned result", 0);
+			Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
+			int pressed = JOptionPane.showOptionDialog(diagram, s, "Returned result",
+					JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
+			if (pressed == 1)
+			{
+				step = true;
+				paus = true;
+				control.setButtonsForPause();
+			}
+			// END KGU#84 2015-11-23
 		}
 		returned = true;
 		return result;
