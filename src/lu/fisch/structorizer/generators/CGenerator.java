@@ -43,10 +43,11 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2014.11.16		Bugfixes in operator conversion
  *      Kay Gürtzig             2015.10.18		Indentation and comment mechanisms revised, bugfix
  *      Kay Gürtzig             2015.10.21		New generator now supports multiple-case branches
- *      Kay Gürtzig             2015.11.01      Language transformation reorganised, FOR loop revision
- *      Kay Gürtzig             2015.11.10      Bugfixes KGU#71, KGU#72
+ *      Kay Gürtzig             2015.11.01		Language transforming reorganised, FOR loop revision
+ *      Kay Gürtzig             2015.11.10		Bugfixes KGU#71 (switch default), KGU#72 (div operators)
  *      Kay Gürtzig             2015.11.10      Code style option optionBlockBraceNextLine() added,
  *                                              bugfix/enhancement #22 (KGU#74 jump and return handling)
+ *      Kay Gürtzig             2015.12.13		Bugfix #51 (=KGU#108): Cope with empty input and output
  *
  ******************************************************************************************************
  *
@@ -225,22 +226,26 @@ public class CGenerator extends Generator {
 	}
 
 	// END KGU#18/KGU#23 2015-11-01
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * lu.fisch.structorizer.generators.Generator#transform(java.lang.String)
+    
+// START KGU#18/KGU#23 2015-11-01: Obsolete    
+//    public static String transform(String _input)
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String)
 	 */
 	@Override
-	protected String transform(String _input) {
+	protected String transform(String _input)
+	{
 		_input = super.transform(_input);
 
 		// START KGU#72 2015-11-10: Replacement was done but ineffective
-		// _input.replace(" div ", " / ");
+		//_input.replace(" div ", " / ");
 		_input = _input.replace(" div ", " / ");
 		// END KGU#72 2015-11-10
-
+		// START KGU#108 2015-12-13: Bugfix #51: Cope with empty input and output
+		_input = _input.replace("scanf(\"\", &)", "getchar()");
+		_input = _input.replace("printf(\"\", ); ", "");
+		// END KGU#108 2015-12-13
+		
 		return _input.trim();
 	}
 

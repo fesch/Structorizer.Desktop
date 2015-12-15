@@ -88,67 +88,67 @@ import lu.fisch.structorizer.elements.*;
 public class CSharpGenerator extends CGenerator 
 {
 
-        /************ Fields ***********************/
-        protected String getDialogTitle()
-        {
-                return "Export C# ...";
-        }
+	/************ Fields ***********************/
+	protected String getDialogTitle()
+	{
+		return "Export C# ...";
+	}
 
-        protected String getFileDescription()
-        {
-                return "C# Source Code";
-        }
+	protected String getFileDescription()
+	{
+		return "C# Source Code";
+	}
 
-        protected String[] getFileExtensions()
-        {
-                String[] exts = {"cs"};
-                return exts;
-        }
+	protected String[] getFileExtensions()
+	{
+		String[] exts = {"cs"};
+		return exts;
+	}
 
-        // TODO
-        /************ Code Generation **************/
+	// TODO
+	/************ Code Generation **************/
 
-        // START KGU#18/KGU#23 2015-11-01 Transformation decomposed
-		/**
-		 * A pattern how to embed the variable (right-hand side of an input instruction)
-		 * into the target code
-		 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
-		 */
-		protected String getInputReplacer()
-		{
-			return "Console.ReadLine($1)";
-		}
+	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
+	/**
+	 * A pattern how to embed the variable (right-hand side of an input instruction)
+	 * into the target code
+	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
+	 */
+	protected String getInputReplacer()
+	{
+		return "Console.ReadLine($1)";
+	}
 
-		/**
-		 * A pattern how to embed the expression (right-hand side of an output instruction)
-		 * into the target code
-		 * @return a regex replacement pattern, e.g. "System.out.println($1);"
-		 */
-		protected String getOutputReplacer()
-		{
-			return "Console.WriteLine($1)";
-		}
+	/**
+	 * A pattern how to embed the expression (right-hand side of an output instruction)
+	 * into the target code
+	 * @return a regex replacement pattern, e.g. "System.out.println($1);"
+	 */
+	protected String getOutputReplacer()
+	{
+		return "Console.WriteLine($1)";
+	}
 
-		
-		// START KGU#16/#47 2015-11-30
-		/**
-		 * Instruction to create a language-specific exit instruction (subclassable)
-		 * The exit code will be passed to the generated code.
-		 */
-		protected void insertExitInstr(String _exitCode, String _indent)
-		{
-			Jump dummy = new Jump();
-			insertBlockHeading(dummy, "if (System.Windows.Forms.Application.MessageLoop)", _indent); 
-			insertComment("WinForms app", _indent + this.getIndent());
-			code.add(_indent + this.getIndent() + "System.Windows.Forms.Application.Exit();");
-			insertBlockTail(dummy, null, _indent);
 
-			insertBlockHeading(dummy, "else", _indent); 
-			insertComment("Console app", _indent + this.getIndent());
-			code.add(_indent + this.getIndent() + "System.Environment.Exit(" + _exitCode + ");");
-			insertBlockTail(dummy, null, _indent);
-		}
-		// END KGU#16/#47 2015-11-30
+	// START KGU#16/#47 2015-11-30
+	/**
+	 * Instruction to create a language-specific exit instruction (subclassable)
+	 * The exit code will be passed to the generated code.
+	 */
+	protected void insertExitInstr(String _exitCode, String _indent)
+	{
+		Jump dummy = new Jump();
+		insertBlockHeading(dummy, "if (System.Windows.Forms.Application.MessageLoop)", _indent); 
+		insertComment("WinForms app", _indent + this.getIndent());
+		code.add(_indent + this.getIndent() + "System.Windows.Forms.Application.Exit();");
+		insertBlockTail(dummy, null, _indent);
+
+		insertBlockHeading(dummy, "else", _indent); 
+		insertComment("Console app", _indent + this.getIndent());
+		code.add(_indent + this.getIndent() + "System.Environment.Exit(" + _exitCode + ");");
+		insertBlockTail(dummy, null, _indent);
+	}
+	// END KGU#16/#47 2015-11-30
 
 // KGU#47 2015-11-30: Now inherited - exactly same behaviour as in C		
 //        // JUMP
@@ -272,114 +272,131 @@ public class CSharpGenerator extends CGenerator
 //        	return code.getText();
 //        }
 
-    	/**
-    	 * Composes the heading for the program or function according to the
-    	 * C language specification.
-    	 * @param _root - The diagram root
-    	 * @param _indent - the initial indentation string
-    	 * @param _procName - the procedure name
-    	 * @param paramNames - list of the argument names
-    	 * @param paramTypes - list of corresponding type names (possibly null) 
-    	 * @param resultType - result type name (possibly null)
-    	 * @return the default indentation string for the subsequent stuff
-    	 */
-    	@Override
-    	protected String generateHeader(Root _root, String _indent, String _procName,
-    			StringList _paramNames, StringList _paramTypes, String _resultType)
-    	{
-        	if (_root.isProgram==true) {
-        		code.add(_indent + "using System;");
-        		code.add(_indent + "");
-        		// START KGU 2015-10-18
-        		insertBlockComment(_root.getComment(), _indent, "/**", " * ", " */");
-        		// END KGU 2015-10-18
+	/**
+	 * Composes the heading for the program or function according to the
+	 * C language specification.
+	 * @param _root - The diagram root
+	 * @param _indent - the initial indentation string
+	 * @param _procName - the procedure name
+	 * @param paramNames - list of the argument names
+	 * @param paramTypes - list of corresponding type names (possibly null) 
+	 * @param resultType - result type name (possibly null)
+	 * @return the default indentation string for the subsequent stuff
+	 */
+	@Override
+	protected String generateHeader(Root _root, String _indent, String _procName,
+			StringList _paramNames, StringList _paramTypes, String _resultType)
+	{
+		if (_root.isProgram==true) {
+			code.add(_indent + "using System;");
+			code.add(_indent + "");
+			// START KGU 2015-10-18
+			insertBlockComment(_root.getComment(), _indent, "/**", " * ", " */");
+			// END KGU 2015-10-18
 
-        		insertBlockHeading(_root, "public class "+ _procName, _indent);
-        		code.add(_indent);
-        		insertComment("TODO: Declare and initialise global variables here", _indent + this.getIndent());
-        		code.add(_indent);
-        		code.add(_indent + this.getIndent()+"/**");
-        		code.add(_indent + this.getIndent()+" * @param args");
-        		code.add(_indent + this.getIndent()+" */");
+			insertBlockHeading(_root, "public class "+ _procName, _indent);
+			code.add(_indent);
+			insertComment("TODO: Declare and initialise global variables here", _indent + this.getIndent());
+			code.add(_indent);
+			code.add(_indent + this.getIndent()+"/**");
+			code.add(_indent + this.getIndent()+" * @param args");
+			code.add(_indent + this.getIndent()+" */");
 
-        		insertBlockHeading(_root, "public static void Main(string[] args)", _indent + this.getIndent());
-    	    	code.add("");
-    		}
-        	else {
-        		insertBlockComment(_root.getComment(), _indent+this.getIndent(), "/**", " * ", null);
-        		if (_resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
-        		{
-        			insertBlockComment(_paramNames, _indent + this.getIndent(), null, " * @param ", null);
-        			code.add(_indent+this.getIndent() + " * @return ");
-        			code.add(_indent+this.getIndent() + " */");
-        			_resultType = transformType(_resultType, "int");
-        		}
-        		else
-        		{
-        			insertBlockComment(_paramNames, _indent+this.getIndent(), null, " * @param ", " */");
-        			_resultType = "void";
-        		}
-        		String fnHeader = "public static " + _resultType + " " + _procName + "(";
-        		for (int p = 0; p < _paramNames.count(); p++) {
-        			if (p > 0)
-        				fnHeader += ", ";
-        			fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
-        				_paramNames.get(p)).trim();
-        		}
-        		fnHeader += ")";
-        		insertBlockHeading(_root, fnHeader, _indent+this.getIndent());
-        	}
-    		
-    		return _indent + this.getIndent() + this.getIndent();
-    	}
+			insertBlockHeading(_root, "public static void Main(string[] args)", _indent + this.getIndent());
+			code.add("");
+		}
+		else {
+			insertBlockComment(_root.getComment(), _indent+this.getIndent(), "/**", " * ", null);
+			if (_resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
+			{
+				insertBlockComment(_paramNames, _indent + this.getIndent(), null, " * @param ", null);
+				code.add(_indent+this.getIndent() + " * @return ");
+				code.add(_indent+this.getIndent() + " */");
+				_resultType = transformType(_resultType, "int");
+			}
+			else
+			{
+				insertBlockComment(_paramNames, _indent+this.getIndent(), null, " * @param ", " */");
+				_resultType = "void";
+			}
+			String fnHeader = "public static " + _resultType + " " + _procName + "(";
+			for (int p = 0; p < _paramNames.count(); p++) {
+				if (p > 0)
+					fnHeader += ", ";
+				fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
+						_paramNames.get(p)).trim();
+			}
+			fnHeader += ")";
+			insertBlockHeading(_root, fnHeader, _indent+this.getIndent());
+		}
+
+		return _indent + this.getIndent() + this.getIndent();
+	}
+
+	/**
+	 * Generates some preamble (i.e. comments, language declaration section etc.)
+	 * and adds it to this.code.
+	 * @param _root - the diagram root element
+	 * @param _indent - the current indentation string
+	 * @param varNames - list of variable names introduced inside the body
+	 */
+	@Override
+	protected String generatePreamble(Root _root, String _indent, StringList varNames)
+	{
+		code.add("");
+		// Variable declaration proposals (now with all used variables listed)
+		insertComment("TODO: Declare local variables here:", _indent);
+		for (int v = 0; v < varNames.count(); v++)
+		{
+			insertComment(varNames.get(v), _indent);
+		}
+		code.add("");
+		return _indent;
+	}
+
+	/**
+	 * Creates the appropriate code for returning a required result and adds it
+	 * (after the algorithm code of the body) to this.code)
+	 * @param _root - the diagram root element
+	 * @param _indent - the current indentation string
+	 * @param alwaysReturns - whether all paths of the body already force a return
+	 * @param varNames - names of all assigned variables
+	 */
+	@Override
+	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
+	{
+		if ((returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
+		{
+			String result = "0";
+			if (isFunctionNameSet)
+			{
+				result = _root.getMethodName();
+			}
+			else if (isResultSet)
+			{
+				int vx = varNames.indexOf("result", false);
+				result = varNames.get(vx);
+			}
+			code.add(_indent);
+			code.add(_indent + "return " + result + ";");
+		}
+		return _indent;
+	}
+
+	// START KGU 2015-12-15: Method block must be closed as well
+	/**
+	 * Method is to finish up after the text insertions of the diagram, i.e. to close open blocks etc. 
+	 * @param _root - the diagram root element 
+	 * @param _indent - the current indentation string
+	 */
+	@Override
+	protected void generateFooter(Root _root, String _indent)
+	{
+		// Method block close
+		code.add(_indent + this.getIndent() + "}");
+
+		super.generateFooter(_root, _indent);
+	}
+	// END KGU 2015-12-15
     	
-    	/**
-    	 * Generates some preamble (i.e. comments, language declaration section etc.)
-    	 * and adds it to this.code.
-    	 * @param _root - the diagram root element
-    	 * @param _indent - the current indentation string
-    	 * @param varNames - list of variable names introduced inside the body
-    	 */
-    	@Override
-    	protected String generatePreamble(Root _root, String _indent, StringList varNames)
-    	{
-    		code.add("");
-	    	// Variable declaration proposals (now with all used variables listed)
-    		insertComment("TODO: Declare local variables here:", _indent);
-    		for (int v = 0; v < varNames.count(); v++)
-    		{
-    			insertComment(varNames.get(v), _indent);
-    		}
-    		code.add("");
-    		return _indent;
-    	}
-        
-    	/**
-    	 * Creates the appropriate code for returning a required result and adds it
-    	 * (after the algorithm code of the body) to this.code)
-    	 * @param _root - the diagram root element
-    	 * @param _indent - the current indentation string
-    	 * @param alwaysReturns - whether all paths of the body already force a return
-    	 * @param varNames - names of all assigned variables
-    	 */
-    	@Override
-    	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
-    	{
-    		if ((returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
-    		{
-    			String result = "0";
-    			if (isFunctionNameSet)
-    			{
-    				result = _root.getMethodName();
-    			}
-    			else if (isResultSet)
-    			{
-    				int vx = varNames.indexOf("result", false);
-    				result = varNames.get(vx);
-    			}
-    			code.add(_indent);
-    			code.add(_indent + "return " + result + ";");
-    		}
-    		return _indent;
-    	}
 }

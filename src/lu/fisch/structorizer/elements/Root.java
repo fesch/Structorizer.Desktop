@@ -2824,7 +2824,7 @@ public class Root extends Element {
 		StringList textToShow = super.getText(_alwaysTrueText);
 		if (textToShow.getText().trim().isEmpty())
 		{
-			textToShow = comment;
+			textToShow = text;
 		}
 		return textToShow;
 	}

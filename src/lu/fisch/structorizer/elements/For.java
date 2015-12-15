@@ -40,6 +40,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.14      Bugfixes (#28 = KGU#80 and #31 = KGU#82) in Method copy
  *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
  *      Kay Gürtzig     2015.12.01      Bugfix #39 (=KGU#91) -> getText(false), prepareDraw() optimised
+ *      Kay Gürtzig     2015.12.08      //Temporary modification in addFullText() as workaround for bug #46
  *
  ******************************************************************************************************
  *
@@ -128,7 +129,6 @@ public class For extends Element implements ILoop {
 
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 
-		rect.right=Math.round(2*(Element.E_PADDING/2));
 		for (int i=0; i<getText(false).count(); i++)
 		{
 			int lineWidth = getWidthOutVariables(_canvas, getText(false).get(i), this) + padding;
@@ -168,7 +168,7 @@ public class For extends Element implements ILoop {
 //			r=q.prepareDraw(_canvas);
 //			
 //			rect.right=Math.max(rect.right,r.right+E_PADDING);
-			rect.bottom += r.bottom + E_PADDING;		
+			rect.bottom += r.bottom + E_PADDING;
 //			return rect;
 		}
 		else
@@ -232,6 +232,7 @@ public class For extends Element implements ILoop {
 		Canvas canvas = _canvas;
 		canvas.setBackground(drawColor);
 		canvas.setColor(drawColor);
+
 
 		int headerHeight = fm.getHeight() * getText(false).count() + 2 * (Element.E_PADDING / 2);
 
@@ -417,12 +418,12 @@ public class For extends Element implements ILoop {
 	@Override
     protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
-		// START KGU#3 2015-11-30: Fine tuning (temporarily undone as issue #46 workaround)
+		// START KGU#3 2015-11-30: Fine tuning
 		//_lines.add(this.getText());
-	//	if (!_instructionsOnly)
-	//	{
+		if (!_instructionsOnly)
+		{
 			_lines.add(this.getText());
-	//	}
+		}
 		// END KGU#3 2015-11-30
 		this.q.addFullText(_lines, _instructionsOnly);
     }

@@ -11,18 +11,21 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.23-05 (2015.12.11)
-- 05: executor: Subroutine call now supported via Arranger as pool (#9) <Kay Gürtzig>
-- 05: executor: Control panel shows subdiagram call depth and (on error) stacktrace <Kay Gürtzig>
-- 05: executor: Jump execution according to enhancement request (#10) <Kay Gürtzig>
-- 05: arranger: Arranger can now be opened from Structorizer, diagrams sent there. <Kay Gürtzig>
-- 05: arranger: diagrams may be pinned (protected against replacement) and dropped <Kay Gürtzig>
-- 05: arranger: Display now has got scrollbars and moves to a just added diagram <Kay Gürtzig>
-- 05: generator: Export to C, C++, C#, Java, and Pascal now supports Jumps <Kay Gürtzig>
+Current development version: 3.23-05 (2015.12.20)
+- 05: executor: Enh. #9 - Subroutine call now supported via Arranger as pool <Kay Gürtzig>
+- 05: executor: Enh. #9 - Control panel shows call depth and (on error) stacktrace <Kay Gürtzig>
+- 05: executor: Enh. #23 - Jump execution implemented in three categories <Kay Gürtzig>
+- 05: arranger: Enh. #9 - Structorizer can now push diagrams into Arranger. <Kay Gürtzig>
+- 05: arranger: Enh. #35 - Display now has got scrollbars and moves to a just added diagram <Kay Gürtzig>
+- 05: arranger: Enh. #35 - Diagrams may be pinned (against replacement) and dropped <Kay Gürtzig>
+- 05: generator: Enh. #23 - Export to C, C++, C#, Java, and Pascal now supports Jumps <Kay Gürtzig>
 - 05: analyser: New checks for calls, jumps, return mechanisms and concurrency risks <Kay Gürtzig>
 - 05: analyser: Analyser hadn't checked within Forever loops and Parallel sections <Kay Gürtzig>
-- 05: editor: Multiple element selection (all of subqueue on Alt, a sequence on shift) <Kay Gürtzig>
+- 05: Enh. #38: Multiple selection (Alt+Click: entire subqueue, Shift+Click: sequence) <Kay Gürtzig>
 - 05: updated language files (DE,EN,ES) <Kay Gürtzig>
+- 05: executor: Localisation attempts for Control panel <Kay Gürtzig>
+- 05: Enh. #51 - Handling of empty input/output instructions by executor and export <Kay Gürtzig>
+- 05: executor: Parameter splitting for functions calls improved <Kay Gürtzig>
 
 Version 3.23-04 (2015.12.12)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]

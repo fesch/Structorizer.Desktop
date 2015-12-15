@@ -21,32 +21,33 @@
 package lu.fisch.structorizer.generators;
 
 /******************************************************************************************************
-*
-*      Author:         Kay Gürtzig
-*
-*      Description:    This class generates C++ code (mainly based on ANSI C code except for IO).
-*
-******************************************************************************************************
-*
-*      Revision List
-*
-*      Author          	Date			Description
-*      ------			----			-----------
-*      Kay Gürtzig      2010.08.31      First Issue
-*      Kay Gürtzig      2015.11.01      Adaptations to new decomposed preprocessing
-*      Kay Gürtzig      2015.11.30      Jump mechanisms (KGU#78) and root export revised 
-*      Kay Gürtzig      2015.12.11      Enh. #54 (KGU#101): Support for output expression lists
-*
-******************************************************************************************************
-*
-*      Comment:
-*      2015.11.01 Simplified, drastically reduced to CGenerator as parent class
-
-*      2010.08.31 Initial version
-*      - root handling overridden - still too much copied code w.r.t. CGenerator, should be
-*        parameterized
-*
-******************************************************************************************************///
+ *
+ *      Author:         Kay Gürtzig
+ *
+ *      Description:    This class generates C++ code (mainly based on ANSI C code except for IO).
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2010.08.31      First Issue
+ *      Kay Gürtzig     2015.11.01      Adaptations to new decomposed preprocessing
+ *      Kay Gürtzig     2015.11.30      Jump mechanisms (KGU#78) and root export revised 
+ *      Kay Gürtzig     2015.12.11      Enh. #54 (KGU#101): Support for output expression lists
+ *      Kay Gürtzig     2015.12.13		Bugfix #51 (=KGU#108): Cope with empty input and output
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:
+ *      2015.11.01 Simplified, drastically reduced to CGenerator as parent class
+ *
+ *      2010.08.31 Initial version
+ *      - root handling overridden - still too much copied code w.r.t. CGenerator, should be
+ *        parameterized
+ *
+ ******************************************************************************************************///
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
@@ -114,13 +115,16 @@ public class CPlusPlusGenerator extends CGenerator {
 		
 		_input = super.transform(_input);
 		
+		// START KGU#108 2015-12-13: Bugfix #51: Cope with empty input and output
+		if (_input.equals("std::cin >>")) _input = "getchar()";	// FIXME Better solution required
+		_input = _input.replace("<<  <<", "<<");
+		// END KGU#108 2015-12-13
+
 		return _input.trim();
 	}
 	// END KGU#101 2015-12-11
 	
-    @Override
-    public String generateCode(Root _root, String _indent)
-    {
+
 // KGU#74 (2015-11-30): Now we only override some of the decomposed methods below
 //    @Override
 //    public String generateCode(Root _root, String _indent)
