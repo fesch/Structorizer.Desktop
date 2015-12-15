@@ -30,22 +30,23 @@ package lu.fisch.structorizer.elements;
  *
  *      Revision List
  *
- *      Author          Date		Description
- *      ------		----		-----------
- *      Bob Fisch      2007.12.09      First Issue
- *      Bob Fisch      2008.04.18      Added analyser
- *      Kay Gürtzig    2014.10.18      Var name search unified and false detection of "as" within var names mended
- *      Kay Gürtzig    2015.10.12      new methods toggleBreakpoint() and clearBreakpoints() (KGU#43).
- *      Kay Gürtzig    2015.10.16      getFullText methods redesigned/replaced, changes in getVarNames()
- *      Kay Gürtzig    2015.10.17      improved Arranger support by method notifyReplaced (KGU#48)
- *      Kay Gürtzig    2015.11.03      New error14 field and additions to analyse for FOR loop checks (KGU#3)
- *      Kay Gürtzig    2015.11.13/14   Method copy() accomplished, modifications for subroutine calls (KGU#2 = #9)
- *      Kay Gürtzig    2015.11.22/23   Modifications to support selection of Element sequences (KGU#87),
- *                                     Code revision in Analyser (field Subqueue.children now private).
- *      Kay Gürtzig    2015.11.28      Several additions to analyser (KGU#2 = #9, KGU#47, KGU#78 = #23) and
- *                                     saveToIni()
- *      Kay Gürtzig    2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
- *      Bob Fisch      2015.12.10      Bugfix #50 -> grep parameter types (Method getParams(...))
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2007.12.09      First Issue
+ *      Bob Fisch       2008.04.18      Added analyser
+ *      Kay Gürtzig     2014.10.18      Var name search unified and false detection of "as" within var names mended
+ *      Kay Gürtzig     2015.10.12      new methods toggleBreakpoint() and clearBreakpoints() (KGU#43).
+ *      Kay Gürtzig     2015.10.16      getFullText methods redesigned/replaced, changes in getVarNames()
+ *      Kay Gürtzig     2015.10.17      improved Arranger support by method notifyReplaced (KGU#48)
+ *      Kay Gürtzig     2015.11.03      New error14 field and additions to analyse for FOR loop checks (KGU#3)
+ *      Kay Gürtzig     2015.11.13/14   Method copy() accomplished, modifications for subroutine calls (KGU#2 = #9)
+ *      Kay Gürtzig     2015.11.22/23   Modifications to support selection of Element sequences (KGU#87),
+ *                                      Code revision in Analyser (field Subqueue.children now private).
+ *      Kay Gürtzig     2015.11.28      Several additions to analyser (KGU#2 = #9, KGU#47, KGU#78 = #23) and
+ *                                      saveToIni()
+ *      Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *      Bob Fisch       2015.12.10      Bugfix #50 -> grep parameter types (Method getParams(...))
+ *      Kay Gürtzig     2015.12.11      Bugfix #54 (KGU#102) in getVarNames(): keywords within identifiers
  *
  ******************************************************************************************************
  *
@@ -1258,21 +1259,39 @@ public class Root extends Element {
                     // Should use PARAMETERS HERE!!!
                     //
 
+                    // START KGU#102 2015-12-11: Bugfix #55 keyword replacement must not be done within identifiers
+                    // FIXME (KGU): Is it necessary to accept the keywords case-independently (well, in Pascal it is)
+//                    // input
+//                    r = new Regex(BString.breakup(D7Parser.input.trim())+"[ ](.*?)",D7Parser.input.trim()+" $1"); allText=r.replaceAll(allText);
+//                    // output
+//                    r = new Regex(BString.breakup(D7Parser.output.trim())+"[ ](.*?)",D7Parser.output.trim()+" $1"); allText=r.replaceAll(allText);
+//                    // for
+//                    r = new Regex(BString.breakup(D7Parser.preFor.trim())+"(.*?)"+D7Parser.postFor.trim()+"(.*?)",D7Parser.preFor.trim()+"$1"+D7Parser.postFor.trim()+"$2"); allText=r.replaceAll(allText);
+//                    // while
+//                    r = new Regex(BString.breakup(D7Parser.preWhile.trim())+"(.*?)",D7Parser.preWhile.trim()+"$1"); allText=r.replaceAll(allText);
+//                    // repeat
+//                    r = new Regex(BString.breakup(D7Parser.preRepeat.trim())+"(.*?)",D7Parser.preRepeat.trim()); allText=r.replaceAll(allText);
+//                    // for
+//                    if(allText.indexOf(D7Parser.preFor.trim())>=0)
+//                    {
+//                            allText=allText.substring(allText.indexOf(D7Parser.preFor.trim())+D7Parser.preFor.trim().length()).trim();
+//                    }
                     // input
-                    r = new Regex(BString.breakup(D7Parser.input.trim())+"[ ](.*?)",D7Parser.input.trim()+" $1"); allText=r.replaceAll(allText);
+                    r = new Regex("^"+BString.breakup(D7Parser.input.trim())+"[ ](.*?)", D7Parser.input.trim()+" $1"); allText=r.replaceAll(allText);
                     // output
-                    r = new Regex(BString.breakup(D7Parser.output.trim())+"[ ](.*?)",D7Parser.output.trim()+" $1"); allText=r.replaceAll(allText);
+                    r = new Regex("^"+BString.breakup(D7Parser.output.trim())+"[ ](.*?)", D7Parser.output.trim()+" $1"); allText=r.replaceAll(allText);
                     // for
-                    r = new Regex(BString.breakup(D7Parser.preFor.trim())+"(.*?)"+D7Parser.postFor.trim()+"(.*?)",D7Parser.preFor.trim()+"$1"+D7Parser.postFor.trim()+"$2"); allText=r.replaceAll(allText);
+                    r = new Regex("(^|[\\W])"+BString.breakup(D7Parser.preFor.trim())+"([ ].*?)"+D7Parser.postFor.trim()+"([ ].*?)", D7Parser.preFor.trim()+"$2"+D7Parser.postFor.trim()+"$3"); allText=r.replaceAll(allText);
                     // while
-                    r = new Regex(BString.breakup(D7Parser.preWhile.trim())+"(.*?)",D7Parser.preWhile.trim()+"$1"); allText=r.replaceAll(allText);
+                    r = new Regex("^"+BString.breakup(D7Parser.preWhile.trim())+"(.*?)", D7Parser.preWhile.trim()+"$1"); allText=r.replaceAll(allText);
                     // repeat
-                    r = new Regex(BString.breakup(D7Parser.preRepeat.trim())+"(.*?)",D7Parser.preRepeat.trim()); allText=r.replaceAll(allText);
+                    r = new Regex("^"+BString.breakup(D7Parser.preRepeat.trim())+"(.*?)", D7Parser.preRepeat.trim()); allText=r.replaceAll(allText);
                     // for
-                    if(allText.indexOf(D7Parser.preFor.trim())>=0)
+                    if(allText.matches("(^|[\\W])" + D7Parser.preFor.trim() + "[ ](.*)"))
                     {
-                            allText=allText.substring(allText.indexOf(D7Parser.preFor.trim())+D7Parser.preFor.trim().length()).trim();
+                            allText=allText.substring(allText.indexOf(D7Parser.preFor.trim()+" ")+D7Parser.preFor.trim().length()).trim();
                     }
+                    // END KGU#102 2015-12-11
 
                     // START KGU 2015-11-28: Operators have already been unified above 
                     // get names from assignments

@@ -57,6 +57,7 @@ package lu.fisch.structorizer.executor;
 *      Kay Gürtzig     2015.11.25/27   Enhancement #23 (KGU#78) to handle Jump elements properly.
 *      Kay Gürtzig     2015.12.10      Bugfix #49 (KGU#99): wrapper objects in variables obstructed comparison,
 *                                      ER #48 (KGU#97) w.r.t. delay control of diagramControllers
+*      Kay Gürtzig     2015.12.11      Enhancement #54 KGU#101: List of output expressions
 *
 ******************************************************************************************************
 *
@@ -1761,7 +1762,7 @@ public class Executor implements Runnable
 		// END KGU33 2014-12-05
 		String str = JOptionPane.showInputDialog(null,
 				"Please enter a value for <" + in + ">", null);
-		// START KGU#84 2015-11-23: Allow a controlled continuation on cancelled input
+		// START KGU#84 2015-11-23: ER #36 - Allow a controlled continuation on cancelled input
 		//setVarRaw(in, str);
 		if (str == null)
 		{
@@ -1792,19 +1793,36 @@ public class Executor implements Runnable
 	private String tryOutput(String cmd) throws EvalError
 	{
 		String result = "";
-		String out = cmd.substring(D7Parser.output.trim().length()).trim();
-		Object n = interpreter.eval(out);
-		if (n == null)
+		// KGU 2015-12-11: Instruction is supposed to start with the output keyword!
+		String out = cmd.substring(/*cmd.indexOf(D7Parser.output) +*/
+						D7Parser.output.trim().length()).trim();
+		// START KGU#101 2015-12-11: Fix #54 - Allow several expressions to be output in a line
+		StringList outExpressions = Element.splitExpressionList(out, ",");
+		String str = "";
+		for (int i = 0; i < outExpressions.count() && result.isEmpty(); i++)
 		{
-			result = "<"
-					+ out
-					+ "> is not a correct or existing expression.";
-		} else
+			out = outExpressions.get(i);
+		// END KGU#101 2015-12-11
+			Object n = interpreter.eval(out);
+			if (n == null)
+			{
+				result = "<"
+						+ out
+						+ "> is not a correct or existing expression.";
+			} else
+			{
+		// START KGU#101 2015-12-11
+		//	String s = unconvert(n.toString());
+				str += n.toString();
+			}
+		}
+		if (result.isEmpty())
 		{
-			String s = unconvert(n.toString());
-			// START KGU#84 2015-11-23: Enhancement to give a chance to pause
+			String s = unconvert(str);
+		// END KGU#101 2015-12-11
+			// START KGU#84 2015-11-23: Enhancement #36 to give a chance to pause
 			//JOptionPane.showMessageDialog(diagram, s, "Output",
-			//		JOptionPane.INFORMATION_MESSAGE);
+			//		0);
 			//System.out.println("running/step/paus/stop: " +
 			//		running + " / " + step + " / " + paus + " / " + " / " + stop);
 			if (step)

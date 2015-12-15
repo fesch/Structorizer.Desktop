@@ -45,6 +45,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig                2015.11.30      Inheritance changed to CGenerator (KGU#16), specific
  *                                                 jump and return handling added (issue #22 = KGU#74)
  *
+ *      Kay Gürtzig                2015.12.12      Enh. #54 (KGU#101): Support for output expression lists
+*
  ******************************************************************************************************
  *
  *      Comments:
@@ -205,6 +207,16 @@ public class JavaGenerator extends CGenerator
 	    @Override
 	    protected String transform(String _input)
 	    {
+			// START KGU#101 2015-12-12: Enh. #54 - support lists of expressions
+			if (_input.matches("^" + D7Parser.output.trim() + "[ ](.*?)"))
+			{
+				StringList expressions = 
+						Element.splitExpressionList(_input.substring(D7Parser.output.trim().length()), ",");
+				// Some of the expressions might be sums, so better put parentheses around them
+				_input = D7Parser.output.trim() + " (" + expressions.getText().replace("\n", ") + (") + ")";
+			}
+			// END KGU#101 2015-12-12
+
 			// START KGU#18/KGU#23 2015-11-01: This can now be inherited
 			String s = super.transform(_input).replace(" div "," / ");
 			// END KGU#18/KGU#23 2015-11-01
@@ -275,6 +287,8 @@ public class JavaGenerator extends CGenerator
 //
 //			}
 //		}
+			return s.trim();
+	    }
 		
 // KGU#16 2015-11-30: Now inherited		
 //		protected void generateCode(Alternative _alt, String _indent)
@@ -597,6 +611,22 @@ public class JavaGenerator extends CGenerator
 		@Override
 		protected String generateHeader(Root _root, String _indent, String _procName,
 				StringList _paramNames, StringList _paramTypes, String _resultType)
+			// KGU 2015-10-18: In case of an empty text generate a break instruction by default.
+			boolean isEmpty = true;
+			StringList lines = _jump.getText();
+			for (int i = 0; i < lines.count(); i++)
+			{
+				String line = transform(lines.get(i), false);
+				if (!line.trim().isEmpty()) isEmpty = false;
+				code.add(_indent + line + ";\t// FIXME goto instructions not allowed in Java");
+			}
+			if (isEmpty)
+			{
+				code.add(_indent + "break;");
+			}
+		}
+		
+		public String generateCode(Root _root, String _indent)
 		{
 			if (_root.isProgram==true) {
 				code.add(_indent + "import java.util.Scanner;");

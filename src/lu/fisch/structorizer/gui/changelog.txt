@@ -11,25 +11,29 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.23-04 (2015.12.11)
-- 04: executor: Subroutine call now supported via Arranger as pool (#9) <Kay Gürtzig>
-- 04: executor: Control panel shows subdiagram call depth and (on error) stacktrace <Kay Gürtzig>
-- 04: executor: Jump execution according to enhancement request (#10) <Kay Gürtzig>
-- 04: arranger: Arranger can now be opened from Structorizer, diagrams sent there. <Kay Gürtzig>
-- 04: arranger: diagrams may be pinned (protected against replacement) and dropped <Kay Gürtzig>
-- 04: arranger: Display now has got scrollbars and moves to a just added diagram <Kay Gürtzig>
-- 04: generator: Export to C, C++, C#, Java, and Pascal now supports Jumps <Kay Gürtzig>
-- 04: analyser: New checks for calls, jumps, return mechanisms and concurrency risks <Kay Gürtzig>
-- 04: analyser: Analyser hadn't checked within Forever loops and Parallel sections <Kay Gürtzig>
-- 04: editor: Multiple element selection (all of subqueue on Alt, a sequence on shift) <Kay Gürtzig>
-- 04: executor: Dialog boxes for input / output now switch to step mode on Cancel/Pause <Kay Gürtzig>
-- 04: updated language files (DE,EN,ES) <Kay Gürtzig>
+Current development version: 3.23-05 (2015.12.11)
+- 05: executor: Subroutine call now supported via Arranger as pool (#9) <Kay Gürtzig>
+- 05: executor: Control panel shows subdiagram call depth and (on error) stacktrace <Kay Gürtzig>
+- 05: executor: Jump execution according to enhancement request (#10) <Kay Gürtzig>
+- 05: arranger: Arranger can now be opened from Structorizer, diagrams sent there. <Kay Gürtzig>
+- 05: arranger: diagrams may be pinned (protected against replacement) and dropped <Kay Gürtzig>
+- 05: arranger: Display now has got scrollbars and moves to a just added diagram <Kay Gürtzig>
+- 05: generator: Export to C, C++, C#, Java, and Pascal now supports Jumps <Kay Gürtzig>
+- 05: analyser: New checks for calls, jumps, return mechanisms and concurrency risks <Kay Gürtzig>
+- 05: analyser: Analyser hadn't checked within Forever loops and Parallel sections <Kay Gürtzig>
+- 05: editor: Multiple element selection (all of subqueue on Alt, a sequence on shift) <Kay Gürtzig>
+- 05: updated language files (DE,EN,ES) <Kay Gürtzig>
 
-Version 3.23-03 (2015.12.10)
+Version 3.23-04 (2015.12.12)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
 - 02: Bugfix #51 - stand alone input/output identifier where not converted in Pascal export [IrisLuc]
 - 03: Bugfix #48 - delay propagation to Turtleizer <Kay Gürtzig>
 - 03: Bugfix #49 - failing equality detection among variables (also array elements) <Kay Gürtzig>
+- 04: Enh. #36 - allowing to pause from input and output dialogs <Kay Gürtzig>
+- 04: Enh. #54 - Output instruction with expression list (executor, most generators) <Kay Gürtzig>
+- 04: Bugfix #55 - highlighting of variables with keywords as substring mended <Kay Gürtzig>
+- 04: Bugfix #57 - Risk of endless loops and other flaws on Perl export <Kay Gürtzig>
+- 04: Bugfix #59 - For loop export to Python was defective <Kay Gürtzig>
 
 Version 3.23 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]

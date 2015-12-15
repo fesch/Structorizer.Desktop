@@ -42,6 +42,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig                2014.11.16      Conversion of C-like logical operators and arcus functions (see comment)
  *      Kay Gürtzig                2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
  *      Kay Gürtzig                2015.10.18      Indentation and comment mechanisms revised, bugfix
+ *      Kay Gürtzig                2015.12.12      bugfix #59 (KGU#104) with respect to ER #10
  *
  ******************************************************************************************************
  *
@@ -293,22 +294,28 @@ public class PythonGenerator extends Generator
 			insertComment(_for, _indent);
 			// END KGU 2014-11-16
 
-			String startValueStr="";
-			String endValueStr="";
-			String stepValueStr="";
-			
-			String editStr = BString.replace(transform(_for.getText().getText()),"\n","").trim();
-			String[] word = editStr.split(" ");
-			int nbrWords = word.length;
-			String counterStr = word[0];
-			if ((nbrWords-1) >= 2) startValueStr = word[2];
-			if ((nbrWords-1) >= 4) endValueStr = word[4];
-			if ((nbrWords-1) >= 6) {
-				stepValueStr = word[6]; 
-			}
-			else {
-				stepValueStr = "1";
-			}
+			// START KGU#3/KGU#104 2015-12-12: ER #10 / Bugfix #59 - This was forgotten to fix
+			//String startValueStr="";
+			//String endValueStr="";
+			//String stepValueStr="";
+			//
+			//String editStr = BString.replace(transform(_for.getText().getText()),"\n","").trim();
+			//String[] word = editStr.split(" ");
+			//int nbrWords = word.length;
+			//String counterStr = word[0];
+			//if ((nbrWords-1) >= 2) startValueStr = word[2];
+			//if ((nbrWords-1) >= 4) endValueStr = word[4];
+			//if ((nbrWords-1) >= 6) {
+			//	stepValueStr = word[6]; 
+			//}
+			//else {
+			//	stepValueStr = "1";
+			//}
+			String counterStr = _for.getCounterVar();
+			String startValueStr = this.transform(_for.getStartValue());
+			String endValueStr = this.transform(_for.getEndValue());
+			String stepValueStr = _for.getStepString();
+			// END KGU#3/KGU#104 2015-12-12
 			code.add(_indent+"for "+counterStr+" in range("+startValueStr+", "+endValueStr+", "+stepValueStr+"):");
 			generateCode((Subqueue) _for.q,_indent + this.getIndent());
 			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!

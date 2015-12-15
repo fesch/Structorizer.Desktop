@@ -35,6 +35,7 @@ package lu.fisch.structorizer.generators;
 *      Kay Gürtzig      2010.08.31      First Issue
 *      Kay Gürtzig      2015.11.01      Adaptations to new decomposed preprocessing
 *      Kay Gürtzig      2015.11.30      Jump mechanisms (KGU#78) and root export revised 
+*      Kay Gürtzig      2015.12.11      Enh. #54 (KGU#101): Support for output expression lists
 *
 ******************************************************************************************************
 *
@@ -47,6 +48,7 @@ package lu.fisch.structorizer.generators;
 *
 ******************************************************************************************************///
 
+import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.BString;
@@ -94,6 +96,31 @@ public class CPlusPlusGenerator extends CGenerator {
 	}
 
 
+	// START KGU#101 2015-12-11: Enhancement #54: Cope with output expression lists
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String)
+	 */
+	@Override
+	protected String transform(String _input)
+	{
+		// START KGU#101 2015-12-11: Enh. #54 - support lists of expressions
+		if (_input.matches("^" + D7Parser.output.trim() + "[ ](.*?)"))
+		{
+			StringList expressions = 
+					Element.splitExpressionList(_input.substring(D7Parser.output.trim().length()), ",");
+			_input = D7Parser.output.trim() + " " + expressions.getText().replace("\n", " << ");
+		}
+		// END KGU#101 2015-12-11
+		
+		_input = super.transform(_input);
+		
+		return _input.trim();
+	}
+	// END KGU#101 2015-12-11
+	
+    @Override
+    public String generateCode(Root _root, String _indent)
+    {
 // KGU#74 (2015-11-30): Now we only override some of the decomposed methods below
 //    @Override
 //    public String generateCode(Root _root, String _indent)

@@ -36,18 +36,19 @@ package lu.fisch.structorizer.generators;
  *
  *      Revision List
  *
- *      Author			Date			Description
- *      ------			----			-----------
- *      Jan Peter Klippel       2008.04.11              First Issue
- *	Bob Fisch		2008.04.12		Added "Fields" section for generator to be used as plugin
- *	Bob Fisch		2009.01.18		Corrected the FOR-loop
- *      Bob Fisch               2011.11.07              Fixed an issue while doing replacements
- *      Kay Gürtzig             2014.12.02      Additional replacement of operator "<--" by "<-"
- *      Kay Gürtzig             2015.10.18      Indentation and comment insertion revised
- *      Kay Gürtzig             2015.11.02      Reorganisation of the transformation, input/output corrected
- *      Kay Gürtzig             2015.11.02      Variable detection and renaming introduced (KGU#62)
- *                                              Code generation for Case elements (KGU#15) and For
- *                                              loops (KGU#3) revised
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Jan Peter Klippel 2008.04.11    First Issue
+ *      Bob Fisch       2008.04.12		Added "Fields" section for generator to be used as plugin
+ *      Bob Fisch       2009.01.18		Corrected the FOR-loop
+ *      Bob Fisch       2011.11.07      Fixed an issue while doing replacements
+ *      Kay Gürtzig     2014.12.02      Additional replacement of operator "<--" by "<-"
+ *      Kay Gürtzig     2015.10.18      Indentation and comment insertion revised
+ *      Kay Gürtzig     2015.11.02      Reorganisation of the transformation, input/output corrected
+ *      Kay Gürtzig     2015.11.02      Variable detection and renaming introduced (KGU#62)
+ *                                      Code generation for Case elements (KGU#15) and For
+ *                                      loops (KGU#3) revised
+ *      Kay Gürtzig     2015.12.12      Bugfix #57 (KGU#103) endless loops / flaws on variable prefixing
  *
  ******************************************************************************************************
  *
@@ -128,7 +129,10 @@ public class PerlGenerator extends Generator {
 	 */
 	protected String getOutputReplacer()
 	{
-		return "print $1, \"\\n\"";
+		// START KGU#103 2015-12-12: Bugfix #57 - Too few backslashes - were consumed by the regex replacement 
+		//return "print $1, \"\\n\"";
+		return "print $1, \"\\\\n\"";
+		// END KGU#103 2015-12-12
 	}
 
 	/**
@@ -149,27 +153,58 @@ public class PerlGenerator extends Generator {
     	_input = super.transform(_input);
     	
     	// START KGU#62 2015-11-02: Identify and adapt variable names
-		System.out.println("Perl - text to be transformed: \"" + _input + "\"");
+		//System.out.println("Perl - text to be transformed: \"" + _input + "\"");
+		// START KGU#103 2015-12-12: We must do a lexical analysis instead
+//    	for (int i = 0; i < varNames.count(); i++)
+//    	{
+//    		String varName = varNames.get(i);	// FIXME (KGU): Remove after Test!
+//    		System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
+//    		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
+//    		int pos = _input.indexOf(varName);
+//    		while (pos >= 0)
+//    		{
+//    			int posBehind = pos + varName.length();
+//    			// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
+//    			//if ((pos == 0 || !Character.isJavaIdentifierPart(_input.charAt(pos-1))) && (posBehind >= varName.length() || !Character.isJavaIdentifierPart(_input.charAt(posBehind))))
+//    	  		if ((pos == 0 || !Character.isJavaIdentifierPart(_input.charAt(pos-1)) && _input.charAt(pos-1) != '\\') &&
+//    	  				(posBehind >= _input.length() || !Character.isJavaIdentifierPart(_input.charAt(posBehind))))
+//    	  		// END KGU#103 2015-12-12
+//    			{
+//    				if (pos == 0 || _input.charAt(pos-1) != '$')
+//    				{
+//    					_input = _input.substring(0, pos) + "$" + _input.substring(pos);
+//            	  		// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
+//        				posBehind++;
+//        				// END KGU#103 2015-12-12
+//    				}
+//        	  		// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
+//    				//pos = _input.indexOf(varName, posBehind);
+//    				// END KGU#103 2015-12-12
+//    			}
+//    	  		// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
+//    	  		if (posBehind < _input.length() - varName.length())
+//    	  		{
+//    	  			pos = _input.indexOf(varName, posBehind);
+//    	  		}
+//    	  		else
+//    	  		{
+//    	  			pos = -1;
+//    	  		}
+//				// END KGU#103 2015-12-12
+//    		}
+//    		System.out.println("Perl - after replacement: \"" + _input + "\""); 	// FIXME (KGU): Remove after Test!
+//    	}
+		StringList tokens = Element.splitLexically(_input, true);
     	for (int i = 0; i < varNames.count(); i++)
     	{
     		String varName = varNames.get(i);	// FIXME (KGU): Remove after Test!
-    		System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
+    		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
     		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
-    		int pos = _input.indexOf(varName);
-    		while (pos >= 0)
-    		{
-    			int posBehind = pos + varName.length();
-    			if ((pos == 0 || !Character.isJavaIdentifierPart(_input.charAt(pos-1))) && (posBehind >= varName.length() || !Character.isJavaIdentifierPart(_input.charAt(posBehind))))
-    			{
-    				if (pos > 0 && _input.charAt(pos-1) != '$')
-    				{
-    					_input = _input.substring(0, pos) + "$" + _input.substring(pos);
-    				}
-    				pos = _input.indexOf(varName, posBehind);
-    			}
-    		}
-    		System.out.println("Perl - after replacement: \"" + _input + "\""); 	// FIXME (KGU): Remove after Test!
+    		tokens.replaceAll(varName, "$"+varName);
     	}
+    	_input = tokens.getText().replace("\n", "");
+		//System.out.println("Perl - after replacement: \"" + _input + "\""); 	// FIXME (KGU): Remove after Test!
+		// END KGU#103 2015-12-12
     	// END KGU#62 2015-11-02
 
 		return _input.trim();
@@ -284,9 +319,9 @@ public class PerlGenerator extends Generator {
     	String var = _for.getCounterVar();
     	int step = _for.getStepConst();
     	String compOp = (step > 0) ? " >= " : " <= ";
-    	String increment = var + " += (" + step + ")";
-    	code.add(_indent + "for (" +
-    			var + " = " + transform(_for.getStartValue(), false) + "; " +
+    	String increment = "$" + var + " += (" + step + ")";
+    	code.add(_indent + "for ($" +
+    			var + " = " + transform(_for.getStartValue(), false) + "; $" +
     			var + compOp + transform(_for.getEndValue(), false) + "; " +
     			increment +
     			") {");
