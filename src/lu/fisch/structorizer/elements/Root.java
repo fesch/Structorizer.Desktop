@@ -1652,6 +1652,7 @@ public class Root extends Element {
 
 
     		// CHECK: assignment in condition (#8)
+    		// FIXME (KGU 2015-12-16): What about Case elements?
     		if(ele.getClass().getSimpleName().equals("While")
     				||
     				ele.getClass().getSimpleName().equals("Repeat")

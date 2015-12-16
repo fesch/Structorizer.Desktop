@@ -25,7 +25,9 @@ Current development version: 3.23-05 (2015.12.20)
 - 05: updated language files (DE,EN,ES) <Kay Gürtzig>
 - 05: executor: Localisation attempts for Control panel <Kay Gürtzig>
 - 05: Enh. #51 - Handling of empty input/output instructions by executor and export <Kay Gürtzig>
-- 05: executor: Parameter splitting for functions calls improved <Kay Gürtzig>
+- 05: executor: Parameter splitting for function calls improved <Kay Gürtzig>
+- 05: Bugfix #61: Precautions against type specifiers [elemhsb]<Kay Gürtzig>
+- 05: Bugfix #63: Error messages on nsd loading failure no longer suppressed <Kay Gürtzig>
 
 Version 3.23-04 (2015.12.12)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]

@@ -57,8 +57,9 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2015.11.25/27   Enhancement #23 (KGU#78) to handle Jump elements properly.
  *      Kay Gürtzig     2015.12.10      Bugfix #49 (KGU#99): wrapper objects in variables obstructed comparison,
  *                                      ER #48 (KGU#97) w.r.t. delay control of diagramControllers
- *      Kay Gürtzig     2015.12.11      Enhancement #54 KGU#101: List of output expressions
- *      Kay Gürtzig     2015.12.13      Enhancement #51 KGU#107: Handling of empty input and output
+ *      Kay Gürtzig     2015.12.11      Enhancement #54 (KGU#101): List of output expressions
+ *      Kay Gürtzig     2015.12.13      Enhancement #51 (KGU#107): Handling of empty input and output
+ *      Kay Gürtzig     2015.12.15/26   Bugfix #61 (KGU#109): Precautions against type specifiers
  *
  ******************************************************************************************************
  *
@@ -1049,9 +1050,18 @@ public class Executor implements Runnable
 	private void setVarRaw(String name, String rawInput) throws EvalError
 	{
 		// first add as string (lest we should end with nothing at all...)
-		setVar(name, rawInput);
+		// START KGU#109 2015-12-15: Bugfix #61: Previously declared (typed) variables caused errors here
+		//setVar(name, rawInput);
+		try {
+			setVar(name, rawInput);
+		}
+		catch (EvalError ex)
+		{
+			System.out.println(rawInput + " as raw string " + ex.getMessage());			
+		}
+		// END KGU#109 2015-12-15
 		// Try some refinement if possible
-		if (rawInput instanceof String && !isNumeric(rawInput) )
+		if (rawInput != null && !isNumeric(rawInput) )
 		{
 			try
 			{
@@ -1126,6 +1136,10 @@ public class Executor implements Runnable
 		if ((name.contains("[")) && (name.contains("]")))
 		{
 			arrayname = name.substring(0, name.indexOf("["));
+			// START KGU#109 2015-12-16: Bugfix #61: Several strings suggest type specifiers
+			String[] nameParts = arrayname.split(" ");
+			arrayname = nameParts[nameParts.length-1];
+			// END KGU#109 2015-12-15
 			boolean arrayFound = this.variables.contains(arrayname);
 			int index = this.getIndexValue(name);
 			Object[] objectArray = null;
@@ -1161,6 +1175,10 @@ public class Executor implements Runnable
 			this.variables.addIfNew(arrayname);
 		} else // if ((name.contains("[")) && (name.contains("]")))
 		{
+			// START KGU#109 2015-12-16: Bugfix #61: Several strings suggest type specifiers
+			String[] nameParts = name.split(" ");
+			name = nameParts[nameParts.length-1];
+			// END KGU#109 2015-12-15
 			this.interpreter.set(name, content);
 
 			// MODIFIED BY GENNARO DONNARUMMA
