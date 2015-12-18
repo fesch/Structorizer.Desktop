@@ -38,6 +38,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2015.11.14      Parameterized creation of dependent Mainforms (to solve issues #6, #16)
  *      Kay Gürtzig     2015.11.18      Several changes to get scrollbars working (issue #35 = KGU#85)
  *                                      removal mechanism added, selection mechanisms revised
+ *      Kay Gürtzig     2015.12.17      Bugfix K#111 for Enh. #63, preparations for Enh. #62 (KGU#110)
  *
  ******************************************************************************************************
  *
@@ -150,19 +151,23 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     		public void  filesDropped( java.io.File[] files )
     		{
     			//boolean found = false;
-    			for (int i = 0; i < files.length; i++)
-    			{
-    				String filename = files[i].toString();
-    				if(filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".nsd"))
-    				{
-    					// open an existing file
-    					NSDParser parser = new NSDParser();
-    					File f = new File(filename);
-    					Root root = parser.parse(f.toURI().toString());
-    					root.filename=filename;
-    					addDiagram(root);
-    				}
-    			}
+// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
+//    			for (int i = 0; i < files.length; i++)
+//    			{
+//    				String filename = files[i].toString();
+//    				if(filename.substring(filename.length()-4).toLowerCase().equals(".nsd"))
+//    				{
+//    					// open an existing file
+//    					NSDParser parser = new NSDParser();
+//    					File f = new File(filename);
+//        				Root root = parser.parse(f.toURI().toString());
+//    					
+//        				root.filename=filename;
+//        				addDiagram(root);
+//    				}
+//    			}
+    			loadFiles(files);
+// END KGU#111 2015-12-17
     		}
     	});
 
@@ -174,6 +179,44 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
         // END KGU#85 2015-11-18
 
     }
+    
+    // START KGU#110 2015-12-17: Enh. #62 - offer an opportunity to save / load an arrangement
+    public int loadFiles(java.io.File[] files)
+    {
+    	int nLoaded = 0;
+    	String troubles = "";
+    	for (int i = 0; i < files.length; i++)
+    	{
+    		String filename = files[i].toString();
+    		if(filename.substring(filename.length()-4).toLowerCase().equals(".nsd"))
+    		{
+    			// open an existing file
+    			NSDParser parser = new NSDParser();
+    			File f = new File(filename);	// FIXME (KGU) Why don't we just use files[i]?
+    			// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
+    			try {
+    			// END KGU#111 2015-12-17
+    				Root root = parser.parse(f.toURI().toString());
+
+    				root.filename=filename;
+    				addDiagram(root);
+       			// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
+    			}
+    			catch (Exception ex) {
+    				if (!troubles.isEmpty()) { troubles += "\n"; }
+    				troubles += "\"" + filename + "\": " + ex.getMessage();
+    				System.err.println("Arranger failed to load \"" + filename + "\": " + ex.getMessage());
+    			}
+    			// END KGU#111 2015-12-17
+    		}
+    	}
+    	if (!troubles.isEmpty())
+    	{
+			JOptionPane.showMessageDialog(this, troubles, "File Load Error", JOptionPane.ERROR_MESSAGE);
+    	}
+	return nLoaded;
+    }
+    // END KGU#110 2015-12-17
 
     public void exportPNG(Frame frame)
     {

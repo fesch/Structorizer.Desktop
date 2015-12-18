@@ -84,7 +84,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected boolean isFunctionNameSet = false; // Assignment to variable named like function?
 	protected int labelCount = 0; // unique count for generated labels
 	protected String labelBaseName = "StructorizerLabel_";
-	// maps loops and Jump elements to label counts
+	// maps loops and Jump elements to label counts (neg. number means illegal jump target)
 	protected Hashtable<Element, Integer> jumpTable = new Hashtable<Element, Integer>();
 
 	// END KGU#74 2015-11-29
@@ -365,9 +365,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	
 
 	// START KGU#74 2015-11-30
-	// We do a recursive analysis for loops, returns and jumps of type "leave"
-	// to be able to
-	// place equivalent goto instructions and their target labels on demand.
+	/**
+	 * We do a recursive analysis for loops, returns and jumps of type "leave"
+	 * to be able to place equivalent goto instructions and their target labels
+	 * on demand.
+	 * Maps Jump instructions and Loops (as potential jump targets) to unique
+	 * numbers used for the creation of unambiguous goto or break labels. The
+	 * mapping is gathered in this.jumpTable. 
+	 * @param _squeue - instruction sequence to be analysed 
+	 * @return true iff there is no execution path without a value returned.
+	 */
 	protected boolean mapJumps(Subqueue _squeue)
 	{
 		boolean surelyReturns = false;
@@ -432,7 +439,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 					}
 					else if (parent instanceof Case)
 					{
-						// If we were within a switch instruction then we must use a goto to get out
+						// If we were within a selection (switch) then we must use "goto" to get out
 						simpleBreak = false;
 					}
 					parent = parent.parent;
@@ -664,9 +671,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @param _root - The diagram root element
 	 * @param _indent - the initial indentation string
 	 * @param _procName - the procedure name
-	 * @param paramNames - list of the argument names
-	 * @param paramTypes - list of corresponding type names (possibly null) 
-	 * @param resultType - result type name (possibly null)
+	 * @param _paramNames - list of the argument names
+	 * @param _paramTypes - list of corresponding type names (possibly null) 
+	 * @param _resultType - result type name (possibly null)
 	 * @return the default indentation string for the subsequent stuff
 	 */
 	protected String generateHeader(Root _root, String _indent, String _procName,

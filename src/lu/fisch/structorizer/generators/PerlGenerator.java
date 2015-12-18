@@ -49,6 +49,10 @@ package lu.fisch.structorizer.generators;
  *                                      Code generation for Case elements (KGU#15) and For
  *                                      loops (KGU#3) revised
  *      Kay Gürtzig     2015.12.12      Bugfix #57 (KGU#103) endless loops / flaws on variable prefixing
+ *      Kay Gürtzig     2015.12.17      Enh. #23 (KGU#78) jump generation revised; Root generation
+ *                                      decomposed according to Generator.generateCode(Root, String);
+ *                                      Enh. KGU#47: Dummy implementation for Parallel element
+ *                                      Fixes in FOR and REPEAT export
  *
  ******************************************************************************************************
  *
@@ -57,14 +61,18 @@ package lu.fisch.structorizer.generators;
  ******************************************************************************************************///
 
 
+import java.util.regex.Matcher;
+
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Forever;
+import lu.fisch.structorizer.elements.ILoop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
+import lu.fisch.structorizer.elements.Parallel;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
@@ -92,7 +100,7 @@ public class PerlGenerator extends Generator {
 	
 	protected String getIndent()
 	{
-		return " ";
+		return "    ";	// KGU 2015-12-17: Changed from " " to "    " (www.tutorialspoint.com/perl/perl_coding_standard.html)
 	}
 	
 	protected String[] getFileExtensions()
@@ -197,7 +205,7 @@ public class PerlGenerator extends Generator {
 		StringList tokens = Element.splitLexically(_input, true);
     	for (int i = 0; i < varNames.count(); i++)
     	{
-    		String varName = varNames.get(i);	// FIXME (KGU): Remove after Test!
+    		String varName = varNames.get(i);
     		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
     		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
     		tokens.replaceAll(varName, "$"+varName);
@@ -210,6 +218,16 @@ public class PerlGenerator extends Generator {
 		return _input.trim();
 	}
 	
+    // START KGU#78 2015-12-17: Enh. #23 (jump translation)
+    // Places a label with empty instruction into the code if elem is an exited loop
+	protected void appendLabel(Element elem, String _indent)
+	{
+		if (elem instanceof ILoop && this.jumpTable.containsKey(elem)) {
+			code.add(_indent + this.labelBaseName + this.jumpTable.get(elem) + ": ;");
+		}
+	}
+	// ED KGU#78 2015-12-17
+
 	protected void generateCode(Instruction _inst, String _indent) {
 
 		if(!insertAsComment(_inst, _indent))
@@ -318,7 +336,7 @@ public class PerlGenerator extends Generator {
 
     	String var = _for.getCounterVar();
     	int step = _for.getStepConst();
-    	String compOp = (step > 0) ? " >= " : " <= ";
+    	String compOp = (step > 0) ? " <= " : " >= ";
     	String increment = "$" + var + " += (" + step + ")";
     	code.add(_indent + "for ($" +
     			var + " = " + transform(_for.getStartValue(), false) + "; $" +
@@ -328,8 +346,11 @@ public class PerlGenerator extends Generator {
 		// END KGU#3 2015-11-02
 		generateCode(_for.q,_indent+this.getIndent());
 		code.add(_indent+"}");
+		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
+		appendLabel(_for, _indent);
+		// END KGU#78 2015-12-17
 		code.add("");
-		
+	
 	}
 	
 	protected void generateCode(While _while, String _indent) {
@@ -339,6 +360,9 @@ public class PerlGenerator extends Generator {
 		code.add(_indent+"while ("+BString.replace(transform(_while.getText().getText()),"\n","").trim()+") {");		
 		generateCode(_while.q,_indent+this.getIndent());
 		code.add(_indent+"}");
+		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
+		appendLabel(_while, _indent);
+		// END KGU#78 2015-12-17
 		code.add("");
 		
 	}
@@ -352,7 +376,10 @@ public class PerlGenerator extends Generator {
 
 		code.add(_indent+"do {");
 		generateCode(_repeat.q,_indent+this.getIndent());
-		code.add(_indent+"} while (!"+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+");");
+		code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+"));");
+		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
+		appendLabel(_repeat, _indent);
+		// END KGU#78 2015-12-17
 		code.add("");
 		
 	}
@@ -366,6 +393,9 @@ public class PerlGenerator extends Generator {
 		code.add(_indent+"while (1) {");		
 		generateCode(_forever.q,_indent+this.getIndent());
 		code.add(_indent+"}");
+		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
+		appendLabel(_forever, _indent);
+		// END KGU#78 2015-12-17
 		code.add("");
 		
 	}
@@ -384,14 +414,101 @@ public class PerlGenerator extends Generator {
 	
 	protected void generateCode(Jump _jump, String _indent) {
 		if(!insertAsComment(_jump, _indent))
-			insertComment(_jump, _indent);
-			for(int i=0;i<_jump.getText().count();i++)
-			{
-				code.add(_indent+transform(_jump.getText().get(i))+";");
+// START KGU#78 2015-12-17: Block braces had been missing! Enh. #23 - jump support
+//			insertComment(_jump, _indent);
+//			for(int i=0;i<_jump.getText().count();i++)
+//			{
+//				code.add(_indent+transform(_jump.getText().get(i))+";");
+//			}
+		{
+			// In case of an empty text generate a break instruction by default.
+			boolean isEmpty = true;
+			
+			StringList lines = _jump.getText();
+			for (int i = 0; isEmpty && i < lines.count(); i++) {
+				String line = transform(lines.get(i)).trim();
+				if (!line.isEmpty())
+				{
+					isEmpty = false;
+				}
+				// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
+				//code.add(_indent + line + ";");
+				if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
+				{
+					code.add(_indent + "return " + line.substring(D7Parser.preReturn.length()).trim() + ";");
+				}
+				else if (line.matches(Matcher.quoteReplacement(D7Parser.preExit)+"([\\W].*|$)"))
+				{
+					code.add(_indent + "exit(" + line.substring(D7Parser.preExit.length()).trim() + ");");
+				}
+				// Has it already been matched with a loop? Then syntax must have been okay...
+				else if (this.jumpTable.containsKey(_jump))
+				{
+					Integer ref = this.jumpTable.get(_jump);
+					String label = this.labelBaseName + ref;
+					if (ref.intValue() < 0)
+					{
+						insertComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
+						insertComment(line, _indent);
+						label = "__ERROR__";
+					}
+					code.add(_indent + "goto " + label + ";");
+				}
+				else if (line.matches(Matcher.quoteReplacement(D7Parser.preLeave)+"([\\W].*|$)"))
+				{
+					// Strange case: neither matched nor rejected - how can this happen?
+					// Try with an ordinary break instruction and a funny comment
+					code.add(_indent + "last;\t" + this.commentSymbolLeft() + " FIXME: Dubious occurrance of 'last' instruction!");
+				}
+				else if (!isEmpty)
+				{
+					insertComment("FIXME: jump/exit instruction of unrecognised kind!", _indent);
+					insertComment(line, _indent);
+				}
+				// END KGU#74/KGU#78 2015-11-30
 			}
-
+			if (isEmpty) {
+				code.add(_indent + "last;");
+			}
+			
+		}
+// END KGU#78 2015-12-17
+			
 	}
 
+	// START KGU#47 2015-12-17: Offer at least a sequential execution (which is one legal execution order)
+	protected void generateCode(Parallel _para, String _indent)
+	{
+		// START KGU 2014-11-16
+		insertComment(_para, _indent);
+		// END KGU 2014-11-16
+
+		code.add("");
+		insertComment("==========================================================", _indent);
+		insertComment("================= START PARALLEL SECTION =================", _indent);
+		insertComment("==========================================================", _indent);
+		insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
+		code.add(_indent + "{");
+
+		for (int i = 0; i < _para.qs.size(); i++) {
+			code.add("");
+			insertComment("----------------- START THREAD " + i + " -----------------", _indent + this.getIndent());
+			code.add(_indent + this.getIndent() + "{");
+			generateCode((Subqueue) _para.qs.get(i), _indent + this.getIndent() + this.getIndent());
+			code.add(_indent + this.getIndent() + "}");
+			insertComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
+			code.add("");
+		}
+
+		code.add(_indent + "}");
+		insertComment("==========================================================", _indent);
+		insertComment("================== END PARALLEL SECTION ==================", _indent);
+		insertComment("==========================================================", _indent);
+		code.add("");
+	}
+	// END KGU#47 2015-12-17
+	
+	
 	// START KGU 2015-11-02: Already inherited
 //	protected void generateCode(Subqueue _subqueue, String _indent) {
 //		
@@ -405,35 +522,117 @@ public class PerlGenerator extends Generator {
 //	}
 	// END KGU 2015-11-02
 	
-	public String generateCode(Root _root, String _indent) {
-		
-		// START KGU 2015-11-02: First of all, fetch all variable names from the entire diagram
-		varNames = _root.getVarNames();
-		// END KGU 2015-11-02
-		
+// START KGU#78 2015-12-17: Enh. #23 Root generation decomposed
+//	public String generateCode(Root _root, String _indent) {
+//		
+//		// START KGU 2015-11-02: First of all, fetch all variable names from the entire diagram
+//		varNames = _root.getVarNames();
+//		// END KGU 2015-11-02
+//		
+//		if( ! _root.isProgram ) {
+//			code.add("sub "+_root.getText().get(0)+" {");
+//		} else {
+//			
+//			code.add("#!/usr/bin/perl");
+//			code.add("");
+//			code.add("use strict;");
+//			code.add("use warnings;");
+//			
+//		}
+//		
+//		insertComment("generated by Structorizer", _indent);
+//		code.add("");
+//		insertComment("TODO declare your variables here", _indent);
+//		code.add("");
+//		generateCode(_root.children, _indent + this.getIndent());
+//		
+//		if( ! _root.isProgram ) {
+//			code.add("}");
+//		}
+//		
+//		return code.getText();
+//		
+//	}
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateHeader(lu.fisch.structorizer.elements.Root, java.lang.String, java.lang.String, lu.fisch.utils.StringList, lu.fisch.utils.StringList, java.lang.String)
+	 */
+	@Override
+	protected String generateHeader(Root _root, String _indent, String _procName,
+			StringList _paramNames, StringList _paramTypes, String _resultType)
+	{
+		String indent = _indent + this.getIndent();
+		code.add(_indent + "#!/usr/bin/perl");
+		insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+		insertComment("", _indent);
+		insertComment(_root, _indent);
 		if( ! _root.isProgram ) {
-			code.add("sub "+_root.getText().get(0)+" {");
+			code.add(_indent + "sub " + _procName + " {");
+			indent = _indent + this.getIndent();
+			for (int p = 0; p < _paramNames.count(); p++) {
+				code.add(indent + "my $" + _paramNames.get(p).trim() + " = $_[" + p + "];");
+			}
 		} else {
-			
-			code.add("#!/usr/bin/perl");
 			code.add("");
-			code.add("use strict;");
-			code.add("use warnings;");
-			
+			code.add(_indent + "use strict;");
+			code.add(_indent + "use warnings;");
 		}
-		
-		insertComment("generated by Structorizer", _indent);
+	
 		code.add("");
-		insertComment("TODO declare your variables here", _indent);
-		code.add("");
-		generateCode(_root.children, _indent + this.getIndent());
 		
-		if( ! _root.isProgram ) {
-			code.add("}");
-		}
-		
-		return code.getText();
-		
+		return indent;
 	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generatePreamble(lu.fisch.structorizer.elements.Root, java.lang.String, lu.fisch.utils.StringList)
+	 */
+	@Override
+	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
+	{
+		// Ensure all variables be private
+		if (!_root.isProgram) {
+			for (int v = 0; v < _varNames.count(); v++) {
+				code.add(_indent + "my $" + _varNames.get(v) + ";");	// FIXME (KGU) What about lists?
+			}
+		}
+		code.add(_indent);
+		// START KGU 2015-11-02: Now fetch all variable names from the entire diagram
+		varNames = _root.getVarNames(); // We need more variables than just the ones retrieved by super.
+		// END KGU 2015-11-02
+		return _indent;
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateResult(lu.fisch.structorizer.elements.Root, java.lang.String, boolean, lu.fisch.utils.StringList)
+	 */
+	@Override
+	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
+	{
+		if (!_root.isProgram && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
+		{
+			String result = "0";
+			if (isFunctionNameSet)
+			{
+				result = _root.getMethodName();
+			}
+			else if (isResultSet)
+			{
+				int vx = varNames.indexOf("result", false);
+				result = varNames.get(vx);
+			}
+			code.add(_indent);
+			code.add(_indent + "return " + result + ";");
+		}
+		return _indent;
+	}
+	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateFooter(lu.fisch.structorizer.elements.Root, java.lang.String)
+	 */
+	@Override
+	protected void generateFooter(Root _root, String _indent)
+	{
+		if (!_root.isProgram) code.add(_indent + "}");		
+	}
+	// END KGU#78 2015-12-17
 	
 }
