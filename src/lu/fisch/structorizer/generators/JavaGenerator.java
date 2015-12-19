@@ -126,12 +126,13 @@ public class JavaGenerator extends CGenerator
 	}
 	// END KGU 2015-10-18
 
-	// START KGU#16 2015-11-29: Code style option for opening brace placement
-	protected boolean optionBlockBraceNextLine() {
-		// TODO (KGU 2015-11-29): Should become an ExportOptionDialoge option
-		return false;
-	}
-	// END KGU#16 2015-11-29
+// START KGU#16 2015-12-18: Now inherited and depending on export option	
+//	// START KGU#16 2015-11-29: Code style option for opening brace placement
+//	protected boolean optionBlockBraceNextLine() {
+//		return false;
+//	}
+//	// END KGU#16 2015-11-29
+// END KGU#16 2015-12-18
 
 	// START KGU#16/KGU#47 2015-11-30: Unification of block generation (configurable)
 	/**
@@ -258,6 +259,10 @@ public class JavaGenerator extends CGenerator
 	}
 
 	// START KGU#16 2015-11-29
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#transformType(java.lang.String, java.lang.String)
+	 */
+	@Override
 	protected String transformType(String _type, String _default) {
 		if (_type == null)
 			_type = _default;

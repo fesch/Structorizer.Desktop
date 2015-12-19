@@ -46,6 +46,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig				2014.11.16		Operator conversion corrected (see comment)
  *      Kay Gürtzig				2014.12.02		Additional replacement of long assignment operator "<--" by "<-"
  *      Kay Gürtzig				2015.10.18		Indentation issue fixed and comment generation revised
+ *      Kay Gürtzig				2015.12.18		Enh. #23 (KGU#78) Jump generation revised
  *
  ******************************************************************************************************
  *
@@ -107,6 +108,18 @@ public class OberonGenerator extends Generator {
     	return "*)";
     }
     // END KGU 2015-10-18
+	
+	// START KGU#78 2015-12-18: Enh. #23 We must know whether to create labels for simple breaks
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
+	 */
+	@Override
+	protected boolean supportsSimpleBreak()
+	{
+		return true;
+	}
+	// END KGU#78 2015-12-18
+
 	
 	/************ Code Generation **************/
 
@@ -292,6 +305,8 @@ public class OberonGenerator extends Generator {
         // START KGU 2014-11-16
         insertComment(_jump, _indent);
         // END KGU 2014-11-16
+        
+        // TODO: EXIT (= break) and RETURN exist, no further jump allowed
 		for(int i=0;i<_jump.getText().count();i++)
 		{
 			code.add(_indent+transform(_jump.getText().get(i))+";");

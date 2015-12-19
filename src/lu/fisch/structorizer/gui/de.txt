@@ -39,6 +39,7 @@
  *      Kay Gürtzig		2015.11.01		InputBoxFor captions and Analyzer messages for FOR loops added
  *      Kay Gürtzig		2015.11.09		Additions for ParserPreferences (KGU#3 FOR loop enhancement)
  *      Kay Gürtzig		2015.11.15		Messages for Jump element modified or corrected
+ *      Kay Gürtzig 	2015.12.18		New messages for ExportOptionDialoge
  *
  ******************************************************************************************************
  *
@@ -509,6 +510,8 @@ PrintPreview.btnOK.tooltip=Das Diagram ausdrucken.
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Einstellungen für den Code-Export
 ExportOptionDialoge.commentsCheckBox.text=Anweisungen als Kommentare exportieren.
+ExportOptionDialoge.bracesCheckBox.text=Öffnende Blockklammern ans Ende der Zeile (C/C++/Java etc.).
+ExportOptionDialoge.lineNumbersCheckBox.text=Zeilennummern mitgenerieren (BASIC).
 ExportOptionDialoge.jLabel1.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Speichern der gewählten Einstellungen.

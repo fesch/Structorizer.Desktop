@@ -2505,6 +2505,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 eod.commentsCheckBox.setSelected(true);
             else 
                 eod.commentsCheckBox.setSelected(false);
+            // START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
+            eod.bracesCheckBox.setSelected(ini.getProperty("genExportBraces", "0").equals("true"));
+            eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "0").equals("true"));
+            // END KGU#16/KGU#113 2015-12-18
             // START KGU 2014-11-18
             eod.setLang(NSDControl.getLang());
             // END KGU 2014-11-18
@@ -2513,6 +2517,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             if(eod.goOn==true)
             {
                 ini.setProperty("genExportComments", String.valueOf(eod.commentsCheckBox.isSelected()));
+                // START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
+                ini.setProperty("genExportBraces", String.valueOf(eod.bracesCheckBox.isSelected()));
+                ini.setProperty("genExportLineNumbers", String.valueOf(eod.lineNumbersCheckBox.isSelected()));
+                // END KGU#16/KGU#113 2015-12-18
                 ini.save();
             }
         } 

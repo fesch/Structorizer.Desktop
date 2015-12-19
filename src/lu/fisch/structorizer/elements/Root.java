@@ -1499,9 +1499,9 @@ public class Root extends Element {
             if(this.isProgram) return null;
             // get the root text
             String rootText = this.getText().getText(); 
-            // stop if there is no closing braket
+            // stop if there is no closing parenthesis
             if(rootText.indexOf(")")<0) return null;
-            // get part after closing braket
+            // get part after closing parenthesis
             rootText = rootText.substring(rootText.indexOf(")")+1);
             // replace eventually ":"
             rootText = rootText.replaceAll(":", "");

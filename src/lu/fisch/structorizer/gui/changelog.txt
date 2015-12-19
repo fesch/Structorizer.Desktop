@@ -28,7 +28,10 @@ Current development version: 3.23-05 (2015.12.20)
 - 05: executor: Parameter splitting for function calls improved <Kay Gürtzig>
 - 05: Bugfix #61: Precautions against type specifiers [elemhsb]<Kay Gürtzig>
 - 05: Bugfix #63: Error messages on nsd loading failure no longer suppressed <Kay Gürtzig>
-- 05: generator: Enh. #23 - Export to Python and Perl now supports Jumps <Kay Gürtzig>
+- 05: generator: Enh. #23 - Export to Python, Perl, PHP, and Bash/Ksh now supports Jumps <Kay Gürtzig>
+- 05: generator: Enh. #23 + #66 - Export to Basic now supports Jumps and line numbers <Kay Gürtzig>
+- 05: generator: Enh. #67 - Code style option (position of opening braces) for C,C++, Java <Kay Gürtzig>
+- 05: generator: StrukTex export enhanced and corrected <Kay Gürtzig>
 
 Version 3.23-04 (2015.12.12)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]

@@ -115,8 +115,20 @@ public class PerlGenerator extends Generator {
     {
     	return "#";
     }
-
     // END KGU 2015-10-18
+
+	// START KGU#78 2015-12-18: Enh. #23 We must know whether to create labels for simple breaks
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
+	 */
+	@Override
+	protected boolean supportsSimpleBreak()
+	{
+		return true;
+	}
+	// END KGU#78 2015-12-18
+	
+	
 	/************ Code Generation **************/
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed

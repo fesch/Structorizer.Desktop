@@ -23,20 +23,21 @@
  *
  *      Author:         Andrés Cabrera
  *
- *      Description:    The spanish language file
+ *      Description:    The Spanish language file
  *
  ******************************************************************************************************
  *
  *      Revision List
  *
- *      Author          Date                    Description
- *      ------          ----                    -----------
- *      Andrés Cabrera  2008.09.27              First Issue
- *      Kay Gürtzig     2014.12.02              ExportOptionDialoge messages added, language names translated
- *      Kay Gürtzig     2015.10.06              altPadRight added to Preferences dialog
- *      Kay Gürtzig     2015.10.14              InputBox-specific part enhanced
- *      Kay Gürtzig     2015.11.22              Additions for InputBoxFor, Analyser, and AnalyserPreferences
- *      Kay Gürtzig     2015.11.30              Further additions for Analyser and AnalyserPreferences
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      Andrés Cabrera  2008.09.27  First Issue
+ *      Kay Gürtzig     2014.12.02  ExportOptionDialoge messages added, language names translated
+ *      Kay Gürtzig     2015.10.06  altPadRight added to Preferences dialog
+ *      Kay Gürtzig     2015.10.14  InputBox-specific part enhanced
+ *      Kay Gürtzig     2015.11.22  Additions for InputBoxFor, Analyser, and AnalyserPreferences
+ *      Kay Gürtzig     2015.11.30  Further additions for Analyser and AnalyserPreferences
+ *      Kay Gürtzig     2015.12.18  New messages for ExportOptionDialoge
  *
  ******************************************************************************************************
  *
@@ -510,6 +511,8 @@ PrintPreview.btnOK.tooltip=Imprimir el diagrama.
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Preferencias de Exportación de código
 ExportOptionDialoge.commentsCheckBox.text=Exportar instrucciones como comentarios.
-ExportOptionDialoge.jLabel1.text=Eleccione las preferencias, que quieres activar...
+ExportOptionDialoge.bracesCheckBox.text=Poner abrazadera abrienda al fin de la misma linea (C/C++/Java etc.).
+ExportOptionDialoge.lineNumbersCheckBox.text=Generar números de linea con el exporte (BASIC).
+ExportOptionDialoge.jLabel1.text=Elije las preferencias, que quieres activar...
 ExportOptionDialoge.jButton1.text=Aceptar
 ExportOptionDialoge.jButton1.tooltip=Aceptar los cambios.

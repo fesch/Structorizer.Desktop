@@ -121,7 +121,18 @@ public class PythonGenerator extends Generator
 	    }
 	    // END KGU 2015-10-18
 
-	    /************ Code Generation **************/
+		// START KGU#78 2015-12-18: Enh. #23 We must know whether to create labels for simple breaks
+		/* (non-Javadoc)
+		 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
+		 */
+		@Override
+		protected boolean supportsSimpleBreak()
+		{
+			return true;
+		}
+		// END KGU#78 2015-12-18
+
+		/************ Code Generation **************/
 	    
 		// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 		/**
@@ -198,10 +209,10 @@ public class PythonGenerator extends Generator
 			s=s.replace("amath.sin(", "math.asin(");
 			s=s.replace("amath.tan(", "math.atan(");
 			// END KGU 2014-11-16
-			s=s.replace("abs(", "abs(");
-			s=s.replace("round(", "round(");
-			s=s.replace("min(", "min(");
-			s=s.replace("max(", "max(");
+			//s=s.replace("abs(", "abs(");
+			//s=s.replace("round(", "round(");
+			//s=s.replace("min(", "min(");
+			//s=s.replace("max(", "max(");
 			s=s.replace("ceil(", "math.ceil(");
 			s=s.replace("floor(", "math.floor(");
 			s=s.replace("exp(", "math.exp(");

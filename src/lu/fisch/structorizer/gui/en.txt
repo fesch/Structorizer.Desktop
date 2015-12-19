@@ -38,6 +38,7 @@
  *      Kay Gürtzig 	2015.11.03		Additions to Menu (errors) and AnalyserPreferences
  *      Kay Gürtzig 	2015.11.09		Additions for ParserPreferences
  *      Kay Gürtzig 	2015.11.30		Further additions to Menu (errors) and AnalyserPreferences
+ *      Kay Gürtzig 	2015.12.18		New messages for ExportOptionDialoge
  *
  ******************************************************************************************************
  *
@@ -466,6 +467,8 @@ PrintPreview.btnOK.tooltip=Print the diagram.
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Export options ...
 ExportOptionDialoge.commentsCheckBox.text=Export instructions as comments.
+ExportOptionDialoge.bracesCheckBox.text=Put block-opening brace on same line (C/C++/Java etc.).
+ExportOptionDialoge.lineNumbersCheckBox.text=Generate line numbers on export to BASIC.
 ExportOptionDialoge.jLabel1.text=Please select the options you want to activate...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Save these settings.

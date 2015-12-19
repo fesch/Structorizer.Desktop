@@ -46,6 +46,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2015.11.02      transform methods re-organised (KGU#18/KGU23) using subclassing,
  *                                              Pattern list syntax in Case Elements corrected (KGU#15).
  *                                              Bugfix KGU#60 (Repeat loop was incorrectly translated).
+ *      Kay Gürtzig             2015.12.19      Enh. #23 (KGU#78): Jump translation implemented
  *
  ******************************************************************************************************
  *
@@ -68,6 +69,8 @@ package lu.fisch.structorizer.generators;
  *
  ******************************************************************************************************///
 
+
+import java.util.regex.Matcher;
 
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Call;
@@ -123,6 +126,17 @@ public class BASHGenerator extends Generator {
     }
     // END KGU 2015-10-18
 
+	// START KGU#78 2015-12-18: Enh. #23 We must know whether to create labels for simple breaks
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
+	 */
+	@Override
+	protected boolean supportsSimpleBreak()
+	{
+		return false;
+	}
+	// END KGU#78 2015-12-18
+
 	/************ Code Generation **************/
 	
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
@@ -161,11 +175,26 @@ public class BASHGenerator extends Generator {
 	// START KGU#18/KGU#23 2015-11-02: Most of the stuff became obsolete by subclassing
 	protected String transform(String _input)
 	{
-		_input = super.transform(_input);
+		String intermed = super.transform(_input);
 		
         // START KGU 2014-11-16 Support for Pascal-style operators		
-        _input=BString.replace(_input," div "," / ");
+        intermed = BString.replace(intermed, " div ", " / ");
         // END KGU 2014-11-06
+        
+        // START KGU#78 2015-12-19: Enh. #23: We only have to ensure the correct keywords
+        if (intermed.matches("^" + Matcher.quoteReplacement(D7Parser.preLeave.trim()) + "(\\W.*|$)"))
+        {
+        	intermed = "break " + intermed.substring(D7Parser.preLeave.trim().length());
+        }
+        else if (intermed.matches("^" + Matcher.quoteReplacement(D7Parser.preReturn.trim()) + "(\\W.*|$)"))
+        {
+        	intermed = "return " + intermed.substring(D7Parser.preReturn.trim().length());
+        }
+        else if (intermed.matches("^" + Matcher.quoteReplacement(D7Parser.preExit.trim()) + "(\\W.*|$)"))
+        {
+        	intermed = "exit " + intermed.substring(D7Parser.preExit.trim().length());
+        } 
+        // END KGU#78 2015-12-19
 
         return _input.trim();
 	}

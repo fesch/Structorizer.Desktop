@@ -30,22 +30,22 @@ package lu.fisch.structorizer.generators;
  *
  *      Revision List
  *
- *      Author          		Date			Description
- *      ------				----			-----------
- *      Bob Fisch       		2008.11.17              First Issue
- *      Gunter Schillebeeckx            2009.08.10		Bugfixes (see comment)
- *      Bob Fisch                       2009.08.17              Bugfixes (see comment)
- *      Bob Fisch                       2010.08-30              Different fixes asked by Kay Gürtzig
- *                                                              and Peter Ehrlich
- *      Kay Gürtzig                     2010.09.10              Bugfixes and cosmetics (see comment)
- *      Rolf Schmidt                    2010.09.15              1. Release of PHPGenerator
- *      Bob Fisch                       2011.11.07              Fixed an issue while doing replacements
- *      Kay Gürtzig                     2014.11.11              Fixed some replacement flaws (see comment)
- *      Kay Gürtzig                     2014.11.16              Comment generation revised (now inherited)
- *      Kay Gürtzig                     2014.12.02              Additional replacement of "<--" by "<-"
- *      Kay Gürtzig                     2015.10.18              Indentation and comment mechanisms revised, bugfix
- *      Kay Gürtzig                     2015.11.02              Variable identification added, Case and
- *                                                              For mechanisms improved (KGU#15, KGU#3)
+ *      Author                  Date			Description
+ *      ------                  ----			-----------
+ *      Bob Fisch       	    2008.11.17      First Issue
+ *      Gunter Schillebeeckx    2009.08.10		Bugfixes (see comment)
+ *      Bob Fisch               2009.08.17      Bugfixes (see comment)
+ *      Bob Fisch               2010.08-30      Different fixes asked by Kay Gürtzig and Peter Ehrlich
+ *      Kay Gürtzig             2010.09.10      Bugfixes and cosmetics (see comment)
+ *      Rolf Schmidt            2010.09.15      1. Release of PHPGenerator
+ *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
+ *      Kay Gürtzig             2014.11.11      Fixed some replacement flaws (see comment)
+ *      Kay Gürtzig             2014.11.16      Comment generation revised (now inherited)
+ *      Kay Gürtzig             2014.12.02      Additional replacement of "<--" by "<-"
+ *      Kay Gürtzig             2015.10.18      Indentation and comment mechanisms revised, bugfix
+ *      Kay Gürtzig             2015.11.02      Variable identification added, Case and
+ *                                              For mechanisms improved (KGU#15, KGU#3)
+ *      Kay Gürtzig             2015.12.19      Variable prefixing revised (KGU#62) in analogy to PerlGenerator
  *
  ******************************************************************************************************
  *
@@ -94,6 +94,8 @@ package lu.fisch.structorizer.generators;
  *
  ******************************************************************************************************///
 
+import java.util.regex.Matcher;
+
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.elements.*;
@@ -136,6 +138,17 @@ public class PHPGenerator extends Generator
     	return "//";
     }
     // END KGU 2015-10-18
+    
+	// START KGU#78 2015-12-18: Enh. #23 We must know whether to create labels for simple breaks
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
+	 */
+	@Override
+	protected boolean supportsSimpleBreak()
+	{
+		return true;
+	}
+	// END KGU#78 2015-12-18
     
     /************ Code Generation **************/
 
@@ -182,15 +195,16 @@ public class PHPGenerator extends Generator
 
     	_input=BString.replace(_input," div "," / ");
 
-    	// START KGU#62 2015-11-02: Identify and adapt variable names
-		System.out.println("Perl - text to be transformed: \"" + _input + "\"");
+    	// START KGU#62 2015-11-02: Identify and adapt variable names (revised KGU 2015-12-19)
+		StringList tokens = Element.splitLexically(_input, true);
     	for (int i = 0; i < varNames.count(); i++)
     	{
-    		String varName = varNames.get(i);	// FIXME (KGU): Remove after Test!
-    		System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
-    		_input.replaceAll("(.*?[^\\$])" + varName + "([\\W].*?)", "$1" + "\\$" + varName + "$2");
-    		System.out.println("Perl - after replacement: \"" + _input + "\""); 	// FIXME (KGU): Remove after Test!
+    		String varName = varNames.get(i);
+    		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
+    		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
+    		tokens.replaceAll(varName, "$"+varName);
     	}
+    	_input = tokens.getText().replace("\n", "");
     	// END KGU#62 2015-11-02
 
     	return _input.trim();
@@ -362,10 +376,59 @@ public class PHPGenerator extends Generator
 		insertComment(_jump, _indent);
 		// END KGU 2014-11-16
 
-        for(int i=0;i<_jump.getText().count();i++)
-        {
-                code.add(_indent+transform(_jump.getText().get(i))+";");
-        }
+		// START KGU#78 2015-12-18: Enh. #23 - sensible exit strategy
+        //for(int i=0;i<_jump.getText().count();i++)
+        //{
+        //        code.add(_indent+transform(_jump.getText().get(i))+";");
+        //}
+		// In case of an empty text generate a continue instruction by default.
+		boolean isEmpty = true;
+		
+		StringList lines = _jump.getText();
+		for (int i = 0; isEmpty && i < lines.count(); i++) {
+			String line = transform(lines.get(i)).trim();
+			if (!line.isEmpty())
+			{
+				isEmpty = false;
+			}
+			if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
+			{
+				code.add(_indent + "return " + line.substring(D7Parser.preReturn.length()).trim() + ";");
+			}
+			else if (line.matches(Matcher.quoteReplacement(D7Parser.preExit)+"([\\W].*|$)"))
+			{
+				code.add(_indent + "exit(" + line.substring(D7Parser.preExit.length()).trim() + ");");
+			}
+			// Has it already been matched with a loop? Then syntax must have been okay...
+			else if (this.jumpTable.containsKey(_jump))
+			{
+				Integer ref = this.jumpTable.get(_jump);
+				String label = this.labelBaseName + ref;
+				if (ref.intValue() < 0)
+				{
+					insertComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
+					insertComment(line, _indent);
+					label = "__ERROR__";
+				}
+				code.add(_indent + "goto " + label + ";");
+			}
+			else if (line.matches(Matcher.quoteReplacement(D7Parser.preLeave)+"([\\W].*|$)"))
+			{
+				// Strange case: neither matched nor rejected - how can this happen?
+				// Try with an ordinary break instruction and a funny comment
+				code.add(_indent + "last;\t" + this.commentSymbolLeft() + " FIXME: Dubious occurrance of 'last' instruction!");
+			}
+			else if (!isEmpty)
+			{
+				insertComment("FIXME: jump/exit instruction of unrecognised kind!", _indent);
+				insertComment(line, _indent);
+			}
+			// END KGU#74/KGU#78 2015-11-30
+		}
+		if (isEmpty) {
+			code.add(_indent + "last;");
+		}
+		// END KGU#78 2015-12-18
     }
 
     @Override
