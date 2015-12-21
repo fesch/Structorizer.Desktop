@@ -42,7 +42,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.11.24      Method setRoot() may now refuse the replacement (e.g. on cancelling
  *                                      the request to save recent changes)
  *      Kay Gürtzig     2015.11.29      New check options added to analyserNSD()
+ *      Kay Gürtzig     2015.12.02      Bugfix #39 (KGU#91)
  *      Kay Gürtzig     2015.12.04      Bugfix #40 (KGU#94): With an error on saving, the recent file was destroyed
+ *      Kay Gürtzig     2015.12.16      Bugfix #63 (KGU#111): Error message on loading failure
  *
  ******************************************************************************************************
  *
@@ -290,9 +292,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void mouseMoved(MouseEvent e)
 	{
+		// KGU#91 2015-12-04: Bugfix #39 - Disabled
         //if(Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
-        if(e.getSource()==this && NSDControl!=null)
-        {
+		if(e.getSource()==this && NSDControl!=null)
+		{
         	boolean popVisible = false;
         	if (Element.E_SHOWCOMMENTS==true && ((Editor) NSDControl).popup.isVisible()==false)
         	{
@@ -337,6 +340,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         	}
         	pop.setVisible(popVisible);
 		}
+		// KGU#91 2015-12-04: Bugfix #39 - Disabled
         //if(Element.E_TOGGLETC) root.setSwitchTextAndComments(false);
 	}
 
@@ -726,6 +730,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void redraw(Graphics _g)
 	{
+		// KGU#91 2015-12-04: Bugfix #39 - Disabled
         //if (Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
 		root.draw(_g);
                 
@@ -761,6 +766,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                     //_g.drawRect(mX-selX, mY-selY, w, h);
                 }/**/
 
+                // KGU#91 2015-12-04: Bugfix #39 - Disabled
                 //if (Element.E_TOGGLETC) root.setSwitchTextAndComments(false);
 }
 
@@ -923,13 +929,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#48 2015-10-17: Arranger support
 		Root oldRoot = this.root;
 		// END KGU#48 2015-10-17
+		// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
+		String errorMessage = "File not found!";
+		// END KGU#111 2015-12-16
 		try
 		{
 			File f = new File(_filename);
 			//System.out.println(f.toURI().toString());
 			if(f.exists()==true)
 			{
-				// only save if something has been changed
+				// save current diagram (only if something has been changed)
 				saveNSD(true);
 
 				// open an existing file
@@ -948,12 +957,26 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					oldRoot.notifyReplaced(root);
 				}
 				// END KGU#48 2015-10-17
+				// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
+				errorMessage = null;
+				// END KGU#111 2015-12-16
 			}
 		}
 		catch (Exception e)
 		{
-			System.out.println(e.getMessage());
+			// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
+			//System.out.println(e.getMessage());
+			errorMessage = e.getMessage();
+			System.out.println(errorMessage);
+			// END KGU#111 2015-12-16
 		}
+		// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
+		if (errorMessage != null)
+		{
+			JOptionPane.showMessageDialog(this, "\"" + _filename + "\": " + errorMessage, "Loading Error",
+					JOptionPane.ERROR_MESSAGE);
+		}
+		// END KGU#111 2015-12-16
 	}
 
 
@@ -2482,6 +2505,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 eod.commentsCheckBox.setSelected(true);
             else 
                 eod.commentsCheckBox.setSelected(false);
+            // START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
+            eod.bracesCheckBox.setSelected(ini.getProperty("genExportBraces", "0").equals("true"));
+            eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "0").equals("true"));
+            // END KGU#16/KGU#113 2015-12-18
             // START KGU 2014-11-18
             eod.setLang(NSDControl.getLang());
             // END KGU 2014-11-18
@@ -2490,6 +2517,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             if(eod.goOn==true)
             {
                 ini.setProperty("genExportComments", String.valueOf(eod.commentsCheckBox.isSelected()));
+                // START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
+                ini.setProperty("genExportBraces", String.valueOf(eod.bracesCheckBox.isSelected()));
+                ini.setProperty("genExportLineNumbers", String.valueOf(eod.lineNumbersCheckBox.isSelected()));
+                // END KGU#16/KGU#113 2015-12-18
                 ini.save();
             }
         } 

@@ -42,6 +42,10 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig                2014.11.16      Conversion of C-like logical operators and arcus functions (see comment)
  *      Kay Gürtzig                2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
  *      Kay Gürtzig                2015.10.18      Indentation and comment mechanisms revised, bugfix
+ *      Kay Gürtzig                2015.12.12      bugfix #59 (KGU#104) with respect to ER #10
+ *      Kay Gürtzig                2015.12.17      Enh. #23 (KGU#78) jump generation revised; Root generation
+ *                                                 decomposed according to Generator.generateCode(Root, String);
+ *                                                 Enh. KGU#47: Dummy implementation for Parallel element
  *
  ******************************************************************************************************
  *
@@ -76,6 +80,8 @@ package lu.fisch.structorizer.generators;
  *        - writeln() => System.out.println()
  * 
  ******************************************************************************************************///
+
+import java.util.regex.Matcher;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
@@ -115,7 +121,18 @@ public class PythonGenerator extends Generator
 	    }
 	    // END KGU 2015-10-18
 
-	    /************ Code Generation **************/
+		// START KGU#78 2015-12-18: Enh. #23 We must know whether to create labels for simple breaks
+		/* (non-Javadoc)
+		 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
+		 */
+		@Override
+		protected boolean supportsSimpleBreak()
+		{
+			return true;
+		}
+		// END KGU#78 2015-12-18
+
+		/************ Code Generation **************/
 	    
 		// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 		/**
@@ -172,7 +189,6 @@ public class PythonGenerator extends Generator
 			_input=BString.replace(_input,"&&"," and ");
 			_input=BString.replace(_input,"||"," or ");
 			_input=BString.replace(_input,"!"," not ");
-			_input=BString.replace(_input,"!"," not ");
 			_input=BString.replace(_input," xor "," ^ ");            
 			// END KGU 2014-11-16
 
@@ -193,10 +209,10 @@ public class PythonGenerator extends Generator
 			s=s.replace("amath.sin(", "math.asin(");
 			s=s.replace("amath.tan(", "math.atan(");
 			// END KGU 2014-11-16
-			s=s.replace("abs(", "abs(");
-			s=s.replace("round(", "round(");
-			s=s.replace("min(", "min(");
-			s=s.replace("max(", "max(");
+			//s=s.replace("abs(", "abs(");
+			//s=s.replace("round(", "round(");
+			//s=s.replace("min(", "min(");
+			//s=s.replace("max(", "max(");
 			s=s.replace("ceil(", "math.ceil(");
 			s=s.replace("floor(", "math.floor(");
 			s=s.replace("exp(", "math.exp(");
@@ -293,22 +309,28 @@ public class PythonGenerator extends Generator
 			insertComment(_for, _indent);
 			// END KGU 2014-11-16
 
-			String startValueStr="";
-			String endValueStr="";
-			String stepValueStr="";
-			
-			String editStr = BString.replace(transform(_for.getText().getText()),"\n","").trim();
-			String[] word = editStr.split(" ");
-			int nbrWords = word.length;
-			String counterStr = word[0];
-			if ((nbrWords-1) >= 2) startValueStr = word[2];
-			if ((nbrWords-1) >= 4) endValueStr = word[4];
-			if ((nbrWords-1) >= 6) {
-				stepValueStr = word[6]; 
-			}
-			else {
-				stepValueStr = "1";
-			}
+			// START KGU#3/KGU#104 2015-12-12: ER #10 / Bugfix #59 - This was forgotten to fix
+			//String startValueStr="";
+			//String endValueStr="";
+			//String stepValueStr="";
+			//
+			//String editStr = BString.replace(transform(_for.getText().getText()),"\n","").trim();
+			//String[] word = editStr.split(" ");
+			//int nbrWords = word.length;
+			//String counterStr = word[0];
+			//if ((nbrWords-1) >= 2) startValueStr = word[2];
+			//if ((nbrWords-1) >= 4) endValueStr = word[4];
+			//if ((nbrWords-1) >= 6) {
+			//	stepValueStr = word[6]; 
+			//}
+			//else {
+			//	stepValueStr = "1";
+			//}
+			String counterStr = _for.getCounterVar();
+			String startValueStr = this.transform(_for.getStartValue());
+			String endValueStr = this.transform(_for.getEndValue());
+			String stepValueStr = _for.getStepString();
+			// END KGU#3/KGU#104 2015-12-12
 			code.add(_indent+"for "+counterStr+" in range("+startValueStr+", "+endValueStr+", "+stepValueStr+"):");
 			generateCode((Subqueue) _for.q,_indent + this.getIndent());
 			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
@@ -398,13 +420,83 @@ public class PythonGenerator extends Generator
 				// START KGU 2014-11-16
 				insertComment(_jump, _indent);
 				// END KGU 2014-11-16
-				for(int i=0;i<_jump.getText().count();i++)
-				{
-					insertComment(transform(_jump.getText().get(i))+" # FIXME goto instructions not allowed in Python", _indent);
+				// START KGU#78 2015-12-17: Enh. 38 - translate acceptable Jumps to break instructions
+				//for(int i=0;i<_jump.getText().count();i++)
+				//{
+				//	insertComment(transform(_jump.getText().get(i))+" # FIXME goto instructions not allowed in Python", _indent);
+				//}
+				// In case of an empty text generate a break instruction by default.
+				boolean isEmpty = true;
+
+				StringList lines = _jump.getText();
+				for (int i = 0; isEmpty && i < lines.count(); i++) {
+					String line = transform(lines.get(i)).trim();
+					if (!line.isEmpty())
+					{
+						isEmpty = false;
+					}
+					if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
+					{
+						code.add(_indent + "return " + line.substring(D7Parser.preReturn.length()).trim());
+					}
+					else if (line.matches(Matcher.quoteReplacement(D7Parser.preLeave)+"([\\W].*|$)"))
+					{
+						// We may only allow one-level breaks, i. e. there must not be an argument
+						// or the argument must be 1 and a legal label must be associated.
+						String arg = line.substring(D7Parser.preLeave.length()).trim();
+						Integer label = this.jumpTable.get(_jump);
+						if (label != null && label.intValue() >= 0 &&
+								(arg.isEmpty() || Integer.parseInt(arg) == 1))
+						{
+							code.add(_indent + "break");		
+						}
+						else
+						{
+							code.add(_indent + "break # FIXME: Illegal multi-level break attempted!");
+						}
+					}
+					else if (!isEmpty)
+					{
+						insertComment("FIXME: unsupported jump/exit instruction!", _indent);
+						insertComment(line, _indent);
+					}
 				}
+				if (isEmpty) {
+					code.add(_indent + "break");
+				}
+				// END KGU#78 2015-12-17
 			}
 		}
 		
+		// START KGU#47 2015-12-1: Offer at least a sequential execution (which is one legal execution order)
+		protected void generateCode(Parallel _para, String _indent)
+		{
+			// FIXME (KGU) Try an implementation by means of the Threading module!
+			String indentPlusOne = _indent + this.getIndent();
+			String indentPlusTwo = indentPlusOne + this.getIndent();
+			insertComment(_para, _indent);
+
+			code.add(_indent);
+			insertComment("==========================================================", _indent);
+			insertComment("================= START PARALLEL SECTION =================", _indent);
+			insertComment("==========================================================", _indent);
+			insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
+			code.add(indentPlusOne);
+
+			for (int i = 0; i < _para.qs.size(); i++) {
+				insertComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
+				generateCode((Subqueue) _para.qs.get(i), indentPlusTwo);
+				insertComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
+				code.add(indentPlusOne);
+			}
+
+			insertComment("==========================================================", _indent);
+			insertComment("================== END PARALLEL SECTION ==================", _indent);
+			insertComment("==========================================================", _indent);
+			code.add("");
+		}
+		// END KGU#47 2015-12-17
+
 		// START KGU#18/KGU#23 2015-11-02: Use inherited method
 //		protected void generateCode(Subqueue _subqueue, String _indent)
 //		{
@@ -417,37 +509,85 @@ public class PythonGenerator extends Generator
 //		}
 		// END KGU#18/KGU#23 2015-11-02
 		
-		public String generateCode(Root _root, String _indent)
+		// START KGU#78 2015-12-17: Enh. #23 Root generation decomposed
+//		public String generateCode(Root _root, String _indent)
+//		{
+//			if(_root.isProgram==true) {
+//				code.add("#!/usr/bin/env python");
+//				insertComment(_root.getText().get(0), _indent);
+//				code.add("");
+//		        // START KGU 2015-10-18
+//				//code.add("\"\"\"This script ...\"\"\"");
+//		        insertComment(_root, "");
+//		        // END KGU 2015-10-18
+//				code.add("");
+//					
+//				Subqueue _subqueue = _root.children;
+//				for(int i=0;i<_subqueue.getSize();i++) {
+//					generateCode((Element) _subqueue.getElement(i),"");
+//				}
+//				
+//				code.add("");
+//			}
+//			else {
+//				code.add("def "+_root.getText().get(0)+"() :");
+//		        // START KGU 2014-11-16
+//				//code.add(this.getIndent()+"\"\"\"This method ...\"\"\"");
+//		        insertComment(_root, this.getIndent());
+//		        // END KGU 2014-11-16
+//
+//				generateCode(_root.children,"");
+//				code.add("");
+//			}
+//			
+//			return code.getText();
+//		}
+
+		/* (non-Javadoc)
+		 * @see lu.fisch.structorizer.generators.Generator#generateHeader(lu.fisch.structorizer.elements.Root, java.lang.String, java.lang.String, lu.fisch.utils.StringList, lu.fisch.utils.StringList, java.lang.String)
+		 */
+		@Override
+		protected String generateHeader(Root _root, String _indent, String _procName,
+				StringList _paramNames, StringList _paramTypes, String _resultType)
 		{
-			if(_root.isProgram==true) {
-				code.add("#!/usr/bin/env python");
+			String indent = "";
+			if (_root.isProgram) {
+				code.add(_indent + "#!/usr/bin/env python");
 				insertComment(_root.getText().get(0), _indent);
 				code.add("");
-		        // START KGU 2015-10-18
-				//code.add("\"\"\"This script ...\"\"\"");
-		        insertComment(_root, "");
-		        // END KGU 2015-10-18
-				code.add("");
-					
-				Subqueue _subqueue = _root.children;
-				for(int i=0;i<_subqueue.getSize();i++) {
-					generateCode((Element) _subqueue.getElement(i),"");
-				}
-				
-				code.add("");
+				insertComment(_root, _indent);
 			}
 			else {
-				code.add("def "+_root.getText().get(0)+"() :");
-		        // START KGU 2014-11-16
-				//code.add(this.getIndent()+"\"\"\"This method ...\"\"\"");
-		        insertComment(_root, this.getIndent());
-		        // END KGU 2014-11-16
-
-				generateCode(_root.children,"");
-				code.add("");
+				indent = _indent + this.getIndent();
+				insertComment(_root, _indent);
+				code.add(_indent + "def " + _procName +"(" + _paramNames.getText().replace("\n", ", ") +") :");
 			}
-			
-			return code.getText();
+			return indent;
 		}
-		
+
+		/* (non-Javadoc)
+		 * @see lu.fisch.structorizer.generators.Generator#generateResult(lu.fisch.structorizer.elements.Root, java.lang.String, boolean, lu.fisch.utils.StringList)
+		 */
+		@Override
+		protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
+		{
+			if (!_root.isProgram && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
+			{
+				String result = "0";
+				if (isFunctionNameSet)
+				{
+					result = _root.getMethodName();
+				}
+				else if (isResultSet)
+				{
+					int vx = varNames.indexOf("result", false);
+					result = varNames.get(vx);
+				}
+				code.add(_indent);
+				code.add(_indent + "return " + result);
+			}
+			return _indent;
+		}
+		// END KGU#78 2015-12-17
+
 	}

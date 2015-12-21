@@ -38,6 +38,9 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2015.11.14      Parameterized creation of dependent Mainforms (to solve issues #6, #16)
  *      Kay Gürtzig     2015.11.18      Several changes to get scrollbars working (issue #35 = KGU#85)
  *                                      removal mechanism added, selection mechanisms revised
+ *      Kay Gürtzig     2015.12.17      Bugfix KGU#111 for Enh. #63, preparations for Enh. #62 (KGU#110)
+ *      Kay Gürtzig     2015.12.20      Enh. #62 (KGU#110) 1st approach: Load / save as mere file list.
+ *                                      Enh. #35 (KGU#88) Usability improvement (automatic pinning)
  *
  ******************************************************************************************************
  *
@@ -74,8 +77,14 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.util.Iterator;
+import java.util.Scanner;
 import java.util.Vector;
+import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -89,9 +98,12 @@ import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Updater;
 import lu.fisch.structorizer.executor.IRoutinePool;
+import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.Mainform;
+import lu.fisch.structorizer.io.ArrFilter;
 import lu.fisch.structorizer.io.PNGFilter;
 import lu.fisch.structorizer.parsers.NSDParser;
+import lu.fisch.utils.StringList;
 import net.iharder.dnd.FileDrop;
 
 /**
@@ -109,7 +121,9 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     // START KGU#88 2015-11-24: We may often need the pin icon
     public static Image pinIcon = null;
     // END KGU#88 2015-11-24
-
+    // START KGU#110 2015-12-21: Enh. #62, also supports PNG export
+    public File currentDirectory = new File(System.getProperty("user.home"));
+    // END KGU#110 2015-12-21
 
     @Override
     public void paint(Graphics g)
@@ -150,19 +164,23 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     		public void  filesDropped( java.io.File[] files )
     		{
     			//boolean found = false;
-    			for (int i = 0; i < files.length; i++)
-    			{
-    				String filename = files[i].toString();
-    				if(filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".nsd"))
-    				{
-    					// open an existing file
-    					NSDParser parser = new NSDParser();
-    					File f = new File(filename);
-    					Root root = parser.parse(f.toURI().toString());
-    					root.filename=filename;
-    					addDiagram(root);
-    				}
-    			}
+// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
+//    			for (int i = 0; i < files.length; i++)
+//    			{
+//    				String filename = files[i].toString();
+//    				if(filename.substring(filename.length()-4).toLowerCase().equals(".nsd"))
+//    				{
+//    					// open an existing file
+//    					NSDParser parser = new NSDParser();
+//    					File f = new File(filename);
+//        				Root root = parser.parse(f.toURI().toString());
+//    					
+//        				root.filename=filename;
+//        				addDiagram(root);
+//    				}
+//    			}
+    			loadFiles(files);
+// END KGU#111 2015-12-17
     		}
     	});
 
@@ -174,7 +192,260 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
         // END KGU#85 2015-11-18
 
     }
+    
+    // START KGU#110 2015-12-17: Enh. #62 - offer an opportunity to save / load an arrangement
+    public int loadFiles(java.io.File[] files)
+    {
+    	int nLoaded = 0;
+    	String troubles = "";
+    	for (int i = 0; i < files.length; i++)
+    	{
+    		String filename = files[i].toString();
+    		String errorMessage = loadFile(filename);
+			if (!troubles.isEmpty()) { troubles += "\n"; }
+			troubles += "\"" + filename + "\": " + errorMessage;
+			System.err.println("Arranger failed to load \"" + filename + "\": " + troubles);
+    	}
+    	if (!troubles.isEmpty())
+    	{
+			JOptionPane.showMessageDialog(this, troubles, "File Load Error", JOptionPane.ERROR_MESSAGE);
+    	}
+	return nLoaded;
+    }
+    
+    private String loadFile(String filename)
+    {
+    	return loadFile(filename, null);
+    }
+    
+    private String loadFile(String filename, Point point)
+    {
+    	String errorMessage = "";
+		if(filename.substring(filename.length()-4).toLowerCase().equals(".nsd"))
+		{
+			// open an existing file
+			NSDParser parser = new NSDParser();
+			File f = new File(filename);	// FIXME (KGU) Why don't we just use files[i]?
+			// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
+			try {
+			// END KGU#111 2015-12-17
+				Root root = parser.parse(f.toURI().toString());
 
+				root.filename=filename;
+				addDiagram(root, point);
+   			// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
+			}
+			catch (Exception ex) {
+				errorMessage = ex.getLocalizedMessage();
+			}
+			// END KGU#111 2015-12-17
+		}
+    	return errorMessage;
+    }
+    
+    /**
+     * Stores the current diagram arrangement to a file.
+     * In this first approach this will only be a list of points and filenames
+     * Hence, the file won't be portable (unless all listed files were copied accordingly.
+     * 
+     * The final version might produce a packed archive containing the list file as well
+     * as the referenced NSD files such that it can be ported to a different location and
+     * extracted.
+     *  
+     * @param frame - the commanding GUI component
+     * @return status flag (true iff the saving succeeded without error) 
+     */
+    public boolean saveArrangement(Frame frame)
+    {
+    	boolean done = false;
+    	// Ensure the diagrams themselves are saved
+    	this.saveDiagrams();
+    	// Let's select path and name for the list / archive file
+        JFileChooser dlgSave = new JFileChooser("Save arranged set of diagrams ...");
+        dlgSave.addChoosableFileFilter(new ArrFilter());
+        dlgSave.setCurrentDirectory(currentDirectory);
+        int result = dlgSave.showSaveDialog(frame);
+        if (result == JFileChooser.APPROVE_OPTION)
+        {
+            currentDirectory = dlgSave.getCurrentDirectory();
+            // correct the filename if necessary
+            String filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
+            if (!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".arr"))
+            {
+                    filename+=".arr";
+            }
+            done = saveArrangement(frame, filename + "");
+        }
+        return done;
+    }
+    
+    /**
+     * Stores the current diagram arrangement to a file.
+     * In this first approach this will only be a list of points and filenames
+     * Hence, the file won't be portable (unless all listed files were copied accordingly.
+     * 
+     * The final version might produce a packed archive containing the list file as well
+     * as the referenced NSD files such that it can be ported to a different location and
+     * extracted.
+     *  
+     * @param frame - the commanding GUI component
+     * @param filename - the name of the selected file
+     * @return status flag (true iff the saving succeeded without error) 
+     */
+    public boolean saveArrangement(Frame frame, String filename)
+    {
+    	String[] EnvVariablesToCheck = { "TEMP", "TMP", "TMPDIR", "HOME", "HOMEPATH" };
+    	boolean done = false;
+    	// Ensure the diagrams themselves are saved
+    	String outFilename = filename + "";		// Name of the actually written file
+    	try
+    	{
+    		// set up the file
+    		File file = new File(outFilename);
+    		boolean fileExisted = file.exists(); 
+    		if (fileExisted)
+    		{
+    			// Find a suited temporary directory to store the output file
+    			String tempDir = "";
+    			for (int i = 0; (tempDir == null || tempDir.isEmpty()) && i < EnvVariablesToCheck.length; i++)
+    			{
+    				tempDir = System.getenv(EnvVariablesToCheck[i]);
+    			}
+    			if ((tempDir == null || tempDir.isEmpty()))
+    			{
+    				File dir = new File(".");
+    				if (dir.isFile())
+    				{
+    					tempDir = dir.getParent();
+    				}
+    				else
+    				{
+    					tempDir = dir.getAbsolutePath();
+    				}
+    			}
+    			outFilename = tempDir + File.separator + "Arranger.tmp";
+    		}
+    		FileOutputStream fos = new FileOutputStream(outFilename);
+    		Writer out = new OutputStreamWriter(fos, "UTF8");
+    		for (int d = 0; d < this.diagrams.size(); d++)
+    		{
+    			Diagram diagr = this.diagrams.get(d);
+    			out.write(Integer.toString(diagr.point.x) + ",");
+    			out.write(Integer.toString(diagr.point.y) + ",");
+    			StringList entry = new StringList();
+    			entry.add(diagr.root.getPath());
+    			out.write(entry.getCommaText()+'\n');
+    		}
+
+    		out.close();
+
+    		// If the Arr file had existed then replace it by the output file after having created a backup
+    		if (fileExisted)
+    		{
+    			File backUp = new File(filename + ".bak");
+    			if (backUp.exists())
+    			{
+    				backUp.delete();
+    			}
+    			file.renameTo(backUp);
+    			file = new File(filename);
+    			File tmpFile = new File(outFilename);
+    			tmpFile.renameTo(file);
+    		}
+    		// END KGU#94 2015.12.04
+
+    		done = true;
+    	}
+    	catch (Exception ex)
+    	{
+    		JOptionPane.showMessageDialog(frame, "Error on saving the arrangement:" + ex.getMessage() + "!",
+    				"Error", JOptionPane.ERROR_MESSAGE, null);
+    	}
+    	return done;
+    }
+    
+    public boolean loadArrangement(Frame frame)
+    {
+    	boolean done = false;
+    	// Ensure the previous diagrams themselves are saved
+    	this.saveDiagrams();
+    	// Let's select path and name for the list / archive file
+        JFileChooser dlgOpen = new JFileChooser("Reload a stored arrangement of diagrams ...");
+        dlgOpen.addChoosableFileFilter(new ArrFilter());
+        dlgOpen.setCurrentDirectory(currentDirectory);
+        
+        int result = dlgOpen.showOpenDialog(frame);
+        if (result == JFileChooser.APPROVE_OPTION)
+        {
+            currentDirectory = dlgOpen.getCurrentDirectory();
+            // correct the filename if necessary
+            String filename = dlgOpen.getSelectedFile().getAbsoluteFile().toString();
+            done = loadArrangement(frame, filename);
+        }
+   	
+    	return done;
+    }
+
+    public boolean loadArrangement(Frame frame, String filename)
+    {
+    	boolean done = false;
+    	
+    	String errorMessage = null;
+    	try
+    	{
+    		// set up the file
+    		File file = new File(filename);
+    		//Pattern separator = new Pattern(",");
+    		Scanner in = new Scanner(file, "UTF8");
+    		while (in.hasNextLine())
+    		{
+    			String line = in.nextLine();
+    			StringList fields = StringList.explode(line, ",");
+    			if (fields.count() >= 3)
+    			{
+    			Point point = new Point();
+    			point.x = Integer.parseInt(fields.get(0));
+    			point.y = Integer.parseInt(fields.get(1));
+    			String nsdFileName = fields.get(2);
+    			if (nsdFileName.startsWith("\""))
+    				nsdFileName = nsdFileName.substring(1);
+    			if (nsdFileName.endsWith("\""))
+    				nsdFileName = nsdFileName.substring(0, nsdFileName.length() - 1);
+    			String trouble = loadFile(nsdFileName, point);
+    			if (!trouble.isEmpty())
+    			{
+    				if (errorMessage != null)
+    				{
+    					errorMessage += "\n" + trouble;
+    				}
+    				else {
+    					errorMessage = trouble;
+    				}
+    			}
+    			}
+    		}
+
+    		in.close();
+
+    		done = true;
+    	}
+    	catch (Exception ex)
+    	{
+    		errorMessage = ex.getLocalizedMessage();
+    		if (errorMessage == null)
+    		{
+    			errorMessage = ex.toString();
+    		}
+    	}
+    	if (errorMessage != null)
+    	{
+    		JOptionPane.showMessageDialog(frame, "Error on loading the arrangement: " + errorMessage + "!",
+    				"Error", JOptionPane.ERROR_MESSAGE, null);   		
+    	}
+    	return done;
+    }
+    // END KGU#110 2015-12-17
+    
     public void exportPNG(Frame frame)
     {
         JFileChooser dlgSave = new JFileChooser("Export diagram as PNG ...");
@@ -183,9 +454,11 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
         //dlgSave.setSelectedFile(new File(uniName));
 
         dlgSave.addChoosableFileFilter(new PNGFilter());
+        dlgSave.setCurrentDirectory(currentDirectory);
         int result = dlgSave.showSaveDialog(frame);
         if (result == JFileChooser.APPROVE_OPTION)
         {
+            currentDirectory = dlgSave.getCurrentDirectory();
             // correct the filename, if necessary
             String filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
             if(!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".png"))
@@ -281,9 +554,43 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     public void addDiagram(Root root)
     // START KGU#2 2015-11-19: Needed a possibility to register a related Mainform
     {
-    	addDiagram(root, null);
+    	addDiagram(root, null, null);
     }
+    /**
+     * Places the passed-in diagram root in the drawing area if it hadn't already been
+     * residing here. If a Mainform form was given, then it is registered with the root
+     * and root will automatically be pinned.
+     * @param root - a diagram to be placed here
+     * @param form - the sender of the diagram if it was pushed here from a Structorizer instance
+     */
     public void addDiagram(Root root, Mainform form)
+    // START KGU#110 2015-12-20: Enhancement #62 -we want to be able to use predefined positions
+    {
+    	this.addDiagram(root, form, null);
+    }
+    
+    /**
+     * @param root - the root element of the diagram to be added
+     * @param position - the proposed position
+     */
+    public void addDiagram(Root root, Point position)
+    // START KGU#110 2015-12-20: Enhancement #62 -we want to be able to use predefined positions
+    {
+    	this.addDiagram(root, null, position);
+    }    
+    
+    /**
+     * Places the passed-in diagram root in the drawing area if it hadn't already been
+     * residing here. If a Mainform form was given, then it is registered with the root
+     * and root will automatically be pinned.
+     * If point is given then the diaram will be place to that position, otherwise a free
+     * area is looked for.
+     * @param root - the root element of the diagram to be added
+     * @param form - the sender of the diagram if it was pushed here from a Structorizer instance
+     * @param point - the proposed position
+     */
+    public void addDiagram(Root root, Mainform form, Point point)
+    // END KGU#110 2015-12-20
     // END KGU#2 2015-11-19
     {
     	// START KGU#2 2015-11-19: Don't add a diagram that is already held here
@@ -304,7 +611,13 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     			top = rect.bottom+10;
     			left = rect.left;
     		}
-    		Point point = new Point(left,top);
+    		// START KGU#110 2015-12-20
+    		//Point point = new Point(left,top);
+    		if (point == null)
+    		{
+    			point = new Point(left,top);
+    		}
+    		// END KGU#110 2015-12-20
     		/*Diagram*/ diagram = new Diagram(root,point);
     		diagrams.add(diagram);
     		// START KGU#85 2015-11-18
@@ -316,6 +629,12 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     		if (rec.width == 0)	rec.width = 120;
     		if (rec.height == 0) rec.height = 150;
     		this.scrollRectToVisible(rec);
+    		// START KGU#88 2015-12-20: It ought to be pinned if form wasn't null
+    		if (form != null)
+    		{
+    			diagram.isPinned = true;
+    		}
+    		// END KGU88 2015-12-20
     		// END KGU 2015-11-30
     		repaint();
     		getDrawingRect();

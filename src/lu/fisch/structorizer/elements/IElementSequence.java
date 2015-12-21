@@ -20,7 +20,7 @@
 
 package lu.fisch.structorizer.elements;
 
-import lu.fisch.structorizer.gui.SelectedSequence;
+//import lu.fisch.structorizer.gui.SelectedSequence;
 
 /******************************************************************************************************
 *

@@ -30,8 +30,8 @@ package lu.fisch.structorizer.generators;
  *
  *      Revision List
  *
- *      Author                     Date		   Description
- *      ------			   ----		   -----------
+ *      Author                     Date            Description
+ *      ------                     ----            -----------
  *      Bob Fisch                  2008.11.17      First Issue
  *      Gunter Schillebeeckx       2009.08.10      Java Generator starting from C Generator
  *      Bob Fisch                  2009.08.10      Update I/O
@@ -44,6 +44,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig                2015.11.01      Preprocessing reorganised, FOR loop and CASE enhancements
  *      Kay Gürtzig                2015.11.30      Inheritance changed to CGenerator (KGU#16), specific
  *                                                 jump and return handling added (issue #22 = KGU#74)
+ *      Kay Gürtzig                2015.12.12      Enh. #54 (KGU#101): Support for output expression lists
+ *      Kay Gürtzig                2015.12.15      Bugfix #51 (=KGU#108): Cope with empty input and output
  *
  ******************************************************************************************************
  *
@@ -92,176 +94,198 @@ import lu.fisch.structorizer.elements.*;
 //public class JavaGenerator extends Generator
 public class JavaGenerator extends CGenerator
 // END KGU#16 2015-11-30
+{
+
+	/************ Fields ***********************/
+	protected String getDialogTitle()
 	{
-		
-		/************ Fields ***********************/
-		protected String getDialogTitle()
-		{
-			return "Export Java ...";
-		}
-		
-		protected String getFileDescription()
-		{
-			return "Java Source Code";
-		}
-		
-		protected String getIndent()
-		{
-			return "\t";
-		}
-		
-		protected String[] getFileExtensions()
-		{
-			String[] exts = {"java"};
-			return exts;
-		}
-		
-	    // START KGU 2015-10-18: New pseudo field
-	    @Override
-	    protected String commentSymbolLeft()
-	    {
-	    	return "//";
-	    }
-	    // END KGU 2015-10-18
+		return "Export Java ...";
+	}
 
-		// START KGU#16 2015-11-29: Code style option for opening brace placement
-		protected boolean optionBlockBraceNextLine() {
-			// TODO (KGU 2015-11-29): Should become an ExportOptionDialoge option
-			return false;
-		}
-		// END KGU#16 2015-11-29
+	protected String getFileDescription()
+	{
+		return "Java Source Code";
+	}
 
-		// START KGU#16/KGU#47 2015-11-30: Unification of block generation (configurable)
-		/**
-		 * This subclassable method is used for insertBlockHeading()
-		 * @return Indicates where labels for multi-level loop exit jumps are to be placed
-		 * (in C, C++, C# after the loop, in Java at the beginning of the loop). 
-		 */
-		@Override
-		protected boolean isLabelAtLoopStart()
+	protected String getIndent()
+	{
+		return "\t";
+	}
+
+	protected String[] getFileExtensions()
+	{
+		String[] exts = {"java"};
+		return exts;
+	}
+
+	// START KGU 2015-10-18: New pseudo field
+	@Override
+	protected String commentSymbolLeft()
+	{
+		return "//";
+	}
+	// END KGU 2015-10-18
+
+// START KGU#16 2015-12-18: Now inherited and depending on export option	
+//	// START KGU#16 2015-11-29: Code style option for opening brace placement
+//	protected boolean optionBlockBraceNextLine() {
+//		return false;
+//	}
+//	// END KGU#16 2015-11-29
+// END KGU#16 2015-12-18
+
+	// START KGU#16/KGU#47 2015-11-30: Unification of block generation (configurable)
+	/**
+	 * This subclassable method is used for insertBlockHeading()
+	 * @return Indicates where labels for multi-level loop exit jumps are to be placed
+	 * (in C, C++, C# after the loop, in Java at the beginning of the loop). 
+	 */
+	@Override
+	protected boolean isLabelAtLoopStart()
+	{
+		return true;
+	}
+
+	/**
+	 * Instruction to be used to leave an outer loop (subclassable)
+	 * A label string is supposed to be appended without parentheses.
+	 * @return a string containing the respective reserved word
+	 */
+	@Override
+	protected String getMultiLevelLeaveInstr()
+	{
+		return "break";
+	}
+
+	// END KGU#16/#47 2015-11-30
+
+	/************ Code Generation **************/
+
+	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
+	/**
+	 * A pattern how to embed the variable (right-hand side of an input instruction)
+	 * into the target code
+	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
+	 */
+	protected String getInputReplacer()
+	{
+		return "$1 = (new Scanner(System.in)).nextLine()";
+	}
+
+	/**
+	 * A pattern how to embed the expression (right-hand side of an output instruction)
+	 * into the target code
+	 * @return a regex replacement pattern, e.g. "System.out.println($1);"
+	 */
+	protected String getOutputReplacer()
+	{
+		return "System.out.println($1)";
+	}
+
+	// START KGU#16/#47 2015-11-30
+	/**
+	 * Instruction to create a language-specific exit instruction (subclassable)
+	 * The exit code will be passed to the generated code.
+	 */
+	protected void insertExitInstr(String _exitCode, String _indent)
+	{
+		code.add(_indent + "System.exit(" + _exitCode + ")");
+	}
+	// END KGU#16/#47 2015-11-30
+
+	/**
+	 * Transforms assignments in the given intermediate-language code line.
+	 * Replaces "<-" by "="
+	 * @param _interm - a code line in intermediate syntax
+	 * @return transformed string
+	 */
+	protected String transformAssignment(String _interm)
+	{
+		return _interm.replace(" <- ", " = ");
+	}
+	// END KGU#18/KGU#23 2015-11-01
+
+	@Override
+	protected String transform(String _input)
+	{
+		// START KGU#101 2015-12-12: Enh. #54 - support lists of expressions
+		if (_input.matches("^" + D7Parser.output.trim() + "[ ](.*?)"))
 		{
-			return true;
+			StringList expressions = 
+					Element.splitExpressionList(_input.substring(D7Parser.output.trim().length()), ",");
+			// Some of the expressions might be sums, so better put parentheses around them
+			_input = D7Parser.output.trim() + " (" + expressions.getText().replace("\n", ") + (") + ")";
 		}
-		
-		/**
-		 * Instruction to be used to leave an outer loop (subclassable)
-		 * A label string is supposed to be appended without parentheses.
-		 * @return a string containing the respective reserved word
-		 */
-		@Override
-		protected String getMultiLevelLeaveInstr()
-		{
-			return "break";
-		}
+		// END KGU#101 2015-12-12
 
-		// END KGU#16/#47 2015-11-30
-
-		/************ Code Generation **************/
-
-	    // START KGU#18/KGU#23 2015-11-01 Transformation decomposed
-		/**
-		 * A pattern how to embed the variable (right-hand side of an input instruction)
-		 * into the target code
-		 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
-		 */
-		protected String getInputReplacer()
-		{
-			return "$1 = (new Scanner(System.in)).nextLine()";
-		}
-
-		/**
-		 * A pattern how to embed the expression (right-hand side of an output instruction)
-		 * into the target code
-		 * @return a regex replacement pattern, e.g. "System.out.println($1);"
-		 */
-		protected String getOutputReplacer()
-		{
-			return "System.out.println($1)";
-		}
-
-		// START KGU#16/#47 2015-11-30
-		/**
-		 * Instruction to create a language-specific exit instruction (subclassable)
-		 * The exit code will be passed to the generated code.
-		 */
-		protected void insertExitInstr(String _exitCode, String _indent)
-		{
-			code.add(_indent + "System.exit(" + _exitCode + ")");
-		}
-		// END KGU#16/#47 2015-11-30
-
-		/**
-		 * Transforms assignments in the given intermediate-language code line.
-		 * Replaces "<-" by "="
-		 * @param _interm - a code line in intermediate syntax
-		 * @return transformed string
-		 */
-		protected String transformAssignment(String _interm)
-		{
-			return _interm.replace(" <- ", " = ");
-		}
+		// START KGU#18/KGU#23 2015-11-01: This can now be inherited
+		String s = super.transform(_input).replace(" div "," / ");
 		// END KGU#18/KGU#23 2015-11-01
-		
-	    @Override
-	    protected String transform(String _input)
-	    {
-			// START KGU#18/KGU#23 2015-11-01: This can now be inherited
-			String s = super.transform(_input).replace(" div "," / ");
-			// END KGU#18/KGU#23 2015-11-01
-                        
-			// Math function
-			s=s.replace("cos(", "Math.cos(");
-			s=s.replace("sin(", "Math.sin(");
-			s=s.replace("tan(", "Math.tan(");
-			// START KGU 2014-10-22: After the previous replacements the following 3 strings would never be found!
-			//s=s.replace("acos(", "Math.acos(");
-			//s=s.replace("asin(", "Math.asin(");
-			//s=s.replace("atan(", "Math.atan(");
-			// This is just a workaround; A clean approach would require a genuine lexical scanning in advance
-			s=s.replace("aMath.cos(", "Math.acos(");
-			s=s.replace("aMath.sin(", "Math.asin(");
-			s=s.replace("aMath.tan(", "Math.atan(");
-			// END KGU 2014-10-22:
-			s=s.replace("abs(", "Math.abs(");
-			s=s.replace("round(", "Math.round(");
-			s=s.replace("min(", "Math.min(");
-			s=s.replace("max(", "Math.max(");
-			s=s.replace("ceil(", "Math.ceil(");
-			s=s.replace("floor(", "Math.floor(");
-			s=s.replace("exp(", "Math.exp(");
-			s=s.replace("log(", "Math.log(");
-			s=s.replace("sqrt(", "Math.sqrt(");
-			s=s.replace("pow(", "Math.pow(");
-			s=s.replace("toRadians(", "Math.toRadians(");
-			s=s.replace("toDegrees(", "Math.toDegrees(");
-			// clean up ... if needed
-			s=s.replace("Math.Math.", "Math.");
 
-			return s.trim();
-	    }
-		
-		// START KGU#16 2015-11-29
-		protected String transformType(String _type, String _default) {
-			if (_type == null)
-				_type = _default;
-			_type = _type.toLowerCase();
-			_type = _type.replace("short int", "int");
-			_type = _type.replace("short", "int");
-			_type = _type.replace("unsigned int", "int");
-			_type = _type.replace("unsigned long", "long");
-			_type = _type.replace("unsigned char", "char");
-			_type = _type.replace("unsigned", "int");
-			_type = _type.replace("real", "double");
-			_type = _type.replace("bool", "boolean");
-			_type = _type.replace("boole", "boolean");
-			_type = _type.replace("character", "Character");
-			_type = _type.replace("integer", "Integer");
-			_type = _type.replace("string", "String");
-			return _type;
-		}
-		// END KGU#16 2015-11-29
+		// START KGU#108 2015-12-15: Bugfix #51: Cope with empty input and output
+		if (s.startsWith("= (new Scanner(System.in)).nextLine()")) s = s.substring(2);
+		// END KGU#108 2015-12-15
 
-// KGU#16 2015-11-30: Now inherited		
+
+		// Math function
+		s=s.replace("cos(", "Math.cos(");
+		s=s.replace("sin(", "Math.sin(");
+		s=s.replace("tan(", "Math.tan(");
+		// START KGU 2014-10-22: After the previous replacements the following 3 strings would never be found!
+		//s=s.replace("acos(", "Math.acos(");
+		//s=s.replace("asin(", "Math.asin(");
+		//s=s.replace("atan(", "Math.atan(");
+		// This is just a workaround; A clean approach would require a genuine lexical scanning in advance
+		s=s.replace("aMath.cos(", "Math.acos(");
+		s=s.replace("aMath.sin(", "Math.asin(");
+		s=s.replace("aMath.tan(", "Math.atan(");
+		// END KGU 2014-10-22:
+		s=s.replace("abs(", "Math.abs(");
+		s=s.replace("round(", "Math.round(");
+		s=s.replace("min(", "Math.min(");
+		s=s.replace("max(", "Math.max(");
+		s=s.replace("ceil(", "Math.ceil(");
+		s=s.replace("floor(", "Math.floor(");
+		s=s.replace("exp(", "Math.exp(");
+		s=s.replace("log(", "Math.log(");
+		s=s.replace("sqrt(", "Math.sqrt(");
+		s=s.replace("pow(", "Math.pow(");
+		s=s.replace("toRadians(", "Math.toRadians(");
+		s=s.replace("toDegrees(", "Math.toDegrees(");
+		// clean up ... if needed
+		s=s.replace("Math.Math.", "Math.");
+
+		return s.trim();
+	}
+
+	// START KGU#16 2015-11-29
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#transformType(java.lang.String, java.lang.String)
+	 */
+	@Override
+	protected String transformType(String _type, String _default) {
+		if (_type == null)
+			_type = _default;
+		_type = _type.toLowerCase();
+		_type = _type.replace("short int", "int");
+		_type = _type.replace("short", "int");
+		_type = _type.replace("unsigned int", "int");
+		_type = _type.replace("unsigned long", "long");
+		_type = _type.replace("unsigned char", "char");
+		_type = _type.replace("unsigned", "int");
+		_type = _type.replace("longreal", "double");
+		_type = _type.replace("real", "double");
+		_type = _type.replace("boole", "boolean");
+		_type = _type.replace("bool", "boolean");
+		_type = _type.replace("character", "Character");
+		_type = _type.replace("integer", "Integer");
+		_type = _type.replace("string", "String");
+		_type = _type.replace("array[ ]([0-9]*)[ ]of char", "String");
+		return _type;
+	}
+	// END KGU#16 2015-11-29
+
+// KGU#16 2015-11-30: Now inherited from CGenerator
 //		protected void generateCode(Instruction _inst, String _indent)
 //		{
 //			if (!insertAsComment(_inst, _indent)) {
@@ -276,7 +300,7 @@ public class JavaGenerator extends CGenerator
 //			}
 //		}
 		
-// KGU#16 2015-11-30: Now inherited		
+// KGU#16 2015-11-30: Now inherited from CGenerator
 //		protected void generateCode(Alternative _alt, String _indent)
 //		{
 //	        insertComment(_alt, _indent);
@@ -295,26 +319,26 @@ public class JavaGenerator extends CGenerator
 //			code.add(_indent+"}");
 //		}
 		
-// KGU#16 2015-11-30: Now inherited		
+// KGU#16 2015-11-30: Now inherited from CGenerator
 //		protected void generateCode(Case _case, String _indent)
 //		{
-//	        insertComment(_case, _indent);
+//			insertComment(_case, _indent);
 //
-//	        StringList lines = _case.getText();
-//	        String condition = transform(lines.get(0));
-//	        if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+//			StringList lines = _case.getText();
+//			String condition = transform(lines.get(0));
+//			if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 //
-//	        code.add(_indent+"switch "+condition+" {");
+//			code.add(_indent+"switch "+condition+" {");
 //			
 //			for(int i=0;i<_case.qs.size()-1;i++)
 //			{
-//	    		// START KGU#15 2015-10-21: Support for multiple constants per branch
-//	    		StringList constants = StringList.explode(lines.get(i+1), ",");
-//	    		for (int j = 0; j < constants.count(); j++)
-//	    		{
-//	    			code.add(_indent + "case " + constants.get(j).trim() + ":");
-//	    		}
-//	    		// END KGU#15 2015-10-21
+//				// START KGU#15 2015-10-21: Support for multiple constants per branch
+//				StringList constants = StringList.explode(lines.get(i+1), ",");
+//				for (int j = 0; j < constants.count(); j++)
+//				{
+//					code.add(_indent + "case " + constants.get(j).trim() + ":");
+//				}
+//				// END KGU#15 2015-10-21
 //				generateCode((Subqueue) _case.qs.get(i),_indent + this.getIndent());
 //				code.add(_indent + this.getIndent() + "break;\n");
 //			}
@@ -328,7 +352,7 @@ public class JavaGenerator extends CGenerator
 //			code.add(_indent + "}");
 //		}
 
-// KGU#16 2015-11-30: Now inherited	form CGenerator			
+// KGU#16 2015-11-30: Now inherited	from CGenerator			
 //		protected void generateCode(For _for, String _indent)
 //		{
 //	        // START KGU 2014-11-16
@@ -356,7 +380,7 @@ public class JavaGenerator extends CGenerator
 //	    	code.add(_indent + "}");
 //		}
 		
-// KGU#16 2015-11-30: Now inherited	form CGenerator	
+// KGU#16 2015-11-30: Now inherited	from CGenerator	
 //		protected void generateCode(While _while, String _indent)
 //		{
 //	        // START KGU 2014-11-16
@@ -377,7 +401,7 @@ public class JavaGenerator extends CGenerator
 //			code.add(_indent+"}");
 //		}
 		
-// KGU#16 2015-11-30: Now inherited	form CGenerator	
+// KGU#16 2015-11-30: Now inherited	from CGenerator	
 //		@Override
 //		protected void generateCode(Repeat _repeat, String _indent)
 //		{
@@ -396,7 +420,7 @@ public class JavaGenerator extends CGenerator
 //			code.add(_indent + "} while (!(" + transform(_repeat.getText().getLongString(), false).trim() + "));");
 //		}
 		
-// KGU#16 2015-11-30: Now inherited	form CGenerator	
+// KGU#16 2015-11-30: Now inherited	from CGenerator	
 //		protected void generateCode(Forever _forever, String _indent)
 //		{
 //	        // START KGU 2014-11-16
@@ -415,7 +439,7 @@ public class JavaGenerator extends CGenerator
 //		}
 
 		
-// KGU#16 2015-11-30: Now inherited	form CGenerator	
+// KGU#16 2015-11-30: Now inherited	from CGenerator	
 //		protected void generateCode(Call _call, String _indent)
 //		{
 //			if (!insertAsComment(_call, _indent)) {
@@ -583,104 +607,124 @@ public class JavaGenerator extends CGenerator
 //			return code.getText();
 //		}
 
-		/**
-		 * Composes the heading for the program or function according to the
-		 * C language specification.
-		 * @param _root - The diagram root
-		 * @param _indent - the initial indentation string
-		 * @param _procName - the procedure name
-		 * @param paramNames - list of the argument names
-		 * @param paramTypes - list of corresponding type names (possibly null) 
-		 * @param resultType - result type name (possibly null)
-		 * @return the default indentation string for the subsequent stuff
-		 */
-		@Override
-		protected String generateHeader(Root _root, String _indent, String _procName,
-				StringList _paramNames, StringList _paramTypes, String _resultType)
-		{
-			if (_root.isProgram==true) {
-				code.add(_indent + "import java.util.Scanner;");
-				code.add("");
-				insertBlockComment(_root.getComment(), _indent, "/**", " * ", " */");
-				insertBlockHeading(_root, "public class " + _procName, _indent);
-				
-				code.add("");
-				insertComment("TODO Declare and initialise class variables here", this.getIndent());
-				code.add("");
-				code.add(_indent+this.getIndent() + "/**");
-				code.add(_indent+this.getIndent() + " * @param args");
-				code.add(_indent+this.getIndent() + " */");
-				
-				insertBlockHeading(_root, "public static void main(String[] args)", _indent+this.getIndent());
+	/**
+	 * Composes the heading for the program or function according to the
+	 * C language specification.
+	 * @param _root - The diagram root
+	 * @param _indent - the initial indentation string
+	 * @param _procName - the procedure name
+	 * @param paramNames - list of the argument names
+	 * @param paramTypes - list of corresponding type names (possibly null) 
+	 * @param resultType - result type name (possibly null)
+	 * @return the default indentation string for the subsequent stuff
+	 */
+	@Override
+	protected String generateHeader(Root _root, String _indent, String _procName,
+			StringList _paramNames, StringList _paramTypes, String _resultType)
+	{
+		if (_root.isProgram==true) {
+			code.add(_indent + "import java.util.Scanner;");
+			code.add("");
+			insertBlockComment(_root.getComment(), _indent, "/**", " * ", " */");
+			insertBlockHeading(_root, "public class " + _procName, _indent);
+
+			code.add("");
+			insertComment("TODO Declare and initialise class variables here", this.getIndent());
+			code.add("");
+			code.add(_indent+this.getIndent() + "/**");
+			code.add(_indent+this.getIndent() + " * @param args");
+			code.add(_indent+this.getIndent() + " */");
+
+			insertBlockHeading(_root, "public static void main(String[] args)", _indent+this.getIndent());
+		}
+		else {
+			insertBlockComment(_root.getComment(), _indent+this.getIndent(), "/**", " * ", null);
+			insertBlockComment(_paramNames, _indent+this.getIndent(), null, " * @param ", null);
+			if (_resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
+			{
+				code.add(_indent+this.getIndent() + " * @return ");
+				_resultType = transformType(_resultType, "int");
 			}
 			else {
-		        insertBlockComment(_root.getComment(), _indent+this.getIndent(), "/**", " * ", null);
-	        	insertBlockComment(_paramNames, _indent+this.getIndent(), null, " * @param ", null);
-		        if (_resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
-		        {
-		        	code.add(_indent+this.getIndent() + " * @return ");
-		        	_resultType = transformType(_resultType, "int");
-		        }
-		        else {
-	        		_resultType = "void";		        	
-		        }
-	        	code.add(_indent+this.getIndent() + " */");
-	        	String fnHeader = "public static " + _resultType + " " + _procName + "(";
-	        	for (int p = 0; p < _paramNames.count(); p++) {
-	        		if (p > 0)
-	        			fnHeader += ", ";
-	        		fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " +
-	        			_paramNames.get(p)).trim();
-	        	}
-	        	fnHeader += ")";
-	        	insertBlockHeading(_root, fnHeader,  _indent + this.getIndent());
+				_resultType = "void";		        	
 			}
-			
-			return _indent + this.getIndent() + this.getIndent();
+			code.add(_indent+this.getIndent() + " */");
+			String fnHeader = "public static " + _resultType + " " + _procName + "(";
+			for (int p = 0; p < _paramNames.count(); p++) {
+				if (p > 0)
+					fnHeader += ", ";
+				fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " +
+						_paramNames.get(p)).trim();
+			}
+			fnHeader += ")";
+			insertBlockHeading(_root, fnHeader,  _indent + this.getIndent());
 		}
 
-		/**
-		 * Generates some preamble (i.e. comments, language declaration section etc.)
-		 * and adds it to this.code.
-		 * @param _root - the diagram root element
-		 * @param _indent - the current indentation string
-		 * @param varNames - list of variable names introduced inside the body
-		 */
-		@Override
-		protected String generatePreamble(Root _root, String _indent, StringList varNames)
-		{
-			code.add(_indent);
-			insertComment("TODO: Declare and initialise local variables here:", _indent);
-			for (int v = 0; v < varNames.count(); v++) {
-				insertComment(varNames.get(v), _indent);
-			}
-			code.add(_indent);
-			return _indent;
-		}
-		
-		/**
-		 * Creates the appropriate code for returning a required result and adds it
-		 * (after the algorithm code of the body) to this.code)
-		 * @param _root - the diagram root element
-		 * @param _indent - the current indentation string
-		 * @param alwaysReturns - whether all paths of the body already force a return
-		 * @param varNames - names of all assigned variables
-		 */
-		@Override
-		protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
-		{
-			if ((this.returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns) {
-				String result = "0";
-				if (isFunctionNameSet) {
-					result = _root.getMethodName();
-				} else if (isResultSet) {
-					int vx = varNames.indexOf("result", false);
-					result = varNames.get(vx);
-				}
-				code.add(_indent);
-				code.add(_indent + "return " + result + ";");
-			}
-			return _indent;
-		}
-		
+		return _indent + this.getIndent() + this.getIndent();
 	}
+
+	/**
+	 * Generates some preamble (i.e. comments, language declaration section etc.)
+	 * and adds it to this.code.
+	 * @param _root - the diagram root element
+	 * @param _indent - the current indentation string
+	 * @param varNames - list of variable names introduced inside the body
+	 */
+	@Override
+	protected String generatePreamble(Root _root, String _indent, StringList varNames)
+	{
+		code.add(_indent);
+		insertComment("TODO: Declare and initialise local variables here:", _indent);
+		for (int v = 0; v < varNames.count(); v++) {
+			insertComment(varNames.get(v), _indent);
+		}
+		code.add(_indent);
+		return _indent;
+	}
+
+	/**
+	 * Creates the appropriate code for returning a required result and adds it
+	 * (after the algorithm code of the body) to this.code)
+	 * @param _root - the diagram root element
+	 * @param _indent - the current indentation string
+	 * @param alwaysReturns - whether all paths of the body already force a return
+	 * @param varNames - names of all assigned variables
+	 */
+	@Override
+	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
+	{
+		if ((this.returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns) {
+			String result = "0";
+			if (isFunctionNameSet) {
+				result = _root.getMethodName();
+			} else if (isResultSet) {
+				int vx = varNames.indexOf("result", false);
+				result = varNames.get(vx);
+			}
+			code.add(_indent);
+			code.add(_indent + "return " + result + ";");
+		}
+		return _indent;
+	}
+
+	// START KGU 2015-12-15: Method block must be closed as well
+	/**
+	 * Method is to finish up after the text insertions of the diagram, i.e. to close open blocks etc. 
+	 * @param _root 
+	 * @param _indent
+	 */
+	@Override
+	protected void generateFooter(Root _root, String _indent)
+	{
+		// Method block close
+		code.add(_indent + this.getIndent() + "}");
+
+		// Don't close class block if we haven't opened any
+		if (_root.isProgram)
+		{
+			super.generateFooter(_root, _indent);
+		}
+	}
+	// END KGU 2015-12-15
+
+}

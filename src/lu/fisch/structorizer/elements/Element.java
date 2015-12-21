@@ -40,6 +40,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.01      operator unification and intermediate syntax transformation ready
  *      Kay Gürtzig     2015.11.12      Issue #25 (= KGU#80) fixed in unifyOperators, highlighting corrected
  *      Kay Gürtzig     2015.12.01      Bugfixes #39 (= KGU#91) and #41 (= KGU#92)
+ *      Kay Gürtzig     2015.12.11      Enhancement #54 (KGU#101): Method splitExpressionList added
  *
  ******************************************************************************************************
  *
@@ -93,7 +94,7 @@ import java.awt.Point;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.22-33";
+	public static String E_VERSION = "3.23-05dev";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -911,6 +912,55 @@ public abstract class Element {
 	}
 	// END KGU#18/KGU#23
 	
+	// START KGU#101 2015-12-11: Enhancement #54: We need to split expression lists (might go to a helper class)
+	/**
+	 * Splits the _text supposed to represent a list of expressions separated by _listSeparator
+	 * into strings representing one of the listed expressions each.
+	 * This does not mean mere string splitting but is be aware of string literals, argument lists
+	 * of function calls etc. These must not be broken.
+	 * @param _text - string containing one or more expressions
+	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
+	 * @return a StringList, each element of which contains one of the separated expressions (order preserved)
+	 */
+	public static StringList splitExpressionList(String _text, String _listSeparator)
+	{
+		StringList expressionList = new StringList();
+		if (_listSeparator == null) _listSeparator = ",";
+		StringList tokens = Element.splitLexically(_text, true);
+		
+		int parenthDepth = 0;
+		int tokenCount = tokens.count();
+		String currExpr = "";
+		for (int i = 0; i < tokenCount; i++)
+		{
+			String token = tokens.get(i);
+			if (token.equals(_listSeparator) && parenthDepth == 0)
+			{
+				// store the current expression and start a new one
+				expressionList.add(currExpr + "");
+				currExpr = new String();
+			}
+			else
+			{ 
+				if (token.equals("("))
+				{
+					parenthDepth++;
+				}
+				else if (token.equals(")") && parenthDepth > 0)
+				{
+					parenthDepth--;
+				}
+				currExpr += token;
+			}
+		}
+		// add the last expression if it's not empty
+		if (!currExpr.trim().isEmpty())
+		{
+			expressionList.add(currExpr + "");
+		}
+		return expressionList;
+	}
+	// END KGU#101 2015-12-11
 
 	// START KGU#63 2015-11-03: getWidthOutVariables and writeOutVariables were nearly identical (and had to be!)
 	// Now it's two wrappers and a common algorithm -> ought to avoid duplicate work and prevents from divergence

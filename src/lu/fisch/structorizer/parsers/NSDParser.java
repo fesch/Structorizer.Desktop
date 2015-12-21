@@ -35,6 +35,7 @@ package lu.fisch.structorizer.parsers;
  *      Bob Fisch       2007.12.13              First Issue
  *      Kay Gürtzig     2015.10.29              Enhancement on For loop (new attributes KGU#3)
  *      Kay Gürtzig     2015.10.29              Modification on For loop (new attribute KGU#3)
+ *      Kay Gürtzig     2015.12.16              Bugfix #63 (KGU#111): Exception on parsing failure
  *
  ******************************************************************************************************
  *
@@ -48,6 +49,7 @@ import javax.xml.parsers.*;
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 
+import java.io.IOException;
 import java.util.Stack;
 
 import lu.fisch.utils.*;
@@ -458,7 +460,7 @@ public class NSDParser extends DefaultHandler {
 		//String dataString =	new String(chars, startIndex, endIndex).trim();
 	}
 	
-	public Root parse(String _filename)
+	public Root parse(String _filename) throws SAXException, IOException
 	{
 		// setup a new root
 		root=new Root();
@@ -481,6 +483,16 @@ public class NSDParser extends DefaultHandler {
 			String errorMessage = "Error parsing " + _filename + ": " + e;
 			System.err.println(errorMessage);
 			e.printStackTrace();
+			// START KGU#111 2015-12-16: Bugfix #63 re-throw the exception!
+			if (e instanceof SAXException)
+			{
+				throw (SAXException)e;
+			}
+			else if (e instanceof IOException)
+			{
+				throw (IOException)e;
+			}
+			// END KGU#111 2015-12-16
 		}
 		
 		root.hasChanged=false;

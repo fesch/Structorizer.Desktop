@@ -21,81 +21,95 @@
 package lu.fisch.structorizer.executor;
 
 /******************************************************************************************************
-*
-*      Author:         Bob Fisch
-*
-*      Description:    This class controls the execution of a diagram.
-*
-******************************************************************************************************
-*
-*      Revision List
-*
-*      Author          Date			Description
-*      ------			----			-----------
-*      Bob Fisch                       First Issue
-*      Kay Gürtzig     2015.10.11      Method execute() now ensures that all elements get unselected
-*      Kay Gürtzig     2015.10.13      Method step decomposed into separate subroutines, missing
-*                                      support for Forever loops and Parallel sections added;
-*                                      delay mechanism reorganised in order to integrate breakpoint
-*                                      handling in a sound way
-*      Kay Gürtzig     2015.10.15      stepParallel() revised (see comment)
-*      Kay Gürtzig     2015.10.17/18   First preparations for a subroutine retrieval via Arranger
-*      Kay Gürtzig     2015.10.21      Support for multiple constants per CASE branch added
-*      Kay Gürtzig     2015.10.26/27   Language conversion and FOR loop parameter analysis delegated to the elements
-*      Kay Gürtzig     2015.11.04      Bugfix in stepInstruction() w.r.t. input/output (KGU#65)
-*      Kay Gürtzig     2015.11.05      Enhancement allowing to adopt edited values from Control (KGU#68)
-*      Kay Gürtzig     2015.11.08      Array assignments and variable setting deeply revised (KGU#69)
-*      Kay Gürtzig     2015.11.09      Bugfix: div operator had gone, wrong exit condition in stepRepeat (KGU#70),
-*                                      wrong equality operator in stepCase().
-*      Kay Gürtzig     2015.11.11      Issue #21 KGU#77 fixed: return instructions didn't terminate the execution.
-*      Kay Gürtzig     2015.11.12      Bugfix KGU#79: WHILE condition wasn't effectively converted.
-*      Kay Gürtzig     2015.11.13/14   Enhancement #9 (KGU#2) to allow the execution of subroutine calls
-*      Kay Gürtzig     2015.11.20      Bugfix KGU#86: Interpreter was improperly set up for functions sqr, sqrt;
-*                                      Message types for output and return value information corrected
-*      Kay Gürtzig     2015.11.23      Enhancement #36 (KGU#84) allowing to pause from input and output dialogs.
-*      Kay Gürtzig     2015.11.24/25   Enhancement #9 (KGU#2) enabling the execution of calls accomplished.
-*      Kay Gürtzig     2015.11.25/27   Enhancement #23 (KGU#78) to handle Jump elements properly.
-*
-******************************************************************************************************
-*
-*      Comment:
-*      2015.11.23 (KGU#84) Pausing from input and output dialogs enabled (Enhancement issue #36)
-*          On cancelling input now first a warning box opens and after having quit the execution is in pause
-*          mode such that the user may edit values, abort or continue in either run oder step mode.
-*          Output and result message dialogs now provide a Pause button to allow to pause mode (see above).
-*      2015.11.13 (KGU#2) Subroutine call mechanisms introduced
-*          Recursively callable submethod of execute(Root) added plus new call-handling method executeCall()
-*          Error handling in some subroutine level still neither prepared nor tested
-*      2015.11.04 (KGU#65) Input/output execution mended
-*          The configured input / output parser settings triggered input or output action also if found
-*          deep in a line, even within a string literal. This was mended.
-*      2015.10.26/27 (KGU#3) Language conversion (in method convert) partially delegated to Element
-*          The aim was to share this functionality with generators
-*          Analysis of FOR loop parameters also delegated to the For class instance.
-*      2015.10.21 (KGU#15) Common branch for multiple constants in Case structure enabled
-*          A modification in stepCase() now allows to test against a comma-separated list of case constants
-*          (though it would fail with complex expressions, accidently containing commas but this would anyway
-*          produce nonsense on code export)
-*      2015.10.17/18 (KGU#2) Two successful (though somewhat makeshift) subroutine retrieval attempts
-*          in stepInstruction() via Arranger and by means of Bob's Function class.
-*          We can be glad that Executor is already a Singleton - on the one hand...
-*          Towards an actually working approach several challenges must therefore be addressed:
-*          1. a Stack with tuples of root, variable values, return value, and the like.
-*          2. Reentrance of the Elements or replication of entire Element hierarchies.
-*          3. Recursion on the user algorithm level (see above) - if deep copies of the diagrams are
-*             temporarily created and pushed into the Arranger then either an additional "busy" flag
-*             will be necessary on Root or a second, volatile diagram vector (not be searched!) on
-*             Surface. By design, volatile subroutine copies should never be associated with a Mainform,
-*             not even on double-clicking! By design, they should partially overlap on the Surface
-*             (in the stack order i.e. top on top).
-*          4. The trouble is going to get really nasty with Parallel elements involved, particularly if
-*             their threads use identical subroutines.   
-*      2015.10.15 (KGU#47) Improved simulation of Parallel execution
-*          Instead of running entire "threads" of the parallel section in just random order, the "threads"
-*          will now only progress by one instruction when randomly chosen, so they alternate in an
-*          unpredictable way)
-*         
-******************************************************************************************************///
+ *
+ *      Author:         Bob Fisch
+ *
+ *      Description:    This class controls the execution of a diagram.
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date			Description
+ *      ------			----			-----------
+ *      Bob Fisch                       First Issue
+ *      Kay Gürtzig     2015.10.11      Method execute() now ensures that all elements get unselected
+ *      Kay Gürtzig     2015.10.13      Method step decomposed into separate subroutines, missing
+ *                                      support for Forever loops and Parallel sections added;
+ *                                      delay mechanism reorganised in order to integrate breakpoint
+ *                                      handling in a sound way
+ *      Kay Gürtzig     2015.10.15      stepParallel() revised (see comment)
+ *      Kay Gürtzig     2015.10.17/18   First preparations for a subroutine retrieval via Arranger
+ *      Kay Gürtzig     2015.10.21      Support for multiple constants per CASE branch added
+ *      Kay Gürtzig     2015.10.26/27   Language conversion and FOR loop parameter analysis delegated to the elements
+ *      Kay Gürtzig     2015.11.04      Bugfix in stepInstruction() w.r.t. input/output (KGU#65)
+ *      Kay Gürtzig     2015.11.05      Enhancement allowing to adopt edited values from Control (KGU#68)
+ *      Kay Gürtzig     2015.11.08      Array assignments and variable setting deeply revised (KGU#69)
+ *      Kay Gürtzig     2015.11.09      Bugfix: div operator had gone, wrong exit condition in stepRepeat (KGU#70),
+ *                                      wrong equality operator in stepCase().
+ *      Kay Gürtzig     2015.11.11      Issue #21 KGU#77 fixed: return instructions didn't terminate the execution.
+ *      Kay Gürtzig     2015.11.12      Bugfix KGU#79: WHILE condition wasn't effectively converted.
+ *      Kay Gürtzig     2015.11.13/14   Enhancement #9 (KGU#2) to allow the execution of subroutine calls
+ *      Kay Gürtzig     2015.11.20      Bugfix KGU#86: Interpreter was improperly set up for functions sqr, sqrt;
+ *                                      Message types for output and return value information corrected
+ *      Kay Gürtzig     2015.11.23      Enhancement #36 (KGU#84) allowing to pause from input and output dialogs.
+ *      Kay Gürtzig     2015.11.24/25   Enhancement #9 (KGU#2) enabling the execution of calls accomplished.
+ *      Kay Gürtzig     2015.11.25/27   Enhancement #23 (KGU#78) to handle Jump elements properly.
+ *      Kay Gürtzig     2015.12.10      Bugfix #49 (KGU#99): wrapper objects in variables obstructed comparison,
+ *                                      ER #48 (KGU#97) w.r.t. delay control of diagramControllers
+ *      Kay Gürtzig     2015.12.11      Enhancement #54 (KGU#101): List of output expressions
+ *      Kay Gürtzig     2015.12.13      Enhancement #51 (KGU#107): Handling of empty input and output
+ *      Kay Gürtzig     2015.12.15/26   Bugfix #61 (KGU#109): Precautions against type specifiers
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:
+ *      2015.12.10 (KGU#97, KGU#99)
+ *          Bug/ER #48: An attached diagramController (usually the TurtleBox) had not immediately been
+ *            informed about a delay change, such that e.g. the Turtleizer still crept in slow motion
+ *            while the Executor had no delay anymore. Now a suitable diagramController will be informed.
+ *          Bug 49: Equality test had failed between variables, particularly between array elements,
+ *            because they presented Wrapper objects (e. g. Intege) rather than primitive values. 
+ *            For scalar variables, values are now assigned as primitive type if possible (via
+ *            interpreter.eval()). For array elements, in contrast, the comparison expression  will be
+ *            converted, such that == and != will be replaced by .equals() calls.
+ *      2015.11.23 (KGU#84) Pausing from input and output dialogs enabled (Enhancement issue #36)
+ *          On cancelling input now first a warning box opens and after having quit the execution is in pause
+ *          mode such that the user may edit values, abort or continue in either run oder step mode.
+ *          Output and result message dialogs now provide a Pause button to allow to pause mode (see above).
+ *      2015.11.13 (KGU#2) Subroutine call mechanisms introduced
+ *          Recursively callable submethod of execute(Root) added plus new call-handling method executeCall()
+ *          Error handling in some subroutine level still neither prepared nor tested
+ *      2015.11.04 (KGU#65) Input/output execution mended
+ *          The configured input / output parser settings triggered input or output action also if found
+ *          deep in a line, even within a string literal. This was mended.
+ *      2015.10.26/27 (KGU#3) Language conversion (in method convert) partially delegated to Element
+ *          The aim was to share this functionality with generators
+ *          Analysis of FOR loop parameters also delegated to the For class instance.
+ *      2015.10.21 (KGU#15) Common branch for multiple constants in Case structure enabled
+ *          A modification in stepCase() now allows to test against a comma-separated list of case constants
+ *          (though it would fail with complex expressions, accidently containing commas but this would anyway
+ *          produce nonsense on code export)
+ *      2015.10.17/18 (KGU#2) Two successful (though somewhat makeshift) subroutine retrieval attempts
+ *          in stepInstruction() via Arranger and by means of Bob's Function class.
+ *          We can be glad that Executor is already a Singleton - on the one hand...
+ *          Towards an actually working approach several challenges must therefore be addressed:
+ *          1. a Stack with tuples of root, variable values, return value, and the like.
+ *          2. Reentrance of the Elements or replication of entire Element hierarchies.
+ *          3. Recursion on the user algorithm level (see above) - if deep copies of the diagrams are
+ *             temporarily created and pushed into the Arranger then either an additional "busy" flag
+ *             will be necessary on Root or a second, volatile diagram vector (not be searched!) on
+ *             Surface. By design, volatile subroutine copies should never be associated with a Mainform,
+ *             not even on double-clicking! By design, they should partially overlap on the Surface
+ *             (in the stack order i.e. top on top).
+ *          4. The trouble is going to get really nasty with Parallel elements involved, particularly if
+ *             their threads use identical subroutines.   
+ *      2015.10.15 (KGU#47) Improved simulation of Parallel execution
+ *          Instead of running entire "threads" of the parallel section in just random order, the "threads"
+ *          will now only progress by one instruction when randomly chosen, so they alternate in an
+ *          unpredictable way)
+ *         
+ ******************************************************************************************************///
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -321,8 +335,11 @@ public class Executor implements Runnable
 		// Is there any equality test at all?
 		if (str.indexOf(" == ") >= 0 || str.indexOf(" != ") >= 0)
 		{
+			// We are looking for || operators and split the expression by them (if present) 
 			StringList exprs = StringList.explodeWithDelimiter(str, " \\|\\| ");	// '|' is a regex metasymbol!
+			// Now we do the same with && operators
 			exprs = StringList.explodeWithDelimiter(exprs, " && ");
+			// Now we should have some atomic assertions, among them comparisons
 			boolean replaced = false;
 			for (int i = 0; i < exprs.count(); i++)
 			{
@@ -331,6 +348,7 @@ public class Executor implements Runnable
 				for (int op = 0; op < eqOps.length; op++)
 				{
 					Regex r = null;
+					// The comparison operators should have been padded within the string by former conversion steps
 					if (!s.equals(" " + eqOps[op] + " ") && s.indexOf(eqOps[op]) >= 0)
 					{
 						String leftParenth = "";
@@ -360,6 +378,7 @@ public class Executor implements Runnable
 						// addendum: sorry, doesn't always work.
 						try
 						{
+							int pos = -1;	// some character position
 							Object leftO = interpreter.eval(left);
 							Object rightO = interpreter.eval(right);
 							String neg = (op > 0) ? "!" : "";
@@ -381,6 +400,14 @@ public class Executor implements Runnable
 								exprs.set(i, leftParenth + neg + right + ".equals(\"" + (Character)leftO + "\")" + rightParenth);
 								replaced = true;								
 							}
+							// START KGU#99 2015-12-10: Bugfix #49 (also replace if both operands are array elements (objects!)
+							else if ((pos = left.indexOf('[')) > -1 && left.indexOf(']', pos) > -1 && 
+									(pos = right.indexOf('[')) > -1 && right.indexOf(']', pos) > -1)
+							{
+								exprs.set(i, leftParenth + neg + left + ".equals(" + right + ")" + rightParenth);
+								replaced = true;								
+							}
+							// END KGU#99 2015-12-10
 						} catch (EvalError ex)
 						{
 							System.err.println(ex.getMessage());
@@ -936,7 +963,18 @@ public class Executor implements Runnable
 	 */
 	public void setDelay(int aDelay)
 	{
+		// START KGU#97 2015-12-20: Enh.Req. #48: Only inform if it's worth
+		boolean delayChanged = aDelay != delay;
+		// END KGU#97 2015-12-10
 		delay = aDelay;
+		// START KGU#97 2015-12-10: Enh.Req. #48: Inform a delay-aware DiaramController A.S.A.P.
+		if (delayChanged && 
+				diagramController != null &&
+				diagramController instanceof DelayableDiagramController)
+		{
+			((DelayableDiagramController) diagramController).setAnimationDelay(aDelay);
+		}
+		// END KGU#97 2015-12-20
 	}
 
 	/*
@@ -1012,9 +1050,18 @@ public class Executor implements Runnable
 	private void setVarRaw(String name, String rawInput) throws EvalError
 	{
 		// first add as string (lest we should end with nothing at all...)
-		setVar(name, rawInput);
+		// START KGU#109 2015-12-15: Bugfix #61: Previously declared (typed) variables caused errors here
+		//setVar(name, rawInput);
+		try {
+			setVar(name, rawInput);
+		}
+		catch (EvalError ex)
+		{
+			System.out.println(rawInput + " as raw string " + ex.getMessage());			
+		}
+		// END KGU#109 2015-12-15
 		// Try some refinement if possible
-		if (rawInput instanceof String && !isNumeric(rawInput) )
+		if (rawInput != null && !isNumeric(rawInput) )
 		{
 			try
 			{
@@ -1089,6 +1136,10 @@ public class Executor implements Runnable
 		if ((name.contains("[")) && (name.contains("]")))
 		{
 			arrayname = name.substring(0, name.indexOf("["));
+			// START KGU#109 2015-12-16: Bugfix #61: Several strings suggest type specifiers
+			String[] nameParts = arrayname.split(" ");
+			arrayname = nameParts[nameParts.length-1];
+			// END KGU#109 2015-12-15
 			boolean arrayFound = this.variables.contains(arrayname);
 			int index = this.getIndexValue(name);
 			Object[] objectArray = null;
@@ -1124,11 +1175,15 @@ public class Executor implements Runnable
 			this.variables.addIfNew(arrayname);
 		} else // if ((name.contains("[")) && (name.contains("]")))
 		{
+			// START KGU#109 2015-12-16: Bugfix #61: Several strings suggest type specifiers
+			String[] nameParts = name.split(" ");
+			name = nameParts[nameParts.length-1];
+			// END KGU#109 2015-12-15
 			this.interpreter.set(name, content);
 
 			// MODIFIED BY GENNARO DONNARUMMA
 			// PREVENTING DAMAGED STRING AND CHARS
-			// FIXME (KGU): Seems superfluous or even dangerous
+			// FIXME (KGU): Seems superfluous or even dangerous (Addendum 2015-12-10: Now the aim became clear by issue #49)
 //			if (content != null)
 //			{
 //				if (content instanceof String)
@@ -1141,6 +1196,16 @@ public class Executor implements Runnable
 //				}
 //			}
 //			this.interpreter.eval(name + " = " + content);	// What the heck is this good for, now?
+			// START KGU#99 2015-12-10: Bugfix #49 - for later comparison etc. we try to replace wrapper objects by simple values
+			if (! (content instanceof String || content instanceof Character || content instanceof Object[]))
+			{
+				try {
+					this.interpreter.eval(name + " = " + content);	// Avoid the variable content to be an object
+				}
+				catch (EvalError ex)	// Just ignore an error (if we may rely on the previously set content to survive)
+				{}
+			}
+			// END KGU#99 2015-12-10
 			this.variables.addIfNew(name);
 		}
 		
@@ -1699,46 +1764,66 @@ public class Executor implements Runnable
 	{
 		String result = "";
 		String in = cmd.substring(D7Parser.input.trim().length()).trim();
-		// START KGU#33 2014-12-05: We ought to show the index value
-		// if the variable is indeed an array element
-		if (in.contains("[") && in.contains("]")) {
-			try {
-				// Try to replace the index expression by its current value
-				int index = getIndexValue(in);
-				in = in.substring(0, in.indexOf('[')+1) + index
-						+ in.substring(in.indexOf(']'));
-			}
-			catch (Exception e)
-			{
-				// Is bound to fail anyway!
-			}
-		}
-		// END KGU33 2014-12-05
-		String str = JOptionPane.showInputDialog(null,
-				"Please enter a value for <" + in + ">", null);
-		// START KGU#84 2015-11-23: Allow a controlled continuation on cancelled input
-		//setVarRaw(in, str);
-		if (str == null)
+		// START KGU#107 2015-12-13: Enh-/bug #51: Handle empty input instruction
+		if (in.isEmpty())
 		{
-			// Switch to step mode such that the user may enter the variable in the display and go on
-			JOptionPane.showMessageDialog(diagram, "Execution paused - you may enter the value in the variable display.",
-					"Input cancelled", JOptionPane.WARNING_MESSAGE);
-			paus = true;
-			step = true;
-			this.control.setButtonsForPause();
-			if (!variables.contains(in))
+			// In run mode, give the user a chance to intervene
+			Object[] options = {"OK", "Pause"};	// FIXME: Provide a translation
+			int pressed = JOptionPane.showOptionDialog(diagram, "Please acknowledge.", "Input",
+					JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
+			if (pressed == 1)
 			{
-				// If the variable hasn't been used before, we must create it now
-				setVar(in, null);
+				paus = true;
+				step = true;
+				control.setButtonsForPause();
 			}
 		}
 		else
 		{
-			// START KGU#69 2015-11-08: Use specific method for raw input
-			setVarRaw(in, str);
-			// END KGU#69 2015-11-08
+		// END KGU#107 2015-12-13
+			// START KGU#33 2014-12-05: We ought to show the index value
+			// if the variable is indeed an array element
+			if (in.contains("[") && in.contains("]")) {
+				try {
+					// Try to replace the index expression by its current value
+					int index = getIndexValue(in);
+					in = in.substring(0, in.indexOf('[')+1) + index
+							+ in.substring(in.indexOf(']'));
+				}
+				catch (Exception e)
+				{
+					// Is bound to fail anyway!
+				}
+			}
+			// END KGU#33 2014-12-05
+			String str = JOptionPane.showInputDialog(null,
+					"Please enter a value for <" + in + ">", null);
+			// START KGU#84 2015-11-23: ER #36 - Allow a controlled continuation on cancelled input
+			//setVarRaw(in, str);
+			if (str == null)
+			{
+				// Switch to step mode such that the user may enter the variable in the display and go on
+				JOptionPane.showMessageDialog(diagram, "Execution paused - you may enter the value in the variable display.",
+						"Input cancelled", JOptionPane.WARNING_MESSAGE);
+				paus = true;
+				step = true;
+				this.control.setButtonsForPause();
+				if (!variables.contains(in))
+				{
+					// If the variable hasn't been used before, we must create it now
+					setVar(in, null);
+				}
+			}
+			else
+			{
+				// START KGU#69 2015-11-08: Use specific method for raw input
+				setVarRaw(in, str);
+				// END KGU#69 2015-11-08
+			}
+			// END KGU#84 2015-11-23
+		// START KGU#107 2015-12-13: Enh./bug #51 part 2
 		}
-		// END KGU#84 2015-11-23
+		// END KGU#107 2015-12-13
 		
 		return result;
 	}
@@ -1747,19 +1832,46 @@ public class Executor implements Runnable
 	private String tryOutput(String cmd) throws EvalError
 	{
 		String result = "";
-		String out = cmd.substring(D7Parser.output.trim().length()).trim();
-		Object n = interpreter.eval(out);
-		if (n == null)
+		// KGU 2015-12-11: Instruction is supposed to start with the output keyword!
+		String out = cmd.substring(/*cmd.indexOf(D7Parser.output) +*/
+						D7Parser.output.trim().length()).trim();
+		String str = "";
+		// START KGU#107 2015-12-13: Enh-/bug #51: Handle empty output instruction
+		if (!out.isEmpty())
 		{
-			result = "<"
-					+ out
-					+ "> is not a correct or existing expression.";
-		} else
+		// END KGU#107 2015-12-13
+		// START KGU#101 2015-12-11: Fix #54 - Allow several expressions to be output in a line
+			StringList outExpressions = Element.splitExpressionList(out, ",");
+			for (int i = 0; i < outExpressions.count() && result.isEmpty(); i++)
+			{
+				out = outExpressions.get(i);
+		// END KGU#101 2015-12-11
+				Object n = interpreter.eval(out);
+				if (n == null)
+				{
+					result = "<"
+							+ out
+							+ "> is not a correct or existing expression.";
+				} else
+				{
+		// START KGU#101 2015-12-11
+					//	String s = unconvert(n.toString());
+					str += n.toString();
+				}
+			}
+		// START KGU#107 2015-12-13: Enh-/bug #51: Handle empty output instruction
+		}
+		else {
+			str = "(empty line)";
+		}
+		// END KGU#107 2015-12-13
+		if (result.isEmpty())
 		{
-			String s = unconvert(n.toString());
-			// START KGU#84 2015-11-23: Enhancement to give a chance to pause
+			String s = unconvert(str.trim());
+		// END KGU#101 2015-12-11
+			// START KGU#84 2015-11-23: Enhancement #36 to give a chance to pause
 			//JOptionPane.showMessageDialog(diagram, s, "Output",
-			//		JOptionPane.INFORMATION_MESSAGE);
+			//		0);
 			//System.out.println("running/step/paus/stop: " +
 			//		running + " / " + step + " / " + paus + " / " + " / " + stop);
 			if (step)
@@ -1861,7 +1973,7 @@ public class Executor implements Runnable
 						{
 							result = result + "\n";
 						}
-						result = result + "PARAM " + p + ": <"
+						result = result + "PARAM " + (p+1) + ": <"
 								+ f.getParam(p)
 								+ "> is not a correct or existing expression.";
 					} else
@@ -1871,7 +1983,7 @@ public class Executor implements Runnable
 				} catch (EvalError ex)
 				{
 					result = result + (!result.isEmpty() ? "\n" : "") +
-							"PARAM " + p + ": " + ex.getMessage();
+							"PARAM " + (p+1) + ": " + ex.getMessage();
 				}
 			}
 			// If this element is of class Call and the extracted function name

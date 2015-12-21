@@ -63,7 +63,7 @@ package lu.fisch.structorizer.elements;
  *      - case switch: see alternative. It might be confusing, though, that in C-like languages a
  *           break instruction is needed to end a case branch. In a Nassi-Shneiderman diagram, however,
  *           there is obviously no need for such a workaround, the branch ends where it ends.
- *           Hence, a selection element ought to transparent for termination as well.
+ *           Hence, a selection element ought to be transparent for termination as well.
  *      - parallel section: No single thread may steal off the flock or even stop the entire show.
  *           Only to exit the entire process may be allowed, not even a return out of a parallel branch
  *           seems tolerable. In no case a loop enclosing the parallel element may be terminated from

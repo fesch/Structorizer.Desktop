@@ -31,13 +31,15 @@ package lu.fisch.structorizer.generators;
  *      Revision List
  *
  *      Author          Date			Description
- *      ------			----			-----------
+ *      ------          ----			-----------
  *      Bob Fisch       2007.12.27		First Issue
  *      Bob Fisch       2008.04.12		Plugin Interface
  *      Kay Gürtzig     2014.11.16		comment generation revised (see comment below)
  *      Kay Gürtzig     2015.10.18		File name proposal in exportCode(Root, File, Frame) delegated to Root
  *      Kay Gürtzig     2015.11.01		transform methods reorganised (KGU#18/KGU23) using subclassing
  *      Kay Gürtzig     2015.11.30		General preprocessing for generateCode(Root, String) (KGU#47)
+ *      Bob Fisch       2015.12.10		Bugfix #51: when input identifier is alone, it was not converted
+ *      Kay Gürtzig     2015.12.18		Enh #66, #67: New export options
  *
  ******************************************************************************************************
  *
@@ -83,7 +85,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected boolean isFunctionNameSet = false; // Assignment to variable named like function?
 	protected int labelCount = 0; // unique count for generated labels
 	protected String labelBaseName = "StructorizerLabel_";
-	// maps loops and Jump elements to label counts
+	// maps loops and Jump elements to label counts (neg. number means illegal jump target)
 	protected Hashtable<Element, Integer> jumpTable = new Hashtable<Element, Integer>();
 
 	// END KGU#74 2015-11-29
@@ -120,7 +122,29 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected abstract String getOutputReplacer();
 	// END KGU#18/KGU#23 2015-11-01
 	
+	// START KGU#78 2015-12-18: Enh. #23 We must know whether to create labels for simple breaks
+	/**
+	 * Specifies whether an instruction to leave the innermost enclosing loop (like "break;" in C)
+	 * is available in the target language AND ALSO BREAKS CASE SELECTIONS (switch constructs).
+	 * 
+	 * @return true if and only if there is such an instruction
+	 */
+	protected abstract boolean supportsSimpleBreak();
+	// END KGU#78 2015-12-18
+	
 	/************ Code Generation **************/
+	
+	// START KGU#16 2015-12-18: Enh. #66 - Code style option for opening brace placement
+	protected boolean optionBlockBraceNextLine() {
+		return (!eod.bracesCheckBox.isSelected());
+	}
+	// END KGU#16 2015-12-18	
+	
+	// START KGU#113 2015-12-18: Enh. #67 - Line numbering for BASIC export
+	protected boolean optionBasicLineNumbering() {
+		return (eod.lineNumbersCheckBox.isSelected());
+	}
+	// END KGU#113 2015-12-18	
 	
 	// KGU 2014-11-16: Method renamed (formerly: insertComment)
 	// START KGU 2015-11-18: Method parameter list reduced by a comment symbol configuration
@@ -237,12 +261,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	/**
 	 * Overridable general text transformation routine, performing the following steps:
 	 * 1. Eliminates parser preference keywords listed below and unifies all operators
-	 *    @see lu.fisch.Structorizer.elements.Element#unifyOperators(java.lang.String)
 	 *         preAlt, preCase, preWhile, preRepeat,
 	 *         postAlt, postCase, postWhile, postRepeat
 	 * 2. Replaces assignments by a call of overridable method transformAssignment(String)
 	 * 3. Transforms Input and Output lines if _doInput and/or _doOutput are true, respectively
 	 *    This is only done if _input starts with one of the configured Input and Output keywords 
+	 * @see lu.fisch.Structorizer.elements.Element#unifyOperators(java.lang.String)
 	 * @param _input - a line or the concatenated lines of an Element's text
 	 * @param _doInputOutput - whether the third transforms are to be performed
 	 * @return the transformed line (target language line)
@@ -311,6 +335,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			{
 				matcher = matcher + "[ ]";
 			}
+                        
+			// Start - BFI (#51 - Allow empty input instructions)
+			if(!_interm.matches("^" + matcher + "(.*)"))
+			{
+				_interm += " ";
+			}
+			// End - BFI (#51)
+			
 			_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
 		}
 		return _interm;
@@ -334,6 +366,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			{
 				matcher = matcher + "[ ]";
 			}
+
+			// Start - BFI (#51 - Allow empty output instructions)
+			if(!_interm.matches("^" + matcher + "(.*)"))
+			{
+				_interm += " ";
+			}
+			// End - BFI (#51)
+			
 			_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
 		}
 		return _interm;
@@ -342,9 +382,19 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	
 
 	// START KGU#74 2015-11-30
-	// We do a recursive analysis for loops, returns and jumps of type "leave"
-	// to be able to
-	// place equivalent goto instructions and their target labels on demand.
+	/**
+	 * We do a recursive analysis for loops, returns and jumps of type "leave"
+	 * to be able to place equivalent goto instructions and their target labels
+	 * on demand.
+	 * Maps Jump instructions and Loops (as potential jump targets) to unique
+	 * numbers used for the creation of unambiguous goto or break labels.
+	 * 
+	 * The mapping is gathered in this.jumpTable.
+	 * If a return instruction with value is encountered, this.returns will be set true
+	 *   
+	 * @param _squeue - instruction sequence to be analysed 
+	 * @return true iff there is no execution path without a value returned.
+	 */
 	protected boolean mapJumps(Subqueue _squeue)
 	{
 		boolean surelyReturns = false;
@@ -388,7 +438,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 					}
 				}
 				// Try to find the target loop
-				boolean simpleBreak = levelsUp == 1;	// For special handling of Case context
+				// START KGU#78 2015-12-18: Enh. #23 specific handling only required if there is a break instruction
+				//boolean simpleBreak = levelsUp == 1;	// For special handling of Case context
+				// Simple break instructions usually require special handling of Case context
+				boolean simpleBreak = levelsUp == 1 && this.supportsSimpleBreak();
+				// END KGU#78 2015-12-18
 				Element parent = elem.parent;
 				while (parent != null && !(parent instanceof Parallel) && levelsUp > 0)
 				{
@@ -409,7 +463,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 					}
 					else if (parent instanceof Case)
 					{
-						// If we were within a switch instruction then we must use a goto to get out
+						// If we were within a selection (switch) then we must use "goto" to get out
 						simpleBreak = false;
 					}
 					parent = parent.parent;
@@ -641,9 +695,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @param _root - The diagram root element
 	 * @param _indent - the initial indentation string
 	 * @param _procName - the procedure name
-	 * @param paramNames - list of the argument names
-	 * @param paramTypes - list of corresponding type names (possibly null) 
-	 * @param resultType - result type name (possibly null)
+	 * @param _paramNames - list of the argument names
+	 * @param _paramTypes - list of corresponding type names (possibly null) 
+	 * @param _resultType - result type name (possibly null)
 	 * @return the default indentation string for the subsequent stuff
 	 */
 	protected String generateHeader(Root _root, String _indent, String _procName,
@@ -691,11 +745,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
                 {
                     Ini ini = Ini.getInstance();
                     ini.load();
-                    eod = new ExportOptionDialoge(frame);
+                    eod = new ExportOptionDialoge(frame);	// FIXME (KGU) What do we need this hidden dialog for?
                     if(ini.getProperty("genExportComments","0").equals("true"))
                         eod.commentsCheckBox.setSelected(true);
                     else 
                         eod.commentsCheckBox.setSelected(false);
+                    // START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
+                    eod.bracesCheckBox.setSelected(ini.getProperty("genExportBraces", "0").equals("true"));
+                    eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "0").equals("true"));
+                    // END KGU#16/KGU#113 2015-12-18
                 } 
                 catch (FileNotFoundException ex)
                 {
@@ -799,7 +857,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
                             }
                             catch(Exception e)
                             {
-                                    JOptionPane.showOptionDialog(null,"Error while saving the file!\n"+e.getMessage(),"Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+                                    JOptionPane.showMessageDialog(null,"Error while saving the file!\n" + e.getMessage(),"Error", JOptionPane.ERROR_MESSAGE);
                             }
                         }
 		}

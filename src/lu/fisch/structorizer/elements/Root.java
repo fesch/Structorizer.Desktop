@@ -30,21 +30,24 @@ package lu.fisch.structorizer.elements;
  *
  *      Revision List
  *
- *      Author          Date		Description
- *      ------		----		-----------
- *      Bob Fisch	2007.12.09      First Issue
- *		Bob Fisch	2008.04.18      Added analyser
- *		Kay Gürtzig	2014.10.18      Var name search unified and false detection of "as" within var names mended
- *		Kay Gürtzig	2015.10.12      new methods toggleBreakpoint() and clearBreakpoints() (KGU#43).
- *		Kay Gürtzig	2015.10.16      getFullText methods redesigned/replaced, changes in getVarNames()
- *		Kay Gürtzig	2015.10.17      improved Arranger support by method notifyReplaced (KGU#48)
- *		Kay Gürtzig	2015.11.03      New error14 field and additions to analyse for FOR loop checks (KGU#3)
- *      Kay Gürtzig	2015.11.13/14   Method copy() accomplished, modifications for subroutine calls (KGU#2 = #9)
- *      Kay Gürtzig	2015.11.22/23   Modifications to support selection of Element sequences (KGU#87),
- *                 	                Code revision in Analyser (field Subqueue.children now private).
- *      Kay Gürtzig	2015.11.28      Several additions to analyser (KGU#2 = #9, KGU#47, KGU#78 = #23) and
- *                 	                saveToIni()
- *      Kay Gürtzig	2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2007.12.09      First Issue
+ *      Bob Fisch       2008.04.18      Added analyser
+ *      Kay Gürtzig     2014.10.18      Var name search unified and false detection of "as" within var names mended
+ *      Kay Gürtzig     2015.10.12      new methods toggleBreakpoint() and clearBreakpoints() (KGU#43).
+ *      Kay Gürtzig     2015.10.16      getFullText methods redesigned/replaced, changes in getVarNames()
+ *      Kay Gürtzig     2015.10.17      improved Arranger support by method notifyReplaced (KGU#48)
+ *      Kay Gürtzig     2015.11.03      New error14 field and additions to analyse for FOR loop checks (KGU#3)
+ *      Kay Gürtzig     2015.11.13/14   Method copy() accomplished, modifications for subroutine calls (KGU#2 = #9)
+ *      Kay Gürtzig     2015.11.22/23   Modifications to support selection of Element sequences (KGU#87),
+ *                                      Code revision in Analyser (field Subqueue.children now private).
+ *      Kay Gürtzig     2015.11.28      Several additions to analyser (KGU#2 = #9, KGU#47, KGU#78 = #23) and
+ *                                      saveToIni()
+ *      Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *      Bob Fisch       2015.12.10      Bugfix #50 -> grep parameter types (Method getParams(...))
+ *      Kay Gürtzig     2015.12.11      Bugfix #54 (KGU#102) in getVarNames(): keywords within identifiers
+ *      Kay Gürtzig     2015.12.20      Bugfix #50 (KGU#112) getResultType() slightly revised
  *
  ******************************************************************************************************
  *
@@ -79,6 +82,7 @@ import lu.fisch.structorizer.gui.*;
 import com.stevesoft.pat.*;
 
 import java.awt.Point;
+import java.util.ArrayList;
 
 public class Root extends Element {
 	
@@ -1256,21 +1260,39 @@ public class Root extends Element {
                     // Should use PARAMETERS HERE!!!
                     //
 
+                    // START KGU#102 2015-12-11: Bugfix #55 keyword replacement must not be done within identifiers
+                    // FIXME (KGU): Is it necessary to accept the keywords case-independently (well, in Pascal it is)
+//                    // input
+//                    r = new Regex(BString.breakup(D7Parser.input.trim())+"[ ](.*?)",D7Parser.input.trim()+" $1"); allText=r.replaceAll(allText);
+//                    // output
+//                    r = new Regex(BString.breakup(D7Parser.output.trim())+"[ ](.*?)",D7Parser.output.trim()+" $1"); allText=r.replaceAll(allText);
+//                    // for
+//                    r = new Regex(BString.breakup(D7Parser.preFor.trim())+"(.*?)"+D7Parser.postFor.trim()+"(.*?)",D7Parser.preFor.trim()+"$1"+D7Parser.postFor.trim()+"$2"); allText=r.replaceAll(allText);
+//                    // while
+//                    r = new Regex(BString.breakup(D7Parser.preWhile.trim())+"(.*?)",D7Parser.preWhile.trim()+"$1"); allText=r.replaceAll(allText);
+//                    // repeat
+//                    r = new Regex(BString.breakup(D7Parser.preRepeat.trim())+"(.*?)",D7Parser.preRepeat.trim()); allText=r.replaceAll(allText);
+//                    // for
+//                    if(allText.indexOf(D7Parser.preFor.trim())>=0)
+//                    {
+//                            allText=allText.substring(allText.indexOf(D7Parser.preFor.trim())+D7Parser.preFor.trim().length()).trim();
+//                    }
                     // input
-                    r = new Regex(BString.breakup(D7Parser.input.trim())+"[ ](.*?)",D7Parser.input.trim()+" $1"); allText=r.replaceAll(allText);
+                    r = new Regex("^"+BString.breakup(D7Parser.input.trim())+"[ ](.*?)", D7Parser.input.trim()+" $1"); allText=r.replaceAll(allText);
                     // output
-                    r = new Regex(BString.breakup(D7Parser.output.trim())+"[ ](.*?)",D7Parser.output.trim()+" $1"); allText=r.replaceAll(allText);
+                    r = new Regex("^"+BString.breakup(D7Parser.output.trim())+"[ ](.*?)", D7Parser.output.trim()+" $1"); allText=r.replaceAll(allText);
                     // for
-                    r = new Regex(BString.breakup(D7Parser.preFor.trim())+"(.*?)"+D7Parser.postFor.trim()+"(.*?)",D7Parser.preFor.trim()+"$1"+D7Parser.postFor.trim()+"$2"); allText=r.replaceAll(allText);
+                    r = new Regex("(^|[\\W])"+BString.breakup(D7Parser.preFor.trim())+"([ ].*?)"+D7Parser.postFor.trim()+"([ ].*?)", D7Parser.preFor.trim()+"$2"+D7Parser.postFor.trim()+"$3"); allText=r.replaceAll(allText);
                     // while
-                    r = new Regex(BString.breakup(D7Parser.preWhile.trim())+"(.*?)",D7Parser.preWhile.trim()+"$1"); allText=r.replaceAll(allText);
+                    r = new Regex("^"+BString.breakup(D7Parser.preWhile.trim())+"(.*?)", D7Parser.preWhile.trim()+"$1"); allText=r.replaceAll(allText);
                     // repeat
-                    r = new Regex(BString.breakup(D7Parser.preRepeat.trim())+"(.*?)",D7Parser.preRepeat.trim()); allText=r.replaceAll(allText);
+                    r = new Regex("^"+BString.breakup(D7Parser.preRepeat.trim())+"(.*?)", D7Parser.preRepeat.trim()); allText=r.replaceAll(allText);
                     // for
-                    if(allText.indexOf(D7Parser.preFor.trim())>=0)
+                    if(allText.matches("(^|[\\W])" + D7Parser.preFor.trim() + "[ ](.*)"))
                     {
-                            allText=allText.substring(allText.indexOf(D7Parser.preFor.trim())+D7Parser.preFor.trim().length()).trim();
+                            allText=allText.substring(allText.indexOf(D7Parser.preFor.trim()+" ")+D7Parser.preFor.trim().length()).trim();
                     }
+                    // END KGU#102 2015-12-11
 
                     // START KGU 2015-11-28: Operators have already been unified above 
                     // get names from assignments
@@ -1468,7 +1490,139 @@ public class Root extends Element {
             //System.out.println(varNames.getCommaText());
             return varNames;
     }
+    
+    // START BFI 2015-12-10
+    public String getReturnType()
+    {
+        try 
+        {
+            // stop and return null if this is not a function
+            if(this.isProgram) return null;
+            // get the root text
+            String rootText = this.getText().getText(); 
+            // stop if there is no closing parenthesis
+            if(rootText.indexOf(")")<0) return null;
+            // get part after closing parenthesis
+            rootText = rootText.substring(rootText.indexOf(")")+1);
+            // replace eventually ":"
+            rootText = rootText.replaceAll(":", "");
+            
+            return rootText.trim();
+        }
+        catch(Exception e)
+        {
+            return null;
+        }
+    }
+    
+    /*
+    // test getReturnType()
+    public static void main(String[] args)
+    {
+        StringList sl = new StringList();
+        sl.add("test(a,b:integer; c:real): string");
+        Root root = new Root(sl);
+        root.isProgram=false;
 
+        System.out.println("Starting ...");
+        System.out.println(root.getReturnType());
+        System.out.println("- end -");
+    }
+    */
+            
+    public ArrayList<Param> getParams()
+    {
+            ArrayList<Param> resultVars = new ArrayList<Param>();
+
+            // check root text for variable names
+            // !!
+            // !! This works only for Pascal-like syntax: functionname (<name>, <name>, ..., <name>:<type>; ...)
+            // !! or VBA like syntax: functionname(<name>, <name> as <type>; ...)
+            // !!
+            // !! This will also detect the functionname itself if the parentheses are missing (bug?)
+            // !!
+            try
+            {
+                    if(this.isProgram==false)
+                    {
+                            String rootText = this.getText().getText();
+                            rootText = rootText.replace("var ", "");
+                            if(rootText.indexOf("(")>=0)
+                            {
+                                    rootText=rootText.substring(rootText.indexOf("(")+1).trim();
+                                    rootText=rootText.substring(0,rootText.indexOf(")")).trim();
+                            }
+
+                            StringList params = StringList.explode(rootText,";");
+                            if(params.count()>0)
+                            {
+                                    for(int i=0;i<params.count();i++)
+                                    {
+                                            String S = params.get(i);
+                                            String varType = "";
+                                            if(S.indexOf(":")>=0)
+                                            {
+                                                // retrieve types
+                                                varType=S.substring(S.indexOf(":")+1).trim();
+                                                S=S.substring(0,S.indexOf(":")).trim();
+                                            }
+// START KGU#18 2014-10-18 "as" must not be detected if it's a substring of some identifier
+//                                            if(S.indexOf("as")>=0)
+//                                            {
+//                                                    S=S.substring(0,S.indexOf("as")).trim();
+//                                            }
+                                            // Actually, a sensible approach should consider any kinds of white space and delimiters...
+                                            if(S.indexOf(" as ")>=0)
+                                            {
+                                                    S=S.substring(0,S.indexOf(" as ")).trim();
+                                            }
+// END KGU#18 2014-10-18                                            
+                                            StringList vars = StringList.explode(S,",");
+                                            for(int j=0;j<vars.count();j++)
+                                            {
+                                                    if(!vars.get(j).trim().equals(""))
+                                                    {
+                                                        //System.out.println("Adding: "+vars.get(j).trim());
+                                                        resultVars.add(new Param(vars.get(j).trim(), varType));
+                                                    }
+                                            }
+                                    }
+                            }
+                    }
+            }
+            catch (Exception e)
+            {
+            }
+
+            // reverse
+            /*ArrayList<Param> reversedResultVars = new ArrayList<Param>();
+            for(int i=resultVars.size()-1; i>=0; i--)
+                reversedResultVars.add(resultVars.get(i));
+            */
+            
+            return resultVars;
+    }    
+    
+    /*
+    // test getParams()
+    public static void main(String[] args)
+    {
+        StringList sl = new StringList();
+        sl.add("a,b:integer; c:real");
+        Root root = new Root(sl);
+        root.isProgram=false;
+
+        System.out.println("Starting ...");
+        ArrayList<Param> vars = root.getParams();
+        for(int i=0; i<vars.size(); i++)
+        {
+           System.out.println(i+") "+vars.get(i).name+" = "+vars.get(i).type);
+        }
+        System.out.println("- end -");
+    }
+    */
+    // END BFI 2015-12-10
+    
     private String errorMsg(JLabel _label, String _rep)
     {
             String res = _label.getText();
@@ -1499,6 +1653,7 @@ public class Root extends Element {
 
 
     		// CHECK: assignment in condition (#8)
+    		// FIXME (KGU 2015-12-16): What about Case elements?
     		if(ele.getClass().getSimpleName().equals("While")
     				||
     				ele.getClass().getSimpleName().equals("Repeat")
@@ -2362,42 +2517,49 @@ public class Root extends Element {
     }
     
     // START KGU#78 2015-11-25: Extracted from analyse() and rewritten
-    // FIXME: This is not consistent to getMethodName()!
+    /**
+     * Returns a string representing a detected result type if this is a subroutine diagram. 
+     * @return null or a string possibly representing some datatype
+     */
     public String getResultType()
     {
-    	String rootText = getText().getLongString();
+        // FIXME: This is not consistent to getMethodName()!
     	String resultType = null;
-    	StringList tokens = Element.splitLexically(rootText, true);
-    	tokens.removeAll(" ");
-    	int posOpenParenth = tokens.indexOf("(");
-		int posCloseParenth = tokens.indexOf(")");
-		int posColon = tokens.indexOf(":");
-    	if (!this.isProgram && posOpenParenth >= 0 && posOpenParenth < posCloseParenth)
+    	if (!this.isProgram)	// KGU 2015-12-20: Types more rigorously discarded if this is a program
     	{
-    		// First attempt: Something after parameter list and "as" or ":"
-    		if (tokens.count() > posCloseParenth + 1 &&
-    				(tokens.get(posCloseParenth + 1).toLowerCase().equals("as")) ||
-    				(tokens.get(posCloseParenth + 1).equals(":"))
-    				)
+    		String rootText = getText().getLongString();
+    		StringList tokens = Element.splitLexically(rootText, true);
+    		tokens.removeAll(" ");
+    		int posOpenParenth = tokens.indexOf("(");
+    		int posCloseParenth = tokens.indexOf(")");
+    		int posColon = tokens.indexOf(":");
+    		if (posOpenParenth >= 0 && posOpenParenth < posCloseParenth)
     		{
-    			resultType = tokens.getText(posCloseParenth + 2);
+    			// First attempt: Something after parameter list and "as" or ":"
+    			if (tokens.count() > posCloseParenth + 1 &&
+    					(tokens.get(posCloseParenth + 1).toLowerCase().equals("as")) ||
+    					(tokens.get(posCloseParenth + 1).equals(":"))
+    					)
+    			{
+    				resultType = tokens.getText(posCloseParenth + 2);
+    			}
+    			// Second attempt: A keyword sequence preceding the routine name
+    			else if (posOpenParenth > 1 && testidentifier(tokens.get(posOpenParenth-1)))
+    			{
+    				// We assume that the last token is the procedure name, the previous strings
+    				// may be the type
+    				resultType = tokens.getText(0, posOpenParenth - 1);
+    			}
     		}
-    		// Second attempt: A keyword sequence preceding the routine name
-    		else if (posOpenParenth > 1 && testidentifier(tokens.get(posOpenParenth-1)))
+    		else if (posColon != -1)
     		{
-    			// We assume that the last token is the procedure name, the previous strings
-    			// may be the type
-    			resultType = tokens.getText(0, posOpenParenth - 1);
+    			// Third attempt: In case of an omitted parenthesis, the part behind the colon may be the type 
+    			resultType = tokens.getText(posColon+1);
     		}
-    	}
-    	else if (posColon != -1)
-    	{
-    		// Third attempt: In case of an omitted parenthesis, the part behind the colon may be the type 
-    		resultType = tokens.getText(posColon+1);
-    	}
-    	if (resultType != null)
-    	{
-    		resultType = resultType.replace('\n', ' ').trim();
+    		if (resultType != null)
+    		{
+    			resultType = resultType.replace('\n', ' ').trim();
+    		}
     	}
     	return resultType;
     }
@@ -2671,7 +2833,7 @@ public class Root extends Element {
 		StringList textToShow = super.getText(_alwaysTrueText);
 		if (textToShow.getText().trim().isEmpty())
 		{
-			textToShow = comment;
+			textToShow = text;
 		}
 		return textToShow;
 	}

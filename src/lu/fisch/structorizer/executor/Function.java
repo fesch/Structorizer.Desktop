@@ -20,6 +20,30 @@
 
 package lu.fisch.structorizer.executor;
 
+/******************************************************************************************************
+ *
+ *      Author:         Bob Fisch
+ *
+ *      Description:    Auxiliary class to check function syntax and to separate signature parts.
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date			Description
+ *      ------			----			-----------
+ *      Bob Fisch                       First Issue
+ *      Kay Gürtzig     2015.10.27      For performance reasons, now stores name and parsed parameters
+ *      Kay Gürtzig     2015.11.13      KGU#2 (Enhacement #9): No longer automatically renames to lowercase
+ *      Kay Gürtzig     2015.12.12      KGU#106: Parameter splitting mended (using enhancement #54 = KGU#101)
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:		/
+ *
+ ******************************************************************************************************///
+
+import lu.fisch.structorizer.elements.Element;
 import lu.fisch.utils.StringList;
 
 /**
@@ -27,7 +51,6 @@ import lu.fisch.utils.StringList;
  * May confirm function syntax resemblance and report name and parameter strings.
  * @author robertfisch
  */
-// TODO KGU 2015-10-13: For performance reasons, this class should hold the name and the list of parsed parameters as fields
 public class Function
 {
     private String str = new String();
@@ -55,9 +78,10 @@ public class Function
         	String params = str.substring(posLP+1, str.length()-1).trim();
         	if (!params.equals(""))
         	{
-        		// FIXME (KGU 2015-11-14): This seems to be a little bit too simple
-        		// (Face nested function calls with comma-separated arguments!)
-        		this.parameters = StringList.explode(params, ",");
+        		// START KGU#106 2015-12-12: Face nested function calls with comma-separated arguments!
+        		//this.parameters = StringList.explode(params, ",");
+        		this.parameters = Element.splitExpressionList(params, ",");
+        		// END KGU#106 2015-12-12
             }
         }
         // END KGU 2015-10-27
