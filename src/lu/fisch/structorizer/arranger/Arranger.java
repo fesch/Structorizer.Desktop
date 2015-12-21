@@ -41,6 +41,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2015.11.19		Converted into a singleton (enhancement request #9 = KGU#2)
  *      Kay Gürtzig     2015-11-24		Pin button added (issue #35, KGU#88)
  *      Kay Gürtzig     2015-11-30		Remove action now also achievable by pressing del button (issue #35, KGU#88)
+ *      Kay Gürtzig     2015-12-21		Two new buttons for saving and loading arrangements (issue #62, KGU#110)
  *
  ******************************************************************************************************
  *
@@ -72,7 +73,7 @@ import lu.fisch.structorizer.gui.Mainform;
  */
 public class Arranger extends javax.swing.JFrame implements WindowListener, KeyListener, IRoutinePool
 {
-    // START KGU#2 2015-11-19: Converted into a singleton class
+    // START KGU#2 2015-11-19: Enh. #9 - Converted into a singleton class
     //** Creates new form Arranger */
     //public Arranger() {
     //    initComponents();
@@ -140,6 +141,12 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
         // START KGU#88 2015-11-24
         btnPinDiagram = new javax.swing.JButton();
         // END KGU#88 2015-11-24
+        // START KGU#110 2015-12-20: Enh. #62
+        btnSaveArr = new javax.swing.JButton();
+        btnLoadArr = new javax.swing.JButton();
+        // END KGU#110 2015-12-20
+
+        
         surface = new lu.fisch.structorizer.arranger.Surface();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -169,6 +176,34 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
             }
         });
         toolbar.add(btnExportPNG);
+
+        // START KGU#110 2015-12-20: Enh. #62
+        // FIXME: Icon somewhat too little
+        btnSaveArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/003_Save.png"))); // NOI18N
+        btnSaveArr.setText("Save List");
+        btnSaveArr.setFocusable(false);
+        btnSaveArr.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnSaveArr.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnSaveArr.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSaveArrActionPerformed(evt);
+            }
+        });
+        toolbar.add(btnSaveArr);
+
+        // FIXME: Icon somewhat too little
+        btnLoadArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/002_Open.png"))); // NOI18N
+        btnLoadArr.setText("Load List");
+        btnLoadArr.setFocusable(false);
+        btnLoadArr.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnLoadArr.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnLoadArr.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnLoadArrActionPerformed(evt);
+            }
+        });
+        toolbar.add(btnLoadArr);
+        // END KGU#110 2015-12-20
 
         btnAddDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/101_diagram_new.png"))); // NOI18N
         btnAddDiagram.setText("New Diagram");
@@ -288,18 +323,30 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
     }//GEN-LAST:event_btnAddDiagramActionPerformed
 
     // START KGU#85 2015-11-17
-    private void btnRemoveDiagramActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnAddDiagramActionPerformed
+    private void btnRemoveDiagramActionPerformed(java.awt.event.ActionEvent evt)
     {
         surface.removeDiagram();
     }
     // END KGU#85 2015-11-17
 
     // START KGU#88 2015-11-24
-    private void btnPinDiagramActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnAddDiagramActionPerformed
+    private void btnPinDiagramActionPerformed(java.awt.event.ActionEvent evt)
     {
         surface.togglePinned();
     }
     // END KGU#88 2015-11-24
+
+    // START KGU#110 2015-12-20: Enh. #62 Possibility to save and load arrangements
+    private void btnSaveArrActionPerformed(java.awt.event.ActionEvent evt)
+    {
+        surface.saveArrangement(this);
+    }
+
+    private void btnLoadArrActionPerformed(java.awt.event.ActionEvent evt)
+    {
+        surface.loadArrangement(this);
+    }
+    // END KGU#110 2015-12-20
 
     /**
      * Starts the Arranger as application
@@ -325,6 +372,11 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
     private javax.swing.JButton btnPinDiagram;
     // END KGU#88 2015-11-24
     private javax.swing.JButton btnExportPNG;
+    // START KGU#110 2015-12-20: Enh. #62 a possibility to save and load arrangements was requested
+    private javax.swing.JButton btnSaveArr;
+    private javax.swing.JButton btnLoadArr;
+    // END KGU#110 2015-12-20
+    
     private lu.fisch.structorizer.arranger.Surface surface;
     private javax.swing.JToolBar toolbar;
     // End of variables declaration//GEN-END:variables

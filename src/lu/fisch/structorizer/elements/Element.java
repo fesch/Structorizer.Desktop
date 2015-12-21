@@ -953,8 +953,11 @@ public abstract class Element {
 				currExpr += token;
 			}
 		}
-		// add the last expression
-		expressionList.add(currExpr + "");
+		// add the last expression if it's not empty
+		if (!currExpr.trim().isEmpty())
+		{
+			expressionList.add(currExpr + "");
+		}
 		return expressionList;
 	}
 	// END KGU#101 2015-12-11

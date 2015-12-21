@@ -47,6 +47,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
  *      Bob Fisch       2015.12.10      Bugfix #50 -> grep parameter types (Method getParams(...))
  *      Kay Gürtzig     2015.12.11      Bugfix #54 (KGU#102) in getVarNames(): keywords within identifiers
+ *      Kay Gürtzig     2015.12.20      Bugfix #50 (KGU#112) getResultType() slightly revised
  *
  ******************************************************************************************************
  *
@@ -2516,42 +2517,49 @@ public class Root extends Element {
     }
     
     // START KGU#78 2015-11-25: Extracted from analyse() and rewritten
-    // FIXME: This is not consistent to getMethodName()!
+    /**
+     * Returns a string representing a detected result type if this is a subroutine diagram. 
+     * @return null or a string possibly representing some datatype
+     */
     public String getResultType()
     {
-    	String rootText = getText().getLongString();
+        // FIXME: This is not consistent to getMethodName()!
     	String resultType = null;
-    	StringList tokens = Element.splitLexically(rootText, true);
-    	tokens.removeAll(" ");
-    	int posOpenParenth = tokens.indexOf("(");
-		int posCloseParenth = tokens.indexOf(")");
-		int posColon = tokens.indexOf(":");
-    	if (!this.isProgram && posOpenParenth >= 0 && posOpenParenth < posCloseParenth)
+    	if (!this.isProgram)	// KGU 2015-12-20: Types more rigorously discarded if this is a program
     	{
-    		// First attempt: Something after parameter list and "as" or ":"
-    		if (tokens.count() > posCloseParenth + 1 &&
-    				(tokens.get(posCloseParenth + 1).toLowerCase().equals("as")) ||
-    				(tokens.get(posCloseParenth + 1).equals(":"))
-    				)
+    		String rootText = getText().getLongString();
+    		StringList tokens = Element.splitLexically(rootText, true);
+    		tokens.removeAll(" ");
+    		int posOpenParenth = tokens.indexOf("(");
+    		int posCloseParenth = tokens.indexOf(")");
+    		int posColon = tokens.indexOf(":");
+    		if (posOpenParenth >= 0 && posOpenParenth < posCloseParenth)
     		{
-    			resultType = tokens.getText(posCloseParenth + 2);
+    			// First attempt: Something after parameter list and "as" or ":"
+    			if (tokens.count() > posCloseParenth + 1 &&
+    					(tokens.get(posCloseParenth + 1).toLowerCase().equals("as")) ||
+    					(tokens.get(posCloseParenth + 1).equals(":"))
+    					)
+    			{
+    				resultType = tokens.getText(posCloseParenth + 2);
+    			}
+    			// Second attempt: A keyword sequence preceding the routine name
+    			else if (posOpenParenth > 1 && testidentifier(tokens.get(posOpenParenth-1)))
+    			{
+    				// We assume that the last token is the procedure name, the previous strings
+    				// may be the type
+    				resultType = tokens.getText(0, posOpenParenth - 1);
+    			}
     		}
-    		// Second attempt: A keyword sequence preceding the routine name
-    		else if (posOpenParenth > 1 && testidentifier(tokens.get(posOpenParenth-1)))
+    		else if (posColon != -1)
     		{
-    			// We assume that the last token is the procedure name, the previous strings
-    			// may be the type
-    			resultType = tokens.getText(0, posOpenParenth - 1);
+    			// Third attempt: In case of an omitted parenthesis, the part behind the colon may be the type 
+    			resultType = tokens.getText(posColon+1);
     		}
-    	}
-    	else if (posColon != -1)
-    	{
-    		// Third attempt: In case of an omitted parenthesis, the part behind the colon may be the type 
-    		resultType = tokens.getText(posColon+1);
-    	}
-    	if (resultType != null)
-    	{
-    		resultType = resultType.replace('\n', ' ').trim();
+    		if (resultType != null)
+    		{
+    			resultType = resultType.replace('\n', ' ').trim();
+    		}
     	}
     	return resultType;
     }

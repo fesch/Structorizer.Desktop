@@ -261,12 +261,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	/**
 	 * Overridable general text transformation routine, performing the following steps:
 	 * 1. Eliminates parser preference keywords listed below and unifies all operators
-	 *    @see lu.fisch.Structorizer.elements.Element#unifyOperators(java.lang.String)
 	 *         preAlt, preCase, preWhile, preRepeat,
 	 *         postAlt, postCase, postWhile, postRepeat
 	 * 2. Replaces assignments by a call of overridable method transformAssignment(String)
 	 * 3. Transforms Input and Output lines if _doInput and/or _doOutput are true, respectively
 	 *    This is only done if _input starts with one of the configured Input and Output keywords 
+	 * @see lu.fisch.Structorizer.elements.Element#unifyOperators(java.lang.String)
 	 * @param _input - a line or the concatenated lines of an Element's text
 	 * @param _doInputOutput - whether the third transforms are to be performed
 	 * @return the transformed line (target language line)
@@ -336,17 +336,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				matcher = matcher + "[ ]";
 			}
                         
-                        // Start - BFI (#51)
-                        if(_interm.matches("^" + matcher + "(.*)"))
-                        {
-                            _interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
-                        }
-                        else
-                        {
-                            _interm+=" ";
-                            _interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
-                        }
-                        // End - BFI (#51)
+			// Start - BFI (#51 - Allow empty input instructions)
+			if(!_interm.matches("^" + matcher + "(.*)"))
+			{
+				_interm += " ";
+			}
+			// End - BFI (#51)
+			
+			_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
 		}
 		return _interm;
 	}
@@ -369,18 +366,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			{
 				matcher = matcher + "[ ]";
 			}
-                        
-                        // Start - BFI (#51)
-                        if(_interm.matches("^" + matcher + "(.*)"))
-                        {
-                            _interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
-                        }
-                        else
-                        {
-                            _interm+=" ";
-                            _interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
-                        }
-                        // End - BFI (#51)
+
+			// Start - BFI (#51 - Allow empty output instructions)
+			if(!_interm.matches("^" + matcher + "(.*)"))
+			{
+				_interm += " ";
+			}
+			// End - BFI (#51)
+			
+			_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
 		}
 		return _interm;
 	}

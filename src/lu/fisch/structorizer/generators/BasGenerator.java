@@ -531,19 +531,19 @@ public class BasGenerator extends Generator
 		insertComment("================= START PARALLEL SECTION =================", _indent);
 		insertComment("==========================================================", _indent);
 		insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
-		code.add(this.getLineNumber() + _indent + "PARALLEL");
+		//code.add(this.getLineNumber() + _indent + "PARALLEL");
 
 		for (int i = 0; i < _para.qs.size(); i++) {
 			code.add(this.getLineNumber());
 			insertComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
-			code.add(this.getLineNumber() + indentPlusOne + "THREAD");
+			//code.add(this.getLineNumber() + indentPlusOne + "THREAD");
 			generateCode((Subqueue) _para.qs.get(i), indentPlusOne + this.getIndent());
-			code.add(this.getLineNumber() + indentPlusOne + "END THREAD");
+			//code.add(this.getLineNumber() + indentPlusOne + "END THREAD");
 			insertComment("------------------ END THREAD " + i + " ------------------", indentPlusOne);
 			code.add(this.getLineNumber());
 		}
 
-		code.add(this.getLineNumber() + _indent + "END PARALLEL");
+		//code.add(this.getLineNumber() + _indent + "END PARALLEL");
 		insertComment("==========================================================", _indent);
 		insertComment("================== END PARALLEL SECTION ==================", _indent);
 		insertComment("==========================================================", _indent);

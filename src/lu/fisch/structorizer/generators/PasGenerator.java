@@ -41,9 +41,11 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2014.11.16      Conversion of C-like comparison operator, comment export
  *      Kay Gürtzig         2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
  *      Kay Gürtzig         2015.10.18      Comment generation and indentation revised
- *      Kay Gürtzig         2015.11.30      Jump generation modified, Parallel generation added, Root
- *                                          generation fundamentally redesigned (decomposed)  
+ *      Kay Gürtzig         2015.11.30      Enh. #23: Jump generation modified, KGU#47: Parallel generation
+ *                                          added, Root generation fundamentally redesigned (decomposed)  
  *      Bob Fisch           2015.12.10      Bugfix #50 --> grep & export function parameter types
+ *      Kay Gürtzig         2015.12.20      Bugfix #22 (KGU#74): Correct return mechanisms even with
+ *                                          return instructions not placed in Jump elements
  *
  ******************************************************************************************************
  *
@@ -173,33 +175,41 @@ public class PasGenerator extends Generator
 			_type = _default;
 		else {
 			_type = _type.trim();
-			if (_type.equals("long")) _type = "LongInt";
-			else if (_type.equals("int")) _type = "LongInt";
-			else if (_type.equals("float")) _type = "Single";
-			else if (_type.equals("double")) _type = "Double";
-			else if (_type.equals("int")) _type = "LongInt";
-			else if (_type.equals("unsigned short")) _type = "Word";
-			else if (_type.equals("short")) _type = "Smallint";
-			else if (_type.equals("unsigned long")) _type = "Cardinal";
-			else if (_type.equals("bool")) _type = "Boolean";
+			if (_type.equalsIgnoreCase("long")) _type = "Longint";
+			else if (_type.equalsIgnoreCase("int")) _type = "Longint";
+			else if (_type.equalsIgnoreCase("integer")) _type = "Longint";
+			else if (_type.equalsIgnoreCase("float")) _type = "Single";
+			else if (_type.equalsIgnoreCase("real")) _type = "Single";
+			else if (_type.equalsIgnoreCase("double")) _type = "Double";
+			else if (_type.equalsIgnoreCase("longreal")) _type = "Double";
+			else if (_type.equalsIgnoreCase("unsigned short")) _type = "Word";
+			else if (_type.equalsIgnoreCase("short")) _type = "Smallint";
+			else if (_type.equalsIgnoreCase("shortint")) _type = "Smallint";
+			else if (_type.equalsIgnoreCase("unsigned int")) _type = "Cardinal";
+			else if (_type.equalsIgnoreCase("unsigned long")) _type = "Cardinal";
+			else if (_type.equalsIgnoreCase("bool")) _type = "Boolean";
 			// To be continued if required...
 		}
 		return _type;
 	}
-	// END KGU#1 2015-11-30	
+	// END KGU#16 2015-11-30	
 
 	/**
 	 * Transforms assignments in the given intermediate-language code line.
-	 * Replaces "<-" by "="
+	 * Replaces "<-" by ":=" here
 	 * @param _interm - a code line in intermediate syntax
 	 * @return transformed string
 	 */
+	@Override
 	protected String transformAssignment(String _interm)
 	{
 		return _interm.replace(" <- ", " := ");
 	}
 	// END KGU#18/KGU#23 2015-11-01
     
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String)
+	 */
 	@Override
 	protected String transform(String _input)
 	{
@@ -250,7 +260,28 @@ public class PasGenerator extends Generator
 
 			for (int i=0; i<_inst.getText().count(); i++)
 			{
-				code.add(_indent+transform(_inst.getText().get(i))+";");
+				// START KGU#74 2015-12-20: Bug #22 There might be a return outside of a Jump element, handle it!
+				//code.add(_indent+transform(_inst.getText().get(i))+";");
+				String line = _inst.getText().get(i).trim();
+				if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
+				{
+					String argument = line.substring(D7Parser.preReturn.length()).trim();
+					if (!argument.isEmpty())
+					{
+						code.add(_indent + this.procName + " := " + transform(argument) + ";"); 
+					}
+					Subqueue sq = (_inst.parent == null) ? null : (Subqueue)_inst.parent;
+					if (sq == null || !(sq.parent instanceof Root) || sq.getIndexOf(_inst) != sq.getSize()-1 ||
+							i+1 < _inst.getText().count())
+					{
+						code.add(_indent + "exit;");
+					}
+				}
+				else
+				{
+					code.add(_indent + transform(line) + ";");
+				}
+				// END KGU#74 2015-12-20
 			}
 
 		}
@@ -494,7 +525,6 @@ public class PasGenerator extends Generator
 						this.getFileDescription(), _indent);
 			}
 		}
-		// END KGU 2015-10-18
     }
 
 //    @Override
@@ -578,17 +608,10 @@ public class PasGenerator extends Generator
 //    }
 	
 	// START KGU#74 2015-11-30 
-	/**
-	 * Composes the heading for the program or function according to the
-	 * syntactic rules of the target language and adds it to this.code.
-	 * @param _root - The diagram root element
-	 * @param _indent - the initial indentation string
-	 * @param _procName - the procedure name
-	 * @param paramNames - list of the argument names
-	 * @param paramTypes - list of corresponding type names (possibly null) 
-	 * @param resultType - result type name (possibly null)
-	 * @return the default indentation string for the subsequent stuff
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateHeader(lu.fisch.structorizer.elements.Root, java.lang.String, java.lang.String, lu.fisch.utils.StringList, lu.fisch.utils.StringList, java.lang.String)
 	 */
+	@Override
 	protected String generateHeader(Root _root, String _indent, String _procName,
 			StringList _paramNames, StringList _paramTypes, String _resultType)
 	{
@@ -596,7 +619,7 @@ public class PasGenerator extends Generator
         this.procName = _procName;	// Needed for value return mechanisms
 
         insertComment(_root, _indent);
-        insertComment("(Generated by Structorizer)", _indent);            
+        insertComment("Generated by Structorizer " + Element.E_VERSION + ")", _indent);            
         
         String signature = _root.getMethodName();
         if (!_root.isProgram) {
@@ -636,13 +659,11 @@ public class PasGenerator extends Generator
         
 		return _indent;
 	}
-	/**
-	 * Generates some preamble (i.e. comments, language declaration section etc.)
-	 * and adds it to this.code.
-	 * @param _root - the diagram root element
-	 * @param _indent - the current indentation string
-	 * @param varNames - list of variable names introduced inside the body
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generatePreamble(lu.fisch.structorizer.elements.Root, java.lang.String, lu.fisch.utils.StringList)
 	 */
+	@Override
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
         insertComment("TODO: declare your variables here", _indent + this.getIndent());
@@ -654,11 +675,30 @@ public class PasGenerator extends Generator
 
 		return _indent + this.getIndent();
 	}
-	/**
-	 * Method is to finish up after the text insertions of the diagram, i.e. to close an open block. 
-	 * @param _root - the diagram root element 
-	 * @param _indent - the current indentation string
+
+	// START KGU#74 2015-12-20: Enh. #22: We must achieve a correct value assignment to the function name
+	@Override
+	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
+	{
+		if (!_root.isProgram)
+		{
+			String varName = "";
+			if (isResultSet && !isFunctionNameSet && !alwaysReturns)
+			{
+				int vx = varNames.indexOf("result", false);
+				varName = varNames.get(vx);
+				code.add(_indent);
+				code.add(_indent + this.getIndent() + _root.getMethodName() + " := " + varName + ";");
+			}
+		}
+		return _indent;
+	}
+	// END KGU#74 2015-12-20
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateFooter(lu.fisch.structorizer.elements.Root, java.lang.String)
 	 */
+	@Override
 	protected void generateFooter(Root _root, String _indent)
 	{
 		code.add(_indent + "end.");

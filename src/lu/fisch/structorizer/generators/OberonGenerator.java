@@ -46,7 +46,6 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig				2014.11.16		Operator conversion corrected (see comment)
  *      Kay Gürtzig				2014.12.02		Additional replacement of long assignment operator "<--" by "<-"
  *      Kay Gürtzig				2015.10.18		Indentation issue fixed and comment generation revised
- *      Kay Gürtzig				2015.12.18		Enh. #23 (KGU#78) Jump generation revised
  *
  ******************************************************************************************************
  *
@@ -66,6 +65,8 @@ package lu.fisch.structorizer.generators;
  *      - assignment operator conversion now preserves or ensures surrounding spaces
  *
  ******************************************************************************************************///
+
+import java.util.regex.Matcher;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
@@ -120,8 +121,8 @@ public class OberonGenerator extends Generator {
 	}
 	// END KGU#78 2015-12-18
 
-	
-	/************ Code Generation **************/
+    
+    /************ Code Generation **************/
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/**
@@ -131,7 +132,7 @@ public class OberonGenerator extends Generator {
 	 */
 	protected String getInputReplacer()
 	{
-		return "In.TYPE($1);";
+		return "In.TYPE($1)";
 	}
 
 	/**
@@ -141,12 +142,47 @@ public class OberonGenerator extends Generator {
 	 */
 	protected String getOutputReplacer()
 	{
-		return "Out.TYPE($1);";
+		return "Out.TYPE($1)";
 	}
+
+	// START KGU#16 2015-11-30
+	/**
+	 * Transforms type identifier into the target language (as far as possible)
+	 * @param _type - a string potentially meaning a datatype (or null)
+	 * @param _default - a default string returned if _type happens to be null
+	 * @return a type identifier (or the unchanged _type value if matching failed)
+	 */
+	protected String transformType(String _type, String _default) {
+		if (_type == null)
+			_type = _default;
+		else {
+			_type = _type.trim();
+			if (_type.equalsIgnoreCase("long") ||
+					_type.equalsIgnoreCase("unsigned long")) _type = "LONGINT";
+			else if (_type.equalsIgnoreCase("int") ||
+					_type.equalsIgnoreCase("unsigned") ||
+					_type.equalsIgnoreCase("unsigned int")) _type = "INTEGER";
+			else if (_type.equalsIgnoreCase("short") ||
+					_type.equalsIgnoreCase("unsigned short") ||
+					_type.equalsIgnoreCase("unsigned char")) _type = "SHORTINT";
+			else if (_type.equalsIgnoreCase("char") ||
+					_type.equalsIgnoreCase("character")) _type = "CHAR";
+			else if (_type.equalsIgnoreCase("float") ||
+					_type.equalsIgnoreCase("single") ||
+					_type.equalsIgnoreCase("real")) _type = "REAL";
+			else if (_type.equalsIgnoreCase("double") ||
+					_type.equalsIgnoreCase("longreal")) _type = "LONGREAL";
+			else if (_type.equalsIgnoreCase("bool")) _type = "BOOLEAN";
+			else if (_type.equalsIgnoreCase("string")) _type = "ARRAY 100 OF CHAR"; // may be too short but how can we guess?
+			// To be continued if required...
+		}
+		return _type;
+	}
+	// END KGU#16 2015-11-30	
 
 	/**
 	 * Transforms assignments in the given intermediate-language code line.
-	 * Replaces "<-" by "="
+	 * Replaces "<-" by ":=" here
 	 * @param _interm - a code line in intermediate syntax
 	 * @return transformed string
 	 */
@@ -156,10 +192,14 @@ public class OberonGenerator extends Generator {
 	}
 	// END KGU#18/KGU#23 2015-11-01
     
-	protected String transform(String _input)
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String, boolean)
+	 */
+	@Override
+	protected String transform(String _input, boolean _doInputOutput)
 	{
 		// START KGU#18/KGU#23 2015-11-02
-		_input = super.transform(_input);
+		_input = super.transform(_input, _doInputOutput);
 		// END KGU#18/KGU#23 2015-11-02
 		// START KGU 2014-11-16: Comparison operator had to be converted properly first
         _input=BString.replace(_input," == "," = ");
@@ -192,7 +232,44 @@ public class OberonGenerator extends Generator {
 
 			for (int i=0; i<_inst.getText().count(); i++)
 			{
-				code.add(_indent+transform(_inst.getText().get(i))+";");
+				// START KGU#101/KGU#108 2015-12-20 Issue #51/#54
+				//code.add(_indent+transform(_inst.getText().get(i))+";");
+				String line = _inst.getText().get(i);
+				String matcherInput = "^" + Matcher.quoteReplacement(D7Parser.input);
+				String matcherOutput = "^" + Matcher.quoteReplacement(D7Parser.output);
+				if (Character.isJavaIdentifierPart(D7Parser.input.charAt(D7Parser.input.length()-1))) { matcherInput += "[ ]"; }
+				if (Character.isJavaIdentifierPart(D7Parser.output.charAt(D7Parser.output.length()-1))) { matcherOutput += "[ ]"; }
+				boolean isInput = (line.trim()+" ").matches(matcherInput + "(.*)");			// only non-empty input instructions relevant  
+				boolean isOutput = (line.trim()+" ").matches(matcherOutput + "(.*)"); 	// also empty output instructions relevant
+				if (isInput)
+				{
+					code.add(_indent + "In.Open;");
+					if (line.substring(D7Parser.input.trim().length()).trim().isEmpty())
+					{
+						code.add(_indent + "In.Char(dummyInputChar);");
+					}
+					else
+					{	
+						insertComment("TODO: Replace \"TYPE\" by the the actual data type name!", _indent);
+						code.add(_indent + transform(line) + ";");
+					}
+				}
+				else if (isOutput)
+				{
+					insertComment("TODO: Replace \"TYPE\" by the the actual data type name and add a length argument where needed!", _indent);	
+					StringList expressions = Element.splitExpressionList(line.substring(D7Parser.output.length()).trim(), ",");
+					// Produce an output isntruction for every expression (according to type)
+					for (int j = 0; j < expressions.count(); j++)
+					{
+						code.add(_indent + transform(D7Parser.output + " " + expressions.get(j)) + ";");
+					}
+					code.add(_indent + "Out.Ln;");
+				}
+				else
+				{
+					code.add(_indent + transform(line) + ";");
+				}
+				// END KGU#101/KGU#108 2015-12-20
 			}
 
 		}
@@ -313,6 +390,36 @@ public class OberonGenerator extends Generator {
 		}
 	}
 	
+	// START KGU#47 2015-12-20: Offer at least a sequential execution (which is one legal execution order)
+	protected void generateCode(Parallel _para, String _indent)
+	{
+		insertComment(_para, _indent);
+
+		code.add("");
+		insertComment("==========================================================", _indent);
+		insertComment("================= START PARALLEL SECTION =================", _indent);
+		insertComment("==========================================================", _indent);
+		insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
+		code.add(_indent + "BEGIN");
+
+		for (int i = 0; i < _para.qs.size(); i++) {
+			code.add("");
+			insertComment("----------------- START THREAD " + i + " -----------------", _indent + this.getIndent());
+			code.add(_indent + this.getIndent() + "BEGIN");
+			generateCode((Subqueue) _para.qs.get(i), _indent + this.getIndent() + this.getIndent());
+			code.add(_indent + this.getIndent() + "END;");
+			insertComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
+			code.add("");
+		}
+
+		code.add(_indent + "END;");
+		insertComment("==========================================================", _indent);
+		insertComment("================== END PARALLEL SECTION ==================", _indent);
+		insertComment("==========================================================", _indent);
+		code.add("");
+	}
+	// END KGU#47 2015-12-20
+
 //	protected void generateCode(Subqueue _subqueue, String _indent)
 //	{
 //		// code.add(_indent+"");
@@ -323,38 +430,148 @@ public class OberonGenerator extends Generator {
 //		// code.add(_indent+"");
 //	}
 	
-	public String generateCode(Root _root, String _indent)
+	// START KGU 2015-12-20: Decomposition accoring to super class Generator
+//	public String generateCode(Root _root, String _indent)
+//	{
+//		String pr = "MODULE";
+//		String modname = _root.getText().get(0);
+//		if(_root.isProgram==false) {pr="PROCEDURE";}
+//		
+//		code.add(pr+" "+modname+";");
+//		code.add("");
+//
+//		// Add comments and/or declarations to the program (Bob)
+//		for(int i=0;i<_root.getComment().count();i++)
+//		{
+//			if(!_root.getComment().get(i).startsWith("#"))
+//			{
+//				code.add(_root.getComment().get(i));
+//			}
+//	        // START KGU 2014-11-16: Don't get the comments get lost
+//			else {
+//				insertComment(_root.getComment().get(i).substring(1), "");
+//			}
+//	        // END KGU 2014-11-16
+//			
+//		}
+//		
+//		//code.add("// declare your variables here");
+//		code.add("");
+//		code.add("BEGIN");
+//		generateCode(_root.children,_indent+this.getIndent());
+//		code.add("END "+modname+".");
+//		
+//		return code.getText();
+//	}
+	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateHeader(lu.fisch.structorizer.elements.Root, java.lang.String, java.lang.String, lu.fisch.utils.StringList, lu.fisch.utils.StringList, java.lang.String)
+	 */
+	@Override
+	protected String generateHeader(Root _root, String _indent, String _procName,
+			StringList _paramNames, StringList _paramTypes, String _resultType)
 	{
-		String pr = "MODULE";
-		String modname = _root.getText().get(0);
-		if(_root.isProgram==false) {pr="PROCEDURE";}
-		
-		code.add(pr+" "+modname+";");
-		code.add("");
-
-		// Add comments and/or declarations to the program (Bob)
-		for(int i=0;i<_root.getComment().count();i++)
+		String header = (_root.isProgram ? "MODULE " : "PROCEDURE ") + _procName;
+		if (!_root.isProgram)
 		{
-			if(!_root.getComment().get(i).startsWith("#"))
+			header += "*";	// Marked for export as default
+			String lastType = "";
+			int nParams = _paramNames.count();
+			for (int p = 0; p < nParams; p++) {
+				String type = transformType(_paramTypes.get(p), "(*type?*)");
+				if (p == 0) {
+					header += "(";
+				}
+				else if (type.equals("(*type?*)") || !type.equals(lastType)) {
+					header += ": " + lastType + "; ";
+				}
+				else {
+					header += ", ";
+				}
+				header += _paramNames.get(p).trim();
+				if (p+1 == nParams) {
+					header += ": " + type + ")";
+				}
+				lastType = type;
+			}
+			if (_resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
 			{
-				code.add(_root.getComment().get(i));
+				header += ": " + transformType(_resultType, "");
 			}
-	        // START KGU 2014-11-16: Don't get the comments get lost
-			else {
-				insertComment(_root.getComment().get(i).substring(1), "");
-			}
-	        // END KGU 2014-11-16
-			
 		}
 		
-		//code.add("// declare your variables here");
-		code.add("");
-		code.add("BEGIN");
-		generateCode(_root.children,_indent+this.getIndent());
-		code.add("END "+modname+".");
-		
-		return code.getText();
+		code.add(_indent + header + ";");
+
+		// START KGU 2015-12-20: Don't understand what this was meant to achieve
+		// Add comments and/or declarations to the program (Bob)
+//		for(int i=0; i<_root.getComment().count(); i++)
+//		{
+//			if(!_root.getComment().get(i).startsWith("#"))
+//			{
+//				code.add(_indent + _root.getComment().get(i));
+//			}
+//	        // START KGU 2014-11-16: Don't get the comments get lost
+//			else {
+//				insertComment(_root.getComment().get(i).substring(1), _indent);
+//			}
+//	        // END KGU 2014-11-16
+//		}
+		insertBlockComment(_root.getComment(), _indent, this.commentSymbolLeft(),
+				" * ", " " + this.commentSymbolRight());
+		// END KGU 2015-12-20
+
+		return _indent;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generatePreamble(lu.fisch.structorizer.elements.Root, java.lang.String, lu.fisch.utils.StringList)
+	 */
+	@Override
+	protected String generatePreamble(Root _root, String _indent, StringList varNames)
+	{
+		String indentPlusOne = _indent + this.getIndent();
+		code.add(_indent + "VAR");
+		insertComment("TODO: Declare and initialise local variables here:", indentPlusOne);
+		code.add(indentPlusOne + "dummyInputChar: Char;	" +
+				this.commentSymbolLeft() + " for void input " + this.commentSymbolRight());
+		for (int v = 0; v < varNames.count(); v++) {
+			insertComment(varNames.get(v), indentPlusOne);
+		}
+		code.add(_indent + "BEGIN");
+		return indentPlusOne;
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateResult(lu.fisch.structorizer.elements.Root, java.lang.String, boolean, lu.fisch.utils.StringList)
+	 */
+	@Override
+	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
+	{
+		if ((this.returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns) {
+			String result = "0";
+			if (isFunctionNameSet) {
+				result = _root.getMethodName();
+			} else if (isResultSet) {
+				int vx = varNames.indexOf("result", false);
+				result = varNames.get(vx);
+			}
+			code.add(_indent);
+			code.add(_indent + this.getIndent() + "RETURN " + result + ";");
+		}
+		return _indent;
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#generateFooter(lu.fisch.structorizer.elements.Root, java.lang.String)
+	 */
+	@Override
+	protected void generateFooter(Root _root, String _indent)
+	{
+		// Method block close
+		code.add(_indent + "END " + _root.getMethodName() + ";");
+
+		super.generateFooter(_root, _indent);
+	}
+	// END KGU 2015-12-20
 	
 }

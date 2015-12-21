@@ -273,12 +273,14 @@ public class JavaGenerator extends CGenerator
 		_type = _type.replace("unsigned long", "long");
 		_type = _type.replace("unsigned char", "char");
 		_type = _type.replace("unsigned", "int");
+		_type = _type.replace("longreal", "double");
 		_type = _type.replace("real", "double");
-		_type = _type.replace("bool", "boolean");
 		_type = _type.replace("boole", "boolean");
+		_type = _type.replace("bool", "boolean");
 		_type = _type.replace("character", "Character");
 		_type = _type.replace("integer", "Integer");
 		_type = _type.replace("string", "String");
+		_type = _type.replace("array[ ]([0-9]*)[ ]of char", "String");
 		return _type;
 	}
 	// END KGU#16 2015-11-29
@@ -717,7 +719,11 @@ public class JavaGenerator extends CGenerator
 		// Method block close
 		code.add(_indent + this.getIndent() + "}");
 
-		super.generateFooter(_root, _indent);
+		// Don't close class block if we haven't opened any
+		if (_root.isProgram)
+		{
+			super.generateFooter(_root, _indent);
+		}
 	}
 	// END KGU 2015-12-15
 
