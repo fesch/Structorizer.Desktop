@@ -38,6 +38,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.11.03      check_14 property added (For loop enhancement, #10 = KGU#3)
  *      Kay Gürtzig     2015.11.10      Issues #6 and #16 fixed by appropriate default window behaviour
  *      Kay Gürtzig     2015.11.14      Yet another improved approach to #6 / #16: see comment
+ *      Kay Gürtzig     2015.11.24      KGU#88: The decision according to #6 / #16 is now returned on setRoot()
+ *      Kay Gürtzig     2015.11.28      KGU#2/KGU#78/KGU#47: New checks 15, 16, and 17 registered for loading
  *      Kay Gürtzig     2015.12.04      KGU#95: Bugfix #42 - wrong default current directory mended
  *
  ******************************************************************************************************
@@ -320,7 +322,7 @@ public class Mainform  extends JFrame implements NSDController
 				System.out.println(e.getMessage());
 			}
 			
-			// analyser
+			// analyser (see also Root.saveToIni())
 			Root.check1 = ini.getProperty("check1","1").equals("1");
 			Root.check2 = ini.getProperty("check2","1").equals("1");
 			Root.check3 = ini.getProperty("check3","1").equals("1");
@@ -337,6 +339,11 @@ public class Mainform  extends JFrame implements NSDController
 			// START KGU#3 2015-11-03: New check for enhanced FOR loops
 			Root.check14 = ini.getProperty("check14","1").equals("1");
 			// END KGU#3 2015-11-03
+			// START KGU#2/KGU#78 2015-11-28: New checks for CALL and JUMP elements
+			Root.check15 = ini.getProperty("check15","1").equals("1");
+			Root.check16 = ini.getProperty("check16","1").equals("1");
+			Root.check17 = ini.getProperty("check17","1").equals("1");
+			// END KGU#2/KGU#78 2015-11-28
 
 			
 			doButtons();
@@ -573,8 +580,8 @@ public class Mainform  extends JFrame implements NSDController
     	boolean done = false;
     	if (this.diagram != null)	// May look somewhat paranoid, but diagram is public...
     	{
-    		this.diagram.setRoot(root);
-    		done = true;
+    		// KGU#88: We now reflect if the user refuses to override the former diagram
+    		done = this.diagram.setRoot(root);
     	}
     	return done;
     }

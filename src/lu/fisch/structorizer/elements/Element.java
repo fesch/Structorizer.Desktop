@@ -94,7 +94,7 @@ import java.awt.Point;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.23-04";
+	public static String E_VERSION = "3.23-05";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -953,8 +953,11 @@ public abstract class Element {
 				currExpr += token;
 			}
 		}
-		// add the last expression
-		expressionList.add(currExpr + "");
+		// add the last expression if it's not empty
+		if (!currExpr.trim().isEmpty())
+		{
+			expressionList.add(currExpr + "");
+		}
 		return expressionList;
 	}
 	// END KGU#101 2015-12-11

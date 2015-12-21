@@ -30,11 +30,13 @@ package lu.fisch.structorizer.gui;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2007.12.30      First Issue
- *		Bob Fisch		2008.04.12		Adapted for Generator plugin
- *		Kay Gürtzig		2015.11.03		Additions for FOR loop enhancement (KGU#3)
+ *      Bob Fisch       2008.04.12      Adapted for Generator plugin
+ *      Kay Gürtzig     2015.11.03      Additions for FOR loop enhancement (KGU#3)
+ *      Kay Gürtzig     2015.11.22      Adaptations for handling selected non-empty Subqueues (KGU#87)
+ *      Kay Gürtzig     2015.11.25      New error labels error13_3 (KGU#78) and error15 (KGU#2) added
  *
  ******************************************************************************************************
  *
@@ -92,6 +94,9 @@ public class Menu extends JMenuBar implements NSDController
 	// Submenu of "File -> Import"
 	protected JMenuItem menuFileImportPascal = new JMenuItem("Pascal Code ...",IconLoader.ico004);
 
+	// START KGU#2 2015-11-19: New menu item to have the Arranger present the diagram
+	protected JMenuItem menuFileArrange = new JMenuItem("Arrange", IconLoader.ico105);
+	// END KGU#2 2015-11-19
 	protected JMenuItem menuFilePrint = new JMenuItem("Print ...",IconLoader.ico041);
 	protected JMenuItem menuFileQuit = new JMenuItem("Quit");
 
@@ -213,10 +218,28 @@ public class Menu extends JMenuBar implements NSDController
 	public static JLabel error12 = new JLabel("The parameter «%» must start with the letter \"p\" followed by only uppercase letters!");
 	public static JLabel error13_1 = new JLabel("Your function does not return any result!");
 	public static JLabel error13_2 = new JLabel("Your function may not return a result!");
+	// START KGU#78 (#23) 2015-11-25: Check for competitive return mechanisms
+	public static JLabel error13_3 = new JLabel("Your functions seems to use several competitive return mechanisms: «%»!");
+	// END KGU#78 (#23) 2015-11-25
 	// START KGU#3 2015-11-03: New checks for the enhanced For loop
 	public static JLabel error14_1 = new JLabel("The FOR loop parameters are not consistent to the loop heading text!");
 	public static JLabel error14_2 = new JLabel("The FOR loop step value («%») is not a legal integer constant!");
+	// START KGU#3 2015-11-26: More clarity if e.g. a counter variable is named "step" and so is the stepFor parser preference
+	public static JLabel error14_3 = new JLabel("Variable name «%» may collide with one of the configured FOR loop heading keywords!");
+	// END KGU#3 2015-11-26
 	// END KGU#3 2015-11-03
+	// START KGU#2 2015-11-25: New check for call element syntax
+	public static JLabel error15 = new JLabel("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
+	public static JLabel error16_1 = new JLabel("A JUMP element may be empty or start with one of %, possibly followed by an argument!");	
+	public static JLabel error16_2 = new JLabel("A return instruction, unless at final position, must form a JUMP element!");
+	public static JLabel error16_3 = new JLabel("An exit, leave or break instruction is only allowed as JUMP element!");
+	public static JLabel error16_4 = new JLabel("Cannot leave or break more loop levels than being nested in («%»)!");
+	public static JLabel error16_5 = new JLabel("You must not directly return out of a parallel thread!");
+	public static JLabel error16_6 = new JLabel("Wrong argument for this kind of JUMP (should be an integer constant)!");
+	// END KGU#2 2015-11-25
+	// START KGU#47 2015-11-28: New check for concurrency problems
+	public static JLabel error17 = new JLabel("Consistency risk due to concurrent access to variable «%» by several parallel threads!");
+	// END KGU#47 2015-11-28
 
 
 	public void create()
@@ -314,6 +337,12 @@ public class Menu extends JMenuBar implements NSDController
 		menuFile.add(menuFilePrint);
 		menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		menuFilePrint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.printNSD(); doButtons(); } } );
+
+		// START KGU#2 2015-11-19
+		menuFile.add(menuFileArrange);
+		//menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuFileArrange.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.arrangeNSD(); doButtons(); } } );
+		// END KGU#2 2015-11-19
 
 		menuFile.addSeparator();
 
@@ -702,16 +731,19 @@ public class Menu extends JMenuBar implements NSDController
                         */
 
 			// conditions
-			boolean condition =  diagram.getSelected()!=null && diagram.getSelected()!=diagram.getRoot();
 			boolean conditionAny =  diagram.getSelected()!=null;
+			boolean condition =  conditionAny && diagram.getSelected()!=diagram.getRoot();
+			// START KGU#87 2015-11-22: For most operations, multiple selections are not suported
+			boolean conditionNoMult = condition && !diagram.selectedIsMultiple();
+			// END KGU#87 2015-11-22
 			int i = -1;
 			boolean conditionCanMoveUp = false;
 			boolean conditionCanMoveDown = false;
-			if(diagram.getSelected()!=null)
+			if (conditionAny)
 			{
 				if(diagram.getSelected().parent!=null)
 				{
-					// make shure parent is a subqueue, which is not the case if somebody clicks on a subqueue!
+					// make sure parent is a subqueue, which is not the case if somebody clicks on a subqueue!
 					if (diagram.getSelected().parent.getClass().getSimpleName().equals("Subqueue"))
 					{
 						i = ((Subqueue) diagram.getSelected().parent).getIndexOf(diagram.getSelected());
@@ -733,31 +765,37 @@ public class Menu extends JMenuBar implements NSDController
 			menuDiagramAnalyser.setSelected(Element.E_ANALYSER);
 
 			// elements
-			menuDiagramAddBeforeInst.setEnabled(condition);
-			menuDiagramAddBeforeAlt.setEnabled(condition);
-			menuDiagramAddBeforeCase.setEnabled(condition);
-			menuDiagramAddBeforeFor.setEnabled(condition);
-			menuDiagramAddBeforeWhile.setEnabled(condition);
-			menuDiagramAddBeforeRepeat.setEnabled(condition);
-			menuDiagramAddBeforeForever.setEnabled(condition);
-			menuDiagramAddBeforeCall.setEnabled(condition);
-			menuDiagramAddBeforeJump.setEnabled(condition);
-			menuDiagramAddBeforePara.setEnabled(condition);
+			// START KGU#87 2015-11-22: Why enable the main entry if no action is enabled?
+			menuDiagramAdd.setEnabled(conditionNoMult);
+			// END KGU#87 2015-11-22
+			menuDiagramAddBeforeInst.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeAlt.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeCase.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeFor.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeWhile.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeRepeat.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeForever.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeCall.setEnabled(conditionNoMult);
+			menuDiagramAddBeforeJump.setEnabled(conditionNoMult);
+			menuDiagramAddBeforePara.setEnabled(conditionNoMult);
 
-			menuDiagramAddAfterInst.setEnabled(condition);
-			menuDiagramAddAfterAlt.setEnabled(condition);
-			menuDiagramAddAfterCase.setEnabled(condition);
-			menuDiagramAddAfterFor.setEnabled(condition);
-			menuDiagramAddAfterWhile.setEnabled(condition);
-			menuDiagramAddAfterRepeat.setEnabled(condition);
-			menuDiagramAddAfterForever.setEnabled(condition);
-			menuDiagramAddAfterCall.setEnabled(condition);
-			menuDiagramAddAfterJump.setEnabled(condition);
-			menuDiagramAddAfterPara.setEnabled(condition);
+			menuDiagramAddAfterInst.setEnabled(conditionNoMult);
+			menuDiagramAddAfterAlt.setEnabled(conditionNoMult);
+			menuDiagramAddAfterCase.setEnabled(conditionNoMult);
+			menuDiagramAddAfterFor.setEnabled(conditionNoMult);
+			menuDiagramAddAfterWhile.setEnabled(conditionNoMult);
+			menuDiagramAddAfterRepeat.setEnabled(conditionNoMult);
+			menuDiagramAddAfterForever.setEnabled(conditionNoMult);
+			menuDiagramAddAfterCall.setEnabled(conditionNoMult);
+			menuDiagramAddAfterJump.setEnabled(conditionNoMult);
+			menuDiagramAddAfterPara.setEnabled(conditionNoMult);
 
 
 			// editing
-			menuDiagramEdit.setEnabled(conditionAny);
+			// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
+			//menuDiagramEdit.setEnabled(conditionAny);
+			menuDiagramEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
+			// END KGU#87 2015-11-22
 			menuDiagramDelete.setEnabled(diagram.canCutCopy());
 			menuDiagramMoveUp.setEnabled(conditionCanMoveUp);
 			menuDiagramMoveDown.setEnabled(conditionCanMoveDown);
@@ -817,13 +855,13 @@ public class Menu extends JMenuBar implements NSDController
 			menuPreferencesLanguageDutch.setSelected(getLang().equals("nl.txt"));
 			menuPreferencesLanguageLuxemburgish.setSelected(getLang().equals("lu.txt"));
 			menuPreferencesLanguageSpanish.setSelected(getLang().equals("es.txt"));
-                        menuPreferencesLanguagePortugalBrazil.setSelected(getLang().equals("pt_br.txt"));
-                        menuPreferencesLanguageItalian.setSelected(getLang().equals("it.txt"));
-                        menuPreferencesLanguageSimplifiedChinese.setSelected(getLang().equals("chs.txt"));
-                        menuPreferencesLanguageTraditionalChinese.setSelected(getLang().equals("cht.txt"));
-                        menuPreferencesLanguageCzech.setSelected(getLang().equals("cz.txt"));
-                        menuPreferencesLanguageRussian.setSelected(getLang().equals("ru.txt"));
-                        menuPreferencesLanguagePolish.setSelected(getLang().equals("pl.txt"));
+			menuPreferencesLanguagePortugalBrazil.setSelected(getLang().equals("pt_br.txt"));
+			menuPreferencesLanguageItalian.setSelected(getLang().equals("it.txt"));
+			menuPreferencesLanguageSimplifiedChinese.setSelected(getLang().equals("chs.txt"));
+			menuPreferencesLanguageTraditionalChinese.setSelected(getLang().equals("cht.txt"));
+			menuPreferencesLanguageCzech.setSelected(getLang().equals("cz.txt"));
+			menuPreferencesLanguageRussian.setSelected(getLang().equals("ru.txt"));
+			menuPreferencesLanguagePolish.setSelected(getLang().equals("pl.txt"));
 
 			// Recentl file
 			menuFileOpenRecent.removeAll();

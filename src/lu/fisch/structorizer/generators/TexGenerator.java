@@ -30,10 +30,13 @@ package lu.fisch.structorizer.generators;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------		----			-----------
- *      Bob Fisch       2007.12.27              First Issue
- *	Bob Fisch	2008.04.12		Added "Fields" section for generator to be used as plugin
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2007.12.27      First Issue
+ *      Bob Fisch       2008.04.12      Added "Fields" section for generator to be used as plugin
+ *      Kay Gürtzig     2015.10.18      Adaptations to updated Generator structure and interface
+ *      Kay Gürtzig     2015.11.01      KGU#18/KGU#23 Transformation decomposed
+ *      Kay Gürtzig     2015.12.18/19   KGU#2/KGU#47/KGU#78 Fixes for Call, Jump, and Parallel elements
  *
  ******************************************************************************************************
  *
@@ -43,6 +46,7 @@ package lu.fisch.structorizer.generators;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.parsers.D7Parser;
 
 public class TexGenerator extends Generator {
 	
@@ -76,7 +80,18 @@ public class TexGenerator extends Generator {
     }
     // END KGU 2015-10-18
 	
-	/************ Code Generation **************/
+	// START KGU#78 2015-12-18: Enh. #23 - Irrelevant here (?) but necessary now
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
+	 */
+	@Override
+	protected boolean supportsSimpleBreak()
+	{
+		return true;
+	}
+	// END KGU#78 2015-12-18
+
+    /************ Code Generation **************/
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
@@ -102,7 +117,7 @@ public class TexGenerator extends Generator {
 
 	/**
 	 * Transforms assignments in the given intermediate-language code line.
-	 * Replaces "<-" by "="
+	 * Replaces "<-" by "\gets" here
 	 * @param _interm - a code line in intermediate syntax
 	 * @return transformed string
 	 */
@@ -115,11 +130,11 @@ public class TexGenerator extends Generator {
 
 	protected String transform(String _input)
 	{
-		// der Pfeil
+		// das Zuweisungssymbol
 		//_input=BString.replace(_input,"<-","\\gets");
 		_input = transformAssignment(_input);
 		
-		// Leerzeichen
+		// Leerzeichen - FIXME (KGU) Is this actually necessary?
 		_input=BString.replace(_input," ","\\ ");
 		
 		// Umlaute
@@ -231,25 +246,64 @@ public class TexGenerator extends Generator {
 	{
 		for(int i=0;i<_call.getText().count();i++)
 		{
-			code.add(_indent+"\\assign{\\("+transform(_call.getText().get(i))+"\\)}");
+			// START KGU#2 2015-12-19: Wrong command, should be \sub
+			//code.add(_indent+"\\assign{\\("+transform(_call.getText().get(i))+"\\)}");
+			code.add(_indent+"\\sub{\\("+transform(_call.getText().get(i))+"\\)}");
+			// END KGU#2 2015-12-19
 		}
 	}
 	
 	protected void generateCode(Jump _jump, String _indent)
 	{
-		for(int i=0;i<_jump.getText().count();i++)
+		// START KGU#78 2015-12-19: Enh. #23: We now distinguish exit and return boxes
+		//code.add(_indent+"\\assign{\\("+transform(_jump.getText().get(i))+"\\)}");
+		if (_jump.getText().count() == 0 || _jump.getText().getText().trim().isEmpty())
 		{
-			code.add(_indent+"\\assign{\\("+transform(_jump.getText().get(i))+"\\)}");
+			code.add(_indent+ "\\exit{}");
 		}
+		else
+		// END KGU#78 2015-12-19
+			// FIXME (KGU 2015-12-19): This should not be split into several blocks
+			for(int i=0; i<_jump.getText().count(); i++)
+			{
+				// START KGU#78 2015-12-19: Enh. #23: We now distinguish exit and return boxes
+				//code.add(_indent+"\\assign{\\("+transform(_jump.getText().get(i))+"\\)}");
+				String command = "exit";	// Just the default
+				if (_indent.startsWith(D7Parser.preReturn))
+				{
+					command = "return";
+				}
+				code.add(_indent+ "\\" + command + "{\\("+transform(_jump.getText().get(i))+"\\)}");
+				// END KGU#78 2015-12-19
+			}
 	}
 	
-	protected void generateCode(Subqueue _subqueue, String _indent)
+	// START KGU#47 2015-12-19: Hadn't been generated at all - Trouble is: structure must not be recursive!
+	protected void generateCode(Parallel _para, String _indent)
 	{
-		for(int i=0;i<_subqueue.children.size();i++)
+		// Ignore it if there no threads
+		if (!_para.qs.isEmpty())
 		{
-			generateCode((Element) _subqueue.children.get(i),_indent);
+			// Since substructure is not allowed (at least a call would have been sensible!),
+			// we transform all thread contents into single long strings...
+			code.add(_indent + "\\inparallel{" + _para.qs.size() + "} {" + 
+					transform(_para.qs.get(0).getFullText(false).getLongString()) + "}");
+			for (int q = 1; q < _para.qs.size(); q++)
+			{
+				code.add(_indent + "\\task{" + transform(_para.qs.get(q).getFullText(false).getLongString()) + "}");
+			}
+			code.add(_indent + "\\inparallelend");		
 		}
 	}
+	// END KGU#47 2015-12-19
+	
+//	protected void generateCode(Subqueue _subqueue, String _indent)
+//	{
+//		for(int i=0;i<_subqueue.getSize();i++)
+//		{
+//			generateCode((Element) _subqueue.getElement(i),_indent);
+//		}
+//	}
 	
 	public String generateCode(Root _root, String _indent)
 	{
@@ -269,7 +323,7 @@ public class TexGenerator extends Generator {
 		code.add("");
 		code.add("\\begin{document}");
 		code.add("");
-		code.add("\\begin{struktogramm}("+Math.round(_root.width/72*25.4)+","+Math.round(_root.height/75*25.4)+")["+transform(_root.getText().get(0))+"]");
+		code.add("\\begin{struktogramm}("+Math.round(_root.width/72.0*25.4)+","+Math.round(_root.height/75.0*25.4)+")["+transform(_root.getText().get(0))+"]");
 		generateCode(_root.children, this.getIndent());
 		code.add("\\end{struktogramm}");
 		code.add("");

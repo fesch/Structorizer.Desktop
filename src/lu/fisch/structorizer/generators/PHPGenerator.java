@@ -30,22 +30,22 @@ package lu.fisch.structorizer.generators;
  *
  *      Revision List
  *
- *      Author          		Date			Description
- *      ------				----			-----------
- *      Bob Fisch       		2008.11.17              First Issue
- *      Gunter Schillebeeckx            2009.08.10		Bugfixes (see comment)
- *      Bob Fisch                       2009.08.17              Bugfixes (see comment)
- *      Bob Fisch                       2010.08-30              Different fixes asked by Kay Gürtzig
- *                                                              and Peter Ehrlich
- *      Kay Gürtzig                     2010.09.10              Bugfixes and cosmetics (see comment)
- *      Rolf Schmidt                    2010.09.15              1. Release of PHPGenerator
- *      Bob Fisch                       2011.11.07              Fixed an issue while doing replacements
- *      Kay Gürtzig                     2014.11.11              Fixed some replacement flaws (see comment)
- *      Kay Gürtzig                     2014.11.16              Comment generation revised (now inherited)
- *      Kay Gürtzig                     2014.12.02              Additional replacement of "<--" by "<-"
- *      Kay Gürtzig                     2015.10.18              Indentation and comment mechanisms revised, bugfix
- *      Kay Gürtzig                     2015.11.02              Variable identification added, Case and
- *                                                              For mechanisms improved (KGU#15, KGU#3)
+ *      Author                  Date			Description
+ *      ------                  ----			-----------
+ *      Bob Fisch       	    2008.11.17      First Issue
+ *      Gunter Schillebeeckx    2009.08.10		Bugfixes (see comment)
+ *      Bob Fisch               2009.08.17      Bugfixes (see comment)
+ *      Bob Fisch               2010.08-30      Different fixes asked by Kay Gürtzig and Peter Ehrlich
+ *      Kay Gürtzig             2010.09.10      Bugfixes and cosmetics (see comment)
+ *      Rolf Schmidt            2010.09.15      1. Release of PHPGenerator
+ *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
+ *      Kay Gürtzig             2014.11.11      Fixed some replacement flaws (see comment)
+ *      Kay Gürtzig             2014.11.16      Comment generation revised (now inherited)
+ *      Kay Gürtzig             2014.12.02      Additional replacement of "<--" by "<-"
+ *      Kay Gürtzig             2015.10.18      Indentation and comment mechanisms revised, bugfix
+ *      Kay Gürtzig             2015.11.02      Variable identification added, Case and
+ *                                              For mechanisms improved (KGU#15, KGU#3)
+ *      Kay Gürtzig             2015.12.19      Variable prefixing revised (KGU#62) in analogy to PerlGenerator
  *
  ******************************************************************************************************
  *
@@ -94,6 +94,8 @@ package lu.fisch.structorizer.generators;
  *
  ******************************************************************************************************///
 
+import java.util.regex.Matcher;
+
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.elements.*;
@@ -137,6 +139,17 @@ public class PHPGenerator extends Generator
     }
     // END KGU 2015-10-18
     
+	// START KGU#78 2015-12-18: Enh. #23 We must know whether to create labels for simple breaks
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
+	 */
+	@Override
+	protected boolean supportsSimpleBreak()
+	{
+		return true;
+	}
+	// END KGU#78 2015-12-18
+    
     /************ Code Generation **************/
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
@@ -179,121 +192,22 @@ public class PHPGenerator extends Generator
     protected String transform(String _input)
     {
     	_input = super.transform(_input);
-//            // et => and
-//            // ou => or
-//            // lire => readln()
-//            // écrire => writeln()
-//            // tant que => ""
-//            // pour => ""
-//            // jusqu'à => ""
-//            // à => "to"
-//
-//            String s = _input;
-//            // variable assignment
-////            s=s.replace("==", "=");
-//            // testing
-///*
-//            s=s.replace("=", "==");
-//            s=s.replace(":=", " = ");
-//            s=s.replace("<==", "<=");
-//            s=s.replace(">==", ">=");
-//            s=s.replace("<>", "!=");
-//*/
-//            _input=s;
-//
-//            // variable assignment
-////            _input=BString.replace(_input," <- "," = ");
-////            _input=BString.replace(_input,"<- "," = ");
-////            _input=BString.replace(_input," <-"," = ");
-////            _input=BString.replace(_input,"<-"," = ");
-//
-//            // comparison operators
-//            _input=BString.replace(_input," = "," == ");
-//            _input=BString.replace(_input," := "," = ");
-//            _input=BString.replace(_input," <== "," <= ");
-//            // START KGU 2014-11-11: Defective replacement mended (though " >== " is not likely to occur)
-//            /*_input=BString.replace(_input," >== "," >== ");*/
-//            _input=BString.replace(_input," >== "," >= ");
-//            // END KGU 2014-11-11
-//            _input=BString.replace(_input," <> "," != ");
-//
-//            // START KGU 2014-11-11: Had been forgotten, obviously (formerly misplaced)
-//            // variable assignment (might interfere with HTML comments, though)
-//            // START KGU 2014-12-02: To achieve consistency with operator highlighting
-//            _input=BString.replace(_input, "<--", "<-");
-//            // END KGU 2014-12-02
-//            _input=BString.replace(_input," <- "," = ");
-//            _input=BString.replace(_input,"<- "," = ");
-//            _input=BString.replace(_input," <-"," = ");
-//            _input=BString.replace(_input,"<-"," = ");
-//            // END KGU 2014-11-11
-//            
-//            // convert Pascal operators
-//            _input=BString.replace(_input," mod "," % ");
-            _input=BString.replace(_input," div "," / ");
-//
-//            StringList empty = new StringList();
-//            empty.addByLength(D7Parser.preAlt);
-//            empty.addByLength(D7Parser.postAlt);
-//            empty.addByLength(D7Parser.preCase);
-//            empty.addByLength(D7Parser.postCase);
-//            empty.addByLength(D7Parser.preFor);
-//            empty.addByLength(D7Parser.preWhile);
-//            empty.addByLength(D7Parser.postWhile);
-//            empty.addByLength(D7Parser.postRepeat);
-//            empty.addByLength(D7Parser.preRepeat);
-//            //System.out.println(empty);
-//            for(int i=0;i<empty.count();i++)
-//            {
-//                _input=BString.replace(_input,empty.get(i),"");
-//                //System.out.println(i);
-//            }
-//            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
-//
-//            
-///*
-//            
-//            if(!D7Parser.preAlt.equals("")){_input=BString.replace(_input,D7Parser.preAlt,"");}
-//            if(!D7Parser.postAlt.equals("")){_input=BString.replace(_input,D7Parser.postAlt,"");}
-//            if(!D7Parser.preCase.equals("")){_input=BString.replace(_input,D7Parser.preCase,"");}
-//            if(!D7Parser.postCase.equals("")){_input=BString.replace(_input,D7Parser.postCase,"");}
-//            if(!D7Parser.preFor.equals("")){_input=BString.replace(_input,D7Parser.preFor,"");}
-//            if(!D7Parser.postFor.equals("")){_input=BString.replace(_input,D7Parser.postFor,"to");}
-//            if(!D7Parser.preWhile.equals("")){_input=BString.replace(_input,D7Parser.preWhile,"");}
-//            if(!D7Parser.postWhile.equals("")){_input=BString.replace(_input,D7Parser.postWhile,"");}
-//            if(!D7Parser.preRepeat.equals("")){_input=BString.replace(_input,D7Parser.preRepeat,"");}
-//            if(!D7Parser.postRepeat.equals("")){_input=BString.replace(_input,D7Parser.postRepeat,"");}
-//*/
-//            
-//            /*Regex r;
-//             r = new Regex(BString.breakup(D7Parser.input)+"[ ](.*?)","readln($1)"); _input=r.replaceAll(_input);
-//             r = new Regex(BString.breakup(D7Parser.output)+"[ ](.*?)","writeln($1)"); _input=r.replaceAll(_input);
-//             r = new Regex(BString.breakup(D7Parser.input)+"(.*?)","readln($1)"); _input=r.replaceAll(_input);
-//             r = new Regex(BString.breakup(D7Parser.output)+"(.*?)","writeln($1)"); _input=r.replaceAll(_input);*/
-//
-//
-////            if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input+" ")>=0){_input=BString.replace(_input,D7Parser.input+" ","scanf(\"\",&")+")";}
-////            if(!D7Parser.input.equals("")&&_input.indexOf(D7Parser.input)>=0){_input=BString.replace(_input,D7Parser.input,"scanf(\"\",&")+")";}
-//
-//            // START KGU 2014-11-11: The C function had to be replaced by "echo" 
-////            if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output+" ")>=0){_input=BString.replace(_input,D7Parser.output+" ","printf(\"\",")+"); printf(\"\\n\")";}
-////            if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output)>=0){_input=BString.replace(_input,D7Parser.output,"printf(\"\",")+"); printf(\"\\n\")";}
-//            if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output+" ")>=0){_input=BString.replace(_input,D7Parser.output+" ","echo ");}
-//            if(!D7Parser.output.equals("")&&_input.indexOf(D7Parser.output)>=0){_input=BString.replace(_input,D7Parser.output,"echo ");}
-//            // END KGU 2014-11-11
 
-    	// START KGU#62 2015-11-02: Identify and adapt variable names
-		System.out.println("Perl - text to be transformed: \"" + _input + "\"");
+    	_input=BString.replace(_input," div "," / ");
+
+    	// START KGU#62 2015-11-02: Identify and adapt variable names (revised KGU 2015-12-19)
+		StringList tokens = Element.splitLexically(_input, true);
     	for (int i = 0; i < varNames.count(); i++)
     	{
-    		String varName = varNames.get(i);	// FIXME (KGU): Remove after Test!
-    		System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
-    		_input.replaceAll("(.*?[^\\$])" + varName + "([\\W].*?)", "$1" + "\\$" + varName + "$2");
-    		System.out.println("Perl - after replacement: \"" + _input + "\""); 	// FIXME (KGU): Remove after Test!
+    		String varName = varNames.get(i);
+    		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
+    		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
+    		tokens.replaceAll(varName, "$"+varName);
     	}
+    	_input = tokens.getText().replace("\n", "");
     	// END KGU#62 2015-11-02
 
-            return _input.trim();
+    	return _input.trim();
     }
 
     @Override
@@ -385,24 +299,6 @@ public class PHPGenerator extends Generator
 		// END KGU 2014-11-16
 
 		// START KGU#3 2015-11-02: Now we have a more reliable mechanism
-//        String startValueStr="";
-//        String endValueStr="";
-//        String stepValueStr="";
-//        String editStr = BString.replace(transform(_for.getText().getText()),"\n","").trim();
-//        String[] word = editStr.split(" ");
-//        int nbrWords = word.length;
-//        String counterStr = word[0];
-//        if ((nbrWords-1) >= 2) startValueStr = word[2];
-//        if ((nbrWords-1) >= 4) endValueStr = word[4];
-//        if ((nbrWords-1) >= 6) {
-//                stepValueStr = word[6];
-//        }
-//        else {
-//                stepValueStr = "1";
-//        }
-//        code.add(_indent+"for ("+
-//                        counterStr+" = "+startValueStr+"; "+counterStr+" <= "+endValueStr+"; "+counterStr+" = "+counterStr+" + ("+stepValueStr+") "+
-//                        ")");
     	String var = _for.getCounterVar();
     	int step = _for.getStepConst();
     	String compOp = (step > 0) ? " >= " : " <= ";
@@ -417,31 +313,6 @@ public class PHPGenerator extends Generator
         generateCode(_for.q,_indent+this.getIndent());
         code.add(_indent+"}");
     }
-    /* Version 2009.01.18 by Bob Fisch
-    protected void generateCode(For _for, String _indent)
-    {
-            String str = _for.getText().getText();
-            // cut of the start of the expression
-            if(!D7Parser.preFor.equals("")){str=BString.replace(str,D7Parser.preFor,"");}
-            // trim blanks
-            str=str.trim();
-            // modify the later word
-            if(!D7Parser.postFor.equals("")){str=BString.replace(str,D7Parser.postFor,"<=");}
-            // do other transformations
-            str=transform(str);
-            String counter = str.substring(0,str.indexOf("="));
-            // insert the middle
-            str=BString.replace(str,"<=",";"+counter+"<=");
-            // complete
-            str="for("+str+";"+counter+"++)";
-
-
-            code.add(_indent+str);
-            // needs some work here!
-            code.add(_indent+"{");
-            generateCode(_for.q,_indent+_indent.substring(0,1));
-            code.add(_indent+"}");
-    }/**/
 
     @Override
     protected void generateCode(While _while, String _indent)
@@ -505,24 +376,60 @@ public class PHPGenerator extends Generator
 		insertComment(_jump, _indent);
 		// END KGU 2014-11-16
 
-        for(int i=0;i<_jump.getText().count();i++)
-        {
-                code.add(_indent+transform(_jump.getText().get(i))+";");
-        }
+		// START KGU#78 2015-12-18: Enh. #23 - sensible exit strategy
+        //for(int i=0;i<_jump.getText().count();i++)
+        //{
+        //        code.add(_indent+transform(_jump.getText().get(i))+";");
+        //}
+		// In case of an empty text generate a continue instruction by default.
+		boolean isEmpty = true;
+		
+		StringList lines = _jump.getText();
+		for (int i = 0; isEmpty && i < lines.count(); i++) {
+			String line = transform(lines.get(i)).trim();
+			if (!line.isEmpty())
+			{
+				isEmpty = false;
+			}
+			if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
+			{
+				code.add(_indent + "return " + line.substring(D7Parser.preReturn.length()).trim() + ";");
+			}
+			else if (line.matches(Matcher.quoteReplacement(D7Parser.preExit)+"([\\W].*|$)"))
+			{
+				code.add(_indent + "exit(" + line.substring(D7Parser.preExit.length()).trim() + ");");
+			}
+			// Has it already been matched with a loop? Then syntax must have been okay...
+			else if (this.jumpTable.containsKey(_jump))
+			{
+				Integer ref = this.jumpTable.get(_jump);
+				String label = this.labelBaseName + ref;
+				if (ref.intValue() < 0)
+				{
+					insertComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
+					insertComment(line, _indent);
+					label = "__ERROR__";
+				}
+				code.add(_indent + "goto " + label + ";");
+			}
+			else if (line.matches(Matcher.quoteReplacement(D7Parser.preLeave)+"([\\W].*|$)"))
+			{
+				// Strange case: neither matched nor rejected - how can this happen?
+				// Try with an ordinary break instruction and a funny comment
+				code.add(_indent + "last;\t" + this.commentSymbolLeft() + " FIXME: Dubious occurrance of 'last' instruction!");
+			}
+			else if (!isEmpty)
+			{
+				insertComment("FIXME: jump/exit instruction of unrecognised kind!", _indent);
+				insertComment(line, _indent);
+			}
+			// END KGU#74/KGU#78 2015-11-30
+		}
+		if (isEmpty) {
+			code.add(_indent + "last;");
+		}
+		// END KGU#78 2015-12-18
     }
-
-    // STARTZ KGU 2015-11-02: The inherited method does exactly this
-//    @Override
-//    protected void generateCode(Subqueue _subqueue, String _indent)
-//    {
-//        // code.add(_indent+"");
-//        for(int i=0;i<_subqueue.children.size();i++)
-//        {
-//            generateCode((Element) _subqueue.children.get(i),_indent);
-//            code.add(_indent+"");
-//        }
-//    }
-    // END KGU 2015-11-02
 
     @Override
     public String generateCode(Root _root, String _indent)

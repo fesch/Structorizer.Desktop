@@ -613,7 +613,7 @@ public class Executor_old2 implements Runnable
 
             element.waited=true;
 
-            while(i<((Root) element).children.children.size() && result.equals("") && stop==false)
+            while(i<((Root) element).children.getSize() && result.equals("") && stop==false)
             {
                 result = step(((Root) element).children.getElement(i));
                 i++;
@@ -722,7 +722,7 @@ public class Executor_old2 implements Runnable
                                 if(result.equals(""))
                                 {
                                     if(f.paramCount()>0) params=params.substring(1);
-                                    cmd = f.getName()+"("+params+")";
+                                    cmd = f.getName().toLowerCase() +"("+params+")";
                                     result = getExec(cmd, element.getColor());
                                 }
                                 delay();
@@ -806,7 +806,7 @@ public class Executor_old2 implements Runnable
                         done=true;
                         element.waited=true;
                         int i = 0;
-                        while (i < c.qs.get(q-1).children.size() && result.equals("") && stop == false)
+                        while (i < c.qs.get(q-1).getSize() && result.equals("") && stop == false)
                         {
                             result = step(c.qs.get(q-1).getElement(i));
                             i++;
@@ -854,7 +854,7 @@ public class Executor_old2 implements Runnable
                 {
                     element.waited=true;
                     int i = 0;
-                    while (i < ((Alternative) element).qTrue.children.size() && result.equals("") && stop == false)
+                    while (i < ((Alternative) element).qTrue.getSize() && result.equals("") && stop == false)
                     {
                         result = step(((Alternative) element).qTrue.getElement(i));
                         i++;
@@ -868,7 +868,7 @@ public class Executor_old2 implements Runnable
                 {
                     element.waited=true;
                     int i = 0;
-                    while (i < ((Alternative) element).qFalse.children.size() && result.equals("") && stop == false)
+                    while (i < ((Alternative) element).qFalse.getSize() && result.equals("") && stop == false)
                     {
                         result = step(((Alternative) element).qFalse.getElement(i));
                         i++;
@@ -917,7 +917,7 @@ public class Executor_old2 implements Runnable
                     int i = 0;
                     // START KGU 2010-09-14 The limitation of cw CAUSED eternal loops (rather then preventing them)
                     //while (i < ((While) element).q.children.size() && result.equals("") && stop == false && cw < 100)
-                    while (i < ((While) element).q.children.size() && result.equals("") && stop == false)
+                    while (i < ((While) element).q.getSize() && result.equals("") && stop == false)
                     // END KGU 2010-09-14
                     {
                         result = step(((While) element).q.getElement(i));
@@ -969,7 +969,7 @@ public class Executor_old2 implements Runnable
                     int i = 0;
                     // START KGU 2010-09-14 The limitation of cw CAUSED eternal loops (rather then preventing them)
                     //while (i < ((Repeat) element).q.children.size() && result.equals("") && stop == false && cw < 100)
-                    while (i < ((Repeat) element).q.children.size() && result.equals("") && stop == false)
+                    while (i < ((Repeat) element).q.getSize() && result.equals("") && stop == false)
                     // END KGU 2010-09-14
                     {
                         result = step(((Repeat) element).q.getElement(i));
@@ -1027,7 +1027,7 @@ public class Executor_old2 implements Runnable
                     str = BString.replace(str, D7Parser.postFor, "<=");
                 }
                 // do other transformations
-//                str = CGenerator.transform(str);
+                //str = CGenerator.transform(str);
                 String counter = str.substring(0, str.indexOf("="));
                 // complete
 
@@ -1063,7 +1063,7 @@ public class Executor_old2 implements Runnable
                     int i = 0;
                     // START KGU 2010-09-14 The limitation of cw CAUSED eternal loops (rather then preventing them)
                     //while (i < ((For) element).q.children.size() && result.equals("") && stop == false && cw < 100)
-                    while (i < ((For) element).q.children.size() && result.equals("") && stop == false)
+                    while (i < ((For) element).q.getSize() && result.equals("") && stop == false)
                     // END KGU 2010-09-14
                     {
                         result = step(((For) element).q.getElement(i));

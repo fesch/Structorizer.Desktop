@@ -82,6 +82,11 @@ public class D7Parser implements GPMessageConstants
 	public static String input = "read ";
 	public static String output = "write ";
 	
+	// START KGU#78 2015-11-27: Configurable keywords for Jump types prepared
+	public static String preLeave = "leave";
+	public static String preReturn = "return";
+	public static String preExit = "exit";
+	// END KGU#78 2015-11-27
 
 	private String compiledGrammar = null;
 	Root root = null;

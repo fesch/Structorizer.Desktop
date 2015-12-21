@@ -21,29 +21,33 @@
 package lu.fisch.structorizer.generators;
 
 /******************************************************************************************************
-*
-*      Author:         Kay Gürtzig
-*
-*      Description:    This class generates C++ code (mainly based on ANSI C code except for IO).
-*
-******************************************************************************************************
-*
-*      Revision List
-*
-*      Author          	Date			Description
-*      ------			----			-----------
-*      Kay Gürtzig      2010.08.31      First Issue
-*      Kay Gürtzig      2015.11.01      Adaptations to new decomposed preprocessing
-*      Kay Gürtzig      2015.12.11      Enh. #54 (KGU#101): Support for output expression lists
-*
-******************************************************************************************************
-*
-*      Comment:
-*      2010.08.31 Initial revision
-*      - root handling overridden - still too much copied code w.r.t. CGenerator, should be
-*        parameterized
-*
-******************************************************************************************************///
+ *
+ *      Author:         Kay Gürtzig
+ *
+ *      Description:    This class generates C++ code (mainly based on ANSI C code except for IO).
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2010.08.31      First Issue
+ *      Kay Gürtzig     2015.11.01      Adaptations to new decomposed preprocessing
+ *      Kay Gürtzig     2015.11.30      Jump mechanisms (KGU#78) and root export revised 
+ *      Kay Gürtzig     2015.12.11      Enh. #54 (KGU#101): Support for output expression lists
+ *      Kay Gürtzig     2015.12.13		Bugfix #51 (=KGU#108): Cope with empty input and output
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:
+ *      2015.11.01 Simplified, drastically reduced to CGenerator as parent class
+ *
+ *      2010.08.31 Initial version
+ *      - root handling overridden - still too much copied code w.r.t. CGenerator, should be
+ *        parameterized
+ *
+ ******************************************************************************************************///
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
@@ -111,49 +115,168 @@ public class CPlusPlusGenerator extends CGenerator {
 		
 		_input = super.transform(_input);
 		
+		// START KGU#108 2015-12-13: Bugfix #51: Cope with empty input and output
+		if (_input.equals("std::cin >>")) _input = "getchar()";	// FIXME Better solution required
+		_input = _input.replace("<<  <<", "<<");
+		// END KGU#108 2015-12-13
+
 		return _input.trim();
 	}
 	// END KGU#101 2015-12-11
 	
-    @Override
-    public String generateCode(Root _root, String _indent)
-    {
+
+// KGU#74 (2015-11-30): Now we only override some of the decomposed methods below
+//    @Override
+//    public String generateCode(Root _root, String _indent)
+//    {
+//		// START KGU#78 2015-11-30: Prepare the label associations
+//		this.alwaysReturns = this.mapJumps(_root.children);
+//		// END KGU#78 2015-11-30
+//
+//		String fnName = _root.getMethodName();
+//		// START KGU 2015-11-29: More informed generation attempts
+//		// Get all local variable names
+//		StringList varNames = _root.getVarNames(_root, false, true);
+//		// code.add(pr+" "+_root.getText().get(0)+";");
+//        // add comment
+//    	insertComment(_root, "");
+//
+//        String pr = _root.isProgram ? "program" : "function";
+//        insertComment(pr + " " + fnName, "");
+//        code.add("#include <iostream>");
+//        code.add("");
+//        
+//        if (_root.isProgram)
+//        	code.add("int main(void)");
+//        else {
+//			// START KGU 2015-11-29: We may get more informed information
+//			// String fnHeader = _root.getText().get(0).trim();
+//			// if(fnHeader.indexOf('(')==-1 || !fnHeader.endsWith(")"))
+//			// fnHeader=fnHeader+"(void)";
+//			this.isResultSet = varNames.contains("result", false);
+//			this.isFunctionNameSet = varNames.contains(fnName);
+//			String fnHeader = transformType(_root.getResultType(),
+//					((returns || isResultSet || isFunctionNameSet) ? "int" : "void"));
+//			fnHeader += " " + fnName + "(";
+//			StringList paramNames = new StringList();
+//			StringList paramTypes = new StringList();
+//			_root.collectParameters(paramNames, paramTypes);
+//			for (int p = 0; p < paramNames.count(); p++) {
+//				if (p > 0)
+//					fnHeader += ", ";
+//				fnHeader += (transformType(paramTypes.get(p), "/*type?*/") + " " + paramNames
+//						.get(p)).trim();
+//			}
+//			fnHeader += ")";
+//			// END KGU 2015-11-29
+//            insertComment("TODO Revise the return type and declare the parameters!", _indent);
+//            
+//        	code.add(fnHeader);
+//        }
+//        // END KGU 2010-08-31
+//        code.add("{");
+//        insertComment("TODO Don't forget to declare your variables!", this.getIndent());
+//        // START KGU 2015-11-30: List the variables to be declared
+//		for (int v = 0; v < varNames.count(); v++) {
+//			insertComment(varNames.get(v), this.getIndent());
+//		}
+//		// END KGU 2015-11-30
+//		code.add(this.getIndent());
+//
+//        code.add(this.getIndent());
+//        generateCode(_root.children, this.getIndent());
+//        code.add(this.getIndent());
+//        // START KGU#78 2015-11-30: Adaptive return generation on demand
+//        //code.add(this.getIndent() + "return 0;");
+//		if (_root.isProgram) {
+//			code.add(this.getIndent());
+//			code.add(this.getIndent() + "return 0;");
+//		} else if ((returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns) {
+//			String result = "0";
+//			if (isFunctionNameSet) {
+//				result = fnName;
+//			} else if (isResultSet) {
+//				int vx = varNames.indexOf("result", false);
+//				result = varNames.get(vx);
+//			}
+//			code.add(this.getIndent());
+//			code.add(this.getIndent() + "return " + result + ";");
+//		}
+//		// END KGU#78 2015-11-30
+//        code.add("}");
+//
+//        return code.getText();
+//    }
+    
+	/**
+	 * Composes the heading for the program or function according to the
+	 * C language specification.
+	 * @param _root - The diagram root
+	 * @param _indent - the initial indentation string
+	 * @param _procName - the procedure name
+	 * @param paramNames - list of the argument names
+	 * @param paramTypes - list of corresponding type names (possibly null) 
+	 * @param resultType - result type name (possibly null)
+	 * @return the default indentation string for the subsequent stuff
+	 */
+	@Override
+	protected String generateHeader(Root _root, String _indent, String _procName,
+			StringList _paramNames, StringList _paramTypes, String _resultType)
+	{
+
         // add comment
-    	insertComment(_root, "");
+    	insertComment(_root, _indent);
 
         String pr = _root.isProgram ? "program" : "function";
-        insertComment(pr + " " + _root.getMethodName(), "");
+        insertComment(pr + " " + _root.getText().get(0), _indent);
         code.add("#include <iostream>");
         code.add("");
         
         if (_root.isProgram)
-        	code.add("int main(void)");
+        	code.add(_indent + "int main(void)");
         else {
+			String fnHeader = transformType(_resultType,
+					((returns || isResultSet || isFunctionNameSet) ? "int" : "void"));
+			fnHeader += " " + _procName + "(";
+			for (int p = 0; p < _paramNames.count(); p++) {
+				if (p > 0)
+					fnHeader += ", ";
+				fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " +
+					_paramNames.get(p)).trim();
+			}
+			fnHeader += ")";
+			// END KGU 2015-11-29
             insertComment("TODO Revise the return type and declare the parameters!", _indent);
-            String fnHeader = _root.getMethodName();
             
-            //if(fnHeader.indexOf('(')==-1 && !fnHeader.endsWith(")")) fnHeader=fnHeader+"(void)";
-            StringList paramNames = _root.getParameterNames();
-            if (paramNames.count() > 0) {
-            	fnHeader += "(" + paramNames.getText().replace("\n", ", ") + ")";
-            } else {
-            	fnHeader += "(void)";             	
-            }
-        	code.add("int " + fnHeader);
+        	code.add(fnHeader);
         }
-        // END KGU 2010-08-31
-        code.add("{");
-        insertComment("TODO Don't forget to declare your variables!", this.getIndent());
-        code.add(this.getIndent());
+		
+		code.add("{");
+		
+		return _indent + this.getIndent();
+	}
 
-        code.add(this.getIndent());
-        generateCode(_root.children, this.getIndent());
-        code.add(this.getIndent());
-        code.add(this.getIndent() + "return 0;");
-        code.add("}");
-
-        return code.getText();
-    }
+	/**
+	 * Generates some preamble (i.e. comments, language declaration section etc.)
+	 * and adds it to this.code.
+	 * @param _root - the diagram root element
+	 * @param _indent - the current indentation string
+	 * @param varNames - list of variable names introduced inside the body
+	 */
+	@Override
+	protected String generatePreamble(Root _root, String _indent, StringList varNames)
+	{
+		code.add(_indent);
+		insertComment("TODO: declare your variables here:", _indent);
+        // START KGU 2015-11-30: List the variables to be declared
+		for (int v = 0; v < varNames.count(); v++) {
+			insertComment(varNames.get(v), _indent);
+		}
+		// END KGU 2015-11-30
+		code.add(_indent);
+		return _indent;
+	}
+    
 
 
 }
