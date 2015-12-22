@@ -37,6 +37,7 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2015.11.04      Methods indexOf added.
  *      Kay Gürtzig     2015.11.24      Method clear added.
  *      Kay Gürtzig     2015.12.01      Methods replaceAll, replaceAllCi added.
+ *      Kay Gürtzig     2015.12.01      Methods concatenate(...) added; getText() etc. reduced to them.
  *
  ******************************************************************************************************
  *
@@ -84,10 +85,10 @@ public class StringList {
 	{
 		StringList sl = new StringList();
 
-		for(int s=0;s<_source.count();s++)
+		for(int s=0; s<_source.count(); s++)
 		{
 			String[] multi = _source.get(s).split(_by);
-			for(int i=0;i<multi.length;i++)
+			for(int i=0; i<multi.length; i++)
 			{
 				sl.add(multi[i]);
 			}
@@ -101,7 +102,7 @@ public class StringList {
 		String[] multi = _source.split(_by);
 		StringList sl = new StringList();
 
-		for(int i=0;i<multi.length;i++)
+		for(int i=0; i<multi.length; i++)
 		{
 			if(i!=0)
 			{
@@ -125,9 +126,10 @@ public class StringList {
 
 		return sl;
 	}
-
+	
 	public StringList copy()
 	{
+		// FIXME (KGU) Why this complicated detour?
 		StringList sl = new StringList();
 		//sl.add("TEXT");
 		sl.setCommaText(this.getCommaText()+"");
@@ -141,14 +143,14 @@ public class StringList {
 
 	public void addOrdered(String _string)
 	{
-		if(count()==0)
+		if (count()==0)
 		{
 			add(_string);
 		}
 		else
 		{
 			boolean inserted = false;
-			for(int i=0;i<strings.size();i++)
+			for (int i=0; i<strings.size(); i++)
 			{
 				if ((strings.get(i)).compareTo(_string)>0)
 				{
@@ -217,7 +219,7 @@ public class StringList {
 	public void addOrderedIfNew(String _string)
 	{
 		boolean found = false;
-		for(int i=0;i<strings.size();i++)
+		for(int i=0; i<strings.size(); i++)
 		{
 			if((strings.get(i)).equals(_string))
 			{
@@ -422,44 +424,80 @@ public class StringList {
 		}
 	}
 
+	// START KGU 2015-12-21: More flexibility with reduced redundancy
+	/**
+	 * Concatenates all elements, putting the _separator string between them
+	 * @param _separator - a string placed between the elements of this 
+	 * @return the concatenated string
+	 */
+	public String concatenate(String _separator)
+	{
+		return concatenate(_separator, 0, this.count());
+	}
+	
+	/**
+	 * Concatenates all elements, putting the _separator string between them
+	 * @param _separator - a string placed between the elements of this
+	 * @param _start - index of the first element to be included
+	 * @param _end - index beyond the last element to be included 
+	 * @return the concatenated string
+	 */
+	public String concatenate(String _separator, int _start, int _end)
+	{
+		String text = "";
+		boolean isFirst = true;
+        for(int i = Math.min(_start, count()); i < Math.min(_end, count()); i++)
+		{
+			if (isFirst)
+			{
+				text = strings.get(i);
+				isFirst = false;
+			}
+			else
+			{
+				text += _separator + strings.get(i);
+			}
+		}
+		return text;
+	}
+	
+	public String concatenate(String _separator, int _start)
+	{
+		return concatenate(_separator, _start, this.count());
+	}
+	
+	/**
+	 * Concatenates the elements without separating string (exact reconstruction
+	 * of a string having produced this StringList by explodeWithDelimiter())
+	 * @return a continuous string composed of all elements
+	 */
+	public String concatenate()
+	{
+		return concatenate("");
+	}
+
+	/**
+	 * Multi-line text formed from the list elements as lines (actually the
+	 * same as this.concatenate("\n"))
+	 * @return multi-line string, each element being copied to a line
+	 */
 	public String getText()
 	{
-		String text = new String();
-
-		for(int i=0;i<strings.size();i++)
-		{
-			if(i==0)
-			{
-				text = strings.get(i);
-			}
-			else
-			{
-				text += "\n" + strings.get(i);
-			}
-		}
-
-		return text;
+		return concatenate("\n");
 	}
 
+	/**
+	 * @return the concatenation of all elements separated by single blanks
+	 */
 	public String getLongString()
 	{
-		String text = new String();
-
-		for(int i=0;i<strings.size();i++)
-		{
-			if(i==0)
-			{
-				text = strings.get(i);
-			}
-			else
-			{
-				text += " " + strings.get(i);
-			}
-		}
-
-		return text;
+		return concatenate(" ");
 	}
+	// END KGU 2015-12-21
 
+	/**
+	 * @return the number of elements
+	 */
 	public int count()
 	{
 		return strings.size();
@@ -655,15 +693,16 @@ public class StringList {
      */
     public String getText(int _start, int _end)
     {
-        String ret = "";
-        for(int i = Math.min(_start, count()); i < Math.min(_end, count()); i++)
-        {
-            String line = get(i);
-            //System.err.println(i+") "+line);
-            ret += "\n" + line;
-        }
-        //System.err.println("Res = "+ret);
-        return ret;
+//        String ret = "";
+//        for(int i = Math.min(_start, count()); i < Math.min(_end, count()); i++)
+//        {
+//            String line = get(i);
+//            //System.err.println(i+") "+line);
+//            ret += "\n" + line;
+//        }
+//        //System.err.println("Res = "+ret);
+//        return ret;
+    	return concatenate("\n", _start, _end);
     }
     
     /**
@@ -708,7 +747,7 @@ public class StringList {
      * _stringNew
      * @param _stringOld - the searched string
      * @param _stringNew - the string to replace occurrences of _stringOld
-     * @return number of deletions
+     * @return number of replacements
      */
     public int replaceAll(String _stringOld, String _stringNew)
     {
@@ -734,7 +773,7 @@ public class StringList {
      * _stringOld by _stringNew
      * @param _stringOld - the searched string
      * @param _stringNew - the string to replace occurrences of _stringOld
-     * @return number of deletions
+     * @return number of replacements
      */
     public int replaceAllCi(String _stringOld, String _stringNew)
     {
@@ -775,5 +814,7 @@ public class StringList {
             StringList sl = new StringList();
             sl.setCommaText("\"\",\"1\",\"2\",\"3\",\"sinon\"");
             System.out.println(sl.getText());
+            StringList sl1 = sl.copy();
+            System.out.println(sl1.getText());
         }
 }

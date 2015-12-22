@@ -30,19 +30,19 @@ package lu.fisch.structorizer.generators;
  *
  *      Revision List
  *
- *      Author         		Date			Description
- *      ------			----                	-----------
- *      Bob Fisch       	2008.11.17              First Issue
- *      Gunter Schillebeeckx    2010.08.07              C# Generator starting from C Generator & Java Generator
- *      Kay Gürtzig             2010.09.10              Bugfixes and cosmetics (see comment)
- *      Bob Fisch               2011.11.07              Fixed an issue while doing replacements
- *      Kay Gürtzig             2014.11.06              Support for logical Pascal operators added
- *      Kay Gürtzig             2014.11.16              Bugfixes and enhancements (see comment)
- *      Kay Gürtzig             2014.12.02              Additional replacement of long assignment operator "<--" by "<-"
- *      Kay Gürtzig             2015.10.18              Indentation fixed, comment insertion interface modified
- *      Kay Gürtzig             2015.11.01              Inheritance changed and unnecessary overridings disabled
- *      Kay Gürtzig             2015.11.30              Sensible handling of return and exit/break instructions
- *                                                      (issue #22 = KGU#47)
+ *      Author         			Date			Description
+ *      ------					----            -----------
+ *      Bob Fisch               2008.11.17      First Issue
+ *      Gunter Schillebeeckx    2010.08.07      C# Generator starting from C Generator & Java Generator
+ *      Kay Gürtzig             2010.09.10      Bugfixes and cosmetics (see comment)
+ *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
+ *      Kay Gürtzig             2014.11.06      Support for logical Pascal operators added
+ *      Kay Gürtzig             2014.11.16      Bugfixes and enhancements (see comment)
+ *      Kay Gürtzig             2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
+ *      Kay Gürtzig             2015.10.18      Indentation fixed, comment insertion interface modified
+ *      Kay Gürtzig             2015.11.01      Inheritance changed and unnecessary overridings disabled
+ *      Kay Gürtzig             2015.11.30      Sensible handling of return and exit/break instructions
+ *                                              (issue #22 = KGU#47)
  *
  ******************************************************************************************************
  *

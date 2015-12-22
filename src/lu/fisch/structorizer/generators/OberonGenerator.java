@@ -46,10 +46,15 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig				2014.11.16		Operator conversion corrected (see comment)
  *      Kay Gürtzig				2014.12.02		Additional replacement of long assignment operator "<--" by "<-"
  *      Kay Gürtzig				2015.10.18		Indentation issue fixed and comment generation revised
+ *      Kay Gürtzig				2015.12.21		Bugfix #41/#68/#69 (= KG#93)
  *
  ******************************************************************************************************
  *
  *      Comment:		Based on "PasGenerator.java" from Bob Fisch
+ *      
+ *      2015.12.21 - Bugfix #41/#68/#69 (Kay Gürtzig)
+ *      - Operator replacement had induced unwanted padding and string literal modifications
+ *      - new subclassable method transformTokens() for all token-based replacements 
  *      
  *      2015.10.18 - Bugfix / Code revision (Kay Gürtzig)
  *      - Indentation had worked in an exponential way (duplicated every level: _indent+_indent)
@@ -180,43 +185,66 @@ public class OberonGenerator extends Generator {
 	}
 	// END KGU#16 2015-11-30	
 
-	/**
-	 * Transforms assignments in the given intermediate-language code line.
-	 * Replaces "<-" by ":=" here
-	 * @param _interm - a code line in intermediate syntax
-	 * @return transformed string
-	 */
-	protected String transformAssignment(String _interm)
-	{
-		return _interm.replace(" <- ", " := ");
-	}
+	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
+//	/**
+//	 * Transforms assignments in the given intermediate-language code line.
+//	 * Replaces "<-" by ":=" here
+//	 * @param _interm - a code line in intermediate syntax
+//	 * @return transformed string
+//	 */
+//	@Deprecated
+//	protected String transformAssignment(String _interm)
+//	{
+//		return _interm.replace(" <- ", " := ");
+//	}
 	// END KGU#18/KGU#23 2015-11-01
-    
+
 	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String, boolean)
+	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
 	 */
 	@Override
-	protected String transform(String _input, boolean _doInputOutput)
+	protected String transformTokens(StringList tokens)
 	{
-		// START KGU#18/KGU#23 2015-11-02
-		_input = super.transform(_input, _doInputOutput);
-		// END KGU#18/KGU#23 2015-11-02
-		// START KGU 2014-11-16: Comparison operator had to be converted properly first
-        _input=BString.replace(_input," == "," = ");
-        _input=BString.replace(_input," != "," # ");
-        _input=BString.replace(_input," <> "," # ");
+        tokens.replaceAll("==", "=");
+        tokens.replaceAll("!=","#");
         // C and Pascal division operators
-        _input=BString.replace(_input," div "," DIV ");
-        _input=BString.replace(_input," % "," MOD ");
+        tokens.replaceAll("div","DIV");
+        tokens.replaceAll("%"," MOD ");
         // logical operators required transformation, too
-        _input=BString.replace(_input," && "," & ");
-        _input=BString.replace(_input," || "," OR ");
-        _input=BString.replace(_input," ! "," ~ ");
-        _input=BString.replace(_input,"!"," ~ ");
-        // END KGU 2014-11-16
-            
-		return _input.trim();
+        tokens.replaceAll("&&","&");
+        tokens.replaceAll("||"," OR ");
+        tokens.replaceAll("!","~");
+		tokens.replaceAll("<-", ":=");
+		return tokens.concatenate();
 	}
+
+	// No longer needed (Bugfix #41/#68/#69)
+//	/* (non-Javadoc)
+//	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String, boolean)
+//	 */
+//	@Override
+//	protected String transform(String _input, boolean _doInputOutput)
+//	{
+//		// START KGU#18/KGU#23 2015-11-02
+//		_input = super.transform(_input, _doInputOutput);
+//		// END KGU#18/KGU#23 2015-11-02
+//		// START KGU 2014-11-16: Comparison operator had to be converted properly first
+//		_input=BString.replace(_input," == "," = ");
+//		_input=BString.replace(_input," != "," # ");
+//		_input=BString.replace(_input," <> "," # ");
+//		// C and Pascal division operators
+//		_input=BString.replace(_input," div "," DIV ");
+//		_input=BString.replace(_input," % "," MOD ");
+//		// logical operators required transformation, too
+//		_input=BString.replace(_input," && "," & ");
+//		_input=BString.replace(_input," || "," OR ");
+//		_input=BString.replace(_input," ! "," ~ ");
+//		_input=BString.replace(_input,"!"," ~ ");
+//		// END KGU 2014-11-16
+//
+//		return _input.trim();
+//	}
+	// END KGU#93 2015-12-21
 	
 	protected void generateCode(Instruction _inst, String _indent)
 	{

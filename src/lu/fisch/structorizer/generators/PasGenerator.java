@@ -46,10 +46,15 @@ package lu.fisch.structorizer.generators;
  *      Bob Fisch           2015.12.10      Bugfix #50 --> grep & export function parameter types
  *      Kay Gürtzig         2015.12.20      Bugfix #22 (KGU#74): Correct return mechanisms even with
  *                                          return instructions not placed in Jump elements
+ *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KG#93)
  *
  ******************************************************************************************************
  *
  *      Comments:
+ *      
+ *      2015.12.21 - Bugfix #41/#68/#69 (Kay Gürtzig)
+ *      - Operator replacement had induced unwanted padding and string literal modifications
+ *      - new subclassable method transformTokens() for all token-based replacements 
  *      
  *      2015-11-01 - Code revision / enhancements
  *      - Most of the transform stuff delegated to Element and Generator (KGU#18/KGU23)
@@ -194,56 +199,97 @@ public class PasGenerator extends Generator
 	}
 	// END KGU#16 2015-11-30	
 
-	/**
-	 * Transforms assignments in the given intermediate-language code line.
-	 * Replaces "<-" by ":=" here
-	 * @param _interm - a code line in intermediate syntax
-	 * @return transformed string
+	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
+//	/**
+//	 * Transforms assignments in the given intermediate-language code line.
+//	 * Replaces "<-" by ":=" here
+//	 * @param _interm - a code line in intermediate syntax
+//	 * @return transformed string
+//	 */
+//	@Deprecated
+//	protected String transformAssignment(String _interm)
+//	{
+//		return _interm.replace(" <- ", " := ");
+//	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
 	 */
 	@Override
-	protected String transformAssignment(String _interm)
+	protected String transformTokens(StringList tokens)
 	{
-		return _interm.replace(" <- ", " := ");
+		// First get rid of superfluous spaces
+		int pos = -1;
+		StringList doubleBlank = StringList.explode(" \n ", "\n");
+		while ((pos = tokens.indexOf(doubleBlank, 0, true)) >= 0)
+		{
+			tokens.delete(pos);	// Get rid of one of the blanks
+		}
+		// On inserting operator keywords we better make sure them being padded
+		// (lest neighbouring identifiers be glued to them on concatenating)
+		// The correct way would of course be to add blank tokens where needed
+		// but this seemed too expensive here.
+        tokens.replaceAll("==", "=");
+        tokens.replaceAll("!=","<>");
+        tokens.replaceAll("%"," mod ");
+        tokens.replaceAll("&&"," and");
+        tokens.replaceAll("||"," or ");
+        tokens.replaceAll("!"," not ");
+        tokens.replaceAll("&"," and");
+        tokens.replaceAll("|"," or ");
+        tokens.replaceAll("~"," not ");
+        tokens.replaceAll("<<"," shl ");
+        tokens.replaceAll(">>"," shr ");
+		tokens.replaceAll("<-", ":=");
+		String result = tokens.concatenate();
+		// We now shrink superfluous padding - this may affect string literals, though!
+		result = result.replace("  ", " ");
+		result = result.replace("  ", " ");	// twice to catch odd-numbered space sequences, too
+		return result;
 	}
+	// END KGU#93 2015-12-21
 	// END KGU#18/KGU#23 2015-11-01
     
-	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String)
-	 */
-	@Override
-	protected String transform(String _input)
-	{
-		_input = super.transform(_input);
 
-            // START KGU 2014-11-16: C comparison operator required transformation, too
-            _input=BString.replace(_input," != "," <> ");
-            _input=BString.replace(_input," == "," = ");
-            // END KGU 2014-11-16
-            // START KGU 2014-11-10: logical operators required transformation, too
-            _input=BString.replace(_input," && "," and ");
-            _input=BString.replace(_input," || "," or ");
-            _input=BString.replace(_input," ! "," not ");
-            // END KGU 2014-11-10
-            // START KGU 2014-11-16: C bit operators required transformation, too
-            _input=BString.replace(_input," ~ "," not ");
-            _input=BString.replace(_input," & "," and ");
-            _input=BString.replace(_input," | "," or ");
-            _input=BString.replace(_input,"~"," not ");
-            _input=BString.replace(_input,"&"," and ");
-            _input=BString.replace(_input,"|"," or ");
-            _input=BString.replace(_input," << "," shl ");
-            _input=BString.replace(_input," >> "," shr ");
-            _input=BString.replace(_input,"<<"," shl ");
-            _input=BString.replace(_input,">>"," shr ");
-            // END KGU 2014-11-16
-            // START KGU 2015-11-02
-            _input = _input.replace(" % ", " mod ");
-            // END KGU 2015-11-02
-
-            _input.replace("  ", " ");
-            _input.replace("  ", " ");
-            return _input.trim();
-    }
+	// START KGU#93 2015-12-21: Bugfix #41/#68/#69 - overriding no longer needed
+//	/* (non-Javadoc)
+//	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String)
+//	 */
+//	@Override
+//	protected String transform(String _input)
+//	{
+//		_input = super.transform(_input);
+//
+//            // START KGU 2014-11-16: C comparison operator required transformation, too
+//            _input=BString.replace(_input," != "," <> ");
+//            _input=BString.replace(_input," == "," = ");
+//            // END KGU 2014-11-16
+//            // START KGU 2014-11-10: logical operators required transformation, too
+//            _input=BString.replace(_input," && "," and ");
+//            _input=BString.replace(_input," || "," or ");
+//            _input=BString.replace(_input," ! "," not ");
+//            // END KGU 2014-11-10
+//            // START KGU 2014-11-16: C bit operators required transformation, too
+//            _input=BString.replace(_input," ~ "," not ");
+//            _input=BString.replace(_input," & "," and ");
+//            _input=BString.replace(_input," | "," or ");
+//            _input=BString.replace(_input,"~"," not ");
+//            _input=BString.replace(_input,"&"," and ");
+//            _input=BString.replace(_input,"|"," or ");
+//            _input=BString.replace(_input," << "," shl ");
+//            _input=BString.replace(_input," >> "," shr ");
+//            _input=BString.replace(_input,"<<"," shl ");
+//            _input=BString.replace(_input,">>"," shr ");
+//            // END KGU 2014-11-16
+//            // START KGU 2015-11-02
+//            _input = _input.replace(" % ", " mod ");
+//            // END KGU 2015-11-02
+//
+//            _input.replace("  ", " ");
+//            _input.replace("  ", " ");
+//            return _input.trim();
+//    }
+	// END KGU#93 2015-12-21
 
     @Override
     protected void generateCode(Instruction _inst, String _indent)

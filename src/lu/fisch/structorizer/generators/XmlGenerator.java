@@ -31,10 +31,12 @@ package lu.fisch.structorizer.generators;
  *      Revision List
  *
  *      Author          Date			Description
- *      ------		----			-----------
- *      Bob Fisch       2007.12.27              First Issue
- *	Bob Fisch	2008.04.12		Added "Fields" section for generator to be used as plugin
- *      Kay Gürtzig     2015.11.08              Additional information with FOR loops (KGU#3)
+ *      ------			----			-----------
+ *      Bob Fisch       2007.12.27      First Issue
+ *      Bob Fisch       2008.04.12      Added "Fields" section for generator to be used as plugin
+ *      Kay Gürtzig     2015.11.08      Additional information with FOR loops (KGU#3)
+ *      Kay Gürtzig     2015.12.18      Formal adaptation to Enh. #23 (KGU#78) related to break mechanism
+ *      Kay Gürtzig     2015.12.21      Formal adaptation to Bugfix #41/#68/#69 (KGU#93)
  *
  ******************************************************************************************************
  *
@@ -117,16 +119,17 @@ public class XmlGenerator extends Generator {
 		return "";
 	}
 
-	/**
-	 * Transforms assignments in the given intermediate-language code line.
-	 * Replaces "<-" by "="
-	 * @param _interm - a code line in intermediate syntax
-	 * @return transformed string
-	 */
-	protected String transformAssignment(String _interm)
-	{
-		return _interm;
-	}
+	// START KGU#93 2015-12-21: Bugfix #41/#68/#69 - no longer needed
+//	/**
+//	 * Transforms assignments in the given intermediate-language code line.
+//	 * @param _interm - a code line in intermediate syntax
+//	 * @return transformed string
+//	 */
+//	protected String transformAssignment(String _interm)
+//	{
+//		return _interm;
+//	}
+	// END KGU#93 2015-12-21
 	// END KGU#18/KGU#23 2015-11-01
     
     
