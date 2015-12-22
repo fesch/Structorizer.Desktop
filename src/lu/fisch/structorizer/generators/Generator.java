@@ -31,17 +31,24 @@ package lu.fisch.structorizer.generators;
  *      Revision List
  *
  *      Author          Date			Description
- *      ------			----			-----------
+ *      ------          ----			-----------
  *      Bob Fisch       2007.12.27		First Issue
  *      Bob Fisch       2008.04.12		Plugin Interface
  *      Kay Gürtzig     2014.11.16		comment generation revised (see comment below)
  *      Kay Gürtzig     2015.10.18		File name proposal in exportCode(Root, File, Frame) delegated to Root
  *      Kay Gürtzig     2015.11.01		transform methods reorganised (KGU#18/KGU23) using subclassing
- *      Bob Fisch       2015.12.10              Bugfix #51: when input identifier is alone, it was not converted
+ *      Kay Gürtzig     2015.11.30		General preprocessing for generateCode(Root, String) (KGU#47)
+ *      Bob Fisch       2015.12.10		Bugfix #51: when input identifier is alone, it was not converted
+ *      Kay Gürtzig     2015.12.18		Enh #66, #67: New export options
  *
  ******************************************************************************************************
  *
  *      Comment:		
+ *      2015.11.30 - Decomposition of generateRoot() and divers preprocessing provided for subclasses
+ *      - method mapJumps fills hashTable jumpTable mapping (Jump and Loop elements to connecting codes)
+ *      - parameter names and types as well as functio name and type are preprocessed
+ *      - result mechanisms are also analysed
+
  *      2014.11.16 - Enhancement
  *      - method insertComment renamed to insertAsComment (as it inserts the instruction text!)
  *      - overloaded method insertComment added to export the actual element comment
@@ -50,6 +57,8 @@ package lu.fisch.structorizer.generators;
 
 import java.awt.Frame;
 import java.io.*;
+import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 
 import javax.swing.*;
@@ -68,6 +77,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	/************ Fields ***********************/
 	private ExportOptionDialoge eod = null;
 	protected StringList code = new StringList();
+
+	// START KGU#74 2015-11-29: Sound handling of Jumps requires some tracking
+	protected boolean returns = false; // Explicit return instructions occurred?
+	protected boolean alwaysReturns = false; // Do all paths involve a return instruction?
+	protected boolean isResultSet = false; // Assignment to variable named "result"?
+	protected boolean isFunctionNameSet = false; // Assignment to variable named like function?
+	protected int labelCount = 0; // unique count for generated labels
+	protected String labelBaseName = "StructorizerLabel_";
+	// maps loops and Jump elements to label counts (neg. number means illegal jump target)
+	protected Hashtable<Element, Integer> jumpTable = new Hashtable<Element, Integer>();
+
+	// END KGU#74 2015-11-29
 
 	/************ Abstract Methods *************/
 	protected abstract String getDialogTitle();
@@ -101,7 +122,29 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected abstract String getOutputReplacer();
 	// END KGU#18/KGU#23 2015-11-01
 	
+	// START KGU#78 2015-12-18: Enh. #23 We must know whether to create labels for simple breaks
+	/**
+	 * Specifies whether an instruction to leave the innermost enclosing loop (like "break;" in C)
+	 * is available in the target language AND ALSO BREAKS CASE SELECTIONS (switch constructs).
+	 * 
+	 * @return true if and only if there is such an instruction
+	 */
+	protected abstract boolean supportsSimpleBreak();
+	// END KGU#78 2015-12-18
+	
 	/************ Code Generation **************/
+	
+	// START KGU#16 2015-12-18: Enh. #66 - Code style option for opening brace placement
+	protected boolean optionBlockBraceNextLine() {
+		return (!eod.bracesCheckBox.isSelected());
+	}
+	// END KGU#16 2015-12-18	
+	
+	// START KGU#113 2015-12-18: Enh. #67 - Line numbering for BASIC export
+	protected boolean optionBasicLineNumbering() {
+		return (eod.lineNumbersCheckBox.isSelected());
+	}
+	// END KGU#113 2015-12-18	
 	
 	// KGU 2014-11-16: Method renamed (formerly: insertComment)
 	// START KGU 2015-11-18: Method parameter list reduced by a comment symbol configuration
@@ -164,6 +207,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		}
 	}
 	
+	/**
+	 * Inserts a multi-line comment with configurable comment delimiters for the staring line, the
+	 * continuation lines, and the trailing line.
+	 * @param _sl - the StringList to be written as commment
+	 * @param _indent - the basic indentation 
+	 * @param _start - comment symbol for the leading comment line (e.g. "/**", if null then this is omitted)
+	 * @param _cont - comment symbol for the continuation lines
+	 * @param _end - comment symbol for trailing line (e.g. " *\/", if null then no trailing line is generated)
+	 */
 	protected void insertBlockComment(StringList _sl, String _indent, String _start, String _cont, String _end)
 	{
 		if (_start != null)
@@ -209,12 +261,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	/**
 	 * Overridable general text transformation routine, performing the following steps:
 	 * 1. Eliminates parser preference keywords listed below and unifies all operators
-	 *    @see lu.fisch.Structorizer.elements.Element#unifyOperators(java.lang.String)
 	 *         preAlt, preCase, preWhile, preRepeat,
 	 *         postAlt, postCase, postWhile, postRepeat
 	 * 2. Replaces assignments by a call of overridable method transformAssignment(String)
 	 * 3. Transforms Input and Output lines if _doInput and/or _doOutput are true, respectively
 	 *    This is only done if _input starts with one of the configured Input and Output keywords 
+	 * @see lu.fisch.Structorizer.elements.Element#unifyOperators(java.lang.String)
 	 * @param _input - a line or the concatenated lines of an Element's text
 	 * @param _doInputOutput - whether the third transforms are to be performed
 	 * @return the transformed line (target language line)
@@ -251,6 +303,20 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		return _interm;
 	}
 	
+	// START KGU#16 2015-11-30
+	/**
+	 * Transforms type identifier into the target language (as far as possible)
+	 * @param _type - a string potentially meaning a datatype (or null)
+	 * @param _default - a default string returned if _type happens to be null
+	 * @return a type identifier (or the unchanged _type value if matching failed)
+	 */
+	protected String transformType(String _type, String _default) {
+		if (_type == null)
+			_type = _default;
+		return _type;
+	}
+	// END KGU#1 2015-11-30	
+	
 	/**
 	 * Detects whether the given code line starts with the configured input keystring
 	 * and if so replaces it according to the regex pattern provided by getInputReplacer()
@@ -270,17 +336,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				matcher = matcher + "[ ]";
 			}
                         
-                        // Start - BFI (#51)
-                        if(_interm.matches("^" + matcher + "(.*)"))
-                        {
-                            _interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
-                        }
-                        else
-                        {
-                            _interm+=" ";
-                            _interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
-                        }
-                        // End - BFI (#51)
+			// Start - BFI (#51 - Allow empty input instructions)
+			if(!_interm.matches("^" + matcher + "(.*)"))
+			{
+				_interm += " ";
+			}
+			// End - BFI (#51)
+			
+			_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
 		}
 		return _interm;
 	}
@@ -303,22 +366,171 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			{
 				matcher = matcher + "[ ]";
 			}
-                        
-                        // Start - BFI (#51)
-                        if(_interm.matches("^" + matcher + "(.*)"))
-                        {
-                            _interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
-                        }
-                        else
-                        {
-                            _interm+=" ";
-                            _interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
-                        }
-                        // End - BFI (#51)
+
+			// Start - BFI (#51 - Allow empty output instructions)
+			if(!_interm.matches("^" + matcher + "(.*)"))
+			{
+				_interm += " ";
+			}
+			// End - BFI (#51)
+			
+			_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
 		}
 		return _interm;
 	}
 	// END KGU#18/KGU#23 2015-11-01
+	
+
+	// START KGU#74 2015-11-30
+	/**
+	 * We do a recursive analysis for loops, returns and jumps of type "leave"
+	 * to be able to place equivalent goto instructions and their target labels
+	 * on demand.
+	 * Maps Jump instructions and Loops (as potential jump targets) to unique
+	 * numbers used for the creation of unambiguous goto or break labels.
+	 * 
+	 * The mapping is gathered in this.jumpTable.
+	 * If a return instruction with value is encountered, this.returns will be set true
+	 *   
+	 * @param _squeue - instruction sequence to be analysed 
+	 * @return true iff there is no execution path without a value returned.
+	 */
+	protected boolean mapJumps(Subqueue _squeue)
+	{
+		boolean surelyReturns = false;
+		Iterator<Element> iter = _squeue.getIterator();
+		while (iter.hasNext() && !surelyReturns)
+		{
+			Element elem = iter.next();
+			// If we detect a Jump element of type leave then we detect its target
+			// and label both
+			if (elem instanceof Jump)
+			{
+				String jumpText = elem.getText().getLongString().trim();
+				if (jumpText.matches(Matcher.quoteReplacement(D7Parser.preReturn) + "([\\W].*|$)"))
+				{
+					boolean hasResult = !jumpText.substring(D7Parser.preReturn.length()).trim().isEmpty();
+					if (hasResult) this.returns = true;
+					// Further investigation would be done in vain - the remaining sequence is redundant
+					return hasResult;
+				}
+				else if (jumpText.matches(Matcher.quoteReplacement(D7Parser.preExit) + "([\\W].*|$)"))
+				{
+					// Doesn't return a regular result but we won't get to the end, so a default return is
+					// not required, we handle this as if a result would have been returned.
+					surelyReturns = true;
+				}
+				// Get the number of requested exit levels
+				int levelsUp = 0;
+				if (jumpText.isEmpty())
+				{
+					levelsUp = 1;
+				}
+				else if (jumpText.matches(Matcher.quoteReplacement(D7Parser.preLeave) + "([\\W].*|$)"))
+				{
+					levelsUp = 1;
+					try {
+						levelsUp = Integer.parseInt(jumpText.substring(D7Parser.preLeave.length()).trim());
+					}
+					catch (NumberFormatException ex)
+					{
+						System.out.println("Unsuited leave argument in Element \"" + jumpText + "\"");
+					}
+				}
+				// Try to find the target loop
+				// START KGU#78 2015-12-18: Enh. #23 specific handling only required if there is a break instruction
+				//boolean simpleBreak = levelsUp == 1;	// For special handling of Case context
+				// Simple break instructions usually require special handling of Case context
+				boolean simpleBreak = levelsUp == 1 && this.supportsSimpleBreak();
+				// END KGU#78 2015-12-18
+				Element parent = elem.parent;
+				while (parent != null && !(parent instanceof Parallel) && levelsUp > 0)
+				{
+					if (parent instanceof ILoop)
+					{
+						if (--levelsUp == 0 && !simpleBreak)	// Target reached?
+						{
+							// Is target loop already associated with a label?
+							Integer label = this.jumpTable.get(parent);
+							if (label == null)
+							{
+								// If not then associate it with a label
+								label = this.labelCount++;
+								this.jumpTable.put(parent, label);
+							}
+							this.jumpTable.put(elem, label);
+						}
+					}
+					else if (parent instanceof Case)
+					{
+						// If we were within a selection (switch) then we must use "goto" to get out
+						simpleBreak = false;
+					}
+					parent = parent.parent;
+				}
+				if (levelsUp > 0)
+				{
+					// Target couldn't be found, so mark the jump with with an error marker
+					this.jumpTable.put(elem, -1);
+				}
+				else {
+					// After an unconditional jump, the remaining instructions are redundant
+					return surelyReturns;
+				}
+			}
+			// No jump: then only recursively descend
+			else if (elem instanceof Alternative)
+			{
+				boolean willReturnT = mapJumps(((Alternative)elem).qTrue);
+				boolean willReturnF = mapJumps(((Alternative)elem).qFalse);
+				surelyReturns = willReturnT && willReturnF;
+			}
+			else if (elem instanceof Case)
+			{
+				boolean willReturn = false;
+				for (int i = 0; i < ((Case)elem).qs.size(); i++)
+				{
+					boolean caseReturns = mapJumps(((Case)elem).qs.elementAt(i));
+					willReturn = willReturn && caseReturns;
+				}
+				if (willReturn) surelyReturns = true;
+			}
+			else if (elem instanceof ILoop)	// While, Repeat, For, Forever
+			{
+				if (mapJumps(((ILoop)elem).getBody())) surelyReturns = true;
+			}
+			else if (elem instanceof Parallel)
+			{
+				// There is no regular return out of a parallel thread...
+				for (int i = 0; i < ((Parallel)elem).qs.size(); i++)
+				{
+					mapJumps(((Parallel)elem).qs.elementAt(i));
+				}
+			}
+			else if (elem instanceof Instruction)
+			{
+				StringList text = elem.getText();
+				for (int i = 0; i < text.count(); i++)
+				{
+					String line = text.get(i);
+					if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn) + "([\\W].*|$)"))
+					{
+						boolean hasResult = !line.substring(D7Parser.preReturn.length()).trim().isEmpty();
+						if (hasResult)
+						{
+							this.returns = true;
+							// Further investigation would be done in vain - the remaining sequence is redundant
+							surelyReturns = true;
+						}
+					}
+				}
+				
+			}
+		}
+		return surelyReturns;
+	}
+	
+	
 
  	
     protected void generateCode(Instruction _inst, String _indent)
@@ -437,9 +649,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected void generateCode(Subqueue _subqueue, String _indent)
 	{
 		// code.add(_indent+"");
-		for(int i=0;i<_subqueue.children.size();i++)
+		for(int i=0;i<_subqueue.getSize();i++)
 		{
-			generateCode((Element) _subqueue.children.get(i),_indent);
+			generateCode((Element) _subqueue.getElement(i),_indent);
 		}
 		// code.add(_indent+"");
 	}
@@ -448,12 +660,84 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 
 	public String generateCode(Root _root, String _indent)
 	{
+		// START KGU#74 2015-11-30: General preprocessing phase 1
+		// Code analysis and Header analysis
+		String procName = _root.getMethodName();
+		boolean alwaysReturns = mapJumps(_root.children);
+		StringList paramNames = new StringList();
+		StringList paramTypes = new StringList();
+		_root.collectParameters(paramNames, paramTypes);
+		String resultType = _root.getResultType();
+		StringList varNames = _root.getVarNames(_root, false, true);
+		this.isResultSet = varNames.contains("result", false);
+		this.isFunctionNameSet = varNames.contains(procName);
+		
+		String preaIndent = generateHeader(_root, _indent, procName, paramNames, paramTypes, resultType);
+		String bodyIndent = generatePreamble(_root, preaIndent, varNames);
+		// END KGU#74 2015-11-30
+		
 		// code.add("");
-		generateCode(_root.children,_indent+this.getIndent());
+		generateCode(_root.children, bodyIndent);
 		// code.add("");
+		
+		// START KGU#74 2015-11-30: Result preprocessing
+		generateResult(_root, preaIndent, alwaysReturns, varNames);
+		generateFooter(_root, _indent);
+		// END KGU#74 2015-11-30
 
 		return code.getText();
 	}
+	
+	// Just dummy implementations to be overridden by subclasses
+	/**
+	 * Composes the heading for the program or function according to the
+	 * syntactic rules of the target language and adds it to this.code.
+	 * @param _root - The diagram root element
+	 * @param _indent - the initial indentation string
+	 * @param _procName - the procedure name
+	 * @param _paramNames - list of the argument names
+	 * @param _paramTypes - list of corresponding type names (possibly null) 
+	 * @param _resultType - result type name (possibly null)
+	 * @return the default indentation string for the subsequent stuff
+	 */
+	protected String generateHeader(Root _root, String _indent, String _procName,
+			StringList _paramNames, StringList _paramTypes, String _resultType)
+	{
+		return _indent + this.getIndent();
+	}
+	/**
+	 * Generates some preamble (i.e. comments, language declaration section etc.)
+	 * and adds it to this.code.
+	 * @param _root - the diagram root element
+	 * @param _indent - the current indentation string
+	 * @param varNames - list of variable names introduced inside the body
+	 */
+	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
+	{
+		return _indent;
+	}
+	/**
+	 * Creates the appropriate code for returning a required result and adds it
+	 * (after the algorithm code of the body) to this.code)
+	 * @param _root - the diagram root element
+	 * @param _indent - the current indentation string
+	 * @param alwaysReturns - whether all paths of the body already force a return
+	 * @param varNames - names of all assigned variables
+	 */
+	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
+	{
+		return _indent;
+	}
+	/**
+	 * Method is to finish up after the text insertions of the diagram, i.e. to close an open block. 
+	 * @param _root - the diagram root element 
+	 * @param _indent - the current indentation string
+	 */
+	protected void generateFooter(Root _root, String _indent)
+	{
+		
+	}
+	// END KGU#74 2015-11-30
 	
 	public void exportCode(Root _root, File _currentDirectory, Frame frame)
 	{
@@ -461,11 +745,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
                 {
                     Ini ini = Ini.getInstance();
                     ini.load();
-                    eod = new ExportOptionDialoge(frame);
+                    eod = new ExportOptionDialoge(frame);	// FIXME (KGU) What do we need this hidden dialog for?
                     if(ini.getProperty("genExportComments","0").equals("true"))
                         eod.commentsCheckBox.setSelected(true);
                     else 
                         eod.commentsCheckBox.setSelected(false);
+                    // START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
+                    eod.bracesCheckBox.setSelected(ini.getProperty("genExportBraces", "0").equals("true"));
+                    eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "0").equals("true"));
+                    // END KGU#16/KGU#113 2015-12-18
                 } 
                 catch (FileNotFoundException ex)
                 {
@@ -569,7 +857,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
                             }
                             catch(Exception e)
                             {
-                                    JOptionPane.showOptionDialog(null,"Error while saving the file!\n"+e.getMessage(),"Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+                                    JOptionPane.showMessageDialog(null,"Error while saving the file!\n" + e.getMessage(),"Error", JOptionPane.ERROR_MESSAGE);
                             }
                         }
 		}

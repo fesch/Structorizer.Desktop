@@ -34,11 +34,12 @@
  *      Klaus-Peter Reimers 	2008.01.14      	First Issue
  *      Kay Gürtzig		2014.10.18		Linguistic flaws corrected
  *      Kay Gürtzig		2014.12.02		ExportOptionDialoge and further messages added
- *      Kay Gürtzig 	2015.10.06		altPadRight added to Preferences dialog
+ *      Kay Gürtzig	 	2015.10.06		altPadRight added to Preferences dialog
  *      Kay Gürtzig		2015.10.14		InputBox.class_specific stuff added
  *      Kay Gürtzig		2015.11.01		InputBoxFor captions and Analyzer messages for FOR loops added
- *      Kay Gürtzig 	2015.11.09		Additions for ParserPreferences (KGU#3 FOR loop enhancement)
- *      Kay Gürtzig 	2015.11.15		Messages for Jump element modified or corrected 
+ *      Kay Gürtzig		2015.11.09		Additions for ParserPreferences (KGU#3 FOR loop enhancement)
+ *      Kay Gürtzig		2015.11.15		Messages for Jump element modified or corrected
+ *      Kay Gürtzig 	2015.12.18		New messages for ExportOptionDialoge
  *
  ******************************************************************************************************
  *
@@ -63,6 +64,7 @@ Menu.menuFileImport.text=Importieren
 // Submenu of "File -> Import"
 Menu.menuFileImportPascal.text=Pascal Code ...
 Menu.menuFilePrint.text=Drucken ...
+Menu.menuFileArrange.text=Im Arranger anordnen
 Menu.menuFileQuit.text=Beenden
 // Menu "Edit"
 Menu.menuEdit.text=Bearbeiten
@@ -177,8 +179,17 @@ Menu.error11.text=Wertzuweisung scheint fehlerhaft. Anweisung überprüfen ...
 Menu.error12.text=Der Parameter «%» muss mit dem Buchstaben "p" anfangen, gefolgt nur von Großbuchstaben!
 Menu.error13_1.text=Die Funktion hat keinen Rückgabewert!
 Menu.error13_2.text=Die Funktion hat nicht in jedem Fall einen Rückgabewert!
+Menu.error13_3.text=Die Funktion verwendet verschiedene Wertrückgabemechanismen zugleich: «%»!
 Menu.error14_1.text=Die Einzelangaben der Zählschleife und der Text passen nicht zusammen!
 Menu.error14_2.text=Die Schrittweite «%» der Zählschleife ist keine konstante Ganzzahl!
+Menu.error15.text=Der Unterprogrammaufruf hat nicht die Form [ <var> <- ] <routine_name>(<arg_list>)!
+Menu.error16_1.text=Der Aussprung muss leer sein oder mit einem der Schlüsselwörter % beginnen!
+Menu.error16_2.text=Eine return-Anweisung muss (außer am Diagrammende) ein Aussprung-Element sein!
+Menu.error16_3.text=Exit-, leave- oder break-Anweisungen sind nur als Aussprung-Elemente zulässig!
+Menu.error16_4.text=Ein Aussprung ist nur um höchstens die Anzahl der umgebenden Schleifen (%) zulässig!
+Menu.error16_5.text=Ein direkter Rücksprung (return) aus einem Parallelzweig ist unzulässig!
+Menu.error16_6.text=Falscher Parameter für diese Art von Aussprung - hier sollte eine Ganzzahlkonstante stehen.
+Menu.error17.text=Konsistenzgefahr wegen konkurrierender Zugriffe auf Variable «%» aus mehreren Threads!
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Überprüfungs-Einstellungen
@@ -190,12 +201,15 @@ AnalyserPreferences.check5.text=Prüfen, ob alle Variablenamen großgeschrieben 
 AnalyserPreferences.check6.text=Prüfen, ob der Programmname großgeschrieben ist. (LUX/MEN)
 AnalyserPreferences.check7.text=Nach nicht korrekt benannten Identifikatoren suchen.
 AnalyserPreferences.check8.text=Nach Wertzuweisungen innerhalb von Bedingungen suchen.
-AnalyserPreferences.check9.text=Testen, ob der Programmname einzigartig ist.
+AnalyserPreferences.check9.text=Testen, ob sich der Programmname von allen anderen Bezeichnern unterscheidet.
 AnalyserPreferences.check10.text=Nach fehlerhaften mehrzeiligen Anweisungen suchen.
 AnalyserPreferences.check11.text=Nach fehlerhaften Wertzuweisungen suchen.
 AnalyserPreferences.check12.text=Prüfen, ob die Parameternamen korrekt sind. (LUX/MEN)
 AnalyserPreferences.check13.text=Prüfen, ob im Falle einer Funktion diese auch einen Rückgabewert hat.
 AnalyserPreferences.check14.text=Prüfen, ob die Angaben von FOR-Schleifen konsistent sind.
+AnalyserPreferences.check15.text=Prüfen, ob Aufruf-Elemente nur einen einzelnen Routinenaufruf enthalten.
+AnalyserPreferences.check16.text=Prüfen, ob Aussprung-Elemente korrekt benutzt sind.
+AnalyserPreferences.check17.text=Prüfen, ob konkurrierende Wertzuweisungen in parallelen Zweigen vorkommen.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -245,6 +259,7 @@ Editor.btnMoveUp.tooltip=Bewegen des ausgewählten Elements um eine Position nac
 Editor.btnMoveDown.tooltip=Bewegen des ausgewählten Elements um eine Position nach unten.
 //printing
 Editor.btnPrint.tooltip=Drucken des Diagramms.
+Editor.btnArrange.tooltip=Diagram zum Arranger-Tableau hinzufügen.
 // font
 Editor.btnFontUp.tooltip=Erhöhen der Zeichensatz-Größe.
 Editor.btnFontDown.tooltip=Verringern der Zeichensatz-Größe.
@@ -495,6 +510,8 @@ PrintPreview.btnOK.tooltip=Das Diagram ausdrucken.
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Einstellungen für den Code-Export
 ExportOptionDialoge.commentsCheckBox.text=Anweisungen als Kommentare exportieren.
+ExportOptionDialoge.bracesCheckBox.text=Öffnende Blockklammern ans Ende der Zeile (C/C++/Java etc.).
+ExportOptionDialoge.lineNumbersCheckBox.text=Zeilennummern mitgenerieren (BASIC).
 ExportOptionDialoge.jLabel1.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Speichern der gewählten Einstellungen.

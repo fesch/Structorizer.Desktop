@@ -42,13 +42,6 @@ public interface Updater
      * @param newRoot (optional) - the Root object having replaced oldRoot. May be null if Updater is able to retrieve newRoot itself
      */
     public void replaced(Root oldRoot, Root newRoot);
-    
-    /**
-     * Gathers all update sources responding to the name passed in. 
-     * @param rootName - a String the Root objects looked for ought to respond to as name
-     * @return a collection of Root objects responding to the passed-in name
-     */
-    public Vector<Root> findSourcesByName(String rootName);
     // END KGU#48 2015-10-17
 }
 

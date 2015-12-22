@@ -221,7 +221,9 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
             container.add(pnPanel0,BorderLayout.NORTH);
             container.add(pnPanel1,BorderLayout.CENTER);
 
-            txtText.requestFocus(true);
+            // START KGU#91 2015-12-04: fix #39 - we leave this for diagram now
+            //txtText.requestFocus(true);
+            // END KGU#91 2015-12-04
     }
     
     // START KGU#3 2015-10-24: Hook for subclasses

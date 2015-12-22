@@ -52,7 +52,13 @@ public class Structorizer
 				s+=args[i];
 			}
 			//System.out.println("Opening from shell: "+s);
-			mainform.diagram.openNSD(s);
+			// START KGU#111 2015-12-16: Bugfix #63 - no open attempt without need
+			//mainform.diagram.openNSD(s);
+			if (!s.trim().isEmpty())
+			{
+				mainform.diagram.openNSD(s);
+			}
+			// END KGU#111 2015-12-16
 			mainform.diagram.redraw();
 		}
 		catch (Exception e)

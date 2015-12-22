@@ -23,18 +23,21 @@
  *
  *      Author:         Andrés Cabrera
  *
- *      Description:    The spanish language file
+ *      Description:    The Spanish language file
  *
  ******************************************************************************************************
  *
  *      Revision List
  *
- *      Author          Date                    Description
- *      ------          ----                    -----------
- *      Andrés Cabrera  2008.09.27              First Issue
- *      Kay Gürtzig     2014.12.02              ExportOptionDialoge messages added, language names translated
- *      Kay Gürtzig     2015.10.06              altPadRight added to Preferences dialog
- *      Kay Gürtzig     2015.10.14              InputBox-specific part enhanced
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      Andrés Cabrera  2008.09.27  First Issue
+ *      Kay Gürtzig     2014.12.02  ExportOptionDialoge messages added, language names translated
+ *      Kay Gürtzig     2015.10.06  altPadRight added to Preferences dialog
+ *      Kay Gürtzig     2015.10.14  InputBox-specific part enhanced
+ *      Kay Gürtzig     2015.11.22  Additions for InputBoxFor, Analyser, and AnalyserPreferences
+ *      Kay Gürtzig     2015.11.30  Further additions for Analyser and AnalyserPreferences
+ *      Kay Gürtzig     2015.12.18  New messages for ExportOptionDialoge
  *
  ******************************************************************************************************
  *
@@ -48,6 +51,7 @@ Menu.menuFile.text=Archivo
 // Submenus of "File"
 Menu.menuFileNew.text=Archivo
 Menu.menuFileOpen.text=Abrir ...
+Menu.menuFileOpenRecent.text=Recientemente usado
 Menu.menuFileSave.text=Guardar
 Menu.menuFileSaveAs.text=Guardar como ...
 Menu.menuFileExport.text=Exportar
@@ -57,7 +61,9 @@ Menu.menuFileExportCode.text=Código ...
 Menu.menuFileImport.text=Importar
 // Submenu of "File -> Import"
 Menu.menuFileImportPascal.text=Código Pascal ...
+// Submenu of "File -> Print"
 Menu.menuFilePrint.text=Imprimir ...
+Menu.menuFileArrange.text=Colocar en el Arranger
 Menu.menuFileQuit.text=Salir
 // Menu "Edit"
 Menu.menuEdit.text=Editar
@@ -155,23 +161,34 @@ Menu.error01_2.text=ADVERTENCIA: Más de una variable de bucle detectada ...
 Menu.error01_3.text=¡No tienes permiso modificar la variable del bucle «%» dentro del bucle!
 Menu.error02.text=¡Sin cambio de las variables de la condición! Posible bucle sin fin ... 
 Menu.error03_1.text=¡La variable «%» no ha sido inicializada!
-Menu.error03_2.text=¡La variable «%» no debe ser inicializada!
+Menu.error03_2.text=¡La variable «%» no siempre será inicializada!
 Menu.error04.text=¡No tienes permiso usar una declaración IF con un bloque de verdad vacío!
 Menu.error05.text=¡La variable «%» debe ser escrita en mayusculas!
 Menu.error06.text=¡El programa «%» debe ser escrita en mayusculas!
-Menu.error07_1.text=¡«%» no es un nombre valido para el programa o método!
-Menu.error07_2.text=¡«%» no es un nombre valido para el parámetro!
-Menu.error07_3.text=¡«%» no es un nombre valido para la variable!
-Menu.error08.text=No esta permitido hacer una asignacion dentro de una condición.
-Menu.error09.text=¡Tu programa («%») no puede tener el mismo nombre que una variable o parametro!
-Menu.error10_1.text=¡Un unico elemento de instrucción no debe contener instrucciones de entrada/salida y asignaciones!
-Menu.error10_2.text=¡Un unico elemento de instrucción no debe contener instrucciones de entrada y salida!
-Menu.error10_3.text=¡Un unico elemento de instrucción no debe contener instrucciones de entrada y asignaciones!
-Menu.error10_4.text=¡Un unico elemento de instrucción no debe contener instrucciones de salida y asignaciones!
+Menu.error07_1.text=¡«%» no es un nombre válido para el programa o método!
+Menu.error07_2.text=¡«%» no es un nombre válido para el parámetro!
+Menu.error07_3.text=¡«%» no es un nombre válido para la variable!
+Menu.error08.text=¡No está permitido hacer una asignación dentro de una condición!
+Menu.error09.text=¡Tu programa («%») no debe tener el mismo nombre que una variable o parametro!
+Menu.error10_1.text=¡Un solo elemento de instrucción no debe contener instrucciones de entrada/salida y asignaciones!
+Menu.error10_2.text=¡Un solo elemento de instrucción no debe contener instrucciones de entrada y salida!
+Menu.error10_3.text=¡Un solo elemento de instrucción no debe contener instrucciones de entrada y asignaciones!
+Menu.error10_4.text=¡Un solo elemento de instrucción no debe contener instrucciones de salida y asignaciones!
 Menu.error11.text=Probablemente has hecho un error de asignación. ¡Por favor comprueba esta instrucción!
-Menu.error12.text=¡El parámetro «%» debe comenzar con la letra "p" seguido unicamente de letras MAYUSCULAS!
+Menu.error12.text=¡El parámetro «%» debe comenzar con la letra "p" seguido únicamente de letras MAYUSCULAS!
 Menu.error13_1.text=¡La función no retorna ningún resultado!
-Menu.error13_2.text=¡Su función no puede retornar ningún resultado!
+Menu.error13_2.text=¡Su función no siempre retorna un resultado!
+Menu.error13_3.text=¡La función emplea diferentes métodos para retornar un valor a la vez: «%»!
+Menu.error14_1.text=¡Los componentes separados no se convienen con el texto del encabiezamiento!
+Menu.error14_2.text=¡El paso «%» del bucle FOR no es una constante entera!
+Menu.error15.text=¡La LLAMADA no tiene ninguna de las formas aceptadas: [ <var> <- ] <routine_name>(<arg_list>)!
+Menu.error16_1.text=¡Un elemento de salto (salida) debe ser vacío o empezar con uno de los comandos %!
+Menu.error16_2.text=¡Una instrucción de retorno debe ser colocado en un elemento SALTO si no es la última instrucción del diagrama!
+Menu.error16_3.text=¡Instrucciones de salida (exit, leave, o break) solo están permitidos en elementos del tipo SALTO!
+Menu.error16_4.text=¡Un elemento de salto (salida) no puede salir más ciclos que está anidado en (%)!
+Menu.error16_5.text=¡Una instrucción de retorno no está permitida desde una sección paralela!
+Menu.error16_6.text=¡Parámetro inadecuado para este tipo de SALTO - debería ser una constante entera.
+Menu.error17.text=¡Varios hilos de ejecución compiten por el acceso a la variable «%» y así riesgan la consistencia! 
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferencias del Comprobador
@@ -188,6 +205,10 @@ AnalyserPreferences.check10.text=Comprobar instrucciones con multiples comandos.
 AnalyserPreferences.check11.text=Comprobar errores en asignaciones.
 AnalyserPreferences.check12.text=Comprobar por nombre de parámetro estándar. (LUX/MEN)
 AnalyserPreferences.check13.text=Comprobar si, en caso de una función, ésta devuelve un resultado.
+AnalyserPreferences.check14.text=Comprobar si los parámetros de bucles FOR están consistentes.
+AnalyserPreferences.check15.text=Comprobar que llamadas contengan una sola linea de código llamando una subrutina.
+AnalyserPreferences.check16.text=Comprobar si el uso de elementos SALTO es corrrecto.
+AnalyserPreferences.check17.text=Comprobar que hilos paralelos no pongan a riesgo la consistencia de variables.
 AnalyserPreferences.okButton.text=Aceptar
 
 
@@ -219,25 +240,26 @@ Editor.btnAfterForever.tooltip=Insertar nuevo bucle SINFIN después del elemento
 Editor.btnAfterCall.tooltip=Insertar nueva LLAMADA después del elemento seleccionado.
 Editor.btnAfterJump.tooltip=Insertar nuevo SALTO después del elemento seleccionado.
 Editor.btnAfterCase.tooltip=Insertar nueva instrucción CASE después del elemento seleccionado.
-Editor.btnBeforePara.tooltip=Insertar nueva sección PARALELA después del elemento seleccionado.
+Editor.btnAfterPara.tooltip=Insertar nueva sección PARALELA después del elemento seleccionado.
 // undo & redo
 Editor.btnUndo.tooltip=Deshacer la ultima acción.
 Editor.btnRedo.tooltip=Rehacer la ultima acción.
 // copy & paste
-Editor.btnCut.tooltip=Cortar elemento seleccionado.
-Editor.btnCopy.tooltip=Copiar elemento seleccionado.
-Editor.btnPaste.tooltip=Pega el elemento cortado o copiado después del elemento seleccionado.
+Editor.btnCut.tooltip=Cortar elementos seleccionados.
+Editor.btnCopy.tooltip=Copiar elementos seleccionados.
+Editor.btnPaste.tooltip=Pegar los elementos cortados o copiados después del elemento seleccionado.
 // style
 Editor.btnNice.tooltip=Cambiar estilo visual del diagrama.
 Editor.btnFunction.tooltip=Sub diagrama (esquinas redondeadas).
 Editor.btnProgram.tooltip=Main diagrama (esquinas cuadradas).
 // editing
 Editor.btnEdit.tooltip=Editar elemento seleccionado.
-Editor.btnDelete.tooltip=Borrar elemento seleccionado.
+Editor.btnDelete.tooltip=Borrar elementos seleccionados.
 Editor.btnMoveUp.tooltip=Desplazar elemento seleccionado una posición arriba.
 Editor.btnMoveDown.tooltip=Desplazar elemento seleccionado una posición abajo.
 //printing
 Editor.btnPrint.tooltip=Imprimir el diagrama.
+Editor.btnArrange.tooltip=Añadir el diagrama al Arranger.
 // font
 Editor.btnFontUp.tooltip=Aumentar tamaño de fuente.
 Editor.btnFontDown.tooltip=Disminuir tamaño de fuente.
@@ -310,6 +332,7 @@ InputBox.btnOK.text=Aceptar
 InputBox.btnOK.tooltip=Aceptar los cambios.
 InputBox.btnCancel.text=Cancelar
 InputBox.btnCancel.tooltip=Cancelar los cambios.
+InputBox.chkBreakpoint.text=Breakpoint
 InputBox.class_specific.Root=Editar nombre de programa...
 InputBox.class_specific.Function=Editar signatura de función...
 InputBox.class_specific.Instruction.insert=Insertar instrucciones...
@@ -337,6 +360,24 @@ InputBox.class_specific.While.lblText=Por favor ingresa la condición para entra
 InputBox.class_specific.Repeat.lblText=Por favor ingresa la condición para salir
 InputBox.class_specific.Case.lblText=Ingresa la expresión y las constantes de selección (cada en nueva linea)
 InputBox.class_specific.Parallel.lblText=Número de brazos paralelos
+-----[ InputBoxFor ]-----
+InputBoxFor.class_specific.For.insert=Insertar bucle PARA...
+InputBoxFor.class_specific.For.update=Editar bucle PARA...
+InputBoxFor.lblVariable.text=Variable contadora
+InputBoxFor.lblStartVal.text=Valor inicial
+InputBoxFor.lblEndVal.text=Valor final
+InputBoxFor.lblIncr.text=Paso
+InputBoxFor.chkTextInput.text=Editar como texto pleno
+InputBoxFor.chkTextInput.tooltip=Si puesto, los componentes de arriba serán extraído del texto, de otro modo el texto será compuesto de los componentes.
+InputBoxFor.lblComment.text=Comentario
+InputBoxFor.lblComment.tooltip=
+InputBoxFor.txtText.tooltip=Encabezamiento del bucle como texto.
+InputBoxFor.txtComment.tooltip=El comentario del bucle.
+InputBoxFor.btnOK.text=Aceptar
+InputBoxFor.btnOK.tooltip=Aceptar los cambios.
+InputBoxFor.btnCancel.text=Cancelar
+InputBoxFor.btnCancel.tooltip=Cancelar los Cambios.
+InputBoxFor.chkBreakpoint.text=Breakpoint
 
 
 -----[ Preferences ]-----
@@ -445,6 +486,7 @@ ParserPreferences.lblCase.text=declaración CASE
 ParserPreferences.lblCase.tooltip=
 ParserPreferences.lblFor.text=bucle PARA
 ParserPreferences.lblFor.tooltip=
+ParserPreferences.lblForStep.text=Paso
 ParserPreferences.lblWhile.text=bucle MIENTRAS
 ParserPreferences.lblWhile.tooltip=
 ParserPreferences.lblRepeat.text=bucle REPETIR
@@ -469,6 +511,8 @@ PrintPreview.btnOK.tooltip=Imprimir el diagrama.
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Preferencias de Exportación de código
 ExportOptionDialoge.commentsCheckBox.text=Exportar instrucciones como comentarios.
-ExportOptionDialoge.jLabel1.text=Eleccione las preferencias, que quieres activar...
+ExportOptionDialoge.bracesCheckBox.text=Poner abrazadera abrienda al fin de la misma linea (C/C++/Java etc.).
+ExportOptionDialoge.lineNumbersCheckBox.text=Generar números de linea con el exporte (BASIC).
+ExportOptionDialoge.jLabel1.text=Elije las preferencias, que quieres activar...
 ExportOptionDialoge.jButton1.text=Aceptar
 ExportOptionDialoge.jButton1.tooltip=Aceptar los cambios.

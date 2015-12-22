@@ -48,34 +48,23 @@ public class ExportOptionDialoge extends LangDialog
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
-        jButton1 = new javax.swing.JButton();
         commentsCheckBox = new javax.swing.JCheckBox();
         jLabel1 = new javax.swing.JLabel();
+        bracesCheckBox = new javax.swing.JCheckBox();
+        lineNumbersCheckBox = new javax.swing.JCheckBox();
+        jButton1 = new javax.swing.JButton();
 
         setTitle("Export options ...");
-
-        jButton1.setText("OK");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
 
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(266, Short.MAX_VALUE)
-                .add(jButton1)
-                .addContainerGap())
+            .add(0, 0, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(33, Short.MAX_VALUE)
-                .add(jButton1)
-                .add(8, 8, 8))
+            .add(0, 0, Short.MAX_VALUE)
         );
 
         commentsCheckBox.setText("Export instructions as comments.");
@@ -87,19 +76,46 @@ public class ExportOptionDialoge extends LangDialog
 
         jLabel1.setText("Please select the options you want to activate ...");
 
+        bracesCheckBox.setText("Put block-opening brace on same line (C/C++/Java etc.).");
+        bracesCheckBox.setActionCommand("Put block-opening brace on same line (C/C++/Java etc.).");
+        bracesCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bracesCheckBoxActionPerformed(evt);
+            }
+        });
+
+        lineNumbersCheckBox.setText("Generate line numbers on export to BASIC.");
+        lineNumbersCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                lineNumbersCheckBoxActionPerformed(evt);
+            }
+        });
+
+        jButton1.setText("OK");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
-                .add(10, 10, 10)
-                .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-            .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(commentsCheckBox))
-            .add(layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jLabel1))
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(layout.createSequentialGroup()
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(bracesCheckBox)
+                            .add(lineNumbersCheckBox))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(commentsCheckBox)
+                    .add(jLabel1)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                        .add(jButton1)
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -108,11 +124,18 @@ public class ExportOptionDialoge extends LangDialog
                 .add(jLabel1)
                 .add(22, 22, 22)
                 .add(commentsCheckBox)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 20, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(bracesCheckBox)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lineNumbersCheckBox)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jButton1)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 8, Short.MAX_VALUE)
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
 
         pack();
+        this.setSize(500, 200);
     }// </editor-fold>//GEN-END:initComponents
 
     private void commentsCheckBoxActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_commentsCheckBoxActionPerformed
@@ -125,6 +148,14 @@ public class ExportOptionDialoge extends LangDialog
         goOn = true;
         this.setVisible(false);
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void bracesCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bracesCheckBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_bracesCheckBoxActionPerformed
+
+    private void lineNumbersCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lineNumbersCheckBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_lineNumbersCheckBoxActionPerformed
 
     /**
      * @param args the command line arguments
@@ -172,9 +203,11 @@ public class ExportOptionDialoge extends LangDialog
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    public javax.swing.JCheckBox bracesCheckBox;
     public javax.swing.JCheckBox commentsCheckBox;
     public javax.swing.JButton jButton1;
     public javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
+    public javax.swing.JCheckBox lineNumbersCheckBox;
     // End of variables declaration//GEN-END:variables
 }

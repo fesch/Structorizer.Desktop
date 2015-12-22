@@ -83,6 +83,17 @@ public class XmlGenerator extends Generator {
     }
     // END KGU 2015-10-18
     
+	// START KGU#78 2015-12-18: Enh. #23 - Irrelevant here but necessary now
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
+	 */
+	@Override
+	protected boolean supportsSimpleBreak()
+	{
+		return true;
+	}
+	// END KGU#78 2015-12-18
+
 	/************ Code Generation **************/
     
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
@@ -247,16 +258,16 @@ public class XmlGenerator extends Generator {
 				 _jump.getHexColor()+"\"></jump>");
 	}
 		
-    @Override
-	protected void generateCode(Subqueue _subqueue, String _indent)
-	{
-		// code.add(_indent+"");
-		for(int i=0;i<_subqueue.children.size();i++)
-		{
-			generateCode((Element) _subqueue.children.get(i),_indent);
-		}
-		// code.add(_indent+"");
-	}
+//    @Override
+//	protected void generateCode(Subqueue _subqueue, String _indent)
+//	{
+//		// code.add(_indent+"");
+//		for(int i=0;i<_subqueue.getSize();i++)
+//		{
+//			generateCode((Element) _subqueue.getElement(i),_indent);
+//		}
+//		// code.add(_indent+"");
+//	}
 	
     @Override
 	public String generateCode(Root _root, String _indent)
@@ -268,7 +279,11 @@ public class XmlGenerator extends Generator {
 
 		code.add("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		//code.add("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");
-		code.add("<root xmlns:nsd=\"http://structorizer.fisch.lu/\" text=\""+BString.encodeToHtml(_root.getText().getCommaText())+"\" comment=\""+
+		// START KGU 2015-12-04: Might not be so bad an idea to write the product version into the file
+		//code.add("<root xmlns:nsd=\"http://structorizer.fisch.lu/\" text=\""+BString.encodeToHtml(_root.getText().getCommaText())+"\" comment=\""+
+		code.add("<root xmlns:nsd=\"http://structorizer.fisch.lu/\" version=\"" + Element.E_VERSION + "\" text=\"" + 
+								BString.encodeToHtml(_root.getText().getCommaText()) + "\" comment=\"" +
+		// END KGU 2015-12-04
 								BString.encodeToHtml(_root.getComment().getCommaText())+"\" color=\""+
 								_root.getHexColor()+"\" type=\""+pr+"\" style=\""+ni+"\">");
 		code.add(_indent+"<children>");

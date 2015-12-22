@@ -81,7 +81,18 @@ public class CSharpGenerator extends Generator
 	    }
 	    // END KGU 2015-10-18
 
-	    // TODO
+		// START KGU#78 2015-12-18: Enh. #23 (added for compilability, not actually used)
+		/* (non-Javadoc)
+		 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
+		 */
+		@Override
+		protected boolean supportsSimpleBreak()
+		{
+			return true;
+		}
+		// END KGU#78 2015-12-18
+
+		// TODO
 		/************ Code Generation **************/
 
 		// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
@@ -333,9 +344,9 @@ public class CSharpGenerator extends Generator
 		protected void generateCode(Subqueue _subqueue, String _indent)
 		{
 			// code.add(_indent+"");
-			for(int i=0;i<_subqueue.children.size();i++)
+			for(int i=0;i<_subqueue.getSize();i++)
 			{
-				generateCode((Element) _subqueue.children.get(i),_indent);
+				generateCode((Element) _subqueue.getElement(i),_indent);
 			}
 			// code.add(_indent+"");
 		}

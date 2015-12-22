@@ -34,6 +34,7 @@
  *      Andrea Maiani   2009.12.01		Created
  *      Kay Gürtzig		2015.10.06		Obvious mis-spellings mended (cilc -> ciclo, contenuro -> contenuto etc.)
  *      Kay Gürtzig     2015.10.14		InputBox-specific part enhanced
+ *      Kay Gürtzig     2015.10.14		FOR-specific part enhanced and Arranger buttons added
  *
  ******************************************************************************************************
  *
@@ -47,6 +48,7 @@ Menu.menuFile.text=File
 // Submenus of "File"
 Menu.menuFileNew.text=Nuovo
 Menu.menuFileOpen.text=Apri ...
+Menu.menuFileOpenRecent.text=Recentemente utilizzato
 Menu.menuFileSave.text=Salva
 Menu.menuFileSaveAs.text=Salva con nome...
 Menu.menuFileExport.text=Esporta
@@ -56,7 +58,9 @@ Menu.menuFileExportCode.text=Codice ...
 Menu.menuFileImport.text=Importa
 // Submenu of "File -> Import"
 Menu.menuFileImportPascal.text=Codice Pascal...
+// Submenu of "File -> Print"
 Menu.menuFilePrint.text=Stampa ...
+Menu.menuFileArrange.text=Collocare in Arranger
 Menu.menuFileQuit.text=Esci
 // Menu "Edit"
 Menu.menuEdit.text=Modifica
@@ -121,7 +125,7 @@ Menu.menuPreferencesLanguageFrench.text=French
 Menu.menuPreferencesLanguageDutch.text=Dutch
 Menu.menuPreferencesLanguageItalian.text=Italian
 Menu.menuPreferencesLanguageSpanish.text=Spanish
-Menu.menuPreferencesLanguagePortuguese=Portuguese
+Menu.menuPreferencesLanguagePortugalBrazil=Portuguese (Brazil)
 Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburgish
 Menu.menuPreferencesLookAndFeel.text=Aspetto
 Menu.menuPreferencesSave.text=Salva tutte le impostazioni ora
@@ -153,6 +157,8 @@ Menu.error11.text=Hai probabilmente commesso un errore di assegnamento. Leggi qu
 Menu.error12.text=Il parametro «%» deve iniziare con la lettera "p" seguita da sole lettere maiuscole!
 Menu.error13_1.text=La tua funzione non ritorna alcun valore!
 Menu.error13_2.text=La tua funzione potrebbe non ritornare alcun risultato!
+Menu.error14_1.text=Parametri del ciclo FOR non si confan con la intestazione dello medesimo!
+Menu.error14_2.text=Il passo del ciclo FOR non è una constante intera!
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.check1.text=Controlla variabile di ciclo modificata.
@@ -168,6 +174,7 @@ AnalyserPreferences.check10.text=Controlla istruzioni con comandi multipli.
 AnalyserPreferences.check11.text=Controlla errori di assegnamento.
 AnalyserPreferences.check12.text=Controlla nomi dei parametri standardizzati. (LUX/MEN)
 AnalyserPreferences.check13.text=Controlla se una funzione ritorna un risultato.
+AnalyserPreferences.check14.text=Controlla se parametri del ciclo FOR si confan con la intestazione dello medesimo.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -287,6 +294,7 @@ InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=Valida la tua scelta.
 InputBox.btnCancel.text=Annulla
 InputBox.btnCancel.tooltip=Annulla la tua scelta.
+InputBox.chkBreakpoint.text=Breakpoint
 InputBox.class_specific.Root=Modificare il nome dello programma...
 InputBox.class_specific.Function=Modificare la signatura della funzione...
 InputBox.class_specific.Instruction.insert=Inseriscire istruzioni...
@@ -314,7 +322,24 @@ InputBox.class_specific.While.lblText=Inserisci la condicione para entrar y qued
 InputBox.class_specific.Repeat.lblText=Inserisci la conditione para salir
 InputBox.class_specific.Case.lblText=Inserisci l'espressione e le constanti della selezione
 InputBox.class_specific.Parallel.lblText=Nummero dei rami paraleli
-
+-----[ InputBoxFor ]-----
+InputBoxFor.class_specific.For.insert=Inseriscire Ciclo FOR...
+InputBoxFor.class_specific.For.update=Modificare Ciclo FOR...
+InputBoxFor.lblVariable.text=Variable contatora
+InputBoxFor.lblStartVal.text=Valore iniziale
+InputBoxFor.lblEndVal.text=Valore finale
+InputBoxFor.lblIncr.text=Passo
+InputBoxFor.chkTextInput.text=Digitare cuomo testo pieno
+InputBoxFor.chkTextInput.tooltip=Se segnato, i parametri son estratto del testo, se no el testo è composto dei componenti.
+InputBoxFor.lblComment.text=Commento
+InputBoxFor.lblComment.tooltip=
+InputBoxFor.txtText.tooltip=Intestazione dello ciclo composto.
+InputBoxFor.txtComment.tooltip=Il commento dello ciclo.
+InputBoxFor.btnOK.text=OK
+InputBoxFor.btnOK.tooltip=Valida la tua scelta.
+InputBoxFor.btnCancel.text=Annulla
+InputBoxFor.btnCancel.tooltip=Annulla la tua scelta.
+InputBoxFor.chkBreakpoint.text=Breakpoint
 
 -----[ Preferences ]-----
 Preferences.title=Preferenze di struttura

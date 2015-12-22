@@ -37,6 +37,8 @@
  *      Kay Gürtzig 	2015.10.16		Several additions to Editor and InputBox
  *      Kay Gürtzig 	2015.11.03		Additions to Menu (errors) and AnalyserPreferences
  *      Kay Gürtzig 	2015.11.09		Additions for ParserPreferences
+ *      Kay Gürtzig 	2015.11.30		Further additions to Menu (errors) and AnalyserPreferences
+ *      Kay Gürtzig 	2015.12.18		New messages for ExportOptionDialoge
  *
  ******************************************************************************************************
  *
@@ -175,8 +177,18 @@ Menu.error11.text=You probably made an assignment error. Please check this instr
 Menu.error12.text=The parameter «%» must start with the letter "p" followed by only uppercase letters!
 Menu.error13_1.text=Your function does not return any result!
 Menu.error13_2.text=Your function may not return a result!
+Menu.error13_3.text=Your functions seems to use several competitive return mechanisms: «%»!
 Menu.error14_1.text=The FOR loop parameters are not consistent to the loop heading text!
 Menu.error14_2.text=The FOR loop step value («%») is not a legal integer constant!
+Menu.error14_3.text=Variable name «%» may collide with one of the configured FOR loop heading keywords!
+Menu.error15.text=The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!
+Menu.error16_1.text=A JUMP element may be empty or start with one of %, possibly followed by an argument!	
+Menu.error16_2.text=A return instruction, unless at final position, must form a JUMP element!
+Menu.error16_3.text=An exit, leave or break instruction is only allowed as JUMP element!
+Menu.error16_4.text=Cannot leave or break more loop levels than being nested in (%)!
+Menu.error16_5.text=You must not directly return out of a parallel thread!
+Menu.error16_6.text=Wrong argument for this kind of JUMP (should be an integer constant)!
+Menu.error17.text=Consistency risk due to concurrent access to variable «%» by several parallel threads!
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Analyser preferences
@@ -194,6 +206,9 @@ AnalyserPreferences.check11.text=Check for assignment errors.
 AnalyserPreferences.check12.text=Check for standardized parameter name. (LUX/MEN)
 AnalyserPreferences.check13.text=Check if, in case of a function, it returns a result.
 AnalyserPreferences.check14.text=Check for consistency of FOR loop parameters.
+AnalyserPreferences.check15.text=Check for inappropriate subroutine CALLs.
+AnalyserPreferences.check16.text=Check for incorrect JUMP element usage.
+AnalyserPreferences.check17.text=Check for inconsistency risks in PARALLEL sections.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -452,6 +467,8 @@ PrintPreview.btnOK.tooltip=Print the diagram.
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Export options ...
 ExportOptionDialoge.commentsCheckBox.text=Export instructions as comments.
+ExportOptionDialoge.bracesCheckBox.text=Put block-opening brace on same line (C/C++/Java etc.).
+ExportOptionDialoge.lineNumbersCheckBox.text=Generate line numbers on export to BASIC.
 ExportOptionDialoge.jLabel1.text=Please select the options you want to activate...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Save these settings.

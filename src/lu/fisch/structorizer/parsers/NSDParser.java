@@ -35,6 +35,7 @@ package lu.fisch.structorizer.parsers;
  *      Bob Fisch       2007.12.13              First Issue
  *      Kay Gürtzig     2015.10.29              Enhancement on For loop (new attributes KGU#3)
  *      Kay Gürtzig     2015.10.29              Modification on For loop (new attribute KGU#3)
+ *      Kay Gürtzig     2015.12.16              Bugfix #63 (KGU#111): Exception on parsing failure
  *
  ******************************************************************************************************
  *
@@ -48,6 +49,7 @@ import javax.xml.parsers.*;
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 
+import java.io.IOException;
 import java.util.Stack;
 
 import lu.fisch.utils.*;
@@ -82,12 +84,24 @@ public class NSDParser extends DefaultHandler {
 				*/
 			}
 			
+			// START KGU 2015-12-04: Prepared for future use...
+//			String version = Element.E_VERSION;
+//			if (attributes.getIndex("version") != -1) { version = attributes.getValue("version"); }
+//			// So we might react to some incompatibility... 
+//			if (version.indexOf("dev") != 0)
+//			{
+//				// Unstable version ...
+//			}
+			// END KGU 2015-12-04
+			
 			// read attributes
 			root.isProgram = true;
 			if(attributes.getIndex("type")!=-1)  {if (attributes.getValue("type").equals("sub")) {root.isProgram=false;}}
 			root.isNice=true;
 			if(attributes.getIndex("style")!=-1)  {if (!attributes.getValue("style").equals("nice")) {root.isNice=false;}}
-			if(attributes.getIndex("style")!=-1)  {if (attributes.getValue("type").equals(" ")) {root.isNice=true;}}
+			// START KGU 2015-12-04: The following line was nonsense
+			//if(attributes.getIndex("style")!=-1)  {if (attributes.getValue("type").equals(" ")) {root.isNice=true;}}
+			// END KGU 2015-12-04
 			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {root.setColor(root.getColor().decode("0x"+attributes.getValue("color")));}}
 			if(attributes.getIndex("text")!=-1)  {root.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {root.getComment().setCommaText(attributes.getValue("comment"));}
@@ -287,7 +301,7 @@ public class NSDParser extends DefaultHandler {
 			Case ele = new Case(StringList.getNew("???"));
 
 			// read attributes
-			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text")); System.out.println(attributes.getValue("text"));}
+			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text")); /*System.out.println(attributes.getValue("text"));*/}
 			ele.qs.clear();
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
 			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(ele.getColor().decode("0x"+attributes.getValue("color")));}}
@@ -446,7 +460,7 @@ public class NSDParser extends DefaultHandler {
 		//String dataString =	new String(chars, startIndex, endIndex).trim();
 	}
 	
-	public Root parse(String _filename)
+	public Root parse(String _filename) throws SAXException, IOException
 	{
 		// setup a new root
 		root=new Root();
@@ -469,6 +483,16 @@ public class NSDParser extends DefaultHandler {
 			String errorMessage = "Error parsing " + _filename + ": " + e;
 			System.err.println(errorMessage);
 			e.printStackTrace();
+			// START KGU#111 2015-12-16: Bugfix #63 re-throw the exception!
+			if (e instanceof SAXException)
+			{
+				throw (SAXException)e;
+			}
+			else if (e instanceof IOException)
+			{
+				throw (IOException)e;
+			}
+			// END KGU#111 2015-12-16
 		}
 		
 		root.hasChanged=false;
