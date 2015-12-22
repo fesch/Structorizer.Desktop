@@ -53,6 +53,8 @@ package lu.fisch.structorizer.generators;
  *                                      decomposed according to Generator.generateCode(Root, String);
  *                                      Enh. KGU#47: Dummy implementation for Parallel element
  *                                      Fixes in FOR and REPEAT export
+ *      Kay Gürtzig     2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
+ *      Kay Gürtzig     2015.12.21      Bugfix #51 (= KGU#108) Didn't cope with empty input / output
  *
  ******************************************************************************************************
  *
@@ -139,7 +141,10 @@ public class PerlGenerator extends Generator {
 	 */
 	protected String getInputReplacer()
 	{
-		return "$1 = <STDIN>";
+		// START KGU#108 2015-12-22: Bugfix #51
+		//return "$1 = <STDIN>";
+		return "$1 = <STDIN>; chomp $1";
+		// END KGU#108 2015-12-22
 	}
 
 	/**
@@ -155,66 +160,26 @@ public class PerlGenerator extends Generator {
 		// END KGU#103 2015-12-12
 	}
 
-	/**
-	 * Transforms assignments in the given intermediate-language code line.
-	 * Replaces "<-" by "="
-	 * @param _interm - a code line in intermediate syntax
-	 * @return transformed string
-	 */
-	protected String transformAssignment(String _interm)
-	{
-		return _interm.replace(" <- ", " = ");
-	}
-	// END KGU#18/KGU#23 2015-11-01
+	// START KGU#93 2015-12-21 Bugfix #41/#68/#69
+//	/**
+//	 * Transforms assignments in the given intermediate-language code line.
+//	 * Replaces "<-" by "="
+//	 * @param _interm - a code line in intermediate syntax
+//	 * @return transformed string
+//	 */
+//	@Deprecated
+//	protected String transformAssignment(String _interm)
+//	{
+//		return _interm.replace(" <- ", " = ");
+//	}
     
-    // KGU 2015-11-02 Most of this now obsolete (delegated to Generator, Element), something was wrong anyway
-    protected String transform(String _input)
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
+	 */
+	@Override
+	protected String transformTokens(StringList tokens)
 	{
-    	_input = super.transform(_input);
-    	
-    	// START KGU#62 2015-11-02: Identify and adapt variable names
-		//System.out.println("Perl - text to be transformed: \"" + _input + "\"");
-		// START KGU#103 2015-12-12: We must do a lexical analysis instead
-//    	for (int i = 0; i < varNames.count(); i++)
-//    	{
-//    		String varName = varNames.get(i);	// FIXME (KGU): Remove after Test!
-//    		System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
-//    		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
-//    		int pos = _input.indexOf(varName);
-//    		while (pos >= 0)
-//    		{
-//    			int posBehind = pos + varName.length();
-//    			// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
-//    			//if ((pos == 0 || !Character.isJavaIdentifierPart(_input.charAt(pos-1))) && (posBehind >= varName.length() || !Character.isJavaIdentifierPart(_input.charAt(posBehind))))
-//    	  		if ((pos == 0 || !Character.isJavaIdentifierPart(_input.charAt(pos-1)) && _input.charAt(pos-1) != '\\') &&
-//    	  				(posBehind >= _input.length() || !Character.isJavaIdentifierPart(_input.charAt(posBehind))))
-//    	  		// END KGU#103 2015-12-12
-//    			{
-//    				if (pos == 0 || _input.charAt(pos-1) != '$')
-//    				{
-//    					_input = _input.substring(0, pos) + "$" + _input.substring(pos);
-//            	  		// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
-//        				posBehind++;
-//        				// END KGU#103 2015-12-12
-//    				}
-//        	  		// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
-//    				//pos = _input.indexOf(varName, posBehind);
-//    				// END KGU#103 2015-12-12
-//    			}
-//    	  		// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
-//    	  		if (posBehind < _input.length() - varName.length())
-//    	  		{
-//    	  			pos = _input.indexOf(varName, posBehind);
-//    	  		}
-//    	  		else
-//    	  		{
-//    	  			pos = -1;
-//    	  		}
-//				// END KGU#103 2015-12-12
-//    		}
-//    		System.out.println("Perl - after replacement: \"" + _input + "\""); 	// FIXME (KGU): Remove after Test!
-//    	}
-		StringList tokens = Element.splitLexically(_input, true);
+		// START KGU#62/KGU#103 2015-12-12: Bugfix #57 - We must work based on a lexical analysis
     	for (int i = 0; i < varNames.count(); i++)
     	{
     		String varName = varNames.get(i);
@@ -222,13 +187,108 @@ public class PerlGenerator extends Generator {
     		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
     		tokens.replaceAll(varName, "$"+varName);
     	}
-    	_input = tokens.getText().replace("\n", "");
-		//System.out.println("Perl - after replacement: \"" + _input + "\""); 	// FIXME (KGU): Remove after Test!
-		// END KGU#103 2015-12-12
-    	// END KGU#62 2015-11-02
-
-		return _input.trim();
+		// END KGU#62/KGU#103 2015-12-12
+		tokens.replaceAll("div", "/");
+		tokens.replaceAll("<-", "=");
+		return tokens.concatenate();
 	}
+	// END KGU#93 2015-12-21
+	
+	// END KGU#18/KGU#23 2015-11-01
+	
+	// START KGU#108 2015-12-22: Bugfix #51
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transformInput(java.lang.String)
+	 */
+	@Override
+	protected String transformInput(String _interm)
+	{
+		String transformed = super.transformInput(_interm);
+		if (transformed.startsWith(" = <STDIN>"))
+		{
+			transformed = "my $dummy = <STDIN>";
+		}
+		return transformed;
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transformInput(java.lang.String)
+	 */
+	@Override
+	protected String transformOutput(String _interm)
+	{
+		String transformed = super.transformOutput(_interm);
+		if (transformed.startsWith("print , "))
+		{
+			transformed = transformed.replace("print , ", "print ");
+		}
+		return transformed;
+	}
+	// END KGU#108 2015-12-22
+
+//	// KGU 2015-11-02 Most of this now obsolete (delegated to Generator, Element), something was wrong anyway
+//    protected String transform(String _input)
+//	{
+//    	_input = super.transform(_input);
+//    	
+//    	// START KGU#62 2015-11-02: Identify and adapt variable names
+//		//System.out.println("Perl - text to be transformed: \"" + _input + "\"");
+//		// START KGU#103 2015-12-12: We must do a lexical analysis instead
+////    	for (int i = 0; i < varNames.count(); i++)
+////    	{
+////    		String varName = varNames.get(i);	// FIXME (KGU): Remove after Test!
+////    		System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
+////    		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
+////    		int pos = _input.indexOf(varName);
+////    		while (pos >= 0)
+////    		{
+////    			int posBehind = pos + varName.length();
+////    			// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
+////    			//if ((pos == 0 || !Character.isJavaIdentifierPart(_input.charAt(pos-1))) && (posBehind >= varName.length() || !Character.isJavaIdentifierPart(_input.charAt(posBehind))))
+////    	  		if ((pos == 0 || !Character.isJavaIdentifierPart(_input.charAt(pos-1)) && _input.charAt(pos-1) != '\\') &&
+////    	  				(posBehind >= _input.length() || !Character.isJavaIdentifierPart(_input.charAt(posBehind))))
+////    	  		// END KGU#103 2015-12-12
+////    			{
+////    				if (pos == 0 || _input.charAt(pos-1) != '$')
+////    				{
+////    					_input = _input.substring(0, pos) + "$" + _input.substring(pos);
+////            	  		// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
+////        				posBehind++;
+////        				// END KGU#103 2015-12-12
+////    				}
+////        	  		// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
+////    				//pos = _input.indexOf(varName, posBehind);
+////    				// END KGU#103 2015-12-12
+////    			}
+////    	  		// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
+////    	  		if (posBehind < _input.length() - varName.length())
+////    	  		{
+////    	  			pos = _input.indexOf(varName, posBehind);
+////    	  		}
+////    	  		else
+////    	  		{
+////    	  			pos = -1;
+////    	  		}
+////				// END KGU#103 2015-12-12
+////    		}
+////    		System.out.println("Perl - after replacement: \"" + _input + "\""); 	// FIXME (KGU): Remove after Test!
+////    	}
+//		StringList tokens = Element.splitLexically(_input, true);
+//    	for (int i = 0; i < varNames.count(); i++)
+//    	{
+//    		String varName = varNames.get(i);
+//    		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
+//    		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
+//    		tokens.replaceAll(varName, "$"+varName);
+//    	}
+//    	_input = tokens.getText().replace("\n", "");
+//		//System.out.println("Perl - after replacement: \"" + _input + "\""); 	// FIXME (KGU): Remove after Test!
+//		// END KGU#103 2015-12-12
+//    	// END KGU#62 2015-11-02
+//
+//		return _input.trim();
+//	}
+	// END KGU#93 2015-12-21
 	
     // START KGU#78 2015-12-17: Enh. #23 (jump translation)
     // Places a label with empty instruction into the code if elem is an exited loop
@@ -572,7 +632,7 @@ public class PerlGenerator extends Generator {
 	protected String generateHeader(Root _root, String _indent, String _procName,
 			StringList _paramNames, StringList _paramTypes, String _resultType)
 	{
-		String indent = _indent + this.getIndent();
+		String indent = _indent;
 		code.add(_indent + "#!/usr/bin/perl");
 		insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
 		insertComment("", _indent);

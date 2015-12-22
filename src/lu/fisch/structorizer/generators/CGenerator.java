@@ -48,10 +48,15 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2015.11.10      Code style option optionBlockBraceNextLine() added,
  *                                              bugfix/enhancement #22 (KGU#74 jump and return handling)
  *      Kay Gürtzig             2015.12.13		Bugfix #51 (=KGU#108): Cope with empty input and output
+ *      Kay Gürtzig             2015.12.21		Adaptations for Bugfix #41/#68/#69 (=KGU#93)
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      
+ *      2015.12.21 - Bugfix #41/#68/#69 (Kay Gürtzig)
+ *      - Operator replacement had induced unwanted padding and string literal modifications
+ *      - new subclassable method transformTokens() for all token-based replacements 
  *      
  *      2015-11-29 - enhancement #23: Sensible handling of Jump elements (break / return / exit)
  *      - return instructions and assignments to variables named "result" or like the function
@@ -225,17 +230,31 @@ public class CGenerator extends Generator {
 	}
 	// END KGU#16/#47 2015-11-30
 
-	/**
-	 * Transforms assignments in the given intermediate-language code line.
-	 * Replaces "<-" by "="
-	 * 
-	 * @param _interm
-	 *            - a code line in intermediate syntax
-	 * @return transformed string
+	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
+//	/**
+//	 * Transforms assignments in the given intermediate-language code line.
+//	 * Replaces "<-" by "="
+//	 * 
+//	 * @param _interm
+//	 *            - a code line in intermediate syntax
+//	 * @return transformed string
+//	 */
+//	@Deprecated
+//	protected String transformAssignment(String _interm) {
+//		return _interm.replace(" <- ", " = ");
+//	}
+	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
 	 */
-	protected String transformAssignment(String _interm) {
-		return _interm.replace(" <- ", " = ");
+	@Override
+	protected String transformTokens(StringList tokens)
+	{
+		tokens.replaceAll("div", "/");
+		tokens.replaceAll("<-", "=");
+		return tokens.concatenate();
 	}
+	// END KGU#93 2015-12-21
 
 	// END KGU#18/KGU#23 2015-11-01
     
@@ -251,7 +270,7 @@ public class CGenerator extends Generator {
 
 		// START KGU#72 2015-11-10: Replacement was done but ineffective
 		//_input.replace(" div ", " / ");
-		_input = _input.replace(" div ", " / ");
+		//_input = _input.replace(" div ", " / ");
 		// END KGU#72 2015-11-10
 		// START KGU#108 2015-12-13: Bugfix #51: Cope with empty input and output
 		_input = _input.replace("scanf(\"\", &)", "getchar()");

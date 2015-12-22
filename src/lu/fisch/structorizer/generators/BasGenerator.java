@@ -42,11 +42,16 @@ package lu.fisch.structorizer.generators;
  *                                          Enh. #67 (KGU#113) Line number generation considered
  *      Kay Gürtzig         2015.12.19      Bugfix #51 (KGU#108) empty input instruction
  *                                          Enh. #54 (KGU#101) multiple expressions on output
+ *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
  *
  ******************************************************************************************************
  *
  *      Comments:
  *
+ *      2015.12.21 - Bugfix #41/#68/#69 (Kay Gürtzig)
+ *      - Operator replacement had induced unwanted padding and string literal modifications
+ *      - new subclassable method transformTokens() for all token-based replacements 
+ *      
  *      2015-11-01 - Code revision / enhancements
  *      - Most of the transform stuff delegated to Element and Generator (KGU#18/KGU#23)
  *      - Enhancement #10 (KGU#3): FOR loops now provide more reliable loop parameters 
@@ -140,21 +145,48 @@ public class BasGenerator extends Generator
 		return "PRINT $1";
 	}
 
-	/**
-	 * Transforms assignments in the given intermediate-language code line.
-	 * Replaces "<-" by "="
-	 * @param _interm - a code line in intermediate syntax
-	 * @return transformed string
+	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
+//	/**
+//	 * Transforms assignments in the given intermediate-language code line.
+//	 * Replaces "<-" by "="
+//	 * @param _interm - a code line in intermediate syntax
+//	 * @return transformed string
+//	 */
+//	@Deprecated
+//	protected String transformAssignment(String _interm)
+//	{
+//		String prefix = "";
+//		if (_interm.indexOf(" <- ") >= 0 && this.optionBasicLineNumbering())	// Old-style Basic? Then better insert "LET "
+//		{
+//			prefix = "LET ";
+//		}
+//		return prefix + _interm.replace(" <- ", " = ");
+//	}
+	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
 	 */
-	protected String transformAssignment(String _interm)
+	@Override
+	protected String transformTokens(StringList tokens)
 	{
-		String prefix = "";
-		if (_interm.indexOf(" <- ") >= 0 && this.optionBasicLineNumbering())	// Old-style Basic? Then better insert "LET "
+		tokens.replaceAll("==", "=");
+		tokens.replaceAll("!=", "<>");
+		tokens.replaceAll("&&", "AND");
+		tokens.replaceAll("||", "OR");
+		tokens.replaceAll("!", "NOT");
+		tokens.replaceAll("[", "(");
+		tokens.replaceAll("]", ")");
+		tokens.replaceAll("div", "/");
+		if (tokens.contains("<-") && this.optionBasicLineNumbering())
 		{
-			prefix = "LET ";
+			// Insert a "LET" keyword but ensure a separating blank between it and the variable name
+			if (!tokens.get(0).equals(" "))	tokens.insert(" ", 0);
+			tokens.insert("LET", 0);
 		}
-		return prefix + _interm.replace(" <- ", " = ");
+		tokens.replaceAll("<-", "=");
+		return tokens.concatenate();
 	}
+	// END KGU#93 2015-12-21
 	// END KGU#18/KGU#23 2015-11-01
 	
 	// START KGU#113 2015-12-18: Enh. #67: Provide a current line number if required
@@ -238,15 +270,15 @@ public class BasGenerator extends Generator
 
 		String interm = super.transform(_input);
 		
-		// Operator translations
-		interm = interm.replace(" == ", " = ");
-		interm = interm.replace(" != ", " <> ");
-		interm = interm.replace(" && ", " AND ");
-		interm = interm.replace(" || ", " OR ");
-		interm = interm.replace(" ! ", " NOT ");
-		// START KGU 2015-12-19: In BASIC, array indices are usually encöosed by parentheses rather than brackets
-		interm = interm.replace("[", "(");
-		interm = interm.replace("]", ")");
+		// Operator translations; KGU#93: now in transformTokens() 
+//		interm = interm.replace(" == ", " = ");
+//		interm = interm.replace(" != ", " <> ");
+//		interm = interm.replace(" && ", " AND ");
+//		interm = interm.replace(" || ", " OR ");
+//		interm = interm.replace(" ! ", " NOT ");
+//		// START KGU 2015-12-19: In BASIC, array indices are usually encöosed by parentheses rather than brackets
+//		interm = interm.replace("[", "(");
+//		interm = interm.replace("]", ")");
 		// END KGU 2015-12-19
 
 		// START KGU#108 2015-12-19: Bugfix #51: Cope with empty input

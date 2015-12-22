@@ -121,7 +121,6 @@ public class TexGenerator extends Generator {
 	 * @param _interm - a code line in intermediate syntax
 	 * @return transformed string
 	 */
-    @Override
 	protected String transformAssignment(String _interm)
 	{
 		return _interm.replace("<-", "\\gets");
@@ -134,10 +133,10 @@ public class TexGenerator extends Generator {
 		//_input=BString.replace(_input,"<-","\\gets");
 		_input = transformAssignment(_input);
 		
-		// Leerzeichen - FIXME (KGU) Is this actually necessary?
+		// Leerzeichen
 		_input=BString.replace(_input," ","\\ ");
 		
-		// Umlaute
+		// Umlaute (UTF-8 -> LaTeX)
 		_input=BString.replace(_input,"\u00F6","\"o");
 		_input=BString.replace(_input,"\u00D6","\"O");
 		_input=BString.replace(_input,"\u00E4","\"a");
