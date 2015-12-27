@@ -46,10 +46,15 @@ package lu.fisch.structorizer.generators;
  *                                                 jump and return handling added (issue #22 = KGU#74)
  *      Kay Gürtzig                2015.12.12      Enh. #54 (KGU#101): Support for output expression lists
  *      Kay Gürtzig                2015.12.15      Bugfix #51 (=KGU#108): Cope with empty input and output
+ *      Kay Gürtzig                2015.12.21      Bugfix #41/#68/#69 (= KG#93)
  *
  ******************************************************************************************************
  *
  *      Comments:
+ *      
+ *      2015.12.21 - Bugfix #41/#68/#69 (Kay Gürtzig)
+ *      - Operator replacement had induced unwanted padding and string literal modifications
+ *      - new subclassable method transformTokens() for all token-based replacements 
  *      
  *      2015-11-01 - Code revision / enhancements
  *      - Most of the transform stuff delegated to Element and Generator (KGU#18/KGU#23)
@@ -193,16 +198,31 @@ public class JavaGenerator extends CGenerator
 	}
 	// END KGU#16/#47 2015-11-30
 
-	/**
-	 * Transforms assignments in the given intermediate-language code line.
-	 * Replaces "<-" by "="
-	 * @param _interm - a code line in intermediate syntax
-	 * @return transformed string
+	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
+//	/**
+//	 * Transforms assignments in the given intermediate-language code line.
+//	 * Replaces "<-" by "="
+//	 * @param _interm - a code line in intermediate syntax
+//	 * @return transformed string
+//	 */
+//	@Deprecated
+//	protected String transformAssignment(String _interm)
+//	{
+//		return _interm.replace(" <- ", " = ");
+//	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
 	 */
-	protected String transformAssignment(String _interm)
+	@Override
+	protected String transformTokens(StringList tokens)
 	{
-		return _interm.replace(" <- ", " = ");
+		tokens.replaceAll("div", "/");
+		tokens.replaceAll("<-", "=");
+		return tokens.concatenate();
 	}
+	// END KGU#93 2015-12-21
+
 	// END KGU#18/KGU#23 2015-11-01
 
 	@Override
@@ -219,7 +239,7 @@ public class JavaGenerator extends CGenerator
 		// END KGU#101 2015-12-12
 
 		// START KGU#18/KGU#23 2015-11-01: This can now be inherited
-		String s = super.transform(_input).replace(" div "," / ");
+		String s = super.transform(_input) /*.replace(" div "," / ")*/;
 		// END KGU#18/KGU#23 2015-11-01
 
 		// START KGU#108 2015-12-15: Bugfix #51: Cope with empty input and output

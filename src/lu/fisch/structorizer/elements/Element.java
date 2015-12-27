@@ -41,6 +41,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.12      Issue #25 (= KGU#80) fixed in unifyOperators, highlighting corrected
  *      Kay Gürtzig     2015.12.01      Bugfixes #39 (= KGU#91) and #41 (= KGU#92)
  *      Kay Gürtzig     2015.12.11      Enhancement #54 (KGU#101): Method splitExpressionList added
+ *      Kay Gürtzig     2015.12.21      Bugfix #41/#68/#69 (KGU#93): Method transformIntermediate revised
+ *      Kay Gürtzig     2015.12.23      Bugfix #74 (KGU#115): Pascal operators accidently disabled
+ *                                      Enh. #75 (KGU#116): Highlighting of jump keywords (orange)
  *
  ******************************************************************************************************
  *
@@ -91,10 +94,11 @@ import lu.fisch.structorizer.io.*;
 import com.stevesoft.pat.*;  //http://www.javaregex.com/
 
 import java.awt.Point;
+import java.util.Stack;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.23-05";
+	public static String E_VERSION = "3.23-07";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -746,7 +750,7 @@ public abstract class Element {
 		parts.add(_text);
 		
 		// split
-		parts=StringList.explodeWithDelimiter(parts," ");
+		parts=StringList.explodeWithDelimiter(parts," ");	// FIXME: Should we omit the delimiters here? 
 		parts=StringList.explodeWithDelimiter(parts,"\t");
 		parts=StringList.explodeWithDelimiter(parts,"\n");
 		parts=StringList.explodeWithDelimiter(parts,".");
@@ -916,47 +920,97 @@ public abstract class Element {
 	/**
 	 * Splits the _text supposed to represent a list of expressions separated by _listSeparator
 	 * into strings representing one of the listed expressions each.
-	 * This does not mean mere string splitting but is be aware of string literals, argument lists
+	 * This does not mean mere string splitting but is aware of string literals, argument lists
 	 * of function calls etc. These must not be broken.
+	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched closing parenthesis,
+	 * bracket, or the like).
+	 * The remaining string from the unsatisfied closing parenthesis, bracket, or brace on will
+	 * be ignored!
+	 * If the last result element is empty then the expression list was syntactically "clean".
 	 * @param _text - string containing one or more expressions
 	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
 	 * @return a StringList, each element of which contains one of the separated expressions (order preserved)
 	 */
 	public static StringList splitExpressionList(String _text, String _listSeparator)
+	// START KGU#93 2015-12-21 Bugfix #41/#68/#69
+	{
+		return splitExpressionList(_text, _listSeparator, false);
+	}
+	
+	/**
+	 * Splits the _text supposed to represent a list of expressions separated by _listSeparator
+	 * into strings representing one of the listed expressions each.
+	 * This does not mean mere string splitting but is aware of string literals, argument lists
+	 * of function calls etc. These must not be broken.
+	 * The analysis stops as soon as there is a level underflow (i.e. an unmatched closing parenthesis,
+	 * bracket, or the like).
+	 * The remaining string from the unsatisfied closing parenthesis, bracket, or brace on will
+	 * be added as last element to the result if _appendRemainder is true - otherwise there is no
+	 * difference to method splitExpressionList(String _text, String _listSeparator)!
+	 * If the last result element is empty then the expression list was syntactically "clean".
+	 * @param _text - string containing one or more expressions
+	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
+	 * @param _appendTail - if the remaining part of _text from the first unaccepted character on is to be added 
+	 * @return a StringList, each element of which contains one of the separated expressions (order preserved)
+	 */
+	public static StringList splitExpressionList(String _text, String _listSeparator, boolean _appendTail)
+	// END KU#93 2015-12-21
 	{
 		StringList expressionList = new StringList();
 		if (_listSeparator == null) _listSeparator = ",";
 		StringList tokens = Element.splitLexically(_text, true);
 		
 		int parenthDepth = 0;
+		boolean isWellFormed = true;
+		Stack<String> enclosings = new Stack<String>();
 		int tokenCount = tokens.count();
 		String currExpr = "";
-		for (int i = 0; i < tokenCount; i++)
+		for (int i = 0; isWellFormed && parenthDepth >= 0 && i < tokenCount; i++)
 		{
 			String token = tokens.get(i);
-			if (token.equals(_listSeparator) && parenthDepth == 0)
+			if (token.equals(_listSeparator) && enclosings.isEmpty())
 			{
 				// store the current expression and start a new one
-				expressionList.add(currExpr + "");
+				expressionList.add(currExpr.trim());
 				currExpr = new String();
 			}
 			else
 			{ 
 				if (token.equals("("))
 				{
+					enclosings.push(")");
 					parenthDepth++;
 				}
-				else if (token.equals(")") && parenthDepth > 0)
+				else if (token.equals("["))
 				{
+					enclosings.push("]");
+					parenthDepth++;
+				}
+				else if (token.equals("{"))
+				{
+					enclosings.push("}");
+					parenthDepth++;
+				}
+				else if ((token.equals(")") || token.equals("]") || token.equals("}")))
+				{
+					isWellFormed = parenthDepth > 0 && token.equals(enclosings.pop());
 					parenthDepth--;
 				}
-				currExpr += token;
+				if (isWellFormed)
+				{
+					currExpr += token;
+				}
+				else if (_appendTail)
+				{
+					expressionList.add(currExpr.trim());
+					currExpr = tokens.concatenate("", i);
+				}
 			}
 		}
 		// add the last expression if it's not empty
-		if (!currExpr.trim().isEmpty())
+		if (!currExpr.trim().isEmpty() || _appendTail)
 		{
-			expressionList.add(currExpr + "");
+			expressionList.add(currExpr.trim());
 		}
 		return expressionList;
 	}
@@ -1034,6 +1088,10 @@ public abstract class Element {
 					specialSigns.add("xor");
 					specialSigns.add("not");
 					// END KGU#24 2014-10-18
+					// START KGU#115 2015-12-23: Issue #74 - These Pascal operators hadn't been supported
+					specialSigns.add("shl");
+					specialSigns.add("shr");
+					// END KGU#115 2015-12-23
 
 					specialSigns.add("'");
 					specialSigns.add("\"");	// KGU 2015-11-12: Quotes alone will hardly occur anymore
@@ -1045,6 +1103,12 @@ public abstract class Element {
 				StringList ioSigns = new StringList();
 				ioSigns.add(D7Parser.input.trim());
 				ioSigns.add(D7Parser.output.trim());
+				// START KGU#116 2015-12-23: Enh. #75 - highlight jump keywords
+				StringList jumpSigns = new StringList();
+				jumpSigns.add(D7Parser.preLeave.trim());
+				jumpSigns.add(D7Parser.preReturn.trim());
+				jumpSigns.add(D7Parser.preExit.trim());
+				// END KGU#116 2015-12-23
 				
 				for(int i=0; i < parts.count(); i++)
 				{
@@ -1079,6 +1143,15 @@ public abstract class Element {
 							_canvas.setFont(boldFont);
 						}
 						// START KGU 2015-11-12
+						// START KGU#116 2015-12-23: Enh. #75
+						else if(jumpSigns.contains(display))
+						{
+							// set color
+							_canvas.setColor(Color.decode("0xff5511"));
+							// set font
+							_canvas.setFont(boldFont);
+						}
+						// END KGU#116 2015-12-23
 						// if it's a String or Character literal color it as such
 						else if (display.startsWith("\"") && display.endsWith("\"") ||
 								display.startsWith("'") && display.endsWith("'"))
@@ -1178,109 +1251,115 @@ public abstract class Element {
      */
     public static String unifyOperators(String _expression)
     {
-    	return unifyOperators(_expression, false);
+    	// START KGU#93 2015-12-21: Bugfix #41/#68/#69 Avoid operator padding
+    	//return unifyOperators(_expression, false);
+    	StringList tokens = Element.splitLexically(_expression, true);
+    	unifyOperators(tokens, false);
+    	return tokens.concatenate();
+    	// END KGU#93 2015-12-21
     }
     
-    // START KGU#18/KGU#23 2015-10-24 intermediate transformation added and decomposed
-    /**
-     * Converts the operator symbols accepted by Structorizer into padded Java operators
-     * (note the surrounding spaces - no double spaces will exist):
-     * - Assignment:		" <- "
-     * - Comparison*:		" == ", " < ", " > ", " <= ", " >= ", " != "
-     * - Logic*:			" && ", " || ", " ! ", " ^ "
-     * - Arithmetics*:		" div " and usual Java operators without padding (e. g. " mod " -> " % ")
-     * @param _expression an Element's text in practically unknown syntax
-     * @param _assignmentOnly if true then only assignment operator will be unified
-     * @return an equivalent of the _expression String with replaced operators
-     */
-    public static String unifyOperators(String _expression, boolean _assignmentOnly)
-    {
-    	
-        String interm = _expression.trim();	// KGU#54
-        // variable assignment
-        interm = interm.replace("<--", " §ASGN§ ");
-        interm = interm.replace("<-", " §ASGN§ ");
-        interm = interm.replace(":=", " §ASGN§ ");
-        
-        if (!_assignmentOnly)
-        {
-        	// testing
-        	interm = interm.replace("!=", " §UNEQ§ ");
-        	interm = interm.replace("==", " §EQU§ ");
-        	interm = interm.replace("<=", " §LE§ ");
-        	interm = interm.replace(">=", " §GE§ ");
-        	interm = interm.replace("<>", " §UNEQ§ ");
-        	// START KGU#92 2015-12-01: Bugfix #41
-        	interm = interm.replace("<<", " §SHL§ ");
-        	interm = interm.replace(">>", " §SHR§ ");
-        	// END KGU#92 2015-12-01
-        	interm = interm.replace("<", " < ");
-        	interm = interm.replace(">", " > ");
-        	interm = interm.replace("=", " §EQU§ ");
-
-        	// Parenthesis/bracket padding as preparation for the following replacements
-        	interm = interm.replace(")", " ) ");
-        	interm = interm.replace("(", "( ");
-        	interm = interm.replace("]", "] ");	// Do NOT pad '[' (would spoil the array detection)
-        	// arithmetics and signs
-        	interm = interm.replace("+", " +");	// Fortunately, ++ isn't accepted as working operator by the Structorizer
-        	interm = interm.replace("-", " -");	// Fortunately, -- isn't accepted as working operator by the Structorizer
-        	//interm = interm.replace(" div "," / ");	// We must still distinguish integer division
-        	interm = interm.replace(" mod ", " % ");
-        	interm = interm.replace(" MOD ", " % ");
-        	interm = interm.replace(" mod(", " % (");
-        	interm = interm.replace(" MOD(", " % (");
-        	interm = interm.replace(" div(", " div (");
-        	interm = interm.replace(" DIV ", " div ");
-        	interm = interm.replace(" DIV(", " div (");
-        	// START KGU#92 2015-12-01: Bugfix #41
-        	interm = interm.replace(" shl ", " §SHL§ ");
-        	interm = interm.replace(" shr ", " §SHR§ ");
-        	interm = interm.replace(" SHL ", " §SHL§ ");
-        	interm = interm.replace(" SHR ", " §SHR§ ");
-        	// END KGU#92 2015-12-01
-        	// Logic
-        	interm = interm.replace( "&&", " && ");
-        	interm = interm.replace( "||", " || ");
-        	interm = interm.replace( " and ", " && ");
-        	interm = interm.replace( " AND ", " && ");
-        	interm = interm.replace( " and(", " && (");
-        	interm = interm.replace( " AND(", " && (");
-        	interm = interm.replace( " or ", " || ");
-        	interm = interm.replace( " OR ", " || ");
-        	interm = interm.replace( " or(", " || (");
-        	interm = interm.replace( " OR(", " || (");
-        	interm = interm.replace( " not ", " §NOT§ ");
-        	interm = interm.replace( " NOT ", " §NOT§ ");
-        	interm = interm.replace( " not(", " §NOT§ (");
-        	interm = interm.replace( " NOT(", " §NOT§ (");
-        	String lower = interm.toLowerCase();
-        	if (lower.startsWith("not ") || lower.startsWith("not(")) {
-        		interm = " §NOT§ " + interm.substring(3);
-        	}
-        	interm = interm.replace( "!", " §NOT§ ");
-        	interm = interm.replace( " xor ", " ^ ");	// Might cause some operator preference trouble
-        	interm = interm.replace( " XOR ", " ^ ");	// Might cause some operator preference trouble
-        }
-
-        String unified = interm.replace(" §ASGN§ ", " <- ");
-        if (!_assignmentOnly)
-        {
-        	unified = unified.replace(" §EQU§ ", " == ");
-        	unified = unified.replace(" §UNEQ§ ", " != ");
-        	unified = unified.replace(" §LE§ ", " <= ");
-        	unified = unified.replace(" §GE§ ", " >= ");
-        	unified = unified.replace(" §NOT§ ", " ! ");
-        	// START KGU#92 2015-12-01: Bugfix #41
-        	unified = unified.replace(" §SHL§ ", " << ");
-        	unified = unified.replace(" §SHR§ ", " >> ");
-        	// END KGU#92 2015-12-01
-        }
-        unified = BString.replace(unified, "  ", " ");	// shrink multiple blanks
-        unified = BString.replace(unified, "  ", " ");	// do it again to catch odd-numbered blanks as well
-        
-        return unified;
-    }
+//    // START KGU#18/KGU#23 2015-10-24 intermediate transformation added and decomposed
+//    /**
+//     * Converts the operator symbols accepted by Structorizer into padded Java operators
+//     * (note the surrounding spaces - no double spaces will exist):
+//     * - Assignment:		" <- "
+//     * - Comparison*:		" == ", " < ", " > ", " <= ", " >= ", " != "
+//     * - Logic*:			" && ", " || ", " ! ", " ^ "
+//     * - Arithmetics*:		" div " and usual Java operators without padding (e. g. " mod " -> " % ")
+//     * @param _expression an Element's text in practically unknown syntax
+//     * @param _assignmentOnly if true then only assignment operator will be unified
+//     * @return an equivalent of the _expression String with replaced operators
+//     */
+//    @Deprecated
+//    public static String unifyOperators(String _expression, boolean _assignmentOnly)
+//    {
+//    	
+//        String interm = _expression.trim();	// KGU#54
+//        // variable assignment
+//        interm = interm.replace("<--", " §ASGN§ ");
+//        interm = interm.replace("<-", " §ASGN§ ");
+//        interm = interm.replace(":=", " §ASGN§ ");
+//        
+//        if (!_assignmentOnly)
+//        {
+//        	// testing
+//        	interm = interm.replace("!=", " §UNEQ§ ");
+//        	interm = interm.replace("==", " §EQU§ ");
+//        	interm = interm.replace("<=", " §LE§ ");
+//        	interm = interm.replace(">=", " §GE§ ");
+//        	interm = interm.replace("<>", " §UNEQ§ ");
+//        	// START KGU#92 2015-12-01: Bugfix #41
+//        	interm = interm.replace("<<", " §SHL§ ");
+//        	interm = interm.replace(">>", " §SHR§ ");
+//        	// END KGU#92 2015-12-01
+//        	interm = interm.replace("<", " < ");
+//        	interm = interm.replace(">", " > ");
+//        	interm = interm.replace("=", " §EQU§ ");
+//
+//        	// Parenthesis/bracket padding as preparation for the following replacements
+//        	interm = interm.replace(")", " ) ");
+//        	interm = interm.replace("(", "( ");
+//        	interm = interm.replace("]", "] ");	// Do NOT pad '[' (would spoil the array detection)
+//        	// arithmetics and signs
+//        	interm = interm.replace("+", " +");	// Fortunately, ++ isn't accepted as working operator by the Structorizer
+//        	interm = interm.replace("-", " -");	// Fortunately, -- isn't accepted as working operator by the Structorizer
+//        	//interm = interm.replace(" div "," / ");	// We must still distinguish integer division
+//        	interm = interm.replace(" mod ", " % ");
+//        	interm = interm.replace(" MOD ", " % ");
+//        	interm = interm.replace(" mod(", " % (");
+//        	interm = interm.replace(" MOD(", " % (");
+//        	interm = interm.replace(" div(", " div (");
+//        	interm = interm.replace(" DIV ", " div ");
+//        	interm = interm.replace(" DIV(", " div (");
+//        	// START KGU#92 2015-12-01: Bugfix #41
+//        	interm = interm.replace(" shl ", " §SHL§ ");
+//        	interm = interm.replace(" shr ", " §SHR§ ");
+//        	interm = interm.replace(" SHL ", " §SHL§ ");
+//        	interm = interm.replace(" SHR ", " §SHR§ ");
+//        	// END KGU#92 2015-12-01
+//        	// Logic
+//        	interm = interm.replace( "&&", " && ");
+//        	interm = interm.replace( "||", " || ");
+//        	interm = interm.replace( " and ", " && ");
+//        	interm = interm.replace( " AND ", " && ");
+//        	interm = interm.replace( " and(", " && (");
+//        	interm = interm.replace( " AND(", " && (");
+//        	interm = interm.replace( " or ", " || ");
+//        	interm = interm.replace( " OR ", " || ");
+//        	interm = interm.replace( " or(", " || (");
+//        	interm = interm.replace( " OR(", " || (");
+//        	interm = interm.replace( " not ", " §NOT§ ");
+//        	interm = interm.replace( " NOT ", " §NOT§ ");
+//        	interm = interm.replace( " not(", " §NOT§ (");
+//        	interm = interm.replace( " NOT(", " §NOT§ (");
+//        	String lower = interm.toLowerCase();
+//        	if (lower.startsWith("not ") || lower.startsWith("not(")) {
+//        		interm = " §NOT§ " + interm.substring(3);
+//        	}
+//        	interm = interm.replace( "!", " §NOT§ ");
+//        	interm = interm.replace( " xor ", " ^ ");	// Might cause some operator preference trouble
+//        	interm = interm.replace( " XOR ", " ^ ");	// Might cause some operator preference trouble
+//        }
+//
+//        String unified = interm.replace(" §ASGN§ ", " <- ");
+//        if (!_assignmentOnly)
+//        {
+//        	unified = unified.replace(" §EQU§ ", " == ");
+//        	unified = unified.replace(" §UNEQ§ ", " != ");
+//        	unified = unified.replace(" §LE§ ", " <= ");
+//        	unified = unified.replace(" §GE§ ", " >= ");
+//        	unified = unified.replace(" §NOT§ ", " ! ");
+//        	// START KGU#92 2015-12-01: Bugfix #41
+//        	unified = unified.replace(" §SHL§ ", " << ");
+//        	unified = unified.replace(" §SHR§ ", " >> ");
+//        	// END KGU#92 2015-12-01
+//        }
+//        unified = BString.replace(unified, "  ", " ");	// shrink multiple blanks
+//        unified = BString.replace(unified, "  ", " ");	// do it again to catch odd-numbered blanks as well
+//        
+//        return unified;
+//    }
 
 	// START KGU#92 2015-12-01: Bugfix #41 Okay now, here is the new approach (still a sketch)
     /**
@@ -1292,29 +1371,35 @@ public abstract class Element {
      * - Arithmetics*:		" div " and usual Java operators (e. g. " mod " -> " % ")
      * @param _tokens a tokenised line of an Element's text (in practically unknown syntax)
      * @param _assignmentOnly if true then only assignment operator will be unified
-     * @return an equivalent of the _expression String with replaced operators
+     * @return total number of deletions / replacements
      */
     public static int unifyOperators(StringList _tokens, boolean _assignmentOnly)
     {
     	int count = 0;
-        count += _tokens.replaceAll(":=", " <- ");
-        if (_assignmentOnly)
+        count += _tokens.replaceAll(":=", "<-");
+        // START KGU#115 2015-12-23: Bugfix #74 - logical inversion
+        //if (_assignmentOnly)
+        if (!_assignmentOnly)
+        // END KGU#115 2015-12-23
         {
-        	count += _tokens.replaceAll("=", " == ");
-        	count += _tokens.replaceAll("<", " < ");
-        	count += _tokens.replaceAll(">", " > ");
-        	count += _tokens.replaceAll("<=", " <= ");
-        	count += _tokens.replaceAll(">=", " >= ");
-        	count += _tokens.replaceAll("<>", " != ");
-        	count += _tokens.replaceAll("%", " % ");
-        	count += _tokens.replaceAllCi("mod", " % ");
-        	count += _tokens.replaceAllCi("div", " div ");
-        	count += _tokens.replaceAllCi("shl", " << ");
-        	count += _tokens.replaceAllCi("shr", " >> ");
-        	count += _tokens.replaceAllCi("and", " && ");
-        	count += _tokens.replaceAllCi("or", " || ");
-        	count += _tokens.replaceAllCi("not", " ! ");
-        	count += _tokens.replaceAllCi("xor", " ^ ");
+        	//count += _tokens.replaceAll("=", " == ");
+        	count += _tokens.replaceAll("=", "==");
+        	//count += _tokens.replaceAll("<", " < ");
+        	//count += _tokens.replaceAll(">", " > ");
+        	//count += _tokens.replaceAll("<=", " <= ");
+        	//count += _tokens.replaceAll(">=", " >= ");
+        	//count += _tokens.replaceAll("<>", " != ");
+        	count += _tokens.replaceAll("<>", "!=");
+        	//count += _tokens.replaceAll("%", " % ");
+        	//count += _tokens.replaceAllCi("mod", " % ");
+        	count += _tokens.replaceAllCi("mod", "%");
+        	//count += _tokens.replaceAllCi("div", " div ");
+        	count += _tokens.replaceAllCi("shl", "<<");
+        	count += _tokens.replaceAllCi("shr", ">>");
+        	count += _tokens.replaceAllCi("and", "&&");
+        	count += _tokens.replaceAllCi("or", "||");
+        	count += _tokens.replaceAllCi("not", "!");
+        	count += _tokens.replaceAllCi("xor", "^");
         }
     	return count;
     }
@@ -1352,24 +1437,28 @@ public abstract class Element {
     
     /**
      * Creates a (hopefully) lossless representation of the _text String as a
-     * line of a common intermediate language (code generation phase 1).
-     * This allows the language-specific Generator subclasses to concentrate on the translation into their
-     * target language (code generation phase 2).
+     * tokens list of a common intermediate language (code generation phase 1).
+     * This allows the language-specific Generator subclasses to concentrate
+     * on the translation into their target language (code generation phase 2).
      * Conventions of the intermediate language:
      * Operators (note the surrounding spaces - no double spaces will exist):
-     * - Assignment:		" <- "
-     * - Comparison:		" = ", " < ", " > ", " <= ", " >= ", " <> "
-     * - Logic:				" && ", " || ", " §NOT§ ", " ^ "
-     * - Arithmetics:		usual Java operators without padding
+     * - Assignment:		"<-"
+     * - Comparison:		"=", "<", ">", "<=", ">=", "<>"
+     * - Logic:				"&&", "||", "!", "^"
+     * - Arithmetics:		usual Java operators
      * - Control key words:
      * -	If, Case:		none (wiped off)
      * -	While, Repeat:	none (wiped off)
      * -	For:			unchanged
      * -	Forever:		none (wiped off)
      * 
-     * @return a padded intermediate language equivalent of the stored text
+     * @param _text - a line of the Structorizer element
+     * //@return a padded intermediate language equivalent of the stored text
+     * @return a StringList consisting of tokens translated into a unified intermediate language
      */
-    public static String transformIntermediate(String _text)
+    // START KGU#93 2015-12-21: Bugfix #41/#68/#69
+    //public static String transformIntermediate(String _text)
+    public static StringList transformIntermediate(String _text)
     {
     	//final String regexMatchers = ".?*+[](){}\\^$";
     	
@@ -1421,14 +1510,17 @@ public abstract class Element {
         			// Already padded, so just replace it everywhere
         			interm = interm.replace( marker, ""); 
         		}
-        		interm = " " + interm + " ";	// Ensure the string being padded for easier matching
+        		//interm = " " + interm + " ";	// Ensure the string being padded for easier matching
                 interm = interm.replace("  ", " ");
+                interm = interm.trim();
         		//System.out.println("transformIntermediate: " + interm);	// FIXME (KGU): Remove or deactivate after test!
         	}
         }
         
-        interm = unifyOperators(interm);
-
+        // START KGU#93 2015-12-21 Bugfix #41/#68/#69 Get rid of padding defects and string damages
+        //interm = unifyOperators(interm);
+        // END KGU#93 2015-12-21
+        
 		// START KGU 2015-11-30: Adopted from Root.getVarNames(): 
         // pascal: convert "inc" and "dec" procedures
         // (Of course we could omit it for Pascal, and for C offsprings there are more efficient translations, but this
@@ -1439,14 +1531,21 @@ public abstract class Element {
         r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); interm = r.replaceAll(interm);
         r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); interm = r.replaceAll(interm);
         // END KGU 2015-11-30
-        
-        // Reduce multiple space characters
-        interm = interm.replace("  ", " ");
-        interm = interm.replace("  ", " ");	// By repetition we eliminate the remnants of odd-number space sequences
 
-        return interm/*.trim()*/;
+        // START KGU#93 2015-12-21 Bugfix #41/#68/#69 Get rid of padding defects and string damages
+        // Reduce multiple space characters
+        //interm = interm.replace("  ", " ");
+        //interm = interm.replace("  ", " ");	// By repetition we eliminate the remnants of odd-number space sequences
+        //return interm/*.trim()*/;
+
+        StringList tokens = Element.splitLexically(interm, true);
+        unifyOperators(tokens, false);
+        
+        return tokens;
+        // END KGU#93 2015-12-21
+
     }
     
     // END KGU#18/KGU#23 2015-10-24
-       
+    
 }

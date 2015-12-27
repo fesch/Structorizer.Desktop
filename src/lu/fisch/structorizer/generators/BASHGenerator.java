@@ -36,21 +36,27 @@ package lu.fisch.structorizer.generators;
  *
  *      Revision List
  *
- *      Author					Date			Description
- *      ------					----			-----------
- *      Markus Grundner         2008.06.01		First Issue based on KSHGenerator from Jan Peter Kippel
- *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
- *      Kay Gürtzig             2014.11.16      Bugfixes in operator conversion and enhancements (see comments)
- *      Kay Gürtzig             2015.10.18      Indentation logic and comment insertion revised
- *                                              generateCode(For, String) and generateCode(Root, String) modified
- *      Kay Gürtzig             2015.11.02      transform methods re-organised (KGU#18/KGU23) using subclassing,
- *                                              Pattern list syntax in Case Elements corrected (KGU#15).
- *                                              Bugfix KGU#60 (Repeat loop was incorrectly translated).
- *      Kay Gürtzig             2015.12.19      Enh. #23 (KGU#78): Jump translation implemented
+ *      Author				Date			Description
+ *      ------				----			-----------
+ *      Markus Grundner     2008.06.01		First Issue based on KSHGenerator from Jan Peter Kippel
+ *      Bob Fisch           2011.11.07      Fixed an issue while doing replacements
+ *      Kay Gürtzig         2014.11.16      Bugfixes in operator conversion and enhancements (see comments)
+ *      Kay Gürtzig         2015.10.18      Indentation logic and comment insertion revised
+ *                                          generateCode(For, String) and generateCode(Root, String) modified
+ *      Kay Gürtzig         2015.11.02      transform methods re-organised (KGU#18/KGU23) using subclassing,
+ *                                          Pattern list syntax in Case Elements corrected (KGU#15).
+ *                                          Bugfix KGU#60 (Repeat loop was incorrectly translated).
+ *      Kay Gürtzig         2015.12.19      Enh. #23 (KGU#78): Jump translation implemented
+ *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KG#93)
+ *      Kay Gürtzig         2015.12.22      Bugfix #71 (= KG#114)
  *
  ******************************************************************************************************
  *
  *      Comment:		LGPL license (http://www.gnu.org/licenses/lgpl.html).
+ *      
+ *      2015.12.21 - Bugfix #41/#68/#69 (Kay Gürtzig)
+ *      - Operator replacement had induced unwanted padding and string literal modifications
+ *      - new subclassable method transformTokens() for all token-based replacements 
  *      
  *      2015-11-02 - Code revision / enhancements
  *      - Most of the transform stuff delegated to Element and Generator (KGU#18/KGU23)
@@ -160,18 +166,58 @@ public class BASHGenerator extends Generator {
 		return "echo $1";
 	}
 
-	/**
-	 * Transforms assignments in the given intermediate-language code line.
-	 * Replaces "<-" by "="
-	 * @param _interm - a code line in intermediate syntax
-	 * @return transformed string
+	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
+//	/**
+//	 * Transforms assignments in the given intermediate-language code line.
+//	 * Replaces "<-" by "="
+//	 * @param _interm - a code line in intermediate syntax
+//	 * @return transformed string
+//	 */
+//	protected String transformAssignment(String _interm)
+//	{
+//		return _interm.replace(" <- ", "=");
+//	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
 	 */
-	protected String transformAssignment(String _interm)
+	@Override
+	protected String transformTokens(StringList tokens)
 	{
-		return _interm.replace(" <- ", "=");
+		// FIXME (KGU): We must of course identify variable names and prefix them with $ unless being an lvalue
+		// FIXME (KGU): Further on, function calls will have to be put into brackets etc. pp.
+		tokens.replaceAll("div", "/");
+		tokens.replaceAll("<-", "=");
+		return tokens.concatenate();
 	}
+	// END KGUä93 2015-12-21
+
 	// END KGU#18/KGU#23 2015-11-01
 
+	// START KGU#101 2015-12-22: Enh. #54 - handling of multiple expressions
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transformInput(java.lang.String)
+	 */
+	@Override
+	protected String transformOutput(String _interm)
+	{
+		if (_interm.matches("^" + D7Parser.output.trim() + "[ ](.*?)"))
+		{
+			StringList expressions = 
+					Element.splitExpressionList(_interm.substring(D7Parser.output.trim().length()), ",");
+			expressions.removeAll(" ");
+			_interm = D7Parser.output.trim() + " " + expressions.getLongString();
+		}
+		
+		String transformed = super.transformOutput(_interm);
+		if (transformed.startsWith("print , "))
+		{
+			transformed = transformed.replace("print , ", "print ");
+		}
+		return transformed;
+	}
+	// END KGU#101 2015-12-22
+	
 	// START KGU#18/KGU#23 2015-11-02: Most of the stuff became obsolete by subclassing
 	protected String transform(String _input)
 	{
@@ -196,7 +242,10 @@ public class BASHGenerator extends Generator {
         } 
         // END KGU#78 2015-12-19
 
-        return _input.trim();
+        // START KGU#114 2015-12-22: Bugfix #71
+        //return _input.trim();
+        return intermed.trim();
+        // END KGU#114 2015-12-22
 	}
 	
 	protected void generateCode(Instruction _inst, String _indent) {
@@ -205,9 +254,9 @@ public class BASHGenerator extends Generator {
 			// START KGU 2014-11-16
 			insertComment(_inst, _indent);
 			// END KGU 2014-11-16
-			for(int i=0;i<_inst.getText().count();i++)
+			for(int i=0; i<_inst.getText().count(); i++)
 			{
-				code.add(_indent+transform(_inst.getText().get(i)));
+				code.add(_indent + transform(_inst.getText().get(i)));
 			}
 		}
 
@@ -378,7 +427,7 @@ public class BASHGenerator extends Generator {
 		insertComment(_root, _indent);
 		// END KGU 2014-11-16
 		String indent = _indent;
-		insertComment("(generated by Structorizer)", indent);
+		insertComment("(generated by Structorizer " + Element.E_VERSION + ")", indent);
 		
 		if( ! _root.isProgram ) {
 			// START KGU#53 2015-10-18: Shell functions get their arguments via $1, $2 etc.
