@@ -46,10 +46,15 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2015.11.02      Variable identification added, Case and
  *                                              For mechanisms improved (KGU#15, KGU#3)
  *      Kay Gürtzig             2015.12.19      Variable prefixing revised (KGU#62) in analogy to PerlGenerator
+ *      Kay Gürtzig             2015.12.21      Bugfix #41/#68/#69 (= KG#93)
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      
+ *      2015.12.21 - Bugfix #41/#68/#69 (Kay Gürtzig)
+ *      - Operator replacement had induced unwanted padding and string literal modifications
+ *      - new subclassable method transformTokens() for all token-based replacements 
  *      
  *      2015.11.02 - Enhancements and code refactoring (Kay Gürtzig)
  *      - Great bunch of transform preprocessing delegated to Generator and Elemnt, respectively
@@ -174,29 +179,26 @@ public class PHPGenerator extends Generator
 		return "echo $1";
 	}
 
-	/**
-	 * Transforms assignments in the given intermediate-language code line.
-	 * Replaces "<-" by "="
-	 * @param _interm - a code line in intermediate syntax
-	 * @return transformed string
+	// START KGU#93 2015-12-21 Bugfix #41/#68/#69
+//	/**
+//	 * Transforms assignments in the given intermediate-language code line.
+//	 * Replaces "<-" by "="
+//	 * @param _interm - a code line in intermediate syntax
+//	 * @return transformed string
+//	 */
+//	@Deprecated
+//	protected String transformAssignment(String _interm)
+//	{
+//		return _interm.replace(" <- ", " = ");
+//	}
+    
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
 	 */
-	protected String transformAssignment(String _interm)
+	@Override
+	protected String transformTokens(StringList tokens)
 	{
-		return _interm.replace(" <- ", " = ");
-	}
-	// END KGU#18/KGU#23 2015-11-01
-    
-    
-	// START KGU 2015-11-02: Had to be converted to a member method
-    //public static String transform(String _input)
-    protected String transform(String _input)
-    {
-    	_input = super.transform(_input);
-
-    	_input=BString.replace(_input," div "," / ");
-
-    	// START KGU#62 2015-11-02: Identify and adapt variable names (revised KGU 2015-12-19)
-		StringList tokens = Element.splitLexically(_input, true);
+		// START KGU#62 2015-12-19: We must work based on a lexical analysis
     	for (int i = 0; i < varNames.count(); i++)
     	{
     		String varName = varNames.get(i);
@@ -204,11 +206,38 @@ public class PHPGenerator extends Generator
     		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
     		tokens.replaceAll(varName, "$"+varName);
     	}
-    	_input = tokens.getText().replace("\n", "");
-    	// END KGU#62 2015-11-02
+		// END KGU#62 2015-12-19
+		tokens.replaceAll("div", "/");
+		tokens.replaceAll("<-", "=");
+		return tokens.concatenate();
+	}
+	// END KGU#93 2015-12-21
+    
+	// END KGU#18/KGU#23 2015-11-01
 
-    	return _input.trim();
-    }
+//	// START KGU 2015-11-02: Had to be converted to a member method
+//    //public static String transform(String _input)
+//    protected String transform(String _input)
+//    {
+//    	_input = super.transform(_input);
+//
+//    	_input=BString.replace(_input," div "," / ");
+//
+//    	// START KGU#62 2015-11-02: Identify and adapt variable names (revised KGU 2015-12-19)
+//		StringList tokens = Element.splitLexically(_input, true);
+//    	for (int i = 0; i < varNames.count(); i++)
+//    	{
+//    		String varName = varNames.get(i);
+//    		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
+//    		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
+//    		tokens.replaceAll(varName, "$"+varName);
+//    	}
+//    	_input = tokens.getText().replace("\n", "");
+//    	// END KGU#62 2015-11-02
+//
+//    	return _input.trim();
+//    }
+// END KGU#93 2015-12-21
 
     @Override
     protected void generateCode(Instruction _inst, String _indent)

@@ -40,6 +40,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2015.11.30		General preprocessing for generateCode(Root, String) (KGU#47)
  *      Bob Fisch       2015.12.10		Bugfix #51: when input identifier is alone, it was not converted
  *      Kay Gürtzig     2015.12.18		Enh #66, #67: New export options
+ *      Kay Gürtzig     2015-12-21      Bugfix #41/#68/#69 (= KGU#93) avoid padding and string literal impact
+ *      Kay Gürtzig     2015.12.22		Slight performance improvement in transform()
  *
  ******************************************************************************************************
  *
@@ -275,33 +277,62 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	{
 
 		// General operator unification and dummy keyword elimination
-		_input = Element.transformIntermediate(_input);
-
-		// assignment transformation
-		_input = transformAssignment(_input);
+		// START KGU#93 2015-12-21: Bugfix #41/#68/#69
+//		_input = Element.transformIntermediate(_input);
+//
+//		// assignment transformation
+//		_input = transformAssignment(_input);
+		
+		StringList tokens = Element.transformIntermediate(_input);
+		String transformed = transformTokens(tokens);
+		// END KGU#93 2015-12-21
 
 		if (_doInputOutput)
 		{
-			// input instruction transformation
-			_input = transformInput(_input);
-
-			// output instruction transformation
-			_input = transformOutput(_input);
+			// START KGU 2015-12-22: Avoid unnecessary transformation attempts
+			//// input instruction transformation
+			//transformed = transformInput(transformed);
+			//// output instruction transformation
+			//transformed = transformOutput(transformed);
+			if (transformed.indexOf(D7Parser.input.trim()) >= 0)
+			{
+				transformed = transformInput(transformed);
+			}
+			if (transformed.indexOf(D7Parser.output.trim()) >= 0)
+			{
+				transformed = transformOutput(transformed);
+			}
+			// END KGU 2015-12-22
 		}
 
-		return _input.trim();
+		return transformed.trim();
 	}
 	
+	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
 	/**
-	 * Transforms assignments in the given intermediate-language code line.
-	 * OVERRIDE this! (Method just returns _interm without changes)
+	 * Transforms operators and other tokens from the given intermediate
+	 * language into tokens of the target language.
+	 * OVERRIDE this! (Method just returns the reconcatentated tokens)
 	 * @param _interm - a code line in intermediate syntax
 	 * @return transformed string
 	 */
-	protected String transformAssignment(String _interm)
+	protected String transformTokens(StringList tokens)
 	{
-		return _interm;
+		return tokens.concatenate();
 	}
+	
+//	/**
+//	 * Transforms assignments in the given intermediate-language code line.
+//	 * OVERRIDE this! (Method just returns _interm without changes)
+//	 * @param _interm - a code line in intermediate syntax
+//	 * @return transformed string
+//	 */
+//	@Deprecated
+//	protected String transformAssignment(String _interm)
+//	{
+//		return _interm;
+//	}
+	// END KGU#93 2015-12-21
 	
 	// START KGU#16 2015-11-30
 	/**

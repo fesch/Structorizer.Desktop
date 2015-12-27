@@ -109,7 +109,7 @@ public class CPlusPlusGenerator extends CGenerator {
 		{
 			StringList expressions = 
 					Element.splitExpressionList(_input.substring(D7Parser.output.trim().length()), ",");
-			_input = D7Parser.output.trim() + " " + expressions.getText().replace("\n", " << ");
+			_input = D7Parser.output.trim() + " " + expressions.concatenate(" << ");
 		}
 		// END KGU#101 2015-12-11
 		

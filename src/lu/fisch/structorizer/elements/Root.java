@@ -1530,75 +1530,26 @@ public class Root extends Element {
     }
     */
             
+    /**
+     * Identifies parameter names and types of the routine and returns an array list
+     * of Param objects being name-type pairs.
+     * This is just a different aggregation of the same results getParameterNames() and
+     * getParameterTypes() would provide.
+     * @return the list of the declared parameters
+     */
     public ArrayList<Param> getParams()
     {
             ArrayList<Param> resultVars = new ArrayList<Param>();
 
-            // check root text for variable names
-            // !!
-            // !! This works only for Pascal-like syntax: functionname (<name>, <name>, ..., <name>:<type>; ...)
-            // !! or VBA like syntax: functionname(<name>, <name> as <type>; ...)
-            // !!
-            // !! This will also detect the functionname itself if the parentheses are missing (bug?)
-            // !!
-            try
+            StringList names = new StringList();
+            StringList types = new StringList();
+            
+            collectParameters(names, types);
+            
+            for (int i = 0; i < names.count(); i++)
             {
-                    if(this.isProgram==false)
-                    {
-                            String rootText = this.getText().getText();
-                            rootText = rootText.replace("var ", "");
-                            if(rootText.indexOf("(")>=0)
-                            {
-                                    rootText=rootText.substring(rootText.indexOf("(")+1).trim();
-                                    rootText=rootText.substring(0,rootText.indexOf(")")).trim();
-                            }
-
-                            StringList params = StringList.explode(rootText,";");
-                            if(params.count()>0)
-                            {
-                                    for(int i=0;i<params.count();i++)
-                                    {
-                                            String S = params.get(i);
-                                            String varType = "";
-                                            if(S.indexOf(":")>=0)
-                                            {
-                                                // retrieve types
-                                                varType=S.substring(S.indexOf(":")+1).trim();
-                                                S=S.substring(0,S.indexOf(":")).trim();
-                                            }
-// START KGU#18 2014-10-18 "as" must not be detected if it's a substring of some identifier
-//                                            if(S.indexOf("as")>=0)
-//                                            {
-//                                                    S=S.substring(0,S.indexOf("as")).trim();
-//                                            }
-                                            // Actually, a sensible approach should consider any kinds of white space and delimiters...
-                                            if(S.indexOf(" as ")>=0)
-                                            {
-                                                    S=S.substring(0,S.indexOf(" as ")).trim();
-                                            }
-// END KGU#18 2014-10-18                                            
-                                            StringList vars = StringList.explode(S,",");
-                                            for(int j=0;j<vars.count();j++)
-                                            {
-                                                    if(!vars.get(j).trim().equals(""))
-                                                    {
-                                                        //System.out.println("Adding: "+vars.get(j).trim());
-                                                        resultVars.add(new Param(vars.get(j).trim(), varType));
-                                                    }
-                                            }
-                                    }
-                            }
-                    }
+            	resultVars.add(new Param(names.get(i), types.get(i)));
             }
-            catch (Exception e)
-            {
-            }
-
-            // reverse
-            /*ArrayList<Param> reversedResultVars = new ArrayList<Param>();
-            for(int i=resultVars.size()-1; i>=0; i--)
-                reversedResultVars.add(resultVars.get(i));
-            */
             
             return resultVars;
     }    
@@ -1620,7 +1571,7 @@ public class Root extends Element {
         }
         System.out.println("- end -");
     }
-    */
+    /**/
     // END BFI 2015-12-10
     
     private String errorMsg(JLabel _label, String _rep)
@@ -2548,17 +2499,13 @@ public class Root extends Element {
     			{
     				// We assume that the last token is the procedure name, the previous strings
     				// may be the type
-    				resultType = tokens.getText(0, posOpenParenth - 1);
+    				resultType = tokens.concatenate(" ", 0, posOpenParenth - 1);
     			}
     		}
     		else if (posColon != -1)
     		{
     			// Third attempt: In case of an omitted parenthesis, the part behind the colon may be the type 
-    			resultType = tokens.getText(posColon+1);
-    		}
-    		if (resultType != null)
-    		{
-    			resultType = resultType.replace('\n', ' ').trim();
+    			resultType = tokens.concatenate(" ", posColon+1);
     		}
     	}
     	return resultType;

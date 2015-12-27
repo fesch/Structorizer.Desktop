@@ -30,27 +30,33 @@ package lu.fisch.structorizer.generators;
  *
  *      Revision List
  *
- *      Author                     Date		   Description
- *      ------			   ----		   -----------
- *      Bob Fisch                  2008.11.17      First Issue
- *      Gunter Schillebeeckx       2009.08.10      Java Generator starting from C Generator
- *      Bob Fisch                  2009.08.10      Update I/O
- *      Bob Fisch                  2009.08.17      Bugfixes (see comment)
- *      Kay Gürtzig                2010.09.10      Bugfixes and cosmetics (see comment)
- *      Bob Fisch                  2011.11.07      Fixed an issue while doing replacements
- *      Daniel Spittank            2014.02.01      Python Generator starting from Java Generator
- *      Kay Gürtzig                2014.11.16      Conversion of C-like logical operators and arcus functions (see comment)
- *      Kay Gürtzig                2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
- *      Kay Gürtzig                2015.10.18      Indentation and comment mechanisms revised, bugfix
- *      Kay Gürtzig                2015.12.12      bugfix #59 (KGU#104) with respect to ER #10
- *      Kay Gürtzig                2015.12.17      Enh. #23 (KGU#78) jump generation revised; Root generation
- *                                                 decomposed according to Generator.generateCode(Root, String);
- *                                                 Enh. KGU#47: Dummy implementation for Parallel element
+ *      Author                  Date            Description
+ *      ------					----			-----------
+ *      Bob Fisch               2008.11.17      First Issue
+ *      Gunter Schillebeeckx    2009.08.10      Java Generator starting from C Generator
+ *      Bob Fisch               2009.08.10      Update I/O
+ *      Bob Fisch               2009.08.17      Bugfixes (see comment)
+ *      Kay Gürtzig             2010.09.10      Bugfixes and cosmetics (see comment)
+ *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
+ *      Daniel Spittank         2014.02.01      Python Generator starting from Java Generator
+ *      Kay Gürtzig             2014.11.16      Conversion of C-like logical operators and arcus functions (see comment)
+ *      Kay Gürtzig             2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
+ *      Kay Gürtzig             2015.10.18      Indentation and comment mechanisms revised, bugfix
+ *      Kay Gürtzig             2015.12.12      bugfix #59 (KGU#104) with respect to ER #10
+ *      Kay Gürtzig             2015.12.17      Enh. #23 (KGU#78) jump generation revised; Root generation
+ *                                              decomposed according to Generator.generateCode(Root, String);
+ *                                              Enh. KGU#47: Dummy implementation for Parallel element
+ *      Kay Gürtzig             2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
+ *      Kay Gürtzig             2015.12.22      Bugfix #51/#54 (= KGU#108) empty input and output expression lists
  *
  ******************************************************************************************************
  *
  *      Comments:
  *
+ *      2015.12.21 - Bugfix #41/#68/#69 (Kay Gürtzig)
+ *      - Operator replacement had induced unwanted padding and string literal modifications
+ *      - new subclassable method transformTokens() for all token-based replacements 
+ *      
  *      2015.10.18 - Bugfixes and modifications (Kay Gürtzig)
  *      - Comment method signature simplified
  *      - Bugfix: The export option "export instructions as comments" had been ignored before
@@ -152,22 +158,64 @@ public class PythonGenerator extends Generator
 		 */
 		protected String getOutputReplacer()
 		{
-			return "print($1)";
+			// START KGU#108 2015-12-22: Bugfix #51, #54: Parenthesis was rather wrong (produced lists)
+			//return "print($1)";
+			return "print $1";
+			// END KGU#108 2015-12-22
 		}
 
-		/**
-		 * Transforms assignments in the given intermediate-language code line.
-		 * Replaces "<-" by "="
-		 * @param _interm - a code line in intermediate syntax
-		 * @return transformed string
-		 */
-		protected String transformAssignment(String _interm)
-		{
-			return _interm.replace(" <- ", " = ");
-		}
-		// END KGU#18/KGU#23 2015-11-01
+		// START KGU#93 2015-12-21: Bugfix #41/#68/#69
+//		/**
+//		 * Transforms assignments in the given intermediate-language code line.
+//		 * Replaces "<-" by "="
+//		 * @param _interm - a code line in intermediate syntax
+//		 * @return transformed string
+//		 */
+//		@Deprecated
+//		protected String transformAssignment(String _interm)
+//		{
+//			return _interm.replace(" <- ", " = ");
+//		}
 	    
-	// START KGU#18/KGU#23 2015-11-01: Obsolete    
+		/* (non-Javadoc)
+		 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
+		 */
+		@Override
+		protected String transformTokens(StringList tokens)
+		{
+			// START KGU 2014-11-16: C comparison operator required conversion before logical ones
+			tokens.replaceAll("!="," <> ");
+			// convert C logical operators
+			tokens.replaceAll("&&"," and ");
+			tokens.replaceAll("||"," or ");
+			tokens.replaceAll("!"," not ");
+			tokens.replaceAll("xor","^");            
+			// END KGU 2014-11-16
+			tokens.replaceAll("div", "/");
+			tokens.replaceAll("<-", "=");
+			return tokens.concatenate();
+		}
+		// END KGU#93 2015-12-21
+
+		// END KGU#18/KGU#23 2015-11-01
+
+		// START KGU#108 2015-12-22: Bugfix #51
+		/* (non-Javadoc)
+		 * @see lu.fisch.structorizer.generators.Generator#transformInput(java.lang.String)
+		 */
+		@Override
+		protected String transformInput(String _interm)
+		{
+			String transformed = super.transformInput(_interm);
+			if (transformed.startsWith(" = input("))
+			{
+				transformed = "generatedDummy" + transformed;
+			}
+			return transformed;
+		}
+		// END KGU#108 2015-12-22
+		
+		// START KGU#18/KGU#23 2015-11-01: Obsolete    
 //	    private String transform(String _input)
 		/* (non-Javadoc)
 		 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String)
@@ -180,22 +228,22 @@ public class PythonGenerator extends Generator
 
 			String s = _input;
 
-			// START KGU 2014-11-16: C comparison operator required conversion before logical ones
-			_input=BString.replace(_input,"!="," <> ");
-			// convert C logical operators
-			_input=BString.replace(_input," && "," and ");
-			_input=BString.replace(_input," || "," or ");
-			_input=BString.replace(_input," ! "," not ");
-			_input=BString.replace(_input,"&&"," and ");
-			_input=BString.replace(_input,"||"," or ");
-			_input=BString.replace(_input,"!"," not ");
-			_input=BString.replace(_input," xor "," ^ ");            
-			// END KGU 2014-11-16
-
-            // convert Pascal operators
-			_input=BString.replace(_input," div "," / ");
-
-			s = _input;
+//			// START KGU 2014-11-16: C comparison operator required conversion before logical ones
+//			_input=BString.replace(_input,"!="," <> ");
+//			// convert C logical operators
+//			_input=BString.replace(_input," && "," and ");
+//			_input=BString.replace(_input," || "," or ");
+//			_input=BString.replace(_input," ! "," not ");
+//			_input=BString.replace(_input,"&&"," and ");
+//			_input=BString.replace(_input,"||"," or ");
+//			_input=BString.replace(_input,"!"," not ");
+//			_input=BString.replace(_input," xor "," ^ ");            
+//			// END KGU 2014-11-16
+//
+//            // convert Pascal operators
+//			_input=BString.replace(_input," div "," / ");
+//
+//			s = _input;
 			// Math function
 			s=s.replace("cos(", "math.cos(");
 			s=s.replace("sin(", "math.sin(");
