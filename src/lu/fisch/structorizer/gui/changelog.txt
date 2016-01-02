@@ -11,7 +11,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.23-08 (2015.12.31)
+Current development version: 3.23-08 (2016.01.02)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
 - 02: Bugfix #51 - stand alone input/output identifier where not converted in Pascal export [IrisLuc]
 - 03: Bugfix #48 - delay propagation to Turtleizer <Kay Gürtzig>
@@ -48,6 +48,8 @@ Current development version: 3.23-08 (2015.12.31)
 - 07: Bugfix #74: Accidently disabled Pascal operators like =, <>, and, or <Kay Gürtzig>
 - 07: Enh. #75: Highlighting of Jump element keywords leave, return, exit <Kay Gürtzig> 
 - 08: Bugfix #82: Saving of NSDs with inconsistent FOR loops <Kay Gürtzig>
+- 08: Bugfix #78: Reloading an Arranger constellation could cause duplicates [elemhsb]
+- 08: Bugfix #85: Diagram heading or comment changes now undoable <Kay Gürtzig>
 
 Version 3.23 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]

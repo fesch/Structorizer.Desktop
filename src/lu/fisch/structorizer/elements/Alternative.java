@@ -37,6 +37,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy
  *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in drawing methods
+ *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *
  ******************************************************************************************************
  *
@@ -425,7 +426,27 @@ public class Alternative extends Element {
 		return ele;
 	}
 
-    /*@Override
+	// START KGU#119 2016-01-02: Bugfix #78
+	/**
+	 * Returns true iff _another is of same class, all persistent attributes are equal, and
+	 * all substructure of _another recursively equals the substructure of this. 
+	 * @param another - the Element to be compared
+	 * @return true on recursive structural equality, false else
+	 */
+	@Override
+	public boolean equals(Element _another)
+	{
+		boolean isEqual = super.equals(_another);
+		if (isEqual)
+		{
+			isEqual = this.qTrue.equals(((Alternative)_another).qTrue) &&
+					this.qFalse.equals(((Alternative)_another).qFalse);
+		}
+		return isEqual;
+	}
+	// END KGU#119 2016-01-02
+
+	/*@Override
     public void setColor(Color _color) 
     {
         super.setColor(_color);
