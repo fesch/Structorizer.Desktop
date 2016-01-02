@@ -41,10 +41,16 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2015.12.17      Bugfix KGU#111 for Enh. #63, preparations for Enh. #62 (KGU#110)
  *      Kay Gürtzig     2015.12.20      Enh. #62 (KGU#110) 1st approach: Load / save as mere file list.
  *                                      Enh. #35 (KGU#88) Usability improvement (automatic pinning)
+ *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): Avoid reloading of structurally equivalent diagrams 
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2016.01.02 (Kay Gürtzig)
+ *      - Bug #78: On (re)placing diagrams from a Structorizer Mainframe, an identity check had already
+ *        duplicate diagram presence, but on file dropping and reloading a saved arrangement (Enhancement #62),
+ *        an identity check didn't help, of course. So for these cases, a structural equivalence check had
+ *        to be used instead - the bugfix realises this by new method Root.equals(). 
  *      2015.11.18 (Kay Gürtzig)
  *      - In order to achieve scrollability, autoscroll mode (on dragging) had to be enabled, used area has
  *        to be communicated (nothing better than resetting the layout found - see adapt_layout())
@@ -73,6 +79,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
@@ -196,6 +203,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     // START KGU#110 2015-12-17: Enh. #62 - offer an opportunity to save / load an arrangement
     public int loadFiles(java.io.File[] files)
     {
+    	// We try to load as many files of the list as possible and collect the error messages
     	int nLoaded = 0;
     	String troubles = "";
     	for (int i = 0; i < files.length; i++)
@@ -231,7 +239,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
 			// END KGU#111 2015-12-17
 				Root root = parser.parse(f.toURI().toString());
 
-				root.filename=filename;
+				root.filename = filename;
 				addDiagram(root, point);
    			// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
 			}
@@ -574,7 +582,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
      * @param position - the proposed position
      */
     public void addDiagram(Root root, Point position)
-    // START KGU#110 2015-12-20: Enhancement #62 -we want to be able to use predefined positions
+    // START KGU#110 2015-12-20: Enhancement #62 - we want to be able to use predefined positions
     {
     	this.addDiagram(root, null, position);
     }    
@@ -594,7 +602,10 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     // END KGU#2 2015-11-19
     {
     	// START KGU#2 2015-11-19: Don't add a diagram that is already held here
-    	Diagram diagram = findDiagram(root);
+    	// START KGU#119 2016-01-02: Bugfix #78 - Don't reload a structurally equal diagram from file
+    	//Diagram diagram = findDiagram(root);
+    	Diagram diagram = findDiagram(root, form != null);	// If the Mainform is given, then it's not from file
+    	// END KGU#1119 2016-01-02
     	if (diagram == null) {
     	// END KGU#2 2015-11-19
     		Rect rect = getDrawingRect();
@@ -640,6 +651,14 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     		getDrawingRect();
     	// START KGU#2 2015-11-19
     	}
+    	// START KGU#119 2016-01-02: Bugfix #78 - if a position is given then move the found diagram
+    	else if (point != null)
+    	{
+    		diagram.point = point;
+    		repaint();
+    		getDrawingRect();    		
+    	}
+    	// END KGU#119 2016-01-02
     	if (form != null)
     	{
     		diagram.mainform = form;
@@ -720,7 +739,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     // START KGU#49 2015-10-18: When the window is going to be closed we have to give the diagrams a chance to store their stuff
     // FIXME (KGU): Quick-and-dirty version. More convenient should be a list view with all unsaved diagrams for checkbox selection
     /**
-     * Loops over all administered diagrams and has their respective Mainform (if still alive) save them in case they are dirty 
+     * Loops over all administered diagrams and has their respective Mainform (if still alive) saved them in case they are dirty 
      */
     public void saveDiagrams()
     {
@@ -890,14 +909,21 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     }
     
     // START KGU#2 2015-11-19: We now need a way to identify a diagram - a root should not be twice here
-    private Diagram findDiagram(Root root)
+    // START KGU#119 2016-01-02: Bugfix #78 Under certain circumstances, even the equality has to be avoided
+    //private Diagram findDiagram(Root root)
+    private Diagram findDiagram(Root root, boolean identityCheck)
+    // END KGU#119 2016-01-02
     {
     	Diagram owner = null;
     	if (this.diagrams != null) {
     		for(int d = 0; owner == null && d < this.diagrams.size(); d++)
     		{
     			Diagram diagram = this.diagrams.get(d);
-    			if (diagram.root == root)
+    			// START KGU#119 2016-01-02: Bugfix #78 When loading diagrams we ought to check for equality only
+    			//if (diagram.root == root)
+    			if (identityCheck && diagram.root == root ||
+    					!identityCheck && diagram.root.equals(root))
+       			// END KGU#119 2016-01-02
     			{
     				owner = diagram;	// Will leave the loop
     			}
@@ -915,7 +941,10 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     public void replaced(Root oldRoot, Root newRoot)
     {
     	// Try to find the appropriate diagram holding oldRoot
-    	Diagram owner = findDiagram(oldRoot);
+    	// START KGU#119 2016-01-02: Bugfix #78 - we only check for identity here, not for structural equality
+    	//Diagram owner = findDiagram(oldRoot);
+    	Diagram owner = findDiagram(oldRoot, true);
+    	// END KGU#119 2016-01-02
     	if (owner != null) {
     		oldRoot.removeUpdater(this);
     	// START KGU#88 2015-11-24: Protect the Root if diagram is pinned

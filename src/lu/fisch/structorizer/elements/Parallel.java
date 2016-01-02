@@ -38,6 +38,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.16      Method clearExecutionStatus() duly overridden.
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy()
  *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false))
+ *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *
  ******************************************************************************************************
  *
@@ -498,9 +499,9 @@ public class Parallel extends Element
             ele.qs.clear();
             for(int i=0; i<qs.size(); i++)
             {
-                    Subqueue ss = (Subqueue) ((Subqueue) this.qs.get(i)).copy();
-                    ss.parent = ele;
-                    ele.qs.add(ss);
+                    Subqueue sq = (Subqueue) ((Subqueue) this.qs.get(i)).copy();
+                    sq.parent = ele;
+                    ele.qs.add(sq);
             }
     		// START KGU#82 (bug #31) 2015-11-14
     		ele.breakpoint = this.breakpoint;
@@ -508,6 +509,25 @@ public class Parallel extends Element
 
             return ele;
     }
+
+	// START KGU#119 2016-01-02: Bugfix #78
+	/**
+	 * Returns true iff _another is of same class, all persistent attributes are equal, and
+	 * all substructure of _another recursively equals the substructure of this. 
+	 * @param another - the Element to be compared
+	 * @return true on recursive structural equality, false else
+	 */
+	@Override
+	public boolean equals(Element _another)
+	{
+		boolean isEqual = super.equals(_another) && this.qs.size() == ((Parallel)_another).qs.size();
+		for (int i = 0; isEqual && i < this.qs.size(); i++)
+		{
+			isEqual = this.qs.get(i).equals(((Parallel)_another).qs.get(i));
+		}
+		return isEqual;
+	}
+	// END KGU#119 2016-01-02
 
     // START KGU 2015-10-12
     /* (non-Javadoc)

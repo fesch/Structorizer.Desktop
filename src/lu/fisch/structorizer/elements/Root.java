@@ -48,6 +48,7 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2015.12.10      Bugfix #50 -> grep parameter types (Method getParams(...))
  *      Kay Gürtzig     2015.12.11      Bugfix #54 (KGU#102) in getVarNames(): keywords within identifiers
  *      Kay Gürtzig     2015.12.20      Bugfix #50 (KGU#112) getResultType() slightly revised
+ *      Kay Gürtzig     2016.01.02      Bugfixes #78 (KGU#119, equals()) and #85 (KGU#120, undo() etc.) 
  *
  ******************************************************************************************************
  *
@@ -711,12 +712,31 @@ public class Root extends Element {
             // END KGU#2 (#9) 2015-11-13
             return ele;
     }
-
-    public void addUndo()
-    {
-            undoList.add((Subqueue)children.copy());
-            clearRedo();
-    }
+    
+	// START KGU#119 2016-01-02: Bugfix #78
+	/**
+	 * Returns true iff _another is of same class, all persistent attributes are equal, and
+	 * all substructure of _another recursively equals the substructure of this. 
+	 * @param another - the Element to be compared
+	 * @return true on recursive structural equality, false else
+	 */
+	@Override
+	public boolean equals(Element _another)
+	{
+		return super.equals(_another) && this.children.equals(((Root)_another).children);
+	}
+	// END KGU#119 2016-01-02
+	
+	public void addUndo()
+	{
+		boolean test = this.equals(this);
+		undoList.add((Subqueue)children.copy());
+		// START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes on the stack top
+		undoList.peek().setText(this.text.copy());
+		undoList.peek().setComment(this.comment.copy());
+		// END KGU#120 2016-01-02
+		clearRedo();
+	}
 
     public boolean canUndo()
     {
@@ -744,8 +764,18 @@ public class Root extends Element {
             {
                     this.hasChanged=true;
                     redoList.add((Subqueue)children.copy());
+            		// START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes in the stack top
+            		redoList.peek().setText(this.text.copy());
+            		redoList.peek().setComment(this.comment.copy());
+            		// END KGU#120 2016-01-02
                     children = undoList.pop();
                     children.parent=this;
+            		// START KGU#120 2016-01-02: Bugfix #85 - restore my StringList attributes from stack
+            		this.setText(children.getText().copy());
+            		this.setComment(children.getComment().copy());
+            		children.text.clear();
+            		children.comment.clear();
+            		// END KGU#120 2016-01-02
             }
     }
 
@@ -755,8 +785,18 @@ public class Root extends Element {
             {
                     this.hasChanged=true;
                     undoList.add((Subqueue)children.copy());
+            		// START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes on the stack top
+            		undoList.peek().setText(this.text.copy());
+            		undoList.peek().setComment(this.comment.copy());
+            		// END KGU#120 2016-01-02
                     children = redoList.pop();
                     children.parent=this;
+            		// START KGU#120 2016-01-02: Bugfix #85 - restore my StringList attributes from the stack
+            		this.setText(children.getText().copy());
+            		this.setComment(children.getComment().copy());
+            		children.text.clear();
+            		children.comment.clear();
+            		// END KGU#120 2016-01-02
             }
     }
 
