@@ -40,7 +40,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.14      Bugfixes (#28 = KGU#80 and #31 = KGU#82) in Method copy
  *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
  *      Kay Gürtzig     2015.12.01      Bugfix #39 (=KGU#91) -> getText(false), prepareDraw() optimised
- *      Kay Gürtzig     2015.12.08      //Temporary modification in addFullText() as workaround for bug #46
+ *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *
  ******************************************************************************************************
  *
@@ -392,6 +392,20 @@ public class For extends Element implements ILoop {
 		return ele;
 	}
 	
+	// START KGU#119 2016-01-02: Bugfix #78
+	/**
+	 * Returns true iff _another is of same class, all persistent attributes are equal, and
+	 * all substructure of _another recursively equals the substructure of this. 
+	 * @param another - the Element to be compared
+	 * @return true on recursive structural equality, false else
+	 */
+	@Override
+	public boolean equals(Element _another)
+	{
+		return super.equals(_another) && this.q.equals(((For)_another).q) &&
+				this.isConsistent == ((For)_another).isConsistent;
+	}
+	// END KGU#119 2016-01-02
 	
 	// START KGU#43 2015-10-12
 	@Override
