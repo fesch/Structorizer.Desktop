@@ -39,6 +39,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
  *		Kay Gürtzig     2015.12.02      Bugfix #39 (KGU#91) -> getText(false) on drawing, constructors
  *                                      and methods setText() now ensure field text being empty
+ *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *
  ******************************************************************************************************
  *
@@ -308,6 +309,19 @@ public class Forever extends Element implements ILoop {
 		return ele;
 	}
 	
+	// START KGU#119 2016-01-02: Bugfix #78
+	/**
+	 * Returns true iff _another is of same class, all persistent attributes are equal, and
+	 * all substructure of _another recursively equals the substructure of this. 
+	 * @param another - the Element to be compared
+	 * @return true on recursive structural equality, false else
+	 */
+	@Override
+	public boolean equals(Element _another)
+	{
+		return super.equals(_another) && this.q.equals(((Forever)_another).q);
+	}
+	// END KGU#119 2016-01-02
 	
 	// START KGU#43 2015-10-12
 	@Override

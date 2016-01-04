@@ -38,6 +38,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy()
  *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
  *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false))
+ *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *
  ******************************************************************************************************
  *
@@ -281,6 +282,20 @@ public class While extends Element implements ILoop {
 		// END KGU#82 (bug #31) 2015-11-14
 		return ele;
 	}
+	
+	// START KGU#119 2016-01-02: Bugfix #78
+	/**
+	 * Returns true iff _another is of same class, all persistent attributes are equal, and
+	 * all substructure of _another recursively equals the substructure of this. 
+	 * @param another - the Element to be compared
+	 * @return true on recursive structural equality, false else
+	 */
+	@Override
+	public boolean equals(Element _another)
+	{
+		return super.equals(_another) && this.q.equals(((While)_another).q);
+	}
+	// END KGU#119 2016-01-02
 	
     /*@Override
     public void setColor(Color _color) 
