@@ -194,7 +194,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
 
-        // START KGI#85 2015-11-18
+        // START KGU#85 2015-11-18
         this.setAutoscrolls(true);
         // END KGU#85 2015-11-18
 

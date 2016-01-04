@@ -36,6 +36,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared
  *      Kay Gürtzig     2015.11.14      Bugfix #31 = KGU#82 in method copy()
  *		Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *		Kay Gürtzig     2016.01.03      Enh. #87 (KGU#122) -> getIcon()
  *
  ******************************************************************************************************
  *
@@ -107,11 +108,13 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
+import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.gui.IconLoader;
 
 public class Jump extends Instruction {
 
@@ -229,6 +232,14 @@ public class Jump extends Instruction {
 		canvas.setColor(Color.BLACK);
 		canvas.drawRect(_top_left);
 	}
+
+	// START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
+	@Override
+	protected ImageIcon getIcon()
+	{
+		return IconLoader.ico059;
+	}
+	// END KGU#122 2016-01-03
 
 	public Element copy()
 	{

@@ -35,6 +35,8 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2007.12.28      First Issue
  *      Kay Gürtzig     2015.10.12      New icons (103_breakpt, 104_nobreakpt) introduced
  *      Kay Gürtzig     2015.11.19      New Arranger icon (icoArr) introduced
+ *      Kay Gürtzig     2016.01.03/04   Enh. #87 (=KGU#123) Basic icons for NSD element types and
+ *                                      element collapsing introduced
  *
  ******************************************************************************************************
  *
@@ -106,6 +108,17 @@ public class IconLoader {
 	public static ImageIcon ico055 = getIconImage(getURI(from+"icons/055_jumpafter.png"));
 	public static ImageIcon ico056 = getIconImage(getURI(from+"icons/056_jumpbefore.png"));
 	
+	// START KGU#122 2016-01-03: Enhancement for collapsed elements
+	public static ImageIcon ico057 = getIconImage(getURI(from+"icons/057_conv_inst.png"));
+	public static ImageIcon ico058 = getIconImage(getURI(from+"icons/058_conv_call.png"));
+	public static ImageIcon ico059 = getIconImage(getURI(from+"icons/059_conv_jump.png"));
+	public static ImageIcon ico060 = getIconImage(getURI(from+"icons/060_conv_if.png"));
+	public static ImageIcon ico061 = getIconImage(getURI(from+"icons/061_conv_for.png"));
+	public static ImageIcon ico062 = getIconImage(getURI(from+"icons/062_conv_while.png"));
+	public static ImageIcon ico063 = getIconImage(getURI(from+"icons/063_conv_repeat.png"));
+	public static ImageIcon ico064 = getIconImage(getURI(from+"icons/064_conv_case.png"));
+	// END KGU#122 2016-01-03
+	
 	public static ImageIcon ico074 = getIconImage(getURI(from+"icons/074_nsd.png"));
 	public static ImageIcon ico075 = getIconImage(getURI(from+"icons/075_lu.png"));
 	public static ImageIcon ico076 = getIconImage(getURI(from+"icons/076_latex.png"));
@@ -138,6 +151,11 @@ public class IconLoader {
 	// START KGU#2 2015-11-19: Arranger icon
 	public static ImageIcon ico105 = getIconImage(getURI(from+"icons/105_arranger.png"));
 	// END KGU 2015-10-12
+	// START KGU#123 2016-01-03/04: Enh. #87
+	public static ImageIcon ico106 = getIconImage(getURI(from+"icons/106_collapse.png"));
+	public static ImageIcon ico107 = getIconImage(getURI(from+"icons/107_expand.png"));
+	public static ImageIcon ico108 = getIconImage(getURI(from+"icons/108_collapse_by_wheel.png"));
+	// END KGU#123 2016-01-03/04
 
         public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
 
@@ -192,7 +210,18 @@ public class IconLoader {
             ico055 = getIconImage(getURI(from+"icons/055_jumpafter.png"));
             ico056 = getIconImage(getURI(from+"icons/056_jumpbefore.png"));
 
-            ico074 = getIconImage(getURI(from+"icons/074_nsd.png"));
+        	// START KGU#122 2016-01-03: Enhancement for collapsed elements
+        	ico057 = getIconImage(getURI(from+"icons/057_conv_inst.png"));
+        	ico058 = getIconImage(getURI(from+"icons/058_conv_call.png"));
+        	ico059 = getIconImage(getURI(from+"icons/059_conv_jump.png"));
+        	ico060 = getIconImage(getURI(from+"icons/060_conv_if.png"));
+        	ico061 = getIconImage(getURI(from+"icons/061_conv_for.png"));
+        	ico062 = getIconImage(getURI(from+"icons/062_conv_while.png"));
+        	ico063 = getIconImage(getURI(from+"icons/063_conv_repeat.png"));
+        	ico064 = getIconImage(getURI(from+"icons/064_conv_case.png"));
+        	// END KGU#122 2016-01-03
+
+        	ico074 = getIconImage(getURI(from+"icons/074_nsd.png"));
             ico075 = getIconImage(getURI(from+"icons/075_lu.png"));
             ico076 = getIconImage(getURI(from+"icons/076_latex.png"));
             ico077 = getIconImage(getURI(from+"icons/077_bubble.png"));
@@ -218,6 +247,11 @@ public class IconLoader {
         	// START KGU#2 2015-11-19
         	ico105 = getIconImage(getURI(from+"icons/105_arranger.png"));
         	// END KGU#2 2015-11-19
+        	// START KGU#123 2016-01-03/04: Enh. #87
+        	ico106 = getIconImage(getURI(from+"icons/106_collapse.png"));
+        	ico107 = getIconImage(getURI(from+"icons/107_expand.png"));
+        	ico108 = getIconImage(getURI(from+"icons/108_collapse_by_wheel.png"));
+        	// END KGU#123 2016-01-03/04
 
             turtle = getIconImage(getURI(from+"icons/turtle.png"));
         }

@@ -43,6 +43,7 @@ package lu.fisch.structorizer.gui;
 
 import java.awt.Color;
 import java.awt.FontMetrics;
+import java.util.Iterator;
 
 import lu.fisch.graphics.Canvas;
 import lu.fisch.graphics.Rect;
@@ -360,6 +361,17 @@ public class SelectedSequence extends Element implements IElementSequence {
 			((Subqueue)parent).getElement(i).selected = _sel;
 		}
 	}
+
+	// START KGU#123 2016-01-03: We need a collective collapsing/expansion now
+	@Override
+    public void setCollapsed(boolean collapsed) {
+        super.setCollapsed(false);	// the Subqueue itself will never be collapsed
+		for (int i = firstIndex; i <= lastIndex; i++)
+        {
+			((Subqueue)parent).getElement(i).setCollapsed(collapsed);
+        }
+    }
+	// END KGU#123 2016-01-03
 
 	@Override
 	public void addElement(Element _element) {
