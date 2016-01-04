@@ -41,6 +41,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
  *      Kay Gürtzig     2015.12.01      Bugfix #39 (=KGU#91) -> getText(false), prepareDraw() optimised
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
  *
  ******************************************************************************************************
  *
@@ -53,9 +54,12 @@ import java.awt.Color;
 import java.awt.FontMetrics;
 import java.util.regex.Matcher;
 
+import javax.swing.ImageIcon;
+
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.generators.Generator;
+import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.*;
 
@@ -352,16 +356,35 @@ public class For extends Element implements ILoop {
 		// END KGU 2015-10-12
 	}
 	
+	// START KGU#122 2016-01-03: Enh. #87 - Collapsed elements may be marked with an element-specific icon
+	@Override
+	protected ImageIcon getIcon()
+	{
+		if (Element.E_DIN)
+		{
+			return IconLoader.ico062;
+		}
+		return IconLoader.ico061;
+	}
+	// END KGU#122 2016-01-03
+
 	@Override
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
 		Element selMe = super.getElementByCoord(_x, _y, _forSelection);
-		Element sel = q.getElementByCoord(_x, _y, _forSelection);
-		if(sel!=null) 
+		// START KGU#121 2016-01-03: Bugfix #87 - A collapsed element has no visible substructure!
+		if (!this.isCollapsed())
 		{
-			if (_forSelection) selected=false;
-			selMe = sel;
+		// END KGU#121 2016-01-03
+			Element sel = q.getElementByCoord(_x, _y, _forSelection);
+			if(sel!=null) 
+			{
+				if (_forSelection) selected=false;
+				selMe = sel;
+			}
+		// START KGU#121 2016-01-03: Bugfix #87 (continued)
 		}
+		// END KGU#121 2016-01-03
 		
 		return selMe;
 	}

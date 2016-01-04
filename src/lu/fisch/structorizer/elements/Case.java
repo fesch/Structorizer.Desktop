@@ -38,6 +38,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy
  *      Kay Gürtzig     2015.11.14      Bugfix #39 (= KGU#91) in method draw()
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
  *
  ******************************************************************************************************
  *
@@ -49,7 +50,10 @@ import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
 
+import javax.swing.ImageIcon;
+
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
 
@@ -524,7 +528,15 @@ public class Case extends Element
             canvas.drawRect(_top_left);
     }
 
-	// START KGU 2015-10-09: On moving the cursor, substructures had been eclipsed
+    // START KGU#122 2016-01-03: Enh. #87 - Collapsed elements may be marked with an element-specific icon
+    @Override
+    protected ImageIcon getIcon()
+    {
+    	return IconLoader.ico057;
+    }
+    // END KGU#122 2016-01-03
+
+    // START KGU 2015-10-09: On moving the cursor, substructures had been eclipsed
 	// by their containing box wrt. comment popping etc. This correction, however,
 	// might significantly slow down the mouse tracking on enabled comment popping.
     // Just give it a try... 
@@ -555,22 +567,29 @@ public class Case extends Element
     public Element getElementByCoord(int _x, int _y, boolean _forSelection)
     {
     	Element selMe = super.getElementByCoord(_x, _y, _forSelection);
-    	Element selCh = null;
+		// START KGU#121 2016-01-03: Bugfix #87 - A collapsed element has no visible substructure!
+		if (!this.isCollapsed())
+		{
+		// END KGU#121 2016-01-03
+			Element selCh = null;
 
-    	for(int i = 0; i<qs.size(); i++)
-    	{
-    		Element pre = ((Subqueue) qs.get(i)).getElementByCoord(_x,_y, _forSelection);
-    		if(pre!=null)
-    		{
-    			selCh = pre;
-    		}
-    	}
+			for(int i = 0; i<qs.size(); i++)
+			{
+				Element pre = ((Subqueue) qs.get(i)).getElementByCoord(_x,_y, _forSelection);
+				if(pre!=null)
+				{
+					selCh = pre;
+				}
+			}
 
-    	if(selCh!=null)
-    	{
-    		if (_forSelection) selected = false;
-    		selMe = selCh;
-    	}
+			if(selCh!=null)
+			{
+				if (_forSelection) selected = false;
+				selMe = selCh;
+			}
+		// START KGU#121 2016-01-03: Bugfix #87 (continued)
+		}
+		// END KGU#121 2016-01-03
 
     	return selMe;
     }

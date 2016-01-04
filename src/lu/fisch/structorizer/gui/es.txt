@@ -38,6 +38,7 @@
  *      Kay Gürtzig     2015.11.22  Additions for InputBoxFor, Analyser, and AnalyserPreferences
  *      Kay Gürtzig     2015.11.30  Further additions for Analyser and AnalyserPreferences
  *      Kay Gürtzig     2015.12.18  New messages for ExportOptionDialoge
+ *      Kay Gürtzig 	2016.01.04  Enh. #87: New messages for collapsing / expanding elements
  *
  ******************************************************************************************************
  *
@@ -109,6 +110,8 @@ Menu.menuDiagramEdit.text=Editar
 Menu.menuDiagramDelete.text=Borrar
 Menu.menuDiagramMoveUp.text=Desplazar arriba
 Menu.menuDiagramMoveDown.text=Desplazar abajo
+Menu.menuDiagramCollapse.text=Reducir
+Menu.menuDiagramExpand.text=Expandir
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Main
 Menu.menuDiagramTypeFunction.text=Sub
@@ -118,6 +121,7 @@ Menu.menuDiagramSwitchComments.text=Intercambiar textos/comentarios?
 Menu.menuDiagramMarker.text=Resaltar variables?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Comprobar diagrama?
+Menu.menuDiagramWheel.text=Usar rueda para reducir?
 // Menu "Help"
 Menu.menuPreferences.text=Preferencias
 // Submenu of "Help"
@@ -276,6 +280,9 @@ Editor.btnColor6.tooltip=Colorear el elemento seleccionado con este color.
 Editor.btnColor7.tooltip=Colorear el elemento seleccionado con este color.
 Editor.btnColor8.tooltip=Colorear el elemento seleccionado con este color.
 Editor.btnColor9.tooltip=Colorear el elemento seleccionado con este color.
+// collapsing
+Editor.btnCollapse.tooltip=Reducir el elemento seleccionado.
+Editor.btnExpand.tooltip=Expandir el elemento seleccionado.
 // turtleizer & executor
 Editor.btnTurtle.tooltip=Abrir Turtleizer ...
 Editor.btnMake.tooltip=Activar Control de Ejecución ...
@@ -316,6 +323,9 @@ Editor.popupEdit.text=Editar
 Editor.popupDelete.text=Borrar
 Editor.popupMoveUp.text=Desplazar Arriba
 Editor.popupMoveDown.text=Desplazar Abajo
+// Collapsing
+Editor.popupCollapse.text=Reducir
+Editor.popupExpand.text=Expandir
 // Breakpoint
 Editor.popupBreakpoint.text=Poner/eliminar breakpoint
 

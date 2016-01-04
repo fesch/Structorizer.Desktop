@@ -35,7 +35,9 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2007.12.09      First Issue
  *      Kay Gürtzig     2015.10.11/13   Comment drawing unified, breakpoints supported, colouring modified
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy
- *		Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *      Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *      Kay Gürtzig     2016-01-03      Bugfix #87 (KGU#124) collapsing of larger instruction elements,
+ *                                      Enh. #87 (KGU#122) marking of collapsed elements with icon
  *
  ******************************************************************************************************
  *
@@ -48,6 +50,7 @@ import java.awt.Color;
 import java.awt.FontMetrics;
 
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
 public class Instruction extends Element {
@@ -123,8 +126,19 @@ public class Instruction extends Element {
                 rect.bottom=2*Math.round(Element.E_PADDING/2)+text.count()*fm.getHeight();
 		
 		return rect;*/
-                rect = prepareDraw(_canvas, getText(false), this);
-                return rect;
+		
+		// START KGU#124 2016-01-03: Large instructions should also be actually collapsed
+        //rect = prepareDraw(_canvas, getText(false), this);
+        if (isCollapsed() && getText(false).count() > 2) 
+        {
+        	rect = prepareDraw(_canvas, getCollapsedText(), this);
+        }
+        else
+        {
+            rect = prepareDraw(_canvas, getText(false), this);
+        }
+        // END KGU#124 2016-01-03
+        return rect;
 	}
 
 	public static void draw(Canvas _canvas, Rect _top_left, StringList _text, Element _element)
@@ -193,6 +207,13 @@ public class Instruction extends Element {
 		}
 		canvas.setColor(Color.BLACK);
 		canvas.drawRect(_top_left);
+		// START KGU#122 2016-01-03: Enh. #87 - A collapsed element is to be marked by the type-specific symbol,
+		// unless it's an Instruction offspring in which case it will keep its original style, anyway.
+		if (_element.isCollapsed() && !(_element instanceof Instruction))
+		{
+			canvas.draw(_element.getIcon().getImage(), _top_left.left, _top_left.top);
+		}
+		// END KGU#122 2016-01-03
 	}
                 
 	public void draw(Canvas _canvas, Rect _top_left)
@@ -200,7 +221,17 @@ public class Instruction extends Element {
 		// Now delegates all stuff to the static method above, which may also
 		// be called from Elements of different types when those are collapsed
 		
-		draw(_canvas, _top_left, getText(false), this);
+		// START KGU#124 2016-01-03: Large instructions should also be actually collapsed
+        //draw(_canvas, _top_left, getText(false), this);
+        if (isCollapsed() && getText(false).count() > 2) 
+        {
+        	draw(_canvas, _top_left, getCollapsedText(), this);
+        }
+        else
+        {
+            draw(_canvas, _top_left, getText(false), this);
+        }
+        // END KGU#124 2016-01-03
 	}
 	
 	public Element copy()

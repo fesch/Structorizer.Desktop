@@ -35,6 +35,7 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2007.12.28      First Issue
  *      Kay Gürtzig     2015.10.12      control elements for breakpoint handling added (KGU#43). 
  *      Kay Gürtzig     2015.11.22      Adaptations for handling selected non-empty Subqueues (KGU#87)
+ *      Kay Gürtzig     2016.01.04      Enh. #87: New buttons and menu items for collapsing/expanding elements
  *
  ******************************************************************************************************
  *
@@ -44,14 +45,11 @@ package lu.fisch.structorizer.gui;
 
 
 import com.kobrix.notebook.gui.AKDockLayout;
+
 import java.awt.*;
 import java.awt.event.*;
 
-
-
 import javax.swing.*;
-
-//import sun.awt.image.codec.JPEGImageEncoderImpl;
 
 import lu.fisch.structorizer.elements.*;
 
@@ -119,7 +117,12 @@ public class Editor extends JPanel implements NSDController, ComponentListener
     protected JButton btnEdit = new JButton(IconLoader.ico006); 
     protected JButton btnDelete = new JButton(IconLoader.ico005); 
     protected JButton btnMoveUp = new JButton(IconLoader.ico019); 
-    protected JButton btnMoveDown = new JButton(IconLoader.ico020); 
+    protected JButton btnMoveDown = new JButton(IconLoader.ico020);
+    // collapsing & expanding
+    // START KGU#123 2016-01-04: Enh. #87 - Preparations for Fix #65
+    protected JButton btnCollapse = new JButton(IconLoader.ico106); 
+    protected JButton btnExpand = new JButton(IconLoader.ico107);    
+    // END KGU#123 2016-01-04
 	// printing
     protected JButton btnPrint = new JButton(IconLoader.ico041);
     // START KGU#2 2015-11-19: Arranger launch added
@@ -186,6 +189,10 @@ public class Editor extends JPanel implements NSDController, ComponentListener
     protected JMenuItem popupDelete = new JMenuItem("Delete",IconLoader.ico005);
     protected JMenuItem popupMoveUp = new JMenuItem("Move up",IconLoader.ico019);
     protected JMenuItem popupMoveDown = new JMenuItem("Move down",IconLoader.ico020);
+    // START KGU#123 2016-01-04: Enh. #87 - Preparations for Fix #65
+    protected JMenuItem popupCollapse = new JMenuItem("Collapse", IconLoader.ico106); 
+    protected JMenuItem popupExpand = new JMenuItem("Expand", IconLoader.ico107);    
+    // END KGU#123 2016-01-04
     // START KGU#43 2015-10-12: Breakpoint toggle
     protected JMenuItem popupBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
     // END KGU#43 2015-10-12
@@ -304,7 +311,17 @@ public class Editor extends JPanel implements NSDController, ComponentListener
         popup.add(popupMoveDown);
         popupMoveDown.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.moveDownNSD(); doButtons(); } } );
         
-        // START KGU#43 2015-10-12 Add a possibility to set or unset a checkpoint on the selected Element
+		// START KGU#123 2016-01-03: Enh. #87 - New menu items (addressing Bug #65)
+		popup.addSeparator();
+
+		popup.add(popupCollapse);
+		popupCollapse.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.collapseNSD(); doButtons(); } } );
+
+		popup.add(popupExpand);
+		popupExpand.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.expandNSD(); doButtons(); } } );
+		// END KGU#123 2016-01-03
+
+		// START KGU#43 2015-10-12 Add a possibility to set or unset a checkpoint on the selected Element
         popup.addSeparator();
 
         popup.add(popupBreakpoint);
@@ -512,6 +529,19 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		btnColor8.setFocusable(false);
 		btnColor9.setFocusable(false);
 
+		// START KGU#123 2016-01-04: Enh. #87 - Preparation for fix #65
+		toolbar=newToolBar("Collapsing");
+
+		// Collapse & Expand
+		//toolbar.addSeparator();
+        toolbar.add(btnCollapse);
+		btnCollapse.setFocusable(false);
+		btnCollapse.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.collapseNSD(); } } );
+        toolbar.add(btnExpand);
+		btnExpand.setFocusable(false);
+		btnExpand.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.expandNSD(); } } );
+		// END KGU#123 2016-01-04
+
 		toolbar=newToolBar("About");
 
 		// About
@@ -684,6 +714,12 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		btnColor8.setEnabled(condition);
 		btnColor9.setEnabled(condition);
 		
+		// START KGU#123 2016-01-03: Enh. #87 - We allow multiple selection for collapsing
+		// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
+		btnCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
+		btnExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
+		// END KGU#123 2016-01-03
+
 		// editing
 		// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
 		//btnEdit.setEnabled(conditionAny);
@@ -700,6 +736,12 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		popupMoveUp.setEnabled(conditionCanMoveUp);
 		popupMoveDown.setEnabled(conditionCanMoveDown);
 		
+		// START KGU#123 2016-01-03: Enh. #87 - We allow multiple selection for collapsing
+		// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
+		popupCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
+		popupExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
+		// END KGU#123 2016-01-03
+
 		// executor
 		popupBreakpoint.setEnabled(diagram.canCutCopy());	// KGU 2015-10-12: added
 		

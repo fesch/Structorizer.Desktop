@@ -39,6 +39,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy()
  *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false))
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(),
+ *                                      method getCollapsedText() overridden for more clarity, getIcon()
  *
  ******************************************************************************************************
  *
@@ -50,9 +52,11 @@ import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
 
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
 
@@ -86,6 +90,16 @@ public class Parallel extends Element
 		return getComment();
 	}
     // END KGU#91 2015-12-01
+    
+    // START KGU#122 2016-01-04: Add the Class name (or some localized text?) to the number of threads
+    @Override
+	public StringList getCollapsedText()
+	{
+		StringList sl = super.getCollapsedText();
+		sl.set(0, getClass().getSimpleName() + "(" + sl.get(0) + ")");
+		return sl;
+	}
+    // END KGU#122 2016-01-04
 
     @Override
     public void setText(String _text)
@@ -430,6 +444,14 @@ public class Parallel extends Element
             canvas.drawRect(_top_left);
     }
 
+    // START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
+    @Override
+    protected ImageIcon getIcon()
+    {
+    	return IconLoader.ico091;
+    }
+    // END KGU#122 2016-01-03
+
     // START KGU 2015-10-11: Merged with getElementByCoord, which had to be overridden as well for proper Comment popping
 //    @Override
 //    public Element selectElementByCoord(int _x, int _y)
@@ -458,22 +480,29 @@ public class Parallel extends Element
     public Element getElementByCoord(int _x, int _y, boolean _forSelection)
     {
             Element selMe = super.getElementByCoord(_x, _y, _forSelection);
-            Element selCh = null;
+    		// START KGU#121 2016-01-03: A collapsed element has no visible substructure!
+    		if (!this.isCollapsed())
+    		{
+    		// END KGU#121 2016-01-03
+    			Element selCh = null;
 
-            for(int i = 0; i < qs.size(); i++)
-            {
-                    Element pre = qs.get(i).getElementByCoord(_x, _y, _forSelection);
-                    if(pre!=null)
-                    {
-                            selCh = pre;
-                    }
-            }
+    			for(int i = 0; i < qs.size(); i++)
+    			{
+    				Element pre = qs.get(i).getElementByCoord(_x, _y, _forSelection);
+    				if (pre!=null)
+    				{
+    					selCh = pre;
+    				}
+    			}
 
-            if(selCh!=null)
-            {
-                    if (_forSelection) selected = false;
-                    selMe = selCh;
-            }
+    			if (selCh!=null)
+    			{
+    				if (_forSelection) selected = false;
+    				selMe = selCh;
+    			}
+    		// START KGU#121 2016-01-03: A collapsed element has no visible substructure!
+    		}
+    		// END KGU#121 2016-01-03
 
             return selMe;
     }

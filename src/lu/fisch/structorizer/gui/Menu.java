@@ -1,4 +1,4 @@
-/*
+﻿/*
     Structorizer
     A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
 
@@ -36,7 +36,10 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2008.04.12      Adapted for Generator plugin
  *      Kay Gürtzig     2015.11.03      Additions for FOR loop enhancement (KGU#3)
  *      Kay Gürtzig     2015.11.22      Adaptations for handling selected non-empty Subqueues (KGU#87)
- *      Kay Gürtzig     2015.11.25      New error labels error13_3 (KGU#78) and error15 (KGU#2) added
+ *      Kay Gürtzig     2015.11.25      Error labels error13_3 (KGU#78), error15 (KGU#2), and error_16_x added
+ *      Kay Gürtzig     2015.11.26      New error label error14_3 (KGU#3) added
+ *      Kay Gürtzig     2015.11.28      New error label error17 (KGU#47) added
+ *      Kay Gürtzig     2016.01.03/04   Enh. #87: New menu items and buttons for collapsing/expanding 
  *
  ******************************************************************************************************
  *
@@ -149,6 +152,10 @@ public class Menu extends JMenuBar implements NSDController
 	protected JMenuItem menuDiagramDelete = new JMenuItem("Delete",IconLoader.ico005);
 	protected JMenuItem menuDiagramMoveUp = new JMenuItem("Move up",IconLoader.ico019);
 	protected JMenuItem menuDiagramMoveDown = new JMenuItem("Move down",IconLoader.ico020);
+	// START KGU#123 2016-01-03: New menu items for collapsing/expanding (addresses #65)
+	protected JMenuItem menuDiagramCollapse = new JMenuItem("Collapse", IconLoader.ico106);
+	protected JMenuItem menuDiagramExpand = new JMenuItem("Expand", IconLoader.ico107);
+	// END KGU#123 2016-01-03
 
 	protected JMenu menuDiagramType = new JMenu("Type");
 	protected JCheckBoxMenuItem menuDiagramTypeProgram = new JCheckBoxMenuItem("Main",IconLoader.ico022);
@@ -159,6 +166,9 @@ public class Menu extends JMenuBar implements NSDController
 	protected JCheckBoxMenuItem menuDiagramDIN = new JCheckBoxMenuItem("DIN?",IconLoader.ico082);
 	protected JCheckBoxMenuItem menuDiagramAnalyser = new JCheckBoxMenuItem("Analyse structogram?",IconLoader.ico083);
 	protected JCheckBoxMenuItem menuDiagramSwitchComments = new JCheckBoxMenuItem("Switch text/comments?",IconLoader.ico102);
+	// START KGU#123 2016-01-04: Enh. #87
+	protected JCheckBoxMenuItem menuDiagramWheel = new JCheckBoxMenuItem("Mouse wheel for collapsing?",IconLoader.ico108);
+	// END KGU#123 2016-01-04
 
 	// Menu "Help"
 	protected JMenu menuPreferences = new JMenu("Preferences");
@@ -503,6 +513,18 @@ public class Menu extends JMenuBar implements NSDController
 
 		menuDiagram.addSeparator();
 
+		// START KGU#123 2016-01-03: New menu items (addressing #65)
+		menuDiagram.add(menuDiagramCollapse);
+		menuDiagramCollapse.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, 0));
+		menuDiagramCollapse.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.collapseNSD(); doButtons(); } } );
+
+		menuDiagram.add(menuDiagramExpand);
+		menuDiagramExpand.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0));
+		menuDiagramExpand.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.expandNSD(); doButtons(); } } );
+
+		menuDiagram.addSeparator();
+		// END KGU#123 2016-01-03
+
 		menuDiagram.add(menuDiagramType);
 
 		menuDiagramType.add(menuDiagramTypeProgram);
@@ -530,6 +552,11 @@ public class Menu extends JMenuBar implements NSDController
 		menuDiagram.add(menuDiagramAnalyser);
 		menuDiagramAnalyser.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleAnalyser(); doButtons(); } } );
 		menuDiagramAnalyser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0));
+		
+		// START KGU#123 2016-01-04: Enh. #87
+		menuDiagram.add(menuDiagramWheel);
+		menuDiagramWheel.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleWheelMode(); doButtons(); } } );
+		// END KGU#123 2016-01-04
 
 		// Setting up Menu "Preferences" with all submenus and shortcuts and actions
 		menubar.add(menuPreferences);
@@ -799,6 +826,12 @@ public class Menu extends JMenuBar implements NSDController
 			menuDiagramDelete.setEnabled(diagram.canCutCopy());
 			menuDiagramMoveUp.setEnabled(conditionCanMoveUp);
 			menuDiagramMoveDown.setEnabled(conditionCanMoveDown);
+			
+			// START KGU#123 2016-01-03: We allow multiple selection for collapsing
+			// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
+			menuDiagramCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
+			menuDiagramExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
+			// END KGU#123 2016-01-03
 
 			// copy & paste
 			menuEditCopy.setEnabled(diagram.canCutCopy());
@@ -808,17 +841,16 @@ public class Menu extends JMenuBar implements NSDController
 			// nice
 			menuDiagramNice.setSelected(diagram.isNice());
 
-			// comments?
+			// show comments?
 			menuDiagramComment.setSelected(diagram.drawComments());
 
-			// variable hightlighting
+			// variable highlighting
 			menuDiagramMarker.setSelected(diagram.getRoot().hightlightVars);
 
+			// swap texts against comments?
 			menuDiagramSwitchComments.setSelected(Element.E_TOGGLETC);
-                        
-                        
-			// din
-			menuDiagramDIN.setSelected(Element.E_DIN);
+
+			// DIN 66261			menuDiagramDIN.setSelected(Element.E_DIN);
 			if(Element.E_DIN==true)
 			{
 				menuDiagramAddBeforeFor.setIcon(IconLoader.ico010);
@@ -829,6 +861,11 @@ public class Menu extends JMenuBar implements NSDController
 				menuDiagramAddBeforeFor.setIcon(IconLoader.ico009);
 				menuDiagramAddAfterFor.setIcon(IconLoader.ico014);
 			}
+			
+			// START KGU#123 2016-01-04: Enh. #87
+			// control the collapsing by mouse wheel?
+			menuDiagramWheel.setSelected(diagram.getWheelCollapses());
+			// END KGU#123 2016-01-04
 
 			// Look and Feel submenu
 			//System.out.println("Having: "+UIManager.getLookAndFeel().getName());

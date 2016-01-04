@@ -45,6 +45,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.12.23      Bugfix #74 (KGU#115): Pascal operators accidently disabled
  *                                      Enh. #75 (KGU#116): Highlighting of jump keywords (orange)
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016.01.03/04   Enh. #87 for collapsing/expanding (KGU#122/KGU#123)
  *
  ******************************************************************************************************
  *
@@ -89,7 +90,7 @@ import java.awt.Font;
 import lu.fisch.utils.*;
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.parsers.*;
-import lu.fisch.structorizer.generators.Generator;
+import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.io.*;
 
 import com.stevesoft.pat.*;  //http://www.javaregex.com/
@@ -97,9 +98,11 @@ import com.stevesoft.pat.*;  //http://www.javaregex.com/
 import java.awt.Point;
 import java.util.Stack;
 
+import javax.swing.ImageIcon;
+
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.23-08";
+	public static String E_VERSION = "3.23-09";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -178,7 +181,7 @@ public abstract class Element {
 	// some static constants
 	protected static int E_PADDING = 20;
 	static int E_INDENT = 2;
-	public static Color E_DRAWCOLOR = Color.YELLOW;
+	public static Color E_DRAWCOLOR = Color.YELLOW;	// Actually, the background colour for selected elements
 	public static Color E_COLLAPSEDCOLOR = Color.LIGHT_GRAY;
 	// START KGU#41 2015-10-13: Executing status now independent from selection
 	public static Color E_RUNNINGCOLOR = Color.ORANGE;		// used for Elements currently (to be) executed 
@@ -188,11 +191,14 @@ public abstract class Element {
 	// START KGU#43 2015-10-11: New fix color for breakpoint marking
 	static Color E_BREAKPOINTCOLOR = Color.RED;				// Colour of the breakpoint bar at element top
 	// END KGU#43 2015-10-11
-	public static boolean E_VARHIGHLIGHT = false;
-	public static boolean E_SHOWCOMMENTS = true;
-	public static boolean E_TOGGLETC = false;
-	public static boolean E_DIN = false;
-	public static boolean E_ANALYSER = true;
+	public static boolean E_VARHIGHLIGHT = false;	// Highlight variables, operators, string literals, and certain keywords? 
+	public static boolean E_SHOWCOMMENTS = true;	// Enable comment bars and comment popups? 
+	public static boolean E_TOGGLETC = false;		// Swap text and comment on displaying?
+	public static boolean E_DIN = false;			// Show FOR loops according to DIN 66261?
+	public static boolean E_ANALYSER = true;		// Analyser enabled?
+	// START KGU#123 2016-01-04: New toggle for Enh. #87
+	public static boolean E_WHEELCOLLAPSE = false;	// Is collapsing by mouse wheel rotation enabled?
+	// END KGU#123 2016-01-04
 
 	// some colors
 	public static Color color0 = Color.decode("0xFFFFFF");
@@ -476,6 +482,8 @@ public abstract class Element {
 			return Element.E_DRAWCOLOR;
 		}
 		else if (this.collapsed) {
+			// NOTE: If the backround colour for collapsed elements should once be discarded, then
+			// for Instruction subclasses the icon is to be activated in Instruction.draw() 
 			return Element.E_COLLAPSEDCOLOR;
 		}
 		return getColor();
@@ -1222,6 +1230,13 @@ public abstract class Element {
     public void setCollapsed(boolean collapsed) {
         this.collapsed = collapsed;
     }
+    
+    // START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
+    protected ImageIcon getIcon()
+    {
+    	return IconLoader.ico057;
+    }
+    // END KGU#122 2016-01-03
 
     // START KGU 2015-10-16: Some Root stuff properly delegated to the Element subclasses
     // (The obvious disadvantage is slightly reduced performance, of course)

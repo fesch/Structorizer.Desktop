@@ -46,6 +46,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.12.04      Bugfix #40 (KGU#94): With an error on saving, the recent file was destroyed
  *      Kay Gürtzig     2015.12.16      Bugfix #63 (KGU#111): Error message on loading failure
  *      Kay Gürtzig     2016.01.02      Bugfix #85 (KGU#120): Root changes are also subject to undoing/redoing
+ *      Kay Gürtzig     2016.01.03      Issue #65 (KGU#123): Collapsing/expanding from menu, autoscroll enabled 
  *
  ******************************************************************************************************
  *
@@ -212,10 +213,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 		this.addMouseListener(this);
 		this.addMouseMotionListener(this);
-		this.addMouseWheelListener(this);
+		// START KGU#123 2016-01-04: Enh. #87, Bugfix #65
+		//this.addMouseWheelListener(this);
+		if (Element.E_WHEELCOLLAPSE)
+		{
+			this.addMouseWheelListener(this);
+		}
+		// END KGU#123 2016-01-04
 
-
-		new  FileDrop( this, new FileDrop.Listener()
+		new FileDrop( this, new FileDrop.Listener()
 								{
 									public void  filesDropped( java.io.File[] files )
 									{
@@ -278,7 +284,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 		root.setText(StringList.getNew(_string));
 
-		// popup for comment
+        // START KGU#123 2016-01-04: Issue #65
+        this.setAutoscrolls(true);
+        // END KGU#123 2016--01-04
+
+        // popup for comment
 		JPanel jp = new JPanel();
 		jp.setOpaque(true);
 		lblPop.setPreferredSize(new Dimension(30,12));
@@ -349,7 +359,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		if(e.getSource()==this)
 		{
-			// START KGU#25 2015-10-11: Method merged with getElementByCoord(int,int)
+			// START KGU#123 2016-01-04: Issue #65 - added for autoscroll behaviour
+			Rectangle r = new Rectangle(e.getX(), e.getY(), 1, 1);
+	        ((JPanel)e.getSource()).scrollRectToVisible(r);
+	        // END KGU#123 2016-01-04
+
+	        // START KGU#25 2015-10-11: Method merged with getElementByCoord(int,int)
 			//Element bSome = root.selectElementByCoord(e.getX(),e.getY());
 			Element bSome = root.getElementByCoord(e.getX(), e.getY(), true);
 			// END KGU#25 2015-10-11
@@ -1500,6 +1515,30 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 		analyse();
 	}
+	
+	// START KGU#123 2016-01-03: Issue #65, for new buttons and menu items
+	/*****************************************
+	 * collapse method
+	 *****************************************/
+	public void collapseNSD()
+	{
+		getSelected().setCollapsed(true);
+		redraw();
+		analyse();
+		this.NSDControl.doButtons();
+	}
+	
+	/*****************************************
+	 * expand method
+	 *****************************************/
+	public void expandNSD()
+	{
+		getSelected().setCollapsed(false);
+		redraw();
+		analyse();
+		this.NSDControl.doButtons();
+	}
+	// END KGU#123 2016-01-03
 
 	/*****************************************
 	 * add method
@@ -2681,6 +2720,32 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Element.E_ANALYSER=_analyse;
 		NSDControl.doButtons();
 	}
+	
+	// START KGU#123 2016-01-04: Enh. #87
+	public void toggleWheelMode()
+	{
+		setWheelCollapses(!Element.E_WHEELCOLLAPSE);
+	}
+	
+	public void setWheelCollapses(boolean _collapse)
+	{
+		Element.E_WHEELCOLLAPSE = _collapse;
+		if (_collapse)
+		{
+			this.addMouseWheelListener(this);
+		}
+		else
+		{
+			this.removeMouseWheelListener(this);
+		}
+		this.NSDControl.doButtons();
+	}
+	
+	public boolean getWheelCollapses()
+	{
+		return Element.E_WHEELCOLLAPSE;
+	}
+	// END KGU#123 2016-01-04
 
 	/*****************************************
 	 * inputbox methods
@@ -2842,11 +2907,32 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 
     @Override
-    public void mouseWheelMoved(MouseWheelEvent e) {
-        if(selected!=null)
+    public void mouseWheelMoved(MouseWheelEvent e)
+    {
+    	//System.out.println("MouseWheelEvent: " + e.getModifiers() + " Rotation = " + e.getWheelRotation() + " Type = " + 
+    	//		((e.getScrollType() == e.WHEEL_UNIT_SCROLL) ? ("UNIT " + e.getScrollAmount()) : "BLOCK")  );
+        if (selected != null)
         {
-            if(e.getWheelRotation()<-1) selected.setCollapsed(true);
-            else if(e.getWheelRotation()>1)  selected.setCollapsed(false);
+        	// START KGU#123 2016-01-04: Bugfix #65 - heavy differences between Windows and Linux here:
+        	// In Windows, the rotation result may be arbitrarily large whereas the scrollAmount is usually 1.
+        	// In Linux, however, the rotation result will usually be -1 or +1, whereas the scroll amount is 3.
+        	// So we just multiply both and will get a sensible threshold, we hope.
+            //if(e.getWheelRotation()<-1) selected.setCollapsed(true);
+            //else if(e.getWheelRotation()>1)  selected.setCollapsed(false);
+        	int rotation = e.getWheelRotation();
+        	if (e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
+        		rotation *= e.getScrollAmount();
+        	}
+        	else {
+        		rotation *= 2;
+        	}
+            if (rotation < -1) {
+            	selected.setCollapsed(true);
+            }
+            else if (rotation > 1) {
+            	selected.setCollapsed(false);
+            }
+            // END KGU#123 2016-01-04
             
             redraw();
         }
