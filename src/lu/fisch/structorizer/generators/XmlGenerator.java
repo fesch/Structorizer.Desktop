@@ -37,6 +37,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2015.11.08      Additional information with FOR loops (KGU#3)
  *      Kay Gürtzig     2015.12.18      Formal adaptation to Enh. #23 (KGU#78) related to break mechanism
  *      Kay Gürtzig     2015.12.21      Formal adaptation to Bugfix #41/#68/#69 (KGU#93)
+ *      Kay Gürtzig     2015.12.31      Bugfix #82 (KGU#118) Inconsistent FOR loops used to obstruct saving
  *
  ******************************************************************************************************
  *
@@ -49,6 +50,10 @@ import lu.fisch.structorizer.elements.*;
 
 public class XmlGenerator extends Generator {
 
+	// START KG#118 2015-12-31: Support for bugfix #82
+	private static String[] forLoopAttributes = {"counterVar", "StartValue", "endValue", "stepConst"};
+	// END KGU#118 2015-12-31
+	
 	/************ Fields ***********************/
 	protected String getDialogTitle()
 	{
@@ -191,18 +196,40 @@ public class XmlGenerator extends Generator {
     @Override
 	protected void generateCode(For _for, String _indent)
 	{
-		code.add(_indent+"<for text=\""+BString.encodeToHtml(_for.getText().getCommaText()) +
-				"\" comment=\"" + BString.encodeToHtml(_for.getComment().getCommaText()) +
-				// START KGU#3 2015-10-28: Insert new dedicated information fields
-				"\" counterVar=\"" + BString.encodeToHtml(_for.getCounterVar()) +
-				"\" startValue=\"" + BString.encodeToHtml(_for.getStartValue()) +
-				"\" endValue=\"" + BString.encodeToHtml(_for.getEndValue()) +
-				"\" stepConst=\"" + BString.encodeToHtml(_for.getStepString()) +
-				// END KGU#3 2015-10-28
-				// START KGU#3 2015-11-08: The reliability of the structured fields must be stored, too.
-				"\" reliable=\"" + BString.encodeToHtml(_for.checkConsistency() ? "true" : "false") +
-				// END KGU#3 2015-11-08
-				"\" color=\"" + _for.getHexColor()+"\">");
+    	// START KGU#118 2015-12-31: Bugfix 82: "free-style" FOR loops used to obstruct saving
+    	// We need some pre-processing to enhance robustness: If some of the specific fields
+    	// cannot be retrieved then just omit them, they aren't strictly needed on loading.
+//		code.add(_indent+"<for text=\""+BString.encodeToHtml(_for.getText().getCommaText()) +
+//				"\" comment=\"" + BString.encodeToHtml(_for.getComment().getCommaText()) +
+//				// START KGU#3 2015-10-28: Insert new dedicated information fields
+//				"\" counterVar=\"" + BString.encodeToHtml(_for.getCounterVar()) +
+//				"\" startValue=\"" + BString.encodeToHtml(_for.getStartValue()) +
+//				"\" endValue=\"" + BString.encodeToHtml(_for.getEndValue()) +
+//				"\" stepConst=\"" + BString.encodeToHtml(_for.getStepString()) +
+//				// END KGU#3 2015-10-28
+//				// START KGU#3 2015-11-08: The reliability of the structured fields must be stored, too.
+//				"\" reliable=\"" + BString.encodeToHtml(_for.checkConsistency() ? "true" : "false") +
+//				// END KGU#3 2015-11-08
+//				"\" color=\"" + _for.getHexColor()+"\">");
+    	String[] specificInfo = _for.splitForClause();
+    	String specificAttributes = "";
+    	for (int i = 0; i < forLoopAttributes.length; i++)
+    	{
+    		if (specificInfo[i] != null)
+    		{
+    			specificAttributes += "\" " + forLoopAttributes[i] + "=\"" + BString.encodeToHtml(specificInfo[i]);
+    		}
+    	}
+    	code.add(_indent+"<for text=\""+BString.encodeToHtml(_for.getText().getCommaText()) +
+    			"\" comment=\"" + BString.encodeToHtml(_for.getComment().getCommaText()) +
+    			// START KGU#3 2015-10-28: Insert new dedicated information fields
+    			specificAttributes +
+    			// END KGU#3 2015-10-28
+    			// START KGU#3 2015-11-08: The reliability of the structured fields must be stored, too.
+    			"\" reliable=\"" + BString.encodeToHtml(_for.checkConsistency() ? "true" : "false") +
+    			// END KGU#3 2015-11-08
+    			"\" color=\"" + _for.getHexColor()+"\">");
+    	// END KGU#118 2015-12-31
 		code.add(_indent+this.getIndent()+"<qFor>");
 		generateCode(_for.q,_indent+this.getIndent()+this.getIndent());
 		code.add(_indent+this.getIndent()+"</qFor>");

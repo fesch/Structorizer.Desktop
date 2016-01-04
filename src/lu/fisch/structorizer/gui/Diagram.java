@@ -45,6 +45,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.12.02      Bugfix #39 (KGU#91)
  *      Kay Gürtzig     2015.12.04      Bugfix #40 (KGU#94): With an error on saving, the recent file was destroyed
  *      Kay Gürtzig     2015.12.16      Bugfix #63 (KGU#111): Error message on loading failure
+ *      Kay Gürtzig     2016.01.02      Bugfix #85 (KGU#120): Root changes are also subject to undoing/redoing
  *
  ******************************************************************************************************
  *
@@ -1432,7 +1433,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 				if(data.result==true)
 				{
-					if (!element.getClass().getSimpleName().equals("Root"))
+					// START KGU#120 2016-01-02: Bugfix #85 - StringList changes of Root are to be undoable, too!
+					//if (!element.getClass().getSimpleName().equals("Root"))
+					// END KGU#120 2016-01-02
 					{
 						root.addUndo();
 					}

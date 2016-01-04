@@ -38,6 +38,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared.
  *      Kay Gürtzig     2015.11.22      New and modified methods to support operations on non-empty Subqueues (KGU#87).
  *      Kay Gürtzig     2015.11.23      Inheritance extended to IElementSequence (KGU#87), children now private.
+ *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *
  ******************************************************************************************************
  *
@@ -328,7 +329,26 @@ public class Subqueue extends Element implements IElementSequence {
 		return ele;
 	}
         
-    // START KGU#87 2015-11-22: Re-enabled for multiple selection (selected non-empty subqueues)    
+	// START KGU#119 2016-01-02: Bugfix #78
+	/**
+	 * Returns true iff _another is of same class, all persistent attributes are equal, and
+	 * all substructure of _another recursively equals the substructure of this. 
+	 * @param another - the Element to be compared
+	 * @return true on recursive structural equality, false else
+	 */
+	@Override
+	public boolean equals(Element _another)
+	{
+		boolean isEqual = super.equals(_another) && this.children.size() == ((Subqueue)_another).getSize();
+		for (int i = 0; isEqual && i < children.size(); i++)
+		{
+			isEqual = children.get(i).equals(((Subqueue)_another).getElement(i));
+		}
+		return isEqual;
+	}
+	// END KGU#119 2016-01-02
+
+	// START KGU#87 2015-11-22: Re-enabled for multiple selection (selected non-empty subqueues)    
     @Override
     public void setColor(Color _color) 
     {

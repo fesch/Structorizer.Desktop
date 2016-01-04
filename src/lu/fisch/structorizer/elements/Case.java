@@ -37,6 +37,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.11      Comment drawing centralized and breakpoint mechanism prepared
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy
  *      Kay Gürtzig     2015.11.14      Bugfix #39 (= KGU#91) in method draw()
+ *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *
  ******************************************************************************************************
  *
@@ -63,7 +64,7 @@ public class Case extends Element
 	
     // START KGU#91 2015-12-01: Bugfix #39 - Case may NEVER EVER interchange text and comment!
 	/**
-	 * Returns the content of the text field Full stop. No swapping here!
+	 * Returns the content of the text field. Full stop. No swapping here!
 	 * @return the text StringList
 	 */
     @Override
@@ -88,7 +89,7 @@ public class Case extends Element
     public void setText(String _text)
     {
 // START KGU#91 2015-12-01: D.R.Y. - just employ setText(StringList)
-    	text.setText(_text);
+    	text.setText(_text);	// Convert to a StringList
     	this.setText(text);
     	
 //            Subqueue s = null;
@@ -593,7 +594,7 @@ public class Case extends Element
             ele.setComment(this.getComment().copy());
             ele.setColor(this.getColor());
             ((Case) ele).qs.clear();
-            for(int i=0;i<qs.size();i++)
+            for(int i=0; i < qs.size(); i++)
             {
                     Subqueue ss = (Subqueue) ((Subqueue) this.qs.get(i)).copy();
                     ss.parent=ele;
@@ -606,7 +607,26 @@ public class Case extends Element
             return ele;
     }
 
-    // START KGU#43 2015-10-12
+	// START KGU#119 2016-01-02: Bugfix #78
+	/**
+	 * Returns true iff _another is of same class, all persistent attributes are equal, and
+	 * all substructure of _another recursively equals the substructure of this. 
+	 * @param another - the Element to be compared
+	 * @return true on recursive structural equality, false else
+	 */
+	@Override
+	public boolean equals(Element _another)
+	{
+		boolean isEqual = super.equals(_another) && this.qs.size() == ((Case)_another).qs.size();
+		for(int i = 0; isEqual && i < this.qs.size(); i++)
+		{
+			isEqual = this.qs.get(i).equals(((Case)_another).qs.get(i));
+		}
+		return isEqual;
+	}
+	// END KGU#119 2016-01-02
+
+	// START KGU#43 2015-10-12
     @Override
     public void clearBreakpoints()
     {

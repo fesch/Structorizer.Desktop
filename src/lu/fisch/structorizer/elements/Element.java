@@ -44,6 +44,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.12.21      Bugfix #41/#68/#69 (KGU#93): Method transformIntermediate revised
  *      Kay Gürtzig     2015.12.23      Bugfix #74 (KGU#115): Pascal operators accidently disabled
  *                                      Enh. #75 (KGU#116): Highlighting of jump keywords (orange)
+ *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *
  ******************************************************************************************************
  *
@@ -98,7 +99,7 @@ import java.util.Stack;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.23-07";
+	public static String E_VERSION = "3.23-08";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -274,37 +275,54 @@ public abstract class Element {
 	public abstract Rect prepareDraw(Canvas _canvas);
 	public abstract void draw(Canvas _canvas, Rect _top_left);
 	public abstract Element copy();
+	
+	// START KGU#119 2016-01-02 Bugfix #78
+	/**
+	 * Returns true iff another is of same class, all persistent attributes are equal, and
+	 * all substructure of another recursively equals the substructure of this. 
+	 * @param another - the Element to be compared
+	 * @return true on recursive structural equality, false else
+	 */
+	public boolean equals(Element another)
+	{
+		boolean isEqual = this.getClass() == another.getClass();
+		if (isEqual) isEqual = this.getText().getText().equals(another.getText().getText());
+		if (isEqual) isEqual = this.getComment().getText().equals(another.getComment().getText());
+		if (isEqual) isEqual = this.getColor().equals(another.getColor());
+		return isEqual;
+	}
+	// END KGU#119 2016-01-02
 
-        // draw point
-        Point drawPoint = new Point(0,0);
+	// draw point
+	Point drawPoint = new Point(0,0);
 
-        public StringList getCollapsedText()
-        {
-            StringList sl = new StringList();
-            // START KGU#91 2015-12-01: Bugfix #39: This is for drawing, so use switch-sensitive methods
-            //if(getText().count()>0) sl.add(getText().get(0));
-            if(getText(false).count()>0) sl.add(getText(false).get(0));
-            // END KGU#91 2015-12-01
-            sl.add(COLLAPSED);
-            return sl;
-        }
-        
-        public Point getDrawPoint()
-        {
-            Element ele = this;
-            while(ele.parent!=null) ele=ele.parent;
-            return ele.drawPoint;
-        }
+	public StringList getCollapsedText()
+	{
+		StringList sl = new StringList();
+		// START KGU#91 2015-12-01: Bugfix #39: This is for drawing, so use switch-sensitive methods
+		//if(getText().count()>0) sl.add(getText().get(0));
+		if(getText(false).count()>0) sl.add(getText(false).get(0));
+		// END KGU#91 2015-12-01
+		sl.add(COLLAPSED);
+		return sl;
+	}
 
-        public void setDrawPoint(Point point)
-        {
-            Element ele = this;
-            while(ele.parent!=null) ele=ele.parent;
-            ele.drawPoint=point;
-        }
+	public Point getDrawPoint()
+	{
+		Element ele = this;
+		while(ele.parent!=null) ele=ele.parent;
+		return ele.drawPoint;
+	}
+
+	public void setDrawPoint(Point point)
+	{
+		Element ele = this;
+		while(ele.parent!=null) ele=ele.parent;
+		ele.drawPoint=point;
+	}
 
 
-        public Element()
+	public Element()
 	{
 	}
 
@@ -334,7 +352,7 @@ public abstract class Element {
 	// START KGU#91 2015-12-01: We need a way to get the true value
 	/**
 	 * Returns the content of the text field no matter if mode isSwitchedTextAndComment
-	 * is active, use getText(boolean) for a mode-sensitive effect.
+	 * is active, use getText(false) for a mode-sensitive effect.
 	 * @return the text StringList (in normal mode) the comment StringList otherwise
 	 */
 	public StringList getText()
@@ -379,7 +397,7 @@ public abstract class Element {
 	// START KGU#91 2015-12-01: We need a way to get the true value
 	/**
 	 * Returns the content of the comment field no matter if mode isSwitchedTextAndComment
-	 * is active, use getComment(boolean) for a mode-sensitive effect.
+	 * is active, use getComment(false) for a mode-sensitive effect.
 	 * @return the text StringList (in normal mode) the comment StringList otherwise
 	 */
 	public StringList getComment()
