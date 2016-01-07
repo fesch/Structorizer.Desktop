@@ -49,6 +49,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.12.11      Bugfix #54 (KGU#102) in getVarNames(): keywords within identifiers
  *      Kay Gürtzig     2015.12.20      Bugfix #50 (KGU#112) getResultType() slightly revised
  *      Kay Gürtzig     2016.01.02      Bugfixes #78 (KGU#119, equals()) and #85 (KGU#120, undo() etc.) 
+ *      Kay Gürtzig     2016.01.06      Bugfix #89: References to obsolete operator padding (KGU#126) and
+ *                                      faulty index condition for variable detection (KGU#98) fixed 
  *
  ******************************************************************************************************
  *
@@ -1140,10 +1142,10 @@ public class Root extends Element {
                             // END KGU 2015-10-16
 
                             // get names from assignments
-                            // START KGU 2015-11-28: Operators are already unified now
-//                            if(allText.indexOf("<--")>=0)
+                            // START KGU#126 2016-01-06: We can no longer expect operators to be padded
+//                            if(allText.indexOf(" <- ")>=0)
 //                            {
-//                                    int pos = allText.indexOf("<--");
+//                                    int pos = allText.indexOf(" <- ");
 //
 //                                    String s = allText.substring(0, pos);
 //                                    if(allText.indexOf("[")>=0)
@@ -1152,35 +1154,24 @@ public class Root extends Element {
 //                                            s=r.replaceAll(s);
 //                                    } else { s=""; }
 //
-//                                    allText=s+" "+allText.substring(pos+2,allText.length());
+//                                    allText=s+" "+allText.substring(pos + " <- ".length(), allText.length());
 //                            }
-                            if(allText.indexOf(" <- ")>=0)
+                            int asgnPos = allText.indexOf("<-");
+                            if (asgnPos >= 0)
                             {
-                                    int pos = allText.indexOf(" <- ");
-
-                                    String s = allText.substring(0, pos);
-                                    if(allText.indexOf("[")>=0)
+                                    String s = allText.substring(0, asgnPos);
+                                    // START KGU#98 2016-01-06: This is only interesting within s
+                                    //if (allText.indexOf("[") >= 0)
+                                    if (s.indexOf("[") >= 0)
+                                    // END KGU#98 2016-01-06
                                     {
                                             r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-                                            s=r.replaceAll(s);
-                                    } else { s=""; }
+                                            s = r.replaceAll(s);
+                                    } else { s = ""; }
 
-                                    allText=s+" "+allText.substring(pos + " <- ".length(), allText.length());
+                                    allText=s+" "+allText.substring(asgnPos + "<-".length(), allText.length());
                             }
-//                            if(allText.indexOf(":=")>=0)
-//                            {
-//                                    int pos = allText.indexOf(":=");
-//
-//                                    String s = allText.substring(0, pos);
-//                                    if(allText.indexOf("[")>=0)
-//                                    {
-//                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-//                                            s=r.replaceAll(s);
-//                                    } else { s=""; }
-//
-//                                    allText=s+" "+allText.substring(pos+2,allText.length());
-//                            }
-                            // END KGU 2015-11-28
+                            // END KGU#126 2016-01-06
 
                             // cutoff output keyword
                             // START KGU#23 2015-10-16: Must start at the very beginning 
@@ -1335,28 +1326,23 @@ public class Root extends Element {
                     }
                     // END KGU#102 2015-12-11
 
-                    // START KGU 2015-11-28: Operators have already been unified above 
-                    // get names from assignments
-//                    if(allText.indexOf("<--")>=0)
+                    // START KGU#126 2016-01-06: Operators can no longer expected to be padded
+//                    if(allText.indexOf(" <- ")>=0)
 //                    {
-//                            int pos = allText.indexOf("<--");
-//                        allText=allText.substring(0,pos);
+//                            int pos = allText.indexOf(" <- ");
+//                            allText = allText.substring(0,pos);
+//                            //System.out.println("Adding to initialised var names: " + cleanup(allText.trim()));
 //                            varNames.addOrderedIfNew(cleanup(allText.trim()));
 //                    }
-                    if(allText.indexOf(" <- ")>=0)
+                    if(allText.indexOf("<-")>=0)
                     {
-                            int pos = allText.indexOf(" <- ");
-                            allText = allText.substring(0,pos);
+                            int pos = allText.indexOf("<-");
+                            allText = allText.substring(0, pos);
+                            // FIXME: In case of typed variables we should only add the last identifier part
                             //System.out.println("Adding to initialised var names: " + cleanup(allText.trim()));
                             varNames.addOrderedIfNew(cleanup(allText.trim()));
                     }
-//                    if(allText.indexOf(":=")>=0)
-//                    {
-//                            int pos = allText.indexOf(":=");
-//                        allText=allText.substring(0,pos);
-//                            varNames.addOrderedIfNew(cleanup(allText.trim()));
-//                    }
-                    // END KGU 2015-11-28
+                    // END KGU#126 2016-01-06
 
                     // get names from read statements
                     if(allText.indexOf(D7Parser.input.trim())>=0)
@@ -1368,8 +1354,11 @@ public class Root extends Element {
                                     for(int j=0;j<str.count();j++)
                                     {
                                             String s = str.get(j);
-                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1$3");
-                                            s=r.replaceAll(s);
+                                            // START KGU#98 2016-01-06: Better don't glue the prefix and suffix without space
+                                            //r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1$3");
+                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
+                                            // END KGU#98 2016-01-06
+                                            s = r.replaceAll(s);
 
                                             if(!s.trim().equals(""))
                                             {
@@ -1717,79 +1706,83 @@ public class Root extends Element {
     			StringList test = ele.getText();
 
     			// CHECK: wrong multi-line instruction (#10 - new!)
-    			int isInput = 0;
-    			int isOutput = 0;
-    			int isAssignment = 0;
+    			boolean isInput = false;
+    			boolean isOutput = false;
+    			boolean isAssignment = false;
 
     			// Check every instruction line...
-    			for(int l=0;l<test.count();l++)
+    			for(int l=0; l<test.count(); l++)
     			{
-    				// CHECK: wrong affection (#11 - new!)
+    				// CHECK: wrong assignment (#11 - new!)
     				String myTest = test.get(l);
 
-    				// FIXME (KGU): Shouldn't we better do a lexical splitting here (see below)? 
-    				// Remove all strings delimited by '
-    				myTest=myTest.replaceAll("(.*?)['](.*?)['](.*?)","$1$3");
-    				// Remove all strings delimited by "
-    				myTest=myTest.replaceAll("(.*?)[\"](.*?)[\"](.*?)","$1$3");
+    				// START KGU#65/KGU#126 2016-01-06: More precise analysis, though expensive
+//    				// FIXME (KGU): Shouldn't we better do a lexical splitting here (see below)? 
+//    				// Remove all strings delimited by '
+//    				myTest=myTest.replaceAll("(.*?)['](.*?)['](.*?)","$1$3");
+//    				// Remove all strings delimited by "
+//    				myTest=myTest.replaceAll("(.*?)[\"](.*?)[\"](.*?)","$1$3");
+//
+//    				//System.out.println(" -- "+myTest);
+//
+//    				// FIXME (KGU): condition is not sound
+//    				String unified = Element.unifyOperators(myTest);
+//    				if (unified.contains(" == ") && !unified.contains(" <- "))
+//    				{
+//    					//error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
+//    					error  = new DetectedError(errorMsg(Menu.error11,""), ele);
+//    					addError(_errors,error,11);
+//    				}
+//
+//    				// CHECK: wrong multi-line instruction (#10 - new!)
+//    				String myText = test.get(l);
+//    				if (myText.contains(D7Parser.input.trim())) {isInput=1;}
+//    				if (myText.contains(D7Parser.output.trim())) {isOutput=1;}
+//    				if ( myText.contains("<-") || myText.contains(":=") || myText.contains("<--")) {isAssignment=1;}
 
-    				//System.out.println(" -- "+myTest);
-
-    				// FIXME (KGU): condition is not sound
-    				String unified = ele.unifyOperators(myTest);
-    				if (unified.contains(" == ") && !unified.contains(" <- "))
+    				StringList tokens = splitLexically(myTest, true);
+    				unifyOperators(tokens, false);
+    				if (tokens.contains("<-"))
     				{
-    					//error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
-    					error  = new DetectedError(errorMsg(Menu.error11,""), ele);
-    					addError(_errors,error,11);
+    					isAssignment = true;
     				}
-
+    				else if (tokens.contains("=="))
+    				{
+    				        //error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
+    				        error  = new DetectedError(errorMsg(Menu.error11,""), _node.getElement(i));
+    				        addError(_errors,error,11);
+    				}
+    				
     				// CHECK: wrong multi-line instruction (#10 - new!)
-    				String myText = test.get(l);
-    				if (myText.contains(D7Parser.input.trim())) {isInput=1;}
-    				if (myText.contains(D7Parser.output.trim())) {isOutput=1;}
-    				if ( myText.contains("<-") || myText.contains(":=") || myText.contains("<--")) {isAssignment=1;}
-
-    				// START KGU#65 2015-11-04: Possible replacement (though expensive, hence not activated)
-    				//StringList tokens = splitLexically(myTest, true);
-    				//if((tokens.contains("=") || tokens.contains("==")) && !tokens.contains("<-") && !tokens.contains(":="))
-    				//{
-    				//        //error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
-    				//        error  = new DetectedError(errorMsg(Menu.error11,""), _node.getElement(i));
-    				//        addError(_errors,error,11);
-    				//}
-    				//
-    				//// CHECK: wrong multi-line instruction (#10 - new!)
-    				//if (tokens.contains(D7Parser.input.trim())) {isInput=1;}
-    				//if (tokens.contains(D7Parser.output.trim())) {isOutput=1;}
-    				//if (tokens.contains("<-") || tokens.contains(":=")) {isAssignment=1;}
-    				// END KGU#65 2015-11-04
+    				if (myTest.startsWith(D7Parser.input.trim())) {isInput = true;}
+    				if (myTest.startsWith(D7Parser.output.trim())) {isOutput = true;}
+    				// END KGU#65/KGU#126 2016-01-06
 
     			}
     			// CHECK: wrong multi-line instruction (#10 - new!)
-    			if (isInput+isOutput+isAssignment==3)
+    			if (isInput && isOutput && isAssignment)
     			{
     				//error  = new DetectedError("A single instruction element should not contain input/output instructions and assignments!",(Element) _node.getElement(i));
     				error  = new DetectedError(errorMsg(Menu.error10_1,""), ele);
-    				addError(_errors,error,10);
+    				addError(_errors, error, 10);
     			}
-    			else if (isInput+isOutput==2)
+    			else if (isInput && isOutput)
     			{
     				//error  = new DetectedError("A single instruction element should not contain input and output instructions!",(Element) _node.getElement(i));
     				error  = new DetectedError(errorMsg(Menu.error10_2,""), ele);
-    				addError(_errors,error,10);
+    				addError(_errors, error, 10);
     			}
-    			else if (isInput+isAssignment==2)
+    			else if (isInput && isAssignment)
     			{
     				//error  = new DetectedError("A single instruction element should not contain input instructions and assignments!",(Element) _node.getElement(i));
     				error  = new DetectedError(errorMsg(Menu.error10_3,""), ele);
-    				addError(_errors,error,10);
+    				addError(_errors, error, 10);
     			}
-    			else if (isOutput+isAssignment==2)
+    			else if (isOutput && isAssignment)
     			{
     				//error  = new DetectedError("A single instruction element should not contain ouput instructions and assignments!",(Element) _node.getElement(i));
     				error  = new DetectedError(errorMsg(Menu.error10_4,""), ele);
-    				addError(_errors,error,10);
+    				addError(_errors, error, 10);
     			}
     		}
 
@@ -1840,10 +1833,16 @@ public class Root extends Element {
     		{
     			String text = ele.getText().getLongString();
     			text = Element.unifyOperators(text);
-    			if ( text.contains(" <- ") )
+    			// START KGU#126 2016-01-06: We may no longer expect operatos to be padded
+//    			if ( text.contains(" <- ") )
+//    			{
+//    				text = text.substring(text.indexOf(" <- ") + 4);
+//    			}
+    			if ( text.contains("<-") )	// FIXME: Detection within string literals!?
     			{
-    				text = text.substring(text.indexOf(" <- ") + 4);
+    				text = text.substring(text.indexOf("<-") + 2);
     			}
+    			// END KGU#126 2016-01-06
     			Function func = new Function(text);
     			if (!func.isFunction())
     			{
