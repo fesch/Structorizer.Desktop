@@ -303,6 +303,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void mouseMoved(MouseEvent e)
 	{
+		//System.out.println("MouseMoved at (" + e.getX() + ", " + e.getY() + ")");
 		// KGU#91 2015-12-04: Bugfix #39 - Disabled
         //if(Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
 		if(e.getSource()==this && NSDControl!=null)
@@ -1676,6 +1677,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		isArrangerOpen = true;	// Gives the Executor a hint where to find a subroutine pool
 	}
 	// END KGU#2 2015-11-19
+	
+	// START KGU#125 2016-01-06: Possibility to adopt a diagram if it's orphaned
+	public void adoptArrangedOrphanNSD(Root root)
+	{
+		if (isArrangerOpen)
+		{
+			Arranger arr = Arranger.getInstance();
+			arr.addToPool(root, NSDControl.getFrame());			
+		}
+	}
+	// END KGU#125 2016-01-06
 
 	/*****************************************
 	 * about method
@@ -2909,7 +2921,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     @Override
     public void mouseWheelMoved(MouseWheelEvent e)
     {
-    	//System.out.println("MouseWheelEvent: " + e.getModifiers() + " Rotation = " + e.getWheelRotation() + " Type = " + 
+		//System.out.println("MouseWheelMoved at (" + e.getX() + ", " + e.getY() + ")");
+    	//System.out.println("MouseWheelEvent: " + e.getModifiersEx() + " Rotation = " + e.getWheelRotation() + " Type = " + 
     	//		((e.getScrollType() == e.WHEEL_UNIT_SCROLL) ? ("UNIT " + e.getScrollAmount()) : "BLOCK")  );
         if (selected != null)
         {
@@ -2936,6 +2949,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             
             redraw();
         }
+        // FIXME KGU 2016-01-0: Issue #65
+//        // Rough approach to test horizontal scrollability - only works near the left and right
+//        // borders, because the last mouseMoved position is used. Seems that we will have to
+//        // maintain a virtual scroll position here which is to be used instead of e.getX().
+//        if ((e.getModifiersEx() & MouseWheelEvent.SHIFT_DOWN_MASK) != 0)
+//        {
+//        	int rotation = e.getWheelRotation();
+//        	if (e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
+//        		rotation *= e.getScrollAmount();
+//        	}
+//        	System.out.println("Horizontal scrolling by " + rotation);
+//			Rectangle r = new Rectangle(e.getX() + 50 * rotation, e.getY(), 1, 1);
+//	        ((JPanel)e.getSource()).scrollRectToVisible(r);
+//        	
+//        }
     }
 
     void toggleTextComments() {

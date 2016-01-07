@@ -303,7 +303,7 @@ public class StringList {
 	{
 		int foundAt = -1;
 		int foundFirst = -1;
-		while ((foundFirst = indexOf(_subList.get(0), _from, _matchCase)) >= 0 && foundFirst + _subList.count() <= this.count())
+		while (foundAt < 0 && (foundFirst = indexOf(_subList.get(0), _from, _matchCase)) >= 0 && foundFirst + _subList.count() <= this.count())
 		{
 			for (int i = 1; foundFirst >= 0 && i < _subList.count(); i++)
 			{

@@ -11,7 +11,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.23-09 (2016.01.04)
+Current development version: 3.23-10 (2016.01.07)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
 - 02: Bugfix #51 - stand alone input/output identifier where not converted in Pascal export [IrisLuc]
 - 03: Bugfix #48 - delay propagation to Turtleizer <Kay Gürtzig>
@@ -51,6 +51,10 @@ Current development version: 3.23-09 (2016.01.04)
 - 08: Bugfix #78: Reloading an Arranger constellation could cause duplicates [elemhsb]
 - 08: Bugfix #85: Diagram heading or comment changes now undoable <Kay Gürtzig>
 - 09: Bugfix #65, Enh. #87: Collapsing/expanding reorganised, autoscrolling enabled [elemhsb] 
+- 10: Bugfix #89: Two flaws in variable detection (highlighting, analyser) <Kay Gürtzig>
+- 10: Bugfix #90: Insufficient updating of executed subroutines in Arranger <Kay Gürtzig>
+- 10: Bugfix #91: Unreliable execution of some empty Jump elements <Kay Gürtzig>
+- 10: Bugfix #92: Executor: Unwanted replacements within string literals <Kay Gürtzig>
 
 Version 3.23 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
