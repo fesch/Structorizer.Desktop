@@ -39,6 +39,7 @@
  *      Kay Gürtzig 	2015.11.09		Additions for ParserPreferences
  *      Kay Gürtzig 	2015.11.30		Further additions to Menu (errors) and AnalyserPreferences
  *      Kay Gürtzig 	2015.12.18		New messages for ExportOptionDialoge
+ *      Kay Gürtzig 	2016.01.04		Enh. #87: New messages for collapsing / expanding elements
  *
  ******************************************************************************************************
  *
@@ -108,6 +109,8 @@ Menu.menuDiagramEdit.text=Edit
 Menu.menuDiagramDelete.text=Delete
 Menu.menuDiagramMoveUp.text=Move up
 Menu.menuDiagramMoveDown.text=Move down
+Menu.menuDiagramCollapse.text=Collapse
+Menu.menuDiagramExpand.text=Expand
 Menu.menuDiagramType.text=Type
 Menu.menuDiagramTypeProgram.text=Main
 Menu.menuDiagramTypeFunction.text=Sub
@@ -117,6 +120,7 @@ Menu.menuDiagramSwitchComments.text=Switch text/comments?
 Menu.menuDiagramMarker.text=Highlight variables?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Analyse structogram?
+Menu.menuDiagramWheel.text=Mouse wheel for collapsing?
 // Menu "Help"
 Menu.menuPreferences.text=Preferences
 // Submenu of "Help"
@@ -275,6 +279,9 @@ Editor.btnColor6.tooltip=Colorize the selected element with this color.
 Editor.btnColor7.tooltip=Colorize the selected element with this color.
 Editor.btnColor8.tooltip=Colorize the selected element with this color.
 Editor.btnColor9.tooltip=Colorize the selected element with this color.
+// collapsing
+Editor.btnCollapse.tooltip=Collapse the selected element.
+Editor.btnExpand.tooltip=Expand the selected element.
 // turtleizer & executor
 Editor.btnTurtle.tooltip=Open Turtleizer ...
 Editor.btnMake.tooltip=Open Executor ...
@@ -315,6 +322,9 @@ Editor.popupEdit.text=Edit
 Editor.popupDelete.text=Delete
 Editor.popupMoveUp.text=Move up
 Editor.popupMoveDown.text=Move down
+// Collapsing
+Editor.popupCollapse.text=Collapse
+Editor.popupExpand.text=Expand
 // Breakpoint
 Editor.popupBreakpoint.text=Toggle breakpoint
 

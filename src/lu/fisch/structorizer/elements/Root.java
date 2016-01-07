@@ -115,6 +115,7 @@ public class Root extends Element {
 	public Vector<DetectedError> errors = new Vector<DetectedError>();
 	private StringList rootVars = new StringList();
 
+	// TODO (KGU 2016-01-04): We ought to think about an array or Vector here.
 	// error checks for analyser (see also addError(), saveToIni(), Diagram.analyserNSD() and Mainform.loadFromIni())
 	public static boolean check1 = false;
 	public static boolean check2 = false;

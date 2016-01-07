@@ -39,6 +39,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.22      New and modified methods to support operations on non-empty Subqueues (KGU#87).
  *      Kay Gürtzig     2015.11.23      Inheritance extended to IElementSequence (KGU#87), children now private.
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016-01-03      Enh. #87: Collapsing mechanism for selected Subqueue (KGU#123)
  *
  ******************************************************************************************************
  *
@@ -416,4 +417,16 @@ public class Subqueue extends Element implements IElementSequence {
 	}
 	// END KGU#87 2015-11-22
 
+	// START KGU#123 2016-01-03: We need a collective collapsing/expansion now
+	@Override
+    public void setCollapsed(boolean collapsed) {
+        super.setCollapsed(false);	// the Subqueue itself will never be collapsed
+        Iterator<Element> iter = getIterator();
+        while (iter.hasNext())
+        {
+        	iter.next().setCollapsed(collapsed);
+        }
+    }
+	// END KGU#123 2016-01-03
+	
 }

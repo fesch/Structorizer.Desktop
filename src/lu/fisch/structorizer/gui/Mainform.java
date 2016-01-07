@@ -41,6 +41,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.11.24      KGU#88: The decision according to #6 / #16 is now returned on setRoot()
  *      Kay Gürtzig     2015.11.28      KGU#2/KGU#78/KGU#47: New checks 15, 16, and 17 registered for loading
  *      Kay Gürtzig     2015.12.04      KGU#95: Bugfix #42 - wrong default current directory mended
+ *      Kay Gürtzig     2016.01.04      KGU#123: Bugfix #65 / Enh. #87 - New Ini property: mouse wheel mode
  *
  ******************************************************************************************************
  *
@@ -271,7 +272,7 @@ public class Mainform  extends JFrame implements NSDController
 				diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("user.home")));
 				// END KGU#95 2015-12-04
 				
-				// din
+				// DIN 66261
 				if (ini.getProperty("DIN","0").equals("1")) // default = 0
 				{
 					diagram.setDIN();
@@ -297,6 +298,9 @@ public class Mainform  extends JFrame implements NSDController
 					diagram.setAnalyser(false);
 				}
                  * */
+				// START KGU#123 2016-01-04: Enh. #87, Bugfix #65
+				diagram.setWheelCollapses(ini.getProperty("wheelToCollapse", "0").equals("1"));
+				// END KGU#123 2016-01-04
 			}
 			
 			// recent files
@@ -391,6 +395,9 @@ public class Mainform  extends JFrame implements NSDController
 			ini.setProperty("switchTextComments",(Element.E_TOGGLETC?"1":"0"));
 			ini.setProperty("varHightlight",(Element.E_VARHIGHLIGHT?"1":"0"));
 			//ini.setProperty("analyser",(Element.E_ANALYSER?"1":"0"));
+			// START KGU#123 2016-01-04: Enh. #87
+			ini.setProperty("wheelToCollapse",(Element.E_WHEELCOLLAPSE?"1":"0"));
+			// END KGU#123 2016-01-04
 			
 			// look and feel
 			if(laf!=null)

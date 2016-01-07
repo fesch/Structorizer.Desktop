@@ -32,9 +32,9 @@ package lu.fisch.structorizer.elements;
 *
 *      Revision List
 *
-*      Author          Date			Description
-*      ------			----			-----------
-*      Kay Gürtzig     2015.11.23      First issue (KGU#87).
+*      Author           Date            Description
+*      ------           ----            -----------
+*      Kay Gürtzig      2015.11.23      First issue (KGU#87).
 *
 ******************************************************************************************************
 *

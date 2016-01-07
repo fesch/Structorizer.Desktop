@@ -40,6 +40,7 @@ package lu.fisch.structorizer.elements;
  *		Kay Gürtzig     2015.12.02      Bugfix #39 (KGU#91) -> getText(false) on drawing, constructors
  *                                      and methods setText() now ensure field text being empty
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), geIcon()
  *
  ******************************************************************************************************
  *
@@ -51,7 +52,10 @@ package lu.fisch.structorizer.elements;
 import java.awt.Color;
 import java.awt.FontMetrics;
 
+import javax.swing.ImageIcon;
+
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
 public class Forever extends Element implements ILoop {
@@ -261,7 +265,15 @@ public class Forever extends Element implements ILoop {
 		q.draw(_canvas,myrect);
 	}
 	
-	// START KGU 2015-10-11: Merged with getElementByCoord, which had to be overridden as well for proper Comment popping
+	// START KGU#122 2016-01-03: Enh. #87 - Collapsed elements may be marked with an element-specific icon
+	@Override
+	protected ImageIcon getIcon()
+	{
+		return IconLoader.ico061;
+	}
+	// END KGU#122 2016-01-03
+
+// START KGU 2015-10-11: Merged with getElementByCoord, which had to be overridden as well for proper Comment popping
 //	public Element selectElementByCoord(int _x, int _y)
 //	{
 //		Element selMe = super.selectElementByCoord(_x,_y);
@@ -278,12 +290,19 @@ public class Forever extends Element implements ILoop {
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
 		Element selMe = super.getElementByCoord(_x, _y, _forSelection);
-		Element sel = q.getElementByCoord(_x, _y, _forSelection);
-		if(sel!=null) 
+		// START KGU#121 2016-01-03: Bugfix #87 - A collapsed element has no visible substructure!
+		if (!this.isCollapsed())
 		{
-			if (_forSelection) selected=false;
-			selMe = sel;
+		// END KGU#121 2016-01-03
+			Element sel = q.getElementByCoord(_x, _y, _forSelection);
+			if(sel!=null) 
+			{
+				if (_forSelection) selected=false;
+				selMe = sel;
+			}
+		// START KGU#121 2016-01-03: Bugfix #87 (continued)
 		}
+		// END KGU#121 2016-01-03
 		
 		return selMe;
 	}

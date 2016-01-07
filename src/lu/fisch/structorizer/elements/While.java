@@ -39,6 +39,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
  *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false))
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
  *
  ******************************************************************************************************
  *
@@ -52,9 +53,11 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
+import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
 
@@ -235,6 +238,14 @@ public class While extends Element implements ILoop {
 		q.draw(_canvas,myrect);
 		
 	}
+
+	// START KGU#122 2016-01-03: Enh. #87: Collapsed elements may be marked with an element-specific icon
+	@Override
+	protected ImageIcon getIcon()
+	{
+		return IconLoader.ico062;
+	}
+	// END KGU#122 2016-01-03
 	
 	// START KGU 2015-10-11: Merged with getElementByCoord, which had to be overridden as well for proper Comment popping
 //	public Element selectElementByCoord(int _x, int _y)
@@ -253,12 +264,19 @@ public class While extends Element implements ILoop {
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
 		Element selMe = super.getElementByCoord(_x, _y, _forSelection);
-		Element sel = q.getElementByCoord(_x, _y, _forSelection);
-		if(sel!=null) 
+		// START KGU#121 2016-01-03: Bugfix #87 - A collapsed element has no visible substructure!
+		if (!this.isCollapsed())
 		{
-			if (_forSelection) selected=false;
-			selMe = sel;
+		// END KGU#121 2016-01-03
+			Element sel = q.getElementByCoord(_x, _y, _forSelection);
+			if(sel!=null) 
+			{
+				if (_forSelection) selected=false;
+				selMe = sel;
+			}
+		// START KGU#121 2016-01-03: Bugfix #87 (continued)
 		}
+		// END KGU#121 2016-01-03
 		
 		return selMe;
 	}
