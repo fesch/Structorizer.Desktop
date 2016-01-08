@@ -102,7 +102,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.23-11";
+	public static String E_VERSION = "3.23-12";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -118,7 +118,8 @@ public abstract class Element {
 	" - Java: Gunter Schillebeeckx <gunter.schillebeeckx@tsmmechelen.be>\n"+
 	" - C: Gunter Schillebeeckx <gunter.schillebeeckx@tsmmechelen.be>\n"+
 	" - C#: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
-	" - PHP: Rolf Schmidt <rolf.frogs@t-online.de>\n"+
+	" - C++: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n" +
+	" - PHP: Rolf Schmidt <rolf.frogs@t-online.de>\n" +
 	"\n"+
 	"License setup and checking done by\n"+
 	" - Marcus Radisch <radischm@googlemail.com>\n"+

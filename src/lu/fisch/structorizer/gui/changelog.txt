@@ -10,7 +10,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.23-11 (2016.01.08)
+Current development version: 3.23-12 (2016.01.08)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
 - 02: Bugfix #51 - stand alone input/output identifier where not converted in Pascal export [IrisLuc]
 - 03: Bugfix #48 - delay propagation to Turtleizer <Kay Gürtzig>
@@ -56,6 +56,8 @@ Current development version: 3.23-11 (2016.01.08)
 - 10: Bugfix #92: Executor: Unwanted replacements within string literals <Kay Gürtzig>
 - 11: Bugfix #95: Executor: div operator support accidently dropped  <Kay Gürtzig>
 - 11: Bugfix #96: export: variable prefix, test expressions for shell scripts <Kay Gürtzig>
+- 12: Bugfix #99: FOR loops were saved defectively, new version can load them <Kay Gürtzig>
+- 12: Arranger: Image buttons for saving and loading resized <Kay Gürtzig>
 
 Version 3.23 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
