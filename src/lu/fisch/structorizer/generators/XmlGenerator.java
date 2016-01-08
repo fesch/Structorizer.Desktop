@@ -38,6 +38,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2015.12.18      Formal adaptation to Enh. #23 (KGU#78) related to break mechanism
  *      Kay Gürtzig     2015.12.21      Formal adaptation to Bugfix #41/#68/#69 (KGU#93)
  *      Kay Gürtzig     2015.12.31      Bugfix #82 (KGU#118) Inconsistent FOR loops used to obstruct saving
+ *      Kay Gürtzig     2016.01.08      Bugfix #99 (KGU#134) mends mis-spelling due to fix #82
  *
  ******************************************************************************************************
  *
@@ -50,8 +51,11 @@ import lu.fisch.structorizer.elements.*;
 
 public class XmlGenerator extends Generator {
 
-	// START KG#118 2015-12-31: Support for bugfix #82
-	private static String[] forLoopAttributes = {"counterVar", "StartValue", "endValue", "stepConst"};
+	// START KGU#118 2015-12-31: Support for bugfix #82
+	// START KGU#134 2016-01-08: Bugfix #99: mis-spelled attribute name
+	//private static String[] forLoopAttributes = {"counterVar", "StartValue", "endValue", "stepConst"};
+	private static String[] forLoopAttributes = {"counterVar", "startValue", "endValue", "stepConst"};
+	// END KGU#134 2016-01-08
 	// END KGU#118 2015-12-31
 	
 	/************ Fields ***********************/
