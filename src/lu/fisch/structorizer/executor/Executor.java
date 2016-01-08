@@ -60,6 +60,10 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2015.12.11      Enhancement #54 (KGU#101): List of output expressions
  *      Kay Gürtzig     2015.12.13      Enhancement #51 (KGU#107): Handling of empty input and output
  *      Kay Gürtzig     2015.12.15/26   Bugfix #61 (KGU#109): Precautions against type specifiers
+ *      Kay Gürtzig     2016.01.05      Bugfix #90 (KGU#125): Arranger updating for executed subroutines fixed
+ *      Kay Gürtzig     2016.01.07      Bugfix #91 (KGU#126): Reliable execution of empty Jump elements,
+ *                                      Bugfix #92 (KGU#128): Function names were replaced within string literals
+ *      Kay Gürtzig     2016.01.08      Bugfix #95 (KGU#130): div operator conversion accidently dropped
  *
  ******************************************************************************************************
  *
@@ -69,7 +73,7 @@ package lu.fisch.structorizer.executor;
  *            informed about a delay change, such that e.g. the Turtleizer still crept in slow motion
  *            while the Executor had no delay anymore. Now a suitable diagramController will be informed.
  *          Bug 49: Equality test had failed between variables, particularly between array elements,
- *            because they presented Wrapper objects (e. g. Intege) rather than primitive values. 
+ *            because they presented Wrapper objects (e. g. Integer) rather than primitive values. 
  *            For scalar variables, values are now assigned as primitive type if possible (via
  *            interpreter.eval()). For array elements, in contrast, the comparison expression  will be
  *            converted, such that == and != will be replaced by .equals() calls.
@@ -253,36 +257,60 @@ public class Executor implements Runnable
 	{
 		Regex r;
 
-		s = Element.unifyOperators(s);
-		s = s.replace(" div ", " / ");		// FIXME: Operands should be coerced to integer...
-		// END KGU#18/KGU#23 2015-10-26
-
-		// Convert built-in mathematical functions
-		s = s.replace("cos(", "Math.cos(");
-		s = s.replace("sin(", "Math.sin(");
-		s = s.replace("tan(", "Math.tan(");
-        // START KGU 2014-10-22: After the previous replacements the following 3 strings would never be found!
-        //s=s.replace("acos(", "Math.acos(");
-        //s=s.replace("asin(", "Math.asin(");
-        //s=s.replace("atan(", "Math.atan(");
-        // This is just a workaround; A clean approach would require a genuine lexical scanning in advance
-        s=s.replace("aMath.cos(", "Math.acos(");
-        s=s.replace("aMath.sin(", "Math.asin(");
-        s=s.replace("aMath.tan(", "Math.atan(");
-        // END KGU 2014-10-22:
-		s = s.replace("abs(", "Math.abs(");
-		s = s.replace("round(", "Math.round(");
-		s = s.replace("min(", "Math.min(");
-		s = s.replace("max(", "Math.max(");
-		s = s.replace("ceil(", "Math.ceil(");
-		s = s.replace("floor(", "Math.floor(");
-		s = s.replace("exp(", "Math.exp(");
-		s = s.replace("log(", "Math.log(");
-		s = s.replace("sqrt(", "Math.sqrt(");
-		s = s.replace("pow(", "Math.pow(");
-		s = s.replace("toRadians(", "Math.toRadians(");
-		s = s.replace("toDegrees(", "Math.toDegrees(");
-		// s=s.replace("random(", "Math.random(");
+		// START KGU#128 2016-01-07: Bugfix #92 - Effort via tokens to avoid replacements within string literals
+//		s = Element.unifyOperators(s);
+//		s = s.replace(" div ", " / ");		// FIXME: Operands should be coerced to integer...
+//
+//		// Convert built-in mathematical functions
+//		s = s.replace("cos(", "Math.cos(");
+//		s = s.replace("sin(", "Math.sin(");
+//		s = s.replace("tan(", "Math.tan(");
+//        // START KGU 2014-10-22: After the previous replacements the following 3 strings would never be found!
+//        //s=s.replace("acos(", "Math.acos(");
+//        //s=s.replace("asin(", "Math.asin(");
+//        //s=s.replace("atan(", "Math.atan(");
+//        // This is just a workaround; A clean approach would require a genuine lexical scanning in advance
+//        s=s.replace("aMath.cos(", "Math.acos(");
+//        s=s.replace("aMath.sin(", "Math.asin(");
+//        s=s.replace("aMath.tan(", "Math.atan(");
+//        // END KGU 2014-10-22:
+//		s = s.replace("abs(", "Math.abs(");
+//		s = s.replace("round(", "Math.round(");
+//		s = s.replace("min(", "Math.min(");
+//		s = s.replace("max(", "Math.max(");
+//		s = s.replace("ceil(", "Math.ceil(");
+//		s = s.replace("floor(", "Math.floor(");
+//		s = s.replace("exp(", "Math.exp(");
+//		s = s.replace("log(", "Math.log(");
+//		s = s.replace("sqrt(", "Math.sqrt(");
+//		s = s.replace("pow(", "Math.pow(");
+//		s = s.replace("toRadians(", "Math.toRadians(");
+//		s = s.replace("toDegrees(", "Math.toDegrees(");
+//		// s=s.replace("random(", "Math.random(");
+		StringList tokens = Element.splitLexically(s, true);
+		Element.unifyOperators(tokens, false);
+		// START KGU#130 2015-01-08: Bugfix #95 - Conversion of div operator had been forgotten...
+		tokens.replaceAll("div", "/");		// FIXME: Operands should better be coerced to integer...
+		// END KGU#130 2015-01-08
+		// Function names to be prefixed with "Math."
+		final String[] mathFunctions = {
+				"cos", "sin", "tan", "acos", "asin", "atan", "toRadians", "toDegrees",
+				"abs", "round", "min", "max", "ceil", "floor", "exp", "log", "sqrt", "pow"
+				};
+		StringList fn = new StringList();
+		fn.add("DUMMY");
+		fn.add("(");
+		for (int f = 0; f < mathFunctions.length; f++)
+		{
+			int pos = 0;
+			fn.set(0, mathFunctions[f]);
+			while ((pos = tokens.indexOf(fn, pos, true)) >= 0)
+			{
+				tokens.set(pos, "Math." + mathFunctions[f]);
+			}
+		}
+		s = tokens.concatenate();
+		// END KGU#128 2016-01-07
 
 		// pascal notation to access a character inside a string
 		//r = new Regex("(.*)\\[(.*)\\](.*)", "$1.charAt($2-1)$3");
@@ -811,11 +839,19 @@ public class Executor implements Runnable
     	Iterator<IRoutinePool> iter = this.routinePools.iterator();
     	while (subroutine == null && iter.hasNext())
     	{
-    		Vector<Root> candidates = iter.next().findRoutinesBySignature(name, nArgs);
+    		IRoutinePool pool = iter.next();
+    		Vector<Root> candidates = pool.findRoutinesBySignature(name, nArgs);
     		for (int c = 0; subroutine == null && c < candidates.size(); c++)
     		{
     	    	// TODO Check for ambiguity (multiple matches) and raise e.g. an exception in that case
     			subroutine = candidates.get(c);
+    			// START KGU#125 2016-01-05: Is to force updating of the diagram status
+    			if (pool instanceof Updater)
+    			{
+    				subroutine.addUpdater((Updater)pool);
+    			}
+    			diagram.adoptArrangedOrphanNSD(subroutine);
+    			// END KGU#125 2016-01-05
     		}
     	}
     	return subroutine;
@@ -890,7 +926,7 @@ public class Executor implements Runnable
 			pascalFunction = "public void randomize() {  }";
 			interpreter.eval(pascalFunction);
 			// square
-			pascalFunction = "public double sqr(double d) { return (d) * (d); }";
+			pascalFunction = "public double sqr(double d) { return d * d; }";
 			interpreter.eval(pascalFunction);
 			// square root
 			pascalFunction = "public double sqrt(double d) { return Math.sqrt(d); }";
@@ -1603,6 +1639,13 @@ public class Executor implements Runnable
 		int i = 0;
 		boolean done = false;
 
+		// START KGU#127 2016-01-07: Bugfix #91 - without a single line the exit didn't work
+		if (sl.count() == 0)
+		{
+			done = true;
+			this.leave++;
+		}
+		// END KGU#127 2016-01-07
 		while ((i < sl.count()) && !done && result.equals("") && (stop == false) && !returned)
 		{
 			String cmd = sl.get(i).trim();

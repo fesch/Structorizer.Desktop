@@ -85,7 +85,7 @@ import lu.fisch.utils.StringList;
 
 public class PerlGenerator extends Generator {
 	
-	// START KGU 2015-11-02: We must know alle variable names in order to prefix the with '$'.
+	// START KGU 2015-11-02: We must know all variable names in order to prefix them with '$'.
 	StringList varNames = new StringList();
 	// END KGU 2015-11-02
 

@@ -1,4 +1,4 @@
-﻿/*
+/*
     Structorizer
     A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
 
@@ -163,7 +163,7 @@ public class Menu extends JMenuBar implements NSDController
 	protected JCheckBoxMenuItem menuDiagramNice = new JCheckBoxMenuItem("Boxed diagram?",IconLoader.ico040);
 	protected JCheckBoxMenuItem menuDiagramComment = new JCheckBoxMenuItem("Show comments?",IconLoader.ico077);
 	protected JCheckBoxMenuItem menuDiagramMarker = new JCheckBoxMenuItem("Highlight variables?",IconLoader.ico079);
-	protected JCheckBoxMenuItem menuDiagramDIN = new JCheckBoxMenuItem("DIN?",IconLoader.ico082);
+	protected JCheckBoxMenuItem menuDiagramDIN = new JCheckBoxMenuItem("DIN 66261?",IconLoader.ico082);
 	protected JCheckBoxMenuItem menuDiagramAnalyser = new JCheckBoxMenuItem("Analyse structogram?",IconLoader.ico083);
 	protected JCheckBoxMenuItem menuDiagramSwitchComments = new JCheckBoxMenuItem("Switch text/comments?",IconLoader.ico102);
 	// START KGU#123 2016-01-04: Enh. #87
@@ -850,7 +850,8 @@ public class Menu extends JMenuBar implements NSDController
 			// swap texts against comments?
 			menuDiagramSwitchComments.setSelected(Element.E_TOGGLETC);
 
-			// DIN 66261			menuDiagramDIN.setSelected(Element.E_DIN);
+			// DIN 66261
+			menuDiagramDIN.setSelected(Element.E_DIN);
 			if(Element.E_DIN==true)
 			{
 				menuDiagramAddBeforeFor.setIcon(IconLoader.ico010);

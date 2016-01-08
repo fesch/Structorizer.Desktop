@@ -5,13 +5,12 @@
   e.g. GUI=EN, Input will be "IN"
        GUI=LU, Input will be "lire" ...
 - allow text formating of elements --> must also be saved to the NSD file [David Tremain]
-- allow multiple elements to be selected and moved/formatted at once [David Tremain]
 
 Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.23-09 (2016.01.04)
+Current development version: 3.23-12 (2016.01.08)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
 - 02: Bugfix #51 - stand alone input/output identifier where not converted in Pascal export [IrisLuc]
 - 03: Bugfix #48 - delay propagation to Turtleizer <Kay Gürtzig>
@@ -24,8 +23,8 @@ Current development version: 3.23-09 (2016.01.04)
 - 05: executor: Enh. #9 - Subroutine call now supported via Arranger as pool <Kay Gürtzig>
 - 05: executor: Enh. #9 - Control panel shows call depth and (on error) stacktrace <Kay Gürtzig>
 - 05: executor: Enh. #23 - Jump execution implemented in three categories <Kay Gürtzig>
-- 05: arranger: Enh. #9 - Structorizer can now push diagrams into Arranger. <Kay Gürtzig>
-- 05: arranger: Enh. #35 - Display now has got scrollbars and moves to a just added diagram <Kay Gürtzig>
+- 05: arranger: Enh. #9 - Structorizer can now push diagrams into Arranger <Kay Gürtzig>
+- 05: arranger: Enh. #35 - Arranger now got scrollbars and moves to a just added diagram <Kay Gürtzig>
 - 05: arranger: Enh. #35 - Diagrams may be pinned (against replacement) and dropped <Kay Gürtzig>
 - 05: generator: Enh. #23 - Export to C, C++, C#, Java, and Pascal now supports Jumps <Kay Gürtzig>
 - 05: analyser: New checks for calls, jumps, return mechanisms and concurrency risks <Kay Gürtzig>
@@ -46,11 +45,19 @@ Current development version: 3.23-09 (2016.01.04)
 - 06: Bugfix #71 - Code export to shell scripts was defective (no text translation) <Kay Gürtzig>
 - 06: Bugfix #51, #54 - Defective input / output export to Perl, Python <Kay Gürtzig>
 - 07: Bugfix #74: Accidently disabled Pascal operators like =, <>, and, or <Kay Gürtzig>
-- 07: Enh. #75: Highlighting of Jump element keywords leave, return, exit <Kay Gürtzig> 
+- 07: Enh. #75: Highlighting of Jump element keywords (leave, return, exit) <Kay Gürtzig> 
 - 08: Bugfix #82: Saving of NSDs with inconsistent FOR loops <Kay Gürtzig>
 - 08: Bugfix #78: Reloading an Arranger constellation could cause duplicates [elemhsb]
 - 08: Bugfix #85: Diagram heading or comment changes now undoable <Kay Gürtzig>
 - 09: Bugfix #65, Enh. #87: Collapsing/expanding reorganised, autoscrolling enabled [elemhsb] 
+- 10: Bugfix #89: Two flaws in variable detection (highlighting, analyser) <Kay Gürtzig>
+- 10: Bugfix #90: Insufficient updating of executed subroutines in Arranger <Kay Gürtzig>
+- 10: Bugfix #91: Unreliable execution of some empty Jump elements <Kay Gürtzig>
+- 10: Bugfix #92: Executor: Unwanted replacements within string literals <Kay Gürtzig>
+- 11: Bugfix #95: Executor: div operator support accidently dropped  <Kay Gürtzig>
+- 11: Bugfix #96: export: variable prefix, test expressions for shell scripts <Kay Gürtzig>
+- 12: Bugfix #99: FOR loops were saved defectively, new version can load them <Kay Gürtzig>
+- 12: Arranger: Image buttons for saving and loading resized <Kay Gürtzig>
 
 Version 3.23 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
@@ -110,17 +117,17 @@ Version 3.23 (2015.12.04)
 - 31: Newly created empty diagrams are no longer flagged as changed <Kay Gürtzig>
 - 31: Content of array variables now sensibly displayed on execution (issue #14) <Kay Gürtzig>
 - 31: Variable content may now effectively be edited on excution pauses (issue #15) <Kay Gürtzig>
-- 31: Menu item File > Quit acts consistent to the [x] button now (bug #16) <Kay Gürtzig>
+- 31: Menu item File > Quit action consistent to the [x] button now (bug #16) <Kay Gürtzig>
 - 31: Phenomenon of stalling execution on syntax errors within loops fixed (bug #17) <Kay Gürtzig>
 - 31: Several fixes induced by wide-spread code rebuilding in versions 29...30 <Kay Gürtzig>
-- 32: Bugfixes KGU#71 and KGU#72 for CGenerator: div operators remained, switch bug <Kay Gürtzig>
-- 32: Issues #24 (=KGU#79) and #25 (=KGU#80) fixed (defective condition conversion) <Kay Gürtzig> 
-- 32: Issue #21 (=KGU#77) fixed: return instructions now terminate the execution <Kay Gürtzig>
+- 32: Bugfixes for code export C etc.: div operators remained, switch bug <Kay Gürtzig>
+- 32: Issues #24 and #25 fixed (defective condition conversion) <Kay Gürtzig> 
+- 32: Issue #21 fixed: return instructions now terminate the execution <Kay Gürtzig>
 - 32: Operator highlighting fixed, new colouring for string and character literals <Kay Gürtzig>
 - 32: Bugs #28, #31, and #32 fixed, all concerning element degrading on undoing/copying <Kay Gürtzig>
 - 32: More adaptive approach to either exit or dispose a Structorizer on closing <Kay Gürtzig>
 - 33: Bugfix #39 - Errors on drawing empty Case structures, confused texts and comments <Kay Gürtzig>
-- 33: Bugfix #41 - shift operators <<, >>, shl, shr haven't been supported <Kay Gürtzig>
+- 33: Bugfix #41 - shift operators <<, >>, shl, shr hadn't been supported <Kay Gürtzig>
 - 33: Bugfix #40 - Recent nsd files got truncated on saving errors <Kay Gürtzig>
 - 33: Bugfix #42 - Default saving directory should not be root (/) but home <Kay Gürtzig>
 
