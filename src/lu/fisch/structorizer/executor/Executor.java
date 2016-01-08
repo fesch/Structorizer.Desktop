@@ -63,6 +63,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.01.05      Bugfix #90 (KGU#125): Arranger updating for executed subroutines fixed
  *      Kay Gürtzig     2016.01.07      Bugfix #91 (KGU#126): Reliable execution of empty Jump elements,
  *                                      Bugfix #92 (KGU#128): Function names were replaced within string literals
+ *      Kay Gürtzig     2016.01.08      Bugfix #95 (KGU#130): div operator conversion accidently dropped
  *
  ******************************************************************************************************
  *
@@ -72,7 +73,7 @@ package lu.fisch.structorizer.executor;
  *            informed about a delay change, such that e.g. the Turtleizer still crept in slow motion
  *            while the Executor had no delay anymore. Now a suitable diagramController will be informed.
  *          Bug 49: Equality test had failed between variables, particularly between array elements,
- *            because they presented Wrapper objects (e. g. Intege) rather than primitive values. 
+ *            because they presented Wrapper objects (e. g. Integer) rather than primitive values. 
  *            For scalar variables, values are now assigned as primitive type if possible (via
  *            interpreter.eval()). For array elements, in contrast, the comparison expression  will be
  *            converted, such that == and != will be replaced by .equals() calls.
@@ -256,10 +257,9 @@ public class Executor implements Runnable
 	{
 		Regex r;
 
-		// START KGU#128 2016-01-07 Effort via tokens to avoid replacements within string literals
+		// START KGU#128 2016-01-07: Bugfix #92 - Effort via tokens to avoid replacements within string literals
 //		s = Element.unifyOperators(s);
 //		s = s.replace(" div ", " / ");		// FIXME: Operands should be coerced to integer...
-//		// END KGU#18/KGU#23 2015-10-26
 //
 //		// Convert built-in mathematical functions
 //		s = s.replace("cos(", "Math.cos(");
@@ -289,6 +289,9 @@ public class Executor implements Runnable
 //		// s=s.replace("random(", "Math.random(");
 		StringList tokens = Element.splitLexically(s, true);
 		Element.unifyOperators(tokens, false);
+		// START KGU#130 2015-01-08: Bugfix #95 - Conversion of div operator had been forgotten...
+		tokens.replaceAll("div", "/");		// FIXME: Operands should better be coerced to integer...
+		// END KGU#130 2015-01-08
 		// Function names to be prefixed with "Math."
 		final String[] mathFunctions = {
 				"cos", "sin", "tan", "acos", "asin", "atan", "toRadians", "toDegrees",

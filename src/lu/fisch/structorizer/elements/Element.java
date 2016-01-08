@@ -102,7 +102,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.23-10";
+	public static String E_VERSION = "3.23-11";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -128,17 +128,18 @@ public abstract class Element {
 	" - David Morais <narutodc@hotmail.com>\n"+
 	" - Praveen Kumar <praveen_sonal@yahoo.com>\n"+
 	" - Jan Ollmann <bkgmjo@gmx.net>\n"+
+	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"\n"+
 	"Translations realised by\n"+
 	" - NL: Jerone <jeronevw@hotmail.com>\n"+
 	" - DE: Klaus-Peter Reimers <k_p_r@freenet.de>\n"+
 	" - LU: Laurent Zender <laurent.zender@hotmail.de>\n"+
 	" - ES: Andres Cabrera <andrescabrera20@gmail.com>\n"+
-        " - PT/BR: Theldo Cruz <cruz@pucminas.br>\n"+
-        " - IT: Andrea Maiani <andreamaiani@gmail.com>\n"+
-        " - CN: Wang Lei <wanglei@hollysys.com>\n"+
-        " - CZ: Vladimír Vaščák <vascak@spszl.cz>\n"+
-        " - RU: Юра Лебедев <elita.alegator@gmail.com>\n"+
+	" - PT/BR: Theldo Cruz <cruz@pucminas.br>\n"+
+	" - IT: Andrea Maiani <andreamaiani@gmail.com>\n"+
+	" - CN: Wang Lei <wanglei@hollysys.com>\n"+
+	" - CZ: Vladimír Vaščák <vascak@spszl.cz>\n"+
+	" - RU: Юра Лебедев <elita.alegator@gmail.com>\n"+
 	"\n"+
 	"Different good ideas and improvements provided by\n"+
 	" - Serge Marelli <serge.marelli@education.lu>\n"+
