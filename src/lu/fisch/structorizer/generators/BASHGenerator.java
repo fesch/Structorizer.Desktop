@@ -47,8 +47,10 @@ package lu.fisch.structorizer.generators;
  *                                          Pattern list syntax in Case Elements corrected (KGU#15).
  *                                          Bugfix KGU#60 (Repeat loop was incorrectly translated).
  *      Kay Gürtzig         2015.12.19      Enh. #23 (KGU#78): Jump translation implemented
- *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KG#93)
- *      Kay Gürtzig         2015.12.22      Bugfix #71 (= KG#114)
+ *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KG#93): String literals were spoiled
+ *      Kay Gürtzig         2015.12.22      Bugfix #71 (= KG#114): Text transformation didn't work
+ *      Kay Gürtzig         2016.01.08      Bugfix #96 (= KG#129): Variable names handled properly,
+ *                                          Logical expressions (conditions) put into ((  )).
  *
  ******************************************************************************************************
  *
@@ -97,6 +99,9 @@ import lu.fisch.utils.StringList;
 
 public class BASHGenerator extends Generator {
 	
+	// START KGU#129 2016-01-08: Bugfix #96 We must know all variable names to prefix them with '$'.
+	StringList varNames = new StringList();
+	// END KGU#129 2015-01-08
 
 	/************ Fields ***********************/
 	@Override
@@ -184,13 +189,51 @@ public class BASHGenerator extends Generator {
 	@Override
 	protected String transformTokens(StringList tokens)
 	{
-		// FIXME (KGU): We must of course identify variable names and prefix them with $ unless being an lvalue
-		// FIXME (KGU): Further on, function calls will have to be put into brackets etc. pp.
+		// START KGU#129 2016-01-08: Bugfix #96 - variable name processing
+		// We must of course identify variable names and prefix them with $ unless being an lvalue
+		int posAsgnOpr = tokens.indexOf("<-");
+		// If there is an array variable (which doesn't exist in shell) left of the assignment symbol, check the index 
+		int posBracket1 = tokens.indexOf("[");
+		int posBracket2 = -1;
+		if (posBracket1 >= 0 && posBracket1 < posAsgnOpr) posBracket2 = Math.min(posAsgnOpr, tokens.indexOf("]"));
+    	for (int i = 0; i < varNames.count(); i++)
+    	{
+    		String varName = varNames.get(i);
+    		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
+    		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
+    		tokens.replaceAllBetween(varName, "$"+varName, true, posAsgnOpr+1, tokens.count());
+    		tokens.replaceAllBetween(varName, "$"+varName, true, posBracket1+1, posBracket2);
+    	}
+    	// Now we remove spaces around the assignment operator
+    	if (posAsgnOpr >= 0)
+    	{
+    		int pos = posAsgnOpr - 1;
+    		while (pos >= 0 && tokens.get(pos).equals(" "))
+    		{
+    			tokens.delete(pos--);
+    			posAsgnOpr--;
+    		}
+    		pos = posAsgnOpr + 1;
+    		while (pos < tokens.count() && tokens.get(pos).equals(" "))
+    		{
+    			tokens.delete(pos);
+    		}
+    	}
+		// END KGU#96 2016-01-08
+		// FIXME (KGU): Function calls, math expressions etc. will have to be put into brackets etc. pp.
 		tokens.replaceAll("div", "/");
 		tokens.replaceAll("<-", "=");
+		// START KGU#131 2015-01-08: Prepared for old-style test expressions, but disabled again
+//		tokens.replaceAll("<", " -lt ");
+//		tokens.replaceAll(">", " -gt ");
+//		tokens.replaceAll("==", " -eq ");
+//		tokens.replaceAll("!=", " -ne ");
+//		tokens.replaceAll("<=", " -le ");
+//		tokens.replaceAll(">=", " -ge ");
+		// END KGU#131 2016-01-08
 		return tokens.concatenate();
 	}
-	// END KGUä93 2015-12-21
+	// END KGU#93 2015-12-21
 
 	// END KGU#18/KGU#23 2015-11-01
 
@@ -268,7 +311,10 @@ public class BASHGenerator extends Generator {
 		// START KGU 2014-11-16
 		insertComment(_alt, _indent);
 		// END KGU 2014-11-16
-		code.add(_indent+"if "+BString.replace(transform(_alt.getText().getText()),"\n","").trim());
+		// START KGU#131 2016-01-08: Bugfix #96 - approach with C-like syntax
+		//code.add(_indent+"if "+BString.replace(transform(_alt.getText().getText()),"\n","").trim());
+		code.add(_indent+"if (( "+BString.replace(transform(_alt.getText().getText()),"\n","").trim() + " ))");
+		// END KGU#131 2016-01-08
 		code.add(_indent+"then");
 		generateCode(_alt.qTrue,_indent+this.getIndent());
 		
@@ -327,15 +373,20 @@ public class BASHGenerator extends Generator {
 		// We now use C-like syntax  for ((var = sval; var < eval; var=var+incr)) ...
 		// START KGU#3 2015-11-02: And now we have a competent splitting mechanism...
 		String counterStr = _for.getCounterVar();
-		String startValueStr = _for.getStartValue();
-		String endValueStr = _for.getEndValue();
+		// START KGU#129 2016-01-08: Bugfix #96: Expressions must be transformed
+		//String startValueStr = _for.getStartValue();
+		//String endValueStr = _for.getEndValue();
+		String startValueStr = transform(_for.getStartValue());
+		String endValueStr = transform(_for.getEndValue());
+		// END KGU#129 2016-01-08
 		int stepValue = _for.getStepConst();
 		String incrStr = counterStr + "++";
 		if (stepValue == -1) {
 			incrStr = counterStr + "--";
 		}
 		else if (stepValue != 1) {
-			incrStr = "(( " + counterStr + "=" + counterStr + "+(" + stepValue + ") ))";
+			// START KGU#129 2016-01-08: Bugfix #96 - prefix variables
+			incrStr = "(( " + counterStr + "=$" + counterStr + "+(" + stepValue + ") ))";
 		}
 		// END KGU#3 2015-11-02
 		code.add(_indent+"for (("+counterStr+"="+startValueStr+"; "+
@@ -354,7 +405,10 @@ public class BASHGenerator extends Generator {
 		// START KGU 2014-11-16
 		insertComment(_while, _indent);
 		// END KGU 2014-11-16
-		code.add(_indent+"while " + transform(_while.getText().getLongString()).trim());
+		// START KGU#131 2016-01-08: Bugfix #96 first approach with C-like syntax
+		//code.add(_indent+"while " + transform(_while.getText().getLongString()));
+		code.add(_indent+"while (( " + transform(_while.getText().getLongString()) + " ))");
+		// END KGU#131 2016-01-08
 		code.add(_indent+"do");
 		generateCode(_while.q,_indent+this.getIndent());
 		code.add(_indent+"done");
@@ -373,7 +427,10 @@ public class BASHGenerator extends Generator {
 		insertComment("NOTE: This is an automatically inserted copy of the loop body below.", _indent);
 		generateCode(_repeat.q, _indent);		
 		// END KGU#60 2015-11-02
-		code.add(_indent + "until " + transform(_repeat.getText().getLongString()).trim());
+		// START KGU#131 2016-01-08: Bugfix #96 first approach with C-like syntax
+		//code.add(_indent + "until " + transform(_repeat.getText().getLongString()).trim());
+		code.add(_indent + "until (( " + transform(_repeat.getText().getLongString()).trim() + " ))");
+		// END KGU#131 2016-01-08
 		code.add(_indent + "do");
 		generateCode(_repeat.q, _indent + this.getIndent());
 		code.add(_indent + "done");
@@ -446,6 +503,11 @@ public class BASHGenerator extends Generator {
 		}
 		
 		code.add("");
+		// START KGU#129 2016-01-08: Bugfix #96 - Now fetch all variable names from the entire diagram
+		varNames = _root.getVarNames();
+		insertComment("TODO: Check and revise the syntax of all expressions!", _indent);
+		code.add("");
+		// END KGU#129 2016-01-08
 		generateCode(_root.children, indent);
 		
 		if( ! _root.isProgram ) {

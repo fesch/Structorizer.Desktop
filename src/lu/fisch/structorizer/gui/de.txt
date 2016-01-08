@@ -120,7 +120,7 @@ Menu.menuDiagramNice.text=Umrahmtes Diagramm?
 Menu.menuDiagramComment.text=Zeige Kommentare?
 Menu.menuDiagramSwitchComments.text=Tausche Text/Kommentare?
 Menu.menuDiagramMarker.text=Hervorheben von Variablen?
-Menu.menuDiagramDIN.text=DIN?
+Menu.menuDiagramDIN.text=DIN 66261?
 Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
 Menu.menuDiagramWheel.text=Mausrad zum Reduzieren?
 // Menu "Help"
