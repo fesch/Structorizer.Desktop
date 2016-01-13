@@ -64,6 +64,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.01.07      Bugfix #91 (KGU#126): Reliable execution of empty Jump elements,
  *                                      Bugfix #92 (KGU#128): Function names were replaced within string literals
  *      Kay Gürtzig     2016.01.08      Bugfix #95 (KGU#130): div operator conversion accidently dropped
+ *      Kay Gürtzig     2016.01.09      KGU#133: Quick fix to show returned arrays in a list view rather than a message box
  *
  ******************************************************************************************************
  *
@@ -686,8 +687,19 @@ public class Executor implements Runnable
 							this.returnedValue = n;
 							if (this.callers.isEmpty())
 							{
-								JOptionPane.showMessageDialog(diagram, n,
-										"Returned result", JOptionPane.INFORMATION_MESSAGE);
+								// START KGU#133 2016-01-09: Show large arrays in a listview
+								//JOptionPane.showMessageDialog(diagram, n,
+								//		"Returned result", JOptionPane.INFORMATION_MESSAGE);
+								if (n instanceof Object[] && ((Object[])n).length > 20)
+								{
+									showArray((Object[])n, "Returned result");
+								}
+								else
+								{
+									JOptionPane.showMessageDialog(diagram, n,
+											"Returned result", JOptionPane.INFORMATION_MESSAGE);
+								}
+								// END KGU#133 2016-01-09
 							}
 							// END KGU#2 (#9) 2015-11-13
 							returned = true;
@@ -712,6 +724,26 @@ public class Executor implements Runnable
 		return successful;
 		// END KGU# (#9) 2015-11-13
 	}
+	
+	// START KGU#133 2016-01-09: New method for presenting large result arrays as scrollable list
+	private void showArray(Object[] _array, String _title)
+	{
+		JDialog arrayView = new JDialog();
+		arrayView.setTitle(_title);
+		arrayView.setIconImage(IconLoader.ico004.getImage());
+		List arrayContent = new List(10);
+		for (int i = 0; i < _array.length; i++)
+		{
+			arrayContent.add(i + ":  " + prepareValueForDisplay(_array[i]));
+		}
+		arrayView.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		arrayView.getContentPane().add(arrayContent, BorderLayout.CENTER);
+		arrayView.setSize(300, 300);
+		arrayView.setLocationRelativeTo(control);
+		arrayView.setModalityType(ModalityType.APPLICATION_MODAL);
+		arrayView.setVisible(true);
+	}
+	// END KGU#133 2016-01-09
 	
 	// START KGU#2 (#9) 2015-11-13: New method to execute a called subroutine
 	private Object executeCall(Root root, Object[] arguments)
@@ -1751,13 +1783,13 @@ public class Executor implements Runnable
 			Function f = new Function(expression);
 			if (f.isFunction())
 			{
-				System.out.println("Looking for SUBROUTINE NSD:");
-				System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
+				//System.out.println("Looking for SUBROUTINE NSD:");
+				//System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
 				Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
 				if (sub != null)
 				{
-					System.out.println("Matching sub-NSD found for SUBROUTINE CALL!");
-					System.out.println("--> " + varName + " <- " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
+					//System.out.println("Matching sub-NSD found for SUBROUTINE CALL!");
+					//System.out.println("--> " + varName + " <- " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
 					Object[] args = new Object[f.paramCount()];
 					for (int p = 0; p < f.paramCount(); p++)
 					{
@@ -2036,14 +2068,14 @@ public class Executor implements Runnable
 			if (result.isEmpty() && element instanceof Call)
 			{
 				// FIXME: Disable the output instructions for the release version
-				System.out.println("Looking for SUBROUTINE NSD:");
-				System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
+				//System.out.println("Looking for SUBROUTINE NSD:");
+				//System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
 				Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
 				if (sub != null)
 				{
 					// FIXME: Disable the output instructions for the release version
-					System.out.println("Matching sub-NSD found for SUBROUTINE CALL!");
-					System.out.println("--> " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
+					//System.out.println("Matching sub-NSD found for SUBROUTINE CALL!");
+					//System.out.println("--> " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
 					executeCall(sub, args);
 				}
 				else

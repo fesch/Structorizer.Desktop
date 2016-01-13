@@ -36,6 +36,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.10.12      control elements for breakpoint handling added (KGU#43). 
  *      Kay Gürtzig     2015.11.22      Adaptations for handling selected non-empty Subqueues (KGU#87)
  *      Kay Gürtzig     2016.01.04      Enh. #87: New buttons and menu items for collapsing/expanding elements
+ *      Kay Gürtzig     2016.01.11      Enh. #103: Save button disabled while Root is unchanged (KGU#137)
  *
  ******************************************************************************************************
  *
@@ -649,6 +650,11 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 				}
 			}
 		}
+		
+		// START KGU#137 2016-01-11: Bugfix #103 - Reflect the "saveworthyness" of the diagram
+		// save
+		btnSave.setEnabled(diagram.getRoot().hasChanged());
+		// END KGU#137 2016-01-11
 		
 		// undo & redo
 		btnUndo.setEnabled(diagram.getRoot().canUndo());

@@ -780,6 +780,11 @@ public class Menu extends JMenuBar implements NSDController
 				}
 			}
 
+			// START KGU#137 2016-01-11: Bugfix #103 - Reflect the "saveworthyness" of the diagram
+			// save
+			menuFileSave.setEnabled(diagram.getRoot().hasChanged());
+			// END KGU#137 2016-01-11
+			
 			// undo & redo
 			menuEditUndo.setEnabled(diagram.getRoot().canUndo());
 			menuEditRedo.setEnabled(diagram.getRoot().canRedo());

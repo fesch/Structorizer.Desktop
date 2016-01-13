@@ -500,7 +500,7 @@ public class Parallel extends Element
     				if (_forSelection) selected = false;
     				selMe = selCh;
     			}
-    		// START KGU#121 2016-01-03: A collapsed element has no visible substructure!
+    		// START KGU#121 2016-01-03: Bugfix #87 (continued)
     		}
     		// END KGU#121 2016-01-03
 
