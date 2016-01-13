@@ -46,6 +46,9 @@ package lu.fisch.structorizer.elements;
  *                                      Enh. #75 (KGU#116): Highlighting of jump keywords (orange)
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *      Kay Gürtzig     2016.01.03/04   Enh. #87 for collapsing/expanding (KGU#122/KGU#123)
+ *      Kay Gürtzig     2016.01.09      Issue #97: coordinate comparison changed to improve selection (KGU#136)
+ *      Kay Gürtzig     2016.01.12      Bugfix #105: flaw in string literal tokenization (KGU#139)
+ *      Kay Gürtzig     2016.01.12      Bugfix #104: transform caused index errors
  *
  ******************************************************************************************************
  *
@@ -102,7 +105,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.23-12";
+	public static String E_VERSION = "3.23-13";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -118,8 +121,8 @@ public abstract class Element {
 	" - Java: Gunter Schillebeeckx <gunter.schillebeeckx@tsmmechelen.be>\n"+
 	" - C: Gunter Schillebeeckx <gunter.schillebeeckx@tsmmechelen.be>\n"+
 	" - C#: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
-	" - C++: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n" +
-	" - PHP: Rolf Schmidt <rolf.frogs@t-online.de>\n" +
+	" - C++: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
+	" - PHP: Rolf Schmidt <rolf.frogs@t-online.de>\n"+
 	"\n"+
 	"License setup and checking done by\n"+
 	" - Marcus Radisch <radischm@googlemail.com>\n"+
@@ -578,13 +581,23 @@ public abstract class Element {
 	{
 		Point pt=getDrawPoint();
 
-		if ((rect.left-pt.x < _x) && (_x < rect.right-pt.x) &&
-				(rect.top-pt.y < _y) && (_y < rect.bottom-pt.y))
+		// START KGU#136 2016-01-09: Bugfix #97: Little gaps between the claimed regions let selection flicker
+//		if ((rect.left-pt.x < _x) && (_x < rect.right-pt.x) &&
+//				(rect.top-pt.y < _y) && (_y < rect.bottom-pt.y))
+		int overlap = 0;
+//		System.out.print(this.getClass().getSimpleName() + " " + this.getText().getLongString() +
+//				"\t[" + rect.left + ", " + rect.top + "; " + rect.right + ", " + rect.bottom + "]\t(" +
+//				_x + ", " + _y + ")\t");
+		if ((rect.left-pt.x <= _x+overlap) && (_x-overlap <= rect.right-pt.x) &&
+				(rect.top-pt.y <= _y+overlap) && (_y-overlap <= rect.bottom-pt.y))
+		// END KGU#136 2016-01-09
 		{
+//			System.out.println("YES");
 			return this;         
 		}
 		else 
 		{
+//			System.out.println("NO");
 			if (_forSelection)	
 			{
 				selected = false;	
@@ -904,6 +917,10 @@ public abstract class Element {
 		if (_restoreStrings)
 		{
 			String[] delimiters = {"\"", "'"};
+			// START KGU#139 2016-01-12: Bugfix #105 - apparently incomplete strings got lost
+			// We mustn't eat seemingly incomplete strings, instead we re-feed them
+			StringList parkedTokens = new StringList();
+			// END KGU#139 2016-01-12
 			for (int d = 0; d < delimiters.length; d++)
 			{
 				boolean withinString = false;
@@ -917,6 +934,9 @@ public abstract class Element {
 						composed = composed + lexeme;
 						if (lexeme.equals(delimiters[d]))
 						{
+							// START KGU#139 2016-01-12: Bugfix #105
+							parkedTokens.clear();
+							// END KGU#139 2016-01-12
 							parts.set(i, composed+"");
 							composed = "";
 							withinString = false;
@@ -924,11 +944,17 @@ public abstract class Element {
 						}
 						else
 						{
+							// START KGU#139 2016-01-12: Bugfix #105
+							parkedTokens.add(lexeme);
+							// END KGU#139 2016-01-12
 							parts.delete(i);
 						}
 					}
 					else if (lexeme.equals(delimiters[d]))
 					{
+						// START KGU#139 2016-01-12: Bugfix #105
+						parkedTokens.add(lexeme);
+						// END KGU#139 2016-01-12
 						withinString = true;
 						composed = lexeme+"";
 						parts.delete(i);
@@ -939,6 +965,12 @@ public abstract class Element {
 					}
 				}
 			}
+			// START KGU#139 2916-01-12: Bugfix #105
+			if (parkedTokens.count() > 0)
+			{
+				parts.add(parkedTokens);
+			}
+			// END KGU#139 2016-01-12
 		}
 		return parts;
 	}
@@ -1180,7 +1212,7 @@ public abstract class Element {
 							_canvas.setFont(boldFont);
 						}
 						// END KGU#116 2015-12-23
-						// if it's a String or Character literal color it as such
+						// if it's a String or Character literal then mark it as such
 						else if (display.startsWith("\"") && display.endsWith("\"") ||
 								display.startsWith("'") && display.endsWith("'"))
 						{
@@ -1530,7 +1562,10 @@ public abstract class Element {
         		{
         			int len = marker.length();
         			int pos = 0;
-        			while ((pos = interm.indexOf(marker, pos)) >= 0)
+        			// START KGU 2016-01-13: Bugfix #104: position fault
+        			//while ((pos = interm.indexOf(marker, pos)) >= 0)
+        			while ((pos = interm.indexOf(marker, pos)) > 0)
+        			// END KGU 2016-01-13
         			{
         				if (!Character.isJavaIdentifierPart(interm.charAt(pos-1)) &&
         						(pos + len) < interm.length() &&
@@ -1543,14 +1578,22 @@ public abstract class Element {
         		else
         		{
         			// Already padded, so just replace it everywhere
-        			interm = interm.replace( marker, ""); 
+        			// START KGU 2016-01-13: Bugfix #104 - padding might go away here
+        			//interm = interm.replace( marker, ""); 
+        			interm = interm.replace( marker, " "); 
+        			// END KGU 2016-01-13
         		}
         		//interm = " " + interm + " ";	// Ensure the string being padded for easier matching
-                interm = interm.replace("  ", " ");
-                interm = interm.trim();
+                interm = interm.replace("  ", " ");		// Reduce multiple spaces (may also spoil string literals!)
+                // START KGU 2016-01-13: Bugfix #104 - should have been done after the loop only
+                //interm = interm.trim();
+                // END KGU 2016-01-13
         		//System.out.println("transformIntermediate: " + interm);	// FIXME (KGU): Remove or deactivate after test!
         	}
         }
+        // START KGU 2016-01-13: Bugfix #104 - should have been done after the loop only
+        interm = interm.trim();
+        // END KGU 2016-01-13
         
         // START KGU#93 2015-12-21 Bugfix #41/#68/#69 Get rid of padding defects and string damages
         //interm = unifyOperators(interm);
@@ -1574,6 +1617,24 @@ public abstract class Element {
         //return interm/*.trim()*/;
 
         StringList tokens = Element.splitLexically(interm, true);
+        
+//        // START KGU 2016-01-13: Bugfix #104 - planned new approach to overcome that nasty keyword/string problem
+//        // It is also too simple, e.g. in cases like  jusqu'à test = 'o'  where a false string recognition would
+//        // avert the keyvword recognition. So both will have to be done simultaneously...
+//        for (int i=0; i < redundantMarkers.count(); i++)
+//        {
+//        	StringList markerTokens = Element.splitLexically(redundantMarkers.get(i), true);
+//        	int pos = 0;
+//        	while ((pos = tokens.indexOf(markerTokens, pos, true)) >= 0)
+//        	{
+//        		for (int j = 0; j < markerTokens.count(); j++)
+//        		{
+//        			tokens.delete(pos);
+//        		}
+//        	}
+//        }
+//        // END KGU 2016-01-13
+        
         unifyOperators(tokens, false);
         
         return tokens;

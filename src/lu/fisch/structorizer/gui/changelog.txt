@@ -10,7 +10,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.23-12 (2016.01.08)
+Current development version: 3.23-13 (2016.01.13)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
 - 02: Bugfix #51 - stand alone input/output identifier where not converted in Pascal export [IrisLuc]
 - 03: Bugfix #48 - delay propagation to Turtleizer <Kay Gürtzig>
@@ -58,6 +58,13 @@ Current development version: 3.23-12 (2016.01.08)
 - 11: Bugfix #96: export: variable prefix, test expressions for shell scripts <Kay Gürtzig>
 - 12: Bugfix #99: FOR loops were saved defectively, new version can load them <Kay Gürtzig>
 - 12: Arranger: Image buttons for saving and loading resized <Kay Gürtzig>
+- 13: Bugfix #50: Return type specifications were split into several lines <Kay Gürtzig>
+- 13: GUI Enh.: Scrollable display of returned arrays (at top routine level) <Kay Gürtzig>
+- 13: Enh. #101: Title string with version number and sub-thread mark [elemhsb]
+- 13: Bugfix #102: Selection wasn't cleared after deletion, undo or redo <Kay Gürtzig>
+- 13: Issue #103: Save button visibility is to depend on changed status <Kay Gürtzig>
+- 13: Bugfix #104: Code Export could provoke index range errors <Kay Gürtzig>
+- 13: Bugfix #105: Displayed lines were cut off at apostrophes in keywords <Kay Gürtzig>
 
 Version 3.23 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
@@ -71,7 +78,7 @@ Version 3.23 (2015.12.04)
 - 08: added polish translation [Jacek Dzieniewicz]
 - 09: new drawing strategy for the IF statement [David Tremain]
 - 09: new colorizing strategy for elements [David Tremain]
-- 10: visual re-enforcement for draw & drop [David Tremain]
+- 10: visual re-enforcement for drag & drop [David Tremain]
 - 11: allow to collapse / expand elements by scrolling the mouse [David Tremain]
 - 12: added preferences on how to draw IF statements [David Tremain]
 - 13: fixed "empty line" bug [David Tremain]
@@ -92,7 +99,7 @@ Version 3.23 (2015.12.04)
 - 25: added hints to speed buttons [Rens Duijsens]
 - 26: export for Basic [Jacek Dzieniewicz]
 - 26: PL: updated [Jacek Dzieniewicz]
-- 27: array variables improvements in executor <Kay Gürtzig>
+- 27: Array variable improvements in executor <Kay Gürtzig>
 - 27: updated language files (RU,DE,EN,ES) <Kay Gürtzig>
 - 28: minor change in executor for comp. with Unimozer [Bob Fisch]
 - 29: Complex changes and enhancements as described (pull-request #7) <codemanyak>

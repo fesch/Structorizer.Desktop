@@ -51,10 +51,22 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.02      Bugfixes #78 (KGU#119, equals()) and #85 (KGU#120, undo() etc.) 
  *      Kay Gürtzig     2016.01.06      Bugfix #89: References to obsolete operator padding (KGU#126) and
  *                                      faulty index condition for variable detection (KGU#98) fixed 
+ *      Kay Gürtzig     2016.01.08      Bugfix #50 (KGU#135) postfix result type was split into lines  
+ *      Kay Gürtzig     2016.01.11      Bugfix #103 (KGU#137): "changed" state now dependent on undo/redo
+ *                                      stack, see comments below for details
  *
  ******************************************************************************************************
  *
  *      Comment:		/
+ *      
+ *      2016.01.11 (KGU#137)
+ *      - When changes are undone back to the moment of last file saving, the hasChanged is to be reset
+ *      - Therefore, we now track the undo stack size when saving. As soon as an undo action returns to
+ *        the recorded stack size, the hasChanged flag will be reset. Undoing more steps sets the
+ *        flag again but keeps the stored stack size for the case of redoing forward to this point again.
+ *      - As soon as an undoable editing below the recorded stack level eccurs (wiping the redo stack),
+ *        the recorded stack level will be set to an unreachable -1, because the saved state gets lost
+ *        internally.
  *
  ******************************************************************************************************///
 
@@ -87,6 +99,10 @@ import com.stevesoft.pat.*;
 import java.awt.Point;
 import java.util.ArrayList;
 
+/**
+ * @author kay
+ *
+ */
 public class Root extends Element {
 	
 	// KGU 2015-10-16: Just for testing purposes
@@ -95,7 +111,11 @@ public class Root extends Element {
 	// some fields
 	public boolean isNice = true;
 	public boolean isProgram = true;
-	public boolean hasChanged = false;
+	// START KGU#137 2016-01-11: Bugfix #103 - More precise tracking of changes
+	//public boolean hasChanged = false;
+	private boolean hasChanged = false;		// Now only for global, not undoable changes
+	private int undoLevelOfLastSave = 0;	// Undo stack level recorded on saving
+	// END KGU#137 2016-01-11
 	public boolean hightlightVars = false;
 	// START KGU#2 (#9) 2015-11-13:
 	// Is this routine currently waiting for a called subroutine?
@@ -200,6 +220,26 @@ public class Root extends Element {
     	updaters.clear();
     }
     // END KGU#48 2015-10-17
+    
+    // START KGU#137 2016-01-11: Bugfix #103 - Enhanced change tracking, synchronized with undoing/redoing/saving
+    /**
+     * Sets an additional sticky changed flag for saveable global settings that are not subject
+     * of the undo/redo stacks
+     */
+    public void setChanged()
+    {
+    	this.hasChanged = true;
+    }
+
+    /**
+     * Detects if changes (no matter if undoable or not) have been registered since last saving
+     * @return true if there have been changes not undone
+     */
+    public boolean hasChanged()
+    {
+    	return this.hasChanged || this.undoLevelOfLastSave != this.undoList.size();
+    }
+    // END KGU#137 2016-01-11
 
 	// START KGU 2015-10-13: This follows a code snippet found in Root.draw(Canvas, Rect), which had been ineffective though
 	@Override
@@ -535,14 +575,18 @@ public class Root extends Element {
                     //         !_ele.getClass().getSimpleName().equals("Root"))
                     if ( _ele instanceof IElementSequence)
                     {
-                    	hasChanged = ((IElementSequence)_ele).getSize() > 0;
+                    	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                    	//hasChanged = ((IElementSequence)_ele).getSize() > 0;
+                    	// END KGU#137 2016-01-11
                     	((IElementSequence)_ele).removeElements();
                     }
                     else if (!_ele.getClass().getSimpleName().equals("Root"))
                     // END KGU#87 2015-11-22
                     {
                             ((Subqueue) _ele.parent).removeElement(_ele);
-                            hasChanged=true;
+                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            //hasChanged=true;
+                        	// END KGU#137 2016-01-11
                     }
             }
     }
@@ -556,7 +600,9 @@ public class Root extends Element {
                             ((Subqueue) _ele).addElement(_new);
                             _ele.selected=false;
                             _new.selected=true;
-                            hasChanged=true;
+                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            //hasChanged=true;
+                        	// END KGU#137 2016-01-11
                     }
                     else if (_ele.parent.getClass().getSimpleName().equals("Subqueue"))
                     {
@@ -565,7 +611,9 @@ public class Root extends Element {
                             ((Subqueue) _ele.parent).insertElementAt(_new, i);
                             _ele.selected=false;
                             _new.selected=true;
-                            hasChanged=true;
+                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            //hasChanged=true;
+                        	// END KGU#137 2016-01-11
                     }
                     else
                     {
@@ -739,6 +787,13 @@ public class Root extends Element {
 		undoList.peek().setComment(this.comment.copy());
 		// END KGU#120 2016-01-02
 		clearRedo();
+		// START KGU#137 2016-01-11: Bugfix #103
+		// If stack was lower than when last saved, then related info is going lost
+		if (undoList.size() <= this.undoLevelOfLastSave)
+		{
+			this.undoLevelOfLastSave = -1;
+		}
+		// END KGU#137 2016-01-11
 	}
 
     public boolean canUndo()
@@ -759,13 +814,19 @@ public class Root extends Element {
     public void clearUndo()
     {
             undoList = new Stack<Subqueue>();
+    		// START KGU#137 2016-01-11: Bugfix #103 - Most recently saved state is lost, too
+            // FIXME: It might also be an initialisation (in which case = 0 would have been correct)
+            this.undoLevelOfLastSave = -1;
+    		// END KGU#137 2016-01-11
     }
 
     public void undo()
     {
             if (undoList.size()>0)
             {
-                    this.hasChanged=true;
+                    // START KGU#137 2016-01-11: Bugfix #103 - rely on undoList level comparison 
+                    //this.hasChanged=true;
+                    // END KGU#137 2016-01-11
                     redoList.add((Subqueue)children.copy());
             		// START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes in the stack top
             		redoList.peek().setText(this.text.copy());
@@ -786,7 +847,9 @@ public class Root extends Element {
     {
             if (redoList.size()>0)
             {
-                    this.hasChanged=true;
+                    // START KGU#137 2016-01-11: Bugfix #103 - rely on undoList level comparison 
+                    //this.hasChanged=true;
+                    // END KGU#137 2016-01-11
                     undoList.add((Subqueue)children.copy());
             		// START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes on the stack top
             		undoList.peek().setText(this.text.copy());
@@ -803,6 +866,17 @@ public class Root extends Element {
             }
     }
 
+    // START KGU#137 2016-01-11: Bugfix #103 - Synchronize saving with undo / redo stacks
+    /**
+     * To be called after successful saving the diagram as NSD in order to record
+     * the current undoStack size, such that we may know whether or not there are
+     * unsaved changes or not.
+     */
+    public void rememberSaved()
+    {
+    	this.undoLevelOfLastSave = this.undoList.size();
+    }
+    // END KGU#137 2016-01-11
 
     public boolean moveDown(Element _ele)
     {
@@ -816,7 +890,9 @@ public class Root extends Element {
                     {
                             ((Subqueue) _ele.parent).removeElement(i);
                             ((Subqueue) _ele.parent).insertElementAt(_ele, i+1);
-                            this.hasChanged=true;
+                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            //hasChanged=true;
+                        	// END KGU#137 2016-01-11
                             _ele.setSelected(true);
                             res=true;
                     }
@@ -836,7 +912,9 @@ public class Root extends Element {
                     {
                             ((Subqueue) _ele.parent).removeElement(i);
                             ((Subqueue) _ele.parent).insertElementAt(_ele, i-1);
-                            this.hasChanged=true;
+                        	// START KGU#137 2016-01-11: Bugfix 103 - rely on addUndo() 
+                            //hasChanged=true;
+                        	// END KGU#137 2016-01-11
                             _ele.setSelected(true);
                             res=true;
                     }
@@ -2532,7 +2610,10 @@ public class Root extends Element {
     					(tokens.get(posCloseParenth + 1).equals(":"))
     					)
     			{
-    				resultType = tokens.getText(posCloseParenth + 2);
+    				// START KGU#135 2016-01-08: It was not meant to be split to several lines.
+    				//resultType = tokens.getText(posCloseParenth + 2);
+    				resultType = tokens.concatenate(" ", posCloseParenth + 2);
+    				// END KGU#135 2016-01-06
     			}
     			// Second attempt: A keyword sequence preceding the routine name
     			else if (posOpenParenth > 1 && testidentifier(tokens.get(posOpenParenth-1)))

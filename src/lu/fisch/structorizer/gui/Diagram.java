@@ -47,6 +47,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.12.16      Bugfix #63 (KGU#111): Error message on loading failure
  *      Kay Gürtzig     2016.01.02      Bugfix #85 (KGU#120): Root changes are also subject to undoing/redoing
  *      Kay Gürtzig     2016.01.03      Issue #65 (KGU#123): Collapsing/expanding from menu, autoscroll enabled 
+ *      Kay Gürtzig     2016.01.11      Bugfix #102 (KGU#138): clear selection on delete, undo, redo 
  *
  ******************************************************************************************************
  *
@@ -438,13 +439,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					(ele == null || ((IElementSequence)selected).getIndexOf(ele) >= 0))
 			{
 				// Restore the selection flags (which have been reduced to ele by root.getElementByCoord(...))
-				ele.setSelected(false);
+				// START KGU 2016-01-09: Bugfix #97 (possibly) - ele may be null here!
+				//ele.setSelected(false);
+				if (ele != null) ele.setSelected(false);
+				// END KGU 2016-01-09
 				selected.setSelected(true);
 				redraw();
 			}
 			else
 			// END KGU#87 2015-11-23	
-			if(ele!=null)
+			if (ele != null)
 			{
 				mX = mouseX;
 				mY = mouseY;
@@ -494,8 +498,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						// START KGU#87 2015-11-23: Ensure a redrawing after a Subqueue had been selected 
 						//selected=ele;
 						//if(selectedDown!=ele) 
-						if(selectedDown != ele || selected instanceof Subqueue || selected instanceof SelectedSequence)
-							// END KGU#87 2015-11-23
+						if (selectedDown != ele || selected instanceof Subqueue || selected instanceof SelectedSequence)
+						// END KGU#87 2015-11-23
 						{
 							redraw();
 						}
@@ -511,19 +515,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if(selected!=null)
 			{
 				if ( !selected.getClass().getSimpleName().equals("Subqueue") &&
-					!selected.getClass().getSimpleName().equals("Root"))
+					!selected.getClass().getSimpleName().equals("Root") )
 				{
 					mouseMove=false;
 				}
 			}
 
-			if(NSDControl!=null) NSDControl.doButtons();
+			if (NSDControl != null) NSDControl.doButtons();
 		}
     }
 
     public void mouseReleased(MouseEvent e)
 	{
-    	if(e.getSource()==this)
+    	if (e.getSource()==this)
     	{
     		//System.out.println("Released");
     		boolean doDraw = false;
@@ -593,7 +597,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//selectedUp = root.selectElementByCoord(e.getX(),e.getY());
 					selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
 					// END KGU#25 2015-10-11
-					if(selectedUp!=null) selectedUp.setSelected(false);
+					if (selectedUp!=null) selectedUp.setSelected(false);
 					doDraw=true;
 				}
 			}
@@ -606,7 +610,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				analyse();
 			}
 
-			if(NSDControl!=null) NSDControl.doButtons();
+			if (NSDControl!=null) NSDControl.doButtons();
 		}
 	}
 
@@ -708,14 +712,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			else
 			{
-                                // the error list has been clicked
+				// the error list has been clicked
 				if(errorlist.getSelectedIndex()!=-1)
 				{
-                                        // select the right element
+					// select the right element
 					selected = (root.errors.get(errorlist.getSelectedIndex())).getElement();
-                                        // edit it
+					// edit it
 					editNSD();
-                                        // do the button things
+					// do the button things
 					if(NSDControl!=null) NSDControl.doButtons();
 				}
 			}
@@ -1091,10 +1095,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		int res = 0;	// Save decision: 0 = do save, 1 = don't save, -1 = cancelled (don't leave)
 		// only save if something has been changed
-		if(root.hasChanged==true)
+		// START KGU#137 2016-01-11: Use the new method now
+		//if(root.hasChanged==true)
+		if (root.hasChanged())
+		// END KGU#137 2016-01-11
 		{
 
-			if(_checkChanged==true)
+			if (_checkChanged==true)
 			{
 				// START KGU#49 2015-10-18: If induced by Arranger then it's less ambiguous to see the NSD name
 				//res = JOptionPane.showOptionDialog(this,
@@ -1245,7 +1252,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         	}
         	// END KGU#94 2015.12.04
         	
-        	root.hasChanged=false;
+			// START KGU#137 2016-01-11: On successful saving, record the undo stack level
+        	//root.hasChanged=false;
+        	root.rememberSaved();
+        	// END KGU#137 2016-01-11
         	addRecentFile(root.filename);
         	done = true;
         }
@@ -1264,6 +1274,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void undoNSD()
 	{
 		root.undo();
+		// START KGU#138 2016-01-11: Bugfix #102 - All elements will be replaced by copies...
+		selected = this.selectedDown = this.selectedMoved = this.selectedUp = null;
+		// END KGU#138 2016-01-11
 		redraw();
 		analyse();
 	}
@@ -1274,6 +1287,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void redoNSD()
 	{
 		root.redo();
+		// START KGU#138 2016-01-11: Bugfix #102 All elements will be replaced by copies...
+		selected = this.selectedDown = this.selectedMoved = this.selectedUp = null;
+		// END KGU#138 2016-01-11
 		redraw();
 		analyse();
 	}
@@ -1311,12 +1327,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		if(getSelected()!=null)
 		{
+			// START KGU#38 2016-01-11 Setting of colour wasn't undoable though recorded as change
+			root.addUndo();
+			// END KGU#38 2016-01-11
 			getSelected().setColor(_color);
 			//getSelected().setSelected(false);
 			//selected=null;
-			// START KGU#38 2015-10-09 Setting of colour hadn't been regarded as diagram modification
-			root.hasChanged = true;
-			// END KGU#38 2015-10-09
+			// START KGU#137 2016-01-11: Already prepared by addUndo()
+			//root.hasChanged=true;
+			// END KGU#137 2016-01-11
 			redraw();
 		}
 	}
@@ -1344,7 +1363,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			eCopy.setSelected(false);
 			root.addUndo();
 			root.removeElement(selected);
-			root.hasChanged=true;
+			// START KGU#137 2016-01-11: Already prepared by addUndo()
+			//root.hasChanged=true;
+			// END KGU#137 2016-01-11
 			redraw();
 			selected=null;
 			analyse();
@@ -1363,7 +1384,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Element nE = eCopy.copy();
 			nE.setSelected(true);	// FIXME (KGU#87): Looks fine but is misleading with a pasted Subqueue
 			root.addAfter(selected,nE);
-			root.hasChanged=true;
+			// START KGU#137 2016-01-11: Already prepared by addUndo()
+			//root.hasChanged=true;
+			// END KGU#137 2016-01-11
 			// START KGU#87 2015-11-22: In case of a copied Subqueue the copy shouldn't be selected!
 			if (nE instanceof Subqueue)
 			{
@@ -1409,7 +1432,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 					// END KGU#43 2015-10-17
 					root.addUndo();
-					root.hasChanged=true;
+					// START KGU#137 2016-01-11: Already prepared by addUndo()
+					//root.hasChanged=true;
+					// END KGU#137 2016-01-11
 					((Subqueue) element).addElement(ele);
 					ele.setSelected(true);
 					selected=ele;
@@ -1452,9 +1477,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#120 2016-01-02: Bugfix #85 - StringList changes of Root are to be undoable, too!
 					//if (!element.getClass().getSimpleName().equals("Root"))
 					// END KGU#120 2016-01-02
-					{
 						root.addUndo();
-					}
 					if (!(element instanceof Forever))
 					{
 						element.setText(data.text.getText());
@@ -1475,7 +1498,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						((For)element).setStepConst(data.forParts.get(3));
 					}
 					// END KGU#3 2015-10-25
-					root.hasChanged=true;
+					// START KGU#137 2016-01-11: Already prepared by addUndo()
+					//root.hasChanged=true;
+					// END KGU#137 2016-01-11
 					redraw();
 				}
 			}
@@ -1513,8 +1538,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		root.addUndo();
 		root.removeElement(getSelected());
+		// START KGU#138 2016-01-11: Bugfix #102 - selection no longer valid
+		this.selected = null;
+		// END KGU#138 2016-01-11
 		redraw();
 		analyse();
+		// START KGU#138 2016-01-11: Bugfix#102 - disable element-based buttons
+		this.NSDControl.doButtons();
+		// END KGU#138 2016-01-11
 	}
 	
 	// START KGU#123 2016-01-03: Issue #65, for new buttons and menu items
@@ -2264,7 +2295,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
-			// load and pas source-code
+			// load and parse source-code
 			D7Parser d7 = new D7Parser("D7Grammar.cgt");
 			Root rootNew = d7.parse(filename);
 			if (d7.error.equals(""))
@@ -2276,15 +2307,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			else
 			{
 				// show error
-				JOptionPane.showOptionDialog(null,d7.error,
-											 "Parser Error",
-											 JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+				// START KGU 2016-01-11: Yes and No buttons somewhat strange...
+				//JOptionPane.showOptionDialog(null,d7.error,
+				//							 "Parser Error",
+				//							 JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+				JOptionPane.showMessageDialog(null, d7.error,
+						"Parser Error", JOptionPane.ERROR_MESSAGE, null);
+				// END KGU 2016-01-11
 			}
 
 			redraw();
 			analyse();
 		}
-	}
+	} 
 
 	/*****************************************
 	 * export code methods
@@ -2662,7 +2697,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void setNice(boolean _nice)
 	{
 		root.isNice=_nice;
-		root.hasChanged=true;
+		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
+		//root.hasChanged=true;
+		root.setChanged();
+		// END KGU#137 2016-01-11
 		redraw();
 	}
 
@@ -2674,14 +2712,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void setFunction()
 	{
 		root.isProgram=false;
-		root.hasChanged=true;
+		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
+		//root.hasChanged=true;
+		root.setChanged();
+		// END KGU#137 2016-01-11
 		redraw();
 	}
 
 	public void setProgram()
 	{
 		root.isProgram=true;
-		root.hasChanged=true;
+		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
+		//root.hasChanged=true;
+		root.setChanged();
+		// END KGU#137 2016-01-11
 		redraw();
 	}
 

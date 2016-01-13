@@ -86,6 +86,10 @@ public class Mainform  extends JFrame implements NSDController
 	// START KGU#49/KGU#66 2015-11-14: This decides whether to exit or just to dispose when being closed
 	private boolean isStandalone = true;	// The default is to exit...
 	// END KGU#49/KGU#66 2015-11-14
+	
+	// START KGU 2016-01-10: Enhancement #101: Show version number and stand-alone status in title
+	private String titleString = "Structorizer " + Element.E_VERSION;
+	// END KGU 2016-01-10
 		
 	/******************************
  	 * Setup the Mainform
@@ -112,7 +116,11 @@ public class Mainform  extends JFrame implements NSDController
 		 * Some JFrame specific things
 		 ******************************/
 		// set window title
-		setTitle("Structorizer");
+		// START KGU 2016-01-10: Enhancement #101 - show version number and standalone status
+		//setTitle("Structorizer");
+		if (!this.isStandalone) titleString = "(" + titleString + ")";
+		setTitle(titleString);
+		// END KGU 2016-01-10
 		// set layout (OS default)
 		setLayout(null);
 		// set windows size
@@ -525,11 +533,17 @@ public class Mainform  extends JFrame implements NSDController
         	if (root != null && root.filename != null && !root.filename.isEmpty())
         	{
         		File f = new File(root.filename);
-        		this.setTitle("Structorizer - " + f.getName());
+            	// START KGU 2016-01-10: Enhancement #101 - involve version number and stand-alone status
+        		//this.setTitle("Structorizer - " + f.getName());
+        		this.setTitle(this.titleString + " - " + f.getName());
+        		// END KGU 2016-01-10
         		done = true;
         	}
         }
-        if (!done) this.setTitle("Structorizer");
+    	// START KGU 2016-01-10: Enhancement #101 - involve version number and stand-alone status
+        //if (!done) this.setTitle("Structorizer");
+        if (!done) this.setTitle(this.titleString);
+		// END KGU 2016-01-10
     }
 
     public void updateColors() 

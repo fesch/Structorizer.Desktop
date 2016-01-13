@@ -567,7 +567,8 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     /**
      * Places the passed-in diagram root in the drawing area if it hadn't already been
      * residing here. If a Mainform form was given, then it is registered with the root
-     * and root will automatically be pinned.
+     * (unless there is already another Mainform associated) and root will automatically
+     * be pinned.
      * @param root - a diagram to be placed here
      * @param form - the sender of the diagram if it was pushed here from a Structorizer instance
      */
@@ -590,7 +591,8 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     /**
      * Places the passed-in diagram root in the drawing area if it hadn't already been
      * residing here. If a Mainform form was given, then it is registered with the root
-     * and root will automatically be pinned.
+     * (unless there is already another Mainform associated) and root will automatically
+     * be pinned.
      * If point is given then the diaram will be place to that position, otherwise a free
      * area is looked for.
      * @param root - the root element of the diagram to be added
@@ -661,7 +663,13 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     	// END KGU#119 2016-01-02
     	if (form != null)
     	{
-    		diagram.mainform = form;
+        	// START KGU#125 2016-01-07: We allow adoption but only for orphaned diagrams
+    		//diagram.mainform = form;
+        	if (diagram.mainform == null)
+        	{
+        		diagram.mainform = form;
+        	}
+        	// END KGU#125 2016-01-07
     		root.addUpdater(this);
     	}
     	// END KGU#2 2015-11-19
