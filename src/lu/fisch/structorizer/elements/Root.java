@@ -52,8 +52,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.06      Bugfix #89: References to obsolete operator padding (KGU#126) and
  *                                      faulty index condition for variable detection (KGU#98) fixed 
  *      Kay Gürtzig     2016.01.08      Bugfix #50 (KGU#135) postfix result type was split into lines  
- *      Kay Gürtzig     2016.01.11      Bugfix #103 (KGU#137): "changed" state now dependent on undo/redo
+ *      Kay Gürtzig     2016.01.11      Issue #103 (KGU#137): "changed" state now dependent on undo/redo
  *                                      stack, see comments below for details
+ *      Kay Gürtzig     2016.01.14      Bugfix #103: Saving didn't reset the hasChanged flag anymore (KGU#137)
  *
  ******************************************************************************************************
  *
@@ -870,11 +871,14 @@ public class Root extends Element {
     /**
      * To be called after successful saving the diagram as NSD in order to record
      * the current undoStack size, such that we may know whether or not there are
-     * unsaved changes or not.
+     * unsaved changes.
      */
     public void rememberSaved()
     {
     	this.undoLevelOfLastSave = this.undoList.size();
+    	// START KGU#137 2016-01-14: Bugfix #107
+    	this.hasChanged = false;
+    	// END KGU#137 2016-01-16
     }
     // END KGU#137 2016-01-11
 

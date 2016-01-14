@@ -300,7 +300,7 @@ public class JavaGenerator extends CGenerator
 		_type = _type.replace("character", "Character");
 		_type = _type.replace("integer", "Integer");
 		_type = _type.replace("string", "String");
-		_type = _type.replace("array[ ]([0-9]*)[ ]of char", "String");
+		_type = _type.replace("array[ ]([0-9]*)[ ]of char", "String");	// FIXME (KGU 2016-01-14) doesn't make much sense
 		return _type;
 	}
 	// END KGU#16 2015-11-29

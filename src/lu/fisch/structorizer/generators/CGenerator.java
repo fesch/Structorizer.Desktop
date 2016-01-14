@@ -293,7 +293,7 @@ public class CGenerator extends Generator {
 		_type = _type.replace("character", "char");
 		return _type;
 	}
-	// END KGU#1 2015-11-29
+	// END KGU#16 2015-11-29
 
 	
 	protected void insertBlockHeading(Element elem, String _headingText, String _indent)
