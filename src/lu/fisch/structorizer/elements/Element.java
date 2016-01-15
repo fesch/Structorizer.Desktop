@@ -49,6 +49,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.09      Issue #97: coordinate comparison changed to improve selection (KGU#136)
  *      Kay Gürtzig     2016.01.12      Bugfix #105: flaw in string literal tokenization (KGU#139)
  *      Kay Gürtzig     2016.01.12      Bugfix #104: transform caused index errors
+ *      Kay Gürtzig     2016.01.14      Enh. #84: Added "{" and "}" to the token separator list (KGU#100)
  *
  ******************************************************************************************************
  *
@@ -801,6 +802,10 @@ public abstract class Element {
 		parts=StringList.explodeWithDelimiter(parts,")");
 		parts=StringList.explodeWithDelimiter(parts,"[");
 		parts=StringList.explodeWithDelimiter(parts,"]");
+		// START KGU#100 2016-01-14: We must also catch the initialiser delimiters
+		parts=StringList.explodeWithDelimiter(parts,"{");
+		parts=StringList.explodeWithDelimiter(parts,"}");
+		// END KGU#100 2016-01-14
 		parts=StringList.explodeWithDelimiter(parts,"-");
 		parts=StringList.explodeWithDelimiter(parts,"+");
 		parts=StringList.explodeWithDelimiter(parts,"/");

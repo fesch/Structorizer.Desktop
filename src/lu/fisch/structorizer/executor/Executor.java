@@ -65,6 +65,7 @@ package lu.fisch.structorizer.executor;
  *                                      Bugfix #92 (KGU#128): Function names were replaced within string literals
  *      Kay Gürtzig     2016.01.08      Bugfix #95 (KGU#130): div operator conversion accidently dropped
  *      Kay Gürtzig     2016.01.09      KGU#133: Quick fix to show returned arrays in a list view rather than a message box
+ *      Kay Gürtzig     2016.01.14      KGU#100: Array initialisation in assignments enabled (Enh. #84)
  *
  ******************************************************************************************************
  *
@@ -1411,9 +1412,6 @@ public class Executor implements Runnable
 		variables = new StringList();
 		control.updateVars(new Vector<Vector>());
 		
-		// FIXME (KGU 2015-11-07) Should we replace the interpreter in order to avoid the frequently
-		// observed "freezing" after some severe syntax errors in a previous run attempt?
-
 		Thread runner = new Thread(this, "Player");
 		runner.start();
 	}
@@ -1777,7 +1775,7 @@ public class Executor implements Runnable
 		String varName = cmd.substring(0, cmd.indexOf("<-")).trim();
 		String expression = cmd.substring(
 				cmd.indexOf("<-") + 2, cmd.length()).trim();
-		// START KGU#2 2015-10-18: Just a preliminary check for the applicability of a cross-NSD subroutine execution!
+		// START KGU#2 2015-10-18: cross-NSD subroutine execution?
 		if (isCall)
 		{
 			Function f = new Function(expression);
@@ -1809,10 +1807,19 @@ public class Executor implements Runnable
 			}
 		}
 		// END KGU#2 2015-10-17
+		// evaluate the expression
+		// START KGU#100 2016-01-14: Enh. #84 - accept array assignments with syntax array <- {val1, val2, ..., valN}
+		else if (expression.startsWith("{") && expression.endsWith("}"))
+		{
+			interpreter.eval("Object[] tmp20160114kgu = " + expression);
+			value = interpreter.get("tmp20160114kgu");
+			interpreter.unset("tmp20160114kgu");
+		}
+		// END KGU#100 2016-01-14
 		else		
 		{
-			cmd = cmd.replace("<-", "=");
-			// evaluate the expression
+			//cmd = cmd.replace("<-", "=");
+		
 			value = interpreter.eval(expression);
 		}
 		

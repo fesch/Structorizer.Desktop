@@ -67,6 +67,7 @@ Current development version: 3.23-14 (2016.01.14)
 - 13: Bugfix #105: Displayed lines were cut off at apostrophes in keywords <Kay Gürtzig>
 - 14: Bugfix #108: C++ export had converted bool type to int <Kay Gürtzig>
 - 14: Bugfix #103: Change status hadn't been reset sufficiently on saving <Kay Gürtzig>
+- 14: Enh. #84: C/Java-style array initialisation expressions enabled <Kay Gürtzig>
 
 Version 3.23 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
