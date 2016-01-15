@@ -50,6 +50,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.12      Bugfix #105: flaw in string literal tokenization (KGU#139)
  *      Kay Gürtzig     2016.01.12      Bugfix #104: transform caused index errors
  *      Kay Gürtzig     2016.01.14      Enh. #84: Added "{" and "}" to the token separator list (KGU#100)
+ *      Kay Gürtzig     2016.01.15      Enh. #61,#107: Highlighting for "as" added (KGU#109)
  *
  ******************************************************************************************************
  *
@@ -1157,6 +1158,9 @@ public abstract class Element {
 					specialSigns.add("shl");
 					specialSigns.add("shr");
 					// END KGU#115 2015-12-23
+					// START KGU#109 2016-01-15: Issues #61, #107 highlight the BASIC declarator keyword, too
+					specialSigns.add("as");
+					// END KGU#109 2016-01-15
 
 					specialSigns.add("'");
 					specialSigns.add("\"");	// KGU 2015-11-12: Quotes alone will hardly occur anymore

@@ -66,6 +66,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.01.08      Bugfix #95 (KGU#130): div operator conversion accidently dropped
  *      Kay Gürtzig     2016.01.09      KGU#133: Quick fix to show returned arrays in a list view rather than a message box
  *      Kay Gürtzig     2016.01.14      KGU#100: Array initialisation in assignments enabled (Enh. #84)
+ *      Kay Gürtzig     2016.01.15      KGU#109: More precaution against typed variables (issues #61, #107)
  *
  ******************************************************************************************************
  *
@@ -1177,7 +1178,7 @@ public class Executor implements Runnable
 	private void setVar(String name, Object content) throws EvalError
 
 	{
-		// START KGU#69 2015-11-09: This is only a god idea in case of raw input
+		// START KGU#69 2015-11-09: This is only a good idea in case of raw input
 		//if (content instanceof String)
 		//{
 		//	if (!isNumeric((String) content))
@@ -1245,6 +1246,13 @@ public class Executor implements Runnable
 		} else // if ((name.contains("[")) && (name.contains("]")))
 		{
 			// START KGU#109 2015-12-16: Bugfix #61: Several strings suggest type specifiers
+			// START KGU#109 2016-01-15: Bugfix #61,#107: There might also be a colon...
+			int colonPos = name.indexOf(":");	// Check Pascal and BASIC style as well
+			if (colonPos > 0 || (colonPos = name.indexOf(" as ")) > 0)
+			{
+				name = name.substring(0, colonPos).trim();
+			}
+			// END KGU#109 2016-01-15
 			String[] nameParts = name.split(" ");
 			name = nameParts[nameParts.length-1];
 			// END KGU#109 2015-12-15
