@@ -49,6 +49,8 @@ package lu.fisch.structorizer.generators;
  *                                              bugfix/enhancement #22 (KGU#74 jump and return handling)
  *      Kay Gürtzig             2015.12.13		Bugfix #51 (=KGU#108): Cope with empty input and output
  *      Kay Gürtzig             2015.12.21		Adaptations for Bugfix #41/#68/#69 (=KGU#93)
+ *      Kay Gürtzig             2016.01.15		Bugfix #64 (exit instruction was exported without ';')
+ *      Kay Gürtzig             2016.01.15		Issue #61/#107: improved handling of typed variables 
  *
  ******************************************************************************************************
  *
@@ -226,7 +228,10 @@ public class CGenerator extends Generator {
 	 */
 	protected void insertExitInstr(String _exitCode, String _indent)
 	{
-		code.add(_indent + "exit(" + _exitCode + ")");
+		// START KGU 2016-01-15: Bugfix #64 (reformulated) semicolon was missing
+		//code.add(_indent + "exit(" + _exitCode + ")");
+		code.add(_indent + "exit(" + _exitCode + ");");
+		// END KGU 2016-01-15
 	}
 	// END KGU#16/#47 2015-11-30
 
@@ -293,7 +298,7 @@ public class CGenerator extends Generator {
 		_type = _type.replace("character", "char");
 		return _type;
 	}
-	// END KGU#1 2015-11-29
+	// END KGU#16 2015-11-29
 
 	
 	protected void insertBlockHeading(Element elem, String _headingText, String _indent)
@@ -343,7 +348,39 @@ public class CGenerator extends Generator {
 
 			StringList lines = _inst.getText();
 			for (int i = 0; i < lines.count(); i++) {
-				code.add(_indent + transform(lines.get(i)) + ";");
+				// START KGU#109 2016-01-15: Bugfix #61,#107: There might also be a colon...
+				//code.add(_indent + transform(lines.get(i)) + ";");
+				String line = Element.unifyOperators(lines.get(i));
+				int asgnPos = line.indexOf("<-");
+				if (asgnPos > 0)
+				{
+					String name = line.substring(0, asgnPos).trim();
+					String expr = line.substring(asgnPos + "<-".length()).trim();
+					String type = "";
+					int colonPos = name.indexOf(":");	// Check Pascal and BASIC style as well
+					if (colonPos > 0)
+					{
+						type = name.substring(colonPos + 1).trim() + " ";
+						name = name.substring(0, colonPos).trim();
+					}
+					else if ((colonPos = name.indexOf(" as ")) > 0)
+					{
+						type = name.substring(colonPos + " as ".length()).trim() + " ";
+						name = name.substring(0, colonPos).trim();
+					}
+					StringList nameParts = StringList.explode(name, " ");
+					if (type.isEmpty() || nameParts.count() > 1)
+					{
+						type = nameParts.concatenate(" ", 0, nameParts.count()-1).trim() + " ";
+					}
+					name = nameParts.get(nameParts.count()-1);
+					code.add(_indent + transform((type + name + " <- " + expr).trim()) + ";");
+				}
+				else
+				{
+					code.add(_indent + transform(line) + ";");
+				}
+				// END KGU#109 2016-01-15
 			}
 
 		}

@@ -48,6 +48,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.01.02      Bugfix #85 (KGU#120): Root changes are also subject to undoing/redoing
  *      Kay Gürtzig     2016.01.03      Issue #65 (KGU#123): Collapsing/expanding from menu, autoscroll enabled 
  *      Kay Gürtzig     2016.01.11      Bugfix #102 (KGU#138): clear selection on delete, undo, redo 
+ *      Kay Gürtzig     2016.01.15      Enh. #110: File open dialog now selects the NSD filter
  *
  ******************************************************************************************************
  *
@@ -928,7 +929,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			dlgOpen.setCurrentDirectory(currentDirectory);
 		}
 		// config dialogue
-		dlgOpen.addChoosableFileFilter(new StructogramFilter());
+		// START KGU 2016-01-15: Enh. #110 - select the provided filter
+		//dlgOpen.addChoosableFileFilter(new StructogramFilter());
+		StructogramFilter filter = new StructogramFilter();
+		dlgOpen.addChoosableFileFilter(filter);
+		dlgOpen.setFileFilter(filter);
+		// END KGU 2016-01-15
 		// show & get result
 		int result = dlgOpen.showOpenDialog(this);
 		// react on result

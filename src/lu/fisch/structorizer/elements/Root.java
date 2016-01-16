@@ -52,8 +52,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.06      Bugfix #89: References to obsolete operator padding (KGU#126) and
  *                                      faulty index condition for variable detection (KGU#98) fixed 
  *      Kay Gürtzig     2016.01.08      Bugfix #50 (KGU#135) postfix result type was split into lines  
- *      Kay Gürtzig     2016.01.11      Bugfix #103 (KGU#137): "changed" state now dependent on undo/redo
+ *      Kay Gürtzig     2016.01.11      Issue #103 (KGU#137): "changed" state now dependent on undo/redo
  *                                      stack, see comments below for details
+ *      Kay Gürtzig     2016.01.14      Bugfix #103: Saving didn't reset the hasChanged flag anymore (KGU#137)
  *
  ******************************************************************************************************
  *
@@ -870,11 +871,14 @@ public class Root extends Element {
     /**
      * To be called after successful saving the diagram as NSD in order to record
      * the current undoStack size, such that we may know whether or not there are
-     * unsaved changes or not.
+     * unsaved changes.
      */
     public void rememberSaved()
     {
     	this.undoLevelOfLastSave = this.undoList.size();
+    	// START KGU#137 2016-01-14: Bugfix #107
+    	this.hasChanged = false;
+    	// END KGU#137 2016-01-16
     }
     // END KGU#137 2016-01-11
 
@@ -1415,8 +1419,17 @@ public class Root extends Element {
                     if(allText.indexOf("<-")>=0)
                     {
                             int pos = allText.indexOf("<-");
-                            allText = allText.substring(0, pos);
-                            // FIXME: In case of typed variables we should only add the last identifier part
+                            allText = allText.substring(0, pos).trim();
+                            // START KGU#109 2016-01-15: Bugfix #61/#107
+                            // In case of typed variables we should only add the last identifier part
+                            int colonPos = allText.indexOf(':');	// Check Pascal and BASIC style as well
+                            if (colonPos > 0 || (colonPos = allText.indexOf(" as ")) > 0)
+                            {
+                            	allText = allText.substring(0, colonPos).trim();
+                            }
+                            String[] tokens = allText.split(" ");
+                            if (tokens.length > 0) allText = tokens[tokens.length-1];
+                            // END KGU#109 2016-01-15
                             //System.out.println("Adding to initialised var names: " + cleanup(allText.trim()));
                             varNames.addOrderedIfNew(cleanup(allText.trim()));
                     }
@@ -2648,31 +2661,46 @@ public class Root extends Element {
         			rootText=rootText.substring(0,rootText.indexOf(")")).trim();
         		}
 
-        		StringList params = StringList.explode(rootText,";");
-        		for(int i = 0; i < params.count(); i++)
+        		StringList paramGroups = StringList.explode(rootText,";");
+        		for(int i = 0; i < paramGroups.count(); i++)
         		{
         			// common type for parameter group
         			String type = null;
-        			String decl = params.get(i);
-        			int posColon = decl.indexOf(":");
+        			String group = paramGroups.get(i);
+        			int posColon = group.indexOf(":");
         			if (posColon >= 0)
         			{
-        				type = decl.substring(posColon + 1).trim();
-        				decl = decl.substring(0, posColon).trim();
+        				type = group.substring(posColon + 1).trim();
+        				group = group.substring(0, posColon).trim();
         			}
-        			else if ((posColon = decl.indexOf(" as ")) >= 0)
-        			{
-        				type = decl.substring(posColon + " as ".length()).trim();
-        				decl = decl.substring(0, posColon).trim();
-        			}
-        			StringList vars = StringList.explode(decl,",");
+        			// START KGU#109 2016-01-15 Bugfix #61/#107 - was wrong, must first split by ','
+//        			else if ((posColon = group.indexOf(" as ")) >= 0)
+//        			{
+//        				type = group.substring(posColon + " as ".length()).trim();
+//        				group = group.substring(0, posColon).trim();
+//        			}
+        			// END KGU#109 2016-01-15
+        			StringList vars = StringList.explode(group,",");
         			for (int j=0; j < vars.count(); j++)
         			{
-        				String varName = vars.get(j).trim();
-        				if (!varName.isEmpty())
+        				String decl = vars.get(j).trim();
+        				if (!decl.isEmpty())
         				{
+               				// START KGU#109 2016-01-15: Bugfix #61/#107 - we must split every "varName" by ' '.
+                			if (type == null && (posColon = decl.indexOf(" as ")) >= 0)
+                			{
+                				type = decl.substring(posColon + " as ".length()).trim();
+                				decl = decl.substring(0, posColon).trim();
+                			}
+                			StringList tokens = StringList.explode(decl, " ");
+                			if (tokens.count() > 1) {
+                				if (type == null) {
+                					type = tokens.concatenate(" ", 0, tokens.count() - 1);
+                				}
+                				decl = tokens.get(tokens.count()-1);
+                			}
         					//System.out.println("Adding parameter: " + vars.get(j).trim());
-        					if (paramNames != null)	paramNames.add(varName);
+        					if (paramNames != null)	paramNames.add(decl);
         					if (paramTypes != null)	paramTypes.add(type);
         				}
         			}

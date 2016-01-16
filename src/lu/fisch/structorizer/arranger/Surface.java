@@ -42,6 +42,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2015.12.20      Enh. #62 (KGU#110) 1st approach: Load / save as mere file list.
  *                                      Enh. #35 (KGU#88) Usability improvement (automatic pinning)
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): Avoid reloading of structurally equivalent diagrams 
+ *      Kay Gürtzig     2016.01.15      Enh. #110: File open dialog now selects the NSD filter
  *
  ******************************************************************************************************
  *
@@ -379,7 +380,13 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     	this.saveDiagrams();
     	// Let's select path and name for the list / archive file
         JFileChooser dlgOpen = new JFileChooser("Reload a stored arrangement of diagrams ...");
-        dlgOpen.addChoosableFileFilter(new ArrFilter());
+        // START KGU 2016-01-15: Enh. #110 - select the provided filter
+        //dlgOpen.addChoosableFileFilter(new ArrFilter());
+        ArrFilter filter = new ArrFilter();
+        dlgOpen.addChoosableFileFilter(filter);
+        dlgOpen.setFileFilter(filter);
+        // END KGU 2016-01-15: Enh. #110
+
         dlgOpen.setCurrentDirectory(currentDirectory);
         
         int result = dlgOpen.showOpenDialog(frame);
