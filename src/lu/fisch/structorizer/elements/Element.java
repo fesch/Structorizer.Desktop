@@ -51,6 +51,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.12      Bugfix #104: transform caused index errors
  *      Kay Gürtzig     2016.01.14      Enh. #84: Added "{" and "}" to the token separator list (KGU#100)
  *      Kay Gürtzig     2016.01.15      Enh. #61,#107: Highlighting for "as" added (KGU#109)
+ *      Kay Gürtzig     2016.01.16      Changes having got lost on a Nov. 2014 merge re-inserted
  *
  ******************************************************************************************************
  *
@@ -107,13 +108,13 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.23-14";
+	public static String E_VERSION = "3.23-15";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
 	"\n"+
 	"Having also put his fingers into the code\n"+
-        " - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
+	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"\n"+
 	"Export classes written and maintained by\n"+
 	" - Oberon: Klaus-Peter Reimers <k_p_r@freenet.de>\n"+
@@ -125,6 +126,7 @@ public abstract class Element {
 	" - C#: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	" - C++: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	" - PHP: Rolf Schmidt <rolf.frogs@t-online.de>\n"+
+	" - Python: Daniel Spittank <kontakt@daniel.spittank.net>\n"+
 	"\n"+
 	"License setup and checking done by\n"+
 	" - Marcus Radisch <radischm@googlemail.com>\n"+
@@ -143,7 +145,8 @@ public abstract class Element {
 	" - ES: Andres Cabrera <andrescabrera20@gmail.com>\n"+
 	" - PT/BR: Theldo Cruz <cruz@pucminas.br>\n"+
 	" - IT: Andrea Maiani <andreamaiani@gmail.com>\n"+
-	" - CN: Wang Lei <wanglei@hollysys.com>\n"+
+	" - CHS: Wang Lei <wanglei@hollysys.com>\n"+
+	" - CHT: Joe Chem <hueyan_chen@yahoo.com.tw>\n"+
 	" - CZ: Vladimír Vaščák <vascak@spszl.cz>\n"+
 	" - RU: Юра Лебедев <elita.alegator@gmail.com>\n"+
 	"\n"+
@@ -160,7 +163,8 @@ public abstract class Element {
 	" - Sascha Meyer <harlequin2@gmx.de>\n"+
 	" - Andreas Jenet <ajenet@gmx.de>\n"+
 	" - Jan Peter Klippel <structorizer@xtux.org>\n"+
-	                
+	" - David Tremain <DTremain@omnisource.com>\n"+
+	
 	"\n"+
 	"File dropper class by\n"+
 	" - Robert W. Harder <robertharder@mac.com>\n"+
@@ -187,16 +191,16 @@ public abstract class Element {
 
 	// some static constants
 	protected static int E_PADDING = 20;
-	static int E_INDENT = 2;
+	public static int E_INDENT = 2;
 	public static Color E_DRAWCOLOR = Color.YELLOW;	// Actually, the background colour for selected elements
 	public static Color E_COLLAPSEDCOLOR = Color.LIGHT_GRAY;
 	// START KGU#41 2015-10-13: Executing status now independent from selection
 	public static Color E_RUNNINGCOLOR = Color.ORANGE;		// used for Elements currently (to be) executed 
 	// END KGU#41 2015-10-13
 	public static Color E_WAITCOLOR = new Color(255,255,210);	// used for Elements with pending execution
-	static Color E_COMMENTCOLOR = Color.LIGHT_GRAY;
+	public static Color E_COMMENTCOLOR = Color.LIGHT_GRAY;
 	// START KGU#43 2015-10-11: New fix color for breakpoint marking
-	static Color E_BREAKPOINTCOLOR = Color.RED;				// Colour of the breakpoint bar at element top
+	public static Color E_BREAKPOINTCOLOR = Color.RED;			// Colour of the breakpoint bar at element top
 	// END KGU#43 2015-10-11
 	public static boolean E_VARHIGHLIGHT = false;	// Highlight variables, operators, string literals, and certain keywords? 
 	public static boolean E_SHOWCOMMENTS = true;	// Enable comment bars and comment popups? 
@@ -691,6 +695,9 @@ public abstract class Element {
 			preAltT=ini.getProperty("IfTrue","V");
 			preAltF=ini.getProperty("IfFalse","F");
 			preAlt=ini.getProperty("If","()");
+			// START KGU 2016-01-16: Stuff having got lost by a Nov. 2014 merge
+			altPadRight=Boolean.valueOf(ini.getProperty("altPadRight", "true"));
+			// END KGU 2016-01-16
 			StringList sl = new StringList();
 			sl.setCommaText(ini.getProperty("Case","\"?\",\"?\",\"?\",\"sinon\""));
 			preCase=sl.getText();
@@ -727,6 +734,9 @@ public abstract class Element {
 			ini.setProperty("IfTrue",preAltT);
 			ini.setProperty("IfFalse",preAltF);
 			ini.setProperty("If",preAlt);
+			// START KGU 2016-01-16: Stuff having got lost by a Nov. 2014 merge
+			ini.setProperty("altPadRight", String.valueOf(altPadRight));
+			// END KGU 2016-01-16
 			StringList sl = new StringList();
 			sl.setText(preCase);
 			ini.setProperty("Case",sl.getCommaText());
@@ -756,16 +766,16 @@ public abstract class Element {
 		}
 	}
 
-	public static Root getRoot(Element now)
+	public static Root getRoot(Element _element)
 	{
-		while(now.parent!=null)
+		while (_element.parent != null)
 		{
-			now=now.parent;
+			_element = _element.parent;
 		}
-                if(now instanceof Root)
-                    return (Root) now;
-                else
-                    return null;
+		if (_element instanceof Root)
+			return (Root) _element;
+		else
+			return null;
 	}
 
 	private String cutOut(String _s, String _by)
@@ -1115,7 +1125,7 @@ public abstract class Element {
 
 				// START KGU#64 2015-11-03: Not to be done again and again. Private static field now!
 				//StringList specialSigns = new StringList();
-				if (specialSigns == null)	// lazy initialisiation
+				if (specialSigns == null)	// lazy initialisation
 				{
 					specialSigns = new StringList();
 					// ENDU KGU#64 2015-11-03
@@ -1161,9 +1171,15 @@ public abstract class Element {
 					// START KGU#109 2016-01-15: Issues #61, #107 highlight the BASIC declarator keyword, too
 					specialSigns.add("as");
 					// END KGU#109 2016-01-15
+					
+					// START KGU#100 2016-01-16: Enh. #84: Also highlight the initialiser delimiters
+					specialSigns.add("{");
+					specialSigns.add("}");
+					// END KGU#100 2016-01-16
 
+					// The quotes will only occur as tokens if they are unpaired!
 					specialSigns.add("'");
-					specialSigns.add("\"");	// KGU 2015-11-12: Quotes alone will hardly occur anymore
+					specialSigns.add("\"");
 				// START KGU#64 2015-11-03: See above
 				}
 				// END KGU#64 2015-11-03

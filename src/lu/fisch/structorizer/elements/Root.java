@@ -54,7 +54,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.08      Bugfix #50 (KGU#135) postfix result type was split into lines  
  *      Kay Gürtzig     2016.01.11      Issue #103 (KGU#137): "changed" state now dependent on undo/redo
  *                                      stack, see comments below for details
- *      Kay Gürtzig     2016.01.14      Bugfix #103: Saving didn't reset the hasChanged flag anymore (KGU#137)
+ *      Kay Gürtzig     2016.01.14      Bugfix #103/#109: Saving didn't reset the hasChanged flag anymore (KGU#137)
+ *      Kay Gürtzig     2016.01.16      Bugfix #112: Processing of indexed variables mended (KGU#141)
  *
  ******************************************************************************************************
  *
@@ -1068,21 +1069,45 @@ public class Root extends Element {
      *************************************/
 
 
-
+    /**
+     * Extracts the variable name out of a more complex string possibly also
+     * containing index brackets, component access operator or type specifications
+     * @param _s the raw lvalue string
+     * @return the pure variable name
+     */
     private String cleanup(String _s)
     {
-            //System.out.println("IN : "+_s);
-            if(_s.indexOf("[")>=0)
-            {
-                    _s=_s.substring(0,_s.indexOf("["));
-            }
-            if(_s.indexOf(".")>=0)
-            {
-                    _s=_s.substring(0,_s.indexOf("."));
-            }
-            //System.out.println("OUT : "+_s);
+    	//System.out.println("IN : "+_s);
+    	// START KGU#141 2016-01-16: Bugfix #112
+//            if(_s.indexOf("[")>=0)
+//            {
+//                    _s=_s.substring(0,_s.indexOf("["));
+//            }
+    	while (_s.startsWith("(") && _s.endsWith(")"))
+    	{
+    		_s = _s.substring(1,  _s.length()-1);
+    	}
+    	Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
+    	_s = r.replaceAll(_s);
+    	// START KGU#141 2016-01-16
+    	if(_s.indexOf(".")>=0)
+    	{
+    		_s=_s.substring(0,_s.indexOf("."));
+    	}
+    	// START KGU#109/KGU#141 2016-01-16: Bugfix #61/#107/#112
+    	// In case of Pascal-typed variables we should only use the part before the separator
+    	int colonPos = _s.indexOf(':');	// Check Pascal and BASIC style as well
+    	if (colonPos > 0 || (colonPos = _s.indexOf(" as ")) > 0)
+    	{
+    		_s = _s.substring(0, colonPos).trim();
+    	}
+    	// In case of C-typed variables we should only use the last word (identifier)
+    	String[] tokens = _s.split(" ");
+    	if (tokens.length > 0) _s = tokens[tokens.length-1];
+    	// END KGU#109/KGU#141 2016-01-16
+    	//System.out.println("OUT : "+_s);
 
-            return _s;
+    	return _s;
 
     }
 
@@ -1408,7 +1433,7 @@ public class Root extends Element {
                     }
                     // END KGU#102 2015-12-11
 
-                    // START KGU#126 2016-01-06: Operators can no longer expected to be padded
+                    // START KGU#126 2016-01-06: Operators can no longer be expected to be padded
 //                    if(allText.indexOf(" <- ")>=0)
 //                    {
 //                            int pos = allText.indexOf(" <- ");
@@ -1420,16 +1445,7 @@ public class Root extends Element {
                     {
                             int pos = allText.indexOf("<-");
                             allText = allText.substring(0, pos).trim();
-                            // START KGU#109 2016-01-15: Bugfix #61/#107
-                            // In case of typed variables we should only add the last identifier part
-                            int colonPos = allText.indexOf(':');	// Check Pascal and BASIC style as well
-                            if (colonPos > 0 || (colonPos = allText.indexOf(" as ")) > 0)
-                            {
-                            	allText = allText.substring(0, colonPos).trim();
-                            }
-                            String[] tokens = allText.split(" ");
-                            if (tokens.length > 0) allText = tokens[tokens.length-1];
-                            // END KGU#109 2016-01-15
+                            // (KGU#141 2016-01-16: type elimination moved to cleanup())
                             //System.out.println("Adding to initialised var names: " + cleanup(allText.trim()));
                             varNames.addOrderedIfNew(cleanup(allText.trim()));
                     }
@@ -1444,12 +1460,15 @@ public class Root extends Element {
                             {
                                     for(int j=0;j<str.count();j++)
                                     {
-                                            String s = str.get(j);
-                                            // START KGU#98 2016-01-06: Better don't glue the prefix and suffix without space
-                                            //r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1$3");
-                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
-                                            // END KGU#98 2016-01-06
-                                            s = r.replaceAll(s);
+                                              // START KGU#141 2016-01-16: Bugfix #112 - use cleanup...
+//                                            String s = str.get(j);
+//                                            // START KGU#98 2016-01-06: Better don't glue the prefix and suffix without space
+//                                            //r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1$3");
+//                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
+//                                            // END KGU#98 2016-01-06
+//                                            s = r.replaceAll(s);
+                                              String s = cleanup(str.get(j));
+                                              // END KGU#141 2016-01-16
 
                                             if(!s.trim().equals(""))
                                             {
@@ -1602,9 +1621,11 @@ public class Root extends Element {
 //                    }
 //            }
 
+            // FIXME (KGU 2016-01-16): On a merge for 3.22-22, the following change got lost
+            // if (!(this instanceof Root))
             varNames.add(getVarnames(lines));
 
-            varNames=varNames.reverse();
+            varNames=varNames.reverse();	// FIXME (KGU): What is intended by reversing?
             if (_entireProg) {
                     this.variables=varNames;
             }

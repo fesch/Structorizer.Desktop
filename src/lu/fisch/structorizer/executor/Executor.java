@@ -67,6 +67,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.01.09      KGU#133: Quick fix to show returned arrays in a list view rather than a message box
  *      Kay Gürtzig     2016.01.14      KGU#100: Array initialisation in assignments enabled (Enh. #84)
  *      Kay Gürtzig     2016.01.15      KGU#109: More precaution against typed variables (issues #61, #107)
+ *      Kay Gürtzig     2016.01.16      Bugfix #112: Several flaws in index evaluation mended (KGU#141)
  *
  ******************************************************************************************************
  *
@@ -1190,14 +1191,17 @@ public class Executor implements Runnable
 
 		// MODIFIED BY GENNARO DONNARUMMA
 
-		if ((name != null) && (name.contains("(")))
-		{
-			name = name.replace("(", "");
-		}
-		if ((name != null) && (name.contains(")")))
-		{
-			name = name.replace(")", "");
-		}
+		// START KGU#141 2016-01-16: Bugfix #112 - this spoiled many index expressions!
+		// No idea what this might have been intended for - enclosing parentheses after input?
+		//if ((name != null) && (name.contains("(")))
+		//{
+		//	name = name.replace("(", "");
+		//}
+		//if ((name != null) && (name.contains(")")))
+		//{
+		//	name = name.replace(")", "");
+		//}
+		// END KGU#141 2016-01-16
 
 		// MODIFIED BY GENNARO DONNARUMMA, ARRAY SUPPORT ADDED
 		// Fundamentally revised by Kay Gürtzig 2015-11-08
@@ -1871,6 +1875,12 @@ public class Executor implements Runnable
 		else
 		{
 		// END KGU#107 2015-12-13
+			// START KGU#141 2016-01-16: Bugfix #112 - setVar won't eliminate enclosing paranetheses anymore
+			while (in.startsWith("(") && in.endsWith(")"))
+			{
+				in = in.substring(1, in.length()-1).trim();
+			}
+			// END KGU#141 2016-01-16
 			// START KGU#33 2014-12-05: We ought to show the index value
 			// if the variable is indeed an array element
 			if (in.contains("[") && in.contains("]")) {
@@ -1882,10 +1892,18 @@ public class Executor implements Runnable
 				}
 				catch (Exception e)
 				{
-					// Is bound to fail anyway!
+					// START KGU#141 2016-01-16: We MUST raise the error here.
+					result = e.getMessage();
+					// END KGU#141 2016-01-16
 				}
 			}
 			// END KGU#33 2014-12-05
+			// START KGU#141 2016-01-16: Bugfix #112 - nothing more to do than exiting
+			if (!result.isEmpty())
+			{
+				return result;
+			}
+			// END KGU#141 2016-01-16
 			String str = JOptionPane.showInputDialog(null,
 					"Please enter a value for <" + in + ">", null);
 			// START KGU#84 2015-11-23: ER #36 - Allow a controlled continuation on cancelled input
@@ -1944,7 +1962,7 @@ public class Executor implements Runnable
 							+ "> is not a correct or existing expression.";
 				} else
 				{
-		// START KGU#101 2015-12-11
+		// START KGU#101 2015-12-11: Fix #54 (continued)
 					//	String s = unconvert(n.toString());
 					str += n.toString();
 				}
@@ -2773,6 +2791,9 @@ public class Executor implements Runnable
 	// a array element access, i.e. "<arrayname>[<expression>]"
 	private int getIndexValue(String varname) throws EvalError
 	{
+		// START KGU#141 2016-01-16: Bugfix #112
+		String message = "Illegal (negative) index";
+		// END KGU#141 2016-01-16
 		String ind = varname.substring(varname.indexOf("[") + 1,
 				varname.indexOf("]"));
 
@@ -2786,8 +2807,17 @@ public class Executor implements Runnable
 		catch (Exception e)
 		{
 			//index = (Integer) this.interpreter.get(ind);	// KGU: This didn't work for expressions
-			System.out.println(e.getMessage() + " on " + varname + " in Executor.getIndexValue()");
+			// START KGU#141 2016-01-16: Bugfix #112 - this led to silent errors and incapacitation of executor
+			//System.out.println(e.getMessage() + " on " + varname + " in Executor.getIndexValue()");
+			message = e.getMessage();	// We will rethrow it later
+			// END KGU#141 2016-01-16
 		}
+		// START KGU#141 2016-01-16: Bugfix #112 - We may not allow negative indices
+		if (index < 0)
+		{
+			throw new EvalError(message + " on index evaluation in: " + varname, null, null);
+		}
+		// END KGU#141 2016-01-16
 		return index;
 	}
 	// END KGU#33/KGU#34 2014-12-05
