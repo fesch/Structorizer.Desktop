@@ -603,7 +603,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		
 		if ((subPos = _lval.indexOf('[')) >= 0 && _lval.indexOf(']', subPos+1) >= 0)
 		{
-			index = _lval.replaceAll("(.*?)[\\[](.*?)[\\]](.*?)","$1X$2X$3");
+			index = _lval.replaceAll("(.*?)[\\[](.*?)[\\]](.*?)","$2").trim();
 		}
 		String[] typeNameIndex = {type, name, index};
 		return typeNameIndex;
