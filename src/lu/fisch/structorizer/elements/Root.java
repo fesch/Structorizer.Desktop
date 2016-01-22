@@ -56,6 +56,8 @@ package lu.fisch.structorizer.elements;
  *                                      stack, see comments below for details
  *      Kay Gürtzig     2016.01.14      Bugfix #103/#109: Saving didn't reset the hasChanged flag anymore (KGU#137)
  *      Kay Gürtzig     2016.01.16      Bugfix #112: Processing of indexed variables mended (KGU#141)
+ *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
+ *      Kay Gürtzig     2016.01.22      Bugfix for issue #38: moveUp/moveDown for selected sequences (KGU#144)
  *
  ******************************************************************************************************
  *
@@ -800,12 +802,18 @@ public class Root extends Element {
 
     public boolean canUndo()
     {
-            return (undoList.size()>0);
+    	// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
+    	//return (undoList.size()>0);
+    	return (undoList.size() > 0) && !this.waited;
+    	// END KGU#143 2016-01-21
     }
 
     public boolean canRedo()
     {
-            return (redoList.size()>0);
+    	// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
+    	//return (redoList.size()>0);
+    	return (redoList.size() > 0) && !this.waited;
+    	// END KGU#143 2016-01-21
     }
 
     public void clearRedo()
@@ -888,6 +896,14 @@ public class Root extends Element {
             boolean res = false;
             if(_ele!=null)
             {
+            	// START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
+            	if (_ele instanceof SelectedSequence)
+            	{
+            		res = ((SelectedSequence)_ele).moveDown();
+            	}
+            	else
+            	{
+            	// END KGU#144 2016-01-22
                     int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
                     if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
                             !_ele.getClass().getSimpleName().equals("Root") &&
@@ -901,6 +917,9 @@ public class Root extends Element {
                             _ele.setSelected(true);
                             res=true;
                     }
+               	// START KGU#144 2016-01-22: Bugfix #38 (continued)
+            	}
+            	// END KGU#144 2016-01-22
             }
             return res;
     }
@@ -910,6 +929,14 @@ public class Root extends Element {
             boolean res = false;
             if(_ele!=null)
             {
+            	// START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
+            	if (_ele instanceof SelectedSequence)
+            	{
+            		res = ((SelectedSequence)_ele).moveUp();
+            	}
+            	else
+            	{
+            	// END KGU#144 2016-01-22
                     int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
                     if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
                             !_ele.getClass().getSimpleName().equals("Root") &&
@@ -923,6 +950,9 @@ public class Root extends Element {
                             _ele.setSelected(true);
                             res=true;
                     }
+               	// START KGU#144 2016-01-22: Bugfix #38 (continued)
+               	}
+               	// END KGU#144 2016-01-22
             }
             return res;
     }

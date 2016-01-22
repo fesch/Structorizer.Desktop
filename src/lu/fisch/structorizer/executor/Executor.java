@@ -1449,6 +1449,9 @@ public class Executor implements Runnable
 		{
 			diagram.redraw();
 		}
+		// START KGU#143 2016-01-21: Bugfix #114 - make sure no compromising editing is done
+		diagram.doButtons();
+		// END KGU#143 2016-01-21
 		// START KGU#43 2015-10-12: If there is a breakpoint switch to step mode before delay
 		checkBreakpoint(element);
 		// END KGU#43 2015-10-12

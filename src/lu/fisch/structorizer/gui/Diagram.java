@@ -49,6 +49,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.01.03      Issue #65 (KGU#123): Collapsing/expanding from menu, autoscroll enabled 
  *      Kay Gürtzig     2016.01.11      Bugfix #102 (KGU#138): clear selection on delete, undo, redo 
  *      Kay Gürtzig     2016.01.15      Enh. #110: File open dialog now selects the NSD filter
+ *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
  *
  ******************************************************************************************************
  *
@@ -727,6 +728,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
+    // START KGU#143 2016-01-21: Bugfix #114 - We need a possibility to update buttons from execution status
+    public void doButtons()
+    {
+    	if(NSDControl!=null) NSDControl.doButtons();
+    }
+    // END KGU#143 2016-01-21
 
     public void redraw()
     {
@@ -841,7 +848,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	* @param page a value of type int
 	* @return a value of type int
 	*/
-	public int print (Graphics g, PageFormat pageFormat, int page)
+	public int print(Graphics g, PageFormat pageFormat, int page)
 	{  
 		if (page == 0)
 		{
@@ -1303,20 +1310,39 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public boolean canPaste()
 	{
 		boolean cond = (eCopy!=null && selected!=null);
-		if(selected!=null)
+		if (cond)
 		{
+			// START KGU#143 2016-01-21 Bugfix #114
+			// The first condition is for the case the copy is a referenced sequence 
+			cond = !eCopy.isExecuted();
+			// We must not insert to a subqueue with an element currently executed or with pending execution
+			// (usually the exection index would then be on the stack!)
+			if (!(selected instanceof Subqueue) && selected.parent != null && selected.parent.isExecuted())
+			{
+				cond = false;
+			}
+			// END KGU#143 2016-01-21
 			cond = cond && !selected.getClass().getSimpleName().equals("Root");
 		}
 
 		return cond;
 	}
 
-	public boolean canCutCopy()
+	// START KGU#143 2016-01-21: Bugfix #114 - elements involved in execution must not be edited...
+	//public boolean canCutCopy()
+	public boolean canCut()
+	{
+		return canCopy() && !selected.executed && !selected.waited;
+	}
+
+	// ... though breakpoints shall still be controllable
+	public boolean canCopy()
+	// END KGU#143 2016-01-21
 	{
 		boolean cond = (selected!=null);
-		if(selected!=null)
+		if (cond)
 		{
-			cond = cond && !selected.getClass().getSimpleName().equals("Root");
+			cond = !selected.getClass().getSimpleName().equals("Root");
 			// START KGU#87 2015-11-22: Allow to cut or copy a non-empty Subqueue
 			//cond = cond && !selected.getClass().getSimpleName().equals("Subqueue");
 			cond = cond && (!selected.getClass().getSimpleName().equals("Subqueue") || ((Subqueue)selected).getSize() > 0);

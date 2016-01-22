@@ -1,5 +1,5 @@
 /*
-    Structorizer german language file
+    Structorizer German language file
 
     Copyright (C) 2009  Klaus-Peter Reimers
 
@@ -113,6 +113,9 @@ Menu.menuDiagramMoveUp.text=Nach oben
 Menu.menuDiagramMoveDown.text=Nach unten
 Menu.menuDiagramCollapse.text=Reduzieren
 Menu.menuDiagramExpand.text=Erweitern
+// Breakpoint
+Menu.menuDiagramBreakpoint.text=Haltepunkt setzen/löschen
+// Diagram Appearance
 Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=Hauptprogramm
 Menu.menuDiagramTypeFunction.text=Unterprogramm

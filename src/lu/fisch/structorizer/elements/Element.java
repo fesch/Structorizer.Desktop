@@ -52,6 +52,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.14      Enh. #84: Added "{" and "}" to the token separator list (KGU#100)
  *      Kay Gürtzig     2016.01.15      Enh. #61,#107: Highlighting for "as" added (KGU#109)
  *      Kay Gürtzig     2016.01.16      Changes having got lost on a Nov. 2014 merge re-inserted
+ *      Kay Gürtzig     2016.01.22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#144).
  *
  ******************************************************************************************************
  *
@@ -455,6 +456,49 @@ public abstract class Element {
 	{
 		selected=_sel;
 	}
+	
+	// START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
+	/**
+	 * Checks execution involvement.
+	 * @return true iff this or some substructure of this is currently executed. 
+	 */
+	public boolean isExecuted()
+	{
+		return this.executed || this.waited;
+	}
+	// END KGU#143 2016-01-22
+
+	// START KGU#144 2016-01-22: Bugfix for #38 - Element knows best whether it can be moved up or down
+	/**
+	 * Checks whether this has a successor within the parenting Subqueue
+	 * @return true iff this is element of a Subqueue and has a successor
+	 */
+	public boolean canMoveDown()
+	{
+		boolean canMove = false;
+		if (parent != null && parent.getClass().getSimpleName().equals("Subqueue"))
+		{
+			int i = ((Subqueue)parent).getIndexOf(this);
+			canMove = (i+1 < ((Subqueue)parent).getSize()) && !this.isExecuted() && !((Subqueue)parent).getElement(i+1).isExecuted();
+		}
+		return canMove;
+	}
+
+	/**
+	 * Checks whether this has a predecessor within the parenting Subqueue
+	 * @return true iff this is element of a Subqueue and has a predecessor
+	 */
+	public boolean canMoveUp()
+	{
+		boolean canMove = false;
+		if (parent != null && parent.getClass().getSimpleName().equals("Subqueue"))
+		{
+			int  i = ((Subqueue)parent).getIndexOf(this);
+			canMove = (i > 0) && !this.isExecuted() && !((Subqueue)parent).getElement(i-1).isExecuted();
+		}
+		return canMove;
+	}
+	//	END KGU#144 2016-01-22
 
 	public Color getColor()
 	{

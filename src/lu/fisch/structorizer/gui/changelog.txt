@@ -71,7 +71,10 @@ Current development version: 3.23-15 (2016.01.??)
 - 14: Bugfix #61+#107: More consistent handling of typed variables <Kay Gürtzig>
 - 14: Enh. #110: File open dialogs now use the specific filter as default [elemshb]
 - 15: Bugfix #112: Several flaws on handling indexed variables <Kay Gürtzig>
-- 15: Jump translation on export to Pascal or Oberon fixed <Kay Gürtzig> 
+- 15: Jump translation on export to Pascal or Oberon fixed <Kay Gürtzig>
+- 15: Bugfix #114: Editing of elements being executed prevented <Kay Gürtzig>
+- 15: Bugfix for enh. #38: moving up/down of multiple selection <Kay Gürtzig>
+- 15: Accelerator key for breakpoints (also on multiple selection) <Kay Gürtzig>
 
 Version 3.23 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
