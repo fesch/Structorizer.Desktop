@@ -43,6 +43,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2015.12.19      Bugfix #51 (KGU#108) empty input instruction
  *                                          Enh. #54 (KGU#101) multiple expressions on output
  *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
+ *      Kay Gürtzig         2016.01.22      Bugfix/Enh. #84 (= KGU#100): Array initialisation
  *
  ******************************************************************************************************
  *
@@ -183,6 +184,13 @@ public class BasGenerator extends Generator
 			if (!tokens.get(0).equals(" "))	tokens.insert(" ", 0);
 			tokens.insert("LET", 0);
 		}
+		// START KGU#100 2016-01-22: Enh #84 - Array initialisiation for Visual/modern BASIC
+		if (!this.optionBasicLineNumbering())
+		{
+			tokens.replaceAll("{", "Array(");
+			tokens.replaceAll("}", ")");
+		}
+		// END KGU#100 2016-01-22
 		tokens.replaceAll("<-", "=");
 		return tokens.concatenate();
 	}
@@ -320,7 +328,48 @@ public class BasGenerator extends Generator
 			// END KGU 2014-11-16
 			for(int i=0; i<_inst.getText().count(); i++)
 			{
-				code.add(this.getLineNumber() + _indent + transform(_inst.getText().get(i)));
+				// START KGU#100 2016-01-22: Enh. #84 - resolve array initialisation
+				boolean isArrayInit = false;
+				if (this.optionBasicLineNumbering())
+				{
+					// The crux is: we don't know the index range!
+					// So we'll invent an index base variable easy to be modified in code
+					//code.add(_indent + transform(line) + ";");
+					String uniline = Element.unifyOperators(_inst.getText().get(i));
+					int asgnPos = uniline.indexOf("<-");
+					if (asgnPos >= 0 && uniline.contains("{") && uniline.contains("}"))
+					{
+						String varName = transform(uniline.substring(0, asgnPos).trim());
+						String expr = uniline.substring(asgnPos+2).trim();
+						isArrayInit = expr.startsWith("{") && expr.endsWith("}");
+						if (isArrayInit)
+						{
+							StringList elements = Element.splitExpressionList(
+									expr.substring(1, expr.length()-1), ",");
+							// In order to be consistent with possible index access
+							// at other positions in code, we use the standard Java
+							// index range here (though in Pascal indexing usually 
+							// starts with 1 but may vary widely). We solve the problem
+							// by providing a configurable start index variable 
+							insertComment("TODO: Check indexBase value (automatically generated)", _indent);
+							code.add(this.getLineNumber() + _indent + "LET indexBase = 0");
+							for (int el = 0; el < elements.count(); el++)
+							{
+								code.add(this.getLineNumber() + _indent + "LET " + varName + 
+										"(indexBase + " + el + ") = " + 
+										transform(elements.get(el)));
+							}
+						}
+
+					}
+				}
+				if (!isArrayInit)
+				{
+				// END KGU#100 2016-01-22
+					code.add(this.getLineNumber() + _indent + transform(_inst.getText().get(i)));
+				// START KGU#100 2016-01-22: Enh. #84 (continued)
+				}
+				// END KGU#100 2016-01-22				
 			}
 		}
     }
