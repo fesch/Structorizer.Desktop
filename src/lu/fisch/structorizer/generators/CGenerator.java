@@ -49,6 +49,8 @@ package lu.fisch.structorizer.generators;
  *                                              bugfix/enhancement #22 (KGU#74 jump and return handling)
  *      Kay Gürtzig             2015.12.13		Bugfix #51 (=KGU#108): Cope with empty input and output
  *      Kay Gürtzig             2015.12.21		Adaptations for Bugfix #41/#68/#69 (=KGU#93)
+ *      Kay Gürtzig             2016.01.15		Bugfix #64 (exit instruction was exported without ';')
+ *      Kay Gürtzig             2016.01.15		Issue #61/#107: improved handling of typed variables 
  *
  ******************************************************************************************************
  *
@@ -113,6 +115,8 @@ package lu.fisch.structorizer.generators;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.regex.Matcher;
+
+import com.stevesoft.pat.Regex;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
@@ -189,7 +193,7 @@ public class CGenerator extends Generator {
 	 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
 	 */
 	@Override
-	protected boolean supportsSimpleBreak()
+	protected boolean breakMatchesCase()
 	{
 		return true;
 	}
@@ -226,7 +230,10 @@ public class CGenerator extends Generator {
 	 */
 	protected void insertExitInstr(String _exitCode, String _indent)
 	{
-		code.add(_indent + "exit(" + _exitCode + ")");
+		// START KGU 2016-01-15: Bugfix #64 (reformulated) semicolon was missing
+		//code.add(_indent + "exit(" + _exitCode + ")");
+		code.add(_indent + "exit(" + _exitCode + ");");
+		// END KGU 2016-01-15
 	}
 	// END KGU#16/#47 2015-11-30
 
@@ -266,17 +273,28 @@ public class CGenerator extends Generator {
 	@Override
 	protected String transform(String _input)
 	{
+		// START KGU#109/KGU#141 2016-01-16: Bugfix #61,#107,#112
+		_input = Element.unifyOperators(_input);
+		int asgnPos = _input.indexOf("<-");
+		if (asgnPos > 0)
+		{
+			String lval = _input.substring(0, asgnPos).trim();
+			String expr = _input.substring(asgnPos + "<-".length()).trim();
+			String[] typeNameIndex = this.lValueToTypeNameIndex(lval);
+			String index = typeNameIndex[2];
+			_input = (typeNameIndex[0] + " " + typeNameIndex[1] + 
+					(index.isEmpty() ? "" : "["+index+"]") + 
+					" <- " + expr).trim();
+		}
+		// END KGU#109/KGU#1412016-01-16
+		
 		_input = super.transform(_input);
 
-		// START KGU#72 2015-11-10: Replacement was done but ineffective
-		//_input.replace(" div ", " / ");
-		//_input = _input.replace(" div ", " / ");
-		// END KGU#72 2015-11-10
 		// START KGU#108 2015-12-13: Bugfix #51: Cope with empty input and output
 		_input = _input.replace("scanf(\"\", &)", "getchar()");
 		_input = _input.replace("printf(\"\", ); ", "");
 		// END KGU#108 2015-12-13
-		
+
 		return _input.trim();
 	}
 
@@ -293,7 +311,7 @@ public class CGenerator extends Generator {
 		_type = _type.replace("character", "char");
 		return _type;
 	}
-	// END KGU#1 2015-11-29
+	// END KGU#16 2015-11-29
 
 	
 	protected void insertBlockHeading(Element elem, String _headingText, String _indent)
@@ -330,13 +348,7 @@ public class CGenerator extends Generator {
 
 	@Override
 	protected void generateCode(Instruction _inst, String _indent) {
-		// START KGU#18/KGU#23 2015-10-18: The "export instructions as comments"
-		// configuration had been ignored here
-		// insertComment(_inst, _indent);
-		// for(int i=0;i<_inst.getText().count();i++)
-		// {
-		// code.add(_indent+transform(_inst.getText().get(i))+";");
-		// }
+
 		if (!insertAsComment(_inst, _indent)) {
 
 			insertComment(_inst, _indent);
@@ -347,15 +359,14 @@ public class CGenerator extends Generator {
 			}
 
 		}
-		// END KGU 2015-10-18
+		
 	}
 
 	@Override
 	protected void generateCode(Alternative _alt, String _indent) {
-		// START KGU 2014-11-16
+		
 		insertComment(_alt, _indent);
-		// END KGU 2014-11-16
-
+		
 		String condition = transform(_alt.getText().getLongString(), false)
 				.trim();
 		if (!condition.startsWith("(") || !condition.endsWith(")"))
@@ -374,10 +385,9 @@ public class CGenerator extends Generator {
 
 	@Override
 	protected void generateCode(Case _case, String _indent) {
-		// START KGU 2014-11-16
+		
 		insertComment(_case, _indent);
-		// END KGU 2014-11-16
-
+		
 		StringList lines = _case.getText();
 		String condition = transform(lines.get(0), false);
 		if (!condition.startsWith("(") || !condition.endsWith(")")) {
@@ -417,6 +427,7 @@ public class CGenerator extends Generator {
 
 	@Override
 	protected void generateCode(For _for, String _indent) {
+
 		insertComment(_for, _indent);
 		
 		String var = _for.getCounterVar();
@@ -435,9 +446,9 @@ public class CGenerator extends Generator {
 
 	@Override
 	protected void generateCode(While _while, String _indent) {
-		// START KGU 2014-11-16
+		
 		insertComment(_while, _indent);
-		// END KGU 2014-11-16
+		
 
 		String condition = transform(_while.getText().getLongString(), false)
 				.trim();
@@ -455,9 +466,8 @@ public class CGenerator extends Generator {
 
 	@Override
 	protected void generateCode(Repeat _repeat, String _indent) {
-		// START KGU 2014-11-16
+		
 		insertComment(_repeat, _indent);
-		// END KGU 2014-11-16
 
 		insertBlockHeading(_repeat, "do", _indent);
 
@@ -469,9 +479,8 @@ public class CGenerator extends Generator {
 
 	@Override
 	protected void generateCode(Forever _forever, String _indent) {
-		// START KGU 2014-11-16
+		
 		insertComment(_forever, _indent);
-		// END KGU 2014-11-16
 
 		insertBlockHeading(_forever, "while (true)", _indent);
 
@@ -482,13 +491,7 @@ public class CGenerator extends Generator {
 
 	@Override
 	protected void generateCode(Call _call, String _indent) {
-		// START KGU 2015-10-18: The "export instructions as comments"
-		// configuration had been ignored here
-		// insertComment(_call, _indent);
-		// for(int i=0;i<_call.getText().count();i++)
-		// {
-		// code.add(_indent+transform(_call.getText().get(i))+";");
-		// }
+ 
 		if (!insertAsComment(_call, _indent)) {
 
 			insertComment(_call, _indent);
@@ -499,7 +502,7 @@ public class CGenerator extends Generator {
 				code.add(_indent + transform(lines.get(i), false) + ";");
 			}
 		}
-		// END KGU 2015-10-18
+		
 	}
 
 	@Override
@@ -566,16 +569,15 @@ public class CGenerator extends Generator {
 			if (isEmpty) {
 				code.add(_indent + "break;");
 			}
+			// END KGU 2015-10-18
 		}
-		// END KGU 2015-10-18
 	}
 
-	// START KGU#47 2015-11-29: Offer at least a sequential execution (which is one legal execution order)
+	// START KGU#47 2015-11-30: Offer at least a sequential execution (which is one legal execution order)
 	protected void generateCode(Parallel _para, String _indent)
 	{
-		// START KGU 2014-11-16
+
 		insertComment(_para, _indent);
-		// END KGU 2014-11-16
 
 		code.add("");
 		insertComment("==========================================================", _indent);

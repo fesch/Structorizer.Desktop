@@ -34,6 +34,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Kay Gürtzig     2015.11.23      First issue (KGU#87).
+ *      Kay Gürtzig     2016.01.22      Bugfix #114 for Enh. #38 (addressing moveUp/moveDown, KGU#143 + KGU#144).
  *
  ******************************************************************************************************
  *
@@ -58,7 +59,7 @@ import lu.fisch.utils.StringList;
  */
 public class SelectedSequence extends Element implements IElementSequence {
 
-	private int firstIndex = 0, lastIndex = -1;	// The positions of the first and last selected element within the parenthet Subqueue
+	private int firstIndex = 0, lastIndex = -1;	// The positions of the first and last selected element within the parent Subqueue
 	
 	/**
 	 * @param _child1 - a selected Element, marking one end of the sequence
@@ -310,6 +311,79 @@ public class SelectedSequence extends Element implements IElementSequence {
 		}
 	}
 	
+	// START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#isExecuted()
+	 */
+	@Override
+	public boolean isExecuted()
+	{
+		boolean involved = false;
+		for (int index = this.firstIndex; !involved && index <= this.lastIndex; index++)
+		{
+			if (((Subqueue)this.parent).getElement(index).isExecuted())
+			{
+				involved = true;
+			}
+		}
+		return involved;
+	}
+	// END KGU#143 2016-01-22
+
+	// START KGU#144 2016-01-22: Bugfix #38, #114 - moveDown and moveUp hadn't been implemented
+	public boolean canMoveDown()
+	{
+		boolean canMove = this.lastIndex + 1 < ((Subqueue)this.parent).getSize();
+		// None of the affected elements must be under execution! (Issue #114)
+		for (int index = this.firstIndex; canMove && index <= this.lastIndex + 1; index++)
+		{
+			if (((Subqueue)this.parent).getElement(index).executed)
+			{
+				canMove = false;
+			}
+		}
+		return canMove;
+	}
+	
+	public boolean canMoveUp()
+	{
+		boolean canMove = this.firstIndex > 0;
+		// None of the affected elements must be under execution! (Issue #114)
+		for (int index = this.firstIndex - 1; canMove && index <= this.lastIndex; index++)
+		{
+			if (((Subqueue)this.parent).getElement(index).executed)
+			{
+				canMove = false;
+			}
+		}
+		return canMove;
+	}
+	
+	public boolean moveDown()
+	{
+		boolean feasible = this.canMoveDown();
+		if (feasible) {
+			Element successor = ((Subqueue)this.parent).getElement(this.lastIndex + 1);
+			((Subqueue)this.parent).removeElement(this.lastIndex + 1);
+			((Subqueue)this.parent).insertElementAt(successor, this.firstIndex++);
+			this.lastIndex++;
+		}
+		return feasible;
+	}
+
+	public boolean moveUp()
+	{
+		boolean feasible = this.canMoveUp();
+		if (feasible) {
+			Element predecessor = ((Subqueue)this.parent).getElement(this.firstIndex - 1);
+			((Subqueue)this.parent).removeElement(this.firstIndex - 1);
+			this.firstIndex--;
+			((Subqueue)this.parent).insertElementAt(predecessor, this.lastIndex--);
+		}
+		return feasible;
+	}
+	// END KGU#144 2016-01-22
+	
 	/**
 	 * Clears the element references held by this (without removing them from the owning
 	 * Subqueue (if they are to be removed from the owning Subqueue, use removeElements())
@@ -384,5 +458,17 @@ public class SelectedSequence extends Element implements IElementSequence {
 		// TODO Auto-generated method stub
 		
 	}
+	
+	// START KGU#43 2016-01-22: Method to control the breakpoint property of the sub-elements
+	@Override
+	public void toggleBreakpoint()
+	{
+		for (int i = 0; i < this.getSize(); i++)
+		{
+			this.getElement(i).toggleBreakpoint();
+		}
+	}
+	// END KGU#43 2016-01-22
+
 	
 }

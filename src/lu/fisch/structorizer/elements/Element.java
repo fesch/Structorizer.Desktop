@@ -46,6 +46,13 @@ package lu.fisch.structorizer.elements;
  *                                      Enh. #75 (KGU#116): Highlighting of jump keywords (orange)
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *      Kay Gürtzig     2016.01.03/04   Enh. #87 for collapsing/expanding (KGU#122/KGU#123)
+ *      Kay Gürtzig     2016.01.09      Issue #97: coordinate comparison changed to improve selection (KGU#136)
+ *      Kay Gürtzig     2016.01.12      Bugfix #105: flaw in string literal tokenization (KGU#139)
+ *      Kay Gürtzig     2016.01.12      Bugfix #104: transform caused index errors
+ *      Kay Gürtzig     2016.01.14      Enh. #84: Added "{" and "}" to the token separator list (KGU#100)
+ *      Kay Gürtzig     2016.01.15      Enh. #61,#107: Highlighting for "as" added (KGU#109)
+ *      Kay Gürtzig     2016.01.16      Changes having got lost on a Nov. 2014 merge re-inserted
+ *      Kay Gürtzig     2016.01.22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#144).
  *
  ******************************************************************************************************
  *
@@ -102,13 +109,13 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.23-12";
+	public static String E_VERSION = "3.23-15";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
 	"\n"+
 	"Having also put his fingers into the code\n"+
-        " - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
+	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"\n"+
 	"Export classes written and maintained by\n"+
 	" - Oberon: Klaus-Peter Reimers <k_p_r@freenet.de>\n"+
@@ -118,8 +125,9 @@ public abstract class Element {
 	" - Java: Gunter Schillebeeckx <gunter.schillebeeckx@tsmmechelen.be>\n"+
 	" - C: Gunter Schillebeeckx <gunter.schillebeeckx@tsmmechelen.be>\n"+
 	" - C#: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
-	" - C++: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n" +
-	" - PHP: Rolf Schmidt <rolf.frogs@t-online.de>\n" +
+	" - C++: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
+	" - PHP: Rolf Schmidt <rolf.frogs@t-online.de>\n"+
+	" - Python: Daniel Spittank <kontakt@daniel.spittank.net>\n"+
 	"\n"+
 	"License setup and checking done by\n"+
 	" - Marcus Radisch <radischm@googlemail.com>\n"+
@@ -138,7 +146,8 @@ public abstract class Element {
 	" - ES: Andres Cabrera <andrescabrera20@gmail.com>\n"+
 	" - PT/BR: Theldo Cruz <cruz@pucminas.br>\n"+
 	" - IT: Andrea Maiani <andreamaiani@gmail.com>\n"+
-	" - CN: Wang Lei <wanglei@hollysys.com>\n"+
+	" - CHS: Wang Lei <wanglei@hollysys.com>\n"+
+	" - CHT: Joe Chem <hueyan_chen@yahoo.com.tw>\n"+
 	" - CZ: Vladimír Vaščák <vascak@spszl.cz>\n"+
 	" - RU: Юра Лебедев <elita.alegator@gmail.com>\n"+
 	"\n"+
@@ -155,7 +164,8 @@ public abstract class Element {
 	" - Sascha Meyer <harlequin2@gmx.de>\n"+
 	" - Andreas Jenet <ajenet@gmx.de>\n"+
 	" - Jan Peter Klippel <structorizer@xtux.org>\n"+
-	                
+	" - David Tremain <DTremain@omnisource.com>\n"+
+	
 	"\n"+
 	"File dropper class by\n"+
 	" - Robert W. Harder <robertharder@mac.com>\n"+
@@ -182,16 +192,16 @@ public abstract class Element {
 
 	// some static constants
 	protected static int E_PADDING = 20;
-	static int E_INDENT = 2;
+	public static int E_INDENT = 2;
 	public static Color E_DRAWCOLOR = Color.YELLOW;	// Actually, the background colour for selected elements
 	public static Color E_COLLAPSEDCOLOR = Color.LIGHT_GRAY;
 	// START KGU#41 2015-10-13: Executing status now independent from selection
 	public static Color E_RUNNINGCOLOR = Color.ORANGE;		// used for Elements currently (to be) executed 
 	// END KGU#41 2015-10-13
 	public static Color E_WAITCOLOR = new Color(255,255,210);	// used for Elements with pending execution
-	static Color E_COMMENTCOLOR = Color.LIGHT_GRAY;
+	public static Color E_COMMENTCOLOR = Color.LIGHT_GRAY;
 	// START KGU#43 2015-10-11: New fix color for breakpoint marking
-	static Color E_BREAKPOINTCOLOR = Color.RED;				// Colour of the breakpoint bar at element top
+	public static Color E_BREAKPOINTCOLOR = Color.RED;			// Colour of the breakpoint bar at element top
 	// END KGU#43 2015-10-11
 	public static boolean E_VARHIGHLIGHT = false;	// Highlight variables, operators, string literals, and certain keywords? 
 	public static boolean E_SHOWCOMMENTS = true;	// Enable comment bars and comment popups? 
@@ -446,6 +456,49 @@ public abstract class Element {
 	{
 		selected=_sel;
 	}
+	
+	// START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
+	/**
+	 * Checks execution involvement.
+	 * @return true iff this or some substructure of this is currently executed. 
+	 */
+	public boolean isExecuted()
+	{
+		return this.executed || this.waited;
+	}
+	// END KGU#143 2016-01-22
+
+	// START KGU#144 2016-01-22: Bugfix for #38 - Element knows best whether it can be moved up or down
+	/**
+	 * Checks whether this has a successor within the parenting Subqueue
+	 * @return true iff this is element of a Subqueue and has a successor
+	 */
+	public boolean canMoveDown()
+	{
+		boolean canMove = false;
+		if (parent != null && parent.getClass().getSimpleName().equals("Subqueue"))
+		{
+			int i = ((Subqueue)parent).getIndexOf(this);
+			canMove = (i+1 < ((Subqueue)parent).getSize()) && !this.isExecuted() && !((Subqueue)parent).getElement(i+1).isExecuted();
+		}
+		return canMove;
+	}
+
+	/**
+	 * Checks whether this has a predecessor within the parenting Subqueue
+	 * @return true iff this is element of a Subqueue and has a predecessor
+	 */
+	public boolean canMoveUp()
+	{
+		boolean canMove = false;
+		if (parent != null && parent.getClass().getSimpleName().equals("Subqueue"))
+		{
+			int  i = ((Subqueue)parent).getIndexOf(this);
+			canMove = (i > 0) && !this.isExecuted() && !((Subqueue)parent).getElement(i-1).isExecuted();
+		}
+		return canMove;
+	}
+	//	END KGU#144 2016-01-22
 
 	public Color getColor()
 	{
@@ -578,13 +631,23 @@ public abstract class Element {
 	{
 		Point pt=getDrawPoint();
 
-		if ((rect.left-pt.x < _x) && (_x < rect.right-pt.x) &&
-				(rect.top-pt.y < _y) && (_y < rect.bottom-pt.y))
+		// START KGU#136 2016-01-09: Bugfix #97: Little gaps between the claimed regions let selection flicker
+//		if ((rect.left-pt.x < _x) && (_x < rect.right-pt.x) &&
+//				(rect.top-pt.y < _y) && (_y < rect.bottom-pt.y))
+		int overlap = 0;
+//		System.out.print(this.getClass().getSimpleName() + " " + this.getText().getLongString() +
+//				"\t[" + rect.left + ", " + rect.top + "; " + rect.right + ", " + rect.bottom + "]\t(" +
+//				_x + ", " + _y + ")\t");
+		if ((rect.left-pt.x <= _x+overlap) && (_x-overlap <= rect.right-pt.x) &&
+				(rect.top-pt.y <= _y+overlap) && (_y-overlap <= rect.bottom-pt.y))
+		// END KGU#136 2016-01-09
 		{
+//			System.out.println("YES");
 			return this;         
 		}
 		else 
 		{
+//			System.out.println("NO");
 			if (_forSelection)	
 			{
 				selected = false;	
@@ -676,6 +739,9 @@ public abstract class Element {
 			preAltT=ini.getProperty("IfTrue","V");
 			preAltF=ini.getProperty("IfFalse","F");
 			preAlt=ini.getProperty("If","()");
+			// START KGU 2016-01-16: Stuff having got lost by a Nov. 2014 merge
+			altPadRight=Boolean.valueOf(ini.getProperty("altPadRight", "true"));
+			// END KGU 2016-01-16
 			StringList sl = new StringList();
 			sl.setCommaText(ini.getProperty("Case","\"?\",\"?\",\"?\",\"sinon\""));
 			preCase=sl.getText();
@@ -712,6 +778,9 @@ public abstract class Element {
 			ini.setProperty("IfTrue",preAltT);
 			ini.setProperty("IfFalse",preAltF);
 			ini.setProperty("If",preAlt);
+			// START KGU 2016-01-16: Stuff having got lost by a Nov. 2014 merge
+			ini.setProperty("altPadRight", String.valueOf(altPadRight));
+			// END KGU 2016-01-16
 			StringList sl = new StringList();
 			sl.setText(preCase);
 			ini.setProperty("Case",sl.getCommaText());
@@ -741,16 +810,16 @@ public abstract class Element {
 		}
 	}
 
-	public static Root getRoot(Element now)
+	public static Root getRoot(Element _element)
 	{
-		while(now.parent!=null)
+		while (_element.parent != null)
 		{
-			now=now.parent;
+			_element = _element.parent;
 		}
-                if(now instanceof Root)
-                    return (Root) now;
-                else
-                    return null;
+		if (_element instanceof Root)
+			return (Root) _element;
+		else
+			return null;
 	}
 
 	private String cutOut(String _s, String _by)
@@ -788,6 +857,10 @@ public abstract class Element {
 		parts=StringList.explodeWithDelimiter(parts,")");
 		parts=StringList.explodeWithDelimiter(parts,"[");
 		parts=StringList.explodeWithDelimiter(parts,"]");
+		// START KGU#100 2016-01-14: We must also catch the initialiser delimiters
+		parts=StringList.explodeWithDelimiter(parts,"{");
+		parts=StringList.explodeWithDelimiter(parts,"}");
+		// END KGU#100 2016-01-14
 		parts=StringList.explodeWithDelimiter(parts,"-");
 		parts=StringList.explodeWithDelimiter(parts,"+");
 		parts=StringList.explodeWithDelimiter(parts,"/");
@@ -904,6 +977,10 @@ public abstract class Element {
 		if (_restoreStrings)
 		{
 			String[] delimiters = {"\"", "'"};
+			// START KGU#139 2016-01-12: Bugfix #105 - apparently incomplete strings got lost
+			// We mustn't eat seemingly incomplete strings, instead we re-feed them
+			StringList parkedTokens = new StringList();
+			// END KGU#139 2016-01-12
 			for (int d = 0; d < delimiters.length; d++)
 			{
 				boolean withinString = false;
@@ -917,6 +994,9 @@ public abstract class Element {
 						composed = composed + lexeme;
 						if (lexeme.equals(delimiters[d]))
 						{
+							// START KGU#139 2016-01-12: Bugfix #105
+							parkedTokens.clear();
+							// END KGU#139 2016-01-12
 							parts.set(i, composed+"");
 							composed = "";
 							withinString = false;
@@ -924,11 +1004,17 @@ public abstract class Element {
 						}
 						else
 						{
+							// START KGU#139 2016-01-12: Bugfix #105
+							parkedTokens.add(lexeme);
+							// END KGU#139 2016-01-12
 							parts.delete(i);
 						}
 					}
 					else if (lexeme.equals(delimiters[d]))
 					{
+						// START KGU#139 2016-01-12: Bugfix #105
+						parkedTokens.add(lexeme);
+						// END KGU#139 2016-01-12
 						withinString = true;
 						composed = lexeme+"";
 						parts.delete(i);
@@ -939,6 +1025,12 @@ public abstract class Element {
 					}
 				}
 			}
+			// START KGU#139 2916-01-12: Bugfix #105
+			if (parkedTokens.count() > 0)
+			{
+				parts.add(parkedTokens);
+			}
+			// END KGU#139 2016-01-12
 		}
 		return parts;
 	}
@@ -1077,7 +1169,7 @@ public abstract class Element {
 
 				// START KGU#64 2015-11-03: Not to be done again and again. Private static field now!
 				//StringList specialSigns = new StringList();
-				if (specialSigns == null)	// lazy initialisiation
+				if (specialSigns == null)	// lazy initialisation
 				{
 					specialSigns = new StringList();
 					// ENDU KGU#64 2015-11-03
@@ -1120,9 +1212,18 @@ public abstract class Element {
 					specialSigns.add("shl");
 					specialSigns.add("shr");
 					// END KGU#115 2015-12-23
+					// START KGU#109 2016-01-15: Issues #61, #107 highlight the BASIC declarator keyword, too
+					specialSigns.add("as");
+					// END KGU#109 2016-01-15
+					
+					// START KGU#100 2016-01-16: Enh. #84: Also highlight the initialiser delimiters
+					specialSigns.add("{");
+					specialSigns.add("}");
+					// END KGU#100 2016-01-16
 
+					// The quotes will only occur as tokens if they are unpaired!
 					specialSigns.add("'");
-					specialSigns.add("\"");	// KGU 2015-11-12: Quotes alone will hardly occur anymore
+					specialSigns.add("\"");
 				// START KGU#64 2015-11-03: See above
 				}
 				// END KGU#64 2015-11-03
@@ -1180,7 +1281,7 @@ public abstract class Element {
 							_canvas.setFont(boldFont);
 						}
 						// END KGU#116 2015-12-23
-						// if it's a String or Character literal color it as such
+						// if it's a String or Character literal then mark it as such
 						else if (display.startsWith("\"") && display.endsWith("\"") ||
 								display.startsWith("'") && display.endsWith("'"))
 						{
@@ -1530,7 +1631,10 @@ public abstract class Element {
         		{
         			int len = marker.length();
         			int pos = 0;
-        			while ((pos = interm.indexOf(marker, pos)) >= 0)
+        			// START KGU 2016-01-13: Bugfix #104: position fault
+        			//while ((pos = interm.indexOf(marker, pos)) >= 0)
+        			while ((pos = interm.indexOf(marker, pos)) > 0)
+        			// END KGU 2016-01-13
         			{
         				if (!Character.isJavaIdentifierPart(interm.charAt(pos-1)) &&
         						(pos + len) < interm.length() &&
@@ -1543,14 +1647,22 @@ public abstract class Element {
         		else
         		{
         			// Already padded, so just replace it everywhere
-        			interm = interm.replace( marker, ""); 
+        			// START KGU 2016-01-13: Bugfix #104 - padding might go away here
+        			//interm = interm.replace( marker, ""); 
+        			interm = interm.replace( marker, " "); 
+        			// END KGU 2016-01-13
         		}
         		//interm = " " + interm + " ";	// Ensure the string being padded for easier matching
-                interm = interm.replace("  ", " ");
-                interm = interm.trim();
+                interm = interm.replace("  ", " ");		// Reduce multiple spaces (may also spoil string literals!)
+                // START KGU 2016-01-13: Bugfix #104 - should have been done after the loop only
+                //interm = interm.trim();
+                // END KGU 2016-01-13
         		//System.out.println("transformIntermediate: " + interm);	// FIXME (KGU): Remove or deactivate after test!
         	}
         }
+        // START KGU 2016-01-13: Bugfix #104 - should have been done after the loop only
+        interm = interm.trim();
+        // END KGU 2016-01-13
         
         // START KGU#93 2015-12-21 Bugfix #41/#68/#69 Get rid of padding defects and string damages
         //interm = unifyOperators(interm);
@@ -1574,6 +1686,24 @@ public abstract class Element {
         //return interm/*.trim()*/;
 
         StringList tokens = Element.splitLexically(interm, true);
+        
+//        // START KGU 2016-01-13: Bugfix #104 - planned new approach to overcome that nasty keyword/string problem
+//        // It is also too simple, e.g. in cases like  jusqu'à test = 'o'  where a false string recognition would
+//        // avert the keyvword recognition. So both will have to be done simultaneously...
+//        for (int i=0; i < redundantMarkers.count(); i++)
+//        {
+//        	StringList markerTokens = Element.splitLexically(redundantMarkers.get(i), true);
+//        	int pos = 0;
+//        	while ((pos = tokens.indexOf(markerTokens, pos, true)) >= 0)
+//        	{
+//        		for (int j = 0; j < markerTokens.count(); j++)
+//        		{
+//        			tokens.delete(pos);
+//        		}
+//        	}
+//        }
+//        // END KGU 2016-01-13
+        
         unifyOperators(tokens, false);
         
         return tokens;

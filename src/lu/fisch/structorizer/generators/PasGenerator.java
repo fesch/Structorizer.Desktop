@@ -37,6 +37,7 @@ package lu.fisch.structorizer.generators;
  *      Bob Fisch           2008.11.17      Added Freepascal extensions
  *      Bob Fisch           2009.08.17      Bugfixes (see comment)
  *      Bob Fisch           2011.11.07      Fixed an issue while doing replacements
+ *      Dirk Wilhelmi       2012.10.11      Added comments export
  *      Kay Gürtzig         2014.11.10      Conversion of C-like logical operators
  *      Kay Gürtzig         2014.11.16      Conversion of C-like comparison operator, comment export
  *      Kay Gürtzig         2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
@@ -47,6 +48,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2015.12.20      Bugfix #22 (KGU#74): Correct return mechanisms even with
  *                                          return instructions not placed in Jump elements
  *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KG#93)
+ *      Kay Gürtzig         2016.01.14      Enh. #84: array initialisation expressions decomposed (= KG#100)
+ *      Kay Gürtzig         2016.01.17      KGU#142: Bugfix for enh. #23 - empty Jumps weren't translated
  *
  ******************************************************************************************************
  *
@@ -139,7 +142,7 @@ public class PasGenerator extends Generator
 	 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
 	 */
 	@Override
-	protected boolean supportsSimpleBreak()
+	protected boolean breakMatchesCase()
 	{
 		return false;
 	}
@@ -251,15 +254,15 @@ public class PasGenerator extends Generator
 	// END KGU#18/KGU#23 2015-11-01
     
 
-	// START KGU#93 2015-12-21: Bugfix #41/#68/#69 - overriding no longer needed
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String)
-//	 */
-//	@Override
-//	protected String transform(String _input)
-//	{
-//		_input = super.transform(_input);
-//
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String)
+	 */
+	@Override
+	protected String transform(String _input)
+	{
+		String transline = super.transform(_input);
+
+		// START KGU#93 2015-12-21: Bugfix #41/#68/#69 - overriding no longer needed		
 //            // START KGU 2014-11-16: C comparison operator required transformation, too
 //            _input=BString.replace(_input," != "," <> ");
 //            _input=BString.replace(_input," == "," = ");
@@ -288,8 +291,30 @@ public class PasGenerator extends Generator
 //            _input.replace("  ", " ");
 //            _input.replace("  ", " ");
 //            return _input.trim();
-//    }
-	// END KGU#93 2015-12-21
+// END KGU#93 2015-12-21
+
+		// START KGU#141 2016-01-16: Bugfix #112 - suppress type specifications
+		// (This must work both in Instruction and Call elements)
+		int asgnPos = transline.indexOf(":=");
+		if (asgnPos > 0)
+		{
+			String varName = transline.substring(0, asgnPos);
+			String expr = transline.substring(asgnPos + ":=".length());
+			String[] typeNameIndex = this.lValueToTypeNameIndex(varName);
+			varName = typeNameIndex[1];
+			String index = typeNameIndex[2];
+			if (!index.isEmpty())
+			{
+				varName = varName + "["+index+"]";
+			}
+			transline = varName + " := " + expr;
+		}
+		// END KGU#141 2016-01-16
+		
+		return transline.trim(); 
+    }
+	
+	
 
     @Override
     protected void generateCode(Instruction _inst, String _indent)
@@ -323,9 +348,44 @@ public class PasGenerator extends Generator
 						code.add(_indent + "exit;");
 					}
 				}
-				else
+				else	// no return
 				{
-					code.add(_indent + transform(line) + ";");
+					// START KGU#100 2016-01-14: Enh. #84 - resolve array initialisation
+					// The crux is: we don't know the index range!
+					// So we'll invent an index base variable easy to be modified in code
+					//code.add(_indent + transform(line) + ";");
+					String transline = transform(line);
+					int asgnPos = transline.indexOf(":=");
+					boolean isArrayInit = false;
+					if (asgnPos >= 0 && transline.contains("{") && transline.contains("}"))
+					{
+						String varName = transline.substring(0, asgnPos).trim();
+						String expr = transline.substring(asgnPos+2).trim();
+						isArrayInit = expr.startsWith("{") && expr.endsWith("}");
+						if (isArrayInit)
+						{
+							StringList elements = Element.splitExpressionList(
+									expr.substring(1, expr.length()-1), ",");
+							// In order to be consistent with possible index access
+							// at other positions in code, we use the standard Java
+							// index range here (though in Pascal indexing usually 
+							// starts with 1 but may vary widely). We solve the problem
+							// by providing a configurable start index variable 
+							insertComment("TODO: Check indexBase value (automatically generated)", _indent);
+							code.add(_indent + "indexBase := 0;");
+							for (int el = 0; el < elements.count(); el++)
+							{
+								code.add(_indent + varName + "[indexBase + " + el + "] := " + 
+										elements.get(el) + ";");
+							}
+						}
+						
+					}
+					if (!isArrayInit)
+					{
+						code.add(_indent + transline + ";");
+					}
+					// END KGU#100 2016-01-14
 				}
 				// END KGU#74 2015-12-20
 			}
@@ -519,57 +579,90 @@ public class PasGenerator extends Generator
 			boolean isEmpty = true;
 			
 			StringList lines = _jump.getText();
-			for (int i = 0; isEmpty && i < lines.count(); i++) {
-				String line = transform(lines.get(i)).trim();
-				if (!line.isEmpty())
+			// START KGU#142 2016-01-17: fixes Enh. #23 The following code had been
+			// misplaced inside the text line loop, it belongs to the top (no further
+			// analysis required):
+			// Has it already been matched with a loop? Then syntax must have been okay...
+			if (this.jumpTable.containsKey(_jump))
+			{
+				Integer ref = this.jumpTable.get(_jump);
+				String label = "StructorizerLabel_" + ref;
+				if (ref.intValue() < 0)
 				{
-					isEmpty = false;
+					insertComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
+					insertComment(lines.getLongString(), _indent);
+					label = "__ERROR__";
 				}
-				// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
-				//code.add(_indent + line + ";");
-				if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
+				else
 				{
-					String argument = line.substring(D7Parser.preReturn.length()).trim();
-					if (!argument.isEmpty())
+					insertComment("WARNING: Most Pascal compilers don't support jump instructions!", _indent);					
+				}
+				code.add(_indent + "goto" + " " + label + ";");
+			}
+			else
+			{
+			// END KGU#142 2016-01-17
+				for (int i = 0; isEmpty && i < lines.count(); i++) {
+					String line = transform(lines.get(i)).trim();
+					if (!line.isEmpty())
 					{
-						code.add(_indent + this.procName + " := " + argument + ";"); 
+						isEmpty = false;
 					}
-					code.add(_indent + "exit;");
-				}
-				else if (line.matches(Matcher.quoteReplacement(D7Parser.preExit)+"([\\W].*|$)"))
-				{
-					String argument = line.substring(D7Parser.preExit.length()).trim();
-					if (!argument.isEmpty()) { argument = "(" + argument + ")"; }
-					code.add(_indent + "halt" + argument + ";");
-				}
-				// Has it already been matched with a loop? Then syntax must have been okay...
-				else if (this.jumpTable.containsKey(_jump))
-				{
-					Integer ref = this.jumpTable.get(_jump);
-					String label = "StructorizerLabel_" + ref;
-					if (ref.intValue() < 0)
+					// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
+					//code.add(_indent + line + ";");
+					if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
 					{
-						insertComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
+						String argument = line.substring(D7Parser.preReturn.length()).trim();
+						if (!argument.isEmpty())
+						{
+							code.add(_indent + this.procName + " := " + argument + ";"); 
+						}
+						// START KGU 2016-01-17: Omit the exit if this is the last instruction of the diagram
+						//code.add(_indent + "exit;");
+						if (i < lines.count()-1 || !((_jump.parent).parent instanceof Root))
+						{
+							code.add(_indent + "exit;");
+						}
+						// END KGU 2016-01-17
+					}
+					else if (line.matches(Matcher.quoteReplacement(D7Parser.preExit)+"([\\W].*|$)"))
+					{
+						String argument = line.substring(D7Parser.preExit.length()).trim();
+						if (!argument.isEmpty()) { argument = "(" + argument + ")"; }
+						code.add(_indent + "halt" + argument + ";");
+					}
+					// START KGU#142 2016-01-17: This belonged to the top (no further analysis required)
+					//				else if (this.jumpTable.containsKey(_jump))
+					//				{
+					//					Integer ref = this.jumpTable.get(_jump);
+					//					String label = "StructorizerLabel_" + ref;
+					//					if (ref.intValue() < 0)
+					//					{
+					//						insertComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
+					//						insertComment(line, _indent);
+					//						label = "__ERROR__";
+					//					}
+					//					else
+					//					{
+					//						insertComment("WARNING: Most Pascal compilers don't support jump instructions!", _indent);					
+					//					}
+					//					code.add(_indent + "goto" + " " + label + ";");
+					//				}
+					// END KGU#142 2016-01-17
+					else if (!isEmpty)
+					{
+						insertComment("FIXME: Structorizer detected the following illegal jump attempt:", _indent);
 						insertComment(line, _indent);
-						label = "__ERROR__";
 					}
-					else
-					{
-						insertComment("WARNING: Most Pascal compilers don't support jump instructions!", _indent);					
-					}
-					code.add(_indent + "goto" + " " + label + ";");
+					// END KGU#74/KGU#78 2015-11-30
 				}
-				else if (!isEmpty)
-				{
-					insertComment("FIXME: Structorizer detected the following illegal jump attempt:", _indent);
-					insertComment(line, _indent);
+				if (isEmpty) {
+					insertComment("FIXME: An empty jump was found here! Cannot be translated to " +
+							this.getFileDescription(), _indent);
 				}
-				// END KGU#74/KGU#78 2015-11-30
+			// START KGU#142 2016-01-17: Bugfix for enh. #23 (continued)
 			}
-			if (isEmpty) {
-				insertComment("FIXME: An empty jump was found here! Cannot be translated to " +
-						this.getFileDescription(), _indent);
-			}
+			// END KGU#142 2016-01-17
 		}
     }
 
@@ -665,7 +758,7 @@ public class PasGenerator extends Generator
         this.procName = _procName;	// Needed for value return mechanisms
 
         insertComment(_root, _indent);
-        insertComment("Generated by Structorizer " + Element.E_VERSION + ")", _indent);            
+        insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);            
         
         String signature = _root.getMethodName();
         if (!_root.isProgram) {

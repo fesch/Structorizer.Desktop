@@ -37,6 +37,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2015.11.30      Jump mechanisms (KGU#78) and root export revised 
  *      Kay Gürtzig     2015.12.11      Enh. #54 (KGU#101): Support for output expression lists
  *      Kay Gürtzig     2015.12.13		Bugfix #51 (=KGU#108): Cope with empty input and output
+ *      Kay Gürtzig     2016.01.14		Type conversion of C overridden (KGU#16)
  *
  ******************************************************************************************************
  *
@@ -124,6 +125,20 @@ public class CPlusPlusGenerator extends CGenerator {
 	}
 	// END KGU#101 2015-12-11
 	
+	// START KGU#16 2016-01-14
+	@Override
+	protected String transformType(String _type, String _default) {
+		if (_type == null)
+			_type = _default;
+		_type = _type.toLowerCase();
+		_type = _type.replace("integer", "int");
+		_type = _type.replace("real", "double");
+		_type = _type.replace("boolean", "bool");
+		_type = _type.replace("boole", "bool");
+		_type = _type.replace("character", "char");
+		return _type;
+	}
+	// END KGU#16 2016-01-14
 
 // KGU#74 (2015-11-30): Now we only override some of the decomposed methods below
 //    @Override

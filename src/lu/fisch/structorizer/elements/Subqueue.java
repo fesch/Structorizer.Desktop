@@ -40,6 +40,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.23      Inheritance extended to IElementSequence (KGU#87), children now private.
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *      Kay Gürtzig     2016-01-03      Enh. #87: Collapsing mechanism for selected Subqueue (KGU#123)
+ *      Kay Gürtzig     2016-01-22      Bugfix #114: Method isExecuted() added (KGU#143)
  *
  ******************************************************************************************************
  *
@@ -361,6 +362,17 @@ public class Subqueue extends Element implements IElementSequence {
     }
 	// END KGU#87 2015-11-22
 
+	// START KGU#43 2016-01-22: Method to control the breakpoint property of the sub-elements
+	@Override
+	public void toggleBreakpoint()
+	{
+		for (int i = 0; i < this.getSize(); i++)
+		{
+			this.getElement(i).toggleBreakpoint();
+		}
+	}
+	// END KGU#43 2016-01-22
+
 	// START KGU 2015-11-12
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#clearBreakpoints()
@@ -388,6 +400,25 @@ public class Subqueue extends Element implements IElementSequence {
         }
 	}
 	// END KGU 2015-10-12
+
+	// START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#isExecuted()
+	 */
+	@Override
+	public boolean isExecuted()
+	{
+		boolean involved = false;
+		for (int index = 0; !involved && index < this.getSize(); index++)
+		{
+			if (children.get(index).isExecuted())
+			{
+				involved = true;
+			}
+		}
+		return involved;
+	}
+	// END KGU#143 2016-01-22
 
 	// START KGU 2015-10-16
 	/* (non-Javadoc)

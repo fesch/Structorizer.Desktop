@@ -51,10 +51,26 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.02      Bugfixes #78 (KGU#119, equals()) and #85 (KGU#120, undo() etc.) 
  *      Kay Gürtzig     2016.01.06      Bugfix #89: References to obsolete operator padding (KGU#126) and
  *                                      faulty index condition for variable detection (KGU#98) fixed 
+ *      Kay Gürtzig     2016.01.08      Bugfix #50 (KGU#135) postfix result type was split into lines  
+ *      Kay Gürtzig     2016.01.11      Issue #103 (KGU#137): "changed" state now dependent on undo/redo
+ *                                      stack, see comments below for details
+ *      Kay Gürtzig     2016.01.14      Bugfix #103/#109: Saving didn't reset the hasChanged flag anymore (KGU#137)
+ *      Kay Gürtzig     2016.01.16      Bugfix #112: Processing of indexed variables mended (KGU#141)
+ *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
+ *      Kay Gürtzig     2016.01.22      Bugfix for issue #38: moveUp/moveDown for selected sequences (KGU#144)
  *
  ******************************************************************************************************
  *
  *      Comment:		/
+ *      
+ *      2016.01.11 (KGU#137)
+ *      - When changes are undone back to the moment of last file saving, the hasChanged is to be reset
+ *      - Therefore, we now track the undo stack size when saving. As soon as an undo action returns to
+ *        the recorded stack size, the hasChanged flag will be reset. Undoing more steps sets the
+ *        flag again but keeps the stored stack size for the case of redoing forward to this point again.
+ *      - As soon as an undoable editing below the recorded stack level eccurs (wiping the redo stack),
+ *        the recorded stack level will be set to an unreachable -1, because the saved state gets lost
+ *        internally.
  *
  ******************************************************************************************************///
 
@@ -87,6 +103,10 @@ import com.stevesoft.pat.*;
 import java.awt.Point;
 import java.util.ArrayList;
 
+/**
+ * @author kay
+ *
+ */
 public class Root extends Element {
 	
 	// KGU 2015-10-16: Just for testing purposes
@@ -95,7 +115,11 @@ public class Root extends Element {
 	// some fields
 	public boolean isNice = true;
 	public boolean isProgram = true;
-	public boolean hasChanged = false;
+	// START KGU#137 2016-01-11: Bugfix #103 - More precise tracking of changes
+	//public boolean hasChanged = false;
+	private boolean hasChanged = false;		// Now only for global, not undoable changes
+	private int undoLevelOfLastSave = 0;	// Undo stack level recorded on saving
+	// END KGU#137 2016-01-11
 	public boolean hightlightVars = false;
 	// START KGU#2 (#9) 2015-11-13:
 	// Is this routine currently waiting for a called subroutine?
@@ -200,6 +224,26 @@ public class Root extends Element {
     	updaters.clear();
     }
     // END KGU#48 2015-10-17
+    
+    // START KGU#137 2016-01-11: Bugfix #103 - Enhanced change tracking, synchronized with undoing/redoing/saving
+    /**
+     * Sets an additional sticky changed flag for saveable global settings that are not subject
+     * of the undo/redo stacks
+     */
+    public void setChanged()
+    {
+    	this.hasChanged = true;
+    }
+
+    /**
+     * Detects if changes (no matter if undoable or not) have been registered since last saving
+     * @return true if there have been changes not undone
+     */
+    public boolean hasChanged()
+    {
+    	return this.hasChanged || this.undoLevelOfLastSave != this.undoList.size();
+    }
+    // END KGU#137 2016-01-11
 
 	// START KGU 2015-10-13: This follows a code snippet found in Root.draw(Canvas, Rect), which had been ineffective though
 	@Override
@@ -535,14 +579,18 @@ public class Root extends Element {
                     //         !_ele.getClass().getSimpleName().equals("Root"))
                     if ( _ele instanceof IElementSequence)
                     {
-                    	hasChanged = ((IElementSequence)_ele).getSize() > 0;
+                    	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                    	//hasChanged = ((IElementSequence)_ele).getSize() > 0;
+                    	// END KGU#137 2016-01-11
                     	((IElementSequence)_ele).removeElements();
                     }
                     else if (!_ele.getClass().getSimpleName().equals("Root"))
                     // END KGU#87 2015-11-22
                     {
                             ((Subqueue) _ele.parent).removeElement(_ele);
-                            hasChanged=true;
+                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            //hasChanged=true;
+                        	// END KGU#137 2016-01-11
                     }
             }
     }
@@ -556,7 +604,9 @@ public class Root extends Element {
                             ((Subqueue) _ele).addElement(_new);
                             _ele.selected=false;
                             _new.selected=true;
-                            hasChanged=true;
+                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            //hasChanged=true;
+                        	// END KGU#137 2016-01-11
                     }
                     else if (_ele.parent.getClass().getSimpleName().equals("Subqueue"))
                     {
@@ -565,7 +615,9 @@ public class Root extends Element {
                             ((Subqueue) _ele.parent).insertElementAt(_new, i);
                             _ele.selected=false;
                             _new.selected=true;
-                            hasChanged=true;
+                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            //hasChanged=true;
+                        	// END KGU#137 2016-01-11
                     }
                     else
                     {
@@ -739,16 +791,29 @@ public class Root extends Element {
 		undoList.peek().setComment(this.comment.copy());
 		// END KGU#120 2016-01-02
 		clearRedo();
+		// START KGU#137 2016-01-11: Bugfix #103
+		// If stack was lower than when last saved, then related info is going lost
+		if (undoList.size() <= this.undoLevelOfLastSave)
+		{
+			this.undoLevelOfLastSave = -1;
+		}
+		// END KGU#137 2016-01-11
 	}
 
     public boolean canUndo()
     {
-            return (undoList.size()>0);
+    	// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
+    	//return (undoList.size()>0);
+    	return (undoList.size() > 0) && !this.waited;
+    	// END KGU#143 2016-01-21
     }
 
     public boolean canRedo()
     {
-            return (redoList.size()>0);
+    	// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
+    	//return (redoList.size()>0);
+    	return (redoList.size() > 0) && !this.waited;
+    	// END KGU#143 2016-01-21
     }
 
     public void clearRedo()
@@ -759,13 +824,19 @@ public class Root extends Element {
     public void clearUndo()
     {
             undoList = new Stack<Subqueue>();
+    		// START KGU#137 2016-01-11: Bugfix #103 - Most recently saved state is lost, too
+            // FIXME: It might also be an initialisation (in which case = 0 would have been correct)
+            this.undoLevelOfLastSave = -1;
+    		// END KGU#137 2016-01-11
     }
 
     public void undo()
     {
             if (undoList.size()>0)
             {
-                    this.hasChanged=true;
+                    // START KGU#137 2016-01-11: Bugfix #103 - rely on undoList level comparison 
+                    //this.hasChanged=true;
+                    // END KGU#137 2016-01-11
                     redoList.add((Subqueue)children.copy());
             		// START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes in the stack top
             		redoList.peek().setText(this.text.copy());
@@ -786,7 +857,9 @@ public class Root extends Element {
     {
             if (redoList.size()>0)
             {
-                    this.hasChanged=true;
+                    // START KGU#137 2016-01-11: Bugfix #103 - rely on undoList level comparison 
+                    //this.hasChanged=true;
+                    // END KGU#137 2016-01-11
                     undoList.add((Subqueue)children.copy());
             		// START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes on the stack top
             		undoList.peek().setText(this.text.copy());
@@ -803,12 +876,34 @@ public class Root extends Element {
             }
     }
 
+    // START KGU#137 2016-01-11: Bugfix #103 - Synchronize saving with undo / redo stacks
+    /**
+     * To be called after successful saving the diagram as NSD in order to record
+     * the current undoStack size, such that we may know whether or not there are
+     * unsaved changes.
+     */
+    public void rememberSaved()
+    {
+    	this.undoLevelOfLastSave = this.undoList.size();
+    	// START KGU#137 2016-01-14: Bugfix #107
+    	this.hasChanged = false;
+    	// END KGU#137 2016-01-16
+    }
+    // END KGU#137 2016-01-11
 
     public boolean moveDown(Element _ele)
     {
             boolean res = false;
             if(_ele!=null)
             {
+            	// START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
+            	if (_ele instanceof SelectedSequence)
+            	{
+            		res = ((SelectedSequence)_ele).moveDown();
+            	}
+            	else
+            	{
+            	// END KGU#144 2016-01-22
                     int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
                     if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
                             !_ele.getClass().getSimpleName().equals("Root") &&
@@ -816,10 +911,15 @@ public class Root extends Element {
                     {
                             ((Subqueue) _ele.parent).removeElement(i);
                             ((Subqueue) _ele.parent).insertElementAt(_ele, i+1);
-                            this.hasChanged=true;
+                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            //hasChanged=true;
+                        	// END KGU#137 2016-01-11
                             _ele.setSelected(true);
                             res=true;
                     }
+               	// START KGU#144 2016-01-22: Bugfix #38 (continued)
+            	}
+            	// END KGU#144 2016-01-22
             }
             return res;
     }
@@ -829,6 +929,14 @@ public class Root extends Element {
             boolean res = false;
             if(_ele!=null)
             {
+            	// START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
+            	if (_ele instanceof SelectedSequence)
+            	{
+            		res = ((SelectedSequence)_ele).moveUp();
+            	}
+            	else
+            	{
+            	// END KGU#144 2016-01-22
                     int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
                     if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
                             !_ele.getClass().getSimpleName().equals("Root") &&
@@ -836,10 +944,15 @@ public class Root extends Element {
                     {
                             ((Subqueue) _ele.parent).removeElement(i);
                             ((Subqueue) _ele.parent).insertElementAt(_ele, i-1);
-                            this.hasChanged=true;
+                        	// START KGU#137 2016-01-11: Bugfix 103 - rely on addUndo() 
+                            //hasChanged=true;
+                        	// END KGU#137 2016-01-11
                             _ele.setSelected(true);
                             res=true;
                     }
+               	// START KGU#144 2016-01-22: Bugfix #38 (continued)
+               	}
+               	// END KGU#144 2016-01-22
             }
             return res;
     }
@@ -986,21 +1099,45 @@ public class Root extends Element {
      *************************************/
 
 
-
+    /**
+     * Extracts the variable name out of a more complex string possibly also
+     * containing index brackets, component access operator or type specifications
+     * @param _s the raw lvalue string
+     * @return the pure variable name
+     */
     private String cleanup(String _s)
     {
-            //System.out.println("IN : "+_s);
-            if(_s.indexOf("[")>=0)
-            {
-                    _s=_s.substring(0,_s.indexOf("["));
-            }
-            if(_s.indexOf(".")>=0)
-            {
-                    _s=_s.substring(0,_s.indexOf("."));
-            }
-            //System.out.println("OUT : "+_s);
+    	//System.out.println("IN : "+_s);
+    	// START KGU#141 2016-01-16: Bugfix #112
+//            if(_s.indexOf("[")>=0)
+//            {
+//                    _s=_s.substring(0,_s.indexOf("["));
+//            }
+    	while (_s.startsWith("(") && _s.endsWith(")"))
+    	{
+    		_s = _s.substring(1,  _s.length()-1);
+    	}
+    	Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
+    	_s = r.replaceAll(_s);
+    	// START KGU#141 2016-01-16
+    	if(_s.indexOf(".")>=0)
+    	{
+    		_s=_s.substring(0,_s.indexOf("."));
+    	}
+    	// START KGU#109/KGU#141 2016-01-16: Bugfix #61/#107/#112
+    	// In case of Pascal-typed variables we should only use the part before the separator
+    	int colonPos = _s.indexOf(':');	// Check Pascal and BASIC style as well
+    	if (colonPos > 0 || (colonPos = _s.indexOf(" as ")) > 0)
+    	{
+    		_s = _s.substring(0, colonPos).trim();
+    	}
+    	// In case of C-typed variables we should only use the last word (identifier)
+    	String[] tokens = _s.split(" ");
+    	if (tokens.length > 0) _s = tokens[tokens.length-1];
+    	// END KGU#109/KGU#141 2016-01-16
+    	//System.out.println("OUT : "+_s);
 
-            return _s;
+    	return _s;
 
     }
 
@@ -1326,7 +1463,7 @@ public class Root extends Element {
                     }
                     // END KGU#102 2015-12-11
 
-                    // START KGU#126 2016-01-06: Operators can no longer expected to be padded
+                    // START KGU#126 2016-01-06: Operators can no longer be expected to be padded
 //                    if(allText.indexOf(" <- ")>=0)
 //                    {
 //                            int pos = allText.indexOf(" <- ");
@@ -1337,8 +1474,8 @@ public class Root extends Element {
                     if(allText.indexOf("<-")>=0)
                     {
                             int pos = allText.indexOf("<-");
-                            allText = allText.substring(0, pos);
-                            // FIXME: In case of typed variables we should only add the last identifier part
+                            allText = allText.substring(0, pos).trim();
+                            // (KGU#141 2016-01-16: type elimination moved to cleanup())
                             //System.out.println("Adding to initialised var names: " + cleanup(allText.trim()));
                             varNames.addOrderedIfNew(cleanup(allText.trim()));
                     }
@@ -1353,12 +1490,15 @@ public class Root extends Element {
                             {
                                     for(int j=0;j<str.count();j++)
                                     {
-                                            String s = str.get(j);
-                                            // START KGU#98 2016-01-06: Better don't glue the prefix and suffix without space
-                                            //r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1$3");
-                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
-                                            // END KGU#98 2016-01-06
-                                            s = r.replaceAll(s);
+                                              // START KGU#141 2016-01-16: Bugfix #112 - use cleanup...
+//                                            String s = str.get(j);
+//                                            // START KGU#98 2016-01-06: Better don't glue the prefix and suffix without space
+//                                            //r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1$3");
+//                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
+//                                            // END KGU#98 2016-01-06
+//                                            s = r.replaceAll(s);
+                                              String s = cleanup(str.get(j));
+                                              // END KGU#141 2016-01-16
 
                                             if(!s.trim().equals(""))
                                             {
@@ -1511,9 +1651,11 @@ public class Root extends Element {
 //                    }
 //            }
 
+            // FIXME (KGU 2016-01-16): On a merge for 3.22-22, the following change got lost
+            // if (!(this instanceof Root))
             varNames.add(getVarnames(lines));
 
-            varNames=varNames.reverse();
+            varNames=varNames.reverse();	// FIXME (KGU): What is intended by reversing?
             if (_entireProg) {
                     this.variables=varNames;
             }
@@ -2532,7 +2674,10 @@ public class Root extends Element {
     					(tokens.get(posCloseParenth + 1).equals(":"))
     					)
     			{
-    				resultType = tokens.getText(posCloseParenth + 2);
+    				// START KGU#135 2016-01-08: It was not meant to be split to several lines.
+    				//resultType = tokens.getText(posCloseParenth + 2);
+    				resultType = tokens.concatenate(" ", posCloseParenth + 2);
+    				// END KGU#135 2016-01-06
     			}
     			// Second attempt: A keyword sequence preceding the routine name
     			else if (posOpenParenth > 1 && testidentifier(tokens.get(posOpenParenth-1)))
@@ -2567,31 +2712,46 @@ public class Root extends Element {
         			rootText=rootText.substring(0,rootText.indexOf(")")).trim();
         		}
 
-        		StringList params = StringList.explode(rootText,";");
-        		for(int i = 0; i < params.count(); i++)
+        		StringList paramGroups = StringList.explode(rootText,";");
+        		for(int i = 0; i < paramGroups.count(); i++)
         		{
         			// common type for parameter group
         			String type = null;
-        			String decl = params.get(i);
-        			int posColon = decl.indexOf(":");
+        			String group = paramGroups.get(i);
+        			int posColon = group.indexOf(":");
         			if (posColon >= 0)
         			{
-        				type = decl.substring(posColon + 1).trim();
-        				decl = decl.substring(0, posColon).trim();
+        				type = group.substring(posColon + 1).trim();
+        				group = group.substring(0, posColon).trim();
         			}
-        			else if ((posColon = decl.indexOf(" as ")) >= 0)
-        			{
-        				type = decl.substring(posColon + " as ".length()).trim();
-        				decl = decl.substring(0, posColon).trim();
-        			}
-        			StringList vars = StringList.explode(decl,",");
+        			// START KGU#109 2016-01-15 Bugfix #61/#107 - was wrong, must first split by ','
+//        			else if ((posColon = group.indexOf(" as ")) >= 0)
+//        			{
+//        				type = group.substring(posColon + " as ".length()).trim();
+//        				group = group.substring(0, posColon).trim();
+//        			}
+        			// END KGU#109 2016-01-15
+        			StringList vars = StringList.explode(group,",");
         			for (int j=0; j < vars.count(); j++)
         			{
-        				String varName = vars.get(j).trim();
-        				if (!varName.isEmpty())
+        				String decl = vars.get(j).trim();
+        				if (!decl.isEmpty())
         				{
+               				// START KGU#109 2016-01-15: Bugfix #61/#107 - we must split every "varName" by ' '.
+                			if (type == null && (posColon = decl.indexOf(" as ")) >= 0)
+                			{
+                				type = decl.substring(posColon + " as ".length()).trim();
+                				decl = decl.substring(0, posColon).trim();
+                			}
+                			StringList tokens = StringList.explode(decl, " ");
+                			if (tokens.count() > 1) {
+                				if (type == null) {
+                					type = tokens.concatenate(" ", 0, tokens.count() - 1);
+                				}
+                				decl = tokens.get(tokens.count()-1);
+                			}
         					//System.out.println("Adding parameter: " + vars.get(j).trim());
-        					if (paramNames != null)	paramNames.add(varName);
+        					if (paramNames != null)	paramNames.add(decl);
         					if (paramTypes != null)	paramTypes.add(type);
         				}
         			}

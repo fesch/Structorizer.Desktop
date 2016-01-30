@@ -87,7 +87,7 @@ public class NSDParser extends DefaultHandler {
 				*/
 			}
 			
-			// START KGU#134 2016-01-08: File version now activated for bugfix #99 
+			// START KGU#134 2016-01-08: File version now needed for bugfix #99 
 			String version = Element.E_VERSION;
 			if (attributes.getIndex("version") != -1) { fileVersion = attributes.getValue("version"); }
 			// So we might react to some incompatibility... 
@@ -505,7 +505,9 @@ public class NSDParser extends DefaultHandler {
 			// END KGU#111 2015-12-16
 		}
 		
-		root.hasChanged=false;
+		// START KGU#137 2016-01-11: In theory no longer needed - should have been initialized so
+		//root.hasChanged=false;
+		// END KGU#137 2016-01-11
 		
 		return root;
 	}

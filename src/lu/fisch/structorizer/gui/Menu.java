@@ -40,6 +40,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.11.26      New error label error14_3 (KGU#3) added
  *      Kay Gürtzig     2015.11.28      New error label error17 (KGU#47) added
  *      Kay Gürtzig     2016.01.03/04   Enh. #87: New menu items and buttons for collapsing/expanding 
+ *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
+ *      Kay Gürtzig     2016.01.22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#143 + KGU#144).
  *
  ******************************************************************************************************
  *
@@ -50,14 +52,10 @@ package lu.fisch.structorizer.gui;
 
 import java.util.*;
 import java.io.*;
-
 import java.awt.*;
 import java.awt.event.*;
 
-
 import javax.swing.*;
-
-//import sun.awt.image.codec.JPEGImageEncoderImpl;
 
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.helpers.*;
@@ -156,6 +154,9 @@ public class Menu extends JMenuBar implements NSDController
 	protected JMenuItem menuDiagramCollapse = new JMenuItem("Collapse", IconLoader.ico106);
 	protected JMenuItem menuDiagramExpand = new JMenuItem("Expand", IconLoader.ico107);
 	// END KGU#123 2016-01-03
+	// START KGU#143 2016-01-21: Bugfix #114 - Compensate editing restriction by accelerator4
+	protected JMenuItem menuDiagramBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
+	// END KGU#143 2016-01-21
 
 	protected JMenu menuDiagramType = new JMenu("Type");
 	protected JCheckBoxMenuItem menuDiagramTypeProgram = new JCheckBoxMenuItem("Main",IconLoader.ico022);
@@ -524,6 +525,14 @@ public class Menu extends JMenuBar implements NSDController
 
 		menuDiagram.addSeparator();
 		// END KGU#123 2016-01-03
+		
+		// START KGU#143 2016-01-21: Bugfix #114 - Compensate editing restriction by accelerator
+		menuDiagram.add(menuDiagramBreakpoint);
+    	menuDiagramBreakpoint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK));
+        menuDiagramBreakpoint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleBreakpoint(); doButtons(); } }); 
+
+		menuDiagram.addSeparator();
+		// END KGU#143 2016-01-21
 
 		menuDiagram.add(menuDiagramType);
 
@@ -758,7 +767,11 @@ public class Menu extends JMenuBar implements NSDController
                         */
 
 			// conditions
-			boolean conditionAny =  diagram.getSelected()!=null;
+			// START KGU#143 2016-01-21: Bugfix #114 - elements involved in execution must not be edited
+			//boolean conditionAny =  diagram.getSelected()!=null;
+			Element selected = diagram.getSelected();
+			boolean conditionAny =  selected != null && !selected.isExecuted();
+			// END KGU#143 2016-01-21
 			boolean condition =  conditionAny && diagram.getSelected()!=diagram.getRoot();
 			// START KGU#87 2015-11-22: For most operations, multiple selections are not suported
 			boolean conditionNoMult = condition && !diagram.selectedIsMultiple();
@@ -768,18 +781,27 @@ public class Menu extends JMenuBar implements NSDController
 			boolean conditionCanMoveDown = false;
 			if (conditionAny)
 			{
-				if(diagram.getSelected().parent!=null)
-				{
-					// make sure parent is a subqueue, which is not the case if somebody clicks on a subqueue!
-					if (diagram.getSelected().parent.getClass().getSimpleName().equals("Subqueue"))
-					{
-						i = ((Subqueue) diagram.getSelected().parent).getIndexOf(diagram.getSelected());
-						conditionCanMoveUp = (i-1>=0);
-						conditionCanMoveDown = (i+1<((Subqueue) diagram.getSelected().parent).getSize());
-					}
-				}
+				// START KGU#144 2016-01-22: Bugfix for #38 - Leave the decision to the selected element
+				//if(diagram.getSelected().parent!=null)
+				//{
+				//	// make sure parent is a subqueue, which is not the case if somebody clicks on a subqueue!
+				//	if (diagram.getSelected().parent.getClass().getSimpleName().equals("Subqueue"))
+				//	{
+				//		i = ((Subqueue) diagram.getSelected().parent).getIndexOf(diagram.getSelected());
+				//		conditionCanMoveUp = (i-1>=0);
+				//		conditionCanMoveDown = (i+1<((Subqueue) diagram.getSelected().parent).getSize());
+				//	}
+				//}
+				conditionCanMoveUp = diagram.getSelected().canMoveUp();
+				conditionCanMoveDown = diagram.getSelected().canMoveDown();
+				// END KGU#144 2016-01-22
 			}
 
+			// START KGU#137 2016-01-11: Bugfix #103 - Reflect the "saveworthyness" of the diagram
+			// save
+			menuFileSave.setEnabled(diagram.getRoot().hasChanged());
+			// END KGU#137 2016-01-11
+			
 			// undo & redo
 			menuEditUndo.setEnabled(diagram.getRoot().canUndo());
 			menuEditRedo.setEnabled(diagram.getRoot().canRedo());
@@ -823,7 +845,10 @@ public class Menu extends JMenuBar implements NSDController
 			//menuDiagramEdit.setEnabled(conditionAny);
 			menuDiagramEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
 			// END KGU#87 2015-11-22
-			menuDiagramDelete.setEnabled(diagram.canCutCopy());
+			// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
+			//menuDiagramDelete.setEnabled(diagram.canCutCopy());
+			menuDiagramDelete.setEnabled(diagram.canCut());
+			// END KGU#143 2016-01-21
 			menuDiagramMoveUp.setEnabled(conditionCanMoveUp);
 			menuDiagramMoveDown.setEnabled(conditionCanMoveDown);
 			
@@ -833,9 +858,17 @@ public class Menu extends JMenuBar implements NSDController
 			menuDiagramExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
 			// END KGU#123 2016-01-03
 
+			// START KGU#143 2016-01-21: Bugfix #114 - breakpoint control now also here
+			menuDiagramBreakpoint.setEnabled(diagram.canCopy());
+			// END KGU#143 2016-01-21
+
 			// copy & paste
-			menuEditCopy.setEnabled(diagram.canCutCopy());
-			menuEditCut.setEnabled(diagram.canCutCopy());
+			// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
+			//menuEditCopy.setEnabled(diagram.canCutCopy());
+			//menuEditCut.setEnabled(diagram.canCutCopy());
+			menuEditCopy.setEnabled(diagram.canCopy());
+			menuEditCut.setEnabled(diagram.canCut());
+			// END KGU#143 2016-01-21
 			menuEditPaste.setEnabled(diagram.canPaste());
 
 			// nice

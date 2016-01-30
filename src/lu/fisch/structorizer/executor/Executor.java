@@ -64,6 +64,12 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.01.07      Bugfix #91 (KGU#126): Reliable execution of empty Jump elements,
  *                                      Bugfix #92 (KGU#128): Function names were replaced within string literals
  *      Kay Gürtzig     2016.01.08      Bugfix #95 (KGU#130): div operator conversion accidently dropped
+ *      Kay Gürtzig     2016.01.09      KGU#133: Quick fix to show returned arrays in a list view rather than a message box
+ *      Kay Gürtzig     2016.01.14      KGU#100: Array initialisation in assignments enabled (Enh. #84)
+ *      Kay Gürtzig     2016.01.15      KGU#109: More precaution against typed variables (issues #61, #107)
+ *      Kay Gürtzig     2016.01.16      Bugfix #112: Several flaws in index evaluation mended (KGU#141)
+ *      Kay Gürtzig     2016-01-29      Bugfix #115, enh. #84: Result arrays now always presented as list
+ *                                      (with "Pause" button if not already in step mode; KGU#133, KGU#147).
  *
  ******************************************************************************************************
  *
@@ -117,8 +123,11 @@ package lu.fisch.structorizer.executor;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dialog.ModalityType;
 import java.awt.List;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.Iterator;
@@ -130,6 +139,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.PatternSyntaxException;
 
+import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -677,18 +687,55 @@ public class Executor implements Runnable
 					int i = 0;
 					while ((i < posres.count()) && (!returned))
 					{
-						Object n = interpreter.get(posres.get(i));
-						if (n != null)
+						Object resObj = interpreter.get(posres.get(i));
+						if (resObj != null)
 						{
 							// START KGU#2 (#9) 2015-11-13: Only tell the user if this wasn't called
 							//JOptionPane.showMessageDialog(diagram, n,
 							//		"Returned result", 0);
-							this.returnedValue = n;
+							this.returnedValue = resObj;
 							if (this.callers.isEmpty())
 							{
-								JOptionPane.showMessageDialog(diagram, n,
-										"Returned result", JOptionPane.INFORMATION_MESSAGE);
+								// START KGU#133 2016-01-09: Show large arrays in a listview
+								//JOptionPane.showMessageDialog(diagram, n,
+								//		"Returned result", JOptionPane.INFORMATION_MESSAGE);
+								// KGU#133 2016-01-29: Arrays now always shown as listview (independent of size)
+								if (resObj instanceof Object[] /*&& ((Object[])resObj).length > 20*/)
+								{
+									// START KGU#147 2016-01-29: Enh. #84 - interface changed for more flexibility
+									//showArray((Object[])resObj, "Returned result");
+									showArray((Object[])resObj, "Returned result", !step);
+									// END KGU#147 2016-01-29
+								}
+								// START KGU#84 2015-11-23: Enhancement to give a chance to pause (though of little use here)
+								//else
+								//{
+									//JOptionPane.showMessageDialog(diagram, resObj,
+									//		"Returned result", JOptionPane.INFORMATION_MESSAGE);
+								//}
+								else if (step)
+								{
+									JOptionPane.showMessageDialog(diagram, resObj,
+											"Returned result", JOptionPane.INFORMATION_MESSAGE);
+								}
+								else
+								{
+									Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
+									int pressed = JOptionPane.showOptionDialog(diagram, resObj, "Returned result",
+											JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
+									if (pressed == 1)
+									{
+										paus = true;
+										step = true;
+										control.setButtonsForPause();
+									}
+								}
+								// END KGU#84 2015-11-23
+								// END KGU#133 2016-01-09
 							}
+							// START KGU#148 2016-01-29: Pause now here, particularly for subroutines
+							delay();
+							// END KGU#148 2016-01-29							
 							// END KGU#2 (#9) 2015-11-13
 							returned = true;
 						}
@@ -712,6 +759,51 @@ public class Executor implements Runnable
 		return successful;
 		// END KGU# (#9) 2015-11-13
 	}
+	
+	// START KGU#133 2016-01-09: New method for presenting result arrays as scrollable list
+	// START KGU#147 2016-01-29: Enh. #84 - interface enhanced, pause button added
+	//private void showArray(Object[] _array, String _title)
+	private void showArray(Object[] _array, String _title, boolean withPauseButton)
+	// END KGU#147 2016-01-29
+	{	
+		JDialog arrayView = new JDialog();
+		arrayView.setTitle(_title);
+		arrayView.setIconImage(IconLoader.ico004.getImage());
+		arrayView.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		// START KGU#147 2016-01-29: Enh. #84 (continued)
+		JButton btnPause = new JButton("Pause");
+		btnPause.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent event) 
+			{
+				step = true; paus = true; control.setButtonsForPause();
+				if (event.getSource() instanceof JButton)
+				{
+					Container parent = ((JButton)(event.getSource())).getParent();
+					while (parent != null && !(parent instanceof JDialog))
+					{
+						parent = parent.getParent();
+					}
+					if (parent != null) {
+						((JDialog)parent).dispose();
+					}
+				}
+			}
+		});
+		arrayView.getContentPane().add(btnPause, BorderLayout.NORTH);
+		btnPause.setVisible(withPauseButton);
+		// END KGU#147 2016-01-29
+		List arrayContent = new List(10);
+		for (int i = 0; i < _array.length; i++)
+		{
+			arrayContent.add("[" + i + "]  " + prepareValueForDisplay(_array[i]));
+		}
+		arrayView.getContentPane().add(arrayContent, BorderLayout.CENTER);
+		arrayView.setSize(300, 300);
+		arrayView.setLocationRelativeTo(control);
+		arrayView.setModalityType(ModalityType.APPLICATION_MODAL);
+		arrayView.setVisible(true);
+	}
+	// END KGU#133 2016-01-09
 	
 	// START KGU#2 (#9) 2015-11-13: New method to execute a called subroutine
 	private Object executeCall(Root root, Object[] arguments)
@@ -1144,7 +1236,7 @@ public class Executor implements Runnable
 	private void setVar(String name, Object content) throws EvalError
 
 	{
-		// START KGU#69 2015-11-09: This is only a god idea in case of raw input
+		// START KGU#69 2015-11-09: This is only a good idea in case of raw input
 		//if (content instanceof String)
 		//{
 		//	if (!isNumeric((String) content))
@@ -1156,14 +1248,17 @@ public class Executor implements Runnable
 
 		// MODIFIED BY GENNARO DONNARUMMA
 
-		if ((name != null) && (name.contains("(")))
-		{
-			name = name.replace("(", "");
-		}
-		if ((name != null) && (name.contains(")")))
-		{
-			name = name.replace(")", "");
-		}
+		// START KGU#141 2016-01-16: Bugfix #112 - this spoiled many index expressions!
+		// No idea what this might have been intended for - enclosing parentheses after input?
+		//if ((name != null) && (name.contains("(")))
+		//{
+		//	name = name.replace("(", "");
+		//}
+		//if ((name != null) && (name.contains(")")))
+		//{
+		//	name = name.replace(")", "");
+		//}
+		// END KGU#141 2016-01-16
 
 		// MODIFIED BY GENNARO DONNARUMMA, ARRAY SUPPORT ADDED
 		// Fundamentally revised by Kay Gürtzig 2015-11-08
@@ -1212,6 +1307,13 @@ public class Executor implements Runnable
 		} else // if ((name.contains("[")) && (name.contains("]")))
 		{
 			// START KGU#109 2015-12-16: Bugfix #61: Several strings suggest type specifiers
+			// START KGU#109 2016-01-15: Bugfix #61,#107: There might also be a colon...
+			int colonPos = name.indexOf(":");	// Check Pascal and BASIC style as well
+			if (colonPos > 0 || (colonPos = name.indexOf(" as ")) > 0)
+			{
+				name = name.substring(0, colonPos).trim();
+			}
+			// END KGU#109 2016-01-15
 			String[] nameParts = name.split(" ");
 			name = nameParts[nameParts.length-1];
 			// END KGU#109 2015-12-15
@@ -1379,9 +1481,6 @@ public class Executor implements Runnable
 		variables = new StringList();
 		control.updateVars(new Vector<Vector>());
 		
-		// FIXME (KGU 2015-11-07) Should we replace the interpreter in order to avoid the frequently
-		// observed "freezing" after some severe syntax errors in a previous run attempt?
-
 		Thread runner = new Thread(this, "Player");
 		runner.start();
 	}
@@ -1407,6 +1506,9 @@ public class Executor implements Runnable
 		{
 			diagram.redraw();
 		}
+		// START KGU#143 2016-01-21: Bugfix #114 - make sure no compromising editing is done
+		diagram.doButtons();
+		// END KGU#143 2016-01-21
 		// START KGU#43 2015-10-12: If there is a breakpoint switch to step mode before delay
 		checkBreakpoint(element);
 		// END KGU#43 2015-10-12
@@ -1495,11 +1597,13 @@ public class Executor implements Runnable
 			i++;
 		}
 
-		delay(); // FIXME Specific pause for root after the last instruction of the program/function
-		if (result.equals(""))
-		{
-			element.clearExecutionStatus();
-		}
+		// START KGU#148 2016-01-29: Moved to execute
+//		delay(); // FIXME Specific pause for root after the last instruction of the program/function
+//		if (result.equals(""))
+//		{
+//			element.clearExecutionStatus();
+//		}
+		// END KGU#148 2016-01-29
 		return result;
 	}
 
@@ -1745,19 +1849,19 @@ public class Executor implements Runnable
 		String varName = cmd.substring(0, cmd.indexOf("<-")).trim();
 		String expression = cmd.substring(
 				cmd.indexOf("<-") + 2, cmd.length()).trim();
-		// START KGU#2 2015-10-18: Just a preliminary check for the applicability of a cross-NSD subroutine execution!
+		// START KGU#2 2015-10-18: cross-NSD subroutine execution?
 		if (isCall)
 		{
 			Function f = new Function(expression);
 			if (f.isFunction())
 			{
-				System.out.println("Looking for SUBROUTINE NSD:");
-				System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
+				//System.out.println("Looking for SUBROUTINE NSD:");
+				//System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
 				Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
 				if (sub != null)
 				{
-					System.out.println("Matching sub-NSD found for SUBROUTINE CALL!");
-					System.out.println("--> " + varName + " <- " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
+					//System.out.println("Matching sub-NSD found for SUBROUTINE CALL!");
+					//System.out.println("--> " + varName + " <- " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
 					Object[] args = new Object[f.paramCount()];
 					for (int p = 0; p < f.paramCount(); p++)
 					{
@@ -1777,10 +1881,19 @@ public class Executor implements Runnable
 			}
 		}
 		// END KGU#2 2015-10-17
+		// evaluate the expression
+		// START KGU#100 2016-01-14: Enh. #84 - accept array assignments with syntax array <- {val1, val2, ..., valN}
+		else if (expression.startsWith("{") && expression.endsWith("}"))
+		{
+			interpreter.eval("Object[] tmp20160114kgu = " + expression);
+			value = interpreter.get("tmp20160114kgu");
+			interpreter.unset("tmp20160114kgu");
+		}
+		// END KGU#100 2016-01-14
 		else		
 		{
-			cmd = cmd.replace("<-", "=");
-			// evaluate the expression
+			//cmd = cmd.replace("<-", "=");
+		
 			value = interpreter.eval(expression);
 		}
 		
@@ -1824,6 +1937,12 @@ public class Executor implements Runnable
 		else
 		{
 		// END KGU#107 2015-12-13
+			// START KGU#141 2016-01-16: Bugfix #112 - setVar won't eliminate enclosing paranetheses anymore
+			while (in.startsWith("(") && in.endsWith(")"))
+			{
+				in = in.substring(1, in.length()-1).trim();
+			}
+			// END KGU#141 2016-01-16
 			// START KGU#33 2014-12-05: We ought to show the index value
 			// if the variable is indeed an array element
 			if (in.contains("[") && in.contains("]")) {
@@ -1835,10 +1954,18 @@ public class Executor implements Runnable
 				}
 				catch (Exception e)
 				{
-					// Is bound to fail anyway!
+					// START KGU#141 2016-01-16: We MUST raise the error here.
+					result = e.getMessage();
+					// END KGU#141 2016-01-16
 				}
 			}
 			// END KGU#33 2014-12-05
+			// START KGU#141 2016-01-16: Bugfix #112 - nothing more to do than exiting
+			if (!result.isEmpty())
+			{
+				return result;
+			}
+			// END KGU#141 2016-01-16
 			String str = JOptionPane.showInputDialog(null,
 					"Please enter a value for <" + in + ">", null);
 			// START KGU#84 2015-11-23: ER #36 - Allow a controlled continuation on cancelled input
@@ -1897,7 +2024,7 @@ public class Executor implements Runnable
 							+ "> is not a correct or existing expression.";
 				} else
 				{
-		// START KGU#101 2015-12-11
+		// START KGU#101 2015-12-11: Fix #54 (continued)
 					//	String s = unconvert(n.toString());
 					str += n.toString();
 				}
@@ -1910,7 +2037,7 @@ public class Executor implements Runnable
 		// END KGU#107 2015-12-13
 		if (result.isEmpty())
 		{
-			String s = unconvert(str.trim());
+			String s = unconvert(str.trim());	// FIXME (KGU): What the heck is this good for?
 		// END KGU#101 2015-12-11
 			// START KGU#84 2015-11-23: Enhancement #36 to give a chance to pause
 			//JOptionPane.showMessageDialog(diagram, s, "Output",
@@ -1959,29 +2086,41 @@ public class Executor implements Runnable
 		//	JOptionPane.showMessageDialog(diagram, s,
 		//			"Returned result", 0);
 		//}
-		Object n = null;
+		Object resObj = null;
 		if (!out.isEmpty())
 		{
-			n = interpreter.eval(out);
+			resObj = interpreter.eval(out);
 			// If this diagram is executed at top level then show the return value
 			if (this.callers.empty())
 			{
-				if (n == null)
+				if (resObj == null)
 				{
 					result = "<"
 							+ out
 							+ "> is not a correct or existing expression.";
-				} else
+				// START KGU#133 2016-01-29: Arrays should be presented as scrollable list
+				} else if (resObj instanceof Object[])
 				{
-					String s = unconvert(n.toString());
-					// START KGU#84 2015-11-23: Enhancement to give a chance to pause
+					showArray((Object[])resObj, "Returned result", !step);
+				} else if (step)
+				{
+					// START KGU#147 2016-01-29: This "uncoverting" copied from tryOutput() didn't make sense...
+					//String s = unconvert(resObj.toString());
 					//JOptionPane.showMessageDialog(diagram, s,
 					//		"Returned result", JOptionPane.INFORMATION_MESSAGE);
+					JOptionPane.showMessageDialog(diagram, resObj,
+							"Returned result", JOptionPane.INFORMATION_MESSAGE);
+					// END KGU#147 2016-01-29					
+				// END KGU#133 2016-01-29
+				} else
+				{
+					// START KGU#84 2015-11-23: Enhancement to give a chance to pause (though of little use here)
 					Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
-					int pressed = JOptionPane.showOptionDialog(diagram, s, "Returned result",
+					int pressed = JOptionPane.showOptionDialog(diagram, resObj, "Returned result",
 							JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
 					if (pressed == 1)
 					{
+						paus = true;
 						step = true;
 						control.setButtonsForPause();
 					}
@@ -1989,7 +2128,7 @@ public class Executor implements Runnable
 				}
 			}
 		}
-		this.returnedValue = n;
+		this.returnedValue = resObj;
 		// END KGU#77 (#21) 2015-11-13
 		returned = true;
 		return result;
@@ -2036,14 +2175,14 @@ public class Executor implements Runnable
 			if (result.isEmpty() && element instanceof Call)
 			{
 				// FIXME: Disable the output instructions for the release version
-				System.out.println("Looking for SUBROUTINE NSD:");
-				System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
+				//System.out.println("Looking for SUBROUTINE NSD:");
+				//System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
 				Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
 				if (sub != null)
 				{
 					// FIXME: Disable the output instructions for the release version
-					System.out.println("Matching sub-NSD found for SUBROUTINE CALL!");
-					System.out.println("--> " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
+					//System.out.println("Matching sub-NSD found for SUBROUTINE CALL!");
+					//System.out.println("--> " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
 					executeCall(sub, args);
 				}
 				else
@@ -2726,6 +2865,9 @@ public class Executor implements Runnable
 	// a array element access, i.e. "<arrayname>[<expression>]"
 	private int getIndexValue(String varname) throws EvalError
 	{
+		// START KGU#141 2016-01-16: Bugfix #112
+		String message = "Illegal (negative) index";
+		// END KGU#141 2016-01-16
 		String ind = varname.substring(varname.indexOf("[") + 1,
 				varname.indexOf("]"));
 
@@ -2739,8 +2881,17 @@ public class Executor implements Runnable
 		catch (Exception e)
 		{
 			//index = (Integer) this.interpreter.get(ind);	// KGU: This didn't work for expressions
-			System.out.println(e.getMessage() + " on " + varname + " in Executor.getIndexValue()");
+			// START KGU#141 2016-01-16: Bugfix #112 - this led to silent errors and incapacitation of executor
+			//System.out.println(e.getMessage() + " on " + varname + " in Executor.getIndexValue()");
+			message = e.getMessage();	// We will rethrow it later
+			// END KGU#141 2016-01-16
 		}
+		// START KGU#141 2016-01-16: Bugfix #112 - We may not allow negative indices
+		if (index < 0)
+		{
+			throw new EvalError(message + " on index evaluation in: " + varname, null, null);
+		}
+		// END KGU#141 2016-01-16
 		return index;
 	}
 	// END KGU#33/KGU#34 2014-12-05

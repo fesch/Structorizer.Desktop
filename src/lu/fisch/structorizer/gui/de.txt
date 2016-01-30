@@ -1,5 +1,5 @@
 /*
-    Structorizer german language file
+    Structorizer German language file
 
     Copyright (C) 2009  Klaus-Peter Reimers
 
@@ -113,6 +113,9 @@ Menu.menuDiagramMoveUp.text=Nach oben
 Menu.menuDiagramMoveDown.text=Nach unten
 Menu.menuDiagramCollapse.text=Reduzieren
 Menu.menuDiagramExpand.text=Erweitern
+// Breakpoint
+Menu.menuDiagramBreakpoint.text=Haltepunkt setzen/löschen
+// Diagram Appearance
 Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=Hauptprogramm
 Menu.menuDiagramTypeFunction.text=Unterprogramm
@@ -175,10 +178,10 @@ Menu.error07_2.text=«%» ist kein korrekter Name für einen Parameter!
 Menu.error07_3.text=«%» ist kein korrekter Name für eine Variable!
 Menu.error08.text=In einer Bedingung darf keine Wertzuweisung erfolgen!
 Menu.error09.text=Der Programmname («%») darf nicht identisch mit dem Namen einer Variablen oder eines Parameters sein!
-Menu.error10_1.text=Eine Anweisung darf nicht zugleich Eingaben, Ausgaben und Wertzuweisungen beinhalten!
-Menu.error10_2.text=Eine Anweisung darf nicht zugleich Eingaben und Ausgaben beinhalten!
-Menu.error10_3.text=Eine Anweisung darf nicht zugleich Eingaben und Wertzuweisungen beinhalten!
-Menu.error10_4.text=Eine Anweisung darf nicht zugleich Ausgaben und Wertzuweisungen beinhalten!
+Menu.error10_1.text=Eine Anweisung soll nicht zugleich Eingaben, Ausgaben und Wertzuweisungen beinhalten!
+Menu.error10_2.text=Eine Anweisung soll nicht zugleich Eingaben und Ausgaben beinhalten!
+Menu.error10_3.text=Eine Anweisung soll nicht zugleich Eingaben und Wertzuweisungen beinhalten!
+Menu.error10_4.text=Eine Anweisung soll nicht zugleich Ausgaben und Wertzuweisungen beinhalten!
 Menu.error11.text=Wertzuweisung scheint fehlerhaft. Anweisung überprüfen ...
 Menu.error12.text=Der Parameter «%» muss mit dem Buchstaben "p" anfangen, gefolgt nur von Großbuchstaben!
 Menu.error13_1.text=Die Funktion hat keinen Rückgabewert!
