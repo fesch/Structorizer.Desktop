@@ -50,6 +50,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.01.11      Bugfix #102 (KGU#138): clear selection on delete, undo, redo 
  *      Kay Gürtzig     2016.01.15      Enh. #110: File open dialog now selects the NSD filter
  *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
+ *      Kay Gürtzig     2016.02.03      Bugfix #117: Title and button update on root replacement (KGU#149)
  *
  ******************************************************************************************************
  *
@@ -191,6 +192,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//root.hasChanged = true;
 			redraw();
 			analyse();
+			// START KGU#149 2016-02-03: Bugfix #117
+			doButtons();
+			// END KGU#149 2016-02-03
 		}
 		return true;
 	}
