@@ -77,6 +77,7 @@ import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
@@ -108,29 +109,36 @@ public class Call extends Instruction {
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
-		rect.top=0;
-		rect.left=0;
-		rect.right=0;
-		rect.bottom=0;
+		// START KGU#136 2016-01-03: Bugfix #97 (prepared)
+		if (this.isRectUpToDate) return rect0;
+		// END KGU#136 2016-01-03
+        // KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
+		rect0.top=0;
+		rect0.left=0;
+		rect0.right=0;
+		rect0.bottom=0;
 		
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 		
 		// START KGU#91 2015-12-02: The minimum width must allow to show both vertical lines
 		//rect.right = 2*(E_PADDING/2);
-		rect.right = 8*(E_PADDING/2);
+		rect0.right = 8*(E_PADDING/2);
 		// END KGU#91 2015-12-02
 		
-		for(int i=0;i<getText(false).count();i++)
+		for (int i=0; i<getText(false).count(); i++)
 		{
 			int lineWidth = getWidthOutVariables(_canvas,getText(false).get(i),this)+4*E_PADDING;
-			if (rect.right < lineWidth)
+			if (rect0.right < lineWidth)
 			{
-				rect.right = lineWidth;
+				rect0.right = lineWidth;
 			}
 		}
-		rect.bottom = 2 * (E_PADDING/2) + getText(false).count() * fm.getHeight();
+		rect0.bottom = 2 * (E_PADDING/2) + getText(false).count() * fm.getHeight();
 
-		return rect;
+		// START KGU#136 2016-03-01: Bugfix #97
+		isRectUpToDate = true;
+		// END KGU#136 2016-03-01
+		return rect0;
 	}
 	
 	public void draw(Canvas _canvas, Rect _top_left)
@@ -149,7 +157,14 @@ public class Call extends Instruction {
 //		}
 		// END KGU 2015-10-13
 		
-		rect=_top_left.copy();
+		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
+		//rect = _top_left.copy();
+		rect = new Rect(0, 0, 
+				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
+		Point ref = this.getDrawPoint();
+		this.topLeft.x = _top_left.left - ref.x;
+		this.topLeft.y = _top_left.top - ref.y;
+		// END KGU#136 2016-03-01
 		
 		Canvas canvas = _canvas;
 		canvas.setBackground(drawColor);
@@ -162,20 +177,7 @@ public class Call extends Instruction {
 		// draw comment
 		if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 		{
-			// START KGU 2015-10-11: Use an inherited helper method now
-//			canvas.setBackground(E_COMMENTCOLOR);
-//			canvas.setColor(E_COMMENTCOLOR);
-//			
-//			Rect someRect = _top_left.copy();
-//			
-//			someRect.left+=2;
-//			someRect.top+=2;
-//			someRect.right=someRect.left+4;
-//			someRect.bottom-=1;
-//			
-//			canvas.fillRect(someRect);
 			this.drawCommentMark(canvas, _top_left);
-			// END KGU 2015-10-11
 		}
 		// START KGU 2015-10-11
 		// draw breakpoint bar if necessary

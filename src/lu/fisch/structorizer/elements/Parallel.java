@@ -41,6 +41,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(),
  *                                      method getCollapsedText() overridden for more clarity, getIcon()
+ *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016.02.01      Bugfix #97 (KGU#136): Translation-neutral selection;
+ *                                      KGU#151: nonsense removed from prepareDraw() and draw().
  *
  ******************************************************************************************************
  *
@@ -48,9 +51,11 @@ package lu.fisch.structorizer.elements;
  *
  ******************************************************************************************************///
 
+import java.util.Stack;
 import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
+import java.awt.Point;
 
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
@@ -68,6 +73,10 @@ public class Parallel extends Element
     private Rect r = new Rect();
     private int fullWidth = 0;
     private int maxHeight = 0;
+    // START KGU#136 2016-03-01: Bugfix #97 - cache the upper left corners of all branches
+    private Vector<Integer> x0Branches = new Vector<Integer>();
+    private int y0Branches = 0;
+    // END KGU#136 2016-03-01
 	
     // START KGU#91 2015-12-01: Bugfix #39 - Parallel may NEVER EVER interchange text and comment!
 	/**
@@ -239,46 +248,64 @@ public class Parallel extends Element
     
     public Rect prepareDraw(Canvas _canvas)
     {
+            // START KGU#136 2016-01-03: Bugfix #97 (prepared)
+            if (this.isRectUpToDate) return rect0;
+            this.x0Branches.clear();
+            this.y0Branches = 0;
+            // END KGU#136 2016-01-03
+
+            // KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
             if(isCollapsed()) 
             {
-                rect = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
-                return rect;
+                rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
+        		// START KGU#136 2016-03-01: Bugfix #97
+        		isRectUpToDate = true;
+        		// END KGU#136 2016-03-01
+                return rect0;
             }
 
 
-            rect.top = 0;
-            rect.left = 0;
+            rect0.top = 0;
+            rect0.left = 0;
 
-            FontMetrics fm = _canvas.getFontMetrics(font);
-
-            rect.right  = 3 * (E_PADDING/2);
-            rect.bottom = 4 * (E_PADDING/2);
+            rect0.right  = 3 * (E_PADDING/2);
+            rect0.bottom = 4 * (E_PADDING/2);
+            // START KGU#136 2016-03-01: Bugfix #97
+            this.y0Branches = 2 * (E_PADDING/2);
+            // END KGU#136 2016-03-01
 
             // retrieve the number of parallel tasks
-            int tasks = Integer.valueOf(getText().get(0));
+            int nTasks = Integer.valueOf(getText().get(0));
 
-            Rect rtt = null;
+            fullWidth = 0;
+            maxHeight = 0;
 
-            fullWidth=0;
-            maxHeight=0;
-
-            if (qs.size()!=0)
+            if (qs.size() != 0)
             {
-                    for (int i=0;i<tasks;i++)
-                    {
-                       rtt = qs.get(i).prepareDraw(_canvas);
-                       fullWidth += Math.max(rtt.right, getWidthOutVariables(_canvas, getText(false).get(i+1), this) + (E_PADDING / 2));
-                       if (maxHeight < rtt.bottom)
-                       {
-                            maxHeight = rtt.bottom;
-                       }
-                    }
+            	for (int i = 0; i < nTasks; i++)
+            	{
+            		// START KGU#136 2016-03-01: Bugfix #97
+            		x0Branches.addElement(fullWidth);
+            		// END KGU#136 2016-03-01
+            		Rect rtt = qs.get(i).prepareDraw(_canvas);
+                	// START KGU#151 2016-03-01: Additional text lines should not influence the thread width!
+            		//fullWidth += Math.max(rtt.right, getWidthOutVariables(_canvas, getText(false).get(i+1), this) + (E_PADDING / 2));
+            		fullWidth += Math.max(rtt.right, E_PADDING / 2);
+            		// END KGU#151 2016-03-01
+            		if (maxHeight < rtt.bottom)
+            		{
+            			maxHeight = rtt.bottom;
+            		}
+            	}
             }
 
-            rect.right = Math.max(rect.right, fullWidth)+1;
-            rect.bottom = rect.bottom+maxHeight;
+            rect0.right = Math.max(rect0.right, fullWidth)+1;
+            rect0.bottom = rect0.bottom + maxHeight;
 
-            return rect;
+    		// START KGU#136 2016-03-01: Bugfix #97
+    		isRectUpToDate = true;
+    		// END KGU#136 2016-03-01
+            return rect0;
     }
 
     public void draw(Canvas _canvas, Rect _top_left)
@@ -290,7 +317,7 @@ public class Parallel extends Element
             }
                 
             // retrieve the number of parallel tasks
-            int tasks = Integer.valueOf(getText().get(0));
+            int nTasks = Integer.valueOf(getText().get(0));
 
             Rect myrect = new Rect();
     		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
@@ -313,44 +340,38 @@ public class Parallel extends Element
             canvas.setBackground(drawColor);
             canvas.setColor(drawColor);
 
-            rect=_top_left.copy();
-
+    		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
+    		//rect = _top_left.copy();
+    		rect = new Rect(0, 0, 
+    				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
+    		Point ref = this.getDrawPoint();
+    		this.topLeft.x = _top_left.left - ref.x;
+    		this.topLeft.y = _top_left.top - ref.y;
+    		// END KGU#136 2016-03-01
+    		
             // fill shape
             canvas.setColor(drawColor);
-            myrect=_top_left.copy();
-            myrect.left+=1;
-            myrect.top+=1;
-            //myrect.right-=1;
+            myrect = _top_left.copy();
+            myrect.left += 1;
+            myrect.top += 1;
+            //myrect.right -= 1;
             canvas.fillRect(myrect);
 
             // draw shape
-            myrect=_top_left.copy();
+            myrect = _top_left.copy();
             myrect.bottom = _top_left.top + 2*fm.getHeight() + 4*(E_PADDING / 2);
 
-            int y = myrect.top+E_PADDING;
+            int y = myrect.top + E_PADDING;
             int a = myrect.left + (myrect.right-myrect.left) / 2;
             int b = myrect.top;
-            int c = myrect.left+fullWidth-1;
+            int c = myrect.left + fullWidth-1;
             int d = myrect.bottom-1;
             int x = ((y-b)*(c-a) + a*(d-b)) / (d-b);
 
             // draw comment
-            if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
+            if (Element.E_SHOWCOMMENTS==true && !comment.getText().trim().isEmpty())
             {
-                // START KGU 2015-10-11: Use an inherited helper method now
-//                    canvas.setBackground(E_COMMENTCOLOR);
-//                    canvas.setColor(E_COMMENTCOLOR);
-//
-//                    Rect someRect = myrect.copy();
-//
-//                    someRect.left+=2;
-//                    someRect.top+=2;
-//                    someRect.right=someRect.left+4;
-//                    someRect.bottom-=2;
-//
-//                    canvas.fillRect(someRect);
     			this.drawCommentMark(canvas, myrect);
-        		// END KGU 2015-10-11
     		}
             // START KGU 2015-10-11
     		// draw breakpoint bar if necessary
@@ -360,14 +381,17 @@ public class Parallel extends Element
 
             // draw lines
             canvas.setColor(Color.BLACK);
-            int lineWidth=0;
-            Rect rtt = null;
-
-            for(int i = 0; i<tasks;i++)
-            {
-                    rtt=((Subqueue) qs.get(i)).prepareDraw(_canvas);
-                    lineWidth += Math.max(rtt.right, getWidthOutVariables(_canvas,getText(false).get(i+1),this) + (E_PADDING / 2));
-            }
+            
+            // START KGU#151 2016-03-01: This seemed to be superfluous
+//            int lineWidth=0;
+//            Rect rtt = null;
+//
+//            for(int i = 0; i < tasks; i++)
+//            {
+//                    rtt = ((Subqueue) qs.get(i)).prepareDraw(_canvas);
+//                    lineWidth += Math.max(rtt.right, getWidthOutVariables(_canvas,getText(false).get(i+1),this) + (E_PADDING / 2));
+//            }
+            // END KGU#151 2016-03-01
 
             // corners
             myrect = _top_left.copy();
@@ -395,15 +419,15 @@ public class Parallel extends Element
             myrect = _top_left.copy();
             myrect.top = _top_left.top + 2*(E_PADDING/2);
             myrect.bottom = _top_left.bottom - 2*(E_PADDING/2);
-
+            
             if (qs.size() != 0)
             {
 
-                    for(int i = 0; i <tasks; i++)
+                    for (int i = 0; i < nTasks; i++)
                     {
-                            rtt = qs.get(i).prepareDraw(_canvas);
+                            Rect rtt = qs.get(i).prepareDraw(_canvas);
 
-                            if (i==tasks-1)
+                            if (i == nTasks-1)
                             {
                                     myrect.right = _top_left.right;
                             }
@@ -415,7 +439,10 @@ public class Parallel extends Element
 */
                             else
                             {
-                                    myrect.right = myrect.left + Math.max(rtt.right,getWidthOutVariables(_canvas,getText(false).get(i+1),this)+Math.round(E_PADDING / 2))+1;
+                            	// START KGU#151 2016-03-01: Additional text lines should not influence the thread width!
+                                //myrect.right = myrect.left + Math.max(rtt.right,getWidthOutVariables(_canvas,getText(false).get(i+1),this) + (E_PADDING / 2)) + 1;
+                                myrect.right = myrect.left + Math.max(rtt.right, E_PADDING / 2) + 1;
+                            	// END KGU#151 2016-03-01
                             }
 
                             // draw child
@@ -485,17 +512,23 @@ public class Parallel extends Element
     		{
     		// END KGU#121 2016-01-03
     			Element selCh = null;
-
+    			Element pre = null;
     			for(int i = 0; i < qs.size(); i++)
     			{
-    				Element pre = qs.get(i).getElementByCoord(_x, _y, _forSelection);
-    				if (pre!=null)
+    				// START KGU#136 2016-03-01: Bugfix #97
+    				//Element pre = qs.get(i).getElementByCoord(_x, _y, _forSelection);
+    				if (i < x0Branches.size()) {
+    					int xOff = x0Branches.get(i);
+        				pre = qs.get(i).getElementByCoord(_x - xOff, _y - y0Branches, _forSelection);
+    				}
+    				// END KGU#136 2016-03-01
+    				if (pre != null)
     				{
     					selCh = pre;
     				}
     			}
 
-    			if (selCh!=null)
+    			if (selCh != null)
     			{
     				if (_forSelection) selected = false;
     				selMe = selCh;
