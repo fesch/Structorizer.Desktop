@@ -35,6 +35,7 @@ package lu.fisch.structorizer.gui;
  *      ------			----			-----------
  *      Kay Gürtzig     2015.11.23      First issue (KGU#87).
  *      Kay Gürtzig     2016.01.22      Bugfix #114 for Enh. #38 (addressing moveUp/moveDown, KGU#143 + KGU#144).
+ *      Kay Gürtzig     2016.03.01/02   Bugfix #79 (KGU#136) for reliable selection.
  *
  ******************************************************************************************************
  *
@@ -44,7 +45,7 @@ package lu.fisch.structorizer.gui;
 
 import java.awt.Color;
 import java.awt.FontMetrics;
-import java.util.Iterator;
+import java.util.Vector;
 
 import lu.fisch.graphics.Canvas;
 import lu.fisch.graphics.Rect;
@@ -61,6 +62,10 @@ public class SelectedSequence extends Element implements IElementSequence {
 
 	private int firstIndex = 0, lastIndex = -1;	// The positions of the first and last selected element within the parent Subqueue
 	
+	// START KGU#136 2016-03-01: Bugfix #97
+	private Vector<Integer> y0Children = new Vector<Integer>();
+	// END KGU#136 2016-03-01
+
 	/**
 	 * @param _child1 - a selected Element, marking one end of the sequence
 	 * @param _child2 - a selected Element, marking the other end of  sequence
@@ -142,25 +147,33 @@ public class SelectedSequence extends Element implements IElementSequence {
 	 */
 	@Override
 	public Rect prepareDraw(Canvas _canvas) {
+		// START KGU#136 2016-01-03: Bugfix #97
+		if (this.isRectUpToDate) return rect0;
+		// END KGU#136 2016-01-03
+		
+		rect0.left = rect0.right = rect0.top = rect0.bottom = 0;
 		Rect subrect = new Rect(0, 0, 0, 0);
+		this.y0Children.clear();
 		
 		if (firstIndex <= lastIndex) 
 		{
 			for(int i = firstIndex; i <= lastIndex ;i++)
 			{
+				y0Children.addElement(rect0.bottom);
 				subrect = ((Subqueue)parent).getElement(i).prepareDraw(_canvas);
-				rect.right = Math.max(rect.right, subrect.right);
-				rect.bottom += subrect.bottom;
+				rect0.right = Math.max(rect0.right, subrect.right);
+				rect0.bottom += subrect.bottom;
 			}
 		}
 		else
 		{
-			rect.right = 2 * Element.E_PADDING;
+			rect0.right = 2 * Element.E_PADDING;
 			FontMetrics fm = _canvas.getFontMetrics(Element.font);
-			rect.bottom = fm.getHeight() + 2* Math.round(Element.E_PADDING/2);
+			rect0.bottom = fm.getHeight() + 2* (Element.E_PADDING/2);
 		}
 		
-		return rect;
+		this.isRectUpToDate = true;
+		return rect0;
 	}
 
 	/* (non-Javadoc)
@@ -174,8 +187,14 @@ public class SelectedSequence extends Element implements IElementSequence {
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 		Canvas canvas = _canvas;		
 		
-		rect = _top_left.copy();
-		
+		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
+		//rect = _top_left.copy();
+		rect = new Rect(0, 0, 
+				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
+		this.topLeft.x = _top_left.left;
+		this.topLeft.y = _top_left.top;
+		// END KGU#136 2016-03-01
+				
 		myrect = _top_left.copy();
 		myrect.bottom = myrect.top;
 		
@@ -199,7 +218,6 @@ public class SelectedSequence extends Element implements IElementSequence {
 		else
 		{
 			// draw empty set symbol
-			rect = _top_left.copy();
 			
 			canvas.setBackground(drawColor);
 			canvas.setColor(drawColor);
@@ -294,6 +312,9 @@ public class SelectedSequence extends Element implements IElementSequence {
 		{
 			((Subqueue)parent).removeElement(_element);
 			lastIndex--;
+			// START KGU#136 2016-03-01: Bugfix #97
+			this.resetDrawingInfo();
+			// END KGU#136 2016-03-01
 		}
 	}
 	
@@ -308,6 +329,9 @@ public class SelectedSequence extends Element implements IElementSequence {
 		{
 			((Subqueue)parent).removeElement(_index + firstIndex);
 			lastIndex--;
+			// START KGU#136 2016-03-01: Bugfix #97
+			this.resetDrawingInfo();
+			// END KGU#136 2016-03-01
 		}
 	}
 	
@@ -363,10 +387,15 @@ public class SelectedSequence extends Element implements IElementSequence {
 	{
 		boolean feasible = this.canMoveDown();
 		if (feasible) {
-			Element successor = ((Subqueue)this.parent).getElement(this.lastIndex + 1);
-			((Subqueue)this.parent).removeElement(this.lastIndex + 1);
-			((Subqueue)this.parent).insertElementAt(successor, this.firstIndex++);
-			this.lastIndex++;
+			// START KGU#136 2016-03-02: Bugfix #97
+			//Element successor = ((Subqueue)this.parent).getElement(this.lastIndex + 1);
+			//((Subqueue)this.parent).removeElement(this.lastIndex + 1);
+			//((Subqueue)this.parent).insertElementAt(successor, this.firstIndex++);
+			//this.lastIndex++;
+			((Subqueue)this.parent).moveElement(++this.lastIndex, this.firstIndex++);
+			this.resetDrawingInfo();
+			// END KGU#136 2016-03-02
+
 		}
 		return feasible;
 	}
@@ -375,10 +404,14 @@ public class SelectedSequence extends Element implements IElementSequence {
 	{
 		boolean feasible = this.canMoveUp();
 		if (feasible) {
-			Element predecessor = ((Subqueue)this.parent).getElement(this.firstIndex - 1);
-			((Subqueue)this.parent).removeElement(this.firstIndex - 1);
-			this.firstIndex--;
-			((Subqueue)this.parent).insertElementAt(predecessor, this.lastIndex--);
+			// START KGU#136 2016-03-02: Bugfix #97
+			//Element predecessor = ((Subqueue)this.parent).getElement(this.firstIndex - 1);
+			//((Subqueue)this.parent).removeElement(this.firstIndex - 1);
+			//this.firstIndex--;
+			//((Subqueue)this.parent).insertElementAt(predecessor, this.lastIndex--);
+			((Subqueue)this.parent).moveElement(--this.firstIndex, this.lastIndex--);
+			this.resetDrawingInfo();
+			// END KGU#136 2016-03-02
 		}
 		return feasible;
 	}
@@ -470,5 +503,4 @@ public class SelectedSequence extends Element implements IElementSequence {
 	}
 	// END KGU#43 2016-01-22
 
-	
 }

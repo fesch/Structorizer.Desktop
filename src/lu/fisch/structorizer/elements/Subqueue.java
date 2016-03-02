@@ -41,6 +41,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *      Kay Gürtzig     2016-01-03      Enh. #87: Collapsing mechanism for selected Subqueue (KGU#123)
  *      Kay Gürtzig     2016-01-22      Bugfix #114: Method isExecuted() added (KGU#143)
+ *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
  *
  ******************************************************************************************************
  *
@@ -49,9 +50,11 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.util.Iterator;
+import java.util.Stack;
 import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
+import java.awt.Point;
 
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.gui.SelectedSequence;
@@ -76,6 +79,9 @@ public class Subqueue extends Element implements IElementSequence {
 	}
 	
 	private Vector<Element> children = new Vector<Element>();
+	// START KGU#136 2016-03-01: Bugfix #97
+	private Vector<Integer> y0Children = new Vector<Integer>();
+	// END KGU#136 2016-03-01
 	
 	// START KGU#64 2015-11-03: Is to improve drawing performance
 	/**
@@ -98,31 +104,46 @@ public class Subqueue extends Element implements IElementSequence {
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
+		// START KGU#136 2016-01-03: Bugfix #97 (prepared)
+		if (this.isRectUpToDate) return rect0;
+		this.y0Children.clear();
+		// END KGU#136 2016-01-03
+
+		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
 		Rect subrect = new Rect();
 		
-		rect.top=0;
-		rect.left=0;
-		rect.right=0;
-		rect.bottom=0;
+		rect0.top = 0;
+		rect0.left = 0;
+		rect0.right = 0;
+		rect0.bottom = 0;
 		
-		if(children.size()>0) 
+		if (children.size() > 0) 
 		{
-			for(int i=0;i<children.size() ;i++)
+			for(int i = 0; i < children.size(); i++)
 			{
+				// START KGU#136 2016-03-01: Bugfix #97
+				this.y0Children.addElement(rect0.bottom);
+				// END KGU#136 2016-03-01
 				subrect = ((Element) children.get(i)).prepareDraw(_canvas);
-				rect.right=Math.max(rect.right,subrect.right);
-				rect.bottom+=subrect.bottom;
+				rect0.right = Math.max(rect0.right, subrect.right);
+				rect0.bottom += subrect.bottom;
 			}
 		}
 		else
 		{
-			rect.right=2*Element.E_PADDING;
+			// START KGU#136 2016-03-01: Bugfix #97
+			this.y0Children.addElement(rect0.bottom);
+			// END KGU#136 2016-03-01
+			rect0.right = 2*Element.E_PADDING;
 			FontMetrics fm = _canvas.getFontMetrics(Element.font);
-			rect.bottom = fm.getHeight() + 2* Math.round(Element.E_PADDING/2);
+			rect0.bottom = fm.getHeight() + 2*(Element.E_PADDING/2);
 
 		}
 		
-		return rect;
+		// START KGU#136 2016-03-01: Bugfix #97
+		isRectUpToDate = true;
+		// END KGU#136 2016-03-01
+		return rect0;
 	}
 	
 	public void draw(Canvas _canvas, Rect _top_left)
@@ -142,7 +163,14 @@ public class Subqueue extends Element implements IElementSequence {
 //		}
 		// END KGU 2015-10-13
 		
-		rect = _top_left.copy();
+		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
+		//rect = _top_left.copy();
+		rect = new Rect(0, 0, 
+				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
+		Point dP = this.getDrawPoint();
+		this.topLeft.x = _top_left.left - dP.x;
+		this.topLeft.y = _top_left.top - dP.y;
+		// END KGU#136 2016-03-01
 		
 		myrect = _top_left.copy();
 		myrect.bottom = myrect.top;
@@ -153,26 +181,24 @@ public class Subqueue extends Element implements IElementSequence {
 			for(int i=0; i<children.size(); i++)
 			{
 				subrect = ((Element) children.get(i)).prepareDraw(_canvas);
-				myrect.bottom+=subrect.bottom;
-				if(i==children.size()-1)
+				myrect.bottom += subrect.bottom;
+				if (i==children.size()-1)
 				{
-					myrect.bottom=_top_left.bottom;
+					myrect.bottom = _top_left.bottom;
 				}
-				((Element) children.get(i)).draw(_canvas,myrect);
+				((Element) children.get(i)).draw(_canvas, myrect);
 
 				//myrect.bottom-=1;
-				myrect.top+=subrect.bottom;
+				myrect.top += subrect.bottom;
 			}
 		}
 		else
 		{
 			// draw empty set symbol
-			rect=_top_left.copy();
-			
 			canvas.setBackground(drawColor);
 			canvas.setColor(drawColor);
 			
-			myrect=_top_left.copy();
+			myrect = _top_left.copy();
 			
 			canvas.fillRect(myrect);
 			
@@ -253,7 +279,22 @@ public class Subqueue extends Element implements IElementSequence {
 		children.removeElementAt(_index);
 		// END KGU 2015-11-22
 	}
-
+	
+	// START KGU#136 2016-03-02: New method to facilitate bugfix #97
+	public boolean moveElement(int _from, int _to)
+	{
+		boolean done = 0 <= _from && _from < children.size() && 0 <= _to && _to < children.size();
+		if (done)
+		{
+			Element ele = children.get(_from);
+			children.removeElementAt(_from);
+			children.insertElementAt(ele, _to);
+			this.resetDrawingInfo();	// Element start points must be re-computed
+		}
+		return done;
+	}
+	// END KGU#136 2016-03-02
+	
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.IElementContainer#removeElements()
 	 */
@@ -308,14 +349,20 @@ public class Subqueue extends Element implements IElementSequence {
 		Element sel = null;
 		for (int i = 0; i < children.size(); i++)
 		{
-			sel = ((Element) children.get(i)).getElementByCoord(_x, _y, _forSelection);
+			// START KGU#136 2016-03-01: Bugfix #97
+			//sel = ((Element) children.get(i)).getElementByCoord(_x, _y, _forSelection);
+			if (i < this.y0Children.size())
+			{
+				int yOff = this.y0Children.get(i);
+				sel = children.get(i).getElementByCoord(_x, _y-yOff, _forSelection);
+			}
+			// END KGU#136 2016-03-01
 			if (sel != null)
 			{
 				if (_forSelection) selected = false;
 				res = sel;
 			}
 		}
-		//System.out.println(this + ".getElementByCoord("+_x + ", " + _y + ") returning " + (res == null ? "null" : res));
 		return res;
 	}
 	// END KGU 2015-10-11

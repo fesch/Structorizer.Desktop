@@ -89,7 +89,7 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 	protected JTextField edtWhile;
 	protected JPanel buttonBar;
 	protected JButton btnOK;
-        protected JCheckBox altPadRight;
+	protected JCheckBox altPadRight;
 	// JFormDesigner - End of variables declaration  //GEN-END:variables
 	
 	/*public Preferences() {
@@ -100,7 +100,7 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 	
 	public Preferences(Frame owner) {
 		super(owner);
-                setModal(true);
+		setModal(true);
 		initComponents();
 	}
 	
@@ -142,7 +142,7 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 		edtWhile = new JTextField();
 		buttonBar = new JPanel();
 		btnOK = new JButton();
-                altPadRight = new JCheckBox();
+		altPadRight = new JCheckBox();
 
 		//======== this ========
 		setTitle("Structures Preferences");
@@ -219,8 +219,8 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 							lblAltContent.setText("Default content");
 							pnlContent.add(lblAltContent, BorderLayout.NORTH);
 							pnlContent.add(edtAlt, BorderLayout.CENTER);
-                                                        altPadRight.setText("Enlarge FALSE");
-                                                        pnlContent.add(altPadRight,BorderLayout.SOUTH);
+							altPadRight.setText("Enlarge FALSE");
+							pnlContent.add(altPadRight, BorderLayout.SOUTH);
 						}
 						pnlAlt.add(pnlContent, BorderLayout.CENTER);
 					}
