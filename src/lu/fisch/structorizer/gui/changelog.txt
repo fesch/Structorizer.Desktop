@@ -79,6 +79,7 @@ Current development version: 3.23-15 (2016.03.02)
 - 15: Enh. #84: Array initialisations now exportable to BASIC code <Kay Gürtzig>
 - 15: Bugfix #117: Title and button update on diagram replacement <Kay Gürtzig>
 - 15: Bugfix #97: Target selection on dragging stabilized <Kay Gürtzig>
+- 15: Bugfix #121: Irritating error message box on file dropping <Kay Gürtzig>
 
 Version 3.23 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
