@@ -46,16 +46,32 @@ package lu.fisch.structorizer.elements;
  *                                      Enh. #75 (KGU#116): Highlighting of jump keywords (orange)
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *      Kay Gürtzig     2016.01.03/04   Enh. #87 for collapsing/expanding (KGU#122/KGU#123)
- *      Kay Gürtzig     2016.01.09      Issue #97: coordinate comparison changed to improve selection (KGU#136)
  *      Kay Gürtzig     2016.01.12      Bugfix #105: flaw in string literal tokenization (KGU#139)
  *      Kay Gürtzig     2016.01.12      Bugfix #104: transform caused index errors
  *      Kay Gürtzig     2016.01.14      Enh. #84: Added "{" and "}" to the token separator list (KGU#100)
  *      Kay Gürtzig     2016.01.15      Enh. #61,#107: Highlighting for "as" added (KGU#109)
+ *      Kay Gürtzig     2016.01.16      Changes having got lost on a Nov. 2014 merge re-inserted
+ *      Kay Gürtzig     2016.01.22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#144).
+ *      Kay Gürtzig     2016.03.02      Bugfix #97: steady selection on dragging (see comment, KGU#136),
+ *                                      Element self-description improved (method toString(), KGU#152)
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      
+ *      2016-02-25 / 2016-03-02 Bugfix #97 (KGU#136)
+ *      - Methods prepareDraw() and draw() used the same field rect for temporary calculations but in
+ *        a slightly different way: draw() left a bounding rec related to the Root coordinates whereas
+ *        prepareDraw() always produced a (0,0)-bound rectangle i. e. with (0,0) as upper left corner.
+ *      - getElementByCoord(), however compared the cursor coordinates with rect expecting it to contain
+ *        the real drawing coordinates
+ *      - getElementByCoord() was not ensured to be called after a draw() invocation but could follow a
+ *        prepareDraw() call in which case the coordinate comparison led to wrong results
+ *      - So a new field rect0 was introduced for prepareDraw() - in combination with field isRectUpToDate
+ *        it even allows to avoid unnecessary re-calculation.
+ *      - Field rect was also converted to a (0,0)-bound and hence position-independent bounds rectangle
+ *        (in contrast to rect0 representing actual context-sensitive drawing extension (important for
+ *        selection).
  *      2015.12.01 (KGU#91/KGU#92)
  *      - Methods setText() were inconsistent and caused nasty effects including data losses (bug #39).
  *      - Operator unification enhanced (issue #41)
@@ -72,19 +88,15 @@ package lu.fisch.structorizer.elements;
  *        always been extremely annoying that for the investigation of some issues near the end of the diagram
  *        either the entire execution had to be started in step more or you had to be utterly quick to pause
  *        in the right moment. Now breakpoints allow to catch the execution wherever necessary.
- *      2014.10.18 / 2014.11.11
- *      - Additions for highlighting of logical operators (both C and Pascal style) in methods
- *        writeOutVariables() and getWidthOutVariables(),
- *      - minor code revision respecting 2- and 3-character operator symbols
  *      2015.10.09
  *      - In E_SHOWCOMMENTS mode, substructures had been eclipsed by the top-level elements popping their
  *        comments. This was due to an incomplete subclassing of method getElementByCoord (in contrast
  *        to the nearly identical method selectElementByCoord), both methods were merged by means of a
  *        discriminating additional parameter to identifyElementByCoord(_x, _y, _forSelection)
- *      20015.10.11 / 2015.10.13
- *      - New field breakpoint and specific drawing extension for setting and drawing breakpoints
- *      - The new breakpoint mechanism made clear that the execution status had to be logically separated
- *        from selection status, which required a new field and an additional drawing mechanism 
+ *      2014.10.18 / 2014.11.11
+ *      - Additions for highlighting of logical operators (both C and Pascal style) in methods
+ *        writeOutVariables() and getWidthOutVariables(),
+ *      - minor code revision respecting 2- and 3-character operator symbols
  *
  ******************************************************************************************************///
 
@@ -102,18 +114,19 @@ import com.stevesoft.pat.*;  //http://www.javaregex.com/
 
 import java.awt.Point;
 import java.util.Stack;
+import java.util.Vector;
 
 import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.23-14";
+	public static String E_VERSION = "3.23-15";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
 	"\n"+
 	"Having also put his fingers into the code\n"+
-        " - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
+	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"\n"+
 	"Export classes written and maintained by\n"+
 	" - Oberon: Klaus-Peter Reimers <k_p_r@freenet.de>\n"+
@@ -125,6 +138,7 @@ public abstract class Element {
 	" - C#: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	" - C++: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	" - PHP: Rolf Schmidt <rolf.frogs@t-online.de>\n"+
+	" - Python: Daniel Spittank <kontakt@daniel.spittank.net>\n"+
 	"\n"+
 	"License setup and checking done by\n"+
 	" - Marcus Radisch <radischm@googlemail.com>\n"+
@@ -143,7 +157,8 @@ public abstract class Element {
 	" - ES: Andres Cabrera <andrescabrera20@gmail.com>\n"+
 	" - PT/BR: Theldo Cruz <cruz@pucminas.br>\n"+
 	" - IT: Andrea Maiani <andreamaiani@gmail.com>\n"+
-	" - CN: Wang Lei <wanglei@hollysys.com>\n"+
+	" - CHS: Wang Lei <wanglei@hollysys.com>\n"+
+	" - CHT: Joe Chem <hueyan_chen@yahoo.com.tw>\n"+
 	" - CZ: Vladimír Vaščák <vascak@spszl.cz>\n"+
 	" - RU: Юра Лебедев <elita.alegator@gmail.com>\n"+
 	"\n"+
@@ -160,7 +175,8 @@ public abstract class Element {
 	" - Sascha Meyer <harlequin2@gmx.de>\n"+
 	" - Andreas Jenet <ajenet@gmx.de>\n"+
 	" - Jan Peter Klippel <structorizer@xtux.org>\n"+
-	                
+	" - David Tremain <DTremain@omnisource.com>\n"+
+	
 	"\n"+
 	"File dropper class by\n"+
 	" - Robert W. Harder <robertharder@mac.com>\n"+
@@ -187,16 +203,16 @@ public abstract class Element {
 
 	// some static constants
 	protected static int E_PADDING = 20;
-	static int E_INDENT = 2;
+	public static int E_INDENT = 2;
 	public static Color E_DRAWCOLOR = Color.YELLOW;	// Actually, the background colour for selected elements
 	public static Color E_COLLAPSEDCOLOR = Color.LIGHT_GRAY;
 	// START KGU#41 2015-10-13: Executing status now independent from selection
 	public static Color E_RUNNINGCOLOR = Color.ORANGE;		// used for Elements currently (to be) executed 
 	// END KGU#41 2015-10-13
 	public static Color E_WAITCOLOR = new Color(255,255,210);	// used for Elements with pending execution
-	static Color E_COMMENTCOLOR = Color.LIGHT_GRAY;
+	public static Color E_COMMENTCOLOR = Color.LIGHT_GRAY;
 	// START KGU#43 2015-10-11: New fix color for breakpoint marking
-	static Color E_BREAKPOINTCOLOR = Color.RED;				// Colour of the breakpoint bar at element top
+	public static Color E_BREAKPOINTCOLOR = Color.RED;			// Colour of the breakpoint bar at element top
 	// END KGU#43 2015-10-11
 	public static boolean E_VARHIGHLIGHT = false;	// Highlight variables, operators, string literals, and certain keywords? 
 	public static boolean E_SHOWCOMMENTS = true;	// Enable comment bars and comment popups? 
@@ -255,7 +271,11 @@ public abstract class Element {
 	// END KGU 2015-10-11
 
 	// used for drawing
-	public Rect rect = new Rect();
+	// START KGU#136 2016-02-25: Bugfix #97 - New separate 0-based Rect for prepareDraw()
+	protected Rect rect = new Rect();			// bounds aligned to fit in the context, no longer public
+	protected Rect rect0 = new Rect();			// minimum bounds for stand-alone representation
+	protected Point topLeft = new Point(0, 0);	// upper left corner coordinate offset wrt drawPoint
+	// END KGU#136 2016-03-01
 	// START KGU#64 2015-11-03: Is to improve drawing performance
 	protected boolean isRectUpToDate = false;		// Will be set and used by prepareDraw() - to be reset on changes
 	private static StringList specialSigns = null;	// Strings to be highlighted in the text (lazy initialisation)
@@ -285,7 +305,21 @@ public abstract class Element {
 	// END KGU#64 2015-11-03
 
 	// abstract things
+	/**
+	 * Recursively computes the drawing extensions of the element and stores
+	 * them in the 0-based rect0 attribute, which is also returned
+	 * @param _canvas - the drawing canvas for which the drawing is to be prepared
+	 * @return the origin-based extension record.
+	 */
 	public abstract Rect prepareDraw(Canvas _canvas);
+	/**
+	 * Actually draws this element within the given canvas, using _top_left
+	 * for the placement of the upper left corner. Uses attribute rect0 as
+	 * prepared by prepareDraw() to determine the expected extensions and
+	 * stores the the actually drawn bounds in attribute rect.
+	 * @param _canvas - the drawing canvas where the drawing is to be done in 
+	 * @param _top_left - conveyes the upper-left corner for the placement
+	 */
 	public abstract void draw(Canvas _canvas, Rect _top_left);
 	public abstract Element copy();
 	
@@ -451,6 +485,49 @@ public abstract class Element {
 	{
 		selected=_sel;
 	}
+	
+	// START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
+	/**
+	 * Checks execution involvement.
+	 * @return true iff this or some substructure of this is currently executed. 
+	 */
+	public boolean isExecuted()
+	{
+		return this.executed || this.waited;
+	}
+	// END KGU#143 2016-01-22
+
+	// START KGU#144 2016-01-22: Bugfix for #38 - Element knows best whether it can be moved up or down
+	/**
+	 * Checks whether this has a successor within the parenting Subqueue
+	 * @return true iff this is element of a Subqueue and has a successor
+	 */
+	public boolean canMoveDown()
+	{
+		boolean canMove = false;
+		if (parent != null && parent.getClass().getSimpleName().equals("Subqueue"))
+		{
+			int i = ((Subqueue)parent).getIndexOf(this);
+			canMove = (i+1 < ((Subqueue)parent).getSize()) && !this.isExecuted() && !((Subqueue)parent).getElement(i+1).isExecuted();
+		}
+		return canMove;
+	}
+
+	/**
+	 * Checks whether this has a predecessor within the parenting Subqueue
+	 * @return true iff this is element of a Subqueue and has a predecessor
+	 */
+	public boolean canMoveUp()
+	{
+		boolean canMove = false;
+		if (parent != null && parent.getClass().getSimpleName().equals("Subqueue"))
+		{
+			int  i = ((Subqueue)parent).getIndexOf(this);
+			canMove = (i > 0) && !this.isExecuted() && !((Subqueue)parent).getElement(i-1).isExecuted();
+		}
+		return canMove;
+	}
+	//	END KGU#144 2016-01-22
 
 	public Color getColor()
 	{
@@ -581,25 +658,23 @@ public abstract class Element {
 
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
-		Point pt=getDrawPoint();
+		// START KGU#136 2016-03-01: Bugfix #97 - we will now have origin-bound rects and coords
+		//Point pt=getDrawPoint();
+		// END KGU#136 2016-03-01
 
-		// START KGU#136 2016-01-09: Bugfix #97: Little gaps between the claimed regions let selection flicker
+		// START KGU#136 2016-03-01: Bugfix #97: Now all coords will be "local"
 //		if ((rect.left-pt.x < _x) && (_x < rect.right-pt.x) &&
 //				(rect.top-pt.y < _y) && (_y < rect.bottom-pt.y))
-		int overlap = 0;
-//		System.out.print(this.getClass().getSimpleName() + " " + this.getText().getLongString() +
-//				"\t[" + rect.left + ", " + rect.top + "; " + rect.right + ", " + rect.bottom + "]\t(" +
-//				_x + ", " + _y + ")\t");
-		if ((rect.left-pt.x <= _x+overlap) && (_x-overlap <= rect.right-pt.x) &&
-				(rect.top-pt.y <= _y+overlap) && (_y-overlap <= rect.bottom-pt.y))
-		// END KGU#136 2016-01-09
+		if ((rect.left <= _x) && (_x <= rect.right) &&
+				(rect.top <= _y) && (_y <= rect.bottom))
+		// END KGU#136 2016-03-01
 		{
-//			System.out.println("YES");
+			//System.out.println("YES");
 			return this;         
 		}
 		else 
 		{
-//			System.out.println("NO");
+			//System.out.println("NO");
 			if (_forSelection)	
 			{
 				selected = false;	
@@ -621,20 +696,14 @@ public abstract class Element {
 		_canvas.setBackground(E_COMMENTCOLOR);
 		_canvas.setColor(E_COMMENTCOLOR);
 		
-		Rect markerRect = _rect.copy();
+		Rect markerRect = new Rect(_rect.left + 2, _rect.top + 2,
+				_rect.left + 4, _rect.bottom - 2);
 		
-		markerRect.left += 2;
 		if (breakpoint)
 		{
 			// spare the area of the breakpoint bar
-			markerRect.top += 7;
+			markerRect.top += 5;
 		}
-		else
-		{
-			markerRect.top += 2;
-		}
-		markerRect.right = markerRect.left+4;
-		markerRect.bottom -= 2;
 		
 		_canvas.fillRect(markerRect);
 	}
@@ -662,11 +731,36 @@ public abstract class Element {
 	}
 	// END KGU 2015-10-11
 
-        public Rect getRect()
-        {
-            return new Rect(rect.left,rect.top,rect.right,rect.bottom);
-        }
+	/**
+	 * Returns a copy of the (relocatable i. e. 0-bound) extension rectangle 
+	 * @return a rectangle starting at (0,0) and spanning to (width, height) 
+	 */
+	public Rect getRect()
+	{
+		return new Rect(rect.left, rect.top, rect.right, rect.bottom);
+	}
 
+	// START KGU#136 2016-03-01: Bugfix #97
+	/**
+	 * Returns the bounding rectangle translated to point relativeTo 
+	 * @return a rectangle starting at relativeTo 
+	 */
+	public Rect getRect(Point relativeTo)
+	{
+		return new Rect(rect.left + relativeTo.x, rect.top + relativeTo.y,
+				rect.right + relativeTo.x, rect.bottom + relativeTo.y);		
+	}
+
+	/**
+	 * Returns the bounding rectangle translated relative to the drawingPoint 
+	 * @return a rectangle starting at relativeTo 
+	 */
+	public Rect getRectOffDrawPoint()
+	{
+		return getRect(this.topLeft);		
+	}
+	// END KGU#136 2016-03-01
+	
 	public static Font getFont()
 	{
 		return font;
@@ -691,6 +785,9 @@ public abstract class Element {
 			preAltT=ini.getProperty("IfTrue","V");
 			preAltF=ini.getProperty("IfFalse","F");
 			preAlt=ini.getProperty("If","()");
+			// START KGU 2016-01-16: Stuff having got lost by a Nov. 2014 merge
+			altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "true"));
+			// END KGU 2016-01-16
 			StringList sl = new StringList();
 			sl.setCommaText(ini.getProperty("Case","\"?\",\"?\",\"?\",\"sinon\""));
 			preCase=sl.getText();
@@ -727,6 +824,9 @@ public abstract class Element {
 			ini.setProperty("IfTrue",preAltT);
 			ini.setProperty("IfFalse",preAltF);
 			ini.setProperty("If",preAlt);
+			// START KGU 2016-01-16: Stuff having got lost by a Nov. 2014 merge
+			ini.setProperty("altPadRight", String.valueOf(altPadRight));
+			// END KGU 2016-01-16
 			StringList sl = new StringList();
 			sl.setText(preCase);
 			ini.setProperty("Case",sl.getCommaText());
@@ -756,24 +856,24 @@ public abstract class Element {
 		}
 	}
 
-	public static Root getRoot(Element now)
+	public static Root getRoot(Element _element)
 	{
-		while(now.parent!=null)
+		while (_element.parent != null)
 		{
-			now=now.parent;
+			_element = _element.parent;
 		}
-                if(now instanceof Root)
-                    return (Root) now;
-                else
-                    return null;
+		if (_element instanceof Root)
+			return (Root) _element;
+		else
+			return null;
 	}
 
 	private String cutOut(String _s, String _by)
 	{
-		System.out.print(_s+" -> ");
+		//System.out.print(_s+" -> ");
 		Regex rep = new Regex("(.*?)"+BString.breakup(_by)+"(.*?)","$1\",\""+_by+"\",\"$2");
 		_s=rep.replaceAll(_s);
-		System.out.println(_s);
+		//System.out.println(_s);
 		return _s;
 	}
 	
@@ -1115,7 +1215,7 @@ public abstract class Element {
 
 				// START KGU#64 2015-11-03: Not to be done again and again. Private static field now!
 				//StringList specialSigns = new StringList();
-				if (specialSigns == null)	// lazy initialisiation
+				if (specialSigns == null)	// lazy initialisation
 				{
 					specialSigns = new StringList();
 					// ENDU KGU#64 2015-11-03
@@ -1161,9 +1261,15 @@ public abstract class Element {
 					// START KGU#109 2016-01-15: Issues #61, #107 highlight the BASIC declarator keyword, too
 					specialSigns.add("as");
 					// END KGU#109 2016-01-15
+					
+					// START KGU#100 2016-01-16: Enh. #84: Also highlight the initialiser delimiters
+					specialSigns.add("{");
+					specialSigns.add("}");
+					// END KGU#100 2016-01-16
 
+					// The quotes will only occur as tokens if they are unpaired!
 					specialSigns.add("'");
-					specialSigns.add("\"");	// KGU 2015-11-12: Quotes alone will hardly occur anymore
+					specialSigns.add("\"");
 				// START KGU#64 2015-11-03: See above
 				}
 				// END KGU#64 2015-11-03
@@ -1272,6 +1378,9 @@ public abstract class Element {
 
     public void setCollapsed(boolean collapsed) {
         this.collapsed = collapsed;
+    	// START KGU#136 2016-03-01: Bugfix #97
+    	this.resetDrawingInfoUp();
+    	// END KGU#136 2016-03-01
     }
     
     // START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
@@ -1650,7 +1759,14 @@ public abstract class Element {
         // END KGU#93 2015-12-21
 
     }
-    
     // END KGU#18/KGU#23 2015-10-24
+    
+    // START KGU#152 2016-03-02: Better self-description of Elements
+    public String toString()
+    {
+    	return getClass().getSimpleName() + '@' + Integer.toHexString(hashCode()) +
+    			"(" + (this.getText().count() > 0 ? this.getText().get(0) : "") + ")";
+    }
+    // END KGU#152 2016-03-02
     
 }

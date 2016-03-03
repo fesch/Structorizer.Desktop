@@ -39,6 +39,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.14      Bugfix #39 (= KGU#91) in method draw()
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
+ *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136): Translation-neutral selection mechanism
  *
  ******************************************************************************************************
  *
@@ -46,9 +48,11 @@ package lu.fisch.structorizer.elements;
  *
  ******************************************************************************************************///
 
+import java.util.Stack;
 import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
+import java.awt.Point;
 
 import javax.swing.ImageIcon;
 
@@ -62,9 +66,13 @@ public class Case extends Element
 	
     public Vector<Subqueue> qs = new Vector<Subqueue>();
 
-    private Rect r = new Rect();
+    //private Rect r = new Rect();
     private int fullWidth = 0;
     private int maxHeight = 0;
+    // START KGU#136 2016-03-01: Bugfix #97 - cache the upper left corners of all branches
+    private Vector<Integer> x0Branches = new Vector<Integer>();
+    private int y0Branches = 0;
+    // END KGU#136 2016-03-01
 	
     // START KGU#91 2015-12-01: Bugfix #39 - Case may NEVER EVER interchange text and comment!
 	/**
@@ -219,20 +227,30 @@ public class Case extends Element
     
     public Rect prepareDraw(Canvas _canvas)
     {
-            if(isCollapsed()) 
+            // START KGU#136 2016-03-01: Bugfix #97
+            if (this.isRectUpToDate) return rect0;
+            this.x0Branches.clear();
+            this.y0Branches = 0;
+            // END KGU#136 2016-03-01
+            
+            // KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
+            if (isCollapsed()) 
             {
-            	rect = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
-            	return rect;
+            	rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
+        		// START KGU#136 2016-03-01: Bugfix #97
+        		isRectUpToDate = true;
+        		// END KGU#136 2016-03-01
+            	return rect0;
             }
 
-            rect.top=0;
-            rect.left=0;
+            rect0.top = 0;
+            rect0.left = 0;
 
             FontMetrics fm = _canvas.getFontMetrics(font);
 
             // Lest the sum of the paddings per branch should gather too many lost remainders 
             int padding = 2 * (E_PADDING/2);
-            rect.right = padding;
+            rect0.right = padding;
 
             int nBranches = getText().count() - 1;
 
@@ -241,7 +259,7 @@ public class Case extends Element
             if (nBranches > 0)
             {
             	if (getText().get(nBranches).equals("%")) nBranches--;
-            	rect.right = Math.max(padding, getWidthOutVariables(_canvas, getText().get(0), this) + padding);
+            	rect0.right = Math.max(padding, getWidthOutVariables(_canvas, getText().get(0), this) + padding);
             }
             // Total width of the branches
             int width = 0;
@@ -253,22 +271,28 @@ public class Case extends Element
             	textWidths[i] = getWidthOutVariables(_canvas, getText().get(i+1), this) + padding/2; 
             	width += textWidths[i];
             }
-        	if (rect.right < width)
+        	if (rect0.right < width)
         	{
-        		rect.right = width;
+        		rect0.right = width;
         	}
 
-            rect.bottom = 2 * (padding) + 2 * fm.getHeight();
+            rect0.bottom = 2 * (padding) + 2 * fm.getHeight();
+            // START KGU#136 2016-03-01: Bugfix #97
+            this.y0Branches = rect0.bottom;
+            // END KGU#136 2016-03-01
 
             //Rect rtt = null;
 
-            fullWidth=0;
-            maxHeight=0;
+            fullWidth = 0;
+            maxHeight = 0;
 
             if (qs.size() > 0)
             {
             	for (int i = 0; i < nBranches; i++)
             	{
+            		// START KGU#136 2016-03-01: Bugfix #97
+            		x0Branches.addElement(fullWidth);
+            		// END KGU#136 2016-03-01
             		Rect rtt = qs.get(i).prepareDraw(_canvas);
             		fullWidth = fullWidth + Math.max(rtt.right, textWidths[i]);
             		if (maxHeight < rtt.bottom)
@@ -278,10 +302,13 @@ public class Case extends Element
             	}
             }
 
-            rect.right = Math.max(rect.right, fullWidth);
-            rect.bottom = rect.bottom + maxHeight;
+            rect0.right = Math.max(rect0.right, fullWidth);
+            rect0.bottom = rect0.bottom + maxHeight;
 
-            return rect;
+    		// START KGU#136 2016-03-01: Bugfix #97
+    		isRectUpToDate = true;
+    		// END KGU#136 2016-03-01
+    		return rect0;
     }
 
     public void draw(Canvas _canvas, Rect _top_left)
@@ -313,8 +340,15 @@ public class Case extends Element
             canvas.setBackground(drawColor);
             canvas.setColor(drawColor);
 
-            rect = _top_left.copy();
-
+    		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
+    		//rect = _top_left.copy();
+    		rect = new Rect(0, 0, 
+    				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
+    		Point ref = this.getDrawPoint();
+    		this.topLeft.x = _top_left.left - ref.x;
+    		this.topLeft.y = _top_left.top - ref.y;
+    		// END KGU#136 2016-03-01
+    		
             int minHeight = 2 * fm.getHeight() + 4 * (E_PADDING / 2);
             
             // fill shape
@@ -379,20 +413,7 @@ public class Case extends Element
             // draw comment
             if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
             {
-                // START KGU 2015-10-11: Use an inherited helper method now
-//                    canvas.setBackground(E_COMMENTCOLOR);
-//                    canvas.setColor(E_COMMENTCOLOR);
-//
-//                    Rect someRect = myrect.copy();
-//
-//                    someRect.left+=2;
-//                    someRect.top+=2;
-//                    someRect.right=someRect.left+4;
-//                    someRect.bottom-=2;
-//
-//                    canvas.fillRect(someRect);
     			this.drawCommentMark(canvas, myrect);
-        		// END KGU 2015-10-11
     		}
             // START KGU 2015-10-11
     		// draw breakpoint bar if necessary
@@ -402,7 +423,7 @@ public class Case extends Element
 
             // draw lines
             canvas.setColor(Color.BLACK);
-            int lineWidth=0;
+            int lineWidth = 0;
             // if the last line is '%', do not draw an else part
             int count = nLines - 2;
             Rect rtt = null;
@@ -486,7 +507,7 @@ public class Case extends Element
 
                             if (i==count-1)
                             {
-                                    myrect.right=_top_left.right;
+                            	myrect.right = _top_left.right;
                             }
                             else
                             {
@@ -573,9 +594,16 @@ public class Case extends Element
 		// END KGU#121 2016-01-03
 			Element selCh = null;
 
-			for(int i = 0; i<qs.size(); i++)
+			for(int i = 0; i < qs.size(); i++)
 			{
-				Element pre = ((Subqueue) qs.get(i)).getElementByCoord(_x,_y, _forSelection);
+				// START KGU#136 2016-03-01: Bugfix #97
+				//Element pre = ((Subqueue) qs.get(i)).getElementByCoord(_x,_y, _forSelection);
+				int xOff = rect0.right;
+				if (i < x0Branches.size()) {
+					xOff = x0Branches.get(i);
+				}
+				Element pre = qs.get(i).getElementByCoord(_x-xOff, _y-y0Branches, _forSelection);
+				// END KGU#136 2016-03-01
 				if(pre!=null)
 				{
 					selCh = pre;

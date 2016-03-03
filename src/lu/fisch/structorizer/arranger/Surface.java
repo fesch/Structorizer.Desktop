@@ -43,6 +43,8 @@ package lu.fisch.structorizer.arranger;
  *                                      Enh. #35 (KGU#88) Usability improvement (automatic pinning)
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): Avoid reloading of structurally equivalent diagrams 
  *      Kay Gürtzig     2016.01.15      Enh. #110: File open dialog now selects the NSD filter
+ *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136): Modifications for stable selection
+ *      Kay Gürtzig     2016.03.03      Bugfix #121 (KGU#153): Successful file dropping must not pop up an error message
  *
  ******************************************************************************************************
  *
@@ -211,15 +213,27 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     	{
     		String filename = files[i].toString();
     		String errorMessage = loadFile(filename);
-			if (!troubles.isEmpty()) { troubles += "\n"; }
-			troubles += "\"" + filename + "\": " + errorMessage;
-			System.err.println("Arranger failed to load \"" + filename + "\": " + troubles);
+    		// START KGU#153 2016-03-03: Bugfix #121 - a successful load must not add to the troubles text
+			//if (!troubles.isEmpty()) { troubles += "\n"; }
+			//troubles += "\"" + filename + "\": " + errorMessage;
+			//System.err.println("Arranger failed to load \"" + filename + "\": " + troubles);
+    		if (!errorMessage.isEmpty())
+    		{
+    			if (!troubles.isEmpty()) { troubles += "\n"; }
+    			troubles += "\"" + filename + "\": " + errorMessage;
+    			System.err.println("Arranger failed to load \"" + filename + "\": " + troubles);	
+    		}
+    		else
+    		{
+    			nLoaded++;
+    		}
+    		// END KGU#153 2016-03-03
     	}
     	if (!troubles.isEmpty())
     	{
 			JOptionPane.showMessageDialog(this, troubles, "File Load Error", JOptionPane.ERROR_MESSAGE);
     	}
-	return nLoaded;
+    	return nLoaded;
     }
     
     private String loadFile(String filename)
@@ -517,22 +531,25 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
         {
         	//System.out.println("--------getDrawingRect()---------");
             if(diagrams.size()>0)
-            for(int d=0;d<diagrams.size();d++)
+            for(int d=0; d<diagrams.size(); d++)
             {
                 Diagram diagram = diagrams.get(d);
                 Root root = diagram.root;
                 // FIXME (KGU 2015-11-18) This does not necessarily return a Rect within this surface!
-                Rect rect = root.getRect();	// Beware! Rect of last drawing - possibly in Structorizer!
+                Rect rect = root.getRect();	// 0-bound extension rectangle
                 // START KGU#85 2015-11-18: Didn't work properly, hence
                 //r.left=Math.min(rect.left,r.left);
                 //r.top=Math.min(rect.top,r.top);
                 //r.right=Math.max(rect.right,r.right);
                 //r.bottom=Math.max(rect.bottom,r.bottom);
-                // empirical minimum width of an empty diagram 
-                int width = Math.max(rect.right - rect.left, 80); 
+                // START KGU#136 2016-03-01: Bugfix #97
+                // empirical minimum width of an empty diagram
+                //int width = Math.max(rect.right - rect.left, 80);
+                int width = Math.max(rect.right, 80);
                 // empirical minimum height of an empty diagram 
-                int height = Math.max(rect.bottom - rect.top, 118);
-                // empirical minimum height of an empty diagram 
+                //int height = Math.max(rect.bottom - rect.top, 118);
+                int height = Math.max(rect.bottom, 118);
+                // END KGU#136 2016-03-01
                 //System.out.println(root.getMethodName() + ": (" + rect.left + ", " + rect.top + ", " + rect.right + ", " + rect.bottom +")");
                 r.left = Math.min(diagram.point.x, r.left);
                 r.top = Math.min(diagram.point.y, r.top);
@@ -644,8 +661,11 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     		adaptLayout();
     		// END KGU#85 2015-11-18
     		// START KGU 2015-11-30
-    		Rectangle rec = root.getRect().getRectangle();
-    		rec.setLocation(left, top);
+    		// START KGU#136 2016-03-01: Bugfix #97 - here we need the actual position
+    		//Rectangle rec = root.getRect().getRectangle();
+    		//rec.setLocation(left, top);
+    		Rectangle rec = root.getRect(point).getRectangle();
+    		// END KGU#136 2016-03-01
     		if (rec.width == 0)	rec.width = 120;
     		if (rec.height == 0) rec.height = 150;
     		this.scrollRectToVisible(rec);
@@ -654,7 +674,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     		{
     			diagram.isPinned = true;
     		}
-    		// END KGU88 2015-12-20
+    		// END KGU#88 2015-12-20
     		// END KGU 2015-11-30
     		repaint();
     		getDrawingRect();

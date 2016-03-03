@@ -10,7 +10,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.23-14 (2016.01.16)
+Current development version: 3.23-15 (2016.03.03)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
 - 02: Bugfix #51 - stand-alone input/output keywords were not converted on export [IrisLuc]
 - 03: Bugfix #48 - instant delay propagation to Turtleizer <Kay Gürtzig>
@@ -70,6 +70,16 @@ Current development version: 3.23-14 (2016.01.16)
 - 14: Enh. #84: C/Java-style array initialisation expressions enabled <Kay Gürtzig>
 - 14: Bugfix #61+#107: More consistent handling of typed variables <Kay Gürtzig>
 - 14: Enh. #110: File open dialogs now use the specific filter as default [elemshb]
+- 15: Bugfix #112: Several flaws on handling indexed variables <Kay Gürtzig>
+- 15: Jump translation on export to Pascal or Oberon fixed <Kay Gürtzig>
+- 15: Bugfix #114: Editing of elements being executed prevented <Kay Gürtzig>
+- 15: Bugfix for enh. #38: moving up/down of multiple selection <Kay Gürtzig>
+- 15: Accelerator key for breakpoints (also on multiple selection) <Kay Gürtzig>
+- 15: Issue #115: Returned arrays now always presented as element list <Kay Gürtzig>
+- 15: Enh. #84: Array initialisations now exportable to BASIC code <Kay Gürtzig>
+- 15: Bugfix #117: Title and button update on diagram replacement <Kay Gürtzig>
+- 15: Bugfix #97: Target selection on dragging stabilized <Kay Gürtzig>
+- 15: Bugfix #121: Irritating error message box on file dropping <Kay Gürtzig>
 
 Version 3.23 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]

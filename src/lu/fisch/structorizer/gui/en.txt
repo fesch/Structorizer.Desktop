@@ -1,5 +1,5 @@
 /*
-    Structorizer english language file
+    Structorizer English language file
 
     Copyright (C) 2009  Bob Fisch
 
@@ -32,14 +32,15 @@
  *      Author          Date			Description
  *      ------		----			-----------
  *      Bob Fisch       2008.01.14      First Issue
- *      Kay Gürtzig		2014.12.02		ExportOptionDialoge and further messages added
- *      Kay Gürtzig 	2015.10.06		altPadRight added to Preferences dialog
- *      Kay Gürtzig 	2015.10.16		Several additions to Editor and InputBox
- *      Kay Gürtzig 	2015.11.03		Additions to Menu (errors) and AnalyserPreferences
- *      Kay Gürtzig 	2015.11.09		Additions for ParserPreferences
- *      Kay Gürtzig 	2015.11.30		Further additions to Menu (errors) and AnalyserPreferences
- *      Kay Gürtzig 	2015.12.18		New messages for ExportOptionDialoge
- *      Kay Gürtzig 	2016.01.04		Enh. #87: New messages for collapsing / expanding elements
+ *      Kay Gürtzig     2014.12.02      ExportOptionDialoge and further messages added
+ *      Kay Gürtzig     2015.10.06      altPadRight added to Preferences dialog
+ *      Kay Gürtzig     2015.10.16      Several additions to Editor and InputBox
+ *      Kay Gürtzig     2015.11.03      Additions to Menu (errors) and AnalyserPreferences
+ *      Kay Gürtzig     2015.11.09      Additions for ParserPreferences
+ *      Kay Gürtzig     2015.11.30      Further additions to Menu (errors) and AnalyserPreferences
+ *      Kay Gürtzig     2015.12.18      New messages for ExportOptionDialoge
+ *      Kay Gürtzig     2016.01.04      Enh. #87: New messages for collapsing / expanding elements
+ *      Kay Gürtzig     2016.01.21      Breakpoint message also in Menu now
  *
  ******************************************************************************************************
  *
@@ -111,6 +112,9 @@ Menu.menuDiagramMoveUp.text=Move up
 Menu.menuDiagramMoveDown.text=Move down
 Menu.menuDiagramCollapse.text=Collapse
 Menu.menuDiagramExpand.text=Expand
+// Breakpoint
+Menu.menuDiagramBreakpoint.text=Toggle breakpoint
+// Diagram Appearance
 Menu.menuDiagramType.text=Type
 Menu.menuDiagramTypeProgram.text=Main
 Menu.menuDiagramTypeFunction.text=Sub

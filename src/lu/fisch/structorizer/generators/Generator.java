@@ -42,6 +42,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2015.12.18		Enh #66, #67: New export options
  *      Kay Gürtzig     2015-12-21      Bugfix #41/#68/#69 (= KGU#93) avoid padding and string literal impact
  *      Kay Gürtzig     2015.12.22		Slight performance improvement in transform()
+ *      Kay Gürtzig     2016-01-16      KGU#141: New generic method lValueToTypeNameIndex introduced for Issue #112
  *
  ******************************************************************************************************
  *
@@ -131,7 +132,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * 
 	 * @return true if and only if there is such an instruction
 	 */
-	protected abstract boolean supportsSimpleBreak();
+	protected abstract boolean breakMatchesCase();
 	// END KGU#78 2015-12-18
 	
 	/************ Code Generation **************/
@@ -472,7 +473,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				// START KGU#78 2015-12-18: Enh. #23 specific handling only required if there is a break instruction
 				//boolean simpleBreak = levelsUp == 1;	// For special handling of Case context
 				// Simple break instructions usually require special handling of Case context
-				boolean simpleBreak = levelsUp == 1 && this.supportsSimpleBreak();
+				boolean simpleBreak = levelsUp == 1 && this.breakMatchesCase();
 				// END KGU#78 2015-12-18
 				Element parent = elem.parent;
 				while (parent != null && !(parent instanceof Parallel) && levelsUp > 0)
@@ -501,7 +502,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				}
 				if (levelsUp > 0)
 				{
-					// Target couldn't be found, so mark the jump with with an error marker
+					// Target couldn't be found, so mark the jump with an error marker
 					this.jumpTable.put(elem, -1);
 				}
 				else {
@@ -561,6 +562,53 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		return surelyReturns;
 	}
 	
+	
+	// START KGU#141 2016-01-16: New for ease of fixing #112
+	/**
+	 * Decomposes the left-hand side of an assignment passed in as _lval
+	 * into three strings:
+	 * [0] - type specification (a sequence of tokens, may be empty)
+	 * [1] - variable name (a single token supposed to be the identifier)
+	 * [2] - index expression (if _lval is an indexed variable, else empty)
+	 * @param _lval a string found on the left-hand side of an assignment operator
+	 * @return String array of [0] type, [1] name, [2] index; all but [1] may be empty
+	 */
+	protected String[] lValueToTypeNameIndex(String _lval)
+	{
+		// Avoid too much nonsense on indexed variables
+    	Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
+    	String name = r.replaceAll(_lval);
+		String type = "";
+		// Check Pascal and BASIC style of type specifications
+		int subPos = name.indexOf(":");
+		if (subPos > 0)
+		{
+			type = name.substring(subPos + 1).trim() + " ";
+			name = name.substring(0, subPos).trim();
+		}
+		else if ((subPos = name.indexOf(" as ")) > 0)
+		{
+			type = name.substring(subPos + " as ".length()).trim() + " ";
+			name = name.substring(0, subPos).trim();
+		}
+		// Now split the assumed name to check C-style type specifications
+		StringList nameParts = StringList.explode(name, " ");
+		if (type.isEmpty() || nameParts.count() > 1)
+		{
+			type = nameParts.concatenate(" ", 0, nameParts.count()-1).trim() + " ";
+		}
+		name = nameParts.get(nameParts.count()-1);
+		//r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
+		String index = "";
+		
+		if ((subPos = _lval.indexOf('[')) >= 0 && _lval.indexOf(']', subPos+1) >= 0)
+		{
+			index = _lval.replaceAll("(.*?)[\\[](.*?)[\\]](.*?)","$1X$2X$3");
+		}
+		String[] typeNameIndex = {type, name, index};
+		return typeNameIndex;
+	}
+	// END KGU#141 2016-01-16
 	
 
  	
@@ -699,7 +747,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		StringList paramTypes = new StringList();
 		_root.collectParameters(paramNames, paramTypes);
 		String resultType = _root.getResultType();
-		StringList varNames = _root.getVarNames(_root, false, true);
+		StringList varNames = _root.getVarNames(_root, false, true);	// FIXME: FOR loop vars are missing
 		this.isResultSet = varNames.contains("result", false);
 		this.isFunctionNameSet = varNames.contains(procName);
 		
@@ -772,32 +820,32 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	
 	public void exportCode(Root _root, File _currentDirectory, Frame frame)
 	{
-                try
-                {
-                    Ini ini = Ini.getInstance();
-                    ini.load();
-                    eod = new ExportOptionDialoge(frame);	// FIXME (KGU) What do we need this hidden dialog for?
-                    if(ini.getProperty("genExportComments","0").equals("true"))
-                        eod.commentsCheckBox.setSelected(true);
-                    else 
-                        eod.commentsCheckBox.setSelected(false);
-                    // START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
-                    eod.bracesCheckBox.setSelected(ini.getProperty("genExportBraces", "0").equals("true"));
-                    eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "0").equals("true"));
-                    // END KGU#16/KGU#113 2015-12-18
-                } 
-                catch (FileNotFoundException ex)
-                {
-                    ex.printStackTrace();
-                } 
-                catch (IOException ex)
-                {
-                    ex.printStackTrace();
-                }
-            
-                JFileChooser dlgSave = new JFileChooser();
+		try
+		{
+			Ini ini = Ini.getInstance();
+			ini.load();
+			eod = new ExportOptionDialoge(frame);	// FIXME (KGU) What do we need this hidden dialog for?
+			if(ini.getProperty("genExportComments","0").equals("true"))
+				eod.commentsCheckBox.setSelected(true);
+			else 
+				eod.commentsCheckBox.setSelected(false);
+			// START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
+			eod.bracesCheckBox.setSelected(ini.getProperty("genExportBraces", "0").equals("true"));
+			eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "0").equals("true"));
+			// END KGU#16/KGU#113 2015-12-18
+		} 
+		catch (FileNotFoundException ex)
+		{
+			ex.printStackTrace();
+		} 
+		catch (IOException ex)
+		{
+			ex.printStackTrace();
+		}
+
+		JFileChooser dlgSave = new JFileChooser();
 		dlgSave.setDialogTitle(getDialogTitle());
-		
+
 		// set directory
 		if(_root.getFile()!=null)
 		{
@@ -807,20 +855,20 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		{
 			dlgSave.setCurrentDirectory(_currentDirectory);
 		}
-		
+
 		// propose name
 		// START KGU 2015-10-18: Root has got a mechanism for this!
-//		String nsdName = _root.getText().get(0);
-//		nsdName.replace(':', '_');
-//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
-//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		//		String nsdName = _root.getText().get(0);
+		//		nsdName.replace(':', '_');
+		//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
+		//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
 		String nsdName = _root.getMethodName();
 		// END KGU 2015-10-18
 		dlgSave.setSelectedFile(new File(nsdName));
-		
+
 		dlgSave.addChoosableFileFilter((javax.swing.filechooser.FileFilter) this);
 		int result = dlgSave.showSaveDialog(frame);
-		
+
 		/***** file_exists check here!
 		 if(file.exists())
 		 {
@@ -836,9 +884,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		 else
 		 */
 		String filename = new String();
-		
+
 		boolean saveIt = true;
-                
+
 		if (result == JFileChooser.APPROVE_OPTION) 
 		{
 			filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
@@ -851,46 +899,46 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		{
 			saveIt = false;
 		}
-		
+
 		//System.out.println(filename);
-		
+
 		if (saveIt == true) 
 		{
 			File file = new File(filename);
-                        boolean writeDown = true;
+			boolean writeDown = true;
 
-                        if(file.exists())
+			if(file.exists())
 			{
-                            int response = JOptionPane.showConfirmDialog (null,
-                                            "Overwrite existing file?","Confirm Overwrite",
-                                            JOptionPane.YES_NO_OPTION,
-                                            JOptionPane.QUESTION_MESSAGE);
-                            if (response == JOptionPane.NO_OPTION)
-                            {
-				writeDown=false;
-                            }
-                        }
-                        if(writeDown==true)
-                        {
+				int response = JOptionPane.showConfirmDialog (null,
+						"Overwrite existing file?","Confirm Overwrite",
+								JOptionPane.YES_NO_OPTION,
+								JOptionPane.QUESTION_MESSAGE);
+				if (response == JOptionPane.NO_OPTION)
+				{
+					writeDown=false;
+				}
+			}
+			if(writeDown==true)
+			{
 
-                            try
-                            {
-                            	// START KGU 2015-10-18: This didn't make much sense: Why first insert characters that will be replaced afterwards?
-                            	// (And with possibly any such characters that had not been there for indentation!)
-                                //    String code = BString.replace(generateCode(_root,"\t"),"\t",getIndent());
-                            	String code = generateCode(_root, "");
-                            	// END KGU 2015-10-18
+				try
+				{
+					// START KGU 2015-10-18: This didn't make much sense: Why first insert characters that will be replaced afterwards?
+					// (And with possibly any such characters that had not been there for indentation!)
+					//    String code = BString.replace(generateCode(_root,"\t"),"\t",getIndent());
+					String code = generateCode(_root, "");
+					// END KGU 2015-10-18
 
-                                    BTextfile outp = new BTextfile(filename);
-                                    outp.rewrite();
-                                    outp.write(code);
-                                    outp.close();
-                            }
-                            catch(Exception e)
-                            {
-                                    JOptionPane.showMessageDialog(null,"Error while saving the file!\n" + e.getMessage(),"Error", JOptionPane.ERROR_MESSAGE);
-                            }
-                        }
+					BTextfile outp = new BTextfile(filename);
+					outp.rewrite();
+					outp.write(code);
+					outp.close();
+				}
+				catch(Exception e)
+				{
+					JOptionPane.showMessageDialog(null,"Error while saving the file!\n" + e.getMessage(),"Error", JOptionPane.ERROR_MESSAGE);
+				}
+			}
 		}
 	} 
 	
@@ -898,13 +946,23 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected boolean isOK(String _filename)
 	{
 		boolean res = false;
-		if(getExtension(_filename)!=null)
+		// START KGU 2016-01-16: Didn't work for mixed-case extensions like ".Mod" - and it was inefficient
+//		if(getExtension(_filename)!=null)
+//		{
+//			for(int i =0; i<getFileExtensions().length; i++)
+//			{
+//				res = res || (getExtension(_filename).equals(getFileExtensions()[i]));
+//			}
+//		}
+		String ext = getExtension(_filename); 
+		if (ext != null)
 		{
-			for(int i =0; i<getFileExtensions().length; i++)
+			for (int i =0; i<getFileExtensions().length; i++)
 			{
-				res = res || (getExtension(_filename).equals(getFileExtensions()[i]));
+				res = res || (ext.equalsIgnoreCase(getFileExtensions()[i]));
 			}
 		}
+		// END KGU 2016-01-16
 		return res;
 	}
 	

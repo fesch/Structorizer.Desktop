@@ -38,6 +38,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
  *      Kay Gürtzig     2016-01-03      Bugfix #87 (KGU#124) collapsing of larger instruction elements,
  *                                      Enh. #87 (KGU#122) marking of collapsed elements with icon
+ *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
  *
  ******************************************************************************************************
  *
@@ -48,6 +49,8 @@ package lu.fisch.structorizer.elements;
 
 import java.awt.Color;
 import java.awt.FontMetrics;
+import java.awt.Point;
+import java.util.Stack;
 
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.gui.IconLoader;
@@ -108,37 +111,26 @@ public class Instruction extends Element {
         
 	public Rect prepareDraw(Canvas _canvas)
 	{
-		/*rect.top=0;
-		rect.left=0;
-		rect.right=0;
-		rect.bottom=0;
-		
-		FontMetrics fm = _canvas.getFontMetrics(Element.font);
-		
-                rect.right=Math.round(2*(Element.E_PADDING/2));
-                for(int i=0;i<text.count();i++)
-                {
-                        if(rect.right<getWidthOutVariables(_canvas,text.get(i),this)+1*Element.E_PADDING)
-                        {
-                                rect.right=getWidthOutVariables(_canvas,text.get(i),this)+1*Element.E_PADDING;
-                        }
-                }
-                rect.bottom=2*Math.round(Element.E_PADDING/2)+text.count()*fm.getHeight();
-		
-		return rect;*/
+		// START KGU#136 2016-01-03: Bugfix #97 (prepared)
+		if (this.isRectUpToDate) return rect0;
+		// END KGU#136 2016-01-03
+
+		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
 		
 		// START KGU#124 2016-01-03: Large instructions should also be actually collapsed
         //rect = prepareDraw(_canvas, getText(false), this);
-        if (isCollapsed() && getText(false).count() > 2) 
+		StringList text = getText(false);
+        if (isCollapsed() && text.count() > 2) 
         {
-        	rect = prepareDraw(_canvas, getCollapsedText(), this);
+        	text = getCollapsedText();
         }
-        else
-        {
-            rect = prepareDraw(_canvas, getText(false), this);
-        }
+        rect0 = prepareDraw(_canvas, text, this);
         // END KGU#124 2016-01-03
-        return rect;
+        
+		// START KGU#136 2016-03-01: Bugfix #97
+		isRectUpToDate = true;
+		// END KGU#136 2016-03-01
+        return rect0;
 	}
 
 	public static void draw(Canvas _canvas, Rect _top_left, StringList _text, Element _element)
@@ -161,31 +153,27 @@ public class Instruction extends Element {
 //		}
 		// END KGU 2015-10-13
 		
-		_element.rect=_top_left.copy();
+		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
+		//_element.rect = _top_left.copy();
+		_element.rect = new Rect(0, 0, 
+				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
+		Point ref = _element.getDrawPoint();
+		_element.topLeft.x = _top_left.left - ref.x;
+		_element.topLeft.y = _top_left.top - ref.y;
+		// END KGU#136 2016-03-01
 		
 		Canvas canvas = _canvas;
 		canvas.setBackground(drawColor);
 		canvas.setColor(drawColor);
 		
-		myrect=_top_left.copy();
+		myrect = _top_left.copy();
 		
 		canvas.fillRect(myrect);
 				
 		// draw comment
 		if(Element.E_SHOWCOMMENTS==true && !_element.getComment(false).getText().trim().equals(""))
 		{
-			// START KGU 2015-10-11
-//			canvas.setBackground(E_COMMENTCOLOR);
-//			canvas.setColor(E_COMMENTCOLOR);
-//			
-//			myrect.left+=2;
-//			myrect.top+=2;
-//			myrect.right=myrect.left+4;
-//			myrect.bottom-=1;
-//			
-//			canvas.fillRect(myrect);
 			_element.drawCommentMark(canvas, myrect);
-			// END KGU 2015-10-11
 		}
 		
 		// START KGU 2015-10-11: If _element is a breakpoint, mark it
