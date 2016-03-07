@@ -41,6 +41,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
  *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
  *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136): Translation-neutral selection mechanism
+ *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
  *
  ******************************************************************************************************
  *
@@ -48,7 +49,6 @@ package lu.fisch.structorizer.elements;
  *
  ******************************************************************************************************///
 
-import java.util.Stack;
 import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -534,7 +534,7 @@ public class Case extends Element
                             {
                                     canvas.moveTo(myrect.right-1,myrect.top);
                                     int mx = myrect.right-1;
-                                    int my = myrect.top-fm.getHeight();
+                                    //int my = myrect.top-fm.getHeight();
                                     int sx = mx;
                                     int sy = (sx*(by-ay) - ax*by + ay*bx) / (bx-ax);
                                     canvas.lineTo(sx,sy+1);
@@ -604,7 +604,7 @@ public class Case extends Element
 				}
 				Element pre = qs.get(i).getElementByCoord(_x-xOff, _y-y0Branches, _forSelection);
 				// END KGU#136 2016-03-01
-				if(pre!=null)
+				if (pre!=null)
 				{
 					selCh = pre;
 				}
@@ -650,6 +650,9 @@ public class Case extends Element
     		// START KGU#82 (bug #31) 2015-11-14
     		ele.breakpoint = this.breakpoint;
     		// END KGU#82 (bug #31) 2015-11-14
+    		// START KGU#117 2016-03-07: Enh. #77
+    		ele.tested = Element.E_TESTCOVERAGEMODE && this.tested;
+    		// END KGU#117 2016-03-07
 
             return ele;
     }
@@ -672,6 +675,22 @@ public class Case extends Element
 		return isEqual;
 	}
 	// END KGU#119 2016-01-02
+
+	// START KGU#117 2016-03-07: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
+	 */
+	@Override
+	public boolean combineCoverage(Element _another)
+	{
+		boolean isEqual = super.combineCoverage(_another);
+		for(int i = 0; isEqual && i < this.qs.size(); i++)
+		{
+			isEqual = this.qs.get(i).combineCoverage(((Case)_another).qs.get(i));
+		}
+		return isEqual;
+	}
+	// END KGU#117 2016-03-07
 
 	// START KGU#43 2015-10-12
     @Override
@@ -702,6 +721,43 @@ public class Case extends Element
     	}
     }
     // END KGU#43 2015-10-13
+
+	// START KGU#117 2016-03-07: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
+	 */
+    @Override
+	public void clearTestCoverage()
+	{
+		super.clearTestCoverage();
+    	if (qs!= null)
+    	{
+    		for (int i = 0; i < qs.size(); i++)
+    		{
+    			qs.get(i).clearTestCoverage();
+    		}
+    	}
+	}
+	// END KGU#117 2016-03-07
+
+	// START KGU#117 2016-03-06: Enh. #77
+	/**
+	 * Detects full test coverage of this element according to set flags
+	 * @return true iff element and all its sub-structure is test-covered
+	 */
+	public boolean isTestCovered()
+	{
+		boolean covered = true;
+    	if (qs!= null)
+    	{
+    		for (int i = 0; covered && i < qs.size(); i++)
+    		{
+    			covered = qs.get(i).isTestCovered();
+    		}
+    	}		
+		return covered;
+	}
+	// END KGU#117 2016-03-06
 
 	// START KGU 2015-10-16
 	/* (non-Javadoc)

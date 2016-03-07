@@ -10,7 +10,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.23-16 (2016.03.07)
+Current development version: 3.23-17dev (2016.03.07)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
 - 02: Bugfix #51 - stand-alone input/output keywords were not converted on export [IrisLuc]
 - 03: Bugfix #48 - instant delay propagation to Turtleizer <Kay Gürtzig>
@@ -81,6 +81,7 @@ Current development version: 3.23-16 (2016.03.07)
 - 15: Bugfix #97: Target selection on dragging stabilized <Kay Gürtzig>
 - 15: Bugfix #121: Irritating error message box on file dropping <Kay Gürtzig>
 - 16: Bugfix #122: Selection problems with enlargeFALSE set <Kay Gürtzig>
+- 17: Enh. #77: Test coverage mode highlights passed code paths [elemhsb]
 
 Version 3.23 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]

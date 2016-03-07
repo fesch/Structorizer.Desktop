@@ -41,6 +41,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord()
  *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
  *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): Translation-neutral selection
+ *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Methods for test coverage tracking added
  *      Kay Gürtzig     2016.03.07      Bugfix #122 (KGU#136): Selection was not aware of option altPadRight 
  *
  ******************************************************************************************************
@@ -71,9 +72,9 @@ public class Alternative extends Element {
 	private Rect rTrue = new Rect();
 	private Rect rFalse = new Rect();
 	
-	// START KGU#136 2016-03-01: Bugfix #97
-	private Point pt0True = new Point();
-	private Point pt0False = new Point();
+	// START KGU#136 2016-03-07: Bugfix #97
+	private Point pt0Parting = new Point();
+	// END KGU#136 2016-03-07
 
 	public Alternative()
 	{
@@ -204,12 +205,11 @@ public class Alternative extends Element {
 		}
 
 		rect0.bottom = 4*(E_PADDING/2) + nLines*fm.getHeight();
-		pt0True.y = pt0False.y = rect0.bottom;
+		pt0Parting.y = rect0.bottom;
 		
 		rect0.right = Math.max(rect0.right, rTrue.right + rFalse.right);
 		rect0.bottom += Math.max(rTrue.bottom, rFalse.bottom);
-		pt0True.x = 0;
-		pt0False.x = rTrue.right;
+		pt0Parting.x = rTrue.right;
 
 		// START KGU#136 2016-03-01: Bugfix #97
 		isRectUpToDate = true;
@@ -291,7 +291,7 @@ public class Alternative extends Element {
                              -(rFalse.right - rFalse.left);
                 if (Element.altPadRight == false) remain=0;
                 // START KGU#136 2016-03-07: Bugfix #122 - we must correct the else start point
-                this.pt0False.x = this.rTrue.right - rTrue.left + remain; 
+                this.pt0Parting.x = this.rTrue.right - rTrue.left + remain; 
                 // END KGU#136 2016-03-07
                 
                 // the upper left point of the corner
@@ -424,8 +424,8 @@ public class Alternative extends Element {
 			// START KGU#136 2016-03-01: Bugfix #97 - we use local coordinates now
 			//Element selT = qTrue.getElementByCoord(_x,_y, _forSelection);
 			//Element selF = qFalse.getElementByCoord(_x,_y, _forSelection);
-			Element selT = qTrue.getElementByCoord(_x-pt0True.x, _y-pt0True.y, _forSelection);
-			Element selF = qFalse.getElementByCoord(_x-pt0False.x, _y-pt0False.y, _forSelection);
+			Element selT = qTrue.getElementByCoord(_x, _y-pt0Parting.y, _forSelection);
+			Element selF = qFalse.getElementByCoord(_x-pt0Parting.x, _y-pt0Parting.y, _forSelection);
 			// END KGU#136 2016-03-01
 			if (selT != null) 
 			{
@@ -459,9 +459,12 @@ public class Alternative extends Element {
 		// START KGU#82 (bug #31) 2015-11-14
 		ele.breakpoint = this.breakpoint;
 		// END KGU#82 (bug #31) 2015-11-14
+		// START KGU#117 2016-03-07: Enh. #77
+		ele.tested = Element.E_TESTCOVERAGEMODE && this.tested;
+		// END KGU#117 2016-03-07
 		return ele;
 	}
-
+	
 	// START KGU#119 2016-01-02: Bugfix #78
 	/**
 	 * Returns true iff _another is of same class, all persistent attributes are equal, and
@@ -481,6 +484,23 @@ public class Alternative extends Element {
 		return isEqual;
 	}
 	// END KGU#119 2016-01-02
+
+	// START KGU#117 2016-03-07: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
+	 */
+	@Override
+	public boolean combineCoverage(Element _another)
+	{
+		boolean isEqual = super.combineCoverage(_another);
+		if (isEqual)
+		{
+			isEqual = this.qTrue.combineCoverage(((Alternative)_another).qTrue) &&
+					this.qFalse.combineCoverage(((Alternative)_another).qFalse);			
+		}
+		return isEqual;
+	}
+	// END KGU#117 2016-03-07
 
 	/*@Override
     public void setColor(Color _color) 
@@ -510,6 +530,25 @@ public class Alternative extends Element {
 		this.qTrue.clearExecutionStatus();
 	}
 	// END KGU 2015-10-13
+
+	// START KGU#117 2016-03-07: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
+	 */
+	public void clearTestCoverage()
+	{
+		super.clearTestCoverage();
+		this.qFalse.clearTestCoverage();
+		this.qTrue.clearTestCoverage();
+	}
+	// END KGU#117 2016-03-07
+
+	// START KGU#117 2016-03-06: Enh. #77
+	public boolean isTestCovered()
+	{
+		return this.qTrue.isTestCovered() && this.qFalse.isTestCovered();
+	}
+	// END KGU#117 2016-03-06
 
 	// START KGU 2015-10-16
 	/* (non-Javadoc)

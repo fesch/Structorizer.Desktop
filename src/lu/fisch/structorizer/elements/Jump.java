@@ -37,6 +37,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.14      Bugfix #31 = KGU#82 in method copy()
  *		Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
  *		Kay Gürtzig     2016.01.03      Enh. #87 (KGU#122) -> getIcon()
+ *		Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136) Drawing/dragging/selection consolidated
  *
  ******************************************************************************************************
  *
@@ -102,19 +103,14 @@ package lu.fisch.structorizer.elements;
  *
  ******************************************************************************************************///
 
-import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Point;
 
 import javax.swing.ImageIcon;
-import javax.swing.JPanel;
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
-import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.gui.IconLoader;
 
 public class Jump extends Instruction {
@@ -139,9 +135,9 @@ public class Jump extends Instruction {
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
-		// START KGU#136 2016-01-03: Bugfix #97 (prepared)
+		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
 		if (this.isRectUpToDate) return rect0;
-		// END KGU#136 2016-01-03
+		// END KGU#136 2016-03-01
 
 		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
 		rect0.top=0;
@@ -252,6 +248,13 @@ public class Jump extends Instruction {
 		// START KGU#82 (bug #31) 2015-11-14
 		ele.breakpoint = this.breakpoint;
 		// END KGU#82 (bug #31) 2015-11-14
+		// START KGU#117 2016-03-07: Enh. #77
+        if (Element.E_TESTCOVERAGEMODE)
+        {
+        	// We share this object (important for recursion!)
+        	ele.tested = this.tested;
+        }
+		// END KGU#117 2016-03-07
 		return ele;
 	}
 	
