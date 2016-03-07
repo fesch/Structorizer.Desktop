@@ -41,6 +41,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
  *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136) accomplished (translation-independent selection)
+ *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
  *
  ******************************************************************************************************
  *
@@ -48,16 +50,11 @@ package lu.fisch.structorizer.elements;
  *
  ******************************************************************************************************///
 
-import java.util.Stack;
-import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Point;
 
 import javax.swing.ImageIcon;
-import javax.swing.JPanel;
 
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.gui.IconLoader;
@@ -110,9 +107,9 @@ public class While extends Element implements ILoop {
 
 	public Rect prepareDraw(Canvas _canvas)
 	{
-		// START KGU#136 2016-01-03: Bugfix #97 (prepared)
+		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
 		if (this.isRectUpToDate) return rect0;
-		// END KGU#136 2016-01-03
+		// END KGU#136 2016-03-01
 
 		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
 		if(isCollapsed()) 
@@ -337,6 +334,9 @@ public class While extends Element implements ILoop {
 		// START KGU#82 (bug #31) 2015-11-14
 		ele.breakpoint = this.breakpoint;
 		// END KGU#82 (bug #31) 2015-11-14
+		// START KGU#117 2016-03-07: Enh. #77
+		ele.tested = Element.E_TESTCOVERAGEMODE && this.tested;
+		// END KGU#117 2016-03-07
 		return ele;
 	}
 	
@@ -354,6 +354,18 @@ public class While extends Element implements ILoop {
 	}
 	// END KGU#119 2016-01-02
 	
+	// START KGU#117 2016-03-07: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
+	 */
+	@Override
+	public boolean combineCoverage(Element _another)
+	{
+		return super.combineCoverage(_another) &&
+				this.getBody().combineCoverage(((ILoop)_another).getBody());
+	}
+	// END KGU#117 2016-03-07
+
     /*@Override
     public void setColor(Color _color) 
     {
@@ -379,6 +391,27 @@ public class While extends Element implements ILoop {
 	}
 	// END KGU#43 2015-11-09
 	
+	// START KGU#117 2016-03-06: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
+	 */
+	@Override
+	public void clearTestCoverage()
+	{
+		super.clearTestCoverage();
+		this.getBody().clearTestCoverage();
+	}
+
+	/**
+	 * Detects full test coverage of this element according to set flags
+	 * @return true iff element and all its sub-structure is test-covered
+	 */
+	public boolean isTestCovered()
+	{
+		return this.getBody().isTestCovered();
+	}
+	// END KGU#117 2016-03-06
+
 
 	// START KGU 2015-10-16
 	/* (non-Javadoc)

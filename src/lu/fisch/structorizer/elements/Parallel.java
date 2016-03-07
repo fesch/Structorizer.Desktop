@@ -42,8 +42,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(),
  *                                      method getCollapsedText() overridden for more clarity, getIcon()
  *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
- *      Kay Gürtzig     2016.02.01      Bugfix #97 (KGU#136): Translation-neutral selection;
+ *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): Translation-neutral selection;
  *                                      KGU#151: nonsense removed from prepareDraw() and draw().
+ *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
  *
  ******************************************************************************************************
  *
@@ -51,7 +52,6 @@ package lu.fisch.structorizer.elements;
  *
  ******************************************************************************************************///
 
-import java.util.Stack;
 import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -70,7 +70,6 @@ public class Parallel extends Element
 	
     public Vector<Subqueue> qs = new Vector<Subqueue>();
 
-    private Rect r = new Rect();
     private int fullWidth = 0;
     private int maxHeight = 0;
     // START KGU#136 2016-03-01: Bugfix #97 - cache the upper left corners of all branches
@@ -248,11 +247,11 @@ public class Parallel extends Element
     
     public Rect prepareDraw(Canvas _canvas)
     {
-            // START KGU#136 2016-01-03: Bugfix #97 (prepared)
+            // START KGU#136 2016-03-01: Bugfix #97 (prepared)
             if (this.isRectUpToDate) return rect0;
             this.x0Branches.clear();
             this.y0Branches = 0;
-            // END KGU#136 2016-01-03
+            // END KGU#136 2016-03-01
 
             // KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
             if(isCollapsed()) 
@@ -361,12 +360,12 @@ public class Parallel extends Element
             myrect = _top_left.copy();
             myrect.bottom = _top_left.top + 2*fm.getHeight() + 4*(E_PADDING / 2);
 
-            int y = myrect.top + E_PADDING;
-            int a = myrect.left + (myrect.right-myrect.left) / 2;
-            int b = myrect.top;
-            int c = myrect.left + fullWidth-1;
-            int d = myrect.bottom-1;
-            int x = ((y-b)*(c-a) + a*(d-b)) / (d-b);
+//            int y = myrect.top + E_PADDING;
+//            int a = myrect.left + (myrect.right-myrect.left) / 2;
+//            int b = myrect.top;
+//            int c = myrect.left + fullWidth-1;
+//            int d = myrect.bottom-1;
+//            int x = ((y-b)*(c-a) + a*(d-b)) / (d-b);
 
             // draw comment
             if (Element.E_SHOWCOMMENTS==true && !comment.getText().trim().isEmpty())
@@ -568,6 +567,9 @@ public class Parallel extends Element
     		// START KGU#82 (bug #31) 2015-11-14
     		ele.breakpoint = this.breakpoint;
     		// END KGU#82 (bug #31) 2015-11-14
+    		// START KGU#117 2016-03-07: Enh. #77
+    		ele.tested = Element.E_TESTCOVERAGEMODE && this.tested;
+    		// END KGU#117 2016-03-07
 
             return ele;
     }
@@ -590,6 +592,22 @@ public class Parallel extends Element
 		return isEqual;
 	}
 	// END KGU#119 2016-01-02
+
+	// START KGU#117 2016-03-07: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
+	 */
+	@Override
+	public boolean combineCoverage(Element _another)
+	{
+		boolean isEqual = super.combineCoverage(_another);
+		for (int i = 0; isEqual && i < this.qs.size(); i++)
+		{
+			isEqual = this.qs.get(i).combineCoverage(((Parallel)_another).qs.get(i));
+		}
+		return isEqual;
+	}
+	// END KGU#117 2016-03-07
 
     // START KGU 2015-10-12
     /* (non-Javadoc)
@@ -627,6 +645,41 @@ public class Parallel extends Element
     }
     // END KGU 2015-10-16
     
+	// START KGU#117 2016-03-06: Enh. #77
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.elements.Element#clearExecutionStatus()
+     */
+    @Override
+    public void clearTestCoverage()
+    {
+    	super.clearTestCoverage();
+    	if (qs!= null)
+    	{
+    		for (int i = 0; i < qs.size(); i++)
+    		{
+    			qs.get(i).clearTestCoverage();
+    		}
+    	}
+    }
+
+    /**
+	 * Detects full test coverage of this element according to set flags
+	 * @return true iff element and all its sub-structure is test-covered
+	 */
+	public boolean isTestCovered()
+	{
+		boolean covered = true;
+    	if (qs!= null)
+    	{
+    		for (int i = 0; covered && i < qs.size(); i++)
+    		{
+    			covered = qs.get(i).isTestCovered();
+    		}
+    	}		
+		return covered;
+	}
+	// END KGU#117 2016-03-06
+
 	// START KGU 2015-10-16
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)

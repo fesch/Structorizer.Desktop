@@ -54,6 +54,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#144).
  *      Kay Gürtzig     2016.03.02      Bugfix #97: steady selection on dragging (see comment, KGU#136),
  *                                      Element self-description improved (method toString(), KGU#152)
+ *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Fields for test coverage tracking added
  *
  ******************************************************************************************************
  *
@@ -114,13 +115,12 @@ import com.stevesoft.pat.*;  //http://www.javaregex.com/
 
 import java.awt.Point;
 import java.util.Stack;
-import java.util.Vector;
 
 import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.23-16";
+	public static String E_VERSION = "3.23-17dev";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -214,6 +214,10 @@ public abstract class Element {
 	// START KGU#43 2015-10-11: New fix color for breakpoint marking
 	public static Color E_BREAKPOINTCOLOR = Color.RED;			// Colour of the breakpoint bar at element top
 	// END KGU#43 2015-10-11
+	// START KGU#117 2016-03-06: Test coverage colour and mode for Enh. #77
+	public static Color E_TESTCOVEREDCOLOR = Color.GREEN;	// TODO fine-tuning
+	public static boolean E_TESTCOVERAGEMODE = false;
+	// END KGU#117 2016-03-06
 	public static boolean E_VARHIGHLIGHT = false;	// Highlight variables, operators, string literals, and certain keywords? 
 	public static boolean E_SHOWCOMMENTS = true;	// Enable comment bars and comment popups? 
 	public static boolean E_TOGGLETC = false;		// Swap text and comment on displaying?
@@ -262,6 +266,9 @@ public abstract class Element {
 	public boolean executed = false;	// Is set while being executed
 	// END KGU#41 2015-10-13
 	public boolean waited = false;		// Is set while a substructure Element is under execution
+	// START KGU#117 2016-03-06: Enh. #77 - is set in test coverage mode when execution passed this element
+	public Boolean tested = false;		// This must be a shareable object!
+	// END KGU#117 2016-03-06
 	private Color color = Color.WHITE;
 
 	private boolean collapsed = false;
@@ -327,18 +334,39 @@ public abstract class Element {
 	/**
 	 * Returns true iff another is of same class, all persistent attributes are equal, and
 	 * all substructure of another recursively equals the substructure of this. 
-	 * @param another - the Element to be compared
+	 * @param _another - the Element to be compared
 	 * @return true on recursive structural equality, false else
 	 */
-	public boolean equals(Element another)
+	public boolean equals(Element _another)
 	{
-		boolean isEqual = this.getClass() == another.getClass();
-		if (isEqual) isEqual = this.getText().getText().equals(another.getText().getText());
-		if (isEqual) isEqual = this.getComment().getText().equals(another.getComment().getText());
-		if (isEqual) isEqual = this.getColor().equals(another.getColor());
+		boolean isEqual = this.getClass() == _another.getClass();
+		if (isEqual) isEqual = this.getText().getText().equals(_another.getText().getText());
+		if (isEqual) isEqual = this.getComment().getText().equals(_another.getComment().getText());
+		if (isEqual) isEqual = this.getColor().equals(_another.getColor());
 		return isEqual;
 	}
 	// END KGU#119 2016-01-02
+
+	// START KGU#117 2016-03-07: Enh. #77
+	/**
+	 * Disjunctively combines the test coverage status of _another (which is supposed
+	 * to a clone of this) with my own test coverage status.
+	 * (Important for recursive tests)
+	 * @param _another - the Element to be combined (must be equal to this)
+	 * @return true on recursive structural equality, false else
+	 */
+	public boolean combineCoverage(Element _another)
+	{
+		if (this.equals(_another))
+		{
+			//System.out.print(this + " " + (this.tested ? "TRUE " : "FALSE") + " --> ");
+			this.tested = this.tested || _another.tested;
+			//System.out.println(this.tested ? "TRUE " : "FALSE");
+			return true;
+		}
+		return false;
+	}
+	// END KGU#117 2016-03-07
 
 	// draw point
 	Point drawPoint = new Point(0,0);
@@ -496,6 +524,42 @@ public abstract class Element {
 		return this.executed || this.waited;
 	}
 	// END KGU#143 2016-01-22
+	
+	// START KGU#117 2016-03-06: Enh. #77
+	/**
+	 * In test coverage mode, sets the local tested flag if element is fully covered
+	 * and then recursively checks test coverage upwards all ancestry if
+	 * _propagateUpwards is true (otherwise it would be postponed to the termination
+	 * of the superstructure).
+	 * @param _propagateUpwards if true then the change is immediately propagated  
+	 */
+	public void checkTestCoverage(boolean _propagateUpwards)
+	{
+		//System.out.print("Checking coverage of " + this + " --> ");
+		if (Element.E_TESTCOVERAGEMODE && this.isTestCovered())
+		{
+			this.tested = true;
+			if (_propagateUpwards)
+			{
+				Element parent = this.parent;
+				if (parent != null)
+				{
+					parent.checkTestCoverage(_propagateUpwards);
+				}
+			}
+		}
+		//System.out.println(this.tested ? "SET" : "unset");
+	}
+	
+	/**
+	 * Detects full test coverage of this element according to set flags
+	 * @return true iff element and all its sub-structure is test-covered
+	 */
+	public boolean isTestCovered()
+	{
+		return this.tested;
+	}
+	// END KGU#117 2016-03-06
 
 	// START KGU#144 2016-01-22: Bugfix for #38 - Element knows best whether it can be moved up or down
 	/**
@@ -557,6 +621,7 @@ public abstract class Element {
 	{
 		// This priority might be arguable but represents more or less what was found in the draw methods before
 		if (this.waited) {
+			// FIXME (KGU#117): Need a combined colour for waited + tested
 			return Element.E_WAITCOLOR; 
 		}
 		else if (this.executed) {
@@ -565,6 +630,11 @@ public abstract class Element {
 		else if (this.selected) {
 			return Element.E_DRAWCOLOR;
 		}
+		// START KGU#117 2016-03-06: Enh. #77 Specific colouring for test coverage tracking
+		else if (Element.E_TESTCOVERAGEMODE && this.tested) {
+			return Element.E_TESTCOVEREDCOLOR;
+		}
+		// END KGU#117 2016-03-06
 		else if (this.collapsed) {
 			// NOTE: If the backround colour for collapsed elements should once be discarded, then
 			// for Instruction subclasses the icon is to be activated in Instruction.draw() 
@@ -606,8 +676,25 @@ public abstract class Element {
 	{
 		this.executed = false;
 		this.waited = false;
+		// START KGU#117 2016-03-06: Enh. #77 - extra functionality in test coverage mode
+		if (!E_TESTCOVERAGEMODE)
+		{
+			this.tested = false;
+		}
+		// KGU#117 2016-03-06
 	}
 	// END KGU#41 2015-10-13
+
+	// START KGU#117 2016-03-07: Enh. #77
+	/** 
+	 * Recursively clears test coverage flags in this branch
+	 * (To be overridden by structured sub-classes!)
+	 */
+	public void clearTestCoverage()
+	{
+		this.tested = false;;
+	}
+	// END KGU#117 2016-03-07
 
 	// START KGU 2015-10-09 Methods selectElementByCoord(int, int) and getElementByCoord(int, int) merged
 	/**
@@ -868,6 +955,7 @@ public abstract class Element {
 			return null;
 	}
 
+	@Deprecated
 	private String cutOut(String _s, String _by)
 	{
 		//System.out.print(_s+" -> ");

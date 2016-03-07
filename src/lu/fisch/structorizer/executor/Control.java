@@ -35,6 +35,7 @@ package lu.fisch.structorizer.executor;
  *      Bob Fisch       2009.05.18      First Issue
  *      Kay Gürtzig     2015.11.05      Enhancement allowing to adopt edited values from Control (KGU#68)
  *      Kay Gürtzig     2015.11.14      New controls to display the call level for enhancement #9 (KGU#2)
+ *      Kay Gürtzig     2016.03.06      New checkboxes for test coverage tracking mode
  *
  ******************************************************************************************************
  *
@@ -51,6 +52,8 @@ import java.util.Vector;
 
 import javax.swing.table.DefaultTableModel;
 
+import lu.fisch.structorizer.elements.Call;
+import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.gui.IconLoader;
 
 
@@ -83,6 +86,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         // START KGU#89 2015-11-25
         lblSpeedValue = new javax.swing.JLabel();
         // END KGU#89 2015-11-25
+        // START KGU#117 2016-03-06: Enh. #77 - Checkbox fpr Test coverage mode
+        chkTestCoverage = new javax.swing.JCheckBox("Track Test Coverage");
+        chkTestRecursive = new javax.swing.JCheckBox("Subroutine Coverage");
+        // END KGU#117 2016-03-06
         btnStop = new javax.swing.JButton();
         btnPlay = new javax.swing.JButton();
         btnPause = new javax.swing.JButton();
@@ -143,6 +150,11 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         lblSpeed.setText(" Delay: ");
         lblSpeedValue.setText("50");
         // END KGU#89 2015-11-25
+        
+        // START KGU#117 2016-03-06: Enh. #77 Track test coverage mode change
+        chkTestCoverage.addPropertyChangeListener(this);
+        chkTestRecursive.addPropertyChangeListener(this);
+        // END KGU#117 2016-03-06
 
         btnStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/stop.png"))); // NOI18N
         btnStop.addActionListener(new java.awt.event.ActionListener() {
@@ -202,6 +214,9 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
                     	.add(lblSpeed /*, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 86, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE*/)
                     	.add(lblSpeedValue/*, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE*/))
                     	// END KGU#89 2015-11-25
+                    	// START KGU#117 2016-03-06: Enh. #77
+                    .add(layout.createSequentialGroup().add(chkTestCoverage))
+                    	// END KGU#117 2016-03-06
                     .add(layout.createSequentialGroup()
                         .add(btnStop)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -211,6 +226,9 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
                 // END KGU#2 (#9) 2015-11-14
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    	// START KGU#117 2016-03-06: Enh. #77
+                    .add(layout.createSequentialGroup().add(chkTestRecursive))
+                    	// END KGU#117 2016-03-06
                     .add(layout.createSequentialGroup()
                         .add(btnPause)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -233,6 +251,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
                     .add(lblSpeedValue, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 		// END KGU#89 2015-11-25
                     .add(slSpeed, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE)
+                    .add(chkTestCoverage)
+                    .add(chkTestRecursive))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(btnStop)
@@ -257,7 +279,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         btnPlay.setEnabled(true);
         btnPause.setEnabled(false);
         btnStep.setEnabled(true);
-        // emtpy table
+        // START KGU#117 2016-03-06: Enh. #77
+        chkTestCoverage.setEnabled(true);
+        // END KGU#117 2016-03-06
+        // empty table
         DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
         while(tm.getRowCount()>0) tm.removeRow(0);
     }
@@ -265,6 +290,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     private void btnStopActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnStopActionPerformed
     {//GEN-HEADEREND:event_btnStopActionPerformed
         Executor.getInstance().setStop(true);
+        // START KGU#117 2016-03-06: Enh. #77
+        chkTestCoverage.setEnabled(true);
+        chkTestRecursive.setEnabled(chkTestCoverage.isSelected());
+        // END KGU#117 2016-03-06
         this.setVisible(false);
     }//GEN-LAST:event_btnStopActionPerformed
 
@@ -273,6 +302,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         btnPause.setEnabled(true);
         btnPlay.setEnabled(false);
         btnStep.setEnabled(false);
+        // START KGU#117 2016-03-06: Enh. #77
+        chkTestCoverage.setEnabled(false);
+        chkTestRecursive.setEnabled(false);
+        // END KGU#117 2016-03-06
         // START KGU#68 205-11-06: Enhancement - update edited values
     	if (varsUpdated)
     	{
@@ -319,6 +352,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     		varsUpdated = false;
     	}
     	// END KGU#68 2015-11-06
+        // START KGU#117 2016-03-06: Enh. #77
+        chkTestCoverage.setEnabled(false);
+        chkTestRecursive.setEnabled(false);
+        // END KGU#117 2016-03-06
         if(Executor.getInstance().isRunning()==false)
         {
             Executor.getInstance().start(true);
@@ -420,6 +457,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     private javax.swing.JLabel lblSpeedValue;
     // END KGU#49 2015-11-25
     private javax.swing.JSlider slSpeed;
+    // START KGU#117 2016-03-06: Enh. #77 - Checkbox fpr Test coverage mode
+    public javax.swing.JCheckBox chkTestCoverage;
+    public javax.swing.JCheckBox chkTestRecursive;
+    // END KGU#117 2016-03-06
     private javax.swing.JTable tblVar;
     // End of variables declaration//GEN-END:variables
     // START KGU#2 (#9) 2015-11-14: Additional display of subroutine call level
@@ -446,6 +487,18 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
             	//System.out.println(tm.getValueAt(rowNr, 0).toString() + " <- " + val.toString());
             }
     	}
+    	// START KGU#117 2016-03-06: Enh. #77
+    	else if (pcEv.getSource() == this.chkTestCoverage)
+    	{
+    		boolean isSelected = this.chkTestCoverage.isSelected();    		
+    		Element.E_TESTCOVERAGEMODE = isSelected;
+    		this.chkTestRecursive.setEnabled(isSelected && this.chkTestCoverage.isEnabled());
+    	}
+    	else if (pcEv.getSource() == this.chkTestRecursive)
+    	{
+    		Call.E_TESTCOVERAGERECURSIVE = this.chkTestRecursive.isSelected();
+    	}
+    	// END KGU#117 2016-03-06
 		
 	}
     // END KGU#68 2015-11-06
