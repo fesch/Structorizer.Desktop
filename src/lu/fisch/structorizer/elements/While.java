@@ -40,6 +40,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false))
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
+ *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
  *
  ******************************************************************************************************
  *
@@ -47,11 +48,13 @@ package lu.fisch.structorizer.elements;
  *
  ******************************************************************************************************///
 
+import java.util.Stack;
 import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
@@ -65,7 +68,12 @@ public class While extends Element implements ILoop {
 
 	public Subqueue q = new Subqueue();
 	
-	private Rect r = new Rect();
+	// START KGU#136 2016-02-27: Bugfix #97 replaced by local variable in repareDraw()
+	//private Rect r = new Rect();
+	// END KGU#136 2016-02-27
+	// START KGU#136 2016-03-01: Bugfix #97
+	private Point pt0Body = new Point(0,0);
+	// END KGU#136 2016-03-01
 	
 	public While()
 	{
@@ -102,46 +110,67 @@ public class While extends Element implements ILoop {
 
 	public Rect prepareDraw(Canvas _canvas)
 	{
-                if(isCollapsed()) 
-                {
-                    rect = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
-                    return rect;
-                }
+		// START KGU#136 2016-01-03: Bugfix #97 (prepared)
+		if (this.isRectUpToDate) return rect0;
+		// END KGU#136 2016-01-03
+
+		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
+		if(isCollapsed()) 
+		{
+			rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
+			// START KGU#136 2016-03-01: Bugfix #97
+			isRectUpToDate = true;
+			// END KGU#136 2016-03-01
+			return rect0;
+		}
             
-		rect.top=0;
-		rect.left=0;
+		rect0.top = 0;
+		rect0.left = 0;
 		
-		rect.right=2*Math.round(E_PADDING/2);
+		rect0.right = 2*(E_PADDING/2);
 		
 		FontMetrics fm = _canvas.getFontMetrics(font);
 		
-		rect.right=Math.round(2*(E_PADDING/2));
-		for(int i=0;i<getText(false).count();i++)
+		rect0.right = (2*(E_PADDING/2));
+		for (int i = 0; i < getText(false).count(); i++)
 		{
 			int lineWidth = getWidthOutVariables(_canvas,getText(false).get(i),this)+2*(E_PADDING/2);
-			if (rect.right < lineWidth)
+			if (rect0.right < lineWidth)
 			{
-				rect.right = lineWidth;
+				rect0.right = lineWidth;
 			}
 		}
 		
-		rect.bottom = 2*(E_PADDING/2) + getText(false).count() * fm.getHeight();
+		rect0.bottom = 2*(E_PADDING/2) + getText(false).count() * fm.getHeight();
+		// START KGU#136 2016-03-01: Bugfix #97 - Preparation for local coordinate detection
+		this.pt0Body.x = E_PADDING - 1;		// FIXME: Fine tuning!
+		this.pt0Body.y = rect0.bottom - 1;	// FIXME: Fine tuning!
+		// END KGU#136 2016-03-01
 		
-		r=q.prepareDraw(_canvas);
-		
-		rect.right = Math.max(rect.right,r.right+E_PADDING);
-		rect.bottom += r.bottom;		
-		return rect;
+		// START KGU#136 2016-02-27: Bugfix #97 - field r replaced by local variable
+		//r=q.prepareDraw(_canvas);
+		//rect.right = Math.max(rect.right,r.right+E_PADDING);
+		//rect.bottom += r.bottom;		
+		//return rect;
+		Rect rectBody = q.prepareDraw(_canvas);
+		rect0.right = Math.max(rect0.right, rectBody.right+E_PADDING);
+		rect0.bottom += rectBody.bottom;		
+
+		// START KGU#136 2016-03-01: Bugfix #97
+		isRectUpToDate = true;
+		// END KGU#136 2016-03-01
+		return rect0;
+		// END KGU#136 2016-02-27
 	}
 	
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
-                if(isCollapsed()) 
+                if (isCollapsed()) 
                 {
                     Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
                     return;
                 }
-                
+        
 		Rect myrect = new Rect();
 		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
 		//Color drawColor = getColor();
@@ -163,38 +192,45 @@ public class While extends Element implements ILoop {
 		canvas.setBackground(drawColor);
 		canvas.setColor(drawColor);
 		
-		rect=_top_left.copy();
+		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
+		//rect = _top_left.copy();
+		rect = new Rect(0, 0, 
+				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
+		Point ref = this.getDrawPoint();
+		this.topLeft.x = _top_left.left - ref.x;
+		this.topLeft.y = _top_left.top - ref.y;
+		// END KGU#136 2016-03-01
 		
 		int headerHeight = fm.getHeight() * getText(false).count() + 2*(E_PADDING / 2);
 		
 		// draw shape
-		myrect=_top_left.copy();
+		myrect = _top_left.copy();
 		canvas.setColor(Color.BLACK);
-		myrect.bottom=_top_left.top + headerHeight;
+		myrect.bottom = _top_left.top + headerHeight;
 		canvas.drawRect(myrect);
 		
-		myrect=_top_left.copy();
-		myrect.right=myrect.left+Element.E_PADDING;
+		myrect = _top_left.copy();
+		myrect.right = myrect.left + Element.E_PADDING;
 		canvas.drawRect(myrect);
 		
 		// fill shape
 		canvas.setColor(drawColor);
-		myrect.left=myrect.left+1;
-		myrect.top=myrect.top+1;
-		myrect.bottom=myrect.bottom;
-		myrect.right=myrect.right;
+		myrect.left += 1;
+		myrect.top += 1;
+		//myrect.bottom = myrect.bottom;
+		//myrect.right = myrect.right;
 		canvas.fillRect(myrect);
 	
-		myrect=_top_left.copy();
-		myrect.bottom=_top_left.top + headerHeight;
-		myrect.left=myrect.left+1;
-		myrect.top=myrect.top+1;
-		myrect.bottom=myrect.bottom;
-		myrect.right=myrect.right;
+		myrect = _top_left.copy();
+		myrect.bottom = _top_left.top + headerHeight;
+		myrect.left += 1;
+		myrect.top += 1;
+		//myrect.bottom = myrect.bottom;
+		//myrect.right = myrect.right;
 		canvas.fillRect(myrect);
 		
 		// draw comment
-		if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
+		if (Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 		{
 			// START KGU 2015-10-11: Use an inherited helper method now
 //			canvas.setBackground(E_COMMENTCOLOR);
@@ -217,24 +253,24 @@ public class While extends Element implements ILoop {
 		// END KGU 2015-10-11
 		
 		
-		myrect=_top_left.copy();
+		myrect = _top_left.copy();
 		// draw text
-		for(int i=0;i<getText(false).count();i++)
+		for (int i = 0; i < getText(false).count(); i++)
 		{
 			String text = this.getText(false).get(i);
 			
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
-							  _top_left.left+Math.round(E_PADDING / 2),
-							_top_left.top+Math.round(E_PADDING / 2)+(i+1)*fm.getHeight(),
-							text,this
+							  _top_left.left + (E_PADDING / 2),
+							_top_left.top + (E_PADDING / 2) + (i+1)*fm.getHeight(),
+							text, this
 							);  	
 		}
 		
 		// draw children
-		myrect=_top_left.copy();
-		myrect.left=myrect.left+Element.E_PADDING-1;
-		myrect.top=_top_left.top+fm.getHeight()*getText(false).count()+2*Math.round(E_PADDING / 2)-1;
+		myrect = _top_left.copy();
+		myrect.left += Element.E_PADDING-1;
+		myrect.top += headerHeight-1;
 		q.draw(_canvas,myrect);
 		
 	}
@@ -268,7 +304,10 @@ public class While extends Element implements ILoop {
 		if (!this.isCollapsed())
 		{
 		// END KGU#121 2016-01-03
-			Element sel = q.getElementByCoord(_x, _y, _forSelection);
+			// START KGU#136 2016-03-01: Bugfix #97
+			//Element sel = q.getElementByCoord(_x, _y, _forSelection);
+			Element sel = q.getElementByCoord(_x-pt0Body.x, _y-pt0Body.y, _forSelection);
+			// END KGU#136 2016-03-01
 			if(sel!=null) 
 			{
 				if (_forSelection) selected=false;

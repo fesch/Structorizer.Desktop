@@ -1,5 +1,5 @@
 /*
-    Structorizer spanish language file
+    Structorizer Spanish language file
 
     Copyright (C) 2009  Andrés Cabrera
 
@@ -38,7 +38,8 @@
  *      Kay Gürtzig     2015.11.22  Additions for InputBoxFor, Analyser, and AnalyserPreferences
  *      Kay Gürtzig     2015.11.30  Further additions for Analyser and AnalyserPreferences
  *      Kay Gürtzig     2015.12.18  New messages for ExportOptionDialoge
- *      Kay Gürtzig 	2016.01.04  Enh. #87: New messages for collapsing / expanding elements
+ *      Kay Gürtzig     2016.01.04  Enh. #87: New messages for collapsing / expanding elements
+ *      Kay Gürtzig     2016.01.21  Breakpoint message also in Menu now
  *
  ******************************************************************************************************
  *
@@ -112,6 +113,9 @@ Menu.menuDiagramMoveUp.text=Desplazar arriba
 Menu.menuDiagramMoveDown.text=Desplazar abajo
 Menu.menuDiagramCollapse.text=Reducir
 Menu.menuDiagramExpand.text=Expandir
+// Breakpoint
+Menu.menuDiagramBreakpoint.text=Poner/eliminar breakpoint
+// Diagram Appearance
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Main
 Menu.menuDiagramTypeFunction.text=Sub

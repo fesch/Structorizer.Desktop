@@ -38,6 +38,7 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2015.11.24      Method clear added.
  *      Kay Gürtzig     2015.12.01      Methods replaceAll, replaceAllCi added.
  *      Kay Gürtzig     2015.12.01      Methods concatenate(...) added; getText() etc. reduced to them.
+ *      Kay Gürtzig     2016.01.08      Method replaceAllBetween() added, replaceAll etc. reduced to it.
  *
  ******************************************************************************************************
  *
@@ -303,7 +304,7 @@ public class StringList {
 	{
 		int foundAt = -1;
 		int foundFirst = -1;
-		while ((foundFirst = indexOf(_subList.get(0), _from, _matchCase)) >= 0 && foundFirst + _subList.count() <= this.count())
+		while (foundAt < 0 && (foundFirst = indexOf(_subList.get(0), _from, _matchCase)) >= 0 && foundFirst + _subList.count() <= this.count())
 		{
 			for (int i = 1; foundFirst >= 0 && i < _subList.count(); i++)
 			{
@@ -751,21 +752,24 @@ public class StringList {
      */
     public int replaceAll(String _stringOld, String _stringNew)
     {
-    	int nReplaced = 0;
-    	int i = 0;
-    	while (i < count())
-    	{
-    		if (strings.get(i).equals(_stringOld))
-    		{
-    			strings.setElementAt(_stringNew, i);
-    			nReplaced++;
-    		}
-    		else
-    		{
-        		i++;    			
-    		}
-    	}
-    	return nReplaced;
+    	// START KGU#129 2016-01-08: Delegated to common submethod
+//    	int nReplaced = 0;
+//    	int i = 0;
+//    	while (i < count())
+//    	{
+//    		if (strings.get(i).equals(_stringOld))
+//    		{
+//    			strings.setElementAt(_stringNew, i);
+//    			nReplaced++;
+//    		}
+//    		else
+//    		{
+//    			i++;    			
+//    		}
+//    	}
+//    	return nReplaced;
+    	return replaceAllBetween(_stringOld, _stringNew, true, 0, count());
+    	// END KGU#129 2016-01-08
     }
 
     /**
@@ -777,11 +781,47 @@ public class StringList {
      */
     public int replaceAllCi(String _stringOld, String _stringNew)
     {
+    	// START KGU#129 2016-01-08: Delegated to common submethod
+//    	int nReplaced = 0;
+//    	int i = 0;
+//    	while (i < count())
+//    	{
+//    		if (strings.get(i).equalsIgnoreCase(_stringOld))
+//    		{
+//    			strings.setElementAt(_stringNew, i);
+//    			nReplaced++;
+//    		}
+//    		else
+//    		{
+//    			i++;    			
+//    		}
+//    	}
+//    	return nReplaced;
+    	return replaceAllBetween(_stringOld, _stringNew, false, 0, count());
+    	// END KGU#129 2016-01-08
+    }
+    // END KGU#92 2015-12-01
+    
+    // START KGU#129 2016-01-08: Extended interface to facilitate bugfix #96
+    /**
+     * Replaces all elements being exactly (or case-independently) equal to the given
+     * string _stringOld by _stringNew; works only within index range _start and _end
+     * (where _end is not included).
+     * @param _stringOld - the searched string
+     * @param _stringNew - the string to replace occurrences of _stringOld
+     * @param _matchCase - whether or not letter case must match exactly
+     * @param _start - index of first token to be affected
+     * @param _end - index beyond the last token to be affected
+     * @return number of replacements
+     */
+    public int replaceAllBetween(String _stringOld, String _stringNew, boolean _matchCase, int _start, int _end)
+    {
     	int nReplaced = 0;
-    	int i = 0;
-    	while (i < count())
+    	int i = Math.max(0, _start);
+    	while (i < Math.min(_end, count()))
     	{
-    		if (strings.get(i).equalsIgnoreCase(_stringOld))
+    		if (_matchCase && strings.get(i).equals(_stringOld) ||
+    				!_matchCase && strings.get(i).equalsIgnoreCase(_stringOld))
     		{
     			strings.setElementAt(_stringNew, i);
     			nReplaced++;
@@ -793,7 +833,7 @@ public class StringList {
     	}
     	return nReplaced;
     }
-    // END KGU#92 2015-12-01
+    // END KGU#129 2016-01-08
 
     @Override
 	public String toString()

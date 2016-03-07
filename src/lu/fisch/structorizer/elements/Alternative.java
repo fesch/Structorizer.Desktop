@@ -39,6 +39,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in drawing methods
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord()
+ *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): Translation-neutral selection
+ *      Kay Gürtzig     2016.03.07      Bugfix #122 (KGU#136): Selection was not aware of option altPadRight 
  *
  ******************************************************************************************************
  *
@@ -52,6 +55,7 @@ import java.awt.FontMetrics;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.geom.Point2D.Double;
+import java.util.Stack;
 
 import javax.swing.ImageIcon;
 
@@ -66,6 +70,10 @@ public class Alternative extends Element {
 	
 	private Rect rTrue = new Rect();
 	private Rect rFalse = new Rect();
+	
+	// START KGU#136 2016-03-01: Bugfix #97
+	private Point pt0True = new Point();
+	private Point pt0False = new Point();
 
 	public Alternative()
 	{
@@ -106,30 +114,38 @@ public class Alternative extends Element {
 
 	public Rect prepareDraw(Canvas _canvas)
 	{
+		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
+		if (this.isRectUpToDate) return rect0;
+		// END KGU#136 2016-03-01
+		//  KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
 		if(isCollapsed()) 
 		{
-			rect = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
-			return rect;
+			rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
+			// START KGU#136 2016-03-01: Bugfix #97
+			isRectUpToDate = true;
+			// END KGU#136 2016-03-01
+			return rect0;
 		}
 
-		rect.top=0;
-		rect.left=0;
+		int nLines = getText(false).count();
+		rect0.top = 0;
+		rect0.left = 0;
 
-		rect.right=2*Math.round(E_PADDING/2);
+		rect0.right = 2 * (E_PADDING/2);
 
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 
-		rect.right=Math.round(2*(E_PADDING));
+		rect0.right = 2 * E_PADDING;
 
 		// prepare the sub-queues
-		rFalse=qFalse.prepareDraw(_canvas);
-		rTrue=qTrue.prepareDraw(_canvas);
+		rFalse = qFalse.prepareDraw(_canvas);
+		rTrue = qTrue.prepareDraw(_canvas);
 
 		// the upper left point of the corner
 		double cx = 0;
-		double cy = getText(false).count()*fm.getHeight()+4*Math.round(E_PADDING/2);
-		// the the lowest point of the triangle
-		double ax =  rTrue.right-rTrue.left;
+		double cy = nLines*fm.getHeight() + 4*(E_PADDING/2);
+		// the lowest point of the triangle
+		double ax =  rTrue.right - rTrue.left;
 		//System.out.println("AX : "+ax);
 		double ay =  0;
 		// coefficient of the left droite
@@ -137,10 +153,10 @@ public class Alternative extends Element {
 
 
 		// init
-		int choice = -1;
-		double lowest = 100000;
+		//int choice = -1;
+		double lowest = 100000;	// dummy bound
 
-		for(int i=0;i<getText(false).count();i++)
+		for (int i = 0; i < nLines; i++)
 		{
 
 			/* old code
@@ -151,19 +167,19 @@ public class Alternative extends Element {
 			 */
 
 			// bottom line of the text
-			double by = 4*Math.round(E_PADDING/2)-Math.round(E_PADDING/3)+(getText(false).count()-i-1)*fm.getHeight();
+			double by = 4*(E_PADDING/2) - (E_PADDING/3) + (nLines-i-1) * fm.getHeight();
 			// part on the left side
-			double leftside = by/coeffleft+ax-ay/coeffleft;
-			// the the bottom right point of this text line
-			int textWidth = getWidthOutVariables(_canvas,getText(false).get(i),this);
-			double bx = textWidth + 2*Math.round(E_PADDING/2) + leftside;
+			double leftside = by/coeffleft + ax - ay/coeffleft;
+			// the bottom right point of this text line
+			int textWidth = getWidthOutVariables(_canvas, getText(false).get(i), this);
+			double bx = textWidth + 2*(E_PADDING/2) + leftside;
 			//System.out.println("LS : "+leftside);
 
 			// check if this is the one we need to do calculations
 			double coeff = (by-ay)/(bx-ax);
 
 			// the point height we need
-			double y = getText(false).count() * fm.getHeight() + 4*Math.round(E_PADDING/2);
+			double y = nLines * fm.getHeight() + 4*(E_PADDING/2);
 			double x = y/coeff + ax - ay/coeff;
 			//System.out.println(i+" => "+coeff+" --> "+String.valueOf(x));
 
@@ -171,32 +187,40 @@ public class Alternative extends Element {
 			{
 				// remember it
 				lowest = coeff;
-				choice = i;
+				//choice = i;
 			}
 		}
 		if (lowest!=100000)
 		{
 			// the point height we need
-			double y = getText(false).count() * fm.getHeight() + 4*Math.round(E_PADDING/2);
+			double y = nLines * fm.getHeight() + 4*(E_PADDING/2);
 			double x = y/lowest + ax - ay/lowest;
-			rect.right = (int) Math.round(x);
+			rect0.right = (int) Math.round(x);
 			//System.out.println("C => "+lowest+" ---> "+rect.right);
 		}
 		else
 		{
-			rect.right=4*Math.round(E_PADDING/2);
+			rect0.right = 4*(E_PADDING/2);
 		}
 
-		rect.bottom=4*Math.round(E_PADDING/2)+getText(false).count()*fm.getHeight();
+		rect0.bottom = 4*(E_PADDING/2) + nLines*fm.getHeight();
+		pt0True.y = pt0False.y = rect0.bottom;
+		
+		rect0.right = Math.max(rect0.right, rTrue.right + rFalse.right);
+		rect0.bottom += Math.max(rTrue.bottom, rFalse.bottom);
+		pt0True.x = 0;
+		pt0False.x = rTrue.right;
 
-		rect.right=Math.max(rect.right,rTrue.right+rFalse.right);
-		rect.bottom+=Math.max(rTrue.bottom,rFalse.bottom);
+		// START KGU#136 2016-03-01: Bugfix #97
+		isRectUpToDate = true;
+		// END KGU#136 2016-03-01
 
-		return rect;
+		return rect0;
 	}
 	
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
+		//System.out.println("ALT("+this.getText().getLongString()+") draw at ("+_top_left.left+", "+_top_left.top+")");
                 if(isCollapsed()) 
                 {
                     Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
@@ -231,18 +255,27 @@ public class Alternative extends Element {
 		canvas.setBackground(drawColor);
 		canvas.setColor(drawColor);
 		
-		myrect=_top_left.copy();
-		myrect.bottom-=1;
+		int nLines = getText(false).count();
+		myrect = _top_left.copy();
+		myrect.bottom -= 1;
 		canvas.fillRect(myrect);
 
-		rect=_top_left.copy();
-		myrect.bottom=_top_left.top+getText(false).count()*fm.getHeight()+4*Math.round(E_PADDING / 2);
-		y=myrect.top+E_PADDING;
-		a=myrect.left+Math.round((myrect.right-myrect.left) / 2);
-		b=myrect.top;
-		c=myrect.left+rTrue.right-1;
-		d=myrect.bottom-1;
-		x=Math.round(((y-b)*(c-a)+a*(d-b))/(d-b));
+		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
+		//rect = _top_left.copy();
+		rect = new Rect(0, 0, 
+				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
+		Point ref = this.getDrawPoint();
+		this.topLeft.x = _top_left.left - ref.x;
+		this.topLeft.y = _top_left.top - ref.y;
+		// END KGU#136 2016-03-01
+		
+		myrect.bottom = _top_left.top + nLines*fm.getHeight() + 4*(E_PADDING/2);
+		y = myrect.top + E_PADDING;
+		a = myrect.left + ((myrect.right-myrect.left) / 2);
+		b = myrect.top;
+		c = myrect.left + rTrue.right - 1;
+		d = myrect.bottom - 1;
+		x = Math.round(((y-b)*(c-a) + a*(d-b))/(d-b));
 /*
 		wmax=0;
 		for(int i=0;i<text.count();i++)
@@ -253,35 +286,38 @@ public class Alternative extends Element {
 			}
 		}
 */
-                int remain = (_top_left.right-_top_left.left)
-                             -(rTrue.right-rTrue.left)
-                             -(rFalse.right-rFalse.left);
-                if(Element.altPadRight==false) remain=0;
+                int remain = (_top_left.right - _top_left.left)
+                             -(rTrue.right - rTrue.left)
+                             -(rFalse.right - rFalse.left);
+                if (Element.altPadRight == false) remain=0;
+                // START KGU#136 2016-03-07: Bugfix #122 - we must correct the else start point
+                this.pt0False.x = this.rTrue.right - rTrue.left + remain; 
+                // END KGU#136 2016-03-07
                 
                 // the upper left point of the corner
                 double cx = 0;
-                double cy = getText(false).count()*fm.getHeight()+4*Math.round(E_PADDING/2);
+                double cy = nLines*fm.getHeight() + 4*(E_PADDING/2);
                 // upper right corner
-                double dx = _top_left.right-_top_left.left;
+                double dx = _top_left.right - _top_left.left;
                 double dy = cy;
                 // the the lowest point of the triangle
-                double ax =  rTrue.right-rTrue.left+remain;
-                double ay =  0;
+                double ax = rTrue.right - rTrue.left + remain;
+                double ay = 0;
                 // coefficient of the left droite
                 double coeffleft = (cy-ay)/(cx-ax);
                 double coeffright = (dy-ay)/(dx-ax);
 
                 // draw text
-		for(int i=0;i<getText(false).count();i++)
+		for (int i=0; i < nLines; i++)
 		{
 			String mytext = this.getText(false).get(i);
 
                         // bottom line of the text
-                        double by = 4*Math.round(E_PADDING/2)-Math.round(E_PADDING/3)+(getText(false).count()-i-1)*fm.getHeight();
+                        double by = 4*(E_PADDING/2) - (E_PADDING/3) + (nLines-i-1)*fm.getHeight();
                         // part on the left side
-                        double leftside = by/coeffleft+ax-ay/coeffleft;
+                        double leftside = by/coeffleft + ax - ay/coeffleft;
                         // the the bottom right point of this text line
-                        double bx = by/coeffright+ax-ay/coeffright;
+                        double bx = by/coeffright + ax - ay/coeffright;
                         /* dbugging output
                         canvas.setColor(Color.RED);
                         canvas.fillRect(new Rect(
@@ -296,8 +332,8 @@ public class Alternative extends Element {
 
                         canvas.setColor(Color.BLACK);
                         writeOutVariables(canvas,
-                            _top_left.left + Math.round(E_PADDING/2) + (int) leftside + (int) (boxWidth - textWidth)/2,
-                            _top_left.top+Math.round(E_PADDING / 3)+(i+1)*fm.getHeight(),
+                            _top_left.left + (E_PADDING/2) + (int) leftside + (int) (boxWidth - textWidth)/2,
+                            _top_left.top + (E_PADDING / 3) + (i+1)*fm.getHeight(),
                             mytext,this
                         );
 
@@ -323,30 +359,17 @@ public class Alternative extends Element {
 		}
 		
 		// draw symbols
-		canvas.writeOut(myrect.left+Math.round(E_PADDING / 2),
-						myrect.bottom-Math.round(E_PADDING / 2),preAltT);
-		canvas.writeOut(myrect.right-Math.round(E_PADDING / 2)-_canvas.stringWidth(preAltF),
-						myrect.bottom-Math.round(E_PADDING / 2),preAltF);
+		canvas.writeOut(myrect.left + (E_PADDING / 2),
+						myrect.bottom - (E_PADDING / 2), preAltT);
+		canvas.writeOut(myrect.right - (E_PADDING / 2) -_canvas.stringWidth(preAltF),
+						myrect.bottom - (E_PADDING / 2), preAltF);
 		
 		
 		
 		// draw comment
-		if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
+		if (Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 		{
-			// START KGU 2015-10-11: Use an inherited helper method now
-//			canvas.setBackground(E_COMMENTCOLOR);
-//			canvas.setColor(E_COMMENTCOLOR);
-//			
-//			Rect someRect = myrect.copy();
-//			
-//			someRect.left+=2;
-//			someRect.top+=2;
-//			someRect.right=someRect.left+4;
-//			someRect.bottom-=2;
-//			
-//			canvas.fillRect(someRect);
 			this.drawCommentMark(canvas, myrect);
-			// END KGU 2015-10-11
 		}
 		// START KGU 2015-10-11
 		// draw breakpoint bar if necessary
@@ -355,24 +378,24 @@ public class Alternative extends Element {
 		
                 // draw triangle
 		canvas.setColor(Color.BLACK);
-		canvas.moveTo(myrect.left,myrect.top);
-		canvas.lineTo(myrect.left+rTrue.right-1+remain,myrect.bottom-1);
-		canvas.lineTo(myrect.right,myrect.top);
+		canvas.moveTo(myrect.left, myrect.top);
+		canvas.lineTo(myrect.left + rTrue.right-1 + remain, myrect.bottom-1);
+		canvas.lineTo(myrect.right, myrect.top);
 		
 		// draw children
-		myrect=_top_left.copy();
+		myrect = _top_left.copy();
                 
-		myrect.top=_top_left.top+fm.getHeight()*getText(false).count()+4*Math.round(E_PADDING / 2)-1;
-		myrect.right=myrect.left+rTrue.right-1+remain;
+		myrect.top = _top_left.top + fm.getHeight()*nLines + 4*(E_PADDING / 2)-1;
+		myrect.right = myrect.left + rTrue.right-1 + remain;
 		
 		qTrue.draw(_canvas,myrect);
 		
-		myrect.left=myrect.right;
-		myrect.right=_top_left.right;
+		myrect.left = myrect.right;
+		myrect.right = _top_left.right;
 		qFalse.draw(_canvas,myrect);
 		
 		
-		myrect=_top_left.copy();
+		myrect = _top_left.copy();
 		canvas.setColor(Color.BLACK);
 		canvas.drawRect(myrect);
 	}
@@ -393,16 +416,17 @@ public class Alternative extends Element {
 	@Override
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
-//		Element selMe = super.selectElementByCoord(_x,_y);
-//		Element selT = qTrue.selectElementByCoord(_x,_y);
-//		Element selF = qFalse.selectElementByCoord(_x,_y);
 		Element selMe = super.getElementByCoord(_x,_y, _forSelection);
 		// START KGU#121 2016-01-03: Bugfix #87 - A collapsed element has no visible substructure!
 		if (!this.isCollapsed())
 		{
 		// END KGU#121 2016-01-03
-			Element selT = qTrue.getElementByCoord(_x,_y, _forSelection);
-			Element selF = qFalse.getElementByCoord(_x,_y, _forSelection);
+			// START KGU#136 2016-03-01: Bugfix #97 - we use local coordinates now
+			//Element selT = qTrue.getElementByCoord(_x,_y, _forSelection);
+			//Element selF = qFalse.getElementByCoord(_x,_y, _forSelection);
+			Element selT = qTrue.getElementByCoord(_x-pt0True.x, _y-pt0True.y, _forSelection);
+			Element selF = qFalse.getElementByCoord(_x-pt0False.x, _y-pt0False.y, _forSelection);
+			// END KGU#136 2016-03-01
 			if (selT != null) 
 			{
 				//selected=false;

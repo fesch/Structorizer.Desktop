@@ -49,10 +49,29 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.12.11      Bugfix #54 (KGU#102) in getVarNames(): keywords within identifiers
  *      Kay Gürtzig     2015.12.20      Bugfix #50 (KGU#112) getResultType() slightly revised
  *      Kay Gürtzig     2016.01.02      Bugfixes #78 (KGU#119, equals()) and #85 (KGU#120, undo() etc.) 
+ *      Kay Gürtzig     2016.01.06      Bugfix #89: References to obsolete operator padding (KGU#126) and
+ *                                      faulty index condition for variable detection (KGU#98) fixed 
+ *      Kay Gürtzig     2016.01.08      Bugfix #50 (KGU#135) postfix result type was split into lines  
+ *      Kay Gürtzig     2016.01.11      Issue #103 (KGU#137): "changed" state now dependent on undo/redo
+ *                                      stack, see comments below for details
+ *      Kay Gürtzig     2016.01.14      Bugfix #103/#109: Saving didn't reset the hasChanged flag anymore (KGU#137)
+ *      Kay Gürtzig     2016.01.16      Bugfix #112: Processing of indexed variables mended (KGU#141)
+ *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
+ *      Kay Gürtzig     2016.01.22      Bugfix for issue #38: moveUp/moveDown for selected sequences (KGU#144)
+ *      Kay Gürtzig     2016.02.25      Bugfix #97 (= KGU#136): field rect replaced by rect0 in prepareDraw()
  *
  ******************************************************************************************************
  *
  *      Comment:		/
+ *      
+ *      2016.01.11 (KGU#137)
+ *      - When changes are undone back to the moment of last file saving, the hasChanged is to be reset
+ *      - Therefore, we now track the undo stack size when saving. As soon as an undo action returns to
+ *        the recorded stack size, the hasChanged flag will be reset. Undoing more steps sets the
+ *        flag again but keeps the stored stack size for the case of redoing forward to this point again.
+ *      - As soon as an undoable editing below the recorded stack level eccurs (wiping the redo stack),
+ *        the recorded stack level will be set to an unreachable -1, because the saved state gets lost
+ *        internally.
  *
  ******************************************************************************************************///
 
@@ -85,6 +104,10 @@ import com.stevesoft.pat.*;
 import java.awt.Point;
 import java.util.ArrayList;
 
+/**
+ * @author kay
+ *
+ */
 public class Root extends Element {
 	
 	// KGU 2015-10-16: Just for testing purposes
@@ -93,10 +116,14 @@ public class Root extends Element {
 	// some fields
 	public boolean isNice = true;
 	public boolean isProgram = true;
-	public boolean hasChanged = false;
+	// START KGU#137 2016-01-11: Bugfix #103 - More precise tracking of changes
+	//public boolean hasChanged = false;
+	private boolean hasChanged = false;		// Now only for global, not undoable changes
+	private int undoLevelOfLastSave = 0;	// Undo stack level recorded on saving
+	// END KGU#137 2016-01-11
 	public boolean hightlightVars = false;
 	// START KGU#2 (#9) 2015-11-13:
-	// Is this routine currently waiting for a called subroutine?
+	// Executor: Is this routine currently waiting for a called subroutine?
 	public boolean isCalling = false;
 	// END KG#2 (#9) 2015-11-13
 	
@@ -104,6 +131,11 @@ public class Root extends Element {
 
 	public int height = 0;
 	public int width = 0;
+	
+	// START KGU#136 2016-03-01: Bugfix #97 - sensibly, we cache the subqueue extensions
+	private Rect subrect0 = new Rect();
+	private Point pt0Sub = new Point(0,0);
+	// END KGU#136 2016-03-01
 
 	private Stack<Subqueue> undoList = new Stack<Subqueue>();
 	private Stack<Subqueue> redoList = new Stack<Subqueue>();
@@ -198,6 +230,26 @@ public class Root extends Element {
     	updaters.clear();
     }
     // END KGU#48 2015-10-17
+    
+    // START KGU#137 2016-01-11: Bugfix #103 - Enhanced change tracking, synchronized with undoing/redoing/saving
+    /**
+     * Sets an additional sticky changed flag for saveable global settings that are not subject
+     * of the undo/redo stacks
+     */
+    public void setChanged()
+    {
+    	this.hasChanged = true;
+    }
+
+    /**
+     * Detects if changes (no matter if undoable or not) have been registered since last saving
+     * @return true if there have been changes not undone
+     */
+    public boolean hasChanged()
+    {
+    	return this.hasChanged || this.undoLevelOfLastSave != this.undoList.size();
+    }
+    // END KGU#137 2016-01-11
 
 	// START KGU 2015-10-13: This follows a code snippet found in Root.draw(Canvas, Rect), which had been ineffective though
 	@Override
@@ -218,59 +270,63 @@ public class Root extends Element {
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
-		Rect subrect = new Rect();
-
-		rect.top=0;
-		rect.left=0;
+		// START KGU#136 2016-01-03: Bugfix #97 (prepared)
+		if (this.isRectUpToDate) return rect0.copy();
+		pt0Sub.x = 0;
+		// END KGU#136 2016-01-03
+		
+		//  KGU#136 2016-02-25: Bugfix #97 - all rect references replaced by rect0
+		rect0.top = 0;
+		rect0.left = 0;
 
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 		Font titleFont = new Font(Element.font.getName(),Font.BOLD,Element.font.getSize());
 		_canvas.setFont(titleFont);
 
-		if(isNice==true)
+		// Compute width (dependent on diagram style and text properties)
+		int padding = 2*(E_PADDING/2);
+		if (isNice)
 		{
-			rect.right=2*E_PADDING;
-			for(int i=0;i<getText(false).count();i++)
-			{
-				int w = getWidthOutVariables(_canvas,getText(false).get(i),this);
-				if(rect.right<w+2*E_PADDING)
-				{
-					rect.right=w+2*E_PADDING;
-				}
-			}
-			rect.bottom=3*E_PADDING+getText(false).count()*fm.getHeight();
+			padding = 2 * E_PADDING;
+			pt0Sub.x = E_PADDING;
 		}
-		else
+		rect0.right = 2 * E_PADDING;
+		for (int i=0; i<getText(false).count(); i++)
 		{
-			rect.right=2*E_PADDING;
-			for(int i=0;i<getText(false).count();i++)
+			int width = getWidthOutVariables(_canvas,getText(false).get(i),this) + padding;
+			if (rect0.right < width)
 			{
-				if(rect.right<getWidthOutVariables(_canvas,getText(false).get(i),this)+2*Math.round(E_PADDING/2))
-				{
-					rect.right=getWidthOutVariables(_canvas,getText(false).get(i),this)+2*Math.round(E_PADDING/2);
-				}
+				rect0.right = width;
 			}
-			rect.bottom=2*Math.round(E_PADDING/2)+getText(false).count()*fm.getHeight();
 		}
+		
+		// Compute height (dependent on diagram style and number of text lines 
+		if (isNice)	padding = 3 * E_PADDING;
+		rect0.bottom = padding + getText(false).count() * fm.getHeight();
+		pt0Sub.y = rect0.bottom;
+		if (isNice)	pt0Sub.y -= E_PADDING;
 
 		_canvas.setFont(Element.font);
 
-		subrect=children.prepareDraw(_canvas);
+		subrect0 = children.prepareDraw(_canvas);
 
-		if(isNice==true)
+		if (isNice)
 		{
-			rect.right=Math.max(rect.right,subrect.right+2*Element.E_PADDING);
+			rect0.right = Math.max(rect0.right, subrect0.right + 2*Element.E_PADDING);
 		}
 		else
 		{
-			rect.right=Math.max(rect.right,subrect.right);
+			rect0.right = Math.max(rect0.right, subrect0.right);
 		}
 
-		rect.bottom+=subrect.bottom;
-		this.width=rect.right-rect.left;
-		this.height=rect.bottom-rect.top;
-
-		return rect;
+		rect0.bottom += subrect0.bottom;
+		this.width = rect0.right - rect0.left;
+		this.height = rect0.bottom - rect0.top;
+		
+		// START KGU#136 2016-03-01: Bugfix #97
+		isRectUpToDate = true;
+		// END KGU#136 2016-03-01
+		return rect0.copy();
 	}
 
 	public void drawBuffered(Canvas _canvas, Rect _top_left)
@@ -278,24 +334,23 @@ public class Root extends Element {
 		// save reference to output canvas
 		Canvas origCanvas = _canvas;
 		// create a new image (buffer) to draw on
-		BufferedImage bufferImg = new BufferedImage(_top_left.right+1,_top_left.bottom+1, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage bufferImg = new BufferedImage(_top_left.right+1, _top_left.bottom+1, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D bufferGraphics = (Graphics2D) bufferImg.getGraphics();
 		_canvas = new Canvas(bufferGraphics);
 
 
-		draw(_canvas,_top_left);
+		draw(_canvas, _top_left);
 
 		// draw buffer to output canvas
 		origCanvas.draw(bufferImg,0,0);
 
-		// free up the buffer an clean memory
-		bufferImg=null;
+		// free up the buffer and clean memory
+		bufferImg = null;
 		System.gc();
 	}
 
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
-		Rect myrect = new Rect();
 		// START KGU 2015-10-13: Encapsulates all fundamental colouring and highlighting strategy
 		//Color drawColor = getColor();
 		Color drawColor = getFillColor();
@@ -311,7 +366,7 @@ public class Root extends Element {
 			getText().insert("???",0);
 		}
 
-		rect=_top_left.copy();
+		rect = _top_left.copy();
 
 		// START KGU 2015-10-13: 
 		// Root-specific part put into an override version of getColor()
@@ -335,15 +390,13 @@ public class Root extends Element {
 		// END KGU 2015-10-13
 		
 		// draw background
-		myrect=_top_left.copy();
-
 
 		Canvas canvas = _canvas;
 
 		// erase background
 		canvas.setBackground(drawColor);
 		canvas.setColor(drawColor);
-		canvas.fillRect(myrect);
+		canvas.fillRect(_top_left);
 
 		/*
 		 if(isNice=false) then _canvas.pen.Width:=3;
@@ -360,17 +413,9 @@ public class Root extends Element {
 		 */
 
 		// draw comment
-		if(E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
+		if (E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 		{
-			canvas.setBackground(E_COMMENTCOLOR);
-			canvas.setColor(E_COMMENTCOLOR);
-
-			myrect.left+=2;
-			myrect.top+=1;
-			myrect.right=myrect.left+4;
-			myrect.bottom-=2;
-
-			canvas.fillRect(myrect);
+			this.drawCommentMark(_canvas, _top_left);
 		}
 
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
@@ -378,7 +423,7 @@ public class Root extends Element {
 		canvas.setFont(titleFont);
 
 		// draw text
-		if(isNice==true)
+		if (isNice==true)
 		{
 			for(int i=0;i<getText(false).count();i++)
 			{
@@ -396,8 +441,8 @@ public class Root extends Element {
 			{
 				canvas.setColor(Color.BLACK);
 				// FIXME (KGU): Why aren't the variables highlighted here? (forgotten?)
-				canvas.writeOut(  rect.left+Math.round(E_PADDING/2),
-								rect.top+(i+1)*fm.getHeight()+Math.round(E_PADDING/2),
+				canvas.writeOut(rect.left + (E_PADDING/2),
+								rect.top + (i+1)*fm.getHeight() + (E_PADDING/2),
 								(String) getText(false).get(i)
 								);
 			}
@@ -406,7 +451,7 @@ public class Root extends Element {
 		
 		int headerHeight = fm.getHeight()*getText(false).count();
 
-		if(isNice==true)
+		if (isNice==true)
 		{
 			headerHeight += 2*E_PADDING;
 			rect.top = _top_left.top + headerHeight;
@@ -429,7 +474,7 @@ public class Root extends Element {
 
 
 		// draw thick line
-		if(isNice==false)
+		if (isNice==false)
 		{
 			rect.top = _top_left.top + headerHeight - 1;
 			rect.left = _top_left.left;
@@ -447,7 +492,13 @@ public class Root extends Element {
 			canvas.roundRect(rect);
 		}
 
-		rect = _top_left.copy();
+		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
+		//rect = _top_left.copy();
+		rect = new Rect(0, 0, 
+				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
+		this.topLeft.x = _top_left.left - this.drawPoint.x;
+		this.topLeft.y = _top_left.top - this.drawPoint.y;
+		// END KGU#136 2016-03-01
 	}
 
 	// START KGU 2015-10-11: Methods merged into getElementByCoord(int _x, int _y, boolean _forSelection
@@ -485,8 +536,17 @@ public class Root extends Element {
     @Override
     public Element getElementByCoord(int _x, int _y, boolean _forSelection)
     {
+            // START KGU#136 2016-03-01: Bugfix #97 - now we relativate cursor position rather than rectangles
+//            Point pt = getDrawPoint();
+//            _x -= pt.x;
+//            _y -= pt.y;
+            // END KGU#136 2016-03-01
+
             Element selMe = super.getElementByCoord(_x, _y, _forSelection);
-            Element selCh = children.getElementByCoord(_x, _y, _forSelection);
+            // START KGU#136 2016-03-01: Bugfix #97
+            //Element selCh = children.getElementByCoord(_x, _y, _forSelection);
+            Element selCh = children.getElementByCoord(_x - pt0Sub.x, _y - pt0Sub.y, _forSelection);
+            // END KGU#136 2016-03-01
             if(selCh!=null)
             {
                     if (_forSelection) selected = false;
@@ -533,14 +593,24 @@ public class Root extends Element {
                     //         !_ele.getClass().getSimpleName().equals("Root"))
                     if ( _ele instanceof IElementSequence)
                     {
-                    	hasChanged = ((IElementSequence)_ele).getSize() > 0;
+                    	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                    	//hasChanged = ((IElementSequence)_ele).getSize() > 0;
+                    	// END KGU#137 2016-01-11
                     	((IElementSequence)_ele).removeElements();
+                    	// START KGU#136 2016-03-01: Bugfix #97
+                    	_ele.resetDrawingInfoUp();
+                    	// END KGU#136 2016-03-01
                     }
                     else if (!_ele.getClass().getSimpleName().equals("Root"))
                     // END KGU#87 2015-11-22
                     {
                             ((Subqueue) _ele.parent).removeElement(_ele);
-                            hasChanged=true;
+                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            //hasChanged=true;
+                        	// END KGU#137 2016-01-11
+                        	// START KGU#136 2016-03-01: Bugfix #97
+                        	_ele.parent.resetDrawingInfoUp();
+                        	// END KGU#136 2016-03-01
                     }
             }
     }
@@ -554,7 +624,12 @@ public class Root extends Element {
                             ((Subqueue) _ele).addElement(_new);
                             _ele.selected=false;
                             _new.selected=true;
-                            hasChanged=true;
+                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            //hasChanged=true;
+                        	// END KGU#137 2016-01-11
+                        	// START KGU#136 2016-03-01: Bugfix #97
+                        	_ele.resetDrawingInfoUp();
+                        	// END KGU#136 2016-03-01
                     }
                     else if (_ele.parent.getClass().getSimpleName().equals("Subqueue"))
                     {
@@ -563,7 +638,12 @@ public class Root extends Element {
                             ((Subqueue) _ele.parent).insertElementAt(_new, i);
                             _ele.selected=false;
                             _new.selected=true;
-                            hasChanged=true;
+                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            //hasChanged=true;
+                        	// END KGU#137 2016-01-11
+                        	// START KGU#136 2016-03-01: Bugfix #97
+                        	_ele.parent.resetDrawingInfoUp();
+                        	// END KGU#136 2016-03-01
                     }
                     else
                     {
@@ -652,7 +732,7 @@ public class Root extends Element {
         ).start();/**/
 
         // inform updaters
-        for(int u=0;u<updaters.size();u++)
+        for(int u=0; u<updaters.size(); u++)
         {
             if(updaters.get(u)!=updater)
             {
@@ -663,12 +743,12 @@ public class Root extends Element {
         Canvas canvas = new Canvas((Graphics2D) _g);
         canvas.setFont(Element.getFont()); //?
         Rect myrect = this.prepareDraw(canvas);
-        myrect.left+=point.x;
-        myrect.top+=point.y;
-        myrect.right+=point.x;
-        myrect.bottom+=point.y;
+        myrect.left += point.x;
+        myrect.top += point.y;
+        myrect.right += point.x;
+        myrect.bottom += point.y;
         //this.drawBuffered(canvas,myrect);
-        this.draw(canvas,myrect);
+        this.draw(canvas, myrect);
         //this.drawBuffered(canvas, myrect);
 
         return myrect;
@@ -737,16 +817,29 @@ public class Root extends Element {
 		undoList.peek().setComment(this.comment.copy());
 		// END KGU#120 2016-01-02
 		clearRedo();
+		// START KGU#137 2016-01-11: Bugfix #103
+		// If stack was lower than when last saved, then related info is going lost
+		if (undoList.size() <= this.undoLevelOfLastSave)
+		{
+			this.undoLevelOfLastSave = -1;
+		}
+		// END KGU#137 2016-01-11
 	}
 
     public boolean canUndo()
     {
-            return (undoList.size()>0);
+    	// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
+    	//return (undoList.size()>0);
+    	return (undoList.size() > 0) && !this.waited;
+    	// END KGU#143 2016-01-21
     }
 
     public boolean canRedo()
     {
-            return (redoList.size()>0);
+    	// START KGU#143 2016-01-21: Bugfix #114 - we cannot allow a redo while an execution is pending
+    	//return (redoList.size()>0);
+    	return (redoList.size() > 0) && !this.waited;
+    	// END KGU#143 2016-01-21
     }
 
     public void clearRedo()
@@ -757,13 +850,19 @@ public class Root extends Element {
     public void clearUndo()
     {
             undoList = new Stack<Subqueue>();
+    		// START KGU#137 2016-01-11: Bugfix #103 - Most recently saved state is lost, too
+            // FIXME: It might also be an initialisation (in which case = 0 would have been correct)
+            this.undoLevelOfLastSave = -1;
+    		// END KGU#137 2016-01-11
     }
 
     public void undo()
     {
             if (undoList.size()>0)
             {
-                    this.hasChanged=true;
+                    // START KGU#137 2016-01-11: Bugfix #103 - rely on undoList level comparison 
+                    //this.hasChanged=true;
+                    // END KGU#137 2016-01-11
                     redoList.add((Subqueue)children.copy());
             		// START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes in the stack top
             		redoList.peek().setText(this.text.copy());
@@ -777,6 +876,9 @@ public class Root extends Element {
             		children.text.clear();
             		children.comment.clear();
             		// END KGU#120 2016-01-02
+                	// START KGU#136 2016-03-01: Bugfix #97
+                	this.resetDrawingInfoDown();
+                	// END KGU#136 2016-03-01
             }
     }
 
@@ -784,7 +886,9 @@ public class Root extends Element {
     {
             if (redoList.size()>0)
             {
-                    this.hasChanged=true;
+                    // START KGU#137 2016-01-11: Bugfix #103 - rely on undoList level comparison 
+                    //this.hasChanged=true;
+                    // END KGU#137 2016-01-11
                     undoList.add((Subqueue)children.copy());
             		// START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes on the stack top
             		undoList.peek().setText(this.text.copy());
@@ -798,26 +902,59 @@ public class Root extends Element {
             		children.text.clear();
             		children.comment.clear();
             		// END KGU#120 2016-01-02
+                	// START KGU#136 2016-03-01: Bugfix #97
+                	this.resetDrawingInfoDown();
+                	// END KGU#136 2016-03-01
             }
     }
 
+    // START KGU#137 2016-01-11: Bugfix #103 - Synchronize saving with undo / redo stacks
+    /**
+     * To be called after successful saving the diagram as NSD in order to record
+     * the current undoStack size, such that we may know whether or not there are
+     * unsaved changes.
+     */
+    public void rememberSaved()
+    {
+    	this.undoLevelOfLastSave = this.undoList.size();
+    	// START KGU#137 2016-01-14: Bugfix #107
+    	this.hasChanged = false;
+    	// END KGU#137 2016-01-16
+    }
+    // END KGU#137 2016-01-11
 
     public boolean moveDown(Element _ele)
     {
             boolean res = false;
             if(_ele!=null)
             {
+            	// START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
+            	if (_ele instanceof SelectedSequence)
+            	{
+            		res = ((SelectedSequence)_ele).moveDown();
+            	}
+            	else
+            	{
+            	// END KGU#144 2016-01-22
                     int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
                     if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
                             !_ele.getClass().getSimpleName().equals("Root") &&
                             ((i+1)<((Subqueue) _ele.parent).getSize()))
                     {
-                            ((Subqueue) _ele.parent).removeElement(i);
-                            ((Subqueue) _ele.parent).insertElementAt(_ele, i+1);
-                            this.hasChanged=true;
+                            // START KGU#136 2016-03-02: Bugfix #97
+                            //((Subqueue) _ele.parent).removeElement(i);
+                            //((Subqueue) _ele.parent).insertElementAt(_ele, i+1);
+                            ((Subqueue) _ele.parent).moveElement(i, i+1);
+                            // END KGU#136 2016-03-02: Bugfix #97
+                        	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
+                            //hasChanged=true;
+                        	// END KGU#137 2016-01-11
                             _ele.setSelected(true);
                             res=true;
                     }
+               	// START KGU#144 2016-01-22: Bugfix #38 (continued)
+            	}
+            	// END KGU#144 2016-01-22
             }
             return res;
     }
@@ -827,17 +964,33 @@ public class Root extends Element {
             boolean res = false;
             if(_ele!=null)
             {
+            	// START KGU#144 2016-01-22: Bugfix #38 - multiple selection wasn't properly considered
+            	if (_ele instanceof SelectedSequence)
+            	{
+            		res = ((SelectedSequence)_ele).moveUp();
+            	}
+            	else
+            	{
+            	// END KGU#144 2016-01-22
                     int i = ((Subqueue) _ele.parent).getIndexOf(_ele);
                     if (!_ele.getClass().getSimpleName().equals("Subqueue") &&
                             !_ele.getClass().getSimpleName().equals("Root") &&
                             ((i-1>=0)))
                     {
-                            ((Subqueue) _ele.parent).removeElement(i);
-                            ((Subqueue) _ele.parent).insertElementAt(_ele, i-1);
-                            this.hasChanged=true;
+                            // START KGU#136 2016-03-02: Bugfix #97
+                            //((Subqueue) _ele.parent).removeElement(i);
+                            //((Subqueue) _ele.parent).insertElementAt(_ele, i-1);
+                            ((Subqueue) _ele.parent).moveElement(i, i-1);
+                            // END KGU#136 2016-03-02: Bugfix #97
+                        	// START KGU#137 2016-01-11: Bugfix 103 - rely on addUndo() 
+                            //hasChanged=true;
+                        	// END KGU#137 2016-01-11
                             _ele.setSelected(true);
                             res=true;
                     }
+               	// START KGU#144 2016-01-22: Bugfix #38 (continued)
+               	}
+               	// END KGU#144 2016-01-22
             }
             return res;
     }
@@ -984,21 +1137,45 @@ public class Root extends Element {
      *************************************/
 
 
-
+    /**
+     * Extracts the variable name out of a more complex string possibly also
+     * containing index brackets, component access operator or type specifications
+     * @param _s the raw lvalue string
+     * @return the pure variable name
+     */
     private String cleanup(String _s)
     {
-            //System.out.println("IN : "+_s);
-            if(_s.indexOf("[")>=0)
-            {
-                    _s=_s.substring(0,_s.indexOf("["));
-            }
-            if(_s.indexOf(".")>=0)
-            {
-                    _s=_s.substring(0,_s.indexOf("."));
-            }
-            //System.out.println("OUT : "+_s);
+    	//System.out.println("IN : "+_s);
+    	// START KGU#141 2016-01-16: Bugfix #112
+//            if(_s.indexOf("[")>=0)
+//            {
+//                    _s=_s.substring(0,_s.indexOf("["));
+//            }
+    	while (_s.startsWith("(") && _s.endsWith(")"))
+    	{
+    		_s = _s.substring(1,  _s.length()-1);
+    	}
+    	Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
+    	_s = r.replaceAll(_s);
+    	// START KGU#141 2016-01-16
+    	if(_s.indexOf(".")>=0)
+    	{
+    		_s=_s.substring(0,_s.indexOf("."));
+    	}
+    	// START KGU#109/KGU#141 2016-01-16: Bugfix #61/#107/#112
+    	// In case of Pascal-typed variables we should only use the part before the separator
+    	int colonPos = _s.indexOf(':');	// Check Pascal and BASIC style as well
+    	if (colonPos > 0 || (colonPos = _s.indexOf(" as ")) > 0)
+    	{
+    		_s = _s.substring(0, colonPos).trim();
+    	}
+    	// In case of C-typed variables we should only use the last word (identifier)
+    	String[] tokens = _s.split(" ");
+    	if (tokens.length > 0) _s = tokens[tokens.length-1];
+    	// END KGU#109/KGU#141 2016-01-16
+    	//System.out.println("OUT : "+_s);
 
-            return _s;
+    	return _s;
 
     }
 
@@ -1140,10 +1317,10 @@ public class Root extends Element {
                             // END KGU 2015-10-16
 
                             // get names from assignments
-                            // START KGU 2015-11-28: Operators are already unified now
-//                            if(allText.indexOf("<--")>=0)
+                            // START KGU#126 2016-01-06: We can no longer expect operators to be padded
+//                            if(allText.indexOf(" <- ")>=0)
 //                            {
-//                                    int pos = allText.indexOf("<--");
+//                                    int pos = allText.indexOf(" <- ");
 //
 //                                    String s = allText.substring(0, pos);
 //                                    if(allText.indexOf("[")>=0)
@@ -1152,35 +1329,24 @@ public class Root extends Element {
 //                                            s=r.replaceAll(s);
 //                                    } else { s=""; }
 //
-//                                    allText=s+" "+allText.substring(pos+2,allText.length());
+//                                    allText=s+" "+allText.substring(pos + " <- ".length(), allText.length());
 //                            }
-                            if(allText.indexOf(" <- ")>=0)
+                            int asgnPos = allText.indexOf("<-");
+                            if (asgnPos >= 0)
                             {
-                                    int pos = allText.indexOf(" <- ");
-
-                                    String s = allText.substring(0, pos);
-                                    if(allText.indexOf("[")>=0)
+                                    String s = allText.substring(0, asgnPos);
+                                    // START KGU#98 2016-01-06: This is only interesting within s
+                                    //if (allText.indexOf("[") >= 0)
+                                    if (s.indexOf("[") >= 0)
+                                    // END KGU#98 2016-01-06
                                     {
                                             r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-                                            s=r.replaceAll(s);
-                                    } else { s=""; }
+                                            s = r.replaceAll(s);
+                                    } else { s = ""; }
 
-                                    allText=s+" "+allText.substring(pos + " <- ".length(), allText.length());
+                                    allText=s+" "+allText.substring(asgnPos + "<-".length(), allText.length());
                             }
-//                            if(allText.indexOf(":=")>=0)
-//                            {
-//                                    int pos = allText.indexOf(":=");
-//
-//                                    String s = allText.substring(0, pos);
-//                                    if(allText.indexOf("[")>=0)
-//                                    {
-//                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-//                                            s=r.replaceAll(s);
-//                                    } else { s=""; }
-//
-//                                    allText=s+" "+allText.substring(pos+2,allText.length());
-//                            }
-                            // END KGU 2015-11-28
+                            // END KGU#126 2016-01-06
 
                             // cutoff output keyword
                             // START KGU#23 2015-10-16: Must start at the very beginning 
@@ -1335,28 +1501,23 @@ public class Root extends Element {
                     }
                     // END KGU#102 2015-12-11
 
-                    // START KGU 2015-11-28: Operators have already been unified above 
-                    // get names from assignments
-//                    if(allText.indexOf("<--")>=0)
+                    // START KGU#126 2016-01-06: Operators can no longer be expected to be padded
+//                    if(allText.indexOf(" <- ")>=0)
 //                    {
-//                            int pos = allText.indexOf("<--");
-//                        allText=allText.substring(0,pos);
+//                            int pos = allText.indexOf(" <- ");
+//                            allText = allText.substring(0,pos);
+//                            //System.out.println("Adding to initialised var names: " + cleanup(allText.trim()));
 //                            varNames.addOrderedIfNew(cleanup(allText.trim()));
 //                    }
-                    if(allText.indexOf(" <- ")>=0)
+                    if(allText.indexOf("<-")>=0)
                     {
-                            int pos = allText.indexOf(" <- ");
-                            allText = allText.substring(0,pos);
+                            int pos = allText.indexOf("<-");
+                            allText = allText.substring(0, pos).trim();
+                            // (KGU#141 2016-01-16: type elimination moved to cleanup())
                             //System.out.println("Adding to initialised var names: " + cleanup(allText.trim()));
                             varNames.addOrderedIfNew(cleanup(allText.trim()));
                     }
-//                    if(allText.indexOf(":=")>=0)
-//                    {
-//                            int pos = allText.indexOf(":=");
-//                        allText=allText.substring(0,pos);
-//                            varNames.addOrderedIfNew(cleanup(allText.trim()));
-//                    }
-                    // END KGU 2015-11-28
+                    // END KGU#126 2016-01-06
 
                     // get names from read statements
                     if(allText.indexOf(D7Parser.input.trim())>=0)
@@ -1367,9 +1528,15 @@ public class Root extends Element {
                             {
                                     for(int j=0;j<str.count();j++)
                                     {
-                                            String s = str.get(j);
-                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1$3");
-                                            s=r.replaceAll(s);
+                                              // START KGU#141 2016-01-16: Bugfix #112 - use cleanup...
+//                                            String s = str.get(j);
+//                                            // START KGU#98 2016-01-06: Better don't glue the prefix and suffix without space
+//                                            //r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1$3");
+//                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
+//                                            // END KGU#98 2016-01-06
+//                                            s = r.replaceAll(s);
+                                              String s = cleanup(str.get(j));
+                                              // END KGU#141 2016-01-16
 
                                             if(!s.trim().equals(""))
                                             {
@@ -1522,9 +1689,11 @@ public class Root extends Element {
 //                    }
 //            }
 
+            // FIXME (KGU 2016-01-16): On a merge for 3.22-22, the following change got lost
+            // if (!(this instanceof Root))
             varNames.add(getVarnames(lines));
 
-            varNames=varNames.reverse();
+            varNames=varNames.reverse();	// FIXME (KGU): What is intended by reversing?
             if (_entireProg) {
                     this.variables=varNames;
             }
@@ -1717,79 +1886,83 @@ public class Root extends Element {
     			StringList test = ele.getText();
 
     			// CHECK: wrong multi-line instruction (#10 - new!)
-    			int isInput = 0;
-    			int isOutput = 0;
-    			int isAssignment = 0;
+    			boolean isInput = false;
+    			boolean isOutput = false;
+    			boolean isAssignment = false;
 
     			// Check every instruction line...
-    			for(int l=0;l<test.count();l++)
+    			for(int l=0; l<test.count(); l++)
     			{
-    				// CHECK: wrong affection (#11 - new!)
+    				// CHECK: wrong assignment (#11 - new!)
     				String myTest = test.get(l);
 
-    				// FIXME (KGU): Shouldn't we better do a lexical splitting here (see below)? 
-    				// Remove all strings delimited by '
-    				myTest=myTest.replaceAll("(.*?)['](.*?)['](.*?)","$1$3");
-    				// Remove all strings delimited by "
-    				myTest=myTest.replaceAll("(.*?)[\"](.*?)[\"](.*?)","$1$3");
+    				// START KGU#65/KGU#126 2016-01-06: More precise analysis, though expensive
+//    				// FIXME (KGU): Shouldn't we better do a lexical splitting here (see below)? 
+//    				// Remove all strings delimited by '
+//    				myTest=myTest.replaceAll("(.*?)['](.*?)['](.*?)","$1$3");
+//    				// Remove all strings delimited by "
+//    				myTest=myTest.replaceAll("(.*?)[\"](.*?)[\"](.*?)","$1$3");
+//
+//    				//System.out.println(" -- "+myTest);
+//
+//    				// FIXME (KGU): condition is not sound
+//    				String unified = Element.unifyOperators(myTest);
+//    				if (unified.contains(" == ") && !unified.contains(" <- "))
+//    				{
+//    					//error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
+//    					error  = new DetectedError(errorMsg(Menu.error11,""), ele);
+//    					addError(_errors,error,11);
+//    				}
+//
+//    				// CHECK: wrong multi-line instruction (#10 - new!)
+//    				String myText = test.get(l);
+//    				if (myText.contains(D7Parser.input.trim())) {isInput=1;}
+//    				if (myText.contains(D7Parser.output.trim())) {isOutput=1;}
+//    				if ( myText.contains("<-") || myText.contains(":=") || myText.contains("<--")) {isAssignment=1;}
 
-    				//System.out.println(" -- "+myTest);
-
-    				// FIXME (KGU): condition is not sound
-    				String unified = ele.unifyOperators(myTest);
-    				if (unified.contains(" == ") && !unified.contains(" <- "))
+    				StringList tokens = splitLexically(myTest, true);
+    				unifyOperators(tokens, false);
+    				if (tokens.contains("<-"))
     				{
-    					//error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
-    					error  = new DetectedError(errorMsg(Menu.error11,""), ele);
-    					addError(_errors,error,11);
+    					isAssignment = true;
     				}
-
+    				else if (tokens.contains("=="))
+    				{
+    				        //error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
+    				        error  = new DetectedError(errorMsg(Menu.error11,""), _node.getElement(i));
+    				        addError(_errors,error,11);
+    				}
+    				
     				// CHECK: wrong multi-line instruction (#10 - new!)
-    				String myText = test.get(l);
-    				if (myText.contains(D7Parser.input.trim())) {isInput=1;}
-    				if (myText.contains(D7Parser.output.trim())) {isOutput=1;}
-    				if ( myText.contains("<-") || myText.contains(":=") || myText.contains("<--")) {isAssignment=1;}
-
-    				// START KGU#65 2015-11-04: Possible replacement (though expensive, hence not activated)
-    				//StringList tokens = splitLexically(myTest, true);
-    				//if((tokens.contains("=") || tokens.contains("==")) && !tokens.contains("<-") && !tokens.contains(":="))
-    				//{
-    				//        //error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
-    				//        error  = new DetectedError(errorMsg(Menu.error11,""), _node.getElement(i));
-    				//        addError(_errors,error,11);
-    				//}
-    				//
-    				//// CHECK: wrong multi-line instruction (#10 - new!)
-    				//if (tokens.contains(D7Parser.input.trim())) {isInput=1;}
-    				//if (tokens.contains(D7Parser.output.trim())) {isOutput=1;}
-    				//if (tokens.contains("<-") || tokens.contains(":=")) {isAssignment=1;}
-    				// END KGU#65 2015-11-04
+    				if (myTest.startsWith(D7Parser.input.trim())) {isInput = true;}
+    				if (myTest.startsWith(D7Parser.output.trim())) {isOutput = true;}
+    				// END KGU#65/KGU#126 2016-01-06
 
     			}
     			// CHECK: wrong multi-line instruction (#10 - new!)
-    			if (isInput+isOutput+isAssignment==3)
+    			if (isInput && isOutput && isAssignment)
     			{
     				//error  = new DetectedError("A single instruction element should not contain input/output instructions and assignments!",(Element) _node.getElement(i));
     				error  = new DetectedError(errorMsg(Menu.error10_1,""), ele);
-    				addError(_errors,error,10);
+    				addError(_errors, error, 10);
     			}
-    			else if (isInput+isOutput==2)
+    			else if (isInput && isOutput)
     			{
     				//error  = new DetectedError("A single instruction element should not contain input and output instructions!",(Element) _node.getElement(i));
     				error  = new DetectedError(errorMsg(Menu.error10_2,""), ele);
-    				addError(_errors,error,10);
+    				addError(_errors, error, 10);
     			}
-    			else if (isInput+isAssignment==2)
+    			else if (isInput && isAssignment)
     			{
     				//error  = new DetectedError("A single instruction element should not contain input instructions and assignments!",(Element) _node.getElement(i));
     				error  = new DetectedError(errorMsg(Menu.error10_3,""), ele);
-    				addError(_errors,error,10);
+    				addError(_errors, error, 10);
     			}
-    			else if (isOutput+isAssignment==2)
+    			else if (isOutput && isAssignment)
     			{
     				//error  = new DetectedError("A single instruction element should not contain ouput instructions and assignments!",(Element) _node.getElement(i));
     				error  = new DetectedError(errorMsg(Menu.error10_4,""), ele);
-    				addError(_errors,error,10);
+    				addError(_errors, error, 10);
     			}
     		}
 
@@ -1840,10 +2013,16 @@ public class Root extends Element {
     		{
     			String text = ele.getText().getLongString();
     			text = Element.unifyOperators(text);
-    			if ( text.contains(" <- ") )
+    			// START KGU#126 2016-01-06: We may no longer expect operatos to be padded
+//    			if ( text.contains(" <- ") )
+//    			{
+//    				text = text.substring(text.indexOf(" <- ") + 4);
+//    			}
+    			if ( text.contains("<-") )	// FIXME: Detection within string literals!?
     			{
-    				text = text.substring(text.indexOf(" <- ") + 4);
+    				text = text.substring(text.indexOf("<-") + 2);
     			}
+    			// END KGU#126 2016-01-06
     			Function func = new Function(text);
     			if (!func.isFunction())
     			{
@@ -2533,7 +2712,10 @@ public class Root extends Element {
     					(tokens.get(posCloseParenth + 1).equals(":"))
     					)
     			{
-    				resultType = tokens.getText(posCloseParenth + 2);
+    				// START KGU#135 2016-01-08: It was not meant to be split to several lines.
+    				//resultType = tokens.getText(posCloseParenth + 2);
+    				resultType = tokens.concatenate(" ", posCloseParenth + 2);
+    				// END KGU#135 2016-01-06
     			}
     			// Second attempt: A keyword sequence preceding the routine name
     			else if (posOpenParenth > 1 && testidentifier(tokens.get(posOpenParenth-1)))
@@ -2568,31 +2750,46 @@ public class Root extends Element {
         			rootText=rootText.substring(0,rootText.indexOf(")")).trim();
         		}
 
-        		StringList params = StringList.explode(rootText,";");
-        		for(int i = 0; i < params.count(); i++)
+        		StringList paramGroups = StringList.explode(rootText,";");
+        		for(int i = 0; i < paramGroups.count(); i++)
         		{
         			// common type for parameter group
         			String type = null;
-        			String decl = params.get(i);
-        			int posColon = decl.indexOf(":");
+        			String group = paramGroups.get(i);
+        			int posColon = group.indexOf(":");
         			if (posColon >= 0)
         			{
-        				type = decl.substring(posColon + 1).trim();
-        				decl = decl.substring(0, posColon).trim();
+        				type = group.substring(posColon + 1).trim();
+        				group = group.substring(0, posColon).trim();
         			}
-        			else if ((posColon = decl.indexOf(" as ")) >= 0)
-        			{
-        				type = decl.substring(posColon + " as ".length()).trim();
-        				decl = decl.substring(0, posColon).trim();
-        			}
-        			StringList vars = StringList.explode(decl,",");
+        			// START KGU#109 2016-01-15 Bugfix #61/#107 - was wrong, must first split by ','
+//        			else if ((posColon = group.indexOf(" as ")) >= 0)
+//        			{
+//        				type = group.substring(posColon + " as ".length()).trim();
+//        				group = group.substring(0, posColon).trim();
+//        			}
+        			// END KGU#109 2016-01-15
+        			StringList vars = StringList.explode(group,",");
         			for (int j=0; j < vars.count(); j++)
         			{
-        				String varName = vars.get(j).trim();
-        				if (!varName.isEmpty())
+        				String decl = vars.get(j).trim();
+        				if (!decl.isEmpty())
         				{
+               				// START KGU#109 2016-01-15: Bugfix #61/#107 - we must split every "varName" by ' '.
+                			if (type == null && (posColon = decl.indexOf(" as ")) >= 0)
+                			{
+                				type = decl.substring(posColon + " as ".length()).trim();
+                				decl = decl.substring(0, posColon).trim();
+                			}
+                			StringList tokens = StringList.explode(decl, " ");
+                			if (tokens.count() > 1) {
+                				if (type == null) {
+                					type = tokens.concatenate(" ", 0, tokens.count() - 1);
+                				}
+                				decl = tokens.get(tokens.count()-1);
+                			}
         					//System.out.println("Adding parameter: " + vars.get(j).trim());
-        					if (paramNames != null)	paramNames.add(varName);
+        					if (paramNames != null)	paramNames.add(decl);
         					if (paramTypes != null)	paramTypes.add(type);
         				}
         			}
@@ -2826,5 +3023,6 @@ public class Root extends Element {
 		return textToShow;
 	}
 // END KGU#91 2015-12-04
-  
+
+    
 }

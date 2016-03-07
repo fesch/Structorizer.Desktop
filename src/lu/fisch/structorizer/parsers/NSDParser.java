@@ -36,6 +36,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2015.10.29              Enhancement on For loop (new attributes KGU#3)
  *      Kay Gürtzig     2015.10.29              Modification on For loop (new attribute KGU#3)
  *      Kay Gürtzig     2015.12.16              Bugfix #63 (KGU#111): Exception on parsing failure
+ *      Kay Gürtzig     2016.01.08              Bugfix #99 (KGU#134): workaround for defective FOR loops
  *
  ******************************************************************************************************
  *
@@ -69,6 +70,8 @@ public class NSDParser extends DefaultHandler {
 	
 	private Subqueue lastQ = null;
 	private Element lastE = null;
+	
+	private String fileVersion = "";
 
         @Override
 	public void startElement(String namespaceUri, String localName, String qualifiedName, Attributes attributes) throws SAXException 
@@ -84,15 +87,15 @@ public class NSDParser extends DefaultHandler {
 				*/
 			}
 			
-			// START KGU 2015-12-04: Prepared for future use...
-//			String version = Element.E_VERSION;
-//			if (attributes.getIndex("version") != -1) { version = attributes.getValue("version"); }
-//			// So we might react to some incompatibility... 
+			// START KGU#134 2016-01-08: File version now needed for bugfix #99 
+			String version = Element.E_VERSION;
+			if (attributes.getIndex("version") != -1) { fileVersion = attributes.getValue("version"); }
+			// So we might react to some incompatibility... 
 //			if (version.indexOf("dev") != 0)
 //			{
 //				// Unstable version ...
 //			}
-			// END KGU 2015-12-04
+			// END KGU 2016-01-08
 			
 			// read attributes
 			root.isProgram = true;
@@ -218,6 +221,10 @@ public class NSDParser extends DefaultHandler {
 			// create element
 			For ele = new For(StringList.getNew("???"));
 			
+//			// START KGU#134 2016-01-08: Bugfix #99
+//			final StringList issue99Versions = StringList.explode("3.23-08 3.23-09 3.23-10 3.23-11", " ");
+//			// END KGU#134 2016-01-08
+			
 			// read attributes
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
@@ -226,6 +233,9 @@ public class NSDParser extends DefaultHandler {
 			int got = 0;
 			if(attributes.getIndex("counterVar")!=-1)  {ele.setCounterVar(attributes.getValue("counterVar")); got++;}
 			if(attributes.getIndex("startValue")!=-1)  {ele.setStartValue(attributes.getValue("startValue")); got++;}
+			// START KGU#134 2016-01-08: Bugfix #99 Test for mis-spelled attribute name (issue99Versions)
+			else if (attributes.getIndex("StartValue")!=-1)  {ele.setStartValue(attributes.getValue("StartValue")); got++;}
+			// END KGU#134 2016-01-08
 			if(attributes.getIndex("endValue")!=-1)  {ele.setEndValue(attributes.getValue("endValue")); got++;}
 			if(attributes.getIndex("stepConst")!=-1)  {ele.setStepConst(attributes.getValue("stepConst")); got++;}
 			//ele.isConsistent = ele.checkConsistency();
@@ -495,7 +505,9 @@ public class NSDParser extends DefaultHandler {
 			// END KGU#111 2015-12-16
 		}
 		
-		root.hasChanged=false;
+		// START KGU#137 2016-01-11: In theory no longer needed - should have been initialized so
+		//root.hasChanged=false;
+		// END KGU#137 2016-01-11
 		
 		return root;
 	}
