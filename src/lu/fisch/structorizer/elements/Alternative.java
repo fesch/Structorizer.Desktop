@@ -40,7 +40,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord()
  *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
- *      Kay Gürtzig     2016.02.01      Bugfix #97 (KGU#136): Translation-neutral selection
+ *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): Translation-neutral selection
+ *      Kay Gürtzig     2016.03.07      Bugfix #122 (KGU#136): Selection was not aware of option altPadRight 
  *
  ******************************************************************************************************
  *
@@ -113,9 +114,9 @@ public class Alternative extends Element {
 
 	public Rect prepareDraw(Canvas _canvas)
 	{
-		// START KGU#136 2016-01-03: Bugfix #97 (prepared)
+		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
 		if (this.isRectUpToDate) return rect0;
-		// END KGU#136 2016-01-03
+		// END KGU#136 2016-03-01
 		//  KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
 		if(isCollapsed()) 
 		{
@@ -289,12 +290,15 @@ public class Alternative extends Element {
                              -(rTrue.right - rTrue.left)
                              -(rFalse.right - rFalse.left);
                 if (Element.altPadRight == false) remain=0;
+                // START KGU#136 2016-03-07: Bugfix #122 - we must correct the else start point
+                this.pt0False.x = this.rTrue.right - rTrue.left + remain; 
+                // END KGU#136 2016-03-07
                 
                 // the upper left point of the corner
                 double cx = 0;
                 double cy = nLines*fm.getHeight() + 4*(E_PADDING/2);
                 // upper right corner
-                double dx = _top_left.right-_top_left.left;
+                double dx = _top_left.right - _top_left.left;
                 double dy = cy;
                 // the the lowest point of the triangle
                 double ax = rTrue.right - rTrue.left + remain;
