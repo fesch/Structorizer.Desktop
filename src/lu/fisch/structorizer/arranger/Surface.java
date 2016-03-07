@@ -44,6 +44,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): Avoid reloading of structurally equivalent diagrams 
  *      Kay Gürtzig     2016.01.15      Enh. #110: File open dialog now selects the NSD filter
  *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136): Modifications for stable selection
+ *      Kay Gürtzig     2016.03.03      Bugfix #121 (KGU#153): Successful file dropping must not pop up an error message
  *
  ******************************************************************************************************
  *
@@ -212,15 +213,27 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     	{
     		String filename = files[i].toString();
     		String errorMessage = loadFile(filename);
-			if (!troubles.isEmpty()) { troubles += "\n"; }
-			troubles += "\"" + filename + "\": " + errorMessage;
-			System.err.println("Arranger failed to load \"" + filename + "\": " + troubles);
+    		// START KGU#153 2016-03-03: Bugfix #121 - a successful load must not add to the troubles text
+			//if (!troubles.isEmpty()) { troubles += "\n"; }
+			//troubles += "\"" + filename + "\": " + errorMessage;
+			//System.err.println("Arranger failed to load \"" + filename + "\": " + troubles);
+    		if (!errorMessage.isEmpty())
+    		{
+    			if (!troubles.isEmpty()) { troubles += "\n"; }
+    			troubles += "\"" + filename + "\": " + errorMessage;
+    			System.err.println("Arranger failed to load \"" + filename + "\": " + troubles);	
+    		}
+    		else
+    		{
+    			nLoaded++;
+    		}
+    		// END KGU#153 2016-03-03
     	}
     	if (!troubles.isEmpty())
     	{
 			JOptionPane.showMessageDialog(this, troubles, "File Load Error", JOptionPane.ERROR_MESSAGE);
     	}
-	return nLoaded;
+    	return nLoaded;
     }
     
     private String loadFile(String filename)
