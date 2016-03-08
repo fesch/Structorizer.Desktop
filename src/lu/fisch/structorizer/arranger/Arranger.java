@@ -51,8 +51,6 @@ package lu.fisch.structorizer.arranger;
  *
  ******************************************************************************************************///
 
-import java.awt.Color;
-import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
@@ -66,7 +64,6 @@ import javax.swing.JScrollPane;
 
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.executor.IRoutinePool;
-import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
 
 /**
