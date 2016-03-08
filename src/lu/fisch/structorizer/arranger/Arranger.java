@@ -43,6 +43,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2015-11-30		Remove action now also achievable by pressing del button (issue #35, KGU#88)
  *      Kay Gürtzig     2015-12-21		Two new buttons for saving and loading arrangements (issue #62, KGU#110)
  *      Kay Gürtzig     2016-01-05		Icons for saving and loading arrangements replaced by fitting ones
+ *      Kay Gürtzig     2016-03-08		Bugfix #97: Methods for drawing info invalidation added (KGU#155) 
  *      Kay Gürtzig     2016.03.08      Method clearExecutionStatus added (for Enhancement #77)
  *
  ******************************************************************************************************
@@ -96,6 +97,17 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
 		return mySelf;
 	}
 	
+	// START KGU#155 2016-03-08: added for bugfix #97
+	/**
+	 * Allows to find out whether an Arranger instance is created without creating it
+	 * @return true iff there is already an Arranger instance
+	 */
+	public static boolean hasInstance()
+	{
+		return mySelf != null;
+	}
+	// END KGU#155 2016-03-08
+	
     /** Creates new form Arranger */
     private Arranger(boolean standalone) {
         initComponents();
@@ -121,6 +133,19 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
     }
     // END KGU#2 2015-11-19
 	
+	// START KGU#155 2016-03-08: Bugfix #97 extension
+	/**
+	 * Invalidates the cached prepareDraw info of all diagrams residing here
+	 * (to be called on events with heavy impact on the size or shape of some
+	 * Elements)
+	 * @param _exceptDiagr the hash code of a lu.fisch.structorizer.gui.Diagram
+	 * that is not to be invoked (to avoid recursion)
+	 */
+	public void resetDrawingInfo(int _exceptDiagr)
+	{
+		surface.resetDrawingInfo(_exceptDiagr);
+	}
+	// END KGU#155 2016-03-08
 
     /** This method is called from within the constructor to
      * initialize the form.

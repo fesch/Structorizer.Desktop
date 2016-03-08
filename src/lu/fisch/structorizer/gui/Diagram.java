@@ -52,6 +52,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
  *      Kay Gürtzig     2016.02.03      Bugfix #117: Title and button update on root replacement (KGU#149)
  *      Kay Gürtzig     2016.03.02      Bugfix #97: Reliable selection mechanism on dragging (KGU#136)
+ *      Kay Gürtzig     2016.03.08      Bugfix #97: Drawing info invalidation now involves Arranger (KGU#155)
  *
  ******************************************************************************************************
  *
@@ -801,37 +802,37 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //		canvas.fillRect(rect);
 		// END KGU 2016-02-27
         
-                // draw dragged element
-                if (selX != -1 && selY != -1 && selectedDown!=null && mX!=mouseX && mY!=mouseY)
-                {
-                    _g.setColor(Color.BLACK);
-                    // START KGU#136 2016-03-02: Bugfix #97 - It must not play any role where the diagram was drawn before
-                    //rect = selectedDown.getRect();
-                    //Rect copyRect = rect.copy();
-                    rect = selectedDown.getRectOffDrawPoint();
-                    // END KGU#136 2016-03-02
-                    int w = rect.right-rect.left;
-                    int h = rect.bottom-rect.top;
-                    rect.left = mX - selX;
-                    rect.top  = mY - selY;
-                    rect.right  = rect.left + w;
-                    rect.bottom = rect.top + h;
-                    ((Graphics2D)_g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-                    selectedDown.draw(canvas, rect);
-                    ((Graphics2D)_g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-                    // START KGU#136 2016-03-01: Bugfix #97 - this is no longer necessary
-                    //selectedDown.rect = copyRect;
-                    // END KGU#136 2016-03-01
-                    //System.out.println(selectedDown.getClass().getSimpleName()+"("+selectedDown.getText().getLongString()+
-                    //		") repositioned to ("+copyRect.left+", "+copyRect.top+")");
-                    //_g.drawRect(mX-selX, mY-selY, w, h);
-                }/**/
+		// draw dragged element
+		if (selX != -1 && selY != -1 && selectedDown!=null && mX!=mouseX && mY!=mouseY)
+		{
+			_g.setColor(Color.BLACK);
+			// START KGU#136 2016-03-02: Bugfix #97 - It must not play any role where the diagram was drawn before
+			//rect = selectedDown.getRect();
+			//Rect copyRect = rect.copy();
+			rect = selectedDown.getRectOffDrawPoint();
+			// END KGU#136 2016-03-02
+			int w = rect.right-rect.left;
+			int h = rect.bottom-rect.top;
+			rect.left = mX - selX;
+			rect.top  = mY - selY;
+			rect.right  = rect.left + w;
+			rect.bottom = rect.top + h;
+			((Graphics2D)_g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+			selectedDown.draw(canvas, rect);
+			((Graphics2D)_g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+			// START KGU#136 2016-03-01: Bugfix #97 - this is no longer necessary
+			//selectedDown.rect = copyRect;
+			// END KGU#136 2016-03-01
+			//System.out.println(selectedDown.getClass().getSimpleName()+"("+selectedDown.getText().getLongString()+
+			//		") repositioned to ("+copyRect.left+", "+copyRect.top+")");
+			//_g.drawRect(mX-selX, mY-selY, w, h);
+		}/**/
 
-                // KGU#91 2015-12-04: Bugfix #39 - Disabled
-                //if (Element.E_TOGGLETC) root.setSwitchTextAndComments(false);
-}
+		// KGU#91 2015-12-04: Bugfix #39 - Disabled
+		//if (Element.E_TOGGLETC) root.setSwitchTextAndComments(false);
+	}
 
-        @Override
+	@Override
 	public void paintComponent(Graphics g)
 	{
 		super.paintComponent(g);
@@ -840,6 +841,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			redraw(g);
 		}
 	}
+        
+    // START KGU#155 2016-03-08: Some additional fixing for bugfix #97
+	/**
+	 * Invalidates the cached prepareDraw info of the current diagram (Root)
+	 * (to be called on events with global impact on the size or shape of Elements)
+	 * @param _all are Roots parked in the Arranger to be invalidated, too?
+	 */
+	public void resetDrawingInfo(boolean _all)
+	{
+		root.resetDrawingInfoDown();
+		if (this.isArrangerOpen)
+		{
+			Arranger.getInstance().resetDrawingInfo(this.hashCode());
+		}
+	}
+	// END KGU#155 2016-03-08
 
 	public Element getSelected()
 	{
@@ -2712,7 +2729,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Element.saveToINI();
 		
 		// START KGU#136 2016-03-02: Bugfix #97 - cached bounds must be invalidated
-		root.resetDrawingInfoDown();
+		this.resetDrawingInfo(true);
 		// END KGU#136 2016-03-02
 
 		// redraw diagram
@@ -2728,7 +2745,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Element.saveToINI();
 
 		// START KGU#136 2016-03-02: Bugfix #97 - cached bounds must be invalidated
-		root.resetDrawingInfoDown();
+		this.resetDrawingInfo(true);
 		// END KGU#136 2016-03-02
 
 		// redraw diagram
@@ -2746,7 +2763,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Element.saveToINI();
 
 			// START KGU#136 2016-03-02: Bugfix #97 - cached bounds must be invalidated
-			root.resetDrawingInfoDown();
+			this.resetDrawingInfo(true);
 			// END KGU#136 2016-03-02
 
 			// redraw diagram
@@ -2762,7 +2779,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Element.E_DIN = !(Element.E_DIN);
 		NSDControl.doButtons();
 		// START KGU#136 2016-03-02: Bugfix #97 - cached bounds must be invalidated
-		root.resetDrawingInfoDown();
+		this.resetDrawingInfo(true);
 		// END KGU#136 2016-03-02		
 		redraw();
 	}
@@ -2772,7 +2789,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Element.E_DIN = true;
 		NSDControl.doButtons();
 		// START KGU#136 2016-03-02: Bugfix #97 - cached bounds must be invalidated
-		root.resetDrawingInfoDown();
+		this.resetDrawingInfo(true);
 		// END KGU#136 2016-03-02
 		redraw();
 	}
@@ -2837,7 +2854,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		Element.E_TOGGLETC=_tc;
     	// START KGU#136 2016-03-01: Bugfix #97
-    	root.resetDrawingInfoDown();
+    	this.resetDrawingInfo(true);
     	// END KGU#136 2016-03-01
 		NSDControl.doButtons();
 		redraw();
@@ -2850,10 +2867,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void setHightlightVars(boolean _highlight)
 	{
-		Element.E_VARHIGHLIGHT=_highlight;
+		Element.E_VARHIGHLIGHT=_highlight;	// this isn't used for drawing, actually
 		root.hightlightVars=_highlight;
     	// START KGU#136 2016-03-01: Bugfix #97
-    	root.resetDrawingInfoDown();
+    	this.resetDrawingInfo(false);	// Only current root is involved
     	// END KGU#136 2016-03-01
 		NSDControl.doButtons();
 		redraw();
@@ -3110,7 +3127,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     void toggleTextComments() {
     	Element.E_TOGGLETC=!Element.E_TOGGLETC;
     	// START KGU#136 2016-03-01: Bugfix #97
-    	root.resetDrawingInfoDown();
+    	this.resetDrawingInfo(true);
     	// END KGU#136 2016-03-01
     	repaint();
     }
