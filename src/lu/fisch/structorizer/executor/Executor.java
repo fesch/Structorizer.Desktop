@@ -2595,7 +2595,7 @@ public class Executor implements Runnable
 			condStr = convert(condStr, false);
 			// System.out.println("REPEAT: "+s
 
-			int cw = 0;
+			//int cw = 0;
 			Object n = interpreter.eval(condStr);
 			if (n == null)
 			{
@@ -2628,7 +2628,7 @@ public class Executor implements Runnable
 
 					if (result.equals(""))
 					{
-						cw++;
+						//cw++;
 						element.executed = true;
 					}
 					n = interpreter.eval(convertStringComparison(condStr));

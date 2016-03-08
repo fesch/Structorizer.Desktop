@@ -46,6 +46,8 @@ package lu.fisch.structorizer.executor;
 
 
 import java.awt.Color;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Vector;
@@ -61,7 +63,7 @@ import lu.fisch.structorizer.gui.IconLoader;
  *
  * @author robertfisch
  */
-public class Control extends javax.swing.JFrame implements PropertyChangeListener {
+public class Control extends javax.swing.JFrame implements PropertyChangeListener, ItemListener {
 
     /** Creates new form Control */
     public Control() {
@@ -152,8 +154,8 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         // END KGU#89 2015-11-25
         
         // START KGU#117 2016-03-06: Enh. #77 Track test coverage mode change
-        chkTestCoverage.addPropertyChangeListener(this);
-        chkTestRecursive.addPropertyChangeListener(this);
+        chkTestCoverage.addItemListener(this);
+        chkTestRecursive.addItemListener(this);
         // END KGU#117 2016-03-06
 
         btnStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/stop.png"))); // NOI18N
@@ -281,6 +283,7 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         btnStep.setEnabled(true);
         // START KGU#117 2016-03-06: Enh. #77
         chkTestCoverage.setEnabled(true);
+        chkTestRecursive.setEnabled(chkTestCoverage.isSelected());
         // END KGU#117 2016-03-06
         // empty table
         DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
@@ -487,25 +490,36 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
             	//System.out.println(tm.getValueAt(rowNr, 0).toString() + " <- " + val.toString());
             }
     	}
-    	// START KGU#117 2016-03-06: Enh. #77
-    	else if (pcEv.getSource() == this.chkTestCoverage)
-    	{
-    		boolean isSelected = this.chkTestCoverage.isSelected();
-    		boolean wipeTestStatus = !isSelected && Element.E_TESTCOVERAGEMODE;
-    		Element.E_TESTCOVERAGEMODE = isSelected;
-    		this.chkTestRecursive.setEnabled(isSelected && this.chkTestCoverage.isEnabled());
-    		if (wipeTestStatus) 
-    		{
-    			Executor.getInstance().clearPoolExecutionStatus();
-    		}
-    	}
-    	else if (pcEv.getSource() == this.chkTestRecursive)
-    	{
-    		Call.E_TESTCOVERAGERECURSIVE = this.chkTestRecursive.isSelected();
-    	}
-    	// END KGU#117 2016-03-06
 		
 	}
     // END KGU#68 2015-11-06
+
+	// START KGU#117 2016-03-08: Enh. #77
+	@Override
+	public void itemStateChanged(ItemEvent itEv) {
+		if (itEv.getSource() == this.chkTestCoverage)
+    	{
+    		if (itEv.getStateChange() == itEv.SELECTED)
+    		{
+    			Element.E_TESTCOVERAGEMODE = true;
+    			this.chkTestRecursive.setEnabled(this.chkTestCoverage.isEnabled());
+    		}
+    		else if (itEv.getStateChange() == itEv.DESELECTED)
+    		{
+    			boolean wipeTestStatus = Element.E_TESTCOVERAGEMODE;
+    			Element.E_TESTCOVERAGEMODE = false;
+    			this.chkTestRecursive.setEnabled(false);
+    			if (wipeTestStatus) 
+    			{
+    				Executor.getInstance().clearPoolExecutionStatus();
+    			}
+    		}
+    	}
+    	else if (itEv.getSource() == this.chkTestRecursive)
+    	{
+    		Call.E_TESTCOVERAGERECURSIVE = this.chkTestRecursive.isSelected();
+    	}
+	}
+	// END KGU#117 2016-03-08
 
 }
