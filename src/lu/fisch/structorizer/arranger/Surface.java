@@ -45,6 +45,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.01.15      Enh. #110: File open dialog now selects the NSD filter
  *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136): Modifications for stable selection
  *      Kay Gürtzig     2016.03.03      Bugfix #121 (KGU#153): Successful file dropping must not pop up an error message
+ *      Kay Gürtzig     2016.03.08      Enh. #77 (KGU#117): Method clearExecutionStatus added
  *
  ******************************************************************************************************
  *
@@ -1047,6 +1048,25 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     }
     // END KGU#2 2015-11-24
 
+	// START KGU#117 2016-03-08: Introduced on occasion of Enhancement #77
+	/**
+	 * Clears the execution status of all routines in the pool.
+	 */
+	public void clearExecutionStatus()
+	{
+    	if (this.diagrams != null) {
+    		for (int d = 0; d < this.diagrams.size(); d++)
+    		{
+    			Diagram diagram = this.diagrams.get(d);
+    			if (diagram.root != null)
+    			{
+    				diagram.root.clearExecutionStatus();
+    			}
+    		}
+    		this.repaint();
+    	}
+	}
+	// END KGU#117 2016-03-08
     
     // Windows listener for the mainform
     // I need this to unregister the updater

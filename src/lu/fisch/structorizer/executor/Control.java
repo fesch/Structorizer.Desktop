@@ -490,9 +490,14 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     	// START KGU#117 2016-03-06: Enh. #77
     	else if (pcEv.getSource() == this.chkTestCoverage)
     	{
-    		boolean isSelected = this.chkTestCoverage.isSelected();    		
+    		boolean isSelected = this.chkTestCoverage.isSelected();
+    		boolean wipeTestStatus = !isSelected && Element.E_TESTCOVERAGEMODE;
     		Element.E_TESTCOVERAGEMODE = isSelected;
     		this.chkTestRecursive.setEnabled(isSelected && this.chkTestCoverage.isEnabled());
+    		if (wipeTestStatus) 
+    		{
+    			Executor.getInstance().clearPoolExecutionStatus();
+    		}
     	}
     	else if (pcEv.getSource() == this.chkTestRecursive)
     	{

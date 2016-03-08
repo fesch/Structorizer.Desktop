@@ -89,6 +89,9 @@ public class Call extends Instruction {
 	public static boolean E_TESTCOVERAGERECURSIVE = false;
 	public boolean subroutineCovered = false;
 	// END KGU#117 2016-03-06
+	// START KGU#117 2016-03-08: Enh. #77 Special marker for recursive calls
+	public boolean isRecursive = false;
+	// END KGU#117 2016-03-08
 
 	public Call()
 	{
@@ -240,7 +243,7 @@ public class Call extends Instruction {
 	public void checkTestCoverage(boolean _propagateUpwards)
 	{
 		if (Element.E_TESTCOVERAGEMODE &&
-				(!Call.E_TESTCOVERAGERECURSIVE || this.subroutineCovered))
+				(!Call.E_TESTCOVERAGERECURSIVE || this.subroutineCovered || this.isRecursive))
 		{
 			super.checkTestCoverage(_propagateUpwards);
 		}

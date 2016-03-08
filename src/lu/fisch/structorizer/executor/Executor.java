@@ -494,6 +494,22 @@ public class Executor implements Runnable
 			this.notify();
 		}
 	}
+	
+	// START KGU#117 2016-03-08: Enh. #77
+	/**
+	 * Clears the execution status of all routines held by known
+	 * subroutine pools  
+	 */
+	public void clearPoolExecutionStatus()
+	{
+		Iterator<IRoutinePool> iter = this.routinePools.iterator();
+		while (iter.hasNext())
+		{
+			iter.next().clearExecutionStatus();
+		}
+		this.diagram.clearExecutionStatus();
+	}
+	// END KGU#117 2016-03-08
 
 	// METHOD MODIFIED BY GENNARO DONNARUMMA
 
@@ -506,6 +522,9 @@ public class Executor implements Runnable
 		if (diagram.isArrangerOpen)
 		{
 			this.routinePools.addElement(Arranger.getInstance());
+			// START KGU#117 2016-03-08: Enh. #77
+			Arranger.getInstance().clearExecutionStatus();
+			// END KGU#117 2016-03-08
 		}
 		this.isErrorReported = false;
 		this.diagram.getRoot().isCalling = false;
@@ -544,8 +563,8 @@ public class Executor implements Runnable
 		diagram.setAnalyser(false);
 		// START KGU 2015-10-11/13:
 		// Unselect all elements before start!
-		diagram.unselectAll();	// Is this still needed?
-		// ...and reset all execution state remnants (just for sure)
+		//diagram.unselectAll();	// KGU 2016-03-08: There is no need anymore
+		// Reset all execution state remnants (just for sure)
 		diagram.clearExecutionStatus();
 		// END KGU 2015-10-11/13
 		initInterpreter();
@@ -1901,25 +1920,16 @@ public class Executor implements Runnable
 					{
 						args[p] = interpreter.eval(f.getParam(p));
 					}
-					// START KGU#117 2016-03-07: Enh. #77
-					boolean subCoverage = Call.E_TESTCOVERAGERECURSIVE;
-					boolean recursiveCall = 
+					// START KGU#117 2016-03-08: Enh. #77
+					((Call)instr).isRecursive = 
 							sub.isCalling || sub.equals(this.diagram.getRoot());
-					// In recursive calls a test coverage would never be fulfilled
-					// if the call requires itself to be covered in order to mark it
-					// as covered, so we temporarily switch this off.
-					if (recursiveCall)
-					{
-						Call.E_TESTCOVERAGERECURSIVE = false;
-					}
-					// END KGU#117 2016-03-07
+					// END KGU#117 2016-03-08
 					value = executeCall(sub, args);
 					// START KGU#117 2016-03-07: Enh. #77
 					((Call)instr).subroutineCovered = sub.isTestCovered();
-					if (recursiveCall) 
+					if (((Call)instr).isRecursive) // FIXME: Still needed?
 					{
 						instr.checkTestCoverage(true);
-						Call.E_TESTCOVERAGERECURSIVE = subCoverage;
 					}
 					// END KGU#117 2016-03-07
 				}
@@ -2233,21 +2243,17 @@ public class Executor implements Runnable
 				Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
 				if (sub != null)
 				{
-					// START KGU#117 2016-03-07: Enh. #77
-					boolean subCoverage = Call.E_TESTCOVERAGERECURSIVE;
-					// In recursive calls a test coverage would never be fulfilled
-					// if the call requires itself to be covered in order to mark it
-					// as covered, so we temporarily switch this off.
-					if (sub.isCalling)
-					{
-						Call.E_TESTCOVERAGERECURSIVE = false;
-					}
-					// END KGU#117 2016-03-07
+					// START KGU#117 2016-03-08: Enh. #77
+					((Call)element).isRecursive = sub.isCalling || sub.equals(this.diagram.getRoot());
+					// END KGU#117 2016-03-08
 					executeCall(sub, args);
-					// START KGU#117 2016-03-07: Enh. #77
+					// START KGU#117 2016-03-08: Enh. #77
 					((Call)element).subroutineCovered = sub.isTestCovered();
-					Call.E_TESTCOVERAGERECURSIVE = subCoverage;
-					// END KGU#117 2016-03-07
+					if (((Call)element).isRecursive)	// FIXME: Still necessary?
+					{
+						element.checkTestCoverage(true);
+					}
+					// END KGU#117 2016-03-08
 				}
 				else
 				{
