@@ -10,7 +10,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.23-17dev (2016.03.07)
+Current development version: 3.23-17dev (2016.03.08)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
 - 02: Bugfix #51 - stand-alone input/output keywords were not converted on export [IrisLuc]
 - 03: Bugfix #48 - instant delay propagation to Turtleizer <Kay Gürtzig>

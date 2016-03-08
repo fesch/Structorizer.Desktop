@@ -20,6 +20,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package lu.fisch.structorizer.executor;
 
+/******************************************************************************************************
+ *
+ *      Author:         Kay Gürtzig
+ *
+ *      Description:    This interface represents the fundamental capabilities of a subroutine pool.
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author           Date            Description
+ *      ------           ----            -----------
+ *      Kay Gürtzig      2015.11.25      First issue
+ *      Kay Gürtzig      2016.03.08      Method clearExecutionStatus added (for Enhancement #77)
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:		/
+ *      
+ *      The interface facilitates the retrieval of callable subroutines for execution mode
+ *
+ ******************************************************************************************************///
+
 import java.util.Vector;
 
 import lu.fisch.structorizer.elements.Root;
@@ -45,4 +68,10 @@ public interface IRoutinePool {
 	 */
 	public Vector<Root> findRoutinesBySignature(String rootName, int argCount);
 
+	// START KGU#117 2016-03-08: Introduced on occasion of Enhancement #77
+	/**
+	 * Clears the execution status of all routines in the pool.
+	 */
+	public void clearExecutionStatus();
+	// END KGU#117 2016-03-08
 }

@@ -43,6 +43,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2015-11-30		Remove action now also achievable by pressing del button (issue #35, KGU#88)
  *      Kay Gürtzig     2015-12-21		Two new buttons for saving and loading arrangements (issue #62, KGU#110)
  *      Kay Gürtzig     2016-01-05		Icons for saving and loading arrangements replaced by fitting ones
+ *      Kay Gürtzig     2016.03.08      Method clearExecutionStatus added (for Enhancement #77)
  *
  ******************************************************************************************************
  *
@@ -447,5 +448,12 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
 		return surface.findRoutinesBySignature(rootName, argCount);
 	}
 	// END KGU#2 2015-11-24
-
+	// START KGU#117 2016-03-08: Introduced on occasion of Enhancement #77
+	@Override
+	public void clearExecutionStatus()
+	{
+		surface.clearExecutionStatus();
+	}
+	// END KGU#117 2016-03-08
+	
 }
