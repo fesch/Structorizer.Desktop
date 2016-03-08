@@ -42,4 +42,27 @@ public class Diagram
         this.root=root;
         this.point=point;
     }
+
+    // START KGU#155 2016-03-08: Bugfix #97 extension
+	/**
+	 * Invalidates the cached prepareDraw info of all diagrams residing here
+	 * (to be called on events with heavy impact on the size or shape of some
+	 * Elements)
+	 * @param _exceptDiagr the hash code of a lu.fisch.structorizer.gui.Diagram
+	 * that is not to be invoked (to avoid recursion)
+	 */
+	public void resetDrawingInfo(int _exceptDiagr)
+	{
+		if (root != null)
+		{
+			root.resetDrawingInfoDown();
+		}
+		// The following seems too much, actually
+//		if (mainform != null && mainform.diagram != null &&
+//				mainform.diagram.hashCode() != _exceptDiagr)
+//		{
+//			mainform.diagram.resetDrawingInfo(false);
+//		}
+	}
+	// END KGU#155 2016-03-08
 }
