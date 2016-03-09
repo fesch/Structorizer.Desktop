@@ -215,7 +215,7 @@ public abstract class Element {
 	public static Color E_BREAKPOINTCOLOR = Color.RED;			// Colour of the breakpoint bar at element top
 	// END KGU#43 2015-10-11
 	// START KGU#117 2016-03-06: Test coverage colour and mode for Enh. #77
-	public static Color E_TESTCOVEREDCOLOR = Color.GREEN;	// TODO fine-tuning
+	public static Color E_TESTCOVEREDCOLOR = Color.GREEN;
 	public static boolean E_TESTCOVERAGEMODE = false;
 	// END KGU#117 2016-03-06
 	public static boolean E_VARHIGHLIGHT = false;	// Highlight variables, operators, string literals, and certain keywords? 
@@ -266,8 +266,8 @@ public abstract class Element {
 	public boolean executed = false;	// Is set while being executed
 	// END KGU#41 2015-10-13
 	public boolean waited = false;		// Is set while a substructure Element is under execution
-	// START KGU#117 2016-03-06: Enh. #77 - is set in test coverage mode when execution passed this element
-	public Boolean tested = false;		// This must be a shareable object!
+	// START KGU#117 2016-03-06: Enh. #77 - for test coverage mode
+	public boolean tested = false;		// Flag indicates full test coverage
 	// END KGU#117 2016-03-06
 	private Color color = Color.WHITE;
 
@@ -955,15 +955,15 @@ public abstract class Element {
 			return null;
 	}
 
-	@Deprecated
-	private String cutOut(String _s, String _by)
-	{
-		//System.out.print(_s+" -> ");
-		Regex rep = new Regex("(.*?)"+BString.breakup(_by)+"(.*?)","$1\",\""+_by+"\",\"$2");
-		_s=rep.replaceAll(_s);
-		//System.out.println(_s);
-		return _s;
-	}
+//	@Deprecated
+//	private String cutOut(String _s, String _by)
+//	{
+//		//System.out.print(_s+" -> ");
+//		Regex rep = new Regex("(.*?)"+BString.breakup(_by)+"(.*?)","$1\",\""+_by+"\",\"$2");
+//		_s=rep.replaceAll(_s);
+//		//System.out.println(_s);
+//		return _s;
+//	}
 	
 	// START KGU#18/KGU#23 2015-11-04: Lexical splitter extracted from writeOutVariables
 	/**

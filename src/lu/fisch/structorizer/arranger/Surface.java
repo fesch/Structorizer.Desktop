@@ -46,11 +46,14 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136): Modifications for stable selection
  *      Kay Gürtzig     2016.03.03      Bugfix #121 (KGU#153): Successful file dropping must not pop up an error message
  *      Kay Gürtzig     2016-03-08		Bugfix #97: Method for drawing info invalidation added (KGU#155) 
- *      Kay Gürtzig     2016.03.08      Enh. #77 (KGU#117): Method clearExecutionStatus added
+ *      Kay Gürtzig     2016.03.09      Enh. #77 (KGU#117): Methods clearExecutionStatus and setCovered added
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2016.03.98 (Kay Gürtzig)
+ *      - Enh. #77: For Test Coverage Tracking, Arranger in its function of a subroutine pool had to
+ *        be enabled to set oder clear coverage flags 
  *      2016.01.02 (Kay Gürtzig)
  *      - Bug #78: On (re)placing diagrams from a Structorizer Mainframe, an identity check had already
  *        duplicate diagram presence, but on file dropping and reloading a saved arrangement (Enhancement #62),
@@ -718,6 +721,42 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     		this.mouseSelected.isPinned = !this.mouseSelected.isPinned;
     		repaint();
     	}
+    }
+    // END KGU#88 2015-11-24
+
+    // START KGU#117 2016-03-09: Provide a possibility to mark diagrams as test-covered
+    public void setCovered(Frame frame)
+    {
+    	if (this.maySetCovered())
+    	{
+    		if (this.mouseSelected.root.tested)
+    		{
+    			if (JOptionPane.showConfirmDialog(frame, "Routine is already marked as test-covered! Reset coverage mark?") == JOptionPane.OK_OPTION)
+    			{
+    				this.mouseSelected.root.tested = false;
+    			}
+    		}
+    		else
+    		{
+    			this.mouseSelected.root.tested = true;
+    			this.mouseSelected.root.setSelected(false);
+    			this.mouseSelected = null;
+    		}
+    		repaint();
+    	}
+    	else
+    	{
+    		JOptionPane.showMessageDialog(frame, "No suitable routine diagram selected, cannot mark anything as covered!",
+    				"Error", JOptionPane.ERROR_MESSAGE, null);   		
+    	}
+    }
+    
+    public boolean maySetCovered()
+    {
+    	return Element.E_TESTCOVERAGEMODE &&
+    			this.mouseSelected != null &&
+    			this.mouseSelected.root != null &&
+    			!this.mouseSelected.root.isProgram;
     }
     // END KGU#88 2015-11-24
 

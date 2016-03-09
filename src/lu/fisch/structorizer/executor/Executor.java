@@ -1729,9 +1729,10 @@ public class Executor implements Runnable
 		StringList sl = element.getText();
 		int i = 0;
 
-		// START KGU#117 2016-03-07: Enh. #77
+		// START KGU#117 2016-03-08: Enh. #77
+		boolean wasTested = element.isTestCovered();
 		boolean allSubroutinesCovered = true;
-		// END KGU#117 2016-03-07
+		// END KGU#117 2016-03-08
 
 		// START KGU#77 2015-11-11: Leave if a return statement has been executed
 		//while ((i < sl.count()) && result.equals("") && (stop == false))
@@ -1744,9 +1745,9 @@ public class Executor implements Runnable
 
 			try
 			{
-				// START KGU#117 2016-03-07: Enh. #77
-				element.subroutineCovered = false;
-				// END KGU#117 2016-03-07
+				// START KGU#117 2016-03-08: Enh. #77
+				element.tested = false;
+				// END KGU#117 2016-03-08
 
 				// START KGU 2015-10-12: Allow to step within an instruction block (but no breakpoint here!) 
 				if (i > 0)
@@ -1765,9 +1766,9 @@ public class Executor implements Runnable
 					result = trySubroutine(cmd, element);
 				}
 				
-				// START KGU#117 2016-03-07: Enh. #77
-				allSubroutinesCovered = allSubroutinesCovered && element.subroutineCovered;
-				// END KGU#117 2016-03-07
+				// START KGU#117 2016-03-08: Enh. #77
+				allSubroutinesCovered = allSubroutinesCovered && element.tested;
+				// END KGU#117 2016-03-08
 				
 			} catch (EvalError ex)
 			{
@@ -1780,7 +1781,13 @@ public class Executor implements Runnable
 		if (result.equals(""))
 		{
 			element.executed = false;
-			element.subroutineCovered = allSubroutinesCovered;
+			// START KGU#117 2016-03-08: Enh. #77
+			element.tested = wasTested || allSubroutinesCovered;
+			if (!wasTested && allSubroutinesCovered)
+			{
+				element.checkTestCoverage(true);	// FIXME: Still necessary?
+			}
+			// END KGU#117 2016-03-08
 		}
 		return result;
 	}
@@ -1921,15 +1928,16 @@ public class Executor implements Runnable
 						args[p] = interpreter.eval(f.getParam(p));
 					}
 					// START KGU#117 2016-03-08: Enh. #77
-					((Call)instr).isRecursive = 
+					boolean isRecursive = 
 							sub.isCalling || sub.equals(this.diagram.getRoot());
 					// END KGU#117 2016-03-08
 					value = executeCall(sub, args);
 					// START KGU#117 2016-03-07: Enh. #77
-					((Call)instr).subroutineCovered = sub.isTestCovered();
-					if (((Call)instr).isRecursive) // FIXME: Still needed?
+					if (Element.E_TESTCOVERAGEMODE &&
+							(!Call.E_TESTCOVERAGERECURSIVE || isRecursive || sub.isTestCovered()))
 					{
-						instr.checkTestCoverage(true);
+						instr.tested = true;
+						//instr.checkTestCoverage(true);
 					}
 					// END KGU#117 2016-03-07
 				}
@@ -2244,14 +2252,15 @@ public class Executor implements Runnable
 				if (sub != null)
 				{
 					// START KGU#117 2016-03-08: Enh. #77
-					((Call)element).isRecursive = sub.isCalling || sub.equals(this.diagram.getRoot());
+					boolean isRecursive = sub.isCalling || sub.equals(this.diagram.getRoot());
 					// END KGU#117 2016-03-08
 					executeCall(sub, args);
 					// START KGU#117 2016-03-08: Enh. #77
-					((Call)element).subroutineCovered = sub.isTestCovered();
-					if (((Call)element).isRecursive)	// FIXME: Still necessary?
+					if (Element.E_TESTCOVERAGEMODE &&
+							(!Call.E_TESTCOVERAGERECURSIVE || isRecursive || sub.isTestCovered()))
 					{
-						element.checkTestCoverage(true);
+						element.tested = true;
+						//element.checkTestCoverage(true);
 					}
 					// END KGU#117 2016-03-08
 				}

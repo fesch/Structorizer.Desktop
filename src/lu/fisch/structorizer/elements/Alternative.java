@@ -54,9 +54,6 @@ package lu.fisch.structorizer.elements;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
-import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
-import java.util.Stack;
 
 import javax.swing.ImageIcon;
 
@@ -180,8 +177,8 @@ public class Alternative extends Element {
 			double coeff = (by-ay)/(bx-ax);
 
 			// the point height we need
-			double y = nLines * fm.getHeight() + 4*(E_PADDING/2);
-			double x = y/coeff + ax - ay/coeff;
+			//double y = nLines * fm.getHeight() + 4*(E_PADDING/2);
+			//double x = y/coeff + ax - ay/coeff;
 			//System.out.println(i+" => "+coeff+" --> "+String.valueOf(x));
 
 			if (coeff<lowest && coeff>0)
@@ -233,15 +230,15 @@ public class Alternative extends Element {
 		Color drawColor = getFillColor();
 		// END KGU 2015-10-13
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
-		int a;
-		int b;
-		int c;
-		int d;
-		int x;
-		int y;
-		int wmax;
-		int p;
-		int w;
+		//int a;
+		//int b;
+		//int c;
+		//int d;
+		//int x;
+		//int y;
+		//int wmax;
+		//int p;
+		//int w;
 
 		// START KGU 2015-10-13: Already done by new method getFillColor() now
 //		if (selected==true)
@@ -270,12 +267,12 @@ public class Alternative extends Element {
 		// END KGU#136 2016-03-01
 		
 		myrect.bottom = _top_left.top + nLines*fm.getHeight() + 4*(E_PADDING/2);
-		y = myrect.top + E_PADDING;
-		a = myrect.left + ((myrect.right-myrect.left) / 2);
-		b = myrect.top;
-		c = myrect.left + rTrue.right - 1;
-		d = myrect.bottom - 1;
-		x = Math.round(((y-b)*(c-a) + a*(d-b))/(d-b));
+		//y = myrect.top + E_PADDING;
+		//a = myrect.left + ((myrect.right-myrect.left) / 2);
+		//b = myrect.top;
+		//c = myrect.left + rTrue.right - 1;
+		//d = myrect.bottom - 1;
+		//x = Math.round(((y-b)*(c-a) + a*(d-b))/(d-b));
 /*
 		wmax=0;
 		for(int i=0;i<text.count();i++)

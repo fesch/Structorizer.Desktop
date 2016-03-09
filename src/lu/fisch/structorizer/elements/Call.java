@@ -87,11 +87,7 @@ public class Call extends Instruction {
 	
 	// START KGU#117 2016-03-06: Test coverage mode for Enh. #77
 	public static boolean E_TESTCOVERAGERECURSIVE = false;
-	public boolean subroutineCovered = false;
 	// END KGU#117 2016-03-06
-	// START KGU#117 2016-03-08: Enh. #77 Special marker for recursive calls
-	public boolean isRecursive = false;
-	// END KGU#117 2016-03-08
 
 	public Call()
 	{
@@ -229,7 +225,6 @@ public class Call extends Instruction {
 		// END KGU#82 (bug #31) 2015-11-14
 		// START KGU#117 2016-03-07: Enh. #77
 		ele.tested = Element.E_TESTCOVERAGEMODE && this.tested;
-		((Call)ele).subroutineCovered = this.subroutineCovered;
 		// END KGU#117 2016-03-07
 		return ele;
 	}
@@ -242,8 +237,7 @@ public class Call extends Instruction {
 	@Override
 	public void checkTestCoverage(boolean _propagateUpwards)
 	{
-		if (Element.E_TESTCOVERAGEMODE &&
-				(!Call.E_TESTCOVERAGERECURSIVE || this.subroutineCovered || this.isRecursive))
+		if (Element.E_TESTCOVERAGEMODE && this.isTestCovered())
 		{
 			super.checkTestCoverage(_propagateUpwards);
 		}

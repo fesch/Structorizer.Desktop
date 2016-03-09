@@ -44,7 +44,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2015-12-21		Two new buttons for saving and loading arrangements (issue #62, KGU#110)
  *      Kay Gürtzig     2016-01-05		Icons for saving and loading arrangements replaced by fitting ones
  *      Kay Gürtzig     2016-03-08		Bugfix #97: Methods for drawing info invalidation added (KGU#155) 
- *      Kay Gürtzig     2016.03.08      Method clearExecutionStatus added (for Enhancement #77)
+ *      Kay Gürtzig     2016.03.08      Method clearExecutionStatus and btnSetCovered added (for Enhancement #77)
  *
  ******************************************************************************************************
  *
@@ -63,6 +63,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 
+import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.gui.Mainform;
@@ -169,6 +170,9 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
         btnSaveArr = new javax.swing.JButton();
         btnLoadArr = new javax.swing.JButton();
         // END KGU#110 2015-12-20
+        // START KGU#117 2016-03-09: Env. #77 - test coverage
+        btnSetCovered = new javax.swing.JButton();
+        // END KGU#117 2016-03-09
 
         
         surface = new lu.fisch.structorizer.arranger.Surface();
@@ -241,7 +245,7 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
         });
         toolbar.add(btnAddDiagram);
 
-        // START KGU#88 2015-11-24: FIXME: Need a different icon
+        // START KGU#88 2015-11-24: Protect a diagram against replacement
         btnPinDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png"))); // NOI18N
         btnPinDiagram.setText("Pin Diagram");
         btnPinDiagram.setToolTipText("Pin a diagram to make it immune against replacement.");
@@ -255,6 +259,21 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
         });
         toolbar.add(btnPinDiagram);
         // END KGU#88 2015-11-24
+
+        // START KGU#117 2016-03-09: Enh. #77 - Mark a subroutine as test-covered
+        btnSetCovered.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/setCovered20x20.png"))); // NOI18N
+        btnSetCovered.setText("Set Covered");
+        btnSetCovered.setToolTipText("Mark the routine diagram as test-covered for subroutine calls to it.");
+        btnSetCovered.setFocusable(false);
+        btnSetCovered.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnSetCovered.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnSetCovered.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSetCoveredActionPerformed(evt);
+            }
+        });
+        toolbar.add(btnSetCovered);
+        // END KGU#117 2016-03-09
 
         // START KGU#85 2015-11-17: New opportunity to drop the selected diagram 
         btnRemoveDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/100_diagram_drop.png"))); // NOI18N
@@ -333,6 +352,9 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
         });
         // END KGU#49 2015-10-18
 
+        // START KGU#117 2016-03-09: New for Enh. #77
+        this.doButtons();
+        // END KGU#117 2016-03-09
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
@@ -372,6 +394,13 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
     }
     // END KGU#110 2015-12-20
 
+    // START KGU#117 2016-03-09: Enh. #77
+    private void btnSetCoveredActionPerformed(java.awt.event.ActionEvent evt)
+    {
+        surface.setCovered(this);
+    }
+    // END KGU#88 2016-03-09
+
     /**
      * Starts the Arranger as application
      * @param args the command line arguments
@@ -400,6 +429,9 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
     private javax.swing.JButton btnSaveArr;
     private javax.swing.JButton btnLoadArr;
     // END KGU#110 2015-12-20
+    // START KGU#117 2016-03-09: Env. #77 - test coverage
+    private javax.swing.JButton btnSetCovered;
+    // END KGU#117 2016-03-09
     
     private lu.fisch.structorizer.arranger.Surface surface;
     private javax.swing.JToolBar toolbar;
@@ -470,11 +502,18 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
 		return surface.findRoutinesBySignature(rootName, argCount);
 	}
 	// END KGU#2 2015-11-24
+	
 	// START KGU#117 2016-03-08: Introduced on occasion of Enhancement #77
 	@Override
 	public void clearExecutionStatus()
 	{
+		doButtons();
 		surface.clearExecutionStatus();
+	}
+	
+	public void doButtons()
+	{
+		btnSetCovered.setEnabled(Element.E_TESTCOVERAGEMODE);
 	}
 	// END KGU#117 2016-03-08
 	

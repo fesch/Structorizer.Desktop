@@ -54,6 +54,7 @@ import java.util.Vector;
 
 import javax.swing.table.DefaultTableModel;
 
+import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.gui.IconLoader;
@@ -513,6 +514,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     			{
     				Executor.getInstance().clearPoolExecutionStatus();
     			}
+    		}
+    		if (Arranger.hasInstance())
+    		{
+    			Arranger.getInstance().doButtons();
     		}
     	}
     	else if (itEv.getSource() == this.chkTestRecursive)
