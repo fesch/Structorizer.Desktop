@@ -38,6 +38,7 @@ package lu.fisch.structorizer.elements;
  *		Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
  *		Kay Gürtzig     2016.01.03      Enh. #87 (KGU#122) -> getIcon()
  *		Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136) Drawing/dragging/selection consolidated
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *
  ******************************************************************************************************
  *
@@ -210,6 +211,11 @@ public class Jump extends Instruction {
 		this.drawBreakpointMark(canvas, _top_left);
 		// END KGU 2015-10-11
 		
+		// START KGU#156 2016-03-11: Enh. #124
+		// write the run-time info if enabled
+		this.writeOutRuntimeInfo(canvas, myrect.right - (Element.E_PADDING / 2), myrect.top);
+		// END KGU#156 2016-03-11
+				
 		
 		for(int i=0;i<getText(false).count();i++)
 		{
@@ -249,10 +255,10 @@ public class Jump extends Instruction {
 		ele.breakpoint = this.breakpoint;
 		// END KGU#82 (bug #31) 2015-11-14
 		// START KGU#117 2016-03-07: Enh. #77
-        if (Element.E_TESTCOVERAGEMODE)
+        if (Element.E_COLLECTRUNTIMEDATA)
         {
         	// We share this object (important for recursion!)
-        	ele.tested = this.tested;
+        	ele.deeplyCovered = this.deeplyCovered;
         }
 		// END KGU#117 2016-03-07
 		return ele;

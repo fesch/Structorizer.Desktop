@@ -42,6 +42,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
  *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136): Translation-neutral selection mechanism
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *
  ******************************************************************************************************
  *
@@ -407,6 +408,12 @@ public class Case extends Element
                     		text,this
                     		);
                     // END KGU#91 2015-12-01
+
+                    // START KGU#156 2016-03-11: Enh. #124
+            		// write the run-time info if enabled
+            		this.writeOutRuntimeInfo(canvas, myrect.right - Element.E_PADDING, myrect.top);
+            		// END KGU#156 2016-03-11
+            				
             }
 
 
@@ -651,7 +658,8 @@ public class Case extends Element
     		ele.breakpoint = this.breakpoint;
     		// END KGU#82 (bug #31) 2015-11-14
     		// START KGU#117 2016-03-07: Enh. #77
-    		ele.tested = Element.E_TESTCOVERAGEMODE && this.tested;
+    		ele.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
+    		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
     		// END KGU#117 2016-03-07
 
             return ele;
@@ -681,12 +689,12 @@ public class Case extends Element
 	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
 	 */
 	@Override
-	public boolean combineCoverage(Element _another)
+	public boolean combineRuntimeData(Element _cloneOfMine)
 	{
-		boolean isEqual = super.combineCoverage(_another);
+		boolean isEqual = super.combineRuntimeData(_cloneOfMine);
 		for(int i = 0; isEqual && i < this.qs.size(); i++)
 		{
-			isEqual = this.qs.get(i).combineCoverage(((Case)_another).qs.get(i));
+			isEqual = this.qs.get(i).combineRuntimeData(((Case)_cloneOfMine).qs.get(i));
 		}
 		return isEqual;
 	}
@@ -707,7 +715,7 @@ public class Case extends Element
     }
     // END KGU#43 2015-10-12
 
-    // START KGU#43 2015-10-13
+	// START KGU#43 2015-10-13
     @Override
     public void clearExecutionStatus()
     {
@@ -727,32 +735,52 @@ public class Case extends Element
 	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
 	 */
     @Override
-	public void clearTestCoverage()
+	public void clearRuntimeData()
 	{
-		super.clearTestCoverage();
+		super.clearRuntimeData();
     	if (qs!= null)
     	{
     		for (int i = 0; i < qs.size(); i++)
     		{
-    			qs.get(i).clearTestCoverage();
+    			qs.get(i).clearRuntimeData();
     		}
     	}
 	}
 	// END KGU#117 2016-03-07
 
+	// START KGU#156 2016-03-13: Enh. #124
+	protected String getRuntimeInfoString()
+	{
+		String info = this.execCount + " / ";
+		String stepInfo = null;
+		switch (E_RUNTIMEDATAPRESENTMODE)
+		{
+		case TOTALSTEPS_LIN:
+		case TOTALSTEPS_LOG:
+			stepInfo = Integer.toString(this.getExecStepCount(true));
+			if (!this.isCollapsed()) {
+				stepInfo = "(" + stepInfo + ")";
+			}
+			break;
+		default:
+			stepInfo = Integer.toString(this.getExecStepCount(this.isCollapsed()));
+		}
+		return info + stepInfo;
+	}
+	// END KGU#156 2016-03-11
+
 	// START KGU#117 2016-03-06: Enh. #77
-	/**
-	 * Detects full test coverage of this element according to set flags
-	 * @return true iff element and all its sub-structure is test-covered
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
 	 */
-	public boolean isTestCovered()
+	public boolean isTestCovered(boolean _deeply)
 	{
 		boolean covered = true;
     	if (qs!= null)
     	{
     		for (int i = 0; covered && i < qs.size(); i++)
     		{
-    			covered = qs.get(i).isTestCovered();
+    			covered = qs.get(i).isTestCovered(_deeply);
     		}
     	}		
 		return covered;

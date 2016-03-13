@@ -45,6 +45,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016-01-05		Icons for saving and loading arrangements replaced by fitting ones
  *      Kay Gürtzig     2016-03-08		Bugfix #97: Methods for drawing info invalidation added (KGU#155) 
  *      Kay Gürtzig     2016.03.08      Method clearExecutionStatus and btnSetCovered added (for Enhancement #77)
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation hooks
  *
  ******************************************************************************************************
  *
@@ -513,8 +514,15 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
 	
 	public void doButtons()
 	{
-		btnSetCovered.setEnabled(Element.E_TESTCOVERAGEMODE);
+		btnSetCovered.setEnabled(Element.E_COLLECTRUNTIMEDATA);
 	}
 	// END KGU#117 2016-03-08
+	
+	// START KGU#156 2016-03-10: An interface for an external update trigger was needed
+	public void redraw()
+	{
+		surface.repaint();
+	}
+	// END KGU#156 2016-03-10
 	
 }

@@ -44,6 +44,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
  *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): Translation-neutral selection
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *
  ******************************************************************************************************
  *
@@ -351,10 +352,10 @@ public class Forever extends Element implements ILoop {
 		ele.breakpoint = this.breakpoint;
 		// END KGU#82 (bug #31) 2015-11-14
 		// START KGU#117 2016-03-07: Enh. #77
-        if (Element.E_TESTCOVERAGEMODE)
+        if (Element.E_COLLECTRUNTIMEDATA)
         {
         	// We share this object (important for recursion!)
-        	ele.tested = this.tested;
+        	ele.deeplyCovered = this.deeplyCovered;
         }
 		// END KGU#117 2016-03-07
 		return ele;
@@ -379,10 +380,10 @@ public class Forever extends Element implements ILoop {
 	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
 	 */
 	@Override
-	public boolean combineCoverage(Element _another)
+	public boolean combineRuntimeData(Element _cloneOfMine)
 	{
-		return super.combineCoverage(_another) &&
-				this.getBody().combineCoverage(((ILoop)_another).getBody());
+		return super.combineRuntimeData(_cloneOfMine) &&
+				this.getBody().combineRuntimeData(((ILoop)_cloneOfMine).getBody());
 	}
 	// END KGU#117 2016-03-07
 
@@ -409,21 +410,43 @@ public class Forever extends Element implements ILoop {
 	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
 	 */
 	@Override
-	public void clearTestCoverage()
+	public void clearRuntimeData()
 	{
-		super.clearTestCoverage();
-		this.getBody().clearTestCoverage();
-	}
-
-	/**
-	 * Detects full test coverage of this element according to set flags
-	 * @return true iff element and all its sub-structure is test-covered
-	 */
-	public boolean isTestCovered()
-	{
-		return this.getBody().isTestCovered();
+		super.clearRuntimeData();
+		this.getBody().clearRuntimeData();
 	}
 	// END KGU#117 2016-03-06
+
+	// START KGU#156 2016-03-13: Enh. #124
+	protected String getRuntimeInfoString()
+	{
+		String info = this.execCount + " / ";
+		String stepInfo = null;
+		switch (E_RUNTIMEDATAPRESENTMODE)
+		{
+		case TOTALSTEPS_LIN:
+		case TOTALSTEPS_LOG:
+			stepInfo = Integer.toString(this.getExecStepCount(true));
+			if (!this.isCollapsed()) {
+				stepInfo = "(" + stepInfo + ")";
+			}
+			break;
+		default:
+			stepInfo = Integer.toString(this.getExecStepCount(this.isCollapsed()));
+		}
+		return info + stepInfo;
+	}
+	// END KGU#156 2016-03-11
+
+	// START KGU#117 2016-03-10: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
+	 */
+	public boolean isTestCovered(boolean _deeply)
+	{
+		return this.getBody().isTestCovered(_deeply);
+	}
+	// END KGU#117 2016-03-10
 
 	// START KGU 2015-10-16
 	/* (non-Javadoc)

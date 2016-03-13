@@ -60,6 +60,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.22      Bugfix for issue #38: moveUp/moveDown for selected sequences (KGU#144)
  *      Kay Gürtzig     2016.02.25      Bugfix #97 (= KGU#136): field rect replaced by rect0 in prepareDraw()
  *      Kay Gürtzig     2016.03.02      Bugfix #97 (= KGU#136) accomplished -> translation-independent selection
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *
  ******************************************************************************************************
  *
@@ -435,6 +436,11 @@ public class Root extends Element {
 								  (String) getText(false).get(i)
 								  ,this);
 			}
+			// START KGU#156 2016-03-11: Enh. #124
+			// write the run-time info if enabled
+			this.writeOutRuntimeInfo(canvas, rect.right - (Element.E_PADDING), rect.top);
+			// END KGU#156 2016-03-11
+					
 		}
 		else
 		{
@@ -447,6 +453,11 @@ public class Root extends Element {
 								(String) getText(false).get(i)
 								);
 			}
+			// START KGU#156 2016-03-11: Enh. #124
+			// write the run-time info if enabled
+			this.writeOutRuntimeInfo(canvas, rect.right - (Element.E_PADDING/2), rect.top);
+			// END KGU#156 2016-03-11
+					
 		}
 		canvas.setFont(Element.font);
 		
@@ -691,11 +702,11 @@ public class Root extends Element {
 	
 	// START KGU#117 2016-03-06: Enh. #77
 	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.elements.Element#isTestCovered()
+	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
 	 */
-	public boolean isTestCovered()
+	public boolean isTestCovered(boolean _deeply)
 	{
-		return this.children.isTestCovered();
+		return this.children.isTestCovered(_deeply);
 	}
 	// END KGU#117 2016-03-06
 
@@ -704,10 +715,10 @@ public class Root extends Element {
 	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
 	 */
 	@Override
-	public void clearTestCoverage()
+	public void clearRuntimeData()
 	{
-		super.clearTestCoverage();
-		children.clearTestCoverage();
+		super.clearRuntimeData();
+		children.clearRuntimeData();
 	}
 	// END KGU#117 2016-03-07
 
@@ -815,7 +826,7 @@ public class Root extends Element {
             //ele.updaters = this.updaters;	// FIXME: Risks of this?
             // END KGU#2 (#9) 2015-11-13
     		// START KGU#117 2016-03-07: Enh. #77
-    		ele.tested = Element.E_TESTCOVERAGEMODE && this.tested;
+    		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
     		// END KGU#117 2016-03-07
             return ele;
     }
@@ -839,11 +850,18 @@ public class Root extends Element {
 	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
 	 */
 	@Override
-	public boolean combineCoverage(Element _another)
+	public boolean combineRuntimeData(Element _cloneOfMine)
 	{
-		return super.combineCoverage(_another) && this.children.combineCoverage(((Root)_another).children);
+		return super.combineRuntimeData(_cloneOfMine) && this.children.combineRuntimeData(((Root)_cloneOfMine).children);
 	}
 	// END KGU#117 2016-03-07
+	
+	// START KGU#117 2016-03-12: Enh. #77
+	protected String getRuntimeInfoString()
+	{
+		return this.execCount + " / (" + this.getExecStepCount(true) + ")";
+	}
+	// END KGU#117 2016-03-12
 
 	public void addUndo()
 	{
@@ -861,7 +879,7 @@ public class Root extends Element {
 		}
 		// END KGU#137 2016-01-11
 		// START KGU#117 2016-03-07: Enh. #77: On a substantial change, invalidate test coverage
-		this.clearTestCoverage();
+		this.clearRuntimeData();
 		// END KGU#117 2016-03-07
 	}
 
