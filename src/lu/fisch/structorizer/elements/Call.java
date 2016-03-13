@@ -39,6 +39,7 @@ package lu.fisch.structorizer.elements;
  *		Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
  *		Kay Gürtzig     2015.01.03      Enh. #87 (KGU#122) -> getIcon()
  *		Kay Gürtzig     2015.03.01      Bugfix #97 (KGU#136) Steady selection mechanism
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *
  ******************************************************************************************************
  *
@@ -85,10 +86,6 @@ import lu.fisch.structorizer.gui.IconLoader;
 
 public class Call extends Instruction {
 	
-	// START KGU#117 2016-03-06: Test coverage mode for Enh. #77
-	public static boolean E_TESTCOVERAGERECURSIVE = false;
-	// END KGU#117 2016-03-06
-
 	public Call()
 	{
 		super();
@@ -184,6 +181,11 @@ public class Call extends Instruction {
 		this.drawBreakpointMark(canvas, _top_left);
 		// END KGU 2015-10-11
 		
+		// START KGU#156 2016-03-11: Enh. #124
+		// write the run-time info if enabled
+		this.writeOutRuntimeInfo(canvas, _top_left.left + rect.right - (Element.E_PADDING), _top_left.top);
+		// END KGU#156 2016-03-11
+				
 		
 		for(int i=0;i<getText(false).count();i++)
 		{
@@ -224,7 +226,8 @@ public class Call extends Instruction {
 		ele.breakpoint = this.breakpoint;
 		// END KGU#82 (bug #31) 2015-11-14
 		// START KGU#117 2016-03-07: Enh. #77
-		ele.tested = Element.E_TESTCOVERAGEMODE && this.tested;
+		ele.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
+		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
 		// END KGU#117 2016-03-07
 		return ele;
 	}
@@ -237,12 +240,20 @@ public class Call extends Instruction {
 	@Override
 	public void checkTestCoverage(boolean _propagateUpwards)
 	{
-		if (Element.E_TESTCOVERAGEMODE && this.isTestCovered())
+		// Replace super implementation by the original Element implementation again
+		if (Element.E_COLLECTRUNTIMEDATA && (this.isTestCovered(false) || this.isTestCovered(true)))
 		{
-			super.checkTestCoverage(_propagateUpwards);
+			if (_propagateUpwards)
+			{
+				Element parent = this.parent;
+				while (parent != null)
+				{
+					parent.checkTestCoverage(false);
+					parent = parent.parent;
+				}
+			}
 		}
 	}
 	// END KGU#117 2016-03-07
 
-	
 }

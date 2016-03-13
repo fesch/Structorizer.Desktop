@@ -47,6 +47,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.03.03      Bugfix #121 (KGU#153): Successful file dropping must not pop up an error message
  *      Kay Gürtzig     2016-03-08		Bugfix #97: Method for drawing info invalidation added (KGU#155) 
  *      Kay Gürtzig     2016.03.09      Enh. #77 (KGU#117): Methods clearExecutionStatus and setCovered added
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation (refactoring)
  *
  ******************************************************************************************************
  *
@@ -729,16 +730,16 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     {
     	if (this.maySetCovered())
     	{
-    		if (this.mouseSelected.root.tested)
+    		if (this.mouseSelected.root.deeplyCovered)
     		{
     			if (JOptionPane.showConfirmDialog(frame, "Routine is already marked as test-covered! Reset coverage mark?") == JOptionPane.OK_OPTION)
     			{
-    				this.mouseSelected.root.tested = false;
+    				this.mouseSelected.root.deeplyCovered = false;
     			}
     		}
     		else
     		{
-    			this.mouseSelected.root.tested = true;
+    			this.mouseSelected.root.deeplyCovered = true;
     			this.mouseSelected.root.setSelected(false);
     			this.mouseSelected = null;
     		}
@@ -753,7 +754,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     
     public boolean maySetCovered()
     {
-    	return Element.E_TESTCOVERAGEMODE &&
+    	return Element.E_COLLECTRUNTIMEDATA &&
     			this.mouseSelected != null &&
     			this.mouseSelected.root != null &&
     			!this.mouseSelected.root.isProgram;

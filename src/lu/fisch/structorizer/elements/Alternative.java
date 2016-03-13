@@ -43,6 +43,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): Translation-neutral selection
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Methods for test coverage tracking added
  *      Kay Gürtzig     2016.03.07      Bugfix #122 (KGU#136): Selection was not aware of option altPadRight 
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *
  ******************************************************************************************************
  *
@@ -283,28 +284,29 @@ public class Alternative extends Element {
 			}
 		}
 */
-                int remain = (_top_left.right - _top_left.left)
-                             -(rTrue.right - rTrue.left)
-                             -(rFalse.right - rFalse.left);
-                if (Element.altPadRight == false) remain=0;
-                // START KGU#136 2016-03-07: Bugfix #122 - we must correct the else start point
-                this.pt0Parting.x = this.rTrue.right - rTrue.left + remain; 
-                // END KGU#136 2016-03-07
-                
-                // the upper left point of the corner
-                double cx = 0;
-                double cy = nLines*fm.getHeight() + 4*(E_PADDING/2);
-                // upper right corner
-                double dx = _top_left.right - _top_left.left;
-                double dy = cy;
-                // the the lowest point of the triangle
-                double ax = rTrue.right - rTrue.left + remain;
-                double ay = 0;
-                // coefficient of the left droite
-                double coeffleft = (cy-ay)/(cx-ax);
-                double coeffright = (dy-ay)/(dx-ax);
+		int remain = (_top_left.right - _top_left.left)
+				-(rTrue.right - rTrue.left)
+				-(rFalse.right - rFalse.left);
+		if (Element.altPadRight == false) remain=0;
+		// START KGU#136 2016-03-07: Bugfix #122 - we must correct the else start point
+		this.pt0Parting.x = this.rTrue.right - rTrue.left + remain; 
+		// END KGU#136 2016-03-07
 
-                // draw text
+		// the upper left point of the corner
+		double cx = 0;
+		double cy = nLines*fm.getHeight() + 4*(E_PADDING/2);
+		// upper right corner
+		double dx = _top_left.right - _top_left.left;
+		double dy = cy;
+		// the the lowest point of the triangle
+		double ax = rTrue.right - rTrue.left + remain;
+		double ay = 0;
+		// coefficient of the left traverse line
+		double coeffleft = (cy-ay)/(cx-ax);
+		// coefficient of the right traverse line
+		double coeffright = (dy-ay)/(dx-ax);
+
+		// draw text
 		for (int i=0; i < nLines; i++)
 		{
 			String mytext = this.getText(false).get(i);
@@ -361,8 +363,6 @@ public class Alternative extends Element {
 		canvas.writeOut(myrect.right - (E_PADDING / 2) -_canvas.stringWidth(preAltF),
 						myrect.bottom - (E_PADDING / 2), preAltF);
 		
-		
-		
 		// draw comment
 		if (Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 		{
@@ -373,7 +373,14 @@ public class Alternative extends Element {
 		this.drawBreakpointMark(canvas, myrect);
 		// END KGU 2015-10-11
 		
-                // draw triangle
+		// START KGU#156 2016-03-11: Enh. #124
+		// write the run-time info if enabled
+		this.writeOutRuntimeInfo(_canvas, 
+				_top_left.left + rect.right - (int)Math.round(fm.getHeight() / coeffright),
+				_top_left.top);
+		// END KGU#156 2016-03-11
+				
+		// draw triangle
 		canvas.setColor(Color.BLACK);
 		canvas.moveTo(myrect.left, myrect.top);
 		canvas.lineTo(myrect.left + rTrue.right-1 + remain, myrect.bottom-1);
@@ -457,7 +464,8 @@ public class Alternative extends Element {
 		ele.breakpoint = this.breakpoint;
 		// END KGU#82 (bug #31) 2015-11-14
 		// START KGU#117 2016-03-07: Enh. #77
-		ele.tested = Element.E_TESTCOVERAGEMODE && this.tested;
+		ele.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
+		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
 		// END KGU#117 2016-03-07
 		return ele;
 	}
@@ -487,13 +495,13 @@ public class Alternative extends Element {
 	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
 	 */
 	@Override
-	public boolean combineCoverage(Element _another)
+	public boolean combineRuntimeData(Element _cloneOfMine)
 	{
-		boolean isEqual = super.combineCoverage(_another);
+		boolean isEqual = super.combineRuntimeData(_cloneOfMine);
 		if (isEqual)
 		{
-			isEqual = this.qTrue.combineCoverage(((Alternative)_another).qTrue) &&
-					this.qFalse.combineCoverage(((Alternative)_another).qFalse);			
+			isEqual = this.qTrue.combineRuntimeData(((Alternative)_cloneOfMine).qTrue) &&
+					this.qFalse.combineRuntimeData(((Alternative)_cloneOfMine).qFalse);			
 		}
 		return isEqual;
 	}
@@ -532,20 +540,44 @@ public class Alternative extends Element {
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
 	 */
-	public void clearTestCoverage()
+	public void clearRuntimeData()
 	{
-		super.clearTestCoverage();
-		this.qFalse.clearTestCoverage();
-		this.qTrue.clearTestCoverage();
+		super.clearRuntimeData();
+		this.qFalse.clearRuntimeData();
+		this.qTrue.clearRuntimeData();
 	}
 	// END KGU#117 2016-03-07
 
-	// START KGU#117 2016-03-06: Enh. #77
-	public boolean isTestCovered()
+	// START KGU#156 2016-03-13: Enh. #124
+	protected String getRuntimeInfoString()
 	{
-		return this.qTrue.isTestCovered() && this.qFalse.isTestCovered();
+		String info = this.execCount + " / ";
+		String stepInfo = null;
+		switch (E_RUNTIMEDATAPRESENTMODE)
+		{
+		case TOTALSTEPS_LIN:
+		case TOTALSTEPS_LOG:
+			stepInfo = Integer.toString(this.getExecStepCount(true));
+			if (!this.isCollapsed()) {
+				stepInfo = "(" + stepInfo + ")";
+			}
+			break;
+		default:
+			stepInfo = Integer.toString(this.getExecStepCount(this.isCollapsed()));
+		}
+		return info + stepInfo;
 	}
-	// END KGU#117 2016-03-06
+	// END KGU#156 2016-03-11
+
+	// START KGU#117 2016-03-10: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
+	 */
+	public boolean isTestCovered(boolean _deeply)
+	{
+		return this.qTrue.isTestCovered(_deeply) && this.qFalse.isTestCovered(_deeply);
+	}
+	// END KGU#117 2016-03-10
 
 	// START KGU 2015-10-16
 	/* (non-Javadoc)

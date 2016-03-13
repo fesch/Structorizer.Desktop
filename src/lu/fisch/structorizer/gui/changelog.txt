@@ -10,7 +10,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.23-17dev (2016.03.08)
+Current development version: 3.23-17dev (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
 - 02: Bugfix #51 - stand-alone input/output keywords were not converted on export [IrisLuc]
 - 03: Bugfix #48 - instant delay propagation to Turtleizer <Kay Gürtzig>
@@ -83,6 +83,7 @@ Current development version: 3.23-17dev (2016.03.08)
 - 16: Bugfix #122: Selection problems with enlargeFALSE set <Kay Gürtzig>
 - 17: Bugfix #97 update: Arranger updated on global drawing changes <Kay Gürtzig>
 - 17: Enh. #77: Test coverage mode highlights passed code paths [elemhsb]
+- 17: Enh. #124: Generalized runtime data visualisation <Kay Gürtzig>
 
 Version 3.23 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]

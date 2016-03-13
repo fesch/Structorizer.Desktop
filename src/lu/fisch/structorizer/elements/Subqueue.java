@@ -44,6 +44,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
  *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136) accomplished (translation-independent selection)
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *
  ******************************************************************************************************
  *
@@ -208,6 +209,11 @@ public class Subqueue extends Element implements IElementSequence {
 							"\u2205"
 							);  	
 
+			// START KGU#156 2016-03-11: Enh. #124
+			// write the run-time info if enabled
+			this.writeOutRuntimeInfo(canvas, _top_left.right - (Element.E_PADDING / 2), _top_left.top);
+			// END KGU#156 2016-03-11
+					
 			canvas.drawRect(_top_left);
 		}
 	}
@@ -376,7 +382,7 @@ public class Subqueue extends Element implements IElementSequence {
 			((Subqueue) ele).addElement(((Element) children.get(i)).copy());
 		}
 		// START KGU#117 2016-03-07: Enh. #77
-		ele.tested = Element.E_TESTCOVERAGEMODE && this.tested;
+		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
 		// END KGU#117 2016-03-07
 		return ele;
 	}
@@ -405,12 +411,12 @@ public class Subqueue extends Element implements IElementSequence {
 	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
 	 */
 	@Override
-	public boolean combineCoverage(Element _another)
+	public boolean combineRuntimeData(Element _cloneOfMine)
 	{
-		boolean isEqual = super.combineCoverage(_another);
+		boolean isEqual = super.combineRuntimeData(_cloneOfMine);
 		for (int i = 0; isEqual && i < children.size(); i++)
 		{
-			isEqual = children.get(i).combineCoverage(((Subqueue)_another).getElement(i));
+			isEqual = children.get(i).combineRuntimeData(((Subqueue)_cloneOfMine).getElement(i));
 		}
 		return isEqual;
 	}
@@ -491,31 +497,30 @@ public class Subqueue extends Element implements IElementSequence {
 	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
 	 */
 	@Override
-	public void clearTestCoverage()
+	public void clearRuntimeData()
 	{
-		super.clearTestCoverage();
+		super.clearRuntimeData();
         for(int i = 0; i < children.size(); i++)
         {      
-            children.get(i).clearTestCoverage();
+            children.get(i).clearRuntimeData();
         }
 	}
 
-	/**
-	 * Detects full test coverage of this element according to set flags
-	 * @return true iff element and all its sub-structure is test-covered
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
 	 */
-	public boolean isTestCovered()
+	public boolean isTestCovered(boolean _deeply)
 	{
 		// An empty sequence must at least once have been passed in order to count as covered
 		if (children.isEmpty())
 		{
-			return this.tested;
+			return super.isTestCovered(_deeply);
 		}
 		// ... otherwise all instructions must be covered
 		boolean covered = true;
         for(int i = 0; covered && i < children.size(); i++)
         {      
-            covered = children.get(i).isTestCovered();
+            covered = children.get(i).isTestCovered(_deeply);
         }
 		return covered;
 	}
