@@ -45,6 +45,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.01.15      Enh. #110: File open dialog now selects the NSD filter
  *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136): Modifications for stable selection
  *      Kay Gürtzig     2016.03.03      Bugfix #121 (KGU#153): Successful file dropping must not pop up an error message
+ *      Kay Gürtzig     2016-03-08		Bugfix #97: Method for drawing info invalidation added (KGU#155) 
  *
  ******************************************************************************************************
  *
@@ -943,7 +944,27 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
         this.repaint();
     }
     
-    // START KGU#2 2015-11-19: We now need a way to identify a diagram - a root should not be twice here
+	// START KGU#155 2016-03-08: Bugfix #97 extension
+	/**
+	 * Invalidates the cached prepareDraw info of all diagrams residing here
+	 * (to be called on events with heavy impact on the size or shape of some
+	 * Elements)
+	 * @param _exceptDiagr the hash code of a lu.fisch.structorizer.gui.Diagram
+	 * that is not to be invoked (to avoid recursion)
+	 */
+	public void resetDrawingInfo(int _exceptDiagr)
+	{
+		if (this.diagrams != null)
+		{
+			for (int d = 0; d < this.diagrams.size(); d++)
+			{
+				this.diagrams.get(d).resetDrawingInfo(_exceptDiagr);
+			}
+		}
+	}
+	// END KGU#155 2016-03-08
+
+	// START KGU#2 2015-11-19: We now need a way to identify a diagram - a root should not be twice here
     // START KGU#119 2016-01-02: Bugfix #78 Under certain circumstances, even the equality has to be avoided
     //private Diagram findDiagram(Root root)
     private Diagram findDiagram(Root root, boolean identityCheck)
