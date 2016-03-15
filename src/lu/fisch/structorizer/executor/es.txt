@@ -32,6 +32,8 @@
  *      Author          	Date			Description
  *      ------			----			-----------
  *      Kay Gürtzig		2015.11.25		First Issue
+ *      Kay Gürtzig		2016.03.07		Test coverage message added (Enh. #77)
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data texts
  *
  ******************************************************************************************************
  *
@@ -42,3 +44,12 @@
 -----[ Control ]-----
 Control.lblSpeed.text= Demora: 
 Control.lblCallLevel.text= Nivel de subprograma:
+Control.chkCollectRuntimeData.text=Colecciona datos on ej.
+Control.cbRunDataDisplay.item.0=no tinción
+Control.cbRunDataDisplay.item.1=plana cobertura de test
+Control.cbRunDataDisplay.item.2=prof. cobertura de test
+Control.cbRunDataDisplay.item.3=número de ejecuciones
+Control.cbRunDataDisplay.item.4=hechas operaciones, lin.
+Control.cbRunDataDisplay.item.5=hechas operaciones, log.
+Control.cbRunDataDisplay.item.6=acum. operaciones, lin.
+Control.cbRunDataDisplay.item.7=acum. operaciones, log.

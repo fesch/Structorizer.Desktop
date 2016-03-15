@@ -59,6 +59,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
  *      Kay Gürtzig     2016.01.22      Bugfix for issue #38: moveUp/moveDown for selected sequences (KGU#144)
  *      Kay Gürtzig     2016.02.25      Bugfix #97 (= KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016.03.02      Bugfix #97 (= KGU#136) accomplished -> translation-independent selection
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *
  ******************************************************************************************************
  *
@@ -270,10 +272,10 @@ public class Root extends Element {
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
-		// START KGU#136 2016-01-03: Bugfix #97 (prepared)
+		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
 		if (this.isRectUpToDate) return rect0.copy();
 		pt0Sub.x = 0;
-		// END KGU#136 2016-01-03
+		// END KGU#136 2016-03-01
 		
 		//  KGU#136 2016-02-25: Bugfix #97 - all rect references replaced by rect0
 		rect0.top = 0;
@@ -434,6 +436,11 @@ public class Root extends Element {
 								  (String) getText(false).get(i)
 								  ,this);
 			}
+			// START KGU#156 2016-03-11: Enh. #124
+			// write the run-time info if enabled
+			this.writeOutRuntimeInfo(canvas, rect.right - (Element.E_PADDING), rect.top);
+			// END KGU#156 2016-03-11
+					
 		}
 		else
 		{
@@ -446,6 +453,11 @@ public class Root extends Element {
 								(String) getText(false).get(i)
 								);
 			}
+			// START KGU#156 2016-03-11: Enh. #124
+			// write the run-time info if enabled
+			this.writeOutRuntimeInfo(canvas, rect.right - (Element.E_PADDING/2), rect.top);
+			// END KGU#156 2016-03-11
+					
 		}
 		canvas.setFont(Element.font);
 		
@@ -687,6 +699,28 @@ public class Root extends Element {
 		children.clearExecutionStatus();
 	}
 	// END KGU#43 2015-10-13
+	
+	// START KGU#117 2016-03-06: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
+	 */
+	public boolean isTestCovered(boolean _deeply)
+	{
+		return this.children.isTestCovered(_deeply);
+	}
+	// END KGU#117 2016-03-06
+
+	// START KGU#117 2016-03-07: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
+	 */
+	@Override
+	public void clearRuntimeData()
+	{
+		super.clearRuntimeData();
+		children.clearRuntimeData();
+	}
+	// END KGU#117 2016-03-07
 
 	// START KGU#64 2015-11-03: Is to improve drawing performance
 	/**
@@ -791,6 +825,9 @@ public class Root extends Element {
             ele.children.parent = ele;
             //ele.updaters = this.updaters;	// FIXME: Risks of this?
             // END KGU#2 (#9) 2015-11-13
+    		// START KGU#117 2016-03-07: Enh. #77
+    		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+    		// END KGU#117 2016-03-07
             return ele;
     }
     
@@ -808,9 +845,26 @@ public class Root extends Element {
 	}
 	// END KGU#119 2016-01-02
 	
+	// START KGU#117 2016-03-07: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
+	 */
+	@Override
+	public boolean combineRuntimeData(Element _cloneOfMine)
+	{
+		return super.combineRuntimeData(_cloneOfMine) && this.children.combineRuntimeData(((Root)_cloneOfMine).children);
+	}
+	// END KGU#117 2016-03-07
+	
+	// START KGU#117 2016-03-12: Enh. #77
+	protected String getRuntimeInfoString()
+	{
+		return this.execCount + " / (" + this.getExecStepCount(true) + ")";
+	}
+	// END KGU#117 2016-03-12
+
 	public void addUndo()
 	{
-		boolean test = this.equals(this);
 		undoList.add((Subqueue)children.copy());
 		// START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes on the stack top
 		undoList.peek().setText(this.text.copy());
@@ -824,6 +878,9 @@ public class Root extends Element {
 			this.undoLevelOfLastSave = -1;
 		}
 		// END KGU#137 2016-01-11
+		// START KGU#117 2016-03-07: Enh. #77: On a substantial change, invalidate test coverage
+		this.clearRuntimeData();
+		// END KGU#117 2016-03-07
 	}
 
     public boolean canUndo()
@@ -1185,6 +1242,7 @@ public class Root extends Element {
     // HYP 2: (?)[<used>] <- <used>
     // HYP 3: [output] <used>
     //
+    @Deprecated
     private StringList getUsedVarNames(Element _ele)
     {
             return getUsedVarNames(_ele,true,false);
@@ -1200,6 +1258,7 @@ public class Root extends Element {
      * @param _includeSelf - whether or not the own text lines of _ele are to be included
      * @return The StringList of passively used variable names
      */
+    @Deprecated
     private StringList getUsedVarNames(Element _ele, boolean _includeSelf)
     {
             return getUsedVarNames(_ele,_includeSelf,false);

@@ -46,10 +46,16 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136): Modifications for stable selection
  *      Kay Gürtzig     2016.03.03      Bugfix #121 (KGU#153): Successful file dropping must not pop up an error message
  *      Kay Gürtzig     2016-03-08		Bugfix #97: Method for drawing info invalidation added (KGU#155) 
+ *      Kay Gürtzig     2016.03.09      Enh. #77 (KGU#117): Methods clearExecutionStatus and setCovered added
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation (refactoring)
+ *      Kay Gürtzig     2016.03.14      Enh. #62 update: currentDirectory adopted from first added diagram.
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2016.03.98 (Kay Gürtzig)
+ *      - Enh. #77: For Test Coverage Tracking, Arranger in its function of a subroutine pool had to
+ *        be enabled to set oder clear coverage flags 
  *      2016.01.02 (Kay Gürtzig)
  *      - Bug #78: On (re)placing diagrams from a Structorizer Mainframe, an identity check had already
  *        duplicate diagram presence, but on file dropping and reloading a saved arrangement (Enhancement #62),
@@ -78,38 +84,30 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
-import java.io.Reader;
 import java.io.Writer;
 import java.util.Iterator;
 import java.util.Scanner;
 import java.util.Vector;
-import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-import lu.fisch.graphics.Canvas;
 import lu.fisch.graphics.Rect;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Updater;
 import lu.fisch.structorizer.executor.IRoutinePool;
-import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.io.ArrFilter;
 import lu.fisch.structorizer.io.PNGFilter;
@@ -656,6 +654,13 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     			point = new Point(left,top);
     		}
     		// END KGU#110 2015-12-20
+    		// START KGU 2016-03-14: Enh. #62
+    		// If it's the first diagram then adopt the crrent directory if possible
+    		if (diagrams.isEmpty() && root.filename != null && !root.filename.isEmpty())
+    		{
+    			this.currentDirectory = new File(root.filename);
+    		}
+    		// END KGU 2016-03-14
     		/*Diagram*/ diagram = new Diagram(root,point);
     		diagrams.add(diagram);
     		// START KGU#85 2015-11-18
@@ -725,6 +730,42 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     		this.mouseSelected.isPinned = !this.mouseSelected.isPinned;
     		repaint();
     	}
+    }
+    // END KGU#88 2015-11-24
+
+    // START KGU#117 2016-03-09: Provide a possibility to mark diagrams as test-covered
+    public void setCovered(Frame frame)
+    {
+    	if (this.maySetCovered())
+    	{
+    		if (this.mouseSelected.root.deeplyCovered)
+    		{
+    			if (JOptionPane.showConfirmDialog(frame, "Routine is already marked as test-covered! Reset coverage mark?") == JOptionPane.OK_OPTION)
+    			{
+    				this.mouseSelected.root.deeplyCovered = false;
+    			}
+    		}
+    		else
+    		{
+    			this.mouseSelected.root.deeplyCovered = true;
+    			this.mouseSelected.root.setSelected(false);
+    			this.mouseSelected = null;
+    		}
+    		repaint();
+    	}
+    	else
+    	{
+    		JOptionPane.showMessageDialog(frame, "No suitable routine diagram selected, cannot mark anything as covered!",
+    				"Error", JOptionPane.ERROR_MESSAGE, null);   		
+    	}
+    }
+    
+    public boolean maySetCovered()
+    {
+    	return Element.E_COLLECTRUNTIMEDATA &&
+    			this.mouseSelected != null &&
+    			this.mouseSelected.root != null &&
+    			!this.mouseSelected.root.isProgram;
     }
     // END KGU#88 2015-11-24
 
@@ -1068,6 +1109,25 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     }
     // END KGU#2 2015-11-24
 
+	// START KGU#117 2016-03-08: Introduced on occasion of Enhancement #77
+	/**
+	 * Clears the execution status of all routines in the pool.
+	 */
+	public void clearExecutionStatus()
+	{
+    	if (this.diagrams != null) {
+    		for (int d = 0; d < this.diagrams.size(); d++)
+    		{
+    			Diagram diagram = this.diagrams.get(d);
+    			if (diagram.root != null)
+    			{
+    				diagram.root.clearExecutionStatus();
+    			}
+    		}
+    		this.repaint();
+    	}
+	}
+	// END KGU#117 2016-03-08
     
     // Windows listener for the mainform
     // I need this to unregister the updater

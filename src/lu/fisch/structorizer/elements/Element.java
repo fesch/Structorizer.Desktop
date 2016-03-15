@@ -54,11 +54,37 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#144).
  *      Kay Gürtzig     2016.03.02      Bugfix #97: steady selection on dragging (see comment, KGU#136),
  *                                      Element self-description improved (method toString(), KGU#152)
+ *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Fields for test coverage tracking added
+ *      Kay Gürtzig     2016.03.10      Enh. #124 (KGU#156): Counter fields for histographic tracking added
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Runtime data collection accomplished
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      
+ *      2016-03-06 / 2016-03-12 Enhancements #77, #124 (KGU#117/KGU#156)
+ *      - According to an ER by [elemhsb], first a mechanism optionally to visualise code coverage (for
+ *        white-box test comleteness) was implemented. A green background colour was proposed and used
+ *        to highlight covered Element. It soon became clear that with respect to subroutines a dis-
+ *        tinction among loose (shallow) and strict (deep) coverage was necessary, particularly when
+ *        recursion comes in. So the coverage tracking could be switched between shallow mode (where
+ *        subroutines were automatically regarded as proven to have been covered previously, such the
+ *        first CALL to a routine it was automatically marked as covered as well) and deep mode where
+ *        a CALL was only marked after the subroutine (regarded as brand-new and never analyzed) had
+ *        fully been covered at runtime.
+ *      - When this obviously worked, I wanted to get more out of the new mechanism. Instead of
+ *        deciding first which coverage tracking to do and having to do another run to see the effect
+ *        of the complementary option, always both kinds of analysis were done at once, and the user
+ *        could arbitrarily switch between the two possible coverage results.
+ *      - And then I had a really great idea: Why not add some more runtime data collection, once data
+ *        are collected? And so I added an execution counter for every very element, such that after
+ *        a run one might easily see, how often a certain operation was executed. And a kind of
+ *        histographic analysis seemed also sensible, i.e. to show how the load is distributed over
+ *        the elements (particularly the structured ones) and how many instruction steps were needed
+ *        in total to run the algorithm for certain data. This is practically an empirical abstract
+ *        time estimation. Both count numbers (execution counter / instruction load) are now written
+ *        to the upper right corner of any element, and additionally a scaled colouring from deep
+ *        blue to hot red is used to visualize the hot spots and the lonesome places.
  *      2016-02-25 / 2016-03-02 Bugfix #97 (KGU#136)
  *      - Methods prepareDraw() and draw() used the same field rect for temporary calculations but in
  *        a slightly different way: draw() left a bounding rec related to the Root coordinates whereas
@@ -103,6 +129,7 @@ package lu.fisch.structorizer.elements;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.FontMetrics;
 
 import lu.fisch.utils.*;
 import lu.fisch.graphics.*;
@@ -114,13 +141,12 @@ import com.stevesoft.pat.*;  //http://www.javaregex.com/
 
 import java.awt.Point;
 import java.util.Stack;
-import java.util.Vector;
 
 import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.24";
+	public static String E_VERSION = "3.24-01";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -214,6 +240,17 @@ public abstract class Element {
 	// START KGU#43 2015-10-11: New fix color for breakpoint marking
 	public static Color E_BREAKPOINTCOLOR = Color.RED;			// Colour of the breakpoint bar at element top
 	// END KGU#43 2015-10-11
+	// START KGU#117 2016-03-06: Test coverage colour and mode for Enh. #77
+	public static Color E_TESTCOVEREDCOLOR = Color.GREEN;
+	public static boolean E_COLLECTRUNTIMEDATA = false;
+	public static RuntimeDataPresentMode E_RUNTIMEDATAPRESENTMODE = RuntimeDataPresentMode.NONE;	// FIXME: To be replaced by an enumeration type
+	// END KGU#117 2016-03-06
+	// START KGU#156 2016-03-10; Enh. #124
+	protected static int maxExecCount = 0;			// Maximum number of executions of any element while runEventTracking has been on
+	protected static int maxExecStepCount = 0;		// Maximum number of instructions carried out directly per element
+	protected static int maxExecTotalCount = 0;		// Maximum combined number of directly and indirectly performed instructions
+	// END KGU156 2016-03-10
+
 	public static boolean E_VARHIGHLIGHT = false;	// Highlight variables, operators, string literals, and certain keywords? 
 	public static boolean E_SHOWCOMMENTS = true;	// Enable comment bars and comment popups? 
 	public static boolean E_TOGGLETC = false;		// Swap text and comment on displaying?
@@ -262,6 +299,18 @@ public abstract class Element {
 	public boolean executed = false;	// Is set while being executed
 	// END KGU#41 2015-10-13
 	public boolean waited = false;		// Is set while a substructure Element is under execution
+	// START KGU#117 2016-03-06: Enh. #77 - for test coverage mode
+	public boolean simplyCovered = false;	// Flag indicates shallow test coverage
+	public boolean deeplyCovered = false;	// Flag indicates full test coverage
+	// END KGU#117 2016-03-06
+	// START KGU#156 2016-03-10; Enh. #124
+	protected int execCount = 0;		// Number of times this was executed while runEventTracking has been on
+	protected int execStepCount = 0;	// Number of instructions carried out directly by this element
+	protected int execSubCount;			// Number of instructions carried out by substructures of this element
+	// END KGU#156 2016-03-11
+
+	// END KGU156 2016-03-10
+	
 	private Color color = Color.WHITE;
 
 	private boolean collapsed = false;
@@ -279,6 +328,23 @@ public abstract class Element {
 	// START KGU#64 2015-11-03: Is to improve drawing performance
 	protected boolean isRectUpToDate = false;		// Will be set and used by prepareDraw() - to be reset on changes
 	private static StringList specialSigns = null;	// Strings to be highlighted in the text (lazy initialisation)
+
+
+	public Element()
+	{
+	}
+
+	public Element(String _string)
+	{
+		setText(_string);
+	}
+
+	public Element(StringList _strings)
+	{
+		setText(_strings);
+	}
+
+	
 	/**
 	 * Resets my cached drawing info
 	 */
@@ -321,38 +387,69 @@ public abstract class Element {
 	 * @param _top_left - conveyes the upper-left corner for the placement
 	 */
 	public abstract void draw(Canvas _canvas, Rect _top_left);
+	
 	public abstract Element copy();
+	
+	// START KGU#156 2016-03-11: Enh. #124
+	protected void copyRuntimeData(Element _target)
+	{
+		_target.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
+		_target.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+		_target.execCount = this.execCount;
+	}
+	// END KGU#156 2016-03-11
 	
 	// START KGU#119 2016-01-02 Bugfix #78
 	/**
 	 * Returns true iff another is of same class, all persistent attributes are equal, and
 	 * all substructure of another recursively equals the substructure of this. 
-	 * @param another - the Element to be compared
+	 * @param _another - the Element to be compared
 	 * @return true on recursive structural equality, false else
 	 */
-	public boolean equals(Element another)
+	public boolean equals(Element _another)
 	{
-		boolean isEqual = this.getClass() == another.getClass();
-		if (isEqual) isEqual = this.getText().getText().equals(another.getText().getText());
-		if (isEqual) isEqual = this.getComment().getText().equals(another.getComment().getText());
-		if (isEqual) isEqual = this.getColor().equals(another.getColor());
+		boolean isEqual = this.getClass() == _another.getClass();
+		if (isEqual) isEqual = this.getText().getText().equals(_another.getText().getText());
+		if (isEqual) isEqual = this.getComment().getText().equals(_another.getComment().getText());
+		// START KGU#156 2016-03-12: Colour had to be disabled due to races
+		//if (isEqual) isEqual = this.getColor().equals(_another.getColor());
+		// END KGU#156 2016-03-12
 		return isEqual;
 	}
 	// END KGU#119 2016-01-02
 
+	// START KGU#117 2016-03-07: Enh. #77
+	/**
+	 * Disjunctively combines the test coverage status and the execution counts
+	 * of _cloneOfMine (which is supposed to a clone of this) with this own
+	 * runtime data (coverage status, execution and step counts)
+	 * (Important for recursive tests)
+	 * @param _cloneOfMine - the Element to be combined (must be equal to this)
+	 * @return true on recursive structural equality, false else
+	 */
+	public boolean combineRuntimeData(Element _cloneOfMine)
+	{
+		if (this.equals(_cloneOfMine))	// This is rather paranoia
+		{
+			this.simplyCovered = this.simplyCovered || _cloneOfMine.simplyCovered;
+			this.deeplyCovered = this.deeplyCovered || _cloneOfMine.deeplyCovered;
+			this.execCount += _cloneOfMine.execCount;
+			//this.execStepCount += _cloneOfMine.execStepCount;
+			// In case of (direct or indirect) recursion the substructure steps will
+			// gathered on a different way! We must not do it twice
+//			if (!this.getClass().getSimpleName().equals("Root"))
+//			{
+//				this.execSubCount += _cloneOfMine.execSubCount;
+//			}
+			return true;
+		}
+		System.err.println("CombineRuntimeData for " + this + " FAILED!");
+		return false;
+	}
+	// END KGU#117 2016-03-07
+
 	// draw point
 	Point drawPoint = new Point(0,0);
-
-	public StringList getCollapsedText()
-	{
-		StringList sl = new StringList();
-		// START KGU#91 2015-12-01: Bugfix #39: This is for drawing, so use switch-sensitive methods
-		//if(getText().count()>0) sl.add(getText().get(0));
-		if(getText(false).count()>0) sl.add(getText(false).get(0));
-		// END KGU#91 2015-12-01
-		sl.add(COLLAPSED);
-		return sl;
-	}
 
 	public Point getDrawPoint()
 	{
@@ -366,21 +463,6 @@ public abstract class Element {
 		Element ele = this;
 		while(ele.parent!=null) ele=ele.parent;
 		ele.drawPoint=point;
-	}
-
-
-	public Element()
-	{
-	}
-
-	public Element(String _string)
-	{
-		setText(_string);
-	}
-
-	public Element(StringList _strings)
-	{
-		setText(_strings);
 	}
 
 	public void setText(String _text)
@@ -429,6 +511,17 @@ public abstract class Element {
             {
             	return text;
             }
+	}
+
+	public StringList getCollapsedText()
+	{
+		StringList sl = new StringList();
+		// START KGU#91 2015-12-01: Bugfix #39: This is for drawing, so use switch-sensitive methods
+		//if(getText().count()>0) sl.add(getText().get(0));
+		if(getText(false).count()>0) sl.add(getText(false).get(0));
+		// END KGU#91 2015-12-01
+		sl.add(COLLAPSED);
+		return sl;
 	}
 
 	public void setComment(String _comment)
@@ -496,6 +589,114 @@ public abstract class Element {
 		return this.executed || this.waited;
 	}
 	// END KGU#143 2016-01-22
+	
+	// START KGU#156 2016-03-11: Enh. #124 - We need a consistent execution step counting
+	public static void resetMaxExecCount()
+	{
+		Element.maxExecTotalCount = Element.maxExecStepCount = Element.maxExecCount = 0;		
+	}
+
+
+	/**
+	 * Computes the summed up execution steps of this and all its substructure
+	 * This method is just for setting the cached value execTotalCount, so don't
+	 * call it unless you must (better 
+	 * @param _directly TODO
+	 * @return
+	 */
+	public int getExecStepCount(boolean _combined)
+	{
+		return this.execStepCount + (_combined ? this.execSubCount : 0);
+	}
+
+	/**
+	 * Increments the execution counter.
+	 */
+	public final void countExecution()
+	{
+		// Element execution is always counting 1, no matter whether element is structured or not
+		if (Element.E_COLLECTRUNTIMEDATA && ++this.execCount > Element.maxExecCount)
+		{
+			Element.maxExecCount = this.execCount;
+		}
+	}
+	
+	/**
+	 * Updates the own or substructure instruction counter by adding the growth value
+	 * @param _growth - the amount by which the counter is to be increased
+	 * @param _directly - whether is to be counted as own instruction or the substructure's
+	 */
+	public void addToExecTotalCount(int _growth, boolean _directly)
+	{
+		if (Element.E_COLLECTRUNTIMEDATA)
+		{
+			if (_directly)
+			{
+				this.execStepCount += _growth;
+				if (this.execStepCount > Element.maxExecStepCount)
+				{
+					Element.maxExecStepCount = this.execStepCount;
+				}
+			}
+			else
+			{
+				this.execSubCount += _growth;
+				Element.maxExecTotalCount = 
+						Math.max(this.getExecStepCount(true),
+								Element.maxExecTotalCount);			
+			}
+		}
+	}
+	// END KGU#156 2016-03-11
+	
+	// START KGU#117 2016-03-10: Enh. #77
+	/**
+	 * In test coverage mode, sets the local tested flag if element is fully covered
+	 * and then recursively checks test coverage upwards all ancestry if
+	 * _propagateUpwards is true (otherwise it would be postponed to the termination
+	 * of the superstructure).
+	 * @param _propagateUpwards if true then the change is immediately propagated  
+	 */
+	public void checkTestCoverage(boolean _propagateUpwards)
+	{
+		//System.out.print("Checking coverage of " + this + " --> ");
+		if (Element.E_COLLECTRUNTIMEDATA)
+		{
+			boolean hasChanged = false;
+			if (!this.simplyCovered && this.isTestCovered(false))
+			{
+				hasChanged = true;
+				this.simplyCovered = true;
+			}
+			if (!this.deeplyCovered && this.isTestCovered(true))
+			{
+				hasChanged = true;
+				this.deeplyCovered = true;
+			}
+			if (hasChanged && _propagateUpwards)
+			{
+				Element parent = this.parent;
+				while (parent != null)
+				{
+					parent.checkTestCoverage(false);
+					parent = parent.parent;
+				}
+			}
+		}
+		//System.out.println(this.tested ? "SET" : "unset");
+	}
+	
+	/**
+	 * Detects shallow or deep test coverage of this element according to the
+	 * argument _deeply
+	 * @param _deeply if exhaustive coverage (including subroutines is requested)
+	 * @return true iff element and all its sub-structure is test-covered
+	 */
+	public boolean isTestCovered(boolean _deeply)
+	{
+		return _deeply ? this.deeplyCovered : this.simplyCovered;
+	}
+	// END KGU#117 2016-03-10
 
 	// START KGU#144 2016-01-22: Bugfix for #38 - Element knows best whether it can be moved up or down
 	/**
@@ -557,6 +758,7 @@ public abstract class Element {
 	{
 		// This priority might be arguable but represents more or less what was found in the draw methods before
 		if (this.waited) {
+			// FIXME (KGU#117): Need a combined colour for waited + tested
 			return Element.E_WAITCOLOR; 
 		}
 		else if (this.executed) {
@@ -565,6 +767,21 @@ public abstract class Element {
 		else if (this.selected) {
 			return Element.E_DRAWCOLOR;
 		}
+		// START KGU#117/KGU#156 2016-03-06: Enh. #77 + #124 Specific colouring for test coverage tracking
+		else if (E_COLLECTRUNTIMEDATA &&
+				E_RUNTIMEDATAPRESENTMODE != RuntimeDataPresentMode.NONE) {
+			switch (E_RUNTIMEDATAPRESENTMODE) {
+			case SHALLOWCOVERAGE:
+			case DEEPCOVERAGE:
+				if (this.isTestCovered(Element.E_RUNTIMEDATAPRESENTMODE == RuntimeDataPresentMode.DEEPCOVERAGE)) {
+					return Element.E_TESTCOVEREDCOLOR;
+				}
+				break;
+			default:
+				return getScaleColorForRTDPM();
+			}
+		}
+		// END KGU#117 2016-03-06
 		else if (this.collapsed) {
 			// NOTE: If the backround colour for collapsed elements should once be discarded, then
 			// for Instruction subclasses the icon is to be activated in Instruction.draw() 
@@ -573,6 +790,100 @@ public abstract class Element {
 		return getColor();
 	}
 	// END KGU#41 2015-10-13
+	
+	// START KGU#156 2016-03-12: Enh. #124 (Runtime data visualisation)
+	protected Color getScaleColorForRTDPM()
+	{
+		int maxValue = 0;
+		int value = 0;
+		boolean logarithmic = false;
+		switch (Element.E_RUNTIMEDATAPRESENTMODE) {
+		case EXECCOUNTS:
+			maxValue = Element.maxExecCount;
+			value = this.execCount;
+			break;
+		case EXECSTEPS_LOG:
+			logarithmic = true;
+		case EXECSTEPS_LIN:
+			maxValue = Element.maxExecStepCount;
+			value = this.getExecStepCount(false);
+			break;
+		case TOTALSTEPS_LOG:
+			logarithmic = true;
+		case TOTALSTEPS_LIN:
+			maxValue = Element.maxExecTotalCount;
+			value = this.getExecStepCount(true);
+			break;
+		default:
+				;
+		}
+		if (logarithmic) {
+			// We scale the logarithm a little up lest there should be too few
+			// discrete possible values
+			if (maxValue > 0) maxValue = (int) Math.round(25 * Math.log(maxValue));
+			if (value > 0) value = (int) Math.round(25 * Math.log(value));
+		}
+		return getScaleColor(value, maxValue);
+	}
+	
+	/**
+	 * Converts the value in the range 0 ... maxValue in the a colour
+	 * from deep blue to hot red.
+	 * @param value	- a count value in the range 0 (blue) ... maxValue (red)
+	 * @param maxValue - the end of the scale 
+	 * @return the corresponding spectral colour.
+	 */
+	private Color getScaleColor(int value, int maxValue)
+	{
+		// Actually we split the range in four equally sized sections
+		// In section 0, blue is at the brightness limit, red sticks to 0,
+		// and green is linearly rising from 0 to he brightness limit.
+		// In section 1, green is at the brightness limit and blue is linearly
+		// falling from the brightness limit down to 0.
+		// In section 2, green is at the brightness limit and red in linearly
+		// rising from 0 to he brightness limit.
+		// In section 1, red is at the brightness limit and green in linearly
+		// decreasing from the brightness limit down to 0.
+		
+		// Lest the background colour should get too dark for the text to remain
+		// legible, we shift the scale (e.g. by a twelfth) and this way reduce
+		// the effective spectral range such that the latter starts with a less
+		// deep blue...
+		int rangeOffset = maxValue/12;
+		value += rangeOffset;
+		maxValue += rangeOffset;
+		
+		if (maxValue == 0)
+		{
+			return Color.WHITE;
+		}
+		int maxBrightness = 255;
+		int blue = 0, green = 0, red = 0;
+		int value4 = 4 * value * maxBrightness;
+		int maxValueB = maxValue * maxBrightness;
+		if (value4 < maxValueB)
+		{
+			blue = maxBrightness;
+			green = (int)Math.round(value4 * 1.0 / maxValue);
+		}
+		else if (value4 < 2 * maxValueB)
+		{
+			green = maxBrightness;
+			blue = Math.max((int)Math.round((maxValueB * 2.0 - value4) / maxValue), 0);
+		}
+		else if (value4 < 3 * maxValueB)
+		{
+			green = maxBrightness;
+			red = Math.max((int)Math.round((value4 - 2.0 * maxValueB) / maxValue), 0);
+		}
+		else
+		{
+			red = maxBrightness;
+			green = Math.max((int)Math.round((maxValueB * 3.0 - value4) / maxValue), 0);
+		}
+		return new Color(red, green, blue);
+	}
+	// END KGU#156 2016-03-12
 	
 	// START KGU#43 2015-10-12: Methods to control the new breakpoint property
 	public void toggleBreakpoint()
@@ -606,8 +917,31 @@ public abstract class Element {
 	{
 		this.executed = false;
 		this.waited = false;
+		// START KGU#117 2016-03-06: Enh. #77 - extra functionality in test coverage mode
+		if (!E_COLLECTRUNTIMEDATA)
+		{
+			this.deeplyCovered = this.simplyCovered = false;;
+			// START KGU#156 2016-03-10: Enh. #124
+			this.execCount = this.execStepCount = this.execSubCount = 0;
+			// END KGU#156 2016-03-10
+		}
+		// KGU#117 2016-03-06
 	}
 	// END KGU#41 2015-10-13
+
+	// START KGU#117 2016-03-07: Enh. #77
+	/** 
+	 * Recursively clears test coverage flags and execution counts in this branch
+	 * (To be overridden by structured sub-classes!)
+	 */
+	public void clearRuntimeData()
+	{
+		this.deeplyCovered = this.simplyCovered = false;;
+		// START KGU#156 2016-03-11: Enh. #124
+		this.execCount = this.execStepCount = this.execSubCount = 0;
+		// END KGU#156 2016-03-11
+	}
+	// END KGU#117 2016-03-07
 
 	// START KGU 2015-10-09 Methods selectElementByCoord(int, int) and getElementByCoord(int, int) merged
 	/**
@@ -868,14 +1202,15 @@ public abstract class Element {
 			return null;
 	}
 
-	private String cutOut(String _s, String _by)
-	{
-		//System.out.print(_s+" -> ");
-		Regex rep = new Regex("(.*?)"+BString.breakup(_by)+"(.*?)","$1\",\""+_by+"\",\"$2");
-		_s=rep.replaceAll(_s);
-		//System.out.println(_s);
-		return _s;
-	}
+//	@Deprecated
+//	private String cutOut(String _s, String _by)
+//	{
+//		//System.out.print(_s+" -> ");
+//		Regex rep = new Regex("(.*?)"+BString.breakup(_by)+"(.*?)","$1\",\""+_by+"\",\"$2");
+//		_s=rep.replaceAll(_s);
+//		//System.out.println(_s);
+//		return _s;
+//	}
 	
 	// START KGU#18/KGU#23 2015-11-04: Lexical splitter extracted from writeOutVariables
 	/**
@@ -1370,6 +1705,45 @@ public abstract class Element {
 		return total;
 	}
 
+	// START KGU#156 2016-03-11: Enh. #124 - helper routines to display run-time info
+	/**
+	 * Writes the selected runtime information in half-size font to the lower
+	 * left of position (_right, _top).
+	 * @param _canvas - the Canvas to write to
+	 * @param _right - right border x coordinate
+	 * @param _top - upper border y coordinate
+	 */
+	protected void writeOutRuntimeInfo(Canvas _canvas, int _right, int _top)
+	{
+		if (Element.E_COLLECTRUNTIMEDATA)
+		{
+			// smaller font
+			Font smallFont = new Font(Element.font.getName(), Font.PLAIN, Element.font.getSize()*2/3);
+			FontMetrics fm = _canvas.getFontMetrics(smallFont);
+			// backup the original font
+			Font backupFont = _canvas.getFont();
+			String info = this.getRuntimeInfoString();
+			int yOffs = this.isBreakpoint() ? 4 : 0; 
+			_canvas.setFont(smallFont);
+			_canvas.setColor(Color.BLACK);
+			int width = _canvas.stringWidth(info);
+			_canvas.writeOut(_right - width, _top + yOffs + fm.getHeight() , info);
+			_canvas.setFont(backupFont);
+		}
+	}
+	
+	/**
+	 * Returns a runtime counter string, composed from execution count
+	 * and a mode-dependent number of steps (pure or aggregated, with or
+	 * without parenthesis). 
+	 * @return the decoration string for runtime data visualisation
+	 */
+	protected String getRuntimeInfoString()
+	{
+		return this.execCount + " / " + this.getExecStepCount(this.isCollapsed());
+	}
+	// END KGU#156 2016-03-11
+	
 
 
     public boolean isCollapsed() {

@@ -39,6 +39,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016-01-03      Bugfix #87 (KGU#124) collapsing of larger instruction elements,
  *                                      Enh. #87 (KGU#122) marking of collapsed elements with icon
  *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): fix accomplished
+ *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Fields for test coverage tracking added
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *
  ******************************************************************************************************
  *
@@ -50,10 +53,9 @@ package lu.fisch.structorizer.elements;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
-import java.util.Stack;
 
 import lu.fisch.graphics.*;
-import lu.fisch.structorizer.gui.IconLoader;
+//import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
 public class Instruction extends Element {
@@ -111,9 +113,9 @@ public class Instruction extends Element {
         
 	public Rect prepareDraw(Canvas _canvas)
 	{
-		// START KGU#136 2016-01-03: Bugfix #97 (prepared)
+		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
 		if (this.isRectUpToDate) return rect0;
-		// END KGU#136 2016-01-03
+		// END KGU#136 2016-03-01
 
 		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
 		
@@ -193,6 +195,12 @@ public class Instruction extends Element {
 					);  	
 
 		}
+
+		// START KGU#156 2016-03-11: Enh. #124
+		// write the run-time info if enabled
+		_element.writeOutRuntimeInfo(_canvas, _top_left.left + _element.rect.right - (Element.E_PADDING / 2), _top_left.top);
+		// END KGU#156 2016-03-11
+				
 		canvas.setColor(Color.BLACK);
 		canvas.drawRect(_top_left);
 		// START KGU#122 2016-01-03: Enh. #87 - A collapsed element is to be marked by the type-specific symbol,
@@ -230,6 +238,13 @@ public class Instruction extends Element {
 		// START KGU#82 (bug #31) 2015-11-14
 		ele.breakpoint = this.breakpoint;
 		// END KGU#82 (bug #31) 2015-11-14
+		// START KGU#117 2016-03-07: Enh. #77
+        if (Element.E_COLLECTRUNTIMEDATA)
+        {
+        	// We share this object (important for recursion!)
+        	ele.deeplyCovered = this.deeplyCovered;
+        }
+		// END KGU#117 2016-03-07
 		return ele;
 	}
 
@@ -243,5 +258,29 @@ public class Instruction extends Element {
    		_lines.add(this.getText());
     }
     // END KGU 2015-10-16
+
+	// START KGU#117 2016-03-10: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#checkTestCoverage(boolean)
+	 */
+	@Override
+	public void checkTestCoverage(boolean _propagateUpwards)
+	{
+		if (Element.E_COLLECTRUNTIMEDATA)
+		{
+			this.simplyCovered = true;
+			this.deeplyCovered = true;
+			if (_propagateUpwards)
+			{
+				Element parent = this.parent;
+				while (parent != null)
+				{
+					parent.checkTestCoverage(false);
+					parent = parent.parent;
+				}
+			}
+		}
+	}
+	// END KGU#117 2016-03-10
 
 }

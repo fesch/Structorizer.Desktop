@@ -41,6 +41,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
  *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
  *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136): Translation-neutral selection mechanism
+ *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *
  ******************************************************************************************************
  *
@@ -48,7 +50,6 @@ package lu.fisch.structorizer.elements;
  *
  ******************************************************************************************************///
 
-import java.util.Stack;
 import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -407,6 +408,12 @@ public class Case extends Element
                     		text,this
                     		);
                     // END KGU#91 2015-12-01
+
+                    // START KGU#156 2016-03-11: Enh. #124
+            		// write the run-time info if enabled
+            		this.writeOutRuntimeInfo(canvas, myrect.right - Element.E_PADDING, myrect.top);
+            		// END KGU#156 2016-03-11
+            				
             }
 
 
@@ -534,7 +541,7 @@ public class Case extends Element
                             {
                                     canvas.moveTo(myrect.right-1,myrect.top);
                                     int mx = myrect.right-1;
-                                    int my = myrect.top-fm.getHeight();
+                                    //int my = myrect.top-fm.getHeight();
                                     int sx = mx;
                                     int sy = (sx*(by-ay) - ax*by + ay*bx) / (bx-ax);
                                     canvas.lineTo(sx,sy+1);
@@ -604,7 +611,7 @@ public class Case extends Element
 				}
 				Element pre = qs.get(i).getElementByCoord(_x-xOff, _y-y0Branches, _forSelection);
 				// END KGU#136 2016-03-01
-				if(pre!=null)
+				if (pre!=null)
 				{
 					selCh = pre;
 				}
@@ -650,6 +657,10 @@ public class Case extends Element
     		// START KGU#82 (bug #31) 2015-11-14
     		ele.breakpoint = this.breakpoint;
     		// END KGU#82 (bug #31) 2015-11-14
+    		// START KGU#117 2016-03-07: Enh. #77
+    		ele.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
+    		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+    		// END KGU#117 2016-03-07
 
             return ele;
     }
@@ -673,6 +684,22 @@ public class Case extends Element
 	}
 	// END KGU#119 2016-01-02
 
+	// START KGU#117 2016-03-07: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
+	 */
+	@Override
+	public boolean combineRuntimeData(Element _cloneOfMine)
+	{
+		boolean isEqual = super.combineRuntimeData(_cloneOfMine);
+		for(int i = 0; isEqual && i < this.qs.size(); i++)
+		{
+			isEqual = this.qs.get(i).combineRuntimeData(((Case)_cloneOfMine).qs.get(i));
+		}
+		return isEqual;
+	}
+	// END KGU#117 2016-03-07
+
 	// START KGU#43 2015-10-12
     @Override
     public void clearBreakpoints()
@@ -688,7 +715,7 @@ public class Case extends Element
     }
     // END KGU#43 2015-10-12
 
-    // START KGU#43 2015-10-13
+	// START KGU#43 2015-10-13
     @Override
     public void clearExecutionStatus()
     {
@@ -702,6 +729,63 @@ public class Case extends Element
     	}
     }
     // END KGU#43 2015-10-13
+
+	// START KGU#117 2016-03-07: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
+	 */
+    @Override
+	public void clearRuntimeData()
+	{
+		super.clearRuntimeData();
+    	if (qs!= null)
+    	{
+    		for (int i = 0; i < qs.size(); i++)
+    		{
+    			qs.get(i).clearRuntimeData();
+    		}
+    	}
+	}
+	// END KGU#117 2016-03-07
+
+	// START KGU#156 2016-03-13: Enh. #124
+	protected String getRuntimeInfoString()
+	{
+		String info = this.execCount + " / ";
+		String stepInfo = null;
+		switch (E_RUNTIMEDATAPRESENTMODE)
+		{
+		case TOTALSTEPS_LIN:
+		case TOTALSTEPS_LOG:
+			stepInfo = Integer.toString(this.getExecStepCount(true));
+			if (!this.isCollapsed()) {
+				stepInfo = "(" + stepInfo + ")";
+			}
+			break;
+		default:
+			stepInfo = Integer.toString(this.getExecStepCount(this.isCollapsed()));
+		}
+		return info + stepInfo;
+	}
+	// END KGU#156 2016-03-11
+
+	// START KGU#117 2016-03-06: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
+	 */
+	public boolean isTestCovered(boolean _deeply)
+	{
+		boolean covered = true;
+    	if (qs!= null)
+    	{
+    		for (int i = 0; covered && i < qs.size(); i++)
+    		{
+    			covered = qs.get(i).isTestCovered(_deeply);
+    		}
+    	}		
+		return covered;
+	}
+	// END KGU#117 2016-03-06
 
 	// START KGU 2015-10-16
 	/* (non-Javadoc)

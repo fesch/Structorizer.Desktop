@@ -41,7 +41,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord()
  *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
  *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): Translation-neutral selection
+ *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Methods for test coverage tracking added
  *      Kay Gürtzig     2016.03.07      Bugfix #122 (KGU#136): Selection was not aware of option altPadRight 
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *
  ******************************************************************************************************
  *
@@ -53,9 +55,6 @@ package lu.fisch.structorizer.elements;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
-import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
-import java.util.Stack;
 
 import javax.swing.ImageIcon;
 
@@ -71,9 +70,9 @@ public class Alternative extends Element {
 	private Rect rTrue = new Rect();
 	private Rect rFalse = new Rect();
 	
-	// START KGU#136 2016-03-01: Bugfix #97
-	private Point pt0True = new Point();
-	private Point pt0False = new Point();
+	// START KGU#136 2016-03-07: Bugfix #97
+	private Point pt0Parting = new Point();
+	// END KGU#136 2016-03-07
 
 	public Alternative()
 	{
@@ -179,8 +178,8 @@ public class Alternative extends Element {
 			double coeff = (by-ay)/(bx-ax);
 
 			// the point height we need
-			double y = nLines * fm.getHeight() + 4*(E_PADDING/2);
-			double x = y/coeff + ax - ay/coeff;
+			//double y = nLines * fm.getHeight() + 4*(E_PADDING/2);
+			//double x = y/coeff + ax - ay/coeff;
 			//System.out.println(i+" => "+coeff+" --> "+String.valueOf(x));
 
 			if (coeff<lowest && coeff>0)
@@ -204,12 +203,11 @@ public class Alternative extends Element {
 		}
 
 		rect0.bottom = 4*(E_PADDING/2) + nLines*fm.getHeight();
-		pt0True.y = pt0False.y = rect0.bottom;
+		pt0Parting.y = rect0.bottom;
 		
 		rect0.right = Math.max(rect0.right, rTrue.right + rFalse.right);
 		rect0.bottom += Math.max(rTrue.bottom, rFalse.bottom);
-		pt0True.x = 0;
-		pt0False.x = rTrue.right;
+		pt0Parting.x = rTrue.right;
 
 		// START KGU#136 2016-03-01: Bugfix #97
 		isRectUpToDate = true;
@@ -233,15 +231,15 @@ public class Alternative extends Element {
 		Color drawColor = getFillColor();
 		// END KGU 2015-10-13
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
-		int a;
-		int b;
-		int c;
-		int d;
-		int x;
-		int y;
-		int wmax;
-		int p;
-		int w;
+		//int a;
+		//int b;
+		//int c;
+		//int d;
+		//int x;
+		//int y;
+		//int wmax;
+		//int p;
+		//int w;
 
 		// START KGU 2015-10-13: Already done by new method getFillColor() now
 //		if (selected==true)
@@ -270,12 +268,12 @@ public class Alternative extends Element {
 		// END KGU#136 2016-03-01
 		
 		myrect.bottom = _top_left.top + nLines*fm.getHeight() + 4*(E_PADDING/2);
-		y = myrect.top + E_PADDING;
-		a = myrect.left + ((myrect.right-myrect.left) / 2);
-		b = myrect.top;
-		c = myrect.left + rTrue.right - 1;
-		d = myrect.bottom - 1;
-		x = Math.round(((y-b)*(c-a) + a*(d-b))/(d-b));
+		//y = myrect.top + E_PADDING;
+		//a = myrect.left + ((myrect.right-myrect.left) / 2);
+		//b = myrect.top;
+		//c = myrect.left + rTrue.right - 1;
+		//d = myrect.bottom - 1;
+		//x = Math.round(((y-b)*(c-a) + a*(d-b))/(d-b));
 /*
 		wmax=0;
 		for(int i=0;i<text.count();i++)
@@ -286,28 +284,29 @@ public class Alternative extends Element {
 			}
 		}
 */
-                int remain = (_top_left.right - _top_left.left)
-                             -(rTrue.right - rTrue.left)
-                             -(rFalse.right - rFalse.left);
-                if (Element.altPadRight == false) remain=0;
-                // START KGU#136 2016-03-07: Bugfix #122 - we must correct the else start point
-                this.pt0False.x = this.rTrue.right - rTrue.left + remain; 
-                // END KGU#136 2016-03-07
-                
-                // the upper left point of the corner
-                double cx = 0;
-                double cy = nLines*fm.getHeight() + 4*(E_PADDING/2);
-                // upper right corner
-                double dx = _top_left.right - _top_left.left;
-                double dy = cy;
-                // the the lowest point of the triangle
-                double ax = rTrue.right - rTrue.left + remain;
-                double ay = 0;
-                // coefficient of the left droite
-                double coeffleft = (cy-ay)/(cx-ax);
-                double coeffright = (dy-ay)/(dx-ax);
+		int remain = (_top_left.right - _top_left.left)
+				-(rTrue.right - rTrue.left)
+				-(rFalse.right - rFalse.left);
+		if (Element.altPadRight == false) remain=0;
+		// START KGU#136 2016-03-07: Bugfix #122 - we must correct the else start point
+		this.pt0Parting.x = this.rTrue.right - rTrue.left + remain; 
+		// END KGU#136 2016-03-07
 
-                // draw text
+		// the upper left point of the corner
+		double cx = 0;
+		double cy = nLines*fm.getHeight() + 4*(E_PADDING/2);
+		// upper right corner
+		double dx = _top_left.right - _top_left.left;
+		double dy = cy;
+		// the the lowest point of the triangle
+		double ax = rTrue.right - rTrue.left + remain;
+		double ay = 0;
+		// coefficient of the left traverse line
+		double coeffleft = (cy-ay)/(cx-ax);
+		// coefficient of the right traverse line
+		double coeffright = (dy-ay)/(dx-ax);
+
+		// draw text
 		for (int i=0; i < nLines; i++)
 		{
 			String mytext = this.getText(false).get(i);
@@ -364,8 +363,6 @@ public class Alternative extends Element {
 		canvas.writeOut(myrect.right - (E_PADDING / 2) -_canvas.stringWidth(preAltF),
 						myrect.bottom - (E_PADDING / 2), preAltF);
 		
-		
-		
 		// draw comment
 		if (Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 		{
@@ -376,7 +373,14 @@ public class Alternative extends Element {
 		this.drawBreakpointMark(canvas, myrect);
 		// END KGU 2015-10-11
 		
-                // draw triangle
+		// START KGU#156 2016-03-11: Enh. #124
+		// write the run-time info if enabled
+		this.writeOutRuntimeInfo(_canvas, 
+				_top_left.left + rect.right - (int)Math.round(fm.getHeight() / coeffright),
+				_top_left.top);
+		// END KGU#156 2016-03-11
+				
+		// draw triangle
 		canvas.setColor(Color.BLACK);
 		canvas.moveTo(myrect.left, myrect.top);
 		canvas.lineTo(myrect.left + rTrue.right-1 + remain, myrect.bottom-1);
@@ -424,8 +428,8 @@ public class Alternative extends Element {
 			// START KGU#136 2016-03-01: Bugfix #97 - we use local coordinates now
 			//Element selT = qTrue.getElementByCoord(_x,_y, _forSelection);
 			//Element selF = qFalse.getElementByCoord(_x,_y, _forSelection);
-			Element selT = qTrue.getElementByCoord(_x-pt0True.x, _y-pt0True.y, _forSelection);
-			Element selF = qFalse.getElementByCoord(_x-pt0False.x, _y-pt0False.y, _forSelection);
+			Element selT = qTrue.getElementByCoord(_x, _y-pt0Parting.y, _forSelection);
+			Element selF = qFalse.getElementByCoord(_x-pt0Parting.x, _y-pt0Parting.y, _forSelection);
 			// END KGU#136 2016-03-01
 			if (selT != null) 
 			{
@@ -459,9 +463,13 @@ public class Alternative extends Element {
 		// START KGU#82 (bug #31) 2015-11-14
 		ele.breakpoint = this.breakpoint;
 		// END KGU#82 (bug #31) 2015-11-14
+		// START KGU#117 2016-03-07: Enh. #77
+		ele.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
+		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+		// END KGU#117 2016-03-07
 		return ele;
 	}
-
+	
 	// START KGU#119 2016-01-02: Bugfix #78
 	/**
 	 * Returns true iff _another is of same class, all persistent attributes are equal, and
@@ -481,6 +489,23 @@ public class Alternative extends Element {
 		return isEqual;
 	}
 	// END KGU#119 2016-01-02
+
+	// START KGU#117 2016-03-07: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
+	 */
+	@Override
+	public boolean combineRuntimeData(Element _cloneOfMine)
+	{
+		boolean isEqual = super.combineRuntimeData(_cloneOfMine);
+		if (isEqual)
+		{
+			isEqual = this.qTrue.combineRuntimeData(((Alternative)_cloneOfMine).qTrue) &&
+					this.qFalse.combineRuntimeData(((Alternative)_cloneOfMine).qFalse);			
+		}
+		return isEqual;
+	}
+	// END KGU#117 2016-03-07
 
 	/*@Override
     public void setColor(Color _color) 
@@ -510,6 +535,49 @@ public class Alternative extends Element {
 		this.qTrue.clearExecutionStatus();
 	}
 	// END KGU 2015-10-13
+
+	// START KGU#117 2016-03-07: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
+	 */
+	public void clearRuntimeData()
+	{
+		super.clearRuntimeData();
+		this.qFalse.clearRuntimeData();
+		this.qTrue.clearRuntimeData();
+	}
+	// END KGU#117 2016-03-07
+
+	// START KGU#156 2016-03-13: Enh. #124
+	protected String getRuntimeInfoString()
+	{
+		String info = this.execCount + " / ";
+		String stepInfo = null;
+		switch (E_RUNTIMEDATAPRESENTMODE)
+		{
+		case TOTALSTEPS_LIN:
+		case TOTALSTEPS_LOG:
+			stepInfo = Integer.toString(this.getExecStepCount(true));
+			if (!this.isCollapsed()) {
+				stepInfo = "(" + stepInfo + ")";
+			}
+			break;
+		default:
+			stepInfo = Integer.toString(this.getExecStepCount(this.isCollapsed()));
+		}
+		return info + stepInfo;
+	}
+	// END KGU#156 2016-03-11
+
+	// START KGU#117 2016-03-10: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
+	 */
+	public boolean isTestCovered(boolean _deeply)
+	{
+		return this.qTrue.isTestCovered(_deeply) && this.qFalse.isTestCovered(_deeply);
+	}
+	// END KGU#117 2016-03-10
 
 	// START KGU 2015-10-16
 	/* (non-Javadoc)

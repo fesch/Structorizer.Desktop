@@ -42,6 +42,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016-01-03      Enh. #87: Collapsing mechanism for selected Subqueue (KGU#123)
  *      Kay Gürtzig     2016-01-22      Bugfix #114: Method isExecuted() added (KGU#143)
  *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136) accomplished (translation-independent selection)
+ *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *
  ******************************************************************************************************
  *
@@ -50,14 +53,12 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.util.Iterator;
-import java.util.Stack;
 import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
 
 import lu.fisch.graphics.*;
-import lu.fisch.structorizer.gui.SelectedSequence;
 import lu.fisch.utils.*;
 
 public class Subqueue extends Element implements IElementSequence {
@@ -104,10 +105,10 @@ public class Subqueue extends Element implements IElementSequence {
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
-		// START KGU#136 2016-01-03: Bugfix #97 (prepared)
+		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
 		if (this.isRectUpToDate) return rect0;
 		this.y0Children.clear();
-		// END KGU#136 2016-01-03
+		// END KGU#136 2016-03-01
 
 		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
 		Rect subrect = new Rect();
@@ -208,6 +209,11 @@ public class Subqueue extends Element implements IElementSequence {
 							"\u2205"
 							);  	
 
+			// START KGU#156 2016-03-11: Enh. #124
+			// write the run-time info if enabled
+			this.writeOutRuntimeInfo(canvas, _top_left.right - (Element.E_PADDING / 2), _top_left.top);
+			// END KGU#156 2016-03-11
+					
 			canvas.drawRect(_top_left);
 		}
 	}
@@ -375,6 +381,9 @@ public class Subqueue extends Element implements IElementSequence {
 		{
 			((Subqueue) ele).addElement(((Element) children.get(i)).copy());
 		}
+		// START KGU#117 2016-03-07: Enh. #77
+		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+		// END KGU#117 2016-03-07
 		return ele;
 	}
         
@@ -396,6 +405,22 @@ public class Subqueue extends Element implements IElementSequence {
 		return isEqual;
 	}
 	// END KGU#119 2016-01-02
+
+	// START KGU#117 2016-03-07: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
+	 */
+	@Override
+	public boolean combineRuntimeData(Element _cloneOfMine)
+	{
+		boolean isEqual = super.combineRuntimeData(_cloneOfMine);
+		for (int i = 0; isEqual && i < children.size(); i++)
+		{
+			isEqual = children.get(i).combineRuntimeData(((Subqueue)_cloneOfMine).getElement(i));
+		}
+		return isEqual;
+	}
+	// END KGU#117 2016-03-07
 
 	// START KGU#87 2015-11-22: Re-enabled for multiple selection (selected non-empty subqueues)    
     @Override
@@ -440,9 +465,9 @@ public class Subqueue extends Element implements IElementSequence {
 	@Override
 	public void clearExecutionStatus()
 	{
+    	super.clearExecutionStatus();
         for(int i = 0; i < children.size(); i++)
         {      
-        	super.clearExecutionStatus();	// FIXME: Is this necessary at all?
             children.get(i).clearExecutionStatus();
         }
 	}
@@ -466,6 +491,40 @@ public class Subqueue extends Element implements IElementSequence {
 		return involved;
 	}
 	// END KGU#143 2016-01-22
+
+	// START KGU#117 2016-03-06: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
+	 */
+	@Override
+	public void clearRuntimeData()
+	{
+		super.clearRuntimeData();
+        for(int i = 0; i < children.size(); i++)
+        {      
+            children.get(i).clearRuntimeData();
+        }
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
+	 */
+	public boolean isTestCovered(boolean _deeply)
+	{
+		// An empty sequence must at least once have been passed in order to count as covered
+		if (children.isEmpty())
+		{
+			return super.isTestCovered(_deeply);
+		}
+		// ... otherwise all instructions must be covered
+		boolean covered = true;
+        for(int i = 0; covered && i < children.size(); i++)
+        {      
+            covered = children.get(i).isTestCovered(_deeply);
+        }
+		return covered;
+	}
+	// END KGU#117 2016-03-06
 
 	// START KGU 2015-10-16
 	/* (non-Javadoc)

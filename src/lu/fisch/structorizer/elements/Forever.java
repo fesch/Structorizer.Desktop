@@ -42,7 +42,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
  *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), geIcon()
  *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
- *      Kay Gürtzig     2016.02.01      Bugfix #97 (KGU#136): Translation-neutral selection
+ *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): Translation-neutral selection
+ *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *
  ******************************************************************************************************
  *
@@ -54,7 +56,6 @@ package lu.fisch.structorizer.elements;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
-import java.util.Stack;
 
 import javax.swing.ImageIcon;
 
@@ -123,9 +124,9 @@ public class Forever extends Element implements ILoop {
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
-		// START KGU#136 2016-01-03: Bugfix #97 (prepared)
+		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
 		if (this.isRectUpToDate) return rect0;
-		// END KGU#136 2016-01-03
+		// END KGU#136 2016-03-01
 		
 		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
 		if (isCollapsed()) 
@@ -350,6 +351,13 @@ public class Forever extends Element implements ILoop {
 		// START KGU#82 (bug #31) 2015-11-14
 		ele.breakpoint = this.breakpoint;
 		// END KGU#82 (bug #31) 2015-11-14
+		// START KGU#117 2016-03-07: Enh. #77
+        if (Element.E_COLLECTRUNTIMEDATA)
+        {
+        	// We share this object (important for recursion!)
+        	ele.deeplyCovered = this.deeplyCovered;
+        }
+		// END KGU#117 2016-03-07
 		return ele;
 	}
 	
@@ -367,6 +375,18 @@ public class Forever extends Element implements ILoop {
 	}
 	// END KGU#119 2016-01-02
 	
+	// START KGU#117 2016-03-07: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
+	 */
+	@Override
+	public boolean combineRuntimeData(Element _cloneOfMine)
+	{
+		return super.combineRuntimeData(_cloneOfMine) &&
+				this.getBody().combineRuntimeData(((ILoop)_cloneOfMine).getBody());
+	}
+	// END KGU#117 2016-03-07
+
 	// START KGU#43 2015-10-12
 	@Override
 	public void clearBreakpoints()
@@ -385,6 +405,49 @@ public class Forever extends Element implements ILoop {
 	}
 	// END KGU#43 2015-10-13
 	
+	// START KGU#117 2016-03-06: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
+	 */
+	@Override
+	public void clearRuntimeData()
+	{
+		super.clearRuntimeData();
+		this.getBody().clearRuntimeData();
+	}
+	// END KGU#117 2016-03-06
+
+	// START KGU#156 2016-03-13: Enh. #124
+	protected String getRuntimeInfoString()
+	{
+		String info = this.execCount + " / ";
+		String stepInfo = null;
+		switch (E_RUNTIMEDATAPRESENTMODE)
+		{
+		case TOTALSTEPS_LIN:
+		case TOTALSTEPS_LOG:
+			stepInfo = Integer.toString(this.getExecStepCount(true));
+			if (!this.isCollapsed()) {
+				stepInfo = "(" + stepInfo + ")";
+			}
+			break;
+		default:
+			stepInfo = Integer.toString(this.getExecStepCount(this.isCollapsed()));
+		}
+		return info + stepInfo;
+	}
+	// END KGU#156 2016-03-11
+
+	// START KGU#117 2016-03-10: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
+	 */
+	public boolean isTestCovered(boolean _deeply)
+	{
+		return this.getBody().isTestCovered(_deeply);
+	}
+	// END KGU#117 2016-03-10
+
 	// START KGU 2015-10-16
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)

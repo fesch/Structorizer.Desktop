@@ -35,6 +35,8 @@ package lu.fisch.structorizer.executor;
  *      Bob Fisch       2009.05.18      First Issue
  *      Kay Gürtzig     2015.11.05      Enhancement allowing to adopt edited values from Control (KGU#68)
  *      Kay Gürtzig     2015.11.14      New controls to display the call level for enhancement #9 (KGU#2)
+ *      Kay Gürtzig     2016.03.06      Enh. #77: New checkboxes for test coverage tracking mode (KGU#117)
+ *      Kay Gürtzig     2016.03.13      Enh. #124 (KGU#156): Runtime data collection generalised (KGU#156)
  *
  ******************************************************************************************************
  *
@@ -45,12 +47,19 @@ package lu.fisch.structorizer.executor;
 
 
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Vector;
 
+import javax.swing.JComboBox;
 import javax.swing.table.DefaultTableModel;
 
+import lu.fisch.structorizer.arranger.Arranger;
+import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.RuntimeDataPresentMode;
 import lu.fisch.structorizer.gui.IconLoader;
 
 
@@ -58,7 +67,7 @@ import lu.fisch.structorizer.gui.IconLoader;
  *
  * @author robertfisch
  */
-public class Control extends javax.swing.JFrame implements PropertyChangeListener {
+public class Control extends javax.swing.JFrame implements PropertyChangeListener, ItemListener {
 
     /** Creates new form Control */
     public Control() {
@@ -83,6 +92,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         // START KGU#89 2015-11-25
         lblSpeedValue = new javax.swing.JLabel();
         // END KGU#89 2015-11-25
+        // START KGU#117 2016-03-06: Enh. #77 - Checkbox fpr Test coverage mode
+        chkCollectRuntimeData = new javax.swing.JCheckBox("Collect Run Data");
+        cbRunDataDisplay = new JComboBox<RuntimeDataPresentMode>(RuntimeDataPresentMode.values());
+        // END KGU#117 2016-03-06
         btnStop = new javax.swing.JButton();
         btnPlay = new javax.swing.JButton();
         btnPause = new javax.swing.JButton();
@@ -141,8 +154,19 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         // START KGU#89 2015-11-25
         //lblSpeed.setText(" Delay: 50");
         lblSpeed.setText(" Delay: ");
+        
         lblSpeedValue.setText("50");
         // END KGU#89 2015-11-25
+        
+        // START KGU#117 2016-03-06: Enh. #77 Track test coverage mode change
+        chkCollectRuntimeData.addItemListener(this);
+        // END KGU#117 2016-03-06
+        // START KGU#165 2016-03-13: Enh. #124
+        cbRunDataDisplay.addItemListener(this);
+        // Now fix the element height, the width may stay extensible
+        cbRunDataDisplay.setMaximumSize(
+        		new Dimension(Short.MAX_VALUE, cbRunDataDisplay.getPreferredSize().height));
+        // END KGU#156 2016-03-13
 
         btnStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/stop.png"))); // NOI18N
         btnStop.addActionListener(new java.awt.event.ActionListener() {
@@ -190,7 +214,7 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
             }
         });
         jScrollPane1.setViewportView(tblVar);
-
+        
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -202,6 +226,9 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
                     	.add(lblSpeed /*, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 86, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE*/)
                     	.add(lblSpeedValue/*, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE*/))
                     	// END KGU#89 2015-11-25
+                    	// START KGU#117 2016-03-06: Enh. #77
+                    .add(layout.createSequentialGroup().add(chkCollectRuntimeData))
+                    	// END KGU#117 2016-03-06
                     .add(layout.createSequentialGroup()
                         .add(btnStop)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -211,6 +238,9 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
                 // END KGU#2 (#9) 2015-11-14
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    	// START KGU#117 2016-03-06: Enh. #77
+                    .add(layout.createSequentialGroup().add(cbRunDataDisplay))
+                    	// END KGU#117 2016-03-06
                     .add(layout.createSequentialGroup()
                         .add(btnPause)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -233,6 +263,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
                     .add(lblSpeedValue, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 		// END KGU#89 2015-11-25
                     .add(slSpeed, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(layout.createParallelGroup()
+                    .add(chkCollectRuntimeData)
+                    .add(cbRunDataDisplay))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(btnStop)
@@ -257,7 +291,11 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         btnPlay.setEnabled(true);
         btnPause.setEnabled(false);
         btnStep.setEnabled(true);
-        // emtpy table
+        // START KGU#117 2016-03-06: Enh. #77
+        chkCollectRuntimeData.setEnabled(true);
+        this.cbRunDataDisplay.setEnabled(chkCollectRuntimeData.isSelected());
+        // END KGU#117 2016-03-06
+        // empty table
         DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
         while(tm.getRowCount()>0) tm.removeRow(0);
     }
@@ -265,6 +303,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     private void btnStopActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnStopActionPerformed
     {//GEN-HEADEREND:event_btnStopActionPerformed
         Executor.getInstance().setStop(true);
+        // START KGU#117 2016-03-06: Enh. #77
+        chkCollectRuntimeData.setEnabled(true);
+        cbRunDataDisplay.setEnabled(chkCollectRuntimeData.isSelected());
+        // END KGU#117 2016-03-06
         this.setVisible(false);
     }//GEN-LAST:event_btnStopActionPerformed
 
@@ -273,6 +315,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         btnPause.setEnabled(true);
         btnPlay.setEnabled(false);
         btnStep.setEnabled(false);
+        // START KGU#117 2016-03-06: Enh. #77
+        chkCollectRuntimeData.setEnabled(false);
+        cbRunDataDisplay.setEnabled(chkCollectRuntimeData.isSelected());
+        // END KGU#117 2016-03-06
         // START KGU#68 205-11-06: Enhancement - update edited values
     	if (varsUpdated)
     	{
@@ -319,6 +365,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     		varsUpdated = false;
     	}
     	// END KGU#68 2015-11-06
+        // START KGU#117 2016-03-06: Enh. #77
+        chkCollectRuntimeData.setEnabled(false);
+        cbRunDataDisplay.setEnabled(chkCollectRuntimeData.isSelected());
+        // END KGU#117 2016-03-06
         if(Executor.getInstance().isRunning()==false)
         {
             Executor.getInstance().start(true);
@@ -389,7 +439,7 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         tblVar.setGridColor(Color.LIGHT_GRAY);
         tblVar.setShowGrid(true);
         DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
-        // emtpy table
+        // empty the table
         while(tm.getRowCount()>0) tm.removeRow(0);
         // START KGU#68 2015-11-06: Preparation for variable editing
         //for(int i=0;i<vars.size();i++) tm.addRow(vars.get(i));
@@ -420,6 +470,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     private javax.swing.JLabel lblSpeedValue;
     // END KGU#49 2015-11-25
     private javax.swing.JSlider slSpeed;
+    // START KGU#117 2016-03-06: Enh. #77 - Checkbox fpr Test coverage mode
+    public javax.swing.JCheckBox chkCollectRuntimeData;
+    public javax.swing.JComboBox<RuntimeDataPresentMode> cbRunDataDisplay;
+    // END KGU#117 2016-03-06
     private javax.swing.JTable tblVar;
     // End of variables declaration//GEN-END:variables
     // START KGU#2 (#9) 2015-11-14: Additional display of subroutine call level
@@ -449,5 +503,51 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
 		
 	}
     // END KGU#68 2015-11-06
+
+	// START KGU#117 2016-03-08: Enh. #77
+	@Override
+	public void itemStateChanged(ItemEvent itEv) {
+		if (itEv.getSource() == this.chkCollectRuntimeData)
+    	{
+    		if (itEv.getStateChange() == ItemEvent.SELECTED)
+    		{
+    			Element.E_COLLECTRUNTIMEDATA = true;
+    			this.cbRunDataDisplay.setEnabled(this.chkCollectRuntimeData.isEnabled());
+        		if (Arranger.hasInstance())
+        		{
+        			Arranger.getInstance().redraw();
+        		}
+        		Executor.getInstance().redraw();
+    		}
+    		else if (itEv.getStateChange() == ItemEvent.DESELECTED)
+    		{
+    			boolean wipeTestStatus = Element.E_COLLECTRUNTIMEDATA;
+    			Element.E_COLLECTRUNTIMEDATA = false;
+    			this.cbRunDataDisplay.setEnabled(false);
+    			if (wipeTestStatus) 
+    			{
+    				Executor.getInstance().clearPoolExecutionStatus();
+    			}
+    		}
+    		if (Arranger.hasInstance())
+    		{
+    			Arranger.getInstance().doButtons();
+    		}
+    	}
+    	else if (itEv.getSource() == this.cbRunDataDisplay)
+    	{
+    		RuntimeDataPresentMode oldShowMode = Element.E_RUNTIMEDATAPRESENTMODE;
+    		Element.E_RUNTIMEDATAPRESENTMODE = (RuntimeDataPresentMode)itEv.getItem();
+    		if (oldShowMode != Element.E_RUNTIMEDATAPRESENTMODE)
+    		{
+        		if (Arranger.hasInstance())
+        		{
+        			Arranger.getInstance().redraw();
+        		}
+        		Executor.getInstance().redraw();
+    		}
+    	}
+	}
+	// END KGU#117 2016-03-08
 
 }
