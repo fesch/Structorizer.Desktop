@@ -593,7 +593,7 @@ public abstract class Element {
 	// START KGU#156 2016-03-11: Enh. #124 - We need a consistent execution step counting
 	public static void resetMaxExecCount()
 	{
-		Element.maxExecTotalCount = Element.maxExecCount = 0;		
+		Element.maxExecTotalCount = Element.maxExecStepCount = Element.maxExecCount = 0;		
 	}
 
 
