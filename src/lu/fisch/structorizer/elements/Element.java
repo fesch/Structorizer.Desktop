@@ -768,7 +768,8 @@ public abstract class Element {
 			return Element.E_DRAWCOLOR;
 		}
 		// START KGU#117/KGU#156 2016-03-06: Enh. #77 + #124 Specific colouring for test coverage tracking
-		else if (E_RUNTIMEDATAPRESENTMODE != RuntimeDataPresentMode.NONE) {
+		else if (E_COLLECTRUNTIMEDATA &&
+				E_RUNTIMEDATAPRESENTMODE != RuntimeDataPresentMode.NONE) {
 			switch (E_RUNTIMEDATAPRESENTMODE) {
 			case SHALLOWCOVERAGE:
 			case DEEPCOVERAGE:
@@ -880,8 +881,7 @@ public abstract class Element {
 			red = maxBrightness;
 			green = Math.max((int)Math.round((maxValueB * 3.0 - value4) / maxValue), 0);
 		}
-		color = new Color(red, green, blue);
-		return color;
+		return new Color(red, green, blue);
 	}
 	// END KGU#156 2016-03-12
 	

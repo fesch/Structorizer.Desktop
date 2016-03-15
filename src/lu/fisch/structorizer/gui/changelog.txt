@@ -11,8 +11,9 @@ Legend:
 <Foo>   -->     idea AND coding done by Foo
 
 Current development version: 3.24-01 (2016.03.15)
-- 01: Enh. #77: Test coverage mode highlights passed code paths [elemhsb]
+- 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]
 - 01: Enh. #124: Generalized runtime data visualisation <Kay Gürtzig>
+- 01: Arranger now adopts current directory from first arranged diagram <Kay Gürtzig>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]

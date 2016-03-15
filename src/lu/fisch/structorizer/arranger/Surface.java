@@ -48,6 +48,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016-03-08		Bugfix #97: Method for drawing info invalidation added (KGU#155) 
  *      Kay Gürtzig     2016.03.09      Enh. #77 (KGU#117): Methods clearExecutionStatus and setCovered added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation (refactoring)
+ *      Kay Gürtzig     2016.03.14      Enh. #62 update: currentDirectory adopted from first added diagram.
  *
  ******************************************************************************************************
  *
@@ -653,6 +654,13 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     			point = new Point(left,top);
     		}
     		// END KGU#110 2015-12-20
+    		// START KGU 2016-03-14: Enh. #62
+    		// If it's the first diagram then adopt the crrent directory if possible
+    		if (diagrams.isEmpty() && root.filename != null && !root.filename.isEmpty())
+    		{
+    			this.currentDirectory = new File(root.filename);
+    		}
+    		// END KGU 2016-03-14
     		/*Diagram*/ diagram = new Diagram(root,point);
     		diagrams.add(diagram);
     		// START KGU#85 2015-11-18
