@@ -10,10 +10,14 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.24-01 (2016.03.15)
+Current development version: 3.24-02 (2016.03.19)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]
 - 01: Enh. #124: Generalized runtime data visualisation <Kay Gürtzig>
 - 01: Arranger now adopts current directory from first arranged diagram <Kay Gürtzig>
+- 02: Bugfix #131: User activities during execution could compromise Executor <Kay Gürtzig>
+- 02: Bugfix #132: Stale Structorizer references in Arranger caused trouble <Kay Gürtzig>
+- 02: Enh. #133: Execution Call stack may now be inspected in paused state <Kay Gürtzig>
+- 02: Enh. KGU#89: Executor: Extended language localisation support <Kay Gürtzig>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
