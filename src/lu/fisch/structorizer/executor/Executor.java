@@ -71,10 +71,27 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016-01-29      Bugfix #115, enh. #84: Result arrays now always presented as list
  *                                      (with "Pause" button if not already in step mode; KGU#133, KGU#147).
  *      Kay Gürtzig     2016.03.13      Enh. #77, #124: runtime data collection implemented (KGU#117, KGU#156)
+ *      Kay Gürtzig     2016.03.16      Bugfix #131: Precautions against reopening, take-over, and loss of control (KGU#157)
+ *      Kay Gürtzig     2016.03.17      Enh. #133: Stacktrace now permanently maintained, not only on errors (KGU#159)
+ *      Kay Gürtzig     2016.03.18      KGU#89: Language localization support slightly improved
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2016-03-17 Enh. #133 (KGU#159)
+ *      - Previously, a Call stack trace was only shown in cse of an execution error or manual abort.
+ *        Now a Call stack trace may always be requested while execution hasn't ended. Only prerequisite
+ *        is that the execution be paused. Then a double-click on the stext item showing the subroutine
+ *        depth is sufficient. Moreover, the stacktrace will always be presented as list view (before a
+ *        simple message box was used if the number of call levels didn't exceed 10.   
+ *      2016-03-16/18 Bugfix #131 (KGU#157)
+ *      - When the "run" (or "make") button was pressed while an execution was already running or stood
+ *        paused then the Executor CALL stack, the event queues, and the connection between Diagram and
+ *        Root often got compromised or even corrupted. The same used to happen when a Structorizer
+ *        instance replaced its Root while this was involved in some execution. So these actions had to
+ *        be prevented if an execution is going on. Hence, the parameterized version of getInstance() 
+ *        now checks the running flag and raises a user dialog in order either to ignore the interfering
+ *        action or to abort the running execution.
  *      2016-03-06 / 2016-03-12 Enhancements #77, #124 (KGU#117/KGU#156)
  *      - According to an ER by [elemhsb], first a mechanism optionally to visualise code coverage (for
  *        white-box test completeness) was implemented. A green background colour was proposed and used
@@ -223,12 +240,47 @@ public class Executor implements Runnable
 		{
 			mySelf.diagramController = diagramController;
 		}
-		if (diagram != null)
+		// START KGU#157 2016-03-16: Bugfix #131 - Don't init if there is a running thread
+		//if (diagram != null)
+		//{
+		//	mySelf.diagram = diagram;
+		//}
+		//mySelf.control.init();
+		//mySelf.control.setLocationRelativeTo(diagram);
+		boolean doInitialise = true;
+		mySelf.reopenFor = null;
+		if (mySelf.diagram != null && mySelf.running)
 		{
-			mySelf.diagram = diagram;
+			doInitialise = false;
+			Root root = mySelf.diagram.getRoot();
+			String errText = mySelf.control.lbStopRunningProc.getText();
+			errText = errText.replace("\\n", "\n");
+			if (root != null)
+			{
+				errText = errText.replace("?", " (\"" + root.getMethodName() + "\")?");
+			}
+			int res = JOptionPane.showOptionDialog(diagram,
+					   errText,
+					   "Question",
+					   JOptionPane.YES_NO_OPTION,
+					   JOptionPane.QUESTION_MESSAGE,
+					   null,null,null);
+			if (res == 0)
+			{
+				mySelf.setStop(true);
+				mySelf.reopenFor = diagram;
+			}
 		}
-		mySelf.control.init();
-		mySelf.control.setLocationRelativeTo(diagram);
+		if (doInitialise)
+		{
+			if (diagram != null)
+			{
+				mySelf.diagram = diagram;
+			}
+			mySelf.control.init();
+			mySelf.control.setLocationRelativeTo(diagram);
+		}
+		// END KGU#157 2016-03-16: Bugfix #131
 		mySelf.control.validate();
 		// START KGU#89 2015-11-25: Language support (we don't force the existence of all languages)
 		try {
@@ -274,6 +326,9 @@ public class Executor implements Runnable
 	private boolean isErrorReported = false;
 	private StringList stackTrace = new StringList();
 	// END KGU#2 2015-11-22
+	// START KGU#157 2016-03-16: Bugfix #131 - Precaution against a reopen attempts by different Structorizer instances
+	private Diagram reopenFor = null;	// A Structorizer instance that tried to open Control while still running
+	// END KGU#2 2016-03-16
 
 	private Executor(Diagram diagram, DiagramController diagramController)
 	{
@@ -281,6 +336,20 @@ public class Executor implements Runnable
 		this.diagramController = diagramController;
 	}
 
+	// START KGU#89 2016-03-18: Opportunity to trigger re-tramsltion from outside
+	public void setLangLocal()
+	{
+		try {
+			LangDialog.setLang(control, diagram.getLang());
+		}
+		catch (Exception ex)
+		{
+			System.err.println(ex.getMessage());
+		}
+		
+	}
+	// END KGU#89 2016-03-18
+	
 	// METHOD MODIFIED BY GENNARO DONNARUMMA
 
 	private String convert(String s)
@@ -577,6 +646,11 @@ public class Executor implements Runnable
 	// END KGU#2 (#9) 2015-11-13
 		
 		Root root = diagram.getRoot();
+
+		// START KGU#159 2016-03-17: Now we permanently maintain the stacktrace, not only in case of error
+		addToStackTrace(root, arguments);
+		// END KGU#159 2016-03-17
+		
 		// START KGU#2 (#9) 2015-11-14
 		Iterator<Updater> iter = root.getUpdateIterator();
 		while (iter.hasNext())
@@ -627,8 +701,13 @@ public class Executor implements Runnable
 				if (noArguments)
 				{
 				// END KGU#2 (#9) 2015-11-13
-					String str = JOptionPane.showInputDialog(null,
-							"Please enter a value for <" + in + ">", null);
+					// START KGU#89 2016-03-18: More language support 
+					//String str = JOptionPane.showInputDialog(null,
+					//		"Please enter a value for <" + in + ">", null);
+					String msg = control.lbInputValue.getText();
+					msg = msg.replace("%", in);
+					String str = JOptionPane.showInputDialog(null, msg, null);
+					// END KGU#89 2016-03-18
 					if (str == null)
 					{
 						//i = params.count();	// leave the loop
@@ -716,9 +795,11 @@ public class Executor implements Runnable
 				paus = false;
 				step = false;
 			}
-			else if (isErrorReported && stackTrace.count() > 0)
+			else if (isErrorReported && stackTrace.count() > 1)
 			{
-				addToStackTrace(root, arguments);
+				// START KGU#159 2016-03-17: Now we permanently maintain the stacktrace, so there is no need anymore
+				//addToStackTrace(root, arguments);
+				// END KGU#159 2016-03-17
 				showStackTrace();
 			}
 			// END KGU#2 2015-11-24	
@@ -805,6 +886,11 @@ public class Executor implements Runnable
 		// END KGU 2015-10-13
 		diagram.setAnalyser(analyserState);
 
+		if (successful)
+		{
+			dropFromStackTrace();
+		}
+		
 		// START KGU#2 (#9) 2015-11-13: Need the status
 		return successful;
 		// END KGU# (#9) 2015-11-13
@@ -887,7 +973,7 @@ public class Executor implements Runnable
 			cloned = true;
 		}
 		
-		this.diagram.setRoot(root);
+		this.diagram.setRoot(root, true);
 		
 		// START KGU#156 2016-03-11: Enh. #124 - detect execution counter diff.
 		int countBefore = root.getExecStepCount(true);
@@ -902,10 +988,10 @@ public class Executor implements Runnable
 		// END KGU#156 2016-03-11
 
 		// START KGU#2 2015-11-24
-		if (!done || stop)
-		{
-			addToStackTrace(root, arguments);
-		}
+//		if (!done || stop)
+//		{
+//			addToStackTrace(root, arguments);
+//		}
 		// END KGU#2 2015-11-24
 		
 		// START KGU#117 2016-03-07: Enh. #77
@@ -955,27 +1041,42 @@ public class Executor implements Runnable
 		}
 		this.stackTrace.add(_root.getMethodName() + argumentString);
 	}
+	
+	// START KGU#159 2016-03-17: Stacktrace should always be available on demand, not only on error
+	private void dropFromStackTrace()
+	{
+		int size = this.stackTrace.count();
+		if (size > 0)
+		{
+			this.stackTrace.delete(size-1);
+		}
+	}
+	// END KGU#159 2016-03-17
 
 	/**
 	 * Pops up a dialog displaying the call trace with argument values
 	 */
-	private void showStackTrace()
+	public void showStackTrace()
 	{
-		if (stackTrace.count() <= 20)
-		{
-			// Okay, keep it simple
-			JOptionPane.showMessageDialog(diagram, this.stackTrace.getText(), "Stack trace",
-					JOptionPane.INFORMATION_MESSAGE);
-		}
-		else
-		{
+// START KGU#159 2016-03-17: A listview is always the better choice
+// (Think of large arrays as arguments!)
+//		if (stackTrace.count() <= 20)
+//		{
+//			// Okay, keep it simple
+//			JOptionPane.showMessageDialog(diagram, this.stackTrace.getText(), "Stack trace",
+//					JOptionPane.INFORMATION_MESSAGE);
+//		}
+//		else
+//		{
+// END KGU#159 2016-03-17
 			JDialog stackView = new JDialog();
 			stackView.setTitle("Stack trace");
 			stackView.setIconImage(IconLoader.ico004.getImage());
 			List stackContent = new List(10);
-			for (int i = 0; i < stackTrace.count(); i++)
+			int depth = stackTrace.count();
+			for (int i = 0; i < depth; i++)
 			{
-				stackContent.add(stackTrace.get(i));
+				stackContent.add(stackTrace.get(depth - i - 1));
 			}
 			stackView.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		    stackView.getContentPane().add(stackContent, BorderLayout.CENTER);
@@ -983,10 +1084,12 @@ public class Executor implements Runnable
 		    stackView.setLocationRelativeTo(control);
 		    stackView.setModalityType(ModalityType.APPLICATION_MODAL);
 		    stackView.setVisible(true);
-		}		
+// START KGU#159 2016-03-17: A listview is always the better choice
+//		}		
+// END KGU#159 2016-03-17
 	}
 	// END KGU#2 2015-11-24
-
+	
     /**
      * Searches all known pools for subroutines with a signature compatible to name(arg1, arg2, ..., arg_nArgs) 
      * @param name - function name
@@ -1156,11 +1259,19 @@ public class Executor implements Runnable
 	{
 		execute();
 		running = false;
+		control.setVisible(false);
+		// START KGU#157 2016-03-16: Bugfix #131 - postponed Control start?
+		boolean reopen = false;
+		if (this.reopenFor != null)
+		{
+			this.diagram = this.reopenFor;
+			this.reopenFor = null;
+			reopen = true;
+		}
 		// START KGU#117/KGU#156 2016-03-13: Enh. #77 + #124
 		// It is utterly annoying when in run data mode the control always 
 		// closes after execution.
-		control.setVisible(false);
-		if (Element.E_COLLECTRUNTIMEDATA)
+		if (reopen || Element.E_COLLECTRUNTIMEDATA)
 		{
 			control.init();
 			// START KGU#89 2015-11-25: Language support (we don't force the existence of all languages)
@@ -1568,13 +1679,13 @@ public class Executor implements Runnable
 
 	public void start(boolean useSteps)
 	{
-		running = true;
 		paus = useSteps;
 		step = useSteps;
 		stop = false;
 		variables = new StringList();
 		control.updateVars(new Vector<Vector>());
 		
+		running = true;
 		Thread runner = new Thread(this, "Player");
 		runner.start();
 	}
@@ -2107,8 +2218,13 @@ public class Executor implements Runnable
 				return result;
 			}
 			// END KGU#141 2016-01-16
-			String str = JOptionPane.showInputDialog(null,
-					"Please enter a value for <" + in + ">", null);
+			// START KGU#89 2016-03-18: More language support 
+			//String str = JOptionPane.showInputDialog(null,
+			//		"Please enter a value for <" + in + ">", null);
+			String msg = control.lbInputValue.getText();
+			msg = msg.replace("%", in);
+			String str = JOptionPane.showInputDialog(null, msg, null);
+			// END KGU#89 2016-03-18
 			// START KGU#84 2015-11-23: ER #36 - Allow a controlled continuation on cancelled input
 			//setVarRaw(in, str);
 			if (str == null)

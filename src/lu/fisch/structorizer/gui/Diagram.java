@@ -53,6 +53,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.02.03      Bugfix #117: Title and button update on root replacement (KGU#149)
  *      Kay Gürtzig     2016.03.02      Bugfix #97: Reliable selection mechanism on dragging (KGU#136)
  *      Kay Gürtzig     2016.03.08      Bugfix #97: Drawing info invalidation now involves Arranger (KGU#155)
+ *      Kay Gürtzig     2016.03.16      Bugfix #131: Precautions against replacement of Root under execution (KGU#158)
  *
  ******************************************************************************************************
  *
@@ -69,7 +70,6 @@ import java.awt.datatransfer.*;
 import net.iharder.dnd.*; //http://iharder.sourceforge.net/current/java/filedrop/
 
 import java.io.*;
-import java.net.URI;
 import java.util.*;
 
 import javax.swing.*;
@@ -167,9 +167,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	/**
 	 * @param root the Root to set
-	 * @return false if the user refuses to adopt the Root
+	 * @return false if the user refuses to adopt the Root or the Root is being executed
 	 */
 	public boolean setRoot(Root root) {
+		// START KGU#157 2016-03-16: Bugfix #131 - Precaution against replacement if under execution
+		if (!this.checkRunning()) return false;	// Don't proceed if the root is being executed
+		// END KGU#157 2016-03-16
+
 		return setRoot(root, true);
 	}
 	
@@ -231,65 +235,68 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#123 2016-01-04
 
 		new FileDrop( this, new FileDrop.Listener()
-								{
-									public void  filesDropped( java.io.File[] files )
-									{
-										//boolean found = false;
-										for (int i = 0; i < files.length; i++)
-										{
-											String filename = files[i].toString();
+			{
+				public void  filesDropped( java.io.File[] files )
+				{
+					// START KGU#157 2016-03-16: Bugfix #131 - Precaution against replacement if under execution
+					if (!checkRunning()) return;	// Don't proceed if the root is being executed
+					// END KGU#157 2016-03-16
+					//boolean found = false;
+					for (int i = 0; i < files.length; i++)
+					{
+						String filename = files[i].toString();
 
-					  if(filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".nsd"))
-					  {
-					  /*
-					  // only save if something has been changed
-					  saveNSD(true);
+						if(filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".nsd"))
+						{
+							/*
+							// only save if something has been changed
+							saveNSD(true);
 
-					  // load the new file
-					  NSDParser parser = new NSDParser();
-					  root = parser.parse(filename);
-					  root.filename=filename;
-					  currentDirectory = new File(filename);
-					  redraw();*/
-					  openNSD(filename);
-					  }
-					  else if (
-							   (filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".mod"))
-							   ||
-							   (filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".pas"))
-							   ||
-							   (filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".dpr"))
-							   ||
-							   (filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".lpr"))
-							   )
-					  {
-					  // save (only if something has been changed)
-					  saveNSD(true);
-					  // load and parse source-code
-					  D7Parser d7 = new D7Parser("D7Grammar.cgt");
-					  Root rootNew = d7.parse(filename);
-					  if (d7.error.equals(""))
-					  {
-						  setRoot(rootNew);
-						  currentDirectory = new File(filename);
-						  //System.out.println(root.getFullText().getText());
-					  }
-					  else
-					  {
-						// show error
-					  JOptionPane.showOptionDialog(null,d7.error,
-												   "Parser Error",
-												   JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
-					  }
+							// load the new file
+							NSDParser parser = new NSDParser();
+							root = parser.parse(filename);
+							root.filename=filename;
+							currentDirectory = new File(filename);
+							redraw();*/
+							openNSD(filename);
+						}
+						else if (
+								(filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".mod"))
+								||
+								(filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".pas"))
+								||
+								(filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".dpr"))
+								||
+								(filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".lpr"))
+								)
+						{
+							// save (only if something has been changed)
+							saveNSD(true);
+							// load and parse source-code
+							D7Parser d7 = new D7Parser("D7Grammar.cgt");
+							Root rootNew = d7.parse(filename);
+							if (d7.error.equals(""))
+							{
+								setRoot(rootNew);
+								currentDirectory = new File(filename);
+								//System.out.println(root.getFullText().getText());
+							}
+							else
+							{
+								// show error
+								JOptionPane.showOptionDialog(null,d7.error,
+										"Parser Error",
+										JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+							}
 
-					  redraw();
-					  }
+							redraw();
+						}
 
 
-										}
-									}
-								}
-						);
+					}
+				}
+			}
+				);
 
 		root.setText(StringList.getNew(_string));
 
@@ -937,6 +944,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 	public void newNSD()
 	{
+		// START KGU#157 2016-03-16: Bugfix #131 - Precaution against replacement if under execution
+		if (!this.checkRunning()) return;	// Don't proceed if the root is being executed
+		// END KGU#157 2016-03-16
+
 		// START KGU#48 2015-10-17: Arranger support
 		Root oldRoot = root;
 		// END KGU#48 2015-10-17
@@ -970,6 +981,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// only save if something has been changed
 		//saveNSD(true);
 		// END KGU 2015-10-17
+
+		// START KGU#157 2016-03-16: Bugfix #131 - Precaution against replacement if under execution
+		if (!this.checkRunning()) return;	// Don't proceed if the root is being executed
+		// END KGU#157 2016-03-16
 
 		// open an existing file
 		// create dialog
@@ -3324,6 +3339,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 }
     	 */
 
+    }
+    
+    /**
+     * Checks for running status of the Root currently held and suggests the user to stop the
+     * execution if it is running
+     * @return true if the fostered Root isn't executed (action may proceed), false otherwise
+     */
+    private boolean checkRunning()
+    {
+    	if (this.root == null || !this.root.isExecuted()) return true;	// No problem
+    	// Give the user the chance to kill the execution but don't do anything for now,
+    	// whatever the user may have been decided.
+    	Executor.getInstance(null, null);
+    	return false;
     }
     
 }

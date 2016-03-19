@@ -34,6 +34,7 @@
  *      Kay Gürtzig		2015.11.25		First Issue
  *      Kay Gürtzig		2016.03.07		Test coverage message added (Enh. #77)
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data texts
+ *      Kay Gürtzig     2016.03.18      Additional message texts for Executor dialog
  *
  ******************************************************************************************************
  *
@@ -44,6 +45,7 @@
 -----[ Control ]-----
 Control.lblSpeed.text= Delay: 
 Control.lblCallLevel.text= Subroutine level:
+Control.txtCallLevel.tooltip=Call stack depth. Double-click to see the Call stack content (only on paused execution).
 Control.chkCollectRuntimeData.text=Collect Runtime Data
 Control.cbRunDataDisplay.item.0=no coloring
 Control.cbRunDataDisplay.item.1=shallow test coverage
@@ -53,3 +55,6 @@ Control.cbRunDataDisplay.item.4=done operations, lin.
 Control.cbRunDataDisplay.item.5=done operations, log.
 Control.cbRunDataDisplay.item.6=total operations, lin.
 Control.cbRunDataDisplay.item.7=total operations, log.
+Control.lbStopRunningProc.text=This action is not allowed while a diagram is being executed.\nDo you want to stop the current execution?
+Control.lbInputValue.text=Please enter a value for <%>
+Control.lbInputPaused.text=Execution paused - you may enter the value in the variable display.
