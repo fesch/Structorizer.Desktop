@@ -49,11 +49,18 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.03.09      Enh. #77 (KGU#117): Methods clearExecutionStatus and setCovered added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation (refactoring)
  *      Kay Gürtzig     2016.03.14      Enh. #62 update: currentDirectory adopted from first added diagram.
+ *      Kay Gürtzig     2016.03.16      Bugfix #132: Precautions against stale Mainform references (KGU#158) 
  *
  ******************************************************************************************************
  *
  *      Comment:
- *      2016.03.98 (Kay Gürtzig)
+ *      2016.03.16 (Kay Gürtzig)
+ *      - It still happened that double-clicking on a diagram seemed to have no effect. In these cases
+ *        actually there was a stale Mainform reference. The reason was that the windowClosing() trigger
+ *        used to compare the Roots instead of the Mainform itself. So wrong reference may have been
+ *        removed, e.g. if the Mainform contained some called subroutine it wasn't associated with.
+ *        On the other hand, a handling for such a case was missing in the mouseClicked() trigger. 
+ *      2016.03.08 (Kay Gürtzig)
  *      - Enh. #77: For Test Coverage Tracking, Arranger in its function of a subroutine pool had to
  *        be enabled to set oder clear coverage flags 
  *      2016.01.02 (Kay Gürtzig)
@@ -840,40 +847,56 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     public void mouseClicked(MouseEvent e)
     {
         mousePressed(e);
-        if(e.getClickCount()==2 && mouseSelected!=null)
+        // Double click?
+        if (e.getClickCount()==2 && mouseSelected!=null)
         {
             // create editor
             Mainform form = mouseSelected.mainform;
-            // START KGU#88 2015-11-24: An atteched Mainform might refuse to re-adopt the root
-            //if(form==null)
-            if(form==null || !form.setRoot(mouseSelected.root))
-            // END KGU#88 2015-11-24
-            {
-            	// START KGU#49/KGU#66 2015-11-14: Start a dependent Mainform not willing to kill us
-                //form=new Mainform();
-                form=new Mainform(false);
-            	// END KGU#49/KGU#66 2015-11-14
-                form.addWindowListener(this);
-                // With a new Mainform, refusal is not possible 
-                form.setRoot(mouseSelected.root);
-            }
+            // START KGU#158 2016-03-16: Bugfix #132 - Precaution against stale Mainform
+            int nAttempts = 0;
+            do {
+            	try
+            	{
+            // END KGU#158 2016-03-16 (part 1)
+            		// START KGU#88 2015-11-24: An atteched Mainform might refuse to re-adopt the root
+            		//if(form==null)
+            		if(form==null || !form.setRoot(mouseSelected.root))
+            			// END KGU#88 2015-11-24
+            		{
+            			// START KGU#49/KGU#66 2015-11-14: Start a dependent Mainform not willing to kill us
+            			//form=new Mainform();
+            			form=new Mainform(false);
+            			// END KGU#49/KGU#66 2015-11-14
+            			form.addWindowListener(this);
+            			// With a new Mainform, refusal is not possible 
+            			form.setRoot(mouseSelected.root);
+            		}
 
-            // change the default closing behaviour
-            // START KGU#49/KGU#66 2015-11-14 Now already achieved by constructor argument false  
-            //form.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            // END KGU#49/#66 2015-11-14
+            		// change the default closing behaviour
+            		// START KGU#49/KGU#66 2015-11-14 Now already achieved by constructor argument false  
+            		//form.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            		// END KGU#49/#66 2015-11-14
 
-            // store mainform in diagram
-            mouseSelected.mainform=form;
+            		// store mainform in diagram
+            		mouseSelected.mainform=form;
 
-            // register this as "updater"
-            mouseSelected.root.addUpdater(this);
+            		// register this as "updater"
+            		mouseSelected.root.addUpdater(this);
 
-            // attach the new diagram to the editor
-            // START KGU#88 2015-11-24: Now already done above
-            //form.setRoot(mouseSelected.root);
-            // END KGU#88 2015-11-24
-            form.setVisible(true);
+            		// attach the new diagram to the editor
+            		// START KGU#88 2015-11-24: Now already done above
+            		//form.setRoot(mouseSelected.root);
+            		// END KGU#88 2015-11-24
+            		form.setVisible(true);
+            // START KGU#158 2016-03-16: Bugfix #132 (part 2)
+            	}
+            	catch (Exception ex)
+            	{
+            		// Seems the Mainform was stale (closed without having been cleared)
+            		form = null;
+            	}
+            } while (form == null && nAttempts++ < 2);
+            // END KGU#158 2016-03-16 (part 2)
 
             mouseSelected=null;
             mousePressed=false;
@@ -895,7 +918,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
         	mouseSelected = null;
         }
         // END KGU 2015-11-18
-        for(int d=0;d<diagrams.size();d++)
+        for (int d=0; d<diagrams.size(); d++)
         {
             Diagram diagram = diagrams.get(d);
             Root root = diagram.root;
@@ -1148,10 +1171,12 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     			for (int d=0; d<diagrams.size(); d++)
     			{
     				Diagram diagram = diagrams.get(d);
-    				Root root = diagram.root;
-    				//Point point = diagram.point;
-
-    				if (mainform.getRoot() == root)
+    				// START KGU#158 2016-03-16: Bugfix #132 - wrong mainform cleared
+    				//Root root = diagram.root;
+    				////Point point = diagram.point;
+    				//if (mainform.getRoot() == root)
+    				if (diagram.mainform == mainform)
+    				// END KGU#158 2016-03-16
     				{
     					diagram.mainform = null;
     				}

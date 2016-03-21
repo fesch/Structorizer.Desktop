@@ -146,7 +146,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.24-01";
+	public static String E_VERSION = "3.24-02";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -593,7 +593,7 @@ public abstract class Element {
 	// START KGU#156 2016-03-11: Enh. #124 - We need a consistent execution step counting
 	public static void resetMaxExecCount()
 	{
-		Element.maxExecTotalCount = Element.maxExecCount = 0;		
+		Element.maxExecTotalCount = Element.maxExecStepCount = Element.maxExecCount = 0;		
 	}
 
 

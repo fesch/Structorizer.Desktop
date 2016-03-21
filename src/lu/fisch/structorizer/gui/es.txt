@@ -40,6 +40,7 @@
  *      Kay Gürtzig     2015.12.18  New messages for ExportOptionDialoge
  *      Kay Gürtzig     2016.01.04  Enh. #87: New messages for collapsing / expanding elements
  *      Kay Gürtzig     2016.01.21  Breakpoint message also in Menu now
+ *      Kay Gürtzig     2016.03.18  Initial question marks added
  *
  ******************************************************************************************************
  *
@@ -119,13 +120,13 @@ Menu.menuDiagramBreakpoint.text=Poner/eliminar breakpoint
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Main
 Menu.menuDiagramTypeFunction.text=Sub
-Menu.menuDiagramNice.text=Diagrama en caja?
-Menu.menuDiagramComment.text=Mostrar comentarios?
-Menu.menuDiagramSwitchComments.text=Intercambiar textos/comentarios?
-Menu.menuDiagramMarker.text=Resaltar variables?
-Menu.menuDiagramDIN.text=DIN?
-Menu.menuDiagramAnalyser.text=Comprobar diagrama?
-Menu.menuDiagramWheel.text=Usar rueda para reducir?
+Menu.menuDiagramNice.text=¿Diagrama en caja?
+Menu.menuDiagramComment.text=¿Mostrar comentarios?
+Menu.menuDiagramSwitchComments.text=¿Intercambiar textos/comentarios?
+Menu.menuDiagramMarker.text=¿Resaltar variables?
+Menu.menuDiagramDIN.text=¿DIN?
+Menu.menuDiagramAnalyser.text=¿Comprobar diagrama?
+Menu.menuDiagramWheel.text=¿Usar rueda para reducir?
 // Menu "Help"
 Menu.menuPreferences.text=Preferencias
 // Submenu of "Help"
@@ -456,16 +457,16 @@ Colors.lblColor6.text=Color 6
 Colors.lblColor7.text=Color 7
 Colors.lblColor8.text=Color 8
 Colors.lblColor9.text=Color 9
-Colors.lblColor0.tooltip=Su elección de color n? 0.
-Colors.lblColor1.tooltip=Su elección de color n? 1.
-Colors.lblColor2.tooltip=Se elección de color n? 2.
-Colors.lblColor3.tooltip=Se elección de color n? 3.
-Colors.lblColor4.tooltip=Se elección de color n? 4.
-Colors.lblColor5.tooltip=Se elección de color n? 5.
-Colors.lblColor6.tooltip=Se elección de color n? 6.
-Colors.lblColor7.tooltip=Se elección de color n? 7.
-Colors.lblColor8.tooltip=Se elección de color n? 8.
-Colors.lblColor9.tooltip=Se elección de color n? 9.
+Colors.lblColor0.tooltip=¿Su elección de color n? 0.
+Colors.lblColor1.tooltip=¿Su elección de color n? 1.
+Colors.lblColor2.tooltip=¿Su elección de color n? 2.
+Colors.lblColor3.tooltip=¿Su elección de color n? 3.
+Colors.lblColor4.tooltip=¿Su elección de color n? 4.
+Colors.lblColor5.tooltip=¿Su elección de color n? 5.
+Colors.lblColor6.tooltip=¿Su elección de color n? 6.
+Colors.lblColor7.tooltip=¿Su elección de color n? 7.
+Colors.lblColor8.tooltip=¿Su elección de color n? 8.
+Colors.lblColor9.tooltip=¿Su elección de color n? 9.
 Colors.color0.tooltip=Click para editar ...
 Colors.color1.tooltip=Click para editar ...
 Colors.color2.tooltip=Click para editar ...
