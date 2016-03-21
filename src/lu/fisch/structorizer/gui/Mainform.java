@@ -42,6 +42,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.11.28      KGU#2/KGU#78/KGU#47: New checks 15, 16, and 17 registered for loading
  *      Kay Gürtzig     2015.12.04      KGU#95: Bugfix #42 - wrong default current directory mended
  *      Kay Gürtzig     2016.01.04      KGU#123: Bugfix #65 / Enh. #87 - New Ini property: mouse wheel mode
+ *      Kay Gürtzig     2016.03.16      KGU#157: Bugfix #132 - Don't allow to close without having stopped Executor
+ *      Kay Gürtzig     2016.03.18      KGU#89: Localization of Executor Control supported 
  *
  ******************************************************************************************************
  *
@@ -63,16 +65,15 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************///
 
 import java.io.*;
-
 import java.awt.*;
 import java.awt.event.*;
-
 
 import javax.swing.*;
 
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Executor;
 
 public class Mainform  extends JFrame implements NSDController
 {
@@ -172,6 +173,17 @@ public class Mainform  extends JFrame implements NSDController
 			@Override
 			public void windowClosing(WindowEvent e) 
 			{
+				// START KGU#157 2016-03-16: Bugfix #131 Never just close with a running executor!
+				if (diagram.getRoot() != null && diagram.getRoot().executed && !isStandalone)
+				{
+					// This will pop up a dialog to stop the execution
+					// By first argument set to null we avoid reopening the Executor Control
+					Executor.getInstance(null, null);
+					// Since the executor is a concurrent thread and we don't know the decision of
+					// the user, we cannot neither wait nor proceeed here. So we just leave the 
+				}
+				else
+				// END KGU#157
 				if (diagram.saveNSD(true))
 				{
 					saveToINI();
@@ -503,6 +515,13 @@ public class Mainform  extends JFrame implements NSDController
 		{
 			getEditor().setLangLocal(_langfile);
 		}
+		
+		// START KGU#89 2016-03-18: Re-translation of the Executor Control
+		if (Executor.getInstance() != null)
+		{
+			Executor.getInstance().setLangLocal();
+		}
+		// END KGU#89
 	}
 	
     public void setLangLocal(String _langfile) {}
