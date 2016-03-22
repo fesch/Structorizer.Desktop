@@ -74,6 +74,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.03.16      Bugfix #131: Precautions against reopening, take-over, and loss of control (KGU#157)
  *      Kay Gürtzig     2016.03.17      Enh. #133: Stacktrace now permanently maintained, not only on errors (KGU#159)
  *      Kay Gürtzig     2016.03.18      KGU#89: Language localization support slightly improved
+ *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): Support for FOR-IN loops
  *
  ******************************************************************************************************
  *
@@ -1002,6 +1003,14 @@ public class Executor implements Runnable
 		}
 		// END KG#117 2016-03-07
 		
+		// START KGU#117 2016-03-07: Enh. #77
+		// For recursive calls the coverage must be combined
+		if (cloned && Element.E_COLLECTRUNTIMEDATA)
+		{
+			subRoot.combineRuntimeData(root);
+		}
+		// END KG#117 2016-03-07
+		
 		this.callers.pop();	// Should be the entry still held by variable entry
 					
 		this.variables = entry.variables;
@@ -1259,6 +1268,9 @@ public class Executor implements Runnable
 	{
 		execute();
 		running = false;
+		// START KGU#117/KGU#156 2016-03-13: Enh. #77 + #124
+		// It is utterly annoying when in run data mode the control always 
+		// closes after execution.
 		control.setVisible(false);
 		// START KGU#157 2016-03-16: Bugfix #131 - postponed Control start?
 		boolean reopen = false;
@@ -2895,6 +2907,12 @@ public class Executor implements Runnable
 	
 	private String stepFor(For element)
 	{
+		// START KGU#61 2016-03-21: Enh. #84
+		if (element.style == For.ForLoopStyle.TRAVERSAL || element.classifyStyle() == For.ForLoopStyle.TRAVERSAL)
+		{
+			return stepForIn(element);
+		}
+		// END KGU#61 2016-03-21
 		String result = new String();
 		try
 		{
@@ -3075,6 +3093,145 @@ public class Executor implements Runnable
 		}
 		return result;
 	}
+	
+	// START KGU#61 2016-03-21: Enh. #84
+	// This executes FOR-IN loops
+	private String stepForIn(For element)
+	{
+		String result = new String();
+		String valueListString = element.getValueList();
+		String iterVar = element.getCounterVar();
+		Object[] valueList = null;
+		String problem = "";
+		Object value = null;
+		if (valueListString.startsWith("{") && valueListString.endsWith("}"))
+		{
+			try
+			{
+				interpreter.eval("Object[] tmp20160321kgu = " + valueListString);
+				value = interpreter.get("tmp20160321kgu");
+				interpreter.unset("tmp20160321kgu");
+			}
+			catch (EvalError ex)
+			{
+				problem = ex.getMessage();
+			}
+		}
+		if (value == null && valueListString.contains(","))
+		{
+			try
+			{
+				interpreter.eval("Object[] tmp20160321kgu = {" + valueListString + "}");
+				value = interpreter.get("tmp20160321kgu");
+				interpreter.unset("tmp20160321kgu");
+			}
+			catch (EvalError ex)
+			{
+				problem = ex.getMessage();
+			}
+		}
+		// Might be a function or variable otherwise evaluable
+		if (value == null)
+		{
+			try
+			{
+				value = interpreter.eval(valueListString);
+			}
+			catch (EvalError ex)
+			{
+				problem = ex.getMessage();
+			}
+		}
+		if (value == null && valueListString.contains(" "))
+		{
+			// Rather desparate attempt to compose an array from loose strings (like in shell scripts)
+			StringList tokens = Element.splitExpressionList(valueListString, " ");
+			try
+			{
+				interpreter.eval("Object[] tmp20160321kgu = {" + tokens.concatenate(",") + "}");
+				value = interpreter.get("tmp20160321kgu");
+				interpreter.unset("tmp20160321kgu");
+			}
+			catch (EvalError ex)
+			{
+				problem = ex.getMessage();
+			}
+		}
+		if (value != null)
+		{
+			if (value instanceof Object[])
+			{
+				valueList = (Object[]) value;
+			}
+			else
+			{
+				valueList = new Object[1];
+				valueList[0] = value;
+			}
+		}
+
+		if (valueList == null)
+		{
+			result = "<" + valueListString
+					+ "> cannot be interpreted as value list.";
+		}
+		else
+		{
+				element.addToExecTotalCount(1, true);	// For the condition evaluation
+
+				// Leave if any kind of Jump statement has been executed
+				loopDepth++;
+				int cw = 0;
+
+				while (cw < valueList.length && result.equals("")
+						&& (stop == false) && !returned && leave == 0)
+				{
+					try
+					{
+						setVar(iterVar, valueList[cw]);
+						element.executed = false;
+						element.waited = true;
+
+						if (result.isEmpty())
+						{
+							result = stepSubqueue(((ILoop)element).getBody(), true);						
+						}
+
+						element.executed = true;
+						element.waited = false;
+						if (result.equals(""))
+						{
+							cw++;
+							// Symbolizes the loop condition check 
+							checkBreakpoint(element);
+							delay();
+						}
+						element.addToExecTotalCount(1, true);	// For the condition evaluation
+					} catch (EvalError ex)
+					{
+						result = ex.getMessage();
+					}
+				}
+				// If there are open leave requests then nibble one off
+				if (leave > 0)
+				{
+					leave--;
+				}
+				loopDepth--;
+		}
+		if (result.equals(""))
+		{
+			element.executed = false;
+			element.waited = false;
+		}
+		/*
+		 * if (cw > 1000000) { element.selected = true; result =
+		 * "Your loop ran a million times. I think there is a problem!";
+		 * }
+		 */
+		return result;
+	}
+	// END KGU#61 2016-03-21
 	
 	private String stepParallel(Parallel element)
 	{

@@ -146,7 +146,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.24-02";
+	public static String E_VERSION = "3.24-03dev";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -1427,7 +1427,6 @@ public abstract class Element {
 	 * bracket, or the like).
 	 * The remaining string from the unsatisfied closing parenthesis, bracket, or brace on will
 	 * be ignored!
-	 * If the last result element is empty then the expression list was syntactically "clean".
 	 * @param _text - string containing one or more expressions
 	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
 	 * @return a StringList, each element of which contains one of the separated expressions (order preserved)
@@ -1452,7 +1451,7 @@ public abstract class Element {
 	 * @param _text - string containing one or more expressions
 	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
 	 * @param _appendTail - if the remaining part of _text from the first unaccepted character on is to be added 
-	 * @return a StringList, each element of which contains one of the separated expressions (order preserved)
+	 * @return a StringList consisting of the separated expressions (and the tail if _appendTail was true).
 	 */
 	public static StringList splitExpressionList(String _text, String _listSeparator, boolean _appendTail)
 	// END KU#93 2015-12-21

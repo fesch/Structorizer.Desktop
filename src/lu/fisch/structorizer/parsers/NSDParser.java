@@ -37,6 +37,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2015.10.29              Modification on For loop (new attribute KGU#3)
  *      Kay Gürtzig     2015.12.16              Bugfix #63 (KGU#111): Exception on parsing failure
  *      Kay Gürtzig     2016.01.08              Bugfix #99 (KGU#134): workaround for defective FOR loops
+ *      Kay Gürtzig     2016.03.21              Enh. #84 (KGU#61): Enhancement towards FOR-IN loops
  *
  ******************************************************************************************************
  *
@@ -249,7 +250,22 @@ public class NSDParser extends DefaultHandler {
 				ele.setStepConst(ele.getStepConst());
 			}
 			boolean reliable = attributes.getIndex("reliable")!=-1 && attributes.getValue("reliable").equals("true");
-			ele.isConsistent = (reliable || ele.checkConsistency());
+			// START KGU#61 2016-03-21: Enh. #84 - Support for FOR-INloops, new attribute
+			//ele.isConsistent = (reliable || ele.checkConsistency());
+			if (reliable)
+			{
+				ele.style = For.ForLoopStyle.COUNTER;
+			}
+			else if (attributes.getIndex("style")!=-1)
+			{
+				String style = attributes.getValue("style");
+				ele.style = For.ForLoopStyle.valueOf(style);	// FIXME: Exception possible?
+			}
+			else
+			{
+				ele.style = ((For)ele).classifyStyle();
+			}
+			// END KGU#61 2016-03-21
 			// END KGU#3 2015-11-08
 			
 			// set system attribute - NO!

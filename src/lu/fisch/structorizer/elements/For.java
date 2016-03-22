@@ -46,6 +46,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): Translation-neutral selection
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Fields for test coverage tracking added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016.03.20      Enh. #84/#135 (KGU#61): enum type and methods introduced/modified
+ *                                      to distinguish and handle FOR-IN loops 
  *
  ******************************************************************************************************
  *
@@ -57,16 +59,27 @@ package lu.fisch.structorizer.elements;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
+import java.util.Vector;
 import java.util.regex.Matcher;
 
 import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.*;
 
+
 public class For extends Element implements ILoop {
+
+	// START KGU#61 2016-03-20: Enh. #84/#135
+	public enum ForLoopStyle {
+		FREETEXT,
+		COUNTER,
+		TRAVERSAL
+	}
+	// END KGU#61 2016-03-26
 
 	public Subqueue q = new Subqueue();
 	
@@ -82,14 +95,23 @@ public class For extends Element implements ILoop {
 	private static String forSeparatorPre = "§FOR§";
 	private static String forSeparatorTo = "§TO§";
 	private static String forSeparatorBy = "§BY§";
+	// START KGU#61 2016-03-20: Enh. #84/#135 - support FOR-IN loops
+	private static String forInSeparatorPre = "§FOREACH§";
+	private static String forInSeparatorIn = "§IN§";
+	// END KGU#61 2016-03-20
 	// The following fields are dedicated for unambiguous semantics representation. If and only if the
 	// structured information of these fields is consistent field isConsistent shall be true.
 	private String counterVar = "";			// name of the counter variable
 	private String startValue = "1";		// expression determining the start value of the loop
 	private String endValue = "";			// expression determining the end value of the loop
 	private int stepConst = 1;				// an integer value defining the increment/decrement
+	@Deprecated
 	public boolean isConsistent = false;	// flag determining whether the semantics is consistently defined by the dedicated fields
 	// END KGU#3 2015-10-24
+	// START KGU#61 2016-03-20: Enh. #84/#135 - now we have to distinguish three styles
+	private String valueList = null;		// expression specifying the set (array) of values
+	public ForLoopStyle style = ForLoopStyle.FREETEXT;
+	// END KGU#61 2016-03-20
 	
 	public For()
 	{
@@ -404,6 +426,9 @@ public class For extends Element implements ILoop {
 		ele.stepConst = this.stepConst;
 		ele.isConsistent = this.isConsistent;
 		// END KGU#81 (bug #28) 2015-11-14
+		// START KGU#61 2016-03-20: Enh. #84/#135
+		ele.style = this.style;
+		// END KGU#61 2016-03-20
 		ele.setColor(this.getColor());
 		ele.q=(Subqueue) this.q.copy();
 		ele.q.parent=ele;
@@ -431,7 +456,8 @@ public class For extends Element implements ILoop {
 	public boolean equals(Element _another)
 	{
 		return super.equals(_another) && this.q.equals(((For)_another).q) &&
-				this.isConsistent == ((For)_another).isConsistent;
+				this.isConsistent == ((For)_another).isConsistent &&
+				this.style == ((For)_another).style;
 	}
 	// END KGU#119 2016-01-02
 	
@@ -534,7 +560,10 @@ public class For extends Element implements ILoop {
 	 */
 	public String getCounterVar()
 	{
-		if (this.isConsistent)
+		// START KGU#61 2016-03-20: Enh. #84/#135
+		//if (this.isConsistent)
+		if (this.style != ForLoopStyle.FREETEXT)
+		// END KGU#61 206-03-20
 		{
 			return this.counterVar;
 		}
@@ -547,7 +576,10 @@ public class For extends Element implements ILoop {
 	 */
 	public String getStartValue()
 	{
-		if (this.isConsistent)
+		// START KGU#61 2016-03-20: Enh. #84/#135
+		//if (this.isConsistent)
+		if (this.style == ForLoopStyle.COUNTER)
+		// END KGU#61 206-03-20
 		{
 			return this.startValue;
 		}
@@ -560,7 +592,10 @@ public class For extends Element implements ILoop {
 	 */
 	public String getEndValue()
 	{
-		if (this.isConsistent)
+		// START KGU#61 2016-03-20: Enh. #84/#135
+		//if (this.isConsistent)
+		if (this.style == ForLoopStyle.COUNTER)
+		// END KGU#61 206-03-20
 		{
 			return this.endValue;
 		}
@@ -574,7 +609,10 @@ public class For extends Element implements ILoop {
 	public int getStepConst()
 	{
 		int step = 1;
-		if (this.isConsistent)
+		// START KGU#61 2016-03-20: Enh. #84/#135
+		//if (this.isConsistent)
+		if (this.style == ForLoopStyle.COUNTER)
+		// END KGU#61 206-03-20
 		{
 			step = this.stepConst;
 		}
@@ -592,13 +630,35 @@ public class For extends Element implements ILoop {
 	 */
 	public String getStepString()
 	{
-		if (this.isConsistent)
+		// START KGU#61 2016-03-20: Enh. #84/#135
+		//if (this.isConsistent)
+		if (this.style == ForLoopStyle.COUNTER)
+		// END KGU#61 206-03-20
 		{
 			return Integer.toString(this.stepConst);
 		}
 		else
 		{
 			return this.splitForClause()[3]; // Or should we provide this.splitClause()[4]?
+		}
+	}
+	
+	/**
+	 * Retrieves the set or list of values to be traversed (For-In style)
+	 * @return string representing the array variable or literal
+	 */
+	public String getValueList()
+	{
+		// START KGU#61 2016-03-20: Enh. #84/#135
+		//if (this.isConsistent)
+		if (this.style == ForLoopStyle.TRAVERSAL)
+		// END KGU#61 206-03-20
+		{
+			return this.valueList;
+		}
+		else
+		{
+			return this.splitForClause()[5];
 		}
 	}
 	
@@ -647,16 +707,33 @@ public class For extends Element implements ILoop {
 	}
 	// END KGU#3 2015-10-24
 
-	// START KGU#3 2015-11-04 We need a transformation to a common intermediate language
+	// START KGU#61 2016-03-20: Enh. #84/#135 - needed for FOR-IN loops
+	/**
+	 * @param valueList the String representing the values to be traversed
+	 */
+	public void setValueList(String valueList) {
+		this.valueList = valueList;
+	}
+	// END KGU#61 2016-03-20
+
+	// START KGU#3 2015-11-04: We need a transformation to a common intermediate language
 	private static String disambiguateForClause(String _text)
 	{
 		// Pad the string to ease the key word detection
 		String interm = " " + _text + " ";
 
+		// START KGU#61 2016-03-20: Enh. #84/#135
 		// First collect the placemarkers of the for loop header ...
-		String[] forMarkers = {D7Parser.preFor, D7Parser.postFor, D7Parser.stepFor};
+		//String[] forMarkers = {D7Parser.preFor, D7Parser.postFor, D7Parser.stepFor};
 		// ... and their replacements (in same order!)
-		String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy};
+		//String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy};
+		// First collect the placemarkers of the for loop header ...
+		String[] forMarkers = {D7Parser.preFor, D7Parser.postFor, D7Parser.stepFor,
+				D7Parser.preForIn, D7Parser.postForIn};
+		// ... and their replacements (in same order!)
+		String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy,
+				forInSeparatorPre, forInSeparatorIn};
+		// END KGU#61 2016-03-20
 
 		// The configured markers for the For loop are not at all redundant but the only sensible
 		// hint how to split the line into the counter variable, the initial and the final value (and possibly the step).
@@ -688,6 +765,19 @@ public class For extends Element implements ILoop {
 	}
 	
 
+	/**
+	 * Splits the contained text (after operator unification, see unifyOperators for details)
+	 * into an array consisting of six strings meant to have following meaning:
+	 * 0. counter variable name 
+	 * 1. expression representing the initial value
+	 * 2. expression representing the final value
+	 * 3. Integer literal representing the increment value ("1" if the substring can't be parsed)
+	 * 4. Substring for increment section as found on splitting (no integer coercion done)
+	 * 5. Substring representing the set of values to be traversed (FOR-IN loop) or null
+	 * 
+	 * @param _text the FOR clause to be split (something like "for i <- 1 to n")
+	 * @return String array consisting of the four parts explained above
+	 */
 	public String[] splitForClause()
 	{
 		return splitForClause(this.getText().getText());
@@ -695,21 +785,25 @@ public class For extends Element implements ILoop {
 	
 	/**
 	 * Splits a potential FOR clause (after operator unification, see unifyOperators for details)
-	 * into an array consisting of five strings meant to have following meaning:
-	 * 1. counter variable name 
-	 * 2. expression representing the initial value
-	 * 3. expression representing the final value
-	 * 4. Integer literal representing the increment value ("1" if the substring can't be parsed)
-	 * 5. Substring for increment section as found on splitting (no integer coercion done)
+	 * into an array consisting of six strings meant to have following meaning:
+	 * 0. counter variable name 
+	 * 1. expression representing the initial value
+	 * 2. expression representing the final value
+	 * 3. Integer literal representing the increment value ("1" if the substring can't be parsed)
+	 * 4. Substring for increment section as found on splitting (no integer coercion done)
+	 * 5. Substring representing the set of values to be traversed (FOR-IN loop) or null
 	 * 
 	 * @param _text the FOR clause to be split (something like "for i <- 1 to n")
 	 * @return String array consisting of the four parts explained above
 	 */
 	public static String[] splitForClause(String _text)
 	{
-		String[] forParts = { "dummy_counter", "1", null, "1", ""};
+		// START KGU#61 2016-03-20: Enh. #84/#135 - consider FOR-IN loops
+		// Components are: loop variable, start value, end value, step int, step string, value set
+		//String[] forParts = { "dummy_counter", "1", null, "1", ""};
 		// Set some defaults
-		String init = "";	// Initialisation instruction
+		//String init = "";	// Initialisation instruction
+		// END KGU#61 2016-03-20
 		
 		// Do some pre-processing to disambiguate the key words
 		String _intermediate = disambiguateForClause(_text);		
@@ -717,14 +811,38 @@ public class For extends Element implements ILoop {
 		
 		_intermediate = _intermediate.replace('\n', ' '); // Concatenate the lines
 		int posFor = _intermediate.indexOf(forSeparatorPre);
-		int lenFor = forSeparatorPre.length();
+		//int lenFor = forSeparatorPre.length();
 		int posTo = _intermediate.indexOf(forSeparatorTo);
-		int lenTo = forSeparatorTo.length();
+		//int lenTo = forSeparatorTo.length();
 		int posBy = _intermediate.indexOf(forSeparatorBy);
+		//int lenBy = forSeparatorBy.length();
+		int posForIn = _intermediate.indexOf(forInSeparatorPre);
+		int posIn = _intermediate.indexOf(forInSeparatorIn);
+		//if (posFor < 0) { posFor = -lenFor; }	// Fictitious position such that posFor+lenFor becomes 0
+		//int posIni = posFor + lenFor;
+		// START KGU#61 2016-03-20: Enh. #84/#135 - must go different ways now
+		// If both forInSeparatorIn and forSeparatorTo occur then a traditional loop is assumed
+		if (posIn > 0 && posTo < 0)
+		{
+			return splitForTraversal(_intermediate, posFor, posForIn, posIn);
+		}
+		else {
+			return splitForCounter(_intermediate, posFor, posTo, posBy);
+		}
+		// END KGU#61 2016-03-20
+	}
+	
+	// START KGU#61 2016-03-20: Enh. #84/#135 - outsourced from splitForClause(String)
+	private static String[] splitForCounter(String _intermediate, int posFor, int posTo, int posBy)
+	{
+		String[] forParts = { "dummy_counter", "1", null, "1", "", null};
+		int[] positions = { posFor, posTo, posBy };
+		String init = "";	// Initialisation instruction
+		int lenFor = forSeparatorPre.length();
+		int lenTo = forSeparatorTo.length();
 		int lenBy = forSeparatorBy.length();
 		if (posFor < 0) { posFor = -lenFor; }	// Fictitious position such that posFor+lenFor becomes 0
 		int posIni = posFor + lenFor;
-		int[] positions = { posFor, posTo, posBy };
 		int pastIni = _intermediate.length();
 		int pastTo = pastIni, pastBy = pastIni;
 		for (int i = 0; i < positions.length; i++) 
@@ -775,14 +893,44 @@ public class For extends Element implements ILoop {
 			forParts[1] = initParts[1].trim();
 		}
 		return forParts;
+		
+	}
+	
+	private static String[] splitForTraversal(String _intermediate, int _posFor, int _posForIn, int _posIn)
+	{
+		String[] forParts = { "dummy_iterator", "", null, "", "", "{}"};
+		int lenFor = forInSeparatorPre.length();
+		int lenIn = forInSeparatorIn.length();
+		if (_posForIn < 0)
+		{
+			if (_posFor > 0 /*&& D7Parser.preFor.trim().equals(D7Parser.preForIn.trim())*/)
+			{
+				_posForIn = _posFor;
+				lenFor = forSeparatorPre.length();
+			}
+			else
+			{
+				_posForIn = -lenFor;	// Fictitious position such that posFor+lenFor becomes 0
+			}
+		}
+
+		forParts[0] = _intermediate.substring(_posForIn + lenFor, _posIn).trim();
+		forParts[5] = _intermediate.substring(_posIn + lenIn).trim();
+		return forParts;
 	}
 	
 	public String composeForClause()
 	{
-		return composeForClause(this.counterVar, this.startValue, this.endValue, this.stepConst);
+		return composeForClause(false);
 	}
 	
-	public static String composeForClause(String _counter, String _start, String _end, String _step)
+	public String composeForClause(boolean _forceStep)
+	{
+		return composeForClause(this.counterVar, this.startValue, this.endValue, this.stepConst, _forceStep);
+	}
+	
+	// START KGU#61 2016-03-20: Enh. #84/#135
+	public static String composeForClause(String _counter, String _start, String _end, String _step, boolean _forceStep)
 	{
 		int step = 1;
 		try
@@ -791,10 +939,10 @@ public class For extends Element implements ILoop {
 		}
 		catch (Exception ex)
 		{}
-		return composeForClause(_counter, _start, _end, step);
+		return composeForClause(_counter, _start, _end, step, _forceStep);
 	}
 	
-	public static String composeForClause(String _counter, String _start, String _end, int _step)
+	public static String composeForClause(String _counter, String _start, String _end, int _step, boolean _forceStep)
 	{
 		String asgnmtOpr = " <- ";	// default assignment operator
 		// If the preset text prefers the Pascal assignment operator then we will use this instead
@@ -804,7 +952,7 @@ public class For extends Element implements ILoop {
 		}
 		String forClause = D7Parser.preFor.trim() + " " + _counter + asgnmtOpr + _start + " " +
 				D7Parser.postFor.trim() + " " + _end;
-		if (_step != 1)
+		if (_step != 1 || _forceStep)
 		{
 			forClause = forClause + " " + D7Parser.stepFor.trim() + " " + Integer.toString(_step);
 		}
@@ -818,9 +966,44 @@ public class For extends Element implements ILoop {
 	{
 		//String string1 = this.getText().getLongString();
 		//String string2 = this.composeForClause();
-		return this.getText().getLongString().equals(this.composeForClause());
+		// START KGU#61 2016-03-20: Enh. #84/#135 - there are two styles now
+		//return this.getText().getLongString().equals(this.composeForClause());
+		return this.classifyStyle() != ForLoopStyle.FREETEXT;
+		// END KGU#61 2016-03-20
 	}
 	// END KGU#3 2015-11-04
+
+	// START KGU#61 2016-03-20: Enh. #84/#135
+	public String composeForInClause()
+	{
+		return composeForInClause(this.counterVar, this.valueList);
+	}
+
+	public String composeForInClause(String _iterator, String _valueList)
+	{
+		String forClause = D7Parser.preForIn.trim() + " " + _iterator + " " +
+				D7Parser.postForIn.trim() + " " + _valueList;
+		return forClause;
+	}
+	
+	public ForLoopStyle classifyStyle()
+	{
+		ForLoopStyle style = ForLoopStyle.FREETEXT;
+		String thisText = this.getText().getLongString().trim();
+		//System.out.println(thisText + " <-> " + this.composeForClause() + " <-> " + this.composeForInClause());
+		
+		if (thisText.equals(this.composeForClause()) ||
+				thisText.equals(this.composeForClause(true)))
+		{
+			style = ForLoopStyle.COUNTER;
+		}
+		else if (thisText.equals(this.composeForInClause()))
+		{
+			style = ForLoopStyle.TRAVERSAL;
+		}
+		return style;
+	}
+	// END KGU#61 2016-03-20
 
 	// START KGU 2015-11-30
 	@Override
@@ -828,5 +1011,32 @@ public class For extends Element implements ILoop {
 		return this.q;
 	}
 	// END KGU 2015-11-30
+	
+//    public static void main(String[] args)
+//	{
+//    	Vector<For> forElems = new Vector<For>();
+//		forElems.add(new For("for doof <- 42 to 56"));
+//		forElems.add(new For("for troll in {34, 252, 21}"));
+//		forElems.add(new For("for int mumpitz in 18 20 22 23 24 27 passe"));
+//		forElems.add(new For("irgendein Schwachsinn hier!"));
+//		for (int f = 0; f < forElems.size(); f++)
+//		{
+//			String[] components = forElems.get(f).splitForClause();
+//			for (int i = 0; i < components.length; i++) System.out.println(i + ": " + components[i]);
+//			if (components[5] == null)
+//			{
+//				forElems.get(f).setCounterVar(components[0]);
+//				forElems.get(f).setStartValue(components[1]);
+//				forElems.get(f).setEndValue(components[2]);
+//				forElems.get(f).setStepConst(components[3]);
+//			}
+//			else
+//			{
+//				forElems.get(f).setCounterVar(components[0]);
+//				forElems.get(f).setValueList(components[5]);				
+//			}
+//			System.out.println(forElems.get(f).classifyStyle());
+//		}		
+//	}
 
 }

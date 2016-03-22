@@ -61,6 +61,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.02.25      Bugfix #97 (= KGU#136): field rect replaced by rect0 in prepareDraw()
  *      Kay Gürtzig     2016.03.02      Bugfix #97 (= KGU#136) accomplished -> translation-independent selection
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): For-In loops in variable detection and Analyser
  *
  ******************************************************************************************************
  *
@@ -1349,6 +1350,17 @@ public class Root extends Element {
                             //        allText=allText.substring(allText.indexOf(D7Parser.preFor.trim())+D7Parser.preFor.trim().length()).trim();
                             //}
                             // REPLACEMENT STARTS HERE:
+                            // START KGI#61 2016-03-21: Enh. #84 - for analysis purposes we replace all FOR-IN-specific keywords by FOR tokens
+                            // for-in
+                            if (!D7Parser.preForIn.trim().isEmpty()) {
+                            	r = new Regex(BString.breakup(D7Parser.preForIn.trim())+"[ ](.*?\\W)"+D7Parser.postForIn.trim()+"(\\W.*?)",D7Parser.preFor.trim()+" $1 <- $2");
+                            }
+                            else {
+                            	r = new Regex("(.*?\\W)"+D7Parser.postForIn.trim()+"(\\W.*?)","$1 <- $2");
+                            }
+                            allText=r.replaceAll(allText);
+                            // END KGU#61 2016-03-21
+                            
                             // for
                             if (!D7Parser.preFor.trim().isEmpty()) {
                             	r = new Regex(BString.breakup(D7Parser.preFor.trim())+"[ ](.*?\\W)"+D7Parser.postFor.trim()+"(\\W.*?)",D7Parser.preFor.trim()+" $1 "+D7Parser.postFor.trim()+" $2");
@@ -1559,6 +1571,15 @@ public class Root extends Element {
                             allText=allText.substring(allText.indexOf(D7Parser.preFor.trim()+" ")+D7Parser.preFor.trim().length()).trim();
                     }
                     // END KGU#102 2015-12-11
+                    // START KGU#61 2016-03-21: Enh. #84 - Also extract from FOR-IN loops
+                    // for-in
+                    if(allText.matches("(^|[\\W])" + D7Parser.preForIn.trim() + "[ ](.*)"))
+                    {
+                            allText=allText.substring(allText.indexOf(D7Parser.preForIn.trim()+" ")+D7Parser.preForIn.trim().length()).trim();
+                    }
+                    // in (for-in) - formally replace D7Parser by an assignment symbol
+                    r = new Regex("(.*?[\\W])"+BString.breakup(D7Parser.postForIn.trim())+"([\\W].*?)", "$1 <- $2"); allText=r.replaceAll(allText);
+                    // END KGU#61 2016-03-21
 
                     // START KGU#126 2016-01-06: Operators can no longer be expected to be padded
 //                    if(allText.indexOf(" <- ")>=0)
@@ -2275,7 +2296,14 @@ public class Root extends Element {
     			StringList usedVars = getVarNames(ele, false, true);
     			// get loop variable (that should be only one!!!)
     			StringList loopVars = getVarNames(ele, true);
-
+    			// START KGU#61 2016-03-21: Enh. #84 - ensure FOR-IN variables aren't forgotten
+    			String counterVar = ((For)ele).getCounterVar();
+    			if (counterVar != null && !counterVar.isEmpty())
+    			{
+    				loopVars.addIfNew(counterVar);
+    			}
+    			// END KGU#61 2016-03-21
+    			
     			/*
                                     System.out.println("USED : "+usedVars);
                                     System.out.println("LOOP : "+loopVars);

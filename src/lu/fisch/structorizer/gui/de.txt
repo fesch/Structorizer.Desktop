@@ -41,6 +41,7 @@
  *      Kay Gürtzig		2015.11.15		Messages for Jump element modified or corrected
  *      Kay Gürtzig 	2015.12.18		New messages for ExportOptionDialoge
  *      Kay Gürtzig 	2016.01.04		Enh. #87: New messages for collapsing / expanding elements
+ *      Kay Gürtzig 	2016.03.21		Enh. #84: New messages for FOR-IN loops and their handling
  *
  ******************************************************************************************************
  *
@@ -499,6 +500,8 @@ ParserPreferences.lblCase.tooltip=Einfügungen im CASE-Anweisungskopf.
 ParserPreferences.lblFor.text=FOR-Anweisung
 ParserPreferences.lblFor.tooltip=Einfügungen im FOR-Anweisungskopf.
 ParserPreferences.lblForStep.text=Schrittweite
+ParserPreferences.lblForIn.text=FOR-IN-Schleife
+ParserPreferences.lblForIn.tooltip=Einfügungen im FOR-Anweisungskopf für FOR-IN-Schleifen.
 ParserPreferences.lblWhile.text=WHILE-Schleife
 ParserPreferences.lblWhile.tooltip=Einfügungen im WHILE-Anweisungskopf.
 ParserPreferences.lblRepeat.text=REPEAT-Schleife
@@ -510,6 +513,7 @@ ParserPreferences.lblOutput.tooltip=Einfügungen für Ausgabe-Einweisungen.
 ParserPreferences.btnOK.text=Speichern
 ParserPreferences.btnOK.tooltip=Speichern der gewählten Einstellungen.
 ParserPreferences.lblErrorSign.text=Der Doppelpunkt ':' darf in keiner der Parser-Einstellungen vorkommen!
+ParserPreferences.lblErrorSign2.text=Die Einstellung für FOR-IN / Nach darf keiner anderen Parser-Einstellung gleichen!
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Druckvoransicht

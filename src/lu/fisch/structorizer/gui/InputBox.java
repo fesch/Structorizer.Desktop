@@ -343,4 +343,11 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
     }
     // END KGU#42 2015-10-14
     
+    // START KGU#61 2016-03-21: Enh. #84 - Addition to facilitate specific handling
+    /**
+     * May check and ensure consistency between inserted data, control behaviour etc.
+     */
+    public void checkConsistency() {}
+    // END KGU#61 2016-03-21
+    
 }

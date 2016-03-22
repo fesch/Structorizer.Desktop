@@ -230,7 +230,10 @@ public class XmlGenerator extends Generator {
     			specificAttributes +
     			// END KGU#3 2015-10-28
     			// START KGU#3 2015-11-08: The reliability of the structured fields must be stored, too.
-    			"\" reliable=\"" + BString.encodeToHtml(_for.checkConsistency() ? "true" : "false") +
+    			// START KGU#61 2016-03-21: Enh. #84 - Now the style is to be stored instead
+    			//"\" reliable=\"" + BString.encodeToHtml(_for.checkConsistency() ? "true" : "false") +
+    			"\" style=\"" + BString.encodeToHtml(_for.style.toString()) +
+    			// END KGU#61 2016-03-21
     			// END KGU#3 2015-11-08
     			"\" color=\"" + _for.getHexColor()+"\">");
     	// END KGU#118 2015-12-31

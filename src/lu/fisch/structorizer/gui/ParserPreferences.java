@@ -33,6 +33,8 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2008.01.03      First Issue
+ *      Kay Gürtzig     2015.11.08      Enh. #10: step keyword setting manually added (FOR loop)
+ *      Kay Gürtzig     2016.03.21      Enh. #84: FOR-IN loop settings manually added
  *
  ******************************************************************************************************
  *
@@ -82,11 +84,16 @@ public class ParserPreferences extends LangDialog {
 	protected JLabel lblFor;
 	protected JTextField edtForPre;
 	protected JTextField edtForPost;
-	// START KGU# 2015-11-08
+	// START KGU#3 2015-11-08: Enh. #10 - consistent parsing for steps
 	protected JLabel lblNothing4;
 	protected JLabel lblForStep;
 	protected JTextField edtForStep;
 	// END KGU#3 2015-11-08
+	// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
+	protected JLabel lblForIn;
+	protected JTextField edtForInPre;
+	protected JTextField edtForInPost;
+	// END KGU#61 2016-03-21
 	protected JLabel lblWhile;
 	protected JTextField edtWhilePre;
 	protected JTextField edtWhilePost;
@@ -96,6 +103,9 @@ public class ParserPreferences extends LangDialog {
 	protected JPanel buttonBar;
 	protected JButton btnOK;
         protected JLabel lblErrorSign;
+    	// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
+        protected JLabel lblErrorSign2;
+    	// END KGU#61 2016-03-21
 	// JFormDesigner - End of variables declaration  //GEN-END:variables
 	
 	/*public ParserPreferences()
@@ -142,6 +152,11 @@ public class ParserPreferences extends LangDialog {
 		lblForStep = new JLabel();
 		edtForStep = new JTextField();
 		// END KGU#3 2015-11-08
+		// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
+		lblForIn = new JLabel();
+		edtForInPre = new JTextField();
+		edtForInPost = new JTextField();
+		// END KGU#61 2016-03-21
 		lblWhile = new JLabel();
 		edtWhilePre = new JTextField();
 		edtWhilePost = new JTextField();
@@ -155,6 +170,10 @@ public class ParserPreferences extends LangDialog {
                 lblErrorSign = new JLabel();
                 
                 lblErrorSign.setText("Your are not allowed to use the sign ':' in any parser string!");
+            	// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
+                lblErrorSign2 = new JLabel();
+                lblErrorSign2.setText("The post-FOR-IN loop keyword must not be equal to any other token!");
+                // END KGU#61 2016-03-21
 
 		//======== this ========
 		setModal(true);
@@ -180,7 +199,10 @@ public class ParserPreferences extends LangDialog {
 			{
 				// START KGU#3 2015-11-08: Need an additional line for For
 				//contentPanel.setLayout(new GridLayout(8, 3, 8, 8));
-				contentPanel.setLayout(new GridLayout(9, 3, 8, 8));
+				// START KGU#61 2016-03-21: Need still an additional line for For-In
+				//contentPanel.setLayout(new GridLayout(9, 3, 8, 8));
+				contentPanel.setLayout(new GridLayout(10, 3, 8, 8));
+				// END KGU#61 2016-03-21
 				// END KGU#3 2015-11-08
 				contentPanel.add(lblNothing);
 
@@ -209,12 +231,18 @@ public class ParserPreferences extends LangDialog {
 				contentPanel.add(lblFor);
 				contentPanel.add(edtForPre);
 				contentPanel.add(edtForPost);
-				// START KGU#3 2015-11-08
+				// START KGU#3 2015-11-08: Enh. #10
 				lblForStep.setText("Step separator");
 				contentPanel.add(lblNothing4);
 				contentPanel.add(lblForStep);
 				contentPanel.add(edtForStep);
 				// END KGU#3 20155-11-08
+				// START KGU#61 2016-03-21: Enh. #84 - For-In preferences
+				lblForIn.setText("FOR-IN loop");
+				contentPanel.add(lblForIn);
+				contentPanel.add(edtForInPre);
+				contentPanel.add(edtForInPost);
+				// END KGU#61 2016-03-21
 
 				//---- lblWhile ----
 				lblWhile.setText("WHILE loop");
@@ -287,9 +315,13 @@ public class ParserPreferences extends LangDialog {
 		edtCasePost.addKeyListener(keyListener);
 		edtForPre.addKeyListener(keyListener);
 		edtForPost.addKeyListener(keyListener);
-		// START KGU#3 2015-11-08
+		// START KGU#3 2015-11-08: Enh. #10
 		edtForStep.addKeyListener(keyListener);
 		// END KGU#3 2015-11-08
+    	// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
+		edtForInPre.addKeyListener(keyListener);
+		edtForInPost.addKeyListener(keyListener);
+    	// END KGU#61 2016-03-21
 		edtWhilePre.addKeyListener(keyListener);
 		edtWhilePost.addKeyListener(keyListener);
 		edtRepeatPre.addKeyListener(keyListener);
@@ -321,6 +353,10 @@ public class ParserPreferences extends LangDialog {
                     // START KGU#3 2015-11-08
                     edtForStep.getText().contains(":") ||
                     // START KGU#3 2015-11-08
+                   	// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
+                    edtForInPre.getText().contains(":") ||
+                    edtForInPost.getText().contains(":") ||
+                	// END KGU#61 2016-03-21
                     edtWhilePre.getText().contains(":") ||
                     edtWhilePost.getText().contains(":") ||
                     edtRepeatPre.getText().contains(":") ||
@@ -330,6 +366,26 @@ public class ParserPreferences extends LangDialog {
             ) {
                  JOptionPane.showMessageDialog(ParserPreferences.this, lblErrorSign.getText(),"Error", JOptionPane.ERROR_MESSAGE);
             }
+        	// START KGU#61 2016-03-21: Enh. #84 - Test ForInPost against duplicates 
+            else if(
+            		edtForInPost.getText().equals(edtAltPre.getText()) ||
+            		edtForInPost.getText().equals(edtAltPost.getText()) ||
+            		edtForInPost.getText().equals(edtCasePre.getText()) ||
+            		edtForInPost.getText().equals(edtCasePost.getText()) ||
+            		edtForInPost.getText().equals(edtForPre.getText()) ||
+            		edtForInPost.getText().equals(edtForPost.getText()) ||
+            		edtForInPost.getText().equals(edtForStep.getText()) ||
+            		edtForInPost.getText().equals(edtForInPre.getText()) ||
+            		edtForInPost.getText().equals(edtWhilePre.getText()) ||
+            		edtForInPost.getText().equals(edtWhilePost.getText()) ||
+            		edtForInPost.getText().equals(edtRepeatPre.getText()) ||
+            		edtForInPost.getText().equals(edtRepeatPost.getText()) ||
+            		edtForInPost.getText().equals(edtInput.getText()) ||
+            		edtForInPost.getText().equals(edtOutput.getText())
+            ) {
+                 JOptionPane.showMessageDialog(ParserPreferences.this, lblErrorSign2.getText(),"Error", JOptionPane.ERROR_MESSAGE);
+            }
+        	// END KGU#61 2016-03-21
             else
             {
                 setVisible(false);
