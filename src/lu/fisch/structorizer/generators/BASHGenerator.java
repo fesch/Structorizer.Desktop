@@ -51,10 +51,20 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2015.12.22      Bugfix #71 (= KG#114): Text transformation didn't work
  *      Kay Gürtzig         2016.01.08      Bugfix #96 (= KG#129): Variable names handled properly,
  *                                          Logical expressions (conditions) put into ((  )).
+ *      Kay Gürtzig         2016.03.22      Enh. #84/#135 (= KG#61): Support for FOR-IN loops
  *
  ******************************************************************************************************
  *
  *      Comment:		LGPL license (http://www.gnu.org/licenses/lgpl.html).
+ *      
+ *      2016.03.21 - Enhancement #84/#135 (Kay Gürtzig / R. Schmidt)
+ *      - Besides the working (but rather rarely used) C-like "three-expression" FOR loop, FOR-IN loops
+ *        were to be enabled in a consistent way, i.e. the syntax must also be accepted by Ediors and
+ *        Executor as wel as other code generators.
+ *      - This generator copes with value lists of the following types:
+ *        {item1, item2, item3} --> item1 item2 item3
+ *        item1, item2, item3 -->   item1 item2 item3
+ *        {val1..val2} and {val1..val2..step} would be left as is but not explicitly created
  *      
  *      2015.12.21 - Bugfix #41/#68/#69 (Kay Gürtzig)
  *      - Operator replacement had induced unwanted padding and string literal modifications
@@ -99,9 +109,10 @@ import lu.fisch.utils.StringList;
 
 public class BASHGenerator extends Generator {
 	
-	// START KGU#129 2016-01-08: Bugfix #96 We must know all variable names to prefix them with '$'.
-	StringList varNames = new StringList();
-	// END KGU#129 2015-01-08
+	// START KGU#61 2016-03-22: Now provided by Generator class
+	// Bugfix #96 (KGU#129, 2015-01-08): We must know all variable names to prefix them with '$'.
+	//StringList varNames = new StringList();
+	// END KGU#6 2016-03-22
 
 	/************ Fields ***********************/
 	@Override
@@ -192,6 +203,9 @@ public class BASHGenerator extends Generator {
 		// START KGU#129 2016-01-08: Bugfix #96 - variable name processing
 		// We must of course identify variable names and prefix them with $ unless being an lvalue
 		int posAsgnOpr = tokens.indexOf("<-");
+		// START KGU#61 2016-03-21: Enh. #84/#135
+		if (posAsgnOpr < 0) posAsgnOpr = tokens.indexOf(D7Parser.postForIn);
+		// END KGU#61 2016-03-21
 		// If there is an array variable (which doesn't exist in shell) left of the assignment symbol, check the index 
 		int posBracket1 = tokens.indexOf("[");
 		int posBracket2 = -1;
@@ -205,6 +219,7 @@ public class BASHGenerator extends Generator {
     		tokens.replaceAllBetween(varName, "$"+varName, true, posBracket1+1, posBracket2);
     	}
     	// Now we remove spaces around the assignment operator
+    	posAsgnOpr = tokens.indexOf("<-");
     	if (posAsgnOpr >= 0)
     	{
     		int pos = posAsgnOpr - 1;
@@ -373,26 +388,52 @@ public class BASHGenerator extends Generator {
 		// We now use C-like syntax  for ((var = sval; var < eval; var=var+incr)) ...
 		// START KGU#3 2015-11-02: And now we have a competent splitting mechanism...
 		String counterStr = _for.getCounterVar();
-		// START KGU#129 2016-01-08: Bugfix #96: Expressions must be transformed
-		//String startValueStr = _for.getStartValue();
-		//String endValueStr = _for.getEndValue();
-		String startValueStr = transform(_for.getStartValue());
-		String endValueStr = transform(_for.getEndValue());
-		// END KGU#129 2016-01-08
-		int stepValue = _for.getStepConst();
-		String incrStr = counterStr + "++";
-		if (stepValue == -1) {
-			incrStr = counterStr + "--";
+		//START KGU#61 2016-03-21: Enh. #84/#135 - FOR-IN support
+		if (_for.isForInLoop())
+		{
+			String valueList = _for.getValueList();
+			StringList items = null;
+			// Convert an array initializer to a space-separated sequence
+			if (valueList.startsWith("{") && valueList.endsWith("}") &&
+					!valueList.contains(".."))	// Preserve ranges like {3..18} or {1..200..2}
+			{
+				items = Element.splitExpressionList(
+						valueList.substring(1, valueList.length()-1), ",");
+			}
+			// Convert a comma-separated list to a space-separated sequence
+			else if (valueList.contains(","))
+			{
+				items = Element.splitExpressionList(valueList, ",");				
+			}
+			if (items != null) valueList = items.getLongString();
+			code.add(_indent + "for " + counterStr + " in " + transform(valueList));
 		}
-		else if (stepValue != 1) {
-			// START KGU#129 2016-01-08: Bugfix #96 - prefix variables
-			incrStr = "(( " + counterStr + "=$" + counterStr + "+(" + stepValue + ") ))";
+		else // traditional COUNTER loop
+		{
+		// END KGU#61 2016-03-21
+			// START KGU#129 2016-01-08: Bugfix #96: Expressions must be transformed
+			//String startValueStr = _for.getStartValue();
+			//String endValueStr = _for.getEndValue();
+			String startValueStr = transform(_for.getStartValue());
+			String endValueStr = transform(_for.getEndValue());
+			// END KGU#129 2016-01-08
+			int stepValue = _for.getStepConst();
+			String incrStr = counterStr + "++";
+			if (stepValue == -1) {
+				incrStr = counterStr + "--";
+			}
+			else if (stepValue != 1) {
+				// START KGU#129 2016-01-08: Bugfix #96 - prefix variables
+				incrStr = "(( " + counterStr + "=$" + counterStr + "+(" + stepValue + ") ))";
+			}
+			// END KGU#3 2015-11-02
+			code.add(_indent+"for (("+counterStr+"="+startValueStr+"; "+
+					counterStr + ((stepValue > 0) ? "<=" : ">=") + endValueStr + "; " +
+					incrStr + " ))");
+			// END KGU#30 2015-10-18
+		// START KGU#61 2016-03-21: Enh. #84/#135 (continued)
 		}
-		// END KGU#3 2015-11-02
-		code.add(_indent+"for (("+counterStr+"="+startValueStr+"; "+
-				counterStr + ((stepValue > 0) ? "<=" : "<=") + endValueStr + "; " +
-				incrStr + " ))");
-		// END KGU#30 2015-10-18
+		// END KGU#61 2016-03-21
 		code.add(_indent+"do");
 		generateCode(_for.q,_indent+this.getIndent());
 		code.add(_indent+"done");	

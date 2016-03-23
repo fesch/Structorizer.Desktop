@@ -30,11 +30,12 @@ package lu.fisch.structorizer.parsers;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------		----			-----------
- *      Bob Fisch       2008.01.06              First Issue
- *      Bob Fisch       2008.05.02              Added filter for (* ... *) comment filtering
- *      Kay Gürtzig     2015.10.20              New setting stepFor (KGU#3, to be made configurable!)
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2008.01.06      First Issue
+ *      Bob Fisch       2008.05.02      Added filter for (* ... *) comment filtering
+ *      Kay Gürtzig     2015.10.20      New setting stepFor (KGU#3, to be made configurable!)
+ *      Kay Gürtzig     2016-03-20      New settings preForIn and postForIn added (KGU#61, #84/#135)
  *
  ******************************************************************************************************
  *
@@ -75,6 +76,10 @@ public class D7Parser implements GPMessageConstants
 	// TODO Must the code below (esp. DrawNSD_R) be adapted? Or isn't it used anymore?
 	public static String stepFor = " step ";	// For consistent analysis of FOR loops
 	// END KGU#3/KGU#18/KGU#23 2015-10-20;
+	// START KGU#61 2016-03-20: Enh. #84/#135 - support and distinguish FOR-IN loops
+	public static String preForIn = "for ";	// This may be equal to preFor!
+	public static String postForIn = " in ";
+	// END KGU#61 2016-03-20
 	public static String preWhile = "while ";
 	public static String postWhile = "";
 	public static String preRepeat = "until ";
@@ -682,6 +687,10 @@ public class D7Parser implements GPMessageConstants
 			// START KGU#3 2015-11-08: Enhancement #10
 			stepFor=ini.getProperty("ParserStepFor", ", pas = ");
 			// END KGU#3 2015-11-08
+			// START KGU#61 2016-03-20: Enh. #84/#135 - support and distinguish FOR-IN loops
+			preForIn=ini.getProperty("ParserPreForIn","pour ");
+			postForIn=ini.getProperty("ParserPostForIn"," en ");
+			// END KGU#61 2016-03-20
 			preWhile=ini.getProperty("ParserPreWhile","tant que ");
 			postWhile=ini.getProperty("ParserPostWhile","");
 			preRepeat=ini.getProperty("ParserPreRepeat","jusqu'\u00E0 ");
@@ -711,6 +720,10 @@ public class D7Parser implements GPMessageConstants
 			// START KGU#3 2015-11-08: Enhancement #10
 			ini.setProperty("ParserStepFor",stepFor);
 			// END KGU#3 2015-11-08
+			// START KGU#61 2016-03-20: Enh. #84/#135 - support and distinguish FOR-IN loops
+			ini.setProperty("ParserPreForIn",preForIn);
+			ini.setProperty("ParserPostForIn",postForIn);
+			// END KGU#61 2016-03-20
 			ini.setProperty("ParserPreWhile",preWhile);
 			ini.setProperty("ParserPostWhile",postWhile);
 			ini.setProperty("ParserPreRepeat",preRepeat);

@@ -35,6 +35,8 @@ package lu.fisch.structorizer.gui;
  *      ------			----			-----------
  *      Bob Fisch       2007.12.29      First Issue
  *      Kay Gürtzig     2015.10.12      Field for breakpoint control added (KGU#43)
+ *      Kay Gürtzig     2015.10.25      Enh. #10: Fields for specific For loop support (KGU#3)
+ *      Kay Gürtzig     2016.03.21      Enh. #84: Field modification to support FOR-IN loops (KGU#61)
  *
  ******************************************************************************************************
  *
@@ -42,6 +44,7 @@ package lu.fisch.structorizer.gui;
  *
  ******************************************************************************************************///
 
+import lu.fisch.structorizer.elements.For;
 import lu.fisch.utils.*;
 
 public class EditData {
@@ -50,9 +53,12 @@ public class EditData {
 
 	public StringList text = new StringList();
 	public StringList comment = new StringList();
-	// START KGU#3 2015-10-25
+	// START KGU#3 2015-10-25: Enh. #10 - specific FOR loop support
 	public StringList forParts = new StringList();
-	public boolean forPartsConsistent = false;
+	// START KGU#61 2016-03-21: Enh. #84 - we have to distinguish three styles now
+	//public boolean forPartsConsistent = false;
+	public For.ForLoopStyle forLoopStyle = For.ForLoopStyle.FREETEXT;
+	// END KGU#61 2016-03-21
 	// END KGU#3 2015-10-25
 	
 	// START KGU#43 2015-10-12

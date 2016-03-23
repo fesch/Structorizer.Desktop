@@ -43,6 +43,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2015-12-21      Bugfix #41/#68/#69 (= KGU#93) avoid padding and string literal impact
  *      Kay Gürtzig     2015.12.22		Slight performance improvement in transform()
  *      Kay Gürtzig     2016-01-16      KGU#141: New generic method lValueToTypeNameIndex introduced for Issue #112
+ *      Kay Gürtzig     2016-03-22      KGU#61/KGU#129: varNames now basic field for all subclasses
  *
  ******************************************************************************************************
  *
@@ -70,6 +71,7 @@ import com.stevesoft.pat.Regex;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.ExportOptionDialoge;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.parsers.D7Parser;
@@ -90,9 +92,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected String labelBaseName = "StructorizerLabel_";
 	// maps loops and Jump elements to label counts (neg. number means illegal jump target)
 	protected Hashtable<Element, Integer> jumpTable = new Hashtable<Element, Integer>();
-
 	// END KGU#74 2015-11-29
 
+	// START KGU#129/KGU#61 2016-03-22: Bugfix #96 / Enh. #84 Now important for most generators
+	// Some generators must prefix variables, for some generators it's important for FOR-IN loops
+	protected StringList varNames = new StringList();
+	// END KGU#129/KGU#61 2015-01-22
+
+	
 	/************ Abstract Methods *************/
 	protected abstract String getDialogTitle();
 	protected abstract String getFileDescription();
@@ -563,7 +570,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	
 	
-	// START KGU#141 2016-01-16: New for ease of fixing #112
+	// START KGU#109/KGU#141 2016-01-16: New for ease of fixing #61 and #112
 	/**
 	 * Decomposes the left-hand side of an assignment passed in as _lval
 	 * into three strings:
@@ -603,14 +610,34 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		
 		if ((subPos = _lval.indexOf('[')) >= 0 && _lval.indexOf(']', subPos+1) >= 0)
 		{
-			index = _lval.replaceAll("(.*?)[\\[](.*?)[\\]](.*?)","$1X$2X$3");
+			index = _lval.replaceAll("(.*?)[\\[](.*?)[\\]](.*?)","$2").trim();
 		}
 		String[] typeNameIndex = {type, name, index};
 		return typeNameIndex;
 	}
-	// END KGU#141 2016-01-16
+	// END KGU#109/KGU#141 2016-01-16
 	
-
+	// START KGU#61 2016-03-23: Enh. #84 (FOR-IN loop infrastructure)
+	protected StringList extractForInListItems(For _for)
+	{
+		String valueList = _for.getValueList();
+		StringList items = null;
+		boolean isComplexObject = (new Function(valueList)).isFunction() || this.varNames.contains(valueList);
+		if (valueList.startsWith("{") && valueList.endsWith("}"))
+		{
+			items = Element.splitExpressionList(valueList.substring(1, valueList.length()-1), ",");
+		}
+		else if (valueList.contains(","))
+		{
+			items = Element.splitExpressionList(valueList, ",");
+		}
+		else if (!isComplexObject && valueList.contains(" "))
+		{
+			items = Element.splitExpressionList(valueList, " ");
+		}
+		return items;
+	}
+	// END KGU#61 2016-03-23
  	
     protected void generateCode(Instruction _inst, String _indent)
 	{
@@ -747,7 +774,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		StringList paramTypes = new StringList();
 		_root.collectParameters(paramNames, paramTypes);
 		String resultType = _root.getResultType();
-		StringList varNames = _root.getVarNames(_root, false, true);	// FIXME: FOR loop vars are missing
+		// START KGU#61/KGU#129 2016-03-22: Now common field for all generator classes
+		//StringList varNames = _root.getVarNames(_root, false, true);	// FIXME: FOR loop vars are missing
+		this.varNames = _root.getVarNames(_root, false, true);	// FIXME: FOR loop vars are missing
+		// END KGU#61/KGU#129
 		this.isResultSet = varNames.contains("result", false);
 		this.isFunctionNameSet = varNames.contains(procName);
 		
