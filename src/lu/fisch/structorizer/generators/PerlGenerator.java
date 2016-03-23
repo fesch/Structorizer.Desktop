@@ -55,6 +55,8 @@ package lu.fisch.structorizer.generators;
  *                                      Fixes in FOR and REPEAT export
  *      Kay Gürtzig     2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
  *      Kay Gürtzig     2015.12.21      Bugfix #51 (= KGU#108) Didn't cope with empty input / output
+ *      Kay Gürtzig     2016.03.22      Enh. #84 (= KGU#61) varNames now inherited, FOR-IN loop support
+ *      Kay Gürtzig     2016.03.23      Enh. #84: Support for FOREACH loops (KGU#61) 
  *
  ******************************************************************************************************
  *
@@ -79,15 +81,17 @@ import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
 public class PerlGenerator extends Generator {
 	
-	// START KGU 2015-11-02: We must know all variable names in order to prefix them with '$'.
-	StringList varNames = new StringList();
-	// END KGU 2015-11-02
+	// START KGU#61 2016-03-22: Now provided by Generator class
+	// (KGU 2015-11-02) We must know all variable names in order to prefix them with '$'.
+	//StringList varNames = new StringList();
+	// END KGU#61 2016-03-22
 
 	/************ Fields ***********************/
 	protected String getDialogTitle()
@@ -190,11 +194,39 @@ public class PerlGenerator extends Generator {
 		// END KGU#62/KGU#103 2015-12-12
 		tokens.replaceAll("div", "/");
 		tokens.replaceAll("<-", "=");
+		// START KGU#61 2016-03-23: Enh. #84 - prepare array literals
+		tokens.replaceAll("{", "(");
+		tokens.replaceAll("}", ")");
+		// END KGU#61 2016-03-23
 		return tokens.concatenate();
 	}
 	// END KGU#93 2015-12-21
 	
 	// END KGU#18/KGU#23 2015-11-01
+	
+	// START KGU#61 2016-03-23: Enh. #84 (Array/List support)
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String)
+	 */
+	@Override
+	protected String transform(String _input)
+	{
+		// Set array variable name prefix in assignments with array initialiser
+		_input = Element.unifyOperators(_input);
+		int asgnPos = _input.indexOf("<-");	// This might mutilate string literals!
+		if (asgnPos > 0)
+		{
+			String lval = _input.substring(0, asgnPos).trim();
+			String expr = _input.substring(asgnPos + "<-".length()).trim();
+			if (expr.startsWith("{") && expr.endsWith("}") && this.varNames.contains(lval))
+			{
+				_input = "@" + lval + " <- " + expr;				
+			}
+		}
+
+		return super.transform(_input).trim();
+	}
+	// END KGU#61 2016-03-23
 	
 	// START KGU#108 2015-12-22: Bugfix #51
 	/* (non-Javadoc)
@@ -407,14 +439,37 @@ public class PerlGenerator extends Generator {
     	insertComment(_for, _indent);
 
     	String var = _for.getCounterVar();
-    	int step = _for.getStepConst();
-    	String compOp = (step > 0) ? " <= " : " >= ";
-    	String increment = "$" + var + " += (" + step + ")";
-    	code.add(_indent + "for ($" +
-    			var + " = " + transform(_for.getStartValue(), false) + "; $" +
-    			var + compOp + transform(_for.getEndValue(), false) + "; " +
-    			increment +
-    			") {");
+    	// START KGU#61 2016-03-23: Enh. 84 - FOREACH support
+    	if (_for.isForInLoop())
+    	{
+    		String valueList = _for.getValueList();
+    		StringList items = this.extractForInListItems(_for);
+    		if (items != null)
+    		{
+        		valueList = "@array20160323";
+    			code.add(_indent + valueList + " = (" + transform(items.concatenate(", "), false) + ")");
+    		}
+    		else
+    		{
+    			valueList = transform(valueList, false);
+    			if (valueList.startsWith("$")) valueList = "@" + valueList.substring(1);
+    		}
+    		code.add(_indent + "foreach $"+ var + " (" + valueList + ") {");
+    	}
+    	else
+    	{
+    	// END KGU#61 2016-03-23
+    		int step = _for.getStepConst();
+    		String compOp = (step > 0) ? " <= " : " >= ";
+    		String increment = "$" + var + " += (" + step + ")";
+    		code.add(_indent + "for ($" +
+    				var + " = " + transform(_for.getStartValue(), false) + "; $" +
+    				var + compOp + transform(_for.getEndValue(), false) + "; " +
+    				increment +
+    				") {");
+    	// START KGU#61 2016-03-23: Enh. 84 - FOREACH support (part 2)
+    	}
+    	// END KGU#61 2016-03-23
 		// END KGU#3 2015-11-02
 		generateCode(_for.q,_indent+this.getIndent());
 		code.add(_indent+"}");

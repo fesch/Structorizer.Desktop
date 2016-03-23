@@ -2908,7 +2908,7 @@ public class Executor implements Runnable
 	private String stepFor(For element)
 	{
 		// START KGU#61 2016-03-21: Enh. #84
-		if (element.style == For.ForLoopStyle.TRAVERSAL || element.classifyStyle() == For.ForLoopStyle.TRAVERSAL)
+		if (element.isForInLoop())
 		{
 			return stepForIn(element);
 		}

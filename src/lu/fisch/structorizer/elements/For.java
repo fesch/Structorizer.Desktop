@@ -105,8 +105,8 @@ public class For extends Element implements ILoop {
 	private String startValue = "1";		// expression determining the start value of the loop
 	private String endValue = "";			// expression determining the end value of the loop
 	private int stepConst = 1;				// an integer value defining the increment/decrement
-	@Deprecated
-	public boolean isConsistent = false;	// flag determining whether the semantics is consistently defined by the dedicated fields
+	//@Deprecated
+	//public boolean isConsistent = false;	// flag determining whether the semantics is consistently defined by the dedicated fields
 	// END KGU#3 2015-10-24
 	// START KGU#61 2016-03-20: Enh. #84/#135 - now we have to distinguish three styles
 	private String valueList = null;		// expression specifying the set (array) of values
@@ -424,10 +424,11 @@ public class For extends Element implements ILoop {
 		ele.startValue = this.startValue + "";
 		ele.endValue = this.endValue + "";
 		ele.stepConst = this.stepConst;
-		ele.isConsistent = this.isConsistent;
+		//ele.isConsistent = this.isConsistent;
 		// END KGU#81 (bug #28) 2015-11-14
 		// START KGU#61 2016-03-20: Enh. #84/#135
 		ele.style = this.style;
+		ele.valueList = this.valueList;
 		// END KGU#61 2016-03-20
 		ele.setColor(this.getColor());
 		ele.q=(Subqueue) this.q.copy();
@@ -456,7 +457,7 @@ public class For extends Element implements ILoop {
 	public boolean equals(Element _another)
 	{
 		return super.equals(_another) && this.q.equals(((For)_another).q) &&
-				this.isConsistent == ((For)_another).isConsistent &&
+				//this.isConsistent == ((For)_another).isConsistent &&
 				this.style == ((For)_another).style;
 	}
 	// END KGU#119 2016-01-02
@@ -643,24 +644,23 @@ public class For extends Element implements ILoop {
 		}
 	}
 	
+	// START KGU#61 2016-03-22: Enh. #84/#135
 	/**
 	 * Retrieves the set or list of values to be traversed (For-In style)
 	 * @return string representing the array variable or literal
 	 */
 	public String getValueList()
 	{
-		// START KGU#61 2016-03-20: Enh. #84/#135
 		//if (this.isConsistent)
-		if (this.style == ForLoopStyle.TRAVERSAL)
-		// END KGU#61 206-03-20
+		String valList = null;
+		if (this.style == ForLoopStyle.TRAVERSAL && (valList = this.valueList) == null ||
+				this.style == ForLoopStyle.FREETEXT)
 		{
-			return this.valueList;
+			this.setValueList(valList = this.splitForClause()[5]);
 		}
-		else
-		{
-			return this.splitForClause()[5];
-		}
+		return valList;
 	}
+	// END KGU#61 206-03-22
 	
     
 	/**
@@ -707,14 +707,18 @@ public class For extends Element implements ILoop {
 	}
 	// END KGU#3 2015-10-24
 
-	// START KGU#61 2016-03-20: Enh. #84/#135 - needed for FOR-IN loops
+	// START KGU#61 2016-03-22: Enh. #84/#135 - needed for FOR-IN loops
 	/**
 	 * @param valueList the String representing the values to be traversed
 	 */
 	public void setValueList(String valueList) {
 		this.valueList = valueList;
+		if (this.getText().getLongString().trim().equals(this.composeForInClause()))
+		{
+			this.style = ForLoopStyle.TRAVERSAL;
+		}
 	}
-	// END KGU#61 2016-03-20
+	// END KGU#61 2016-03-22
 
 	// START KGU#3 2015-11-04: We need a transformation to a common intermediate language
 	private static String disambiguateForClause(String _text)
@@ -986,6 +990,16 @@ public class For extends Element implements ILoop {
 		return forClause;
 	}
 	
+	/**
+	 * Classifies the loop style based only on the congruence of the stored
+	 * text with the generated textes of the styles COUNTER and TRAVERSAL
+	 * (the latter being the code for FOR-IN loops).
+	 * You might also consider testing this.style (which jus returns an cached
+	 * earlier classification) and this.isForInLoop(), which first checks the
+	 * cached classification and if this is FREETEXT also calls this method
+	 * in order to find out whether this complies with FOR-IN syntax.
+	 * @return One of the style codes COUNTER, TRAVERSAL, and FREETEXT
+	 */
 	public ForLoopStyle classifyStyle()
 	{
 		ForLoopStyle style = ForLoopStyle.FREETEXT;
@@ -1002,6 +1016,23 @@ public class For extends Element implements ILoop {
 			style = ForLoopStyle.TRAVERSAL;
 		}
 		return style;
+	}
+	
+	/**
+	 * Convenience method to find out whether this FOR loop has FOR-IN
+	 * style, because it has checks it in two ways:
+	 * 1. by the stored attribute style
+	 * 2. if 1 results in FREETEXT also compares the text against the
+	 * split and composed stored information 
+	 */
+	public boolean isForInLoop()
+	{
+		boolean isForIn = this.style == ForLoopStyle.TRAVERSAL;
+		if (!isForIn && this.style == ForLoopStyle.FREETEXT)
+		{
+			isForIn = this.classifyStyle() == ForLoopStyle.TRAVERSAL;
+		}
+		return isForIn;
 	}
 	// END KGU#61 2016-03-20
 

@@ -434,6 +434,14 @@ public class BasGenerator extends Generator
     	// START KGU#3 2015-11-02: Sensible handling of FOR loops
         //code.add(_indent+"FOR "+BString.replace(transform(_for.getText().getText()),"\n","").trim()+"");
     	insertComment(_for, _indent);
+    	
+    	// START KGU#61 2016-03-23: Enh. 84
+    	if (_for.isForInLoop() && generateForInCode(_for, _indent))
+    	{
+    		// All done
+    		return;
+    	}
+    	// END KGU#61 2016-03-23
 
     	String[] parts = _for.splitForClause();
     	String increment = "";
@@ -449,6 +457,107 @@ public class BasGenerator extends Generator
     	this.placeJumpTarget(_for, _indent);
     	// END KGU#78 2915-12-18
     }
+
+	// START KGU#61 2016-03-23: Enh. #84 - Support for FOR-IN loops
+	/**
+	 * We try our very best to create a working loop from a FOR-IN construct
+	 * This will only work, however, if we can get reliable information about
+	 * the size of the value list, which won't be the case if we obtain it e.g.
+	 * via a variable.
+	 * (Here, we will just apply Visual Basic syntax until someone complains.)
+	 * @param _for - the element to be exported
+	 * @param _indent - the current indentation level
+	 * @return true iff the method created some loop code (sensible or not)
+	 */
+	protected boolean generateForInCode(For _for, String _indent)
+	{
+		boolean done = false;
+		String var = _for.getCounterVar();
+		String valueList = _for.getValueList();
+		StringList items = this.extractForInListItems(_for);
+		if (items != null)
+		{
+			// Good question is: how do we guess the element type and what do we
+			// do if items are heterogenous? We will just try four types: boolean,
+			// integer, real and string, where we can only test literals.
+			// If none of them match then we add a TODO comment.
+			int nItems = items.count();
+			boolean allBoolean = true;
+			boolean allInt = true;
+			boolean allReal = true;
+			boolean allString = true;
+			for (int i = 0; i < nItems; i++)
+			{
+				String item = items.get(i);
+				if (allBoolean)
+				{
+					if (!item.equalsIgnoreCase("true") && !item.equalsIgnoreCase("false"))
+					{
+						allBoolean = false;
+					}
+				}
+				if (allInt)
+				{
+					try {
+						Integer.parseInt(item);
+					}
+					catch (NumberFormatException ex)
+					{
+						allInt = false;
+					}
+				}
+				if (allReal)
+				{
+					try {
+						Double.parseDouble(item);
+					}
+					catch (NumberFormatException ex)
+					{
+						allReal = false;
+					}
+				}
+				if (allString)
+				{
+					allString = item.startsWith("\"") && item.endsWith("\"") &&
+							!item.substring(1, item.length()-1).contains("\"");
+				}
+			}
+			
+			// Create some generic and unique variable names
+			String postfix = Integer.toHexString(_for.hashCode());
+			String arrayName = "array" + postfix;
+			//String indexName = "index" + postfix;
+
+			String itemType = "";
+			if (allBoolean) itemType = "Boolean";
+			else if (allInt) itemType = "Integer";
+			else if (allReal) itemType = "Real";
+			else if (allString) itemType = "String";
+			else {
+				itemType = "FIXME_" + postfix;
+				// We do a dummy type definition
+				this.insertComment("TODO: Specify an appropriate element type for the array!", _indent);
+			}
+
+			// Insert the array declaration and initialisation
+			code.add(this.getLineNumber() + _indent + "DIM " + arrayName + "() AS " + itemType + " = {" + 
+					items.concatenate(", ") + "}");
+			valueList = arrayName;
+		}
+			
+		// Creation of the loop header
+		code.add(this.getLineNumber() + _indent + "FOR EACH " + var + " IN " + valueList);
+
+		// Creation of the loop body
+    	generateCode(_for.q, _indent + this.getIndent());
+    	code.add(this.getLineNumber() + _indent + "NEXT " + var);
+    	
+		this.placeJumpTarget(_for, _indent);	// Enh. #23: Takes care for correct jumps
+
+		done = true;
+		return done;
+	}
+	// END KGU#61 2016-03-23
 
     @Override
     protected void generateCode(While _while, String _indent)

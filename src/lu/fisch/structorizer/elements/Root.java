@@ -1926,7 +1926,10 @@ public class Root extends Element {
     			}
 
     			// CHECK: correct identifiers (#7)
-    			if(testidentifier(myVars.get(j))==false)
+    			// START KGU#61 2016-03-22: Method outsourced
+    			//if(testidentifier(myVars.get(j))==false)
+    			if (!Function.testIdentifier(myVars.get(j), null))
+    			// END KGU#61 2016-03-22
     			{
     				//error  = new DetectedError("«"+myVars.get(j)+"» is not a valid name for a variable!",(Element) _node.getElement(i));
     				error  = new DetectedError(errorMsg(Menu.error07_3,myVars.get(j)), ele);
@@ -2594,59 +2597,61 @@ public class Root extends Element {
     	} // for(int i=0; i < _node.size(); i++)...
     }
 
-    private boolean testidentifier(String _str)
-    {
-            boolean result = true;
-            _str=_str.trim();
-            if(_str.equals(""))
-            {
-                    result=false;
-            }
-            else
-            {
-            	if(
-            			('a'<=_str.toLowerCase().charAt(0) && _str.toLowerCase().charAt(0)<='z')
-            			||
-            			(_str.toLowerCase().charAt(0)=='_')
-            			)
-            	{
-            		if (_str.length()>1)
-            		{
-            			// START KGU 2015-11-25: This loop and condition were obviously wrong
-            			//for(int i=0;i<_str.length();i++)
-            			//{
-            			//	if(!(
-            			//			('a'<=_str.toLowerCase().charAt(0) && _str.toLowerCase().charAt(0)<='z')
-            			//			||
-            			//			('0'<=_str.charAt(0) && _str.charAt(0)<='9')
-            			//			||
-            			//			(_str.charAt(0)=='_')
-            			//			))
-            			String strLower = _str.toLowerCase();
-            			for (int i = 1; i < _str.length(); i++)
-            			{
-            				if (!(
-            						('a' <= strLower.charAt(i) && strLower.charAt(i) <= 'z')
-            						||
-            						('0' <= strLower.charAt(i) && strLower.charAt(i) <= '9')
-            						||
-            						(strLower.charAt(i) == '_')
-            						))
-            			// END KGU 2015-11-25
-            				{
-            					result = false;
-            				}
-            			}
-            		}
-            	}
-            	else
-            	{
-            		result = false;
-            	}
-
-            }
-            return result;
-    }
+    // START KGU#61 2016-03-22: Made public and static and moved to class Function
+//    private boolean testidentifier(String _str)
+//    {
+//            boolean result = true;
+//            _str=_str.trim();
+//            if(_str.equals(""))
+//            {
+//                    result=false;
+//            }
+//            else
+//            {
+//            	if(
+//            			('a'<=_str.toLowerCase().charAt(0) && _str.toLowerCase().charAt(0)<='z')
+//            			||
+//            			(_str.toLowerCase().charAt(0)=='_')
+//            			)
+//            	{
+//            		if (_str.length()>1)
+//            		{
+//            			// START KGU 2015-11-25: This loop and condition were obviously wrong
+//            			//for(int i=0;i<_str.length();i++)
+//            			//{
+//            			//	if(!(
+//            			//			('a'<=_str.toLowerCase().charAt(0) && _str.toLowerCase().charAt(0)<='z')
+//            			//			||
+//            			//			('0'<=_str.charAt(0) && _str.charAt(0)<='9')
+//            			//			||
+//            			//			(_str.charAt(0)=='_')
+//            			//			))
+//            			String strLower = _str.toLowerCase();
+//            			for (int i = 1; i < _str.length(); i++)
+//            			{
+//            				if (!(
+//            						('a' <= strLower.charAt(i) && strLower.charAt(i) <= 'z')
+//            						||
+//            						('0' <= strLower.charAt(i) && strLower.charAt(i) <= '9')
+//            						||
+//            						(strLower.charAt(i) == '_')
+//            						))
+//            			// END KGU 2015-11-25
+//            				{
+//            					result = false;
+//            				}
+//            			}
+//            		}
+//            	}
+//            	else
+//            	{
+//            		result = false;
+//            	}
+//
+//            }
+//            return result;
+//    }
+    // END KGU#61 2016-03-22
 
     private void addError(Vector<DetectedError> errors, DetectedError error, int errorNo)
     {
@@ -2760,7 +2765,10 @@ public class Root extends Element {
     		// It won't be that many strings, so we just go forward and keep the last acceptable one
     		for (int i = 0; i < tokens.length; i++)
     		{
-    			if (testidentifier(tokens[i]))
+    			// START KGU#61 2016-03-22: Method outsourced
+    			//if (testidentifier(tokens[i]))
+    			if (Function.testIdentifier(tokens[i], null))
+    			// END KGU#61 2016-03-22
     			{
     				programName = tokens[i];
     			}
@@ -2805,7 +2813,10 @@ public class Root extends Element {
     				// END KGU#135 2016-01-06
     			}
     			// Second attempt: A keyword sequence preceding the routine name
-    			else if (posOpenParenth > 1 && testidentifier(tokens.get(posOpenParenth-1)))
+    			// START KGU#61 2016-03-22: Method outsourced
+    			//else if (posOpenParenth > 1 && testidentifier(tokens.get(posOpenParenth-1)))
+    			else if (posOpenParenth > 1 && Function.testIdentifier(tokens.get(posOpenParenth-1), null))
+    			// END KGU#61 2016-03-22
     			{
     				// We assume that the last token is the procedure name, the previous strings
     				// may be the type
@@ -2928,7 +2939,10 @@ public class Root extends Element {
             }
 
             // CHECK: correct identifier for programname (#7)
-            if(testidentifier(programName)==false)
+			// START KGU#61 2016-03-22: Method outsourced
+            //if(testidentifier(programName)==false)
+			if (!Function.testIdentifier(programName, null))
+			// END KGU#61 2016-03-22
             {
                     //error  = new DetectedError("«"+programName+"» is not a valid name for a program or function!",this);
                     error  = new DetectedError(errorMsg(Menu.error07_1,programName),this);
@@ -2936,7 +2950,7 @@ public class Root extends Element {
             }
 
             // CHECK: two checks in one loop: (#12 - new!) & (#7)
-            for(int j=0;j<vars.count();j++)
+            for(int j=0; j<vars.count(); j++)
             {
                     // CHECK: non-conform parameter name (#12 - new!)
                     if( !(vars.get(j).charAt(0)=='p' && vars.get(j).substring(1).toUpperCase().equals(vars.get(j).substring(1))) )
@@ -2947,7 +2961,10 @@ public class Root extends Element {
                     }
 
                     // CHECK: correct identifiers (#7)
-                    if(testidentifier(vars.get(j))==false)
+        			// START KGU#61 2016-03-22: Method outsourced
+                    //if(testidentifier(vars.get(j))==false)
+        			if (!Function.testIdentifier(vars.get(j), null))
+        			// END KGU#61 2016-03-22
                     {
                             //error  = new DetectedError("«"+vars.get(j)+"» is not a valid name for a parameter!",this);
                             error  = new DetectedError(errorMsg(Menu.error07_2,vars.get(j)),this);

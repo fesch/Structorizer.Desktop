@@ -58,7 +58,6 @@ package lu.fisch.structorizer.generators;
 
 
 import lu.fisch.structorizer.elements.Element;
-import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.utils.StringList;
 

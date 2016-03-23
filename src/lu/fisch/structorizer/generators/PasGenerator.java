@@ -49,7 +49,9 @@ package lu.fisch.structorizer.generators;
  *                                          return instructions not placed in Jump elements
  *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KG#93)
  *      Kay Gürtzig         2016.01.14      Enh. #84: array initialisation expressions decomposed (= KG#100)
- *      Kay Gürtzig         2016.01.17      KGU#142: Bugfix for enh. #23 - empty Jumps weren't translated
+ *      Kay Gürtzig         2016.01.17      Bugfix #61/#112 - handling of type names in assignments (KGU#109/KGU#141)
+ *                                          KGU#142: Bugfix for enh. #23 - empty Jumps weren't translated
+ *      Kay Gürtzig         2016.03.16      Enh. #84: Minimum support for FOR-IN loops (KGU#61) 
  *
  ******************************************************************************************************
  *
@@ -80,10 +82,6 @@ package lu.fisch.structorizer.generators;
  *
  ******************************************************************************************************///
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.regex.Matcher;
 
 import lu.fisch.utils.*;
@@ -293,7 +291,7 @@ public class PasGenerator extends Generator
 //            return _input.trim();
 // END KGU#93 2015-12-21
 
-		// START KGU#141 2016-01-16: Bugfix #112 - suppress type specifications
+		// START KGU#109/KGU#141 2016-01-16: Bugfix #61,#112 - suppress type specifications
 		// (This must work both in Instruction and Call elements)
 		int asgnPos = transline.indexOf(":=");
 		if (asgnPos > 0)
@@ -309,12 +307,24 @@ public class PasGenerator extends Generator
 			}
 			transline = varName + " := " + expr;
 		}
-		// END KGU#141 2016-01-16
+		// END KGU#109/KGU#141 2016-01-16
 		
 		return transline.trim(); 
     }
 	
-	
+	// START KGU#61 2016-03-23: New for enh. #84
+	private void insertDeclaration(String _category, String text, int _maxIndent)
+	{
+		int posDecl = -1;
+		String seekIndent = "";
+		while (posDecl < 0 && seekIndent.length() < _maxIndent)
+		{
+			posDecl = code.indexOf(seekIndent + _category);
+			seekIndent += this.getIndent();
+		}
+		code.insert(seekIndent + text, posDecl + 1);
+	}
+	// END KGU#61 2016-03-23
 
     @Override
     protected void generateCode(Instruction _inst, String _indent)
@@ -372,10 +382,11 @@ public class PasGenerator extends Generator
 							// starts with 1 but may vary widely). We solve the problem
 							// by providing a configurable start index variable 
 							insertComment("TODO: Check indexBase value (automatically generated)", _indent);
-							code.add(_indent + "indexBase := 0;");
+							insertDeclaration("var", "indexBase_" + varName + ": Integer = 0;",
+									_indent.length());
 							for (int el = 0; el < elements.count(); el++)
 							{
-								code.add(_indent + varName + "[indexBase + " + el + "] := " + 
+								code.add(_indent + varName + "[indexBase_" + varName + " + " + el + "] := " + 
 										elements.get(el) + ";");
 							}
 						}
@@ -452,7 +463,15 @@ public class PasGenerator extends Generator
             insertComment(_for, _indent);
             // END KGU 2014-11-16
 
-            // START KGU#3 2015-11-02: New reliable loop parameter mechanism
+        	// START KGU#61 2016-03-23: Enh. 84
+        	if (_for.isForInLoop() && generateForInCode(_for, _indent))
+        	{
+        		// All done
+        		return;
+        	}
+        	// END KGU#61 2016-03-23
+
+        	// START KGU#3 2015-11-02: New reliable loop parameter mechanism
     		//code.add(_indent+"for "+BString.replace(transform(_for.getText().getText()),"\n","").trim()+" do");
             //code.add(_indent + "begin");
             //generateCode(_for.q, _indent+this.getIndent());
@@ -488,7 +507,132 @@ public class PasGenerator extends Generator
             // END KGU 2015-11-30
     }
 
-    @Override
+	// START KGU#61 2016-03-23: Enh. #84 - Support for FOR-IN loops
+	/**
+	 * We try our very best to create a working loop from a FOR-IN construct
+	 * This will only work, however, if we can get reliable information about
+	 * the size of the value list, which won't be the case if we obtain it e.g.
+	 * via a variable.
+	 * @param _for - the element to be exported
+	 * @param _indent - the current indentation level
+	 * @return true iff the method created some loop code (sensible or not)
+	 */
+	protected boolean generateForInCode(For _for, String _indent)
+	{
+		boolean done = false;
+		String var = _for.getCounterVar();
+		StringList items = this.extractForInListItems(_for);
+		if (items != null)
+		{
+			// Good question is: how do we guess the element type and what do we
+			// do if items are heterogenous? We will just try four types: boolean,
+			// integer, real and string, where we can only test literals.
+			// If none of them match then we add a TODO comment.
+			int nItems = items.count();
+			boolean allBoolean = true;
+			boolean allInt = true;
+			boolean allReal = true;
+			boolean allString = true;
+			for (int i = 0; i < nItems; i++)
+			{
+				String item = items.get(i);
+				if (allBoolean)
+				{
+					if (!item.equalsIgnoreCase("true") && !item.equalsIgnoreCase("false"))
+					{
+						allBoolean = false;
+					}
+				}
+				if (allInt)
+				{
+					try {
+						Integer.parseInt(item);
+					}
+					catch (NumberFormatException ex)
+					{
+						allInt = false;
+					}
+				}
+				if (allReal)
+				{
+					try {
+						Double.parseDouble(item);
+					}
+					catch (NumberFormatException ex)
+					{
+						allReal = false;
+					}
+				}
+				if (allString)
+				{
+					allString = item.startsWith("\"") && item.endsWith("\"") &&
+							!item.substring(1, item.length()-1).contains("\"") ||
+							item.startsWith("\'") && item.endsWith("\'") &&
+							!item.substring(1, item.length()-1).contains("\'");
+				}
+			}
+			
+			// Create some generic and unique variable names
+			String postfix = Integer.toHexString(_for.hashCode());
+			String arrayName = "array" + postfix;
+			String indexName = "index" + postfix;
+
+			String itemType = "";
+			if (allBoolean) itemType = "boolean";
+			else if (allInt) itemType = "integer";
+			else if (allReal) itemType = "real";
+			else if (allString) itemType = "string";
+			else {
+				itemType = "FIXME_" + postfix;
+				// We do a dummy type definition
+				this.insertComment("TODO: Specify an appropriate element type for the array!", _indent);
+			}
+
+			// Insert the array and index declarations
+			String range = "1..." + items.count();
+			insertDeclaration("var", arrayName + ": " + "array [" + 
+					range + "] of " + itemType + ";", _indent.length());
+			insertDeclaration("var", indexName + ": " + range + ";",
+					_indent.length());
+
+			// Now we create code to fill the array with the enumerated values
+			for (int i = 0; i < nItems; i++)
+			{
+				code.add(_indent + arrayName + "[" + (i+1) + "] := " + items.get(i) + ";");
+			}
+			
+			// Creation of the loop header
+    		code.add(_indent + "for " + indexName + " := 1 to " + nItems + " do");
+
+    		// Creation of the loop body
+            code.add(_indent + "begin");
+            code.add(_indent+this.getIndent() + var + " := " + arrayName + "[" + indexName + "];");
+            generateCode(_for.q, _indent+this.getIndent());
+            code.add(_indent + "end;");
+
+            done = true;
+		}
+		else
+		{
+			String valueList = _for.getValueList();
+			// We have no strategy here, no idea how to find out the number and type of elements,
+			// no idea how to iterate the members, so we leave it similar to Delphi and just add a TODO comment...
+			this.insertComment("TODO: Rewrite this loop (there was no way to convert this automatically)", _indent);
+
+			// Creation of the loop header
+			code.add(_indent + "for " + var + " in " + transform(valueList, false) + " do");
+			// Add the loop body as is
+            code.add(_indent + "begin");
+			generateCode(_for.q, _indent + this.getIndent());
+            code.add(_indent + "end;");
+			
+			done = true;
+		}
+		return done;
+	}
+	// END KGU#61 2016-03-23
+
+	@Override
     protected void generateCode(While _while, String _indent)
     {
             // START KGU 2014-11-16

@@ -51,6 +51,7 @@ import javax.xml.parsers.*;
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.util.Stack;
 
@@ -61,13 +62,13 @@ public class NSDParser extends DefaultHandler {
 
 	private Root root = null;
 	
-	private Stack stack = new Stack();
-	private Stack ifStack = new Stack();
-	private Stack qStack = new Stack();
-	private Stack cStack = new Stack();
-	private Stack pStack = new Stack();
+	private Stack<Element>  stack   = new Stack<Element>();
+	private Stack<Subqueue> ifStack = new Stack<Subqueue>();
+	private Stack<Subqueue> qStack  = new Stack<Subqueue>();
+	private Stack<Case>     cStack  = new Stack<Case>();
+	private Stack<Parallel> pStack  = new Stack<Parallel>();
 	
-	private boolean multi = false;
+	//private boolean multi = false;
 	
 	private Subqueue lastQ = null;
 	private Element lastE = null;
@@ -80,13 +81,13 @@ public class NSDParser extends DefaultHandler {
 		// --- ELEMENTS ---
 		if (qualifiedName.equals("root"))
 		{
-			if(multi=true)
-			{
-				/*
-				root:=BRoot.create;
-				RootList.Add(root);
-				*/
-			}
+//			if (multi)
+//			{
+//				/*
+//				root:=BRoot.create;
+//				RootList.Add(root);
+//				*/
+//			}
 			
 			// START KGU#134 2016-01-08: File version now needed for bugfix #99 
 			String version = Element.E_VERSION;
@@ -106,7 +107,8 @@ public class NSDParser extends DefaultHandler {
 			// START KGU 2015-12-04: The following line was nonsense
 			//if(attributes.getIndex("style")!=-1)  {if (attributes.getValue("type").equals(" ")) {root.isNice=true;}}
 			// END KGU 2015-12-04
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {root.setColor(root.getColor().decode("0x"+attributes.getValue("color")));}}
+			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {root.getColor();
+			root.setColor(Color.decode("0x"+attributes.getValue("color")));}}
 			if(attributes.getIndex("text")!=-1)  {root.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {root.getComment().setCommaText(attributes.getValue("comment"));}
 			
@@ -125,7 +127,7 @@ public class NSDParser extends DefaultHandler {
 			// read attributes
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(ele.getColor().decode("0x"+attributes.getValue("color")));}}
+			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
 			//if(attributes.getIndex("rotated")!=-1)  {if (attributes.getValue("rotated").equals("1")) {ele.rotated=true;}}
 			
 			// set system attribute - NO!
@@ -145,7 +147,7 @@ public class NSDParser extends DefaultHandler {
 			// read attributes
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(ele.getColor().decode("0x"+attributes.getValue("color")));}}
+			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
 			
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
@@ -163,7 +165,7 @@ public class NSDParser extends DefaultHandler {
 			// read attributes
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(ele.getColor().decode("0x"+attributes.getValue("color")));}}
+			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
 			
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
@@ -181,7 +183,7 @@ public class NSDParser extends DefaultHandler {
 			// read attributes
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(ele.getColor().decode("0x"+attributes.getValue("color")));}}
+			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
 			
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
@@ -204,7 +206,7 @@ public class NSDParser extends DefaultHandler {
 			// read attributes
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(ele.getColor().decode("0x"+attributes.getValue("color")));}}
+			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
 			
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
@@ -229,7 +231,7 @@ public class NSDParser extends DefaultHandler {
 			// read attributes
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(ele.getColor().decode("0x"+attributes.getValue("color")));}}
+			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
 			// START KGU#3 2015-10-29: New attributes for cleaner loop parameter analysis
 			int got = 0;
 			if(attributes.getIndex("counterVar")!=-1)  {ele.setCounterVar(attributes.getValue("counterVar")); got++;}
@@ -265,6 +267,24 @@ public class NSDParser extends DefaultHandler {
 			{
 				ele.style = ((For)ele).classifyStyle();
 			}
+			if (ele.style == For.ForLoopStyle.TRAVERSAL)
+			{
+				// Now we try to reconstruct the value list.
+				// For this we use the post-FOR-IN separator that was valid on saving the file 
+				String currentInSep = D7Parser.postForIn;
+				String inSep = null;
+				if (attributes.getIndex("insep")!=-1)
+				{
+					inSep = attributes.getValue("insep");
+				}
+				// Note: The following three statements should perhaps form a critical section...
+				if (inSep != null && !inSep.isEmpty())
+				{
+					D7Parser.postForIn = inSep;
+				}
+				ele.setValueList(ele.splitForClause()[5]);
+				D7Parser.postForIn = currentInSep;
+			}
 			// END KGU#61 2016-03-21
 			// END KGU#3 2015-11-08
 			
@@ -287,7 +307,7 @@ public class NSDParser extends DefaultHandler {
 			// read attributes
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(ele.getColor().decode("0x"+attributes.getValue("color")));}}
+			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
 			
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
@@ -308,7 +328,7 @@ public class NSDParser extends DefaultHandler {
 			// read attributes
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(ele.getColor().decode("0x"+attributes.getValue("color")));}}
+			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
 			
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
@@ -330,7 +350,7 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text")); /*System.out.println(attributes.getValue("text"));*/}
 			ele.qs.clear();
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(ele.getColor().decode("0x"+attributes.getValue("color")));}}
+			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
 
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
@@ -347,10 +367,10 @@ public class NSDParser extends DefaultHandler {
 			// create new queue
 			lastQ = new Subqueue();
 			// setup queue
-			lastQ.parent=((Case) cStack.peek());
+			lastQ.parent = cStack.peek();	// the Case element
 			lastQ.setColor(lastQ.parent.getColor());
 			// handle stacks
-			((Case) cStack.peek()).qs.addElement(lastQ);
+			cStack.peek().qs.addElement(lastQ);
 			qStack.push(lastQ);
 		}
 		else if (qualifiedName.equals("parallel"))
@@ -362,7 +382,7 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			ele.qs.clear();
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
-			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(ele.getColor().decode("0x"+attributes.getValue("color")));}}
+			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
 
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
@@ -401,7 +421,7 @@ public class NSDParser extends DefaultHandler {
 		else if (qualifiedName.equals("qFalse"))
 		{
 			// handle stacks
-			lastQ = (Subqueue) ifStack.pop();
+			lastQ = ifStack.pop();
 			qStack.push(lastQ);
 		}
 		else if (qualifiedName.equals("qFor"))
@@ -444,16 +464,16 @@ public class NSDParser extends DefaultHandler {
 		   qualifiedName.equals("for") 
 		   )
 		{
-			lastE=(Element) stack.pop();
+			lastE = stack.pop();
 		}
 		else if (qualifiedName.equals("parallel"))
 		{
-			lastE=(Element) stack.pop();
+			lastE = stack.pop();
 			pStack.pop();
 		}
 		else if (qualifiedName.equals("case"))
 		{
-			lastE=(Element) stack.pop();
+			lastE = stack.pop();
 			cStack.pop();
 		}
 		// -- QUEUES ---
@@ -467,16 +487,16 @@ public class NSDParser extends DefaultHandler {
 				qualifiedName.equals("qFalse")
 				)
 		{
-			lastQ=(Subqueue) qStack.pop();
-			lastQ=(Subqueue) qStack.peek();
+			lastQ = qStack.pop();	// What's this assignment good for
+			lastQ = qStack.peek();
 		}
 		else if(qualifiedName.equals("children"))
 		{
-			lastQ=(Subqueue) qStack.pop();
+			lastQ = qStack.pop();
 		}
-		else if(qualifiedName.equals("qTrue"))
+		else if (qualifiedName.equals("qTrue"))
 		{
-			lastQ=(Subqueue) qStack.pop();
+			lastQ = qStack.pop();
 		}
 	}
 	

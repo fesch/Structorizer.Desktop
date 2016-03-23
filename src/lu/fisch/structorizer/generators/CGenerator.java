@@ -47,10 +47,11 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2015.11.10		Bugfixes KGU#71 (switch default), KGU#72 (div operators)
  *      Kay Gürtzig             2015.11.10      Code style option optionBlockBraceNextLine() added,
  *                                              bugfix/enhancement #22 (KGU#74 jump and return handling)
- *      Kay Gürtzig             2015.12.13		Bugfix #51 (=KGU#108): Cope with empty input and output
- *      Kay Gürtzig             2015.12.21		Adaptations for Bugfix #41/#68/#69 (=KGU#93)
- *      Kay Gürtzig             2016.01.15		Bugfix #64 (exit instruction was exported without ';')
- *      Kay Gürtzig             2016.01.15		Issue #61/#107: improved handling of typed variables 
+ *      Kay Gürtzig             2015.12.13      Bugfix #51 (=KGU#108): Cope with empty input and output
+ *      Kay Gürtzig             2015.12.21      Adaptations for Bugfix #41/#68/#69 (=KGU#93)
+ *      Kay Gürtzig             2016.01.15      Bugfix #64 (exit instruction was exported without ';')
+ *      Kay Gürtzig             2016.01.15      Issue #61/#107: improved handling of typed variables 
+ *      Kay Gürtzig             2016.03.16      Enh. #84: Minimum support for FOR-IN loops (KGU#61) 
  *
  ******************************************************************************************************
  *
@@ -112,11 +113,7 @@ package lu.fisch.structorizer.generators;
  ******************************************************************************************************/
 //
 
-import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.regex.Matcher;
-
-import com.stevesoft.pat.Regex;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
@@ -430,6 +427,15 @@ public class CGenerator extends Generator {
 
 		insertComment(_for, _indent);
 		
+		// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
+		if (_for.isForInLoop())
+		{
+			// There aren't many ideas how to implement this here in general,
+			// but subclasses may have better chances to do so.
+			if (generateForInCode(_for, _indent)) return;
+		}
+		// END KGU#61 2016-03-22
+
 		String var = _for.getCounterVar();
 		int step = _for.getStepConst();
 		String compOp = (step > 0) ? " <= " : " >= ";
@@ -442,7 +448,125 @@ public class CGenerator extends Generator {
 		generateCode(_for.q, _indent + this.getIndent());
 
 		insertBlockTail(_for, null, _indent);
+
 	}
+	
+	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
+	/**
+	 * We try our very best to create a working loop from a FOR-IN construct
+	 * This will only work, however, if we can get reliable information about
+	 * the size of the value list, which won't be the case if we obtain it e.g.
+	 * via a variable.
+	 * @param _for - the element to be exported
+	 * @param _indent - the current indentation level
+	 * @return true iff the method created some loop code (sensible or not)
+	 */
+	protected boolean generateForInCode(For _for, String _indent)
+	{
+		boolean done = false;
+		String var = _for.getCounterVar();
+		String valueList = _for.getValueList();
+		StringList items = this.extractForInListItems(_for);
+		if (items != null)
+		{
+			// Good question is: how do we guess the element type and what do we
+			// do if items are heterogenous? We will just try three types: int,
+			// double and C-strings, and if none of them match we add a TODO comment.
+			int nItems = items.count();
+			boolean allInt = true;
+			boolean allDouble = true;
+			boolean allString = true;
+			for (int i = 0; i < nItems; i++)
+			{
+				String item = items.get(i);
+				if (allInt)
+				{
+					try {
+						Integer.parseInt(item);
+					}
+					catch (NumberFormatException ex)
+					{
+						allInt = false;
+					}
+				}
+				if (allDouble)
+				{
+					try {
+						Double.parseDouble(item);
+					}
+					catch (NumberFormatException ex)
+					{
+						allDouble = false;
+					}
+				}
+				if (allString)
+				{
+					allString = item.startsWith("\"") && item.endsWith("\"") &&
+							!item.substring(1, item.length()-1).contains("\"");
+				}
+			}
+			String itemType = "";
+			if (allInt) itemType = "int";
+			else if (allDouble) itemType = "double";
+			else if (allString) itemType = "char*";
+			String arrayLiteral = "{" + items.concatenate(", ") + "}";
+			String arrayName = "array20160322";
+			String indexName = "index20160322";
+
+			String indent = _indent + this.getIndent();
+			// Start an extra block to encapsulate the additional definitions
+			code.add(_indent + "{");
+			
+			if (itemType.isEmpty())
+			{
+				// We do a dummy type definition
+				this.insertComment("TODO: Define a sensible 'ItemType' and/or prepare the elements of the array", indent);
+				itemType = "ItemType";
+				code.add(indent + "typedef void " + itemType + ";");
+			}
+			// We define a fixed array here
+			code.add(indent + itemType + " " + arrayName +  "[" + nItems + "] = "
+					+ transform(arrayLiteral, false) + ";");
+			// Definition of he loop index variable
+			code.add(indent + "int " + indexName + ";");
+
+			// Creation of the loop header
+			insertBlockHeading(_for, "for (" + indexName + " = 0; " +
+					indexName + " < " + nItems + "; " + indexName + "++)",
+					indent);
+			
+			// Assignment of a single item to the given variable
+			code.add(indent + this.getIndent() + itemType + " " + var + " = " +
+					arrayName + "[" + indexName + "];");
+
+			// Add the loop body as is
+			generateCode(_for.q, indent + this.getIndent());
+
+			// Accomplish the loop
+			insertBlockTail(_for, null, indent);
+
+			// Close the extra block
+			code.add(_indent + "}");
+			done = true;
+		}
+		else
+		{
+			// We have no strategy here, no idea how to find out the number and type of elements,
+			// no idea how to iterate the members, so we leave it similar to C# and just add a TODO comment...
+			this.insertComment("TODO: Rewrite this loop (there was no way to convert this automatically)", _indent);
+
+			// Creation of the loop header
+			insertBlockHeading(_for, "foreach (" + var + " in " + transform(valueList, false) + ")", _indent);
+			// Add the loop body as is
+			generateCode(_for.q, _indent + this.getIndent());
+			// Accomplish the loop
+			insertBlockTail(_for, null, _indent);
+			
+			done = true;
+		}
+		return done;
+	}
+	// END KGU#61 2016-03-22
 
 	@Override
 	protected void generateCode(While _while, String _indent) {

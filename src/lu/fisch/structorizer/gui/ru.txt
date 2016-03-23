@@ -29,11 +29,13 @@
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------		----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Kay Gürtzig		2014.12.02		ExportOptionDialoge and further messages added
  *      Kay Gürtzig 	2015.10.06		altPadRight added to Preferences dialog
  *      Kay Gürtzig     2015.10.14		InputBox-specific part enhanced
+ *      Kay Gürtzig     2016.03.22      Enh. #84: messages related to FOR-IN loops added, several
+ *                                      missing messages inserted
  *
  ******************************************************************************************************
  *
@@ -58,6 +60,7 @@ Menu.menuFileImport.text=Импорт
 // Submenu of "File -> Import"
 Menu.menuFileImportPascal.text=Язык Pascal ...
 Menu.menuFilePrint.text=Печать ...
+Menu.menuFileArrange.text=Распределить к Arranger
 Menu.menuFileQuit.text=Выход
 // Menu "Edit"
 Menu.menuEdit.text=Правка
@@ -84,7 +87,7 @@ Menu.menuDiagramAddBeforeWhile.text=Цикл WHILE
 Menu.menuDiagramAddBeforeRepeat.text=Цикл REPEAT
 Menu.menuDiagramAddBeforeForever.text=Цикл ENDLESS
 Menu.menuDiagramAddBeforeCall.text=Вызов процедуры
-Menu.menuDiagramAddBeforeJump.text=Переход
+Menu.menuDiagramAddBeforeJump.text=Переход (выход)
 Menu.menuDiagramAddBeforePara.text=Паралельный процесс
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=После
@@ -97,12 +100,18 @@ Menu.menuDiagramAddAfterWhile.text=Цикл WHILE
 Menu.menuDiagramAddAfterRepeat.text=Цикл REPEAT
 Menu.menuDiagramAddAfterForever.text=Цикл ENDLESS
 Menu.menuDiagramAddAfterCall.text=Вызов процедуры
-Menu.menuDiagramAddAfterJump.text=Переход
+Menu.menuDiagramAddAfterJump.text=Переход (выход)
 Menu.menuDiagramAddAfterPara.text=Паралельный процесс
+// Element manipulation
 Menu.menuDiagramEdit.text=Изменить
 Menu.menuDiagramDelete.text=Удалить
 Menu.menuDiagramMoveUp.text=Вверх
 Menu.menuDiagramMoveDown.text=Вниз
+Menu.menuDiagramCollapse.text=Сжать
+Menu.menuDiagramExpand.text=Увеличить
+// Breakpoint
+Menu.menuDiagramBreakpoint.text=Сменить точку останова
+// Diagram Appearance
 Menu.menuDiagramType.text=Тип
 Menu.menuDiagramTypeProgram.text=Программа
 Menu.menuDiagramTypeFunction.text=Подпрограмма
@@ -112,6 +121,7 @@ Menu.menuDiagramSwitchComments.text=Обменить тексты/коммент
 Menu.menuDiagramMarker.text=Подсвечивать переменные
 Menu.menuDiagramDIN.text=DIN
 Menu.menuDiagramAnalyser.text=Анализировать схему 
+Menu.menuDiagramWheel.text=Сжать с колесой?
 // Menu "Help"
 Menu.menuPreferences.text=Настройки
 // Submenu of "Help"
@@ -171,6 +181,17 @@ Menu.error11.text=Ошибка присвоения значения. Пожал
 Menu.error12.text=Параметр «%» должен начинаться с маленькой буквы "р", а только затем заглавные буквы!
 Menu.error13_1.text=Ваша функция не возвращает никакого результата!
 Menu.error13_2.text=Ваша функция может не вернуть результат!
+Menu.error13_3.text=Ваша функция использловает разные методы отдачи вместе: «%»!
+Menu.error14_1.text=Отдельные сведения считающего цикла не подходят к тексту!
+Menu.error14_2.text=Шаг «%» считающего цикла не является постоянным целым числом!
+Menu.error15.text=Вызов процедуры не имеет форм [ <var> <- ] <routine_name>(<arg_list>)!
+Menu.error16_1.text=Выходу надо быть пустым или начать со одном из ключевых слов %!
+Menu.error16_2.text=Инструкция return должна (разве только на конце диаграммы) быть элементом типа Выход (Переход)!
+Menu.error16_3.text=Инструкции типов exit, leave или break должны быть элементами типа Выход (Переход)!
+Menu.error16_4.text=Выход не может перепрыгнуть более этажов чем число окружаещемых цикл (%)!
+Menu.error16_5.text=Непосредственное возвращение (return) из паралельной отрасли недопустимо!
+Menu.error16_6.text=Недопустимый параметр для этого типа Выхода - здесь надо целое число.
+Menu.error17.text=Конкурирующий доступ к переменной «%» из разных паралельных отраслей рискует консистенцией!
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Настройки анализатора 
@@ -187,6 +208,10 @@ AnalyserPreferences.check10.text=Проверять инструкции с не
 AnalyserPreferences.check11.text=Проверять ошибки присваивания.
 AnalyserPreferences.check12.text=Проверять правильность имени параметра. (LUX/MEN)
 AnalyserPreferences.check13.text=Проверять всегда ли возращается результат.
+AnalyserPreferences.check14.text=Проверять отдельные сведения считающего цикла подходят ли к тексту.
+AnalyserPreferences.check15.text=Проверять что каждый Вызов содержит только один вызов процедуры/функции.
+AnalyserPreferences.check16.text=Проверять что элементы типа Выход использлованы корректным образоM.
+AnalyserPreferences.check17.text=Проверять что не есть конкурирующий паралельный доступ к переменными.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -205,7 +230,7 @@ Editor.btnBeforeWhile.tooltip=Добавить цикл WHILE перед выб�
 Editor.btnBeforeRepeat.tooltip=Добавить цикл REPEAT перед выбранным элементом.
 Editor.btnBeforeForever.tooltip=Добавить цикл ENDLESS перед выбранным элементом.
 Editor.btnBeforeCall.tooltip=Добавить новый вызов процедуры перед выбранным элементом.
-Editor.btnBeforeJump.tooltip=Добавить новый JUMP перед выбранным элементом.
+Editor.btnBeforeJump.tooltip=Добавить новый выход JUMP перед выбранным элементом.
 Editor.btnBeforeCase.tooltip=Добавить новый оператор CASE перед выбранным элементом.
 Editor.btnBeforePara.tooltip=Добавить новый "Параллельный процесс" перед выбранным элементом.
 // InsertAfter
@@ -216,7 +241,7 @@ Editor.btnAfterWhile.tooltip=Добавить цикл WHILE после выбр
 Editor.btnAfterRepeat.tooltip=Добавить цикл REPEAT после выбранного элемента.
 Editor.btnAfterForever.tooltip=Добавить цикл ENDLESS после выбранного элемента.
 Editor.btnAfterCall.tooltip=Добавить новый "вызов процедуры" после выбранного элемента.
-Editor.btnAfterJump.tooltip=Добавить новый JUMP после выбранного элемента.
+Editor.btnAfterJump.tooltip=Добавить новый выход JUMP после выбранного элемента.
 Editor.btnAfterCase.tooltip=Добавить новый оператор CASE после выбранного элемента.
 Editor.btnAfterPara.tooltip=Добавить новый "Параллельный процесс" после выбранного элемента.
 // undo & redo
@@ -242,6 +267,10 @@ Editor.btnFontUp.tooltip=Увеличить размера шрифта.
 Editor.btnFontDown.tooltip=Уменьшить размера шрифта.
 // copyright 
 Editor.btnAbout.tooltip=Показать информационное сообщение о Structorizer.
+// execution 
+Editor.btnTurtle.tooltip=Открыть Turtleizer ...
+Editor.btnMake.tooltip=Выполнить ...
+Editor.btnDropBrk.tooltip=Удалить все остановочные точки
 // colors
 Editor.btnColor0.tooltip=Окрасить выбранный элемент этим цветом.
 Editor.btnColor1.tooltip=Окрасить выбранный элемент этим цветом.
@@ -253,10 +282,9 @@ Editor.btnColor6.tooltip=Окрасить выбранный элемент эт
 Editor.btnColor7.tooltip=Окрасить выбранный элемент этим цветом.
 Editor.btnColor8.tooltip=Окрасить выбранный элемент этим цветом.
 Editor.btnColor9.tooltip=Окрасить выбранный элемент этим цветом.
-// execution 
-Editor.btnTurtle.tooltip=Открыть Turtleizer ...
-Editor.btnMake.tooltip=Выполнить ...
-Editor.btnDropBrk.tooltip=Удалить все остановочные пункты
+// collapsing
+Editor.btnCollapse.tooltip=Сжать выбранный элемент.
+Editor.btnExpand.tooltip=Увеличить выбранный элемент .
 
 // Popup menu
 Editor.popupCut.text=Вырезать
@@ -267,35 +295,38 @@ Editor.popupAdd.text=Добавить
 Editor.popupAddBefore.text=До
 // Submenus of "Add -> Before"
 Editor.popupAddBeforeInst.text=Инструкцию
-Editor.popupAddBeforeAlt.text=IF statement
-Editor.popupAddBeforeCase.text=CASE statement
-Editor.popupAddBeforeFor.text=FOR loop
-Editor.popupAddBeforeWhile.text=WHILE loop
-Editor.popupAddBeforeRepeat.text=REPEAT loop
-Editor.popupAddBeforeForever.text=ENDLESS loop
+Editor.popupAddBeforeAlt.text=Ветвление IF
+Editor.popupAddBeforeCase.text=Выбор CASE
+Editor.popupAddBeforeFor.text=Цикл FOR loop
+Editor.popupAddBeforeWhile.text=Цикл WHILE loop
+Editor.popupAddBeforeRepeat.text=Цикл REPEAT loop
+Editor.popupAddBeforeForever.text=Цикл ENDLESS loop
 Editor.popupAddBeforeCall.text=Вызов процедуры
-Editor.popupAddBeforeJump.text=Переход
+Editor.popupAddBeforeJump.text=Переход (Выход)
 Editor.popupAddBeforePara.text=Параллельный процесс
 // After
 Editor.popupAddAfter.text=После
 // Submenus of "Add -> After"
 Editor.popupAddAfterInst.text=Инструкцию
-Editor.popupAddAfterAlt.text=IF statement
-Editor.popupAddAfterCase.text=CASE statement
-Editor.popupAddAfterFor.text=FOR loop
-Editor.popupAddAfterWhile.text=WHILE loop
-Editor.popupAddAfterRepeat.text=REPEAT loop
-Editor.popupAddAfterForever.text=ENDLESS loop
+Editor.popupAddAfterAlt.text=Ветвление IF
+Editor.popupAddAfterCase.text=Выбор CASE
+Editor.popupAddAfterFor.text=Цикл FOR
+Editor.popupAddAfterWhile.text=Цикл WHILE
+Editor.popupAddAfterRepeat.text=Цикл REPEAT
+Editor.popupAddAfterForever.text=Цикл ENDLESS
 Editor.popupAddAfterCall.text=Вызов процедуры
-Editor.popupAddAfterJump.text=Переход
+Editor.popupAddAfterJump.text=Переход (Выход)
 Editor.popupAddAfterPara.text=Параллельный процесс
 // Edit	
 Editor.popupEdit.text=Изменить
 Editor.popupDelete.text=Удалить
 Editor.popupMoveUp.text=Переместить вверх
 Editor.popupMoveDown.text=Переместить вниз
+// Collapsing
+Editor.popupCollapse.text=Сжать
+Editor.popupExpand.text=Увеличить
 // Breakpoint
-Editor.popupBreakpoint.text=Сменить остановочный пункт
+Editor.popupBreakpoint.text=Сменить точку останова
 
 -----[ InputBox ]-----
 //InputBox.title=Изменение элемента
@@ -309,7 +340,7 @@ InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=Подтвердить ваш выбор.
 InputBox.btnCancel.text=Отменить
 InputBox.btnCancel.tooltip=Отменить ваш выбор.
-InputBox.chkBreakpoint.text=Остановочный пункт?
+InputBox.chkBreakpoint.text=Точка останова?
 InputBox.class_specific.Root=Изменить название Программы... 
 InputBox.class_specific.Function=Изменить название и парaметры Подпрограммы... 
 InputBox.class_specific.Alternative.update=Изменить оператор IF...
@@ -337,6 +368,24 @@ InputBox.class_specific.Alternative.lblText=Пожалуйста, введите
 InputBox.class_specific.While.lblText=Пожалуйста, введите условие входа
 InputBox.class_specific.Repeat.lblText=Пожалуйста, введите условие выхода
 InputBox.class_specific.Case.lblText=Пожалуйста, введите выражение выбора и случайные константы (построчно)
+-----[ InputBoxFor ]-----
+InputBoxFor.class_specific.For.insert=Добавить новый цикл FOR...
+InputBoxFor.class_specific.For.update=Изменить цикл FOR...
+InputBoxFor.lblVariable.text=Переменная цикла
+InputBoxFor.lblStartVal.text=Исходная величина
+InputBoxFor.lblEndVal.text=Конечная величина
+InputBoxFor.lblIncr.text=Шаг
+InputBoxFor.chkTextInput.text=Изменить как текст
+InputBoxFor.chkTextInput.tooltip=
+InputBoxFor.lblComment.text=Комментарий
+InputBoxFor.lblComment.tooltip=Комментарий элемента.
+InputBoxFor.txtText.tooltip=Заглавие цикла текстом.
+InputBoxFor.txtComment.tooltip=Комментарий элемента.
+InputBoxFor.btnOK.text=OK
+InputBoxFor.btnOK.tooltip=Подтвердить ваш выбор.
+InputBoxFor.btnCancel.text=Отменить
+InputBoxFor.btnCancel.tooltip=Отменить ваш выбор.
+InputBoxFor.chkBreakpoint.text=Точка останова?
 
 
 -----[ Preferences ]-----

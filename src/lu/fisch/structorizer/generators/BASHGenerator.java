@@ -109,9 +109,10 @@ import lu.fisch.utils.StringList;
 
 public class BASHGenerator extends Generator {
 	
-	// START KGU#129 2016-01-08: Bugfix #96 We must know all variable names to prefix them with '$'.
-	StringList varNames = new StringList();
-	// END KGU#129 2015-01-08
+	// START KGU#61 2016-03-22: Now provided by Generator class
+	// Bugfix #96 (KGU#129, 2015-01-08): We must know all variable names to prefix them with '$'.
+	//StringList varNames = new StringList();
+	// END KGU#6 2016-03-22
 
 	/************ Fields ***********************/
 	@Override
@@ -388,7 +389,7 @@ public class BASHGenerator extends Generator {
 		// START KGU#3 2015-11-02: And now we have a competent splitting mechanism...
 		String counterStr = _for.getCounterVar();
 		//START KGU#61 2016-03-21: Enh. #84/#135 - FOR-IN support
-		if (_for.style == For.ForLoopStyle.TRAVERSAL || _for.classifyStyle() == For.ForLoopStyle.TRAVERSAL)
+		if (_for.isForInLoop())
 		{
 			String valueList = _for.getValueList();
 			StringList items = null;
