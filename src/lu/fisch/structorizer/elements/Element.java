@@ -57,6 +57,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Fields for test coverage tracking added
  *      Kay Gürtzig     2016.03.10      Enh. #124 (KGU#156): Counter fields for histographic tracking added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Runtime data collection accomplished
+ *      Kay Gürtzig     2016.03.26      KGU#165: New option D7Parser.ignoreCase introduced
  *
  ******************************************************************************************************
  *
@@ -146,7 +147,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.24-02";
+	public static String E_VERSION = "3.24-04";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -1427,7 +1428,6 @@ public abstract class Element {
 	 * bracket, or the like).
 	 * The remaining string from the unsatisfied closing parenthesis, bracket, or brace on will
 	 * be ignored!
-	 * If the last result element is empty then the expression list was syntactically "clean".
 	 * @param _text - string containing one or more expressions
 	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
 	 * @return a StringList, each element of which contains one of the separated expressions (order preserved)
@@ -1452,7 +1452,7 @@ public abstract class Element {
 	 * @param _text - string containing one or more expressions
 	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
 	 * @param _appendTail - if the remaining part of _text from the first unaccepted character on is to be added 
-	 * @return a StringList, each element of which contains one of the separated expressions (order preserved)
+	 * @return a StringList consisting of the separated expressions (and the tail if _appendTail was true).
 	 */
 	public static StringList splitExpressionList(String _text, String _listSeparator, boolean _appendTail)
 	// END KU#93 2015-12-21
@@ -1609,7 +1609,7 @@ public abstract class Element {
 				}
 				// END KGU#64 2015-11-03
 
-				// These might have changed by configuration, so don't cache them
+				// These markers might have changed by configuration, so don't cache them
 				StringList ioSigns = new StringList();
 				ioSigns.add(D7Parser.input.trim());
 				ioSigns.add(D7Parser.output.trim());
@@ -1645,7 +1645,10 @@ public abstract class Element {
 							_canvas.setFont(boldFont);
 						}
 						// if this part has to be colored with io color
-						else if(ioSigns.contains(display))
+						// START KGU#165 2016-03-25: cosider the new option
+						//else if(ioSigns.contains(display))
+						else if(ioSigns.contains(display, !D7Parser.ignoreCase))
+						// END KGU#165 2016-03-25
 						{
 							// set color
 							_canvas.setColor(Color.decode("0x007700"));
@@ -1654,7 +1657,10 @@ public abstract class Element {
 						}
 						// START KGU 2015-11-12
 						// START KGU#116 2015-12-23: Enh. #75
-						else if(jumpSigns.contains(display))
+						// START KGU#165 2016-03-25: cosider the new option
+						//else if(jumpSigns.contains(display))
+						else if(jumpSigns.contains(display, !D7Parser.ignoreCase))
+						// END KGU#165 2016-03-25
 						{
 							// set color
 							_canvas.setColor(Color.decode("0xff5511"));
@@ -2037,52 +2043,52 @@ public abstract class Element {
         redundantMarkers.addByLength(D7Parser.postRepeat);
        
         String interm = " " + _text + " ";
-
-        //System.out.println(interm);
-        // Now, we eliminate redundant keywords according to the Parser configuration
-        // Unfortunately, regular expressions are of little use here, because the prefix and infix keywords may
-        // consist of or contain Regex matchers like '?' and hence aren't suitable as part of the pattern
-        // The harmful characters to be inhibited or masked are: .?*+[](){}\^$
-        //System.out.println(interm);
-        for (int i=0; i < redundantMarkers.count(); i++)
-        {
-        	String marker = redundantMarkers.get(i);
-        	if (!marker.isEmpty())
-        	{
-        		// If the marker has not been padded then we must care for proper isolation
-        		if (marker.equals(marker.trim()))
-        		{
-        			int len = marker.length();
-        			int pos = 0;
-        			// START KGU 2016-01-13: Bugfix #104: position fault
-        			//while ((pos = interm.indexOf(marker, pos)) >= 0)
-        			while ((pos = interm.indexOf(marker, pos)) > 0)
-        			// END KGU 2016-01-13
-        			{
-        				if (!Character.isJavaIdentifierPart(interm.charAt(pos-1)) &&
-        						(pos + len) < interm.length() &&
-        						!Character.isJavaIdentifierPart(interm.charAt(pos + len)))
-        				{
-        					interm = interm.substring(0, pos) + interm.substring(pos + len);
-        				}
-        			}
-        		}
-        		else
-        		{
-        			// Already padded, so just replace it everywhere
-        			// START KGU 2016-01-13: Bugfix #104 - padding might go away here
-        			//interm = interm.replace( marker, ""); 
-        			interm = interm.replace( marker, " "); 
-        			// END KGU 2016-01-13
-        		}
-        		//interm = " " + interm + " ";	// Ensure the string being padded for easier matching
-                interm = interm.replace("  ", " ");		// Reduce multiple spaces (may also spoil string literals!)
-                // START KGU 2016-01-13: Bugfix #104 - should have been done after the loop only
-                //interm = interm.trim();
-                // END KGU 2016-01-13
-        		//System.out.println("transformIntermediate: " + interm);	// FIXME (KGU): Remove or deactivate after test!
-        	}
-        }
+//
+//        //System.out.println(interm);
+//        // Now, we eliminate redundant keywords according to the Parser configuration
+//        // Unfortunately, regular expressions are of little use here, because the prefix and infix keywords may
+//        // consist of or contain Regex matchers like '?' and hence aren't suitable as part of the pattern
+//        // The harmful characters to be inhibited or masked are: .?*+[](){}\^$
+//        //System.out.println(interm);
+//        for (int i=0; i < redundantMarkers.count(); i++)
+//        {
+//        	String marker = redundantMarkers.get(i);
+//        	if (!marker.isEmpty())
+//        	{
+//        		// If the marker has not been padded then we must care for proper isolation
+//        		if (marker.equals(marker.trim()))
+//        		{
+//        			int len = marker.length();
+//        			int pos = 0;
+//        			// START KGU 2016-01-13: Bugfix #104: position fault
+//        			//while ((pos = interm.indexOf(marker, pos)) >= 0)
+//        			while ((pos = interm.indexOf(marker, pos)) > 0)
+//        			// END KGU 2016-01-13
+//        			{
+//        				if (!Character.isJavaIdentifierPart(interm.charAt(pos-1)) &&
+//        						(pos + len) < interm.length() &&
+//        						!Character.isJavaIdentifierPart(interm.charAt(pos + len)))
+//        				{
+//        					interm = interm.substring(0, pos) + interm.substring(pos + len);
+//        				}
+//        			}
+//        		}
+//        		else
+//        		{
+//        			// Already padded, so just replace it everywhere
+//        			// START KGU 2016-01-13: Bugfix #104 - padding might go away here
+//        			//interm = interm.replace( marker, ""); 
+//        			interm = interm.replace( marker, " "); 
+//        			// END KGU 2016-01-13
+//        		}
+//        		//interm = " " + interm + " ";	// Ensure the string being padded for easier matching
+//                interm = interm.replace("  ", " ");		// Reduce multiple spaces (may also spoil string literals!)
+//                // START KGU 2016-01-13: Bugfix #104 - should have been done after the loop only
+//                //interm = interm.trim();
+//                // END KGU 2016-01-13
+//        		//System.out.println("transformIntermediate: " + interm);	// FIXME (KGU): Remove or deactivate after test!
+//        	}
+//        }
         // START KGU 2016-01-13: Bugfix #104 - should have been done after the loop only
         interm = interm.trim();
         // END KGU 2016-01-13
@@ -2109,6 +2115,26 @@ public abstract class Element {
         //return interm/*.trim()*/;
 
         StringList tokens = Element.splitLexically(interm, true);
+        
+        // START KGU#165 2016-03-26: Now keyword search with/without case
+        for (int i = 0; i < redundantMarkers.count(); i++)
+        {
+        	String marker = redundantMarkers.get(i);
+        	if (!marker.trim().isEmpty())
+        	{
+        		StringList markerTokens = Element.splitLexically(marker, false);
+        		int markerLen = markerTokens.count();
+        		int pos = -1;
+        		while ((pos = tokens.indexOf(markerTokens, 0, !D7Parser.ignoreCase)) >= 0)
+        		{
+        			for (int j = 0; j < markerLen; j++)
+        			{
+        				tokens.delete(pos);
+        			}
+        		}
+        	}
+        }
+        // END KGU#165 2016-03-26
         
 //        // START KGU 2016-01-13: Bugfix #104 - planned new approach to overcome that nasty keyword/string problem
 //        // It is also too simple, e.g. in cases like  jusqu'à test = 'o'  where a false string recognition would

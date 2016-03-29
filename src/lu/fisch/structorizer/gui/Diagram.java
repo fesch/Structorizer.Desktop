@@ -54,6 +54,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.03.02      Bugfix #97: Reliable selection mechanism on dragging (KGU#136)
  *      Kay Gürtzig     2016.03.08      Bugfix #97: Drawing info invalidation now involves Arranger (KGU#155)
  *      Kay Gürtzig     2016.03.16      Bugfix #131: Precautions against replacement of Root under execution (KGU#158)
+ *      Kay Gürtzig     2016.03.21      Enh. #84: FOR-IN loops considered in editing and parser preferences (KGU#61)
  *
  ******************************************************************************************************
  *
@@ -1553,16 +1554,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#3 2015-10-25: Allow more sophisticated For loop editing
 				if (element instanceof For)
 				{
-					boolean wasConsistent = ((For)element).isConsistent;
-					// START KGU#3 2015-11-08: We must support backward compatibility
-					// For the first display show the real contents
-					((For)element).isConsistent = true;
-					// END KGU#3 2015-11-08
-					data.forParts.add(((For)element).getCounterVar());
-					data.forParts.add(((For)element).getStartValue());
-					data.forParts.add(((For)element).getEndValue());
-					data.forParts.add(Integer.toString(((For)element).getStepConst()));
-					data.forPartsConsistent = ((For)element).isConsistent = wasConsistent;
+					// START KGU#61 2016-03-21: Content of the branch outsourced
+					preEditFor(data, (For)element);
+					// END KGU#61 2016-03-21
 				}
 				// END KGU#3 2015-10-25
 
@@ -1590,11 +1584,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#3 2015-10-25
 					if (element instanceof For)
 					{
-						((For)element).isConsistent = data.forPartsConsistent;
-						((For)element).setCounterVar(data.forParts.get(0));
-						((For)element).setStartValue(data.forParts.get(1));
-						((For)element).setEndValue(data.forParts.get(2));
-						((For)element).setStepConst(data.forParts.get(3));
+						// START KGU#61 2016-03-21: Content of the branch outsourced
+						postEditFor(data, (For)element);
+						// END KGU#61 2016-03-21
 					}
 					// END KGU#3 2015-10-25
 					// START KGU#137 2016-01-11: Already prepared by addUndo()
@@ -1609,6 +1601,55 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 			analyse();
 		}
+	}
+	
+	private void preEditFor(EditData _data, For _for)
+	{
+		// START KGU#61 2016-03-21: Enh. #84 - consider FOR-IN loops
+		//boolean wasConsistent = ((For)element).isConsistent;
+		For.ForLoopStyle style = _for.style;
+		// END KGU#61 2016-03-12
+		// START KGU#3 2015-11-08: We must support backward compatibility
+		// For the first display shows the real contents
+		// START KGU#61 2016-03-21: Enh. #84 - Now there are three cases
+		//((For)element).isConsistent = true;^
+		_for.style = For.ForLoopStyle.COUNTER;
+		// END KGU#61 2016-03-21
+		// END KGU#3 2015-11-08
+		_data.forParts.add(_for.getCounterVar());
+		_data.forParts.add(_for.getStartValue());
+		_data.forParts.add(_for.getEndValue());
+		_data.forParts.add(Integer.toString(_for.getStepConst()));
+		// START KGU#61 2016-03-21: Enh. #84
+		//data.forPartsConsistent = ((For)element).isConsistent = wasConsistent;
+		String valueList = _for.getValueList();
+		if (valueList != null)
+		{
+			_data.forParts.add(valueList);
+		}
+		_data.forLoopStyle = _for.style = style;
+		// END KGU#61 2016-03-12
+		
+	}
+	
+	private void postEditFor(EditData _data, For _for)
+	{
+		// START KGU#61 2016-03-21: Enh. #84 - consider FOR-IN loops
+		//((For)element).isConsistent = data.forPartsConsistent;
+		_for.style = _data.forLoopStyle;
+		// END KGU#61 2016-03-21
+		_for.setCounterVar(_data.forParts.get(0));
+		_for.setStartValue(_data.forParts.get(1));
+		_for.setEndValue(_data.forParts.get(2));
+		_for.setStepConst(_data.forParts.get(3));
+		// START KGU#61 2016-03-21: Enh. #84 - FOR-IN loop support
+		if (_for.style == For.ForLoopStyle.TRAVERSAL)
+		{
+			_for.style = For.ForLoopStyle.FREETEXT;
+			_for.setValueList(_for.getValueList());
+			_for.style = For.ForLoopStyle.TRAVERSAL;
+		}
+		// END KGU#61 2016-03-21		
 	}
 
 	/*****************************************
@@ -1707,8 +1748,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					((For)_ele).setStartValue(data.forParts.get(1));
 					((For)_ele).setEndValue(data.forParts.get(2));
 					((For)_ele).setStepConst(data.forParts.get(3));
-					//((For)_ele).isConsistent = data.forPartsConsistent;
-					((For)_ele).isConsistent = ((For)_ele).checkConsistency();
+					// START KGU#61 2016-03-21: Enh. #84 - consider FOR-IN loops as well
+					//((For)_ele).isConsistent = ((For)_ele).checkConsistency();
+					((For)_ele).setValueList(data.forParts.get(4));
+					((For)_ele).style = ((For)_ele).classifyStyle();
+					// END KGU#61 2016-03-21
 				}
 				// END KGU#3 2015-10-25
 				root.addUndo();
@@ -2579,41 +2623,64 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#3 2015-11-08: New configurable separator for FOR loop step const
 		parserPreferences.edtForStep.setText(D7Parser.stepFor);
 		// END KGU#3 2015-11-08
+		// START KGU#61 2016-03-21: New configurable keywords for FOR-IN loop
+		parserPreferences.edtForInPre.setText(D7Parser.preForIn);
+		parserPreferences.edtForInPost.setText(D7Parser.postForIn);
+		// END KGU#61 2016-03-21
 		parserPreferences.edtWhilePre.setText(D7Parser.preWhile);
 		parserPreferences.edtWhilePost.setText(D7Parser.postWhile);
 		parserPreferences.edtRepeatPre.setText(D7Parser.preRepeat);
 		parserPreferences.edtRepeatPost.setText(D7Parser.postRepeat);
+		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
+		parserPreferences.edtJumpLeave.setText(D7Parser.preLeave);
+		parserPreferences.edtJumpReturn.setText(D7Parser.preReturn);
+		parserPreferences.edtJumpExit.setText(D7Parser.preExit);
+		// END KGU#78 2016-03-25
 		parserPreferences.edtInput.setText(D7Parser.input);
 		parserPreferences.edtOutput.setText(D7Parser.output);
+		// START KGU#165 2016-03-25: We need a transparent decision here
+		parserPreferences.chkIgnoreCase.setSelected(D7Parser.ignoreCase);
+		// END KGU#165 2016-03-25
 
 		parserPreferences.setLang(NSDControl.getLang());
 		parserPreferences.pack();
 		parserPreferences.setVisible(true);
-                
-                if(parserPreferences.OK)
-                {
 
-                    // get fields
-                    D7Parser.preAlt=parserPreferences.edtAltPre.getText();
-                    D7Parser.postAlt=parserPreferences.edtAltPost.getText();
-                    D7Parser.preCase=parserPreferences.edtCasePre.getText();
-                    D7Parser.postCase=parserPreferences.edtCasePost.getText();
-                    D7Parser.preFor=parserPreferences.edtForPre.getText();
-                    D7Parser.postFor=parserPreferences.edtForPost.getText();
-            		// START KGU#3 2015-11-08: New configurable separator for FOR loop step const
-                    D7Parser.stepFor=parserPreferences.edtForStep.getText();
-            		// END KGU#3 2015-11-08
-                    D7Parser.preWhile=parserPreferences.edtWhilePre.getText();
-                    D7Parser.postWhile=parserPreferences.edtWhilePost.getText();
-                    D7Parser.preRepeat=parserPreferences.edtRepeatPre.getText();
-                    D7Parser.postRepeat=parserPreferences.edtRepeatPost.getText();
-                    D7Parser.input=parserPreferences.edtInput.getText();
-                    D7Parser.output=parserPreferences.edtOutput.getText();
+		if(parserPreferences.OK)
+		{
 
+			// get fields
+			D7Parser.preAlt=parserPreferences.edtAltPre.getText();
+			D7Parser.postAlt=parserPreferences.edtAltPost.getText();
+			D7Parser.preCase=parserPreferences.edtCasePre.getText();
+			D7Parser.postCase=parserPreferences.edtCasePost.getText();
+			D7Parser.preFor=parserPreferences.edtForPre.getText();
+			D7Parser.postFor=parserPreferences.edtForPost.getText();
+			// START KGU#3 2015-11-08: New configurable separator for FOR loop step const
+			D7Parser.stepFor=parserPreferences.edtForStep.getText();
+			// END KGU#3 2015-11-08
+			// START KGU#61 2016-03-21: New configurable keywords for FOR-IN loop
+			D7Parser.preForIn=parserPreferences.edtForInPre.getText();
+			D7Parser.postForIn=parserPreferences.edtForInPost.getText();
+			// END KGU#61 2016-03-21
+			D7Parser.preWhile=parserPreferences.edtWhilePre.getText();
+			D7Parser.postWhile=parserPreferences.edtWhilePost.getText();
+			D7Parser.preRepeat=parserPreferences.edtRepeatPre.getText();
+			D7Parser.postRepeat=parserPreferences.edtRepeatPost.getText();
+    		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
+    		D7Parser.preLeave=parserPreferences.edtJumpLeave.getText();
+    		D7Parser.preReturn=parserPreferences.edtJumpReturn.getText();
+    		D7Parser.preExit=parserPreferences.edtJumpExit.getText();
+    		// END KGU#78 2016-03-25
+			D7Parser.input=parserPreferences.edtInput.getText();
+			D7Parser.output=parserPreferences.edtOutput.getText();
+			// START KGU#165 2016-03-25: We need a transparent decision here
+			D7Parser.ignoreCase = parserPreferences.chkIgnoreCase.isSelected();
+			// END KGU#165 2016-03-25
 
-                    // save fields to ini-file
-                    D7Parser.saveToINI();
-                }
+			// save fields to ini-file
+			D7Parser.saveToINI();
+		}
 	}
 
 	public void analyserNSD()
@@ -2954,8 +3021,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					ipbFor.txtStartVal.setText(_data.forParts.get(1));
 					ipbFor.txtEndVal.setText(_data.forParts.get(2));
 					ipbFor.txtIncr.setText(_data.forParts.get(3));
-					ipbFor.chkTextInput.setSelected(!_data.forPartsConsistent);
-					ipbFor.enableTextFields(!_data.forPartsConsistent);
+					// START KGU#61 2016-03-21: Enh. #84 - Consider FOR-IN loops
+					//ipbFor.chkTextInput.setSelected(!_data.forPartsConsistent);
+					//ipbFor.enableTextFields(!_data.forPartsConsistent);
+					if (_data.forParts.count() > 4)
+					{
+						ipbFor.forInValueList = _data.forParts.get(4);
+					}
+					boolean textMode = _data.forLoopStyle != For.ForLoopStyle.COUNTER;
+					ipbFor.chkTextInput.setSelected(textMode);
+					ipbFor.enableTextFields(textMode);
+					// END KGU#61 2016-03-21
 				}
 				else {
 					ipbFor.enableTextFields(false);
@@ -3012,6 +3088,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//	//if (ok) System.out.println("Text will get focus");
 			//}
 			// END KGU KGU#91 2015-12-04
+			// START KGU#61 2016-03-21: Give InputBox an opportunity to check consistency
+			inputbox.checkConsistency();
+			// END KGU#61 2016-03-21
 			inputbox.setLang(NSDControl.getLang());
 			inputbox.setVisible(true);
 
@@ -3029,10 +3108,25 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				_data.forParts.add(((InputBoxFor)inputbox).txtStartVal.getText());
 				_data.forParts.add(((InputBoxFor)inputbox).txtEndVal.getText());
 				_data.forParts.add(((InputBoxFor)inputbox).txtIncr.getText());
-				_data.forPartsConsistent = !((InputBoxFor)inputbox).chkTextInput.isSelected();
+				// START KGU#61 2016-03-21: Enh. #84 - consider FOR-IN loops
+				//_data.forPartsConsistent = !((InputBoxFor)inputbox).chkTextInput.isSelected();
+				if (!((InputBoxFor)inputbox).chkTextInput.isSelected())
+				{
+					_data.forLoopStyle = For.ForLoopStyle.COUNTER;
+				}
+				else if (((InputBoxFor)inputbox).forInValueList != null)
+				{
+					_data.forLoopStyle = For.ForLoopStyle.TRAVERSAL;
+					_data.forParts.add(((InputBoxFor)inputbox).forInValueList);				}
+				else
+				{
+					_data.forLoopStyle = For.ForLoopStyle.FREETEXT;
+				}
+				// END KGU#61 2016-03-21
+				
 			}
 			// END KGU#3 2015-10-25
-			_data.result=inputbox.OK;
+			_data.result = inputbox.OK;
 
 			inputbox.dispose();
 		}

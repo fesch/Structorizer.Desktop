@@ -58,6 +58,7 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.helpers.*;
 import lu.fisch.structorizer.io.INIFilter;
 import lu.fisch.structorizer.io.Ini;
@@ -207,49 +208,49 @@ public class Menu extends JMenuBar implements NSDController
 	protected JMenuItem menuHelpUpdate = new JMenuItem("Update ...",IconLoader.ico052);
 
 	// Error messages for analyser
-	public static JLabel error01_1 = new JLabel("WARNING: No loop variable detected ...");
-	public static JLabel error01_2 = new JLabel("WARNING: More than one loop variable detected ...");
-	public static JLabel error01_3 = new JLabel("You are not allowed to modify the loop variable «%» inside the loop!");
-	public static JLabel error02 = new JLabel("No change of the variables in the condition detected. Possible endless loop ...");
-	public static JLabel error03_1= new JLabel("The variable «%» has not yet been initialized!");
-	public static JLabel error03_2 = new JLabel("The variable «%» may not have been initialized!");
-	public static JLabel error04 = new JLabel("You are not allowed to use an IF-statement with an empty TRUE-block!");
-	public static JLabel error05 = new JLabel("The variable «%» must be written in uppercase!");
-	public static JLabel error06 = new JLabel("The programname «%» must be written in uppercase!");
-	public static JLabel error07_1 = new JLabel("«%» is not a valid name for a program or function!");
-	public static JLabel error07_2 = new JLabel("«%» is not a valid name for a parameter!");
-	public static JLabel error07_3 = new JLabel("«%» is not a valid name for a variable!");
-	public static JLabel error08 = new JLabel("It is not allowed to make an assignment inside a condition.");
-	public static JLabel error09 = new JLabel("Your program («%») cannot have the same name as a variable or parameter!");
-	public static JLabel error10_1 = new JLabel("A single instruction element should not contain input/output instructions and assignments!");
-	public static JLabel error10_2 = new JLabel("A single instruction element should not contain input and output instructions!");
-	public static JLabel error10_3 = new JLabel("A single instruction element should not contain input instructions and assignments!");
-	public static JLabel error10_4 = new JLabel("A single instruction element should not contain ouput instructions and assignments!");
-	public static JLabel error11 = new JLabel("You probably made an assignment error. Please check this instruction!");
-	public static JLabel error12 = new JLabel("The parameter «%» must start with the letter \"p\" followed by only uppercase letters!");
-	public static JLabel error13_1 = new JLabel("Your function does not return any result!");
-	public static JLabel error13_2 = new JLabel("Your function may not return a result!");
+	public static LangTextHolder error01_1 = new LangTextHolder("WARNING: No loop varLangTextHolderdetected ...");
+	public static LangTextHolder error01_2 = new LangTextHolder("WARNING: More than one loop variable detected ...");
+	public static LangTextHolder error01_3 = new LangTextHolder("You are not allowed to modify the loop variable «%» inside the loop!");
+	public static LangTextHolder error02 = new LangTextHolder("No change of the variables in the condition detected. Possible endless loop ...");
+	public static LangTextHolder error03_1= new LangTextHolder("The variable «%» has not yet been initialized!");
+	public static LangTextHolder error03_2 = new LangTextHolder("The variable «%» may not have been initialized!");
+	public static LangTextHolder error04 = new LangTextHolder("You are not allowed to use an IF-statement with an empty TRUE-block!");
+	public static LangTextHolder error05 = new LangTextHolder("The variable «%» must be written in uppercase!");
+	public static LangTextHolder error06 = new LangTextHolder("The programname «%» must be written in uppercase!");
+	public static LangTextHolder error07_1 = new LangTextHolder("«%» is not a valid name for a program or function!");
+	public static LangTextHolder error07_2 = new LangTextHolder("«%» is not a valid name for a parameter!");
+	public static LangTextHolder error07_3 = new LangTextHolder("«%» is not a valid name for a variable!");
+	public static LangTextHolder error08 = new LangTextHolder("It is not allowed to make an assignment inside a condition.");
+	public static LangTextHolder error09 = new LangTextHolder("Your program («%») cannot have the same name as a variable or parameter!");
+	public static LangTextHolder error10_1 = new LangTextHolder("A single instruction element should not contain input/output instructions and assignments!");
+	public static LangTextHolder error10_2 = new LangTextHolder("A single instruction element should not contain input and output instructions!");
+	public static LangTextHolder error10_3 = new LangTextHolder("A single instruction element should not contain input instructions and assignments!");
+	public static LangTextHolder error10_4 = new LangTextHolder("A single instruction element should not contain ouput instructions and assignments!");
+	public static LangTextHolder error11 = new LangTextHolder("You probably made an assignment error. Please check this instruction!");
+	public static LangTextHolder error12 = new LangTextHolder("The parameter «%» must start with the letter \"p\" followed by only uppercase letters!");
+	public static LangTextHolder error13_1 = new LangTextHolder("Your function does not return any result!");
+	public static LangTextHolder error13_2 = new LangTextHolder("Your function may not return a result!");
 	// START KGU#78 (#23) 2015-11-25: Check for competitive return mechanisms
-	public static JLabel error13_3 = new JLabel("Your functions seems to use several competitive return mechanisms: «%»!");
+	public static LangTextHolder error13_3 = new LangTextHolder("Your functions seems to use several competitive return mechanisms: «%»!");
 	// END KGU#78 (#23) 2015-11-25
 	// START KGU#3 2015-11-03: New checks for the enhanced For loop
-	public static JLabel error14_1 = new JLabel("The FOR loop parameters are not consistent to the loop heading text!");
-	public static JLabel error14_2 = new JLabel("The FOR loop step value («%») is not a legal integer constant!");
+	public static LangTextHolder error14_1 = new LangTextHolder("The FOR loop parameters are not consistent to the loop heading text!");
+	public static LangTextHolder error14_2 = new LangTextHolder("The FOR loop step value («%») is not a legal integer constant!");
 	// START KGU#3 2015-11-26: More clarity if e.g. a counter variable is named "step" and so is the stepFor parser preference
-	public static JLabel error14_3 = new JLabel("Variable name «%» may collide with one of the configured FOR loop heading keywords!");
+	public static LangTextHolder error14_3 = new LangTextHolder("Variable name «%» may collide with one of the configured FOR loop heading keywords!");
 	// END KGU#3 2015-11-26
 	// END KGU#3 2015-11-03
 	// START KGU#2 2015-11-25: New check for call element syntax
-	public static JLabel error15 = new JLabel("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
-	public static JLabel error16_1 = new JLabel("A JUMP element may be empty or start with one of %, possibly followed by an argument!");	
-	public static JLabel error16_2 = new JLabel("A return instruction, unless at final position, must form a JUMP element!");
-	public static JLabel error16_3 = new JLabel("An exit, leave or break instruction is only allowed as JUMP element!");
-	public static JLabel error16_4 = new JLabel("Cannot leave or break more loop levels than being nested in («%»)!");
-	public static JLabel error16_5 = new JLabel("You must not directly return out of a parallel thread!");
-	public static JLabel error16_6 = new JLabel("Wrong argument for this kind of JUMP (should be an integer constant)!");
+	public static LangTextHolder error15 = new LangTextHolder("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
+	public static LangTextHolder error16_1 = new LangTextHolder("A JUMP element may be empty or start with one of %, possibly followed by an argument!");	
+	public static LangTextHolder error16_2 = new LangTextHolder("A return instruction, unless at final position, must form a JUMP element!");
+	public static LangTextHolder error16_3 = new LangTextHolder("An exit, leave or break instruction is only allowed as JUMP element!");
+	public static LangTextHolder error16_4 = new LangTextHolder("Cannot leave or break more loop levels than being nested in («%»)!");
+	public static LangTextHolder error16_5 = new LangTextHolder("You must not directly return out of a parallel thread!");
+	public static LangTextHolder error16_6 = new LangTextHolder("Wrong argument for this kind of JUMP (should be an integer constant)!");
 	// END KGU#2 2015-11-25
 	// START KGU#47 2015-11-28: New check for concurrency problems
-	public static JLabel error17 = new JLabel("Consistency risk due to concurrent access to variable «%» by several parallel threads!");
+	public static LangTextHolder error17 = new LangTextHolder("Consistency risk due to concurrent access to variable «%» by several parallel threads!");
 	// END KGU#47 2015-11-28
 
 
