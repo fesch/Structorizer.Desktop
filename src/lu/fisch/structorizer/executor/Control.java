@@ -37,8 +37,9 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2015.11.14      New controls to display the call level for enhancement #9 (KGU#2)
  *      Kay Gürtzig     2016.03.06      Enh. #77: New checkboxes for test coverage tracking mode (KGU#117)
  *      Kay Gürtzig     2016.03.13      Enh. #124 (KGU#156): Runtime data collection generalised
- *      Kay Gürtzig     2016.03.17      Enh. #133 (KGU#159): Stacktrace may now be shown in paused mode
+ *      Kay Gürtzig     2016.03.17      Enh. #133 (KGU#159): Stack trace may now be shown in paused mode
  *      Kay Gürtzig     2016.03.18      Enh. #89 Extended Language translation support
+ *      Kay Gürtzig     2016.03.25      Message translations now held in LangTextHolder instead of JLabel
  *
  ******************************************************************************************************
  *
@@ -53,7 +54,6 @@ import java.awt.Dimension;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Vector;
@@ -65,6 +65,7 @@ import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.RuntimeDataPresentMode;
 import lu.fisch.structorizer.gui.IconLoader;
+import lu.fisch.structorizer.gui.LangTextHolder;
 
 
 /**
@@ -115,9 +116,9 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
 
         // START KGU#89/KGU#157 2016-03-18: Bugfix #131 - Prevent interference or take-over
         // This is just a dummy label as translation support for Executor
-        lbStopRunningProc = new javax.swing.JLabel("This action is not allowed while a diagram is being executed.\nDo you want to stop the current execution?");
-        lbInputValue = new javax.swing.JLabel("Please enter a value for <%>");
-        lbInputPaused = new javax.swing.JLabel("Execution paused - you may enter the value in the variable display.");
+        lbStopRunningProc = new LangTextHolder("This action is not allowed while a diagram is being executed.\nDo you want to stop the current execution?");
+        lbInputValue = new LangTextHolder("Please enter a value for <%>");
+        lbInputPaused = new LangTextHolder("Execution paused - you may enter the value in the variable display.");
         // END KGU#89/KGU#157 2016-03-18
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -514,9 +515,9 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     public javax.swing.JTextField txtCallLevel;
     // END KGU#2 (#9) 2015-11-14
     // START KGU#89/KGU#157 2016-03-18: Bugfix #131 - Language support for Executor
-    public javax.swing.JLabel lbStopRunningProc;
-    public javax.swing.JLabel lbInputValue;
-    public javax.swing.JLabel lbInputPaused;
+    public LangTextHolder lbStopRunningProc;
+    public LangTextHolder lbInputValue;
+    public LangTextHolder lbInputPaused;
     // END KGU#89/KGU#157 2016-03-18
     
     // START KGU#68 2015-11-06: Register variable value editing events

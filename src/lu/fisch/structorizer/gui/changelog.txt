@@ -9,7 +9,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.24-03 (2016.03.23)
+Current development version: 3.24-04 (2016.03.29)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]
 - 01: Enh. #124: Generalized runtime data visualisation <Kay Gürtzig>
 - 01: Arranger now adopts current directory from first arranged diagram <Kay Gürtzig>
@@ -18,6 +18,11 @@ Current development version: 3.24-03 (2016.03.23)
 - 02: Enh. #133: Execution Call stack may now be inspected in paused state <Kay Gürtzig>
 - 02: Enh. KGU#89: Executor: Extended language localisation support <Kay Gürtzig>
 - 03: Enh. #84/#135: For-In loops now consistently supported [R. Schmidt]<Kay Gürtzig>
+- 04: Bugfix #96/#135: On BASH export conditions now put into [[ ]] [Rolf Schmidt]
+- 04: Bugfix #135/KGU#163: Detection of completely undefined variables <Kay Gürtzig>
+- 04: Enh. #135: Improved array support on BASH export [Rolf Schmidt]
+- 04: Bugfix #138: Lvalues with nested indices like arr[arr[0]] had failed <Kay Gürtzig>
+- 04: Bugfix #139: on BASH export Call instructions now converted <Kay Gürtzig>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]

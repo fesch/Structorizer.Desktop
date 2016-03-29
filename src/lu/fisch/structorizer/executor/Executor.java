@@ -75,10 +75,12 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.03.17      Enh. #133: Stacktrace now permanently maintained, not only on errors (KGU#159)
  *      Kay Gürtzig     2016.03.18      KGU#89: Language localization support slightly improved
  *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): Support for FOR-IN loops
+ *      Kay Gürtzig     2016.03.29      Bugfix #139 (KGU#166) in getIndexValue() - nested index access failed
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      TODO: Consistent implementation of new setting D7Parser.ignoreCase
  *      2016-03-17 Enh. #133 (KGU#159)
  *      - Previously, a Call stack trace was only shown in cse of an execution error or manual abort.
  *        Now a Call stack trace may always be requested while execution hasn't ended. Only prerequisite
@@ -3381,7 +3383,10 @@ public class Executor implements Runnable
 		String message = "Illegal (negative) index";
 		// END KGU#141 2016-01-16
 		String ind = varname.substring(varname.indexOf("[") + 1,
-				varname.indexOf("]"));
+				// START KGU#166 2016-03-29: Bugfix #139 (nested index expressions failed)
+				//varname.indexOf("]"));
+				varname.lastIndexOf("]"));
+				// END KGU#166 2016-03-29
 
 		int index = -1;
 

@@ -2631,8 +2631,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		parserPreferences.edtWhilePost.setText(D7Parser.postWhile);
 		parserPreferences.edtRepeatPre.setText(D7Parser.preRepeat);
 		parserPreferences.edtRepeatPost.setText(D7Parser.postRepeat);
+		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
+		parserPreferences.edtJumpLeave.setText(D7Parser.preLeave);
+		parserPreferences.edtJumpReturn.setText(D7Parser.preReturn);
+		parserPreferences.edtJumpExit.setText(D7Parser.preExit);
+		// END KGU#78 2016-03-25
 		parserPreferences.edtInput.setText(D7Parser.input);
 		parserPreferences.edtOutput.setText(D7Parser.output);
+		// START KGU#165 2016-03-25: We need a transparent decision here
+		parserPreferences.chkIgnoreCase.setSelected(D7Parser.ignoreCase);
+		// END KGU#165 2016-03-25
 
 		parserPreferences.setLang(NSDControl.getLang());
 		parserPreferences.pack();
@@ -2659,8 +2667,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			D7Parser.postWhile=parserPreferences.edtWhilePost.getText();
 			D7Parser.preRepeat=parserPreferences.edtRepeatPre.getText();
 			D7Parser.postRepeat=parserPreferences.edtRepeatPost.getText();
+    		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
+    		D7Parser.preLeave=parserPreferences.edtJumpLeave.getText();
+    		D7Parser.preReturn=parserPreferences.edtJumpReturn.getText();
+    		D7Parser.preExit=parserPreferences.edtJumpExit.getText();
+    		// END KGU#78 2016-03-25
 			D7Parser.input=parserPreferences.edtInput.getText();
 			D7Parser.output=parserPreferences.edtOutput.getText();
+			// START KGU#165 2016-03-25: We need a transparent decision here
+			D7Parser.ignoreCase = parserPreferences.chkIgnoreCase.isSelected();
+			// END KGU#165 2016-03-25
 
 			// save fields to ini-file
 			D7Parser.saveToINI();
