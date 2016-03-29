@@ -22,10 +22,10 @@ package lu.fisch.structorizer.gui;
 
 /******************************************************************************************************
  *
- *      Author:         Bob Fisch
+ *      Author:         Kay Gürtzig
  *
- *      Description:    This is a simple data class, defining what data the edit dialog
- *						of an element is returning.
+ *      Description:    Light-weight helper class for LangDialog, serves as hlder for translated texts
+ *                      to be used e.g. as messages but don't require a Swing class like JLabel
  *
  ******************************************************************************************************
  *
@@ -33,10 +33,7 @@ package lu.fisch.structorizer.gui;
  *
  *      Author          Date			Description
  *      ------			----			-----------
- *      Bob Fisch       2007.12.29      First Issue
- *      Kay Gürtzig     2015.10.12      Field for breakpoint control added (KGU#43)
- *      Kay Gürtzig     2015.10.25      Enh. #10: Fields for specific For loop support (KGU#3)
- *      Kay Gürtzig     2016.03.21      Enh. #84: Field modification to support FOR-IN loops (KGU#61)
+ *      Kay Gürtzig     2016.03.25      First Issue
  *
  ******************************************************************************************************
  *
@@ -44,27 +41,29 @@ package lu.fisch.structorizer.gui;
  *
  ******************************************************************************************************///
 
-import lu.fisch.structorizer.elements.For;
-import lu.fisch.utils.*;
-
-public class EditData {
-
-	public String title = new String();
-
-	public StringList text = new StringList();
-	public StringList comment = new StringList();
-	// START KGU#3 2015-10-25: Enh. #10 - specific FOR loop support
-	public StringList forParts = new StringList();
-	// START KGU#61 2016-03-21: Enh. #84 - we have to distinguish three styles now
-	//public boolean forPartsConsistent = false;
-	public For.ForLoopStyle forLoopStyle = For.ForLoopStyle.FREETEXT;
-	// END KGU#61 2016-03-21
-	// END KGU#3 2015-10-25
-	
-	// START KGU#43 2015-10-12
-	public boolean breakpoint = false;
-	// END KGU#43 2015-10-12
-	
-	public boolean result = false;
-	
+/**
+ * A simple String wrapper responding to the messages getText() and setText() in order
+ * to serve as light-weight translation holder compatible to the language localisation
+ * mechanism of LangDialog. Translations for messages and other texts not permanently
+ * visible in the GUI should better be stored in an instance of this class than e,g, in a
+ * hidden JLabel.
+ * @author Kay Gürtzig
+ *
+ */
+public class LangTextHolder
+{
+	private String text = "";
+	public LangTextHolder() {}
+	public LangTextHolder(String _text)
+	{
+		this.text = _text;
+	}
+	public void setText(String _text)
+	{
+		this.text = _text;
+	}
+	public String getText()
+	{
+		return this.text;
+	}
 }

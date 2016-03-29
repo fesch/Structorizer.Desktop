@@ -41,6 +41,7 @@
  *      Kay Gürtzig		2015.11.15		Messages for Jump element modified or corrected
  *      Kay Gürtzig 	2015.12.18		New messages for ExportOptionDialoge
  *      Kay Gürtzig 	2016.01.04		Enh. #87: New messages for collapsing / expanding elements
+ *      Kay Gürtzig 	2016.03.21		Enh. #84: Messages related to FOR-IN loops added
  *
  ******************************************************************************************************
  *
@@ -107,6 +108,7 @@ Menu.menuDiagramAddAfterForever.text=ENDLOS-Schleife
 Menu.menuDiagramAddAfterCall.text=Aufruf-Anweisung
 Menu.menuDiagramAddAfterJump.text=Aussprung-Anweisung
 Menu.menuDiagramAddAfterPara.text=Parallel-Abschnitt
+// Element manipulation
 Menu.menuDiagramEdit.text=Bearbeiten
 Menu.menuDiagramDelete.text=Löschen
 Menu.menuDiagramMoveUp.text=Nach oben
@@ -212,7 +214,7 @@ AnalyserPreferences.check9.text=Testen, ob sich der Programmname von allen ander
 AnalyserPreferences.check10.text=Nach fehlerhaften mehrzeiligen Anweisungen suchen.
 AnalyserPreferences.check11.text=Nach fehlerhaften Wertzuweisungen suchen.
 AnalyserPreferences.check12.text=Prüfen, ob die Parameternamen korrekt sind. (LUX/MEN)
-AnalyserPreferences.check13.text=Prüfen, ob im Falle einer Funktion diese auch einen Rückgabewert hat.
+AnalyserPreferences.check13.text=Prüfen, ob eine Funktion stets auch einen Rückgabewert hat.
 AnalyserPreferences.check14.text=Prüfen, ob die Angaben von FOR-Schleifen konsistent sind.
 AnalyserPreferences.check15.text=Prüfen, ob Aufruf-Elemente nur einen einzelnen Routinenaufruf enthalten.
 AnalyserPreferences.check16.text=Prüfen, ob Aussprung-Elemente korrekt benutzt sind.
@@ -489,27 +491,30 @@ ColorChooser.btnOK.tooltip=Speichern der gewählten Einstellungen.
 -----[ ParserPreferences ]-----
 ParserPreferences.title=Parser-Einstellungen
 ParserPreferences.lblPre.text=Vor
-ParserPreferences.lblPre.tooltip=Einzufügen (im Anweisungskopf) vor der Haupteintragung.
+ParserPreferences.lblPre.tooltip=Kennwörter (im Anweisungskopf) vor der Haupteintragung.
 ParserPreferences.lblPost.text=Nach
-ParserPreferences.lblPost.tooltip=Einzufügen (im Anweisungskopf) nach der Haupteintragung.
+ParserPreferences.lblPost.tooltip=Kennwörter (im Anweisungskopf) nach der Haupteintragung.
 ParserPreferences.lblAlt.text=IF-Anweisung
-ParserPreferences.lblAlt.tooltip=Einfügungen im IF-Anweisungskopf.
+ParserPreferences.lblAlt.tooltip=Kennwörter um die Bedingung herum im IF-Anweisungskopf.
 ParserPreferences.lblCase.text=CASE-Anweisung
-ParserPreferences.lblCase.tooltip=Einfügungen im CASE-Anweisungskopf.
+ParserPreferences.lblCase.tooltip=Kennwörter im CASE-Anweisungskopf.
 ParserPreferences.lblFor.text=FOR-Anweisung
-ParserPreferences.lblFor.tooltip=Einfügungen im FOR-Anweisungskopf.
+ParserPreferences.lblFor.tooltip=Gliedernde Kennwörter im FOR-Anweisungskopf.
 ParserPreferences.lblForStep.text=Schrittweite
+ParserPreferences.lblForIn.text=FOR-IN-Schleife
+ParserPreferences.lblForIn.tooltip=Gliedernde Kennwörter im Anweisungskopf von FOR-IN-Schleifen.
 ParserPreferences.lblWhile.text=WHILE-Schleife
-ParserPreferences.lblWhile.tooltip=Einfügungen im WHILE-Anweisungskopf.
+ParserPreferences.lblWhile.tooltip=Kennwörter im WHILE-Anweisungskopf.
 ParserPreferences.lblRepeat.text=REPEAT-Schleife
-ParserPreferences.lblRepeat.tooltip=Einfügungen im REPEAT-Anweisungskopf.
+ParserPreferences.lblRepeat.tooltip=Rahmende Kennwörter um die REPEAT-Bedingung.
 ParserPreferences.lblInput.text=Eingabe
-ParserPreferences.lblInput.tooltip=Einfügungen für Eingabe-Anweisungen.
+ParserPreferences.lblInput.tooltip=Kennwort für Eingabe-Anweisungen.
 ParserPreferences.lblOutput.text=Ausgabe
-ParserPreferences.lblOutput.tooltip=Einfügungen für Ausgabe-Einweisungen.
+ParserPreferences.lblOutput.tooltip=Kennwort für Ausgabe-Einweisungen.
 ParserPreferences.btnOK.text=Speichern
 ParserPreferences.btnOK.tooltip=Speichern der gewählten Einstellungen.
-ParserPreferences.lblErrorSign.text=Der Doppelpunkt ':' darf in keiner der Parser-Einstellungen vorkommen!
+ParserPreferences.lblErrorSign.text=Ein Doppelpunkt ':' darf in keiner der Parser-Einstellungen vorkommen!
+ParserPreferences.lblErrorSign2.text=Das Nach-Kennwort für FOR-IN-Schleifen darf keinem anderen Parser-Kennwort gleichen!
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Druckvoransicht

@@ -14,7 +14,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.utils.BString;
-import lu.fisch.utils.BTextfile;
 
 /**
  *

@@ -23,7 +23,7 @@
  *
  *      Author:         Bob Fisch
  *
- *      Description:    The english language file
+ *      Description:    The English language file
  *
  ******************************************************************************************************
  *
@@ -41,6 +41,7 @@
  *      Kay Gürtzig     2015.12.18      New messages for ExportOptionDialoge
  *      Kay Gürtzig     2016.01.04      Enh. #87: New messages for collapsing / expanding elements
  *      Kay Gürtzig     2016.01.21      Breakpoint message also in Menu now
+ *      Kay Gürtzig     2016.03.22      Enh. #84: messages related to FOR-IN loops added
  *
  ******************************************************************************************************
  *
@@ -447,27 +448,30 @@ ColorChooser.btnOK.tooltip=Validate your choice.
 -----[ ParserPreferences ]-----
 ParserPreferences.title=Parser Preferences
 ParserPreferences.lblPre.text=Pre
-ParserPreferences.lblPre.tooltip=
+ParserPreferences.lblPre.tooltip=Prefix keystring for main entry
 ParserPreferences.lblPost.text=Post
-ParserPreferences.lblPost.tooltip=
+ParserPreferences.lblPost.tooltip=Postfix keystring for main entry
 ParserPreferences.lblAlt.text=IF statement
-ParserPreferences.lblAlt.tooltip=
+ParserPreferences.lblAlt.tooltip=Keystrings around condition in IF header
 ParserPreferences.lblCase.text=CASE statement
-ParserPreferences.lblCase.tooltip=
+ParserPreferences.lblCase.tooltip=Keystrings around selector expression in CASE header
 ParserPreferences.lblFor.text=FOR loop
-ParserPreferences.lblFor.tooltip=
+ParserPreferences.lblFor.tooltip=Keystrings separating the FOR loop header entries
 ParserPreferences.lblForStep.text=Step separator
+ParserPreferences.lblForIn.text=FOR-IN loop
+ParserPreferences.lblForIn.tooltip=Keystrings separating FOR-IN loop header entries
 ParserPreferences.lblWhile.text=WHILE loop
-ParserPreferences.lblWhile.tooltip=
+ParserPreferences.lblWhile.tooltip=Keystrings around the condition in WHILE loop headers
 ParserPreferences.lblRepeat.text=REPEAT loop
-ParserPreferences.lblRepeat.tooltip=
+ParserPreferences.lblRepeat.tooltip=Keystrings around the condition in REPEAT loops
 ParserPreferences.lblInput.text=Input
-ParserPreferences.lblInput.tooltip=
+ParserPreferences.lblInput.tooltip=Prefix keyword for input instructions
 ParserPreferences.lblOutput.text=Output
-ParserPreferences.lblOutput.tooltip=
+ParserPreferences.lblOutput.tooltip=Prefix keyword for output instructions
 ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=Validate your choice.
-ParserPreferences.lblErrorSign.text=Your are not allowed to use the sign ':' in any parser string!
+ParserPreferences.lblErrorSign.text=You are not allowed to use the character ':' in any parser string!
+ParserPreferences.lblErrorSign2.text=The second FOR-IN loop keystring must differ from any other parser token!
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Print Preview

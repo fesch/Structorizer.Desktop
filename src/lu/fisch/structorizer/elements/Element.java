@@ -1645,7 +1645,7 @@ public abstract class Element {
 							_canvas.setFont(boldFont);
 						}
 						// if this part has to be colored with io color
-						// START KGU#165 2016-03-25: cosider the new option
+						// START KGU#165 2016-03-25: consider the new option
 						//else if(ioSigns.contains(display))
 						else if(ioSigns.contains(display, !D7Parser.ignoreCase))
 						// END KGU#165 2016-03-25

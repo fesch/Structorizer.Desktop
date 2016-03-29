@@ -59,11 +59,13 @@ package lu.fisch.structorizer.elements;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
+import java.util.Vector;
 import java.util.regex.Matcher;
 
 import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.*;
@@ -103,8 +105,8 @@ public class For extends Element implements ILoop {
 	private String startValue = "1";		// expression determining the start value of the loop
 	private String endValue = "";			// expression determining the end value of the loop
 	private int stepConst = 1;				// an integer value defining the increment/decrement
-	@Deprecated
-	public boolean isConsistent = false;	// flag determining whether the semantics is consistently defined by the dedicated fields
+	//@Deprecated
+	//public boolean isConsistent = false;	// flag determining whether the semantics is consistently defined by the dedicated fields
 	// END KGU#3 2015-10-24
 	// START KGU#61 2016-03-20: Enh. #84/#135 - now we have to distinguish three styles
 	private String valueList = null;		// expression specifying the set (array) of values
@@ -422,10 +424,11 @@ public class For extends Element implements ILoop {
 		ele.startValue = this.startValue + "";
 		ele.endValue = this.endValue + "";
 		ele.stepConst = this.stepConst;
-		ele.isConsistent = this.isConsistent;
+		//ele.isConsistent = this.isConsistent;
 		// END KGU#81 (bug #28) 2015-11-14
 		// START KGU#61 2016-03-20: Enh. #84/#135
 		ele.style = this.style;
+		ele.valueList = this.valueList;
 		// END KGU#61 2016-03-20
 		ele.setColor(this.getColor());
 		ele.q=(Subqueue) this.q.copy();
@@ -454,7 +457,7 @@ public class For extends Element implements ILoop {
 	public boolean equals(Element _another)
 	{
 		return super.equals(_another) && this.q.equals(((For)_another).q) &&
-				this.isConsistent == ((For)_another).isConsistent &&
+				//this.isConsistent == ((For)_another).isConsistent &&
 				this.style == ((For)_another).style;
 	}
 	// END KGU#119 2016-01-02
@@ -908,6 +911,7 @@ public class For extends Element implements ILoop {
 		forParts[0] = _tokens.subSequence(_posForIn + 1, _posIn).concatenate().trim();
 		forParts[5] = _tokens.subSequence(_posIn + 1, _tokens.count()).concatenate().trim();
 		return forParts;
+		
 	}
 	
 	public String composeForClause()

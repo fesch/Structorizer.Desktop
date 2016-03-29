@@ -41,6 +41,7 @@
  *      Kay Gürtzig     2016.01.04  Enh. #87: New messages for collapsing / expanding elements
  *      Kay Gürtzig     2016.01.21  Breakpoint message also in Menu now
  *      Kay Gürtzig     2016.03.18  Initial question marks added
+ *      Kay Gürtzig     2016.03.22  Enh. #84: messages related to FOR-IN loops added
  *
  ******************************************************************************************************
  *
@@ -502,6 +503,8 @@ ParserPreferences.lblCase.tooltip=
 ParserPreferences.lblFor.text=bucle PARA
 ParserPreferences.lblFor.tooltip=
 ParserPreferences.lblForStep.text=Paso
+ParserPreferences.lblForIn.text=bucle PARA-EN
+ParserPreferences.lblForIn.tooltip=
 ParserPreferences.lblWhile.text=bucle MIENTRAS
 ParserPreferences.lblWhile.tooltip=
 ParserPreferences.lblRepeat.text=bucle REPETIR
@@ -513,6 +516,7 @@ ParserPreferences.lblOutput.tooltip=
 ParserPreferences.btnOK.text=Aceptar
 ParserPreferences.btnOK.tooltip=Aceptar los cambios.
 ParserPreferences.lblErrorSign.text=¡No es permitido usar el carácter ':' dentro de un texto del Analizador!
+ParserPreferences.lblErrorSign2.text=¡El segundo texto clave del bucle FOR-IN no debe ser igual a qualquier otro texto del Analizador!
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Previsualizar impresión
