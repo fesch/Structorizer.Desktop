@@ -123,9 +123,6 @@ public class ParserPreferences extends LangDialog {
 	//protected JLabel lblErrorSign2;
 	protected LangTextHolder lblErrorSign2;
 	// END KGU#61 2016-03-21
-    	// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
-        protected JLabel lblErrorSign2;
-    	// END KGU#61 2016-03-21
 	// JFormDesigner - End of variables declaration  //GEN-END:variables
 	
 	/*public ParserPreferences()
@@ -201,10 +198,6 @@ public class ParserPreferences extends LangDialog {
 		// START KGU 2016-03-25: New general option for handling these keywords
 		chkIgnoreCase = new JCheckBox();
 		// END KGU 2016-03-25
-            	// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
-                lblErrorSign2 = new JLabel();
-                lblErrorSign2.setText("The post-FOR-IN loop keyword must not be equal to any other token!");
-                // END KGU#61 2016-03-21
 
 		//lblErrorSign = new JLabel();
 		lblErrorSign = new LangTextHolder();

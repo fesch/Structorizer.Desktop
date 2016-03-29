@@ -55,7 +55,6 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.03.24      Bugfix #92/#135 (= KGU#161) Input variables were prefixed
  *      Kay Gürtzig         2016.03.29      KGU#164: Bugfix #138 Function call expression revised (in transformTokens())
  *                                          #135 Array and expression support improved (with thanks to R. Schmidt)
- *      Kay Gürtzig         2016.03.22      Enh. #84/#135 (= KG#61): Support for FOR-IN loops
  *
  ******************************************************************************************************
  *
