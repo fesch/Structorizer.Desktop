@@ -43,24 +43,27 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2014.11.16      Bugfixes in operator conversion and enhancements (see comments)
  *      Kay Gürtzig         2015.10.18      Indentation logic and comment insertion revised
  *                                          generateCode(For, String) and generateCode(Root, String) modified
- *      Kay Gürtzig         2015.11.02      transform methods re-organised (KGU#18/KGU23) using subclassing,
+ *      Kay Gürtzig         2015.11.02      transform methods re-organised (KGU#18/KGU#23) using subclassing,
  *                                          Pattern list syntax in Case Elements corrected (KGU#15).
  *                                          Bugfix KGU#60 (Repeat loop was incorrectly translated).
  *      Kay Gürtzig         2015.12.19      Enh. #23 (KGU#78): Jump translation implemented
- *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KG#93): String literals were spoiled
- *      Kay Gürtzig         2015.12.22      Bugfix #71 (= KG#114): Text transformation didn't work
- *      Kay Gürtzig         2016.01.08      Bugfix #96 (= KG#129): Variable names handled properly,
- *                                          Logical expressions (conditions) put into ((  )).
- *      Kay Gürtzig         2016.03.22      Enh. #84/#135 (= KG#61): Support for FOR-IN loops
+ *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KGU#93): String literals were spoiled
+ *      Kay Gürtzig         2015.12.22      Bugfix #71 (= KGU#114): Text transformation didn't work
+ *      Kay Gürtzig         2016.01.08      Bugfix #96 (= KGU#129): Variable names handled properly,
+ *                                          KGU#132: Logical expressions (conditions) put into ((  )).
+ *      Kay Gürtzig         2016.03.22      Enh. #84/#135 (= KGU#61): Support for FOR-IN loops
+ *      Kay Gürtzig         2016.03.24      Bugfix #92/#135 (= KGU#161) Input variables were prefixed
+ *      Kay Gürtzig         2016.03.29      KGU#164: Bugfix #138 Function call expression revised (in transformTokens())
+ *                                          #135 Array and expression support improved (with thanks to R. Schmidt)
  *
  ******************************************************************************************************
  *
  *      Comment:		LGPL license (http://www.gnu.org/licenses/lgpl.html).
  *      
- *      2016.03.21 - Enhancement #84/#135 (Kay Gürtzig / R. Schmidt)
+ *      2016.03.21/22 - Enhancement #84/#135 (Kay Gürtzig / R. Schmidt)
  *      - Besides the working (but rather rarely used) C-like "three-expression" FOR loop, FOR-IN loops
- *        were to be enabled in a consistent way, i.e. the syntax must also be accepted by Ediors and
- *        Executor as wel as other code generators.
+ *        were to be enabled in a consistent way, i.e. the syntax must also be accepted by Editors and
+ *        Executor as well as other code generators.
  *      - This generator copes with value lists of the following types:
  *        {item1, item2, item3} --> item1 item2 item3
  *        item1, item2, item3 -->   item1 item2 item3
@@ -102,6 +105,7 @@ import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
@@ -203,31 +207,40 @@ public class BASHGenerator extends Generator {
 		// START KGU#129 2016-01-08: Bugfix #96 - variable name processing
 		// We must of course identify variable names and prefix them with $ unless being an lvalue
 		int posAsgnOpr = tokens.indexOf("<-");
+		// START KGU#161 2016-03-24: Bugfix #135/#92 - variables in read instructions must not be prefixed!
+		if (tokens.contains(D7Parser.input))
+		{
+			// Hide the text from the replacement, except for occurrences as index
+			posAsgnOpr = tokens.count();
+		}
+		// END KGU#161 2016-03-24
 		// START KGU#61 2016-03-21: Enh. #84/#135
-		if (posAsgnOpr < 0) posAsgnOpr = tokens.indexOf(D7Parser.postForIn);
+		if (posAsgnOpr < 0 && !D7Parser.postForIn.trim().isEmpty()) posAsgnOpr = tokens.indexOf(D7Parser.postForIn);
 		// END KGU#61 2016-03-21
 		// If there is an array variable (which doesn't exist in shell) left of the assignment symbol, check the index 
 		int posBracket1 = tokens.indexOf("[");
 		int posBracket2 = -1;
-		if (posBracket1 >= 0 && posBracket1 < posAsgnOpr) posBracket2 = Math.min(posAsgnOpr, tokens.indexOf("]"));
+		if (posBracket1 >= 0 && posBracket1 < posAsgnOpr) posBracket2 = tokens.lastIndexOf("]", posAsgnOpr-1);
     	for (int i = 0; i < varNames.count(); i++)
     	{
     		String varName = varNames.get(i);
     		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
     		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
-    		tokens.replaceAllBetween(varName, "$"+varName, true, posAsgnOpr+1, tokens.count());
-    		tokens.replaceAllBetween(varName, "$"+varName, true, posBracket1+1, posBracket2);
+    		transformVariableAccess(varName, tokens, posAsgnOpr+1, tokens.count());
+    		transformVariableAccess(varName, tokens, posBracket1+1, posBracket2+1);
     	}
     	// Now we remove spaces around the assignment operator
     	posAsgnOpr = tokens.indexOf("<-");
     	if (posAsgnOpr >= 0)
     	{
     		int pos = posAsgnOpr - 1;
+    		// Eliminate blanks preceding the assignment operator
     		while (pos >= 0 && tokens.get(pos).equals(" "))
     		{
     			tokens.delete(pos--);
     			posAsgnOpr--;
     		}
+    		// Eliminate blanks following the assignment operator
     		pos = posAsgnOpr + 1;
     		while (pos < tokens.count() && tokens.get(pos).equals(" "))
     		{
@@ -238,6 +251,8 @@ public class BASHGenerator extends Generator {
 		// FIXME (KGU): Function calls, math expressions etc. will have to be put into brackets etc. pp.
 		tokens.replaceAll("div", "/");
 		tokens.replaceAll("<-", "=");
+		tokens.replaceAllCi("false", "0");	// FIXME: Is this correct?
+		tokens.replaceAllCi("true", "1");	// FIXME: Is this correct?
 		// START KGU#131 2015-01-08: Prepared for old-style test expressions, but disabled again
 //		tokens.replaceAll("<", " -lt ");
 //		tokens.replaceAll(">", " -gt ");
@@ -246,11 +261,131 @@ public class BASHGenerator extends Generator {
 //		tokens.replaceAll("<=", " -le ");
 //		tokens.replaceAll(">=", " -ge ");
 		// END KGU#131 2016-01-08
-		return tokens.concatenate();
+		// START KGU#164 2016-03-29: Bugfix #138 - function calls weren't handled
+		//return tokens.concatenate();
+		String lval = "";
+		if (posAsgnOpr > 0)
+		{
+			// Separate lval and assignment operator from the expression tokens
+			lval += tokens.concatenate("", 0, posAsgnOpr + 1);
+			tokens = tokens.subSequence(posAsgnOpr+1, tokens.count());
+		}
+		else if (tokens.count() > 0)
+		{
+			String[] keywords = D7Parser.getAllProperties();
+			boolean startsWithKeyword = false;
+			String firstToken = tokens.get(0);
+			for (int kwi = 0; !startsWithKeyword && kwi < keywords.length; kwi++)
+			{
+				if (firstToken.equals(keywords[kwi]))
+				{
+					lval = firstToken + " ";
+					tokens.delete(0);
+					startsWithKeyword = true;
+				}
+			}
+		}
+		// Re-combine the rval expression to a string 
+		String expr = tokens.concatenate().trim();
+		// If the expression is a function call, then convert it to shell syntax
+		// (i.e. drop the parentheses and dissolve the argument list)
+		Function fct = new Function(expr);
+		if (fct.isFunction())
+		{
+			expr = fct.getName();
+			for (int p = 0; p < fct.paramCount(); p++)
+			{
+				String param = fct.getParam(p);
+				if (param.matches("(.*?)(-|[+*/%])(.*?)"))
+				{
+					param = "$(( " + param + " ))";
+				}
+				else if (param.contains(" "))
+				{
+					param = "\"" + param + "\"";
+				}
+				expr += (" " + param);
+			}
+			if (posAsgnOpr > 0)
+			{
+				expr = "`" + expr + "`";
+			}
+		}
+		else if (expr.startsWith("{") && expr.endsWith("}") && posAsgnOpr > 0)
+		{
+			lval = "declare -a " + lval;
+			StringList items = Element.splitExpressionList(expr.substring(1, expr.length()-1), ",");
+			expr = "(" + items.getLongString() + ")";
+		}
+		else if ( !(expr.startsWith("(") && expr.endsWith(")")
+				|| expr.startsWith("`") && expr.endsWith("`")
+				|| expr.startsWith("'") && expr.endsWith("'")
+				|| expr.startsWith("\"") && expr.endsWith("\"")
+				|| expr.startsWith("[[") && expr.endsWith("]]")))
+		{
+			if (expr.matches("(.*?)(-|[+*/%])(.*?)"))
+			{
+				expr = "(( " + expr + " ))";
+				if (posAsgnOpr > 0)
+				{
+					expr = "$" + expr;
+				}
+			}
+			else if (expr.contains(" "))
+			{
+				expr = "\"" + expr + "\"";
+			}
+		}
+		return lval + expr;
+		// END KGU#164 2016-03-29
 	}
 	// END KGU#93 2015-12-21
 
 	// END KGU#18/KGU#23 2015-11-01
+	
+	// START KGU#167 2016-03-30: Enh. #135 Array support
+	protected void transformVariableAccess(String _varName, StringList _tokens, int _start, int _end)
+	{
+		int pos = _start-1;
+		while ((pos = _tokens.indexOf(_varName, pos+1)) >= 0 && pos < _end)
+		{
+			int posNext = pos+1;
+			while (posNext < _end && _tokens.get(posNext).trim().isEmpty()) posNext++;
+			if (_tokens.get(posNext).equals("["))
+			{
+				_tokens.set(pos, "${" + _varName);
+				// index brackets follow, so remove the blanks
+				for (int i = 0; i < posNext - pos-1; i++)
+				{
+					_tokens.delete(pos+1);
+					_end--;
+				}
+				// find the corresponding closing bracket
+				int depth = 1;
+				for (posNext = pos+2; depth > 0 && posNext < _end; posNext++)
+				{
+					String token = _tokens.get(posNext);
+					if (token.equals("["))
+					{
+						depth++;
+					}
+					else if (token.equals("]"))
+					{
+						if (--depth <= 0)
+						{
+							_tokens.set(posNext, "]}");
+						}
+					}
+				}
+			}
+			else
+			{
+				_tokens.set(pos, "${" + _varName + "}");
+			}
+		}
+	}
+
+	// END KGU#167 2016-03-30
 
 	// START KGU#101 2015-12-22: Enh. #54 - handling of multiple expressions
 	/* (non-Javadoc)
@@ -326,9 +461,17 @@ public class BASHGenerator extends Generator {
 		// START KGU 2014-11-16
 		insertComment(_alt, _indent);
 		// END KGU 2014-11-16
-		// START KGU#131 2016-01-08: Bugfix #96 - approach with C-like syntax
+		// START KGU#132 2016-01-08: Bugfix #96 - approach with C-like syntax
 		//code.add(_indent+"if "+BString.replace(transform(_alt.getText().getText()),"\n","").trim());
-		code.add(_indent+"if (( "+BString.replace(transform(_alt.getText().getText()),"\n","").trim() + " ))");
+		// START KGU#132 2016-03-24: Bugfix #96/#135 second approach with [[ ]] instead of (( ))
+		//code.add(_indent+"if (( "+BString.replace(transform(_alt.getText().getText()),"\n","").trim() + " ))");
+		String condition = transform(_alt.getText().getLongString()).trim();
+		if (!(condition.startsWith("((") && condition.endsWith("))")))
+		{
+			condition = "[[ " + condition + "]]";
+		}
+		code.add(_indent + "if " + condition);
+		// END KGU#132 2016-03-24
 		// END KGU#131 2016-01-08
 		code.add(_indent+"then");
 		generateCode(_alt.qTrue,_indent+this.getIndent());
@@ -405,8 +548,20 @@ public class BASHGenerator extends Generator {
 			{
 				items = Element.splitExpressionList(valueList, ",");				
 			}
-			if (items != null) valueList = items.getLongString();
-			code.add(_indent + "for " + counterStr + " in " + transform(valueList));
+			if (items != null)
+			{
+				valueList = transform(items.getLongString());
+			}
+			else if (varNames.contains(valueList))
+			{
+				// Must be an array variable
+				valueList = "${" + valueList + "[@]}";
+			}
+			else
+			{
+				valueList = transform(valueList);
+			}
+			code.add(_indent + "for " + counterStr + " in " + valueList);
 		}
 		else // traditional COUNTER loop
 		{
@@ -446,10 +601,13 @@ public class BASHGenerator extends Generator {
 		// START KGU 2014-11-16
 		insertComment(_while, _indent);
 		// END KGU 2014-11-16
-		// START KGU#131 2016-01-08: Bugfix #96 first approach with C-like syntax
+		// START KGU#132 2016-01-08: Bugfix #96 first approach with C-like syntax (( ))
 		//code.add(_indent+"while " + transform(_while.getText().getLongString()));
-		code.add(_indent+"while (( " + transform(_while.getText().getLongString()) + " ))");
-		// END KGU#131 2016-01-08
+		// START KGU#132 2016-03-24: Bugfix #96/#135 second approach with [[ ]] instead of (( ))
+		//code.add(_indent+"while (( " + transform(_while.getText().getLongString()) + " ))");
+		code.add(_indent+"while [[ " + transform(_while.getText().getLongString()).trim() + " ]]");
+		// END KGU#132 2016-03-24
+		// END KGU#132 2016-01-08
 		code.add(_indent+"do");
 		generateCode(_while.q,_indent+this.getIndent());
 		code.add(_indent+"done");
@@ -470,7 +628,10 @@ public class BASHGenerator extends Generator {
 		// END KGU#60 2015-11-02
 		// START KGU#131 2016-01-08: Bugfix #96 first approach with C-like syntax
 		//code.add(_indent + "until " + transform(_repeat.getText().getLongString()).trim());
-		code.add(_indent + "until (( " + transform(_repeat.getText().getLongString()).trim() + " ))");
+		// START KGU#132 2016-03-24: Bugfix #96/#135 second approach with [[ ]] instead of (( ))
+		//code.add(_indent + "until (( " + transform(_repeat.getText().getLongString()).trim() + " ))");
+		code.add(_indent + "until [[ " + transform(_repeat.getText().getLongString()).trim() + " ]]");
+		// END KGU#132 2016-03-24
 		// END KGU#131 2016-01-08
 		code.add(_indent + "do");
 		generateCode(_repeat.q, _indent + this.getIndent());
@@ -499,7 +660,10 @@ public class BASHGenerator extends Generator {
 			// END KGU 2014-11-16
 			for(int i=0;i<_call.getText().count();i++)
 			{
-				code.add(_indent+transform(_call.getText().get(i))+";");
+				// START KGU#164 2016-03-24: Semicolon was superfluous, 
+				//code.add(_indent+transform(_call.getText().get(i))+";");
+				code.add(_indent+transform(_call.getText().get(i)));
+				// END KGU#164 2016-03-25
 			}
 		}
 	}
@@ -511,11 +675,16 @@ public class BASHGenerator extends Generator {
 			// END KGU 2014-11-16
 			for(int i=0;i<_jump.getText().count();i++)
 			{
-				code.add(_indent+transform(_jump.getText().get(i))+";");
+				// FIXME (KGU 2016-03-25): Handle the kinds of exiting jumps!
+				// START KGU#164 2016-03-24: Semicolon was superfluous
+				//code.add(_indent+transform(_jump.getText().get(i))+";");
+				code.add(_indent+transform(_jump.getText().get(i)));
+				// END KGU#164 2016-03-24
 			}
 		}
 	}
 
+	// FIXME: Decompose this - Result mechanism is missing!
 	public String generateCode(Root _root, String _indent) {
 		
 		code.add("#!/bin/bash");

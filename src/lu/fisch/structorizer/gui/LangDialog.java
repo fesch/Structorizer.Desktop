@@ -45,15 +45,19 @@ package lu.fisch.structorizer.gui;
 import java.awt.*;
 
 import java.io.*;
-import java.lang.*;
 import java.lang.reflect.*;
-import java.util.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
 
 import lu.fisch.utils.*;
 
+/**
+ * Extends JDialog to facilitate language localization, also provides static methods
+ * applicable to other GUI classes not inheriting from LangDialog.
+ * @author Robert Fisch
+ *
+ */
 public class LangDialog extends JDialog
 {
 	protected String langFile = null;
