@@ -51,6 +51,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.01.14      Enh. #84 (= KGU#100) Array init. expr. support
  *      Kay Gürtzig             2016.01.17      Bugfix #61 (= KGU#109) Type names removed from assignments
  *      Kay Gürtzig             2016.03.16      Enh. #84: Support for FOREACH loops (KGU#61) 
+ *      Kay Gürtzig             2016.04.01      Enh. #144: Care for new option to suppress content conversion 
  *
  ******************************************************************************************************
  *
@@ -231,21 +232,28 @@ public class PythonGenerator extends Generator
 		@Override
 		protected String transform(String _input)
 		{
-			// START KGU#109 2016-01-17: Bugfix #61 - Remove type specifiers
-			// Could we also do it by replacing all inventable type names by empty strings
-			// in transformType()? Rather not.
-			_input = Element.unifyOperators(_input);
-			int asgnPos = _input.indexOf("<-");	// This might mutilate string literals!
-			if (asgnPos > 0)
+			// START KGU#162 2016-04-01: Enh. #144 - hands off in "no conversion" mode!
+			if (!this.suppressTransformation)
 			{
-				String lval = _input.substring(0, asgnPos);
-				String expr = _input.substring(asgnPos + "<-".length());
-				String[] typeNameIndex = this.lValueToTypeNameIndex(lval);
-				String index = typeNameIndex[2];
-				if (!index.isEmpty()) index = "[" + index + "]";
-				_input = typeNameIndex[1] + index + " <- " + expr;
+			// END KGU#162 2016-04-01
+				// START KGU#109 2016-01-17: Bugfix #61 - Remove type specifiers
+				// Could we also do it by replacing all inventable type names by empty strings
+				// in transformType()? Rather not.
+				_input = Element.unifyOperators(_input);
+				int asgnPos = _input.indexOf("<-");	// This might mutilate string literals!
+				if (asgnPos > 0)
+				{
+					String lval = _input.substring(0, asgnPos);
+					String expr = _input.substring(asgnPos + "<-".length());
+					String[] typeNameIndex = this.lValueToTypeNameIndex(lval);
+					String index = typeNameIndex[2];
+					if (!index.isEmpty()) index = "[" + index + "]";
+					_input = typeNameIndex[1] + index + " <- " + expr;
+				}
+				// END KGU#109 2016-01-17
+			// START KGU#162 2016-04-01: Enh. #144 - hands off in "no conversion" mode!
 			}
-			// END KGU#109 2016-01-17
+			// END KGU#162 2016-04-01
 
 			_input = super.transform(_input);
 

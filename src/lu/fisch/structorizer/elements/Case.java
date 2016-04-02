@@ -43,6 +43,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136): Translation-neutral selection mechanism
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016-04-01      Issue #145 (KGU#162): Comment is yet to be shown in switchText mode
  *
  ******************************************************************************************************
  *
@@ -86,14 +87,23 @@ public class Case extends Element
 		return getText();
 	}
 
-	/**
-	 * Returns the content of the comment field. Full stop. No swapping here!
-	 * @return the comment StringList
-	 */
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.elements.Element#getComment(boolean)
+     */
     @Override
-	public StringList getComment(boolean _ignored)
+	public StringList getComment(boolean _alwaysTrueComment)
 	{
-		return getComment();
+    	// START KGU#172 2016-04-01: Bugfix #145
+		//return getComment();
+        if (!_alwaysTrueComment && this.isSwitchTextCommentMode())
+        {
+        	return StringList.getNew(text.get(0));
+        }
+        else
+        {
+        	return comment;
+        }
+		// END KGU#172 2016-04-01
 	}
     // END KGU#91 2015-12-01
     
@@ -257,11 +267,28 @@ public class Case extends Element
 
             // Width of the header
             // KGU#91 2015-12-01: Bugfix #39. Though an empty Case text doesn't make sense, the code shouldn't run havoc
+            // START KGU#172 2016-04-01: Bugfix #145 in switch text/comment mode we must present the entire comment here
+//            if (nBranches > 0)
+//            {
+//            	if (getText().get(nBranches).equals("%")) nBranches--;
+//            	rect0.right = Math.max(padding, getWidthOutVariables(_canvas, getText().get(0), this) + padding);
+//            }
+            StringList selectorLines = new StringList();
             if (nBranches > 0)
             {
             	if (getText().get(nBranches).equals("%")) nBranches--;
-            	rect0.right = Math.max(padding, getWidthOutVariables(_canvas, getText().get(0), this) + padding);
+            	selectorLines.add(getText().get(0));
             }
+        	if (this.isSwitchTextCommentMode())
+        	{
+        		selectorLines = this.getComment();
+        	}
+        	int extrapadding = padding + (selectorLines.count()-1) * (3 * padding + fm.getHeight());
+        	for (int i = 0; i < selectorLines.count(); i++)
+        	{
+        		rect0.right = Math.max(rect0.right, getWidthOutVariables(_canvas, selectorLines.get(i), this) + extrapadding);
+        	}
+        	// END KGU#172 2016-04-01
             // Total width of the branches
             int width = 0;
             int[] textWidths = new int[nBranches];
@@ -277,7 +304,10 @@ public class Case extends Element
         		rect0.right = width;
         	}
 
-            rect0.bottom = 2 * (padding) + 2 * fm.getHeight();
+        	// START KGU#172 2016-04-01: Bugfix #144: The header my contain more than one line if comments are visible
+            //rect0.bottom = 2 * (padding) + 2 * fm.getHeight();
+            rect0.bottom = 2 * (padding) + (selectorLines.count() + 1) * fm.getHeight();
+            // END KGU#172 2016-04-01
             // START KGU#136 2016-03-01: Bugfix #97
             this.y0Branches = rect0.bottom;
             // END KGU#136 2016-03-01
@@ -314,246 +344,259 @@ public class Case extends Element
 
     public void draw(Canvas _canvas, Rect _top_left)
     {
-            if(isCollapsed()) 
-            {
-                Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
-                return;
-            }
-                
-            Rect myrect = new Rect();
-    		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
-    		//Color drawColor = getColor();
-    		Color drawColor = getFillColor();
-    		// END KGU 2015-10-13
-            FontMetrics fm = _canvas.getFontMetrics(Element.font);
-//            int p;
-//            int w;
+    	if(isCollapsed()) 
+    	{
+    		Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
+    		return;
+    	}
+    	// START KGU#172 2016-04-01: Bugfix #145
+    	boolean isSwitchMode = this.isSwitchTextCommentMode();
+    	// END KGU#172 2016-04-01
 
-            // START KGU 2015-10-13: Already done by new method getFillColor() now
-//            if (selected==true)
-//            {
-//                if(waited==true) { drawColor=Element.E_WAITCOLOR; }
-//                else { drawColor=Element.E_DRAWCOLOR; }
-//            }
-            // END KGU 2015-10-13
+    	Rect myrect = new Rect();
+    	// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
+    	//Color drawColor = getColor();
+    	Color drawColor = getFillColor();
+    	// END KGU 2015-10-13
+    	FontMetrics fm = _canvas.getFontMetrics(Element.font);
+//  	int p;
+//  	int w;
 
-            Canvas canvas = _canvas;
-            canvas.setBackground(drawColor);
-            canvas.setColor(drawColor);
+// START KGU 2015-10-13: Already done by new method getFillColor() now
+//    	if (selected==true)
+//    	{
+//    		if(waited==true) { drawColor=Element.E_WAITCOLOR; }
+//    		else { drawColor=Element.E_DRAWCOLOR; }
+//    	}
+// END KGU 2015-10-13
 
-    		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
-    		//rect = _top_left.copy();
-    		rect = new Rect(0, 0, 
-    				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
-    		Point ref = this.getDrawPoint();
-    		this.topLeft.x = _top_left.left - ref.x;
-    		this.topLeft.y = _top_left.top - ref.y;
-    		// END KGU#136 2016-03-01
-    		
-            int minHeight = 2 * fm.getHeight() + 4 * (E_PADDING / 2);
-            
-            // fill shape
-            canvas.setColor(drawColor);
-            myrect = _top_left.copy();
-            myrect.left += 1;
-            myrect.top += 1;
-            //myrect.bottom -= 1;
-            myrect.bottom = _top_left.top + minHeight;
-            //myrect.right-=1;
-            canvas.fillRect(myrect);
+    	Canvas canvas = _canvas;
+    	canvas.setBackground(drawColor);
+    	canvas.setColor(drawColor);
 
-            // draw shape
-            myrect = _top_left.copy();
-            myrect.bottom = _top_left.top + minHeight;
+    	// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
+    	//rect = _top_left.copy();
+    	rect = new Rect(0, 0, 
+    			_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
+    	Point ref = this.getDrawPoint();
+    	this.topLeft.x = _top_left.left - ref.x;
+    	this.topLeft.y = _top_left.top - ref.y;
+    	// END KGU#136 2016-03-01
 
-            int y = myrect.top + E_PADDING;
-            int a = myrect.left + (myrect.right - myrect.left) / 2;
-            int b = myrect.top;
-            int c = myrect.left + fullWidth-1;
-            int d = myrect.bottom-1;
-            int x = ((y-b)*(c-a) + a*(d-b)) / (d-b);	
+    	int minHeight = 2 * fm.getHeight() + 4 * (E_PADDING / 2);
+    	// START KGU#172 2016-04-01: Bugfix #145 - we might have to put several comment lines in here
+    	StringList headerText = StringList.getNew(this.getText().get(0));
+    	if (isSwitchMode)
+    	{
+    		headerText = this.getComment();
+    	}
+    	if (headerText.count() > 1)
+    	{
+    		minHeight += (headerText.count() - 1) * fm.getHeight();
+    	}
+    	// END KGU#172 2016-04-01
 
-            // draw the selection expression (text 0)
-            // START KGU#91 2015-12-01: Bugfix #39 Nonsense replaced
-            //for(int i=0;i<1;i++)
-            int nLines = this.getText().count();
-            if (nLines > 0)
-            // END KGU#91 2015-12-01
-            {
-                    String text = this.getText().get(0);	// FIXME (KGU): What if this.getText() were empty?
-                    canvas.setColor(Color.BLACK);
-                    // START KGU#91 2015-12-01 Bugfix #39: An empty text produced a divide/0 exception
-                    // (and an index exception, I should say)
-                    //if(((String) this.getText().get(this.getText().count()-1)).equals("%"))
-                    //{
-                    //        writeOutVariables(canvas,
-                    //                                          x-Math.round(getWidthOutVariables(canvas,text,this) / this.getText().count()),
-                    //                                        myrect.top+Math.round(E_PADDING / 3)+(i+1)*fm.getHeight(),
-                    //                                        text,this
-                    //                                        );
-                    //}
-                    //else
-                    //{
-                    //        writeOutVariables(canvas,
-                    //                                          x-Math.round(getWidthOutVariables(_canvas,text,this) /2),
-                    //                                        myrect.top+Math.round(E_PADDING / 3)+(i+1)*fm.getHeight(),
-                    //                                        text,this
-                    //                                        );
-                    //}
-                    int divisor = 2;
-                    if (nLines > 1 && this.getText().get(nLines-1).equals("%")) divisor = nLines;
-                    writeOutVariables(canvas,
-                    		x - getWidthOutVariables(_canvas, text, this) / divisor,
-                    		myrect.top + E_PADDING / 3 + fm.getHeight(),
-                    		text,this
-                    		);
-                    // END KGU#91 2015-12-01
+    	// fill shape
+    	canvas.setColor(drawColor);
+    	myrect = _top_left.copy();
+    	myrect.left += 1;
+    	myrect.top += 1;
+    	//myrect.bottom -= 1;
+    	myrect.bottom = _top_left.top + minHeight;
+    	//myrect.right-=1;
+    	canvas.fillRect(myrect);
 
-                    // START KGU#156 2016-03-11: Enh. #124
-            		// write the run-time info if enabled
-            		this.writeOutRuntimeInfo(canvas, myrect.right - Element.E_PADDING, myrect.top);
-            		// END KGU#156 2016-03-11
-            				
-            }
+    	// draw shape
+    	myrect = _top_left.copy();
+    	myrect.bottom = _top_left.top + minHeight;
 
+    	int y = myrect.top + E_PADDING;
+    	int a = myrect.left + (myrect.right - myrect.left) / 2;
+    	int b = myrect.top;
+    	int c = myrect.left + fullWidth-1;
+    	int d = myrect.bottom-1;
+    	int x = ((y-b)*(c-a) + a*(d-b)) / (d-b);	
 
-            // draw comment
-            if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
-            {
-    			this.drawCommentMark(canvas, myrect);
+    	// draw the selection expression (text 0)
+    	// START KGU#91 2015-12-01: Bugfix #39 Nonsense replaced
+    	//for (int i=0; i<1; i++)
+    	int nLines = this.getText().count();
+    	if (nLines > 0)
+    	// END KGU#91 2015-12-01
+    	{
+    		canvas.setColor(Color.BLACK);
+    		// START KGU#172 2016-04-01: Bugfix #145
+//    		String text = this.getText().get(0);	// Text can't be empty, see setText()
+//    		int divisor = 2;
+//    		if (nLines > 1 && this.getText().get(nLines-1).equals("%")) divisor = nLines;
+//    		writeOutVariables(canvas,
+//    				x - getWidthOutVariables(_canvas, text, this) / divisor,
+//    				myrect.top + E_PADDING / 3 + fm.getHeight(),
+//    				text,this
+//    				);
+    		StringList text = StringList.getNew(this.getText().get(0));	// Text can't be empty, see setText()
+    		if (isSwitchMode)
+    		{
+    			text = this.getComment();
     		}
-            // START KGU 2015-10-11
-    		// draw breakpoint bar if necessary
-    		this.drawBreakpointMark(canvas, myrect);
-    		// END KGU 2015-10-11
+      		int divisor = 2;
+    		if (nLines > 1 && this.getText().get(nLines-1).equals("%")) divisor = nLines;
+    		for (int ln = 0; ln < text.count(); ln++)
+    		{
+    	  		writeOutVariables(canvas,
+        				x - getWidthOutVariables(_canvas, text.get(ln), this) / divisor,
+        				myrect.top + E_PADDING / 3 + (ln + 1) * fm.getHeight(),
+        				text.get(ln), this
+        				);
+        			
+    		}
+    		// END KGU#172 2016-04-01
+
+    		// START KGU#156 2016-03-11: Enh. #124
+    		// write the run-time info if enabled
+    		this.writeOutRuntimeInfo(canvas, myrect.right - Element.E_PADDING, myrect.top);
+    		// END KGU#156 2016-03-11
+
+    	}
 
 
-            // draw lines
-            canvas.setColor(Color.BLACK);
-            int lineWidth = 0;
-            // if the last line is '%', do not draw an else part
-            int count = nLines - 2;
-            Rect rtt = null;
-
-            // START KGU#91 2015-12-01: Performance optimisation on occasion of bugfix #39
-            int[] textWidths = new int[count+1];
-            // END KGU#91 2015-12-01
-            
-            for(int i = 0; i < count; i++)
-            {
-                    rtt=((Subqueue) qs.get(i)).prepareDraw(_canvas);
-                    // START KGU#91 2015-12-01: Once to calculate it is enough
-                    //lineWidth = lineWidth + Math.max(rtt.right, getWidthOutVariables(_canvas, getText().get(i+1), this) + Math.round(E_PADDING / 2));
-                    textWidths[i] = getWidthOutVariables(_canvas, getText().get(i+1), this);
-                    lineWidth += Math.max(rtt.right, textWidths[i] + E_PADDING / 2);
-                    // END KGU#91 2015-12-01
-            }
-
-            // START KGU#91 2015-12-01: Bugfix #39: We should be aware of pathological cases...
-            //if(  ((String) getText().get(getText().count()-1)).equals("%") )
-            boolean hasDefaultBranch = nLines > 1 && !getText().get(nLines-1).equals("%");
-            if( !hasDefaultBranch )
-            // END KGU#91 2015-12-01
-            {
-                    lineWidth = _top_left.right;
-            }
-            // START KGU#91 2015-12-01
-            else {
-            	textWidths[count] = getWidthOutVariables(_canvas, getText().get(count+1), this);
-            }
-            // END KGU#91 2015-12-01
-
-            int ax = myrect.left;
-            int ay = myrect.top;
-            int bx = myrect.left + lineWidth;
-            int by = myrect.bottom-1 - fm.getHeight() - E_PADDING / 2;
-
-            // START KGU#91 2015-12-01: Bugfix #39: We should be aware of pathological cases...
-            //if(  ((String) getText().get(getText().count()-1)).equals("%") )
-            if( !hasDefaultBranch )
-            // END KGU#91 2015-12-01
-            {
-                    bx = myrect.right;
-            }
-
-            canvas.moveTo(ax,ay);
-            canvas.lineTo(bx,by);
-
-            // START KGU#91 2015-12-01: Bugfix #39
-            //if( ! ((String) text.get(text.count()-1)).equals("%") )
-            if ( hasDefaultBranch )
-            // END KGU#91 2015-12-01
-            {
-                    canvas.lineTo(bx, myrect.bottom-1);
-                    canvas.lineTo(bx, by);
-                    canvas.lineTo(myrect.right, myrect.top);
-            }
+    	// draw comment
+    	if(Element.E_SHOWCOMMENTS==true && !comment.getText().trim().equals(""))
+    	{
+    		this.drawCommentMark(canvas, myrect);
+    	}
+    	// START KGU 2015-10-11
+    	// draw breakpoint bar if necessary
+    	this.drawBreakpointMark(canvas, myrect);
+    	// END KGU 2015-10-11
 
 
-            // draw children
-            myrect = _top_left.copy();
-            myrect.top = _top_left.top + minHeight -1;
+    	// draw lines
+    	canvas.setColor(Color.BLACK);
+    	int lineWidth = 0;
+    	// if the last line is '%', do not draw an else part
+    	int count = nLines - 2;
+    	Rect rtt = null;
 
-            if (qs.size()!=0)
-            {
+    	// START KGU#91 2015-12-01: Performance optimisation on occasion of bugfix #39
+    	int[] textWidths = new int[count+1];
+    	// END KGU#91 2015-12-01
 
-                    // if the last line isn't '%', then draw an else part
-                    //count = qs.size()-1;	// FIXME: On editing, this might be greater than nLines!
-                    // START KGU#91 2015-12-01: Bugfix #39
-                    //if( ((String) getText().get(getText().count()-1)).equals("%"))
-                    if (hasDefaultBranch)
-                    // END KGU 2015-12-01
-                    {
-                            count++;
-                    }
+    	for(int i = 0; i < count; i++)
+    	{
+    		rtt=((Subqueue) qs.get(i)).prepareDraw(_canvas);
+    		// START KGU#91 2015-12-01: Once to calculate it is enough
+    		//lineWidth = lineWidth + Math.max(rtt.right, getWidthOutVariables(_canvas, getText().get(i+1), this) + Math.round(E_PADDING / 2));
+    		textWidths[i] = getWidthOutVariables(_canvas, getText().get(i+1), this);
+    		lineWidth += Math.max(rtt.right, textWidths[i] + E_PADDING / 2);
+    		// END KGU#91 2015-12-01
+    	}
 
-                    for(int i = 0; i < count ; i++)
-                    {
-                    	
-                            rtt=((Subqueue) qs.get(i)).prepareDraw(_canvas);
+    	// START KGU#91 2015-12-01: Bugfix #39: We should be aware of pathological cases...
+    	//if(  ((String) getText().get(getText().count()-1)).equals("%") )
+    	boolean hasDefaultBranch = nLines > 1 && !getText().get(nLines-1).equals("%");
+    	if( !hasDefaultBranch )
+    		// END KGU#91 2015-12-01
+    	{
+    		lineWidth = _top_left.right;
+    	}
+    	// START KGU#91 2015-12-01
+    	else {
+    		textWidths[count] = getWidthOutVariables(_canvas, getText().get(count+1), this);
+    	}
+    	// END KGU#91 2015-12-01
 
-                            if (i==count-1)
-                            {
-                            	myrect.right = _top_left.right;
-                            }
-                            else
-                            {
-                            	// START KGU#91 2015-12-01
-                                //myrect.right=myrect.left+Math.max(rtt.right,getWidthOutVariables(_canvas,getText().get(i+1),this)+Math.round(E_PADDING / 2))+1;
-                                myrect.right = myrect.left + Math.max(rtt.right, textWidths[i] + E_PADDING / 2) + 1;
-                            	// END KGU#91-12-01
-                            }
+    	int ax = myrect.left;
+    	int ay = myrect.top;
+    	int bx = myrect.left + lineWidth;
+    	int by = myrect.bottom-1 - fm.getHeight() - E_PADDING / 2;
 
-                            // draw child
-                            ((Subqueue) qs.get(i)).draw(_canvas,myrect);
+    	// START KGU#91 2015-12-01: Bugfix #39: We should be aware of pathological cases...
+    	//if(  ((String) getText().get(getText().count()-1)).equals("%") )
+    	if( !hasDefaultBranch )
+    		// END KGU#91 2015-12-01
+    	{
+    		bx = myrect.right;
+    	}
 
-                            // draw text
-                            writeOutVariables(canvas,
-                            		// START KGU#91 2015-12-01: Performance may be improved here
-                            		//myrect.right + (myrect.left-myrect.right) / 2 - Math.round(getWidthOutVariables(_canvas,getText().get(i+1),this) / 2),
-                            		myrect.right + (myrect.left-myrect.right) / 2 - textWidths[i] / 2,
-                            		// END KGU#91 2915-12-01
-                            		myrect.top - E_PADDING / 4, //+fm.getHeight(),
-                            		getText().get(i+1),this);
+    	canvas.moveTo(ax,ay);
+    	canvas.lineTo(bx,by);
 
-                            // draw bottom up line
-                            if((i != qs.size()-2) && (i != count-1))
-                            {
-                                    canvas.moveTo(myrect.right-1,myrect.top);
-                                    int mx = myrect.right-1;
-                                    //int my = myrect.top-fm.getHeight();
-                                    int sx = mx;
-                                    int sy = (sx*(by-ay) - ax*by + ay*bx) / (bx-ax);
-                                    canvas.lineTo(sx,sy+1);
-                            }
+    	// START KGU#91 2015-12-01: Bugfix #39
+    	//if( ! ((String) text.get(text.count()-1)).equals("%") )
+    	if ( hasDefaultBranch )
+    		// END KGU#91 2015-12-01
+    	{
+    		canvas.lineTo(bx, myrect.bottom-1);
+    		canvas.lineTo(bx, by);
+    		canvas.lineTo(myrect.right, myrect.top);
+    	}
 
-                            myrect.left = myrect.right-1;
 
-                    }
-            }
+    	// draw children
+    	myrect = _top_left.copy();
+    	myrect.top = _top_left.top + minHeight -1;
 
-            canvas.setColor(Color.BLACK);
-            canvas.drawRect(_top_left);
+    	if (qs.size()!=0)
+    	{
+
+    		// if the last line isn't '%', then draw an else part
+    		//count = qs.size()-1;	// FIXME: On editing, this might be greater than nLines!
+    		// START KGU#91 2015-12-01: Bugfix #39
+    		//if( ((String) getText().get(getText().count()-1)).equals("%"))
+    		if (hasDefaultBranch)
+    			// END KGU 2015-12-01
+    		{
+    			count++;
+    		}
+
+    		for(int i = 0; i < count ; i++)
+    		{
+
+    			rtt=((Subqueue) qs.get(i)).prepareDraw(_canvas);
+
+    			if (i==count-1)
+    			{
+    				myrect.right = _top_left.right;
+    			}
+    			else
+    			{
+    				// START KGU#91 2015-12-01
+    				//myrect.right=myrect.left+Math.max(rtt.right,getWidthOutVariables(_canvas,getText().get(i+1),this)+Math.round(E_PADDING / 2))+1;
+    				myrect.right = myrect.left + Math.max(rtt.right, textWidths[i] + E_PADDING / 2) + 1;
+    				// END KGU#91-12-01
+    			}
+
+    			// draw child
+    			((Subqueue) qs.get(i)).draw(_canvas,myrect);
+
+    			// draw criterion text
+    			writeOutVariables(canvas,
+    					// START KGU#91 2015-12-01: Performance may be improved here
+    					//myrect.right + (myrect.left-myrect.right) / 2 - Math.round(getWidthOutVariables(_canvas,getText().get(i+1),this) / 2),
+    					myrect.right + (myrect.left-myrect.right) / 2 - textWidths[i] / 2,
+    					// END KGU#91 2915-12-01
+    					myrect.top - E_PADDING / 4, //+fm.getHeight(),
+    					getText().get(i+1),this);
+
+    			// draw bottom up line
+    			if((i != qs.size()-2) && (i != count-1))
+    			{
+    				canvas.moveTo(myrect.right-1,myrect.top);
+    				int mx = myrect.right-1;
+    				//int my = myrect.top-fm.getHeight();
+    				int sx = mx;
+    				int sy = (sx*(by-ay) - ax*by + ay*bx) / (bx-ax);
+    				canvas.lineTo(sx,sy+1);
+    			}
+
+    			myrect.left = myrect.right-1;
+
+    		}
+    	}
+
+    	canvas.setColor(Color.BLACK);
+    	canvas.drawRect(_top_left);
     }
 
     // START KGU#122 2016-01-03: Enh. #87 - Collapsed elements may be marked with an element-specific icon

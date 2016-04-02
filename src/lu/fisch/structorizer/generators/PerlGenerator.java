@@ -56,7 +56,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
  *      Kay Gürtzig     2015.12.21      Bugfix #51 (= KGU#108) Didn't cope with empty input / output
  *      Kay Gürtzig     2016.03.22      Enh. #84 (= KGU#61) varNames now inherited, FOR-IN loop support
- *      Kay Gürtzig     2016.03.23      Enh. #84: Support for FOREACH loops (KGU#61) 
+ *      Kay Gürtzig     2016.03.23      Enh. #84: Support for FOREACH loops (KGU#61)
+ *      Kay Gürtzig     2016-04-01      Enh. #144: Care for the new export option suppressing content conversion 
  *
  ******************************************************************************************************
  *
@@ -212,17 +213,24 @@ public class PerlGenerator extends Generator {
 	protected String transform(String _input)
 	{
 		// Set array variable name prefix in assignments with array initialiser
-		_input = Element.unifyOperators(_input);
-		int asgnPos = _input.indexOf("<-");	// This might mutilate string literals!
-		if (asgnPos > 0)
+		// START KGU#162 2016-04-01: Enh. #144 - hands off in "no conversion" mode
+		if (!this.suppressTransformation)
 		{
-			String lval = _input.substring(0, asgnPos).trim();
-			String expr = _input.substring(asgnPos + "<-".length()).trim();
-			if (expr.startsWith("{") && expr.endsWith("}") && this.varNames.contains(lval))
+		// END KGU#162 2016-04-01
+			_input = Element.unifyOperators(_input);
+			int asgnPos = _input.indexOf("<-");	// This might mutilate string literals!
+			if (asgnPos > 0)
 			{
-				_input = "@" + lval + " <- " + expr;				
+				String lval = _input.substring(0, asgnPos).trim();
+				String expr = _input.substring(asgnPos + "<-".length()).trim();
+				if (expr.startsWith("{") && expr.endsWith("}") && this.varNames.contains(lval))
+				{
+					_input = "@" + lval + " <- " + expr;				
+				}
 			}
+		// START KGU#162 2016-04-01: Enh. #144 - hands off in "no conversion" mode
 		}
+		// END KGU#162 2016-04-01
 
 		return super.transform(_input).trim();
 	}
@@ -334,15 +342,15 @@ public class PerlGenerator extends Generator {
 
 	protected void generateCode(Instruction _inst, String _indent) {
 
-		if(!insertAsComment(_inst, _indent))
+		if (!insertAsComment(_inst, _indent))
 		{
 	    	insertComment(_inst, _indent);
 
 			for(int i=0;i<_inst.getText().count();i++)
 			{
-
-				code.add(_indent + transform(_inst.getText().get(i))+";");
-
+				String text = transform(_inst.getText().get(i));
+				if (!text.endsWith(";")) { text += ";"; }
+				code.add(_indent + text);
 			}
 		}
 
@@ -354,7 +362,14 @@ public class PerlGenerator extends Generator {
 
 		insertComment(_alt, _indent);
 
-		code.add(_indent+"if ( "+BString.replace(transform(_alt.getText().getText()),"\n","").trim()+" ) {");
+		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
+		//code.add(_indent+"if ( "+BString.replace(transform(_alt.getText().getText()),"\n","").trim()+" ) {");
+		String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
+		if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
+		{
+			condition = "( " + condition + " )";
+		}
+		code.add(_indent+"if " + condition + " {");
 		generateCode(_alt.qTrue,_indent+this.getIndent());
 		
 		if(_alt.qFalse.getSize()!=0) {
@@ -377,15 +392,23 @@ public class PerlGenerator extends Generator {
 		insertComment(_case, _indent);
 
 		// Since Perl release 5.8.0, switch is a standard module...
-		code.add(_indent+"switch ( "+transform(_case.getText().get(0))+" ) {");
+		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
+		//code.add(_indent+"switch ( "+transform(_case.getText().get(0))+" ) {");
+		String selector = transform(_case.getText().get(0));
+		if (!this.suppressTransformation || !(selector.startsWith("(") && selector.endsWith(")")))
+		{
+			selector = "( " + selector + " )";			
+		}
+		code.add(_indent+"switch " + selector + " {");
+		// END KGU#162 2016-04-01
 		
-		for(int i=0;i<_case.qs.size()-1;i++)
+		for (int i=0; i<_case.qs.size()-1; i++)
 		{
 			code.add("");
 			// START KGU#15 2015-11-02: Support multiple constants per branch
 			//code.add(_indent+this.getIndent()+"case ("+_case.getText().get(i+1).trim()+") {");
 			String conds = _case.getText().get(i+1).trim();
-			if (conds.indexOf(',') >= 0)	// Is it an enumeration of values? 
+			if (Element.splitExpressionList(conds, ",").count() > 1)	// Is it an enumeration of values? 
 			{
 				conds = "[" + conds + "]";
 			}
@@ -439,6 +462,12 @@ public class PerlGenerator extends Generator {
     	insertComment(_for, _indent);
 
     	String var = _for.getCounterVar();
+		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
+		if (!var.startsWith("$"))
+		{
+			var = "$" + var;
+		}
+		// END KGU#162 2016-04-01
     	// START KGU#61 2016-03-23: Enh. 84 - FOREACH support
     	if (_for.isForInLoop())
     	{
@@ -452,27 +481,41 @@ public class PerlGenerator extends Generator {
     		else
     		{
     			valueList = transform(valueList, false);
-    			if (valueList.startsWith("$")) valueList = "@" + valueList.substring(1);
+    			if (!this.suppressTransformation && valueList.startsWith("$"))
+    			{
+    				valueList = "@" + valueList.substring(1);
+    			}
     		}
-    		code.add(_indent + "foreach $"+ var + " (" + valueList + ") {");
+    		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
+    		//code.add(_indent + "foreach $"+ var + " (" + valueList + ") {");
+    		code.add(_indent + "foreach "+ var + " (" + valueList + ") {");
+    		// END KGU#162
     	}
     	else
     	{
     	// END KGU#61 2016-03-23
     		int step = _for.getStepConst();
     		String compOp = (step > 0) ? " <= " : " >= ";
-    		String increment = "$" + var + " += (" + step + ")";
-    		code.add(_indent + "for ($" +
-    				var + " = " + transform(_for.getStartValue(), false) + "; $" +
+    		// START KGU#162 2016-04-01: Enh. #144 var syntax already handled 
+    		//String increment = "$" + var + " += (" + step + ")";
+    		//code.add(_indent + "for ($" +
+    		//	var + " = " + transform(_for.getStartValue(), false) + "; $" +
+    		//		var + compOp + transform(_for.getEndValue(), false) + "; " +
+    		//		increment +
+    		//		") {");
+    		String increment = var + " += (" + step + ")";
+    		code.add(_indent + "for (" +
+    				var + " = " + transform(_for.getStartValue(), false) + "; " +
     				var + compOp + transform(_for.getEndValue(), false) + "; " +
     				increment +
     				") {");
+    		// END KGU#162 2016-04-01
     	// START KGU#61 2016-03-23: Enh. 84 - FOREACH support (part 2)
     	}
     	// END KGU#61 2016-03-23
 		// END KGU#3 2015-11-02
-		generateCode(_for.q,_indent+this.getIndent());
-		code.add(_indent+"}");
+		generateCode(_for.q, _indent+this.getIndent());
+		code.add(_indent + "}");
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_for, _indent);
 		// END KGU#78 2015-12-17
@@ -484,9 +527,17 @@ public class PerlGenerator extends Generator {
 		
 		code.add("");
     	insertComment(_while, _indent);
-		code.add(_indent+"while ("+BString.replace(transform(_while.getText().getText()),"\n","").trim()+") {");		
-		generateCode(_while.q,_indent+this.getIndent());
-		code.add(_indent+"}");
+		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
+		//code.add(_indent+"while ("+BString.replace(transform(_while.getText().getText()),"\n","").trim()+") {");
+    	String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
+    	if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
+    	{
+    		condition = "( " + condition + " )";
+    	}
+    	code.add(_indent + "while " + condition + " {");
+    	// END KGU#162 2016-04-01
+		generateCode(_while.q, _indent+this.getIndent());
+		code.add(_indent + "}");
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_while, _indent);
 		// END KGU#78 2015-12-17
@@ -503,7 +554,15 @@ public class PerlGenerator extends Generator {
 
 		code.add(_indent+"do {");
 		generateCode(_repeat.q,_indent+this.getIndent());
-		code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+"));");
+		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
+		//code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+")) {");
+    	String condition = BString.replace(transform(_repeat.getText().getText()),"\n","").trim();
+    	if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
+    	{
+    		condition = "( " + condition + " )";
+    	}
+    	code.add(_indent + "} while (!" + condition + ");");
+    	// END KGU#162 2016-04-01
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_repeat, _indent);
 		// END KGU#78 2015-12-17
@@ -518,7 +577,7 @@ public class PerlGenerator extends Generator {
 		insertComment(_forever, _indent);
 
 		code.add(_indent+"while (1) {");		
-		generateCode(_forever.q,_indent+this.getIndent());
+		generateCode(_forever.q, _indent+this.getIndent());
 		code.add(_indent+"}");
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_forever, _indent);
@@ -532,9 +591,9 @@ public class PerlGenerator extends Generator {
 
 			insertComment(_call, _indent);
 
-			for(int i=0;i<_call.getText().count();i++)
+			for (int i=0; i<_call.getText().count(); i++)
 			{
-				code.add(_indent+transform(_call.getText().get(i))+";");
+				code.add(_indent + transform(_call.getText().get(i)) + ";");
 			}
 
 	}

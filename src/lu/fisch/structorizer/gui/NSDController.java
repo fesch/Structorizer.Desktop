@@ -49,20 +49,20 @@ public interface NSDController
 
 	public void doButtons();
 	public void doButtonsLocal();
-	
+
 	public void updateColors();
-	
+
 	public void setLookAndFeel(String _laf);
 	public String getLookAndFeel();
-	
+
 	public void setLang(String _langfile);
 	public void setLangLocal(String _langfile);
 	public String getLang();
-	
+
 	public void savePreferences();
 
-        public JFrame getFrame();
-        
-        public void loadFromINI();
+	public JFrame getFrame();
+
+	public void loadFromINI();
 
 }
