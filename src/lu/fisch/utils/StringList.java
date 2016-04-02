@@ -39,6 +39,7 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2015.12.01      Methods replaceAll, replaceAllCi added.
  *      Kay Gürtzig     2015.12.01      Methods concatenate(...) added; getText() etc. reduced to them.
  *      Kay Gürtzig     2016.01.08      Method replaceAllBetween() added, replaceAll etc. reduced to it.
+ *      Kay Gürtzig     2016.03.26      Method subSequence() added.
  *
  ******************************************************************************************************
  *
@@ -134,6 +135,19 @@ public class StringList {
 		StringList sl = new StringList();
 		//sl.add("TEXT");
 		sl.setCommaText(this.getCommaText()+"");
+		return sl;
+	}
+	
+	// START KGU 2016-03-
+	public StringList subSequence(int _start, int _end)
+	{
+		StringList sl = new StringList();
+		if (_start < 0) _start = 0;
+		if (_end > this.count()) _end = this.count();
+		for (int i = _start; i < _end; i++)
+		{
+			sl.add(this.get(i) + "");
+		}
 		return sl;
 	}
 
@@ -269,6 +283,37 @@ public class StringList {
 	}
 
 	// START KGU 2015-11-04: New, more performant and informative searchers 
+	public int lastIndexOf(String _string)
+	{
+		return this.strings.lastIndexOf(_string);
+	}
+
+	public int lastIndexOf(String _string, int _backwardFrom)
+	{
+		return this.strings.lastIndexOf(_string, _backwardFrom);
+	}
+
+	public int lastIndexOf(String _string, boolean _matchCase)
+	{
+		return lastIndexOf(_string, 0, _matchCase);
+	}
+	
+	public int lastIndexOf(String _string, int _backwardFrom, boolean _matchCase)
+	{
+		if (_matchCase)
+			return this.strings.lastIndexOf(_string, _backwardFrom);
+
+		_string = _string.toLowerCase();
+		for (int i=_backwardFrom; i > 0; i--)
+		{
+			if ((strings.get(i)).toLowerCase().equals(_string))
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+
 	public int indexOf(String _string)
 	{
 		return this.strings.indexOf(_string);
@@ -817,18 +862,13 @@ public class StringList {
     public int replaceAllBetween(String _stringOld, String _stringNew, boolean _matchCase, int _start, int _end)
     {
     	int nReplaced = 0;
-    	int i = Math.max(0, _start);
-    	while (i < Math.min(_end, count()))
+    	for (int i = Math.max(0, _start); i < Math.min(_end, count()); i++)
     	{
     		if (_matchCase && strings.get(i).equals(_stringOld) ||
     				!_matchCase && strings.get(i).equalsIgnoreCase(_stringOld))
     		{
     			strings.setElementAt(_stringNew, i);
     			nReplaced++;
-    		}
-    		else
-    		{
-        		i++;    			
     		}
     	}
     	return nReplaced;

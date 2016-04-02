@@ -36,6 +36,8 @@ package lu.fisch.structorizer.parsers;
  *      Bob Fisch       2008.05.02      Added filter for (* ... *) comment filtering
  *      Kay Gürtzig     2015.10.20      New setting stepFor (KGU#3, to be made configurable!)
  *      Kay Gürtzig     2016-03-20      New settings preForIn and postForIn added (KGU#61, #84/#135)
+ *      Kay Gürtzig     2016-03-25      KGU#163: New static method getAllPropeties() added for Analyser
+ *                                      KGU#165: New option ignoreCase
  *
  ******************************************************************************************************
  *
@@ -56,7 +58,6 @@ import java.nio.*;
 import java.nio.charset.*;
 
 import goldengine.java.*;
-
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.elements.*;
@@ -66,6 +67,14 @@ import com.stevesoft.pat.*;  //http://www.javaregex.com/
  
 public class D7Parser implements GPMessageConstants
 {
+	// START KGU#165 2016-03-25: Once and for all: It should be a transparent choice, ...
+	/**
+	 * whether or not the keywords are to be handled in a case-independent way
+	 */
+	public static boolean ignoreCase = true;
+	// END KGU#165 2016-03-25
+	
+	// NOTE: Don't forget to add new keywords to method getAllProperties()!
 	public static String preAlt = "";
 	public static String postAlt = "";
 	public static String preCase = "";
@@ -92,6 +101,8 @@ public class D7Parser implements GPMessageConstants
 	public static String preReturn = "return";
 	public static String preExit = "exit";
 	// END KGU#78 2015-11-27
+	
+	// NOTE: Don't forget to add new keywords to getAllProperties()!
 
 	private String compiledGrammar = null;
 	Root root = null;
@@ -695,8 +706,16 @@ public class D7Parser implements GPMessageConstants
 			postWhile=ini.getProperty("ParserPostWhile","");
 			preRepeat=ini.getProperty("ParserPreRepeat","jusqu'\u00E0 ");
 			postRepeat=ini.getProperty("ParserPostRepeat","");
+    		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
+			preLeave=ini.getProperty("ParserPreLeave", "leave");
+			preReturn=ini.getProperty("ParserPreReturn", "return");
+			preExit=ini.getProperty("ParserPreExit", "exit");
+    		// END KGU#78 2016-03-25
 			input=ini.getProperty("ParserInput","lire");
 			output=ini.getProperty("ParserOutput","\u00E9crire");
+			// START KGU#165 2016-03-25: Enhancement 
+			ignoreCase=ini.getProperty("ParserIgnoreCase", "false").equalsIgnoreCase("true");
+			// END KGU#3 2016-03-25
 			
 		}
 		catch (Exception e) 
@@ -728,8 +747,17 @@ public class D7Parser implements GPMessageConstants
 			ini.setProperty("ParserPostWhile",postWhile);
 			ini.setProperty("ParserPreRepeat",preRepeat);
 			ini.setProperty("ParserPostRepeat",postRepeat);
+    		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
+			ini.setProperty("ParserPreLeave", preLeave);
+			ini.setProperty("ParserPreReturn", preReturn);
+			ini.setProperty("ParserPreExit", preExit);
+    		// END KGU#78 2016-03-25
+			
 			ini.setProperty("ParserInput",input);
 			ini.setProperty("ParserOutput",output);
+			// START KGU#165 2016-03-25: Enhancement 
+			ini.setProperty("ParserIgnoreCase",Boolean.toString(ignoreCase));
+			// END KGU#3 2016-03-25
 			
 			ini.save();
 		}
@@ -738,5 +766,26 @@ public class D7Parser implements GPMessageConstants
 			System.out.println(e);
 		}
 	}
+	
+	// START KGU#163 2016-03-25: For syntax analysis purposes
+	/**
+	 * Returns the complete set of configurable parser keywords for Elements 
+	 * @return array of current keyword strings
+	 */
+	public static String[] getAllProperties()
+	{
+		String[] keywords = {
+				D7Parser.preAlt, D7Parser.postAlt,
+				D7Parser.preCase, D7Parser.postCase,
+				D7Parser.preFor, D7Parser.postFor, D7Parser.stepFor,
+				D7Parser.preForIn, D7Parser.postForIn,
+				D7Parser.preRepeat, D7Parser.postRepeat,
+				D7Parser.preWhile, D7Parser.postWhile,
+				D7Parser.preExit, D7Parser.preLeave, D7Parser.preReturn,
+				D7Parser.input, D7Parser.output
+				};
+		return keywords;
+	}
+	// END KGU#163 2016-03-25
 
 }

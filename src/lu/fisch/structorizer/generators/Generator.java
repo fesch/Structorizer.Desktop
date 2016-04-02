@@ -63,6 +63,7 @@ import java.awt.Frame;
 import java.io.*;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Vector;
 import java.util.regex.Matcher;
 
 import javax.swing.*;
@@ -98,6 +99,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	// Some generators must prefix variables, for some generators it's important for FOR-IN loops
 	protected StringList varNames = new StringList();
 	// END KGU#129/KGU#61 2015-01-22
+	// START KGU  2016-03-29: For keyword detection improvement
+	private Vector<StringList> splitKeywords = new Vector<StringList>();
+	// END KGU 2016-03-29
 
 	
 	/************ Abstract Methods *************/
@@ -254,8 +258,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * 1. Eliminates parser preference keywords listed below and unifies all operators
 	 *    @see lu.fisch.Structorizer.elements.Element#unifyOperators(java.lang.String)
 	 *         preAlt, preCase, preWhile, preRepeat,
-	 *         postAlt, postCase, postWhile, postRepeat
-	 * 2. Replaces assignments by a call of overridable method transformAssignment(String)
+	 *         postAlt, postCase, postWhile, postRepeat;
+	 * 2. Tokenizes the result, processes the tokens by an overridable method
+	 *    transformTokens(StringList), and re-concatenates the result;
 	 * 3. Transforms Input and Output lines according to regular replacement expressions defined
 	 *    by getInputReplacer() and getOutPutReplacer, respectively. This is done by overridable
 	 *    methods transformInput(String) and transformOutput(), respectively.
@@ -272,8 +277,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * Overridable general text transformation routine, performing the following steps:
 	 * 1. Eliminates parser preference keywords listed below and unifies all operators
 	 *         preAlt, preCase, preWhile, preRepeat,
-	 *         postAlt, postCase, postWhile, postRepeat
-	 * 2. Replaces assignments by a call of overridable method transformAssignment(String)
+	 *         postAlt, postCase, postWhile, postRepeat;
+	 * 2. Tokenizes the result, processes the tokens by an overridable method
+	 *    transformTokens(StringList), and re-concatenates the result;
 	 * 3. Transforms Input and Output lines if _doInput and/or _doOutput are true, respectively
 	 *    This is only done if _input starts with one of the configured Input and Output keywords 
 	 * @see lu.fisch.Structorizer.elements.Element#unifyOperators(java.lang.String)
@@ -292,6 +298,26 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 //		_input = transformAssignment(_input);
 		
 		StringList tokens = Element.transformIntermediate(_input);
+		// START KGU 2016-03-29: Unify all parser keywords
+		String[] keywords = D7Parser.getAllProperties();
+		for (int kw = 0; kw < keywords.length; kw++)
+		{    				
+			if (keywords[kw].trim().length() > 0)
+			{
+				StringList keyTokens = this.splitKeywords.elementAt(kw);
+				int keyLength = keyTokens.count();
+				int pos = -1;
+				while ((pos = tokens.indexOf(keyTokens, pos + 1, !D7Parser.ignoreCase)) >= 0)
+				{
+					tokens.set(pos, keywords[kw]);
+					for (int j=1; j < keyLength; j++)
+					{
+						tokens.delete(pos+1);
+					}
+				}
+			}
+		}
+		// END KGU 2016-03-29
 		String transformed = transformTokens(tokens);
 		// END KGU#93 2015-12-21
 
@@ -951,7 +977,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			if(writeDown==true)
 			{
 
-				try
+				// START KGU 2016-03-29: Pre-processed match patterns for better identification of complicated keywords
+		    	this.splitKeywords.clear();
+		    	String[] keywords = D7Parser.getAllProperties();
+		    	for (int k = 0; k < keywords.length; k++)
+		    	{
+		    		this.splitKeywords.add(Element.splitLexically(keywords[k], false));
+		    	}
+				// END KGU 2016-03-29
+
+		    	try
 				{
 					// START KGU 2015-10-18: This didn't make much sense: Why first insert characters that will be replaced afterwards?
 					// (And with possibly any such characters that had not been there for indentation!)

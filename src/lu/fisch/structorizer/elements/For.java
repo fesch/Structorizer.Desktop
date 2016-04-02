@@ -721,10 +721,11 @@ public class For extends Element implements ILoop {
 	// END KGU#61 2016-03-22
 
 	// START KGU#3 2015-11-04: We need a transformation to a common intermediate language
-	private static String disambiguateForClause(String _text)
+	private static StringList disambiguateForClause(String _text)
 	{
 		// Pad the string to ease the key word detection
-		String interm = " " + _text + " ";
+		//String interm = " " + _text + " ";
+		StringList tokens = Element.splitLexically(_text, true);
 
 		// START KGU#61 2016-03-20: Enh. #84/#135
 		// First collect the placemarkers of the for loop header ...
@@ -733,7 +734,7 @@ public class For extends Element implements ILoop {
 		//String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy};
 		// First collect the placemarkers of the for loop header ...
 		String[] forMarkers = {D7Parser.preFor, D7Parser.postFor, D7Parser.stepFor,
-				D7Parser.preForIn, D7Parser.postForIn};
+				(D7Parser.preForIn.trim().isEmpty() ? D7Parser.preFor : D7Parser.preForIn), D7Parser.postForIn};
 		// ... and their replacements (in same order!)
 		String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy,
 				forInSeparatorPre, forInSeparatorIn};
@@ -745,26 +746,44 @@ public class For extends Element implements ILoop {
 		// what the user might have configured (see above)
 		for (int i = 0; i < forMarkers.length; i++)
 		{
-			//String marker = forMarkers[i];
-			String marker = Matcher.quoteReplacement(forMarkers[i]);
-			String separator = forSeparators[i];
+//			//String marker = forMarkers[i];
+//			String marker = Matcher.quoteReplacement(forMarkers[i]);
+//			String separator = forSeparators[i];
+//			if (!marker.isEmpty())
+//			{
+//				String pattern = "(.*?)" + marker + "(.*)";
+//				// If it is not padded, then ensure it is properly isolated
+//				if (marker.equals(marker.trim()))
+//				{
+//					pattern = "(.*?\\W)" + marker + "(\\W.*)";
+//				}
+//				interm = interm.replaceFirst(pattern, "$1 " + separator + " $2");
+//				// Eliminate possibly remaining occurrences if padded (preserve name substrings!)
+//				interm = interm.replaceAll(pattern, "$1 " + separator + " $2");
+//			}
+//			// eliminate multiple blanks
+//			interm = BString.replace(interm, "  ", " ");
+			String marker = forMarkers[i];
 			if (!marker.isEmpty())
 			{
-				String pattern = "(.*?)" + marker + "(.*)";
-				// If it is not padded, then ensure it is properly isolated
-				if (marker.equals(marker.trim()))
+				StringList markerTokens = Element.splitLexically(marker, false);
+				int markerLen = markerTokens.count();
+				int pos = -1;
+				while ((pos = tokens.indexOf(markerTokens, pos+1, !D7Parser.ignoreCase)) >= 0)
 				{
-					pattern = "(.*?\\W)" + marker + "(\\W.*)";
+					// Replace the first token of the parser keyword by the separator 
+					tokens.set(pos, forSeparators[i]);
+					// ... and remove the remaining ones (they will all pass through pos+1)
+					for (int d = 1; d < markerLen; d++)
+					{
+						tokens.delete(pos+1);
+					}
 				}
-				interm = interm.replaceFirst(pattern, "$1 " + separator + " $2");
-				// Eliminate possibly remaining occurrences if padded (preserve name substrings!)
-				interm = interm.replaceAll(pattern, "$1 " + separator + " $2");
 			}
-			// eliminate multiple blanks
-			interm = BString.replace(interm, "  ", " ");
 		}
 
-		return interm;
+		//return interm;
+		return tokens;
 
 	}
 	
@@ -810,64 +829,50 @@ public class For extends Element implements ILoop {
 		// END KGU#61 2016-03-20
 		
 		// Do some pre-processing to disambiguate the key words
-		String _intermediate = disambiguateForClause(_text);		
+		StringList tokens = disambiguateForClause(_text);		
 		//System.out.println("Disambiguated For clause: \"" + _intermediate + "\"");
 		
-		_intermediate = _intermediate.replace('\n', ' '); // Concatenate the lines
-		int posFor = _intermediate.indexOf(forSeparatorPre);
+		tokens.replaceAll("\n", " "); // Concatenate the lines
+		int posFor = tokens.indexOf(forSeparatorPre);
 		//int lenFor = forSeparatorPre.length();
-		int posTo = _intermediate.indexOf(forSeparatorTo);
+		int posTo = tokens.indexOf(forSeparatorTo);
 		//int lenTo = forSeparatorTo.length();
-		int posBy = _intermediate.indexOf(forSeparatorBy);
+		int posBy = tokens.indexOf(forSeparatorBy);
 		//int lenBy = forSeparatorBy.length();
-		int posForIn = _intermediate.indexOf(forInSeparatorPre);
-		int posIn = _intermediate.indexOf(forInSeparatorIn);
+		int posForIn = tokens.indexOf(forInSeparatorPre);
+		int posIn = tokens.indexOf(forInSeparatorIn);
 		//if (posFor < 0) { posFor = -lenFor; }	// Fictitious position such that posFor+lenFor becomes 0
 		//int posIni = posFor + lenFor;
 		// START KGU#61 2016-03-20: Enh. #84/#135 - must go different ways now
 		// If both forInSeparatorIn and forSeparatorTo occur then a traditional loop is assumed
 		if (posIn > 0 && posTo < 0)
 		{
-			return splitForTraversal(_intermediate, posFor, posForIn, posIn);
+			return splitForTraversal(tokens, posFor, posForIn, posIn);
 		}
 		else {
-			return splitForCounter(_intermediate, posFor, posTo, posBy);
+			return splitForCounter(tokens, posFor, posTo, posBy);
 		}
 		// END KGU#61 2016-03-20
 	}
 	
 	// START KGU#61 2016-03-20: Enh. #84/#135 - outsourced from splitForClause(String)
-	private static String[] splitForCounter(String _intermediate, int posFor, int posTo, int posBy)
+	private static String[] splitForCounter(StringList _tokens, int _posFor, int _posTo, int _posBy)
 	{
 		String[] forParts = { "dummy_counter", "1", null, "1", "", null};
-		int[] positions = { posFor, posTo, posBy };
-		String init = "";	// Initialisation instruction
-		int lenFor = forSeparatorPre.length();
-		int lenTo = forSeparatorTo.length();
-		int lenBy = forSeparatorBy.length();
-		if (posFor < 0) { posFor = -lenFor; }	// Fictitious position such that posFor+lenFor becomes 0
-		int posIni = posFor + lenFor;
-		int pastIni = _intermediate.length();
-		int pastTo = pastIni, pastBy = pastIni;
-		for (int i = 0; i < positions.length; i++) 
-		{
-			if (i > 0 && positions[i] >= posIni && positions[i] < pastIni) pastIni = positions[i];
-			if (positions[i] >= posTo+lenTo && positions[i] < pastTo) pastTo = positions[i];
-			if (positions[i] >= posBy+lenBy && positions[i] < pastBy) pastBy = positions[i];
-		}
-		//System.out.println("FOR section from " + posIni + " to " + pastIni + "...");
-		init = _intermediate.substring(posIni, pastIni).trim();
+		int endInit = (_posTo >= 0) ? _posTo : _tokens.count();
+		if (_posBy >= 0 && _posBy < _posTo) endInit = _posBy;
+		StringList init = _tokens.subSequence(_posFor+1, endInit);
 		//System.out.println("FOR --> \"" + init + "\"");
-		if (posTo >= 0)
+		if (_posTo >= 0)
 		{
-			//System.out.println("TO section from " + (posTo + lenTo) + " to " + pastTo + "...");
-			forParts[2] = _intermediate.substring(posTo + lenTo, pastTo).trim();
+			int endTo = (_posBy > _posTo) ? _posBy : _tokens.count();
+			forParts[2] = _tokens.subSequence(_posTo + 1, endTo).concatenate().trim();
 			//System.out.println("TO --> \"" + forParts[2] + "\"");
 		}
-		if (posBy >= 0)
+		if (_posBy >= 0)
 		{
-			//System.out.println("BY section from " + (posBy + lenBy) + " to " + pastBy + "...");
-			forParts[4] = _intermediate.substring(posBy + lenBy, pastBy).trim();
+			int endBy = (_posTo > _posBy) ? _posTo : _tokens.count();
+			forParts[4] = _tokens.subSequence(_posBy + 1, endBy).concatenate().trim();
 			//System.out.println("BY --> \"" + forParts[4] + "\"");
 		}
 		if (forParts[4].isEmpty())
@@ -885,42 +890,28 @@ public class For extends Element implements ILoop {
 				forParts[3] = "1";
 			}
 		}
-		init = unifyOperators(init);	// 
-		String[] initParts = init.split(" <- ");
-		if (initParts.length < 2)
+		unifyOperators(init, true);
+		int posAsgnOpr = init.indexOf("<-");
+		if (posAsgnOpr > 0)
 		{
-			forParts[1] = initParts[0].trim();
+			forParts[0] = init.subSequence(0, posAsgnOpr).concatenate().trim();
 		}
-		else
-		{
-			forParts[0] = initParts[0].trim();
-			forParts[1] = initParts[1].trim();
-		}
-		return forParts;
+		forParts[1] = init.subSequence(posAsgnOpr + 1, init.count()).concatenate().trim();
 		
+		return forParts;		
 	}
-	
-	private static String[] splitForTraversal(String _intermediate, int _posFor, int _posForIn, int _posIn)
+
+	private static String[] splitForTraversal(StringList _tokens, int _posFor, int _posForIn, int _posIn)
 	{
 		String[] forParts = { "dummy_iterator", "", null, "", "", "{}"};
-		int lenFor = forInSeparatorPre.length();
-		int lenIn = forInSeparatorIn.length();
 		if (_posForIn < 0)
 		{
-			if (_posFor > 0 /*&& D7Parser.preFor.trim().equals(D7Parser.preForIn.trim())*/)
-			{
-				_posForIn = _posFor;
-				lenFor = forSeparatorPre.length();
-			}
-			else
-			{
-				_posForIn = -lenFor;	// Fictitious position such that posFor+lenFor becomes 0
-			}
+			_posForIn = _posFor;
 		}
-
-		forParts[0] = _intermediate.substring(_posForIn + lenFor, _posIn).trim();
-		forParts[5] = _intermediate.substring(_posIn + lenIn).trim();
+		forParts[0] = _tokens.subSequence(_posForIn + 1, _posIn).concatenate().trim();
+		forParts[5] = _tokens.subSequence(_posIn + 1, _tokens.count()).concatenate().trim();
 		return forParts;
+		
 	}
 	
 	public String composeForClause()
@@ -985,7 +976,9 @@ public class For extends Element implements ILoop {
 
 	public String composeForInClause(String _iterator, String _valueList)
 	{
-		String forClause = D7Parser.preForIn.trim() + " " + _iterator + " " +
+		String preForIn = D7Parser.preForIn.trim();
+		if (preForIn.isEmpty()) { preForIn = D7Parser.preFor.trim(); }
+		String forClause = preForIn + " " + _iterator + " " +
 				D7Parser.postForIn.trim() + " " + _valueList;
 		return forClause;
 	}
@@ -1006,14 +999,29 @@ public class For extends Element implements ILoop {
 		String thisText = this.getText().getLongString().trim();
 		//System.out.println(thisText + " <-> " + this.composeForClause() + " <-> " + this.composeForInClause());
 		
-		if (thisText.equals(this.composeForClause()) ||
-				thisText.equals(this.composeForClause(true)))
+		if (D7Parser.ignoreCase)
 		{
-			style = ForLoopStyle.COUNTER;
+			if (thisText.equalsIgnoreCase(this.composeForClause()) ||
+					thisText.equalsIgnoreCase(this.composeForClause(true)))
+			{
+				style = ForLoopStyle.COUNTER;
+			}
+			else if (thisText.equalsIgnoreCase(this.composeForInClause()))
+			{
+				style = ForLoopStyle.TRAVERSAL;
+			}			
 		}
-		else if (thisText.equals(this.composeForInClause()))
+		else
 		{
-			style = ForLoopStyle.TRAVERSAL;
+			if (thisText.equals(this.composeForClause()) ||
+					thisText.equals(this.composeForClause(true)))
+			{
+				style = ForLoopStyle.COUNTER;
+			}
+			else if (thisText.equals(this.composeForInClause()))
+			{
+				style = ForLoopStyle.TRAVERSAL;
+			}
 		}
 		return style;
 	}
