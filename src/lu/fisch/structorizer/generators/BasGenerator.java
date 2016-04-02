@@ -44,6 +44,7 @@ package lu.fisch.structorizer.generators;
  *                                          Enh. #54 (KGU#101) multiple expressions on output
  *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
  *      Kay Gürtzig         2016.01.22      Bugfix/Enh. #84 (= KGU#100): Array initialisation
+ *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
  *
  ******************************************************************************************************
  *
@@ -330,7 +331,10 @@ public class BasGenerator extends Generator
 			{
 				// START KGU#100 2016-01-22: Enh. #84 - resolve array initialisation
 				boolean isArrayInit = false;
-				if (this.optionBasicLineNumbering())
+				// START KGU#171 2016-03-31: Enh. #144
+				//if (this.optionBasicLineNumbering())
+				if (!this.suppressTransformation && this.optionBasicLineNumbering())
+				// END KGU#171 2016-03-31
 				{
 					// The crux is: we don't know the index range!
 					// So we'll invent an index base variable easy to be modified in code
@@ -475,7 +479,10 @@ public class BasGenerator extends Generator
 		String var = _for.getCounterVar();
 		String valueList = _for.getValueList();
 		StringList items = this.extractForInListItems(_for);
-		if (items != null)
+		// START KGU#171 2016-03-31: Enh. #144
+		//if (items != null)
+		if (!this.suppressTransformation && items != null)
+		// END KGU#171 2016-03-31
 		{
 			// Good question is: how do we guess the element type and what do we
 			// do if items are heterogenous? We will just try four types: boolean,

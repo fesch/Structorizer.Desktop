@@ -52,11 +52,16 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.01.15      Bugfix #64 (exit instruction was exported without ';')
  *      Kay Gürtzig             2016.01.15      Issue #61/#107: improved handling of typed variables 
  *      Kay Gürtzig             2016.03.16      Enh. #84: Minimum support for FOR-IN loops (KGU#61) 
+ *      Kay Gürtzig             2016.04.01      Enh. #144: Export option to suppress content conversion 
  *
  ******************************************************************************************************
  *
  *      Comment:
- *      
+ *
+ *      2016.04.01 - Enh. #144 (Kay Gürtzig)
+ *      - A new export option suppresses conversion of text content and restricts the export
+ *        more or less to the mere control structure generation.
+ *        
  *      2015.12.21 - Bugfix #41/#68/#69 (Kay Gürtzig)
  *      - Operator replacement had induced unwanted padding and string literal modifications
  *      - new subclassable method transformTokens() for all token-based replacements 
@@ -270,20 +275,27 @@ public class CGenerator extends Generator {
 	@Override
 	protected String transform(String _input)
 	{
-		// START KGU#109/KGU#141 2016-01-16: Bugfix #61,#107,#112
-		_input = Element.unifyOperators(_input);
-		int asgnPos = _input.indexOf("<-");
-		if (asgnPos > 0)
+		// START KGU#162 2016-04-01: Enh. #144
+		if (!this.suppressTransformation)
 		{
-			String lval = _input.substring(0, asgnPos).trim();
-			String expr = _input.substring(asgnPos + "<-".length()).trim();
-			String[] typeNameIndex = this.lValueToTypeNameIndex(lval);
-			String index = typeNameIndex[2];
-			_input = (typeNameIndex[0] + " " + typeNameIndex[1] + 
-					(index.isEmpty() ? "" : "["+index+"]") + 
-					" <- " + expr).trim();
+		// END KGU#162 2016-04-01
+			// START KGU#109/KGU#141 2016-01-16: Bugfix #61,#107,#112
+			_input = Element.unifyOperators(_input);
+			int asgnPos = _input.indexOf("<-");
+			if (asgnPos > 0)
+			{
+				String lval = _input.substring(0, asgnPos).trim();
+				String expr = _input.substring(asgnPos + "<-".length()).trim();
+				String[] typeNameIndex = this.lValueToTypeNameIndex(lval);
+				String index = typeNameIndex[2];
+				_input = (typeNameIndex[0] + " " + typeNameIndex[1] + 
+						(index.isEmpty() ? "" : "["+index+"]") + 
+						" <- " + expr).trim();
+			}
+			// END KGU#109/KGU#1412016-01-16
+		// START KGU#162 2016-04-01: Enh. #144
 		}
-		// END KGU#109/KGU#1412016-01-16
+		// END KGU#162 2016-04-01
 		
 		_input = super.transform(_input);
 

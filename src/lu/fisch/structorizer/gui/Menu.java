@@ -42,6 +42,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.01.03/04   Enh. #87: New menu items and buttons for collapsing/expanding 
  *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
  *      Kay Gürtzig     2016.01.22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#143 + KGU#144).
+ *      Kay Gürtzig     2016.04.01      Issue #144: Favourite code export menu item, #142 accelerator keys added
  *
  ******************************************************************************************************
  *
@@ -87,11 +88,10 @@ public class Menu extends JMenuBar implements NSDController
 	protected JMenuItem menuFileExportPicturePDF = new JMenuItem("PDF ...",IconLoader.ico032);
 	protected JMenuItem menuFileExportPictureSVG = new JMenuItem("SVG ...",IconLoader.ico032);
 	protected JMenu menuFileExportCode = new JMenu("Code");
-/*	protected JMenuItem menuFileExportPascal = new JMenuItem("Pascal Code ...",IconLoader.ico004);
-	protected JMenuItem menuFileExportOberon = new JMenuItem("Oberon Code ...",IconLoader.ico004);
-	protected JMenuItem menuFileExportStruktex = new JMenuItem("StrukTeX Code ...",IconLoader.ico076);
-	protected JMenuItem menuFileExportPerl = new JMenuItem("Perl Code ...",IconLoader.ico004);
-	protected JMenuItem menuFileExportKSH = new JMenuItem("KSH Code ...",IconLoader.ico004);*/
+	// START KGU#171 2016-04-01: Enh. #144 - new menu item for Favourite Code Export
+	protected static LangTextHolder lbFileExportCodeFavorite = new LangTextHolder("Export as % Code");	// Label template for translation
+	protected JMenuItem menuFileExportCodeFavorite = new JMenuItem("Export Fav. Code", IconLoader.ico004);
+	// END KGU#171 2016-04-01
 	protected JMenu menuFileImport = new JMenu("Import");
 	// Submenu of "File -> Import"
 	protected JMenuItem menuFileImportPascal = new JMenuItem("Pascal Code ...",IconLoader.ico004);
@@ -319,7 +319,7 @@ public class Menu extends JMenuBar implements NSDController
 		// and add them to the menu
 		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("generators.xml"));
 		GENParser genp = new GENParser();
-		Vector plugins = genp.parse(buff);
+		Vector<GENPlugin> plugins = genp.parse(buff);
 		for(int i=0;i<plugins.size();i++)
 		{
 			GENPlugin plugin = (GENPlugin) plugins.get(i);
@@ -328,22 +328,30 @@ public class Menu extends JMenuBar implements NSDController
 			final String className = plugin.className;
 			pluginItem.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.export(className); doButtons(); } } );
 		}
-/*
-		menuFileExport.add(menuFileExportPascal);
-		menuFileExportPascal.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.export("lu.fisch.structorizer.generators.PasGenerator"); doButtons(); } } );
+		
+		// START KGU#171 2016-04-01: Enh. #144 - accelerated export to favourite target language
+		menuFile.add(menuFileExportCodeFavorite);
+		menuFileExportCodeFavorite.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X,(java.awt.event.InputEvent.SHIFT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
+		menuFileExportCodeFavorite.setToolTipText("You may alter the favourite target language in the export preferences.");
+		menuFileExportCodeFavorite.addActionListener(
+				new ActionListener() {
+					public void actionPerformed(ActionEvent event)
+					{
+						boolean done = false;
+						String generatorName = diagram.getPreferredGeneratorName();
+						for (int pos = 0; !done && pos < menuFileExportCode.getItemCount(); pos++)
+						{
+							JMenuItem pluginItem = menuFileExportCode.getItem(pos);
+							if (pluginItem.getText().equals(generatorName))
+							{
+								pluginItem.getActionListeners()[0].actionPerformed(event);
+								done = true;
+							}
+						}
+					}
+				});
+		// END KGU#171 2016-04-01
 
-		menuFileExport.add(menuFileExportOberon);
-		menuFileExportOberon.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportMOD(); doButtons(); } } );
-
-		menuFileExport.add(menuFileExportStruktex);
-		menuFileExportStruktex.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportTEX(); doButtons(); } } );
-
-		menuFileExport.add(menuFileExportPerl);
-		menuFileExportPerl.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportPerl(); doButtons(); } } );
-
-		menuFileExport.add(menuFileExportKSH);
-		menuFileExportKSH.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportKSH(); doButtons(); } } );
-*/
 		menuFile.addSeparator();
 
 		menuFile.add(menuFilePrint);
@@ -352,7 +360,7 @@ public class Menu extends JMenuBar implements NSDController
 
 		// START KGU#2 2015-11-19
 		menuFile.add(menuFileArrange);
-		//menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		//menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		menuFileArrange.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.arrangeNSD(); doButtons(); } } );
 		// END KGU#2 2015-11-19
 
@@ -370,7 +378,7 @@ public class Menu extends JMenuBar implements NSDController
 						getFrame().dispatchEvent(new WindowEvent(getFrame(), WindowEvent.WINDOW_CLOSING));
 					}
 				} );
-		// KGU#66 2015-11-05
+		// END KGU#66 2015-11-05
 
 		// Setting up Menu "Edit" with all submenus and shortcuts and actions
 		menubar.add(menuEdit);
@@ -391,9 +399,9 @@ public class Menu extends JMenuBar implements NSDController
 		menuEditCut.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.cutNSD(); doButtons(); } } );
 
 		menuEdit.add(menuEditCopy);
-                //Toolkit.getDefaultToolkit().get
-                //MenuShortcut ms = new MenuShortcut
-                menuEditCopy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		//Toolkit.getDefaultToolkit().get
+		//MenuShortcut ms = new MenuShortcut
+		menuEditCopy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		menuEditCopy.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.copyNSD(); doButtons(); } } );
 
 		menuEdit.add(menuEditPaste);
@@ -414,9 +422,9 @@ public class Menu extends JMenuBar implements NSDController
 		}
 
 		// Setting up Menu "View" with all submenus and shortcuts and actions
-                //menubar.add(menuView);
+		//menubar.add(menuView);
 
-                // Setting up Menu "Diagram" with all submenus and shortcuts and actions
+		// Setting up Menu "Diagram" with all submenus and shortcuts and actions
 		menubar.add(menuDiagram);
 		menuDiagram.setMnemonic(KeyEvent.VK_D);
 
@@ -426,35 +434,46 @@ public class Menu extends JMenuBar implements NSDController
 		menuDiagramAdd.add(menuDiagramAddBefore);
 		menuDiagramAddBefore.setIcon(IconLoader.ico019);
 
+		// START KGU#169 2016-04-01: Enh. #142 (accelerator keys added in analogy to the insert after items)
 		menuDiagramAddBefore.add(menuDiagramAddBeforeInst);
 		menuDiagramAddBeforeInst.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Instruction(),"Add new instruction ...","",false); doButtons(); } } );
+		menuDiagramAddBeforeInst.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, java.awt.event.InputEvent.SHIFT_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeAlt);
 		menuDiagramAddBeforeAlt.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Alternative(),"Add new IF statement ...",Element.preAlt,false); doButtons(); } } );
+		menuDiagramAddBeforeAlt.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, java.awt.event.InputEvent.SHIFT_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeCase);
 		menuDiagramAddBeforeCase.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Case(),"Add new CASE statement ...",Element.preCase,false); doButtons(); } } );
+		menuDiagramAddBeforeCase.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F10, java.awt.event.InputEvent.SHIFT_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeFor);
 		menuDiagramAddBeforeFor.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new For(),"Add new FOR loop ...",Element.preFor,false); doButtons(); } } );
+		menuDiagramAddBeforeFor.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, java.awt.event.InputEvent.SHIFT_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeWhile);
 		menuDiagramAddBeforeWhile.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new While(),"Add new WHILE loop ...",Element.preWhile,false); doButtons(); } } );
+		menuDiagramAddBeforeWhile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F8, java.awt.event.InputEvent.SHIFT_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeRepeat);
 		menuDiagramAddBeforeRepeat.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Repeat(),"Add new REPEAT loop ...",Element.preRepeat,false); doButtons(); } } );
+		menuDiagramAddBeforeRepeat.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F9, java.awt.event.InputEvent.SHIFT_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeForever);
 		menuDiagramAddBeforeForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",false); doButtons(); } } );
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeCall);
 		menuDiagramAddBeforeCall.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Call(),"Add new call ...","",false); doButtons(); } } );
+		menuDiagramAddBeforeCall.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, java.awt.event.InputEvent.SHIFT_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeJump);
 		menuDiagramAddBeforeJump.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Jump(),"Add new jump ...","",false); doButtons(); } } );
+		menuDiagramAddBeforeJump.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F12, java.awt.event.InputEvent.SHIFT_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforePara);
 		menuDiagramAddBeforePara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",false); doButtons(); } } );
+		menuDiagramAddBeforePara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F13, java.awt.event.InputEvent.SHIFT_MASK));
+		// END KGU#169 2016-04-01
 
 		menuDiagramAdd.add(menuDiagramAddAfter);
 		menuDiagramAddAfter.setIcon(IconLoader.ico020);
@@ -551,6 +570,9 @@ public class Menu extends JMenuBar implements NSDController
 
 		menuDiagram.add(menuDiagramSwitchComments);
 		menuDiagramSwitchComments.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleTextComments(); doButtons(); } } );
+		// START KGU#169 2016-04-01: Enh. #142 (accelerator key added)
+		menuDiagramSwitchComments.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, (java.awt.event.InputEvent.ALT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
+		// START KGU#169 2016-04-01
 
 		menuDiagram.add(menuDiagramMarker);
 		menuDiagramMarker.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setHightlightVars(menuDiagramMarker.isSelected()); doButtons(); } } );
@@ -730,6 +752,13 @@ public class Menu extends JMenuBar implements NSDController
 	public void setLangLocal(String _langfile)
 	{
 		LangDialog.setLang(this,NSDControl.getLang());
+		// START KGU#170 2016-04-01: Enh. #144 - update the favourite export item text
+		if (diagram != null)
+		{
+			String itemText = lbFileExportCodeFavorite.getText().replace("%", diagram.getPreferredGeneratorName());
+			this.menuFileExportCodeFavorite.setText(itemText);
+		}
+		// END KGU#170 2016-04-01
 		diagram.analyse();
 	}
 
@@ -745,7 +774,7 @@ public class Menu extends JMenuBar implements NSDController
 
 	public void doButtonsLocal()
 	{
-		if(diagram!=null)
+		if (diagram!=null)
 		{
                         /*
                         // remove all submenus from "view"
@@ -802,6 +831,10 @@ public class Menu extends JMenuBar implements NSDController
 			// save
 			menuFileSave.setEnabled(diagram.getRoot().hasChanged());
 			// END KGU#137 2016-01-11
+			// START KGU#170 2016-04-01: Enh. #144 - update the favourite export item text
+			String itemText = lbFileExportCodeFavorite.getText().replace("%", diagram.getPreferredGeneratorName());
+			this.menuFileExportCodeFavorite.setText(itemText);
+			// END KGU#170 2016-04-01
 			
 			// undo & redo
 			menuEditUndo.setEnabled(diagram.getRoot().canUndo());

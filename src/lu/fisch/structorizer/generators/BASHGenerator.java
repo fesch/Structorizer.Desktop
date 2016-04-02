@@ -55,6 +55,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.03.24      Bugfix #92/#135 (= KGU#161) Input variables were prefixed
  *      Kay Gürtzig         2016.03.29      KGU#164: Bugfix #138 Function call expression revised (in transformTokens())
  *                                          #135 Array and expression support improved (with thanks to R. Schmidt)
+ *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
  *
  ******************************************************************************************************
  *
@@ -317,6 +318,7 @@ public class BASHGenerator extends Generator {
 			StringList items = Element.splitExpressionList(expr.substring(1, expr.length()-1), ",");
 			expr = "(" + items.getLongString() + ")";
 		}
+		// The following is a very rough and vague heuristics to support arithmetic expressions 
 		else if ( !(expr.startsWith("(") && expr.endsWith(")")
 				|| expr.startsWith("`") && expr.endsWith("`")
 				|| expr.startsWith("'") && expr.endsWith("'")
@@ -331,10 +333,12 @@ public class BASHGenerator extends Generator {
 					expr = "$" + expr;
 				}
 			}
-			else if (expr.contains(" "))
-			{
-				expr = "\"" + expr + "\"";
-			}
+			// START KGU 2016-03-31: Issue #135+#144 - quoting wasn't actually helpful
+//			else if (expr.contains(" "))
+//			{
+//				expr = "\"" + expr + "\"";
+//			}
+			// END KGU 2016-03-31
 		}
 		return lval + expr;
 		// END KGU#164 2016-03-29
@@ -416,24 +420,34 @@ public class BASHGenerator extends Generator {
 	{
 		String intermed = super.transform(_input);
 		
-        // START KGU 2014-11-16 Support for Pascal-style operators		
-        intermed = BString.replace(intermed, " div ", " / ");
-        // END KGU 2014-11-06
-        
-        // START KGU#78 2015-12-19: Enh. #23: We only have to ensure the correct keywords
-        if (intermed.matches("^" + Matcher.quoteReplacement(D7Parser.preLeave.trim()) + "(\\W.*|$)"))
-        {
-        	intermed = "break " + intermed.substring(D7Parser.preLeave.trim().length());
-        }
-        else if (intermed.matches("^" + Matcher.quoteReplacement(D7Parser.preReturn.trim()) + "(\\W.*|$)"))
-        {
-        	intermed = "return " + intermed.substring(D7Parser.preReturn.trim().length());
-        }
-        else if (intermed.matches("^" + Matcher.quoteReplacement(D7Parser.preExit.trim()) + "(\\W.*|$)"))
-        {
-        	intermed = "exit " + intermed.substring(D7Parser.preExit.trim().length());
-        } 
-        // END KGU#78 2015-12-19
+		// START KGU#162 2016-03-31: Enh. #144
+		if (!this.suppressTransformation)
+		{
+		// END KGU#162 2016-03-31
+		
+			// START KGU 2014-11-16 Support for Pascal-style operators		
+			intermed = BString.replace(intermed, " div ", " / ");
+			// END KGU 2014-11-06
+
+			// START KGU#78 2015-12-19: Enh. #23: We only have to ensure the correct keywords
+			if (intermed.matches("^" + Matcher.quoteReplacement(D7Parser.preLeave.trim()) + "(\\W.*|$)"))
+			{
+				intermed = "break " + intermed.substring(D7Parser.preLeave.trim().length());
+			}
+			else if (intermed.matches("^" + Matcher.quoteReplacement(D7Parser.preReturn.trim()) + "(\\W.*|$)"))
+			{
+				intermed = "return " + intermed.substring(D7Parser.preReturn.trim().length());
+			}
+			else if (intermed.matches("^" + Matcher.quoteReplacement(D7Parser.preExit.trim()) + "(\\W.*|$)"))
+			{
+				intermed = "exit " + intermed.substring(D7Parser.preExit.trim().length());
+			} 
+			// END KGU#78 2015-12-19
+			
+		// START KGU#162 2016-03-31: Enh. #144
+		}
+		// END KGU#162 2016-03-31
+		
 
         // START KGU#114 2015-12-22: Bugfix #71
         //return _input.trim();
@@ -466,9 +480,9 @@ public class BASHGenerator extends Generator {
 		// START KGU#132 2016-03-24: Bugfix #96/#135 second approach with [[ ]] instead of (( ))
 		//code.add(_indent+"if (( "+BString.replace(transform(_alt.getText().getText()),"\n","").trim() + " ))");
 		String condition = transform(_alt.getText().getLongString()).trim();
-		if (!(condition.startsWith("((") && condition.endsWith("))")))
+		if (!this.suppressTransformation && !(condition.startsWith("((") && condition.endsWith("))")))
 		{
-			condition = "[[ " + condition + "]]";
+			condition = "[[ " + condition + " ]]";
 		}
 		code.add(_indent + "if " + condition);
 		// END KGU#132 2016-03-24
@@ -535,31 +549,34 @@ public class BASHGenerator extends Generator {
 		if (_for.isForInLoop())
 		{
 			String valueList = _for.getValueList();
-			StringList items = null;
-			// Convert an array initializer to a space-separated sequence
-			if (valueList.startsWith("{") && valueList.endsWith("}") &&
-					!valueList.contains(".."))	// Preserve ranges like {3..18} or {1..200..2}
+			if (!this.suppressTransformation)
 			{
-				items = Element.splitExpressionList(
-						valueList.substring(1, valueList.length()-1), ",");
-			}
-			// Convert a comma-separated list to a space-separated sequence
-			else if (valueList.contains(","))
-			{
-				items = Element.splitExpressionList(valueList, ",");				
-			}
-			if (items != null)
-			{
-				valueList = transform(items.getLongString());
-			}
-			else if (varNames.contains(valueList))
-			{
-				// Must be an array variable
-				valueList = "${" + valueList + "[@]}";
-			}
-			else
-			{
-				valueList = transform(valueList);
+				StringList items = null;
+				// Convert an array initializer to a space-separated sequence
+				if (valueList.startsWith("{") && valueList.endsWith("}") &&
+						!valueList.contains(".."))	// Preserve ranges like {3..18} or {1..200..2}
+				{
+					items = Element.splitExpressionList(
+							valueList.substring(1, valueList.length()-1), ",");
+				}
+				// Convert a comma-separated list to a space-separated sequence
+				else if (valueList.contains(","))
+				{
+					items = Element.splitExpressionList(valueList, ",");				
+				}
+				if (items != null)
+				{
+					valueList = transform(items.getLongString());
+				}
+				else if (varNames.contains(valueList))
+				{
+					// Must be an array variable
+					valueList = "${" + valueList + "[@]}";
+				}
+				else
+				{
+					valueList = transform(valueList);
+				}
 			}
 			code.add(_indent + "for " + counterStr + " in " + valueList);
 		}
@@ -582,7 +599,7 @@ public class BASHGenerator extends Generator {
 				incrStr = "(( " + counterStr + "=$" + counterStr + "+(" + stepValue + ") ))";
 			}
 			// END KGU#3 2015-11-02
-			code.add(_indent+"for (("+counterStr+"="+startValueStr+"; "+
+			code.add(_indent+"for (( "+counterStr+"="+startValueStr+"; "+
 					counterStr + ((stepValue > 0) ? "<=" : ">=") + endValueStr + "; " +
 					incrStr + " ))");
 			// END KGU#30 2015-10-18
@@ -605,7 +622,15 @@ public class BASHGenerator extends Generator {
 		//code.add(_indent+"while " + transform(_while.getText().getLongString()));
 		// START KGU#132 2016-03-24: Bugfix #96/#135 second approach with [[ ]] instead of (( ))
 		//code.add(_indent+"while (( " + transform(_while.getText().getLongString()) + " ))");
-		code.add(_indent+"while [[ " + transform(_while.getText().getLongString()).trim() + " ]]");
+		// START KGU#132/KGU#162 2016-03-31: Bugfix #96 + Enh. #144
+		//code.add(_indent+"while [[ " + transform(_while.getText().getLongString()).trim() + " ]]");
+		String condition = transform(_while.getText().getLongString()).trim();
+		if (!this.suppressTransformation && !(condition.startsWith("((") && condition.endsWith("))")))
+		{
+			condition = "[[ " + condition + " ]]";
+		}
+		code.add(_indent + "while " + condition);
+		// END KGU#132/KGU#144 2016-03-31
 		// END KGU#132 2016-03-24
 		// END KGU#132 2016-01-08
 		code.add(_indent+"do");
@@ -630,7 +655,15 @@ public class BASHGenerator extends Generator {
 		//code.add(_indent + "until " + transform(_repeat.getText().getLongString()).trim());
 		// START KGU#132 2016-03-24: Bugfix #96/#135 second approach with [[ ]] instead of (( ))
 		//code.add(_indent + "until (( " + transform(_repeat.getText().getLongString()).trim() + " ))");
-		code.add(_indent + "until [[ " + transform(_repeat.getText().getLongString()).trim() + " ]]");
+		// START KGU#132/KGU#162 2016-03-31: Bugfix #96 + Enh. #144
+		//code.add(_indent + "until [[ " + transform(_repeat.getText().getLongString()).trim() + " ]]");
+		String condition = transform(_repeat.getText().getLongString()).trim();
+		if (!this.suppressTransformation && !(condition.startsWith("((") && condition.endsWith("))")))
+		{
+			condition = "[[ " + condition + " ]]";
+		}
+		code.add(_indent + "while " + condition);
+		// END KGU#132/KGU#144 2016-03-31
 		// END KGU#132 2016-03-24
 		// END KGU#131 2016-01-08
 		code.add(_indent + "do");
@@ -684,7 +717,7 @@ public class BASHGenerator extends Generator {
 		}
 	}
 
-	// FIXME: Decompose this - Result mechanism is missing!
+	// TODO: Decompose this - Result mechanism is missing!
 	public String generateCode(Root _root, String _indent) {
 		
 		code.add("#!/bin/bash");

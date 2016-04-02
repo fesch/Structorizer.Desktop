@@ -55,6 +55,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.03.08      Bugfix #97: Drawing info invalidation now involves Arranger (KGU#155)
  *      Kay Gürtzig     2016.03.16      Bugfix #131: Precautions against replacement of Root under execution (KGU#158)
  *      Kay Gürtzig     2016.03.21      Enh. #84: FOR-IN loops considered in editing and parser preferences (KGU#61)
+ *      Kay Gürtzig     2016-04-01      Issue #143 (comment popup off on editing etc.), Issue #144 (preferred code generator)
  *
  ******************************************************************************************************
  *
@@ -127,6 +128,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
     public File currentDirectory = new File(System.getProperty("user.home"));
     public File lastExportDir = null;
+    // START KGU#170 2016-04-01: Enh. #144 maintain a favourite export generator
+    private String prefGeneratorName = "";
+    // END KGU#170 2016-04-01
 
     // recently opened files
     protected Vector<String> recentFiles = new Vector<String>();
@@ -1915,7 +1919,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
-		dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.PNGFilter());
+		// START KGU#170 2016-04-01: Enh. #110 - select the provided filter
+		//dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.PNGFilter());
+		PNGFilter filter = new PNGFilter();
+		dlgSave.addChoosableFileFilter(filter);
+		dlgSave.setFileFilter(filter);
+		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		// END KGU#170 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
@@ -2030,7 +2040,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
-		dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.PNGFilter());
+		// START KGU 2016-04-01: Enh. #110 - select the provided filter
+		//dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.PNGFilter());
+		PNGFilter filter = new PNGFilter();
+		dlgSave.addChoosableFileFilter(filter);
+		dlgSave.setFileFilter(filter);
+		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		// END KGU 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
@@ -2103,7 +2119,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
-		dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.EMFFilter());
+		// START KGU 2016-04-01: Enh. #110 - select the provided filter
+		//dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.EMFFilter());
+		EMFFilter filter = new EMFFilter();
+		dlgSave.addChoosableFileFilter(filter);
+		dlgSave.setFileFilter(filter);
+		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		// END KGU 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
@@ -2182,7 +2204,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
-		dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.SVGFilter());
+		// START KGU 2016-04-01: Enh. #110 - select the provided filter
+		//dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.SVGFilter());
+		SVGFilter filter = new SVGFilter();
+		dlgSave.addChoosableFileFilter(filter);
+		dlgSave.setFileFilter(filter);
+		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		// END KGU 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
@@ -2286,7 +2314,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
-		dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.SWFFilter());
+		// START KGU 2016-04-01: Enh. #110 - select the provided filter
+		//dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.SWFFilter());
+		SWFFilter filter = new SWFFilter();
+		dlgSave.addChoosableFileFilter(filter);
+		dlgSave.setFileFilter(filter);
+		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		// END KGU 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
@@ -2365,7 +2399,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
-		dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.PDFFilter());
+		// START KGU 2016-04-01: Enh. #110 - select the provided filter
+		//dlgSave.addChoosableFileFilter(new lu.fisch.structorizer.io.PDFFilter());
+		PDFFilter filter = new PDFFilter();
+		dlgSave.addChoosableFileFilter(filter);
+		dlgSave.setFileFilter(filter);
+		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		// END KGU 2016-04-01
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
@@ -2435,7 +2475,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			dlgOpen.setCurrentDirectory(currentDirectory);
 		}
 
-		dlgOpen.addChoosableFileFilter(new PascalFilter());
+		// START KGU 2016-04-01: Enh. #110 - select the provided filter
+		//dlgOPen.addChoosableFileFilter(new PascalFilter());
+		PascalFilter filter = new PascalFilter();
+		dlgOpen.addChoosableFileFilter(filter);
+		dlgOpen.setFileFilter(filter);
+		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		// END KGU 2016-04-01
 		int result = dlgOpen.showOpenDialog(NSDControl.getFrame());
 		filename=dlgOpen.getSelectedFile().getAbsoluteFile().toString();
 
@@ -2476,6 +2522,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			Class genClass = Class.forName(_generatorClassName);
 			Generator gen = (Generator) genClass.newInstance();
+			// START KGU#170 2016-04-01: Issue #143
+			pop.setVisible(false);	// Hide the current comment popup if visible
+			// END KGU#170 2016-04-01
 			gen.exportCode(root,currentDirectory,NSDControl.getFrame());
 		}
 		catch(Exception e)
@@ -2680,6 +2729,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 			// save fields to ini-file
 			D7Parser.saveToINI();
+
+			// START KGU#136 2016-03-31: Bugfix #97 - cached bounds may have to be invalidated
+			if (Element.E_VARHIGHLIGHT)
+			{
+				// Parser keyword chenges may have an impact on the text width
+				this.resetDrawingInfo(true);
+				// redraw diagram
+				redraw();
+			}
+			// END KGU#136 2016-03-31
+			
 		}
 	}
 
@@ -2767,6 +2827,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             eod.bracesCheckBox.setSelected(ini.getProperty("genExportBraces", "0").equals("true"));
             eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "0").equals("true"));
             // END KGU#16/KGU#113 2015-12-18
+            // START KGU#162 2016-03-31: Enh. #144
+            eod.noConversionCheckBox.setSelected(ini.getProperty("genExportnoConversion", "0").equals("true"));
+            // END KGU#162 2016-03-31
+            // START KGU#170 2016-04-01: Enh. #144 Favourite export generator
+            eod.cbPrefGenerator.setSelectedItem(ini.getProperty("genExportPreferred", "Java"));
+            // END KGU#170 2016-04-01
             // START KGU 2014-11-18
             eod.setLang(NSDControl.getLang());
             // END KGU 2014-11-18
@@ -2779,6 +2845,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 ini.setProperty("genExportBraces", String.valueOf(eod.bracesCheckBox.isSelected()));
                 ini.setProperty("genExportLineNumbers", String.valueOf(eod.lineNumbersCheckBox.isSelected()));
                 // END KGU#16/KGU#113 2015-12-18
+                // START KGU#162 2016-03-31: Enh. #144
+                ini.setProperty("genExportnoConversion", String.valueOf(eod.noConversionCheckBox.isSelected()));
+                // END KGU#162 2016-03-31
+                // START KGU#170 2016-04-01: Enh. #144 Favourite export generator
+                prefGeneratorName = (String)eod.cbPrefGenerator.getSelectedItem();
+                ini.setProperty("genExportPreferred", prefGeneratorName);
+                this.NSDControl.doButtons();
+                // END KGU#170 2016-04-01
                 ini.save();
             }
         } 
@@ -2998,6 +3072,30 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return Element.E_WHEELCOLLAPSE;
 	}
 	// END KGU#123 2016-01-04
+	
+	// START KGU#170 2016-04-01: Enh. #144: Maintain a preferred export generator
+	public String getPreferredGeneratorName()
+	{
+		if (this.prefGeneratorName.isEmpty())
+		{
+	        try
+	        {
+	            Ini ini = Ini.getInstance();
+	            ini.load();
+	            this.prefGeneratorName = ini.getProperty("genExportPreferred", "Java");
+	        } 
+	        catch (FileNotFoundException ex)
+	        {
+	            ex.printStackTrace();
+	        } 
+	        catch (IOException ex)
+	        {
+	            ex.printStackTrace();
+	        }
+	    }
+		return this.prefGeneratorName;
+	}
+	// END KGU#170 2016-04-01
 
 	/*****************************************
 	 * inputbox methods
@@ -3009,7 +3107,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		if(NSDControl!=null)
 		{
-			// START KGU#3 2015-10-25: Dedicated support for For loops
+			// START KGU#170 2016-04-01: Issue #143 - on opening the editor a comment popup should vanish
+			pop.setVisible(false);
+			// END KGU#170 2016-04-01
+			// START KGU#3 2015-10-25: Dedicated support for FOR loops
 			//InputBox inputbox = new InputBox(NSDControl.getFrame(),true);
 			InputBox inputbox = null;
 			if (_elementType.equals("For"))

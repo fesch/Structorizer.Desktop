@@ -42,6 +42,8 @@
  *      Kay Gürtzig     2016.01.21  Breakpoint message also in Menu now
  *      Kay Gürtzig     2016.03.18  Initial question marks added
  *      Kay Gürtzig     2016.03.22  Enh. #84: messages related to FOR-IN loops added
+ *      Kay Gürtzig     2016.03.31  Enh. #23: messages related to JUMP configuration added
+ *      Kay Gürtzig     2016-04-02  Messages para #144 (ExportOptionDialoge and Menu)
  *
  ******************************************************************************************************
  *
@@ -62,6 +64,8 @@ Menu.menuFileExport.text=Exportar
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Imagen ...
 Menu.menuFileExportCode.text=Código ...
+Menu.lbFileExportCodeFavorite.text=Exportar código %
+Menu.menuFileExportCodeFavorite.tooltip=El código preferido se puede configurar an las Preferencias de Exportación.
 Menu.menuFileImport.text=Importar
 // Submenu of "File -> Import"
 Menu.menuFileImportPascal.text=Código Pascal ...
@@ -146,7 +150,6 @@ Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburgés
 Menu.menuPreferencesLanguageItalian.text=Italiano
 Menu.menuPreferencesLanguageSpanish.text=Espaniol
 Menu.menuPreferencesLanguagePortugalBrazil.text=Portugés (Brazil)
-//Menu.menuPreferencesLanguageChinese.text=Chino
 Menu.menuPreferencesLanguageSimplifiedChinese.text=Chino (simplificado)
 Menu.menuPreferencesLanguageTraditionalChinese.text=Chino (tradicional)
 Menu.menuPreferencesLanguageCzech.text=Checo
@@ -191,6 +194,7 @@ Menu.error13_2.text=¡Su función no siempre retorna un resultado!
 Menu.error13_3.text=¡La función emplea diferentes métodos para retornar un valor a la vez: «%»!
 Menu.error14_1.text=¡Los componentes separados no se convienen con el texto del encabiezamiento!
 Menu.error14_2.text=¡El paso «%» del bucle FOR no es una constante entera!
+Menu.error14_3.text=El nombre de la variable «%» puede confligir con una de las palabras claves configuradas para el bucle PARA!
 Menu.error15.text=¡La LLAMADA no tiene ninguna de las formas aceptadas: [ <var> <- ] <routine_name>(<arg_list>)!
 Menu.error16_1.text=¡Un elemento de salto (salida) debe ser vacío o empezar con uno de los comandos %!
 Menu.error16_2.text=¡Una instrucción de retorno debe ser colocado en un elemento SALTO si no es la última instrucción del diagrama!
@@ -493,30 +497,38 @@ ColorChooser.btnOK.tooltip=Aceptar los cambios.
 -----[ ParserPreferences ]-----
 ParserPreferences.title=Preferencias del Analizador
 ParserPreferences.lblPre.text=Pre
-ParserPreferences.lblPre.tooltip=
+ParserPreferences.lblPre.tooltip=Palabra clave anterior del contenido principal
 ParserPreferences.lblPost.text=Post
-ParserPreferences.lblPost.tooltip=
+ParserPreferences.lblPost.tooltip=Palabra clave posterior del contenido principal
 ParserPreferences.lblAlt.text=declaración SI
-ParserPreferences.lblAlt.tooltip=
+ParserPreferences.lblAlt.tooltip=Palabras encerrando la condición de la declaración SI
 ParserPreferences.lblCase.text=declaración CASE
-ParserPreferences.lblCase.tooltip=
+ParserPreferences.lblCase.tooltip=Palabras encerrando la expresión de selección
 ParserPreferences.lblFor.text=bucle PARA
-ParserPreferences.lblFor.tooltip=
+ParserPreferences.lblFor.tooltip=Palabras claves separando los parametros del bucle PARA.
 ParserPreferences.lblForStep.text=Paso
 ParserPreferences.lblForIn.text=bucle PARA-EN
-ParserPreferences.lblForIn.tooltip=
+ParserPreferences.lblForIn.tooltip=Palabras claves separando los parametros del bucle PARA ... EN ....
+ParserPreferences.edtForInPre.tooltip=Puede ser igual a la cual del bucle PARA (o quedar vacío - con mismo efecto).
+ParserPreferences.edtForInPost.tooltip=¡Tiene que diferar de todas las restantes palabras claves del Analizador!
 ParserPreferences.lblWhile.text=bucle MIENTRAS
-ParserPreferences.lblWhile.tooltip=
+ParserPreferences.lblWhile.tooltip=Palabras encerrando la condición del bucle MIENTRAS
 ParserPreferences.lblRepeat.text=bucle REPETIR
-ParserPreferences.lblRepeat.tooltip=
+ParserPreferences.lblRepeat.tooltip=Palabras encerrando la condición del bucle REPETIR HASTA
+ParserPreferences.lblJump.text=Instrucción SALTO
+ParserPreferences.lblJump.tooltip=Palabras claves clasificando SALTOs para salir de una entidad...
+ParserPreferences.lblJumpLeave.text=del bucle
+ParserPreferences.lblJumpReturn.text=de subprograma
+ParserPreferences.lblJumpExit.text=de programa
 ParserPreferences.lblInput.text=Entrada
-ParserPreferences.lblInput.tooltip=
+ParserPreferences.lblInput.tooltip=Palabra clave calificando una instruccion de entrada
 ParserPreferences.lblOutput.text=Salida
-ParserPreferences.lblOutput.tooltip=
+ParserPreferences.lblOutput.tooltip=Palabra clave calificando una instruccion de salida
+ParserPreferences.chkIgnoreCase.text=Ignorar mayúsc./minúsc.
 ParserPreferences.btnOK.text=Aceptar
 ParserPreferences.btnOK.tooltip=Aceptar los cambios.
 ParserPreferences.lblErrorSign.text=¡No es permitido usar el carácter ':' dentro de un texto del Analizador!
-ParserPreferences.lblErrorSign2.text=¡El segundo texto clave del bucle FOR-IN no debe ser igual a qualquier otro texto del Analizador!
+ParserPreferences.lblErrorSign2.text=¡El segundo texto clave para el bucle PARA-EN no debe ser igual a ningún otro texto del Analizador!
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Previsualizar impresión
@@ -529,9 +541,12 @@ PrintPreview.btnOK.tooltip=Imprimir el diagrama.
 
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Preferencias de Exportación de código
+ExportOptionDialoge.noConversionCheckBox.text=No conversión del contenido de expresiones e instrucciones.
+ExportOptionDialoge.noConversionCheckBox.tooltip=Habilita esta opción si el contenido de los textos ya está escrito in la sintaxis del código de destinación..
 ExportOptionDialoge.commentsCheckBox.text=Exportar instrucciones como comentarios.
 ExportOptionDialoge.bracesCheckBox.text=Poner abrazadera abrienda al fin de la misma linea (C/C++/Java etc.).
 ExportOptionDialoge.lineNumbersCheckBox.text=Generar números de linea con el exporte (BASIC).
+ExportOptionDialoge.lbPrefGenerator.text=Preferido código de exportación:
 ExportOptionDialoge.jLabel1.text=Elije las preferencias, que quieres activar...
 ExportOptionDialoge.jButton1.text=Aceptar
 ExportOptionDialoge.jButton1.tooltip=Aceptar los cambios.
