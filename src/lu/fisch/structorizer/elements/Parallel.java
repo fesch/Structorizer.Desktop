@@ -46,6 +46,7 @@ package lu.fisch.structorizer.elements;
  *                                      KGU#151: nonsense removed from prepareDraw() and draw().
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016-04-01      Issue #145 (KGU#162): Comment is yet to be shown in switchText mode
  *
  ******************************************************************************************************
  *
@@ -90,13 +91,26 @@ public class Parallel extends Element
 	}
 
 	/**
-	 * Returns the content of the comment field. Full stop. No swapping here!
-	 * @return the comment StringList
+	 * Returns the content of the comment field unless _alwaysTrueComment is false and
+	 * mode isSwitchedTextAndComment is active, in which case the colapsedText is
+	 * returned. 
+	 * @param _alwaysTrueText - if true then mode isSwitchTextAndComment is ignored
+	 * @return either the text or the comment
 	 */
     @Override
-	public StringList getComment(boolean _ignored)
+	public StringList getComment(boolean _alwaysTrueComment)
 	{
-		return getComment();
+    	// START KGU#172 2016-04.01: Issue #145
+		//return getComment();
+		if (!_alwaysTrueComment && this.isSwitchTextCommentMode())
+		{
+			return this.getCollapsedText();
+		}
+		else
+		{
+			return this.getComment();
+		}
+		// END KGU#172 2016-04-01
 	}
     // END KGU#91 2015-12-01
     
@@ -274,6 +288,20 @@ public class Parallel extends Element
             this.y0Branches = 2 * (E_PADDING/2);
             // END KGU#136 2016-03-01
 
+            // START KGU#172 2016-04-01: Issue #145 Show comment in switch text/comment mode
+            if (this.isSwitchTextCommentMode())
+            {
+                FontMetrics fm = _canvas.getFontMetrics(Element.font);
+            	for (int ci = 0; ci < this.comment.count(); ci++)
+            	{
+            		rect0.right = Math.max(rect0.right, getWidthOutVariables(_canvas, this.comment.get(ci), this) + 2 * E_PADDING);
+            	}
+            	int extraHeight = this.comment.count() * fm.getHeight();
+            	rect0.bottom += extraHeight;
+            	this.y0Branches += extraHeight;
+            }
+            // END KGU#172 2016-04-01
+            
             // retrieve the number of parallel tasks
             int nTasks = Integer.valueOf(getText().get(0));
 
@@ -360,6 +388,7 @@ public class Parallel extends Element
             // draw shape
             myrect = _top_left.copy();
             myrect.bottom = _top_left.top + 2*fm.getHeight() + 4*(E_PADDING / 2);
+            
 
 //            int y = myrect.top + E_PADDING;
 //            int a = myrect.left + (myrect.right-myrect.left) / 2;
@@ -369,9 +398,12 @@ public class Parallel extends Element
 //            int x = ((y-b)*(c-a) + a*(d-b)) / (d-b);
 
             // draw comment
-            if (Element.E_SHOWCOMMENTS==true && !comment.getText().trim().isEmpty())
+            // START KGU#172 2016-04-01: Issue #145
+            //if (Element.E_SHOWCOMMENTS==true && !comment.getText().trim().isEmpty())
+            if (Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().isEmpty())
+            // END KGU#172 2016-04-01
             {
-    			this.drawCommentMark(canvas, myrect);
+    			this.drawCommentMark(canvas, _top_left);
     		}
             // START KGU 2015-10-11
     		// draw breakpoint bar if necessary
@@ -395,35 +427,78 @@ public class Parallel extends Element
 
             // corners
             myrect = _top_left.copy();
-
+            
+            // START KGU#172 2016-04-01: Issue #145 - we shall show the comment in switch mode
+            int headerHeight = 2*(E_PADDING/2);
+            int footerHeight = 2*(E_PADDING/2);
+            if (this.isSwitchTextCommentMode())
+            {
+            	headerHeight += this.comment.count() * fm.getHeight();
+            }
+            // END KGU#172 2016-04-01
+            
             canvas.moveTo(myrect.left, myrect.bottom - 2*(E_PADDING/2));
             canvas.lineTo(myrect.left + 2*(E_PADDING/2), myrect.bottom);
 
-            canvas.moveTo(myrect.left, myrect.top + 2*(E_PADDING/2));
+            // START KGU#172 2016-04-01: Bugfix #145
+            //canvas.moveTo(myrect.left, myrect.top + 2*(E_PADDING/2));
+            canvas.moveTo(myrect.left, myrect.top + headerHeight);
+            // END KGU#172 2016-04-01
             canvas.lineTo(myrect.left + 2*(E_PADDING/2), myrect.top);
 
             canvas.moveTo(myrect.right - 2*(E_PADDING/2), myrect.top);
-            canvas.lineTo(myrect.right, myrect.top + 2*(E_PADDING/2));
+            // START KGU#172 2016-04-01: Bugfix #145
+            //canvas.lineTo(myrect.right, myrect.top + 2*(E_PADDING/2));
+            canvas.lineTo(myrect.right, myrect.top + headerHeight);
+            // END KGU#172 2016-04-01
 
             canvas.moveTo(myrect.right - 2*(E_PADDING/2), myrect.bottom);
-            canvas.lineTo(myrect.right, myrect.bottom - 2*(E_PADDING/2));
+            // START KGU#172 2016-04-01: Bugfix #145
+            //canvas.lineTo(myrect.right, myrect.bottom - 2*(E_PADDING/2));
+            canvas.lineTo(myrect.right, myrect.bottom - footerHeight);
+            // END KGU#172 2016-04-01
 
             // horizontal lines
-            canvas.moveTo(myrect.left, myrect.top + 2*(E_PADDING/2));
-            canvas.lineTo(myrect.right, myrect.top + 2*(E_PADDING/2));
+            // START KGU#172 2016-04-01: Bugfix #145
+            //canvas.moveTo(myrect.left, myrect.top + 2*(E_PADDING/2));
+            //canvas.lineTo(myrect.right, myrect.top + 2*(E_PADDING/2));
+            canvas.moveTo(myrect.left, myrect.top + headerHeight);
+            canvas.lineTo(myrect.right, myrect.top + headerHeight);
+            // END KGU#172 2016-04-01
 
-            canvas.moveTo(myrect.left, myrect.bottom - 2*(E_PADDING/2));
-            canvas.lineTo(myrect.right, myrect.bottom - 2*(E_PADDING/2));
+            //canvas.lineTo(myrect.right, myrect.bottom - 2*(E_PADDING/2));
+            //canvas.moveTo(myrect.left, myrect.bottom - 2*(E_PADDING/2));
+            //canvas.lineTo(myrect.right, myrect.bottom - 2*(E_PADDING/2));
+            canvas.moveTo(myrect.left, myrect.bottom - footerHeight);
+            canvas.lineTo(myrect.right, myrect.bottom - footerHeight);
+            // END KGU#172 2016-04-01
+            
+            // START KGU#172 2016-04.01: Issue #145
+            // draw the comment in switch Text / Comment mode
+            if (this.isSwitchTextCommentMode())
+            {
+            	for (int ci = 0; ci < this.comment.count(); ci++)
+            	{
+            		this.writeOutVariables(_canvas, myrect.left + 2*(E_PADDING/2), 
+            				myrect.top + E_PADDING/2 + (ci + 1) * fm.getHeight(),
+            				this.comment.get(ci), this);
+            	}
+            }
+            // END KGU#172 2016-04-01
 
     		// START KGU#156 2016-03-11: Enh. #124
     		// write the run-time info if enabled
     		this.writeOutRuntimeInfo(canvas, myrect.right - (Element.E_PADDING * 2), myrect.top);
-    		// END KGU#156 2016-03-11    				
+    		// END KGU#156 2016-03-11				
             
             // draw children
             myrect = _top_left.copy();
-            myrect.top = _top_left.top + 2*(E_PADDING/2);
-            myrect.bottom = _top_left.bottom - 2*(E_PADDING/2);
+            // START KGU#172 2016-04-01: Issue #145 - consider the possible comment area
+            //myrect.top = _top_left.top + 2*(E_PADDING/2);
+            //myrect.bottom = _top_left.bottom - 2*(E_PADDING/2);
+            myrect.top = _top_left.top + headerHeight;
+            myrect.bottom = _top_left.bottom - footerHeight;
+            // END KGU#172 2016-04-01
             
             if (qs.size() != 0)
             {

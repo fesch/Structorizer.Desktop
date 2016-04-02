@@ -9,7 +9,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.24-04 (2016.03.29)
+Current development version: 3.24-05 (2016.04.02)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]
 - 01: Enh. #124: Generalized runtime data visualisation <Kay Gürtzig>
 - 01: Arranger now adopts current directory from first arranged diagram <Kay Gürtzig>
@@ -23,6 +23,12 @@ Current development version: 3.24-04 (2016.03.29)
 - 04: Enh. #135: Improved array support on BASH export [Rolf Schmidt]
 - 04: Bugfix #138: Lvalues with nested indices like arr[arr[0]] had failed <Kay Gürtzig>
 - 04: Bugfix #139: on BASH export Call instructions now converted <Kay Gürtzig>
+- 05: Issue #135: Further improvements on BASH export [Rolf Schmidt] <Kay Gürtzig>
+- 05: Enh. #142: New Accelerator keys (e.g. for switch text/comment) [Rolf Schmidt]
+- 05: Issue #143: Comment popups now close on editing and code export [Rolf Schmidt]
+- 05: Enh. #144: New export option to suppress content conversion <Kay Gürtzig>
+- 05: Enh. #144: New "favourite code export" menu item (export preference) [Rolf Schmidt]
+- 05: Issue #145: Swapped text/comment now works on CASE and PARALLEL elements <Kay Gürtzig>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
