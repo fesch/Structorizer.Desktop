@@ -40,6 +40,7 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2015.12.01      Methods concatenate(...) added; getText() etc. reduced to them.
  *      Kay Gürtzig     2016.01.08      Method replaceAllBetween() added, replaceAll etc. reduced to it.
  *      Kay Gürtzig     2016.03.26      Method subSequence() added.
+ *      Kay Gürtzig     2016.04.03      Method int removeAll(StringList, int, boolean) added
  *
  ******************************************************************************************************
  *
@@ -182,29 +183,39 @@ public class StringList {
 		}
 	}
 
+	/**
+	 * Inserts _string such that the elements be ordered by decreasing length
+	 * (longest ones first!). If _string is empty then it won't be added at all.
+	 * Elements of same length occur in order of insertion.
+	 * (Only works if the already contained elements represent the order described
+	 * above.
+	 * @param _string the string to be inserted
+	 */
 	public void addByLength(String _string)
 	{
-            if (!_string.equals(""))
-		if(count()==0)
+		if (!_string.equals(""))
 		{
-			add(_string);
-		}
-		else
-		{
-			boolean inserted = false;
-			for(int i=0;i<strings.size();i++)
-			{
-				if ((strings.get(i)).length()<_string.length())
-				{
-					strings.insertElementAt(_string,i);
-					inserted = true;
-					break;
-				}
-			}
-
-			if(inserted==false)
+			if(count()==0)
 			{
 				add(_string);
+			}
+			else
+			{
+				boolean inserted = false;
+				for(int i=0;i<strings.size();i++)
+				{
+					if ((strings.get(i)).length()<_string.length())
+					{
+						strings.insertElementAt(_string,i);
+						inserted = true;
+						break;
+					}
+				}
+
+				if(inserted==false)
+				{
+					add(_string);
+				}
 			}
 		}
 	}
@@ -786,6 +797,30 @@ public class StringList {
     	return nRemoved;
     }
     // END KGU 2015-11-25
+    
+    // START KGU 2018-04-03: New methods to ease case-independent manipulations
+    /**
+     * Removes all subsequences being equal to _subList, either case-independently
+     * or not, according to the _matchCase argument
+     * @param _subList - The subsequence to cut out
+     * @param _matchCase - if false then case is ignored
+     * @return the number of removed matches
+     */
+    public int removeAll(StringList _subList, boolean _matchCase)
+    {
+    	int nRemoved = 0;
+    	int pos = -1;
+    	while ((pos = this.indexOf(_subList, pos+1, _matchCase)) >= 0)
+    	{
+    		for (int i = 0; i < _subList.count(); i++)
+    		{
+    			strings.removeElementAt(pos);
+    		}
+    		nRemoved++;
+    	}
+    	return nRemoved;
+    }
+    // END KGU 2016-04-03
     
     // START KGU#92 2015-12-01: New method to facilitate bugfix #41
     /**

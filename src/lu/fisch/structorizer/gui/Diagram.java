@@ -56,6 +56,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.03.16      Bugfix #131: Precautions against replacement of Root under execution (KGU#158)
  *      Kay Gürtzig     2016.03.21      Enh. #84: FOR-IN loops considered in editing and parser preferences (KGU#61)
  *      Kay Gürtzig     2016-04-01      Issue #143 (comment popup off on editing etc.), Issue #144 (preferred code generator)
+ *      Kay Gürtzig     2016-04-04      Enh. #149: Characterset configuration for export supported
  *
  ******************************************************************************************************
  *
@@ -72,6 +73,7 @@ import java.awt.datatransfer.*;
 import net.iharder.dnd.*; //http://iharder.sourceforge.net/current/java/filedrop/
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.*;
 
 import javax.swing.*;
@@ -2833,6 +2835,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#170 2016-04-01: Enh. #144 Favourite export generator
             eod.cbPrefGenerator.setSelectedItem(ini.getProperty("genExportPreferred", "Java"));
             // END KGU#170 2016-04-01
+            // START KGU#168 2016-04-04: Issue #149 Charsets for export
+            eod.charsetListChanged(ini.getProperty("genExportCharset", Charset.defaultCharset().name()));
+            // END KGU#168 2016-04-04
             // START KGU 2014-11-18
             eod.setLang(NSDControl.getLang());
             // END KGU 2014-11-18
@@ -2849,10 +2854,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 ini.setProperty("genExportnoConversion", String.valueOf(eod.noConversionCheckBox.isSelected()));
                 // END KGU#162 2016-03-31
                 // START KGU#170 2016-04-01: Enh. #144 Favourite export generator
-                prefGeneratorName = (String)eod.cbPrefGenerator.getSelectedItem();
-                ini.setProperty("genExportPreferred", prefGeneratorName);
+                this.prefGeneratorName = (String)eod.cbPrefGenerator.getSelectedItem();
+                ini.setProperty("genExportPreferred", this.prefGeneratorName);
                 this.NSDControl.doButtons();
                 // END KGU#170 2016-04-01
+                // START KGU#168 2016-04-04: Issue #149 Charset for export
+                ini.setProperty("genExportCharset", (String)eod.cbCharset.getSelectedItem());
+                // END KGU#168 2016-04-04
                 ini.save();
             }
         } 

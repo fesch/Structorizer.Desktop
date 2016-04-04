@@ -45,6 +45,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
  *      Kay Gürtzig         2016.01.22      Bugfix/Enh. #84 (= KGU#100): Array initialisation
  *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
+ *      Kay Gürtzig         2016-04-04      Enh. #150 - Pascal functions ord and chr translated
  *
  ******************************************************************************************************
  *
@@ -179,6 +180,25 @@ public class BasGenerator extends Generator
 		tokens.replaceAll("[", "(");
 		tokens.replaceAll("]", ")");
 		tokens.replaceAll("div", "/");
+		// START KGU#150 2016-04-04: Handle Pascal ord and chr function
+		int pos = - 1;
+		while ((pos = tokens.indexOf("ord", pos+1)) >= 0 && pos+1 < tokens.count() && tokens.get(pos+1).equals("("))
+		{
+			tokens.set(pos, "Asc");
+		}
+		pos = -1;
+		while ((pos = tokens.indexOf("chr", pos+1)) >= 0 && pos+1 < tokens.count() && tokens.get(pos+1).equals("("))
+		{
+			if (this.optionBasicLineNumbering())
+			{
+				tokens.set(pos, "Chr$");
+			}
+			else
+			{
+				tokens.set(pos,  "Chr");
+			}
+		}
+		// END KGU#150 2016-04-04
 		if (tokens.contains("<-") && this.optionBasicLineNumbering())
 		{
 			// Insert a "LET" keyword but ensure a separating blank between it and the variable name
@@ -268,7 +288,7 @@ public class BasGenerator extends Generator
 	protected String transform(String _input)
 	{
 		// START KGU#101 2015-12-19: Enh. #54 - support lists of output expressions
-		if (_input.matches("^" + D7Parser.output.trim() + "[ ](.*?)"))
+		if (_input.matches("^" + getKeywordPattern(D7Parser.output.trim()) + "[ ](.*?)"))
 		{
 			// Replace commas by semicolons to avoid tabulation
 			StringList expressions = 
