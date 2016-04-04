@@ -76,6 +76,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.03.18      KGU#89: Language localization support slightly improved
  *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): Support for FOR-IN loops
  *      Kay Gürtzig     2016.03.29      Bugfix #139 (KGU#166) in getIndexValue() - nested index access failed
+ *      Kay Gürtzig     2016.04.03      KGU#150: Support for Pascal functions chr and ord
+ *                                      KGU#165: Case awareness consistency for keywords improved. 
  *
  ******************************************************************************************************
  *
@@ -1236,12 +1238,20 @@ public class Executor implements Runnable
 			pascalFunction = "public String trim(String s) { return s.trim(); }";
 			interpreter.eval(pascalFunction);
 			// START KGU#57 2015-11-07: More interoperability for characters and Strings
+			// char transformation
 			pascalFunction = "public Character lowercase(Character ch) { return (Character)Character.toLowerCase(ch); }";
 			interpreter.eval(pascalFunction);
 			pascalFunction = "public Character uppercase(Character ch) { return (Character)Character.toUpperCase(ch); }";
 			interpreter.eval(pascalFunction);
-			// char transformation
-			
+			// START KGU#150 2016-04-03
+			pascalFunction = "public int ord(Character ch) { return (int)ch; }";
+			interpreter.eval(pascalFunction);
+			// FIXME: Find a better suited exceptkon
+			pascalFunction = "public int ord(String s) throws Exception { if (s.length() == 1) return (int)s.charAt(0); else throw new Exception(); }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public char chr(int code) { return (char)code; }";
+			interpreter.eval(pascalFunction);
+			// END KGU#150 2016-04-03
 			// END KGU#57 2015-11-07
 		} catch (EvalError ex)
 		{
@@ -1869,7 +1879,7 @@ public class Executor implements Runnable
 				// START KGU#65 2015-11-04: Input keyword should only trigger this if positioned at line start
 				//else if (cmd.indexOf(D7Parser.input) >= 0)
 				else if (cmd.matches(
-						Matcher.quoteReplacement(D7Parser.input.trim()) + "([\\W].*|$)"))
+						this.getKeywordPattern(D7Parser.input) + "([\\W].*|$)"))
 				// END KGU#65 2015-11-04
 				{
 					result = tryInput(cmd);
@@ -1878,7 +1888,7 @@ public class Executor implements Runnable
 				// START KGU#65 2015-11-04: Output keyword should only trigger this if positioned at line start
 				//else if (cmd.indexOf(D7Parser.output) >= 0)
 				else if (cmd.matches(
-						Matcher.quoteReplacement(D7Parser.output.trim()) + "([\\W].*|$)"))
+						this.getKeywordPattern(D7Parser.output) + "([\\W].*|$)"))
 				// END KGU#65 2015-11-04
 				{
 					result = tryOutput(cmd);
@@ -1888,9 +1898,8 @@ public class Executor implements Runnable
 				// comparison should not be case-sensitive while D7Parser.preReturn isn't fully configurable,
 				// but a separator would be fine...
 				//else if (cmd.indexOf("return") >= 0)
-				else if (cmd.toLowerCase().matches(
-						Matcher.quoteReplacement(
-								D7Parser.preReturn.toLowerCase()) + "([\\W].*|$)"))
+				else if (cmd.matches(
+						this.getKeywordPattern(D7Parser.preReturn) + "([\\W].*|$)"))
 				// END KGU 2015-11-11
 				{		 
 					result = tryReturn(cmd.trim());
@@ -2013,15 +2022,16 @@ public class Executor implements Runnable
 			tokens.removeAll(" ");
 			try
 			{
+				boolean startsWithLeave = tokens.indexOf(D7Parser.preLeave, !D7Parser.ignoreCase) == 0;
 				// Single-level break? (An empty Jump is also a break!)
-				if (tokens.indexOf(D7Parser.preLeave) == 0 && tokens.count() == 1 ||
+				if (startsWithLeave && tokens.count() == 1 ||
 						cmd.isEmpty() && i == sl.count() - 1)
 				{
 					this.leave++;
 					done = true;
 				}
 				// Multi-level leave?
-				else if (tokens.indexOf(D7Parser.preLeave) == 0)
+				else if (startsWithLeave)
 				{
 					int nLevels = 1;
 					if (tokens.count() > 1)
@@ -2038,13 +2048,13 @@ public class Executor implements Runnable
 					done = true;
 				}
 				// Unstructured return from the routine?
-				else if (tokens.indexOf(D7Parser.preReturn) == 0)
+				else if (tokens.indexOf(D7Parser.preReturn, !D7Parser.ignoreCase) == 0)
 				{
 					result = tryReturn(convert(sl.get(i)));
 					done = true;
 				}
 				// Exit from the entire program - simply handled like an error here.
-				else if (tokens.indexOf(D7Parser.preExit) == 0)
+				else if (tokens.indexOf(D7Parser.preExit, !D7Parser.ignoreCase) == 0)
 				{
 					int exitValue = 0;
 					try {
@@ -2582,18 +2592,29 @@ public class Executor implements Runnable
 		try
 		{
 			String s = element.getText().getText();
-			if (!D7Parser.preAlt.equals(""))
+			// START KGU#150 2016-04-03: More precise processing
+//			if (!D7Parser.preAlt.equals(""))
+//			{
+//				// FIXME: might damage variable names
+//				s = BString.replace(s, D7Parser.preAlt, "");
+//			}
+//			if (!D7Parser.postAlt.equals(""))
+//			{
+//				// FIXME: might damage variable names
+//				s = BString.replace(s, D7Parser.postAlt, "");
+//			}
+//
+//			s = convert(s);
+			StringList tokens = Element.splitLexically(s, true);
+			for (String key : new String[]{D7Parser.preAlt, D7Parser.postAlt})
 			{
-				// FIXME: might damage variable names
-				s = BString.replace(s, D7Parser.preAlt, "");
+				if (!key.trim().isEmpty())
+				{
+					tokens.removeAll(Element.splitLexically(key, false), !D7Parser.ignoreCase);
+				}		
 			}
-			if (!D7Parser.postAlt.equals(""))
-			{
-				// FIXME: might damage variable names
-				s = BString.replace(s, D7Parser.postAlt, "");
-			}
-
-			s = convert(s);
+			s = convert(tokens.concatenate());
+			// END KGU#150 2016-04-03
 
 			//System.out.println("C=  " + interpreter.get("C"));
 			//System.out.println("IF: " + s);
@@ -2666,21 +2687,32 @@ public class Executor implements Runnable
 			String condStr = "true";	// Condition expression
 			if (!eternal) {
 				condStr = ((While) element).getText().getText();
-				if (!D7Parser.preWhile.equals(""))
+				// START KGU#150 2016-04-03: More precise processing
+//				if (!D7Parser.preWhile.equals(""))
+//				{
+//					// FIXME: might damage variable names
+//					condStr = BString.replace(condStr, D7Parser.preWhile, "");
+//				}
+//				if (!D7Parser.postWhile.equals(""))
+//				{
+//					// FIXME: might damage variable names
+//					condStr = BString.replace(condStr, D7Parser.postWhile, "");
+//				}
+//				// START KGU#79 2015-11-12: Forgotten zu write back the result!
+//				//convert(condStr, false);
+//				condStr = convert(condStr, false);
+//				// END KGU#79 2015-11-12
+//				// System.out.println("WHILE: "+condStr);
+				StringList tokens = Element.splitLexically(condStr, true);
+				for (String key : new String[]{D7Parser.preWhile, D7Parser.postWhile})
 				{
-					// FIXME: might damage variable names
-					condStr = BString.replace(condStr, D7Parser.preWhile, "");
+					if (!key.trim().isEmpty())
+					{
+						tokens.removeAll(Element.splitLexically(key, false), !D7Parser.ignoreCase);
+					}		
 				}
-				if (!D7Parser.postWhile.equals(""))
-				{
-					// FIXME: might damage variable names
-					condStr = BString.replace(condStr, D7Parser.postWhile, "");
-				}
-				// START KGU#79 2015-11-12: Forgotten zu write back the result!
-				//convert(condStr, false);
-				condStr = convert(condStr, false);
-				// END KGU#79 2015-11-12
-				// System.out.println("WHILE: "+condStr);
+				condStr = convert(tokens.concatenate());
+				// END KGU#150 2016-04-03
 			}
 
 			//int cw = 0;
@@ -2801,22 +2833,28 @@ public class Executor implements Runnable
 			// And, of course, variables only introduced within the loop won't be recognised--
 			// which is sound with scope rules in C or Java.
 			String condStr = element.getText().getText();
-			if (!D7Parser.preRepeat.equals(""))
+			// STRT KGU#150 2016-04-03: More pecise processing
+//			if (!D7Parser.preRepeat.equals(""))
+//			{
+//				// FIXME: might damage variable names
+//				condStr = BString.replace(condStr, D7Parser.preRepeat, "");
+//			}
+//			if (!D7Parser.postRepeat.equals(""))
+//			{
+//				// FIXME: might damage variable names
+//				condStr = BString.replace(condStr, D7Parser.postRepeat, "");
+//			}
+//			condStr = convert(condStr, false);
+			StringList tokens = Element.splitLexically(condStr, true);
+			for (String key : new String[]{D7Parser.preRepeat, D7Parser.postRepeat})
 			{
-				// FIXME: might damage variable names
-				condStr = BString.replace(condStr, D7Parser.preRepeat, "");
+				if (!key.trim().isEmpty())
+				{
+					tokens.removeAll(Element.splitLexically(key, false), !D7Parser.ignoreCase);
+				}		
 			}
-			if (!D7Parser.postRepeat.equals(""))
-			{
-				// FIXME: might damage variable names
-				condStr = BString.replace(condStr, D7Parser.postRepeat, "");
-			}
-			// s=s.replace("==", "=");
-			// s=s.replace("=", "==");
-			// s=s.replace("<==", "<=");
-			// s=s.replace(">==", ">=");
-			condStr = convert(condStr, false);
-			// System.out.println("REPEAT: "+s
+			condStr = convert(tokens.concatenate());
+			// END KGU#150 2016-04-03
 
 			//int cw = 0;
 			Object n = interpreter.eval(condStr);
@@ -3412,6 +3450,24 @@ public class Executor implements Runnable
 		return index;
 	}
 	// END KGU#33/KGU#34 2014-12-05
+	
+	// START KGU#165 2016-04-03: Support keyword case sensitivity
+	/**
+	 * Returns an appropriate match string for the given parser preference string
+	 * (where D7Parser.ignoreCase is paid attention to)
+	 * @param keyword - parser preference string
+	 * @return match pattern
+	 */
+	private String getKeywordPattern(String keyword)
+	{
+		String pattern = Matcher.quoteReplacement(keyword);
+		if (D7Parser.ignoreCase)
+		{
+			pattern = BString.breakup(pattern);
+		}
+		return pattern;
+	}
+	// END KGU#165 2016-04-03
 	
 	// START KGU#156 2016-03-10: An interface for an external update trigger was needed
 	public void redraw()

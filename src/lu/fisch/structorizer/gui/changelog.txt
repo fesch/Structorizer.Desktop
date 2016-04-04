@@ -9,7 +9,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.24-05 (2016.04.02)
+Current development version: 3.24-06 (2016.04.xx)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]
 - 01: Enh. #124: Generalized runtime data visualisation <Kay Gürtzig>
 - 01: Arranger now adopts current directory from first arranged diagram <Kay Gürtzig>
@@ -29,6 +29,10 @@ Current development version: 3.24-05 (2016.04.02)
 - 05: Enh. #144: New export option to suppress content conversion <Kay Gürtzig>
 - 05: Enh. #144: New "favourite code export" menu item (export preference) [Rolf Schmidt]
 - 05: Issue #145: Swapped text/comment now works on CASE and PARALLEL elements <Kay Gürtzig>
+- 06: Pascal functions ord and chr supported (Executor + Code generators) <Kay Gürtzig>
+- 06: Executor: Keyword case awareness (configurable) consistently ensured <Kay Gürtzig>
+- 06: Issue #149: Character set (encoding) for export now selectable [Rolf Schmidt]
+- 06: Issue #151: Code export pumped the process up with useless GUI threads <Kay Gürtzig>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]

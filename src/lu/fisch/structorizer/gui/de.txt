@@ -44,6 +44,7 @@
  *      Kay Gürtzig         2016.03.21  Enh. #84: Messages related to FOR-IN loops added
  *      Kay Gürtzig         2016.03.31  Enh. #23: ParserPreferences for JUMP statements,
  *      Kay Gürtzig         2016.04.01  Enh. #144: New ExportOptionDialog and Menu messages
+ *      Kay Gürtzig         2016.04.04  Issue #149: New ExportOptionDialog messages for charset setting
  *
  ******************************************************************************************************
  *
@@ -546,6 +547,8 @@ ExportOptionDialoge.commentsCheckBox.text=Anweisungen als Kommentare exportieren
 ExportOptionDialoge.bracesCheckBox.text=Öffnende Blockklammern ans Ende der Zeile (C/C++/Java etc.).
 ExportOptionDialoge.lineNumbersCheckBox.text=Zeilennummern mitgenerieren (BASIC).
 ExportOptionDialoge.lbPrefGenerator.text=Bevorzugte Code-Export-Sprache:
+ExportOptionDialoge.lbCharset.txt=Zeichensatz (Codierung):
+ExportOptionDialoge.chkCharsetAll.txt=Alle auflisten
 ExportOptionDialoge.jLabel1.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Speichern der gewählten Einstellungen.
