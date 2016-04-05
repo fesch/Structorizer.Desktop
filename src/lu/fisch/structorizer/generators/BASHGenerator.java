@@ -732,9 +732,9 @@ public class BASHGenerator extends Generator {
 		code.add(_indent + varName + "=\"\"");
 		for (Subqueue q : _para.qs)
 		{
-			code.add(_indent + "{");
+			code.add(_indent + "(");
 			generateCode(q, indent1);
-			code.add(_indent + "} &");
+			code.add(_indent + ") &");
 			code.add(_indent + varName + "=\"${" + varName + "} $!\"");
 		}
 		code.add(_indent + "wait ${" + varName + "}");
