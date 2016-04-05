@@ -71,4 +71,20 @@
     nbproject/build-impl.xml file. 
 
     -->
+
+    <!-- target to build the OSX wrapper -->
+    <target name="Structorizer">
+        <bundleapp outputdirectory="./Structorizer/"
+            name="Structorizer"
+            displayname="Structorizer"
+            identifier="lu.fisch.Structorizer"
+            mainclassname="Structorizer"
+            icon="icons/Structorizer.icns"
+            copyright="Bob Fisch">
+            <classpath file="dist/Structorizer.jar" />
+            <classpath file="dist/lib/*" />
+        </bundleapp>
+    </target>
+
+
 </project>

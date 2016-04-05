@@ -1,0 +1,473 @@
+﻿/*
+    Structorizer russian language file
+
+    Copyright (C) 2011 Yura Lebedev
+
+    This file is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or any
+    later version.
+
+    This file is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    This file is part of the "Structorizer" project.     
+*/
+
+/******************************************************************************************************
+ *
+ *      Author:         Yura Lebedev
+ *
+ *      Description:    The Russian language file
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date			Description
+ *      ------		----			-----------
+ *      Kay Gürtzig		2014.12.02		ExportOptionDialoge and further messages added
+ *      Kay Gürtzig 	2015.10.06		altPadRight added to Preferences dialog
+ *      Kay Gürtzig     2015.10.14		InputBox-specific part enhanced
+ *
+ ******************************************************************************************************
+ *
+ *      Email: elita.alegator@gmail.com
+ *
+ ******************************************************************************************************/
+
+-----[ Menu ]-----
+//Menu File
+Menu.menuFile.text=Файл
+// Submenus of "File"
+Menu.menuFileNew.text=Новый
+Menu.menuFileOpen.text=Открыть ...
+Menu.menuFileOpenRecent.text=Открыть последний файл ...
+Menu.menuFileSave.text=Сохранить
+Menu.menuFileSaveAs.text=Сохранить как ...
+Menu.menuFileExport.text=Экспорт
+// Submenu of "File -> Export"
+Menu.menuFileExportPicture.text=Изображение ...
+Menu.menuFileExportCode.text=Язык (код) ...
+Menu.menuFileImport.text=Импорт
+// Submenu of "File -> Import"
+Menu.menuFileImportPascal.text=Язык Pascal ...
+Menu.menuFilePrint.text=Печать ...
+Menu.menuFileQuit.text=Выход
+// Menu "Edit"
+Menu.menuEdit.text=Правка
+// Submenu of "Edit"
+Menu.menuEditUndo.text=Отменить
+Menu.menuEditRedo.text=Повторить
+Menu.menuEditCut.text=Вырезать
+Menu.menuEditCopy.text=Копировать
+Menu.menuEditPaste.text=Вставить
+Menu.menuEditCopyDiagramPNG.text=Копировать изображение PNG
+Menu.menuEditCopyDiagramEMF.text=Копировать изображение EMF
+// Menu "Diagram"
+Menu.menuDiagram.text=Схема
+// Submenus of "Diagram"
+Menu.menuDiagramAdd.text=Добавить
+// Submenu "Diagram -> Add -> Before"
+Menu.menuDiagramAddBefore.text=До
+// Submenus for adding Elements "Before"
+Menu.menuDiagramAddBeforeInst.text=Инструкция
+Menu.menuDiagramAddBeforeAlt.text=Оператор ветвления IF
+Menu.menuDiagramAddBeforeCase.text=Оператор множественного выбора CASE
+Menu.menuDiagramAddBeforeFor.text=Цикл FOR
+Menu.menuDiagramAddBeforeWhile.text=Цикл WHILE
+Menu.menuDiagramAddBeforeRepeat.text=Цикл REPEAT
+Menu.menuDiagramAddBeforeForever.text=Цикл ENDLESS
+Menu.menuDiagramAddBeforeCall.text=Вызов процедуры
+Menu.menuDiagramAddBeforeJump.text=Переход
+Menu.menuDiagramAddBeforePara.text=Паралельный процесс
+// Submenu "Diagram -> Add -> After"
+Menu.menuDiagramAddAfter.text=После
+// Submenus for adding Elements "After"
+Menu.menuDiagramAddAfterInst.text=Инструкция
+Menu.menuDiagramAddAfterAlt.text=Оператор ветвления IF
+Menu.menuDiagramAddAfterCase.text=Оператор множественного выбора CASE
+Menu.menuDiagramAddAfterFor.text=Цикл FOR
+Menu.menuDiagramAddAfterWhile.text=Цикл WHILE
+Menu.menuDiagramAddAfterRepeat.text=Цикл REPEAT
+Menu.menuDiagramAddAfterForever.text=Цикл ENDLESS
+Menu.menuDiagramAddAfterCall.text=Вызов процедуры
+Menu.menuDiagramAddAfterJump.text=Переход
+Menu.menuDiagramAddAfterPara.text=Паралельный процесс
+Menu.menuDiagramEdit.text=Изменить
+Menu.menuDiagramDelete.text=Удалить
+Menu.menuDiagramMoveUp.text=Вверх
+Menu.menuDiagramMoveDown.text=Вниз
+Menu.menuDiagramType.text=Тип
+Menu.menuDiagramTypeProgram.text=Программа
+Menu.menuDiagramTypeFunction.text=Подпрограмма
+Menu.menuDiagramNice.text=Поля диаграммы
+Menu.menuDiagramComment.text=Показывать комментарии
+Menu.menuDiagramSwitchComments.text=Обменить тексты/комментарии
+Menu.menuDiagramMarker.text=Подсвечивать переменные
+Menu.menuDiagramDIN.text=DIN
+Menu.menuDiagramAnalyser.text=Анализировать схему 
+// Menu "Help"
+Menu.menuPreferences.text=Настройки
+// Submenu of "Help"
+Menu.menuPreferencesFont.text=Шрифт ...
+Menu.menuPreferencesColors.text=Цвет ...
+Menu.menuPreferencesOptions.text=Структур ...
+Menu.menuPreferencesParser.text=Парсер ...
+Menu.menuPreferencesAnalyser.text=Анализатор ...
+Menu.menuPreferencesExport.text=Экспорт ...
+Menu.menuPreferencesLanguage.text=Язык
+Menu.menuPreferencesLanguageEnglish.text=Английский
+Menu.menuPreferencesLanguageGerman.text=Германский
+Menu.menuPreferencesLanguageFrench.text=Француский
+Menu.menuPreferencesLanguageDutch.text=Голландский
+Menu.menuPreferencesLanguageLuxemburgish.text=Люксембургский
+Menu.menuPreferencesLanguageSpanish.text=Испанский
+Menu.menuPreferencesLanguageItalian.text=Итальянский
+Menu.menuPreferencesLanguagePortugalBrazil.text=Португальский (бразильский)
+Menu.menuPreferencesLanguageSimplifiedChinese.text=Китайский (упрощен)
+Menu.menuPreferencesLanguageTraditionalChinese.text=Китайский (традиционен)
+Menu.menuPreferencesLanguageCzech.text=Чeшский
+Menu.menuPreferencesLanguageRussian.text=Русский
+Menu.menuPreferencesLanguagePolish.text=Польский
+
+Menu.menuPreferencesLookAndFeel.text=Внешний вид
+
+Menu.menuPreferencesSave.text=Bсе настройки ...
+Menu.menuPreferencesSaveAll.text=Сохранить
+Menu.menuPreferencesSaveDump.text=Сохранить как ...
+Menu.menuPreferencesSaveLoad.text=Ввезти из файла ...
+
+// Menu "Help"
+Menu.menuHelp.text=Помощь
+// Submenu of "Help"
+Menu.menuHelpAbout.text=О программе ...
+Menu.menuHelpUpdate.text=Обновления ...
+// Error messages for analyser
+Menu.error01_1.text=ВНИМАНИЕ: Не обнаружено переменной цикла ...
+Menu.error01_2.text=ВНИМАНИЕ: Обнаружено более одной переменной цикла ...
+Menu.error01_3.text=Вы не можете изменить переменную цикла «%» внутри цикла!
+Menu.error02.text=Не обноружено изменение переменных в условии. Возможен бесконечный цикл ...
+Menu.error03_1.text=Переменная «%» не была инициализирована!
+Menu.error03_2.text=Переменная «%» возможно не была инициализирована!
+Menu.error04.text=Вы не можете использовать оператор IF с пустым блоком TRUE!
+Menu.error05.text=Переменная «%» должна быть написана в верхнем регистре!
+Menu.error06.text=Имя программы «%» должно быть написано в верхнем регистре!
+Menu.error07_1.text=«%» не является допустимым названием программы или метода!
+Menu.error07_2.text=«%» не является допустимым названием параметра!
+Menu.error07_3.text=«%» не является допустимым названием переменной!
+Menu.error08.text=Не разрешается делать присваивание внутри условия.
+Menu.error09.text=Ваша программа («%») не может иметь такое же название как переменная или параметр!
+Menu.error10_1.text=Единственная инструкция не должна содержать инструкций ввода/вывода и заданий!
+Menu.error10_2.text=Единственная инструкция не должна содержать входные и выходные инструкции!
+Menu.error10_3.text=Единственная инструкция не должна содержать входные инструкции и задания!
+Menu.error10_4.text=Единственная инструкция не должна содержать выходные инструкции и задания!
+Menu.error11.text=Ошибка присвоения значения. Пожалуйста, проверьте эту инструкцию!
+Menu.error12.text=Параметр «%» должен начинаться с маленькой буквы "р", а только затем заглавные буквы!
+Menu.error13_1.text=Ваша функция не возвращает никакого результата!
+Menu.error13_2.text=Ваша функция может не вернуть результат!
+
+-----[ AnalyserPreferences ]-----
+AnalyserPreferences.title=Настройки анализатора 
+AnalyserPreferences.check1.text=Проверять изменение переменной цикла.
+AnalyserPreferences.check2.text=Проверять конец цикла (возможен бесконечный цикл!).
+AnalyserPreferences.check3.text=Проверять неинициализированные переменные.
+AnalyserPreferences.check4.text=Проверять неправильное использлование оператора IF.
+AnalyserPreferences.check5.text=Проверять переменные на наличие имен в верхнем регистре. (LUX/MEN)
+AnalyserPreferences.check6.text=Проверять имя программы и функций на наличие имен в верхнем регистре. (LUX/MEN)
+AnalyserPreferences.check7.text=Проверять правильность идентификаторов.
+AnalyserPreferences.check8.text=Проверять присваивание в условиях.
+AnalyserPreferences.check9.text=Проверять, что имя программы/функций не совпадает с любым другим идентификатором.
+AnalyserPreferences.check10.text=Проверять инструкции с несколькими командами.
+AnalyserPreferences.check11.text=Проверять ошибки присваивания.
+AnalyserPreferences.check12.text=Проверять правильность имени параметра. (LUX/MEN)
+AnalyserPreferences.check13.text=Проверять всегда ли возращается результат.
+AnalyserPreferences.okButton.text=OK
+
+
+
+-----[ Diagram ]-----
+// Buttons
+// I/O
+Editor.btnNew.tooltip=Создать новую пустую схему.
+Editor.btnOpen.tooltip=Открыть схему.
+Editor.btnSave.tooltip=Сохранить схему.
+// InsertBefore
+Editor.btnBeforeInst.tooltip=Добавить новую инструкцию перед выбранным элементом. 
+Editor.btnBeforeAlt.tooltip=Добавить оператор IF перед выбранным элементом.
+Editor.btnBeforeFor.tooltip=Добавить цикл FOR перед выбранным элементом.
+Editor.btnBeforeWhile.tooltip=Добавить цикл WHILE перед выбранным элементом.
+Editor.btnBeforeRepeat.tooltip=Добавить цикл REPEAT перед выбранным элементом.
+Editor.btnBeforeForever.tooltip=Добавить цикл ENDLESS перед выбранным элементом.
+Editor.btnBeforeCall.tooltip=Добавить новый вызов процедуры перед выбранным элементом.
+Editor.btnBeforeJump.tooltip=Добавить новый JUMP перед выбранным элементом.
+Editor.btnBeforeCase.tooltip=Добавить новый оператор CASE перед выбранным элементом.
+Editor.btnBeforePara.tooltip=Добавить новый "Параллельный процесс" перед выбранным элементом.
+// InsertAfter
+Editor.btnAfterInst.tooltip=Добавить новую инструкцию после выбранного элемента.
+Editor.btnAfterAlt.tooltip=Добавить оператор IF после выбранного элемента.
+Editor.btnAfterFor.tooltip=Добавить цикл FOR после выбранного элемента.
+Editor.btnAfterWhile.tooltip=Добавить цикл WHILE после выбранного элемента.
+Editor.btnAfterRepeat.tooltip=Добавить цикл REPEAT после выбранного элемента.
+Editor.btnAfterForever.tooltip=Добавить цикл ENDLESS после выбранного элемента.
+Editor.btnAfterCall.tooltip=Добавить новый "вызов процедуры" после выбранного элемента.
+Editor.btnAfterJump.tooltip=Добавить новый JUMP после выбранного элемента.
+Editor.btnAfterCase.tooltip=Добавить новый оператор CASE после выбранного элемента.
+Editor.btnAfterPara.tooltip=Добавить новый "Параллельный процесс" после выбранного элемента.
+// undo & redo
+Editor.btnUndo.tooltip=Отменить последнее действие.
+Editor.btnRedo.tooltip=Повторить последнее действие.
+// copy & paste
+Editor.btnCut.tooltip=Вырезать выбранный элемент.
+Editor.btnCopy.tooltip=Скопировать выбранный элемент.
+Editor.btnPaste.tooltip=Вставить скопированный или вырезанный элемент.
+// style 
+Editor.btnNice.tooltip=Переключить визуальный стиль схемы.
+Editor.btnFunction.tooltip=Подпрограмма (закругленные углы).
+Editor.btnProgram.tooltip=Программа (прямые углы).
+// editing
+Editor.btnEdit.tooltip=Изменить выбранный элемент.
+Editor.btnDelete.tooltip=Удалить выбранный элемент.
+Editor.btnMoveUp.tooltip=Переместить выбранный элемент на одну позицию вверх.
+Editor.btnMoveDown.tooltip=Переместить выбранный элемент на одну позицию вниз.
+//printing
+Editor.btnPrint.tooltip=Распечатать схему.
+// font
+Editor.btnFontUp.tooltip=Увеличить размера шрифта.
+Editor.btnFontDown.tooltip=Уменьшить размера шрифта.
+// copyright 
+Editor.btnAbout.tooltip=Показать информационное сообщение о Structorizer.
+// colors
+Editor.btnColor0.tooltip=Окрасить выбранный элемент этим цветом.
+Editor.btnColor1.tooltip=Окрасить выбранный элемент этим цветом.
+Editor.btnColor2.tooltip=Окрасить выбранный элемент этим цветом.
+Editor.btnColor3.tooltip=Окрасить выбранный элемент этим цветом.
+Editor.btnColor4.tooltip=Окрасить выбранный элемент этим цветом.
+Editor.btnColor5.tooltip=Окрасить выбранный элемент этим цветом.
+Editor.btnColor6.tooltip=Окрасить выбранный элемент этим цветом.
+Editor.btnColor7.tooltip=Окрасить выбранный элемент этим цветом.
+Editor.btnColor8.tooltip=Окрасить выбранный элемент этим цветом.
+Editor.btnColor9.tooltip=Окрасить выбранный элемент этим цветом.
+// execution 
+Editor.btnTurtle.tooltip=Открыть Turtleizer ...
+Editor.btnMake.tooltip=Выполнить ...
+Editor.btnDropBrk.tooltip=Удалить все остановочные пункты
+
+// Popup menu
+Editor.popupCut.text=Вырезать
+Editor.popupCopy.text=Копировать
+Editor.popupPaste.text=Вставить
+Editor.popupAdd.text=Добавить
+// Submenu of "Add"
+Editor.popupAddBefore.text=До
+// Submenus of "Add -> Before"
+Editor.popupAddBeforeInst.text=Инструкцию
+Editor.popupAddBeforeAlt.text=IF statement
+Editor.popupAddBeforeCase.text=CASE statement
+Editor.popupAddBeforeFor.text=FOR loop
+Editor.popupAddBeforeWhile.text=WHILE loop
+Editor.popupAddBeforeRepeat.text=REPEAT loop
+Editor.popupAddBeforeForever.text=ENDLESS loop
+Editor.popupAddBeforeCall.text=Вызов процедуры
+Editor.popupAddBeforeJump.text=Переход
+Editor.popupAddBeforePara.text=Параллельный процесс
+// After
+Editor.popupAddAfter.text=После
+// Submenus of "Add -> After"
+Editor.popupAddAfterInst.text=Инструкцию
+Editor.popupAddAfterAlt.text=IF statement
+Editor.popupAddAfterCase.text=CASE statement
+Editor.popupAddAfterFor.text=FOR loop
+Editor.popupAddAfterWhile.text=WHILE loop
+Editor.popupAddAfterRepeat.text=REPEAT loop
+Editor.popupAddAfterForever.text=ENDLESS loop
+Editor.popupAddAfterCall.text=Вызов процедуры
+Editor.popupAddAfterJump.text=Переход
+Editor.popupAddAfterPara.text=Параллельный процесс
+// Edit	
+Editor.popupEdit.text=Изменить
+Editor.popupDelete.text=Удалить
+Editor.popupMoveUp.text=Переместить вверх
+Editor.popupMoveDown.text=Переместить вниз
+// Breakpoint
+Editor.popupBreakpoint.text=Сменить остановочный пункт
+
+-----[ InputBox ]-----
+//InputBox.title=Изменение элемента
+InputBox.lblText.text=Пожалуйста, введите текст
+InputBox.lblText.tooltip=
+InputBox.lblComment.text=Комментарий
+InputBox.lblComment.tooltip=
+InputBox.txtText.tooltip=Содержание элемента.
+InputBox.txtComment.tooltip=Комментарий элемента.
+InputBox.btnOK.text=OK
+InputBox.btnOK.tooltip=Подтвердить ваш выбор.
+InputBox.btnCancel.text=Отменить
+InputBox.btnCancel.tooltip=Отменить ваш выбор.
+InputBox.chkBreakpoint.text=Остановочный пункт?
+InputBox.class_specific.Root=Изменить название Программы... 
+InputBox.class_specific.Function=Изменить название и парaметры Подпрограммы... 
+InputBox.class_specific.Alternative.update=Изменить оператор IF...
+InputBox.class_specific.Instruction.insert=Добавить новую инструкцию... 
+InputBox.class_specific.Alternative.insert=Добавить оператор IF...
+InputBox.class_specific.For.insert=Добавить цикл FOR...
+InputBox.class_specific.While.insert=Добавить цикл WHILE...
+InputBox.class_specific.Repeat.insert=Добавить цикл REPEAT...
+InputBox.class_specific.Forever.insert=Добавить цикл ENDLESS...
+InputBox.class_specific.Call.insert=Добавить новый вызов процедуры...
+InputBox.class_specific.Jump.insert=Добавить новый JUMP...
+InputBox.class_specific.Case.insert=Добавить новый оператор CASE...
+InputBox.class_specific.Parallel.insert=Добавить новый "Параллельный процесс"...
+InputBox.class_specific.Instruction.update=Изменить инструкцию... 
+InputBox.class_specific.Alternative.update=Изменить оператор IF...
+InputBox.class_specific.For.update=Изменить цикл FOR...
+InputBox.class_specific.While.update=Изменить цикл WHILE...
+InputBox.class_specific.Repeat.update=Изменить цикл REPEAT...
+InputBox.class_specific.Forever.update=Изменить цикл ENDLESS...
+InputBox.class_specific.Call.update=Изменить вызов процедуры...
+InputBox.class_specific.Jump.update=Изменить JUMP...
+InputBox.class_specific.Case.update=Изменить оператор CASE...
+InputBox.class_specific.Parallel.update=Изменить "Параллельный процесс"...
+InputBox.class_specific.Alternative.lblText=Пожалуйста, введите условие
+InputBox.class_specific.While.lblText=Пожалуйста, введите условие входа
+InputBox.class_specific.Repeat.lblText=Пожалуйста, введите условие выхода
+InputBox.class_specific.Case.lblText=Пожалуйста, введите выражение выбора и случайные константы (построчно)
+
+
+-----[ Preferences ]-----
+Preferences.title=Настройка структур
+Preferences.pnlAlt.border=Оператор IF
+Preferences.pnlAlt.tooltip=
+Preferences.lblAltT.text=Метка TRUE
+Preferences.lblAltT.tooltip=Метка левой стороны.
+Preferences.lblAltF.text=Метка FALSE
+Preferences.lblAltF.tooltip=Метка правой стороны.
+Preferences.lblAltContent.text=Содержимое по умолчанию
+Preferences.lblAltContent.tooltip=Содержимое по умолчанию для IF.
+Preferences.altPadRight.text=Расширять FALSE
+Preferences.pnlCase.border=Оператор CASE
+Preferences.pnlCase.tooltip=
+Preferences.lblCase.text=Содержимое по умолчанию
+Preferences.lblCase.tooltip=Содержимое по умолчанию для CASE.
+Preferences.pnlFor.border=Цикл FOR
+Preferences.pnlFor.tooltip=
+Preferences.lblFor.text=Содержимое по умолчанию
+Preferences.lblFor.tooltip=Содержимое по умолчанию для FOR.
+Preferences.pnlWhile.border=Цикл WHILE
+Preferences.pnlWhile.tooltip=
+Preferences.lblWhile.text=Содержимое по умолчанию
+Preferences.lblWhile.tooltip=Содержимое по умолчанию для WHILE.
+Preferences.pnlRepeat.border=Цикл REPEAT
+Preferences.pnlRepeat.tooltip=
+Preferences.lblRepeat.text=Содержимое по умолчанию
+Preferences.lblRepeat.tooltip=Содержимое по умолчанию для REPEAT.
+Preferences.btnOK.text=OK
+Preferences.btnOK.tooltip=Подтвердите свой выбор.
+
+
+-----[ About ]-----
+About.title=About
+About.pnlTabbed.tab.0=Участники проекта
+About.pnlTabbed.tab.1=Изменения
+About.btnOK.text=OK
+About.btnOK.tooltip=Подтвердите свой выбор.
+
+
+-----[ FontChooser ]-----
+FontChooser.title=Шрифт
+FontChooser.lblTest.tooltip=Тестовая строка. Так шрифт будет выглядеть позднее в редакторе.
+FontChooser.lblName.text=Имя
+FontChooser.lblName.tooltip=Название выбранного шрифта.
+FontChooser.lblSize.text=Размер
+FontChooser.lblSize.tooltip=Рамер выбранного шрифта.
+FontChooser.btnOK.text=OK
+FontChooser.btnOK.tooltip=Подтвердите свой выбор.
+
+
+-----[ Colors ]-----
+Colors.title=Настройки цвета
+Colors.lblColor0.text=Цвет 0
+Colors.lblColor1.text=Цвет 1
+Colors.lblColor2.text=Цвет 2
+Colors.lblColor3.text=Цвет 3
+Colors.lblColor4.text=Цвет 4
+Colors.lblColor5.text=Цвет 5
+Colors.lblColor6.text=Цвет 6
+Colors.lblColor7.text=Цвет 7
+Colors.lblColor8.text=Цвет 8
+Colors.lblColor9.text=Цвет 9
+Colors.lblColor0.tooltip=Ваш выбор для цвета nˇ 0.
+Colors.lblColor1.tooltip=Ваш выбор для цвета nˇ 1.
+Colors.lblColor2.tooltip=Ваш выбор для цвета nˇ 2.
+Colors.lblColor3.tooltip=Ваш выбор для цвета nˇ 3.
+Colors.lblColor4.tooltip=Ваш выбор для цвета nˇ 4.
+Colors.lblColor5.tooltip=Ваш выбор для цвета nˇ 5.
+Colors.lblColor6.tooltip=Ваш выбор для цвета nˇ 6.
+Colors.lblColor7.tooltip=Ваш выбор для цвета nˇ 7.
+Colors.lblColor8.tooltip=Ваш выбор для цвета nˇ 8.
+Colors.lblColor9.tooltip=Ваш выбор для цвета nˇ 9.
+Colors.color0.tooltip=Нажмите чтобы изменить ...
+Colors.color1.tooltip=Нажмите чтобы изменить ...
+Colors.color2.tooltip=Нажмите чтобы изменить ...
+Colors.color3.tooltip=Нажмите чтобы изменить ...
+Colors.color4.tooltip=Нажмите чтобы изменить ...
+Colors.color5.tooltip=Нажмите чтобы изменить ...
+Colors.color6.tooltip=Нажмите чтобы изменить ...
+Colors.color7.tooltip=Нажмите чтобы изменить ...
+Colors.color8.tooltip=Нажмите чтобы изменить ...
+Colors.color9.tooltip=Нажмите чтобы изменить ...
+Colors.btnOK.text=OK
+Colors.btnOK.tooltip=Подтвердите свой выбор.
+
+
+-----[ ColorChooser ]-----
+ColorChooser.title=Изменение цвета
+ColorChooser.btnCancel.text=Отменить
+ColorChooser.btnCancel.tooltip=Отвенить выбор.
+ColorChooser.btnOK.text=OK
+ColorChooser.btnOK.tooltip=Подтвердите свой выбор.
+
+
+-----[ ParserPreferences ]-----
+ParserPreferences.title=Parser Preferences
+ParserPreferences.lblPre.text=Перед
+ParserPreferences.lblPre.tooltip=
+ParserPreferences.lblPost.text=После
+ParserPreferences.lblPost.tooltip=
+ParserPreferences.lblAlt.text=Оператор IF
+ParserPreferences.lblAlt.tooltip=
+ParserPreferences.lblCase.text=Оператор CASE
+ParserPreferences.lblCase.tooltip=
+ParserPreferences.lblFor.text=Цикл FOR
+ParserPreferences.lblFor.tooltip=
+ParserPreferences.lblWhile.text=Цикл WHILE
+ParserPreferences.lblWhile.tooltip=
+ParserPreferences.lblRepeat.text=Цикл REPEAT
+ParserPreferences.lblRepeat.tooltip=
+ParserPreferences.lblInput.text=Ввод
+ParserPreferences.lblInput.tooltip=
+ParserPreferences.lblOutput.text=Вывод
+ParserPreferences.lblOutput.tooltip=
+ParserPreferences.btnOK.text=OK
+ParserPreferences.btnOK.tooltip=Подтвердите свой выбор.
+
+-----[ PrintPreview ]-----
+PrintPreview.title=Предварительный просмотр
+PrintPreview.btnOrientation.text=Переключение ориентации
+PrintPreview.btnOrientation.tooltip=Повернуть страницу на 90°.
+PrintPreview.btnCancel.text=Отменить
+PrintPreview.btnCancel.tooltip=Отменить печать.
+PrintPreview.btnOK.text=Печать
+PrintPreview.btnOK.tooltip=Распечатать схему.
+
+-----[ ExportOptionDialoge ]-----
+ExportOptionDialoge.title=Настройки экспортa
+ExportOptionDialoge.commentsCheckBox.text=Экспортировать инструкции кaк комментарии.
+ExportOptionDialoge.jLabel1.text=Выборите настройки, которые хочете активировать...
+ExportOptionDialoge.jButton1.text=OK
+ExportOptionDialoge.jButton1.tooltip=Сохранить настройки.
