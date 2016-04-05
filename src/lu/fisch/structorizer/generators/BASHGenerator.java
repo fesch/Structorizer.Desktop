@@ -56,6 +56,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.03.29      KGU#164: Bugfix #138 Function call expression revised (in transformTokens())
  *                                          #135 Array and expression support improved (with thanks to R. Schmidt)
  *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
+ *      Kay Gürtzig         2016-04-05      Enh. #153 - Export of Parallel elements had been missing
  *
  ******************************************************************************************************
  *
@@ -102,6 +103,7 @@ import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Forever;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
+import lu.fisch.structorizer.elements.Parallel;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
@@ -230,7 +232,8 @@ public class BASHGenerator extends Generator {
     		transformVariableAccess(varName, tokens, posAsgnOpr+1, tokens.count());
     		transformVariableAccess(varName, tokens, posBracket1+1, posBracket2+1);
     	}
-    	// Now we remove spaces around the assignment operator
+
+		// Now we remove spaces around the assignment operator
     	posAsgnOpr = tokens.indexOf("<-");
     	if (posAsgnOpr >= 0)
     	{
@@ -716,6 +719,30 @@ public class BASHGenerator extends Generator {
 			}
 		}
 	}
+	
+	// START KGU#174 2016-04-05: Issue #153 - export had been missing
+	protected void generateCode(Parallel _para, String _indent)
+	{
+		insertComment(_para, _indent);
+		insertComment("==========================================================", _indent);
+		insertComment("================= START PARALLEL SECTION =================", _indent);
+		insertComment("==========================================================", _indent);
+		String indent1 = _indent + this.getIndent();
+		String varName = "pids" + Integer.toHexString(_para.hashCode());
+		code.add(_indent + varName + "=\"\"");
+		for (Subqueue q : _para.qs)
+		{
+			code.add(_indent + "(");
+			generateCode(q, indent1);
+			code.add(_indent + ") &");
+			code.add(_indent + varName + "=\"${" + varName + "} $!\"");
+		}
+		code.add(_indent + "wait ${" + varName + "}");
+		insertComment("==========================================================", _indent);
+		insertComment("================== END PARALLEL SECTION ==================", _indent);
+		insertComment("==========================================================", _indent);
+	}
+	// END KGU#174 2016-04-05
 
 	// TODO: Decompose this - Result mechanism is missing!
 	public String generateCode(Root _root, String _indent) {

@@ -345,7 +345,7 @@ public class PasGenerator extends Generator
 				// START KGU#74 2015-12-20: Bug #22 There might be a return outside of a Jump element, handle it!
 				//code.add(_indent+transform(_inst.getText().get(i))+";");
 				String line = _inst.getText().get(i).trim();
-				if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
+				if (line.matches(getKeywordPattern(D7Parser.preReturn)+"([\\W].*|$)"))
 				{
 					String argument = line.substring(D7Parser.preReturn.length()).trim();
 					if (!argument.isEmpty())

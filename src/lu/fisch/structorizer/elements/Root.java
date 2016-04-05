@@ -64,6 +64,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): For-In loops in variable detection and Analyser
  *      Kay Gürtzig     2016-03-25      Bugfix #135 (KGU#163) Method analyse(.,.,.,.,.) decomposed and corrected
  *      Kay Gürtzig     2016-03-29      Methods getUsedVarNames() completely rewritten.
+ *      Kay Gürtzig     2016-04-05      Bugfix #154 (KGU#176) analyse_17() peeked in a wrong collection (Parallel)
  *
  ******************************************************************************************************
  *
@@ -2990,7 +2991,10 @@ public class Root extends Element {
 			// Then register all used variables
 			for (int v = 0; v < threadUsedVars.count(); v++)
 			{
-				String varName = threadSetVars.get(v);
+				// START KGU#176 2016-04-05: Bugfix #154 Wrong collection used
+				//String varName = threadSetVars.get(v);
+				String varName = threadUsedVars.get(v);
+				// END KGU#176 2016-04-05
 				Integer count = myUsedVars.putIfAbsent(varName, 1 << threadNo);
 				if (count != null) { myUsedVars.put(varName, count.intValue() | (1 << threadNo)); }
 			}

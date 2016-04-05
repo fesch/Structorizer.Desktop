@@ -53,6 +53,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.01.15      Issue #61/#107: improved handling of typed variables 
  *      Kay Gürtzig             2016.03.16      Enh. #84: Minimum support for FOR-IN loops (KGU#61) 
  *      Kay Gürtzig             2016.04.01      Enh. #144: Export option to suppress content conversion 
+ *      Kay Gürtzig             2016.04.03      Enh. KGU#150: ord and chr functions converted (raw approach) 
  *
  ******************************************************************************************************
  *
@@ -261,6 +262,18 @@ public class CGenerator extends Generator {
 	{
 		tokens.replaceAll("div", "/");
 		tokens.replaceAll("<-", "=");
+		// START KGU#150 2016-04-03: Handle Pascal ord and chr function
+		int pos = - 1;
+		while ((pos = tokens.indexOf("ord", pos+1)) >= 0 && pos+1 < tokens.count() && tokens.get(pos+1).equals("("))
+		{
+			tokens.set(pos, "(int)");
+		}
+		pos = -1;
+		while ((pos = tokens.indexOf("chr", pos+1)) >= 0 && pos+1 < tokens.count() && tokens.get(pos+1).equals("("))
+		{
+			tokens.set(pos, "(char)");
+		}
+		// END KGU#150 2016-04-03
 		return tokens.concatenate();
 	}
 	// END KGU#93 2015-12-21

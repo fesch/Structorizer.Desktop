@@ -21,25 +21,26 @@
 package lu.fisch.structorizer.gui;
 
 /******************************************************************************************************
-*
-*      Author:         Bob Fisch
-*
-*      Description:    This dialog allows to control certain settings for the code export.
-*
-******************************************************************************************************
-*
-*      Revision List
-*
-*      Author           Date         Description
-*      ------           ----         -----------
-*      Bob Fisch        2012.07.02   First Issue
-*      Kay Gürtzig      2016.03.31   Enh. #144: noConversion checkBox added
-*
-******************************************************************************************************
-*
-*      Comment:		I used JFormDesigner to design this window graphically.
-*
-******************************************************************************************************///
+ *
+ *      Author:         Bob Fisch
+ *
+ *      Description:    This dialog allows to control certain settings for the code export.
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author           Date         Description
+ *      ------           ----         -----------
+ *      Bob Fisch        2012.07.02   First Issue
+ *      Kay Gürtzig      2016.04.01   Enh. #144: noConversionCheckBox and cbPrefGenerator added
+ *      Kay Gürtzig      2016-04-04   Enh. #149: cbCharset added
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:		I used JFormDesigner to design this window graphically.
+ *
+ ******************************************************************************************************///
 
 import java.awt.Dimension;
 import java.awt.Frame;
@@ -48,9 +49,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.BufferedInputStream;
+import java.nio.charset.Charset;
+import java.util.Set;
 import java.util.Vector;
 
-import javax.swing.JMenuItem;
+import javax.swing.ComboBoxModel;
 import javax.swing.LookAndFeel;
 
 import lu.fisch.structorizer.helpers.GENPlugin;
@@ -101,7 +104,13 @@ public class ExportOptionDialoge extends LangDialog
         lbVoid = new javax.swing.JLabel();
         lbPrefGenerator = new javax.swing.JLabel();
         cbPrefGenerator = new javax.swing.JComboBox<String>(this.getCodeGeneratorNames());
-        // END KGU#17 2016-04-01
+        // END KGU#171 2016-04-01
+        // START KGU#168 2016-04-04: Issue #149
+        lbVoid1 = new javax.swing.JLabel();
+        lbCharset = new javax.swing.JLabel();
+        cbCharset = new javax.swing.JComboBox<String>();
+        chkCharsetAll = new javax.swing.JCheckBox();
+        // END KGU#168 2016-04-04
 
         setTitle("Export options ...");
 
@@ -116,10 +125,31 @@ public class ExportOptionDialoge extends LangDialog
             .add(0, 0, Short.MAX_VALUE)
         );
 
+        // START KGU#168 2016-04-04: Issue #149
+        lbVoid1.setText(" ");	// FIXME: Can we replace this by insets?
+        lbCharset.setText("Character Set: ");
+        lbCharset.setMinimumSize(
+        		new Dimension(lbCharset.getMinimumSize().width, cbCharset.getPreferredSize().height));
+        cbCharset.setMaximumSize(
+        		new Dimension(150, cbCharset.getPreferredSize().height));
+        charsetListChanged(null);
+        chkCharsetAll.setText("List all?");
+        chkCharsetAll.setMinimumSize(
+        		new Dimension(chkCharsetAll.getMinimumSize().width, cbCharset.getPreferredSize().height));
+        chkCharsetAll.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent evt) {
+        		charsetListChanged((String)cbCharset.getSelectedItem());
+        	}
+        });
+        // END KGU#168 2016-04-04
+
         // START KGU#171 2016-04-01: Enh. #144 - new: preferred code export language
-        lbVoid.setText(" ");
+        lbVoid.setText(" ");	// FIXME: Can we replace this by insets?
+        lbVoid.setMinimumSize(
+        		new Dimension(lbVoid.getMinimumSize().width, cbPrefGenerator.getPreferredSize().height));
         lbPrefGenerator.setText("Favorite Code Export:");
-        Vector<String> generatorNames = this.getCodeGeneratorNames();
+        lbPrefGenerator.setMinimumSize(
+        		new Dimension(lbPrefGenerator.getMinimumSize().width, cbPrefGenerator.getPreferredSize().height));
         cbPrefGenerator.setMaximumSize(
         		new Dimension(150, cbPrefGenerator.getPreferredSize().height));
         cbPrefGenerator.setMaximumRowCount(cbPrefGenerator.getItemCount());
@@ -133,24 +163,19 @@ public class ExportOptionDialoge extends LangDialog
         // START KGU#162 2016-03-31: Enh. #144 - now option to suppress all content transformation
         noConversionCheckBox.setText("No conversion of the expression/instruction contents.");
         noConversionCheckBox.setToolTipText("Select this option if the text content of your elements already represents target language syntax.");
-        noConversionCheckBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                noConversionCheckBoxActionPerformed(evt);
-            }
-        });
         // END KGU#162 2016-03-31
 
         commentsCheckBox.setText("Export instructions as comments.");
-        commentsCheckBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                commentsCheckBoxActionPerformed(evt);
-            }
-        });
+//        commentsCheckBox.addActionListener(new ActionListener() {
+//            public void actionPerformed(ActionEvent evt) {
+//                commentsCheckBoxActionPerformed(evt);
+//            }
+//        });
 
         jLabel1.setText("Please select the options you want to activate ...");
 
         bracesCheckBox.setText("Put block-opening brace on same line (C/C++/Java etc.).");
-        bracesCheckBox.setActionCommand("Put block-opening brace on same line (C/C++/Java etc.).");	// ??
+        //bracesCheckBox.setActionCommand("Put block-opening brace on same line (C/C++/Java etc.).");	// ??
         bracesCheckBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 bracesCheckBoxActionPerformed(evt);
@@ -184,14 +209,35 @@ public class ExportOptionDialoge extends LangDialog
                             .add(lineNumbersCheckBox))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    // START KGU#168 2016-04-04: Enh. #149
                     .add(layout.createSequentialGroup()
-                    		.add(lbVoid)
-                    		.add(lbPrefGenerator)
+                    		.add(lbVoid1)
+                            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            		.add(lbCharset)
+                            		.add(lbPrefGenerator))
                     		.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                    		.add(cbPrefGenerator)
+                            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            		.add(cbCharset)
+                            		.add(cbPrefGenerator))
+                    		.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            		.add(chkCharsetAll)
+                            		.add(lbVoid))
                     		.addContainerGap()
                     		)
+                    // END KGU#168 2016-04-04
+//                    // START KGU#171 2016-04-01: Enh. #144
+//                    .add(layout.createSequentialGroup()
+//                    		.add(lbVoid)
+//                    		.add(lbPrefGenerator)
+//                    		.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+//                    		.add(cbPrefGenerator)
+//                    		.addContainerGap()
+//                    		)
+//                    // END KGU#171 2016-04-01
+                    // START KGU#162 2016-03-31: Enh. #144
                     .add(noConversionCheckBox)
+                    // END KGU#162 2016-03-31
                     .add(commentsCheckBox)
                     .add(jLabel1)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
@@ -204,13 +250,31 @@ public class ExportOptionDialoge extends LangDialog
                 .addContainerGap()
                 .add(jLabel1)
                 .add(22, 22, 22)
-                // START KGU#171 2016-04-01: Enh. #144 choice of preferred export lang.
+                // START KGU#168/KGU#171 2016-04-04: Enh. #149 choice of character set
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
-                		.add(lbVoid)
-                		.add(lbPrefGenerator)
-                		.add(cbPrefGenerator)
+                		.add(lbVoid1)
+                		.add(layout.createSequentialGroup()
+                				.add(lbCharset)
+                				.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                				.add(lbPrefGenerator))
+                		.add(layout.createSequentialGroup()
+                				.add(cbCharset)
+                				.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                				.add(cbPrefGenerator))
+                		.add(layout.createSequentialGroup()
+                				.add(chkCharsetAll)
+                				.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                				.add(lbVoid))
                 		)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                // END KGU#168/KGU#171 2016-04-04
+//                // START KGU#171 2016-04-01: Enh. #144 choice of preferred export lang.
+//                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+//        				.add(lbVoid)                		
+//                		.add(lbPrefGenerator)
+//                		.add(cbPrefGenerator)
+//                		)
+//                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 // END KGU#170 2016-04-01
                 // START KGU#162 2016-03-31: Enh. #144
                 .add(noConversionCheckBox)
@@ -228,7 +292,7 @@ public class ExportOptionDialoge extends LangDialog
         );
 
         pack();
-        int height = 240;
+        int height = 280;
         LookAndFeel laF = javax.swing.UIManager.getLookAndFeel();
         if (laF.getName().equals("CDE/Motif"))
         {
@@ -237,15 +301,10 @@ public class ExportOptionDialoge extends LangDialog
         this.setSize(450, height);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void noConversionCheckBoxActionPerformed(ActionEvent evt)//GEN-FIRST:event_noConversionCheckBoxActionPerformed
-    {//GEN-HEADEREND:event_noConversionCheckBoxActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_noConversionCheckBoxActionPerformed
-
-    private void commentsCheckBoxActionPerformed(ActionEvent evt)//GEN-FIRST:event_commentsCheckBoxActionPerformed
-    {//GEN-HEADEREND:event_commentsCheckBoxActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_commentsCheckBoxActionPerformed
+//    private void commentsCheckBoxActionPerformed(ActionEvent evt)//GEN-FIRST:event_commentsCheckBoxActionPerformed
+//    {//GEN-HEADEREND:event_commentsCheckBoxActionPerformed
+//        // TODO add your handling code here:
+//    }//GEN-LAST:event_commentsCheckBoxActionPerformed
 
     private void jButton1ActionPerformed(ActionEvent evt)//GEN-FIRST:event_jButton1ActionPerformed
     {//GEN-HEADEREND:event_jButton1ActionPerformed
@@ -261,8 +320,47 @@ public class ExportOptionDialoge extends LangDialog
         // TODO add your handling code here:
     }//GEN-LAST:event_lineNumbersCheckBoxActionPerformed
     
+    // START KGU#171 2016-04-01: Enh. #144
     private void preferredGeneratorChanged(ItemEvent evt) {
     	// TODO inform the Menu? No need, value will be retrieved by Diagram
+    }
+    // END KGU#171 2016-04-01
+    
+    public void charsetListChanged(String favouredCharset)
+    {
+    	Set<String> availableCharsets = Charset.availableCharsets().keySet();
+    	cbCharset.removeAllItems();
+        if (chkCharsetAll.isSelected())
+        {
+        	for (String charsetName : availableCharsets)
+        	{
+        		cbCharset.addItem(charsetName);
+        	}
+        }
+        else
+        {
+        	boolean inNewList = false;
+        	for (int i = 0; i < standardCharsets.length; i++)
+        	{
+        		String charsetName = standardCharsets[i];
+        		if (availableCharsets.contains(charsetName))
+        		{
+        			cbCharset.addItem(charsetName);
+        			if (favouredCharset != null && favouredCharset.equals(charsetName))
+        			{
+        				inNewList = true;
+        			}
+        		}
+        	}
+        	if (favouredCharset != null && !inNewList && availableCharsets.contains(favouredCharset))
+        	{
+        		cbCharset.insertItemAt(favouredCharset,  0);
+        	}
+        }
+    	if (favouredCharset != null)
+    	{
+    		cbCharset.setSelectedItem(favouredCharset);
+    	}
     }
     
     private Vector<String> getCodeGeneratorNames()
@@ -326,6 +424,11 @@ public class ExportOptionDialoge extends LangDialog
             }
         });
     }
+    
+    // START KGU#168 2016-04-04: Issue #149
+    public static String[] standardCharsets = {"ISO-8859-1", "UTF-8", "UTF-16", "windows-1250", "windows-1252", "US-ASCII"};
+    // END KGU#168 2016-04-04
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     public javax.swing.JCheckBox bracesCheckBox;
     public javax.swing.JCheckBox commentsCheckBox;
@@ -340,6 +443,12 @@ public class ExportOptionDialoge extends LangDialog
     public javax.swing.JLabel lbVoid;
     public javax.swing.JLabel lbPrefGenerator;
     public javax.swing.JComboBox<String> cbPrefGenerator;
-    // END KGU#17 2016-04-01
+    // END KGU#171 2016-04-01
+    // START KGU#168 2016-04-04: Issue #149
+    public javax.swing.JLabel lbVoid1;
+    public javax.swing.JLabel lbCharset;
+    public javax.swing.JComboBox<String> cbCharset;
+    public javax.swing.JCheckBox chkCharsetAll;
+    // END KGU#168 2016-04-04
     // End of variables declaration//GEN-END:variables
 }

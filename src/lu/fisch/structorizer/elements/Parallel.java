@@ -47,6 +47,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *      Kay Gürtzig     2016-04-01      Issue #145 (KGU#162): Comment is yet to be shown in switchText mode
+ *      Kay Gürtzig     2016-04-05      Issue #145 solution improved and setText() stabilized
  *
  ******************************************************************************************************
  *
@@ -178,49 +179,48 @@ public class Parallel extends Element
     @Override
     public void setText(StringList _textList)
     {
-            Subqueue s = null;
+    	Subqueue s = null;
 
-            //setText(_textList);
-            text=_textList;
+    	//setText(_textList);
+    	text=_textList;
 
-            if(qs==null)
-            {
-                    qs = new Vector<Subqueue>();
-            }
+    	if(qs==null)
+    	{
+    		qs = new Vector<Subqueue>();
+    	}
 
-            // we need at least one line
-            if(text.count()>0)
-            {
-                int count = 10;
-                try
-                {
-                    // retrieve the number of parallel tasks
-                    count = Integer.valueOf(text.get(0).trim());
-                }
-                catch (java.lang.NumberFormatException e)
-                {
-                    count = 10;
-                    JOptionPane.showMessageDialog(null,
-                    		"Unknown number <" + text.get(0).trim() +
-                    		">.\nSetting number of tasks to " + count + "!",
-                    		"Error", JOptionPane.ERROR_MESSAGE);
-                    setText(new StringList());
-                    text.add(Integer.toString(count));
-                }
+    	// we need at least one line
+    	if(text.count()>0)
+    	{
+    		int count = 10;
+    		try
+    		{
+    			// retrieve the number of parallel tasks
+    			count = Integer.valueOf(text.get(0).trim());
+    		}
+    		catch (java.lang.NumberFormatException e)
+    		{
+    			count = 10;
+    			JOptionPane.showMessageDialog(null,
+    					"Unknown number <" + text.get(0).trim() +
+    					">.\nSetting number of tasks to " + count + "!",
+    					"Error", JOptionPane.ERROR_MESSAGE);
+    			text = StringList.getNew(Integer.toString(count));
+    		}
 
-                    // add subqueues
-                    while(count>qs.size())
-                    {
-                            s=new Subqueue();
-                            s.parent=this;
-                            qs.add(s);
-                    }
-                    // remove subqueues
-                    while(count<qs.size())
-                    {
-                            qs.removeElementAt(qs.size()-1);
-                    }
-            }
+    		// add subqueues
+    		while(count>qs.size())
+    		{
+    			s=new Subqueue();
+    			s.parent=this;
+    			qs.add(s);
+    		}
+    		// remove subqueues
+    		while(count<qs.size())
+    		{
+    			qs.removeElementAt(qs.size()-1);
+    		}
+    	}
 
     }
 
@@ -289,7 +289,7 @@ public class Parallel extends Element
             // END KGU#136 2016-03-01
 
             // START KGU#172 2016-04-01: Issue #145 Show comment in switch text/comment mode
-            if (this.isSwitchTextCommentMode())
+            if (this.isSwitchTextCommentMode() && !this.comment.getText().trim().isEmpty())
             {
                 FontMetrics fm = _canvas.getFontMetrics(Element.font);
             	for (int ci = 0; ci < this.comment.count(); ci++)
@@ -431,7 +431,7 @@ public class Parallel extends Element
             // START KGU#172 2016-04-01: Issue #145 - we shall show the comment in switch mode
             int headerHeight = 2*(E_PADDING/2);
             int footerHeight = 2*(E_PADDING/2);
-            if (this.isSwitchTextCommentMode())
+            if (this.isSwitchTextCommentMode() && !this.comment.getText().trim().isEmpty())
             {
             	headerHeight += this.comment.count() * fm.getHeight();
             }
@@ -479,7 +479,7 @@ public class Parallel extends Element
             {
             	for (int ci = 0; ci < this.comment.count(); ci++)
             	{
-            		this.writeOutVariables(_canvas, myrect.left + 2*(E_PADDING/2), 
+            		writeOutVariables(_canvas, myrect.left + 2*(E_PADDING/2), 
             				myrect.top + E_PADDING/2 + (ci + 1) * fm.getHeight(),
             				this.comment.get(ci), this);
             	}
