@@ -1,19 +1,60 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+    Structorizer
+    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
 
-/*
- * ExportOptionDialogue.java
- *
- * Created on Jul 2, 2012, 7:02:28 PM
- */
+    Copyright (C) 2009  Bob Fisch
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or any
+    later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package lu.fisch.structorizer.gui;
 
-import java.awt.Frame;
+/******************************************************************************************************
+*
+*      Author:         Bob Fisch
+*
+*      Description:    This dialog allows to control certain settings for the code export.
+*
+******************************************************************************************************
+*
+*      Revision List
+*
+*      Author           Date         Description
+*      ------           ----         -----------
+*      Bob Fisch        2012.07.02   First Issue
+*      Kay Gürtzig      2016.03.31   Enh. #144: noConversion checkBox added
+*
+******************************************************************************************************
+*
+*      Comment:		I used JFormDesigner to design this window graphically.
+*
+******************************************************************************************************///
 
-import javax.swing.JDialog;
-import javax.swing.JFrame;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.io.BufferedInputStream;
+import java.util.Vector;
+
+import javax.swing.JMenuItem;
+import javax.swing.LookAndFeel;
+
+import lu.fisch.structorizer.helpers.GENPlugin;
+import lu.fisch.structorizer.parsers.GENParser;
 
 /**
  *
@@ -48,11 +89,19 @@ public class ExportOptionDialoge extends LangDialog
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
+        // START KGU#162 2016-03-31: Enh. #144 - now option to suppress all content transformation
+        noConversionCheckBox = new javax.swing.JCheckBox();
+        // END KGU#162 2016-03-31
         commentsCheckBox = new javax.swing.JCheckBox();
         jLabel1 = new javax.swing.JLabel();
         bracesCheckBox = new javax.swing.JCheckBox();
         lineNumbersCheckBox = new javax.swing.JCheckBox();
         jButton1 = new javax.swing.JButton();
+        // START KGU#171 2016-04-01: Enh. #144 - new: preferred code export language
+        lbVoid = new javax.swing.JLabel();
+        lbPrefGenerator = new javax.swing.JLabel();
+        cbPrefGenerator = new javax.swing.JComboBox<String>(this.getCodeGeneratorNames());
+        // END KGU#17 2016-04-01
 
         setTitle("Export options ...");
 
@@ -67,9 +116,33 @@ public class ExportOptionDialoge extends LangDialog
             .add(0, 0, Short.MAX_VALUE)
         );
 
+        // START KGU#171 2016-04-01: Enh. #144 - new: preferred code export language
+        lbVoid.setText(" ");
+        lbPrefGenerator.setText("Favorite Code Export:");
+        Vector<String> generatorNames = this.getCodeGeneratorNames();
+        cbPrefGenerator.setMaximumSize(
+        		new Dimension(150, cbPrefGenerator.getPreferredSize().height));
+        cbPrefGenerator.setMaximumRowCount(cbPrefGenerator.getItemCount());
+        cbPrefGenerator.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent evt) {
+                preferredGeneratorChanged(evt);
+            }
+        });
+        // END KGU#17 2016-04-01
+
+        // START KGU#162 2016-03-31: Enh. #144 - now option to suppress all content transformation
+        noConversionCheckBox.setText("No conversion of the expression/instruction contents.");
+        noConversionCheckBox.setToolTipText("Select this option if the text content of your elements already represents target language syntax.");
+        noConversionCheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                noConversionCheckBoxActionPerformed(evt);
+            }
+        });
+        // END KGU#162 2016-03-31
+
         commentsCheckBox.setText("Export instructions as comments.");
-        commentsCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        commentsCheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 commentsCheckBoxActionPerformed(evt);
             }
         });
@@ -77,23 +150,23 @@ public class ExportOptionDialoge extends LangDialog
         jLabel1.setText("Please select the options you want to activate ...");
 
         bracesCheckBox.setText("Put block-opening brace on same line (C/C++/Java etc.).");
-        bracesCheckBox.setActionCommand("Put block-opening brace on same line (C/C++/Java etc.).");
-        bracesCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        bracesCheckBox.setActionCommand("Put block-opening brace on same line (C/C++/Java etc.).");	// ??
+        bracesCheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 bracesCheckBoxActionPerformed(evt);
             }
         });
 
         lineNumbersCheckBox.setText("Generate line numbers on export to BASIC.");
-        lineNumbersCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        lineNumbersCheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 lineNumbersCheckBoxActionPerformed(evt);
             }
         });
 
         jButton1.setText("OK");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
+        jButton1.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
                 jButton1ActionPerformed(evt);
             }
         });
@@ -111,6 +184,14 @@ public class ExportOptionDialoge extends LangDialog
                             .add(lineNumbersCheckBox))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(layout.createSequentialGroup()
+                    		.add(lbVoid)
+                    		.add(lbPrefGenerator)
+                    		.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                    		.add(cbPrefGenerator)
+                    		.addContainerGap()
+                    		)
+                    .add(noConversionCheckBox)
                     .add(commentsCheckBox)
                     .add(jLabel1)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
@@ -123,6 +204,18 @@ public class ExportOptionDialoge extends LangDialog
                 .addContainerGap()
                 .add(jLabel1)
                 .add(22, 22, 22)
+                // START KGU#171 2016-04-01: Enh. #144 choice of preferred export lang.
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
+                		.add(lbVoid)
+                		.add(lbPrefGenerator)
+                		.add(cbPrefGenerator)
+                		)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                // END KGU#170 2016-04-01
+                // START KGU#162 2016-03-31: Enh. #144
+                .add(noConversionCheckBox)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                // END KGU#162 2016-03-31
                 .add(commentsCheckBox)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(bracesCheckBox)
@@ -135,27 +228,58 @@ public class ExportOptionDialoge extends LangDialog
         );
 
         pack();
-        this.setSize(500, 200);
+        int height = 240;
+        LookAndFeel laF = javax.swing.UIManager.getLookAndFeel();
+        if (laF.getName().equals("CDE/Motif"))
+        {
+        	height += (height / 4);
+        }
+        this.setSize(450, height);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void commentsCheckBoxActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_commentsCheckBoxActionPerformed
+    private void noConversionCheckBoxActionPerformed(ActionEvent evt)//GEN-FIRST:event_noConversionCheckBoxActionPerformed
+    {//GEN-HEADEREND:event_noConversionCheckBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_noConversionCheckBoxActionPerformed
+
+    private void commentsCheckBoxActionPerformed(ActionEvent evt)//GEN-FIRST:event_commentsCheckBoxActionPerformed
     {//GEN-HEADEREND:event_commentsCheckBoxActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_commentsCheckBoxActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_jButton1ActionPerformed
+    private void jButton1ActionPerformed(ActionEvent evt)//GEN-FIRST:event_jButton1ActionPerformed
     {//GEN-HEADEREND:event_jButton1ActionPerformed
         goOn = true;
         this.setVisible(false);
     }//GEN-LAST:event_jButton1ActionPerformed
 
-    private void bracesCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bracesCheckBoxActionPerformed
+    private void bracesCheckBoxActionPerformed(ActionEvent evt) {//GEN-FIRST:event_bracesCheckBoxActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_bracesCheckBoxActionPerformed
 
-    private void lineNumbersCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lineNumbersCheckBoxActionPerformed
+    private void lineNumbersCheckBoxActionPerformed(ActionEvent evt) {//GEN-FIRST:event_lineNumbersCheckBoxActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_lineNumbersCheckBoxActionPerformed
+    
+    private void preferredGeneratorChanged(ItemEvent evt) {
+    	// TODO inform the Menu? No need, value will be retrieved by Diagram
+    }
+    
+    private Vector<String> getCodeGeneratorNames()
+    {
+		// read generators from file
+		// and add them to the Vector
+    	Vector<String> generatorNames = new Vector<String>();
+		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("generators.xml"));
+		GENParser genp = new GENParser();
+		Vector<GENPlugin> plugins = genp.parse(buff);
+		for(int i=0;i<plugins.size();i++)
+		{
+			GENPlugin plugin = (GENPlugin) plugins.get(i);
+			generatorNames.add(plugin.title);
+		}
+		return generatorNames;
+    }
 
     /**
      * @param args the command line arguments
@@ -209,5 +333,13 @@ public class ExportOptionDialoge extends LangDialog
     public javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     public javax.swing.JCheckBox lineNumbersCheckBox;
+    // START KGU#162 2016-03-31: Enh. #144 - new option to suppress all content transformation
+    public javax.swing.JCheckBox noConversionCheckBox;
+    // END KGU#162 2016-03-31
+    // START KGU#171 2016-04-01: Enh. #144 - new: preferred code export language
+    public javax.swing.JLabel lbVoid;
+    public javax.swing.JLabel lbPrefGenerator;
+    public javax.swing.JComboBox<String> cbPrefGenerator;
+    // END KGU#17 2016-04-01
     // End of variables declaration//GEN-END:variables
 }

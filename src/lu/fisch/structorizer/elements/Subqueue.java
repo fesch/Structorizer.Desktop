@@ -39,6 +39,12 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.22      New and modified methods to support operations on non-empty Subqueues (KGU#87).
  *      Kay Gürtzig     2015.11.23      Inheritance extended to IElementSequence (KGU#87), children now private.
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016-01-03      Enh. #87: Collapsing mechanism for selected Subqueue (KGU#123)
+ *      Kay Gürtzig     2016-01-22      Bugfix #114: Method isExecuted() added (KGU#143)
+ *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136) accomplished (translation-independent selection)
+ *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *
  ******************************************************************************************************
  *
@@ -50,9 +56,9 @@ import java.util.Iterator;
 import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
+import java.awt.Point;
 
 import lu.fisch.graphics.*;
-import lu.fisch.structorizer.gui.SelectedSequence;
 import lu.fisch.utils.*;
 
 public class Subqueue extends Element implements IElementSequence {
@@ -74,6 +80,9 @@ public class Subqueue extends Element implements IElementSequence {
 	}
 	
 	private Vector<Element> children = new Vector<Element>();
+	// START KGU#136 2016-03-01: Bugfix #97
+	private Vector<Integer> y0Children = new Vector<Integer>();
+	// END KGU#136 2016-03-01
 	
 	// START KGU#64 2015-11-03: Is to improve drawing performance
 	/**
@@ -96,31 +105,46 @@ public class Subqueue extends Element implements IElementSequence {
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
+		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
+		if (this.isRectUpToDate) return rect0;
+		this.y0Children.clear();
+		// END KGU#136 2016-03-01
+
+		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
 		Rect subrect = new Rect();
 		
-		rect.top=0;
-		rect.left=0;
-		rect.right=0;
-		rect.bottom=0;
+		rect0.top = 0;
+		rect0.left = 0;
+		rect0.right = 0;
+		rect0.bottom = 0;
 		
-		if(children.size()>0) 
+		if (children.size() > 0) 
 		{
-			for(int i=0;i<children.size() ;i++)
+			for(int i = 0; i < children.size(); i++)
 			{
+				// START KGU#136 2016-03-01: Bugfix #97
+				this.y0Children.addElement(rect0.bottom);
+				// END KGU#136 2016-03-01
 				subrect = ((Element) children.get(i)).prepareDraw(_canvas);
-				rect.right=Math.max(rect.right,subrect.right);
-				rect.bottom+=subrect.bottom;
+				rect0.right = Math.max(rect0.right, subrect.right);
+				rect0.bottom += subrect.bottom;
 			}
 		}
 		else
 		{
-			rect.right=2*Element.E_PADDING;
+			// START KGU#136 2016-03-01: Bugfix #97
+			this.y0Children.addElement(rect0.bottom);
+			// END KGU#136 2016-03-01
+			rect0.right = 2*Element.E_PADDING;
 			FontMetrics fm = _canvas.getFontMetrics(Element.font);
-			rect.bottom = fm.getHeight() + 2* Math.round(Element.E_PADDING/2);
+			rect0.bottom = fm.getHeight() + 2*(Element.E_PADDING/2);
 
 		}
 		
-		return rect;
+		// START KGU#136 2016-03-01: Bugfix #97
+		isRectUpToDate = true;
+		// END KGU#136 2016-03-01
+		return rect0;
 	}
 	
 	public void draw(Canvas _canvas, Rect _top_left)
@@ -140,7 +164,14 @@ public class Subqueue extends Element implements IElementSequence {
 //		}
 		// END KGU 2015-10-13
 		
-		rect = _top_left.copy();
+		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
+		//rect = _top_left.copy();
+		rect = new Rect(0, 0, 
+				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
+		Point dP = this.getDrawPoint();
+		this.topLeft.x = _top_left.left - dP.x;
+		this.topLeft.y = _top_left.top - dP.y;
+		// END KGU#136 2016-03-01
 		
 		myrect = _top_left.copy();
 		myrect.bottom = myrect.top;
@@ -151,26 +182,24 @@ public class Subqueue extends Element implements IElementSequence {
 			for(int i=0; i<children.size(); i++)
 			{
 				subrect = ((Element) children.get(i)).prepareDraw(_canvas);
-				myrect.bottom+=subrect.bottom;
-				if(i==children.size()-1)
+				myrect.bottom += subrect.bottom;
+				if (i==children.size()-1)
 				{
-					myrect.bottom=_top_left.bottom;
+					myrect.bottom = _top_left.bottom;
 				}
-				((Element) children.get(i)).draw(_canvas,myrect);
+				((Element) children.get(i)).draw(_canvas, myrect);
 
 				//myrect.bottom-=1;
-				myrect.top+=subrect.bottom;
+				myrect.top += subrect.bottom;
 			}
 		}
 		else
 		{
 			// draw empty set symbol
-			rect=_top_left.copy();
-			
 			canvas.setBackground(drawColor);
 			canvas.setColor(drawColor);
 			
-			myrect=_top_left.copy();
+			myrect = _top_left.copy();
 			
 			canvas.fillRect(myrect);
 			
@@ -180,6 +209,11 @@ public class Subqueue extends Element implements IElementSequence {
 							"\u2205"
 							);  	
 
+			// START KGU#156 2016-03-11: Enh. #124
+			// write the run-time info if enabled
+			this.writeOutRuntimeInfo(canvas, _top_left.right - (Element.E_PADDING / 2), _top_left.top);
+			// END KGU#156 2016-03-11
+					
 			canvas.drawRect(_top_left);
 		}
 	}
@@ -251,7 +285,22 @@ public class Subqueue extends Element implements IElementSequence {
 		children.removeElementAt(_index);
 		// END KGU 2015-11-22
 	}
-
+	
+	// START KGU#136 2016-03-02: New method to facilitate bugfix #97
+	public boolean moveElement(int _from, int _to)
+	{
+		boolean done = 0 <= _from && _from < children.size() && 0 <= _to && _to < children.size();
+		if (done)
+		{
+			Element ele = children.get(_from);
+			children.removeElementAt(_from);
+			children.insertElementAt(ele, _to);
+			this.resetDrawingInfo();	// Element start points must be re-computed
+		}
+		return done;
+	}
+	// END KGU#136 2016-03-02
+	
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.IElementContainer#removeElements()
 	 */
@@ -306,14 +355,20 @@ public class Subqueue extends Element implements IElementSequence {
 		Element sel = null;
 		for (int i = 0; i < children.size(); i++)
 		{
-			sel = ((Element) children.get(i)).getElementByCoord(_x, _y, _forSelection);
+			// START KGU#136 2016-03-01: Bugfix #97
+			//sel = ((Element) children.get(i)).getElementByCoord(_x, _y, _forSelection);
+			if (i < this.y0Children.size())
+			{
+				int yOff = this.y0Children.get(i);
+				sel = children.get(i).getElementByCoord(_x, _y-yOff, _forSelection);
+			}
+			// END KGU#136 2016-03-01
 			if (sel != null)
 			{
 				if (_forSelection) selected = false;
 				res = sel;
 			}
 		}
-		//System.out.println(this + ".getElementByCoord("+_x + ", " + _y + ") returning " + (res == null ? "null" : res));
 		return res;
 	}
 	// END KGU 2015-10-11
@@ -326,6 +381,9 @@ public class Subqueue extends Element implements IElementSequence {
 		{
 			((Subqueue) ele).addElement(((Element) children.get(i)).copy());
 		}
+		// START KGU#117 2016-03-07: Enh. #77
+		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+		// END KGU#117 2016-03-07
 		return ele;
 	}
         
@@ -348,6 +406,22 @@ public class Subqueue extends Element implements IElementSequence {
 	}
 	// END KGU#119 2016-01-02
 
+	// START KGU#117 2016-03-07: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
+	 */
+	@Override
+	public boolean combineRuntimeData(Element _cloneOfMine)
+	{
+		boolean isEqual = super.combineRuntimeData(_cloneOfMine);
+		for (int i = 0; isEqual && i < children.size(); i++)
+		{
+			isEqual = children.get(i).combineRuntimeData(((Subqueue)_cloneOfMine).getElement(i));
+		}
+		return isEqual;
+	}
+	// END KGU#117 2016-03-07
+
 	// START KGU#87 2015-11-22: Re-enabled for multiple selection (selected non-empty subqueues)    
     @Override
     public void setColor(Color _color) 
@@ -359,6 +433,17 @@ public class Subqueue extends Element implements IElementSequence {
         }
     }
 	// END KGU#87 2015-11-22
+
+	// START KGU#43 2016-01-22: Method to control the breakpoint property of the sub-elements
+	@Override
+	public void toggleBreakpoint()
+	{
+		for (int i = 0; i < this.getSize(); i++)
+		{
+			this.getElement(i).toggleBreakpoint();
+		}
+	}
+	// END KGU#43 2016-01-22
 
 	// START KGU 2015-11-12
 	/* (non-Javadoc)
@@ -380,13 +465,66 @@ public class Subqueue extends Element implements IElementSequence {
 	@Override
 	public void clearExecutionStatus()
 	{
+    	super.clearExecutionStatus();
         for(int i = 0; i < children.size(); i++)
         {      
-        	super.clearExecutionStatus();	// FIXME: Is this necessary at all?
             children.get(i).clearExecutionStatus();
         }
 	}
 	// END KGU 2015-10-12
+
+	// START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#isExecuted()
+	 */
+	@Override
+	public boolean isExecuted()
+	{
+		boolean involved = false;
+		for (int index = 0; !involved && index < this.getSize(); index++)
+		{
+			if (children.get(index).isExecuted())
+			{
+				involved = true;
+			}
+		}
+		return involved;
+	}
+	// END KGU#143 2016-01-22
+
+	// START KGU#117 2016-03-06: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
+	 */
+	@Override
+	public void clearRuntimeData()
+	{
+		super.clearRuntimeData();
+        for(int i = 0; i < children.size(); i++)
+        {      
+            children.get(i).clearRuntimeData();
+        }
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
+	 */
+	public boolean isTestCovered(boolean _deeply)
+	{
+		// An empty sequence must at least once have been passed in order to count as covered
+		if (children.isEmpty())
+		{
+			return super.isTestCovered(_deeply);
+		}
+		// ... otherwise all instructions must be covered
+		boolean covered = true;
+        for(int i = 0; covered && i < children.size(); i++)
+        {      
+            covered = children.get(i).isTestCovered(_deeply);
+        }
+		return covered;
+	}
+	// END KGU#117 2016-03-06
 
 	// START KGU 2015-10-16
 	/* (non-Javadoc)
@@ -416,4 +554,16 @@ public class Subqueue extends Element implements IElementSequence {
 	}
 	// END KGU#87 2015-11-22
 
+	// START KGU#123 2016-01-03: We need a collective collapsing/expansion now
+	@Override
+    public void setCollapsed(boolean collapsed) {
+        super.setCollapsed(false);	// the Subqueue itself will never be collapsed
+        Iterator<Element> iter = getIterator();
+        while (iter.hasNext())
+        {
+        	iter.next().setCollapsed(collapsed);
+        }
+    }
+	// END KGU#123 2016-01-03
+	
 }

@@ -36,6 +36,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.10.12      Comment drawing centralized and breakpoint mechanism prepared
  *      Kay Gürtzig     2015.11.14      Bugfix #31 = KGU#82 in method copy()
  *		Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *		Kay Gürtzig     2016.01.03      Enh. #87 (KGU#122) -> getIcon()
+ *		Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136) Drawing/dragging/selection consolidated
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *
  ******************************************************************************************************
  *
@@ -101,17 +104,15 @@ package lu.fisch.structorizer.elements;
  *
  ******************************************************************************************************///
 
-import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
+import java.awt.Point;
 
-import javax.swing.JPanel;
+import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
-import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.gui.IconLoader;
 
 public class Jump extends Instruction {
 
@@ -135,28 +136,36 @@ public class Jump extends Instruction {
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
-		rect.top=0;
-		rect.left=0;
-		rect.right=0;
-		rect.bottom=0;
+		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
+		if (this.isRectUpToDate) return rect0;
+		// END KGU#136 2016-03-01
+
+		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
+		rect0.top=0;
+		rect0.left=0;
+		rect0.right=0;
+		rect0.bottom=0;
 		
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 		
 		// FIXME (KGU): What is the rounding of an integer division result good for?
-		rect.right=Math.round(2*(E_PADDING/2));
-		for(int i=0;i<getText(false).count();i++)
+		rect0.right = 2 * (E_PADDING/2);
+		for (int i=0; i<getText(false).count(); i++)
 		{
 			// FIXME (KGU): The width parameters differ from the ones in draw()!
 			int lineWidth = getWidthOutVariables(_canvas, getText(false).get(i), this) + 3*E_PADDING;
-			if(rect.right < lineWidth)
+			if (rect0.right < lineWidth)
 			{
-				rect.right = lineWidth;
+				rect0.right = lineWidth;
 			}
 		}
 		// FIXME (KGU): What is the rounding of an integer division result good for?
-		rect.bottom=2*Math.round(Element.E_PADDING/2)+getText(false).count()*fm.getHeight();
+		rect0.bottom = 2*(Element.E_PADDING/2) + getText(false).count()*fm.getHeight();
 		
-		return rect;
+		// START KGU#136 2016-03-01: Bugfix #97
+		isRectUpToDate = true;
+		// END KGU#136 2016-03-01
+		return rect0;
 	}
 	
 	public void draw(Canvas _canvas, Rect _top_left)
@@ -175,8 +184,15 @@ public class Jump extends Instruction {
 //		}
 		// END KGU 2015-10-13
 		
-		rect=_top_left.copy();
-		
+		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
+		//rect = _top_left.copy();
+		rect = new Rect(0, 0, 
+				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
+		Point ref = this.getDrawPoint();
+		this.topLeft.x = _top_left.left - ref.x;
+		this.topLeft.y = _top_left.top - ref.y;
+		// END KGU#136 2016-03-01
+				
 		Canvas canvas = _canvas;
 		canvas.setBackground(drawColor);
 		canvas.setColor(drawColor);
@@ -188,26 +204,18 @@ public class Jump extends Instruction {
 		// draw comment
         if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
         {
-            // START KGU 2015-10-11: Use an inherited helper method now
-//                canvas.setBackground(E_COMMENTCOLOR);
-//                canvas.setColor(E_COMMENTCOLOR);
-//
-//                Rect someRect = _top_left.copy();
-//
-//                someRect.left+=2;
-//                someRect.top+=2;
-//                someRect.right=someRect.left+4;
-//                someRect.bottom-=1;
-//
-//                canvas.fillRect(someRect);
 			this.drawCommentMark(canvas, _top_left);
-    		// END KGU 2015-10-11
 		}
         // START KGU 2015-10-11
 		// draw breakpoint bar if necessary
 		this.drawBreakpointMark(canvas, _top_left);
 		// END KGU 2015-10-11
 		
+		// START KGU#156 2016-03-11: Enh. #124
+		// write the run-time info if enabled
+		this.writeOutRuntimeInfo(canvas, myrect.right - (Element.E_PADDING / 2), myrect.top);
+		// END KGU#156 2016-03-11
+				
 		
 		for(int i=0;i<getText(false).count();i++)
 		{
@@ -230,6 +238,14 @@ public class Jump extends Instruction {
 		canvas.drawRect(_top_left);
 	}
 
+	// START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
+	@Override
+	protected ImageIcon getIcon()
+	{
+		return IconLoader.ico059;
+	}
+	// END KGU#122 2016-01-03
+
 	public Element copy()
 	{
 		Element ele = new Jump(this.getText().copy());
@@ -238,6 +254,13 @@ public class Jump extends Instruction {
 		// START KGU#82 (bug #31) 2015-11-14
 		ele.breakpoint = this.breakpoint;
 		// END KGU#82 (bug #31) 2015-11-14
+		// START KGU#117 2016-03-07: Enh. #77
+        if (Element.E_COLLECTRUNTIMEDATA)
+        {
+        	// We share this object (important for recursion!)
+        	ele.deeplyCovered = this.deeplyCovered;
+        }
+		// END KGU#117 2016-03-07
 		return ele;
 	}
 	

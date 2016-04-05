@@ -60,16 +60,70 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2015.12.11      Enhancement #54 (KGU#101): List of output expressions
  *      Kay Gürtzig     2015.12.13      Enhancement #51 (KGU#107): Handling of empty input and output
  *      Kay Gürtzig     2015.12.15/26   Bugfix #61 (KGU#109): Precautions against type specifiers
+ *      Kay Gürtzig     2016.01.05      Bugfix #90 (KGU#125): Arranger updating for executed subroutines fixed
+ *      Kay Gürtzig     2016.01.07      Bugfix #91 (KGU#126): Reliable execution of empty Jump elements,
+ *                                      Bugfix #92 (KGU#128): Function names were replaced within string literals
+ *      Kay Gürtzig     2016.01.08      Bugfix #95 (KGU#130): div operator conversion accidently dropped
+ *      Kay Gürtzig     2016.01.09      KGU#133: Quick fix to show returned arrays in a list view rather than a message box
+ *      Kay Gürtzig     2016.01.14      KGU#100: Array initialisation in assignments enabled (Enh. #84)
+ *      Kay Gürtzig     2016.01.15      KGU#109: More precaution against typed variables (issues #61, #107)
+ *      Kay Gürtzig     2016.01.16      Bugfix #112: Several flaws in index evaluation mended (KGU#141)
+ *      Kay Gürtzig     2016-01-29      Bugfix #115, enh. #84: Result arrays now always presented as list
+ *                                      (with "Pause" button if not already in step mode; KGU#133, KGU#147).
+ *      Kay Gürtzig     2016.03.13      Enh. #77, #124: runtime data collection implemented (KGU#117, KGU#156)
+ *      Kay Gürtzig     2016.03.16      Bugfix #131: Precautions against reopening, take-over, and loss of control (KGU#157)
+ *      Kay Gürtzig     2016.03.17      Enh. #133: Stacktrace now permanently maintained, not only on errors (KGU#159)
+ *      Kay Gürtzig     2016.03.18      KGU#89: Language localization support slightly improved
+ *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): Support for FOR-IN loops
+ *      Kay Gürtzig     2016.03.29      Bugfix #139 (KGU#166) in getIndexValue() - nested index access failed
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      TODO: Consistent implementation of new setting D7Parser.ignoreCase
+ *      2016-03-17 Enh. #133 (KGU#159)
+ *      - Previously, a Call stack trace was only shown in cse of an execution error or manual abort.
+ *        Now a Call stack trace may always be requested while execution hasn't ended. Only prerequisite
+ *        is that the execution be paused. Then a double-click on the stext item showing the subroutine
+ *        depth is sufficient. Moreover, the stacktrace will always be presented as list view (before a
+ *        simple message box was used if the number of call levels didn't exceed 10.   
+ *      2016-03-16/18 Bugfix #131 (KGU#157)
+ *      - When the "run" (or "make") button was pressed while an execution was already running or stood
+ *        paused then the Executor CALL stack, the event queues, and the connection between Diagram and
+ *        Root often got compromised or even corrupted. The same used to happen when a Structorizer
+ *        instance replaced its Root while this was involved in some execution. So these actions had to
+ *        be prevented if an execution is going on. Hence, the parameterized version of getInstance() 
+ *        now checks the running flag and raises a user dialog in order either to ignore the interfering
+ *        action or to abort the running execution.
+ *      2016-03-06 / 2016-03-12 Enhancements #77, #124 (KGU#117/KGU#156)
+ *      - According to an ER by [elemhsb], first a mechanism optionally to visualise code coverage (for
+ *        white-box test completeness) was implemented. A green background colour was proposed and used
+ *        to highlight covered Element. It soon became clear that with respect to subroutines a dis-
+ *        tinction among loose (shallow) and strict (deep) coverage was necessary, particularly when
+ *        recursion comes in. So the coverage tracking could be switched between shallow mode (where
+ *        subroutines were automatically regarded as proven to have been covered previously, such the
+ *        first CALL to a routine it was automatically marked as covered as well) and deep mode where
+ *        a CALL was only marked after the subroutine (regarded as brand-new and never analyzed) had
+ *        fully been covered at runtime.
+ *      - When this obviously worked, I wanted to get more out of the new mechanism. Instead of
+ *        deciding first which coverage tracking to do and having to do another run to see the effect
+ *        of the complementary option, always both kinds of analysis were done at once, and the user
+ *        could arbitrarily switch between the two possible coverage results.
+ *      - And then I had a really great idea: Why not add some more runtime data collection, once data
+ *        are collected? And so I added an execution counter for every very element, such that after
+ *        a run one might easily see, how often a certain operation was executed. And a kind of
+ *        histographic analysis seemed also sensible, i.e. to show how the load is distributed over
+ *        the elements (particularly the structured ones) and how many instruction steps were needed
+ *        in total to run the algorithm for certain data. This is practically an empirical abstract
+ *        time estimation. Both count numbers (execution counter / instruction load) are now written
+ *        to the upper right corner of any element, and additionally a scaled colouring from deep
+ *        blue to hot red is used to visualize the hot spots and the lost places.
  *      2015.12.10 (KGU#97, KGU#99)
  *          Bug/ER #48: An attached diagramController (usually the TurtleBox) had not immediately been
  *            informed about a delay change, such that e.g. the Turtleizer still crept in slow motion
  *            while the Executor had no delay anymore. Now a suitable diagramController will be informed.
  *          Bug 49: Equality test had failed between variables, particularly between array elements,
- *            because they presented Wrapper objects (e. g. Intege) rather than primitive values. 
+ *            because they presented Wrapper objects (e. g. Integer) rather than primitive values. 
  *            For scalar variables, values are now assigned as primitive type if possible (via
  *            interpreter.eval()). For array elements, in contrast, the comparison expression  will be
  *            converted, such that == and != will be replaced by .equals() calls.
@@ -113,8 +167,11 @@ package lu.fisch.structorizer.executor;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dialog.ModalityType;
 import java.awt.List;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.Iterator;
@@ -126,6 +183,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.PatternSyntaxException;
 
+import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -138,6 +196,7 @@ import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
+import lu.fisch.structorizer.elements.ILoop;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Parallel;
@@ -184,16 +243,51 @@ public class Executor implements Runnable
 		{
 			mySelf.diagramController = diagramController;
 		}
-		if (diagram != null)
+		// START KGU#157 2016-03-16: Bugfix #131 - Don't init if there is a running thread
+		//if (diagram != null)
+		//{
+		//	mySelf.diagram = diagram;
+		//}
+		//mySelf.control.init();
+		//mySelf.control.setLocationRelativeTo(diagram);
+		boolean doInitialise = true;
+		mySelf.reopenFor = null;
+		if (mySelf.diagram != null && mySelf.running)
 		{
-			mySelf.diagram = diagram;
+			doInitialise = false;
+			Root root = mySelf.diagram.getRoot();
+			String errText = mySelf.control.lbStopRunningProc.getText();
+			errText = errText.replace("\\n", "\n");
+			if (root != null)
+			{
+				errText = errText.replace("?", " (\"" + root.getMethodName() + "\")?");
+			}
+			int res = JOptionPane.showOptionDialog(diagram,
+					   errText,
+					   "Question",
+					   JOptionPane.YES_NO_OPTION,
+					   JOptionPane.QUESTION_MESSAGE,
+					   null,null,null);
+			if (res == 0)
+			{
+				mySelf.setStop(true);
+				mySelf.reopenFor = diagram;
+			}
 		}
-		mySelf.control.init();
-		mySelf.control.setLocationRelativeTo(diagram);
+		if (doInitialise)
+		{
+			if (diagram != null)
+			{
+				mySelf.diagram = diagram;
+			}
+			mySelf.control.init();
+			mySelf.control.setLocationRelativeTo(diagram);
+		}
+		// END KGU#157 2016-03-16: Bugfix #131
 		mySelf.control.validate();
 		// START KGU#89 2015-11-25: Language support (we don't force the existence of all languages)
 		try {
-		LangDialog.setLang(mySelf.control, mySelf.diagram.getLang());
+			LangDialog.setLang(mySelf.control, mySelf.diagram.getLang());
 		}
 		catch (Exception ex)
 		{
@@ -235,6 +329,9 @@ public class Executor implements Runnable
 	private boolean isErrorReported = false;
 	private StringList stackTrace = new StringList();
 	// END KGU#2 2015-11-22
+	// START KGU#157 2016-03-16: Bugfix #131 - Precaution against a reopen attempts by different Structorizer instances
+	private Diagram reopenFor = null;	// A Structorizer instance that tried to open Control while still running
+	// END KGU#2 2016-03-16
 
 	private Executor(Diagram diagram, DiagramController diagramController)
 	{
@@ -242,6 +339,20 @@ public class Executor implements Runnable
 		this.diagramController = diagramController;
 	}
 
+	// START KGU#89 2016-03-18: Opportunity to trigger re-tramsltion from outside
+	public void setLangLocal()
+	{
+		try {
+			LangDialog.setLang(control, diagram.getLang());
+		}
+		catch (Exception ex)
+		{
+			System.err.println(ex.getMessage());
+		}
+		
+	}
+	// END KGU#89 2016-03-18
+	
 	// METHOD MODIFIED BY GENNARO DONNARUMMA
 
 	private String convert(String s)
@@ -253,36 +364,60 @@ public class Executor implements Runnable
 	{
 		Regex r;
 
-		s = Element.unifyOperators(s);
-		s = s.replace(" div ", " / ");		// FIXME: Operands should be coerced to integer...
-		// END KGU#18/KGU#23 2015-10-26
-
-		// Convert built-in mathematical functions
-		s = s.replace("cos(", "Math.cos(");
-		s = s.replace("sin(", "Math.sin(");
-		s = s.replace("tan(", "Math.tan(");
-        // START KGU 2014-10-22: After the previous replacements the following 3 strings would never be found!
-        //s=s.replace("acos(", "Math.acos(");
-        //s=s.replace("asin(", "Math.asin(");
-        //s=s.replace("atan(", "Math.atan(");
-        // This is just a workaround; A clean approach would require a genuine lexical scanning in advance
-        s=s.replace("aMath.cos(", "Math.acos(");
-        s=s.replace("aMath.sin(", "Math.asin(");
-        s=s.replace("aMath.tan(", "Math.atan(");
-        // END KGU 2014-10-22:
-		s = s.replace("abs(", "Math.abs(");
-		s = s.replace("round(", "Math.round(");
-		s = s.replace("min(", "Math.min(");
-		s = s.replace("max(", "Math.max(");
-		s = s.replace("ceil(", "Math.ceil(");
-		s = s.replace("floor(", "Math.floor(");
-		s = s.replace("exp(", "Math.exp(");
-		s = s.replace("log(", "Math.log(");
-		s = s.replace("sqrt(", "Math.sqrt(");
-		s = s.replace("pow(", "Math.pow(");
-		s = s.replace("toRadians(", "Math.toRadians(");
-		s = s.replace("toDegrees(", "Math.toDegrees(");
-		// s=s.replace("random(", "Math.random(");
+		// START KGU#128 2016-01-07: Bugfix #92 - Effort via tokens to avoid replacements within string literals
+//		s = Element.unifyOperators(s);
+//		s = s.replace(" div ", " / ");		// FIXME: Operands should be coerced to integer...
+//
+//		// Convert built-in mathematical functions
+//		s = s.replace("cos(", "Math.cos(");
+//		s = s.replace("sin(", "Math.sin(");
+//		s = s.replace("tan(", "Math.tan(");
+//        // START KGU 2014-10-22: After the previous replacements the following 3 strings would never be found!
+//        //s=s.replace("acos(", "Math.acos(");
+//        //s=s.replace("asin(", "Math.asin(");
+//        //s=s.replace("atan(", "Math.atan(");
+//        // This is just a workaround; A clean approach would require a genuine lexical scanning in advance
+//        s=s.replace("aMath.cos(", "Math.acos(");
+//        s=s.replace("aMath.sin(", "Math.asin(");
+//        s=s.replace("aMath.tan(", "Math.atan(");
+//        // END KGU 2014-10-22:
+//		s = s.replace("abs(", "Math.abs(");
+//		s = s.replace("round(", "Math.round(");
+//		s = s.replace("min(", "Math.min(");
+//		s = s.replace("max(", "Math.max(");
+//		s = s.replace("ceil(", "Math.ceil(");
+//		s = s.replace("floor(", "Math.floor(");
+//		s = s.replace("exp(", "Math.exp(");
+//		s = s.replace("log(", "Math.log(");
+//		s = s.replace("sqrt(", "Math.sqrt(");
+//		s = s.replace("pow(", "Math.pow(");
+//		s = s.replace("toRadians(", "Math.toRadians(");
+//		s = s.replace("toDegrees(", "Math.toDegrees(");
+//		// s=s.replace("random(", "Math.random(");
+		StringList tokens = Element.splitLexically(s, true);
+		Element.unifyOperators(tokens, false);
+		// START KGU#130 2015-01-08: Bugfix #95 - Conversion of div operator had been forgotten...
+		tokens.replaceAll("div", "/");		// FIXME: Operands should better be coerced to integer...
+		// END KGU#130 2015-01-08
+		// Function names to be prefixed with "Math."
+		final String[] mathFunctions = {
+				"cos", "sin", "tan", "acos", "asin", "atan", "toRadians", "toDegrees",
+				"abs", "round", "min", "max", "ceil", "floor", "exp", "log", "sqrt", "pow"
+				};
+		StringList fn = new StringList();
+		fn.add("DUMMY");
+		fn.add("(");
+		for (int f = 0; f < mathFunctions.length; f++)
+		{
+			int pos = 0;
+			fn.set(0, mathFunctions[f]);
+			while ((pos = tokens.indexOf(fn, pos, true)) >= 0)
+			{
+				tokens.set(pos, "Math." + mathFunctions[f]);
+			}
+		}
+		s = tokens.concatenate();
+		// END KGU#128 2016-01-07
 
 		// pascal notation to access a character inside a string
 		//r = new Regex("(.*)\\[(.*)\\](.*)", "$1.charAt($2-1)$3");
@@ -455,6 +590,28 @@ public class Executor implements Runnable
 			this.notify();
 		}
 	}
+	
+	// START KGU#117 2016-03-08: Enh. #77
+	/**
+	 * Clears the execution status of all routines held by known
+	 * subroutine pools  
+	 */
+	public void clearPoolExecutionStatus()
+	{
+		Iterator<IRoutinePool> iter = this.routinePools.iterator();
+		while (iter.hasNext())
+		{
+			iter.next().clearExecutionStatus();
+		}
+		this.diagram.clearExecutionStatus();
+		// START KGU#156 2016-03-10: Enh. #124
+		if (!Element.E_COLLECTRUNTIMEDATA)
+		{
+			Element.resetMaxExecCount();
+		}
+		// END KGU#156 2016-03-10
+	}
+	// END KGU#117 2016-03-08
 
 	// METHOD MODIFIED BY GENNARO DONNARUMMA
 
@@ -467,6 +624,9 @@ public class Executor implements Runnable
 		if (diagram.isArrangerOpen)
 		{
 			this.routinePools.addElement(Arranger.getInstance());
+			// START KGU#117 2016-03-08: Enh. #77
+			Arranger.getInstance().clearExecutionStatus();
+			// END KGU#117 2016-03-08
 		}
 		this.isErrorReported = false;
 		this.diagram.getRoot().isCalling = false;
@@ -489,6 +649,11 @@ public class Executor implements Runnable
 	// END KGU#2 (#9) 2015-11-13
 		
 		Root root = diagram.getRoot();
+
+		// START KGU#159 2016-03-17: Now we permanently maintain the stacktrace, not only in case of error
+		addToStackTrace(root, arguments);
+		// END KGU#159 2016-03-17
+		
 		// START KGU#2 (#9) 2015-11-14
 		Iterator<Updater> iter = root.getUpdateIterator();
 		while (iter.hasNext())
@@ -505,8 +670,8 @@ public class Executor implements Runnable
 		diagram.setAnalyser(false);
 		// START KGU 2015-10-11/13:
 		// Unselect all elements before start!
-		diagram.unselectAll();	// Is this still needed?
-		// ...and reset all execution state remnants (just for sure)
+		//diagram.unselectAll();	// KGU 2016-03-08: There is no need anymore
+		// Reset all execution state remnants (just for sure)
 		diagram.clearExecutionStatus();
 		// END KGU 2015-10-11/13
 		initInterpreter();
@@ -539,8 +704,13 @@ public class Executor implements Runnable
 				if (noArguments)
 				{
 				// END KGU#2 (#9) 2015-11-13
-					String str = JOptionPane.showInputDialog(null,
-							"Please enter a value for <" + in + ">", null);
+					// START KGU#89 2016-03-18: More language support 
+					//String str = JOptionPane.showInputDialog(null,
+					//		"Please enter a value for <" + in + ">", null);
+					String msg = control.lbInputValue.getText();
+					msg = msg.replace("%", in);
+					String str = JOptionPane.showInputDialog(null, msg, null);
+					// END KGU#89 2016-03-18
 					if (str == null)
 					{
 						//i = params.count();	// leave the loop
@@ -628,9 +798,11 @@ public class Executor implements Runnable
 				paus = false;
 				step = false;
 			}
-			else if (isErrorReported && stackTrace.count() > 0)
+			else if (isErrorReported && stackTrace.count() > 1)
 			{
-				addToStackTrace(root, arguments);
+				// START KGU#159 2016-03-17: Now we permanently maintain the stacktrace, so there is no need anymore
+				//addToStackTrace(root, arguments);
+				// END KGU#159 2016-03-17
 				showStackTrace();
 			}
 			// END KGU#2 2015-11-24	
@@ -649,18 +821,55 @@ public class Executor implements Runnable
 					int i = 0;
 					while ((i < posres.count()) && (!returned))
 					{
-						Object n = interpreter.get(posres.get(i));
-						if (n != null)
+						Object resObj = interpreter.get(posres.get(i));
+						if (resObj != null)
 						{
 							// START KGU#2 (#9) 2015-11-13: Only tell the user if this wasn't called
 							//JOptionPane.showMessageDialog(diagram, n,
 							//		"Returned result", 0);
-							this.returnedValue = n;
+							this.returnedValue = resObj;
 							if (this.callers.isEmpty())
 							{
-								JOptionPane.showMessageDialog(diagram, n,
-										"Returned result", JOptionPane.INFORMATION_MESSAGE);
+								// START KGU#133 2016-01-09: Show large arrays in a listview
+								//JOptionPane.showMessageDialog(diagram, n,
+								//		"Returned result", JOptionPane.INFORMATION_MESSAGE);
+								// KGU#133 2016-01-29: Arrays now always shown as listview (independent of size)
+								if (resObj instanceof Object[] /*&& ((Object[])resObj).length > 20*/)
+								{
+									// START KGU#147 2016-01-29: Enh. #84 - interface changed for more flexibility
+									//showArray((Object[])resObj, "Returned result");
+									showArray((Object[])resObj, "Returned result", !step);
+									// END KGU#147 2016-01-29
+								}
+								// START KGU#84 2015-11-23: Enhancement to give a chance to pause (though of little use here)
+								//else
+								//{
+									//JOptionPane.showMessageDialog(diagram, resObj,
+									//		"Returned result", JOptionPane.INFORMATION_MESSAGE);
+								//}
+								else if (step)
+								{
+									JOptionPane.showMessageDialog(diagram, resObj,
+											"Returned result", JOptionPane.INFORMATION_MESSAGE);
+								}
+								else
+								{
+									Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
+									int pressed = JOptionPane.showOptionDialog(diagram, resObj, "Returned result",
+											JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
+									if (pressed == 1)
+									{
+										paus = true;
+										step = true;
+										control.setButtonsForPause();
+									}
+								}
+								// END KGU#84 2015-11-23
+								// END KGU#133 2016-01-09
 							}
+							// START KGU#148 2016-01-29: Pause now here, particularly for subroutines
+							delay();
+							// END KGU#148 2016-01-29							
 							// END KGU#2 (#9) 2015-11-13
 							returned = true;
 						}
@@ -680,14 +889,69 @@ public class Executor implements Runnable
 		// END KGU 2015-10-13
 		diagram.setAnalyser(analyserState);
 
+		if (successful)
+		{
+			dropFromStackTrace();
+		}
+		
 		// START KGU#2 (#9) 2015-11-13: Need the status
 		return successful;
 		// END KGU# (#9) 2015-11-13
 	}
 	
+	// START KGU#133 2016-01-09: New method for presenting result arrays as scrollable list
+	// START KGU#147 2016-01-29: Enh. #84 - interface enhanced, pause button added
+	//private void showArray(Object[] _array, String _title)
+	private void showArray(Object[] _array, String _title, boolean withPauseButton)
+	// END KGU#147 2016-01-29
+	{	
+		JDialog arrayView = new JDialog();
+		arrayView.setTitle(_title);
+		arrayView.setIconImage(IconLoader.ico004.getImage());
+		arrayView.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		// START KGU#147 2016-01-29: Enh. #84 (continued)
+		JButton btnPause = new JButton("Pause");
+		btnPause.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent event) 
+			{
+				step = true; paus = true; control.setButtonsForPause();
+				if (event.getSource() instanceof JButton)
+				{
+					Container parent = ((JButton)(event.getSource())).getParent();
+					while (parent != null && !(parent instanceof JDialog))
+					{
+						parent = parent.getParent();
+					}
+					if (parent != null) {
+						((JDialog)parent).dispose();
+					}
+				}
+			}
+		});
+		arrayView.getContentPane().add(btnPause, BorderLayout.NORTH);
+		btnPause.setVisible(withPauseButton);
+		// END KGU#147 2016-01-29
+		List arrayContent = new List(10);
+		for (int i = 0; i < _array.length; i++)
+		{
+			arrayContent.add("[" + i + "]  " + prepareValueForDisplay(_array[i]));
+		}
+		arrayView.getContentPane().add(arrayContent, BorderLayout.CENTER);
+		arrayView.setSize(300, 300);
+		arrayView.setLocationRelativeTo(control);
+		arrayView.setModalityType(ModalityType.APPLICATION_MODAL);
+		arrayView.setVisible(true);
+	}
+	// END KGU#133 2016-01-09
+	
 	// START KGU#2 (#9) 2015-11-13: New method to execute a called subroutine
-	private Object executeCall(Root root, Object[] arguments)
+	// START KGU#156 2016-03-12: Enh. #124 - signature enhanced to overcome some nasty hacks
+	//private Object executeCall(Root subRoot, Object[] arguments)
+	private Object executeCall(Root subRoot, Object[] arguments, Call caller)
+	// END KGU#156 2016-03-12
 	{
+		boolean cloned = false;
+		Root root = subRoot;
 		Object resultObject = null;
 		Root oldRoot = this.diagram.getRoot();
 		ExecutionStackEntry entry = new ExecutionStackEntry(
@@ -709,18 +973,45 @@ public class Executor implements Runnable
 			root = (Root)root.copy();
 			root.isCalling = false;
 			// Remaining initialisations will be done by this.execute(...).
+			cloned = true;
 		}
 		
-		this.diagram.setRoot(root);
+		this.diagram.setRoot(root, true);
 		
+		// START KGU#156 2016-03-11: Enh. #124 - detect execution counter diff.
+		int countBefore = root.getExecStepCount(true);
+		// END KGU#156 2016-03-11
 		boolean done = this.execute(arguments);
+		// START KGU#156 2016-03-11; Enh. #124
+		caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore, true);
+		if (cloned || root.isTestCovered(true))	
+		{
+			caller.deeplyCovered = true;
+		}
+		// END KGU#156 2016-03-11
 
 		// START KGU#2 2015-11-24
-		if (!done || stop)
-		{
-			addToStackTrace(root, arguments);
-		}
+//		if (!done || stop)
+//		{
+//			addToStackTrace(root, arguments);
+//		}
 		// END KGU#2 2015-11-24
+		
+		// START KGU#117 2016-03-07: Enh. #77
+		// For recursive calls the coverage must be combined
+		if (cloned && Element.E_COLLECTRUNTIMEDATA)
+		{
+			subRoot.combineRuntimeData(root);
+		}
+		// END KG#117 2016-03-07
+		
+		// START KGU#117 2016-03-07: Enh. #77
+		// For recursive calls the coverage must be combined
+		if (cloned && Element.E_COLLECTRUNTIMEDATA)
+		{
+			subRoot.combineRuntimeData(root);
+		}
+		// END KG#117 2016-03-07
 		
 		this.callers.pop();	// Should be the entry still held by variable entry
 					
@@ -761,27 +1052,42 @@ public class Executor implements Runnable
 		}
 		this.stackTrace.add(_root.getMethodName() + argumentString);
 	}
+	
+	// START KGU#159 2016-03-17: Stacktrace should always be available on demand, not only on error
+	private void dropFromStackTrace()
+	{
+		int size = this.stackTrace.count();
+		if (size > 0)
+		{
+			this.stackTrace.delete(size-1);
+		}
+	}
+	// END KGU#159 2016-03-17
 
 	/**
 	 * Pops up a dialog displaying the call trace with argument values
 	 */
-	private void showStackTrace()
+	public void showStackTrace()
 	{
-		if (stackTrace.count() <= 20)
-		{
-			// Okay, keep it simple
-			JOptionPane.showMessageDialog(diagram, this.stackTrace.getText(), "Stack trace",
-					JOptionPane.INFORMATION_MESSAGE);
-		}
-		else
-		{
+// START KGU#159 2016-03-17: A listview is always the better choice
+// (Think of large arrays as arguments!)
+//		if (stackTrace.count() <= 20)
+//		{
+//			// Okay, keep it simple
+//			JOptionPane.showMessageDialog(diagram, this.stackTrace.getText(), "Stack trace",
+//					JOptionPane.INFORMATION_MESSAGE);
+//		}
+//		else
+//		{
+// END KGU#159 2016-03-17
 			JDialog stackView = new JDialog();
 			stackView.setTitle("Stack trace");
 			stackView.setIconImage(IconLoader.ico004.getImage());
 			List stackContent = new List(10);
-			for (int i = 0; i < stackTrace.count(); i++)
+			int depth = stackTrace.count();
+			for (int i = 0; i < depth; i++)
 			{
-				stackContent.add(stackTrace.get(i));
+				stackContent.add(stackTrace.get(depth - i - 1));
 			}
 			stackView.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		    stackView.getContentPane().add(stackContent, BorderLayout.CENTER);
@@ -789,10 +1095,12 @@ public class Executor implements Runnable
 		    stackView.setLocationRelativeTo(control);
 		    stackView.setModalityType(ModalityType.APPLICATION_MODAL);
 		    stackView.setVisible(true);
-		}		
+// START KGU#159 2016-03-17: A listview is always the better choice
+//		}		
+// END KGU#159 2016-03-17
 	}
 	// END KGU#2 2015-11-24
-
+	
     /**
      * Searches all known pools for subroutines with a signature compatible to name(arg1, arg2, ..., arg_nArgs) 
      * @param name - function name
@@ -811,11 +1119,19 @@ public class Executor implements Runnable
     	Iterator<IRoutinePool> iter = this.routinePools.iterator();
     	while (subroutine == null && iter.hasNext())
     	{
-    		Vector<Root> candidates = iter.next().findRoutinesBySignature(name, nArgs);
+    		IRoutinePool pool = iter.next();
+    		Vector<Root> candidates = pool.findRoutinesBySignature(name, nArgs);
     		for (int c = 0; subroutine == null && c < candidates.size(); c++)
     		{
     	    	// TODO Check for ambiguity (multiple matches) and raise e.g. an exception in that case
     			subroutine = candidates.get(c);
+    			// START KGU#125 2016-01-05: Is to force updating of the diagram status
+    			if (pool instanceof Updater)
+    			{
+    				subroutine.addUpdater((Updater)pool);
+    			}
+    			diagram.adoptArrangedOrphanNSD(subroutine);
+    			// END KGU#125 2016-01-05
     		}
     	}
     	return subroutine;
@@ -890,7 +1206,7 @@ public class Executor implements Runnable
 			pascalFunction = "public void randomize() {  }";
 			interpreter.eval(pascalFunction);
 			// square
-			pascalFunction = "public double sqr(double d) { return (d) * (d); }";
+			pascalFunction = "public double sqr(double d) { return d * d; }";
 			interpreter.eval(pascalFunction);
 			// square root
 			pascalFunction = "public double sqrt(double d) { return Math.sqrt(d); }";
@@ -954,7 +1270,38 @@ public class Executor implements Runnable
 	{
 		execute();
 		running = false;
+		// START KGU#117/KGU#156 2016-03-13: Enh. #77 + #124
+		// It is utterly annoying when in run data mode the control always 
+		// closes after execution.
 		control.setVisible(false);
+		// START KGU#157 2016-03-16: Bugfix #131 - postponed Control start?
+		boolean reopen = false;
+		if (this.reopenFor != null)
+		{
+			this.diagram = this.reopenFor;
+			this.reopenFor = null;
+			reopen = true;
+		}
+		// START KGU#117/KGU#156 2016-03-13: Enh. #77 + #124
+		// It is utterly annoying when in run data mode the control always 
+		// closes after execution.
+		if (reopen || Element.E_COLLECTRUNTIMEDATA)
+		{
+			control.init();
+			// START KGU#89 2015-11-25: Language support (we don't force the existence of all languages)
+			try {
+				LangDialog.setLang(mySelf.control, mySelf.diagram.getLang());
+			}
+			catch (Exception ex)
+			{
+				System.err.println(ex.getMessage());
+			}
+			// END KGU#89 2015-11-25
+			control.validate();
+			control.setVisible(true);
+			control.repaint();
+		}
+		// END KGU#117/KGU#156
 	}
 
 	/**
@@ -1108,7 +1455,7 @@ public class Executor implements Runnable
 	private void setVar(String name, Object content) throws EvalError
 
 	{
-		// START KGU#69 2015-11-09: This is only a god idea in case of raw input
+		// START KGU#69 2015-11-09: This is only a good idea in case of raw input
 		//if (content instanceof String)
 		//{
 		//	if (!isNumeric((String) content))
@@ -1120,14 +1467,17 @@ public class Executor implements Runnable
 
 		// MODIFIED BY GENNARO DONNARUMMA
 
-		if ((name != null) && (name.contains("(")))
-		{
-			name = name.replace("(", "");
-		}
-		if ((name != null) && (name.contains(")")))
-		{
-			name = name.replace(")", "");
-		}
+		// START KGU#141 2016-01-16: Bugfix #112 - this spoiled many index expressions!
+		// No idea what this might have been intended for - enclosing parentheses after input?
+		//if ((name != null) && (name.contains("(")))
+		//{
+		//	name = name.replace("(", "");
+		//}
+		//if ((name != null) && (name.contains(")")))
+		//{
+		//	name = name.replace(")", "");
+		//}
+		// END KGU#141 2016-01-16
 
 		// MODIFIED BY GENNARO DONNARUMMA, ARRAY SUPPORT ADDED
 		// Fundamentally revised by Kay Gürtzig 2015-11-08
@@ -1176,6 +1526,13 @@ public class Executor implements Runnable
 		} else // if ((name.contains("[")) && (name.contains("]")))
 		{
 			// START KGU#109 2015-12-16: Bugfix #61: Several strings suggest type specifiers
+			// START KGU#109 2016-01-15: Bugfix #61,#107: There might also be a colon...
+			int colonPos = name.indexOf(":");	// Check Pascal and BASIC style as well
+			if (colonPos > 0 || (colonPos = name.indexOf(" as ")) > 0)
+			{
+				name = name.substring(0, colonPos).trim();
+			}
+			// END KGU#109 2016-01-15
 			String[] nameParts = name.split(" ");
 			name = nameParts[nameParts.length-1];
 			// END KGU#109 2015-12-15
@@ -1336,16 +1693,13 @@ public class Executor implements Runnable
 
 	public void start(boolean useSteps)
 	{
-		running = true;
 		paus = useSteps;
 		step = useSteps;
 		stop = false;
 		variables = new StringList();
 		control.updateVars(new Vector<Vector>());
 		
-		// FIXME (KGU 2015-11-07) Should we replace the interpreter in order to avoid the frequently
-		// observed "freezing" after some severe syntax errors in a previous run attempt?
-
+		running = true;
 		Thread runner = new Thread(this, "Player");
 		runner.start();
 	}
@@ -1371,6 +1725,9 @@ public class Executor implements Runnable
 		{
 			diagram.redraw();
 		}
+		// START KGU#143 2016-01-21: Bugfix #114 - make sure no compromising editing is done
+		diagram.doButtons();
+		// END KGU#143 2016-01-21
 		// START KGU#43 2015-10-12: If there is a breakpoint switch to step mode before delay
 		checkBreakpoint(element);
 		// END KGU#43 2015-10-12
@@ -1430,15 +1787,19 @@ public class Executor implements Runnable
 		}
 		if (result.equals("")) {
 			element.executed = false;
+			// START KGU#117 2016-03-07: Enh. #77
+			element.checkTestCoverage(false);
+			// END KGU#117 2016-03-07
+			// START KGU#156 2016-03-11: Enh. #124
+			// Increment the execution counters
+			element.countExecution();
+			// END KGU#156 2016-03-11
 		}
 		return result;
 	}
 
 	private String stepRoot(Root element)
 	{
-		String result = new String();
-
-		int i = 0;
 		// KGU 2015-11-25: Was very annoying to wait here in step mode
 		// and we MUST NOT re-initialise the Turtleizer on a subroutine!
 		if ((diagramController != null || !step) && callers.isEmpty())
@@ -1448,22 +1809,29 @@ public class Executor implements Runnable
 
 		element.waited = true;
 
-		// START KGU#77 2015-11-11: Leave if a return statement has been executed
-		//while ((i < element.children.children.size())
-		//		&& result.equals("") && (stop == false))
-		while ((i < element.children.getSize())
-				&& result.equals("") && (stop == false) && !returned)
-		// END KGU#77 2015-11-11
-		{
-			result = step(element.children.getElement(i));
-			i++;
-		}
+		// START KGU#117 2016-03-07: Enh. #77 - consistent subqueue handling
+//		String result = new String();
+//		int i = 0;
+//		// START KGU#77 2015-11-11: Leave if a return statement has been executed
+//		//while ((i < element.children.children.size())
+//		//		&& result.equals("") && (stop == false))
+//		while ((i < element.children.getSize())
+//				&& result.equals("") && (stop == false) && !returned)
+//		// END KGU#77 2015-11-11
+//		{
+//			result = step(element.children.getElement(i));
+//			i++;
+//		}
+		String result = stepSubqueue(element.children, false);
+		// END KGU#117 2016-03-07
 
-		delay(); // FIXME Specific pause for root after the last instruction of the program/function
-		if (result.equals(""))
-		{
-			element.clearExecutionStatus();
-		}
+		// START KGU#148 2016-01-29: Moved to execute
+//		delay(); // FIXME Specific pause for root after the last instruction of the program/function
+//		if (result.equals(""))
+//		{
+//			element.clearExecutionStatus();
+//		}
+		// END KGU#148 2016-01-29
 		return result;
 	}
 
@@ -1495,7 +1863,7 @@ public class Executor implements Runnable
 				// assignment
 				if (cmd.indexOf("<-") >= 0)
 				{
-					result = tryAssignment(cmd, false);
+					result = tryAssignment(cmd, element);
 				}
 				// input
 				// START KGU#65 2015-11-04: Input keyword should only trigger this if positioned at line start
@@ -1531,6 +1899,9 @@ public class Executor implements Runnable
 				{
 					result = trySubroutine(cmd, element);
 				}
+				// START KGU#156 2016-03-11: Enh. #124
+				element.addToExecTotalCount(1, true);	// For the instruction line
+				//END KGU#156 2016-03-11
 			} catch (EvalError ex)
 			{
 				result = ex.getMessage();
@@ -1553,6 +1924,12 @@ public class Executor implements Runnable
 		StringList sl = element.getText();
 		int i = 0;
 
+		// START KGU#117 2016-03-10: Enh. #77
+		boolean wasSimplyCovered = element.simplyCovered;
+		boolean wasDeeplyCovered = element.deeplyCovered;
+		boolean allSubroutinesCovered = true;
+		// END KGU#117 2016-03-10
+
 		// START KGU#77 2015-11-11: Leave if a return statement has been executed
 		//while ((i < sl.count()) && result.equals("") && (stop == false))
 		while ((i < sl.count()) && result.equals("") && (stop == false) && !returned)
@@ -1561,8 +1938,13 @@ public class Executor implements Runnable
 			String cmd = sl.get(i);
 			// cmd=cmd.replace(":=", "<-");
 			cmd = convert(cmd);
+
 			try
 			{
+				// START KGU#117 2016-03-08: Enh. #77
+				element.deeplyCovered = false;
+				// END KGU#117 2016-03-08
+
 				// START KGU 2015-10-12: Allow to step within an instruction block (but no breakpoint here!) 
 				if (i > 0)
 				{
@@ -1573,22 +1955,36 @@ public class Executor implements Runnable
 				// assignment
 				if (cmd.indexOf("<-") >= 0)
 				{
-					result = tryAssignment(cmd, true);
+					result = tryAssignment(cmd, element);
 				}
 				else
 				{
 					result = trySubroutine(cmd, element);
 				}
+				
+				// START KGU#117 2016-03-08: Enh. #77
+				allSubroutinesCovered = allSubroutinesCovered && element.deeplyCovered;
+				// END KGU#117 2016-03-08
 			} catch (EvalError ex)
 			{
 				result = ex.getMessage();
 			}
+
 			i++;
 			// Among the lines of a single instruction element there is no further breakpoint check!
 		}
 		if (result.equals(""))
 		{
 			element.executed = false;
+			// START KGU#117 2016-03-08: Enh. #77
+			element.simplyCovered = true;	// (Should already have been set)
+			element.deeplyCovered = wasDeeplyCovered || allSubroutinesCovered;
+			if (!wasDeeplyCovered && allSubroutinesCovered ||
+					!wasSimplyCovered)
+			{
+				element.checkTestCoverage(true);
+			}
+			// END KGU#117 2016-03-08
 		}
 		return result;
 	}
@@ -1603,6 +1999,13 @@ public class Executor implements Runnable
 		int i = 0;
 		boolean done = false;
 
+		// START KGU#127 2016-01-07: Bugfix #91 - without a single line the exit didn't work
+		if (sl.count() == 0)
+		{
+			done = true;
+			this.leave++;
+		}
+		// END KGU#127 2016-01-07
 		while ((i < sl.count()) && !done && result.equals("") && (stop == false) && !returned)
 		{
 			String cmd = sl.get(i).trim();
@@ -1663,6 +2066,9 @@ public class Executor implements Runnable
 					if (result.isEmpty())
 					{
 						result = "Program exited with code " + exitValue + "!";
+						// START KGU#117 2016-03-07: Enh. #77
+						element.checkTestCoverage(true);
+						// END KGU#117 2016-03-07
 					}
 					done = true;
 				}
@@ -1683,6 +2089,9 @@ public class Executor implements Runnable
 		}			
 		if (result.equals(""))
 		{
+			// START KGU#156 2016-03-11: Enh. #124
+			element.addToExecTotalCount(1, true);	// For the jump
+			//END KGU#156 2016-03-11
 			element.executed = false;
 		}
 		return result;
@@ -1691,7 +2100,7 @@ public class Executor implements Runnable
 	
 	// START KGU 2015-11-11: Equivalent decomposition of method stepInstruction
 	// Submethod of stepInstruction(Instruction element), handling an assignment
-	private String tryAssignment(String cmd, boolean isCall) throws EvalError
+	private String tryAssignment(String cmd, Instruction instr) throws EvalError
 	{
 		String result = "";
 		Object value = null;
@@ -1702,25 +2111,29 @@ public class Executor implements Runnable
 		String varName = cmd.substring(0, cmd.indexOf("<-")).trim();
 		String expression = cmd.substring(
 				cmd.indexOf("<-") + 2, cmd.length()).trim();
-		// START KGU#2 2015-10-18: Just a preliminary check for the applicability of a cross-NSD subroutine execution!
-		if (isCall)
+		// START KGU#2 2015-10-18: cross-NSD subroutine execution?
+		if (instr instanceof Call)
 		{
 			Function f = new Function(expression);
 			if (f.isFunction())
 			{
-				System.out.println("Looking for SUBROUTINE NSD:");
-				System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
+				//System.out.println("Looking for SUBROUTINE NSD:");
+				//System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
 				Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
 				if (sub != null)
 				{
-					System.out.println("Matching sub-NSD found for SUBROUTINE CALL!");
-					System.out.println("--> " + varName + " <- " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
 					Object[] args = new Object[f.paramCount()];
 					for (int p = 0; p < f.paramCount(); p++)
 					{
 						args[p] = interpreter.eval(f.getParam(p));
 					}
-					value = executeCall(sub, args);
+					value = executeCall(sub, args, (Call)instr);
+					// START KGU#117 2016-03-10: Enh. #77
+					if (Element.E_COLLECTRUNTIMEDATA)
+					{
+						instr.simplyCovered = true;
+					}
+					// END KGU#117 2016-03-10
 				}
 				else
 				{
@@ -1734,10 +2147,19 @@ public class Executor implements Runnable
 			}
 		}
 		// END KGU#2 2015-10-17
+		// evaluate the expression
+		// START KGU#100 2016-01-14: Enh. #84 - accept array assignments with syntax array <- {val1, val2, ..., valN}
+		else if (expression.startsWith("{") && expression.endsWith("}"))
+		{
+			interpreter.eval("Object[] tmp20160114kgu = " + expression);
+			value = interpreter.get("tmp20160114kgu");
+			interpreter.unset("tmp20160114kgu");
+		}
+		// END KGU#100 2016-01-14
 		else		
 		{
-			cmd = cmd.replace("<-", "=");
-			// evaluate the expression
+			//cmd = cmd.replace("<-", "=");
+		
 			value = interpreter.eval(expression);
 		}
 		
@@ -1781,6 +2203,12 @@ public class Executor implements Runnable
 		else
 		{
 		// END KGU#107 2015-12-13
+			// START KGU#141 2016-01-16: Bugfix #112 - setVar won't eliminate enclosing paranetheses anymore
+			while (in.startsWith("(") && in.endsWith(")"))
+			{
+				in = in.substring(1, in.length()-1).trim();
+			}
+			// END KGU#141 2016-01-16
 			// START KGU#33 2014-12-05: We ought to show the index value
 			// if the variable is indeed an array element
 			if (in.contains("[") && in.contains("]")) {
@@ -1792,12 +2220,25 @@ public class Executor implements Runnable
 				}
 				catch (Exception e)
 				{
-					// Is bound to fail anyway!
+					// START KGU#141 2016-01-16: We MUST raise the error here.
+					result = e.getMessage();
+					// END KGU#141 2016-01-16
 				}
 			}
 			// END KGU#33 2014-12-05
-			String str = JOptionPane.showInputDialog(null,
-					"Please enter a value for <" + in + ">", null);
+			// START KGU#141 2016-01-16: Bugfix #112 - nothing more to do than exiting
+			if (!result.isEmpty())
+			{
+				return result;
+			}
+			// END KGU#141 2016-01-16
+			// START KGU#89 2016-03-18: More language support 
+			//String str = JOptionPane.showInputDialog(null,
+			//		"Please enter a value for <" + in + ">", null);
+			String msg = control.lbInputValue.getText();
+			msg = msg.replace("%", in);
+			String str = JOptionPane.showInputDialog(null, msg, null);
+			// END KGU#89 2016-03-18
 			// START KGU#84 2015-11-23: ER #36 - Allow a controlled continuation on cancelled input
 			//setVarRaw(in, str);
 			if (str == null)
@@ -1854,7 +2295,7 @@ public class Executor implements Runnable
 							+ "> is not a correct or existing expression.";
 				} else
 				{
-		// START KGU#101 2015-12-11
+		// START KGU#101 2015-12-11: Fix #54 (continued)
 					//	String s = unconvert(n.toString());
 					str += n.toString();
 				}
@@ -1867,7 +2308,7 @@ public class Executor implements Runnable
 		// END KGU#107 2015-12-13
 		if (result.isEmpty())
 		{
-			String s = unconvert(str.trim());
+			String s = unconvert(str.trim());	// FIXME (KGU): What the heck is this good for?
 		// END KGU#101 2015-12-11
 			// START KGU#84 2015-11-23: Enhancement #36 to give a chance to pause
 			//JOptionPane.showMessageDialog(diagram, s, "Output",
@@ -1916,29 +2357,41 @@ public class Executor implements Runnable
 		//	JOptionPane.showMessageDialog(diagram, s,
 		//			"Returned result", 0);
 		//}
-		Object n = null;
+		Object resObj = null;
 		if (!out.isEmpty())
 		{
-			n = interpreter.eval(out);
+			resObj = interpreter.eval(out);
 			// If this diagram is executed at top level then show the return value
 			if (this.callers.empty())
 			{
-				if (n == null)
+				if (resObj == null)
 				{
 					result = "<"
 							+ out
 							+ "> is not a correct or existing expression.";
-				} else
+				// START KGU#133 2016-01-29: Arrays should be presented as scrollable list
+				} else if (resObj instanceof Object[])
 				{
-					String s = unconvert(n.toString());
-					// START KGU#84 2015-11-23: Enhancement to give a chance to pause
+					showArray((Object[])resObj, "Returned result", !step);
+				} else if (step)
+				{
+					// START KGU#147 2016-01-29: This "uncoverting" copied from tryOutput() didn't make sense...
+					//String s = unconvert(resObj.toString());
 					//JOptionPane.showMessageDialog(diagram, s,
 					//		"Returned result", JOptionPane.INFORMATION_MESSAGE);
+					JOptionPane.showMessageDialog(diagram, resObj,
+							"Returned result", JOptionPane.INFORMATION_MESSAGE);
+					// END KGU#147 2016-01-29					
+				// END KGU#133 2016-01-29
+				} else
+				{
+					// START KGU#84 2015-11-23: Enhancement to give a chance to pause (though of little use here)
 					Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
-					int pressed = JOptionPane.showOptionDialog(diagram, s, "Returned result",
+					int pressed = JOptionPane.showOptionDialog(diagram, resObj, "Returned result",
 							JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
 					if (pressed == 1)
 					{
+						paus = true;
 						step = true;
 						control.setButtonsForPause();
 					}
@@ -1946,7 +2399,8 @@ public class Executor implements Runnable
 				}
 			}
 		}
-		this.returnedValue = n;
+		
+		this.returnedValue = resObj;
 		// END KGU#77 (#21) 2015-11-13
 		returned = true;
 		return result;
@@ -1957,7 +2411,6 @@ public class Executor implements Runnable
 	{
 		String result = "";
 		Function f = new Function(cmd);
-		boolean done = false;
 		if (f.isFunction())
 		{
 			String params = new String();
@@ -1993,15 +2446,18 @@ public class Executor implements Runnable
 			if (result.isEmpty() && element instanceof Call)
 			{
 				// FIXME: Disable the output instructions for the release version
-				System.out.println("Looking for SUBROUTINE NSD:");
-				System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
+				//System.out.println("Looking for SUBROUTINE NSD:");
+				//System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
 				Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
 				if (sub != null)
 				{
-					// FIXME: Disable the output instructions for the release version
-					System.out.println("Matching sub-NSD found for SUBROUTINE CALL!");
-					System.out.println("--> " + sub.getMethodName() + "(" + sub.getParameterNames().getCommaText() + ")");
-					executeCall(sub, args);
+					executeCall(sub, args, (Call)element);
+					// START KGU#117 2016-03-10: Enh. #77
+					if (Element.E_COLLECTRUNTIMEDATA)
+					{
+						element.simplyCovered = true;
+					}
+					// END KGU#117 2016-03-10
 				}
 				else
 				{
@@ -2049,6 +2505,10 @@ public class Executor implements Runnable
 			{
 				last--;
 			}
+			// START KGU#156 2016-03-11: Enh. #124
+			element.addToExecTotalCount(1, true);	// For the condition test (as if were just one comparison)
+			//END KGU#156 2016-03-11
+			
 			for (int q = 1; (q <= last) && (done == false); q++)
 			{
 				// START KGU#15 2015-10-21: Support for multiple constants per branch
@@ -2078,18 +2538,24 @@ public class Executor implements Runnable
 				{
 					done = true;
 					element.waited = true;
-					int i = 0;
-					// START KGU#78 2015-11-25: Leave if a loop exit is open
-					// START KGU#77 2015-11-11: Leave if a return statement has been executed
-					//while ((i < element.qs.get(q - 1).children.size())
-					//		&& result.equals("") && (stop == false))
-					while ((i < element.qs.get(q - 1).getSize())
-							&& result.equals("") && (stop == false) && !returned)
-					// END KGU#77 2015-11-11
+					// START KGU#117 2016-03-07: Enh. #77 - consistent subqueue handling
+//					int i = 0;
+//					// START KGU#78 2015-11-25: Leave if a loop exit is open
+//					// START KGU#77 2015-11-11: Leave if a return statement has been executed
+//					//while ((i < element.qs.get(q - 1).children.size())
+//					//		&& result.equals("") && (stop == false))
+//					while ((i < element.qs.get(q - 1).getSize())
+//							&& result.equals("") && (stop == false) && !returned)
+//					// END KGU#77 2015-11-11
+//					{
+//						result = step(element.qs.get(q - 1).getElement(i));
+//						i++;
+//					}
+					if (result.isEmpty())
 					{
-						result = step(element.qs.get(q - 1).getElement(i));
-						i++;
+						result = stepSubqueue(element.qs.get(q - 1), false);
 					}
+					// END KGU#117 2016-03-07
 					if (result.equals(""))
 					{
 						element.waited = false;
@@ -2141,6 +2607,10 @@ public class Executor implements Runnable
 			// if(getExec(s).equals("OK"))
 			else 
 			{
+				// START KGU#156 2016-03-11: Enh. #124
+				element.addToExecTotalCount(1, true);	// For the condition test
+				//END KGU#156 2016-03-11
+				
 				Subqueue branch;
 				if (n.toString().equals("true"))
 				{
@@ -2152,17 +2622,24 @@ public class Executor implements Runnable
 				}
 				element.executed = false;
 				element.waited = true;
-				int i = 0;
-				// START KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
-				//while ((i < branch.children.size())
-				//		&& result.equals("") && (stop == false))
-				while ((i < branch.getSize())
-						&& result.equals("") && (stop == false) && !returned && leave == 0)
-				// END KGU#78 2015-11-25
+
+				// START KGU#117 2016-03-07: Enh. #77 - consistent subqueue handling
+//				int i = 0;
+//				// START KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
+//				//while ((i < branch.children.size())
+//				//		&& result.equals("") && (stop == false))
+//				while ((i < branch.getSize())
+//						&& result.equals("") && (stop == false) && !returned && leave == 0)
+//				// END KGU#78 2015-11-25
+//				{
+//					result = step(branch.getElement(i));
+//					i++;
+//				}
+				if (result.isEmpty())
 				{
-					result = step(branch.getElement(i));
-					i++;
+					result = stepSubqueue(branch, true);
 				}
+				// END KGU#117 2016-03-07
 				if (result.equals(""))
 				{
 					element.waited = false;
@@ -2206,7 +2683,7 @@ public class Executor implements Runnable
 				// System.out.println("WHILE: "+condStr);
 			}
 
-			int cw = 0;
+			//int cw = 0;
 			Object cond = interpreter.eval(convertStringComparison(condStr));
 
 			if (cond == null)
@@ -2215,6 +2692,10 @@ public class Executor implements Runnable
 						+ "> is not a correct or existing expression.";
 			} else
 			{
+				// START KGU#156 2016-03-11: Enh. #124
+				element.addToExecTotalCount(1, true);	// For the condition evaluation
+				//END KGU#156 2016-03-11
+				
 				// START KGU#77/KGU#78 2015-11-25: Leave if any kind of Jump statement has been executed
 				//while (cond.toString().equals("true") && result.equals("")
 				//		&& (stop == false))
@@ -2227,32 +2708,38 @@ public class Executor implements Runnable
 					element.executed = false;
 					element.waited = true;
 
-					int i = 0;
-					Subqueue body;
-					if (eternal)
+					// START KGU#117 2016-03-07: Enh. #77 - consistent subqueue handling
+//					int i = 0;
+//					Subqueue body;
+//					if (eternal)
+//					{
+//						body = ((Forever)element).q;
+//					}
+//					else
+//					{
+//						body = ((While) element).q;
+//					}
+//					// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
+//					//while ((i < body.children.size())
+//					//		&& result.equals("") && (stop == false))
+//					while ((i < body.getSize())
+//							&& result.equals("") && (stop == false) && !returned && leave == 0)
+//					// END KGU#77/KGU#78 2015-11-25
+//					{
+//						result = step(body.getElement(i));
+//						i++;
+//					}
+					if (result.isEmpty())
 					{
-						body = ((Forever)element).q;
+						result = stepSubqueue(((ILoop)element).getBody(), true);						
 					}
-					else
-					{
-						body = ((While) element).q;
-					}
-					// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
-					//while ((i < body.children.size())
-					//		&& result.equals("") && (stop == false))
-					while ((i < body.getSize())
-							&& result.equals("") && (stop == false) && !returned && leave == 0)
-					// END KGU#77/KGU#78 2015-11-25
-					{
-						result = step(body.getElement(i));
-						i++;
-					}
+					// END KGU#117 2016-03-07
 
 					element.executed = true;
 					element.waited = false;
 					if (result.equals(""))
 					{
-						cw++;
+						//cw++;
 						// START KGU 2015-10-13: Symbolizes the loop condition check 
 						checkBreakpoint(element);
 						delay();
@@ -2265,6 +2752,13 @@ public class Executor implements Runnable
 								+ condStr
 								+ "> is not a correct or existing expression.";
 					}
+					// START KGU#156 2016-03-11: Enh. #124
+					else
+					{
+						element.addToExecTotalCount(1, true);	// For the condition evaluation
+					}
+					//END KGU#156 2016-03-11			
+						
 				}
 				// START KGU#78 2015-11-25: If there are open leave requests then nibble one off
 				if (leave > 0)
@@ -2324,7 +2818,7 @@ public class Executor implements Runnable
 			condStr = convert(condStr, false);
 			// System.out.println("REPEAT: "+s
 
-			int cw = 0;
+			//int cw = 0;
 			Object n = interpreter.eval(condStr);
 			if (n == null)
 			{
@@ -2337,21 +2831,27 @@ public class Executor implements Runnable
 				// END KGU#78
 				do
 				{
-					int i = 0;
-					// START KGU#77/KGU#78 2015-11-25: Leave if some Jump statement has been executed
-					//while ((i < element.q.children.size())
-					//		&& result.equals("") && (stop == false))
-					while ((i < element.q.getSize())
-							&& result.equals("") && (stop == false) && !returned && leave == 0)
-					// END KGU#77/KGU#78 2015-11-25
+					// START KGU#117 2016-03-07: Enh. #77 - consistent subqueue handling
+//					int i = 0;
+//					// START KGU#77/KGU#78 2015-11-25: Leave if some Jump statement has been executed
+//					//while ((i < element.q.children.size())
+//					//		&& result.equals("") && (stop == false))
+//					while ((i < element.q.getSize())
+//							&& result.equals("") && (stop == false) && !returned && leave == 0)
+//					// END KGU#77/KGU#78 2015-11-25
+//					{
+//						result = step(element.q.getElement(i));
+//						i++;
+//					}
+					if (result.isEmpty())
 					{
-						result = step(element.q.getElement(i));
-						i++;
+						result = stepSubqueue(element.getBody(), true);
 					}
+					// END KGU#117 2016-03-07
 
 					if (result.equals(""))
 					{
-						cw++;
+						//cw++;
 						element.executed = true;
 					}
 					n = interpreter.eval(convertStringComparison(condStr));
@@ -2370,6 +2870,10 @@ public class Executor implements Runnable
 					delay();	// Symbolizes the loop condition check time
 					element.waited = true;
 
+					// START KGU#156 2016-03-11: Enh. #124
+					element.addToExecTotalCount(1, true);		// For the condition evaluation
+					//END KGU#156 2016-03-11
+					
 				// START KGU#70 2015-11-09: Condition logically incorrect - execution often got stuck here 
 				//} while (!(n.toString().equals("true") && result.equals("") && (stop == false)));
 				// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
@@ -2405,6 +2909,12 @@ public class Executor implements Runnable
 	
 	private String stepFor(For element)
 	{
+		// START KGU#61 2016-03-21: Enh. #84
+		if (element.isForInLoop())
+		{
+			return stepForIn(element);
+		}
+		// END KGU#61 2016-03-21
 		String result = new String();
 		try
 		{
@@ -2505,6 +3015,10 @@ public class Executor implements Runnable
 				fval = ((Double) n).intValue();
 			}
 
+			// START KGU#156 2016-03-11: Enh. #124
+			element.addToExecTotalCount(1, true);	// For the initialisation and first test
+			//END KGU#156 2016-03-11
+			
 			int cw = ival;
 			// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
 			//while (((sval >= 0) ? (cw <= fval) : (cw >= fval)) && result.equals("") && (stop == false))
@@ -2516,18 +3030,29 @@ public class Executor implements Runnable
 				setVar(counter, cw);
 				element.waited = true;
 
-				int i = 0;
-				// START KGU#77/KGU#78 2015-11-25: Leave if a return statement has been executed
-				//while ((i < element.q.children.size())
-				//		&& result.equals("") && (stop == false))
-				while ((i < element.q.getSize())
-						&& result.equals("") && (stop == false) && !returned && leave == 0)
-				// END KGU#77/KGU#78 2015-11-25
+
+				// START KGU#117 2016-03-07: Enh. #77 - consistent subqueue handling
+//				int i = 0;
+//				// START KGU#77/KGU#78 2015-11-25: Leave if a return statement has been executed
+//				//while ((i < element.q.children.size())
+//				//		&& result.equals("") && (stop == false))
+//				while ((i < element.q.getSize())
+//						&& result.equals("") && (stop == false) && !returned && leave == 0)
+//				// END KGU#77/KGU#78 2015-11-25
+//				{
+//					result = step(element.q.getElement(i));
+//					i++;
+//				}
+				if (result.isEmpty())
 				{
-					result = step(element.q.getElement(i));
-					i++;
+					result = stepSubqueue(element.getBody(), true);
 				}
+				// END KGU#117 2016-03-07
                 
+				// START KGU#156 2016-03-11: Enh. #124
+				element.addToExecTotalCount(1, true);	// For the condition test and increment
+				//END KGU#156 2016-03-11
+				
 				// At this point, we symbolize the time for the incrementing and condition checking
 				element.waited = false;
 				element.executed = true;
@@ -2571,6 +3096,145 @@ public class Executor implements Runnable
 		return result;
 	}
 	
+	// START KGU#61 2016-03-21: Enh. #84
+	// This executes FOR-IN loops
+	private String stepForIn(For element)
+	{
+		String result = new String();
+		String valueListString = element.getValueList();
+		String iterVar = element.getCounterVar();
+		Object[] valueList = null;
+		String problem = "";
+		Object value = null;
+		if (valueListString.startsWith("{") && valueListString.endsWith("}"))
+		{
+			try
+			{
+				interpreter.eval("Object[] tmp20160321kgu = " + valueListString);
+				value = interpreter.get("tmp20160321kgu");
+				interpreter.unset("tmp20160321kgu");
+			}
+			catch (EvalError ex)
+			{
+				problem = ex.getMessage();
+			}
+		}
+		if (value == null && valueListString.contains(","))
+		{
+			try
+			{
+				interpreter.eval("Object[] tmp20160321kgu = {" + valueListString + "}");
+				value = interpreter.get("tmp20160321kgu");
+				interpreter.unset("tmp20160321kgu");
+			}
+			catch (EvalError ex)
+			{
+				problem = ex.getMessage();
+			}
+		}
+		// Might be a function or variable otherwise evaluable
+		if (value == null)
+		{
+			try
+			{
+				value = interpreter.eval(valueListString);
+			}
+			catch (EvalError ex)
+			{
+				problem = ex.getMessage();
+			}
+		}
+		if (value == null && valueListString.contains(" "))
+		{
+			// Rather desparate attempt to compose an array from loose strings (like in shell scripts)
+			StringList tokens = Element.splitExpressionList(valueListString, " ");
+			try
+			{
+				interpreter.eval("Object[] tmp20160321kgu = {" + tokens.concatenate(",") + "}");
+				value = interpreter.get("tmp20160321kgu");
+				interpreter.unset("tmp20160321kgu");
+			}
+			catch (EvalError ex)
+			{
+				problem = ex.getMessage();
+			}
+		}
+		if (value != null)
+		{
+			if (value instanceof Object[])
+			{
+				valueList = (Object[]) value;
+			}
+			else
+			{
+				valueList = new Object[1];
+				valueList[0] = value;
+			}
+		}
+
+		if (valueList == null)
+		{
+			result = "<" + valueListString
+					+ "> cannot be interpreted as value list.";
+		}
+		else
+		{
+				element.addToExecTotalCount(1, true);	// For the condition evaluation
+
+				// Leave if any kind of Jump statement has been executed
+				loopDepth++;
+				int cw = 0;
+
+				while (cw < valueList.length && result.equals("")
+						&& (stop == false) && !returned && leave == 0)
+				{
+					try
+					{
+						setVar(iterVar, valueList[cw]);
+						element.executed = false;
+						element.waited = true;
+
+						if (result.isEmpty())
+						{
+							result = stepSubqueue(((ILoop)element).getBody(), true);						
+						}
+
+						element.executed = true;
+						element.waited = false;
+						if (result.equals(""))
+						{
+							cw++;
+							// Symbolizes the loop condition check 
+							checkBreakpoint(element);
+							delay();
+						}
+						element.addToExecTotalCount(1, true);	// For the condition evaluation
+					} catch (EvalError ex)
+					{
+						result = ex.getMessage();
+					}
+				}
+				// If there are open leave requests then nibble one off
+				if (leave > 0)
+				{
+					leave--;
+				}
+				loopDepth--;
+		}
+		if (result.equals(""))
+		{
+			element.executed = false;
+			element.waited = false;
+		}
+		/*
+		 * if (cw > 1000000) { element.selected = true; result =
+		 * "Your loop ran a million times. I think there is a problem!";
+		 * }
+		 */
+		return result;
+	}
+	// END KGU#61 2016-03-21
+	
 	private String stepParallel(Parallel element)
 	{
 		String result = new String();
@@ -2610,7 +3274,12 @@ public class Executor implements Runnable
 				{
 					// Run the next instruction of the chosen thread
 					Element instr = iter.next();
+					int oldExecCount = instr.getExecStepCount(true);
+					// END KGU#156 2016-03-11
 					result = step(instr);
+					// START KGU#117 2016-03-12: Enh. #77
+					element.addToExecTotalCount(instr.getExecStepCount(true) - oldExecCount, false);
+					// END KGU#117 2016-03-12
 					// In order to allow better tracking we put the executed instructions into `waited´ state...
 					instr.waited = true;
 					// START KGU#78 2015-11-25: Parallel sections are impermeable for leave requests!
@@ -2642,7 +3311,34 @@ public class Executor implements Runnable
 		return result;
 	}
 
-
+	// START KGU#117 2016-03-07: Enh. #77 - to track test coverage a consistent subqueue handling is necessary
+	String stepSubqueue(Subqueue sq, boolean checkLeave)
+	{
+		String result = "";
+		
+		int i = 0;
+		while ((i < sq.getSize())
+				&& result.equals("") && (stop == false) && !returned
+				&& (!checkLeave || leave == 0))
+		{
+			// START KGU#156 2016-03-11: Enh. #124
+			//result = step(sq.getElement(i));
+			Element ele = sq.getElement(i);
+			int oldExecCount = ele.getExecStepCount(true);
+			result = step(ele);
+			sq.parent.addToExecTotalCount(ele.getExecStepCount(true) - oldExecCount, false);
+			// END KGU#156 2016-03-11
+			i++;
+		}
+		if (sq.getSize() == 0)
+		{
+			sq.deeplyCovered = sq.simplyCovered = true;
+			// START KGU#156 2016-03-11: Enh. #124
+			sq.countExecution();
+			//END KGU#156 2016-03-11
+		}
+		return result;
+	}
 
 	private String unconvert(String s)
 	{
@@ -2683,8 +3379,14 @@ public class Executor implements Runnable
 	// a array element access, i.e. "<arrayname>[<expression>]"
 	private int getIndexValue(String varname) throws EvalError
 	{
+		// START KGU#141 2016-01-16: Bugfix #112
+		String message = "Illegal (negative) index";
+		// END KGU#141 2016-01-16
 		String ind = varname.substring(varname.indexOf("[") + 1,
-				varname.indexOf("]"));
+				// START KGU#166 2016-03-29: Bugfix #139 (nested index expressions failed)
+				//varname.indexOf("]"));
+				varname.lastIndexOf("]"));
+				// END KGU#166 2016-03-29
 
 		int index = -1;
 
@@ -2696,10 +3398,26 @@ public class Executor implements Runnable
 		catch (Exception e)
 		{
 			//index = (Integer) this.interpreter.get(ind);	// KGU: This didn't work for expressions
-			System.out.println(e.getMessage() + " on " + varname + " in Executor.getIndexValue()");
+			// START KGU#141 2016-01-16: Bugfix #112 - this led to silent errors and incapacitation of executor
+			//System.out.println(e.getMessage() + " on " + varname + " in Executor.getIndexValue()");
+			message = e.getMessage();	// We will rethrow it later
+			// END KGU#141 2016-01-16
 		}
+		// START KGU#141 2016-01-16: Bugfix #112 - We may not allow negative indices
+		if (index < 0)
+		{
+			throw new EvalError(message + " on index evaluation in: " + varname, null, null);
+		}
+		// END KGU#141 2016-01-16
 		return index;
 	}
 	// END KGU#33/KGU#34 2014-12-05
 	
+	// START KGU#156 2016-03-10: An interface for an external update trigger was needed
+	public void redraw()
+	{
+		diagram.repaint();
+	}
+	// END KGU#156 2016-03-10
+
 }

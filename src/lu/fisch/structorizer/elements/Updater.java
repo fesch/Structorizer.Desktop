@@ -20,8 +20,6 @@
 
 package lu.fisch.structorizer.elements;
 
-import java.util.Vector;
-
 /**
  *
  * @author robertfisch

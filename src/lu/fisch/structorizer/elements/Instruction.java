@@ -35,7 +35,13 @@ package lu.fisch.structorizer.elements;
  *      Bob Fisch       2007.12.09      First Issue
  *      Kay Gürtzig     2015.10.11/13   Comment drawing unified, breakpoints supported, colouring modified
  *      Kay Gürtzig     2015.11.14      Bugfix #31 (= KGU#82) in method copy
- *		Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *      Kay Gürtzig     2015.12.01      Bugfix #39 (KGU#91) -> getText(false) on drawing
+ *      Kay Gürtzig     2016-01-03      Bugfix #87 (KGU#124) collapsing of larger instruction elements,
+ *                                      Enh. #87 (KGU#122) marking of collapsed elements with icon
+ *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): fix accomplished
+ *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Fields for test coverage tracking added
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *
  ******************************************************************************************************
  *
@@ -46,8 +52,10 @@ package lu.fisch.structorizer.elements;
 
 import java.awt.Color;
 import java.awt.FontMetrics;
+import java.awt.Point;
 
 import lu.fisch.graphics.*;
+//import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
 public class Instruction extends Element {
@@ -105,26 +113,26 @@ public class Instruction extends Element {
         
 	public Rect prepareDraw(Canvas _canvas)
 	{
-		/*rect.top=0;
-		rect.left=0;
-		rect.right=0;
-		rect.bottom=0;
+		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
+		if (this.isRectUpToDate) return rect0;
+		// END KGU#136 2016-03-01
+
+		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
 		
-		FontMetrics fm = _canvas.getFontMetrics(Element.font);
-		
-                rect.right=Math.round(2*(Element.E_PADDING/2));
-                for(int i=0;i<text.count();i++)
-                {
-                        if(rect.right<getWidthOutVariables(_canvas,text.get(i),this)+1*Element.E_PADDING)
-                        {
-                                rect.right=getWidthOutVariables(_canvas,text.get(i),this)+1*Element.E_PADDING;
-                        }
-                }
-                rect.bottom=2*Math.round(Element.E_PADDING/2)+text.count()*fm.getHeight();
-		
-		return rect;*/
-                rect = prepareDraw(_canvas, getText(false), this);
-                return rect;
+		// START KGU#124 2016-01-03: Large instructions should also be actually collapsed
+        //rect = prepareDraw(_canvas, getText(false), this);
+		StringList text = getText(false);
+        if (isCollapsed() && text.count() > 2) 
+        {
+        	text = getCollapsedText();
+        }
+        rect0 = prepareDraw(_canvas, text, this);
+        // END KGU#124 2016-01-03
+        
+		// START KGU#136 2016-03-01: Bugfix #97
+		isRectUpToDate = true;
+		// END KGU#136 2016-03-01
+        return rect0;
 	}
 
 	public static void draw(Canvas _canvas, Rect _top_left, StringList _text, Element _element)
@@ -147,31 +155,27 @@ public class Instruction extends Element {
 //		}
 		// END KGU 2015-10-13
 		
-		_element.rect=_top_left.copy();
+		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
+		//_element.rect = _top_left.copy();
+		_element.rect = new Rect(0, 0, 
+				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
+		Point ref = _element.getDrawPoint();
+		_element.topLeft.x = _top_left.left - ref.x;
+		_element.topLeft.y = _top_left.top - ref.y;
+		// END KGU#136 2016-03-01
 		
 		Canvas canvas = _canvas;
 		canvas.setBackground(drawColor);
 		canvas.setColor(drawColor);
 		
-		myrect=_top_left.copy();
+		myrect = _top_left.copy();
 		
 		canvas.fillRect(myrect);
 				
 		// draw comment
 		if(Element.E_SHOWCOMMENTS==true && !_element.getComment(false).getText().trim().equals(""))
 		{
-			// START KGU 2015-10-11
-//			canvas.setBackground(E_COMMENTCOLOR);
-//			canvas.setColor(E_COMMENTCOLOR);
-//			
-//			myrect.left+=2;
-//			myrect.top+=2;
-//			myrect.right=myrect.left+4;
-//			myrect.bottom-=1;
-//			
-//			canvas.fillRect(myrect);
 			_element.drawCommentMark(canvas, myrect);
-			// END KGU 2015-10-11
 		}
 		
 		// START KGU 2015-10-11: If _element is a breakpoint, mark it
@@ -191,8 +195,21 @@ public class Instruction extends Element {
 					);  	
 
 		}
+
+		// START KGU#156 2016-03-11: Enh. #124
+		// write the run-time info if enabled
+		_element.writeOutRuntimeInfo(_canvas, _top_left.left + _element.rect.right - (Element.E_PADDING / 2), _top_left.top);
+		// END KGU#156 2016-03-11
+				
 		canvas.setColor(Color.BLACK);
 		canvas.drawRect(_top_left);
+		// START KGU#122 2016-01-03: Enh. #87 - A collapsed element is to be marked by the type-specific symbol,
+		// unless it's an Instruction offspring in which case it will keep its original style, anyway.
+		if (_element.isCollapsed() && !(_element instanceof Instruction))
+		{
+			canvas.draw(_element.getIcon().getImage(), _top_left.left, _top_left.top);
+		}
+		// END KGU#122 2016-01-03
 	}
                 
 	public void draw(Canvas _canvas, Rect _top_left)
@@ -200,7 +217,17 @@ public class Instruction extends Element {
 		// Now delegates all stuff to the static method above, which may also
 		// be called from Elements of different types when those are collapsed
 		
-		draw(_canvas, _top_left, getText(false), this);
+		// START KGU#124 2016-01-03: Large instructions should also be actually collapsed
+        //draw(_canvas, _top_left, getText(false), this);
+        if (isCollapsed() && getText(false).count() > 2) 
+        {
+        	draw(_canvas, _top_left, getCollapsedText(), this);
+        }
+        else
+        {
+            draw(_canvas, _top_left, getText(false), this);
+        }
+        // END KGU#124 2016-01-03
 	}
 	
 	public Element copy()
@@ -211,6 +238,13 @@ public class Instruction extends Element {
 		// START KGU#82 (bug #31) 2015-11-14
 		ele.breakpoint = this.breakpoint;
 		// END KGU#82 (bug #31) 2015-11-14
+		// START KGU#117 2016-03-07: Enh. #77
+        if (Element.E_COLLECTRUNTIMEDATA)
+        {
+        	// We share this object (important for recursion!)
+        	ele.deeplyCovered = this.deeplyCovered;
+        }
+		// END KGU#117 2016-03-07
 		return ele;
 	}
 
@@ -224,5 +258,29 @@ public class Instruction extends Element {
    		_lines.add(this.getText());
     }
     // END KGU 2015-10-16
+
+	// START KGU#117 2016-03-10: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#checkTestCoverage(boolean)
+	 */
+	@Override
+	public void checkTestCoverage(boolean _propagateUpwards)
+	{
+		if (Element.E_COLLECTRUNTIMEDATA)
+		{
+			this.simplyCovered = true;
+			this.deeplyCovered = true;
+			if (_propagateUpwards)
+			{
+				Element parent = this.parent;
+				while (parent != null)
+				{
+					parent.checkTestCoverage(false);
+					parent = parent.parent;
+				}
+			}
+		}
+	}
+	// END KGU#117 2016-03-10
 
 }

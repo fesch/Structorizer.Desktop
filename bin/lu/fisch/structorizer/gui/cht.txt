@@ -1,0 +1,422 @@
+/*
+    Structorizer traditional chinese language file
+
+    Copyright (C) 2014  Hueyan Chen(Joe Chen)陳會安
+
+    This file is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or any
+    later version.
+
+    This file is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    This file is part of the "Structorizer" project.     
+*/
+
+/******************************************************************************************************
+ *
+ *      Author:         Hueyan Chen(Joe Chen)陳會安
+ *
+ *      Description:    The traditional chinese language file
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date			Description
+ *      ------		----			-----------
+ *      Hueyan Chen     2014.07.27     	First Issue
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:	
+ *
+ ******************************************************************************************************/
+
+-----[ Menu ]-----
+//Menu File
+Menu.menuFile.text=檔案
+// Submenus of "File"
+Menu.menuFileNew.text=新增
+Menu.menuFileOpen.text=開啟 ...
+Menu.menuFileSave.text=儲存
+Menu.menuFileSaveAs.text=另存成 ...
+Menu.menuFileExport.text=匯出
+// Submenu of "File -> Export"
+Menu.menuFileExportPicture.text=圖檔 ...
+Menu.menuFileExportCode.text=程式碼 ...
+Menu.menuFileImport.text=匯入
+// Submenu of "File -> Import"
+Menu.menuFileImportPascal.text=Pascal程式碼 ...
+Menu.menuFilePrint.text=列印 ...
+Menu.menuFileQuit.text=結束
+// Menu "Edit"
+Menu.menuEdit.text=編輯
+// Submenu of "Edit"
+Menu.menuEditUndo.text=復原
+Menu.menuEditRedo.text=重做
+Menu.menuEditCut.text=剪下
+Menu.menuEditCopy.text=複製
+Menu.menuEditPaste.text=貼上
+Menu.menuEditCopyDiagramPNG.text=複製PNG圖
+Menu.menuEditCopyDiagramEMF.text=複製EMF圖
+// Menu "Diagram"
+Menu.menuDiagram.text=圖形
+// Submenus of "Diagram"
+Menu.menuDiagramAdd.text=新增
+// Submenu "Diagram -> Add -> Before"
+Menu.menuDiagramAddBefore.text=之前
+// Submenus for adding Elements "Before"
+Menu.menuDiagramAddBeforeInst.text=指令
+Menu.menuDiagramAddBeforeAlt.text=IF條件
+Menu.menuDiagramAddBeforeCase.text=CASE條件
+Menu.menuDiagramAddBeforeFor.text=FOR迴圈
+Menu.menuDiagramAddBeforeWhile.text=WHILE迴圈
+Menu.menuDiagramAddBeforeRepeat.text=REPEAT迴圈
+Menu.menuDiagramAddBeforeForever.text=無窮迴圈
+Menu.menuDiagramAddBeforeCall.text=呼叫
+Menu.menuDiagramAddBeforeJump.text=跳躍
+// Submenu "Diagram -> Add -> After"
+Menu.menuDiagramAddAfter.text=之後
+// Submenus for adding Elements "After"
+Menu.menuDiagramAddAfterInst.text=指令
+Menu.menuDiagramAddAfterAlt.text=IF條件
+Menu.menuDiagramAddAfterCase.text=CASE條件
+Menu.menuDiagramAddAfterFor.text=FOR迴圈
+Menu.menuDiagramAddAfterWhile.text=WHILE迴圈
+Menu.menuDiagramAddAfterRepeat.text=REPEAT迴圈
+Menu.menuDiagramAddAfterForever.text=無窮迴圈
+Menu.menuDiagramAddAfterCall.text=呼叫
+Menu.menuDiagramAddAfterJump.text=跳躍
+Menu.menuDiagramEdit.text=編輯
+Menu.menuDiagramDelete.text=刪除
+Menu.menuDiagramMoveUp.text=往上移
+Menu.menuDiagramMoveDown.text=往下移
+Menu.menuDiagramType.text=類型
+Menu.menuDiagramTypeProgram.text=主程式
+Menu.menuDiagramTypeFunction.text=副程式
+Menu.menuDiagramNice.text=有分隔線的圖?
+Menu.menuDiagramComment.text=顯示註解?
+Menu.menuDiagramMarker.text=高亮度變數?
+Menu.menuDiagramDIN.text=DIN連接器?
+// Menu "Help"
+Menu.menuPreferences.text=選項設定
+// Submenu of "Help"
+Menu.menuPreferencesFont.text=字型 ...
+Menu.menuPreferencesColors.text=色彩 ...
+Menu.menuPreferencesOptions.text=結構 ...
+Menu.menuPreferencesParser.text=剖析器 ...
+Menu.menuPreferencesLanguage.text=語言
+Menu.menuPreferencesLanguageEnglish.text=英文
+Menu.menuPreferencesLanguageGerman.text=德文
+Menu.menuPreferencesLanguageFrench.text=法文
+Menu.menuPreferencesLanguageDutch.text=荷蘭文
+Menu.menuPreferencesLanguageLuxemburgish.text=盧森堡文
+Menu.menuPreferencesLanguageSpanish.text=西班牙文
+Menu.menuPreferencesLanguageItalian.text=義大利文
+Menu.menuPreferencesLanguagePortugalBrazil.text=葡萄牙巴西文
+Menu.menuPreferencesLanguageChinese.text=中文
+//  Menu.menuPreferencesLanguageSimplifiedChinese.text=簡體中文
+//  Menu.menuPreferencesLanguageTraditionalChinese.text=繁體中文
+Menu.menuPreferencesLanguageCzech.text=捷克文
+
+Menu.menuPreferencesLookAndFeel.text=外觀
+
+Menu.menuPreferencesSave.text=所有選項設定 ...
+Menu.menuPreferencesSaveAll.text=儲存
+Menu.menuPreferencesSaveDump.text=儲存成檔案 ...
+Menu.menuPreferencesSaveLoad.text=從檔案載入 ...
+
+
+// Menu "Help"
+Menu.menuHelp.text=說明
+// Submenu of "Help"
+Menu.menuHelpAbout.text=關於 ...
+Menu.menuHelpUpdate.text=程式更新 ...
+// Error messages for analyser
+Menu.error01_1.text=警告: 沒有迴圈的計數器變數 ...
+Menu.error01_2.text=警告: 超過一個迴圈的計數器變數 ...
+Menu.error01_3.text=你並不允許在迴圈中更改迴圈計數器變數 «%» !
+Menu.error02.text=沒有更改迴圈的條件變數. 可能產生無窮迴圈 ...
+Menu.error03_1.text=變數 «%» 沒有初始變數值!
+Menu.error03_2.text=變數 «%» 可能不曾初始變數值!
+Menu.error04.text=你不允許使用 IF 條件擁有一個空的 TRUE 程式區塊!
+Menu.error05.text=變數 «%» 必須命名成大寫字母!
+Menu.error06.text=參數 «%» 必須命名成大寫字母!
+Menu.error07_1.text=«%» 不是合法的程式或方法（函數）名稱!
+Menu.error07_2.text=«%» 不是合法的參數名稱!
+Menu.error07_3.text=«%» 不是合法的變數名稱!
+Menu.error08.text=不允許在條件中使用指定敘述.
+Menu.error09.text=你的程式 («%») 不能和變數或參數同名!
+Menu.error10_1.text=單一指令元素不能包含輸入/輸出指令和指定敘述!
+Menu.error10_2.text=單一指令元素不能包含輸入/輸出指令!
+Menu.error10_3.text=單一指令元素不能包含輸入指令和指定敘述!
+Menu.error10_4.text=單一指令元素不能包含輸出指令和指定敘述!
+Menu.error11.text=你可能有指定敘述錯誤. 請檢查此指令!
+Menu.error12.text=參數 «%» 必須是字母"p"開頭且在之後只有一個大寫字母!
+Menu.error13_1.text=你的函數沒有傳回任何值!
+Menu.error13_2.text=你的函數可能沒有傳回執行結果!
+
+-----[ AnalyserPreferences ]-----
+AnalyserPreferences.check1.text=請檢查迴圈計數器變數的變更.
+AnalyserPreferences.check2.text=請檢查無窮迴圈 (儘可能的檢查!)
+AnalyserPreferences.check3.text=請檢查沒有初始化的變數.
+AnalyserPreferences.check4.text=請檢查錯誤使用 IF 條件.
+AnalyserPreferences.check5.text=請檢查大寫的變數名稱. (LUX/MEN)
+AnalyserPreferences.check6.text=請檢查大寫的程式/程序名稱. (LUX/MEN)
+AnalyserPreferences.check7.text=請檢查合法的識別字.
+AnalyserPreferences.check8.text=請檢查條件中的指定敘述.
+AnalyserPreferences.check9.text=請檢查哪個程式/程序名稱不等於任何其他識別字.
+AnalyserPreferences.check10.text=請檢查是否是多命令的指令.
+AnalyserPreferences.check11.text=請檢查指定敘述的錯誤.
+AnalyserPreferences.check12.text=請檢查標準的參數名稱. (LUX/MEN)
+AnalyserPreferences.check13.text=請檢查如果是函數，是否有傳回值.
+AnalyserPreferences.okButton.text=確定
+
+
+
+-----[ Diagram ]-----
+// Buttons
+// I/O
+Editor.btnNew.tooltip=建立全新的空白圖形.
+Editor.btnOpen.tooltip=開啟存在的圖形.
+Editor.btnSave.tooltip=儲存實際的圖形.
+// InsertBefore
+Editor.btnBeforeInst.tooltip=在選取元素之前插入一個新指令. 
+Editor.btnBeforeAlt.tooltip=在選取元素之前插入一個新IF條件.
+Editor.btnBeforeFor.tooltip=在選取元素之前插入一個新FOR迴圈.
+Editor.btnBeforeWhile.tooltip=在選取元素之前插入一個新WHILE迴圈.
+Editor.btnBeforeRepeat.tooltip=在選取元素之前插入一個新REPEAT迴圈.
+Editor.btnBeforeForever.tooltip=在選取元素之前插入一個新無窮迴圈.
+Editor.btnBeforeCall.tooltip=在選取元素之前插入一個新呼叫.
+Editor.btnBeforeJump.tooltip=在選取元素之前插入一個新跳躍.
+Editor.btnBeforeCase.tooltip=在選取元素之前插入一個新CASE條件.
+Editor.btnBeforePara.tooltip=在選取元素之前插入一個新平行.
+// InsertAfter
+Editor.btnAfterInst.tooltip=在選取元素之後插入一個新指令.
+Editor.btnAfterAlt.tooltip=在選取元素之後插入一個新IF條件.
+Editor.btnAfterFor.tooltip=在選取元素之後插入一個新FOR迴圈.
+Editor.btnAfterWhile.tooltip=在選取元素之後插入一個新WHILE迴圈.
+Editor.btnAfterRepeat.tooltip=在選取元素之後插入一個新REPEAT迴圈.
+Editor.btnAfterForever.tooltip=在選取元素之後插入一個新無窮迴圈.
+Editor.btnAfterCall.tooltip=在選取元素之後插入一個新呼叫.
+Editor.btnAfterJump.tooltip=在選取元素之後插入一個新跳躍.
+Editor.btnAfterCase.tooltip=在選取元素之後插入一個新CASE條件.
+Editor.btnAfterPara.tooltip=在選取元素之後插入一個新平行.
+// undo & redo
+Editor.btnUndo.tooltip=復原最後一個操作.
+Editor.btnRedo.tooltip=重做最後一個操作.
+// copy & paste
+Editor.btnCut.tooltip=剪下選取元素.
+Editor.btnCopy.tooltip=複製選取素.
+Editor.btnPaste.tooltip=貼上或複製在選取元素之後的元素.
+// style 
+Editor.btnNice.tooltip=切換圖形的佈景樣式.
+Editor.btnFunction.tooltip=子圖形 (圓角).
+Editor.btnProgram.tooltip=主圖形 (直角).
+// editing
+Editor.btnEdit.tooltip=編輯選取元素.
+Editor.btnDelete.tooltip=刪除選取元素.
+Editor.btnMoveUp.tooltip=將選取元素往上移一個位置.
+Editor.btnMoveDown.tooltip=將選取元素往下移一個位置.
+//printing
+Editor.btnPrint.tooltip=列印圖形.
+// font
+Editor.btnFontUp.tooltip=增加字型尺寸.
+Editor.btnFontDown.tooltip=減少字型尺寸.
+// copyright 
+Editor.btnAbout.tooltip=顯示關於Structorizer的資訊.
+// colors
+Editor.btnColor0.tooltip=使用此色彩來著色選取元素.
+Editor.btnColor1.tooltip=使用此色彩來著色選取元素.
+Editor.btnColor2.tooltip=使用此色彩來著色選取元素.
+Editor.btnColor3.tooltip=使用此色彩來著色選取元素.
+Editor.btnColor4.tooltip=使用此色彩來著色選取元素.
+Editor.btnColor5.tooltip=使用此色彩來著色選取元素.
+Editor.btnColor6.tooltip=使用此色彩來著色選取元素.
+Editor.btnColor7.tooltip=使用此色彩來著色選取元素.
+Editor.btnColor8.tooltip=使用此色彩來著色選取元素.
+Editor.btnColor9.tooltip=使用此色彩來著色選取元素.
+// Popup menu
+Editor.popupCut.text=剪下
+Editor.popupCopy.text=複製
+Editor.popupPaste.text=貼上
+Editor.popupAdd.text=新增
+// Submenu of "Add"
+Editor.popupAddBefore.text=之前
+// Submenus of "Add -> Before"
+Editor.popupAddBeforeInst.text=指令
+Editor.popupAddBeforeAlt.text=IF條件
+Editor.popupAddBeforeCase.text=CASE條件
+Editor.popupAddBeforeFor.text=FOR迴圈
+Editor.popupAddBeforeWhile.text=WHILE迴圈
+Editor.popupAddBeforeRepeat.text=REPEAT迴圈
+Editor.popupAddBeforeForever.text=無窮迴圏
+Editor.popupAddBeforeCall.text=呼叫
+Editor.popupAddBeforeJump.text=跳躍
+Editor.popupAddBeforePara.text=平行
+// After
+Editor.popupAddAfter.text=之後
+// Submenus of "Add -> After"
+Editor.popupAddAfterInst.text=指令
+Editor.popupAddAfterAlt.text=IF條件
+Editor.popupAddAfterCase.text=CASE條件
+Editor.popupAddAfterFor.text=FOR迴圈
+Editor.popupAddAfterWhile.text=WHILE迴圈
+Editor.popupAddAfterRepeat.text=REPEAT迴圈
+Editor.popupAddAfterForever.text=無窮迴圏
+Editor.popupAddAfterCall.text=呼叩
+Editor.popupAddAfterJump.text=跳躍
+Editor.popupAddAfterPara.text=平行
+// Edxit	
+Editor.popupEdit.text=編輯
+Editor.popupDelete.text=刪除
+Editor.popupMoveUp.text=往上移
+Editor.popupMoveDown.text=往下移
+
+
+-----[ InputBox ]-----
+InputBox.lblText.text=請輸入文字內容
+InputBox.lblText.tooltip=
+InputBox.lblComment.text=註解
+InputBox.lblComment.tooltip=
+InputBox.txtText.tooltip=元素內容.
+InputBox.txtComment.tooltip=註解內容.
+InputBox.btnOK.text=確定
+InputBox.btnOK.tooltip=驗證你的選擇.
+InputBox.btnCancel.text=取消
+InputBox.btnCancel.tooltip=取消你的選擇.
+
+
+-----[ Preferences ]-----
+Preferences.title=結構選項設定
+Preferences.pnlAlt.border=IF條件敘述
+Preferences.pnlAlt.tooltip=
+Preferences.lblAltT.text=標籤 TRUE
+Preferences.lblAltT.tooltip=左邊的標籤.
+Preferences.lblAltF.text=標籤 FALSE
+Preferences.lblAltF.tooltip=右邊的標籤.
+Preferences.lblAltContent.text=預設內容
+Preferences.lblAltContent.tooltip=IF條件敘述的預設內容.
+Preferences.pnlCase.border=CASE條件敘述
+Preferences.pnlCase.tooltip=
+Preferences.lblCase.text=預設內容
+Preferences.lblCase.tooltip=CASE條件敘述的預設內容.
+Preferences.pnlFor.border=FOR迴圈
+Preferences.pnlFor.tooltip=
+Preferences.lblFor.text=預設內容
+Preferences.lblFor.tooltip=FOR迴圈的預設內容.
+Preferences.pnlWhile.border=WHILE迴圈
+Preferences.pnlWhile.tooltip=
+Preferences.lblWhile.text=預設內容
+Preferences.lblWhile.tooltip=WHILE迴圈的預設內容.
+Preferences.pnlRepeat.border=REPEAT迴圈
+Preferences.pnlRepeat.tooltip=
+Preferences.lblRepeat.text=預設內容
+Preferences.lblRepeat.tooltip=REPEAT迴圈的預設內容.
+Preferences.btnOK.text=確定
+Preferences.btnOK.tooltip=驗證你的選擇.
+
+
+-----[ About ]-----
+About.title=關於
+About.pnlTabbed.tab.0=相關人員
+About.pnlTabbed.tab.1=改版記錄
+About.btnOK.text=確定
+About.btnOK.tooltip=驗證你的選擇.
+
+
+-----[ FontChooser ]-----
+FontChooser.title=字型
+FontChooser.lblTest.tooltip=一個測試字串以便你可以看到之後編輯的改變.
+FontChooser.lblName.text=名稱
+FontChooser.lblName.tooltip=可選擇字型的名稱.
+FontChooser.lblSize.text=尺寸
+FontChooser.lblSize.tooltip=可選擇字型的尺寸.
+FontChooser.btnOK.text=確定
+FontChooser.btnOK.tooltip=驗證你的選擇.
+
+
+-----[ Colors ]-----
+Colors.title=色彩選項設定
+Colors.lblColor0.text=色彩 0
+Colors.lblColor1.text=色彩 1
+Colors.lblColor2.text=色彩 2
+Colors.lblColor3.text=色彩 3
+Colors.lblColor4.text=色彩 4
+Colors.lblColor5.text=色彩 5
+Colors.lblColor6.text=色彩 6
+Colors.lblColor7.text=色彩 7
+Colors.lblColor8.text=色彩 8
+Colors.lblColor9.text=色彩 9
+Colors.lblColor0.tooltip=你選擇色彩編號 0.
+Colors.lblColor1.tooltip=你選擇色彩編號 1.
+Colors.lblColor2.tooltip=你選擇色彩編號 2.
+Colors.lblColor3.tooltip=你選擇色彩編號 3.
+Colors.lblColor4.tooltip=你選擇色彩編號 4.
+Colors.lblColor5.tooltip=你選擇色彩編號 5.
+Colors.lblColor6.tooltip=你選擇色彩編號 6.
+Colors.lblColor7.tooltip=你選擇色彩編號 7.
+Colors.lblColor8.tooltip=你選擇色彩編號 8.
+Colors.lblColor9.tooltip=你選擇色彩編號 9.
+Colors.color0.tooltip=按一下編輯 ...
+Colors.color1.tooltip=按一下編輯 ...
+Colors.color2.tooltip=按一下編輯 ...
+Colors.color3.tooltip=按一下編輯 ...
+Colors.color4.tooltip=按一下編輯 ...
+Colors.color5.tooltip=按一下編輯 ...
+Colors.color6.tooltip=按一下編輯 ...
+Colors.color7.tooltip=按一下編輯 ...
+Colors.color8.tooltip=按一下編輯 ...
+Colors.color9.tooltip=按一下編輯 ...
+Colors.btnOK.text=確定
+Colors.btnOK.tooltip=驗證你的選擇.
+
+
+-----[ ColorChooser ]-----
+ColorChooser.title=色彩
+ColorChooser.btnCancel.text=取消
+ColorChooser.btnCancel.tooltip=取消你的選擇.
+ColorChooser.btnOK.text=確定
+ColorChooser.btnOK.tooltip=驗證你的選擇.
+
+
+-----[ ParserPreferences ]-----
+ParserPreferences.title=剖析器選項設定
+ParserPreferences.lblPre.text=之前
+ParserPreferences.lblPre.tooltip=
+ParserPreferences.lblPost.text=之後
+ParserPreferences.lblPost.tooltip=
+ParserPreferences.lblAlt.text=IF條件
+ParserPreferences.lblAlt.tooltip=
+ParserPreferences.lblCase.text=CASE條件
+ParserPreferences.lblCase.tooltip=
+ParserPreferences.lblFor.text=FOR迴圈
+ParserPreferences.lblFor.tooltip=
+ParserPreferences.lblWhile.text=WHILE迴圈
+ParserPreferences.lblWhile.tooltip=
+ParserPreferences.lblRepeat.text=REPEAT迴圈
+ParserPreferences.lblRepeat.tooltip=
+ParserPreferences.lblInput.text=輸入
+ParserPreferences.lblInput.tooltip=
+ParserPreferences.lblOutput.text=輸出
+ParserPreferences.lblOutput.tooltip=
+ParserPreferences.btnOK.text=確定
+ParserPreferences.btnOK.tooltip=驗證你的選擇.
+ParserPreferences.lblErrorSign.text=你不允許使用 ':' 符號在任何剖析器字串!
+
+-----[ PrintPreview ]-----
+PrintPreview.title=列印預覽
+PrintPreview.btnOrientation.text=切換方向
+PrintPreview.btnOrientation.tooltip=將頁面轉90°.
+PrintPreview.btnCancel.text=取消
+PrintPreview.btnCancel.tooltip=取消列印.
+PrintPreview.btnOK.text=列印
+PrintPreview.btnOK.tooltip=列印圖形.
+

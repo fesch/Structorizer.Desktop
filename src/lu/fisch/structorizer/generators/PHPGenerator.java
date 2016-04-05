@@ -46,7 +46,10 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2015.11.02      Variable identification added, Case and
  *                                              For mechanisms improved (KGU#15, KGU#3)
  *      Kay Gürtzig             2015.12.19      Variable prefixing revised (KGU#62) in analogy to PerlGenerator
- *      Kay Gürtzig             2015.12.21      Bugfix #41/#68/#69 (= KG#93)
+ *      Kay Gürtzig             2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
+ *      Kay Gürtzig             2016.03.22      Enh. #84 (= KGU#61) varNames now inherited, FOR-IN loop support
+ *      Kay Gürtzig             2016.03.23      Enh. #84: Support for FOREACH loops (KGU#61)
+ *      Kay Gürtzig             2016.04.01      Enh. #144: Care for new option to suppress content conversion 
  *
  ******************************************************************************************************
  *
@@ -104,15 +107,17 @@ import java.util.regex.Matcher;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Function;
 
 // FIXME (KGU 2014-11-11): Variable names will have to be accomplished by a '$' prefix - this requires
 // sound lexic preprocessing (as do a lot more of the rather lavish mechanisms here)
 
 public class PHPGenerator extends Generator 
 {
-	// START KGU 2015-11-02: We must know alle variable names in order to prefix the with '$'.
-	StringList varNames = new StringList();
-	// END KGU 2015-11-02
+	// START KGU#61 2016-03-22: Enh. #84 - Now inherited
+	// (KGU 2015-11-02) We must know all variable names in order to prefix them with '$'.
+	//StringList varNames = new StringList();
+	// END KGU#61 2016-03-22
 
     /************ Fields ***********************/
     protected String getDialogTitle()
@@ -149,7 +154,7 @@ public class PHPGenerator extends Generator
 	 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
 	 */
 	@Override
-	protected boolean supportsSimpleBreak()
+	protected boolean breakMatchesCase()
 	{
 		return true;
 	}
@@ -269,7 +274,7 @@ public class PHPGenerator extends Generator
 		// END KGU 2014-11-16
 
         String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
-        if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+        if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 
         code.add(_indent+"if "+condition+"");
         code.add(_indent+"{");
@@ -293,12 +298,12 @@ public class PHPGenerator extends Generator
 
         StringList lines = _case.getText();
         String condition = transform(_case.getText().get(0));
-        if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+        if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 
         code.add(_indent+"switch "+condition+" ");
         code.add(_indent+"{");
 
-        for(int i=0;i<_case.qs.size()-1;i++)
+        for (int i=0; i<_case.qs.size()-1; i++)
         {
         	// START KGU#15 2015-11-02: Support for multiple constants per branch
         	//code.add(_indent+this.getIndent()+"case "+_case.getText().get(i+1).trim()+":");
@@ -329,14 +334,59 @@ public class PHPGenerator extends Generator
 
 		// START KGU#3 2015-11-02: Now we have a more reliable mechanism
     	String var = _for.getCounterVar();
-    	int step = _for.getStepConst();
-    	String compOp = (step > 0) ? " >= " : " <= ";
-    	String increment = var + " += (" + step + ")";
-    	code.add(_indent + "for (" +
-    			var + " = " + transform(_for.getStartValue(), false) + "; " +
-    			var + compOp + transform(_for.getEndValue(), false) + "; " +
-    			increment +
-    			")");
+    	// START KGU#162 2016-04-01: Enh. #144 more tentative mode of operation
+    	if (!var.startsWith("$"))
+    	{
+    		var = "$" + var;
+    	}
+    	// END KGU#162 2016-04-01
+    	// START KGU#61 2016-03-23: Enh. #84 - support for FOREACH loop
+//		int step = _for.getStepConst();
+//		String compOp = (step > 0) ? " >= " : " <= ";
+//		String increment = var + " += (" + step + ")";
+//		code.add(_indent + "for (" +
+//				var + " = " + transform(_for.getStartValue(), false) + "; " +
+//				var + compOp + transform(_for.getEndValue(), false) + "; " +
+//				increment +
+//				")");
+    	if (_for.isForInLoop())
+    	{
+    		String valueList = _for.getValueList();
+    		StringList items = this.extractForInListItems(_for);
+    		if (items != null)
+    		{
+    			valueList = "array(" + transform(items.concatenate(", "), false) + ")";
+    		}
+    		else
+    		{
+    			valueList = transform(valueList, false);
+    		}
+    		// START KGU#162 2016-04-01: Enh. #144 - var syntax already handled
+    		//code.add(_indent + "foreach (" + valueList + " as $" + var + ")");
+    		code.add(_indent + "foreach (" + valueList + " as " + var + ")");
+    		// END KGU#162 2016-04-01
+    	
+    	}
+    	else
+    	{
+    		int step = _for.getStepConst();
+    		String compOp = (step > 0) ? " >= " : " <= ";
+    		// START KGU#162 2016-04-01: Enh. #144 - var syntax already handled
+//    		String increment = "$" + var + " += (" + step + ")";
+//    		code.add(_indent + "for ($" +
+//    				var + " = " + transform(_for.getStartValue(), false) + "; $" +
+//    				var + compOp + transform(_for.getEndValue(), false) + "; " +
+//    				increment +
+//    				")");
+    		String increment = var + " += (" + step + ")";
+    		code.add(_indent + "for (" +
+    				var + " = " + transform(_for.getStartValue(), false) + "; " +
+    				var + compOp + transform(_for.getEndValue(), false) + "; " +
+    				increment +
+    				")");
+    		// END KGU#162 2016-04-01
+    	}
+    	// END KGU#61 2016-03-23
 		// END KGU#3 2015-11-02
         code.add(_indent+"{");
         generateCode(_for.q,_indent+this.getIndent());
@@ -369,7 +419,15 @@ public class PHPGenerator extends Generator
         code.add(_indent+"do");
         code.add(_indent+"{");
         generateCode(_repeat.q,_indent+this.getIndent());
-        code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+"));");
+        // START KGU#162 2016-04-01: Enh. #144 - more tentative approach
+        //code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+"));");
+        String condition = BString.replace(transform(_repeat.getText().getText()),"\n","").trim();
+        if (!this.suppressTransformation || !(condition.startsWith("(") && !condition.endsWith(")")))
+        {
+        	condition = "( " + condition + " )";
+        }
+        code.add(_indent + "} while (!" + condition + ");");
+        // END KGU#162 2016-04-01
     }
 
     @Override
@@ -468,8 +526,7 @@ public class PHPGenerator extends Generator
 		// END KGU 2015-11-02
     	
         code.add("<?php");
-        String pr = "program";
-        if(_root.isProgram == false) {pr="function";}
+        String pr = _root.isProgram ? "program" : "function";
         insertComment(pr+" "+_root.getMethodName() + " (generated by Structorizer)", _indent);
 		// START KGU 2014-11-16
 		insertComment(_root, "");

@@ -41,6 +41,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.11.24      KGU#88: The decision according to #6 / #16 is now returned on setRoot()
  *      Kay Gürtzig     2015.11.28      KGU#2/KGU#78/KGU#47: New checks 15, 16, and 17 registered for loading
  *      Kay Gürtzig     2015.12.04      KGU#95: Bugfix #42 - wrong default current directory mended
+ *      Kay Gürtzig     2016.01.04      KGU#123: Bugfix #65 / Enh. #87 - New Ini property: mouse wheel mode
+ *      Kay Gürtzig     2016.03.16      KGU#157: Bugfix #132 - Don't allow to close without having stopped Executor
+ *      Kay Gürtzig     2016.03.18      KGU#89: Localization of Executor Control supported 
  *
  ******************************************************************************************************
  *
@@ -62,16 +65,15 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************///
 
 import java.io.*;
-
 import java.awt.*;
 import java.awt.event.*;
-
 
 import javax.swing.*;
 
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Executor;
 
 public class Mainform  extends JFrame implements NSDController
 {
@@ -85,6 +87,10 @@ public class Mainform  extends JFrame implements NSDController
 	// START KGU#49/KGU#66 2015-11-14: This decides whether to exit or just to dispose when being closed
 	private boolean isStandalone = true;	// The default is to exit...
 	// END KGU#49/KGU#66 2015-11-14
+	
+	// START KGU 2016-01-10: Enhancement #101: Show version number and stand-alone status in title
+	private String titleString = "Structorizer " + Element.E_VERSION;
+	// END KGU 2016-01-10
 		
 	/******************************
  	 * Setup the Mainform
@@ -111,7 +117,11 @@ public class Mainform  extends JFrame implements NSDController
 		 * Some JFrame specific things
 		 ******************************/
 		// set window title
-		setTitle("Structorizer");
+		// START KGU 2016-01-10: Enhancement #101 - show version number and standalone status
+		//setTitle("Structorizer");
+		if (!this.isStandalone) titleString = "(" + titleString + ")";
+		setTitle(titleString);
+		// END KGU 2016-01-10
 		// set layout (OS default)
 		setLayout(null);
 		// set windows size
@@ -163,6 +173,17 @@ public class Mainform  extends JFrame implements NSDController
 			@Override
 			public void windowClosing(WindowEvent e) 
 			{
+				// START KGU#157 2016-03-16: Bugfix #131 Never just close with a running executor!
+				if (diagram.getRoot() != null && diagram.getRoot().executed && !isStandalone)
+				{
+					// This will pop up a dialog to stop the execution
+					// By first argument set to null we avoid reopening the Executor Control
+					Executor.getInstance(null, null);
+					// Since the executor is a concurrent thread and we don't know the decision of
+					// the user, we cannot neither wait nor proceeed here. So we just leave the 
+				}
+				else
+				// END KGU#157
 				if (diagram.saveNSD(true))
 				{
 					saveToINI();
@@ -271,7 +292,7 @@ public class Mainform  extends JFrame implements NSDController
 				diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("user.home")));
 				// END KGU#95 2015-12-04
 				
-				// din
+				// DIN 66261
 				if (ini.getProperty("DIN","0").equals("1")) // default = 0
 				{
 					diagram.setDIN();
@@ -297,6 +318,9 @@ public class Mainform  extends JFrame implements NSDController
 					diagram.setAnalyser(false);
 				}
                  * */
+				// START KGU#123 2016-01-04: Enh. #87, Bugfix #65
+				diagram.setWheelCollapses(ini.getProperty("wheelToCollapse", "0").equals("1"));
+				// END KGU#123 2016-01-04
 			}
 			
 			// recent files
@@ -391,6 +415,9 @@ public class Mainform  extends JFrame implements NSDController
 			ini.setProperty("switchTextComments",(Element.E_TOGGLETC?"1":"0"));
 			ini.setProperty("varHightlight",(Element.E_VARHIGHLIGHT?"1":"0"));
 			//ini.setProperty("analyser",(Element.E_ANALYSER?"1":"0"));
+			// START KGU#123 2016-01-04: Enh. #87
+			ini.setProperty("wheelToCollapse",(Element.E_WHEELCOLLAPSE?"1":"0"));
+			// END KGU#123 2016-01-04
 			
 			// look and feel
 			if(laf!=null)
@@ -488,6 +515,13 @@ public class Mainform  extends JFrame implements NSDController
 		{
 			getEditor().setLangLocal(_langfile);
 		}
+		
+		// START KGU#89 2016-03-18: Re-translation of the Executor Control
+		if (Executor.getInstance() != null)
+		{
+			Executor.getInstance().setLangLocal();
+		}
+		// END KGU#89
 	}
 	
     public void setLangLocal(String _langfile) {}
@@ -518,11 +552,17 @@ public class Mainform  extends JFrame implements NSDController
         	if (root != null && root.filename != null && !root.filename.isEmpty())
         	{
         		File f = new File(root.filename);
-        		this.setTitle("Structorizer - " + f.getName());
+            	// START KGU 2016-01-10: Enhancement #101 - involve version number and stand-alone status
+        		//this.setTitle("Structorizer - " + f.getName());
+        		this.setTitle(this.titleString + " - " + f.getName());
+        		// END KGU 2016-01-10
         		done = true;
         	}
         }
-        if (!done) this.setTitle("Structorizer");
+    	// START KGU 2016-01-10: Enhancement #101 - involve version number and stand-alone status
+        //if (!done) this.setTitle("Structorizer");
+        if (!done) this.setTitle(this.titleString);
+		// END KGU 2016-01-10
     }
 
     public void updateColors() 

@@ -37,6 +37,7 @@ package lu.fisch.structorizer.generators;
  *      Bob Fisch           2008.11.17      Added Freepascal extensions
  *      Bob Fisch           2009.08.17      Bugfixes (see comment)
  *      Bob Fisch           2011.11.07      Fixed an issue while doing replacements
+ *      Dirk Wilhelmi       2012.10.11      Added comments export
  *      Kay Gürtzig         2014.11.10      Conversion of C-like logical operators
  *      Kay Gürtzig         2014.11.16      Conversion of C-like comparison operator, comment export
  *      Kay Gürtzig         2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
@@ -47,6 +48,11 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2015.12.20      Bugfix #22 (KGU#74): Correct return mechanisms even with
  *                                          return instructions not placed in Jump elements
  *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KG#93)
+ *      Kay Gürtzig         2016.01.14      Enh. #84: array initialisation expressions decomposed (= KG#100)
+ *      Kay Gürtzig         2016.01.17      Bugfix #61/#112 - handling of type names in assignments (KGU#109/KGU#141)
+ *                                          KGU#142: Bugfix for enh. #23 - empty Jumps weren't translated
+ *      Kay Gürtzig         2016.03.16      Enh. #84: Minimum support for FOR-IN loops (KGU#61) 
+ *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
  *
  ******************************************************************************************************
  *
@@ -77,10 +83,6 @@ package lu.fisch.structorizer.generators;
  *
  ******************************************************************************************************///
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.regex.Matcher;
 
 import lu.fisch.utils.*;
@@ -139,7 +141,7 @@ public class PasGenerator extends Generator
 	 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
 	 */
 	@Override
-	protected boolean supportsSimpleBreak()
+	protected boolean breakMatchesCase()
 	{
 		return false;
 	}
@@ -251,15 +253,15 @@ public class PasGenerator extends Generator
 	// END KGU#18/KGU#23 2015-11-01
     
 
-	// START KGU#93 2015-12-21: Bugfix #41/#68/#69 - overriding no longer needed
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String)
-//	 */
-//	@Override
-//	protected String transform(String _input)
-//	{
-//		_input = super.transform(_input);
-//
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String)
+	 */
+	@Override
+	protected String transform(String _input)
+	{
+		String transline = super.transform(_input);
+
+		// START KGU#93 2015-12-21: Bugfix #41/#68/#69 - overriding no longer needed		
 //            // START KGU 2014-11-16: C comparison operator required transformation, too
 //            _input=BString.replace(_input," != "," <> ");
 //            _input=BString.replace(_input," == "," = ");
@@ -288,8 +290,42 @@ public class PasGenerator extends Generator
 //            _input.replace("  ", " ");
 //            _input.replace("  ", " ");
 //            return _input.trim();
-//    }
-	// END KGU#93 2015-12-21
+// END KGU#93 2015-12-21
+
+		// START KGU#109/KGU#141 2016-01-16: Bugfix #61,#112 - suppress type specifications
+		// (This must work both in Instruction and Call elements)
+		int asgnPos = transline.indexOf(":=");
+		if (asgnPos > 0)
+		{
+			String varName = transline.substring(0, asgnPos);
+			String expr = transline.substring(asgnPos + ":=".length());
+			String[] typeNameIndex = this.lValueToTypeNameIndex(varName);
+			varName = typeNameIndex[1];
+			String index = typeNameIndex[2];
+			if (!index.isEmpty())
+			{
+				varName = varName + "["+index+"]";
+			}
+			transline = varName + " := " + expr;
+		}
+		// END KGU#109/KGU#141 2016-01-16
+		
+		return transline.trim(); 
+    }
+	
+	// START KGU#61 2016-03-23: New for enh. #84
+	private void insertDeclaration(String _category, String text, int _maxIndent)
+	{
+		int posDecl = -1;
+		String seekIndent = "";
+		while (posDecl < 0 && seekIndent.length() < _maxIndent)
+		{
+			posDecl = code.indexOf(seekIndent + _category);
+			seekIndent += this.getIndent();
+		}
+		code.insert(seekIndent + text, posDecl + 1);
+	}
+	// END KGU#61 2016-03-23
 
     @Override
     protected void generateCode(Instruction _inst, String _indent)
@@ -323,9 +359,45 @@ public class PasGenerator extends Generator
 						code.add(_indent + "exit;");
 					}
 				}
-				else
+				else	// no return
 				{
-					code.add(_indent + transform(line) + ";");
+					// START KGU#100 2016-01-14: Enh. #84 - resolve array initialisation
+					// The crux is: we don't know the index range!
+					// So we'll invent an index base variable easy to be modified in code
+					//code.add(_indent + transform(line) + ";");
+					String transline = transform(line);
+					int asgnPos = transline.indexOf(":=");
+					boolean isArrayInit = false;
+					if (asgnPos >= 0 && transline.contains("{") && transline.contains("}"))
+					{
+						String varName = transline.substring(0, asgnPos).trim();
+						String expr = transline.substring(asgnPos+2).trim();
+						isArrayInit = expr.startsWith("{") && expr.endsWith("}");
+						if (isArrayInit)
+						{
+							StringList elements = Element.splitExpressionList(
+									expr.substring(1, expr.length()-1), ",");
+							// In order to be consistent with possible index access
+							// at other positions in code, we use the standard Java
+							// index range here (though in Pascal indexing usually 
+							// starts with 1 but may vary widely). We solve the problem
+							// by providing a configurable start index variable 
+							insertComment("TODO: Check indexBase value (automatically generated)", _indent);
+							insertDeclaration("var", "indexBase_" + varName + ": Integer = 0;",
+									_indent.length());
+							for (int el = 0; el < elements.count(); el++)
+							{
+								code.add(_indent + varName + "[indexBase_" + varName + " + " + el + "] := " + 
+										elements.get(el) + ";");
+							}
+						}
+						
+					}
+					if (!isArrayInit)
+					{
+						code.add(_indent + transline + ";");
+					}
+					// END KGU#100 2016-01-14
 				}
 				// END KGU#74 2015-12-20
 			}
@@ -392,7 +464,15 @@ public class PasGenerator extends Generator
             insertComment(_for, _indent);
             // END KGU 2014-11-16
 
-            // START KGU#3 2015-11-02: New reliable loop parameter mechanism
+        	// START KGU#61 2016-03-23: Enh. 84
+        	if (_for.isForInLoop() && generateForInCode(_for, _indent))
+        	{
+        		// All done
+        		return;
+        	}
+        	// END KGU#61 2016-03-23
+
+        	// START KGU#3 2015-11-02: New reliable loop parameter mechanism
     		//code.add(_indent+"for "+BString.replace(transform(_for.getText().getText()),"\n","").trim()+" do");
             //code.add(_indent + "begin");
             //generateCode(_for.q, _indent+this.getIndent());
@@ -428,7 +508,132 @@ public class PasGenerator extends Generator
             // END KGU 2015-11-30
     }
 
-    @Override
+	// START KGU#61 2016-03-23: Enh. #84 - Support for FOR-IN loops
+	/**
+	 * We try our very best to create a working loop from a FOR-IN construct
+	 * This will only work, however, if we can get reliable information about
+	 * the size of the value list, which won't be the case if we obtain it e.g.
+	 * via a variable.
+	 * @param _for - the element to be exported
+	 * @param _indent - the current indentation level
+	 * @return true iff the method created some loop code (sensible or not)
+	 */
+	protected boolean generateForInCode(For _for, String _indent)
+	{
+		boolean done = false;
+		String var = _for.getCounterVar();
+		StringList items = this.extractForInListItems(_for);
+		if (items != null)
+		{
+			// Good question is: how do we guess the element type and what do we
+			// do if items are heterogenous? We will just try four types: boolean,
+			// integer, real and string, where we can only test literals.
+			// If none of them match then we add a TODO comment.
+			int nItems = items.count();
+			boolean allBoolean = true;
+			boolean allInt = true;
+			boolean allReal = true;
+			boolean allString = true;
+			for (int i = 0; i < nItems; i++)
+			{
+				String item = items.get(i);
+				if (allBoolean)
+				{
+					if (!item.equalsIgnoreCase("true") && !item.equalsIgnoreCase("false"))
+					{
+						allBoolean = false;
+					}
+				}
+				if (allInt)
+				{
+					try {
+						Integer.parseInt(item);
+					}
+					catch (NumberFormatException ex)
+					{
+						allInt = false;
+					}
+				}
+				if (allReal)
+				{
+					try {
+						Double.parseDouble(item);
+					}
+					catch (NumberFormatException ex)
+					{
+						allReal = false;
+					}
+				}
+				if (allString)
+				{
+					allString = item.startsWith("\"") && item.endsWith("\"") &&
+							!item.substring(1, item.length()-1).contains("\"") ||
+							item.startsWith("\'") && item.endsWith("\'") &&
+							!item.substring(1, item.length()-1).contains("\'");
+				}
+			}
+			
+			// Create some generic and unique variable names
+			String postfix = Integer.toHexString(_for.hashCode());
+			String arrayName = "array" + postfix;
+			String indexName = "index" + postfix;
+
+			String itemType = "";
+			if (allBoolean) itemType = "boolean";
+			else if (allInt) itemType = "integer";
+			else if (allReal) itemType = "real";
+			else if (allString) itemType = "string";
+			else {
+				itemType = "FIXME_" + postfix;
+				// We do a dummy type definition
+				this.insertComment("TODO: Specify an appropriate element type for the array!", _indent);
+			}
+
+			// Insert the array and index declarations
+			String range = "1..." + items.count();
+			insertDeclaration("var", arrayName + ": " + "array [" + 
+					range + "] of " + itemType + ";", _indent.length());
+			insertDeclaration("var", indexName + ": " + range + ";",
+					_indent.length());
+
+			// Now we create code to fill the array with the enumerated values
+			for (int i = 0; i < nItems; i++)
+			{
+				code.add(_indent + arrayName + "[" + (i+1) + "] := " + items.get(i) + ";");
+			}
+			
+			// Creation of the loop header
+    		code.add(_indent + "for " + indexName + " := 1 to " + nItems + " do");
+
+    		// Creation of the loop body
+            code.add(_indent + "begin");
+            code.add(_indent+this.getIndent() + var + " := " + arrayName + "[" + indexName + "];");
+            generateCode(_for.q, _indent+this.getIndent());
+            code.add(_indent + "end;");
+
+            done = true;
+		}
+		else
+		{
+			String valueList = _for.getValueList();
+			// We have no strategy here, no idea how to find out the number and type of elements,
+			// no idea how to iterate the members, so we leave it similar to Delphi and just add a TODO comment...
+			this.insertComment("TODO: Rewrite this loop (there was no way to convert this automatically)", _indent);
+
+			// Creation of the loop header
+			code.add(_indent + "for " + var + " in " + transform(valueList, false) + " do");
+			// Add the loop body as is
+            code.add(_indent + "begin");
+			generateCode(_for.q, _indent + this.getIndent());
+            code.add(_indent + "end;");
+			
+			done = true;
+		}
+		return done;
+	}
+	// END KGU#61 2016-03-23
+
+	@Override
     protected void generateCode(While _while, String _indent)
     {
             // START KGU 2014-11-16
@@ -519,57 +724,90 @@ public class PasGenerator extends Generator
 			boolean isEmpty = true;
 			
 			StringList lines = _jump.getText();
-			for (int i = 0; isEmpty && i < lines.count(); i++) {
-				String line = transform(lines.get(i)).trim();
-				if (!line.isEmpty())
+			// START KGU#142 2016-01-17: fixes Enh. #23 The following code had been
+			// misplaced inside the text line loop, it belongs to the top (no further
+			// analysis required):
+			// Has it already been matched with a loop? Then syntax must have been okay...
+			if (this.jumpTable.containsKey(_jump))
+			{
+				Integer ref = this.jumpTable.get(_jump);
+				String label = "StructorizerLabel_" + ref;
+				if (ref.intValue() < 0)
 				{
-					isEmpty = false;
+					insertComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
+					insertComment(lines.getLongString(), _indent);
+					label = "__ERROR__";
 				}
-				// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
-				//code.add(_indent + line + ";");
-				if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
+				else
 				{
-					String argument = line.substring(D7Parser.preReturn.length()).trim();
-					if (!argument.isEmpty())
+					insertComment("WARNING: Most Pascal compilers don't support jump instructions!", _indent);					
+				}
+				code.add(_indent + "goto" + " " + label + ";");
+			}
+			else
+			{
+			// END KGU#142 2016-01-17
+				for (int i = 0; isEmpty && i < lines.count(); i++) {
+					String line = transform(lines.get(i)).trim();
+					if (!line.isEmpty())
 					{
-						code.add(_indent + this.procName + " := " + argument + ";"); 
+						isEmpty = false;
 					}
-					code.add(_indent + "exit;");
-				}
-				else if (line.matches(Matcher.quoteReplacement(D7Parser.preExit)+"([\\W].*|$)"))
-				{
-					String argument = line.substring(D7Parser.preExit.length()).trim();
-					if (!argument.isEmpty()) { argument = "(" + argument + ")"; }
-					code.add(_indent + "halt" + argument + ";");
-				}
-				// Has it already been matched with a loop? Then syntax must have been okay...
-				else if (this.jumpTable.containsKey(_jump))
-				{
-					Integer ref = this.jumpTable.get(_jump);
-					String label = "StructorizerLabel_" + ref;
-					if (ref.intValue() < 0)
+					// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
+					//code.add(_indent + line + ";");
+					if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
 					{
-						insertComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
+						String argument = line.substring(D7Parser.preReturn.length()).trim();
+						if (!argument.isEmpty())
+						{
+							code.add(_indent + this.procName + " := " + argument + ";"); 
+						}
+						// START KGU 2016-01-17: Omit the exit if this is the last instruction of the diagram
+						//code.add(_indent + "exit;");
+						if (i < lines.count()-1 || !((_jump.parent).parent instanceof Root))
+						{
+							code.add(_indent + "exit;");
+						}
+						// END KGU 2016-01-17
+					}
+					else if (line.matches(Matcher.quoteReplacement(D7Parser.preExit)+"([\\W].*|$)"))
+					{
+						String argument = line.substring(D7Parser.preExit.length()).trim();
+						if (!argument.isEmpty()) { argument = "(" + argument + ")"; }
+						code.add(_indent + "halt" + argument + ";");
+					}
+					// START KGU#142 2016-01-17: This belonged to the top (no further analysis required)
+					//				else if (this.jumpTable.containsKey(_jump))
+					//				{
+					//					Integer ref = this.jumpTable.get(_jump);
+					//					String label = "StructorizerLabel_" + ref;
+					//					if (ref.intValue() < 0)
+					//					{
+					//						insertComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
+					//						insertComment(line, _indent);
+					//						label = "__ERROR__";
+					//					}
+					//					else
+					//					{
+					//						insertComment("WARNING: Most Pascal compilers don't support jump instructions!", _indent);					
+					//					}
+					//					code.add(_indent + "goto" + " " + label + ";");
+					//				}
+					// END KGU#142 2016-01-17
+					else if (!isEmpty)
+					{
+						insertComment("FIXME: Structorizer detected the following illegal jump attempt:", _indent);
 						insertComment(line, _indent);
-						label = "__ERROR__";
 					}
-					else
-					{
-						insertComment("WARNING: Most Pascal compilers don't support jump instructions!", _indent);					
-					}
-					code.add(_indent + "goto" + " " + label + ";");
+					// END KGU#74/KGU#78 2015-11-30
 				}
-				else if (!isEmpty)
-				{
-					insertComment("FIXME: Structorizer detected the following illegal jump attempt:", _indent);
-					insertComment(line, _indent);
+				if (isEmpty) {
+					insertComment("FIXME: An empty jump was found here! Cannot be translated to " +
+							this.getFileDescription(), _indent);
 				}
-				// END KGU#74/KGU#78 2015-11-30
+			// START KGU#142 2016-01-17: Bugfix for enh. #23 (continued)
 			}
-			if (isEmpty) {
-				insertComment("FIXME: An empty jump was found here! Cannot be translated to " +
-						this.getFileDescription(), _indent);
-			}
+			// END KGU#142 2016-01-17
 		}
     }
 
@@ -665,7 +903,7 @@ public class PasGenerator extends Generator
         this.procName = _procName;	// Needed for value return mechanisms
 
         insertComment(_root, _indent);
-        insertComment("Generated by Structorizer " + Element.E_VERSION + ")", _indent);            
+        insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);            
         
         String signature = _root.getMethodName();
         if (!_root.isProgram) {

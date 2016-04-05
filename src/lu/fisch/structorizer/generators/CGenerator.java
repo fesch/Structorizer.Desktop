@@ -47,13 +47,21 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2015.11.10		Bugfixes KGU#71 (switch default), KGU#72 (div operators)
  *      Kay Gürtzig             2015.11.10      Code style option optionBlockBraceNextLine() added,
  *                                              bugfix/enhancement #22 (KGU#74 jump and return handling)
- *      Kay Gürtzig             2015.12.13		Bugfix #51 (=KGU#108): Cope with empty input and output
- *      Kay Gürtzig             2015.12.21		Adaptations for Bugfix #41/#68/#69 (=KGU#93)
+ *      Kay Gürtzig             2015.12.13      Bugfix #51 (=KGU#108): Cope with empty input and output
+ *      Kay Gürtzig             2015.12.21      Adaptations for Bugfix #41/#68/#69 (=KGU#93)
+ *      Kay Gürtzig             2016.01.15      Bugfix #64 (exit instruction was exported without ';')
+ *      Kay Gürtzig             2016.01.15      Issue #61/#107: improved handling of typed variables 
+ *      Kay Gürtzig             2016.03.16      Enh. #84: Minimum support for FOR-IN loops (KGU#61) 
+ *      Kay Gürtzig             2016.04.01      Enh. #144: Export option to suppress content conversion 
  *
  ******************************************************************************************************
  *
  *      Comment:
- *      
+ *
+ *      2016.04.01 - Enh. #144 (Kay Gürtzig)
+ *      - A new export option suppresses conversion of text content and restricts the export
+ *        more or less to the mere control structure generation.
+ *        
  *      2015.12.21 - Bugfix #41/#68/#69 (Kay Gürtzig)
  *      - Operator replacement had induced unwanted padding and string literal modifications
  *      - new subclassable method transformTokens() for all token-based replacements 
@@ -110,8 +118,6 @@ package lu.fisch.structorizer.generators;
  ******************************************************************************************************/
 //
 
-import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.regex.Matcher;
 
 import lu.fisch.utils.*;
@@ -189,7 +195,7 @@ public class CGenerator extends Generator {
 	 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
 	 */
 	@Override
-	protected boolean supportsSimpleBreak()
+	protected boolean breakMatchesCase()
 	{
 		return true;
 	}
@@ -226,7 +232,10 @@ public class CGenerator extends Generator {
 	 */
 	protected void insertExitInstr(String _exitCode, String _indent)
 	{
-		code.add(_indent + "exit(" + _exitCode + ")");
+		// START KGU 2016-01-15: Bugfix #64 (reformulated) semicolon was missing
+		//code.add(_indent + "exit(" + _exitCode + ")");
+		code.add(_indent + "exit(" + _exitCode + ");");
+		// END KGU 2016-01-15
 	}
 	// END KGU#16/#47 2015-11-30
 
@@ -266,17 +275,35 @@ public class CGenerator extends Generator {
 	@Override
 	protected String transform(String _input)
 	{
+		// START KGU#162 2016-04-01: Enh. #144
+		if (!this.suppressTransformation)
+		{
+		// END KGU#162 2016-04-01
+			// START KGU#109/KGU#141 2016-01-16: Bugfix #61,#107,#112
+			_input = Element.unifyOperators(_input);
+			int asgnPos = _input.indexOf("<-");
+			if (asgnPos > 0)
+			{
+				String lval = _input.substring(0, asgnPos).trim();
+				String expr = _input.substring(asgnPos + "<-".length()).trim();
+				String[] typeNameIndex = this.lValueToTypeNameIndex(lval);
+				String index = typeNameIndex[2];
+				_input = (typeNameIndex[0] + " " + typeNameIndex[1] + 
+						(index.isEmpty() ? "" : "["+index+"]") + 
+						" <- " + expr).trim();
+			}
+			// END KGU#109/KGU#1412016-01-16
+		// START KGU#162 2016-04-01: Enh. #144
+		}
+		// END KGU#162 2016-04-01
+		
 		_input = super.transform(_input);
 
-		// START KGU#72 2015-11-10: Replacement was done but ineffective
-		//_input.replace(" div ", " / ");
-		//_input = _input.replace(" div ", " / ");
-		// END KGU#72 2015-11-10
 		// START KGU#108 2015-12-13: Bugfix #51: Cope with empty input and output
 		_input = _input.replace("scanf(\"\", &)", "getchar()");
 		_input = _input.replace("printf(\"\", ); ", "");
 		// END KGU#108 2015-12-13
-		
+
 		return _input.trim();
 	}
 
@@ -293,7 +320,7 @@ public class CGenerator extends Generator {
 		_type = _type.replace("character", "char");
 		return _type;
 	}
-	// END KGU#1 2015-11-29
+	// END KGU#16 2015-11-29
 
 	
 	protected void insertBlockHeading(Element elem, String _headingText, String _indent)
@@ -330,13 +357,7 @@ public class CGenerator extends Generator {
 
 	@Override
 	protected void generateCode(Instruction _inst, String _indent) {
-		// START KGU#18/KGU#23 2015-10-18: The "export instructions as comments"
-		// configuration had been ignored here
-		// insertComment(_inst, _indent);
-		// for(int i=0;i<_inst.getText().count();i++)
-		// {
-		// code.add(_indent+transform(_inst.getText().get(i))+";");
-		// }
+
 		if (!insertAsComment(_inst, _indent)) {
 
 			insertComment(_inst, _indent);
@@ -347,15 +368,14 @@ public class CGenerator extends Generator {
 			}
 
 		}
-		// END KGU 2015-10-18
+		
 	}
 
 	@Override
 	protected void generateCode(Alternative _alt, String _indent) {
-		// START KGU 2014-11-16
+		
 		insertComment(_alt, _indent);
-		// END KGU 2014-11-16
-
+		
 		String condition = transform(_alt.getText().getLongString(), false)
 				.trim();
 		if (!condition.startsWith("(") || !condition.endsWith(")"))
@@ -374,10 +394,9 @@ public class CGenerator extends Generator {
 
 	@Override
 	protected void generateCode(Case _case, String _indent) {
-		// START KGU 2014-11-16
+		
 		insertComment(_case, _indent);
-		// END KGU 2014-11-16
-
+		
 		StringList lines = _case.getText();
 		String condition = transform(lines.get(0), false);
 		if (!condition.startsWith("(") || !condition.endsWith(")")) {
@@ -417,8 +436,18 @@ public class CGenerator extends Generator {
 
 	@Override
 	protected void generateCode(For _for, String _indent) {
+
 		insertComment(_for, _indent);
 		
+		// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
+		if (_for.isForInLoop())
+		{
+			// There aren't many ideas how to implement this here in general,
+			// but subclasses may have better chances to do so.
+			if (generateForInCode(_for, _indent)) return;
+		}
+		// END KGU#61 2016-03-22
+
 		String var = _for.getCounterVar();
 		int step = _for.getStepConst();
 		String compOp = (step > 0) ? " <= " : " >= ";
@@ -431,13 +460,131 @@ public class CGenerator extends Generator {
 		generateCode(_for.q, _indent + this.getIndent());
 
 		insertBlockTail(_for, null, _indent);
+
 	}
+	
+	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
+	/**
+	 * We try our very best to create a working loop from a FOR-IN construct
+	 * This will only work, however, if we can get reliable information about
+	 * the size of the value list, which won't be the case if we obtain it e.g.
+	 * via a variable.
+	 * @param _for - the element to be exported
+	 * @param _indent - the current indentation level
+	 * @return true iff the method created some loop code (sensible or not)
+	 */
+	protected boolean generateForInCode(For _for, String _indent)
+	{
+		boolean done = false;
+		String var = _for.getCounterVar();
+		String valueList = _for.getValueList();
+		StringList items = this.extractForInListItems(_for);
+		if (items != null)
+		{
+			// Good question is: how do we guess the element type and what do we
+			// do if items are heterogenous? We will just try three types: int,
+			// double and C-strings, and if none of them match we add a TODO comment.
+			int nItems = items.count();
+			boolean allInt = true;
+			boolean allDouble = true;
+			boolean allString = true;
+			for (int i = 0; i < nItems; i++)
+			{
+				String item = items.get(i);
+				if (allInt)
+				{
+					try {
+						Integer.parseInt(item);
+					}
+					catch (NumberFormatException ex)
+					{
+						allInt = false;
+					}
+				}
+				if (allDouble)
+				{
+					try {
+						Double.parseDouble(item);
+					}
+					catch (NumberFormatException ex)
+					{
+						allDouble = false;
+					}
+				}
+				if (allString)
+				{
+					allString = item.startsWith("\"") && item.endsWith("\"") &&
+							!item.substring(1, item.length()-1).contains("\"");
+				}
+			}
+			String itemType = "";
+			if (allInt) itemType = "int";
+			else if (allDouble) itemType = "double";
+			else if (allString) itemType = "char*";
+			String arrayLiteral = "{" + items.concatenate(", ") + "}";
+			String arrayName = "array20160322";
+			String indexName = "index20160322";
+
+			String indent = _indent + this.getIndent();
+			// Start an extra block to encapsulate the additional definitions
+			code.add(_indent + "{");
+			
+			if (itemType.isEmpty())
+			{
+				// We do a dummy type definition
+				this.insertComment("TODO: Define a sensible 'ItemType' and/or prepare the elements of the array", indent);
+				itemType = "ItemType";
+				code.add(indent + "typedef void " + itemType + ";");
+			}
+			// We define a fixed array here
+			code.add(indent + itemType + " " + arrayName +  "[" + nItems + "] = "
+					+ transform(arrayLiteral, false) + ";");
+			// Definition of he loop index variable
+			code.add(indent + "int " + indexName + ";");
+
+			// Creation of the loop header
+			insertBlockHeading(_for, "for (" + indexName + " = 0; " +
+					indexName + " < " + nItems + "; " + indexName + "++)",
+					indent);
+			
+			// Assignment of a single item to the given variable
+			code.add(indent + this.getIndent() + itemType + " " + var + " = " +
+					arrayName + "[" + indexName + "];");
+
+			// Add the loop body as is
+			generateCode(_for.q, indent + this.getIndent());
+
+			// Accomplish the loop
+			insertBlockTail(_for, null, indent);
+
+			// Close the extra block
+			code.add(_indent + "}");
+			done = true;
+		}
+		else
+		{
+			// We have no strategy here, no idea how to find out the number and type of elements,
+			// no idea how to iterate the members, so we leave it similar to C# and just add a TODO comment...
+			this.insertComment("TODO: Rewrite this loop (there was no way to convert this automatically)", _indent);
+
+			// Creation of the loop header
+			insertBlockHeading(_for, "foreach (" + var + " in " + transform(valueList, false) + ")", _indent);
+			// Add the loop body as is
+			generateCode(_for.q, _indent + this.getIndent());
+			// Accomplish the loop
+			insertBlockTail(_for, null, _indent);
+			
+			done = true;
+		}
+		return done;
+	}
+	// END KGU#61 2016-03-22
 
 	@Override
 	protected void generateCode(While _while, String _indent) {
-		// START KGU 2014-11-16
+		
 		insertComment(_while, _indent);
-		// END KGU 2014-11-16
+		
 
 		String condition = transform(_while.getText().getLongString(), false)
 				.trim();
@@ -455,9 +602,8 @@ public class CGenerator extends Generator {
 
 	@Override
 	protected void generateCode(Repeat _repeat, String _indent) {
-		// START KGU 2014-11-16
+		
 		insertComment(_repeat, _indent);
-		// END KGU 2014-11-16
 
 		insertBlockHeading(_repeat, "do", _indent);
 
@@ -469,9 +615,8 @@ public class CGenerator extends Generator {
 
 	@Override
 	protected void generateCode(Forever _forever, String _indent) {
-		// START KGU 2014-11-16
+		
 		insertComment(_forever, _indent);
-		// END KGU 2014-11-16
 
 		insertBlockHeading(_forever, "while (true)", _indent);
 
@@ -482,13 +627,7 @@ public class CGenerator extends Generator {
 
 	@Override
 	protected void generateCode(Call _call, String _indent) {
-		// START KGU 2015-10-18: The "export instructions as comments"
-		// configuration had been ignored here
-		// insertComment(_call, _indent);
-		// for(int i=0;i<_call.getText().count();i++)
-		// {
-		// code.add(_indent+transform(_call.getText().get(i))+";");
-		// }
+ 
 		if (!insertAsComment(_call, _indent)) {
 
 			insertComment(_call, _indent);
@@ -499,7 +638,7 @@ public class CGenerator extends Generator {
 				code.add(_indent + transform(lines.get(i), false) + ";");
 			}
 		}
-		// END KGU 2015-10-18
+		
 	}
 
 	@Override
@@ -566,16 +705,15 @@ public class CGenerator extends Generator {
 			if (isEmpty) {
 				code.add(_indent + "break;");
 			}
+			// END KGU 2015-10-18
 		}
-		// END KGU 2015-10-18
 	}
 
-	// START KGU#47 2015-11-29: Offer at least a sequential execution (which is one legal execution order)
+	// START KGU#47 2015-11-30: Offer at least a sequential execution (which is one legal execution order)
 	protected void generateCode(Parallel _para, String _indent)
 	{
-		// START KGU 2014-11-16
+
 		insertComment(_para, _indent);
-		// END KGU 2014-11-16
 
 		code.add("");
 		insertComment("==========================================================", _indent);

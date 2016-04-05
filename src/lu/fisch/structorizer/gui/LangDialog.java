@@ -34,6 +34,7 @@ package lu.fisch.structorizer.gui;
  *      ------			----			-----------
  *      Bob Fisch       2008.01.14      First Issue
  *      Kay Gürtzig     2015.10.14      Hook for customizable class-specific translation activities added
+ *      Kay Gürtzig     2016.03.13      KGU#156: Support for JComboBox added on occasion of enhancement #124
  *
  ******************************************************************************************************
  *
@@ -44,15 +45,19 @@ package lu.fisch.structorizer.gui;
 import java.awt.*;
 
 import java.io.*;
-import java.lang.*;
 import java.lang.reflect.*;
-import java.util.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
 
 import lu.fisch.utils.*;
 
+/**
+ * Extends JDialog to facilitate language localization, also provides static methods
+ * applicable to other GUI classes not inheriting from LangDialog.
+ * @author Robert Fisch
+ *
+ */
 public class LangDialog extends JDialog
 {
 	protected String langFile = null;
@@ -161,27 +166,44 @@ public class LangDialog extends JDialog
 						if(field!=null)
 						{
 							Class fieldClass = field.getType();
+							String piece2 = pieces.get(2).toLowerCase();
 							
-							if (pieces.get(2).toLowerCase().equals("text"))
+							if (piece2.equals("text"))
 							{
 								Method method = fieldClass.getMethod("setText",new Class [] {String.class});
 								method.invoke(field.get(_com),new Object [] {parts.get(1)});
 							}
-							else if (pieces.get(2).toLowerCase().equals("tooltip"))
+							else if (piece2.equals("tooltip"))
 							{
 								Method method = fieldClass.getMethod("setToolTipText",new Class [] {String.class});
 								method.invoke(field.get(_com),new Object [] {parts.get(1)});
 							}
-							else if (pieces.get(2).toLowerCase().equals("border"))
+							else if (piece2.equals("border"))
 							{
 								Method method = fieldClass.getMethod("setBorder",new Class [] {Border.class});
 								method.invoke(field.get(_com),new Object [] {new TitledBorder(parts.get(1))});
 						 	}
-							else if (pieces.get(2).toLowerCase().equals("tab"))
+							else if (piece2.equals("tab"))
 							{
 								Method method = fieldClass.getMethod("setTitleAt",new Class [] {int.class,String.class});
 								method.invoke(field.get(_com),new Object [] {Integer.valueOf(pieces.get(3)),parts.get(1)});
 							}
+							// START KGU#156 2016-03-13: Enh. #124 - intended for JComboBoxes
+							else if (piece2.equalsIgnoreCase("item"))
+							{
+								// The JCombobox is supposed to be equipped with enum objects providing a setText() method
+								// (see lu.fisch.structorizer.elements.RuntimeDataPresentMode and
+								// lu.fisch.structorizer.executor.Control for an example).
+								Method method = fieldClass.getMethod("getItemAt", new Class [] {int.class});
+								Object item = method.invoke(field.get(_com), new Object[] {Integer.valueOf(pieces.get(3))});
+								if (item != null)
+								{
+								Class itemClass = item.getClass();
+								method = itemClass.getMethod("setText", new Class[] {String.class});
+								method.invoke(item, new Object[] {parts.get(1)});
+								}
+							}
+							// END KGU#156 2016-03-13
 						}
 						else
 						{

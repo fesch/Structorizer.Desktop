@@ -38,6 +38,12 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
  *      Kay Gürtzig     2015.12.01      Bugfix #39 (= KGU#91) in draw methods (--> getText(false))
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(),
+ *                                      Enh. #87 (KGU#122): Modification of collapsed text, getIcon()
+ *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): Translation-neutral selection
+ *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *
  ******************************************************************************************************
  *
@@ -45,22 +51,27 @@ package lu.fisch.structorizer.elements;
  *
  ******************************************************************************************************///
 
-import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
+import java.awt.Point;
 
-import javax.swing.JPanel;
+import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
 public class Repeat extends Element implements ILoop {
 	
 	public Subqueue q = new Subqueue();
 	
-	private Rect r = new Rect();
+	// START KGU#136 206-02-27: Bugfix #97 - replaced by local variable in prepareDraw()
+	//private Rect r = new Rect();
+	// END KGU#136 2016-02-27
+	// START KGU#136 2016-03-01: Bugfix #97
+	private Point pt0Body = new Point(0,0);
+	// END KGU#136 2016-03-01
+
 	
 	public Repeat()
 	{
@@ -95,37 +106,65 @@ public class Repeat extends Element implements ILoop {
 	}
 	// END KGU#64 2015-11-03
 
+	// START KGU#122 2016-01-04: It makes more sense to revert the line order for Repeat (first ellipse, then condition)
+	public StringList getCollapsedText()
+	{
+		return super.getCollapsedText().reverse();
+	}
+	// END KGU#122 2016-01-04
+
 	public Rect prepareDraw(Canvas _canvas)
 	{
-                if(isCollapsed()) 
-                {
-                    rect = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
-                    return rect;
-                }
+		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
+		if (this.isRectUpToDate) return rect0;
+		// END KGU#136 2016-03-01
+
+		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
+		if(isCollapsed()) 
+		{
+			rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
+			// START KGU#136 2016-03-01: Bugfix #97
+			isRectUpToDate = true;
+			// END KGU#136 2016-03-01
+			return rect0;
+		}
             
-		rect.top=0;
-		rect.left=0;
+		rect0.top = 0;
+		rect0.left = 0;
 		
-		rect.right=2*Math.round(E_PADDING/2);
+		rect0.right = 2*(E_PADDING/2);
 		
 		FontMetrics fm = _canvas.getFontMetrics(font);
 		
-		rect.right=Math.round(2*(E_PADDING/2));
-		for(int i=0;i<getText(false).count();i++)
+		for (int i=0; i<getText(false).count(); i++)
 		{
-			if(rect.right<getWidthOutVariables(_canvas,getText(false).get(i),this)+2*Math.round(E_PADDING/2))
+			int width = getWidthOutVariables(_canvas, getText(false).get(i), this) + 2*(E_PADDING/2);
+			if (rect0.right < width)
 			{
-				rect.right=getWidthOutVariables(_canvas,getText(false).get(i),this)+2*Math.round(E_PADDING/2);
+				rect0.right = width;
 			}
 		}
 		
-		rect.bottom=2*Math.round(E_PADDING/2)+getText(false).count()*fm.getHeight();
+		rect0.bottom = 2*(E_PADDING/2) + getText(false).count()*fm.getHeight();
 		
-		r=q.prepareDraw(_canvas);
-		
-		rect.right=Math.max(rect.right,r.right+E_PADDING);
-		rect.bottom+=r.bottom;		
-		return rect;
+		// START KGU#136 2016-02-27: Bugfix #97 - field replaced by local variable
+		//r=q.prepareDraw(_canvas);
+		//rect.right=Math.max(rect.right,r.right+E_PADDING);
+		//rect.bottom+=r.bottom;		
+		//return rect;
+		// START KGU#136 2016-03-01: Bugfix #97 - Preparation for local coordinate detection
+		this.pt0Body.x = E_PADDING - 2;		// FIXME: Fine tuning!
+		this.pt0Body.y = 0;
+		// END KGU#136 2016-03-01
+		Rect rectBody = q.prepareDraw(_canvas);
+		rect0.right = Math.max(rect0.right, rectBody.right+E_PADDING);
+		rect0.bottom += rectBody.bottom;		
+
+		// START KGU#136 2016-03-01: Bugfix #97
+		isRectUpToDate = true;
+		// END KGU#136 2016-03-01
+		return rect0;
+		// END KGU#136 2016-02-27
 	}
 	
 	public void draw(Canvas _canvas, Rect _top_left)
@@ -157,18 +196,26 @@ public class Repeat extends Element implements ILoop {
 		canvas.setBackground(drawColor);
 		canvas.setColor(drawColor);
 		
-		rect=_top_left.copy();
+		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
+		//rect = _top_left.copy();
+		rect = new Rect(0, 0, 
+				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
+		Point ref = this.getDrawPoint();
+		this.topLeft.x = _top_left.left - ref.x;
+		this.topLeft.y = _top_left.top - ref.y;
+
+		// END KGU#136 2016-03-01
 		
 		int footerHeight = fm.getHeight() * getText(false).count() + 2*(E_PADDING / 2);
 		
 		// draw shape
-		Rect cprect=_top_left.copy();
+		Rect cprect = _top_left.copy();
 		canvas.setColor(Color.BLACK);
-		cprect.bottom=_top_left.bottom;
-		cprect.top=cprect.bottom - footerHeight;
+		cprect.bottom = _top_left.bottom;
+		cprect.top = cprect.bottom - footerHeight;
 		canvas.drawRect(cprect);
 		
-		myrect=_top_left.copy();
+		myrect = _top_left.copy();
 		myrect.right=myrect.left+Element.E_PADDING;
 		canvas.drawRect(myrect);
 
@@ -177,23 +224,23 @@ public class Repeat extends Element implements ILoop {
 		
 		// fill shape
 		canvas.setColor(drawColor);
-		myrect.left=myrect.left+1;
-		myrect.top=myrect.top+1;
-		myrect.bottom=myrect.bottom;
-		myrect.right=myrect.right;
+		myrect.left += 1;
+		myrect.top += 1;
+		//myrect.bottom = myrect.bottom;
+		//myrect.right = myrect.right;
 		canvas.fillRect(myrect);
 		
-		myrect=_top_left.copy();
-		myrect.bottom=_top_left.bottom;
-		myrect.top=myrect.bottom - footerHeight;
-		myrect.left=myrect.left+1;
-		myrect.top=myrect.top+1;
+		myrect = _top_left.copy();
+		myrect.bottom = _top_left.bottom;
+		myrect.top = myrect.bottom - footerHeight;
+		myrect.left += 1;
+		myrect.top += 1;
 		//myrect.bottom=myrect.bottom;
 		//myrect.right=myrect.right;
 		canvas.fillRect(myrect);
 		
 		// draw comment
-		if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
+		if (Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 		{
 			// START KGU 2015-10-11: Use an inherited helper method now
 //			canvas.setBackground(E_COMMENTCOLOR);
@@ -217,27 +264,40 @@ public class Repeat extends Element implements ILoop {
 		
 		
 		// draw text
-		for(int i=0;i<getText(false).count();i++)
+		for (int i=0; i<getText(false).count(); i++)
 		{
 			String text = this.getText(false).get(i);
 			
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
-							  _top_left.left+Math.round(E_PADDING / 2),
-							myrect.top+Math.round(E_PADDING / 2)+(i+1)*fm.getHeight(),
-							text,this
+							  _top_left.left + (E_PADDING / 2),
+							myrect.top + (E_PADDING / 2) + (i+1)*fm.getHeight(),
+							text, this
 							);  	
 		}
 		
+		// START KGU#156 2016-03-11: Enh. #124
+		// write the run-time info if enabled
+		this.writeOutRuntimeInfo(canvas, myrect.right - (Element.E_PADDING / 2), myrect.top);
+		// END KGU#156 2016-03-11
+				
 		// draw children
-		myrect.bottom=myrect.top;
-		myrect.top=_top_left.top;
-		myrect.left=myrect.left+E_PADDING-2;
-		myrect.right=_top_left.right;
+		myrect.bottom = myrect.top;
+		myrect.top = _top_left.top + pt0Body.y;
+		myrect.left += pt0Body.x;
+		myrect.right = _top_left.right;
 		q.draw(_canvas,myrect);
 		
 	}
 	
+	// START KGU#122 2016-01-03: Enh. #87 - Collapsed elements may be marked with an element-specific icon
+	@Override
+	protected ImageIcon getIcon()
+	{
+		return IconLoader.ico063;
+	}
+	// END KGU#122 2016-01-03
+
 	// START KGU 2015-10-11: Merged with getElementByCoord, which had to be overridden as well for proper Comment popping
 //	public Element selectElementByCoord(int _x, int _y)
 //	{
@@ -255,12 +315,19 @@ public class Repeat extends Element implements ILoop {
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
 		Element selMe = super.getElementByCoord(_x, _y, _forSelection);
-		Element sel = q.getElementByCoord(_x, _y, _forSelection);
-		if(sel!=null) 
+		// START KGU#121 2016-01-03: A collapsed element has no visible substructure!
+		if (!this.isCollapsed())
 		{
-			if (_forSelection) selected=false;
-			selMe = sel;
+		// END KGU#121 2016-01-03
+			Element sel = q.getElementByCoord(_x, _y, _forSelection);
+			if (sel!=null) 
+			{
+				if (_forSelection) selected=false;
+				selMe = sel;
+			}
+		// START KGU#121 2016-01-03: A collapsed element has no visible substructure!
 		}
+		// END KGU#121 2016-01-03
 		
 		return selMe;
 	}
@@ -282,6 +349,9 @@ public class Repeat extends Element implements ILoop {
 		// START KGU#82 (bug #31) 2015-11-14
 		ele.breakpoint = this.breakpoint;
 		// END KGU#82 (bug #31) 2015-11-14
+		// START KGU#117 2016-03-07: Enh. #77
+		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+		// END KGU#117 2016-03-07
 		return ele;
 	}
 	
@@ -324,6 +394,48 @@ public class Repeat extends Element implements ILoop {
 	}
 	// END KGU#43 2015-11-09
 	
+	// START KGU#117 2016-03-06: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
+	 */
+	@Override
+	public void clearRuntimeData()
+	{
+		super.clearRuntimeData();
+		this.getBody().clearRuntimeData();
+	}
+	// END KGU#117 2016-03-06
+
+	// START KGU#156 2016-03-13: Enh. #124
+	protected String getRuntimeInfoString()
+	{
+		String info = this.execCount + " / ";
+		String stepInfo = null;
+		switch (E_RUNTIMEDATAPRESENTMODE)
+		{
+		case TOTALSTEPS_LIN:
+		case TOTALSTEPS_LOG:
+			stepInfo = Integer.toString(this.getExecStepCount(true));
+			if (!this.isCollapsed()) {
+				stepInfo = "(" + stepInfo + ")";
+			}
+			break;
+		default:
+			stepInfo = Integer.toString(this.getExecStepCount(this.isCollapsed()));
+		}
+		return info + stepInfo;
+	}
+	// END KGU#156 2016-03-11
+
+	// START KGU#117 2016-03-10: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
+	 */
+	public boolean isTestCovered(boolean _deeply)
+	{
+		return this.getBody().isTestCovered(_deeply);
+	}
+	// END KGU#117 2016-03-10
 	
 	// START KGU 2015-10-16
 	/* (non-Javadoc)

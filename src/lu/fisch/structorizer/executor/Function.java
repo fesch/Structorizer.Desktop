@@ -108,7 +108,12 @@ public class Function
 //               str.indexOf("(")>=0 &&
 //               countChar(str,'(')==countChar(str,')') &&
 //               str.endsWith(")");
-    	return this.isFunc;
+		// START KGU#61 2016-03-22: We must not accept names containing e.g. blanks
+		// (though dots as in method invocations should be accepted)
+    	//return this.isFunc;
+    	return this.isFunc && testIdentifier(this.name, ".");
+		
+		// END KGU#61 2016-03-22
     	// END KGU#56 2015-10-27
     }
 
@@ -165,4 +170,41 @@ public class Function
         else return null;
     }
 
+    // START KGU#61 2016-03-22: Moved hitherto from Root (was a private member method there)
+    /**
+     * Checks identifier syntax (i.e. ASCII letters, digits, underscores, and possibly dots)
+     * @param _str - the identifier candidate
+     * @param _refuseDots - whether dots like in qualified method names are allowed 
+     * @return true iff _str complies with the strict identifier syntax convention
+     */
+    public static boolean testIdentifier(String _str, String _alsoAllowedChars)
+    {
+    	_str = _str.trim().toLowerCase();
+    	boolean isIdent = !_str.isEmpty() &&
+    			('a' <= _str.charAt(0) && 'z' >= _str.charAt(0) || _str.charAt(0) == '_');
+    	if (_alsoAllowedChars == null)
+    	{
+    		_alsoAllowedChars = "";
+    	}
+    	for (int i = 1; isIdent && i < _str.length(); i++)
+    	{
+    		char currChar = _str.charAt(i);
+    		if (!(
+    				('a' <= currChar && currChar <= 'z')
+    				||
+    				('0' <= currChar && currChar <= '9')
+    				||
+    				(currChar == '_')
+    				||
+    				_alsoAllowedChars.indexOf(currChar) >= 0
+    				))
+    			// END KGU 2015-11-25
+    		{
+    			isIdent = false;
+    		}
+    	}
+    	return isIdent;
+    }
+    // END KGU#61 2016-03-22
+    
 }

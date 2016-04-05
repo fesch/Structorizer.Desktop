@@ -38,6 +38,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2015.12.18      Formal adaptation to Enh. #23 (KGU#78) related to break mechanism
  *      Kay Gürtzig     2015.12.21      Formal adaptation to Bugfix #41/#68/#69 (KGU#93)
  *      Kay Gürtzig     2015.12.31      Bugfix #82 (KGU#118) Inconsistent FOR loops used to obstruct saving
+ *      Kay Gürtzig     2016.01.08      Bugfix #99 (KGU#134) mends mis-spelling due to fix #82
+ *      Kay Gürtzig     2016.03.21-22   Enh. #84 (KGU#61) mechanisms to save FOR-IN loops adequately
  *
  ******************************************************************************************************
  *
@@ -47,11 +49,15 @@ package lu.fisch.structorizer.generators;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.parsers.D7Parser;
 
 public class XmlGenerator extends Generator {
 
-	// START KG#118 2015-12-31: Support for bugfix #82
-	private static String[] forLoopAttributes = {"counterVar", "StartValue", "endValue", "stepConst"};
+	// START KGU#118 2015-12-31: Support for bugfix #82
+	// START KGU#134 2016-01-08: Bugfix #99: mis-spelled attribute name
+	//private static String[] forLoopAttributes = {"counterVar", "StartValue", "endValue", "stepConst"};
+	private static String[] forLoopAttributes = {"counterVar", "startValue", "endValue", "stepConst"};
+	// END KGU#134 2016-01-08
 	// END KGU#118 2015-12-31
 	
 	/************ Fields ***********************/
@@ -95,7 +101,7 @@ public class XmlGenerator extends Generator {
 	 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
 	 */
 	@Override
-	protected boolean supportsSimpleBreak()
+	protected boolean breakMatchesCase()
 	{
 		return true;
 	}
@@ -226,7 +232,12 @@ public class XmlGenerator extends Generator {
     			specificAttributes +
     			// END KGU#3 2015-10-28
     			// START KGU#3 2015-11-08: The reliability of the structured fields must be stored, too.
-    			"\" reliable=\"" + BString.encodeToHtml(_for.checkConsistency() ? "true" : "false") +
+    			// START KGU#61 2016-03-21: Enh. #84 - Now the style is to be stored instead
+    			//"\" reliable=\"" + BString.encodeToHtml(_for.checkConsistency() ? "true" : "false") +
+    			"\" style=\"" + BString.encodeToHtml(_for.style.toString()) +
+    			// Instead of redundantly storing the value list twice, we just save the ForIn separator...
+    			(_for.isForInLoop() ? ("\" insep=\"" + BString.encodeToHtml(D7Parser.postForIn)) : "") +
+    			// END KGU#61 2016-03-21
     			// END KGU#3 2015-11-08
     			"\" color=\"" + _for.getHexColor()+"\">");
     	// END KGU#118 2015-12-31
@@ -302,10 +313,8 @@ public class XmlGenerator extends Generator {
     @Override
 	public String generateCode(Root _root, String _indent)
 	{
-		String pr = "program";
-		if(_root.isProgram==false) {pr="sub";}
-		String ni = "nice";
-		if(_root.isNice==false) {ni="abbr";}
+		String pr = _root.isProgram ? "program" : "sub";
+		String ni = _root.isNice ? "nice" : "abbr";
 
 		code.add("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		//code.add("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");

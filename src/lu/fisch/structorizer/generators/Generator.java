@@ -36,17 +36,21 @@ package lu.fisch.structorizer.generators;
  *      Bob Fisch       2008.04.12		Plugin Interface
  *      Kay Gürtzig     2014.11.16		comment generation revised (see comment below)
  *      Kay Gürtzig     2015.10.18		File name proposal in exportCode(Root, File, Frame) delegated to Root
- *      Kay Gürtzig     2015.11.01		transform methods reorganised (KGU#18/KGU23) using subclassing
- *      Kay Gürtzig     2015.11.30		General preprocessing for generateCode(Root, String) (KGU#47)
+ *      Kay Gürtzig     2015.11.01		transform methods re-organised (KGU#18/KGU23) using subclassing
+ *      Kay Gürtzig     2015.11.30		General pre-processing for generateCode(Root, String) (KGU#47)
  *      Bob Fisch       2015.12.10		Bugfix #51: when input identifier is alone, it was not converted
  *      Kay Gürtzig     2015.12.18		Enh #66, #67: New export options
  *      Kay Gürtzig     2015-12-21      Bugfix #41/#68/#69 (= KGU#93) avoid padding and string literal impact
  *      Kay Gürtzig     2015.12.22		Slight performance improvement in transform()
+ *      Kay Gürtzig     2016-01-16      KGU#141: New generic method lValueToTypeNameIndex introduced for Issue #112
+ *      Kay Gürtzig     2016-03-22      KGU#61/KGU#129: varNames now basic field for all subclasses
+ *      Kay Gürtzig     2016-03-31      Enh. #144 - content conversion may be switched off
+ *      Kay Gürtzig     2016-04-01      Enh. #110 - export file filter now pre-selected
  *
  ******************************************************************************************************
  *
  *      Comment:		
- *      2015.11.30 - Decomposition of generateRoot() and divers preprocessing provided for subclasses
+ *      2015.11.30 - Decomposition of generateRoot() and diverse pre-processing provided for subclasses
  *      - method mapJumps fills hashTable jumpTable mapping (Jump and Loop elements to connecting codes)
  *      - parameter names and types as well as functio name and type are preprocessed
  *      - result mechanisms are also analysed
@@ -61,6 +65,7 @@ import java.awt.Frame;
 import java.io.*;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Vector;
 import java.util.regex.Matcher;
 
 import javax.swing.*;
@@ -69,6 +74,7 @@ import com.stevesoft.pat.Regex;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.ExportOptionDialoge;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.parsers.D7Parser;
@@ -89,9 +95,20 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected String labelBaseName = "StructorizerLabel_";
 	// maps loops and Jump elements to label counts (neg. number means illegal jump target)
 	protected Hashtable<Element, Integer> jumpTable = new Hashtable<Element, Integer>();
-
 	// END KGU#74 2015-11-29
+	// START KGU#162 2016-03-31: Enh. #144
+	protected boolean suppressTransformation = false;
+	// END KGU#162 2016-03-31
 
+	// START KGU#129/KGU#61 2016-03-22: Bugfix #96 / Enh. #84 Now important for most generators
+	// Some generators must prefix variables, for some generators it's important for FOR-IN loops
+	protected StringList varNames = new StringList();
+	// END KGU#129/KGU#61 2015-01-22
+	// START KGU  2016-03-29: For keyword detection improvement
+	private Vector<StringList> splitKeywords = new Vector<StringList>();
+	// END KGU 2016-03-29
+
+	
 	/************ Abstract Methods *************/
 	protected abstract String getDialogTitle();
 	protected abstract String getFileDescription();
@@ -131,7 +148,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * 
 	 * @return true if and only if there is such an instruction
 	 */
-	protected abstract boolean supportsSimpleBreak();
+	protected abstract boolean breakMatchesCase();
 	// END KGU#78 2015-12-18
 	
 	/************ Code Generation **************/
@@ -246,8 +263,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * 1. Eliminates parser preference keywords listed below and unifies all operators
 	 *    @see lu.fisch.Structorizer.elements.Element#unifyOperators(java.lang.String)
 	 *         preAlt, preCase, preWhile, preRepeat,
-	 *         postAlt, postCase, postWhile, postRepeat
-	 * 2. Replaces assignments by a call of overridable method transformAssignment(String)
+	 *         postAlt, postCase, postWhile, postRepeat;
+	 * 2. Tokenizes the result, processes the tokens by an overridable method
+	 *    transformTokens(StringList), and re-concatenates the result;
 	 * 3. Transforms Input and Output lines according to regular replacement expressions defined
 	 *    by getInputReplacer() and getOutPutReplacer, respectively. This is done by overridable
 	 *    methods transformInput(String) and transformOutput(), respectively.
@@ -264,8 +282,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * Overridable general text transformation routine, performing the following steps:
 	 * 1. Eliminates parser preference keywords listed below and unifies all operators
 	 *         preAlt, preCase, preWhile, preRepeat,
-	 *         postAlt, postCase, postWhile, postRepeat
-	 * 2. Replaces assignments by a call of overridable method transformAssignment(String)
+	 *         postAlt, postCase, postWhile, postRepeat;
+	 * 2. Tokenizes the result, processes the tokens by an overridable method
+	 *    transformTokens(StringList), and re-concatenates the result;
 	 * 3. Transforms Input and Output lines if _doInput and/or _doOutput are true, respectively
 	 *    This is only done if _input starts with one of the configured Input and Output keywords 
 	 * @see lu.fisch.Structorizer.elements.Element#unifyOperators(java.lang.String)
@@ -283,8 +302,57 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 //		// assignment transformation
 //		_input = transformAssignment(_input);
 		
-		StringList tokens = Element.transformIntermediate(_input);
-		String transformed = transformTokens(tokens);
+		// START KGU#162 2016-03-31: Enh. #144
+		//StringList tokens = Element.transformIntermediate(_input);
+		StringList tokens = null;
+		if (this.suppressTransformation)
+		{
+			// Suppress all syntax changes, just split to tokens.
+			tokens = Element.splitLexically(_input, true);
+			Element.cutOutRedundantMarkers(tokens);
+		}
+		else
+		{
+			// convert to tokens in an common intermediate language
+			tokens = Element.transformIntermediate(_input);
+		}
+		// END KGU#162 2016-03-31
+		
+		// START KGU 2016-03-29: Unify all parser keywords
+		// This is somewhat redundant because most of the keywords have already been cut out
+		// but it's still needed for the meaningful ones.
+		String[] keywords = D7Parser.getAllProperties();
+		for (int kw = 0; kw < keywords.length; kw++)
+		{    				
+			if (keywords[kw].trim().length() > 0)
+			{
+				StringList keyTokens = this.splitKeywords.elementAt(kw);
+				int keyLength = keyTokens.count();
+				int pos = -1;
+				while ((pos = tokens.indexOf(keyTokens, pos + 1, !D7Parser.ignoreCase)) >= 0)
+				{
+					// Replace the first token of the keyword by the entire keyword
+					tokens.set(pos, keywords[kw]);
+					// Remove the remaining tokens of the split keyword
+					for (int j=1; j < keyLength; j++)
+					{
+						tokens.delete(pos+1);
+					}
+				}
+			}
+		}
+		// END KGU 2016-03-29
+		// START KGU#162 2016-03-31: Enh. #144
+		//String transformed = transformTokens(tokens);
+		String transformed = "";
+		if (this.suppressTransformation) {
+			// Just re-concatenate the tokens if no conversion is wanted
+			transformed = tokens.concatenate();
+		}
+		else {
+			transformed = transformTokens(tokens);
+		}
+		// END KGU#162 2016-03-31
 		// END KGU#93 2015-12-21
 
 		if (_doInputOutput)
@@ -472,7 +540,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				// START KGU#78 2015-12-18: Enh. #23 specific handling only required if there is a break instruction
 				//boolean simpleBreak = levelsUp == 1;	// For special handling of Case context
 				// Simple break instructions usually require special handling of Case context
-				boolean simpleBreak = levelsUp == 1 && this.supportsSimpleBreak();
+				boolean simpleBreak = levelsUp == 1 && this.breakMatchesCase();
 				// END KGU#78 2015-12-18
 				Element parent = elem.parent;
 				while (parent != null && !(parent instanceof Parallel) && levelsUp > 0)
@@ -501,7 +569,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				}
 				if (levelsUp > 0)
 				{
-					// Target couldn't be found, so mark the jump with with an error marker
+					// Target couldn't be found, so mark the jump with an error marker
 					this.jumpTable.put(elem, -1);
 				}
 				else {
@@ -562,7 +630,74 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	
 	
-
+	// START KGU#109/KGU#141 2016-01-16: New for ease of fixing #61 and #112
+	/**
+	 * Decomposes the left-hand side of an assignment passed in as _lval
+	 * into three strings:
+	 * [0] - type specification (a sequence of tokens, may be empty)
+	 * [1] - variable name (a single token supposed to be the identifier)
+	 * [2] - index expression (if _lval is an indexed variable, else empty)
+	 * @param _lval a string found on the left-hand side of an assignment operator
+	 * @return String array of [0] type, [1] name, [2] index; all but [1] may be empty
+	 */
+	protected String[] lValueToTypeNameIndex(String _lval)
+	{
+		// Avoid too much nonsense on indexed variables
+    	Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
+    	String name = r.replaceAll(_lval);
+		String type = "";
+		// Check Pascal and BASIC style of type specifications
+		int subPos = name.indexOf(":");
+		if (subPos > 0)
+		{
+			type = name.substring(subPos + 1).trim() + " ";
+			name = name.substring(0, subPos).trim();
+		}
+		else if ((subPos = name.indexOf(" as ")) > 0)
+		{
+			type = name.substring(subPos + " as ".length()).trim() + " ";
+			name = name.substring(0, subPos).trim();
+		}
+		// Now split the assumed name to check C-style type specifications
+		StringList nameParts = StringList.explode(name, " ");
+		if (type.isEmpty() || nameParts.count() > 1)
+		{
+			type = nameParts.concatenate(" ", 0, nameParts.count()-1).trim() + " ";
+		}
+		name = nameParts.get(nameParts.count()-1);
+		//r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
+		String index = "";
+		
+		if ((subPos = _lval.indexOf('[')) >= 0 && _lval.indexOf(']', subPos+1) >= 0)
+		{
+			index = _lval.replaceAll("(.*?)[\\[](.*?)[\\]](.*?)","$2").trim();
+		}
+		String[] typeNameIndex = {type, name, index};
+		return typeNameIndex;
+	}
+	// END KGU#109/KGU#141 2016-01-16
+	
+	// START KGU#61 2016-03-23: Enh. #84 (FOR-IN loop infrastructure)
+	protected StringList extractForInListItems(For _for)
+	{
+		String valueList = _for.getValueList();
+		StringList items = null;
+		boolean isComplexObject = (new Function(valueList)).isFunction() || this.varNames.contains(valueList);
+		if (valueList.startsWith("{") && valueList.endsWith("}"))
+		{
+			items = Element.splitExpressionList(valueList.substring(1, valueList.length()-1), ",");
+		}
+		else if (valueList.contains(","))
+		{
+			items = Element.splitExpressionList(valueList, ",");
+		}
+		else if (!isComplexObject && valueList.contains(" "))
+		{
+			items = Element.splitExpressionList(valueList, " ");
+		}
+		return items;
+	}
+	// END KGU#61 2016-03-23
  	
     protected void generateCode(Instruction _inst, String _indent)
 	{
@@ -699,7 +834,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		StringList paramTypes = new StringList();
 		_root.collectParameters(paramNames, paramTypes);
 		String resultType = _root.getResultType();
-		StringList varNames = _root.getVarNames(_root, false, true);
+		// START KGU#61/KGU#129 2016-03-22: Now common field for all generator classes
+		//StringList varNames = _root.getVarNames(_root, false, true);	// FIXME: FOR loop vars are missing
+		this.varNames = _root.getVarNames(_root, false, true);	// FIXME: FOR loop vars are missing
+		// END KGU#61/KGU#129
 		this.isResultSet = varNames.contains("result", false);
 		this.isFunctionNameSet = varNames.contains(procName);
 		
@@ -772,32 +910,36 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	
 	public void exportCode(Root _root, File _currentDirectory, Frame frame)
 	{
-                try
-                {
-                    Ini ini = Ini.getInstance();
-                    ini.load();
-                    eod = new ExportOptionDialoge(frame);	// FIXME (KGU) What do we need this hidden dialog for?
-                    if(ini.getProperty("genExportComments","0").equals("true"))
-                        eod.commentsCheckBox.setSelected(true);
-                    else 
-                        eod.commentsCheckBox.setSelected(false);
-                    // START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
-                    eod.bracesCheckBox.setSelected(ini.getProperty("genExportBraces", "0").equals("true"));
-                    eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "0").equals("true"));
-                    // END KGU#16/KGU#113 2015-12-18
-                } 
-                catch (FileNotFoundException ex)
-                {
-                    ex.printStackTrace();
-                } 
-                catch (IOException ex)
-                {
-                    ex.printStackTrace();
-                }
-            
-                JFileChooser dlgSave = new JFileChooser();
+		try
+		{
+			Ini ini = Ini.getInstance();
+			ini.load();
+			eod = new ExportOptionDialoge(frame);	// FIXME (KGU) What do we need this hidden dialog for?
+			if(ini.getProperty("genExportComments","0").equals("true"))
+				eod.commentsCheckBox.setSelected(true);
+			else 
+				eod.commentsCheckBox.setSelected(false);
+			// START KGU#16/KGU#113 2015-12-18: Enh. #66, #67
+			eod.bracesCheckBox.setSelected(ini.getProperty("genExportBraces", "0").equals("true"));
+			eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "0").equals("true"));
+			// END KGU#16/KGU#113 2015-12-18
+			// START KGU#162 2016-03-31: Enh. #144
+			eod.noConversionCheckBox.setSelected(ini.getProperty("genExportnoConversion", "0").equals("true"));
+			this.suppressTransformation = eod.noConversionCheckBox.isSelected(); 
+			// END KGU#16/KGU#113 2015-12-18
+		} 
+		catch (FileNotFoundException ex)
+		{
+			ex.printStackTrace();
+		} 
+		catch (IOException ex)
+		{
+			ex.printStackTrace();
+		}
+
+		JFileChooser dlgSave = new JFileChooser();
 		dlgSave.setDialogTitle(getDialogTitle());
-		
+
 		// set directory
 		if(_root.getFile()!=null)
 		{
@@ -807,20 +949,23 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		{
 			dlgSave.setCurrentDirectory(_currentDirectory);
 		}
-		
+
 		// propose name
 		// START KGU 2015-10-18: Root has got a mechanism for this!
-//		String nsdName = _root.getText().get(0);
-//		nsdName.replace(':', '_');
-//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
-//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
+		//		String nsdName = _root.getText().get(0);
+		//		nsdName.replace(':', '_');
+		//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
+		//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
 		String nsdName = _root.getMethodName();
 		// END KGU 2015-10-18
 		dlgSave.setSelectedFile(new File(nsdName));
-		
+
+		// START KGU 2016-04-01: Enh. #110 - select the provided filter
 		dlgSave.addChoosableFileFilter((javax.swing.filechooser.FileFilter) this);
+		dlgSave.setFileFilter((javax.swing.filechooser.FileFilter) this);
+		// END KGU 2016-04-01
 		int result = dlgSave.showSaveDialog(frame);
-		
+
 		/***** file_exists check here!
 		 if(file.exists())
 		 {
@@ -836,9 +981,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		 else
 		 */
 		String filename = new String();
-		
+
 		boolean saveIt = true;
-                
+
 		if (result == JFileChooser.APPROVE_OPTION) 
 		{
 			filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
@@ -851,46 +996,55 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		{
 			saveIt = false;
 		}
-		
+
 		//System.out.println(filename);
-		
+
 		if (saveIt == true) 
 		{
 			File file = new File(filename);
-                        boolean writeDown = true;
+			boolean writeDown = true;
 
-                        if(file.exists())
+			if(file.exists())
 			{
-                            int response = JOptionPane.showConfirmDialog (null,
-                                            "Overwrite existing file?","Confirm Overwrite",
-                                            JOptionPane.YES_NO_OPTION,
-                                            JOptionPane.QUESTION_MESSAGE);
-                            if (response == JOptionPane.NO_OPTION)
-                            {
-				writeDown=false;
-                            }
-                        }
-                        if(writeDown==true)
-                        {
+				int response = JOptionPane.showConfirmDialog (null,
+						"Overwrite existing file?","Confirm Overwrite",
+								JOptionPane.YES_NO_OPTION,
+								JOptionPane.QUESTION_MESSAGE);
+				if (response == JOptionPane.NO_OPTION)
+				{
+					writeDown=false;
+				}
+			}
+			if(writeDown==true)
+			{
 
-                            try
-                            {
-                            	// START KGU 2015-10-18: This didn't make much sense: Why first insert characters that will be replaced afterwards?
-                            	// (And with possibly any such characters that had not been there for indentation!)
-                                //    String code = BString.replace(generateCode(_root,"\t"),"\t",getIndent());
-                            	String code = generateCode(_root, "");
-                            	// END KGU 2015-10-18
+				// START KGU 2016-03-29: Pre-processed match patterns for better identification of complicated keywords
+		    	this.splitKeywords.clear();
+		    	String[] keywords = D7Parser.getAllProperties();
+		    	for (int k = 0; k < keywords.length; k++)
+		    	{
+		    		this.splitKeywords.add(Element.splitLexically(keywords[k], false));
+		    	}
+				// END KGU 2016-03-29
 
-                                    BTextfile outp = new BTextfile(filename);
-                                    outp.rewrite();
-                                    outp.write(code);
-                                    outp.close();
-                            }
-                            catch(Exception e)
-                            {
-                                    JOptionPane.showMessageDialog(null,"Error while saving the file!\n" + e.getMessage(),"Error", JOptionPane.ERROR_MESSAGE);
-                            }
-                        }
+		    	try
+				{
+					// START KGU 2015-10-18: This didn't make much sense: Why first insert characters that will be replaced afterwards?
+					// (And with possibly any such characters that had not been there for indentation!)
+					//    String code = BString.replace(generateCode(_root,"\t"),"\t",getIndent());
+					String code = generateCode(_root, "");
+					// END KGU 2015-10-18
+
+					BTextfile outp = new BTextfile(filename);
+					outp.rewrite();
+					outp.write(code);
+					outp.close();
+				}
+				catch(Exception e)
+				{
+					JOptionPane.showMessageDialog(null,"Error while saving the file!\n" + e.getMessage(),"Error", JOptionPane.ERROR_MESSAGE);
+				}
+			}
 		}
 	} 
 	
@@ -898,13 +1052,23 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected boolean isOK(String _filename)
 	{
 		boolean res = false;
-		if(getExtension(_filename)!=null)
+		// START KGU 2016-01-16: Didn't work for mixed-case extensions like ".Mod" - and it was inefficient
+//		if(getExtension(_filename)!=null)
+//		{
+//			for(int i =0; i<getFileExtensions().length; i++)
+//			{
+//				res = res || (getExtension(_filename).equals(getFileExtensions()[i]));
+//			}
+//		}
+		String ext = getExtension(_filename); 
+		if (ext != null)
 		{
-			for(int i =0; i<getFileExtensions().length; i++)
+			for (int i =0; i<getFileExtensions().length; i++)
 			{
-				res = res || (getExtension(_filename).equals(getFileExtensions()[i]));
+				res = res || (ext.equalsIgnoreCase(getFileExtensions()[i]));
 			}
 		}
+		// END KGU 2016-01-16
 		return res;
 	}
 	

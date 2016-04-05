@@ -45,11 +45,60 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.12.23      Bugfix #74 (KGU#115): Pascal operators accidently disabled
  *                                      Enh. #75 (KGU#116): Highlighting of jump keywords (orange)
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016.01.03/04   Enh. #87 for collapsing/expanding (KGU#122/KGU#123)
+ *      Kay Gürtzig     2016.01.12      Bugfix #105: flaw in string literal tokenization (KGU#139)
+ *      Kay Gürtzig     2016.01.12      Bugfix #104: transform caused index errors
+ *      Kay Gürtzig     2016.01.14      Enh. #84: Added "{" and "}" to the token separator list (KGU#100)
+ *      Kay Gürtzig     2016.01.15      Enh. #61,#107: Highlighting for "as" added (KGU#109)
+ *      Kay Gürtzig     2016.01.16      Changes having got lost on a Nov. 2014 merge re-inserted
+ *      Kay Gürtzig     2016.01.22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#144).
+ *      Kay Gürtzig     2016.03.02      Bugfix #97: steady selection on dragging (see comment, KGU#136),
+ *                                      Element self-description improved (method toString(), KGU#152)
+ *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Fields for test coverage tracking added
+ *      Kay Gürtzig     2016.03.10      Enh. #124 (KGU#156): Counter fields for histographic tracking added
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Runtime data collection accomplished
+ *      Kay Gürtzig     2016.03.26      KGU#165: New option D7Parser.ignoreCase introduced
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      
+ *      2016-03-06 / 2016-03-12 Enhancements #77, #124 (KGU#117/KGU#156)
+ *      - According to an ER by [elemhsb], first a mechanism optionally to visualise code coverage (for
+ *        white-box test comleteness) was implemented. A green background colour was proposed and used
+ *        to highlight covered Element. It soon became clear that with respect to subroutines a dis-
+ *        tinction among loose (shallow) and strict (deep) coverage was necessary, particularly when
+ *        recursion comes in. So the coverage tracking could be switched between shallow mode (where
+ *        subroutines were automatically regarded as proven to have been covered previously, such the
+ *        first CALL to a routine it was automatically marked as covered as well) and deep mode where
+ *        a CALL was only marked after the subroutine (regarded as brand-new and never analyzed) had
+ *        fully been covered at runtime.
+ *      - When this obviously worked, I wanted to get more out of the new mechanism. Instead of
+ *        deciding first which coverage tracking to do and having to do another run to see the effect
+ *        of the complementary option, always both kinds of analysis were done at once, and the user
+ *        could arbitrarily switch between the two possible coverage results.
+ *      - And then I had a really great idea: Why not add some more runtime data collection, once data
+ *        are collected? And so I added an execution counter for every very element, such that after
+ *        a run one might easily see, how often a certain operation was executed. And a kind of
+ *        histographic analysis seemed also sensible, i.e. to show how the load is distributed over
+ *        the elements (particularly the structured ones) and how many instruction steps were needed
+ *        in total to run the algorithm for certain data. This is practically an empirical abstract
+ *        time estimation. Both count numbers (execution counter / instruction load) are now written
+ *        to the upper right corner of any element, and additionally a scaled colouring from deep
+ *        blue to hot red is used to visualize the hot spots and the lonesome places.
+ *      2016-02-25 / 2016-03-02 Bugfix #97 (KGU#136)
+ *      - Methods prepareDraw() and draw() used the same field rect for temporary calculations but in
+ *        a slightly different way: draw() left a bounding rec related to the Root coordinates whereas
+ *        prepareDraw() always produced a (0,0)-bound rectangle i. e. with (0,0) as upper left corner.
+ *      - getElementByCoord(), however compared the cursor coordinates with rect expecting it to contain
+ *        the real drawing coordinates
+ *      - getElementByCoord() was not ensured to be called after a draw() invocation but could follow a
+ *        prepareDraw() call in which case the coordinate comparison led to wrong results
+ *      - So a new field rect0 was introduced for prepareDraw() - in combination with field isRectUpToDate
+ *        it even allows to avoid unnecessary re-calculation.
+ *      - Field rect was also converted to a (0,0)-bound and hence position-independent bounds rectangle
+ *        (in contrast to rect0 representing actual context-sensitive drawing extension (important for
+ *        selection).
  *      2015.12.01 (KGU#91/KGU#92)
  *      - Methods setText() were inconsistent and caused nasty effects including data losses (bug #39).
  *      - Operator unification enhanced (issue #41)
@@ -66,30 +115,27 @@ package lu.fisch.structorizer.elements;
  *        always been extremely annoying that for the investigation of some issues near the end of the diagram
  *        either the entire execution had to be started in step more or you had to be utterly quick to pause
  *        in the right moment. Now breakpoints allow to catch the execution wherever necessary.
- *      2014.10.18 / 2014.11.11
- *      - Additions for highlighting of logical operators (both C and Pascal style) in methods
- *        writeOutVariables() and getWidthOutVariables(),
- *      - minor code revision respecting 2- and 3-character operator symbols
  *      2015.10.09
  *      - In E_SHOWCOMMENTS mode, substructures had been eclipsed by the top-level elements popping their
  *        comments. This was due to an incomplete subclassing of method getElementByCoord (in contrast
  *        to the nearly identical method selectElementByCoord), both methods were merged by means of a
  *        discriminating additional parameter to identifyElementByCoord(_x, _y, _forSelection)
- *      20015.10.11 / 2015.10.13
- *      - New field breakpoint and specific drawing extension for setting and drawing breakpoints
- *      - The new breakpoint mechanism made clear that the execution status had to be logically separated
- *        from selection status, which required a new field and an additional drawing mechanism 
+ *      2014.10.18 / 2014.11.11
+ *      - Additions for highlighting of logical operators (both C and Pascal style) in methods
+ *        writeOutVariables() and getWidthOutVariables(),
+ *      - minor code revision respecting 2- and 3-character operator symbols
  *
  ******************************************************************************************************///
 
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.FontMetrics;
 
 import lu.fisch.utils.*;
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.parsers.*;
-import lu.fisch.structorizer.generators.Generator;
+import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.io.*;
 
 import com.stevesoft.pat.*;  //http://www.javaregex.com/
@@ -97,15 +143,17 @@ import com.stevesoft.pat.*;  //http://www.javaregex.com/
 import java.awt.Point;
 import java.util.Stack;
 
+import javax.swing.ImageIcon;
+
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.23-08";
+	public static String E_VERSION = "3.24-05";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
 	"\n"+
 	"Having also put his fingers into the code\n"+
-        " - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
+	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"\n"+
 	"Export classes written and maintained by\n"+
 	" - Oberon: Klaus-Peter Reimers <k_p_r@freenet.de>\n"+
@@ -115,7 +163,9 @@ public abstract class Element {
 	" - Java: Gunter Schillebeeckx <gunter.schillebeeckx@tsmmechelen.be>\n"+
 	" - C: Gunter Schillebeeckx <gunter.schillebeeckx@tsmmechelen.be>\n"+
 	" - C#: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
+	" - C++: Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	" - PHP: Rolf Schmidt <rolf.frogs@t-online.de>\n"+
+	" - Python: Daniel Spittank <kontakt@daniel.spittank.net>\n"+
 	"\n"+
 	"License setup and checking done by\n"+
 	" - Marcus Radisch <radischm@googlemail.com>\n"+
@@ -125,17 +175,19 @@ public abstract class Element {
 	" - David Morais <narutodc@hotmail.com>\n"+
 	" - Praveen Kumar <praveen_sonal@yahoo.com>\n"+
 	" - Jan Ollmann <bkgmjo@gmx.net>\n"+
+	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"\n"+
 	"Translations realised by\n"+
 	" - NL: Jerone <jeronevw@hotmail.com>\n"+
 	" - DE: Klaus-Peter Reimers <k_p_r@freenet.de>\n"+
 	" - LU: Laurent Zender <laurent.zender@hotmail.de>\n"+
 	" - ES: Andres Cabrera <andrescabrera20@gmail.com>\n"+
-        " - PT/BR: Theldo Cruz <cruz@pucminas.br>\n"+
-        " - IT: Andrea Maiani <andreamaiani@gmail.com>\n"+
-        " - CN: Wang Lei <wanglei@hollysys.com>\n"+
-        " - CZ: Vladimír Vaščák <vascak@spszl.cz>\n"+
-        " - RU: Юра Лебедев <elita.alegator@gmail.com>\n"+
+	" - PT/BR: Theldo Cruz <cruz@pucminas.br>\n"+
+	" - IT: Andrea Maiani <andreamaiani@gmail.com>\n"+
+	" - CHS: Wang Lei <wanglei@hollysys.com>\n"+
+	" - CHT: Joe Chem <hueyan_chen@yahoo.com.tw>\n"+
+	" - CZ: Vladimír Vaščák <vascak@spszl.cz>\n"+
+	" - RU: Юра Лебедев <elita.alegator@gmail.com>\n"+
 	"\n"+
 	"Different good ideas and improvements provided by\n"+
 	" - Serge Marelli <serge.marelli@education.lu>\n"+
@@ -150,7 +202,8 @@ public abstract class Element {
 	" - Sascha Meyer <harlequin2@gmx.de>\n"+
 	" - Andreas Jenet <ajenet@gmx.de>\n"+
 	" - Jan Peter Klippel <structorizer@xtux.org>\n"+
-	                
+	" - David Tremain <DTremain@omnisource.com>\n"+
+	
 	"\n"+
 	"File dropper class by\n"+
 	" - Robert W. Harder <robertharder@mac.com>\n"+
@@ -177,22 +230,36 @@ public abstract class Element {
 
 	// some static constants
 	protected static int E_PADDING = 20;
-	static int E_INDENT = 2;
-	public static Color E_DRAWCOLOR = Color.YELLOW;
+	public static int E_INDENT = 2;
+	public static Color E_DRAWCOLOR = Color.YELLOW;	// Actually, the background colour for selected elements
 	public static Color E_COLLAPSEDCOLOR = Color.LIGHT_GRAY;
 	// START KGU#41 2015-10-13: Executing status now independent from selection
 	public static Color E_RUNNINGCOLOR = Color.ORANGE;		// used for Elements currently (to be) executed 
 	// END KGU#41 2015-10-13
 	public static Color E_WAITCOLOR = new Color(255,255,210);	// used for Elements with pending execution
-	static Color E_COMMENTCOLOR = Color.LIGHT_GRAY;
+	public static Color E_COMMENTCOLOR = Color.LIGHT_GRAY;
 	// START KGU#43 2015-10-11: New fix color for breakpoint marking
-	static Color E_BREAKPOINTCOLOR = Color.RED;				// Colour of the breakpoint bar at element top
+	public static Color E_BREAKPOINTCOLOR = Color.RED;			// Colour of the breakpoint bar at element top
 	// END KGU#43 2015-10-11
-	public static boolean E_VARHIGHLIGHT = false;
-	public static boolean E_SHOWCOMMENTS = true;
-	public static boolean E_TOGGLETC = false;
-	public static boolean E_DIN = false;
-	public static boolean E_ANALYSER = true;
+	// START KGU#117 2016-03-06: Test coverage colour and mode for Enh. #77
+	public static Color E_TESTCOVEREDCOLOR = Color.GREEN;
+	public static boolean E_COLLECTRUNTIMEDATA = false;
+	public static RuntimeDataPresentMode E_RUNTIMEDATAPRESENTMODE = RuntimeDataPresentMode.NONE;	// FIXME: To be replaced by an enumeration type
+	// END KGU#117 2016-03-06
+	// START KGU#156 2016-03-10; Enh. #124
+	protected static int maxExecCount = 0;			// Maximum number of executions of any element while runEventTracking has been on
+	protected static int maxExecStepCount = 0;		// Maximum number of instructions carried out directly per element
+	protected static int maxExecTotalCount = 0;		// Maximum combined number of directly and indirectly performed instructions
+	// END KGU156 2016-03-10
+
+	public static boolean E_VARHIGHLIGHT = false;	// Highlight variables, operators, string literals, and certain keywords? 
+	public static boolean E_SHOWCOMMENTS = true;	// Enable comment bars and comment popups? 
+	public static boolean E_TOGGLETC = false;		// Swap text and comment on displaying?
+	public static boolean E_DIN = false;			// Show FOR loops according to DIN 66261?
+	public static boolean E_ANALYSER = true;		// Analyser enabled?
+	// START KGU#123 2016-01-04: New toggle for Enh. #87
+	public static boolean E_WHEELCOLLAPSE = false;	// Is collapsing by mouse wheel rotation enabled?
+	// END KGU#123 2016-01-04
 
 	// some colors
 	public static Color color0 = Color.decode("0xFFFFFF");
@@ -233,6 +300,18 @@ public abstract class Element {
 	public boolean executed = false;	// Is set while being executed
 	// END KGU#41 2015-10-13
 	public boolean waited = false;		// Is set while a substructure Element is under execution
+	// START KGU#117 2016-03-06: Enh. #77 - for test coverage mode
+	public boolean simplyCovered = false;	// Flag indicates shallow test coverage
+	public boolean deeplyCovered = false;	// Flag indicates full test coverage
+	// END KGU#117 2016-03-06
+	// START KGU#156 2016-03-10; Enh. #124
+	protected int execCount = 0;		// Number of times this was executed while runEventTracking has been on
+	protected int execStepCount = 0;	// Number of instructions carried out directly by this element
+	protected int execSubCount;			// Number of instructions carried out by substructures of this element
+	// END KGU#156 2016-03-11
+
+	// END KGU156 2016-03-10
+	
 	private Color color = Color.WHITE;
 
 	private boolean collapsed = false;
@@ -242,10 +321,31 @@ public abstract class Element {
 	// END KGU 2015-10-11
 
 	// used for drawing
-	public Rect rect = new Rect();
+	// START KGU#136 2016-02-25: Bugfix #97 - New separate 0-based Rect for prepareDraw()
+	protected Rect rect = new Rect();			// bounds aligned to fit in the context, no longer public
+	protected Rect rect0 = new Rect();			// minimum bounds for stand-alone representation
+	protected Point topLeft = new Point(0, 0);	// upper left corner coordinate offset wrt drawPoint
+	// END KGU#136 2016-03-01
 	// START KGU#64 2015-11-03: Is to improve drawing performance
 	protected boolean isRectUpToDate = false;		// Will be set and used by prepareDraw() - to be reset on changes
 	private static StringList specialSigns = null;	// Strings to be highlighted in the text (lazy initialisation)
+
+
+	public Element()
+	{
+	}
+
+	public Element(String _string)
+	{
+		setText(_string);
+	}
+
+	public Element(StringList _strings)
+	{
+		setText(_strings);
+	}
+
+	
 	/**
 	 * Resets my cached drawing info
 	 */
@@ -272,40 +372,85 @@ public abstract class Element {
 	// END KGU#64 2015-11-03
 
 	// abstract things
+	/**
+	 * Recursively computes the drawing extensions of the element and stores
+	 * them in the 0-based rect0 attribute, which is also returned
+	 * @param _canvas - the drawing canvas for which the drawing is to be prepared
+	 * @return the origin-based extension record.
+	 */
 	public abstract Rect prepareDraw(Canvas _canvas);
+	/**
+	 * Actually draws this element within the given canvas, using _top_left
+	 * for the placement of the upper left corner. Uses attribute rect0 as
+	 * prepared by prepareDraw() to determine the expected extensions and
+	 * stores the the actually drawn bounds in attribute rect.
+	 * @param _canvas - the drawing canvas where the drawing is to be done in 
+	 * @param _top_left - conveyes the upper-left corner for the placement
+	 */
 	public abstract void draw(Canvas _canvas, Rect _top_left);
+	
 	public abstract Element copy();
+	
+	// START KGU#156 2016-03-11: Enh. #124
+	protected void copyRuntimeData(Element _target)
+	{
+		_target.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
+		_target.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+		_target.execCount = this.execCount;
+	}
+	// END KGU#156 2016-03-11
 	
 	// START KGU#119 2016-01-02 Bugfix #78
 	/**
 	 * Returns true iff another is of same class, all persistent attributes are equal, and
 	 * all substructure of another recursively equals the substructure of this. 
-	 * @param another - the Element to be compared
+	 * @param _another - the Element to be compared
 	 * @return true on recursive structural equality, false else
 	 */
-	public boolean equals(Element another)
+	public boolean equals(Element _another)
 	{
-		boolean isEqual = this.getClass() == another.getClass();
-		if (isEqual) isEqual = this.getText().getText().equals(another.getText().getText());
-		if (isEqual) isEqual = this.getComment().getText().equals(another.getComment().getText());
-		if (isEqual) isEqual = this.getColor().equals(another.getColor());
+		boolean isEqual = this.getClass() == _another.getClass();
+		if (isEqual) isEqual = this.getText().getText().equals(_another.getText().getText());
+		if (isEqual) isEqual = this.getComment().getText().equals(_another.getComment().getText());
+		// START KGU#156 2016-03-12: Colour had to be disabled due to races
+		//if (isEqual) isEqual = this.getColor().equals(_another.getColor());
+		// END KGU#156 2016-03-12
 		return isEqual;
 	}
 	// END KGU#119 2016-01-02
 
+	// START KGU#117 2016-03-07: Enh. #77
+	/**
+	 * Disjunctively combines the test coverage status and the execution counts
+	 * of _cloneOfMine (which is supposed to a clone of this) with this own
+	 * runtime data (coverage status, execution and step counts)
+	 * (Important for recursive tests)
+	 * @param _cloneOfMine - the Element to be combined (must be equal to this)
+	 * @return true on recursive structural equality, false else
+	 */
+	public boolean combineRuntimeData(Element _cloneOfMine)
+	{
+		if (this.equals(_cloneOfMine))	// This is rather paranoia
+		{
+			this.simplyCovered = this.simplyCovered || _cloneOfMine.simplyCovered;
+			this.deeplyCovered = this.deeplyCovered || _cloneOfMine.deeplyCovered;
+			this.execCount += _cloneOfMine.execCount;
+			//this.execStepCount += _cloneOfMine.execStepCount;
+			// In case of (direct or indirect) recursion the substructure steps will
+			// gathered on a different way! We must not do it twice
+//			if (!this.getClass().getSimpleName().equals("Root"))
+//			{
+//				this.execSubCount += _cloneOfMine.execSubCount;
+//			}
+			return true;
+		}
+		System.err.println("CombineRuntimeData for " + this + " FAILED!");
+		return false;
+	}
+	// END KGU#117 2016-03-07
+
 	// draw point
 	Point drawPoint = new Point(0,0);
-
-	public StringList getCollapsedText()
-	{
-		StringList sl = new StringList();
-		// START KGU#91 2015-12-01: Bugfix #39: This is for drawing, so use switch-sensitive methods
-		//if(getText().count()>0) sl.add(getText().get(0));
-		if(getText(false).count()>0) sl.add(getText(false).get(0));
-		// END KGU#91 2015-12-01
-		sl.add(COLLAPSED);
-		return sl;
-	}
 
 	public Point getDrawPoint()
 	{
@@ -319,21 +464,6 @@ public abstract class Element {
 		Element ele = this;
 		while(ele.parent!=null) ele=ele.parent;
 		ele.drawPoint=point;
-	}
-
-
-	public Element()
-	{
-	}
-
-	public Element(String _string)
-	{
-		setText(_string);
-	}
-
-	public Element(StringList _strings)
-	{
-		setText(_strings);
 	}
 
 	public void setText(String _text)
@@ -369,19 +499,25 @@ public abstract class Element {
 	public StringList getText(boolean _alwaysTrueText)
 	// END KGU#91 2015-12-01
 	{
-            Root root = null;
-            // START KGU#91 2015-12-01: Bugfix #39
-    		//if ((root = getRoot(this))!=null && root.isSwitchTextAndComments())
-            if (!_alwaysTrueText && 
-            		(root = getRoot(this))!=null && root.isSwitchTextAndComments())
-            // START KGU#91 2015-12-01
-            {
-            	return comment;
-            }
-            else
-            {
-            	return text;
-            }
+        if (!_alwaysTrueText && this.isSwitchTextCommentMode())
+        {
+        	return comment;
+        }
+        else
+        {
+        	return text;
+        }
+	}
+
+	public StringList getCollapsedText()
+	{
+		StringList sl = new StringList();
+		// START KGU#91 2015-12-01: Bugfix #39: This is for drawing, so use switch-sensitive methods
+		//if(getText().count()>0) sl.add(getText().get(0));
+		if(getText(false).count()>0) sl.add(getText(false).get(0));
+		// END KGU#91 2015-12-01
+		sl.add(COLLAPSED);
+		return sl;
 	}
 
 	public void setComment(String _comment)
@@ -404,30 +540,38 @@ public abstract class Element {
 	{
 		return comment;
 	}
+
 	/**
-	 * Returns the content of the text field unless _alwaysTrueComment is false and
-	 * mode isSwitchedTextAndComment is active, in which case the comment field
-	 * is returned instead 
+	 * Returns the content of the comment field unless _alwaysTrueComment is false and
+	 * mode isSwitchedTextAndComment is active, in which case the text field
+	 * content is returned instead 
 	 * @param _alwaysTrueText - if true then mode isSwitchTextAndComment is ignored
 	 * @return either the text or the comment
 	 */
 	public StringList getComment(boolean _alwaysTrueComment)
 	// END KGU#91 2015-12-01
 	{
-            Root root = null;
-            // START KGU#91 2015-12-01: Bugfix #39
-      		//if ((root = getRoot(this))!=null && root.isSwitchTextAndComments())
-            if (!_alwaysTrueComment && 
-            		(root = getRoot(this))!=null && root.isSwitchTextAndComments())
-            // END KGU#91 2015-12-01
-            {
-            	return text;
-            }
-            else
-            {
-            	return comment;
-            }
+		if (!_alwaysTrueComment && this.isSwitchTextCommentMode())
+		{
+			return text;
+		}
+		else
+		{
+			return comment;
+		}
 	}
+	
+	// START KGU#172 2016-04-01: Issue #145: Make it easier to obtain this information
+	/**
+	 * Checks whether texts and comments are to swappe for display.
+	 * @return rue iff a Root is associated and its swichTextAndComments flag is on
+	 */
+	protected boolean isSwitchTextCommentMode()
+	{
+		Root root = getRoot(this);
+		return (root != null && root.isSwitchTextAndComments());
+	}
+	// END KGU#172 2916-04-01
 
 	public boolean getSelected()
 	{
@@ -438,6 +582,157 @@ public abstract class Element {
 	{
 		selected=_sel;
 	}
+	
+	// START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
+	/**
+	 * Checks execution involvement.
+	 * @return true iff this or some substructure of this is currently executed. 
+	 */
+	public boolean isExecuted()
+	{
+		return this.executed || this.waited;
+	}
+	// END KGU#143 2016-01-22
+	
+	// START KGU#156 2016-03-11: Enh. #124 - We need a consistent execution step counting
+	public static void resetMaxExecCount()
+	{
+		Element.maxExecTotalCount = Element.maxExecStepCount = Element.maxExecCount = 0;		
+	}
+
+
+	/**
+	 * Computes the summed up execution steps of this and all its substructure
+	 * This method is just for setting the cached value execTotalCount, so don't
+	 * call it unless you must (better 
+	 * @param _directly TODO
+	 * @return
+	 */
+	public int getExecStepCount(boolean _combined)
+	{
+		return this.execStepCount + (_combined ? this.execSubCount : 0);
+	}
+
+	/**
+	 * Increments the execution counter.
+	 */
+	public final void countExecution()
+	{
+		// Element execution is always counting 1, no matter whether element is structured or not
+		if (Element.E_COLLECTRUNTIMEDATA && ++this.execCount > Element.maxExecCount)
+		{
+			Element.maxExecCount = this.execCount;
+		}
+	}
+	
+	/**
+	 * Updates the own or substructure instruction counter by adding the growth value
+	 * @param _growth - the amount by which the counter is to be increased
+	 * @param _directly - whether is to be counted as own instruction or the substructure's
+	 */
+	public void addToExecTotalCount(int _growth, boolean _directly)
+	{
+		if (Element.E_COLLECTRUNTIMEDATA)
+		{
+			if (_directly)
+			{
+				this.execStepCount += _growth;
+				if (this.execStepCount > Element.maxExecStepCount)
+				{
+					Element.maxExecStepCount = this.execStepCount;
+				}
+			}
+			else
+			{
+				this.execSubCount += _growth;
+				Element.maxExecTotalCount = 
+						Math.max(this.getExecStepCount(true),
+								Element.maxExecTotalCount);			
+			}
+		}
+	}
+	// END KGU#156 2016-03-11
+	
+	// START KGU#117 2016-03-10: Enh. #77
+	/**
+	 * In test coverage mode, sets the local tested flag if element is fully covered
+	 * and then recursively checks test coverage upwards all ancestry if
+	 * _propagateUpwards is true (otherwise it would be postponed to the termination
+	 * of the superstructure).
+	 * @param _propagateUpwards if true then the change is immediately propagated  
+	 */
+	public void checkTestCoverage(boolean _propagateUpwards)
+	{
+		//System.out.print("Checking coverage of " + this + " --> ");
+		if (Element.E_COLLECTRUNTIMEDATA)
+		{
+			boolean hasChanged = false;
+			if (!this.simplyCovered && this.isTestCovered(false))
+			{
+				hasChanged = true;
+				this.simplyCovered = true;
+			}
+			if (!this.deeplyCovered && this.isTestCovered(true))
+			{
+				hasChanged = true;
+				this.deeplyCovered = true;
+			}
+			if (hasChanged && _propagateUpwards)
+			{
+				Element parent = this.parent;
+				while (parent != null)
+				{
+					parent.checkTestCoverage(false);
+					parent = parent.parent;
+				}
+			}
+		}
+		//System.out.println(this.tested ? "SET" : "unset");
+	}
+	
+	/**
+	 * Detects shallow or deep test coverage of this element according to the
+	 * argument _deeply
+	 * @param _deeply if exhaustive coverage (including subroutines is requested)
+	 * @return true iff element and all its sub-structure is test-covered
+	 */
+	public boolean isTestCovered(boolean _deeply)
+	{
+		return _deeply ? this.deeplyCovered : this.simplyCovered;
+	}
+	// END KGU#117 2016-03-10
+
+	// START KGU#144 2016-01-22: Bugfix for #38 - Element knows best whether it can be moved up or down
+	/**
+	 * Checks whether this has a successor within the parenting Subqueue
+	 * @return true iff this is element of a Subqueue and has a successor
+	 */
+	public boolean canMoveDown()
+	{
+		boolean canMove = false;
+		if (parent != null && parent.getClass().getSimpleName().equals("Subqueue"))
+		{
+			int i = ((Subqueue)parent).getIndexOf(this);
+			canMove = (i+1 < ((Subqueue)parent).getSize()) && !this.isExecuted() && !((Subqueue)parent).getElement(i+1).isExecuted();
+		}
+		return canMove;
+	}
+
+	/**
+	 * Checks whether this has a predecessor within the parenting Subqueue
+	 * @return true iff this is element of a Subqueue and has a predecessor
+	 */
+	public boolean canMoveUp()
+	{
+		boolean canMove = false;
+		if (parent != null && parent.getClass().getSimpleName().equals("Subqueue"))
+		{
+			int  i = ((Subqueue)parent).getIndexOf(this);
+			canMove = (i > 0) && !this.isExecuted() && !((Subqueue)parent).getElement(i-1).isExecuted();
+		}
+		return canMove;
+	}
+	//	END KGU#144 2016-01-22
 
 	public Color getColor()
 	{
@@ -467,6 +762,7 @@ public abstract class Element {
 	{
 		// This priority might be arguable but represents more or less what was found in the draw methods before
 		if (this.waited) {
+			// FIXME (KGU#117): Need a combined colour for waited + tested
 			return Element.E_WAITCOLOR; 
 		}
 		else if (this.executed) {
@@ -475,12 +771,123 @@ public abstract class Element {
 		else if (this.selected) {
 			return Element.E_DRAWCOLOR;
 		}
+		// START KGU#117/KGU#156 2016-03-06: Enh. #77 + #124 Specific colouring for test coverage tracking
+		else if (E_COLLECTRUNTIMEDATA &&
+				E_RUNTIMEDATAPRESENTMODE != RuntimeDataPresentMode.NONE) {
+			switch (E_RUNTIMEDATAPRESENTMODE) {
+			case SHALLOWCOVERAGE:
+			case DEEPCOVERAGE:
+				if (this.isTestCovered(Element.E_RUNTIMEDATAPRESENTMODE == RuntimeDataPresentMode.DEEPCOVERAGE)) {
+					return Element.E_TESTCOVEREDCOLOR;
+				}
+				break;
+			default:
+				return getScaleColorForRTDPM();
+			}
+		}
+		// END KGU#117 2016-03-06
 		else if (this.collapsed) {
+			// NOTE: If the backround colour for collapsed elements should once be discarded, then
+			// for Instruction subclasses the icon is to be activated in Instruction.draw() 
 			return Element.E_COLLAPSEDCOLOR;
 		}
 		return getColor();
 	}
 	// END KGU#41 2015-10-13
+	
+	// START KGU#156 2016-03-12: Enh. #124 (Runtime data visualisation)
+	protected Color getScaleColorForRTDPM()
+	{
+		int maxValue = 0;
+		int value = 0;
+		boolean logarithmic = false;
+		switch (Element.E_RUNTIMEDATAPRESENTMODE) {
+		case EXECCOUNTS:
+			maxValue = Element.maxExecCount;
+			value = this.execCount;
+			break;
+		case EXECSTEPS_LOG:
+			logarithmic = true;
+		case EXECSTEPS_LIN:
+			maxValue = Element.maxExecStepCount;
+			value = this.getExecStepCount(false);
+			break;
+		case TOTALSTEPS_LOG:
+			logarithmic = true;
+		case TOTALSTEPS_LIN:
+			maxValue = Element.maxExecTotalCount;
+			value = this.getExecStepCount(true);
+			break;
+		default:
+				;
+		}
+		if (logarithmic) {
+			// We scale the logarithm a little up lest there should be too few
+			// discrete possible values
+			if (maxValue > 0) maxValue = (int) Math.round(25 * Math.log(maxValue));
+			if (value > 0) value = (int) Math.round(25 * Math.log(value));
+		}
+		return getScaleColor(value, maxValue);
+	}
+	
+	/**
+	 * Converts the value in the range 0 ... maxValue in the a colour
+	 * from deep blue to hot red.
+	 * @param value	- a count value in the range 0 (blue) ... maxValue (red)
+	 * @param maxValue - the end of the scale 
+	 * @return the corresponding spectral colour.
+	 */
+	private Color getScaleColor(int value, int maxValue)
+	{
+		// Actually we split the range in four equally sized sections
+		// In section 0, blue is at the brightness limit, red sticks to 0,
+		// and green is linearly rising from 0 to he brightness limit.
+		// In section 1, green is at the brightness limit and blue is linearly
+		// falling from the brightness limit down to 0.
+		// In section 2, green is at the brightness limit and red in linearly
+		// rising from 0 to he brightness limit.
+		// In section 1, red is at the brightness limit and green in linearly
+		// decreasing from the brightness limit down to 0.
+		
+		// Lest the background colour should get too dark for the text to remain
+		// legible, we shift the scale (e.g. by a twelfth) and this way reduce
+		// the effective spectral range such that the latter starts with a less
+		// deep blue...
+		int rangeOffset = maxValue/12;
+		value += rangeOffset;
+		maxValue += rangeOffset;
+		
+		if (maxValue == 0)
+		{
+			return Color.WHITE;
+		}
+		int maxBrightness = 255;
+		int blue = 0, green = 0, red = 0;
+		int value4 = 4 * value * maxBrightness;
+		int maxValueB = maxValue * maxBrightness;
+		if (value4 < maxValueB)
+		{
+			blue = maxBrightness;
+			green = (int)Math.round(value4 * 1.0 / maxValue);
+		}
+		else if (value4 < 2 * maxValueB)
+		{
+			green = maxBrightness;
+			blue = Math.max((int)Math.round((maxValueB * 2.0 - value4) / maxValue), 0);
+		}
+		else if (value4 < 3 * maxValueB)
+		{
+			green = maxBrightness;
+			red = Math.max((int)Math.round((value4 - 2.0 * maxValueB) / maxValue), 0);
+		}
+		else
+		{
+			red = maxBrightness;
+			green = Math.max((int)Math.round((maxValueB * 3.0 - value4) / maxValue), 0);
+		}
+		return new Color(red, green, blue);
+	}
+	// END KGU#156 2016-03-12
 	
 	// START KGU#43 2015-10-12: Methods to control the new breakpoint property
 	public void toggleBreakpoint()
@@ -514,8 +921,31 @@ public abstract class Element {
 	{
 		this.executed = false;
 		this.waited = false;
+		// START KGU#117 2016-03-06: Enh. #77 - extra functionality in test coverage mode
+		if (!E_COLLECTRUNTIMEDATA)
+		{
+			this.deeplyCovered = this.simplyCovered = false;;
+			// START KGU#156 2016-03-10: Enh. #124
+			this.execCount = this.execStepCount = this.execSubCount = 0;
+			// END KGU#156 2016-03-10
+		}
+		// KGU#117 2016-03-06
 	}
 	// END KGU#41 2015-10-13
+
+	// START KGU#117 2016-03-07: Enh. #77
+	/** 
+	 * Recursively clears test coverage flags and execution counts in this branch
+	 * (To be overridden by structured sub-classes!)
+	 */
+	public void clearRuntimeData()
+	{
+		this.deeplyCovered = this.simplyCovered = false;;
+		// START KGU#156 2016-03-11: Enh. #124
+		this.execCount = this.execStepCount = this.execSubCount = 0;
+		// END KGU#156 2016-03-11
+	}
+	// END KGU#117 2016-03-07
 
 	// START KGU 2015-10-09 Methods selectElementByCoord(int, int) and getElementByCoord(int, int) merged
 	/**
@@ -566,15 +996,23 @@ public abstract class Element {
 
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
-		Point pt=getDrawPoint();
+		// START KGU#136 2016-03-01: Bugfix #97 - we will now have origin-bound rects and coords
+		//Point pt=getDrawPoint();
+		// END KGU#136 2016-03-01
 
-		if ((rect.left-pt.x < _x) && (_x < rect.right-pt.x) &&
-				(rect.top-pt.y < _y) && (_y < rect.bottom-pt.y))
+		// START KGU#136 2016-03-01: Bugfix #97: Now all coords will be "local"
+//		if ((rect.left-pt.x < _x) && (_x < rect.right-pt.x) &&
+//				(rect.top-pt.y < _y) && (_y < rect.bottom-pt.y))
+		if ((rect.left <= _x) && (_x <= rect.right) &&
+				(rect.top <= _y) && (_y <= rect.bottom))
+		// END KGU#136 2016-03-01
 		{
+			//System.out.println("YES");
 			return this;         
 		}
 		else 
 		{
+			//System.out.println("NO");
 			if (_forSelection)	
 			{
 				selected = false;	
@@ -596,20 +1034,14 @@ public abstract class Element {
 		_canvas.setBackground(E_COMMENTCOLOR);
 		_canvas.setColor(E_COMMENTCOLOR);
 		
-		Rect markerRect = _rect.copy();
+		Rect markerRect = new Rect(_rect.left + 2, _rect.top + 2,
+				_rect.left + 4, _rect.bottom - 2);
 		
-		markerRect.left += 2;
 		if (breakpoint)
 		{
 			// spare the area of the breakpoint bar
-			markerRect.top += 7;
+			markerRect.top += 5;
 		}
-		else
-		{
-			markerRect.top += 2;
-		}
-		markerRect.right = markerRect.left+4;
-		markerRect.bottom -= 2;
 		
 		_canvas.fillRect(markerRect);
 	}
@@ -637,11 +1069,36 @@ public abstract class Element {
 	}
 	// END KGU 2015-10-11
 
-        public Rect getRect()
-        {
-            return new Rect(rect.left,rect.top,rect.right,rect.bottom);
-        }
+	/**
+	 * Returns a copy of the (relocatable i. e. 0-bound) extension rectangle 
+	 * @return a rectangle starting at (0,0) and spanning to (width, height) 
+	 */
+	public Rect getRect()
+	{
+		return new Rect(rect.left, rect.top, rect.right, rect.bottom);
+	}
 
+	// START KGU#136 2016-03-01: Bugfix #97
+	/**
+	 * Returns the bounding rectangle translated to point relativeTo 
+	 * @return a rectangle starting at relativeTo 
+	 */
+	public Rect getRect(Point relativeTo)
+	{
+		return new Rect(rect.left + relativeTo.x, rect.top + relativeTo.y,
+				rect.right + relativeTo.x, rect.bottom + relativeTo.y);		
+	}
+
+	/**
+	 * Returns the bounding rectangle translated relative to the drawingPoint 
+	 * @return a rectangle starting at relativeTo 
+	 */
+	public Rect getRectOffDrawPoint()
+	{
+		return getRect(this.topLeft);		
+	}
+	// END KGU#136 2016-03-01
+	
 	public static Font getFont()
 	{
 		return font;
@@ -666,6 +1123,9 @@ public abstract class Element {
 			preAltT=ini.getProperty("IfTrue","V");
 			preAltF=ini.getProperty("IfFalse","F");
 			preAlt=ini.getProperty("If","()");
+			// START KGU 2016-01-16: Stuff having got lost by a Nov. 2014 merge
+			altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "true"));
+			// END KGU 2016-01-16
 			StringList sl = new StringList();
 			sl.setCommaText(ini.getProperty("Case","\"?\",\"?\",\"?\",\"sinon\""));
 			preCase=sl.getText();
@@ -702,6 +1162,9 @@ public abstract class Element {
 			ini.setProperty("IfTrue",preAltT);
 			ini.setProperty("IfFalse",preAltF);
 			ini.setProperty("If",preAlt);
+			// START KGU 2016-01-16: Stuff having got lost by a Nov. 2014 merge
+			ini.setProperty("altPadRight", String.valueOf(altPadRight));
+			// END KGU 2016-01-16
 			StringList sl = new StringList();
 			sl.setText(preCase);
 			ini.setProperty("Case",sl.getCommaText());
@@ -731,26 +1194,27 @@ public abstract class Element {
 		}
 	}
 
-	public static Root getRoot(Element now)
+	public static Root getRoot(Element _element)
 	{
-		while(now.parent!=null)
+		while (_element.parent != null)
 		{
-			now=now.parent;
+			_element = _element.parent;
 		}
-                if(now instanceof Root)
-                    return (Root) now;
-                else
-                    return null;
+		if (_element instanceof Root)
+			return (Root) _element;
+		else
+			return null;
 	}
 
-	private String cutOut(String _s, String _by)
-	{
-		System.out.print(_s+" -> ");
-		Regex rep = new Regex("(.*?)"+BString.breakup(_by)+"(.*?)","$1\",\""+_by+"\",\"$2");
-		_s=rep.replaceAll(_s);
-		System.out.println(_s);
-		return _s;
-	}
+//	@Deprecated
+//	private String cutOut(String _s, String _by)
+//	{
+//		//System.out.print(_s+" -> ");
+//		Regex rep = new Regex("(.*?)"+BString.breakup(_by)+"(.*?)","$1\",\""+_by+"\",\"$2");
+//		_s=rep.replaceAll(_s);
+//		//System.out.println(_s);
+//		return _s;
+//	}
 	
 	// START KGU#18/KGU#23 2015-11-04: Lexical splitter extracted from writeOutVariables
 	/**
@@ -778,6 +1242,10 @@ public abstract class Element {
 		parts=StringList.explodeWithDelimiter(parts,")");
 		parts=StringList.explodeWithDelimiter(parts,"[");
 		parts=StringList.explodeWithDelimiter(parts,"]");
+		// START KGU#100 2016-01-14: We must also catch the initialiser delimiters
+		parts=StringList.explodeWithDelimiter(parts,"{");
+		parts=StringList.explodeWithDelimiter(parts,"}");
+		// END KGU#100 2016-01-14
 		parts=StringList.explodeWithDelimiter(parts,"-");
 		parts=StringList.explodeWithDelimiter(parts,"+");
 		parts=StringList.explodeWithDelimiter(parts,"/");
@@ -894,6 +1362,10 @@ public abstract class Element {
 		if (_restoreStrings)
 		{
 			String[] delimiters = {"\"", "'"};
+			// START KGU#139 2016-01-12: Bugfix #105 - apparently incomplete strings got lost
+			// We mustn't eat seemingly incomplete strings, instead we re-feed them
+			StringList parkedTokens = new StringList();
+			// END KGU#139 2016-01-12
 			for (int d = 0; d < delimiters.length; d++)
 			{
 				boolean withinString = false;
@@ -907,6 +1379,9 @@ public abstract class Element {
 						composed = composed + lexeme;
 						if (lexeme.equals(delimiters[d]))
 						{
+							// START KGU#139 2016-01-12: Bugfix #105
+							parkedTokens.clear();
+							// END KGU#139 2016-01-12
 							parts.set(i, composed+"");
 							composed = "";
 							withinString = false;
@@ -914,11 +1389,17 @@ public abstract class Element {
 						}
 						else
 						{
+							// START KGU#139 2016-01-12: Bugfix #105
+							parkedTokens.add(lexeme);
+							// END KGU#139 2016-01-12
 							parts.delete(i);
 						}
 					}
 					else if (lexeme.equals(delimiters[d]))
 					{
+						// START KGU#139 2016-01-12: Bugfix #105
+						parkedTokens.add(lexeme);
+						// END KGU#139 2016-01-12
 						withinString = true;
 						composed = lexeme+"";
 						parts.delete(i);
@@ -929,6 +1410,12 @@ public abstract class Element {
 					}
 				}
 			}
+			// START KGU#139 2916-01-12: Bugfix #105
+			if (parkedTokens.count() > 0)
+			{
+				parts.add(parkedTokens);
+			}
+			// END KGU#139 2016-01-12
 		}
 		return parts;
 	}
@@ -944,7 +1431,6 @@ public abstract class Element {
 	 * bracket, or the like).
 	 * The remaining string from the unsatisfied closing parenthesis, bracket, or brace on will
 	 * be ignored!
-	 * If the last result element is empty then the expression list was syntactically "clean".
 	 * @param _text - string containing one or more expressions
 	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
 	 * @return a StringList, each element of which contains one of the separated expressions (order preserved)
@@ -969,7 +1455,7 @@ public abstract class Element {
 	 * @param _text - string containing one or more expressions
 	 * @param _listSeparator - a character sequence serving as separator among the expressions (default: ",") 
 	 * @param _appendTail - if the remaining part of _text from the first unaccepted character on is to be added 
-	 * @return a StringList, each element of which contains one of the separated expressions (order preserved)
+	 * @return a StringList consisting of the separated expressions (and the tail if _appendTail was true).
 	 */
 	public static StringList splitExpressionList(String _text, String _listSeparator, boolean _appendTail)
 	// END KU#93 2015-12-21
@@ -1067,7 +1553,7 @@ public abstract class Element {
 
 				// START KGU#64 2015-11-03: Not to be done again and again. Private static field now!
 				//StringList specialSigns = new StringList();
-				if (specialSigns == null)	// lazy initialisiation
+				if (specialSigns == null)	// lazy initialisation
 				{
 					specialSigns = new StringList();
 					// ENDU KGU#64 2015-11-03
@@ -1110,14 +1596,23 @@ public abstract class Element {
 					specialSigns.add("shl");
 					specialSigns.add("shr");
 					// END KGU#115 2015-12-23
+					// START KGU#109 2016-01-15: Issues #61, #107 highlight the BASIC declarator keyword, too
+					specialSigns.add("as");
+					// END KGU#109 2016-01-15
+					
+					// START KGU#100 2016-01-16: Enh. #84: Also highlight the initialiser delimiters
+					specialSigns.add("{");
+					specialSigns.add("}");
+					// END KGU#100 2016-01-16
 
+					// The quotes will only occur as tokens if they are unpaired!
 					specialSigns.add("'");
-					specialSigns.add("\"");	// KGU 2015-11-12: Quotes alone will hardly occur anymore
+					specialSigns.add("\"");
 				// START KGU#64 2015-11-03: See above
 				}
 				// END KGU#64 2015-11-03
 
-				// These might have changed by configuration, so don't cache them
+				// These markers might have changed by configuration, so don't cache them
 				StringList ioSigns = new StringList();
 				ioSigns.add(D7Parser.input.trim());
 				ioSigns.add(D7Parser.output.trim());
@@ -1153,7 +1648,10 @@ public abstract class Element {
 							_canvas.setFont(boldFont);
 						}
 						// if this part has to be colored with io color
-						else if(ioSigns.contains(display))
+						// START KGU#165 2016-03-25: consider the new option
+						//else if(ioSigns.contains(display))
+						else if(ioSigns.contains(display, !D7Parser.ignoreCase))
+						// END KGU#165 2016-03-25
 						{
 							// set color
 							_canvas.setColor(Color.decode("0x007700"));
@@ -1162,7 +1660,10 @@ public abstract class Element {
 						}
 						// START KGU 2015-11-12
 						// START KGU#116 2015-12-23: Enh. #75
-						else if(jumpSigns.contains(display))
+						// START KGU#165 2016-03-25: cosider the new option
+						//else if(jumpSigns.contains(display))
+						else if(jumpSigns.contains(display, !D7Parser.ignoreCase))
+						// END KGU#165 2016-03-25
 						{
 							// set color
 							_canvas.setColor(Color.decode("0xff5511"));
@@ -1170,7 +1671,7 @@ public abstract class Element {
 							_canvas.setFont(boldFont);
 						}
 						// END KGU#116 2015-12-23
-						// if it's a String or Character literal color it as such
+						// if it's a String or Character literal then mark it as such
 						else if (display.startsWith("\"") && display.endsWith("\"") ||
 								display.startsWith("'") && display.endsWith("'"))
 						{
@@ -1213,6 +1714,45 @@ public abstract class Element {
 		return total;
 	}
 
+	// START KGU#156 2016-03-11: Enh. #124 - helper routines to display run-time info
+	/**
+	 * Writes the selected runtime information in half-size font to the lower
+	 * left of position (_right, _top).
+	 * @param _canvas - the Canvas to write to
+	 * @param _right - right border x coordinate
+	 * @param _top - upper border y coordinate
+	 */
+	protected void writeOutRuntimeInfo(Canvas _canvas, int _right, int _top)
+	{
+		if (Element.E_COLLECTRUNTIMEDATA)
+		{
+			// smaller font
+			Font smallFont = new Font(Element.font.getName(), Font.PLAIN, Element.font.getSize()*2/3);
+			FontMetrics fm = _canvas.getFontMetrics(smallFont);
+			// backup the original font
+			Font backupFont = _canvas.getFont();
+			String info = this.getRuntimeInfoString();
+			int yOffs = this.isBreakpoint() ? 4 : 0; 
+			_canvas.setFont(smallFont);
+			_canvas.setColor(Color.BLACK);
+			int width = _canvas.stringWidth(info);
+			_canvas.writeOut(_right - width, _top + yOffs + fm.getHeight() , info);
+			_canvas.setFont(backupFont);
+		}
+	}
+	
+	/**
+	 * Returns a runtime counter string, composed from execution count
+	 * and a mode-dependent number of steps (pure or aggregated, with or
+	 * without parenthesis). 
+	 * @return the decoration string for runtime data visualisation
+	 */
+	protected String getRuntimeInfoString()
+	{
+		return this.execCount + " / " + this.getExecStepCount(this.isCollapsed());
+	}
+	// END KGU#156 2016-03-11
+	
 
 
     public boolean isCollapsed() {
@@ -1221,7 +1761,17 @@ public abstract class Element {
 
     public void setCollapsed(boolean collapsed) {
         this.collapsed = collapsed;
+    	// START KGU#136 2016-03-01: Bugfix #97
+    	this.resetDrawingInfoUp();
+    	// END KGU#136 2016-03-01
     }
+    
+    // START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
+    protected ImageIcon getIcon()
+    {
+    	return IconLoader.ico057;
+    }
+    // END KGU#122 2016-01-03
 
     // START KGU 2015-10-16: Some Root stuff properly delegated to the Element subclasses
     // (The obvious disadvantage is slightly reduced performance, of course)
@@ -1480,60 +2030,71 @@ public abstract class Element {
     {
     	//final String regexMatchers = ".?*+[](){}\\^$";
     	
-    	// Collect redundant placemarkers to be deleted from the text
-        StringList redundantMarkers = new StringList();
-        redundantMarkers.addByLength(D7Parser.preAlt);
-        redundantMarkers.addByLength(D7Parser.preCase);
-        //redundantMarkers.addByLength(D7Parser.preFor);	// will be handled separately
-        redundantMarkers.addByLength(D7Parser.preWhile);
-        redundantMarkers.addByLength(D7Parser.preRepeat);
-
-        redundantMarkers.addByLength(D7Parser.postAlt);
-        redundantMarkers.addByLength(D7Parser.postCase);
-        //redundantMarkers.addByLength(D7Parser.postFor);	// will be handled separately
-        //redundantMarkers.addByLength(D7Parser.stepFor);	// will be handled separately
-        redundantMarkers.addByLength(D7Parser.postWhile);
-        redundantMarkers.addByLength(D7Parser.postRepeat);
+//    	// Collect redundant placemarkers to be deleted from the text
+//        StringList redundantMarkers = new StringList();
+//        redundantMarkers.addByLength(D7Parser.preAlt);
+//        redundantMarkers.addByLength(D7Parser.preCase);
+//        //redundantMarkers.addByLength(D7Parser.preFor);	// will be handled separately
+//        redundantMarkers.addByLength(D7Parser.preWhile);
+//        redundantMarkers.addByLength(D7Parser.preRepeat);
+//
+//        redundantMarkers.addByLength(D7Parser.postAlt);
+//        redundantMarkers.addByLength(D7Parser.postCase);
+//        //redundantMarkers.addByLength(D7Parser.postFor);	// will be handled separately
+//        //redundantMarkers.addByLength(D7Parser.stepFor);	// will be handled separately
+//        redundantMarkers.addByLength(D7Parser.postWhile);
+//        redundantMarkers.addByLength(D7Parser.postRepeat);
        
         String interm = " " + _text + " ";
-
-        //System.out.println(interm);
-        // Now, we eliminate redundant keywords according to the Parser configuration
-        // Unfortunately, regular expressions are of little use here, because the prefix and infix keywords may
-        // consist of or contain Regex matchers like '?' and hence aren't suitable as part of the pattern
-        // The harmful characters to be inhibited or masked are: .?*+[](){}\^$
-        //System.out.println(interm);
-        for (int i=0; i < redundantMarkers.count(); i++)
-        {
-        	String marker = redundantMarkers.get(i);
-        	if (!marker.isEmpty())
-        	{
-        		// If the marker has not been padded then we must care for proper isolation
-        		if (marker.equals(marker.trim()))
-        		{
-        			int len = marker.length();
-        			int pos = 0;
-        			while ((pos = interm.indexOf(marker, pos)) >= 0)
-        			{
-        				if (!Character.isJavaIdentifierPart(interm.charAt(pos-1)) &&
-        						(pos + len) < interm.length() &&
-        						!Character.isJavaIdentifierPart(interm.charAt(pos + len)))
-        				{
-        					interm = interm.substring(0, pos) + interm.substring(pos + len);
-        				}
-        			}
-        		}
-        		else
-        		{
-        			// Already padded, so just replace it everywhere
-        			interm = interm.replace( marker, ""); 
-        		}
-        		//interm = " " + interm + " ";	// Ensure the string being padded for easier matching
-                interm = interm.replace("  ", " ");
-                interm = interm.trim();
-        		//System.out.println("transformIntermediate: " + interm);	// FIXME (KGU): Remove or deactivate after test!
-        	}
-        }
+//
+//        //System.out.println(interm);
+//        // Now, we eliminate redundant keywords according to the Parser configuration
+//        // Unfortunately, regular expressions are of little use here, because the prefix and infix keywords may
+//        // consist of or contain Regex matchers like '?' and hence aren't suitable as part of the pattern
+//        // The harmful characters to be inhibited or masked are: .?*+[](){}\^$
+//        //System.out.println(interm);
+//        for (int i=0; i < redundantMarkers.count(); i++)
+//        {
+//        	String marker = redundantMarkers.get(i);
+//        	if (!marker.isEmpty())
+//        	{
+//        		// If the marker has not been padded then we must care for proper isolation
+//        		if (marker.equals(marker.trim()))
+//        		{
+//        			int len = marker.length();
+//        			int pos = 0;
+//        			// START KGU 2016-01-13: Bugfix #104: position fault
+//        			//while ((pos = interm.indexOf(marker, pos)) >= 0)
+//        			while ((pos = interm.indexOf(marker, pos)) > 0)
+//        			// END KGU 2016-01-13
+//        			{
+//        				if (!Character.isJavaIdentifierPart(interm.charAt(pos-1)) &&
+//        						(pos + len) < interm.length() &&
+//        						!Character.isJavaIdentifierPart(interm.charAt(pos + len)))
+//        				{
+//        					interm = interm.substring(0, pos) + interm.substring(pos + len);
+//        				}
+//        			}
+//        		}
+//        		else
+//        		{
+//        			// Already padded, so just replace it everywhere
+//        			// START KGU 2016-01-13: Bugfix #104 - padding might go away here
+//        			//interm = interm.replace( marker, ""); 
+//        			interm = interm.replace( marker, " "); 
+//        			// END KGU 2016-01-13
+//        		}
+//        		//interm = " " + interm + " ";	// Ensure the string being padded for easier matching
+//                interm = interm.replace("  ", " ");		// Reduce multiple spaces (may also spoil string literals!)
+//                // START KGU 2016-01-13: Bugfix #104 - should have been done after the loop only
+//                //interm = interm.trim();
+//                // END KGU 2016-01-13
+//        		//System.out.println("transformIntermediate: " + interm);	// FIXME (KGU): Remove or deactivate after test!
+//        	}
+//        }
+        // START KGU 2016-01-13: Bugfix #104 - should have been done after the loop only
+        interm = interm.trim();
+        // END KGU 2016-01-13
         
         // START KGU#93 2015-12-21 Bugfix #41/#68/#69 Get rid of padding defects and string damages
         //interm = unifyOperators(interm);
@@ -1557,13 +2118,97 @@ public abstract class Element {
         //return interm/*.trim()*/;
 
         StringList tokens = Element.splitLexically(interm, true);
+        
+        // START KGU#165 2016-03-26: Now keyword search with/without case
+//        for (int i = 0; i < redundantMarkers.count(); i++)
+//        {
+//        	String marker = redundantMarkers.get(i);
+//        	if (!marker.trim().isEmpty())
+//        	{
+//        		StringList markerTokens = Element.splitLexically(marker, false);
+//        		int markerLen = markerTokens.count();
+//        		int pos = -1;
+//        		while ((pos = tokens.indexOf(markerTokens, 0, !D7Parser.ignoreCase)) >= 0)
+//        		{
+//        			for (int j = 0; j < markerLen; j++)
+//        			{
+//        				tokens.delete(pos);
+//        			}
+//        		}
+//        	}
+//        }
+        cutOutRedundantMarkers(tokens);
+        // END KGU#165 2016-03-26
+        
+//        // START KGU 2016-01-13: Bugfix #104 - planned new approach to overcome that nasty keyword/string problem
+//        // It is also too simple, e.g. in cases like  jusqu'à test = 'o'  where a false string recognition would
+//        // avert the keyvword recognition. So both will have to be done simultaneously...
+//        for (int i=0; i < redundantMarkers.count(); i++)
+//        {
+//        	StringList markerTokens = Element.splitLexically(redundantMarkers.get(i), true);
+//        	int pos = 0;
+//        	while ((pos = tokens.indexOf(markerTokens, pos, true)) >= 0)
+//        	{
+//        		for (int j = 0; j < markerTokens.count(); j++)
+//        		{
+//        			tokens.delete(pos);
+//        		}
+//        	}
+//        }
+//        // END KGU 2016-01-13
+        
         unifyOperators(tokens, false);
         
         return tokens;
         // END KGU#93 2015-12-21
 
     }
-    
     // END KGU#18/KGU#23 2015-10-24
+    
+    // START KGU#162 2016-03-31: Enh. #144 - undispensible part of transformIntermediate
+    public static void cutOutRedundantMarkers(StringList _tokens)
+    {
+    	// Collect redundant placemarkers to be deleted from the text
+        StringList redundantMarkers = new StringList();
+        redundantMarkers.addByLength(D7Parser.preAlt);
+        redundantMarkers.addByLength(D7Parser.preCase);
+        //redundantMarkers.addByLength(D7Parser.preFor);	// will be handled separately
+        redundantMarkers.addByLength(D7Parser.preWhile);
+        redundantMarkers.addByLength(D7Parser.preRepeat);
+
+        redundantMarkers.addByLength(D7Parser.postAlt);
+        redundantMarkers.addByLength(D7Parser.postCase);
+        //redundantMarkers.addByLength(D7Parser.postFor);	// will be handled separately
+        //redundantMarkers.addByLength(D7Parser.stepFor);	// will be handled separately
+        redundantMarkers.addByLength(D7Parser.postWhile);
+        redundantMarkers.addByLength(D7Parser.postRepeat);
+        
+        for (int i = 0; i < redundantMarkers.count(); i++)
+        {
+        	String marker = redundantMarkers.get(i);
+        	if (!marker.trim().isEmpty())
+        	{
+        		StringList markerTokens = Element.splitLexically(marker, false);
+        		int markerLen = markerTokens.count();
+        		int pos = -1;
+        		while ((pos = _tokens.indexOf(markerTokens, 0, !D7Parser.ignoreCase)) >= 0)
+        		{
+        			for (int j = 0; j < markerLen; j++)
+        			{
+        				_tokens.delete(pos);
+        			}
+        		}
+        	}
+        }
+    }
+    // END KGU#162 2016-03-31
+    
+    // START KGU#152 2016-03-02: Better self-description of Elements
+    public String toString()
+    {
+    	return getClass().getSimpleName() + '@' + Integer.toHexString(hashCode()) +
+    			"(" + (this.getText().count() > 0 ? this.getText().get(0) : "") + ")";
+    }
+    // END KGU#152 2016-03-02
     
 }

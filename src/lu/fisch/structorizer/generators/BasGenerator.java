@@ -43,6 +43,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2015.12.19      Bugfix #51 (KGU#108) empty input instruction
  *                                          Enh. #54 (KGU#101) multiple expressions on output
  *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
+ *      Kay Gürtzig         2016.01.22      Bugfix/Enh. #84 (= KGU#100): Array initialisation
+ *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
  *
  ******************************************************************************************************
  *
@@ -117,7 +119,7 @@ public class BasGenerator extends Generator
 	 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
 	 */
 	@Override
-	protected boolean supportsSimpleBreak()
+	protected boolean breakMatchesCase()
 	{
 		return false;
 	}
@@ -183,6 +185,13 @@ public class BasGenerator extends Generator
 			if (!tokens.get(0).equals(" "))	tokens.insert(" ", 0);
 			tokens.insert("LET", 0);
 		}
+		// START KGU#100 2016-01-22: Enh #84 - Array initialisiation for Visual/modern BASIC
+		if (!this.optionBasicLineNumbering())
+		{
+			tokens.replaceAll("{", "Array(");
+			tokens.replaceAll("}", ")");
+		}
+		// END KGU#100 2016-01-22
 		tokens.replaceAll("<-", "=");
 		return tokens.concatenate();
 	}
@@ -320,7 +329,51 @@ public class BasGenerator extends Generator
 			// END KGU 2014-11-16
 			for(int i=0; i<_inst.getText().count(); i++)
 			{
-				code.add(this.getLineNumber() + _indent + transform(_inst.getText().get(i)));
+				// START KGU#100 2016-01-22: Enh. #84 - resolve array initialisation
+				boolean isArrayInit = false;
+				// START KGU#171 2016-03-31: Enh. #144
+				//if (this.optionBasicLineNumbering())
+				if (!this.suppressTransformation && this.optionBasicLineNumbering())
+				// END KGU#171 2016-03-31
+				{
+					// The crux is: we don't know the index range!
+					// So we'll invent an index base variable easy to be modified in code
+					//code.add(_indent + transform(line) + ";");
+					String uniline = Element.unifyOperators(_inst.getText().get(i));
+					int asgnPos = uniline.indexOf("<-");
+					if (asgnPos >= 0 && uniline.contains("{") && uniline.contains("}"))
+					{
+						String varName = transform(uniline.substring(0, asgnPos).trim());
+						String expr = uniline.substring(asgnPos+2).trim();
+						isArrayInit = expr.startsWith("{") && expr.endsWith("}");
+						if (isArrayInit)
+						{
+							StringList elements = Element.splitExpressionList(
+									expr.substring(1, expr.length()-1), ",");
+							// In order to be consistent with possible index access
+							// at other positions in code, we use the standard Java
+							// index range here (though in Pascal indexing usually 
+							// starts with 1 but may vary widely). We solve the problem
+							// by providing a configurable start index variable 
+							insertComment("TODO: Check indexBase value (automatically generated)", _indent);
+							code.add(this.getLineNumber() + _indent + "LET indexBase = 0");
+							for (int el = 0; el < elements.count(); el++)
+							{
+								code.add(this.getLineNumber() + _indent + "LET " + varName + 
+										"(indexBase + " + el + ") = " + 
+										transform(elements.get(el)));
+							}
+						}
+
+					}
+				}
+				if (!isArrayInit)
+				{
+				// END KGU#100 2016-01-22
+					code.add(this.getLineNumber() + _indent + transform(_inst.getText().get(i)));
+				// START KGU#100 2016-01-22: Enh. #84 (continued)
+				}
+				// END KGU#100 2016-01-22				
 			}
 		}
     }
@@ -385,6 +438,14 @@ public class BasGenerator extends Generator
     	// START KGU#3 2015-11-02: Sensible handling of FOR loops
         //code.add(_indent+"FOR "+BString.replace(transform(_for.getText().getText()),"\n","").trim()+"");
     	insertComment(_for, _indent);
+    	
+    	// START KGU#61 2016-03-23: Enh. 84
+    	if (_for.isForInLoop() && generateForInCode(_for, _indent))
+    	{
+    		// All done
+    		return;
+    	}
+    	// END KGU#61 2016-03-23
 
     	String[] parts = _for.splitForClause();
     	String increment = "";
@@ -400,6 +461,110 @@ public class BasGenerator extends Generator
     	this.placeJumpTarget(_for, _indent);
     	// END KGU#78 2915-12-18
     }
+
+	// START KGU#61 2016-03-23: Enh. #84 - Support for FOR-IN loops
+	/**
+	 * We try our very best to create a working loop from a FOR-IN construct
+	 * This will only work, however, if we can get reliable information about
+	 * the size of the value list, which won't be the case if we obtain it e.g.
+	 * via a variable.
+	 * (Here, we will just apply Visual Basic syntax until someone complains.)
+	 * @param _for - the element to be exported
+	 * @param _indent - the current indentation level
+	 * @return true iff the method created some loop code (sensible or not)
+	 */
+	protected boolean generateForInCode(For _for, String _indent)
+	{
+		boolean done = false;
+		String var = _for.getCounterVar();
+		String valueList = _for.getValueList();
+		StringList items = this.extractForInListItems(_for);
+		// START KGU#171 2016-03-31: Enh. #144
+		//if (items != null)
+		if (!this.suppressTransformation && items != null)
+		// END KGU#171 2016-03-31
+		{
+			// Good question is: how do we guess the element type and what do we
+			// do if items are heterogenous? We will just try four types: boolean,
+			// integer, real and string, where we can only test literals.
+			// If none of them match then we add a TODO comment.
+			int nItems = items.count();
+			boolean allBoolean = true;
+			boolean allInt = true;
+			boolean allReal = true;
+			boolean allString = true;
+			for (int i = 0; i < nItems; i++)
+			{
+				String item = items.get(i);
+				if (allBoolean)
+				{
+					if (!item.equalsIgnoreCase("true") && !item.equalsIgnoreCase("false"))
+					{
+						allBoolean = false;
+					}
+				}
+				if (allInt)
+				{
+					try {
+						Integer.parseInt(item);
+					}
+					catch (NumberFormatException ex)
+					{
+						allInt = false;
+					}
+				}
+				if (allReal)
+				{
+					try {
+						Double.parseDouble(item);
+					}
+					catch (NumberFormatException ex)
+					{
+						allReal = false;
+					}
+				}
+				if (allString)
+				{
+					allString = item.startsWith("\"") && item.endsWith("\"") &&
+							!item.substring(1, item.length()-1).contains("\"");
+				}
+			}
+			
+			// Create some generic and unique variable names
+			String postfix = Integer.toHexString(_for.hashCode());
+			String arrayName = "array" + postfix;
+			//String indexName = "index" + postfix;
+
+			String itemType = "";
+			if (allBoolean) itemType = "Boolean";
+			else if (allInt) itemType = "Integer";
+			else if (allReal) itemType = "Real";
+			else if (allString) itemType = "String";
+			else {
+				itemType = "FIXME_" + postfix;
+				// We do a dummy type definition
+				this.insertComment("TODO: Specify an appropriate element type for the array!", _indent);
+			}
+
+			// Insert the array declaration and initialisation
+			code.add(this.getLineNumber() + _indent + "DIM " + arrayName + "() AS " + itemType + " = {" + 
+					items.concatenate(", ") + "}");
+			valueList = arrayName;
+		}
+			
+		// Creation of the loop header
+		code.add(this.getLineNumber() + _indent + "FOR EACH " + var + " IN " + valueList);
+
+		// Creation of the loop body
+    	generateCode(_for.q, _indent + this.getIndent());
+    	code.add(this.getLineNumber() + _indent + "NEXT " + var);
+    	
+		this.placeJumpTarget(_for, _indent);	// Enh. #23: Takes care for correct jumps
+
+		done = true;
+		return done;
+	}
+	// END KGU#61 2016-03-23
 
     @Override
     protected void generateCode(While _while, String _indent)

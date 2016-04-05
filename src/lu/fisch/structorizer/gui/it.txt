@@ -1,5 +1,5 @@
 /*
-    Structorizer italian language file
+    Structorizer Italian language file
 
     Copyright (C) 2009  Maiani Andrea
 
@@ -32,9 +32,10 @@
  *      Author          Date			Description
  *      ------		----			-----------
  *      Andrea Maiani   2009.12.01		Created
- *      Kay Gürtzig		2015.10.06		Obvious mis-spellings mended (cilc -> ciclo, contenuro -> contenuto etc.)
+ *      Kay Gürtzig     2015.10.06		Obvious mis-spellings mended (cilc -> ciclo, contenuro -> contenuto etc.)
  *      Kay Gürtzig     2015.10.14		InputBox-specific part enhanced
  *      Kay Gürtzig     2015.10.14		FOR-specific part enhanced and Arranger buttons added
+ *      Kay Gürtzig     2016.01.21      Breakpoint message also in Menu now
  *
  ******************************************************************************************************
  *
@@ -104,6 +105,9 @@ Menu.menuDiagramEdit.text=Modifica
 Menu.menuDiagramDelete.text=Cancella
 Menu.menuDiagramMoveUp.text=Sposta in alto
 Menu.menuDiagramMoveDown.text=Sposta in basso
+// Breakpoint
+Menu.menuDiagramBreakpoint.text=Alterna breakpoint
+// Diagram Appearance
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Principale
 Menu.menuDiagramTypeFunction.text=Funzione

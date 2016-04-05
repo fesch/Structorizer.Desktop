@@ -46,7 +46,10 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig				2014.11.16		Operator conversion corrected (see comment)
  *      Kay Gürtzig				2014.12.02		Additional replacement of long assignment operator "<--" by "<-"
  *      Kay Gürtzig				2015.10.18		Indentation issue fixed and comment generation revised
- *      Kay Gürtzig				2015.12.21		Bugfix #41/#68/#69 (= KG#93)
+ *      Kay Gürtzig				2015.12.21		Bugfix #41/#68/#69 (= KGU#93)
+ *      Kay Gürtzig				2016.01.16		KGU#109: Bugfix #61 - handling of type names in assignments
+ *                                              Enh. #84 + Bugfix #112 (KGU#141): Assignment export revised
+ *      Kay Gürtzig             2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61) 
  *
  ******************************************************************************************************
  *
@@ -76,6 +79,7 @@ import java.util.regex.Matcher;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Function;
 
 public class OberonGenerator extends Generator {
 	
@@ -120,7 +124,7 @@ public class OberonGenerator extends Generator {
 	 * @see lu.fisch.structorizer.generators.Generator#supportsSimpleBreak()
 	 */
 	@Override
-	protected boolean supportsSimpleBreak()
+	protected boolean breakMatchesCase()
 	{
 		return true;
 	}
@@ -215,19 +219,24 @@ public class OberonGenerator extends Generator {
         tokens.replaceAll("||"," OR ");
         tokens.replaceAll("!","~");
 		tokens.replaceAll("<-", ":=");
-		return tokens.concatenate();
+		String result = tokens.concatenate();
+		// We now shrink superfluous padding - this may affect string literals, though!
+		result = result.replace("  ", " ");
+		result = result.replace("  ", " ");	// twice to catch odd-numbered space sequences, too
+		return result;
 	}
 
-	// No longer needed (Bugfix #41/#68/#69)
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String, boolean)
-//	 */
-//	@Override
-//	protected String transform(String _input, boolean _doInputOutput)
-//	{
-//		// START KGU#18/KGU#23 2015-11-02
-//		_input = super.transform(_input, _doInputOutput);
-//		// END KGU#18/KGU#23 2015-11-02
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transform(java.lang.String, boolean)
+	 */
+	@Override
+	protected String transform(String _input, boolean _doInputOutput)
+	{
+		// START KGU#18/KGU#23 2015-11-02
+		String transline = super.transform(_input, _doInputOutput);
+		// END KGU#18/KGU#23 2015-11-02
+
+// START KGU#93 205-12-21: No longer needed (Bugfix #41/#68/#69)
 //		// START KGU 2014-11-16: Comparison operator had to be converted properly first
 //		_input=BString.replace(_input," == "," = ");
 //		_input=BString.replace(_input," != "," # ");
@@ -241,10 +250,42 @@ public class OberonGenerator extends Generator {
 //		_input=BString.replace(_input," ! "," ~ ");
 //		_input=BString.replace(_input,"!"," ~ ");
 //		// END KGU 2014-11-16
-//
-//		return _input.trim();
-//	}
-	// END KGU#93 2015-12-21
+// END KGU#93 2015-12-21
+		int asgnPos = transline.indexOf(":=");
+		// START KGU#109/KGU#141 2016-01-16: Bugfix #61,#112 - suppress type specifications
+		if (asgnPos >= 0)
+		{
+			String varName = transline.substring(0, asgnPos).trim();
+			String expr = transline.substring(asgnPos+2).trim();
+			String[] typeNameIndex = this.lValueToTypeNameIndex(varName);
+			varName = typeNameIndex[1];
+			String index = typeNameIndex[2];
+			if (!index.isEmpty())
+			{
+				varName = varName + "["+index+"]";
+			}
+			transline = varName + " := " + expr;
+		}
+		// END KGU#109/KGU#141 2016-01-16
+
+		return transline.trim();
+	}
+	
+
+	// START KGU#61 2016-03-23: New for enh. #84
+	private void insertDeclaration(String _category, String text, int _maxIndent)
+	{
+		int posDecl = -1;
+		String seekIndent = "";
+		while (posDecl < 0 && seekIndent.length() < _maxIndent)
+		{
+			posDecl = code.indexOf(seekIndent + _category);
+			seekIndent += this.getIndent();
+		}
+		code.insert(seekIndent + text, posDecl + 1);
+	}
+	// END KGU#61 2016-03-23
+
 	
 	protected void generateCode(Instruction _inst, String _indent)
 	{
@@ -295,7 +336,34 @@ public class OberonGenerator extends Generator {
 				}
 				else
 				{
-					code.add(_indent + transform(line) + ";");
+					// START KGU#100/#KGU#141 2016-01-16: Enh. #84 + Bugfix #112 - array handling
+					//code.add(_indent + transform(line) + ";");
+					String transline = transform(line);
+					int asgnPos = transline.indexOf(":=");
+					boolean isArrayInit = false;
+					// START KGU#100 2016-01-16: Enh. #84 - resolve array initialisation
+					if (asgnPos >= 0 && transline.contains("{") && transline.contains("}"))
+					{
+						String varName = transline.substring(0, asgnPos).trim();
+						String expr = transline.substring(asgnPos+":=".length()).trim();
+						isArrayInit = expr.startsWith("{") && expr.endsWith("}");
+						if (isArrayInit)
+						{
+							StringList elements = Element.splitExpressionList(
+									expr.substring(1, expr.length()-1), ",");
+							for (int el = 0; el < elements.count(); el++)
+							{
+								code.add(_indent + varName + "[" + el + "] := " + 
+										elements.get(el) + ";");
+							}
+						}
+						
+					}
+					if (!isArrayInit)
+					{
+						code.add(_indent + transline + ";");
+					}
+					// END KGU#100 2016-01-16
 				}
 				// END KGU#101/KGU#108 2015-12-20
 			}
@@ -353,6 +421,15 @@ public class OberonGenerator extends Generator {
         // START KGU 2014-11-16
         insertComment(_for, _indent);
         // END KGU 2014-11-16
+
+        // START KGU#61 2016-03-23: Enh. 84
+    	if (_for.isForInLoop() && generateForInCode(_for, _indent))
+    	{
+    		// All done
+    		return;
+    	}
+    	// END KGU#61 2016-03-23
+
         // START KGU#3 2015-11-02: New reliable loop parameter mechanism
 		//code.add(_indent+"FOR "+BString.replace(transform(_for.getText().getText()),"\n","")+" DO");
         int step = _for.getStepConst();
@@ -364,6 +441,134 @@ public class OberonGenerator extends Generator {
 		code.add(_indent+"END;");
 	}
 	
+	// START KGU#61 2016-03-23: Enh. #84 - Support for FOR-IN loops
+	/**
+	 * We try our very best to create a working loop from a FOR-IN construct
+	 * This will only work, however, if we can get reliable information about
+	 * the size of the value list, which won't be the case if we obtain it e.g.
+	 * via a variable.
+	 * @param _for - the element to be exported
+	 * @param _indent - the current indentation level
+	 * @return true iff the method created some loop code (sensible or not)
+	 */
+	protected boolean generateForInCode(For _for, String _indent)
+	{
+		boolean done = false;
+		String var = _for.getCounterVar();
+		StringList items = this.extractForInListItems(_for);
+		// Create some generic and unique variable names
+		String postfix = Integer.toHexString(_for.hashCode());
+		String arrayName = "array" + postfix;
+		String indexName = "index" + postfix;
+		String itemType = "FIXME_" + postfix;
+
+		if (items != null)
+		{
+			// Good question is: how do we guess the element type and what do we
+			// do if items are heterogenous? We will just try four types: boolean,
+			// integer, real and string, where we can only test literals.
+			// If none of them match then we add a TODO comment.
+			int nItems = items.count();
+			boolean allBoolean = true;
+			boolean allInt = true;
+			boolean allReal = true;
+			boolean allString = true;
+			for (int i = 0; i < nItems; i++)
+			{
+				String item = items.get(i);
+				if (allBoolean)
+				{
+					if (!item.equalsIgnoreCase("true") && !item.equalsIgnoreCase("false"))
+					{
+						allBoolean = false;
+					}
+				}
+				if (allInt)
+				{
+					try {
+						Integer.parseInt(item);
+					}
+					catch (NumberFormatException ex)
+					{
+						allInt = false;
+					}
+				}
+				if (allReal)
+				{
+					try {
+						Double.parseDouble(item);
+					}
+					catch (NumberFormatException ex)
+					{
+						allReal = false;
+					}
+				}
+				if (allString)
+				{
+					allString = item.startsWith("\"") && item.endsWith("\"") &&
+							!item.substring(1, item.length()-1).contains("\"") ||
+							item.startsWith("\'") && item.endsWith("\'") &&
+							!item.substring(1, item.length()-1).contains("\'");
+				}
+			}
+			
+			if (allBoolean) itemType = "BOOLEAN";
+			else if (allInt) itemType = "INTEGER";
+			else if (allReal) itemType = "REAL";
+			else if (allString) itemType = "string";
+			else {
+				// We do a dummy type definition
+				this.insertComment("TODO: Specify an appropriate element type for the array!", _indent);
+			}
+
+			// Insert the array and index declarations
+			insertDeclaration("VAR", arrayName + ": " + "ARRAY " + 
+					nItems + " OF " + itemType + ";", _indent.length());
+			insertDeclaration("VAR", indexName + ": INTEGER;",
+					_indent.length());
+
+			// Now we create code to fill the array with the enumerated values
+			for (int i = 0; i < nItems; i++)
+			{
+				code.add(_indent + arrayName + "[" + i + "] := " + items.get(i) + ";");
+			}
+			
+			// Creation of the loop header
+    		code.add(_indent + "FOR " + indexName + " := 0 TO " + (nItems-1) + " DO");
+
+    		// Creation of the loop body
+            code.add(_indent+this.getIndent() + var + " := " + arrayName + "[" + indexName + "];");
+            generateCode(_for.q, _indent+this.getIndent());
+            code.add(_indent + "END;");
+
+            done = true;
+		}
+		else
+		{
+			String valueList = _for.getValueList();
+			// Fortunately, there is a predefined function LEN in Oberon that makes it possible
+			// to convert this in to a COUNTER loop. We just need a generic index variable
+			if ((new Function(valueList).isFunction()))
+			{
+				// For performance reasons, it wouldn't be so good an idea to call the function all the way again
+				this.insertDeclaration("VAR", arrayName + ": ARRAY OF " + itemType + ";", _indent.length());
+				code.add(_indent + arrayName + " := " + valueList);
+				valueList = arrayName;
+			}
+			insertDeclaration("VAR", indexName + ": INTEGER;", _indent.length());
+			// Creation of the loop header
+			code.add(_indent + "FOR " + indexName + " := 0 TO LEN(" + transform(valueList, false) + ")-1 DO");
+            code.add(_indent+this.getIndent() + var + " := " + valueList + "[" + indexName + "];");
+			// Add the loop body as is
+			generateCode(_for.q, _indent + this.getIndent());
+            code.add(_indent + "END;");
+			
+			done = true;
+		}
+		return done;
+	}
+	// END KGU#61 2016-03-23
+
 	protected void generateCode(While _while, String _indent)
 	{
         // START KGU 2014-11-16
@@ -411,11 +616,52 @@ public class OberonGenerator extends Generator {
         insertComment(_jump, _indent);
         // END KGU 2014-11-16
         
-        // TODO: EXIT (= break) and RETURN exist, no further jump allowed
-		for(int i=0;i<_jump.getText().count();i++)
-		{
-			code.add(_indent+transform(_jump.getText().get(i))+";");
-		}
+		// START KGU#74/KGU#78 2016-01-17: actual jump handling
+		//for(int i=0;i<_jump.getText().count();i++)
+		//{
+		//	code.add(_indent+transform(_jump.getText().get(i))+";");
+		//}
+        // Only EXIT (= break) and RETURN exist, no further jump allowed
+        boolean isEmpty = true;
+
+        StringList lines = _jump.getText();
+        for (int i = 0; isEmpty && i < lines.count(); i++) {
+        	String line = transform(lines.get(i)).trim();
+        	if (!line.isEmpty())
+        	{
+        		isEmpty = false;
+        	}
+        	// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
+        	//code.add(_indent + line + ";");
+        	if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
+        	{
+        		code.add(_indent + "RETURN " + line.substring(D7Parser.preReturn.length()).trim() + ";");
+        	}
+        	else if (line.matches(Matcher.quoteReplacement(D7Parser.preExit)+"([\\W].*|$)"))
+        	{
+        		insertComment("FIXME: Find a solution to exit the program here!", _indent);
+        		insertComment(line, _indent);
+        	}
+        	else if (line.matches(Matcher.quoteReplacement(D7Parser.preLeave)+"([\\W].*|$)"))
+        	{
+        		String argument = line.substring(D7Parser.preLeave.length()).trim();
+        		if (!argument.isEmpty() && !argument.equals("1"))
+        		{
+        			insertComment("FIXME: No multi-level EXIT in OBERON; reformulate your loops to leave " + argument + " levels!", _indent);
+        			insertComment(line, _indent);
+        		}
+    			code.add(_indent + "EXIT;");
+        	}
+        	else if (!isEmpty)
+        	{
+        		insertComment("FIXME: jump/exit instruction of unrecognised kind!", _indent);
+        		insertComment(line, _indent);
+        	}
+        }
+        if (isEmpty) {
+        	code.add(_indent + "EXIT;");
+        }
+    	// END KGU#74/KGU#78 2016-01-17
 	}
 	
 	// START KGU#47 2015-12-20: Offer at least a sequential execution (which is one legal execution order)
@@ -529,6 +775,12 @@ public class OberonGenerator extends Generator {
 		}
 		
 		code.add(_indent + header + ";");
+		// START KGU 2016-03-23: For a module, we will by default import In and Out
+		if (_root.isProgram)
+		{
+			code.add(_indent + "IMPORT In, Out");	// Later, this could be done on demand
+		}
+		// END KGU#61 2016-03-23
 
 		// START KGU 2015-12-20: Don't understand what this was meant to achieve
 		// Add comments and/or declarations to the program (Bob)
@@ -538,14 +790,22 @@ public class OberonGenerator extends Generator {
 //			{
 //				code.add(_indent + _root.getComment().get(i));
 //			}
-//	        // START KGU 2014-11-16: Don't get the comments get lost
+//	        // START KGU 2014-11-16: Don't let the comments get lost
 //			else {
 //				insertComment(_root.getComment().get(i).substring(1), _indent);
 //			}
 //	        // END KGU 2014-11-16
 //		}
-		insertBlockComment(_root.getComment(), _indent, this.commentSymbolLeft(),
-				" * ", " " + this.commentSymbolRight());
+		// START KGU 2016-01-16: No need to create an empty comment
+		//insertBlockComment(_root.getComment(), _indent, this.commentSymbolLeft(),
+		//		" * ", " " + this.commentSymbolRight());
+		if (!_root.getComment().getLongString().trim().isEmpty())
+		{
+			insertBlockComment(_root.getComment(), _indent, this.commentSymbolLeft(),
+					" * ", " " + this.commentSymbolRight());
+		}
+		insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+		// END KGU 2016-01-16
 		// END KGU 2015-12-20
 
 		return _indent;

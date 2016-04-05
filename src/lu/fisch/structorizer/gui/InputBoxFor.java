@@ -35,10 +35,16 @@ package lu.fisch.structorizer.gui;
 *      Kay Gürtzig      2015-10-12		First Issue
 *      Kay Gürtzig      2015-11-01		Mutual text field update and error detection accomplished
 *      Kay Gürtzig      2015-12-04		frame width increased (-> 600)
+*      Kay Gürtzig      2016-03-20      Enhancement #84/#135: FOR-IN / FOREACH paradigm considered
 *
 ******************************************************************************************************
 *
 *      Comment:		/
+*      - This editor has practically two and a half modes:
+*        1. Structured editing of traditional counter loops via specific fields, text automatically composed
+*        2. full text editing, editor splits it to fill the structured counter fields (strong syntax support)
+*        3. full text editing, as soon as one of the keys for FOR IN loops occurs, a FOR-IN loop is assumed
+*           (weak syntax support)  
 *
 ******************************************************************************************************///
 
@@ -61,9 +67,12 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.Border;
 
+import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.BString;
+import lu.fisch.utils.StringList;
 
 /**
  * @author kay
@@ -75,18 +84,20 @@ public class InputBoxFor extends InputBox implements ItemListener {
 	protected JLabel lblStartVal/* = new JLabel("Start value")*/;
 	protected JLabel lblEndVal/* = new JLabel("End value")*/;
 	protected JLabel lblIncr/* = new JLabel("Increment")*/;
-	// START optional labels for design study 2
 	protected JLabel lblPreFor/* = new JLabel(D7Parser.preFor)*/;
 	protected JLabel lblPostFor/* = new JLabel(D7Parser.postFor)*/;
 	protected JLabel lblAsgnmt/* = new JLabel(" <- ")*/;
 	protected JLabel lblStepFor/* = new JLabel(D7Parser.stepFor)*/;
-	// END optional labels
-	protected JLabel lblParserWarnings/* = new JLabel("")*/;
+	protected JLabel lblParserInfo/* = new JLabel("")*/;
 	protected JTextField txtVariable/* = new JTextField(20)*/;
 	protected JTextField txtStartVal/* = new JTextField(10)*/;
 	protected JTextField txtEndVal/* = new JTextField(20)*/;
 	protected JTextField txtIncr/* = new JTextField(10)*/;
 	protected JCheckBox chkTextInput/* = new JCheckBox("Full Text Editing")*/;
+	
+	// START KGU#61 2016-03-20: Enh. #84/#135 - FOR-IN loop support
+	protected String forInValueList = null;
+	// END KGU#61 2016-03-20
 	
 	private int prevTxtIncrContent = 1;		// Workaround for poor behaviour of JFormattedTextField;
 
@@ -112,14 +123,11 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		lblStartVal = new JLabel("Start value");
 		lblEndVal = new JLabel("End value");
 		lblIncr = new JLabel("Increment");
-		// START optional labels for design study two
 		lblPreFor = new JLabel(D7Parser.preFor);
 		lblPostFor = new JLabel(D7Parser.postFor);
 		lblAsgnmt = new JLabel(" <- ");
 		lblStepFor = new JLabel(D7Parser.stepFor);
-		// END optional labels
-		lblParserWarnings = new JLabel("");
-		lblParserWarnings.setForeground(Color.RED);
+		lblParserInfo = new JLabel("");
 		txtVariable = new JTextField(50);
 		txtStartVal = new JTextField(20);
 		txtEndVal = new JTextField(50);
@@ -350,8 +358,8 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gbc.gridwidth = GridBagConstraints.REMAINDER;
 		_gbc.fill = GridBagConstraints.HORIZONTAL;
 		_gbc.anchor = GridBagConstraints.WEST;
-		_gb.setConstraints(lblParserWarnings, _gbc);
-		_panel.add(lblParserWarnings);
+		_gb.setConstraints(lblParserInfo, _gbc);
+		_panel.add(lblParserInfo);
 
 		return lineNo;
 	}
@@ -374,28 +382,63 @@ public class InputBoxFor extends InputBox implements ItemListener {
     				txtIncr.setText(Integer.toString(this.prevTxtIncrContent));
     			}
     		}
-    		txtText.setText(For.composeForClause(txtVariable.getText(), txtStartVal.getText(), txtEndVal.getText(), incr));
+    		txtText.setText(For.composeForClause(txtVariable.getText(), txtStartVal.getText(), txtEndVal.getText(), incr, false));
+    		// START KGU#61 2016-03-20: Enh. #84/#135 - FOR-IN loop support
+    		forInValueList = null;
+    		// END KGU#61 2016-03-20
     	}
     	else if (source == txtText)
     	{
     		//String text = For.unifyOperators(txtText.getText());	// Now done by splitForClause
     		String text = txtText.getText();
     		String[] forFractions = For.splitForClause(text);
-    		if (forFractions.length >= 3)
+    		// START KGU#61 2016-03-21: Enh. #84/#135 - check whether this is a FOR-IN loop
+    		if (forFractions.length >= 6 && forFractions[5] != null)
     		{
     			txtVariable.setText(forFractions[0]);
-    			txtStartVal.setText(forFractions[1]);
-    			txtEndVal.setText(forFractions[2]);
-    			txtIncr.setText(forFractions[3]);
-    		}
-    		if (forFractions[4].isEmpty() || forFractions[3].equals(forFractions[4]))
-    		{
-    			lblParserWarnings.setText("");
+    			forInValueList = forFractions[5];
+    			checkValueList();
+    			lblStartVal.setVisible(false);
+    			lblEndVal.setVisible(false);
+    			lblIncr.setVisible(false);
+    			lblPostFor.setForeground(Color.GRAY);
+    			lblAsgnmt.setText(D7Parser.postForIn);
+    			lblStepFor.setForeground(Color.GRAY);			
+    			txtStartVal.setText("");
+    			txtEndVal.setText("");
+    			txtIncr.setText("");
     		}
     		else
     		{
-    			lblParserWarnings.setText("<" + forFractions[4] + "> is no valid integer constant");
+    			// END KGU#61 2016-03-21
+    			if (forFractions.length >= 3)
+    			{
+    				// START KGU#61 2016-03-21: Enh. #84/#135 - Ensure traditional field visibility
+    				lblStartVal.setVisible(true);
+    				lblEndVal.setVisible(true);
+    				lblIncr.setVisible(true);
+    				lblPostFor.setForeground(Color.BLACK);
+    				lblAsgnmt.setText(" <- ");
+    				lblStepFor.setForeground(Color.BLACK);			
+    				// END KGU#61 2016-03-21
+    				txtVariable.setText(forFractions[0]);
+    				txtStartVal.setText(forFractions[1]);
+    				txtEndVal.setText(forFractions[2]);
+    				txtIncr.setText(forFractions[3]);
+    			}
+    			if (forFractions[4].isEmpty() || forFractions[3].equals(forFractions[4]))
+    			{
+    				lblParserInfo.setText("");
+    			}
+    			else
+    			{
+    				lblParserInfo.setForeground(Color.RED);
+    				lblParserInfo.setText("<" + forFractions[4] + "> is no valid integer constant");
+    			}
+   			// START KGU#61 2016-03-21: Enh. #84/#135 (continued)
+        		forInValueList = null;
     		}
+    		// END KGU#61 2016-03-21
     	}
     	super.keyReleased(kevt);
     }
@@ -408,15 +451,86 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		}
 	}
 	
+	// TODO: Change parameter to For.ForLoopStyle
 	public void enableTextFields(boolean inputAsText)
 	{
 		txtVariable.setEnabled(!inputAsText);
 		txtStartVal.setEnabled(!inputAsText);
 		txtEndVal.setEnabled(!inputAsText);
 		txtIncr.setEnabled(!inputAsText);
+		// START KGU#61 2016-03-21: Enh. #84/#135 - Ensure traditional field visibility
+		if (!inputAsText)
+		{
+			lblStartVal.setVisible(true);
+			lblEndVal.setVisible(true);
+			lblIncr.setVisible(true);
+			lblPostFor.setForeground(Color.BLACK);
+			lblAsgnmt.setText(" <- ");
+			lblStepFor.setForeground(Color.BLACK);			
+		}
+		// END KGU#61 2016-03-21
+		
 		txtText.setEnabled(inputAsText);
-		lblParserWarnings.setVisible(inputAsText);
+		lblParserInfo.setVisible(inputAsText);
 	}
 
+	// START KGU#61 2016-03-21: Enh. #84 - special test for FOR-IN loop
+	private void checkValueList()
+	{
+		lblParserInfo.setForeground(Color.BLACK);
+		lblParserInfo.setText("");
+		if (forInValueList.startsWith("{") && !forInValueList.endsWith("}"))
+		{				
+    			lblParserInfo.setForeground(Color.RED);
+    			lblParserInfo.setText("Value list must end with '}'");
+		}
+		else if (!forInValueList.startsWith("{") && forInValueList.endsWith("}"))
+		{				
+			lblParserInfo.setForeground(Color.RED);
+			lblParserInfo.setText("Value list should begin with '{'");
+		}
+		else if ((new Function(forInValueList)).isFunction())
+		{
+			lblParserInfo.setForeground(Color.BLUE);
+			lblParserInfo.setText("Ensure the function returns an array.");			
+		}
+		else if (forInValueList.isEmpty())
+		{
+			lblParserInfo.setForeground(Color.BLUE);
+			lblParserInfo.setText("Enter the value list for the loop.");			
+		}
+		//lblParserInfo.setForeground(Color.decode("0x007700"));
+		//lblParserInfo.setText(values);
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.gui.InputBox#checkConsistency()
+	 */
+	@Override
+	public void checkConsistency()
+	{
+		if (chkTextInput.isSelected())
+		{
+    		String text = txtText.getText();
+    		String[] forFractions = For.splitForClause(text);
+    		// START KGU#61 2016-03-21: Enh. #84/#135 - check whether this is a FOR-IN loop
+    		if (forFractions.length >= 6 && forFractions[5] != null)
+    		{
+    			txtVariable.setText(forFractions[0]);
+    			forInValueList = forFractions[5];
+    			checkValueList();
+    			lblStartVal.setVisible(false);
+    			lblEndVal.setVisible(false);
+    			lblIncr.setVisible(false);
+    			lblPostFor.setForeground(Color.GRAY);
+    			lblAsgnmt.setText(D7Parser.postForIn);
+    			lblStepFor.setForeground(Color.GRAY);			
+    			txtStartVal.setText("");
+    			txtEndVal.setText("");
+    			txtIncr.setText("");
+    		}		
+		}
+	}
+	// END KGU#61 2016-03-21
 
 }

@@ -1,5 +1,5 @@
 /*
-    Structorizer german language file
+    Structorizer German language file
 
     Copyright (C) 2009  Klaus-Peter Reimers
 
@@ -29,17 +29,21 @@
  *
  *      Revision List
  *
- *      Author          	Date			Description
- *      ------			----			-----------
- *      Klaus-Peter Reimers 	2008.01.14      	First Issue
- *      Kay Gürtzig		2014.10.18		Linguistic flaws corrected
- *      Kay Gürtzig		2014.12.02		ExportOptionDialoge and further messages added
- *      Kay Gürtzig	 	2015.10.06		altPadRight added to Preferences dialog
- *      Kay Gürtzig		2015.10.14		InputBox.class_specific stuff added
- *      Kay Gürtzig		2015.11.01		InputBoxFor captions and Analyzer messages for FOR loops added
- *      Kay Gürtzig		2015.11.09		Additions for ParserPreferences (KGU#3 FOR loop enhancement)
- *      Kay Gürtzig		2015.11.15		Messages for Jump element modified or corrected
- *      Kay Gürtzig 	2015.12.18		New messages for ExportOptionDialoge
+ *      Author              Date        Description
+ *      ------              ----        -----------
+ *      Klaus-Peter Reimers 2008.01.14  Frst Issue
+ *      Kay Gürtzig         2014.10.18  Linguistic flaws corrected
+ *      Kay Gürtzig         2014.12.02  ExportOptionDialoge and further messages added
+ *      Kay Gürtzig         2015.10.06  altPadRight added to Preferences dialog
+ *      Kay Gürtzig         2015.10.14  InputBox.class_specific stuff added
+ *      Kay Gürtzig         2015.11.01  InputBoxFor captions and Analyzer messages for FOR loops added
+ *      Kay Gürtzig         2015.11.09  Additions for ParserPreferences (KGU#3 FOR loop enhancement)
+ *      Kay Gürtzig         2015.11.15  Messages for Jump element modified or corrected
+ *      Kay Gürtzig         2015.12.18  New messages for ExportOptionDialoge
+ *      Kay Gürtzig         2016.01.04  Enh. #87: New messages for collapsing / expanding elements
+ *      Kay Gürtzig         2016.03.21  Enh. #84: Messages related to FOR-IN loops added
+ *      Kay Gürtzig         2016.03.31  Enh. #23: ParserPreferences for JUMP statements,
+ *      Kay Gürtzig         2016.04.01  Enh. #144: New ExportOptionDialog and Menu messages
  *
  ******************************************************************************************************
  *
@@ -60,6 +64,8 @@ Menu.menuFileExport.text=Exportieren
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Bild ...
 Menu.menuFileExportCode.text=Quellcode ...
+Menu.lbFileExportCodeFavorite.text=Exportieren nach %
+Menu.menuFileExportCodeFavorite.tooltip=Die bevorzugte Exportsprache kann in den Export-Einstellungen gewählt werden.
 Menu.menuFileImport.text=Importieren
 // Submenu of "File -> Import"
 Menu.menuFileImportPascal.text=Pascal Code ...
@@ -106,10 +112,16 @@ Menu.menuDiagramAddAfterForever.text=ENDLOS-Schleife
 Menu.menuDiagramAddAfterCall.text=Aufruf-Anweisung
 Menu.menuDiagramAddAfterJump.text=Aussprung-Anweisung
 Menu.menuDiagramAddAfterPara.text=Parallel-Abschnitt
+// Element manipulation
 Menu.menuDiagramEdit.text=Bearbeiten
 Menu.menuDiagramDelete.text=Löschen
 Menu.menuDiagramMoveUp.text=Nach oben
 Menu.menuDiagramMoveDown.text=Nach unten
+Menu.menuDiagramCollapse.text=Reduzieren
+Menu.menuDiagramExpand.text=Erweitern
+// Breakpoint
+Menu.menuDiagramBreakpoint.text=Haltepunkt setzen/löschen
+// Diagram Appearance
 Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=Hauptprogramm
 Menu.menuDiagramTypeFunction.text=Unterprogramm
@@ -117,8 +129,9 @@ Menu.menuDiagramNice.text=Umrahmtes Diagramm?
 Menu.menuDiagramComment.text=Zeige Kommentare?
 Menu.menuDiagramSwitchComments.text=Tausche Text/Kommentare?
 Menu.menuDiagramMarker.text=Hervorheben von Variablen?
-Menu.menuDiagramDIN.text=DIN?
+Menu.menuDiagramDIN.text=DIN 66261?
 Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
+Menu.menuDiagramWheel.text=Mausrad zum Reduzieren?
 // Menu "Help"
 Menu.menuPreferences.text=Einstellungen
 // Submenu of "Help"
@@ -171,10 +184,10 @@ Menu.error07_2.text=«%» ist kein korrekter Name für einen Parameter!
 Menu.error07_3.text=«%» ist kein korrekter Name für eine Variable!
 Menu.error08.text=In einer Bedingung darf keine Wertzuweisung erfolgen!
 Menu.error09.text=Der Programmname («%») darf nicht identisch mit dem Namen einer Variablen oder eines Parameters sein!
-Menu.error10_1.text=Eine Anweisung darf nicht zugleich Eingaben, Ausgaben und Wertzuweisungen beinhalten!
-Menu.error10_2.text=Eine Anweisung darf nicht zugleich Eingaben und Ausgaben beinhalten!
-Menu.error10_3.text=Eine Anweisung darf nicht zugleich Eingaben und Wertzuweisungen beinhalten!
-Menu.error10_4.text=Eine Anweisung darf nicht zugleich Ausgaben und Wertzuweisungen beinhalten!
+Menu.error10_1.text=Eine Anweisung soll nicht zugleich Eingaben, Ausgaben und Wertzuweisungen beinhalten!
+Menu.error10_2.text=Eine Anweisung soll nicht zugleich Eingaben und Ausgaben beinhalten!
+Menu.error10_3.text=Eine Anweisung soll nicht zugleich Eingaben und Wertzuweisungen beinhalten!
+Menu.error10_4.text=Eine Anweisung soll nicht zugleich Ausgaben und Wertzuweisungen beinhalten!
 Menu.error11.text=Wertzuweisung scheint fehlerhaft. Anweisung überprüfen ...
 Menu.error12.text=Der Parameter «%» muss mit dem Buchstaben "p" anfangen, gefolgt nur von Großbuchstaben!
 Menu.error13_1.text=Die Funktion hat keinen Rückgabewert!
@@ -182,6 +195,7 @@ Menu.error13_2.text=Die Funktion hat nicht in jedem Fall einen Rückgabewert!
 Menu.error13_3.text=Die Funktion verwendet verschiedene Wertrückgabemechanismen zugleich: «%»!
 Menu.error14_1.text=Die Einzelangaben der Zählschleife und der Text passen nicht zusammen!
 Menu.error14_2.text=Die Schrittweite «%» der Zählschleife ist keine konstante Ganzzahl!
+Menu.error14_3.text=Variable «%» steht in möglichem Namenskonflikt mit einem der konfigurierten Kennwörtern für FOR-Schleifen!
 Menu.error15.text=Der Unterprogrammaufruf hat nicht die Form [ <var> <- ] <routine_name>(<arg_list>)!
 Menu.error16_1.text=Der Aussprung muss leer sein oder mit einem der Schlüsselwörter % beginnen!
 Menu.error16_2.text=Eine return-Anweisung muss (außer am Diagrammende) ein Aussprung-Element sein!
@@ -205,7 +219,7 @@ AnalyserPreferences.check9.text=Testen, ob sich der Programmname von allen ander
 AnalyserPreferences.check10.text=Nach fehlerhaften mehrzeiligen Anweisungen suchen.
 AnalyserPreferences.check11.text=Nach fehlerhaften Wertzuweisungen suchen.
 AnalyserPreferences.check12.text=Prüfen, ob die Parameternamen korrekt sind. (LUX/MEN)
-AnalyserPreferences.check13.text=Prüfen, ob im Falle einer Funktion diese auch einen Rückgabewert hat.
+AnalyserPreferences.check13.text=Prüfen, ob eine Funktion stets auch einen Rückgabewert hat.
 AnalyserPreferences.check14.text=Prüfen, ob die Angaben von FOR-Schleifen konsistent sind.
 AnalyserPreferences.check15.text=Prüfen, ob Aufruf-Elemente nur einen einzelnen Routinenaufruf enthalten.
 AnalyserPreferences.check16.text=Prüfen, ob Aussprung-Elemente korrekt benutzt sind.
@@ -280,6 +294,9 @@ Editor.btnColor6.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
 Editor.btnColor7.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
 Editor.btnColor8.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
 Editor.btnColor9.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
+// collapsing
+Editor.btnCollapse.tooltip=Reduzieren des ausgewählten Elements.
+Editor.btnExpand.tooltip=Erweitern des ausgewählten Elements.
 // Popup menu
 Editor.popupCut.text=Ausschneiden
 Editor.popupCopy.text=Kopieren
@@ -316,6 +333,9 @@ Editor.popupEdit.text=Bearbeiten
 Editor.popupDelete.text=Löschen
 Editor.popupMoveUp.text=Nach oben bewegen
 Editor.popupMoveDown.text=Nach unten bewegen
+// Collapsing
+Editor.popupCollapse.text=Reduzieren
+Editor.popupExpand.text=Erweitern
 // Breakpoint
 Editor.popupBreakpoint.text=Haltepunkt setzen/löschen
 
@@ -476,27 +496,38 @@ ColorChooser.btnOK.tooltip=Speichern der gewählten Einstellungen.
 -----[ ParserPreferences ]-----
 ParserPreferences.title=Parser-Einstellungen
 ParserPreferences.lblPre.text=Vor
-ParserPreferences.lblPre.tooltip=Einzufügen (im Anweisungskopf) vor der Haupteintragung.
+ParserPreferences.lblPre.tooltip=Kennwörter (im Anweisungskopf) vor der Haupteintragung.
 ParserPreferences.lblPost.text=Nach
-ParserPreferences.lblPost.tooltip=Einzufügen (im Anweisungskopf) nach der Haupteintragung.
+ParserPreferences.lblPost.tooltip=Kennwörter (im Anweisungskopf) nach der Haupteintragung.
 ParserPreferences.lblAlt.text=IF-Anweisung
-ParserPreferences.lblAlt.tooltip=Einfügungen im IF-Anweisungskopf.
+ParserPreferences.lblAlt.tooltip=Kennwörter um die Bedingung herum im IF-Anweisungskopf.
 ParserPreferences.lblCase.text=CASE-Anweisung
-ParserPreferences.lblCase.tooltip=Einfügungen im CASE-Anweisungskopf.
-ParserPreferences.lblFor.text=FOR-Anweisung
-ParserPreferences.lblFor.tooltip=Einfügungen im FOR-Anweisungskopf.
+ParserPreferences.lblCase.tooltip=Kennwörter im CASE-Anweisungskopf.
+ParserPreferences.lblFor.text=FOR-Schleife
+ParserPreferences.lblFor.tooltip=Gliedernde Kennwörter im FOR-Schleifenkopf.
 ParserPreferences.lblForStep.text=Schrittweite
+ParserPreferences.lblForIn.text=FOR-IN-Schleife
+ParserPreferences.lblForIn.tooltip=Gliedernde Kennwörter im Schleifenkopf von FOR-IN-Schleifen.
+ParserPreferences.edtForInPre.tooltip=Kann gleich dem der FOR-Schleife sein (oder leer bleiben mit gleicher Wirkung)
+ParserPreferences.edtForInPost.tooltip=muss sich von allen anderen Kennwörtern unterscheiden!
 ParserPreferences.lblWhile.text=WHILE-Schleife
-ParserPreferences.lblWhile.tooltip=Einfügungen im WHILE-Anweisungskopf.
+ParserPreferences.lblWhile.tooltip=Kennwörter im WHILE-Schleifenkopf.
 ParserPreferences.lblRepeat.text=REPEAT-Schleife
-ParserPreferences.lblRepeat.tooltip=Einfügungen im REPEAT-Anweisungskopf.
+ParserPreferences.lblRepeat.tooltip=Die Austrittsbedingung einrahmende Kennwörter.
+ParserPreferences.lblJump.text=Aussprung-Anweisung
+ParserPreferences.lblJump.tooltip=Klassifizierende Kennwörter für die Aussprung-Arten.
+ParserPreferences.lblJumpLeave.text=aus Schleifen
+ParserPreferences.lblJumpReturn.text=aus Routinen
+ParserPreferences.lblJumpExit.text=aus dem Programm
 ParserPreferences.lblInput.text=Eingabe
-ParserPreferences.lblInput.tooltip=Einfügungen für Eingabe-Anweisungen.
+ParserPreferences.lblInput.tooltip=Kennwort für Eingabe-Anweisungen.
 ParserPreferences.lblOutput.text=Ausgabe
-ParserPreferences.lblOutput.tooltip=Einfügungen für Ausgabe-Einweisungen.
+ParserPreferences.lblOutput.tooltip=Kennwort für Ausgabe-Einweisungen.
+ParserPreferences.chkIgnoreCase.text=Ignoriere Gr./Kl.-Schreibung
 ParserPreferences.btnOK.text=Speichern
 ParserPreferences.btnOK.tooltip=Speichern der gewählten Einstellungen.
-ParserPreferences.lblErrorSign.text=Der Doppelpunkt ':' darf in keiner der Parser-Einstellungen vorkommen!
+ParserPreferences.lblErrorSign.text=Ein Doppelpunkt ':' darf in keiner der Parser-Einstellungen vorkommen!
+ParserPreferences.lblErrorSign2.text=Das Nach-Kennwort für FOR-IN-Schleifen darf keinem anderen Parser-Kennwort gleichen!
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Druckvoransicht
@@ -509,9 +540,12 @@ PrintPreview.btnOK.tooltip=Das Diagram ausdrucken.
 
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Einstellungen für den Code-Export
+ExportOptionDialoge.noConversionCheckBox.text=Keine Umwandlung der Elementinhalte (Ausdrücke, Befehle).
+ExportOptionDialoge.noConversionCheckBox.tooltip=Aktivieren Sie diese Option, wenn Ihre Struktogrammtexte bereits in der Zielsprache formuliert sind.
 ExportOptionDialoge.commentsCheckBox.text=Anweisungen als Kommentare exportieren.
 ExportOptionDialoge.bracesCheckBox.text=Öffnende Blockklammern ans Ende der Zeile (C/C++/Java etc.).
 ExportOptionDialoge.lineNumbersCheckBox.text=Zeilennummern mitgenerieren (BASIC).
+ExportOptionDialoge.lbPrefGenerator.text=Bevorzugte Code-Export-Sprache:
 ExportOptionDialoge.jLabel1.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Speichern der gewählten Einstellungen.

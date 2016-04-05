@@ -36,7 +36,13 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2008.04.12      Adapted for Generator plugin
  *      Kay Gürtzig     2015.11.03      Additions for FOR loop enhancement (KGU#3)
  *      Kay Gürtzig     2015.11.22      Adaptations for handling selected non-empty Subqueues (KGU#87)
- *      Kay Gürtzig     2015.11.25      New error labels error13_3 (KGU#78) and error15 (KGU#2) added
+ *      Kay Gürtzig     2015.11.25      Error labels error13_3 (KGU#78), error15 (KGU#2), and error_16_x added
+ *      Kay Gürtzig     2015.11.26      New error label error14_3 (KGU#3) added
+ *      Kay Gürtzig     2015.11.28      New error label error17 (KGU#47) added
+ *      Kay Gürtzig     2016.01.03/04   Enh. #87: New menu items and buttons for collapsing/expanding 
+ *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
+ *      Kay Gürtzig     2016.01.22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#143 + KGU#144).
+ *      Kay Gürtzig     2016.04.01      Issue #144: Favourite code export menu item, #142 accelerator keys added
  *
  ******************************************************************************************************
  *
@@ -47,16 +53,13 @@ package lu.fisch.structorizer.gui;
 
 import java.util.*;
 import java.io.*;
-
 import java.awt.*;
 import java.awt.event.*;
 
-
 import javax.swing.*;
 
-//import sun.awt.image.codec.JPEGImageEncoderImpl;
-
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.helpers.*;
 import lu.fisch.structorizer.io.INIFilter;
 import lu.fisch.structorizer.io.Ini;
@@ -85,11 +88,10 @@ public class Menu extends JMenuBar implements NSDController
 	protected JMenuItem menuFileExportPicturePDF = new JMenuItem("PDF ...",IconLoader.ico032);
 	protected JMenuItem menuFileExportPictureSVG = new JMenuItem("SVG ...",IconLoader.ico032);
 	protected JMenu menuFileExportCode = new JMenu("Code");
-/*	protected JMenuItem menuFileExportPascal = new JMenuItem("Pascal Code ...",IconLoader.ico004);
-	protected JMenuItem menuFileExportOberon = new JMenuItem("Oberon Code ...",IconLoader.ico004);
-	protected JMenuItem menuFileExportStruktex = new JMenuItem("StrukTeX Code ...",IconLoader.ico076);
-	protected JMenuItem menuFileExportPerl = new JMenuItem("Perl Code ...",IconLoader.ico004);
-	protected JMenuItem menuFileExportKSH = new JMenuItem("KSH Code ...",IconLoader.ico004);*/
+	// START KGU#171 2016-04-01: Enh. #144 - new menu item for Favourite Code Export
+	protected static LangTextHolder lbFileExportCodeFavorite = new LangTextHolder("Export as % Code");	// Label template for translation
+	protected JMenuItem menuFileExportCodeFavorite = new JMenuItem("Export Fav. Code", IconLoader.ico004);
+	// END KGU#171 2016-04-01
 	protected JMenu menuFileImport = new JMenu("Import");
 	// Submenu of "File -> Import"
 	protected JMenuItem menuFileImportPascal = new JMenuItem("Pascal Code ...",IconLoader.ico004);
@@ -149,6 +151,13 @@ public class Menu extends JMenuBar implements NSDController
 	protected JMenuItem menuDiagramDelete = new JMenuItem("Delete",IconLoader.ico005);
 	protected JMenuItem menuDiagramMoveUp = new JMenuItem("Move up",IconLoader.ico019);
 	protected JMenuItem menuDiagramMoveDown = new JMenuItem("Move down",IconLoader.ico020);
+	// START KGU#123 2016-01-03: New menu items for collapsing/expanding (addresses #65)
+	protected JMenuItem menuDiagramCollapse = new JMenuItem("Collapse", IconLoader.ico106);
+	protected JMenuItem menuDiagramExpand = new JMenuItem("Expand", IconLoader.ico107);
+	// END KGU#123 2016-01-03
+	// START KGU#143 2016-01-21: Bugfix #114 - Compensate editing restriction by accelerator4
+	protected JMenuItem menuDiagramBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
+	// END KGU#143 2016-01-21
 
 	protected JMenu menuDiagramType = new JMenu("Type");
 	protected JCheckBoxMenuItem menuDiagramTypeProgram = new JCheckBoxMenuItem("Main",IconLoader.ico022);
@@ -156,9 +165,12 @@ public class Menu extends JMenuBar implements NSDController
 	protected JCheckBoxMenuItem menuDiagramNice = new JCheckBoxMenuItem("Boxed diagram?",IconLoader.ico040);
 	protected JCheckBoxMenuItem menuDiagramComment = new JCheckBoxMenuItem("Show comments?",IconLoader.ico077);
 	protected JCheckBoxMenuItem menuDiagramMarker = new JCheckBoxMenuItem("Highlight variables?",IconLoader.ico079);
-	protected JCheckBoxMenuItem menuDiagramDIN = new JCheckBoxMenuItem("DIN?",IconLoader.ico082);
+	protected JCheckBoxMenuItem menuDiagramDIN = new JCheckBoxMenuItem("DIN 66261?",IconLoader.ico082);
 	protected JCheckBoxMenuItem menuDiagramAnalyser = new JCheckBoxMenuItem("Analyse structogram?",IconLoader.ico083);
 	protected JCheckBoxMenuItem menuDiagramSwitchComments = new JCheckBoxMenuItem("Switch text/comments?",IconLoader.ico102);
+	// START KGU#123 2016-01-04: Enh. #87
+	protected JCheckBoxMenuItem menuDiagramWheel = new JCheckBoxMenuItem("Mouse wheel for collapsing?",IconLoader.ico108);
+	// END KGU#123 2016-01-04
 
 	// Menu "Help"
 	protected JMenu menuPreferences = new JMenu("Preferences");
@@ -196,49 +208,49 @@ public class Menu extends JMenuBar implements NSDController
 	protected JMenuItem menuHelpUpdate = new JMenuItem("Update ...",IconLoader.ico052);
 
 	// Error messages for analyser
-	public static JLabel error01_1 = new JLabel("WARNING: No loop variable detected ...");
-	public static JLabel error01_2 = new JLabel("WARNING: More than one loop variable detected ...");
-	public static JLabel error01_3 = new JLabel("You are not allowed to modify the loop variable «%» inside the loop!");
-	public static JLabel error02 = new JLabel("No change of the variables in the condition detected. Possible endless loop ...");
-	public static JLabel error03_1= new JLabel("The variable «%» has not yet been initialized!");
-	public static JLabel error03_2 = new JLabel("The variable «%» may not have been initialized!");
-	public static JLabel error04 = new JLabel("You are not allowed to use an IF-statement with an empty TRUE-block!");
-	public static JLabel error05 = new JLabel("The variable «%» must be written in uppercase!");
-	public static JLabel error06 = new JLabel("The programname «%» must be written in uppercase!");
-	public static JLabel error07_1 = new JLabel("«%» is not a valid name for a program or function!");
-	public static JLabel error07_2 = new JLabel("«%» is not a valid name for a parameter!");
-	public static JLabel error07_3 = new JLabel("«%» is not a valid name for a variable!");
-	public static JLabel error08 = new JLabel("It is not allowed to make an assignment inside a condition.");
-	public static JLabel error09 = new JLabel("Your program («%») cannot have the same name as a variable or parameter!");
-	public static JLabel error10_1 = new JLabel("A single instruction element should not contain input/output instructions and assignments!");
-	public static JLabel error10_2 = new JLabel("A single instruction element should not contain input and output instructions!");
-	public static JLabel error10_3 = new JLabel("A single instruction element should not contain input instructions and assignments!");
-	public static JLabel error10_4 = new JLabel("A single instruction element should not contain ouput instructions and assignments!");
-	public static JLabel error11 = new JLabel("You probably made an assignment error. Please check this instruction!");
-	public static JLabel error12 = new JLabel("The parameter «%» must start with the letter \"p\" followed by only uppercase letters!");
-	public static JLabel error13_1 = new JLabel("Your function does not return any result!");
-	public static JLabel error13_2 = new JLabel("Your function may not return a result!");
+	public static LangTextHolder error01_1 = new LangTextHolder("WARNING: No loop varLangTextHolderdetected ...");
+	public static LangTextHolder error01_2 = new LangTextHolder("WARNING: More than one loop variable detected ...");
+	public static LangTextHolder error01_3 = new LangTextHolder("You are not allowed to modify the loop variable «%» inside the loop!");
+	public static LangTextHolder error02 = new LangTextHolder("No change of the variables in the condition detected. Possible endless loop ...");
+	public static LangTextHolder error03_1= new LangTextHolder("The variable «%» has not yet been initialized!");
+	public static LangTextHolder error03_2 = new LangTextHolder("The variable «%» may not have been initialized!");
+	public static LangTextHolder error04 = new LangTextHolder("You are not allowed to use an IF-statement with an empty TRUE-block!");
+	public static LangTextHolder error05 = new LangTextHolder("The variable «%» must be written in uppercase!");
+	public static LangTextHolder error06 = new LangTextHolder("The programname «%» must be written in uppercase!");
+	public static LangTextHolder error07_1 = new LangTextHolder("«%» is not a valid name for a program or function!");
+	public static LangTextHolder error07_2 = new LangTextHolder("«%» is not a valid name for a parameter!");
+	public static LangTextHolder error07_3 = new LangTextHolder("«%» is not a valid name for a variable!");
+	public static LangTextHolder error08 = new LangTextHolder("It is not allowed to make an assignment inside a condition.");
+	public static LangTextHolder error09 = new LangTextHolder("Your program («%») cannot have the same name as a variable or parameter!");
+	public static LangTextHolder error10_1 = new LangTextHolder("A single instruction element should not contain input/output instructions and assignments!");
+	public static LangTextHolder error10_2 = new LangTextHolder("A single instruction element should not contain input and output instructions!");
+	public static LangTextHolder error10_3 = new LangTextHolder("A single instruction element should not contain input instructions and assignments!");
+	public static LangTextHolder error10_4 = new LangTextHolder("A single instruction element should not contain ouput instructions and assignments!");
+	public static LangTextHolder error11 = new LangTextHolder("You probably made an assignment error. Please check this instruction!");
+	public static LangTextHolder error12 = new LangTextHolder("The parameter «%» must start with the letter \"p\" followed by only uppercase letters!");
+	public static LangTextHolder error13_1 = new LangTextHolder("Your function does not return any result!");
+	public static LangTextHolder error13_2 = new LangTextHolder("Your function may not return a result!");
 	// START KGU#78 (#23) 2015-11-25: Check for competitive return mechanisms
-	public static JLabel error13_3 = new JLabel("Your functions seems to use several competitive return mechanisms: «%»!");
+	public static LangTextHolder error13_3 = new LangTextHolder("Your functions seems to use several competitive return mechanisms: «%»!");
 	// END KGU#78 (#23) 2015-11-25
 	// START KGU#3 2015-11-03: New checks for the enhanced For loop
-	public static JLabel error14_1 = new JLabel("The FOR loop parameters are not consistent to the loop heading text!");
-	public static JLabel error14_2 = new JLabel("The FOR loop step value («%») is not a legal integer constant!");
+	public static LangTextHolder error14_1 = new LangTextHolder("The FOR loop parameters are not consistent to the loop heading text!");
+	public static LangTextHolder error14_2 = new LangTextHolder("The FOR loop step value («%») is not a legal integer constant!");
 	// START KGU#3 2015-11-26: More clarity if e.g. a counter variable is named "step" and so is the stepFor parser preference
-	public static JLabel error14_3 = new JLabel("Variable name «%» may collide with one of the configured FOR loop heading keywords!");
+	public static LangTextHolder error14_3 = new LangTextHolder("Variable name «%» may collide with one of the configured FOR loop heading keywords!");
 	// END KGU#3 2015-11-26
 	// END KGU#3 2015-11-03
 	// START KGU#2 2015-11-25: New check for call element syntax
-	public static JLabel error15 = new JLabel("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
-	public static JLabel error16_1 = new JLabel("A JUMP element may be empty or start with one of %, possibly followed by an argument!");	
-	public static JLabel error16_2 = new JLabel("A return instruction, unless at final position, must form a JUMP element!");
-	public static JLabel error16_3 = new JLabel("An exit, leave or break instruction is only allowed as JUMP element!");
-	public static JLabel error16_4 = new JLabel("Cannot leave or break more loop levels than being nested in («%»)!");
-	public static JLabel error16_5 = new JLabel("You must not directly return out of a parallel thread!");
-	public static JLabel error16_6 = new JLabel("Wrong argument for this kind of JUMP (should be an integer constant)!");
+	public static LangTextHolder error15 = new LangTextHolder("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
+	public static LangTextHolder error16_1 = new LangTextHolder("A JUMP element may be empty or start with one of %, possibly followed by an argument!");	
+	public static LangTextHolder error16_2 = new LangTextHolder("A return instruction, unless at final position, must form a JUMP element!");
+	public static LangTextHolder error16_3 = new LangTextHolder("An exit, leave or break instruction is only allowed as JUMP element!");
+	public static LangTextHolder error16_4 = new LangTextHolder("Cannot leave or break more loop levels than being nested in («%»)!");
+	public static LangTextHolder error16_5 = new LangTextHolder("You must not directly return out of a parallel thread!");
+	public static LangTextHolder error16_6 = new LangTextHolder("Wrong argument for this kind of JUMP (should be an integer constant)!");
 	// END KGU#2 2015-11-25
 	// START KGU#47 2015-11-28: New check for concurrency problems
-	public static JLabel error17 = new JLabel("Consistency risk due to concurrent access to variable «%» by several parallel threads!");
+	public static LangTextHolder error17 = new LangTextHolder("Consistency risk due to concurrent access to variable «%» by several parallel threads!");
 	// END KGU#47 2015-11-28
 
 
@@ -307,7 +319,7 @@ public class Menu extends JMenuBar implements NSDController
 		// and add them to the menu
 		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("generators.xml"));
 		GENParser genp = new GENParser();
-		Vector plugins = genp.parse(buff);
+		Vector<GENPlugin> plugins = genp.parse(buff);
 		for(int i=0;i<plugins.size();i++)
 		{
 			GENPlugin plugin = (GENPlugin) plugins.get(i);
@@ -316,22 +328,30 @@ public class Menu extends JMenuBar implements NSDController
 			final String className = plugin.className;
 			pluginItem.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.export(className); doButtons(); } } );
 		}
-/*
-		menuFileExport.add(menuFileExportPascal);
-		menuFileExportPascal.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.export("lu.fisch.structorizer.generators.PasGenerator"); doButtons(); } } );
+		
+		// START KGU#171 2016-04-01: Enh. #144 - accelerated export to favourite target language
+		menuFile.add(menuFileExportCodeFavorite);
+		menuFileExportCodeFavorite.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X,(java.awt.event.InputEvent.SHIFT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
+		menuFileExportCodeFavorite.setToolTipText("You may alter the favourite target language in the export preferences.");
+		menuFileExportCodeFavorite.addActionListener(
+				new ActionListener() {
+					public void actionPerformed(ActionEvent event)
+					{
+						boolean done = false;
+						String generatorName = diagram.getPreferredGeneratorName();
+						for (int pos = 0; !done && pos < menuFileExportCode.getItemCount(); pos++)
+						{
+							JMenuItem pluginItem = menuFileExportCode.getItem(pos);
+							if (pluginItem.getText().equals(generatorName))
+							{
+								pluginItem.getActionListeners()[0].actionPerformed(event);
+								done = true;
+							}
+						}
+					}
+				});
+		// END KGU#171 2016-04-01
 
-		menuFileExport.add(menuFileExportOberon);
-		menuFileExportOberon.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportMOD(); doButtons(); } } );
-
-		menuFileExport.add(menuFileExportStruktex);
-		menuFileExportStruktex.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportTEX(); doButtons(); } } );
-
-		menuFileExport.add(menuFileExportPerl);
-		menuFileExportPerl.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportPerl(); doButtons(); } } );
-
-		menuFileExport.add(menuFileExportKSH);
-		menuFileExportKSH.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportKSH(); doButtons(); } } );
-*/
 		menuFile.addSeparator();
 
 		menuFile.add(menuFilePrint);
@@ -340,7 +360,7 @@ public class Menu extends JMenuBar implements NSDController
 
 		// START KGU#2 2015-11-19
 		menuFile.add(menuFileArrange);
-		//menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		//menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		menuFileArrange.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.arrangeNSD(); doButtons(); } } );
 		// END KGU#2 2015-11-19
 
@@ -358,7 +378,7 @@ public class Menu extends JMenuBar implements NSDController
 						getFrame().dispatchEvent(new WindowEvent(getFrame(), WindowEvent.WINDOW_CLOSING));
 					}
 				} );
-		// KGU#66 2015-11-05
+		// END KGU#66 2015-11-05
 
 		// Setting up Menu "Edit" with all submenus and shortcuts and actions
 		menubar.add(menuEdit);
@@ -379,9 +399,9 @@ public class Menu extends JMenuBar implements NSDController
 		menuEditCut.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.cutNSD(); doButtons(); } } );
 
 		menuEdit.add(menuEditCopy);
-                //Toolkit.getDefaultToolkit().get
-                //MenuShortcut ms = new MenuShortcut
-                menuEditCopy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		//Toolkit.getDefaultToolkit().get
+		//MenuShortcut ms = new MenuShortcut
+		menuEditCopy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		menuEditCopy.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.copyNSD(); doButtons(); } } );
 
 		menuEdit.add(menuEditPaste);
@@ -402,9 +422,9 @@ public class Menu extends JMenuBar implements NSDController
 		}
 
 		// Setting up Menu "View" with all submenus and shortcuts and actions
-                //menubar.add(menuView);
+		//menubar.add(menuView);
 
-                // Setting up Menu "Diagram" with all submenus and shortcuts and actions
+		// Setting up Menu "Diagram" with all submenus and shortcuts and actions
 		menubar.add(menuDiagram);
 		menuDiagram.setMnemonic(KeyEvent.VK_D);
 
@@ -414,35 +434,46 @@ public class Menu extends JMenuBar implements NSDController
 		menuDiagramAdd.add(menuDiagramAddBefore);
 		menuDiagramAddBefore.setIcon(IconLoader.ico019);
 
+		// START KGU#169 2016-04-01: Enh. #142 (accelerator keys added in analogy to the insert after items)
 		menuDiagramAddBefore.add(menuDiagramAddBeforeInst);
 		menuDiagramAddBeforeInst.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Instruction(),"Add new instruction ...","",false); doButtons(); } } );
+		menuDiagramAddBeforeInst.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F5, java.awt.event.InputEvent.SHIFT_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeAlt);
 		menuDiagramAddBeforeAlt.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Alternative(),"Add new IF statement ...",Element.preAlt,false); doButtons(); } } );
+		menuDiagramAddBeforeAlt.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F6, java.awt.event.InputEvent.SHIFT_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeCase);
 		menuDiagramAddBeforeCase.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Case(),"Add new CASE statement ...",Element.preCase,false); doButtons(); } } );
+		menuDiagramAddBeforeCase.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F10, java.awt.event.InputEvent.SHIFT_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeFor);
 		menuDiagramAddBeforeFor.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new For(),"Add new FOR loop ...",Element.preFor,false); doButtons(); } } );
+		menuDiagramAddBeforeFor.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F7, java.awt.event.InputEvent.SHIFT_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeWhile);
 		menuDiagramAddBeforeWhile.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new While(),"Add new WHILE loop ...",Element.preWhile,false); doButtons(); } } );
+		menuDiagramAddBeforeWhile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F8, java.awt.event.InputEvent.SHIFT_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeRepeat);
 		menuDiagramAddBeforeRepeat.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Repeat(),"Add new REPEAT loop ...",Element.preRepeat,false); doButtons(); } } );
+		menuDiagramAddBeforeRepeat.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F9, java.awt.event.InputEvent.SHIFT_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeForever);
 		menuDiagramAddBeforeForever.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Forever(),"Add new ENDLESS loop ...","",false); doButtons(); } } );
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeCall);
 		menuDiagramAddBeforeCall.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Call(),"Add new call ...","",false); doButtons(); } } );
+		menuDiagramAddBeforeCall.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, java.awt.event.InputEvent.SHIFT_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforeJump);
 		menuDiagramAddBeforeJump.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Jump(),"Add new jump ...","",false); doButtons(); } } );
+		menuDiagramAddBeforeJump.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F12, java.awt.event.InputEvent.SHIFT_MASK));
 
 		menuDiagramAddBefore.add(menuDiagramAddBeforePara);
 		menuDiagramAddBeforePara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",false); doButtons(); } } );
+		menuDiagramAddBeforePara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F13, java.awt.event.InputEvent.SHIFT_MASK));
+		// END KGU#169 2016-04-01
 
 		menuDiagramAdd.add(menuDiagramAddAfter);
 		menuDiagramAddAfter.setIcon(IconLoader.ico020);
@@ -503,6 +534,26 @@ public class Menu extends JMenuBar implements NSDController
 
 		menuDiagram.addSeparator();
 
+		// START KGU#123 2016-01-03: New menu items (addressing #65)
+		menuDiagram.add(menuDiagramCollapse);
+		menuDiagramCollapse.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, 0));
+		menuDiagramCollapse.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.collapseNSD(); doButtons(); } } );
+
+		menuDiagram.add(menuDiagramExpand);
+		menuDiagramExpand.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0));
+		menuDiagramExpand.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.expandNSD(); doButtons(); } } );
+
+		menuDiagram.addSeparator();
+		// END KGU#123 2016-01-03
+		
+		// START KGU#143 2016-01-21: Bugfix #114 - Compensate editing restriction by accelerator
+		menuDiagram.add(menuDiagramBreakpoint);
+    	menuDiagramBreakpoint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK));
+        menuDiagramBreakpoint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleBreakpoint(); doButtons(); } }); 
+
+		menuDiagram.addSeparator();
+		// END KGU#143 2016-01-21
+
 		menuDiagram.add(menuDiagramType);
 
 		menuDiagramType.add(menuDiagramTypeProgram);
@@ -519,6 +570,9 @@ public class Menu extends JMenuBar implements NSDController
 
 		menuDiagram.add(menuDiagramSwitchComments);
 		menuDiagramSwitchComments.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleTextComments(); doButtons(); } } );
+		// START KGU#169 2016-04-01: Enh. #142 (accelerator key added)
+		menuDiagramSwitchComments.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, (java.awt.event.InputEvent.ALT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
+		// START KGU#169 2016-04-01
 
 		menuDiagram.add(menuDiagramMarker);
 		menuDiagramMarker.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setHightlightVars(menuDiagramMarker.isSelected()); doButtons(); } } );
@@ -530,6 +584,11 @@ public class Menu extends JMenuBar implements NSDController
 		menuDiagram.add(menuDiagramAnalyser);
 		menuDiagramAnalyser.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleAnalyser(); doButtons(); } } );
 		menuDiagramAnalyser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0));
+		
+		// START KGU#123 2016-01-04: Enh. #87
+		menuDiagram.add(menuDiagramWheel);
+		menuDiagramWheel.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleWheelMode(); doButtons(); } } );
+		// END KGU#123 2016-01-04
 
 		// Setting up Menu "Preferences" with all submenus and shortcuts and actions
 		menubar.add(menuPreferences);
@@ -693,6 +752,13 @@ public class Menu extends JMenuBar implements NSDController
 	public void setLangLocal(String _langfile)
 	{
 		LangDialog.setLang(this,NSDControl.getLang());
+		// START KGU#170 2016-04-01: Enh. #144 - update the favourite export item text
+		if (diagram != null)
+		{
+			String itemText = lbFileExportCodeFavorite.getText().replace("%", diagram.getPreferredGeneratorName());
+			this.menuFileExportCodeFavorite.setText(itemText);
+		}
+		// END KGU#170 2016-04-01
 		diagram.analyse();
 	}
 
@@ -708,7 +774,7 @@ public class Menu extends JMenuBar implements NSDController
 
 	public void doButtonsLocal()
 	{
-		if(diagram!=null)
+		if (diagram!=null)
 		{
                         /*
                         // remove all submenus from "view"
@@ -731,7 +797,11 @@ public class Menu extends JMenuBar implements NSDController
                         */
 
 			// conditions
-			boolean conditionAny =  diagram.getSelected()!=null;
+			// START KGU#143 2016-01-21: Bugfix #114 - elements involved in execution must not be edited
+			//boolean conditionAny =  diagram.getSelected()!=null;
+			Element selected = diagram.getSelected();
+			boolean conditionAny =  selected != null && !selected.isExecuted();
+			// END KGU#143 2016-01-21
 			boolean condition =  conditionAny && diagram.getSelected()!=diagram.getRoot();
 			// START KGU#87 2015-11-22: For most operations, multiple selections are not suported
 			boolean conditionNoMult = condition && !diagram.selectedIsMultiple();
@@ -741,18 +811,31 @@ public class Menu extends JMenuBar implements NSDController
 			boolean conditionCanMoveDown = false;
 			if (conditionAny)
 			{
-				if(diagram.getSelected().parent!=null)
-				{
-					// make sure parent is a subqueue, which is not the case if somebody clicks on a subqueue!
-					if (diagram.getSelected().parent.getClass().getSimpleName().equals("Subqueue"))
-					{
-						i = ((Subqueue) diagram.getSelected().parent).getIndexOf(diagram.getSelected());
-						conditionCanMoveUp = (i-1>=0);
-						conditionCanMoveDown = (i+1<((Subqueue) diagram.getSelected().parent).getSize());
-					}
-				}
+				// START KGU#144 2016-01-22: Bugfix for #38 - Leave the decision to the selected element
+				//if(diagram.getSelected().parent!=null)
+				//{
+				//	// make sure parent is a subqueue, which is not the case if somebody clicks on a subqueue!
+				//	if (diagram.getSelected().parent.getClass().getSimpleName().equals("Subqueue"))
+				//	{
+				//		i = ((Subqueue) diagram.getSelected().parent).getIndexOf(diagram.getSelected());
+				//		conditionCanMoveUp = (i-1>=0);
+				//		conditionCanMoveDown = (i+1<((Subqueue) diagram.getSelected().parent).getSize());
+				//	}
+				//}
+				conditionCanMoveUp = diagram.getSelected().canMoveUp();
+				conditionCanMoveDown = diagram.getSelected().canMoveDown();
+				// END KGU#144 2016-01-22
 			}
 
+			// START KGU#137 2016-01-11: Bugfix #103 - Reflect the "saveworthyness" of the diagram
+			// save
+			menuFileSave.setEnabled(diagram.getRoot().hasChanged());
+			// END KGU#137 2016-01-11
+			// START KGU#170 2016-04-01: Enh. #144 - update the favourite export item text
+			String itemText = lbFileExportCodeFavorite.getText().replace("%", diagram.getPreferredGeneratorName());
+			this.menuFileExportCodeFavorite.setText(itemText);
+			// END KGU#170 2016-04-01
+			
 			// undo & redo
 			menuEditUndo.setEnabled(diagram.getRoot().canUndo());
 			menuEditRedo.setEnabled(diagram.getRoot().canRedo());
@@ -796,28 +879,45 @@ public class Menu extends JMenuBar implements NSDController
 			//menuDiagramEdit.setEnabled(conditionAny);
 			menuDiagramEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
 			// END KGU#87 2015-11-22
-			menuDiagramDelete.setEnabled(diagram.canCutCopy());
+			// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
+			//menuDiagramDelete.setEnabled(diagram.canCutCopy());
+			menuDiagramDelete.setEnabled(diagram.canCut());
+			// END KGU#143 2016-01-21
 			menuDiagramMoveUp.setEnabled(conditionCanMoveUp);
 			menuDiagramMoveDown.setEnabled(conditionCanMoveDown);
+			
+			// START KGU#123 2016-01-03: We allow multiple selection for collapsing
+			// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
+			menuDiagramCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
+			menuDiagramExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
+			// END KGU#123 2016-01-03
+
+			// START KGU#143 2016-01-21: Bugfix #114 - breakpoint control now also here
+			menuDiagramBreakpoint.setEnabled(diagram.canCopy());
+			// END KGU#143 2016-01-21
 
 			// copy & paste
-			menuEditCopy.setEnabled(diagram.canCutCopy());
-			menuEditCut.setEnabled(diagram.canCutCopy());
+			// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
+			//menuEditCopy.setEnabled(diagram.canCutCopy());
+			//menuEditCut.setEnabled(diagram.canCutCopy());
+			menuEditCopy.setEnabled(diagram.canCopy());
+			menuEditCut.setEnabled(diagram.canCut());
+			// END KGU#143 2016-01-21
 			menuEditPaste.setEnabled(diagram.canPaste());
 
 			// nice
 			menuDiagramNice.setSelected(diagram.isNice());
 
-			// comments?
+			// show comments?
 			menuDiagramComment.setSelected(diagram.drawComments());
 
-			// variable hightlighting
+			// variable highlighting
 			menuDiagramMarker.setSelected(diagram.getRoot().hightlightVars);
 
+			// swap texts against comments?
 			menuDiagramSwitchComments.setSelected(Element.E_TOGGLETC);
-                        
-                        
-			// din
+
+			// DIN 66261
 			menuDiagramDIN.setSelected(Element.E_DIN);
 			if(Element.E_DIN==true)
 			{
@@ -829,6 +929,11 @@ public class Menu extends JMenuBar implements NSDController
 				menuDiagramAddBeforeFor.setIcon(IconLoader.ico009);
 				menuDiagramAddAfterFor.setIcon(IconLoader.ico014);
 			}
+			
+			// START KGU#123 2016-01-04: Enh. #87
+			// control the collapsing by mouse wheel?
+			menuDiagramWheel.setSelected(diagram.getWheelCollapses());
+			// END KGU#123 2016-01-04
 
 			// Look and Feel submenu
 			//System.out.println("Having: "+UIManager.getLookAndFeel().getName());

@@ -41,6 +41,13 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2015.11.30      Inheritance changed: implements ILoop
  *      Kay Gürtzig     2015.12.01      Bugfix #39 (=KGU#91) -> getText(false), prepareDraw() optimised
  *      Kay Gürtzig     2016.01.02      Bugfix #78 (KGU#119): New method equals(Element)
+ *      Kay Gürtzig     2016.01.03      Bugfix #87 (KGU#121): Correction in getElementByCoord(), getIcon()
+ *      Kay Gürtzig     2016.02.27      Bugfix #97 (KGU#136): field rect replaced by rect0 in prepareDraw()
+ *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): Translation-neutral selection
+ *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Fields for test coverage tracking added
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016.03.20      Enh. #84/#135 (KGU#61): enum type and methods introduced/modified
+ *                                      to distinguish and handle FOR-IN loops 
  *
  ******************************************************************************************************
  *
@@ -51,33 +58,61 @@ package lu.fisch.structorizer.elements;
 
 import java.awt.Color;
 import java.awt.FontMetrics;
+import java.awt.Point;
+import java.util.Vector;
 import java.util.regex.Matcher;
 
+import javax.swing.ImageIcon;
+
 import lu.fisch.graphics.*;
-import lu.fisch.structorizer.executor.Executor;
-import lu.fisch.structorizer.generators.Generator;
+import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.*;
 
+
 public class For extends Element implements ILoop {
+
+	// START KGU#61 2016-03-20: Enh. #84/#135
+	public enum ForLoopStyle {
+		FREETEXT,
+		COUNTER,
+		TRAVERSAL
+	}
+	// END KGU#61 2016-03-26
 
 	public Subqueue q = new Subqueue();
 	
-	private Rect r = new Rect();
+	// START KGU#136 2016-02-27: Bugfix #97 - replaced by local variable in prepareDraw()
+	//private Rect r = new Rect();
+	// END KGU#136 2016-02-27
+	// START KGU#136 2016-03-01: Bugfix #97
+	private Point pt0Body = new Point(0,0);
+	// END KGU#136 2016-03-01
+
 	
 	// START KGU#3 2015-10-24
 	private static String forSeparatorPre = "§FOR§";
 	private static String forSeparatorTo = "§TO§";
 	private static String forSeparatorBy = "§BY§";
+	// START KGU#61 2016-03-20: Enh. #84/#135 - support FOR-IN loops
+	private static String forInSeparatorPre = "§FOREACH§";
+	private static String forInSeparatorIn = "§IN§";
+	// END KGU#61 2016-03-20
 	// The following fields are dedicated for unambiguous semantics representation. If and only if the
 	// structured information of these fields is consistent field isConsistent shall be true.
 	private String counterVar = "";			// name of the counter variable
 	private String startValue = "1";		// expression determining the start value of the loop
 	private String endValue = "";			// expression determining the end value of the loop
 	private int stepConst = 1;				// an integer value defining the increment/decrement
-	public boolean isConsistent = false;	// flag determining whether the semantics is consistently defined by the dedicated fields
+	//@Deprecated
+	//public boolean isConsistent = false;	// flag determining whether the semantics is consistently defined by the dedicated fields
 	// END KGU#3 2015-10-24
-
+	// START KGU#61 2016-03-20: Enh. #84/#135 - now we have to distinguish three styles
+	private String valueList = null;		// expression specifying the set (array) of values
+	public ForLoopStyle style = ForLoopStyle.FREETEXT;
+	// END KGU#61 2016-03-20
+	
 	public For()
 	{
 		super();
@@ -114,98 +149,77 @@ public class For extends Element implements ILoop {
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
-		if(isCollapsed()) 
+		// START KGU#136 2016-03-01: Bugfix #97
+		if (this.isRectUpToDate) return rect0;
+		// END KGU#136 2016-03-01
+		
+		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
+		if (isCollapsed()) 
 		{
-			rect = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
-			return rect;
+			rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
+			// START KGU#136 2016-03-01: Bugfix #97
+			isRectUpToDate = true;
+			// END KGU#136 2016-03-01
+			return rect0;
 		}
 
-        // START KGU 2015-12-02: Obviously redundant stuff merged        
-		rect.top=0;
-		rect.left=0;
+		rect0.top = 0;
+		rect0.left=0;
 
 		int padding = 2*(E_PADDING/2); 
-		rect.right = padding;
+		rect0.right = padding;
 
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 
-		for (int i=0; i<getText(false).count(); i++)
+		int nLines = getText(false).count();
+		for (int i = 0; i < nLines; i++)
 		{
 			int lineWidth = getWidthOutVariables(_canvas, getText(false).get(i), this) + padding;
-			if (rect.right < lineWidth)
+			if (rect0.right < lineWidth)
 			{
-				rect.right = lineWidth;
+				rect0.right = lineWidth;
 			}
 		}
 
-		rect.bottom = padding + getText(false).count() * fm.getHeight();
+		rect0.bottom = padding + nLines * fm.getHeight();
+		// START KGU#136 2016-03-01: Bugfix #97 - Preparation for local coordinate detection
+		this.pt0Body.x = padding - 1;		// FIXME: Fine tuning!
+		this.pt0Body.y = rect0.bottom - 1;	// FIXME: Fine tuning!
+		// END KGU#136 2016-03-01
 
-		r = q.prepareDraw(_canvas);
+		// START KGU#136 2016-02-27: Bugfix #97 - field replaced by local variable
+		//r = q.prepareDraw(_canvas);
+		//rect.right = Math.max(rect.right, r.right + E_PADDING);
+		Rect rectBody = q.prepareDraw(_canvas);
+		rect0.right = Math.max(rect0.right, rectBody.right + E_PADDING);
+		// END KGU#136 2016-02-27
 
-		rect.right = Math.max(rect.right, r.right + E_PADDING);
 
-		if(Element.E_DIN==false)
+		if (Element.E_DIN==false)
 		{
-//			rect.top=0;
-//			rect.left=0;
-//			
-//			rect.right=2*Math.round(E_PADDING/2);
-//			
-//			FontMetrics fm = _canvas.getFontMetrics(Element.font);
-//			
-//			rect.right=Math.round(2*(Element.E_PADDING/2));
-//			for(int i=0;i<getText(false).count();i++)
-//			{
-//				int lineWidth = getWidthOutVariables(_canvas,getText(false).get(i),this)+2*Math.round(E_PADDING/2);
-//				if(rect.right < lineWidth)
-//				{
-//					rect.right = lineWidth;
-//				}
-//			}
-//			
-//			rect.bottom = 2 * (E_PADDING/2) + getText(false).count() * fm.getHeight();
-//			
-//			r=q.prepareDraw(_canvas);
-//			
-//			rect.right=Math.max(rect.right,r.right+E_PADDING);
-			rect.bottom += r.bottom + E_PADDING;
-//			return rect;
+			// START KGU#136 2016-02-27: Bugfix #97
+			//rect.bottom += r.bottom + E_PADDING;
+			rect0.bottom += rectBody.bottom + E_PADDING;
+			// END KGU#136 2016-02-27
 		}
 		else
 		{
-//			rect.top=0;
-//			rect.left=0;
-//			
-//			rect.right=2*Math.round(E_PADDING/2);
-//			
-//			FontMetrics fm = _canvas.getFontMetrics(font);
-//			
-//			rect.right=Math.round(2*(E_PADDING/2));
-//			for(int i=0;i<getText(false).count();i++)
-//			{
-//				int lineWidth = getWidthOutVariables(_canvas,getText(false).get(i),this)+2*Math.round(E_PADDING/2);
-//				if(rect.right < lineWidth)
-//				{
-//					rect.right = lineWidth;
-//				}
-//			}
-//			
-//			rect.bottom= 2 * (E_PADDING/2) + getText(false).count() * fm.getHeight();
-//			
-//			r=q.prepareDraw(_canvas);
-//			
-//			rect.right=Math.max(rect.right,r.right+E_PADDING);
-			rect.bottom += r.bottom;		
-//			return rect;
+			// START KGU#136 2016-02-27: Bugfix #97 - field replaced by local variable
+			//rect.bottom += r.bottom;		
+			rect0.bottom += rectBody.bottom;		
+			// END KGU#136 2016-02-27
 		}
-		return rect;
-		// END KGU 2015-12-02
+
+		// START KGU#136 2016-03-01: Bugfix #97
+		isRectUpToDate = true;
+		// END KGU#136 2016-03-01
+		return rect0;
 	}
 	
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
 
-		if(isCollapsed()) 
+		if (isCollapsed()) 
 		{
 			Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
 			return;
@@ -236,86 +250,88 @@ public class For extends Element implements ILoop {
 
 		int headerHeight = fm.getHeight() * getText(false).count() + 2 * (Element.E_PADDING / 2);
 
+		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
+		//rect = _top_left.copy();
+		rect = new Rect(0, 0, 
+				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
+		Point ref = this.getDrawPoint();
+		this.topLeft.x = _top_left.left - ref.x;
+		this.topLeft.y = _top_left.top - ref.y;
+		// END KGU#136 2016-03-01
+
 		if(Element.E_DIN==false)
 		{
-
 			// draw background
-			myrect=_top_left.copy();
+			myrect = _top_left.copy();
 			canvas.fillRect(myrect);
 			
 			// draw shape
-			rect=_top_left.copy();
 			canvas.setColor(Color.BLACK);
 			canvas.drawRect(_top_left);
 			
-			myrect=_top_left.copy();
-			myrect.bottom=_top_left.top + headerHeight;
+			myrect = _top_left.copy();
+			myrect.bottom = _top_left.top + headerHeight;
 			canvas.drawRect(myrect);
 			
-			myrect.bottom=_top_left.bottom;
-			myrect.top=myrect.bottom-E_PADDING;
+			myrect.bottom = _top_left.bottom;
+			myrect.top = myrect.bottom-E_PADDING;
 			canvas.drawRect(myrect);
 			
-			myrect=_top_left.copy();
-			myrect.right=myrect.left+E_PADDING;
+			myrect = _top_left.copy();
+			myrect.right = myrect.left+E_PADDING;
 			canvas.drawRect(myrect);
 			
 			// fill shape
 			canvas.setColor(drawColor);
-			myrect.left=myrect.left+1;
-			myrect.top=myrect.top+1;
-			myrect.bottom=myrect.bottom;
-			myrect.right=myrect.right-1;
+			myrect.left = myrect.left+1;
+			myrect.top = myrect.top+1;
+			myrect.bottom = myrect.bottom;
+			myrect.right = myrect.right-1;
 			canvas.fillRect(myrect);
 			
-			myrect=_top_left.copy();
-			myrect.bottom=_top_left.top + headerHeight;
-			myrect.left=myrect.left+1;
-			myrect.top=myrect.top+1;
-			myrect.bottom=myrect.bottom;
-			myrect.right=myrect.right-1;
+			myrect = _top_left.copy();
+			myrect.bottom = _top_left.top + headerHeight;
+			myrect.left = myrect.left+1;
+			myrect.top = myrect.top+1;
+			myrect.bottom = myrect.bottom;
+			myrect.right = myrect.right-1;
 			canvas.fillRect(myrect);
 			
-			myrect.bottom=_top_left.bottom;
-			myrect.top=myrect.bottom-Element.E_PADDING;
-			myrect.left=myrect.left+1;
-			myrect.top=myrect.top+1;
-			myrect.bottom=myrect.bottom;
-			myrect.right=myrect.right;
+			myrect.bottom = _top_left.bottom;
+			myrect.top = myrect.bottom-Element.E_PADDING;
+			myrect.left = myrect.left+1;
+			myrect.top = myrect.top+1;
+			myrect.bottom = myrect.bottom;
+			myrect.right = myrect.right;
 			canvas.fillRect(myrect);
-	
 		}
 		else
 		{
-			
-			rect=_top_left.copy();
-			
 			// draw shape
-			myrect=_top_left.copy();
+			myrect = _top_left.copy();
 			canvas.setColor(Color.BLACK);
-			myrect.bottom=_top_left.top + headerHeight;
+			myrect.bottom = _top_left.top + headerHeight;
 			canvas.drawRect(myrect);
 			
 			myrect=_top_left.copy();
-			myrect.right=myrect.left+Element.E_PADDING;
+			myrect.right = myrect.left+Element.E_PADDING;
 			canvas.drawRect(myrect);
 			
 			// fill shape
 			canvas.setColor(drawColor);
-			myrect.left=myrect.left+1;
-			myrect.top=myrect.top+1;
-			myrect.bottom=myrect.bottom;
-			myrect.right=myrect.right;
+			myrect.left = myrect.left+1;
+			myrect.top = myrect.top+1;
+			myrect.bottom = myrect.bottom;
+			myrect.right = myrect.right;
 			canvas.fillRect(myrect);
 			
-			myrect=_top_left.copy();
-			myrect.bottom=_top_left.top + headerHeight;
-			myrect.left=myrect.left+1;
-			myrect.top=myrect.top+1;
-			myrect.bottom=myrect.bottom;
-			myrect.right=myrect.right;
+			myrect = _top_left.copy();
+			myrect.bottom = _top_left.top + headerHeight;
+			myrect.left = myrect.left+1;
+			myrect.top = myrect.top+1;
+			myrect.bottom = myrect.bottom;
+			myrect.right = myrect.right;
 			canvas.fillRect(myrect);
-			
 		}
 		
 		// START KGU 2015-10-12: D.R.Y. - common tail of both branches re-united here
@@ -327,41 +343,68 @@ public class For extends Element implements ILoop {
 		this.drawBreakpointMark(canvas, _top_left);
 
 		// draw text
-		for(int i=0;i<getText(false).count();i++)
+		for (int i=0; i<getText(false).count(); i++)
 		{
 			String text = this.getText(false).get(i);
 			text = BString.replace(text, "<--","<-");
 			
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
-							  _top_left.left + Math.round(E_PADDING / 2),
-							  _top_left.top + Math.round(E_PADDING / 2) + (i+1)*fm.getHeight(),
+							  _top_left.left + (E_PADDING / 2),
+							  _top_left.top + (E_PADDING / 2) + (i+1)*fm.getHeight(),
 							  text, this
 							  );  	
 		}
 		
+		// START KGU#156 2016-03-11: Enh. #124
+		// write the run-time info if enabled
+		this.writeOutRuntimeInfo(canvas, _top_left.left + rect.right - (Element.E_PADDING / 2), _top_left.top);
+		// END KGU#156 2016-03-11
+				
 		// draw children
-		myrect=_top_left.copy();
-		myrect.left=myrect.left+Element.E_PADDING-1;
-		myrect.top=_top_left.top + headerHeight-1;
+		myrect = _top_left.copy();
+		myrect.left = myrect.left+Element.E_PADDING-1;
+		myrect.top = _top_left.top + headerHeight-1;
 		if (Element.E_DIN == false)
 		{
-			myrect.bottom=myrect.bottom-E_PADDING+1;
+			myrect.bottom = myrect.bottom-E_PADDING+1;
 		}
 		q.draw(_canvas,myrect);
 		// END KGU 2015-10-12
 	}
 	
+	// START KGU#122 2016-01-03: Enh. #87 - Collapsed elements may be marked with an element-specific icon
+	@Override
+	protected ImageIcon getIcon()
+	{
+		if (Element.E_DIN)
+		{
+			return IconLoader.ico062;
+		}
+		return IconLoader.ico061;
+	}
+	// END KGU#122 2016-01-03
+
 	@Override
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
 		Element selMe = super.getElementByCoord(_x, _y, _forSelection);
-		Element sel = q.getElementByCoord(_x, _y, _forSelection);
-		if(sel!=null) 
+		// START KGU#121 2016-01-03: Bugfix #87 - A collapsed element has no visible substructure!
+		if (!this.isCollapsed())
 		{
-			if (_forSelection) selected=false;
-			selMe = sel;
+		// END KGU#121 2016-01-03
+			// START KGU#136 2016-03-01: Bugfix #97
+			//Element sel = q.getElementByCoord(_x, _y, _forSelection);
+			Element sel = q.getElementByCoord(_x-pt0Body.x, _y-pt0Body.y, _forSelection);
+			// END KGU#136 2016-03-01
+			if(sel!=null) 
+			{
+				if (_forSelection) selected=false;
+				selMe = sel;
+			}
+		// START KGU#121 2016-01-03: Bugfix #87 (continued)
 		}
+		// END KGU#121 2016-01-03
 		
 		return selMe;
 	}
@@ -381,14 +424,25 @@ public class For extends Element implements ILoop {
 		ele.startValue = this.startValue + "";
 		ele.endValue = this.endValue + "";
 		ele.stepConst = this.stepConst;
-		ele.isConsistent = this.isConsistent;
+		//ele.isConsistent = this.isConsistent;
 		// END KGU#81 (bug #28) 2015-11-14
+		// START KGU#61 2016-03-20: Enh. #84/#135
+		ele.style = this.style;
+		ele.valueList = this.valueList;
+		// END KGU#61 2016-03-20
 		ele.setColor(this.getColor());
 		ele.q=(Subqueue) this.q.copy();
 		ele.q.parent=ele;
 		// START KGU#82 (bug #31) 2015-11-14
 		ele.breakpoint = this.breakpoint;
 		// END KGU#82 (bug #31) 2015-11-14
+		// START KGU#117 2016-03-07: Enh. #77
+        if (Element.E_COLLECTRUNTIMEDATA)
+        {
+        	// We share this object (important for recursion!)
+        	ele.deeplyCovered = this.deeplyCovered;
+        }
+		// END KGU#117 2016-03-07
 		return ele;
 	}
 	
@@ -403,10 +457,23 @@ public class For extends Element implements ILoop {
 	public boolean equals(Element _another)
 	{
 		return super.equals(_another) && this.q.equals(((For)_another).q) &&
-				this.isConsistent == ((For)_another).isConsistent;
+				//this.isConsistent == ((For)_another).isConsistent &&
+				this.style == ((For)_another).style;
 	}
 	// END KGU#119 2016-01-02
 	
+	// START KGU#117 2016-03-07: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
+	 */
+	@Override
+	public boolean combineRuntimeData(Element _cloneOfMine)
+	{
+		return super.combineRuntimeData(_cloneOfMine) &&
+				this.getBody().combineRuntimeData(((ILoop)_cloneOfMine).getBody());
+	}
+	// END KGU#117 2016-03-07
+
 	// START KGU#43 2015-10-12
 	@Override
 	public void clearBreakpoints()
@@ -424,6 +491,49 @@ public class For extends Element implements ILoop {
 		this.q.clearExecutionStatus();
 	}
 	// END KGU#43 2015-10-13
+
+	// START KGU#117 2016-03-06: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
+	 */
+	@Override
+	public void clearRuntimeData()
+	{
+		super.clearRuntimeData();
+		this.getBody().clearRuntimeData();
+	}
+	// END KGU#117 2016-03-06
+
+	// START KGU#156 2016-03-13: Enh. #124
+	protected String getRuntimeInfoString()
+	{
+		String info = this.execCount + " / ";
+		String stepInfo = null;
+		switch (E_RUNTIMEDATAPRESENTMODE)
+		{
+		case TOTALSTEPS_LIN:
+		case TOTALSTEPS_LOG:
+			stepInfo = Integer.toString(this.getExecStepCount(true));
+			if (!this.isCollapsed()) {
+				stepInfo = "(" + stepInfo + ")";
+			}
+			break;
+		default:
+			stepInfo = Integer.toString(this.getExecStepCount(this.isCollapsed()));
+		}
+		return info + stepInfo;
+	}
+	// END KGU#156 2016-03-11
+
+	// START KGU#117 2016-03-10: Enh. #77
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
+	 */
+	public boolean isTestCovered(boolean _deeply)
+	{
+		return this.getBody().isTestCovered(_deeply);
+	}
+	// END KGU#117 2016-03-10
 
 	// START KGU 2015-10-16
 	/* (non-Javadoc)
@@ -451,7 +561,10 @@ public class For extends Element implements ILoop {
 	 */
 	public String getCounterVar()
 	{
-		if (this.isConsistent)
+		// START KGU#61 2016-03-20: Enh. #84/#135
+		//if (this.isConsistent)
+		if (this.style != ForLoopStyle.FREETEXT)
+		// END KGU#61 206-03-20
 		{
 			return this.counterVar;
 		}
@@ -464,7 +577,10 @@ public class For extends Element implements ILoop {
 	 */
 	public String getStartValue()
 	{
-		if (this.isConsistent)
+		// START KGU#61 2016-03-20: Enh. #84/#135
+		//if (this.isConsistent)
+		if (this.style == ForLoopStyle.COUNTER)
+		// END KGU#61 206-03-20
 		{
 			return this.startValue;
 		}
@@ -477,7 +593,10 @@ public class For extends Element implements ILoop {
 	 */
 	public String getEndValue()
 	{
-		if (this.isConsistent)
+		// START KGU#61 2016-03-20: Enh. #84/#135
+		//if (this.isConsistent)
+		if (this.style == ForLoopStyle.COUNTER)
+		// END KGU#61 206-03-20
 		{
 			return this.endValue;
 		}
@@ -491,7 +610,10 @@ public class For extends Element implements ILoop {
 	public int getStepConst()
 	{
 		int step = 1;
-		if (this.isConsistent)
+		// START KGU#61 2016-03-20: Enh. #84/#135
+		//if (this.isConsistent)
+		if (this.style == ForLoopStyle.COUNTER)
+		// END KGU#61 206-03-20
 		{
 			step = this.stepConst;
 		}
@@ -509,7 +631,10 @@ public class For extends Element implements ILoop {
 	 */
 	public String getStepString()
 	{
-		if (this.isConsistent)
+		// START KGU#61 2016-03-20: Enh. #84/#135
+		//if (this.isConsistent)
+		if (this.style == ForLoopStyle.COUNTER)
+		// END KGU#61 206-03-20
 		{
 			return Integer.toString(this.stepConst);
 		}
@@ -518,6 +643,24 @@ public class For extends Element implements ILoop {
 			return this.splitForClause()[3]; // Or should we provide this.splitClause()[4]?
 		}
 	}
+	
+	// START KGU#61 2016-03-22: Enh. #84/#135
+	/**
+	 * Retrieves the set or list of values to be traversed (For-In style)
+	 * @return string representing the array variable or literal
+	 */
+	public String getValueList()
+	{
+		//if (this.isConsistent)
+		String valList = null;
+		if (this.style == ForLoopStyle.TRAVERSAL && (valList = this.valueList) == null ||
+				this.style == ForLoopStyle.FREETEXT)
+		{
+			this.setValueList(valList = this.splitForClause()[5]);
+		}
+		return valList;
+	}
+	// END KGU#61 206-03-22
 	
     
 	/**
@@ -564,16 +707,38 @@ public class For extends Element implements ILoop {
 	}
 	// END KGU#3 2015-10-24
 
-	// START KGU#3 2015-11-04 We need a transformation to a common intermediate language
-	private static String disambiguateForClause(String _text)
+	// START KGU#61 2016-03-22: Enh. #84/#135 - needed for FOR-IN loops
+	/**
+	 * @param valueList the String representing the values to be traversed
+	 */
+	public void setValueList(String valueList) {
+		this.valueList = valueList;
+		if (this.getText().getLongString().trim().equals(this.composeForInClause()))
+		{
+			this.style = ForLoopStyle.TRAVERSAL;
+		}
+	}
+	// END KGU#61 2016-03-22
+
+	// START KGU#3 2015-11-04: We need a transformation to a common intermediate language
+	private static StringList disambiguateForClause(String _text)
 	{
 		// Pad the string to ease the key word detection
-		String interm = " " + _text + " ";
+		//String interm = " " + _text + " ";
+		StringList tokens = Element.splitLexically(_text, true);
 
+		// START KGU#61 2016-03-20: Enh. #84/#135
 		// First collect the placemarkers of the for loop header ...
-		String[] forMarkers = {D7Parser.preFor, D7Parser.postFor, D7Parser.stepFor};
+		//String[] forMarkers = {D7Parser.preFor, D7Parser.postFor, D7Parser.stepFor};
 		// ... and their replacements (in same order!)
-		String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy};
+		//String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy};
+		// First collect the placemarkers of the for loop header ...
+		String[] forMarkers = {D7Parser.preFor, D7Parser.postFor, D7Parser.stepFor,
+				(D7Parser.preForIn.trim().isEmpty() ? D7Parser.preFor : D7Parser.preForIn), D7Parser.postForIn};
+		// ... and their replacements (in same order!)
+		String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy,
+				forInSeparatorPre, forInSeparatorIn};
+		// END KGU#61 2016-03-20
 
 		// The configured markers for the For loop are not at all redundant but the only sensible
 		// hint how to split the line into the counter variable, the initial and the final value (and possibly the step).
@@ -581,30 +746,61 @@ public class For extends Element implements ILoop {
 		// what the user might have configured (see above)
 		for (int i = 0; i < forMarkers.length; i++)
 		{
-			//String marker = forMarkers[i];
-			String marker = Matcher.quoteReplacement(forMarkers[i]);
-			String separator = forSeparators[i];
+//			//String marker = forMarkers[i];
+//			String marker = Matcher.quoteReplacement(forMarkers[i]);
+//			String separator = forSeparators[i];
+//			if (!marker.isEmpty())
+//			{
+//				String pattern = "(.*?)" + marker + "(.*)";
+//				// If it is not padded, then ensure it is properly isolated
+//				if (marker.equals(marker.trim()))
+//				{
+//					pattern = "(.*?\\W)" + marker + "(\\W.*)";
+//				}
+//				interm = interm.replaceFirst(pattern, "$1 " + separator + " $2");
+//				// Eliminate possibly remaining occurrences if padded (preserve name substrings!)
+//				interm = interm.replaceAll(pattern, "$1 " + separator + " $2");
+//			}
+//			// eliminate multiple blanks
+//			interm = BString.replace(interm, "  ", " ");
+			String marker = forMarkers[i];
 			if (!marker.isEmpty())
 			{
-				String pattern = "(.*?)" + marker + "(.*)";
-				// If it is not padded, then ensure it is properly isolated
-				if (marker.equals(marker.trim()))
+				StringList markerTokens = Element.splitLexically(marker, false);
+				int markerLen = markerTokens.count();
+				int pos = -1;
+				while ((pos = tokens.indexOf(markerTokens, pos+1, !D7Parser.ignoreCase)) >= 0)
 				{
-					pattern = "(.*?\\W)" + marker + "(\\W.*)";
+					// Replace the first token of the parser keyword by the separator 
+					tokens.set(pos, forSeparators[i]);
+					// ... and remove the remaining ones (they will all pass through pos+1)
+					for (int d = 1; d < markerLen; d++)
+					{
+						tokens.delete(pos+1);
+					}
 				}
-				interm = interm.replaceFirst(pattern, "$1 " + separator + " $2");
-				// Eliminate possibly remaining occurrences if padded (preserve name substrings!)
-				interm = interm.replaceAll(pattern, "$1 " + separator + " $2");
 			}
-			// eliminate multiple blanks
-			interm = BString.replace(interm, "  ", " ");
 		}
 
-		return interm;
+		//return interm;
+		return tokens;
 
 	}
 	
 
+	/**
+	 * Splits the contained text (after operator unification, see unifyOperators for details)
+	 * into an array consisting of six strings meant to have following meaning:
+	 * 0. counter variable name 
+	 * 1. expression representing the initial value
+	 * 2. expression representing the final value
+	 * 3. Integer literal representing the increment value ("1" if the substring can't be parsed)
+	 * 4. Substring for increment section as found on splitting (no integer coercion done)
+	 * 5. Substring representing the set of values to be traversed (FOR-IN loop) or null
+	 * 
+	 * @param _text the FOR clause to be split (something like "for i <- 1 to n")
+	 * @return String array consisting of the four parts explained above
+	 */
 	public String[] splitForClause()
 	{
 		return splitForClause(this.getText().getText());
@@ -612,57 +808,71 @@ public class For extends Element implements ILoop {
 	
 	/**
 	 * Splits a potential FOR clause (after operator unification, see unifyOperators for details)
-	 * into an array consisting of five strings meant to have following meaning:
-	 * 1. counter variable name 
-	 * 2. expression representing the initial value
-	 * 3. expression representing the final value
-	 * 4. Integer literal representing the increment value ("1" if the substring can't be parsed)
-	 * 5. Substring for increment section as found on splitting (no integer coercion done)
+	 * into an array consisting of six strings meant to have following meaning:
+	 * 0. counter variable name 
+	 * 1. expression representing the initial value
+	 * 2. expression representing the final value
+	 * 3. Integer literal representing the increment value ("1" if the substring can't be parsed)
+	 * 4. Substring for increment section as found on splitting (no integer coercion done)
+	 * 5. Substring representing the set of values to be traversed (FOR-IN loop) or null
 	 * 
 	 * @param _text the FOR clause to be split (something like "for i <- 1 to n")
 	 * @return String array consisting of the four parts explained above
 	 */
 	public static String[] splitForClause(String _text)
 	{
-		String[] forParts = { "dummy_counter", "1", null, "1", ""};
+		// START KGU#61 2016-03-20: Enh. #84/#135 - consider FOR-IN loops
+		// Components are: loop variable, start value, end value, step int, step string, value set
+		//String[] forParts = { "dummy_counter", "1", null, "1", ""};
 		// Set some defaults
-		String init = "";	// Initialisation instruction
+		//String init = "";	// Initialisation instruction
+		// END KGU#61 2016-03-20
 		
 		// Do some pre-processing to disambiguate the key words
-		String _intermediate = disambiguateForClause(_text);		
+		StringList tokens = disambiguateForClause(_text);		
 		//System.out.println("Disambiguated For clause: \"" + _intermediate + "\"");
 		
-		_intermediate = _intermediate.replace('\n', ' '); // Concatenate the lines
-		int posFor = _intermediate.indexOf(forSeparatorPre);
-		int lenFor = forSeparatorPre.length();
-		int posTo = _intermediate.indexOf(forSeparatorTo);
-		int lenTo = forSeparatorTo.length();
-		int posBy = _intermediate.indexOf(forSeparatorBy);
-		int lenBy = forSeparatorBy.length();
-		if (posFor < 0) { posFor = -lenFor; }	// Fictitious position such that posFor+lenFor becomes 0
-		int posIni = posFor + lenFor;
-		int[] positions = { posFor, posTo, posBy };
-		int pastIni = _intermediate.length();
-		int pastTo = pastIni, pastBy = pastIni;
-		for (int i = 0; i < positions.length; i++) 
+		tokens.replaceAll("\n", " "); // Concatenate the lines
+		int posFor = tokens.indexOf(forSeparatorPre);
+		//int lenFor = forSeparatorPre.length();
+		int posTo = tokens.indexOf(forSeparatorTo);
+		//int lenTo = forSeparatorTo.length();
+		int posBy = tokens.indexOf(forSeparatorBy);
+		//int lenBy = forSeparatorBy.length();
+		int posForIn = tokens.indexOf(forInSeparatorPre);
+		int posIn = tokens.indexOf(forInSeparatorIn);
+		//if (posFor < 0) { posFor = -lenFor; }	// Fictitious position such that posFor+lenFor becomes 0
+		//int posIni = posFor + lenFor;
+		// START KGU#61 2016-03-20: Enh. #84/#135 - must go different ways now
+		// If both forInSeparatorIn and forSeparatorTo occur then a traditional loop is assumed
+		if (posIn > 0 && posTo < 0)
 		{
-			if (i > 0 && positions[i] >= posIni && positions[i] < pastIni) pastIni = positions[i];
-			if (positions[i] >= posTo+lenTo && positions[i] < pastTo) pastTo = positions[i];
-			if (positions[i] >= posBy+lenBy && positions[i] < pastBy) pastBy = positions[i];
+			return splitForTraversal(tokens, posFor, posForIn, posIn);
 		}
-		//System.out.println("FOR section from " + posIni + " to " + pastIni + "...");
-		init = _intermediate.substring(posIni, pastIni).trim();
+		else {
+			return splitForCounter(tokens, posFor, posTo, posBy);
+		}
+		// END KGU#61 2016-03-20
+	}
+	
+	// START KGU#61 2016-03-20: Enh. #84/#135 - outsourced from splitForClause(String)
+	private static String[] splitForCounter(StringList _tokens, int _posFor, int _posTo, int _posBy)
+	{
+		String[] forParts = { "dummy_counter", "1", null, "1", "", null};
+		int endInit = (_posTo >= 0) ? _posTo : _tokens.count();
+		if (_posBy >= 0 && _posBy < _posTo) endInit = _posBy;
+		StringList init = _tokens.subSequence(_posFor+1, endInit);
 		//System.out.println("FOR --> \"" + init + "\"");
-		if (posTo >= 0)
+		if (_posTo >= 0)
 		{
-			//System.out.println("TO section from " + (posTo + lenTo) + " to " + pastTo + "...");
-			forParts[2] = _intermediate.substring(posTo + lenTo, pastTo).trim();
+			int endTo = (_posBy > _posTo) ? _posBy : _tokens.count();
+			forParts[2] = _tokens.subSequence(_posTo + 1, endTo).concatenate().trim();
 			//System.out.println("TO --> \"" + forParts[2] + "\"");
 		}
-		if (posBy >= 0)
+		if (_posBy >= 0)
 		{
-			//System.out.println("BY section from " + (posBy + lenBy) + " to " + pastBy + "...");
-			forParts[4] = _intermediate.substring(posBy + lenBy, pastBy).trim();
+			int endBy = (_posTo > _posBy) ? _posTo : _tokens.count();
+			forParts[4] = _tokens.subSequence(_posBy + 1, endBy).concatenate().trim();
 			//System.out.println("BY --> \"" + forParts[4] + "\"");
 		}
 		if (forParts[4].isEmpty())
@@ -680,26 +890,42 @@ public class For extends Element implements ILoop {
 				forParts[3] = "1";
 			}
 		}
-		init = unifyOperators(init);	// 
-		String[] initParts = init.split(" <- ");
-		if (initParts.length < 2)
+		unifyOperators(init, true);
+		int posAsgnOpr = init.indexOf("<-");
+		if (posAsgnOpr > 0)
 		{
-			forParts[1] = initParts[0].trim();
+			forParts[0] = init.subSequence(0, posAsgnOpr).concatenate().trim();
 		}
-		else
+		forParts[1] = init.subSequence(posAsgnOpr + 1, init.count()).concatenate().trim();
+		
+		return forParts;		
+	}
+
+	private static String[] splitForTraversal(StringList _tokens, int _posFor, int _posForIn, int _posIn)
+	{
+		String[] forParts = { "dummy_iterator", "", null, "", "", "{}"};
+		if (_posForIn < 0)
 		{
-			forParts[0] = initParts[0].trim();
-			forParts[1] = initParts[1].trim();
+			_posForIn = _posFor;
 		}
+		forParts[0] = _tokens.subSequence(_posForIn + 1, _posIn).concatenate().trim();
+		forParts[5] = _tokens.subSequence(_posIn + 1, _tokens.count()).concatenate().trim();
 		return forParts;
+		
 	}
 	
 	public String composeForClause()
 	{
-		return composeForClause(this.counterVar, this.startValue, this.endValue, this.stepConst);
+		return composeForClause(false);
 	}
 	
-	public static String composeForClause(String _counter, String _start, String _end, String _step)
+	public String composeForClause(boolean _forceStep)
+	{
+		return composeForClause(this.counterVar, this.startValue, this.endValue, this.stepConst, _forceStep);
+	}
+	
+	// START KGU#61 2016-03-20: Enh. #84/#135
+	public static String composeForClause(String _counter, String _start, String _end, String _step, boolean _forceStep)
 	{
 		int step = 1;
 		try
@@ -708,10 +934,10 @@ public class For extends Element implements ILoop {
 		}
 		catch (Exception ex)
 		{}
-		return composeForClause(_counter, _start, _end, step);
+		return composeForClause(_counter, _start, _end, step, _forceStep);
 	}
 	
-	public static String composeForClause(String _counter, String _start, String _end, int _step)
+	public static String composeForClause(String _counter, String _start, String _end, int _step, boolean _forceStep)
 	{
 		String asgnmtOpr = " <- ";	// default assignment operator
 		// If the preset text prefers the Pascal assignment operator then we will use this instead
@@ -721,7 +947,7 @@ public class For extends Element implements ILoop {
 		}
 		String forClause = D7Parser.preFor.trim() + " " + _counter + asgnmtOpr + _start + " " +
 				D7Parser.postFor.trim() + " " + _end;
-		if (_step != 1)
+		if (_step != 1 || _forceStep)
 		{
 			forClause = forClause + " " + D7Parser.stepFor.trim() + " " + Integer.toString(_step);
 		}
@@ -733,9 +959,90 @@ public class For extends Element implements ILoop {
 	
 	public boolean checkConsistency()
 	{
-		return this.getText().getLongString().equals(this.composeForClause());
+		//String string1 = this.getText().getLongString();
+		//String string2 = this.composeForClause();
+		// START KGU#61 2016-03-20: Enh. #84/#135 - there are two styles now
+		//return this.getText().getLongString().equals(this.composeForClause());
+		return this.classifyStyle() != ForLoopStyle.FREETEXT;
+		// END KGU#61 2016-03-20
 	}
 	// END KGU#3 2015-11-04
+
+	// START KGU#61 2016-03-20: Enh. #84/#135
+	public String composeForInClause()
+	{
+		return composeForInClause(this.counterVar, this.valueList);
+	}
+
+	public String composeForInClause(String _iterator, String _valueList)
+	{
+		String preForIn = D7Parser.preForIn.trim();
+		if (preForIn.isEmpty()) { preForIn = D7Parser.preFor.trim(); }
+		String forClause = preForIn + " " + _iterator + " " +
+				D7Parser.postForIn.trim() + " " + _valueList;
+		return forClause;
+	}
+	
+	/**
+	 * Classifies the loop style based only on the congruence of the stored
+	 * text with the generated textes of the styles COUNTER and TRAVERSAL
+	 * (the latter being the code for FOR-IN loops).
+	 * You might also consider testing this.style (which jus returns an cached
+	 * earlier classification) and this.isForInLoop(), which first checks the
+	 * cached classification and if this is FREETEXT also calls this method
+	 * in order to find out whether this complies with FOR-IN syntax.
+	 * @return One of the style codes COUNTER, TRAVERSAL, and FREETEXT
+	 */
+	public ForLoopStyle classifyStyle()
+	{
+		ForLoopStyle style = ForLoopStyle.FREETEXT;
+		String thisText = this.getText().getLongString().trim();
+		//System.out.println(thisText + " <-> " + this.composeForClause() + " <-> " + this.composeForInClause());
+		
+		if (D7Parser.ignoreCase)
+		{
+			if (thisText.equalsIgnoreCase(this.composeForClause()) ||
+					thisText.equalsIgnoreCase(this.composeForClause(true)))
+			{
+				style = ForLoopStyle.COUNTER;
+			}
+			else if (thisText.equalsIgnoreCase(this.composeForInClause()))
+			{
+				style = ForLoopStyle.TRAVERSAL;
+			}			
+		}
+		else
+		{
+			if (thisText.equals(this.composeForClause()) ||
+					thisText.equals(this.composeForClause(true)))
+			{
+				style = ForLoopStyle.COUNTER;
+			}
+			else if (thisText.equals(this.composeForInClause()))
+			{
+				style = ForLoopStyle.TRAVERSAL;
+			}
+		}
+		return style;
+	}
+	
+	/**
+	 * Convenience method to find out whether this FOR loop has FOR-IN
+	 * style, because it has checks it in two ways:
+	 * 1. by the stored attribute style
+	 * 2. if 1 results in FREETEXT also compares the text against the
+	 * split and composed stored information 
+	 */
+	public boolean isForInLoop()
+	{
+		boolean isForIn = this.style == ForLoopStyle.TRAVERSAL;
+		if (!isForIn && this.style == ForLoopStyle.FREETEXT)
+		{
+			isForIn = this.classifyStyle() == ForLoopStyle.TRAVERSAL;
+		}
+		return isForIn;
+	}
+	// END KGU#61 2016-03-20
 
 	// START KGU 2015-11-30
 	@Override
@@ -743,4 +1050,32 @@ public class For extends Element implements ILoop {
 		return this.q;
 	}
 	// END KGU 2015-11-30
+	
+//    public static void main(String[] args)
+//	{
+//    	Vector<For> forElems = new Vector<For>();
+//		forElems.add(new For("for doof <- 42 to 56"));
+//		forElems.add(new For("for troll in {34, 252, 21}"));
+//		forElems.add(new For("for int mumpitz in 18 20 22 23 24 27 passe"));
+//		forElems.add(new For("irgendein Schwachsinn hier!"));
+//		for (int f = 0; f < forElems.size(); f++)
+//		{
+//			String[] components = forElems.get(f).splitForClause();
+//			for (int i = 0; i < components.length; i++) System.out.println(i + ": " + components[i]);
+//			if (components[5] == null)
+//			{
+//				forElems.get(f).setCounterVar(components[0]);
+//				forElems.get(f).setStartValue(components[1]);
+//				forElems.get(f).setEndValue(components[2]);
+//				forElems.get(f).setStepConst(components[3]);
+//			}
+//			else
+//			{
+//				forElems.get(f).setCounterVar(components[0]);
+//				forElems.get(f).setValueList(components[5]);				
+//			}
+//			System.out.println(forElems.get(f).classifyStyle());
+//		}		
+//	}
+
 }

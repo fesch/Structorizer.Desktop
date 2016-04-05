@@ -35,6 +35,10 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2007.12.28      First Issue
  *      Kay Gürtzig     2015.10.12      control elements for breakpoint handling added (KGU#43). 
  *      Kay Gürtzig     2015.11.22      Adaptations for handling selected non-empty Subqueues (KGU#87)
+ *      Kay Gürtzig     2016.01.04      Enh. #87: New buttons and menu items for collapsing/expanding elements
+ *      Kay Gürtzig     2016.01.11      Enh. #103: Save button disabled while Root is unchanged (KGU#137)
+ *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution (KGU#143)
+ *      Kay Gürtzig     2016.01.22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#143 + KGU#144).
  *
  ******************************************************************************************************
  *
@@ -44,14 +48,11 @@ package lu.fisch.structorizer.gui;
 
 
 import com.kobrix.notebook.gui.AKDockLayout;
+
 import java.awt.*;
 import java.awt.event.*;
 
-
-
 import javax.swing.*;
-
-//import sun.awt.image.codec.JPEGImageEncoderImpl;
 
 import lu.fisch.structorizer.elements.*;
 
@@ -119,7 +120,12 @@ public class Editor extends JPanel implements NSDController, ComponentListener
     protected JButton btnEdit = new JButton(IconLoader.ico006); 
     protected JButton btnDelete = new JButton(IconLoader.ico005); 
     protected JButton btnMoveUp = new JButton(IconLoader.ico019); 
-    protected JButton btnMoveDown = new JButton(IconLoader.ico020); 
+    protected JButton btnMoveDown = new JButton(IconLoader.ico020);
+    // collapsing & expanding
+    // START KGU#123 2016-01-04: Enh. #87 - Preparations for Fix #65
+    protected JButton btnCollapse = new JButton(IconLoader.ico106); 
+    protected JButton btnExpand = new JButton(IconLoader.ico107);    
+    // END KGU#123 2016-01-04
 	// printing
     protected JButton btnPrint = new JButton(IconLoader.ico041);
     // START KGU#2 2015-11-19: Arranger launch added
@@ -186,6 +192,10 @@ public class Editor extends JPanel implements NSDController, ComponentListener
     protected JMenuItem popupDelete = new JMenuItem("Delete",IconLoader.ico005);
     protected JMenuItem popupMoveUp = new JMenuItem("Move up",IconLoader.ico019);
     protected JMenuItem popupMoveDown = new JMenuItem("Move down",IconLoader.ico020);
+    // START KGU#123 2016-01-04: Enh. #87 - Preparations for Fix #65
+    protected JMenuItem popupCollapse = new JMenuItem("Collapse", IconLoader.ico106); 
+    protected JMenuItem popupExpand = new JMenuItem("Expand", IconLoader.ico107);    
+    // END KGU#123 2016-01-04
     // START KGU#43 2015-10-12: Breakpoint toggle
     protected JMenuItem popupBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
     // END KGU#43 2015-10-12
@@ -304,7 +314,17 @@ public class Editor extends JPanel implements NSDController, ComponentListener
         popup.add(popupMoveDown);
         popupMoveDown.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.moveDownNSD(); doButtons(); } } );
         
-        // START KGU#43 2015-10-12 Add a possibility to set or unset a checkpoint on the selected Element
+		// START KGU#123 2016-01-03: Enh. #87 - New menu items (addressing Bug #65)
+		popup.addSeparator();
+
+		popup.add(popupCollapse);
+		popupCollapse.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.collapseNSD(); doButtons(); } } );
+
+		popup.add(popupExpand);
+		popupExpand.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.expandNSD(); doButtons(); } } );
+		// END KGU#123 2016-01-03
+
+		// START KGU#43 2015-10-12 Add a possibility to set or unset a checkpoint on the selected Element
         popup.addSeparator();
 
         popup.add(popupBreakpoint);
@@ -512,6 +532,19 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		btnColor8.setFocusable(false);
 		btnColor9.setFocusable(false);
 
+		// START KGU#123 2016-01-04: Enh. #87 - Preparation for fix #65
+		toolbar=newToolBar("Collapsing");
+
+		// Collapse & Expand
+		//toolbar.addSeparator();
+        toolbar.add(btnCollapse);
+		btnCollapse.setFocusable(false);
+		btnCollapse.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.collapseNSD(); } } );
+        toolbar.add(btnExpand);
+		btnExpand.setFocusable(false);
+		btnExpand.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.expandNSD(); } } );
+		// END KGU#123 2016-01-04
+
 		toolbar=newToolBar("About");
 
 		// About
@@ -598,7 +631,11 @@ public class Editor extends JPanel implements NSDController, ComponentListener
                 //scrollarea.setViewportView(diagram);
 
 		// conditions
-		boolean conditionAny =  diagram.getSelected() != null;
+		// START KGU#143 2016-01-21: Bugfix #114 - elements involved in execution must not be edited
+		//boolean conditionAny =  diagram.getSelected() != null;
+		Element selected = diagram.getSelected();
+		boolean conditionAny =  selected != null && !selected.isExecuted();
+		// END KGU#143 2016-01-21
 		boolean condition =  conditionAny && diagram.getSelected()!=diagram.getRoot();
 		// START KGU#87 2015-11-22: For most operations, multiple selections are not supported
 		boolean conditionNoMult = condition && !diagram.selectedIsMultiple();
@@ -608,17 +645,26 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		boolean conditionCanMoveDown = false;
 		if (conditionAny)
 		{
-			if (diagram.getSelected().parent!=null)
-			{
-				// make sure parent is a subqueue, which is not the case if somebody clicks on a subqueue!
-				if (diagram.getSelected().parent.getClass().getSimpleName().equals("Subqueue"))
-				{
-					i = ((Subqueue) diagram.getSelected().parent).getIndexOf(diagram.getSelected());
-					conditionCanMoveUp = (i-1>=0);
-					conditionCanMoveDown = (i+1<((Subqueue) diagram.getSelected().parent).getSize());
-				}
-			}
+			// START KGU#144 2016-01-22: Bugfix for #38 - Leave the decision to the selected element
+			//if(diagram.getSelected().parent!=null)
+			//{
+			//	// make sure parent is a subqueue, which is not the case if somebody clicks on a subqueue!
+			//	if (diagram.getSelected().parent.getClass().getSimpleName().equals("Subqueue"))
+			//	{
+			//		i = ((Subqueue) diagram.getSelected().parent).getIndexOf(diagram.getSelected());
+			//		conditionCanMoveUp = (i-1>=0);
+			//		conditionCanMoveDown = (i+1<((Subqueue) diagram.getSelected().parent).getSize());
+			//	}
+			//}
+			conditionCanMoveUp = diagram.getSelected().canMoveUp();
+			conditionCanMoveDown = diagram.getSelected().canMoveDown();
+			// END KGU#144 2016-01-22
 		}
+		
+		// START KGU#137 2016-01-11: Bugfix #103 - Reflect the "saveworthyness" of the diagram
+		// save
+		btnSave.setEnabled(diagram.getRoot().hasChanged());
+		// END KGU#137 2016-01-11
 		
 		// undo & redo
 		btnUndo.setEnabled(diagram.getRoot().canUndo());
@@ -684,32 +730,61 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		btnColor8.setEnabled(condition);
 		btnColor9.setEnabled(condition);
 		
+		// START KGU#123 2016-01-03: Enh. #87 - We allow multiple selection for collapsing
+		// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
+		btnCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
+		btnExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
+		// END KGU#123 2016-01-03
+
 		// editing
 		// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
 		//btnEdit.setEnabled(conditionAny);
 		btnEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
 		// END KGU#87 2015-11-22
-		btnDelete.setEnabled(diagram.canCutCopy());
+		// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
+		//btnDelete.setEnabled(diagram.canCutCopy());
+		btnDelete.setEnabled(diagram.canCut());
+		// END KGU#143 2016-01-21
 		btnMoveUp.setEnabled(conditionCanMoveUp);
 		btnMoveDown.setEnabled(conditionCanMoveDown);
 		// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
 		//popuEdit.setEnabled(conditionAny);
 		popupEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
 		// END KGU#87 2015-11-22
-		popupDelete.setEnabled(condition);
+		// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
+		//popupDelete.setEnabled(condition);
+		popupDelete.setEnabled(diagram.canCut());
+		// END KGU#143 2016-01-21
 		popupMoveUp.setEnabled(conditionCanMoveUp);
 		popupMoveDown.setEnabled(conditionCanMoveDown);
 		
+		// START KGU#123 2016-01-03: Enh. #87 - We allow multiple selection for collapsing
+		// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
+		popupCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
+		popupExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
+		// END KGU#123 2016-01-03
+
 		// executor
-		popupBreakpoint.setEnabled(diagram.canCutCopy());	// KGU 2015-10-12: added
+		// START KGU#143 2016-01-21: Bugfix #114 - breakpoint need a more generous enabling policy
+		//popupBreakpoint.setEnabled(diagram.canCutCopy());	// KGU 2015-10-12: added
+		popupBreakpoint.setEnabled(diagram.canCopy());
+		// END KGU#143 2016-01-21
 		
 		// copy & paste
-		btnCopy.setEnabled(diagram.canCutCopy());
-		btnCut.setEnabled(diagram.canCutCopy());
+		// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
+		//btnCopy.setEnabled(diagram.canCutCopy());
+		//btnCut.setEnabled(diagram.canCutCopy());
+		btnCopy.setEnabled(diagram.canCopy());
+		btnCut.setEnabled(diagram.canCut());
+		// END KGU#143 2016-01-21
 		btnPaste.setEnabled(diagram.canPaste());
-		popupCopy.setEnabled(diagram.canCutCopy());
-		popupCut.setEnabled(diagram.canCutCopy());
+		// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
+		//popupCopy.setEnabled(diagram.canCutCopy());
+		//popupCut.setEnabled(diagram.canCutCopy());
+		popupCopy.setEnabled(diagram.canCopy());
+		popupCut.setEnabled(diagram.canCut());
 		popupPaste.setEnabled(diagram.canPaste());
+		// END KGU#143 2016-01-21
 		
 		// style
 		btnNice.setSelected(diagram.isNice());

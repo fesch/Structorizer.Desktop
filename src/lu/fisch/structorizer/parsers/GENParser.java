@@ -32,7 +32,8 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author          Date			Description
  *      ------		----			-----------
- *      Bob Fisch       2008.04.12              First Issue
+ *      Bob Fisch       2008.04.12      First Issue
+ *      Kay Gürtzig     2016.04.01      Type of field plugin specialized
  *
  ******************************************************************************************************
  *
@@ -54,7 +55,7 @@ import lu.fisch.structorizer.elements.*;
 
 public class GENParser extends DefaultHandler {
 	
-	private Vector plugins = new Vector();
+	private Vector<GENPlugin> plugins = new Vector<GENPlugin>();
 	
 	public void startElement(String namespaceUri, String localName, String qualifiedName, Attributes attributes) throws SAXException 
 	{
@@ -78,9 +79,9 @@ public class GENParser extends DefaultHandler {
 	{
 	}
 	
-	public Vector parse(BufferedInputStream _is)
+	public Vector<GENPlugin> parse(BufferedInputStream _is)
 	{
-		plugins = new Vector();
+		plugins = new Vector<GENPlugin>();
 		
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		try		
