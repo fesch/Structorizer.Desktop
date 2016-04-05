@@ -72,6 +72,7 @@
 
     -->
 
+    <!-- target to build the OSX wrapper -->
     <target name="Structorizer">
         <bundleapp outputdirectory="./Structorizer/"
             name="Structorizer"
