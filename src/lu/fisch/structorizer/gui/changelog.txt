@@ -18,6 +18,7 @@ Current development version: 3.24-06 (2016.04.xx)
 - 02: Enh. #133: Execution Call stack may now be inspected in paused state <Kay Gürtzig>
 - 02: Enh. KGU#89: Executor: Extended language localisation support <Kay Gürtzig>
 - 03: Enh. #84/#135: For-In loops now consistently supported [R. Schmidt]<Kay Gürtzig>
+- 03: Issue #79/#152: Requested Java version corrected (1.6 --> 1.8) <Kay Gürtzig>
 - 04: Bugfix #96/#135: On BASH export conditions now put into [[ ]] [Rolf Schmidt]
 - 04: Bugfix #135/KGU#163: Detection of completely undefined variables <Kay Gürtzig>
 - 04: Enh. #135: Improved array support on BASH export [Rolf Schmidt]
@@ -33,6 +34,9 @@ Current development version: 3.24-06 (2016.04.xx)
 - 06: Executor: Keyword case awareness (configurable) consistently ensured <Kay Gürtzig>
 - 06: Issue #149: Character set (encoding) for export now selectable [Rolf Schmidt]
 - 06: Issue #151: Code export pumped the process up with useless GUI threads <Kay Gürtzig>
+- 06: Issue #153: BASH export had ignored Parallel sections [Rolf Schmidt] <Kay Gürtzig> 
+- 06: Bugfix #154: Analyser caused silent exception on Parallel sections <Kay Gürtzig>
+- 06: Bugfix #155: "New" diagram didn't clear previous selection <Kay Gürtzig> 
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
