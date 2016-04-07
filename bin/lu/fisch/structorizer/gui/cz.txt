@@ -1,0 +1,408 @@
+/*
+    Structorizer czech language file
+
+    Copyright (C) 2009  Vaščák Vladimír
+
+    This file is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or any
+    later version.
+
+    This file is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    This file is part of the "Structorizer" project.     
+*/
+
+/******************************************************************************************************
+ *
+ *      Author:         Vaščák Vladimír
+ *
+ *      Description:    The czech language file
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date			Description
+ *      ------		----			-----------
+ *      Vaščák Vladimír     2010.11.04      	Created
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:	
+ *
+ ******************************************************************************************************/
+
+-----[ Menu ]-----
+//Menu File
+Menu.menuFile.text=Soubor
+// Submenus of "File"
+Menu.menuFileNew.text=Nový
+Menu.menuFileOpen.text=Otevřít ...
+Menu.menuFileSave.text=Uložit
+Menu.menuFileSaveAs.text=Uložit jako ...
+Menu.menuFileExport.text=Export
+// Submenu of "File -> Export"
+Menu.menuFileExportPicture.text=Obrázek ...
+Menu.menuFileExportCode.text=Jazyk ...
+Menu.menuFileImport.text=Import
+// Submenu of "File -> Import"
+Menu.menuFileImportPascal.text=Pascal ...
+Menu.menuFilePrint.text=Tisk ...
+Menu.menuFileQuit.text=Konec
+// Menu "Edit"
+Menu.menuEdit.text=Úpravy
+// Submenu of "Edit"
+Menu.menuEditUndo.text=Zpět
+Menu.menuEditRedo.text=Znovu
+Menu.menuEditCut.text=Vyjmout
+Menu.menuEditCopy.text=Kopírovat
+Menu.menuEditPaste.text=Vložit
+Menu.menuEditCopyDiagramPNG.text=Kopírovat PNG obrázek
+Menu.menuEditCopyDiagramEMF.text=Kopírovat EMF obrázek
+// Menu "Diagram"
+Menu.menuDiagram.text=Diagram
+// Submenus of "Diagram"
+Menu.menuDiagramAdd.text=Přidat
+// Submenu "Diagram -> Add -> Before"
+Menu.menuDiagramAddBefore.text=Před
+// Submenus for adding Elements "Before"
+Menu.menuDiagramAddBeforeInst.text=Příkaz
+Menu.menuDiagramAddBeforeAlt.text=IF podmínka
+Menu.menuDiagramAddBeforeCase.text=CASE rozhodování
+Menu.menuDiagramAddBeforeFor.text=FOR cyklus
+Menu.menuDiagramAddBeforeWhile.text=WHILE cyklus
+Menu.menuDiagramAddBeforeRepeat.text=REPEAT cyklus
+Menu.menuDiagramAddBeforeForever.text=ENDLESS cyklus
+Menu.menuDiagramAddBeforeCall.text=Volání
+Menu.menuDiagramAddBeforeJump.text=Skok
+// Submenu "Diagram -> Add -> After"
+Menu.menuDiagramAddAfter.text=Po
+// Submenus for adding Elements "After"
+Menu.menuDiagramAddAfterInst.text=Příkaz
+Menu.menuDiagramAddAfterAlt.text=IF podmínka
+Menu.menuDiagramAddAfterCase.text=CASE rozhodování
+Menu.menuDiagramAddAfterFor.text=FOR cyklus
+Menu.menuDiagramAddAfterWhile.text=WHILE cyklus
+Menu.menuDiagramAddAfterRepeat.text=REPEAT cyklus
+Menu.menuDiagramAddAfterForever.text=ENDLESS cyklus
+Menu.menuDiagramAddAfterCall.text=Volání
+Menu.menuDiagramAddAfterJump.text=Skok
+Menu.menuDiagramEdit.text=Editovat
+Menu.menuDiagramDelete.text=Smazat
+Menu.menuDiagramMoveUp.text=Posun nahoru
+Menu.menuDiagramMoveDown.text=Posun dolů
+Menu.menuDiagramType.text=Typ
+Menu.menuDiagramTypeProgram.text=Hlavní program
+Menu.menuDiagramTypeFunction.text=Podprogram
+Menu.menuDiagramNice.text=Hranatý diagram?
+Menu.menuDiagramComment.text=Ukazovat komentáře?
+Menu.menuDiagramMarker.text=Zvýraznit proměnné?
+Menu.menuDiagramDIN.text=DIN?
+// Menu "Help"
+Menu.menuPreferences.text=Nastavení
+// Submenu of "Help"
+Menu.menuPreferencesFont.text=Písmo ...
+Menu.menuPreferencesColors.text=Barvy ...
+Menu.menuPreferencesOptions.text=Struktury ...
+Menu.menuPreferencesParser.text=Rozbor ...
+Menu.menuPreferencesLanguage.text=Jazyk
+Menu.menuPreferencesLanguageEnglish.text=Anglicky
+Menu.menuPreferencesLanguageGerman.text=Německy
+Menu.menuPreferencesLanguageFrench.text=Francouzsky
+Menu.menuPreferencesLanguageDutch.text=Holandsky
+Menu.menuPreferencesLanguageLuxemburgish.text=Lucembursky
+Menu.menuPreferencesLanguagePortugalBrazil.text=Brazil
+Menu.menuPreferencesLanguageItalian.text=Italsky
+Menu.menuPreferencesLanguageChinese.text=Chinese
+Menu.menuPreferencesLanguageCzech.text=Česky
+
+Menu.menuPreferencesLookAndFeel.text=Vzhled
+Menu.menuPreferencesSave.text=Uložit nyní všechna nastavení
+// Menu "Help"
+Menu.menuHelp.text=Nápověda
+// Submenu of "Help"
+Menu.menuHelpAbout.text=O programu ...
+Menu.menuHelpUpdate.text=Aktualizace ...
+// Error messages for analyser
+Menu.error01_1.text=WARNING: Nenalezena proměnná cyklu ...
+Menu.error01_2.text=WARNING: Více než jedna proměnná cyklu nalezena ...
+Menu.error01_3.text=Není povoleno měnit proměnnou cyklu  «%» uvnitř cyklu!
+Menu.error02.text=Žádná změna proměnné v podmínce. Je možné zacyklení ...
+Menu.error03_1.text=Proměnná «%» nebyla nastavena!
+Menu.error03_2.text=Proměnná «%» možná nebyla nastavena!
+Menu.error04.text=Není možné použít IF-podmínku s prázdným TRUE-blokem!
+Menu.error05.text=Proměnná «%» musí být napsána velkými písmeny!
+Menu.error06.text=Název programu «%» musí být napsán velkými písmeny!
+Menu.error07_1.text=«%» není povolené jméno pro program nebo metodu!
+Menu.error07_2.text=«%» není povolené jméno pro parametr!
+Menu.error07_3.text=«%» není povolené jméno pro proměnnou!
+Menu.error08.text=Není povoleno přiřazení uvnitř podmínky.
+Menu.error09.text=Program («%») nemůže mít stejné jméno jako proměnná nebo parametr!
+Menu.error10_1.text=Jeden element nemůže obsahovat současně instrukci vstupu/výstupu a přiřazení!
+Menu.error10_2.text=Jeden element nemůže obsahovat současně instrukci vstupu a výstupu!
+Menu.error10_3.text=Jeden element nemůže obsahovat současně instrukci vstupu a přiřazení!
+Menu.error10_4.text=Jeden element nemůže obsahovat současně instrukci výstupu a přiřazení!
+Menu.error11.text=Možná chyba v přiřazení. Prosím zkontrolujte tuto instrukci!
+Menu.error12.text=Parametr «%» musí začínat písmenem "p" následovaný velkými písmeny!
+Menu.error13_1.text=Funkce nevrací žádnou hodnotu!
+Menu.error13_2.text=Funkce nemusí vracet žádnou hodnotu!
+
+-----[ AnalyserPreferences ]-----
+AnalyserPreferences.check1.text=Kontrola proměnné cyklu.
+AnalyserPreferences.check2.text=Kontrola zacyklení. (pokud to jde!))
+AnalyserPreferences.check3.text=Kontrola nenastavené proměnné.
+AnalyserPreferences.check4.text=Kontrola správnosti IF-podmínky.
+AnalyserPreferences.check5.text=Kontrola VELKÝCH PÍSMEN u proměnných. (LUX/MEN)
+AnalyserPreferences.check6.text=Kontrola VELKÝCH PÍSMEN u programů a podprogramů. (LUX/MEN)
+AnalyserPreferences.check7.text=Kontrola správnosti identifikátorů.
+AnalyserPreferences.check8.text=Kontrola přiřazení v podmínkách.
+AnalyserPreferences.check9.text=Kontrola zda jméno programu nebo podprogramu není shodné s žádným identifikátorem.
+AnalyserPreferences.check10.text=Kontrola instrukcí s více příkazy.
+AnalyserPreferences.check11.text=Kontrola chyb u přiřazení.
+AnalyserPreferences.check12.text=Kontrola standardizovaných jmen parametrů. (LUX/MEN)
+AnalyserPreferences.check13.text=Kontrola zda funkce vrací hodnotu.
+AnalyserPreferences.okButton.text=OK
+
+
+
+-----[ Diagram ]-----
+// Buttons
+// I/O
+Editor.btnNew.tooltip=Vytvořit nový prázdný diagram.
+Editor.btnOpen.tooltip=Otevřít existující diagram.
+Editor.btnSave.tooltip=Uložit aktuální diagram.
+// InsertBefore
+Editor.btnBeforeInst.tooltip=Vložit nový příkaz před vybraný element. 
+Editor.btnBeforeAlt.tooltip=Vložit novou IF podmínku před vybraný element.
+Editor.btnBeforeFor.tooltip=Vložit nový FOR cyklus před vybraný element.
+Editor.btnBeforeWhile.tooltip=Vložit nový WHILE cyklus před vybraný element.
+Editor.btnBeforeRepeat.tooltip=Vložit nový REPEAT cyklus před vybraný element.
+Editor.btnBeforeForever.tooltip=Vložit nový nekonečný ENDLESS cyklus před vybraný element.
+Editor.btnBeforeCall.tooltip=Vložit nové volání CALL před vybraný element.
+Editor.btnBeforeJump.tooltip=Vložit nový skok JUMP před vybraný element.
+Editor.btnBeforeCase.tooltip=Vložit nové CASE rozhodování před vybraný element.
+// InsertAfter
+Editor.btnAfterInst.tooltip=Vložit nový příkaz po vybraném elementu.
+Editor.btnAfterAlt.tooltip=Vložit novou IF podmínku po vybraném elementu.
+Editor.btnAfterFor.tooltip=Vložit nový FOR cyklus po vybraném elementu.
+Editor.btnAfterWhile.tooltip=Vložit nový WHILE cyklus po vybraném elementu.
+Editor.btnAfterRepeat.tooltip=Vložit nový REPEAT cyklus po vybraném elementu.
+Editor.btnAfterForever.tooltip=Vložit nový nekonečný ENDLESS cyklus po vybraném elementu.
+Editor.btnAfterCall.tooltip=Vložit nové volání CALL po vybraném elementu.
+Editor.btnAfterJump.tooltip=Vložit nový skok JUMP po vybraném elementu.
+Editor.btnAfterCase.tooltip=Vložit nové CASE po vybraném elementu.
+// undo & redo
+Editor.btnUndo.tooltip=Odvolat poslední akci.
+Editor.btnRedo.tooltip=Opakovat poslední akci.
+// copy & paste
+Editor.btnCut.tooltip=Vyjmout vybraný element.
+Editor.btnCopy.tooltip=Kopírovat vybraný element.
+Editor.btnPaste.tooltip=Vložit zkopírovaný nebo vyjmutý element po vybraném elementu.
+// style 
+Editor.btnNice.tooltip=Přepnout mezi zobrazeními diagramu.
+Editor.btnFunction.tooltip=Diagram podprogramu (kulaté rohy).
+Editor.btnProgram.tooltip=Diagram hlavního programu (hranaté rohy).
+// editing
+Editor.btnEdit.tooltip=Editovat vybraný element.
+Editor.btnDelete.tooltip=Smazat vybraný element.
+Editor.btnMoveUp.tooltip=Posunout vybraný element o jednu pozici nahoru.
+Editor.btnMoveDown.tooltip=Posunout vybraný element o jednu pozici dolů.
+//printing
+Editor.btnPrint.tooltip=Vytisknout diagram.
+// font
+Editor.btnFontUp.tooltip=Zvětšit velikost písma.
+Editor.btnFontDown.tooltip=Zmenšit velikost písma.
+// copyright 
+Editor.btnAbout.tooltip=Ukázat informace o aplikaci Structorizer.
+// colors
+Editor.btnColor0.tooltip=Obarvit vybraný element touto barvou.
+Editor.btnColor1.tooltip=Obarvit vybraný element touto barvou.
+Editor.btnColor2.tooltip=Obarvit vybraný element touto barvou.
+Editor.btnColor3.tooltip=Obarvit vybraný element touto barvou.
+Editor.btnColor4.tooltip=Obarvit vybraný element touto barvou.
+Editor.btnColor5.tooltip=Obarvit vybraný element touto barvou.
+Editor.btnColor6.tooltip=Obarvit vybraný element touto barvou.
+Editor.btnColor7.tooltip=Obarvit vybraný element touto barvou.
+Editor.btnColor8.tooltip=Obarvit vybraný element touto barvou.
+Editor.btnColor9.tooltip=Obarvit vybraný element touto barvou.
+// Popup menu
+Editor.popupCut.text=Vyjmout
+Editor.popupCopy.text=Kopírovat
+Editor.popupPaste.text=Vložit
+Editor.popupAdd.text=Přidat
+// Submenu of "Add"
+Editor.popupAddBefore.text=Před
+// Submenus of "Add -> Before"
+Editor.popupAddBeforeInst.text=Příkaz
+Editor.popupAddBeforeAlt.text=IF podmínka
+Editor.popupAddBeforeCase.text=CASE rozhodování
+Editor.popupAddBeforeFor.text=FOR cyklus
+Editor.popupAddBeforeWhile.text=WHILE cyklus
+Editor.popupAddBeforeRepeat.text=REPEAT cyklus
+Editor.popupAddBeforeForever.text=ENDLESS cyklus
+Editor.popupAddBeforeCall.text=Call volání
+Editor.popupAddBeforeJump.text=Jump skok
+// After
+Editor.popupAddAfter.text=Po
+// Submenus of "Add -> After"
+Editor.popupAddAfterInst.text=Příkaz
+Editor.popupAddAfterAlt.text=IF podmínka
+Editor.popupAddAfterCase.text=CASE rozhodování
+Editor.popupAddAfterFor.text=FOR cyklus
+Editor.popupAddAfterWhile.text=WHILE cyklus
+Editor.popupAddAfterRepeat.text=REPEAT cyklus
+Editor.popupAddAfterForever.text=ENDLESS cyklus
+Editor.popupAddAfterCall.text=Call volání
+Editor.popupAddAfterJump.text=Jump skok
+// Edxit	
+Editor.popupEdit.text=Editovat
+Editor.popupDelete.text=Smazat
+Editor.popupMoveUp.text=Posunout nahoru
+Editor.popupMoveDown.text=Posunout dolů
+
+
+-----[ InputBox ]-----
+InputBox.lblText.text=Prosím vložte text
+InputBox.lblText.tooltip=
+InputBox.lblComment.text=Komentář
+InputBox.lblComment.tooltip=
+InputBox.txtText.tooltip=Obsah elementu.
+InputBox.txtComment.tooltip=Komentář k elementu.
+InputBox.btnOK.text=OK
+InputBox.btnOK.tooltip=Potvrďte svou volbu.
+InputBox.btnCancel.text=Storno
+InputBox.btnCancel.tooltip=Zrušit volbu.
+
+
+-----[ Preferences ]-----
+Preferences.title=Nastavení struktur
+Preferences.pnlAlt.border=Podmínka IF
+Preferences.pnlAlt.tooltip=
+Preferences.lblAltT.text=Označení PRAVDA
+Preferences.lblAltT.tooltip=Označení pro levou stranu.
+Preferences.lblAltF.text=Označení NEPRAVDA
+Preferences.lblAltF.tooltip=Označení pro pravou stranu.
+Preferences.lblAltContent.text=Přednastavený obsah
+Preferences.lblAltContent.tooltip=Přednastavený obsah podmínky IF.
+Preferences.pnlCase.border=CASE rozhodování
+Preferences.pnlCase.tooltip=
+Preferences.lblCase.text=Přednastavený obsah
+Preferences.lblCase.tooltip=Přednastavený obsah CASE rozhodování.
+Preferences.pnlFor.border=FOR loop
+Preferences.pnlFor.tooltip=
+Preferences.lblFor.text=Přednastavený obsah
+Preferences.lblFor.tooltip=Přednastavený obsah pro FOR cyklus.
+Preferences.pnlWhile.border=WHILE cyklus
+Preferences.pnlWhile.tooltip=
+Preferences.lblWhile.text=Přednastavený obsah
+Preferences.lblWhile.tooltip=Přednastavený obsah pro WHILE cyklus.
+Preferences.pnlRepeat.border=REPEAT cyklus
+Preferences.pnlRepeat.tooltip=
+Preferences.lblRepeat.text=Přednastavený obsah
+Preferences.lblRepeat.tooltip=Přednastavený obsah pro REPEAT cyklus.
+Preferences.btnOK.text=OK
+Preferences.btnOK.tooltip=Potvrďte svou volbu.
+
+
+-----[ About ]-----
+About.title=O programu
+About.pnlTabbed.tab.0=Zúčastnění lidé
+About.pnlTabbed.tab.1=Seznam změn
+About.btnOK.text=OK
+About.btnOK.tooltip=Potvrďte svou volbu.
+
+
+-----[ FontChooser ]-----
+FontChooser.title=Písmo
+FontChooser.lblTest.tooltip=Ukázkový text pro zobrazení v Editoru.
+FontChooser.lblName.text=Název
+FontChooser.lblName.tooltip=Název vybraného písma.
+FontChooser.lblSize.text=Velikost
+FontChooser.lblSize.tooltip=Velikost vybraných písem.
+FontChooser.btnOK.text=OK
+FontChooser.btnOK.tooltip=Potvrďte svou volbu.
+
+
+-----[ Colors ]-----
+Colors.title=Nastavení barev
+Colors.lblColor0.text=Barva 0
+Colors.lblColor1.text=Barva 1
+Colors.lblColor2.text=Barva 2
+Colors.lblColor3.text=Barva 3
+Colors.lblColor4.text=Barva 4
+Colors.lblColor5.text=Barva 5
+Colors.lblColor6.text=Barva 6
+Colors.lblColor7.text=Barva 7
+Colors.lblColor8.text=Barva 8
+Colors.lblColor9.text=Barva 9
+Colors.lblColor0.tooltip=Volba pro barvu č. 0.
+Colors.lblColor1.tooltip=Volba pro barvu č. 1.
+Colors.lblColor2.tooltip=Volba pro barvu č. 2.
+Colors.lblColor3.tooltip=Volba pro barvu č. 3.
+Colors.lblColor4.tooltip=Volba pro barvu č. 4.
+Colors.lblColor5.tooltip=Volba pro barvu č. 5.
+Colors.lblColor6.tooltip=Volba pro barvu č. 6.
+Colors.lblColor7.tooltip=Volba pro barvu č. 7.
+Colors.lblColor8.tooltip=Volba pro barvu č. 8.
+Colors.lblColor9.tooltip=Volba pro barvu č. 9.
+Colors.color0.tooltip=Kliknutím editovat ...
+Colors.color1.tooltip=Kliknutím editovat ...
+Colors.color2.tooltip=Kliknutím editovat ...
+Colors.color3.tooltip=Kliknutím editovat ...
+Colors.color4.tooltip=Kliknutím editovat ...
+Colors.color5.tooltip=Kliknutím editovat ...
+Colors.color6.tooltip=Kliknutím editovat ...
+Colors.color7.tooltip=Kliknutím editovat ...
+Colors.color8.tooltip=Kliknutím editovat ...
+Colors.color9.tooltip=Kliknutím editovat ...
+Colors.btnOK.text=OK
+Colors.btnOK.tooltip=Potvrďte svou volbu.
+
+
+-----[ ColorChooser ]-----
+ColorChooser.title=Barvy
+ColorChooser.btnCancel.text=Storno
+ColorChooser.btnCancel.tooltip=Zrušit volbu.
+ColorChooser.btnOK.text=OK
+ColorChooser.btnOK.tooltip=Potvrďte svou volbu.
+
+
+-----[ ParserPreferences ]-----
+ParserPreferences.title=Nastavení parseru
+ParserPreferences.lblPre.text=Před
+ParserPreferences.lblPre.tooltip=
+ParserPreferences.lblPost.text=Po
+ParserPreferences.lblPost.tooltip=
+ParserPreferences.lblAlt.text=IF podmínka
+ParserPreferences.lblAlt.tooltip=
+ParserPreferences.lblCase.text=CASE rozhodování
+ParserPreferences.lblCase.tooltip=
+ParserPreferences.lblFor.text=FOR cyklus
+ParserPreferences.lblFor.tooltip=
+ParserPreferences.lblWhile.text=WHILE cyklus
+ParserPreferences.lblWhile.tooltip=
+ParserPreferences.lblRepeat.text=REPEAT cyklus
+ParserPreferences.lblRepeat.tooltip=
+ParserPreferences.lblInput.text=Vstup
+ParserPreferences.lblInput.tooltip=
+ParserPreferences.lblOutput.text=Výstup
+ParserPreferences.lblOutput.tooltip=
+ParserPreferences.btnOK.text=OK
+ParserPreferences.btnOK.tooltip=Potvrďte svou volbu.
+
+-----[ PrintPreview ]-----
+PrintPreview.title=Tiskový náhled
+PrintPreview.btnOrientation.text=Změna orientace
+PrintPreview.btnOrientation.tooltip=Otočit stránku o 90°.
+PrintPreview.btnCancel.text=Storno
+PrintPreview.btnCancel.tooltip=Zrušit tisk.
+PrintPreview.btnOK.text=Tisk
+PrintPreview.btnOK.tooltip=Vytisknout diagram.
+
