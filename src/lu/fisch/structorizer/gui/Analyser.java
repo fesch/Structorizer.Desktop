@@ -50,34 +50,34 @@ import javax.swing.*;
 public class Analyser extends Thread
 {
 	private Root root = null;
-	private JList errorlist = null;
-	private DefaultListModel errors = null;
+	private JList<DetectedError> errorlist = null;
+	private DefaultListModel<DetectedError> errors = null;
 	
 	private static boolean running = false;
 	
-	public Analyser(Root _root, JList _errorlist)
+	public Analyser(Root _root, JList<DetectedError> _errorlist)
 	{
 		super();
 		
 		//System.out.println("Setup ...");
-		root=_root;
-		errorlist=_errorlist;
-		errors=(DefaultListModel) _errorlist.getModel();
+		root = _root;
+		errorlist = _errorlist;
+		errors = (DefaultListModel<DetectedError>) _errorlist.getModel();
 	}
 
 	public void run() 
 	{
-		// make shure the analyser is not yet running
+		// make sure the analyser is not yet running
 		if(running==false)
 		{
 			running=true;
 			//System.out.println("Working ...");
-			Vector vec = root.analyse();
+			Vector<DetectedError> vec = root.analyse();
 			errors.clear();
 			
-			for(int i=0;i<vec.size();i++)
+			for(int i=0; i<vec.size(); i++)
 			{
-				errors.addElement((DetectedError) vec.get(i));
+				errors.addElement(vec.get(i));
 			}
 			
 			errorlist.repaint();

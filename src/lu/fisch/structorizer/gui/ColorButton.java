@@ -45,6 +45,7 @@ import java.awt.*;
 import javax.swing.*;
 
 
+@SuppressWarnings("serial")
 public class ColorButton extends JButton 
 {
 	private Color myColor = Color.WHITE;

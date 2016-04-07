@@ -26,6 +26,7 @@ import javax.swing.JToolBar;
  *
  * @author robertfisch
  */
+@SuppressWarnings("serial")
 public class MyToolbar extends JToolBar
 {
     private boolean visible = true;

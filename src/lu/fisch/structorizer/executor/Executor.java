@@ -174,8 +174,6 @@ import java.awt.Dialog.ModalityType;
 import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Stack;
@@ -183,14 +181,11 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
-import java.util.regex.PatternSyntaxException;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
 
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Alternative;
@@ -208,7 +203,6 @@ import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.Updater;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.elements.Forever;
-import lu.fisch.structorizer.generators.CGenerator;
 import lu.fisch.structorizer.gui.Diagram;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.LangDialog;
@@ -983,7 +977,7 @@ public class Executor implements Runnable
 		// START KGU#156 2016-03-11: Enh. #124 - detect execution counter diff.
 		int countBefore = root.getExecStepCount(true);
 		// END KGU#156 2016-03-11
-		boolean done = this.execute(arguments);
+		/*boolean done =*/ this.execute(arguments);
 		// START KGU#156 2016-03-11; Enh. #124
 		caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore, true);
 		if (cloned || root.isTestCovered(true))	
@@ -1605,10 +1599,10 @@ public class Executor implements Runnable
 	 */
 	private void updateVariableDisplay() throws EvalError
 	{
-		Vector<Vector> vars = new Vector();
+		Vector<Vector<Object>> vars = new Vector<Vector<Object>>();
 		for (int i = 0; i < this.variables.count(); i++)
 		{
-			Vector myVar = new Vector();
+			Vector<Object> myVar = new Vector<Object>();
 			myVar.add(this.variables.get(i));	// Variable name
 			// START KGU#67 2015-11-08: We had to find a solution for displaying arrays in a sensible way
 			//myVar.add(this.interpreter.get(this.variables.get(i)));
@@ -1707,7 +1701,7 @@ public class Executor implements Runnable
 		step = useSteps;
 		stop = false;
 		variables = new StringList();
-		control.updateVars(new Vector<Vector>());
+		control.updateVars(new Vector<Vector<Object>>());
 		
 		running = true;
 		Thread runner = new Thread(this, "Player");

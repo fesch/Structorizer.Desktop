@@ -43,6 +43,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution, breakpoint menu item
  *      Kay Gürtzig     2016.01.22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#143 + KGU#144).
  *      Kay Gürtzig     2016.04.01      Issue #144: Favourite code export menu item, #142 accelerator keys added
+ *      Kay Gürtzig     2016.04.06      Enh. #158: Key bindings for editNSD, moveUpNSD, moveDownNSD
  *
  ******************************************************************************************************
  *
@@ -65,6 +66,7 @@ import lu.fisch.structorizer.io.INIFilter;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.parsers.*;
 
+@SuppressWarnings("serial")
 public class Menu extends JMenuBar implements NSDController
 {
 	private Diagram diagram = null;
@@ -518,6 +520,9 @@ public class Menu extends JMenuBar implements NSDController
 		menuDiagramAddAfterPara.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F13,0));
 
 		menuDiagram.add(menuDiagramEdit);
+		// START KGU#177 2016-04-06: Enh. #158
+		menuDiagramEdit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,0));
+		// END KGU#177 2016-04-06
 		menuDiagramEdit.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.editNSD(); doButtons(); } } );
 
 		menuDiagram.add(menuDiagramDelete);
@@ -527,9 +532,15 @@ public class Menu extends JMenuBar implements NSDController
 		menuDiagram.addSeparator();
 
 		menuDiagram.add(menuDiagramMoveUp);
+		// START KGU#177 2016-04-06: Enh. #158
+		menuDiagramMoveUp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.CTRL_DOWN_MASK));
+		// END KGU#177 2016-04-06
 		menuDiagramMoveUp.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.moveUpNSD(); doButtons(); } } );
 
 		menuDiagram.add(menuDiagramMoveDown);
+		// START KGU#177 2016-04-06: Enh. #158
+		menuDiagramMoveDown.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.CTRL_DOWN_MASK));
+		// END KGU#177 2016-04-06
 		menuDiagramMoveDown.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.moveDownNSD(); doButtons(); } } );
 
 		menuDiagram.addSeparator();

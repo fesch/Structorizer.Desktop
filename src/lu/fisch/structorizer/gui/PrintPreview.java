@@ -51,6 +51,7 @@ import javax.swing.border.*;
 /**
  * @author Bob Fisch
  */
+@SuppressWarnings("serial")
 public class PrintPreview extends LangDialog implements Runnable{
 
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
@@ -59,7 +60,7 @@ public class PrintPreview extends LangDialog implements Runnable{
 	protected JPanel contentPanel;
 	protected JScrollPane scrPreview;
 	protected JPanel buttonBar;
-	protected JComboBox m_cbScale;
+	protected JComboBox<String> m_cbScale;
 	protected JButton btnOrientation;
 	protected JButton btnOK;
 	protected JButton btnCancel;
@@ -86,7 +87,7 @@ public class PrintPreview extends LangDialog implements Runnable{
 		contentPanel = new JPanel();
 		scrPreview = new JScrollPane();
 		buttonBar = new JPanel();
-		m_cbScale = new JComboBox();
+		m_cbScale = new JComboBox<String>();
 		btnOrientation = new JButton();
 		btnOK = new JButton();
 		btnCancel = new JButton();
