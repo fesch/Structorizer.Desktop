@@ -40,6 +40,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.03.17      Enh. #133 (KGU#159): Stack trace may now be shown in paused mode
  *      Kay Gürtzig     2016.03.18      Enh. #89 Extended Language translation support
  *      Kay Gürtzig     2016.03.25      Message translations now held in LangTextHolder instead of JLabel
+ *      Kay Gürtzig     2016.04.12      Enh. #137: additional toggle to direct input and output to a text window
  *
  ******************************************************************************************************
  *
@@ -99,7 +100,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         // START KGU#89 2015-11-25
         lblSpeedValue = new javax.swing.JLabel();
         // END KGU#89 2015-11-25
-        // START KGU#117 2016-03-06: Enh. #77 - Checkbox fpr Test coverage mode
+        // START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+        chkOutputToTextWindow = new javax.swing.JCheckBox("Text Window Output");
+        // END KGU#160 2016-04-12
+        // START KGU#117 2016-03-06: Enh. #77 - Checkbox for Run data collection
         chkCollectRuntimeData = new javax.swing.JCheckBox("Collect Run Data");
         cbRunDataDisplay = new JComboBox<RuntimeDataPresentMode>(RuntimeDataPresentMode.values());
         // END KGU#117 2016-03-06
@@ -172,7 +176,11 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         lblSpeedValue.setText("50");
         // END KGU#89 2015-11-25
         
-        // START KGU#117 2016-03-06: Enh. #77 Track test coverage mode change
+		// START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+        chkOutputToTextWindow.addItemListener(this);
+		// END KGU#160 2016-04-12
+
+		// START KGU#117 2016-03-06: Enh. #77 Track test coverage mode change
         chkCollectRuntimeData.addItemListener(this);
         // END KGU#117 2016-03-06
         // START KGU#165 2016-03-13: Enh. #124
@@ -246,21 +254,24 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                		// START KGU#89 2015-11-25: Speed label decomposed
+                	// START KGU#89 2015-11-25: Speed label decomposed
                     .add(layout.createSequentialGroup()
                     	.add(lblSpeed /*, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 86, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE*/)
                     	.add(lblSpeedValue/*, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE*/))
-                    	// END KGU#89 2015-11-25
-                    	// START KGU#117 2016-03-06: Enh. #77
+                    // END KGU#89 2015-11-25
+                    // START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+                    .add(layout.createSequentialGroup().add(chkOutputToTextWindow))
+                    // END KGU#160 2016-04-12
+                    // START KGU#117 2016-03-06: Enh. #77
                     .add(layout.createSequentialGroup().add(chkCollectRuntimeData))
-                    	// END KGU#117 2016-03-06
+                    // END KGU#117 2016-03-06
                     .add(layout.createSequentialGroup()
                         .add(btnStop)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(btnPlay))
-                // START KGU#2 (#9) 2015-11-14
+                        // START KGU#2 (#9) 2015-11-14
                         .add(lblCallLevel))
-                // END KGU#2 (#9) 2015-11-14
+                        // END KGU#2 (#9) 2015-11-14
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     	// START KGU#117 2016-03-06: Enh. #77
@@ -288,6 +299,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
                     .add(lblSpeedValue, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 		// END KGU#89 2015-11-25
                     .add(slSpeed, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                // START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(chkOutputToTextWindow)
+                // END KGU#160 2016-04-12
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup()
                     .add(chkCollectRuntimeData)
@@ -505,6 +520,9 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     private javax.swing.JLabel lblSpeedValue;
     // END KGU#49 2015-11-25
     private javax.swing.JSlider slSpeed;
+    // START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+    public javax.swing.JCheckBox chkOutputToTextWindow;
+    // END KGU#160 2016-04-12
     // START KGU#117/KGU#156 2016-03-13: Enh. #77/#124 - Checkbox fpr Test coverage mode
     public javax.swing.JCheckBox chkCollectRuntimeData;
     public javax.swing.JComboBox<RuntimeDataPresentMode> cbRunDataDisplay;
@@ -587,6 +605,12 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         		Executor.getInstance().redraw();
     		}
     	}
+	    // START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+    	else if (itEv.getSource() == this.chkOutputToTextWindow)
+    	{
+    		Executor.getInstance().setOutputWindowEnabled(this.chkOutputToTextWindow.isSelected());
+    	}
+	    // END KGU#160 2016-04-12
 	}
 	// END KGU#117 2016-03-08
 

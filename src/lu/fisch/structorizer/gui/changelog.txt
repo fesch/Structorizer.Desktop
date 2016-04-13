@@ -38,6 +38,8 @@ Current development version: 3.24-07 (2016.04.xx)
 - 06: Bugfix #154: Analyser caused silent exception on Parallel sections <Kay Gürtzig>
 - 06: Bugfix #155: "New" diagram didn't clear previous selection <Kay Gürtzig>
 - 07: Enh. #158: New key bindings for element editing and selection [Rolf Schmidt]
+- 07: Enh. #137: Executor may direct all output to a text window <Kay Gürtzig>
+- 07: Enh. #161: New Analyser warning on instructions following a Jump [Rolf Schmidt]
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]

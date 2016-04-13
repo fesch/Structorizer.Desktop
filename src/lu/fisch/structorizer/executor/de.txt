@@ -35,6 +35,7 @@
  *      Kay Gürtzig		2016.03.07		Test coverage message added (Enh. #77)
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data texts
  *      Kay Gürtzig     2016.03.18      Additional message texts for Executor dialog
+ *      Kay Gürtzig     2016.04.12      New message text for Control option
  *
  ******************************************************************************************************
  *
@@ -55,6 +56,7 @@ Control.cbRunDataDisplay.item.4=Anzahl Schritte, lin.
 Control.cbRunDataDisplay.item.5=Anzahl Schritte, log.
 Control.cbRunDataDisplay.item.6=aggreg. Schritte, lin.
 Control.cbRunDataDisplay.item.7=aggreg. Schritte, log.
+Control.chkOutputToTextWindow.text=Ausgabe in Fenster
 Control.lbStopRunningProc.text=Diese Aktion ist während der Ausführung eines Diagramms nicht erlaubt.\nLaufende Ausführung abbrechen?
 Control.lbInputValue.text=Bitte Wert für <%> eingeben
 Control.lbInputPaused.text=Ausführung angehalten - der Wert kann in der Variablenanzeige eingetragen werden.
