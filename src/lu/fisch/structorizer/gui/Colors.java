@@ -45,8 +45,6 @@ import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
-import javax.swing.event.*;
-import javax.swing.colorchooser.*;
 
 /*
  * Created by JFormDesigner on Mon Dec 31 20:03:51 CET 2007
@@ -57,6 +55,7 @@ import javax.swing.colorchooser.*;
 /**
  * @author Robert Fisch
  */
+@SuppressWarnings("serial")
 public class Colors extends LangDialog {
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
 	// Generated using JFormDesigner Evaluation license - Robert Fisch

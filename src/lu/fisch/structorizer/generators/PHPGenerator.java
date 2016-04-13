@@ -107,7 +107,6 @@ import java.util.regex.Matcher;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.elements.*;
-import lu.fisch.structorizer.executor.Function;
 
 // FIXME (KGU 2014-11-11): Variable names will have to be accomplished by a '$' prefix - this requires
 // sound lexic preprocessing (as do a lot more of the rather lavish mechanisms here)

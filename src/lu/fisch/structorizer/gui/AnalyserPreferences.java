@@ -52,6 +52,7 @@ import javax.swing.border.*;
 /**
  * @author Bob Fisch
  */
+@SuppressWarnings("serial")
 public class AnalyserPreferences extends LangDialog {
 
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables

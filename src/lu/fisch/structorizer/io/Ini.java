@@ -60,22 +60,20 @@ public class Ini
 
 	public static String getDirname()
 	{
+		String os_name = System.getProperty("os.name").toLowerCase();
 		// mac
-		if (System.getProperty("os.name").toLowerCase().indexOf("mac") >= 0)
+		if (os_name.indexOf("mac") >= 0)
 		{
 			return System.getProperty("user.home")
 					+ "/Library/Application Support/Structorizer";
 		}
 		// windows
-		else if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0)
+		else if (os_name.indexOf("win") >= 0)
 		{
 			String appData = System.getenv("APPDATA");
-			if (appData != null)
+			if (appData != null && !appData.isEmpty())
 			{
-				if (!appData.equals(""))
-				{
-					return appData + "\\Structorizer";
-				}
+				return appData + "\\Structorizer";
 			}
 			return System.getProperty("user.home")
 					+ "\\Application Data\\Structorizer";
@@ -326,9 +324,9 @@ public class Ini
 		}
 	}
 
-	public Set keySet()
+	public Set<Object> keySet()
 	{
-		return p.keySet();
+		return (Set<Object>)p.keySet();
 	}
 
 	public void load() throws FileNotFoundException, IOException

@@ -58,6 +58,7 @@ import lu.fisch.utils.*;
  * @author Robert Fisch
  *
  */
+@SuppressWarnings("serial")
 public class LangDialog extends JDialog
 {
 	protected String langFile = null;
@@ -165,7 +166,7 @@ public class LangDialog extends JDialog
 
 						if(field!=null)
 						{
-							Class fieldClass = field.getType();
+							Class<?> fieldClass = field.getType();
 							String piece2 = pieces.get(2).toLowerCase();
 							
 							if (piece2.equals("text"))
@@ -198,7 +199,7 @@ public class LangDialog extends JDialog
 								Object item = method.invoke(field.get(_com), new Object[] {Integer.valueOf(pieces.get(3))});
 								if (item != null)
 								{
-								Class itemClass = item.getClass();
+								Class<?> itemClass = item.getClass();
 								method = itemClass.getMethod("setText", new Class[] {String.class});
 								method.invoke(item, new Object[] {parts.get(1)});
 								}
