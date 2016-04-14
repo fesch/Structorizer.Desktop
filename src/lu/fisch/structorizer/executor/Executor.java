@@ -77,12 +77,12 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): Support for FOR-IN loops
  *      Kay Gürtzig     2016.03.29      Bugfix #139 (KGU#166) in getIndexValue() - nested index access failed
  *      Kay Gürtzig     2016.04.03      KGU#150: Support for Pascal functions chr and ord
- *                                      KGU#165: Case awareness consistency for keywords improved. 
+ *                                      KGU#165: Case awareness consistency for keywords improved.
+ *      Kay Gürtzig     2016-04-12      Enh. #137 (KGU#160): Additional or exclusive output to text window 
  *
  ******************************************************************************************************
  *
  *      Comment:
- *      TODO: Consistent implementation of new setting D7Parser.ignoreCase
  *      2016-03-17 Enh. #133 (KGU#159)
  *      - Previously, a Call stack trace was only shown in cse of an execution error or manual abort.
  *        Now a Call stack trace may always be requested while execution hasn't ended. Only prerequisite
@@ -174,8 +174,7 @@ import java.awt.Dialog.ModalityType;
 import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
+import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Stack;
@@ -183,14 +182,11 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
-import java.util.regex.PatternSyntaxException;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
 
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Alternative;
@@ -208,7 +204,6 @@ import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.Updater;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.elements.Forever;
-import lu.fisch.structorizer.generators.CGenerator;
 import lu.fisch.structorizer.gui.Diagram;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.LangDialog;
@@ -303,6 +298,11 @@ public class Executor implements Runnable
 	}
 
 	private Control control = new Control();
+
+	// START KGU#160 2016-04-12: Enh. #137 - Option for text window output
+	private OutputConsole console = new OutputConsole();
+	private boolean isConsoleEnabled = false; 
+	// END KGU#160 2016-04-12
 
 	private int delay = 50;
 
@@ -632,11 +632,23 @@ public class Executor implements Runnable
 		}
 		this.isErrorReported = false;
 		this.diagram.getRoot().isCalling = false;
+		// START KGU#160 2016-04-12: Enh. #137 - Address the console window 
+		this.console.clear();
+		SimpleDateFormat sdf = new SimpleDateFormat();
+		this.console.writeln("*** STARTED \"" + this.diagram.getRoot().getText().getLongString() +
+				"\" at " + sdf.format(System.currentTimeMillis()) + " ***", Color.GRAY);
+		if (this.isConsoleEnabled) this.console.setVisible(true);
+		// END KGU#160 2016-04-12
 		/////////////////////////////////////////////////////////
 		this.execute(null);	// The actual top-level execution
 		/////////////////////////////////////////////////////////
 		this.callers.clear();
 		this.stackTrace.clear();
+		// START KGU#160 2016-04-12: Enh. #137 - Address the console window 
+		this.console.writeln("*** TERMINATED \"" + this.diagram.getRoot().getText().getLongString() +
+				"\" at " + sdf.format(System.currentTimeMillis()) + " ***", Color.GRAY);
+		if (this.isConsoleEnabled) this.console.setVisible(true);
+		// END KGU#160 2016-04-12
 		//System.out.println("stackTrace size: " + stackTrace.count());
 	}
 	
@@ -983,7 +995,7 @@ public class Executor implements Runnable
 		// START KGU#156 2016-03-11: Enh. #124 - detect execution counter diff.
 		int countBefore = root.getExecStepCount(true);
 		// END KGU#156 2016-03-11
-		boolean done = this.execute(arguments);
+		/*boolean done =*/ this.execute(arguments);
 		// START KGU#156 2016-03-11; Enh. #124
 		caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore, true);
 		if (cloned || root.isTestCovered(true))	
@@ -1605,10 +1617,10 @@ public class Executor implements Runnable
 	 */
 	private void updateVariableDisplay() throws EvalError
 	{
-		Vector<Vector> vars = new Vector();
+		Vector<Vector<Object>> vars = new Vector<Vector<Object>>();
 		for (int i = 0; i < this.variables.count(); i++)
 		{
-			Vector myVar = new Vector();
+			Vector<Object> myVar = new Vector<Object>();
 			myVar.add(this.variables.get(i));	// Variable name
 			// START KGU#67 2015-11-08: We had to find a solution for displaying arrays in a sensible way
 			//myVar.add(this.interpreter.get(this.variables.get(i)));
@@ -1666,6 +1678,14 @@ public class Executor implements Runnable
 				try {
 					String varName = this.variables.get(i);
 					Object oldValue = interpreter.get(varName);
+					// START KGU#160 2016-04-12: Enh. #137 - text window output
+					this.console.writeln("*** Manually set: " + varName + " <- " + newValues[i] + " ***", Color.RED);
+					if (isConsoleEnabled)
+					{
+						this.console.setVisible(true);
+					}
+					// END KGU#160 2016-04-12
+					
 					if (oldValue != null && oldValue.getClass().getSimpleName().equals("Object[]"))
 					{
 						// In this case an initialisation expression ("{ ..., ..., ...}") is expected
@@ -1707,7 +1727,7 @@ public class Executor implements Runnable
 		step = useSteps;
 		stop = false;
 		variables = new StringList();
-		control.updateVars(new Vector<Vector>());
+		control.updateVars(new Vector<Vector<Object>>());
 		
 		running = true;
 		Thread runner = new Thread(this, "Player");
@@ -2247,6 +2267,13 @@ public class Executor implements Runnable
 			//		"Please enter a value for <" + in + ">", null);
 			String msg = control.lbInputValue.getText();
 			msg = msg.replace("%", in);
+			// START KGU#160 2016-04-12: Enh. #137 - text window output
+			this.console.write(msg + ": ");
+			if (isConsoleEnabled)
+			{
+				this.console.setVisible(true);
+			}
+			// END KGU#160 2016-04-12
 			String str = JOptionPane.showInputDialog(null, msg, null);
 			// END KGU#89 2016-03-18
 			// START KGU#84 2015-11-23: ER #36 - Allow a controlled continuation on cancelled input
@@ -2267,6 +2294,13 @@ public class Executor implements Runnable
 			}
 			else
 			{
+				// START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+				this.console.writeln(str, Color.GREEN);
+				if (isConsoleEnabled)
+				{
+					this.console.setVisible(true);
+				}
+				// END KGU#160 2016-04-12
 				// START KGU#69 2015-11-08: Use specific method for raw input
 				setVarRaw(in, str);
 				// END KGU#69 2015-11-08
@@ -2325,7 +2359,16 @@ public class Executor implements Runnable
 			//		0);
 			//System.out.println("running/step/paus/stop: " +
 			//		running + " / " + step + " / " + paus + " / " + " / " + stop);
-			if (step)
+
+			// START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+			//if (step)
+			this.console.writeln(s);
+			if (isConsoleEnabled)
+			{
+				this.console.setVisible(true);
+			}
+			else if (step)
+			// END KGU#160 2016-04-12
 			{
 				// In step mode, there is no use to offer pausing
 				JOptionPane.showMessageDialog(diagram, s, "Output",
@@ -3475,5 +3518,13 @@ public class Executor implements Runnable
 		diagram.repaint();
 	}
 	// END KGU#156 2016-03-10
+	
+    // START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+	public void setOutputWindowEnabled(boolean _enabled)
+	{
+		this.isConsoleEnabled = _enabled;
+		this.console.setVisible(_enabled);
+	}
+	// END KGU#160 2016-04-12
 
 }

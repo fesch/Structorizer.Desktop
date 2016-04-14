@@ -77,7 +77,6 @@ import com.stevesoft.pat.Regex;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
-import lu.fisch.structorizer.gui.ExportOptionDialoge;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.parsers.D7Parser;
 

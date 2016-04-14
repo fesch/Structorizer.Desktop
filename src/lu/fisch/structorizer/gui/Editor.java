@@ -39,6 +39,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.01.11      Enh. #103: Save button disabled while Root is unchanged (KGU#137)
  *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution (KGU#143)
  *      Kay Gürtzig     2016.01.22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#143 + KGU#144).
+ *      Kay Gürtzig     2016.04.06      Enh. #158: Key bindings for cursor keys added (KGU#177)
+ *      Kay Gürtzig     2016.04.14      Enh. #158: Key bindings for page keys added (KGU#177)
  *
  ******************************************************************************************************
  *
@@ -56,6 +58,7 @@ import javax.swing.*;
 
 import lu.fisch.structorizer.elements.*;
 
+@SuppressWarnings("serial")
 public class Editor extends JPanel implements NSDController, ComponentListener
 {
     // Controller
@@ -199,7 +202,50 @@ public class Editor extends JPanel implements NSDController, ComponentListener
     // START KGU#43 2015-10-12: Breakpoint toggle
     protected JMenuItem popupBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
     // END KGU#43 2015-10-12
+    
+    // START KGU#177 2016-04-06: Enh. #158
+    // Action names
+    public enum CursorMoveDirection { CMD_UP, CMD_DOWN, CMD_LEFT, CMD_RIGHT };
+    private class SelectionMoveAction extends AbstractAction
+    {
+    	Diagram diagram;	// The object responsible for executing the action
+    	
+    	SelectionMoveAction(Diagram _diagram, CursorMoveDirection _dir)
+    	{
+    		super(_dir.name());
+    		diagram = _diagram;
+    	}
+    	
+		@Override
+		public void actionPerformed(ActionEvent ev) {
+			diagram.moveSelection(CursorMoveDirection.valueOf(getValue(AbstractAction.NAME).toString()));
+		}
+    	
+    }
+    // END KGU#177 2016-04-06
+    // START KGU#177 2016-04-14: Enh. #158
+    private class PageScrollAction extends AbstractAction
+    {
+    	private JScrollBar vScrollBar;
+    	private boolean up;
+    	
+    	PageScrollAction(JScrollBar vScrBar, boolean pageUp, String key)
+    	{
+    		super(key);
+    		vScrollBar = vScrBar;
+    		up = pageUp; 		
+    	}
 
+		@Override
+		public void actionPerformed(ActionEvent ev) {
+			// TODO Auto-generated method stub
+			int value = vScrollBar.getValue();
+			int incr = vScrollBar.getBlockIncrement(up ? -1 : 1);
+			vScrollBar.setValue(value + (up ? -incr : incr));
+		}
+    	
+    }
+    // END KGU#177 2016-04-14
     
     private MyToolbar newToolBar(String name)
     {
@@ -593,10 +639,31 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		sp.add(scrollarea);
                 scrollarea.setBackground(Color.LIGHT_GRAY);
 		scrollarea.getViewport().putClientProperty("EnableWindowBlit", Boolean.TRUE);
-                scrollarea.setWheelScrollingEnabled(true);
+		scrollarea.setWheelScrollingEnabled(true);
 		scrollarea.setDoubleBuffered(true);
 		scrollarea.setBorder(BorderFactory.createEmptyBorder());
 		scrollarea.setViewportView(diagram);
+		// START KGU#177 2016-04-06 Enh. #158 Moving selection by cursor keys
+		InputMap inpMap = scrollarea.getInputMap(WHEN_IN_FOCUSED_WINDOW);
+		ActionMap actMap = scrollarea.getActionMap();
+		// Add key bindings to the Diagram
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), CursorMoveDirection.CMD_UP);
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), CursorMoveDirection.CMD_DOWN);
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), CursorMoveDirection.CMD_LEFT);
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), CursorMoveDirection.CMD_RIGHT);
+	    // START KGU#177 2016-04-14: Enh. #158
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0), "PAGE_DOWN");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0), "PAGE_UP");
+		// END KGU#177 2016-04-16
+		actMap.put(CursorMoveDirection.CMD_UP, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_UP));
+		actMap.put(CursorMoveDirection.CMD_DOWN, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_DOWN));
+		actMap.put(CursorMoveDirection.CMD_LEFT, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_LEFT));
+		actMap.put(CursorMoveDirection.CMD_RIGHT, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_RIGHT));
+		// END KGU#177 2016-04.-06
+	    // START KGU#177 2016-04-14: Enh. #158
+		actMap.put("PAGE_DOWN", new PageScrollAction(scrollarea.getVerticalScrollBar(), false, "PAGE_DOWN"));
+		actMap.put("PAGE_UP", new PageScrollAction(scrollarea.getVerticalScrollBar(), true, "PAGE_UP"));
+		// END KGU#177 2016-04-16
 		//scrollarea.getViewport().setBackingStoreEnabled(true);
 				
         //container.add(scrolllist,AKDockLayout.SOUTH);
@@ -640,7 +707,7 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		// START KGU#87 2015-11-22: For most operations, multiple selections are not supported
 		boolean conditionNoMult = condition && !diagram.selectedIsMultiple();
 		// END KGU#87 2015-11-22
-		int i = -1;
+		//int i = -1;
 		boolean conditionCanMoveUp = false;
 		boolean conditionCanMoveDown = false;
 		if (conditionAny)
@@ -791,7 +858,7 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		btnFunction.setSelected(!diagram.isProgram());
 		btnProgram.setSelected(diagram.isProgram());
 
-                // DIN
+		// DIN
 		if(Element.E_DIN==true)
 		{
 			btnBeforeFor.setIcon(IconLoader.ico010);
@@ -813,7 +880,7 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		
 		// analyser
 		
-                if(Element.E_ANALYSER==true)
+		if(Element.E_ANALYSER==true)
 		{
 			if (sp.getDividerSize()==0)
 			{

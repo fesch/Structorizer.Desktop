@@ -57,6 +57,7 @@ import javax.swing.border.*;
 /**
  * @author Robert Fisch
  */
+@SuppressWarnings("serial")
 public class ParserPreferences extends LangDialog {
     
         public boolean OK = false;

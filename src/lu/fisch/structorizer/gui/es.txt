@@ -45,6 +45,7 @@
  *      Kay Gürtzig     2016.03.31  Enh. #23: messages related to JUMP configuration added
  *      Kay Gürtzig     2016-04-02  Messages para #144 (ExportOptionDialoge and Menu)
  *      Kay Gürtzig     2016.04.04  Issue #149: New ExportOptionDialog messages for charset setting
+ *      Kay Gürtzig     2016.04.12  Issue #161: New Analyser error message for Jump
  *
  ******************************************************************************************************
  *
@@ -203,6 +204,7 @@ Menu.error16_3.text=¡Instrucciones de salida (exit, leave, o break) solo están
 Menu.error16_4.text=¡Un elemento de salto (salida) no puede salir más ciclos que está anidado en (%)!
 Menu.error16_5.text=¡Una instrucción de retorno no está permitida desde una sección paralela!
 Menu.error16_6.text=¡Parámetro inadecuado para este tipo de SALTO - debería ser una constante entera.
+Menu.error16_7.text=Instrucciones después de un Salto no son alcanzables!
 Menu.error17.text=¡Varios hilos de ejecución compiten por el acceso a la variable «%» y así riesgan la consistencia! 
 
 -----[ AnalyserPreferences ]-----

@@ -54,6 +54,7 @@ import javax.swing.border.*;
 
 import lu.fisch.structorizer.elements.*;
 
+@SuppressWarnings("serial")
 public class About extends LangDialog implements ActionListener, KeyListener
 {
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
