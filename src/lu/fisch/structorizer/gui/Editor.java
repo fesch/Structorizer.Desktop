@@ -40,6 +40,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.01.21      Bugfix #114: Editing restrictions during execution (KGU#143)
  *      Kay Gürtzig     2016.01.22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#143 + KGU#144).
  *      Kay Gürtzig     2016.04.06      Enh. #158: Key bindings for cursor keys added (KGU#177)
+ *      Kay Gürtzig     2016.04.14      Enh. #158: Key bindings for page keys added (KGU#177)
  *
  ******************************************************************************************************
  *
@@ -222,6 +223,29 @@ public class Editor extends JPanel implements NSDController, ComponentListener
     	
     }
     // END KGU#177 2016-04-06
+    // START KGU#177 2016-04-14: Enh. #158
+    private class PageScrollAction extends AbstractAction
+    {
+    	private JScrollBar vScrollBar;
+    	private boolean up;
+    	
+    	PageScrollAction(JScrollBar vScrBar, boolean pageUp, String key)
+    	{
+    		super(key);
+    		vScrollBar = vScrBar;
+    		up = pageUp; 		
+    	}
+
+		@Override
+		public void actionPerformed(ActionEvent ev) {
+			// TODO Auto-generated method stub
+			int value = vScrollBar.getValue();
+			int incr = vScrollBar.getBlockIncrement(up ? -1 : 1);
+			vScrollBar.setValue(value + (up ? -incr : incr));
+		}
+    	
+    }
+    // END KGU#177 2016-04-14
     
     private MyToolbar newToolBar(String name)
     {
@@ -627,11 +651,19 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), CursorMoveDirection.CMD_DOWN);
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), CursorMoveDirection.CMD_LEFT);
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), CursorMoveDirection.CMD_RIGHT);
+	    // START KGU#177 2016-04-14: Enh. #158
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0), "PAGE_DOWN");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0), "PAGE_UP");
+		// END KGU#177 2016-04-16
 		actMap.put(CursorMoveDirection.CMD_UP, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_UP));
 		actMap.put(CursorMoveDirection.CMD_DOWN, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_DOWN));
 		actMap.put(CursorMoveDirection.CMD_LEFT, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_LEFT));
 		actMap.put(CursorMoveDirection.CMD_RIGHT, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_RIGHT));
 		// END KGU#177 2016-04.-06
+	    // START KGU#177 2016-04-14: Enh. #158
+		actMap.put("PAGE_DOWN", new PageScrollAction(scrollarea.getVerticalScrollBar(), false, "PAGE_DOWN"));
+		actMap.put("PAGE_UP", new PageScrollAction(scrollarea.getVerticalScrollBar(), true, "PAGE_UP"));
+		// END KGU#177 2016-04-16
 		//scrollarea.getViewport().setBackingStoreEnabled(true);
 				
         //container.add(scrolllist,AKDockLayout.SOUTH);

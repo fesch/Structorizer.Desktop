@@ -49,7 +49,9 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.03.09      Enh. #77 (KGU#117): Methods clearExecutionStatus and setCovered added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation (refactoring)
  *      Kay Gürtzig     2016.03.14      Enh. #62 update: currentDirectory adopted from first added diagram.
- *      Kay Gürtzig     2016.03.16      Bugfix #132: Precautions against stale Mainform references (KGU#158) 
+ *      Kay Gürtzig     2016.03.16      Bugfix #132: Precautions against stale Mainform references (KGU#158)
+ *      Kay Gürtzig     2016.04.14      Enh. #158: Methods for copy and paste of diagrams as XML strings (KGU#177)
+ *                                      Selection mechanisms mended
  *
  ******************************************************************************************************
  *
@@ -91,16 +93,25 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.ClipboardOwner;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Scanner;
 import java.util.Vector;
@@ -115,6 +126,7 @@ import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Updater;
 import lu.fisch.structorizer.executor.IRoutinePool;
+import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.io.ArrFilter;
 import lu.fisch.structorizer.io.PNGFilter;
@@ -127,7 +139,7 @@ import net.iharder.dnd.FileDrop;
  * @author robertfisch
  */
 @SuppressWarnings("serial")
-public class Surface extends javax.swing.JPanel implements MouseListener, MouseMotionListener, WindowListener, Updater, IRoutinePool {
+public class Surface extends javax.swing.JPanel implements MouseListener, MouseMotionListener, WindowListener, Updater, IRoutinePool, ClipboardOwner {
 
     private Vector<Diagram> diagrams = new Vector<Diagram>();
 
@@ -289,23 +301,25 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     {
     	boolean done = false;
     	// Ensure the diagrams themselves are saved
-    	this.saveDiagrams();
-    	// Let's select path and name for the list / archive file
-        JFileChooser dlgSave = new JFileChooser("Save arranged set of diagrams ...");
-        dlgSave.addChoosableFileFilter(new ArrFilter());
-        dlgSave.setCurrentDirectory(currentDirectory);
-        int result = dlgSave.showSaveDialog(frame);
-        if (result == JFileChooser.APPROVE_OPTION)
-        {
-            currentDirectory = dlgSave.getCurrentDirectory();
-            // correct the filename if necessary
-            String filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
-            if (!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".arr"))
-            {
-                    filename+=".arr";
-            }
-            done = saveArrangement(frame, filename + "");
-        }
+    	if (this.saveDiagrams())
+    	{
+    		// Let's select path and name for the list / archive file
+    		JFileChooser dlgSave = new JFileChooser("Save arranged set of diagrams ...");
+    		dlgSave.addChoosableFileFilter(new ArrFilter());
+    		dlgSave.setCurrentDirectory(currentDirectory);
+    		int result = dlgSave.showSaveDialog(frame);
+    		if (result == JFileChooser.APPROVE_OPTION)
+    		{
+    			currentDirectory = dlgSave.getCurrentDirectory();
+    			// correct the filename if necessary
+    			String filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
+    			if (!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".arr"))
+    			{
+    				filename+=".arr";
+    			}
+    			done = saveArrangement(frame, filename + "");
+    		}
+    	}
         return done;
     }
     
@@ -398,27 +412,28 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     {
     	boolean done = false;
     	// Ensure the previous diagrams themselves are saved
-    	this.saveDiagrams();
-    	// Let's select path and name for the list / archive file
-        JFileChooser dlgOpen = new JFileChooser("Reload a stored arrangement of diagrams ...");
-        // START KGU 2016-01-15: Enh. #110 - select the provided filter
-        //dlgOpen.addChoosableFileFilter(new ArrFilter());
-        ArrFilter filter = new ArrFilter();
-        dlgOpen.addChoosableFileFilter(filter);
-        dlgOpen.setFileFilter(filter);
-        // END KGU 2016-01-15: Enh. #110
+    	if (this.saveDiagrams())
+    	{
+    		// Let's select path and name for the list / archive file
+    		JFileChooser dlgOpen = new JFileChooser("Reload a stored arrangement of diagrams ...");
+    		// START KGU 2016-01-15: Enh. #110 - select the provided filter
+    		//dlgOpen.addChoosableFileFilter(new ArrFilter());
+    		ArrFilter filter = new ArrFilter();
+    		dlgOpen.addChoosableFileFilter(filter);
+    		dlgOpen.setFileFilter(filter);
+    		// END KGU 2016-01-15: Enh. #110
 
-        dlgOpen.setCurrentDirectory(currentDirectory);
-        
-        int result = dlgOpen.showOpenDialog(frame);
-        if (result == JFileChooser.APPROVE_OPTION)
-        {
-            currentDirectory = dlgOpen.getCurrentDirectory();
-            // correct the filename if necessary
-            String filename = dlgOpen.getSelectedFile().getAbsoluteFile().toString();
-            done = loadArrangement(frame, filename);
-        }
-   	
+    		dlgOpen.setCurrentDirectory(currentDirectory);
+
+    		int result = dlgOpen.showOpenDialog(frame);
+    		if (result == JFileChooser.APPROVE_OPTION)
+    		{
+    			currentDirectory = dlgOpen.getCurrentDirectory();
+    			// correct the filename if necessary
+    			String filename = dlgOpen.getSelectedFile().getAbsoluteFile().toString();
+    			done = loadArrangement(frame, filename);
+    		}
+    	}
     	return done;
     }
 
@@ -691,7 +706,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     		// END KGU#88 2015-12-20
     		// END KGU 2015-11-30
     		repaint();
-    		getDrawingRect();
+    		getDrawingRect();		// What was this good for?
     	// START KGU#2 2015-11-19
     	}
     	// START KGU#119 2016-01-02: Bugfix #78 - if a position is given then move the found diagram
@@ -699,7 +714,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     	{
     		diagram.point = point;
     		repaint();
-    		getDrawingRect();    		
+    		getDrawingRect();    	// What was this good for?
     	}
     	// END KGU#119 2016-01-02
     	if (form != null)
@@ -729,6 +744,50 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     	}
     }
     // END KGU#85 2015-11-17
+    
+    // END KGU#177 2016-04-14: Enh. #158: Allow to copy diagrams via clipboard (as XML)
+    public void copyDiagram()
+    {
+    	if (this.mouseSelected !=null)
+    	{
+    		XmlGenerator xmlgen = new XmlGenerator();
+    		StringSelection toClip = new StringSelection(xmlgen.generateCode(this.mouseSelected.root,"\t"));
+    		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+    		clipboard.setContents(toClip, this);					
+    	}
+    }
+    
+    public void pasteDiagram()
+    {
+    	// See http://www.javapractices.com/topic/TopicAction.do?Id=82
+    	Toolkit toolkit = Toolkit.getDefaultToolkit();
+    	Clipboard clip = toolkit.getSystemClipboard();
+    	Transferable contents = clip.getContents(this);
+    	String rootXML = "";
+    	Root root = null;
+    	if ((contents != null) && contents.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+    		try {
+    			rootXML = (String)contents.getTransferData(DataFlavor.stringFlavor);
+    			InputStream istr = new ByteArrayInputStream(rootXML.getBytes(StandardCharsets.UTF_8));
+				NSDParser parser = new NSDParser();
+				root = parser.parse(istr);
+    		}
+    		catch (Exception ex){
+    			JOptionPane.showMessageDialog(this, "NSD-Parser Error : " + ex.getMessage(), "Paste Error",
+    					JOptionPane.ERROR_MESSAGE);
+    			
+    			System.out.println(ex);
+    			ex.printStackTrace();
+    		}
+    	}	
+    	if (root != null)
+    	{
+    		addDiagram(root);
+    		// The content may not have been saved or may come from a different JVM
+    		root.setChanged();
+    	}
+    }
+    // END KGU#177 2016-04-14
 
     // START KGU#88 2015-11-24: Provide a possibility to protect diagrams against replacement
     public void togglePinned()
@@ -824,10 +883,18 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     // START KGU#49 2015-10-18: When the window is going to be closed we have to give the diagrams a chance to store their stuff
     // FIXME (KGU): Quick-and-dirty version. More convenient should be a list view with all unsaved diagrams for checkbox selection
     /**
-     * Loops over all administered diagrams and has their respective Mainform (if still alive) saved them in case they are dirty 
+     * Loops over all administered diagrams and has their respective Mainform (if still alive) saved them in case they are dirty
+     * @return Whether saving is complete (or confirmed though being incomplete) 
      */
-    public void saveDiagrams()
+    // START KGU#177 2016-04-14: Enh. #158 - return all diagram (file) names without saving possibility
+    //public void saveDiagrams()
+    public boolean saveDiagrams()
+    // END KGU#177 2016-04-14
     {
+		// START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
+    	boolean allDone = true;
+		StringList unsaved = new StringList();
+		// END KGU#177 2016-04-14
     	if (this.diagrams != null)
     	{
     		Iterator<Diagram> iter = this.diagrams.iterator();
@@ -839,8 +906,31 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     			{
     				form.diagram.saveNSD(true);
     			}
+    			// START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
+    			else if (diagram.root.filename != null && !diagram.root.filename.isEmpty())
+    			{
+    				unsaved.add(diagram.root.filename);
+    				allDone = false;
+    			}
+    			else
+    			{
+    				unsaved.add("( " + diagram.root.getMethodName() + " ?)");
+    				allDone = false;
+    			}
+    			// END KGU#177 2016-04-14
     		}
     	}
+		// START KGU#177 2016-04-14: Enh. #158
+    	if (!allDone)
+    	{
+    		String message = "Couldn't save these diagrams:\n" + unsaved.getText();
+    		int answer = JOptionPane.showConfirmDialog(this, message +
+    				"\n\nYou might want to double-click and save them via Structorizer first.\nContinue nevertheless?", "Saving Problem",
+    				JOptionPane.WARNING_MESSAGE);
+    		allDone = answer == JOptionPane.YES_OPTION;
+    	}
+    	return allDone;
+    	// END KGU#177 2016-04-14
     }
     // END KGU#49 2015-10-18
     
@@ -899,7 +989,9 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
             } while (form == null && nAttempts++ < 2);
             // END KGU#158 2016-03-16 (part 2)
 
-            mouseSelected=null;
+            // START KGU 2016-04-14: Selection must not be changed here
+            //mouseSelected=null;
+            // END KGU 2016-04-14
             mousePressed=false;
             // START KGU#85 2015-11-18
             adaptLayout();
@@ -939,8 +1031,8 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
                 }
                 // END KGU 2015-11-18
                 mouseSelected = diagram;
-                mouseRelativePoint = new Point(mousePoint.x-mouseSelected.point.x,
-                                               mousePoint.y-mouseSelected.point.y);
+                mouseRelativePoint = new Point(mousePoint.x - mouseSelected.point.x,
+                                               mousePoint.y - mouseSelected.point.y);
                 // START KGU 2015-11-18: We didn't select anything, so there is nothing to unselect 
                 //root.selectElementByCoord(-1, -1);
                 // END KGU 2015-11-18
@@ -954,13 +1046,15 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     public void mouseReleased(MouseEvent e)
     {
         mousePressed = false;
-        // START KGU 2015-11-18: For consistency reasons, the selected diagram has to be unselected, too
-        if (mouseSelected != null && mouseSelected.root != null)
-        {
-        	mouseSelected.root.setSelected(false);
-        }
-        // END KGU 2015-11-18
-        mouseSelected = null;
+        // START KGU 2016-04-14 The following turned out to be wrong - selection must not be changed at all
+//        // START KGU 2015-11-18: For consistency reasons, the selected diagram has to be unselected, too
+//        if (mouseSelected != null && mouseSelected.root != null)
+//        {
+//        	mouseSelected.root.setSelected(false);
+//        }
+//        // END KGU 2015-11-18
+//        //mouseSelected = null;
+        // END KGU 2016-04-14
     }
 
     public void mouseEntered(MouseEvent e)
@@ -1205,6 +1299,12 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     public void windowDeactivated(WindowEvent e)
     {
     }
+
+	@Override
+	public void lostOwnership(Clipboard clipboard, Transferable contents) {
+		// TODO Auto-generated method stub
+		
+	}
 
 
 
