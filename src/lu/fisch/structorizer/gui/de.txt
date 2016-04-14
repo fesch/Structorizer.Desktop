@@ -45,6 +45,7 @@
  *      Kay Gürtzig         2016.03.31  Enh. #23: ParserPreferences for JUMP statements,
  *      Kay Gürtzig         2016.04.01  Enh. #144: New ExportOptionDialog and Menu messages
  *      Kay Gürtzig         2016.04.04  Issue #149: New ExportOptionDialog messages for charset setting
+ *      Kay Gürtzig         2016.04.12  Issue #161: New Analyser error message for Jump
  *
  ******************************************************************************************************
  *
@@ -204,6 +205,7 @@ Menu.error16_3.text=Exit-, leave- oder break-Anweisungen sind nur als Aussprung-
 Menu.error16_4.text=Ein Aussprung ist nur um höchstens die Anzahl der umgebenden Schleifen (%) zulässig!
 Menu.error16_5.text=Ein direkter Rücksprung (return) aus einem Parallelzweig ist unzulässig!
 Menu.error16_6.text=Falscher Parameter für diese Art von Aussprung - hier sollte eine Ganzzahlkonstante stehen.
+Menu.error16_7.text=Anweisungen nach einem Aussprung sind nicht erreichbar.
 Menu.error17.text=Konsistenzgefahr wegen konkurrierender Zugriffe auf Variable «%» aus mehreren Threads!
 
 -----[ AnalyserPreferences ]-----

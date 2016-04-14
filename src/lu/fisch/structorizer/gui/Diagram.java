@@ -58,6 +58,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016-04-01      Issue #143 (comment popup off on editing etc.), Issue #144 (preferred code generator)
  *      Kay Gürtzig     2016-04-04      Enh. #149: Characterset configuration for export supported
  *      Kay Gürtzig     2016-04-05      Bugfix #155: Selection must be cleared in newNSD()
+ *      Kay Gürtzig     2016.04.07      Enh. #158: Moving selection as cursor key actions (KGU#177)
+ *      Kay Gürtzig     2016-04-14      Enh. #158: moveSelection() now updates the scroll view (KGU#177)
  *
  ******************************************************************************************************
  *
@@ -98,7 +100,9 @@ import lu.fisch.turtle.TurtleBox;
 
 import org.freehep.graphicsio.svg.SVGGraphics2D;
 
-public class Diagram extends JPanel implements MouseMotionListener, MouseListener, Printable, MouseWheelListener {
+@SuppressWarnings("serial")
+public class Diagram extends JPanel implements MouseMotionListener, MouseListener, Printable, MouseWheelListener, ClipboardOwner
+{
 
 	// START KGU#48 2015-10-18: We must be capable of preserving consistency when root is replaced by the Arranger
     //public Root root = new Root();
@@ -144,8 +148,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
     // toolbar management
     public Vector<MyToolbar> toolbars = new Vector<MyToolbar>();
-
-
+    
 	/*****************************************
 	 * CONSTRUCTOR
      *****************************************/
@@ -1407,7 +1410,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	//public boolean canCutCopy()
 	public boolean canCut()
 	{
-		return canCopy() && !selected.executed && !selected.waited;
+		// START KGU#177 2016-04-14: Enh. #158 - we want to allow to copy diagrams e.g. to an Arranger of a different JVM
+		//return canCopy() && !selected.executed && !selected.waited;
+		return canCopy() && !(selected instanceof Root) && !selected.executed && !selected.waited;
+		// END KGU#177 2016-04-14
 	}
 
 	// ... though breakpoints shall still be controllable
@@ -1417,8 +1423,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		boolean cond = (selected!=null);
 		if (cond)
 		{
-			cond = !selected.getClass().getSimpleName().equals("Root");
-			// START KGU#87 2015-11-22: Allow to cut or copy a non-empty Subqueue
+			// START KGU#177 2016-04-14: Enh. #158 - we want to allow to copy diagrams e.g. to an Arranger of a different JVM
+			//cond = !selected.getClass().getSimpleName().equals("Root");
+			cond = true;
+			// END KGU#177 2016-04-14
+			// START KGU#87 2015-11-22: Allow to copy a non-empty Subqueue
 			//cond = cond && !selected.getClass().getSimpleName().equals("Subqueue");
 			cond = cond && (!selected.getClass().getSimpleName().equals("Subqueue") || ((Subqueue)selected).getSize() > 0);
 			// END KGU#87 2015-11-22
@@ -1455,7 +1464,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		if (selected!=null)
 		{
-			eCopy = selected.copy();
+			// START KGU#177 2016-04-14: Enh. #158 - Allow to copy a diagram via clipboard
+			//eCopy = selected.copy();
+			if (selected instanceof Root)
+			{
+	        	XmlGenerator xmlgen = new XmlGenerator();
+				StringSelection toClip = new StringSelection(xmlgen.generateCode(root,"\t"));
+				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+				clipboard.setContents(toClip, this);
+			}
+			else
+			{
+				eCopy = selected.copy();
+			}
+			// END KGU#177 2016-04-14
 		}
 	}
 
@@ -2526,7 +2548,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		try
 		{
-			Class genClass = Class.forName(_generatorClassName);
+			Class<?> genClass = Class.forName(_generatorClassName);
 			Generator gen = (Generator) genClass.newInstance();
 			// START KGU#170 2016-04-01: Issue #143
 			pop.setVisible(false);	// Hide the current comment popup if visible
@@ -3562,4 +3584,129 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	return false;
     }
     
+    
+    // START KGU#177 2016-04-07: Enh. #158
+    /**
+     * Tries to shift the selection to the next element in the _direction specified.
+     * It turned out that on going down and right it's most intuitive to dive into
+     * the substructure of compound elements (rather than jumping to its successor).
+     * (For Repeat elements this holds on going up).
+     * @param _direction the cursor key orientation (up, down, left, right)
+     */
+    public void moveSelection(Editor.CursorMoveDirection _direction)
+    {
+    	if (selected != null)
+    	{
+    		Rect selRect = selected.getRectOffDrawPoint();
+    		// Get center coordinates
+    		int x = (selRect.left + selRect.right) / 2;
+    		int y = (selRect.top + selRect.bottom) / 2;
+    		// 
+    		switch (_direction)
+    		{
+    		case CMD_UP:
+    			if (selected instanceof Repeat)
+    			{
+    				y = ((Repeat)selected).getRectOffDrawPoint().bottom - 2;
+    			}
+    			else if (selected instanceof Root)
+    			{
+    				y = ((Root)selected).children.getRectOffDrawPoint().bottom - 2;
+    			}
+    			else
+    			{
+    				y = selRect.top - 2;
+    			}
+    			break;
+    		case CMD_DOWN:
+    			if (selected instanceof ILoop && !(selected instanceof Repeat))
+    			{
+    				Subqueue body = ((ILoop)selected).getBody();
+    				y = body.getRectOffDrawPoint().top + 2;
+    			}
+    			else if (selected instanceof Alternative)
+    			{
+    				y = ((Alternative)selected).qTrue.getRectOffDrawPoint().top + 2;
+    			}
+    			else if (selected instanceof Case)
+    			{
+    				y = ((Case)selected).qs.get(0).getRectOffDrawPoint().top + 2;
+    			}
+    			else if (selected instanceof Parallel)
+    			{
+    				y = ((Parallel)selected).qs.get(0).getRectOffDrawPoint().top + 2;
+    			}
+    			else if (selected instanceof Root)
+    			{
+    				y = ((Root)selected).children.getRectOffDrawPoint().top + 2;
+    			}
+    			else
+    			{
+    				y = selRect.bottom + 2;
+    			}
+    			break;
+    		case CMD_LEFT:
+    			if (selected instanceof Root)
+    			{
+    				Rect bodyRect =((Root)selected).children.getRectOffDrawPoint(); 
+    				// The central element of the subqueue isn't the worst choice because from
+    				// here the distances are minimal. The top element, on the other hand,
+    				// is directly reachable by cursor down.
+    				x = bodyRect.right - 2;
+    				y = (bodyRect.top + bodyRect.bottom) / 2;
+    			}
+    			else
+    			{
+    				x = selRect.left - 2;
+    			}
+    			break;
+    		case CMD_RIGHT:
+    			if (selected instanceof ILoop)
+    			{
+    				Rect bodyRect = ((ILoop)selected).getBody().getRectOffDrawPoint();
+    				x = bodyRect.left + 2;
+    				// The central element of the subqueue isn't the worst choice because from
+    				// here the distances are minimal. The top element, on the other hand,
+    				// is directly reachable by cursor down.
+    				y = (bodyRect.top + bodyRect.bottom) / 2;
+    			}
+    			else if (selected instanceof Root)
+    			{
+    				Rect bodyRect =((Root)selected).children.getRectOffDrawPoint(); 
+    				// The central element of the subqueue isn't the worst choice because from
+    				// here the distances are minimal. The top element, on the other hand,
+    				// is directly reachable by cursor down.
+    				x = bodyRect.left + 2;
+    				y = (bodyRect.top + bodyRect.bottom) / 2;
+    			}
+    			else
+    			{
+    				x = selRect.right + 2;
+    			}
+    			break;
+    		}
+    		Element newSel = root.getElementByCoord(x, y, true);
+    		if (newSel != null)
+    		{
+    			selected = newSel;
+    		}
+    		selected.setSelected(true);
+			
+    		// START KGU#177 2016-04-14: Enh. #158 - scroll to the selected element
+			this.scrollRectToVisible(selected.getRectOffDrawPoint().getRectangle());
+			// END KGU#177 2016-04-14
+			
+			redraw();
+			
+    	}
+    }
+    // END KGU#177 2016-04-07
+
+
+	@Override
+	public void lostOwnership(Clipboard arg0, Transferable arg1) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

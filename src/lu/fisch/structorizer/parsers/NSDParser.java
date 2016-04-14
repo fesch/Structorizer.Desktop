@@ -38,6 +38,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2015.12.16              Bugfix #63 (KGU#111): Exception on parsing failure
  *      Kay Gürtzig     2016.01.08              Bugfix #99 (KGU#134): workaround for defective FOR loops
  *      Kay Gürtzig     2016.03.21              Enh. #84 (KGU#61): Enhancement towards FOR-IN loops
+ *      Kay Gürtzig     2016.04.14              Enh. #158 (KGU#177): method parse() cloned
  *
  ******************************************************************************************************
  *
@@ -53,6 +54,7 @@ import org.xml.sax.helpers.*;
 
 import java.awt.Color;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Stack;
 
 import lu.fisch.utils.*;
@@ -512,8 +514,8 @@ public class NSDParser extends DefaultHandler {
 		root=new Root();
 		
 		// clear stacks
-		stack.clear();		
-		ifStack.clear();		
+		stack.clear();
+		ifStack.clear();
 		qStack.clear();
 		cStack.clear();
 		pStack.clear();
@@ -547,4 +549,44 @@ public class NSDParser extends DefaultHandler {
 		
 		return root;
 	}
+	
+	// START KGU#177 2016-04-14: Enh. 158 - we need an opportunity to parse an XML string as well
+	// (FIXME: This is just a copy-and-paste clone of Root parse(String _filename))
+	public Root parse(InputStream _is) throws SAXException, IOException
+	{
+		// setup a new root
+		root=new Root();
+		
+		// clear stacks
+		stack.clear();
+		ifStack.clear();
+		qStack.clear();
+		cStack.clear();
+		pStack.clear();
+				
+		SAXParserFactory factory = SAXParserFactory.newInstance();
+		try		
+		{
+			SAXParser saxParser = factory.newSAXParser();
+			saxParser.parse(_is, this);
+		} 
+		catch(Exception e) 
+		{
+			String errorMessage = "Error parsing NSD: " + e;
+			System.err.println(errorMessage);
+			e.printStackTrace();
+			// START KGU#111 2015-12-16: Bugfix #63 re-throw the exception!
+			if (e instanceof SAXException)
+			{
+				throw (SAXException)e;
+			}
+			else if (e instanceof IOException)
+			{
+				throw (IOException)e;
+			}
+			// END KGU#111 2015-12-16
+		}
+		return root;
+	}
+	// END KGU#177 2016-04-14
 }

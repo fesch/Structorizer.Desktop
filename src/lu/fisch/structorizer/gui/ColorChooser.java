@@ -53,6 +53,7 @@ import javax.swing.border.*;
 /**
  * @author Robert Fisch
  */
+@SuppressWarnings("serial")
 public class ColorChooser extends LangDialog 
 {
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables

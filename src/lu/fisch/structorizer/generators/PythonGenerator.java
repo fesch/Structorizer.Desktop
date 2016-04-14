@@ -96,7 +96,6 @@ import java.util.regex.Matcher;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.elements.*;
-import lu.fisch.structorizer.executor.Function;
 
 
 public class PythonGenerator extends Generator 

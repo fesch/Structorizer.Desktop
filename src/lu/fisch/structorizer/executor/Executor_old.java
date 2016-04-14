@@ -29,7 +29,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import lu.fisch.structorizer.elements.*;
-import lu.fisch.structorizer.generators.CGenerator;
 import lu.fisch.structorizer.gui.Diagram;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.BString;
@@ -230,7 +229,7 @@ public class Executor_old implements Runnable
         step=useSteps;
         stop=false;
         variables = new StringList();
-        control.updateVars(new Vector<Vector>());
+        control.updateVars(new Vector<Vector<Object>>());
 
         Thread runner = new Thread(this, "Player");
         runner.start();
@@ -267,10 +266,10 @@ public class Executor_old implements Runnable
 
         if(delay!=0)
         {
-            Vector<Vector> vars = new Vector<Vector>();
+            Vector<Vector<Object>> vars = new Vector<Vector<Object>>();
             for(int i=0;i<variables.count();i++)
             {
-                Vector myVar = new Vector();
+                Vector<Object> myVar = new Vector<Object>();
                 myVar.add(variables.get(i));
                 myVar.add(interpreter.get(variables.get(i)));
                 vars.add(myVar);

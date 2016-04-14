@@ -48,9 +48,7 @@ package lu.fisch.structorizer.gui;
 *
 ******************************************************************************************************///
 
-import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Container;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -59,25 +57,20 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 
-import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.border.Border;
 
-import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.parsers.D7Parser;
-import lu.fisch.utils.BString;
-import lu.fisch.utils.StringList;
 
 /**
  * @author kay
  *
  */
+@SuppressWarnings("serial")
 public class InputBoxFor extends InputBox implements ItemListener {
 	
 	protected JLabel lblVariable/* = new JLabel("Counter variable")*/;
