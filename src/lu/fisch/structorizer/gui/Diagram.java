@@ -60,6 +60,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016-04-05      Bugfix #155: Selection must be cleared in newNSD()
  *      Kay Gürtzig     2016.04.07      Enh. #158: Moving selection as cursor key actions (KGU#177)
  *      Kay Gürtzig     2016-04-14      Enh. #158: moveSelection() now updates the scroll view (KGU#177)
+ *      Kay Gürtzig     2016-04-19      Issue #164 (no selection heir on deletion) and #165 (inconsistent unselection)
  *
  ******************************************************************************************************
  *
@@ -551,6 +552,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				//redraw();
 			}
+			// START KGU#180 2016-04-15: Bugfix #165 - delection didn't work properly
+			else /* ele == null */
+			{
+				selected = null;
+				redraw();
+			}
+			// END KGU#180 2016-04-15
 
 			if (selected != null)
 			{
@@ -708,21 +716,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			else
 			{
-                                // an error has been selected
+				// an error list entry has been selected
 				if(errorlist.getSelectedIndex()!=-1)
 				{
-                                        // get the selected error
+					// get the selected error
 					Element ele = (root.errors.get(errorlist.getSelectedIndex())).getElement();
 					if(ele!=null)
 					{
-                                                // deselect any previous selected element
-						if(selected!=null) {selected.selected=false;}
-                                                // select the new one
+						// deselect the previously selected element (if any)
+						if (selected!=null) {selected.setSelected(false);}
+						// select the new one
 						selected = ele;
-						ele.selected=true;
-                                                // redraw the diagram
+						ele.setSelected(true);
+						// redraw the diagram
 						redraw();
-                                                // do the button thing
+						// do the button thing
 						if(NSDControl!=null) NSDControl.doButtons();
 					}
 				}
@@ -1712,9 +1720,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void deleteNSD()
 	{
 		root.addUndo();
+		// START KGU#181 2016-04-19: Issue #164	- pass the selection to the "next" element
+		Element newSel = getSelectionHeir();
+		// END KGU#181 2016-04-19
 		root.removeElement(getSelected());
 		// START KGU#138 2016-01-11: Bugfix #102 - selection no longer valid
-		this.selected = null;
+		// START KGU#181 2016-04-19: Issue #164	- pass the selection to the "next" element
+		//this.selected = null;
+		this.selected = newSel;
+		if (newSel != null)
+		{
+			newSel.setSelected(true);
+		}
+		// END KGU#181 2016-04-19
 		// END KGU#138 2016-01-11
 		redraw();
 		analyse();
@@ -1722,6 +1740,62 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		this.NSDControl.doButtons();
 		// END KGU#138 2016-01-11
 	}
+	
+	// START KGU#181 2016-04-19: Issue #164	- pass the selection to the "next" element
+	/**
+	 * Returns the element "inheriting" the selection from the doomed currently selected element
+	 * This will be (if existent): 1. successor within Subqueue, 2. predecessor within Subqueue
+	 * Requires this.selected to be neither Root nor an empty Subqueue.
+	 * @return the element next the currently selected one, null if there is no selection
+	 */
+	private Element getSelectionHeir()
+	{
+		Element heir = null;
+		if (selected != null && !(selected instanceof Root))
+		{
+			Subqueue sq = (Subqueue)selected.parent;
+			int ixHeir = sq.getSize(); 
+			if (selected instanceof SelectedSequence)
+			{
+				// Last element of the subsequence
+				Element last = ((SelectedSequence) selected).getElement(((SelectedSequence) selected).getSize()-1);
+				Element frst = ((SelectedSequence) selected).getElement(0);
+				int ixLast = sq.getIndexOf(last);	// Actual index of the last element in the Subqueue
+				int ixFrst = sq.getIndexOf(frst);	// Actual index of the first element in the Subqueue
+				if (ixLast < sq.getSize() - 1)
+				{
+					ixHeir = ixLast + 1;
+				}
+				else if (ixFrst > 0)
+				{
+					ixHeir = ixFrst - 1;
+				}
+			}
+			else // the selection comprises entire Subqueue 
+			{
+				int ixEle = sq.getIndexOf(selected);
+				if (ixEle < sq.getSize() - 1)
+				{
+					ixHeir = ixEle + 1;
+				}
+				else
+				{
+					ixHeir = ixEle - 1;
+				}
+			}
+			if (ixHeir >= 0)
+			{
+				heir = sq.getElement(ixHeir);
+			}
+			else
+			{
+				// Empty Subqueue remnant will take over selection
+				heir = sq;
+			}
+		}
+		return heir;
+	}
+	// END KGU#181 2016-04-19
 	
 	// START KGU#123 2016-01-03: Issue #65, for new buttons and menu items
 	/*****************************************
