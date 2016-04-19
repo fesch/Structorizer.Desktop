@@ -1753,8 +1753,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Element heir = null;
 		if (selected != null && !(selected instanceof Root))
 		{
-			Subqueue sq = (Subqueue)selected.parent;
-			int ixHeir = sq.getSize(); 
+			Subqueue sq = (Subqueue)((selected instanceof Subqueue) ? selected : selected.parent);
+			int ixHeir = -1; 
 			if (selected instanceof SelectedSequence)
 			{
 				// Last element of the subsequence
@@ -1771,7 +1771,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					ixHeir = ixFrst - 1;
 				}
 			}
-			else // the selection comprises entire Subqueue 
+			else if (!(selected instanceof Subqueue)) 
 			{
 				int ixEle = sq.getIndexOf(selected);
 				if (ixEle < sq.getSize() - 1)
