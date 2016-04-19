@@ -41,7 +41,6 @@ package lu.fisch.structorizer.io;
  ******************************************************************************************************///
 
 import java.io.File;
-import javax.swing.*;
 import javax.swing.filechooser.*;
 
 public class EMFFilter extends FileFilter {

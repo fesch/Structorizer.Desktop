@@ -38,6 +38,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2016-03-20      New settings preForIn and postForIn added (KGU#61, #84/#135)
  *      Kay Gürtzig     2016-03-25      KGU#163: New static method getAllPropeties() added for Analyser
  *                                      KGU#165: New option ignoreCase
+ *      Kay Gürtzig     2016-04-04      KGU#165: Default for ignoreCase changed to true
  *
  ******************************************************************************************************
  *
@@ -713,8 +714,8 @@ public class D7Parser implements GPMessageConstants
     		// END KGU#78 2016-03-25
 			input=ini.getProperty("ParserInput","lire");
 			output=ini.getProperty("ParserOutput","\u00E9crire");
-			// START KGU#165 2016-03-25: Enhancement 
-			ignoreCase=ini.getProperty("ParserIgnoreCase", "false").equalsIgnoreCase("true");
+			// START KGU#165 2016-03-25: Enhancement configurable case awareness
+			ignoreCase=ini.getProperty("ParserIgnoreCase", "true").equalsIgnoreCase("true");
 			// END KGU#3 2016-03-25
 			
 		}

@@ -76,11 +76,13 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.03.18      KGU#89: Language localization support slightly improved
  *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): Support for FOR-IN loops
  *      Kay Gürtzig     2016.03.29      Bugfix #139 (KGU#166) in getIndexValue() - nested index access failed
+ *      Kay Gürtzig     2016.04.03      KGU#150: Support for Pascal functions chr and ord
+ *                                      KGU#165: Case awareness consistency for keywords improved.
+ *      Kay Gürtzig     2016-04-12      Enh. #137 (KGU#160): Additional or exclusive output to text window 
  *
  ******************************************************************************************************
  *
  *      Comment:
- *      TODO: Consistent implementation of new setting D7Parser.ignoreCase
  *      2016-03-17 Enh. #133 (KGU#159)
  *      - Previously, a Call stack trace was only shown in cse of an execution error or manual abort.
  *        Now a Call stack trace may always be requested while execution hasn't ended. Only prerequisite
@@ -172,8 +174,7 @@ import java.awt.Dialog.ModalityType;
 import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
+import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Stack;
@@ -181,14 +182,11 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
-import java.util.regex.PatternSyntaxException;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
 
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Alternative;
@@ -206,7 +204,6 @@ import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.Updater;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.elements.Forever;
-import lu.fisch.structorizer.generators.CGenerator;
 import lu.fisch.structorizer.gui.Diagram;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.LangDialog;
@@ -301,6 +298,11 @@ public class Executor implements Runnable
 	}
 
 	private Control control = new Control();
+
+	// START KGU#160 2016-04-12: Enh. #137 - Option for text window output
+	private OutputConsole console = new OutputConsole();
+	private boolean isConsoleEnabled = false; 
+	// END KGU#160 2016-04-12
 
 	private int delay = 50;
 
@@ -630,11 +632,23 @@ public class Executor implements Runnable
 		}
 		this.isErrorReported = false;
 		this.diagram.getRoot().isCalling = false;
+		// START KGU#160 2016-04-12: Enh. #137 - Address the console window 
+		this.console.clear();
+		SimpleDateFormat sdf = new SimpleDateFormat();
+		this.console.writeln("*** STARTED \"" + this.diagram.getRoot().getText().getLongString() +
+				"\" at " + sdf.format(System.currentTimeMillis()) + " ***", Color.GRAY);
+		if (this.isConsoleEnabled) this.console.setVisible(true);
+		// END KGU#160 2016-04-12
 		/////////////////////////////////////////////////////////
 		this.execute(null);	// The actual top-level execution
 		/////////////////////////////////////////////////////////
 		this.callers.clear();
 		this.stackTrace.clear();
+		// START KGU#160 2016-04-12: Enh. #137 - Address the console window 
+		this.console.writeln("*** TERMINATED \"" + this.diagram.getRoot().getText().getLongString() +
+				"\" at " + sdf.format(System.currentTimeMillis()) + " ***", Color.GRAY);
+		if (this.isConsoleEnabled) this.console.setVisible(true);
+		// END KGU#160 2016-04-12
 		//System.out.println("stackTrace size: " + stackTrace.count());
 	}
 	
@@ -981,7 +995,7 @@ public class Executor implements Runnable
 		// START KGU#156 2016-03-11: Enh. #124 - detect execution counter diff.
 		int countBefore = root.getExecStepCount(true);
 		// END KGU#156 2016-03-11
-		boolean done = this.execute(arguments);
+		/*boolean done =*/ this.execute(arguments);
 		// START KGU#156 2016-03-11; Enh. #124
 		caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore, true);
 		if (cloned || root.isTestCovered(true))	
@@ -1236,12 +1250,20 @@ public class Executor implements Runnable
 			pascalFunction = "public String trim(String s) { return s.trim(); }";
 			interpreter.eval(pascalFunction);
 			// START KGU#57 2015-11-07: More interoperability for characters and Strings
+			// char transformation
 			pascalFunction = "public Character lowercase(Character ch) { return (Character)Character.toLowerCase(ch); }";
 			interpreter.eval(pascalFunction);
 			pascalFunction = "public Character uppercase(Character ch) { return (Character)Character.toUpperCase(ch); }";
 			interpreter.eval(pascalFunction);
-			// char transformation
-			
+			// START KGU#150 2016-04-03
+			pascalFunction = "public int ord(Character ch) { return (int)ch; }";
+			interpreter.eval(pascalFunction);
+			// FIXME: Find a better suited exceptkon
+			pascalFunction = "public int ord(String s) throws Exception { if (s.length() == 1) return (int)s.charAt(0); else throw new Exception(); }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public char chr(int code) { return (char)code; }";
+			interpreter.eval(pascalFunction);
+			// END KGU#150 2016-04-03
 			// END KGU#57 2015-11-07
 		} catch (EvalError ex)
 		{
@@ -1595,10 +1617,10 @@ public class Executor implements Runnable
 	 */
 	private void updateVariableDisplay() throws EvalError
 	{
-		Vector<Vector> vars = new Vector();
+		Vector<Vector<Object>> vars = new Vector<Vector<Object>>();
 		for (int i = 0; i < this.variables.count(); i++)
 		{
-			Vector myVar = new Vector();
+			Vector<Object> myVar = new Vector<Object>();
 			myVar.add(this.variables.get(i));	// Variable name
 			// START KGU#67 2015-11-08: We had to find a solution for displaying arrays in a sensible way
 			//myVar.add(this.interpreter.get(this.variables.get(i)));
@@ -1656,6 +1678,14 @@ public class Executor implements Runnable
 				try {
 					String varName = this.variables.get(i);
 					Object oldValue = interpreter.get(varName);
+					// START KGU#160 2016-04-12: Enh. #137 - text window output
+					this.console.writeln("*** Manually set: " + varName + " <- " + newValues[i] + " ***", Color.RED);
+					if (isConsoleEnabled)
+					{
+						this.console.setVisible(true);
+					}
+					// END KGU#160 2016-04-12
+					
 					if (oldValue != null && oldValue.getClass().getSimpleName().equals("Object[]"))
 					{
 						// In this case an initialisation expression ("{ ..., ..., ...}") is expected
@@ -1697,7 +1727,7 @@ public class Executor implements Runnable
 		step = useSteps;
 		stop = false;
 		variables = new StringList();
-		control.updateVars(new Vector<Vector>());
+		control.updateVars(new Vector<Vector<Object>>());
 		
 		running = true;
 		Thread runner = new Thread(this, "Player");
@@ -1869,7 +1899,7 @@ public class Executor implements Runnable
 				// START KGU#65 2015-11-04: Input keyword should only trigger this if positioned at line start
 				//else if (cmd.indexOf(D7Parser.input) >= 0)
 				else if (cmd.matches(
-						Matcher.quoteReplacement(D7Parser.input.trim()) + "([\\W].*|$)"))
+						this.getKeywordPattern(D7Parser.input) + "([\\W].*|$)"))
 				// END KGU#65 2015-11-04
 				{
 					result = tryInput(cmd);
@@ -1878,7 +1908,7 @@ public class Executor implements Runnable
 				// START KGU#65 2015-11-04: Output keyword should only trigger this if positioned at line start
 				//else if (cmd.indexOf(D7Parser.output) >= 0)
 				else if (cmd.matches(
-						Matcher.quoteReplacement(D7Parser.output.trim()) + "([\\W].*|$)"))
+						this.getKeywordPattern(D7Parser.output) + "([\\W].*|$)"))
 				// END KGU#65 2015-11-04
 				{
 					result = tryOutput(cmd);
@@ -1888,9 +1918,8 @@ public class Executor implements Runnable
 				// comparison should not be case-sensitive while D7Parser.preReturn isn't fully configurable,
 				// but a separator would be fine...
 				//else if (cmd.indexOf("return") >= 0)
-				else if (cmd.toLowerCase().matches(
-						Matcher.quoteReplacement(
-								D7Parser.preReturn.toLowerCase()) + "([\\W].*|$)"))
+				else if (cmd.matches(
+						this.getKeywordPattern(D7Parser.preReturn) + "([\\W].*|$)"))
 				// END KGU 2015-11-11
 				{		 
 					result = tryReturn(cmd.trim());
@@ -2013,15 +2042,16 @@ public class Executor implements Runnable
 			tokens.removeAll(" ");
 			try
 			{
+				boolean startsWithLeave = tokens.indexOf(D7Parser.preLeave, !D7Parser.ignoreCase) == 0;
 				// Single-level break? (An empty Jump is also a break!)
-				if (tokens.indexOf(D7Parser.preLeave) == 0 && tokens.count() == 1 ||
+				if (startsWithLeave && tokens.count() == 1 ||
 						cmd.isEmpty() && i == sl.count() - 1)
 				{
 					this.leave++;
 					done = true;
 				}
 				// Multi-level leave?
-				else if (tokens.indexOf(D7Parser.preLeave) == 0)
+				else if (startsWithLeave)
 				{
 					int nLevels = 1;
 					if (tokens.count() > 1)
@@ -2038,13 +2068,13 @@ public class Executor implements Runnable
 					done = true;
 				}
 				// Unstructured return from the routine?
-				else if (tokens.indexOf(D7Parser.preReturn) == 0)
+				else if (tokens.indexOf(D7Parser.preReturn, !D7Parser.ignoreCase) == 0)
 				{
 					result = tryReturn(convert(sl.get(i)));
 					done = true;
 				}
 				// Exit from the entire program - simply handled like an error here.
-				else if (tokens.indexOf(D7Parser.preExit) == 0)
+				else if (tokens.indexOf(D7Parser.preExit, !D7Parser.ignoreCase) == 0)
 				{
 					int exitValue = 0;
 					try {
@@ -2237,6 +2267,13 @@ public class Executor implements Runnable
 			//		"Please enter a value for <" + in + ">", null);
 			String msg = control.lbInputValue.getText();
 			msg = msg.replace("%", in);
+			// START KGU#160 2016-04-12: Enh. #137 - text window output
+			this.console.write(msg + ": ");
+			if (isConsoleEnabled)
+			{
+				this.console.setVisible(true);
+			}
+			// END KGU#160 2016-04-12
 			String str = JOptionPane.showInputDialog(null, msg, null);
 			// END KGU#89 2016-03-18
 			// START KGU#84 2015-11-23: ER #36 - Allow a controlled continuation on cancelled input
@@ -2257,6 +2294,13 @@ public class Executor implements Runnable
 			}
 			else
 			{
+				// START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+				this.console.writeln(str, Color.GREEN);
+				if (isConsoleEnabled)
+				{
+					this.console.setVisible(true);
+				}
+				// END KGU#160 2016-04-12
 				// START KGU#69 2015-11-08: Use specific method for raw input
 				setVarRaw(in, str);
 				// END KGU#69 2015-11-08
@@ -2315,7 +2359,16 @@ public class Executor implements Runnable
 			//		0);
 			//System.out.println("running/step/paus/stop: " +
 			//		running + " / " + step + " / " + paus + " / " + " / " + stop);
-			if (step)
+
+			// START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+			//if (step)
+			this.console.writeln(s);
+			if (isConsoleEnabled)
+			{
+				this.console.setVisible(true);
+			}
+			else if (step)
+			// END KGU#160 2016-04-12
 			{
 				// In step mode, there is no use to offer pausing
 				JOptionPane.showMessageDialog(diagram, s, "Output",
@@ -2582,18 +2635,29 @@ public class Executor implements Runnable
 		try
 		{
 			String s = element.getText().getText();
-			if (!D7Parser.preAlt.equals(""))
+			// START KGU#150 2016-04-03: More precise processing
+//			if (!D7Parser.preAlt.equals(""))
+//			{
+//				// FIXME: might damage variable names
+//				s = BString.replace(s, D7Parser.preAlt, "");
+//			}
+//			if (!D7Parser.postAlt.equals(""))
+//			{
+//				// FIXME: might damage variable names
+//				s = BString.replace(s, D7Parser.postAlt, "");
+//			}
+//
+//			s = convert(s);
+			StringList tokens = Element.splitLexically(s, true);
+			for (String key : new String[]{D7Parser.preAlt, D7Parser.postAlt})
 			{
-				// FIXME: might damage variable names
-				s = BString.replace(s, D7Parser.preAlt, "");
+				if (!key.trim().isEmpty())
+				{
+					tokens.removeAll(Element.splitLexically(key, false), !D7Parser.ignoreCase);
+				}		
 			}
-			if (!D7Parser.postAlt.equals(""))
-			{
-				// FIXME: might damage variable names
-				s = BString.replace(s, D7Parser.postAlt, "");
-			}
-
-			s = convert(s);
+			s = convert(tokens.concatenate());
+			// END KGU#150 2016-04-03
 
 			//System.out.println("C=  " + interpreter.get("C"));
 			//System.out.println("IF: " + s);
@@ -2666,21 +2730,32 @@ public class Executor implements Runnable
 			String condStr = "true";	// Condition expression
 			if (!eternal) {
 				condStr = ((While) element).getText().getText();
-				if (!D7Parser.preWhile.equals(""))
+				// START KGU#150 2016-04-03: More precise processing
+//				if (!D7Parser.preWhile.equals(""))
+//				{
+//					// FIXME: might damage variable names
+//					condStr = BString.replace(condStr, D7Parser.preWhile, "");
+//				}
+//				if (!D7Parser.postWhile.equals(""))
+//				{
+//					// FIXME: might damage variable names
+//					condStr = BString.replace(condStr, D7Parser.postWhile, "");
+//				}
+//				// START KGU#79 2015-11-12: Forgotten zu write back the result!
+//				//convert(condStr, false);
+//				condStr = convert(condStr, false);
+//				// END KGU#79 2015-11-12
+//				// System.out.println("WHILE: "+condStr);
+				StringList tokens = Element.splitLexically(condStr, true);
+				for (String key : new String[]{D7Parser.preWhile, D7Parser.postWhile})
 				{
-					// FIXME: might damage variable names
-					condStr = BString.replace(condStr, D7Parser.preWhile, "");
+					if (!key.trim().isEmpty())
+					{
+						tokens.removeAll(Element.splitLexically(key, false), !D7Parser.ignoreCase);
+					}		
 				}
-				if (!D7Parser.postWhile.equals(""))
-				{
-					// FIXME: might damage variable names
-					condStr = BString.replace(condStr, D7Parser.postWhile, "");
-				}
-				// START KGU#79 2015-11-12: Forgotten zu write back the result!
-				//convert(condStr, false);
-				condStr = convert(condStr, false);
-				// END KGU#79 2015-11-12
-				// System.out.println("WHILE: "+condStr);
+				condStr = convert(tokens.concatenate());
+				// END KGU#150 2016-04-03
 			}
 
 			//int cw = 0;
@@ -2801,22 +2876,28 @@ public class Executor implements Runnable
 			// And, of course, variables only introduced within the loop won't be recognised--
 			// which is sound with scope rules in C or Java.
 			String condStr = element.getText().getText();
-			if (!D7Parser.preRepeat.equals(""))
+			// STRT KGU#150 2016-04-03: More pecise processing
+//			if (!D7Parser.preRepeat.equals(""))
+//			{
+//				// FIXME: might damage variable names
+//				condStr = BString.replace(condStr, D7Parser.preRepeat, "");
+//			}
+//			if (!D7Parser.postRepeat.equals(""))
+//			{
+//				// FIXME: might damage variable names
+//				condStr = BString.replace(condStr, D7Parser.postRepeat, "");
+//			}
+//			condStr = convert(condStr, false);
+			StringList tokens = Element.splitLexically(condStr, true);
+			for (String key : new String[]{D7Parser.preRepeat, D7Parser.postRepeat})
 			{
-				// FIXME: might damage variable names
-				condStr = BString.replace(condStr, D7Parser.preRepeat, "");
+				if (!key.trim().isEmpty())
+				{
+					tokens.removeAll(Element.splitLexically(key, false), !D7Parser.ignoreCase);
+				}		
 			}
-			if (!D7Parser.postRepeat.equals(""))
-			{
-				// FIXME: might damage variable names
-				condStr = BString.replace(condStr, D7Parser.postRepeat, "");
-			}
-			// s=s.replace("==", "=");
-			// s=s.replace("=", "==");
-			// s=s.replace("<==", "<=");
-			// s=s.replace(">==", ">=");
-			condStr = convert(condStr, false);
-			// System.out.println("REPEAT: "+s
+			condStr = convert(tokens.concatenate());
+			// END KGU#150 2016-04-03
 
 			//int cw = 0;
 			Object n = interpreter.eval(condStr);
@@ -3413,11 +3494,37 @@ public class Executor implements Runnable
 	}
 	// END KGU#33/KGU#34 2014-12-05
 	
+	// START KGU#165 2016-04-03: Support keyword case sensitivity
+	/**
+	 * Returns an appropriate match string for the given parser preference string
+	 * (where D7Parser.ignoreCase is paid attention to)
+	 * @param keyword - parser preference string
+	 * @return match pattern
+	 */
+	private String getKeywordPattern(String keyword)
+	{
+		String pattern = Matcher.quoteReplacement(keyword);
+		if (D7Parser.ignoreCase)
+		{
+			pattern = BString.breakup(pattern);
+		}
+		return pattern;
+	}
+	// END KGU#165 2016-04-03
+	
 	// START KGU#156 2016-03-10: An interface for an external update trigger was needed
 	public void redraw()
 	{
 		diagram.repaint();
 	}
 	// END KGU#156 2016-03-10
+	
+    // START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+	public void setOutputWindowEnabled(boolean _enabled)
+	{
+		this.isConsoleEnabled = _enabled;
+		this.console.setVisible(_enabled);
+	}
+	// END KGU#160 2016-04-12
 
 }

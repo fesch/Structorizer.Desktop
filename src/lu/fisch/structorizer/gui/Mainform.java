@@ -75,6 +75,7 @@ import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
 
+@SuppressWarnings("serial")
 public class Mainform  extends JFrame implements NSDController
 {
 	public Diagram diagram = null;
@@ -257,7 +258,7 @@ public class Mainform  extends JFrame implements NSDController
 			int width = Integer.valueOf(ini.getProperty("Width","750")).intValue();
 			int height = Integer.valueOf(ini.getProperty("Height","550")).intValue();
 
-                        // reset do defaults if wrong values
+                        // reset to defaults if wrong values
                         if (top<0) top=0;
                         if (left<0) left=0;
                         if (width<=0) width=750;

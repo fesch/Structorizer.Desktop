@@ -54,6 +54,7 @@ import javax.swing.border.*;
 /**
  * @author Robert Fisch
  */
+@SuppressWarnings("serial")
 public class Preferences extends LangDialog implements ActionListener, KeyListener
 {
 

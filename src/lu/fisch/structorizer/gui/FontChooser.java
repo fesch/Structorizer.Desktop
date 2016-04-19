@@ -67,6 +67,7 @@ import javax.swing.event.*;
 /**
  * @author Robert Fisch
  */
+@SuppressWarnings("serial")
 public class FontChooser extends LangDialog
 {
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
@@ -77,11 +78,11 @@ public class FontChooser extends LangDialog
 	protected JPanel pnlName;
 	protected JLabel lblName;
 	protected JScrollPane scrollPane1;
-	protected JList lsNames;
+	protected JList<String> lsNames;
 	protected JPanel pnlSize;
 	protected JLabel lblSize;
 	protected JScrollPane scrollPane2;
-	protected JList lsSizes;
+	protected JList<String> lsSizes;
 	protected JPanel buttonBar;
 	protected JButton btnOK;
 	// JFormDesigner - End of variables declaration  //GEN-END:variables
@@ -115,11 +116,11 @@ public class FontChooser extends LangDialog
 		pnlName = new JPanel();
 		lblName = new JLabel();
 		scrollPane1 = new JScrollPane();
-		lsNames = new JList(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
+		lsNames = new JList<String>(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
 		pnlSize = new JPanel();
 		lblSize = new JLabel();
 		scrollPane2 = new JScrollPane();
-		lsSizes = new JList(sizes);
+		lsSizes = new JList<String>(sizes);
 		buttonBar = new JPanel();
 		btnOK = new JButton();
 

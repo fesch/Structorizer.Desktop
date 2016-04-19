@@ -64,6 +64,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): For-In loops in variable detection and Analyser
  *      Kay Gürtzig     2016-03-25      Bugfix #135 (KGU#163) Method analyse(.,.,.,.,.) decomposed and corrected
  *      Kay Gürtzig     2016-03-29      Methods getUsedVarNames() completely rewritten.
+ *      Kay Gürtzig     2016-04-05      Bugfix #154 (KGU#176) analyse_17() peeked in a wrong collection (Parallel)
+ *      Kay Gürtzig     2016-04-12      Enh. #161 (KGU#179) analyse_13_16() extended (new error16_7)
  *
  ******************************************************************************************************
  *
@@ -107,7 +109,6 @@ import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.*;
 
 import com.stevesoft.pat.*;
-import com.sun.webkit.ThemeClient;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -2819,6 +2820,14 @@ public class Root extends Element {
 				line.matches("exit([\\W].*|$)") ||	// Also check hard-coded keywords
 				line.matches("break([\\W].*|$)");	// Also check hard-coded keywords
 		Element parent = ele.parent;
+		// START KGU#179 2016-04-12: Enh. #161 New check for unreachable instructions
+		int pos = -1;
+		if (parent instanceof Subqueue && (pos = ((Subqueue)parent).getIndexOf(ele)) < ((Subqueue)parent).getSize()-1)
+		{
+			//error = new DetectedError("Your function seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
+			addError(_errors, new DetectedError(errorMsg(Menu.error16_7, ""), ((Subqueue)parent).getElement(pos+1)), 16);	
+		}
+		// END KGU#179 2016-04-12
 		// Count the nested loops
 		int levelsDown = 0;
 		// Routines and Parallel sections cannot be penetrated by leave or break
@@ -2959,7 +2968,7 @@ public class Root extends Element {
 	}
 
 	/**
-	 * CHECK #17: Inconsistency risk due to concurent variable access by parallel threads
+	 * CHECK #17: Inconsistency risk due to concurrent variable access by parallel threads
 	 * @param ele - Parallel element to be analysed
 	 * @param _errors - global error list
 	 */
@@ -2990,7 +2999,10 @@ public class Root extends Element {
 			// Then register all used variables
 			for (int v = 0; v < threadUsedVars.count(); v++)
 			{
-				String varName = threadSetVars.get(v);
+				// START KGU#176 2016-04-05: Bugfix #154 Wrong collection used
+				//String varName = threadSetVars.get(v);
+				String varName = threadUsedVars.get(v);
+				// END KGU#176 2016-04-05
 				Integer count = myUsedVars.putIfAbsent(varName, 1 << threadNo);
 				if (count != null) { myUsedVars.put(varName, count.intValue() | (1 << threadNo)); }
 			}

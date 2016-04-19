@@ -48,6 +48,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig                2015.12.15      Bugfix #51 (=KGU#108): Cope with empty input and output
  *      Kay Gürtzig                2015.12.21      Bugfix #41/#68/#69 (= KG#93)
  *      Kay Gürtzig                2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61) 
+ *      Kay Gürtzig                2016.04.04      transforTokens() disabled due to missing difference to super 
  *
  ******************************************************************************************************
  *
@@ -210,16 +211,18 @@ public class JavaGenerator extends CGenerator
 //		return _interm.replace(" <- ", " = ");
 //	}
 
-	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
-	 */
-	@Override
-	protected String transformTokens(StringList tokens)
-	{
-		tokens.replaceAll("div", "/");
-		tokens.replaceAll("<-", "=");
-		return tokens.concatenate();
-	}
+	// START KGU#150 2016-04-04: No need to override CGenerator.tranformTokens()
+//	/* (non-Javadoc)
+//	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
+//	 */
+//	@Override
+//	protected String transformTokens(StringList tokens)
+//	{
+//		tokens.replaceAll("div", "/");
+//		tokens.replaceAll("<-", "=");
+//		return tokens.concatenate();
+//	}
+	// END KGU#150 2016-04-04
 	// END KGU#93 2015-12-21
 
 	// END KGU#18/KGU#23 2015-11-01
@@ -228,7 +231,7 @@ public class JavaGenerator extends CGenerator
 	protected String transform(String _input)
 	{
 		// START KGU#101 2015-12-12: Enh. #54 - support lists of expressions
-		if (_input.matches("^" + D7Parser.output.trim() + "[ ](.*?)"))
+		if (_input.matches("^" + getKeywordPattern(D7Parser.output.trim()) + "[ ](.*?)"))
 		{
 			StringList expressions = 
 					Element.splitExpressionList(_input.substring(D7Parser.output.trim().length()), ",");

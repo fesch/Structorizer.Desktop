@@ -53,6 +53,7 @@ import javax.swing.border.*;
 import lu.fisch.utils.StringList;
 
 
+@SuppressWarnings("serial")
 public class InputBox extends LangDialog implements ActionListener, KeyListener
 {
     public boolean OK = false;

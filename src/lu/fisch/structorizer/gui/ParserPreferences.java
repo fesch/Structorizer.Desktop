@@ -35,6 +35,7 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2008.01.03      First Issue
  *      Kay Gürtzig     2015.11.08      Enh. #10: step keyword setting manually added (FOR loop)
  *      Kay Gürtzig     2016.03.21      Enh. #84: FOR-IN loop settings manually added
+ *      Kay Gürtzig     2016.03.23      Enh. #23: Settings for JUMP statements prepared (but not enabled)
  *
  ******************************************************************************************************
  *
@@ -56,6 +57,7 @@ import javax.swing.border.*;
 /**
  * @author Robert Fisch
  */
+@SuppressWarnings("serial")
 public class ParserPreferences extends LangDialog {
     
         public boolean OK = false;
@@ -294,7 +296,7 @@ public class ParserPreferences extends LangDialog {
 				contentPanel.add(edtRepeatPost);
 
 				// START KGU#78 2016-03-26: Enh. #23 - still not enabled
-				//---- lblJump ----
+//				//---- lblJump ----
 //				lblJump.setText("JUMP statement");
 //				contentPanel.add(lblJump);
 //				contentPanel.add(edtJumpLeave);
@@ -437,7 +439,7 @@ public class ParserPreferences extends LangDialog {
                  JOptionPane.showMessageDialog(ParserPreferences.this, lblErrorSign.getText(),"Error", JOptionPane.ERROR_MESSAGE);
             }
         	// START KGU#61 2016-03-21: Enh. #84 - Test ForInPost against duplicates 
-            else if((textField = this.hasConflicts()) != null)
+            else if ((textField = this.hasConflicts()) != null)
             {
             	Color oldColour = textField.getForeground();
             	textField.setForeground(Color.RED);
@@ -470,11 +472,12 @@ public class ParserPreferences extends LangDialog {
     				edtInput,
     				edtOutput
         	};
+        	String forInPost = edtForInPost.getText().trim();
         	if (chkIgnoreCase.isSelected())
         	{
             	for (int i = 0; conflicting == null && i < fieldsToCheck.length; i++)
             	{
-            		if (edtForInPost.getText().equalsIgnoreCase(fieldsToCheck[i].getText()))
+            		if (forInPost.equalsIgnoreCase(fieldsToCheck[i].getText().trim()))
             		{
             			conflicting = fieldsToCheck[i];
             		}
@@ -485,7 +488,7 @@ public class ParserPreferences extends LangDialog {
         	{
         		for (int i = 0; conflicting == null && i < fieldsToCheck.length; i++)
         		{
-        			if (edtForInPost.getText().equals(fieldsToCheck[i].getText()))
+        			if (forInPost.equals(fieldsToCheck[i].getText().trim()))
         			{
         				conflicting = fieldsToCheck[i];        			
         			}

@@ -147,7 +147,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.24-04";
+	public static String E_VERSION = "3.24-07";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -499,19 +499,14 @@ public abstract class Element {
 	public StringList getText(boolean _alwaysTrueText)
 	// END KGU#91 2015-12-01
 	{
-            Root root = null;
-            // START KGU#91 2015-12-01: Bugfix #39
-    		//if ((root = getRoot(this))!=null && root.isSwitchTextAndComments())
-            if (!_alwaysTrueText && 
-            		(root = getRoot(this))!=null && root.isSwitchTextAndComments())
-            // START KGU#91 2015-12-01
-            {
-            	return comment;
-            }
-            else
-            {
-            	return text;
-            }
+        if (!_alwaysTrueText && this.isSwitchTextCommentMode())
+        {
+        	return comment;
+        }
+        else
+        {
+        	return text;
+        }
 	}
 
 	public StringList getCollapsedText()
@@ -545,30 +540,38 @@ public abstract class Element {
 	{
 		return comment;
 	}
+
 	/**
-	 * Returns the content of the text field unless _alwaysTrueComment is false and
-	 * mode isSwitchedTextAndComment is active, in which case the comment field
-	 * is returned instead 
+	 * Returns the content of the comment field unless _alwaysTrueComment is false and
+	 * mode isSwitchedTextAndComment is active, in which case the text field
+	 * content is returned instead 
 	 * @param _alwaysTrueText - if true then mode isSwitchTextAndComment is ignored
 	 * @return either the text or the comment
 	 */
 	public StringList getComment(boolean _alwaysTrueComment)
 	// END KGU#91 2015-12-01
 	{
-            Root root = null;
-            // START KGU#91 2015-12-01: Bugfix #39
-      		//if ((root = getRoot(this))!=null && root.isSwitchTextAndComments())
-            if (!_alwaysTrueComment && 
-            		(root = getRoot(this))!=null && root.isSwitchTextAndComments())
-            // END KGU#91 2015-12-01
-            {
-            	return text;
-            }
-            else
-            {
-            	return comment;
-            }
+		if (!_alwaysTrueComment && this.isSwitchTextCommentMode())
+		{
+			return text;
+		}
+		else
+		{
+			return comment;
+		}
 	}
+	
+	// START KGU#172 2016-04-01: Issue #145: Make it easier to obtain this information
+	/**
+	 * Checks whether texts and comments are to swappe for display.
+	 * @return rue iff a Root is associated and its swichTextAndComments flag is on
+	 */
+	protected boolean isSwitchTextCommentMode()
+	{
+		Root root = getRoot(this);
+		return (root != null && root.isSwitchTextAndComments());
+	}
+	// END KGU#172 2916-04-01
 
 	public boolean getSelected()
 	{
@@ -2027,20 +2030,20 @@ public abstract class Element {
     {
     	//final String regexMatchers = ".?*+[](){}\\^$";
     	
-    	// Collect redundant placemarkers to be deleted from the text
-        StringList redundantMarkers = new StringList();
-        redundantMarkers.addByLength(D7Parser.preAlt);
-        redundantMarkers.addByLength(D7Parser.preCase);
-        //redundantMarkers.addByLength(D7Parser.preFor);	// will be handled separately
-        redundantMarkers.addByLength(D7Parser.preWhile);
-        redundantMarkers.addByLength(D7Parser.preRepeat);
-
-        redundantMarkers.addByLength(D7Parser.postAlt);
-        redundantMarkers.addByLength(D7Parser.postCase);
-        //redundantMarkers.addByLength(D7Parser.postFor);	// will be handled separately
-        //redundantMarkers.addByLength(D7Parser.stepFor);	// will be handled separately
-        redundantMarkers.addByLength(D7Parser.postWhile);
-        redundantMarkers.addByLength(D7Parser.postRepeat);
+//    	// Collect redundant placemarkers to be deleted from the text
+//        StringList redundantMarkers = new StringList();
+//        redundantMarkers.addByLength(D7Parser.preAlt);
+//        redundantMarkers.addByLength(D7Parser.preCase);
+//        //redundantMarkers.addByLength(D7Parser.preFor);	// will be handled separately
+//        redundantMarkers.addByLength(D7Parser.preWhile);
+//        redundantMarkers.addByLength(D7Parser.preRepeat);
+//
+//        redundantMarkers.addByLength(D7Parser.postAlt);
+//        redundantMarkers.addByLength(D7Parser.postCase);
+//        //redundantMarkers.addByLength(D7Parser.postFor);	// will be handled separately
+//        //redundantMarkers.addByLength(D7Parser.stepFor);	// will be handled separately
+//        redundantMarkers.addByLength(D7Parser.postWhile);
+//        redundantMarkers.addByLength(D7Parser.postRepeat);
        
         String interm = " " + _text + " ";
 //
@@ -2117,23 +2120,24 @@ public abstract class Element {
         StringList tokens = Element.splitLexically(interm, true);
         
         // START KGU#165 2016-03-26: Now keyword search with/without case
-        for (int i = 0; i < redundantMarkers.count(); i++)
-        {
-        	String marker = redundantMarkers.get(i);
-        	if (!marker.trim().isEmpty())
-        	{
-        		StringList markerTokens = Element.splitLexically(marker, false);
-        		int markerLen = markerTokens.count();
-        		int pos = -1;
-        		while ((pos = tokens.indexOf(markerTokens, 0, !D7Parser.ignoreCase)) >= 0)
-        		{
-        			for (int j = 0; j < markerLen; j++)
-        			{
-        				tokens.delete(pos);
-        			}
-        		}
-        	}
-        }
+//        for (int i = 0; i < redundantMarkers.count(); i++)
+//        {
+//        	String marker = redundantMarkers.get(i);
+//        	if (!marker.trim().isEmpty())
+//        	{
+//        		StringList markerTokens = Element.splitLexically(marker, false);
+//        		int markerLen = markerTokens.count();
+//        		int pos = -1;
+//        		while ((pos = tokens.indexOf(markerTokens, 0, !D7Parser.ignoreCase)) >= 0)
+//        		{
+//        			for (int j = 0; j < markerLen; j++)
+//        			{
+//        				tokens.delete(pos);
+//        			}
+//        		}
+//        	}
+//        }
+        cutOutRedundantMarkers(tokens);
         // END KGU#165 2016-03-26
         
 //        // START KGU 2016-01-13: Bugfix #104 - planned new approach to overcome that nasty keyword/string problem
@@ -2160,6 +2164,44 @@ public abstract class Element {
 
     }
     // END KGU#18/KGU#23 2015-10-24
+    
+    // START KGU#162 2016-03-31: Enh. #144 - undispensible part of transformIntermediate
+    public static void cutOutRedundantMarkers(StringList _tokens)
+    {
+    	// Collect redundant placemarkers to be deleted from the text
+        StringList redundantMarkers = new StringList();
+        redundantMarkers.addByLength(D7Parser.preAlt);
+        redundantMarkers.addByLength(D7Parser.preCase);
+        //redundantMarkers.addByLength(D7Parser.preFor);	// will be handled separately
+        redundantMarkers.addByLength(D7Parser.preWhile);
+        redundantMarkers.addByLength(D7Parser.preRepeat);
+
+        redundantMarkers.addByLength(D7Parser.postAlt);
+        redundantMarkers.addByLength(D7Parser.postCase);
+        //redundantMarkers.addByLength(D7Parser.postFor);	// will be handled separately
+        //redundantMarkers.addByLength(D7Parser.stepFor);	// will be handled separately
+        redundantMarkers.addByLength(D7Parser.postWhile);
+        redundantMarkers.addByLength(D7Parser.postRepeat);
+        
+        for (int i = 0; i < redundantMarkers.count(); i++)
+        {
+        	String marker = redundantMarkers.get(i);
+        	if (!marker.trim().isEmpty())
+        	{
+        		StringList markerTokens = Element.splitLexically(marker, false);
+        		int markerLen = markerTokens.count();
+        		int pos = -1;
+        		while ((pos = _tokens.indexOf(markerTokens, 0, !D7Parser.ignoreCase)) >= 0)
+        		{
+        			for (int j = 0; j < markerLen; j++)
+        			{
+        				_tokens.delete(pos);
+        			}
+        		}
+        	}
+        }
+    }
+    // END KGU#162 2016-03-31
     
     // START KGU#152 2016-03-02: Better self-description of Elements
     public String toString()

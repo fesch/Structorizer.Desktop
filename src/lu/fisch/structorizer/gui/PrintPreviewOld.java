@@ -398,19 +398,18 @@ public class PrintPreview extends JDialog implements Runnable
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
-import java.util.*;
 import java.awt.print.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
-import javax.swing.event.*;
 
+@SuppressWarnings("serial")
 public class PrintPreviewOld extends JDialog
 	{
         protected int m_wPage;
         protected int m_hPage;
         protected Printable m_target;
-        protected JComboBox m_cbScale;
+        protected JComboBox<String> m_cbScale;
         protected PreviewContainer m_preview;
 
 		
@@ -465,7 +464,7 @@ public class PrintPreviewOld extends JDialog
 			bt.setMargin(new Insets(2, 6, 2, 6));
 			tb.add(bt);
 			
-			String[] scales = { "10 %", "25 %", "50 %", "100 %" };
+			//String[] scales = { "10 %", "25 %", "50 %", "100 %" };
 			//m_cbScale = new JComboBox(scales);
 			lst = new ActionListener()
 			{

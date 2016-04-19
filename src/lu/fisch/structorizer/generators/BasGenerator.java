@@ -44,6 +44,8 @@ package lu.fisch.structorizer.generators;
  *                                          Enh. #54 (KGU#101) multiple expressions on output
  *      Kay Gürtzig         2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
  *      Kay Gürtzig         2016.01.22      Bugfix/Enh. #84 (= KGU#100): Array initialisation
+ *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
+ *      Kay Gürtzig         2016-04-04      Enh. #150 - Pascal functions ord and chr translated
  *
  ******************************************************************************************************
  *
@@ -178,6 +180,25 @@ public class BasGenerator extends Generator
 		tokens.replaceAll("[", "(");
 		tokens.replaceAll("]", ")");
 		tokens.replaceAll("div", "/");
+		// START KGU#150 2016-04-04: Handle Pascal ord and chr function
+		int pos = - 1;
+		while ((pos = tokens.indexOf("ord", pos+1)) >= 0 && pos+1 < tokens.count() && tokens.get(pos+1).equals("("))
+		{
+			tokens.set(pos, "Asc");
+		}
+		pos = -1;
+		while ((pos = tokens.indexOf("chr", pos+1)) >= 0 && pos+1 < tokens.count() && tokens.get(pos+1).equals("("))
+		{
+			if (this.optionBasicLineNumbering())
+			{
+				tokens.set(pos, "Chr$");
+			}
+			else
+			{
+				tokens.set(pos,  "Chr");
+			}
+		}
+		// END KGU#150 2016-04-04
 		if (tokens.contains("<-") && this.optionBasicLineNumbering())
 		{
 			// Insert a "LET" keyword but ensure a separating blank between it and the variable name
@@ -267,7 +288,7 @@ public class BasGenerator extends Generator
 	protected String transform(String _input)
 	{
 		// START KGU#101 2015-12-19: Enh. #54 - support lists of output expressions
-		if (_input.matches("^" + D7Parser.output.trim() + "[ ](.*?)"))
+		if (_input.matches("^" + getKeywordPattern(D7Parser.output.trim()) + "[ ](.*?)"))
 		{
 			// Replace commas by semicolons to avoid tabulation
 			StringList expressions = 
@@ -330,7 +351,10 @@ public class BasGenerator extends Generator
 			{
 				// START KGU#100 2016-01-22: Enh. #84 - resolve array initialisation
 				boolean isArrayInit = false;
-				if (this.optionBasicLineNumbering())
+				// START KGU#171 2016-03-31: Enh. #144
+				//if (this.optionBasicLineNumbering())
+				if (!this.suppressTransformation && this.optionBasicLineNumbering())
+				// END KGU#171 2016-03-31
 				{
 					// The crux is: we don't know the index range!
 					// So we'll invent an index base variable easy to be modified in code
@@ -475,7 +499,10 @@ public class BasGenerator extends Generator
 		String var = _for.getCounterVar();
 		String valueList = _for.getValueList();
 		StringList items = this.extractForInListItems(_for);
-		if (items != null)
+		// START KGU#171 2016-03-31: Enh. #144
+		//if (items != null)
+		if (!this.suppressTransformation && items != null)
+		// END KGU#171 2016-03-31
 		{
 			// Good question is: how do we guess the element type and what do we
 			// do if items are heterogenous? We will just try four types: boolean,

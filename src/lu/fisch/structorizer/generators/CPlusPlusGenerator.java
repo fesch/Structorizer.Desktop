@@ -107,7 +107,7 @@ public class CPlusPlusGenerator extends CGenerator {
 	protected String transform(String _input)
 	{
 		// START KGU#101 2015-12-11: Enh. #54 - support lists of expressions
-		if (_input.matches("^" + D7Parser.output.trim() + "[ ](.*?)"))
+		if (_input.matches("^" + getKeywordPattern(D7Parser.output.trim()) + "[ ](.*?)"))
 		{
 			StringList expressions = 
 					Element.splitExpressionList(_input.substring(D7Parser.output.trim().length()), ",");

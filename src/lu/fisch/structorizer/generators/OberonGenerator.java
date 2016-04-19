@@ -49,7 +49,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig				2015.12.21		Bugfix #41/#68/#69 (= KGU#93)
  *      Kay Gürtzig				2016.01.16		KGU#109: Bugfix #61 - handling of type names in assignments
  *                                              Enh. #84 + Bugfix #112 (KGU#141): Assignment export revised
- *      Kay Gürtzig             2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61) 
+ *      Kay Gürtzig             2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61)
+ *      Kay Gürtzig             2016-04-03      KGU#150 Support for CHR and ORD and other built-in functions
  *
  ******************************************************************************************************
  *
@@ -219,6 +220,20 @@ public class OberonGenerator extends Generator {
         tokens.replaceAll("||"," OR ");
         tokens.replaceAll("!","~");
 		tokens.replaceAll("<-", ":=");
+		// START KGU#150 2016-04-03: Support for ord and chr function and capitalization
+		String[] functionNames = {"abs", "inc", "dec", "chr", "ord", "uppercase"};
+		for (int i = 0; i < functionNames.length; i++)
+		{
+			int pos = -1;
+			while ((pos = tokens.indexOf(functionNames[i], pos+1)) >= 0 &&
+					pos+1 < tokens.count() &&
+					tokens.get(pos+1).equals("("))
+			{
+				tokens.set(pos, functionNames[i].toUpperCase());
+			}
+		}
+		tokens.replaceAll("UPPERCASE", "CAP");
+		// END KGU#15ß 2016-04-03
 		String result = tokens.concatenate();
 		// We now shrink superfluous padding - this may affect string literals, though!
 		result = result.replace("  ", " ");
@@ -304,8 +319,8 @@ public class OberonGenerator extends Generator {
 				// START KGU#101/KGU#108 2015-12-20 Issue #51/#54
 				//code.add(_indent+transform(_inst.getText().get(i))+";");
 				String line = _inst.getText().get(i);
-				String matcherInput = "^" + Matcher.quoteReplacement(D7Parser.input);
-				String matcherOutput = "^" + Matcher.quoteReplacement(D7Parser.output);
+				String matcherInput = "^" + getKeywordPattern(D7Parser.input);
+				String matcherOutput = "^" + getKeywordPattern(D7Parser.output);
 				if (Character.isJavaIdentifierPart(D7Parser.input.charAt(D7Parser.input.length()-1))) { matcherInput += "[ ]"; }
 				if (Character.isJavaIdentifierPart(D7Parser.output.charAt(D7Parser.output.length()-1))) { matcherOutput += "[ ]"; }
 				boolean isInput = (line.trim()+" ").matches(matcherInput + "(.*)");			// only non-empty input instructions relevant  
