@@ -43,7 +43,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136): Translation-neutral selection mechanism
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
- *      Kay Gürtzig     2016-04-01      Issue #145 (KGU#162): Comment is yet to be shown in switchText mode
+ *      Kay Gürtzig     2016.04.01      Issue #145 (KGU#162): Comment is yet to be shown in switchText mode
+ *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *
  ******************************************************************************************************
  *
@@ -673,17 +674,32 @@ public class Case extends Element
     }
     // END KGU 2015-10-09
     
-    public void setSelected(boolean _sel)
-    {
-            selected=_sel;
-            /* Quatsch !
-            for(int i = 0;i<qs.size();i++)
-            {
-                    ((Subqueue) qs.get(i)).setSelected(_sel);
-            }
-            */
-    }
+//    public void setSelected(boolean _sel)
+//    {
+//            selected=_sel;
+//            /* Quatsch !
+//            for(int i = 0;i<qs.size();i++)
+//            {
+//                    ((Subqueue) qs.get(i)).setSelected(_sel);
+//            }
+//            */
+//    }
 
+	// START KGU#183 2016-04-24: Issue #169 
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#findSelected()
+	 */
+	public Element findSelected()
+	{
+		Element sel = selected ? this : null;
+		for (int i = 0; sel == null && i < this.qs.size(); i++)
+		{
+			sel = qs.elementAt(i).findSelected();
+		}
+		return sel;
+	}
+	// END KGU#183 2016-04-24
+	    
     public Element copy() // Problem here???
     {
             Element ele = new Case(this.getText().getText());
@@ -704,6 +720,9 @@ public class Case extends Element
     		ele.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
     		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
     		// END KGU#117 2016-03-07
+    		// START KGU#183 2016-04-24: Issue #169
+    		ele.selected = this.selected;
+    		// END KGU#183 2016-04-24
 
             return ele;
     }

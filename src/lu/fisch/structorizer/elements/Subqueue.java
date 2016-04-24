@@ -45,6 +45,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136) accomplished (translation-independent selection)
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *
  ******************************************************************************************************
  *
@@ -373,6 +374,50 @@ public class Subqueue extends Element implements IElementSequence {
 	}
 	// END KGU 2015-10-11
 	
+	// START KGU#183 2016-04-24: Issue #169 
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#findSelected()
+	 */
+	public Element findSelected()
+	{
+		Element sel = selected ? this : null;
+		// Now look for a selected subsequence
+		if (sel == null)
+		{
+			int from = children.size(), to = -1;
+			boolean done = false;
+			for (int i = 0; !done && i < this.children.size(); i++)
+			{
+				if (children.elementAt(i).getSelected())
+				{
+					if (from > i)
+					{
+						from = i;
+					}
+					else
+					{
+						to = i;
+					}
+				}
+				else
+				{
+					done = from < i;
+				}
+			}
+			if (to >= 0)
+			{
+				sel = new lu.fisch.structorizer.gui.SelectedSequence(this, from, to);
+			}
+		}
+		// If neither this nor a subsequence is selected then look into the deep
+		for (int i = 0; sel == null && i < this.children.size(); i++)
+		{
+			sel = children.elementAt(i).findSelected();
+		}
+		return sel;
+	}
+	// END KGU#183 2016-04-24
+	    
 	public Element copy()
 	{
 		Element ele = new Subqueue();
@@ -384,6 +429,9 @@ public class Subqueue extends Element implements IElementSequence {
 		// START KGU#117 2016-03-07: Enh. #77
 		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
 		// END KGU#117 2016-03-07
+		// START KGU#183 2016-04-24: Issue #169
+		ele.selected = this.selected;
+		// END KGU#183 2016-04-24
 		return ele;
 	}
         

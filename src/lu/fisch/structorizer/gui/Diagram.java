@@ -61,6 +61,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.04.07      Enh. #158: Moving selection as cursor key actions (KGU#177)
  *      Kay Gürtzig     2016-04-14      Enh. #158: moveSelection() now updates the scroll view (KGU#177)
  *      Kay Gürtzig     2016-04-19      Issue #164 (no selection heir on deletion) and #165 (inconsistent unselection)
+ *      Kay Gürtzig     2016-04-23      Issue #168 (no selection heir on cut) and #169 (no selection on start/undo/redo)
+ *      Kay Gürtzig     2016-04-24      Bugfixes for issue #158 (KGU#177): Leaving the body of Parallel, Forever etc. downwards,
+ *                                      button state update was missing.
  *
  ******************************************************************************************************
  *
@@ -208,6 +211,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//System.out.println(root.getFullText().getText());
 			//root.getVarNames();
 			//root.hasChanged = true;
+			// START KGU#183 2016-04-23: Issue #169
+			selected = root.findSelected();
+			if (selected == null)
+			{
+				selected = root;
+				root.setSelected(true);
+			}
+			// END KGU#183 2016-04-23
 			redraw();
 			analyse();
 			// START KGU#149 2016-02-03: Bugfix #117
@@ -420,7 +431,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					if(selectedDown.getClass().getSimpleName().equals("Root") ||
 					   selectedDown.getClass().getSimpleName().equals("Subqueue") ||
 					   bSome.getClass().getSimpleName().equals("Root") ||
-					   root.checkChild(bSome, selectedDown))
+					   //root.checkChild(bSome, selectedDown))
+					   bSome.isDescendantOf(selectedDown))
 					{
 						Element.E_DRAWCOLOR=Color.RED;
 					}
@@ -599,12 +611,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
 					// END KGU#25 2015-10-11
 					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 1 >>>>>>> " + ((selectedUp != null)?selectedUp:"null")+ " <<<<<<<<<<<<<<<<<<<<<<");
-					if(selectedUp!=null)
+					if (selectedUp != null)
 					{
 						selectedUp.setSelected(false);
-						if( !selectedUp.getClass().getSimpleName().equals("Root") &&
-						   selectedUp!=selectedDown &&
-						   root.checkChild(selectedUp,selectedDown)==false
+						if ( !selectedUp.getClass().getSimpleName().equals("Root") &&
+						   selectedUp != selectedDown &&
+						   //root.checkChild(selectedUp,selectedDown)==false
+						   !selectedUp.isDescendantOf(selectedDown)
 						   )
 						{
 							root.addUndo();
@@ -618,7 +631,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							}
 							// END KGU#87 2015-11-22
 							selectedUp.setSelected(false);
-							root.addAfter(selectedUp,selectedDown);
+							root.addAfter(selectedUp, selectedDown);
 							// START KGU'87 2015-11-22: See above
 							//selectedDown.setSelected(true);
 							if (!(selectedDown instanceof Subqueue))
@@ -980,9 +993,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU 2015-10-29: This didn't actually make sense
 		//root.hasChanged=true;
 		// END KGU 2015-10-29
-		// START KGU#175 2016-04-05: Bugfix #155 We must not forget to clear a previous selection
-		this.selected = this.selectedDown = this.selectedUp = null;
-		// END KGU#175 2016-04-05
+		// START KGU#183 2016-04-23: Bugfix #155, Issue #169
+		// We must not forget to clear a previous selection
+		//this.selected = this.selectedDown = this.selectedUp = null;
+		this.selectedDown = this.selectedUp = null;
+		this.selected = root;
+		root.setSelected(true);
+		// END KGU#183 2016-04-23
 		redraw();
 		analyse();
 		// START KGU#48 2015-10-17: Arranger support
@@ -1069,6 +1086,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				root.filename=_filename;
 				currentDirectory = new File(root.filename);
 				addRecentFile(root.filename);
+				// START KGU#183 2016-04-23: Issue #169
+				selected = root;
+				root.setSelected(true);
+				// END KGU#183 2016-04-23
 				redraw();
 				analyse();
 				// START KGU#48 2015-10-17: Arranger support
@@ -1376,6 +1397,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#138 2016-01-11: Bugfix #102 - All elements will be replaced by copies...
 		selected = this.selectedDown = this.selectedMoved = this.selectedUp = null;
 		// END KGU#138 2016-01-11
+		// START KGU#183 2016-04-24: Issue #169 - Restore previous selection if possible
+		selected = root.findSelected();
+		// END KGU#183 2016-04-24
 		redraw();
 		analyse();
 	}
@@ -1389,6 +1413,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#138 2016-01-11: Bugfix #102 All elements will be replaced by copies...
 		selected = this.selectedDown = this.selectedMoved = this.selectedUp = null;
 		// END KGU#138 2016-01-11
+		// START KGU#183 2016-04-24: Issue #169 - Restore previous selection if possible
+		selected = root.findSelected();
+		// END KGU#183 2016-04-24
 		redraw();
 		analyse();
 	}
@@ -1497,6 +1524,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (selected!=null)
 		{
 			eCopy = selected.copy();
+			// START KGU#182 2016-04-23: Issue #168	- pass the selection to the "next" element
+			Element newSel = getSelectionHeir();
+			// END KGU#182 2016-04-23
 			eCopy.setSelected(false);
 			root.addUndo();
 			root.removeElement(selected);
@@ -1504,7 +1534,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//root.hasChanged=true;
 			// END KGU#137 2016-01-11
 			redraw();
-			selected=null;
+			// START KGU#182 2016-04-23: Issue #168	- pass the selection to the "next" element
+			//selected=null;
+			this.selected = newSel;
+			if (newSel != null)
+			{
+				newSel.setSelected(true);
+			}
+			// END KGU#182 2016-04-23
 			analyse();
 		}
 	}
@@ -3675,7 +3712,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		// Get center coordinates
     		int x = (selRect.left + selRect.right) / 2;
     		int y = (selRect.top + selRect.bottom) / 2;
-    		// 
     		switch (_direction)
     		{
     		case CMD_UP:
@@ -3762,6 +3798,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		Element newSel = root.getElementByCoord(x, y, true);
     		if (newSel != null)
     		{
+    			// START KGU#177 2016-04-24: Bugfix - couldn't leave Parallel and Forever elements
+    			// Compound elements with a lower bar would catch the selection again when their last
+    			// encorporated element is left downwards. So identify such a situation and leap after
+    			// the enclosing compound...
+    			if (_direction == Editor.CursorMoveDirection.CMD_DOWN &&
+    					(newSel instanceof Parallel || newSel instanceof Forever || !Element.E_DIN && newSel instanceof For) &&
+    					newSel.getRectOffDrawPoint().top < selRect.top)
+    			{
+    				newSel = root.getElementByCoord(x, newSel.getRectOffDrawPoint().bottom + 2, true);
+    			}
+    			// END KGU#177 2016-04-24
     			selected = newSel;
     		}
     		selected.setSelected(true);
@@ -3771,7 +3818,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#177 2016-04-14
 			
 			redraw();
-			
+			// START KGU#177 2016-04-24: Bugfix - buttons haven't been updated 
+			this.doButtons();
+			// END KGU#177 2016-04-24
     	}
     }
     // END KGU#177 2016-04-07
