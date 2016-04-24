@@ -45,6 +45,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): Translation-neutral selection
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *
  ******************************************************************************************************
  *
@@ -228,7 +229,7 @@ public class Forever extends Element implements ILoop {
 		canvas.drawRect(myrect);
 		
 		myrect = _top_left.copy();
-		myrect.right = myrect.left+E_PADDING;
+		myrect.right = myrect.left + E_PADDING;
 		canvas.drawRect(myrect);
 		
 		// fill shape
@@ -284,7 +285,7 @@ public class Forever extends Element implements ILoop {
 		myrect = _top_left.copy();
 		myrect.left += Element.E_PADDING-1;
 		myrect.top += headerHeight-1;
-		myrect.bottom -= E_PADDING+1;
+		myrect.bottom -= E_PADDING/*+1*/;	// KGU 2016-04-24: +1 led to line of double thickness
 		q.draw(_canvas,myrect);
 	}
 	
@@ -334,11 +335,26 @@ public class Forever extends Element implements ILoop {
 	}
 	// END KGU 2015-10-11
 	
-	public void setSelected(boolean _sel)
+//	public void setSelected(boolean _sel)
+//	{
+//		selected=_sel;
+//		//q.setSelected(_sel);
+//	}
+	
+	// START KGU#183 2016-04-24: Issue #169 
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#findSelected()
+	 */
+	public Element findSelected()
 	{
-		selected=_sel;
-		//q.setSelected(_sel);
+		Element sel = selected ? this : null;
+		if (sel == null)
+		{
+			sel = q.findSelected();
+		}
+		return sel;
 	}
+	// END KGU#183 2016-04-24
 	
 	public Element copy()
 	{
@@ -358,6 +374,9 @@ public class Forever extends Element implements ILoop {
         	ele.deeplyCovered = this.deeplyCovered;
         }
 		// END KGU#117 2016-03-07
+		// START KGU#183 2016-04-24: Issue #169
+		ele.selected = this.selected;
+		// END KGU#183 2016-04-24
 		return ele;
 	}
 	

@@ -66,6 +66,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016-03-29      Methods getUsedVarNames() completely rewritten.
  *      Kay Gürtzig     2016-04-05      Bugfix #154 (KGU#176) analyse_17() peeked in a wrong collection (Parallel)
  *      Kay Gürtzig     2016-04-12      Enh. #161 (KGU#179) analyse_13_16() extended (new error16_7)
+ *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *
  ******************************************************************************************************
  *
@@ -583,29 +584,47 @@ public class Root extends Element {
     }
     // END KGU 2015-10-11
 
-    /**
-     * Checks if _child is a descendant of _parent in the tree
-     * @param _child - Element to be verified as descendant of _parent
-     * @param _parent - Element to be verified as ancestor of _child
-     * @return true iff _cild is a descendant of _parent
-     */
-    public boolean checkChild(Element _child, Element _parent)
-    {
-            Element tmp = _child;
-            boolean res = false;
-            if(tmp != null)
-            {
-                    while ((tmp.parent!=null) && (res==false))
-                    {
-                            if(tmp.parent==_parent)
-                            {
-                                    res = true;
-                            }
-                            tmp=tmp.parent;
-                    }
-            }
-            return res;
-    }
+	// START KGU#183 2016-04-24: Issue #169 
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#findSelected()
+	 */
+	public Element findSelected()
+	{
+		Element sel = selected ? this : null;
+		if (sel == null)
+		{
+			sel = children.findSelected();
+		}
+		return sel;
+	}
+	// END KGU#183 2016-04-24
+	
+	// START KGU 2016-04-24: Replaced by Element.isDescendantOf(another)
+//    /**
+//     * Checks if _child is a descendant of _parent in the tree
+//     * @param _child - Element to be verified as descendant of _parent
+//     * @param _parent - Element to be verified as ancestor of _child
+//     * @return true iff _cild is a descendant of _parent
+//     */
+//	@Deprecated
+//    public boolean checkChild(Element _child, Element _parent)
+//    {
+//            Element tmp = _child;
+//            boolean res = false;
+//            if(tmp != null)
+//            {
+//                    while ((tmp.parent!=null) && (res==false))
+//                    {
+//                            if(tmp.parent==_parent)
+//                            {
+//                                    res = true;
+//                            }
+//                            tmp=tmp.parent;
+//                    }
+//            }
+//            return res;
+//    }
+	// END KGU 2016-04-24
 
     public void removeElement(Element _ele)
     {
@@ -840,6 +859,9 @@ public class Root extends Element {
     		// START KGU#117 2016-03-07: Enh. #77
     		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
     		// END KGU#117 2016-03-07
+    		// START KGU#183 2016-04-24: Issue #169
+    		ele.selected = this.selected;
+    		// END KGU#183 2016-04-24
             return ele;
     }
     

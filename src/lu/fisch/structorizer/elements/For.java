@@ -48,6 +48,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *      Kay Gürtzig     2016.03.20      Enh. #84/#135 (KGU#61): enum type and methods introduced/modified
  *                                      to distinguish and handle FOR-IN loops 
+ *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *
  ******************************************************************************************************
  *
@@ -59,13 +60,10 @@ package lu.fisch.structorizer.elements;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
-import java.util.Vector;
-import java.util.regex.Matcher;
 
 import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
-import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.*;
@@ -409,12 +407,27 @@ public class For extends Element implements ILoop {
 		return selMe;
 	}
 
-	public void setSelected(boolean _sel)
-	{
-		selected=_sel;
-		//q.setSelected(_sel);
-	}
+//	public void setSelected(boolean _sel)
+//	{
+//		selected=_sel;
+//		//q.setSelected(_sel);
+//	}
 	
+	// START KGU#183 2016-04-24: Issue #169 
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#findSelected()
+	 */
+	public Element findSelected()
+	{
+		Element sel = selected ? this : null;
+		if (sel == null)
+		{
+			sel = q.findSelected();
+		}
+		return sel;
+	}
+	// END KGU#183 2016-04-24
+	    
 	public Element copy()
 	{
 		For ele = new For(this.getText().copy());
@@ -443,6 +456,9 @@ public class For extends Element implements ILoop {
         	ele.deeplyCovered = this.deeplyCovered;
         }
 		// END KGU#117 2016-03-07
+		// START KGU#183 2016-04-24: Issue #169
+		ele.selected = this.selected;
+		// END KGU#183 2016-04-24
 		return ele;
 	}
 	
