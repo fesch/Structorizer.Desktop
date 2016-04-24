@@ -29,9 +29,10 @@
  *
  *      Revision List
  *
- *      Author              Date			Description
- *      ------              ----			-----------
- *      Laurent Zender      2008.01.14                  First Issue
+ *      Author              Date            Description
+ *      ------              ----            -----------
+ *      Laurent Zender      2008.01.14      First Issue
+ *      Kay Gürtzig         2016.04.24      Issue #173: New mnemonic configurations added
  *
  ******************************************************************************************************
  *
@@ -42,6 +43,7 @@
 -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=File
+Menu.menuFile.mnemonic=f
 // Submenus of "File"
 Menu.menuFileNew.text=Nei
 Menu.menuFileOpen.text=Opmaachen...
@@ -58,6 +60,7 @@ Menu.menuFilePrint.text=Drécken...
 Menu.menuFileQuit.text=Verlossen
 // Menu "Edit"
 Menu.menuEdit.text=Editéieren
+Menu.menuEdit.mnemonic=e
 // Submenu of "Edit"
 Menu.menuEditUndo.text=Réckgängig machen
 Menu.menuEditRedo.text=Erëm hierstellen
@@ -68,6 +71,7 @@ Menu.menuEditCopyDiagramPNG.text=D'Bild als PNG kopéieren
 Menu.menuEditCopyDiagramEMF.text=D'Bild als EMF kopéieren
 // Menu "Diagram"
 Menu.menuDiagram.text=Diagram
+Menu.menuDiagram.mnemonic=d
 // Submenus of "Diagram"
 Menu.menuDiagramAdd.text=Bäisetzen
 // Submenu "Diagram -> Add -> Before"
@@ -105,9 +109,10 @@ Menu.menuDiagramNice.text=Boxed diagram?
 Menu.menuDiagramComment.text=Kommentaren uwëisen?
 Menu.menuDiagramMarker.text=Variablen markéieren?
 Menu.menuDiagramDIN.text=DIN?
-// Menu "Help"
+// Menu "Preferences"
 Menu.menuPreferences.text=Astellungen
-// Submenu of "Help"
+Menu.menuPreferences.mnemonic=a
+// Submenu of "Preferences"
 Menu.menuPreferencesFont.text=Schreft...
 Menu.menuPreferencesColors.text=Faarw...
 Menu.menuPreferencesOptions.text=Strukturen...
@@ -134,6 +139,7 @@ Menu.menuPreferencesSaveLoad.text=Lueden ...
 
 // Menu "Help"
 Menu.menuHelp.text=Hellef
+Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpAbout.text=Iwwert...
 Menu.menuHelpUpdate.text=Update...

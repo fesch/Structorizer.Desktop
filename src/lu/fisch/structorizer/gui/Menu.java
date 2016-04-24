@@ -739,7 +739,10 @@ public class Menu extends JMenuBar implements NSDController
 
 		// Setting up Menu "Help" with all submenus and shortcuts and actions
 		menubar.add(menuHelp);
-		menuDiagram.setMnemonic(KeyEvent.VK_A);
+		// START KGU#184 2016-04-24: Bugfix #173: This overwrote the Diagram mnemonics
+		//menuDiagram.setMnemonic(KeyEvent.VK_A);
+		menuHelp.setMnemonic(KeyEvent.VK_H);
+		// END KGU#184 2016-04-24
 
 		menuHelp.add(menuHelpAbout);
 		menuHelpAbout.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {diagram.aboutNSD(); } } );
