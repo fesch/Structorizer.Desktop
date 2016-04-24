@@ -44,6 +44,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Methods for test coverage tracking added
  *      Kay Gürtzig     2016.03.07      Bugfix #122 (KGU#136): Selection was not aware of option altPadRight 
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *
  ******************************************************************************************************
  *
@@ -451,6 +452,21 @@ public class Alternative extends Element {
 	}
 	// END KGU 2015.10.09
 	
+	// START KGU#183 2016-04-24: Issue #169 
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#findSelected()
+	 */
+	public Element findSelected()
+	{
+		Element sel = selected ? this : null;
+		if (sel == null && (sel = qTrue.findSelected()) == null)
+		{
+			sel = qFalse.findSelected();
+		}
+		return sel;
+	}
+	// END KGU#183 2016-04-24
+	
 	public Element copy()
 	{
 		Alternative ele = new Alternative(this.getText().copy());
@@ -467,6 +483,9 @@ public class Alternative extends Element {
 		ele.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
 		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
 		// END KGU#117 2016-03-07
+		// START KGU#183 2016-04-24: Issue #169
+		ele.selected = this.selected;
+		// END KGU#183 2016-04-24
 		return ele;
 	}
 	
