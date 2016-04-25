@@ -34,6 +34,7 @@ package lu.fisch.structorizer.executor;
  *      ------			----			-----------
  *      Kay Gürtzig     2016.04.08      First Issue (implementing enhancement request #137)
  *      Kay Gürtzig     2016.04.12      Functionality accomplished
+ *      Kay Gürtzig     2016-04-25      Scrolling to last line ensured
  *
  ******************************************************************************************************
  *
@@ -43,6 +44,7 @@ package lu.fisch.structorizer.executor;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Rectangle;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -101,6 +103,11 @@ public class OutputConsole extends JFrame {
     public void write(String _text)
     {
     	this.textArea.append(_text);
+    	// Scroll to end (if there is an easier way, I just didn't find it).
+    	Rectangle rect = this.textArea.getBounds();
+    	rect.y = rect.height - 1;
+    	rect.height = 1;
+    	this.textArea.scrollRectToVisible(rect);
     }
 
     /**
@@ -113,10 +120,15 @@ public class OutputConsole extends JFrame {
     public void write(String _text, Color _colour)
     {
     	// TODO: In order to be able to format something we must use a Document
-    	Color oldColour = this.textArea.getForeground();
-    	this.textArea.setForeground(_colour);
+    	//Color oldColour = this.textArea.getForeground();
+    	//this.textArea.setForeground(_colour);
     	this.textArea.append(_text);
-    	this.textArea.setForeground(oldColour);
+    	//this.textArea.setForeground(oldColour);
+    	// Scroll to end (if there is an easier way, I just didn't find it).
+    	Rectangle rect = this.textArea.getBounds();
+    	rect.y = rect.height - 1;
+    	rect.height = 1;
+    	this.textArea.scrollRectToVisible(rect);
     }
 
     /**

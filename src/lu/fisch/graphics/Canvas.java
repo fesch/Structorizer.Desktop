@@ -49,7 +49,6 @@ import java.awt.FontMetrics;
 import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
-import lu.fisch.structorizer.elements.Element;
 
 
 import lu.fisch.utils.*;
