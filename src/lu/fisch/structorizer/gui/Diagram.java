@@ -60,6 +60,11 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016-04-05      Bugfix #155: Selection must be cleared in newNSD()
  *      Kay Gürtzig     2016.04.07      Enh. #158: Moving selection as cursor key actions (KGU#177)
  *      Kay Gürtzig     2016-04-14      Enh. #158: moveSelection() now updates the scroll view (KGU#177)
+ *      Kay Gürtzig     2016-04-19      Issue #164 (no selection heir on deletion) and #165 (inconsistent unselection)
+ *      Kay Gürtzig     2016-04-23      Issue #168 (no selection heir on cut) and #169 (no selection on start/undo/redo)
+ *      Kay Gürtzig     2016-04-24      Bugfixes for issue #158 (KGU#177): Leaving the body of Parallel, Forever etc. downwards,
+ *                                      button state update was missing.
+ *      Kay Gürtzig     2016-04-24      Issue #169 accomplished: selection on start / after export
  *
  ******************************************************************************************************
  *
@@ -207,6 +212,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//System.out.println(root.getFullText().getText());
 			//root.getVarNames();
 			//root.hasChanged = true;
+			// START KGU#183 2016-04-23: Issue #169
+			selected = root.findSelected();
+			if (selected == null)
+			{
+				selected = root;
+				root.setSelected(true);
+			}
+			// END KGU#183 2016-04-23
 			redraw();
 			analyse();
 			// START KGU#149 2016-02-03: Bugfix #117
@@ -321,6 +334,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		lblPop.setPreferredSize(new Dimension(30,12));
 		jp.add(lblPop);
 		pop.add(jp);
+		
+		// START KGU#182 2016-04-24: Issue #169
+		selected = root;
+		root.setSelected(true);
+		// END KGU#182 2016-04-24
 	}
 
 	public void hideComments()
@@ -419,7 +437,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					if(selectedDown.getClass().getSimpleName().equals("Root") ||
 					   selectedDown.getClass().getSimpleName().equals("Subqueue") ||
 					   bSome.getClass().getSimpleName().equals("Root") ||
-					   root.checkChild(bSome, selectedDown))
+					   //root.checkChild(bSome, selectedDown))
+					   bSome.isDescendantOf(selectedDown))
 					{
 						Element.E_DRAWCOLOR=Color.RED;
 					}
@@ -551,6 +570,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				//redraw();
 			}
+			// START KGU#180 2016-04-15: Bugfix #165 - delection didn't work properly
+			else /* ele == null */
+			{
+				selected = null;
+				redraw();
+			}
+			// END KGU#180 2016-04-15
 
 			if (selected != null)
 			{
@@ -591,12 +617,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
 					// END KGU#25 2015-10-11
 					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 1 >>>>>>> " + ((selectedUp != null)?selectedUp:"null")+ " <<<<<<<<<<<<<<<<<<<<<<");
-					if(selectedUp!=null)
+					if (selectedUp != null)
 					{
 						selectedUp.setSelected(false);
-						if( !selectedUp.getClass().getSimpleName().equals("Root") &&
-						   selectedUp!=selectedDown &&
-						   root.checkChild(selectedUp,selectedDown)==false
+						if ( !selectedUp.getClass().getSimpleName().equals("Root") &&
+						   selectedUp != selectedDown &&
+						   //root.checkChild(selectedUp,selectedDown)==false
+						   !selectedUp.isDescendantOf(selectedDown)
 						   )
 						{
 							root.addUndo();
@@ -610,7 +637,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							}
 							// END KGU#87 2015-11-22
 							selectedUp.setSelected(false);
-							root.addAfter(selectedUp,selectedDown);
+							root.addAfter(selectedUp, selectedDown);
 							// START KGU'87 2015-11-22: See above
 							//selectedDown.setSelected(true);
 							if (!(selectedDown instanceof Subqueue))
@@ -708,21 +735,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			else
 			{
-                                // an error has been selected
+				// an error list entry has been selected
 				if(errorlist.getSelectedIndex()!=-1)
 				{
-                                        // get the selected error
+					// get the selected error
 					Element ele = (root.errors.get(errorlist.getSelectedIndex())).getElement();
 					if(ele!=null)
 					{
-                                                // deselect any previous selected element
-						if(selected!=null) {selected.selected=false;}
-                                                // select the new one
+						// deselect the previously selected element (if any)
+						if (selected!=null) {selected.setSelected(false);}
+						// select the new one
 						selected = ele;
-						ele.selected=true;
-                                                // redraw the diagram
+						ele.setSelected(true);
+						// redraw the diagram
 						redraw();
-                                                // do the button thing
+						// do the button thing
 						if(NSDControl!=null) NSDControl.doButtons();
 					}
 				}
@@ -972,9 +999,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU 2015-10-29: This didn't actually make sense
 		//root.hasChanged=true;
 		// END KGU 2015-10-29
-		// START KGU#175 2016-04-05: Bugfix #155 We must not forget to clear a previous selection
-		this.selected = this.selectedDown = this.selectedUp = null;
-		// END KGU#175 2016-04-05
+		// START KGU#183 2016-04-23: Bugfix #155, Issue #169
+		// We must not forget to clear a previous selection
+		//this.selected = this.selectedDown = this.selectedUp = null;
+		this.selectedDown = this.selectedUp = null;
+		this.selected = root;
+		root.setSelected(true);
+		// END KGU#183 2016-04-23
 		redraw();
 		analyse();
 		// START KGU#48 2015-10-17: Arranger support
@@ -1061,6 +1092,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				root.filename=_filename;
 				currentDirectory = new File(root.filename);
 				addRecentFile(root.filename);
+				// START KGU#183 2016-04-23: Issue #169
+				selected = root;
+				root.setSelected(true);
+				// END KGU#183 2016-04-23
 				redraw();
 				analyse();
 				// START KGU#48 2015-10-17: Arranger support
@@ -1368,6 +1403,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#138 2016-01-11: Bugfix #102 - All elements will be replaced by copies...
 		selected = this.selectedDown = this.selectedMoved = this.selectedUp = null;
 		// END KGU#138 2016-01-11
+		// START KGU#183 2016-04-24: Issue #169 - Restore previous selection if possible
+		selected = root.findSelected();
+		// END KGU#183 2016-04-24
 		redraw();
 		analyse();
 	}
@@ -1381,6 +1419,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#138 2016-01-11: Bugfix #102 All elements will be replaced by copies...
 		selected = this.selectedDown = this.selectedMoved = this.selectedUp = null;
 		// END KGU#138 2016-01-11
+		// START KGU#183 2016-04-24: Issue #169 - Restore previous selection if possible
+		selected = root.findSelected();
+		// END KGU#183 2016-04-24
 		redraw();
 		analyse();
 	}
@@ -1489,6 +1530,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		if (selected!=null)
 		{
 			eCopy = selected.copy();
+			// START KGU#182 2016-04-23: Issue #168	- pass the selection to the "next" element
+			Element newSel = getSelectionHeir();
+			// END KGU#182 2016-04-23
 			eCopy.setSelected(false);
 			root.addUndo();
 			root.removeElement(selected);
@@ -1496,7 +1540,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//root.hasChanged=true;
 			// END KGU#137 2016-01-11
 			redraw();
-			selected=null;
+			// START KGU#182 2016-04-23: Issue #168	- pass the selection to the "next" element
+			//selected=null;
+			this.selected = newSel;
+			if (newSel != null)
+			{
+				newSel.setSelected(true);
+			}
+			// END KGU#182 2016-04-23
 			analyse();
 		}
 	}
@@ -1712,9 +1763,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void deleteNSD()
 	{
 		root.addUndo();
+		// START KGU#181 2016-04-19: Issue #164	- pass the selection to the "next" element
+		Element newSel = getSelectionHeir();
+		// END KGU#181 2016-04-19
 		root.removeElement(getSelected());
 		// START KGU#138 2016-01-11: Bugfix #102 - selection no longer valid
-		this.selected = null;
+		// START KGU#181 2016-04-19: Issue #164	- pass the selection to the "next" element
+		//this.selected = null;
+		this.selected = newSel;
+		if (newSel != null)
+		{
+			newSel.setSelected(true);
+		}
+		// END KGU#181 2016-04-19
 		// END KGU#138 2016-01-11
 		redraw();
 		analyse();
@@ -1722,6 +1783,62 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		this.NSDControl.doButtons();
 		// END KGU#138 2016-01-11
 	}
+	
+	// START KGU#181 2016-04-19: Issue #164	- pass the selection to the "next" element
+	/**
+	 * Returns the element "inheriting" the selection from the doomed currently selected element
+	 * This will be (if existent): 1. successor within Subqueue, 2. predecessor within Subqueue
+	 * Requires this.selected to be neither Root nor an empty Subqueue.
+	 * @return the element next the currently selected one, null if there is no selection
+	 */
+	private Element getSelectionHeir()
+	{
+		Element heir = null;
+		if (selected != null && !(selected instanceof Root))
+		{
+			Subqueue sq = (Subqueue)((selected instanceof Subqueue) ? selected : selected.parent);
+			int ixHeir = -1; 
+			if (selected instanceof SelectedSequence)
+			{
+				// Last element of the subsequence
+				Element last = ((SelectedSequence) selected).getElement(((SelectedSequence) selected).getSize()-1);
+				Element frst = ((SelectedSequence) selected).getElement(0);
+				int ixLast = sq.getIndexOf(last);	// Actual index of the last element in the Subqueue
+				int ixFrst = sq.getIndexOf(frst);	// Actual index of the first element in the Subqueue
+				if (ixLast < sq.getSize() - 1)
+				{
+					ixHeir = ixLast + 1;
+				}
+				else if (ixFrst > 0)
+				{
+					ixHeir = ixFrst - 1;
+				}
+			}
+			else if (!(selected instanceof Subqueue)) 
+			{
+				int ixEle = sq.getIndexOf(selected);
+				if (ixEle < sq.getSize() - 1)
+				{
+					ixHeir = ixEle + 1;
+				}
+				else
+				{
+					ixHeir = ixEle - 1;
+				}
+			}
+			if (ixHeir >= 0)
+			{
+				heir = sq.getElement(ixHeir);
+			}
+			else
+			{
+				// Empty Subqueue remnant will take over selection
+				heir = sq;
+			}
+		}
+		return heir;
+	}
+	// END KGU#181 2016-04-19
 	
 	// START KGU#123 2016-01-03: Issue #65, for new buttons and menu items
 	/*****************************************
@@ -1916,7 +2033,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 	public void exportPNGmulti()
 	{
-
+		// START KGU#183 2016-04-24: Issue #169 - retain old selection
+		Element wasSelected = selected;
+		// END KGU#183 2016-04-24
+		
 		// START KGU#41 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
@@ -2034,23 +2154,35 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 		}
+		// START KGU#183 2016-04-24: Issue #169 - restore old selection
+		selected = wasSelected;
+		if (selected != null)
+		{
+			selected.setSelected(true);
+		}
+		redraw();
+		// END KGU#183 2016-04-24
 	}
         
 	public void exportPNG()
 	{
-    	// START KGU#41 2015-10-11
-    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
-    	//redraw();
-    	unselectAll();
-    	// END KGU#41 2015-10-11
+		// START KGU#183 2016-04-24: Issue #169 - retain old selection
+		Element wasSelected = selected;
+		// END KGU#183 2016-04-24
+
+		// START KGU#41 2015-10-11
+		//root.selectElementByCoord(-1,-1);	// Unselect all elements
+		//redraw();
+		unselectAll();
+		// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as PNG ...");
 		// set directory
 		if (lastExportDir!=null)
-                {
-                    dlgSave.setCurrentDirectory(lastExportDir);
-                }
-                else if(root.getFile()!=null)
+		{
+			dlgSave.setCurrentDirectory(lastExportDir);
+		}
+		else if(root.getFile()!=null)
 		{
 			dlgSave.setCurrentDirectory(root.getFile());
 		}
@@ -2078,7 +2210,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
-                    lastExportDir=dlgSave.getSelectedFile().getParentFile();
+			lastExportDir=dlgSave.getSelectedFile().getParentFile();
 			String filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
 			if(!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".png"))
 			{
@@ -2086,37 +2218,49 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 
 			File file = new File(filename);
-                        boolean writeDown = true;
+			boolean writeDown = true;
 
-                        if(file.exists())
+			if(file.exists())
 			{
-                            int response = JOptionPane.showConfirmDialog (null,
-                                            "Overwrite existing file?","Confirm Overwrite",
-                                            JOptionPane.YES_NO_OPTION,
-                                            JOptionPane.QUESTION_MESSAGE);
-                            if (response == JOptionPane.NO_OPTION)
-                            {
-				writeDown=false;
-                            }
-                        }
-                        if(writeDown==true)
-                        {
-                            BufferedImage bi = new BufferedImage(root.width+1,root.height+1,BufferedImage.TYPE_4BYTE_ABGR);
-                            printAll(bi.getGraphics());
-                            try
-                            {
-                                    ImageIO.write(bi, "png", file);
-                            }
-                            catch(Exception e)
-                            {
-                                    JOptionPane.showOptionDialog(this,"Error while saving the image!","Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
-                            }
-                        }
+				int response = JOptionPane.showConfirmDialog (null,
+						"Overwrite existing file?","Confirm Overwrite",
+						JOptionPane.YES_NO_OPTION,
+						JOptionPane.QUESTION_MESSAGE);
+				if (response == JOptionPane.NO_OPTION)
+				{
+					writeDown=false;
+				}
+			}
+			if(writeDown==true)
+			{
+				BufferedImage bi = new BufferedImage(root.width+1,root.height+1,BufferedImage.TYPE_4BYTE_ABGR);
+				printAll(bi.getGraphics());
+				try
+				{
+					ImageIO.write(bi, "png", file);
+				}
+				catch(Exception e)
+				{
+					JOptionPane.showOptionDialog(this,"Error while saving the image!","Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+				}
+			}
 		}
+		// START KGU#183 2016-04-24: Issue #169 - restore old selection
+		selected = wasSelected;
+		if (selected != null)
+		{
+			selected.setSelected(true);
+		}
+		redraw();
+		// END KGU#183 2016-04-24
 	}
 
 	public void exportEMF()
 	{
+		// START KGU#183 2016-04-24: Issue #169 - retain old selection
+		Element wasSelected = selected;
+		// END KGU#183 2016-04-24
+		
 		// START KGU#41 2015-10-11
 		//root.selectElementByCoord(-1,-1);	// Unselect all elements
 		//redraw();
@@ -2198,23 +2342,35 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 		}
+		// START KGU#183 2016-04-24: Issue #169 - restor old selection
+		selected = wasSelected;
+		if (selected != null)
+		{
+			selected.setSelected(true);
+		}
+		redraw();
+		// END KGU#183 2016-04-24
 	}
 
 	public void exportSVG() // does not work!!
 	{
-    	// START KGU#41 2015-10-11
-    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
-    	//redraw();
-    	unselectAll();
-    	// END KGU#41 2015-10-11
+		// START KGU#183 2016-04-24: Issue #169 - retain old selection
+		Element wasSelected = selected;
+		// END KGU#183 2016-04-24
+		
+		// START KGU#41 2015-10-11
+		//root.selectElementByCoord(-1,-1);	// Unselect all elements
+		//redraw();
+		unselectAll();
+		// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as SVG ...");
 		// set directory
 		if (lastExportDir!=null)
-                {
-                    dlgSave.setCurrentDirectory(lastExportDir);
-                }
-                else if(root.getFile()!=null)
+		{
+			dlgSave.setCurrentDirectory(lastExportDir);
+		}
+		else if(root.getFile()!=null)
 		{
 			dlgSave.setCurrentDirectory(root.getFile());
 		}
@@ -2242,7 +2398,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
-                    lastExportDir=dlgSave.getSelectedFile().getParentFile();
+			lastExportDir=dlgSave.getSelectedFile().getParentFile();
 			String filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
 			if(!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".svg"))
 			{
@@ -2250,81 +2406,89 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 
 			File file = new File(filename);
-                        boolean writeDown = true;
+			boolean writeDown = true;
 
-                        if(file.exists())
+			if(file.exists())
 			{
-                            int response = JOptionPane.showConfirmDialog (null,
-                                            "Overwrite existing file?","Confirm Overwrite",
-                                            JOptionPane.YES_NO_OPTION,
-                                            JOptionPane.QUESTION_MESSAGE);
-                            if (response == JOptionPane.NO_OPTION)
-                            {
-				writeDown=false;
-                            }
-                        }
-                        if(writeDown==true)
-                        {
-                            try
-                            {
-                                    SVGGraphics2D svg = new SVGGraphics2D(new FileOutputStream(filename),new Dimension(root.width+12, root.height+12)) ;
-                                    svg.startExport();
-                                    lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(svg);
-                                    lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
-                                    myrect.left+=6;
-                                    myrect.top+=6;
-                                    root.draw(c,myrect);
-                                    svg.endExport();
-                                    
-                                    // re-read the file ...
-                                    StringBuffer buffer = new StringBuffer();
-                                    InputStreamReader isr = new InputStreamReader(new FileInputStream(filename));
-                                    Reader in = new BufferedReader(isr);
-                                    int ch;
-                                    while ((ch = in.read()) > -1)
-                                    {
-                                        buffer.append((char)ch);
-                                    }
-                                    // START KGU 2015-12-04
-                                    in.close();
-                                    // END KGU 2015-12-04
+				int response = JOptionPane.showConfirmDialog (null,
+						"Overwrite existing file?","Confirm Overwrite",
+						JOptionPane.YES_NO_OPTION,
+						JOptionPane.QUESTION_MESSAGE);
+				if (response == JOptionPane.NO_OPTION)
+				{
+					writeDown=false;
+				}
+			}
+			if(writeDown==true)
+			{
+				try
+				{
+					SVGGraphics2D svg = new SVGGraphics2D(new FileOutputStream(filename),new Dimension(root.width+12, root.height+12)) ;
+					svg.startExport();
+					lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(svg);
+					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
+					myrect.left+=6;
+					myrect.top+=6;
+					root.draw(c,myrect);
+					svg.endExport();
 
-                                    // ... and encode it UTF-8
-                                    FileOutputStream fos = new FileOutputStream(filename);
-                                    Writer out = new OutputStreamWriter(fos, "UTF-8");
-                                    out.write(buffer.toString());
-                                    out.close();
-                                    
-                            }
-                            catch (Exception e)
-                            {
-                                    e.printStackTrace();
-                            }
-                       }
+					// re-read the file ...
+					StringBuffer buffer = new StringBuffer();
+					InputStreamReader isr = new InputStreamReader(new FileInputStream(filename));
+					Reader in = new BufferedReader(isr);
+					int ch;
+					while ((ch = in.read()) > -1)
+					{
+						buffer.append((char)ch);
+					}
+					// START KGU 2015-12-04
+					in.close();
+					// END KGU 2015-12-04
+
+					// ... and encode it UTF-8
+					FileOutputStream fos = new FileOutputStream(filename);
+					Writer out = new OutputStreamWriter(fos, "UTF-8");
+					out.write(buffer.toString());
+					out.close();
+
+				}
+				catch (Exception e)
+				{
+					e.printStackTrace();
+				}
+			}
 		}
 
-    	// START KGU 2015-10-11
-    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
-    	//redraw();
-    	unselectAll();
-    	// END KGU 2015-10-11
+		// START KGU#183 2016-04-24: Issue #169 - restore old selection
+		//unselectAll();
+		selected = wasSelected;
+		if (selected != null)
+		{
+			selected.setSelected(true);
+		}
+		redraw();
+		// END KGU#183 2016-04-24
 	}
 
 	public void exportSWF()
 	{
-    	// START KGU 2015-10-11
-    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
-    	//redraw();
-    	unselectAll();
-    	// END KGU 2015-10-11
+		// START KGU#183 2016-04-24: Issue #169 - retain old selection
+		Element wasSelected = selected;
+		// END KGU#183 2016-04-24
+
+		// START KGU 2015-10-11
+		//root.selectElementByCoord(-1,-1);	// Unselect all elements
+		//redraw();
+		unselectAll();
+		// END KGU 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as SWF ...");
 		// set directory
 		if (lastExportDir!=null)
-                {
-                    dlgSave.setCurrentDirectory(lastExportDir);
-                }
-                else if(root.getFile()!=null)
+		{
+			dlgSave.setCurrentDirectory(lastExportDir);
+		}
+		else if(root.getFile()!=null)
 		{
 			dlgSave.setCurrentDirectory(root.getFile());
 		}
@@ -2352,7 +2516,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
-                    lastExportDir=dlgSave.getSelectedFile().getParentFile();
+			lastExportDir=dlgSave.getSelectedFile().getParentFile();
 			String filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
 			if(!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".swf"))
 			{
@@ -2360,56 +2524,68 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 
 			File file = new File(filename);
-                        boolean writeDown = true;
+			boolean writeDown = true;
 
-                        if(file.exists())
+			if(file.exists())
 			{
-                            int response = JOptionPane.showConfirmDialog (null,
-                                            "Overwrite existing file?","Confirm Overwrite",
-                                            JOptionPane.YES_NO_OPTION,
-                                            JOptionPane.QUESTION_MESSAGE);
-                            if (response == JOptionPane.NO_OPTION)
-                            {
-				writeDown=false;
-                            }
-                        }
-                        if(writeDown==true)
-                        {
-                            try
-                            {
-                                    SWFGraphics2D svg = new SWFGraphics2D(new FileOutputStream(filename),new Dimension(root.width+12, root.height+12)) ;
+				int response = JOptionPane.showConfirmDialog (null,
+						"Overwrite existing file?","Confirm Overwrite",
+						JOptionPane.YES_NO_OPTION,
+						JOptionPane.QUESTION_MESSAGE);
+				if (response == JOptionPane.NO_OPTION)
+				{
+					writeDown=false;
+				}
+			}
+			if(writeDown==true)
+			{
+				try
+				{
+					SWFGraphics2D svg = new SWFGraphics2D(new FileOutputStream(filename),new Dimension(root.width+12, root.height+12)) ;
 
-                                    svg.startExport();
-                                    lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(svg);
-                                    lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
-                                    myrect.left+=6;
-                                    myrect.top+=6;
-                                    root.draw(c,myrect);
-                                    svg.endExport();
-                            }
-                            catch (Exception e)
-                            {
-                                    e.printStackTrace();
-                            }
-                       }
+					svg.startExport();
+					lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(svg);
+					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
+					myrect.left+=6;
+					myrect.top+=6;
+					root.draw(c,myrect);
+					svg.endExport();
+				}
+				catch (Exception e)
+				{
+					e.printStackTrace();
+				}
+			}
 		}
+		// START KGU#183 2016-04-24: Issue #169 - restore old selection
+		selected = wasSelected;
+		if (selected != null)
+		{
+			selected.setSelected(true);
+		}
+		redraw();
+		// END KGU#183 2016-04-24
 	}
 
 	public void exportPDF()
 	{
-    	// START KGU 2015-10-11
-    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
-    	//redraw();
-    	unselectAll();
-    	// END KGU 2015-10-11
+		// START KGU#183 2016-04-24: Issue #169 - retain old selection
+		Element wasSelected = selected;
+		// END KGU#183 2016-04-24
+
+		// START KGU 2015-10-11
+		//root.selectElementByCoord(-1,-1);	// Unselect all elements
+		//redraw();
+		unselectAll();
+		// END KGU 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as PDF ...");
 		// set directory
 		if (lastExportDir!=null)
-                {
-                    dlgSave.setCurrentDirectory(lastExportDir);
-                }
-                else if(root.getFile()!=null)
+		{
+			dlgSave.setCurrentDirectory(lastExportDir);
+		}
+		else if(root.getFile()!=null)
 		{
 			dlgSave.setCurrentDirectory(root.getFile());
 		}
@@ -2437,7 +2613,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
-                    lastExportDir=dlgSave.getSelectedFile().getParentFile();
+			lastExportDir=dlgSave.getSelectedFile().getParentFile();
 			String filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
 			if(!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".pdf"))
 			{
@@ -2445,39 +2621,47 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 
 			File file = new File(filename);
-                        boolean writeDown = true;
+			boolean writeDown = true;
 
-                        if(file.exists())
+			if(file.exists())
 			{
-                            int response = JOptionPane.showConfirmDialog (null,
-                                            "Overwrite existing file?","Confirm Overwrite",
-                                            JOptionPane.YES_NO_OPTION,
-                                            JOptionPane.QUESTION_MESSAGE);
-                            if (response == JOptionPane.NO_OPTION)
-                            {
-				writeDown=false;
-                            }
-                        }
-                        if(writeDown==true)
-                        {
-                            try
-                            {
-                                    PDFGraphics2D svg = new PDFGraphics2D(new FileOutputStream(filename),new Dimension(root.width+12, root.height+12)) ;
+				int response = JOptionPane.showConfirmDialog (null,
+						"Overwrite existing file?","Confirm Overwrite",
+						JOptionPane.YES_NO_OPTION,
+						JOptionPane.QUESTION_MESSAGE);
+				if (response == JOptionPane.NO_OPTION)
+				{
+					writeDown=false;
+				}
+			}
+			if(writeDown==true)
+			{
+				try
+				{
+					PDFGraphics2D svg = new PDFGraphics2D(new FileOutputStream(filename),new Dimension(root.width+12, root.height+12)) ;
 
-                                    svg.startExport();
-                                    lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(svg);
-                                    lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
-                                        myrect.left+=6;
-                                        myrect.top+=6;
-                                    root.draw(c,myrect);
-                                    svg.endExport();
-                            }
-                            catch (Exception e)
-                            {
-                                    e.printStackTrace();
-                            }
-                        }
+					svg.startExport();
+					lu.fisch.graphics.Canvas c = new lu.fisch.graphics.Canvas(svg);
+					lu.fisch.graphics.Rect myrect = root.prepareDraw(c);
+					myrect.left+=6;
+					myrect.top+=6;
+					root.draw(c,myrect);
+					svg.endExport();
+				}
+				catch (Exception e)
+				{
+					e.printStackTrace();
+				}
+			}
 		}
+		// START KGU#183 2016-04-24: Issue #169 - restore old selection
+		selected = wasSelected;
+		if (selected != null)
+		{
+			selected.setSelected(true);
+		}
+		redraw();
+		// END KGU#183 2016-04-24
 	}
 
 
@@ -2523,6 +2707,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				boolean hil = root.hightlightVars;
 				root = rootNew;
 				root.hightlightVars = hil;
+				// START KGU#183 2016-04-24: Enh. #169
+				selected = root;
+				selected.setSelected(true);
+				// END KGU#183 2016-04-24
 			}
 			else
 			{
@@ -3272,13 +3460,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
      *****************************************/
 	public void copyToClipboardPNG()
 	{
-    	// START KGU 2015-10-11
-    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
-    	//redraw();
-    	unselectAll();
-    	// END KGU 2015-10-11
+		// START KGU#183 2016-04-24: Issue #169 - retain old selection
+		Element wasSelected = selected;
+		// END KGU#183 2016-04-24
 
-                Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		// START KGU 2015-10-11
+		//root.selectElementByCoord(-1,-1);	// Unselect all elements
+		//redraw();
+		unselectAll();
+		// END KGU 2015-10-11
+
+		Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		//DataFlavor pngFlavor = new DataFlavor("image/png","Portable Network Graphics");
 
 		// get diagram
@@ -3288,17 +3480,30 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// put image to clipboard
 		ImageSelection imageSelection = new ImageSelection(image);
 		systemClipboard.setContents(imageSelection, null);
+
+		// START KGU#183 2016-04-24: Issue #169 - restore old selection
+		selected = wasSelected;
+		if (selected != null)
+		{
+			selected.setSelected(true);
+		}
+		redraw();
+		// END KGU#183 2016-04-24
 	}
 
 	public void copyToClipboardEMF()
 	{
-    	// START KGU 2015-10-11
-    	//root.selectElementByCoord(-1,-1);	// Unselect all elements
-    	//redraw();
-    	unselectAll();
-    	// END KGU 2015-10-11
+		// START KGU#183 2016-04-24: Issue #169 - retain old selection
+		Element wasSelected = selected;
+		// END KGU#183 2016-04-24
 
-                Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		// START KGU 2015-10-11
+		//root.selectElementByCoord(-1,-1);	// Unselect all elements
+		//redraw();
+		unselectAll();
+		// END KGU 2015-10-11
+
+		Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
 		try
 		{
@@ -3318,6 +3523,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			e.printStackTrace();
 		}
+
+		// START KGU#183 2016-04-24: Issue #169 - restore old selection
+		selected = wasSelected;
+		if (selected != null)
+		{
+			selected.setSelected(true);
+		}
+		redraw();
+		// END KGU#183 2016-04-24
 	}
 
     @Override
@@ -3601,7 +3815,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		// Get center coordinates
     		int x = (selRect.left + selRect.right) / 2;
     		int y = (selRect.top + selRect.bottom) / 2;
-    		// 
     		switch (_direction)
     		{
     		case CMD_UP:
@@ -3688,6 +3901,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		Element newSel = root.getElementByCoord(x, y, true);
     		if (newSel != null)
     		{
+    			// START KGU#177 2016-04-24: Bugfix - couldn't leave Parallel and Forever elements
+    			// Compound elements with a lower bar would catch the selection again when their last
+    			// encorporated element is left downwards. So identify such a situation and leap after
+    			// the enclosing compound...
+    			if (_direction == Editor.CursorMoveDirection.CMD_DOWN &&
+    					(newSel instanceof Parallel || newSel instanceof Forever || !Element.E_DIN && newSel instanceof For) &&
+    					newSel.getRectOffDrawPoint().top < selRect.top)
+    			{
+    				newSel = root.getElementByCoord(x, newSel.getRectOffDrawPoint().bottom + 2, true);
+    			}
+    			// END KGU#177 2016-04-24
     			selected = newSel;
     		}
     		selected.setSelected(true);
@@ -3697,7 +3921,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#177 2016-04-14
 			
 			redraw();
-			
+			// START KGU#177 2016-04-24: Bugfix - buttons haven't been updated 
+			this.doButtons();
+			// END KGU#177 2016-04-24
     	}
     }
     // END KGU#177 2016-04-07

@@ -26,6 +26,7 @@
  *      ------		----			-----------
  *      PUC-Minas     2009.08.20        	First Issue
  *      PUC-Minas     2009.10.20        	Revised
+ *      Kay Gürtzig   2016.04.24        	Issue #173: New mnemonic configurations added
  *
  *****************************************************************************************************
  *
@@ -36,6 +37,7 @@
 -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=Arquivo
+Menu.menuFile.mnemonic=a
 // Submenus of "File"
 Menu.menuFileNew.text=Novo
 Menu.menuFileOpen.text=Abrir ...
@@ -56,6 +58,7 @@ Menu.menuFileQuit.text=Sair
 
 // Menu "Edit"
 Menu.menuEdit.text=Editar
+Menu.menuEdit.mnemonic=e
 
 // Submenu of "Edit"
 Menu.menuEditUndo.text=Desfazer
@@ -68,6 +71,7 @@ Menu.menuEditCopyDiagramEMF.text=Copiar imagem EMF
 
 // Menu "Diagram"
 Menu.menuDiagram.text=Diagrama
+Menu.menuDiagram.mnemonic=d
 
 // Submenus of "Diagram"
 Menu.menuDiagramAdd.text=Inserir
@@ -112,10 +116,11 @@ Menu.menuDiagramMarker.text=Destacar variáveis?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Analisar diagrama?
 
-// Menu "Help"
+// Menu "Preferences"
 Menu.menuPreferences.text=Preferências
+Menu.menuPreferences.mnemonic=p
 
-// Submenu of "Help"
+// Submenu of "Preferences"
 Menu.menuPreferencesFont.text=Fonte ...
 Menu.menuPreferencesColors.text=Cores ...
 Menu.menuPreferencesOptions.text=Estruturas ...
@@ -133,6 +138,7 @@ Menu.menuPreferencesSave.text=Salvar preferências agora
 
 // Menu "Help"
 Menu.menuHelp.text=Ajuda
+Menu.menuHelp.mnemonic=j
 
 // Submenu of "Help"
 Menu.menuHelpAbout.text=Sobre ...

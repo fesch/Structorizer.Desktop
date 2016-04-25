@@ -181,7 +181,7 @@ public class Mainform  extends JFrame implements NSDController
 					// By first argument set to null we avoid reopening the Executor Control
 					Executor.getInstance(null, null);
 					// Since the executor is a concurrent thread and we don't know the decision of
-					// the user, we cannot neither wait nor proceeed here. So we just leave the 
+					// the user, we can neither wait nor proceed here. So we just leave.
 				}
 				else
 				// END KGU#157

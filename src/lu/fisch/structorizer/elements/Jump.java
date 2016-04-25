@@ -39,6 +39,7 @@ package lu.fisch.structorizer.elements;
  *		Kay Gürtzig     2016.01.03      Enh. #87 (KGU#122) -> getIcon()
  *		Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136) Drawing/dragging/selection consolidated
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *
  ******************************************************************************************************
  *
@@ -261,6 +262,9 @@ public class Jump extends Instruction {
         	ele.deeplyCovered = this.deeplyCovered;
         }
 		// END KGU#117 2016-03-07
+		// START KGU#183 2016-04-24: Issue #169
+		ele.selected = this.selected;
+		// END KGU#183 2016-04-24
 		return ele;
 	}
 	

@@ -46,6 +46,7 @@
  *      Kay Gürtzig         2016.04.01  Enh. #144: New ExportOptionDialog and Menu messages
  *      Kay Gürtzig         2016.04.04  Issue #149: New ExportOptionDialog messages for charset setting
  *      Kay Gürtzig         2016.04.12  Issue #161: New Analyser error message for Jump
+ *      Kay Gürtzig         2016.04.24  Issue #173: New mnemonic configurations added
  *
  ******************************************************************************************************
  *
@@ -56,6 +57,7 @@
 -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=Datei
+Menu.menuFile.mnemonic=d
 // Submenus of "File"
 Menu.menuFileNew.text=Neu
 Menu.menuFileOpen.text=Öffnen ...
@@ -76,6 +78,7 @@ Menu.menuFileArrange.text=Im Arranger anordnen
 Menu.menuFileQuit.text=Beenden
 // Menu "Edit"
 Menu.menuEdit.text=Bearbeiten
+Menu.menuEdit.mnemonic=e
 // Submenu of "Edit"
 Menu.menuEditUndo.text=Rückgängig machen
 Menu.menuEditRedo.text=Wiederholen
@@ -86,6 +89,7 @@ Menu.menuEditCopyDiagramPNG.text=Als PNG Grafik kopieren
 Menu.menuEditCopyDiagramEMF.text=Als EMF Grafik kopieren
 // Menu "Diagram"
 Menu.menuDiagram.text=Diagramme
+Menu.menuDiagram.mnemonic=g
 // Submenus of "Diagram"
 Menu.menuDiagramAdd.text=Hinzufügen
 // Submenu "Diagram -> Add -> Before"
@@ -134,9 +138,10 @@ Menu.menuDiagramMarker.text=Hervorheben von Variablen?
 Menu.menuDiagramDIN.text=DIN 66261?
 Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
 Menu.menuDiagramWheel.text=Mausrad zum Reduzieren?
-// Menu "Help"
+// Menu "Preferences"
 Menu.menuPreferences.text=Einstellungen
-// Submenu of "Help"
+Menu.menuPreferences.mnemonic=s
+// Submenu of "Preferences"
 Menu.menuPreferencesFont.text=Zeichensätze ...
 Menu.menuPreferencesColors.text=Farben ...
 Menu.menuPreferencesOptions.text=Strukturen ...
@@ -168,6 +173,7 @@ Menu.menuPreferencesSaveLoad.text=Laden ...
 
 // Menu "Help"
 Menu.menuHelp.text=Hilfe
+Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpAbout.text=Über Structorizer ...
 Menu.menuHelpUpdate.text=Neue Versionen ...

@@ -36,6 +36,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.11.23      First issue (KGU#87).
  *      Kay Gürtzig     2016.01.22      Bugfix #114 for Enh. #38 (addressing moveUp/moveDown, KGU#143 + KGU#144).
  *      Kay Gürtzig     2016.03.01/02   Bugfix #79 (KGU#136) for reliable selection.
+ *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *
  ******************************************************************************************************
  *
@@ -147,9 +149,9 @@ public class SelectedSequence extends Element implements IElementSequence {
 	 */
 	@Override
 	public Rect prepareDraw(Canvas _canvas) {
-		// START KGU#136 2016-01-03: Bugfix #97
+		// START KGU#136 2016-03-01: Bugfix #97
 		if (this.isRectUpToDate) return rect0;
-		// END KGU#136 2016-01-03
+		// END KGU#136 2016-03-01
 		
 		rect0.left = rect0.right = rect0.top = rect0.bottom = 0;
 		Rect subrect = new Rect(0, 0, 0, 0);
@@ -461,7 +463,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 	public void setSelected(boolean _sel)
 	{
 		//System.out.println(this + ".setSelected(" + _sel + ")");
-		selected=_sel;
+		selected = _sel;
 		for (int i = firstIndex; i <= lastIndex; i++)
 		{
 			// This must not be recursive!
@@ -469,6 +471,17 @@ public class SelectedSequence extends Element implements IElementSequence {
 		}
 	}
 
+	// START KGU#183 2016-04-24: Issue #169 
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#findSelected()
+	 */
+	public Element findSelected()
+	{
+		// Shouldn't it always return this - being a SELECTEDSequence?
+		return selected ? this : null;
+	}
+	// END KGU#183 2016-04-24
+	    
 	// START KGU#123 2016-01-03: We need a collective collapsing/expansion now
 	@Override
     public void setCollapsed(boolean collapsed) {
@@ -502,5 +515,24 @@ public class SelectedSequence extends Element implements IElementSequence {
 		}
 	}
 	// END KGU#43 2016-01-22
+
+	// START KGU#156 2016-03-11: Enh. #124
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getExecStepCount(boolean)
+	 */
+	public int getExecStepCount(boolean _combined)
+	{
+		this.execStepCount = ((Subqueue)parent).getExecStepCount(false);
+		if (_combined && this.getSize() > 0)
+		{
+			this.execSubCount = 0;
+			for (int i = 0; i < this.getSize(); i++)
+			{
+				this.execSubCount += this.getElement(i).getExecStepCount(true);
+			}
+		}
+		return super.getExecStepCount(_combined);
+	}
+	// END KGU#156 2016-03-12
 
 }

@@ -58,6 +58,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.10      Enh. #124 (KGU#156): Counter fields for histographic tracking added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Runtime data collection accomplished
  *      Kay Gürtzig     2016.03.26      KGU#165: New option D7Parser.ignoreCase introduced
+ *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *
  ******************************************************************************************************
  *
@@ -147,7 +148,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.24-07";
+	public static String E_VERSION = "3.24-10";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -582,7 +583,34 @@ public abstract class Element {
 	{
 		selected=_sel;
 	}
+
+	// START KGU#183 2016-04-24: Issue #169 
+	/**
+	 * Recursively searches the subtree for the currently selected Element or Element
+	 * sequence and returns it
+	 * @return selected Element (null if none was found)
+	 */
+	public abstract Element findSelected();
+	// END KGU#183 2016-04-24
 	
+	// START KGU 2016-04-24: replaces Root.checkChild(this, _ancestor)
+    /**
+     * Checks if this is a descendant of _ancestor in the tree
+     * @param _parent - Element to be verified as ancestor of _child
+     * @return true iff this is a descendant of _ancestor
+     */
+    public boolean isDescendantOf(Element _ancestor)
+    {
+            Element tmp = this.parent;
+            boolean res = false;
+            while ((tmp != null) && !(res = tmp == _ancestor))
+            {
+            	tmp = tmp.parent;
+            }
+            return res;
+    }
+    // END KGU 2016-04-24
+
 	// START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
 	/**
 	 * Checks execution involvement.
