@@ -29,9 +29,10 @@
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------		----			-----------
- *      Bob Fisch       2008.01.14      	First Issue
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2008.01.14      First Issue
+ *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
  *
  ******************************************************************************************************
  *
@@ -42,6 +43,7 @@
  -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=Fichier
+Menu.menuFile.mnemonic=f
 // Submenus of "File"
 Menu.menuFileNew.text=Nouveau
 Menu.menuFileOpen.text=Ouvrir ...
@@ -58,6 +60,7 @@ Menu.menuFilePrint.text=Imprimer ...
 Menu.menuFileQuit.text=Quitter
 // Menu "Edit"
 Menu.menuEdit.text=Editer
+Menu.menuEdit.mnemonic=e
 // Submenu of "Edit"
 Menu.menuEditUndo.text=Annuler
 Menu.menuEditRedo.text=Annuler annuler
@@ -68,6 +71,7 @@ Menu.menuEditCopyDiagramPNG.text=Copier l'image (PNG)
 Menu.menuEditCopyDiagramEMF.text=Copier l'image (EMF)
 // Menu "Diagram"
 Menu.menuDiagram.text=Diagramme
+Menu.menuDiagram.mnemonic=d
 // Submenus of "Diagram"
 Menu.menuDiagramAdd.text=Ajouter
 // Submenu "Diagram -> Add -> Before"
@@ -105,9 +109,10 @@ Menu.menuDiagramNice.text=Diagramme cadré
 Menu.menuDiagramComment.text=Montrer les commentaires?
 Menu.menuDiagramMarker.text=Marquer les variables?
 Menu.menuDiagramDIN.text=DIN?
-// Menu "Help"
+// Menu "Preferences"
 Menu.menuPreferences.text=Préférences
-// Submenu of "Help"
+Menu.menuPreferences.mnemonic=p
+// Submenu of "Preferences"
 Menu.menuPreferencesFont.text=Police ...
 Menu.menuPreferencesColors.text=Couleurrs ...
 Menu.menuPreferencesOptions.text=Structures ...
@@ -121,7 +126,7 @@ Menu.menuPreferencesLanguageLuxemburgish.text=Luxembourgeois
 Menu.menuPreferencesLanguageSpanish.text=Espagnol
 Menu.menuPreferencesLanguageItalian.text=Italien
 Menu.menuPreferencesLanguagePortugalBrazil.text=Portugais (brazilien)
-Menu.menuPreferencesLanguageChinese.text=Chinois
+//Menu.menuPreferencesLanguageChinese.text=Chinois
 Menu.menuPreferencesLanguageCzech.text=Czech
 
 Menu.menuPreferencesLookAndFeel.text=Look & Feel
@@ -134,6 +139,7 @@ Menu.menuPreferencesSaveLoad.text=Charger ...
 
 // Menu "Help"
 Menu.menuHelp.text=Aide
+Menu.menuHelp.mnemonic=a
 // Submenu of "Help"
 Menu.menuHelpAbout.text=A propos de ...
 Menu.menuHelpUpdate.text=Mise à jour ...
