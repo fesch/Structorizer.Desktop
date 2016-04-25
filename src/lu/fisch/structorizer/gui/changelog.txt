@@ -49,7 +49,7 @@ Current development version: 3.24-10 (2016.04.25)
 - 10: Issue #30: Lexicographic string comparison enabled (Executor). <Kay Gürtzig>
 - 10: Issue #137: Output text window now automatically scrolls to end. <Kay Gürtzig>
 - 10: Issue #169: Selection ensured on start / after export. [Rolf Schmidt]
-- 10: Issue #173: Menomics corrected (EN) and localized in most languages. <Kay Gürtzig>
+- 10: Issue #173: Mnemonics corrected (EN) and localized in most languages. <Kay Gürtzig>
 - 10: Enh. #174: Input now accepts array initialisation expressions. <Kay Gürtzig>
 
 Version: 3.24 (2016.03.14)
