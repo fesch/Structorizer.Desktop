@@ -43,7 +43,7 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************///
 
 import java.awt.*;
-
+import java.awt.event.KeyEvent;
 import java.io.*;
 import java.lang.reflect.*;
 
@@ -189,8 +189,19 @@ public class LangDialog extends JDialog
 								Method method = fieldClass.getMethod("setTitleAt",new Class [] {int.class,String.class});
 								method.invoke(field.get(_com),new Object [] {Integer.valueOf(pieces.get(3)),parts.get(1)});
 							}
+							// START KGU#183 2016-04-24: Enh. #173 - new support
+							else if (piece2.equals("mnemonic"))
+							{
+								Method method = fieldClass.getMethod("setMnemonic", new Class [] {int.class});
+								int keyCode = KeyEvent.getExtendedKeyCodeForChar(parts.get(1).toLowerCase().charAt(0)); 
+								if (keyCode != KeyEvent.VK_UNDEFINED)
+								{
+									method.invoke(field.get(_com),new Object [] {Integer.valueOf(keyCode)});
+								}
+							}
+							// END KGU#183 2016-04-24
 							// START KGU#156 2016-03-13: Enh. #124 - intended for JComboBoxes
-							else if (piece2.equalsIgnoreCase("item"))
+							else if (piece2.equals("item"))
 							{
 								// The JCombobox is supposed to be equipped with enum objects providing a setText() method
 								// (see lu.fisch.structorizer.elements.RuntimeDataPresentMode and

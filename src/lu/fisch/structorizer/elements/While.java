@@ -44,6 +44,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.02      Bugfix #97 (KGU#136) accomplished (translation-independent selection)
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *
  ******************************************************************************************************
  *
@@ -323,12 +324,27 @@ public class While extends Element implements ILoop {
 	}
 	// END KGU 2015-10-11
 	
-	public void setSelected(boolean _sel)
-	{
-		selected=_sel;
-		//q.setSelected(_sel);
-	}
+//	public void setSelected(boolean _sel)
+//	{
+//		selected=_sel;
+//		//q.setSelected(_sel);
+//	}
 	
+	// START KGU#183 2016-04-24: Issue #169 
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#findSelected()
+	 */
+	public Element findSelected()
+	{
+		Element sel = selected ? this : null;
+		if (sel == null)
+		{
+			sel = q.findSelected();
+		}
+		return sel;
+	}
+	// END KGU#183 2016-04-24
+	    
 	public Element copy()
 	{
 		Element ele = new While(this.getText().copy());
@@ -342,6 +358,9 @@ public class While extends Element implements ILoop {
 		// START KGU#117 2016-03-07: Enh. #77
 		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
 		// END KGU#117 2016-03-07
+		// START KGU#183 2016-04-24: Issue #169
+		ele.selected = this.selected;
+		// END KGU#183 2016-04-24
 		return ele;
 	}
 	

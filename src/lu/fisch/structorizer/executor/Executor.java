@@ -78,11 +78,14 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.03.29      Bugfix #139 (KGU#166) in getIndexValue() - nested index access failed
  *      Kay Gürtzig     2016.04.03      KGU#150: Support for Pascal functions chr and ord
  *                                      KGU#165: Case awareness consistency for keywords improved.
- *      Kay Gürtzig     2016-04-12      Enh. #137 (KGU#160): Additional or exclusive output to text window 
+ *      Kay Gürtzig     2016-04-12      Enh. #137 (KGU#160): Additional or exclusive output to text window
+ *      Kay Gürtzig     2016-04-25      Issue #30 (KGU#76): String comparison substantially improved,
+ *                                      Enh. #174 (KGU#184): Input now accepts array initialisation expressions
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      TODO: Consistent implementation of new setting D7Parser.ignoreCase
  *      2016-03-17 Enh. #133 (KGU#159)
  *      - Previously, a Call stack trace was only shown in cse of an execution error or manual abort.
  *        Now a Call stack trace may always be requested while execution hasn't ended. Only prerequisite
@@ -470,7 +473,16 @@ public class Executor implements Runnable
 //		System.out.println("Zeichen sind " + ((chA == chB) ? "" : "NICHT ") + "identisch!");
 //		System.out.println("Zeichen sind " + ((chA.equals(chB)) ? "" : "NICHT ") + "gleich!");
 		// Is there any equality test at all?
-		if (str.indexOf(" == ") >= 0 || str.indexOf(" != ") >= 0)
+		// START KGU#76 2016-04-25: Issue #30 - convert all string comparisons
+		//if (str.indexOf(" == ") >= 0 || str.indexOf(" != ") >= 0)
+		String[] compOps = {"==", "!=", "<=", ">=", "<", ">"};
+		boolean containsComparison = false;
+		for (int op = 0; !containsComparison && op < compOps.length; op++)
+		{
+			containsComparison = str.indexOf(compOps[op]) >= 0;
+		}
+		if (containsComparison)
+		// END KGU#76 2016-04-25
 		{
 			// We are looking for || operators and split the expression by them (if present) 
 			StringList exprs = StringList.explodeWithDelimiter(str, " \\|\\| ");	// '|' is a regex metasymbol!
@@ -481,18 +493,28 @@ public class Executor implements Runnable
 			for (int i = 0; i < exprs.count(); i++)
 			{
 				String s = exprs.get(i);
-				String[] eqOps = {"==", "!="};
-				for (int op = 0; op < eqOps.length; op++)
+				// START KGU#76 2016-04-25: Issue #30 - convert all string comparisons
+				//String[] eqOps = {"==", "!="};
+				//for (int op = 0; op < eqOps.length; op++)
+				StringList tokens = Element.splitLexically(s.trim(), true);
+				for (int op = 0; op < compOps.length; op++)
+				// END KGU#76 2016-04-25
 				{
-					Regex r = null;
-					// The comparison operators should have been padded within the string by former conversion steps
-					if (!s.equals(" " + eqOps[op] + " ") && s.indexOf(eqOps[op]) >= 0)
+					// START KGU#76 2016-04-25: Issue #30
+					//Regex r = null;
+					// We can no longer expect operators to be padded, better use tokens
+					//if (!s.equals(" " + eqOps[op] + " ") && s.indexOf(eqOps[op]) >= 0)
+					int opPos = -1;		// Operator position
+					if ((opPos = tokens.indexOf(compOps[op])) >= 0)
 					{
 						String leftParenth = "";
 						String rightParenth = "";
 						// Get the left operand expression
-						r = new Regex("(.*)"+eqOps[op]+"(.*)", "$1");
-						String left = r.replaceAll(s).trim();	// All? Really? And what is the result supposed to be then?
+						// START KGU#76 2016-04-25: Issue #30
+						//r = new Regex("(.*)"+eqOps[op]+"(.*)", "$1");
+						//String left = r.replaceAll(s).trim();	// All? Really? And what is the result supposed to be then?
+						String left = tokens.concatenate("", 0, opPos).trim();
+						// END KGU#76 2016-04-25
 						// Re-balance parentheses
 						while (Function.countChar(left, '(') > Function.countChar(left, ')') &&
 								left.startsWith("("))
@@ -501,8 +523,11 @@ public class Executor implements Runnable
 							left = left.substring(1).trim();
 						}
 						// Get the right operand expression
-						r = new Regex("(.*)"+eqOps[op]+"(.*)", "$2");
-						String right = r.replaceAll(s).trim();
+						// START KGU#76 2016-04-25: Issue #30
+						//r = new Regex("(.*)"+eqOps[op]+"(.*)", "$2");
+						//String right = r.replaceAll(s).trim();
+						String right = tokens.concatenate("", opPos+1).trim();
+						// END KGU#76 2016-04-25
 						// Re-balance parentheses
 						while (Function.countChar(right, ')') > Function.countChar(right, '(') &&
 								right.endsWith(")"))
@@ -522,23 +547,36 @@ public class Executor implements Runnable
 							// First the obvious case: two String expressions
 							if ((leftO instanceof String) && (rightO instanceof String))
 							{
-								exprs.set(i, leftParenth + neg + left + ".equals(" + right + ")" + rightParenth);
+								// START KGU#76 2016-04-25: Issue #30 support all string comparison
+								//exprs.set(i, leftParenth + neg + left + ".equals(" + right + ")" + rightParenth);
+								exprs.set(i, leftParenth + left + ".compareTo(" + right + ") " + compOps[op] + " 0" + rightParenth);
+								// END KGU#76 2016-04-25
 								replaced = true;
 							}
 							// We must make single-char strings comparable with characters, since it
 							// doesn't work automatically and several conversions have been performed 
 							else if ((leftO instanceof String) && (rightO instanceof Character))
 							{
-								exprs.set(i, leftParenth + neg + left + ".equals(\"" + (Character)rightO + "\")" + rightParenth);
+								// START KGU#76 2016-04-25: Issue #30 support all string comparison
+								//exprs.set(i, leftParenth + neg + left + ".equals(\"" + (Character)rightO + "\")" + rightParenth);
+								exprs.set(i, leftParenth + left + ".compareTo(\"" + (Character)rightO + "\") " + compOps[op] + " 0" + rightParenth);
+								// END KGU#76 2016-04-25
 								replaced = true;								
 							}
 							else if ((leftO instanceof Character) && (rightO instanceof String))
 							{
-								exprs.set(i, leftParenth + neg + right + ".equals(\"" + (Character)leftO + "\")" + rightParenth);
+								// START KGU#76 2016-04-25: Issue #30 support all string comparison
+								//exprs.set(i, leftParenth + neg + right + ".equals(\"" + (Character)leftO + "\")" + rightParenth);
+								exprs.set(i, leftParenth + "\"" + (Character)leftO + "\".compareTo(" + right + ") " + compOps[op] + " 0" + rightParenth);
+								// END KGU#76 2016-04-25
 								replaced = true;								
 							}
 							// START KGU#99 2015-12-10: Bugfix #49 (also replace if both operands are array elements (objects!)
-							else if ((pos = left.indexOf('[')) > -1 && left.indexOf(']', pos) > -1 && 
+							// START KGU#76 2016-04-25: Issue #30 - this makes only sense for "==" and "!="
+							//else if ((pos = left.indexOf('[')) > -1 && left.indexOf(']', pos) > -1 && 
+							else if (op < 2 &&
+									(pos = left.indexOf('[')) > -1 && left.indexOf(']', pos) > -1 && 
+							// END KGU#76 2016-04-25
 									(pos = right.indexOf('[')) > -1 && right.indexOf(']', pos) > -1)
 							{
 								exprs.set(i, leftParenth + neg + left + ".equals(" + right + ")" + rightParenth);
@@ -1447,6 +1485,15 @@ public class Executor implements Runnable
 					Character charInput = rawInput.charAt(0);
 					setVar(name, charInput);
 				}
+				// START KGU#184 2016-04-25: Enh. #174 - accept array initialisations on input
+				else if (rawInput.startsWith("{") && rawInput.endsWith("}"))
+				{
+					String asgnmt = "Object[] " + name + " = " + rawInput;
+					// Nested initializers won't work here!
+					interpreter.eval(asgnmt);
+					setVar(name, interpreter.get(name));
+				}
+				// END KGU#184 2016-04-25
 			}
 			catch (Exception ex)
 			{
@@ -1460,7 +1507,7 @@ public class Executor implements Runnable
 			setVar(name, dblInput);
 		} catch (Exception ex)
 		{
-			System.out.println(rawInput + " as double: " + ex.getMessage());
+			//System.out.println(rawInput + " as double: " + ex.getMessage());
 		}
 		// finally try adding as integer
 		try
@@ -1469,7 +1516,7 @@ public class Executor implements Runnable
 			setVar(name, intInput);
 		} catch (Exception ex)
 		{
-			System.out.println(rawInput + " as int: " + ex.getMessage());
+			//System.out.println(rawInput + " as int: " + ex.getMessage());
 		}
 	}
 	

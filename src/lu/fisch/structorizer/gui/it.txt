@@ -36,6 +36,7 @@
  *      Kay Gürtzig     2015.10.14		InputBox-specific part enhanced
  *      Kay Gürtzig     2015.10.14		FOR-specific part enhanced and Arranger buttons added
  *      Kay Gürtzig     2016.01.21      Breakpoint message also in Menu now
+ *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
  *
  ******************************************************************************************************
  *
@@ -46,6 +47,7 @@
 -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=File
+Menu.menuFile.mnemonic=f
 // Submenus of "File"
 Menu.menuFileNew.text=Nuovo
 Menu.menuFileOpen.text=Apri ...
@@ -65,6 +67,7 @@ Menu.menuFileArrange.text=Collocare in Arranger
 Menu.menuFileQuit.text=Esci
 // Menu "Edit"
 Menu.menuEdit.text=Modifica
+Menu.menuEdit.mnemonic=m
 // Submenu of "Edit"
 Menu.menuEditUndo.text=Annula
 Menu.menuEditRedo.text=Ripeti
@@ -75,6 +78,7 @@ Menu.menuEditCopyDiagramPNG.text=Copia immagine PNG
 Menu.menuEditCopyDiagramEMF.text=Copia immagine EMF
 // Menu "Diagram"
 Menu.menuDiagram.text=Diagramma
+Menu.menuDiagram.mnemonic=d
 // Submenus of "Diagram"
 Menu.menuDiagramAdd.text=Aggiungi
 // Submenu "Diagram -> Add -> Before"
@@ -115,9 +119,10 @@ Menu.menuDiagramNice.text=Stile box?
 Menu.menuDiagramComment.text=Mostra commenti?
 Menu.menuDiagramMarker.text=Evidenzia variabili?
 Menu.menuDiagramDIN.text=DIN?
-// Menu "Help"
+// Menu "Preferences"
 Menu.menuPreferences.text=Opzioni
-// Submenu of "Help"
+Menu.menuPreferences.mnemonic=o
+// Submenu of "Preferences"
 Menu.menuPreferencesFont.text=Caratteri ...
 Menu.menuPreferencesColors.text=Colori ...
 Menu.menuPreferencesOptions.text=Strutture ...
@@ -135,6 +140,7 @@ Menu.menuPreferencesLookAndFeel.text=Aspetto
 Menu.menuPreferencesSave.text=Salva tutte le impostazioni ora
 // Menu "Help"
 Menu.menuHelp.text=Aiuto
+Menu.menuHelp.mnemonic=a
 // Submenu of "Help"
 Menu.menuHelpAbout.text=About ...
 Menu.menuHelpUpdate.text=Aggiorna ...

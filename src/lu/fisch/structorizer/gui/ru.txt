@@ -36,6 +36,7 @@
  *      Kay Gürtzig     2015.10.14		InputBox-specific part enhanced
  *      Kay Gürtzig     2016.03.22      Enh. #84: messages related to FOR-IN loops added, several
  *                                      missing messages inserted
+ *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
  *
  ******************************************************************************************************
  *
@@ -46,6 +47,7 @@
 -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=Файл
+Menu.menuFile.mnemonic=ф
 // Submenus of "File"
 Menu.menuFileNew.text=Новый
 Menu.menuFileOpen.text=Открыть ...
@@ -64,6 +66,7 @@ Menu.menuFileArrange.text=Распределить к Arranger
 Menu.menuFileQuit.text=Выход
 // Menu "Edit"
 Menu.menuEdit.text=Правка
+Menu.menuEdit.mnemonic=р
 // Submenu of "Edit"
 Menu.menuEditUndo.text=Отменить
 Menu.menuEditRedo.text=Повторить
@@ -74,6 +77,7 @@ Menu.menuEditCopyDiagramPNG.text=Копировать изображение PNG
 Menu.menuEditCopyDiagramEMF.text=Копировать изображение EMF
 // Menu "Diagram"
 Menu.menuDiagram.text=Схема
+Menu.menuDiagram.mnemonic=с
 // Submenus of "Diagram"
 Menu.menuDiagramAdd.text=Добавить
 // Submenu "Diagram -> Add -> Before"
@@ -122,9 +126,10 @@ Menu.menuDiagramMarker.text=Подсвечивать переменные
 Menu.menuDiagramDIN.text=DIN
 Menu.menuDiagramAnalyser.text=Анализировать схему 
 Menu.menuDiagramWheel.text=Сжать с колесой?
-// Menu "Help"
+// Menu "Preferences"
 Menu.menuPreferences.text=Настройки
-// Submenu of "Help"
+Menu.menuPreferences.mnemonic=н
+// Submenu of "Preferences"
 Menu.menuPreferencesFont.text=Шрифт ...
 Menu.menuPreferencesColors.text=Цвет ...
 Menu.menuPreferencesOptions.text=Структур ...
@@ -155,6 +160,7 @@ Menu.menuPreferencesSaveLoad.text=Ввезти из файла ...
 
 // Menu "Help"
 Menu.menuHelp.text=Помощь
+Menu.menuHelp.mnemonic=п
 // Submenu of "Help"
 Menu.menuHelpAbout.text=О программе ...
 Menu.menuHelpUpdate.text=Обновления ...

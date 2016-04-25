@@ -42,6 +42,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136): fix accomplished
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Fields for test coverage tracking added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
+ *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *
  ******************************************************************************************************
  *
@@ -230,6 +231,16 @@ public class Instruction extends Element {
         // END KGU#124 2016-01-03
 	}
 	
+	// START KGU#183 2016-04-24: Issue #169 
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#findSelected()
+	 */
+	public Element findSelected()
+	{
+		return selected ? this : null;
+	}
+	// END KGU#183 2016-04-24
+
 	public Element copy()
 	{
 		Instruction ele = new Instruction(this.getText().copy());
@@ -245,6 +256,9 @@ public class Instruction extends Element {
         	ele.deeplyCovered = this.deeplyCovered;
         }
 		// END KGU#117 2016-03-07
+		// START KGU#183 2016-04-24: Issue #169
+		ele.selected = this.selected;
+		// END KGU#183 2016-04-24
 		return ele;
 	}
 
