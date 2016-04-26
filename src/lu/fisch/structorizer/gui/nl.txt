@@ -29,9 +29,10 @@
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------		----			-----------
- *      Jerone          ???                     First Issue
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Jerone          ???             First Issue
+ *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
  *
  ******************************************************************************************************
  *
@@ -42,6 +43,7 @@
 -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=Bestand
+Menu.menuFile.mnemonic=b
 // Submenus of "File"
 Menu.menuFileNew.text=Nieuw
 Menu.menuFileOpen.text=Openen ...
@@ -58,6 +60,7 @@ Menu.menuFilePrint.text=Afdrukken ...
 Menu.menuFileQuit.text=Afsluiten
 // Menu "Edit"
 Menu.menuEdit.text=Bewerken
+Menu.menuEdit.mnemonic=w
 // Submenu of "Edit"
 Menu.menuEditUndo.text=Ongedaan maken
 Menu.menuEditRedo.text=Herhalen
@@ -68,6 +71,7 @@ Menu.menuEditCopyDiagramPNG.text=Afbeelding als PNG kopiëren
 Menu.menuEditCopyDiagramEMF.text=Afbeelding als EMF kopiëren
 // Menu "Diagram"
 Menu.menuDiagram.text=Diagram
+Menu.menuDiagram.mnemonic=d
 // Submenus of "Diagram"
 Menu.menuDiagramAdd.text=Toevoegen
 // Submenu "Diagram -> Add -> Before"
@@ -105,9 +109,10 @@ Menu.menuDiagramNice.text=Boxed diagram?
 Menu.menuDiagramComment.text=Opmerkingen weergeven?
 Menu.menuDiagramMarker.text=Variabelen markeren?
 Menu.menuDiagramDIN.text=DIN?
-// Menu "Help"
+// Menu "Preferences"
 Menu.menuPreferences.text=Instellingen
-// Submenu of "Help"
+Menu.menuPreferences.mnemonic=i
+// Submenu of "Preferences"
 Menu.menuPreferencesFont.text=Lettertype ...
 Menu.menuPreferencesColors.text=Kleuren ...
 Menu.menuPreferencesOptions.text=Structuren ...
@@ -123,6 +128,7 @@ Menu.menuPreferencesLookAndFeel.text=Uiterlijk
 Menu.menuPreferencesSave.text=Alle instellingen nu opslaan
 // Menu "Help"
 Menu.menuHelp.text=Help
+Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpAbout.text=Over ...
 Menu.menuHelpUpdate.text=Update ...
