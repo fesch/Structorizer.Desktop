@@ -36,6 +36,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015-10-12      A checkbox added for breakpoint control (KGU#43)
  *      Kay Gürtzig     2015-10-14      Element-class-specific language support (KGU#42)
  *      Kay Gürtzig     2015-10-25      Hook for subclassing added to method create() (KGU#3)
+ *      Kay Gürtzig     2016-04-26      Issue #165: Focus transfer reset to Tab and Shift-Tab
  *
  ******************************************************************************************************
  *
@@ -50,6 +51,7 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
 
+import lu.fisch.structorizer.elements.Element;
 import lu.fisch.utils.StringList;
 
 
@@ -106,7 +108,15 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
             btnOK.addKeyListener(this);
             btnCancel.addKeyListener(this);
             txtText.addKeyListener(this);
+            // START KGU#186 2016-04-26: Issue #163 - tab isn't really needed within the text
+            txtText.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
+            txtText.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);
+            // END KGU#186 2016-04-26
             txtComment.addKeyListener(this);
+            // START KGU#186 2016-04-26: Issue #163 - tab isn't really needed within the text
+            txtComment.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
+            txtComment.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);
+            // END KGU#186 2016-04-26
             addKeyListener(this);
 
             Border emptyBorder = BorderFactory.createEmptyBorder(4,4,4,4);
@@ -224,6 +234,15 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
 
             // START KGU#91 2015-12-04: fix #39 - we leave this for diagram now
             //txtText.requestFocus(true);
+            //this.pack();	// This makes focus control possible but requires minimum size settings above
+//            if (Element.E_TOGGLETC)
+//            {
+//            	txtComment.requestFocusInWindow();
+//            }
+//            else
+//            {
+//            	txtText.requestFocusInWindow();
+//            }
             // END KGU#91 2015-12-04
     }
     
