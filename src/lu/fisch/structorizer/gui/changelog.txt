@@ -9,7 +9,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.24-10 (2016.04.25)
+Current development version: 3.24-10 (2016.04.26)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]
 - 01: Enh. #124: Generalized runtime data visualisation <Kay Gürtzig>
 - 01: Arranger now adopts current directory from first arranged diagram <Kay Gürtzig>
@@ -47,7 +47,8 @@ Current development version: 3.24-10 (2016.04.25)
 - 09: Issue #169: Selection ensured on new / loading an NSD, undo, redo [Rolf Schmidt]
 - 09: Bugfix #171: Twos flaws in enh. #158 mended <Kay Gürtzig>
 - 10: Issue #30: Lexicographic string comparison enabled (Executor). <Kay Gürtzig>
-- 10: Issue #137: Output text window now automatically scrolls to end. <Kay Gürtzig>
+- 10: Issue #137: Output text window now styled and automatically scrolls to end. <Kay Gürtzig>
+- 10: Issue #163: Tab / Shift-Tab key now move focus in element editor [Rolf Schmidt]
 - 10: Issue #169: Selection ensured on start / after export. [Rolf Schmidt]
 - 10: Issue #173: Mnemonics corrected (EN) and localized in most languages. <Kay Gürtzig>
 - 10: Enh. #174: Input now accepts array initialisation expressions. <Kay Gürtzig>
