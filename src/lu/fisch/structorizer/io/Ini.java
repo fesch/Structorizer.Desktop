@@ -197,8 +197,8 @@ public class Ini
 						.replaceFirst(
 								"\\" + System.getProperty("file.separator")
 										+ "Contents\\"
-										+ System.getProperty("file.separator")
-										+ "Resources\\"
+										//+ System.getProperty("file.separator")
+										//+ "Resources\\"
 										+ System.getProperty("file.separator")
 										+ "Java", "");
 				// filename2 = filename2.replaceFirst("\\\\Structorizer.app",
