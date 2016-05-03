@@ -372,7 +372,7 @@ public class D7Parser implements GPMessageConstants
 			{
 				content=new String();
 				content=getContent_R(_reduction,content);
-				System.out.println(ruleName + ": " + content);
+				//System.out.println(ruleName + ": " + content);
 				_parentNode.addElement(new Instruction(updateContent(content)));
 			}
 			else if (
