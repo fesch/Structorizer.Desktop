@@ -39,6 +39,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2016-03-25      KGU#163: New static method getAllPropeties() added for Analyser
  *                                      KGU#165: New option ignoreCase
  *      Kay Gürtzig     2016-04-04      KGU#165: Default for ignoreCase changed to true
+ *      Kay Gürtzig     2016-04-30      Issue #182 (KGU#191): More information on error exit in parse()
+ *      Kay Gürtzig     2016-05-02      Issue #184 / Enh. #10: Flaws in FOR loop import (KGU#192)
  *
  ******************************************************************************************************
  *
@@ -170,7 +172,6 @@ public class D7Parser implements GPMessageConstants
 		root = new Root();
 		error = "";
 		
-
 		// prepare textfile
 		try
 		{
@@ -225,9 +226,15 @@ public class D7Parser implements GPMessageConstants
 		// init some vars
         boolean done = false;
         int response = -1;
+		// START KGU#191 2016-04-30: Issue #182 (insufficient information for error detection)
+        // Rolling buffer for processed tokens as retrospective context for error messages
+        // Number of empty strings = number of retained context lines 
+        String[] context = {"", "", "", "", "", "", "", "", "", ""};
+        int contextLine = 0;
+		// END KGU#191 2016-04-30
 		
-		// stsart parsing
-        while(!done)
+		// start parsing
+        while (!done)
         {
             try
             {
@@ -237,22 +244,26 @@ public class D7Parser implements GPMessageConstants
             }
             catch(ParserException parse)
             {
-                System.out.println("**PARSER ERROR**\n" + parse.toString());
+                System.err.println("**PARSER ERROR**\n" + parse.toString());
                 System.exit(1);
             }
 			
 			//System.out.println("===> "+response);
-			
+            Token theTok = null;
             switch(response)
             {
                 case gpMsgLexicalError:
-                    System.out.println("gpMsgLexicalError");
+                    //System.err.println("gpMsgLexicalError");
+                    // START KGU#191 2016-04-30: Issue #182 
+                    theTok = parser.currentToken();
+                    error = ("Unexpected character: " + (String)theTok.getData()+" at line "+parser.currentLineNumber());
+                    // END KGU#191 2016-04-30
                     parser.popInputToken();
 					done = true;
                     break;
 					
                 case gpMsgSyntaxError:
-                    Token theTok = parser.currentToken();
+                    theTok = parser.currentToken();
                     error = ("Token not expected: " + (String)theTok.getData()+" at line "+parser.currentLineNumber());
 					
                     //System.out.println("gpMsgSyntaxError");
@@ -275,20 +286,25 @@ public class D7Parser implements GPMessageConstants
                     //System.out.println("gpMsgTokenRead");
                     Token myTok = parser.currentToken();
                     //System.out.println((String)myTok.getData());
+                    while (parser.currentLineNumber() > contextLine)
+                    {
+                    	context[(++contextLine) % context.length] = "";
+                    }
+                    context[contextLine % context.length] += ((String)myTok.getData() + " ");
                     break;
 					
                 case gpMsgNotLoadedError:
-                    System.out.println("gpMsgNotLoadedError");
+                    System.err.println("gpMsgNotLoadedError");
                     done = true;
                     break;
 					
                 case gpMsgCommentError:
-                    System.out.println("gpMsgCommentError");
+                    System.err.println("gpMsgCommentError");
                     done = true;
 					break;
 					
                 case gpMsgInternalError:
-                    System.out.println("gpMsgInternalError");
+                    System.err.println("gpMsgInternalError");
                     done = true;
                     break;
 				
@@ -299,14 +315,29 @@ public class D7Parser implements GPMessageConstants
             }
         }
 		//System.out.println("---- done ----");
-		
+
+        // START KGU#191 2016-04-30: Issue #182 - In error case append the context 
+        if (!error.isEmpty())
+        {
+        	error += "\nPreceding source context:";
+    		contextLine -= context.length;
+        	for (int line = 0; line < context.length; line++)
+        	{
+        		if (++contextLine >= 0)
+        		{
+        			error += "\n" + contextLine + ":   " + context[contextLine % context.length];
+        		}
+        	}
+        }
+        // END KGU#191 2016-04-30
+        
         try
         {
         	parser.closeFile();
         }
-        catch(ParserException parse)
+        catch(ParserException parsex)
         {
-            System.out.println("**PARSER ERROR**\n" + parse.toString());
+            System.err.println("**PARSER ERROR**\n" + parsex.toString());
             System.exit(1);
         }
 		
@@ -328,32 +359,33 @@ public class D7Parser implements GPMessageConstants
 	
 		if (_reduction.getTokenCount()>0)
 		{
+			String ruleName = _reduction.getParentRule().name();
 			if ( 
-				_reduction.getParentRule().name().equals("<RefId>")
+				ruleName.equals("<RefId>")
 				||
-				_reduction.getParentRule().name().equals("<CallStmt>")
+				ruleName.equals("<CallStmt>")
 				||
-				_reduction.getParentRule().name().equals("<Designator>")
+				ruleName.equals("<Designator>")
 				||
-				_reduction.getParentRule().name().equals("<AssignmentStmt>")
+				ruleName.equals("<AssignmentStmt>")
 			   )
 			{
 				content=new String();
 				content=getContent_R(_reduction,content);
-				//System.out.println(content);
+				System.out.println(ruleName + ": " + content);
 				_parentNode.addElement(new Instruction(updateContent(content)));
 			}
 			else if (
-					 _reduction.getParentRule().name().equals("<UsesClause>")
+					 ruleName.equals("<UsesClause>")
 					 ||
-					 _reduction.getParentRule().name().equals("<VarSection>")
+					 ruleName.equals("<VarSection>")
 					 ||
-					 _reduction.getParentRule().name().equals("<ConstSection>")
+					 ruleName.equals("<ConstSection>")
 					 )
 			{
 			}
 			else if (
-					 _reduction.getParentRule().name().equals("<ProgHeader>")
+					 ruleName.equals("<ProgHeader>")
 					 )
 			{
 				content=new String();
@@ -361,7 +393,7 @@ public class D7Parser implements GPMessageConstants
 				root.setText(updateContent(content));
 			}
 			else if (
-					 _reduction.getParentRule().name().equals("<ProcHeading>")
+					 ruleName.equals("<ProcHeading>")
 					 )
 			{
 				content=new String();
@@ -379,7 +411,7 @@ public class D7Parser implements GPMessageConstants
 				root.isProgram=false;
 			}
 			else if (
-					 _reduction.getParentRule().name().equals("<FuncHeading>")
+					 ruleName.equals("<FuncHeading>")
 					 )
 			{
 				content=new String();
@@ -404,7 +436,7 @@ public class D7Parser implements GPMessageConstants
 				root.isProgram=false;
 			}
 			else if (
-					 _reduction.getParentRule().name().equals("<WhileStatement>")
+					 ruleName.equals("<WhileStatement>")
 					 )
 			{
 				content=new String();
@@ -416,7 +448,7 @@ public class D7Parser implements GPMessageConstants
 				DrawNSD_R(secReduc,ele.q);
 			}
 			else if (
-					 _reduction.getParentRule().name().equals("<RepeatStatement>")
+					 ruleName.equals("<RepeatStatement>")
 					 )
 			{
 				content=new String();
@@ -428,31 +460,35 @@ public class D7Parser implements GPMessageConstants
 				DrawNSD_R(secReduc,ele.q);
 			}
 			else if (
-					 _reduction.getParentRule().name().equals("<ForStatement>")
+					 ruleName.equals("<ForStatement>")
 					 )
 			{
 				content=new String();
 				content=getContent_R((Reduction) _reduction.getToken(1).getData(),content);
 				content+=":=";
 				content=getContent_R((Reduction) _reduction.getToken(3).getData(),content);
-				content+="  ";
+				content+=" ";
 				content+=postFor;
-				content+="  ";
+				content+=" ";
 				content=getContent_R((Reduction) _reduction.getToken(5).getData(),content);
-				// TODO (KGU#3 2015-11-08): Are the following 3 lines sensible / correct / necessary?
-				//content+=stepFor;
-				//content+="  ";
-				//content=getContent_R((Reduction) _reduction.getToken(7).getData(),content);
-				// TODO END
-				
-				For ele = new For(preFor+updateContent(content));
+				// START KGU#3 2016-05-02: Enh. #10 Token 4 contains the information whether it's to or downto
+				if (getContent_R((Reduction) _reduction.getToken(4).getData(), "").equals("downto"))
+				{
+					content += " " + stepFor + " -1";
+				}
+				// END KGU#3 2016-05-02
+				// START KGU 2016-05-02: This worked only if preFor ended with space
+				//For ele = new For(preFor+updateContent(content));
+				For ele = new For(preFor.trim() + " " + updateContent(content));
+				// END KGU 2016-05-02
 				_parentNode.addElement(ele);
 				
+				// Get and convert the body
 				Reduction secReduc = (Reduction) _reduction.getToken(7).getData();
 				DrawNSD_R(secReduc,ele.q);
 			}
 			else if (
-					 _reduction.getParentRule().name().equals("<IfStatement>")
+					 ruleName.equals("<IfStatement>")
 					 )
 			{
 				content=new String();
@@ -470,7 +506,7 @@ public class D7Parser implements GPMessageConstants
 				}
 			}
 			else if (
-					 _reduction.getParentRule().name().equals("<CaseSelector>")
+					 ruleName.equals("<CaseSelector>")
 					 )
 			{
 				content=new String();
@@ -508,7 +544,7 @@ public class D7Parser implements GPMessageConstants
 				*/
 			}
 			else if (
-					 _reduction.getParentRule().name().equals("<CaseStatement>")
+					 ruleName.equals("<CaseStatement>")
 					 )
 			{
 				content=new String();
@@ -618,14 +654,14 @@ public class D7Parser implements GPMessageConstants
 		r = new Regex(BString.breakup("readln")+"(.*?)",input+" $1"); _content=r.replaceAll(_content);
 		r = new Regex(BString.breakup("read")+"(.*?)",input+" $1"); _content=r.replaceAll(_content);*/
 
-		_content=_content.replaceAll(BString.breakup("write")+"[((](.*?)[))]",output+" $1");
-		_content=_content.replaceAll(BString.breakup("writeln")+"[((](.*?)[))]",output+" $1");
-		_content=_content.replaceAll(BString.breakup("writeln")+"(.*?)",output+" $1");
-		_content=_content.replaceAll(BString.breakup("write")+"(.*?)",output+" $1");
-		_content=_content.replaceAll(BString.breakup("read")+"[((](.*?)[))]",input+" $1");
-		_content=_content.replaceAll(BString.breakup("readln")+"[((](.*?)[))]",input+" $1");
-		_content=_content.replaceAll(BString.breakup("readln")+"(.*?)",input+" $1");
-		_content=_content.replaceAll(BString.breakup("read")+"(.*?)",input+" $1");
+		_content = _content.replaceAll(BString.breakup("write")+"[((](.*?)[))]",output+" $1");
+		_content = _content.replaceAll(BString.breakup("writeln")+"[((](.*?)[))]",output+" $1");
+		_content = _content.replaceAll(BString.breakup("writeln")+"(.*?)",output+" $1");
+		_content = _content.replaceAll(BString.breakup("write")+"(.*?)",output+" $1");
+		_content = _content.replaceAll(BString.breakup("read")+"[((](.*?)[))]",input+" $1");
+		_content = _content.replaceAll(BString.breakup("readln")+"[((](.*?)[))]",input+" $1");
+		_content = _content.replaceAll(BString.breakup("readln")+"(.*?)",input+" $1");
+		_content = _content.replaceAll(BString.breakup("read")+"(.*?)",input+" $1");
 		
 		//System.out.println(_content);
 		
@@ -651,15 +687,22 @@ public class D7Parser implements GPMessageConstants
 						_content=getContent_R((Reduction) _reduction.getToken(i).getData(), _content);	
 						break;
 					case SymbolTypeConstants.symbolTypeTerminal:
-						if (((String) _reduction.getToken(i).getData()).trim().equals("mod") ||
-						    ((String) _reduction.getToken(i).getData()).trim().equals("div"))
+						{
+							String tokenData = (String) _reduction.getToken(i).getData();
+							if (tokenData.trim().equalsIgnoreCase("mod") ||
+									// START KGU#192 2016-05-02: There are more operators to be considered...
+									tokenData.trim().equalsIgnoreCase("shl") ||
+									tokenData.trim().equalsIgnoreCase("shr") ||
+									// END KGU#192 2016-05-02
+									tokenData.trim().equalsIgnoreCase("div"))
 							{
-								_content+=" "+(String) _reduction.getToken(i).getData()+" ";
+								_content += " " + tokenData + " ";
 							}
 							else
 							{
-								_content+=(String) _reduction.getToken(i).getData();
+								_content += tokenData;
 							}
+						}
 						break;
 					default:
 						break;

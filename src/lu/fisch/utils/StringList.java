@@ -71,6 +71,18 @@ public class StringList {
 		return sl;
 	}
 
+	/**
+	 * Splits string _source around matches of the given REGULAR EXPRESSION(!) _by.
+	 * Trailing empty strings are not included in the resulting StringList.
+	 * The string "boo:and:foo", for example, yields the following results with
+	 * these expressions:
+	 * Regex Result
+	 * :     { "boo", "and", "foo" }
+	 * o     { "b", "", ":and:f" }
+	 * @param _source - the string to be split
+	 * @param _by - the splitting regular expression
+	 * @return the StringLits containing all splitting shards
+	 */
 	public static StringList explode(String _source, String _by)
 	{
 		String[] multi = _source.split(_by);
