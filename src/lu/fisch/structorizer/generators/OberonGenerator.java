@@ -34,23 +34,24 @@ package lu.fisch.structorizer.generators;
  *
  *      Revision List
  *
- *      Author					Date			Description
- *      ------                      		----			-----------
- *      Klaus-Peter Reimers                     2008.01.08              First Issue
- *      Bob Fisch				2008.01.08		Modified "private String transform(String _input)"
- *      Bob Fisch				2008.04.12		Added "Fields" section for generator to be used as plugin
- *      Bob Fisch				2008.08.14		Added declaration output. A comment line in the root element
- *												with a "#" is ignored. All other lines are written to the code.
- *      Bob Fisch				2011.11.07		Fixed an issue while doing replacements
- *      Kay Gürtzig				2014.11.10		Operator conversion modified (see comment)
- *      Kay Gürtzig				2014.11.16		Operator conversion corrected (see comment)
- *      Kay Gürtzig				2014.12.02		Additional replacement of long assignment operator "<--" by "<-"
- *      Kay Gürtzig				2015.10.18		Indentation issue fixed and comment generation revised
- *      Kay Gürtzig				2015.12.21		Bugfix #41/#68/#69 (= KGU#93)
- *      Kay Gürtzig				2016.01.16		KGU#109: Bugfix #61 - handling of type names in assignments
+ *      Author                  Date            Description
+ *      ------                  ----            -----------
+ *      Klaus-Peter Reimers     2008.01.08      First Issue
+ *      Bob Fisch				2008.01.08      Modified "private String transform(String _input)"
+ *      Bob Fisch				2008.04.12      Added "Fields" section for generator to be used as plugin
+ *      Bob Fisch				2008.08.14      Added declaration output. A comment line in the root element
+ *                                              with a "#" is ignored. All other lines are written to the code.
+ *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
+ *      Kay Gürtzig             2014.11.10      Operator conversion modified (see comment)
+ *      Kay Gürtzig             2014.11.16      Operator conversion corrected (see comment)
+ *      Kay Gürtzig             2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
+ *      Kay Gürtzig             2015.10.18      Indentation issue fixed and comment generation revised
+ *      Kay Gürtzig             2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
+ *      Kay Gürtzig             2016.01.16      KGU#109: Bugfix #61 - handling of type names in assignments
  *                                              Enh. #84 + Bugfix #112 (KGU#141): Assignment export revised
  *      Kay Gürtzig             2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61)
  *      Kay Gürtzig             2016-04-03      KGU#150 Support for CHR and ORD and other built-in functions
+ *      Kay Gürtzig             2016.04.29      Bugfix #144 suppressTransformation mode didn't fully work
  *
  ******************************************************************************************************
  *
@@ -266,22 +267,29 @@ public class OberonGenerator extends Generator {
 //		_input=BString.replace(_input,"!"," ~ ");
 //		// END KGU 2014-11-16
 // END KGU#93 2015-12-21
-		int asgnPos = transline.indexOf(":=");
-		// START KGU#109/KGU#141 2016-01-16: Bugfix #61,#112 - suppress type specifications
-		if (asgnPos >= 0)
+		// START KGU#162 2016-04-29: Bugfix for enh. #144
+		if (!this.suppressTransformation)
 		{
-			String varName = transline.substring(0, asgnPos).trim();
-			String expr = transline.substring(asgnPos+2).trim();
-			String[] typeNameIndex = this.lValueToTypeNameIndex(varName);
-			varName = typeNameIndex[1];
-			String index = typeNameIndex[2];
-			if (!index.isEmpty())
+		// END KGU#162 2016-04-29
+			int asgnPos = transline.indexOf(":=");
+			// START KGU#109/KGU#141 2016-01-16: Bugfix #61,#112 - suppress type specifications
+			if (asgnPos >= 0)
 			{
-				varName = varName + "["+index+"]";
+				String varName = transline.substring(0, asgnPos).trim();
+				String expr = transline.substring(asgnPos+2).trim();
+				String[] typeNameIndex = this.lValueToTypeNameIndex(varName);
+				varName = typeNameIndex[1];
+				String index = typeNameIndex[2];
+				if (!index.isEmpty())
+				{
+					varName = varName + "["+index+"]";
+				}
+				transline = varName + " := " + expr;
 			}
-			transline = varName + " := " + expr;
+			// END KGU#109/KGU#141 2016-01-16
+		// START KGU#162 2016-04-29: Bugfix for enh. #144
 		}
-		// END KGU#109/KGU#141 2016-01-16
+		// END KGU#162 2016-04-29
 
 		return transline.trim();
 	}

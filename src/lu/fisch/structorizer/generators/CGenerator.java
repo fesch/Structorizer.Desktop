@@ -53,7 +53,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.01.15      Issue #61/#107: improved handling of typed variables 
  *      Kay Gürtzig             2016.03.16      Enh. #84: Minimum support for FOR-IN loops (KGU#61) 
  *      Kay Gürtzig             2016.04.01      Enh. #144: Export option to suppress content conversion 
- *      Kay Gürtzig             2016.04.03      Enh. KGU#150: ord and chr functions converted (raw approach) 
+ *      Kay Gürtzig             2016.04.03      Enh. KGU#150: ord and chr functions converted (raw approach)
  *
  ******************************************************************************************************
  *
@@ -305,7 +305,7 @@ public class CGenerator extends Generator {
 						(index.isEmpty() ? "" : "["+index+"]") + 
 						" <- " + expr).trim();
 			}
-			// END KGU#109/KGU#1412016-01-16
+			// END KGU#109/KGU#141 2016-01-16
 		// START KGU#162 2016-04-01: Enh. #144
 		}
 		// END KGU#162 2016-04-01

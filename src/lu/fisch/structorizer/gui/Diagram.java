@@ -65,6 +65,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016-04-24      Bugfixes for issue #158 (KGU#177): Leaving the body of Parallel, Forever etc. downwards,
  *                                      button state update was missing.
  *      Kay Gürtzig     2016-04-24      Issue #169 accomplished: selection on start / after export
+ *      Kay Gürtzig     2016-05-02      Bugfix #184: Imported root must be set changed.
  *
  ******************************************************************************************************
  *
@@ -1277,7 +1278,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					if (result == JFileChooser.APPROVE_OPTION)
 					{
 						root.filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
-						if(!root.filename.substring(root.filename.length()-4, root.filename.length()).toLowerCase().equals(".nsd"))
+						if(!root.filename.substring(root.filename.length()-4).toLowerCase().equals(".nsd"))
 						{
 							root.filename+=".nsd";
 						}
@@ -2711,6 +2712,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				selected = root;
 				selected.setSelected(true);
 				// END KGU#183 2016-04-24
+				// START KGU#192 2016-05-02: #184 - The Root must be marked for saving
+				root.setChanged();
+				// END KGU#192 2016-05-02
 			}
 			else
 			{
@@ -3415,6 +3419,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			inputbox.checkConsistency();
 			// END KGU#61 2016-03-21
 			inputbox.setLang(NSDControl.getLang());
+//			inputbox.pack();// This makes focus control possible but requires minimum size settings
+//			if (Element.E_TOGGLETC)
+//			{
+//				inputbox.txtComment.requestFocusInWindow();
+//			}
+//			else
+//			{
+//				inputbox.txtText.requestFocusInWindow();
+//			}
 			inputbox.setVisible(true);
 
 			// get fields
