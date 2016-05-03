@@ -38,7 +38,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2015.12.11      Enh. #54 (KGU#101): Support for output expression lists
  *      Kay Gürtzig     2015.12.13      Bugfix #51 (=KGU#108): Cope with empty input and output
  *      Kay Gürtzig     2016.01.14      Type conversion of C overridden (KGU#16)
- *      Kay Gürtzig     2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61) 
+ *      Kay Gürtzig     2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61)
  *
  ******************************************************************************************************
  *

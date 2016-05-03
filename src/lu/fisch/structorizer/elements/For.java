@@ -49,6 +49,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.20      Enh. #84/#135 (KGU#61): enum type and methods introduced/modified
  *                                      to distinguish and handle FOR-IN loops 
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016-05-02      Bugfix #184: constructor For(String) now supports code import (KGU#192)
  *
  ******************************************************************************************************
  *
@@ -111,19 +112,36 @@ public class For extends Element implements ILoop {
 	public ForLoopStyle style = ForLoopStyle.FREETEXT;
 	// END KGU#61 2016-03-20
 	
+	/**
+	 * Standard constructor producing an empty element.
+	 */
 	public For()
 	{
 		super();
 		q.parent=this;
 	}
 
-	public For(String _strings)
+	/**
+	 * This constructor version is intended to be used by the code import. It automatically
+	 * fills in the dedicated parameter fields by analysing the passed-in header string _string. 
+	 * @param _string - the header string
+	 */
+	public For(String _string)
 	{
-		super(_strings);
+		super(_string);
 		q.parent=this;
-		setText(_strings);
+		setText(_string);
+		// START KGU#192 2016-05-02: Bugfix #184 - Support for code import (Pascal)
+		this.updateFromForClause();
+		// END KGU#192 2016-05-02
 	}
 	
+	/**
+	 * This is a more low-level constructor e.g. to be used on copying. It simply adopts
+	 * the given StringList _strings as text content and does NOT attempt to fill in the
+	 * FOR-loop-specific parameter fields (this is supposed to be done explicitly afterwards)
+	 * @param _strings
+	 */
 	public For(StringList _strings)
 	{
 		super(_strings);
@@ -930,17 +948,55 @@ public class For extends Element implements ILoop {
 		
 	}
 	
+	// START KGU#192 2016-05-02: Bugfix #184 - New method to support code import (from Pascal)
+	/**
+	 * Splits the For clause and updates the structured parameter fields accordingly,
+	 * classifies the loop style, sets and returns the style code.
+	 * Intended to be used in the constructor with String argument.
+	 * @return the identified style of the loop (counting, traversing, or "freestyle")
+	 */
+	private ForLoopStyle updateFromForClause()
+	{
+		String[] forParts = this.splitForClause();
+		this.setCounterVar(forParts[0]);
+		this.setStartValue(forParts[1]);
+		this.setEndValue(forParts[2]);
+		this.setStepConst(forParts[3]);
+		this.setValueList(forParts[5]);
+		return (this.style = this.classifyStyle());
+	}
+	// END KGU#192 2016-05-02
+	
+	/**
+	 * Returns the FOR loop header resulting from the stored structured fields,
+	 * not forcing a step section
+	 * @return the composed For loop header
+	 */
 	public String composeForClause()
 	{
 		return composeForClause(false);
 	}
 	
+	/**
+	 * Returns the FOR loop header resulting from the stored structured fields
+	 * @param _forceStep - if a step section is to be produced even in case step==1
+	 * @return the composed For loop header
+	 */
 	public String composeForClause(boolean _forceStep)
 	{
 		return composeForClause(this.counterVar, this.startValue, this.endValue, this.stepConst, _forceStep);
 	}
 	
 	// START KGU#61 2016-03-20: Enh. #84/#135
+	/**
+	 * Returns the FOR loop header resulting from the given arguments
+	 * @param _counter - name of the loop variable
+	 * @param _start - start value expression
+	 * @param _end - end value expression
+	 * @param _step - increment literal (integer constant)
+	 * @param _forceStep - if a step section is to be produced even in case step==1
+	 * @return the composed For loop header
+	 */
 	public static String composeForClause(String _counter, String _start, String _end, String _step, boolean _forceStep)
 	{
 		int step = 1;
@@ -953,6 +1009,15 @@ public class For extends Element implements ILoop {
 		return composeForClause(_counter, _start, _end, step, _forceStep);
 	}
 	
+	/**
+	 * Returns the FOR loop header resulting from the given arguments
+	 * @param _counter - name of the loop variable
+	 * @param _start - start value expression
+	 * @param _end - end value expression
+	 * @param _step - increment integer constant
+	 * @param _forceStep - if a step section is to be produced even in case step==1
+	 * @return the composed For loop header
+	 */
 	public static String composeForClause(String _counter, String _start, String _end, int _step, boolean _forceStep)
 	{
 		String asgnmtOpr = " <- ";	// default assignment operator

@@ -47,6 +47,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016-03-31      Enh. #144 - content conversion may be switched off
  *      Kay Gürtzig     2016-04-01      Enh. #110 - export file filter now pre-selected
  *      Kay Gürtzig     2016-04-04      Issues #149, #151 - Configurable charset / useless ExportOptionDialogs
+ *      Kay Gürtzig     2016-04-28      Draft for enh. #179 - batch mode (KGU#187)
+ *      Kay Gürtzig     2016.04.29      Bugfix KGU#189 for issue #61/#107 (mutilated array access)
  *
  ******************************************************************************************************
  *
@@ -55,7 +57,7 @@ package lu.fisch.structorizer.generators;
  *      - method mapJumps fills hashTable jumpTable mapping (Jump and Loop elements to connecting codes)
  *      - parameter names and types as well as functio name and type are preprocessed
  *      - result mechanisms are also analysed
-
+ *
  *      2014.11.16 - Enhancement
  *      - method insertComment renamed to insertAsComment (as it inserts the instruction text!)
  *      - overloaded method insertComment added to export the actual element comment
@@ -706,7 +708,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		
 		if ((subPos = _lval.indexOf('[')) >= 0 && _lval.indexOf(']', subPos+1) >= 0)
 		{
-			index = _lval.replaceAll("(.*?)[\\[](.*?)[\\]](.*?)","$2").trim();
+			// START KGU#189 2016-04-29: Bugfix for multidimensional array expressions
+			// lvalues like a[i][j] <- ... had been transformed to a[ij] <- ...
+			// Now index would become "i][j" in such a case which at least preserves syntax
+			//index = _lval.replaceAll("(.*?)[\\[](.*?)[\\]](.*?)","$2").trim();
+			index = _lval.replaceAll("(.*?)[\\[](.*)[\\]](.*?)","$2").trim();
+			// END KGU#189 2016-04-29
 		}
 		String[] typeNameIndex = {type, name, index};
 		return typeNameIndex;
@@ -1099,6 +1106,168 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 		}
 	} 
+	
+	// START KGU#187 2016-04-28: Enh. 179 batch mode
+	/*****************************************
+	 * batch code export methods
+	 *****************************************/
+
+	public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet)
+	{
+		
+		if (Charset.isSupported(_charSet))
+		{
+			exportCharset = _charSet;
+		}
+		else
+		{
+			System.err.println("*** Charset " + _charSet + " not available; " + exportCharset + " used.");
+		}
+		
+		boolean overwrite = false;
+		if (_options != null)
+		{
+			for (int i = 0; i < _options.length(); i++)
+			{
+				char ch = _options.charAt(i);
+				switch (ch)
+				{
+				//case 'C':
+				case 'c':
+					exportAsComments = true;
+					break;
+				//case 'B':
+				case 'b':
+					startBlockNextLine = true;
+					break;
+				//case 'L':
+				case 'l':
+					generateLineNumbers = true;
+					break;
+				//case 'T':
+				case 't':
+					suppressTransformation = true;
+					break;
+				case 'f':
+					overwrite = true;
+					break;
+				case '-':	// Handled separately
+					break;
+				default:
+					System.err.println("Unknown generator option -" + ch + " ignored.");
+				}
+			}
+		}
+
+		if (_targetFile != null)
+		{
+			if (!isOK(_targetFile))			
+			{
+				int posDot = _targetFile.lastIndexOf(".");
+				int posSep = _targetFile.lastIndexOf(System.getProperty("file.separator"));
+				if (posDot > posSep)
+				{
+					_targetFile = _targetFile.substring(0, posDot);
+				}
+				_targetFile += "." + getFileExtensions()[0];
+			}
+
+			StringList nameParts = StringList.explode(_targetFile, "[.]");
+			//System.out.println("File name raw: " + nameParts);
+			if (!overwrite)
+			{
+				int count = 0;
+				do {
+					File file = new File(nameParts.concatenate("."));
+					if (file.exists())
+					{
+						if (count == 0) {
+							nameParts.insert(Integer.toString(count), nameParts.count()-1);
+						}
+						else {
+							nameParts.set(nameParts.count()-2, Integer.toString(count));
+						}
+						count++;
+					}
+					else
+					{
+						overwrite = true;
+					}
+				} while (!overwrite);
+			}
+			_targetFile = nameParts.concatenate(".");
+		}
+
+		D7Parser.loadFromINI();
+		this.splitKeywords.clear();
+		String[] keywords = D7Parser.getAllProperties();
+		for (int k = 0; k < keywords.length; k++)
+		{
+			this.splitKeywords.add(Element.splitLexically(keywords[k], false));
+		}
+
+		boolean firstExport = true;
+		for (Root root : _roots)
+		{
+			if (firstExport)
+			{
+				firstExport = false;
+			}
+			else
+			{
+				code.add("");
+				this.insertComment("============================================================", "");
+				code.add("");
+			}
+			generateCode(root, "");
+		}
+
+		// Did the user want the code directed to standard output?
+		if (_options.indexOf('-') >= 0)
+		{
+			exportToStdOut();
+		}
+		// Normal file export
+		if (_targetFile != null)
+		try
+		{
+			BTextfile outp = new BTextfile(_targetFile);
+
+			outp.rewrite(exportCharset);
+
+			outp.write(code.getText());
+			outp.close();
+		}
+		catch(Exception e)
+		{
+			System.err.println("*** Error while saving the file \"" + _targetFile + "\"!\n" + e.getMessage());
+		}
+	} 
+	
+	/**
+	 * Subroutine for batch mode - writes the generated code to the console
+	 * (for redirection purposes)
+	 * Expects the target charset in field exportCharset and the code to be
+	 * exported in field code.
+	 */
+	private void exportToStdOut()
+	{
+		OutputStreamWriter outp = null;
+		try {
+			outp = new OutputStreamWriter(System.out, exportCharset);
+		} catch (UnsupportedEncodingException e) {
+			// This should never happen since we have checked the Charset before...
+			System.err.println("*** Unsupported Encoding: " + e.getMessage());
+			outp = new OutputStreamWriter(System.out, Charset.defaultCharset());
+		}
+		try {
+			BufferedWriter writer = new BufferedWriter(outp);
+			writer.write(code.getText());
+			writer.close();		// May we do this at all with an underlying System.out?
+		} catch (IOException e) {
+			System.err.println("*** Error on writing to stdout, " + e.getMessage());
+		}
+	}
 	
 	/******* FileFilter Extension *********/
 	protected boolean isOK(String _filename)

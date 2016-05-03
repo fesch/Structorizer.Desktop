@@ -53,6 +53,7 @@ package lu.fisch.structorizer.generators;
  *                                          KGU#142: Bugfix for enh. #23 - empty Jumps weren't translated
  *      Kay Gürtzig         2016.03.16      Enh. #84: Minimum support for FOR-IN loops (KGU#61) 
  *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
+ *      Kay Gürtzig         2016-04-30      Bugfix #181 - delimiters of string literals weren't converted (KGU#190)
  *
  ******************************************************************************************************
  *
@@ -243,6 +244,20 @@ public class PasGenerator extends Generator
         tokens.replaceAll("<<"," shl ");
         tokens.replaceAll(">>"," shr ");
 		tokens.replaceAll("<-", ":=");
+		// START KGU#190 2016-04-30: Bugfix #181 - String delimiters must be converted to '
+		for (int i = 0; i < tokens.count(); i++)
+		{
+			String token = tokens.get(i);
+			if (token.length() > 1 && token.startsWith("\"") && token.endsWith("\""))
+			{
+				// Seems to be a string, hence modify it
+				// Replace all internal apostrophes by double apostrophes
+				token = token.replace("'", "''");
+				// Now replace the outer delimiters
+				tokens.set(i, "'" + token.substring(1, token.length()-1) + "'");
+			}
+		}
+		// END KGU#190 2016-04-30
 		String result = tokens.concatenate();
 		// We now shrink superfluous padding - this may affect string literals, though!
 		result = result.replace("  ", " ");

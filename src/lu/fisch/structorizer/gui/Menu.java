@@ -45,6 +45,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.04.01      Issue #144: Favourite code export menu item, #142 accelerator keys added
  *      Kay Gürtzig     2016.04.06      Enh. #158: Key bindings for editNSD, moveUpNSD, moveDownNSD
  *      Kay Gürtzig     2016.04.12      Enh. #137: New message error16_7 introduced.
+ *      Kay Gürtzig     2016.04.24      Fix #173: Mnemonics for menus Diagram and Help had been compromised 
  *
  ******************************************************************************************************
  *
@@ -327,7 +328,7 @@ public class Menu extends JMenuBar implements NSDController
 		for(int i=0;i<plugins.size();i++)
 		{
 			GENPlugin plugin = (GENPlugin) plugins.get(i);
-			JMenuItem pluginItem = new JMenuItem(plugin.title,IconLoader.ico004);
+			JMenuItem pluginItem = new JMenuItem(plugin.title, IconLoader.ico004);
 			menuFileExportCode.add(pluginItem);
 			final String className = plugin.className;
 			pluginItem.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.export(className); doButtons(); } } );
