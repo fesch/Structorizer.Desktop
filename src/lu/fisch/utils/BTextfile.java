@@ -91,7 +91,9 @@ public class BTextfile
   }
 
 	/**
-	 * Opens the file for writing and overwrites any existing file with the same name
+	 * Opens the file for writing (in the given Charset) and overwrites any
+	 * existing file with the same name
+	 * @param _code - The name of a supported Charset
 	 */
 	public void rewrite(String _code) throws IOException
 	{
@@ -101,6 +103,7 @@ public class BTextfile
 	
 	/**
 	 * Opens the file for writing and overwrites any existing file with the same name
+	 * Uses charset "ISO-8859-1". (For a different encoding use BTextfile.write(_code);)
 	 */
 	public void rewrite() throws IOException
 	{
