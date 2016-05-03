@@ -444,7 +444,7 @@ public class Structorizer
 		{
 			System.out.print((j > 0 ? " | " : "\t\t") + names[j]);
 		}
-		
+		System.out.println("");
 	}
 	// END KGU#187 2016-05-02
 	
