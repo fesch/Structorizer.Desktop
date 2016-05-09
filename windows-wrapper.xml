@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch4jConfig>
+  <dontWrapJar>true</dontWrapJar>
+  <headerType>gui</headerType>
+  <jar>Structorizer.app/Contents/Java/Structorizer.jar</jar>
+  <outfile>/Users/robertfisch/Programs/Structorizer/Structorizer/Structorizer.exe</outfile>
+  <errTitle></errTitle>
+  <cmdLine></cmdLine>
+  <chdir>.</chdir>
+  <priority>normal</priority>
+  <downloadUrl>http://java.com/download</downloadUrl>
+  <supportUrl>http://structorizer.fisch.lu</supportUrl>
+  <stayAlive>false</stayAlive>
+  <restartOnCrash>false</restartOnCrash>
+  <manifest></manifest>
+  <icon>/Users/robertfisch/Programs/Structorizer/icons/Structorizer.ico</icon>
+  <jre>
+    <path></path>
+    <bundledJre64Bit>false</bundledJre64Bit>
+    <bundledJreAsFallback>false</bundledJreAsFallback>
+    <minVersion>1.6.0</minVersion>
+    <maxVersion></maxVersion>
+    <jdkPreference>preferJre</jdkPreference>
+    <runtimeBits>64/32</runtimeBits>
+  </jre>
+  <splash>
+    <file>/Users/robertfisch/Programs/Structorizer/icons/Structorizer512.bmp</file>
+    <waitForWindow>true</waitForWindow>
+    <timeout>60</timeout>
+    <timeoutErr>true</timeoutErr>
+  </splash>
+</launch4jConfig>

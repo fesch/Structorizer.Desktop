@@ -9,7 +9,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.24-10 (2016.04.25)
+Current development version: 3.24-11 (2016.05.03)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]
 - 01: Enh. #124: Generalized runtime data visualisation <Kay Gürtzig>
 - 01: Arranger now adopts current directory from first arranged diagram <Kay Gürtzig>
@@ -47,10 +47,15 @@ Current development version: 3.24-10 (2016.04.25)
 - 09: Issue #169: Selection ensured on new / loading an NSD, undo, redo [Rolf Schmidt]
 - 09: Bugfix #171: Twos flaws in enh. #158 mended <Kay Gürtzig>
 - 10: Issue #30: Lexicographic string comparison enabled (Executor). <Kay Gürtzig>
-- 10: Issue #137: Output text window now automatically scrolls to end. <Kay Gürtzig>
+- 10: Issue #137: Output text window now styled and automatically scrolls to end. <Kay Gürtzig>
+- 10: Issue #163: Tab / Shift-Tab key now move focus in element editor [Rolf Schmidt]
 - 10: Issue #169: Selection ensured on start / after export. [Rolf Schmidt]
 - 10: Issue #173: Mnemonics corrected (EN) and localized in most languages. <Kay Gürtzig>
 - 10: Enh. #174: Input now accepts array initialisation expressions. <Kay Gürtzig>
+- 11: Enh. #10 / bugfix #184: Flaws in Pascal import of FOR loops mended <Kay Gürtzig>
+- 11: Enh. #179: Code generation and parsing in batch mode [Rolf Schmidt] <Kay Gürtzig>
+- 11: Bugfix #181: Pascal export didn't convert all string delimiters <Kay Gürtzig>
+- 11: Bugfix #184: Diagram imported from Pascal now enables save button <Kay Gürtzig>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
@@ -224,7 +229,7 @@ Version 3.21 [2011.06.28]
 
 Version 3.20 [2010.11.15]
 - 01: Some bugfixes in the generator classes [Georg Braun]
-- 02: Some more improuvements to the C generator [Kay Gürtzig]
+- 02: Some more improvements to the C generator [Kay Gürtzig]
 - 03: Different other bugfixes in the generator classes [Kay Gürtzig]
 - 03: Some small changes to the variable highlighting [Kay Gürtzig]
 - 04: More bugfixes for C, C# and Java generator [Kay Gürtzig]
@@ -252,7 +257,7 @@ Version 3.18 [2009.12.20]
 - "Show comments?" settings being overwritten by diagram (issue #2898346) [Marcus Radisch]
 - Structorizer is now published under the terms of the GPLv3 license [FISRO]
 - Italian localization [Andrea Maiani]
-- ANALYSER: "Result" is now a good variable name for fonction results [FISRO]
+- ANALYSER: "Result" is now a good variable name for function results [FISRO]
 
 Version 3.17 [2009.10.18]
 - Brazilian portuguese localization [Theldo Cruz]
@@ -268,27 +273,27 @@ Version 3.17 [2009.10.18]
 Version 3.16 [2009.08.22]
 - MAC: Files do not open with double click (bug #7) [Thijs Zandwijk]
     * Re-added the "AppleJavaExtensions.jar" to the libraries
-    * This should not interfer with other OS
+    * This should not interfere with other OS
     * It will not be included in the source package either ...
-- MAC: The menubar was disapearing after opening a any dialog [FISRO]
-    * This is a known apple bug with a know workaround *uff*
+- MAC: The menubar was disappearing after opening a any dialog [FISRO]
+    * This is a known apple bug with a known workaround *uff*
 - MAC: Shortcut key stopped working [FISRO]
     * I found that this was related to the previous bug, so fixing
       that one fixed this issue as well.
 - Added file association in Java Web Start [FISRO]
-- Fixed an issue with the luxemburgish language file [FISRO]
-- Bugfixes in the "C" & "Java" source code genetator (bug #8) [Theldo Cruz]
-- Updates of the "C", "Java" & "Pascal" code generatos [FISRO]
+- Fixed an issue with the Luxemburgish language file [FISRO]
+- Bugfixes in the "C" & "Java" source code generator (bug #8) [Theldo Cruz]
+- Updates of the "C", "Java" & "Pascal" code generators [FISRO]
 - Added "Structorizer Arranger" [Stephan O. Merckens]
     * Start via Java Web Start: http://structorizer.fisch.lu/webstart/Arranger.jnlp
 
 Version 3.15 [2009.08.13]
-- Fixed a bug while execution a "REPEAT" loop (bug #3) [Jos Swennen]
+- Fixed a bug concerning execution of a "REPEAT" loop (bug #3) [Jos Swennen]
 - Implemented the execution of the "CASE" structure (bug #4) [Jos Swennen]
 - Fixed a bug in class responsible for saving the preferences [FISRO]
 - Bugfixes in the C source code export [Gunter Schillebeeckx]
-- Implementation of a Java gsource code export [Gunter Schillebeeckx]
-- Bug fixed while displaying a comment (bug #6) [Nico]
+- Implementation of a Java source code export [Gunter Schillebeeckx]
+- Bug fixed concerning the displaying a comment (bug #6) [Nico]
 
 Version 3.14 [2009.07.06]
 - Updated NSD execution feature [FISRO]
@@ -318,7 +323,7 @@ Version 3.13 [2009.05.23]
     ° penDown()
 - Added NSD execution feature [FISRO]
   * use of variables
-  * user of general expressions
+  * use of general expressions
   * input (parameter or prompt): String, Character, Integer or Double
   * output: direct and function result
   * java syntax => build in (BeanShell)
@@ -357,7 +362,7 @@ Version 3.09 [14/08/08]
 - Added simply command line compilation script [Klaus-Peter Reimers]
 - Unification of the previous mentioned source packages [FISRO]
 - NL translated strings [Jerone]
-_ Modified OBERON code generator [Klaus-Peter Reimers]
+- Modified OBERON code generator [Klaus-Peter Reimers]
 
 Version 3.08 [16/05/08]
 - KSH & Perl Code Export [Jan Peter Klippel]

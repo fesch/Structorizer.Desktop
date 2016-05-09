@@ -22,7 +22,7 @@ package lu.fisch.structorizer.executor;
 
 /******************************************************************************************************
  *
- *      Author:         Bob Fisch
+ *      Author:         Kay Gürtzig
  *
  *      Description:    This class represents the Output text area for executor console mode.
  *
@@ -32,9 +32,10 @@ package lu.fisch.structorizer.executor;
  *
  *      Author          Date            Description
  *      ------			----			-----------
- *      Kay Gürtzig     2016.04.08      First Issue (implementing enhancement request #137)
+ *      Kay Gürtzig     2016.04.08      First Issue (implementing enhancement request #137 / KGU#160)
  *      Kay Gürtzig     2016.04.12      Functionality accomplished
  *      Kay Gürtzig     2016-04-25      Scrolling to last line ensured
+ *      Kay Gürtzig     2016-04-26      Converted to JTextPane in order to allow styled output
  *
  ******************************************************************************************************
  *
@@ -49,7 +50,11 @@ import java.awt.Rectangle;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import javax.swing.JTextPane;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 
 import lu.fisch.structorizer.gui.IconLoader;
 
@@ -57,7 +62,8 @@ import lu.fisch.structorizer.gui.IconLoader;
 public class OutputConsole extends JFrame {
 
 	private JPanel panel;
-	private JTextArea textArea;
+	private JTextPane textPane;
+	private StyledDocument doc = null;
 	
 	public OutputConsole()
 	{
@@ -78,22 +84,32 @@ public class OutputConsole extends JFrame {
         setTitle("Structorizer Output Console");
     	this.setIconImage(IconLoader.ico004.getImage());
     	
-    	textArea = new JTextArea();
-    	textArea.setBackground(Color.BLACK);
-    	textArea.setForeground(Color.WHITE);
-    	JScrollPane scrText = new JScrollPane(textArea);
+    	textPane = new JTextPane();
+    	textPane.setBackground(Color.BLACK);
+    	textPane.setForeground(Color.WHITE);
+    	JScrollPane scrText = new JScrollPane(textPane);
+    	doc = textPane.getStyledDocument();
+    	Color[] colours = {Color.BLUE, Color.CYAN, Color.GRAY, Color.GREEN, Color.LIGHT_GRAY,
+    			Color.MAGENTA, Color.ORANGE, Color.PINK, Color.RED, Color.WHITE, Color.YELLOW};
+    	for (Color colour : colours)
+    	{
+    		Style style = doc.addStyle(colour.toString(), null);
+    		style.addAttribute(StyleConstants.Foreground, colour);
+    	}
     	panel.setLayout(new BorderLayout());
     	panel.add(scrText, BorderLayout.CENTER);
-    	textArea.setLineWrap(true);
     	this.add(panel, null);
-    	//textArea.setRows(25);
-    	//textArea.setColumns(80);
     	this.setSize(500, 250);
     }
     
     public void clear()
     {
-    	this.textArea.setText("");
+    	try {
+			doc.remove(0, doc.getLength());
+		} catch (BadLocationException ex) {
+			// TODO Auto-generated catch block
+			ex.printStackTrace();
+		}
     }
     
     /**
@@ -102,12 +118,17 @@ public class OutputConsole extends JFrame {
      */
     public void write(String _text)
     {
-    	this.textArea.append(_text);
+    	try {
+			this.doc.insertString(doc.getLength(), _text, null);
+		} catch (BadLocationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     	// Scroll to end (if there is an easier way, I just didn't find it).
-    	Rectangle rect = this.textArea.getBounds();
+    	Rectangle rect = this.textPane.getBounds();
     	rect.y = rect.height - 1;
     	rect.height = 1;
-    	this.textArea.scrollRectToVisible(rect);
+    	this.textPane.scrollRectToVisible(rect);
     }
 
     /**
@@ -119,16 +140,17 @@ public class OutputConsole extends JFrame {
      */
     public void write(String _text, Color _colour)
     {
-    	// TODO: In order to be able to format something we must use a Document
-    	//Color oldColour = this.textArea.getForeground();
-    	//this.textArea.setForeground(_colour);
-    	this.textArea.append(_text);
-    	//this.textArea.setForeground(oldColour);
+    	try {
+			this.doc.insertString(doc.getLength(), _text, doc.getStyle(_colour.toString()));
+		} catch (BadLocationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     	// Scroll to end (if there is an easier way, I just didn't find it).
-    	Rectangle rect = this.textArea.getBounds();
+    	Rectangle rect = this.textPane.getBounds();
     	rect.y = rect.height - 1;
     	rect.height = 1;
-    	this.textArea.scrollRectToVisible(rect);
+    	this.textPane.scrollRectToVisible(rect);
     }
 
     /**

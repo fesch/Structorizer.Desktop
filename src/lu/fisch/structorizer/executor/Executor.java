@@ -81,11 +81,12 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016-04-12      Enh. #137 (KGU#160): Additional or exclusive output to text window
  *      Kay Gürtzig     2016-04-25      Issue #30 (KGU#76): String comparison substantially improved,
  *                                      Enh. #174 (KGU#184): Input now accepts array initialisation expressions
+ *      Kay Gürtzig     2016-04-26      KGU#150: ord implementation revised,
+ *                                      Enh. #137 (KGU#160): Arguments and results added to text window output
  *
  ******************************************************************************************************
  *
  *      Comment:
- *      TODO: Consistent implementation of new setting D7Parser.ignoreCase
  *      2016-03-17 Enh. #133 (KGU#159)
  *      - Previously, a Call stack trace was only shown in cse of an execution error or manual abort.
  *        Now a Call stack trace may always be requested while execution hasn't ended. Only prerequisite
@@ -777,7 +778,10 @@ public class Executor implements Runnable
 						// START KGU#2 2015-11-24: We might need the values for a stacktrace
 						arguments[i] = interpreter.get(in);
 						// END KGU#2 2015-11-24
-					} catch (EvalError ex)
+						// START KGU#160 2016-04-26: Issue #137 - document the arguments
+						this.console.writeln("*** Argument <" + in + "> = " + this.prepareValueForDisplay(arguments[i]), Color.CYAN);
+						// END KGU#160 2016-04-26
+											} catch (EvalError ex)
 					{
 						result = ex.getMessage();
 						break;
@@ -901,6 +905,9 @@ public class Executor implements Runnable
 								//}
 								else if (step)
 								{
+									// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
+									this.console.writeln("*** Returned result: " + this.prepareValueForDisplay(resObj), Color.CYAN);
+									// END KGU#160 2016-04-26
 									JOptionPane.showMessageDialog(diagram, resObj,
 											"Returned result", JOptionPane.INFORMATION_MESSAGE);
 								}
@@ -983,10 +990,17 @@ public class Executor implements Runnable
 		arrayView.getContentPane().add(btnPause, BorderLayout.NORTH);
 		btnPause.setVisible(withPauseButton);
 		// END KGU#147 2016-01-29
+		// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
+		this.console.writeln("*** " + _title + ":", Color.CYAN);
+		// END KGU#160 2016-04-26
 		List arrayContent = new List(10);
 		for (int i = 0; i < _array.length; i++)
 		{
-			arrayContent.add("[" + i + "]  " + prepareValueForDisplay(_array[i]));
+			// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
+			String valLine = "[" + i + "]  " + prepareValueForDisplay(_array[i]);
+			this.console.writeln("\t" + valLine, Color.CYAN);
+			// END KGU#160 2016-04-26
+			arrayContent.add(valLine);
 		}
 		arrayView.getContentPane().add(arrayContent, BorderLayout.CENTER);
 		arrayView.setSize(300, 300);
@@ -1296,8 +1310,10 @@ public class Executor implements Runnable
 			// START KGU#150 2016-04-03
 			pascalFunction = "public int ord(Character ch) { return (int)ch; }";
 			interpreter.eval(pascalFunction);
-			// FIXME: Find a better suited exceptkon
-			pascalFunction = "public int ord(String s) throws Exception { if (s.length() == 1) return (int)s.charAt(0); else throw new Exception(); }";
+			// START KGU 2016-04-26: It is conform to many languages just to use the first character
+			//pascalFunction = "public int ord(String s) throws Exception { if (s.length() == 1) return (int)s.charAt(0); else throw new Exception(); }";
+			pascalFunction = "public int ord(String s) { return (int)s.charAt(0); }";
+			// END KGU 2016-04-26
 			interpreter.eval(pascalFunction);
 			pascalFunction = "public char chr(int code) { return (char)code; }";
 			interpreter.eval(pascalFunction);
@@ -2315,7 +2331,7 @@ public class Executor implements Runnable
 			String msg = control.lbInputValue.getText();
 			msg = msg.replace("%", in);
 			// START KGU#160 2016-04-12: Enh. #137 - text window output
-			this.console.write(msg + ": ");
+			this.console.write(msg + ": ", Color.YELLOW);
 			if (isConsoleEnabled)
 			{
 				this.console.setVisible(true);
@@ -2475,6 +2491,9 @@ public class Executor implements Runnable
 					showArray((Object[])resObj, "Returned result", !step);
 				} else if (step)
 				{
+					// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
+					this.console.writeln("*** Returned result: " + this.prepareValueForDisplay(resObj), Color.CYAN);
+					// END KGU#160 2016-04-26
 					// START KGU#147 2016-01-29: This "uncoverting" copied from tryOutput() didn't make sense...
 					//String s = unconvert(resObj.toString());
 					//JOptionPane.showMessageDialog(diagram, s,
