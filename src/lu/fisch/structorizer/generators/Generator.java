@@ -97,6 +97,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	private String exportCharset = Charset.defaultCharset().name();
 	// END KGU#173 2016-04-04
 	protected StringList code = new StringList();
+	
+	// START KGU#194 2016-05-07: Bugfix #185 - subclasses might need filename access
+	protected String pureFilename = "";
+	// END KGU#194 2016-05-07
 
 	// START KGU#74 2015-11-29: Sound handling of Jumps requires some tracking
 	protected boolean returns = false; // Explicit return instructions occurred?
@@ -867,7 +871,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 
 	/******** Public Methods *************/
 
+	// START KGU#178 2016-05-07: Enh. #160 - recursion preparation
 	public String generateCode(Root _root, String _indent)
+	{
+		return generateCode(_root, _indent, -1);
+	}
+	
+	protected String generateCode(Root _root, String _indent, int _insertAtLine)
+	// END KGU#178 2016-05-07
 	{
 		// START KGU#74 2015-11-30: General pre-processing phase 1
 		// Code analysis and Header analysis
@@ -951,7 +962,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#74 2015-11-30
 	
-	public void exportCode(Root _root, File _currentDirectory, Frame frame)
+	public void exportCode(Root _root, File _currentDirectory, Frame _frame)
 	{
 		try
 		{
@@ -1014,7 +1025,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		dlgSave.addChoosableFileFilter((javax.swing.filechooser.FileFilter) this);
 		dlgSave.setFileFilter((javax.swing.filechooser.FileFilter) this);
 		// END KGU 2016-04-01
-		int result = dlgSave.showSaveDialog(frame);
+		int result = dlgSave.showSaveDialog(_frame);
 
 		/***** file_exists check here!
 		 if(file.exists())
@@ -1067,6 +1078,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 			if(writeDown==true)
 			{
+				// START KGU#194 2016-05-07: Bugfix #185 - the subclass may need the filename
+				pureFilename = file.getName();
+				int dotPos = pureFilename.indexOf(".");
+				if (dotPos >= 0)
+				{
+					pureFilename = pureFilename.substring(0, dotPos);
+				}
+				// END KGU#194 2016-05-07
 
 				// START KGU 2016-03-29: Pre-processed match patterns for better identification of complicated keywords
 		    	this.splitKeywords.clear();

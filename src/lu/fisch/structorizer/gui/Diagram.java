@@ -66,6 +66,7 @@ package lu.fisch.structorizer.gui;
  *                                      button state update was missing.
  *      Kay Gürtzig     2016-04-24      Issue #169 accomplished: selection on start / after export
  *      Kay Gürtzig     2016-05-02      Bugfix #184: Imported root must be set changed.
+ *      Kay Gürtzig     2016-05-08      Issue #185: Import of multiple roots per file (collected in Arranger, KGU#194)
  *
  ******************************************************************************************************
  *
@@ -84,6 +85,7 @@ import net.iharder.dnd.*; //http://iharder.sourceforge.net/current/java/filedrop
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.imageio.*;
@@ -1217,7 +1219,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * Save method
 	 *****************************************/
 	
-	// Returns false iff a popped-up file save dialog was cancelled by the user rather than decided 
+	/**
+	 * Stores unsaved changes (if any). If _checkChanges is true then the user may confirms or deny saving or cancel the
+	 * inducing request. 
+	 * @param _checkChanged - if true and the current root has unsaved changes then a user dialog will be popped up first
+	 * @return true if the user cancelled the save request
+	 */
 	public boolean saveNSD(boolean _checkChanged)
 	{
 		int res = 0;	// Save decision: 0 = do save, 1 = don't save, -1 = cancelled (don't leave)
@@ -2702,19 +2709,44 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			// load and parse source-code
 			D7Parser d7 = new D7Parser("D7Grammar.cgt");
-			Root rootNew = d7.parse(filename);
+			// START KGU#194 2016-05-08: Bugfix #185 - mechanism for multiple roots per file
+			//Root rootNew = d7.parse(filename);
+			List<Root> newRoots = d7.parse(filename, "ISO-8859-1");
+			// END KGU#194 2016-05-08
 			if (d7.error.equals(""))
 			{
 				boolean hil = root.hightlightVars;
-				root = rootNew;
-				root.hightlightVars = hil;
-				// START KGU#183 2016-04-24: Enh. #169
-				selected = root;
-				selected.setSelected(true);
-				// END KGU#183 2016-04-24
-				// START KGU#192 2016-05-02: #184 - The Root must be marked for saving
-				root.setChanged();
-				// END KGU#192 2016-05-02
+				// START KGU#194 2016-05-08: Bugfix #185 - there may be multiple routines 
+				Root firstRoot = null;
+				//root = rootNew;
+				Iterator<Root> iter = newRoots.iterator();
+				if (iter.hasNext()){
+					firstRoot = iter.next();
+				}
+				while (iter.hasNext())
+				{
+					root = iter.next();
+					root.hightlightVars = hil;
+					// The Root must be marked for saving
+					root.setChanged();
+					// ... and be added to the Arranger
+					this.arrangeNSD();
+				}
+				if (firstRoot != null)
+				{
+					root = firstRoot;
+				// END KGU#194 2016-05-08
+					root.hightlightVars = hil;
+					// START KGU#183 2016-04-24: Enh. #169
+					selected = root;
+					selected.setSelected(true);
+					// END KGU#183 2016-04-24
+					// START KGU#192 2016-05-02: #184 - The Root must be marked for saving
+					root.setChanged();
+					// END KGU#192 2016-05-02
+				// START KGU#194 2016-05-08: Bugfix #185 - multiple routines per file
+				}
+				// END KGU#194 2016-05-08
 			}
 			else
 			{
@@ -3419,15 +3451,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			inputbox.checkConsistency();
 			// END KGU#61 2016-03-21
 			inputbox.setLang(NSDControl.getLang());
-//			inputbox.pack();// This makes focus control possible but requires minimum size settings
-//			if (Element.E_TOGGLETC)
-//			{
-//				inputbox.txtComment.requestFocusInWindow();
-//			}
-//			else
-//			{
-//				inputbox.txtText.requestFocusInWindow();
-//			}
 			inputbox.setVisible(true);
 
 			// get fields

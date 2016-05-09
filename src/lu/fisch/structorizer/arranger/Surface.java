@@ -52,6 +52,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.03.16      Bugfix #132: Precautions against stale Mainform references (KGU#158)
  *      Kay Gürtzig     2016.04.14      Enh. #158: Methods for copy and paste of diagrams as XML strings (KGU#177)
  *                                      Selection mechanisms mended
+ *      Kay Gürtzig     2016-05-09      Issue #185: Chance to store unsaved changes before removal (KGU#194) 
  *
  ******************************************************************************************************
  *
@@ -736,7 +737,28 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     {
     	if (this.mouseSelected != null)
     	{
-    		this.mouseSelected.root.removeUpdater(this);
+    		// START KGU#194 2016-05-09: Bugfix #185 - on importing unsaved roots may linger here
+    		if (this.mouseSelected.root.hasChanged())
+    		{
+    			Mainform form = this.mouseSelected.mainform;
+    			if (form == null || form.getRoot() != this.mouseSelected.root)
+    			{
+    				// Create a temporary Mainform
+    				form = new Mainform(false);
+    				form.setRoot(mouseSelected.root);
+    				// Let the user decide to save it or not, or to cancel this removal 
+    				boolean goOn = form.diagram.saveNSD(true);
+    				// Destroy the temporary Mainform
+    				form.dispose();
+    				if (!goOn)
+    				{
+    					// User cancelled this - don't remove
+    					return;
+    				}
+    			}
+    		}
+    		// END KGU#194 2016-05-09
+			this.mouseSelected.root.removeUpdater(this);
     		diagrams.remove(this.mouseSelected);
     		this.mouseSelected = null;
     		adaptLayout();
@@ -949,7 +971,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
             	try
             	{
             // END KGU#158 2016-03-16 (part 1)
-            		// START KGU#88 2015-11-24: An atteched Mainform might refuse to re-adopt the root
+            		// START KGU#88 2015-11-24: An attached Mainform might refuse to re-adopt the root
             		//if(form==null)
             		if(form==null || !form.setRoot(mouseSelected.root))
             			// END KGU#88 2015-11-24

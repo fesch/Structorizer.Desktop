@@ -9,7 +9,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.24-11 (2016.05.03)
+Current development version: 3.24-12 (2016.05.??)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]
 - 01: Enh. #124: Generalized runtime data visualisation <Kay Gürtzig>
 - 01: Arranger now adopts current directory from first arranged diagram <Kay Gürtzig>
@@ -56,6 +56,11 @@ Current development version: 3.24-11 (2016.05.03)
 - 11: Enh. #179: Code generation and parsing in batch mode [Rolf Schmidt] <Kay Gürtzig>
 - 11: Bugfix #181: Pascal export didn't convert all string delimiters <Kay Gürtzig>
 - 11: Bugfix #184: Diagram imported from Pascal now enables save button <Kay Gürtzig>
+- 12: Several minor bugfixes in Pascal export and import <Kay Gürtzig>
+- 12: Issue #185: Pascal export of functions/procedures now as units. <Kay Gürtzig>
+- 12: Issue #185: Pascal import now copes with multiple routines per file. <Kay Gürtzig> 
+- 12: Executor: Enhanced language support (EN/DE/ES) and minor bugfixing <Kay Gürtzig>
+- 12: Arranger now offers saving before removing "dirty" diagrams <Kay Gürtzig>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]

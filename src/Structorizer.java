@@ -34,6 +34,7 @@
  *      Kay Gürtzig     2015.12.16      Bugfix #63 - no open attempt without need
  *      Kay Gürtzig     2016.04.28      First draft for enh. #179 - batch generator mode (KGU#187)
  *      Kay Gürtzig     2016.05.03      Prototype for enh. #179 - incl. batch parser and help (KGU#187)
+ *      Kay Gürtzig     2016.05.08      Issue #185: Capability of multi-routine import per file (KGU#194)
  *
  ******************************************************************************************************
  *
@@ -49,6 +50,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Vector;
 
 import javax.swing.UIManager;
@@ -340,14 +343,27 @@ public class Structorizer
 			System.exit(5);
 		}
 		
-
+		// START KGU#193 2016-05-09: Output file name specification was ignred, optio f had to be tuned.
+		boolean overwrite = _options.indexOf("f") >= 0 && 
+				!(_outFile != null && !_outFile.isEmpty() && _filenames.size() > 1);
+		// END KGU#193 2016-05-09
+		
+		// While there is only one input language candidate, a single Parser instance is enough
+		D7Parser d7 = new D7Parser("D7Grammar.cgt");
+		
 		for (String filename : _filenames)
 		{
-			Root rootNew = null;
+			// START KGU#194 2016-05-08: Bugfix #185 - face more contained roots
+			//Root rootNew = null;
+			List<Root> newRoots = new LinkedList<Root>();
+			// END KGU#194 2016-05-08
 			if (fileExt.equals("pas"))
 			{
-				D7Parser d7 = new D7Parser("D7Grammar.cgt");
-				rootNew = d7.parse(filename);
+				//D7Parser d7 = new D7Parser("D7Grammar.cgt");
+				// START KGU#194 2016-05-04: Bugfix for 3.24-11 - encoding wasn't passed
+				//rootNew = d7.parse(filename);
+				newRoots = d7.parse(filename, _charSet);
+				// END KGU#194 2016-05-04
 				if (!d7.error.isEmpty())
 				{
 					System.err.println("Parser error in file " + filename + "\n" + d7.error);
@@ -356,10 +372,21 @@ public class Structorizer
 			}
 			// TODO Insert further parser variants here if available...
 			
-			// Now save the root as NSD file. Derive the target file name from the source file name
-			if (rootNew != null)
+		
+			// Now save the roots as NSD files. Derive the target file names from the source file name
+			// if _outFile isn't given.
+			// START KGU#193 2016-05-09: Output file name specification was ignred, optio f had to be tuned.
+			if (_outFile != null && !_outFile.isEmpty())
 			{
-				boolean overwrite = _options.indexOf("f") >= 0;
+				filename = _outFile;
+			}
+			// END KGU#193 2016-05-09
+			// START KGU#194 2016-05-08: Bugfix #185 - face more contained roots
+			//if (rootNew != null)
+			boolean multipleRoots = newRoots.size() > 1;
+			for (Root rootNew : newRoots)
+			// END KGU#194 2016-05-08
+			{
 				StringList nameParts = StringList.explode(filename, "[.]");
 				String ext = nameParts.get(nameParts.count()-1).toLowerCase();
 				if (ext.equals(fileExt))
@@ -369,6 +396,11 @@ public class Structorizer
 				else if (!ext.equals("nsd"))
 				{
 					nameParts.add("nsd");
+				}
+				// In case of multiple roots (subroutines) insert the routine name 
+				if (multipleRoots && !rootNew.isProgram)
+				{
+					nameParts.insert(rootNew.getMethodName(), nameParts.count()-1);
 				}
 				//System.out.println("File name raw: " + nameParts);
 				if (!overwrite)
@@ -392,10 +424,10 @@ public class Structorizer
 						}
 					} while (!overwrite);
 				}
-				filename = nameParts.concatenate(".");
+				String filenameToUse = nameParts.concatenate(".");
 				//System.out.println("Writing to " + filename);
 				try {
-					FileOutputStream fos = new FileOutputStream(filename);
+					FileOutputStream fos = new FileOutputStream(filenameToUse);
 					Writer out = null;
 					out = new OutputStreamWriter(fos, "UTF8");
 					XmlGenerator xmlgen = new XmlGenerator();
