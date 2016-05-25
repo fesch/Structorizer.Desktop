@@ -888,6 +888,9 @@ public class Executor implements Runnable
 							this.returnedValue = resObj;
 							if (this.callers.isEmpty())
 							{
+								// START KGU#197 2016-05-25: Translate the headline!
+								String header = control.lbReturnedResult.getText();
+								// END KGU#197 2016-05-25
 								// START KGU#133 2016-01-09: Show large arrays in a listview
 								//JOptionPane.showMessageDialog(diagram, n,
 								//		"Returned result", JOptionPane.INFORMATION_MESSAGE);
@@ -896,7 +899,7 @@ public class Executor implements Runnable
 								{
 									// START KGU#147 2016-01-29: Enh. #84 - interface changed for more flexibility
 									//showArray((Object[])resObj, "Returned result");
-									showArray((Object[])resObj, "Returned result", !step);
+									showArray((Object[])resObj, header, !step);
 									// END KGU#147 2016-01-29
 								}
 								// START KGU#84 2015-11-23: Enhancement to give a chance to pause (though of little use here)
@@ -908,18 +911,18 @@ public class Executor implements Runnable
 								else if (step)
 								{
 									// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
-									this.console.writeln("*** Returned result: " + this.prepareValueForDisplay(resObj), Color.CYAN);
+									this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
 									// END KGU#160 2016-04-26
 									JOptionPane.showMessageDialog(diagram, resObj,
-											"Returned result", JOptionPane.INFORMATION_MESSAGE);
+											header, JOptionPane.INFORMATION_MESSAGE);
 								}
 								else
 								{
 									// START KGU#198 2016-05-25: Issue #137 - also log the result to the console
-									this.console.writeln("*** Returned result: " + this.prepareValueForDisplay(resObj), Color.CYAN);
+									this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
 									// END KGU#198 2016-05-25
 									Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
-									int pressed = JOptionPane.showOptionDialog(diagram, resObj, "Returned result",
+									int pressed = JOptionPane.showOptionDialog(diagram, resObj, header,
 											JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
 									if (pressed == 1)
 									{
