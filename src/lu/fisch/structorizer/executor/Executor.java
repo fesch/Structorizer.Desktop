@@ -1,4 +1,4 @@
-﻿/*
+/*
     Structorizer
     A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
 
@@ -50,23 +50,14 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2015.11.11      Issue #21 KGU#77 fixed: return instructions didn't terminate the execution.
  *      Kay Gürtzig     2015.11.12      Bugfix KGU#79: WHILE condition wasn't effectively converted.
  *      Kay Gürtzig     2015.11.13/14   Enhancement #9 (KGU#2) to allow the execution of subroutine calls
-
  *      Kay Gürtzig     2015.11.20      Bugfix KGU#86: Interpreter was improperly set up for functions sqr, sqrt;
-
  *                                      Message types for output and return value information corrected
-
  *      Kay Gürtzig     2015.11.23      Enhancement #36 (KGU#84) allowing to pause from input and output dialogs.
-
  *      Kay Gürtzig     2015.11.24/25   Enhancement #9 (KGU#2) enabling the execution of calls accomplished.
-
  *      Kay Gürtzig     2015.11.25/27   Enhancement #23 (KGU#78) to handle Jump elements properly.
-
  *      Kay Gürtzig     2015.12.10      Bugfix #49 (KGU#99): wrapper objects in variables obstructed comparison,
-
  *                                      ER #48 (KGU#97) w.r.t. delay control of diagramControllers
-
  *      Kay Gürtzig     2015.12.11      Enhancement #54 (KGU#101): List of output expressions
-
  *      Kay Gürtzig     2015.12.13      Enhancement #51 (KGU#107): Handling of empty input and output
  *      Kay Gürtzig     2015.12.15/26   Bugfix #61 (KGU#109): Precautions against type specifiers
  *      Kay Gürtzig     2016.01.05      Bugfix #90 (KGU#125): Arranger updating for executed subroutines fixed
@@ -897,9 +888,6 @@ public class Executor implements Runnable
 							this.returnedValue = resObj;
 							if (this.callers.isEmpty())
 							{
-								// START KGU#198 2016-05-25: Issue #137 - also log the result to the console
-								this.console.writeln("*** Returned result: " + this.prepareValueForDisplay(resObj), Color.CYAN);
-								// END KGU#198 2016-05-25
 								// START KGU#133 2016-01-09: Show large arrays in a listview
 								//JOptionPane.showMessageDialog(diagram, n,
 								//		"Returned result", JOptionPane.INFORMATION_MESSAGE);
@@ -920,13 +908,16 @@ public class Executor implements Runnable
 								else if (step)
 								{
 									// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
-									//this.console.writeln("*** Returned result: " + this.prepareValueForDisplay(resObj), Color.CYAN);
+									this.console.writeln("*** Returned result: " + this.prepareValueForDisplay(resObj), Color.CYAN);
 									// END KGU#160 2016-04-26
 									JOptionPane.showMessageDialog(diagram, resObj,
 											"Returned result", JOptionPane.INFORMATION_MESSAGE);
 								}
 								else
 								{
+									// START KGU#198 2016-05-25: Issue #137 - also log the result to the console
+									this.console.writeln("*** Returned result: " + this.prepareValueForDisplay(resObj), Color.CYAN);
+									// END KGU#198 2016-05-25
 									Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
 									int pressed = JOptionPane.showOptionDialog(diagram, resObj, "Returned result",
 											JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
@@ -2529,6 +2520,9 @@ public class Executor implements Runnable
 				// END KGU#133 2016-01-29
 				} else
 				{
+					// START KGU#198 2016-05-25: Issue #137 - also log the result to the console
+					this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
+					// END KGU#198 2016-05-25
 					// START KGU#84 2015-11-23: Enhancement to give a chance to pause (though of little use here)
 					Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
 					int pressed = JOptionPane.showOptionDialog(diagram, resObj, header,
