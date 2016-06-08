@@ -85,6 +85,7 @@ package lu.fisch.structorizer.executor;
  *                                      Enh. #137 (KGU#160): Arguments and results added to text window output
  *      Kay Gürtzig     2016.05.05      KGU#197: Further (forgotten) texts put under language support
  *      Kay Gürtzig     2016.05.25      KGU#198: top-level function results weren't logged in the window output
+ *      Kay Gürtzig     2016.06.07      KGU#200: While loops showed wrong colour if their body raised an error
  *
  ******************************************************************************************************
  *
@@ -2898,10 +2899,16 @@ public class Executor implements Runnable
 					}
 					// END KGU#117 2016-03-07
 
-					element.executed = true;
-					element.waited = false;
+					// START KGU#200 2016-06-07: Body is only done if there was no error
+					//element.executed = true;
+					//element.waited = false;
+					// END KGU#200 2016-06-07
 					if (result.equals(""))
 					{
+						// START KGU#200 2016-06-07: If body is done without error then show loop as active again
+						element.executed = true;
+						element.waited = false;
+						// END KGU#200 2016-06-07
 						//cw++;
 						// START KGU 2015-10-13: Symbolizes the loop condition check 
 						checkBreakpoint(element);
