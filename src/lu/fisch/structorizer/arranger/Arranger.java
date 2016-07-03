@@ -47,6 +47,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.03.08      Method clearExecutionStatus and btnSetCovered added (for Enhancement #77)
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation hooks
  *      Kay Gürtzig     2016-04-14      Enh. #158 (KGU#177): Keys for copy and paste enabled, closing mechanism modified
+ *      Kay Gürtzig     2016-07-03      Dialog message translation mechanism added (KGU#203). 
  *
  ******************************************************************************************************
  *
@@ -68,6 +69,7 @@ import javax.swing.JScrollPane;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.executor.IRoutinePool;
+import lu.fisch.structorizer.gui.LangDialog;
 import lu.fisch.structorizer.gui.Mainform;
 
 /**
@@ -425,6 +427,13 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
         surface.setCovered(this);
     }
     // END KGU#88 2016-03-09
+    
+    // START KGU#202 2016-07-03: Language support for dependent Arranger
+    public void setLangLocal(String _langfile)
+    {
+    	LangDialog.setLang(this.surface, _langfile);
+    }
+    // END KGU#202 2016-07-03
 
     /**
      * Starts the Arranger as application

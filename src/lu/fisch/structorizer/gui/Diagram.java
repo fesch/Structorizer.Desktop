@@ -2007,6 +2007,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//System.out.println("Arranger button pressed!");
 		Arranger arr = Arranger.getInstance();
 		arr.addToPool(root, NSDControl.getFrame());
+		// START KGU#202 2016-07-03: Localization of Arranger
+		arr.setLangLocal(this.getLang());
+		//BEND KGU#202 2016-07-03
 		arr.setVisible(true);
 		isArrangerOpen = true;	// Gives the Executor a hint where to find a subroutine pool
 	}

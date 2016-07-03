@@ -52,7 +52,9 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.03.16      Bugfix #132: Precautions against stale Mainform references (KGU#158)
  *      Kay Gürtzig     2016.04.14      Enh. #158: Methods for copy and paste of diagrams as XML strings (KGU#177)
  *                                      Selection mechanisms mended
- *      Kay Gürtzig     2016-05-09      Issue #185: Chance to store unsaved changes before removal (KGU#194) 
+ *      Kay Gürtzig     2016-05-09      Issue #185: Chance to store unsaved changes before removal (KGU#194)
+ *      Kay Gürtzig     2016-07-01      Enh. #62: Opportunity to save/load zipped arrangement (KGU#110)
+ *      Kay Gürtzig     2016-07-03      Dialog message translation mechanism added (KGU#203). 
  *
  ******************************************************************************************************
  *
@@ -106,21 +108,30 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Scanner;
 import java.util.Vector;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileFilter;
 
 import lu.fisch.graphics.Rect;
 import lu.fisch.structorizer.elements.Element;
@@ -128,8 +139,10 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Updater;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.generators.XmlGenerator;
+import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.io.ArrFilter;
+import lu.fisch.structorizer.io.ArrZipFilter;
 import lu.fisch.structorizer.io.PNGFilter;
 import lu.fisch.structorizer.parsers.NSDParser;
 import lu.fisch.utils.StringList;
@@ -154,6 +167,24 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     // START KGU#110 2015-12-21: Enh. #62, also supports PNG export
     public File currentDirectory = new File(System.getProperty("user.home"));
     // END KGU#110 2015-12-21
+    // START KGU#202 2016-07-03
+    public LangTextHolder msgFileLoadError = new LangTextHolder("File Load Error:");
+    public LangTextHolder msgSavePortable = new LangTextHolder("Save as portable compressed archive?");
+    public LangTextHolder msgSaveDialogTitle = new LangTextHolder("Save arranged set of diagrams ...");
+    public LangTextHolder msgSaveError = new LangTextHolder("Error on saving the arrangement:");
+    public LangTextHolder msgLoadDialogTitle = new LangTextHolder("Reload a stored arrangement of diagrams ...");
+    public LangTextHolder msgExtractDialogTitle = new LangTextHolder("Extract to a directory?");
+    public LangTextHolder msgArrLoadError = new LangTextHolder("Error on loading the arrangement:");
+    public LangTextHolder msgExportDialogTitle = new LangTextHolder("Export diagram as PNG ...");
+    public LangTextHolder msgExportError = new LangTextHolder("Error while saving the image!");
+    public LangTextHolder msgParseError = new LangTextHolder("NSD-Parser Error:");
+    public LangTextHolder msgResetCovered = new LangTextHolder("Routine is already marked as test-covered! Reset coverage mark?");
+    public LangTextHolder msgCoverageError = new LangTextHolder("No suitable routine diagram selected, cannot mark anything as covered!");
+    public LangTextHolder msgUnsavedDiagrams = new LangTextHolder("Couldn't save these diagrams:");
+    public LangTextHolder msgUnsavedHint = new LangTextHolder("You might want to double-click and save them via Structorizer first.");
+    public LangTextHolder msgUnsavedContinue = new LangTextHolder("Continue nevertheless?");
+    public LangTextHolder msgNoArrFile = new LangTextHolder("No Arranger file found");
+    // END KGU#202 2016-07-03
 
     @Override
     public void paint(Graphics g)
@@ -224,6 +255,12 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     }
     
     // START KGU#110 2015-12-17: Enh. #62 - offer an opportunity to save / load an arrangement
+    /**
+     * Tries to load all nsd files contained in the array `files´ such that the diagrams
+     * may be held by this.  
+     * @param files - array of File objects associated to NSD file names 
+     * @return number of successfully loaded files.
+     */
     public int loadFiles(java.io.File[] files)
     {
     	// We try to load as many files of the list as possible and collect the error messages
@@ -251,7 +288,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     	}
     	if (!troubles.isEmpty())
     	{
-			JOptionPane.showMessageDialog(this, troubles, "File Load Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, troubles, msgFileLoadError.getText(), JOptionPane.ERROR_MESSAGE);
     	}
     	return nLoaded;
     }
@@ -264,7 +301,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     private String loadFile(String filename, Point point)
     {
     	String errorMessage = "";
-		if(filename.substring(filename.length()-4).toLowerCase().equals(".nsd"))
+		if (filename.substring(filename.length()-4).toLowerCase().equals(".nsd"))
 		{
 			// open an existing file
 			NSDParser parser = new NSDParser();
@@ -288,12 +325,11 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     
     /**
      * Stores the current diagram arrangement to a file.
-     * In this first approach this will only be a list of points and filenames
-     * Hence, the file won't be portable (unless all listed files were copied accordingly.
-     * 
-     * The final version might produce a packed archive containing the list file as well
-     * as the referenced NSD files such that it can be ported to a different location and
-     * extracted.
+     * Depending on the coice of the user, this file will
+     * either be only a list of reference points and filenames (this way not being portable)
+     * or be a compressed archive containing the list file as well as the referenced
+     * NSD files will be produced such that it can be ported to a different location and
+     * extracted there.
      *  
      * @param frame - the commanding GUI component
      * @return status flag (true iff the saving succeeded without error) 
@@ -301,24 +337,54 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     public boolean saveArrangement(Frame frame)
     {
     	boolean done = false;
-    	// Ensure the diagrams themselves are saved
-    	if (this.saveDiagrams())
+    	// START KGU#110 2016-06-29: Enh. #62
+    	boolean portable = false;
+    	String extension = "arr";
+    	// END KGU#110 2016-06-29
+    	// Ensure the diagrams themselves have been saved
+    	int answer = JOptionPane.CANCEL_OPTION;
+    	if (this.saveDiagrams() && 
+    			(answer = JOptionPane.showConfirmDialog(frame, msgSavePortable.getText())) != JOptionPane.CANCEL_OPTION)
     	{
     		// Let's select path and name for the list / archive file
-    		JFileChooser dlgSave = new JFileChooser("Save arranged set of diagrams ...");
-    		dlgSave.addChoosableFileFilter(new ArrFilter());
+    		JFileChooser dlgSave = new JFileChooser(currentDirectory);
+    		dlgSave.setDialogTitle(msgSaveDialogTitle.getText());
+    		// START KGU#110 2016-06-29: Enh. #62
+     		//dlgSave.addChoosableFileFilter(new ArrFilter());
+    		if (answer == JOptionPane.OK_OPTION)
+     	   	{
+        		dlgSave.addChoosableFileFilter(new ArrZipFilter());
+        		portable = true;
+        		extension += "z";
+     	   	}
+     	   	else
+     	   	{
+     	   		dlgSave.addChoosableFileFilter(new ArrFilter());
+     	   	}
+    		// END KGU#110 2016-06-29
     		dlgSave.setCurrentDirectory(currentDirectory);
     		int result = dlgSave.showSaveDialog(frame);
     		if (result == JFileChooser.APPROVE_OPTION)
     		{
     			currentDirectory = dlgSave.getCurrentDirectory();
+    			while (currentDirectory != null && !currentDirectory.isDirectory())
+    			{
+    				currentDirectory = currentDirectory.getParentFile();
+    			}
     			// correct the filename if necessary
     			String filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
-    			if (!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".arr"))
+    			// START KGU#110 2016-06-29: Enh. #62
+    			//if (!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".arr"))
+    			//{
+    			//	filename+=".arr";
+    			//}
+    			//done = saveArrangement(frame, filename + "");
+    			if (filename.substring(filename.length()-extension.length()-1).equalsIgnoreCase("."+extension))
     			{
-    				filename+=".arr";
+    				filename = filename.substring(0, filename.length()-extension.length()-1);
     			}
-    			done = saveArrangement(frame, filename + "");
+    			done = saveArrangement(frame, filename, extension, portable);
+    			// END KGU#110 2016-06-29
     		}
     	}
         return done;
@@ -326,89 +392,208 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     
     /**
      * Stores the current diagram arrangement to a file.
-     * In this first approach this will only be a list of points and filenames
-     * Hence, the file won't be portable (unless all listed files were copied accordingly.
-     * 
-     * The final version might produce a packed archive containing the list file as well
-     * as the referenced NSD files such that it can be ported to a different location and
-     * extracted.
+     * If `portable´ is false, this file will only contain a list of points and filenames.
+     * Otherwise a compressed archive containing the list file as well as the referenced
+     * NSD files will be produced such that it can be ported to a different location and
+     * extracted there.
      *  
      * @param frame - the commanding GUI component
-     * @param filename - the name of the selected file
+     * @param filename - the base path of the selected file (without extension)
+     * @param extension - the file extension
+     * @param portable - whether a portable zip file is to be created
      * @return status flag (true iff the saving succeeded without error) 
      */
-    public boolean saveArrangement(Frame frame, String filename)
+    // START KGU#110 2016-06-29. Enh. #62
+    //public boolean saveArrangement(Frame frame, String filename)
+    public boolean saveArrangement(Frame frame, String filename, String extension, boolean portable)
+    // END KGU#110 2016-06-29
     {
-    	String[] EnvVariablesToCheck = { "TEMP", "TMP", "TMPDIR", "HOME", "HOMEPATH" };
     	boolean done = false;
-    	// Ensure the diagrams themselves are saved
-    	String outFilename = filename + "";		// Name of the actually written file
+    	String outFilename = filename + "." + extension;		// Name of the actually written file
+    	String tmpFilename = null;
+    	
+		// Find a suited temporary directory to store the output file(s) if needed
+    	String tempDir = findTempDir();
+		if ((tempDir == null || tempDir.isEmpty()))
+		{
+			File dir = new File(".");
+			if (dir.isFile())
+			{
+				tempDir = dir.getParent();
+			}
+			else
+			{
+				tempDir = dir.getAbsolutePath();
+			}
+		}
+		
     	try
     	{
-    		// set up the file
+        	// Prepare to save the arr file (if portable is false then this is the outfile)
+    		String arrFilename = outFilename;
     		File file = new File(outFilename);
-    		boolean fileExisted = file.exists(); 
-    		if (fileExisted)
+    		// START KGU#110 2016-06-29: Enh. #62
+    		// Check whether the target file already exists
+    		//boolean fileExisted = file.exits();
+    		//if (fileExisted)
+    		if (portable)
     		{
-    			// Find a suited temporary directory to store the output file
-    			String tempDir = "";
-    			for (int i = 0; (tempDir == null || tempDir.isEmpty()) && i < EnvVariablesToCheck.length; i++)
-    			{
-    				tempDir = System.getenv(EnvVariablesToCheck[i]);
-    			}
-    			if ((tempDir == null || tempDir.isEmpty()))
-    			{
-    				File dir = new File(".");
-    				if (dir.isFile())
-    				{
-    					tempDir = dir.getParent();
-    				}
-    				else
-    				{
-    					tempDir = dir.getAbsolutePath();
-    				}
-    			}
-    			outFilename = tempDir + File.separator + "Arranger.tmp";
+    			// name for the arr file to zipped into the target file
+    			arrFilename = tempDir + File.separator + (new File(filename)).getName() + ".arr";
     		}
-    		FileOutputStream fos = new FileOutputStream(outFilename);
-    		Writer out = new OutputStreamWriter(fos, "UTF8");
-    		for (int d = 0; d < this.diagrams.size(); d++)
+    		else if (file.exists())
+       		// END KGU#110 2016-06-29
     		{
-    			Diagram diagr = this.diagrams.get(d);
-    			out.write(Integer.toString(diagr.point.x) + ",");
-    			out.write(Integer.toString(diagr.point.y) + ",");
-    			StringList entry = new StringList();
-    			entry.add(diagr.root.getPath());
-    			out.write(entry.getCommaText()+'\n');
+    			// name for a temporary arr file
+    			arrFilename = tempDir + File.separator + "Temp." + extension;
+    			tmpFilename = arrFilename;
     		}
+    		// Now actually save the arr file
+    		saveArrFile(arrFilename, portable);
 
-    		out.close();
-
-    		// If the Arr file had existed then replace it by the output file after having created a backup
-    		if (fileExisted)
+    		// START KGU#110 2016-06-29: Enh. #62
+    		// Now zip all files together if a portable file is requested
+    		if (portable)
     		{
-    			File backUp = new File(filename + ".bak");
+    			// Create a zip file from the nsd files and the arr file
+    			// (returns the name of the zip file if it was placed in
+    			// a temp directory, otherwise null).
+    			tmpFilename = zipAllFiles(outFilename, arrFilename, tempDir);
+    		}
+    		
+
+    		// If the target file had existed then replace it by the output file after having created a backup
+    		if (tmpFilename != null)
+    		{
+    			File backUp = new File(outFilename + ".bak");
     			if (backUp.exists())
     			{
     				backUp.delete();
     			}
     			file.renameTo(backUp);
-    			file = new File(filename);
-    			File tmpFile = new File(outFilename);
+    			file = new File(outFilename);
+    			File tmpFile = new File(tmpFilename);
     			tmpFile.renameTo(file);
     		}
-    		// END KGU#94 2015.12.04
 
     		done = true;
     	}
     	catch (Exception ex)
     	{
-    		JOptionPane.showMessageDialog(frame, "Error on saving the arrangement:" + ex.getMessage() + "!",
+    		JOptionPane.showMessageDialog(frame, msgSaveError.getText() + " " + ex.getMessage() + "!",
     				"Error", JOptionPane.ERROR_MESSAGE, null);
     	}
     	return done;
     }
     
+    
+    /**
+     * Creates the Arranger file with path `arrFilename´ from all held diagrams.
+     * @param arrFilename - target path of the Arranger file
+     * @param pureNames - determines whether only the pure file names (or the
+     * entire paths) are to be referred to by the arr file.
+     * @throws IOException
+     */
+    private void saveArrFile(String arrFilename, boolean pureNames) throws IOException
+    {
+		FileOutputStream fos = new FileOutputStream(arrFilename);
+		Writer out = new OutputStreamWriter(fos, "UTF8");
+		for (int d = 0; d < this.diagrams.size(); d++)
+		{
+			Diagram diagr = this.diagrams.get(d);
+			String path = diagr.root.getPath();
+			// KGU#110 2016-07-01: Bugfix #62 - don't include diagrams without file
+			if (!path.isEmpty())
+			{
+				out.write(Integer.toString(diagr.point.x) + ",");
+				out.write(Integer.toString(diagr.point.y) + ",");
+				StringList entry = new StringList();
+				if (pureNames)
+				{
+					File nsdFile = new File(path);
+					path = nsdFile.getName();	// Only last part of path
+				}
+				entry.add(path);
+				out.write(entry.getCommaText()+'\n');
+			}
+		}
+
+		out.close();
+    }
+    
+    /**
+     * Compresses the arranged diagram files and the describing arr file (`arrFilename´)
+     * into file `zipFilename´ (which is essentially an ordinary zip file but named as given).
+     * @param zipFilename - path of the arrz file (zip file) to be created
+     * @param arrFilename - path of the existing arr file holding the positions
+     * @param tmpPath - path of a temporary directory for the case the target
+     * file already exists
+     * @return the path of the created temporary file if the target file `zipFilename´ had
+     * existed (otherwise null)
+     */
+    private String zipAllFiles(String zipFilename, String arrFilename, String tmpPath) throws IOException
+    {
+    	final int BUFSIZE = 2048;
+    	
+    	String tmpFilename = zipFilename + "";
+		// set up the file (and check whether it has existed already)
+		File file = new File(zipFilename);
+		boolean fileExisted = file.exists(); 
+		if (fileExisted)
+		{
+			tmpFilename = tmpPath + File.separator + "Arranger.zip";
+		}
+
+		BufferedInputStream origin = null;
+		FileOutputStream dest = new	FileOutputStream(tmpFilename);
+		ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
+		//out.setMethod(ZipOutputStream.DEFLATED);
+		byte buffer[] = new byte[BUFSIZE];
+		StringList filePaths = new StringList();
+		// Add the diagram file names
+		for (int d = 0; d < this.diagrams.size(); d++)
+		{
+			Diagram diagr = this.diagrams.get(d);
+			String path = diagr.root.getPath();
+			if (!path.isEmpty())
+			{
+				filePaths.add(path);
+			}
+		}
+		filePaths.add(arrFilename);
+		
+		int count;
+		for (int i = 0; i < filePaths.count(); i++)
+		{
+			FileInputStream fis = new FileInputStream(filePaths.get(i));
+			origin = new BufferedInputStream(fis, BUFSIZE);
+			ZipEntry entry = new ZipEntry(new File(filePaths.get(i)).getName());
+			out.putNextEntry(entry);
+			while((count = origin.read(buffer, 0, BUFSIZE)) != -1)
+			{
+				out.write(buffer, 0, count);
+			}
+			origin.close();
+		}
+		
+		out.close();
+		if (!fileExisted)
+		{
+			tmpFilename = null;
+		}
+    	return tmpFilename;
+    }
+    
+    /**
+     * Action method for the "Load List" button of the Arranger: Attempts to save the
+     * current diagram arrangement either by creating just an arr file (containing
+     * positions and file paths of all arranged diagrams) or a portable
+     * zip file containing an arr file and all referred nsd files.
+     * Signals if some of the diagrams need saving and offers a file type decision 
+     * and a consecutive file selection before.
+     * @param frame - the owning frame object. 
+     * @return true iff the saving succeeded (will raise an error message else).
+     */
     public boolean loadArrangement(Frame frame)
     {
     	boolean done = false;
@@ -416,13 +601,17 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     	if (this.saveDiagrams())
     	{
     		// Let's select path and name for the list / archive file
-    		JFileChooser dlgOpen = new JFileChooser("Reload a stored arrangement of diagrams ...");
-    		// START KGU 2016-01-15: Enh. #110 - select the provided filter
+    		JFileChooser dlgOpen = new JFileChooser(currentDirectory);
+    		dlgOpen.setDialogTitle(msgLoadDialogTitle.getText());
+    		// START KGU#100 2016-01-15: Enh. #62 - select the provided filter
     		//dlgOpen.addChoosableFileFilter(new ArrFilter());
+    		// START KGU#110 2016-07-01: Enh. #62 - Add the zipped filter
+    		dlgOpen.addChoosableFileFilter(new ArrZipFilter());
+    		// END KGU#110 2016-07-01
     		ArrFilter filter = new ArrFilter();
     		dlgOpen.addChoosableFileFilter(filter);
     		dlgOpen.setFileFilter(filter);
-    		// END KGU 2016-01-15: Enh. #110
+    		// END KGU#110 2016-01-15: Enh. #62
 
     		dlgOpen.setCurrentDirectory(currentDirectory);
 
@@ -430,14 +619,52 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     		if (result == JFileChooser.APPROVE_OPTION)
     		{
     			currentDirectory = dlgOpen.getCurrentDirectory();
+    			while (currentDirectory != null && !currentDirectory.isDirectory())
+    			{
+    				currentDirectory = currentDirectory.getParentFile();
+    			}
+    			File oldCurrDir = currentDirectory;
     			// correct the filename if necessary
     			String filename = dlgOpen.getSelectedFile().getAbsoluteFile().toString();
+    			
+    			// START KGU#110 2016-07-01: Enh. # 62 - unpack a zip file first
+    			if (ArrZipFilter.isArr(filename))
+    			{
+    				String extractTo = null;
+    				dlgOpen.setDialogTitle(msgExtractDialogTitle.getText());
+    				dlgOpen.resetChoosableFileFilters();
+    				dlgOpen.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+    				dlgOpen.setAcceptAllFileFilterUsed(false);
+    				if (dlgOpen.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION)
+    				{
+    					//extractTo = dlgOpen.getCurrentDirectory().getAbsolutePath();
+    					extractTo = dlgOpen.getSelectedFile().getAbsolutePath();
+    				}
+    				filename = unzipArrangement(filename, extractTo);
+    				if (filename != null)
+    				{
+    					currentDirectory = new File(filename);
+    					while (currentDirectory != null && !currentDirectory.isDirectory())
+    					{
+    						currentDirectory = currentDirectory.getParentFile();
+    					}
+    				}
+    			}
+    			// END KGU#110 2016-07-01
     			done = loadArrangement(frame, filename);
+    			currentDirectory = oldCurrDir;
     		}
     	}
     	return done;
     }
 
+    /**
+     * Restores the diagram arrangement stored in arr file `filename´ if possible
+     * (i.e. given the referred nsd file paths exist and the nsd files may be parsed)
+     * @param frame - owning frame component
+     * @param filename - path of the arr file to be reloaded
+     * @return true if at lesst some of the referred diagrams could be arranged again.
+     */
     public boolean loadArrangement(Frame frame, String filename)
     {
     	boolean done = false;
@@ -455,25 +682,30 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     			StringList fields = StringList.explode(line, ",");
     			if (fields.count() >= 3)
     			{
-    			Point point = new Point();
-    			point.x = Integer.parseInt(fields.get(0));
-    			point.y = Integer.parseInt(fields.get(1));
-    			String nsdFileName = fields.get(2);
-    			if (nsdFileName.startsWith("\""))
-    				nsdFileName = nsdFileName.substring(1);
-    			if (nsdFileName.endsWith("\""))
-    				nsdFileName = nsdFileName.substring(0, nsdFileName.length() - 1);
-    			String trouble = loadFile(nsdFileName, point);
-    			if (!trouble.isEmpty())
-    			{
-    				if (errorMessage != null)
+    				Point point = new Point();
+    				point.x = Integer.parseInt(fields.get(0));
+    				point.y = Integer.parseInt(fields.get(1));
+    				String nsdFileName = fields.get(2);
+    				if (nsdFileName.startsWith("\""))
+    					nsdFileName = nsdFileName.substring(1);
+    				if (nsdFileName.endsWith("\""))
+    					nsdFileName = nsdFileName.substring(0, nsdFileName.length() - 1);
+    				File nsd = new File(nsdFileName);
+    				if (!nsd.exists() && !nsd.isAbsolute())
     				{
-    					errorMessage += "\n" + trouble;
+    					nsdFileName = currentDirectory.getAbsolutePath() + File.separator + nsdFileName;
     				}
-    				else {
-    					errorMessage = trouble;
+    				String trouble = loadFile(nsdFileName, point);
+    				if (!trouble.isEmpty())
+    				{
+    					if (errorMessage != null)
+    					{
+    						errorMessage += "\n" + trouble;
+    					}
+    					else {
+    						errorMessage = trouble;
+    					}
     				}
-    			}
     			}
     		}
 
@@ -483,7 +715,14 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     	}
     	catch (Exception ex)
     	{
-    		errorMessage = ex.getLocalizedMessage();
+    		if (filename == null)
+    		{
+    			errorMessage = msgNoArrFile.getText();
+    		}
+    		else
+    		{
+    			errorMessage = ex.getLocalizedMessage();
+    		}
     		if (errorMessage == null)
     		{
     			errorMessage = ex.toString();
@@ -491,26 +730,95 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     	}
     	if (errorMessage != null)
     	{
-    		JOptionPane.showMessageDialog(frame, "Error on loading the arrangement: " + errorMessage + "!",
+    		JOptionPane.showMessageDialog(frame, msgArrLoadError.getText() + " " + errorMessage + "!",
     				"Error", JOptionPane.ERROR_MESSAGE, null);   		
     	}
     	return done;
     }
     // END KGU#110 2015-12-17
     
+    // START KGU#110 2016-07-01: Enh. 62
+    /**
+     * Extracts the files contained in the zip file given by `filename´ into the
+     * directory `targetDir´ (or a temporary directory if not given)
+     * @param filename - path of the arrz file
+     * @param targetDir - target directory path for the unzipping (may be null)
+     * @return the path of the arr file found in the extracted archive (or otherwise null) 
+     */
+    private String unzipArrangement(String filename, String targetDir)
+    {
+    	final int BUFSIZE = 2048;
+    	String arrFilename = null;
+    	if (targetDir == null)
+    	{
+    		targetDir = findTempDir();
+    	}
+    	try {
+    		BufferedOutputStream dest = null;
+    		BufferedInputStream bistr = null;
+    		ZipEntry entry;
+    		ZipFile zipfile = new ZipFile(filename);
+    		Enumeration<? extends ZipEntry> entries = zipfile.entries();
+    		while(entries.hasMoreElements()) {
+    			entry = (ZipEntry) entries.nextElement();
+    			bistr = new BufferedInputStream
+    					(zipfile.getInputStream(entry));
+    			int count;
+    			byte buffer[] = new byte[BUFSIZE];
+    			FileOutputStream fostr = new FileOutputStream(targetDir + File.separator + entry.getName());
+    			dest = new BufferedOutputStream(fostr, BUFSIZE);
+    			while ((count = bistr.read(buffer, 0, BUFSIZE))	!= -1)
+    			{
+    				dest.write(buffer, 0, count);
+    			}
+    			dest.flush();
+    			dest.close();
+    			bistr.close();
+    			if (ArrFilter.isArr(entry.getName()))
+    			{
+    				arrFilename = targetDir + File.separator + entry.getName();
+    			}
+    		}
+    		zipfile.close();
+    	} catch(Exception ex) {
+    		ex.printStackTrace();
+    	}
+    	return arrFilename;
+    }
+    
+    /**
+     * Finds a directory for temporary files (trying different OS standard environment variables)
+     * @return path of a temp directory
+     */
+    private static String findTempDir()
+    {
+    	String[] EnvVariablesToCheck = { "TEMP", "TMP", "TMPDIR", "HOME", "HOMEPATH" };
+		String tempDir = "";
+		for (int i = 0; (tempDir == null || tempDir.isEmpty()) && i < EnvVariablesToCheck.length; i++)
+		{
+			tempDir = System.getenv(EnvVariablesToCheck[i]);
+		}
+		return tempDir;
+    }
+    // END KGU#110 2016-07-01
+    
     public void exportPNG(Frame frame)
     {
-        JFileChooser dlgSave = new JFileChooser("Export diagram as PNG ...");
+        JFileChooser dlgSave = new JFileChooser(currentDirectory);
         // propose name
         //String uniName = directoryName.substring(directoryName.lastIndexOf('/')+1).trim();
         //dlgSave.setSelectedFile(new File(uniName));
 
         dlgSave.addChoosableFileFilter(new PNGFilter());
-        dlgSave.setCurrentDirectory(currentDirectory);
+        dlgSave.setDialogTitle(msgExportDialogTitle.getText());
         int result = dlgSave.showSaveDialog(frame);
         if (result == JFileChooser.APPROVE_OPTION)
         {
             currentDirectory = dlgSave.getCurrentDirectory();
+			while (currentDirectory != null && !currentDirectory.isDirectory())
+			{
+				currentDirectory = currentDirectory.getParentFile();
+			}
             // correct the filename, if necessary
             String filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
             if(!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".png"))
@@ -540,7 +848,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
             }
             catch(Exception e)
             {
-                JOptionPane.showOptionDialog(frame,"Error while saving the image!","Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+                JOptionPane.showOptionDialog(frame, msgExportError.getText(), "Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
             }
         }
     }
@@ -683,6 +991,10 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     		if (diagrams.isEmpty() && root.filename != null && !root.filename.isEmpty())
     		{
     			this.currentDirectory = new File(root.filename);
+    			while (this.currentDirectory != null && !this.currentDirectory.isDirectory())
+    			{
+    				this.currentDirectory = this.currentDirectory.getParentFile();
+    			}
     		}
     		// END KGU 2016-03-14
     		/*Diagram*/ diagram = new Diagram(root,point);
@@ -795,7 +1107,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
 				root = parser.parse(istr);
     		}
     		catch (Exception ex){
-    			JOptionPane.showMessageDialog(this, "NSD-Parser Error : " + ex.getMessage(), "Paste Error",
+    			JOptionPane.showMessageDialog(this, msgParseError.getText() + " " + ex.getMessage(), "Paste Error",
     					JOptionPane.ERROR_MESSAGE);
     			
     			System.out.println(ex);
@@ -829,7 +1141,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     	{
     		if (this.mouseSelected.root.deeplyCovered)
     		{
-    			if (JOptionPane.showConfirmDialog(frame, "Routine is already marked as test-covered! Reset coverage mark?") == JOptionPane.OK_OPTION)
+    			if (JOptionPane.showConfirmDialog(frame, msgResetCovered.getText()) == JOptionPane.OK_OPTION)
     			{
     				this.mouseSelected.root.deeplyCovered = false;
     			}
@@ -844,7 +1156,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     	}
     	else
     	{
-    		JOptionPane.showMessageDialog(frame, "No suitable routine diagram selected, cannot mark anything as covered!",
+    		JOptionPane.showMessageDialog(frame, msgCoverageError.getText(),
     				"Error", JOptionPane.ERROR_MESSAGE, null);   		
     	}
     }
@@ -929,25 +1241,26 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     				form.diagram.saveNSD(true);
     			}
     			// START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
-    			else if (diagram.root.filename != null && !diagram.root.filename.isEmpty())
-    			{
-    				unsaved.add(diagram.root.filename);
-    				allDone = false;
-    			}
-    			else
+    			else if (diagram.root.filename == null || diagram.root.filename.isEmpty())
     			{
     				unsaved.add("( " + diagram.root.getMethodName() + " ?)");
     				allDone = false;
     			}
+    			else if (diagram.root.hasChanged())
+				{
+					unsaved.add(diagram.root.filename);
+					allDone = false;
+				}
     			// END KGU#177 2016-04-14
-    		}
+			}
     	}
 		// START KGU#177 2016-04-14: Enh. #158
     	if (!allDone)
     	{
-    		String message = "Couldn't save these diagrams:\n" + unsaved.getText();
+    		String message = msgUnsavedDiagrams.getText() + "\n" + unsaved.getText();
     		int answer = JOptionPane.showConfirmDialog(this, message +
-    				"\n\nYou might want to double-click and save them via Structorizer first.\nContinue nevertheless?", "Saving Problem",
+    				"\n\n" + msgUnsavedHint.getText() + "\n" +
+    				msgUnsavedContinue.getText(), "Saving Problem",
     				JOptionPane.WARNING_MESSAGE);
     		allDone = answer == JOptionPane.YES_OPTION;
     	}
