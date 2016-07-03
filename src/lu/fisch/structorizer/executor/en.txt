@@ -36,6 +36,7 @@
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data texts
  *      Kay Gürtzig     2016.03.18      Additional message texts for Executor dialog
  *      Kay Gürtzig     2016.04.12      New message text for Control option
+ *      Kay Gürtzig     2016.05.05      KGU#197: Further message texts for Executor dialog
  *
  ******************************************************************************************************
  *
@@ -60,3 +61,11 @@ Control.chkOutputToTextWindow.text=Output to window
 Control.lbStopRunningProc.text=This action is not allowed while a diagram is being executed.\nDo you want to stop the current execution?
 Control.lbInputValue.text=Please enter a value for <%>
 Control.lbInputPaused.text=Execution paused - you may enter the value in the variable display.
+Control.lbInputCancelled.text=Input cancelled
+Control.lbManuallySet.text=*** Manually set: %1 <- %2 ***
+Control.lbEmptyLine.text=empty line
+Control.lbNoCorrectExpr.text=<%> is not a correct or existing expression.
+Control.lbReturnedResult.text=Returned result
+Control.lbOutput.text=Output
+Control.lbInput.text=Input
+Control.lbAcknowledge.text=Please acknowledge to continue.

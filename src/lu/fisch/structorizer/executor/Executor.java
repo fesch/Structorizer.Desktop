@@ -83,6 +83,9 @@ package lu.fisch.structorizer.executor;
  *                                      Enh. #174 (KGU#184): Input now accepts array initialisation expressions
  *      Kay Gürtzig     2016-04-26      KGU#150: ord implementation revised,
  *                                      Enh. #137 (KGU#160): Arguments and results added to text window output
+ *      Kay Gürtzig     2016.05.05      KGU#197: Further (forgotten) texts put under language support
+ *      Kay Gürtzig     2016.05.25      KGU#198: top-level function results weren't logged in the window output
+ *      Kay Gürtzig     2016.06.07      KGU#200: While loops showed wrong colour if their body raised an error
  *
  ******************************************************************************************************
  *
@@ -886,6 +889,9 @@ public class Executor implements Runnable
 							this.returnedValue = resObj;
 							if (this.callers.isEmpty())
 							{
+								// START KGU#197 2016-05-25: Translate the headline!
+								String header = control.lbReturnedResult.getText();
+								// END KGU#197 2016-05-25
 								// START KGU#133 2016-01-09: Show large arrays in a listview
 								//JOptionPane.showMessageDialog(diagram, n,
 								//		"Returned result", JOptionPane.INFORMATION_MESSAGE);
@@ -894,7 +900,7 @@ public class Executor implements Runnable
 								{
 									// START KGU#147 2016-01-29: Enh. #84 - interface changed for more flexibility
 									//showArray((Object[])resObj, "Returned result");
-									showArray((Object[])resObj, "Returned result", !step);
+									showArray((Object[])resObj, header, !step);
 									// END KGU#147 2016-01-29
 								}
 								// START KGU#84 2015-11-23: Enhancement to give a chance to pause (though of little use here)
@@ -906,15 +912,18 @@ public class Executor implements Runnable
 								else if (step)
 								{
 									// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
-									this.console.writeln("*** Returned result: " + this.prepareValueForDisplay(resObj), Color.CYAN);
+									this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
 									// END KGU#160 2016-04-26
 									JOptionPane.showMessageDialog(diagram, resObj,
-											"Returned result", JOptionPane.INFORMATION_MESSAGE);
+											header, JOptionPane.INFORMATION_MESSAGE);
 								}
 								else
 								{
+									// START KGU#198 2016-05-25: Issue #137 - also log the result to the console
+									this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
+									// END KGU#198 2016-05-25
 									Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
-									int pressed = JOptionPane.showOptionDialog(diagram, resObj, "Returned result",
+									int pressed = JOptionPane.showOptionDialog(diagram, resObj, header,
 											JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
 									if (pressed == 1)
 									{
@@ -1734,6 +1743,7 @@ public class Executor implements Runnable
 	// START KGU#68 2015-11-06
 	public void adoptVarChanges(Object[] newValues)
 	{
+		String tmplManuallySet = control.lbManuallySet.getText();	// The message template
 		for (int i = 0; i < newValues.length; i++)
 		{
 			if (newValues[i] != null)
@@ -1742,7 +1752,10 @@ public class Executor implements Runnable
 					String varName = this.variables.get(i);
 					Object oldValue = interpreter.get(varName);
 					// START KGU#160 2016-04-12: Enh. #137 - text window output
-					this.console.writeln("*** Manually set: " + varName + " <- " + newValues[i] + " ***", Color.RED);
+					// START KGU#197 2016-05-05: Language support extended
+					//this.console.writeln("*** Manually set: " + varName + " <- " + newValues[i] + " ***", Color.RED);
+					this.console.writeln(tmplManuallySet.replace("%1", varName).replace("%2", newValues[i].toString()), Color.RED);
+					// END KGU#197 2016-05-05
 					if (isConsoleEnabled)
 					{
 						this.console.setVisible(true);
@@ -2284,7 +2297,7 @@ public class Executor implements Runnable
 		{
 			// In run mode, give the user a chance to intervene
 			Object[] options = {"OK", "Pause"};	// FIXME: Provide a translation
-			int pressed = JOptionPane.showOptionDialog(diagram, "Please acknowledge.", "Input",
+			int pressed = JOptionPane.showOptionDialog(diagram, control.lbAcknowledge.getText(), control.lbInput.getText(),
 					JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
 			if (pressed == 1)
 			{
@@ -2344,8 +2357,12 @@ public class Executor implements Runnable
 			if (str == null)
 			{
 				// Switch to step mode such that the user may enter the variable in the display and go on
-				JOptionPane.showMessageDialog(diagram, "Execution paused - you may enter the value in the variable display.",
-						"Input cancelled", JOptionPane.WARNING_MESSAGE);
+				// START KGU#197 2016-05-05: Issue #89
+				//JOptionPane.showMessageDialog(diagram, "Execution paused - you may enter the value in the variable display.",
+				//		"Input cancelled", JOptionPane.WARNING_MESSAGE);
+				JOptionPane.showMessageDialog(diagram, control.lbInputPaused.getText(),
+						control.lbInputCancelled.getText(), JOptionPane.WARNING_MESSAGE);
+				// START KGU#197 2016-05-05
 				paus = true;
 				step = true;
 				this.control.setButtonsForPause();
@@ -2397,9 +2414,7 @@ public class Executor implements Runnable
 				Object n = interpreter.eval(out);
 				if (n == null)
 				{
-					result = "<"
-							+ out
-							+ "> is not a correct or existing expression.";
+					result = control.lbNoCorrectExpr.getText().replace("%", out);
 				} else
 				{
 		// START KGU#101 2015-12-11: Fix #54 (continued)
@@ -2409,9 +2424,9 @@ public class Executor implements Runnable
 			}
 		// START KGU#107 2015-12-13: Enh-/bug #51: Handle empty output instruction
 		}
-		else {
-			str = "(empty line)";
-		}
+//		else {
+//			str = "(empty line)";
+//		}
 		// END KGU#107 2015-12-13
 		if (result.isEmpty())
 		{
@@ -2426,6 +2441,12 @@ public class Executor implements Runnable
 			// START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
 			//if (step)
 			this.console.writeln(s);
+			// START KGU#107 2016-05-05: For the message dialog we must show something
+			if (s.isEmpty())
+			{
+				s = "(" + control.lbEmptyLine.getText() + ")";
+			}
+			// END KGU#107 2016-05-05
 			if (isConsoleEnabled)
 			{
 				this.console.setVisible(true);
@@ -2434,14 +2455,14 @@ public class Executor implements Runnable
 			// END KGU#160 2016-04-12
 			{
 				// In step mode, there is no use to offer pausing
-				JOptionPane.showMessageDialog(diagram, s, "Output",
+				JOptionPane.showMessageDialog(diagram, s, control.lbOutput.getText(),
 						JOptionPane.INFORMATION_MESSAGE);
 			}
 			else
 			{
 				// In run mode, give the user a chance to intervene
 				Object[] options = {"OK", "Pause"};	// FIXME: Provide a translation
-				int pressed = JOptionPane.showOptionDialog(diagram, s, "Output",
+				int pressed = JOptionPane.showOptionDialog(diagram, s, control.lbOutput.getText(),
 						JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
 				if (pressed == 1)
 				{
@@ -2459,6 +2480,7 @@ public class Executor implements Runnable
 	private String tryReturn(String cmd) throws EvalError
 	{
 		String result = "";
+		String header = control.lbReturnedResult.getText();
 		String out = cmd.substring(D7Parser.preReturn.length()).trim();
 		// START KGU#77 (#21) 2015-11-13: We out to allow an empty return
 		//Object n = interpreter.eval(out);
@@ -2482,31 +2504,32 @@ public class Executor implements Runnable
 			{
 				if (resObj == null)
 				{
-					result = "<"
-							+ out
-							+ "> is not a correct or existing expression.";
+					result = control.lbNoCorrectExpr.getText().replace("%", out);
 				// START KGU#133 2016-01-29: Arrays should be presented as scrollable list
 				} else if (resObj instanceof Object[])
 				{
-					showArray((Object[])resObj, "Returned result", !step);
+					showArray((Object[])resObj, header, !step);
 				} else if (step)
 				{
 					// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
-					this.console.writeln("*** Returned result: " + this.prepareValueForDisplay(resObj), Color.CYAN);
+					this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
 					// END KGU#160 2016-04-26
 					// START KGU#147 2016-01-29: This "uncoverting" copied from tryOutput() didn't make sense...
 					//String s = unconvert(resObj.toString());
 					//JOptionPane.showMessageDialog(diagram, s,
 					//		"Returned result", JOptionPane.INFORMATION_MESSAGE);
 					JOptionPane.showMessageDialog(diagram, resObj,
-							"Returned result", JOptionPane.INFORMATION_MESSAGE);
+							header, JOptionPane.INFORMATION_MESSAGE);
 					// END KGU#147 2016-01-29					
 				// END KGU#133 2016-01-29
 				} else
 				{
+					// START KGU#198 2016-05-25: Issue #137 - also log the result to the console
+					this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
+					// END KGU#198 2016-05-25
 					// START KGU#84 2015-11-23: Enhancement to give a chance to pause (though of little use here)
 					Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
-					int pressed = JOptionPane.showOptionDialog(diagram, resObj, "Returned result",
+					int pressed = JOptionPane.showOptionDialog(diagram, resObj, header,
 							JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
 					if (pressed == 1)
 					{
@@ -2876,10 +2899,16 @@ public class Executor implements Runnable
 					}
 					// END KGU#117 2016-03-07
 
-					element.executed = true;
-					element.waited = false;
+					// START KGU#200 2016-06-07: Body is only done if there was no error
+					//element.executed = true;
+					//element.waited = false;
+					// END KGU#200 2016-06-07
 					if (result.equals(""))
 					{
+						// START KGU#200 2016-06-07: If body is done without error then show loop as active again
+						element.executed = true;
+						element.waited = false;
+						// END KGU#200 2016-06-07
 						//cw++;
 						// START KGU 2015-10-13: Symbolizes the loop condition check 
 						checkBreakpoint(element);

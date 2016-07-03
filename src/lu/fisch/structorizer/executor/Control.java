@@ -38,9 +38,10 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.03.06      Enh. #77: New checkboxes for test coverage tracking mode (KGU#117)
  *      Kay Gürtzig     2016.03.13      Enh. #124 (KGU#156): Runtime data collection generalised
  *      Kay Gürtzig     2016.03.17      Enh. #133 (KGU#159): Stack trace may now be shown in paused mode
- *      Kay Gürtzig     2016.03.18      Enh. #89 Extended Language translation support
+ *      Kay Gürtzig     2016.03.18      KGU#89: Extended Language translation support
  *      Kay Gürtzig     2016.03.25      Message translations now held in LangTextHolder instead of JLabel
  *      Kay Gürtzig     2016.04.12      Enh. #137: additional toggle to direct input and output to a text window
+ *      Kay Gürtzig     2016.05.05      KGU#197: Further (forgotten) LangTextHolders added
  *
  ******************************************************************************************************
  *
@@ -120,11 +121,21 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         // END KGU#2 (#9) 2015-11-14
 
         // START KGU#89/KGU#157 2016-03-18: Bugfix #131 - Prevent interference or take-over
-        // This is just a dummy label as translation support for Executor
+        // These fields are just a translation support for Executor
         lbStopRunningProc = new LangTextHolder("This action is not allowed while a diagram is being executed.\nDo you want to stop the current execution?");
         lbInputValue = new LangTextHolder("Please enter a value for <%>");
         lbInputPaused = new LangTextHolder("Execution paused - you may enter the value in the variable display.");
         // END KGU#89/KGU#157 2016-03-18
+        // START KGU#197 2016-05-05: Forgotten translations added
+        lbInputCancelled = new LangTextHolder("Input cancelled");
+        lbManuallySet = new LangTextHolder("*** Manually set: %1 <- %2 ***");
+        lbEmptyLine = new LangTextHolder("empty line");
+        lbNoCorrectExpr = new LangTextHolder("<%> is not a correct or existing expression.");
+        lbReturnedResult = new LangTextHolder("Returned result");
+        lbOutput = new LangTextHolder("Output");
+        lbInput = new LangTextHolder("Input");
+        lbAcknowledge = new LangTextHolder("Please acknowledge.");
+        // END KGU#197 2016-05-05
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -538,6 +549,16 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     public LangTextHolder lbInputValue;
     public LangTextHolder lbInputPaused;
     // END KGU#89/KGU#157 2016-03-18
+    // START KGU#197 2016-05-05: More language support
+    public LangTextHolder lbInputCancelled;
+    public LangTextHolder lbManuallySet;
+    public LangTextHolder lbEmptyLine;
+    public LangTextHolder lbNoCorrectExpr;
+    public LangTextHolder lbReturnedResult;
+    public LangTextHolder lbOutput;
+    public LangTextHolder lbInput;
+    public LangTextHolder lbAcknowledge;
+    // START KGU#197 2016-05-05
     
     // START KGU#68 2015-11-06: Register variable value editing events
     private Object[] varUpdates = null;
