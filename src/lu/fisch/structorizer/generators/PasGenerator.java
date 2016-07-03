@@ -325,6 +325,13 @@ public class PasGenerator extends Generator
 		}
 		// END KGU#109/KGU#141 2016-01-16
 		
+		// START KGU# 2016-05-05: Bugfix
+		if (transline.startsWith("writeln()"))
+		{
+			transline = "writeln" + transline.substring("writeln()".length());
+		}
+		// END KGU# 2016-05-05
+		
 		return transline.trim(); 
     }
 	
@@ -915,6 +922,7 @@ public class PasGenerator extends Generator
 			StringList _paramNames, StringList _paramTypes, String _resultType)
 	{
         String pr = "program";
+        
         this.procName = _procName;	// Needed for value return mechanisms
 
         insertComment(_root, _indent);
@@ -922,6 +930,15 @@ public class PasGenerator extends Generator
         
         String signature = _root.getMethodName();
         if (!_root.isProgram) {
+        	// START KGU#194 2016-05-07: Bugfix #185 - create a unit context
+        	//if (subInsertPos < 0)
+        	//{
+        	code.add(_indent + "UNIT " + pureFilename + ";");
+	        code.add(_indent);
+        	code.add(_indent + "INTERFACE");
+	        code.add(_indent);
+        	//}
+        	// END KGU#194 2016-05-07
         	pr = "function";
 			// Compose the function header
         	signature += "(";
@@ -940,6 +957,17 @@ public class PasGenerator extends Generator
 			{
 				pr = "procedure";
 			}
+        	// START KGU#194 2016-05-07: Bugfix #185 - create a unit context
+        	//if (subInsertPos < 0)
+        	//{
+	        code.add(_indent + pr + " " + signature + ";");
+	        code.add(_indent);
+        	code.add(_indent + "IMPLEMENTATION");
+	        code.add(_indent);
+        	insertComment("TODO: Repeat the parameter and result type specifications of the INTERFACE section!", _indent);
+        	//}
+        	// END KGU#194 2016-05-07
+			
         }
         code.add(_indent + pr + " " + signature + ";");
         
@@ -1000,6 +1028,20 @@ public class PasGenerator extends Generator
 	@Override
 	protected void generateFooter(Root _root, String _indent)
 	{
+    	// START KGU#194 2016-05-07: Bugfix #185 - create a unit context
+        if (!_root.isProgram) {
+        	//if (subInsertPos < 0)
+        	//{
+        	code.add(_indent);
+        	code.add(_indent + "end;");
+        	code.add(_indent);
+        	code.add(_indent + "BEGIN");
+    		code.add(_indent + "END.");
+        	//}
+        }
+        else
+    	// END KGU#194 2016-05-07
+		
 		code.add(_indent + "end.");
 	}
 	// END KGU#74 2015-11-30

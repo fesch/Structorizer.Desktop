@@ -41,6 +41,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2016-04-04      KGU#165: Default for ignoreCase changed to true
  *      Kay Gürtzig     2016-04-30      Issue #182 (KGU#191): More information on error exit in parse()
  *      Kay Gürtzig     2016-05-02      Issue #184 / Enh. #10: Flaws in FOR loop import (KGU#192)
+ *      Kay Gürtzig     2016-05-04      KGU#194: Bugfix - parse() now with Charset argument
+ *      Kay Gürtzig     2016-05-05/09   Issue #185: Import now copes with units and multiple routines per file
  *
  ******************************************************************************************************
  *
@@ -59,6 +61,9 @@ package lu.fisch.structorizer.parsers;
 import java.io.*;
 import java.nio.*;
 import java.nio.charset.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Vector;
 
 import goldengine.java.*;
 import lu.fisch.utils.*;
@@ -109,14 +114,22 @@ public class D7Parser implements GPMessageConstants
 
 	private String compiledGrammar = null;
 	Root root = null;
+	// START KGU#194 2016-05-08: Bugfix #185
+	// We may obtain a collection of Roots (unit or program with subroutines)!
+	private List<Root> subRoots = new LinkedList<Root>();
+	// END KGU#194 2016-05-08
 	
 	public String error = new String();
 	
 	GOLDParser parser = null;
 	
+	// START KGU#194 2016-05-08: Bugfix #185 - if being a unit we must retain its name
+	private String unitName = null;
+	// END KGU#194 2016-05-08
+	
 	public D7Parser(String _compiledGrammar)
 	{
-		compiledGrammar=_compiledGrammar;
+		compiledGrammar = _compiledGrammar;
 		// create new parser
 		parser = new GOLDParser();
 		parser.setTrimReductions(true);
@@ -166,7 +179,30 @@ public class D7Parser implements GPMessageConstants
 		return result;	
 	}
 	
+	// START KGU#193 2016-05-04
+	/**
+	 * Parses the Pascal source code from file _textToParse and returns an equivalent
+	 * structogram.
+	 * Field `error' will either contain an empty string or an error message afterwards.
+	 * For backward compatibility reasons, character encoding ISO-8859-1 is assumed.
+	 * @param _textToParse - file name of the Pascal source.
+	 * @return The composed diagram (if parsing was successful, otherwise field error will contain an error description) 
+	 */
 	public Root parse(String _textToParse)
+	{
+		return parse(_textToParse, "ISO-8859-1").get(0);
+	}
+
+	/**
+	 * Parses the Pascal source code from file _textToParse, which is supposed to be encoded
+	 * with the charset _encoding, and returns an equivalent structogram.
+	 * Field `error' will either contain an empty string or an error message afterwards.
+	 * @param _textToParse - file name of the Pascal source.
+	 * @param _encoding - name of the charset to be used for decoding
+	 * @return The composed diagram (if parsing was successful, otherwise field error will contain an error description) 
+	 */
+	public List<Root> parse(String _textToParse, String _encoding)
+	// END KGU#193 2016-05-04
 	{
 		// create new root
 		root = new Root();
@@ -176,29 +212,37 @@ public class D7Parser implements GPMessageConstants
 		try
 		{
 			DataInputStream in = new DataInputStream(new FileInputStream(_textToParse));
-			BufferedReader br = new BufferedReader(new InputStreamReader(in, "ISO-8859-1"));
+			// START KGU#193 2016-05-04
+			BufferedReader br = new BufferedReader(new InputStreamReader(in, _encoding));
+			// END KGU#193 2016-05-04
 			String strLine;
 			String pasCode = new String();
 			//Read File Line By Line
 			while ((strLine = br.readLine()) != null)   
 			{
 				// add no ending because of comment filter
-				pasCode+=strLine+"\u2190";
+				pasCode += strLine+"\u2190";
 				//pasCode+=strLine+"\n";
 			}
 			//Close the input stream
 			in.close();
 			
-			// filter out comments
+			// filter out comments (KGU: Why? The GOLDParser can do it itself)
 			Regex r = new Regex("(.*?)[(][*](.*?)[*][)](.*?)","$1$3"); 
 			pasCode=r.replaceAll(pasCode);
 			r = new Regex("(.*?)[{](.*?)[}](.*?)","$1$3"); 
-			pasCode=r.replaceAll(pasCode);
+			pasCode = r.replaceAll(pasCode);
 			
+			// START KGU#195 2016-05-04: Issue #185 - Workaround for mere subroutines
+			pasCode = embedSubroutineDeclaration(pasCode);
+			// END KGU#195 2016-05-04
+						
 			// reset correct endings
 			r = new Regex("(.*?)[\u2190](.*?)","$1\n$2"); 
-			pasCode=r.replaceAll(pasCode);
-						
+			pasCode = r.replaceAll(pasCode);
+			
+			//System.out.println(pasCode);
+			
 			// trim and save as new file
 			OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(_textToParse+".structorizer"), "ISO-8859-1");
 			ow.write(filterNonAscii(pasCode.trim()+"\n"));
@@ -344,12 +388,55 @@ public class D7Parser implements GPMessageConstants
 		//remove the temporary file
 		(new File(_textToParse+".structorizer")).delete();
 		
-		return root;
+		// START KGU#194 2016-05-08: Bugfix #185 - face an empty program or unit vessel
+		//return root;
+		if (subRoots.isEmpty() || root.children.getSize() > 0)
+		{
+			subRoots.add(0, root);
+		}
+		return subRoots;
+		// END KGU#194 2016-05-08
 	}
 	
+	// START KGU#195 2016-05-04: Issue #185 - Workaround for mere subroutines
+	private String embedSubroutineDeclaration(String _pasCode)
+	{
+		// Find the first non-empty line where line ends are encoded as "\u2190"
+		boolean headerFound = false;
+		int pos = -1;
+		int lineEnd = -1;
+		while (!headerFound && (lineEnd = _pasCode.indexOf("\u2190", pos+1)) >= 0)
+		{
+			String line = _pasCode.substring(pos+1, lineEnd).toLowerCase();
+			pos = lineEnd;
+			// If the file contains a program or unit then we leave it as is
+			// for the moment...
+			if (line.startsWith("program") || line.startsWith("unit"))
+			{
+				headerFound = true;
+			}
+			else if (line.startsWith("function") ||
+					 line.startsWith("procedure"))
+			{
+				// embed the declaration in a dummy program definition as
+				// workaround
+				headerFound = true;
+				_pasCode = "program dummy;" + "\u2190"
+						+ _pasCode + "\u2190"
+						+ "begin" + "\u2190"
+						+ "end." + "\u2190";
+			}
+		}
+		return _pasCode;
+	}
+	// END KGU#195 2016-05-04
+
 	private void DrawNSD(Reduction _reduction)
 	{
 		root.isProgram=true;
+		// START KGU#194 2016-05-08: Bugfix #185
+		unitName = null;
+		// END KGU#194 2016-05-08
 		DrawNSD_R(_reduction, root.children);
 	}
 	
@@ -360,6 +447,7 @@ public class D7Parser implements GPMessageConstants
 		if (_reduction.getTokenCount()>0)
 		{
 			String ruleName = _reduction.getParentRule().name();
+			//System.out.println(ruleName);
 			if ( 
 				ruleName.equals("<RefId>")
 				||
@@ -372,7 +460,7 @@ public class D7Parser implements GPMessageConstants
 			{
 				content=new String();
 				content=getContent_R(_reduction,content);
-				System.out.println(ruleName + ": " + content);
+				//System.out.println(ruleName + ": " + content);
 				_parentNode.addElement(new Instruction(updateContent(content)));
 			}
 			else if (
@@ -381,9 +469,46 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<VarSection>")
 					 ||
 					 ruleName.equals("<ConstSection>")
+					 // START KGU#194 2016-05-08: Bugfix #185
+					 // UNIT Interface section can be ignored, all contained routines
+					 // must be converted from the implementation section
+					 ||
+					 ruleName.equals("<InterfaceSection>")
+					 ||
+					 ruleName.equals("<InitSection>")
+					 // END KGU#194 2016-05-08
 					 )
 			{
 			}
+			// START KGU#194 2016-05-08: Bugfix #185 - we must handle unit headers
+			else if (
+					ruleName.equals("<UnitHeader>")
+					)
+			{
+				unitName = getContent_R((Reduction) _reduction.getToken(1).getData(), "");
+			}
+			else if (
+					ruleName.equals("<ProcedureDecl>")
+					||
+					ruleName.equals("<FunctionDecl>")
+					||
+					ruleName.equals("<MethodDecl>")
+					)
+			{
+				Root prevRoot = root;	// Push the original root
+				root = new Root();	// Prepare a new root for the subroutine
+				subRoots.add(root);
+				for (int i=0; i < _reduction.getTokenCount(); i++)
+				{
+					if (_reduction.getToken(i).getKind() == SymbolTypeConstants.symbolTypeNonterminal)
+					{
+						DrawNSD_R((Reduction) _reduction.getToken(i).getData(), root.children);
+					}
+				}
+				// Restore the original root
+				root = prevRoot;
+			}
+			// END KGU#194 2016-05-08
 			else if (
 					 ruleName.equals("<ProgHeader>")
 					 )
@@ -396,26 +521,32 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<ProcHeading>")
 					 )
 			{
-				content=new String();
-				content=getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content = new String();
+				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
 				
 				Reduction secReduc = (Reduction) _reduction.getToken(2).getData();
 				if (secReduc.getTokenCount()!=0)
 				{
-					content=getContent_R(secReduc,content);
+					content = getContent_R(secReduc, content);
 				}
 				
 				content = BString.replaceInsensitive(content,";","; ");
 				content = BString.replaceInsensitive(content,";  ","; ");
 				root.setText(updateContent(content));
 				root.isProgram=false;
+				// START KGU#194 2016-05-08: Bugfix #185 - be aware of unit context
+				if (unitName != null)
+				{
+					root.setComment("(UNIT " + unitName + ")");
+				}
+				// END KGU#194 2016-05-08
 			}
 			else if (
 					 ruleName.equals("<FuncHeading>")
 					 )
 			{
-				content=new String();
-				content=getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content = new String();
+				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
 				
 				Reduction secReduc = (Reduction) _reduction.getToken(2).getData();
 				if (secReduc.getTokenCount()!=0)
@@ -426,33 +557,39 @@ public class D7Parser implements GPMessageConstants
 				secReduc = (Reduction) _reduction.getToken(4).getData();
 				if (secReduc.getTokenCount()!=0)
 				{
-					content+=": ";
-					content=getContent_R(secReduc,content);
+					content += ": ";
+					content = getContent_R(secReduc, content);
 				}
 				
-				content = BString.replaceInsensitive(content,";","; ");
-				content = BString.replaceInsensitive(content,";  ","; ");
+				content = BString.replaceInsensitive(content, ";", "; ");
+				content = BString.replaceInsensitive(content, ";  ", "; ");
 				root.setText(updateContent(content));
-				root.isProgram=false;
+				root.isProgram = false;
+				// START KGU#194 2016-05-08: Bugfix #185 - be aware of unit context
+				if (unitName != null)
+				{
+					root.setComment("(UNIT " + unitName + ")");
+				}
+				// END KGU#194 2016-05-08
 			}
 			else if (
 					 ruleName.equals("<WhileStatement>")
 					 )
 			{
-				content=new String();
-				content=getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content = new String();
+				content = getContent_R((Reduction) _reduction.getToken(1).getData(), content);
 				While ele = new While(preWhile+updateContent(content)+postWhile);
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = (Reduction) _reduction.getToken(3).getData();
-				DrawNSD_R(secReduc,ele.q);
+				DrawNSD_R(secReduc, ele.q);
 			}
 			else if (
 					 ruleName.equals("<RepeatStatement>")
 					 )
 			{
-				content=new String();
-				content=getContent_R((Reduction) _reduction.getToken(3).getData(),content);
+				content = new String();
+				content = getContent_R((Reduction)_reduction.getToken(3).getData(), content);
 				Repeat ele = new Repeat(preRepeat+updateContent(content)+postRepeat);
 				_parentNode.addElement(ele);
 				
@@ -463,14 +600,14 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<ForStatement>")
 					 )
 			{
-				content=new String();
-				content=getContent_R((Reduction) _reduction.getToken(1).getData(),content);
-				content+=":=";
-				content=getContent_R((Reduction) _reduction.getToken(3).getData(),content);
-				content+=" ";
-				content+=postFor;
-				content+=" ";
-				content=getContent_R((Reduction) _reduction.getToken(5).getData(),content);
+				content = new String();
+				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content += ":=";
+				content = getContent_R((Reduction) _reduction.getToken(3).getData(),content);
+				content += " ";
+				content += postFor;
+				content += " ";
+				content = getContent_R((Reduction) _reduction.getToken(5).getData(),content);
 				// START KGU#3 2016-05-02: Enh. #10 Token 4 contains the information whether it's to or downto
 				if (getContent_R((Reduction) _reduction.getToken(4).getData(), "").equals("downto"))
 				{
@@ -485,16 +622,16 @@ public class D7Parser implements GPMessageConstants
 				
 				// Get and convert the body
 				Reduction secReduc = (Reduction) _reduction.getToken(7).getData();
-				DrawNSD_R(secReduc,ele.q);
+				DrawNSD_R(secReduc, ele.q);
 			}
 			else if (
 					 ruleName.equals("<IfStatement>")
 					 )
 			{
-				content=new String();
-				content=getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content = new String();
+				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
 				
-				Alternative ele = new Alternative(preAlt+updateContent(content)+postAlt);
+				Alternative ele = new Alternative(preAlt + updateContent(content) + postAlt);
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = (Reduction) _reduction.getToken(3).getData();
@@ -509,14 +646,14 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<CaseSelector>")
 					 )
 			{
-				content=new String();
-				content=getContent_R((Reduction) _reduction.getToken(0).getData(),content);
+				content = new String();
+				content = getContent_R((Reduction) _reduction.getToken(0).getData(),content);
 				
 				// sich am parent (CASE) dat nächst fräit Element
 				boolean found = false;
-				for(int i=0;i<((Case) _parentNode.parent).getText().count();i++)
+				for(int i=0; i<((Case) _parentNode.parent).getText().count(); i++)
 				{
-					if(((Case) _parentNode.parent).getText().get(i).equals("??") && found==false)
+					if (((Case) _parentNode.parent).getText().get(i).equals("??") && found==false)
 					{
 						((Case) _parentNode.parent).getText().set(i,content);
 						found=true;
@@ -547,18 +684,18 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<CaseStatement>")
 					 )
 			{
-				content=new String();
-				content=preCase+getContent_R((Reduction) _reduction.getToken(1).getData(),content)+postCase;
+				content = new String();
+				content = preCase+getContent_R((Reduction) _reduction.getToken(1).getData(),content)+postCase;
 				// am content steet elo hei den "test" dran
 				
 				// Wéivill Elementer sinn am CASE dran?
 				Reduction sr = (Reduction) _reduction.getToken(3).getData();
-				int j=0;
+				int j = 0;
 				//System.out.println(sr.getParentRule().getText());  // <<<<<<<
-				while(sr.getParentRule().name().equals("<CaseList>"))
+				while (sr.getParentRule().name().equals("<CaseList>"))
 				{
 					  j++;
-					  content+="\n??";
+					  content += "\n??";
 					  if (sr.getTokenCount()>=1)
 					  {
 						sr = (Reduction) sr.getToken(0).getData();
@@ -569,10 +706,10 @@ public class D7Parser implements GPMessageConstants
 					  }
 				}
 				
-				if ( j>0) 
+				if (j>0) 
 				{
 					j++;
-					content+="\nelse";
+					content += "\nelse";
 				}
 
 				Case ele = new Case(updateContent(content));
@@ -584,12 +721,12 @@ public class D7Parser implements GPMessageConstants
 				DrawNSD_R(secReduc,(Subqueue) ele.qs.get(0));
 				// den "otherwise"
 				secReduc = (Reduction) _reduction.getToken(4).getData();
-				DrawNSD_R(secReduc,(Subqueue) ele.qs.get(j-1));
+				DrawNSD_R(secReduc, (Subqueue) ele.qs.get(j-1));
 				
 				// cut off else, if possible
 				if (((Subqueue) ele.qs.get(j-1)).getSize()==0)
 				{
-					ele.getText().set(ele.getText().count()-1,"%");
+					ele.getText().set(ele.getText().count()-1, "%");
 				}
 
 				/*
@@ -627,7 +764,7 @@ public class D7Parser implements GPMessageConstants
 			{
 				if (_reduction.getTokenCount()>0)
 				{
-					for(int i=0;i<_reduction.getTokenCount();i++)
+					for(int i=0; i<_reduction.getTokenCount(); i++)
 					{
 						if (_reduction.getToken(i).getKind()==SymbolTypeConstants.symbolTypeNonterminal)
 						{
@@ -654,14 +791,14 @@ public class D7Parser implements GPMessageConstants
 		r = new Regex(BString.breakup("readln")+"(.*?)",input+" $1"); _content=r.replaceAll(_content);
 		r = new Regex(BString.breakup("read")+"(.*?)",input+" $1"); _content=r.replaceAll(_content);*/
 
-		_content = _content.replaceAll(BString.breakup("write")+"[((](.*?)[))]",output+" $1");
-		_content = _content.replaceAll(BString.breakup("writeln")+"[((](.*?)[))]",output+" $1");
-		_content = _content.replaceAll(BString.breakup("writeln")+"(.*?)",output+" $1");
-		_content = _content.replaceAll(BString.breakup("write")+"(.*?)",output+" $1");
-		_content = _content.replaceAll(BString.breakup("read")+"[((](.*?)[))]",input+" $1");
-		_content = _content.replaceAll(BString.breakup("readln")+"[((](.*?)[))]",input+" $1");
-		_content = _content.replaceAll(BString.breakup("readln")+"(.*?)",input+" $1");
-		_content = _content.replaceAll(BString.breakup("read")+"(.*?)",input+" $1");
+		_content = _content.replaceAll(BString.breakup("write")+"[((](.*?)[))]", output+" $1");
+		_content = _content.replaceAll(BString.breakup("writeln")+"[((](.*?)[))]", output+" $1");
+		_content = _content.replaceAll(BString.breakup("writeln")+"(.*?)", output+" $1");
+		_content = _content.replaceAll(BString.breakup("write")+"(.*?)", output+" $1");
+		_content = _content.replaceAll(BString.breakup("read")+"[((](.*?)[))]", input+" $1");
+		_content = _content.replaceAll(BString.breakup("readln")+"[((](.*?)[))]", input+" $1");
+		_content = _content.replaceAll(BString.breakup("readln")+"(.*?)", input+" $1");
+		_content = _content.replaceAll(BString.breakup("read")+"(.*?)", input+" $1");
 		
 		//System.out.println(_content);
 		
@@ -670,25 +807,28 @@ public class D7Parser implements GPMessageConstants
 		*/
 		
 		//_content = BString.replace(_content, ":="," \u2190 ");
-		_content = BString.replace(_content, ":="," <- ");
+		_content = BString.replace(_content, ":=", " <- ");
 
 		return _content.trim();
 	}
 	
 	private String getContent_R(Reduction _reduction, String _content)
 	{
-		if (_reduction.getTokenCount()>0)
-		{
-			for(int i=0;i<_reduction.getTokenCount();i++)
+//		if (_reduction.getTokenCount()>0)
+//		{
+			for(int i=0; i<_reduction.getTokenCount(); i++)
 			{
 				switch (_reduction.getToken(i).getKind()) 
 				{
 					case SymbolTypeConstants.symbolTypeNonterminal:
-						_content=getContent_R((Reduction) _reduction.getToken(i).getData(), _content);	
+						_content = getContent_R((Reduction) _reduction.getToken(i).getData(), _content);	
 						break;
 					case SymbolTypeConstants.symbolTypeTerminal:
 						{
 							String tokenData = (String) _reduction.getToken(i).getData();
+							// START KGU 2016-05-08: Avoid keyword concatenation
+							boolean tokenIsId = !tokenData.isEmpty() && Character.isJavaIdentifierStart(tokenData.charAt(0));
+							// END KGU 2016-05-08
 							if (tokenData.trim().equalsIgnoreCase("mod") ||
 									// START KGU#192 2016-05-02: There are more operators to be considered...
 									tokenData.trim().equalsIgnoreCase("shl") ||
@@ -697,7 +837,22 @@ public class D7Parser implements GPMessageConstants
 									tokenData.trim().equalsIgnoreCase("div"))
 							{
 								_content += " " + tokenData + " ";
+								// START KGU 2016-05-08: Avoid keyword concatenation
+								tokenIsId = false;
+								// END KGU 2016-05-08
 							}
+							// START KGU 2016-05-08: Avoid keyword concatenation
+							else if (
+									tokenIsId
+									&&
+									!_content.isEmpty()
+									&&
+									Character.isJavaIdentifierPart(_content.charAt(_content.length()-1))
+									)
+							{
+								_content += " " + tokenData;
+							}
+							// END KGU 2016-05-08
 							else
 							{
 								_content += tokenData;
@@ -708,12 +863,12 @@ public class D7Parser implements GPMessageConstants
 						break;
 				}
 			}
-		}
-		else
-		{
-			// ?
-			// _content:=_content+trim(R.ParentRule.Text)
-		}
+//		}
+//		else
+//		{
+//			// ?
+//			// _content:=_content+trim(R.ParentRule.Text)
+//		}
 		
 		_content = BString.replaceInsensitive(_content,")and(",") and (");
 		_content = BString.replaceInsensitive(_content,")or(",") or (");
@@ -831,5 +986,5 @@ public class D7Parser implements GPMessageConstants
 		return keywords;
 	}
 	// END KGU#163 2016-03-25
-
+	
 }
