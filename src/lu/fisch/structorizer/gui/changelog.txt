@@ -9,14 +9,14 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.24-11 (2016.05.03)
+Current development version: 3.24-12 (2016.07.03)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]
-- 01: Enh. #124: Generalized runtime data visualisation <Kay Gürtzig>
+- 01: Enh. #124: Generalized runtime data visualization <Kay Gürtzig>
 - 01: Arranger now adopts current directory from first arranged diagram <Kay Gürtzig>
 - 02: Bugfix #131: User activities during execution could compromise Executor <Kay Gürtzig>
 - 02: Bugfix #132: Stale Structorizer references in Arranger caused trouble <Kay Gürtzig>
 - 02: Enh. #133: Execution Call stack may now be inspected in paused state <Kay Gürtzig>
-- 02: Enh. KGU#89: Executor: Extended language localisation support <Kay Gürtzig>
+- 02: Enh. KGU#89: Executor: Extended language localization support <Kay Gürtzig>
 - 03: Enh. #84/#135: For-In loops now consistently supported [R. Schmidt]<Kay Gürtzig>
 - 03: Issue #79/#152: Requested Java version corrected (1.6 --> 1.8) <Kay Gürtzig>
 - 04: Bugfix #96/#135: On BASH export conditions now put into [[ ]] [Rolf Schmidt]
@@ -56,6 +56,13 @@ Current development version: 3.24-11 (2016.05.03)
 - 11: Enh. #179: Code generation and parsing in batch mode [Rolf Schmidt] <Kay Gürtzig>
 - 11: Bugfix #181: Pascal export didn't convert all string delimiters <Kay Gürtzig>
 - 11: Bugfix #184: Diagram imported from Pascal now enables save button <Kay Gürtzig>
+- 12: Several minor bugfixes in Pascal export and import <Kay Gürtzig>
+- 12: Issue #185: Pascal export of functions/procedures now as units. <Kay Gürtzig>
+- 12: Issue #185: Pascal import now copes with multiple routines per file. <Kay Gürtzig> 
+- 12: Executor: Enhanced language support (EN/DE/ES) and minor bugfixing <Kay Gürtzig>
+- 12: Arranger now offers saving before removing "dirty" diagrams <Kay Gürtzig>
+- 12: Enh. #62: Arranger may now save arrangements in a portable way <Kay Gürtzig>
+- 12: Arranger: Partial language support (EN/DE/ES) introduced <Kay Gürtzig>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
