@@ -259,6 +259,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 */
 	protected void insertBlockComment(StringList _sl, String _indent, String _start, String _cont, String _end)
 	{
+		// START KGU#199 2016-07-07: Precaution against enh. #188 (multi-line StringList elements)
+		_sl = StringList.explode(_sl,  "\n");
+		// END KGU#199 2016-07-07
 		if (_start != null)
 		{
 			code.add(_indent + _start);

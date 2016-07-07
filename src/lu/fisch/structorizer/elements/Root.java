@@ -67,6 +67,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016-04-05      Bugfix #154 (KGU#176) analyse_17() peeked in a wrong collection (Parallel)
  *      Kay Gürtzig     2016-04-12      Enh. #161 (KGU#179) analyse_13_16() extended (new error16_7)
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016.07.07      Enh. #185 + #188: Mechanism to convert Instructions to Calls
  *
  ******************************************************************************************************
  *
@@ -670,9 +671,9 @@ public class Root extends Element {
                         	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
                             //hasChanged=true;
                         	// END KGU#137 2016-01-11
-                        	// START KGU#136 2016-03-01: Bugfix #97
-                        	_ele.resetDrawingInfoUp();
-                        	// END KGU#136 2016-03-01
+                        	// START KGU#136 2016-07-07: Bugfix #97 - now delegated to Subqueue
+                        	//_ele.resetDrawingInfoUp();
+                        	// END KGU#136 2016-07-07
                     }
                     else if (_ele.parent.getClass().getSimpleName().equals("Subqueue"))
                     {
@@ -684,8 +685,8 @@ public class Root extends Element {
                         	// START KGU#137 2016-01-11: Bugfix #103 - rely on addUndo() 
                             //hasChanged=true;
                         	// END KGU#137 2016-01-11
-                        	// START KGU#136 2016-03-01: Bugfix #97
-                        	_ele.parent.resetDrawingInfoUp();
+                        	// START KGU#136 2016-03-01: Bugfix #97 - now delegated to Subqueue
+                        	//_ele.parent.resetDrawingInfoUp();
                         	// END KGU#136 2016-03-01
                     }
                     else
@@ -3605,6 +3606,16 @@ public class Root extends Element {
 		return textToShow;
 	}
 // END KGU#91 2015-12-04
+
+	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#convertToCalls(lu.fisch.utils.StringList)
+	 */
+	@Override
+	public void convertToCalls(StringList _signatures) {
+		this.children.convertToCalls(_signatures);
+	}
+	// END KGU#199 2016-07-07
 
     
 }

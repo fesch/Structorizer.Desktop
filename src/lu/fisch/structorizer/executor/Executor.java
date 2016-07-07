@@ -3280,7 +3280,7 @@ public class Executor implements Runnable
 		String valueListString = element.getValueList();
 		String iterVar = element.getCounterVar();
 		Object[] valueList = null;
-		String problem = "";
+		String problem = "";	// Gathers exception descriptions for analysis purposes
 		Object value = null;
 		if (valueListString.startsWith("{") && valueListString.endsWith("}"))
 		{
@@ -3352,6 +3352,12 @@ public class Executor implements Runnable
 		{
 			result = "<" + valueListString
 					+ "> cannot be interpreted as value list.";
+			// START KGU 2016-07-06: Privide the gathered information
+			if (!problem.isEmpty())
+			{
+				result += "\nDetails: " + problem;
+			}
+			// END KGU 2016-07-06
 		}
 		else
 		{

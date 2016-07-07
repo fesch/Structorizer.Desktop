@@ -46,6 +46,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016.07.06      Bugfix: changes of the element set now force drawing info invalidation
+ *      Kay Gürtzig     2016.07.07      Enh. #185 + #188: Mechanism to convert Instructions to Calls
  *
  ******************************************************************************************************
  *
@@ -265,11 +267,17 @@ public class Subqueue extends Element implements IElementSequence {
 			children.insertElementAt(_element, _where);
 			_element.parent=this;
 		}
+    	// START KGU#136 2016-07-06: Bugfix #97
+    	this.resetDrawingInfoUp();
+    	// END KGU#136 2016-07-06
 	}
 
 	public void clear()
 	{
 		children.clear();
+    	// START KGU#136 2016-07-06: Bugfix #97
+    	this.resetDrawingInfoUp();
+    	// END KGU#136 2016-07-06
 	}
 	// END KGU#87 2015-11-22
 	
@@ -277,6 +285,9 @@ public class Subqueue extends Element implements IElementSequence {
 	public void removeElement(Element _element)
 	{
 		children.removeElement(_element);
+    	// START KGU#136 2016-07-06: Bugfix #97
+    	this.resetDrawingInfoUp();
+    	// END KGU#136 2016-07-06
 	}
 	
 	public void removeElement(int _index)
@@ -285,6 +296,9 @@ public class Subqueue extends Element implements IElementSequence {
 		//children.removeElement(children.get(_index));
 		children.removeElementAt(_index);
 		// END KGU 2015-11-22
+    	// START KGU#136 2016-07-06: Bugfix #97
+    	this.resetDrawingInfoUp();
+    	// END KGU#136 2016-07-06
 	}
 	
 	// START KGU#136 2016-03-02: New method to facilitate bugfix #97
@@ -614,4 +628,32 @@ public class Subqueue extends Element implements IElementSequence {
     }
 	// END KGU#123 2016-01-03
 	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#convertToCalls(lu.fisch.utils.StringList)
+	 */
+	@Override
+	public void convertToCalls(StringList _signatures)
+	{
+		boolean somethingChanged = false;
+		for (int i = 0; i < this.children.size(); i++)
+		{
+			Element ele = this.children.get(i);
+			if (ele instanceof Instruction && !(ele instanceof Call) && ((Instruction)ele).isCallOfOneOf(_signatures))
+			{
+				Element newEle = new Call((Instruction)ele);
+				this.children.setElementAt(newEle, i);
+				newEle.parent = this;
+				somethingChanged = true;
+			}
+			else
+			{
+				ele.convertToCalls(_signatures);
+			}
+		}
+		if (somethingChanged)
+		{
+			this.resetDrawingInfoUp();
+		}
+	}
+	// END KGU#199 2016-07-07
 }

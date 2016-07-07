@@ -67,6 +67,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016-04-24      Issue #169 accomplished: selection on start / after export
  *      Kay Gürtzig     2016-05-02      Bugfix #184: Imported root must be set changed.
  *      Kay Gürtzig     2016-05-08      Issue #185: Import of multiple roots per file (collected in Arranger, KGU#194)
+ *      Kay Gürtzig     2016.07.06      Enh. #188: New method transmuteNSD() for element conversion (KGU#199)
  *
  ******************************************************************************************************
  *
@@ -369,7 +370,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         		if (selEle != null &&
         				!selEle.getComment(false).getText().trim().isEmpty())
         		{
-        			StringList comment = selEle.getComment(false);
+        			// START KGU#199 2016-07-07: Enh. #188 - we must cope with combined comments now
+        			//StringList comment = selEle.getComment(false);
+        			StringList comment = StringList.explode(selEle.getComment(false), "\n");
+        			comment.removeAll("");	// Don't include empty lines here
+        			// END KGU#199 2016-07-07
         			String htmlComment = "<html>"+BString.replace(BString.encodeToHtml(comment.getText()),"\n","<br>")+"</html>";
         			if(!lblPop.getText().equals(htmlComment))
         			{
@@ -1434,6 +1439,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		analyse();
 	}
 
+	/*****************************************
+	 * applicability test methods
+	 *****************************************/
 	public boolean canPaste()
 	{
 		boolean cond = (eCopy!=null && selected!=null);
@@ -1461,7 +1469,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		// START KGU#177 2016-04-14: Enh. #158 - we want to allow to copy diagrams e.g. to an Arranger of a different JVM
 		//return canCopy() && !selected.executed && !selected.waited;
-		return canCopy() && !(selected instanceof Root) && !selected.executed && !selected.waited;
+		// START KGU#177 2016-07-06: Enh #158: mere re-formulation (equivalent)
+		//return canCopy() && !(selected instanceof Root) && !selected.executed && !selected.waited;
+		return canCopyNoRoot() && !selected.executed && !selected.waited;
+		// END KGU#177 2016-07-06
 		// END KGU#177 2016-04-14
 	}
 
@@ -1474,7 +1485,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			// START KGU#177 2016-04-14: Enh. #158 - we want to allow to copy diagrams e.g. to an Arranger of a different JVM
 			//cond = !selected.getClass().getSimpleName().equals("Root");
-			cond = true;
 			// END KGU#177 2016-04-14
 			// START KGU#87 2015-11-22: Allow to copy a non-empty Subqueue
 			//cond = cond && !selected.getClass().getSimpleName().equals("Subqueue");
@@ -1484,7 +1494,44 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 		return cond;
 	}
+	
+	// START KGU#177 2016-07-06: Enh. #158 - accidently breakpoints had become enabled on Root
+	public boolean canCopyNoRoot()
+	{
+		return canCopy() && !(selected instanceof Root);
+	}
+	// END KGU#177 2016-07-06
 
+	// START KGU#199 2016-07-06: Enh. #188: Element conversions
+	public boolean canTransmute()
+	{
+		boolean convertible = false;
+		if (selected != null && !selected.executed && !selected.waited)
+		{
+			if (selected instanceof Instruction)
+			{
+				Instruction instr = (Instruction)selected;
+				convertible = instr.getText().count() > 1
+						|| instr.isJump()
+						|| instr.isFunctionCall()
+						|| instr.isProcedureCall();
+			}
+			else if (selected instanceof IElementSequence && ((IElementSequence)selected).getSize() > 1)
+			{
+				convertible = true;
+				for (int i = 0; convertible && i < ((IElementSequence)selected).getSize(); i++)
+				{
+					if (!(((IElementSequence)selected).getElement(i) instanceof Instruction))
+					{
+						convertible = false;
+					}
+				}
+			}
+		}
+		return convertible;
+	}
+	// END KGU#199 2016-07-06
+	
 	/*****************************************
 	 * setColor method
 	 *****************************************/
@@ -1928,6 +1975,157 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 		}
 	}
+	
+	/*****************************************
+	 * transmute method(s)
+	 *****************************************/
+	// START KGU#199 2016-07-06: Enh. #188 - perform the possible conversion
+	public void transmuteNSD()
+	{
+		Subqueue parent = (Subqueue)selected.parent;
+		if (selected instanceof Instruction)
+		{
+			root.addUndo();
+			if (selected.getText().count() > 1)
+			{
+				transmuteToSequence(parent);
+			}
+			else
+			{
+				transmuteToSpecialInstr(parent);
+			}
+		}
+		else if (selected instanceof IElementSequence)
+		{
+			root.addUndo();
+			transmuteToCompoundInstr(parent);
+		}
+		this.doButtons();
+		redraw();
+		analyse();
+	}
+	
+	private void transmuteToSequence(Subqueue parent)
+	{
+		// Comment will be split as follows:
+		// If the number of Strings of the coment equals the numbe of instruction
+		// lines then the strings are assigned one by one to he resulting instructions
+		// (thereby splitting multi-line strings into StringLists),
+		// otherwise the first instruction will get all comment.
+		int index = parent.getIndexOf(selected);
+		StringList comment = selected.getComment();
+		int count = selected.getText().count();
+		boolean distributeComment = (count == comment.count());
+		for (int i = 0; i < count; i++)
+		{
+			Instruction instr = (Instruction)selected.copy();
+			instr.setText(selected.getText().get(i));
+			if (distributeComment)
+			{
+				instr.setComment(StringList.explode(comment.get(i), "\n"));
+			}
+			else if (i == 0)
+			{
+				instr.setComment(comment);
+			}
+			parent.insertElementAt(instr, index+i+1);
+		}
+		parent.removeElement(index);
+		selected = new SelectedSequence(parent, index, index+count-1);
+		selectedUp = selectedDown = null;
+		selected.setSelected(true);
+	}
+	
+	private void transmuteToSpecialInstr(Subqueue parent)
+	{
+		Instruction instr = (Instruction)selected;
+		Element elem = instr;
+		if (instr instanceof Call || instr instanceof Jump)
+		{
+			elem = new Instruction(instr);
+		}
+		else if (instr.isProcedureCall() || instr.isFunctionCall())
+		{
+			elem = new Call(instr);
+		}
+		else if (instr.isJump())
+		{
+			elem = new Jump(instr);
+		}
+		int index = parent.getIndexOf(instr);
+		parent.insertElementAt(elem, index+1);
+		parent.removeElement(index);
+		this.selected = elem;
+		this.selectedUp = this.selectedDown = this.selected;
+	}
+	
+	private void transmuteToCompoundInstr(Subqueue parent)
+	{
+		// Comments will be composed as follows:
+		// If none of the selected elements had a non-empty comment then the resulting
+		// comment will be empty. Otherwise the resulting comment will contain as many
+		// strings as elemets. Each of them will be the respective element comment,
+		// possibly containing several newlines if it was a multi-line comment.
+		Instruction instr = (Instruction)((IElementSequence)selected).getElement(0);
+		StringList composedComment = StringList.getNew(instr.getComment().getText().trim());
+		int nElements = ((IElementSequence)selected).getSize();
+		int index = parent.getIndexOf(instr);
+		boolean brkpt = instr.isBreakpoint();
+		// Find out whether all elements are of the same kind
+		boolean sameKind = true;
+		for (int i = 1; sameKind && i < nElements; i++)
+		{
+			if (((IElementSequence)selected).getElement(i).getClass() != instr.getClass())
+			{
+				sameKind = false;
+			}
+		}
+		// If so...
+		if (sameKind)
+		{
+			// ... then clone the first element of the sequence as same class
+			instr = (Instruction)instr.copy();
+		}
+		else {
+			// ... else clone the first element of the sequence as simple instruction
+			instr = new Instruction(instr);
+		}
+		((IElementSequence)selected).removeElement(0);
+		nElements--;
+		// And now append the contents of the remaining elements, removing them from the selection
+		for (int i = 0; i < nElements; i++)
+		{
+			Element ele = ((IElementSequence)selected).getElement(0);
+			instr.getText().add(ele.getText());
+			composedComment.add(ele.getComment().getText().trim());
+			if (ele.isBreakpoint())
+			{
+				brkpt = true;
+			}
+			((IElementSequence)selected).removeElement(0);			
+		}
+		// If there was no substantial comment then we must not create one, otherwise
+		// the cmment is to consist of as many strings as instruction lines - where
+		// each of them may contain newlines for reversibility
+		if (!composedComment.concatenate().trim().isEmpty())
+		{
+			instr.setComment(composedComment);
+		}
+		else
+		{
+			instr.getComment().clear();
+		}
+		// If any of the implicated instructions had a breakpoint then set it here, too
+		if (brkpt && !instr.isBreakpoint())
+		{
+			instr.toggleBreakpoint();
+		}
+		instr.setSelected(true);
+		parent.insertElementAt(instr, index);
+		this.selected = instr;
+		this.selectedUp = this.selectedDown = this.selected;
+	}
+	// END KGU#199 2016-07-06
 
 	// START KGU#43 2015-10-12
 	/*****************************************
@@ -2729,7 +2927,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				while (iter.hasNext())
 				{
 					root = iter.next();
-					root.hightlightVars = hil;
+				root.hightlightVars = hil;
 					// The Root must be marked for saving
 					root.setChanged();
 					// ... and be added to the Arranger
@@ -2740,15 +2938,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					root = firstRoot;
 				// END KGU#194 2016-05-08
 					root.hightlightVars = hil;
-					// START KGU#183 2016-04-24: Enh. #169
-					selected = root;
-					selected.setSelected(true);
-					// END KGU#183 2016-04-24
+				// START KGU#183 2016-04-24: Enh. #169
+				selected = root;
+				selected.setSelected(true);
+				// END KGU#183 2016-04-24
 					// START KGU#192 2016-05-02: #184 - The Root must be marked for saving
 					root.setChanged();
 					// END KGU#192 2016-05-02
 				// START KGU#194 2016-05-08: Bugfix #185 - multiple routines per file
-				}
+			}
 				// END KGU#194 2016-05-08
 			}
 			else
@@ -3454,6 +3652,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			inputbox.checkConsistency();
 			// END KGU#61 2016-03-21
 			inputbox.setLang(NSDControl.getLang());
+//			inputbox.pack();// This makes focus control possible but requires minimum size settings
+//			if (Element.E_TOGGLETC)
+//			{
+//				inputbox.txtComment.requestFocusInWindow();
+//			}
+//			else
+//			{
+//				inputbox.txtText.requestFocusInWindow();
+//			}
 			inputbox.setVisible(true);
 
 			// get fields
