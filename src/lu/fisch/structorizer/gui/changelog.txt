@@ -65,6 +65,8 @@ Current development version: 3.24-13 (2016.07.??)
 - 12: Arranger: Partial language support (EN/DE/ES) introduced <Kay Gürtzig>
 - 13: Enh. #188: Instruction transmutation, concatenation and spliting <Kay Gürtzig>
 - 13: Enh. #185: Call identification on Pascal import improved <Kay Gürtzig>
+- 13: Enh. #180: Initial editor focus dependent on switch text/comment mode [elemhsb]
+
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
