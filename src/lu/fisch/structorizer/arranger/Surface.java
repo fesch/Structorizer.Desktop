@@ -131,7 +131,6 @@ import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.filechooser.FileFilter;
 
 import lu.fisch.graphics.Rect;
 import lu.fisch.structorizer.elements.Element;

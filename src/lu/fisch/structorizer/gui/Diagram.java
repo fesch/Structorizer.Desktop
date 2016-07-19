@@ -2008,7 +2008,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	private void transmuteToSequence(Subqueue parent)
 	{
 		// Comment will be split as follows:
-		// If the number of Strings of the coment equals the numbe of instruction
+		// If the number of strings of the comment equals the number of instruction
 		// lines then the strings are assigned one by one to he resulting instructions
 		// (thereby splitting multi-line strings into StringLists),
 		// otherwise the first instruction will get all comment.
@@ -2024,9 +2024,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			{
 				instr.setComment(StringList.explode(comment.get(i), "\n"));
 			}
-			else if (i == 0)
+			else if (i != 0)
 			{
-				instr.setComment(comment);
+				instr.comment.clear();
 			}
 			parent.insertElementAt(instr, index+i+1);
 		}
@@ -2064,7 +2064,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// Comments will be composed as follows:
 		// If none of the selected elements had a non-empty comment then the resulting
 		// comment will be empty. Otherwise the resulting comment will contain as many
-		// strings as elemets. Each of them will be the respective element comment,
+		// strings as elements. Each of them will be the respective element comment,
 		// possibly containing several newlines if it was a multi-line comment.
 		Instruction instr = (Instruction)((IElementSequence)selected).getElement(0);
 		StringList composedComment = StringList.getNew(instr.getComment().getText().trim());
