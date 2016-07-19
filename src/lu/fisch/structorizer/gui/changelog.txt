@@ -63,6 +63,7 @@ Current development version: 3.24-12 (2016.07.03)
 - 12: Arranger now offers saving before removing "dirty" diagrams <Kay Gürtzig>
 - 12: Enh. #62: Arranger may now save arrangements in a portable way <Kay Gürtzig>
 - 12: Arranger: Partial language support (EN/DE/ES) introduced <Kay Gürtzig>
+- 13: Bugfix #191: Defective FOR loop export to PHP [Frank Schenk]
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
