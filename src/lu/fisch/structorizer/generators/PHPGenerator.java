@@ -49,7 +49,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
  *      Kay Gürtzig             2016.03.22      Enh. #84 (= KGU#61) varNames now inherited, FOR-IN loop support
  *      Kay Gürtzig             2016.03.23      Enh. #84: Support for FOREACH loops (KGU#61)
- *      Kay Gürtzig             2016.04.01      Enh. #144: Care for new option to suppress content conversion 
+ *      Kay Gürtzig             2016.04.01      Enh. #144: Care for new option to suppress content conversion
+ *      Kay Gürtzig             2016.07.19      Bugfix #191 (= KGU#204): Wrong comparison operator in FOR loops 
  *
  ******************************************************************************************************
  *
@@ -369,7 +370,10 @@ public class PHPGenerator extends Generator
     	else
     	{
     		int step = _for.getStepConst();
-    		String compOp = (step > 0) ? " >= " : " <= ";
+    		// START KGU#204 2016-07-19: Bugfix #191 - operators confused
+    		//String compOp = (step > 0) ? " >= " : " <= ";
+    		String compOp = (step > 0) ? " <= " : " >= ";
+    		// END KGU#204 2016-07-19
     		// START KGU#162 2016-04-01: Enh. #144 - var syntax already handled
 //    		String increment = "$" + var + " += (" + step + ")";
 //    		code.add(_indent + "for ($" +
