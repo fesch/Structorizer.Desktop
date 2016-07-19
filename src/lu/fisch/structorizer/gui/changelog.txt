@@ -66,6 +66,7 @@ Current development version: 3.24-13 (2016.07.??)
 - 13: Enh. #188: Instruction transmutation, concatenation and spliting <Kay Gürtzig>
 - 13: Enh. #185: Call identification on Pascal import improved <Kay Gürtzig>
 - 13: Enh. #180: Initial editor focus dependent on switch text/comment mode [elemhsb]
+- 13: Bugfix #191: Defective FOR loop export to PHP [Frank Schenk]
 
 
 Version: 3.24 (2016.03.14)
