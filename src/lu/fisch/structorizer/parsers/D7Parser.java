@@ -130,7 +130,7 @@ public class D7Parser implements GPMessageConstants
 	
 	public D7Parser(String _compiledGrammar)
 	{
-		compiledGrammar=_compiledGrammar;
+		compiledGrammar = _compiledGrammar;
 		// create new parser
 		parser = new GOLDParser();
 		parser.setTrimReductions(true);
@@ -222,7 +222,7 @@ public class D7Parser implements GPMessageConstants
 			while ((strLine = br.readLine()) != null)   
 			{
 				// add no ending because of comment filter
-				pasCode+=strLine+"\u2190";
+				pasCode += strLine+"\u2190";
 				//pasCode+=strLine+"\n";
 			}
 			//Close the input stream
@@ -539,13 +539,13 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<ProcHeading>")
 					 )
 			{
-				content=new String();
-				content=getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content = new String();
+				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
 				
 				Reduction secReduc = (Reduction) _reduction.getToken(2).getData();
 				if (secReduc.getTokenCount()!=0)
 				{
-					content=getContent_R(secReduc,content);
+					content = getContent_R(secReduc,content);
 				}
 				
 				content = BString.replaceInsensitive(content,";","; ");
@@ -563,26 +563,26 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<FuncHeading>")
 					 )
 			{
-				content=new String();
-				content=getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content = new String();
+				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
 				
 				Reduction secReduc = (Reduction) _reduction.getToken(2).getData();
 				if (secReduc.getTokenCount()!=0)
 				{
-					content=getContent_R(secReduc,content);
+					content = getContent_R(secReduc,content);
 				}
 				
 				secReduc = (Reduction) _reduction.getToken(4).getData();
 				if (secReduc.getTokenCount()!=0)
 				{
-					content+=": ";
-					content=getContent_R(secReduc,content);
+					content += ": ";
+					content = getContent_R(secReduc,content);
 				}
 				
 				content = BString.replaceInsensitive(content,";","; ");
 				content = BString.replaceInsensitive(content,";  ","; ");
 				root.setText(updateContent(content));
-				root.isProgram=false;
+				root.isProgram = false;
 				// START KGU#194 2016-05-08: Bugfix #185 - be aware of unit context
 				if (unitName != null)
 				{
@@ -594,8 +594,8 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<WhileStatement>")
 					 )
 			{
-				content=new String();
-				content=getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content = new String();
+				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
 				While ele = new While(preWhile+updateContent(content)+postWhile);
 				_parentNode.addElement(ele);
 				
@@ -606,8 +606,8 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<RepeatStatement>")
 					 )
 			{
-				content=new String();
-				content=getContent_R((Reduction) _reduction.getToken(3).getData(),content);
+				content = new String();
+				content = getContent_R((Reduction) _reduction.getToken(3).getData(),content);
 				Repeat ele = new Repeat(preRepeat+updateContent(content)+postRepeat);
 				_parentNode.addElement(ele);
 				
@@ -618,14 +618,14 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<ForStatement>")
 					 )
 			{
-				content=new String();
-				content=getContent_R((Reduction) _reduction.getToken(1).getData(),content);
-				content+=":=";
-				content=getContent_R((Reduction) _reduction.getToken(3).getData(),content);
+				content = new String();
+				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content += ":=";
+				content = getContent_R((Reduction) _reduction.getToken(3).getData(),content);
 				content += " ";
-				content+=postFor;
+				content += postFor;
 				content += " ";
-				content=getContent_R((Reduction) _reduction.getToken(5).getData(),content);
+				content = getContent_R((Reduction) _reduction.getToken(5).getData(),content);
 				// START KGU#3 2016-05-02: Enh. #10 Token 4 contains the information whether it's to or downto
 				if (getContent_R((Reduction) _reduction.getToken(4).getData(), "").equals("downto"))
 				{
@@ -646,10 +646,10 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<IfStatement>")
 					 )
 			{
-				content=new String();
-				content=getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content = new String();
+				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
 				
-				Alternative ele = new Alternative(preAlt+updateContent(content)+postAlt);
+				Alternative ele = new Alternative(preAlt + updateContent(content)+postAlt);
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = (Reduction) _reduction.getToken(3).getData();
@@ -664,14 +664,14 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<CaseSelector>")
 					 )
 			{
-				content=new String();
-				content=getContent_R((Reduction) _reduction.getToken(0).getData(),content);
+				content = new String();
+				content = getContent_R((Reduction) _reduction.getToken(0).getData(),content);
 				
 				// sich am parent (CASE) dat nächst fräit Element
 				boolean found = false;
-				for(int i=0;i<((Case) _parentNode.parent).getText().count();i++)
+				for (int i=0; i<((Case) _parentNode.parent).getText().count(); i++)
 				{
-					if(((Case) _parentNode.parent).getText().get(i).equals("??") && found==false)
+					if (((Case) _parentNode.parent).getText().get(i).equals("??") && found==false)
 					{
 						((Case) _parentNode.parent).getText().set(i,content);
 						found=true;
@@ -702,32 +702,32 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<CaseStatement>")
 					 )
 			{
-				content=new String();
-				content=preCase+getContent_R((Reduction) _reduction.getToken(1).getData(),content)+postCase;
+				content = new String();
+				content = preCase+getContent_R((Reduction) _reduction.getToken(1).getData(),content)+postCase;
 				// am content steet elo hei den "test" dran
 				
 				// Wéivill Elementer sinn am CASE dran?
 				Reduction sr = (Reduction) _reduction.getToken(3).getData();
-				int j=0;
+				int j = 0;
 				//System.out.println(sr.getParentRule().getText());  // <<<<<<<
-				while(sr.getParentRule().name().equals("<CaseList>"))
+				while (sr.getParentRule().name().equals("<CaseList>"))
 				{
-					  j++;
-					  content+="\n??";
-					  if (sr.getTokenCount()>=1)
-					  {
+					j++;
+					content += "\n??";
+					if (sr.getTokenCount()>=1)
+					{
 						sr = (Reduction) sr.getToken(0).getData();
-					  }
-					  else
-					  {
+					}
+					else
+					{
 						break;
-					  }
+					}
 				}
 				
 				if ( j>0) 
 				{
 					j++;
-					content+="\nelse";
+					content += "\nelse";
 				}
 
 				Case ele = new Case(updateContent(content));
@@ -782,7 +782,7 @@ public class D7Parser implements GPMessageConstants
 			{
 				if (_reduction.getTokenCount()>0)
 				{
-					for(int i=0;i<_reduction.getTokenCount();i++)
+					for(int i=0; i<_reduction.getTokenCount(); i++)
 					{
 						if (_reduction.getToken(i).getKind()==SymbolTypeConstants.symbolTypeNonterminal)
 						{
@@ -839,7 +839,7 @@ public class D7Parser implements GPMessageConstants
 				switch (_reduction.getToken(i).getKind()) 
 				{
 					case SymbolTypeConstants.symbolTypeNonterminal:
-						_content=getContent_R((Reduction) _reduction.getToken(i).getData(), _content);	
+						_content = getContent_R((Reduction) _reduction.getToken(i).getData(), _content);	
 						break;
 					case SymbolTypeConstants.symbolTypeTerminal:
 						{
@@ -906,32 +906,32 @@ public class D7Parser implements GPMessageConstants
 			ini.load();
 
 			// elements
-			preAlt=ini.getProperty("ParserPreAlt","");
-			postAlt=ini.getProperty("ParserPostAlt","");
-			preCase=ini.getProperty("ParserPreCase","");
-			postCase=ini.getProperty("ParserPostCase","");
-			preFor=ini.getProperty("ParserPreFor","pour ");
-			postFor=ini.getProperty("ParserPostFor","\u00E0");
+			preAlt = ini.getProperty("ParserPreAlt","");
+			postAlt = ini.getProperty("ParserPostAlt","");
+			preCase = ini.getProperty("ParserPreCase","");
+			postCase = ini.getProperty("ParserPostCase","");
+			preFor = ini.getProperty("ParserPreFor","pour ");
+			postFor = ini.getProperty("ParserPostFor","\u00E0");
 			// START KGU#3 2015-11-08: Enhancement #10
-			stepFor=ini.getProperty("ParserStepFor", ", pas = ");
+			stepFor = ini.getProperty("ParserStepFor", ", pas = ");
 			// END KGU#3 2015-11-08
 			// START KGU#61 2016-03-20: Enh. #84/#135 - support and distinguish FOR-IN loops
-			preForIn=ini.getProperty("ParserPreForIn","pour ");
-			postForIn=ini.getProperty("ParserPostForIn"," en ");
+			preForIn = ini.getProperty("ParserPreForIn","pour ");
+			postForIn = ini.getProperty("ParserPostForIn"," en ");
 			// END KGU#61 2016-03-20
-			preWhile=ini.getProperty("ParserPreWhile","tant que ");
-			postWhile=ini.getProperty("ParserPostWhile","");
-			preRepeat=ini.getProperty("ParserPreRepeat","jusqu'\u00E0 ");
-			postRepeat=ini.getProperty("ParserPostRepeat","");
+			preWhile = ini.getProperty("ParserPreWhile","tant que ");
+			postWhile = ini.getProperty("ParserPostWhile","");
+			preRepeat = ini.getProperty("ParserPreRepeat","jusqu'\u00E0 ");
+			postRepeat = ini.getProperty("ParserPostRepeat","");
     		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
-			preLeave=ini.getProperty("ParserPreLeave", "leave");
-			preReturn=ini.getProperty("ParserPreReturn", "return");
-			preExit=ini.getProperty("ParserPreExit", "exit");
+			preLeave = ini.getProperty("ParserPreLeave", "leave");
+			preReturn = ini.getProperty("ParserPreReturn", "return");
+			preExit = ini.getProperty("ParserPreExit", "exit");
     		// END KGU#78 2016-03-25
-			input=ini.getProperty("ParserInput","lire");
-			output=ini.getProperty("ParserOutput","\u00E9crire");
+			input = ini.getProperty("ParserInput","lire");
+			output = ini.getProperty("ParserOutput","\u00E9crire");
 			// START KGU#165 2016-03-25: Enhancement configurable case awareness
-			ignoreCase=ini.getProperty("ParserIgnoreCase", "true").equalsIgnoreCase("true");
+			ignoreCase = ini.getProperty("ParserIgnoreCase", "true").equalsIgnoreCase("true");
 			// END KGU#3 2016-03-25
 			
 		}

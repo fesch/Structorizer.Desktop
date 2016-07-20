@@ -37,6 +37,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2015.10.18      Adaptations to updated Generator structure and interface
  *      Kay Gürtzig     2015.11.01      KGU#18/KGU#23 Transformation decomposed
  *      Kay Gürtzig     2015.12.18/19   KGU#2/KGU#47/KGU#78 Fixes for Call, Jump, and Parallel elements
+ *      Kay Gürtzig     2016.07.20      Enh. #160 adapted (option to integrate subroutines = KGU#178)
  *
  ******************************************************************************************************
  *
@@ -312,6 +313,10 @@ public class TexGenerator extends Generator {
 		s.add(makeIndent(_indent)+'\end{struktogramm}');
 		*/
 		
+		// START KGU#178 2016-07-20: Enh. #160
+		if (topLevel)
+		{
+		// END KGU#178 2016-07-20
 		code.add("\\documentclass[a4paper,10pt]{article}");
 		code.add("");
 		code.add("\\usepackage{struktex}");
@@ -321,12 +326,22 @@ public class TexGenerator extends Generator {
 		code.add("\\author{Structorizer "+Element.E_VERSION+"}");
 		code.add("");
 		code.add("\\begin{document}");
+		// START KGU#178 2016-07-20: Enh. #160
+		subroutineInsertionLine = code.count();
+		}
+		// END KGU#178 2016-07-20
 		code.add("");
 		code.add("\\begin{struktogramm}("+Math.round(_root.width/72.0*25.4)+","+Math.round(_root.height/75.0*25.4)+")["+transform(_root.getText().get(0))+"]");
 		generateCode(_root.children, this.getIndent());
 		code.add("\\end{struktogramm}");
 		code.add("");
-		code.add("\\end{document}");
+		// START KGU#178 2016-07-20: Enh. #160
+		//code.add("\\end{document}");
+		if (topLevel)
+		{
+			code.add("\\end{document}");
+		}
+		// END KGU#178 2016-07-20
 		
 		return code.getText();
 	}
