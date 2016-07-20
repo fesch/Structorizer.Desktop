@@ -45,7 +45,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.04.01      Issue #144: Favourite code export menu item, #142 accelerator keys added
  *      Kay Gürtzig     2016.04.06      Enh. #158: Key bindings for editNSD, moveUpNSD, moveDownNSD
  *      Kay Gürtzig     2016.04.12      Enh. #137: New message error16_7 introduced.
- *      Kay Gürtzig     2016.04.24      Fix #173: Mnemonics for menus Diagram and Help had been compromised 
+ *      Kay Gürtzig     2016.04.24      Fix #173: Mnemonics for menus Diagram and Help had been compromised
+ *      Kay Gürtzig     2016.07.07      Enh. #188: New menu item "wand" for element conversion (KGU#199)
  *
  ******************************************************************************************************
  *
@@ -155,6 +156,9 @@ public class Menu extends JMenuBar implements NSDController
 	protected JMenuItem menuDiagramDelete = new JMenuItem("Delete",IconLoader.ico005);
 	protected JMenuItem menuDiagramMoveUp = new JMenuItem("Move up",IconLoader.ico019);
 	protected JMenuItem menuDiagramMoveDown = new JMenuItem("Move down",IconLoader.ico020);
+	// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
+	protected JMenuItem menuDiagramTransmute = new JMenuItem("Transmute", IconLoader.ico109);
+	// END KGU#199 2016-07-06
 	// START KGU#123 2016-01-03: New menu items for collapsing/expanding (addresses #65)
 	protected JMenuItem menuDiagramCollapse = new JMenuItem("Collapse", IconLoader.ico106);
 	protected JMenuItem menuDiagramExpand = new JMenuItem("Expand", IconLoader.ico107);
@@ -546,6 +550,12 @@ public class Menu extends JMenuBar implements NSDController
 		// END KGU#177 2016-04-06
 		menuDiagramMoveDown.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.moveDownNSD(); doButtons(); } } );
 
+		// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
+		menuDiagram.add(menuDiagramTransmute);
+		menuDiagramTransmute.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuDiagramTransmute.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.transmuteNSD(); doButtons(); } } );;
+		// END KGU#199 2016-07-06
+		
 		menuDiagram.addSeparator();
 
 		// START KGU#123 2016-01-03: New menu items (addressing #65)
@@ -902,6 +912,10 @@ public class Menu extends JMenuBar implements NSDController
 			// END KGU#143 2016-01-21
 			menuDiagramMoveUp.setEnabled(conditionCanMoveUp);
 			menuDiagramMoveDown.setEnabled(conditionCanMoveDown);
+			// START KGU#199 2016-07-07: Enh. #188 - We allow instruction conversion
+			menuDiagramTransmute.setEnabled(diagram.canTransmute());
+			// END KGU#199 2016-07-07
+			
 			
 			// START KGU#123 2016-01-03: We allow multiple selection for collapsing
 			// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
@@ -910,7 +924,10 @@ public class Menu extends JMenuBar implements NSDController
 			// END KGU#123 2016-01-03
 
 			// START KGU#143 2016-01-21: Bugfix #114 - breakpoint control now also here
-			menuDiagramBreakpoint.setEnabled(diagram.canCopy());
+			// START KGU#177 2016-07-06: Enh. #158 - Collateral damage mended
+			//menuDiagramBreakpoint.setEnabled(diagram.canCopy());
+			menuDiagramBreakpoint.setEnabled(diagram.canCopyNoRoot());
+			// END KGU#177 2016-07-06
 			// END KGU#143 2016-01-21
 
 			// copy & paste

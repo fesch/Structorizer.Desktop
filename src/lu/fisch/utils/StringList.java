@@ -70,7 +70,7 @@ public class StringList {
 		sl.add(_string);
 		return sl;
 	}
-
+	
 	/**
 	 * Splits string _source around matches of the given REGULAR EXPRESSION(!) _by.
 	 * Trailing empty strings are not included in the resulting StringList.
@@ -142,6 +142,10 @@ public class StringList {
 		return sl;
 	}
 	
+	/**
+	 * Creates a copy of this StringList via a representation in CSV format.
+	 * @return an equivalent StringList
+	 */
 	public StringList copy()
 	{
 		// FIXME (KGU) Why this complicated detour?

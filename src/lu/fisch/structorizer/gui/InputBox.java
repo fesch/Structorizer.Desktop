@@ -37,6 +37,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015-10-14      Element-class-specific language support (KGU#42)
  *      Kay Gürtzig     2015-10-25      Hook for subclassing added to method create() (KGU#3)
  *      Kay Gürtzig     2016-04-26      Issue #165: Focus transfer reset to Tab and Shift-Tab
+ *      Kay Gürtzig     2016-07-14      Enh. #180: Initial focus dependent on switchTextComment mode (KGU#169)
  *
  ******************************************************************************************************
  *
@@ -87,6 +88,13 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
     public boolean forInsertion = false;		// If this dialog is used to setup a new element (in contrast to updating an existing element)
     private boolean gotSpecificTitle = false;	// class-specific title translation already done? (prevents setTitle() from spoiling it)
     // END KGU 2015-10-14
+    
+    // START KGU#169 2016-07-14: Enh. #180: helps to enable focus control
+    protected void setPreferredSize()
+    {
+        setSize(500, 400);   	
+    }
+    // END KGU#169 2016-07-14
 
 
     private void create()
@@ -95,11 +103,13 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
             setTitle("Content");
             // set layout (OS default)
             setLayout(null);
+            // START KGU#169 2016-07-14: Enh. #180: Now done after pack() and subclassable
             // set windows size
-            setSize(500, 400);
+            //setSize(500, 400);
+            // END KGU#169 2016-07-14
             // show form
             setVisible(false);
-            // set action to perfom if closed
+            // set action to perform if closed
             setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             // set icon
             btnOK.addActionListener(this);
@@ -232,18 +242,18 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
             container.add(pnPanel0,BorderLayout.NORTH);
             container.add(pnPanel1,BorderLayout.CENTER);
 
-            // START KGU#91 2015-12-04: fix #39 - we leave this for diagram now
-            //txtText.requestFocus(true);
-            //this.pack();	// This makes focus control possible but requires minimum size settings above
-//            if (Element.E_TOGGLETC)
-//            {
-//            	txtComment.requestFocusInWindow();
-//            }
-//            else
-//            {
-//            	txtText.requestFocusInWindow();
-//            }
-            // END KGU#91 2015-12-04
+            // START KGU#91+KGU#169 2016-07-14: Enh. #180 (also see #39 and #142)
+            this.pack();	// This makes focus control possible but must precede the size setting
+            setPreferredSize();
+            if (Element.E_TOGGLETC)
+            {
+            	txtComment.requestFocusInWindow();
+            }
+            else
+            {
+            	txtText.requestFocusInWindow();
+            }
+            // END KGU#91+KGU#169 2016-07-14
     }
     
     // START KGU#3 2015-10-24: Hook for subclasses

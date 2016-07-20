@@ -479,4 +479,14 @@ public class Repeat extends Element implements ILoop {
 	}
 	// END KGU 2015-11-30
 
+	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#convertToCalls(lu.fisch.utils.StringList)
+	 */
+	@Override
+	public void convertToCalls(StringList _signatures)
+	{
+    	getBody().convertToCalls(_signatures);
+	}
+	// END KGU#199 2016-07-07
 }

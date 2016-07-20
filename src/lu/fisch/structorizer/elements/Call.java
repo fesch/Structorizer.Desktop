@@ -41,6 +41,8 @@ package lu.fisch.structorizer.elements;
  *		Kay Gürtzig     2015.03.01      Bugfix #97 (KGU#136) Steady selection mechanism
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016.07.07      Enh. #188: New copy constructor to support conversion (KGU#199)
+ *      Kay Gürtzig     2016.07.19      Enh. #160: New method getSignatureString()
  *
  ******************************************************************************************************
  *
@@ -83,6 +85,7 @@ import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.IconLoader;
 
 public class Call extends Instruction {
@@ -101,9 +104,15 @@ public class Call extends Instruction {
 	public Call(StringList _strings)
 	{
 		super(_strings);
-		setText(_strings);
+		setText(_strings);	// FIXME (KGU 2016-07-07): What is this good for (see above)? 
 	}
 	
+	// START KGU#199 2016-07-07: New for enh. #188
+	public Call(Instruction instr)
+	{
+		super(instr);
+	}
+	// END KGU#199 2016-07-07
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
@@ -221,21 +230,44 @@ public class Call extends Instruction {
 	public Element copy()
 	{
 		Element ele = new Call(this.getText().copy());
-		ele.setComment(this.getComment().copy());
-		ele.setColor(this.getColor());
-		// START KGU#82 (bug #31) 2015-11-14
-		ele.breakpoint = this.breakpoint;
-		// END KGU#82 (bug #31) 2015-11-14
-		// START KGU#117 2016-03-07: Enh. #77
-		ele.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
-		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
-		// END KGU#117 2016-03-07
-		// START KGU#183 2016-04-24: Issue #169
-		ele.selected = this.selected;
-		// END KGU#183 2016-04-24
-		return ele;
+// START KGU#199 2016-07-07: Enh. #188, D.R.Y.
+//		ele.setComment(this.getComment().copy());
+//		ele.setColor(this.getColor());
+//		// START KGU#82 (bug #31) 2015-11-14
+//		ele.breakpoint = this.breakpoint;
+//		// END KGU#82 (bug #31) 2015-11-14
+//		// START KGU#117 2016-03-07: Enh. #77
+//		ele.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
+//		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+//		// END KGU#117 2016-03-07
+//		// START KGU#183 2016-04-24: Issue #169
+//		ele.selected = this.selected;
+//		// END KGU#183 2016-04-24
+//		return ele;
+//	}
+		return copyDetails(ele, false);
 	}
-
+// END KGU#199 2016-07-07
+	
+	// START #178 2016-07-19: Enh. #160
+	/**
+	 * Returns a string of form "&lt;function_name&gt;#&lt;parameter_count&gt;"
+	 * describing the signature of the called routine if the text is conform to
+	 * the call syntax described in the user guide. Otherwise null will be returned.
+	 * @return signature string, e.g. "factorial#1", or null
+	 */
+	public String getSignatureString()
+	{
+		String signature = null;
+		Function fct = this.getCalledRoutine();
+		if (fct != null)
+		{
+			signature = fct.getName() + "#" + fct.paramCount();
+		}
+		return signature;
+	}
+	// END #178 2016-07-19
+	
 	// START KGU#117 2016-03-07: Enh. #77
 	/**
 	 * In test coverage mode, sets the local tested flag if element is fully covered,

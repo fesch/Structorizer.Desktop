@@ -43,6 +43,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Fields for test coverage tracking added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016.07.06      Enh. #188: New classification methods isAssignment() etc.,
+ *                                      new copy constructor to support conversion (KGU#199)
  *
  ******************************************************************************************************
  *
@@ -56,6 +58,8 @@ import java.awt.FontMetrics;
 import java.awt.Point;
 
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.parsers.D7Parser;
 //import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
@@ -77,6 +81,14 @@ public class Instruction extends Element {
 		super(_strings);
 		setText(_strings);
 	}
+	
+	// START KGU#199 2016-07-07: Enh. #188 - also serves subclasses for "up-casting"
+	public Instruction(Instruction instr)
+	{
+		super(instr.text.copy());
+		instr.copyDetails(this, true);
+	}
+	// END KGU#199 2016-07-07
 	
 	// START KGU#64 2015-11-03: Is to improve drawing performance
 	/**
@@ -243,23 +255,39 @@ public class Instruction extends Element {
 
 	public Element copy()
 	{
-		Instruction ele = new Instruction(this.getText().copy());
-		ele.setComment(this.getComment().copy());
-		ele.setColor(this.getColor());
+		Element ele = new Instruction(this.getText().copy());
+		// START KGU#199 2016-07-06: Enh. #188 specific conversions enabled
+		return copyDetails(ele, false);
+	}
+	
+	protected Element copyDetails(Element _ele, boolean _forConversion)
+	{
+		// END KGU#199 2016-07-06
+		_ele.setComment(this.getComment().copy());
+		_ele.setColor(this.getColor());
 		// START KGU#82 (bug #31) 2015-11-14
-		ele.breakpoint = this.breakpoint;
+		_ele.breakpoint = this.breakpoint;
 		// END KGU#82 (bug #31) 2015-11-14
 		// START KGU#117 2016-03-07: Enh. #77
         if (Element.E_COLLECTRUNTIMEDATA)
         {
         	// We share this object (important for recursion!)
-        	ele.deeplyCovered = this.deeplyCovered;
+        	_ele.deeplyCovered = this.deeplyCovered;
+        	// START KGU#199 2016-07-06: Enh. #188
+        	if (_forConversion)
+        	{
+        		_ele.simplyCovered = this.simplyCovered;
+        		_ele.execCount = this.execCount;
+        		_ele.execStepCount = this.execStepCount;
+        		_ele.execSubCount = this.execSubCount;
+        	}
+        	// END KGU#199 2016-07-06
         }
 		// END KGU#117 2016-03-07
 		// START KGU#183 2016-04-24: Issue #169
-		ele.selected = this.selected;
+		_ele.selected = this.selected;
 		// END KGU#183 2016-04-24
-		return ele;
+		return _ele;
 	}
 
 	// START KGU 2015-10-16
@@ -296,5 +324,110 @@ public class Instruction extends Element {
 		}
 	}
 	// END KGU#117 2016-03-10
+	
+	// START KGU#199 2016-07-06: Enh. #188 - new classication methods.
+	// There is always a pair of a static and an instance method, the former for
+	// a single line, the latter for the element as a whole.
+	public static boolean isAssignment(String line)
+	{
+    	StringList tokens = Element.splitLexically(line, true);
+    	unifyOperators(tokens, true);
+		return tokens.contains("<-");
+	}
+	public boolean isAssignment()
+	{
+		return this.text.count() == 1 && Instruction.isAssignment(this.text.get(0));
+	}
+	
+	public static boolean isJump(String line)
+	{
+    	StringList tokens = Element.splitLexically(line, true);
+		return (tokens.indexOf(D7Parser.preReturn, !D7Parser.ignoreCase) == 0 ||
+				tokens.indexOf(D7Parser.preLeave, !D7Parser.ignoreCase) == 0 ||
+				tokens.indexOf(D7Parser.preExit, !D7Parser.ignoreCase) == 0
+				);
+	}
+	public boolean isJump()
+	{
+		return this.text.count() == 1 && Instruction.isJump(this.text.get(0));
+	}
+	
+	public static boolean isProcedureCall(String line)
+	{
+		// Be aware that this method is also used for the isFunctionCall check
+		Function fct = new Function(line);
+		return fct.isFunction();
+	}
+	public boolean isProcedureCall()
+	{
+		return this.text.count() == 1 && Instruction.isProcedureCall(this.text.get(0));		
+	}
+	
+	public static boolean isFunctionCall(String line)
+	{
+		boolean isFunc = false;
+    	StringList tokens = Element.splitLexically(line, true);
+    	unifyOperators(tokens, true);
+		int asgnPos = tokens.indexOf("<-");
+		if (asgnPos > 0)
+		{
+			// This looks somewhat misleading. But we do a mere syntax check
+			isFunc = isProcedureCall(tokens.concatenate("", asgnPos+1));
+		}
+		return isFunc;
+	}
+	public boolean isFunctionCall()
+	{
+		return this.text.count() == 1 && Instruction.isFunctionCall(this.text.get(0));
+	}
+	// END KGU#199 2016-07-06
 
+	// START KGU#178 2016-07-19: Support for enh. #160 (export of called subroutines)
+	// (This method is plaed here instead of in class Call because it is needed
+	// to decide whether an Instruction element complies to the Call syntax and
+	// may be transmuted.)
+	/**
+	 * Returns a Function object describing the signature of the called routine
+	 * if the text complies to the call syntax described in the user guide
+	 * or null otherwise.
+	 * @return Function object or null.
+	 */
+	public Function getCalledRoutine()
+	{
+		Function called = null;
+		if (this.text.count() == 1)
+		{
+			String potentialCall = this.text.get(0);
+			StringList tokens = Element.splitLexically(potentialCall, true);
+			unifyOperators(tokens, true);
+			int asgnPos = tokens.indexOf("<-");
+			if (asgnPos > 0)
+			{
+				potentialCall = tokens.concatenate("", tokens.indexOf("<-")+1);		
+			}
+			called = new Function(potentialCall);
+			if (!called.isFunction())
+			{
+				called = null;
+			}
+		}
+		return called;
+	}
+	// END KGU#178 2016-07-19
+
+	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
+	public boolean isCallOfOneOf(StringList _signatures)
+	{
+		Function fct = this.getCalledRoutine();
+		return fct != null && _signatures.contains(fct.getName() + "#" + fct.paramCount());
+	}
+	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#convertToCalls(lu.fisch.utils.StringList)
+	 * Doesn't do anything - it's the task of SubQueues
+	 */
+	@Override
+	public void convertToCalls(StringList _signatures)
+	{}
+	// END KGU#199 2016-07-07
 }

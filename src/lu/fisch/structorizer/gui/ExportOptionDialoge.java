@@ -35,6 +35,7 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch        2012.07.02   First Issue
  *      Kay Gürtzig      2016.04.01   Enh. #144: noConversionCheckBox and cbPrefGenerator added
  *      Kay Gürtzig      2016-04-04   Enh. #149: cbCharset added
+ *      Kay Gürtzig      2016-07-20   Enh. #160: new option to involve called subroutines (= KGU#178)
  *
  ******************************************************************************************************
  *
@@ -110,6 +111,9 @@ public class ExportOptionDialoge extends LangDialog
         cbCharset = new javax.swing.JComboBox<String>();
         chkCharsetAll = new javax.swing.JCheckBox();
         // END KGU#168 2016-04-04
+        // START KGU#178 2016-07-20: Enh. #160
+        chkExportSubroutines = new javax.swing.JCheckBox();
+        // END KGU#178 2016-07-20
 
         setTitle("Export options ...");
 
@@ -188,6 +192,13 @@ public class ExportOptionDialoge extends LangDialog
             }
         });
 
+        chkExportSubroutines.setText("Involve called subroutines");
+        chkExportSubroutines.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent evt) {
+        		subroutinesCheckBoxActionPerformed(evt);
+        	}
+        });
+        
         jButton1.setText("OK");
         jButton1.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
@@ -205,7 +216,10 @@ public class ExportOptionDialoge extends LangDialog
                     .add(layout.createSequentialGroup()
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(bracesCheckBox)
-                            .add(lineNumbersCheckBox))
+                            .add(lineNumbersCheckBox)
+                            // START KGU#178 2016-07-20: Enh. #160
+                            .add(chkExportSubroutines))
+                            // END KGU#178 2016-07-20
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     // START KGU#168 2016-04-04: Enh. #149
@@ -284,6 +298,10 @@ public class ExportOptionDialoge extends LangDialog
                 .add(bracesCheckBox)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lineNumbersCheckBox)
+                // START KGU#178 2016-07-20: Enh. #160
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(chkExportSubroutines)
+                // END KGU#178 2016-07-20
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jButton1)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 8, Short.MAX_VALUE)
@@ -291,7 +309,7 @@ public class ExportOptionDialoge extends LangDialog
         );
 
         pack();
-        int height = 280;
+        int height = 305;
         LookAndFeel laF = javax.swing.UIManager.getLookAndFeel();
         if (laF.getName().equals("CDE/Motif"))
         {
@@ -324,6 +342,12 @@ public class ExportOptionDialoge extends LangDialog
     	// TODO inform the Menu? No need, value will be retrieved by Diagram
     }
     // END KGU#171 2016-04-01
+    
+    // START KGU#178 2016-07-20: Enh. #160
+    private void subroutinesCheckBoxActionPerformed(ActionEvent evt) {
+        // TODO add your handling code here:    	
+    }
+    // END KGU#178 2016-07-20
     
     public void charsetListChanged(String favouredCharset)
     {
@@ -449,5 +473,8 @@ public class ExportOptionDialoge extends LangDialog
     public javax.swing.JComboBox<String> cbCharset;
     public javax.swing.JCheckBox chkCharsetAll;
     // END KGU#168 2016-04-04
+    // START KGU#178 2016-07-20: Enh. #160
+    public javax.swing.JCheckBox chkExportSubroutines;
+    // END KGU#178 2016-07-20
     // End of variables declaration//GEN-END:variables
 }
