@@ -9,7 +9,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.24-13 (2016.07.??)
+Current development version: 3.24-13 (2016.07.20)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]
 - 01: Enh. #124: Generalized runtime data visualization <Kay Gürtzig>
 - 01: Arranger now adopts current directory from first arranged diagram <Kay Gürtzig>
@@ -67,7 +67,8 @@ Current development version: 3.24-13 (2016.07.??)
 - 13: Enh. #185: Call identification on Pascal import improved <Kay Gürtzig>
 - 13: Enh. #180: Initial editor focus dependent on switch text/comment mode [elemhsb]
 - 13: Bugfix #191: Defective FOR loop export to PHP [Frank Schenk]
-
+- 13: Enh. #192: File name proposals now involve parameter count <Kay Gürtzig>
+- 13: Enh. #160: Code export with reachable subroutines [Rolf Schmidt]<Kay Gürtzig>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]

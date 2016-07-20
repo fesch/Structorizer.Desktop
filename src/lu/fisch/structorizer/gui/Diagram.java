@@ -68,6 +68,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016-05-02      Bugfix #184: Imported root must be set changed.
  *      Kay Gürtzig     2016-05-08      Issue #185: Import of multiple roots per file (collected in Arranger, KGU#194)
  *      Kay Gürtzig     2016.07.06      Enh. #188: New method transmuteNSD() for element conversion (KGU#199)
+ *      Kay Gürtzig     2016.07.19      Enh. #192: File name proposals slightly modified (KGU#205)
+ *      Kay Gürtzig     2016.07.20      Enh. #160: New export option genExportSubroutines integrated (KGU#178)
  *
  ******************************************************************************************************
  *
@@ -1158,7 +1160,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //		nsdName.replace(':', '_');
 //		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
 //		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
-		String nsdName = root.getMethodName();
+		String nsdName = root.proposeFileName();
 		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
@@ -1248,7 +1250,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				String filename = root.filename;
 				if (filename == null || filename.isEmpty())
 				{
-					filename = root.getMethodName();
+					filename = root.proposeFileName();
 				}
 				res = JOptionPane.showOptionDialog(this,
 												   "Do you want to save the current NSD-File?\n\"" + filename + "\"",
@@ -1282,7 +1284,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 					// propose name
 
-					dlgSave.setSelectedFile(new File(root.getMethodName()));
+					dlgSave.setSelectedFile(new File(root.proposeFileName()));
 
 					dlgSave.addChoosableFileFilter(new StructogramFilter());
 					int result = dlgSave.showSaveDialog(this);
@@ -2272,7 +2274,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //		nsdName.replace(':', '_');
 //		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
 //		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
-		String nsdName = root.getMethodName();
+		String nsdName = root.proposeFileName();
 		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
@@ -2405,7 +2407,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //		nsdName.replace(':', '_');
 //		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
 //		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
-		String nsdName = root.getMethodName();
+		String nsdName = root.proposeFileName();
 		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
@@ -2496,7 +2498,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//		nsdName.replace(':', '_');
 		//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
 		//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
-		String nsdName = root.getMethodName();
+		String nsdName = root.proposeFileName();
 		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
@@ -2593,7 +2595,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //		nsdName.replace(':', '_');
 //		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
 //		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
-		String nsdName = root.getMethodName();
+		String nsdName = root.proposeFileName();
 		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
@@ -2711,7 +2713,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //		nsdName.replace(':', '_');
 //		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
 //		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
-		String nsdName = root.getMethodName();
+		String nsdName = root.proposeFileName();
 		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
@@ -2808,7 +2810,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //		nsdName.replace(':', '_');
 //		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
 //		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
-		String nsdName = root.getMethodName();
+		String nsdName = root.proposeFileName();
 		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
@@ -3280,6 +3282,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             eod.bracesCheckBox.setSelected(ini.getProperty("genExportBraces", "0").equals("true"));
             eod.lineNumbersCheckBox.setSelected(ini.getProperty("genExportLineNumbers", "0").equals("true"));
             // END KGU#16/KGU#113 2015-12-18
+            // START KGU#178 2016-07-20: Enh. #160
+            eod.chkExportSubroutines.setSelected(ini.getProperty("genExportSubroutines", "0").equals("true"));
+            // END #178 2016-07-20
             // START KGU#162 2016-03-31: Enh. #144
             eod.noConversionCheckBox.setSelected(ini.getProperty("genExportnoConversion", "0").equals("true"));
             // END KGU#162 2016-03-31
@@ -3301,6 +3306,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 ini.setProperty("genExportBraces", String.valueOf(eod.bracesCheckBox.isSelected()));
                 ini.setProperty("genExportLineNumbers", String.valueOf(eod.lineNumbersCheckBox.isSelected()));
                 // END KGU#16/KGU#113 2015-12-18
+                // START KGU#178 2016-07-20: Enh. #160
+                ini.setProperty("genExportSubroutines", String.valueOf(eod.chkExportSubroutines.isSelected()));
+                // END #178 2016-07-20                
                 // START KGU#162 2016-03-31: Enh. #144
                 ini.setProperty("genExportnoConversion", String.valueOf(eod.noConversionCheckBox.isSelected()));
                 // END KGU#162 2016-03-31

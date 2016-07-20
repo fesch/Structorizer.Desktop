@@ -382,10 +382,19 @@ public class Instruction extends Element {
 	}
 	// END KGU#199 2016-07-06
 
-	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
-	public boolean isCallOfOneOf(StringList _signatures)
+	// START KGU#178 2016-07-19: Support for enh. #160 (export of called subroutines)
+	// (This method is plaed here instead of in class Call because it is needed
+	// to decide whether an Instruction element complies to the Call syntax and
+	// may be transmuted.)
+	/**
+	 * Returns a Function object describing the signature of the called routine
+	 * if the text complies to the call syntax described in the user guide
+	 * or null otherwise.
+	 * @return Function object or null.
+	 */
+	public Function getCalledRoutine()
 	{
-		boolean isHit = false;
+		Function called = null;
 		if (this.text.count() == 1)
 		{
 			String potentialCall = this.text.get(0);
@@ -396,13 +405,21 @@ public class Instruction extends Element {
 			{
 				potentialCall = tokens.concatenate("", tokens.indexOf("<-")+1);		
 			}
-			Function fct = new Function(potentialCall);
-			if (fct.isFunction())
+			called = new Function(potentialCall);
+			if (!called.isFunction())
 			{
-				isHit = _signatures.contains(fct.getName() + "#" + fct.paramCount());
+				called = null;
 			}
 		}
-		return isHit;
+		return called;
+	}
+	// END KGU#178 2016-07-19
+
+	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
+	public boolean isCallOfOneOf(StringList _signatures)
+	{
+		Function fct = this.getCalledRoutine();
+		return fct != null && _signatures.contains(fct.getName() + "#" + fct.paramCount());
 	}
 	
 	/* (non-Javadoc)

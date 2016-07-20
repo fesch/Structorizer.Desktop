@@ -48,6 +48,7 @@
  *      Kay Gürtzig         2016.04.12  Issue #161: New Analyser error message for Jump
  *      Kay Gürtzig         2016.04.24  Issue #173: New mnemonic configurations added
  *      Kay Gürtzig         2016.07.07  Enh. #188: Messages for transmute button and menu items
+ *      Kay Gürtzig         2016-07-20  Enh. #160: New message for ExportOptionDialoge 
  *
  ******************************************************************************************************
  *
@@ -558,6 +559,7 @@ ExportOptionDialoge.noConversionCheckBox.tooltip=Aktivieren Sie diese Option, we
 ExportOptionDialoge.commentsCheckBox.text=Anweisungen als Kommentare exportieren.
 ExportOptionDialoge.bracesCheckBox.text=Öffnende Blockklammern ans Ende der Zeile (C/C++/Java etc.).
 ExportOptionDialoge.lineNumbersCheckBox.text=Zeilennummern mitgenerieren (BASIC).
+ExportOptionDialoge.chkExportSubroutines.text=Aufgerufene Unterprogramme mit exportieren.
 ExportOptionDialoge.lbPrefGenerator.text=Bevorzugte Code-Export-Sprache:
 ExportOptionDialoge.lbCharset.txt=Zeichensatz (Codierung):
 ExportOptionDialoge.chkCharsetAll.txt=Alle auflisten?

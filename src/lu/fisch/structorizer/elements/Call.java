@@ -42,6 +42,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.07      Enh. #188: New copy constructor to support conversion (KGU#199)
+ *      Kay Gürtzig     2016.07.19      Enh. #160: New method getSignatureString()
  *
  ******************************************************************************************************
  *
@@ -84,6 +85,7 @@ import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.IconLoader;
 
 public class Call extends Instruction {
@@ -246,7 +248,26 @@ public class Call extends Instruction {
 		return copyDetails(ele, false);
 	}
 // END KGU#199 2016-07-07
-
+	
+	// START #178 2016-07-19: Enh. #160
+	/**
+	 * Returns a string of form "&lt;function_name&gt;#&lt;parameter_count&gt;"
+	 * describing the signature of the called routine if the text is conform to
+	 * the call syntax described in the user guide. Otherwise null will be returned.
+	 * @return signature string, e.g. "factorial#1", or null
+	 */
+	public String getSignatureString()
+	{
+		String signature = null;
+		Function fct = this.getCalledRoutine();
+		if (fct != null)
+		{
+			signature = fct.getName() + "#" + fct.paramCount();
+		}
+		return signature;
+	}
+	// END #178 2016-07-19
+	
 	// START KGU#117 2016-03-07: Enh. #77
 	/**
 	 * In test coverage mode, sets the local tested flag if element is fully covered,

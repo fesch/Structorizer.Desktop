@@ -49,10 +49,18 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016-04-04      Issues #149, #151 - Configurable charset / useless ExportOptionDialogs
  *      Kay Gürtzig     2016-04-28      Draft for enh. #179 - batch mode (KGU#187)
  *      Kay Gürtzig     2016.04.29      Bugfix KGU#189 for issue #61/#107 (mutilated array access)
+ *      Kay Gürtzig     2016.07.19      Enh. #192: File name proposal slightly modified (KGU#205)
+ *      Kay Gürtzig     2016.07.20      Enh. #160: Support for export of involved subroutines (KGU#178)
  *
  ******************************************************************************************************
  *
- *      Comment:		
+ *      Comment:	
+ *      2016.07.20 - Enhancement #160 - option to include called subroutines
+ *      - there is no sufficient way to export a called subroutine when its call is generated, because
+ *        duplicate exports must be avoided and usually a topological sorting is necessary.
+ *        For a topologically sorted duplication-free export, however, all called subroutines must be known
+ *        in advance. Therefore, we must analyse the subroutines as well in advance 
+ *      	
  *      2015.11.30 - Decomposition of generateRoot() and diverse pre-processing provided for subclasses
  *      - method mapJumps fills hashTable jumpTable mapping (Jump and Loop elements to connecting codes)
  *      - parameter names and types as well as functio name and type are preprocessed
@@ -69,6 +77,8 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Vector;
 import java.util.regex.Matcher;
 
@@ -77,6 +87,7 @@ import javax.swing.*;
 import com.stevesoft.pat.Regex;
 
 import lu.fisch.utils.*;
+import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.io.Ini;
@@ -96,6 +107,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	private boolean generateLineNumbers = false;
 	private String exportCharset = Charset.defaultCharset().name();
 	// END KGU#173 2016-04-04
+	// START KGU#178 2016-07-19: Enh. #160
+	private boolean exportSubroutines = false;
+	// END KGU#178 2016-07-19
 	protected StringList code = new StringList();
 	
 	// START KGU#194 2016-05-07: Bugfix #185 - subclasses might need filename access
@@ -112,6 +126,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	// maps loops and Jump elements to label counts (neg. number means illegal jump target)
 	protected Hashtable<Element, Integer> jumpTable = new Hashtable<Element, Integer>();
 	// END KGU#74 2015-11-29
+	// START KGU#178 2016-07-19: Enh. #160 Subroutines for export integration
+	protected Hashtable<Root, SubTopoSortEntry> subroutines = new Hashtable<Root, SubTopoSortEntry>();
+	protected int subroutineInsertionLine = 0;	// where to insert subroutine definitions
+	protected String subroutineIndent = "";		// Indentation level for subroutines
+	protected StringList missingSubroutines = new StringList();	// Signatures of missing routines
+	protected boolean topLevel = true;
+	// END KGU#178 2016-07-19
 
 	// START KGU#129/KGU#61 2016-03-22: Bugfix #96 / Enh. #84 Now important for most generators
 	// Some generators must prefix variables, for some generators it's important for FOR-IN loops
@@ -183,6 +204,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		// END KGU 2016-04-04
 	}
 	// END KGU#113 2015-12-18	
+	
+	// START KGU#178 2016-07-19: Enh. #160 - recursive implication of subroutines
+	protected boolean optionExportSubroutines() {
+		return this.exportSubroutines;
+	}
+	// END KGU#178 2016-07-19	
 	
 	// KGU 2014-11-16: Method renamed (formerly: insertComment)
 	// START KGU 2015-11-18: Method parameter list reduced by a comment symbol configuration
@@ -748,6 +775,103 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		return items;
 	}
 	// END KGU#61 2016-03-23
+	
+	// START KGU#178 2016-07-19: Enh. #160
+	private Root registerCalled(Call _call, Root _caller)
+	{
+		Root newSub = null;
+		Function called = _call.getCalledRoutine();
+		if (called != null && Arranger.hasInstance())
+		{
+			Vector<Root> foundRoots = Arranger.getInstance().
+					findRoutinesBySignature(called.getName(), called.paramCount());
+			// FIXME: How to select among Roots with comaptible signature?
+			if (!foundRoots.isEmpty())
+			{
+				Root sub = foundRoots.firstElement();
+				// Is there already an entry for this root?
+				SubTopoSortEntry entry = subroutines.getOrDefault(sub, null);
+				if (entry == null)
+				{
+					// No - create a new entry
+					subroutines.put(sub, new SubTopoSortEntry(_caller));
+					newSub = sub;
+					// Now count the call at the callers entry (if there is one)
+					if ((entry = subroutines.getOrDefault(_caller, null)) != null)
+					{
+						entry.nReferingTo++;
+					}
+				}
+				else
+				{
+					// Yes: add the calling routine to the set of roots to be informed
+					// (if not already registered)
+					entry.callers.add(_caller);
+				}
+			}
+			else
+			{
+				missingSubroutines.add(_call.getSignatureString());
+			}
+		}
+		return newSub;
+	}
+
+	private void registerCalledSubroutines(Root _root)
+	{
+		Vector<Call> calls = new Vector<Call>();
+		collectCalls(_root.children, calls);
+		for (Call call: calls)
+		{
+			Root registered = null;
+			// Identify and register the called routine
+			if ((registered = registerCalled(call, _root)) != null)
+			{
+				// If it hadn't been registered before, analyse it as well
+				registerCalledSubroutines(registered);
+			}
+		}
+	}
+	
+	private void collectCalls(Element _ele, Vector<Call> _calls)
+	{
+		if (_ele instanceof Call)
+		{
+			_calls.add((Call)_ele);
+		}
+		else if (_ele instanceof Subqueue)
+		{
+			for (int i = 0; i < ((Subqueue)_ele).getSize(); i++)
+			{
+				collectCalls(((Subqueue)_ele).getElement(i), _calls);
+			}
+		}
+		else if (_ele instanceof ILoop)
+		{
+			collectCalls(((ILoop)_ele).getBody(), _calls);
+		}
+		else if (_ele instanceof Alternative)
+		{
+			collectCalls(((Alternative)_ele).qTrue, _calls);
+			collectCalls(((Alternative)_ele).qFalse, _calls);
+			
+		}
+		else if (_ele instanceof Case)
+		{
+			for (int i = 0; i < ((Case)_ele).qs.size(); i++)
+			{
+				collectCalls(((Case)_ele).qs.get(i), _calls);
+			}
+		}
+		else if (_ele instanceof Parallel)
+		{
+			for (int i = 0; i < ((Parallel)_ele).qs.size(); i++)
+			{
+				collectCalls(((Parallel)_ele).qs.get(i), _calls);
+			}
+		}
+	}
+	// END KGU#178 2016-07-19
  	
     protected void generateCode(Instruction _inst, String _indent)
 	{
@@ -865,7 +989,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected void generateCode(Subqueue _subqueue, String _indent)
 	{
 		// code.add(_indent+"");
-		for(int i=0;i<_subqueue.getSize();i++)
+		for(int i=0; i<_subqueue.getSize(); i++)
 		{
 			generateCode((Element) _subqueue.getElement(i),_indent);
 		}
@@ -874,14 +998,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 
 	/******** Public Methods *************/
 
-	// START KGU#178 2016-05-07: Enh. #160 - recursion preparation
 	public String generateCode(Root _root, String _indent)
-	{
-		return generateCode(_root, _indent, -1);
-	}
-	
-	protected String generateCode(Root _root, String _indent, int _insertAtLine)
-	// END KGU#178 2016-05-07
 	{
 		// START KGU#74 2015-11-30: General pre-processing phase 1
 		// Code analysis and Header analysis
@@ -991,6 +1108,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			exportCharset = ini.getProperty("genExportCharset", Charset.defaultCharset().name());
 			suppressTransformation = ini.getProperty("genExportnoConversion", "0").equals("true");
 			// END KGU#173 2016-04-04
+			// START KGU#178 2016-07-19: Enh. #160
+			exportSubroutines = ini.getProperty("genExportSubroutines", "0").equals("true");
+			// END KGU#178 2016-07-19
 		} 
 		catch (FileNotFoundException ex)
 		{
@@ -1020,7 +1140,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		//		nsdName.replace(':', '_');
 		//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
 		//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
-		String nsdName = _root.getMethodName();
+		String nsdName = _root.proposeFileName();
 		// END KGU 2015-10-18
 		dlgSave.setSelectedFile(new File(nsdName));
 
@@ -1053,7 +1173,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
 			if(!isOK(filename))
 			{
-				filename+="."+getFileExtensions()[0];
+				filename += "."+getFileExtensions()[0];
 			}
 		}
 		else
@@ -1101,11 +1221,25 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 
 		    	try
 				{
-					// START KGU 2015-10-18: This didn't make much sense: Why first insert characters that will be replaced afterwards?
+		    		// START KGU#178 2016-07-20: Enh. #160 - register all subroutine calls
+		    		if (this.optionExportSubroutines())
+		    		{
+		    			registerCalledSubroutines(_root);
+		    		}
+		    		// END KGU#178 2016-07-20
+					
+		    		// START KGU 2015-10-18: This didn't make much sense: Why first insert characters that will be replaced afterwards?
 					// (And with them possibly any such characters that had not been there for indentation!)
 					//    String code = BString.replace(generateCode(_root,"\t"),"\t",getIndent());
 					String code = generateCode(_root, "");
 					// END KGU 2015-10-18
+					
+					// START KGU#178 2016-07-20: #160 - Sort and export required subroutines
+					if (this.optionExportSubroutines())
+					{
+						code = generateSubroutineCode(_root);
+					}
+					// END KGU#178 2016-07-20
 
 //					for (String charsetName : Charset.availableCharsets().keySet())
 //					{
@@ -1123,11 +1257,67 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				}
 				catch(Exception e)
 				{
-					JOptionPane.showMessageDialog(null,"Error while saving the file!\n" + e.getMessage(),"Error", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(null,
+							"Error while saving the file!\n" + e.getMessage(),
+							"Error", JOptionPane.ERROR_MESSAGE);
+				}
+		    	// START KGU#178 2016-07-20: Enh. #160
+		    	if (this.optionExportSubroutines() && missingSubroutines.count() > 0)
+		    	{
+					JOptionPane.showMessageDialog(null,
+							"Export defective. Some subroutines weren't found:\n\n" + missingSubroutines.getText(),
+							"Warning", JOptionPane.WARNING_MESSAGE);		    		
+		    	}
+		    	// END KGU#178 2016-07-20
+			}
+		}
+	}
+	
+	// START KGU#178 2016-07-20: Enh. #160 - Specific code for subroutine export
+	protected String generateSubroutineCode(Root _root)
+	{
+		StringList outerCodeTail = code.subSequence(this.subroutineInsertionLine, code.count());
+		code = code.subSequence(0, this.subroutineInsertionLine);
+		topLevel = false;
+		Queue<Root> roots = new LinkedList<Root>();
+		// Initial queue filling - this is a classical topological sorting algorithm
+		for (Root sub: this.subroutines.keySet())
+		{
+			SubTopoSortEntry entry = this.subroutines.get(sub);
+			// If this routine refers to no other one, then enlist it
+			if (entry.nReferingTo == 0)
+			{
+				roots.add(sub);
+			}
+		}
+		// Now we have an initial queue of independent routines,
+		// so export them and enlist those dependents the prerequisites of which are
+		// thereby fulfilled.
+		while (!roots.isEmpty())
+		{
+			Root sub = roots.remove();	// get the next routine
+			
+			generateCode(sub, subroutineIndent);	// add its code
+			
+			// look for dependent routines and decrement their dependency counter
+			// (the entry for sub isn't needed any longer now)
+			for (Root caller: subroutines.remove(sub).callers)
+			{
+				SubTopoSortEntry entry = this.subroutines.get(caller);
+				// Last dependency? Then enlist the caller
+				if (entry != null && --entry.nReferingTo <= 0)
+				{
+					roots.add(caller);
 				}
 			}
 		}
-	} 
+		code.add(outerCodeTail);
+		
+		topLevel = true;
+		
+		return code.getText();
+	}
+	// END KGU#178 2016-07-20
 	
 	// START KGU#187 2016-04-28: Enh. 179 batch mode
 	/*****************************************

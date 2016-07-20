@@ -68,6 +68,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016-04-12      Enh. #161 (KGU#179) analyse_13_16() extended (new error16_7)
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.07      Enh. #185 + #188: Mechanism to convert Instructions to Calls
+ *      Kay Gürtzig     2016.07.19      Enh. #192: New method proposeFileName() involving the argument count (KGU#205)
  *
  ******************************************************************************************************
  *
@@ -1227,7 +1228,6 @@ public class Root extends Element {
     /*************************************
      * Extract full text of all Elements
      *************************************/
-
 
     /**
      * Extracts the variable name out of a more complex string possibly also
@@ -3378,6 +3378,27 @@ public class Root extends Element {
     	
     }
     // END KGU#78 2015-11-25
+    
+    // START KGU#205 2016-07-19: Enh. #192 The proposed file name of subroutines should contain the argument number
+    /**
+     * Returns a String composed of the diagram name (actually the routine name)
+     * and (if the diagram is a function diagram) the number of arguments, separated
+     * by a hyphen, e.g. if the diagram header is DEMO and the type is program then
+     * the result will also be "DEMO". If the diagram is a function diagram, however,
+     * and the text contains "func(x, name)" or "int func(double x, String name)" or
+     * "func(x: REAL; name: STRING): INTEGER" then the resul would be "func-2".
+     * @return
+     */
+    public String proposeFileName()
+    {
+    	String fname = this.getMethodName();
+    	if (!this.isProgram)
+    	{
+    		fname += "-" + this.getParameterNames().count();
+    	}
+    	return fname;
+    }
+    // END KGU#205 2016-07-19
 
     public Vector<DetectedError> analyse()
     {

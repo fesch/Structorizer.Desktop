@@ -223,7 +223,8 @@ import bsh.Interpreter;
 import com.stevesoft.pat.Regex;
 
 /**
- * 
+ * Singleton class controlling the execution of a Nassi-Shneiderman diagram.
+ * Method sed as runnable thread.
  * @author robertfisch
  */
 public class Executor implements Runnable

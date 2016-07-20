@@ -397,10 +397,10 @@ public class Structorizer
 				{
 					nameParts.add("nsd");
 				}
-				// In case of multiple roots (subroutines) insert the routine name 
+				// In case of multiple roots (subroutines) insert the routine's proposed file name
 				if (multipleRoots && !rootNew.isProgram)
 				{
-					nameParts.insert(rootNew.getMethodName(), nameParts.count()-1);
+					nameParts.insert(rootNew.proposeFileName(), nameParts.count()-1);
 				}
 				//System.out.println("File name raw: " + nameParts);
 				if (!overwrite)

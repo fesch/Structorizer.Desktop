@@ -150,7 +150,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.24-13dev";
+	public static String E_VERSION = "3.24-13";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -617,8 +617,8 @@ public abstract class Element {
             return res;
     }
     // END KGU 2016-04-24
-
-	// START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
+    
+    // START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
 	/**
 	 * Checks execution involvement.
 	 * @return true iff this or some substructure of this is currently executed. 

@@ -55,6 +55,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016-05-09      Issue #185: Chance to store unsaved changes before removal (KGU#194)
  *      Kay Gürtzig     2016-07-01      Enh. #62: Opportunity to save/load zipped arrangement (KGU#110)
  *      Kay Gürtzig     2016-07-03      Dialog message translation mechanism added (KGU#203). 
+ *      Kay Gürtzig     2016.07.19      Enh. #192: File name proposals slightly modified (KGU#205)
  *
  ******************************************************************************************************
  *
@@ -1242,7 +1243,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     			// START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
     			else if (diagram.root.filename == null || diagram.root.filename.isEmpty())
     			{
-    				unsaved.add("( " + diagram.root.getMethodName() + " ?)");
+    				unsaved.add("( " + diagram.root.proposeFileName() + " ?)");
     				allDone = false;
     			}
     			else if (diagram.root.hasChanged())

@@ -54,6 +54,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.03.16      Enh. #84: Minimum support for FOR-IN loops (KGU#61) 
  *      Kay Gürtzig             2016.04.01      Enh. #144: Export option to suppress content conversion 
  *      Kay Gürtzig             2016.04.03      Enh. KGU#150: ord and chr functions converted (raw approach)
+ *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
  *
  ******************************************************************************************************
  *
@@ -754,112 +755,6 @@ public class CGenerator extends Generator {
 	// END KGU#47 2015-11-30
 	
 
-//	@Override
-//	public String generateCode(Root _root, String _indent) {
-//		// START KGU#74 2015-11-30: Prepare the label associations
-//		this.alwaysReturns = this.mapJumps(_root.children);
-//		// END KGU#74 2015-11-30
-//
-//		String fnName = _root.getMethodName();
-//		String pr = (_root.isProgram) ? "program" : "function";
-//		// START KGU 2015-11-29: More informed generation attempts
-//		// Get all local variable names
-//		StringList varNames = _root.getVarNames(_root, false, true);
-//		// code.add(pr+" "+_root.getText().get(0)+";");
-//		insertComment(pr + " " + _root.getText().get(0), "");
-//		code.add("#include <stdio.h>");
-//		code.add("");
-//		// START KGU 2014-11-16
-//		insertComment(_root, "");
-//		// END KGU 2014-11-16
-//
-//		// START Kay Gürtzig 2010-09-10
-//		// code.add("int main(void)");
-//		if (_root.isProgram)
-//			code.add("int main(void)");
-//		else {
-//			// START KGU 2015-11-29: We may get more informed information
-//			// String fnHeader = _root.getText().get(0).trim();
-//			// if(fnHeader.indexOf('(')==-1 || !fnHeader.endsWith(")"))
-//			// fnHeader=fnHeader+"(void)";
-//			this.isResultSet = varNames.contains("result", false);
-//			this.isFunctionNameSet = varNames.contains(fnName);
-//			String fnHeader = transformType(_root.getResultType(),
-//					((returns || isResultSet || isFunctionNameSet) ? "int" : "void"));
-//			fnHeader += " " + fnName + "(";
-//			StringList paramNames = new StringList();
-//			StringList paramTypes = new StringList();
-//			_root.collectParameters(paramNames, paramTypes);
-//			for (int p = 0; p < paramNames.count(); p++) {
-//				if (p > 0)
-//					fnHeader += ", ";
-//				fnHeader += (transformType(paramTypes.get(p), "/*type?*/") + " " + paramNames
-//						.get(p)).trim();
-//			}
-//			fnHeader += ")";
-//			// END KGU 2015-11-29
-//
-//			// START KGU 2015-10-18: Hint to accomplish the function signature
-//			insertComment(
-//					"TODO Revise the return type and declare the parameters.",
-//					"");
-//			// END KGU 2015-10-18
-//			code.add(fnHeader);
-//		}
-//		// END Kay Gürtzig 2010-09-10
-//		code.add("{");
-//		insertComment("TODO declare your variables here:", this.getIndent());
-//        // START KGU 2015-11-30: List the variables to be declared
-//		for (int v = 0; v < varNames.count(); v++) {
-//			insertComment(varNames.get(v), this.getIndent());
-//		}
-//		// END KGU 2015-11-30
-//		code.add(this.getIndent());
-//		insertComment("TODO", this.getIndent());
-//		insertComment(
-//				"For any input using the 'scanf' function you need to fill the first argument.",
-//				this.getIndent());
-//		insertComment(
-//				"http://en.wikipedia.org/wiki/Scanf#Format_string_specifications",
-//				this.getIndent());
-//		code.add(this.getIndent());
-//		insertComment("TODO", this.getIndent());
-//		insertComment(
-//				"For any output using the 'printf' function you need to fill the first argument:",
-//				this.getIndent());
-//		insertComment(
-//				"http://en.wikipedia.org/wiki/Printf#printf_format_placeholders",
-//				this.getIndent());
-//		code.add(this.getIndent());
-//
-//		code.add(this.getIndent());
-//		generateCode(_root.children, this.getIndent());
-//		// Kay Gürtzig 2010.09.10: A function will already have got a return
-//		// statement (if it needs one)
-//		if (_root.isProgram)
-//		{
-//			code.add(this.getIndent());
-//			code.add(this.getIndent() + "return 0;");
-//		}
-//		else if ((returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
-//		{
-//			String result = "0";
-//			if (isFunctionNameSet)
-//			{
-//				result = _root.getMethodName();
-//			}
-//			else if (isResultSet)
-//			{
-//				int vx = varNames.indexOf("result", false);
-//				result = varNames.get(vx);
-//			}
-//			code.add(this.getIndent());
-//			code.add(this.getIndent() + "return " + result + ";");
-//		}
-//		code.add("}");
-//
-//		return code.getText();
-//	}
 
 	/**
 	 * Composes the heading for the program or function according to the
@@ -876,13 +771,28 @@ public class CGenerator extends Generator {
 	protected String generateHeader(Root _root, String _indent, String _procName,
 			StringList _paramNames, StringList _paramTypes, String _resultType)
 	{
+		// START KGU#178 2016-07-20: Enh. #160
+		if (!topLevel)
+		{
+			code.add("");					
+		}
+		// END KGU#178 2016-07-20
 		String pr = (_root.isProgram) ? "program" : "function";
 		insertComment(pr + " " + _root.getText().get(0), _indent);
-		insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
-		code.add("");
-		code.add("#include <stdio.h>");
+		// START KGU#178 2016-07-20: Enh. #160
+		if (topLevel)
+		{
+		// END KGU#178 2016-07-20
+			insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+			code.add("");
+			code.add("#include <stdio.h>");
+			code.add("");
+		// START KGU#178 2016-07-20: Enh. #160
+			subroutineInsertionLine = code.count();
+			subroutineIndent = _indent;
+		}
+		// END KGU#178 2016-07-20
 
-		code.add("");		
 		insertComment(_root, _indent);
 		
 		if (_root.isProgram)
