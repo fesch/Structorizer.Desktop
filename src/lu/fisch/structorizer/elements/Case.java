@@ -869,4 +869,20 @@ public class Case extends Element
     }
     // END KGU 2015-10-16
 
+	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#convertToCalls(lu.fisch.utils.StringList)
+	 */
+	@Override
+	public void convertToCalls(StringList _signatures) {
+    	if (qs!= null)
+    	{
+    		for (int i = 0; i < qs.size(); i++)
+    		{
+    			qs.get(i).convertToCalls(_signatures);
+    		}
+    	}
+	}
+	// END KGU#199 2016-07-07
+
 }

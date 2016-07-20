@@ -38,6 +38,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.03.01/02   Bugfix #79 (KGU#136) for reliable selection.
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016.07.06      Bugfix in method removeElement() for enh. #188 (element conversion)
  *
  ******************************************************************************************************
  *
@@ -327,7 +328,10 @@ public class SelectedSequence extends Element implements IElementSequence {
 	 */
 	public void removeElement(int _index)
 	{
-		if (_index >= 0 && _index < lastIndex - firstIndex)
+		// START KGU#199 2016-07-07: Bugfix (on occasion of Enh. #188)
+		//if (_index >= 0 && _index < lastIndex - firstIndex)
+		if (_index >= 0 && _index <= lastIndex - firstIndex)
+		// END KGU#199 2016-07-07
 		{
 			((Subqueue)parent).removeElement(_index + firstIndex);
 			lastIndex--;
@@ -535,4 +539,13 @@ public class SelectedSequence extends Element implements IElementSequence {
 	}
 	// END KGU#156 2016-03-12
 
+	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#convertToCalls(lu.fisch.utils.StringList)
+	 */
+	@Override
+	public void convertToCalls(StringList _signatures) {
+		this.parent.convertToCalls(_signatures);
+	}
+	// END KGU#199 2016-07-07
 }

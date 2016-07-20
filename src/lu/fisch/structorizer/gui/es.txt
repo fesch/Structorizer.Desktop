@@ -47,6 +47,8 @@
  *      Kay Gürtzig     2016.04.04  Issue #149: New ExportOptionDialog messages for charset setting
  *      Kay Gürtzig     2016.04.12  Issue #161: New Analyser error message for Jump
  *      Kay Gürtzig     2016.04.24  Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig     2016.07.07  Enh. #188: Messages for transmute button and menu items
+ *      Kay Gürtzig     2016-07-20  Enh. #160: New message for ExportOptionDialoge 
  *
  ******************************************************************************************************
  *
@@ -123,6 +125,7 @@ Menu.menuDiagramEdit.text=Editar
 Menu.menuDiagramDelete.text=Borrar
 Menu.menuDiagramMoveUp.text=Desplazar arriba
 Menu.menuDiagramMoveDown.text=Desplazar abajo
+Menu.menuDiagramTransmute.text=Transmutar
 Menu.menuDiagramCollapse.text=Reducir
 Menu.menuDiagramExpand.text=Expandir
 // Breakpoint
@@ -280,6 +283,7 @@ Editor.btnEdit.tooltip=Editar elemento seleccionado.
 Editor.btnDelete.tooltip=Borrar elementos seleccionados.
 Editor.btnMoveUp.tooltip=Desplazar elemento seleccionado una posición arriba.
 Editor.btnMoveDown.tooltip=Desplazar elemento seleccionado una posición abajo.
+Editor.btnTransmute.tooltip=Transmutar instrucción en Salto o Llamada o dividirla o combinarlas.
 //printing
 Editor.btnPrint.tooltip=Imprimir el diagrama.
 Editor.btnArrange.tooltip=Añadir el diagrama al Arranger.
@@ -342,6 +346,7 @@ Editor.popupEdit.text=Editar
 Editor.popupDelete.text=Borrar
 Editor.popupMoveUp.text=Desplazar Arriba
 Editor.popupMoveDown.text=Desplazar Abajo
+Editor.popupTransmute.text=Transmutar
 // Collapsing
 Editor.popupCollapse.text=Reducir
 Editor.popupExpand.text=Expandir
@@ -555,6 +560,7 @@ ExportOptionDialoge.noConversionCheckBox.tooltip=Habilita esta opción si el con
 ExportOptionDialoge.commentsCheckBox.text=Exportar instrucciones como comentarios.
 ExportOptionDialoge.bracesCheckBox.text=Poner abrazadera abrienda al fin de la misma linea (C/C++/Java etc.).
 ExportOptionDialoge.lineNumbersCheckBox.text=Generar números de linea con el exporte (BASIC).
+ExportOptionDialoge.chkExportSubroutines.text=Incluir empleados subprogramas.
 ExportOptionDialoge.lbPrefGenerator.text=Preferido código de exportación:
 ExportOptionDialoge.lbCharset.text=Codificación:
 ExportOptionDialoge.chkCharsetAll.text=Listar todas

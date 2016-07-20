@@ -43,6 +43,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2016-05-02      Issue #184 / Enh. #10: Flaws in FOR loop import (KGU#192)
  *      Kay Gürtzig     2016-05-04      KGU#194: Bugfix - parse() now with Charset argument
  *      Kay Gürtzig     2016-05-05/09   Issue #185: Import now copes with units and multiple routines per file
+ *      Kay Gürtzig     2016-07-07      Enh. #185: Identification of Calls improved on parsing
  *
  ******************************************************************************************************
  *
@@ -129,7 +130,7 @@ public class D7Parser implements GPMessageConstants
 	
 	public D7Parser(String _compiledGrammar)
 	{
-		compiledGrammar = _compiledGrammar;
+		compiledGrammar=_compiledGrammar;
 		// create new parser
 		parser = new GOLDParser();
 		parser.setTrimReductions(true);
@@ -207,7 +208,7 @@ public class D7Parser implements GPMessageConstants
 		// create new root
 		root = new Root();
 		error = "";
-		
+
 		// prepare textfile
 		try
 		{
@@ -221,28 +222,28 @@ public class D7Parser implements GPMessageConstants
 			while ((strLine = br.readLine()) != null)   
 			{
 				// add no ending because of comment filter
-				pasCode += strLine+"\u2190";
+				pasCode+=strLine+"\u2190";
 				//pasCode+=strLine+"\n";
 			}
 			//Close the input stream
 			in.close();
-			
+
 			// filter out comments (KGU: Why? The GOLDParser can do it itself)
 			Regex r = new Regex("(.*?)[(][*](.*?)[*][)](.*?)","$1$3"); 
 			pasCode=r.replaceAll(pasCode);
 			r = new Regex("(.*?)[{](.*?)[}](.*?)","$1$3"); 
 			pasCode = r.replaceAll(pasCode);
-			
+
 			// START KGU#195 2016-05-04: Issue #185 - Workaround for mere subroutines
 			pasCode = embedSubroutineDeclaration(pasCode);
 			// END KGU#195 2016-05-04
-						
+
 			// reset correct endings
 			r = new Regex("(.*?)[\u2190](.*?)","$1\n$2"); 
 			pasCode = r.replaceAll(pasCode);
-			
+
 			//System.out.println(pasCode);
-			
+
 			// trim and save as new file
 			OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(_textToParse+".structorizer"), "ISO-8859-1");
 			ow.write(filterNonAscii(pasCode.trim()+"\n"));
@@ -253,140 +254,151 @@ public class D7Parser implements GPMessageConstants
 		{
 			System.out.println(e.getMessage());
 		}
-		
+
 		// try to load the compiled grammar and
 		// load the text to parse
 		try
-        {
-            //parser.loadCompiledGrammar(compiledGrammar);
-        	parser.openFile(_textToParse+".structorizer");
-        }
-        catch(ParserException parse)
-        {
-            System.out.println("**PARSER ERROR**\n" + parse.toString());
-            System.exit(1);
-        }
-		
+		{
+			//parser.loadCompiledGrammar(compiledGrammar);
+			parser.openFile(_textToParse+".structorizer");
+		}
+		catch(ParserException parse)
+		{
+			System.out.println("**PARSER ERROR**\n" + parse.toString());
+			System.exit(1);
+		}
+
 		// init some vars
-        boolean done = false;
-        int response = -1;
+		boolean done = false;
+		int response = -1;
 		// START KGU#191 2016-04-30: Issue #182 (insufficient information for error detection)
-        // Rolling buffer for processed tokens as retrospective context for error messages
-        // Number of empty strings = number of retained context lines 
-        String[] context = {"", "", "", "", "", "", "", "", "", ""};
-        int contextLine = 0;
+		// Rolling buffer for processed tokens as retrospective context for error messages
+		// Number of empty strings = number of retained context lines 
+		String[] context = {"", "", "", "", "", "", "", "", "", ""};
+		int contextLine = 0;
 		// END KGU#191 2016-04-30
-		
+
 		// start parsing
-        while (!done)
-        {
-            try
-            {
+		while (!done)
+		{
+			try
+			{
 				//System.out.println("- Parse: before");
-            	response = parser.parse();
+				response = parser.parse();
 				//System.out.println("- Parse: after");
-            }
-            catch(ParserException parse)
-            {
-                System.err.println("**PARSER ERROR**\n" + parse.toString());
-                System.exit(1);
-            }
-			
+			}
+			catch(ParserException parse)
+			{
+				System.err.println("**PARSER ERROR**\n" + parse.toString());
+				System.exit(1);
+			}
+
 			//System.out.println("===> "+response);
-            Token theTok = null;
-            switch(response)
-            {
-                case gpMsgLexicalError:
-                    //System.err.println("gpMsgLexicalError");
-                    // START KGU#191 2016-04-30: Issue #182 
-                    theTok = parser.currentToken();
-                    error = ("Unexpected character: " + (String)theTok.getData()+" at line "+parser.currentLineNumber());
-                    // END KGU#191 2016-04-30
-                    parser.popInputToken();
-					done = true;
-                    break;
-					
-                case gpMsgSyntaxError:
-                    theTok = parser.currentToken();
-                    error = ("Token not expected: " + (String)theTok.getData()+" at line "+parser.currentLineNumber());
-					
-                    //System.out.println("gpMsgSyntaxError");
-                    done = true;
-                    break;
-					
-                case gpMsgReduction:
-                    //System.out.println("gpMsgReduction");
-                    //Reduction myRed = parser.currentReduction();
-                    //System.out.println(myRed.getParentRule().getText());
-                    break;
-					
-                case gpMsgAccept:
-					//System.out.println("Source OK");
-					DrawNSD(parser.currentReduction());
-                    done = true;
-                    break;
-					
-                case gpMsgTokenRead:
-                    //System.out.println("gpMsgTokenRead");
-                    Token myTok = parser.currentToken();
-                    //System.out.println((String)myTok.getData());
-                    while (parser.currentLineNumber() > contextLine)
-                    {
-                    	context[(++contextLine) % context.length] = "";
-                    }
-                    context[contextLine % context.length] += ((String)myTok.getData() + " ");
-                    break;
-					
-                case gpMsgNotLoadedError:
-                    System.err.println("gpMsgNotLoadedError");
-                    done = true;
-                    break;
-					
-                case gpMsgCommentError:
-                    System.err.println("gpMsgCommentError");
-                    done = true;
-					break;
-					
-                case gpMsgInternalError:
-                    System.err.println("gpMsgInternalError");
-                    done = true;
-                    break;
-				
-				default:
-					//System.out.println("default");
-					break;
-					
-            }
-        }
+			Token theTok = null;
+			switch(response)
+			{
+			case gpMsgLexicalError:
+				//System.err.println("gpMsgLexicalError");
+				// START KGU#191 2016-04-30: Issue #182 
+				theTok = parser.currentToken();
+				error = ("Unexpected character: " + (String)theTok.getData()+" at line "+parser.currentLineNumber());
+				// END KGU#191 2016-04-30
+				parser.popInputToken();
+				done = true;
+				break;
+
+			case gpMsgSyntaxError:
+				theTok = parser.currentToken();
+				error = ("Token not expected: " + (String)theTok.getData()+" at line "+parser.currentLineNumber());
+
+				//System.out.println("gpMsgSyntaxError");
+				done = true;
+				break;
+
+			case gpMsgReduction:
+				//System.out.println("gpMsgReduction");
+				//Reduction myRed = parser.currentReduction();
+				//System.out.println(myRed.getParentRule().getText());
+				break;
+
+			case gpMsgAccept:
+				//System.out.println("Source OK");
+				DrawNSD(parser.currentReduction());
+				done = true;
+				break;
+
+			case gpMsgTokenRead:
+				//System.out.println("gpMsgTokenRead");
+				Token myTok = parser.currentToken();
+				//System.out.println((String)myTok.getData());
+				while (parser.currentLineNumber() > contextLine)
+				{
+					context[(++contextLine) % context.length] = "";
+				}
+				context[contextLine % context.length] += ((String)myTok.getData() + " ");
+				break;
+
+			case gpMsgNotLoadedError:
+				System.err.println("gpMsgNotLoadedError");
+				done = true;
+				break;
+
+			case gpMsgCommentError:
+				System.err.println("gpMsgCommentError");
+				done = true;
+				break;
+
+			case gpMsgInternalError:
+				System.err.println("gpMsgInternalError");
+				done = true;
+				break;
+
+			default:
+				//System.out.println("default");
+				break;
+
+			}
+		}
 		//System.out.println("---- done ----");
 
-        // START KGU#191 2016-04-30: Issue #182 - In error case append the context 
-        if (!error.isEmpty())
-        {
-        	error += "\nPreceding source context:";
-    		contextLine -= context.length;
-        	for (int line = 0; line < context.length; line++)
-        	{
-        		if (++contextLine >= 0)
-        		{
-        			error += "\n" + contextLine + ":   " + context[contextLine % context.length];
-        		}
-        	}
-        }
-        // END KGU#191 2016-04-30
-        
-        try
-        {
-        	parser.closeFile();
-        }
-        catch(ParserException parsex)
-        {
-            System.err.println("**PARSER ERROR**\n" + parsex.toString());
-            System.exit(1);
-        }
-		
+		// START KGU#191 2016-04-30: Issue #182 - In error case append the context 
+		if (!error.isEmpty())
+		{
+			error += "\nPreceding source context:";
+			contextLine -= context.length;
+			for (int line = 0; line < context.length; line++)
+			{
+				if (++contextLine >= 0)
+				{
+					error += "\n" + contextLine + ":   " + context[contextLine % context.length];
+				}
+			}
+		}
+		// END KGU#191 2016-04-30
+
+		try
+		{
+			parser.closeFile();
+		}
+		catch(ParserException parsex)
+		{
+			System.err.println("**PARSER ERROR**\n" + parsex.toString());
+			System.exit(1);
+		}
+
 		//remove the temporary file
 		(new File(_textToParse+".structorizer")).delete();
+
+		// START KGU#194 2016-07-07: Enh. #185/#188 - Try to convert calls to Call elements
+		StringList signatures = new StringList();
+		for (Root subroutine : subRoots)
+		{
+			if (!subroutine.isProgram)
+			{
+				signatures.add(subroutine.getMethodName() + "#" + subroutine.getParameterNames().count());
+			}
+		}
+		// END KGU#194 2016-07-07
 		
 		// START KGU#194 2016-05-08: Bugfix #185 - face an empty program or unit vessel
 		//return root;
@@ -394,6 +406,12 @@ public class D7Parser implements GPMessageConstants
 		{
 			subRoots.add(0, root);
 		}
+		// START KGU#194 2016-07-07: Enh. #185/#188 - Try to convert calls to Call elements
+		for (Root aRoot : subRoots)
+		{
+			aRoot.convertToCalls(signatures);
+		}
+		// END KGU#194 2016-07-07
 		return subRoots;
 		// END KGU#194 2016-05-08
 	}
@@ -483,7 +501,7 @@ public class D7Parser implements GPMessageConstants
 			// START KGU#194 2016-05-08: Bugfix #185 - we must handle unit headers
 			else if (
 					ruleName.equals("<UnitHeader>")
-					)
+					 )
 			{
 				unitName = getContent_R((Reduction) _reduction.getToken(1).getData(), "");
 			}
@@ -521,13 +539,13 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<ProcHeading>")
 					 )
 			{
-				content = new String();
-				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content=new String();
+				content=getContent_R((Reduction) _reduction.getToken(1).getData(),content);
 				
 				Reduction secReduc = (Reduction) _reduction.getToken(2).getData();
 				if (secReduc.getTokenCount()!=0)
 				{
-					content = getContent_R(secReduc, content);
+					content=getContent_R(secReduc,content);
 				}
 				
 				content = BString.replaceInsensitive(content,";","; ");
@@ -545,8 +563,8 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<FuncHeading>")
 					 )
 			{
-				content = new String();
-				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content=new String();
+				content=getContent_R((Reduction) _reduction.getToken(1).getData(),content);
 				
 				Reduction secReduc = (Reduction) _reduction.getToken(2).getData();
 				if (secReduc.getTokenCount()!=0)
@@ -557,14 +575,14 @@ public class D7Parser implements GPMessageConstants
 				secReduc = (Reduction) _reduction.getToken(4).getData();
 				if (secReduc.getTokenCount()!=0)
 				{
-					content += ": ";
-					content = getContent_R(secReduc, content);
+					content+=": ";
+					content=getContent_R(secReduc,content);
 				}
 				
-				content = BString.replaceInsensitive(content, ";", "; ");
-				content = BString.replaceInsensitive(content, ";  ", "; ");
+				content = BString.replaceInsensitive(content,";","; ");
+				content = BString.replaceInsensitive(content,";  ","; ");
 				root.setText(updateContent(content));
-				root.isProgram = false;
+				root.isProgram=false;
 				// START KGU#194 2016-05-08: Bugfix #185 - be aware of unit context
 				if (unitName != null)
 				{
@@ -576,20 +594,20 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<WhileStatement>")
 					 )
 			{
-				content = new String();
-				content = getContent_R((Reduction) _reduction.getToken(1).getData(), content);
+				content=new String();
+				content=getContent_R((Reduction) _reduction.getToken(1).getData(),content);
 				While ele = new While(preWhile+updateContent(content)+postWhile);
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = (Reduction) _reduction.getToken(3).getData();
-				DrawNSD_R(secReduc, ele.q);
+				DrawNSD_R(secReduc,ele.q);
 			}
 			else if (
 					 ruleName.equals("<RepeatStatement>")
 					 )
 			{
-				content = new String();
-				content = getContent_R((Reduction)_reduction.getToken(3).getData(), content);
+				content=new String();
+				content=getContent_R((Reduction) _reduction.getToken(3).getData(),content);
 				Repeat ele = new Repeat(preRepeat+updateContent(content)+postRepeat);
 				_parentNode.addElement(ele);
 				
@@ -600,14 +618,14 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<ForStatement>")
 					 )
 			{
-				content = new String();
-				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
-				content += ":=";
-				content = getContent_R((Reduction) _reduction.getToken(3).getData(),content);
+				content=new String();
+				content=getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content+=":=";
+				content=getContent_R((Reduction) _reduction.getToken(3).getData(),content);
 				content += " ";
-				content += postFor;
+				content+=postFor;
 				content += " ";
-				content = getContent_R((Reduction) _reduction.getToken(5).getData(),content);
+				content=getContent_R((Reduction) _reduction.getToken(5).getData(),content);
 				// START KGU#3 2016-05-02: Enh. #10 Token 4 contains the information whether it's to or downto
 				if (getContent_R((Reduction) _reduction.getToken(4).getData(), "").equals("downto"))
 				{
@@ -622,16 +640,16 @@ public class D7Parser implements GPMessageConstants
 				
 				// Get and convert the body
 				Reduction secReduc = (Reduction) _reduction.getToken(7).getData();
-				DrawNSD_R(secReduc, ele.q);
+				DrawNSD_R(secReduc,ele.q);
 			}
 			else if (
 					 ruleName.equals("<IfStatement>")
 					 )
 			{
-				content = new String();
-				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content=new String();
+				content=getContent_R((Reduction) _reduction.getToken(1).getData(),content);
 				
-				Alternative ele = new Alternative(preAlt + updateContent(content) + postAlt);
+				Alternative ele = new Alternative(preAlt+updateContent(content)+postAlt);
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = (Reduction) _reduction.getToken(3).getData();
@@ -646,14 +664,14 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<CaseSelector>")
 					 )
 			{
-				content = new String();
-				content = getContent_R((Reduction) _reduction.getToken(0).getData(),content);
+				content=new String();
+				content=getContent_R((Reduction) _reduction.getToken(0).getData(),content);
 				
 				// sich am parent (CASE) dat nächst fräit Element
 				boolean found = false;
-				for(int i=0; i<((Case) _parentNode.parent).getText().count(); i++)
+				for(int i=0;i<((Case) _parentNode.parent).getText().count();i++)
 				{
-					if (((Case) _parentNode.parent).getText().get(i).equals("??") && found==false)
+					if(((Case) _parentNode.parent).getText().get(i).equals("??") && found==false)
 					{
 						((Case) _parentNode.parent).getText().set(i,content);
 						found=true;
@@ -684,18 +702,18 @@ public class D7Parser implements GPMessageConstants
 					 ruleName.equals("<CaseStatement>")
 					 )
 			{
-				content = new String();
-				content = preCase+getContent_R((Reduction) _reduction.getToken(1).getData(),content)+postCase;
+				content=new String();
+				content=preCase+getContent_R((Reduction) _reduction.getToken(1).getData(),content)+postCase;
 				// am content steet elo hei den "test" dran
 				
 				// Wéivill Elementer sinn am CASE dran?
 				Reduction sr = (Reduction) _reduction.getToken(3).getData();
-				int j = 0;
+				int j=0;
 				//System.out.println(sr.getParentRule().getText());  // <<<<<<<
-				while (sr.getParentRule().name().equals("<CaseList>"))
+				while(sr.getParentRule().name().equals("<CaseList>"))
 				{
 					  j++;
-					  content += "\n??";
+					  content+="\n??";
 					  if (sr.getTokenCount()>=1)
 					  {
 						sr = (Reduction) sr.getToken(0).getData();
@@ -706,10 +724,10 @@ public class D7Parser implements GPMessageConstants
 					  }
 				}
 				
-				if (j>0) 
+				if ( j>0) 
 				{
 					j++;
-					content += "\nelse";
+					content+="\nelse";
 				}
 
 				Case ele = new Case(updateContent(content));
@@ -721,12 +739,12 @@ public class D7Parser implements GPMessageConstants
 				DrawNSD_R(secReduc,(Subqueue) ele.qs.get(0));
 				// den "otherwise"
 				secReduc = (Reduction) _reduction.getToken(4).getData();
-				DrawNSD_R(secReduc, (Subqueue) ele.qs.get(j-1));
+				DrawNSD_R(secReduc,(Subqueue) ele.qs.get(j-1));
 				
 				// cut off else, if possible
 				if (((Subqueue) ele.qs.get(j-1)).getSize()==0)
 				{
-					ele.getText().set(ele.getText().count()-1, "%");
+					ele.getText().set(ele.getText().count()-1,"%");
 				}
 
 				/*
@@ -764,7 +782,7 @@ public class D7Parser implements GPMessageConstants
 			{
 				if (_reduction.getTokenCount()>0)
 				{
-					for(int i=0; i<_reduction.getTokenCount(); i++)
+					for(int i=0;i<_reduction.getTokenCount();i++)
 					{
 						if (_reduction.getToken(i).getKind()==SymbolTypeConstants.symbolTypeNonterminal)
 						{
@@ -807,7 +825,7 @@ public class D7Parser implements GPMessageConstants
 		*/
 		
 		//_content = BString.replace(_content, ":="," \u2190 ");
-		_content = BString.replace(_content, ":=", " <- ");
+		_content = BString.replace(_content, ":="," <- ");
 
 		return _content.trim();
 	}
@@ -816,12 +834,12 @@ public class D7Parser implements GPMessageConstants
 	{
 //		if (_reduction.getTokenCount()>0)
 //		{
-			for(int i=0; i<_reduction.getTokenCount(); i++)
+			for(int i=0;i<_reduction.getTokenCount();i++)
 			{
 				switch (_reduction.getToken(i).getKind()) 
 				{
 					case SymbolTypeConstants.symbolTypeNonterminal:
-						_content = getContent_R((Reduction) _reduction.getToken(i).getData(), _content);	
+						_content=getContent_R((Reduction) _reduction.getToken(i).getData(), _content);	
 						break;
 					case SymbolTypeConstants.symbolTypeTerminal:
 						{
@@ -986,5 +1004,5 @@ public class D7Parser implements GPMessageConstants
 		return keywords;
 	}
 	// END KGU#163 2016-03-25
-	
+
 }

@@ -59,6 +59,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Runtime data collection accomplished
  *      Kay Gürtzig     2016.03.26      KGU#165: New option D7Parser.ignoreCase introduced
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016.07.07      Enh. #188: Modification of getText(boolean) to cope with transmutation,
+ *                                      Enh. #185: new abstract method convertToCalls() for code import
  *
  ******************************************************************************************************
  *
@@ -148,7 +150,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.24-12";
+	public static String E_VERSION = "3.24-13";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -502,7 +504,12 @@ public abstract class Element {
 	{
         if (!_alwaysTrueText && this.isSwitchTextCommentMode())
         {
-        	return comment;
+        	// START KGU#199 2016-07-07: Enh. #188
+        	// Had to be altered since the combination of instructions may produce
+        	// multi-line string elements which would compromise drawing
+        	//return comment;
+        	return StringList.explode(comment, "\n");
+        	// END KGU#199 2016-07-07
         }
         else
         {
@@ -610,8 +617,8 @@ public abstract class Element {
             return res;
     }
     // END KGU 2016-04-24
-
-	// START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
+    
+    // START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
 	/**
 	 * Checks execution involvement.
 	 * @return true iff this or some substructure of this is currently executed. 
@@ -761,6 +768,16 @@ public abstract class Element {
 		return canMove;
 	}
 	//	END KGU#144 2016-01-22
+	
+	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
+	/**
+	 * Recursively identifies Instruction elements with call syntax matching one
+	 * the given subroutine signatures and converts respective elements to Call
+	 * elements.
+	 * @param signatures - strings of the form "&lt;routinename&gt;#&lt;arity&gt;"
+	 */
+	public abstract void convertToCalls(StringList _signatures);
+	// END KGU#199 2016-07-07
 
 	public Color getColor()
 	{

@@ -40,6 +40,7 @@ package lu.fisch.structorizer.elements;
  *		Kay Gürtzig     2016.03.01      Bugfix #97 (KGU#136) Drawing/dragging/selection consolidated
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016.07.07      Enh. #188: New copy constructor to support conversion (KGU#199)
  *
  ******************************************************************************************************
  *
@@ -134,6 +135,12 @@ public class Jump extends Instruction {
 		setText(_strings);
 	}
 	
+	// START KGU#199 2016-07-07: New for enh. #188
+	public Jump(Instruction instr)
+	{
+		super(instr);
+	}
+	// END KGU#199 2016-07-07	
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
@@ -250,23 +257,27 @@ public class Jump extends Instruction {
 	public Element copy()
 	{
 		Element ele = new Jump(this.getText().copy());
-		ele.setComment(this.getComment().copy());
-		ele.setColor(this.getColor());
-		// START KGU#82 (bug #31) 2015-11-14
-		ele.breakpoint = this.breakpoint;
-		// END KGU#82 (bug #31) 2015-11-14
-		// START KGU#117 2016-03-07: Enh. #77
-        if (Element.E_COLLECTRUNTIMEDATA)
-        {
-        	// We share this object (important for recursion!)
-        	ele.deeplyCovered = this.deeplyCovered;
-        }
-		// END KGU#117 2016-03-07
-		// START KGU#183 2016-04-24: Issue #169
-		ele.selected = this.selected;
-		// END KGU#183 2016-04-24
-		return ele;
+// START KGU#199 2016-07-07: Enh. #188, D.R.Y.
+//		ele.setComment(this.getComment().copy());
+//		ele.setColor(this.getColor());
+//		// START KGU#82 (bug #31) 2015-11-14
+//		ele.breakpoint = this.breakpoint;
+//		// END KGU#82 (bug #31) 2015-11-14
+//		// START KGU#117 2016-03-07: Enh. #77
+//        if (Element.E_COLLECTRUNTIMEDATA)
+//        {
+//        	// We share this object (important for recursion!)
+//        	ele.deeplyCovered = this.deeplyCovered;
+//        }
+//		// END KGU#117 2016-03-07
+//		// START KGU#183 2016-04-24: Issue #169
+//		ele.selected = this.selected;
+//		// END KGU#183 2016-04-24
+//		return ele;
+//	}
+		return copyDetails(ele, false);
 	}
+// END KGU#199 2016-07-07
 	
 	// START KGU 2015-10-16
 	/* (non-Javadoc)

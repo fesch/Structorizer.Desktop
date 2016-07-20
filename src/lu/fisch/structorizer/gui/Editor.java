@@ -41,6 +41,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.01.22      Bugfix for Enh. #38 (addressing moveUp/moveDown, KGU#143 + KGU#144).
  *      Kay Gürtzig     2016.04.06      Enh. #158: Key bindings for cursor keys added (KGU#177)
  *      Kay Gürtzig     2016.04.14      Enh. #158: Key bindings for page keys added (KGU#177)
+ *      Kay Gürtzig     2016.07.06      Enh. #188: New button and menu item for element conversion (KGU#199)
  *
  ******************************************************************************************************
  *
@@ -124,6 +125,9 @@ public class Editor extends JPanel implements NSDController, ComponentListener
     protected JButton btnDelete = new JButton(IconLoader.ico005); 
     protected JButton btnMoveUp = new JButton(IconLoader.ico019); 
     protected JButton btnMoveDown = new JButton(IconLoader.ico020);
+	// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
+	protected JButton btnTransmute = new JButton(IconLoader.ico109);
+	// END KGU#199 2016-07-06
     // collapsing & expanding
     // START KGU#123 2016-01-04: Enh. #87 - Preparations for Fix #65
     protected JButton btnCollapse = new JButton(IconLoader.ico106); 
@@ -195,6 +199,9 @@ public class Editor extends JPanel implements NSDController, ComponentListener
     protected JMenuItem popupDelete = new JMenuItem("Delete",IconLoader.ico005);
     protected JMenuItem popupMoveUp = new JMenuItem("Move up",IconLoader.ico019);
     protected JMenuItem popupMoveDown = new JMenuItem("Move down",IconLoader.ico020);
+	// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
+	protected JMenuItem popupTransmute = new JMenuItem("Transmute", IconLoader.ico109);
+	// END KGU#199 2016-07-06
     // START KGU#123 2016-01-04: Enh. #87 - Preparations for Fix #65
     protected JMenuItem popupCollapse = new JMenuItem("Collapse", IconLoader.ico106); 
     protected JMenuItem popupExpand = new JMenuItem("Expand", IconLoader.ico107);    
@@ -360,7 +367,12 @@ public class Editor extends JPanel implements NSDController, ComponentListener
         popup.add(popupMoveDown);
         popupMoveDown.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.moveDownNSD(); doButtons(); } } );
         
-		// START KGU#123 2016-01-03: Enh. #87 - New menu items (addressing Bug #65)
+		// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
+		popup.add(popupTransmute);
+		popupTransmute.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.transmuteNSD(); doButtons(); } } );
+		// END KGU#199 2016-07-06
+
+        // START KGU#123 2016-01-03: Enh. #87 - New menu items (addressing Bug #65)
 		popup.addSeparator();
 
 		popup.add(popupCollapse);
@@ -450,6 +462,11 @@ public class Editor extends JPanel implements NSDController, ComponentListener
         toolbar.add(btnMoveDown);
 		btnMoveDown.setFocusable(false);
 		btnMoveDown.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.moveDownNSD(); doButtons(); } } );
+		// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
+        toolbar.add(btnTransmute);
+        btnTransmute.setFocusable(false);
+		btnTransmute.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.transmuteNSD(); doButtons(); } } ); 
+		// END KGU#199 2016-07-06
 		
 		toolbar=newToolBar("Method, program");
 
@@ -814,6 +831,9 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		// END KGU#143 2016-01-21
 		btnMoveUp.setEnabled(conditionCanMoveUp);
 		btnMoveDown.setEnabled(conditionCanMoveDown);
+		// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
+		btnTransmute.setEnabled(diagram.canTransmute());
+		// END KGU#199 2016-07-06
 		// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
 		//popuEdit.setEnabled(conditionAny);
 		popupEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
@@ -824,6 +844,9 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		// END KGU#143 2016-01-21
 		popupMoveUp.setEnabled(conditionCanMoveUp);
 		popupMoveDown.setEnabled(conditionCanMoveDown);
+		// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
+		popupTransmute.setEnabled(diagram.canTransmute());
+		// END KGU#199 2016-07-06
 		
 		// START KGU#123 2016-01-03: Enh. #87 - We allow multiple selection for collapsing
 		// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur
@@ -832,9 +855,12 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		// END KGU#123 2016-01-03
 
 		// executor
-		// START KGU#143 2016-01-21: Bugfix #114 - breakpoint need a more generous enabling policy
+		// START KGU#143 2016-01-21: Bugfix #114 - breakpoints need a more generous enabling policy
 		//popupBreakpoint.setEnabled(diagram.canCutCopy());	// KGU 2015-10-12: added
-		popupBreakpoint.setEnabled(diagram.canCopy());
+		// START KGU#177 2016-07-06: Enh. #158 - Collateral damage mended
+		//popupBreakpoint.setEnabled(diagram.canCopy());
+		popupBreakpoint.setEnabled(diagram.canCopyNoRoot());
+		// END KGU#177 2016-07-06
 		// END KGU#143 2016-01-21
 		
 		// copy & paste
