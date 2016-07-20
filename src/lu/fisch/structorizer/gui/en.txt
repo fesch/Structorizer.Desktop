@@ -47,6 +47,8 @@
  *      Kay Gürtzig     2016.04.04      Issue #149: New ExportOptionDialog messages for charset setting
  *      Kay Gürtzig     2016.04.12      Issue #161: New Analyser error message for Jump
  *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig     2016.07.07      Enh. #188: Messages for transmute button and menu items
+ *      Kay Gürtzig     2016-07-20      Enh. #160: New message for ExportOptionDialoge 
  *
  ******************************************************************************************************
  *
@@ -122,6 +124,7 @@ Menu.menuDiagramEdit.text=Edit
 Menu.menuDiagramDelete.text=Delete
 Menu.menuDiagramMoveUp.text=Move up
 Menu.menuDiagramMoveDown.text=Move down
+Menu.menuDiagramTransmute.text=Transmute
 Menu.menuDiagramCollapse.text=Collapse
 Menu.menuDiagramExpand.text=Expand
 // Breakpoint
@@ -280,6 +283,7 @@ Editor.btnEdit.tooltip=Edit the selected element.
 Editor.btnDelete.tooltip=Delete the selected element.
 Editor.btnMoveUp.tooltip=Move the selected element one position up.
 Editor.btnMoveDown.tooltip=Move the selected element one position down.
+Editor.btnTransmute.tooltip=Transmute instructions to Calls or Jumps, merge or split sequences
 //printing
 Editor.btnPrint.tooltip=Print the diagram.
 Editor.btnArrange.tooltip=Add the diagram to the Arranger panel
@@ -342,6 +346,7 @@ Editor.popupEdit.text=Edit
 Editor.popupDelete.text=Delete
 Editor.popupMoveUp.text=Move up
 Editor.popupMoveDown.text=Move down
+Editor.popupTransmute.text=Transmute
 // Collapsing
 Editor.popupCollapse.text=Collapse
 Editor.popupExpand.text=Expand
@@ -512,6 +517,7 @@ ExportOptionDialoge.noConversionCheckBox.tooltip=Select this option if the text 
 ExportOptionDialoge.commentsCheckBox.text=Export instructions as comments.
 ExportOptionDialoge.bracesCheckBox.text=Put block-opening brace on same line (C/C++/Java etc.).
 ExportOptionDialoge.lineNumbersCheckBox.text=Generate line numbers on export to BASIC.
+ExportOptionDialoge.chkExportSubroutines.text=Involve called subroutines.
 ExportOptionDialoge.lbPrefGenerator.text=Favorite Code Export:
 ExportOptionDialoge.lbCharset.text=Character set:
 ExportOptionDialoge.chkCharsetAll.text=List all?

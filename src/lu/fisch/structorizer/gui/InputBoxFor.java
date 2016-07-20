@@ -36,6 +36,7 @@ package lu.fisch.structorizer.gui;
 *      Kay Gürtzig      2015-11-01		Mutual text field update and error detection accomplished
 *      Kay Gürtzig      2015-12-04		frame width increased (-> 600)
 *      Kay Gürtzig      2016-03-20      Enhancement #84/#135: FOR-IN / FOREACH paradigm considered
+*      Kay Gürtzig      2016-07-14      Enh. #180: Initial focus dependent on switchTextComment mode (KGU#169)
 *
 ******************************************************************************************************
 *
@@ -103,6 +104,13 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		super(owner, modal);
 	}
 	
+    // START KGU#169 2016-07-14: Enh. #180 (see also: #39, #142) - helps to enable focus control
+    protected void setPreferredSize()
+    {
+        setSize(600, 400);   	
+    }
+    // END KGU#169 2016-07-14
+
     
     /**
      * Subclassable method to add specific stuff to the Panel top
@@ -135,83 +143,12 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		chkTextInput.addItemListener(this);
 		txtText.addKeyListener(this);
 
-		setSize(600, 400);	// We need more width, at least on Linux
-		
+	    // START KGU#169 2016-07-14: Enh. #180 - Now delegated to setPreferredSize() to be done afterwards
+		//setSize(600, 400);	// We need more width, at least on Linux
+	    // END KGU#169 2016-07-14
+
 		int lineNo = 1;
 
-		// START KGU 2015-10-30: Design study 1
-//		_gbc.gridx = 1;
-//		_gbc.gridy = lineNo;
-//		_gbc.gridheight = 1;
-//		_gbc.gridwidth = 1;
-//		_gbc.fill = GridBagConstraints.NONE;
-//		_gbc.anchor = GridBagConstraints.WEST;
-//		_gb.setConstraints(lblVariable, _gbc);
-//		_panel.add(lblVariable);
-//
-//		_gbc.gridx = 2;
-//		_gbc.gridy = lineNo;
-//		_gbc.gridheight = 1;
-//		_gbc.gridwidth = 6;
-//		_gbc.fill = GridBagConstraints.HORIZONTAL;
-//		_gb.setConstraints(txtVariable, _gbc);
-//		_panel.add(txtVariable);
-//
-//		_gbc.gridx = 12;
-//		_gbc.gridy = lineNo;
-//		_gbc.gridheight = 1;
-//		_gbc.gridwidth = 1;
-//		_gbc.fill = GridBagConstraints.NONE;
-//		_gbc.anchor = GridBagConstraints.WEST;
-//		_gb.setConstraints(lblStartVal, _gbc);
-//		_panel.add(lblStartVal);
-//
-//		_gbc.gridx = 13;
-//		_gbc.gridy = lineNo;
-//		_gbc.gridheight = 1;
-//		_gbc.gridwidth = GridBagConstraints.REMAINDER;
-//		_gbc.fill = GridBagConstraints.HORIZONTAL;
-//		_gb.setConstraints(txtStartVal, _gbc);
-//		_panel.add(txtStartVal);
-//
-//		lineNo++;
-//		
-//		_gbc.gridx = 1;
-//		_gbc.gridy = lineNo;
-//		_gbc.gridheight = 1;
-//		_gbc.gridwidth = 1;
-//		_gbc.fill = GridBagConstraints.NONE;
-//		_gbc.anchor = GridBagConstraints.WEST;
-//		_gb.setConstraints(lblEndVal, _gbc);
-//		_panel.add(lblEndVal);
-//
-//		_gbc.gridx = 2;
-//		_gbc.gridy = lineNo;
-//		_gbc.gridheight = 1;
-//		_gbc.gridwidth = 6;
-//		_gbc.fill = GridBagConstraints.HORIZONTAL;
-//		_gb.setConstraints(txtEndVal, _gbc);
-//		_panel.add(txtEndVal);
-//
-//		_gbc.gridx = 12;
-//		_gbc.gridy = lineNo;
-//		_gbc.gridheight = 1;
-//		_gbc.gridwidth = 1;
-//		_gbc.fill = GridBagConstraints.NONE;
-//		_gbc.anchor = GridBagConstraints.WEST;
-//		_gb.setConstraints(lblIncr, _gbc);
-//		_panel.add(lblIncr);
-//
-//		_gbc.gridx = 13;
-//		_gbc.gridy = lineNo;
-//		_gbc.gridheight = 1;
-//		_gbc.gridwidth = GridBagConstraints.REMAINDER;
-//		_gbc.fill = GridBagConstraints.HORIZONTAL;
-//		_gb.setConstraints(txtIncr, _gbc);
-//		_panel.add(txtIncr);
-		// END KGU 2015-10-30: Design study 1
-
-		// START KGU 2015-10-30: Design study 2
 		// TODO (KGU 2015-11-01) Grid configuration halfway works under both Windows and KDE but's still not pleasant 
 		
 		_gbc.insets = new Insets(10, 5, 0, 5);
@@ -331,7 +268,6 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gbc.fill = GridBagConstraints.HORIZONTAL;
 		_gb.setConstraints(txtIncr, _gbc);
 		_panel.add(txtIncr);
-		// END KGU 2015-10-30: Design study 2
 		
 		lineNo++;
 

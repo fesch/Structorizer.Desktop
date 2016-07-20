@@ -49,6 +49,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig                2015.12.21      Bugfix #41/#68/#69 (= KG#93)
  *      Kay Gürtzig                2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61) 
  *      Kay Gürtzig                2016.04.04      transforTokens() disabled due to missing difference to super 
+ *      Kay Gürtzig                2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
  *
  ******************************************************************************************************
  *
@@ -633,101 +634,7 @@ public class JavaGenerator extends CGenerator
 // KGU#16 (2015-11-30): Now we only override the decomposed methods below
 //		public String generateCode(Root _root, String _indent)
 //		{
-//			// START KGU#74 2015-11-30: Prepare the label associations
-//			String fnName = _root.getMethodName();
-//			this.alwaysReturns = this.mapJumps(_root.children);
-//			// Get all local variable names
-//			StringList varNames = _root.getVarNames(_root, false, true);
-//			String brace = optionBlockBraceNextLine() ? "" : " {";
-//			// END KGU#74 2015-11-30
-//			if(_root.isProgram==true) {
-//				code.add("import java.util.Scanner;");
-//				code.add("");
-//				// START KGU 2015-10-18
-//				insertBlockComment(_root.getComment(), "", "/**", " * ", " */");
-//				// END KGU 2014-10-18
-//				code.add("public class " + fnName + " {");
-//				code.add("");
-//				insertComment("TODO Declare and initialise class variables here", this.getIndent());
-//				code.add("");
-//				code.add(this.getIndent() + "/**");
-//				code.add(this.getIndent() + " * @param args");
-//				code.add(this.getIndent() + " */");
-//				code.add(this.getIndent() + "public static void main(String[] args)" + brace);
-//				if (optionBlockBraceNextLine())	code.add(this.getIndent() + "{");
-//
-//				insertComment("TODO Declare and initialise local variables here:", this.getIndent() + this.getIndent());
-//				// START KGU 2015-11-30
-//				for (int v = 0; v < varNames.count(); v++)
-//				{
-//					insertComment(varNames.get(v), this.getIndent() + this.getIndent());
-//				}
-//				// END KGU 2015-11-30
-//				code.add(this.getIndent()+ this.getIndent() +"");
-//				generateCode(_root.children, this.getIndent()+this.getIndent());
-//				code.add(this.getIndent()+"}");
-//				code.add("");
-//				code.add("}");
-//			}
-//			else {
-//		        // START KGU 2014-10-18
-//				// START KGU 2015-11-30: More precise header information
-//				StringList argNames = new StringList();
-//				StringList argTypes = new StringList();
-//				_root.collectParameters(argNames, argTypes);
-//				String resultType = _root.getResultType();
-//		        insertBlockComment(_root.getComment(), _indent+this.getIndent(), "/**", " * ", null);
-//		        if (resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
-//		        {
-//		        	insertBlockComment(argNames, _indent+this.getIndent(), null, " * @param ", null);
-//		        	code.add(_indent+this.getIndent() + " * @return ");
-//		        	code.add(_indent+this.getIndent() + " */");
-//		        	resultType = transformType(resultType, "int");
-//		        }
-//		        else
-//		        {
-//		        	insertBlockComment(argNames, this.getIndent(), null, " * @param ", " */");
-//		        	resultType = "void";
-//		        }
-//		        String fnHeader = "public static " + resultType + " " + fnName + "(";
-//				for (int p = 0; p < argNames.count(); p++) {
-//					if (p > 0)
-//						fnHeader += ", ";
-//					fnHeader += (transformType(argTypes.get(p), "/*TODO*/") + " " + argNames
-//							.get(p)).trim();
-//				}
-//				fnHeader += ")";
-//				code.add(this.getIndent() + fnHeader + brace);
-//				insertComment("TODO declare parameters and local variables:", this.getIndent()+this.getIndent());
-//				// START KGU 2015-11-30
-//				for (int v = 0; v < varNames.count(); v++)
-//				{
-//					insertComment(varNames.get(v), this.getIndent() + this.getIndent());
-//				}
-//				// END KGU 2015-11-30
-//				
-//				// Method body
-//				code.add("");
-//				generateCode(_root.children,_indent+this.getIndent()+this.getIndent());
-//				code.add("");
-//				
-//				// Ensuring result
-//				this.isResultSet = varNames.contains("result", false);
-//				this.isFunctionNameSet = varNames.contains(fnName);
-//				if ((this.returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns) {
-//					String result = "0";
-//					if (isFunctionNameSet) {
-//						result = fnName;
-//					} else if (isResultSet) {
-//						int vx = varNames.indexOf("result", false);
-//						result = varNames.get(vx);
-//					}
-//					code.add(this.getIndent());
-//					code.add(this.getIndent()+this.getIndent() + "return " + result + ";");
-//				}
-//				code.add(this.getIndent()+"}");
-//			}
-//			
+//			...
 //			return code.getText();
 //		}
 
@@ -746,8 +653,20 @@ public class JavaGenerator extends CGenerator
 	protected String generateHeader(Root _root, String _indent, String _procName,
 			StringList _paramNames, StringList _paramTypes, String _resultType)
 	{
-		if (_root.isProgram==true) {
+		// START KGU#178 2016-07-20: Enh. #160
+		if (topLevel)
+		{
 			insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
+			code.add("");
+			subroutineInsertionLine = code.count();	// default position for subroutines
+			subroutineIndent = _indent;
+		}
+		else
+		{
+			code.add("");
+		}
+		// END KGU#178 2016-07-20
+		if (_root.isProgram==true) {
 			code.add(_indent + "import java.util.Scanner;");
 			code.add("");
 			insertBlockComment(_root.getComment(), _indent, "/**", " * ", " */");
@@ -774,7 +693,11 @@ public class JavaGenerator extends CGenerator
 				_resultType = "void";		        	
 			}
 			code.add(_indent+this.getIndent() + " */");
-			String fnHeader = "public static " + _resultType + " " + _procName + "(";
+			// START KGU#178 2016-07-20: Enh. #160 - insert called subroutines as private
+			//String fnHeader = "public static " + _resultType + " " + _procName + "(";
+			String fnHeader = (topLevel ? "public" : "private") + " static "
+					+ _resultType + " " + _procName + "(";
+			// END KGU#178 2016-07-20
 			for (int p = 0; p < _paramNames.count(); p++) {
 				if (p > 0)
 					fnHeader += ", ";
@@ -842,12 +765,19 @@ public class JavaGenerator extends CGenerator
 	protected void generateFooter(Root _root, String _indent)
 	{
 		// Method block close
-		code.add(_indent + this.getIndent() + "}");
+		super.generateFooter(_root, _indent + this.getIndent());
 
 		// Don't close class block if we haven't opened any
 		if (_root.isProgram)
 		{
-			super.generateFooter(_root, _indent);
+			// START KGU#178 2016-07-20: Enh. #160
+			// Modify the subroutine insertion position
+			subroutineInsertionLine = code.count();
+			// END KGU#178 2016-07-20
+			
+			// Close class block
+			code.add("");
+			code.add(_indent + "}");
 		}
 	}
 	// END KGU 2015-12-15
