@@ -71,6 +71,7 @@ Current development version: 3.24-14 (2016.07.21)
 - 13: Enh. #160: Code export with reachable subroutines [Rolf Schmidt]<Kay Gürtzig>
 - 14: Fixes #160: Subroutine export mode fixed for StrukTeX <Kay Gürtzig>
 - 14: Fixes #197: Keyboard selection actions on subsequences mended <Kay Gürtzig>
+- 14: Fixes #198: Flaw in key-controlled selection traversal <Kay Gürtzig>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
