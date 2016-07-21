@@ -39,6 +39,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.06      Bugfix in method removeElement() for enh. #188 (element conversion)
+ *      Kay Gürtzig     2016.07.21      Bugfix #197 (selection moves by cursor keys)
  *
  ******************************************************************************************************
  *
@@ -48,6 +49,7 @@ package lu.fisch.structorizer.gui;
 
 import java.awt.Color;
 import java.awt.FontMetrics;
+import java.awt.Point;
 import java.util.Vector;
 
 import lu.fisch.graphics.Canvas;
@@ -238,6 +240,46 @@ public class SelectedSequence extends Element implements IElementSequence {
 			canvas.drawRect(_top_left);
 		}
 	}
+
+	// START KGU#206 2016-07-21: Bugfix #197 for enh. #158 (cursor move didn't work due to wrong coordinates)
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getRect()
+	 */
+	public Rect getRect()
+	{
+		Rect first = this.getElement(0).getRect();
+		int extraHeight = 0;
+		for (int i = 1; i < this.getSize(); i++)
+		{
+			Rect next = this.getElement(i).getRect();
+			extraHeight += next.bottom - next.top;
+		}
+		return new Rect(first.left, first.top, first.right, first.bottom + extraHeight);
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getRect(java.awt.Point)
+	 */
+	public Rect getRect(Point relativeTo)
+	{
+		Rect combined = getRect();
+		return new Rect(combined.left + relativeTo.x, combined.top + relativeTo.y,
+				combined.right + relativeTo.x, combined.bottom + relativeTo.y);		
+	}
+	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getRectOffDrawPoint()
+	 */
+	public Rect getRectOffDrawPoint()
+	{
+		// First find out the topLeft coordinate of the first element
+		Element elem0 = this.getElement(0);
+		Rect rect0DP = elem0.getRectOffDrawPoint();
+		Rect rect0 = elem0.getRect();
+		// Now compute the rectangle
+		return getRect(new Point(rect0DP.left - rect0.left, rect0DP.top - rect0.top));
+	}
+	// END KGU#206 2016-07-21
 
 	/* (non-Javadoc)
 	 * The copy will be related to a new Suqueue only consisting of copies of

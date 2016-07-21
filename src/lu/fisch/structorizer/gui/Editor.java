@@ -42,6 +42,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.04.06      Enh. #158: Key bindings for cursor keys added (KGU#177)
  *      Kay Gürtzig     2016.04.14      Enh. #158: Key bindings for page keys added (KGU#177)
  *      Kay Gürtzig     2016.07.06      Enh. #188: New button and menu item for element conversion (KGU#199)
+ *      Kay Gürtzig     2016.07.21      Enh. #197: Selection may be expanded by Shift-Up and Shift-Down (KGU#206)
  *
  ******************************************************************************************************
  *
@@ -230,6 +231,25 @@ public class Editor extends JPanel implements NSDController, ComponentListener
     	
     }
     // END KGU#177 2016-04-06
+    // START KGU#206 2016-07-21: Enh. #158, #197
+    public enum SelectionExpandDirection { EXPAND_UP, EXPAND_DOWN };
+    private class SelectionExpandAction extends AbstractAction
+    {
+    	Diagram diagram;	// The object responsible for executing the action
+    	
+    	SelectionExpandAction(Diagram _diagram, SelectionExpandDirection _dir)
+    	{
+    		super(_dir.name());
+    		diagram = _diagram;
+    	}
+    	
+		@Override
+		public void actionPerformed(ActionEvent ev) {
+			diagram.expandSelection(SelectionExpandDirection.valueOf(getValue(AbstractAction.NAME).toString()));
+		}
+    	
+    }
+    // END KGU#206 2016-07-21
     // START KGU#177 2016-04-14: Enh. #158
     private class PageScrollAction extends AbstractAction
     {
@@ -668,6 +688,10 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), CursorMoveDirection.CMD_DOWN);
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), CursorMoveDirection.CMD_LEFT);
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), CursorMoveDirection.CMD_RIGHT);
+		// START KGU#206 2016-07-21: Enh. #197
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.SHIFT_DOWN_MASK ), SelectionExpandDirection.EXPAND_UP);
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK ), SelectionExpandDirection.EXPAND_DOWN);
+		// END KGU#206 2016-07-21
 	    // START KGU#177 2016-04-14: Enh. #158
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0), "PAGE_DOWN");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0), "PAGE_UP");
@@ -677,6 +701,10 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		actMap.put(CursorMoveDirection.CMD_LEFT, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_LEFT));
 		actMap.put(CursorMoveDirection.CMD_RIGHT, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_RIGHT));
 		// END KGU#177 2016-04.-06
+		// START KGU#206 2016-07-21: Enh. #197
+		actMap.put(SelectionExpandDirection.EXPAND_UP, new SelectionExpandAction(diagram, SelectionExpandDirection.EXPAND_UP));
+		actMap.put(SelectionExpandDirection.EXPAND_DOWN, new SelectionExpandAction(diagram, SelectionExpandDirection.EXPAND_DOWN));
+		// END KGU#206 2016-07-21
 	    // START KGU#177 2016-04-14: Enh. #158
 		actMap.put("PAGE_DOWN", new PageScrollAction(scrollarea.getVerticalScrollBar(), false, "PAGE_DOWN"));
 		actMap.put("PAGE_UP", new PageScrollAction(scrollarea.getVerticalScrollBar(), true, "PAGE_UP"));
