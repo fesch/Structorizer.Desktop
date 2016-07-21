@@ -367,23 +367,30 @@ public class Subqueue extends Element implements IElementSequence {
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
 		Element res = super.getElementByCoord(_x, _y, _forSelection);
-		Element sel = null;
-		for (int i = 0; i < children.size(); i++)
+    	// START KGU#207 2016-07-21: If this element isn't hit then there is no use searching the substructure
+		if (res != null || _forSelection)
 		{
-			// START KGU#136 2016-03-01: Bugfix #97
-			//sel = ((Element) children.get(i)).getElementByCoord(_x, _y, _forSelection);
-			if (i < this.y0Children.size())
+		// START KGU#207 2016-07-21
+			Element sel = null;
+			for (int i = 0; i < children.size(); i++)
 			{
-				int yOff = this.y0Children.get(i);
-				sel = children.get(i).getElementByCoord(_x, _y-yOff, _forSelection);
+				// START KGU#136 2016-03-01: Bugfix #97
+				//sel = ((Element) children.get(i)).getElementByCoord(_x, _y, _forSelection);
+				if (i < this.y0Children.size())
+				{
+					int yOff = this.y0Children.get(i);
+					sel = children.get(i).getElementByCoord(_x, _y-yOff, _forSelection);
+				}
+				// END KGU#136 2016-03-01
+				if (sel != null)
+				{
+					if (_forSelection) selected = false;
+					res = sel;
+				}
 			}
-			// END KGU#136 2016-03-01
-			if (sel != null)
-			{
-				if (_forSelection) selected = false;
-				res = sel;
-			}
+		// START KGU#207 2016-07-21
 		}
+		// END KGU#207 2016-07-21
 		return res;
 	}
 	// END KGU 2015-10-11

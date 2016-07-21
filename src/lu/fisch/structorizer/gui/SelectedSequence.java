@@ -39,7 +39,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.06      Bugfix in method removeElement() for enh. #188 (element conversion)
- *      Kay Gürtzig     2016.07.21      Bugfix #197 (selection moves by cursor keys)
+ *      Kay Gürtzig     2016.07.21      Bugfix #197 (selection moves by cursor keys); KGU#207 (getElementByCoord() revised)
  *
  ******************************************************************************************************
  *
@@ -143,8 +143,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 	 */
 	@Override
 	public void resetDrawingInfoDown() {
-		// TODO Auto-generated method stub
-
+		this.isRectUpToDate = false;
 	}
 
 	/* (non-Javadoc)
@@ -329,7 +328,14 @@ public class SelectedSequence extends Element implements IElementSequence {
 	@Override
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
-		Element res = super.getElementByCoord(_x, _y, _forSelection);
+		// START KGU#207 2016-07-21: Method will hardly ever be used. But if so then it should at least work
+		if (!this.isRectUpToDate)
+		{
+			rect = this.getRect();
+			this.isRectUpToDate = true;
+		}
+		// END KGU#207 2016-07-21
+		Element res = super.getElementByCoord(_x, _y, _forSelection);		
 		Element sel = null;
 		for (int i = firstIndex; i <= lastIndex; i++)
 		{
