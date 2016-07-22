@@ -87,6 +87,7 @@ import java.awt.datatransfer.*;
 import net.iharder.dnd.*; //http://iharder.sourceforge.net/current/java/filedrop/
 
 import java.io.*;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
@@ -2989,6 +2990,31 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
+	// START KGU#208 2016-07-22: Enh. #199
+	/*****************************************
+	 * help method
+	 *****************************************/
+
+	/**
+	 * Tries to open the online User Guide in the browser
+	 */
+	public void helpNSD()
+	{
+		try {
+			Desktop.getDesktop().browse(new URI("http://help.structorizer.fisch.lu/index.php"));
+		}
+		catch(Exception ex)
+		{
+			ex.printStackTrace();
+			// Usually we won't get here - in case of missing network access the browser will
+			// show a message
+			JOptionPane.showMessageDialog(null, ex.getMessage(),
+					"URL Error", JOptionPane.ERROR_MESSAGE);
+		}
+		
+	}
+	// END KGU#208 2016-07-22
+	
 	/*****************************************
 	 * update method
 	 *****************************************/

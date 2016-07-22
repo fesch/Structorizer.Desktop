@@ -69,6 +69,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.07      Enh. #185 + #188: Mechanism to convert Instructions to Calls
  *      Kay Gürtzig     2016.07.19      Enh. #192: New method proposeFileName() involving the argument count (KGU#205)
+ *      Kay Gürtzig     2016.07.22      Bugfix KGU#209 (Enh. #77): The display of the coverage marker didn't work
  *
  ******************************************************************************************************
  *
@@ -739,7 +740,10 @@ public class Root extends Element {
 	 */
 	public boolean isTestCovered(boolean _deeply)
 	{
-		return this.children.isTestCovered(_deeply);
+		// START KGU#209 2016-07-22 If Root is marked as deeply covered then it is to report it
+		//return this.children.isTestCovered(_deeply);
+		return this.deeplyCovered || this.children.isTestCovered(_deeply);
+		// END KGU#209 2016-07-22
 	}
 	// END KGU#117 2016-03-06
 
