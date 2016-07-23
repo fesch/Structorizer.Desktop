@@ -34,6 +34,8 @@ package lu.fisch.structorizer.io;
  *      ------              ----			-----------
  *      Bob Fisch           2008.05.02                  First Issue
  *      GENNARO DONNARUMMA  2014.02.02                  Ini in JAR support
+ *      Kay Gürtzig         2016.04.26                  Jar path updated
+ *      Kay Gürtzig         2016.07.22                  Bugfix: save() method now immediately closes the file 
  *
  ******************************************************************************************************
  *
@@ -197,8 +199,10 @@ public class Ini
 						.replaceFirst(
 								"\\" + System.getProperty("file.separator")
 										+ "Contents\\"
+										// START KGU 2016-04-26: New jar path!
 										//+ System.getProperty("file.separator")
 										//+ "Resources\\"
+										// END KGU 2016-04-26
 										+ System.getProperty("file.separator")
 										+ "Java", "");
 				// filename2 = filename2.replaceFirst("\\\\Structorizer.app",
@@ -267,6 +271,7 @@ public class Ini
 			}
 		} else if (alternateExists)
 		{
+			// This means: the alternate path has preference before the regular one!
 			filename = filename2;
 			alternateExists = false;
 		}
@@ -342,39 +347,50 @@ public class Ini
 		File f = new File(_filename);
 		if (f.length() != 0)
 		{
-			p.load(new FileInputStream(_filename));
+			// START KGU#210 2016-07-22: Bugfix #200
+			//p.load(new FileInputStream(_filename));
+			FileInputStream fis = new FileInputStream(_filename);
+			p.load(fis);
+			fis.close();
+			// END KGU#210 2016-07-22
 		}
 	}
 
 	public void loadAlternate() throws FileNotFoundException, IOException
 	{
 		// System.out.println("Trying to load INI file: "+filename);
-		File f = new File(filename2);
-		if (f.length() == 0)
-		{
-			System.out.println("File is empty!");
-		} else
-		{
-			// p.loadFromXML(new FileInputStream(filename));
-			p.load(new FileInputStream(filename2));
-			// System.out.println(p.toString());
-		}
+		// START KGU#210 2016-07-22: Bugfix #200
+//		File f = new File(filename2);
+//		if (f.length() == 0)
+//		{
+//			System.out.println("File is empty!");
+//		} else
+//		{
+//			// p.loadFromXML(new FileInputStream(filename));
+//			p.load(new FileInputStream(filename2));
+//			// System.out.println(p.toString());
+//		}
+		load(filename2);
+		// END KGU#210 2016-07-22
 	}
 
 	public void loadRegular() throws FileNotFoundException, IOException
 	{
 		// System.out.println("Trying to load INI file: "+filename);
 		// JOptionPane.showMessageDialog(null, "Loading from => "+filename);
-		File f = new File(filename);
-		if (f.length() == 0)
-		{
-			System.out.println("File is empty!");
-		} else
-		{
-			// p.loadFromXML(new FileInputStream(filename));
-			p.load(new FileInputStream(filename));
-			// System.out.println(p.toString());
-		}
+		// START KGU#210 2016-07-22: Bugfix #200
+//		File f = new File(filename);
+//		if (f.length() == 0)
+//		{
+//			System.out.println("File is empty!");
+//		} else
+//		{
+//			// p.loadFromXML(new FileInputStream(filename));
+//			p.load(new FileInputStream(filename));
+//			// System.out.println(p.toString());
+//		}
+		load(filename);
+		// END KGU#210 2016-07-22
 	}
 
 	public void save() throws FileNotFoundException, IOException
@@ -387,21 +403,32 @@ public class Ini
 	public void save(String _filename) throws FileNotFoundException,
 			IOException
 	{
-		p.store(new FileOutputStream(_filename), "last updated "
-				+ new java.util.Date());
+		// START KGU#210 2016-07-22: Bugfix #200
+//		p.store(new FileOutputStream(_filename), "last updated "
+//				+ new java.util.Date());
+		FileOutputStream fos = new FileOutputStream(_filename);
+		p.store(fos, "last updated " + new java.util.Date());
+		fos.close();
+		// END KGU#210 2016-07-22
 	}
 
 	private void saveAlternate() throws FileNotFoundException, IOException
 	{
-		p.store(new FileOutputStream(filename2), "last updated "
-				+ new java.util.Date());
+		// START KGU#210 2016-07-22: Bugfix #200
+		//p.store(new FileOutputStream(filename2), "last updated "
+		//		+ new java.util.Date());
+		this.save(filename2);
+		// END KGU#210 2016-07-22
 		// JOptionPane.showMessageDialog(null, "Alternate saved => "+filename2);
 	}
 
 	private void saveRegular() throws FileNotFoundException, IOException
 	{
-		p.store(new FileOutputStream(filename), "last updated "
-				+ new java.util.Date());
+		// START KGU#210 2016-07-22: Bugfix #200
+		//p.store(new FileOutputStream(filename), "last updated "
+		//		+ new java.util.Date());
+		this.save(filename);
+		// END KGU#210 2016-07-22
 		// JOptionPane.showMessageDialog(null, "Regular saved");
 	}
 

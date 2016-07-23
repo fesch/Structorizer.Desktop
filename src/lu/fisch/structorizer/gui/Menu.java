@@ -728,7 +728,7 @@ public class Menu extends JMenuBar implements NSDController
                     }
                 } } );
                 menuPreferencesSave.add(menuPreferencesSaveLoad);
-		menuPreferencesSaveLoad.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) 
+                menuPreferencesSaveLoad.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) 
                 { 
                     JFileChooser fc = new JFileChooser();
                     fc.setFileFilter(new INIFilter());
