@@ -42,6 +42,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.03.25      Message translations now held in LangTextHolder instead of JLabel
  *      Kay Gürtzig     2016.04.12      Enh. #137: additional toggle to direct input and output to a text window
  *      Kay Gürtzig     2016.05.05      KGU#197: Further (forgotten) LangTextHolders added
+ *      Kay Gürtzig     2016.07.25      Issue #201: Redesign of the GUI, new Slider listening, Call Stack button
  *
  ******************************************************************************************************
  *
@@ -52,15 +53,20 @@ package lu.fisch.structorizer.executor;
 
 
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Vector;
 
 import javax.swing.JComboBox;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
 
 import lu.fisch.structorizer.arranger.Arranger;
@@ -96,7 +102,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     	// START KGU#89 2015-11-25
     	this.setIconImage(IconLoader.ico004.getImage());
     	// END KGU#89 2015-11-25
-        slSpeed = new javax.swing.JSlider();
+    	// START KGU#210 2016-07-25: Initialisation with min, max, and value
+        //slSpeed = new javax.swing.JSlider();
+        slSpeed = new javax.swing.JSlider(0, 2000, 50);
+        // END KGU#210 2016-07-25
         lblSpeed = new javax.swing.JLabel();
         // START KGU#89 2015-11-25
         lblSpeedValue = new javax.swing.JLabel();
@@ -115,7 +124,11 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         jScrollPane1 = new javax.swing.JScrollPane();
         tblVar = new javax.swing.JTable();
         // START KGU#2 (#9) 2015-11-14: Additional display of subroutine call level
-        lblCallLevel = new javax.swing.JLabel(" Subroutine level:");
+        // START KGU#210 2016-07-25: Fix #210 - improved usability
+        //lblCallLevel = new javax.swing.JLabel(" Subroutine level:");
+        btnCallStack = new javax.swing.JButton("Call stack");
+        lblCallLevel = new javax.swing.JLabel("Level:");
+        // END KGU#210 2016-07-25
         txtCallLevel = new javax.swing.JTextField("0");
         txtCallLevel.setEditable(false);
         // END KGU#2 (#9) 2015-11-14
@@ -139,8 +152,25 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        slSpeed.setMajorTickSpacing(100);
-        slSpeed.setMaximum(2000);
+        // START KGU#210 2016-07-25: Issue #201 - show more details
+        //slSpeed.setMajorTickSpacing(100);
+        //slSpeed.setMaximum(2000);
+        slSpeed.setMajorTickSpacing(500);
+        slSpeed.setMinorTickSpacing(50);
+        slSpeed.setPaintTicks(true);
+        slSpeed.setPaintLabels(true);
+        // END KGU#201 2016-07-25
+        // START KGU#210 2016-07-25: Issue #201 - Cursor key movements didn't immedialtely show
+        slSpeed.addChangeListener(new ChangeListener() {
+        	public void stateChanged(ChangeEvent e) {
+                javax.swing.JSlider source = (javax.swing.JSlider)e.getSource();
+                if (!source.getValueIsAdjusting()) {
+                	updateSpeed();
+                }
+        	}    
+
+        });
+        // END KGU#210 2016-07-25
         slSpeed.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
             public void mouseMoved(java.awt.event.MouseEvent evt) {
                 slSpeedMouseMoved(evt);
@@ -149,37 +179,39 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
                 slSpeedMouseDragged(evt);
             }
         });
-        slSpeed.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
-            public void propertyChange(java.beans.PropertyChangeEvent evt) {
-                slSpeedPropertyChange(evt);
-            }
-        });
-        slSpeed.addInputMethodListener(new java.awt.event.InputMethodListener() {
-            public void inputMethodTextChanged(java.awt.event.InputMethodEvent evt) {
-            }
-            public void caretPositionChanged(java.awt.event.InputMethodEvent evt) {
-                slSpeedCaretPositionChanged(evt);
-            }
-        });
-        slSpeed.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseReleased(java.awt.event.MouseEvent evt) {
-                slSpeedMouseReleased(evt);
-            }
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                slSpeedMouseClicked(evt);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                slSpeedMouseExited(evt);
-            }
-        });
-        slSpeed.addMouseWheelListener(new java.awt.event.MouseWheelListener() {
-            public void mouseWheelMoved(java.awt.event.MouseWheelEvent evt) {
-                slSpeedMouseWheelMoved(evt);
-            }
-        });
+        // START KGU#210 2016-07-25: Issue #201 - subsumed by ChangeListener
+//        slSpeed.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+//            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+//                slSpeedPropertyChange(evt);
+//            }
+//        });
+//        slSpeed.addInputMethodListener(new java.awt.event.InputMethodListener() {
+//            public void inputMethodTextChanged(java.awt.event.InputMethodEvent evt) {
+//            }
+//            public void caretPositionChanged(java.awt.event.InputMethodEvent evt) {
+//                slSpeedCaretPositionChanged(evt);
+//            }
+//        });
+//        slSpeed.addMouseListener(new java.awt.event.MouseAdapter() {
+//            public void mouseReleased(java.awt.event.MouseEvent evt) {
+//                slSpeedMouseReleased(evt);
+//            }
+//            public void mouseClicked(java.awt.event.MouseEvent evt) {
+//                slSpeedMouseClicked(evt);
+//            }
+//            public void mouseExited(java.awt.event.MouseEvent evt) {
+//                slSpeedMouseExited(evt);
+//            }
+//        });
+//        slSpeed.addMouseWheelListener(new java.awt.event.MouseWheelListener() {
+//            public void mouseWheelMoved(java.awt.event.MouseWheelEvent evt) {
+//                slSpeedMouseWheelMoved(evt);
+//            }
+//        });
+        // END KGU#210 2016-07-25
         tblVar.addPropertyChangeListener(this);
 
-        lblSpeed.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        //lblSpeed.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         // START KGU#89 2015-11-25
         //lblSpeed.setText(" Delay: 50");
         lblSpeed.setText(" Delay: ");
@@ -197,8 +229,8 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         // START KGU#165 2016-03-13: Enh. #124
         cbRunDataDisplay.addItemListener(this);
         // Now fix the element height, the width may stay extensible
-        cbRunDataDisplay.setMaximumSize(
-        		new Dimension(Short.MAX_VALUE, cbRunDataDisplay.getPreferredSize().height));
+        //cbRunDataDisplay.setMaximumSize(
+        //		new Dimension(Short.MAX_VALUE, cbRunDataDisplay.getPreferredSize().height));
         // END KGU#156 2016-03-13
 
         btnStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/stop.png"))); // NOI18N
@@ -231,14 +263,19 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         });
 
         // START KGU#159 2016-03-17: New possibility to show stacktrace in paused mode by double-click
-        txtCallLevel.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseReleased(java.awt.event.MouseEvent evt) {}
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                txtCallLevelClicked(evt);
+//        txtCallLevel.addMouseListener(new java.awt.event.MouseAdapter() {
+//            public void mouseReleased(java.awt.event.MouseEvent evt) {}
+//            public void mouseClicked(java.awt.event.MouseEvent evt) {
+//                txtCallLevelClicked(evt);
+//            }
+//			public void mouseExited(java.awt.event.MouseEvent evt) {}
+//        });
+//        txtCallLevel.setToolTipText("Call stack depth. Double-click to see the Call stack content (only on paused execution).");
+        btnCallStack.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCallStackActionPerformed(evt);
             }
-			public void mouseExited(java.awt.event.MouseEvent evt) {}
         });
-        txtCallLevel.setToolTipText("Call stack depth. Double-click to see the Call stack content (only on paused execution).");
         // END KGU#159 2016-03-17
 
         tblVar.setModel(new javax.swing.table.DefaultTableModel(
@@ -259,81 +296,267 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         });
         jScrollPane1.setViewportView(tblVar);
         
-        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                	// START KGU#89 2015-11-25: Speed label decomposed
-                    .add(layout.createSequentialGroup()
-                    	.add(lblSpeed /*, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 86, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE*/)
-                    	.add(lblSpeedValue/*, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE*/))
-                    // END KGU#89 2015-11-25
-                    // START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
-                    .add(layout.createSequentialGroup().add(chkOutputToTextWindow))
-                    // END KGU#160 2016-04-12
-                    // START KGU#117 2016-03-06: Enh. #77
-                    .add(layout.createSequentialGroup().add(chkCollectRuntimeData))
-                    // END KGU#117 2016-03-06
-                    .add(layout.createSequentialGroup()
-                        .add(btnStop)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(btnPlay))
-                        // START KGU#2 (#9) 2015-11-14
-                        .add(lblCallLevel))
-                        // END KGU#2 (#9) 2015-11-14
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    	// START KGU#117 2016-03-06: Enh. #77
-                    .add(layout.createSequentialGroup().add(cbRunDataDisplay))
-                    	// END KGU#117 2016-03-06
-                    .add(layout.createSequentialGroup()
-                        .add(btnPause)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(btnStep))
-                // START KGU#2 (#9) 2015-11-14
-                		.add(txtCallLevel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 120, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                // END KGU#2 (#9) 2015-11-14
-// START KGU 2015-10-12: preferred size enhanced from 83 to 120
-                    //.add(slSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 83, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                    .add(slSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 120, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-// END KGU 2015-0-12
-                .add(jScrollPane1, 0, 0, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                    .add(lblSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                		// START KGU#89 2015-11-25: New, separate value label
-                    .add(lblSpeedValue, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                		// END KGU#89 2015-11-25
-                    .add(slSpeed, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                // START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(chkOutputToTextWindow)
-                // END KGU#160 2016-04-12
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup()
-                    .add(chkCollectRuntimeData)
-                    .add(cbRunDataDisplay))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(btnStop)
-                    .add(btnPlay)
-                    .add(btnPause)
-                    .add(btnStep))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                // START KGU#2 (#9) 2015-11-14
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                		.add(lblCallLevel)
-                		.add(txtCallLevel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                // END KGU#2 (#9) 2015-11-14
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 236, Short.MAX_VALUE))
-        );
+//        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
+//        getContentPane().setLayout(layout);
+//        layout.setHorizontalGroup(
+//            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+//            .add(layout.createSequentialGroup()
+//                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+//                	// START KGU#89 2015-11-25: Speed label decomposed
+//                    .add(layout.createSequentialGroup()
+//                    	.add(lblSpeed /*, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 86, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE*/)
+//                    	.add(lblSpeedValue/*, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE*/))
+//                    // END KGU#89 2015-11-25
+//                    // START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+//                    .add(layout.createSequentialGroup().add(chkOutputToTextWindow))
+//                    // END KGU#160 2016-04-12
+//                    // START KGU#117 2016-03-06: Enh. #77
+//                    .add(layout.createSequentialGroup().add(chkCollectRuntimeData))
+//                    // END KGU#117 2016-03-06
+//                    .add(layout.createSequentialGroup()
+//                        .add(btnStop)
+//                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+//                        .add(btnPlay))
+//                        // START KGU#2 (#9) 2015-11-14
+//                        .add(lblCallLevel))
+//                        // END KGU#2 (#9) 2015-11-14
+//                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+//                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+//                    	// START KGU#117 2016-03-06: Enh. #77
+//                    .add(layout.createSequentialGroup().add(cbRunDataDisplay))
+//                    	// END KGU#117 2016-03-06
+//                    .add(layout.createSequentialGroup()
+//                        .add(btnPause)
+//                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+//                        .add(btnStep))
+//                // START KGU#2 (#9) 2015-11-14
+//                		.add(txtCallLevel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 120, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+//                // END KGU#2 (#9) 2015-11-14
+//// START KGU 2015-10-12: preferred size enhanced from 83 to 120
+//                    //.add(slSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 83, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+//                    .add(slSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 120, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+//// END KGU 2015-0-12
+//                .add(jScrollPane1, 0, 0, Short.MAX_VALUE)
+//        );
+//        layout.setVerticalGroup(
+//            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+//            .add(layout.createSequentialGroup()
+//                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+//                    .add(lblSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+//                		// START KGU#89 2015-11-25: New, separate value label
+//                    .add(lblSpeedValue, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+//                		// END KGU#89 2015-11-25
+//                    .add(slSpeed, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+//                // START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
+//                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+//                .add(chkOutputToTextWindow)
+//                // END KGU#160 2016-04-12
+//                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+//                .add(layout.createParallelGroup()
+//                    .add(chkCollectRuntimeData)
+//                    .add(cbRunDataDisplay))
+//                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+//                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+//                    .add(btnStop)
+//                    .add(btnPlay)
+//                    .add(btnPause)
+//                    .add(btnStep))
+//                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+//                // START KGU#2 (#9) 2015-11-14
+//                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+//                		.add(lblCallLevel)
+//                		.add(txtCallLevel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+//                // END KGU#2 (#9) 2015-11-14
+//                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 236, Short.MAX_VALUE))
+//        );
+
+// START KGU#210 2016-07-25: Issue #201 - new GridBagLayout-based GUI
+// Trouble is that the width gets unnecessarily large and reducing the width
+// adds extra spaces between the lines - no idea how to suppress this. It seems
+// that no specific component can be blamed.
+        GridBagLayout gbl = new GridBagLayout();
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(3,2,2,2);
+        Container ctnr = getContentPane();
+        //JPanel ctnr = new JPanel();
+        ctnr.setLayout(gbl);
+
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        //gbc.anchor = GridBagConstraints.BASELINE;
+        gbl.setConstraints(lblSpeed, gbc);
+        //getContentPane().add(lblSpeed);
+        ctnr.add(lblSpeed);
+        
+        gbc.gridx = 2;
+        gbc.gridy = 1;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        //gbc.anchor = GridBagConstraints.BASELINE;
+        gbl.setConstraints(lblSpeedValue, gbc);
+        //getContentPane().add(lblSpeedValue);
+        ctnr.add(lblSpeedValue);
+        
+        gbc.gridx = 3;
+        gbc.gridy = 1;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.gridheight = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        //gbc.anchor = GridBagConstraints.BASELINE_LEADING;
+        gbl.setConstraints(slSpeed, gbc);
+        //getContentPane().add(slSpeed);
+        ctnr.add(slSpeed);
+        slSpeed.setMaximumSize(new Dimension(30, 15));
+        
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        //gbc.anchor = GridBagConstraints.BASELINE_LEADING;
+        gbl.setConstraints(chkOutputToTextWindow, gbc);
+        //getContentPane().add(chkOutputToTextWindow);
+        ctnr.add(chkOutputToTextWindow);
+        
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        //gbc.anchor = GridBagConstraints.BASELINE_LEADING;
+        gbl.setConstraints(chkCollectRuntimeData, gbc);
+        //getContentPane().add(chkCollectRuntimeData);
+        ctnr.add(chkCollectRuntimeData);
+        
+        gbc.gridx = 3;
+        gbc.gridy = 3;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        //gbc.anchor = GridBagConstraints.BASELINE_LEADING;
+        gbl.setConstraints(cbRunDataDisplay, gbc);
+        //getContentPane().add(cbRunDataDisplay);
+        ctnr.add(cbRunDataDisplay);
+        
+        gbc.gridx = 1;
+        gbc.gridy = 4;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        //gbc.anchor = GridBagConstraints.CENTER;
+        gbl.setConstraints(btnStop, gbc);
+        //getContentPane().add(btnStop);
+        ctnr.add(btnStop);
+        
+        gbc.gridx = 2;
+        gbc.gridy = 4;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        //gbc.anchor = GridBagConstraints.CENTER;
+        gbl.setConstraints(btnPlay, gbc);
+        //getContentPane().add(btnPlay);
+        ctnr.add(btnPlay);
+        
+        gbc.gridx = 3;
+        gbc.gridy = 4;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        //gbc.anchor = GridBagConstraints.CENTER;
+        gbl.setConstraints(btnPause, gbc);
+        //getContentPane().add(btnPause);
+        ctnr.add(btnPause);
+        
+        gbc.gridx = 4;
+        gbc.gridy = 4;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        //gbc.anchor = GridBagConstraints.CENTER;
+        gbl.setConstraints(btnStep, gbc);
+        //getContentPane().add(btnStep);
+        ctnr.add(btnStep);
+        
+        gbc.gridx = 1;
+        gbc.gridy = 5;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        //gbc.anchor = GridBagConstraints.BASELINE_LEADING;
+        gbl.setConstraints(btnCallStack, gbc);
+        //getContentPane().add(lblCallLevel);
+        ctnr.add(btnCallStack);
+        
+        gbc.gridx = 3;
+        gbc.gridy = 5;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        //gbc.anchor = GridBagConstraints.BASELINE_LEADING;
+        gbl.setConstraints(lblCallLevel, gbc);
+        //getContentPane().add(lblCallLevel);
+        ctnr.add(lblCallLevel);
+        
+        gbc.gridx = 4;
+        gbc.gridy = 5;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        //gbc.anchor = GridBagConstraints.BASELINE_LEADING;
+        gbl.setConstraints(txtCallLevel, gbc);
+        //getContentPane().add(txtCallLevel);
+        ctnr.add(txtCallLevel);
+        
+        gbc.gridx = 1;
+        gbc.gridy = 6;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        //gbc.gridheight = GridBagConstraints.REMAINDER;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 0;
+        gbc.weighty = 1;
+        //gbc.anchor = GridBagConstraints.BASELINE_LEADING;
+        gbl.setConstraints(jScrollPane1, gbc);
+        //getContentPane().add(jScrollPane1);  
+        ctnr.add(jScrollPane1);
+// END KGU#210 2016-07-25
+       
+        //getContentPane().add(ctnr);
 
         pack();
+        
+        setSize(350, 500);
+        
     }// </editor-fold>//GEN-END:initComponents
 
     public void init()
@@ -342,6 +565,9 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         btnPlay.setEnabled(true);
         btnPause.setEnabled(false);
         btnStep.setEnabled(true);
+        // START KGU#210 2016-07-25: Issue #201 - new call stack display strategy
+        btnCallStack.setEnabled(false);
+        // END KGU#210 2016-07-25
         // START KGU#117 2016-03-06: Enh. #77
         chkCollectRuntimeData.setEnabled(true);
         this.cbRunDataDisplay.setEnabled(chkCollectRuntimeData.isSelected());
@@ -366,6 +592,9 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         btnPause.setEnabled(true);
         btnPlay.setEnabled(false);
         btnStep.setEnabled(false);
+        // START KGU#210 2016-07-25: Issue #201 - new Call Stack display strategy
+        btnCallStack.setEnabled(false);
+        // END KGU#210 2016-07-25
         // START KGU#117 2016-03-06: Enh. #77
         chkCollectRuntimeData.setEnabled(false);
         cbRunDataDisplay.setEnabled(chkCollectRuntimeData.isSelected());
@@ -392,7 +621,10 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     {
         btnPause.setEnabled(false);
         btnPlay.setEnabled(true);
-        btnStep.setEnabled(true);    	
+        btnStep.setEnabled(true);
+        // START KGU#210 2016-07-25: Issue #201 - new Call stack display strategy
+        btnCallStack.setEnabled(true);
+        // END KGU#210 2016-07-25
     }
     // END KGU 2015-10-12
 
@@ -442,25 +674,27 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         // END KGU#89 2015-11-25
     }
 
-    private void slSpeedCaretPositionChanged(java.awt.event.InputMethodEvent evt)//GEN-FIRST:event_slSpeedCaretPositionChanged
-    {//GEN-HEADEREND:event_slSpeedCaretPositionChanged
-        updateSpeed();
-    }//GEN-LAST:event_slSpeedCaretPositionChanged
-
-    private void slSpeedPropertyChange(java.beans.PropertyChangeEvent evt)//GEN-FIRST:event_slSpeedPropertyChange
-    {//GEN-HEADEREND:event_slSpeedPropertyChange
-        updateSpeed();
-    }//GEN-LAST:event_slSpeedPropertyChange
-
-    private void slSpeedMouseClicked(java.awt.event.MouseEvent evt)//GEN-FIRST:event_slSpeedMouseClicked
-    {//GEN-HEADEREND:event_slSpeedMouseClicked
-        // TODO add your handling code here:
-    }//GEN-LAST:event_slSpeedMouseClicked
-
-    private void slSpeedMouseExited(java.awt.event.MouseEvent evt)//GEN-FIRST:event_slSpeedMouseExited
-    {//GEN-HEADEREND:event_slSpeedMouseExited
-        updateSpeed();
-    }//GEN-LAST:event_slSpeedMouseExited
+    // START KGU#210 2016-07-25: Issue #201 - No longer needed
+//    private void slSpeedCaretPositionChanged(java.awt.event.InputMethodEvent evt)//GEN-FIRST:event_slSpeedCaretPositionChanged
+//    {//GEN-HEADEREND:event_slSpeedCaretPositionChanged
+//        updateSpeed();
+//    }//GEN-LAST:event_slSpeedCaretPositionChanged
+//
+//    private void slSpeedPropertyChange(java.beans.PropertyChangeEvent evt)//GEN-FIRST:event_slSpeedPropertyChange
+//    {//GEN-HEADEREND:event_slSpeedPropertyChange
+//        updateSpeed();
+//    }//GEN-LAST:event_slSpeedPropertyChange
+//
+//    private void slSpeedMouseClicked(java.awt.event.MouseEvent evt)//GEN-FIRST:event_slSpeedMouseClicked
+//    {//GEN-HEADEREND:event_slSpeedMouseClicked
+//        // TODO add your handling code here:
+//    }//GEN-LAST:event_slSpeedMouseClicked
+//
+//    private void slSpeedMouseExited(java.awt.event.MouseEvent evt)//GEN-FIRST:event_slSpeedMouseExited
+//    {//GEN-HEADEREND:event_slSpeedMouseExited
+//        updateSpeed();
+//    }//GEN-LAST:event_slSpeedMouseExited
+    // END KGU#210 2016-07-25
 
     private void slSpeedMouseMoved(java.awt.event.MouseEvent evt)//GEN-FIRST:event_slSpeedMouseMoved
     {//GEN-HEADEREND:event_slSpeedMouseMoved
@@ -472,24 +706,35 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         updateSpeed();
     }//GEN-LAST:event_slSpeedMouseDragged
 
-    private void slSpeedMouseWheelMoved(java.awt.event.MouseWheelEvent evt)//GEN-FIRST:event_slSpeedMouseWheelMoved
-    {//GEN-HEADEREND:event_slSpeedMouseWheelMoved
-        // TODO add your handling code here:
-    }//GEN-LAST:event_slSpeedMouseWheelMoved
-
-    private void slSpeedMouseReleased(java.awt.event.MouseEvent evt)//GEN-FIRST:event_slSpeedMouseReleased
-    {//GEN-HEADEREND:event_slSpeedMouseReleased
-        updateSpeed();
-    }//GEN-LAST:event_slSpeedMouseReleased
+    // START KGU#210 2016-07-25: Issue #201 - No longer needed
+//    private void slSpeedMouseWheelMoved(java.awt.event.MouseWheelEvent evt)//GEN-FIRST:event_slSpeedMouseWheelMoved
+//    {//GEN-HEADEREND:event_slSpeedMouseWheelMoved
+//        // TODO add your handling code here:
+//    }//GEN-LAST:event_slSpeedMouseWheelMoved
+//
+//    private void slSpeedMouseReleased(java.awt.event.MouseEvent evt)//GEN-FIRST:event_slSpeedMouseReleased
+//    {//GEN-HEADEREND:event_slSpeedMouseReleased
+//        updateSpeed();
+//    }//GEN-LAST:event_slSpeedMouseReleased
+    // END KGU#210 2016-07-25
 
     // START KGU#159 2016-03-17: Stacktrace now permanently available on demand
-    private void txtCallLevelClicked(MouseEvent evt)
+    // START KGU#210 2016-07-25: Fix #201 - improved usability
+    //private void txtCallLevelClicked(MouseEvent evt)
+    //{
+    //	if (evt.getClickCount() == 2 && Executor.getInstance().getPaus())
+    //	{
+    //		Executor.getInstance().showStackTrace();
+    //	}
+    //}
+    private void btnCallStackActionPerformed(java.awt.event.ActionEvent evt)
     {
-    	if (evt.getClickCount() == 2 && Executor.getInstance().getPaus())
+    	if (Executor.getInstance().getPaus())
     	{
     		Executor.getInstance().showStackTrace();
-    	}
-	}
+    	}    	
+    }
+    // END KGU
     // END KGU#159 2016-03-17
 
     public void updateVars(Vector<Vector<Object>> vars)
@@ -541,6 +786,9 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     private javax.swing.JTable tblVar;
     // End of variables declaration//GEN-END:variables
     // START KGU#2 (#9) 2015-11-14: Additional display of subroutine call level
+    // START KGU#210 2016-07-25: Fix #201 - A button would be more obvious to display
+    public javax.swing.JButton btnCallStack;
+    // END KGU#210 2016-07-25
     public javax.swing.JLabel lblCallLevel;
     public javax.swing.JTextField txtCallLevel;
     // END KGU#2 (#9) 2015-11-14

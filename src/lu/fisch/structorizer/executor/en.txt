@@ -37,6 +37,7 @@
  *      Kay Gürtzig     2016.03.18      Additional message texts for Executor dialog
  *      Kay Gürtzig     2016.04.12      New message text for Control option
  *      Kay Gürtzig     2016.05.05      KGU#197: Further message texts for Executor dialog
+ *      Kay Gürtzig     2016.07.25      Fix #201: caption for new Call Stack button
  *
  ******************************************************************************************************
  *
@@ -46,8 +47,8 @@
 
 -----[ Control ]-----
 Control.lblSpeed.text= Delay: 
-Control.lblCallLevel.text= Subroutine level:
-Control.txtCallLevel.tooltip=Call stack depth. Double-click to see the Call stack content (only on paused execution).
+Control.btnCallStack.text=Call Stack
+Control.lblCallLevel.text=Call depth:
 Control.chkCollectRuntimeData.text=Collect Runtime Data
 Control.cbRunDataDisplay.item.0=no coloring
 Control.cbRunDataDisplay.item.1=shallow test coverage
