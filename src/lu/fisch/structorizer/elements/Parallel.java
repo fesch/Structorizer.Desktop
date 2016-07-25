@@ -49,6 +49,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.04.01      Issue #145 (KGU#162): Comment is yet to be shown in switchText mode
  *      Kay Gürtzig     2016.04.05      Issue #145 solution improved and setText() stabilized
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
  *
  ******************************************************************************************************
  *
@@ -589,7 +590,10 @@ public class Parallel extends Element
     {
             Element selMe = super.getElementByCoord(_x, _y, _forSelection);
     		// START KGU#121 2016-01-03: A collapsed element has no visible substructure!
-    		if (!this.isCollapsed())
+        	// START KGU#207 2016-07-21: If this element isn't hit then there is no use searching the substructure
+    		//if (!this.isCollapsed())
+    		if (!this.isCollapsed() && (selMe != null || _forSelection))
+    		// START KGU#207 2016-07-21
     		{
     		// END KGU#121 2016-01-03
     			Element selCh = null;

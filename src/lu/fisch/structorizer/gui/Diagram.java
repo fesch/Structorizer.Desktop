@@ -70,6 +70,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.06      Enh. #188: New method transmuteNSD() for element conversion (KGU#199)
  *      Kay Gürtzig     2016.07.19      Enh. #192: File name proposals slightly modified (KGU#205)
  *      Kay Gürtzig     2016.07.20      Enh. #160: New export option genExportSubroutines integrated (KGU#178)
+ *      Kay Gürtzig     2016.07.21      Enh. #197: Selection may be expanded by Shift-Up and Shift-Down (KGU#206)
  *
  ******************************************************************************************************
  *
@@ -86,6 +87,7 @@ import java.awt.datatransfer.*;
 import net.iharder.dnd.*; //http://iharder.sourceforge.net/current/java/filedrop/
 
 import java.io.*;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
@@ -2209,7 +2211,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		arr.addToPool(root, NSDControl.getFrame());
 		// START KGU#202 2016-07-03: Localization of Arranger
 		arr.setLangLocal(this.getLang());
-		//BEND KGU#202 2016-07-03
+		// END KGU#202 2016-07-03
 		arr.setVisible(true);
 		isArrangerOpen = true;	// Gives the Executor a hint where to find a subroutine pool
 	}
@@ -2929,7 +2931,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				while (iter.hasNext())
 				{
 					root = iter.next();
-				root.hightlightVars = hil;
+					root.hightlightVars = hil;
 					// The Root must be marked for saving
 					root.setChanged();
 					// ... and be added to the Arranger
@@ -2940,15 +2942,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					root = firstRoot;
 				// END KGU#194 2016-05-08
 					root.hightlightVars = hil;
-				// START KGU#183 2016-04-24: Enh. #169
-				selected = root;
-				selected.setSelected(true);
-				// END KGU#183 2016-04-24
+					// START KGU#183 2016-04-24: Enh. #169
+					selected = root;
+					selected.setSelected(true);
+					// END KGU#183 2016-04-24
 					// START KGU#192 2016-05-02: #184 - The Root must be marked for saving
 					root.setChanged();
 					// END KGU#192 2016-05-02
 				// START KGU#194 2016-05-08: Bugfix #185 - multiple routines per file
-			}
+				}
 				// END KGU#194 2016-05-08
 			}
 			else
@@ -2988,6 +2990,31 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 
+	// START KGU#208 2016-07-22: Enh. #199
+	/*****************************************
+	 * help method
+	 *****************************************/
+
+	/**
+	 * Tries to open the online User Guide in the browser
+	 */
+	public void helpNSD()
+	{
+		try {
+			Desktop.getDesktop().browse(new URI("http://help.structorizer.fisch.lu/index.php"));
+		}
+		catch(Exception ex)
+		{
+			ex.printStackTrace();
+			// Usually we won't get here - in case of missing network access the browser will
+			// show a message
+			JOptionPane.showMessageDialog(null, ex.getMessage(),
+					"URL Error", JOptionPane.ERROR_MESSAGE);
+		}
+		
+	}
+	// END KGU#208 2016-07-22
+	
 	/*****************************************
 	 * update method
 	 *****************************************/
@@ -3660,15 +3687,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			inputbox.checkConsistency();
 			// END KGU#61 2016-03-21
 			inputbox.setLang(NSDControl.getLang());
-//			inputbox.pack();// This makes focus control possible but requires minimum size settings
-//			if (Element.E_TOGGLETC)
-//			{
-//				inputbox.txtComment.requestFocusInWindow();
-//			}
-//			else
-//			{
-//				inputbox.txtText.requestFocusInWindow();
-//			}
 			inputbox.setVisible(true);
 
 			// get fields
@@ -4059,7 +4077,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
      * It turned out that on going down and right it's most intuitive to dive into
      * the substructure of compound elements (rather than jumping to its successor).
      * (For Repeat elements this holds on going up).
-     * @param _direction the cursor key orientation (up, down, left, right)
+     * @param _direction - the cursor key orientation (up, down, left, right)
      */
     public void moveSelection(Editor.CursorMoveDirection _direction)
     {
@@ -4182,6 +4200,50 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     }
     // END KGU#177 2016-04-07
 
+    // START KGU#206 2016-07-21: Enh. #158 + #197
+    /**
+     * Tries to expand the selection towards the next element in the _direction
+     * specified.
+     * This is of course limited to the bounds of the containing Subqueue.
+     * @param _direction - the cursor key orientation (up, down)
+     */
+    public void expandSelection(Editor.SelectionExpandDirection _direction)
+    {
+    	if (selected != null
+    			&& !(selected instanceof Subqueue)
+    			&& !(selected instanceof Root))
+    	{
+    		boolean newSelection = false;
+    		Subqueue sq = (Subqueue)selected.parent;
+    		Element first = selected;
+    		Element last = selected;
+    		if (selected instanceof SelectedSequence)
+    		{
+    			first = ((SelectedSequence)selected).getElement(0);
+    			last = ((SelectedSequence)selected).getElement(((SelectedSequence)selected).getSize()-1);
+    		}
+    		int index0 = sq.getIndexOf(first);
+    		int index1 = sq.getIndexOf(last);
+    		if (_direction == Editor.SelectionExpandDirection.EXPAND_UP && index0 > 0)
+    		{
+    			selected = new SelectedSequence(sq, index0-1, index1);
+    			newSelection = true;
+    		}
+    		else if (_direction == Editor.SelectionExpandDirection.EXPAND_DOWN && index1 < sq.getSize()-1)
+    		{
+    			selected = new SelectedSequence(sq, index0, index1+1);
+    			newSelection = true;
+    		}
+    		if (newSelection)
+    		{
+        		selected.setSelected(true);
+    			this.scrollRectToVisible(selected.getRectOffDrawPoint().getRectangle());
+    			redraw();
+    			this.doButtons();
+    		}
+    	}
+    }
+    // END KGU#206 2016-07-21
 
 	@Override
 	public void lostOwnership(Clipboard arg0, Transferable arg1) {

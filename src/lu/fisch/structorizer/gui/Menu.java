@@ -47,6 +47,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.04.12      Enh. #137: New message error16_7 introduced.
  *      Kay Gürtzig     2016.04.24      Fix #173: Mnemonics for menus Diagram and Help had been compromised
  *      Kay Gürtzig     2016.07.07      Enh. #188: New menu item "wand" for element conversion (KGU#199)
+ *      Kay Gürtzig     2016.07.22      Enh. #199: New help menu item "user guide" for element conversion (KGU#208)
  *
  ******************************************************************************************************
  *
@@ -212,6 +213,9 @@ public class Menu extends JMenuBar implements NSDController
 	// Menu "Help"
 	protected JMenu menuHelp = new JMenu("Help");
 	// Submenu of "Help"
+	// START KGU#208 2016-07-22: Enh. #199
+	protected JMenuItem menuHelpOnline = new JMenuItem("User Guide",IconLoader.ico110);
+	// END KGU#208 2016-07-22
 	protected JMenuItem menuHelpAbout = new JMenuItem("About ...",IconLoader.ico017);
 	protected JMenuItem menuHelpUpdate = new JMenuItem("Update ...",IconLoader.ico052);
 
@@ -724,7 +728,7 @@ public class Menu extends JMenuBar implements NSDController
                     }
                 } } );
                 menuPreferencesSave.add(menuPreferencesSaveLoad);
-		menuPreferencesSaveLoad.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) 
+                menuPreferencesSaveLoad.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) 
                 { 
                     JFileChooser fc = new JFileChooser();
                     fc.setFileFilter(new INIFilter());
@@ -755,9 +759,18 @@ public class Menu extends JMenuBar implements NSDController
 		menuHelp.setMnemonic(KeyEvent.VK_H);
 		// END KGU#184 2016-04-24
 
+		// START KGU#208 2016-07-22: Enh. #199
+		menuHelp.add(menuHelpOnline);
+		menuHelpOnline.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {diagram.helpNSD(); } } );
+		menuHelpOnline.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
+		// END KGU#208 2016-07-22
+
 		menuHelp.add(menuHelpAbout);
 		menuHelpAbout.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {diagram.aboutNSD(); } } );
-		menuHelpAbout.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1,0));
+		// START KGU#208 2016-07-22: Enh. #199 - F1 accelerator re-decicated to User Guide
+		//menuHelpAbout.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
+		menuHelpAbout.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, InputEvent.SHIFT_DOWN_MASK));
+		// END KGU#208 2016-07-22
 
 		menuHelp.add(menuHelpUpdate);
 		menuHelpUpdate.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {diagram.updateNSD(); } } );

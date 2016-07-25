@@ -150,7 +150,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.24-13";
+	public static String E_VERSION = "3.24-14";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+

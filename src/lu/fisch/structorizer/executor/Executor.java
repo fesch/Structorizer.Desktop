@@ -86,6 +86,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.05.05      KGU#197: Further (forgotten) texts put under language support
  *      Kay Gürtzig     2016.05.25      KGU#198: top-level function results weren't logged in the window output
  *      Kay Gürtzig     2016.06.07      KGU#200: While loops showed wrong colour if their body raised an error
+ *      Kay Gürtzig     2016.07.25      Issue #201: Look-and-Feel update, Strack trace level numbers (KGU#210)
  *
  ******************************************************************************************************
  *
@@ -194,6 +195,7 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Alternative;
@@ -362,6 +364,16 @@ public class Executor implements Runnable
 		
 	}
 	// END KGU#89 2016-03-18
+	
+	// START KGU#210 2016-07-25: Issue #201 - Ensure GUI consistency
+	public void updateLookAndFeel()
+	{
+		try {
+			SwingUtilities.updateComponentTreeUI(mySelf.control);
+		}
+		catch (Exception ex) {}
+	}
+	// END KGU#210 2016-07-25
 	
 	// METHOD MODIFIED BY GENNARO DONNARUMMA
 
@@ -1163,7 +1175,10 @@ public class Executor implements Runnable
 			int depth = stackTrace.count();
 			for (int i = 0; i < depth; i++)
 			{
-				stackContent.add(stackTrace.get(depth - i - 1));
+				// START KGU#201 2016-07-25: Issue #201 - level indices added
+				//stackContent.add(stackTrace.get(depth - i - 1));
+				stackContent.add(depth-i-1 + ": " + stackTrace.get(depth - i - 1));
+				// END KGU#201 2016-07-25
 			}
 			stackView.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		    stackView.getContentPane().add(stackContent, BorderLayout.CENTER);

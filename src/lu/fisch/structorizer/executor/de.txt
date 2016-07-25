@@ -37,6 +37,7 @@
  *      Kay Gürtzig     2016.03.18      Additional message texts for Executor dialog
  *      Kay Gürtzig     2016.04.12      New message text for Control option
  *      Kay Gürtzig     2016.05.05      KGU#197: Further message texts for Executor dialog
+ *      Kay Gürtzig     2016.07.25      Fix #201: caption for new Call Stack button
  *
  ******************************************************************************************************
  *
@@ -45,9 +46,9 @@
  ******************************************************************************************************/
 
 -----[ Control ]-----
-Control.lblSpeed.text= Verzögerung: 
-Control.lblCallLevel.text= Unterprogrammebene:
-Control.txtCallLevel.tooltip=Aufruftiefe. Doppelklick zur Anzeige des Aufrufstapelinhalts (nur bei angehaltenem Zustand).
+Control.lblSpeed.text= Verzögerung:
+Control.btnCallStack.text=Aufrufstapel 
+Control.lblCallLevel.text=Aufruftiefe:
 Control.chkCollectRuntimeData.text=Sammle Laufzeitdaten
 Control.cbRunDataDisplay.item.0=keine Färbung
 Control.cbRunDataDisplay.item.1=Testabdeckung flach
