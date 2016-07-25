@@ -38,6 +38,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.01.03/04   Enh. #87 (=KGU#123) Basic icons for NSD element types and
  *                                      element collapsing introduced
  *      Kay Gürtzig     2016.07.06      Enh. #188: New icon 109_wand introduced for element conversion
+ *      Kay Gürtzig     2016.07.22      Enh. #199: New icon 110_help introduced for online user guide activation
  *
  ******************************************************************************************************
  *
@@ -157,9 +158,12 @@ public class IconLoader {
 	public static ImageIcon ico107 = getIconImage(getURI(from+"icons/107_expand.png"));
 	public static ImageIcon ico108 = getIconImage(getURI(from+"icons/108_collapse_by_wheel.png"));
 	// END KGU#123 2016-01-03/04
-	// END KGU#199 2016-07-06: Enh. #188
+	// START KGU#199 2016-07-06: Enh. #188
 	public static ImageIcon ico109 = getIconImage(getURI(from+"icons/109_wand.png"));
 	// END KGU#199 2016-07-06
+	// START KGU#208 2016-07-22: Enh. #199 - direct online user guide activation
+	public static ImageIcon ico110 = getIconImage(getURI(from+"icons/110_help.png"));
+	// END KGU#208 2016-07-22
 
         public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
 
@@ -256,9 +260,12 @@ public class IconLoader {
         	ico107 = getIconImage(getURI(from+"icons/107_expand.png"));
         	ico108 = getIconImage(getURI(from+"icons/108_collapse_by_wheel.png"));
         	// END KGU#123 2016-01-03/04
-        	// END KGU#199 2016-07-06: Enh. #188
+        	// START KGU#199 2016-07-06: Enh. #188
         	ico109 = getIconImage(getURI(from+"icons/109_wand.png"));
         	// END KGU#199 2016-07-06
+        	// START KGU#208 2016-07-22: Enh. #199 - direct online user guide activation
+        	ico110 = getIconImage(getURI(from+"icons/110_help.png"));
+        	// END KGU#208 2016-07-22
 
             turtle = getIconImage(getURI(from+"icons/turtle.png"));
         }

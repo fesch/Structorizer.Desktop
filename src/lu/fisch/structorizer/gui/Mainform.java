@@ -44,6 +44,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.01.04      KGU#123: Bugfix #65 / Enh. #87 - New Ini property: mouse wheel mode
  *      Kay Gürtzig     2016.03.16      KGU#157: Bugfix #132 - Don't allow to close without having stopped Executor
  *      Kay Gürtzig     2016.03.18      KGU#89: Localization of Executor Control supported 
+ *      Kay Gürtzig     2016.07.03      KGU#202: Localization of Arranger Surface supported
+ *      Kay Gürtzig     2016.07.25      Issues #201, #202: Look-and-Feel propagation to Arranger and Executor
  *
  ******************************************************************************************************
  *
@@ -72,6 +74,7 @@ import javax.swing.*;
 
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.parsers.*;
+import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
 
@@ -490,6 +493,18 @@ public class Mainform  extends JFrame implements NSDController
 					{
 						UIManager.setLookAndFeel(plafs[j].getClassName());
 						SwingUtilities.updateComponentTreeUI(this);
+						// START KGU#211 2016-07-25: Issue #202 - Propagation to Arranger
+						if (Arranger.hasInstance())
+						{
+							SwingUtilities.updateComponentTreeUI(Arranger.getInstance());
+						}
+						// END KGU#211 2016-07-25
+						// START KGU#210 2016-07-25: Issue #201 - Propagation to Executor Control
+						if (Executor.getInstance() != null)
+						{
+							Executor.getInstance().updateLookAndFeel();
+						}
+						// END KGU#210 2016-07-25						
 					}
 					catch (Exception e)
 					{
@@ -522,7 +537,14 @@ public class Mainform  extends JFrame implements NSDController
 		{
 			Executor.getInstance().setLangLocal();
 		}
-		// END KGU#89
+		// END KGU#89 2016-03-18
+		
+		// START KGU#202 2016-07-03: Re-translation of the Arranger surface
+		if (Arranger.hasInstance())
+		{
+			Arranger.getInstance().setLangLocal(_langfile);
+		}
+		// END KGU#202 2016-07-03
 	}
 	
     public void setLangLocal(String _langfile) {}

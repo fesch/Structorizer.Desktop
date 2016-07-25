@@ -45,6 +45,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Method for test coverage tracking added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
  *
  ******************************************************************************************************
  *
@@ -317,7 +318,10 @@ public class Repeat extends Element implements ILoop {
 	{
 		Element selMe = super.getElementByCoord(_x, _y, _forSelection);
 		// START KGU#121 2016-01-03: A collapsed element has no visible substructure!
-		if (!this.isCollapsed())
+    	// START KGU#207 2016-07-21: If this element isn't hit then there is no use searching the substructure
+		//if (!this.isCollapsed())
+		if (!this.isCollapsed() && (selMe != null || _forSelection))
+		// START KGU#207 2016-07-21
 		{
 		// END KGU#121 2016-01-03
 			Element sel = q.getElementByCoord(_x, _y, _forSelection);

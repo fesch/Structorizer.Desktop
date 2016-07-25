@@ -1168,7 +1168,7 @@ public class Surface extends javax.swing.JPanel implements MouseListener, MouseM
     			this.mouseSelected.root != null &&
     			!this.mouseSelected.root.isProgram;
     }
-    // END KGU#88 2015-11-24
+    // END KGU#117 2016-03-09
 
     /** Creates new form Surface */
     public Surface()

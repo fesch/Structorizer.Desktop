@@ -49,7 +49,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.20      Enh. #84/#135 (KGU#61): enum type and methods introduced/modified
  *                                      to distinguish and handle FOR-IN loops 
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
- *      Kay Gürtzig     2016-05-02      Bugfix #184: constructor For(String) now supports code import (KGU#192)
+ *      Kay Gürtzig     2016.05.02      Bugfix #184: constructor For(String) now supports code import (KGU#192)
+ *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
  *
  ******************************************************************************************************
  *
@@ -406,7 +407,10 @@ public class For extends Element implements ILoop {
 	{
 		Element selMe = super.getElementByCoord(_x, _y, _forSelection);
 		// START KGU#121 2016-01-03: Bugfix #87 - A collapsed element has no visible substructure!
-		if (!this.isCollapsed())
+    	// START KGU#207 2016-07-21: If this element isn't hit then there is no use searching the substructure
+		//if (!this.isCollapsed())
+		if (!this.isCollapsed() && (selMe != null || _forSelection))
+		// START KGU#207 2016-07-21
 		{
 		// END KGU#121 2016-01-03
 			// START KGU#136 2016-03-01: Bugfix #97
@@ -1158,7 +1162,7 @@ public class For extends Element implements ILoop {
 //			System.out.println(forElems.get(f).classifyStyle());
 //		}		
 //	}
-	
+
 	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#convertToCalls(lu.fisch.utils.StringList)

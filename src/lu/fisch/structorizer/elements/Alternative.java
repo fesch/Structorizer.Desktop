@@ -45,6 +45,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.07      Bugfix #122 (KGU#136): Selection was not aware of option altPadRight 
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
+ *      Kay Gürtzig     2016.07.21      Bugfix #198: Inconsistency between methods prepareDraw() and draw()
  *
  ******************************************************************************************************
  *
@@ -203,7 +204,10 @@ public class Alternative extends Element {
 			rect0.right = 4*(E_PADDING/2);
 		}
 
-		rect0.bottom = 4*(E_PADDING/2) + nLines*fm.getHeight();
+		// START KGU#207 2016-07-21: Bugfix #198 - Inconsistency with draw() mended 
+		//rect0.bottom = 4*(E_PADDING/2) + nLines*fm.getHeight();
+		rect0.bottom = 4*(E_PADDING/2) + nLines*fm.getHeight() - 1;
+		// END KGU#207 2016-07-21
 		pt0Parting.y = rect0.bottom;
 		
 		rect0.right = Math.max(rect0.right, rTrue.right + rFalse.right);
@@ -389,8 +393,11 @@ public class Alternative extends Element {
 		
 		// draw children
 		myrect = _top_left.copy();
-                
-		myrect.top = _top_left.top + fm.getHeight()*nLines + 4*(E_PADDING / 2)-1;
+
+		// START KGU#207 2016-07-21: Bugfix #198 - this offset difference to pt0Parting.y spoiled selection traversal 
+		//myrect.top = _top_left.top + fm.getHeight()*nLines + 4*(E_PADDING / 2)-1;
+		myrect.top = _top_left.top + this.pt0Parting.y;
+		// END KGU#207 2016-07-21
 		myrect.right = myrect.left + rTrue.right-1 + remain;
 		
 		qTrue.draw(_canvas,myrect);
@@ -423,7 +430,10 @@ public class Alternative extends Element {
 	{
 		Element selMe = super.getElementByCoord(_x,_y, _forSelection);
 		// START KGU#121 2016-01-03: Bugfix #87 - A collapsed element has no visible substructure!
-		if (!this.isCollapsed())
+		// START KGU#207 2016-07-21: Bugfix #198 - If this is not hit then there is no need to check the children
+		//if (!this.isCollapsed())
+		if ((selMe != null || _forSelection) && !this.isCollapsed())
+		// END KGU#207 2016-07-21
 		{
 		// END KGU#121 2016-01-03
 			// START KGU#136 2016-03-01: Bugfix #97 - we use local coordinates now

@@ -37,6 +37,7 @@
  *      Kay Gürtzig     2016.03.18      Additional message texts for Executor dialog
  *      Kay Gürtzig     2016.04.12      New message text for Control option
  *      Kay Gürtzig     2016.05.05      KGU#197: Further message texts for Executor dialog
+ *      Kay Gürtzig     2016.07.25      Fix #201: caption for new Call Stack button
  *
  ******************************************************************************************************
  *
@@ -46,8 +47,8 @@
 
 -----[ Control ]-----
 Control.lblSpeed.text= Demora: 
-Control.lblCallLevel.text= Nivel de subprograma:
-Control.txtCallLevel.tooltip=Tamaño del lote. Doble clic muestra el contenido del lote (solo con ejecución pausada).
+Control.btnCallStack.text=Lote de llamadas
+Control.lblCallLevel.text=Nivel:
 Control.chkCollectRuntimeData.text=Coleccionar datos on ej.
 Control.cbRunDataDisplay.item.0=no tinción
 Control.cbRunDataDisplay.item.1=plana cobertura de test
