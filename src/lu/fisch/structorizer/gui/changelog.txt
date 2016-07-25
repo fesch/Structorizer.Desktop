@@ -76,7 +76,8 @@ Current development version: 3.24-14 (2016.07.25)
 - 14: Issue #77: Test coverage markers as set by Arranger didn't work <Kay Gürtzig>
 - 14: Issue #200: The saving of preferences now closes the ini file <Kay Gürtzig>
 - 14: Issue #201: Executor GUI revised, usability improved <Kay Gürtzig>
-- 14: Issue #202: Arranger hadn't reacted to a Look-and-Feel change <Kay Gürtzig> 
+- 14: Issue #202: Arranger hadn't reacted to a Look-and-Feel change <Kay Gürtzig>
+- 14: Issue #127: Sizing problem of Export Options dialog solved <Kay Gürtzig>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]

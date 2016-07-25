@@ -36,6 +36,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig      2016.04.01   Enh. #144: noConversionCheckBox and cbPrefGenerator added
  *      Kay Gürtzig      2016-04-04   Enh. #149: cbCharset added
  *      Kay Gürtzig      2016-07-20   Enh. #160: new option to involve called subroutines (= KGU#178)
+ *      Kay Gürtzig      2016-07-25   Size setting dropped. With the current layout, pack() is fine (KGU#212).
  *
  ******************************************************************************************************
  *
@@ -309,13 +310,15 @@ public class ExportOptionDialoge extends LangDialog
         );
 
         pack();
-        int height = 305;
-        LookAndFeel laF = javax.swing.UIManager.getLookAndFeel();
-        if (laF.getName().equals("CDE/Motif"))
-        {
-        	height += (height / 4);
-        }
-        this.setSize(450, height);
+        // START KGU#212 2016-07-25: Best of all is not to set a specific size (ref. #127)
+//        int height = 305;
+//        LookAndFeel laF = javax.swing.UIManager.getLookAndFeel();
+//        if (laF.getName().equals("CDE/Motif"))
+//        {
+//        	height += (height / 4);
+//        }
+//        this.setSize(450, height);
+        // END KGU#212 2016-07-25
     }// </editor-fold>//GEN-END:initComponents
 
 //    private void commentsCheckBoxActionPerformed(ActionEvent evt)//GEN-FIRST:event_commentsCheckBoxActionPerformed
