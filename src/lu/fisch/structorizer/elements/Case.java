@@ -46,6 +46,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.04.01      Issue #145 (KGU#162): Comment is yet to be shown in switchText mode
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
+ *      Kay Gürtzig     2016.07.25      Issue #87: Icon for collapsed state corrected (KGU#217)
  *
  ******************************************************************************************************
  *
@@ -605,7 +606,7 @@ public class Case extends Element
     @Override
     protected ImageIcon getIcon()
     {
-    	// START KGU#217 2016-07-25: Was wrong icon number
+    	// START KGU#217 2016-07-25: Issue #87 - Was wrong icon number
     	//return IconLoader.ico057;
     	return IconLoader.ico064;
     	// END KGU#217 2016-07-25

@@ -1077,11 +1077,11 @@ public abstract class Element {
 	 */
 	protected void drawCommentMark(Canvas _canvas, Rect _rect)
 	{
-		// START KGU#215 2015-07-25: If fill colour is the same use an alternative colour
+		// START KGU#215 2015-07-25: Bugfix # 205 - If fill colour is the same use an alternative colour
 		//_canvas.setBackground(E_COMMENTCOLOR);
 		//_canvas.setColor(E_COMMENTCOLOR);
 		Color commentColor = E_COMMENTCOLOR;
-		if (commentColor == this.getFillColor())
+		if (commentColor.equals(this.getFillColor()))
 		{
 			commentColor = Color.WHITE;
 		}
