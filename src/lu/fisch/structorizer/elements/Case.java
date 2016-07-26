@@ -605,7 +605,10 @@ public class Case extends Element
     @Override
     protected ImageIcon getIcon()
     {
-    	return IconLoader.ico057;
+    	// START KGU#217 2016-07-25: Was wrong icon number
+    	//return IconLoader.ico057;
+    	return IconLoader.ico064;
+    	// END KGU#217 2016-07-25
     }
     // END KGU#122 2016-01-03
 

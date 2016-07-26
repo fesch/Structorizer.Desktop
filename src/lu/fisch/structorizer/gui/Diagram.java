@@ -71,6 +71,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.19      Enh. #192: File name proposals slightly modified (KGU#205)
  *      Kay Gürtzig     2016.07.20      Enh. #160: New export option genExportSubroutines integrated (KGU#178)
  *      Kay Gürtzig     2016.07.21      Enh. #197: Selection may be expanded by Shift-Up and Shift-Down (KGU#206)
+ *      Kay Gürtzig     2016.07.25      Enh. #158 / KGU#214: selection traversal accomplished for un-boxed Roots,
+ *                                      and FOREVER / non-DIN FOR loops
+ *      Kay Gürtzig     2016.07.26      Bugfix #204: Modified ExportOptionDialoge API (for correct sizing)
  *
  ******************************************************************************************************
  *
@@ -3300,7 +3303,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         {
             Ini ini = Ini.getInstance();
             ini.load();
-            ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame());
+            // START KGU#212 2016-07-26: bugfix #204 eod sizing needs the language
+            //ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame());
+            ExportOptionDialoge eod = new ExportOptionDialoge(
+            		NSDControl.getFrame(), NSDControl.getLang());
+            // END KGU#212 2016-07-26
             if(ini.getProperty("genExportComments","0").equals("true"))
                 eod.commentsCheckBox.setSelected(true);
             else 
@@ -3321,9 +3328,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#168 2016-04-04: Issue #149 Charsets for export
             eod.charsetListChanged(ini.getProperty("genExportCharset", Charset.defaultCharset().name()));
             // END KGU#168 2016-04-04
-            // START KGU 2014-11-18
-            eod.setLang(NSDControl.getLang());
-            // END KGU 2014-11-18
             eod.setVisible(true);
             
             if(eod.goOn==true)
@@ -4184,8 +4188,27 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     				newSel = root.getElementByCoord(x, newSel.getRectOffDrawPoint().bottom + 2, true);
     			}
     			// END KGU#177 2016-04-24
+    			// START KGU#214 2016-07-25: Improvement of enh. #158
+    			else if (_direction == Editor.CursorMoveDirection.CMD_UP &&
+    					(newSel instanceof Forever || !Element.E_DIN && newSel instanceof For) &&
+    					newSel.getRectOffDrawPoint().bottom < selRect.bottom)
+    			{
+    				Subqueue body = ((ILoop)newSel).getBody();
+    				Element sel = root.getElementByCoord(x, body.getRectOffDrawPoint().bottom - 2, true);
+    				if (sel != null)
+    				{
+    					newSel = sel;
+    				}
+    			}
+    			// END KGU#214 2016-07-25
     			selected = newSel;
     		}
+    		// START KGU#214 2016-07-25: Bugfix for enh. #158 - un-boxed Roots didn't catch the selection
+    		else if (_direction != Editor.CursorMoveDirection.CMD_UP && !root.isNice)
+    		{
+    			selected = root;
+    		}
+    		// END KGU#214 2016-07-25
     		selected.setSelected(true);
 			
     		// START KGU#177 2016-04-14: Enh. #158 - scroll to the selected element

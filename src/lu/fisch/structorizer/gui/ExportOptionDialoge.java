@@ -34,9 +34,10 @@ package lu.fisch.structorizer.gui;
  *      ------           ----         -----------
  *      Bob Fisch        2012.07.02   First Issue
  *      Kay Gürtzig      2016.04.01   Enh. #144: noConversionCheckBox and cbPrefGenerator added
- *      Kay Gürtzig      2016-04-04   Enh. #149: cbCharset added
- *      Kay Gürtzig      2016-07-20   Enh. #160: new option to involve called subroutines (= KGU#178)
- *      Kay Gürtzig      2016-07-25   Size setting dropped. With the current layout, pack() is fine (KGU#212).
+ *      Kay Gürtzig      2016.04.04   Enh. #149: cbCharset added
+ *      Kay Gürtzig      2016.07.20   Enh. #160: new option to involve called subroutines (= KGU#178)
+ *      Kay Gürtzig      2016.07.25   Size setting dropped. With the current layout, pack() is fine (KGU#212).
+ *      Kay Gürtzig      2016.07.26   Bug #204: Constructor API modified to ensure language translation before pack()
  *
  ******************************************************************************************************
  *
@@ -76,8 +77,14 @@ public class ExportOptionDialoge extends LangDialog
         setModal(true);
     }
 
-    public ExportOptionDialoge(Frame frame)
+    // START KGU#212 2016-07-26: bugfix #204 - We need the language before pack()
+    //public ExportOptionDialoge(Frame frame)
+    public ExportOptionDialoge(Frame frame, String langFileName)
+    // END KGU#212 2016-07-26
     {
+        // START KGU#212 2016-07-26: bugfix #204
+        this.langFile = langFileName;
+        // END KGU#212 2016-07-26
         initComponents();
         setModal(true);
         setLocationRelativeTo(frame);
@@ -308,9 +315,13 @@ public class ExportOptionDialoge extends LangDialog
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 8, Short.MAX_VALUE)
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
+        
+        // START KGU#212 2016-07-26: bugfix #204 - do the translation before packing
+        setLang(langFile);
+        // END KGU#212 2016-07-26
 
         pack();
-        // START KGU#212 2016-07-25: Best of all is not to set a specific size (ref. #127)
+        // START KGU#212 2016-07-25: Best of all is not to set a specific size (cf. #127)
 //        int height = 305;
 //        LookAndFeel laF = javax.swing.UIManager.getLookAndFeel();
 //        if (laF.getName().equals("CDE/Motif"))

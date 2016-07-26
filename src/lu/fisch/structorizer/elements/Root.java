@@ -70,6 +70,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.07      Enh. #185 + #188: Mechanism to convert Instructions to Calls
  *      Kay Gürtzig     2016.07.19      Enh. #192: New method proposeFileName() involving the argument count (KGU#205)
  *      Kay Gürtzig     2016.07.22      Bugfix KGU#209 (Enh. #77): The display of the coverage marker didn't work
+ *      Kay Gürtzig     2016.07.25      Bugfix #205: Variable higlighting worked only in boxed Roots (KGU#216)
  *
  ******************************************************************************************************
  *
@@ -286,6 +287,7 @@ public class Root extends Element {
 	}
 	// END KGU 2015-10-13
 	
+	
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
@@ -386,27 +388,6 @@ public class Root extends Element {
 
 		rect = _top_left.copy();
 
-		// START KGU 2015-10-13: 
-		// Root-specific part put into an override version of getColor()
-		// Remaining stuff replaced by new method getFillColor(), which hence comprises both
-//		if(isNice==false)
-//		{
-//			drawColor=Color.WHITE;
-//		}
-//		else
-//		{
-//			drawColor=Color.LIGHT_GRAY;
-//		}
-//
-//		drawColor=getColor();
-//
-//		if(selected==true)
-//		{
-//                if(waited==true) { drawColor=Element.E_WAITCOLOR; }
-//                else { drawColor=Element.E_DRAWCOLOR; }
-//		}
-		// END KGU 2015-10-13
-		
 		// draw background
 
 		Canvas canvas = _canvas;
@@ -441,40 +422,55 @@ public class Root extends Element {
 		canvas.setFont(titleFont);
 
 		// draw text
-		if (isNice==true)
+		// START KGU#216 2016-07-25: Bug #205 - Except the padding the differences here were wrong
+//		if (isNice==true)
+//		{
+//			for(int i=0;i<getText(false).count();i++)
+//			{
+//				canvas.setColor(Color.BLACK);
+//				writeOutVariables(canvas,
+//								  rect.left+E_PADDING,
+//							      rect.top+(i+1)*fm.getHeight()+E_PADDING,
+//								  (String) getText(false).get(i)
+//								  ,this);
+//			}
+//			// START KGU#156 2016-03-11: Enh. #124
+//			// write the run-time info if enabled
+//			this.writeOutRuntimeInfo(canvas, rect.right - (Element.E_PADDING), rect.top);
+//			// END KGU#156 2016-03-11
+//					
+//		}
+//		else
+//		{
+//			for(int i=0;i<getText(false).count();i++)
+//			{
+//				canvas.setColor(Color.BLACK);
+//				// FIXME (KGU): Why aren't the variables highlighted here? (forgotten?)
+//				canvas.writeOut(rect.left + (E_PADDING/2),
+//								rect.top + (i+1)*fm.getHeight() + (E_PADDING/2),
+//								(String) getText(false).get(i)
+//								);
+//			}
+//			// START KGU#156 2016-03-11: Enh. #124
+//			// write the run-time info if enabled
+//			this.writeOutRuntimeInfo(canvas, rect.right - (Element.E_PADDING/2), rect.top);
+//			// END KGU#156 2016-03-11
+//					
+//		}
+		int textPadding = isNice ? E_PADDING : E_PADDING/2;
+		for(int i=0; i<getText(false).count(); i++)
 		{
-			for(int i=0;i<getText(false).count();i++)
-			{
-				canvas.setColor(Color.BLACK);
-				writeOutVariables(canvas,
-								  rect.left+E_PADDING,
-							      rect.top+(i+1)*fm.getHeight()+E_PADDING,
-								  (String) getText(false).get(i)
-								  ,this);
-			}
-			// START KGU#156 2016-03-11: Enh. #124
-			// write the run-time info if enabled
-			this.writeOutRuntimeInfo(canvas, rect.right - (Element.E_PADDING), rect.top);
-			// END KGU#156 2016-03-11
-					
+			canvas.setColor(Color.BLACK);
+			writeOutVariables(canvas,
+							  rect.left + textPadding,
+						      rect.top + (i+1)*fm.getHeight() + textPadding,
+							  (String)getText(false).get(i),
+							  this);
 		}
-		else
-		{
-			for(int i=0;i<getText(false).count();i++)
-			{
-				canvas.setColor(Color.BLACK);
-				// FIXME (KGU): Why aren't the variables highlighted here? (forgotten?)
-				canvas.writeOut(rect.left + (E_PADDING/2),
-								rect.top + (i+1)*fm.getHeight() + (E_PADDING/2),
-								(String) getText(false).get(i)
-								);
-			}
-			// START KGU#156 2016-03-11: Enh. #124
-			// write the run-time info if enabled
-			this.writeOutRuntimeInfo(canvas, rect.right - (Element.E_PADDING/2), rect.top);
-			// END KGU#156 2016-03-11
-					
-		}
+		// write the run-time info if enabled (Enh. #124)
+		this.writeOutRuntimeInfo(canvas, rect.right - textPadding, rect.top);
+		// END KGU#216 2016-07-25
+		
 		canvas.setFont(Element.font);
 		
 		int headerHeight = fm.getHeight()*getText(false).count();

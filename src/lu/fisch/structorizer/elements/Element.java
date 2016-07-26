@@ -61,6 +61,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.07      Enh. #188: Modification of getText(boolean) to cope with transmutation,
  *                                      Enh. #185: new abstract method convertToCalls() for code import
+ *      Kay Gürtzig     2016.07.25      Bugfix #205: Alternative comment bar colour if fill colour equals (KGU#215)
  *
  ******************************************************************************************************
  *
@@ -150,7 +151,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.24-14";
+	public static String E_VERSION = "3.24-15";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -1076,8 +1077,17 @@ public abstract class Element {
 	 */
 	protected void drawCommentMark(Canvas _canvas, Rect _rect)
 	{
-		_canvas.setBackground(E_COMMENTCOLOR);
-		_canvas.setColor(E_COMMENTCOLOR);
+		// START KGU#215 2015-07-25: If fill colour is the same use an alternative colour
+		//_canvas.setBackground(E_COMMENTCOLOR);
+		//_canvas.setColor(E_COMMENTCOLOR);
+		Color commentColor = E_COMMENTCOLOR;
+		if (commentColor == this.getFillColor())
+		{
+			commentColor = Color.WHITE;
+		}
+		_canvas.setBackground(commentColor);
+		_canvas.setColor(commentColor);
+		// END KGU#215 2015-07-25
 		
 		Rect markerRect = new Rect(_rect.left + 2, _rect.top + 2,
 				_rect.left + 4, _rect.bottom - 2);

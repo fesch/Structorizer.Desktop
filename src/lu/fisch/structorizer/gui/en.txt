@@ -48,7 +48,7 @@
  *      Kay Gürtzig     2016.04.12      Issue #161: New Analyser error message for Jump
  *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
  *      Kay Gürtzig     2016.07.07      Enh. #188: Messages for transmute button and menu items
- *      Kay Gürtzig     2016-07-20      Enh. #160: New message for ExportOptionDialoge 
+ *      Kay Gürtzig     2016.07.20      Enh. #160: New message for ExportOptionDialoge 
  *
  ******************************************************************************************************
  *
@@ -158,7 +158,7 @@ Menu.menuPreferencesLanguageDutch.text=Dutch
 Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburgish
 Menu.menuPreferencesLanguageSpanish.text=Spanish
 Menu.menuPreferencesLanguageItalian.text=Italian
-Menu.menuPreferencesLanguagePortugalBrazil.text=Portugese brazilian
+Menu.menuPreferencesLanguagePortugalBrazil.text=Portuguese brazilian
 Menu.menuPreferencesLanguageSimplifiedChinese.text=Chinese (simplified)
 Menu.menuPreferencesLanguageTraditionalChinese.text=Chinese (traditional)
 Menu.menuPreferencesLanguageCzech.text=Czech

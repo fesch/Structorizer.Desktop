@@ -9,7 +9,7 @@ Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 <Foo>   -->     idea AND coding done by Foo
 
-Current development version: 3.24-14 (2016.07.25)
+Current development version: 3.24-15 (2016.07.26)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]
 - 01: Enh. #124: Generalized runtime data visualization <Kay Gürtzig>
 - 01: Arranger now adopts current directory from first arranged diagram <Kay Gürtzig>
@@ -77,7 +77,11 @@ Current development version: 3.24-14 (2016.07.25)
 - 14: Issue #200: The saving of preferences now closes the ini file <Kay Gürtzig>
 - 14: Issue #201: Executor GUI revised, usability improved <Kay Gürtzig>
 - 14: Issue #202: Arranger hadn't reacted to a Look-and-Feel change <Kay Gürtzig>
-- 14: Issue #127: Sizing problem of Export Options dialog solved <Kay Gürtzig>
+- 14: Issue #127: Height problem of Export Options dialog solved <Kay Gürtzig>
+- 15: Bugfix #158: Selection traversal in un-boxed diagrams and FOREVER <Kay Gürtzig>
+- 15: Bugfix #204: Width problem of Export Options dialog solved <Kay Gürtzig>
+- 15: Bugfix #205: Un-boxed Roots variable highlighting didn't work <Kay Gürtzig> 
+- 15: Bugfix #87: Collapsed CASE elements showed wrong icon <Kay Gürtzig>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
