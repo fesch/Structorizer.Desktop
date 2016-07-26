@@ -37,6 +37,7 @@
  *      Kay Gürtzig     2015.10.14		FOR-specific part enhanced and Arranger buttons added
  *      Kay Gürtzig     2016.01.21      Breakpoint message also in Menu now
  *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig     2016.07.26      Issue #206: Provisional translation of most important new menu items
  *
  ******************************************************************************************************
  *
@@ -58,6 +59,7 @@ Menu.menuFileExport.text=Esporta
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Immagine ...
 Menu.menuFileExportCode.text=Codice ...
+Menu.lbFileExportCodeFavorite.text=Esporta in % codice
 Menu.menuFileImport.text=Importa
 // Submenu of "File -> Import"
 Menu.menuFileImportPascal.text=Codice Pascal...
@@ -109,6 +111,9 @@ Menu.menuDiagramEdit.text=Modifica
 Menu.menuDiagramDelete.text=Cancella
 Menu.menuDiagramMoveUp.text=Sposta in alto
 Menu.menuDiagramMoveDown.text=Sposta in basso
+Menu.menuDiagramTransmute.text=Trasforma
+Menu.menuDiagramCollapse.text=Riduca
+Menu.menuDiagramExpand.text=Gonfia
 // Breakpoint
 Menu.menuDiagramBreakpoint.text=Alterna breakpoint
 // Diagram Appearance
@@ -117,8 +122,11 @@ Menu.menuDiagramTypeProgram.text=Principale
 Menu.menuDiagramTypeFunction.text=Funzione
 Menu.menuDiagramNice.text=Stile box?
 Menu.menuDiagramComment.text=Mostra commenti?
+Menu.menuDiagramSwitchComments.text=Cambia texti/commenti?
 Menu.menuDiagramMarker.text=Evidenzia variabili?
 Menu.menuDiagramDIN.text=DIN?
+Menu.menuDiagramAnalyser.text=Verifica diagramma?
+Menu.menuDiagramWheel.text=Mouse wheel per ridurre?
 // Menu "Preferences"
 Menu.menuPreferences.text=Opzioni
 Menu.menuPreferences.mnemonic=o
@@ -127,13 +135,15 @@ Menu.menuPreferencesFont.text=Caratteri ...
 Menu.menuPreferencesColors.text=Colori ...
 Menu.menuPreferencesOptions.text=Strutture ...
 Menu.menuPreferencesParser.text=Parser ...
+Menu.menuPreferencesAnalyser.text=Verificatore ...
+Menu.menuPreferencesExport.text=Esportazione ...
 Menu.menuPreferencesLanguage.text=Lingua
 Menu.menuPreferencesLanguageEnglish.text=English
-Menu.menuPreferencesLanguageGerman.text=German
+Menu.menuPreferencesLanguageGerman.text=Tedesco
 Menu.menuPreferencesLanguageFrench.text=French
 Menu.menuPreferencesLanguageDutch.text=Dutch
-Menu.menuPreferencesLanguageItalian.text=Italian
-Menu.menuPreferencesLanguageSpanish.text=Spanish
+Menu.menuPreferencesLanguageItalian.text=Italiano
+Menu.menuPreferencesLanguageSpanish.text=Spagnolo
 Menu.menuPreferencesLanguagePortugalBrazil=Portuguese (Brazil)
 Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburgish
 Menu.menuPreferencesLookAndFeel.text=Aspetto
@@ -289,6 +299,10 @@ Editor.popupEdit.text=Modifica
 Editor.popupDelete.text=Cancella
 Editor.popupMoveUp.text=Sposta in alto
 Editor.popupMoveDown.text=Sposta in basso
+Editor.popupTransmute.text=Trasforma
+// Collapsing
+Editor.popupCollapse.text=Riduca
+Editor.popupExpand.text=Gonfia
 // Breakpoint
 Editor.popupBreakpoint.text=Alterna breakpoint
 
