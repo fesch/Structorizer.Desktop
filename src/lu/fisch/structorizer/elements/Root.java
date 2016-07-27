@@ -3428,6 +3428,14 @@ public class Root extends Element {
             // END KGU 2015-11-25
 
             DetectedError error;
+            
+            // START KGU#220 2016-07-27: Enh. #207
+            // Warn in case of switched text/comments as first report
+            if (Element.E_TOGGLETC)
+            {
+            	error = new DetectedError(errorMsg(Menu.warning_1, ""), null);
+            	addError(errors, error, 0);
+            }
 
             // CHECK: uppercase for programname (#6)
             if(!programName.toUpperCase().equals(programName))

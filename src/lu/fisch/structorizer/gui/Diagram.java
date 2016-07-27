@@ -350,6 +350,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		selected = root;
 		root.setSelected(true);
 		// END KGU#182 2016-04-24
+		
+		// Attempt to find out what provokes the NullPointerExceptions on start
+		//System.out.println("**** " + this + ".create() ready!");
 	}
 
 	public void hideComments()
@@ -754,7 +757,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if(errorlist.getSelectedIndex()!=-1)
 				{
 					// get the selected error
-					Element ele = (root.errors.get(errorlist.getSelectedIndex())).getElement();
+					DetectedError err = root.errors.get(errorlist.getSelectedIndex()); 
+					Element ele = err.getElement();
 					if(ele!=null)
 					{
 						// deselect the previously selected element (if any)
@@ -767,6 +771,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						// do the button thing
 						if(NSDControl!=null) NSDControl.doButtons();
 					}
+					// START KGU#220 2016-07-27: Draft for Enh. #207, but withdrawn
+					//else if (err.getError().equals(Menu.warning_1.getText()))
+					//{
+					//	this.toggleTextComments();
+					//}
+					// END KGU#200 2016-07-27
 				}
 			}
 		}
@@ -3863,6 +3873,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	// START KGU#136 2016-03-01: Bugfix #97
     	this.resetDrawingInfo(true);
     	// END KGU#136 2016-03-01
+    	// START KGU#220 2016-07-27: Enh. #207
+    	analyse();
+    	// END KGU#220 2016-07-27
     	repaint();
     }
 

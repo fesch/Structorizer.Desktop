@@ -38,6 +38,7 @@
  *      Kay Gürtzig     2016.04.12      New message text for Control option
  *      Kay Gürtzig     2016.05.05      KGU#197: Further message texts for Executor dialog
  *      Kay Gürtzig     2016.07.25      Fix #201: caption for new Call Stack button
+ *      Kay Gürtzig     2016.07.27      KGU#197: Further message texts for Executor dialog
  *
  ******************************************************************************************************
  *
@@ -70,3 +71,12 @@ Control.lbReturnedResult.text=Returned result
 Control.lbOutput.text=Output
 Control.lbInput.text=Input
 Control.lbAcknowledge.text=Please acknowledge to continue.
+Control.msgNoSubroutine.text=A subroutine diagram "%1" (%2 parameters) could not be found!%0Consider starting the Arranger and place needed subroutine diagrams there first.
+Control.msgInvalidExpr.text=<%1> is not a correct or existing expression.
+Control.msgIllFuncion.text=<%1> is not a correct function!
+Control.msgManualBreak.text=Manual Break!
+Control.msgIllegalLeave.text=Illegal leave argument: %1
+Control.msgWrongExit.text=Wrong exit value: %1
+Control.msgExitCode.text=Program exited with code %1!
+Control.msgIllegalJump.text=Illegal content of a Jump (i.e. exit) instruction: <%1>!
+Control.msgTooManyLevels.text=Too many levels to leave (actual depth: %1 / specified: %2)!

@@ -38,6 +38,7 @@
  *      Kay Gürtzig     2016.04.12      New message text for Control option
  *      Kay Gürtzig     2016.05.05      KGU#197: Further message texts for Executor dialog
  *      Kay Gürtzig     2016.07.25      Fix #201: caption for new Call Stack button
+ *      Kay Gürtzig     2016.07.27      KGU#197: Further message texts for Executor dialog
  *
  ******************************************************************************************************
  *
@@ -70,3 +71,12 @@ Control.lbReturnedResult.text=Zurückgegebenes Resultat
 Control.lbOutput.text=Ausgabe
 Control.lbInput.text=Eingabe
 Control.lbAcknowledge.text=Zum Fortfahren bitte bestätigen.
+Control.msgNoSubroutine.text=Ein Diagramm mit Unterprogramm "%1" (%2 Parameter) wurde nicht gefunden!%0Platzieren Sie benötigte Unterprogramm-Diagramme zunächst im Arranger.
+Control.msgInvalidExpr.text=<%1> ist kein korrekter oder existierender Ausdruck.
+Control.msgIllFuncion.text=<%1> ist keine korrekte Funktion!
+Control.msgManualBreak.text=Nutzer-Abbruch!
+Control.msgIllegalLeave.text=Unzulässiger LEAVE-Parameter: %1
+Control.msgWrongExit.text=Falscher EXIT-Wert: %1
+Control.msgExitCode.text=Programm abgebrochen mit Code %1!
+Control.msgIllegalJump.text=Unzulässiger Inhalt einer Aussprung-Anweisung: <%1>!
+Control.msgTooManyLevels.text=Zu viele Ebenen zum Verlassen gefordert (tatsächliche Tiefe: %1 / angegeben: %2)!

@@ -67,17 +67,24 @@ public class DetectedError
 		// transformers
 		public String toString()
 		{
-			if(element!=null)
+			// START KGU#220 2016-07-27: Enh. #207 - allow general warnings
+			//if(element!=null)
+			// END KGU#220 2016-07-27
 			{
-				error=error.replaceAll("«", "\u00AB");
-				error=error.replaceAll("»", "\u00BB");
+				error = error.replaceAll("«", "\u00AB");
+				error = error.replaceAll("»", "\u00BB");
+				// START KGU#220 2016-07-27: Enh. #207 - allow general warnings
+				error = error.replace("--->", "\u2192");
+				// END KGU#220 2016-07-27
 				return error;
 				//return element.getClass().getSimpleName()+" «"+element.getText().get(0)+"»: "+error;
 			}
-			else
-			{
-				return "No error?";
-			}
+			// START KGU#220 2016-07-27: Enh. #207 - allow general warnings
+			//else
+			//{
+			//	return "No error?";
+			//}
+			// END KGU#220 2016-07-27
 		}
 		
 		// tester

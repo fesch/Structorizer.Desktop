@@ -220,7 +220,10 @@ public class Menu extends JMenuBar implements NSDController
 	protected JMenuItem menuHelpUpdate = new JMenuItem("Update ...",IconLoader.ico052);
 
 	// Error messages for analyser
-	public static LangTextHolder error01_1 = new LangTextHolder("WARNING: No loop varLangTextHolderdetected ...");
+	// START KGU#220 2016-07-27: Enh. as proposed in issue #207
+	public static LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! ---> \"Diagram > Switch text/comments\".");
+	// END KGU#220 2016-07-27
+	public static LangTextHolder error01_1 = new LangTextHolder("WARNING: No loop variable detected ...");
 	public static LangTextHolder error01_2 = new LangTextHolder("WARNING: More than one loop variable detected ...");
 	public static LangTextHolder error01_3 = new LangTextHolder("You are not allowed to modify the loop variable «%» inside the loop!");
 	public static LangTextHolder error02 = new LangTextHolder("No change of the variables in the condition detected. Possible endless loop ...");
@@ -776,6 +779,8 @@ public class Menu extends JMenuBar implements NSDController
 		menuHelpUpdate.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {diagram.updateNSD(); } } );
 		menuHelpUpdate.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 
+		// Attempt to find out what provokes the NullPointerExceptions on start
+		//System.out.println("**** " + this + ".create() ready!");
 	}
 
 	public void setLookAndFeel(String _laf) {}

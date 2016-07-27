@@ -29,12 +29,12 @@
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------		----			-----------
- *      Andrea Maiani   2009.12.01		Created
- *      Kay Gürtzig     2015.10.06		Obvious mis-spellings mended (cilc -> ciclo, contenuro -> contenuto etc.)
- *      Kay Gürtzig     2015.10.14		InputBox-specific part enhanced
- *      Kay Gürtzig     2015.10.14		FOR-specific part enhanced and Arranger buttons added
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Andrea Maiani   2009.12.01      Created
+ *      Kay Gürtzig     2015.10.06      Obvious mis-spellings mended (cilc -> ciclo, contenuro -> contenuto etc.)
+ *      Kay Gürtzig     2015.10.14      InputBox-specific part enhanced
+ *      Kay Gürtzig     2015.10.14      FOR-specific part enhanced and Arranger buttons added
  *      Kay Gürtzig     2016.01.21      Breakpoint message also in Menu now
  *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
  *      Kay Gürtzig     2016.07.26      Issue #206: Provisional translation of most important new menu items
@@ -122,7 +122,7 @@ Menu.menuDiagramTypeProgram.text=Principale
 Menu.menuDiagramTypeFunction.text=Funzione
 Menu.menuDiagramNice.text=Stile box?
 Menu.menuDiagramComment.text=Mostra commenti?
-Menu.menuDiagramSwitchComments.text=Cambia texti/commenti?
+Menu.menuDiagramSwitchComments.text=Cambia testi/commenti?
 Menu.menuDiagramMarker.text=Evidenzia variabili?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Verifica diagramma?
