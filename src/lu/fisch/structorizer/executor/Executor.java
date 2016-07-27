@@ -88,6 +88,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.06.07      KGU#200: While loops showed wrong colour if their body raised an error
  *      Kay Gürtzig     2016.07.25      Issue #201: Look-and-Feel update, Strack trace level numbers (KGU#210)
  *      Kay Gürtzig     2016-07-27      KGU#197: Further (chiefly error) messages put under language support
+ *                                      Enh. #137: Error messages now also written to text window output
  *
  ******************************************************************************************************
  *

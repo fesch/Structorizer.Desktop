@@ -71,6 +71,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.19      Enh. #192: New method proposeFileName() involving the argument count (KGU#205)
  *      Kay Gürtzig     2016.07.22      Bugfix KGU#209 (Enh. #77): The display of the coverage marker didn't work
  *      Kay Gürtzig     2016.07.25      Bugfix #205: Variable higlighting worked only in boxed Roots (KGU#216)
+ *      Kay Gürtzig     2016.07.27      Issue #207: New Analyser warning in switch text/comments mode (KGU#220)
  *
  ******************************************************************************************************
  *
@@ -3433,9 +3434,12 @@ public class Root extends Element {
             // Warn in case of switched text/comments as first report
             if (Element.E_TOGGLETC)
             {
+            	// This is a general warning without associated element - put at top
             	error = new DetectedError(errorMsg(Menu.warning_1, ""), null);
+            	// Category 0 is not restricted to configuration (cannot be switched off)
             	addError(errors, error, 0);
             }
+            // END KGU#220 2016-07-27
 
             // CHECK: uppercase for programname (#6)
             if(!programName.toUpperCase().equals(programName))

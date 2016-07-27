@@ -38,6 +38,7 @@
  *      Kay Gürtzig     2016.01.21      Breakpoint message also in Menu now
  *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
  *      Kay Gürtzig     2016.07.26      Issue #206: Provisional translation of most important new menu items
+ *      Kay Gürtzig     2016.07.27      Enh. #270: New message Menu.warning_1 (must be consistent with menu entry names!) 
  *
  ******************************************************************************************************
  *
@@ -160,6 +161,8 @@ Menu.menuHelp.mnemonic=a
 Menu.menuHelpAbout.text=About ...
 Menu.menuHelpUpdate.text=Aggiorna ...
 // Error messages for analyser
+// warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
+Menu.warning_1.text=Attenzione: ¡TESTI E COMMENTI SONO CAMBIATI! → Menu "Diagramma > Cambia testi/commenti?".
 Menu.error01_1.text=Attenzione: Variabile di ciclo non trovate ...
 Menu.error01_2.text=Attenzione: Trovate più di una variabile di ciclo ...
 Menu.error01_3.text=Non ti è permesso modificare la variabile del cilco «%» all'interno di esso!
