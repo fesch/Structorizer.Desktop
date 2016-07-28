@@ -34,6 +34,7 @@ package lu.fisch.graphics;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.10      First Issue
+ *      Kay Gürtzig     2016.07.27      Issue #208: New public method fillRoundRect()
  *
  ******************************************************************************************************
  *
@@ -122,7 +123,14 @@ public class Canvas  {
 	public void fillRect(Rect _rect)
 	{
 		canvas.fillRect(_rect.left, _rect.top, _rect.right-_rect.left, _rect.bottom-_rect.top);
-	}	
+	}
+	
+	// START KGU#221 2016-07-27: Enhancement for bugfix #208
+	public void fillRoundRect(Rect _rect)
+	{
+		canvas.fillRoundRect(_rect.left, _rect.top, _rect.right-_rect.left, _rect.bottom-_rect.top, 30, 30);
+	}
+	// END KGU#221 2016-07-27
 	
 	public void writeOut(int _x, int _y, String _text)
 	{

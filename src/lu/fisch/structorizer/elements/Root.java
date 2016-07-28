@@ -72,6 +72,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.22      Bugfix KGU#209 (Enh. #77): The display of the coverage marker didn't work
  *      Kay Gürtzig     2016.07.25      Bugfix #205: Variable higlighting worked only in boxed Roots (KGU#216)
  *      Kay Gürtzig     2016.07.27      Issue #207: New Analyser warning in switch text/comments mode (KGU#220)
+ *      Kay Gürtzig     2016.07.28      Bugfix #208: Filling of subroutine diagrams no longer exceeds border 
  *
  ******************************************************************************************************
  *
@@ -341,6 +342,9 @@ public class Root extends Element {
 		}
 
 		rect0.bottom += subrect0.bottom;
+		// START KGU#221 2016-07-28: Bugfix #208 - partial boxing for un-boxed subroutine
+		if (!isNice && !isProgram) rect0.bottom += E_PADDING/2;
+		// END KGU#221 2016-07-28
 		this.width = rect0.right - rect0.left;
 		this.height = rect0.bottom - rect0.top;
 		
@@ -396,7 +400,17 @@ public class Root extends Element {
 		// erase background
 		canvas.setBackground(drawColor);
 		canvas.setColor(drawColor);
-		canvas.fillRect(_top_left);
+		// START KGU#221 2016-07-27: Bugfix #208
+		//canvas.fillRect(_top_left);
+		if (!isProgram)
+		{
+			canvas.fillRoundRect(_top_left);
+		}
+		else
+		{
+			canvas.fillRect(_top_left);
+		}
+		// END KGU#221 2016-07-27
 
 		/*
 		 if(isNice=false) then _canvas.pen.Width:=3;
@@ -415,7 +429,16 @@ public class Root extends Element {
 		// draw comment
 		if (E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 		{
-			this.drawCommentMark(_canvas, _top_left);
+			// START KGU#221 2016-07-27: Bugfix #208
+			//this.drawCommentMark(_canvas, _top_left);
+			Rect commRect = _top_left.copy();
+			if (!isProgram)
+			{
+				commRect.top += E_PADDING/2;
+				commRect.bottom -= E_PADDING/2;
+			}
+			this.drawCommentMark(_canvas, commRect);
+			// END KGU#221 2016-07-27
 		}
 
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
@@ -476,6 +499,7 @@ public class Root extends Element {
 		
 		int headerHeight = fm.getHeight()*getText(false).count();
 
+		// Draw the frame around the body
 		if (isNice==true)
 		{
 			headerHeight += 2*E_PADDING;
@@ -489,29 +513,56 @@ public class Root extends Element {
 			headerHeight += 2*(E_PADDING/2);
 			rect.top = _top_left.top + headerHeight;
 			rect.left = _top_left.left;
+			// START KGU#221 2016-07-28: Bugfix #208
+			if (!isProgram)
+			{
+				rect.bottom -= E_PADDING/2;
+			}
+			// END KGU#221 2016-07-28
 		}
 
 		children.draw(_canvas,rect);
 
 		// draw box around
 		canvas.setColor(Color.BLACK);
-		canvas.drawRect(_top_left);
+		// START KGU#221 2016-07-27: Bugfix #208
+		//canvas.drawRect(_top_left);
+		if (isProgram)
+		{
+			canvas.drawRect(_top_left);
+		}
+		// END KGU##221 2016-07-27
 
 
 		// draw thick line
 		if (isNice==false)
 		{
 			rect.top = _top_left.top + headerHeight - 1;
-			rect.left = _top_left.left;
+			//rect.left = _top_left.left;
 			canvas.drawRect(rect);
+			// START KGU#221 2016-07-28: Bugfix #208
+			if (!isProgram)
+			{
+				rect.top = rect.bottom;
+				rect.bottom++;
+				canvas.drawRect(rect);
+			}
+			// END KGU#221 2016-07-28
 		}
 
 
 		if (isProgram==false)
 		{
 			rect = _top_left.copy();
-			canvas.setColor(Color.WHITE);
-			canvas.drawRect(rect);
+			// START KGU#221 2016-07-27: Bugfix #208
+			//canvas.setColor(Color.WHITE);
+			//canvas.drawRect(rect);
+//			if (!isNice)
+//			{
+//				canvas.setColor(Color.WHITE);
+//				canvas.drawRect(rect);
+//			}
+			// END KGU#221 2016-07-27
 			canvas.setColor(Color.BLACK);
 			rect = _top_left.copy();
 			canvas.roundRect(rect);

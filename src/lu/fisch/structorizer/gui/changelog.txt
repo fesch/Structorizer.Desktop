@@ -84,6 +84,7 @@ Current development version: 3.24-15 (2016.07.27)
 - 15: Bugfix #87: Collapsed CASE elements showed wrong icon <Kay Gürtzig>
 - 15: Issue #207: Analyser warning during switch text/comment mode <Kay Gürtzig>
 - 15: Issue #206: More executor error messages put under language control <Kay Gürtzig>
+- 15: Bugfix #208: Subroutine diagrams now cleanly drawn <Kay Gürtzig>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]

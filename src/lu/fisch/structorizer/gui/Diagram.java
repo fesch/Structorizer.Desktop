@@ -74,6 +74,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.25      Enh. #158 / KGU#214: selection traversal accomplished for un-boxed Roots,
  *                                      and FOREVER / non-DIN FOR loops
  *      Kay Gürtzig     2016.07.26      Bugfix #204: Modified ExportOptionDialoge API (for correct sizing)
+ *      Kay Gürtzig     2016.07.28      Bugfix #208: Modification in setFunction() and setProgram()
  *
  ******************************************************************************************************
  *
@@ -3483,6 +3484,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void setFunction()
 	{
+		// START KGU#221 2016-07-28: Bugfix #208
+		if (!root.isNice && root.isProgram)
+		{
+			root.resetDrawingInfoUp();
+		}
+		// END KGU#221 2016-07-28
 		root.isProgram=false;
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
@@ -3493,6 +3500,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void setProgram()
 	{
+		// START KGU#221 2016-07-28: Bugfix #208
+		if (!root.isNice && !root.isProgram)
+		{
+			root.resetDrawingInfoUp();
+		}
+		// END KGU#221 2016-07-28
 		root.isProgram=true;
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
