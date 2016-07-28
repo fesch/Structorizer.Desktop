@@ -490,8 +490,11 @@ public class Alternative extends Element {
 		ele.breakpoint = this.breakpoint;
 		// END KGU#82 (bug #31) 2015-11-14
 		// START KGU#117 2016-03-07: Enh. #77
-		ele.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
-		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+		// START KGU#156/KGU#225 2016-07-28: Bugfix #210
+		//ele.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
+		//ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+		this.copyRuntimeData(ele, true);
+		// END KGU#156/KGU#225 2016-07-28
 		// END KGU#117 2016-03-07
 		// START KGU#183 2016-04-24: Issue #169
 		ele.selected = this.selected;
@@ -580,7 +583,7 @@ public class Alternative extends Element {
 	// START KGU#156 2016-03-13: Enh. #124
 	protected String getRuntimeInfoString()
 	{
-		String info = this.execCount + " / ";
+		String info = this.getExecCount() + " / ";
 		String stepInfo = null;
 		switch (E_RUNTIMEDATAPRESENTMODE)
 		{

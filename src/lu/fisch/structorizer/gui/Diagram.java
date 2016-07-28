@@ -1197,8 +1197,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                         {
                             writeNow=false;
                             int res = JOptionPane.showConfirmDialog(
-                                this,"A file with the specified name exists.\nDo you want to owerwrite it?",
-                                "Owerwrite?",JOptionPane.YES_NO_OPTION);
+                                    this,
+                                    Menu.msgOverwriteFile.getText(),
+                                    Menu.btnConfirmOverwrite.getText(),
+                                    JOptionPane.YES_NO_OPTION);
                             if(res==JOptionPane.YES_OPTION) writeNow=true;
                         }
 
@@ -1211,7 +1213,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                         	// START KGU#94 2015.12.04: out-sourced to auxiliary method
 //                            try
 //                            {
-//                            	
+//                            
 //                                    FileOutputStream fos = new FileOutputStream(root.filename);
 //                                    Writer out = new OutputStreamWriter(fos, "UTF8");
 //                                    XmlGenerator xmlgen = new XmlGenerator();
@@ -1690,9 +1692,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//root.hasChanged=true;
 					// END KGU#137 2016-01-11
 					((Subqueue) element).addElement(ele);
-                	// START KGU#136 2016-03-01: Bugfix #97
-                	element.resetDrawingInfoUp();
-                	// END KGU#136 2016-03-01
+					// START KGU#136 2016-03-01: Bugfix #97
+					element.resetDrawingInfoUp();
+					// END KGU#136 2016-03-01
 					ele.setSelected(true);
 					selected=ele;
 					redraw();
@@ -1749,9 +1751,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#137 2016-01-11: Already prepared by addUndo()
 					//root.hasChanged=true;
 					// END KGU#137 2016-01-11
-                	// START KGU#136 2016-03-01: Bugfix #97
-                	element.resetDrawingInfoUp();
-                	// END KGU#136 2016-03-01
+					// START KGU#136 2016-03-01: Bugfix #97
+					element.resetDrawingInfoUp();
+					// END KGU#136 2016-03-01
 					redraw();
 				}
 			}
@@ -2274,10 +2276,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		JFileChooser dlgSave = new JFileChooser("Export diagram as Multi-PNG ...");
 		// set directory
 		if (lastExportDir!=null)
-                {
-                    dlgSave.setCurrentDirectory(lastExportDir);
-                }
-                else if(root.getFile()!=null)
+		{
+			dlgSave.setCurrentDirectory(lastExportDir);
+		}
+		else if(root.getFile()!=null)
 		{
 			dlgSave.setCurrentDirectory(root.getFile());
 		}
@@ -2321,7 +2323,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if(file.exists())
 			{
 				int response = JOptionPane.showConfirmDialog (null,
-						"Overwrite existing file?","Confirm Overwrite",
+						Menu.msgOverwriteFiles.getText(),
+						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
 						JOptionPane.QUESTION_MESSAGE);
 				if (response == JOptionPane.NO_OPTION)
@@ -2482,7 +2485,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if(file.exists())
 			{
 				int response = JOptionPane.showConfirmDialog (null,
-						"Overwrite existing file?","Confirm Overwrite",
+						Menu.msgOverwriteFile.getText(),
+						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
 						JOptionPane.QUESTION_MESSAGE);
 				if (response == JOptionPane.NO_OPTION)
@@ -2576,7 +2580,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if(file.exists())
 			{
 				int response = JOptionPane.showConfirmDialog (null,
-						"Overwrite existing file?","Confirm Overwrite",
+						Menu.msgOverwriteFile.getText(),
+						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
 						JOptionPane.QUESTION_MESSAGE);
 				if (response == JOptionPane.NO_OPTION)
@@ -2673,7 +2678,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if(file.exists())
 			{
 				int response = JOptionPane.showConfirmDialog (null,
-						"Overwrite existing file?","Confirm Overwrite",
+						Menu.msgOverwriteFile.getText(),
+						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
 						JOptionPane.QUESTION_MESSAGE);
 				if (response == JOptionPane.NO_OPTION)
@@ -2791,7 +2797,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if(file.exists())
 			{
 				int response = JOptionPane.showConfirmDialog (null,
-						"Overwrite existing file?","Confirm Overwrite",
+						Menu.msgOverwriteFile.getText(),
+						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
 						JOptionPane.QUESTION_MESSAGE);
 				if (response == JOptionPane.NO_OPTION)
@@ -2888,7 +2895,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if(file.exists())
 			{
 				int response = JOptionPane.showConfirmDialog (null,
-						"Overwrite existing file?","Confirm Overwrite",
+						Menu.msgOverwriteFile.getText(),
+						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
 						JOptionPane.QUESTION_MESSAGE);
 				if (response == JOptionPane.NO_OPTION)
@@ -3565,9 +3573,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void setToggleTC(boolean _tc)
 	{
 		Element.E_TOGGLETC=_tc;
-    	// START KGU#136 2016-03-01: Bugfix #97
-    	this.resetDrawingInfo(true);
-    	// END KGU#136 2016-03-01
+		// START KGU#136 2016-03-01: Bugfix #97
+		this.resetDrawingInfo(true);
+		// END KGU#136 2016-03-01
 		NSDControl.doButtons();
 		redraw();
 	}
@@ -3581,9 +3589,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		Element.E_VARHIGHLIGHT=_highlight;	// this isn't used for drawing, actually
 		root.hightlightVars=_highlight;
-    	// START KGU#136 2016-03-01: Bugfix #97
-    	this.resetDrawingInfo(false);	// Only current root is involved
-    	// END KGU#136 2016-03-01
+		// START KGU#136 2016-03-01: Bugfix #97
+		this.resetDrawingInfo(false);	// Only current root is involved
+		// END KGU#136 2016-03-01
 		NSDControl.doButtons();
 		redraw();
 	}

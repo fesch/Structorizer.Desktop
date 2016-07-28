@@ -11,7 +11,7 @@ Legend:
 <Foo>   -->     idea AND coding done by Foo
 <*>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.24-15 (2016.07.28)
+Current development version: 3.24-15 (2016.07.29)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]*
 - 01: Enh. #124: Generalized runtime data visualization <*>
 - 01: Arranger now adopts current directory from first arranged diagram <*>
@@ -34,7 +34,7 @@ Current development version: 3.24-15 (2016.07.28)
 - 05: Issue #145: Swapped text/comment now works on CASE and PARALLEL elements <*>
 - 06: Pascal functions ord and chr supported (Executor + Code generators) <*>
 - 06: Executor: Keyword case awareness (configurable) consistently ensured <*>
-- 06: Issue #149: Character set (encoding) for export now selectable [Rolf Schmidt]
+- 06: Issue #149: Character set (encoding) for export now selectable [Rolf Schmidt]*
 - 06: Issue #151: Code export pumped the process up with useless GUI threads <*>
 - 06: Issue #153: BASH export had ignored Parallel sections [Rolf Schmidt] <*> 
 - 06: Bugfix #154: Analyser caused silent exception on Parallel sections <*>
@@ -50,8 +50,8 @@ Current development version: 3.24-15 (2016.07.28)
 - 09: Bugfix #171: Twos flaws in enh. #158 mended <*>
 - 10: Issue #30: Lexicographic string comparison enabled (Executor). <*>
 - 10: Issue #137: Output text window now styled and automatically scrolls to end. <*>
-- 10: Issue #163: Tab / Shift-Tab key now move focus in element editor [Rolf Schmidt]
-- 10: Issue #169: Selection ensured on start / after export. [Rolf Schmidt]
+- 10: Issue #163: Tab / Shift-Tab key now move focus in element editor [Rolf Schmidt]*
+- 10: Issue #169: Selection ensured on start / after export. [Rolf Schmidt]*
 - 10: Issue #173: Mnemonics corrected (EN) and localized in most languages. <*>
 - 10: Enh. #174: Input now accepts array initialisation expressions. <*>
 - 11: Enh. #10 / bugfix #184: Flaws in Pascal import of FOR loops mended <*>
@@ -68,7 +68,7 @@ Current development version: 3.24-15 (2016.07.28)
 - 13: Enh. #188: Instruction transmutation, concatenation and splitting <*>
 - 13: Enh. #185: Call identification on Pascal import improved <*>
 - 13: Enh. #180: Initial editor focus dependent on switch text/comment mode [elemhsb]
-- 13: Bugfix #191: Defective FOR loop export to PHP [Frank Schenk]
+- 13: Bugfix #191: Defective FOR loop export to PHP [Frank Schenk]*
 - 13: Enh. #192: File name proposals now involve parameter count <*>
 - 13: Enh. #160: Code export with reachable subroutines [Rolf Schmidt]<*>
 - 14: Issue #160: Subroutine export mode fixed for StrukTeX <*>
@@ -88,6 +88,7 @@ Current development version: 3.24-15 (2016.07.28)
 - 15: Issue #206: More executor error messages put under language control <*>
 - 15: Bugfix #208: Subroutine diagrams now cleanly drawn <*>
 - 15: Bugfix #209: Multiple PNG export fixed (uncut borders, file names) <*>
+- 15: Bugfix #210: Wrong execution counting in recursive routines <*>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
@@ -209,7 +210,6 @@ Version 3.23 (2015.12.04)
 - 29: export: Python export no longer "eats" lines within Repeat loops <*>
 - 29: comment popup: sticky popups eliminated, no element level limit <*>
 - 29: Arranger: No longer loses track when related Structorizer reloads <*>
-- 29: Known NEW ISSUE: Closing a dependent Structorizer kills the owning Arranger!
 - 30: Several Chinese (CHS) translations added and typos eliminated <Zijun Ke>
 - 30: Issue on closing a Structorizer fixed, file update question may be cancelled. <*>
 - 31: Major enhancement supporting cleaner For loop evaluation (issue #10) <*>

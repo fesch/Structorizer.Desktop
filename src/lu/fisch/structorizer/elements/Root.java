@@ -912,7 +912,10 @@ public class Root extends Element {
             //ele.updaters = this.updaters;	// FIXME: Risks of this?
             // END KGU#2 (#9) 2015-11-13
     		// START KGU#117 2016-03-07: Enh. #77
-    		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+    		// START KGU#156/KGU#225 2016-07-28: Bugfix #210
+    		//ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+    		this.copyRuntimeData(ele, false);
+    		// END KGU#156/KGU#225 2016-07-28
     		// END KGU#117 2016-03-07
     		// START KGU#183 2016-04-24: Issue #169
     		ele.selected = this.selected;
@@ -948,7 +951,7 @@ public class Root extends Element {
 	// START KGU#117 2016-03-12: Enh. #77
 	protected String getRuntimeInfoString()
 	{
-		return this.execCount + " / (" + this.getExecStepCount(true) + ")";
+		return this.getExecCount() + " / (" + this.getExecStepCount(true) + ")";
 	}
 	// END KGU#117 2016-03-12
 

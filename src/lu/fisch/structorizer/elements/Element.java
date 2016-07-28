@@ -62,14 +62,25 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.07      Enh. #188: Modification of getText(boolean) to cope with transmutation,
  *                                      Enh. #185: new abstract method convertToCalls() for code import
  *      Kay Gürtzig     2016.07.25      Bugfix #205: Alternative comment bar colour if fill colour equals (KGU#215)
+ *      Kay Gürtzig     2016.07.28      Bugfix #210: Execution counting mechanism fundamentally revised
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      
+ *      2016-07-28: Bugfix #210 (KGU#225)
+ *      - Before this fix the execution count values were held locally in the Elements. Without recursion,
+ *        this wasn't a problem. But for recursive algorithms, particularly for spawning recursion as
+ *        in Fibonacci, QuickSort, or binary search trees, all attempts to combine the counts from the
+ *        various copies of an algorithm failed in the end. So now the counters are placed in a static
+ *        vector on base class Element, the actual element instances hold only indices into this table.
+ *        Hence, cloning of elements is no longer a problem, all copies of an element (recursion copies
+ *        the diagram!) look via the shared index into the same vector slot and increment it when executed,
+ *        at what call level ever. Still, the differences in run data copying between the element classes
+ *        must still be put under scrutinous analysis. Not all differences seem plausible.
  *      2016-03-06 / 2016-03-12 Enhancements #77, #124 (KGU#117/KGU#156)
  *      - According to an ER by [elemhsb], first a mechanism optionally to visualise code coverage (for
- *        white-box test comleteness) was implemented. A green background colour was proposed and used
+ *        white-box test completeness) was implemented. A green background colour was proposed and used
  *        to highlight covered Element. It soon became clear that with respect to subroutines a dis-
  *        tinction among loose (shallow) and strict (deep) coverage was necessary, particularly when
  *        recursion comes in. So the coverage tracking could be switched between shallow mode (where
@@ -146,6 +157,7 @@ import com.stevesoft.pat.*;  //http://www.javaregex.com/
 
 import java.awt.Point;
 import java.util.Stack;
+import java.util.Vector;
 
 import javax.swing.ImageIcon;
 
@@ -255,6 +267,9 @@ public abstract class Element {
 	protected static int maxExecStepCount = 0;		// Maximum number of instructions carried out directly per element
 	protected static int maxExecTotalCount = 0;		// Maximum combined number of directly and indirectly performed instructions
 	// END KGU156 2016-03-10
+	// START KGU#225 2016-07-28: Bugfix #210
+	protected static Vector<Integer> execCounts = new Vector<Integer>();
+	// END KGU#225 2016-07-28
 
 	public static boolean E_VARHIGHLIGHT = false;	// Highlight variables, operators, string literals, and certain keywords? 
 	public static boolean E_SHOWCOMMENTS = true;	// Enable comment bars and comment popups? 
@@ -309,10 +324,13 @@ public abstract class Element {
 	public boolean deeplyCovered = false;	// Flag indicates full test coverage
 	// END KGU#117 2016-03-06
 	// START KGU#156 2016-03-10; Enh. #124
-	protected int execCount = 0;		// Number of times this was executed while runEventTracking has been on
+	//protected int execCount = 0;		// Number of times this was executed while runEventTracking has been on
 	protected int execStepCount = 0;	// Number of instructions carried out directly by this element
 	protected int execSubCount;			// Number of instructions carried out by substructures of this element
 	// END KGU#156 2016-03-11
+	// START KGU#225 2016-07-28: Bugfix #210
+	protected int execCountIndex = -1;
+	// END KGU#225 2016-07-28
 
 	// END KGU156 2016-03-10
 	
@@ -396,11 +414,21 @@ public abstract class Element {
 	public abstract Element copy();
 	
 	// START KGU#156 2016-03-11: Enh. #124
-	protected void copyRuntimeData(Element _target)
+	protected void copyRuntimeData(Element _target, boolean _simply_too)
 	{
-		_target.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
-		_target.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
-		_target.execCount = this.execCount;
+		if (Element.E_COLLECTRUNTIMEDATA)
+		{
+			if (_simply_too)	// Is this disticntion really important?
+			{
+				_target.simplyCovered = this.simplyCovered;
+			}
+			_target.deeplyCovered = this.deeplyCovered;
+			// START KGU#225 2016-07-28: Bugfix #210
+			//_target.execCount = this.execCount;
+			this.makeExecutionCount();
+			_target.execCountIndex = this.execCountIndex;
+			// END KGU#225 2016-07-28
+		}
 	}
 	// END KGU#156 2016-03-11
 	
@@ -438,7 +466,9 @@ public abstract class Element {
 		{
 			this.simplyCovered = this.simplyCovered || _cloneOfMine.simplyCovered;
 			this.deeplyCovered = this.deeplyCovered || _cloneOfMine.deeplyCovered;
-			this.execCount += _cloneOfMine.execCount;
+			// START KGU#225 2016-07-28: Bugfix #210 - no longer needed, seemed wrong
+			//this.execCount += _cloneOfMine.execCount;
+			// END KGU#225 2016-07-28
 			//this.execStepCount += _cloneOfMine.execStepCount;
 			// In case of (direct or indirect) recursion the substructure steps will
 			// gathered on a different way! We must not do it twice
@@ -631,11 +661,71 @@ public abstract class Element {
 	// END KGU#143 2016-01-22
 	
 	// START KGU#156 2016-03-11: Enh. #124 - We need a consistent execution step counting
+	/**
+	 * Resets all element execution counts and the derived maximum execution count 
+	 */
 	public static void resetMaxExecCount()
 	{
-		Element.maxExecTotalCount = Element.maxExecStepCount = Element.maxExecCount = 0;		
+		Element.maxExecTotalCount = Element.maxExecStepCount = Element.maxExecCount = 0;
+		// START KGU#225 2016-07-28: Bugfix #210
+		Element.execCounts.clear();
+		// END KGU#225 2016-07-28
 	}
 
+	// START KGU#225 2016-07-28: Bugfix #210
+	/**
+	 * Resets the execution count value of this element and all its clones
+	 */
+	protected void resetExecCount()
+	{
+		if (this.execCountIndex >= 0)
+		{
+			if (this.execCountIndex < Element.execCounts.size())
+			{
+				Element.execCounts.set(this.execCountIndex, 0);
+			}
+			else
+			{
+				this.execCountIndex = -1;
+			}
+		}
+	}
+	
+	/*
+	 * Ensures an entry in the static execution count array. If there
+	 * hadn't been an entry, then its value will be 0 and its index is
+	 * stored in this.execCountEntry
+	 */
+	protected void makeExecutionCount()
+	{
+		if (this.execCountIndex < 0 || this.execCountIndex >= Element.execCounts.size())
+		{
+			this.execCountIndex = Element.execCounts.size();
+			Element.execCounts.add(0);
+		}
+	}
+	
+	/**
+	 * Retrieves the associated execution count and returns it.
+	 * @return current execution count for this element (and all its clones)
+	 */
+	protected int getExecCount()
+	{
+		int execCount = 0;
+		if (this.execCountIndex >= 0)
+		{
+			if (this.execCountIndex < Element.execCounts.size())
+			{
+				execCount = Element.execCounts.get(this.execCountIndex);
+			}
+			else
+			{
+				System.err.println("**** Illegal execCountIndex " + this.execCountIndex + " on " + this);
+			}
+		}
+		return execCount;
+	}
+	// END KGU#225 2016-07-28
 
 	/**
 	 * Computes the summed up execution steps of this and all its substructure
@@ -655,10 +745,22 @@ public abstract class Element {
 	public final void countExecution()
 	{
 		// Element execution is always counting 1, no matter whether element is structured or not
-		if (Element.E_COLLECTRUNTIMEDATA && ++this.execCount > Element.maxExecCount)
+		// START KGU#225 2016-07-28: Bugfix #210
+		//if (Element.E_COLLECTRUNTIMEDATA && ++this.execCount > Element.maxExecCount)
+		//{
+		//	Element.maxExecCount = this.execCount;
+		//}
+		if (Element.E_COLLECTRUNTIMEDATA)
 		{
-			Element.maxExecCount = this.execCount;
+			this.makeExecutionCount();
+			int execCount = this.getExecCount() + 1;
+			Element.execCounts.set(this.execCountIndex, execCount);
+			if (execCount > Element.maxExecCount)
+			{
+				Element.maxExecCount = execCount;
+			}
 		}
+		// END KGU#225 2016-07-28
 	}
 	
 	/**
@@ -850,7 +952,7 @@ public abstract class Element {
 		switch (Element.E_RUNTIMEDATAPRESENTMODE) {
 		case EXECCOUNTS:
 			maxValue = Element.maxExecCount;
-			value = this.execCount;
+			value = this.getExecCount();
 			break;
 		case EXECSTEPS_LOG:
 			logarithmic = true;
@@ -972,7 +1074,11 @@ public abstract class Element {
 		{
 			this.deeplyCovered = this.simplyCovered = false;;
 			// START KGU#156 2016-03-10: Enh. #124
-			this.execCount = this.execStepCount = this.execSubCount = 0;
+			// START KGU#225 2016-07-28: Bugfix #210
+			//this.execCount = this.execStepCount = this.execSubCount = 0;
+			this.execStepCount = this.execSubCount = 0;
+			this.execCountIndex = -1;
+			// END KGU#225 2016-07-28
 			// END KGU#156 2016-03-10
 		}
 		// KGU#117 2016-03-06
@@ -988,7 +1094,18 @@ public abstract class Element {
 	{
 		this.deeplyCovered = this.simplyCovered = false;;
 		// START KGU#156 2016-03-11: Enh. #124
-		this.execCount = this.execStepCount = this.execSubCount = 0;
+		// START KGU#225 2016-07-28: Bugfix #210
+		//this.execCount = this.execStepCount = this.execSubCount = 0;
+		this.execStepCount = this.execSubCount = 0;
+		if (this.execCountIndex >= Element.execCounts.size())
+		{
+			this.execCountIndex = -1;
+		}
+		else if (this.execCountIndex >= 0)
+		{
+			Element.execCounts.set(this.execCountIndex, 0);
+		}
+		// END KGU#225 2016-07-28
 		// END KGU#156 2016-03-11
 	}
 	// END KGU#117 2016-03-07
@@ -1804,7 +1921,7 @@ public abstract class Element {
 	 */
 	protected String getRuntimeInfoString()
 	{
-		return this.execCount + " / " + this.getExecStepCount(this.isCollapsed());
+		return this.getExecCount() + " / " + this.getExecStepCount(this.isCollapsed());
 	}
 	// END KGU#156 2016-03-11
 	

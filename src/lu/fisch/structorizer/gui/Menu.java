@@ -274,6 +274,10 @@ public class Menu extends JMenuBar implements NSDController
 	// Dialog messages
 	public static LangTextHolder msgDialogExpCols = new LangTextHolder("Into how many columns do you want to split the output?");
 	public static LangTextHolder msgDialogExpRows = new LangTextHolder("Into how many rows do you want to split the output?");
+	public static LangTextHolder msgOverwriteFile = new LangTextHolder("Overwrite existing file?");
+	public static LangTextHolder msgOverwriteFiles = new LangTextHolder("Existing file(s) detected. Overwrite?");
+	public static LangTextHolder btnConfirmOverwrite = new LangTextHolder("Confirm Overwrite");
+	public static LangTextHolder msgRepeatSaveAttempt = new LangTextHolder("Your file has not been saved. Please repeat the save operation!");
 	// END KGU#218 2016-07-28
 
 	public void create()

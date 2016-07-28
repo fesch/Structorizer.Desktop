@@ -245,7 +245,7 @@ public class Call extends Instruction {
 //		// END KGU#183 2016-04-24
 //		return ele;
 //	}
-		return copyDetails(ele, false);
+		return copyDetails(ele, true);
 	}
 // END KGU#199 2016-07-07
 	

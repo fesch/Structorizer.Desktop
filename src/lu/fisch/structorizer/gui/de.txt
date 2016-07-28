@@ -50,7 +50,8 @@
  *      Kay Gürtzig         2016.07.07  Enh. #188: Messages for transmute button and menu items
  *      Kay Gürtzig         2016.07.20  Enh. #160: New message for ExportOptionDialoge
  *      Kay Gürtzig         2016.07.26  Bugfix #149: Tags for ExportOptionDialoge corrected
- *      Kay Gürtzig         2016.07.27  Enh. #270: New message Menu.warning_1 (must be consistent with menu entry names!) 
+ *      Kay Gürtzig         2016.07.27  Enh. #207: New message Menu.warning_1 (must be consistent with menu entry names!) 
+ *      Kay Gürtzig         2016.07.28  Issue #208: New dialog messages for PNG export 
  *
  ******************************************************************************************************
  *
@@ -71,6 +72,7 @@ Menu.menuFileOpenRecent.text=Zuletzt verwendet
 Menu.menuFileExport.text=Exportieren
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Bild ...
+Menu.menuFileExportPicturePNGmulti=PNG (gekachelt) ...
 Menu.menuFileExportCode.text=Quellcode ...
 Menu.lbFileExportCodeFavorite.text=Exportieren nach %
 Menu.menuFileExportCodeFavorite.tooltip=Die bevorzugte Exportsprache kann in den Export-Einstellungen gewählt werden.
@@ -182,6 +184,15 @@ Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpAbout.text=Über Structorizer ...
 Menu.menuHelpUpdate.text=Neue Versionen ...
+
+// Dialog messages
+Menu.msgDialogExpCols.text=In wie viele Spalten soll das Bild zerlegt werden?
+Menu.msgDialogExpRows.text=In wie viele Zeilen soll das Bild zerlegt werden?
+Menu.msgOverwriteFile.text=Bestehende Datei überschreiben?
+Menu.msgOverwriteFiles.text=Gleichnamige Datei(en) vorhanden. Überschreiben?
+Menu.btnConfirmOverwrite.text=Überschreiben bestätigen
+Menu.msgRepeatSaveAttempt.text=Die Datei konnte nicht gesichert werden. Versuchen Sie es bitte erneut!
+
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
 Menu.warning_1.text=ACHTUNG: TEXTE UND KOMMENTARE IN DER ANZEIGE VERTAUSCHT! → Menüpunkt "Diagramme > Tausche Text/Kommentare".
@@ -220,9 +231,6 @@ Menu.error16_5.text=Ein direkter Rücksprung (return) aus einem Parallelzweig is
 Menu.error16_6.text=Falscher Parameter für diese Art von Aussprung - hier sollte eine Ganzzahlkonstante stehen.
 Menu.error16_7.text=Anweisungen nach einem Aussprung sind nicht erreichbar.
 Menu.error17.text=Konsistenzgefahr wegen konkurrierender Zugriffe auf Variable «%» aus mehreren Threads!
-// Dialog messages
-Menu.msgDialogExpCols.text=In wie viele Spalten soll das Bild zerlegt werden?
-Menu.msgDialogExpRows.text=In wie viele Zeilen soll das Bild zerlegt werden?
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Überprüfungs-Einstellungen
