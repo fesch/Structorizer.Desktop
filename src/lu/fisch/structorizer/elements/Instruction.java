@@ -271,17 +271,22 @@ public class Instruction extends Element {
 		// START KGU#117 2016-03-07: Enh. #77
         if (Element.E_COLLECTRUNTIMEDATA)
         {
+        	// START KGU#225 2016-07-28: Bugfix #210
         	// We share this object (important for recursion!)
-        	_ele.deeplyCovered = this.deeplyCovered;
+        	//_ele.deeplyCovered = this.deeplyCovered;
         	// START KGU#199 2016-07-06: Enh. #188
-        	if (_forConversion)
-        	{
-        		_ele.simplyCovered = this.simplyCovered;
-        		_ele.execCount = this.execCount;
-        		_ele.execStepCount = this.execStepCount;
-        		_ele.execSubCount = this.execSubCount;
-        	}
+        	//if (_forConversion)	// This distinction wasn't clear here: why?
+        	//{
+        	//	_ele.simplyCovered = this.simplyCovered;
+        	//	_ele.execCount = this.execCount;
+        	//	_ele.execStepCount = this.execStepCount;
+        	//	_ele.execSubCount = this.execSubCount;
+        	//}
         	// END KGU#199 2016-07-06
+        	this.copyRuntimeData(_ele, _forConversion);
+        	_ele.execStepCount = this.execStepCount;
+        	_ele.execSubCount = this.execSubCount;
+        	// END KGU#225 2016-07-28
         }
 		// END KGU#117 2016-03-07
 		// START KGU#183 2016-04-24: Issue #169

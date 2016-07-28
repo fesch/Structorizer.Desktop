@@ -87,6 +87,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.05.25      KGU#198: top-level function results weren't logged in the window output
  *      Kay Gürtzig     2016.06.07      KGU#200: While loops showed wrong colour if their body raised an error
  *      Kay Gürtzig     2016.07.25      Issue #201: Look-and-Feel update, Strack trace level numbers (KGU#210)
+ *      Kay Gürtzig     2016-07-27      KGU#197: Further (chiefly error) messages put under language support
+ *                                      Enh. #137: Error messages now also written to text window output
  *
  ******************************************************************************************************
  *
@@ -783,7 +785,10 @@ public class Executor implements Runnable
 					if (str == null)
 					{
 						//i = params.count();	// leave the loop
-						result = "Manual break!";
+						// START KGU#197 2016-07-27: Enhanced localization
+						//result = "Manual break!";
+						result = control.msgManualBreak.getText();
+						// END KGU#197 2016-07-27
 						break;
 					}
 					try
@@ -831,7 +836,10 @@ public class Executor implements Runnable
 			
 			if (result.equals("") && (stop == true))
 			{
-				result = "Manual break!";
+				// START KGU#197 2016-07-27: Enhanced localization
+				//result = "Manual break!";
+				result = control.msgManualBreak.getText();
+				// END KGU#197 2016-07-27
 			}
 		}
 
@@ -862,6 +870,9 @@ public class Executor implements Runnable
 			{
 				JOptionPane.showMessageDialog(diagram, result, "Error",
 						JOptionPane.ERROR_MESSAGE);
+				// START KGU#160 2016-07-27: Issue #137 - also log the result to the console
+				this.console.writeln("*** " + result, Color.RED);
+				// END KGU#160 2016-07-27
 				isErrorReported = true;
 			}
 			if (!this.callers.isEmpty())
@@ -2153,7 +2164,10 @@ public class Executor implements Runnable
 						}
 						catch (NumberFormatException ex)
 						{
-							result = "Illegal leave argument: " + ex.getMessage();
+							// START KGU#197 2016-07-27: Localization support
+							//result = "Illegal leave argument: " + ex.getMessage();
+							result = control.msgIllegalLeave.getText().replace("%1",ex.getMessage());
+							// END KGU#197 2016-07-27
 						}
 					}
 					this.leave += nLevels;
@@ -2178,16 +2192,28 @@ public class Executor implements Runnable
 						}
 						else
 						{
-							result = "Inappropriate exit value: <" + (n == null ? tokens.get(1) : n.toString()) + ">";
+							// START KGU#197 2016-07-27: More localization support
+							//result = "Inappropriate exit value: <" + (n == null ? tokens.get(1) : n.toString()) + ">";
+							result = control.msgWrongExit.getText().replace("%1",
+									"<" + (n == null ? tokens.get(1) : n.toString()) + ">");
+							// END KGU#197 2016-07-27
 						}
 					}
 					catch (EvalError ex)
 					{
-						result = "Wrong exit value: " + ex.getMessage();
+						// START KGU#197 2016-07-27: More localization support
+						//result = "Wrong exit value: " + ex.getMessage();
+						result = control.msgWrongExit.getText().replace("%1",
+								ex.getMessage());
+						// END KGU#197 2016-07-27
 					}
 					if (result.isEmpty())
 					{
-						result = "Program exited with code " + exitValue + "!";
+						// START KGU#197 2016-07-27: More localization support
+						//result = "Program exited with code " + exitValue + "!";
+						result = control.msgExitCode.getText().replace("%1",
+								Integer.toString(exitValue));
+						// END KGU#197 2016-07-27
 						// START KGU#117 2016-03-07: Enh. #77
 						element.checkTestCoverage(true);
 						// END KGU#117 2016-03-07
@@ -2197,7 +2223,10 @@ public class Executor implements Runnable
 				// Anything else is an error
 				else if (!cmd.isEmpty())
 				{
-					result = "Illegal content of a Jump (i.e. exit) instruction: <" + cmd + ">!";
+					// START KGU#197 2016-07-27: More localization support
+					//result = "Illegal content of a Jump (i.e. exit) instruction: <" + cmd + ">!";
+					result = control.msgIllegalJump.getText().replace("%1", cmd);
+					// END KGU#197 2016-07-27
 				}
 			} catch (Exception ex)
 			{
@@ -2207,7 +2236,12 @@ public class Executor implements Runnable
 		}
 		if (done && leave > loopDepth)
 		{
+			// START KGU#197 2016-07-27: More localization support
 			result = "Too many levels to leave (actual depth: " + loopDepth + " / specified: " + leave + ")!";
+			result = control.msgTooManyLevels.getText().
+					replace("%1", Integer.toString(loopDepth)).
+					replace("%2", Integer.toString(leave));
+			// END KGU#197 2016-07-27
 		}			
 		if (result.equals(""))
 		{
@@ -2259,13 +2293,22 @@ public class Executor implements Runnable
 				}
 				else
 				{
-					result = "A function diagram " + f.getName() + " (" + f.paramCount() + 
-							" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first."; 
+					// START KGU#197 2016-07-27: Now translatable
+					//result = "A function diagram " + f.getName() + " (" + f.paramCount() + 
+					//		" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";
+					result = control.msgNoSubroutine.getText().
+							replace("%1", f.getName()).
+							replace("%2", Integer.toString(f.paramCount())).
+							replace("%0", "\n");
+					// END KGU#197 2016-07-27
 				}
 			}
 			else
 			{
-				result = "<" + expression + "> is not a correct function!";
+				// START KGU#197 2016-07-27: Now translatable
+				//result = "<" + expression + "> is not a correct function!";
+				result = control.msgIllFunction.getText().replace("%1", expression);
+				// END KGU#197 2016-07-27
 			}
 		}
 		// END KGU#2 2015-10-17
@@ -2294,9 +2337,12 @@ public class Executor implements Runnable
 		else if (result.isEmpty() && !stop)
 		// END KGU#2 2015-11-24
 		{
-			result = "<"
-					+ expression
-					+ "> is not a correct or existing expression.";
+			// START KGU#197 2016-07-27: Localization support
+			//result = "<"
+			//		+ expression
+			//		+ "> is not a correct or existing expression.";
+			result = control.msgInvalidExpr.getText().replace("%1", expression);
+			// END KGU#197 2016-07-27
 		}
 
 		return result;
@@ -2564,7 +2610,7 @@ public class Executor implements Runnable
 		return result;
 	}
 
-	// Submethod of stepInstruction(Instruction element), handling an output instruction
+	// Submethod of stepInstruction(Instruction element), handling a function call
 	private String trySubroutine(String cmd, Instruction element) throws EvalError
 	{
 		String result = "";
@@ -2584,9 +2630,13 @@ public class Executor implements Runnable
 						{
 							result = result + "\n";
 						}
-						result = result + "PARAM " + (p+1) + ": <"
-								+ f.getParam(p)
-								+ "> is not a correct or existing expression.";
+						// START KGU#197 2016-07-27: Localization support
+						//result = result + "PARAM " + (p+1) + ": <"
+						//		+ f.getParam(p)
+						//		+ "> is not a correct or existing expression.";
+						result = result + "PARAM " + (p+1) + ": "
+								+ control.msgInvalidExpr.getText().replace("%1", f.getParam(p));
+						// END KGU#197 2016-07-27
 					} else
 					{
 						params += "," + args[p].toString();
@@ -2619,8 +2669,14 @@ public class Executor implements Runnable
 				}
 				else
 				{
-					result = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
-							" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";					
+					// START KGU#197 2016-07-27: Now translatable
+					//result = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
+					//		" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";
+					result = control.msgNoSubroutine.getText().
+							replace("%1", f.getName()).
+							replace("%2", Integer.toString(f.paramCount())).
+							replace("%0", "\n");
+					// END KGU#197 2016-07-27
 				}
 			}
 			// END KGU#2 2015-10-17
@@ -2770,8 +2826,11 @@ public class Executor implements Runnable
 			//System.out.println("Res= " + n);
 			if (n == null)
 			{
-				result = "<" + s
-						+ "> is not a correct or existing expression.";
+				// START KGU#197 2016-07-27: Localization support
+				//result = "<" + s
+				//		+ "> is not a correct or existing expression.";
+				result = control.msgInvalidExpr.getText().replace("%1", s);
+				// END KGU#197 2016-07-27
 			}
 			// if(getExec(s).equals("OK"))
 			else 
@@ -2868,8 +2927,11 @@ public class Executor implements Runnable
 
 			if (cond == null)
 			{
-				result = "<" + condStr
-						+ "> is not a correct or existing expression.";
+				// START KGU#197 2016-07-27: Localization support
+				//result = "<" + condStr
+				//		+ "> is not a correct or existing expression.";
+				result = control.msgInvalidExpr.getText().replace("%1", condStr);
+				// END KGU#197 2016-07-27
 			} else
 			{
 				// START KGU#156 2016-03-11: Enh. #124
@@ -2934,9 +2996,12 @@ public class Executor implements Runnable
 					cond = interpreter.eval(convertStringComparison(condStr));
 					if (cond == null)
 					{
-						result = "<"
-								+ condStr
-								+ "> is not a correct or existing expression.";
+						// START KGU#197 2016-07-27: Localization support
+						//result = "<"
+						//		+ condStr
+						//		+ "> is not a correct or existing expression.";
+						result = control.msgInvalidExpr.getText().replace("%1", condStr);
+						// END KGU#197 2016-07-27
 					}
 					// START KGU#156 2016-03-11: Enh. #124
 					else
@@ -3014,8 +3079,11 @@ public class Executor implements Runnable
 			Object n = interpreter.eval(condStr);
 			if (n == null)
 			{
-				result = "<" + condStr
-						+ "> is not a correct or existing expression.";
+				// START KGU#197 2016-07-27: Localization support
+				//result = "<" + condStr
+				//		+ "> is not a correct or existing expression.";
+				result = control.msgInvalidExpr.getText().replace("%1", condStr);
+				// END KGU#197 2016-07-27
 			} else
 			{
 				// START KGU#78 2015-11-25: In order to handle exits we must know the nesting depth
@@ -3049,9 +3117,12 @@ public class Executor implements Runnable
 					n = interpreter.eval(convertStringComparison(condStr));
 					if (n == null)
 					{
-						result = "<"
-								+ condStr
-								+ "> is not a correct or existing expression.";
+						// START KGU#197 2016-07-27: Localization support
+						//result = "<"
+						//		+ condStr
+						//		+ "> is not a correct or existing expression.";
+						result = control.msgInvalidExpr.getText().replace("%1", condStr);
+						// END KGU#197 2016-07-27
 					}
 
 					// delay this element
@@ -3158,7 +3229,10 @@ public class Executor implements Runnable
 			Object n = interpreter.eval(s);
 			if (n == null)
 			{
-				result = "<"+s+"> is not a correct or existing expression.";
+				// START KGU#197 2016-07-27: Localization support
+				//result = "<"+s+"> is not a correct or existing expression.";
+				result = control.msgInvalidExpr.getText().replace("%1", s);
+				// END KGU#197 2016-07-27
 			}
 			int ival = 0;
 			if (n instanceof Integer)
@@ -3187,7 +3261,10 @@ public class Executor implements Runnable
 			n = interpreter.eval(s);
 			if (n == null)
 			{
-				result = "<"+s+ "> is not a correct or existing expression.";
+				// START KGU#197 2016-07-27: Localization support
+				//result = "<"+s+"> is not a correct or existing expression.";
+				result = control.msgInvalidExpr.getText().replace("%1", s);
+				// END KGU#197 2016-07-27
 			}
 			int fval = 0;
 			if (n instanceof Integer)

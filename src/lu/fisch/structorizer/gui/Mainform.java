@@ -316,6 +316,7 @@ public class Mainform  extends JFrame implements NSDController
 					diagram.setHightlightVars(true);
 				}
 				// analyser
+				// KGU 2016-07-27: Why has this been commented out once (before version 3.17)? See Issue #207
                 /*
 				if (ini.getProperty("analyser","0").equals("0")) // default = 0
 				{
@@ -418,6 +419,7 @@ public class Mainform  extends JFrame implements NSDController
 			ini.setProperty("showComments",(Element.E_SHOWCOMMENTS?"1":"0"));
 			ini.setProperty("switchTextComments",(Element.E_TOGGLETC?"1":"0"));
 			ini.setProperty("varHightlight",(Element.E_VARHIGHLIGHT?"1":"0"));
+			// KGU 2016-07-27: Why has this been commented out once (before version 3.17)? See Issue #207
 			//ini.setProperty("analyser",(Element.E_ANALYSER?"1":"0"));
 			// START KGU#123 2016-01-04: Enh. #87
 			ini.setProperty("wheelToCollapse",(Element.E_WHEELCOLLAPSE?"1":"0"));

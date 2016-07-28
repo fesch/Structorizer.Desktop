@@ -48,7 +48,9 @@
  *      Kay Gürtzig     2016.04.12      Issue #161: New Analyser error message for Jump
  *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
  *      Kay Gürtzig     2016.07.07      Enh. #188: Messages for transmute button and menu items
- *      Kay Gürtzig     2016-07-20      Enh. #160: New message for ExportOptionDialoge 
+ *      Kay Gürtzig     2016.07.20      Enh. #160: New message for ExportOptionDialoge
+ *      Kay Gürtzig     2016.07.27      Enh. #207: New message Menu.warning_1 (must be consistent with menu entry names!) 
+ *      Kay Gürtzig     2016.07.28      Issue #208: New dialog messages for PNG export 
  *
  ******************************************************************************************************
  *
@@ -69,6 +71,7 @@ Menu.menuFileSaveAs.text=Save As ...
 Menu.menuFileExport.text=Export
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Picture ...
+Menu.menuFileExportPicturePNGmulti=PNG (multiple) ...
 Menu.menuFileExportCode.text=Code ...
 Menu.lbFileExportCodeFavorite.text=Export as % code
 Menu.menuFileExportCodeFavorite.tooltip=You may alter the favourite target language in the export preferences.
@@ -158,7 +161,7 @@ Menu.menuPreferencesLanguageDutch.text=Dutch
 Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburgish
 Menu.menuPreferencesLanguageSpanish.text=Spanish
 Menu.menuPreferencesLanguageItalian.text=Italian
-Menu.menuPreferencesLanguagePortugalBrazil.text=Portugese brazilian
+Menu.menuPreferencesLanguagePortugalBrazil.text=Portuguese brazilian
 Menu.menuPreferencesLanguageSimplifiedChinese.text=Chinese (simplified)
 Menu.menuPreferencesLanguageTraditionalChinese.text=Chinese (traditional)
 Menu.menuPreferencesLanguageCzech.text=Czech
@@ -179,7 +182,18 @@ Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpAbout.text=About ...
 Menu.menuHelpUpdate.text=Update ...
+
+// Dialog messages
+Menu.msgDialogExpCols.text=Into how many columns do you want to split the output?
+Menu.msgDialogExpRows.text=Into how many rows do you want to split the output?
+Menu.msgOverwriteFile.text=Overwrite existing file?
+Menu.msgOverwriteFiles.text=Existing file(s) detected. Overwrite?
+Menu.btnConfirmOverwrite.text=Confirm Overwrite
+Menu.msgRepeatSaveAttempt.text=Your file has not been saved. Please repeat the save operation!
+
 // Error messages for analyser
+// warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
+Menu.warning_1.text=WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! → Menu "Diagram > Switch text/comments".
 Menu.error01_1.text=WARNING: No loop variable detected ...
 Menu.error01_2.text=WARNING: More than one loop variable detected ...
 Menu.error01_3.text=You are not allowed to modify the loop variable «%» inside the loop!

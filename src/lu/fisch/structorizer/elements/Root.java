@@ -70,6 +70,10 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.07      Enh. #185 + #188: Mechanism to convert Instructions to Calls
  *      Kay Gürtzig     2016.07.19      Enh. #192: New method proposeFileName() involving the argument count (KGU#205)
  *      Kay Gürtzig     2016.07.22      Bugfix KGU#209 (Enh. #77): The display of the coverage marker didn't work
+ *      Kay Gürtzig     2016.07.25      Bugfix #205: Variable higlighting worked only in boxed Roots (KGU#216)
+ *      Kay Gürtzig     2016.07.27      Issue #207: New Analyser warning in switch text/comments mode (KGU#220)
+ *      Kay Gürtzig     2016.07.28      Bugfix #208: Filling of subroutine diagrams no longer exceeds border
+ *                                      Bugfix KGU#222 in collectParameters()
  *
  ******************************************************************************************************
  *
@@ -286,6 +290,7 @@ public class Root extends Element {
 	}
 	// END KGU 2015-10-13
 	
+	
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
@@ -338,6 +343,9 @@ public class Root extends Element {
 		}
 
 		rect0.bottom += subrect0.bottom;
+		// START KGU#221 2016-07-28: Bugfix #208 - partial boxing for un-boxed subroutine
+		if (!isNice && !isProgram) rect0.bottom += E_PADDING/2;
+		// END KGU#221 2016-07-28
 		this.width = rect0.right - rect0.left;
 		this.height = rect0.bottom - rect0.top;
 		
@@ -386,27 +394,6 @@ public class Root extends Element {
 
 		rect = _top_left.copy();
 
-		// START KGU 2015-10-13: 
-		// Root-specific part put into an override version of getColor()
-		// Remaining stuff replaced by new method getFillColor(), which hence comprises both
-//		if(isNice==false)
-//		{
-//			drawColor=Color.WHITE;
-//		}
-//		else
-//		{
-//			drawColor=Color.LIGHT_GRAY;
-//		}
-//
-//		drawColor=getColor();
-//
-//		if(selected==true)
-//		{
-//                if(waited==true) { drawColor=Element.E_WAITCOLOR; }
-//                else { drawColor=Element.E_DRAWCOLOR; }
-//		}
-		// END KGU 2015-10-13
-		
 		// draw background
 
 		Canvas canvas = _canvas;
@@ -414,7 +401,17 @@ public class Root extends Element {
 		// erase background
 		canvas.setBackground(drawColor);
 		canvas.setColor(drawColor);
-		canvas.fillRect(_top_left);
+		// START KGU#221 2016-07-27: Bugfix #208
+		//canvas.fillRect(_top_left);
+		if (!isProgram)
+		{
+			canvas.fillRoundRect(_top_left);
+		}
+		else
+		{
+			canvas.fillRect(_top_left);
+		}
+		// END KGU#221 2016-07-27
 
 		/*
 		 if(isNice=false) then _canvas.pen.Width:=3;
@@ -433,7 +430,16 @@ public class Root extends Element {
 		// draw comment
 		if (E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 		{
-			this.drawCommentMark(_canvas, _top_left);
+			// START KGU#221 2016-07-27: Bugfix #208
+			//this.drawCommentMark(_canvas, _top_left);
+			Rect commRect = _top_left.copy();
+			if (!isProgram)
+			{
+				commRect.top += E_PADDING/2;
+				commRect.bottom -= E_PADDING/2;
+			}
+			this.drawCommentMark(_canvas, commRect);
+			// END KGU#221 2016-07-27
 		}
 
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
@@ -441,44 +447,60 @@ public class Root extends Element {
 		canvas.setFont(titleFont);
 
 		// draw text
-		if (isNice==true)
+		// START KGU#216 2016-07-25: Bug #205 - Except the padding the differences here were wrong
+//		if (isNice==true)
+//		{
+//			for(int i=0;i<getText(false).count();i++)
+//			{
+//				canvas.setColor(Color.BLACK);
+//				writeOutVariables(canvas,
+//								  rect.left+E_PADDING,
+//							      rect.top+(i+1)*fm.getHeight()+E_PADDING,
+//								  (String) getText(false).get(i)
+//								  ,this);
+//			}
+//			// START KGU#156 2016-03-11: Enh. #124
+//			// write the run-time info if enabled
+//			this.writeOutRuntimeInfo(canvas, rect.right - (Element.E_PADDING), rect.top);
+//			// END KGU#156 2016-03-11
+//					
+//		}
+//		else
+//		{
+//			for(int i=0;i<getText(false).count();i++)
+//			{
+//				canvas.setColor(Color.BLACK);
+//				// FIXME (KGU): Why aren't the variables highlighted here? (forgotten?)
+//				canvas.writeOut(rect.left + (E_PADDING/2),
+//								rect.top + (i+1)*fm.getHeight() + (E_PADDING/2),
+//								(String) getText(false).get(i)
+//								);
+//			}
+//			// START KGU#156 2016-03-11: Enh. #124
+//			// write the run-time info if enabled
+//			this.writeOutRuntimeInfo(canvas, rect.right - (Element.E_PADDING/2), rect.top);
+//			// END KGU#156 2016-03-11
+//					
+//		}
+		int textPadding = isNice ? E_PADDING : E_PADDING/2;
+		for(int i=0; i<getText(false).count(); i++)
 		{
-			for(int i=0;i<getText(false).count();i++)
-			{
-				canvas.setColor(Color.BLACK);
-				writeOutVariables(canvas,
-								  rect.left+E_PADDING,
-							      rect.top+(i+1)*fm.getHeight()+E_PADDING,
-								  (String) getText(false).get(i)
-								  ,this);
-			}
-			// START KGU#156 2016-03-11: Enh. #124
-			// write the run-time info if enabled
-			this.writeOutRuntimeInfo(canvas, rect.right - (Element.E_PADDING), rect.top);
-			// END KGU#156 2016-03-11
-					
+			canvas.setColor(Color.BLACK);
+			writeOutVariables(canvas,
+							  rect.left + textPadding,
+						      rect.top + (i+1)*fm.getHeight() + textPadding,
+							  (String)getText(false).get(i),
+							  this);
 		}
-		else
-		{
-			for(int i=0;i<getText(false).count();i++)
-			{
-				canvas.setColor(Color.BLACK);
-				// FIXME (KGU): Why aren't the variables highlighted here? (forgotten?)
-				canvas.writeOut(rect.left + (E_PADDING/2),
-								rect.top + (i+1)*fm.getHeight() + (E_PADDING/2),
-								(String) getText(false).get(i)
-								);
-			}
-			// START KGU#156 2016-03-11: Enh. #124
-			// write the run-time info if enabled
-			this.writeOutRuntimeInfo(canvas, rect.right - (Element.E_PADDING/2), rect.top);
-			// END KGU#156 2016-03-11
-					
-		}
+		// write the run-time info if enabled (Enh. #124)
+		this.writeOutRuntimeInfo(canvas, rect.right - textPadding, rect.top);
+		// END KGU#216 2016-07-25
+		
 		canvas.setFont(Element.font);
 		
 		int headerHeight = fm.getHeight()*getText(false).count();
 
+		// Draw the frame around the body
 		if (isNice==true)
 		{
 			headerHeight += 2*E_PADDING;
@@ -492,29 +514,56 @@ public class Root extends Element {
 			headerHeight += 2*(E_PADDING/2);
 			rect.top = _top_left.top + headerHeight;
 			rect.left = _top_left.left;
+			// START KGU#221 2016-07-28: Bugfix #208
+			if (!isProgram)
+			{
+				rect.bottom -= E_PADDING/2;
+			}
+			// END KGU#221 2016-07-28
 		}
 
 		children.draw(_canvas,rect);
 
 		// draw box around
 		canvas.setColor(Color.BLACK);
-		canvas.drawRect(_top_left);
+		// START KGU#221 2016-07-27: Bugfix #208
+		//canvas.drawRect(_top_left);
+		if (isProgram)
+		{
+			canvas.drawRect(_top_left);
+		}
+		// END KGU##221 2016-07-27
 
 
 		// draw thick line
 		if (isNice==false)
 		{
 			rect.top = _top_left.top + headerHeight - 1;
-			rect.left = _top_left.left;
+			//rect.left = _top_left.left;
 			canvas.drawRect(rect);
+			// START KGU#221 2016-07-28: Bugfix #208
+			if (!isProgram)
+			{
+				rect.top = rect.bottom;
+				rect.bottom++;
+				canvas.drawRect(rect);
+			}
+			// END KGU#221 2016-07-28
 		}
 
 
 		if (isProgram==false)
 		{
 			rect = _top_left.copy();
-			canvas.setColor(Color.WHITE);
-			canvas.drawRect(rect);
+			// START KGU#221 2016-07-27: Bugfix #208
+			//canvas.setColor(Color.WHITE);
+			//canvas.drawRect(rect);
+//			if (!isNice)
+//			{
+//				canvas.setColor(Color.WHITE);
+//				canvas.drawRect(rect);
+//			}
+			// END KGU#221 2016-07-27
 			canvas.setColor(Color.BLACK);
 			rect = _top_left.copy();
 			canvas.roundRect(rect);
@@ -863,7 +912,10 @@ public class Root extends Element {
             //ele.updaters = this.updaters;	// FIXME: Risks of this?
             // END KGU#2 (#9) 2015-11-13
     		// START KGU#117 2016-03-07: Enh. #77
-    		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+    		// START KGU#156/KGU#225 2016-07-28: Bugfix #210
+    		//ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+    		this.copyRuntimeData(ele, false);
+    		// END KGU#156/KGU#225 2016-07-28
     		// END KGU#117 2016-03-07
     		// START KGU#183 2016-04-24: Issue #169
     		ele.selected = this.selected;
@@ -899,7 +951,7 @@ public class Root extends Element {
 	// START KGU#117 2016-03-12: Enh. #77
 	protected String getRuntimeInfoString()
 	{
-		return this.execCount + " / (" + this.getExecStepCount(true) + ")";
+		return this.getExecCount() + " / (" + this.getExecStepCount(true) + ")";
 	}
 	// END KGU#117 2016-03-12
 
@@ -3328,6 +3380,12 @@ public class Root extends Element {
         			rootText=rootText.substring(rootText.indexOf("(")+1).trim();
         			rootText=rootText.substring(0,rootText.indexOf(")")).trim();
         		}
+        		// START KGU#222 2016-07-28: If there is no parentheis then we shouldn't add anything...
+        		else
+        		{
+        			rootText = "";
+        		}
+        		// END KGU#222 2016-07-28
 
         		StringList paramGroups = StringList.explode(rootText,";");
         		for(int i = 0; i < paramGroups.count(); i++)
@@ -3432,6 +3490,17 @@ public class Root extends Element {
             // END KGU 2015-11-25
 
             DetectedError error;
+            
+            // START KGU#220 2016-07-27: Enh. #207
+            // Warn in case of switched text/comments as first report
+            if (Element.E_TOGGLETC)
+            {
+            	// This is a general warning without associated element - put at top
+            	error = new DetectedError(errorMsg(Menu.warning_1, ""), null);
+            	// Category 0 is not restricted to configuration (cannot be switched off)
+            	addError(errors, error, 0);
+            }
+            // END KGU#220 2016-07-27
 
             // CHECK: uppercase for programname (#6)
             if(!programName.toUpperCase().equals(programName))
