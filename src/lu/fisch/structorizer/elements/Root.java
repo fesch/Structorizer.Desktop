@@ -72,7 +72,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.22      Bugfix KGU#209 (Enh. #77): The display of the coverage marker didn't work
  *      Kay Gürtzig     2016.07.25      Bugfix #205: Variable higlighting worked only in boxed Roots (KGU#216)
  *      Kay Gürtzig     2016.07.27      Issue #207: New Analyser warning in switch text/comments mode (KGU#220)
- *      Kay Gürtzig     2016.07.28      Bugfix #208: Filling of subroutine diagrams no longer exceeds border 
+ *      Kay Gürtzig     2016.07.28      Bugfix #208: Filling of subroutine diagrams no longer exceeds border
+ *                                      Bugfix KGU#222 in collectParameters()
  *
  ******************************************************************************************************
  *
@@ -3376,6 +3377,12 @@ public class Root extends Element {
         			rootText=rootText.substring(rootText.indexOf("(")+1).trim();
         			rootText=rootText.substring(0,rootText.indexOf(")")).trim();
         		}
+        		// START KGU#222 2016-07-28: If there is no parentheis then we shouldn't add anything...
+        		else
+        		{
+        			rootText = "";
+        		}
+        		// END KGU#222 2016-07-28
 
         		StringList paramGroups = StringList.explode(rootText,";");
         		for(int i = 0; i < paramGroups.count(); i++)

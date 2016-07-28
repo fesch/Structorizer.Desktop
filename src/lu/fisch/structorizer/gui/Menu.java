@@ -48,6 +48,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.04.24      Fix #173: Mnemonics for menus Diagram and Help had been compromised
  *      Kay Gürtzig     2016.07.07      Enh. #188: New menu item "wand" for element conversion (KGU#199)
  *      Kay Gürtzig     2016.07.22      Enh. #199: New help menu item "user guide" for element conversion (KGU#208)
+ *      Kay Gürtzig     2016.07.28      Enh. #206: New Dialog message text holders
  *
  ******************************************************************************************************
  *
@@ -219,7 +220,7 @@ public class Menu extends JMenuBar implements NSDController
 	protected JMenuItem menuHelpAbout = new JMenuItem("About ...",IconLoader.ico017);
 	protected JMenuItem menuHelpUpdate = new JMenuItem("Update ...",IconLoader.ico052);
 
-	// Error messages for analyser
+	// Error messages for Analyser
 	// START KGU#220 2016-07-27: Enh. as proposed in issue #207
 	public static LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! ---> \"Diagram > Switch text/comments\".");
 	// END KGU#220 2016-07-27
@@ -269,6 +270,11 @@ public class Menu extends JMenuBar implements NSDController
 	public static LangTextHolder error17 = new LangTextHolder("Consistency risk due to concurrent access to variable «%» by several parallel threads!");
 	// END KGU#47 2015-11-28
 
+	// START KGU#218 2016-07-28: Issue #206 - enhanced localization
+	// Dialog messages
+	public static LangTextHolder msgDialogExpCols = new LangTextHolder("Into how many columns do you want to split the output?");
+	public static LangTextHolder msgDialogExpRows = new LangTextHolder("Into how many rows do you want to split the output?");
+	// END KGU#218 2016-07-28
 
 	public void create()
 	{

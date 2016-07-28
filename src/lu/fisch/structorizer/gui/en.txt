@@ -218,6 +218,9 @@ Menu.error16_5.text=You must not directly return out of a parallel thread!
 Menu.error16_6.text=Wrong argument for this kind of JUMP (should be an integer constant)!
 Menu.error16_7.text=Instruction isn't reachable after a JUMP!
 Menu.error17.text=Consistency risk due to concurrent access to variable «%» by several parallel threads!
+// Dialog messages
+Menu.msgDialogExpCols.text=Into how many columns do you want to split the output?
+Menu.msgDialogExpRows.text=Into how many rows do you want to split the output?
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Analyser preferences

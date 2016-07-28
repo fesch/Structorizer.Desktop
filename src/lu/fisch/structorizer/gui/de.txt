@@ -220,6 +220,9 @@ Menu.error16_5.text=Ein direkter Rücksprung (return) aus einem Parallelzweig is
 Menu.error16_6.text=Falscher Parameter für diese Art von Aussprung - hier sollte eine Ganzzahlkonstante stehen.
 Menu.error16_7.text=Anweisungen nach einem Aussprung sind nicht erreichbar.
 Menu.error17.text=Konsistenzgefahr wegen konkurrierender Zugriffe auf Variable «%» aus mehreren Threads!
+// Dialog messages
+Menu.msgDialogExpCols.text=In wie viele Spalten soll das Bild zerlegt werden?
+Menu.msgDialogExpRows.text=In wie viele Zeilen soll das Bild zerlegt werden?
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Überprüfungs-Einstellungen

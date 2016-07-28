@@ -74,7 +74,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.25      Enh. #158 / KGU#214: selection traversal accomplished for un-boxed Roots,
  *                                      and FOREVER / non-DIN FOR loops
  *      Kay Gürtzig     2016.07.26      Bugfix #204: Modified ExportOptionDialoge API (for correct sizing)
- *      Kay Gürtzig     2016.07.28      Bugfix #208: Modification in setFunction() and setProgram()
+ *      Kay Gürtzig     2016.07.28      Bugfix #208: Modification in setFunction(), setProgram(), and exportPNG()
+ *                                      Bugfix #209: exportPNGmulti() corrected
  *
  ******************************************************************************************************
  *
@@ -139,7 +140,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     private int selY = -1;
     private int mX = -1;
     private int mY = -1;
-
+    
     private NSDController NSDControl = null;
     
     // START KGU#2 2015-11-24
@@ -857,16 +858,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// KGU#91 2015-12-04: Bugfix #39 - Disabled
         //if (Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
 		root.draw(_g);
-                
+        
 		lu.fisch.graphics.Canvas canvas = new lu.fisch.graphics.Canvas((Graphics2D) _g);
 		Rect rect;
 		// FIXME: This "background filling" isn't necessary, at least not under windows
-		rect = new Rect(root.width+1,0,this.getWidth(),this.getHeight());
-		canvas.setColor(Color.LIGHT_GRAY);
-		canvas.fillRect(rect);
-		rect = new Rect(0,root.height+1,this.getWidth(),this.getHeight());
-		canvas.setColor(Color.LIGHT_GRAY);
-		canvas.fillRect(rect);
+//		rect = new Rect(root.width+1,0,this.getWidth(),this.getHeight());
+//		canvas.setColor(Color.LIGHT_GRAY);
+//		canvas.fillRect(rect);
+//		rect = new Rect(0,root.height+1,this.getWidth(),this.getHeight());
+//		canvas.setColor(Color.LIGHT_GRAY);
+//		canvas.fillRect(rect);
 		// START KGU 2016-02-27: This area has already been filled twice
 //		rect = new Rect(root.width+1,root.height+1,this.getWidth(),this.getHeight());
 //		canvas.setColor(Color.LIGHT_GRAY);
@@ -2304,16 +2305,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
-                    lastExportDir=dlgSave.getSelectedFile().getParentFile();
+			lastExportDir=dlgSave.getSelectedFile().getParentFile();
 			String filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
 			if(!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".png"))
 			{
 				filename+=".png";
 			}
 
-			File file = new File(filename);
+			// START KGU#224 2016-07-28: Issue #209  Test was nonsense since the actual file names will be different
+			//File file = new File(filename);
+			File file = new File(filename.replace(".png", "-00-00.png"));
+			// END KGU#224 2016-07-28
 			boolean writeDown = true;
-                        
+            
 			if(file.exists())
 			{
 				int response = JOptionPane.showConfirmDialog (null,
@@ -2327,11 +2331,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			if(writeDown==true)
 			{
-				int cols = Integer.valueOf(JOptionPane.showInputDialog(null, "Into how many columns do you want to split the output?", "1"));
-				int rows = Integer.valueOf(JOptionPane.showInputDialog(null, "Into how many rows do you want to split the output?", "3"));
+				// START KGU#218 2016-07-28: Issue #206 Localization efforts
+				//int cols = Integer.valueOf(JOptionPane.showInputDialog(null, "Into how many columns do you want to split the output?", "1"));
+				//int rows = Integer.valueOf(JOptionPane.showInputDialog(null, "Into how many rows do you want to split the output?", "3"));
+				int cols = Integer.valueOf(JOptionPane.showInputDialog(null, Menu.msgDialogExpCols.getText(), "1"));
+				int rows = Integer.valueOf(JOptionPane.showInputDialog(null, Menu.msgDialogExpRows.getText(), "3"));
+				// END KGU#218 2016-07-28
 
 				BufferedImage image = new BufferedImage(root.width+1,root.height+1,BufferedImage.TYPE_4BYTE_ABGR);
-				printAll(image.getGraphics());
+				// START KGU#221 2016-07-28: Issue #208 Need to achieve transparent background
+				//printAll(image.getGraphics());
+				redraw(image.createGraphics());
+				// END KGU#221 2016-07-28
 				// source: http://answers.yahoo.com/question/index?qid=20110821001157AAcdXVk
 				// source: http://kalanir.blogspot.com/2010/02/how-to-split-image-into-chunks-java.html
 				try
@@ -2348,6 +2359,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 					int chunkWidth = image.getWidth() / cols;
 					int chunkHeight = image.getHeight() / rows;
+					// START KGU#223 2016-07-28: Bugfix #209 - identify the integer division defects
+					int widthDefect = image.getWidth() % cols;
+					int heightDefect = image.getHeight() % rows;
+					// END KGU#223 2016-07-28
 
 					// 3. Define an Image array to hold image chunks
 					int count = 0;
@@ -2359,19 +2374,36 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						for (int y = 0; y < cols; y++)
 						{
 							//Initialize the image array with image chunks
-							imgs[count] = new BufferedImage(chunkWidth, chunkHeight, image.getType());
-
+							// START KGU#223 2016-07-28: Bugfix #209
+							// We must compensate the rounding defects lest the right and lower borders should be cut 
+							//imgs[count] = new BufferedImage(chunkWidth, chunkHeight, image.getType());
+							int tileWidth = chunkWidth + (y < cols-1 ? 0 : widthDefect);
+							int tileHeight = chunkHeight + (x < rows-1 ? 0 : heightDefect);
+							imgs[count] = new BufferedImage(tileWidth, tileHeight, image.getType());
+							// END KGU#223 2016-07-28
+							
 							// draws the image chunk
 							Graphics2D gr = imgs[count++].createGraphics();
-							gr.drawImage(image, 0, 0, chunkWidth, chunkHeight, chunkWidth * y, chunkHeight * x, chunkWidth * y + chunkWidth, chunkHeight * x + chunkHeight, null);
+							// START KGU#223 2016-07-28: Bugfix #209
+							//gr.drawImage(image, 0, 0, chunkWidth, chunkHeight, chunkWidth * y, chunkHeight * x, chunkWidth * y + chunkWidth, chunkHeight * x + chunkHeight, null);
+							// We need to achieve transparent background
+							gr.drawImage(image, 0, 0, tileWidth, tileHeight, chunkWidth * y, chunkHeight * x, chunkWidth * y + tileWidth, chunkHeight * x + tileHeight, null);
+							// END KGU#223 2016-07-28
 							gr.dispose();
 						}
 					}
 
 					// 5. Save mini images into image files
+					// START KGU#224 2016-07-28: Issue #209 - provide the original base name
+					file = new File(filename);
+					filename = file.getAbsolutePath();
+					// END KGU#224 2016-07-28
 					for (int i = 0; i < imgs.length; i++)
 					{
-						File f = new File(file.getAbsolutePath().replace(".png", "-"+i+".png"));
+						// START KGU#224 2016-07-28: Issue #209 - Better file name coding
+						//File f = new File(file.getAbsolutePath().replace(".png", "-"+i+".png"));
+						File f = new File(filename.replace(".png", String.format("-%1$02d-%2$02d.png", i / cols, i % cols)));
+						// END KGU#224 2016-07-28
 						ImageIO.write(imgs[i], "png", f);
 					}     
 				}
@@ -2461,7 +2493,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if(writeDown==true)
 			{
 				BufferedImage bi = new BufferedImage(root.width+1,root.height+1,BufferedImage.TYPE_4BYTE_ABGR);
-				printAll(bi.getGraphics());
+				// START KGU#221 2016-07-28: Issue #208 Need to achieve transparent background
+				//printAll(bi.getGraphics());
+				redraw(bi.createGraphics());
+				// END KGU#221 2016-07-28
 				try
 				{
 					ImageIO.write(bi, "png", file);
