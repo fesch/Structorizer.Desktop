@@ -86,7 +86,7 @@ public class Instruction extends Element {
 	public Instruction(Instruction instr)
 	{
 		super(instr.text.copy());
-		instr.copyDetails(this, true);
+		instr.copyDetails(this, true, true);
 	}
 	// END KGU#199 2016-07-07
 	
@@ -257,10 +257,13 @@ public class Instruction extends Element {
 	{
 		Element ele = new Instruction(this.getText().copy());
 		// START KGU#199 2016-07-06: Enh. #188 specific conversions enabled
-		return copyDetails(ele, false);
+		return copyDetails(ele, false, false);
 	}
 	
-	protected Element copyDetails(Element _ele, boolean _forConversion)
+	// START KGU#225 2016-07-29: Bugfix #210 - argument added
+	//protected Element copyDetails(Element _ele, boolean _forConversion)
+	protected Element copyDetails(Element _ele, boolean _forConversion, boolean _simplyCoveredToo)
+	// END KGU#225 2016-07-29
 	{
 		// END KGU#199 2016-07-06
 		_ele.setComment(this.getComment().copy());
@@ -272,21 +275,21 @@ public class Instruction extends Element {
         if (Element.E_COLLECTRUNTIMEDATA)
         {
         	// START KGU#225 2016-07-28: Bugfix #210
+        	this.copyRuntimeData(_ele, _simplyCoveredToo);
+        	// END KGU#225 2016-07-28
         	// We share this object (important for recursion!)
         	//_ele.deeplyCovered = this.deeplyCovered;
         	// START KGU#199 2016-07-06: Enh. #188
-        	//if (_forConversion)	// This distinction wasn't clear here: why?
-        	//{
-        	//	_ele.simplyCovered = this.simplyCovered;
-        	//	_ele.execCount = this.execCount;
-        	//	_ele.execStepCount = this.execStepCount;
-        	//	_ele.execSubCount = this.execSubCount;
-        	//}
+        	if (_forConversion)	// This distinction wasn't clear here: why?
+        	{
+            	// START KGU#225 2016-07-28: Bugfix #210 - some parts put to copyRuntimeData
+        		//_ele.simplyCovered = this.simplyCovered;
+        		//_ele.execCount = this.execCount;
+            	// END KGU#225 2016-07-28
+        		_ele.execStepCount = this.execStepCount;
+        		_ele.execSubCount = this.execSubCount;
+        	}
         	// END KGU#199 2016-07-06
-        	this.copyRuntimeData(_ele, _forConversion);
-        	_ele.execStepCount = this.execStepCount;
-        	_ele.execSubCount = this.execSubCount;
-        	// END KGU#225 2016-07-28
         }
 		// END KGU#117 2016-03-07
 		// START KGU#183 2016-04-24: Issue #169

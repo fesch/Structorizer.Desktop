@@ -414,11 +414,18 @@ public abstract class Element {
 	public abstract Element copy();
 	
 	// START KGU#156 2016-03-11: Enh. #124
+	/**
+	 * Copies the runtime data tha is to be cloned - Usually this comprises the deep
+	 * coverage status and the execution counter index. Only for certain kinds of elements
+	 * the shallow coverage status is to be copied as well - therefore the argument.
+	 * @param _target - target element of the copy operation
+	 * @param _simply_too - whether the shallow coverage status is to be copied, too
+	 */
 	protected void copyRuntimeData(Element _target, boolean _simply_too)
 	{
 		if (Element.E_COLLECTRUNTIMEDATA)
 		{
-			if (_simply_too)	// Is this disticntion really important?
+			if (_simply_too)	// This distinction is important
 			{
 				_target.simplyCovered = this.simplyCovered;
 			}

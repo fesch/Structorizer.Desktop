@@ -275,7 +275,7 @@ public class Jump extends Instruction {
 //		// END KGU#183 2016-04-24
 //		return ele;
 //	}
-		return copyDetails(ele, false);
+		return copyDetails(ele, false, false);
 	}
 // END KGU#199 2016-07-07
 	
