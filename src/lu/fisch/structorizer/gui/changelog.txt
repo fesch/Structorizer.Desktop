@@ -90,9 +90,9 @@ Version: 3.25 (2016.07.31)
 - 15: Bugfix #209: Multiple PNG export fixed (uncut borders, file names) <*>
 - 15: Bugfix #210: Wrong execution counting in recursive routines <*>
 - 15: Issue #128: Combined comments and text mode [Hubert Klöser]*
-- 15: Bugfix #211: Execution counting in recursion corrected <*>
+- 15: Bugfix #211: Execution counting in recursions corrected <*>
 - 15: Bugfix #212: Inverted logic of preference "enlarge FALSE" mended <*>
-- 15: Icon size in Diagram menu unified <*>
+- 15: Icon sizes in Diagram menu unified <*>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
