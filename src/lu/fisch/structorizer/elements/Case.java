@@ -47,6 +47,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
  *      Kay Gürtzig     2016.07.25      Issue #87: Icon for collapsed state corrected (KGU#217)
+ *      Kay Gürtzig     2016.07.31      Enh. #128: New mode "comments plus text" supported, drawing code revised
+ *                                      (text placement improved, had sometimes exceeded the bounds)
  *
  ******************************************************************************************************
  *
@@ -78,6 +80,9 @@ public class Case extends Element
     private Vector<Integer> x0Branches = new Vector<Integer>();
     private int y0Branches = 0;
     // END KGU#136 2016-03-01
+    // START KGU#227 2016-07-31: Enh. #128
+    private Rect commentRect = new Rect();
+    // END KGU#227 2016-07-31
 	
     // START KGU#91 2015-12-01: Bugfix #39 - Case may NEVER EVER interchange text and comment!
 	/**
@@ -220,6 +225,14 @@ public class Case extends Element
             setText(_strings);
     }
 
+    // START KGU#227 2016-07-31: Apparently helpful method
+    protected boolean hasDefaultBranch()
+    {
+    	int nLines = getText().count();
+    	return nLines > 1 && !getText().get(nLines-1).equals("%");
+    }
+    // END KGU#227 2016-07-31
+    
 	// START KGU#64 2015-11-03: Is to improve drawing performance
 	/**
 	 * Recursively clears all drawing info this subtree down
@@ -243,6 +256,7 @@ public class Case extends Element
     {
             // START KGU#136 2016-03-01: Bugfix #97
             if (this.isRectUpToDate) return rect0;
+            
             this.x0Branches.clear();
             this.y0Branches = 0;
             // END KGU#136 2016-03-01
@@ -286,7 +300,16 @@ public class Case extends Element
         	{
         		selectorLines = this.getComment();
         	}
+        	// FIXME: The required extra padding must be proportional to the fontsize
         	int extrapadding = padding + (selectorLines.count()-1) * (3 * padding + fm.getHeight());
+        	// START KGU#227 2016-07-31: Enh. #128 - compute the dimensions of the comment area
+        	commentRect = new Rect();
+        	if (Element.E_COMMENTSPLUSTEXT)
+        	{
+        		commentRect = this.writeOutCommentLines(_canvas, 0, 0, false, false);
+        		rect0.right = Math.max(rect0.right, commentRect.right + extrapadding);
+        	}
+        	// END KGU#227 2016-07-31
         	for (int i = 0; i < selectorLines.count(); i++)
         	{
         		rect0.right = Math.max(rect0.right, getWidthOutVariables(_canvas, selectorLines.get(i), this) + extrapadding);
@@ -311,6 +334,9 @@ public class Case extends Element
             //rect0.bottom = 2 * (padding) + 2 * fm.getHeight();
             rect0.bottom = 2 * (padding) + (selectorLines.count() + 1) * fm.getHeight();
             // END KGU#172 2016-04-01
+        	// START KGU#227 2016-07-31: Enh. #128 - add the height if the comment area
+            rect0.bottom += commentRect.bottom;
+            // END KGU#227 2016-07-31
             // START KGU#136 2016-03-01: Bugfix #97
             this.y0Branches = rect0.bottom;
             // END KGU#136 2016-03-01
@@ -358,20 +384,9 @@ public class Case extends Element
 
     	Rect myrect = new Rect();
     	// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
-    	//Color drawColor = getColor();
     	Color drawColor = getFillColor();
     	// END KGU 2015-10-13
     	FontMetrics fm = _canvas.getFontMetrics(Element.font);
-//  	int p;
-//  	int w;
-
-// START KGU 2015-10-13: Already done by new method getFillColor() now
-//    	if (selected==true)
-//    	{
-//    		if(waited==true) { drawColor=Element.E_WAITCOLOR; }
-//    		else { drawColor=Element.E_DRAWCOLOR; }
-//    	}
-// END KGU 2015-10-13
 
     	Canvas canvas = _canvas;
     	canvas.setBackground(drawColor);
@@ -398,6 +413,9 @@ public class Case extends Element
     		minHeight += (headerText.count() - 1) * fm.getHeight();
     	}
     	// END KGU#172 2016-04-01
+    	// START KGU#227 2016-07-31: Enh. #128 - add the height of the embedded comment
+    	minHeight += commentRect.bottom;
+    	// END KGU#227 2016-07-31
 
     	// fill shape
     	canvas.setColor(drawColor);
@@ -418,7 +436,27 @@ public class Case extends Element
     	int b = myrect.top;
     	int c = myrect.left + fullWidth-1;
     	int d = myrect.bottom-1;
-    	int x = ((y-b)*(c-a) + a*(d-b)) / (d-b);	
+    	// About the horizontal position of the cleave
+    	int x = ((y-b)*(c-a) + a*(d-b)) / (d-b);
+    	
+    	// START KGU#227 2016-07-31: Enh. #128
+    	boolean hasDefaultBranch = this.hasDefaultBranch();
+    	// Draw the 1st line of the comment if requested
+    	if (Element.E_COMMENTSPLUSTEXT)
+    	{
+    		// Perfect right-bound position if there is no default branch
+    		int xStart = myrect.right - commentRect.right - E_PADDING/2;
+    		// Otherwise use the calculated weighted centre
+    		if (hasDefaultBranch)
+    		{
+    			xStart = Math.min(xStart, x - commentRect.right/2);
+    		}
+    		this.writeOutCommentLines(_canvas,
+    				xStart,
+    				myrect.top + E_PADDING / 3,
+    				true, false);
+    	}
+    	// END KGU#227 2016-07-31
 
     	// draw the selection expression (text 0)
     	// START KGU#91 2015-12-01: Bugfix #39 Nonsense replaced
@@ -443,12 +481,23 @@ public class Case extends Element
     			text = this.getComment();
     		}
       		int divisor = 2;
-    		if (nLines > 1 && this.getText().get(nLines-1).equals("%")) divisor = nLines;
+    		if (nLines > 1 && hasDefaultBranch) divisor = nLines;
     		for (int ln = 0; ln < text.count(); ln++)
     		{
+    			int textWidth = getWidthOutVariables(_canvas, text.get(ln), this);
+    			// Without default branch all text can be placed right-bound
+    			int xStart = myrect.right - textWidth - E_PADDING/2;
+    			// With default branch we should centre it weightedly 
+    			if (hasDefaultBranch)
+    			{
+    				xStart = Math.min(xStart, x - textWidth / divisor);
+    			}
     	  		writeOutVariables(canvas,
-        				x - getWidthOutVariables(_canvas, text.get(ln), this) / divisor,
-        				myrect.top + E_PADDING / 3 + (ln + 1) * fm.getHeight(),
+        				xStart,
+        				// START KGU#227 2016-07-31: Enh. #128 - consider comment
+        				//myrect.top + E_PADDING / 3 + (ln + 1) * fm.getHeight(),
+        				myrect.top + E_PADDING / 3 + commentRect.bottom + (ln + 1) * fm.getHeight(),
+        				// END KGU#227 2016-07-31
         				text.get(ln), this
         				);
         			
@@ -457,7 +506,7 @@ public class Case extends Element
 
     		// START KGU#156 2016-03-11: Enh. #124
     		// write the run-time info if enabled
-    		this.writeOutRuntimeInfo(canvas, myrect.right - Element.E_PADDING, myrect.top);
+    		this.writeOutRuntimeInfo(canvas, myrect.right - (hasDefaultBranch ? Element.E_PADDING : Element.E_PADDING/2), myrect.top);
     		// END KGU#156 2016-03-11
 
     	}
@@ -497,7 +546,6 @@ public class Case extends Element
 
     	// START KGU#91 2015-12-01: Bugfix #39: We should be aware of pathological cases...
     	//if(  ((String) getText().get(getText().count()-1)).equals("%") )
-    	boolean hasDefaultBranch = nLines > 1 && !getText().get(nLines-1).equals("%");
     	if( !hasDefaultBranch )
     		// END KGU#91 2015-12-01
     	{

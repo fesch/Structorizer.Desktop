@@ -49,6 +49,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.07      Enh. #188: New menu item "wand" for element conversion (KGU#199)
  *      Kay Gürtzig     2016.07.22      Enh. #199: New help menu item "user guide" for element conversion (KGU#208)
  *      Kay Gürtzig     2016.07.28      Enh. #206: New Dialog message text holders
+ *      Kay Gürtzig     2016.07.31      Enh. #128: New Diagram menu item "Comments + text"
  *
  ******************************************************************************************************
  *
@@ -181,6 +182,9 @@ public class Menu extends JMenuBar implements NSDController
 	// START KGU#123 2016-01-04: Enh. #87
 	protected JCheckBoxMenuItem menuDiagramWheel = new JCheckBoxMenuItem("Mouse wheel for collapsing?",IconLoader.ico108);
 	// END KGU#123 2016-01-04
+	// START KGU#227 2016-07-31: Enh. #128
+	protected JCheckBoxMenuItem menuDiagramCommentsPlusText = new JCheckBoxMenuItem("Comments plus texts?",IconLoader.ico111);
+	// END KGU#227 2016-07-31
 
 	// Menu "Help"
 	protected JMenu menuPreferences = new JMenu("Preferences");
@@ -279,6 +283,9 @@ public class Menu extends JMenuBar implements NSDController
 	public static LangTextHolder btnConfirmOverwrite = new LangTextHolder("Confirm Overwrite");
 	public static LangTextHolder msgRepeatSaveAttempt = new LangTextHolder("Your file has not been saved. Please repeat the save operation!");
 	// END KGU#218 2016-07-28
+	// START KGU#227 2016-07-31: Enh. #128
+	public static LangTextHolder menuDiagramSwitchTCTooltip = new LangTextHolder("Unselect \"%1\" to enable this item");
+	// END KGU#227 2016-07-31
 
 	public void create()
 	{
@@ -608,6 +615,11 @@ public class Menu extends JMenuBar implements NSDController
 
 		menuDiagram.add(menuDiagramComment);
 		menuDiagramComment.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setComments(menuDiagramComment.isSelected()); doButtons(); } } );
+
+		// START KGU#227 2016-07-31: Enh. #128
+		menuDiagram.add(menuDiagramCommentsPlusText);
+		menuDiagramCommentsPlusText.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setCommentsPlusText(menuDiagramCommentsPlusText.isSelected()); doButtons(); } } );
+		// END KGU#227 2016-07-31
 
 		menuDiagram.add(menuDiagramSwitchComments);
 		menuDiagramSwitchComments.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleTextComments(); doButtons(); } } );
@@ -975,6 +987,20 @@ public class Menu extends JMenuBar implements NSDController
 
 			// variable highlighting
 			menuDiagramMarker.setSelected(diagram.getRoot().hightlightVars);
+
+			// START KGU#227 2016-07-31: Enh. #128
+			// draw elements with both comments and diagram?
+			menuDiagramCommentsPlusText.setSelected(Element.E_COMMENTSPLUSTEXT);
+			menuDiagramSwitchComments.setEnabled(!Element.E_COMMENTSPLUSTEXT);
+			if (Element.E_COMMENTSPLUSTEXT)
+			{
+				menuDiagramSwitchComments.setToolTipText(this.menuDiagramSwitchTCTooltip.getText().replace("%1", menuDiagramCommentsPlusText.getText()));
+			}
+			else
+			{
+				menuDiagramSwitchComments.setToolTipText(null);
+			}
+			// END KGU#227 2016-07-31
 
 			// swap texts against comments?
 			menuDiagramSwitchComments.setSelected(Element.E_TOGGLETC);

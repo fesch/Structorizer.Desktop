@@ -76,10 +76,20 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.26      Bugfix #204: Modified ExportOptionDialoge API (for correct sizing)
  *      Kay Gürtzig     2016.07.28      Bugfix #208: Modification in setFunction(), setProgram(), and exportPNG()
  *                                      Bugfix #209: exportPNGmulti() corrected
+ *      Kay Gürtzig     2016.07.31      Issue #158 Changes from 2016.07.25 partially withdrawn
  *
  ******************************************************************************************************
  *
  *      Comment:		/
+ *      
+ *      2016.07.31 (Kay Gürtzig, #158)
+ *      - It turned out that circular horizontal selection move is not sensible. It compromises usability
+ *        rather than it helps. With active horizontal mouse scrolling the respective diagram margin is
+ *        so quickly reached that a breathtaking rotation evolves - no positioning is possible. Even with
+ *        cursor keys you fall too rapidly into the margin trap, just to be kicked to a totally different
+ *        place. This makes navigation rather hazardous. Selection chain will end at the left or right
+ *        margin now, giving pause for consideration.
+ *        Moving inwards the diagram from the selected Root will still work.
  *
  ******************************************************************************************************///
 
@@ -3570,6 +3580,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
+    // START KGU#227 2016-07-31: Enh. #128
+    void setCommentsPlusText(boolean _activate)
+    {
+    	Element.E_COMMENTSPLUSTEXT = _activate;
+    	this.resetDrawingInfo(true);
+    	analyse();
+    	repaint();
+    }
+    // END KGU#227 2016-07-31
+
 	public void setToggleTC(boolean _tc)
 	{
 		Element.E_TOGGLETC=_tc;
@@ -3934,7 +3954,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	// END KGU#220 2016-07-27
     	repaint();
     }
-
+    
 	// Inner class is used to hold an image while on the clipboard.
 	public static class EMFSelection implements Transferable, ClipboardOwner
 		{
@@ -4270,13 +4290,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     				}
     			}
     			// END KGU#214 2016-07-25
+    			// START KGU#214 2016-07-31: Issue #158
+    			else if (newSel instanceof Root && (_direction == Editor.CursorMoveDirection.CMD_LEFT
+    					|| _direction == Editor.CursorMoveDirection.CMD_RIGHT))
+    			{
+    				newSel = selected;	// Stop before the border on boxed diagrams
+    			}
+    			// END KGU#214 2015-07-31
     			selected = newSel;
     		}
     		// START KGU#214 2016-07-25: Bugfix for enh. #158 - un-boxed Roots didn't catch the selection
-    		else if (_direction != Editor.CursorMoveDirection.CMD_UP && !root.isNice)
-    		{
-    			selected = root;
-    		}
+    		// This was better than to rush around on horizontal wheel activity! Hence fix withdrawn
+//    		else if (_direction != Editor.CursorMoveDirection.CMD_UP && !root.isNice)
+//    		{
+//    			selected = root;
+//    		}
     		// END KGU#214 2016-07-25
     		selected.setSelected(true);
 			

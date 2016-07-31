@@ -45,6 +45,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.06      Enh. #188: New classification methods isAssignment() etc.,
  *                                      new copy constructor to support conversion (KGU#199)
+ *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported
  *
  ******************************************************************************************************
  *
@@ -64,7 +65,7 @@ import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.*;
 
 public class Instruction extends Element {
-
+	
 	public Instruction()
 	{
 		super();
@@ -86,7 +87,7 @@ public class Instruction extends Element {
 	public Instruction(Instruction instr)
 	{
 		super(instr.text.copy());
-		instr.copyDetails(this, true);
+		instr.copyDetails(this, true, true);
 	}
 	// END KGU#199 2016-07-07
 	
@@ -101,15 +102,25 @@ public class Instruction extends Element {
 		this.resetDrawingInfo();
 	}
 	// END KGU#64 2015-11-03
-	
 
 	public static Rect prepareDraw(Canvas _canvas, StringList _text, Element _element)
 	{
-		Rect rect = new Rect(0,0,0,0);
+		Rect rect = new Rect(0, 0, 2*(Element.E_PADDING/2), 0);
+		// START KGU#227 2016-07-30: Enh. #128
+		int commentHeight = 0;
+		// END KGU#227 2016-07-30
 
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 
-		rect.right = 2*(Element.E_PADDING/2);
+		// START KGU#227 2016-07-30: Enh. #128
+		if (Element.E_COMMENTSPLUSTEXT && !_element.isCollapsed())
+		{
+			Rect commentRect = _element.writeOutCommentLines(_canvas,
+					0, 0, false);
+			rect.right = Math.max(rect.right, commentRect.right + Element.E_PADDING);
+			commentHeight = commentRect.bottom;
+		}
+		// END KGU#227 2016-07-30
 		
 		for(int i=0;i<_text.count();i++)
 		{
@@ -120,6 +131,9 @@ public class Instruction extends Element {
 			}
 		}
 		rect.bottom = 2*(Element.E_PADDING/2) + _text.count() * fm.getHeight();
+		// START KGU#227 2016-07-30: Enh. #128
+		rect.bottom += commentHeight;
+		// END KGU#227 2016-07-30
 
 		return rect;
 	}
@@ -185,8 +199,8 @@ public class Instruction extends Element {
 		
 		canvas.fillRect(myrect);
 				
-		// draw comment
-		if(Element.E_SHOWCOMMENTS==true && !_element.getComment(false).getText().trim().equals(""))
+		// draw comment indicator
+		if (Element.E_SHOWCOMMENTS && !_element.getComment(false).getText().trim().equals(""))
 		{
 			_element.drawCommentMark(canvas, myrect);
 		}
@@ -195,19 +209,35 @@ public class Instruction extends Element {
 		_element.drawBreakpointMark(canvas, _top_left);
 		// END KGU 2015-10-11
 		
+		// START KGU#227 2016-07-30: Enh. #128
+		int commentHeight = 0;
+		if (Element.E_COMMENTSPLUSTEXT && !_element.isCollapsed())
+		{
+			Rect commentRect = _element.writeOutCommentLines(canvas,
+					_top_left.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffset(),
+					_top_left.top + (Element.E_PADDING / 2),
+					true);
+			commentHeight = commentRect.bottom - commentRect.top;
+		}
+		int yTextline = _top_left.top + (Element.E_PADDING / 2) + commentHeight/* + fm.getHeight()*/;
+		// END KGU#227 2016-07-30
+		
 		for (int i = 0; i < _text.count(); i++)
 		{
 			String text = _text.get(i);
-			text = BString.replace(text, "<--","<-");
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
-					_top_left.left + (Element.E_PADDING / 2),
-					_top_left.top + (Element.E_PADDING / 2) + (i+1)*fm.getHeight(),
+					_top_left.left + (Element.E_PADDING / 2) + _element.getTextDrawingOffset(),
+					// START KGU#227 2016-07-30: Enh. #128
+					//_top_left.top + (Element.E_PADDING / 2) + (i+1)*fm.getHeight(),
+					yTextline += fm.getHeight(),
+					// END KGU#227 2016-07-30
 					text,
 					_element
 					);  	
 
 		}
+		// END KGU#227 2016-07-30
 
 		// START KGU#156 2016-03-11: Enh. #124
 		// write the run-time info if enabled
@@ -215,7 +245,10 @@ public class Instruction extends Element {
 		// END KGU#156 2016-03-11
 				
 		canvas.setColor(Color.BLACK);
-		canvas.drawRect(_top_left);
+		if (_element.haveOuterRectDrawn())
+		{
+			canvas.drawRect(_top_left);
+		}
 		// START KGU#122 2016-01-03: Enh. #87 - A collapsed element is to be marked by the type-specific symbol,
 		// unless it's an Instruction offspring in which case it will keep its original style, anyway.
 		if (_element.isCollapsed() && !(_element instanceof Instruction))
@@ -257,10 +290,13 @@ public class Instruction extends Element {
 	{
 		Element ele = new Instruction(this.getText().copy());
 		// START KGU#199 2016-07-06: Enh. #188 specific conversions enabled
-		return copyDetails(ele, false);
+		return copyDetails(ele, false, false);
 	}
 	
-	protected Element copyDetails(Element _ele, boolean _forConversion)
+	// START KGU#225 2016-07-29: Bugfix #210 - argument added
+	//protected Element copyDetails(Element _ele, boolean _forConversion)
+	protected Element copyDetails(Element _ele, boolean _forConversion, boolean _simplyCoveredToo)
+	// END KGU#225 2016-07-29
 	{
 		// END KGU#199 2016-07-06
 		_ele.setComment(this.getComment().copy());
@@ -272,21 +308,21 @@ public class Instruction extends Element {
         if (Element.E_COLLECTRUNTIMEDATA)
         {
         	// START KGU#225 2016-07-28: Bugfix #210
+        	this.copyRuntimeData(_ele, _simplyCoveredToo);
+        	// END KGU#225 2016-07-28
         	// We share this object (important for recursion!)
         	//_ele.deeplyCovered = this.deeplyCovered;
         	// START KGU#199 2016-07-06: Enh. #188
-        	//if (_forConversion)	// This distinction wasn't clear here: why?
-        	//{
-        	//	_ele.simplyCovered = this.simplyCovered;
-        	//	_ele.execCount = this.execCount;
-        	//	_ele.execStepCount = this.execStepCount;
-        	//	_ele.execSubCount = this.execSubCount;
-        	//}
+        	if (_forConversion)	// This distinction wasn't clear here: why?
+        	{
+            	// START KGU#225 2016-07-28: Bugfix #210 - some parts put to copyRuntimeData
+        		//_ele.simplyCovered = this.simplyCovered;
+        		//_ele.execCount = this.execCount;
+            	// END KGU#225 2016-07-28
+        		_ele.execStepCount = this.execStepCount;
+        		_ele.execSubCount = this.execSubCount;
+        	}
         	// END KGU#199 2016-07-06
-        	this.copyRuntimeData(_ele, _forConversion);
-        	_ele.execStepCount = this.execStepCount;
-        	_ele.execSubCount = this.execSubCount;
-        	// END KGU#225 2016-07-28
         }
 		// END KGU#117 2016-03-07
 		// START KGU#183 2016-04-24: Issue #169
@@ -354,7 +390,7 @@ public class Instruction extends Element {
 	}
 	public boolean isJump()
 	{
-		return this.text.count() == 1 && Instruction.isJump(this.text.get(0));
+		return this.text.count() == 0 || this.text.count() == 1 && Instruction.isJump(this.text.get(0));
 	}
 	
 	public static boolean isProcedureCall(String line)

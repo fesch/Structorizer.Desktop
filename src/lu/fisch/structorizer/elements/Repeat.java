@@ -115,6 +115,25 @@ public class Repeat extends Element implements ILoop {
 	}
 	// END KGU#122 2016-01-04
 
+	// START KGU#227 2016-07-30: Enh. #128
+	protected boolean haveOuterRectDrawn()
+	{
+		return false;
+	}
+	// END KGU#227 2016-07-30
+
+	/**
+	 * Draws the marker bar on the top side of the given _rect
+	 * @param _canvas - the canvas to be drawn in
+	 * @param _rect - the surrounding rectangle of the Element (or relevant part of it)
+	 */
+	protected void drawBreakpointMark(Canvas _canvas, Rect _rect)
+	{
+		Rect bpRect = _rect.copy();
+		bpRect.left += pt0Body.x;
+		super.drawBreakpointMark(_canvas, bpRect);
+	}
+
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
@@ -130,37 +149,41 @@ public class Repeat extends Element implements ILoop {
 			// END KGU#136 2016-03-01
 			return rect0;
 		}
-            
-		rect0.top = 0;
-		rect0.left = 0;
 		
-		rect0.right = 2*(E_PADDING/2);
-		
-		FontMetrics fm = _canvas.getFontMetrics(font);
-		
-		for (int i=0; i<getText(false).count(); i++)
-		{
-			int width = getWidthOutVariables(_canvas, getText(false).get(i), this) + 2*(E_PADDING/2);
-			if (rect0.right < width)
-			{
-				rect0.right = width;
-			}
-		}
-		
-		rect0.bottom = 2*(E_PADDING/2) + getText(false).count()*fm.getHeight();
+		// START KGU#227 2016-07-30: Enh. #128 Just delegate the basics to Instruction
+//		rect0.top = 0;
+//		rect0.left = 0;
+//		
+//		rect0.right = 2*(E_PADDING/2);
+//		
+//		FontMetrics fm = _canvas.getFontMetrics(font);
+//		
+//		for (int i=0; i<getText(false).count(); i++)
+//		{
+//			int width = getWidthOutVariables(_canvas, getText(false).get(i), this) + 2*(E_PADDING/2);
+//			if (rect0.right < width)
+//			{
+//				rect0.right = width;
+//			}
+//		}
+//		
+//		rect0.bottom = 2*(E_PADDING/2) + getText(false).count()*fm.getHeight();
+		rect0 = Instruction.prepareDraw(_canvas, this.getText(false), this);
+		this.pt0Body.y = rect0.bottom;	// height of the footer
+		// END KGU#227 2016-07-30
+
 		
 		// START KGU#136 2016-02-27: Bugfix #97 - field replaced by local variable
 		//r=q.prepareDraw(_canvas);
 		//rect.right=Math.max(rect.right,r.right+E_PADDING);
 		//rect.bottom+=r.bottom;		
 		//return rect;
-		// START KGU#136 2016-03-01: Bugfix #97 - Preparation for local coordinate detection
-		this.pt0Body.x = E_PADDING - 2;		// FIXME: Fine tuning!
-		this.pt0Body.y = 0;
-		// END KGU#136 2016-03-01
 		Rect rectBody = q.prepareDraw(_canvas);
-		rect0.right = Math.max(rect0.right, rectBody.right+E_PADDING);
+		rect0.right = Math.max(rect0.right, rectBody.right+ 2*E_PADDING/2);
 		rect0.bottom += rectBody.bottom;		
+		// START KGU#136 2016-03-01: Bugfix #97 - Preparation for local coordinate detection
+		this.pt0Body.x = 2*E_PADDING/2 - 1;		// FIXME: Fine tuning!
+		// END KGU#136 2016-03-01
 
 		// START KGU#136 2016-03-01: Bugfix #97
 		isRectUpToDate = true;
@@ -171,123 +194,134 @@ public class Repeat extends Element implements ILoop {
 	
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
-                if(isCollapsed()) 
-                {
-                    Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
-                    return;
-                }
-                
-		Rect myrect = new Rect();
-		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
-		//Color drawColor = getColor();
-		Color drawColor = getFillColor();
-		// END KGU 2015-10-13
-		FontMetrics fm = _canvas.getFontMetrics(font);
-//		int p;
-//		int w;
-		
-		// START KGU 2015-10-13: Became obsolete by new method getFillColor() applied above now
-//		if (selected==true)
+		if(isCollapsed()) 
+		{
+			Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
+			return;
+		}
+
+		// START KGU#227 2016-07-30: Enh. #128 Delegate the drawing of the text area to Instruction
+//		Rect myrect = new Rect();
+//		
+//		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
+//		//Color drawColor = getColor();
+//		Color drawColor = getFillColor();
+//		// END KGU 2015-10-13
+//		FontMetrics fm = _canvas.getFontMetrics(font);
+//		
+//		Canvas canvas = _canvas;
+//		canvas.setBackground(drawColor);
+//		canvas.setColor(drawColor);
+//		
+//		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
+//		//rect = _top_left.copy();
+//		rect = new Rect(0, 0, 
+//				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
+//		Point ref = this.getDrawPoint();
+//		this.topLeft.x = _top_left.left - ref.x;
+//		this.topLeft.y = _top_left.top - ref.y;
+//
+//		// END KGU#136 2016-03-01
+//		
+//		int footerHeight = fm.getHeight() * getText(false).count() + 2*(E_PADDING / 2);
+//		
+//		// FIXME (KGU): What's this nonsense good for?
+//		// draw shape
+//		Rect cprect = _top_left.copy();
+//		canvas.setColor(Color.BLACK);
+//		cprect.bottom = _top_left.bottom;
+//		cprect.top = cprect.bottom - footerHeight;
+//		canvas.drawRect(cprect);
+//		
+//		myrect = _top_left.copy();
+//		myrect.right=myrect.left+Element.E_PADDING;
+//		canvas.drawRect(myrect);
+//
+//		cprect.top += 1;
+//		cprect.left = myrect.right;
+//		
+//		// fill shape
+//		canvas.setColor(drawColor);
+//		myrect.left += 1;
+//		myrect.top += 1;
+//		//myrect.bottom = myrect.bottom;
+//		//myrect.right = myrect.right;
+//		canvas.fillRect(myrect);
+//		
+//		myrect = _top_left.copy();
+//		myrect.bottom = _top_left.bottom;
+//		myrect.top = myrect.bottom - footerHeight;
+//		myrect.left += 1;
+//		myrect.top += 1;
+//		//myrect.bottom=myrect.bottom;
+//		//myrect.right=myrect.right;
+//		canvas.fillRect(myrect);
+//		
+//		// draw comment
+//		if (Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 //		{
-//			if(waited==true) { drawColor=Element.E_WAITCOLOR; }
-//			else { drawColor=Element.E_DRAWCOLOR; }
+//			// START KGU 2015-10-11: Use an inherited helper method now
+//			this.drawCommentMark(canvas, _top_left);
+//			// END KGU 2015-10-11
 //		}
-		// END KGU 2015-10-13
-		
-		Canvas canvas = _canvas;
-		canvas.setBackground(drawColor);
-		canvas.setColor(drawColor);
-		
-		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
-		//rect = _top_left.copy();
-		rect = new Rect(0, 0, 
-				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
-		Point ref = this.getDrawPoint();
-		this.topLeft.x = _top_left.left - ref.x;
-		this.topLeft.y = _top_left.top - ref.y;
+//		// START KGU 2015-10-11
+//		// draw breakpoint bar if necessary
+//		this.drawBreakpointMark(canvas, cprect);
+//		// END KGU 2015-10-11
+//		
+//		
+//		// draw text
+//		for (int i=0; i<getText(false).count(); i++)
+//		{
+//			String text = this.getText(false).get(i);
+//			
+//			canvas.setColor(Color.BLACK);
+//			writeOutVariables(canvas,
+//							  _top_left.left + (E_PADDING / 2),
+//							myrect.top + (E_PADDING / 2) + (i+1)*fm.getHeight(),
+//							text, this
+//							);  	
+//		}
+//		
+//		// START KGU#156 2016-03-11: Enh. #124
+//		// write the run-time info if enabled
+//		this.writeOutRuntimeInfo(canvas, myrect.right - (Element.E_PADDING / 2), myrect.top);
+//		// draw children
+//		myrect.bottom = myrect.top;
+//		myrect.top = _top_left.top + pt0Body.y;
+//		myrect.left += pt0Body.x;
+//		myrect.right = _top_left.right;
+//		// END KGU#156 2016-03-11
 
-		// END KGU#136 2016-03-01
-		
-		int footerHeight = fm.getHeight() * getText(false).count() + 2*(E_PADDING / 2);
-		
-		// draw shape
-		Rect cprect = _top_left.copy();
-		canvas.setColor(Color.BLACK);
-		cprect.bottom = _top_left.bottom;
-		cprect.top = cprect.bottom - footerHeight;
-		canvas.drawRect(cprect);
-		
-		myrect = _top_left.copy();
-		myrect.right=myrect.left+Element.E_PADDING;
-		canvas.drawRect(myrect);
+		Rect myrect = _top_left.copy();
 
-		cprect.top += 1;
-		cprect.left = myrect.right;
+		Color drawColor = getFillColor();
+		_canvas.setBackground(drawColor);
+		_canvas.setColor(drawColor);
+		_canvas.fillRect(myrect);
 		
-		// fill shape
-		canvas.setColor(drawColor);
-		myrect.left += 1;
-		myrect.top += 1;
-		//myrect.bottom = myrect.bottom;
-		//myrect.right = myrect.right;
-		canvas.fillRect(myrect);
-		
+		myrect.top = myrect.bottom - pt0Body.y;
+		Instruction.draw(_canvas, myrect, this.getText(false), this);
+		// Now we must correct the origin information (was set up by draw under wrong assumptions)
+		this.rect.bottom = _top_left.bottom - _top_left.top;
+		this.topLeft.y = _top_left.top - this.getDrawPoint().y;
+
+		_canvas.setColor(Color.BLACK);
 		myrect = _top_left.copy();
-		myrect.bottom = _top_left.bottom;
-		myrect.top = myrect.bottom - footerHeight;
-		myrect.left += 1;
-		myrect.top += 1;
-		//myrect.bottom=myrect.bottom;
-		//myrect.right=myrect.right;
-		canvas.fillRect(myrect);
-		
-		// draw comment
-		if (Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
+		// redraw comment indicator
+		if (Element.E_SHOWCOMMENTS && !this.getComment(false).getText().trim().equals(""))
 		{
-			// START KGU 2015-10-11: Use an inherited helper method now
-//			canvas.setBackground(E_COMMENTCOLOR);
-//			canvas.setColor(E_COMMENTCOLOR);
-//			
-//			Rect someRect = _top_left.copy();
-//			
-//			someRect.left+=2;
-//			someRect.top+=2;
-//			someRect.right=someRect.left+4;
-//			someRect.bottom-=1;
-//			
-//			canvas.fillRect(someRect);
-			this.drawCommentMark(canvas, _top_left);
-			// END KGU 2015-10-11
+			this.drawCommentMark(_canvas, myrect);
 		}
-		// START KGU 2015-10-11
-		// draw breakpoint bar if necessary
-		this.drawBreakpointMark(canvas, cprect);
-		// END KGU 2015-10-11
+		// draw outer box
+		_canvas.setColor(Color.BLACK);
+		_canvas.drawRect(myrect);
 		
-		
-		// draw text
-		for (int i=0; i<getText(false).count(); i++)
-		{
-			String text = this.getText(false).get(i);
-			
-			canvas.setColor(Color.BLACK);
-			writeOutVariables(canvas,
-							  _top_left.left + (E_PADDING / 2),
-							myrect.top + (E_PADDING / 2) + (i+1)*fm.getHeight(),
-							text, this
-							);  	
-		}
-		
-		// START KGU#156 2016-03-11: Enh. #124
-		// write the run-time info if enabled
-		this.writeOutRuntimeInfo(canvas, myrect.right - (Element.E_PADDING / 2), myrect.top);
-		// END KGU#156 2016-03-11
-				
 		// draw children
-		myrect.bottom = myrect.top;
-		myrect.top = _top_left.top + pt0Body.y;
 		myrect.left += pt0Body.x;
-		myrect.right = _top_left.right;
+		myrect.bottom -= pt0Body.y;
+		// END KGU#227 2016-07-30
+				
 		q.draw(_canvas,myrect);
 		
 	}
@@ -324,7 +358,7 @@ public class Repeat extends Element implements ILoop {
 		// START KGU#207 2016-07-21
 		{
 		// END KGU#121 2016-01-03
-			Element sel = q.getElementByCoord(_x, _y, _forSelection);
+			Element sel = q.getElementByCoord(_x - pt0Body.x, _y, _forSelection);
 			if (sel!=null) 
 			{
 				if (_forSelection) selected=false;

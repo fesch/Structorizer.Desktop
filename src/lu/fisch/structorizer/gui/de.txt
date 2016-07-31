@@ -52,6 +52,7 @@
  *      Kay Gürtzig         2016.07.26  Bugfix #149: Tags for ExportOptionDialoge corrected
  *      Kay Gürtzig         2016.07.27  Enh. #207: New message Menu.warning_1 (must be consistent with menu entry names!) 
  *      Kay Gürtzig         2016.07.28  Issue #208: New dialog messages for PNG export 
+ *      Kay Gürtzig         2016.07.31  Enh. #128: New menu item captions for "Comments plus Text" mode
  *
  ******************************************************************************************************
  *
@@ -141,6 +142,8 @@ Menu.menuDiagramTypeFunction.text=Unterprogramm
 Menu.menuDiagramNice.text=Umrahmtes Diagramm?
 Menu.menuDiagramComment.text=Zeige Kommentare?
 Menu.menuDiagramSwitchComments.text=Tausche Text/Kommentare?
+Menu.menuDiagramCommentsPlusText.text=Kommentare plus Text?
+Menu.menuDiagramSwitchTCTooltip.text=Zum Aktivieren dieses Menüpunkts "%1" abwählen
 Menu.menuDiagramMarker.text=Hervorheben von Variablen?
 Menu.menuDiagramDIN.text=DIN 66261?
 Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
