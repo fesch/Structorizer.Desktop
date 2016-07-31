@@ -323,9 +323,27 @@ public class Root extends Element {
 			}
 		}
 		
-		// Compute height (dependent on diagram style and number of text lines 
-		if (isNice)	padding = 3 * E_PADDING;
-		rect0.bottom = padding + getText(false).count() * fm.getHeight();
+		// Compute height (depends on diagram style and number of text lines)
+		int vPadding = isNice ? 3 * E_PADDING : padding;
+		rect0.bottom = vPadding + getText(false).count() * fm.getHeight();
+		
+		// START KGU#227 2016-07-31: Enhancement #128
+		Rect commentRect = new Rect();
+		if (Element.E_COMMENTSPLUSTEXT)
+		{
+			commentRect = this.writeOutCommentLines(_canvas, 0, 0, false);
+			if (isNice)
+			{
+				commentRect.right += padding;
+			}
+			if (rect0.right < commentRect.right)
+			{
+				rect0.right = commentRect.right;
+			}
+			rect0.bottom += commentRect.bottom;
+		}
+		// END KGU#227 2016-07-31
+		
 		pt0Sub.y = rect0.bottom;
 		if (isNice)	pt0Sub.y -= E_PADDING;
 
@@ -382,14 +400,14 @@ public class Root extends Element {
 		Color drawColor = getFillColor();
 		// END KGU 2015-10-13
 
-		if(getText().count()==0)
+		if (getText().count()==0)
 		{
-			getText().add("???");
+			text.add("???");
 		}
 		else if ( ((String)getText().get(0)).trim().equals("") )
 		{
-			getText().delete(0);
-			getText().insert("???",0);
+			text.delete(0);
+			text.insert("???",0);
 		}
 
 		rect = _top_left.copy();
@@ -442,6 +460,20 @@ public class Root extends Element {
 			// END KGU#221 2016-07-27
 		}
 
+		int textPadding = isNice ? E_PADDING : E_PADDING/2;
+
+		// START KGU#227 2016-07-31: Enh. #128
+		int commentHeight = 0;
+		if (Element.E_COMMENTSPLUSTEXT)
+		{
+			Rect commentRect = this.writeOutCommentLines(_canvas,
+					_top_left.left + textPadding,
+					_top_left.top + textPadding,
+					true);
+			commentHeight += commentRect.bottom - commentRect.top;
+		}
+		// END KGU#227 2016-07-31
+		
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 		Font titleFont = new Font(Element.font.getName(),Font.BOLD,Element.font.getSize());
 		canvas.setFont(titleFont);
@@ -482,13 +514,15 @@ public class Root extends Element {
 //			// END KGU#156 2016-03-11
 //					
 //		}
-		int textPadding = isNice ? E_PADDING : E_PADDING/2;
 		for(int i=0; i<getText(false).count(); i++)
 		{
 			canvas.setColor(Color.BLACK);
 			writeOutVariables(canvas,
 							  rect.left + textPadding,
-						      rect.top + (i+1)*fm.getHeight() + textPadding,
+							  // START KGU#227 2016-07-31: Enh. #128
+							  //rect.top + (i+1)*fm.getHeight() + textPadding,
+							  rect.top + (i+1)*fm.getHeight() + textPadding + commentHeight,
+							  // END KGU#227 2016-07-31
 							  (String)getText(false).get(i),
 							  this);
 		}
@@ -498,31 +532,47 @@ public class Root extends Element {
 		
 		canvas.setFont(Element.font);
 		
-		int headerHeight = fm.getHeight()*getText(false).count();
-
 		// Draw the frame around the body
-		if (isNice==true)
+		// START #227 2016-07-31: Enh. #128 + Code revision
+//		int headerHeight = fm.getHeight()*getText(false).count();
+//		if (isNice==true)
+//		{
+//			headerHeight += 2*E_PADDING;
+//			rect.top = _top_left.top + headerHeight;
+//			rect.bottom -= E_PADDING;
+//			rect.left = _top_left.left + E_PADDING;
+//			rect.right -= E_PADDING;
+//		}
+//		else
+//		{
+//			headerHeight += 2*(E_PADDING/2);
+//			rect.top = _top_left.top + headerHeight;
+//			rect.left = _top_left.left;
+//			// START KGU#221 2016-07-28: Bugfix #208
+//			if (!isProgram)
+//			{
+//				rect.bottom -= E_PADDING/2;
+//			}
+//			// END KGU#221 2016-07-28
+//		}
+//
+//		children.draw(_canvas, rect);
+		Rect bodyRect = _top_left.copy();
+		bodyRect.left = pt0Sub.x;
+		bodyRect.top += pt0Sub.y;
+		bodyRect.right -= pt0Sub.x;	// Positioning is symmetric!
+		if (isNice)
 		{
-			headerHeight += 2*E_PADDING;
-			rect.top = _top_left.top + headerHeight;
-			rect.bottom -= E_PADDING;
-			rect.left = _top_left.left + E_PADDING;
-			rect.right -= E_PADDING;
+			bodyRect.bottom -= E_PADDING;
 		}
-		else
+		else if (!isProgram)
 		{
-			headerHeight += 2*(E_PADDING/2);
-			rect.top = _top_left.top + headerHeight;
-			rect.left = _top_left.left;
-			// START KGU#221 2016-07-28: Bugfix #208
-			if (!isProgram)
-			{
-				rect.bottom -= E_PADDING/2;
-			}
-			// END KGU#221 2016-07-28
+			bodyRect.bottom -= E_PADDING/2;
 		}
+		
+		children.draw(_canvas, bodyRect);
+		// END KGU#227 2016-07-31
 
-		children.draw(_canvas,rect);
 
 		// draw box around
 		canvas.setColor(Color.BLACK);
@@ -538,15 +588,16 @@ public class Root extends Element {
 		// draw thick line
 		if (isNice==false)
 		{
-			rect.top = _top_left.top + headerHeight - 1;
+			Rect sepRect = bodyRect.copy();
+			sepRect.bottom = sepRect.top--;
 			//rect.left = _top_left.left;
-			canvas.drawRect(rect);
+			canvas.drawRect(sepRect);
 			// START KGU#221 2016-07-28: Bugfix #208
 			if (!isProgram)
 			{
-				rect.top = rect.bottom;
-				rect.bottom++;
-				canvas.drawRect(rect);
+				sepRect.top = bodyRect.bottom;
+				sepRect.bottom = sepRect.top + 1;
+				canvas.drawRect(sepRect);
 			}
 			// END KGU#221 2016-07-28
 		}
@@ -554,7 +605,7 @@ public class Root extends Element {
 
 		if (isProgram==false)
 		{
-			rect = _top_left.copy();
+			//rect = _top_left.copy();
 			// START KGU#221 2016-07-27: Bugfix #208
 			//canvas.setColor(Color.WHITE);
 			//canvas.drawRect(rect);
@@ -3493,7 +3544,7 @@ public class Root extends Element {
             
             // START KGU#220 2016-07-27: Enh. #207
             // Warn in case of switched text/comments as first report
-            if (Element.E_TOGGLETC)
+            if (this.isSwitchTextAndComments())
             {
             	// This is a general warning without associated element - put at top
             	error = new DetectedError(errorMsg(Menu.warning_1, ""), null);
@@ -3670,12 +3721,16 @@ public class Root extends Element {
     }
 
 
-    public boolean isSwitchTextAndComments() {
-// START KGU#91 2015-12-04: Bugfix #39 drawing has directly to follow the set mode
-//      return switchTextAndComments;
-  	return Element.E_TOGGLETC;
-// END KGU#91 2015-12-04
-  }
+    public boolean isSwitchTextAndComments()
+    {
+    	// START KGU#91 2015-12-04: Bugfix #39 drawing has directly to follow the set mode
+    	//return switchTextAndComments;
+    	// START KGU#227 2016-07-31: Enh. #128 - Mode "comments and text" overrides "switch text/comments" 
+    	//return Element.E_TOGGLETC;
+    	return !Element.E_COMMENTSPLUSTEXT && Element.E_TOGGLETC;
+    	// END KGU#227
+    	// END KGU#91 2015-12-04
+    }
 
 // START KGU#91 2015-12-04: No longer needed
 //  public void setSwitchTextAndComments(boolean switchTextAndComments) {

@@ -3570,6 +3570,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
+    // START KGU#227 2016-07-31: Enh. #128
+    void setCommentsPlusText(boolean _activate)
+    {
+    	Element.E_COMMENTSPLUSTEXT = _activate;
+    	this.resetDrawingInfo(true);
+    	analyse();
+    	repaint();
+    }
+    // END KGU#227 2016-07-31
+
 	public void setToggleTC(boolean _tc)
 	{
 		Element.E_TOGGLETC=_tc;
@@ -3934,7 +3944,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	// END KGU#220 2016-07-27
     	repaint();
     }
-
+    
 	// Inner class is used to hold an image while on the clipboard.
 	public static class EMFSelection implements Transferable, ClipboardOwner
 		{

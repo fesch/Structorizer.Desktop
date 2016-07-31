@@ -11,7 +11,7 @@ Legend:
 <Foo>   -->     idea AND coding done by Foo
 <*>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.24-15 (2016.07.29)
+Version: 3.25 (2016.07.31)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]*
 - 01: Enh. #124: Generalized runtime data visualization <*>
 - 01: Arranger now adopts current directory from first arranged diagram <*>
@@ -89,6 +89,10 @@ Current development version: 3.24-15 (2016.07.29)
 - 15: Bugfix #208: Subroutine diagrams now cleanly drawn <*>
 - 15: Bugfix #209: Multiple PNG export fixed (uncut borders, file names) <*>
 - 15: Bugfix #210: Wrong execution counting in recursive routines <*>
+- 15: Issue #128: Combined comments and text mode [Hubert Klöser]*
+- 15: Bugfix #211: Execution counting in recursion corrected <*>
+- 15: Bugfix #212: Inverted logic of preference "enlarge FALSE" mended <*>
+- 15: Icon size in Diagram menu unified <*>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]

@@ -63,6 +63,7 @@ package lu.fisch.structorizer.elements;
  *                                      Enh. #185: new abstract method convertToCalls() for code import
  *      Kay Gürtzig     2016.07.25      Bugfix #205: Alternative comment bar colour if fill colour equals (KGU#215)
  *      Kay Gürtzig     2016.07.28      Bugfix #210: Execution counting mechanism fundamentally revised
+ *      Kay Gürtzig     2016.07.29      Issue #211: Modification in writeOutVariables() for E_TOGGLETC mode.
  *
  ******************************************************************************************************
  *
@@ -163,7 +164,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.24-15";
+	public static String E_VERSION = "3.25";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -274,6 +275,9 @@ public abstract class Element {
 	public static boolean E_VARHIGHLIGHT = false;	// Highlight variables, operators, string literals, and certain keywords? 
 	public static boolean E_SHOWCOMMENTS = true;	// Enable comment bars and comment popups? 
 	public static boolean E_TOGGLETC = false;		// Swap text and comment on displaying?
+	// START KGU#227 2016-07-29: Enh. #128
+	public static boolean E_COMMENTSPLUSTEXT = true;
+	// END KGU#227 2016-07-29
 	public static boolean E_DIN = false;			// Show FOR loops according to DIN 66261?
 	public static boolean E_ANALYSER = true;		// Analyser enabled?
 	// START KGU#123 2016-01-04: New toggle for Enh. #87
@@ -401,6 +405,7 @@ public abstract class Element {
 	 * @return the origin-based extension record.
 	 */
 	public abstract Rect prepareDraw(Canvas _canvas);
+
 	/**
 	 * Actually draws this element within the given canvas, using _top_left
 	 * for the placement of the upper left corner. Uses attribute rect0 as
@@ -507,6 +512,16 @@ public abstract class Element {
 		ele.drawPoint=point;
 	}
 
+	// START KGU#227 2016-07-30: Enh. #128
+	/**
+	 * Provides a subclassable left offset for drawing the text
+	 */
+	protected int getTextDrawingOffset()
+	{
+		return 0;
+	}
+	// END KGU#227 2016-07-30
+
 	public void setText(String _text)
 	{
 		// START KGU#91 2015-12-01: Should never set in swapped mode!
@@ -560,7 +575,7 @@ public abstract class Element {
 		StringList sl = new StringList();
 		// START KGU#91 2015-12-01: Bugfix #39: This is for drawing, so use switch-sensitive methods
 		//if(getText().count()>0) sl.add(getText().get(0));
-		if(getText(false).count()>0) sl.add(getText(false).get(0));
+		if (getText(false).count()>0) sl.add(getText(false).get(0));
 		// END KGU#91 2015-12-01
 		sl.add(COLLAPSED);
 		return sl;
@@ -597,7 +612,10 @@ public abstract class Element {
 	public StringList getComment(boolean _alwaysTrueComment)
 	// END KGU#91 2015-12-01
 	{
-		if (!_alwaysTrueComment && this.isSwitchTextCommentMode())
+		// START KGU#227 2016-07-30: Enh. #128 - Comments plus text mode ovverrides all
+		//if (!_alwaysTrueComment && this.isSwitchTextCommentMode())
+		if (!_alwaysTrueComment && !Element.E_COMMENTSPLUSTEXT && this.isSwitchTextCommentMode())
+		// END KGU#227 2016-07-30
 		{
 			return text;
 		}
@@ -609,8 +627,8 @@ public abstract class Element {
 	
 	// START KGU#172 2016-04-01: Issue #145: Make it easier to obtain this information
 	/**
-	 * Checks whether texts and comments are to swappe for display.
-	 * @return rue iff a Root is associated and its swichTextAndComments flag is on
+	 * Checks whether texts and comments are to be swapped for display.
+	 * @return true iff a Root is associated and its swichTextAndComments flag is on
 	 */
 	protected boolean isSwitchTextCommentMode()
 	{
@@ -1302,9 +1320,10 @@ public abstract class Element {
 			preAltT=ini.getProperty("IfTrue","V");
 			preAltF=ini.getProperty("IfFalse","F");
 			preAlt=ini.getProperty("If","()");
-			// START KGU 2016-01-16: Stuff having got lost by a Nov. 2014 merge
-			altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "true"));
-			// END KGU 2016-01-16
+			// START KGU 2016-07-31: Bugfix #212 - After corrected effect the default is also turned
+			//altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "true"));
+			altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "false"));
+			// END KGU#228 2016-07-31
 			StringList sl = new StringList();
 			sl.setCommaText(ini.getProperty("Case","\"?\",\"?\",\"?\",\"sinon\""));
 			preCase=sl.getText();
@@ -1719,9 +1738,12 @@ public abstract class Element {
 
 		Root root = getRoot(_this);
 
-		if(root!=null)
+		if (root != null)
 		{
-			if (root.hightlightVars==true)
+			// START KGU#226 2016-07-29: Issue #211: No syntax highlighting in comments
+			//if (root.hightlightVars==true)
+			if (root.hightlightVars==true && !root.isSwitchTextCommentMode())
+			// END KGU#226 2016-07-29
 			{
 				StringList parts = Element.splitLexically(_text, true);
 
@@ -1830,7 +1852,7 @@ public abstract class Element {
 						// START KGU#165 2016-03-25: consider the new option
 						//else if(ioSigns.contains(display))
 						else if(ioSigns.contains(display, !D7Parser.ignoreCase))
-						// END KGU#165 2016-03-25
+							// END KGU#165 2016-03-25
 						{
 							// set color
 							_canvas.setColor(Color.decode("0x007700"));
@@ -1842,7 +1864,7 @@ public abstract class Element {
 						// START KGU#165 2016-03-25: cosider the new option
 						//else if(jumpSigns.contains(display))
 						else if(jumpSigns.contains(display, !D7Parser.ignoreCase))
-						// END KGU#165 2016-03-25
+							// END KGU#165 2016-03-25
 						{
 							// set color
 							_canvas.setColor(Color.decode("0xff5511"));
@@ -1892,6 +1914,69 @@ public abstract class Element {
 		
 		return total;
 	}
+	
+	// START KGU#227 2016-07-29: Enh. #128
+	/**
+	 * Writes the non-empty comment lines at position _x, _y to _canvas with 2/3 font height and in dark gray
+	 * @param _canvas - the drawing canvas
+	 * @param _x - left text anchor coordinate for the text area
+	 * @param _y - top text anchor coordinate for the text area
+	 * @param _actuallyDraw - if the text is actually to be written (otherwise we just return the bonds)
+	 * @return - bounding box of the text
+	 */
+	protected Rect writeOutCommentLines(Canvas _canvas, int _x, int _y, boolean _actuallyDraw)
+	{
+		return writeOutCommentLines(_canvas, _x, _y, _actuallyDraw, true);
+	}
+
+	protected Rect writeOutCommentLines(Canvas _canvas, int _x, int _y, boolean _actuallyDraw, boolean _allLines)
+	{
+		int height = 0;
+		int width = 0;
+		// smaller font
+		Font smallFont = new Font(Element.font.getName(), Font.PLAIN, Element.font.getSize() * 2 / 3);
+		FontMetrics fm = _canvas.getFontMetrics(smallFont);
+		int fontHeight = fm.getHeight();
+		int extraHeight = this.isBreakpoint() ? fontHeight/2 : 0;
+		// backup the original font
+		Font backupFont = _canvas.getFont();
+		_canvas.setFont(smallFont);
+		_canvas.setColor(Color.DARK_GRAY);
+		int nLines = this.getComment().count();
+		String appendix = "";
+		if (nLines > 1 && !_allLines)
+		{
+			nLines = 1;
+			appendix = "...";
+		}
+		for (int i = 0; i < nLines; i++)
+		{
+			String line = this.getComment().get(i).trim();
+			if (!line.isEmpty())
+			{
+				height += fontHeight;
+				width = Math.max(width, _canvas.stringWidth(line + appendix));
+				if (_actuallyDraw)
+				{
+					_canvas.writeOut(_x, _y + height + extraHeight, line + appendix);
+				}
+			}
+		}
+		
+		_canvas.setFont(backupFont);
+		_canvas.setColor(Color.BLACK);
+		if (height > 0)
+		{
+			height += fontHeight/2;
+		}
+		return new Rect(_x, _y, _x+width, _y+height);
+	}
+	
+	protected boolean haveOuterRectDrawn()
+	{
+		return true;
+	}
+	// END KGU#227 2016-07-29
 
 	// START KGU#156 2016-03-11: Enh. #124 - helper routines to display run-time info
 	/**

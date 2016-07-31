@@ -50,7 +50,8 @@
  *      Kay Gürtzig     2016.07.07      Enh. #188: Messages for transmute button and menu items
  *      Kay Gürtzig     2016.07.20      Enh. #160: New message for ExportOptionDialoge
  *      Kay Gürtzig     2016.07.27      Enh. #207: New message Menu.warning_1 (must be consistent with menu entry names!) 
- *      Kay Gürtzig     2016.07.28      Issue #208: New dialog messages for PNG export 
+ *      Kay Gürtzig     2016.07.28      Issue #208: New dialog messages for PNG export
+ *      Kay Gürtzig     2016.07.31      Enh. #128: New menu item captions for "Comments plus Text" mode
  *
  ******************************************************************************************************
  *
@@ -139,6 +140,8 @@ Menu.menuDiagramTypeFunction.text=Sub
 Menu.menuDiagramNice.text=Boxed diagram?
 Menu.menuDiagramComment.text=Show comments?
 Menu.menuDiagramSwitchComments.text=Switch text/comments?
+Menu.menuDiagramCommentsPlusText.text=Comments plus texts?
+Menu.menuDiagramSwitchTCTooltip.text=Unselect "%1" to enable this item
 Menu.menuDiagramMarker.text=Highlight variables?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Analyse structogram?
@@ -220,7 +223,7 @@ Menu.error13_3.text=Your functions seems to use several competitive return mecha
 Menu.error14_1.text=The FOR loop parameters are not consistent to the loop heading text!
 Menu.error14_2.text=The FOR loop step value («%») is not a legal integer constant!
 Menu.error14_3.text=Variable name «%» may collide with one of the configured FOR loop heading keywords!
-Menu.error15.text=The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!
+Menu.error15.text=The CALL hasn't got form «[ <var> <- ] <routine_name>(<arg_list>)»!
 Menu.error16_1.text=A JUMP element may be empty or start with one of %, possibly followed by an argument!	
 Menu.error16_2.text=A return instruction, unless at final position, must form a JUMP element!
 Menu.error16_3.text=An exit, leave or break instruction is only allowed as JUMP element!

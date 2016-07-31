@@ -75,6 +75,7 @@ public class DetectedError
 				error = error.replaceAll("»", "\u00BB");
 				// START KGU#220 2016-07-27: Enh. #207 - allow general warnings
 				error = error.replace("--->", "\u2192");
+				error = error.replace("<-", "\u2190");
 				// END KGU#220 2016-07-27
 				return error;
 				//return element.getClass().getSimpleName()+" «"+element.getText().get(0)+"»: "+error;
