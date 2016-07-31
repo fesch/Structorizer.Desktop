@@ -558,7 +558,7 @@ public class Root extends Element {
 //
 //		children.draw(_canvas, rect);
 		Rect bodyRect = _top_left.copy();
-		bodyRect.left = pt0Sub.x;
+		bodyRect.left += pt0Sub.x;
 		bodyRect.top += pt0Sub.y;
 		bodyRect.right -= pt0Sub.x;	// Positioning is symmetric!
 		if (isNice)
