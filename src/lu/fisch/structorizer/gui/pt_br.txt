@@ -44,27 +44,28 @@ I/*
 -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=Arquivo
+Menu.menuFile.mnemonic=
 // Submenus of "File"
 Menu.menuFileNew.text=Novo
 Menu.menuFileOpen.text=Abrir ...
-Menu.menuFileOpenRecent=Abrir arquivo recente ...
+Menu.menuFileOpenRecent.text=
 Menu.menuFileSave.text=Salvar
 Menu.menuFileSaveAs.text=Salvar como ...
 Menu.menuFileExport.text=Exportar
-
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Figura ...
 Menu.menuFileExportCode.text=Código ...
+Menu.lbFileExportCodeFavorite.text=
+Menu.menuFileExportCodeFavorite.tooltip=
 Menu.menuFileImport.text=Importar
-
 // Submenu of "File -> Import"
 Menu.menuFileImportPascal.text=Pascal ...
 Menu.menuFilePrint.text=Imprimir ...
+Menu.menuFileArrange.text=Organizar
 Menu.menuFileQuit.text=Sair
-
 // Menu "Edit"
 Menu.menuEdit.text=Editar
-
+Menu.menuEdit.mnemonic=
 // Submenu of "Edit"
 Menu.menuEditUndo.text=Desfazer
 Menu.menuEditRedo.text=Refazer
@@ -73,16 +74,13 @@ Menu.menuEditCopy.text=Copiar
 Menu.menuEditPaste.text=Colar
 Menu.menuEditCopyDiagramPNG.text=Copiar imagem PNG
 Menu.menuEditCopyDiagramEMF.text=Copiar imagem EMF
-
 // Menu "Diagram"
 Menu.menuDiagram.text=Diagrama
-
+Menu.menuDiagram.mnemonic=
 // Submenus of "Diagram"
 Menu.menuDiagramAdd.text=Inserir
-
 // Submenu "Diagram -> Add -> Before"
 Menu.menuDiagramAddBefore.text=Antes
-
 // Submenus for adding Elements "Before"
 Menu.menuDiagramAddBeforeInst.text=Instrução
 Menu.menuDiagramAddBeforeAlt.text=alternativa (IF)
@@ -94,10 +92,8 @@ Menu.menuDiagramAddBeforeForever.text=repetição (ENDLESS)
 Menu.menuDiagramAddBeforeCall.text=CALL
 Menu.menuDiagramAddBeforeJump.text=JUMP
 Menu.menuDiagramAddBeforePara.text=Paralelo
-
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Depois
-
 // Submenus for adding Elements "After"
 Menu.menuDiagramAddAfterInst.text=Instrução
 Menu.menuDiagramAddAfterAlt.text=alternativa (IF)
@@ -113,27 +109,26 @@ Menu.menuDiagramEdit.text=Editar
 Menu.menuDiagramDelete.text=Apagar
 Menu.menuDiagramMoveUp.text=Para cima
 Menu.menuDiagramMoveDown.text=Para baixo
+Menu.menuDiagramTransmute.text=
 Menu.menuDiagramCollapse.text=Colapsar
 Menu.menuDiagramExpand.text=Expandir
-
 // Breakpoint
 Menu.menuDiagramBreakpoint.text=Alternar breakpoint
-
 // Diagram Appearance
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Principal
 Menu.menuDiagramTypeFunction.text=Sub
 Menu.menuDiagramNice.text=Diagrama encaixado?
 Menu.menuDiagramComment.text=Mostrar comentários?
+Menu.menuDiagramSwitchComments.text=Trocar texto/comentários?
 Menu.menuDiagramMarker.text=Destacar variáveis?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Analisar diagrama?
 Menu.menuDiagramWheel.text=Rolagem do mouse para colapsar?
-
-// Menu "Help"
+// Menu "Preferences"
 Menu.menuPreferences.text=Preferências
-
-// Submenu of "Help"
+Menu.menuPreferences.mnemonic=p
+// Submenu of "Preferences"
 Menu.menuPreferencesFont.text=Fonte ...
 Menu.menuPreferencesColors.text=Cores ...
 Menu.menuPreferencesOptions.text=Estruturas ...
@@ -148,7 +143,7 @@ Menu.menuPreferencesLanguageDutch.text=Holandês
 Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburguês
 Menu.menuPreferencesLanguageSpanish.text=Espanhol
 Menu.menuPreferencesLanguageItalian.text=Italiano
-Menu.menuPreferencesLanguagePortugalBrazil.text=Português (BR) 
+Menu.menuPreferencesLanguagePortugalBrazil.text=Português (BR)
 Menu.menuPreferencesLanguageSimplifiedChinese.text=Chinês  (simplificado)
 Menu.menuPreferencesLanguageTraditionalChinese.text=Chinês (tradicional)
 Menu.menuPreferencesLanguageCzech.text=Checo
@@ -162,13 +157,13 @@ Menu.menuPreferencesSaveAll.text=Salvar
 Menu.menuPreferencesSaveDump.text=Salvar no arquivo ...
 Menu.menuPreferencesSaveLoad.text=Carregar do arquivo ...
 
+
 // Menu "Help"
 Menu.menuHelp.text=Ajuda
-
+Menu.menuHelp.mnemonic=
 // Submenu of "Help"
 Menu.menuHelpAbout.text=Sobre ...
 Menu.menuHelpUpdate.text=Atualizar ...
-
 // Error messages for analyser
 Menu.error01_1.text=AVISO: Variável de controle não detectada ...
 Menu.error01_2.text=AVISO: Mais de uma variável de controle detectada ...
@@ -197,12 +192,13 @@ Menu.error14_1.text=Os parâmetros da repetição (FOR) não são consistentes c
 Menu.error14_2.text=A valor da variação na repetição («%») não é constante inteira válida!
 Menu.error14_3.text=A variável «%» pode coincidir com outra já configurada como palavra-chave no cabeçalho da repetição (FOR)!
 Menu.error15.text=A chamada (CALL) não tem o formato «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!
-Menu.error16_1.text=Um desvio (JUMP) pode estar vazio ou iniciar-se por %, possivelmente seguido por um argumento!	
+Menu.error16_1.text=Um desvio (JUMP) pode estar vazio ou iniciar-se por %, possivelmente seguido por um argumento!
 Menu.error16_2.text=A instrução para retorno, fora da última posição, deve ter o formato de um desvio (JUMP)!
 Menu.error16_3.text=Uma instrução de escape (exit, leave, break) somente é permitida como desvio (JUMP)!
 Menu.error16_4.text=Não é possível interromper ou abandonar mais de nível aninhado em (%)!
 Menu.error16_5.text=Não se deve retornar diretamente de uma thread paralela!
 Menu.error16_6.text=Argumento impróprio para esse tipo de desvio (JUMP) (deve ser constante inteira)!
+Menu.error16_7.text=
 Menu.error17.text=Risco de inconsistência devido a acesso concorrente à variável «%» por várias threads paralelas!
 
 -----[ AnalyserPreferences ]-----
@@ -226,15 +222,14 @@ AnalyserPreferences.check16.text=Verificar se há uso incorreto de desvio (JUMP)
 AnalyserPreferences.check17.text=Verificar se há riscos de inconsistência em seções paralelas (PARALLEL).
 AnalyserPreferences.okButton.text=OK
 
+
+
 -----[ Diagram ]-----
-
 // Buttons
-
 // I/O
 Editor.btnNew.tooltip=Criar um diagrama em branco.
 Editor.btnOpen.tooltip=Abrir um diagrama existente.
 Editor.btnSave.tooltip=Salvar o diagrama atual.
-
 // InsertBefore
 Editor.btnBeforeInst.tooltip=Inserir uma nova instrução antes do elemento selecionado.
 Editor.btnBeforeAlt.tooltip=Inserir uma nova alternativa (IF) antes do elemento selecionado.
@@ -246,7 +241,6 @@ Editor.btnBeforeCall.tooltip=Inserir uma nova chamada (CALL) antes do elemento s
 Editor.btnBeforeJump.tooltip=Inserir um novo desvio (JUMP) antes do elemento selecionado.
 Editor.btnBeforeCase.tooltip=Inserir uma nova alternativa (CASE) antes do elemento selecionado.
 Editor.btnBeforePara.tooltip=Inserir um novo comando paralelo (PARALLEL) antes do elemento selecionado.
-
 // InsertAfter
 Editor.btnAfterInst.tooltip=Inserir uma nova instrução após o elemento selecionado.
 Editor.btnAfterAlt.tooltip=Inserir uma nova alternativa (IF) após o elemento selecionado.
@@ -258,37 +252,31 @@ Editor.btnAfterCall.tooltip=Inserir uma nova chamada (CALL) após o elemento sel
 Editor.btnAfterJump.tooltip=Inserir um novo desvio (JUMP) após o elemento selecionado.
 Editor.btnAfterCase.tooltip=Inserir uma nova alternativa (CASE) após o elemento selecionado.
 Editor.btnAfterPara.tooltip=Inserir um novo comando paralelo (PARALLEL) após o elemento selecionado.
-
 // undo & redo
 Editor.btnUndo.tooltip=Desfazer a última ação.
 Editor.btnRedo.tooltip=Refazer a última ação.
-
 // copy & paste
 Editor.btnCut.tooltip=Recortar o elemento selecionado.
 Editor.btnCopy.tooltip=Copiar o elemento selecionado.
 Editor.btnPaste.tooltip=Colar ou recortar após o elemento selecionado.
-
-// style
+// style 
 Editor.btnNice.tooltip=Mudar o estilo visual do diagrama.
 Editor.btnFunction.tooltip=Sub diagrama (cantos arredondados).
 Editor.btnProgram.tooltip=Diagrama principal (cantos quadrados).
-
 // editing
 Editor.btnEdit.tooltip=Editar o elemento selecionado.
 Editor.btnDelete.tooltip=Apagar o elemento selecionado.
 Editor.btnMoveUp.tooltip=Mover o elemento selecionado uma posição para cima.
 Editor.btnMoveDown.tooltip=Mover o elemento selecionado uma posição para baixo.
-
+Editor.btnTransmute.tooltip=
 //printing
 Editor.btnPrint.tooltip=Imprimir o diagrama.
-
+Editor.btnArrange.tooltip=
 // font
 Editor.btnFontUp.tooltip=Aumentar o tamanho da fonte.
 Editor.btnFontDown.tooltip=Diminuir o tamanho da fonte.
-
-// copyright
+// copyright 
 Editor.btnAbout.tooltip=Mostrar informações sobre Structorizer.
-
 // colors
 Editor.btnColor0.tooltip=Colorir o elemento selecionado com esta cor.
 Editor.btnColor1.tooltip=Colorir o elemento selecionado com esta cor.
@@ -300,25 +288,20 @@ Editor.btnColor6.tooltip=Colorir o elemento selecionado com esta cor.
 Editor.btnColor7.tooltip=Colorir o elemento selecionado com esta cor.
 Editor.btnColor8.tooltip=Colorir o elemento selecionado com esta cor.
 Editor.btnColor9.tooltip=Colorir o elemento selecionado com esta cor.
-
 // collapsing
 Editor.btnCollapse.tooltip=Colapsar o elemento selecionado.
 Editor.btnExpand.tooltip=Expandir o elemento selecionado.
-
 // turtleizer & executor
 Editor.btnTurtle.tooltip=Abrir Turtleizer ...
 Editor.btnMake.tooltip=Abrir Executor ...
 Editor.btnDropBrk.tooltip=Remover todos os breakpoints.
-
 // Popup menu
 Editor.popupCut.text=Recortar
 Editor.popupCopy.text=Copiar
 Editor.popupPaste.text=Colar
 Editor.popupAdd.text=Inserir
-
 // Submenu of "Add"
 Editor.popupAddBefore.text=Antes
-
 // Submenus of "Add -> Before"
 Editor.popupAddBeforeInst.text=Instrução
 Editor.popupAddBeforeAlt.text=alternativa (IF)
@@ -330,10 +313,8 @@ Editor.popupAddBeforeForever.text=repetição (ENDLESS)
 Editor.popupAddBeforeCall.text=CALL
 Editor.popupAddBeforeJump.text=JUMP
 Editor.popupAddBeforePara.text=Paralelo
-
 // After
 Editor.popupAddAfter.text=Depois
-
 // Submenus of "Add -> After"
 Editor.popupAddAfterInst.text=Instrução
 Editor.popupAddAfterAlt.text=alternativa (IF)
@@ -345,19 +326,18 @@ Editor.popupAddAfterForever.text=repetição (ENDLESS)
 Editor.popupAddAfterCall.text=CALL
 Editor.popupAddAfterJump.text=JUMP
 Editor.popupAddAfterPara.text=Paralelo
-
-// Edit
+// Edit	
 Editor.popupEdit.text=Editar
 Editor.popupDelete.text=Apagar
 Editor.popupMoveUp.text=Para cima
 Editor.popupMoveDown.text=Para baixo
-
+Editor.popupTransmute.text=
 // Collapsing
 Editor.popupCollapse.text=Colapsar
 Editor.popupExpand.text=Expandir
-
 // Breakpoint
 Editor.popupBreakpoint.text=Alternar breakpoint
+
 
 -----[ InputBox ]-----
 InputBox.lblText.text=Favor inserir texto
@@ -406,12 +386,14 @@ Preferences.lblRepeat.tooltip=Conteúdo padrão de uma repetição (REPEAT).
 Preferences.btnOK.text=OK
 Preferences.btnOK.tooltip=Confirmar sua escolha.
 
+
 -----[ About ]-----
 About.title=About
 About.pnlTabbed.tab.0=Pessoas envolvidas
 About.pnlTabbed.tab.1=Registro de alterações
 About.btnOK.text=OK
 About.btnOK.tooltip=Confirmar sua escolha.
+
 
 -----[ FontChooser ]-----
 FontChooser.title=Font
@@ -422,6 +404,7 @@ FontChooser.lblSize.text=Tamanho
 FontChooser.lblSize.tooltip=Os tamanhos das fontes selecionáveis.
 FontChooser.btnOK.text=OK
 FontChooser.btnOK.tooltip=Confirmar sua escolha.
+
 
 -----[ Colors ]-----
 Colors.title=Preferências de cor
@@ -458,6 +441,7 @@ Colors.color9.tooltip=Clicar para editar ...
 Colors.btnOK.text=OK
 Colors.btnOK.tooltip=Confirmar sua escolha.
 
+
 -----[ ColorChooser ]-----
 ColorChooser.title=Colors
 ColorChooser.btnCancel.text=Cancel
@@ -465,8 +449,9 @@ ColorChooser.btnCancel.tooltip=Cancel your choice.
 ColorChooser.btnOK.text=OK
 ColorChooser.btnOK.tooltip=Validate your choice.
 
+
 -----[ ParserPreferences ]-----
-ParserPreferences.title=Preferências do parser 
+ParserPreferences.title=Preferências do parser
 ParserPreferences.lblPre.text=Pre
 ParserPreferences.lblPre.tooltip=
 ParserPreferences.lblPost.text=Pós
@@ -477,17 +462,29 @@ ParserPreferences.lblCase.text=alternativa (CASE)
 ParserPreferences.lblCase.tooltip=
 ParserPreferences.lblFor.text=repetição (FOR)
 ParserPreferences.lblFor.tooltip=
+ParserPreferences.lblForStep.text=
+ParserPreferences.lblForIn.text=
+ParserPreferences.lblForIn.tooltip=
+ParserPreferences.edtForInPre.tooltip=
+ParserPreferences.edtForInPost.tooltip=
 ParserPreferences.lblWhile.text=repetição (WHILE)
 ParserPreferences.lblWhile.tooltip=
 ParserPreferences.lblRepeat.text=repetição (REPEAT)
 ParserPreferences.lblRepeat.tooltip=
+ParserPreferences.lblJump.text=
+ParserPreferences.lblJump.tooltip=
+ParserPreferences.lblJumpLeave.text=
+ParserPreferences.lblJumpReturn.text=
+ParserPreferences.lblJumpExit.text=
 ParserPreferences.lblInput.text=Entrada
 ParserPreferences.lblInput.tooltip=
 ParserPreferences.lblOutput.text=Saída
 ParserPreferences.lblOutput.tooltip=
+ParserPreferences.chkIgnoreCase.text=
 ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=Confirmar sua escolha.
 ParserPreferences.lblErrorSign.text=Não é permitido usar ':' em qualquer sentença do parser!
+ParserPreferences.lblErrorSign2.text=
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Imprimir Visualização
@@ -500,9 +497,15 @@ PrintPreview.btnOK.tooltip=Imprimir o diagrama.
 
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Opções para exportar ...
+ExportOptionDialoge.noConversionCheckBox.text=
+ExportOptionDialoge.noConversionCheckBox.tooltip=
 ExportOptionDialoge.commentsCheckBox.text=Exportar instruções como comentários.
 ExportOptionDialoge.bracesCheckBox.text=Colocar início de bloco na mesma linha (C/C++/Java etc.).
 ExportOptionDialoge.lineNumbersCheckBox.text=Gerar números de linhas ao exportar para BASIC.
+ExportOptionDialoge.chkExportSubroutines.text=
+ExportOptionDialoge.lbPrefGenerator.text=
+ExportOptionDialoge.lbCharset.text=
+ExportOptionDialoge.chkCharsetAll.text=
 ExportOptionDialoge.jLabel1.text=Favor selecionar as opções desejadas para ativação ...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Salvar opções.
