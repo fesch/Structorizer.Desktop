@@ -11,7 +11,7 @@ Legend:
 <Foo>   -->     idea AND coding done by Foo
 <*>     -->     idea and coding done by Kay Gürtzig
 
-Version: 3.25 (2016.07.31)
+Version: 3.25 (2016.08.01)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]*
 - 01: Enh. #124: Generalized runtime data visualization <*>
 - 01: Arranger now adopts current directory from first arranged diagram <*>

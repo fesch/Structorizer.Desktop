@@ -46,6 +46,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.03.18      KGU#89: Localization of Executor Control supported 
  *      Kay Gürtzig     2016.07.03      KGU#202: Localization of Arranger Surface supported
  *      Kay Gürtzig     2016.07.25      Issues #201, #202: Look-and-Feel propagation to Arranger and Executor
+ *      Kay Gürtzig     2016.08.01      Enh. #128: new mode "Comments plus text" associated to Ini file
  *
  ******************************************************************************************************
  *
@@ -306,6 +307,9 @@ public class Mainform  extends JFrame implements NSDController
 				{
 					diagram.setComments(false);
 				}
+				// START KGU#227 2016-08-01: Enh. #128
+				diagram.setCommentsPlusText(ini.getProperty("commentsPlusText","0").equals("1"));	// default = 0
+				// END KGU#227 2016-08-01
 				if (ini.getProperty("switchTextComments","0").equals("1")) // default = 0
 				{
 					diagram.setToggleTC(true);
@@ -417,6 +421,9 @@ public class Mainform  extends JFrame implements NSDController
 			// DIN, comments
 			ini.setProperty("DIN",(Element.E_DIN?"1":"0"));
 			ini.setProperty("showComments",(Element.E_SHOWCOMMENTS?"1":"0"));
+			// START KGU#227 2016-08-01: Enh. #128
+			ini.setProperty("commentsPlusText", Element.E_COMMENTSPLUSTEXT ? "1" : "0");
+			// END KGU#227 2016-08-01
 			ini.setProperty("switchTextComments",(Element.E_TOGGLETC?"1":"0"));
 			ini.setProperty("varHightlight",(Element.E_VARHIGHLIGHT?"1":"0"));
 			// KGU 2016-07-27: Why has this been commented out once (before version 3.17)? See Issue #207

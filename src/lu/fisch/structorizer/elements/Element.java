@@ -64,6 +64,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.25      Bugfix #205: Alternative comment bar colour if fill colour equals (KGU#215)
  *      Kay Gürtzig     2016.07.28      Bugfix #210: Execution counting mechanism fundamentally revised
  *      Kay Gürtzig     2016.07.29      Issue #211: Modification in writeOutVariables() for E_TOGGLETC mode.
+ *                                      Enh. #128: New mode E_COMMENTSPLUSTEXT
  *
  ******************************************************************************************************
  *
@@ -276,7 +277,7 @@ public abstract class Element {
 	public static boolean E_SHOWCOMMENTS = true;	// Enable comment bars and comment popups? 
 	public static boolean E_TOGGLETC = false;		// Swap text and comment on displaying?
 	// START KGU#227 2016-07-29: Enh. #128
-	public static boolean E_COMMENTSPLUSTEXT = true;
+	public static boolean E_COMMENTSPLUSTEXT = false;	// Draw elements with both text and comments?
 	// END KGU#227 2016-07-29
 	public static boolean E_DIN = false;			// Show FOR loops according to DIN 66261?
 	public static boolean E_ANALYSER = true;		// Analyser enabled?
