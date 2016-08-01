@@ -29,10 +29,10 @@
  *
  *      Revision List
  *
- *      Author              Date            Description
- *      ------              ----            -----------
- *      Laurent Zender      2008.01.14      First Issue
- *      Kay Gürtzig         2016.04.24      Issue #173: New mnemonic configurations added
+ *      Author              Date			Description
+ *      ------              ----			-----------
+ *      Laurent Zender      2008.01.14                  First Issue
+ *      Laurent Zender      2016.07.31                  Corrections and Translations for newly added features
  *
  ******************************************************************************************************
  *
@@ -43,26 +43,25 @@
 -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=File
-Menu.menuFile.mnemonic=f
 // Submenus of "File"
 Menu.menuFileNew.text=Nei
 Menu.menuFileOpen.text=Opmaachen...
+Menu.menuFileOpenRecent.text=Läscht opgemaachten Dateien
 Menu.menuFileSave.text=Späicheren
-Menu.menuFileSaveAs.text=Späichern ënner...
+Menu.menuFileSaveAs.text=Späicheren ënner...
 Menu.menuFileExport.text=Exportéieren
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Biller...
 Menu.menuFileExportCode.text=Code ...
-Menu.menuFileImport.text=Import
+Menu.menuFileImport.text=Importéieren
 // Submenu of "File -> Import"
 Menu.menuFileImportPascal.text=Pascal Code...
 Menu.menuFilePrint.text=Drécken...
-Menu.menuFileQuit.text=Verlossen
+Menu.menuFileQuit.text=Verloossen
 // Menu "Edit"
 Menu.menuEdit.text=Editéieren
-Menu.menuEdit.mnemonic=e
 // Submenu of "Edit"
-Menu.menuEditUndo.text=Réckgängig machen
+Menu.menuEditUndo.text=Réckgängeg maachen
 Menu.menuEditRedo.text=Erëm hierstellen
 Menu.menuEditCut.text=Ausschneiden
 Menu.menuEditCopy.text=Kopéieren
@@ -70,14 +69,13 @@ Menu.menuEditPaste.text=Apechen
 Menu.menuEditCopyDiagramPNG.text=D'Bild als PNG kopéieren
 Menu.menuEditCopyDiagramEMF.text=D'Bild als EMF kopéieren
 // Menu "Diagram"
-Menu.menuDiagram.text=Diagram
-Menu.menuDiagram.mnemonic=d
+Menu.menuDiagram.text=Diagramm
 // Submenus of "Diagram"
 Menu.menuDiagramAdd.text=Bäisetzen
 // Submenu "Diagram -> Add -> Before"
 Menu.menuDiagramAddBefore.text=Virdrun
 // Submenus for adding Elements "Before"
-Menu.menuDiagramAddBeforeInst.text=Instruktion
+Menu.menuDiagramAddBeforeInst.text=Instruktioun
 Menu.menuDiagramAddBeforeAlt.text=IF statement
 Menu.menuDiagramAddBeforeCase.text=CASE statement
 Menu.menuDiagramAddBeforeFor.text=FOR Schläif
@@ -86,10 +84,11 @@ Menu.menuDiagramAddBeforeRepeat.text=REPEAT Schläif
 Menu.menuDiagramAddBeforeForever.text=ENDLOS Schläif
 Menu.menuDiagramAddBeforeCall.text=Call
 Menu.menuDiagramAddBeforeJump.text=Jump
+Menu.menuDiagramAddBeforePara.text=Parallel
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Hannendrun
 // Submenus for adding Elements "After"
-Menu.menuDiagramAddAfterInst.text=Instruktion
+Menu.menuDiagramAddAfterInst.text=Instruktioun
 Menu.menuDiagramAddAfterAlt.text=IF statement
 Menu.menuDiagramAddAfterCase.text=CASE statement
 Menu.menuDiagramAddAfterFor.text=FOR Schläif
@@ -98,122 +97,189 @@ Menu.menuDiagramAddAfterRepeat.text=REPEAT Schläif
 Menu.menuDiagramAddAfterForever.text=ENDLOS Schläif
 Menu.menuDiagramAddAfterCall.text=Call
 Menu.menuDiagramAddAfterJump.text=Jump
+Menu.menuDiagramAddAfterPara.text=Parallel
 Menu.menuDiagramEdit.text=Editéieren
 Menu.menuDiagramDelete.text=Läschen
 Menu.menuDiagramMoveUp.text=No uewen réckelen
 Menu.menuDiagramMoveDown.text=No ënnen réckelen
-Menu.menuDiagramType.text=Type
+Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=Main
 Menu.menuDiagramTypeFunction.text=Sub
-Menu.menuDiagramNice.text=Boxed diagram?
+Menu.menuDiagramNice.text=Boxed diagramm?
 Menu.menuDiagramComment.text=Kommentaren uwëisen?
-Menu.menuDiagramMarker.text=Variablen markéieren?
+Menu.menuDiagramSwitchComments.text=Tëschent Text an Kommentaren wiesselen
+Menu.menuDiagramMarker.text=Variabelen markéieren?
 Menu.menuDiagramDIN.text=DIN?
-// Menu "Preferences"
+Menu.menuDiagramAnalyser.text=Structogramm analyséieren
+// Menu "Help"
 Menu.menuPreferences.text=Astellungen
-Menu.menuPreferences.mnemonic=a
-// Submenu of "Preferences"
-Menu.menuPreferencesFont.text=Schreft...
-Menu.menuPreferencesColors.text=Faarw...
+// Submenu of "Help"
+Menu.menuPreferencesFont.text=Schrëft...
+Menu.menuPreferencesColors.text=Faarf...
 Menu.menuPreferencesOptions.text=Strukturen...
 Menu.menuPreferencesParser.text=Parser...
+Menu.menuPreferencesAnalyser.text=Analyser …
+Menu.menuPreferencesExport.text=Export …
 Menu.menuPreferencesLanguage.text=Sprooch
 Menu.menuPreferencesLanguageEnglish.text=Englesch
 Menu.menuPreferencesLanguageGerman.text=Däitsch
-Menu.menuPreferencesLanguageFrench.text=Franséich
+Menu.menuPreferencesLanguageFrench.text=Franséisch
 Menu.menuPreferencesLanguageDutch.text=Hollännesch
-Menu.menuPreferencesLanguageItalian.text=Italienesch
-Menu.menuPreferencesLanguageSpanish.text=Spuenesch
 Menu.menuPreferencesLanguageLuxemburgish.text=Lëtzebuergesch
-Menu.menuPreferencesLanguagePortugalBrazil.text=Portugiesesch (Brazilien)
-Menu.menuPreferencesLanguageChinese.text=Chinesesch
-Menu.menuPreferencesLanguageCzech.text=Czechesch
+Menu.menuPreferencesLanguageSpanish.text=Spuenesch
+Menu.menuPreferencesLanguageItalian.text=Italienesch
+Menu.menuPreferencesLanguagePortugalBrazil.text=Portugisesch (Brasilien)
+Menu.menuPreferencesLanguageSimplifiedChinese.text=Chinesesch (vereinfacht)
+Menu.menuPreferencesLanguageTraditionalChinese.text=Chinesesch (traditionell)
+Menu.menuPreferencesLanguageCzech.text=Tschechesch
+Menu.menuPreferencesLanguageRussian.text=Russesch
+Menu.menuPreferencesLanguagePolish.text=Polnesch
 
 Menu.menuPreferencesLookAndFeel.text=Look & Feel
 
 Menu.menuPreferencesSave.text=All Astellungen ...
 Menu.menuPreferencesSaveAll.text=Späicheren
-Menu.menuPreferencesSaveDump.text=Späicheren ënner ...
-Menu.menuPreferencesSaveLoad.text=Lueden ...
+Menu.menuPreferencesSaveDump.text=Späicheren als Datei ...
+Menu.menuPreferencesSaveLoad.text=Aus Datei lueden
 
 
 // Menu "Help"
 Menu.menuHelp.text=Hellef
-Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
-Menu.menuHelpAbout.text=Iwwert...
-Menu.menuHelpUpdate.text=Update...
+Menu.menuHelpAbout.text=Iwwert ...
+Menu.menuHelpUpdate.text=Update. ..
+// Error messages for analyser
+Menu.error01_1.text=WARNUNG: Keng Schläifvariabel fonnt
+Menu.error01_2.text=WARNUNG: Méi wei eng Schläifvariabel fonnt
+Menu.error01_3.text=D'Schläifvariabel «%» dierf net geännert ginn!
+Menu.error02.text=Keng Variabelännerung an der Konditioun fonnt. Méiglech endlos Schläif ...
+Menu.error03_1.text=D'Variabel «%» ass nach net initialiséiert ginn!
+Menu.error03_2.text=D'Variabel «%» ass méiglecherweis nach net initialiséiert ginn!
+Menu.error04.text=En IF-statement dierf net mat engem eidelen TRUE-Block benotzt ginn!
+Menu.error05.text=D'Variabel «%» muss grouss geschriwwen sinn!
+Menu.error06.text=Den Programmnumm «%» muss grouss geschriwwen sinn!
+Menu.error07_1.text=«%» ass keen validen Numm fir en Programm oder eng Method!
+Menu.error07_2.text=«%» ass keen validen Numm fir en Parameter!
+Menu.error07_3.text=«%» ass keen validen Numm fir eng Variabel
+Menu.error08.text=Et dierf keng Zouwäisung an enger Konditioun gemaach ginn.
+Menu.error09.text=Den Programm («%») dierf net den selwechten Numm wei eng Variabel oder en Parameter hunn!
+Menu.error10_1.text=En eenzelt Instruktiouns Element sollt keng Agang/Ausgang Instruktiounen oder Zouwäisungen enthalen!
+Menu.error10_2.text=En eenzelt Instruktiouns Element sollt keng Agang/Ausgang Instruktiounen enthalen!
+Menu.error10_3.text=En eenzelt Instruktiouns Element sollt keng Agang Instruktiounen oder Zouwäisungen enthalen!
+Menu.error10_4.text=En eenzelt Instruktiouns Element sollt keng Ausgang Instruktiounen oder Zouwäisungen enthalen!
+Menu.error11.text=Wahrscheinlech Zouwäisungsfehler! W.E.G. d'Instruktioun kontrolléieren!
+Menu.error12.text=Den Parameter muss mat engem "p" ufänken an dierf ab dann nëmmen nach Grouss buchstaawen enthalen!
+Menu.error13_1.text=Funktioun gëtt keen Resultat zréck!
+Menu.error13_2.text=Funktioun gëtt méiglecherweis keen Resultat zréck!
+Menu.error13_3.text=Your functions seems to use several competitive return mechanisms: «%»!
+Menu.error14_1.text=The FOR loop parameters are not consistent to the loop heading text!
+Menu.error14_2.text=The FOR loop step value («%») is not a legal integer constant!
+Menu.error14_3.text=Variable name «%» may collide with one of the configured FOR loop heading keywords!
+Menu.error15.text=The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!
+Menu.error16_1.text=A JUMP element may be empty or start with one of %, possibly followed by an argument!
+Menu.error16_2.text=A return instruction, unless at final position, must form a JUMP element!
+Menu.error16_3.text=An exit, leave or break instruction is only allowed as JUMP element!
+Menu.error16_4.text=Cannot leave or break more loop levels than being nested in (%)!
+Menu.error16_5.text=You must not directly return out of a parallel thread!
+Menu.error16_6.text=Wrong argument for this kind of JUMP (should be an integer constant)!
+Menu.error17.text=Consistency risk due to concurrent access to variable «%» by several parallel threads!
+
+-----[ AnalyserPreferences ]-----
+AnalyserPreferences.title=Analyser Astellungen
+AnalyserPreferences.check1.text=Op verännert Schläif Variabel préiwen.
+AnalyserPreferences.check2.text=Op endlos Schläif préiwen. (Souwäit wei méiglech!)
+AnalyserPreferences.check3.text=Op net initialiséiert Variabel préiwen.
+AnalyserPreferences.check4.text=Op falsch IF-Statement Benotzung préiwen.
+AnalyserPreferences.check5.text=Op GROUSSGESCHRIWWEN Variabel Nimm préiwen. (LUX/MEN)
+AnalyserPreferences.check6.text=Op GROUSSGESCHRIWWEN Programm / Sub Nimm préiwen. (LUX/MEN)
+AnalyserPreferences.check7.text=Op valid Identifiers préiwen.
+AnalyserPreferences.check8.text=Zouwäisung an den Konditiounen kontrolléieren.
+AnalyserPreferences.check9.text=Préiwen op den Programm / Subnumm net selwecht wei aner Identifier sinn.
+AnalyserPreferences.check10.text=Op Instruktiounen mat multipellem Befehl.
+AnalyserPreferences.check11.text=Op Zouwäisungsfehler préiwen.
+AnalyserPreferences.check12.text=Op Standardiséiert Parameternimm préiwen (LUX/MEN)
+AnalyserPreferences.check13.text=Check of Funktioun en Resultat zréck gëtt.
+AnalyserPreferences.check14.text=Op Konsistenz vun den Schläifen Parameter préiwen.
+AnalyserPreferences.check15.text=Op feelerhaft Ennerroutine CALLs préiwen.
+AnalyserPreferences.check16.text=Op falsch JUMP Element benotzen préiwen
+AnalyserPreferences.check17.text=Op Inkonsistenz an PARALLEL Sektioun préiwen.
+AnalyserPreferences.okButton.text=OK
+
 
 
 -----[ Diagram ]-----
 // Buttons
 // I/O
 Editor.btnNew.tooltip=En neien Diagramm ufänken.
-
 Editor.btnOpen.tooltip=En Diagramm opmaachen.
-Editor.btnSave.tooltip=Den akutellen Diagramm späicheren.
+Editor.btnSave.tooltip=Den aktuellenDiagramm späicheren.
 // InsertBefore
-Editor.btnBeforeInst.tooltip=Eng nei Instruktioun virun dat ausgewieltent Element setzen.
-Editor.btnBeforeAlt.tooltip=Insert a new IF statement before the selected element.
-Editor.btnBeforeFor.tooltip=Eng nei FOR-Schläif virun dat ausgewieltent Element setzen.
-Editor.btnBeforeWhile.tooltip=Eng nei WHILE-Schläif virun dat ausgewieltent Element setzen.
-Editor.btnBeforeRepeat.tooltip=Eng nei REPEAT-Schläif virun dat ausgewieltent Element setzen.
-Editor.btnBeforeForever.tooltip=Eng nei ENDLOS-Schläif virun dat ausgewieltent Element setzen.
-Editor.btnBeforeCall.tooltip=Eng nei CALL-Instruktioun hannert dat ausgewieltent Element setzen.
-Editor.btnBeforeJump.tooltip=Eng nei JUMP-Instruktioun virun dat ausgewieltent Element setzen.
-Editor.btnBeforeCase.tooltip=Eng nei CASE-Struktur virun dat ausgewieltent Element setzen.
+Editor.btnBeforeInst.tooltip=Eng nei Instruktioun virun dat ausgewielten Element setzen.
+Editor.btnBeforeAlt.tooltip=En neien IF statement virun dat ausgewielten Element setzen.
+Editor.btnBeforeFor.tooltip=Eng nei FOR-Schläif virun dat ausgewielten Element setzen.
+Editor.btnBeforeWhile.tooltip=Eng nei WHILE-Schläif virun dat ausgewielten Element setzen.
+Editor.btnBeforeRepeat.tooltip=Eng nei REPEAT-Schläif virun dat ausgewielten Element setzen.
+Editor.btnBeforeForever.tooltip=Eng nei ENDLOS-Schläif virun dat ausgewielten Element setzen.
+Editor.btnBeforeCall.tooltip=Eng nei CALL-Instruktioun hannert dat ausgewielten Element setzen.
+Editor.btnBeforeJump.tooltip=Eng nei JUMP-Instruktioun virun dat ausgewielten Element setzen.
+Editor.btnBeforeCase.tooltip=Eng nei CASE-Struktur virun dat ausgewielten Element setzen.
+Editor.btnBeforePara.tooltip=En neien PARALLEL statement virun dat ausgewielten Element setzen.
 // InsertAfter
-Editor.btnAfterInst.tooltip=Eng nei Instruktioun hannert dat ausgewieltent Element setzen.
-Editor.btnAfterAlt.tooltip=Insert a new IF statement After the selected element.
-Editor.btnAfterFor.tooltip=Eng nei FOR-Schläif hannert dat ausgewieltent Element setzen.
-Editor.btnAfterWhile.tooltip=Eng nei WHILE-Schläif hannert dat ausgewieltent Element setzen.
-Editor.btnAfterRepeat.tooltip=Eng nei REPEAT-Schläif hannert dat ausgewieltent Element setzen.
-Editor.btnAfterForever.tooltip=Eng nei ENDLOS-Schläif hannert dat ausgewieltent Element setzen.
-Editor.btnAfterCall.tooltip=Eng nei CALL-Instruktioun hannert dat ausgewieltent Element setzen.
-Editor.btnAfterJump.tooltip=Eng nei JUMP-Instruktioun hannert dat ausgewieltent Element setzen.
-Editor.btnAfterCase.tooltip=Eng nei CASE-Struktur hannert dat ausgewieltent Element setzen.
+Editor.btnAfterInst.tooltip=Eng nei Instruktioun hannert dat ausgewielten Element setzen.
+Editor.btnAfterAlt.tooltip=En neien IF statement hannert dat ausgewielten Element setzen.
+Editor.btnAfterFor.tooltip=Eng nei FOR-Schläif hannert dat ausgewielten Element setzen.
+Editor.btnAfterWhile.tooltip=Eng nei WHILE-Schläif hannert dat ausgewielten Element setzen.
+Editor.btnAfterRepeat.tooltip=Eng nei REPEAT-Schläif hannert dat ausgewielten Element setzen.
+Editor.btnAfterForever.tooltip=Eng nei ENDLOS-Schläif hannert dat ausgewielten Element setzen.
+Editor.btnAfterCall.tooltip=Eng nei CALL-Instruktioun hannert dat ausgewielten Element setzen.
+Editor.btnAfterJump.tooltip=Eng nei JUMP-Instruktioun hannert dat ausgewielten Element setzen.
+Editor.btnAfterCase.tooltip=Eng nei CASE-Struktur hannert dat ausgewielten Element setzen.
+Editor.btnAfterPara.tooltip=En neien PARALLEL statement hannert dat ausgewielten Element setzen.
 // undo & redo
-Editor.btnUndo.tooltip=Déi läscht Aktioun réckgängig machen.
+Editor.btnUndo.tooltip=Déi läscht Aktioun réckgängeg maachen.
 Editor.btnRedo.tooltip=Déi läscht Aktioun erëm hierstellen.
 // copy & paste
-Editor.btnCut.tooltip=Dat ausgewieltent Element erausschneiden.
-Editor.btnCopy.tooltip=Dat ausgewieltent Element kopéieren.
-Editor.btnPaste.tooltip=Dat kopéiert oder erausgeschniddent Element hannert daat ausgewieltent Element apechen.
-
+Editor.btnCut.tooltip=Dat ausgewielten Element erausschneiden.
+Editor.btnCopy.tooltip=Dat ausgewielten Element kopéieren.
+Editor.btnPaste.tooltip=Dat kopéiert oder erausgeschnidden Element hannert dat ausgewielten Element apechen.
 // style 
 Editor.btnNice.tooltip=Toggle the visual style of the diagram.
-Editor.btnFunction.tooltip=Sub diagram (rounded corners).
-Editor.btnProgram.tooltip=Main diagram (square corners).
+Editor.btnFunction.tooltip=Sub Diagramm (ronn Ecker).
+Editor.btnProgram.tooltip=Main Diagramm (spatz Ecker).
 // editing
-Editor.btnEdit.tooltip=Dat ausgewieltent Element editéieren.
+Editor.btnEdit.tooltip=Dat ausgewielten Element editéieren.
 Editor.btnDelete.tooltip=Läschen vum ausgewielten Element.
-Editor.btnMoveUp.tooltip=Dat ausgewieltent Element no uewen réckelen.
-Editor.btnMoveDown.tooltip=Dat ausgewieltent Element no ënnen réckelen.
+Editor.btnMoveUp.tooltip=Dat ausgewielten Element no uewen réckelen.
+Editor.btnMoveDown.tooltip=Dat ausgewielten Element no ënnen réckelen.
 //printing
 Editor.btnPrint.tooltip=Den Diagramm ausdrécken.
 // font
-Editor.btnFontUp.tooltip=D'Schrëft vergréißeren.
+Editor.btnFontUp.tooltip=D'Schrëft vergréisseren.
 Editor.btnFontDown.tooltip=D'Schrëft verklengeren.
 // copyright 
 Editor.btnAbout.tooltip=Iwwert den Structorizer.
 // colors
-Editor.btnColor0.tooltip=Dat ausgewieltend Element mat deser Faarw fierwen.
-Editor.btnColor1.tooltip=Dat ausgewieltend Element mat deser Faarw fierwen.
-Editor.btnColor2.tooltip=Dat ausgewieltend Element mat deser Faarw fierwen.
-Editor.btnColor3.tooltip=Dat ausgewieltend Element mat deser Faarw fierwen.
-Editor.btnColor4.tooltip=Dat ausgewieltend Element mat deser Faarw fierwen.
-Editor.btnColor5.tooltip=Dat ausgewieltend Element mat deser Faarw fierwen.
-Editor.btnColor6.tooltip=Dat ausgewieltend Element mat deser Faarw fierwen.
-Editor.btnColor7.tooltip=Dat ausgewieltend Element mat deser Faarw fierwen.
-Editor.btnColor8.tooltip=Dat ausgewieltend Element mat deser Faarw fierwen.
-Editor.btnColor9.tooltip=Dat ausgewieltend Element mat deser Faarw fierwen.
+Editor.btnColor0.tooltip=Dat ausgewieltend Element mat dëser Faarf fierwen.
+Editor.btnColor1.tooltip=Dat ausgewieltend Element mat dëser Faarf fierwen.
+Editor.btnColor2.tooltip=Dat ausgewieltend Element mat dëser Faarf fierwen.
+Editor.btnColor3.tooltip=Dat ausgewieltend Element mat dëser Faarf fierwen.
+Editor.btnColor4.tooltip=Dat ausgewieltend Element mat dëser Faarf fierwen.
+Editor.btnColor5.tooltip=Dat ausgewieltend Element mat dëser Faarf fierwen.
+Editor.btnColor6.tooltip=Dat ausgewieltend Element mat dëser Faarf fierwen.
+Editor.btnColor7.tooltip=Dat ausgewieltend Element mat dëser Faarf fierwen.
+Editor.btnColor8.tooltip=Dat ausgewieltend Element mat dëser Faarf fierwen.
+Editor.btnColor9.tooltip=Dat ausgewieltend Element mat dëser Faarf fierwen.
+// turtleizer & executor
+Editor.btnTurtle.tooltip=Turtleizer opmaachen …
+Editor.btnMake.tooltip=Executor opmaachen …
+Editor.btnDropBrk.tooltip=Breakpoints läschen …
 // Popup menu
 Editor.popupCut.text=Ausschneiden
-Editor.popupCopy.text=Kopeieren
+Editor.popupCopy.text=Kopéieren
 Editor.popupPaste.text=Apechen
 Editor.popupAdd.text=Bäisetzen
 // Submenu of "Add"
-Editor.popupAddBefore.text=Firdrun
+Editor.popupAddBefore.text=Virdrun
 // Submenus of "Add -> Before"
 Editor.popupAddBeforeInst.text=Instruktion
 Editor.popupAddBeforeAlt.text=IF statement
@@ -224,10 +290,11 @@ Editor.popupAddBeforeRepeat.text=REPEAT Schläif
 Editor.popupAddBeforeForever.text=ENDLOS Schläif
 Editor.popupAddBeforeCall.text=Call
 Editor.popupAddBeforeJump.text=Jump
+Editor.popupAddBeforePara.text=Parallel
 // After
 Editor.popupAddAfter.text=Hannendrun
 // Submenus of "Add -> After"
-Editor.popupAddAfterInst.text=Instruktion
+Editor.popupAddAfterInst.text=Instruktioun
 Editor.popupAddAfterAlt.text=IF statement
 Editor.popupAddAfterCase.text=CASE statement
 Editor.popupAddAfterFor.text=FOR Schläif
@@ -236,98 +303,105 @@ Editor.popupAddAfterRepeat.text=REPEAT Schläif
 Editor.popupAddAfterForever.text=ENDLOS Schläif
 Editor.popupAddAfterCall.text=Call
 Editor.popupAddAfterJump.text=Jump
-// Edxit	
+Editor.popupAddAfterPara.text=Parallel
+// Edit
 Editor.popupEdit.text=Editéieren
 Editor.popupDelete.text=Läschen
 Editor.popupMoveUp.text=No uewen réckelen
 Editor.popupMoveDown.text=No ënnen réckelen
+// Breakpoint
+Editor.popupBreakpoint.text=Breakpoint un/ausschalten
 
 
 -----[ InputBox ]-----
 InputBox.lblText.text=W.e.g. en neien Text aginn
-InputBox.lblText.tooltip=
+InputBox.lblText.tooltip
 InputBox.lblComment.text=Kommentar
-InputBox.lblComment.tooltip=
+InputBox.lblComment.tooltip
 InputBox.txtText.tooltip=Den Inhalt vum Element.
 InputBox.txtComment.tooltip=Den Kommentar vum Element.
-
 InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=D'Auswahl bestätegen.
 InputBox.btnCancel.text=Ofbriechen
 InputBox.btnCancel.tooltip=D'Auswahl ofbriechen.
-
+InputBox.class_specific.Alternative.lblText=W.e.g. eng Konditioun aginn
+InputBox.class_specific.While.lblText=W.e.g. eng ufanks Konditioun aginn
+InputBox.class_specific.Repeat.lblText=W.e.g. eng ausgangs Konditioun aginn
+InputBox.class_specific.Case.lblText=W.e.g. Auswahl Expressiounen an Fall Konstanten aginn (Eng pro Linn)
+InputBox.class_specific.Parallel.lblText=Nummer vun parallellen Threads
 
 -----[ Preferences ]-----
 Preferences.title=Structure Preferences
-Preferences.pnlAlt.border=IF statemen
-Preferences.pnlAlt.tooltip=
+Preferences.pnlAlt.border=IF statement
+Preferences.pnlAlt.tooltip
 Preferences.lblAltT.text=Label TRUE
-Preferences.lblAltT.tooltip=The label for the left side.
+Preferences.lblAltT.tooltip=Den Label fir déi lénks Säit
 Preferences.lblAltF.text=Label FALSE
-Preferences.lblAltF.tooltip=The label fir the right side.
-Preferences.lblAltContent.text=Default content
-Preferences.lblAltContent.tooltip=The default content of an IF statement.
+Preferences.lblAltF.tooltip=Den Label fir déi riets Säit
+Preferences.lblAltContent.text=Standard Inhalt
+Preferences.lblAltContent.tooltip=Standard Inhalt vun engem IF statement.
+Preferences.altPadRight.text=FALSE vergréisseren
 Preferences.pnlCase.border=CASE statment
-Preferences.pnlCase.tooltip=
-Preferences.lblCase.text=Default content
-Preferences.lblCase.tooltip=The default content of a CASE statement.
-Preferences.pnlFor.border=FOR loop
-Preferences.pnlFor.tooltip=
-Preferences.lblFor.text=Default content
-Preferences.lblFor.tooltip=The default content of a FOR loop.
-Preferences.pnlWhile.border=WHILE loop
-Preferences.pnlWhile.tooltip=
-Preferences.lblWhile.text=Default content
-Preferences.lblWhile.tooltip=The default content of a WHILE loop.
-Preferences.pnlRepeat.border=REPEAT loop
-Preferences.pnlRepeat.tooltip=
-Preferences.lblRepeat.text=Default content
-Preferences.lblRepeat.tooltip=The default content of a REPEAT loop.
+Preferences.pnlCase.tooltip
+Preferences.lblCase.text=Standard Inhalt
+Preferences.lblCase.tooltip=Standard Inhalt vun engem CASE statement.
+Preferences.pnlFor.border=FOR Schläif
+Preferences.pnlFor.tooltip
+Preferences.lblFor.text=Standard Inhalt
+Preferences.lblFor.tooltip=Standard Inhalt vun enger FOR Schläif.
+Preferences.pnlWhile.border=WHILE Schläif
+Preferences.pnlWhile.tooltip
+Preferences.lblWhile.text=Standard Inhalt
+Preferences.lblWhile.tooltip=Standard Inhalt vun enger WHILE Schläif.
+Preferences.pnlRepeat.border=REPEAT Schläif
+Preferences.pnlRepeat.tooltip
+Preferences.lblRepeat.text=Standard Inhalt
+Preferences.lblRepeat.tooltip=Standard Inhalt vun enger REPEAT Schläif.
 Preferences.btnOK.text=OK
 Preferences.btnOK.tooltip=D'Auswahl bestätegen.
 
 
 -----[ About ]-----
-About.title=About
-About.pnlTabbed.tab.0=Implicated Persons
+About.title=Iwwert
+About.pnlTabbed.tab.0=Agebonne Persons
 About.pnlTabbed.tab.1=Changelog
 About.btnOK.text=OK
 About.btnOK.tooltip=D'Auswahl bestätegen.
 
 
 -----[ FontChooser ]-----
-FontChooser.title=Font
-FontChooser.lblTest.tooltip=A test string so that you can see how it will look like late on in your Editor.
+FontChooser.title=Schrëft
+FontChooser.lblTest.tooltip=En Beispilltext fir ze gesinn wei et spéider am Editor wäert ausgesinn.
 FontChooser.lblName.text=Numm
-FontChooser.lblName.tooltip=Den Numm vun den ausgewielbaren Schreften.
-FontChooser.lblSize.text=Gréißt
-FontChooser.lblSize.tooltip=D'Gréißt vun den ausgewielbaren Schreften.
+FontChooser.lblName.tooltip=Den Numm vun den ausgewielten Schrëften
+FontChooser.lblSize.text=Gréisst
+FontChooser.lblSize.tooltip=D'Gréisst vun den ausgewielten Schrëften.
 FontChooser.btnOK.text=OK
 FontChooser.btnOK.tooltip=D'Auswahl bestätegen.
 
 
 -----[ Colors ]-----
-Colors.title=Faarw Preferences
-Colors.lblColor0.text=Faarw 0
-Colors.lblColor1.text=Faarw 1
-Colors.lblColor2.text=Faarw 2
-Colors.lblColor3.text=Faarw 3
-Colors.lblColor4.text=Faarw 4
-Colors.lblColor5.text=Faarw 5
-Colors.lblColor6.text=Faarw 6
-Colors.lblColor7.text=Faarw 7
-Colors.lblColor8.text=Faarw 8
-Colors.lblColor9.text=Faarw 9
-Colors.lblColor0.tooltip=Your choice for Faarw nˇ 0.
-Colors.lblColor1.tooltip=Your choice for Faarw nˇ 1.
-Colors.lblColor2.tooltip=Your choice for Faarw nˇ 2.
-Colors.lblColor3.tooltip=Your choice for Faarw nˇ 3.
-Colors.lblColor4.tooltip=Your choice for Faarw nˇ 4.
-Colors.lblColor5.tooltip=Your choice for Faarw nˇ 5.
-Colors.lblColor6.tooltip=Your choice for Faarw nˇ 6.
-Colors.lblColor7.tooltip=Your choice for Faarw nˇ 7.
-Colors.lblColor8.tooltip=Your choice for Faarw nˇ 8.
-Colors.lblColor9.tooltip=Your choice for Faarw nˇ 9.
+Colors.title=Faarf Preferences
+Colors.lblColor0.text=Faarf 0
+Colors.lblColor1.text=Faarf 1
+Colors.lblColor2.text=Faarf 2
+Colors.lblColor3.text=Faarf 3
+Colors.lblColor4.text=Faarf 4
+Colors.lblColor5.text=Faarf 5
+Colors.lblColor6.text=Faarf 6
+Colors.lblColor7.text=Faarf 7
+Colors.lblColor8.text=Faarf 8
+Colors.lblColor9.text=Faarf 9
+Colors.lblColor0.tooltip=Ausgewielten Faarf nˇ 0.
+Colors.lblColor1.tooltip=Ausgewielten Faarf nˇ 1.
+Colors.lblColor2.tooltip=Ausgewielten Faarf nˇ 2.
+Colors.lblColor3.tooltip=Ausgewielten Faarf nˇ 3.
+Colors.lblColor4.tooltip=Ausgewielten Faarf nˇ 4.
+Colors.lblColor5.tooltip=Ausgewielten Faarf nˇ 5.
+Colors.lblColor6.tooltip=Ausgewielten Faarf nˇ 6.
+Colors.lblColor7.tooltip=Ausgewielten Faarf nˇ 7.
+Colors.lblColor8.tooltip=Ausgewielten Faarf nˇ 8.
+Colors.lblColor9.tooltip=Ausgewielten Faarf nˇ 9.
 Colors.color0.tooltip=Klick fir ze editéieren...
 Colors.color1.tooltip=Klick fir ze editéieren...
 Colors.color2.tooltip=Klick fir ze editéieren...
@@ -343,7 +417,7 @@ Colors.btnOK.tooltip=D'Auswahl bestätegen.
 
 
 -----[ ColorChooser ]-----
-ColorChooser.title=Colors
+ColorChooser.title=Faarwen
 ColorChooser.btnCancel.text=Ofbriechen
 ColorChooser.btnCancel.tooltip=D'Auswahl ofbriechen.
 ColorChooser.btnOK.text=OK
@@ -351,45 +425,44 @@ ColorChooser.btnOK.tooltip=D'Auswahl bestätegen.
 
 
 -----[ ParserPreferences ]-----
-ParserPreferences.title=Parser Preferences
+ParserPreferences.title=Parser Astellungen
 ParserPreferences.lblPre.text=Pre
-ParserPreferences.lblPre.tooltip=
+ParserPreferences.lblPre.tooltip
 ParserPreferences.lblPost.text=Post
-ParserPreferences.lblPost.tooltip=
+ParserPreferences.lblPost.tooltip
 ParserPreferences.lblAlt.text=IF statement
-ParserPreferences.lblAlt.tooltip=
+ParserPreferences.lblAlt.tooltip
 ParserPreferences.lblCase.text=CASE statement
-ParserPreferences.lblCase.tooltip=
+ParserPreferences.lblCase.tooltip
 ParserPreferences.lblFor.text=FOR Schläif
-ParserPreferences.lblFor.tooltip=
+ParserPreferences.lblFor.tooltip
+ParserPreferences.lblForStep.text=Schrëtt Separater
 ParserPreferences.lblWhile.text=WHILE Schläif
-ParserPreferences.lblWhile.tooltip=
+ParserPreferences.lblWhile.tooltip
 ParserPreferences.lblRepeat.text=REPEAT Schläif
-ParserPreferences.lblRepeat.tooltip=
-ParserPreferences.lblInput.text=Input
-ParserPreferences.lblInput.tooltip=
-ParserPreferences.lblOutput.text=Output
-ParserPreferences.lblOutput.tooltip=
+ParserPreferences.lblRepeat.tooltip
+ParserPreferences.lblInput.text=Agang
+ParserPreferences.lblInput.tooltip
+ParserPreferences.lblOutput.text=Ausgang
+ParserPreferences.lblOutput.tooltip
 ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=D'Auswahl bestätegen.
-ParserPreferences.lblErrorSign.text=Den Doppelpunkt ':' däerf kei a kenger Astellung virkommen.
-
-
-
+ParserPreferences.lblErrorSign.text=Den Doppelpunkt ':' däerf a kengem String virkommen.
 
 -----[ PrintPreview ]-----
-PrintPreview.title=Drockvirusiicht
+PrintPreview.title=Drockvirschau
 PrintPreview.btnOrientation.text=D'Säit dréien
 PrintPreview.btnOrientation.tooltip=D'Säit em 90° dréien.
 PrintPreview.btnCancel.text=Ofbriechen.
-PrintPreview.btnCancel.tooltip=Den Drockvirgang oofbriechen.
-PrintPreview.btnOK.text=Drocken
-PrintPreview.btnOK.tooltip=Den Diagram elo ausdrocken.
-
+PrintPreview.btnCancel.tooltip=Den Dréckvirgang ofbriechen.
+PrintPreview.btnOK.text=Drécken
+PrintPreview.btnOK.tooltip=Den Diagramm elo ausdrécken.
 
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Astellunge fir de Code-Export
 ExportOptionDialoge.commentsCheckBox.text=Uweisungen als Kommentar exportéieren.
+ExportOptionDialoge.bracesCheckBox.text=Block opmaachent Klammer an selwecht Linn setzen (C/C++/Java etc.)
+ExportOptionDialoge.lineNumbersCheckBox.text=Linnennummern beim Export op BASIC erstellen.
 ExportOptionDialoge.jLabel1.text=Wiel déi Astellungen, déi's du gären aktivéiert häss...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Astellunge Späicheren
