@@ -55,7 +55,7 @@
  *      Comment: IF..etc, CASE statements must be translated? No "beautiful" single word for CASE & ENDLESS.
  *
  ******************************************************************************************************/
-
+>>>
 -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=Archivo
