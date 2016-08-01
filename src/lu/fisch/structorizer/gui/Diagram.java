@@ -76,7 +76,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.26      Bugfix #204: Modified ExportOptionDialoge API (for correct sizing)
  *      Kay Gürtzig     2016.07.28      Bugfix #208: Modification in setFunction(), setProgram(), and exportPNG()
  *                                      Bugfix #209: exportPNGmulti() corrected
- *      Kay Gürtzig     2016.07.31      Issue #158 Changes from 2016.07.25 partially withdrawn
+ *      Kay Gürtzig     2016.07.31      Issue #158 Changes from 2016.07.25 partially withdrawn, additional restrictions
+ *      Kay Gürtzig     2016-08-01      Issue #213: FOR loop transmutation implemented
  *
  ******************************************************************************************************
  *
@@ -1558,6 +1559,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 				}
 			}
+			// START KGU#229 2016-08-01: Enh. #213
+			else if (selected instanceof For)
+			{
+				convertible = ((For)selected).style == For.ForLoopStyle.COUNTER;
+			}
+			// END KGU#229 2016-08-01
 		}
 		return convertible;
 	}
@@ -2031,6 +2038,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			root.addUndo();
 			transmuteToCompoundInstr(parent);
 		}
+		// START KGU#229 2016-08-01: Enh. #213 - FOR loop decomposition
+		else if (selected instanceof For && ((For)selected).style == For.ForLoopStyle.COUNTER)
+		{
+			root.addUndo();
+			decomposeForLoop(parent);
+		}
+		// END KGU#229 2016-08-01
 		this.doButtons();
 		redraw();
 		analyse();
@@ -2157,6 +2171,50 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		this.selectedUp = this.selectedDown = this.selected;
 	}
 	// END KGU#199 2016-07-06
+
+	// START KGU#229 2016-08-01: Enh. #213 - FOR loop decomposition
+	private void decomposeForLoop(Subqueue parent)
+	{
+		// Comment will be tranferred to the While loop.
+		For forLoop = (For)selected;
+		String asgmtOpr = " <- ";
+		if (forLoop.getText().get(0).contains(":="))
+		{
+			asgmtOpr = " := ";
+		}
+		int step = forLoop.getStepConst();
+		Element[] elements = new Element[3];
+		elements[0] = new Instruction(forLoop.getCounterVar() + asgmtOpr + forLoop.getStartValue());
+		While whileLoop = new While(forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue());
+		elements[1] = whileLoop;
+		elements[2] = new Instruction(forLoop.getCounterVar() + asgmtOpr + forLoop.getCounterVar() + (step < 0 ? " - " : " + ") + Math.abs(forLoop.getStepConst()));
+
+		whileLoop.setComment(forLoop.getComment());
+		if (forLoop.isBreakpoint())
+		{
+			whileLoop.toggleBreakpoint();
+		}
+		whileLoop.q = forLoop.getBody();
+		whileLoop.q.parent = whileLoop;
+		whileLoop.q.addElement(elements[2]);
+		for (int i = 0; i < elements.length; i++)
+		{
+			Element elem = elements[i];
+			elem.setColor(forLoop.getColor());
+			elem.deeplyCovered = forLoop.deeplyCovered;
+			elem.simplyCovered = forLoop.simplyCovered;
+			elem.setCollapsed(forLoop.isCollapsed());
+		}
+		int index = parent.getIndexOf(forLoop);
+		for (int i = 0; i < 2; i++)
+		{
+			parent.insertElementAt(elements[1-i], index+1);
+		}
+		parent.removeElement(index);
+		this.selected = new SelectedSequence(parent, index, index+1);
+		this.selectedUp = this.selectedDown = this.selected;
+	}
+	// END KGU#229 2016-08-01
 
 	// START KGU#43 2015-10-12
 	/*****************************************

@@ -93,6 +93,7 @@ Version: 3.25 (2016.08.01)
 - 15: Bugfix #211: Execution counting in recursions corrected <*>
 - 15: Bugfix #212: Inverted logic of preference "enlarge FALSE" mended <*>
 - 15: Icon sizes in Diagram menu unified <*>
+- 15: Issue #213: FOR loop transmutation mechanism added <*>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
