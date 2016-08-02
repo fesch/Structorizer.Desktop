@@ -20,7 +20,6 @@
 
 package lu.fisch.structorizer.locales;
 
-import java.awt.Dimension;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -29,6 +28,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -39,12 +39,9 @@ import lu.fisch.utils.StringList;
  * @author robertfisch
  */
 public class Translater extends javax.swing.JFrame {
-    private String filename;
-    private String loaded;
-    private StringList enLines;
     
-    private Locales locales = new Locales();
-    private HashMap<String,JTable> tables = new HashMap<String,JTable>();
+    private final Locales locales = new Locales();
+    private final HashMap<String,JTable> tables = new HashMap<String,JTable>();
     private String loadedLocale;
 
     /**
@@ -56,20 +53,6 @@ public class Translater extends javax.swing.JFrame {
         // disable some buttons
         button_save.setEnabled(false);
         tabs.setEnabled(false);
-        
-        /*
-        // configure the table
-        table.setDefaultRenderer(Object.class, new BoardTableCellRenderer());
-        table.setRowHeight(25);
-        
-        DefaultTableModel model = ((DefaultTableModel)table.getModel());
-        model.setColumnCount(3);
-        model.setRowCount(0);
-        table.getColumnModel().getColumn(0).setHeaderValue("String");
-        
-        table.getColumnModel().getColumn(2).setHeaderValue("Please load a language!");
-        table.getTableHeader().repaint();
-        */
         
         // initialise the header text
         headerText.setText("Please load a language!");
@@ -108,6 +91,8 @@ public class Translater extends javax.swing.JFrame {
     
     public void loadLocale(String localeName)
     {
+        headerText.setText(locales.getLocale(localeName).getHeader().getText());
+        
         // loop through all sections
         ArrayList<String> sectioNames = locales.getSectionNames();
         for (int i = 0; i < sectioNames.size(); i++) {
@@ -197,96 +182,7 @@ public class Translater extends javax.swing.JFrame {
             System.exit(0);
         }
     }
-
-    private StringList loadLang(String _langfile)
-    {
-        // remember what file hase been loaded
-        loaded = _langfile;
-        // remember just the basename
-        filename = (new File(_langfile)).getName();
-        
-        // read the file from the compiled application
-        String input = new String();
-        try 
-        {
-            BufferedReader in = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/lu/fisch/structorizer/locales/"+_langfile), "UTF-8"));
-            String str;
-            while ((str = in.readLine()) != null) 
-            {
-                    input+=str+"\n";
-            }
-            in.close();
-        } 
-        catch (IOException e) 
-        {
-            JOptionPane.showMessageDialog(this, "LANG: Error while loading language file\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
-
-        StringList lines = new StringList();
-        lines.setText(input); 
-        
-        return lines;
-    }
-    
-    public void addLang(String _langfile)
-    {
-        // set the column header name
-        DefaultTableModel model = ((DefaultTableModel)table.getModel());
-        table.getColumnModel().getColumn(2).setHeaderValue((new File(_langfile)).getName());
-        table.getTableHeader().repaint();
-        
-        // load the lang file
-        StringList lines = loadLang(_langfile);
-        
-        // extract & remove the header
-        StringList header = new StringList();
-        while(!lines.get(0).trim().equals(">>>") && lines.count()>0) 
-        {
-            header.add(lines.get(0));
-            lines.remove(0);
-        }
-        headerText.setText(header.getText());
-        
-        // get the strings and put them into the right row
-        for (int r = 0; r < model.getRowCount(); r++) {
-            model.setValueAt("", r, 2);
-            String key = ((String) model.getValueAt(r, 0)).trim();
-            System.out.println("Looking for: "+key);
-            for (int i = 0; i < lines.count(); i++) {
-                String get = lines.get(i);
-                StringList parts = StringList.explode(lines.get(i).trim(),"=");
-                //System.out.println("  Found: "+parts.get(0));
-                if(lines.get(i).trim().contains("=") && parts.get(0).contains(".") && parts.get(0).trim().equals(key))
-                {
-                    model.setValueAt(parts.get(1), r, 2);
-                }
-            }
-        }
-        
-        // enable the buttons
-        button_save.setEnabled(true);
-        table.setEnabled(true);
-    }
-    
-    public void loadDefaultLang(String _langfile)
-    {
-        DefaultTableModel model = ((DefaultTableModel)table.getModel());
-        table.getColumnModel().getColumn(1).setHeaderValue((new File(_langfile)).getName());
-        enLines = loadLang(_langfile);
-        
-        // analyse the lines
-        int stringCount = 0;
-        for (int i = 0; i < enLines.count(); i++) 
-        {
-            StringList parts = StringList.explode(enLines.get(i).trim(),"=");
-            if(enLines.get(i).trim().contains("=") && parts.get(0).contains("."))
-            {
-                stringCount++;
-                model.addRow(parts.toArray());
-            }
-        }
-    }
-    */
+*/
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -544,7 +440,7 @@ public class Translater extends javax.swing.JFrame {
         Locale locale = locales.getDefaultLocale().loadCopyFromFile();
         
         // put the header the locale to save
-        locale.setHeader(locales.getLocale(loadedLocale).getHeader());
+        locale.setHeader(StringList.explode(headerText.getText(), "\n"));
         
         // loop through all sections in order to merge the values
         ArrayList<String> sectioNames = locales.getSectionNames();
@@ -590,65 +486,19 @@ public class Translater extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "Error while saving language file\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }     
-
-        
-        /*
-        // make a copy of the original english lang file
-        StringList lines = enLines.copy();
-        
-        // remove the header
-        while(!lines.get(0).trim().equals(">>>") && lines.count()>0) 
-        {
-            //System.out.println(lines.get(0));
-            lines.remove(0);
-        }
-
-        // check if the remaining list is not empty
-        if(lines.count()==0)
-        {
-            JOptionPane.showMessageDialog(this, "After removing the header, the file EN file is empty!\nIs the >>> marker missing?", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        // modify the values based on what is contained in the table
-        DefaultTableModel model = ((DefaultTableModel)table.getModel());
-        for (int r = 0; r < model.getRowCount(); r++) {
-            String key = (String) model.getValueAt(r, 0);
-            
-            for (int i = 0; i < lines.count(); i++) {
-                String get = lines.get(i);
-                StringList parts = StringList.explode(lines.get(i).trim(),"=");
-                if(parts.count()==2 && parts.get(0).equals(key))
-                {
-                    lines.set(i, key+"="+(String) model.getValueAt(r, 2));
-                }
-            }
-        }
-        
-
-        
-        
-        // add the header
-        StringList header = StringList.explode(headerText.getText(),"\n");
-        header.add(">>>");
-        for (int i = 0; i < header.count(); i++) {
-            lines.insert(header.get(i), i);
-        }
-        
-        // now ask where to save the data
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Save as");   
-        fileChooser.setSelectedFile(new File(filename));
-        int userSelection = fileChooser.showSaveDialog(this);
-        
-        if (userSelection == JFileChooser.APPROVE_OPTION) 
-        {
-            File fileToSave = fileChooser.getSelectedFile();
-            lines.saveToFile(fileToSave.getAbsolutePath());
-        }     
-        */
     }//GEN-LAST:event_button_saveActionPerformed
 
+    public static void launch()
+    {
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                Translater translater = new Translater();
+                translater.setVisible(true);
+                translater.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            }
+        });
+    }
+    
     /**
      * @param args the command line arguments
      */
