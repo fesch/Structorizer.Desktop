@@ -337,7 +337,7 @@ Editor.popupEdit.text=Modifica
 Editor.popupDelete.text=Cancella
 Editor.popupMoveUp.text=Sposta in alto
 Editor.popupMoveDown.text=Sposta in basso
-ditor.popupTransmute.text=Trasmuta
+Editor.popupTransmute.text=Trasmuta
 // Collapsing
 Editor.popupCollapse.text=Collassa
 Editor.popupExpand.text=Espandi
