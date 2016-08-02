@@ -145,11 +145,11 @@ Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Analisar diagrama?
 Menu.menuDiagramWheel.text=Rolagem do mouse para colapsar?
 
-// Menu "Help"
+// Menu "Preferences"
 Menu.menuPreferences.text=Preferências
 Menu.menuPreferences.mnemonic=p
 
-// Submenu of "Help"
+// Submenu of "Preferences"
 Menu.menuPreferencesFont.text=Fonte ...
 Menu.menuPreferencesColors.text=Cores ...
 Menu.menuPreferencesOptions.text=Estruturas ...

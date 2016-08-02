@@ -373,28 +373,10 @@ public class Forever extends Element implements ILoop {
 	
 	public Element copy()
 	{
-		// Bugfix KGU#83 (bug #32) 2015-11-14: Instead of a Forever loop, a For loop had been created!
 		Forever ele = new Forever();
-		ele.setComment(this.getComment().copy());
-		ele.setColor(this.getColor());
+		copyDetails(ele, false);
 		ele.q=(Subqueue) this.q.copy();
 		ele.q.parent=ele;
-		// START KGU#82 (bug #31) 2015-11-14
-		ele.breakpoint = this.breakpoint;
-		// END KGU#82 (bug #31) 2015-11-14
-		// START KGU#117 2016-03-07: Enh. #77
-		// START KGU#156/KGU#225 2016-07-28: Bugfix #210
-		//if (Element.E_COLLECTRUNTIMEDATA)
-		//{
-		//	// We share this object (important for recursion!)
-		//	ele.deeplyCovered = this.deeplyCovered;
-		//}
-		this.copyRuntimeData(ele, false);
-		// END KGU#156/KGU#225 2016-07-28
-		// END KGU#117 2016-03-07
-		// START KGU#183 2016-04-24: Issue #169
-		ele.selected = this.selected;
-		// END KGU#183 2016-04-24
 		return ele;
 	}
 	

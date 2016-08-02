@@ -1840,7 +1840,10 @@ public class Executor implements Runnable
 	// START KGU#43 2015-10-12 New method for breakpoint support
 	private boolean checkBreakpoint(Element element)
 	{
-		boolean atBreakpoint = element.isBreakpoint(); 
+		// START KGU#213 2016-08-01: Enh. #215
+		//boolean atBreakpoint = element.isBreakpoint();
+		boolean atBreakpoint = element.triggersBreakNow();
+		// END KGU#213 2016-08-01
 		if (atBreakpoint) {
 			control.setButtonsForPause();
 			this.setPaus(true);

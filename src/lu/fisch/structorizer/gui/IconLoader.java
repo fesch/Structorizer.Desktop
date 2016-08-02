@@ -40,6 +40,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.06      Enh. #188: New icon 109_wand introduced for element conversion
  *      Kay Gürtzig     2016.07.22      Enh. #199: New icon 110_help introduced for online user guide activation
  *      Kay Gürtzig     2016-07-31      Enh. #128: New icon 111_c_plus_t introduced for "commments plus text" mode
+ *      Kay Gürtzig     2016-08-02      Enh. #215: New icon 112_stopwatch introduced for breapoint count triggers
  *
  ******************************************************************************************************
  *
@@ -168,6 +169,9 @@ public class IconLoader {
 	// START KGU#227 2016-07-31: Enh. #128 - comments plus text display
 	public static ImageIcon ico111 = getIconImage(getURI(from+"icons/111_c_plus_t.png"));
 	// END KGU#227 2016-07-31
+	// START KGU#213 2016-08-02: Enh. #215 - breakpoint counting trigger
+	public static ImageIcon ico112 = getIconImage(getURI(from+"icons/112_stopwatch.png"));
+	// END KGU#213 2016-08-02
 
         public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
 
@@ -273,6 +277,9 @@ public class IconLoader {
         	// START KGU#227 2016-07-31: Enh. #128 - comments plus text display mode
         	ico111 = getIconImage(getURI(from+"icons/111_c_plus_t.png"));
         	// END KGU#227 2016-07-31
+        	// START KGU#213 2016-08-02: Enh. #215 - breakpoint counting trigger
+        	ico112 = getIconImage(getURI(from+"icons/112_stopwatch.png"));
+        	// END KGU#213 2016-08-02
 
             turtle = getIconImage(getURI(from+"icons/turtle.png"));
         }

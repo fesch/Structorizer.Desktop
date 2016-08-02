@@ -29,15 +29,16 @@
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------		----			-----------
- *      Andrea Maiani   2009.12.01		Created
- *      Kay Gürtzig     2015.10.06		Obvious mis-spellings mended (cilc -> ciclo, contenuro -> contenuto etc.)
- *      Kay Gürtzig     2015.10.14		InputBox-specific part enhanced
- *      Kay Gürtzig     2015.10.14		FOR-specific part enhanced and Arranger buttons added
- *      Kay Gürtzig     2016.01.21              Breakpoint message also in Menu now
- *      Kay Gürtzig     2016.04.24              Issue #173: New mnemonic configurations added   
- *      Andrea Maiani   2016.08.01              Updated
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Andrea Maiani   2009.12.01      Created
+ *      Kay Gürtzig     2015.10.06      Obvious mis-spellings mended (cilc -> ciclo, contenuro -> contenuto etc.)
+ *      Kay Gürtzig     2015.10.14      InputBox-specific part enhanced
+ *      Kay Gürtzig     2015.10.14      FOR-specific part enhanced and Arranger buttons added
+ *      Kay Gürtzig     2016.01.21      Breakpoint message also in Menu now
+ *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added   
+ *      Kay Gürtzig     2016.07.27      Enh. #270: New message Menu.warning_1 (must be consistent with menu entry names!) 
+ *      Andrea Maiani   2016.08.01      Updated
  *
  ******************************************************************************************************
  *
@@ -124,6 +125,11 @@ Menu.menuDiagramTypeProgram.text=Principale
 Menu.menuDiagramTypeFunction.text=Funzione
 Menu.menuDiagramNice.text=Stile box?
 Menu.menuDiagramComment.text=Mostra commenti?
+Menu.menuDiagramSwitchComments.text=Scambia testo/commenti?
+Menu.menuDiagramMarker.text=Evidenzia variabili?
+Menu.menuDiagramDIN.text=DIN?
+Menu.menuDiagramAnalyser.text=Analizza struttogramma?
+Menu.menuDiagramWheel.text=Usa la rotella del mouse per collassare
 // Menu "Preferences"
 Menu.menuPreferences.text=Opzioni
 Menu.menuPreferences.mnemonic=o
@@ -132,6 +138,22 @@ Menu.menuPreferencesFont.text=Caratteri ...
 Menu.menuPreferencesColors.text=Colori ...
 Menu.menuPreferencesOptions.text=Strutture ...
 Menu.menuPreferencesParser.text=Parser ...
+Menu.menuPreferencesAnalyser.text=Analizzatore ...
+Menu.menuPreferencesExport.text=Esporta ...
+Menu.menuPreferencesLanguage.text=Lingua
+Menu.menuPreferencesLanguageEnglish.text=Inglese
+Menu.menuPreferencesLanguageGerman.text=Tedesco
+Menu.menuPreferencesLanguageFrench.text=Francese
+Menu.menuPreferencesLanguageDutch.text=Olandese
+Menu.menuPreferencesLanguageItalian.text=Italiano
+Menu.menuPreferencesLanguageSpanish.text=Spagnolo
+Menu.menuPreferencesLanguagePortugalBrazil.text=Portoghese (Brazil)
+Menu.menuPreferencesLanguageLuxemburgish.text=Lussemburghese
+Menu.menuPreferencesLanguageSimplifiedChinese.text=Cinese (semplificato)
+Menu.menuPreferencesLanguageTraditionalChinese.text=Cinese (tradizionale)
+Menu.menuPreferencesLanguageCzech.text=Ceco
+Menu.menuPreferencesLanguageRussian.text=Russo
+Menu.menuPreferencesLanguagePolish.text=Polacco
 Menu.menuPreferencesLookAndFeel.text=Aspetto
 
 Menu.menuPreferencesSave.text=Salva tutte le impostazioni ora
@@ -315,11 +337,10 @@ Editor.popupEdit.text=Modifica
 Editor.popupDelete.text=Cancella
 Editor.popupMoveUp.text=Sposta in alto
 Editor.popupMoveDown.text=Sposta in basso
-Menu.menuDiagramSwitchComments.text=Scambia testo/commenti?
-Menu.menuDiagramMarker.text=Evidenzia variabili?
-Menu.menuDiagramDIN.text=DIN?
-Menu.menuDiagramAnalyser.text=Analizza struttogramma?
-Menu.menuDiagramWheel.text=Usa la rotella del mouse per collassare
+Editor.popupTransmute.text=Trasmuta
+// Collapsing
+Editor.popupCollapse.text=Collassa
+Editor.popupExpand.text=Espandi
 // Breakpoint
 Editor.popupBreakpoint.text=Alterna breakpoint
 
@@ -494,20 +515,5 @@ ExportOptionDialoge.chkCharsetAll.text=Elenca tutto?
 ExportOptionDialoge.jLabel1.text=Per favore seleziona le opzioni che vuoi attivare ...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Salva le impostazioni.
-Menu.menuPreferencesAnalyser.text=Analizzatore ...
-Menu.menuPreferencesExport.text=Esporta ...
-Menu.menuPreferencesLanguage.text=Lingua
-Menu.menuPreferencesLanguageEnglish.text=English
-Menu.menuPreferencesLanguageGerman.text=German
-Menu.menuPreferencesLanguageFrench.text=French
-Menu.menuPreferencesLanguageDutch.text=Dutch
-Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburgish
-Menu.menuPreferencesLanguageSpanish.text=Spanish
-Menu.menuPreferencesLanguageItalian.text=Italian
-Menu.menuPreferencesLanguagePortugalBrazil.text=Portugese brazilian
-Menu.menuPreferencesLanguageSimplifiedChinese.text=Chinese (simplified)
-Menu.menuPreferencesLanguageTraditionalChinese.text=Chinese (traditional)
-Menu.menuPreferencesLanguageCzech.text=Czech
-Menu.menuPreferencesLanguageRussian.text=Russian
-Menu.menuPreferencesLanguagePolish.text=Polish
+
 

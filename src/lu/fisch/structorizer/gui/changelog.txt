@@ -11,7 +11,7 @@ Legend:
 <Foo>   -->     idea AND coding done by Foo
 <*>     -->     idea and coding done by Kay Gürtzig
 
-Version: 3.25 (2016.08.01)
+Version: 3.25 (2016.08.02)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]*
 - 01: Enh. #124: Generalized runtime data visualization <*>
 - 01: Arranger now adopts current directory from first arranged diagram <*>
@@ -94,6 +94,7 @@ Version: 3.25 (2016.08.01)
 - 15: Bugfix #212: Inverted logic of preference "enlarge FALSE" mended <*>
 - 15: Icon sizes in Diagram menu unified <*>
 - 15: Issue #213: FOR loop transmutation mechanism added <*>
+- 15: Issue #215: New conditioned breakpoints (triggered by execution count) <*>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]

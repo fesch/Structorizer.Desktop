@@ -50,6 +50,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.22      Enh. #199: New help menu item "user guide" for element conversion (KGU#208)
  *      Kay Gürtzig     2016.07.28      Enh. #206: New Dialog message text holders
  *      Kay Gürtzig     2016.07.31      Enh. #128: New Diagram menu item "Comments + text"
+ *      Kay Gürtzig     2016.08.02      Enh. #215: menuDiagramBreakTrigger added, new message text holders
  *
  ******************************************************************************************************
  *
@@ -169,6 +170,9 @@ public class Menu extends JMenuBar implements NSDController
 	// START KGU#143 2016-01-21: Bugfix #114 - Compensate editing restriction by accelerator4
 	protected JMenuItem menuDiagramBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
 	// END KGU#143 2016-01-21
+	// START KGU#213 2016-08-02: Enh. #215
+	protected JMenuItem menuDiagramBreakTrigger = new JMenuItem("Specify break trigger...", IconLoader.ico112);
+	// END KGU#143 2016-08-02
 
 	protected JMenu menuDiagramType = new JMenu("Type");
 	protected JCheckBoxMenuItem menuDiagramTypeProgram = new JCheckBoxMenuItem("Main",IconLoader.ico022);
@@ -286,6 +290,11 @@ public class Menu extends JMenuBar implements NSDController
 	// START KGU#227 2016-07-31: Enh. #128
 	public static LangTextHolder menuDiagramSwitchTCTooltip = new LangTextHolder("Unselect \"%1\" to enable this item");
 	// END KGU#227 2016-07-31
+	// START KGU#213 2016-08-02: Enh. #215
+	public static LangTextHolder msgBreakTriggerPrompt = new LangTextHolder("Specify an execution count triggering a break (0 = always).");
+	public static LangTextHolder msgBreakTriggerIgnored = new LangTextHolder("Input ignored - must be a cardinal number.");
+	public static LangTextHolder msgErrorFileSave = new LangTextHolder("Error on saving the file: %!");
+	// END KGU#213 2016-08-214
 
 	public void create()
 	{
@@ -599,7 +608,13 @@ public class Menu extends JMenuBar implements NSDController
     	menuDiagramBreakpoint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK));
         menuDiagramBreakpoint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleBreakpoint(); doButtons(); } }); 
 
-		menuDiagram.addSeparator();
+		// START KGU#213 2016-08-02: Enh. #215 - new breakpoint feature
+		menuDiagram.add(menuDiagramBreakTrigger);
+    	menuDiagramBreakTrigger.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK));
+        menuDiagramBreakTrigger.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.editBreakTrigger(); doButtons(); } }); 
+		// END KGU#213 2016-08-02
+
+        menuDiagram.addSeparator();
 		// END KGU#143 2016-01-21
 
 		menuDiagram.add(menuDiagramType);
@@ -969,6 +984,9 @@ public class Menu extends JMenuBar implements NSDController
 			menuDiagramBreakpoint.setEnabled(diagram.canCopyNoRoot());
 			// END KGU#177 2016-07-06
 			// END KGU#143 2016-01-21
+			// START KGU#213 2016-08-02: Enh. #215 - breakpoint control enhanced
+			menuDiagramBreakTrigger.setEnabled(diagram.canCopyNoRoot() && !diagram.selectedIsMultiple());
+			// END KGU#213 2016-08-02
 
 			// copy & paste
 			// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
@@ -994,7 +1012,7 @@ public class Menu extends JMenuBar implements NSDController
 			menuDiagramSwitchComments.setEnabled(!Element.E_COMMENTSPLUSTEXT);
 			if (Element.E_COMMENTSPLUSTEXT)
 			{
-				menuDiagramSwitchComments.setToolTipText(this.menuDiagramSwitchTCTooltip.getText().replace("%1", menuDiagramCommentsPlusText.getText()));
+				menuDiagramSwitchComments.setToolTipText(menuDiagramSwitchTCTooltip.getText().replace("%1", menuDiagramCommentsPlusText.getText()));
 			}
 			else
 			{

@@ -56,8 +56,6 @@ import java.nio.charset.Charset;
 import java.util.Set;
 import java.util.Vector;
 
-import javax.swing.LookAndFeel;
-
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.parsers.GENParser;
 
