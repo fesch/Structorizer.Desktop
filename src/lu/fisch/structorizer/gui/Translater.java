@@ -87,6 +87,53 @@ public class Translater extends javax.swing.JFrame {
         table.getColumnModel().getColumn(0).setHeaderValue("String");
         
         loadDefaultLang("en.txt");
+        
+        getMissingStrings();
+    }
+    
+    private void getMissingStrings()
+    {
+        // get a list of the english strings only
+        StringList baseList = new StringList();
+        for (int i = 0; i < enLines.count(); i++) {
+            String get = enLines.get(i);
+            StringList parts = StringList.explode(enLines.get(i).trim(),"=");
+            if(enLines.get(i).trim().contains("=") && parts.get(0).contains("."))
+            {
+                baseList.add(parts.get(0));
+            }
+        }
+        System.out.println("Base: "+baseList.count());
+        
+        // load strings of all other languages
+        String[] list = {"chs","cht","cz","de","en","es","fr","it","lu","nl","pl","pt_br","ru"};
+        StringList others = new StringList();
+        for (int i = 0; i < list.length; i++) 
+        {
+            StringList myList = loadLang(list[i]+".txt");
+            for (int j = 0; j < myList.count(); j++) {
+                String get = myList.get(j);
+                StringList parts = StringList.explode(myList.get(j).trim(),"=");
+                if(myList.get(j).trim().contains("=") && parts.get(0).contains("."))
+                {
+                    if(!others.contains(parts.get(0)))
+                        others.add(parts.get(0));
+                }
+            }
+        }
+        System.out.println("Others: "+others.count());
+        
+        // now get the delta
+        StringList delta = new StringList();
+        for (int i = 0; i < others.count(); i++) 
+        {
+            String key = others.get(i);
+            if(!baseList.contains(key))
+                delta.add(key+"=");
+        }
+        
+        System.out.println("The EN lang is missing these keys:");
+        System.out.println(delta.getText());
     }
 
     private StringList loadLang(String _langfile)

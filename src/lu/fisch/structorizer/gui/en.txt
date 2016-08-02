@@ -70,6 +70,12 @@ Menu.menuFileExport.text=Export
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Picture ...
 Menu.menuFileExportCode.text=Code ...
+Menu.menuFileExportPicturePNG.text=
+Menu.menuFileExportPicturePNGmulti.text=
+Menu.menuFileExportPictureEMF.text=
+Menu.menuFileExportPictureSWF.text=
+Menu.menuFileExportPicturePDF.text=
+Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=Export as % code
 Menu.menuFileExportCodeFavorite.tooltip=You may alter the favourite target language in the export preferences.
 Menu.menuFileImport.text=Import
@@ -172,6 +178,8 @@ Menu.menuPreferencesSaveAll.text=Save
 Menu.menuPreferencesSaveDump.text=Save to file ...
 Menu.menuPreferencesSaveLoad.text=Load from file ...
 
+// Menu "View" (not in use right now!)
+Menu.menuView.text=
 
 // Menu "Help"
 Menu.menuHelp.text=Help
@@ -355,6 +363,7 @@ Editor.popupBreakpoint.text=Toggle breakpoint
 
 
 -----[ InputBox ]-----
+InputBox.title=
 InputBox.lblText.text=Please enter a text
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Comment
@@ -370,6 +379,48 @@ InputBox.class_specific.While.lblText=Please enter the entry condition
 InputBox.class_specific.Repeat.lblText=Please enter the condition to leave
 InputBox.class_specific.Case.lblText=Please enter the choice expression and the case constants (one per line)
 InputBox.class_specific.Parallel.lblText=Number of parallel threads
+InputBox.chkBreakpoint.text=
+InputBox.class_specific.Root=
+InputBox.class_specific.Function=
+InputBox.class_specific.Instruction.insert=
+InputBox.class_specific.Alternative.insert=
+InputBox.class_specific.Case.insert=
+InputBox.class_specific.For.insert=
+InputBox.class_specific.Forever.insert=
+InputBox.class_specific.Repeat.insert=
+InputBox.class_specific.While.insert=
+InputBox.class_specific.Call.insert=
+InputBox.class_specific.Jump.insert=
+InputBox.class_specific.Parallel.insert=
+InputBox.class_specific.Instruction.update=
+InputBox.class_specific.Alternative.update=
+InputBox.class_specific.Case.update=
+InputBox.class_specific.For.update=
+InputBox.class_specific.Forever.update=
+InputBox.class_specific.Repeat.update=
+InputBox.class_specific.While.update=
+InputBox.class_specific.Call.update=
+InputBox.class_specific.Jump.update=
+InputBox.class_specific.Parallel.update=
+
+-----[ InputBox For ]-----
+InputBoxFor.class_specific.For.insert=
+InputBoxFor.class_specific.For.update=
+InputBoxFor.lblVariable.text=
+InputBoxFor.lblStartVal.text=
+InputBoxFor.lblEndVal.text=
+InputBoxFor.lblIncr.text=
+InputBoxFor.chkTextInput.text=
+InputBoxFor.chkTextInput.tooltip=
+InputBoxFor.lblComment.text=
+InputBoxFor.lblComment.tooltip=
+InputBoxFor.txtText.tooltip=
+InputBoxFor.txtComment.tooltip=
+InputBoxFor.btnOK.text=
+InputBoxFor.btnOK.tooltip=
+InputBoxFor.btnCancel.text=
+InputBoxFor.btnCancel.tooltip=
+InputBoxFor.chkBreakpoint.text=
 
 -----[ Preferences ]-----
 Preferences.title=Structure Preferences
@@ -406,6 +457,7 @@ Preferences.btnOK.tooltip=Validate your choice.
 About.title=About
 About.pnlTabbed.tab.0=Implicated Persons
 About.pnlTabbed.tab.1=Changelog
+About.pnlTabbed.tab.2=License
 About.btnOK.text=OK
 About.btnOK.tooltip=Validate your choice.
 
@@ -524,3 +576,6 @@ ExportOptionDialoge.chkCharsetAll.text=List all?
 ExportOptionDialoge.jLabel1.text=Please select the options you want to activate...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Save these settings.
+ExportOptionDialoge.lbCharset.txt=
+ExportOptionDialoge.chkCharsetAll.txt=
+

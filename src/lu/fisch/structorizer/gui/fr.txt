@@ -126,7 +126,6 @@ Menu.menuPreferencesLanguageLuxemburgish.text=Luxembourgeois
 Menu.menuPreferencesLanguageSpanish.text=Espagnol
 Menu.menuPreferencesLanguageItalian.text=Italien
 Menu.menuPreferencesLanguagePortugalBrazil.text=Portugais (brazilien)
-//Menu.menuPreferencesLanguageChinese.text=Chinois
 Menu.menuPreferencesLanguageCzech.text=Czech
 
 Menu.menuPreferencesLookAndFeel.text=Look & Feel
