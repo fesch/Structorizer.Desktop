@@ -40,7 +40,8 @@
  *
  ******************************************************************************************************/
  >>>
- -----[ Menu ]-----
+-----> Structorizer
+-----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=Fichier
 Menu.menuFile.mnemonic=f

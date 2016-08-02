@@ -171,6 +171,7 @@ public class IconLoader {
 	// END KGU#227 2016-07-31
 	// START KGU#213 2016-08-02: Enh. #215 - breakpoint counting trigger
 	public static ImageIcon ico112 = getIconImage(getURI(from+"icons/112_stopwatch.png"));
+	public static ImageIcon ico113 = getIconImage(getURI(from+"icons/113_translater.png"));
 	// END KGU#213 2016-08-02
 
         public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));

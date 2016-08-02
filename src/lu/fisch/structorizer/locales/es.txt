@@ -59,6 +59,7 @@
  *
  ******************************************************************************************************/
 >>>
+-----> Structorizer
 -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=Archivo
@@ -583,3 +584,57 @@ ExportOptionDialoge.chkCharsetAll.text=Listar todas
 ExportOptionDialoge.jLabel1.text=Elije las preferencias, que quieres activar...
 ExportOptionDialoge.jButton1.text=Aceptar
 ExportOptionDialoge.jButton1.tooltip=Aceptar los cambios.
+
+-----> Arranger
+Surface.msgFileLoadError.text=Error abriendo archivo:
+Surface.msgSavePortable.text=¿Guardar como archivo portable y comprimido?
+Surface.msgSaveDialogTitle.text=Guarda colocado conjunto de diagramas ...
+Surface.msgSaveError.text=Error guardando la colocación:
+Surface.msgLoadDialogTitle.text=Restablezca guardado conjunto de diagramas ...
+Surface.msgExtractDialogTitle.text=¿Extraer a un directorio?
+Surface.msgArrLoadError.text=Error leyendo la colocación:
+Surface.msgExportDialogTitle.text=Exporta diagrama como PNG ...
+Surface.msgExportError.text=¡Error guardando el imagen!
+Surface.msgParseError.text=NSD Parser Error:
+Surface.msgResetCovered.text=Subprograma ya marcado como cubierto. ¿Quitar marca de cobertura?
+Surface.msgCoverageError.text=No subprograma apropiado seleccionado, ¡no va a ser marcado como cubierto nada!
+Surface.msgUnsavedDiagrams.text=Estos diagramas no fueron guardados:
+Surface.msgUnsavedHint.text=Para guardarlos por Structorizer anteriormente haga un doble clic a los diagramas.
+Surface.msgUnsavedContinue.text=¿Continuar aun así?
+Surface.msgNoArrFile.text=Ningún Arranger archivo encontrado
+
+-----> Executor
+-----[ Control ]-----
+Control.lblSpeed.text= Demora: 
+Control.btnCallStack.text=Lote de llamadas
+Control.lblCallLevel.text=Nivel:
+Control.chkCollectRuntimeData.text=Coleccionar datos on ej.
+Control.cbRunDataDisplay.item.0=no tinción
+Control.cbRunDataDisplay.item.1=plana cobertura de test
+Control.cbRunDataDisplay.item.2=prof. cobertura de test
+Control.cbRunDataDisplay.item.3=número de ejecuciones
+Control.cbRunDataDisplay.item.4=hechas operaciones, lin.
+Control.cbRunDataDisplay.item.5=hechas operaciones, log.
+Control.cbRunDataDisplay.item.6=acum. operaciones, lin.
+Control.cbRunDataDisplay.item.7=acum. operaciones, log.
+Control.chkOutputToTextWindow.text=Salidas a ventana
+Control.lbStopRunningProc.text=Esta acción no está permitida mientras que un diagrama está ejecutido.\n¿Quiere abortar la ejecución?
+Control.lbInputValue.text=Inserta un valor para <%>
+Control.lbInputPaused.text=Ejecución pausando - el valor puede ser insertado en la tabla de variables
+Control.lbInputCancelled.text=Entrada suspendida
+Control.lbManuallySet.text=*** Puesto manualmente: %1 <- %2 ***
+Control.lbEmptyLine.text=línea en blanco
+Control.lbNoCorrectExpr.text=<%> no es una expresión correcta o existente.
+Control.lbReturnedResult.text=Resultado devuelto
+Control.lbOutput.text=Salida
+Control.lbInput.text=Entrada
+Control.lbAcknowledge.text=Confirma, por favor, para continuar.
+Control.msgNoSubroutine.text=¡No diagrama con subprograma "%1" (%2 parameters) encontrado!%0¿Ha olvidado a abrir el Arranger y colocar necesarias subrutinas allí?
+Control.msgInvalidExpr.text=<%1> no es una expresión correcta o existente.
+Control.msgIllFunction.text=¡<%1> no es una función correcta!
+Control.msgManualBreak.text=¡Abortado manualmente!
+Control.msgIllegalLeave.text=Argumento ilegal de la instruction SALIR: %1
+Control.msgWrongExit.text=Valor ilegal en abortar el programa: %1
+Control.msgExitCode.text=¡Programa abortado con código %1!
+Control.msgIllegalJump.text=¡Contenido ilegal del SALTO (instruction para salir): <%1>!
+Control.msgTooManyLevels.text=¡Demasiados niveles para salir (niveles reales: %1 / specificados: %2)!

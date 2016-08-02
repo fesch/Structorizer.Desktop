@@ -56,10 +56,16 @@
  *
  ******************************************************************************************************
  *
- *      Comment:	
+ *      Comment:
+ *
+ *          >>>         indicates the end of the header
+ *          ----->      indicates the start of a top-level section
+ *          -----[      indicates the start of a second-level section
  *
  ******************************************************************************************************/
 >>>
+
+-----> Structorizer
 -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=File
@@ -88,6 +94,7 @@ Menu.menuFileImport.text=Import
 Menu.menuFileImportPascal.text=Pascal Code ...
 Menu.menuFilePrint.text=Print ...
 Menu.menuFileArrange.text=Arrange
+Menu.menuFileTranslater.text=Translater
 Menu.menuFileQuit.text=Quit
 // Menu "Edit"
 Menu.menuEdit.text=Edit
@@ -602,3 +609,56 @@ ExportOptionDialoge.jButton1.tooltip=Save these settings.
 ExportOptionDialoge.lbCharset.txt=
 ExportOptionDialoge.chkCharsetAll.txt=
 
+-----> Arranger
+Surface.msgFileLoadError.text=File Load Error:
+Surface.msgSavePortable.text=Save as portable compressed archive?
+Surface.msgSaveDialogTitle.text=Save arranged set of diagrams ...
+Surface.msgSaveError.text=Error on saving the arrangement:
+Surface.msgLoadDialogTitle.text=Reload a stored arrangement of diagrams ...
+Surface.msgExtractDialogTitle.text=Extract to a directory?
+Surface.msgArrLoadError.text=Error on loading the arrangement:
+Surface.msgExportDialogTitle.text=Export diagram as PNG ...
+Surface.msgExportError.text=Error while saving the image!
+Surface.msgParseError.text=NSD Parser Error:
+Surface.msgResetCovered.text=Routine is already marked as test-covered! Reset coverage mark?
+Surface.msgCoverageError.text=No suitable routine diagram selected, cannot mark anything as covered!
+Surface.msgUnsavedDiagrams.text=Couldn't save these diagrams:
+Surface.msgUnsavedHint.text=You might want to double-click and save them via Structorizer first.
+Surface.msgUnsavedContinue.text=Continue nevertheless?
+Surface.msgNoArrFile.text=No Arranger file found
+
+-----> Executor
+-----[ Control ]-----
+Control.lblSpeed.text= Delay: 
+Control.btnCallStack.text=Call Stack
+Control.lblCallLevel.text=Call depth:
+Control.chkCollectRuntimeData.text=Collect Runtime Data
+Control.cbRunDataDisplay.item.0=no coloring
+Control.cbRunDataDisplay.item.1=shallow test coverage
+Control.cbRunDataDisplay.item.2=deep test coverage
+Control.cbRunDataDisplay.item.3=execution counts
+Control.cbRunDataDisplay.item.4=done operations, lin.
+Control.cbRunDataDisplay.item.5=done operations, log.
+Control.cbRunDataDisplay.item.6=total operations, lin.
+Control.cbRunDataDisplay.item.7=total operations, log.
+Control.chkOutputToTextWindow.text=Output to window
+Control.lbStopRunningProc.text=This action is not allowed while a diagram is being executed.\nDo you want to stop the current execution?
+Control.lbInputValue.text=Please enter a value for <%>
+Control.lbInputPaused.text=Execution paused - you may enter the value in the variable display.
+Control.lbInputCancelled.text=Input cancelled
+Control.lbManuallySet.text=*** Manually set: %1 <- %2 ***
+Control.lbEmptyLine.text=empty line
+Control.lbNoCorrectExpr.text=<%> is not a correct or existing expression.
+Control.lbReturnedResult.text=Returned result
+Control.lbOutput.text=Output
+Control.lbInput.text=Input
+Control.lbAcknowledge.text=Please acknowledge to continue.
+Control.msgNoSubroutine.text=A subroutine diagram "%1" (%2 parameters) could not be found!%0Consider starting the Arranger and place needed subroutine diagrams there first.
+Control.msgInvalidExpr.text=<%1> is not a correct or existing expression.
+Control.msgIllFunction.text=<%1> is not a correct function!
+Control.msgManualBreak.text=Manual Break!
+Control.msgIllegalLeave.text=Illegal leave argument: %1
+Control.msgWrongExit.text=Wrong exit value: %1
+Control.msgExitCode.text=Program exited with code %1!
+Control.msgIllegalJump.text=Illegal content of a Jump (i.e. exit) instruction: <%1>!
+Control.msgTooManyLevels.text=Too many levels to leave (actual depth: %1 / specified: %2)!

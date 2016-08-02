@@ -88,7 +88,7 @@ public class LangDialog extends JDialog
 		// END KGU#203 2016-07-03
 		try 
 		{
-			BufferedReader in = new BufferedReader(new InputStreamReader(_com.getClass().getResourceAsStream(_langfile), "UTF-8"));
+			BufferedReader in = new BufferedReader(new InputStreamReader(_com.getClass().getResourceAsStream("/lu/fisch/structorizer/locales/"+_langfile), "UTF-8"));
 			//BufferedReader in = new BufferedReader(new InputStreamReader(_com.getClass().getResourceAsStream(_langfile), "ISO-8859-1"));
 			String str;
 			while ((str = in.readLine()) != null) 
@@ -138,18 +138,10 @@ public class LangDialog extends JDialog
 		
 		for(int i=0;i<_lines.count();i++)
 		{
-			// START KGU#230 2016-08-02: Bugfix #218
-			parts = StringList.explode(_lines.get(i),"=");
-			if (parts.count() > 2)
-			{
-				String message = parts.concatenate("=", 1);
-				parts = StringList.getNew(parts.get(0));
-				parts.add(message);
-			}
-			// END KGU#230 2016-08-02
+			parts = StringList.explodeFirstOnly(_lines.get(i),"=");
 			pieces = StringList.explode(parts.get(0),"\\.");
 			
-			if (pieces.get(0).equalsIgnoreCase(_com.getClass().getSimpleName()))
+			if (pieces.get(0).equalsIgnoreCase(_com.getClass().getSimpleName()) && !parts.get(1).trim().isEmpty())
 			{	
 				if(pieces.get(1).toLowerCase().equals("title"))
 				{

@@ -40,9 +40,10 @@
  *
  ******************************************************************************************************/
 >>>
+-----> Structorizer
 -----[ Menu ]-----
 //Menu File
-Menu.menuFile.text=File
+Menu.menuFile.text=Fichier
 // Submenus of "File"
 Menu.menuFileNew.text=Nei
 Menu.menuFileOpen.text=Opmaachen...
@@ -466,3 +467,4 @@ ExportOptionDialoge.lineNumbersCheckBox.text=Linnennummern beim Export op BASIC 
 ExportOptionDialoge.jLabel1.text=Wiel déi Astellungen, déi's du gären aktivéiert häss...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Astellunge Späicheren
+

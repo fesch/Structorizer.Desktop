@@ -71,6 +71,7 @@ import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.helpers.*;
 import lu.fisch.structorizer.io.INIFilter;
 import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.locales.Translater;
 import lu.fisch.structorizer.parsers.*;
 
 @SuppressWarnings("serial")
@@ -107,6 +108,7 @@ public class Menu extends JMenuBar implements NSDController
 
 	// START KGU#2 2015-11-19: New menu item to have the Arranger present the diagram
 	protected JMenuItem menuFileArrange = new JMenuItem("Arrange", IconLoader.ico105);
+	protected JMenuItem menuFileTranslater = new JMenuItem("Translater", IconLoader.ico113);
 	// END KGU#2 2015-11-19
 	protected JMenuItem menuFilePrint = new JMenuItem("Print ...",IconLoader.ico041);
 	protected JMenuItem menuFileQuit = new JMenuItem("Quit");
@@ -400,11 +402,18 @@ public class Menu extends JMenuBar implements NSDController
 		menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		menuFilePrint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.printNSD(); doButtons(); } } );
 
+                menuFile.addSeparator();
+
 		// START KGU#2 2015-11-19
 		menuFile.add(menuFileArrange);
 		//menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		menuFileArrange.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.arrangeNSD(); doButtons(); } } );
 		// END KGU#2 2015-11-19
+                
+                // START BOB 2016-08-02
+		menuFile.add(menuFileTranslater);
+		menuFileTranslater.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { Translater.launch(); } } );
+                // END BOB 2016-08-02
 
 		menuFile.addSeparator();
 
