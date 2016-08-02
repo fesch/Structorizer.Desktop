@@ -55,10 +55,9 @@ Menu.menuFileSaveAs.text=Sauvegarder sous ...
 Menu.menuFileExport.text=Exporter
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Image ...
-Menu.menuFileExportPicturePNGmulti=PNG (multiple) ...
 Menu.menuFileExportCode.text=Code source ...
 Menu.menuFileExportPicturePNG.text=
-Menu.menuFileExportPicturePNGmulti.text=
+Menu.menuFileExportPicturePNGmulti.text=PNG (multiple) ...
 Menu.menuFileExportPictureEMF.text=
 Menu.menuFileExportPictureSWF.text=
 Menu.menuFileExportPicturePDF.text=
@@ -582,8 +581,6 @@ ExportOptionDialoge.chkCharsetAll.text=
 ExportOptionDialoge.jLabel1.text=Choisissez les options que vous désirez acitver...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Sauvegarder les options.
-ExportOptionDialoge.lbCharset.txt=
-ExportOptionDialoge.chkCharsetAll.txt=
 -----> Arranger
 Surface.msgFileLoadError.text=
 Surface.msgSavePortable.text=
