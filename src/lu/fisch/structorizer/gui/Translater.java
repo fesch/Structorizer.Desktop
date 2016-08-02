@@ -89,6 +89,8 @@ public class Translater extends javax.swing.JFrame {
         table.getColumnModel().getColumn(2).setHeaderValue("Please load a language!");
         table.getTableHeader().repaint();
         
+        headerText.setText("Please load a language!");
+        
         
         loadDefaultLang("en.txt");
         
@@ -158,7 +160,7 @@ public class Translater extends javax.swing.JFrame {
         String input = new String();
         try 
         {
-            BufferedReader in = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream(_langfile), "UTF-8"));
+            BufferedReader in = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/lu/fisch/structorizer/locales/"+_langfile), "UTF-8"));
             String str;
             while ((str = in.readLine()) != null) 
             {
@@ -270,11 +272,11 @@ public class Translater extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         button_save = new javax.swing.JButton();
         jTabbedPane1 = new javax.swing.JTabbedPane();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        table = new javax.swing.JTable();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         headerText = new javax.swing.JTextPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        table = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(900, 90));
@@ -435,6 +437,15 @@ public class Translater extends javax.swing.JFrame {
 
         getContentPane().add(jPanel1, java.awt.BorderLayout.PAGE_START);
 
+        jPanel2.setLayout(new java.awt.BorderLayout());
+
+        headerText.setFont(new java.awt.Font("Monospaced", 0, 10)); // NOI18N
+        jScrollPane2.setViewportView(headerText);
+
+        jPanel2.add(jScrollPane2, java.awt.BorderLayout.CENTER);
+
+        jTabbedPane1.addTab("Header", jPanel2);
+
         table.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
@@ -449,15 +460,6 @@ public class Translater extends javax.swing.JFrame {
         jScrollPane1.setViewportView(table);
 
         jTabbedPane1.addTab("Strings", jScrollPane1);
-
-        jPanel2.setLayout(new java.awt.BorderLayout());
-
-        headerText.setFont(new java.awt.Font("Monospaced", 0, 10)); // NOI18N
-        jScrollPane2.setViewportView(headerText);
-
-        jPanel2.add(jScrollPane2, java.awt.BorderLayout.CENTER);
-
-        jTabbedPane1.addTab("Header", jPanel2);
 
         getContentPane().add(jTabbedPane1, java.awt.BorderLayout.CENTER);
         jTabbedPane1.getAccessibleContext().setAccessibleName("Strings");

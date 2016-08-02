@@ -83,7 +83,7 @@ public class LangDialog extends JDialog
 		String input = new String();
 		try 
 		{
-			BufferedReader in = new BufferedReader(new InputStreamReader(_com.getClass().getResourceAsStream(_langfile), "UTF-8"));
+			BufferedReader in = new BufferedReader(new InputStreamReader(_com.getClass().getResourceAsStream("/lu/fisch/structorizer/locales/"+_langfile), "UTF-8"));
 			//BufferedReader in = new BufferedReader(new InputStreamReader(_com.getClass().getResourceAsStream(_langfile), "ISO-8859-1"));
 			String str;
 			while ((str = in.readLine()) != null) 
