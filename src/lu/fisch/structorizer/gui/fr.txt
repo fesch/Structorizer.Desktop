@@ -39,7 +39,7 @@
  *      Comment:	
  *
  ******************************************************************************************************/
- 
+ >>>
  -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=Fichier
@@ -126,7 +126,6 @@ Menu.menuPreferencesLanguageLuxemburgish.text=Luxembourgeois
 Menu.menuPreferencesLanguageSpanish.text=Espagnol
 Menu.menuPreferencesLanguageItalian.text=Italien
 Menu.menuPreferencesLanguagePortugalBrazil.text=Portugais (brazilien)
-//Menu.menuPreferencesLanguageChinese.text=Chinois
 Menu.menuPreferencesLanguageCzech.text=Czech
 
 Menu.menuPreferencesLookAndFeel.text=Look & Feel
@@ -170,7 +169,7 @@ Menu.error13_2.text=La fonction ne retourne peut-être pas de résultat!
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.check1.text=Test sur la variable de contrôle d'une boucle "FOR".
 AnalyserPreferences.check2.text=Test sur les boucles infinies. (Pour autant que c'est possible!)
-AnalyserPreferences.check3.text=Test sur les variables non initialisées. 
+AnalyserPreferences.check3.text=Test sur les variables non initialisées.
 AnalyserPreferences.check4.text=Test sur l'utilisation correcte des structures alternatives.
 AnalyserPreferences.check5.text=Test si les nom de variables sont écrites en majuscules. (LUX/MEN)
 AnalyserPreferences.check6.text=Test si le nom du programme ou de la fonction est écrit en majuscules. (LUX/MEN)

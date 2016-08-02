@@ -39,7 +39,7 @@
  *      Comment:	
  *
  ******************************************************************************************************/
-
+>>>
 -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=Soubor
@@ -125,7 +125,8 @@ Menu.menuPreferencesLanguageDutch.text=Holandsky
 Menu.menuPreferencesLanguageLuxemburgish.text=Lucembursky
 Menu.menuPreferencesLanguagePortugalBrazil.text=Brazil
 Menu.menuPreferencesLanguageItalian.text=Italsky
-Menu.menuPreferencesLanguageChinese.text=Chinese
+Menu.menuPreferencesLanguageSimplifiedChinese.text=Chinese (simple)
+Menu.menuPreferencesLanguageTraditionalChinese.text=Chinese (traditional)
 Menu.menuPreferencesLanguageCzech.text=Česky
 
 Menu.menuPreferencesLookAndFeel.text=Vzhled
