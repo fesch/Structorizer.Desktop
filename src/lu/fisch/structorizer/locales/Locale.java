@@ -221,7 +221,7 @@ public class Locale {
         for (int i = 0; i < sectionNames.length; i++) {
             String name = sectionNames[i];
             data +=startOfSection+" "+name+"\n";
-            data +=getSection(name).getText().trim()+"\n";
+            data +=getSection(name).getText().trim()+"\n"+"\n";
         }
         return data;
     }
