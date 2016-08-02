@@ -382,7 +382,7 @@ Editor.popupCollapse.text=Collapse
 Editor.popupExpand.text=Expand
 // Breakpoint
 Editor.popupBreakpoint.text=Toggle breakpoint
-
+Editor.popupBreakTrigger.text=Specify break trigger...
 
 -----[ InputBox ]-----
 InputBox.title=

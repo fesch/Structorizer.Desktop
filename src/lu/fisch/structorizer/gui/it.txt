@@ -361,6 +361,24 @@ InputBox.class_specific.While.lblText=Inserisci la condicione para entrar y qued
 InputBox.class_specific.Repeat.lblText=Inserisci la conditione para salir
 InputBox.class_specific.Case.lblText=Inserisci l'espressione e le constanti della selezione
 InputBox.class_specific.Parallel.lblText=Nummero dei rami paraleli
+-----[ InputBoxFor ]-----
+InputBoxFor.class_specific.For.insert=Inseriscire Ciclo FOR...
+InputBoxFor.class_specific.For.update=Modificare Ciclo FOR...
+InputBoxFor.lblVariable.text=Variable contatora
+InputBoxFor.lblStartVal.text=Valore iniziale
+InputBoxFor.lblEndVal.text=Valore finale
+InputBoxFor.lblIncr.text=Passo
+InputBoxFor.chkTextInput.text=Digitare cuomo testo pieno
+InputBoxFor.chkTextInput.tooltip=Se segnato, i parametri son estratto del testo, se no el testo è composto dei componenti.
+InputBoxFor.lblComment.text=Commento
+InputBoxFor.lblComment.tooltip=
+InputBoxFor.txtText.tooltip=Intestazione dello ciclo composto.
+InputBoxFor.txtComment.tooltip=Il commento dello ciclo.
+InputBoxFor.btnOK.text=OK
+InputBoxFor.btnOK.tooltip=Valida la tua scelta.
+InputBoxFor.btnCancel.text=Annulla
+InputBoxFor.btnCancel.tooltip=Annulla la tua scelta.
+InputBoxFor.chkBreakpoint.text=Breakpoint
 
 -----[ Preferences ]-----
 Preferences.title=Preferenze di struttura
