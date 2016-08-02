@@ -86,6 +86,10 @@ public class Translater extends javax.swing.JFrame {
         model.setRowCount(0);
         table.getColumnModel().getColumn(0).setHeaderValue("String");
         
+        table.getColumnModel().getColumn(2).setHeaderValue("Please load a language!");
+        table.getTableHeader().repaint();
+        
+        
         loadDefaultLang("en.txt");
         
         getMissingStrings();
@@ -172,23 +176,40 @@ public class Translater extends javax.swing.JFrame {
      */
     public void addLang(String _langfile)
     {
+        // set the column header name
         DefaultTableModel model = ((DefaultTableModel)table.getModel());
         table.getColumnModel().getColumn(2).setHeaderValue((new File(_langfile)).getName());
+        table.getTableHeader().repaint();
+        
+        // load the lang file
         StringList lines = loadLang(_langfile);
         
+        // extract & remove the header
+        StringList header = new StringList();
+        while(!lines.get(0).trim().equals(">>>") && lines.count()>0) 
+        {
+            header.add(lines.get(0));
+            lines.remove(0);
+        }
+        headerText.setText(header.getText());
+        
+        // get the strings and put them into the right row
         for (int r = 0; r < model.getRowCount(); r++) {
             model.setValueAt("", r, 2);
-            String key = (String) model.getValueAt(r, 0);
-            
+            String key = ((String) model.getValueAt(r, 0)).trim();
+            System.out.println("Looking for: "+key);
             for (int i = 0; i < lines.count(); i++) {
                 String get = lines.get(i);
                 StringList parts = StringList.explode(lines.get(i).trim(),"=");
-                if(enLines.get(i).trim().contains("=") && parts.get(0).contains(".") && parts.get(0).equals(key))
+                //System.out.println("  Found: "+parts.get(0));
+                if(lines.get(i).trim().contains("=") && parts.get(0).contains(".") && parts.get(0).trim().equals(key))
                 {
                     model.setValueAt(parts.get(1), r, 2);
                 }
             }
         }
+        
+        // enable the buttons
         button_save.setEnabled(true);
         table.setEnabled(true);
     }
@@ -241,10 +262,15 @@ public class Translater extends javax.swing.JFrame {
         button_cht = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         button_save = new javax.swing.JButton();
+        jTabbedPane1 = new javax.swing.JTabbedPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         table = new javax.swing.JTable();
+        jPanel2 = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        headerText = new javax.swing.JTextPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setMinimumSize(new java.awt.Dimension(900, 90));
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 204));
         jPanel1.setPreferredSize(new java.awt.Dimension(655, 48));
@@ -374,7 +400,7 @@ public class Translater extends javax.swing.JFrame {
                 .addComponent(button_pl)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(button_cht)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 362, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 409, Short.MAX_VALUE)
                 .addComponent(button_save)
                 .addContainerGap())
         );
@@ -415,7 +441,19 @@ public class Translater extends javax.swing.JFrame {
         ));
         jScrollPane1.setViewportView(table);
 
-        getContentPane().add(jScrollPane1, java.awt.BorderLayout.CENTER);
+        jTabbedPane1.addTab("Strings", jScrollPane1);
+
+        jPanel2.setLayout(new java.awt.BorderLayout());
+
+        headerText.setFont(new java.awt.Font("Monospaced", 0, 10)); // NOI18N
+        jScrollPane2.setViewportView(headerText);
+
+        jPanel2.add(jScrollPane2, java.awt.BorderLayout.CENTER);
+
+        jTabbedPane1.addTab("Header", jPanel2);
+
+        getContentPane().add(jTabbedPane1, java.awt.BorderLayout.CENTER);
+        jTabbedPane1.getAccessibleContext().setAccessibleName("Strings");
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -501,6 +539,7 @@ public class Translater extends javax.swing.JFrame {
             }
         }
         
+        /*
         // add the original header
         StringList origLines = loadLang(loaded);
         int i = 0;
@@ -509,6 +548,14 @@ public class Translater extends javax.swing.JFrame {
             lines.insert(origLines.get(0), i);
             origLines.remove(0);
             i++;
+        }
+        */
+        
+        // add the header
+        StringList header = StringList.explode(headerText.getText(),"\n");
+        header.add(">>>");
+        for (int i = 0; i < header.count(); i++) {
+            lines.insert(header.get(i), i);
         }
         
         // now ask where to save the data
@@ -574,9 +621,13 @@ public class Translater extends javax.swing.JFrame {
     private javax.swing.JButton button_pt_br;
     private javax.swing.JButton button_ru;
     private javax.swing.JButton button_save;
+    private javax.swing.JTextPane headerText;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable table;
     // End of variables declaration//GEN-END:variables
 }
