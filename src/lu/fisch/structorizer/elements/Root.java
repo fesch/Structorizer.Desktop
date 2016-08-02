@@ -953,8 +953,7 @@ public class Root extends Element {
     public Element copy()
     {
             Root ele = new Root(this.getText().copy());
-            ele.setComment(this.getComment().copy());
-            ele.setColor(this.getColor());
+            copyDetails(ele, false);
             ele.isNice=this.isNice;
             ele.isProgram=this.isProgram;
             ele.children=(Subqueue) this.children.copy();
@@ -962,15 +961,6 @@ public class Root extends Element {
             ele.children.parent = ele;
             //ele.updaters = this.updaters;	// FIXME: Risks of this?
             // END KGU#2 (#9) 2015-11-13
-    		// START KGU#117 2016-03-07: Enh. #77
-    		// START KGU#156/KGU#225 2016-07-28: Bugfix #210
-    		//ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
-    		this.copyRuntimeData(ele, false);
-    		// END KGU#156/KGU#225 2016-07-28
-    		// END KGU#117 2016-03-07
-    		// START KGU#183 2016-04-24: Issue #169
-    		ele.selected = this.selected;
-    		// END KGU#183 2016-04-24
             return ele;
     }
     

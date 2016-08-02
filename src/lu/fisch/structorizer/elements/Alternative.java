@@ -518,25 +518,11 @@ public class Alternative extends Element {
 	public Element copy()
 	{
 		Alternative ele = new Alternative(this.getText().copy());
-		ele.setComment(this.getComment().copy());
-		ele.setColor(this.getColor());
+		copyDetails(ele, true);
 		ele.qTrue=(Subqueue) this.qTrue.copy();
 		ele.qFalse=(Subqueue) this.qFalse.copy();
 		ele.qTrue.parent=ele;
 		ele.qFalse.parent=ele;
-		// START KGU#82 (bug #31) 2015-11-14
-		ele.breakpoint = this.breakpoint;
-		// END KGU#82 (bug #31) 2015-11-14
-		// START KGU#117 2016-03-07: Enh. #77
-		// START KGU#156/KGU#225 2016-07-28: Bugfix #210
-		//ele.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
-		//ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
-		this.copyRuntimeData(ele, true);
-		// END KGU#156/KGU#225 2016-07-28
-		// END KGU#117 2016-03-07
-		// START KGU#183 2016-04-24: Issue #169
-		ele.selected = this.selected;
-		// END KGU#183 2016-04-24
 		return ele;
 	}
 	

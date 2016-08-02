@@ -298,36 +298,15 @@ public class Instruction extends Element {
 	protected Element copyDetails(Element _ele, boolean _forConversion, boolean _simplyCoveredToo)
 	// END KGU#225 2016-07-29
 	{
-		// END KGU#199 2016-07-06
-		_ele.setComment(this.getComment().copy());
-		_ele.setColor(this.getColor());
-		// START KGU#82 (bug #31) 2015-11-14
-		_ele.breakpoint = this.breakpoint;
-		// END KGU#82 (bug #31) 2015-11-14
-		// START KGU#117 2016-03-07: Enh. #77
+		super.copyDetails(_ele, _simplyCoveredToo);
         if (Element.E_COLLECTRUNTIMEDATA)
         {
-        	// START KGU#225 2016-07-28: Bugfix #210
-        	this.copyRuntimeData(_ele, _simplyCoveredToo);
-        	// END KGU#225 2016-07-28
-        	// We share this object (important for recursion!)
-        	//_ele.deeplyCovered = this.deeplyCovered;
-        	// START KGU#199 2016-07-06: Enh. #188
         	if (_forConversion)	// This distinction wasn't clear here: why?
         	{
-            	// START KGU#225 2016-07-28: Bugfix #210 - some parts put to copyRuntimeData
-        		//_ele.simplyCovered = this.simplyCovered;
-        		//_ele.execCount = this.execCount;
-            	// END KGU#225 2016-07-28
         		_ele.execStepCount = this.execStepCount;
         		_ele.execSubCount = this.execSubCount;
         	}
-        	// END KGU#199 2016-07-06
         }
-		// END KGU#117 2016-03-07
-		// START KGU#183 2016-04-24: Issue #169
-		_ele.selected = this.selected;
-		// END KGU#183 2016-04-24
 		return _ele;
 	}
 

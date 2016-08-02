@@ -60,8 +60,6 @@ package lu.fisch.structorizer.elements;
 
 import java.util.Vector;
 import java.awt.Color;
-import java.awt.FontMetrics;
-import java.awt.Point;
 
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
@@ -718,9 +716,7 @@ public class Parallel extends Element
     public Element copy() // Problem here???
     {
             Parallel ele = new Parallel(this.getText().getText());
-            //ele.setText(this.getText().copy());
-            ele.setComment(this.getComment().copy());
-            ele.setColor(this.getColor());
+            copyDetails(ele, false);
             ele.qs.clear();
             for(int i=0; i<qs.size(); i++)
             {
@@ -728,19 +724,6 @@ public class Parallel extends Element
                     sq.parent = ele;
                     ele.qs.add(sq);
             }
-    		// START KGU#82 (bug #31) 2015-11-14
-    		ele.breakpoint = this.breakpoint;
-    		// END KGU#82 (bug #31) 2015-11-14
-    		// START KGU#117 2016-03-07: Enh. #77
-    		// START KGU#156/KGU#225 2016-07-28: Bugfix #210
-    		//ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
-    		this.copyRuntimeData(ele, false);
-    		// END KGU#156/KGU#225 2016-07-28
-    		// END KGU#117 2016-03-07
-    		// START KGU#183 2016-04-24: Issue #169
-    		ele.selected = this.selected;
-    		// END KGU#183 2016-04-24
-
             return ele;
     }
 

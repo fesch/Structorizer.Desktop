@@ -43,6 +43,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.04.14      Enh. #158: Key bindings for page keys added (KGU#177)
  *      Kay Gürtzig     2016.07.06      Enh. #188: New button and menu item for element conversion (KGU#199)
  *      Kay Gürtzig     2016.07.21      Enh. #197: Selection may be expanded by Shift-Up and Shift-Down (KGU#206)
+ *      Kay Gürtzig     2016.08.02      Enh. #215: popupBreakTrigger added
  *
  ******************************************************************************************************
  *
@@ -210,6 +211,9 @@ public class Editor extends JPanel implements NSDController, ComponentListener
     // START KGU#43 2015-10-12: Breakpoint toggle
     protected JMenuItem popupBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
     // END KGU#43 2015-10-12
+	// START KGU#213 2016-08-02: Enh. #215
+	protected JMenuItem popupBreakTrigger = new JMenuItem("Specify break trigger...", IconLoader.ico112);
+	// END KGU#143 2016-08-02
     
     // START KGU#177 2016-04-06: Enh. #158
     // Action names
@@ -408,6 +412,11 @@ public class Editor extends JPanel implements NSDController, ComponentListener
         popup.add(popupBreakpoint);
         popupBreakpoint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleBreakpoint(); doButtons(); } }); 
         // END KGU#43 2015-10-12
+
+		// START KGU#213 2016-08-02: Enh. #215 - new breakpoint feature
+		popup.add(popupBreakTrigger);
+        popupBreakTrigger.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.editBreakTrigger(); doButtons(); } }); 
+		// END KGU#213 2016-08-02
 
         // add toolbars
         //toolbar.setLayout(new FlowLayout(FlowLayout.LEFT,0,0));
@@ -893,6 +902,9 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		popupBreakpoint.setEnabled(diagram.canCopyNoRoot());
 		// END KGU#177 2016-07-06
 		// END KGU#143 2016-01-21
+		// START KGU#213 2016-08-02: Enh. #215 - breakpoint control enhanced
+		popupBreakTrigger.setEnabled(diagram.canCopyNoRoot() && !diagram.selectedIsMultiple());
+		// END KGU#213 2016-08-02
 		
 		// copy & paste
 		// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy

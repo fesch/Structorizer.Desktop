@@ -37,6 +37,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.10.12      Field for breakpoint control added (KGU#43)
  *      Kay Gürtzig     2015.10.25      Enh. #10: Fields for specific For loop support (KGU#3)
  *      Kay Gürtzig     2016.03.21      Enh. #84: Field modification to support FOR-IN loops (KGU#61)
+ *      Kay Gürtzig     2016.08.01      Enh. #215: Breakpoint trigger counters added (KGU#213)
  *
  ******************************************************************************************************
  *
@@ -64,6 +65,9 @@ public class EditData {
 	// START KGU#43 2015-10-12
 	public boolean breakpoint = false;
 	// END KGU#43 2015-10-12
+	// START KGU#213 2016-08-01: Enh. #215
+	public int breakTriggerCount = 0;
+	// END KGU#213 2016-08-01
 	
 	public boolean result = false;
 	

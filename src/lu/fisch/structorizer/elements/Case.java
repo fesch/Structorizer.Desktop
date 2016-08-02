@@ -759,9 +759,7 @@ public class Case extends Element
     public Element copy() // Problem here???
     {
             Element ele = new Case(this.getText().getText());
-            //ele.setText(this.getText().copy());
-            ele.setComment(this.getComment().copy());
-            ele.setColor(this.getColor());
+            copyDetails(ele, true);
             ((Case) ele).qs.clear();
             for(int i=0; i < qs.size(); i++)
             {
@@ -769,20 +767,6 @@ public class Case extends Element
                     ss.parent=ele;
                     ((Case) ele).qs.add(ss);
             }
-    		// START KGU#82 (bug #31) 2015-11-14
-    		ele.breakpoint = this.breakpoint;
-    		// END KGU#82 (bug #31) 2015-11-14
-    		// START KGU#117 2016-03-07: Enh. #77
-    		// START KGU#156/KGU#225 2016-07-28: Bugfix #210
-    		//ele.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
-    		//ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
-    		this.copyRuntimeData(ele, true);
-    		// END KGU#156/KGU#225 2016-07-28
-    		// END KGU#117 2016-03-07
-    		// START KGU#183 2016-04-24: Issue #169
-    		ele.selected = this.selected;
-    		// END KGU#183 2016-04-24
-
             return ele;
     }
 
