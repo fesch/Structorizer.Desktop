@@ -110,7 +110,7 @@ public class LangDialog extends JDialog
 		
 		for(int i=0;i<_lines.count();i++)
 		{
-			parts = StringList.explode(_lines.get(i),"=");
+			parts = StringList.explodeFirstOnly(_lines.get(i),"=");
 			pieces = StringList.explode(parts.get(0),"\\.");
 			
 			if (pieces.get(0).toLowerCase().equals(_com.getClass().getSimpleName().toLowerCase()) && !parts.get(1).trim().isEmpty())

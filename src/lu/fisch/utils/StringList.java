@@ -97,6 +97,28 @@ public class StringList {
 		return sl;
 	}
 
+	public static StringList explodeFirstOnly(String _source, String _by)
+	{
+		String[] multi = _source.split(_by);
+		StringList sl = new StringList();
+
+                String first = multi[0];
+                sl.add(first);
+                
+                if(multi.length>1)
+                {
+                    String second = multi[1];
+                    if(multi.length>2)
+                        for(int i=2;i<multi.length;i++)
+                        {
+                            second+="="+multi[i];
+                        }
+                    sl.add(second);
+                }
+
+		return sl;
+	}
+
 	public static StringList explode(StringList _source, String _by)
 	{
 		StringList sl = new StringList();

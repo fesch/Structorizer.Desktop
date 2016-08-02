@@ -20,7 +20,7 @@
 */
 
 /******************************************************************************************************
-  *
+ *
  *      Author:         PUC-Minas, MG - Brasil
  *
  *      Description:    The Brazilian portuguese (PT-BR) language file
@@ -40,7 +40,8 @@
  *      Comment:	
  *
  ******************************************************************************************************/
-
+>>>
+-----> Structorizer
 -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=Arquivo
