@@ -48,6 +48,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.04.24      Fix #173: Mnemonics for menus Diagram and Help had been compromised
  *      Kay Gürtzig     2016.07.07      Enh. #188: New menu item "wand" for element conversion (KGU#199)
  *      Kay Gürtzig     2016.07.22      Enh. #199: New help menu item "user guide" for element conversion (KGU#208)
+ *      Kay Gürtzig     2016.07.28      Enh. #206: New Dialog message text holders
+ *      Kay Gürtzig     2016.07.31      Enh. #128: New Diagram menu item "Comments + text"
  *
  ******************************************************************************************************
  *
@@ -180,6 +182,9 @@ public class Menu extends JMenuBar implements NSDController
 	// START KGU#123 2016-01-04: Enh. #87
 	protected JCheckBoxMenuItem menuDiagramWheel = new JCheckBoxMenuItem("Mouse wheel for collapsing?",IconLoader.ico108);
 	// END KGU#123 2016-01-04
+	// START KGU#227 2016-07-31: Enh. #128
+	protected JCheckBoxMenuItem menuDiagramCommentsPlusText = new JCheckBoxMenuItem("Comments plus texts?",IconLoader.ico111);
+	// END KGU#227 2016-07-31
 
 	// Menu "Help"
 	protected JMenu menuPreferences = new JMenu("Preferences");
@@ -219,8 +224,11 @@ public class Menu extends JMenuBar implements NSDController
 	protected JMenuItem menuHelpAbout = new JMenuItem("About ...",IconLoader.ico017);
 	protected JMenuItem menuHelpUpdate = new JMenuItem("Update ...",IconLoader.ico052);
 
-	// Error messages for analyser
-	public static LangTextHolder error01_1 = new LangTextHolder("WARNING: No loop varLangTextHolderdetected ...");
+	// Error messages for Analyser
+	// START KGU#220 2016-07-27: Enh. as proposed in issue #207
+	public static LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! ---> \"Diagram > Switch text/comments\".");
+	// END KGU#220 2016-07-27
+	public static LangTextHolder error01_1 = new LangTextHolder("WARNING: No loop variable detected ...");
 	public static LangTextHolder error01_2 = new LangTextHolder("WARNING: More than one loop variable detected ...");
 	public static LangTextHolder error01_3 = new LangTextHolder("You are not allowed to modify the loop variable «%» inside the loop!");
 	public static LangTextHolder error02 = new LangTextHolder("No change of the variables in the condition detected. Possible endless loop ...");
@@ -266,6 +274,18 @@ public class Menu extends JMenuBar implements NSDController
 	public static LangTextHolder error17 = new LangTextHolder("Consistency risk due to concurrent access to variable «%» by several parallel threads!");
 	// END KGU#47 2015-11-28
 
+	// START KGU#218 2016-07-28: Issue #206 - enhanced localization
+	// Dialog messages
+	public static LangTextHolder msgDialogExpCols = new LangTextHolder("Into how many columns do you want to split the output?");
+	public static LangTextHolder msgDialogExpRows = new LangTextHolder("Into how many rows do you want to split the output?");
+	public static LangTextHolder msgOverwriteFile = new LangTextHolder("Overwrite existing file?");
+	public static LangTextHolder msgOverwriteFiles = new LangTextHolder("Existing file(s) detected. Overwrite?");
+	public static LangTextHolder btnConfirmOverwrite = new LangTextHolder("Confirm Overwrite");
+	public static LangTextHolder msgRepeatSaveAttempt = new LangTextHolder("Your file has not been saved. Please repeat the save operation!");
+	// END KGU#218 2016-07-28
+	// START KGU#227 2016-07-31: Enh. #128
+	public static LangTextHolder menuDiagramSwitchTCTooltip = new LangTextHolder("Unselect \"%1\" to enable this item");
+	// END KGU#227 2016-07-31
 
 	public void create()
 	{
@@ -596,6 +616,11 @@ public class Menu extends JMenuBar implements NSDController
 		menuDiagram.add(menuDiagramComment);
 		menuDiagramComment.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setComments(menuDiagramComment.isSelected()); doButtons(); } } );
 
+		// START KGU#227 2016-07-31: Enh. #128
+		menuDiagram.add(menuDiagramCommentsPlusText);
+		menuDiagramCommentsPlusText.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setCommentsPlusText(menuDiagramCommentsPlusText.isSelected()); doButtons(); } } );
+		// END KGU#227 2016-07-31
+
 		menuDiagram.add(menuDiagramSwitchComments);
 		menuDiagramSwitchComments.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleTextComments(); doButtons(); } } );
 		// START KGU#169 2016-04-01: Enh. #142 (accelerator key added)
@@ -776,6 +801,8 @@ public class Menu extends JMenuBar implements NSDController
 		menuHelpUpdate.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {diagram.updateNSD(); } } );
 		menuHelpUpdate.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 
+		// Attempt to find out what provokes the NullPointerExceptions on start
+		//System.out.println("**** " + this + ".create() ready!");
 	}
 
 	public void setLookAndFeel(String _laf) {}
@@ -960,6 +987,20 @@ public class Menu extends JMenuBar implements NSDController
 
 			// variable highlighting
 			menuDiagramMarker.setSelected(diagram.getRoot().hightlightVars);
+
+			// START KGU#227 2016-07-31: Enh. #128
+			// draw elements with both comments and diagram?
+			menuDiagramCommentsPlusText.setSelected(Element.E_COMMENTSPLUSTEXT);
+			menuDiagramSwitchComments.setEnabled(!Element.E_COMMENTSPLUSTEXT);
+			if (Element.E_COMMENTSPLUSTEXT)
+			{
+				menuDiagramSwitchComments.setToolTipText(this.menuDiagramSwitchTCTooltip.getText().replace("%1", menuDiagramCommentsPlusText.getText()));
+			}
+			else
+			{
+				menuDiagramSwitchComments.setToolTipText(null);
+			}
+			// END KGU#227 2016-07-31
 
 			// swap texts against comments?
 			menuDiagramSwitchComments.setSelected(Element.E_TOGGLETC);

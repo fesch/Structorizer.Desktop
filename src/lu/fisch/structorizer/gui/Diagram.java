@@ -71,10 +71,26 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.19      Enh. #192: File name proposals slightly modified (KGU#205)
  *      Kay Gürtzig     2016.07.20      Enh. #160: New export option genExportSubroutines integrated (KGU#178)
  *      Kay Gürtzig     2016.07.21      Enh. #197: Selection may be expanded by Shift-Up and Shift-Down (KGU#206)
+ *      Kay Gürtzig     2016.07.25      Enh. #158 / KGU#214: selection traversal accomplished for un-boxed Roots,
+ *                                      and FOREVER / non-DIN FOR loops
+ *      Kay Gürtzig     2016.07.26      Bugfix #204: Modified ExportOptionDialoge API (for correct sizing)
+ *      Kay Gürtzig     2016.07.28      Bugfix #208: Modification in setFunction(), setProgram(), and exportPNG()
+ *                                      Bugfix #209: exportPNGmulti() corrected
+ *      Kay Gürtzig     2016.07.31      Issue #158 Changes from 2016.07.25 partially withdrawn, additional restrictions
+ *      Kay Gürtzig     2016-08-01      Issue #213: FOR loop transmutation implemented
  *
  ******************************************************************************************************
  *
  *      Comment:		/
+ *      
+ *      2016.07.31 (Kay Gürtzig, #158)
+ *      - It turned out that circular horizontal selection move is not sensible. It compromises usability
+ *        rather than it helps. With active horizontal mouse scrolling the respective diagram margin is
+ *        so quickly reached that a breathtaking rotation evolves - no positioning is possible. Even with
+ *        cursor keys you fall too rapidly into the margin trap, just to be kicked to a totally different
+ *        place. This makes navigation rather hazardous. Selection chain will end at the left or right
+ *        margin now, giving pause for consideration.
+ *        Moving inwards the diagram from the selected Root will still work.
  *
  ******************************************************************************************************///
 
@@ -135,7 +151,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     private int selY = -1;
     private int mX = -1;
     private int mY = -1;
-
+    
     private NSDController NSDControl = null;
     
     // START KGU#2 2015-11-24
@@ -347,6 +363,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		selected = root;
 		root.setSelected(true);
 		// END KGU#182 2016-04-24
+		
+		// Attempt to find out what provokes the NullPointerExceptions on start
+		//System.out.println("**** " + this + ".create() ready!");
 	}
 
 	public void hideComments()
@@ -751,7 +770,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if(errorlist.getSelectedIndex()!=-1)
 				{
 					// get the selected error
-					Element ele = (root.errors.get(errorlist.getSelectedIndex())).getElement();
+					DetectedError err = root.errors.get(errorlist.getSelectedIndex()); 
+					Element ele = err.getElement();
 					if(ele!=null)
 					{
 						// deselect the previously selected element (if any)
@@ -764,6 +784,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						// do the button thing
 						if(NSDControl!=null) NSDControl.doButtons();
 					}
+					// START KGU#220 2016-07-27: Draft for Enh. #207, but withdrawn
+					//else if (err.getError().equals(Menu.warning_1.getText()))
+					//{
+					//	this.toggleTextComments();
+					//}
+					// END KGU#200 2016-07-27
 				}
 			}
 		}
@@ -843,16 +869,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// KGU#91 2015-12-04: Bugfix #39 - Disabled
         //if (Element.E_TOGGLETC) root.setSwitchTextAndComments(true);
 		root.draw(_g);
-                
+        
 		lu.fisch.graphics.Canvas canvas = new lu.fisch.graphics.Canvas((Graphics2D) _g);
 		Rect rect;
 		// FIXME: This "background filling" isn't necessary, at least not under windows
-		rect = new Rect(root.width+1,0,this.getWidth(),this.getHeight());
-		canvas.setColor(Color.LIGHT_GRAY);
-		canvas.fillRect(rect);
-		rect = new Rect(0,root.height+1,this.getWidth(),this.getHeight());
-		canvas.setColor(Color.LIGHT_GRAY);
-		canvas.fillRect(rect);
+//		rect = new Rect(root.width+1,0,this.getWidth(),this.getHeight());
+//		canvas.setColor(Color.LIGHT_GRAY);
+//		canvas.fillRect(rect);
+//		rect = new Rect(0,root.height+1,this.getWidth(),this.getHeight());
+//		canvas.setColor(Color.LIGHT_GRAY);
+//		canvas.fillRect(rect);
 		// START KGU 2016-02-27: This area has already been filled twice
 //		rect = new Rect(root.width+1,root.height+1,this.getWidth(),this.getHeight());
 //		canvas.setColor(Color.LIGHT_GRAY);
@@ -1182,8 +1208,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                         {
                             writeNow=false;
                             int res = JOptionPane.showConfirmDialog(
-                                this,"A file with the specified name exists.\nDo you want to owerwrite it?",
-                                "Owerwrite?",JOptionPane.YES_NO_OPTION);
+                                    this,
+                                    Menu.msgOverwriteFile.getText(),
+                                    Menu.btnConfirmOverwrite.getText(),
+                                    JOptionPane.YES_NO_OPTION);
                             if(res==JOptionPane.YES_OPTION) writeNow=true;
                         }
 
@@ -1196,7 +1224,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                         	// START KGU#94 2015.12.04: out-sourced to auxiliary method
 //                            try
 //                            {
-//                            	
+//                            
 //                                    FileOutputStream fos = new FileOutputStream(root.filename);
 //                                    Writer out = new OutputStreamWriter(fos, "UTF8");
 //                                    XmlGenerator xmlgen = new XmlGenerator();
@@ -1531,6 +1559,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 				}
 			}
+			// START KGU#229 2016-08-01: Enh. #213
+			else if (selected instanceof For)
+			{
+				convertible = ((For)selected).style == For.ForLoopStyle.COUNTER;
+			}
+			// END KGU#229 2016-08-01
 		}
 		return convertible;
 	}
@@ -1675,9 +1709,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//root.hasChanged=true;
 					// END KGU#137 2016-01-11
 					((Subqueue) element).addElement(ele);
-                	// START KGU#136 2016-03-01: Bugfix #97
-                	element.resetDrawingInfoUp();
-                	// END KGU#136 2016-03-01
+					// START KGU#136 2016-03-01: Bugfix #97
+					element.resetDrawingInfoUp();
+					// END KGU#136 2016-03-01
 					ele.setSelected(true);
 					selected=ele;
 					redraw();
@@ -1734,9 +1768,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#137 2016-01-11: Already prepared by addUndo()
 					//root.hasChanged=true;
 					// END KGU#137 2016-01-11
-                	// START KGU#136 2016-03-01: Bugfix #97
-                	element.resetDrawingInfoUp();
-                	// END KGU#136 2016-03-01
+					// START KGU#136 2016-03-01: Bugfix #97
+					element.resetDrawingInfoUp();
+					// END KGU#136 2016-03-01
 					redraw();
 				}
 			}
@@ -2004,6 +2038,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			root.addUndo();
 			transmuteToCompoundInstr(parent);
 		}
+		// START KGU#229 2016-08-01: Enh. #213 - FOR loop decomposition
+		else if (selected instanceof For && ((For)selected).style == For.ForLoopStyle.COUNTER)
+		{
+			root.addUndo();
+			decomposeForLoop(parent);
+		}
+		// END KGU#229 2016-08-01
 		this.doButtons();
 		redraw();
 		analyse();
@@ -2130,6 +2171,50 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		this.selectedUp = this.selectedDown = this.selected;
 	}
 	// END KGU#199 2016-07-06
+
+	// START KGU#229 2016-08-01: Enh. #213 - FOR loop decomposition
+	private void decomposeForLoop(Subqueue parent)
+	{
+		// Comment will be tranferred to the While loop.
+		For forLoop = (For)selected;
+		String asgmtOpr = " <- ";
+		if (forLoop.getText().get(0).contains(":="))
+		{
+			asgmtOpr = " := ";
+		}
+		int step = forLoop.getStepConst();
+		Element[] elements = new Element[3];
+		elements[0] = new Instruction(forLoop.getCounterVar() + asgmtOpr + forLoop.getStartValue());
+		While whileLoop = new While(forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue());
+		elements[1] = whileLoop;
+		elements[2] = new Instruction(forLoop.getCounterVar() + asgmtOpr + forLoop.getCounterVar() + (step < 0 ? " - " : " + ") + Math.abs(forLoop.getStepConst()));
+
+		whileLoop.setComment(forLoop.getComment());
+		if (forLoop.isBreakpoint())
+		{
+			whileLoop.toggleBreakpoint();
+		}
+		whileLoop.q = forLoop.getBody();
+		whileLoop.q.parent = whileLoop;
+		whileLoop.q.addElement(elements[2]);
+		for (int i = 0; i < elements.length; i++)
+		{
+			Element elem = elements[i];
+			elem.setColor(forLoop.getColor());
+			elem.deeplyCovered = forLoop.deeplyCovered;
+			elem.simplyCovered = forLoop.simplyCovered;
+			elem.setCollapsed(forLoop.isCollapsed());
+		}
+		int index = parent.getIndexOf(forLoop);
+		for (int i = 0; i < 2; i++)
+		{
+			parent.insertElementAt(elements[1-i], index+1);
+		}
+		parent.removeElement(index);
+		this.selected = new SelectedSequence(parent, index, index+1);
+		this.selectedUp = this.selectedDown = this.selected;
+	}
+	// END KGU#229 2016-08-01
 
 	// START KGU#43 2015-10-12
 	/*****************************************
@@ -2259,10 +2344,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		JFileChooser dlgSave = new JFileChooser("Export diagram as Multi-PNG ...");
 		// set directory
 		if (lastExportDir!=null)
-                {
-                    dlgSave.setCurrentDirectory(lastExportDir);
-                }
-                else if(root.getFile()!=null)
+		{
+			dlgSave.setCurrentDirectory(lastExportDir);
+		}
+		else if(root.getFile()!=null)
 		{
 			dlgSave.setCurrentDirectory(root.getFile());
 		}
@@ -2290,20 +2375,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		int result = dlgSave.showSaveDialog(NSDControl.getFrame());
 		if (result == JFileChooser.APPROVE_OPTION)
 		{
-                    lastExportDir=dlgSave.getSelectedFile().getParentFile();
+			lastExportDir=dlgSave.getSelectedFile().getParentFile();
 			String filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
 			if(!filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".png"))
 			{
 				filename+=".png";
 			}
 
-			File file = new File(filename);
+			// START KGU#224 2016-07-28: Issue #209  Test was nonsense since the actual file names will be different
+			//File file = new File(filename);
+			File file = new File(filename.replace(".png", "-00-00.png"));
+			// END KGU#224 2016-07-28
 			boolean writeDown = true;
-                        
+            
 			if(file.exists())
 			{
 				int response = JOptionPane.showConfirmDialog (null,
-						"Overwrite existing file?","Confirm Overwrite",
+						Menu.msgOverwriteFiles.getText(),
+						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
 						JOptionPane.QUESTION_MESSAGE);
 				if (response == JOptionPane.NO_OPTION)
@@ -2313,11 +2402,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			if(writeDown==true)
 			{
-				int cols = Integer.valueOf(JOptionPane.showInputDialog(null, "Into how many columns do you want to split the output?", "1"));
-				int rows = Integer.valueOf(JOptionPane.showInputDialog(null, "Into how many rows do you want to split the output?", "3"));
+				// START KGU#218 2016-07-28: Issue #206 Localization efforts
+				//int cols = Integer.valueOf(JOptionPane.showInputDialog(null, "Into how many columns do you want to split the output?", "1"));
+				//int rows = Integer.valueOf(JOptionPane.showInputDialog(null, "Into how many rows do you want to split the output?", "3"));
+				int cols = Integer.valueOf(JOptionPane.showInputDialog(null, Menu.msgDialogExpCols.getText(), "1"));
+				int rows = Integer.valueOf(JOptionPane.showInputDialog(null, Menu.msgDialogExpRows.getText(), "3"));
+				// END KGU#218 2016-07-28
 
 				BufferedImage image = new BufferedImage(root.width+1,root.height+1,BufferedImage.TYPE_4BYTE_ABGR);
-				printAll(image.getGraphics());
+				// START KGU#221 2016-07-28: Issue #208 Need to achieve transparent background
+				//printAll(image.getGraphics());
+				redraw(image.createGraphics());
+				// END KGU#221 2016-07-28
 				// source: http://answers.yahoo.com/question/index?qid=20110821001157AAcdXVk
 				// source: http://kalanir.blogspot.com/2010/02/how-to-split-image-into-chunks-java.html
 				try
@@ -2334,6 +2430,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 					int chunkWidth = image.getWidth() / cols;
 					int chunkHeight = image.getHeight() / rows;
+					// START KGU#223 2016-07-28: Bugfix #209 - identify the integer division defects
+					int widthDefect = image.getWidth() % cols;
+					int heightDefect = image.getHeight() % rows;
+					// END KGU#223 2016-07-28
 
 					// 3. Define an Image array to hold image chunks
 					int count = 0;
@@ -2345,19 +2445,36 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						for (int y = 0; y < cols; y++)
 						{
 							//Initialize the image array with image chunks
-							imgs[count] = new BufferedImage(chunkWidth, chunkHeight, image.getType());
-
+							// START KGU#223 2016-07-28: Bugfix #209
+							// We must compensate the rounding defects lest the right and lower borders should be cut 
+							//imgs[count] = new BufferedImage(chunkWidth, chunkHeight, image.getType());
+							int tileWidth = chunkWidth + (y < cols-1 ? 0 : widthDefect);
+							int tileHeight = chunkHeight + (x < rows-1 ? 0 : heightDefect);
+							imgs[count] = new BufferedImage(tileWidth, tileHeight, image.getType());
+							// END KGU#223 2016-07-28
+							
 							// draws the image chunk
 							Graphics2D gr = imgs[count++].createGraphics();
-							gr.drawImage(image, 0, 0, chunkWidth, chunkHeight, chunkWidth * y, chunkHeight * x, chunkWidth * y + chunkWidth, chunkHeight * x + chunkHeight, null);
+							// START KGU#223 2016-07-28: Bugfix #209
+							//gr.drawImage(image, 0, 0, chunkWidth, chunkHeight, chunkWidth * y, chunkHeight * x, chunkWidth * y + chunkWidth, chunkHeight * x + chunkHeight, null);
+							// We need to achieve transparent background
+							gr.drawImage(image, 0, 0, tileWidth, tileHeight, chunkWidth * y, chunkHeight * x, chunkWidth * y + tileWidth, chunkHeight * x + tileHeight, null);
+							// END KGU#223 2016-07-28
 							gr.dispose();
 						}
 					}
 
 					// 5. Save mini images into image files
+					// START KGU#224 2016-07-28: Issue #209 - provide the original base name
+					file = new File(filename);
+					filename = file.getAbsolutePath();
+					// END KGU#224 2016-07-28
 					for (int i = 0; i < imgs.length; i++)
 					{
-						File f = new File(file.getAbsolutePath().replace(".png", "-"+i+".png"));
+						// START KGU#224 2016-07-28: Issue #209 - Better file name coding
+						//File f = new File(file.getAbsolutePath().replace(".png", "-"+i+".png"));
+						File f = new File(filename.replace(".png", String.format("-%1$02d-%2$02d.png", i / cols, i % cols)));
+						// END KGU#224 2016-07-28
 						ImageIO.write(imgs[i], "png", f);
 					}     
 				}
@@ -2436,7 +2553,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if(file.exists())
 			{
 				int response = JOptionPane.showConfirmDialog (null,
-						"Overwrite existing file?","Confirm Overwrite",
+						Menu.msgOverwriteFile.getText(),
+						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
 						JOptionPane.QUESTION_MESSAGE);
 				if (response == JOptionPane.NO_OPTION)
@@ -2447,7 +2565,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if(writeDown==true)
 			{
 				BufferedImage bi = new BufferedImage(root.width+1,root.height+1,BufferedImage.TYPE_4BYTE_ABGR);
-				printAll(bi.getGraphics());
+				// START KGU#221 2016-07-28: Issue #208 Need to achieve transparent background
+				//printAll(bi.getGraphics());
+				redraw(bi.createGraphics());
+				// END KGU#221 2016-07-28
 				try
 				{
 					ImageIO.write(bi, "png", file);
@@ -2527,7 +2648,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if(file.exists())
 			{
 				int response = JOptionPane.showConfirmDialog (null,
-						"Overwrite existing file?","Confirm Overwrite",
+						Menu.msgOverwriteFile.getText(),
+						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
 						JOptionPane.QUESTION_MESSAGE);
 				if (response == JOptionPane.NO_OPTION)
@@ -2624,7 +2746,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if(file.exists())
 			{
 				int response = JOptionPane.showConfirmDialog (null,
-						"Overwrite existing file?","Confirm Overwrite",
+						Menu.msgOverwriteFile.getText(),
+						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
 						JOptionPane.QUESTION_MESSAGE);
 				if (response == JOptionPane.NO_OPTION)
@@ -2742,7 +2865,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if(file.exists())
 			{
 				int response = JOptionPane.showConfirmDialog (null,
-						"Overwrite existing file?","Confirm Overwrite",
+						Menu.msgOverwriteFile.getText(),
+						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
 						JOptionPane.QUESTION_MESSAGE);
 				if (response == JOptionPane.NO_OPTION)
@@ -2839,7 +2963,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if(file.exists())
 			{
 				int response = JOptionPane.showConfirmDialog (null,
-						"Overwrite existing file?","Confirm Overwrite",
+						Menu.msgOverwriteFile.getText(),
+						Menu.btnConfirmOverwrite.getText(),
 						JOptionPane.YES_NO_OPTION,
 						JOptionPane.QUESTION_MESSAGE);
 				if (response == JOptionPane.NO_OPTION)
@@ -3300,7 +3425,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         {
             Ini ini = Ini.getInstance();
             ini.load();
-            ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame());
+            // START KGU#212 2016-07-26: bugfix #204 eod sizing needs the language
+            //ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame());
+            ExportOptionDialoge eod = new ExportOptionDialoge(
+            		NSDControl.getFrame(), NSDControl.getLang());
+            // END KGU#212 2016-07-26
             if(ini.getProperty("genExportComments","0").equals("true"))
                 eod.commentsCheckBox.setSelected(true);
             else 
@@ -3321,9 +3450,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#168 2016-04-04: Issue #149 Charsets for export
             eod.charsetListChanged(ini.getProperty("genExportCharset", Charset.defaultCharset().name()));
             // END KGU#168 2016-04-04
-            // START KGU 2014-11-18
-            eod.setLang(NSDControl.getLang());
-            // END KGU 2014-11-18
             eod.setVisible(true);
             
             if(eod.goOn==true)
@@ -3469,6 +3595,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void setFunction()
 	{
+		// START KGU#221 2016-07-28: Bugfix #208
+		if (!root.isNice && root.isProgram)
+		{
+			root.resetDrawingInfoUp();
+		}
+		// END KGU#221 2016-07-28
 		root.isProgram=false;
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
@@ -3479,6 +3611,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void setProgram()
 	{
+		// START KGU#221 2016-07-28: Bugfix #208
+		if (!root.isNice && !root.isProgram)
+		{
+			root.resetDrawingInfoUp();
+		}
+		// END KGU#221 2016-07-28
 		root.isProgram=true;
 		// START KGU#137 2016-01-11: Record this change in addition to the undoable ones
 		//root.hasChanged=true;
@@ -3500,12 +3638,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
+    // START KGU#227 2016-07-31: Enh. #128
+    void setCommentsPlusText(boolean _activate)
+    {
+    	Element.E_COMMENTSPLUSTEXT = _activate;
+    	this.resetDrawingInfo(true);
+    	analyse();
+    	repaint();
+    }
+    // END KGU#227 2016-07-31
+
 	public void setToggleTC(boolean _tc)
 	{
 		Element.E_TOGGLETC=_tc;
-    	// START KGU#136 2016-03-01: Bugfix #97
-    	this.resetDrawingInfo(true);
-    	// END KGU#136 2016-03-01
+		// START KGU#136 2016-03-01: Bugfix #97
+		this.resetDrawingInfo(true);
+		// END KGU#136 2016-03-01
 		NSDControl.doButtons();
 		redraw();
 	}
@@ -3519,9 +3667,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		Element.E_VARHIGHLIGHT=_highlight;	// this isn't used for drawing, actually
 		root.hightlightVars=_highlight;
-    	// START KGU#136 2016-03-01: Bugfix #97
-    	this.resetDrawingInfo(false);	// Only current root is involved
-    	// END KGU#136 2016-03-01
+		// START KGU#136 2016-03-01: Bugfix #97
+		this.resetDrawingInfo(false);	// Only current root is involved
+		// END KGU#136 2016-03-01
 		NSDControl.doButtons();
 		redraw();
 	}
@@ -3859,9 +4007,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     	// START KGU#136 2016-03-01: Bugfix #97
     	this.resetDrawingInfo(true);
     	// END KGU#136 2016-03-01
+    	// START KGU#220 2016-07-27: Enh. #207
+    	analyse();
+    	// END KGU#220 2016-07-27
     	repaint();
     }
-
+    
 	// Inner class is used to hold an image while on the clipboard.
 	public static class EMFSelection implements Transferable, ClipboardOwner
 		{
@@ -4184,8 +4335,35 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     				newSel = root.getElementByCoord(x, newSel.getRectOffDrawPoint().bottom + 2, true);
     			}
     			// END KGU#177 2016-04-24
+    			// START KGU#214 2016-07-25: Improvement of enh. #158
+    			else if (_direction == Editor.CursorMoveDirection.CMD_UP &&
+    					(newSel instanceof Forever || !Element.E_DIN && newSel instanceof For) &&
+    					newSel.getRectOffDrawPoint().bottom < selRect.bottom)
+    			{
+    				Subqueue body = ((ILoop)newSel).getBody();
+    				Element sel = root.getElementByCoord(x, body.getRectOffDrawPoint().bottom - 2, true);
+    				if (sel != null)
+    				{
+    					newSel = sel;
+    				}
+    			}
+    			// END KGU#214 2016-07-25
+    			// START KGU#214 2016-07-31: Issue #158
+    			else if (newSel instanceof Root && (_direction == Editor.CursorMoveDirection.CMD_LEFT
+    					|| _direction == Editor.CursorMoveDirection.CMD_RIGHT))
+    			{
+    				newSel = selected;	// Stop before the border on boxed diagrams
+    			}
+    			// END KGU#214 2015-07-31
     			selected = newSel;
     		}
+    		// START KGU#214 2016-07-25: Bugfix for enh. #158 - un-boxed Roots didn't catch the selection
+    		// This was better than to rush around on horizontal wheel activity! Hence fix withdrawn
+//    		else if (_direction != Editor.CursorMoveDirection.CMD_UP && !root.isNice)
+//    		{
+//    			selected = root;
+//    		}
+    		// END KGU#214 2016-07-25
     		selected.setSelected(true);
 			
     		// START KGU#177 2016-04-14: Enh. #158 - scroll to the selected element

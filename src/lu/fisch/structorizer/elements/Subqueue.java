@@ -448,7 +448,10 @@ public class Subqueue extends Element implements IElementSequence {
 			((Subqueue) ele).addElement(((Element) children.get(i)).copy());
 		}
 		// START KGU#117 2016-03-07: Enh. #77
-		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+		// START KGU#156/KGU#225 2016-07-28: Bugfix #210
+		//ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+		this.copyRuntimeData(ele, false);
+		// END KGU#156/KGU#225 2016-07-28
 		// END KGU#117 2016-03-07
 		// START KGU#183 2016-04-24: Issue #169
 		ele.selected = this.selected;

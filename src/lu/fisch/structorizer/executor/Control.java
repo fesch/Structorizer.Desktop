@@ -43,6 +43,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.04.12      Enh. #137: additional toggle to direct input and output to a text window
  *      Kay Gürtzig     2016.05.05      KGU#197: Further (forgotten) LangTextHolders added
  *      Kay Gürtzig     2016.07.25      Issue #201: Redesign of the GUI, new Slider listening, Call Stack button
+ *      Kay Gürtzig     2016.07.27      KGU#197: More LangTextHolders for Executor error messages
  *
  ******************************************************************************************************
  *
@@ -807,6 +808,26 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     public LangTextHolder lbInput;
     public LangTextHolder lbAcknowledge;
     // START KGU#197 2016-05-05
+    // START KGU#197 2016-07-27
+    public LangTextHolder msgNoSubroutine = 
+    		new LangTextHolder("A subroutine diagram %0 (%1 parameters) could not be found!%2Consider starting the Arranger and place needed subroutine diagrams there first.");
+    public LangTextHolder msgInvalidExpr =
+    		new LangTextHolder("<%1> is not a correct or existing expression.");
+    public LangTextHolder msgIllFunction =
+    		new LangTextHolder("<%1> is not a correct function!");
+    public LangTextHolder msgManualBreak =
+    		new LangTextHolder("Manual Break!");
+    public LangTextHolder msgIllegalLeave =
+    		new LangTextHolder("Illegal leave argument: %1");
+    public LangTextHolder msgWrongExit =
+    		new LangTextHolder("Wrong exit value: %1");
+    public LangTextHolder msgExitCode =
+    		new LangTextHolder("Program exited with code %1!");
+    public LangTextHolder msgIllegalJump =
+    		new LangTextHolder("Illegal content of a Jump (i.e. exit) instruction: <%1>!");
+    public LangTextHolder msgTooManyLevels =
+    		new LangTextHolder("Too many levels to leave (actual depth: %1 / specified: %2)!");
+    // END KGU# 2016-07-27
     
     // START KGU#68 2015-11-06: Register variable value editing events
     private Object[] varUpdates = null;

@@ -1,4 +1,4 @@
-I/*
+/*
     Structorizer English language file
 
     Copyright (C) 2009  Bob Fisch
@@ -40,32 +40,43 @@ I/*
  *      Comment:	
  *
  ******************************************************************************************************/
->>>
+
 -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=Arquivo
-Menu.menuFile.mnemonic=
+Menu.menuFile.mnemonic=f
+
 // Submenus of "File"
 Menu.menuFileNew.text=Novo
 Menu.menuFileOpen.text=Abrir ...
-Menu.menuFileOpenRecent.text=
+Menu.menuFileOpenRecent.text=Abrir arquivo recente
 Menu.menuFileSave.text=Salvar
 Menu.menuFileSaveAs.text=Salvar como ...
 Menu.menuFileExport.text=Exportar
+
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Figura ...
 Menu.menuFileExportCode.text=Código ...
-Menu.lbFileExportCodeFavorite.text=
-Menu.menuFileExportCodeFavorite.tooltip=
+Menu.menuFileExportPicturePNG.text= 
+Menu.menuFileExportPicturePNGmulti.text= 
+Menu.menuFileExportPictureEMF.text= 
+Menu.menuFileExportPictureSWF.text= 
+Menu.menuFileExportPicturePDF.text= 
+Menu.menuFileExportPictureSVG.text= 
+Menu.lbFileExportCodeFavorite.text=Exportar como código % 
+Menu.menuFileExportCodeFavorite.tooltip=É possível escolher a linguagem nas preferências para exportação. 
 Menu.menuFileImport.text=Importar
+
 // Submenu of "File -> Import"
 Menu.menuFileImportPascal.text=Pascal ...
 Menu.menuFilePrint.text=Imprimir ...
 Menu.menuFileArrange.text=Organizar
 Menu.menuFileQuit.text=Sair
+
 // Menu "Edit"
 Menu.menuEdit.text=Editar
-Menu.menuEdit.mnemonic=
+Menu.menuEdit.mnemonic=e
+
 // Submenu of "Edit"
 Menu.menuEditUndo.text=Desfazer
 Menu.menuEditRedo.text=Refazer
@@ -74,13 +85,17 @@ Menu.menuEditCopy.text=Copiar
 Menu.menuEditPaste.text=Colar
 Menu.menuEditCopyDiagramPNG.text=Copiar imagem PNG
 Menu.menuEditCopyDiagramEMF.text=Copiar imagem EMF
+
 // Menu "Diagram"
 Menu.menuDiagram.text=Diagrama
-Menu.menuDiagram.mnemonic=
+Menu.menuDiagram.mnemonic=d
+
 // Submenus of "Diagram"
 Menu.menuDiagramAdd.text=Inserir
+
 // Submenu "Diagram -> Add -> Before"
 Menu.menuDiagramAddBefore.text=Antes
+
 // Submenus for adding Elements "Before"
 Menu.menuDiagramAddBeforeInst.text=Instrução
 Menu.menuDiagramAddBeforeAlt.text=alternativa (IF)
@@ -92,8 +107,10 @@ Menu.menuDiagramAddBeforeForever.text=repetição (ENDLESS)
 Menu.menuDiagramAddBeforeCall.text=CALL
 Menu.menuDiagramAddBeforeJump.text=JUMP
 Menu.menuDiagramAddBeforePara.text=Paralelo
+
 // Submenu "Diagram -> Add -> After"
 Menu.menuDiagramAddAfter.text=Depois
+
 // Submenus for adding Elements "After"
 Menu.menuDiagramAddAfterInst.text=Instrução
 Menu.menuDiagramAddAfterAlt.text=alternativa (IF)
@@ -109,11 +126,13 @@ Menu.menuDiagramEdit.text=Editar
 Menu.menuDiagramDelete.text=Apagar
 Menu.menuDiagramMoveUp.text=Para cima
 Menu.menuDiagramMoveDown.text=Para baixo
-Menu.menuDiagramTransmute.text=
+Menu.menuDiagramTransmute.text=Mudar
 Menu.menuDiagramCollapse.text=Colapsar
 Menu.menuDiagramExpand.text=Expandir
+
 // Breakpoint
 Menu.menuDiagramBreakpoint.text=Alternar breakpoint
+
 // Diagram Appearance
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Principal
@@ -125,10 +144,12 @@ Menu.menuDiagramMarker.text=Destacar variáveis?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Analisar diagrama?
 Menu.menuDiagramWheel.text=Rolagem do mouse para colapsar?
-// Menu "Preferences"
+
+// Menu "Help"
 Menu.menuPreferences.text=Preferências
 Menu.menuPreferences.mnemonic=p
-// Submenu of "Preferences"
+
+// Submenu of "Help"
 Menu.menuPreferencesFont.text=Fonte ...
 Menu.menuPreferencesColors.text=Cores ...
 Menu.menuPreferencesOptions.text=Estruturas ...
@@ -143,7 +164,7 @@ Menu.menuPreferencesLanguageDutch.text=Holandês
 Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburguês
 Menu.menuPreferencesLanguageSpanish.text=Espanhol
 Menu.menuPreferencesLanguageItalian.text=Italiano
-Menu.menuPreferencesLanguagePortugalBrazil.text=Português (BR)
+Menu.menuPreferencesLanguagePortugalBrazil.text=Português (BR) 
 Menu.menuPreferencesLanguageSimplifiedChinese.text=Chinês  (simplificado)
 Menu.menuPreferencesLanguageTraditionalChinese.text=Chinês (tradicional)
 Menu.menuPreferencesLanguageCzech.text=Checo
@@ -157,13 +178,17 @@ Menu.menuPreferencesSaveAll.text=Salvar
 Menu.menuPreferencesSaveDump.text=Salvar no arquivo ...
 Menu.menuPreferencesSaveLoad.text=Carregar do arquivo ...
 
+// Menu "View" (not in use right now!) 
+Menu.menuView.text= 
 
 // Menu "Help"
 Menu.menuHelp.text=Ajuda
-Menu.menuHelp.mnemonic=
+Menu.menuHelp.mnemonic=h
+
 // Submenu of "Help"
 Menu.menuHelpAbout.text=Sobre ...
 Menu.menuHelpUpdate.text=Atualizar ...
+
 // Error messages for analyser
 Menu.error01_1.text=AVISO: Variável de controle não detectada ...
 Menu.error01_2.text=AVISO: Mais de uma variável de controle detectada ...
@@ -192,13 +217,13 @@ Menu.error14_1.text=Os parâmetros da repetição (FOR) não são consistentes c
 Menu.error14_2.text=A valor da variação na repetição («%») não é constante inteira válida!
 Menu.error14_3.text=A variável «%» pode coincidir com outra já configurada como palavra-chave no cabeçalho da repetição (FOR)!
 Menu.error15.text=A chamada (CALL) não tem o formato «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!
-Menu.error16_1.text=Um desvio (JUMP) pode estar vazio ou iniciar-se por %, possivelmente seguido por um argumento!
+Menu.error16_1.text=Um desvio (JUMP) pode estar vazio ou iniciar-se por %, possivelmente seguido por um argumento!	
 Menu.error16_2.text=A instrução para retorno, fora da última posição, deve ter o formato de um desvio (JUMP)!
 Menu.error16_3.text=Uma instrução de escape (exit, leave, break) somente é permitida como desvio (JUMP)!
 Menu.error16_4.text=Não é possível interromper ou abandonar mais de nível aninhado em (%)!
 Menu.error16_5.text=Não se deve retornar diretamente de uma thread paralela!
 Menu.error16_6.text=Argumento impróprio para esse tipo de desvio (JUMP) (deve ser constante inteira)!
-Menu.error16_7.text=
+Menu.error16_7.text=Instrução fora de alcance após desvio (JUMP)!
 Menu.error17.text=Risco de inconsistência devido a acesso concorrente à variável «%» por várias threads paralelas!
 
 -----[ AnalyserPreferences ]-----
@@ -222,14 +247,15 @@ AnalyserPreferences.check16.text=Verificar se há uso incorreto de desvio (JUMP)
 AnalyserPreferences.check17.text=Verificar se há riscos de inconsistência em seções paralelas (PARALLEL).
 AnalyserPreferences.okButton.text=OK
 
-
-
 -----[ Diagram ]-----
+
 // Buttons
+
 // I/O
 Editor.btnNew.tooltip=Criar um diagrama em branco.
 Editor.btnOpen.tooltip=Abrir um diagrama existente.
 Editor.btnSave.tooltip=Salvar o diagrama atual.
+
 // InsertBefore
 Editor.btnBeforeInst.tooltip=Inserir uma nova instrução antes do elemento selecionado.
 Editor.btnBeforeAlt.tooltip=Inserir uma nova alternativa (IF) antes do elemento selecionado.
@@ -241,6 +267,7 @@ Editor.btnBeforeCall.tooltip=Inserir uma nova chamada (CALL) antes do elemento s
 Editor.btnBeforeJump.tooltip=Inserir um novo desvio (JUMP) antes do elemento selecionado.
 Editor.btnBeforeCase.tooltip=Inserir uma nova alternativa (CASE) antes do elemento selecionado.
 Editor.btnBeforePara.tooltip=Inserir um novo comando paralelo (PARALLEL) antes do elemento selecionado.
+
 // InsertAfter
 Editor.btnAfterInst.tooltip=Inserir uma nova instrução após o elemento selecionado.
 Editor.btnAfterAlt.tooltip=Inserir uma nova alternativa (IF) após o elemento selecionado.
@@ -252,31 +279,39 @@ Editor.btnAfterCall.tooltip=Inserir uma nova chamada (CALL) após o elemento sel
 Editor.btnAfterJump.tooltip=Inserir um novo desvio (JUMP) após o elemento selecionado.
 Editor.btnAfterCase.tooltip=Inserir uma nova alternativa (CASE) após o elemento selecionado.
 Editor.btnAfterPara.tooltip=Inserir um novo comando paralelo (PARALLEL) após o elemento selecionado.
+
 // undo & redo
 Editor.btnUndo.tooltip=Desfazer a última ação.
 Editor.btnRedo.tooltip=Refazer a última ação.
+
 // copy & paste
 Editor.btnCut.tooltip=Recortar o elemento selecionado.
 Editor.btnCopy.tooltip=Copiar o elemento selecionado.
 Editor.btnPaste.tooltip=Colar ou recortar após o elemento selecionado.
-// style 
+
+// style
 Editor.btnNice.tooltip=Mudar o estilo visual do diagrama.
 Editor.btnFunction.tooltip=Sub diagrama (cantos arredondados).
 Editor.btnProgram.tooltip=Diagrama principal (cantos quadrados).
+
 // editing
 Editor.btnEdit.tooltip=Editar o elemento selecionado.
 Editor.btnDelete.tooltip=Apagar o elemento selecionado.
 Editor.btnMoveUp.tooltip=Mover o elemento selecionado uma posição para cima.
 Editor.btnMoveDown.tooltip=Mover o elemento selecionado uma posição para baixo.
-Editor.btnTransmute.tooltip=
+Editor.btnTransmute.tooltip=Mudar instruções para chamadas (Calls) ou desvios (Jumps), para mesclar ou separar sequências
+
 //printing
 Editor.btnPrint.tooltip=Imprimir o diagrama.
-Editor.btnArrange.tooltip=
+Editor.btnArrange.tooltip=Acrescentar diagrama ao painel do Organizador
+
 // font
 Editor.btnFontUp.tooltip=Aumentar o tamanho da fonte.
 Editor.btnFontDown.tooltip=Diminuir o tamanho da fonte.
-// copyright 
+
+// copyright
 Editor.btnAbout.tooltip=Mostrar informações sobre Structorizer.
+
 // colors
 Editor.btnColor0.tooltip=Colorir o elemento selecionado com esta cor.
 Editor.btnColor1.tooltip=Colorir o elemento selecionado com esta cor.
@@ -288,20 +323,25 @@ Editor.btnColor6.tooltip=Colorir o elemento selecionado com esta cor.
 Editor.btnColor7.tooltip=Colorir o elemento selecionado com esta cor.
 Editor.btnColor8.tooltip=Colorir o elemento selecionado com esta cor.
 Editor.btnColor9.tooltip=Colorir o elemento selecionado com esta cor.
+
 // collapsing
 Editor.btnCollapse.tooltip=Colapsar o elemento selecionado.
 Editor.btnExpand.tooltip=Expandir o elemento selecionado.
+
 // turtleizer & executor
 Editor.btnTurtle.tooltip=Abrir Turtleizer ...
 Editor.btnMake.tooltip=Abrir Executor ...
 Editor.btnDropBrk.tooltip=Remover todos os breakpoints.
+
 // Popup menu
 Editor.popupCut.text=Recortar
 Editor.popupCopy.text=Copiar
 Editor.popupPaste.text=Colar
 Editor.popupAdd.text=Inserir
+
 // Submenu of "Add"
 Editor.popupAddBefore.text=Antes
+
 // Submenus of "Add -> Before"
 Editor.popupAddBeforeInst.text=Instrução
 Editor.popupAddBeforeAlt.text=alternativa (IF)
@@ -313,8 +353,10 @@ Editor.popupAddBeforeForever.text=repetição (ENDLESS)
 Editor.popupAddBeforeCall.text=CALL
 Editor.popupAddBeforeJump.text=JUMP
 Editor.popupAddBeforePara.text=Paralelo
+
 // After
 Editor.popupAddAfter.text=Depois
+
 // Submenus of "Add -> After"
 Editor.popupAddAfterInst.text=Instrução
 Editor.popupAddAfterAlt.text=alternativa (IF)
@@ -326,20 +368,23 @@ Editor.popupAddAfterForever.text=repetição (ENDLESS)
 Editor.popupAddAfterCall.text=CALL
 Editor.popupAddAfterJump.text=JUMP
 Editor.popupAddAfterPara.text=Paralelo
-// Edit	
+
+// Edit
 Editor.popupEdit.text=Editar
 Editor.popupDelete.text=Apagar
 Editor.popupMoveUp.text=Para cima
 Editor.popupMoveDown.text=Para baixo
-Editor.popupTransmute.text=
+Editor.popupTransmute.text=Mudar
+
 // Collapsing
 Editor.popupCollapse.text=Colapsar
 Editor.popupExpand.text=Expandir
+
 // Breakpoint
 Editor.popupBreakpoint.text=Alternar breakpoint
 
-
 -----[ InputBox ]-----
+InputBox.title=
 InputBox.lblText.text=Favor inserir texto
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Comentário
@@ -347,14 +392,56 @@ InputBox.lblComment.tooltip=
 InputBox.txtText.tooltip=O conteúdo de um elemento.
 InputBox.txtComment.tooltip=O comentário de um elemento.
 InputBox.btnOK.text=OK
-InputBox.btnOK.tooltip=Confirmar sua escolha.
+InputBox.btnOK.tooltip=Confirmar escolha.
 InputBox.btnCancel.text=Cancelar
-InputBox.btnCancel.tooltip=Cancelar sua escolha.
+InputBox.btnCancel.tooltip=Cancelar escolha.
 InputBox.class_specific.Alternative.lblText=Favor inserir a condição
 InputBox.class_specific.While.lblText=Favor inserir a condição para entrar
 InputBox.class_specific.Repeat.lblText=Favor inserir a condição para sair
 InputBox.class_specific.Case.lblText=Favor inserir a expressão para escolha e as constantes  para cada caso (uma por linha)
 InputBox.class_specific.Parallel.lblText=Número de threads paralelas
+InputBox.chkBreakpoint.text= 
+InputBox.class_specific.Root= 
+InputBox.class_specific.Function= 
+InputBox.class_specific.Instruction.insert= 
+InputBox.class_specific.Alternative.insert= 
+InputBox.class_specific.Case.insert= 
+InputBox.class_specific.For.insert= 
+InputBox.class_specific.Forever.insert= 
+InputBox.class_specific.Repeat.insert= 
+InputBox.class_specific.While.insert= 
+InputBox.class_specific.Call.insert= 
+InputBox.class_specific.Jump.insert= 
+InputBox.class_specific.Parallel.insert= 
+InputBox.class_specific.Instruction.update= 
+InputBox.class_specific.Alternative.update= 
+InputBox.class_specific.Case.update= 
+InputBox.class_specific.For.update= 
+InputBox.class_specific.Forever.update= 
+InputBox.class_specific.Repeat.update= 
+InputBox.class_specific.While.update= 
+InputBox.class_specific.Call.update= 
+InputBox.class_specific.Jump.update= 
+InputBox.class_specific.Parallel.update= 
+
+-----[ InputBox For ]----- 
+InputBoxFor.class_specific.For.insert= 
+InputBoxFor.class_specific.For.update= 
+InputBoxFor.lblVariable.text= 
+InputBoxFor.lblStartVal.text= 
+InputBoxFor.lblEndVal.text= 
+InputBoxFor.lblIncr.text= 
+InputBoxFor.chkTextInput.text= 
+InputBoxFor.chkTextInput.tooltip= 
+InputBoxFor.lblComment.text= 
+InputBoxFor.lblComment.tooltip= 
+InputBoxFor.txtText.tooltip= 
+InputBoxFor.txtComment.tooltip= 
+InputBoxFor.btnOK.text= 
+InputBoxFor.btnOK.tooltip= 
+InputBoxFor.btnCancel.text= 
+InputBoxFor.btnCancel.tooltip= 
+InputBoxFor.chkBreakpoint.text= 
 
 -----[ Preferences ]-----
 Preferences.title=Preferências de estruturas
@@ -384,16 +471,14 @@ Preferences.pnlRepeat.tooltip=
 Preferences.lblRepeat.text=Conteúdo padrão
 Preferences.lblRepeat.tooltip=Conteúdo padrão de uma repetição (REPEAT).
 Preferences.btnOK.text=OK
-Preferences.btnOK.tooltip=Confirmar sua escolha.
-
+Preferences.btnOK.tooltip=Confirmar escolha.
 
 -----[ About ]-----
 About.title=About
 About.pnlTabbed.tab.0=Pessoas envolvidas
 About.pnlTabbed.tab.1=Registro de alterações
 About.btnOK.text=OK
-About.btnOK.tooltip=Confirmar sua escolha.
-
+About.btnOK.tooltip=Confirmar escolha.
 
 -----[ FontChooser ]-----
 FontChooser.title=Font
@@ -403,8 +488,7 @@ FontChooser.lblName.tooltip=O nome das fontes selecionáveis.
 FontChooser.lblSize.text=Tamanho
 FontChooser.lblSize.tooltip=Os tamanhos das fontes selecionáveis.
 FontChooser.btnOK.text=OK
-FontChooser.btnOK.tooltip=Confirmar sua escolha.
-
+FontChooser.btnOK.tooltip=Confirmar escolha.
 
 -----[ Colors ]-----
 Colors.title=Preferências de cor
@@ -418,16 +502,16 @@ Colors.lblColor6.text=Cor 6
 Colors.lblColor7.text=Cor 7
 Colors.lblColor8.text=Cor 8
 Colors.lblColor9.text=Cor 9
-Colors.lblColor0.tooltip=Sua escolha para a cor 0.
-Colors.lblColor1.tooltip=Sua escolha para a cor 1.
-Colors.lblColor2.tooltip=Sua escolha para a cor 2.
-Colors.lblColor3.tooltip=Sua escolha para a cor 3.
-Colors.lblColor4.tooltip=Sua escolha para a cor 4.
-Colors.lblColor5.tooltip=Sua escolha para a cor 5.
-Colors.lblColor6.tooltip=Sua escolha para a cor 6.
-Colors.lblColor7.tooltip=Sua escolha para a cor 7.
-Colors.lblColor8.tooltip=Sua escolha para a cor 8.
-Colors.lblColor9.tooltip=Sua escolha para a cor 9.
+Colors.lblColor0.tooltip=Escolha da cor 0.
+Colors.lblColor1.tooltip=Escolha da cor 1.
+Colors.lblColor2.tooltip=Escolha da cor 2.
+Colors.lblColor3.tooltip=Escolha da cor 3.
+Colors.lblColor4.tooltip=Escolha da cor 4.
+Colors.lblColor5.tooltip=Escolha da cor 5.
+Colors.lblColor6.tooltip=Escolha da cor 6.
+Colors.lblColor7.tooltip=Escolha da cor 7.
+Colors.lblColor8.tooltip=Escolha da cor 8.
+Colors.lblColor9.tooltip=Escolha da cor 9.
 Colors.color0.tooltip=Clicar para editar ...
 Colors.color1.tooltip=Clicar para editar ...
 Colors.color2.tooltip=Clicar para editar ...
@@ -439,52 +523,50 @@ Colors.color7.tooltip=Clicar para editar ...
 Colors.color8.tooltip=Clicar para editar ...
 Colors.color9.tooltip=Clicar para editar ...
 Colors.btnOK.text=OK
-Colors.btnOK.tooltip=Confirmar sua escolha.
-
+Colors.btnOK.tooltip=Confirmar escolha.
 
 -----[ ColorChooser ]-----
-ColorChooser.title=Colors
-ColorChooser.btnCancel.text=Cancel
-ColorChooser.btnCancel.tooltip=Cancel your choice.
+ColorChooser.title=Cores
+ColorChooser.btnCancel.text=Cancelar
+ColorChooser.btnCancel.tooltip=Cancelar escolha.
 ColorChooser.btnOK.text=OK
-ColorChooser.btnOK.tooltip=Validate your choice.
-
+ColorChooser.btnOK.tooltip=Confirmar escolha.
 
 -----[ ParserPreferences ]-----
-ParserPreferences.title=Preferências do parser
+ParserPreferences.title=Preferências do parser 
 ParserPreferences.lblPre.text=Pre
-ParserPreferences.lblPre.tooltip=
+ParserPreferences.lblPre.tooltip=Prefixo para a entrada principal
 ParserPreferences.lblPost.text=Pós
-ParserPreferences.lblPost.tooltip=
+ParserPreferences.lblPost.tooltip=Sufixo para a entrada principal
 ParserPreferences.lblAlt.text=alternativa (IF)
-ParserPreferences.lblAlt.tooltip=
+ParserPreferences.lblAlt.tooltip=Sequência associada à condição no cabeçalho (IF)
 ParserPreferences.lblCase.text=alternativa (CASE)
-ParserPreferences.lblCase.tooltip=
+ParserPreferences.lblCase.tooltip=Sequência associada à expressão no cabeçalho (CASE)
 ParserPreferences.lblFor.text=repetição (FOR)
-ParserPreferences.lblFor.tooltip=
-ParserPreferences.lblForStep.text=
-ParserPreferences.lblForIn.text=
-ParserPreferences.lblForIn.tooltip=
-ParserPreferences.edtForInPre.tooltip=
-ParserPreferences.edtForInPost.tooltip=
+ParserPreferences.lblFor.tooltip=Sequência para separar itens no cabeçalho (FOR)
+ParserPreferences.lblForStep.text=Separador para a variação 
+ParserPreferences.lblForIn.text=Repetição (FOR-IN) 
+ParserPreferences.lblForIn.tooltip=Sequência para separar itens no cabeçalho (FOR-IN) 
+ParserPreferences.edtForInPre.tooltip=Deve ser igual à da repetição (FOR) (ou vazia - para o mesmo efeito). 
+ParserPreferences.edtForInPost.tooltip=Deve ser diferente de todas as outras palavras já configuradas aqui! 
 ParserPreferences.lblWhile.text=repetição (WHILE)
-ParserPreferences.lblWhile.tooltip=
+ParserPreferences.lblWhile.tooltip=equência para separar itens no cabeçalho (WHILE)
 ParserPreferences.lblRepeat.text=repetição (REPEAT)
-ParserPreferences.lblRepeat.tooltip=
-ParserPreferences.lblJump.text=
-ParserPreferences.lblJump.tooltip=
-ParserPreferences.lblJumpLeave.text=
-ParserPreferences.lblJumpReturn.text=
-ParserPreferences.lblJumpExit.text=
+ParserPreferences.lblRepeat.tooltip=equência para separar itens no cabeçalho (REPEAT)
+ParserPreferences.lblJump.text=Instrução para desvio (JUMP) 
+ParserPreferences.lblJump.tooltip=Sequências para comandos de escape de bloco. 
+ParserPreferences.lblJumpLeave.text=da repetição/de repetições 
+ParserPreferences.lblJumpReturn.text=de subprograma 
+ParserPreferences.lblJumpExit.text=de programa 
 ParserPreferences.lblInput.text=Entrada
-ParserPreferences.lblInput.tooltip=
+ParserPreferences.lblInput.tooltip=Prefixo para instruções de entrada
 ParserPreferences.lblOutput.text=Saída
-ParserPreferences.lblOutput.tooltip=
-ParserPreferences.chkIgnoreCase.text=
+ParserPreferences.lblOutput.tooltip=Prefixo para instruções de saídas
+ParserPreferences.chkIgnoreCase.text=Ignorar tamanho das letras
 ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=Confirmar sua escolha.
 ParserPreferences.lblErrorSign.text=Não é permitido usar ':' em qualquer sentença do parser!
-ParserPreferences.lblErrorSign2.text=
+ParserPreferences.lblErrorSign2.text=A segunda sequência na repetição (FOR-IN) deve ser diferente de qualquer outra já usada!
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Imprimir Visualização
@@ -497,15 +579,18 @@ PrintPreview.btnOK.tooltip=Imprimir o diagrama.
 
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Opções para exportar ...
-ExportOptionDialoge.noConversionCheckBox.text=
-ExportOptionDialoge.noConversionCheckBox.tooltip=
+ExportOptionDialoge.noConversionCheckBox.text=Nenhuma conversão de conteúdo em expressão/instrução. 
+ExportOptionDialoge.noConversionCheckBox.tooltip=Selecionar essa opção se o texto já estiver na linguagem escolhida 
 ExportOptionDialoge.commentsCheckBox.text=Exportar instruções como comentários.
 ExportOptionDialoge.bracesCheckBox.text=Colocar início de bloco na mesma linha (C/C++/Java etc.).
 ExportOptionDialoge.lineNumbersCheckBox.text=Gerar números de linhas ao exportar para BASIC.
-ExportOptionDialoge.chkExportSubroutines.text=
-ExportOptionDialoge.lbPrefGenerator.text=
-ExportOptionDialoge.lbCharset.text=
-ExportOptionDialoge.chkCharsetAll.text=
 ExportOptionDialoge.jLabel1.text=Favor selecionar as opções desejadas para ativação ...
+ExportOptionDialoge.chkExportSubroutines.text=Envolver subprogramas chamados.
+ExportOptionDialoge.lbPrefGenerator.text=Exportar para código de preferência: 
+ExportOptionDialoge.lbCharset.text=Conjunto de caracteres: 
+ExportOptionDialoge.chkCharsetAll.text=Listar tudo? 
+ExportOptionDialoge.jLabel1.text=Favor selecionar as opções que desejar ativar ... 
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Salvar opções.
+ExportOptionDialoge.lbCharset.txt= 
+ExportOptionDialoge.chkCharsetAll.txt= 

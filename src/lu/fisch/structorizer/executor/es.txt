@@ -38,6 +38,7 @@
  *      Kay Gürtzig     2016.04.12      New message text for Control option
  *      Kay Gürtzig     2016.05.05      KGU#197: Further message texts for Executor dialog
  *      Kay Gürtzig     2016.07.25      Fix #201: caption for new Call Stack button
+ *      Kay Gürtzig     2016.07.27      KGU#197: Further message texts for Executor dialog
  *
  ******************************************************************************************************
  *
@@ -70,3 +71,12 @@ Control.lbReturnedResult.text=Resultado devuelto
 Control.lbOutput.text=Salida
 Control.lbInput.text=Entrada
 Control.lbAcknowledge.text=Confirma, por favor, para continuar.
+Control.msgNoSubroutine.text=¡No diagrama con subprograma "%1" (%2 parameters) encontrado!%0¿Ha olvidado a abrir el Arranger y colocar necesarias subrutinas allí?
+Control.msgInvalidExpr.text=<%1> no es una expresión correcta o existente.
+Control.msgIllFunction.text=¡<%1> no es una función correcta!
+Control.msgManualBreak.text=¡Abortado manualmente!
+Control.msgIllegalLeave.text=Argumento ilegal de la instruction SALIR: %1
+Control.msgWrongExit.text=Valor ilegal en abortar el programa: %1
+Control.msgExitCode.text=¡Programa abortado con código %1!
+Control.msgIllegalJump.text=¡Contenido ilegal del SALTO (instruction para salir): <%1>!
+Control.msgTooManyLevels.text=¡Demasiados niveles para salir (niveles reales: %1 / specificados: %2)!

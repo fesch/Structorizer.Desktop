@@ -46,6 +46,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.21      Bugfix #198: Inconsistency between methods prepareDraw() and draw()
+ *      Kay Gürtzig     2016.07.31      Enh. #128: New mode "comments plus text" supported, drawing code delegated
+ *                                      Bugfix #212 (inverted logic of option altPadRight = "enlarge FALSE")
  *
  ******************************************************************************************************
  *
@@ -75,6 +77,9 @@ public class Alternative extends Element {
 	// START KGU#136 2016-03-07: Bugfix #97
 	private Point pt0Parting = new Point();
 	// END KGU#136 2016-03-07
+	// START KGU#227 2016-07-31: Enh. #128
+	private Rect commentRect = new Rect();
+	// END KGU#227 2016-07-31
 
 	public Alternative()
 	{
@@ -138,24 +143,53 @@ public class Alternative extends Element {
 
 		rect0.right = 2 * E_PADDING;
 
+		// START KGU#227 2016-07-31: Enh. #128
+		commentRect = new Rect();
+		if (Element.E_COMMENTSPLUSTEXT)
+		{
+			// Get the space needed for the 1st comment line
+			commentRect = this.writeOutCommentLines(_canvas, 0, 0, false, false);
+		}
+		// END KHU#227 2016-07-31
 		// prepare the sub-queues
 		rFalse = qFalse.prepareDraw(_canvas);
 		rTrue = qTrue.prepareDraw(_canvas);
 
-		// the upper left point of the corner
+		// Compute the left traverse line (y coordinates reversed)
+		// the upper left corner
 		double cx = 0;
-		double cy = nLines*fm.getHeight() + 4*(E_PADDING/2);
+		// START KGU#227 2016-07-31: Enh. #128 - we need additional space for the comment
+		//double cy = nLines*fm.getHeight() + 4*(E_PADDING/2);
+		double cy = nLines*fm.getHeight() + 4*(E_PADDING/2) + commentRect.bottom;
+		// END KGU#227 2016-07-31
 		// the lowest point of the triangle
 		double ax =  rTrue.right - rTrue.left;
 		//System.out.println("AX : "+ax);
 		double ay =  0;
-		// coefficient of the left droite
+		// gradient coefficient of the left traverse line
 		double coeffleft = (cy-ay)/(cx-ax);
 
 
 		// init
 		//int choice = -1;
 		double lowest = 100000;	// dummy bound
+
+		// START KGU#227 2016-07-31: Enh. #128
+		int yOffset = 4*(E_PADDING/2) - (E_PADDING/3) + commentRect.bottom;
+		if (commentRect.bottom > 0)
+		{
+			// THis code is derived from the FOR loop body below. yOffset had to be reduced by the bias fm.getHeight().
+			// part on the left side
+			double by = yOffset - fm.getHeight() - commentRect.bottom;
+			double leftside = by/coeffleft + ax - ay/coeffleft;
+			double bx = commentRect.right + 2*(E_PADDING/2) + leftside;
+			double coeff = (by-ay)/(bx-ax);
+			if (coeff<lowest && coeff>0)
+			{
+				lowest = coeff;
+			}			
+		}
+		// END KGU#227 2016-07-31
 
 		for (int i = 0; i < nLines; i++)
 		{
@@ -168,7 +202,10 @@ public class Alternative extends Element {
 			 */
 
 			// bottom line of the text
-			double by = 4*(E_PADDING/2) - (E_PADDING/3) + (nLines-i-1) * fm.getHeight();
+			// START KGU#227 2016-07-31: Enh. #128
+			//double by = 4*(E_PADDING/2) - (E_PADDING/3) + (nLines-i-1) * fm.getHeight();
+			double by = yOffset + (nLines-i-1) * fm.getHeight();
+			// END KGU#227 2016-07-31
 			// part on the left side
 			double leftside = by/coeffleft + ax - ay/coeffleft;
 			// the bottom right point of this text line
@@ -194,7 +231,10 @@ public class Alternative extends Element {
 		if (lowest!=100000)
 		{
 			// the point height we need
-			double y = nLines * fm.getHeight() + 4*(E_PADDING/2);
+			// START KGU#227 2016-07-31: Enh. #128
+			//double y = nLines * fm.getHeight() + 4*(E_PADDING/2);
+			double y = nLines * fm.getHeight() + 4*(E_PADDING/2) + commentRect.bottom;
+			// END KGU#227 2016-07-31
 			double x = y/lowest + ax - ay/lowest;
 			rect0.right = (int) Math.round(x);
 			//System.out.println("C => "+lowest+" ---> "+rect.right);
@@ -206,7 +246,10 @@ public class Alternative extends Element {
 
 		// START KGU#207 2016-07-21: Bugfix #198 - Inconsistency with draw() mended 
 		//rect0.bottom = 4*(E_PADDING/2) + nLines*fm.getHeight();
-		rect0.bottom = 4*(E_PADDING/2) + nLines*fm.getHeight() - 1;
+		// START KGU#227 2016-07-31: Enh. #128
+		//rect0.bottom = 4*(E_PADDING/2) + nLines*fm.getHeight() - 1;
+		rect0.bottom = 4*(E_PADDING/2) + nLines*fm.getHeight() - 1 + commentRect.bottom;
+		// END KGU#227 2016-07-31
 		// END KGU#207 2016-07-21
 		pt0Parting.y = rect0.bottom;
 		
@@ -224,42 +267,25 @@ public class Alternative extends Element {
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
 		//System.out.println("ALT("+this.getText().getLongString()+") draw at ("+_top_left.left+", "+_top_left.top+")");
-                if(isCollapsed()) 
-                {
-                    Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
-                    return;
-                }
+		if(isCollapsed()) 
+		{
+			Instruction.draw(_canvas, _top_left, getCollapsedText(), this);
+			return;
+		}
                 
-		Rect myrect = new Rect();
+		Rect myrect = _top_left.copy();
 		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
 		//Color drawColor = getColor();
 		Color drawColor = getFillColor();
 		// END KGU 2015-10-13
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
-		//int a;
-		//int b;
-		//int c;
-		//int d;
-		//int x;
-		//int y;
-		//int wmax;
-		//int p;
-		//int w;
 
-		// START KGU 2015-10-13: Already done by new method getFillColor() now
-//		if (selected==true)
-//		{
-//                if(waited==true) { drawColor=Element.E_WAITCOLOR; }
-//                else { drawColor=Element.E_DRAWCOLOR; }
-//		}
-		// END KGU 2015-10-13
-	
 		Canvas canvas = _canvas;
 		canvas.setBackground(drawColor);
 		canvas.setColor(drawColor);
 		
 		int nLines = getText(false).count();
-		myrect = _top_left.copy();
+
 		myrect.bottom -= 1;
 		canvas.fillRect(myrect);
 
@@ -272,52 +298,61 @@ public class Alternative extends Element {
 		this.topLeft.y = _top_left.top - ref.y;
 		// END KGU#136 2016-03-01
 		
-		myrect.bottom = _top_left.top + nLines*fm.getHeight() + 4*(E_PADDING/2);
-		//y = myrect.top + E_PADDING;
-		//a = myrect.left + ((myrect.right-myrect.left) / 2);
-		//b = myrect.top;
-		//c = myrect.left + rTrue.right - 1;
-		//d = myrect.bottom - 1;
-		//x = Math.round(((y-b)*(c-a) + a*(d-b))/(d-b));
-/*
-		wmax=0;
-		for(int i=0;i<text.count();i++)
-		{
-			if (wmax<_canvas.stringWidth(text.get(i)))
-			{
-				wmax = _canvas.stringWidth(text.get(i));
-			}
-		}
-*/
+		// START KGU#227 2016-07-31: Enh. #128
+		//myrect.bottom = _top_left.top + nLines*fm.getHeight() + 4*(E_PADDING/2);
+		myrect.bottom = _top_left.top + pt0Parting.y;
+		// END KGU#227 2016-07-31
+
 		int remain = (_top_left.right - _top_left.left)
 				-(rTrue.right - rTrue.left)
 				-(rFalse.right - rFalse.left);
-		if (Element.altPadRight == false) remain=0;
+		// START KGU#228 2016-07-31: Bugfix #212 - Condition was logically inverted
+		//if (Element.altPadRight == false) remain=0;
+		if (Element.altPadRight) remain=0;
+		// END KGU#228 2016-07-31
 		// START KGU#136 2016-03-07: Bugfix #122 - we must correct the else start point
 		this.pt0Parting.x = this.rTrue.right - rTrue.left + remain; 
 		// END KGU#136 2016-03-07
 
-		// the upper left point of the corner
+		// the upper left corner point (with reversed y coordinates)
 		double cx = 0;
-		double cy = nLines*fm.getHeight() + 4*(E_PADDING/2);
+		// START KGU#227 2016-07-31: Enh. #128 - we rely on the cached value
+		//double cy = nLines*fm.getHeight() + 4*(E_PADDING/2);
+		double cy = pt0Parting.y + 1;
+		// END KGU#227 2016-07-31
 		// upper right corner
 		double dx = _top_left.right - _top_left.left;
 		double dy = cy;
 		// the the lowest point of the triangle
 		double ax = rTrue.right - rTrue.left + remain;
 		double ay = 0;
-		// coefficient of the left traverse line
+		// gradient coefficient of the left traverse line
 		double coeffleft = (cy-ay)/(cx-ax);
 		// coefficient of the right traverse line
 		double coeffright = (dy-ay)/(dx-ax);
 
+		// START KGU#227 2016-07-31: Enh. #128
+		int yOffset = 4*(E_PADDING/2) - (E_PADDING/3);
+		// draw comment if required
+		if (commentRect.bottom > 0)
+		{			
+			double by = yOffset - fm.getHeight();
+            double leftside = by/coeffleft + ax - ay/coeffleft;
+            double bx = by/coeffright + ax - ay/coeffright;
+            int boxWidth = (int) (bx-leftside);
+            writeOutCommentLines(_canvas, _top_left.left + (E_PADDING/2) + (int) leftside + (int) (boxWidth - commentRect.right)/2,
+            		_top_left.top + (E_PADDING / 3), true, false);            
+			yOffset -= commentRect.bottom;
+		}
+		// END KGU#227 2016-07-31
+		
 		// draw text
 		for (int i=0; i < nLines; i++)
 		{
 			String mytext = this.getText(false).get(i);
 
                         // bottom line of the text
-                        double by = 4*(E_PADDING/2) - (E_PADDING/3) + (nLines-i-1)*fm.getHeight();
+                        double by = yOffset + (nLines-i-1)*fm.getHeight();
                         // part on the left side
                         double leftside = by/coeffleft + ax - ay/coeffleft;
                         // the the bottom right point of this text line
@@ -337,7 +372,10 @@ public class Alternative extends Element {
                         canvas.setColor(Color.BLACK);
                         writeOutVariables(canvas,
                             _top_left.left + (E_PADDING/2) + (int) leftside + (int) (boxWidth - textWidth)/2,
-                            _top_left.top + (E_PADDING / 3) + (i+1)*fm.getHeight(),
+                            // START KGU#227 2016-07-31: Enh. #128
+                            //_top_left.top + (E_PADDING / 3) + (i+1)*fm.getHeight(),
+                            _top_left.top + (E_PADDING / 3) + commentRect.bottom + (i+1)*fm.getHeight(),
+                            // END KGU#227 2016-07-31
                             mytext,this
                         );
 
@@ -490,8 +528,11 @@ public class Alternative extends Element {
 		ele.breakpoint = this.breakpoint;
 		// END KGU#82 (bug #31) 2015-11-14
 		// START KGU#117 2016-03-07: Enh. #77
-		ele.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
-		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+		// START KGU#156/KGU#225 2016-07-28: Bugfix #210
+		//ele.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
+		//ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+		this.copyRuntimeData(ele, true);
+		// END KGU#156/KGU#225 2016-07-28
 		// END KGU#117 2016-03-07
 		// START KGU#183 2016-04-24: Issue #169
 		ele.selected = this.selected;
@@ -580,7 +621,7 @@ public class Alternative extends Element {
 	// START KGU#156 2016-03-13: Enh. #124
 	protected String getRuntimeInfoString()
 	{
-		String info = this.execCount + " / ";
+		String info = this.getExecCount() + " / ";
 		String stepInfo = null;
 		switch (E_RUNTIMEDATAPRESENTMODE)
 		{

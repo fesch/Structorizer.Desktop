@@ -61,14 +61,28 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.07      Enh. #188: Modification of getText(boolean) to cope with transmutation,
  *                                      Enh. #185: new abstract method convertToCalls() for code import
+ *      Kay Gürtzig     2016.07.25      Bugfix #205: Alternative comment bar colour if fill colour equals (KGU#215)
+ *      Kay Gürtzig     2016.07.28      Bugfix #210: Execution counting mechanism fundamentally revised
+ *      Kay Gürtzig     2016.07.29      Issue #211: Modification in writeOutVariables() for E_TOGGLETC mode.
+ *                                      Enh. #128: New mode E_COMMENTSPLUSTEXT
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      
+ *      2016-07-28: Bugfix #210 (KGU#225)
+ *      - Before this fix the execution count values were held locally in the Elements. Without recursion,
+ *        this wasn't a problem. But for recursive algorithms, particularly for spawning recursion as
+ *        in Fibonacci, QuickSort, or binary search trees, all attempts to combine the counts from the
+ *        various copies of an algorithm failed in the end. So now the counters are placed in a static
+ *        vector on base class Element, the actual element instances hold only indices into this table.
+ *        Hence, cloning of elements is no longer a problem, all copies of an element (recursion copies
+ *        the diagram!) look via the shared index into the same vector slot and increment it when executed,
+ *        at what call level ever. Still, the differences in run data copying between the element classes
+ *        must still be put under scrutinous analysis. Not all differences seem plausible.
  *      2016-03-06 / 2016-03-12 Enhancements #77, #124 (KGU#117/KGU#156)
  *      - According to an ER by [elemhsb], first a mechanism optionally to visualise code coverage (for
- *        white-box test comleteness) was implemented. A green background colour was proposed and used
+ *        white-box test completeness) was implemented. A green background colour was proposed and used
  *        to highlight covered Element. It soon became clear that with respect to subroutines a dis-
  *        tinction among loose (shallow) and strict (deep) coverage was necessary, particularly when
  *        recursion comes in. So the coverage tracking could be switched between shallow mode (where
@@ -145,12 +159,13 @@ import com.stevesoft.pat.*;  //http://www.javaregex.com/
 
 import java.awt.Point;
 import java.util.Stack;
+import java.util.Vector;
 
 import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.24-14";
+	public static String E_VERSION = "3.25";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -254,10 +269,16 @@ public abstract class Element {
 	protected static int maxExecStepCount = 0;		// Maximum number of instructions carried out directly per element
 	protected static int maxExecTotalCount = 0;		// Maximum combined number of directly and indirectly performed instructions
 	// END KGU156 2016-03-10
+	// START KGU#225 2016-07-28: Bugfix #210
+	protected static Vector<Integer> execCounts = new Vector<Integer>();
+	// END KGU#225 2016-07-28
 
 	public static boolean E_VARHIGHLIGHT = false;	// Highlight variables, operators, string literals, and certain keywords? 
 	public static boolean E_SHOWCOMMENTS = true;	// Enable comment bars and comment popups? 
 	public static boolean E_TOGGLETC = false;		// Swap text and comment on displaying?
+	// START KGU#227 2016-07-29: Enh. #128
+	public static boolean E_COMMENTSPLUSTEXT = false;	// Draw elements with both text and comments?
+	// END KGU#227 2016-07-29
 	public static boolean E_DIN = false;			// Show FOR loops according to DIN 66261?
 	public static boolean E_ANALYSER = true;		// Analyser enabled?
 	// START KGU#123 2016-01-04: New toggle for Enh. #87
@@ -308,10 +329,13 @@ public abstract class Element {
 	public boolean deeplyCovered = false;	// Flag indicates full test coverage
 	// END KGU#117 2016-03-06
 	// START KGU#156 2016-03-10; Enh. #124
-	protected int execCount = 0;		// Number of times this was executed while runEventTracking has been on
+	//protected int execCount = 0;		// Number of times this was executed while runEventTracking has been on
 	protected int execStepCount = 0;	// Number of instructions carried out directly by this element
 	protected int execSubCount;			// Number of instructions carried out by substructures of this element
 	// END KGU#156 2016-03-11
+	// START KGU#225 2016-07-28: Bugfix #210
+	protected int execCountIndex = -1;
+	// END KGU#225 2016-07-28
 
 	// END KGU156 2016-03-10
 	
@@ -382,6 +406,7 @@ public abstract class Element {
 	 * @return the origin-based extension record.
 	 */
 	public abstract Rect prepareDraw(Canvas _canvas);
+
 	/**
 	 * Actually draws this element within the given canvas, using _top_left
 	 * for the placement of the upper left corner. Uses attribute rect0 as
@@ -395,11 +420,28 @@ public abstract class Element {
 	public abstract Element copy();
 	
 	// START KGU#156 2016-03-11: Enh. #124
-	protected void copyRuntimeData(Element _target)
+	/**
+	 * Copies the runtime data tha is to be cloned - Usually this comprises the deep
+	 * coverage status and the execution counter index. Only for certain kinds of elements
+	 * the shallow coverage status is to be copied as well - therefore the argument.
+	 * @param _target - target element of the copy operation
+	 * @param _simply_too - whether the shallow coverage status is to be copied, too
+	 */
+	protected void copyRuntimeData(Element _target, boolean _simply_too)
 	{
-		_target.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
-		_target.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
-		_target.execCount = this.execCount;
+		if (Element.E_COLLECTRUNTIMEDATA)
+		{
+			if (_simply_too)	// This distinction is important
+			{
+				_target.simplyCovered = this.simplyCovered;
+			}
+			_target.deeplyCovered = this.deeplyCovered;
+			// START KGU#225 2016-07-28: Bugfix #210
+			//_target.execCount = this.execCount;
+			this.makeExecutionCount();
+			_target.execCountIndex = this.execCountIndex;
+			// END KGU#225 2016-07-28
+		}
 	}
 	// END KGU#156 2016-03-11
 	
@@ -437,7 +479,9 @@ public abstract class Element {
 		{
 			this.simplyCovered = this.simplyCovered || _cloneOfMine.simplyCovered;
 			this.deeplyCovered = this.deeplyCovered || _cloneOfMine.deeplyCovered;
-			this.execCount += _cloneOfMine.execCount;
+			// START KGU#225 2016-07-28: Bugfix #210 - no longer needed, seemed wrong
+			//this.execCount += _cloneOfMine.execCount;
+			// END KGU#225 2016-07-28
 			//this.execStepCount += _cloneOfMine.execStepCount;
 			// In case of (direct or indirect) recursion the substructure steps will
 			// gathered on a different way! We must not do it twice
@@ -468,6 +512,16 @@ public abstract class Element {
 		while(ele.parent!=null) ele=ele.parent;
 		ele.drawPoint=point;
 	}
+
+	// START KGU#227 2016-07-30: Enh. #128
+	/**
+	 * Provides a subclassable left offset for drawing the text
+	 */
+	protected int getTextDrawingOffset()
+	{
+		return 0;
+	}
+	// END KGU#227 2016-07-30
 
 	public void setText(String _text)
 	{
@@ -522,7 +576,7 @@ public abstract class Element {
 		StringList sl = new StringList();
 		// START KGU#91 2015-12-01: Bugfix #39: This is for drawing, so use switch-sensitive methods
 		//if(getText().count()>0) sl.add(getText().get(0));
-		if(getText(false).count()>0) sl.add(getText(false).get(0));
+		if (getText(false).count()>0) sl.add(getText(false).get(0));
 		// END KGU#91 2015-12-01
 		sl.add(COLLAPSED);
 		return sl;
@@ -559,7 +613,10 @@ public abstract class Element {
 	public StringList getComment(boolean _alwaysTrueComment)
 	// END KGU#91 2015-12-01
 	{
-		if (!_alwaysTrueComment && this.isSwitchTextCommentMode())
+		// START KGU#227 2016-07-30: Enh. #128 - Comments plus text mode ovverrides all
+		//if (!_alwaysTrueComment && this.isSwitchTextCommentMode())
+		if (!_alwaysTrueComment && !Element.E_COMMENTSPLUSTEXT && this.isSwitchTextCommentMode())
+		// END KGU#227 2016-07-30
 		{
 			return text;
 		}
@@ -571,8 +628,8 @@ public abstract class Element {
 	
 	// START KGU#172 2016-04-01: Issue #145: Make it easier to obtain this information
 	/**
-	 * Checks whether texts and comments are to swappe for display.
-	 * @return rue iff a Root is associated and its swichTextAndComments flag is on
+	 * Checks whether texts and comments are to be swapped for display.
+	 * @return true iff a Root is associated and its swichTextAndComments flag is on
 	 */
 	protected boolean isSwitchTextCommentMode()
 	{
@@ -630,11 +687,71 @@ public abstract class Element {
 	// END KGU#143 2016-01-22
 	
 	// START KGU#156 2016-03-11: Enh. #124 - We need a consistent execution step counting
+	/**
+	 * Resets all element execution counts and the derived maximum execution count 
+	 */
 	public static void resetMaxExecCount()
 	{
-		Element.maxExecTotalCount = Element.maxExecStepCount = Element.maxExecCount = 0;		
+		Element.maxExecTotalCount = Element.maxExecStepCount = Element.maxExecCount = 0;
+		// START KGU#225 2016-07-28: Bugfix #210
+		Element.execCounts.clear();
+		// END KGU#225 2016-07-28
 	}
 
+	// START KGU#225 2016-07-28: Bugfix #210
+	/**
+	 * Resets the execution count value of this element and all its clones
+	 */
+	protected void resetExecCount()
+	{
+		if (this.execCountIndex >= 0)
+		{
+			if (this.execCountIndex < Element.execCounts.size())
+			{
+				Element.execCounts.set(this.execCountIndex, 0);
+			}
+			else
+			{
+				this.execCountIndex = -1;
+			}
+		}
+	}
+	
+	/*
+	 * Ensures an entry in the static execution count array. If there
+	 * hadn't been an entry, then its value will be 0 and its index is
+	 * stored in this.execCountEntry
+	 */
+	protected void makeExecutionCount()
+	{
+		if (this.execCountIndex < 0 || this.execCountIndex >= Element.execCounts.size())
+		{
+			this.execCountIndex = Element.execCounts.size();
+			Element.execCounts.add(0);
+		}
+	}
+	
+	/**
+	 * Retrieves the associated execution count and returns it.
+	 * @return current execution count for this element (and all its clones)
+	 */
+	protected int getExecCount()
+	{
+		int execCount = 0;
+		if (this.execCountIndex >= 0)
+		{
+			if (this.execCountIndex < Element.execCounts.size())
+			{
+				execCount = Element.execCounts.get(this.execCountIndex);
+			}
+			else
+			{
+				System.err.println("**** Illegal execCountIndex " + this.execCountIndex + " on " + this);
+			}
+		}
+		return execCount;
+	}
+	// END KGU#225 2016-07-28
 
 	/**
 	 * Computes the summed up execution steps of this and all its substructure
@@ -654,10 +771,22 @@ public abstract class Element {
 	public final void countExecution()
 	{
 		// Element execution is always counting 1, no matter whether element is structured or not
-		if (Element.E_COLLECTRUNTIMEDATA && ++this.execCount > Element.maxExecCount)
+		// START KGU#225 2016-07-28: Bugfix #210
+		//if (Element.E_COLLECTRUNTIMEDATA && ++this.execCount > Element.maxExecCount)
+		//{
+		//	Element.maxExecCount = this.execCount;
+		//}
+		if (Element.E_COLLECTRUNTIMEDATA)
 		{
-			Element.maxExecCount = this.execCount;
+			this.makeExecutionCount();
+			int execCount = this.getExecCount() + 1;
+			Element.execCounts.set(this.execCountIndex, execCount);
+			if (execCount > Element.maxExecCount)
+			{
+				Element.maxExecCount = execCount;
+			}
 		}
+		// END KGU#225 2016-07-28
 	}
 	
 	/**
@@ -849,7 +978,7 @@ public abstract class Element {
 		switch (Element.E_RUNTIMEDATAPRESENTMODE) {
 		case EXECCOUNTS:
 			maxValue = Element.maxExecCount;
-			value = this.execCount;
+			value = this.getExecCount();
 			break;
 		case EXECSTEPS_LOG:
 			logarithmic = true;
@@ -971,7 +1100,11 @@ public abstract class Element {
 		{
 			this.deeplyCovered = this.simplyCovered = false;;
 			// START KGU#156 2016-03-10: Enh. #124
-			this.execCount = this.execStepCount = this.execSubCount = 0;
+			// START KGU#225 2016-07-28: Bugfix #210
+			//this.execCount = this.execStepCount = this.execSubCount = 0;
+			this.execStepCount = this.execSubCount = 0;
+			this.execCountIndex = -1;
+			// END KGU#225 2016-07-28
 			// END KGU#156 2016-03-10
 		}
 		// KGU#117 2016-03-06
@@ -987,7 +1120,18 @@ public abstract class Element {
 	{
 		this.deeplyCovered = this.simplyCovered = false;;
 		// START KGU#156 2016-03-11: Enh. #124
-		this.execCount = this.execStepCount = this.execSubCount = 0;
+		// START KGU#225 2016-07-28: Bugfix #210
+		//this.execCount = this.execStepCount = this.execSubCount = 0;
+		this.execStepCount = this.execSubCount = 0;
+		if (this.execCountIndex >= Element.execCounts.size())
+		{
+			this.execCountIndex = -1;
+		}
+		else if (this.execCountIndex >= 0)
+		{
+			Element.execCounts.set(this.execCountIndex, 0);
+		}
+		// END KGU#225 2016-07-28
 		// END KGU#156 2016-03-11
 	}
 	// END KGU#117 2016-03-07
@@ -1076,8 +1220,17 @@ public abstract class Element {
 	 */
 	protected void drawCommentMark(Canvas _canvas, Rect _rect)
 	{
-		_canvas.setBackground(E_COMMENTCOLOR);
-		_canvas.setColor(E_COMMENTCOLOR);
+		// START KGU#215 2015-07-25: Bugfix # 205 - If fill colour is the same use an alternative colour
+		//_canvas.setBackground(E_COMMENTCOLOR);
+		//_canvas.setColor(E_COMMENTCOLOR);
+		Color commentColor = E_COMMENTCOLOR;
+		if (commentColor.equals(this.getFillColor()))
+		{
+			commentColor = Color.WHITE;
+		}
+		_canvas.setBackground(commentColor);
+		_canvas.setColor(commentColor);
+		// END KGU#215 2015-07-25
 		
 		Rect markerRect = new Rect(_rect.left + 2, _rect.top + 2,
 				_rect.left + 4, _rect.bottom - 2);
@@ -1168,9 +1321,10 @@ public abstract class Element {
 			preAltT=ini.getProperty("IfTrue","V");
 			preAltF=ini.getProperty("IfFalse","F");
 			preAlt=ini.getProperty("If","()");
-			// START KGU 2016-01-16: Stuff having got lost by a Nov. 2014 merge
-			altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "true"));
-			// END KGU 2016-01-16
+			// START KGU 2016-07-31: Bugfix #212 - After corrected effect the default is also turned
+			//altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "true"));
+			altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "false"));
+			// END KGU#228 2016-07-31
 			StringList sl = new StringList();
 			sl.setCommaText(ini.getProperty("Case","\"?\",\"?\",\"?\",\"sinon\""));
 			preCase=sl.getText();
@@ -1585,9 +1739,12 @@ public abstract class Element {
 
 		Root root = getRoot(_this);
 
-		if(root!=null)
+		if (root != null)
 		{
-			if (root.hightlightVars==true)
+			// START KGU#226 2016-07-29: Issue #211: No syntax highlighting in comments
+			//if (root.hightlightVars==true)
+			if (root.hightlightVars==true && !root.isSwitchTextCommentMode())
+			// END KGU#226 2016-07-29
 			{
 				StringList parts = Element.splitLexically(_text, true);
 
@@ -1696,7 +1853,7 @@ public abstract class Element {
 						// START KGU#165 2016-03-25: consider the new option
 						//else if(ioSigns.contains(display))
 						else if(ioSigns.contains(display, !D7Parser.ignoreCase))
-						// END KGU#165 2016-03-25
+							// END KGU#165 2016-03-25
 						{
 							// set color
 							_canvas.setColor(Color.decode("0x007700"));
@@ -1708,7 +1865,7 @@ public abstract class Element {
 						// START KGU#165 2016-03-25: cosider the new option
 						//else if(jumpSigns.contains(display))
 						else if(jumpSigns.contains(display, !D7Parser.ignoreCase))
-						// END KGU#165 2016-03-25
+							// END KGU#165 2016-03-25
 						{
 							// set color
 							_canvas.setColor(Color.decode("0xff5511"));
@@ -1758,6 +1915,69 @@ public abstract class Element {
 		
 		return total;
 	}
+	
+	// START KGU#227 2016-07-29: Enh. #128
+	/**
+	 * Writes the non-empty comment lines at position _x, _y to _canvas with 2/3 font height and in dark gray
+	 * @param _canvas - the drawing canvas
+	 * @param _x - left text anchor coordinate for the text area
+	 * @param _y - top text anchor coordinate for the text area
+	 * @param _actuallyDraw - if the text is actually to be written (otherwise we just return the bonds)
+	 * @return - bounding box of the text
+	 */
+	protected Rect writeOutCommentLines(Canvas _canvas, int _x, int _y, boolean _actuallyDraw)
+	{
+		return writeOutCommentLines(_canvas, _x, _y, _actuallyDraw, true);
+	}
+
+	protected Rect writeOutCommentLines(Canvas _canvas, int _x, int _y, boolean _actuallyDraw, boolean _allLines)
+	{
+		int height = 0;
+		int width = 0;
+		// smaller font
+		Font smallFont = new Font(Element.font.getName(), Font.PLAIN, Element.font.getSize() * 2 / 3);
+		FontMetrics fm = _canvas.getFontMetrics(smallFont);
+		int fontHeight = fm.getHeight();
+		int extraHeight = this.isBreakpoint() ? fontHeight/2 : 0;
+		// backup the original font
+		Font backupFont = _canvas.getFont();
+		_canvas.setFont(smallFont);
+		_canvas.setColor(Color.DARK_GRAY);
+		int nLines = this.getComment().count();
+		String appendix = "";
+		if (nLines > 1 && !_allLines)
+		{
+			nLines = 1;
+			appendix = "...";
+		}
+		for (int i = 0; i < nLines; i++)
+		{
+			String line = this.getComment().get(i).trim();
+			if (!line.isEmpty())
+			{
+				height += fontHeight;
+				width = Math.max(width, _canvas.stringWidth(line + appendix));
+				if (_actuallyDraw)
+				{
+					_canvas.writeOut(_x, _y + height + extraHeight, line + appendix);
+				}
+			}
+		}
+		
+		_canvas.setFont(backupFont);
+		_canvas.setColor(Color.BLACK);
+		if (height > 0)
+		{
+			height += fontHeight/2;
+		}
+		return new Rect(_x, _y, _x+width, _y+height);
+	}
+	
+	protected boolean haveOuterRectDrawn()
+	{
+		return true;
+	}
+	// END KGU#227 2016-07-29
 
 	// START KGU#156 2016-03-11: Enh. #124 - helper routines to display run-time info
 	/**
@@ -1794,7 +2014,7 @@ public abstract class Element {
 	 */
 	protected String getRuntimeInfoString()
 	{
-		return this.execCount + " / " + this.getExecStepCount(this.isCollapsed());
+		return this.getExecCount() + " / " + this.getExecStepCount(this.isCollapsed());
 	}
 	// END KGU#156 2016-03-11
 	

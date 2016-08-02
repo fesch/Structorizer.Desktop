@@ -48,7 +48,11 @@
  *      Kay Gürtzig         2016.04.12  Issue #161: New Analyser error message for Jump
  *      Kay Gürtzig         2016.04.24  Issue #173: New mnemonic configurations added
  *      Kay Gürtzig         2016.07.07  Enh. #188: Messages for transmute button and menu items
- *      Kay Gürtzig         2016-07-20  Enh. #160: New message for ExportOptionDialoge 
+ *      Kay Gürtzig         2016.07.20  Enh. #160: New message for ExportOptionDialoge
+ *      Kay Gürtzig         2016.07.26  Bugfix #149: Tags for ExportOptionDialoge corrected
+ *      Kay Gürtzig         2016.07.27  Enh. #207: New message Menu.warning_1 (must be consistent with menu entry names!) 
+ *      Kay Gürtzig         2016.07.28  Issue #208: New dialog messages for PNG export 
+ *      Kay Gürtzig         2016.07.31  Enh. #128: New menu item captions for "Comments plus Text" mode
  *
  ******************************************************************************************************
  *
@@ -69,6 +73,7 @@ Menu.menuFileOpenRecent.text=Zuletzt verwendet
 Menu.menuFileExport.text=Exportieren
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Bild ...
+Menu.menuFileExportPicturePNGmulti=PNG (gekachelt) ...
 Menu.menuFileExportCode.text=Quellcode ...
 Menu.lbFileExportCodeFavorite.text=Exportieren nach %
 Menu.menuFileExportCodeFavorite.tooltip=Die bevorzugte Exportsprache kann in den Export-Einstellungen gewählt werden.
@@ -137,6 +142,8 @@ Menu.menuDiagramTypeFunction.text=Unterprogramm
 Menu.menuDiagramNice.text=Umrahmtes Diagramm?
 Menu.menuDiagramComment.text=Zeige Kommentare?
 Menu.menuDiagramSwitchComments.text=Tausche Text/Kommentare?
+Menu.menuDiagramCommentsPlusText.text=Kommentare plus Text?
+Menu.menuDiagramSwitchTCTooltip.text=Zum Aktivieren dieses Menüpunkts "%1" abwählen
 Menu.menuDiagramMarker.text=Hervorheben von Variablen?
 Menu.menuDiagramDIN.text=DIN 66261?
 Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
@@ -180,7 +187,18 @@ Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpAbout.text=Über Structorizer ...
 Menu.menuHelpUpdate.text=Neue Versionen ...
+
+// Dialog messages
+Menu.msgDialogExpCols.text=In wie viele Spalten soll das Bild zerlegt werden?
+Menu.msgDialogExpRows.text=In wie viele Zeilen soll das Bild zerlegt werden?
+Menu.msgOverwriteFile.text=Bestehende Datei überschreiben?
+Menu.msgOverwriteFiles.text=Gleichnamige Datei(en) vorhanden. Überschreiben?
+Menu.btnConfirmOverwrite.text=Überschreiben bestätigen
+Menu.msgRepeatSaveAttempt.text=Die Datei konnte nicht gesichert werden. Versuchen Sie es bitte erneut!
+
 // Error messages for analyser
+// warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
+Menu.warning_1.text=ACHTUNG: TEXTE UND KOMMENTARE IN DER ANZEIGE VERTAUSCHT! → Menüpunkt "Diagramme > Tausche Text/Kommentare".
 Menu.error01_1.text=ACHTUNG: Keine Kontrollvariable gefunden!
 Menu.error01_2.text=ACHTUNG: Mehrere Kontrollvariablen gefunden!
 Menu.error01_3.text=Es ist nicht zulässig, die Kontrollvariable «%» im Körper der Schleife zu verändern!
@@ -561,8 +579,8 @@ ExportOptionDialoge.bracesCheckBox.text=Öffnende Blockklammern ans Ende der Zei
 ExportOptionDialoge.lineNumbersCheckBox.text=Zeilennummern mitgenerieren (BASIC).
 ExportOptionDialoge.chkExportSubroutines.text=Aufgerufene Unterprogramme mit exportieren.
 ExportOptionDialoge.lbPrefGenerator.text=Bevorzugte Code-Export-Sprache:
-ExportOptionDialoge.lbCharset.txt=Zeichensatz (Codierung):
-ExportOptionDialoge.chkCharsetAll.txt=Alle auflisten?
+ExportOptionDialoge.lbCharset.text=Zeichensatz (Codierung):
+ExportOptionDialoge.chkCharsetAll.text=Alle auflisten?
 ExportOptionDialoge.jLabel1.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Speichern der gewählten Einstellungen.

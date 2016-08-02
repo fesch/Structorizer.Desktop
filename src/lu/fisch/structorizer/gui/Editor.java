@@ -726,6 +726,9 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 		//diagram.setOpaque(true);
 		diagram.addMouseListener(new PopupListener());
 		
+		// Attempt to find out what provokes the NullPointerExceptions on start
+		//System.out.println("**** " + this + ".create() ready!");
+		
 		//doButtons();
 		//container.validate();
 	}

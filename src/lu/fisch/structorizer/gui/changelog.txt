@@ -7,150 +7,166 @@
 
 Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
+[Foo]*  -->     idea provided by Foo, coding doe by Kay Gürtzig
 <Foo>   -->     idea AND coding done by Foo
+<*>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.24-14 (2016.07.25)
-- 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]
-- 01: Enh. #124: Generalized runtime data visualization <Kay Gürtzig>
-- 01: Arranger now adopts current directory from first arranged diagram <Kay Gürtzig>
-- 02: Bugfix #131: User activities during execution could compromise Executor <Kay Gürtzig>
-- 02: Bugfix #132: Stale Structorizer references in Arranger caused trouble <Kay Gürtzig>
-- 02: Enh. #133: Execution Call stack may now be inspected in paused state <Kay Gürtzig>
-- 02: Enh. KGU#89: Executor: Extended language localization support <Kay Gürtzig>
-- 03: Enh. #84/#135: For-In loops now consistently supported [R. Schmidt]<Kay Gürtzig>
-- 03: Issue #79/#152: Requested Java version corrected (1.6 --> 1.8) <Kay Gürtzig>
-- 04: Bugfix #96/#135: On BASH export conditions now put into [[ ]] [Rolf Schmidt]
-- 04: Bugfix #135/KGU#163: Detection of completely undefined variables <Kay Gürtzig>
-- 04: Enh. #135: Improved array support on BASH export [Rolf Schmidt]
-- 04: Bugfix #138: Lvalues with nested indices like arr[arr[0]] had failed <Kay Gürtzig>
-- 04: Bugfix #139: on BASH export Call instructions now converted <Kay Gürtzig>
-- 05: Issue #135: Further improvements on BASH export [Rolf Schmidt] <Kay Gürtzig>
-- 05: Enh. #142: New Accelerator keys (e.g. for switch text/comment) [Rolf Schmidt]
-- 05: Issue #143: Comment popups now close on editing and code export [Rolf Schmidt]
-- 05: Enh. #144: New export option to suppress content conversion <Kay Gürtzig>
-- 05: Enh. #144: New "favourite code export" menu item (export preference) [Rolf Schmidt]
-- 05: Issue #145: Swapped text/comment now works on CASE and PARALLEL elements <Kay Gürtzig>
-- 06: Pascal functions ord and chr supported (Executor + Code generators) <Kay Gürtzig>
-- 06: Executor: Keyword case awareness (configurable) consistently ensured <Kay Gürtzig>
-- 06: Issue #149: Character set (encoding) for export now selectable [Rolf Schmidt]
-- 06: Issue #151: Code export pumped the process up with useless GUI threads <Kay Gürtzig>
-- 06: Issue #153: BASH export had ignored Parallel sections [Rolf Schmidt] <Kay Gürtzig> 
-- 06: Bugfix #154: Analyser caused silent exception on Parallel sections <Kay Gürtzig>
-- 06: Bugfix #155: "New" diagram didn't clear previous selection <Kay Gürtzig>
-- 07: Enh. #158: New key bindings for element editing and selection [Rolf Schmidt]
-- 07: Enh. #137: Executor may direct all output to a text window <Kay Gürtzig>
-- 07: Enh. #161: New Analyser warning on instructions following a Jump [Rolf Schmidt]
-- 07: Enh. #158: Diagram copy and paste among Structorizers and Arrangers [Rolf Schmidt]
-- 08: Issue #164: On element deletion the next element should be selected [Rolf Schmidt]
-- 08: Bugfix #165: Proper unselection on clicking outside the diagram <Kay Gürtzig>
-- 09: Issue #168: Cutting an element is to pass the selection too (cf. #164) [Rolf Schmidt]
-- 09: Issue #169: Selection ensured on new / loading an NSD, undo, redo [Rolf Schmidt]
-- 09: Bugfix #171: Twos flaws in enh. #158 mended <Kay Gürtzig>
-- 10: Issue #30: Lexicographic string comparison enabled (Executor). <Kay Gürtzig>
-- 10: Issue #137: Output text window now styled and automatically scrolls to end. <Kay Gürtzig>
-- 10: Issue #163: Tab / Shift-Tab key now move focus in element editor [Rolf Schmidt]
-- 10: Issue #169: Selection ensured on start / after export. [Rolf Schmidt]
-- 10: Issue #173: Mnemonics corrected (EN) and localized in most languages. <Kay Gürtzig>
-- 10: Enh. #174: Input now accepts array initialisation expressions. <Kay Gürtzig>
-- 11: Enh. #10 / bugfix #184: Flaws in Pascal import of FOR loops mended <Kay Gürtzig>
-- 11: Enh. #179: Code generation and parsing in batch mode [Rolf Schmidt] <Kay Gürtzig>
-- 11: Bugfix #181: Pascal export didn't convert all string delimiters <Kay Gürtzig>
-- 11: Bugfix #184: Diagram imported from Pascal now enables save button <Kay Gürtzig>
-- 12: Several minor bugfixes in Pascal export and import <Kay Gürtzig>
-- 12: Issue #185: Pascal export of functions/procedures now as units. <Kay Gürtzig>
-- 12: Issue #185: Pascal import now copes with multiple routines per file. <Kay Gürtzig> 
-- 12: Executor: Enhanced language support (EN/DE/ES) and minor bugfixing <Kay Gürtzig>
-- 12: Arranger now offers saving before removing "dirty" diagrams <Kay Gürtzig>
-- 12: Enh. #62: Arranger may now save arrangements in a portable way <Kay Gürtzig>
-- 12: Arranger: Partial language support (EN/DE/ES) introduced <Kay Gürtzig>
-- 13: Enh. #188: Instruction transmutation, concatenation and splitting <Kay Gürtzig>
-- 13: Enh. #185: Call identification on Pascal import improved <Kay Gürtzig>
+Version: 3.25 (2016.08.01)
+- 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]*
+- 01: Enh. #124: Generalized runtime data visualization <*>
+- 01: Arranger now adopts current directory from first arranged diagram <*>
+- 02: Bugfix #131: User activities during execution could compromise Executor <*>
+- 02: Bugfix #132: Stale Structorizer references in Arranger caused trouble <*>
+- 02: Enh. #133: Execution Call stack may now be inspected in paused state <*>
+- 02: Enh. KGU#89: Executor: Extended language localization support <*>
+- 03: Enh. #84/#135: For-In loops now consistently supported [R. Schmidt]<*>
+- 03: Issue #79/#152: Requested Java version corrected (1.6 --> 1.8) <*>
+- 04: Bugfix #96/#135: On BASH export conditions now put into [[ ]] [Rolf Schmidt]*
+- 04: Bugfix #135/KGU#163: Detection of completely undefined variables <*>
+- 04: Enh. #135: Improved array support on BASH export [Rolf Schmidt]*
+- 04: Bugfix #138: Lvalues with nested indices like arr[arr[0]] had failed <*>
+- 04: Bugfix #139: on BASH export Call instructions now converted <*>
+- 05: Issue #135: Further improvements on BASH export [Rolf Schmidt] <*>
+- 05: Enh. #142: New Accelerator keys (e.g. for switch text/comment) [Rolf Schmidt]*
+- 05: Issue #143: Comment popups now close on editing and code export [Rolf Schmidt]*
+- 05: Enh. #144: New export option to suppress content conversion <*>
+- 05: Enh. #144: New "favourite code export" menu item (export preference) [Rolf Schmidt]*
+- 05: Issue #145: Swapped text/comment now works on CASE and PARALLEL elements <*>
+- 06: Pascal functions ord and chr supported (Executor + Code generators) <*>
+- 06: Executor: Keyword case awareness (configurable) consistently ensured <*>
+- 06: Issue #149: Character set (encoding) for export now selectable [Rolf Schmidt]*
+- 06: Issue #151: Code export pumped the process up with useless GUI threads <*>
+- 06: Issue #153: BASH export had ignored Parallel sections [Rolf Schmidt] <*> 
+- 06: Bugfix #154: Analyser caused silent exception on Parallel sections <*>
+- 06: Bugfix #155: "New" diagram didn't clear previous selection <*>
+- 07: Enh. #158: New key bindings for element editing and selection [Rolf Schmidt]*
+- 07: Enh. #137: Executor may direct all output to a text window <*>
+- 07: Enh. #161: New Analyser warning on instructions following a Jump [Rolf Schmidt]*
+- 07: Enh. #158: Diagram copy and paste among Structorizers and Arrangers [Rolf Schmidt]*
+- 08: Issue #164: On element deletion the next element should be selected [Rolf Schmidt]*
+- 08: Bugfix #165: Proper unselection on clicking outside the diagram <*>
+- 09: Issue #168: Cutting an element is to pass the selection too (cf. #164) [Rolf Schmidt]*
+- 09: Issue #169: Selection ensured on new / loading an NSD, undo, redo [Rolf Schmidt]*
+- 09: Bugfix #171: Twos flaws in enh. #158 mended <*>
+- 10: Issue #30: Lexicographic string comparison enabled (Executor). <*>
+- 10: Issue #137: Output text window now styled and automatically scrolls to end. <*>
+- 10: Issue #163: Tab / Shift-Tab key now move focus in element editor [Rolf Schmidt]*
+- 10: Issue #169: Selection ensured on start / after export. [Rolf Schmidt]*
+- 10: Issue #173: Mnemonics corrected (EN) and localized in most languages. <*>
+- 10: Enh. #174: Input now accepts array initialisation expressions. <*>
+- 11: Enh. #10 / bugfix #184: Flaws in Pascal import of FOR loops mended <*>
+- 11: Enh. #179: Code generation and parsing in batch mode [Rolf Schmidt] <*>
+- 11: Bugfix #181: Pascal export didn't convert all string delimiters <*>
+- 11: Bugfix #184: Diagram imported from Pascal now enables save button <*>
+- 12: Several minor bugfixes in Pascal export and import <*>
+- 12: Issue #185: Pascal export of functions/procedures now as units. <*>
+- 12: Issue #185: Pascal import now copes with multiple routines per file. <*> 
+- 12: Executor: Enhanced language support (EN/DE/ES) and minor bugfixing <*>
+- 12: Arranger now offers saving before removing "dirty" diagrams <*>
+- 12: Enh. #62: Arranger may now save arrangements in a portable way <*>
+- 12: Arranger: Partial language support (EN/DE/ES) introduced <*>
+- 13: Enh. #188: Instruction transmutation, concatenation and splitting <*>
+- 13: Enh. #185: Call identification on Pascal import improved <*>
 - 13: Enh. #180: Initial editor focus dependent on switch text/comment mode [elemhsb]
-- 13: Bugfix #191: Defective FOR loop export to PHP [Frank Schenk]
-- 13: Enh. #192: File name proposals now involve parameter count <Kay Gürtzig>
-- 13: Enh. #160: Code export with reachable subroutines [Rolf Schmidt]<Kay Gürtzig>
-- 14: Issue #160: Subroutine export mode fixed for StrukTeX <Kay Gürtzig>
-- 14: Issue #197: Keyboard selection actions on subsequences mended <Kay Gürtzig>
-- 14: Issue #198: Flaw in key-controlled selection traversal <Kay Gürtzig>
-- 14: Issue #199: Help menu now with link to the onlne User Guide <Kay Gürtzig>
-- 14: Issue #77: Test coverage markers as set by Arranger didn't work <Kay Gürtzig>
-- 14: Issue #200: The saving of preferences now closes the ini file <Kay Gürtzig>
-- 14: Issue #201: Executor GUI revised, usability improved <Kay Gürtzig>
-- 14: Issue #202: Arranger hadn't reacted to a Look-and-Feel change <Kay Gürtzig>
-- 14: Issue #127: Sizing problem of Export Options dialog solved <Kay Gürtzig>
+- 13: Bugfix #191: Defective FOR loop export to PHP [Frank Schenk]*
+- 13: Enh. #192: File name proposals now involve parameter count <*>
+- 13: Enh. #160: Code export with reachable subroutines [Rolf Schmidt]<*>
+- 14: Issue #160: Subroutine export mode fixed for StrukTeX <*>
+- 14: Issue #197: Keyboard selection actions on subsequences mended <*>
+- 14: Issue #198: Flaw in key-controlled selection traversal <*>
+- 14: Issue #199: Help menu now with link to the onlne User Guide <*>
+- 14: Issue #77: Test coverage markers as set by Arranger didn't work <*>
+- 14: Issue #200: The saving of preferences now closes the ini file <*>
+- 14: Issue #201: Executor GUI revised, usability improved <*>
+- 14: Issue #202: Arranger hadn't reacted to a Look-and-Feel change <*>
+- 14: Issue #127: Height problem of Export Options dialog solved <*>
+- 15: Bugfix #158: Selection traversal in un-boxed diagrams and FOREVER <*>
+- 15: Bugfix #204: Width problem of Export Options dialog solved <*>
+- 15: Bugfix #205: Un-boxed Roots variable highlighting didn't work <*> 
+- 15: Bugfix #87: Collapsed CASE elements showed wrong icon <*>
+- 15: Issue #207: Analyser warning during switch text/comment mode <*>
+- 15: Issue #206: More executor error messages put under language control <*>
+- 15: Bugfix #208: Subroutine diagrams now cleanly drawn <*>
+- 15: Bugfix #209: Multiple PNG export fixed (uncut borders, file names) <*>
+- 15: Bugfix #210: Wrong execution counting in recursive routines <*>
+- 15: Issue #128: Combined comments and text mode [Hubert Klöser]*
+- 15: Bugfix #211: Execution counting in recursions corrected <*>
+- 15: Bugfix #212: Inverted logic of preference "enlarge FALSE" mended <*>
+- 15: Icon sizes in Diagram menu unified <*>
+- 15: Issue #213: FOR loop transmutation mechanism added <*>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
 - 02: Bugfix #51 - stand-alone input/output keywords were not converted on export [IrisLuc]
-- 03: Bugfix #48 - instant delay propagation to Turtleizer <Kay Gürtzig>
-- 03: Bugfix #49 - failing equality detection among variables (also array elements) <Kay Gürtzig>
-- 04: Enh. #36 - allowing to pause from input and output dialogs <Kay Gürtzig>
-- 04: Enh. #54 - Output instruction with expression list (executor, most generators) <Kay Gürtzig>
-- 04: Bugfix #55 - highlighting of variables with keywords as substring mended <Kay Gürtzig>
-- 04: Bugfix #57 - Risk of endless loops and other flaws on Perl export <Kay Gürtzig>
-- 04: Bugfix #59 - For loop export to Python was defective <Kay Gürtzig>
-- 05: executor: Enh. #9 - Subroutine call now supported via Arranger as pool <Kay Gürtzig>
-- 05: executor: Enh. #9 - Control panel shows call depth and (on error) stacktrace <Kay Gürtzig>
-- 05: executor: Enh. #23 - Jump execution implemented in three categories <Kay Gürtzig>
-- 05: arranger: Enh. #9 - Structorizer can now push diagrams into Arranger <Kay Gürtzig>
-- 05: arranger: Enh. #35 - Arranger now got scrollbars and moves to a just added diagram <Kay Gürtzig>
-- 05: arranger: Enh. #35 - Diagrams may be pinned (against replacement) and dropped <Kay Gürtzig>
-- 05: generator: Enh. #23 - Export to C, C++, C#, Java, and Pascal now supports Jumps <Kay Gürtzig>
-- 05: analyser: New checks for calls, jumps, return mechanisms and concurrency risks <Kay Gürtzig>
-- 05: analyser: Analyser hadn't checked within Forever loops and Parallel sections <Kay Gürtzig>
-- 05: Enh. #38: Multiple selection (Alt+Click: entire subqueue, Shift+Click: sequence) <Kay Gürtzig>
-- 05: updated language files (DE,EN,ES) <Kay Gürtzig>
-- 05: executor: Localisation attempts for Control panel <Kay Gürtzig>
-- 05: Enh. #51 - Handling of empty input/output instructions by executor and export <Kay Gürtzig>
-- 05: executor: Parameter splitting for function calls improved <Kay Gürtzig>
-- 05: Bugfix #61: Executor precautions against type specifiers [elemhsb]<Kay Gürtzig>
-- 05: Bugfix #63: Error messages on nsd loading failure no longer suppressed <Kay Gürtzig>
-- 05: generator: Enh. #23 - Export to Python, Perl, PHP, and Bash/Ksh now supports Jumps <Kay Gürtzig>
-- 05: generator: Enh. #23 + #66 - Export to Basic now supports Jumps and line numbers <Kay Gürtzig>
-- 05: generator: Enh. #67 - Code style option (position of opening braces) for C,C++, Java <Kay Gürtzig>
-- 05: generator: StrukTex export enhanced and corrected <Kay Gürtzig>
-- 05: generator: Enh. #22 - Export to Pascal and Oberon now provides return values <Kay Gürtzig>
-- 05: Arranger: Enh. #62 - Saving and loading arrangements provisionally enabled <Kay Gürtzig>
-- 06: Bugfix #71 - Code export to shell scripts was defective (no text translation) <Kay Gürtzig>
-- 06: Bugfix #51, #54 - Defective input / output export to Perl, Python <Kay Gürtzig>
-- 07: Bugfix #74: Accidently disabled Pascal operators like =, <>, and, or <Kay Gürtzig>
-- 07: Enh. #75: Highlighting of Jump element keywords (leave, return, exit) <Kay Gürtzig> 
-- 08: Bugfix #82: Saving of NSDs with inconsistent FOR loops <Kay Gürtzig>
-- 08: Bugfix #78: Reloading an Arranger constellation could cause duplicates [elemhsb]
-- 08: Bugfix #85: Diagram heading or comment changes now undoable <Kay Gürtzig>
-- 09: Bugfix #65, Enh. #87: Collapsing/expanding reorganised, autoscrolling enabled [elemhsb] 
-- 10: Bugfix #89: Two flaws in variable detection (highlighting, analyser) <Kay Gürtzig>
-- 10: Bugfix #90: Insufficient updating of executed subroutines in Arranger <Kay Gürtzig>
-- 10: Bugfix #91: Unreliable execution of some empty Jump elements <Kay Gürtzig>
-- 10: Bugfix #92: Executor: Unwanted replacements within string literals <Kay Gürtzig>
-- 11: Bugfix #95: Executor: div operator support accidently dropped  <Kay Gürtzig>
-- 11: Bugfix #96: export: variable prefix, test expressions for shell scripts <Kay Gürtzig>
-- 12: Bugfix #99: FOR loops were saved defectively, new version can load them <Kay Gürtzig>
-- 12: Arranger: Image buttons for saving and loading resized <Kay Gürtzig>
-- 13: Bugfix #50: Return type specifications were split into several lines <Kay Gürtzig>
-- 13: Executor enh.: Scrollable display of returned arrays (at top routine level) <Kay Gürtzig>
-- 13: Enh. #101: Title string with version number and sub-thread mark [elemhsb]
-- 13: Bugfix #102: Selection wasn't cleared after deletion, undo or redo <Kay Gürtzig>
-- 13: Issue #103: Save button visibility is to depend on change status <Kay Gürtzig>
-- 13: Bugfix #104: Code export could provoke index range errors <Kay Gürtzig>
-- 13: Bugfix #105: Displayed lines were cut off at apostrophes in keywords <Kay Gürtzig>
-- 14: Bugfix #108: C++ export had converted bool type to int <Kay Gürtzig>
-- 14: Bugfix #103: Change status hadn't been reset sufficiently on saving <Kay Gürtzig>
-- 14: Enh. #84: C/Java-style array initialisation expressions enabled <Kay Gürtzig>
-- 14: Bugfix #61+#107: More consistent handling of typed variables <Kay Gürtzig>
-- 14: Enh. #110: File open dialogs now use the specific filter as default [elemshb]
-- 15: Bugfix #112: Several flaws on handling indexed variables <Kay Gürtzig>
-- 15: Jump translation on export to Pascal or Oberon fixed <Kay Gürtzig>
-- 15: Bugfix #114: Editing of elements being executed prevented <Kay Gürtzig>
-- 15: Bugfix for enh. #38: moving up/down of multiple selection <Kay Gürtzig>
-- 15: Accelerator key for breakpoints (also on multiple selection) <Kay Gürtzig>
-- 15: Issue #115: Returned arrays now always presented as element list <Kay Gürtzig>
-- 15: Enh. #84: Array initialisations now exportable to BASIC code <Kay Gürtzig>
-- 15: Bugfix #117: Title and button update on diagram replacement <Kay Gürtzig>
-- 15: Bugfix #97: Target selection on dragging stabilized <Kay Gürtzig>
-- 15: Bugfix #121: Irritating error message box on file dropping <Kay Gürtzig>
-- 16: Bugfix #122: Selection problems with enlargeFALSE set <Kay Gürtzig>
-- 17: Bugfix #97 update: Arranger updated on global drawing changes <Kay Gürtzig>
+- 03: Bugfix #48 - instant delay propagation to Turtleizer <*>
+- 03: Bugfix #49 - failing equality detection among variables (also array elements) <*>
+- 04: Enh. #36 - allowing to pause from input and output dialogs <*>
+- 04: Enh. #54 - Output instruction with expression list (executor, most generators) <*>
+- 04: Bugfix #55 - highlighting of variables with keywords as substring mended <*>
+- 04: Bugfix #57 - Risk of endless loops and other flaws on Perl export <*>
+- 04: Bugfix #59 - For loop export to Python was defective <*>
+- 05: executor: Enh. #9 - Subroutine call now supported via Arranger as pool <*>
+- 05: executor: Enh. #9 - Control panel shows call depth and (on error) stacktrace <*>
+- 05: executor: Enh. #23 - Jump execution implemented in three categories <*>
+- 05: arranger: Enh. #9 - Structorizer can now push diagrams into Arranger <*>
+- 05: arranger: Enh. #35 - Arranger now got scrollbars and moves to a just added diagram <*>
+- 05: arranger: Enh. #35 - Diagrams may be pinned (against replacement) and dropped <*>
+- 05: generator: Enh. #23 - Export to C, C++, C#, Java, and Pascal now supports Jumps <*>
+- 05: analyser: New checks for calls, jumps, return mechanisms and concurrency risks <*>
+- 05: analyser: Analyser hadn't checked within Forever loops and Parallel sections <*>
+- 05: Enh. #38: Multiple selection (Alt+Click: entire subqueue, Shift+Click: sequence) <*>
+- 05: updated language files (DE,EN,ES) <*>
+- 05: executor: Localisation attempts for Control panel <*>
+- 05: Enh. #51 - Handling of empty input/output instructions by executor and export <*>
+- 05: executor: Parameter splitting for function calls improved <*>
+- 05: Bugfix #61: Executor precautions against type specifiers [elemhsb]<*>
+- 05: Bugfix #63: Error messages on nsd loading failure no longer suppressed <*>
+- 05: generator: Enh. #23 - Export to Python, Perl, PHP, and Bash/Ksh now supports Jumps <*>
+- 05: generator: Enh. #23 + #66 - Export to Basic now supports Jumps and line numbers <*>
+- 05: generator: Enh. #67 - Code style option (position of opening braces) for C,C++, Java <*>
+- 05: generator: StrukTex export enhanced and corrected <*>
+- 05: generator: Enh. #22 - Export to Pascal and Oberon now provides return values <*>
+- 05: Arranger: Enh. #62 - Saving and loading arrangements provisionally enabled <*>
+- 06: Bugfix #71 - Code export to shell scripts was defective (no text translation) <*>
+- 06: Bugfix #51, #54 - Defective input / output export to Perl, Python <*>
+- 07: Bugfix #74: Accidently disabled Pascal operators like =, <>, and, or <*>
+- 07: Enh. #75: Highlighting of Jump element keywords (leave, return, exit) <*> 
+- 08: Bugfix #82: Saving of NSDs with inconsistent FOR loops <*>
+- 08: Bugfix #78: Reloading an Arranger constellation could cause duplicates [elemhsb]*
+- 08: Bugfix #85: Diagram heading or comment changes now undoable <*>
+- 09: Bugfix #65, Enh. #87: Collapsing/expanding reorganised, autoscrolling enabled [elemhsb]* 
+- 10: Bugfix #89: Two flaws in variable detection (highlighting, analyser) <*>
+- 10: Bugfix #90: Insufficient updating of executed subroutines in Arranger <*>
+- 10: Bugfix #91: Unreliable execution of some empty Jump elements <*>
+- 10: Bugfix #92: Executor: Unwanted replacements within string literals <*>
+- 11: Bugfix #95: Executor: div operator support accidently dropped  <*>
+- 11: Bugfix #96: export: variable prefix, test expressions for shell scripts <*>
+- 12: Bugfix #99: FOR loops were saved defectively, new version can load them <*>
+- 12: Arranger: Image buttons for saving and loading resized <*>
+- 13: Bugfix #50: Return type specifications were split into several lines <*>
+- 13: Executor enh.: Scrollable display of returned arrays (at top routine level) <*>
+- 13: Enh. #101: Title string with version number and sub-thread mark [elemhsb]*
+- 13: Bugfix #102: Selection wasn't cleared after deletion, undo or redo <*>
+- 13: Issue #103: Save button visibility is to depend on change status <*>
+- 13: Bugfix #104: Code export could provoke index range errors <*>
+- 13: Bugfix #105: Displayed lines were cut off at apostrophes in keywords <*>
+- 14: Bugfix #108: C++ export had converted bool type to int <*>
+- 14: Bugfix #103: Change status hadn't been reset sufficiently on saving <*>
+- 14: Enh. #84: C/Java-style array initialisation expressions enabled <*>
+- 14: Bugfix #61+#107: More consistent handling of typed variables <*>
+- 14: Enh. #110: File open dialogs now use the specific filter as default [elemshb]*
+- 15: Bugfix #112: Several flaws on handling indexed variables <*>
+- 15: Jump translation on export to Pascal or Oberon fixed <*>
+- 15: Bugfix #114: Editing of elements being executed prevented <*>
+- 15: Bugfix for enh. #38: moving up/down of multiple selection <*>
+- 15: Accelerator key for breakpoints (also on multiple selection) <*>
+- 15: Issue #115: Returned arrays now always presented as element list <*>
+- 15: Enh. #84: Array initialisations now exportable to BASIC code <*>
+- 15: Bugfix #117: Title and button update on diagram replacement <*>
+- 15: Bugfix #97: Target selection on dragging stabilized <*>
+- 15: Bugfix #121: Irritating error message box on file dropping <*>
+- 16: Bugfix #122: Selection problems with enlargeFALSE set <*>
+- 17: Bugfix #97 update: Arranger updated on global drawing changes <*>
 
 Version 3.23 (2015.12.04)
 - 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
@@ -189,40 +205,39 @@ Version 3.23 (2015.12.04)
 - 27: updated language files (RU,DE,EN,ES) <Kay Gürtzig>
 - 28: minor change in executor for comp. with Unimozer [Bob Fisch]
 - 29: Complex changes and enhancements as described (pull-request #7) <codemanyak>
-- 29: executor: breakpoints may now be placed throughout the diagram <Kay Gürtzig>
-- 29: executor: implementation for Endless loops and Parallel elements <Kay Gürtzig>
-- 29: executor: element highlighting separated from selection <Kay Gürtzig>
-- 29: executor: variable list now updated on every pause even with delay 0 <Kay Gürtzig>
-- 29: gui: More localisation support for element editor (InputBox) <Kay Gürtzig>
-- 29: updated language files (DE,EN,ES,RU,IT) <Kay Gürtzig>
-- 29: export: indentation mechanism revised, BASH export corrected <Kay Gürtzig>
-- 29: export: Python export no longer "eats" lines within Repeat loops <Kay Gürtzig>
-- 29: comment popup: sticky popups eliminated, no element level limit <Kay Gürtzig>
-- 29: Arranger: No longer loses track when related Structorizer reloads <Kay Gürtzig>
-- 29: Known NEW ISSUE: Closing a dependent Structorizer kills the owning Arranger!
+- 29: executor: breakpoints may now be placed throughout the diagram <*>
+- 29: executor: implementation for Endless loops and Parallel elements <*>
+- 29: executor: element highlighting separated from selection <*>
+- 29: executor: variable list now updated on every pause even with delay 0 <*>
+- 29: gui: More localisation support for element editor (InputBox) <*>
+- 29: updated language files (DE,EN,ES,RU,IT) <*>
+- 29: export: indentation mechanism revised, BASH export corrected <*>
+- 29: export: Python export no longer "eats" lines within Repeat loops <*>
+- 29: comment popup: sticky popups eliminated, no element level limit <*>
+- 29: Arranger: No longer loses track when related Structorizer reloads <*>
 - 30: Several Chinese (CHS) translations added and typos eliminated <Zijun Ke>
-- 30: Issue on closing a Structorizer fixed, file update question may be cancelled. <Kay Gürtzig>
-- 31: Major enhancement supporting cleaner For loop evaluation (issue #10) <Kay Gürtzig>
-- 31: Enhancement to allow lists of constants controlling a Case branch (issue #13) <Kay Gürtzig>
-- 31: Code export process decomposed, less redundant Generator classes <Kay Gürtzig>
-- 31: String handling improved (comparison, empty strings, quote consistency) <Kay Gürtzig>
-- 31: Variables, function names etc. within strings no longer executed <Kay Gürtzig>
-- 31: Newly created empty diagrams are no longer flagged as changed <Kay Gürtzig>
-- 31: Content of array variables now sensibly displayed on execution (issue #14) <Kay Gürtzig>
-- 31: Variable content may now effectively be edited on excution pauses (issue #15) <Kay Gürtzig>
-- 31: Menu item File > Quit action consistent to the [x] button now (bug #16) <Kay Gürtzig>
-- 31: Phenomenon of stalling execution on syntax errors within loops fixed (bug #17) <Kay Gürtzig>
-- 31: Several fixes induced by wide-spread code rebuilding in versions 29...30 <Kay Gürtzig>
-- 32: Bugfixes for code export C etc.: div operators remained, switch bug <Kay Gürtzig>
-- 32: Issues #24 and #25 fixed (defective condition conversion) <Kay Gürtzig> 
-- 32: Issue #21 fixed: return instructions now terminate the execution <Kay Gürtzig>
-- 32: Operator highlighting fixed, new colouring for string and character literals <Kay Gürtzig>
-- 32: Bugs #28, #31, and #32 fixed, all concerning element degrading on undoing/copying <Kay Gürtzig>
-- 32: More adaptive approach to either exit or dispose a Structorizer on closing <Kay Gürtzig>
-- 33: Bugfix #39 - Errors on drawing empty Case structures, confused texts and comments <Kay Gürtzig>
-- 33: Bugfix #41 - shift operators <<, >>, shl, shr hadn't been supported <Kay Gürtzig>
-- 33: Bugfix #40 - Recent nsd files got truncated on saving errors <Kay Gürtzig>
-- 33: Bugfix #42 - Default saving directory should not be root (/) but home <Kay Gürtzig>
+- 30: Issue on closing a Structorizer fixed, file update question may be cancelled. <*>
+- 31: Major enhancement supporting cleaner For loop evaluation (issue #10) <*>
+- 31: Enhancement to allow lists of constants controlling a Case branch (issue #13) <*>
+- 31: Code export process decomposed, less redundant Generator classes <*>
+- 31: String handling improved (comparison, empty strings, quote consistency) <*>
+- 31: Variables, function names etc. within strings no longer executed <*>
+- 31: Newly created empty diagrams are no longer flagged as changed <*>
+- 31: Content of array variables now sensibly displayed on execution (issue #14) <*>
+- 31: Variable content may now effectively be edited on excution pauses (issue #15) <*>
+- 31: Menu item File > Quit action consistent to the [x] button now (bug #16) <*>
+- 31: Phenomenon of stalling execution on syntax errors within loops fixed (bug #17) <*>
+- 31: Several fixes induced by wide-spread code rebuilding in versions 29...30 <*>
+- 32: Bugfixes for code export C etc.: div operators remained, switch bug <*>
+- 32: Issues #24 and #25 fixed (defective condition conversion) <*> 
+- 32: Issue #21 fixed: return instructions now terminate the execution <*>
+- 32: Operator highlighting fixed, new colouring for string and character literals <*>
+- 32: Bugs #28, #31, and #32 fixed, all concerning element degrading on undoing/copying <*>
+- 32: More adaptive approach to either exit or dispose a Structorizer on closing <*>
+- 33: Bugfix #39 - Errors on drawing empty Case structures, confused texts and comments <*>
+- 33: Bugfix #41 - shift operators <<, >>, shl, shr hadn't been supported <*>
+- 33: Bugfix #40 - Recent nsd files got truncated on saving errors <*>
+- 33: Bugfix #42 - Default saving directory should not be root (/) but home <*>
 
 Version 3.22 (2011.11.21)
 - 01: Some fixes in Executor.java & Control.java [Kay Gürtzig]

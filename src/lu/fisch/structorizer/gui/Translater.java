@@ -138,6 +138,13 @@ public class Translater extends javax.swing.JFrame {
         
         System.out.println("The EN lang is missing these keys:");
         System.out.println(delta.getText());
+        
+        if(delta.count()>0)
+        {
+            JOptionPane.showMessageDialog(this, "The reference language file (en.txt) misses strings that have been found in another language file.\n"+
+                        "Translater will terminate immediately in order to prevent data loss ...", "Error", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+        }
     }
 
     private StringList loadLang(String _langfile)

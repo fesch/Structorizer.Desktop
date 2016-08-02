@@ -49,6 +49,9 @@
  *      Kay Gürtzig     2016.04.24  Issue #173: New mnemonic configurations added
  *      Kay Gürtzig     2016.07.07  Enh. #188: Messages for transmute button and menu items
  *      Kay Gürtzig     2016-07-20  Enh. #160: New message for ExportOptionDialoge 
+ *      Kay Gürtzig     2016.07.27  Enh. #207: New message Menu.warning_1 (must be consistent with menu entry names!) 
+ *      Kay Gürtzig     2016.07.28  Issue #208: New dialog messages for PNG export 
+ *      Kay Gürtzig     2016.07.31  Enh. #128: New menu item captions for "Comments plus Text" mode
  *
  ******************************************************************************************************
  *
@@ -137,6 +140,8 @@ Menu.menuDiagramTypeFunction.text=Sub
 Menu.menuDiagramNice.text=¿Diagrama en caja?
 Menu.menuDiagramComment.text=¿Mostrar comentarios?
 Menu.menuDiagramSwitchComments.text=¿Intercambiar textos/comentarios?
+Menu.menuDiagramCommentsPlusText.text=¿Ambos commentarios y textos?
+Menu.menuDiagramSwitchTCTooltip.text=Impida opción "%1" para activar este punto de menú
 Menu.menuDiagramMarker.text=¿Resaltar variables?
 Menu.menuDiagramDIN.text=¿DIN?
 Menu.menuDiagramAnalyser.text=¿Comprobar diagrama?
@@ -179,7 +184,18 @@ Menu.menuHelp.mnemonic=y
 // Submenu of "Help"
 Menu.menuHelpAbout.text=Acerca de ...
 Menu.menuHelpUpdate.text=Actualizar ...
-// Error messages for analyser
+
+// Dialog messages
+Menu.msgDialogExpCols.text=¿En cuantas columnas se debe seccionar el imagen?
+Menu.msgDialogExpRows.text=¿En cuantas estrías se debe seccionar el imagen?
+Menu.msgOverwriteFile.text=¿Grabar encima del archivo existente?
+Menu.msgOverwriteFiles.text=Archivo(s) existe(n). ¿Gravar encima?
+Menu.btnConfirmOverwrite.text=Confirme gravar
+Menu.msgRepeatSaveAttempt.text=No fue posible grabar el archivo de Vd. Trátelo de nuevo, por favor.
+
+// Error messages for Analyser
+// warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
+Menu.warning_1.text=ADVERTENCIA: ¡TEXTOS Y COMMENTARIOS ESTÁN INTERCAMBIADOS! → Menú "Diagrama > ¿Intercambiar textos/comentarios?".
 Menu.error01_1.text=ADVERTENCIA: Ninguna variable de bucle detectada ...
 Menu.error01_2.text=ADVERTENCIA: Más de una variable de bucle detectada ...
 Menu.error01_3.text=¡No tienes permiso modificar la variable del bucle «%» dentro del bucle!
@@ -232,7 +248,7 @@ AnalyserPreferences.check11.text=Comprobar errores en asignaciones.
 AnalyserPreferences.check12.text=Comprobar por nombre de parámetro estándar. (LUX/MEN)
 AnalyserPreferences.check13.text=Comprobar si, en caso de una función, ésta devuelve un resultado.
 AnalyserPreferences.check14.text=Comprobar si los parámetros de bucles FOR están consistentes.
-AnalyserPreferences.check15.text=Comprobar que llamadas contengan una sola linea de código llamando una subrutina.
+AnalyserPreferences.check15.text=Comprobar que llamadas contengan una sola línea de código llamando una subrutina.
 AnalyserPreferences.check16.text=Comprobar si el uso de elementos SALTO es corrrecto.
 AnalyserPreferences.check17.text=Comprobar que hilos paralelos no pongan a riesgo la consistencia de variables.
 AnalyserPreferences.okButton.text=Aceptar

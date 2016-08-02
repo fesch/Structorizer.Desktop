@@ -50,6 +50,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.04.05      Issue #145 solution improved and setText() stabilized
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
+ *      Kay Gürtzig     2016.07.31      Enh. #128: New mode "comments plus text" supported, drawing code delegated
  *
  ******************************************************************************************************
  *
@@ -83,15 +84,17 @@ public class Parallel extends Element
     // END KGU#136 2016-03-01
 	
     // START KGU#91 2015-12-01: Bugfix #39 - Parallel may NEVER EVER interchange text and comment!
-	/**
-	 * Returns the content of the text field Full stop. No swapping here!
-	 * @return the text StringList
-	 */
-    @Override
-	public StringList getText(boolean _ignored)
-	{
-		return getText();
-	}
+    // START KGU#227 2016-07-31: Enh. #128 - obsolete code, argument no longer ignored -> super
+//	/**
+//	 * Returns the content of the text field Full stop. No swapping here!
+//	 * @return the text StringList
+//	 */
+//    @Override
+//	public StringList getText(boolean _ignored)
+//	{
+//		return getText();
+//	}
+    // END KGU#227 2016-07-31
 
 	/**
 	 * Returns the content of the comment field unless _alwaysTrueComment is false and
@@ -101,14 +104,31 @@ public class Parallel extends Element
 	 * @return either the text or the comment
 	 */
     @Override
-	public StringList getComment(boolean _alwaysTrueComment)
+	public StringList getComment(boolean _trueComment)
 	{
     	// START KGU#172 2016-04.01: Issue #145
 		//return getComment();
-		if (!_alwaysTrueComment && this.isSwitchTextCommentMode())
-		{
-			return this.getCollapsedText();
-		}
+    	// START KGU#227 2016-07-31: Enh. #128
+//		if (!_alwaysTrueComment && this.isSwitchTextCommentMode())
+//		{
+//			return this.getCollapsedText();
+//		}
+    	if (!_trueComment)
+    	{
+    		if (this.isCollapsed())
+    		{
+    			return StringList.getNew(this.getGenericText());
+    		}
+    		else if (!this.isSwitchTextCommentMode())
+    		{
+    			return this.getComment();
+    		}
+    		else
+    		{
+    			return new StringList();
+    		}
+    	}
+		// END KGU#227 2016-07-31
 		else
 		{
 			return this.getComment();
@@ -117,12 +137,27 @@ public class Parallel extends Element
 	}
     // END KGU#91 2015-12-01
     
+    // START KGU#227 2016-07-31: Enh. #128 new helper method
+    private String getGenericText()
+    {
+    	return getClass().getSimpleName() + "(" + this.text.get(0) + ")";
+    }
+    // END KGU#227 2016-07-31
+    
     // START KGU#122 2016-01-04: Add the Class name (or some localized text?) to the number of threads
     @Override
 	public StringList getCollapsedText()
 	{
-		StringList sl = super.getCollapsedText();
-		sl.set(0, getClass().getSimpleName() + "(" + sl.get(0) + ")");
+		// START KGU#227 2016-07-30: Enh. #128 - This is getting rickier now - must must distinguish modes
+		//StringList sl = super.getCollapsedText();
+		//sl.set(0, getClass().getSimpleName() + "(" + sl.get(0) + ")");
+		StringList sl = StringList.getNew(this.getGenericText());
+		sl.add(COLLAPSED);
+    	if (this.isSwitchTextCommentMode() && !this.getComment().getText().trim().isEmpty())
+    	{
+    		sl.set(0, this.getGenericText() + " - " + this.getComment().get(0));
+    	}
+		// END KGU#227 2016-07-30
 		return sl;
 	}
     // END KGU#122 2016-01-04
@@ -262,16 +297,27 @@ public class Parallel extends Element
 	}
 	// END KGU#64 2015-11-03
     
-    public Rect prepareDraw(Canvas _canvas)
+	// START KGU#227 2016-07-30: Enh. #128
+	/**
+	 * Provides a subclassable left offset for drawing the text
+	 */
+	protected int getTextDrawingOffset()
+	{
+		return this.isCollapsed() ? 0 : (Element.E_PADDING/2);
+	}
+	// END KGU#227 2016-07-30
+
+   public Rect prepareDraw(Canvas _canvas)
     {
-            // START KGU#136 2016-03-01: Bugfix #97 (prepared)
+            // START KGU#136 2016-03-01: Bugfix #97
             if (this.isRectUpToDate) return rect0;
+            
             this.x0Branches.clear();
             this.y0Branches = 0;
             // END KGU#136 2016-03-01
 
             // KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
-            if(isCollapsed()) 
+            if (isCollapsed()) 
             {
                 rect0 = Instruction.prepareDraw(_canvas, getCollapsedText(), this);
         		// START KGU#136 2016-03-01: Bugfix #97
@@ -284,25 +330,43 @@ public class Parallel extends Element
             rect0.top = 0;
             rect0.left = 0;
 
-            rect0.right  = 3 * (E_PADDING/2);
-            rect0.bottom = 4 * (E_PADDING/2);
+            rect0.right  = 3 * (E_PADDING/2);		// Minimum total width	(without comments, without thread area)
+            rect0.bottom = 4 * (E_PADDING/2);		// Minimum total height (without thread area)
             // START KGU#136 2016-03-01: Bugfix #97
-            this.y0Branches = 2 * (E_PADDING/2);
+            this.y0Branches = 2 * (E_PADDING/2);	// Y coordinate below which the branches are drawn
             // END KGU#136 2016-03-01
 
-            // START KGU#172 2016-04-01: Issue #145 Show comment in switch text/comment mode
-            if (this.isSwitchTextCommentMode() && !this.comment.getText().trim().isEmpty())
+            // START KGU#227 2016-07-30: Issues #128, #145: New mode "comments plus text" required modification
+//            // START KGU#172 2016-04-01: Issue #145 Show comment in switch text/comment mode
+//            if (this.isSwitchTextCommentMode() && !this.comment.getText().trim().isEmpty())
+//            {
+//                FontMetrics fm = _canvas.getFontMetrics(Element.font);
+//            	for (int ci = 0; ci < this.comment.count(); ci++)
+//            	{
+//            		rect0.right = Math.max(rect0.right, getWidthOutVariables(_canvas, this.comment.get(ci), this) + 2 * E_PADDING);
+//            	}
+//            	int extraHeight = this.comment.count() * fm.getHeight();
+//            	rect0.bottom += extraHeight;
+//            	this.y0Branches += extraHeight;
+//            }
+//            // END KGU#172 2016-04-01
+            
+            // Unless some of the comment modes requires this, the upper stripe remains empty
+            if ((Element.E_COMMENTSPLUSTEXT || this.isSwitchTextCommentMode()) && !this.comment.getText().trim().isEmpty())
             {
-                FontMetrics fm = _canvas.getFontMetrics(Element.font);
-            	for (int ci = 0; ci < this.comment.count(); ci++)
-            	{
-            		rect0.right = Math.max(rect0.right, getWidthOutVariables(_canvas, this.comment.get(ci), this) + 2 * E_PADDING);
-            	}
-            	int extraHeight = this.comment.count() * fm.getHeight();
-            	rect0.bottom += extraHeight;
-            	this.y0Branches += extraHeight;
+            	// In mode"comments plus text" there is no actual text, the comment is to be inserted in lower font
+            	// Otherwise ("switch text/comments") the comment will be added as text in normal font.
+                StringList headerText = new StringList();	// No text in general
+                if (!Element.E_COMMENTSPLUSTEXT)
+                {
+                	headerText = this.getComment();			// It must be "switch text/comments" mode.
+                }
+               Rect textRect = Instruction.prepareDraw(_canvas, headerText, this);
+               rect0.right = Math.max(rect0.right, textRect.right + 2 * (E_PADDING/2));
+               rect0.bottom = Math.max(rect0.bottom, textRect.bottom + 2*(E_PADDING/2));
+               this.y0Branches = Math.max(this.y0Branches, textRect.bottom);
             }
-            // END KGU#172 2016-04-01
+            // END KGU#227 2016-07-30
             
             // retrieve the number of parallel tasks
             int nTasks = Integer.valueOf(getText().get(0));
@@ -349,149 +413,134 @@ public class Parallel extends Element
             // retrieve the number of parallel tasks
             int nTasks = Integer.valueOf(getText().get(0));
 
-            Rect myrect = new Rect();
-    		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
-    		//Color drawColor = getColor();
-    		Color drawColor = getFillColor();
-    		// END KGU 2015-10-13
-            FontMetrics fm = _canvas.getFontMetrics(Element.font);
-//            int p;
-//            int w;
-
-    		// START KGU 2015-10-13: Became obsolete by new method getFillColor() applied above now
-//    		if (selected==true)
-//    		{
-//    			if(waited==true) { drawColor=Element.E_WAITCOLOR; }
-//    			else { drawColor=Element.E_DRAWCOLOR; }
-//    		}
-    		// END KGU 2015-10-13
-
-            Canvas canvas = _canvas;
-            canvas.setBackground(drawColor);
-            canvas.setColor(drawColor);
-
-    		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
-    		//rect = _top_left.copy();
-    		rect = new Rect(0, 0, 
-    				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
-    		Point ref = this.getDrawPoint();
-    		this.topLeft.x = _top_left.left - ref.x;
-    		this.topLeft.y = _top_left.top - ref.y;
-    		// END KGU#136 2016-03-01
-    		
-            // fill shape
-            canvas.setColor(drawColor);
-            myrect = _top_left.copy();
-            myrect.left += 1;
-            myrect.top += 1;
-            //myrect.right -= 1;
-            canvas.fillRect(myrect);
-
-            // draw shape
-            myrect = _top_left.copy();
-            myrect.bottom = _top_left.top + 2*fm.getHeight() + 4*(E_PADDING / 2);
-            
-
-//            int y = myrect.top + E_PADDING;
-//            int a = myrect.left + (myrect.right-myrect.left) / 2;
-//            int b = myrect.top;
-//            int c = myrect.left + fullWidth-1;
-//            int d = myrect.bottom-1;
-//            int x = ((y-b)*(c-a) + a*(d-b)) / (d-b);
-
-            // draw comment
-            // START KGU#172 2016-04-01: Issue #145
-            //if (Element.E_SHOWCOMMENTS==true && !comment.getText().trim().isEmpty())
-            if (Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().isEmpty())
-            // END KGU#172 2016-04-01
-            {
-    			this.drawCommentMark(canvas, _top_left);
-    		}
-            // START KGU 2015-10-11
-    		// draw breakpoint bar if necessary
-    		this.drawBreakpointMark(canvas, myrect);
-    		// END KGU 2015-10-11
-
-
-            // draw lines
-            canvas.setColor(Color.BLACK);
-            
-            // START KGU#151 2016-03-01: This seemed to be superfluous
-//            int lineWidth=0;
-//            Rect rtt = null;
+            // START KGU#227 2016-07-30: Enh. #128 - delegate as much as possible to Instruction
+//            Rect myrect = new Rect();
+//    		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
+//    		//Color drawColor = getColor();
+//    		Color drawColor = getFillColor();
+//    		// END KGU 2015-10-13
+//            FontMetrics fm = _canvas.getFontMetrics(Element.font);
 //
-//            for(int i = 0; i < tasks; i++)
-//            {
-//                    rtt = ((Subqueue) qs.get(i)).prepareDraw(_canvas);
-//                    lineWidth += Math.max(rtt.right, getWidthOutVariables(_canvas,getText(false).get(i+1),this) + (E_PADDING / 2));
-//            }
-            // END KGU#151 2016-03-01
-
-            // corners
-            myrect = _top_left.copy();
-            
-            // START KGU#172 2016-04-01: Issue #145 - we shall show the comment in switch mode
-            int headerHeight = 2*(E_PADDING/2);
-            int footerHeight = 2*(E_PADDING/2);
-            if (this.isSwitchTextCommentMode() && !this.comment.getText().trim().isEmpty())
+//            Canvas canvas = _canvas;
+//            canvas.setBackground(drawColor);
+//            canvas.setColor(drawColor);
+//
+//    		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
+//    		//rect = _top_left.copy();
+//    		rect = new Rect(0, 0, 
+//    				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
+//    		Point ref = this.getDrawPoint();
+//    		this.topLeft.x = _top_left.left - ref.x;
+//    		this.topLeft.y = _top_left.top - ref.y;
+//    		// END KGU#136 2016-03-01
+//    		
+//            // fill shape
+//            canvas.setColor(drawColor);
+//            myrect = _top_left.copy();
+//            myrect.left += 1;
+//            myrect.top += 1;
+//            //myrect.right -= 1;
+//            canvas.fillRect(myrect);
+            StringList headerText = new StringList();
+            if (!Element.E_COMMENTSPLUSTEXT && this.isSwitchTextCommentMode())
             {
-            	headerHeight += this.comment.count() * fm.getHeight();
+            	headerText = this.getComment();
             }
-            // END KGU#172 2016-04-01
+            Instruction.draw(_canvas, _top_left, headerText, this);
+            // END KGU227 2016-07-30
             
-            canvas.moveTo(myrect.left, myrect.bottom - 2*(E_PADDING/2));
-            canvas.lineTo(myrect.left + 2*(E_PADDING/2), myrect.bottom);
+            // draw shape
+            Rect myrect = _top_left.copy();
+            // START KGU#227 2016-07-30: Enh. #128 - All delegated to Instruction.draw(...) above
+//            myrect.bottom = _top_left.top + 2*fm.getHeight() + 4*(E_PADDING / 2);
+//            
+//            // draw comment
+//            // START KGU#172 2016-04-01: Issue #145
+//            //if (Element.E_SHOWCOMMENTS==true && !comment.getText().trim().isEmpty())
+//            if (Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().isEmpty())
+//            // END KGU#172 2016-04-01
+//            {
+//    			this.drawCommentMark(canvas, _top_left);
+//    		}
+//            // START KGU 2015-10-11
+//    		// draw breakpoint bar if necessary
+//    		this.drawBreakpointMark(canvas, myrect);
+//    		// END KGU 2015-10-11
+//
+//
+//            // draw lines
+//            canvas.setColor(Color.BLACK);
+//            
+//            // corners
+//            myrect = _top_left.copy();
+//            
+//            // START KGU#172 2016-04-01: Issue #145 - we shall show the comment in switch mode
+//            int headerHeight = 2*(E_PADDING/2);
+//            int footerHeight = 2*(E_PADDING/2);
+//            if (this.isSwitchTextCommentMode() && !this.comment.getText().trim().isEmpty())
+//            {
+//            	headerHeight += this.comment.count() * fm.getHeight();
+//            }
+//            // END KGU#172 2016-04-01
+            int headerHeight = this.y0Branches;
+            int footerHeight = 2*(E_PADDING/2);
+            // END KGU#227 2016-07-30
+            
+            _canvas.moveTo(myrect.left, myrect.bottom - 2*(E_PADDING/2));
+            _canvas.lineTo(myrect.left + 2*(E_PADDING/2), myrect.bottom);
 
             // START KGU#172 2016-04-01: Bugfix #145
             //canvas.moveTo(myrect.left, myrect.top + 2*(E_PADDING/2));
-            canvas.moveTo(myrect.left, myrect.top + headerHeight);
+            _canvas.moveTo(myrect.left, myrect.top + headerHeight);
             // END KGU#172 2016-04-01
-            canvas.lineTo(myrect.left + 2*(E_PADDING/2), myrect.top);
+            _canvas.lineTo(myrect.left + 2*(E_PADDING/2), myrect.top);
 
-            canvas.moveTo(myrect.right - 2*(E_PADDING/2), myrect.top);
+            _canvas.moveTo(myrect.right - 2*(E_PADDING/2), myrect.top);
             // START KGU#172 2016-04-01: Bugfix #145
             //canvas.lineTo(myrect.right, myrect.top + 2*(E_PADDING/2));
-            canvas.lineTo(myrect.right, myrect.top + headerHeight);
+            _canvas.lineTo(myrect.right, myrect.top + headerHeight);
             // END KGU#172 2016-04-01
 
-            canvas.moveTo(myrect.right - 2*(E_PADDING/2), myrect.bottom);
+            _canvas.moveTo(myrect.right - 2*(E_PADDING/2), myrect.bottom);
             // START KGU#172 2016-04-01: Bugfix #145
             //canvas.lineTo(myrect.right, myrect.bottom - 2*(E_PADDING/2));
-            canvas.lineTo(myrect.right, myrect.bottom - footerHeight);
+            _canvas.lineTo(myrect.right, myrect.bottom - footerHeight);
             // END KGU#172 2016-04-01
 
             // horizontal lines
             // START KGU#172 2016-04-01: Bugfix #145
             //canvas.moveTo(myrect.left, myrect.top + 2*(E_PADDING/2));
             //canvas.lineTo(myrect.right, myrect.top + 2*(E_PADDING/2));
-            canvas.moveTo(myrect.left, myrect.top + headerHeight);
-            canvas.lineTo(myrect.right, myrect.top + headerHeight);
+            _canvas.moveTo(myrect.left, myrect.top + headerHeight);
+            _canvas.lineTo(myrect.right, myrect.top + headerHeight);
             // END KGU#172 2016-04-01
 
             //canvas.lineTo(myrect.right, myrect.bottom - 2*(E_PADDING/2));
             //canvas.moveTo(myrect.left, myrect.bottom - 2*(E_PADDING/2));
             //canvas.lineTo(myrect.right, myrect.bottom - 2*(E_PADDING/2));
-            canvas.moveTo(myrect.left, myrect.bottom - footerHeight);
-            canvas.lineTo(myrect.right, myrect.bottom - footerHeight);
+            _canvas.moveTo(myrect.left, myrect.bottom - footerHeight);
+            _canvas.lineTo(myrect.right, myrect.bottom - footerHeight);
             // END KGU#172 2016-04-01
             
-            // START KGU#172 2016-04.01: Issue #145
-            // draw the comment in switch Text / Comment mode
-            if (this.isSwitchTextCommentMode())
-            {
-            	for (int ci = 0; ci < this.comment.count(); ci++)
-            	{
-            		writeOutVariables(_canvas, myrect.left + 2*(E_PADDING/2), 
-            				myrect.top + E_PADDING/2 + (ci + 1) * fm.getHeight(),
-            				this.comment.get(ci), this);
-            	}
-            }
-            // END KGU#172 2016-04-01
-
-    		// START KGU#156 2016-03-11: Enh. #124
-    		// write the run-time info if enabled
-    		this.writeOutRuntimeInfo(canvas, myrect.right - (Element.E_PADDING * 2), myrect.top);
-    		// END KGU#156 2016-03-11				
+            // START KGU#227 2016-07-30: Enh. #128 - Obsolete code
+//            // START KGU#172 2016-04.01: Issue #145
+//            // draw the comment in switch Text / Comment mode
+//            if (this.isSwitchTextCommentMode())
+//            {
+//            	for (int ci = 0; ci < this.comment.count(); ci++)
+//            	{
+//            		writeOutVariables(_canvas, myrect.left + 2*(E_PADDING/2), 
+//            				myrect.top + E_PADDING/2 + (ci + 1) * fm.getHeight(),
+//            				this.comment.get(ci), this);
+//            	}
+//            }
+//            // END KGU#172 2016-04-01
+//
+//    		// START KGU#156 2016-03-11: Enh. #124
+//    		// write the run-time info if enabled
+//    		this.writeOutRuntimeInfo(canvas, myrect.right - (Element.E_PADDING * 2), myrect.top);
+//    		// END KGU#156 2016-03-11				
+            // END KGU#227 2016-07-30
             
             // draw children
             myrect = _top_left.copy();
@@ -549,11 +598,25 @@ public class Parallel extends Element
                     }
             }
 
-            canvas.setColor(Color.BLACK);
-            canvas.drawRect(_top_left);
+            _canvas.setColor(Color.BLACK);
+            _canvas.drawRect(_top_left);
     }
 
-    // START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
+	// START KGU 2016-07-30: Adapt the runtime info position
+	/**
+	 * Writes the selected runtime information in half-size font to the lower
+	 * left of position (_right, _top).
+	 * @param _canvas - the Canvas to write to
+	 * @param _right - right border x coordinate
+	 * @param _top - upper border y coordinate
+	 */
+	protected void writeOutRuntimeInfo(Canvas _canvas, int _right, int _top)
+	{
+		super.writeOutRuntimeInfo(_canvas, _right - (Element.E_PADDING/2), _top);
+	}
+	// END KGU 2016-07-30
+
+	// START KGU#122 2016-01-03: Collapsed elements may be marked with an element-specific icon
     @Override
     protected ImageIcon getIcon()
     {
@@ -669,7 +732,10 @@ public class Parallel extends Element
     		ele.breakpoint = this.breakpoint;
     		// END KGU#82 (bug #31) 2015-11-14
     		// START KGU#117 2016-03-07: Enh. #77
-    		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+    		// START KGU#156/KGU#225 2016-07-28: Bugfix #210
+    		//ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
+    		this.copyRuntimeData(ele, false);
+    		// END KGU#156/KGU#225 2016-07-28
     		// END KGU#117 2016-03-07
     		// START KGU#183 2016-04-24: Issue #169
     		ele.selected = this.selected;
@@ -786,7 +852,7 @@ public class Parallel extends Element
 	// START KGU#156 2016-03-13: Enh. #124
 	protected String getRuntimeInfoString()
 	{
-		String info = this.execCount + " / ";
+		String info = this.getExecCount() + " / ";
 		String stepInfo = null;
 		switch (E_RUNTIMEDATAPRESENTMODE)
 		{
