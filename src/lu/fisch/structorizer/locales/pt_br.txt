@@ -1,5 +1,5 @@
 /*
-    Structorizer English language file
+    Structorizer Brazilian Portuguese language file
 
     Copyright (C) 2009  Bob Fisch
 
@@ -23,7 +23,7 @@
  *
  *      Author:         PUC-Minas, MG - Brasil
  *
- *      Description:    The Brazilian portuguese (PT-BR) language file
+ *      Description:    The Brazilian Portuguese (PT-BR) language file
  *
  ******************************************************************************************************
  *
