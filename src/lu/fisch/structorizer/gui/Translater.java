@@ -390,7 +390,7 @@ public class Translater extends javax.swing.JFrame {
     }//GEN-LAST:event_button_deActionPerformed
 
     private void button_esActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_esActionPerformed
-        addLang("fr.txt");
+        addLang("es.txt");
     }//GEN-LAST:event_button_esActionPerformed
 
     private void button_pt_brActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_pt_brActionPerformed
