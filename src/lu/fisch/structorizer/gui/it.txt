@@ -35,11 +35,10 @@
  *      Kay Gürtzig     2015.10.06      Obvious mis-spellings mended (cilc -> ciclo, contenuro -> contenuto etc.)
  *      Kay Gürtzig     2015.10.14      InputBox-specific part enhanced
  *      Kay Gürtzig     2015.10.14      FOR-specific part enhanced and Arranger buttons added
- *      Kay Gürtzig     2016.01.21              Breakpoint message also in Menu now
- *      Kay Gürtzig     2016.04.24              Issue #173: New mnemonic configurations added   
- *      Andrea Maiani   2016.08.01              Updated
- *      Kay Gürtzig     2016.07.26      Issue #206: Provisional translation of most important new menu items
+ *      Kay Gürtzig     2016.01.21      Breakpoint message also in Menu now
+ *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added   
  *      Kay Gürtzig     2016.07.27      Enh. #270: New message Menu.warning_1 (must be consistent with menu entry names!) 
+ *      Andrea Maiani   2016.08.01      Updated
  *
  ******************************************************************************************************
  *
@@ -338,7 +337,7 @@ Editor.popupEdit.text=Modifica
 Editor.popupDelete.text=Cancella
 Editor.popupMoveUp.text=Sposta in alto
 Editor.popupMoveDown.text=Sposta in basso
-Editor.popupTransmute.text=Trasmuta
+ditor.popupTransmute.text=Trasmuta
 // Collapsing
 Editor.popupCollapse.text=Collassa
 Editor.popupExpand.text=Espandi
@@ -516,3 +515,5 @@ ExportOptionDialoge.chkCharsetAll.text=Elenca tutto?
 ExportOptionDialoge.jLabel1.text=Per favore seleziona le opzioni che vuoi attivare ...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Salva le impostazioni.
+
+
