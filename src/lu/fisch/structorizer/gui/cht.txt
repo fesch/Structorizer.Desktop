@@ -38,7 +38,7 @@
  *      Comment:	
  *
  ******************************************************************************************************/
-
+>>>
 -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=檔案
@@ -121,9 +121,8 @@ Menu.menuPreferencesLanguageLuxemburgish.text=盧森堡文
 Menu.menuPreferencesLanguageSpanish.text=西班牙文
 Menu.menuPreferencesLanguageItalian.text=義大利文
 Menu.menuPreferencesLanguagePortugalBrazil.text=葡萄牙巴西文
-Menu.menuPreferencesLanguageChinese.text=中文
-//  Menu.menuPreferencesLanguageSimplifiedChinese.text=簡體中文
-//  Menu.menuPreferencesLanguageTraditionalChinese.text=繁體中文
+Menu.menuPreferencesLanguageSimplifiedChinese.text=簡體中文
+Menu.menuPreferencesLanguageTraditionalChinese.text=繁體中文
 Menu.menuPreferencesLanguageCzech.text=捷克文
 
 Menu.menuPreferencesLookAndFeel.text=外觀

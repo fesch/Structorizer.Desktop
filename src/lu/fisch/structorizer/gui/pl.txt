@@ -39,7 +39,7 @@
  *      Comment:	
  *
  ******************************************************************************************************/
-
+>>>
 -----[ Menu ]-----
 //Menu File
 Menu.menuFile.text=Plik
@@ -126,7 +126,8 @@ Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburski
 Menu.menuPreferencesLanguageSpanish.text=Hiszpański
 Menu.menuPreferencesLanguageItalian.text=Włoski
 Menu.menuPreferencesLanguagePortugalBrazil.text=Portugalski
-Menu.menuPreferencesLanguageChinese.text=Chiński
+Menu.menuPreferencesLanguageSimplifiedChinese.text=Chiński (simplified)
+Menu.menuPreferencesLanguageTraditionalChinese.text=Chiński (traditional)
 Menu.menuPreferencesLanguageCzech.text=Czeski
 Menu.menuPreferencesLanguagePolish.text=Polski
 
