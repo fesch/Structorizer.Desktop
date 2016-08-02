@@ -136,7 +136,7 @@ public class Translater extends javax.swing.JFrame {
             for (int i = 0; i < lines.count(); i++) {
                 String get = lines.get(i);
                 StringList parts = StringList.explode(lines.get(i).trim(),"=");
-                if(parts.count()==2 && parts.get(0).equals(key))
+                if(enLines.get(i).trim().contains("=") && parts.get(0).contains(".") && parts.get(0).equals(key))
                 {
                     model.setValueAt(parts.get(1), r, 2);
                 }
@@ -161,7 +161,7 @@ public class Translater extends javax.swing.JFrame {
         for (int i = 0; i < enLines.count(); i++) 
         {
             StringList parts = StringList.explode(enLines.get(i).trim(),"=");
-            if(parts.count()==2)
+            if(enLines.get(i).trim().contains("=") && parts.get(0).contains("."))
             {
                 stringCount++;
                 model.addRow(parts.toArray());
