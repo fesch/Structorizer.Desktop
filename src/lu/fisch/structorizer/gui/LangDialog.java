@@ -35,6 +35,8 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2008.01.14      First Issue
  *      Kay Gürtzig     2015.10.14      Hook for customizable class-specific translation activities added
  *      Kay Gürtzig     2016.03.13      KGU#156: Support for JComboBox added on occasion of enhancement #124
+ *      Kay Gürtzig     2016.07.03      KGU#203: File conversion to StringList now skips comments and empty lines
+ *      Kay Gürtzig     2016.08.02      Bugfix #218: equality signs in translations mutilated them
  *
  ******************************************************************************************************
  *
@@ -81,6 +83,9 @@ public class LangDialog extends JDialog
 	public static void setLang(Component _com, String _langfile)
 	{
 		String input = new String();
+		// START KGU#203 2016-07-03: Skip comment lines (to accelerate matching)
+		boolean isComment = false;
+		// END KGU#203 2016-07-03
 		try 
 		{
 			BufferedReader in = new BufferedReader(new InputStreamReader(_com.getClass().getResourceAsStream("/lu/fisch/structorizer/locales/"+_langfile), "UTF-8"));
@@ -88,13 +93,36 @@ public class LangDialog extends JDialog
 			String str;
 			while ((str = in.readLine()) != null) 
 			{
-				input+=str+"\n";
+				// START KGU#203 2016-07-03: Skip comment lines
+				//input+=str+"\n";
+				int cePos = -1;
+				if (str.startsWith("/*"))
+				{
+					isComment = true;
+				}
+				if (isComment && (cePos = str.indexOf("*/")) >= 0)
+				{
+					str = str.substring(cePos+2);
+					isComment = false;
+				}
+				// START KGU#203 2016-08-02: Also ignore special markers
+				//if (!str.isEmpty() && !isComment && !str.startsWith("//"))
+				if (!str.isEmpty()
+						&& !isComment
+						&& !str.startsWith("//")
+						&& !str.startsWith("-----")
+						&& !str.startsWith(">>>"))
+				// END KGU#203 2016-08-02
+				{
+					input += str+"\n";
+				}
+				// END KGU#203 2016-07-03
 			}
 			in.close();
 		} 
 		catch (IOException e) 
 		{
-			System.out.println("LANG: Error while loading language file => "+e.getMessage());
+			System.err.println("LANG: Error while loading language file => " + e.getMessage());
 		}
 		
 		StringList lines = new StringList();
@@ -113,7 +141,7 @@ public class LangDialog extends JDialog
 			parts = StringList.explodeFirstOnly(_lines.get(i),"=");
 			pieces = StringList.explode(parts.get(0),"\\.");
 			
-			if (pieces.get(0).toLowerCase().equals(_com.getClass().getSimpleName().toLowerCase()) && !parts.get(1).trim().isEmpty())
+			if (pieces.get(0).equalsIgnoreCase(_com.getClass().getSimpleName()) && !parts.get(1).trim().isEmpty())
 			{	
 				if(pieces.get(1).toLowerCase().equals("title"))
 				{
@@ -158,7 +186,7 @@ public class LangDialog extends JDialog
 					}
 					if (errorMessage != null)
 					{
-						System.out.println("LANG: Error accessing element <" + 
+						System.err.println("LANG: Error accessing element <" + 
 								pieces.get(0) + "." + pieces.get(1) + ">!\n" + errorMessage);						
 					}
 					else try {
@@ -221,7 +249,7 @@ public class LangDialog extends JDialog
 						{
 							// START KGU 2015-11-03: Better add the class name for more precision
 							//System.out.println("LANG: Field not found <"+pieces.get(1)+">");
-							System.out.println("LANG: Field not found <" + pieces.get(0) + "." + pieces.get(1) + ">");
+							System.err.println("LANG: Field not found <" + pieces.get(0) + "." + pieces.get(1) + ">");
 							// END KGU 2015-11-03
 						}
 					}
@@ -229,7 +257,7 @@ public class LangDialog extends JDialog
 					{
 						// START KGU 2015-11-03: Better add the class name for more precision
 						//System.out.println("LANG: Error while setting field <"+pieces.get(2)+"> for element <"+pieces.get(1)+">!\n"+e.getMessage());
-						System.out.println("LANG: Error while setting field <" + pieces.get(2) + "> for element <" + 
+						System.err.println("LANG: Error while setting field <" + pieces.get(2) + "> for element <" + 
 								pieces.get(0) + "." + pieces.get(1) + ">!\n" + e.getMessage());
 						// END KGU 2015-11-03
 					}

@@ -2276,6 +2276,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			{
 				try {
 					ele.setBreakTriggerCount(Integer.parseUnsignedInt(str));
+					// Usually the user will want to activate the breakpoint with te configuration
+					if (!ele.isBreakpoint())
+					{
+						ele.toggleBreakpoint();
+					}
 					redraw();
 				}
 				catch (NumberFormatException ex)
