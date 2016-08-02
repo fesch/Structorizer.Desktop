@@ -96,7 +96,7 @@ Version: 3.25 (2016.08.02)
 - 15: Issue #213: FOR loop transmutation mechanism added <*>
 - 15: Issue #215: New conditioned breakpoints (triggered by execution count) <*>
 - 16: Bugfix #218: added new method to StringList [Bob Fisch]
-- 16: Created and integragted translater [Bob Fisch]
+- 16: Created and integrated translater [Bob Fisch]
 - 16: Bugfix  #214: recoded translater [Bob Fisch]
 
 Version: 3.24 (2016.03.14)
