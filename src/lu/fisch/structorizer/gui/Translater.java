@@ -98,7 +98,7 @@ public class Translater extends javax.swing.JFrame {
         for (int i = 0; i < enLines.count(); i++) {
             String get = enLines.get(i);
             StringList parts = StringList.explode(enLines.get(i).trim(),"=");
-            if(enLines.get(i).trim().contains("=") && parts.get(0).contains("."))
+            if(enLines.get(i).trim().contains("=") && parts.get(0).contains(".") && !parts.get(0).startsWith("//"))
             {
                 baseList.add(parts.get(0));
             }
@@ -114,7 +114,7 @@ public class Translater extends javax.swing.JFrame {
             for (int j = 0; j < myList.count(); j++) {
                 String get = myList.get(j);
                 StringList parts = StringList.explode(myList.get(j).trim(),"=");
-                if(myList.get(j).trim().contains("=") && parts.get(0).contains("."))
+                if(myList.get(j).trim().contains("=") && parts.get(0).contains(".") && !parts.get(0).startsWith("//"))
                 {
                     if(!others.contains(parts.get(0)))
                         others.add(parts.get(0));
@@ -128,7 +128,7 @@ public class Translater extends javax.swing.JFrame {
         for (int i = 0; i < others.count(); i++) 
         {
             String key = others.get(i);
-            if(!baseList.contains(key))
+            if(!baseList.contains(key) && !key.startsWith("//"))
                 delta.add(key+"=");
         }
         
