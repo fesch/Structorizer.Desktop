@@ -138,6 +138,11 @@ public class Locale {
         
         StringList section = sections.get(sectionName);
         
+        if(section==null)
+        {
+            return new ArrayList<String>();
+        }
+        
         for (int i = 0; i < section.count(); i++) {
             String line = section.get(i);
             StringList parts = StringList.explodeFirstOnly(line.trim(),"=");
@@ -147,6 +152,43 @@ public class Locale {
             }
         }
         return keys;
+    }
+    
+    public boolean hasKey(String keyName)
+    {
+        String[] sectioNames = getSectionNames();
+        for (int i = 0; i < sectioNames.length; i++) {
+            String sectioName = sectioNames[i];
+            if(getKeys(sectioName).contains(keyName)) return true;
+        }
+        return false;
+    }
+    
+    public boolean hasValuePresent(String keyName)
+    {
+        String[] sectionNames = getSectionNames();
+        
+        for (int i = 0; i < sectionNames.length; i++) {
+            String sectionName = sectionNames[i];
+            
+            StringList section = sections.get(sectionName);
+
+            for (int s = 0; s < section.count(); s++) {
+                String line = section.get(s);
+                StringList parts = StringList.explodeFirstOnly(line.trim(),"=");
+                if(line.trim().contains("=") && parts.get(0).contains(".") && !parts.get(0).startsWith("//"))
+                {
+                    if(parts.get(0).equals(keyName))
+                    {
+                        if(parts.get(1).trim().isEmpty())
+                            return false;
+                        else
+                            return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
     
     public ArrayList<String> getKeyValues(String sectionName)

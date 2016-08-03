@@ -20,6 +20,7 @@
 
 package lu.fisch.structorizer.locales;
 
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -46,6 +47,8 @@ public class Translator extends javax.swing.JFrame {
     private final Locales locales = new Locales();
     private final HashMap<String,JTable> tables = new HashMap<String,JTable>();
     private String loadedLocale;
+    
+    public static Locale locale;
 
     /**
      * Creates new form MainFrame
@@ -90,11 +93,18 @@ public class Translator extends javax.swing.JFrame {
                 model.addRow(parts.toArray());
             }
         }
+        
+        // CHECK WE NEED TO IMPLEMENT
+        // - default locale is missing strings others have
+        checkMissingStrings();
+        // - default locale contains duplicated strings
+        checkForDuplicatedStrings();
     }
     
     public void loadLocale(String localeName)
     {
         headerText.setText(locales.getLocale(localeName).getHeader().getText());
+        locale=locales.getLocale(localeName);
         
         // loop through all sections
         ArrayList<String> sectionNames = locales.getSectionNames();
@@ -133,59 +143,89 @@ public class Translator extends javax.swing.JFrame {
         loadedLocale = localeName;
     }
     
-    /*
-    private void getMissingStrings()
+    private void checkMissingStrings()
     {
-        // get a list of the english strings only
-        StringList baseList = new StringList();
-        for (int i = 0; i < enLines.count(); i++) {
-            String get = enLines.get(i);
-            StringList parts = StringList.explode(enLines.get(i).trim(),"=");
-            if(enLines.get(i).trim().contains("=") && parts.get(0).contains(".") && !parts.get(0).startsWith("//"))
-            {
-                baseList.add(parts.get(0));
+        System.out.println("--[ checkMissingStrings ]--");
+
+        // loop through all locales
+        String[] localeNames = locales.getNames();
+        ArrayList<String> sectioNames = locales.getSectionNames();
+        ArrayList<String> keys = new ArrayList<String>();
+        for (int i = 0; i < localeNames.length; i++) {
+            String localeName = localeNames[i];
+            for (int s = 0; s < sectioNames.size(); s++) {
+                // get the name of the section
+                String sectionName = sectioNames.get(s);
+                ArrayList<String> localKeys = locales.getLocale(localeName).getKeys(sectionName);
+                // check if key already exists before adding it
+                for (int j = 0; j < localKeys.size(); j++) {
+                    String get = localKeys.get(j);
+                    if(!keys.contains(get)) keys.add(get);
+                }
+            }
+        } // now "keys" contains all keys from all locales
+        
+        // substract default locale keys
+        Locale locale = locales.getDefaultLocale();
+        for (int s = 0; s < sectioNames.size(); s++) {
+            // get the name of the section
+            String sectionName = sectioNames.get(s);
+            ArrayList<String> localKeys = locale.getKeys(sectionName);
+            for (int j = 0; j < localKeys.size(); j++) {
+                String get = localKeys.get(j);
+                keys.remove(get);
             }
         }
-        System.out.println("Base: "+baseList.count());
         
-        // load strings of all other languages
-        String[] list = {"chs","cht","cz","de","en","es","fr","it","lu","nl","pl","pt_br","ru"};
-        StringList others = new StringList();
-        for (int i = 0; i < list.length; i++) 
+        if(keys.size()>0)
         {
-            StringList myList = loadLang(list[i]+".txt");
-            for (int j = 0; j < myList.count(); j++) {
-                String get = myList.get(j);
-                StringList parts = StringList.explode(myList.get(j).trim(),"=");
-                if(myList.get(j).trim().contains("=") && parts.get(0).contains(".") && !parts.get(0).startsWith("//"))
+            for (int i = 0; i < keys.size(); i++) {
+                String key = keys.get(i);
+                System.out.println("- "+key+" ("+locales.whoHasKey(key)+")");
+            }
+            
+            JOptionPane.showMessageDialog(this, "The reference language file (en.txt) misses strings that have been found in another language file.\n"+
+                    "Please take a look at the console output for details.\n\n" +
+                    "Translator will terminate immediately in order to prevent data loss ...", "Error", JOptionPane.ERROR_MESSAGE);
+            this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+        }    
+    }
+    
+    private void checkForDuplicatedStrings()
+    {
+        System.out.println("--[ checkForDuplicatedStrings ]--");
+        boolean error = false;
+        
+        // get the default locale
+        Locale locale = locales.getDefaultLocale();
+
+        // loop through all sections in order to merge the values
+        ArrayList<String> sectioNames = locales.getSectionNames();
+        for (int i = 0; i < sectioNames.size(); i++) {
+            // get the name of the section
+            String sectionName = sectioNames.get(i);
+            System.out.println("Section: "+sectionName);
+
+            ArrayList<String> keys = locale.getKeys(sectionName);
+            
+            while(!keys.isEmpty())
+            {
+                String key = keys.get(0);
+                keys.remove(0);
+                if(keys.contains(key))
                 {
-                    if(!others.contains(parts.get(0)))
-                        others.add(parts.get(0));
+                    System.out.println("    - "+key);
+                    error = true;
                 }
             }
         }
-        System.out.println("Others: "+others.count());
         
-        // now get the delta
-        StringList delta = new StringList();
-        for (int i = 0; i < others.count(); i++) 
+        if(error)
         {
-            String key = others.get(i);
-            if(!baseList.contains(key) && !key.startsWith("//"))
-                delta.add(key+"=");
-        }
-        
-        System.out.println("The EN lang is missing these keys:");
-        System.out.println(delta.getText());
-        
-        if(delta.count()>0)
-        {
-            JOptionPane.showMessageDialog(this, "The reference language file (en.txt) misses strings that have been found in another language file.\n"+
-                        "Translator will terminate immediately in order to prevent data loss ...", "Error", JOptionPane.ERROR_MESSAGE);
-            System.exit(0);
+            JOptionPane.showMessageDialog(this, "Duplicated string(s) detected.\nPlease read the console output!\n\nTranslator is closing now!", "Error", JOptionPane.ERROR_MESSAGE);
+            this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
         }
     }
-*/
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -212,6 +252,7 @@ public class Translator extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         button_save = new javax.swing.JButton();
         button_en = new javax.swing.JButton();
+        button_empty = new javax.swing.JButton();
         tabs = new javax.swing.JTabbedPane();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -324,6 +365,13 @@ public class Translator extends javax.swing.JFrame {
             }
         });
 
+        button_empty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/114_unknown.png"))); // NOI18N
+        button_empty.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                button_emptyActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -357,7 +405,9 @@ public class Translator extends javax.swing.JFrame {
                 .addComponent(button_pl)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(button_cht)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 368, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(button_empty)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 327, Short.MAX_VALUE)
                 .addComponent(button_save)
                 .addContainerGap())
         );
@@ -366,6 +416,7 @@ public class Translator extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(button_empty, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(button_en, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(button_save, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(button_it, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -506,9 +557,14 @@ public class Translator extends javax.swing.JFrame {
         loadLocale("en");
     }//GEN-LAST:event_button_enActionPerformed
 
-	public static void launch()
+    private void button_emptyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_emptyActionPerformed
+        loadLocale("empty");
+    }//GEN-LAST:event_button_emptyActionPerformed
+
+    public static void launch()
     {
         java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
             public void run() {
                 Translator translater = new Translator();
                 translater.setVisible(true);
@@ -560,6 +616,7 @@ public class Translator extends javax.swing.JFrame {
     private javax.swing.JButton button_cht;
     private javax.swing.JButton button_cz;
     private javax.swing.JButton button_de;
+    private javax.swing.JButton button_empty;
     private javax.swing.JButton button_en;
     private javax.swing.JButton button_es;
     private javax.swing.JButton button_fr;

@@ -581,6 +581,7 @@ ExportOptionDialoge.chkCharsetAll.text=
 ExportOptionDialoge.jLabel1.text=Choisissez les options que vous désirez acitver...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Sauvegarder les options.
+
 -----> Arranger
 Surface.msgFileLoadError.text=
 Surface.msgSavePortable.text=

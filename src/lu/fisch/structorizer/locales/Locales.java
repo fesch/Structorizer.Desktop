@@ -22,6 +22,7 @@ package lu.fisch.structorizer.locales;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import lu.fisch.utils.StringList;
 
 /**
  *
@@ -29,7 +30,7 @@ import java.util.HashMap;
  */
 public class Locales {
     // LOCALES_LIST of all locales we have
-    public static final String[] LOCALES_LIST = {"chs","cht","cz","de","en","es","fr","it","lu","nl","pl","pt_br","ru"};
+    public static final String[] LOCALES_LIST = {"chs","cht","cz","de","en","es","fr","it","lu","nl","pl","pt_br","ru","empty"};
     
     // the "default" oder "master" locale
     public static final String DEFAULT_LOCALE = "en";
@@ -97,6 +98,18 @@ public class Locales {
     public Locale getLocale(String name)
     {
         return locales.get(name);
+    }
+    
+    public StringList whoHasKey(String keyName)
+    {
+        StringList result = new StringList();
+        
+        for (int i = 0; i < LOCALES_LIST.length; i++) {
+            String localeName = LOCALES_LIST[i];
+            if(getLocale(localeName).hasKey(keyName)) result.add(localeName);
+        }
+        
+        return result;
     }
     
 }

@@ -28,6 +28,7 @@ public class Tab extends javax.swing.JPanel {
         table.setDefaultRenderer(Object.class, new BoardTableCellRenderer());
         table.setRowHeight(25);
         
+        table.setModel(new TranslatorTableModel());
         DefaultTableModel model = ((DefaultTableModel)table.getModel());
         model.setColumnCount(3);
         model.setRowCount(0);
@@ -91,9 +92,9 @@ class BoardTableCellRenderer extends DefaultTableCellRenderer {
         Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
         setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
         
-        String first = (String) table.getModel().getValueAt(row, 0);
+        String key = (String) table.getModel().getValueAt(row, 0);
         
-        if(first!=null && first.startsWith(Locale.startOfSubSection))
+        if(key!=null && key.startsWith(Locale.startOfSubSection))
         {
             if (!isSelected)
                     c.setBackground(Color.cyan);
@@ -108,6 +109,13 @@ class BoardTableCellRenderer extends DefaultTableCellRenderer {
             else
                 c.setBackground(Color.yellow);
         } 
+        else if(col==2 && !Translator.locale.hasValuePresent(key))
+        {
+            if(!isSelected)
+                c.setBackground(Color.green);
+            else
+                c.setBackground(Color.green.darker());
+        }
         else if (!isSelected) 
         {
             c.setBackground(backgroundColor);
