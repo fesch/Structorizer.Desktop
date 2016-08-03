@@ -164,6 +164,33 @@ public class Locale {
         return false;
     }
     
+    public boolean hasValuePresent(String keyName)
+    {
+        String[] sectionNames = getSectionNames();
+        
+        for (int i = 0; i < sectionNames.length; i++) {
+            String sectionName = sectionNames[i];
+            
+            StringList section = sections.get(sectionName);
+
+            for (int s = 0; s < section.count(); s++) {
+                String line = section.get(s);
+                StringList parts = StringList.explodeFirstOnly(line.trim(),"=");
+                if(line.trim().contains("=") && parts.get(0).contains(".") && !parts.get(0).startsWith("//"))
+                {
+                    if(parts.get(0).equals(keyName))
+                    {
+                        if(parts.get(1).trim().isEmpty())
+                            return false;
+                        else
+                            return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
     public ArrayList<String> getKeyValues(String sectionName)
     {
         ArrayList<String> keys = new ArrayList<String>();
