@@ -121,6 +121,9 @@ public class Translator extends javax.swing.JFrame {
             button.setBackground(Color.green);
             button.setToolTipText(loadedLocaleName+" - cached!");
                     
+            // store header
+            loadedLocale.setHeader(StringList.explode(headerText.getText(), "\n"));
+            
             // loop through all sections in order to merge the values
             ArrayList<String> sectionNames = locales.getSectionNames();
             for (int i = 0; i < sectionNames.size(); i++) {
@@ -634,7 +637,20 @@ public class Translator extends javax.swing.JFrame {
         if (userSelection == JFileChooser.APPROVE_OPTION) 
         {
             File fileToSave = fileChooser.getSelectedFile();
-            try
+            
+            boolean save = true;
+            
+            if(fileToSave.exists() && !fileToSave.isDirectory()) { 
+                if (JOptionPane.showConfirmDialog(this, 
+                    "Are you sure to override the file <"+fileToSave.getName()+">?", "Override file?", 
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE) == JOptionPane.NO_OPTION) {
+                save=false;
+            }
+
+            }            
+            
+            if(save) try
             {
                 FileOutputStream fos = new FileOutputStream(fileToSave);
                 Writer out = new OutputStreamWriter(fos, "UTF8");
