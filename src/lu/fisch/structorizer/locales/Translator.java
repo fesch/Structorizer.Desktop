@@ -115,7 +115,7 @@ public class Translator extends javax.swing.JFrame {
         ((JButton)evt.getSource()).setToolTipText(localeName);
         
         // backup actual loadedLocale
-        if(loadedLocale!=null)
+        if(loadedLocale!=null && loadedLocaleName!=null)
         {
             JButton button = (JButton) getComponentByName(loadedLocaleName);
             button.setBackground(Color.green);
