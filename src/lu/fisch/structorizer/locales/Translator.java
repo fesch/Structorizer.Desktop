@@ -20,6 +20,9 @@
 
 package lu.fisch.structorizer.locales;
 
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -28,11 +31,16 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import javax.swing.JButton;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 
 import lu.fisch.utils.StringList;
@@ -46,10 +54,10 @@ public class Translator extends javax.swing.JFrame {
     
     private final Locales locales = new Locales();
     private final HashMap<String,JTable> tables = new HashMap<String,JTable>();
-    private String loadedLocale;
-    
-    public static Locale locale;
 
+    private String loadedLocaleName = null;
+    public static Locale loadedLocale = null;
+    
     /**
      * Creates new form MainFrame
      */
@@ -84,7 +92,7 @@ public class Translator extends javax.swing.JFrame {
             table.getTableHeader().repaint();
             
             // fill the table with the keys and the values
-            // from the default locale
+            // from the default loadedLocale
             DefaultTableModel model = ((DefaultTableModel)table.getModel());
             ArrayList<String> keys = locales.getDefaultLocale().getKeyValues(sectionName);
             for (int j = 0; j < keys.size(); j++) {
@@ -95,52 +103,118 @@ public class Translator extends javax.swing.JFrame {
         }
         
         // CHECK WE NEED TO IMPLEMENT
-        // - default locale is missing strings others have
+        // - default loadedLocale is missing strings others have
         checkMissingStrings();
-        // - default locale contains duplicated strings
+        // - default loadedLocale contains duplicated strings
         checkForDuplicatedStrings();
     }
     
-    public void loadLocale(String localeName)
+    public void loadLocale(String localeName, java.awt.event.ActionEvent evt)
     {
-        headerText.setText(locales.getLocale(localeName).getHeader().getText());
-        locale=locales.getLocale(localeName);
+        ((JButton)evt.getSource()).setName(localeName);
+        ((JButton)evt.getSource()).setToolTipText(localeName);
         
-        // loop through all sections
-        ArrayList<String> sectionNames = locales.getSectionNames();
-        for (int i = 0; i < sectionNames.size(); i++) {
-            // get the name of the section
-            String sectionName = sectionNames.get(i);
-            
-            // fetch the corresponding table
-            JTable table = tables.get(sectionName);
-            
-            // put the label on the column
-            table.getColumnModel().getColumn(2).setHeaderValue(localeName);
-            table.getTableHeader().repaint();
-            
-            // get a reference to the model
-            DefaultTableModel model = ((DefaultTableModel)table.getModel());
-            
-            // get the needed locale and the corresponding section
-            Locale locale = locales.getLocale(localeName);
-            
-            // get the strings and put them into the right row
-            for (int r = 0; r < model.getRowCount(); r++) {
-                // get the key
-                String key = ((String) model.getValueAt(r, 0)).trim();
-                // put the value
-                model.setValueAt(locale.getValue(sectionName, key), r, 2);
-            }
-            
-        }
+        // backup actual loadedLocale
+        if(loadedLocale!=null)
+        {
+            JButton button = (JButton) getComponentByName(loadedLocaleName);
+            button.setBackground(Color.green);
+            button.setToolTipText(loadedLocaleName+" - cached!");
+                    
+            // loop through all sections in order to merge the values
+            ArrayList<String> sectionNames = locales.getSectionNames();
+            for (int i = 0; i < sectionNames.size(); i++) {
+                // get the name of the section
+                String sectionName = sectionNames.get(i);
+                loadedLocale.values.put(sectionName, new LinkedHashMap<String, String>());
 
+                // fetch the corresponding table
+                JTable table = tables.get(sectionName);
+
+                // get a reference to the model
+                DefaultTableModel model = ((DefaultTableModel)table.getModel());
+
+                // get the strings and put them into loadedLocale
+                for (int r = 0; r < model.getRowCount(); r++) {
+                    // get the key
+                    String key = ((String) model.getValueAt(r, 0)).trim();
+                    // get the value
+                    String value = ((String) model.getValueAt(r, 2)).trim();
+                    // put the value
+                    loadedLocale.values.get(sectionName).put(key, value);
+                }
+            }
+        }
+        
+        headerText.setText(locales.getLocale(localeName).getHeader().getText());
+        loadedLocale=locales.getLocale(localeName);
+        
+        // first check if we have some cached values
+        if(loadedLocale.values.size()!=0)
+        {
+            // loop through all sections
+            ArrayList<String> sectionNames = locales.getSectionNames();
+            for (int i = 0; i < sectionNames.size(); i++) {
+                // get the name of the section
+                String sectionName = sectionNames.get(i);
+
+                // fetch the corresponding table
+                JTable table = tables.get(sectionName);
+
+                // put the label on the column
+                table.getColumnModel().getColumn(2).setHeaderValue(localeName);
+                table.getTableHeader().repaint();
+
+                // get a reference to the model
+                DefaultTableModel model = ((DefaultTableModel)table.getModel());
+
+                // get the strings and put them into the right row
+                for (int r = 0; r < model.getRowCount(); r++) {
+                    // get the key
+                    String key = ((String) model.getValueAt(r, 0)).trim();
+                    // put the value
+                    model.setValueAt(loadedLocale.values.get(sectionName).get(key), r, 2);
+                }
+            }
+        }
+        // if not, load the once we got from the file
+        else
+        {
+            // loop through all sections
+            ArrayList<String> sectionNames = locales.getSectionNames();
+            for (int i = 0; i < sectionNames.size(); i++) {
+                // get the name of the section
+                String sectionName = sectionNames.get(i);
+
+                // fetch the corresponding table
+                JTable table = tables.get(sectionName);
+
+                // put the label on the column
+                table.getColumnModel().getColumn(2).setHeaderValue(localeName);
+                table.getTableHeader().repaint();
+
+                // get a reference to the model
+                DefaultTableModel model = ((DefaultTableModel)table.getModel());
+
+                // get the needed loadedLocale and the corresponding section
+                Locale locale = locales.getLocale(localeName);
+
+                // get the strings and put them into the right row
+                for (int r = 0; r < model.getRowCount(); r++) {
+                    // get the key
+                    String key = ((String) model.getValueAt(r, 0)).trim();
+                    // put the value
+                    model.setValueAt(locale.getValue(sectionName, key), r, 2);
+                }
+            }
+        }
+        
         // enable the buttons
         button_save.setEnabled(true);
         tabs.setEnabled(true);  
         
-        // remember the loaded locale name
-        loadedLocale = localeName;
+        // remember the loaded loadedLocale name
+        loadedLocaleName = localeName;
     }
     
     private void checkMissingStrings()
@@ -165,7 +239,7 @@ public class Translator extends javax.swing.JFrame {
             }
         } // now "keys" contains all keys from all locales
         
-        // substract default locale keys
+        // substract default loadedLocale keys
         Locale locale = locales.getDefaultLocale();
         for (int s = 0; s < sectioNames.size(); s++) {
             // get the name of the section
@@ -196,7 +270,7 @@ public class Translator extends javax.swing.JFrame {
         System.out.println("--[ checkForDuplicatedStrings ]--");
         boolean error = false;
         
-        // get the default locale
+        // get the default loadedLocale
         Locale locale = locales.getDefaultLocale();
 
         // loop through all sections in order to merge the values
@@ -225,6 +299,26 @@ public class Translator extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Duplicated string(s) detected.\nPlease read the console output!\n\nTranslator is closing now!", "Error", JOptionPane.ERROR_MESSAGE);
             this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
         }
+    }
+    
+    
+    private Component getComponentByName(String name) {
+        return getComponentByName(this.getRootPane(), name);
+    }
+
+    private Component getComponentByName(Container root, String name) {
+        for (Component c : root.getComponents()) {
+            if (name.equals(c.getName())) {
+                return c;
+            }
+            if (c instanceof Container) {
+                Component result = getComponentByName((Container) c, name);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+        return null;
     }
     
     /**
@@ -359,6 +453,7 @@ public class Translator extends javax.swing.JFrame {
         });
 
         button_en.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/046_uk.png"))); // NOI18N
+        button_en.setName(""); // NOI18N
         button_en.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 button_enActionPerformed(evt);
@@ -453,58 +548,58 @@ public class Translator extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void button_frActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_frActionPerformed
-        loadLocale("fr");
+        loadLocale("fr",evt);
     }//GEN-LAST:event_button_frActionPerformed
 
     private void button_nlActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_nlActionPerformed
-        loadLocale("nl");
+        loadLocale("nl",evt);
     }//GEN-LAST:event_button_nlActionPerformed
 
     private void button_luActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_luActionPerformed
-        loadLocale("lu");
+        loadLocale("lu",evt);
     }//GEN-LAST:event_button_luActionPerformed
 
     private void button_deActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_deActionPerformed
-        loadLocale("de");
+        loadLocale("de",evt);
     }//GEN-LAST:event_button_deActionPerformed
 
     private void button_esActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_esActionPerformed
-        loadLocale("es");
+        loadLocale("es",evt);
     }//GEN-LAST:event_button_esActionPerformed
 
     private void button_pt_brActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_pt_brActionPerformed
-        loadLocale("pt_br");
+        loadLocale("pt_br",evt);
     }//GEN-LAST:event_button_pt_brActionPerformed
 
     private void button_itActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_itActionPerformed
-        loadLocale("it");
+        loadLocale("it",evt);
     }//GEN-LAST:event_button_itActionPerformed
 
     private void button_chsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_chsActionPerformed
-        loadLocale("chs");
+        loadLocale("chs",evt);
     }//GEN-LAST:event_button_chsActionPerformed
 
     private void button_czActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_czActionPerformed
-        loadLocale("cz");
+        loadLocale("cz",evt);
     }//GEN-LAST:event_button_czActionPerformed
 
     private void button_ruActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_ruActionPerformed
-        loadLocale("ru");
+        loadLocale("ru",evt);
     }//GEN-LAST:event_button_ruActionPerformed
 
     private void button_plActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_plActionPerformed
-        loadLocale("pl");
+        loadLocale("pl",evt);
     }//GEN-LAST:event_button_plActionPerformed
 
     private void button_chtActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_chtActionPerformed
-        loadLocale("cht");
+        loadLocale("cht",evt);
     }//GEN-LAST:event_button_chtActionPerformed
 
     private void button_saveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_saveActionPerformed
-        // load a copy of the default locale
+        // load a copy of the default loadedLocale
         Locale locale = locales.getDefaultLocale().loadCopyFromFile();
         
-        // put the header the locale to save
+        // put the header the loadedLocale to save
         locale.setHeader(StringList.explode(headerText.getText(), "\n"));
         
         // loop through all sections in order to merge the values
@@ -519,7 +614,7 @@ public class Translator extends javax.swing.JFrame {
             // get a reference to the model
             DefaultTableModel model = ((DefaultTableModel)table.getModel());
             
-            // get the strings and put them into locale
+            // get the strings and put them into loadedLocale
             for (int r = 0; r < model.getRowCount(); r++) {
                 // get the key
                 String key = ((String) model.getValueAt(r, 0)).trim();
@@ -533,7 +628,7 @@ public class Translator extends javax.swing.JFrame {
         // now ask where to save the data
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Save as");   
-        fileChooser.setSelectedFile(new File(loadedLocale+".txt"));
+        fileChooser.setSelectedFile(new File(loadedLocaleName+".txt"));
         int userSelection = fileChooser.showSaveDialog(this);
         
         if (userSelection == JFileChooser.APPROVE_OPTION) 
@@ -554,11 +649,11 @@ public class Translator extends javax.swing.JFrame {
     }//GEN-LAST:event_button_saveActionPerformed
 
     private void button_enActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_enActionPerformed
-        loadLocale("en");
+        loadLocale("en",evt);
     }//GEN-LAST:event_button_enActionPerformed
 
     private void button_emptyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_emptyActionPerformed
-        loadLocale("empty");
+        loadLocale("empty",evt);
     }//GEN-LAST:event_button_emptyActionPerformed
 
     public static void launch()

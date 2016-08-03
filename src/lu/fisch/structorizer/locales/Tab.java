@@ -109,7 +109,7 @@ class BoardTableCellRenderer extends DefaultTableCellRenderer {
             else
                 c.setBackground(Color.yellow);
         } 
-        else if(col==2 && !Translator.locale.hasValuePresent(key))
+        else if(col==2 && !Translator.loadedLocale.hasValuePresent(key))
         {
             if(!isSelected)
                 c.setBackground(Color.green);

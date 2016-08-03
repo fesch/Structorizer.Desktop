@@ -43,6 +43,8 @@ public class Locale {
     
     private String filename;
     
+    public final LinkedHashMap<String,LinkedHashMap<String,String>> values = new LinkedHashMap<String,LinkedHashMap<String,String>>();
+    
     public static void main(String[] args)
     {
         Locale locale = new Locale("en.txt");
