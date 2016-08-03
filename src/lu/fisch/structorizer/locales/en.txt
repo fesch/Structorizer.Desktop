@@ -79,10 +79,9 @@ Menu.menuFileSaveAs.text=Save As ...
 Menu.menuFileExport.text=Export
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Picture ...
-Menu.menuFileExportPicturePNGmulti=PNG (multiple) ...
 Menu.menuFileExportCode.text=Code ...
 Menu.menuFileExportPicturePNG.text=
-Menu.menuFileExportPicturePNGmulti.text=
+Menu.menuFileExportPicturePNGmulti.text=PNG (multiple) ...
 Menu.menuFileExportPictureEMF.text=
 Menu.menuFileExportPictureSWF.text=
 Menu.menuFileExportPicturePDF.text=
@@ -94,7 +93,7 @@ Menu.menuFileImport.text=Import
 Menu.menuFileImportPascal.text=Pascal Code ...
 Menu.menuFilePrint.text=Print ...
 Menu.menuFileArrange.text=Arrange
-Menu.menuFileTranslater.text=Translater
+Menu.menuFileTranslater.text=Translator
 Menu.menuFileQuit.text=Quit
 // Menu "Edit"
 Menu.menuEdit.text=Edit
@@ -606,8 +605,6 @@ ExportOptionDialoge.chkCharsetAll.text=List all?
 ExportOptionDialoge.jLabel1.text=Please select the options you want to activate...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Save these settings.
-ExportOptionDialoge.lbCharset.txt=
-ExportOptionDialoge.chkCharsetAll.txt=
 
 -----> Arranger
 Surface.msgFileLoadError.text=File Load Error:

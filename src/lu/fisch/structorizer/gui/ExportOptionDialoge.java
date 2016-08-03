@@ -315,7 +315,10 @@ public class ExportOptionDialoge extends LangDialog
         );
         
         // START KGU#212 2016-07-26: bugfix #204 - do the translation before packing
-        setLang(langFile);
+        if (langFile != null)
+        {
+        	setLang(langFile);
+        }
         // END KGU#212 2016-07-26
 
         pack();
