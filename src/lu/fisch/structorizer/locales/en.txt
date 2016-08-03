@@ -94,7 +94,7 @@ Menu.menuFileImport.text=Import
 Menu.menuFileImportPascal.text=Pascal Code ...
 Menu.menuFilePrint.text=Print ...
 Menu.menuFileArrange.text=Arrange
-Menu.menuFileTranslater.text=Translater
+Menu.menuFileTranslator.text=Translator
 Menu.menuFileQuit.text=Quit
 // Menu "Edit"
 Menu.menuEdit.text=Edit

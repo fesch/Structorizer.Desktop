@@ -38,7 +38,7 @@ import lu.fisch.utils.StringList;
  *
  * @author robertfisch
  */
-public class Translater extends javax.swing.JFrame {
+public class Translator extends javax.swing.JFrame {
     
     private final Locales locales = new Locales();
     private final HashMap<String,JTable> tables = new HashMap<String,JTable>();
@@ -47,7 +47,7 @@ public class Translater extends javax.swing.JFrame {
     /**
      * Creates new form MainFrame
      */
-    public Translater() {
+    public Translator() {
         initComponents();
         
         // disable some buttons
@@ -178,7 +178,7 @@ public class Translater extends javax.swing.JFrame {
         if(delta.count()>0)
         {
             JOptionPane.showMessageDialog(this, "The reference language file (en.txt) misses strings that have been found in another language file.\n"+
-                        "Translater will terminate immediately in order to prevent data loss ...", "Error", JOptionPane.ERROR_MESSAGE);
+                        "Translator will terminate immediately in order to prevent data loss ...", "Error", JOptionPane.ERROR_MESSAGE);
             System.exit(0);
         }
     }
@@ -208,6 +208,7 @@ public class Translater extends javax.swing.JFrame {
         button_cht = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         button_save = new javax.swing.JButton();
+        button_en = new javax.swing.JButton();
         tabs = new javax.swing.JTabbedPane();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -313,6 +314,13 @@ public class Translater extends javax.swing.JFrame {
             }
         });
 
+        button_en.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/046_uk.png"))); // NOI18N
+        button_en.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                button_enActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -320,6 +328,8 @@ public class Translater extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(button_en)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(button_fr)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -344,7 +354,7 @@ public class Translater extends javax.swing.JFrame {
                 .addComponent(button_pl)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(button_cht)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 409, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 368, Short.MAX_VALUE)
                 .addComponent(button_save)
                 .addContainerGap())
         );
@@ -353,6 +363,7 @@ public class Translater extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(button_en, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(button_save, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(button_it, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel1)
@@ -488,11 +499,15 @@ public class Translater extends javax.swing.JFrame {
         }     
     }//GEN-LAST:event_button_saveActionPerformed
 
+    private void button_enActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_enActionPerformed
+        loadLocale("en");
+    }//GEN-LAST:event_button_enActionPerformed
+
     public static void launch()
     {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                Translater translater = new Translater();
+                Translator translater = new Translator();
                 translater.setVisible(true);
                 translater.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             }
@@ -516,21 +531,23 @@ public class Translater extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(Translater.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Translator.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(Translater.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Translator.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(Translater.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Translator.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(Translater.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Translator.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+        //</editor-fold>
         //</editor-fold>
         //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Translater().setVisible(true);
+                new Translator().setVisible(true);
             }
         });
     }
@@ -540,6 +557,7 @@ public class Translater extends javax.swing.JFrame {
     private javax.swing.JButton button_cht;
     private javax.swing.JButton button_cz;
     private javax.swing.JButton button_de;
+    private javax.swing.JButton button_en;
     private javax.swing.JButton button_es;
     private javax.swing.JButton button_fr;
     private javax.swing.JButton button_it;
