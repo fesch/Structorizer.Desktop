@@ -606,8 +606,6 @@ ExportOptionDialoge.chkCharsetAll.text=List all?
 ExportOptionDialoge.jLabel1.text=Please select the options you want to activate...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Save these settings.
-ExportOptionDialoge.lbCharset.txt=
-ExportOptionDialoge.chkCharsetAll.txt=
 
 -----> Arranger
 Surface.msgFileLoadError.text=File Load Error:

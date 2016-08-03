@@ -70,7 +70,7 @@ Menu.menuFileImport.text=Importer
 Menu.menuFileImportPascal.text=Code source Pascal ...
 Menu.menuFilePrint.text=Imprimer ...
 Menu.menuFileArrange.text=Arranger
-Menu.menuFileTranslater.text=Traducteur
+Menu.menuFileTranslator.text=Traducteur
 Menu.menuFileQuit.text=Quitter
 // Menu "Edit"
 Menu.menuEdit.text=Editer
@@ -582,8 +582,7 @@ ExportOptionDialoge.chkCharsetAll.text=
 ExportOptionDialoge.jLabel1.text=Choisissez les options que vous désirez acitver...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Sauvegarder les options.
-ExportOptionDialoge.lbCharset.txt=
-ExportOptionDialoge.chkCharsetAll.txt=
+
 -----> Arranger
 Surface.msgFileLoadError.text=
 Surface.msgSavePortable.text=

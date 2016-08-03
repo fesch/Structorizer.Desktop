@@ -593,5 +593,3 @@ ExportOptionDialoge.chkCharsetAll.text=Listar tudo?
 ExportOptionDialoge.jLabel1.text=Favor selecionar as opções que desejar ativar ... 
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Salvar opções.
-ExportOptionDialoge.lbCharset.txt= 
-ExportOptionDialoge.chkCharsetAll.txt= 

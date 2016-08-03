@@ -138,6 +138,11 @@ public class Locale {
         
         StringList section = sections.get(sectionName);
         
+        if(section==null)
+        {
+            return new ArrayList<String>();
+        }
+        
         for (int i = 0; i < section.count(); i++) {
             String line = section.get(i);
             StringList parts = StringList.explodeFirstOnly(line.trim(),"=");
@@ -147,6 +152,16 @@ public class Locale {
             }
         }
         return keys;
+    }
+    
+    public boolean hasKey(String keyName)
+    {
+        String[] sectioNames = getSectionNames();
+        for (int i = 0; i < sectioNames.length; i++) {
+            String sectioName = sectioNames[i];
+            if(getKeys(sectioName).contains(keyName)) return true;
+        }
+        return false;
     }
     
     public ArrayList<String> getKeyValues(String sectionName)

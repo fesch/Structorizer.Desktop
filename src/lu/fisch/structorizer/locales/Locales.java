@@ -22,6 +22,7 @@ package lu.fisch.structorizer.locales;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import lu.fisch.utils.StringList;
 
 /**
  *
@@ -97,6 +98,18 @@ public class Locales {
     public Locale getLocale(String name)
     {
         return locales.get(name);
+    }
+    
+    public StringList whoHasKey(String keyName)
+    {
+        StringList result = new StringList();
+        
+        for (int i = 0; i < LOCALES_LIST.length; i++) {
+            String localeName = LOCALES_LIST[i];
+            if(getLocale(localeName).hasKey(keyName)) result.add(localeName);
+        }
+        
+        return result;
     }
     
 }

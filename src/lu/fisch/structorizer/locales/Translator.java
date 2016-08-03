@@ -87,6 +87,12 @@ public class Translator extends javax.swing.JFrame {
                 model.addRow(parts.toArray());
             }
         }
+        
+        // CHECK WE NEED TO IMPLEMENT
+        // - default locale is missing strings others have
+        checkMissingStrings();
+        // - default locale contains duplicated strings
+        checkForDuplicatedStrings();
     }
     
     public void loadLocale(String localeName)
@@ -128,6 +134,90 @@ public class Translator extends javax.swing.JFrame {
         
         // remeber the loaded localename
         loadedLocale = localeName;
+    }
+    
+    private void checkMissingStrings()
+    {
+        System.out.println("--[ checkMissingStrings ]--");
+
+        // loop through all locales
+        String[] localeNames = locales.getNames();
+        ArrayList<String> sectioNames = locales.getSectionNames();
+        ArrayList<String> keys = new ArrayList<String>();
+        for (int i = 0; i < localeNames.length; i++) {
+            String localeName = localeNames[i];
+            for (int s = 0; s < sectioNames.size(); s++) {
+                // get the name of the section
+                String sectionName = sectioNames.get(s);
+                ArrayList<String> localKeys = locales.getLocale(localeName).getKeys(sectionName);
+                // check if key already exists before adding it
+                for (int j = 0; j < localKeys.size(); j++) {
+                    String get = localKeys.get(j);
+                    if(!keys.contains(get)) keys.add(get);
+                }
+            }
+        } // now "keys" contains all keys from all locales
+        
+        // substract default locale keys
+        Locale locale = locales.getDefaultLocale();
+        for (int s = 0; s < sectioNames.size(); s++) {
+            // get the name of the section
+            String sectionName = sectioNames.get(s);
+            ArrayList<String> localKeys = locale.getKeys(sectionName);
+            for (int j = 0; j < localKeys.size(); j++) {
+                String get = localKeys.get(j);
+                keys.remove(get);
+            }
+        }
+        
+        if(keys.size()>0)
+        {
+            for (int i = 0; i < keys.size(); i++) {
+                String key = keys.get(i);
+                System.out.println("- "+key+" ("+locales.whoHasKey(key)+")");
+            }
+            
+            JOptionPane.showMessageDialog(this, "The reference language file (en.txt) misses strings that have been found in another language file.\n"+
+                    "Please take a look at the console output for details.\n\n" +
+                    "Translator will terminate immediately in order to prevent data loss ...", "Error", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+        }    
+    }
+    
+    private void checkForDuplicatedStrings()
+    {
+        System.out.println("--[ checkForDuplicatedStrings ]--");
+        boolean error = false;
+        
+        // get the default locale
+        Locale locale = locales.getDefaultLocale();
+
+        // loop through all sections in order to merge the values
+        ArrayList<String> sectioNames = locales.getSectionNames();
+        for (int i = 0; i < sectioNames.size(); i++) {
+            // get the name of the section
+            String sectionName = sectioNames.get(i);
+            System.out.println("Section: "+sectionName);
+
+            ArrayList<String> keys = locale.getKeys(sectionName);
+            
+            while(!keys.isEmpty())
+            {
+                String key = keys.get(0);
+                keys.remove(0);
+                if(keys.contains(key))
+                {
+                    System.out.println("    - "+key);
+                    error = true;
+                }
+            }
+        }
+        
+        if(error)
+        {
+            JOptionPane.showMessageDialog(this, "Duplicated string(s) detected.\nPlease read the console output!\n\nTranslator is closing now!", "Error", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+        }
     }
     
     /*
