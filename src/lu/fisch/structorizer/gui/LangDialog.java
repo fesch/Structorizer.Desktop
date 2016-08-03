@@ -89,8 +89,19 @@ public class LangDialog extends JDialog implements ILangDialog
 		// END KGU#203 2016-07-03
 		try 
 		{
-			BufferedReader in = new BufferedReader(new InputStreamReader(_com.getClass().getResourceAsStream("/lu/fisch/structorizer/locales/"+_langfile), "UTF-8"));
-			//BufferedReader in = new BufferedReader(new InputStreamReader(_com.getClass().getResourceAsStream(_langfile), "ISO-8859-1"));
+			// START KGU#232 2016-08-03: Enh. #222 - allow to load translation from a selected file
+			//BufferedReader in = new BufferedReader(new InputStreamReader(_com.getClass().getResourceAsStream("/lu/fisch/structorizer/locales/"+_langfile), "UTF-8"));
+			InputStream instr = null;
+			if (new File(_langfile).isAbsolute())
+			{
+				instr = new FileInputStream(_langfile);
+			}
+			else
+			{
+				instr = _com.getClass().getResourceAsStream("/lu/fisch/structorizer/locales/"+_langfile);
+			}
+			BufferedReader in = new BufferedReader(new InputStreamReader(instr, "UTF-8"));
+			// END KGU#232 2016-08-03
 			String str;
 			while ((str = in.readLine()) != null) 
 			{

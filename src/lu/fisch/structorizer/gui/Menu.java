@@ -51,6 +51,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.28      Enh. #206: New Dialog message text holders
  *      Kay Gürtzig     2016.07.31      Enh. #128: New Diagram menu item "Comments + text"
  *      Kay Gürtzig     2016.08.02      Enh. #215: menuDiagramBreakTrigger added, new message text holders
+ *      Kay Gürtzig     2016-08-03      Enh. #222: New possibility to load translations from a text file
  *
  ******************************************************************************************************
  *
@@ -65,12 +66,14 @@ import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.helpers.*;
 import lu.fisch.structorizer.io.INIFilter;
 import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.io.StructogramFilter;
 import lu.fisch.structorizer.locales.Translator;
 import lu.fisch.structorizer.parsers.*;
 
@@ -108,9 +111,11 @@ public class Menu extends JMenuBar implements NSDController
 
 	// START KGU#2 2015-11-19: New menu item to have the Arranger present the diagram
 	protected JMenuItem menuFileArrange = new JMenuItem("Arrange", IconLoader.ico105);
-	protected JMenuItem menuFileTranslator = new JMenuItem("Translator", IconLoader.ico113);
 	// END KGU#2 2015-11-19
 	protected JMenuItem menuFilePrint = new JMenuItem("Print ...",IconLoader.ico041);
+    // START BOB 2016-08-02
+	protected JMenuItem menuFileTranslator = new JMenuItem("Translator", IconLoader.ico113);
+    // END BOB 2016-08-02
 	protected JMenuItem menuFileQuit = new JMenuItem("Quit");
 
 	// Menu "Edit"
@@ -215,6 +220,9 @@ public class Menu extends JMenuBar implements NSDController
 	protected JMenuItem menuPreferencesLanguageCzech = new JCheckBoxMenuItem("Czech",IconLoader.ico088);
 	protected JMenuItem menuPreferencesLanguageRussian = new JCheckBoxMenuItem("Russian",IconLoader.ico092);
 	protected JMenuItem menuPreferencesLanguagePolish = new JCheckBoxMenuItem("Polish",IconLoader.ico093);
+	// START KGU#232 2016-08-03: Enh. #222
+	protected JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...",IconLoader.ico114);
+	// END KGU#232 2016-08-03
 	protected JMenu menuPreferencesLookAndFeel = new JMenu("Look & Feel");
 	protected JMenu menuPreferencesSave = new JMenu("All preferences ...");
 	protected JMenuItem menuPreferencesSaveAll = new JMenuItem("Save");
@@ -296,7 +304,10 @@ public class Menu extends JMenuBar implements NSDController
 	public static LangTextHolder msgBreakTriggerPrompt = new LangTextHolder("Specify an execution count triggering a break (0 = always).");
 	public static LangTextHolder msgBreakTriggerIgnored = new LangTextHolder("Input ignored - must be a cardinal number.");
 	public static LangTextHolder msgErrorFileSave = new LangTextHolder("Error on saving the file: %!");
-	// END KGU#213 2016-08-214
+	// END KGU#213 2016-08-02
+	// START KGU#232 2016-08-02: Enh. #222
+	public static LangTextHolder msgOpenLangFile = new LangTextHolder("Open language file");
+	// END KGU#232 2016-08-02
 
 	public void create()
 	{
@@ -402,18 +413,18 @@ public class Menu extends JMenuBar implements NSDController
 		menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		menuFilePrint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.printNSD(); doButtons(); } } );
 
-                menuFile.addSeparator();
-
 		// START KGU#2 2015-11-19
 		menuFile.add(menuFileArrange);
 		//menuFilePrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		menuFileArrange.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.arrangeNSD(); doButtons(); } } );
 		// END KGU#2 2015-11-19
                 
-                // START BOB 2016-08-02
+        menuFile.addSeparator();
+
+        // START BOB 2016-08-02
 		menuFile.add(menuFileTranslator);
 		menuFileTranslator.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { Translator.launch(); } } );
-                // END BOB 2016-08-02
+		// END BOB 2016-08-02
 
 		menuFile.addSeparator();
 
@@ -730,6 +741,12 @@ public class Menu extends JMenuBar implements NSDController
 
 		menuPreferencesLanguage.add(menuPreferencesLanguagePolish);
 		menuPreferencesLanguagePolish.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { setLang("pl.txt"); doButtons(); } } );
+
+		// START KGU#232 206-08-03: Enh. #222
+		menuPreferencesLanguage.addSeparator();
+		menuPreferencesLanguage.add(menuPreferencesLanguageFromFile);
+		menuPreferencesLanguageFromFile.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLangFile(); doButtons(); } } );
+		menuPreferencesLanguageFromFile.setToolTipText("You may create translation files with the 'Translator' tool in the File menu.");
                 
 		// create Look & Feel Menu
 		menuPreferences.add(menuPreferencesLookAndFeel);
@@ -1118,4 +1135,24 @@ public class Menu extends JMenuBar implements NSDController
     {
     }
 
+    // START KGU#232 2016-08-03: Enh. #222
+    public void chooseLangFile()
+    {
+		JFileChooser dlgOpen = new JFileChooser();
+		dlgOpen.setDialogTitle(msgOpenLangFile.getText());
+		// set directory
+		dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
+		// config dialogue
+		FileNameExtensionFilter filter = new FileNameExtensionFilter("Structorizer Language files", "txt");
+		dlgOpen.addChoosableFileFilter(filter);
+		dlgOpen.setFileFilter(filter);
+		// show & get result
+		int result = dlgOpen.showOpenDialog(this);
+		// react on result
+		if (result == JFileChooser.APPROVE_OPTION)
+		{
+			setLang(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
+		}
+    }
+    // END KGU#232 2016-08-03
 }

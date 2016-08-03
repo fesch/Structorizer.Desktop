@@ -53,6 +53,7 @@
  *      Kay Gürtzig     2016.07.28  Issue #208: New dialog messages for PNG export 
  *      Kay Gürtzig     2016.07.31  Enh. #128: New menu item captions for "Comments plus Text" mode
  *      Kay Gürtzig     2016.08.03  Issue #206: Several additions for Menu and Control
+ *      Kay Gürtzig     2016.08.04  Enh. #222: Menu option to load translation from file
  *
  ******************************************************************************************************
  *
@@ -179,6 +180,8 @@ Menu.menuPreferencesLanguageTraditionalChinese.text=Chino (tradicional)
 Menu.menuPreferencesLanguageCzech.text=Checo
 Menu.menuPreferencesLanguageRussian.text=Ruso
 Menu.menuPreferencesLanguagePolish.text=Polaco
+Menu.menuPreferencesLanguageFromFile.text=De un archivo ...
+Menu.menuPreferencesLanguageFromFile.tooltip=Archivos de traducción se pueden crear con el 'Traductor' en el menú 'Archivo'.
 
 Menu.menuPreferencesLookAndFeel.text=Aspecto & Ambiente
 
@@ -207,6 +210,8 @@ Menu.msgRepeatSaveAttempt.text=No fue posible grabar el archivo de Vd. Trátelo 
 Menu.msgErrorFileSave.text=Error guardando el archivo: %!
 Menu.msgBreakTriggerPrompt.text=Fije el número de ejecuciónes antes de parar (0 = siempre)
 Menu.msgBreakTriggerIgnored.text=Valor no usable. Tiene que ser un número natural.
+Menu.msgOpenLangFile.text=Abrir archivo de traducciones
+Menu.msgLangFile.text=Structorizer archivo de idioma
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
