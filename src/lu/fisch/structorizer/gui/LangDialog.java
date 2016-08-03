@@ -36,7 +36,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.10.14      Hook for customizable class-specific translation activities added
  *      Kay Gürtzig     2016.03.13      KGU#156: Support for JComboBox added on occasion of enhancement #124
  *      Kay Gürtzig     2016.07.03      KGU#203: File conversion to StringList now skips comments and empty lines
- *      Kay Gürtzig     2016.08.02      Bugfix #218: equality signs in translations mutilated them
+ *      Bob Fisch       2016.08.02      Bugfix #218: equality signs in translations mutilated them
+ *      Kay Gürtzig     2016.08.03      Inheritance changed (ILangDialog added)
  *
  ******************************************************************************************************
  *
@@ -61,7 +62,7 @@ import lu.fisch.utils.*;
  *
  */
 @SuppressWarnings("serial")
-public class LangDialog extends JDialog
+public class LangDialog extends JDialog implements ILangDialog
 {
 	protected String langFile = null;
 	
@@ -110,6 +111,7 @@ public class LangDialog extends JDialog
 				if (!str.isEmpty()
 						&& !isComment
 						&& !str.startsWith("//")
+						&& (str.indexOf("=") > 0)	// Ensure it specifies a translation
 						&& !str.startsWith("-----")
 						&& !str.startsWith(">>>"))
 				// END KGU#203 2016-08-02
@@ -151,9 +153,9 @@ public class LangDialog extends JDialog
 					}
 				}
 				// START KGU 2015-10-14: Hook for some more sophisticated class-specific stuff added
-				else if (pieces.get(1).equals("class_specific") && _com instanceof LangDialog)
+				else if (pieces.get(1).equals("class_specific") && _com instanceof ILangDialog)
 				{
-					((LangDialog)_com).setLangSpecific(pieces, parts.get(1));
+					((ILangDialog)_com).setLangSpecific(pieces, parts.get(1));
 				}
 				// END KGU 2015-10-14
 				else
@@ -275,7 +277,7 @@ public class LangDialog extends JDialog
 	 * @param translation = the text to be used if the ids matched
 	 * @return true if the matching succeeded and no further matching attempts with these keys ought to be done
 	 */
-	protected void setLangSpecific(StringList keys, String translation)
+	public void setLangSpecific(StringList keys, String translation)
 	{
 	}
 	// END KGU 2015-10-14

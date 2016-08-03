@@ -393,7 +393,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener
      * @see lu.fisch.structorizer.gui.LangDialog#setLangSpecific(lu.fisch.utils.StringList, java.lang.String)
      */
     @Override
-	protected void setLangSpecific(StringList keys, String translation)
+	public void setLangSpecific(StringList keys, String translation)
 	{
 		if (!keys.get(2).isEmpty() && keys.get(2).equalsIgnoreCase(this.elementType))
 		{

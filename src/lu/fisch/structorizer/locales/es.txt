@@ -52,6 +52,7 @@
  *      Kay Gürtzig     2016.07.27  Enh. #207: New message Menu.warning_1 (must be consistent with menu entry names!) 
  *      Kay Gürtzig     2016.07.28  Issue #208: New dialog messages for PNG export 
  *      Kay Gürtzig     2016.07.31  Enh. #128: New menu item captions for "Comments plus Text" mode
+ *      Kay Gürtzig     2016.08.03  Issue #206: Several additions for Menu and Control
  *
  ******************************************************************************************************
  *
@@ -74,14 +75,20 @@ Menu.menuFileExport.text=Exportar
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Imagen ...
 Menu.menuFileExportCode.text=Código ...
+Menu.menuFileExportPicturePNG.text=
+Menu.menuFileExportPicturePNGmulti.text=PNG (en mosaico) ...
+Menu.menuFileExportPictureEMF.text=
+Menu.menuFileExportPictureSWF.text=
+Menu.menuFileExportPicturePDF.text=
+Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=Exportar código %
 Menu.menuFileExportCodeFavorite.tooltip=El código preferido se puede configurar an las Preferencias de Exportación.
 Menu.menuFileImport.text=Importar
 // Submenu of "File -> Import"
 Menu.menuFileImportPascal.text=Código Pascal ...
-// Submenu of "File -> Print"
 Menu.menuFilePrint.text=Imprimir ...
 Menu.menuFileArrange.text=Colocar en el Arranger
+Menu.menuFileTranslator.text=Traductor
 Menu.menuFileQuit.text=Salir
 // Menu "Edit"
 Menu.menuEdit.text=Editar
@@ -134,6 +141,7 @@ Menu.menuDiagramCollapse.text=Reducir
 Menu.menuDiagramExpand.text=Expandir
 // Breakpoint
 Menu.menuDiagramBreakpoint.text=Poner/eliminar breakpoint
+Menu.menuDiagramBreakTrigger.text=Fije conditión de parar ...
 // Diagram Appearance
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Main
@@ -163,8 +171,8 @@ Menu.menuPreferencesLanguageGerman.text=Alemán
 Menu.menuPreferencesLanguageFrench.text=Francés
 Menu.menuPreferencesLanguageDutch.text=Holandés
 Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburgés
+Menu.menuPreferencesLanguageSpanish.text=Español
 Menu.menuPreferencesLanguageItalian.text=Italiano
-Menu.menuPreferencesLanguageSpanish.text=Espaniol
 Menu.menuPreferencesLanguagePortugalBrazil.text=Portugés (Brazil)
 Menu.menuPreferencesLanguageSimplifiedChinese.text=Chino (simplificado)
 Menu.menuPreferencesLanguageTraditionalChinese.text=Chino (tradicional)
@@ -178,6 +186,9 @@ Menu.menuPreferencesSave.text=Todas las preferencias ...
 Menu.menuPreferencesSaveAll.text=Guardar
 Menu.menuPreferencesSaveDump.text=Guardar como ...
 Menu.menuPreferencesSaveLoad.text=Importar de un archivo ...
+
+// Menu "View" (not in use right now!)
+Menu.menuView.text=
 
 // Menu "Help"
 Menu.menuHelp.text=Ayuda
@@ -193,14 +204,17 @@ Menu.msgOverwriteFile.text=¿Grabar encima del archivo existente?
 Menu.msgOverwriteFiles.text=Archivo(s) existe(n). ¿Gravar encima?
 Menu.btnConfirmOverwrite.text=Confirme gravar
 Menu.msgRepeatSaveAttempt.text=No fue posible grabar el archivo de Vd. Trátelo de nuevo, por favor.
+Menu.msgErrorFileSave.text=Error guardando el archivo: %!
+Menu.msgBreakTriggerPrompt.text=Fije el número de ejecuciónes antes de parar (0 = siempre)
+Menu.msgBreakTriggerIgnored.text=Valor no usable. Tiene que ser un número natural.
 
-// Error messages for Analyser
+// Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
 Menu.warning_1.text=ADVERTENCIA: ¡TEXTOS Y COMMENTARIOS ESTÁN INTERCAMBIADOS! → Menú "Diagrama > ¿Intercambiar textos/comentarios?".
 Menu.error01_1.text=ADVERTENCIA: Ninguna variable de bucle detectada ...
 Menu.error01_2.text=ADVERTENCIA: Más de una variable de bucle detectada ...
 Menu.error01_3.text=¡No tienes permiso modificar la variable del bucle «%» dentro del bucle!
-Menu.error02.text=¡Sin cambio de las variables de la condición! Posible bucle sin fin ... 
+Menu.error02.text=¡Sin cambio de las variables de la condición! Posible bucle sin fin ...
 Menu.error03_1.text=¡La variable «%» no ha sido inicializada!
 Menu.error03_2.text=¡La variable «%» no siempre será inicializada!
 Menu.error04.text=¡No tienes permiso usar una declaración IF con un bloque de verdad vacío!
@@ -231,7 +245,7 @@ Menu.error16_4.text=¡Un elemento de salto (salida) no puede salir más ciclos q
 Menu.error16_5.text=¡Una instrucción de retorno no está permitida desde una sección paralela!
 Menu.error16_6.text=¡Parámetro inadecuado para este tipo de SALTO - debería ser una constante entera.
 Menu.error16_7.text=Instrucciones después de un Salto no son alcanzables!
-Menu.error17.text=¡Varios hilos de ejecución compiten por el acceso a la variable «%» y así riesgan la consistencia! 
+Menu.error17.text=¡Varios hilos de ejecución compiten por el acceso a la variable «%» y así riesgan la consistencia!
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferencias del Comprobador
@@ -369,10 +383,10 @@ Editor.popupCollapse.text=Reducir
 Editor.popupExpand.text=Expandir
 // Breakpoint
 Editor.popupBreakpoint.text=Poner/eliminar breakpoint
-
+Editor.popupBreakTrigger.text=Fije la conditión de parar ...
 
 -----[ InputBox ]-----
-//InputBox.title=Editar elemento
+InputBox.title=
 InputBox.lblText.text=Por favor ingresa un texto
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Comentario
@@ -383,6 +397,12 @@ InputBox.btnOK.text=Aceptar
 InputBox.btnOK.tooltip=Aceptar los cambios.
 InputBox.btnCancel.text=Cancelar
 InputBox.btnCancel.tooltip=Cancelar los cambios.
+InputBox.lblBreakText.text=Para al ser ejecutido por la %-a vez
+InputBox.class_specific.Alternative.lblText=Por favor ingresa la condición
+InputBox.class_specific.While.lblText=Por favor ingresa la condición para entrar y quedar
+InputBox.class_specific.Repeat.lblText=Por favor ingresa la condición para salir
+InputBox.class_specific.Case.lblText=Ingresa la expresión y las constantes de selección (cada en nueva linea)
+InputBox.class_specific.Parallel.lblText=Número de brazos paralelos
 InputBox.chkBreakpoint.text=Breakpoint
 InputBox.class_specific.Root=Editar nombre de programa...
 InputBox.class_specific.Function=Editar signatura de función...
@@ -406,12 +426,8 @@ InputBox.class_specific.While.update=Editar bucle MIENTRAS...
 InputBox.class_specific.Call.update=Editar LLAMADA...
 InputBox.class_specific.Jump.update=Editar SALTO...
 InputBox.class_specific.Parallel.update=Editar sección PARALELA...
-InputBox.class_specific.Alternative.lblText=Por favor ingresa la condición
-InputBox.class_specific.While.lblText=Por favor ingresa la condición para entrar y quedar
-InputBox.class_specific.Repeat.lblText=Por favor ingresa la condición para salir
-InputBox.class_specific.Case.lblText=Ingresa la expresión y las constantes de selección (cada en nueva linea)
-InputBox.class_specific.Parallel.lblText=Número de brazos paralelos
------[ InputBoxFor ]-----
+
+-----[ InputBox For ]-----
 InputBoxFor.class_specific.For.insert=Insertar bucle PARA...
 InputBoxFor.class_specific.For.update=Editar bucle PARA...
 InputBoxFor.lblVariable.text=Variable contadora
@@ -429,7 +445,6 @@ InputBoxFor.btnOK.tooltip=Aceptar los cambios.
 InputBoxFor.btnCancel.text=Cancelar
 InputBoxFor.btnCancel.tooltip=Cancelar los Cambios.
 InputBoxFor.chkBreakpoint.text=Breakpoint
-
 
 -----[ Preferences ]-----
 Preferences.title=Preferencias de estructura
@@ -466,6 +481,7 @@ Preferences.btnOK.tooltip=Aceptar los cambios.
 About.title=Acerca de
 About.pnlTabbed.tab.0=Personas implicadas
 About.pnlTabbed.tab.1=Cambios
+About.pnlTabbed.tab.2=Licencia
 About.btnOK.text=Aceptar
 About.btnOK.tooltip=Aceptar los cambios.
 
@@ -605,7 +621,7 @@ Surface.msgNoArrFile.text=Ningún Arranger archivo encontrado
 
 -----> Executor
 -----[ Control ]-----
-Control.lblSpeed.text= Demora: 
+Control.lblSpeed.text=Demora:
 Control.btnCallStack.text=Lote de llamadas
 Control.lblCallLevel.text=Nivel:
 Control.chkCollectRuntimeData.text=Coleccionar datos on ej.
@@ -637,4 +653,6 @@ Control.msgIllegalLeave.text=Argumento ilegal de la instruction SALIR: %1
 Control.msgWrongExit.text=Valor ilegal en abortar el programa: %1
 Control.msgExitCode.text=¡Programa abortado con código %1!
 Control.msgIllegalJump.text=¡Contenido ilegal del SALTO (instruction para salir): <%1>!
-Control.msgTooManyLevels.text=¡Demasiados niveles para salir (niveles reales: %1 / specificados: %2)!
+Control.msgTooManyLevels.text=¡Demasiados niveles para salir (niveles reales: %1 / especificados: %2)!
+Control.class_specific.header.name=Nombre de Variable
+Control.class_specific.header.content=Contenido

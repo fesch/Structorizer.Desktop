@@ -44,6 +44,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.05.05      KGU#197: Further (forgotten) LangTextHolders added
  *      Kay Gürtzig     2016.07.25      Issue #201: Redesign of the GUI, new Slider listening, Call Stack button
  *      Kay Gürtzig     2016.07.27      KGU#197: More LangTextHolders for Executor error messages
+ *      Kay Gürtzig     2016.08.03      KGU#89: Inheritance enhanced to improve language support (var table)
  *
  ******************************************************************************************************
  *
@@ -73,8 +74,11 @@ import javax.swing.table.DefaultTableModel;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.RuntimeDataPresentMode;
+import lu.fisch.structorizer.gui.ILangDialog;
 import lu.fisch.structorizer.gui.IconLoader;
+import lu.fisch.structorizer.gui.LangDialog;
 import lu.fisch.structorizer.gui.LangTextHolder;
+import lu.fisch.utils.StringList;
 
 
 /**
@@ -82,7 +86,7 @@ import lu.fisch.structorizer.gui.LangTextHolder;
  * @author robertfisch
  */
 @SuppressWarnings("serial")
-public class Control extends javax.swing.JFrame implements PropertyChangeListener, ItemListener {
+public class Control extends javax.swing.JFrame implements PropertyChangeListener, ItemListener, ILangDialog {
 
     /** Creates new form Control */
     public Control() {
@@ -904,4 +908,39 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
 	}
 	// END KGU#117 2016-03-08
 
+	// START KGU#89 2016-08-03: Language support for the table header
+	@Override
+	public void setLang(String _langfile) {
+		LangDialog.setLang(this, _langfile);		
+	}
+
+	@Override
+	public void setLang(StringList _lines) {
+		LangDialog.setLang(this, _lines);
+	}
+
+	@Override
+	public void setLangSpecific(StringList keys, String translation) {
+		if (!keys.get(2).isEmpty() && keys.get(2).equalsIgnoreCase("header"))
+		{
+			String discriminator = keys.get(3);
+			int column = -1;
+			if (discriminator.equalsIgnoreCase("name"))
+			{
+				column = 0;
+			}
+			else if (discriminator.equalsIgnoreCase("content"))
+			{
+				column = 1;
+			}
+			if (column >= 0)
+			{
+				tblVar.getColumnModel().getColumn(column).setHeaderValue(translation);
+				tblVar.getTableHeader().repaint();
+			}
+		}
+		
+	}
+	// END KGU#89 2016-08-03
+	
 }

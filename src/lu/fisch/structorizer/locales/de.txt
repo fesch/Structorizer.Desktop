@@ -31,7 +31,7 @@
  *
  *      Author              Date        Description
  *      ------              ----        -----------
- *      Klaus-Peter Reimers 2008.01.14  Frst Issue
+ *      Klaus-Peter Reimers 2008.01.14  First Issue
  *      Kay Gürtzig         2014.10.18  Linguistic flaws corrected
  *      Kay Gürtzig         2014.12.02  ExportOptionDialoge and further messages added
  *      Kay Gürtzig         2015.10.06  altPadRight added to Preferences dialog
@@ -75,7 +75,7 @@ Menu.menuFileOpenRecent.text=Zuletzt verwendet
 Menu.menuFileExport.text=Exportieren
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Bild ...
-Menu.menuFileExportPicturePNGmulti=PNG (gekachelt) ...
+Menu.menuFileExportPicturePNGmulti.text=PNG (gekachelt) ...
 Menu.menuFileExportCode.text=Quellcode ...
 Menu.lbFileExportCodeFavorite.text=Exportieren nach %
 Menu.menuFileExportCodeFavorite.tooltip=Die bevorzugte Exportsprache kann in den Export-Einstellungen gewählt werden.
@@ -84,6 +84,7 @@ Menu.menuFileImport.text=Importieren
 Menu.menuFileImportPascal.text=Pascal Code ...
 Menu.menuFilePrint.text=Drucken ...
 Menu.menuFileArrange.text=Im Arranger anordnen
+Menu.menuFileTranslator.text=Übersetzer
 Menu.menuFileQuit.text=Beenden
 // Menu "Edit"
 Menu.menuEdit.text=Bearbeiten
@@ -646,3 +647,5 @@ Control.msgWrongExit.text=Falscher EXIT-Wert: %1
 Control.msgExitCode.text=Programm abgebrochen mit Code %1!
 Control.msgIllegalJump.text=Unzulässiger Inhalt einer Aussprung-Anweisung: <%1>!
 Control.msgTooManyLevels.text=Zu viele Ebenen zum Verlassen gefordert (tatsächliche Tiefe: %1 / angegeben: %2)!
+Control.class_specific.header.name=Variablenname
+Control.class_specific.header.content=Inhalt

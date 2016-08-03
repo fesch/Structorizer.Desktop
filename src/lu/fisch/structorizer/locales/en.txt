@@ -79,10 +79,9 @@ Menu.menuFileSaveAs.text=Save As ...
 Menu.menuFileExport.text=Export
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Picture ...
-Menu.menuFileExportPicturePNGmulti=PNG (multiple) ...
 Menu.menuFileExportCode.text=Code ...
 Menu.menuFileExportPicturePNG.text=
-Menu.menuFileExportPicturePNGmulti.text=
+Menu.menuFileExportPicturePNGmulti.text=PNG (multiple) ...
 Menu.menuFileExportPictureEMF.text=
 Menu.menuFileExportPictureSWF.text=
 Menu.menuFileExportPicturePDF.text=
@@ -660,3 +659,5 @@ Control.msgWrongExit.text=Wrong exit value: %1
 Control.msgExitCode.text=Program exited with code %1!
 Control.msgIllegalJump.text=Illegal content of a Jump (i.e. exit) instruction: <%1>!
 Control.msgTooManyLevels.text=Too many levels to leave (actual depth: %1 / specified: %2)!
+Control.class_specific.header.name=Variable Name
+Control.class_specific.header.content=Content
