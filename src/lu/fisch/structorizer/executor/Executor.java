@@ -296,7 +296,7 @@ public class Executor implements Runnable
 		mySelf.control.validate();
 		// START KGU#89 2015-11-25: Language support (we don't force the existence of all languages)
 		try {
-			LangDialog.setLang(mySelf.control, mySelf.diagram.getLang());
+			mySelf.control.setLang(mySelf.diagram.getLang());
 		}
 		catch (Exception ex)
 		{

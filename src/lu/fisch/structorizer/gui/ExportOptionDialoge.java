@@ -314,12 +314,13 @@ public class ExportOptionDialoge extends LangDialog
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
         
-        // START KGU#212 2016-07-26: bugfix #204 - do the translation before packing
+        // START KGU#212 2016-08-02: bugfix #204 - do the translation before packing
+        // But be aware that there is constructor without langFile initialization!
         if (langFile != null)
         {
         	setLang(langFile);
         }
-        // END KGU#212 2016-07-26
+        // END KGU#212 2016-08-02
 
         pack();
         // START KGU#212 2016-07-25: Best of all is not to set a specific size (cf. #127)

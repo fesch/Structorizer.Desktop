@@ -647,3 +647,5 @@ Control.msgWrongExit.text=Falscher EXIT-Wert: %1
 Control.msgExitCode.text=Programm abgebrochen mit Code %1!
 Control.msgIllegalJump.text=Unzulässiger Inhalt einer Aussprung-Anweisung: <%1>!
 Control.msgTooManyLevels.text=Zu viele Ebenen zum Verlassen gefordert (tatsächliche Tiefe: %1 / angegeben: %2)!
+Control.class_specific.header.name=Variablenname
+Control.class_specific.header.content=Inhalt

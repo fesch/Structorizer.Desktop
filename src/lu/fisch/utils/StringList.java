@@ -108,11 +108,10 @@ public class StringList {
                 if(multi.length>1)
                 {
                     String second = multi[1];
-                    if(multi.length>2)
-                        for(int i=2;i<multi.length;i++)
-                        {
-                            second+="="+multi[i];
-                        }
+                    for(int i=2;i<multi.length;i++)
+                    {
+                    	second+="="+multi[i];
+                    }
                     sl.add(second);
                 }
 

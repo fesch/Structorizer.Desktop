@@ -52,6 +52,7 @@
  *      Kay Gürtzig     2016.07.27  Enh. #207: New message Menu.warning_1 (must be consistent with menu entry names!) 
  *      Kay Gürtzig     2016.07.28  Issue #208: New dialog messages for PNG export 
  *      Kay Gürtzig     2016.07.31  Enh. #128: New menu item captions for "Comments plus Text" mode
+ *      Kay Gürtzig     2016.08.03  Issue #206: Several additions
  *
  ******************************************************************************************************
  *
@@ -652,5 +653,6 @@ Control.msgIllegalLeave.text=Argumento ilegal de la instruction SALIR: %1
 Control.msgWrongExit.text=Valor ilegal en abortar el programa: %1
 Control.msgExitCode.text=¡Programa abortado con código %1!
 Control.msgIllegalJump.text=¡Contenido ilegal del SALTO (instruction para salir): <%1>!
-Control.msgTooManyLevels.text=¡Demasiados niveles para salir (niveles reales: %1 / specificados: %2)!
-
+Control.msgTooManyLevels.text=¡Demasiados niveles para salir (niveles reales: %1 / especificados: %2)!
+Control.class_specific.header.name=Nombre de Variable
+Control.class_specific.header.content=Contenido
