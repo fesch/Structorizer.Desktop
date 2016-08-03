@@ -84,7 +84,7 @@ Menu.menuFileImport.text=Importieren
 Menu.menuFileImportPascal.text=Pascal Code ...
 Menu.menuFilePrint.text=Drucken ...
 Menu.menuFileArrange.text=Im Arranger anordnen
-Menu.menuFileranslater.text=Übersetzer
+Menu.menuFileTranslator.text=Übersetzer
 Menu.menuFileQuit.text=Beenden
 // Menu "Edit"
 Menu.menuEdit.text=Bearbeiten

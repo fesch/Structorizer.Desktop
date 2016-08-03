@@ -52,7 +52,7 @@
  *      Kay Gürtzig     2016.07.27  Enh. #207: New message Menu.warning_1 (must be consistent with menu entry names!) 
  *      Kay Gürtzig     2016.07.28  Issue #208: New dialog messages for PNG export 
  *      Kay Gürtzig     2016.07.31  Enh. #128: New menu item captions for "Comments plus Text" mode
- *      Kay Gürtzig     2016.08.03  Issue #206: Several additions
+ *      Kay Gürtzig     2016.08.03  Issue #206: Several additions for Menu and Control
  *
  ******************************************************************************************************
  *
@@ -88,7 +88,7 @@ Menu.menuFileImport.text=Importar
 Menu.menuFileImportPascal.text=Código Pascal ...
 Menu.menuFilePrint.text=Imprimir ...
 Menu.menuFileArrange.text=Colocar en el Arranger
-Menu.menuFileTranslater.text=Traductor
+Menu.menuFileTranslator.text=Traductor
 Menu.menuFileQuit.text=Salir
 // Menu "Edit"
 Menu.menuEdit.text=Editar

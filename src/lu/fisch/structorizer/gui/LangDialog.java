@@ -111,6 +111,7 @@ public class LangDialog extends JDialog implements ILangDialog
 				if (!str.isEmpty()
 						&& !isComment
 						&& !str.startsWith("//")
+						&& (str.indexOf("=") > 0)	// Ensure it specifies a translation
 						&& !str.startsWith("-----")
 						&& !str.startsWith(">>>"))
 				// END KGU#203 2016-08-02

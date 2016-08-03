@@ -27,17 +27,20 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
+
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+
 import lu.fisch.utils.StringList;
 
 /**
  *
  * @author robertfisch
  */
+@SuppressWarnings("serial")
 public class Translator extends javax.swing.JFrame {
     
     private final Locales locales = new Locales();
@@ -94,10 +97,10 @@ public class Translator extends javax.swing.JFrame {
         headerText.setText(locales.getLocale(localeName).getHeader().getText());
         
         // loop through all sections
-        ArrayList<String> sectioNames = locales.getSectionNames();
-        for (int i = 0; i < sectioNames.size(); i++) {
+        ArrayList<String> sectionNames = locales.getSectionNames();
+        for (int i = 0; i < sectionNames.size(); i++) {
             // get the name of the section
-            String sectionName = sectioNames.get(i);
+            String sectionName = sectionNames.get(i);
             
             // fetch the corresponding table
             JTable table = tables.get(sectionName);
@@ -126,7 +129,7 @@ public class Translator extends javax.swing.JFrame {
         button_save.setEnabled(true);
         tabs.setEnabled(true);  
         
-        // remeber the loaded localename
+        // remember the loaded locale name
         loadedLocale = localeName;
     }
     
@@ -503,7 +506,7 @@ public class Translator extends javax.swing.JFrame {
         loadLocale("en");
     }//GEN-LAST:event_button_enActionPerformed
 
-    public static void launch()
+	public static void launch()
     {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
