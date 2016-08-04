@@ -37,6 +37,9 @@ public class Locale {
     public static final String startOfSection      = "----->";
     public static final String startOfSubSection   = "-----[";
     
+    // START KGU 2016-08-04: #220 
+    public boolean hasUnsavedChanges = false;
+    // END KGU 2016-08-04
     
     private StringList header = new StringList();
     private final LinkedHashMap<String,StringList> sections = new LinkedHashMap<String,StringList>();

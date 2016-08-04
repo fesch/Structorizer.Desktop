@@ -54,7 +54,6 @@ import javax.swing.*;
 import javax.swing.border.*;
 
 import lu.fisch.structorizer.elements.Element;
-import lu.fisch.structorizer.elements.For;
 import lu.fisch.utils.StringList;
 
 

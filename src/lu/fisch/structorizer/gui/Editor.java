@@ -75,81 +75,81 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 
     // list
     DefaultListModel<DetectedError> errors = new DefaultListModel<DetectedError>();
-    protected JList<DetectedError> errorlist = new JList<DetectedError>(errors);
+    protected final JList<DetectedError> errorlist = new JList<DetectedError>(errors);
 
     // Panels
     public Diagram diagram = new Diagram(this, "???");
 	
     // scrollarea
-    protected JScrollPane scrollarea = new JScrollPane(diagram);
-    protected JScrollPane scrolllist = new JScrollPane(errorlist);
+    protected final JScrollPane scrollarea = new JScrollPane(diagram);
+    protected final JScrollPane scrolllist = new JScrollPane(errorlist);
 
     // Buttons
     // I/O
-    protected JButton btnNew = new JButton(IconLoader.ico001); 
-    protected JButton btnOpen = new JButton(IconLoader.ico002); 
-    protected JButton btnSave = new JButton(IconLoader.ico003); 
+    protected final JButton btnNew = new JButton(IconLoader.ico001); 
+    protected final JButton btnOpen = new JButton(IconLoader.ico002); 
+    protected final JButton btnSave = new JButton(IconLoader.ico003); 
     // InsertBefore
-    protected JButton btnBeforeInst = new JButton(IconLoader.ico007); 
-    protected JButton btnBeforeAlt = new JButton(IconLoader.ico008); 
-    protected JButton btnBeforeFor = new JButton(IconLoader.ico009); 
-    protected JButton btnBeforeWhile = new JButton(IconLoader.ico010); 
-    protected JButton btnBeforeRepeat = new JButton(IconLoader.ico011); 
-    protected JButton btnBeforeCall = new JButton(IconLoader.ico049); 
-    protected JButton btnBeforeJump = new JButton(IconLoader.ico056); 
-    protected JButton btnBeforeCase = new JButton(IconLoader.ico047); 
-    protected JButton btnBeforeForever = new JButton(IconLoader.ico009);
-    protected JButton btnBeforePara = new JButton(IconLoader.ico090);
+    protected final JButton btnBeforeInst = new JButton(IconLoader.ico007); 
+    protected final JButton btnBeforeAlt = new JButton(IconLoader.ico008); 
+    protected final JButton btnBeforeFor = new JButton(IconLoader.ico009); 
+    protected final JButton btnBeforeWhile = new JButton(IconLoader.ico010); 
+    protected final JButton btnBeforeRepeat = new JButton(IconLoader.ico011); 
+    protected final JButton btnBeforeCall = new JButton(IconLoader.ico049); 
+    protected final JButton btnBeforeJump = new JButton(IconLoader.ico056); 
+    protected final JButton btnBeforeCase = new JButton(IconLoader.ico047); 
+    protected final JButton btnBeforeForever = new JButton(IconLoader.ico009);
+    protected final JButton btnBeforePara = new JButton(IconLoader.ico090);
     // InsertAfter
-    protected JButton btnAfterInst = new JButton(IconLoader.ico012); 
-    protected JButton btnAfterAlt = new JButton(IconLoader.ico013); 
-    protected JButton btnAfterFor = new JButton(IconLoader.ico014); 
-    protected JButton btnAfterWhile = new JButton(IconLoader.ico015); 
-    protected JButton btnAfterRepeat = new JButton(IconLoader.ico016); 
-    protected JButton btnAfterCall = new JButton(IconLoader.ico050); 
-    protected JButton btnAfterJump = new JButton(IconLoader.ico055); 
-    protected JButton btnAfterCase = new JButton(IconLoader.ico048); 
-    protected JButton btnAfterForever = new JButton(IconLoader.ico014);
-    protected JButton btnAfterPara = new JButton(IconLoader.ico089);
+    protected final JButton btnAfterInst = new JButton(IconLoader.ico012); 
+    protected final JButton btnAfterAlt = new JButton(IconLoader.ico013); 
+    protected final JButton btnAfterFor = new JButton(IconLoader.ico014); 
+    protected final JButton btnAfterWhile = new JButton(IconLoader.ico015); 
+    protected final JButton btnAfterRepeat = new JButton(IconLoader.ico016); 
+    protected final JButton btnAfterCall = new JButton(IconLoader.ico050); 
+    protected final JButton btnAfterJump = new JButton(IconLoader.ico055); 
+    protected final JButton btnAfterCase = new JButton(IconLoader.ico048); 
+    protected final JButton btnAfterForever = new JButton(IconLoader.ico014);
+    protected final JButton btnAfterPara = new JButton(IconLoader.ico089);
 	// undo & redo
-    protected JButton btnUndo = new JButton(IconLoader.ico039); 
-	protected JButton btnRedo = new JButton(IconLoader.ico038); 
+    protected final JButton btnUndo = new JButton(IconLoader.ico039); 
+	protected final JButton btnRedo = new JButton(IconLoader.ico038); 
 	// copy & paste
-	protected JButton btnCut = new JButton(IconLoader.ico044); 
-    protected JButton btnCopy = new JButton(IconLoader.ico042); 
-    protected JButton btnPaste = new JButton(IconLoader.ico043);
+	protected final JButton btnCut = new JButton(IconLoader.ico044); 
+    protected final JButton btnCopy = new JButton(IconLoader.ico042); 
+    protected final JButton btnPaste = new JButton(IconLoader.ico043);
 	// style 
-    protected JToggleButton btnNice = new JToggleButton(IconLoader.ico040);
-    protected JToggleButton btnFunction = new JToggleButton(IconLoader.ico021);
-    protected JToggleButton btnProgram = new JToggleButton(IconLoader.ico022);
+    protected final JToggleButton btnNice = new JToggleButton(IconLoader.ico040);
+    protected final JToggleButton btnFunction = new JToggleButton(IconLoader.ico021);
+    protected final JToggleButton btnProgram = new JToggleButton(IconLoader.ico022);
 	// editing
-    protected JButton btnEdit = new JButton(IconLoader.ico006); 
-    protected JButton btnDelete = new JButton(IconLoader.ico005); 
-    protected JButton btnMoveUp = new JButton(IconLoader.ico019); 
-    protected JButton btnMoveDown = new JButton(IconLoader.ico020);
+    protected final JButton btnEdit = new JButton(IconLoader.ico006); 
+    protected final JButton btnDelete = new JButton(IconLoader.ico005); 
+    protected final JButton btnMoveUp = new JButton(IconLoader.ico019); 
+    protected final JButton btnMoveDown = new JButton(IconLoader.ico020);
 	// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
-	protected JButton btnTransmute = new JButton(IconLoader.ico109);
+	protected final JButton btnTransmute = new JButton(IconLoader.ico109);
 	// END KGU#199 2016-07-06
     // collapsing & expanding
     // START KGU#123 2016-01-04: Enh. #87 - Preparations for Fix #65
-    protected JButton btnCollapse = new JButton(IconLoader.ico106); 
-    protected JButton btnExpand = new JButton(IconLoader.ico107);    
+    protected final JButton btnCollapse = new JButton(IconLoader.ico106); 
+    protected final JButton btnExpand = new JButton(IconLoader.ico107);    
     // END KGU#123 2016-01-04
 	// printing
-    protected JButton btnPrint = new JButton(IconLoader.ico041);
+    protected final JButton btnPrint = new JButton(IconLoader.ico041);
     // START KGU#2 2015-11-19: Arranger launch added
-    protected JButton btnArrange = new JButton(IconLoader.ico105);
+    protected final JButton btnArrange = new JButton(IconLoader.ico105);
     // END KGU#2 2015-11-19
 	// font
-    protected JButton btnFontUp = new JButton(IconLoader.ico033); 
-    protected JButton btnFontDown = new JButton(IconLoader.ico034);
+    protected final JButton btnFontUp = new JButton(IconLoader.ico033); 
+    protected final JButton btnFontDown = new JButton(IconLoader.ico034);
 	// copyright 
-    protected JButton btnAbout = new JButton(IconLoader.ico017);
+    protected final JButton btnAbout = new JButton(IconLoader.ico017);
     // executing / testing
-    protected JButton btnMake = new JButton(IconLoader.ico004);
-    protected JButton btnTurtle = new JButton(IconLoader.turtle);
+    protected final JButton btnMake = new JButton(IconLoader.ico004);
+    protected final JButton btnTurtle = new JButton(IconLoader.turtle);
     // START KGU 2015-10-12: Breakpoint wiping
-    protected JButton btnDropBrk = new JButton(IconLoader.ico104);
+    protected final JButton btnDropBrk = new JButton(IconLoader.ico104);
     // END KGU 2015-10-12
 	// colors
     protected ColorButton btnColor0 = new ColorButton(Element.color0);
@@ -165,54 +165,54 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 	
 	
     // Popup menu
-    protected JPopupMenu popup = new JPopupMenu();
-    protected JMenuItem popupCut = new JMenuItem("Cut",IconLoader.ico044);
-    protected JMenuItem popupCopy = new JMenuItem("Copy",IconLoader.ico042);
-    protected JMenuItem popupPaste = new JMenuItem("Paste",IconLoader.ico043);
-    protected JMenu popupAdd = new JMenu("Add");
+    protected final JPopupMenu popup = new JPopupMenu();
+    protected final JMenuItem popupCut = new JMenuItem("Cut",IconLoader.ico044);
+    protected final JMenuItem popupCopy = new JMenuItem("Copy",IconLoader.ico042);
+    protected final JMenuItem popupPaste = new JMenuItem("Paste",IconLoader.ico043);
+    protected final JMenu popupAdd = new JMenu("Add");
     // Submenu of "Add"
-    protected JMenu popupAddBefore = new JMenu("Before");
+    protected final JMenu popupAddBefore = new JMenu("Before");
     // Submenus of "Add -> Before"
-    protected JMenuItem popupAddBeforeInst = new JMenuItem("Instruction",IconLoader.ico007);
-    protected JMenuItem popupAddBeforeAlt = new JMenuItem("IF statement",IconLoader.ico008);
-    protected JMenuItem popupAddBeforeCase = new JMenuItem("CASE statement",IconLoader.ico047);
-    protected JMenuItem popupAddBeforeFor = new JMenuItem("FOR loop",IconLoader.ico009);
-    protected JMenuItem popupAddBeforeWhile = new JMenuItem("WHILE loop",IconLoader.ico010);
-    protected JMenuItem popupAddBeforeRepeat = new JMenuItem("REPEAT loop",IconLoader.ico011);
-    protected JMenuItem popupAddBeforeForever = new JMenuItem("ENDLESS loop",IconLoader.ico009);
-    protected JMenuItem popupAddBeforeCall = new JMenuItem("Call",IconLoader.ico049);
-    protected JMenuItem popupAddBeforeJump = new JMenuItem("Jump",IconLoader.ico056);
-    protected JMenuItem popupAddBeforePara = new JMenuItem("Parallel",IconLoader.ico090);
+    protected final JMenuItem popupAddBeforeInst = new JMenuItem("Instruction",IconLoader.ico007);
+    protected final JMenuItem popupAddBeforeAlt = new JMenuItem("IF statement",IconLoader.ico008);
+    protected final JMenuItem popupAddBeforeCase = new JMenuItem("CASE statement",IconLoader.ico047);
+    protected final JMenuItem popupAddBeforeFor = new JMenuItem("FOR loop",IconLoader.ico009);
+    protected final JMenuItem popupAddBeforeWhile = new JMenuItem("WHILE loop",IconLoader.ico010);
+    protected final JMenuItem popupAddBeforeRepeat = new JMenuItem("REPEAT loop",IconLoader.ico011);
+    protected final JMenuItem popupAddBeforeForever = new JMenuItem("ENDLESS loop",IconLoader.ico009);
+    protected final JMenuItem popupAddBeforeCall = new JMenuItem("Call",IconLoader.ico049);
+    protected final JMenuItem popupAddBeforeJump = new JMenuItem("Jump",IconLoader.ico056);
+    protected final JMenuItem popupAddBeforePara = new JMenuItem("Parallel",IconLoader.ico090);
 
-    protected JMenu popupAddAfter = new JMenu("After");
+    protected final JMenu popupAddAfter = new JMenu("After");
     // Submenus of "Add -> After"
-    protected JMenuItem popupAddAfterInst = new JMenuItem("Instruction",IconLoader.ico012);
-    protected JMenuItem popupAddAfterAlt = new JMenuItem("IF statement",IconLoader.ico013);
-    protected JMenuItem popupAddAfterCase = new JMenuItem("CASE statement",IconLoader.ico048);
-    protected JMenuItem popupAddAfterFor = new JMenuItem("FOR loop",IconLoader.ico014);
-    protected JMenuItem popupAddAfterWhile = new JMenuItem("WHILE loop",IconLoader.ico015);
-    protected JMenuItem popupAddAfterRepeat = new JMenuItem("REPEAT loop",IconLoader.ico016);
-    protected JMenuItem popupAddAfterCall = new JMenuItem("Call",IconLoader.ico050);
-    protected JMenuItem popupAddAfterJump = new JMenuItem("Jump",IconLoader.ico055);
-    protected JMenuItem popupAddAfterForever = new JMenuItem("ENDLESS loop",IconLoader.ico014);
-    protected JMenuItem popupAddAfterPara = new JMenuItem("Parallel",IconLoader.ico089);
+    protected final JMenuItem popupAddAfterInst = new JMenuItem("Instruction",IconLoader.ico012);
+    protected final JMenuItem popupAddAfterAlt = new JMenuItem("IF statement",IconLoader.ico013);
+    protected final JMenuItem popupAddAfterCase = new JMenuItem("CASE statement",IconLoader.ico048);
+    protected final JMenuItem popupAddAfterFor = new JMenuItem("FOR loop",IconLoader.ico014);
+    protected final JMenuItem popupAddAfterWhile = new JMenuItem("WHILE loop",IconLoader.ico015);
+    protected final JMenuItem popupAddAfterRepeat = new JMenuItem("REPEAT loop",IconLoader.ico016);
+    protected final JMenuItem popupAddAfterCall = new JMenuItem("Call",IconLoader.ico050);
+    protected final JMenuItem popupAddAfterJump = new JMenuItem("Jump",IconLoader.ico055);
+    protected final JMenuItem popupAddAfterForever = new JMenuItem("ENDLESS loop",IconLoader.ico014);
+    protected final JMenuItem popupAddAfterPara = new JMenuItem("Parallel",IconLoader.ico089);
 
-    protected JMenuItem popupEdit = new JMenuItem("Edit",IconLoader.ico006);
-    protected JMenuItem popupDelete = new JMenuItem("Delete",IconLoader.ico005);
-    protected JMenuItem popupMoveUp = new JMenuItem("Move up",IconLoader.ico019);
-    protected JMenuItem popupMoveDown = new JMenuItem("Move down",IconLoader.ico020);
+    protected final JMenuItem popupEdit = new JMenuItem("Edit",IconLoader.ico006);
+    protected final JMenuItem popupDelete = new JMenuItem("Delete",IconLoader.ico005);
+    protected final JMenuItem popupMoveUp = new JMenuItem("Move up",IconLoader.ico019);
+    protected final JMenuItem popupMoveDown = new JMenuItem("Move down",IconLoader.ico020);
 	// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
-	protected JMenuItem popupTransmute = new JMenuItem("Transmute", IconLoader.ico109);
+	protected final JMenuItem popupTransmute = new JMenuItem("Transmute", IconLoader.ico109);
 	// END KGU#199 2016-07-06
     // START KGU#123 2016-01-04: Enh. #87 - Preparations for Fix #65
-    protected JMenuItem popupCollapse = new JMenuItem("Collapse", IconLoader.ico106); 
-    protected JMenuItem popupExpand = new JMenuItem("Expand", IconLoader.ico107);    
+    protected final JMenuItem popupCollapse = new JMenuItem("Collapse", IconLoader.ico106); 
+    protected final JMenuItem popupExpand = new JMenuItem("Expand", IconLoader.ico107);    
     // END KGU#123 2016-01-04
     // START KGU#43 2015-10-12: Breakpoint toggle
-    protected JMenuItem popupBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
+    protected final JMenuItem popupBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
     // END KGU#43 2015-10-12
 	// START KGU#213 2016-08-02: Enh. #215
-	protected JMenuItem popupBreakTrigger = new JMenuItem("Specify break trigger...", IconLoader.ico112);
+	protected final JMenuItem popupBreakTrigger = new JMenuItem("Specify break trigger...", IconLoader.ico112);
 	// END KGU#143 2016-08-02
     
     // START KGU#177 2016-04-06: Enh. #158

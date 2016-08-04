@@ -53,6 +53,7 @@ import java.lang.reflect.*;
 import javax.swing.*;
 import javax.swing.border.*;
 
+import lu.fisch.structorizer.locales.Locale;
 import lu.fisch.utils.*;
 
 /**
@@ -89,8 +90,19 @@ public class LangDialog extends JDialog implements ILangDialog
 		// END KGU#203 2016-07-03
 		try 
 		{
-			BufferedReader in = new BufferedReader(new InputStreamReader(_com.getClass().getResourceAsStream("/lu/fisch/structorizer/locales/"+_langfile), "UTF-8"));
-			//BufferedReader in = new BufferedReader(new InputStreamReader(_com.getClass().getResourceAsStream(_langfile), "ISO-8859-1"));
+			// START KGU#232 2016-08-03: Enh. #222 - allow to load translation from a selected file
+			//BufferedReader in = new BufferedReader(new InputStreamReader(_com.getClass().getResourceAsStream("/lu/fisch/structorizer/locales/"+_langfile), "UTF-8"));
+			InputStream instr = null;
+			if (new File(_langfile).isAbsolute())
+			{
+				instr = new FileInputStream(_langfile);
+			}
+			else
+			{
+				instr = _com.getClass().getResourceAsStream("/lu/fisch/structorizer/locales/"+_langfile);
+			}
+			BufferedReader in = new BufferedReader(new InputStreamReader(instr, "UTF-8"));
+			// END KGU#232 2016-08-03
 			String str;
 			while ((str = in.readLine()) != null) 
 			{
@@ -112,8 +124,9 @@ public class LangDialog extends JDialog implements ILangDialog
 						&& !isComment
 						&& !str.startsWith("//")
 						&& (str.indexOf("=") > 0)	// Ensure it specifies a translation
-						&& !str.startsWith("-----")
-						&& !str.startsWith(">>>"))
+						&& !str.startsWith(Locale.startOfSection)
+						&& !str.startsWith(Locale.startOfSubSection)
+						&& !str.startsWith(Locale.endOfHEader))
 				// END KGU#203 2016-08-02
 				{
 					input += str+"\n";

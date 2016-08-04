@@ -54,6 +54,7 @@
  *      Kay Gürtzig         2016.07.28  Issue #208: New dialog messages for PNG export 
  *      Kay Gürtzig         2016.07.31  Enh. #128: New menu item captions for "Comments plus Text" mode
  *      Kay Gürtzig         2016.08.02  Enh. #215: Menu messages for break trigger (and other dialog messages)
+ *      Kay Gürtzig         2016.08.04  Enh. #222: Menu option to load translation from file
  *
  ******************************************************************************************************
  *
@@ -176,6 +177,8 @@ Menu.menuPreferencesLanguageTraditionalChinese.text=Chinesisch (traditionell)
 Menu.menuPreferencesLanguageCzech.text=Tschechisch
 Menu.menuPreferencesLanguageRussian.text=Russisch
 Menu.menuPreferencesLanguagePolish.text=Polnisch
+Menu.menuPreferencesLanguageFromFile.text=Aus Datei ...
+Menu.menuPreferencesLanguageFromFile.tooltip=Sie könnnen mit dem 'Übersetzer' im Dateimenü selbst Sprachdateien erstellen.
 
 Menu.menuPreferencesLookAndFeel.text=Aussehen & Bedienung
 
@@ -202,6 +205,8 @@ Menu.msgRepeatSaveAttempt.text=Die Datei konnte nicht gesichert werden. Versuche
 Menu.msgErrorFileSave.text=Fehler beim Sichern der Datei: %!
 Menu.msgBreakTriggerPrompt.text=Ausführungsanzahl für die Auslösung eines Haltes festlegen (0 = immer).
 Menu.msgBreakTriggerIgnored.text=Eingabe ignoriert - muss eine Kardinalzahl sein.
+Menu.msgOpenLangFile.text=Übersetzungsdatei öffnen
+Menu.msgLangFile.text=Structorizer-Übersetungsdatei
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
