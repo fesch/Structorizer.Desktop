@@ -7,10 +7,12 @@ package lu.fisch.structorizer.locales;
 
 import java.awt.Color;
 import java.awt.Component;
+
 import javax.swing.BorderFactory;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
 /**
  *
@@ -68,11 +70,11 @@ public class Tab extends javax.swing.JPanel {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
+        
         jScrollPane1.setViewportView(table);
 
         add(jScrollPane1, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane jScrollPane1;
@@ -92,10 +94,17 @@ class BoardTableCellRenderer extends DefaultTableCellRenderer {
         Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
         setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
         
-        String key = (String) table.getModel().getValueAt(row, 0);
+        TableModel model = table.getModel();
+        String key = (String) model.getValueAt(row, 0);
         
         if(key!=null && key.startsWith(Locale.startOfSubSection))
         {
+        	// START KGU 2016-08-04: Issue #220
+        	if (model instanceof TranslatorTableModel)
+        	{
+        		((TranslatorTableModel) model).forbidRowEditable(row);
+        	}
+        	// END KGU 2016-08-04
             if (!isSelected)
                     c.setBackground(Color.cyan);
             else
@@ -123,6 +132,7 @@ class BoardTableCellRenderer extends DefaultTableCellRenderer {
         
         return c;
     }
+    
 }
 
 class MyRenderer extends DefaultTableCellRenderer {

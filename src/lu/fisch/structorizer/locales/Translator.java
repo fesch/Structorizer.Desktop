@@ -23,7 +23,10 @@ package lu.fisch.structorizer.locales;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -32,17 +35,15 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import javax.swing.JButton;
 
+import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
-import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 
+import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.StringList;
 
 /**
@@ -50,19 +51,47 @@ import lu.fisch.utils.StringList;
  * @author robertfisch
  */
 @SuppressWarnings("serial")
-public class Translator extends javax.swing.JFrame {
+// START KGU 2016-08-04: Issue #220
+//public class Translator extends javax.swing.JFrame
+public class Translator extends javax.swing.JFrame implements PropertyChangeListener
+// END KGU 2016-08-04
+{
     
     private final Locales locales = new Locales();
     private final HashMap<String,JTable> tables = new HashMap<String,JTable>();
-
+    
     private String loadedLocaleName = null;
     public static Locale loadedLocale = null;
     
+    // START KGU 2016-08-04: Issue #220
+    // Button colour for saved but still cached modifications
+    private static final Color savedColor = new Color(170,255,170);
+    // Standard button background colour (for restauring original appearance)
+    private Color stdBackgroundColor = null;
+    // END KGU 2016-08-04
+
     /**
      * Creates new form MainFrame
      */
     public Translator() {
         initComponents();
+        
+        // START KGU 2016-08-04: Issue #220
+		// set icon depending on OS ;-)
+		String os = System.getProperty("os.name").toLowerCase();
+		setIconImage(IconLoader.ico074.getImage());
+		if (os.indexOf("windows") != -1) 
+		{
+			setIconImage(IconLoader.ico074.getImage());
+		} 
+		else if (os.indexOf("mac") != -1) 
+		{
+			setIconImage(IconLoader.icoNSD.getImage());
+		}
+		this.setTitle("Structorizer Translator");
+        setSize(1000, 500);	// with less width the save button was invisibble
+        stdBackgroundColor = button_empty.getBackground();	// for resetting
+        // END KGU 2016-08-04
         
         // disable some buttons
         button_save.setEnabled(false);
@@ -86,6 +115,9 @@ public class Translator extends javax.swing.JFrame {
             // store a reference
             JTable table = tab.getTable();
             tables.put(sectionName, table);
+            // START KGU 2016-08-04: Issue #220
+            table.addPropertyChangeListener(this);
+            // END KGU 2016-08-04
             
             // set the name
             table.getColumnModel().getColumn(1).setHeaderValue(Locales.DEFAULT_LOCALE);
@@ -107,6 +139,46 @@ public class Translator extends javax.swing.JFrame {
         checkMissingStrings();
         // - default loadedLocale contains duplicated strings
         checkForDuplicatedStrings();
+
+		/******************************
+		 * Set onClose event
+		 ******************************/
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		addWindowListener(new WindowAdapter() 
+		{
+			@Override
+			public void windowClosing(WindowEvent e) 
+			{
+				boolean unsavedChanges = false;
+				String[] localeNames = locales.getNames();
+				for (int i = 0; !unsavedChanges && i < localeNames.length; i++)
+				{
+					if (locales.getLocale(localeNames[i]).hasUnsavedChanges)
+					{
+						unsavedChanges = true;
+					}
+				}
+				if (unsavedChanges)
+				{
+					int closeOperation = getDefaultCloseOperation();
+					System.out.println(closeOperation);
+	                int answer = JOptionPane.showConfirmDialog (null, 
+	                        "There are unsaved changes! Sure to close?", 
+	                        "Unsaved Changes",
+	                        JOptionPane.YES_NO_OPTION,
+	                        JOptionPane.QUESTION_MESSAGE);
+	                if (answer == JOptionPane.YES_OPTION)
+	                {
+	                    dispose();
+	                }
+				}
+				else
+				{
+					dispose();
+				}
+			}
+		});
+    
     }
     
     public void loadLocale(String localeName, java.awt.event.ActionEvent evt)
@@ -118,7 +190,13 @@ public class Translator extends javax.swing.JFrame {
         if(loadedLocale != null && loadedLocaleName != null)
         {
             JButton button = (JButton) getComponentByName(loadedLocaleName);
-            button.setBackground(Color.green);
+            // START KGU 2016-08-04:#220
+            //button.setBackground(Color.green);
+            if (loadedLocale.hasUnsavedChanges)
+            {
+            	button.setBackground(Color.green);
+            }
+            // END KGU 2016-08-04
             button.setToolTipText(loadedLocaleName+" - cached!");
                     
             // store header
@@ -155,22 +233,22 @@ public class Translator extends javax.swing.JFrame {
         // first check if we have some cached values
         if(loadedLocale.values.size()!=0)
         {
-            // loop through all sections
-            ArrayList<String> sectionNames = locales.getSectionNames();
-            for (int i = 0; i < sectionNames.size(); i++) {
-                // get the name of the section
-                String sectionName = sectionNames.get(i);
-
-                // fetch the corresponding table
-                JTable table = tables.get(sectionName);
-
-                // put the label on the column
-                table.getColumnModel().getColumn(2).setHeaderValue(localeName);
-                table.getTableHeader().repaint();
-
-                // get a reference to the model
-                DefaultTableModel model = ((DefaultTableModel)table.getModel());
-
+        // loop through all sections
+        ArrayList<String> sectionNames = locales.getSectionNames();
+        for (int i = 0; i < sectionNames.size(); i++) {
+            // get the name of the section
+            String sectionName = sectionNames.get(i);
+            
+            // fetch the corresponding table
+            JTable table = tables.get(sectionName);
+            
+            // put the label on the column
+            table.getColumnModel().getColumn(2).setHeaderValue(localeName);
+            table.getTableHeader().repaint();
+            
+            // get a reference to the model
+            DefaultTableModel model = ((DefaultTableModel)table.getModel());
+            
                 // get the strings and put them into the right row
                 for (int r = 0; r < model.getRowCount(); r++) {
                     // get the key
@@ -200,18 +278,18 @@ public class Translator extends javax.swing.JFrame {
                 DefaultTableModel model = ((DefaultTableModel)table.getModel());
 
                 // get the needed loadedLocale and the corresponding section
-                Locale locale = locales.getLocale(localeName);
-
-                // get the strings and put them into the right row
-                for (int r = 0; r < model.getRowCount(); r++) {
-                    // get the key
-                    String key = ((String) model.getValueAt(r, 0)).trim();
-                    // put the value
-                    model.setValueAt(locale.getValue(sectionName, key), r, 2);
-                }
+            Locale locale = locales.getLocale(localeName);
+            
+            // get the strings and put them into the right row
+            for (int r = 0; r < model.getRowCount(); r++) {
+                // get the key
+                String key = ((String) model.getValueAt(r, 0)).trim();
+                // put the value
+                model.setValueAt(locale.getValue(sectionName, key), r, 2);
             }
         }
-        
+        }
+
         // enable the buttons
         button_save.setEnabled(true);
         tabs.setEnabled(true);  
@@ -226,13 +304,13 @@ public class Translator extends javax.swing.JFrame {
 
         // loop through all locales
         String[] localeNames = locales.getNames();
-        ArrayList<String> sectioNames = locales.getSectionNames();
+        ArrayList<String> sectionNames = locales.getSectionNames();
         ArrayList<String> keys = new ArrayList<String>();
         for (int i = 0; i < localeNames.length; i++) {
             String localeName = localeNames[i];
-            for (int s = 0; s < sectioNames.size(); s++) {
+            for (int s = 0; s < sectionNames.size(); s++) {
                 // get the name of the section
-                String sectionName = sectioNames.get(s);
+                String sectionName = sectionNames.get(s);
                 ArrayList<String> localKeys = locales.getLocale(localeName).getKeys(sectionName);
                 // check if key already exists before adding it
                 for (int j = 0; j < localKeys.size(); j++) {
@@ -244,9 +322,9 @@ public class Translator extends javax.swing.JFrame {
         
         // substract default loadedLocale keys
         Locale locale = locales.getDefaultLocale();
-        for (int s = 0; s < sectioNames.size(); s++) {
+        for (int s = 0; s < sectionNames.size(); s++) {
             // get the name of the section
-            String sectionName = sectioNames.get(s);
+            String sectionName = sectionNames.get(s);
             ArrayList<String> localKeys = locale.getKeys(sectionName);
             for (int j = 0; j < localKeys.size(); j++) {
                 String get = localKeys.get(j);
@@ -356,7 +434,10 @@ public class Translator extends javax.swing.JFrame {
         headerText = new javax.swing.JTextPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setMinimumSize(new java.awt.Dimension(900, 500));
+        // START KGU 2016-08-04: Wasn't enough as size but too large as minimum size
+        //setMinimumSize(new java.awt.Dimension(900, 500));
+        setMinimumSize(new java.awt.Dimension(500, 300));
+        // END KGU 2016-08-04
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 204));
         jPanel1.setPreferredSize(new java.awt.Dimension(655, 48));
@@ -656,6 +737,15 @@ public class Translator extends javax.swing.JFrame {
                 Writer out = new OutputStreamWriter(fos, "UTF8");
                 out.write(locale.getText());
                 out.close();
+                // START KGU 2016-08-04: #220
+                JButton button = (JButton) getComponentByName(loadedLocaleName);
+                if (button != null)
+                {
+                	//button.setBackground(stdBackgroundColor);
+                	button.setBackground(savedColor);
+                }
+                loadedLocale.hasUnsavedChanges = false;
+                // END KGU 2016-08-04
             }
             catch (IOException e)
             {
@@ -679,11 +769,43 @@ public class Translator extends javax.swing.JFrame {
             public void run() {
                 Translator translater = new Translator();
                 translater.setVisible(true);
-                translater.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                // START KGU 2016-08-04: Issue #220
+                //translater.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                // END KGU 2016-8-04
             }
         });
     }
     
+    // START KGU 2016-08-04 #220
+	public void propertyChange(PropertyChangeEvent pcEv) {
+		// Check if it was triggered by the termination of some editing activity (i.e. the cell editor was dropped)
+    	if (pcEv.getPropertyName().equals("tableCellEditor") && pcEv.getNewValue() == null)
+    	{
+    		for (String sectionName: locales.getSectionNames())
+    		{
+    			JTable table = tables.get(sectionName);
+    			if (pcEv.getSource().equals(table))
+    			{
+    				int rowNr = table.getSelectedRow();
+    				DefaultTableModel tm = (DefaultTableModel) table.getModel();
+    				Object val = tm.getValueAt(rowNr, 2);
+    				if (val != null && val instanceof String && !((String)val).trim().isEmpty())
+    				{
+    					loadedLocale.hasUnsavedChanges = true;
+    					JButton button = (JButton) getComponentByName(loadedLocaleName);
+    					if (button != null)
+    					{
+    						button.setBackground(Color.green);
+    					}
+    					break;
+    				}
+    			}
+    		}
+    	}
+	}
+	// END KGU 2016-08-04
+
+
     /**
      * @param args the command line arguments
      */

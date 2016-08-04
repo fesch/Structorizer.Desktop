@@ -99,8 +99,8 @@ Version: 3.25 (2016.08.04)
 - 16: Created and integrated translator [Bob Fisch]
 - 16: Bugfix #214: recoded translator [Bob Fisch]
 - 16: Issue #206: Table headers in Executor control now localizable <*>
-- 16: Issue #220: Usability improvements for translator [Bob Fisch]
-- 16: Issue #222: Localization from directly loadable file <*>
+- 16: Issue #220: Usability improvements for translator [Bob Fisch]<*>
+- 16: Issue #222: Structrizer localization from directly loadable file <*>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]

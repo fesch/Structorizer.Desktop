@@ -53,6 +53,7 @@ import java.lang.reflect.*;
 import javax.swing.*;
 import javax.swing.border.*;
 
+import lu.fisch.structorizer.locales.Locale;
 import lu.fisch.utils.*;
 
 /**
@@ -123,8 +124,9 @@ public class LangDialog extends JDialog implements ILangDialog
 						&& !isComment
 						&& !str.startsWith("//")
 						&& (str.indexOf("=") > 0)	// Ensure it specifies a translation
-						&& !str.startsWith("-----")
-						&& !str.startsWith(">>>"))
+						&& !str.startsWith(Locale.startOfSection)
+						&& !str.startsWith(Locale.startOfSubSection)
+						&& !str.startsWith(Locale.endOfHEader))
 				// END KGU#203 2016-08-02
 				{
 					input += str+"\n";

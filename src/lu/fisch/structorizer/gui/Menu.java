@@ -52,6 +52,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.31      Enh. #128: New Diagram menu item "Comments + text"
  *      Kay Gürtzig     2016.08.02      Enh. #215: menuDiagramBreakTrigger added, new message text holders
  *      Kay Gürtzig     2016-08-03      Enh. #222: New possibility to load translations from a text file
+ *      Kay Gürtzig     2016-08-04      Most persistent attributes set to final
  *
  ******************************************************************************************************
  *
@@ -73,7 +74,6 @@ import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.helpers.*;
 import lu.fisch.structorizer.io.INIFilter;
 import lu.fisch.structorizer.io.Ini;
-import lu.fisch.structorizer.io.StructogramFilter;
 import lu.fisch.structorizer.locales.Translator;
 import lu.fisch.structorizer.parsers.*;
 
@@ -84,230 +84,230 @@ public class Menu extends JMenuBar implements NSDController
 	private NSDController NSDControl = null;
 
 	// Menu "File"
-	protected JMenu menuFile = new JMenu("File");
+	protected final JMenu menuFile = new JMenu("File");
 	// Submenus of "File"
-	protected JMenuItem menuFileNew = new JMenuItem("New", IconLoader.ico001);
-	protected JMenuItem menuFileSave = new JMenuItem("Save", IconLoader.ico003);
-	protected JMenuItem menuFileSaveAs = new JMenuItem("Save As ...", IconLoader.ico003);
-	protected JMenuItem menuFileOpen = new JMenuItem("Open ...", IconLoader.ico002);
-	protected JMenuItem menuFileOpenRecent = new JMenu("Open Recent File");
-	protected JMenu menuFileExport = new JMenu("Export");
+	protected final JMenuItem menuFileNew = new JMenuItem("New", IconLoader.ico001);
+	protected final JMenuItem menuFileSave = new JMenuItem("Save", IconLoader.ico003);
+	protected final JMenuItem menuFileSaveAs = new JMenuItem("Save As ...", IconLoader.ico003);
+	protected final JMenuItem menuFileOpen = new JMenuItem("Open ...", IconLoader.ico002);
+	protected final JMenuItem menuFileOpenRecent = new JMenu("Open Recent File");
+	protected final JMenu menuFileExport = new JMenu("Export");
 	// Submenu of "File -> Export"
-	protected JMenu menuFileExportPicture = new JMenu("Picture");
-	protected JMenuItem menuFileExportPicturePNG = new JMenuItem("PNG ...",IconLoader.ico032);
-	protected JMenuItem menuFileExportPicturePNGmulti = new JMenuItem("PNG (multiple) ...",IconLoader.ico032);
-	protected JMenuItem menuFileExportPictureEMF = new JMenuItem("EMF ...",IconLoader.ico032);
-	protected JMenuItem menuFileExportPictureSWF = new JMenuItem("SWF ...",IconLoader.ico032);
-	protected JMenuItem menuFileExportPicturePDF = new JMenuItem("PDF ...",IconLoader.ico032);
-	protected JMenuItem menuFileExportPictureSVG = new JMenuItem("SVG ...",IconLoader.ico032);
-	protected JMenu menuFileExportCode = new JMenu("Code");
+	protected final JMenu menuFileExportPicture = new JMenu("Picture");
+	protected final JMenuItem menuFileExportPicturePNG = new JMenuItem("PNG ...",IconLoader.ico032);
+	protected final JMenuItem menuFileExportPicturePNGmulti = new JMenuItem("PNG (multiple) ...",IconLoader.ico032);
+	protected final JMenuItem menuFileExportPictureEMF = new JMenuItem("EMF ...",IconLoader.ico032);
+	protected final JMenuItem menuFileExportPictureSWF = new JMenuItem("SWF ...",IconLoader.ico032);
+	protected final JMenuItem menuFileExportPicturePDF = new JMenuItem("PDF ...",IconLoader.ico032);
+	protected final JMenuItem menuFileExportPictureSVG = new JMenuItem("SVG ...",IconLoader.ico032);
+	protected final JMenu menuFileExportCode = new JMenu("Code");
 	// START KGU#171 2016-04-01: Enh. #144 - new menu item for Favourite Code Export
-	protected static LangTextHolder lbFileExportCodeFavorite = new LangTextHolder("Export as % Code");	// Label template for translation
-	protected JMenuItem menuFileExportCodeFavorite = new JMenuItem("Export Fav. Code", IconLoader.ico004);
+	protected static final LangTextHolder lbFileExportCodeFavorite = new LangTextHolder("Export as % Code");	// Label template for translation
+	protected final JMenuItem menuFileExportCodeFavorite = new JMenuItem("Export Fav. Code", IconLoader.ico004);
 	// END KGU#171 2016-04-01
-	protected JMenu menuFileImport = new JMenu("Import");
+	protected final JMenu menuFileImport = new JMenu("Import");
 	// Submenu of "File -> Import"
-	protected JMenuItem menuFileImportPascal = new JMenuItem("Pascal Code ...",IconLoader.ico004);
+	protected final JMenuItem menuFileImportPascal = new JMenuItem("Pascal Code ...",IconLoader.ico004);
 
 	// START KGU#2 2015-11-19: New menu item to have the Arranger present the diagram
-	protected JMenuItem menuFileArrange = new JMenuItem("Arrange", IconLoader.ico105);
+	protected final JMenuItem menuFileArrange = new JMenuItem("Arrange", IconLoader.ico105);
 	// END KGU#2 2015-11-19
-	protected JMenuItem menuFilePrint = new JMenuItem("Print ...",IconLoader.ico041);
+	protected final JMenuItem menuFilePrint = new JMenuItem("Print ...",IconLoader.ico041);
     // START BOB 2016-08-02
-	protected JMenuItem menuFileTranslator = new JMenuItem("Translator", IconLoader.ico113);
+	protected final JMenuItem menuFileTranslator = new JMenuItem("Translator", IconLoader.ico113);
     // END BOB 2016-08-02
-	protected JMenuItem menuFileQuit = new JMenuItem("Quit");
+	protected final JMenuItem menuFileQuit = new JMenuItem("Quit");
 
 	// Menu "Edit"
-	protected JMenu menuEdit = new JMenu("Edit");
+	protected final JMenu menuEdit = new JMenu("Edit");
 	// Submenu of "Edit"
-	protected JMenuItem menuEditUndo = new JMenuItem("Undo",IconLoader.ico039);
-	protected JMenuItem menuEditRedo = new JMenuItem("Redo",IconLoader.ico038);
-	protected JMenuItem menuEditCut = new JMenuItem("Cut",IconLoader.ico044);
-	protected JMenuItem menuEditCopy = new JMenuItem("Copy",IconLoader.ico042);
-	protected JMenuItem menuEditPaste = new JMenuItem("Paste",IconLoader.ico043);
-	protected JMenuItem menuEditCopyDiagramPNG = new JMenuItem("Copy bitmap diagram to clipboard",IconLoader.ico032);
-	protected JMenuItem menuEditCopyDiagramEMF = new JMenuItem("Copy vector diagram to clipboard",IconLoader.ico032);
+	protected final JMenuItem menuEditUndo = new JMenuItem("Undo",IconLoader.ico039);
+	protected final JMenuItem menuEditRedo = new JMenuItem("Redo",IconLoader.ico038);
+	protected final JMenuItem menuEditCut = new JMenuItem("Cut",IconLoader.ico044);
+	protected final JMenuItem menuEditCopy = new JMenuItem("Copy",IconLoader.ico042);
+	protected final JMenuItem menuEditPaste = new JMenuItem("Paste",IconLoader.ico043);
+	protected final JMenuItem menuEditCopyDiagramPNG = new JMenuItem("Copy bitmap diagram to clipboard",IconLoader.ico032);
+	protected final JMenuItem menuEditCopyDiagramEMF = new JMenuItem("Copy vector diagram to clipboard",IconLoader.ico032);
 
-	protected JMenu menuView = new JMenu("View");
+	protected final JMenu menuView = new JMenu("View");
 
         // Menu "Diagram"
-	protected JMenu menuDiagram = new JMenu("Diagram");
+	protected final JMenu menuDiagram = new JMenu("Diagram");
 	// Submenus of "Diagram"
-	protected JMenu menuDiagramAdd = new JMenu("Add");
+	protected final JMenu menuDiagramAdd = new JMenu("Add");
 	// Submenu "Diagram -> Add -> Before"
-	protected JMenu menuDiagramAddBefore = new JMenu("Before");
+	protected final JMenu menuDiagramAddBefore = new JMenu("Before");
 	// Submenus for adding Elements "Before"
-	protected JMenuItem menuDiagramAddBeforeInst = new JMenuItem("Instruction",IconLoader.ico007);
-	protected JMenuItem menuDiagramAddBeforeAlt = new JMenuItem("IF statement",IconLoader.ico008);
-	protected JMenuItem menuDiagramAddBeforeCase = new JMenuItem("CASE statement",IconLoader.ico047);
-	protected JMenuItem menuDiagramAddBeforeFor = new JMenuItem("FOR loop",IconLoader.ico009);
-	protected JMenuItem menuDiagramAddBeforeWhile = new JMenuItem("WHILE loop",IconLoader.ico010);
-	protected JMenuItem menuDiagramAddBeforeRepeat = new JMenuItem("REPEAT loop",IconLoader.ico011);
-	protected JMenuItem menuDiagramAddBeforeForever = new JMenuItem("ENDLESS loop",IconLoader.ico009);
-	protected JMenuItem menuDiagramAddBeforeCall = new JMenuItem("Call",IconLoader.ico049);
-	protected JMenuItem menuDiagramAddBeforeJump = new JMenuItem("Jump",IconLoader.ico056);
-	protected JMenuItem menuDiagramAddBeforePara = new JMenuItem("Parallel",IconLoader.ico090);
+	protected final JMenuItem menuDiagramAddBeforeInst = new JMenuItem("Instruction",IconLoader.ico007);
+	protected final JMenuItem menuDiagramAddBeforeAlt = new JMenuItem("IF statement",IconLoader.ico008);
+	protected final JMenuItem menuDiagramAddBeforeCase = new JMenuItem("CASE statement",IconLoader.ico047);
+	protected final JMenuItem menuDiagramAddBeforeFor = new JMenuItem("FOR loop",IconLoader.ico009);
+	protected final JMenuItem menuDiagramAddBeforeWhile = new JMenuItem("WHILE loop",IconLoader.ico010);
+	protected final JMenuItem menuDiagramAddBeforeRepeat = new JMenuItem("REPEAT loop",IconLoader.ico011);
+	protected final JMenuItem menuDiagramAddBeforeForever = new JMenuItem("ENDLESS loop",IconLoader.ico009);
+	protected final JMenuItem menuDiagramAddBeforeCall = new JMenuItem("Call",IconLoader.ico049);
+	protected final JMenuItem menuDiagramAddBeforeJump = new JMenuItem("Jump",IconLoader.ico056);
+	protected final JMenuItem menuDiagramAddBeforePara = new JMenuItem("Parallel",IconLoader.ico090);
 
 	// Submenu "Diagram -> Add -> After"
-	protected JMenu menuDiagramAddAfter = new JMenu("After");
+	protected final JMenu menuDiagramAddAfter = new JMenu("After");
 	// Submenus for adding Elements "After"
-	protected JMenuItem menuDiagramAddAfterInst = new JMenuItem("Instruction",IconLoader.ico012);
-	protected JMenuItem menuDiagramAddAfterAlt = new JMenuItem("IF statement",IconLoader.ico013);
-	protected JMenuItem menuDiagramAddAfterCase = new JMenuItem("CASE statement",IconLoader.ico048);
-	protected JMenuItem menuDiagramAddAfterFor = new JMenuItem("FOR loop",IconLoader.ico014);
-	protected JMenuItem menuDiagramAddAfterWhile = new JMenuItem("WHILE loop",IconLoader.ico015);
-	protected JMenuItem menuDiagramAddAfterRepeat = new JMenuItem("REPEAT loop",IconLoader.ico016);
-	protected JMenuItem menuDiagramAddAfterForever = new JMenuItem("ENDLESS loop",IconLoader.ico014);
-	protected JMenuItem menuDiagramAddAfterCall = new JMenuItem("Call",IconLoader.ico050);
-	protected JMenuItem menuDiagramAddAfterJump = new JMenuItem("Jump",IconLoader.ico055);
-	protected JMenuItem menuDiagramAddAfterPara = new JMenuItem("Parallel",IconLoader.ico089);
+	protected final JMenuItem menuDiagramAddAfterInst = new JMenuItem("Instruction",IconLoader.ico012);
+	protected final JMenuItem menuDiagramAddAfterAlt = new JMenuItem("IF statement",IconLoader.ico013);
+	protected final JMenuItem menuDiagramAddAfterCase = new JMenuItem("CASE statement",IconLoader.ico048);
+	protected final JMenuItem menuDiagramAddAfterFor = new JMenuItem("FOR loop",IconLoader.ico014);
+	protected final JMenuItem menuDiagramAddAfterWhile = new JMenuItem("WHILE loop",IconLoader.ico015);
+	protected final JMenuItem menuDiagramAddAfterRepeat = new JMenuItem("REPEAT loop",IconLoader.ico016);
+	protected final JMenuItem menuDiagramAddAfterForever = new JMenuItem("ENDLESS loop",IconLoader.ico014);
+	protected final JMenuItem menuDiagramAddAfterCall = new JMenuItem("Call",IconLoader.ico050);
+	protected final JMenuItem menuDiagramAddAfterJump = new JMenuItem("Jump",IconLoader.ico055);
+	protected final JMenuItem menuDiagramAddAfterPara = new JMenuItem("Parallel",IconLoader.ico089);
 
-	protected JMenuItem menuDiagramEdit = new JMenuItem("Edit",IconLoader.ico006);
-	protected JMenuItem menuDiagramDelete = new JMenuItem("Delete",IconLoader.ico005);
-	protected JMenuItem menuDiagramMoveUp = new JMenuItem("Move up",IconLoader.ico019);
-	protected JMenuItem menuDiagramMoveDown = new JMenuItem("Move down",IconLoader.ico020);
+	protected final JMenuItem menuDiagramEdit = new JMenuItem("Edit",IconLoader.ico006);
+	protected final JMenuItem menuDiagramDelete = new JMenuItem("Delete",IconLoader.ico005);
+	protected final JMenuItem menuDiagramMoveUp = new JMenuItem("Move up",IconLoader.ico019);
+	protected final JMenuItem menuDiagramMoveDown = new JMenuItem("Move down",IconLoader.ico020);
 	// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
-	protected JMenuItem menuDiagramTransmute = new JMenuItem("Transmute", IconLoader.ico109);
+	protected final JMenuItem menuDiagramTransmute = new JMenuItem("Transmute", IconLoader.ico109);
 	// END KGU#199 2016-07-06
 	// START KGU#123 2016-01-03: New menu items for collapsing/expanding (addresses #65)
-	protected JMenuItem menuDiagramCollapse = new JMenuItem("Collapse", IconLoader.ico106);
-	protected JMenuItem menuDiagramExpand = new JMenuItem("Expand", IconLoader.ico107);
+	protected final JMenuItem menuDiagramCollapse = new JMenuItem("Collapse", IconLoader.ico106);
+	protected final JMenuItem menuDiagramExpand = new JMenuItem("Expand", IconLoader.ico107);
 	// END KGU#123 2016-01-03
 	// START KGU#143 2016-01-21: Bugfix #114 - Compensate editing restriction by accelerator4
-	protected JMenuItem menuDiagramBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
+	protected final JMenuItem menuDiagramBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
 	// END KGU#143 2016-01-21
 	// START KGU#213 2016-08-02: Enh. #215
-	protected JMenuItem menuDiagramBreakTrigger = new JMenuItem("Specify break trigger...", IconLoader.ico112);
+	protected final JMenuItem menuDiagramBreakTrigger = new JMenuItem("Specify break trigger...", IconLoader.ico112);
 	// END KGU#143 2016-08-02
 
-	protected JMenu menuDiagramType = new JMenu("Type");
-	protected JCheckBoxMenuItem menuDiagramTypeProgram = new JCheckBoxMenuItem("Main",IconLoader.ico022);
-	protected JCheckBoxMenuItem menuDiagramTypeFunction = new JCheckBoxMenuItem("Sub",IconLoader.ico021);
-	protected JCheckBoxMenuItem menuDiagramNice = new JCheckBoxMenuItem("Boxed diagram?",IconLoader.ico040);
-	protected JCheckBoxMenuItem menuDiagramComment = new JCheckBoxMenuItem("Show comments?",IconLoader.ico077);
-	protected JCheckBoxMenuItem menuDiagramMarker = new JCheckBoxMenuItem("Highlight variables?",IconLoader.ico079);
-	protected JCheckBoxMenuItem menuDiagramDIN = new JCheckBoxMenuItem("DIN 66261?",IconLoader.ico082);
-	protected JCheckBoxMenuItem menuDiagramAnalyser = new JCheckBoxMenuItem("Analyse structogram?",IconLoader.ico083);
-	protected JCheckBoxMenuItem menuDiagramSwitchComments = new JCheckBoxMenuItem("Switch text/comments?",IconLoader.ico102);
+	protected final JMenu menuDiagramType = new JMenu("Type");
+	protected final JCheckBoxMenuItem menuDiagramTypeProgram = new JCheckBoxMenuItem("Main",IconLoader.ico022);
+	protected final JCheckBoxMenuItem menuDiagramTypeFunction = new JCheckBoxMenuItem("Sub",IconLoader.ico021);
+	protected final JCheckBoxMenuItem menuDiagramNice = new JCheckBoxMenuItem("Boxed diagram?",IconLoader.ico040);
+	protected final JCheckBoxMenuItem menuDiagramComment = new JCheckBoxMenuItem("Show comments?",IconLoader.ico077);
+	protected final JCheckBoxMenuItem menuDiagramMarker = new JCheckBoxMenuItem("Highlight variables?",IconLoader.ico079);
+	protected final JCheckBoxMenuItem menuDiagramDIN = new JCheckBoxMenuItem("DIN 66261?",IconLoader.ico082);
+	protected final JCheckBoxMenuItem menuDiagramAnalyser = new JCheckBoxMenuItem("Analyse structogram?",IconLoader.ico083);
+	protected final JCheckBoxMenuItem menuDiagramSwitchComments = new JCheckBoxMenuItem("Switch text/comments?",IconLoader.ico102);
 	// START KGU#123 2016-01-04: Enh. #87
-	protected JCheckBoxMenuItem menuDiagramWheel = new JCheckBoxMenuItem("Mouse wheel for collapsing?",IconLoader.ico108);
+	protected final JCheckBoxMenuItem menuDiagramWheel = new JCheckBoxMenuItem("Mouse wheel for collapsing?",IconLoader.ico108);
 	// END KGU#123 2016-01-04
 	// START KGU#227 2016-07-31: Enh. #128
-	protected JCheckBoxMenuItem menuDiagramCommentsPlusText = new JCheckBoxMenuItem("Comments plus texts?",IconLoader.ico111);
+	protected final JCheckBoxMenuItem menuDiagramCommentsPlusText = new JCheckBoxMenuItem("Comments plus texts?",IconLoader.ico111);
 	// END KGU#227 2016-07-31
 
 	// Menu "Help"
-	protected JMenu menuPreferences = new JMenu("Preferences");
+	protected final JMenu menuPreferences = new JMenu("Preferences");
 	// Submenu of "Help"
-	protected JMenuItem menuPreferencesFont = new JMenuItem("Font ...",IconLoader.ico023);
-	protected JMenuItem menuPreferencesColors = new JMenuItem("Colors ...",IconLoader.ico031);
-	protected JMenuItem menuPreferencesOptions = new JMenuItem("Structures ...",IconLoader.ico040);
-	protected JMenuItem menuPreferencesParser = new JMenuItem("Parser ...",IconLoader.ico004);
-	protected JMenuItem menuPreferencesAnalyser = new JMenuItem("Analyser ...",IconLoader.ico083);
-	protected JMenuItem menuPreferencesExport = new JMenuItem("Export ...",IconLoader.ico032);
-	protected JMenu menuPreferencesLanguage = new JMenu("Language");
-	protected JMenuItem menuPreferencesLanguageEnglish = new JCheckBoxMenuItem("English",IconLoader.ico046);
-	protected JMenuItem menuPreferencesLanguageGerman = new JCheckBoxMenuItem("German",IconLoader.ico080);
-	protected JMenuItem menuPreferencesLanguageFrench = new JCheckBoxMenuItem("French",IconLoader.ico045);
-	protected JMenuItem menuPreferencesLanguageDutch = new JCheckBoxMenuItem("Dutch",IconLoader.ico051);
-	protected JMenuItem menuPreferencesLanguageLuxemburgish = new JCheckBoxMenuItem("Luxemburgish",IconLoader.ico075);
-	protected JMenuItem menuPreferencesLanguageSpanish = new JCheckBoxMenuItem("Spanish",IconLoader.ico084);
-	protected JMenuItem menuPreferencesLanguagePortugalBrazil = new JCheckBoxMenuItem("Brazilian portuguese",IconLoader.ico085);
-	protected JMenuItem menuPreferencesLanguageItalian = new JCheckBoxMenuItem("Italian",IconLoader.ico086);
-	protected JMenuItem menuPreferencesLanguageSimplifiedChinese = new JCheckBoxMenuItem("Chinese (simplified)",IconLoader.ico087);
-	protected JMenuItem menuPreferencesLanguageTraditionalChinese = new JCheckBoxMenuItem("Chinese (traditional)",IconLoader.ico094);
-	protected JMenuItem menuPreferencesLanguageCzech = new JCheckBoxMenuItem("Czech",IconLoader.ico088);
-	protected JMenuItem menuPreferencesLanguageRussian = new JCheckBoxMenuItem("Russian",IconLoader.ico092);
-	protected JMenuItem menuPreferencesLanguagePolish = new JCheckBoxMenuItem("Polish",IconLoader.ico093);
+	protected final JMenuItem menuPreferencesFont = new JMenuItem("Font ...",IconLoader.ico023);
+	protected final JMenuItem menuPreferencesColors = new JMenuItem("Colors ...",IconLoader.ico031);
+	protected final JMenuItem menuPreferencesOptions = new JMenuItem("Structures ...",IconLoader.ico040);
+	protected final JMenuItem menuPreferencesParser = new JMenuItem("Parser ...",IconLoader.ico004);
+	protected final JMenuItem menuPreferencesAnalyser = new JMenuItem("Analyser ...",IconLoader.ico083);
+	protected final JMenuItem menuPreferencesExport = new JMenuItem("Export ...",IconLoader.ico032);
+	protected final JMenu menuPreferencesLanguage = new JMenu("Language");
+	protected final JMenuItem menuPreferencesLanguageEnglish = new JCheckBoxMenuItem("English",IconLoader.ico046);
+	protected final JMenuItem menuPreferencesLanguageGerman = new JCheckBoxMenuItem("German",IconLoader.ico080);
+	protected final JMenuItem menuPreferencesLanguageFrench = new JCheckBoxMenuItem("French",IconLoader.ico045);
+	protected final JMenuItem menuPreferencesLanguageDutch = new JCheckBoxMenuItem("Dutch",IconLoader.ico051);
+	protected final JMenuItem menuPreferencesLanguageLuxemburgish = new JCheckBoxMenuItem("Luxemburgish",IconLoader.ico075);
+	protected final JMenuItem menuPreferencesLanguageSpanish = new JCheckBoxMenuItem("Spanish",IconLoader.ico084);
+	protected final JMenuItem menuPreferencesLanguagePortugalBrazil = new JCheckBoxMenuItem("Brazilian portuguese",IconLoader.ico085);
+	protected final JMenuItem menuPreferencesLanguageItalian = new JCheckBoxMenuItem("Italian",IconLoader.ico086);
+	protected final JMenuItem menuPreferencesLanguageSimplifiedChinese = new JCheckBoxMenuItem("Chinese (simplified)",IconLoader.ico087);
+	protected final JMenuItem menuPreferencesLanguageTraditionalChinese = new JCheckBoxMenuItem("Chinese (traditional)",IconLoader.ico094);
+	protected final JMenuItem menuPreferencesLanguageCzech = new JCheckBoxMenuItem("Czech",IconLoader.ico088);
+	protected final JMenuItem menuPreferencesLanguageRussian = new JCheckBoxMenuItem("Russian",IconLoader.ico092);
+	protected final JMenuItem menuPreferencesLanguagePolish = new JCheckBoxMenuItem("Polish",IconLoader.ico093);
 	// START KGU#232 2016-08-03: Enh. #222
-	protected JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...",IconLoader.ico114);
+	protected final JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...",IconLoader.ico114);
 	// END KGU#232 2016-08-03
-	protected JMenu menuPreferencesLookAndFeel = new JMenu("Look & Feel");
-	protected JMenu menuPreferencesSave = new JMenu("All preferences ...");
-	protected JMenuItem menuPreferencesSaveAll = new JMenuItem("Save");
-	protected JMenuItem menuPreferencesSaveLoad = new JMenuItem("Load from file ...");
-	protected JMenuItem menuPreferencesSaveDump = new JMenuItem("Save to file ...");
+	protected final JMenu menuPreferencesLookAndFeel = new JMenu("Look & Feel");
+	protected final JMenu menuPreferencesSave = new JMenu("All preferences ...");
+	protected final JMenuItem menuPreferencesSaveAll = new JMenuItem("Save");
+	protected final JMenuItem menuPreferencesSaveLoad = new JMenuItem("Load from file ...");
+	protected final JMenuItem menuPreferencesSaveDump = new JMenuItem("Save to file ...");
 
 	// Menu "Help"
-	protected JMenu menuHelp = new JMenu("Help");
+	protected final JMenu menuHelp = new JMenu("Help");
 	// Submenu of "Help"
 	// START KGU#208 2016-07-22: Enh. #199
-	protected JMenuItem menuHelpOnline = new JMenuItem("User Guide",IconLoader.ico110);
+	protected final JMenuItem menuHelpOnline = new JMenuItem("User Guide",IconLoader.ico110);
 	// END KGU#208 2016-07-22
-	protected JMenuItem menuHelpAbout = new JMenuItem("About ...",IconLoader.ico017);
-	protected JMenuItem menuHelpUpdate = new JMenuItem("Update ...",IconLoader.ico052);
+	protected final JMenuItem menuHelpAbout = new JMenuItem("About ...",IconLoader.ico017);
+	protected final JMenuItem menuHelpUpdate = new JMenuItem("Update ...",IconLoader.ico052);
 
 	// Error messages for Analyser
 	// START KGU#220 2016-07-27: Enh. as proposed in issue #207
-	public static LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! ---> \"Diagram > Switch text/comments\".");
+	public static final LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! ---> \"Diagram > Switch text/comments\".");
 	// END KGU#220 2016-07-27
-	public static LangTextHolder error01_1 = new LangTextHolder("WARNING: No loop variable detected ...");
-	public static LangTextHolder error01_2 = new LangTextHolder("WARNING: More than one loop variable detected ...");
-	public static LangTextHolder error01_3 = new LangTextHolder("You are not allowed to modify the loop variable «%» inside the loop!");
-	public static LangTextHolder error02 = new LangTextHolder("No change of the variables in the condition detected. Possible endless loop ...");
-	public static LangTextHolder error03_1= new LangTextHolder("The variable «%» has not yet been initialized!");
-	public static LangTextHolder error03_2 = new LangTextHolder("The variable «%» may not have been initialized!");
-	public static LangTextHolder error04 = new LangTextHolder("You are not allowed to use an IF-statement with an empty TRUE-block!");
-	public static LangTextHolder error05 = new LangTextHolder("The variable «%» must be written in uppercase!");
-	public static LangTextHolder error06 = new LangTextHolder("The programname «%» must be written in uppercase!");
-	public static LangTextHolder error07_1 = new LangTextHolder("«%» is not a valid name for a program or function!");
-	public static LangTextHolder error07_2 = new LangTextHolder("«%» is not a valid name for a parameter!");
-	public static LangTextHolder error07_3 = new LangTextHolder("«%» is not a valid name for a variable!");
-	public static LangTextHolder error08 = new LangTextHolder("It is not allowed to make an assignment inside a condition.");
-	public static LangTextHolder error09 = new LangTextHolder("Your program («%») cannot have the same name as a variable or parameter!");
-	public static LangTextHolder error10_1 = new LangTextHolder("A single instruction element should not contain input/output instructions and assignments!");
-	public static LangTextHolder error10_2 = new LangTextHolder("A single instruction element should not contain input and output instructions!");
-	public static LangTextHolder error10_3 = new LangTextHolder("A single instruction element should not contain input instructions and assignments!");
-	public static LangTextHolder error10_4 = new LangTextHolder("A single instruction element should not contain ouput instructions and assignments!");
-	public static LangTextHolder error11 = new LangTextHolder("You probably made an assignment error. Please check this instruction!");
-	public static LangTextHolder error12 = new LangTextHolder("The parameter «%» must start with the letter \"p\" followed by only uppercase letters!");
-	public static LangTextHolder error13_1 = new LangTextHolder("Your function does not return any result!");
-	public static LangTextHolder error13_2 = new LangTextHolder("Your function may not return a result!");
+	public static final LangTextHolder error01_1 = new LangTextHolder("WARNING: No loop variable detected ...");
+	public static final LangTextHolder error01_2 = new LangTextHolder("WARNING: More than one loop variable detected ...");
+	public static final LangTextHolder error01_3 = new LangTextHolder("You are not allowed to modify the loop variable «%» inside the loop!");
+	public static final LangTextHolder error02 = new LangTextHolder("No change of the variables in the condition detected. Possible endless loop ...");
+	public static final LangTextHolder error03_1= new LangTextHolder("The variable «%» has not yet been initialized!");
+	public static final LangTextHolder error03_2 = new LangTextHolder("The variable «%» may not have been initialized!");
+	public static final LangTextHolder error04 = new LangTextHolder("You are not allowed to use an IF-statement with an empty TRUE-block!");
+	public static final LangTextHolder error05 = new LangTextHolder("The variable «%» must be written in uppercase!");
+	public static final LangTextHolder error06 = new LangTextHolder("The programname «%» must be written in uppercase!");
+	public static final LangTextHolder error07_1 = new LangTextHolder("«%» is not a valid name for a program or function!");
+	public static final LangTextHolder error07_2 = new LangTextHolder("«%» is not a valid name for a parameter!");
+	public static final LangTextHolder error07_3 = new LangTextHolder("«%» is not a valid name for a variable!");
+	public static final LangTextHolder error08 = new LangTextHolder("It is not allowed to make an assignment inside a condition.");
+	public static final LangTextHolder error09 = new LangTextHolder("Your program («%») cannot have the same name as a variable or parameter!");
+	public static final LangTextHolder error10_1 = new LangTextHolder("A single instruction element should not contain input/output instructions and assignments!");
+	public static final LangTextHolder error10_2 = new LangTextHolder("A single instruction element should not contain input and output instructions!");
+	public static final LangTextHolder error10_3 = new LangTextHolder("A single instruction element should not contain input instructions and assignments!");
+	public static final LangTextHolder error10_4 = new LangTextHolder("A single instruction element should not contain ouput instructions and assignments!");
+	public static final LangTextHolder error11 = new LangTextHolder("You probably made an assignment error. Please check this instruction!");
+	public static final LangTextHolder error12 = new LangTextHolder("The parameter «%» must start with the letter \"p\" followed by only uppercase letters!");
+	public static final LangTextHolder error13_1 = new LangTextHolder("Your function does not return any result!");
+	public static final LangTextHolder error13_2 = new LangTextHolder("Your function may not return a result!");
 	// START KGU#78 (#23) 2015-11-25: Check for competitive return mechanisms
-	public static LangTextHolder error13_3 = new LangTextHolder("Your functions seems to use several competitive return mechanisms: «%»!");
+	public static final LangTextHolder error13_3 = new LangTextHolder("Your functions seems to use several competitive return mechanisms: «%»!");
 	// END KGU#78 (#23) 2015-11-25
 	// START KGU#3 2015-11-03: New checks for the enhanced For loop
-	public static LangTextHolder error14_1 = new LangTextHolder("The FOR loop parameters are not consistent to the loop heading text!");
-	public static LangTextHolder error14_2 = new LangTextHolder("The FOR loop step value («%») is not a legal integer constant!");
+	public static final LangTextHolder error14_1 = new LangTextHolder("The FOR loop parameters are not consistent to the loop heading text!");
+	public static final LangTextHolder error14_2 = new LangTextHolder("The FOR loop step value («%») is not a legal integer constant!");
 	// START KGU#3 2015-11-26: More clarity if e.g. a counter variable is named "step" and so is the stepFor parser preference
-	public static LangTextHolder error14_3 = new LangTextHolder("Variable name «%» may collide with one of the configured FOR loop heading keywords!");
+	public static final LangTextHolder error14_3 = new LangTextHolder("Variable name «%» may collide with one of the configured FOR loop heading keywords!");
 	// END KGU#3 2015-11-26
 	// END KGU#3 2015-11-03
 	// START KGU#2 2015-11-25: New check for Call element syntax and Jump consistency 
-	public static LangTextHolder error15 = new LangTextHolder("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
-	public static LangTextHolder error16_1 = new LangTextHolder("A JUMP element may be empty or start with one of %, possibly followed by an argument!");	
-	public static LangTextHolder error16_2 = new LangTextHolder("A return instruction, unless at final position, must form a JUMP element!");
-	public static LangTextHolder error16_3 = new LangTextHolder("An exit, leave or break instruction is only allowed as JUMP element!");
-	public static LangTextHolder error16_4 = new LangTextHolder("Cannot leave or break more loop levels than being nested in («%»)!");
-	public static LangTextHolder error16_5 = new LangTextHolder("You must not directly return out of a parallel thread!");
-	public static LangTextHolder error16_6 = new LangTextHolder("Wrong argument for this kind of JUMP (should be an integer constant)!");
-	public static LangTextHolder error16_7 = new LangTextHolder("Instruction isn't reachable after a JUMP!");
+	public static final LangTextHolder error15 = new LangTextHolder("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
+	public static final LangTextHolder error16_1 = new LangTextHolder("A JUMP element may be empty or start with one of %, possibly followed by an argument!");	
+	public static final LangTextHolder error16_2 = new LangTextHolder("A return instruction, unless at final position, must form a JUMP element!");
+	public static final LangTextHolder error16_3 = new LangTextHolder("An exit, leave or break instruction is only allowed as JUMP element!");
+	public static final LangTextHolder error16_4 = new LangTextHolder("Cannot leave or break more loop levels than being nested in («%»)!");
+	public static final LangTextHolder error16_5 = new LangTextHolder("You must not directly return out of a parallel thread!");
+	public static final LangTextHolder error16_6 = new LangTextHolder("Wrong argument for this kind of JUMP (should be an integer constant)!");
+	public static final LangTextHolder error16_7 = new LangTextHolder("Instruction isn't reachable after a JUMP!");
 	// END KGU#2 2015-11-25
 	// START KGU#47 2015-11-28: New check for concurrency problems
-	public static LangTextHolder error17 = new LangTextHolder("Consistency risk due to concurrent access to variable «%» by several parallel threads!");
+	public static final LangTextHolder error17 = new LangTextHolder("Consistency risk due to concurrent access to variable «%» by several parallel threads!");
 	// END KGU#47 2015-11-28
 
 	// START KGU#218 2016-07-28: Issue #206 - enhanced localization
 	// Dialog messages
-	public static LangTextHolder msgDialogExpCols = new LangTextHolder("Into how many columns do you want to split the output?");
-	public static LangTextHolder msgDialogExpRows = new LangTextHolder("Into how many rows do you want to split the output?");
-	public static LangTextHolder msgOverwriteFile = new LangTextHolder("Overwrite existing file?");
-	public static LangTextHolder msgOverwriteFiles = new LangTextHolder("Existing file(s) detected. Overwrite?");
-	public static LangTextHolder btnConfirmOverwrite = new LangTextHolder("Confirm Overwrite");
-	public static LangTextHolder msgRepeatSaveAttempt = new LangTextHolder("Your file has not been saved. Please repeat the save operation!");
+	public static final LangTextHolder msgDialogExpCols = new LangTextHolder("Into how many columns do you want to split the output?");
+	public static final LangTextHolder msgDialogExpRows = new LangTextHolder("Into how many rows do you want to split the output?");
+	public static final LangTextHolder msgOverwriteFile = new LangTextHolder("Overwrite existing file?");
+	public static final LangTextHolder msgOverwriteFiles = new LangTextHolder("Existing file(s) detected. Overwrite?");
+	public static final LangTextHolder btnConfirmOverwrite = new LangTextHolder("Confirm Overwrite");
+	public static final LangTextHolder msgRepeatSaveAttempt = new LangTextHolder("Your file has not been saved. Please repeat the save operation!");
 	// END KGU#218 2016-07-28
 	// START KGU#227 2016-07-31: Enh. #128
-	public static LangTextHolder menuDiagramSwitchTCTooltip = new LangTextHolder("Unselect \"%1\" to enable this item");
+	public static final LangTextHolder menuDiagramSwitchTCTooltip = new LangTextHolder("Unselect \"%1\" to enable this item");
 	// END KGU#227 2016-07-31
 	// START KGU#213 2016-08-02: Enh. #215
-	public static LangTextHolder msgBreakTriggerPrompt = new LangTextHolder("Specify an execution count triggering a break (0 = always).");
-	public static LangTextHolder msgBreakTriggerIgnored = new LangTextHolder("Input ignored - must be a cardinal number.");
-	public static LangTextHolder msgErrorFileSave = new LangTextHolder("Error on saving the file: %!");
+	public static final LangTextHolder msgBreakTriggerPrompt = new LangTextHolder("Specify an execution count triggering a break (0 = always).");
+	public static final LangTextHolder msgBreakTriggerIgnored = new LangTextHolder("Input ignored - must be a cardinal number.");
+	public static final LangTextHolder msgErrorFileSave = new LangTextHolder("Error on saving the file: %!");
 	// END KGU#213 2016-08-02
 	// START KGU#232 2016-08-02: Enh. #222
-	public static LangTextHolder msgOpenLangFile = new LangTextHolder("Open language file");
-	public static LangTextHolder msgLangFile = new LangTextHolder("Structorizer language file");
+	public static final LangTextHolder msgOpenLangFile = new LangTextHolder("Open language file");
+	public static final LangTextHolder msgLangFile = new LangTextHolder("Structorizer language file");
 	// END KGU#232 2016-08-02
 
 	public void create()
