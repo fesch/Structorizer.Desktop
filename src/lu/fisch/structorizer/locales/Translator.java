@@ -69,11 +69,18 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     // Standard button background colour (for restauring original appearance)
     private Color stdBackgroundColor = null;
     // END KGU 2016-08-04
+    
+    private static Translator instance = new Translator();
+    
+    public static Translator getInstance() 
+    {
+        return instance;
+    }
 
     /**
      * Creates new form MainFrame
      */
-    public Translator() {
+    private Translator() {
         initComponents();
         
         // START KGU 2016-08-04: Issue #220
@@ -767,7 +774,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                Translator translater = new Translator();
+                Translator translater = getInstance();
                 translater.setVisible(true);
                 // START KGU 2016-08-04: Issue #220
                 //translater.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -839,7 +846,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Translator().setVisible(true);
+                getInstance().setVisible(true);
             }
         });
     }
