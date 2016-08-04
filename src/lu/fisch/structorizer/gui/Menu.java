@@ -307,6 +307,7 @@ public class Menu extends JMenuBar implements NSDController
 	// END KGU#213 2016-08-02
 	// START KGU#232 2016-08-02: Enh. #222
 	public static LangTextHolder msgOpenLangFile = new LangTextHolder("Open language file");
+	public static LangTextHolder msgLangFile = new LangTextHolder("Structorizer language file");
 	// END KGU#232 2016-08-02
 
 	public void create()
@@ -1143,7 +1144,7 @@ public class Menu extends JMenuBar implements NSDController
 		// set directory
 		dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
 		// config dialogue
-		FileNameExtensionFilter filter = new FileNameExtensionFilter("Structorizer Language files", "txt");
+		FileNameExtensionFilter filter = new FileNameExtensionFilter(msgLangFile.getText(), "txt");
 		dlgOpen.addChoosableFileFilter(filter);
 		dlgOpen.setFileFilter(filter);
 		// show & get result

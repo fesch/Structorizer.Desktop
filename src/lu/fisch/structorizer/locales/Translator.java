@@ -72,10 +72,10 @@ public class Translator extends javax.swing.JFrame {
         headerText.setText("Please load a language!");
 
         // loop through all sections
-        ArrayList<String> sectioNames = locales.getSectionNames();
-        for (int i = 0; i < sectioNames.size(); i++) {
+        ArrayList<String> sectionNames = locales.getSectionNames();
+        for (int i = 0; i < sectionNames.size(); i++) {
             // get the name
-            String sectionName = sectioNames.get(i);
+            String sectionName = sectionNames.get(i);
             
             // create a new tab
             Tab tab = new Tab();
@@ -115,7 +115,7 @@ public class Translator extends javax.swing.JFrame {
         ((JButton)evt.getSource()).setToolTipText(localeName);
         
         // backup actual loadedLocale
-        if(loadedLocale!=null && loadedLocaleName!=null)
+        if(loadedLocale != null && loadedLocaleName != null)
         {
             JButton button = (JButton) getComponentByName(loadedLocaleName);
             button.setBackground(Color.green);
