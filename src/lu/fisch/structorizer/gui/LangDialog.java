@@ -70,6 +70,7 @@ public class LangDialog extends JDialog implements ILangDialog
 	private static JFrame dummyFrame = new JFrame();
 
 
+        @Override
 	public void setLang(String _langfile)
 	{
 		langFile = _langfile;
@@ -77,6 +78,7 @@ public class LangDialog extends JDialog implements ILangDialog
 		setLang(this,_langfile);
 	}
 	
+        @Override
 	public void setLang(StringList _lines)
 	{
 		setLang(this,_lines);

@@ -21,6 +21,7 @@
 package lu.fisch.structorizer.gui;
 
 import javax.swing.JFrame;
+import lu.fisch.utils.StringList;
 
 /******************************************************************************************************
  *
@@ -59,7 +60,10 @@ public interface NSDController
 	public void setLangLocal(String _langfile);
 	public String getLang();
 
-	public void savePreferences();
+	public void setLang(StringList _langstrings);
+	public void setLangLocal(StringList _langstrings);
+
+        public void savePreferences();
 
 	public JFrame getFrame();
 

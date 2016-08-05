@@ -70,12 +70,12 @@ import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import lu.fisch.structorizer.elements.*;
-import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.helpers.*;
 import lu.fisch.structorizer.io.INIFilter;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.Translator;
 import lu.fisch.structorizer.parsers.*;
+import lu.fisch.utils.StringList;
 
 @SuppressWarnings("serial")
 public class Menu extends JMenuBar implements NSDController
@@ -424,7 +424,7 @@ public class Menu extends JMenuBar implements NSDController
 
         // START BOB 2016-08-02
 		menuFile.add(menuFileTranslator);
-		menuFileTranslator.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { Translator.launch(); } } );
+		menuFileTranslator.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { Translator.launch(NSDControl); } } );
 		// END BOB 2016-08-02
 
 		menuFile.addSeparator();
@@ -847,9 +847,13 @@ public class Menu extends JMenuBar implements NSDController
 		//System.out.println("**** " + this + ".create() ready!");
 	}
 
+        @Override
 	public void setLookAndFeel(String _laf) {}
+        
+        @Override
 	public String getLookAndFeel() { return null;}
 
+        @Override
 	public void doButtons()
 	{
 		if(NSDControl!=null)
@@ -858,7 +862,29 @@ public class Menu extends JMenuBar implements NSDController
 		}
 	}
 
-	public void setLangLocal(String _langfile)
+        @Override
+	public void setLangLocal(StringList langstrings)
+	{
+		LangDialog.setLang(this,langstrings);
+		// START KGU#170 2016-04-01: Enh. #144 - update the favourite export item text
+		if (diagram != null)
+		{
+			String itemText = lbFileExportCodeFavorite.getText().replace("%", diagram.getPreferredGeneratorName());
+			this.menuFileExportCodeFavorite.setText(itemText);
+		}
+		// END KGU#170 2016-04-01
+		diagram.analyse();
+	}
+
+        @Override
+	public void setLang(StringList langstrings)
+	{
+		NSDControl.setLang(langstrings);
+	}
+
+
+        @Override
+        public void setLangLocal(String _langfile)
 	{
 		LangDialog.setLang(this,NSDControl.getLang());
 		// START KGU#170 2016-04-01: Enh. #144 - update the favourite export item text
@@ -871,16 +897,19 @@ public class Menu extends JMenuBar implements NSDController
 		diagram.analyse();
 	}
 
+        @Override
 	public void setLang(String _langfile)
 	{
 		NSDControl.setLang(_langfile);
 	}
 
+        @Override
 	public String getLang()
 	{
 		return NSDControl.getLang();
 	}
 
+        @Override
 	public void doButtonsLocal()
 	{
 		if (diagram!=null)

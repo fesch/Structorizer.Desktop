@@ -60,6 +60,7 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.utils.StringList;
 
 @SuppressWarnings("serial")
 public class Editor extends JPanel implements NSDController, ComponentListener
@@ -982,48 +983,64 @@ public class Editor extends JPanel implements NSDController, ComponentListener
 	}
 	
 	
-	public void updateColors() 
-	{	
-		btnColor0.setColor(Element.color0);
-		btnColor1.setColor(Element.color1);
-		btnColor2.setColor(Element.color2);
-		btnColor3.setColor(Element.color3);
-		btnColor4.setColor(Element.color4);
-		btnColor5.setColor(Element.color5);
-		btnColor6.setColor(Element.color6);
-		btnColor7.setColor(Element.color7);
-		btnColor8.setColor(Element.color8);
-		btnColor9.setColor(Element.color9);
-	}
-	
-	public void setLangLocal(String _langfile)
-	{
-		LangDialog.setLang(this,NSDControll.getLang());
-	}
-	
-	public void setLang(String _langfile)
-	{
-		NSDControll.setLang(_langfile);
-	}
-	
-	public String getLang()
-	{
-		return NSDControll.getLang();
-	}
-	
-	public Editor()
-	{
-		super();
-		this.NSDControll=null;
-		create();
-	}
-	
-	public Editor(NSDController _NSDControll)
-	{
-		super();
-		this.NSDControll=_NSDControll;
-		create();
-	}
+    @Override
+    public void updateColors() 
+    {	
+            btnColor0.setColor(Element.color0);
+            btnColor1.setColor(Element.color1);
+            btnColor2.setColor(Element.color2);
+            btnColor3.setColor(Element.color3);
+            btnColor4.setColor(Element.color4);
+            btnColor5.setColor(Element.color5);
+            btnColor6.setColor(Element.color6);
+            btnColor7.setColor(Element.color7);
+            btnColor8.setColor(Element.color8);
+            btnColor9.setColor(Element.color9);
+    }
+
+    @Override
+    public void setLangLocal(StringList langstrings)
+    {
+            LangDialog.setLang(this,langstrings);
+    }
+
+    @Override
+    public void setLang(StringList langstrings)
+    {
+            NSDControll.setLang(langstrings);
+    }
+
+    @Override
+    public void setLangLocal(String _langfile)
+    {
+            LangDialog.setLang(this,NSDControll.getLang());
+    }
+
+    @Override
+    public void setLang(String _langfile)
+    {
+            NSDControll.setLang(_langfile);
+    }
+
+    @Override
+    public String getLang()
+    {
+            return NSDControll.getLang();
+    }
+
+    public Editor()
+    {
+            super();
+            this.NSDControll=null;
+            create();
+    }
+
+    public Editor(NSDController _NSDControll)
+    {
+            super();
+            this.NSDControll=_NSDControll;
+            create();
+    }
 
     public JFrame getFrame()
     {

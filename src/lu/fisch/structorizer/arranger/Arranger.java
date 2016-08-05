@@ -71,6 +71,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.gui.LangDialog;
 import lu.fisch.structorizer.gui.Mainform;
+import lu.fisch.utils.StringList;
 
 /**
  *
@@ -435,6 +436,11 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
     }
     // END KGU#202 2016-07-03
 
+    public void setLangLocal(StringList langstrings)
+    {
+    	LangDialog.setLang(this.surface, langstrings);
+    }
+    
     /**
      * Starts the Arranger as application
      * @param args the command line arguments

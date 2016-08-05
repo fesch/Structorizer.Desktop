@@ -35,6 +35,7 @@ import lu.fisch.structorizer.gui.Menu;
 import lu.fisch.structorizer.gui.NSDController;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.parsers.D7Parser;
+import lu.fisch.utils.StringList;
 
 public class StructorizerApplet extends JApplet  implements NSDController
 {
@@ -100,6 +101,21 @@ public class StructorizerApplet extends JApplet  implements NSDController
         if (editor!=null)
            editor.updateColors();
     }
+
+    public void setLang(StringList langstrings)
+    {
+            if(menu!=null)
+            {
+                    menu.setLangLocal(langstrings);
+            }
+
+            if (editor!=null)
+            {
+                    editor.setLangLocal(langstrings);
+            }
+    }
+
+    public void setLangLocal(StringList langstrings) {}
 
     public void setLang(String _langfile)
     {

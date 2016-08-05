@@ -367,7 +367,19 @@ public class Executor implements Runnable
 	}
 	// END KGU#89 2016-03-18
 	
-	// START KGU#210 2016-07-25: Issue #201 - Ensure GUI consistency
+	public void setLangLocal(StringList langstrings)
+	{
+		try {
+			LangDialog.setLang(control, langstrings);
+		}
+		catch (Exception ex)
+		{
+			System.err.println(ex.getMessage());
+		}
+		
+	}
+
+        // START KGU#210 2016-07-25: Issue #201 - Ensure GUI consistency
 	public void updateLookAndFeel()
 	{
 		try {

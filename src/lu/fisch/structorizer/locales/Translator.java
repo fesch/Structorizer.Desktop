@@ -44,6 +44,7 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 import lu.fisch.structorizer.gui.IconLoader;
+import lu.fisch.structorizer.gui.NSDController;
 import lu.fisch.utils.StringList;
 
 /**
@@ -72,6 +73,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     
     private static Translator instance = null;
     
+    private NSDController NSDControl = null;
+    
     public static Translator getInstance() 
     {
         if(instance==null) instance = new Translator();
@@ -83,6 +86,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
      */
     private Translator() {
         initComponents();
+        
+        button_preview.setVisible(false);
         
         // START KGU 2016-08-04: Issue #220
 		// set icon depending on OS ;-)
@@ -436,16 +441,14 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         button_save = new javax.swing.JButton();
         button_en = new javax.swing.JButton();
         button_empty = new javax.swing.JButton();
+        button_preview = new javax.swing.JButton();
         tabs = new javax.swing.JTabbedPane();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         headerText = new javax.swing.JTextPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        // START KGU 2016-08-04: Wasn't enough as size but too large as minimum size
-        //setMinimumSize(new java.awt.Dimension(900, 500));
-        setMinimumSize(new java.awt.Dimension(500, 300));
-        // END KGU 2016-08-04
+        setMinimumSize(new java.awt.Dimension(900, 500));
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 204));
         jPanel1.setPreferredSize(new java.awt.Dimension(655, 48));
@@ -559,6 +562,13 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             }
         });
 
+        button_preview.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/017_Eye.png"))); // NOI18N
+        button_preview.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                button_previewActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -594,7 +604,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 .addComponent(button_cht)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(button_empty)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 327, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 289, Short.MAX_VALUE)
+                .addComponent(button_preview)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(button_save)
                 .addContainerGap())
         );
@@ -603,6 +615,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(button_preview, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(button_empty, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(button_en, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(button_save, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -687,7 +700,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         loadLocale("cht",evt);
     }//GEN-LAST:event_button_chtActionPerformed
 
-    private void button_saveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_saveActionPerformed
+    private Locale getComposedLocale()
+    {
         // load a copy of the default loadedLocale
         Locale locale = locales.getDefaultLocale().loadCopyFromFile();
         
@@ -716,6 +730,13 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 locale.setValue(sectionName, key, value);
             }
         }
+        
+        return locale;
+    }
+    
+    private void button_saveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_saveActionPerformed
+        // get the composed locale
+        Locale locale = getComposedLocale();
         
         // now ask where to save the data
         JFileChooser fileChooser = new JFileChooser();
@@ -770,12 +791,23 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         loadLocale("empty",evt);
     }//GEN-LAST:event_button_emptyActionPerformed
 
-    public static void launch()
+    private void button_previewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_previewActionPerformed
+        // get the composed locale
+        Locale locale = getComposedLocale();
+
+        if(NSDControl!=null)
+        {
+            NSDControl.setLang(StringList.explode(locale.getText(), "\n"));
+        }
+    }//GEN-LAST:event_button_previewActionPerformed
+
+    public static void launch(final NSDController NSDControl)
     {
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
                 Translator translater = getInstance();
+                translater.setNSDControl(NSDControl);
                 translater.setVisible(true);
                 // START KGU 2016-08-04: Issue #220
                 //translater.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -783,6 +815,13 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             }
         });
     }
+
+    public void setNSDControl(NSDController NSDControl) {
+        this.NSDControl = NSDControl;
+        button_preview.setVisible(true);
+    }
+    
+    
     
     // START KGU 2016-08-04 #220
     public void propertyChange(PropertyChangeEvent pcEv) {
@@ -865,6 +904,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     private javax.swing.JButton button_lu;
     private javax.swing.JButton button_nl;
     private javax.swing.JButton button_pl;
+    private javax.swing.JButton button_preview;
     private javax.swing.JButton button_pt_br;
     private javax.swing.JButton button_ru;
     private javax.swing.JButton button_save;

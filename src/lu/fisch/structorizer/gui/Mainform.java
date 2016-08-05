@@ -78,6 +78,7 @@ import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
+import lu.fisch.utils.StringList;
 
 @SuppressWarnings("serial")
 public class Mainform  extends JFrame implements NSDController
@@ -527,42 +528,77 @@ public class Mainform  extends JFrame implements NSDController
 		}
 	}
 	
-	public void setLang(String _langfile)
-	{
-		lang=_langfile;
-		
-		if(menu!=null)
-		{
-			menu.setLangLocal(_langfile);
-		}
-		
-		if (getEditor()!=null)
-		{
-			getEditor().setLangLocal(_langfile);
-		}
-		
-		// START KGU#89 2016-03-18: Re-translation of the Executor Control
-		if (Executor.getInstance() != null)
-		{
-			Executor.getInstance().setLangLocal();
-		}
-		// END KGU#89 2016-03-18
-		
-		// START KGU#202 2016-07-03: Re-translation of the Arranger surface
-		if (Arranger.hasInstance())
-		{
-			Arranger.getInstance().setLangLocal(_langfile);
-		}
-		// END KGU#202 2016-07-03
-	}
+    @Override
+    public void setLang(String _langfile)
+    {
+            lang=_langfile;
+
+            if(menu!=null)
+            {
+                    menu.setLangLocal(_langfile);
+            }
+
+            if (getEditor()!=null)
+            {
+                    getEditor().setLangLocal(_langfile);
+            }
+
+            // START KGU#89 2016-03-18: Re-translation of the Executor Control
+            if (Executor.getInstance() != null)
+            {
+                    Executor.getInstance().setLangLocal();
+            }
+            // END KGU#89 2016-03-18
+
+            // START KGU#202 2016-07-03: Re-translation of the Arranger surface
+            if (Arranger.hasInstance())
+            {
+                    Arranger.getInstance().setLangLocal(_langfile);
+            }
+            // END KGU#202 2016-07-03
+    }
+    
+    @Override
+    public void setLangLocal(StringList langstrings) {}
+
+    @Override
+    public void setLang(StringList langstrings)
+    {
+            if(menu!=null)
+            {
+                    menu.setLangLocal(langstrings);
+            }
+
+            if (getEditor()!=null)
+            {
+                    getEditor().setLangLocal(langstrings);
+            }
+
+            // START KGU#89 2016-03-18: Re-translation of the Executor Control
+            if (Executor.getInstance() != null)
+            {
+                    Executor.getInstance().setLangLocal(langstrings);
+            }
+            // END KGU#89 2016-03-18
+
+            // START KGU#202 2016-07-03: Re-translation of the Arranger surface
+            if (Arranger.hasInstance())
+            {
+                    Arranger.getInstance().setLangLocal(langstrings);
+            }
+            // END KGU#202 2016-07-03
+    }
 	
+    @Override
     public void setLangLocal(String _langfile) {}
 
+    @Override
     public String getLang()
     {
             return lang;
     }
 
+    @Override
     public void savePreferences()
     {
             //System.out.println("Saving");
@@ -575,6 +611,7 @@ public class Mainform  extends JFrame implements NSDController
     /******************************
      * Local listener (empty)
      ******************************/
+    @Override
     public void doButtonsLocal()
     {
         boolean done=false;
@@ -597,6 +634,7 @@ public class Mainform  extends JFrame implements NSDController
 		// END KGU 2016-01-10
     }
 
+    @Override
     public void updateColors() 
     {
         if(editor!=null)
