@@ -38,9 +38,17 @@ public class Locales {
     // structure were all data is being loaded to
     private final HashMap<String,Locale> locales = new HashMap<String,Locale>();
     
+    private static Locales instance = null;
+    
+    public static Locales getInstance()
+    {
+        if(instance==null) instance=new Locales();
+        return instance;
+    }
+    
     public static void main(String[] args)
     {
-        Locales locales = new Locales();
+        Locales locales = Locales.getInstance();
 
         System.out.println("Files:");
         String[] names = locales.getNames();
@@ -56,7 +64,7 @@ public class Locales {
         }
     }
 
-    public Locales() 
+    private Locales() 
     {
         for (int i = 0; i < LOCALES_LIST.length; i++) {
             String name = LOCALES_LIST[i];

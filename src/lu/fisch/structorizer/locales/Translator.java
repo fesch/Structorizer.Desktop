@@ -57,7 +57,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 // END KGU 2016-08-04
 {
     
-    private final Locales locales = new Locales();
+    private final Locales locales = Locales.getInstance();
     private final HashMap<String,JTable> tables = new HashMap<String,JTable>();
     
     private String loadedLocaleName = null;
@@ -70,10 +70,11 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     private Color stdBackgroundColor = null;
     // END KGU 2016-08-04
     
-    private static Translator instance = new Translator();
+    private static Translator instance = null;
     
     public static Translator getInstance() 
     {
+        if(instance==null) instance = new Translator();
         return instance;
     }
 
@@ -784,8 +785,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     }
     
     // START KGU 2016-08-04 #220
-	public void propertyChange(PropertyChangeEvent pcEv) {
-		// Check if it was triggered by the termination of some editing activity (i.e. the cell editor was dropped)
+    public void propertyChange(PropertyChangeEvent pcEv) {
+	// Check if it was triggered by the termination of some editing activity (i.e. the cell editor was dropped)
     	if (pcEv.getPropertyName().equals("tableCellEditor") && pcEv.getNewValue() == null)
     	{
     		for (String sectionName: locales.getSectionNames())
@@ -809,8 +810,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     			}
     		}
     	}
-	}
-	// END KGU 2016-08-04
+    }
+    // END KGU 2016-08-04
 
 
     /**
