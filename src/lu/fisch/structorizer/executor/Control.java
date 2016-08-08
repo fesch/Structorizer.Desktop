@@ -67,6 +67,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Vector;
 
 import javax.swing.JComboBox;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
@@ -582,6 +583,21 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         while(tm.getRowCount()>0) tm.removeRow(0);
     }
 
+    // START KGU#210/KGU#234 2016-08-09: Issue #224 - Ensure GUI consistency and table grid visibility
+    public void updateLookAndFeel()
+    {
+    	try {
+    		SwingUtilities.updateComponentTreeUI(this);
+    		// Now, this is a workaround for issue #224
+    		if (!javax.swing.UIManager.getLookAndFeel().getName().equals("Nimbus"))
+    		{
+    			tblVar.setShowGrid(true);
+    		}
+    	}
+    	catch (Exception ex) {}
+    }
+    // END KGU#210/KGU#234 2016-08-09
+    
     private void btnStopActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnStopActionPerformed
     {//GEN-HEADEREND:event_btnStopActionPerformed
         Executor.getInstance().setStop(true);

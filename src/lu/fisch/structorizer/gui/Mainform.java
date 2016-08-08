@@ -47,6 +47,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.03      KGU#202: Localization of Arranger Surface supported
  *      Kay Gürtzig     2016.07.25      Issues #201, #202: Look-and-Feel propagation to Arranger and Executor
  *      Kay Gürtzig     2016.08.01      Enh. #128: new mode "Comments plus text" associated to Ini file
+ *      Kay Gürtzig     2016.08.08      Issues #220, #224: Loak-and Feel updates for Executor and Translator
  *
  ******************************************************************************************************
  *
@@ -74,6 +75,7 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import lu.fisch.structorizer.io.*;
+import lu.fisch.structorizer.locales.Translator;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
@@ -509,12 +511,12 @@ public class Mainform  extends JFrame implements NSDController
 							SwingUtilities.updateComponentTreeUI(Arranger.getInstance());
 						}
 						// END KGU#211 2016-07-25
-						// START KGU#210 2016-07-25: Issue #201 - Propagation to Executor Control
-						if (Executor.getInstance() != null)
-						{
-							Executor.getInstance().updateLookAndFeel();
-						}
-						// END KGU#210 2016-07-25						
+						// START KGU#210 2016-08-08: Issue #201 - Propagation to Executor Control
+						Executor.updateLookAndFeel();
+						// END KGU#210 2016-08-08
+						// START KGU#233 2016-08-08: Issue #220
+						Translator.updateLookAndFeel();
+						// END KGU#233 2016-08-08
 					}
 					catch (Exception e)
 					{

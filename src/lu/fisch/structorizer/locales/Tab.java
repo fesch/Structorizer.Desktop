@@ -111,14 +111,17 @@ class BoardTableCellRenderer extends DefaultTableCellRenderer {
                     c.setBackground(Color.blue);
         }
         else
-        if((value instanceof  String && ((String) value).equals("")) || (value==null))
+        if((value instanceof String && ((String) value).equals("")) || (value==null))
         {
             if (!isSelected)
                 c.setBackground(Color.orange);
             else
                 c.setBackground(Color.yellow);
-        } 
-        else if(col==2 && !Translator.loadedLocale.hasValuePresent(key))
+        }
+        // START KGU#231 2016-08-08: Issue #220 - detect any substantial change
+        //else if(col==2 && !Translator.loadedLocale.hasValuePresent(key))
+        else if (col==2 && Translator.loadedLocale.valueDiffersFrom(key, (String)value))
+        // END KGU#231 2016-08-08
         {
             if(!isSelected)
                 c.setBackground(Color.green);

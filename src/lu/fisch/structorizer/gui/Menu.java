@@ -847,13 +847,13 @@ public class Menu extends JMenuBar implements NSDController
 		//System.out.println("**** " + this + ".create() ready!");
 	}
 
-        @Override
+	@Override
 	public void setLookAndFeel(String _laf) {}
-        
-        @Override
+
+	@Override
 	public String getLookAndFeel() { return null;}
 
-        @Override
+	@Override
 	public void doButtons()
 	{
 		if(NSDControl!=null)
@@ -862,7 +862,7 @@ public class Menu extends JMenuBar implements NSDController
 		}
 	}
 
-        @Override
+	@Override
 	public void setLangLocal(StringList langstrings)
 	{
 		LangDialog.setLang(this,langstrings);
@@ -876,15 +876,15 @@ public class Menu extends JMenuBar implements NSDController
 		diagram.analyse();
 	}
 
-        @Override
+	@Override
 	public void setLang(StringList langstrings)
 	{
 		NSDControl.setLang(langstrings);
 	}
 
 
-        @Override
-        public void setLangLocal(String _langfile)
+	@Override
+	public void setLangLocal(String _langfile)
 	{
 		LangDialog.setLang(this,NSDControl.getLang());
 		// START KGU#170 2016-04-01: Enh. #144 - update the favourite export item text
@@ -897,19 +897,19 @@ public class Menu extends JMenuBar implements NSDController
 		diagram.analyse();
 	}
 
-        @Override
+	@Override
 	public void setLang(String _langfile)
 	{
 		NSDControl.setLang(_langfile);
 	}
 
-        @Override
+	@Override
 	public String getLang()
 	{
 		return NSDControl.getLang();
 	}
 
-        @Override
+	@Override
 	public void doButtonsLocal()
 	{
 		if (diagram!=null)

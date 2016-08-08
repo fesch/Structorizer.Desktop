@@ -41,6 +41,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
 import lu.fisch.structorizer.gui.IconLoader;
@@ -70,7 +71,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     // Standard button background colour (for restauring original appearance)
     private Color stdBackgroundColor = null;
     // END KGU 2016-08-04
-    
+
     private static Translator instance = null;
     
     private NSDController NSDControl = null;
@@ -80,7 +81,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         if(instance==null) instance = new Translator();
         return instance;
     }
-
+    
     /**
      * Creates new form MainFrame
      */
@@ -175,15 +176,15 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 				{
 					int closeOperation = getDefaultCloseOperation();
 					System.out.println(closeOperation);
-	                int answer = JOptionPane.showConfirmDialog (null, 
-	                        "There are unsaved changes! Sure to close?", 
-	                        "Unsaved Changes",
-	                        JOptionPane.YES_NO_OPTION,
-	                        JOptionPane.QUESTION_MESSAGE);
-	                if (answer == JOptionPane.YES_OPTION)
-	                {
-	                    dispose();
-	                }
+					int answer = JOptionPane.showConfirmDialog (null, 
+					        "There are unsaved changes! Sure to close?", 
+					        "Unsaved Changes",
+					        JOptionPane.YES_NO_OPTION,
+					        JOptionPane.QUESTION_MESSAGE);
+					if (answer == JOptionPane.YES_OPTION)
+					{
+						dispose();
+					}
 				}
 				else
 				{
@@ -448,7 +449,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         headerText = new javax.swing.JTextPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setMinimumSize(new java.awt.Dimension(900, 500));
+        // START KGU 2016-08-04: Wasn't enough as size but too large as minimum size
+        //setMinimumSize(new java.awt.Dimension(900, 500));
+        setMinimumSize(new java.awt.Dimension(500, 300));
+        // END KGU 2016-08-04
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 204));
         jPanel1.setPreferredSize(new java.awt.Dimension(655, 48));
@@ -796,7 +800,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         Locale locale = getComposedLocale();
 
         if(NSDControl!=null)
-        {
+    {
             NSDControl.setLang(StringList.explode(locale.getText(), "\n"));
         }
     }//GEN-LAST:event_button_previewActionPerformed
@@ -815,7 +819,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             }
         });
     }
-
+    
     public void setNSDControl(NSDController NSDControl) {
         this.NSDControl = NSDControl;
         button_preview.setVisible(true);
@@ -824,8 +828,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     
     
     // START KGU 2016-08-04 #220
-    public void propertyChange(PropertyChangeEvent pcEv) {
-	// Check if it was triggered by the termination of some editing activity (i.e. the cell editor was dropped)
+	public void propertyChange(PropertyChangeEvent pcEv) {
+		// Check if it was triggered by the termination of some editing activity (i.e. the cell editor was dropped)
     	if (pcEv.getPropertyName().equals("tableCellEditor") && pcEv.getNewValue() == null)
     	{
     		for (String sectionName: locales.getSectionNames())
@@ -849,8 +853,28 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     			}
     		}
     	}
-    }
-    // END KGU 2016-08-04
+	}
+	// END KGU 2016-08-04
+	
+	// START KGU#233 2016-08-08: Issue #224 - Ensure the visibility of the table grids on LaF change
+	public static void updateLookAndFeel()
+	{
+		if (instance != null)
+		{
+			try {
+				javax.swing.SwingUtilities.updateComponentTreeUI(instance);
+				if (!javax.swing.UIManager.getLookAndFeel().getName().equals("Nimbus"))
+				{
+					for (JTable tbl: instance.tables.values())
+					{
+						tbl.setShowGrid(true);
+					}
+				}
+			}
+			catch (Exception ex) {}
+		}
+	}
+	// END KGU#233 2016-08-08
 
 
     /**

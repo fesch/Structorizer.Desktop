@@ -379,15 +379,15 @@ public class Executor implements Runnable
 		
 	}
 
-        // START KGU#210 2016-07-25: Issue #201 - Ensure GUI consistency
-	public void updateLookAndFeel()
+	// START KGU#210/KGU#234 2016-08-08: Issue #201 - Ensure GUI consistency
+	public static void updateLookAndFeel()
 	{
-		try {
-			SwingUtilities.updateComponentTreeUI(mySelf.control);
+		if (mySelf != null)
+		{
+			mySelf.control.updateLookAndFeel();
 		}
-		catch (Exception ex) {}
 	}
-	// END KGU#210 2016-07-25
+	// END KGU#210/KGU#234 2016-08-08
 	
 	// METHOD MODIFIED BY GENNARO DONNARUMMA
 
