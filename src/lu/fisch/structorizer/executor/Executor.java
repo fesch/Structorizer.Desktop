@@ -217,7 +217,7 @@ import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.elements.Forever;
 import lu.fisch.structorizer.gui.Diagram;
 import lu.fisch.structorizer.gui.IconLoader;
-import lu.fisch.structorizer.gui.LangDialog;
+import lu.fisch.structorizer.locales.LangDialog;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
@@ -294,15 +294,6 @@ public class Executor implements Runnable
 		}
 		// END KGU#157 2016-03-16: Bugfix #131
 		mySelf.control.validate();
-		// START KGU#89 2015-11-25: Language support (we don't force the existence of all languages)
-		try {
-			mySelf.control.setLang(mySelf.diagram.getLang());
-		}
-		catch (Exception ex)
-		{
-			System.err.println(ex.getMessage());
-		}
-		// END KGU#89 2015-11-25
 		mySelf.control.setVisible(true);
 		mySelf.control.repaint();
 
@@ -351,32 +342,6 @@ public class Executor implements Runnable
 	{
 		this.diagram = diagram;
 		this.diagramController = diagramController;
-	}
-
-	// START KGU#89 2016-03-18: Opportunity to trigger re-tramsltion from outside
-	public void setLangLocal()
-	{
-		try {
-			LangDialog.setLang(control, diagram.getLang());
-		}
-		catch (Exception ex)
-		{
-			System.err.println(ex.getMessage());
-		}
-		
-	}
-	// END KGU#89 2016-03-18
-	
-	public void setLangLocal(StringList langstrings)
-	{
-		try {
-			LangDialog.setLang(control, langstrings);
-		}
-		catch (Exception ex)
-		{
-			System.err.println(ex.getMessage());
-		}
-		
 	}
 
         // START KGU#210 2016-07-25: Issue #201 - Ensure GUI consistency
@@ -1412,15 +1377,6 @@ public class Executor implements Runnable
 		if (reopen || Element.E_COLLECTRUNTIMEDATA)
 		{
 			control.init();
-			// START KGU#89 2015-11-25: Language support (we don't force the existence of all languages)
-			try {
-				LangDialog.setLang(mySelf.control, mySelf.diagram.getLang());
-			}
-			catch (Exception ex)
-			{
-				System.err.println(ex.getMessage());
-			}
-			// END KGU#89 2015-11-25
 			control.validate();
 			control.setVisible(true);
 			control.repaint();

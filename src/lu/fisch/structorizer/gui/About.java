@@ -44,6 +44,7 @@ package lu.fisch.structorizer.gui;
  * Created by JFormDesigner on Sat Dec 29 21:36:58 CET 2007
  */
 
+import lu.fisch.structorizer.locales.LangDialog;
 import java.io.*; 
 
 import java.awt.*;
@@ -306,6 +307,7 @@ public class About extends LangDialog implements ActionListener, KeyListener
 	public About(Frame owner)
 	{
 		super(owner);
+                setPacking(false);
 		this.setModal(true);
 		create();
 	}

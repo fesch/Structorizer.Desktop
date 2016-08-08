@@ -45,6 +45,7 @@ package lu.fisch.structorizer.gui;
  *
  ******************************************************************************************************///
 
+import lu.fisch.structorizer.locales.LangDialog;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -77,11 +78,11 @@ public class ExportOptionDialoge extends LangDialog
 
     // START KGU#212 2016-07-26: bugfix #204 - We need the language before pack()
     //public ExportOptionDialoge(Frame frame)
-    public ExportOptionDialoge(Frame frame, String langFileName)
+    public ExportOptionDialoge(Frame frame) //, String langFileName)
     // END KGU#212 2016-07-26
     {
         // START KGU#212 2016-07-26: bugfix #204
-        this.langFile = langFileName;
+        //this.langFile = langFileName;
         // END KGU#212 2016-07-26
         initComponents();
         setModal(true);
@@ -314,24 +315,8 @@ public class ExportOptionDialoge extends LangDialog
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
         
-        // START KGU#212 2016-08-02: bugfix #204 - do the translation before packing
-        // But be aware that there is constructor without langFile initialization!
-        if (langFile != null)
-        {
-        	setLang(langFile);
-        }
-        // END KGU#212 2016-08-02
 
         pack();
-        // START KGU#212 2016-07-25: Best of all is not to set a specific size (cf. #127)
-//        int height = 305;
-//        LookAndFeel laF = javax.swing.UIManager.getLookAndFeel();
-//        if (laF.getName().equals("CDE/Motif"))
-//        {
-//        	height += (height / 4);
-//        }
-//        this.setSize(450, height);
-        // END KGU#212 2016-07-25
     }// </editor-fold>//GEN-END:initComponents
 
 //    private void commentsCheckBoxActionPerformed(ActionEvent evt)//GEN-FIRST:event_commentsCheckBoxActionPerformed

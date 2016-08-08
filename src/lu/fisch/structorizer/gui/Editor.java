@@ -52,6 +52,7 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************///
 
 
+import lu.fisch.structorizer.locales.LangDialog;
 import com.kobrix.notebook.gui.AKDockLayout;
 
 import java.awt.*;
@@ -60,10 +61,11 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.locales.LangPanel;
 import lu.fisch.utils.StringList;
 
 @SuppressWarnings("serial")
-public class Editor extends JPanel implements NSDController, ComponentListener
+public class Editor extends LangPanel implements NSDController, ComponentListener
 {
     // Controller
     NSDController NSDControll = null;
@@ -996,36 +998,6 @@ public class Editor extends JPanel implements NSDController, ComponentListener
             btnColor7.setColor(Element.color7);
             btnColor8.setColor(Element.color8);
             btnColor9.setColor(Element.color9);
-    }
-
-    @Override
-    public void setLangLocal(StringList langstrings)
-    {
-            LangDialog.setLang(this,langstrings);
-    }
-
-    @Override
-    public void setLang(StringList langstrings)
-    {
-            NSDControll.setLang(langstrings);
-    }
-
-    @Override
-    public void setLangLocal(String _langfile)
-    {
-            LangDialog.setLang(this,NSDControll.getLang());
-    }
-
-    @Override
-    public void setLang(String _langfile)
-    {
-            NSDControll.setLang(_langfile);
-    }
-
-    @Override
-    public String getLang()
-    {
-            return NSDControll.getLang();
     }
 
     public Editor()

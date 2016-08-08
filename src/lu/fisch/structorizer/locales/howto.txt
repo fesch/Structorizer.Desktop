@@ -1,0 +1,102 @@
+This is just a little file that explains
+ __ __   ___   __    __  ______   ___  
+|  |  | /   \ |  |__|  ||      | /   \ 
+|  |  ||     ||  |  |  ||      ||     |
+|  _  ||  O  ||  |  |  ||_|  |_||  O  |
+|  |  ||     ||  `  '  |  |  |  |     |
+|  |  ||     | \      /   |  |  |     |
+|__|__| \___/   \_/\_/    |__|   \___/
+
+use Structorizers locales.
+
+1) All language files ...
+    - reside inside the package lu.fisch.structorizer.locales
+    - must be registered in the list Locales.LOCALES_LIST
+      (Actually the buttons in the Translator are not yet being
+       generated automatically, neither is the menu in Structorizer
+       itself.)
+
+2) The actual API supports 4 components. If you add something
+   new to this project, you just need to make your class extend
+   the corresponding Lang-class.
+
+    JFrame      -->     LangFrame
+    JDialog     -->     LangDialog
+    JPanel      -->     LangPanel
+    JMenuBar    -->     LangMenuBar
+
+   Important note: The LangDialog is being repacked by default
+   after a locale is being loaded. If you do not want this
+   behavior, call setPacking(false) somewhere in your constructor.
+
+3) The syntax of the language files can be described like this.
+
+    - The file is composed of a "header" an a "body". The header
+      must always preceed the body. Both are separated by a line
+      containing this string: >>>
+
+    - The body contains sections and each section may contain
+      sub sections. The body *MUST* start with a section!
+      A section is indicated by the prefix: ----->  
+      A sub-section is prefixed by:         -----[
+      In the translator component, each section is presented in
+      a new tab whereas a sub-section is draw as a visual separator.
+
+    - A parsed line looks like this: key=value
+
+        "value" can be any text you want to put inside the key.
+        
+        "key" is a dot separated string:
+            
+            * The first part is the name of the class of the object
+              this line wants to modify
+            
+            * The second one might be "title", which will then modify
+              the objects title of the name of the field that has to
+              be modified.
+
+            * The third part is the attribute to be modified. This can
+              be for now:
+
+                > text  
+                > tooltip
+                > border
+                > mnemonic
+
+                > tab
+                > header
+                > item
+
+              The last three entry have to be followed by a forth part
+              which has to be an integer and which represents the index of
+              the element to modify.
+
+            * Finally the key by have a condition section. This one is indicated
+              by square brackets. It can contain multiple conditions which will
+              be combined using an AND operator.
+
+              The conditions use the syntax: field:value
+                                         or: method():value
+                                       
+              The value of the line will only be affected to the key if all
+              field:value and method():value pairs are equal. Tests are
+              string based!
+
+   Examples
+   --------
+
+    >>> The title of a dialog:      
+        ExportOptionDialoge.title=Export options ...
+
+    >>> The tooltip of a button:    
+        PrintPreview.btnOrientation.tooltip=Turn the page by 90°.
+
+    >>> The name of a tab:          
+        About.pnlTabbed.tab.2=License
+
+    >>> Conditional text of a label:
+        InputBox.lblText.text[elementType:Alternative]=Eingabe der Bedingung an dieser Stelle.
+
+    >>> Conditional (combined) title of a dialog
+        InputBox.title[elementType:Repeat,getInsertionType():insert]=Neue REPEAT-Schleife hinzufügen...
+                

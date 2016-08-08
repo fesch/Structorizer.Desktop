@@ -794,11 +794,17 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     private void button_previewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_previewActionPerformed
         // get the composed locale
         Locale locale = getComposedLocale();
+        
+        // update the special "preview" locale with the generated body
+        Locales.getInstance().getLocale("preview").setBody(locale.getBody());
+        // make it the actual locale
+        Locales.getInstance().setLang("preview");
 
+        /*
         if(NSDControl!=null)
         {
             NSDControl.setLang(StringList.explode(locale.getText(), "\n"));
-        }
+        }*/
     }//GEN-LAST:event_button_previewActionPerformed
 
     public static void launch(final NSDController NSDControl)

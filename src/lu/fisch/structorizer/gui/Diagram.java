@@ -255,12 +255,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#48,KGU#49 2015-10-18
 
+    /*
 	// START KGU#2 2015-11-24: Allows the Executor to localize the Control frame
 	public String getLang()
 	{
 		return NSDControl.getLang();
 	}
 	// END KGU#2 2015-11-24
+    */    
 	
     public boolean getAnalyser()
     {
@@ -2343,7 +2345,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		pp.setVisible(true);
 		*/
 		PrintPreview pp = new PrintPreview(NSDControl.getFrame(),this);
-		pp.setLang(NSDControl.getLang());
 		Point p = getLocationOnScreen();
 		pp.setLocation(Math.round(p.x+(getVisibleRect().width-pp.getWidth())/2+this.getVisibleRect().x),
 					   Math.round(p.y)+(getVisibleRect().height-pp.getHeight())/2+this.getVisibleRect().y);
@@ -2359,9 +2360,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//System.out.println("Arranger button pressed!");
 		Arranger arr = Arranger.getInstance();
 		arr.addToPool(root, NSDControl.getFrame());
-		// START KGU#202 2016-07-03: Localization of Arranger
-		arr.setLangLocal(this.getLang());
-		// END KGU#202 2016-07-03
 		arr.setVisible(true);
 		isArrangerOpen = true;	// Gives the Executor a hint where to find a subroutine pool
 	}
@@ -2387,7 +2385,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Point p = getLocationOnScreen();
 		about.setLocation(Math.round(p.x+(getVisibleRect().width-about.getWidth())/2+this.getVisibleRect().x),
 						  Math.round(p.y)+(getVisibleRect().height-about.getHeight())/2+this.getVisibleRect().y);
-		about.setLang(NSDControl.getLang());
 		about.setVisible(true);
 	}
 
@@ -3267,7 +3264,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		colors.color8.setBackground(Element.color8);
 		colors.color9.setBackground(Element.color9);
 
-		colors.setLang(NSDControl.getLang());
 		colors.pack();
 		colors.setVisible(true);
 
@@ -3308,7 +3304,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 
 		preferences.altPadRight.setSelected(Element.altPadRight);
 
-		preferences.setLang(NSDControl.getLang());
 		preferences.pack();
 		preferences.setVisible(true);
 
@@ -3363,7 +3358,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		parserPreferences.chkIgnoreCase.setSelected(D7Parser.ignoreCase);
 		// END KGU#165 2016-03-25
 
-		parserPreferences.setLang(NSDControl.getLang());
 		parserPreferences.pack();
 		parserPreferences.setVisible(true);
 
@@ -3447,7 +3441,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		analyserPreferences.check17.setSelected(Root.check17);	// KGU#47
 		// END KGU#47 2015-11-29
 
-		analyserPreferences.setLang(NSDControl.getLang());
 		analyserPreferences.pack();
 		analyserPreferences.setVisible(true);
 
@@ -3493,7 +3486,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#212 2016-07-26: bugfix #204 eod sizing needs the language
             //ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame());
             ExportOptionDialoge eod = new ExportOptionDialoge(
-            		NSDControl.getFrame(), NSDControl.getLang());
+            		NSDControl.getFrame()); //, NSDControl.getLang());
             // END KGU#212 2016-07-26
             if(ini.getProperty("genExportComments","0").equals("true"))
                 eod.commentsCheckBox.setSelected(true);
@@ -3560,7 +3553,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 		// set fields
 		fontChooser.setFont(Element.getFont());
-		fontChooser.setLang(NSDControl.getLang());
 		fontChooser.setVisible(true);
 
 		// get fields
@@ -3903,7 +3895,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#61 2016-03-21: Give InputBox an opportunity to check consistency
 			inputbox.checkConsistency();
 			// END KGU#61 2016-03-21
-			inputbox.setLang(NSDControl.getLang());
 			inputbox.setVisible(true);
 
 			// get fields
