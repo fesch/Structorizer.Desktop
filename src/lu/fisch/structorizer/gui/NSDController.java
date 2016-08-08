@@ -56,13 +56,6 @@ public interface NSDController
 	public void setLookAndFeel(String _laf);
 	public String getLookAndFeel();
 
-	public void setLang(String _langfile);
-	public void setLangLocal(String _langfile);
-	public String getLang();
-
-	public void setLang(StringList _langstrings);
-	public void setLangLocal(StringList _langstrings);
-
         public void savePreferences();
 
 	public JFrame getFrame();

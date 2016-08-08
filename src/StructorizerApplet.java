@@ -34,6 +34,7 @@ import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Menu;
 import lu.fisch.structorizer.gui.NSDController;
 import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.StringList;
 
@@ -101,44 +102,7 @@ public class StructorizerApplet extends JApplet  implements NSDController
         if (editor!=null)
            editor.updateColors();
     }
-
-    public void setLang(StringList langstrings)
-    {
-            if(menu!=null)
-            {
-                    menu.setLangLocal(langstrings);
-            }
-
-            if (editor!=null)
-            {
-                    editor.setLangLocal(langstrings);
-            }
-    }
-
-    public void setLangLocal(StringList langstrings) {}
-
-    public void setLang(String _langfile)
-    {
-            lang=_langfile;
-
-            if(menu!=null)
-            {
-                    menu.setLangLocal(_langfile);
-            }
-
-            if (editor!=null)
-            {
-                    editor.setLangLocal(_langfile);
-            }
-    }
-
-    public void setLangLocal(String _langfile) {}
-
-    public String getLang()
-    {
-            return lang;
-    }
-
+    
     public void setLookAndFeel(String _laf)
     {
             laf=_laf;
@@ -189,8 +153,8 @@ public class StructorizerApplet extends JApplet  implements NSDController
 			
 
 			// language	
-			lang=ini.getProperty("Lang","en.txt");
-                        setLang(lang);
+			lang=ini.getProperty("Lang","en");
+                        Locales.getInstance().setLang(lang);
 
                         // colors
                         Element.loadFromINI();

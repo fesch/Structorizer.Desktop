@@ -80,16 +80,16 @@ import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
-import lu.fisch.utils.StringList;
+import lu.fisch.structorizer.locales.LangFrame;
+import lu.fisch.structorizer.locales.Locales;
 
 @SuppressWarnings("serial")
-public class Mainform  extends JFrame implements NSDController
+public class Mainform  extends LangFrame implements NSDController
 {
 	public Diagram diagram = null;
 	private Menu menu = null;
 	private Editor editor = null;
 	
-	private String lang = "en.txt";
 	private String laf = null;
 	
 	// START KGU#49/KGU#66 2015-11-14: This decides whether to exit or just to dispose when being closed
@@ -233,8 +233,8 @@ public class Mainform  extends JFrame implements NSDController
 		 * Load values from INI
 		 ******************************/
 		loadFromINI();
-		setLang(lang);
-		
+                Locales.getInstance().setLang(Locales.getInstance().getLoadedLocaleName());
+                        
 		/******************************
 		 * Resize the toolbar
 		 ******************************/
@@ -260,10 +260,10 @@ public class Mainform  extends JFrame implements NSDController
                         IconLoader.setScaleFactor(scaleFactor);
 			
                         // position
-			int top = Integer.valueOf(ini.getProperty("Top","0")).intValue();
-			int left = Integer.valueOf(ini.getProperty("Left","0")).intValue();
-			int width = Integer.valueOf(ini.getProperty("Width","750")).intValue();
-			int height = Integer.valueOf(ini.getProperty("Height","550")).intValue();
+			int top = Integer.valueOf(ini.getProperty("Top","0"));
+			int left = Integer.parseInt(ini.getProperty("Left","0"));
+			int width = Integer.parseInt(ini.getProperty("Width","750"));
+			int height = Integer.valueOf(ini.getProperty("Height","550"));
 
                         // reset to defaults if wrong values
                         if (top<0) top=0;
@@ -272,8 +272,7 @@ public class Mainform  extends JFrame implements NSDController
                         if (height<=0) height=550;
 
 			// language	
-			lang=ini.getProperty("Lang","en.txt");
-                        setLang(lang);
+                        Locales.getInstance().setLang(ini.getProperty("Lang","en"));
                         
                         // colors
                         Element.loadFromINI();
@@ -419,7 +418,7 @@ public class Mainform  extends JFrame implements NSDController
 			}
 			
 			// language
-			ini.setProperty("Lang",lang);
+			ini.setProperty("Lang",Locales.getInstance().getLoadedLocaleName());
 			
 			// DIN, comments
 			ini.setProperty("DIN",(Element.E_DIN?"1":"0"));
@@ -529,77 +528,7 @@ public class Mainform  extends JFrame implements NSDController
 			}
 		}
 	}
-	
-    @Override
-    public void setLang(String _langfile)
-    {
-            lang=_langfile;
-
-            if(menu!=null)
-            {
-                    menu.setLangLocal(_langfile);
-            }
-
-            if (getEditor()!=null)
-            {
-                    getEditor().setLangLocal(_langfile);
-            }
-
-            // START KGU#89 2016-03-18: Re-translation of the Executor Control
-            if (Executor.getInstance() != null)
-            {
-                    Executor.getInstance().setLangLocal();
-            }
-            // END KGU#89 2016-03-18
-
-            // START KGU#202 2016-07-03: Re-translation of the Arranger surface
-            if (Arranger.hasInstance())
-            {
-                    Arranger.getInstance().setLangLocal(_langfile);
-            }
-            // END KGU#202 2016-07-03
-    }
     
-    @Override
-    public void setLangLocal(StringList langstrings) {}
-
-    @Override
-    public void setLang(StringList langstrings)
-    {
-            if(menu!=null)
-            {
-                    menu.setLangLocal(langstrings);
-            }
-
-            if (getEditor()!=null)
-            {
-                    getEditor().setLangLocal(langstrings);
-            }
-
-            // START KGU#89 2016-03-18: Re-translation of the Executor Control
-            if (Executor.getInstance() != null)
-            {
-                    Executor.getInstance().setLangLocal(langstrings);
-            }
-            // END KGU#89 2016-03-18
-
-            // START KGU#202 2016-07-03: Re-translation of the Arranger surface
-            if (Arranger.hasInstance())
-            {
-                    Arranger.getInstance().setLangLocal(langstrings);
-            }
-            // END KGU#202 2016-07-03
-    }
-	
-    @Override
-    public void setLangLocal(String _langfile) {}
-
-    @Override
-    public String getLang()
-    {
-            return lang;
-    }
-
     @Override
     public void savePreferences()
     {

@@ -1,60 +1,61 @@
 /*
-    Structorizer :: Arranger
-    A little tool which you can use to arrange Nassi-Schneiderman Diagrams (NSD)
+ Structorizer :: Arranger
+ A little tool which you can use to arrange Nassi-Schneiderman Diagrams (NSD)
 
-    Copyright (C) 2009  Bob Fisch
+ Copyright (C) 2009  Bob Fisch
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or any
-    later version.
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or any
+ later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package lu.fisch.structorizer.arranger;
 
-/******************************************************************************************************
+/**
+ * ****************************************************************************************************
  *
- *      Author:         Bob Fisch
+ * Author: Bob Fisch
  *
- *      Description:    This class offers an opportunity to graphically arrange several NSD diagrams
- *                      within one and the same drawing area. While related to owned Structorizers, the
- *                      diagrams will fully and synchronously reflect all status changes (selection,
- *                      execution, ...)
- *
- ******************************************************************************************************
- *
- *      Revision List
- *
- *      Author          Date			Description
- *      ------			----			-----------
- *      Bob Fisch       2009.08.18		First Issue
- *      Kay Gürtzig     2015.10.18		Transient WindowsListener added enabling Surface to have dirty diagrams saved before exit
- *      Kay Gürtzig     2015.11.17		Remove button added (issue #35 = KGU#85)
- *      Kay Gürtzig     2015.11.19		Converted into a singleton (enhancement request #9 = KGU#2)
- *      Kay Gürtzig     2015-11-24		Pin button added (issue #35, KGU#88)
- *      Kay Gürtzig     2015-11-30		Remove action now also achievable by pressing del button (issue #35, KGU#88)
- *      Kay Gürtzig     2015-12-21		Two new buttons for saving and loading arrangements (issue #62, KGU#110)
- *      Kay Gürtzig     2016-01-05		Icons for saving and loading arrangements replaced by fitting ones
- *      Kay Gürtzig     2016-03-08		Bugfix #97: Methods for drawing info invalidation added (KGU#155) 
- *      Kay Gürtzig     2016.03.08      Method clearExecutionStatus and btnSetCovered added (for Enhancement #77)
- *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation hooks
- *      Kay Gürtzig     2016-04-14      Enh. #158 (KGU#177): Keys for copy and paste enabled, closing mechanism modified
- *      Kay Gürtzig     2016-07-03      Dialog message translation mechanism added (KGU#203). 
+ * Description: This class offers an opportunity to graphically arrange several
+ * NSD diagrams within one and the same drawing area. While related to owned
+ * Structorizers, the diagrams will fully and synchronously reflect all status
+ * changes (selection, execution, ...)
  *
  ******************************************************************************************************
  *
- *      Comment:		/
+ * Revision List
  *
- ******************************************************************************************************///
-
+ * Author Date	Description ------	----	----------- Bob Fisch 2009.08.18	First
+ * Issue Kay Gürtzig 2015.10.18	Transient WindowsListener added enabling Surface
+ * to have dirty diagrams saved before exit Kay Gürtzig 2015.11.17	Remove button
+ * added (issue #35 = KGU#85) Kay Gürtzig 2015.11.19	Converted into a singleton
+ * (enhancement request #9 = KGU#2) Kay Gürtzig 2015-11-24	Pin button added
+ * (issue #35, KGU#88) Kay Gürtzig 2015-11-30	Remove action now also achievable
+ * by pressing del button (issue #35, KGU#88) Kay Gürtzig 2015-12-21	Two new
+ * buttons for saving and loading arrangements (issue #62, KGU#110) Kay Gürtzig
+ * 2016-01-05	Icons for saving and loading arrangements replaced by fitting ones
+ * Kay Gürtzig 2016-03-08	Bugfix #97: Methods for drawing info invalidation
+ * added (KGU#155) Kay Gürtzig 2016.03.08 Method clearExecutionStatus and
+ * btnSetCovered added (for Enhancement #77) Kay Gürtzig 2016.03.12 Enh. #124
+ * (KGU#156): Generalized runtime data visualisation hooks Kay Gürtzig
+ * 2016-04-14 Enh. #158 (KGU#177): Keys for copy and paste enabled, closing
+ * mechanism modified Kay Gürtzig 2016-07-03 Dialog message translation
+ * mechanism added (KGU#203).
+ *
+ ******************************************************************************************************
+ *
+ * Comment:	/
+ *
+ *****************************************************************************************************
+ *///
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
@@ -69,59 +70,66 @@ import javax.swing.JScrollPane;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.executor.IRoutinePool;
-import lu.fisch.structorizer.gui.LangDialog;
 import lu.fisch.structorizer.gui.Mainform;
-import lu.fisch.utils.StringList;
+import lu.fisch.structorizer.locales.LangFrame;
 
 /**
  *
  * @author robertfisch
  */
 @SuppressWarnings("serial")
-public class Arranger extends javax.swing.JFrame implements WindowListener, KeyListener, IRoutinePool
-{
-	// START KGU#177 2016-04-14: Enh. #158 - because of pasting opportunity we must take more care
-	private boolean isStandalone = false;
+public class Arranger extends LangFrame implements WindowListener, KeyListener, IRoutinePool {
+
+    // START KGU#177 2016-04-14: Enh. #158 - because of pasting opportunity we must take more care
+
+    private boolean isStandalone = false;
 	// END KGU#177 2016-04-14
-	
+
     // START KGU#2 2015-11-19: Enh. #9 - Converted into a singleton class
     //** Creates new form Arranger */
     //public Arranger() {
     //    initComponents();
     //}
-	private static Arranger mySelf = null;
-    /** Returns the Arranger instance (if it is to be created then it will be as a dependent frame)
+    private static Arranger mySelf = null;
+
+    /**
+     * Returns the Arranger instance (if it is to be created then it will be as
+     * a dependent frame)
      */
-	public static Arranger getInstance()
-	{
-		return getInstance(false);
-	}
-    /** Returns the Arranger instance
-     * @param standalone - if true then the instance will exit on close otherwise only dispose (works only on actual creation)
+    public static Arranger getInstance() {
+        return getInstance(false);
+    }
+
+    /**
+     * Returns the Arranger instance
+     *
+     * @param standalone - if true then the instance will exit on close
+     * otherwise only dispose (works only on actual creation)
      */
-	public static Arranger getInstance(boolean standalone)
-	{
-		if (mySelf == null)
-		{
-			mySelf = new Arranger(standalone);
-		}
-		return mySelf;
-	}
-	
-	// START KGU#155 2016-03-08: added for bugfix #97
-	/**
-	 * Allows to find out whether an Arranger instance is created without creating it
-	 * @return true iff there is already an Arranger instance
-	 */
-	public static boolean hasInstance()
-	{
-		return mySelf != null;
-	}
+    public static Arranger getInstance(boolean standalone) {
+        if (mySelf == null) {
+            mySelf = new Arranger(standalone);
+        }
+        return mySelf;
+    }
+
+    // START KGU#155 2016-03-08: added for bugfix #97
+    /**
+     * Allows to find out whether an Arranger instance is created without
+     * creating it
+     *
+     * @return true iff there is already an Arranger instance
+     */
+    public static boolean hasInstance() {
+        return mySelf != null;
+    }
 	// END KGU#155 2016-03-08
-	
-    /** 
+
+    /**
      * Creates new form Arranger
-     * @param standalone - if Arranger is started as application (or only as dependent frame)
+     *
+     * @param standalone - if Arranger is started as application (or only as
+     * dependent frame)
      */
     private Arranger(boolean standalone) {
         initComponents();
@@ -131,44 +139,42 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         // END KGU#177 2016-04-14
     }
-    
+
     /**
-     * Places the passed-in root at a free space on the Arranger surface if it hasn't been placed there
-     * already. Relates the given frame to it if it is a Mainform instance.
+     * Places the passed-in root at a free space on the Arranger surface if it
+     * hasn't been placed there already. Relates the given frame to it if it is
+     * a Mainform instance.
+     *
      * @param root - The diagram root to be added to the Arranger
      * @param frame - potentially an associable Mainform (Structorizer)
      */
-    public void addToPool(Root root, JFrame frame)
-    {
-    	if (frame instanceof Mainform)
-    	{
-    		surface.addDiagram(root, (Mainform) frame);
-    	}
-    	else
-    	{
-    		surface.addDiagram(root);
-    	}
+    public void addToPool(Root root, JFrame frame) {
+        if (frame instanceof Mainform) {
+            surface.addDiagram(root, (Mainform) frame);
+        } else {
+            surface.addDiagram(root);
+        }
     }
     // END KGU#2 2015-11-19
-	
-	// START KGU#155 2016-03-08: Bugfix #97 extension
-	/**
-	 * Invalidates the cached prepareDraw info of all diagrams residing here
-	 * (to be called on events with heavy impact on the size or shape of some
-	 * Elements)
-	 * @param _exceptDiagr the hash code of a lu.fisch.structorizer.gui.Diagram
-	 * that is not to be invoked (to avoid recursion)
-	 */
-	public void resetDrawingInfo(int _exceptDiagr)
-	{
-		surface.resetDrawingInfo(_exceptDiagr);
-	}
-	// END KGU#155 2016-03-08
 
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+    // START KGU#155 2016-03-08: Bugfix #97 extension
+    /**
+     * Invalidates the cached prepareDraw info of all diagrams residing here (to
+     * be called on events with heavy impact on the size or shape of some
+     * Elements)
+     *
+     * @param _exceptDiagr the hash code of a lu.fisch.structorizer.gui.Diagram
+     * that is not to be invoked (to avoid recursion)
+     */
+    public void resetDrawingInfo(int _exceptDiagr) {
+        surface.resetDrawingInfo(_exceptDiagr);
+    }
+    // END KGU#155 2016-03-08
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     //@SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -397,58 +403,42 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
     }//GEN-LAST:event_btnAddDiagramActionPerformed
 
     // START KGU#85 2015-11-17
-    private void btnRemoveDiagramActionPerformed(java.awt.event.ActionEvent evt)
-    {
+    private void btnRemoveDiagramActionPerformed(java.awt.event.ActionEvent evt) {
         surface.removeDiagram();
     }
     // END KGU#85 2015-11-17
 
     // START KGU#88 2015-11-24
-    private void btnPinDiagramActionPerformed(java.awt.event.ActionEvent evt)
-    {
+    private void btnPinDiagramActionPerformed(java.awt.event.ActionEvent evt) {
         surface.togglePinned();
     }
     // END KGU#88 2015-11-24
 
     // START KGU#110 2015-12-20: Enh. #62 Possibility to save and load arrangements
-    private void btnSaveArrActionPerformed(java.awt.event.ActionEvent evt)
-    {
+    private void btnSaveArrActionPerformed(java.awt.event.ActionEvent evt) {
         surface.saveArrangement(this);
     }
 
-    private void btnLoadArrActionPerformed(java.awt.event.ActionEvent evt)
-    {
+    private void btnLoadArrActionPerformed(java.awt.event.ActionEvent evt) {
         surface.loadArrangement(this);
     }
     // END KGU#110 2015-12-20
 
     // START KGU#117 2016-03-09: Enh. #77
-    private void btnSetCoveredActionPerformed(java.awt.event.ActionEvent evt)
-    {
+    private void btnSetCoveredActionPerformed(java.awt.event.ActionEvent evt) {
         surface.setCovered(this);
     }
     // END KGU#88 2016-03-09
-    
-    // START KGU#202 2016-07-03: Language support for dependent Arranger
-    public void setLangLocal(String _langfile)
-    {
-    	LangDialog.setLang(this.surface, _langfile);
-    }
-    // END KGU#202 2016-07-03
 
-    public void setLangLocal(StringList langstrings)
-    {
-    	LangDialog.setLang(this.surface, langstrings);
-    }
-    
     /**
      * Starts the Arranger as application
+     *
      * @param args the command line arguments
      */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-            	// START KGU#2 2015-11-19: Converted into a singleton
+                // START KGU#2 2015-11-19: Converted into a singleton
                 //new Arranger().setVisible(true);
                 getInstance(true).setVisible(true);
                 // END KGU#2 2015-11-19
@@ -480,121 +470,104 @@ public class Arranger extends javax.swing.JFrame implements WindowListener, KeyL
     private JScrollPane scrollarea;
     // END KGU#85 2015-11-18
 
-    public void windowOpened(WindowEvent e)
-    {
+    public void windowOpened(WindowEvent e) {
     }
 
-    public void windowClosing(WindowEvent e)
-    {
+    public void windowClosing(WindowEvent e) {
     }
 
-    public void windowClosed(WindowEvent e)
-    {
+    public void windowClosed(WindowEvent e) {
     }
 
-    public void windowIconified(WindowEvent e)
-    {
+    public void windowIconified(WindowEvent e) {
     }
 
-    public void windowDeiconified(WindowEvent e)
-    {
+    public void windowDeiconified(WindowEvent e) {
     }
 
-    public void windowActivated(WindowEvent e)
-    {
+    public void windowActivated(WindowEvent e) {
         surface.repaint();
     }
 
-    public void windowDeactivated(WindowEvent e)
-    {
+    public void windowDeactivated(WindowEvent e) {
     }
-    
+
     // START KGU#85 2015-11-30: For convenience, the delete button may also be used to drop a diagram now
-	@Override
-	public void keyPressed(KeyEvent ev) {
-		if (ev.getSource() == this)
-		{
-			switch (ev.getKeyCode())
-			{
-			case KeyEvent.VK_DELETE:
-				surface.removeDiagram();
-				break;
-			// START KGU#177 2016-04-14: Enh. #158 - support the insertion from clipboard
-			case KeyEvent.VK_X:
-				if (ev.isControlDown())
-				{
-					surface.removeDiagram();					
-				}
-				break;
-			case KeyEvent.VK_V:
-				if (ev.isControlDown())
-				{
-					surface.pasteDiagram();
-				}
-				break;
-			case KeyEvent.VK_INSERT:
-				if (ev.isShiftDown())
-				{
-					surface.pasteDiagram();
-				}
-				else if (ev.isControlDown())
-				{
-					surface.copyDiagram();
-				}
-				break;
-			case KeyEvent.VK_C:
-				if (ev.isControlDown())
-				{
-					surface.copyDiagram();
-				}
-				break;
-			// END KGU#177 2016-04-14
-			}
-		}
-	}
-	// END KGU#85 2015-11-30
+    @Override
+    public void keyPressed(KeyEvent ev) {
+        if (ev.getSource() == this) {
+            switch (ev.getKeyCode()) {
+                case KeyEvent.VK_DELETE:
+                    surface.removeDiagram();
+                    break;
+                // START KGU#177 2016-04-14: Enh. #158 - support the insertion from clipboard
+                case KeyEvent.VK_X:
+                    if (ev.isControlDown()) {
+                        surface.removeDiagram();
+                    }
+                    break;
+                case KeyEvent.VK_V:
+                    if (ev.isControlDown()) {
+                        surface.pasteDiagram();
+                    }
+                    break;
+                case KeyEvent.VK_INSERT:
+                    if (ev.isShiftDown()) {
+                        surface.pasteDiagram();
+                    } else if (ev.isControlDown()) {
+                        surface.copyDiagram();
+                    }
+                    break;
+                case KeyEvent.VK_C:
+                    if (ev.isControlDown()) {
+                        surface.copyDiagram();
+                    }
+                    break;
+                // END KGU#177 2016-04-14
+            }
+        }
+    }
+    // END KGU#85 2015-11-30
 
-	@Override
-	public void keyReleased(KeyEvent ev) {
-		// Nothing to do here
-	}
+    @Override
+    public void keyReleased(KeyEvent ev) {
+        // Nothing to do here
+    }
 
-	@Override
-	public void keyTyped(KeyEvent ev) {
-		// Nothing to do here
-	}
+    @Override
+    public void keyTyped(KeyEvent ev) {
+        // Nothing to do here
+    }
 	// END KGU#2 2015-11-30
 
-	// START KGU#2 2015-11-24
-	@Override
-	public Vector<Root> findRoutinesByName(String rootName) {
-		return surface.findRoutinesByName(rootName);
-	}
-	@Override
-	public Vector<Root> findRoutinesBySignature(String rootName, int argCount) {
-		return surface.findRoutinesBySignature(rootName, argCount);
-	}
+    // START KGU#2 2015-11-24
+    @Override
+    public Vector<Root> findRoutinesByName(String rootName) {
+        return surface.findRoutinesByName(rootName);
+    }
+
+    @Override
+    public Vector<Root> findRoutinesBySignature(String rootName, int argCount) {
+        return surface.findRoutinesBySignature(rootName, argCount);
+    }
 	// END KGU#2 2015-11-24
-	
-	// START KGU#117 2016-03-08: Introduced on occasion of Enhancement #77
-	@Override
-	public void clearExecutionStatus()
-	{
-		doButtons();
-		surface.clearExecutionStatus();
-	}
-	
-	public void doButtons()
-	{
-		btnSetCovered.setEnabled(Element.E_COLLECTRUNTIMEDATA);
-	}
+
+    // START KGU#117 2016-03-08: Introduced on occasion of Enhancement #77
+    @Override
+    public void clearExecutionStatus() {
+        doButtons();
+        surface.clearExecutionStatus();
+    }
+
+    public void doButtons() {
+        btnSetCovered.setEnabled(Element.E_COLLECTRUNTIMEDATA);
+    }
 	// END KGU#117 2016-03-08
-	
-	// START KGU#156 2016-03-10: An interface for an external update trigger was needed
-	public void redraw()
-	{
-		surface.repaint();
-	}
+
+    // START KGU#156 2016-03-10: An interface for an external update trigger was needed
+    public void redraw() {
+        surface.repaint();
+    }
 	// END KGU#156 2016-03-10
-	
+
 }

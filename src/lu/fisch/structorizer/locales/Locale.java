@@ -94,7 +94,12 @@ public class Locale {
         StringList lines = new StringList();
         lines.setText(input); 
         
-        // extract & remove the header
+        parseStringList(lines);
+    }
+    
+    public void parseStringList(StringList lines)
+    {
+       // extract & remove the header
         while(!lines.get(0).trim().equals(endOfHEader) && lines.count()>0) 
         {
             header.add(lines.get(0));
@@ -102,11 +107,21 @@ public class Locale {
         }
         
         if(lines.count()==0)
-            JOptionPane.showMessageDialog(null, _langfile+": File is empty after removing the header ...", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, filename+": File is empty after removing the header ...", "Error", JOptionPane.ERROR_MESSAGE);
         
         // remove the endOfHEader marker
         lines.remove(0);
+
+        // parse the body
+        parseBody(lines);
+    }
+    
+    private void parseBody(StringList lines)
+    {
+        // clear all sections
+        sections.clear();
         
+        // go ahead an parse the input
         StringList section = null;
         for(int i=0; i<lines.count(); i++)
         {
@@ -131,7 +146,7 @@ public class Locale {
                 }
                 else if(!line.trim().isEmpty())
                 {
-                    JOptionPane.showMessageDialog(null, _langfile+": Found a sub-section ("+line+") before a section!", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null, filename+": Found a sub-section ("+line+") before a section!", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
@@ -337,6 +352,26 @@ public class Locale {
     public StringList getSection(String name)
     {
         return sections.get(name);
+    }
+
+    /*public StringList getBody() {
+        return body;
+    }/**/
+
+    public StringList getBody() {
+        StringList data = new StringList();
+        String[] sectionNames = getSectionNames();
+        for (int i = 0; i < sectionNames.length; i++) {
+            String name = sectionNames[i];
+            data.add(startOfSection+" "+name);
+            data.add(getSection(name));
+        }
+        
+        return data;
+    }
+    
+    public void setBody(StringList body) {
+        parseBody(body);
     }
     
     

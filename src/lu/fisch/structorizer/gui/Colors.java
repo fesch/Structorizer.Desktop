@@ -40,6 +40,7 @@ package lu.fisch.structorizer.gui;
  *
  ******************************************************************************************************///
 
+import lu.fisch.structorizer.locales.LangDialog;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -344,7 +345,6 @@ public class Colors extends LangDialog {
 										Math.round(p.y+(getHeight()-chooser.getHeight())/2));
 				
 				chooser.setColor(((JPanel) e.getSource()).getBackground());
-				chooser.setLang(langFile);
 				
 				if(chooser.execute()==true)
 				{

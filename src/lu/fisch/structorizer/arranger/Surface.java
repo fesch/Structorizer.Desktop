@@ -144,6 +144,7 @@ import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.io.ArrFilter;
 import lu.fisch.structorizer.io.ArrZipFilter;
 import lu.fisch.structorizer.io.PNGFilter;
+import lu.fisch.structorizer.locales.LangPanel;
 import lu.fisch.structorizer.parsers.NSDParser;
 import lu.fisch.utils.StringList;
 import net.iharder.dnd.FileDrop;
@@ -153,7 +154,7 @@ import net.iharder.dnd.FileDrop;
  * @author robertfisch
  */
 @SuppressWarnings("serial")
-public class Surface extends javax.swing.JPanel implements MouseListener, MouseMotionListener, WindowListener, Updater, IRoutinePool, ClipboardOwner {
+public class Surface extends LangPanel implements MouseListener, MouseMotionListener, WindowListener, Updater, IRoutinePool, ClipboardOwner {
 
     private Vector<Diagram> diagrams = new Vector<Diagram>();
 

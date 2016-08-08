@@ -61,6 +61,7 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************///
 
 
+import lu.fisch.structorizer.locales.LangDialog;
 import java.util.*;
 import java.io.*;
 import java.awt.*;
@@ -73,12 +74,14 @@ import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.helpers.*;
 import lu.fisch.structorizer.io.INIFilter;
 import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.locales.LangMenuBar;
+import lu.fisch.structorizer.locales.Locales;
 import lu.fisch.structorizer.locales.Translator;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.utils.StringList;
 
 @SuppressWarnings("serial")
-public class Menu extends JMenuBar implements NSDController
+public class Menu extends LangMenuBar implements NSDController
 {
 	private Diagram diagram = null;
 	private NSDController NSDControl = null;
@@ -705,43 +708,43 @@ public class Menu extends JMenuBar implements NSDController
 		menuPreferencesLanguage.setIcon(IconLoader.ico081);
 
 		menuPreferencesLanguage.add(menuPreferencesLanguageEnglish);
-		menuPreferencesLanguageEnglish.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { setLang("en.txt"); doButtons(); } } );
+		menuPreferencesLanguageEnglish.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { Locales.getInstance().setLang("en"); doButtons(); } } );
 
 		menuPreferencesLanguage.add(menuPreferencesLanguageGerman);
-		menuPreferencesLanguageGerman.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { setLang("de.txt"); doButtons(); } } );
+		menuPreferencesLanguageGerman.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { Locales.getInstance().setLang("de"); doButtons(); } } );
 
 		menuPreferencesLanguage.add(menuPreferencesLanguageFrench);
-		(menuPreferencesLanguageFrench).addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { setLang("fr.txt"); doButtons(); } } );
+		(menuPreferencesLanguageFrench).addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { Locales.getInstance().setLang("fr"); doButtons(); } } );
 
 		menuPreferencesLanguage.add(menuPreferencesLanguageDutch);
-		menuPreferencesLanguageDutch.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { setLang("nl.txt"); doButtons(); } } );
+		menuPreferencesLanguageDutch.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { Locales.getInstance().setLang("nl"); doButtons(); } } );
 
 		menuPreferencesLanguage.add(menuPreferencesLanguageLuxemburgish);
-		menuPreferencesLanguageLuxemburgish.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { setLang("lu.txt"); doButtons(); } } );
+		menuPreferencesLanguageLuxemburgish.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { Locales.getInstance().setLang("lu"); doButtons(); } } );
 
 		menuPreferencesLanguage.add(menuPreferencesLanguageSpanish);
-		menuPreferencesLanguageSpanish.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { setLang("es.txt"); doButtons(); } } );
+		menuPreferencesLanguageSpanish.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { Locales.getInstance().setLang("es"); doButtons(); } } );
 
 		menuPreferencesLanguage.add(menuPreferencesLanguagePortugalBrazil);
-		menuPreferencesLanguagePortugalBrazil.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { setLang("pt_br.txt"); doButtons(); } } );
+		menuPreferencesLanguagePortugalBrazil.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { Locales.getInstance().setLang("pt_br"); doButtons(); } } );
 
 		menuPreferencesLanguage.add(menuPreferencesLanguageItalian);
-		menuPreferencesLanguageItalian.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { setLang("it.txt"); doButtons(); } } );
+		menuPreferencesLanguageItalian.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { Locales.getInstance().setLang("it"); doButtons(); } } );
 
 		menuPreferencesLanguage.add(menuPreferencesLanguageSimplifiedChinese);
-		menuPreferencesLanguageSimplifiedChinese.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { setLang("chs.txt"); doButtons(); } } );
+		menuPreferencesLanguageSimplifiedChinese.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { Locales.getInstance().setLang("chs"); doButtons(); } } );
 
 		menuPreferencesLanguage.add(menuPreferencesLanguageTraditionalChinese);
-		menuPreferencesLanguageTraditionalChinese.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { setLang("cht.txt"); doButtons(); } } );
+		menuPreferencesLanguageTraditionalChinese.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { Locales.getInstance().setLang("cht"); doButtons(); } } );
 
 		menuPreferencesLanguage.add(menuPreferencesLanguageCzech);
-		menuPreferencesLanguageCzech.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { setLang("cz.txt"); doButtons(); } } );
+		menuPreferencesLanguageCzech.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { Locales.getInstance().setLang("cz"); doButtons(); } } );
 
 		menuPreferencesLanguage.add(menuPreferencesLanguageRussian);
-		menuPreferencesLanguageRussian.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { setLang("ru.txt"); doButtons(); } } );
+		menuPreferencesLanguageRussian.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { Locales.getInstance().setLang("ru"); doButtons(); } } );
 
 		menuPreferencesLanguage.add(menuPreferencesLanguagePolish);
-		menuPreferencesLanguagePolish.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { setLang("pl.txt"); doButtons(); } } );
+		menuPreferencesLanguagePolish.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { Locales.getInstance().setLang("pl"); doButtons(); } } );
 
 		// START KGU#232 206-08-03: Enh. #222
 		menuPreferencesLanguage.addSeparator();
@@ -861,54 +864,7 @@ public class Menu extends JMenuBar implements NSDController
 			NSDControl.doButtons();
 		}
 	}
-
-	@Override
-	public void setLangLocal(StringList langstrings)
-	{
-		LangDialog.setLang(this,langstrings);
-		// START KGU#170 2016-04-01: Enh. #144 - update the favourite export item text
-		if (diagram != null)
-		{
-			String itemText = lbFileExportCodeFavorite.getText().replace("%", diagram.getPreferredGeneratorName());
-			this.menuFileExportCodeFavorite.setText(itemText);
-		}
-		// END KGU#170 2016-04-01
-		diagram.analyse();
-	}
-
-	@Override
-	public void setLang(StringList langstrings)
-	{
-		NSDControl.setLang(langstrings);
-	}
-
-
-	@Override
-	public void setLangLocal(String _langfile)
-	{
-		LangDialog.setLang(this,NSDControl.getLang());
-		// START KGU#170 2016-04-01: Enh. #144 - update the favourite export item text
-		if (diagram != null)
-		{
-			String itemText = lbFileExportCodeFavorite.getText().replace("%", diagram.getPreferredGeneratorName());
-			this.menuFileExportCodeFavorite.setText(itemText);
-		}
-		// END KGU#170 2016-04-01
-		diagram.analyse();
-	}
-
-	@Override
-	public void setLang(String _langfile)
-	{
-		NSDControl.setLang(_langfile);
-	}
-
-	@Override
-	public String getLang()
-	{
-		return NSDControl.getLang();
-	}
-
+       
 	@Override
 	public void doButtonsLocal()
 	{
@@ -1115,20 +1071,21 @@ public class Menu extends JMenuBar implements NSDController
 				}
 			}
 
-			// Langauges
-			menuPreferencesLanguageEnglish.setSelected(getLang().equals("en.txt"));
-			menuPreferencesLanguageGerman.setSelected(getLang().equals("de.txt"));
-			menuPreferencesLanguageFrench.setSelected(getLang().equals("fr.txt"));
-			menuPreferencesLanguageDutch.setSelected(getLang().equals("nl.txt"));
-			menuPreferencesLanguageLuxemburgish.setSelected(getLang().equals("lu.txt"));
-			menuPreferencesLanguageSpanish.setSelected(getLang().equals("es.txt"));
-			menuPreferencesLanguagePortugalBrazil.setSelected(getLang().equals("pt_br.txt"));
-			menuPreferencesLanguageItalian.setSelected(getLang().equals("it.txt"));
-			menuPreferencesLanguageSimplifiedChinese.setSelected(getLang().equals("chs.txt"));
-			menuPreferencesLanguageTraditionalChinese.setSelected(getLang().equals("cht.txt"));
-			menuPreferencesLanguageCzech.setSelected(getLang().equals("cz.txt"));
-			menuPreferencesLanguageRussian.setSelected(getLang().equals("ru.txt"));
-			menuPreferencesLanguagePolish.setSelected(getLang().equals("pl.txt"));
+			// Languages
+			menuPreferencesLanguageEnglish.setSelected(Locales.getInstance().getLoadedLocaleName().equals("en"));
+			menuPreferencesLanguageGerman.setSelected(Locales.getInstance().getLoadedLocaleName().equals("de"));
+			menuPreferencesLanguageFrench.setSelected(Locales.getInstance().getLoadedLocaleName().equals("fr"));
+			menuPreferencesLanguageDutch.setSelected(Locales.getInstance().getLoadedLocaleName().equals("nl"));
+			menuPreferencesLanguageLuxemburgish.setSelected(Locales.getInstance().getLoadedLocaleName().equals("lu"));
+			menuPreferencesLanguageSpanish.setSelected(Locales.getInstance().getLoadedLocaleName().equals("es"));
+			menuPreferencesLanguagePortugalBrazil.setSelected(Locales.getInstance().getLoadedLocaleName().equals("pt_br"));
+			menuPreferencesLanguageItalian.setSelected(Locales.getInstance().getLoadedLocaleName().equals("it"));
+			menuPreferencesLanguageSimplifiedChinese.setSelected(Locales.getInstance().getLoadedLocaleName().equals("chs"));
+			menuPreferencesLanguageTraditionalChinese.setSelected(Locales.getInstance().getLoadedLocaleName().equals("cht"));
+			menuPreferencesLanguageCzech.setSelected(Locales.getInstance().getLoadedLocaleName().equals("cz"));
+			menuPreferencesLanguageRussian.setSelected(Locales.getInstance().getLoadedLocaleName().equals("ru"));
+			menuPreferencesLanguagePolish.setSelected(Locales.getInstance().getLoadedLocaleName().equals("pl"));
+                        menuPreferencesLanguageFromFile.setSelected(Locales.getInstance().getLoadedLocaleName().equals("preview"));
 
 			// Recentl file
 			menuFileOpenRecent.removeAll();
@@ -1143,6 +1100,7 @@ public class Menu extends JMenuBar implements NSDController
 		}
 	}
 
+	@Override
 	public void updateColors() {}
 
 
@@ -1154,35 +1112,46 @@ public class Menu extends JMenuBar implements NSDController
 		create();
 	}
 
+	@Override
 	public void savePreferences() {};
 
+    @Override
     public JFrame getFrame()
     {
         return NSDControl.getFrame();
     }
 
+    @Override
     public void loadFromINI()
     {
     }
 
     // START KGU#232 2016-08-03: Enh. #222
-    public void chooseLangFile()
-    {
-		JFileChooser dlgOpen = new JFileChooser();
-		dlgOpen.setDialogTitle(msgOpenLangFile.getText());
-		// set directory
-		dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
-		// config dialogue
-		FileNameExtensionFilter filter = new FileNameExtensionFilter(msgLangFile.getText(), "txt");
-		dlgOpen.addChoosableFileFilter(filter);
-		dlgOpen.setFileFilter(filter);
-		// show & get result
-		int result = dlgOpen.showOpenDialog(this);
-		// react on result
-		if (result == JFileChooser.APPROVE_OPTION)
-		{
-			setLang(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
-		}
+    public void chooseLangFile() {
+        JFileChooser dlgOpen = new JFileChooser();
+        dlgOpen.setDialogTitle(msgOpenLangFile.getText());
+        // set directory
+        dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
+        // config dialogue
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(msgLangFile.getText(), "txt");
+        dlgOpen.addChoosableFileFilter(filter);
+        dlgOpen.setFileFilter(filter);
+        // show & get result
+        int result = dlgOpen.showOpenDialog(this);
+        // react on result
+        if (result == JFileChooser.APPROVE_OPTION) {
+            // create a new StringList
+            StringList sl = new StringList();
+            // load the selected file into it
+            sl.loadFromFile(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
+            // paste it's content to the "preview" locale
+            Locales.getInstance().getLocale("preview").parseStringList(sl);
+            // set the "preview" locale
+            Locales.getInstance().setLang("preview");
+            
+            //Locales.getInstance().setLang(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
+            //setLang(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
+        }
     }
     // END KGU#232 2016-08-03
 }
