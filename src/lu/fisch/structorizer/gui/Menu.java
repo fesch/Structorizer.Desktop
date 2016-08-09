@@ -1086,7 +1086,7 @@ public class Menu extends LangMenuBar implements NSDController
 			menuPreferencesLanguageCzech.setSelected(Locales.getInstance().getLoadedLocaleName().equals("cz"));
 			menuPreferencesLanguageRussian.setSelected(Locales.getInstance().getLoadedLocaleName().equals("ru"));
 			menuPreferencesLanguagePolish.setSelected(Locales.getInstance().getLoadedLocaleName().equals("pl"));
-                        menuPreferencesLanguageFromFile.setSelected(Locales.getInstance().getLoadedLocaleName().equals("preview"));
+                        menuPreferencesLanguageFromFile.setSelected(Locales.getInstance().getLoadedLocaleName().equals("external"));
 
 			// Recentl file
 			menuFileOpenRecent.removeAll();
@@ -1131,7 +1131,7 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#235 2016-08-09: Bugfix #225
     public void chooseLang(String localeName)
     {
-    	Locales.getInstance().setLang(localeName);
+    	Locales.getInstance().setLocale(localeName);
     	doButtons();
     	diagram.analyse();
     }
@@ -1139,30 +1139,29 @@ public class Menu extends LangMenuBar implements NSDController
 	
     // START KGU#232 2016-08-03: Enh. #222
     public void chooseLangFile() {
-		JFileChooser dlgOpen = new JFileChooser();
-		dlgOpen.setDialogTitle(msgOpenLangFile.getText());
-		// set directory
-		dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
-		// config dialogue
-		FileNameExtensionFilter filter = new FileNameExtensionFilter(msgLangFile.getText(), "txt");
-		dlgOpen.addChoosableFileFilter(filter);
-		dlgOpen.setFileFilter(filter);
-		// show & get result
-		int result = dlgOpen.showOpenDialog(this);
-		// react on result
+        JFileChooser dlgOpen = new JFileChooser();
+        dlgOpen.setDialogTitle(msgOpenLangFile.getText());
+        // set directory
+        dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
+        // config dialogue
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(msgLangFile.getText(), "txt");
+        dlgOpen.addChoosableFileFilter(filter);
+        dlgOpen.setFileFilter(filter);
+        // show & get result
+        int result = dlgOpen.showOpenDialog(this);
+        // react on result
         if (result == JFileChooser.APPROVE_OPTION) {
             // create a new StringList
             StringList sl = new StringList();
             // load the selected file into it
-            sl.loadFromFile(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
+            String filename = dlgOpen.getSelectedFile().getAbsoluteFile().toString();
+            sl.loadFromFile(filename);
             // paste it's content to the "preview" locale
-            Locales.getInstance().getLocale("preview").parseStringList(sl);
-            // set the "preview" locale
-            Locales.getInstance().setLang("preview");
-            
-            //Locales.getInstance().setLang(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
+            Locales.getInstance().setExternal(sl,filename);
+
+            //Locales.getInstance().setLocale(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
             //setLang(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
-		}
+        }
         // START KGU#235 2016-08-09: Bugfix #225
         doButtons();
         diagram.analyse();

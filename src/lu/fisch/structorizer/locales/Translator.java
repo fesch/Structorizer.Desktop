@@ -871,12 +871,12 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         // update the special "preview" locale with the generated body
         Locales.getInstance().getLocale("preview").setBody(locale.getBody());
         // make it the actual locale
-        Locales.getInstance().setLang("preview");
+        Locales.getInstance().setLocale("preview");
 
         /*
         if(NSDControl!=null)
     {
-            NSDControl.setLang(StringList.explode(locale.getText(), "\n"));
+            NSDControl.setLocale(StringList.explode(locale.getText(), "\n"));
         }*/
     }//GEN-LAST:event_button_previewActionPerformed
 

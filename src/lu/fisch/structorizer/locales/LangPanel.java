@@ -36,7 +36,7 @@ public class LangPanel extends JPanel {
     @Override
     public void setVisible(boolean b) {
         super.setVisible(b); 
-        Locales.getInstance().setLang(LangPanel.this);
+        Locales.getInstance().setLocale(LangPanel.this);
     }
     
 }

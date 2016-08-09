@@ -51,7 +51,7 @@ public class LangFrame extends JFrame {
     @Override
     public void setVisible(boolean b) {
         super.setVisible(b); 
-        Locales.getInstance().setLang(LangFrame.this);
+        Locales.getInstance().setLocale(LangFrame.this);
     }
     
 }

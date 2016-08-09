@@ -92,7 +92,7 @@ public class LangDialog extends JDialog {
             @Override
             public void windowOpened(WindowEvent e) {
                 super.windowOpened(e);
-                Locales.getInstance().setLang(LangDialog.this);
+                Locales.getInstance().setLocale(LangDialog.this);
                 // repack the dialog to possibly extend it to the new strings
                 if(LangDialog.this.packing) LangDialog.this.pack();
             }
