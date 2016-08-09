@@ -40,6 +40,7 @@ package lu.fisch.structorizer.gui;
  *
  ******************************************************************************************************///
  
+import lu.fisch.structorizer.locales.LangDialog;
 import java.awt.*;
 import java.awt.image.*;
 import java.awt.event.*;

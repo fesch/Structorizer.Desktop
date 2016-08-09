@@ -41,6 +41,7 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2016.01.08      Method replaceAllBetween() added, replaceAll etc. reduced to it.
  *      Kay Gürtzig     2016.03.26      Method subSequence() added.
  *      Kay Gürtzig     2016.04.03      Method int removeAll(StringList, int, boolean) added
+ *      Bob Fisch       2016.08.01      added method "toArray()" and "remove"
  *
  ******************************************************************************************************
  *
@@ -92,6 +93,27 @@ public class StringList {
 		{
 			sl.add(multi[i]);
 		}
+
+		return sl;
+	}
+
+	public static StringList explodeFirstOnly(String _source, String _by)
+	{
+		String[] multi = _source.split(_by);
+		StringList sl = new StringList();
+
+                String first = multi[0];
+                sl.add(first);
+                
+                if(multi.length>1)
+                {
+                    String second = multi[1];
+                    for(int i=2;i<multi.length;i++)
+                    {
+                    	second+="="+multi[i];
+                    }
+                    sl.add(second);
+                }
 
 		return sl;
 	}
@@ -940,12 +962,31 @@ public class StringList {
     // END KGU 2015-11-24
 
         
-        public static void main(String[] args)
-        {
-            StringList sl = new StringList();
-            sl.setCommaText("\"\",\"1\",\"2\",\"3\",\"sinon\"");
-            System.out.println(sl.getText());
-            StringList sl1 = sl.copy();
-            System.out.println(sl1.getText());
+    // START BOB 2016-08-01
+    public String[] toArray()
+    {
+    	String[] array = new String[count()];
+        for (int i = 0; i < count(); i++) {
+            String get = strings.get(i);
+            array[i]=get;
         }
+        return array;
+    }
+    
+    public void remove(int index)
+    {
+        strings.remove(index);
+    }
+    
+    // END BOB 2016-08-01
+
+        
+    public static void main(String[] args)
+    {
+        StringList sl = new StringList();
+        sl.setCommaText("\"\",\"1\",\"2\",\"3\",\"sinon\"");
+        System.out.println(sl.getText());
+        StringList sl1 = sl.copy();
+        System.out.println(sl1.getText());
+    }
 }

@@ -40,6 +40,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.06      Enh. #188: New icon 109_wand introduced for element conversion
  *      Kay Gürtzig     2016.07.22      Enh. #199: New icon 110_help introduced for online user guide activation
  *      Kay Gürtzig     2016-07-31      Enh. #128: New icon 111_c_plus_t introduced for "commments plus text" mode
+ *      Kay Gürtzig     2016-08-02      Enh. #215: New icon 112_stopwatch introduced for breapoint count triggers
  *
  ******************************************************************************************************
  *
@@ -168,6 +169,13 @@ public class IconLoader {
 	// START KGU#227 2016-07-31: Enh. #128 - comments plus text display
 	public static ImageIcon ico111 = getIconImage(getURI(from+"icons/111_c_plus_t.png"));
 	// END KGU#227 2016-07-31
+	// START KGU#213 2016-08-02: Enh. #215 - breakpoint counting trigger
+	public static ImageIcon ico112 = getIconImage(getURI(from+"icons/112_stopwatch.png"));
+	public static ImageIcon ico113 = getIconImage(getURI(from+"icons/113_translater.png"));
+	// END KGU#213 2016-08-02
+	// START KGU#232 2016-08-03: Enh. #222
+	public static ImageIcon ico114 = getIconImage(getURI(from+"icons/114_unknown.png"));
+	// END KGU#232 2016-08-03
 
         public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
 
@@ -273,8 +281,15 @@ public class IconLoader {
         	// START KGU#227 2016-07-31: Enh. #128 - comments plus text display mode
         	ico111 = getIconImage(getURI(from+"icons/111_c_plus_t.png"));
         	// END KGU#227 2016-07-31
+        	// START KGU#213 2016-08-02: Enh. #215 - breakpoint counting trigger
+        	ico112 = getIconImage(getURI(from+"icons/112_stopwatch.png"));
+        	// END KGU#213 2016-08-02
 
-            turtle = getIconImage(getURI(from+"icons/turtle.png"));
+        	// START KGU#232 2016-08-02: Enh. #222 - more flexible language export
+        	ico114 = getIconImage(getURI(from+"icons/114_unknown.png"));
+        	// END KGU#232 2016-08-02
+
+        	turtle = getIconImage(getURI(from+"icons/turtle.png"));
         }
 
         public static ImageIcon getIconImage(java.net.URL url)

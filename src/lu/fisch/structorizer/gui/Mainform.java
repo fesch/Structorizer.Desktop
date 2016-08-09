@@ -46,6 +46,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.03.18      KGU#89: Localization of Executor Control supported 
  *      Kay Gürtzig     2016.07.03      KGU#202: Localization of Arranger Surface supported
  *      Kay Gürtzig     2016.07.25      Issues #201, #202: Look-and-Feel propagation to Arranger and Executor
+ *      Kay Gürtzig     2016.08.01      Enh. #128: new mode "Comments plus text" associated to Ini file
+ *      Kay Gürtzig     2016.08.08      Issues #220, #224: Loak-and Feel updates for Executor and Translator
  *
  ******************************************************************************************************
  *
@@ -73,19 +75,21 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import lu.fisch.structorizer.io.*;
+import lu.fisch.structorizer.locales.Translator;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
+import lu.fisch.structorizer.locales.LangFrame;
+import lu.fisch.structorizer.locales.Locales;
 
 @SuppressWarnings("serial")
-public class Mainform  extends JFrame implements NSDController
+public class Mainform  extends LangFrame implements NSDController
 {
 	public Diagram diagram = null;
 	private Menu menu = null;
 	private Editor editor = null;
 	
-	private String lang = "en.txt";
 	private String laf = null;
 	
 	// START KGU#49/KGU#66 2015-11-14: This decides whether to exit or just to dispose when being closed
@@ -229,8 +233,8 @@ public class Mainform  extends JFrame implements NSDController
 		 * Load values from INI
 		 ******************************/
 		loadFromINI();
-		setLang(lang);
-		
+                Locales.getInstance().setLang(Locales.getInstance().getLoadedLocaleName());
+                        
 		/******************************
 		 * Resize the toolbar
 		 ******************************/
@@ -256,10 +260,10 @@ public class Mainform  extends JFrame implements NSDController
                         IconLoader.setScaleFactor(scaleFactor);
 			
                         // position
-			int top = Integer.valueOf(ini.getProperty("Top","0")).intValue();
-			int left = Integer.valueOf(ini.getProperty("Left","0")).intValue();
-			int width = Integer.valueOf(ini.getProperty("Width","750")).intValue();
-			int height = Integer.valueOf(ini.getProperty("Height","550")).intValue();
+			int top = Integer.valueOf(ini.getProperty("Top","0"));
+			int left = Integer.parseInt(ini.getProperty("Left","0"));
+			int width = Integer.parseInt(ini.getProperty("Width","750"));
+			int height = Integer.valueOf(ini.getProperty("Height","550"));
 
                         // reset to defaults if wrong values
                         if (top<0) top=0;
@@ -268,8 +272,7 @@ public class Mainform  extends JFrame implements NSDController
                         if (height<=0) height=550;
 
 			// language	
-			lang=ini.getProperty("Lang","en.txt");
-                        setLang(lang);
+                        Locales.getInstance().setLang(ini.getProperty("Lang","en"));
                         
                         // colors
                         Element.loadFromINI();
@@ -306,6 +309,9 @@ public class Mainform  extends JFrame implements NSDController
 				{
 					diagram.setComments(false);
 				}
+				// START KGU#227 2016-08-01: Enh. #128
+				diagram.setCommentsPlusText(ini.getProperty("commentsPlusText","0").equals("1"));	// default = 0
+				// END KGU#227 2016-08-01
 				if (ini.getProperty("switchTextComments","0").equals("1")) // default = 0
 				{
 					diagram.setToggleTC(true);
@@ -412,11 +418,14 @@ public class Mainform  extends JFrame implements NSDController
 			}
 			
 			// language
-			ini.setProperty("Lang",lang);
+			ini.setProperty("Lang",Locales.getInstance().getLoadedLocaleName());
 			
 			// DIN, comments
 			ini.setProperty("DIN",(Element.E_DIN?"1":"0"));
 			ini.setProperty("showComments",(Element.E_SHOWCOMMENTS?"1":"0"));
+			// START KGU#227 2016-08-01: Enh. #128
+			ini.setProperty("commentsPlusText", Element.E_COMMENTSPLUSTEXT ? "1" : "0");
+			// END KGU#227 2016-08-01
 			ini.setProperty("switchTextComments",(Element.E_TOGGLETC?"1":"0"));
 			ini.setProperty("varHightlight",(Element.E_VARHIGHLIGHT?"1":"0"));
 			// KGU 2016-07-27: Why has this been commented out once (before version 3.17)? See Issue #207
@@ -501,12 +510,12 @@ public class Mainform  extends JFrame implements NSDController
 							SwingUtilities.updateComponentTreeUI(Arranger.getInstance());
 						}
 						// END KGU#211 2016-07-25
-						// START KGU#210 2016-07-25: Issue #201 - Propagation to Executor Control
-						if (Executor.getInstance() != null)
-						{
-							Executor.getInstance().updateLookAndFeel();
-						}
-						// END KGU#210 2016-07-25						
+						// START KGU#210 2016-08-08: Issue #201 - Propagation to Executor Control
+						Executor.updateLookAndFeel();
+						// END KGU#210 2016-08-08
+						// START KGU#233 2016-08-08: Issue #220
+						Translator.updateLookAndFeel();
+						// END KGU#233 2016-08-08
 					}
 					catch (Exception e)
 					{
@@ -519,43 +528,8 @@ public class Mainform  extends JFrame implements NSDController
 			}
 		}
 	}
-	
-	public void setLang(String _langfile)
-	{
-		lang=_langfile;
-		
-		if(menu!=null)
-		{
-			menu.setLangLocal(_langfile);
-		}
-		
-		if (getEditor()!=null)
-		{
-			getEditor().setLangLocal(_langfile);
-		}
-		
-		// START KGU#89 2016-03-18: Re-translation of the Executor Control
-		if (Executor.getInstance() != null)
-		{
-			Executor.getInstance().setLangLocal();
-		}
-		// END KGU#89 2016-03-18
-		
-		// START KGU#202 2016-07-03: Re-translation of the Arranger surface
-		if (Arranger.hasInstance())
-		{
-			Arranger.getInstance().setLangLocal(_langfile);
-		}
-		// END KGU#202 2016-07-03
-	}
-	
-    public void setLangLocal(String _langfile) {}
-
-    public String getLang()
-    {
-            return lang;
-    }
-
+    
+    @Override
     public void savePreferences()
     {
             //System.out.println("Saving");
@@ -568,6 +542,7 @@ public class Mainform  extends JFrame implements NSDController
     /******************************
      * Local listener (empty)
      ******************************/
+    @Override
     public void doButtonsLocal()
     {
         boolean done=false;
@@ -590,6 +565,7 @@ public class Mainform  extends JFrame implements NSDController
 		// END KGU 2016-01-10
     }
 
+    @Override
     public void updateColors() 
     {
         if(editor!=null)

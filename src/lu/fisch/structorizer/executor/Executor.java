@@ -217,7 +217,7 @@ import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.elements.Forever;
 import lu.fisch.structorizer.gui.Diagram;
 import lu.fisch.structorizer.gui.IconLoader;
-import lu.fisch.structorizer.gui.LangDialog;
+import lu.fisch.structorizer.locales.LangDialog;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
@@ -294,15 +294,6 @@ public class Executor implements Runnable
 		}
 		// END KGU#157 2016-03-16: Bugfix #131
 		mySelf.control.validate();
-		// START KGU#89 2015-11-25: Language support (we don't force the existence of all languages)
-		try {
-			LangDialog.setLang(mySelf.control, mySelf.diagram.getLang());
-		}
-		catch (Exception ex)
-		{
-			System.err.println(ex.getMessage());
-		}
-		// END KGU#89 2015-11-25
 		mySelf.control.setVisible(true);
 		mySelf.control.repaint();
 
@@ -353,29 +344,15 @@ public class Executor implements Runnable
 		this.diagramController = diagramController;
 	}
 
-	// START KGU#89 2016-03-18: Opportunity to trigger re-tramsltion from outside
-	public void setLangLocal()
+	// START KGU#210/KGU#234 2016-08-08: Issue #201 - Ensure GUI consistency
+	public static void updateLookAndFeel()
 	{
-		try {
-			LangDialog.setLang(control, diagram.getLang());
-		}
-		catch (Exception ex)
+		if (mySelf != null)
 		{
-			System.err.println(ex.getMessage());
+			mySelf.control.updateLookAndFeel();
 		}
-		
 	}
-	// END KGU#89 2016-03-18
-	
-	// START KGU#210 2016-07-25: Issue #201 - Ensure GUI consistency
-	public void updateLookAndFeel()
-	{
-		try {
-			SwingUtilities.updateComponentTreeUI(mySelf.control);
-		}
-		catch (Exception ex) {}
-	}
-	// END KGU#210 2016-07-25
+	// END KGU#210/KGU#234 2016-08-08
 	
 	// METHOD MODIFIED BY GENNARO DONNARUMMA
 
@@ -1400,15 +1377,6 @@ public class Executor implements Runnable
 		if (reopen || Element.E_COLLECTRUNTIMEDATA)
 		{
 			control.init();
-			// START KGU#89 2015-11-25: Language support (we don't force the existence of all languages)
-			try {
-				LangDialog.setLang(mySelf.control, mySelf.diagram.getLang());
-			}
-			catch (Exception ex)
-			{
-				System.err.println(ex.getMessage());
-			}
-			// END KGU#89 2015-11-25
 			control.validate();
 			control.setVisible(true);
 			control.repaint();
@@ -1840,7 +1808,10 @@ public class Executor implements Runnable
 	// START KGU#43 2015-10-12 New method for breakpoint support
 	private boolean checkBreakpoint(Element element)
 	{
-		boolean atBreakpoint = element.isBreakpoint(); 
+		// START KGU#213 2016-08-01: Enh. #215
+		//boolean atBreakpoint = element.isBreakpoint();
+		boolean atBreakpoint = element.triggersBreakNow();
+		// END KGU#213 2016-08-01
 		if (atBreakpoint) {
 			control.setButtonsForPause();
 			this.setPaus(true);

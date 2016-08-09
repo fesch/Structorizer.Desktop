@@ -64,6 +64,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.25      Bugfix #205: Alternative comment bar colour if fill colour equals (KGU#215)
  *      Kay Gürtzig     2016.07.28      Bugfix #210: Execution counting mechanism fundamentally revised
  *      Kay Gürtzig     2016.07.29      Issue #211: Modification in writeOutVariables() for E_TOGGLETC mode.
+ *                                      Enh. #128: New mode E_COMMENTSPLUSTEXT
+ *      Kay Gürtzig     2016.08.02      Enh. #215: Infrastructure for conditional breakpoints added.
  *
  ******************************************************************************************************
  *
@@ -151,12 +153,15 @@ import java.awt.FontMetrics;
 import lu.fisch.utils.*;
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.parsers.*;
+import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.io.*;
 
 import com.stevesoft.pat.*;  //http://www.javaregex.com/
 
 import java.awt.Point;
+import java.util.Hashtable;
+import java.util.Map;
 import java.util.Stack;
 import java.util.Vector;
 
@@ -271,12 +276,19 @@ public abstract class Element {
 	// START KGU#225 2016-07-28: Bugfix #210
 	protected static Vector<Integer> execCounts = new Vector<Integer>();
 	// END KGU#225 2016-07-28
+	// START KGU#213 2016-08-02: Enh. #215
+	/**
+	 *  Container for temporarily (i.e. during execution) modified breakpoint count triggers
+	 *  Keys ae the indices into execCounts
+	 */
+	protected static Map<Integer, Integer> breakTriggersTemp = new Hashtable<Integer, Integer>();
+	// END KGU#213 2016-08-2
 
 	public static boolean E_VARHIGHLIGHT = false;	// Highlight variables, operators, string literals, and certain keywords? 
 	public static boolean E_SHOWCOMMENTS = true;	// Enable comment bars and comment popups? 
 	public static boolean E_TOGGLETC = false;		// Swap text and comment on displaying?
 	// START KGU#227 2016-07-29: Enh. #128
-	public static boolean E_COMMENTSPLUSTEXT = true;
+	public static boolean E_COMMENTSPLUSTEXT = false;	// Draw elements with both text and comments?
 	// END KGU#227 2016-07-29
 	public static boolean E_DIN = false;			// Show FOR loops according to DIN 66261?
 	public static boolean E_ANALYSER = true;		// Analyser enabled?
@@ -342,9 +354,12 @@ public abstract class Element {
 
 	private boolean collapsed = false;
 	
-	// START KGU 2015-10-11: States whether the element serves as breakpoint for execution (stop before!)
+	// START KGU#43 2015-10-11: States whether the element serves as breakpoint for execution (stop before!)
 	protected boolean breakpoint = false;
-	// END KGU 2015-10-11
+	// END KGU#43 2015-10-11
+	// START KGU#213 2016-08-01: Enh. #215 - Optional execution Count trigger for breakpoint (0 = always active)
+	public int breakTriggerCount = 0;
+	// END KGU#213 2016-08-01
 
 	// used for drawing
 	// START KGU#136 2016-02-25: Bugfix #97 - New separate 0-based Rect for prepareDraw()
@@ -444,6 +459,21 @@ public abstract class Element {
 	}
 	// END KGU#156 2016-03-11
 	
+	// START KGU#213 2016-08-01: Enh. #215 - derived from Instruction
+	protected void copyDetails(Element _ele, boolean _simplyCoveredToo)
+	{
+		_ele.setComment(this.getComment().copy());
+		_ele.setColor(this.getColor());
+		_ele.breakpoint = this.breakpoint;
+		_ele.breakTriggerCount = this.breakTriggerCount;
+    	this.copyRuntimeData(_ele, _simplyCoveredToo);
+		// START KGU#183 2016-04-24: Issue #169
+		_ele.selected = this.selected;
+		// END KGU#183 2016-04-24
+		// FIXME: Shouldn't we also copy the collapsed status?
+	}
+	// END KGU#213 2016-08-01
+
 	// START KGU#119 2016-01-02 Bugfix #78
 	/**
 	 * Returns true iff another is of same class, all persistent attributes are equal, and
@@ -687,7 +717,8 @@ public abstract class Element {
 	
 	// START KGU#156 2016-03-11: Enh. #124 - We need a consistent execution step counting
 	/**
-	 * Resets all element execution counts and the derived maximum execution count 
+	 * Resets all element execution counts and the derived maximum execution count as well
+	 * as all centrally held temporary breakpoint triggers
 	 */
 	public static void resetMaxExecCount()
 	{
@@ -695,6 +726,9 @@ public abstract class Element {
 		// START KGU#225 2016-07-28: Bugfix #210
 		Element.execCounts.clear();
 		// END KGU#225 2016-07-28
+		// START KGU#213 2016-08-02: Enh. #215
+		Element.breakTriggersTemp.clear();
+		// END KGU#213 2016-08-02
 	}
 
 	// START KGU#225 2016-07-28: Bugfix #210
@@ -1063,18 +1097,82 @@ public abstract class Element {
 	// END KGU#156 2016-03-12
 	
 	// START KGU#43 2015-10-12: Methods to control the new breakpoint property
+	/**
+	 * Alternatingly enables / disables the breakpoint property of the element
+	 * Does not change the stored break trigger counter
+	 */
 	public void toggleBreakpoint()
 	{
 		this.breakpoint = !this.breakpoint;
 	}
 	
-	// Returns whether this Element works as breakpoint on execution
+	/**
+	 * Returns whether this Element works as breakpoint on execution
+	 * @return true if breakpoint is enabled (no matter whether it is a count trigger or unconditioned)
+	 */
 	public boolean isBreakpoint()
 	{
 		return this.breakpoint;
 	}
 	
-	// 
+	// START KGU#213 2016-08-01: Enh. #215
+	/**
+	 * Tells whether this element may trigger a break with execution counting
+	 * @return true iff breakpoint is enabled and conditioned (waiting for certain execution count)
+	 */
+	public boolean isConditionedBreakpoint()
+	{
+		return this.breakpoint && this.breakTriggerCount > 0;
+	}
+	
+	/**
+	 * Informs whether this element triggers a break just now - regarding the breakpoint info
+	 * @return true iff breakpoint is enabled and either unconditioned or the execution count will match the trigger count on completion
+	 */
+	public boolean triggersBreakNow()
+	{
+		int trigger =  this.getBreakTriggerCount();
+		return this.breakpoint && (trigger == 0 || Element.E_COLLECTRUNTIMEDATA && trigger == this.getExecCount()+1);
+	}
+	
+	/**
+	 * Gets the current 
+	 * @return
+	 */
+	public int getBreakTriggerCount()
+	{
+		int trigger = this.breakTriggerCount;
+		if (Element.E_COLLECTRUNTIMEDATA && Element.breakTriggersTemp.containsKey(this.execCountIndex))
+		{
+			trigger = Element.breakTriggersTemp.get(this.execCountIndex);
+		}
+		return trigger;
+	}
+
+	/**
+	 * Sets a new trigger count value (to be compared with the execution counter)
+	 * 0 means no dependency of execution counter
+	 * @param newTriggerCount
+	 */
+	public void setBreakTriggerCount(int newTriggerCount)
+	{
+		// After execution has begun we must face the existence of recursion clones
+		// So change must be held in a central map rather tahn being stored in an
+		// arbitrary clone of the element.. 
+		if (Element.E_COLLECTRUNTIMEDATA &&
+				(Executor.getInstance().isRunning()
+				|| Executor.getInstance().getPaus()))
+		{
+			this.makeExecutionCount();
+			Element.breakTriggersTemp.put(this.execCountIndex, newTriggerCount);
+		}
+		else
+		{
+			this.breakTriggerCount = newTriggerCount;
+		}
+	}
+	// END KGU#213 2016-08-01
+	
 	/**
 	 * Recursively clears all breakpoints in this branch
 	 * (To be overridden by structured sub-classes!)
@@ -1122,6 +1220,9 @@ public abstract class Element {
 		// START KGU#225 2016-07-28: Bugfix #210
 		//this.execCount = this.execStepCount = this.execSubCount = 0;
 		this.execStepCount = this.execSubCount = 0;
+		// START KGU#213 2016-08-02: Enh. #215
+		Element.breakTriggersTemp.remove(this.execCountIndex);
+		// END KGU#213 2016-08-02
 		if (this.execCountIndex >= Element.execCounts.size())
 		{
 			this.execCountIndex = -1;
@@ -1261,7 +1362,26 @@ public abstract class Element {
 			markerRect.right -= 2;
 			markerRect.bottom = markerRect.top+4;
 
-			_canvas.fillRect(markerRect);
+			// START KGU#213 2016-08-01: Enh. #215
+			//_canvas.fillRect(markerRect);
+			if (this.isConditionedBreakpoint())
+			{
+				Rect squareDot = markerRect.copy();
+				int height = markerRect.bottom - markerRect.top;
+				int width = markerRect.right - markerRect.left;
+				squareDot.right = squareDot.left + height;
+				for (int i = 0; i < width/(2 * height); i++)
+				{
+					_canvas.fillRect(squareDot);
+					squareDot.left += 2* height;
+					squareDot.right += 2* height;
+				}
+			}
+			else
+			{
+				_canvas.fillRect(markerRect);
+			}
+			// END KGU#213 2016-08-01
 		}
 	}
 	// END KGU 2015-10-11
@@ -1996,11 +2116,21 @@ public abstract class Element {
 			// backup the original font
 			Font backupFont = _canvas.getFont();
 			String info = this.getRuntimeInfoString();
-			int yOffs = this.isBreakpoint() ? 4 : 0; 
+			int yOffs = fm.getHeight() + (this.isBreakpoint() ? 4 : 0); 
 			_canvas.setFont(smallFont);
-			_canvas.setColor(Color.BLACK);
 			int width = _canvas.stringWidth(info);
-			_canvas.writeOut(_right - width, _top + yOffs + fm.getHeight() , info);
+			// START KGU#213 2016-08-01: Enh. #215
+			//_canvas.setColor(Color.BLACK);
+			if (this.isConditionedBreakpoint())
+			{
+				String triggerInfo = this.getBreakTriggerCount() + ": ";
+				int extraWidth = _canvas.stringWidth(triggerInfo);
+				_canvas.setColor(Color.RED);
+				_canvas.writeOut(_right - width - extraWidth, _top + yOffs, triggerInfo);
+			}
+			// END KGU#213 2016-08-01
+			_canvas.setColor(Color.BLACK);
+			_canvas.writeOut(_right - width, _top + yOffs, info);
 			_canvas.setFont(backupFont);
 		}
 	}

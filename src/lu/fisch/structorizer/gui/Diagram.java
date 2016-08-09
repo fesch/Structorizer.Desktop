@@ -76,7 +76,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.26      Bugfix #204: Modified ExportOptionDialoge API (for correct sizing)
  *      Kay Gürtzig     2016.07.28      Bugfix #208: Modification in setFunction(), setProgram(), and exportPNG()
  *                                      Bugfix #209: exportPNGmulti() corrected
- *      Kay Gürtzig     2016.07.31      Issue #158 Changes from 2016.07.25 partially withdrawn
+ *      Kay Gürtzig     2016.07.31      Issue #158 Changes from 2016.07.25 partially withdrawn, additional restrictions
+ *      Kay Gürtzig     2016-08-01      Issue #213: FOR loop transmutation implemented
+ *                                      Enh. #215: Breakpoint trigger counters added (KGU#213)
  *
  ******************************************************************************************************
  *
@@ -253,12 +255,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#48,KGU#49 2015-10-18
 
+    /*
 	// START KGU#2 2015-11-24: Allows the Executor to localize the Control frame
 	public String getLang()
 	{
 		return NSDControl.getLang();
 	}
 	// END KGU#2 2015-11-24
+    */    
 	
     public boolean getAnalyser()
     {
@@ -1216,7 +1220,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
                         if(writeNow==false)
                         {
-                            JOptionPane.showMessageDialog(this,"Your file has not been saved. Please repeat the save operation!");
+                            JOptionPane.showMessageDialog(this, Menu.msgRepeatSaveAttempt.getText());
                         }
                         else
                         {
@@ -1431,7 +1435,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         }
         catch(Exception ex)
         {
-        	JOptionPane.showMessageDialog(this, "Error on saving the file:" + ex.getMessage() + "!", "Error",
+        	JOptionPane.showMessageDialog(this, Menu.msgErrorFileSave.getText().replace("%", ex.getMessage()), "Error",
         			JOptionPane.ERROR_MESSAGE, null);
         }
         return done;
@@ -1558,6 +1562,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 				}
 			}
+			// START KGU#229 2016-08-01: Enh. #213
+			else if (selected instanceof For)
+			{
+				convertible = ((For)selected).style == For.ForLoopStyle.COUNTER;
+			}
+			// END KGU#229 2016-08-01
 		}
 		return convertible;
 	}
@@ -1688,7 +1698,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				showInputBox(data, "Instruction", true);
 				// END KGU#42 2015-10-14
 
-				if(data.result==true)
+				if (data.result==true)
 				{
 					Element ele = new Instruction(data.text.getText());
 					ele.setComment(data.comment.getText());
@@ -1697,6 +1707,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						ele.toggleBreakpoint();
 					}
 					// END KGU#43 2015-10-17
+					// START KGU#213 2016-08-01: Enh. #215 (temprarily disabled again)
+					//ele.setBreakTriggerCount(data.breakTriggerCount);
+					// END KGU#213 2016-08-01
 					root.addUndo();
 					// START KGU#137 2016-01-11: Already prepared by addUndo()
 					//root.hasChanged=true;
@@ -1719,6 +1732,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#43 2015-10-12
 				data.breakpoint = element.isBreakpoint();
 				// END KGU#43 2015-10-12
+				// START KGU#213 2016-08-01: Enh. #215
+				data.breakTriggerCount = element.getBreakTriggerCount();
+				// END KGU#213 2016-08-01				
 				
 				// START KGU#3 2015-10-25: Allow more sophisticated For loop editing
 				if (element instanceof For)
@@ -1746,10 +1762,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					}
 					element.setComment(data.comment.getText());
 					// START KGU#43 2015-10-12
-					if (element.isBreakpoint() != data.breakpoint) {
+					if (element.isBreakpoint() != data.breakpoint) 
+					{
 						element.toggleBreakpoint();
 					}
 					// END KGU#43 2015-10-12
+					// START KGU#213 2016-08-01: Enh. #215
+					//element.setBreakTriggerCount(data.breakTriggerCount);
+					// END KGU#213 2016-08-01
 					// START KGU#3 2015-10-25
 					if (element instanceof For)
 					{
@@ -1976,6 +1996,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					_ele.toggleBreakpoint();
 				}
 				// END KGU 2015-10-17
+				// START KGU#213 2016-08-01: Enh. #215
+				//_ele.setBreakTriggerCount(data.breakTriggerCount);
+				// END KGU#213 2016-08-01
 				// START KGU#3 2015-10-25
 				if (_ele instanceof For)
 				{
@@ -2031,6 +2054,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			root.addUndo();
 			transmuteToCompoundInstr(parent);
 		}
+		// START KGU#229 2016-08-01: Enh. #213 - FOR loop decomposition
+		else if (selected instanceof For && ((For)selected).style == For.ForLoopStyle.COUNTER)
+		{
+			root.addUndo();
+			decomposeForLoop(parent);
+		}
+		// END KGU#229 2016-08-01
 		this.doButtons();
 		redraw();
 		analyse();
@@ -2102,6 +2132,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		int nElements = ((IElementSequence)selected).getSize();
 		int index = parent.getIndexOf(instr);
 		boolean brkpt = instr.isBreakpoint();
+		// START KGU#213 2016-08-01: Enh. #215
+		int brkCount = instr.getBreakTriggerCount();
+		// END KGU#213 2016-08-01
 		// Find out whether all elements are of the same kind
 		boolean sameKind = true;
 		for (int i = 1; sameKind && i < nElements; i++)
@@ -2133,6 +2166,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			{
 				brkpt = true;
 			}
+			// START KGU#213 2016-08-01: Enh. #215
+			// Use the earliest breakTriggerCount
+			int brkCnt = ele.getBreakTriggerCount();
+			if (brkCnt > 0 && brkCnt < brkCount)
+			{
+				brkCount = brkCnt;
+			}
+			// END KGU#213 2016-08-01
 			((IElementSequence)selected).removeElement(0);			
 		}
 		// If there was no substantial comment then we must not create one, otherwise
@@ -2151,12 +2192,62 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			instr.toggleBreakpoint();
 		}
+		// START KGU#213 2016-08-01: Enh. #215
+		// Use the earliest breakTriggerCount
+		instr.setBreakTriggerCount(brkCount);
+		// END KGU#213 2016-08-01
+		
 		instr.setSelected(true);
 		parent.insertElementAt(instr, index);
 		this.selected = instr;
 		this.selectedUp = this.selectedDown = this.selected;
 	}
 	// END KGU#199 2016-07-06
+
+	// START KGU#229 2016-08-01: Enh. #213 - FOR loop decomposition
+	private void decomposeForLoop(Subqueue parent)
+	{
+		// Comment will be tranferred to the While loop.
+		For forLoop = (For)selected;
+		String asgmtOpr = " <- ";
+		if (forLoop.getText().get(0).contains(":="))
+		{
+			asgmtOpr = " := ";
+		}
+		int step = forLoop.getStepConst();
+		Element[] elements = new Element[3];
+		elements[0] = new Instruction(forLoop.getCounterVar() + asgmtOpr + forLoop.getStartValue());
+		While whileLoop = new While(forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue());
+		elements[1] = whileLoop;
+		elements[2] = new Instruction(forLoop.getCounterVar() + asgmtOpr + forLoop.getCounterVar() + (step < 0 ? " - " : " + ") + Math.abs(forLoop.getStepConst()));
+
+		whileLoop.setComment(forLoop.getComment());
+		if (forLoop.isBreakpoint())
+		{
+			whileLoop.toggleBreakpoint();
+		}
+		whileLoop.setBreakTriggerCount(forLoop.getBreakTriggerCount());
+		whileLoop.q = forLoop.getBody();
+		whileLoop.q.parent = whileLoop;
+		whileLoop.q.addElement(elements[2]);
+		for (int i = 0; i < elements.length; i++)
+		{
+			Element elem = elements[i];
+			elem.setColor(forLoop.getColor());
+			elem.deeplyCovered = forLoop.deeplyCovered;
+			elem.simplyCovered = forLoop.simplyCovered;
+			elem.setCollapsed(forLoop.isCollapsed());
+		}
+		int index = parent.getIndexOf(forLoop);
+		for (int i = 0; i < 2; i++)
+		{
+			parent.insertElementAt(elements[1-i], index+1);
+		}
+		parent.removeElement(index);
+		this.selected = new SelectedSequence(parent, index, index+1);
+		this.selectedUp = this.selectedDown = this.selected;
+	}
+	// END KGU#229 2016-08-01
 
 	// START KGU#43 2015-10-12
 	/*****************************************
@@ -2172,6 +2263,40 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 	
+	// START KGU#213 2016-08-02: Enh. #215
+	public void editBreakTrigger() {
+		// TODO Auto-generated method stub
+		Element ele = getSelected();
+		if (ele != null)
+		{
+			int trigger = ele.getBreakTriggerCount();
+			// FIXME: Replace this quick-and-dirty approach by something more functional
+			String str = JOptionPane.showInputDialog(this,
+					Menu.msgBreakTriggerPrompt.getText(),
+					Integer.toString(trigger));
+			if (str != null)
+			{
+				try {
+					ele.setBreakTriggerCount(Integer.parseUnsignedInt(str));
+					// Usually the user will want to activate the breakpoint with te configuration
+					if (!ele.isBreakpoint())
+					{
+						ele.toggleBreakpoint();
+					}
+					redraw();
+				}
+				catch (NumberFormatException ex)
+				{
+					JOptionPane.showMessageDialog(this,
+							Menu.msgBreakTriggerIgnored.getText(),
+							"Wrong Input",
+							JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		}
+	}
+	// END KGU#213 2016-08-02
+
 	public void clearBreakpoints()
 	{
 		root.clearBreakpoints();
@@ -2220,7 +2345,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		pp.setVisible(true);
 		*/
 		PrintPreview pp = new PrintPreview(NSDControl.getFrame(),this);
-		pp.setLang(NSDControl.getLang());
 		Point p = getLocationOnScreen();
 		pp.setLocation(Math.round(p.x+(getVisibleRect().width-pp.getWidth())/2+this.getVisibleRect().x),
 					   Math.round(p.y)+(getVisibleRect().height-pp.getHeight())/2+this.getVisibleRect().y);
@@ -2236,9 +2360,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//System.out.println("Arranger button pressed!");
 		Arranger arr = Arranger.getInstance();
 		arr.addToPool(root, NSDControl.getFrame());
-		// START KGU#202 2016-07-03: Localization of Arranger
-		arr.setLangLocal(this.getLang());
-		// END KGU#202 2016-07-03
 		arr.setVisible(true);
 		isArrangerOpen = true;	// Gives the Executor a hint where to find a subroutine pool
 	}
@@ -2264,7 +2385,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Point p = getLocationOnScreen();
 		about.setLocation(Math.round(p.x+(getVisibleRect().width-about.getWidth())/2+this.getVisibleRect().x),
 						  Math.round(p.y)+(getVisibleRect().height-about.getHeight())/2+this.getVisibleRect().y);
-		about.setLang(NSDControl.getLang());
 		about.setVisible(true);
 	}
 
@@ -3144,7 +3264,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		colors.color8.setBackground(Element.color8);
 		colors.color9.setBackground(Element.color9);
 
-		colors.setLang(NSDControl.getLang());
 		colors.pack();
 		colors.setVisible(true);
 
@@ -3185,7 +3304,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 
 		preferences.altPadRight.setSelected(Element.altPadRight);
 
-		preferences.setLang(NSDControl.getLang());
 		preferences.pack();
 		preferences.setVisible(true);
 
@@ -3240,7 +3358,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		parserPreferences.chkIgnoreCase.setSelected(D7Parser.ignoreCase);
 		// END KGU#165 2016-03-25
 
-		parserPreferences.setLang(NSDControl.getLang());
 		parserPreferences.pack();
 		parserPreferences.setVisible(true);
 
@@ -3324,7 +3441,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		analyserPreferences.check17.setSelected(Root.check17);	// KGU#47
 		// END KGU#47 2015-11-29
 
-		analyserPreferences.setLang(NSDControl.getLang());
 		analyserPreferences.pack();
 		analyserPreferences.setVisible(true);
 
@@ -3370,7 +3486,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#212 2016-07-26: bugfix #204 eod sizing needs the language
             //ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame());
             ExportOptionDialoge eod = new ExportOptionDialoge(
-            		NSDControl.getFrame(), NSDControl.getLang());
+            		NSDControl.getFrame()); //, NSDControl.getLang());
             // END KGU#212 2016-07-26
             if(ini.getProperty("genExportComments","0").equals("true"))
                 eod.commentsCheckBox.setSelected(true);
@@ -3437,7 +3553,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 		// set fields
 		fontChooser.setFont(Element.getFont());
-		fontChooser.setLang(NSDControl.getLang());
 		fontChooser.setVisible(true);
 
 		// get fields
@@ -3746,6 +3861,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			inputbox.chkBreakpoint.setEnabled(getSelected() != root);
 			inputbox.chkBreakpoint.setSelected(_data.breakpoint);
 			// END KGU#43 2015-10-12
+			// START KGU#213 2016-08-01: Enh. #215
+			inputbox.lblBreakTrigger.setEnabled(getSelected() != root);
+			inputbox.lblBreakTrigger.setText(inputbox.lblBreakText.getText().replace("%", Integer.toString(_data.breakTriggerCount)));			
+			// END KGU#213 2016-08-01
 
 			inputbox.OK=false;
 			// START KGU#42 2015-10-14: Pass the additional information for title translation control
@@ -3776,7 +3895,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#61 2016-03-21: Give InputBox an opportunity to check consistency
 			inputbox.checkConsistency();
 			// END KGU#61 2016-03-21
-			inputbox.setLang(NSDControl.getLang());
 			inputbox.setVisible(true);
 
 			// get fields
@@ -3785,6 +3903,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#43 2015-10-12: Breakpoint support
 			_data.breakpoint = inputbox.chkBreakpoint.isSelected();
 			// END KGU#43 2015-10-12
+			// START KGU#213 2016-08-01: Enh. #215 (temprarily disabled again)
+//			try{
+//				_data.breakTriggerCount = Integer.parseUnsignedInt(inputbox.txtBreakTrigger.getText());
+//			}
+//			catch (Exception ex)
+//			{
+//				_data.breakTriggerCount = 0;
+//			}
+			// END KGU#213 2016-08-01
 			// START KGU#3 2015-10-25: Dedicated support for For loops
 			if (inputbox instanceof InputBoxFor)
 			{

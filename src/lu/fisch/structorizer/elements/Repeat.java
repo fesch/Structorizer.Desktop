@@ -54,7 +54,6 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.awt.Color;
-import java.awt.FontMetrics;
 import java.awt.Point;
 
 import javax.swing.ImageIcon;
@@ -396,22 +395,9 @@ public class Repeat extends Element implements ILoop {
 	public Element copy()
 	{
 		Element ele = new Repeat(this.getText().copy());
-		ele.setComment(this.getComment().copy());
-		ele.setColor(this.getColor());
+		copyDetails(ele, false);
 		((Repeat) ele).q=(Subqueue) this.q.copy();
 		((Repeat) ele).q.parent=ele;
-		// START KGU#82 (bug #31) 2015-11-14
-		ele.breakpoint = this.breakpoint;
-		// END KGU#82 (bug #31) 2015-11-14
-		// START KGU#117 2016-03-07: Enh. #77
-		// START KGU#156/KGU#225 2016-07-28: Bugfix #210
-		//ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
-		this.copyRuntimeData(ele, false);
-		// END KGU#156/KGU#225 2016-07-28
-		// END KGU#117 2016-03-07
-		// START KGU#183 2016-04-24: Issue #169
-		ele.selected = this.selected;
-		// END KGU#183 2016-04-24
 		return ele;
 	}
 	

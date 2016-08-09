@@ -44,6 +44,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.05.05      KGU#197: Further (forgotten) LangTextHolders added
  *      Kay Gürtzig     2016.07.25      Issue #201: Redesign of the GUI, new Slider listening, Call Stack button
  *      Kay Gürtzig     2016.07.27      KGU#197: More LangTextHolders for Executor error messages
+ *      Kay Gürtzig     2016.08.03      KGU#89: Inheritance enhanced to improve language support (var table)
  *
  ******************************************************************************************************
  *
@@ -66,6 +67,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Vector;
 
 import javax.swing.JComboBox;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
@@ -75,6 +77,7 @@ import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.RuntimeDataPresentMode;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.LangTextHolder;
+import lu.fisch.structorizer.locales.LangFrame;
 
 
 /**
@@ -82,7 +85,7 @@ import lu.fisch.structorizer.gui.LangTextHolder;
  * @author robertfisch
  */
 @SuppressWarnings("serial")
-public class Control extends javax.swing.JFrame implements PropertyChangeListener, ItemListener {
+public class Control extends LangFrame implements PropertyChangeListener, ItemListener { //, ILangDialog {
 
     /** Creates new form Control */
     public Control() {
@@ -123,7 +126,7 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         btnPause = new javax.swing.JButton();
         btnStep = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
-        tblVar = new javax.swing.JTable();
+        tblVar = new HeaderTable();
         // START KGU#2 (#9) 2015-11-14: Additional display of subroutine call level
         // START KGU#210 2016-07-25: Fix #210 - improved usability
         //lblCallLevel = new javax.swing.JLabel(" Subroutine level:");
@@ -578,6 +581,21 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
         while(tm.getRowCount()>0) tm.removeRow(0);
     }
 
+    // START KGU#210/KGU#234 2016-08-09: Issue #224 - Ensure GUI consistency and table grid visibility
+    public void updateLookAndFeel()
+    {
+    	try {
+    		SwingUtilities.updateComponentTreeUI(this);
+    		// Now, this is a workaround for issue #224
+    		if (!javax.swing.UIManager.getLookAndFeel().getName().equals("Nimbus"))
+    		{
+    			tblVar.setShowGrid(true);
+    		}
+    	}
+    	catch (Exception ex) {}
+    }
+    // END KGU#210/KGU#234 2016-08-09
+    
     private void btnStopActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnStopActionPerformed
     {//GEN-HEADEREND:event_btnStopActionPerformed
         Executor.getInstance().setStop(true);
@@ -784,7 +802,7 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
     public javax.swing.JCheckBox chkCollectRuntimeData;
     public javax.swing.JComboBox<RuntimeDataPresentMode> cbRunDataDisplay;
     // END KGU#117/KGU#156 2016-03-13
-    private javax.swing.JTable tblVar;
+    private HeaderTable tblVar;
     // End of variables declaration//GEN-END:variables
     // START KGU#2 (#9) 2015-11-14: Additional display of subroutine call level
     // START KGU#210 2016-07-25: Fix #201 - A button would be more obvious to display
@@ -903,5 +921,4 @@ public class Control extends javax.swing.JFrame implements PropertyChangeListene
 	    // END KGU#160 2016-04-12
 	}
 	// END KGU#117 2016-03-08
-
 }

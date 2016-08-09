@@ -7,11 +7,11 @@
 
 Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
-[Foo]*  -->     idea provided by Foo, coding doe by Kay Gürtzig
+[Foo]*  -->     idea provided by Foo, coding done by Kay Gürtzig
 <Foo>   -->     idea AND coding done by Foo
 <*>     -->     idea and coding done by Kay Gürtzig
 
-Version: 3.25 (2016.07.31)
+Version: 3.25 (2016.08.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]*
 - 01: Enh. #124: Generalized runtime data visualization <*>
 - 01: Arranger now adopts current directory from first arranged diagram <*>
@@ -93,6 +93,16 @@ Version: 3.25 (2016.07.31)
 - 15: Bugfix #211: Execution counting in recursions corrected <*>
 - 15: Bugfix #212: Inverted logic of preference "enlarge FALSE" mended <*>
 - 15: Icon sizes in Diagram menu unified <*>
+- 15: Issue #213: FOR loop transmutation mechanism added <*>
+- 15: Issue #215: New conditioned breakpoints (triggered by execution count) <*>
+- 16: Bugfix #218: added new method to StringList [Bob Fisch]
+- 16: Created and integrated translator [Bob Fisch]
+- 16: Bugfix #214: recoded translator [Bob Fisch]
+- 16: Issue #206: Table headers in Executor control now localizable <*>
+- 16: Issue #220: Usability improvements for Translator [Bob Fisch]<*>
+- 16: Issue #222: Structorizer localization from directly loadable file <*>
+- 16: Issue #224: Workaround for table grids on Look and Feel changes <*>
+- 16: Redesigned localization mechanism [Bob Fisch]
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
