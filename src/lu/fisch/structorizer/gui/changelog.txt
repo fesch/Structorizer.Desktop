@@ -102,7 +102,7 @@ Version: 3.25 (2016.08.09)
 - 16: Issue #220: Usability improvements for Translator [Bob Fisch]<*>
 - 16: Issue #222: Structorizer localization from directly loadable file <*>
 - 16: Issue #224: Workaround for table grids on Look and Feel changes <*>
-- 16: Revised localization mechanisms (key structure enh.) [Bob Fisch]
+- 16: Redesigned localization mechanism [Bob Fisch]
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
