@@ -294,7 +294,7 @@ public class Locales {
     
     
     // ----[ ATTENTION ]----
-    // As this mehtod might be called before a component is fully initialised,
+    // As this method might be called before a component is fully initialised,
     // so before all contained components have been put there, we might get
     // null pointers. So deal with it! ;-)
     public void setLang(Component component, StringList lines) {

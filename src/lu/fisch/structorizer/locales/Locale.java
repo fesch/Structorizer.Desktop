@@ -37,15 +37,17 @@ public class Locale {
     public static final String startOfSection      = "----->";
     public static final String startOfSubSection   = "-----[";
     
-    // START KGU 2016-08-04: #220 
-    public boolean hasUnsavedChanges = false;
-    // END KGU 2016-08-04
-    
     private StringList header = new StringList();
     private final LinkedHashMap<String,StringList> sections = new LinkedHashMap<String,StringList>();
     
     private String filename;
     
+    // START KGU#231 2016-08-04: #220 
+    public boolean hasUnsavedChanges = false;
+    // END KGU#231 2016-08-04
+    // START KGU#231 2016-08-09: #220 
+    public StringList cachedHeader = new StringList();
+    // END KGU#231 2016-08-09
     public final LinkedHashMap<String,LinkedHashMap<String,String>> values = new LinkedHashMap<String,LinkedHashMap<String,String>>();
     
     public static void main(String[] args)
@@ -176,10 +178,10 @@ public class Locale {
     
     public boolean hasKey(String keyName)
     {
-        String[] sectioNames = getSectionNames();
-        for (int i = 0; i < sectioNames.length; i++) {
-            String sectioName = sectioNames[i];
-            if(getKeys(sectioName).contains(keyName)) return true;
+        String[] sectionNames = getSectionNames();
+        for (int i = 0; i < sectionNames.length; i++) {
+            String sectionName = sectionNames[i];
+            if(getKeys(sectionName).contains(keyName)) return true;
         }
         return false;
     }
@@ -189,24 +191,31 @@ public class Locale {
         String[] sectionNames = getSectionNames();
         
         for (int i = 0; i < sectionNames.length; i++) {
-            String sectionName = sectionNames[i];
-            
-            StringList section = sections.get(sectionName);
+            // START KGU#231 2016-08-08: Issue #220 Code unification
+            //String sectionName = sectionNames[i];
+            //
+            //StringList section = sections.get(sectionName);
 
-            for (int s = 0; s < section.count(); s++) {
-                String line = section.get(s);
-                StringList parts = StringList.explodeFirstOnly(line.trim(),"=");
-                if(line.trim().contains("=") && parts.get(0).contains(".") && !parts.get(0).startsWith("//"))
-                {
-                    if(parts.get(0).equals(keyName))
-                    {
-                        if(parts.get(1).trim().isEmpty())
-                            return false;
-                        else
-                            return true;
-                    }
-                }
-            }
+            //for (int s = 0; s < section.count(); s++) {
+            //    String line = section.get(s);
+            //    StringList parts = StringList.explodeFirstOnly(line.trim(),"=");
+            //    if(line.trim().contains("=") && parts.get(0).contains(".") && !parts.get(0).startsWith("//"))
+            //    {
+            //        if(parts.get(0).equals(keyName))
+            //        {
+            //            if(parts.get(1).trim().isEmpty())
+            //                return false;
+            //            else
+            //                return true;
+            //        }
+            //    }
+            //}
+        	String value = getValueIfPresent(sectionNames[i], keyName);
+        	if (value != null)
+        	{
+        		return !(value).trim().isEmpty();
+        	}
+            // END KGU#231 2016-08-08
         }
         return false;
     }
@@ -232,11 +241,12 @@ public class Locale {
         return keys;
     }
 
-    public String getValue(String sectionName, String key)
+    // START KGU#231 2016-08-08: Issue #220 - Unifies retrieval
+    private String getValueIfPresent(String sectionName, String key)
     {
         StringList section = sections.get(sectionName);
         
-        if(section==null) return "";
+        if (section==null) return null;
         
         for (int i = 0; i < section.count(); i++) {
             String line = section.get(i);
@@ -250,6 +260,47 @@ public class Locale {
                 return parts.get(1);
             }
         }
+        return null;
+    }
+    
+    public boolean valueDiffersFrom(String key, String value)
+    {
+        String[] sectionNames = getSectionNames();
+        
+        for (int i = 0; i < sectionNames.length; i++) {
+        	String val = getValueIfPresent(sectionNames[i], key);
+        	if (val != null)
+        	{
+        		return !(val.equals(value));
+        	}
+            // END KGU 2016-08-08
+        }
+        return value != null;
+    }
+    // END KGU#231 2016-08-08
+    
+    public String getValue(String sectionName, String key)
+    {
+        // START KGU#231 2016-08-08: Issue #220 - Reduced to new internal method
+        //StringList section = sections.get(sectionName);
+        //
+        //if(section==null) return "";
+        //
+        //for (int i = 0; i < section.count(); i++) {
+        //    String line = section.get(i);
+        //    StringList parts = StringList.explodeFirstOnly(line.trim(),"=");
+        //    if(line.trim().contains("=") && 
+        //            parts.get(0).contains(".") && 
+        //            !parts.get(0).startsWith("//") &&
+        //            parts.get(0).equals(key)
+        //            )
+        //    {
+        //        return parts.get(1);
+        //    }
+        //}
+    	String value = getValueIfPresent(sectionName, key);
+    	if (value != null) return value;
+        // END KGU#231 2016-08-08
         return "";
     }
     
@@ -325,5 +376,11 @@ public class Locale {
         parseBody(body);
     }
     
+    // START KGU#231 2016-08-09: Issue #220
+    public boolean hasCachedChanges()
+    {
+    	return !this.values.isEmpty() || this.cachedHeader.count() > 0;
+    }
+    // END KGU#231 2016-08-09
     
 }
