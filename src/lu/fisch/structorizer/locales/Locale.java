@@ -37,15 +37,17 @@ public class Locale {
     public static final String startOfSection      = "----->";
     public static final String startOfSubSection   = "-----[";
     
-    // START KGU 2016-08-04: #220 
-    public boolean hasUnsavedChanges = false;
-    // END KGU 2016-08-04
-    
     private StringList header = new StringList();
     private final LinkedHashMap<String,StringList> sections = new LinkedHashMap<String,StringList>();
     
     private String filename;
     
+    // START KGU#231 2016-08-04: #220 
+    public boolean hasUnsavedChanges = false;
+    // END KGU#231 2016-08-04
+    // START KGU#231 2016-08-09: #220 
+    public StringList cachedHeader = new StringList();
+    // END KGU#231 2016-08-09
     public final LinkedHashMap<String,LinkedHashMap<String,String>> values = new LinkedHashMap<String,LinkedHashMap<String,String>>();
     
     public static void main(String[] args)
@@ -374,5 +376,11 @@ public class Locale {
         parseBody(body);
     }
     
+    // START KGU#231 2016-08-09: Issue #220
+    public boolean hasCachedChanges()
+    {
+    	return !this.values.isEmpty() || this.cachedHeader.count() > 0;
+    }
+    // END KGU#231 2016-08-09
     
 }
