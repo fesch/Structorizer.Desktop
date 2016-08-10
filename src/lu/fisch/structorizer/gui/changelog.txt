@@ -107,6 +107,7 @@ Version: 3.25 (2016.08.09)
 - 16: Locales: added special case "external" [Bob Fisch]
 - 16: Locales: save & load external loaded to and from the INI file [Bob Fisch]
 - 16: Locales: make the INI file backward compatible [Bob Fisch]
+- 16: Locales: memory usage optimisations [Bob Fisch]
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]
