@@ -181,7 +181,7 @@ public class Locales {
     {
         loadedLocaleName = localeName.replace(".txt", "");
         
-        // if we can't fine the name of the loaded locale,
+        // if we can't find the name of the loaded locale,
         // we suppose a filepath has been passed
         if(!Arrays.asList(LOCALES_LIST).contains(loadedLocaleName))
         {
@@ -203,7 +203,7 @@ public class Locales {
         
         if(!localeName.equals("preview") && !localeName.equals("external"))
             loadedLocaleFilename=loadedLocaleName+".txt";
-        // update all registereed components
+        // update all registered components
         updateComponents();
     }
     

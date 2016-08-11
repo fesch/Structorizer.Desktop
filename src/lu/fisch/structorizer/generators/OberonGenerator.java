@@ -53,6 +53,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016-04-03      KGU#150 Support for CHR and ORD and other built-in functions
  *      Kay Gürtzig             2016.04.29      Bugfix #144 suppressTransformation mode didn't fully work
  *      Kay Gürtzig             2016.07.20      Enh. #160 (subroutines involved) implemented
+ *      Kay Gürtzig             2016.08.10      Bugfix #227 (Modules = main programs have to end with full stop)
  *
  ******************************************************************************************************
  *
@@ -328,28 +329,32 @@ public class OberonGenerator extends Generator {
 				// START KGU#101/KGU#108 2015-12-20 Issue #51/#54
 				//code.add(_indent+transform(_inst.getText().get(i))+";");
 				String line = _inst.getText().get(i);
-				String matcherInput = "^" + getKeywordPattern(D7Parser.input);
-				String matcherOutput = "^" + getKeywordPattern(D7Parser.output);
-				if (Character.isJavaIdentifierPart(D7Parser.input.charAt(D7Parser.input.length()-1))) { matcherInput += "[ ]"; }
-				if (Character.isJavaIdentifierPart(D7Parser.output.charAt(D7Parser.output.length()-1))) { matcherOutput += "[ ]"; }
-				boolean isInput = (line.trim()+" ").matches(matcherInput + "(.*)");			// only non-empty input instructions relevant  
-				boolean isOutput = (line.trim()+" ").matches(matcherOutput + "(.*)"); 	// also empty output instructions relevant
-				if (isInput)
+				// START KGU#236 2016-08-10: Issue #227: Simplification by delegation
+//				String matcherInput = "^" + getKeywordPattern(D7Parser.input);
+//				String matcherOutput = "^" + getKeywordPattern(D7Parser.output);
+//				if (Character.isJavaIdentifierPart(D7Parser.input.charAt(D7Parser.input.length()-1))) { matcherInput += "[ ]"; }
+//				if (Character.isJavaIdentifierPart(D7Parser.output.charAt(D7Parser.output.length()-1))) { matcherOutput += "[ ]"; }
+//				boolean isInput = (line.trim()+" ").matches(matcherInput + "(.*)");			// only non-empty input instructions relevant  
+//				boolean isOutput = (line.trim()+" ").matches(matcherOutput + "(.*)"); 	// also empty output instructions relevant
+				// END KGU#236 2016-08-10
+				if (Instruction.isInput(line))
 				{
-					code.add(_indent + "In.Open;");
+					// START KGU#236 2016-08-10: Issue #227 - moved to the algorithm start now
+					//code.add(_indent + "In.Open;");
+					// END KGU#236 2016-08-10
 					if (line.substring(D7Parser.input.trim().length()).trim().isEmpty())
 					{
 						code.add(_indent + "In.Char(dummyInputChar);");
 					}
 					else
 					{	
-						insertComment("TODO: Replace \"TYPE\" by the the actual data type name!", _indent);
+						insertComment("TODO: Replace \"TYPE\" by the the actual In procedure name for this type!", _indent);
 						code.add(_indent + transform(line) + ";");
 					}
 				}
-				else if (isOutput)
+				else if (Instruction.isOutput(line))
 				{
-					insertComment("TODO: Replace \"TYPE\" by the the actual data type name and add a length argument where needed!", _indent);	
+					insertComment("TODO: Replace \"TYPE\" by the the actual Out procedure name for this type and add a length argument where needed!", _indent);	
 					StringList expressions = Element.splitExpressionList(line.substring(D7Parser.output.length()).trim(), ",");
 					// Produce an output isntruction for every expression (according to type)
 					for (int j = 0; j < expressions.count(); j++)
@@ -772,6 +777,47 @@ public class OberonGenerator extends Generator {
 		String header = (_root.isProgram ? "MODULE " : "PROCEDURE ") + _procName;
 		if (!_root.isProgram)
 		{
+        	// START KGU#236 2016-08-10: Issue #227 - create a MODULE context
+        	if (topLevel && this.optionExportSubroutines())
+        	{
+        		// Though the MODULE name is to be the same as the file name
+        		// (or vice versa),
+        		// we must not allow non-identifier characters. so convert
+        		// all characters that are neither letters nor digits into 
+        		// underscores.
+        		String moduleName = "";
+        		for (int i = 0; i < pureFilename.length(); i++)
+        		{
+        			char ch = pureFilename.charAt(i);
+        			if (!Character.isAlphabetic(ch) && !Character.isDigit(ch))
+        			{
+        				ch = '_';
+        			}
+        			moduleName += ch;
+        		}
+        		code.add(_indent + "MODULE " + moduleName + ";");
+        		code.add(_indent);
+        		
+        		if (this.hasInput || this.hasOutput)
+       			{
+        			StringList ioModules = new StringList();
+        			if (this.hasInput) ioModules.add("In");
+        			if (this.hasOutput) ioModules.add("Out");
+        			code.add(_indent + "IMPORT " + ioModules.concatenate(", ") + ";");
+            		code.add(_indent);
+       			}
+        		if (this.hasEmptyInput)
+        		{
+        			code.add(_indent + "VAR");
+        			code.add(_indent + this.getIndent() + "dummyInputChar: Char;	" +
+        					this.commentSymbolLeft() + " for void input " + this.commentSymbolRight());
+        			code.add(_indent);
+        		}
+    			subroutineIndent = _indent;
+    			subroutineInsertionLine = code.count();
+        	}
+        	// END KGU#236 2016-08-10
+        	
 			header += "*";	// Marked for export as default
 			String lastType = "";
 			int nParams = _paramNames.count();
@@ -799,11 +845,20 @@ public class OberonGenerator extends Generator {
 		}
 		
 		code.add(_indent + header + ";");
-		// START KGU 2016-03-23: For a module, we will by default import In and Out
-		if (_root.isProgram)
+		// START KGU#61 2016-03-23: For a module, we will import In and Out
+		// START KGU#236 2016-08-10: Issue #227 - only if needed now
+		//if (_root.isProgram)
+		//{
+		//	code.add(_indent + "IMPORT In, Out");	// Later, this could be done on demand
+		//}
+		if (_root.isProgram && (this.hasInput || this.hasOutput))
 		{
-			code.add(_indent + "IMPORT In, Out");	// Later, this could be done on demand
+  			StringList ioModules = new StringList();
+			if (this.hasInput) ioModules.add("In");
+			if (this.hasOutput) ioModules.add("Out");
+			code.add(_indent + "IMPORT " + ioModules.concatenate(", ") + ";");
 		}
+		// END KGU#236 2016-08-10
 		// END KGU#61 2016-03-23
 
 		// START KGU 2015-12-20: Don't understand what this was meant to achieve
@@ -847,8 +902,16 @@ public class OberonGenerator extends Generator {
 		String indentPlusOne = _indent + this.getIndent();
 		code.add(_indent + "VAR");
 		insertComment("TODO: Declare and initialise local variables here:", indentPlusOne);
-		code.add(indentPlusOne + "dummyInputChar: Char;	" +
-				this.commentSymbolLeft() + " for void input " + this.commentSymbolRight());
+		// START KGU#236 2016-08-10: Issue #227: Declare this variable only if needed
+		//code.add(indentPlusOne + "dummyInputChar: Char;	" +
+		//		this.commentSymbolLeft() + " for void input " + this.commentSymbolRight());
+		boolean isProcModule = !_root.isProgram && this.optionExportSubroutines();
+		if (topLevel && this.hasEmptyInput && !isProcModule)
+		{
+			code.add(indentPlusOne + "dummyInputChar: Char;	" +
+					this.commentSymbolLeft() + " for void input " + this.commentSymbolRight());
+		}
+		// END KGU#236 2016-08-10
 		for (int v = 0; v < varNames.count(); v++) {
 			insertComment(varNames.get(v), indentPlusOne);
 		}
@@ -863,6 +926,16 @@ public class OberonGenerator extends Generator {
 		// END KGU#178 2016-07-20
 		
 		code.add(_indent + "BEGIN");
+		// START KGU#236 2016-08-10: Issue #227
+		if (topLevel && this.hasInput && !isProcModule)
+		{
+			code.add(_indent + this.getIndent() + "In.Open;");
+		}
+		if (topLevel && this.hasOutput && !isProcModule)
+		{
+			code.add(_indent + this.getIndent() + "Out.Open;");	// This is optional, actually
+		}
+		// END KGU#236 2016-08-10
 		return indentPlusOne;
 	}
 
@@ -893,13 +966,44 @@ public class OberonGenerator extends Generator {
 	protected void generateFooter(Root _root, String _indent)
 	{
 		// Method block close
-		code.add(_indent + "END " + _root.getMethodName() + ";");
+		// START KGU#236 2016-08-10: Bugfix #227
+		//code.add(_indent + "END " + _root.getMethodName() + ";");
+		code.add(_indent + "END " + _root.getMethodName() + (_root.isProgram ? "." : ";"));
+		// END KGU#236 2016-08-10
 		// START KGU#178 2016-07-20: Enh. #160 - separate the routines
 		if (!topLevel)
 		{
 			code.add(_indent);
 		}
 		// END KGU#178 2016-07-20
+    	// START KGU#236 2016-08-10: Issue #227 - create an additional MODULE context
+		else if (!_root.isProgram && this.optionExportSubroutines())
+    	{
+			// Additionally append an empty module body if we export a
+			// potential bunch of routines
+			code.add(_indent);
+			code.add(_indent + "BEGIN");
+			if (this.hasInput)
+			{
+				code.add(_indent + this.getIndent() + "In.Open;");
+			}
+			if (this.hasOutput)
+			{
+				code.add(_indent + this.getIndent() + "Out.Open;");	// This is optional, actually
+			}
+      		String moduleName = "";
+    		for (int i = 0; i < pureFilename.length(); i++)
+    		{
+    			char ch = pureFilename.charAt(i);
+    			if (!Character.isAlphabetic(ch) && !Character.isDigit(ch))
+    			{
+    				ch = '_';
+    			}
+    			moduleName += ch;
+    		}
+			code.add(_indent + "END " + moduleName + ".");
+    	}
+		// END KGU#236 2016-08-10
 
 		super.generateFooter(_root, _indent);
 	}

@@ -30,9 +30,10 @@ package lu.fisch.structorizer.generators;
 *
 *      Revision List
 *
-*      Author          Date			Description
-*      ------          ----			-----------
+*      Author          Date            Description
+*      ------          ----            -----------
 *      Kay Gürtzig     2016.07.19      First issue (for enh. #160)
+*      Kay Gürtzig     2016.08.10      Modification for bugfix #228 (KGU#237)
 *
 ******************************************************************************************************
 *
@@ -56,7 +57,13 @@ final class SubTopoSortEntry {
 	
 	public void addCaller(Root _caller)
 	{
-		callers.add(_caller);
+		// START KGU#237 2016-08-10: Bugfix #228 preparation
+		//callers.add(_caller);
+		if (_caller != null)
+		{
+			callers.add(_caller);
+		}
+		// END KGU#237 2016-08-10
 	}
 	
 }
