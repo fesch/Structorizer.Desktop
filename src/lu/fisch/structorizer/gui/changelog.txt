@@ -107,6 +107,7 @@ Version: 3.25 (2016.08.11)
 - 16: Locales: added special case "external" [Bob Fisch]
 - 16: Locales: save & load external loaded to and from the INI file [Bob Fisch]
 - 16: Locales: make the INI file backward compatible [Bob Fisch]
+- 16: Locales: memory usage optimisations [Bob Fisch]
 - 16: Bugfix #227: Oberon module export must end with full stop [K.-P. Reimers]2
 - 16: Bugfix #228: Unnecessary warning on code export of recursive routines <2>
 

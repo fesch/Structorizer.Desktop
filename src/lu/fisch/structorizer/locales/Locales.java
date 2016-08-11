@@ -90,15 +90,20 @@ public class Locales {
 
     private Locales() 
     {
+        // do not preload all files
+        // rather use some "load on demand"
+        /*
         for (int i = 0; i < LOCALES_LIST.length; i++) {
             String name = LOCALES_LIST[i];
             locales.put(name, new Locale(name+".txt"));
         }
+        */
     }
     
     public Locale getDefaultLocale()
     {
-        return locales.get(DEFAULT_LOCALE);
+        // get the default locale
+        return getLocale(DEFAULT_LOCALE);
     }
     
     /**
@@ -129,7 +134,17 @@ public class Locales {
     
     public Locale getLocale(String name)
     {
-        return locales.get(name);
+        // try to get the locale
+        Locale locale = locales.get(name);
+        // if it has not yet been loaded
+        if(locale==null)
+        {
+            // load it now ...
+            locale=new Locale(name+".txt");
+            // ... and put it into the list
+            locales.put(name, locale);
+        }
+        return locale;
     }
     
     public StringList whoHasKey(String keyName)
