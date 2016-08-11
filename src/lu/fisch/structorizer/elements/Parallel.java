@@ -276,24 +276,24 @@ public class Parallel extends Element
             //setText(_strings);	// Already done by super
     }
 
-	// START KGU#64 2015-11-03: Is to improve drawing performance
-	/**
-	 * Recursively clears all drawing info this subtree down
-	 * (To be overridden by structured sub-classes!)
-	 */
-	@Override
-	public void resetDrawingInfoDown()
-	{
-		this.resetDrawingInfo();
-		if (this.qs != null)
-		{
-			for (int i = 0; i < this.qs.size(); i++)
-			{
-				this.qs.get(i).resetDrawingInfoDown();
-			}
-		}
-	}
-	// END KGU#64 2015-11-03
+//	// START KGU#64 2015-11-03: Is to improve drawing performance
+//	/**
+//	 * Recursively clears all drawing info this subtree down
+//	 * (To be overridden by structured sub-classes!)
+//	 */
+//	@Override
+//	public void resetDrawingInfoDown()
+//	{
+//		this.resetDrawingInfo();
+//		if (this.qs != null)
+//		{
+//			for (int i = 0; i < this.qs.size(); i++)
+//			{
+//				this.qs.get(i).resetDrawingInfoDown();
+//			}
+//		}
+//	}
+//	// END KGU#64 2015-11-03
     
 	// START KGU#227 2016-07-30: Enh. #128
 	/**
@@ -762,58 +762,58 @@ public class Parallel extends Element
 	}
 	// END KGU#117 2016-03-07
 
-    // START KGU 2015-10-12
-    /* (non-Javadoc)
-     * @see lu.fisch.structorizer.elements.Element#clearBreakpoints()
-     */
-    @Override
-    public void clearBreakpoints()
-    {
-    	super.clearBreakpoints();
-    	if (qs!= null)
-    	{
-    		for (int i = 0; i < qs.size(); i++)
-    		{
-    			qs.get(i).clearBreakpoints();
-    		}
-    	}
-    }
-    // END KGU 2015-10-12
-    
-    // START KGU 2015-10-16
-    /* (non-Javadoc)
-     * @see lu.fisch.structorizer.elements.Element#clearExecutionStatus()
-     */
-    @Override
-    public void clearExecutionStatus()
-    {
-    	super.clearExecutionStatus();
-    	if (qs!= null)
-    	{
-    		for (int i = 0; i < qs.size(); i++)
-    		{
-    			qs.get(i).clearExecutionStatus();
-    		}
-    	}
-    }
-    // END KGU 2015-10-16
-    
-	// START KGU#117 2016-03-06: Enh. #77
-    /* (non-Javadoc)
-     * @see lu.fisch.structorizer.elements.Element#clearExecutionStatus()
-     */
-    @Override
-    public void clearRuntimeData()
-    {
-    	super.clearRuntimeData();
-    	if (qs!= null)
-    	{
-    		for (int i = 0; i < qs.size(); i++)
-    		{
-    			qs.get(i).clearRuntimeData();
-    		}
-    	}
-    }
+//    // START KGU 2015-10-12
+//    /* (non-Javadoc)
+//     * @see lu.fisch.structorizer.elements.Element#clearBreakpoints()
+//     */
+//    @Override
+//    public void clearBreakpoints()
+//    {
+//    	super.clearBreakpoints();
+//    	if (qs!= null)
+//    	{
+//    		for (int i = 0; i < qs.size(); i++)
+//    		{
+//    			qs.get(i).clearBreakpoints();
+//    		}
+//    	}
+//    }
+//    // END KGU 2015-10-12
+//    
+//    // START KGU 2015-10-16
+//    /* (non-Javadoc)
+//     * @see lu.fisch.structorizer.elements.Element#clearExecutionStatus()
+//     */
+//    @Override
+//    public void clearExecutionStatus()
+//    {
+//    	super.clearExecutionStatus();
+//    	if (qs!= null)
+//    	{
+//    		for (int i = 0; i < qs.size(); i++)
+//    		{
+//    			qs.get(i).clearExecutionStatus();
+//    		}
+//    	}
+//    }
+//    // END KGU 2015-10-16
+//    
+//	// START KGU#117 2016-03-06: Enh. #77
+//    /* (non-Javadoc)
+//     * @see lu.fisch.structorizer.elements.Element#clearExecutionStatus()
+//     */
+//    @Override
+//    public void clearRuntimeData()
+//    {
+//    	super.clearRuntimeData();
+//    	if (qs!= null)
+//    	{
+//    		for (int i = 0; i < qs.size(); i++)
+//    		{
+//    			qs.get(i).clearRuntimeData();
+//    		}
+//    	}
+//    }
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
@@ -891,4 +891,23 @@ public class Parallel extends Element
 	}
 	// END KGU#199 2016-07-07
     
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#traverse(lu.fisch.structorizer.elements.IElementVisitor)
+	 */
+	@Override
+	public boolean traverse(IElementVisitor _visitor) {
+		boolean proceed = _visitor.visitPreOrder(this);
+		if (qs != null) {
+			for (int i = 0; proceed && i < qs.size(); i++)
+			{
+				proceed = qs.get(i).traverse(_visitor);
+			}
+		}
+		if (proceed)
+		{
+			proceed = _visitor.visitPostOrder(this);
+		}
+		return proceed;
+	}
+
 }

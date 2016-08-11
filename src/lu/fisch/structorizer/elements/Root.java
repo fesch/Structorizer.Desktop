@@ -818,21 +818,21 @@ public class Root extends Element {
     	breakpoint = false;
     }
     
-    public void clearBreakpoints()
-    {
-            super.clearBreakpoints();
-            children.clearBreakpoints();
-    }
-    // END KGU#43 2015-10-12
-
-	// START KGU#43 2015-10-13
-	// Recursively clears all execution flags in this branch
-	public void clearExecutionStatus()
-	{
-		super.clearExecutionStatus();
-		children.clearExecutionStatus();
-	}
-	// END KGU#43 2015-10-13
+//    public void clearBreakpoints()
+//    {
+//            super.clearBreakpoints();
+//            children.clearBreakpoints();
+//    }
+//    // END KGU#43 2015-10-12
+//
+//	// START KGU#43 2015-10-13
+//	// Recursively clears all execution flags in this branch
+//	public void clearExecutionStatus()
+//	{
+//		super.clearExecutionStatus();
+//		children.clearExecutionStatus();
+//	}
+//	// END KGU#43 2015-10-13
 	
 	// START KGU#117 2016-03-06: Enh. #77
 	/* (non-Javadoc)
@@ -847,30 +847,30 @@ public class Root extends Element {
 	}
 	// END KGU#117 2016-03-06
 
-	// START KGU#117 2016-03-07: Enh. #77
-	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
-	 */
-	@Override
-	public void clearRuntimeData()
-	{
-		super.clearRuntimeData();
-		children.clearRuntimeData();
-	}
-	// END KGU#117 2016-03-07
+//	// START KGU#117 2016-03-07: Enh. #77
+//	/* (non-Javadoc)
+//	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
+//	 */
+//	@Override
+//	public void clearRuntimeData()
+//	{
+//		super.clearRuntimeData();
+//		children.clearRuntimeData();
+//	}
+//	// END KGU#117 2016-03-07
 
-	// START KGU#64 2015-11-03: Is to improve drawing performance
-	/**
-	 * Recursively clears all drawing info this subtree down
-	 * (To be overridden by structured sub-classes!)
-	 */
-	@Override
-	public void resetDrawingInfoDown()
-	{
-		this.resetDrawingInfo();
-		this.children.resetDrawingInfoDown();
-	}
-	// END KGU#64 2015-11-03
+//	// START KGU#64 2015-11-03: Is to improve drawing performance
+//	/**
+//	 * Recursively clears all drawing info this subtree down
+//	 * (To be overridden by structured sub-classes!)
+//	 */
+//	@Override
+//	public void resetDrawingInfoDown()
+//	{
+//		this.resetDrawingInfo();
+//		this.children.resetDrawingInfoDown();
+//	}
+//	// END KGU#64 2015-11-03
 
     public Rect prepareDraw(Graphics _g)
     {
@@ -3755,6 +3755,23 @@ public class Root extends Element {
 		this.children.convertToCalls(_signatures);
 	}
 	// END KGU#199 2016-07-07
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#traverse(lu.fisch.structorizer.elements.IElementVisitor)
+	 */
+	@Override
+	public boolean traverse(IElementVisitor _visitor) {
+		boolean proceed = _visitor.visitPreOrder(this);
+		if (proceed)
+		{
+			proceed = children.traverse(_visitor);
+		}
+		if (proceed)
+		{
+			proceed = _visitor.visitPostOrder(this);
+		}
+		return proceed;
+	}
 
     
 }

@@ -233,24 +233,24 @@ public class Case extends Element
     }
     // END KGU#227 2016-07-31
     
-	// START KGU#64 2015-11-03: Is to improve drawing performance
-	/**
-	 * Recursively clears all drawing info this subtree down
-	 * (To be overridden by structured sub-classes!)
-	 */
-	@Override
-	public void resetDrawingInfoDown()
-	{
-		this.resetDrawingInfo();
-		if (qs != null)
-		{
-			for (int i = 0; i < qs.size(); i++)
-			{
-				qs.get(i).resetDrawingInfoDown();
-			}
-		}
-	}
-	// END KGU#64 2015-11-03    
+//	// START KGU#64 2015-11-03: Is to improve drawing performance
+//	/**
+//	 * Recursively clears all drawing info this subtree down
+//	 * (To be overridden by structured sub-classes!)
+//	 */
+//	@Override
+//	public void resetDrawingInfoDown()
+//	{
+//		this.resetDrawingInfo();
+//		if (qs != null)
+//		{
+//			for (int i = 0; i < qs.size(); i++)
+//			{
+//				qs.get(i).resetDrawingInfoDown();
+//			}
+//		}
+//	}
+//	// END KGU#64 2015-11-03    
     
     public Rect prepareDraw(Canvas _canvas)
     {
@@ -805,53 +805,53 @@ public class Case extends Element
 	}
 	// END KGU#117 2016-03-07
 
-	// START KGU#43 2015-10-12
-    @Override
-    public void clearBreakpoints()
-    {
-    	super.clearBreakpoints();
-    	if (qs!= null)
-    	{
-    		for (int i = 0; i < qs.size(); i++)
-    		{
-    			qs.get(i).clearBreakpoints();
-    		}
-    	}
-    }
-    // END KGU#43 2015-10-12
-
-	// START KGU#43 2015-10-13
-    @Override
-    public void clearExecutionStatus()
-    {
-    	super.clearExecutionStatus();
-    	if (qs!= null)
-    	{
-    		for (int i = 0; i < qs.size(); i++)
-    		{
-    			qs.get(i).clearExecutionStatus();
-    		}
-    	}
-    }
-    // END KGU#43 2015-10-13
-
-	// START KGU#117 2016-03-07: Enh. #77
-	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
-	 */
-    @Override
-	public void clearRuntimeData()
-	{
-		super.clearRuntimeData();
-    	if (qs!= null)
-    	{
-    		for (int i = 0; i < qs.size(); i++)
-    		{
-    			qs.get(i).clearRuntimeData();
-    		}
-    	}
-	}
-	// END KGU#117 2016-03-07
+//	// START KGU#43 2015-10-12
+//    @Override
+//    public void clearBreakpoints()
+//    {
+//    	super.clearBreakpoints();
+//    	if (qs!= null)
+//    	{
+//    		for (int i = 0; i < qs.size(); i++)
+//    		{
+//    			qs.get(i).clearBreakpoints();
+//    		}
+//    	}
+//    }
+//    // END KGU#43 2015-10-12
+//
+//	// START KGU#43 2015-10-13
+//    @Override
+//    public void clearExecutionStatus()
+//    {
+//    	super.clearExecutionStatus();
+//    	if (qs!= null)
+//    	{
+//    		for (int i = 0; i < qs.size(); i++)
+//    		{
+//    			qs.get(i).clearExecutionStatus();
+//    		}
+//    	}
+//    }
+//    // END KGU#43 2015-10-13
+//
+//	// START KGU#117 2016-03-07: Enh. #77
+//	/* (non-Javadoc)
+//	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
+//	 */
+//    @Override
+//	public void clearRuntimeData()
+//	{
+//		super.clearRuntimeData();
+//    	if (qs!= null)
+//    	{
+//    		for (int i = 0; i < qs.size(); i++)
+//    		{
+//    			qs.get(i).clearRuntimeData();
+//    		}
+//    	}
+//	}
+//	// END KGU#117 2016-03-07
 
 	// START KGU#156 2016-03-13: Enh. #124
 	protected String getRuntimeInfoString()
@@ -927,5 +927,24 @@ public class Case extends Element
     	}
 	}
 	// END KGU#199 2016-07-07
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#traverse(lu.fisch.structorizer.elements.IElementVisitor)
+	 */
+	@Override
+	public boolean traverse(IElementVisitor _visitor) {
+		boolean proceed = _visitor.visitPreOrder(this);
+		if (qs != null) {
+			for (int i = 0; proceed && i < qs.size(); i++)
+			{
+				proceed = qs.get(i).traverse(_visitor);
+			}
+		}
+		if (proceed)
+		{
+			proceed = _visitor.visitPostOrder(this);
+		}
+		return proceed;
+	}
 
 }

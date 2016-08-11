@@ -56,6 +56,7 @@ import lu.fisch.graphics.Canvas;
 import lu.fisch.graphics.Rect;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.IElementSequence;
+import lu.fisch.structorizer.elements.IElementVisitor;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.utils.StringList;
 
@@ -138,13 +139,13 @@ public class SelectedSequence extends Element implements IElementSequence {
 		// TODO Auto-generated constructor stub
 	}
 
-	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.elements.Element#resetDrawingInfoDown()
-	 */
-	@Override
-	public void resetDrawingInfoDown() {
-		this.isRectUpToDate = false;
-	}
+//	/* (non-Javadoc)
+//	 * @see lu.fisch.structorizer.elements.Element#resetDrawingInfoDown()
+//	 */
+//	@Override
+//	public void resetDrawingInfoDown() {
+//		this.isRectUpToDate = false;
+//	}
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#prepareDraw(lu.fisch.graphics.Canvas)
@@ -596,4 +597,15 @@ public class SelectedSequence extends Element implements IElementSequence {
 		this.parent.convertToCalls(_signatures);
 	}
 	// END KGU#199 2016-07-07
+
+	@Override
+	public boolean traverse(IElementVisitor _visitor) {
+		boolean proceed = true;
+		// FIXME: It's not quite clear whether we better should do nothing at all here
+		for (int i = 0; proceed && i < this.getSize(); i++)
+		{
+			proceed = this.getElement(i).traverse(_visitor);
+		}
+		return proceed;
+	}
 }

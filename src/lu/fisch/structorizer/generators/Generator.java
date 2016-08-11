@@ -837,8 +837,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 
 	private void registerCalledSubroutines(Root _root)
 	{
-		Vector<Call> calls = new Vector<Call>();
-		collectCalls(_root.children, calls);
+		// START KGU#238 2016-08-11: Code revision
+		//Vector<Call> calls = new Vector<Call>();
+		//collectCalls(_root.children, calls);
+		Vector<Call> calls = collectCalls(_root);
+		// END KGU#238 2016-08-11
 		for (Call call: calls)
 		{
 			Root registered = null;
@@ -851,47 +854,76 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		}
 	}
 	
-	private void collectCalls(Element _ele, Vector<Call> _calls)
+	// START KGU#238 2016-08-12: Code revision
+//	private void collectCalls(Element _ele, Vector<Call> _calls)
+//	{
+//		if (_ele instanceof Call)
+//		{
+//			_calls.add((Call)_ele);
+//		}
+//		else if (_ele instanceof Subqueue)
+//		{
+//			for (int i = 0; i < ((Subqueue)_ele).getSize(); i++)
+//			{
+//				collectCalls(((Subqueue)_ele).getElement(i), _calls);
+//			}
+//		}
+//		else if (_ele instanceof ILoop)
+//		{
+//			collectCalls(((ILoop)_ele).getBody(), _calls);
+//		}
+//		else if (_ele instanceof Alternative)
+//		{
+//			collectCalls(((Alternative)_ele).qTrue, _calls);
+//			collectCalls(((Alternative)_ele).qFalse, _calls);
+//			
+//		}
+//		else if (_ele instanceof Case)
+//		{
+//			for (int i = 0; i < ((Case)_ele).qs.size(); i++)
+//			{
+//				collectCalls(((Case)_ele).qs.get(i), _calls);
+//			}
+//		}
+//		else if (_ele instanceof Parallel)
+//		{
+//			for (int i = 0; i < ((Parallel)_ele).qs.size(); i++)
+//			{
+//				collectCalls(((Parallel)_ele).qs.get(i), _calls);
+//			}
+//		}
+//	}
+	private Vector<Call> collectCalls(Element _ele)
 	{
-		if (_ele instanceof Call)
+		final class CallCollector implements IElementVisitor
 		{
-			_calls.add((Call)_ele);
-		}
-		else if (_ele instanceof Subqueue)
-		{
-			for (int i = 0; i < ((Subqueue)_ele).getSize(); i++)
-			{
-				collectCalls(((Subqueue)_ele).getElement(i), _calls);
-			}
-		}
-		else if (_ele instanceof ILoop)
-		{
-			collectCalls(((ILoop)_ele).getBody(), _calls);
-		}
-		else if (_ele instanceof Alternative)
-		{
-			collectCalls(((Alternative)_ele).qTrue, _calls);
-			collectCalls(((Alternative)_ele).qFalse, _calls);
+			public Vector<Call> calls = new Vector<Call>();
 			
-		}
-		else if (_ele instanceof Case)
-		{
-			for (int i = 0; i < ((Case)_ele).qs.size(); i++)
-			{
-				collectCalls(((Case)_ele).qs.get(i), _calls);
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				if (_ele instanceof Call) {
+					calls.add((Call)_ele);
+				}
+				return true;
 			}
-		}
-		else if (_ele instanceof Parallel)
-		{
-			for (int i = 0; i < ((Parallel)_ele).qs.size(); i++)
-			{
-				collectCalls(((Parallel)_ele).qs.get(i), _calls);
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				return true;
 			}
-		}
+		};
+		CallCollector visitor = new CallCollector();
+		_ele.traverse(visitor);
+		return visitor.calls;
 	}
 	// END KGU#178 2016-07-19
 	
 	// START KGU#237 2016-08-10: Bugfix #228
+	/**
+	 * Tries to find a Root in this.subroutines the signature of which
+	 * matches that of the given Function fct
+	 * @param fct - object holding a parsed subroutine call
+	 * @return a matching Root object if available, otherwise null 
+	 */
 	private Root getAmongSubroutines(Function fct)
 	{
 		for (Root sub: subroutines.keySet())
@@ -911,43 +943,56 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	// subclassable method checkElementInformation();
 	private final void gatherElementInformation(Element _ele)
 	{
-		checkElementInformation(_ele);
-		if (_ele instanceof Root)
-		{
-			gatherElementInformation(((Root)_ele).children);
-		}
-		else if (_ele instanceof Subqueue)
-		{
-			for (int i = 0; i < ((Subqueue)_ele).getSize(); i++)
-			{
-				gatherElementInformation(((Subqueue)_ele).getElement(i));			
+		// START KGU#238 2016-08-11: Code revision
+//		checkElementInformation(_ele);
+//		if (_ele instanceof Root)
+//		{
+//			gatherElementInformation(((Root)_ele).children);
+//		}
+//		else if (_ele instanceof Subqueue)
+//		{
+//			for (int i = 0; i < ((Subqueue)_ele).getSize(); i++)
+//			{
+//				gatherElementInformation(((Subqueue)_ele).getElement(i));			
+//			}
+//		}
+//		else if (_ele instanceof Alternative)
+//		{
+//			gatherElementInformation(((Alternative)_ele).qTrue);
+//			gatherElementInformation(((Alternative)_ele).qFalse);
+//		}
+//		else if (_ele instanceof Case)
+//		{
+//			Vector<Subqueue> branches = ((Case)_ele).qs;
+//			for (int i = 0; i < branches.size(); i++)
+//			{
+//				gatherElementInformation(branches.elementAt(i));
+//			}
+//		}
+//		else if (_ele instanceof ILoop)
+//		{
+//			gatherElementInformation(((ILoop)_ele).getBody());
+//		}
+//		else if (_ele instanceof Parallel)
+//		{
+//			Vector<Subqueue> branches = ((Parallel)_ele).qs;
+//			for (int i = 0; i < branches.size(); i++)
+//			{
+//				gatherElementInformation(branches.elementAt(i));
+//			}
+//		}
+		_ele.traverse(new IElementVisitor() {
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				return checkElementInformation(_ele);
 			}
-		}
-		else if (_ele instanceof Alternative)
-		{
-			gatherElementInformation(((Alternative)_ele).qTrue);
-			gatherElementInformation(((Alternative)_ele).qFalse);
-		}
-		else if (_ele instanceof Case)
-		{
-			Vector<Subqueue> branches = ((Case)_ele).qs;
-			for (int i = 0; i < branches.size(); i++)
-			{
-				gatherElementInformation(branches.elementAt(i));
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				return true;
 			}
-		}
-		else if (_ele instanceof ILoop)
-		{
-			gatherElementInformation(((ILoop)_ele).getBody());
-		}
-		else if (_ele instanceof Parallel)
-		{
-			Vector<Subqueue> branches = ((Parallel)_ele).qs;
-			for (int i = 0; i < branches.size(); i++)
-			{
-				gatherElementInformation(branches.elementAt(i));
-			}
-		}
+			
+		});
+		// END KGU#238 2016-08-11
 	}
 	
 	/**
@@ -955,9 +1000,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * on any kind of element. Is guaranteed to be called on every single
 	 * element of the diagram before code export is started.
 	 * Must not be recursive! 
-	 * @param _ele the currentl inpected element
+	 * @param _ele - the currently inpected element
+	 * @return whether the traversal is to be continued or not
 	 */
-	protected void checkElementInformation(Element _ele)
+	protected boolean checkElementInformation(Element _ele)
 	{
 		if (_ele instanceof Instruction)
 		{
@@ -968,6 +1014,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 			if (instr.isOutput()) hasOutput = true;			
 		}
+		return true;
 	}
 	// END KGU#236 2016-08-10
  	
