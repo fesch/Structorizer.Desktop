@@ -92,17 +92,17 @@ public class Instruction extends Element {
 	}
 	// END KGU#199 2016-07-07
 	
-	// START KGU#64 2015-11-03: Is to improve drawing performance
-	/**
-	 * Recursively clears all drawing info this subtree down
-	 * (To be overridden by structured sub-classes!)
-	 */
-	@Override
-	public void resetDrawingInfoDown()
-	{
-		this.resetDrawingInfo();
-	}
-	// END KGU#64 2015-11-03
+//	// START KGU#64 2015-11-03: Is to improve drawing performance
+//	/**
+//	 * Recursively clears all drawing info this subtree down
+//	 * (To be overridden by structured sub-classes!)
+//	 */
+//	@Override
+//	public void resetDrawingInfoDown()
+//	{
+//		this.resetDrawingInfo();
+//	}
+//	// END KGU#64 2015-11-03
 
 	public static Rect prepareDraw(Canvas _canvas, StringList _text, Element _element)
 	{
@@ -504,4 +504,12 @@ public class Instruction extends Element {
 	public void convertToCalls(StringList _signatures)
 	{}
 	// END KGU#199 2016-07-07
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#traverse(lu.fisch.structorizer.elements.IElementVisitor)
+	 */
+	@Override
+	public boolean traverse(IElementVisitor _visitor) {
+		return _visitor.visitPreOrder(this) && _visitor.visitPostOrder(this);
+	}
 }

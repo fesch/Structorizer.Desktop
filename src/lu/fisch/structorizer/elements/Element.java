@@ -407,9 +407,24 @@ public abstract class Element {
 	}
 	/**
 	 * Recursively clears all drawing info this subtree down
-	 * (To be overridden by structured sub-classes!)
 	 */
-	public abstract void resetDrawingInfoDown();
+	// START KGU#238 2016-08-11: Code revision
+	//public abstract void resetDrawingInfoDown();
+	public void resetDrawingInfoDown()
+	{
+		traverse(new IElementVisitor() {
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				_ele.resetDrawingInfo();
+				return true;
+			}
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				return true;
+			}
+		});
+	}
+	// END KGU#238 2016-08-11
 	// END KGU#64 2015-11-03
 
 	// abstract things
@@ -432,6 +447,18 @@ public abstract class Element {
 	public abstract void draw(Canvas _canvas, Rect _top_left);
 	
 	public abstract Element copy();
+	
+	/**
+	 * Generic diagram traversal to be called with an IElementVisitor implementor
+	 * in order to gather information or to modify the status of this Element and
+	 * all its substructure.
+	 * The _visitor may break the traveral on any visit.
+	 * 
+	 * @param _visitor - the visiting instance (must have access to the required
+	 *          attributes or methods, of course)
+	 * @return false iff the traversal is to be exited after this call
+	 */
+	public abstract boolean traverse(IElementVisitor _visitor);
 	
 	// START KGU#156 2016-03-11: Enh. #124
 	/**
@@ -934,7 +961,7 @@ public abstract class Element {
 	// START KGU#199 2016-07-07: Enh. #188 - ensure Call elements for known subroutines
 	/**
 	 * Recursively identifies Instruction elements with call syntax matching one
-	 * the given subroutine signatures and converts respective elements to Call
+	 * of the given subroutine signatures and converts respective elements to Call
 	 * elements.
 	 * @param signatures - strings of the form "&lt;routinename&gt;#&lt;arity&gt;"
 	 */
@@ -1151,8 +1178,7 @@ public abstract class Element {
 
 	/**
 	 * Sets a new trigger count value (to be compared with the execution counter)
-	 * 0 means no dependency of execution counter
-	 * @param newTriggerCount
+	 * @param newTriggerCount - new trigger (0 means no dependency of execution counter)
 	 */
 	public void setBreakTriggerCount(int newTriggerCount)
 	{
@@ -1175,20 +1201,48 @@ public abstract class Element {
 	
 	/**
 	 * Recursively clears all breakpoints in this branch
-	 * (To be overridden by structured sub-classes!)
 	 */
 	public void clearBreakpoints()
 	{
-		this.breakpoint = false;
+		// START KGU#238 2016-08-11: Code revision
+		//this.breakpoint = false;
+		traverse(new IElementVisitor(){
+			public boolean visitPreOrder(Element _ele)
+			{
+				_ele.breakpoint = false;
+				return true;
+			}
+			public boolean visitPostOrder(Element _ele)
+			{
+				return true;
+			}
+				});
+		// END KGU#238 2016-08-11
 	}
 	// END KGU#43 2015-10-12
 
 	// START KGU#41 2015-10-13
 	/**
 	 * Recursively clears all execution flags in this branch
-	 * (To be overridden by structured sub-classes!)
 	 */
+	// START KGU#238 2016-08-11: Code revision
 	public void clearExecutionStatus()
+	{
+		traverse(new IElementVisitor(){
+			public boolean visitPreOrder(Element _ele)
+			{
+				_ele.intClearExecutionStatus();
+				return true;
+			}
+			public boolean visitPostOrder(Element _ele)
+			{
+				return true;
+			}
+				});		
+	}
+	
+	private void intClearExecutionStatus()
+	// END KGU#238
 	{
 		this.executed = false;
 		this.waited = false;
@@ -1211,9 +1265,25 @@ public abstract class Element {
 	// START KGU#117 2016-03-07: Enh. #77
 	/** 
 	 * Recursively clears test coverage flags and execution counts in this branch
-	 * (To be overridden by structured sub-classes!)
 	 */
+	// START KGU#238 2016-08-11: Code revision
 	public void clearRuntimeData()
+	{
+		traverse(new IElementVisitor(){
+			public boolean visitPreOrder(Element _ele)
+			{
+				_ele.intClearRuntimeData();
+				return true;
+			}
+			public boolean visitPostOrder(Element _ele)
+			{
+				return true;
+			}
+				});
+	}
+	
+	private void intClearRuntimeData()
+	// END KGU#238 2016-08-11
 	{
 		this.deeplyCovered = this.simplyCovered = false;;
 		// START KGU#156 2016-03-11: Enh. #124
