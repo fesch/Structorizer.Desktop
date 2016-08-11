@@ -54,6 +54,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.04.29      Bugfix #144 suppressTransformation mode didn't fully work
  *      Kay Gürtzig             2016.07.20      Enh. #160 (subroutines involved) implemented
  *      Kay Gürtzig             2016.08.10      Bugfix #227 (Modules = main programs have to end with full stop)
+ *      Kay Gürtzig             2016.08.12      Two tiny embellishments
  *
  ******************************************************************************************************
  *
@@ -901,7 +902,7 @@ public class OberonGenerator extends Generator {
 	{
 		String indentPlusOne = _indent + this.getIndent();
 		code.add(_indent + "VAR");
-		insertComment("TODO: Declare and initialise local variables here:", indentPlusOne);
+		insertComment("TODO: Declare local variables here:", indentPlusOne);
 		// START KGU#236 2016-08-10: Issue #227: Declare this variable only if needed
 		//code.add(indentPlusOne + "dummyInputChar: Char;	" +
 		//		this.commentSymbolLeft() + " for void input " + this.commentSymbolRight());
@@ -953,7 +954,7 @@ public class OberonGenerator extends Generator {
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
 			}
-			code.add(_indent);
+			//code.add(_indent);
 			code.add(_indent + this.getIndent() + "RETURN " + result + ";");
 		}
 		return _indent;
