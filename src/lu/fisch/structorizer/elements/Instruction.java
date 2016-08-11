@@ -46,6 +46,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.06      Enh. #188: New classification methods isAssignment() etc.,
  *                                      new copy constructor to support conversion (KGU#199)
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported
+ *      Kay Gürtzig     2016.08.10      Issue #227: New classification methods for Input/Output
  *
  ******************************************************************************************************
  *
@@ -91,17 +92,17 @@ public class Instruction extends Element {
 	}
 	// END KGU#199 2016-07-07
 	
-	// START KGU#64 2015-11-03: Is to improve drawing performance
-	/**
-	 * Recursively clears all drawing info this subtree down
-	 * (To be overridden by structured sub-classes!)
-	 */
-	@Override
-	public void resetDrawingInfoDown()
-	{
-		this.resetDrawingInfo();
-	}
-	// END KGU#64 2015-11-03
+//	// START KGU#64 2015-11-03: Is to improve drawing performance
+//	/**
+//	 * Recursively clears all drawing info this subtree down
+//	 * (To be overridden by structured sub-classes!)
+//	 */
+//	@Override
+//	public void resetDrawingInfoDown()
+//	{
+//		this.resetDrawingInfo();
+//	}
+//	// END KGU#64 2015-11-03
 
 	public static Rect prepareDraw(Canvas _canvas, StringList _text, Element _element)
 	{
@@ -345,7 +346,7 @@ public class Instruction extends Element {
 	}
 	// END KGU#117 2016-03-10
 	
-	// START KGU#199 2016-07-06: Enh. #188 - new classication methods.
+	// START KGU#199 2016-07-06: Enh. #188 - new classification methods.
 	// There is always a pair of a static and an instance method, the former for
 	// a single line, the latter for the element as a whole.
 	public static boolean isAssignment(String line)
@@ -401,6 +402,59 @@ public class Instruction extends Element {
 		return this.text.count() == 1 && Instruction.isFunctionCall(this.text.get(0));
 	}
 	// END KGU#199 2016-07-06
+	// START KGU#236 2016-08-10: Issue #227: New classification for input and output
+	public static boolean isOutput(String line)
+	{
+    	StringList tokens = Element.splitLexically(line, true);
+		return (tokens.indexOf(D7Parser.output, !D7Parser.ignoreCase) == 0);
+	}
+	public boolean isOutput()
+	{
+		for (int i = 0; i < this.getText().count(); i++)
+		{
+			if (isOutput(this.getText().get(i).trim()))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public static boolean isInput(String line)
+	{
+    	StringList tokens = Element.splitLexically(line, true);
+		return (tokens.indexOf(D7Parser.input, !D7Parser.ignoreCase) == 0);
+	}
+	public boolean isInput()
+	{
+		for (int i = 0; i < this.getText().count(); i++)
+		{
+			if (isInput(this.getText().get(i).trim()))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public static boolean isEmptyInput(String line)
+	{
+    	StringList tokens = Element.splitLexically(line, true);
+		return (tokens.count() == 1 && tokens.indexOf(D7Parser.input, !D7Parser.ignoreCase) == 0);
+	}
+	public boolean isEmptyInput()
+	{
+		for (int i = 0; i < this.getText().count(); i++)
+		{
+			if (isEmptyInput(this.getText().get(i).trim()))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	// END KGU#236 2016-08-10
 
 	// START KGU#178 2016-07-19: Support for enh. #160 (export of called subroutines)
 	// (This method is plaed here instead of in class Call because it is needed
@@ -450,4 +504,12 @@ public class Instruction extends Element {
 	public void convertToCalls(StringList _signatures)
 	{}
 	// END KGU#199 2016-07-07
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#traverse(lu.fisch.structorizer.elements.IElementVisitor)
+	 */
+	@Override
+	public boolean traverse(IElementVisitor _visitor) {
+		return _visitor.visitPreOrder(this) && _visitor.visitPostOrder(this);
+	}
 }

@@ -1,4 +1,4 @@
-This is just a little file that explains
+﻿This is just a little file that explains
  __ __   ___   __    __  ______   ___  
 |  |  | /   \ |  |__|  ||      | /   \ 
 |  |  ||     ||  |  |  ||      ||     |
@@ -7,7 +7,7 @@ This is just a little file that explains
 |  |  ||     | \      /   |  |  |     |
 |__|__| \___/   \_/\_/    |__|   \___/
 
-use Structorizers locales.
+use Structorizer locales.
 
 1) All language files ...
     - reside inside the package lu.fisch.structorizer.locales
@@ -31,28 +31,28 @@ use Structorizers locales.
 
 3) The syntax of the language files can be described like this.
 
-    - The file is composed of a "header" an a "body". The header
-      must always preceed the body. Both are separated by a line
+    - The file is composed of a "header" and a "body". The header
+      must always precede the body. Both are separated by a line
       containing this string: >>>
 
     - The body contains sections and each section may contain
-      sub sections. The body *MUST* start with a section!
+      sub-sections. The body *MUST* start with a section!
       A section is indicated by the prefix: ----->  
       A sub-section is prefixed by:         -----[
       In the translator component, each section is presented in
-      a new tab whereas a sub-section is draw as a visual separator.
+      a new tab whereas a sub-section is drawn as a visual separator.
 
     - A parsed line looks like this: key=value
 
         "value" can be any text you want to put inside the key.
         
-        "key" is a dot separated string:
+        "key" is a dot-separated string:
             
             * The first part is the name of the class of the object
               this line wants to modify
             
-            * The second one might be "title", which will then modify
-              the objects title of the name of the field that has to
+            * The second part might be "title", which will then modify
+              the object's title, or the name of the field that is to
               be modified.
 
             * The third part is the attribute to be modified. This can
@@ -67,13 +67,13 @@ use Structorizers locales.
                 > header
                 > item
 
-              The last three entry have to be followed by a forth part
-              which has to be an integer and which represents the index of
+              The last three entries have to be followed by a forth part
+              which has to be an integer and represents the index of
               the element to modify.
 
-            * Finally the key by have a condition section. This one is indicated
-              by square brackets. It can contain multiple conditions which will
-              be combined using an AND operator.
+            * Finally, the key may have a condition section. This one is indicated
+              (and enclosed) by square brackets. It can contain multiple conditions,
+              which will be combined using an AND operator.
 
               The conditions use the syntax: field:value
                                          or: method():value

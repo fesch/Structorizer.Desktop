@@ -51,6 +51,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.04.29      Bugfix KGU#189 for issue #61/#107 (mutilated array access)
  *      Kay Gürtzig     2016.07.19      Enh. #192: File name proposal slightly modified (KGU#205)
  *      Kay Gürtzig     2016.07.20      Enh. #160: Support for export of involved subroutines (KGU#178)
+ *      Kay Gürtzig     2016-08-10      Issue #227: information gathering pass introduced to control optional
+ *                                      code expressions
+ *                                      Bugfix #228: Unnecessary error message exporting recursive routines
  *
  ******************************************************************************************************
  *
@@ -133,6 +136,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected StringList missingSubroutines = new StringList();	// Signatures of missing routines
 	protected boolean topLevel = true;
 	// END KGU#178 2016-07-19
+	// START KGU#236 2016-08-10: Issue #227: Find out whether there are I/O operations
+	protected boolean hasOutput = false;
+	protected boolean hasInput = false;
+	protected boolean hasEmptyInput = false;
+	// END KGU#236 2016-08-10
 
 	// START KGU#129/KGU#61 2016-03-22: Bugfix #96 / Enh. #84 Now important for most generators
 	// Some generators must prefix variables, for some generators it's important for FOR-IN loops
@@ -809,9 +817,19 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 					entry.callers.add(_caller);
 				}
 			}
+			// START KGU#237 2016-08-10: bugfix #228
+			else if ((newSub = getAmongSubroutines(called)) != null)
+			{
+				subroutines.get(newSub).callers.add(_caller);
+				// If we got here, then it's propably the top-level routine itself
+				// So better be cautious with reference counting here (lest the
+				// caling routine would be suppressed on printing)
+				newSub = null;	// ...and it's not a new subroutine, of course
+			}
+			// END KU#237 2016-08-10
 			else
 			{
-				missingSubroutines.add(_call.getSignatureString());
+				missingSubroutines.addIfNew(_call.getSignatureString());
 			}
 		}
 		return newSub;
@@ -819,8 +837,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 
 	private void registerCalledSubroutines(Root _root)
 	{
-		Vector<Call> calls = new Vector<Call>();
-		collectCalls(_root.children, calls);
+		// START KGU#238 2016-08-11: Code revision
+		//Vector<Call> calls = new Vector<Call>();
+		//collectCalls(_root.children, calls);
+		Vector<Call> calls = collectCalls(_root);
+		// END KGU#238 2016-08-11
 		for (Call call: calls)
 		{
 			Root registered = null;
@@ -833,45 +854,169 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		}
 	}
 	
-	private void collectCalls(Element _ele, Vector<Call> _calls)
+	// START KGU#238 2016-08-12: Code revision
+//	private void collectCalls(Element _ele, Vector<Call> _calls)
+//	{
+//		if (_ele instanceof Call)
+//		{
+//			_calls.add((Call)_ele);
+//		}
+//		else if (_ele instanceof Subqueue)
+//		{
+//			for (int i = 0; i < ((Subqueue)_ele).getSize(); i++)
+//			{
+//				collectCalls(((Subqueue)_ele).getElement(i), _calls);
+//			}
+//		}
+//		else if (_ele instanceof ILoop)
+//		{
+//			collectCalls(((ILoop)_ele).getBody(), _calls);
+//		}
+//		else if (_ele instanceof Alternative)
+//		{
+//			collectCalls(((Alternative)_ele).qTrue, _calls);
+//			collectCalls(((Alternative)_ele).qFalse, _calls);
+//			
+//		}
+//		else if (_ele instanceof Case)
+//		{
+//			for (int i = 0; i < ((Case)_ele).qs.size(); i++)
+//			{
+//				collectCalls(((Case)_ele).qs.get(i), _calls);
+//			}
+//		}
+//		else if (_ele instanceof Parallel)
+//		{
+//			for (int i = 0; i < ((Parallel)_ele).qs.size(); i++)
+//			{
+//				collectCalls(((Parallel)_ele).qs.get(i), _calls);
+//			}
+//		}
+//	}
+	private Vector<Call> collectCalls(Element _ele)
 	{
-		if (_ele instanceof Call)
+		final class CallCollector implements IElementVisitor
 		{
-			_calls.add((Call)_ele);
-		}
-		else if (_ele instanceof Subqueue)
-		{
-			for (int i = 0; i < ((Subqueue)_ele).getSize(); i++)
-			{
-				collectCalls(((Subqueue)_ele).getElement(i), _calls);
-			}
-		}
-		else if (_ele instanceof ILoop)
-		{
-			collectCalls(((ILoop)_ele).getBody(), _calls);
-		}
-		else if (_ele instanceof Alternative)
-		{
-			collectCalls(((Alternative)_ele).qTrue, _calls);
-			collectCalls(((Alternative)_ele).qFalse, _calls);
+			public Vector<Call> calls = new Vector<Call>();
 			
-		}
-		else if (_ele instanceof Case)
-		{
-			for (int i = 0; i < ((Case)_ele).qs.size(); i++)
-			{
-				collectCalls(((Case)_ele).qs.get(i), _calls);
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				if (_ele instanceof Call) {
+					calls.add((Call)_ele);
+				}
+				return true;
 			}
-		}
-		else if (_ele instanceof Parallel)
-		{
-			for (int i = 0; i < ((Parallel)_ele).qs.size(); i++)
-			{
-				collectCalls(((Parallel)_ele).qs.get(i), _calls);
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				return true;
 			}
-		}
+		};
+		CallCollector visitor = new CallCollector();
+		_ele.traverse(visitor);
+		return visitor.calls;
 	}
 	// END KGU#178 2016-07-19
+	
+	// START KGU#237 2016-08-10: Bugfix #228
+	/**
+	 * Tries to find a Root in this.subroutines the signature of which
+	 * matches that of the given Function fct
+	 * @param fct - object holding a parsed subroutine call
+	 * @return a matching Root object if available, otherwise null 
+	 */
+	private Root getAmongSubroutines(Function fct)
+	{
+		for (Root sub: subroutines.keySet())
+		{
+			if (sub.getMethodName().equals(fct.getName())
+					&& sub.getParameterNames().count() == fct.paramCount())
+			{
+				return sub;
+			}
+		}
+		return null;
+	}
+	// END KGU#237 2016-08-10
+	
+	// START KGU#236 2016-08-10: Issue #227
+	// Recursive scanning routine to gather certain information via
+	// subclassable method checkElementInformation();
+	private final void gatherElementInformation(Element _ele)
+	{
+		// START KGU#238 2016-08-11: Code revision
+//		checkElementInformation(_ele);
+//		if (_ele instanceof Root)
+//		{
+//			gatherElementInformation(((Root)_ele).children);
+//		}
+//		else if (_ele instanceof Subqueue)
+//		{
+//			for (int i = 0; i < ((Subqueue)_ele).getSize(); i++)
+//			{
+//				gatherElementInformation(((Subqueue)_ele).getElement(i));			
+//			}
+//		}
+//		else if (_ele instanceof Alternative)
+//		{
+//			gatherElementInformation(((Alternative)_ele).qTrue);
+//			gatherElementInformation(((Alternative)_ele).qFalse);
+//		}
+//		else if (_ele instanceof Case)
+//		{
+//			Vector<Subqueue> branches = ((Case)_ele).qs;
+//			for (int i = 0; i < branches.size(); i++)
+//			{
+//				gatherElementInformation(branches.elementAt(i));
+//			}
+//		}
+//		else if (_ele instanceof ILoop)
+//		{
+//			gatherElementInformation(((ILoop)_ele).getBody());
+//		}
+//		else if (_ele instanceof Parallel)
+//		{
+//			Vector<Subqueue> branches = ((Parallel)_ele).qs;
+//			for (int i = 0; i < branches.size(); i++)
+//			{
+//				gatherElementInformation(branches.elementAt(i));
+//			}
+//		}
+		_ele.traverse(new IElementVisitor() {
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				return checkElementInformation(_ele);
+			}
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				return true;
+			}
+			
+		});
+		// END KGU#238 2016-08-11
+	}
+	
+	/**
+	 * Generic and subclassable method to check for certain information
+	 * on any kind of element. Is guaranteed to be called on every single
+	 * element of the diagram before code export is started.
+	 * Must not be recursive! 
+	 * @param _ele - the currently inpected element
+	 * @return whether the traversal is to be continued or not
+	 */
+	protected boolean checkElementInformation(Element _ele)
+	{
+		if (_ele instanceof Instruction)
+		{
+			Instruction instr = (Instruction)_ele;
+			if (instr.isInput()) {
+				hasInput = true;
+				if (instr.isEmptyInput()) hasEmptyInput = true;
+			}
+			if (instr.isOutput()) hasOutput = true;			
+		}
+		return true;
+	}
+	// END KGU#236 2016-08-10
  	
     protected void generateCode(Instruction _inst, String _indent)
 	{
@@ -1166,110 +1311,125 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		 */
 		String filename = new String();
 
-		boolean saveIt = true;
+		File file = null;
 
 		if (result == JFileChooser.APPROVE_OPTION) 
 		{
-			filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
-			if(!isOK(filename))
+			filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
+			if (!isOK(filename))
 			{
 				filename += "."+getFileExtensions()[0];
 			}
-		}
-		else
-		{
-			saveIt = false;
+			file = new File(filename);
 		}
 
 		//System.out.println(filename);
 
-		if (saveIt == true) 
+		if (file != null && file.exists())
 		{
-			File file = new File(filename);
-			boolean writeDown = true;
-
-			if(file.exists())
+			int response = JOptionPane.showConfirmDialog (null,
+					"Overwrite existing file?","Confirm Overwrite",
+					JOptionPane.YES_NO_OPTION,
+					JOptionPane.QUESTION_MESSAGE);
+			if (response == JOptionPane.NO_OPTION)
 			{
-				int response = JOptionPane.showConfirmDialog (null,
-						"Overwrite existing file?","Confirm Overwrite",
-								JOptionPane.YES_NO_OPTION,
-								JOptionPane.QUESTION_MESSAGE);
-				if (response == JOptionPane.NO_OPTION)
-				{
-					writeDown=false;
-				}
+				file = null;	// We might as well return here
 			}
-			if(writeDown==true)
+		}
+			
+		if (file != null)
+		{
+			// START KGU#194 2016-05-07: Bugfix #185 - the subclass may need the filename
+			pureFilename = file.getName();
+			int dotPos = pureFilename.indexOf(".");
+			if (dotPos >= 0)
 			{
-				// START KGU#194 2016-05-07: Bugfix #185 - the subclass may need the filename
-				pureFilename = file.getName();
-				int dotPos = pureFilename.indexOf(".");
-				if (dotPos >= 0)
-				{
-					pureFilename = pureFilename.substring(0, dotPos);
-				}
-				// END KGU#194 2016-05-07
+				pureFilename = pureFilename.substring(0, dotPos);
+			}
+			// END KGU#194 2016-05-07
 
-				// START KGU 2016-03-29: Pre-processed match patterns for better identification of complicated keywords
-		    	this.splitKeywords.clear();
-		    	String[] keywords = D7Parser.getAllProperties();
-		    	for (int k = 0; k < keywords.length; k++)
-		    	{
-		    		this.splitKeywords.add(Element.splitLexically(keywords[k], false));
-		    	}
-				// END KGU 2016-03-29
+			// START KGU 2016-03-29: Pre-processed match patterns for better identification of complicated keywords
+			this.splitKeywords.clear();
+			String[] keywords = D7Parser.getAllProperties();
+			for (int k = 0; k < keywords.length; k++)
+			{
+				this.splitKeywords.add(Element.splitLexically(keywords[k], false));
+			}
+			// END KGU 2016-03-29
 
-		    	try
+			try
+			{
+				// START KGU#178 2016-07-20: Enh. #160 - register all subroutine calls
+				if (this.optionExportSubroutines())
 				{
-		    		// START KGU#178 2016-07-20: Enh. #160 - register all subroutine calls
-		    		if (this.optionExportSubroutines())
-		    		{
-		    			registerCalledSubroutines(_root);
-		    		}
-		    		// END KGU#178 2016-07-20
-					
-		    		// START KGU 2015-10-18: This didn't make much sense: Why first insert characters that will be replaced afterwards?
-					// (And with them possibly any such characters that had not been there for indentation!)
-					//    String code = BString.replace(generateCode(_root,"\t"),"\t",getIndent());
-					String code = generateCode(_root, "");
-					// END KGU 2015-10-18
-					
-					// START KGU#178 2016-07-20: #160 - Sort and export required subroutines
-					if (this.optionExportSubroutines())
+					// START KGU#237 2016-08-10: Bugfix #228 - precautio for recursive top-level routine
+					if (!_root.isProgram)
 					{
-						code = generateSubroutineCode(_root);
+						subroutines.put(_root, new SubTopoSortEntry(null));
 					}
-					// END KGU#178 2016-07-20
-
-//					for (String charsetName : Charset.availableCharsets().keySet())
-//					{
-//						System.out.println(charsetName);
-//					}
-//					System.out.println("Default: " + Charset.defaultCharset().name());
-					
-					BTextfile outp = new BTextfile(filename);
-					// START KGU#168 2016-04-04: Issue #149 - allow to select the charset
-					//outp.rewrite();
-					outp.rewrite(exportCharset);
-					// END KGU#168 2016-04-04
-					outp.write(code);
-					outp.close();
+					// END KGU#237 2016-08-10
+					registerCalledSubroutines(_root);
+					// START KGU#237 2016-08-10: Bugfix #228
+					if (!_root.isProgram)
+					{
+						subroutines.remove(_root);
+					}
+					// END KGU#237 2016-08-10
 				}
-				catch(Exception e)
+				// END KGU#178 2016-07-20
+				
+				// START KGU#236 2016-08-10: Issue #227: General information gathering pass
+				gatherElementInformation(_root);
+				if (this.optionExportSubroutines())
 				{
-					JOptionPane.showMessageDialog(null,
-							"Error while saving the file!\n" + e.getMessage(),
-							"Error", JOptionPane.ERROR_MESSAGE);
+					for (Root sub: subroutines.keySet())
+					{
+						gatherElementInformation(sub);
+					}		
 				}
-		    	// START KGU#178 2016-07-20: Enh. #160
-		    	if (this.optionExportSubroutines() && missingSubroutines.count() > 0)
-		    	{
-					JOptionPane.showMessageDialog(null,
-							"Export defective. Some subroutines weren't found:\n\n" + missingSubroutines.getText(),
-							"Warning", JOptionPane.WARNING_MESSAGE);		    		
-		    	}
-		    	// END KGU#178 2016-07-20
+				// END KGU#236 2016-08-10
+
+				// START KGU 2015-10-18: This didn't make much sense: Why first insert characters that will be replaced afterwards?
+				// (And with them possibly any such characters that had not been there for indentation!)
+				//    String code = BString.replace(generateCode(_root,"\t"),"\t",getIndent());
+				String code = generateCode(_root, "");
+				// END KGU 2015-10-18
+
+				// START KGU#178 2016-07-20: #160 - Sort and export required subroutines
+				if (this.optionExportSubroutines())
+				{
+					code = generateSubroutineCode(_root);
+				}
+				// END KGU#178 2016-07-20
+
+//				for (String charsetName : Charset.availableCharsets().keySet())
+//				{
+//					System.out.println(charsetName);
+//				}
+//				System.out.println("Default: " + Charset.defaultCharset().name());
+				
+				BTextfile outp = new BTextfile(filename);
+				// START KGU#168 2016-04-04: Issue #149 - allow to select the charset
+				//outp.rewrite();
+				outp.rewrite(exportCharset);
+				// END KGU#168 2016-04-04
+				outp.write(code);
+				outp.close();
 			}
+			catch(Exception e)
+			{
+				JOptionPane.showMessageDialog(null,
+						"Error while saving the file!\n" + e.getMessage(),
+						"Error", JOptionPane.ERROR_MESSAGE);
+			}
+		   	// START KGU#178 2016-07-20: Enh. #160
+		   	if (this.optionExportSubroutines() && missingSubroutines.count() > 0)
+		   	{
+				JOptionPane.showMessageDialog(null,
+						"Export defective. Some subroutines weren't found:\n\n" + missingSubroutines.getText(),
+						"Warning", JOptionPane.WARNING_MESSAGE);		    		
+		   	}
+		   	// END KGU#178 2016-07-20
 		}
 	}
 	
@@ -1291,8 +1451,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 		}
 		// Now we have an initial queue of independent routines,
-		// so export them and enlist those dependents the prerequisites of which are
-		// thereby fulfilled.
+		// so export them and enlist those dependents
+		// the prerequisites of which are thereby fulfilled.
 		while (!roots.isEmpty())
 		{
 			Root sub = roots.remove();	// get the next routine

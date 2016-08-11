@@ -87,24 +87,24 @@ public class Subqueue extends Element implements IElementSequence {
 	private Vector<Integer> y0Children = new Vector<Integer>();
 	// END KGU#136 2016-03-01
 	
-	// START KGU#64 2015-11-03: Is to improve drawing performance
-	/**
-	 * Recursively clears all drawing info this subtree down
-	 * (To be overridden by structured sub-classes!)
-	 */
-	@Override
-	public void resetDrawingInfoDown()
-	{
-		this.resetDrawingInfo();
-		if (this.children != null)
-		{
-			for (int i = 0; i < this.children.size(); i++)
-			{
-				this.children.get(i).resetDrawingInfoDown();
-			}
-		}
-	}
-	// END KGU#64 2015-11-03
+//	// START KGU#64 2015-11-03: Is to improve drawing performance
+//	/**
+//	 * Recursively clears all drawing info this subtree down
+//	 * (To be overridden by structured sub-classes!)
+//	 */
+//	@Override
+//	public void resetDrawingInfoDown()
+//	{
+//		this.resetDrawingInfo();
+//		if (this.children != null)
+//		{
+//			for (int i = 0; i < this.children.size(); i++)
+//			{
+//				this.children.get(i).resetDrawingInfoDown();
+//			}
+//		}
+//	}
+//	// END KGU#64 2015-11-03
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
@@ -517,32 +517,32 @@ public class Subqueue extends Element implements IElementSequence {
 	}
 	// END KGU#43 2016-01-22
 
-	// START KGU 2015-11-12
-	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.elements.Element#clearBreakpoints()
-	 */
-	@Override
-	public void clearBreakpoints()
-	{
-		super.clearBreakpoints();
-        for(int i = 0; i < children.size(); i++)
-        {      
-            children.get(i).clearBreakpoints();
-        }
-	}
-
-	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.elements.Element#clearExecutionStatus()
-	 */
-	@Override
-	public void clearExecutionStatus()
-	{
-    	super.clearExecutionStatus();
-        for(int i = 0; i < children.size(); i++)
-        {      
-            children.get(i).clearExecutionStatus();
-        }
-	}
+//	// START KGU 2015-11-12
+//	/* (non-Javadoc)
+//	 * @see lu.fisch.structorizer.elements.Element#clearBreakpoints()
+//	 */
+//	@Override
+//	public void clearBreakpoints()
+//	{
+//		super.clearBreakpoints();
+//        for(int i = 0; i < children.size(); i++)
+//        {      
+//            children.get(i).clearBreakpoints();
+//        }
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see lu.fisch.structorizer.elements.Element#clearExecutionStatus()
+//	 */
+//	@Override
+//	public void clearExecutionStatus()
+//	{
+//    	super.clearExecutionStatus();
+//        for(int i = 0; i < children.size(); i++)
+//        {      
+//            children.get(i).clearExecutionStatus();
+//        }
+//	}
 	// END KGU 2015-10-12
 
 	// START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
@@ -565,18 +565,18 @@ public class Subqueue extends Element implements IElementSequence {
 	// END KGU#143 2016-01-22
 
 	// START KGU#117 2016-03-06: Enh. #77
-	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
-	 */
-	@Override
-	public void clearRuntimeData()
-	{
-		super.clearRuntimeData();
-        for(int i = 0; i < children.size(); i++)
-        {      
-            children.get(i).clearRuntimeData();
-        }
-	}
+//	/* (non-Javadoc)
+//	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
+//	 */
+//	@Override
+//	public void clearRuntimeData()
+//	{
+//		super.clearRuntimeData();
+//        for(int i = 0; i < children.size(); i++)
+//        {      
+//            children.get(i).clearRuntimeData();
+//        }
+//	}
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
@@ -666,4 +666,18 @@ public class Subqueue extends Element implements IElementSequence {
 		}
 	}
 	// END KGU#199 2016-07-07
+
+	@Override
+	public boolean traverse(IElementVisitor _visitor) {
+		boolean proceed = _visitor.visitPreOrder(this);
+		for (int i = 0; proceed && i < children.size(); i++)
+		{
+			proceed = children.get(i).traverse(_visitor);
+		}
+		if (proceed)
+		{
+			proceed = _visitor.visitPostOrder(this);
+		}
+		return proceed;
+	}
 }

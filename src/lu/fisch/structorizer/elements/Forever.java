@@ -110,18 +110,18 @@ public class Forever extends Element implements ILoop {
     }
     // END KGU#91 2015-12-02
 	
-	// START KGU#64 2015-11-03: Is to improve drawing performance
-	/**
-	 * Recursively clears all drawing info this subtree down
-	 * (To be overridden by structured sub-classes!)
-	 */
-	@Override
-	public void resetDrawingInfoDown()
-	{
-		this.resetDrawingInfo();
-		this.q.resetDrawingInfoDown();
-	}
-	// END KGU#64 2015-11-03
+//	// START KGU#64 2015-11-03: Is to improve drawing performance
+//	/**
+//	 * Recursively clears all drawing info this subtree down
+//	 * (To be overridden by structured sub-classes!)
+//	 */
+//	@Override
+//	public void resetDrawingInfoDown()
+//	{
+//		this.resetDrawingInfo();
+//		this.q.resetDrawingInfoDown();
+//	}
+//	// END KGU#64 2015-11-03
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
@@ -406,35 +406,35 @@ public class Forever extends Element implements ILoop {
 	}
 	// END KGU#117 2016-03-07
 
-	// START KGU#43 2015-10-12
-	@Override
-	public void clearBreakpoints()
-	{
-		super.clearBreakpoints();
-		this.q.clearBreakpoints();
-	}
-	// END KGU#43 2015-10-12
-	
-	// START KGU#43 2015-10-13
-	@Override
-	public void clearExecutionStatus()
-	{
-		super.clearExecutionStatus();
-		this.q.clearExecutionStatus();
-	}
-	// END KGU#43 2015-10-13
-	
-	// START KGU#117 2016-03-06: Enh. #77
-	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
-	 */
-	@Override
-	public void clearRuntimeData()
-	{
-		super.clearRuntimeData();
-		this.getBody().clearRuntimeData();
-	}
-	// END KGU#117 2016-03-06
+//	// START KGU#43 2015-10-12
+//	@Override
+//	public void clearBreakpoints()
+//	{
+//		super.clearBreakpoints();
+//		this.q.clearBreakpoints();
+//	}
+//	// END KGU#43 2015-10-12
+//	
+//	// START KGU#43 2015-10-13
+//	@Override
+//	public void clearExecutionStatus()
+//	{
+//		super.clearExecutionStatus();
+//		this.q.clearExecutionStatus();
+//	}
+//	// END KGU#43 2015-10-13
+//	
+//	// START KGU#117 2016-03-06: Enh. #77
+//	/* (non-Javadoc)
+//	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
+//	 */
+//	@Override
+//	public void clearRuntimeData()
+//	{
+//		super.clearRuntimeData();
+//		this.getBody().clearRuntimeData();
+//	}
+//	// END KGU#117 2016-03-06
 
 	// START KGU#156 2016-03-13: Enh. #124
 	protected String getRuntimeInfoString()
@@ -495,4 +495,22 @@ public class Forever extends Element implements ILoop {
     	getBody().convertToCalls(_signatures);
 	}
 	// END KGU#199 2016-07-07
+	
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#traverse(lu.fisch.structorizer.elements.IElementVisitor)
+	 */
+	@Override
+	public boolean traverse(IElementVisitor _visitor) {
+		boolean proceed = _visitor.visitPreOrder(this);
+		if (proceed)
+		{
+			proceed = this.getBody().traverse(_visitor);
+		}
+		if (proceed)
+		{
+			proceed = _visitor.visitPostOrder(this);
+		}
+		return proceed;
+	}
+
 }
