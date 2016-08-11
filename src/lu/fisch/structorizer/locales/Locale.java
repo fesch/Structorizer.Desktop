@@ -75,28 +75,35 @@ public class Locale {
     {
         filename = _langfile;
         
-        // read the file from the compiled application into a string
-        String input = new String();
-        try 
+        // "preview" and "external" as special cases, so we don't need to load
+        // a file then
+        if(!_langfile.equals("external.txt") && !_langfile.equals("preview.txt")) 
         {
-            BufferedReader in = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/lu/fisch/structorizer/locales/"+_langfile), "UTF-8"));
-            String str;
-            while ((str = in.readLine()) != null) 
+            System.out.println("Loading now locale: "+_langfile);        
+
+            // read the file from the compiled application into a string
+            String input = new String();
+            try 
             {
-                input+=str+"\n";
+                BufferedReader in = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/lu/fisch/structorizer/locales/"+_langfile), "UTF-8"));
+                String str;
+                while ((str = in.readLine()) != null) 
+                {
+                    input+=str+"\n";
+                }
+                in.close();
+            } 
+            catch (IOException e) 
+            {
+                JOptionPane.showMessageDialog(null,  _langfile+": Error while loading language file\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
-            in.close();
-        } 
-        catch (IOException e) 
-        {
-            JOptionPane.showMessageDialog(null,  _langfile+": Error while loading language file\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+
+            // convert the data to a stringlist
+            StringList lines = new StringList();
+            lines.setText(input); 
+
+            parseStringList(lines);
         }
-        
-        // convert the data to a stringlist
-        StringList lines = new StringList();
-        lines.setText(input); 
-        
-        parseStringList(lines);
     }
     
     public void parseStringList(StringList lines)

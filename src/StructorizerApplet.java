@@ -154,7 +154,7 @@ public class StructorizerApplet extends JApplet  implements NSDController
 
 			// language	
 			lang=ini.getProperty("Lang","en");
-                        Locales.getInstance().setLang(lang);
+                        Locales.getInstance().setLocale(lang);
 
                         // colors
                         Element.loadFromINI();

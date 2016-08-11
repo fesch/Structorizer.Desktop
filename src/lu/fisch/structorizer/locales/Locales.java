@@ -22,9 +22,11 @@ package lu.fisch.structorizer.locales;
 
 import java.awt.Component;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import javax.swing.JDialog;
 import javax.swing.border.Border;
@@ -37,7 +39,7 @@ import lu.fisch.utils.StringList;
  */
 public class Locales {
     // LOCALES_LIST of all locales we have
-    public static final String[] LOCALES_LIST = {"chs","cht","cz","de","en","es","fr","it","lu","nl","pl","pt_br","ru","empty","preview"};
+    public static final String[] LOCALES_LIST = {"chs","cht","cz","de","en","es","fr","it","lu","nl","pl","pt_br","ru","empty","preview","external"};
     
     // the "default" oder "master" locale
     public static final String DEFAULT_LOCALE = "en";
@@ -48,6 +50,7 @@ public class Locales {
     private static Locales instance = null;
     
     private String loadedLocaleName = null;
+    private String loadedLocaleFilename = null;
     private final ArrayList<Component> components = new ArrayList<Component>();
     
     public static Locales getInstance()
@@ -87,15 +90,20 @@ public class Locales {
 
     private Locales() 
     {
+        // do not preload all files
+        // rather use some "load on demand"
+        /*
         for (int i = 0; i < LOCALES_LIST.length; i++) {
             String name = LOCALES_LIST[i];
             locales.put(name, new Locale(name+".txt"));
         }
+        */
     }
     
     public Locale getDefaultLocale()
     {
-        return locales.get(DEFAULT_LOCALE);
+        // get the default locale
+        return getLocale(DEFAULT_LOCALE);
     }
     
     /**
@@ -126,7 +134,17 @@ public class Locales {
     
     public Locale getLocale(String name)
     {
-        return locales.get(name);
+        // try to get the locale
+        Locale locale = locales.get(name);
+        // if it has not yet been loaded
+        if(locale==null)
+        {
+            // load it now ...
+            locale=new Locale(name+".txt");
+            // ... and put it into the list
+            locales.put(name, locale);
+        }
+        return locale;
     }
     
     public StringList whoHasKey(String keyName)
@@ -169,19 +187,42 @@ public class Locales {
             Component component = components.get(i);
             
             // set it the actual language, if possible
-            setLang(component);
+            Locales.this.setLocale(component);
         }
     }
     
     
-    public void setLang(String localeName)
+    public void setLocale(String localeName)
     {
         loadedLocaleName = localeName.replace(".txt", "");
-        // update all registereed components
+        
+        // if we can't find the name of the loaded locale,
+        // we suppose a filepath has been passed
+        if(!Arrays.asList(LOCALES_LIST).contains(loadedLocaleName))
+        {
+            // let's check if it is an existing file
+            if((new File(localeName)).exists())
+            {
+                // load the file
+                StringList lines = new StringList();
+                lines.loadFromFile(localeName);
+                // set it
+                setExternal(lines, localeName);
+            }
+            else
+            {
+                // get the default
+                loadedLocaleName="en";
+            }
+        }
+        
+        if(!localeName.equals("preview") && !localeName.equals("external"))
+            loadedLocaleFilename=loadedLocaleName+".txt";
+        // update all registered components
         updateComponents();
     }
     
-    public void setLang(Component component)
+    public void setLocale(Component component)
     {
         // check if we have a loaded LocaleName
         if(loadedLocaleName!=null) {
@@ -189,25 +230,25 @@ public class Locales {
             Locale locale = getLocale(loadedLocaleName);
             if(locale!=null) {
                 // set it
-                setLang(component, locale.getBody());
+                setLocale(component, locale.getBody());
             }
         }
     }
     
-    public void setLang(StringList lines)
+    public void setLocale(StringList lines)
     {
         loadedLocaleName="preview";
         Locale locale = getLocale(loadedLocaleName);
         updateComponents();
     }
 
-    public void setLang(Component component, String localeName)
+    public void setLocale(Component component, String localeName)
     {
         localeName = localeName.replace(".txt","");
         Locale locale = getLocale(localeName);
         if(locale!=null)
         {
-            Locales.this.setLang(component, locale.getBody());
+            Locales.this.setLocale(component, locale.getBody());
         }
     }
     
@@ -297,7 +338,7 @@ public class Locales {
     // As this method might be called before a component is fully initialised,
     // so before all contained components have been put there, we might get
     // null pointers. So deal with it! ;-)
-    public void setLang(Component component, StringList lines) {
+    public void setLocale(Component component, StringList lines) {
         StringList pieces;
         StringList parts;
         
@@ -448,4 +489,16 @@ public class Locales {
         else return loadedLocaleName;
     }
     
+    public String getLoadedLocaleFilename()
+    {
+        if(loadedLocaleFilename==null) return "en.txt";
+        else return loadedLocaleFilename;
+    }
+    
+    public void setExternal(StringList lines, String filename)
+    {
+        getLocale("external").parseStringList(lines);
+        setLocale("external");
+        loadedLocaleFilename=filename;
+    }
 }

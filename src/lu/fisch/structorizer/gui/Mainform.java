@@ -105,143 +105,143 @@ public class Mainform  extends LangFrame implements NSDController
 	 ******************************/
 	private void create()
 	{
-		Ini.getInstance();
-		/*
-		try {
-			ClassPathHacker.addFile("Structorizer.app/Contents/Resources/Java/quaqua-filechooser-only.jar");
-			UIManager.setLookAndFeel(
-									 "ch.randelshofer.quaqua.QuaquaLookAndFeel"
-									 );
-		} catch (Exception e) {
-			System.out.println(e.getMessage());
-		}*/
-		
-		/******************************
-		 * Load values from INI
-		 ******************************/
-		loadFromINI();
-		
-		/******************************
-		 * Some JFrame specific things
-		 ******************************/
-		// set window title
-		// START KGU 2016-01-10: Enhancement #101 - show version number and standalone status
-		//setTitle("Structorizer");
-		if (!this.isStandalone) titleString = "(" + titleString + ")";
-		setTitle(titleString);
-		// END KGU 2016-01-10
-		// set layout (OS default)
-		setLayout(null);
-		// set windows size
-		//setSize(550, 550);
-		// show form
-		setVisible(true);
-		// set action to perform if closed
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
-		// set icon depending on OS ;-)
-		String os = System.getProperty("os.name").toLowerCase();
-		setIconImage(IconLoader.ico074.getImage());
-		if (os.indexOf("windows") != -1) 
-		{
-			setIconImage(IconLoader.ico074.getImage());
-		} 
-		else if (os.indexOf("mac") != -1) 
-		{
-			setIconImage(IconLoader.icoNSD.getImage());
-		}
-		
-		/******************************
-		 * Setup the editor
-		 ******************************/
-		editor = new Editor(this);
-		// get reference tot he diagram
-		diagram = getEditor().diagram;
-		Container container = getContentPane();
-                container.setLayout(new BorderLayout());
-		container.add(getEditor(),BorderLayout.CENTER);
-		
-		/******************************
-		 * Setup the menu
-		 ******************************/
-		menu = new Menu(diagram,this);
-		setJMenuBar(menu);		
-				
-		/******************************
-		 * Update the buttons and menu
-		 ******************************/
-		doButtons();
-		
-		/******************************
-		 * Set onClose event
-		 ******************************/
-		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		addWindowListener(new WindowAdapter() 
-		{
-			@Override
-			public void windowClosing(WindowEvent e) 
-			{
-				// START KGU#157 2016-03-16: Bugfix #131 Never just close with a running executor!
-				if (diagram.getRoot() != null && diagram.getRoot().executed && !isStandalone)
-				{
-					// This will pop up a dialog to stop the execution
-					// By first argument set to null we avoid reopening the Executor Control
-					Executor.getInstance(null, null);
-					// Since the executor is a concurrent thread and we don't know the decision of
-					// the user, we can neither wait nor proceed here. So we just leave.
-				}
-				else
-				// END KGU#157
-				if (diagram.saveNSD(true))
-				{
-					saveToINI();
-					// START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
-					if (isStandalone)
-						System.exit(0);	// This kills all related frames and threads as well!
-					else
-						dispose();
-					// END KGU#49/KGU#66 (#6/#16) 2015-11-14
-				}
-			}
-			
-			@Override
-			public void windowOpened(WindowEvent e) 
-			{  
-				//editor.componentResized(null);
-				//editor.revalidate();
-				//repaint();
-			}
-			
-			@Override
-			public void windowActivated(WindowEvent e)
-			{  
-				//editor.componentResized(null);
-				//editor.revalidate();
-				//repaint();
-        		}
+            Ini.getInstance();
+            /*
+            try {
+                    ClassPathHacker.addFile("Structorizer.app/Contents/Resources/Java/quaqua-filechooser-only.jar");
+                    UIManager.setLookAndFeel(
+                                                                     "ch.randelshofer.quaqua.QuaquaLookAndFeel"
+                                                                     );
+            } catch (Exception e) {
+                    System.out.println(e.getMessage());
+            }*/
 
-			@Override
-			public void windowGainedFocus(WindowEvent e) 
-			{  
-				//editor.componentResized(null);
-				//editor.revalidate();
-				//repaint();
-			}  
-		}); 
+            /******************************
+             * Load values from INI
+             ******************************/
+            loadFromINI();
 
-		/******************************
-		 * Load values from INI
-		 ******************************/
-		loadFromINI();
-                Locales.getInstance().setLang(Locales.getInstance().getLoadedLocaleName());
-                        
-		/******************************
-		 * Resize the toolbar
-		 ******************************/
-		//editor.componentResized(null);
-		getEditor().revalidate();
-		repaint();
-        getEditor().diagram.redraw();
+            /******************************
+             * Some JFrame specific things
+             ******************************/
+            // set window title
+            // START KGU 2016-01-10: Enhancement #101 - show version number and standalone status
+            //setTitle("Structorizer");
+            if (!this.isStandalone) titleString = "(" + titleString + ")";
+            setTitle(titleString);
+            // END KGU 2016-01-10
+            // set layout (OS default)
+            setLayout(null);
+            // set windows size
+            //setSize(550, 550);
+            // show form
+            setVisible(true);
+            // set action to perform if closed
+            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+            // set icon depending on OS ;-)
+            String os = System.getProperty("os.name").toLowerCase();
+            setIconImage(IconLoader.ico074.getImage());
+            if (os.contains("windows")) 
+            {
+                setIconImage(IconLoader.ico074.getImage());
+            } 
+            else if (os.contains("mac")) 
+            {
+                setIconImage(IconLoader.icoNSD.getImage());
+            }
+
+            /******************************
+             * Setup the editor
+             ******************************/
+            editor = new Editor(this);
+            // get reference tot he diagram
+            diagram = getEditor().diagram;
+            Container container = getContentPane();
+            container.setLayout(new BorderLayout());
+            container.add(getEditor(),BorderLayout.CENTER);
+
+            /******************************
+             * Setup the menu
+             ******************************/
+            menu = new Menu(diagram,this);
+            setJMenuBar(menu);		
+
+            /******************************
+             * Update the buttons and menu
+             ******************************/
+            doButtons();
+
+            /******************************
+             * Set onClose event
+             ******************************/
+            setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+            addWindowListener(new WindowAdapter() 
+            {
+                    @Override
+                    public void windowClosing(WindowEvent e) 
+                    {
+                            // START KGU#157 2016-03-16: Bugfix #131 Never just close with a running executor!
+                            if (diagram.getRoot() != null && diagram.getRoot().executed && !isStandalone)
+                            {
+                                    // This will pop up a dialog to stop the execution
+                                    // By first argument set to null we avoid reopening the Executor Control
+                                    Executor.getInstance(null, null);
+                                    // Since the executor is a concurrent thread and we don't know the decision of
+                                    // the user, we can neither wait nor proceed here. So we just leave.
+                            }
+                            else
+                            // END KGU#157
+                            if (diagram.saveNSD(true))
+                            {
+                                    saveToINI();
+                                    // START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
+                                    if (isStandalone)
+                                            System.exit(0);	// This kills all related frames and threads as well!
+                                    else
+                                            dispose();
+                                    // END KGU#49/KGU#66 (#6/#16) 2015-11-14
+                            }
+                    }
+
+                    @Override
+                    public void windowOpened(WindowEvent e) 
+                    {  
+                            //editor.componentResized(null);
+                            //editor.revalidate();
+                            //repaint();
+                    }
+
+                    @Override
+                    public void windowActivated(WindowEvent e)
+                    {  
+                            //editor.componentResized(null);
+                            //editor.revalidate();
+                            //repaint();
+                    }
+
+                    @Override
+                    public void windowGainedFocus(WindowEvent e) 
+                    {  
+                            //editor.componentResized(null);
+                            //editor.revalidate();
+                            //repaint();
+                    }  
+            }); 
+
+            /******************************
+             * Load values from INI
+             ******************************/
+            loadFromINI();
+            Locales.getInstance().setLocale(Locales.getInstance().getLoadedLocaleName());
+
+            /******************************
+             * Resize the toolbar
+             ******************************/
+            //editor.componentResized(null);
+            getEditor().revalidate();
+            repaint();
+            getEditor().diagram.redraw();
 	}
 	
 
@@ -272,7 +272,7 @@ public class Mainform  extends LangFrame implements NSDController
                         if (height<=0) height=550;
 
 			// language	
-                        Locales.getInstance().setLang(ini.getProperty("Lang","en"));
+                        Locales.getInstance().setLocale(ini.getProperty("Lang","en"));
                         
                         // colors
                         Element.loadFromINI();
@@ -418,7 +418,7 @@ public class Mainform  extends LangFrame implements NSDController
 			}
 			
 			// language
-			ini.setProperty("Lang",Locales.getInstance().getLoadedLocaleName());
+			ini.setProperty("Lang",Locales.getInstance().getLoadedLocaleFilename());
 			
 			// DIN, comments
 			ini.setProperty("DIN",(Element.E_DIN?"1":"0"));
