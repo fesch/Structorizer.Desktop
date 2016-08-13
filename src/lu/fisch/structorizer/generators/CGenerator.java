@@ -56,6 +56,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.04.03      Enh. KGU#150: ord and chr functions converted (raw approach)
  *      Kay Gürtzig             2016.07.20      Enh. #160: Option to involve subroutines implemented (=KGU#178)
  *      Kay Gürtzig             2016.08.10      Issue #227: <stdio.h> and TODOs only included if needed 
+ *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
  *
  ******************************************************************************************************
  *
@@ -203,6 +204,24 @@ public class CGenerator extends Generator {
 		return true;
 	}
 	// END KGU#78 2015-12-18
+
+	// START KGU 2016-08-12: Enh. #231 - information for analyser
+    private static final String[] reservedWords = new String[]{
+		"auto", "break", "case", "char", "const", "continue",
+		"default", "do", "double", "else", "enum", "extern",
+		"float", "for", "goto", "if", "int", "long",
+		"register", "return",
+		"short", "signed", "sizeof", "static", "struct", "switch",
+		"typedef", "union", "unsigned", "void", "volatile", "while"};
+	public String[] getReservedWords()
+	{
+		return reservedWords;
+	}
+	public boolean isCaseSignificant()
+	{
+		return true;
+	}
+	// END KGU 2016-08-12
 
 	/************ Code Generation **************/
 

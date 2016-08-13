@@ -55,6 +55,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
  *      Kay Gürtzig         2016-04-30      Bugfix #181 - delimiters of string literals weren't converted (KGU#190)
  *      Kay Gürtzig         2016-07-20      Enh. #160 - optional export of called subroutines implemented
+ *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
  *
  ******************************************************************************************************
  *
@@ -148,6 +149,27 @@ public class PasGenerator extends Generator
 		return false;
 	}
 	// END KGU#78 2015-12-18
+
+	
+	// START KGU 2016-08-12: Enh. #231 - information for analyser
+    private static final String[] reservedWords = new String[]{
+		"and", "array", "begin",
+		"case", "const", "div", "do", "downto",
+		"else", "end", "file", "for", "function", "goto",
+		"if", "in", "label", "mod", "nil", "not", "of", "or",
+		"packed", "procedure", "program", "record", "repeat",
+		"set", "shl", "shr", "then", "to", "type",
+		"until", "var", "while", "with"
+		};
+	public String[] getReservedWords()
+	{
+		return reservedWords;
+	}
+	public boolean isCaseSignificant()
+	{
+		return false;
+	}
+	// END KGU 2016-08-12
 
 	/************ Code Generation **************/
     

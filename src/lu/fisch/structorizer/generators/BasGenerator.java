@@ -48,6 +48,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016-04-04      Enh. #150 - Pascal functions ord and chr translated
  *      Kay Gürtzig         2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                          though this is only provisional for the line numbering mode
+ *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
  *
  ******************************************************************************************************
  *
@@ -116,6 +117,26 @@ public class BasGenerator extends Generator
     	return "REM";
     }
     // END KGU 2015-10-18
+
+	// START KGU 2016-08-12: Enh. #231 - information for analyser
+    private static final String[] reservedWords = new String[]{
+		"FUNCTION", "SUB",
+		"REM", "LET", "AS", "DIM",
+		"IF", "THEN", "ELSE", "END",
+		"SELECT", "CASE",
+		"FOR", "TO", "STEP", "NEXT",
+		"DO", "WHILE", "UNTIL", "LOOP",
+		"CALL", "RETURN", "GOTO", "GOSUB", "STOP",
+		"AND", "OR", "NOT"};
+	public String[] getReservedWords()
+	{
+		return reservedWords;
+	}
+	public boolean isCaseSignificant()
+	{
+		return false;
+	}
+	// END KGU 2016-08-12
 
 	// START KGU#78 2015-12-18: Enh. #23 We must know whether to create labels for simple breaks
 	/* (non-Javadoc)

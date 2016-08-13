@@ -55,6 +55,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.07.20      Enh. #160 (subroutines involved) implemented
  *      Kay Gürtzig             2016.08.10      Bugfix #227 (Modules = main programs have to end with full stop)
  *      Kay Gürtzig             2016.08.12      Two tiny embellishments
+ *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
  *
  ******************************************************************************************************
  *
@@ -135,7 +136,25 @@ public class OberonGenerator extends Generator {
 	}
 	// END KGU#78 2015-12-18
 
-    
+	// START KGU 2016-08-12: Enh. #231 - information for analyser
+    private static final String[] reservedWords = new String[]{
+    	"ARRAY", "BEGIN", "BY", "CASE", "CONST", "DIV", "DO", "ELSE", "ELSIF", "END", "EXIT",
+    	"FOR", "IF", "IMPORT", "IN", "IS", "LOOP", "MOD", "MODULE", "NIL", "OF", "OR",
+    	"POINTER", "PROCEDURE", "RECORD", "REPEAT", "RETURN", "THEN", "TO", "TYPE",
+    	"UNTIL", "VAR", "WHILE", "WITH",
+    	"BOOLEAN", "CHAR", "FALSE", "HALT", "INTEGER", "LONG", "LONGINT", "LONGREAL",
+    	"NEW", "REAL", "SET", "SHORT", "SHORTINT", "TRUE"
+    };
+	public String[] getReservedWords()
+	{
+		return reservedWords;
+	}
+	public boolean isCaseSignificant()
+	{
+		return true;
+	}
+	// END KGU 2016-08-12
+   
     /************ Code Generation **************/
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed

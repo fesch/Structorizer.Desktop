@@ -196,19 +196,19 @@ Menu.error13_1.text=你的函数没有任何返回值！
 Menu.error13_2.text=你的函数可能没有返回值！
 
 -----[ AnalyserPreferences ]-----
-AnalyserPreferences.check1.text=检查被修改的循环变量。
-AnalyserPreferences.check2.text=检查无限循环(尽可能检测！)
-AnalyserPreferences.check3.text=检查未初始化的变量。
-AnalyserPreferences.check4.text=检查不正确的使用IF语句。
-AnalyserPreferences.check5.text=检查大写的变量名。(LUX/MEN)
-AnalyserPreferences.check6.text=检查大写的程序名/子程序名。(LUX/MEN)
-AnalyserPreferences.check7.text=检查有效的标识符。
-AnalyserPreferences.check8.text=检查条件中的赋值。
-AnalyserPreferences.check9.text=检查程序名/子程序名不等于其他标识符。
-AnalyserPreferences.check10.text=检查带多个命令的指令。
-AnalyserPreferences.check11.text=检查赋值错误。
-AnalyserPreferences.check12.text=检查标准化的参数名。(LUX/MEN)
-AnalyserPreferences.check13.text=检查函数中是否返回结果。
+AnalyserPreferences.checkboxes.0.text=检查被修改的循环变量。
+AnalyserPreferences.checkboxes.1.text=检查无限循环(尽可能检测！)
+AnalyserPreferences.checkboxes.2.text=检查未初始化的变量。
+AnalyserPreferences.checkboxes.3.text=检查不正确的使用IF语句。
+AnalyserPreferences.checkboxes.4.text=检查大写的变量名。(LUX/MEN)
+AnalyserPreferences.checkboxes.5.text=检查大写的程序名/子程序名。(LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=检查有效的标识符。
+AnalyserPreferences.checkboxes.7.text=检查条件中的赋值。
+AnalyserPreferences.checkboxes.8.text=检查程序名/子程序名不等于其他标识符。
+AnalyserPreferences.checkboxes.9.text=检查带多个命令的指令。
+AnalyserPreferences.checkboxes.10.text=检查赋值错误。
+AnalyserPreferences.checkboxes.11.text=检查标准化的参数名。(LUX/MEN)
+AnalyserPreferences.checkboxes.12.text=检查函数中是否返回结果。
 AnalyserPreferences.okButton.text=确定
 
 

@@ -40,6 +40,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.01.14      Type conversion of C overridden (KGU#16)
  *      Kay Gürtzig     2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61)
  *      Kay Gürtzig     2016.08.10      Issue #227: <iostream> only included if needed 
+ *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
  *
  ******************************************************************************************************
  *
@@ -77,7 +78,26 @@ public class CPlusPlusGenerator extends CGenerator {
             return exts;
     }
 
-    /************ Code Generation **************/
+	// START KGU 2016-08-12: Enh. #231 - information for analyser
+    private static final String[] reservedWords = new String[]{
+		"auto", "break", "case", "char", "const", "continue",
+		"default", "do", "double", "else", "enum", "extern",
+		"float", "for", "goto", "if", "int", "long",
+		"register", "return",
+		"short", "signed", "sizeof", "static", "struct", "switch",
+		"typedef", "union", "unsigned", "void", "volatile", "while",
+		"asm", "bool", "catch", "calss", "const_cast", "delete", "dynamic_cast",
+		"explicit", "false", "friend", "inline", "mutable", "namespace", "new", "nullptr",
+		"operator", "private", "public", "protected", "reinterpret_cast",
+		"staic_cast", "template", "this", "throw", "true", "try", "typeid", "typename",
+		"using", "virtual", "wchar_t"};
+	public String[] getReservedWords()
+	{
+		return reservedWords;
+	}
+	// END KGU 2016-08-12
+
+	/************ Code Generation **************/
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)

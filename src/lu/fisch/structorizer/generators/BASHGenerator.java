@@ -55,10 +55,11 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.03.24      Bugfix #92/#135 (= KGU#161) Input variables were prefixed
  *      Kay Gürtzig         2016.03.29      KGU#164: Bugfix #138 Function call expression revised (in transformTokens())
  *                                          #135 Array and expression support improved (with thanks to R. Schmidt)
- *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
- *      Kay Gürtzig         2016-04-05      Enh. #153 - Export of Parallel elements had been missing
- *      Kay Gürtzig         2016-04-05      KGU#150 - provisional support for chr and ord function
- *      Kay Gürtzig         2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
+ *      Kay Gürtzig         2016.03.31      Enh. #144 - content conversion may be switched off
+ *      Kay Gürtzig         2016.04.05      Enh. #153 - Export of Parallel elements had been missing
+ *      Kay Gürtzig         2016.04.05      KGU#150 - provisional support for chr and ord function
+ *      Kay Gürtzig         2016.07.20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
+ *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
  *
  ******************************************************************************************************
  *
@@ -173,6 +174,23 @@ public class BASHGenerator extends Generator {
 	}
 	// END KGU#78 2015-12-18
 
+	// START KGU 2016-08-12: Enh. #231 - information for analyser
+    private static final String[] reservedWords = new String[]{
+		"if", "then", "else", "elif", "fi",
+		"select", "case", "in", "esac",
+		"for", "do", "done",
+		"while", "until",
+		"function", "return"};
+	public String[] getReservedWords()
+	{
+		return reservedWords;
+	}
+	public boolean isCaseSignificant()
+	{
+		return true;
+	}
+	// END KGU 2016-08-12
+	
 	/************ Code Generation **************/
 	
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed

@@ -188,19 +188,19 @@ Menu.error13_1.text=Twoja funkcja nie ma nadanej wartości!
 Menu.error13_2.text=Twoja funcja nie może zwracać wartości!
 
 -----[ AnalyserPreferences ]-----
-AnalyserPreferences.check1.text=Szukanie zmian zmiennej licznikowej.
-AnalyserPreferences.check2.text=Szukanie nieskończonych pętli (na ile to możliwe!)
-AnalyserPreferences.check3.text=Szukanie zmiennych bez wartości..
-AnalyserPreferences.check4.text=Szukanie niewłaściwego użycia instrukcji IF.
-AnalyserPreferences.check5.text=Szukanie zmiennych pisanych DUŻYMI literami. (LUX/MEN)
-AnalyserPreferences.check6.text=Szukanie nazw programu/podprogramu pisanych DUŻYMI literami. (LUX/MEN)
-AnalyserPreferences.check7.text=Szukanie poprawnych identyfikatorów.
-AnalyserPreferences.check8.text=Szukanie przypisań w wyrażeniach warunkowych.
-AnalyserPreferences.check9.text=Szukanie zbieżności nazw programów/podprogramów/zmiennych.
-AnalyserPreferences.check10.text=Szukanie wielokrotnych poleceń.
-AnalyserPreferences.check11.text=Szukanie błędów przpisania.
-AnalyserPreferences.check12.text=Szukanie nazw argumentów. (LUX/MEN)
-AnalyserPreferences.check13.text=Szukanie czy i co zwracają funkcje.
+AnalyserPreferences.checkboxes.0.text=Szukanie zmian zmiennej licznikowej.
+AnalyserPreferences.checkboxes.1.text=Szukanie nieskończonych pętli (na ile to możliwe!)
+AnalyserPreferences.checkboxes.2.text=Szukanie zmiennych bez wartości..
+AnalyserPreferences.checkboxes.3.text=Szukanie niewłaściwego użycia instrukcji IF.
+AnalyserPreferences.checkboxes.4.text=Szukanie zmiennych pisanych DUŻYMI literami. (LUX/MEN)
+AnalyserPreferences.checkboxes.5.text=Szukanie nazw programu/podprogramu pisanych DUŻYMI literami. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=Szukanie poprawnych identyfikatorów.
+AnalyserPreferences.checkboxes.7.text=Szukanie przypisań w wyrażeniach warunkowych.
+AnalyserPreferences.checkboxes.8.text=Szukanie zbieżności nazw programów/podprogramów/zmiennych.
+AnalyserPreferences.checkboxes.9.text=Szukanie wielokrotnych poleceń.
+AnalyserPreferences.checkboxes.10.text=Szukanie błędów przpisania.
+AnalyserPreferences.checkboxes.11.text=Szukanie nazw argumentów. (LUX/MEN)
+AnalyserPreferences.checkboxes.12.text=Szukanie czy i co zwracają funkcje.
 AnalyserPreferences.okButton.text=OK
 
 

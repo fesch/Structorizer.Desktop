@@ -20,17 +20,41 @@
 
 package lu.fisch.structorizer.locales;
 
+/******************************************************************************************************
+ *
+ *      Author:         Bob Fisch
+ *
+ *      Description:    Fundamental localization manager, hold the locales and performs translations
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2016.08.02      First Issue
+ *      Kay Gürtzig     2016.08.12      Mechanism to translate arrays of controls (initially for AnalyserPreferences)
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:		/
+ *
+ ******************************************************************************************************/
+
 import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+
 import javax.swing.JDialog;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
+
 import lu.fisch.utils.StringList;
 
 /**
@@ -417,33 +441,50 @@ public class Locales {
                                 if (field != null) {
                                     Class<?> fieldClass = field.getType();
                                     String piece2 = pieces.get(2).toLowerCase();
+                                    
+                                    Object target = field.get(component);
+                                    
+                                    // START KGU#239 2016-08-12: Opportunity to localize an array of controls
+                                    if (fieldClass.isArray() && pieces.count() > 3)
+                                    {
+                                    	int length = Array.getLength(field.get(component));
+                                    	int index = Integer.parseUnsignedInt(piece2);
+                                    	if (index < length) {
+                                    		target = Array.get(field.get(component), index);
+                                    		fieldClass = target.getClass();
+                                    		pieces.remove(2);
+                                    		piece2 = pieces.get(2);
+                                    	}
+                                    		
+                                    }
+                                    // END KGU#239 2016-08-12
 
                                     if (piece2.equals("text")) {
                                         Method method = fieldClass.getMethod("setText", new Class[]{String.class});
-                                        if(field.get(component)!=null)
-                                            method.invoke(field.get(component), new Object[]{parts.get(1)});
+                                        if(target != null)
+                                            method.invoke(target, new Object[]{parts.get(1)});
                                     } else if (piece2.equals("tooltip")) {
                                         Method method = fieldClass.getMethod("setToolTipText", new Class[]{String.class});
-                                        if(field.get(component)!=null)
-                                            method.invoke(field.get(component), new Object[]{parts.get(1)});
+                                        if(target != null)
+                                            method.invoke(target, new Object[]{parts.get(1)});
                                     } else if (piece2.equals("border")) {
                                         Method method = fieldClass.getMethod("setBorder", new Class[]{Border.class});
-                                        if(field.get(component)!=null)
-                                            method.invoke(field.get(component), new Object[]{new TitledBorder(parts.get(1))});
+                                        if(target != null)
+                                            method.invoke(target, new Object[]{new TitledBorder(parts.get(1))});
                                     } else if (piece2.equals("tab")) {
                                         Method method = fieldClass.getMethod("setTitleAt", new Class[]{int.class, String.class});
-                                        if(field.get(component)!=null)
-                                            method.invoke(field.get(component), new Object[]{Integer.valueOf(pieces.get(3)), parts.get(1)});
+                                        if(target != null)
+                                            method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3)), parts.get(1)});
                                     } else if (piece2.equals("header")) {
                                         Method method = fieldClass.getMethod("setHeaderTitle", new Class[]{int.class, String.class});
-                                        if(field.get(component)!=null)
-                                            method.invoke(field.get(component), new Object[]{Integer.valueOf(pieces.get(3)), parts.get(1)});
+                                        if(target != null)
+                                            method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3)), parts.get(1)});
                                     } // START KGU#183 2016-04-24: Enh. #173 - new support
                                     else if (piece2.equals("mnemonic")) {
                                         Method method = fieldClass.getMethod("setMnemonic", new Class[]{int.class});
                                         int keyCode = KeyEvent.getExtendedKeyCodeForChar(parts.get(1).toLowerCase().charAt(0));
-                                        if (keyCode != KeyEvent.VK_UNDEFINED && field.get(component)!=null) {
-                                            method.invoke(field.get(component), new Object[]{Integer.valueOf(keyCode)});
+                                        if (keyCode != KeyEvent.VK_UNDEFINED && target != null) {
+                                            method.invoke(target, new Object[]{Integer.valueOf(keyCode)});
                                         }
                                     } // END KGU#183 2016-04-24
                                     // START KGU#156 2016-03-13: Enh. #124 - intended for JComboBoxes
@@ -452,9 +493,9 @@ public class Locales {
                                         // (see lu.fisch.structorizer.elements.RuntimeDataPresentMode and
                                         // lu.fisch.structorizer.executor.Control for an example).
                                         Method method = fieldClass.getMethod("getItemAt", new Class[]{int.class});
-                                        if(field.get(component)!=null)
+                                        if(target != null)
                                         {
-                                            Object item = method.invoke(field.get(component), new Object[]{Integer.valueOf(pieces.get(3))});
+                                            Object item = method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3))});
                                             if (item != null) {
                                                 Class<?> itemClass = item.getClass();
                                                 method = itemClass.getMethod("setText", new Class[]{String.class});

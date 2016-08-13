@@ -227,23 +227,25 @@ Menu.error17.text=Rischio consistente dovuto all'accesso simultaneo della variab
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferenze dell'analizzatore
-AnalyserPreferences.check1.text=Controlla variabile di ciclo modificata.
-AnalyserPreferences.check2.text=Controlla cicli infiniti (finchè e rilevabile!)
-AnalyserPreferences.check3.text=Controlla variabili non inizializzate.
-AnalyserPreferences.check4.text=Controlla errori nell'uso della Selezione.
-AnalyserPreferences.check5.text=Controlla nomi delle variabili in maiuscolo. (LUX/MEN)
-AnalyserPreferences.check6.text=Controlla nomi del programma e dei sottoprogrammi in maiuscolo. (LUX/MEN)
-AnalyserPreferences.check7.text=Controlla identificatori validi.
-AnalyserPreferences.check8.text=Controlla assegnamenti nelle condizioni.
-AnalyserPreferences.check9.text=Controlla che il nome del programma e quelli dei sotto programmi siano diversi da ogni altro identificatore.
-AnalyserPreferences.check10.text=Controlla istruzioni con comandi multipli.
-AnalyserPreferences.check11.text=Controlla errori di assegnamento.
-AnalyserPreferences.check12.text=Controlla nomi dei parametri standardizzati. (LUX/MEN)
-AnalyserPreferences.check13.text=Controlla se una funzione ritorna un risultato.
-AnalyserPreferences.check14.text=Controlla se parametri del ciclo FOR si confan con la intestazione dello medesimo.
-AnalyserPreferences.check15.text=Controlla CALL inappropiate nelle subroutine.
-AnalyserPreferences.check16.text=Controlla usi impropri di un elemento JUMP.
-AnalyserPreferences.check17.text=Controlla rischi di inconsistenza nelle sezioni in PARALLEL.
+AnalyserPreferences.checkboxes.0.text=Controlla variabile di ciclo modificata.
+AnalyserPreferences.checkboxes.1.text=Controlla cicli infiniti (finchè e rilevabile!)
+AnalyserPreferences.checkboxes.2.text=Controlla variabili non inizializzate.
+AnalyserPreferences.checkboxes.3.text=Controlla errori nell'uso della Selezione.
+AnalyserPreferences.checkboxes.4.text=Controlla nomi delle variabili in maiuscolo. (LUX/MEN)
+AnalyserPreferences.checkboxes.5.text=Controlla nomi del programma e dei sottoprogrammi in maiuscolo. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=Controlla identificatori validi.
+AnalyserPreferences.checkboxes.7.text=Controlla assegnamenti nelle condizioni.
+AnalyserPreferences.checkboxes.8.text=Controlla che il nome del programma e quelli dei sotto programmi siano diversi da ogni altro identificatore.
+AnalyserPreferences.checkboxes.9.text=Controlla istruzioni con comandi multipli.
+AnalyserPreferences.checkboxes.10.text=Controlla errori di assegnamento.
+AnalyserPreferences.checkboxes.11.text=Controlla nomi dei parametri standardizzati. (LUX/MEN)
+AnalyserPreferences.checkboxes.12.text=Controlla se una funzione ritorna un risultato.
+AnalyserPreferences.checkboxes.13.text=Controlla se parametri del ciclo FOR si confan con la intestazione dello medesimo.
+AnalyserPreferences.checkboxes.14.text=Controlla CALL inappropiate nelle subroutine.
+AnalyserPreferences.checkboxes.15.text=Controlla usi impropri di un elemento JUMP.
+AnalyserPreferences.checkboxes.16.text=Controlla rischi di inconsistenza nelle sezioni in PARALLEL.
+AnalyserPreferences.checkboxes.17.text=
+AnalyserPreferences.checkboxes.18.text=
 AnalyserPreferences.okButton.text=OK
 
 

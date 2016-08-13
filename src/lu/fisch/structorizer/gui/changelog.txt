@@ -11,7 +11,7 @@ Legend:
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Version: 3.25 (2016.08.11)
+Version: 3.25 (2016.08.13)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2
 - 01: Enh. #124: Generalized runtime data visualization <2>
 - 01: Arranger now adopts current directory from first arranged diagram <2>
@@ -110,6 +110,7 @@ Version: 3.25 (2016.08.11)
 - 16: Locales: memory usage optimisations [Bob Fisch]
 - 16: Bugfix #227: Oberon module export must end with full stop [K.-P. Reimers]2
 - 16: Bugfix #228: Unnecessary warning on code export of recursive routines <2>
+- 17: Enh. #231: Variable name collision checks added to Analyser <2>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]

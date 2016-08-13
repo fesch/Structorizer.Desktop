@@ -59,6 +59,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.03.23      Enh. #84: Support for FOREACH loops (KGU#61)
  *      Kay Gürtzig     2016-04-01      Enh. #144: Care for the new export option suppressing content conversion
  *      Kay Gürtzig     2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
+ *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
  *
  ******************************************************************************************************
  *
@@ -134,6 +135,25 @@ public class PerlGenerator extends Generator {
 		return true;
 	}
 	// END KGU#78 2015-12-18
+	
+	// START KGU 2016-08-12: Enh. #231 - information for analyser
+    private static final String[] reservedWords = new String[]{
+		"and", "cmp", "continue", "do",
+		"else", "elsif", "eq", "exp",
+		"for", "foreach", "ge", "gt",
+		"if", "le", "lock", "lt", "ne", "no", "or",
+		"package", "qq", "qr", "qw", "qx", 
+		"sub", "tr", "unless", "until", "while", "xor"
+		};
+	public String[] getReservedWords()
+	{
+		return reservedWords;
+	}
+	public boolean isCaseSignificant()
+	{
+		return false;
+	}
+	// END KGU 2016-08-12
 	
 	
 	/************ Code Generation **************/

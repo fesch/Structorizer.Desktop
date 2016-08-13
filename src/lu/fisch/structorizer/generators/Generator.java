@@ -156,6 +156,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected abstract String getFileDescription();
 	protected abstract String getIndent();
 	protected abstract String[] getFileExtensions();
+	// START KGU 2016-08-12: Enh. #231 - information for analyser
+	/**
+	 * Returns a list of the most important reserved words in the target language
+	 * @return collection of key strings
+	 */
+	public abstract String[] getReservedWords();
+	/**
+	 * Indicates whether case is significant in parsing of reserved words and identifiers
+	 * @return true if case matters
+	 */
+	public abstract boolean isCaseSignificant();
+	// END KGU 2016-08-12
 	// START KGU 2015-10-18: It seemed sensible to store the comment specification permanently
 	/**
 	 * @return left comment delimiter, e.g. "/*", "//", "(*", or "{"

@@ -46,6 +46,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61) 
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                              brace balance in non-program files fixed  
+ *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
  *
  ******************************************************************************************************
  *
@@ -106,6 +107,27 @@ public class CSharpGenerator extends CGenerator
 		String[] exts = {"cs"};
 		return exts;
 	}
+
+	// START KGU 2016-08-12: Enh. #231 - information for analyser
+    private static final String[] reservedWords = new String[]{
+		"abstract", "as", "base", "bool", "break", "byte",
+		"case", "catch", "char", "checked", "class", "const", "continue",
+		"decimal", "default", "delegate", "do", "double",
+		"else", "enum", "event", "explicit", "extern",
+		"false", "finally", "fixed", "float", "for", "foreach", "goto",
+		"if", "implicit", "in", "int", "interface", "internal", "is",
+		"lock", "long", "namespace", "new", "null",
+		"object", "operator", "out", "override", "params", "private", "public",
+		"readonly", "ref", "return", "sbyte", "sealed", "short", "sizeof",
+		"stackalloc", "static", "string", "struct", "switch",
+		"this", "throw", "true", "try", "typeof",
+		"uint", "ulong", "unchecked", "unsafe", "ushort", "using",
+		"virtual", "void", "volatile", "while"};
+	public String[] getReservedWords()
+	{
+		return reservedWords;
+	}
+	// END KGU 2016-08-12
 
 	// TODO
 	/************ Code Generation **************/

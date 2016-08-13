@@ -175,19 +175,19 @@ Menu.error13_1.text=Uw functie geeft geen enkel resultaat!
 Menu.error13_2.text=Uw functie geeft waarschijnlijk geen resultaat!
 
 -----[ AnalyserPreferences ]-----
-AnalyserPreferences.check1.text=Controle voor gewijzigde loop variabele.
-AnalyserPreferences.check2.text=Controle voor eindeloze loop (zover mogelijk!)
-AnalyserPreferences.check3.text=Controle voor niet geinitialiseerde variabelen.
-AnalyserPreferences.check4.text=Controle voor foutief gebruik van de IF-statement.
-AnalyserPreferences.check5.text=Controle voor HOOFDLETTER variabele namen. (LUX/MEN)
-AnalyserPreferences.check6.text=Controle voor HOOFDLETTER programma / subnaam. (LUX/MEN)
-AnalyserPreferences.check7.text=Controle voor foutieve identifiers.
-AnalyserPreferences.check8.text=Controle voor assignment in condities.
-AnalyserPreferences.check9.text=Controle die controleerd dat het programma / subnaam niet gelijk is aan een identifier.
-AnalyserPreferences.check10.text=Controle voor instructies met inputs en outputs.
-AnalyserPreferences.check11.text=Controle voor assignment fouten.
-AnalyserPreferences.check12.text=Controle voor gestandaardiseerde parameter naam. (LUX/MEN)
-AnalyserPreferences.check13.text=Controle die controleerd dat, in geval van een functie, het een resultaat terug geeft.
+AnalyserPreferences.checkboxes.0.text=Controle voor gewijzigde loop variabele.
+AnalyserPreferences.checkboxes.1.text=Controle voor eindeloze loop (zover mogelijk!)
+AnalyserPreferences.checkboxes.2.text=Controle voor niet geinitialiseerde variabelen.
+AnalyserPreferences.checkboxes.3.text=Controle voor foutief gebruik van de IF-statement.
+AnalyserPreferences.checkboxes.4.text=Controle voor HOOFDLETTER variabele namen. (LUX/MEN)
+AnalyserPreferences.checkboxes.5.text=Controle voor HOOFDLETTER programma / subnaam. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=Controle voor foutieve identifiers.
+AnalyserPreferences.checkboxes.7.text=Controle voor assignment in condities.
+AnalyserPreferences.checkboxes.8.text=Controle die controleerd dat het programma / subnaam niet gelijk is aan een identifier.
+AnalyserPreferences.checkboxes.9.text=Controle voor instructies met inputs en outputs.
+AnalyserPreferences.checkboxes.10.text=Controle voor assignment fouten.
+AnalyserPreferences.checkboxes.11.text=Controle voor gestandaardiseerde parameter naam. (LUX/MEN)
+AnalyserPreferences.checkboxes.12.text=Controle die controleerd dat, in geval van een functie, het een resultaat terug geeft.
 AnalyserPreferences.okButton.text=OK
 
 

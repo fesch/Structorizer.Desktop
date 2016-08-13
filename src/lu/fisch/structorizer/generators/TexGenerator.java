@@ -345,6 +345,16 @@ public class TexGenerator extends Generator {
 		
 		return code.getText();
 	}
+
+	@Override
+	public String[] getReservedWords() {
+		return null;
+	}
+
+	@Override
+	public boolean isCaseSignificant() {
+		return false;
+	}
 	
 	
 }
