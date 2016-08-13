@@ -469,7 +469,7 @@ public class Locales {
                                             method.invoke(target, new Object[]{parts.get(1)});
                                     } else if (piece2.equals("border")) {
                                         Method method = fieldClass.getMethod("setBorder", new Class[]{Border.class});
-                                        if(field.get(component)!=null)
+                                        if(target != null)
                                             method.invoke(target, new Object[]{new TitledBorder(parts.get(1))});
                                     } else if (piece2.equals("tab")) {
                                         Method method = fieldClass.getMethod("setTitleAt", new Class[]{int.class, String.class});
@@ -483,7 +483,7 @@ public class Locales {
                                     else if (piece2.equals("mnemonic")) {
                                         Method method = fieldClass.getMethod("setMnemonic", new Class[]{int.class});
                                         int keyCode = KeyEvent.getExtendedKeyCodeForChar(parts.get(1).toLowerCase().charAt(0));
-                                        if (keyCode != KeyEvent.VK_UNDEFINED && field.get(component)!=null) {
+                                        if (keyCode != KeyEvent.VK_UNDEFINED && target != null) {
                                             method.invoke(target, new Object[]{Integer.valueOf(keyCode)});
                                         }
                                     } // END KGU#183 2016-04-24
