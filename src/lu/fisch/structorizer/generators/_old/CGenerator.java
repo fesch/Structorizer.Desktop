@@ -460,5 +460,17 @@ public class CGenerator extends Generator
         return code.getText();
     }
 
+	@Override
+	public String[] getReservedWords() {
+		// Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isCaseSignificant() {
+		// Auto-generated method stub
+		return false;
+	}
+
 
 }

@@ -247,23 +247,25 @@ Menu.error17.text=
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=
-AnalyserPreferences.check1.text=Test sur la variable de contrôle d'une boucle "FOR".
-AnalyserPreferences.check2.text=Test sur les boucles infinies. (Pour autant que c'est possible!)
-AnalyserPreferences.check3.text=Test sur les variables non initialisées.
-AnalyserPreferences.check4.text=Test sur l'utilisation correcte des structures alternatives.
-AnalyserPreferences.check5.text=Test si les nom de variables sont écrites en majuscules. (LUX/MEN)
-AnalyserPreferences.check6.text=Test si le nom du programme ou de la fonction est écrit en majuscules. (LUX/MEN)
-AnalyserPreferences.check7.text=Test sur la validitié des identificateurs.
-AnalyserPreferences.check8.text=Test si les conditions ne contiennent pas d'assignantions.
-AnalyserPreferences.check9.text=Test si le nom du programme ou de la méthode n'est pas égal à un autre identificateur.
-AnalyserPreferences.check10.text=Test sur les instructions à commandes multiples.
-AnalyserPreferences.check11.text=Test sur les erreurs d'assignation.
-AnalyserPreferences.check12.text=Test si les noms des paramètres sont corrects. (LUX/MEN)
-AnalyserPreferences.check13.text=Test si, dans le cas d'une fonction, celle-ci retourne un résultat.
-AnalyserPreferences.check14.text=
-AnalyserPreferences.check15.text=
-AnalyserPreferences.check16.text=
-AnalyserPreferences.check17.text=
+AnalyserPreferences.checkboxes.0.text=Test sur la variable de contrôle d'une boucle "FOR".
+AnalyserPreferences.checkboxes.1.text=Test sur les boucles infinies. (Pour autant que c'est possible!)
+AnalyserPreferences.checkboxes.2.text=Test sur les variables non initialisées.
+AnalyserPreferences.checkboxes.3.text=Test sur l'utilisation correcte des structures alternatives.
+AnalyserPreferences.checkboxes.4.text=Test si les nom de variables sont écrites en majuscules. (LUX/MEN)
+AnalyserPreferences.checkboxes.5.text=Test si le nom du programme ou de la fonction est écrit en majuscules. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=Test sur la validitié des identificateurs.
+AnalyserPreferences.checkboxes.7.text=Test si les conditions ne contiennent pas d'assignantions.
+AnalyserPreferences.checkboxes.8.text=Test si le nom du programme ou de la méthode n'est pas égal à un autre identificateur.
+AnalyserPreferences.checkboxes.9.text=Test sur les instructions à commandes multiples.
+AnalyserPreferences.checkboxes.10.text=Test sur les erreurs d'assignation.
+AnalyserPreferences.checkboxes.11.text=Test si les noms des paramètres sont corrects. (LUX/MEN)
+AnalyserPreferences.checkboxes.12.text=Test si, dans le cas d'une fonction, celle-ci retourne un résultat.
+AnalyserPreferences.checkboxes.13.text=
+AnalyserPreferences.checkboxes.14.text=
+AnalyserPreferences.checkboxes.15.text=
+AnalyserPreferences.checkboxes.16.text=
+AnalyserPreferences.checkboxes.17.text=
+AnalyserPreferences.checkboxes.18.text=
 AnalyserPreferences.okButton.text=OK
 
 

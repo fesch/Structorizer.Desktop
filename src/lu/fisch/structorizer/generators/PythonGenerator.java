@@ -143,6 +143,30 @@ public class PythonGenerator extends Generator
 			return true;
 		}
 		// END KGU#78 2015-12-18
+		
+		// START KGU 2016-08-12: Enh. #231 - information for analyser
+	    private static final String[] reservedWords = new String[]{
+			"and", "assert", "break", "class", "continue",
+			"def", "del",
+			"else", "elif", "except", "exec",
+			"finally", "for", "from", "global",
+			"if", "import", "in", "is", "lambda", "not", "or",
+			"pass", "print", "raise", "return", 
+			"try", "while",
+			"Data", "Float", "Int", "Numeric", "Oxphys",
+			"array", "close", "float", "int", "input",
+			"open", "range", "type", "write", "zeros"
+			};
+		public String[] getReservedWords()
+		{
+			return reservedWords;
+		}
+		public boolean isCaseSignificant()
+		{
+			return false;
+		}
+		// END KGU 2016-08-12
+
 
 		/************ Code Generation **************/
 	    

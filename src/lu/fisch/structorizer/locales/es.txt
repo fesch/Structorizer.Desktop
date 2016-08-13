@@ -268,26 +268,30 @@ Menu.error16_5.text=¡Una instrucción de retorno no está permitida desde una s
 Menu.error16_6.text=¡Parámetro inadecuado para este tipo de SALTO - debería ser una constante entera.
 Menu.error16_7.text=Instrucciones después de un Salto no son alcanzables!
 Menu.error17.text=¡Varios hilos de ejecución compiten por el acceso a la variable «%» y así riesgan la consistencia!
+Menu.error18.text=¡Variable «%1» podría coincidir con variable(s) «%2» en lenguages sin distincción entre mayúsculas y minúsculas!
+Menu.error19.text=¡Variable «%1» puede collidir con palabras claves en lenguages como %2!
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferencias del Comprobador
-AnalyserPreferences.check1.text=Comprobar modificación de la variable del bucle.
-AnalyserPreferences.check2.text=Comprobar bucle sin fin (¡en la medida de lo detectable!)
-AnalyserPreferences.check3.text=Comprobar si hay variables no inicializadas.
-AnalyserPreferences.check4.text=Comprobar uso correcto de la declaración IF.
-AnalyserPreferences.check5.text=Comprobar nombres de variables en MAYUSCULAS. (LUX/MEN)
-AnalyserPreferences.check6.text=Comprobar MAYUSCULAS en el nombre de programa / subrutina. (LUX/MEN)
-AnalyserPreferences.check7.text=Comprobación de validez de los identificadores.
-AnalyserPreferences.check8.text=Comprobar asignaciones en condiciones.
-AnalyserPreferences.check9.text=Comprobar que el nombre de programa / subrutina no sea igual que algún identificador.
-AnalyserPreferences.check10.text=Comprobar instrucciones con multiples comandos.
-AnalyserPreferences.check11.text=Comprobar errores en asignaciones.
-AnalyserPreferences.check12.text=Comprobar por nombre de parámetro estándar. (LUX/MEN)
-AnalyserPreferences.check13.text=Comprobar si, en caso de una función, ésta devuelve un resultado.
-AnalyserPreferences.check14.text=Comprobar si los parámetros de bucles FOR están consistentes.
-AnalyserPreferences.check15.text=Comprobar que llamadas contengan una sola línea de código llamando una subrutina.
-AnalyserPreferences.check16.text=Comprobar si el uso de elementos SALTO es corrrecto.
-AnalyserPreferences.check17.text=Comprobar que hilos paralelos no pongan a riesgo la consistencia de variables.
+AnalyserPreferences.checkboxes.0.text=Comprobar modificación de la variable del bucle.
+AnalyserPreferences.checkboxes.1.text=Comprobar bucle sin fin (¡en la medida de lo detectable!)
+AnalyserPreferences.checkboxes.2.text=Comprobar si hay variables no inicializadas.
+AnalyserPreferences.checkboxes.3.text=Comprobar uso correcto de la declaración IF.
+AnalyserPreferences.checkboxes.4.text=Comprobar nombres de variables en MAYUSCULAS. (LUX/MEN)
+AnalyserPreferences.checkboxes.5.text=Comprobar MAYUSCULAS en el nombre de programa / subrutina. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=Comprobación de validez de los identificadores.
+AnalyserPreferences.checkboxes.7.text=Comprobar asignaciones en condiciones.
+AnalyserPreferences.checkboxes.8.text=Comprobar que el nombre de programa / subrutina no sea igual que algún identificador.
+AnalyserPreferences.checkboxes.9.text=Comprobar instrucciones con multiples comandos.
+AnalyserPreferences.checkboxes.10.text=Comprobar errores en asignaciones.
+AnalyserPreferences.checkboxes.11.text=Comprobar por nombre de parámetro estándar. (LUX/MEN)
+AnalyserPreferences.checkboxes.12.text=Comprobar si, en caso de una función, ésta devuelve un resultado.
+AnalyserPreferences.checkboxes.13.text=Comprobar si los parámetros de bucles FOR están consistentes.
+AnalyserPreferences.checkboxes.14.text=Comprobar que llamadas contengan una sola línea de código llamando una subrutina.
+AnalyserPreferences.checkboxes.15.text=Comprobar si el uso de elementos SALTO es corrrecto.
+AnalyserPreferences.checkboxes.16.text=Comprobar que hilos paralelos no pongan a riesgo la consistencia de variables.
+AnalyserPreferences.checkboxes.17.text=Comprobar si variables difieren no solo por empleo de mayúsculas o minúsculas.
+AnalyserPreferences.checkboxes.18.text=Comprobar que no habrá colisiones de nombre entre variables y palabras claves.
 AnalyserPreferences.okButton.text=Aceptar
 
 

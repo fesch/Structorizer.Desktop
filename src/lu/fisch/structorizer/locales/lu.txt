@@ -204,23 +204,23 @@ Menu.error17.text=Consistency risk due to concurrent access to variable «%» by
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Analyser Astellungen
-AnalyserPreferences.check1.text=Op verännert Schläif Variabel préiwen.
-AnalyserPreferences.check2.text=Op endlos Schläif préiwen. (Souwäit wei méiglech!)
-AnalyserPreferences.check3.text=Op net initialiséiert Variabel préiwen.
-AnalyserPreferences.check4.text=Op falsch IF-Statement Benotzung préiwen.
-AnalyserPreferences.check5.text=Op GROUSSGESCHRIWWEN Variabel Nimm préiwen. (LUX/MEN)
-AnalyserPreferences.check6.text=Op GROUSSGESCHRIWWEN Programm / Sub Nimm préiwen. (LUX/MEN)
-AnalyserPreferences.check7.text=Op valid Identifiers préiwen.
-AnalyserPreferences.check8.text=Zouwäisung an den Konditiounen kontrolléieren.
-AnalyserPreferences.check9.text=Préiwen op den Programm / Subnumm net selwecht wei aner Identifier sinn.
-AnalyserPreferences.check10.text=Op Instruktiounen mat multipellem Befehl.
-AnalyserPreferences.check11.text=Op Zouwäisungsfehler préiwen.
-AnalyserPreferences.check12.text=Op Standardiséiert Parameternimm préiwen (LUX/MEN)
-AnalyserPreferences.check13.text=Check of Funktioun en Resultat zréck gëtt.
-AnalyserPreferences.check14.text=Op Konsistenz vun den Schläifen Parameter préiwen.
-AnalyserPreferences.check15.text=Op feelerhaft Ennerroutine CALLs préiwen.
-AnalyserPreferences.check16.text=Op falsch JUMP Element benotzen préiwen
-AnalyserPreferences.check17.text=Op Inkonsistenz an PARALLEL Sektioun préiwen.
+AnalyserPreferences.checkboxes.0.text=Op verännert Schläif Variabel préiwen.
+AnalyserPreferences.checkboxes.1.text=Op endlos Schläif préiwen. (Souwäit wei méiglech!)
+AnalyserPreferences.checkboxes.2.text=Op net initialiséiert Variabel préiwen.
+AnalyserPreferences.checkboxes.3.text=Op falsch IF-Statement Benotzung préiwen.
+AnalyserPreferences.checkboxes.4.text=Op GROUSSGESCHRIWWEN Variabel Nimm préiwen. (LUX/MEN)
+AnalyserPreferences.checkboxes.5.text=Op GROUSSGESCHRIWWEN Programm / Sub Nimm préiwen. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=Op valid Identifiers préiwen.
+AnalyserPreferences.checkboxes.7.text=Zouwäisung an den Konditiounen kontrolléieren.
+AnalyserPreferences.checkboxes.8.text=Préiwen op den Programm / Subnumm net selwecht wei aner Identifier sinn.
+AnalyserPreferences.checkboxes.9.text=Op Instruktiounen mat multipellem Befehl.
+AnalyserPreferences.checkboxes.10.text=Op Zouwäisungsfehler préiwen.
+AnalyserPreferences.checkboxes.11.text=Op Standardiséiert Parameternimm préiwen (LUX/MEN)
+AnalyserPreferences.checkboxes.12.text=Check of Funktioun en Resultat zréck gëtt.
+AnalyserPreferences.checkboxes.13.text=Op Konsistenz vun den Schläifen Parameter préiwen.
+AnalyserPreferences.checkboxes.14.text=Op feelerhaft Ennerroutine CALLs préiwen.
+AnalyserPreferences.checkboxes.15.text=Op falsch JUMP Element benotzen préiwen
+AnalyserPreferences.checkboxes.16.text=Op Inkonsistenz an PARALLEL Sektioun préiwen.
 AnalyserPreferences.okButton.text=OK
 
 

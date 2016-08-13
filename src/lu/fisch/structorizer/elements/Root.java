@@ -74,6 +74,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.27      Issue #207: New Analyser warning in switch text/comments mode (KGU#220)
  *      Kay Gürtzig     2016.07.28      Bugfix #208: Filling of subroutine diagrams no longer exceeds border
  *                                      Bugfix KGU#222 in collectParameters()
+ *      Kay Gürtzig     2016-08-12      Enh. #231: New analyser checks 18, 19; checks reorganised to arrays
+ *                                      for easier maintenance
  *
  ******************************************************************************************************
  *
@@ -112,8 +114,10 @@ import java.awt.image.*;
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
+import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.gui.*;
 
 import com.stevesoft.pat.*;
@@ -169,33 +173,67 @@ public class Root extends Element {
 	private String[] operatorsAndLiterals = {"false", "true", "div"};
 	// END KGU#163 2016-03-25
 
-	// TODO (KGU 2016-01-04): We ought to think about an array or Vector here.
 	// error checks for analyser (see also addError(), saveToIni(), Diagram.analyserNSD() and Mainform.loadFromIni())
-	public static boolean check1 = false;
-	public static boolean check2 = false;
-	public static boolean check3 = false;
-	public static boolean check4 = false;
-	public static boolean check5 = false;
-	public static boolean check6 = false;
-	public static boolean check7 = false;
-	public static boolean check8 = false;
-	public static boolean check9 = false;
-	public static boolean check10 = false;
-	public static boolean check11 = false;
-	public static boolean check12 = false;
-	public static boolean check13 = false;
-	// START KGU#3 2015-11-03: New check for enhanced FOR loop
-	public static boolean check14 = false;
-	// END KGU#3 2015-11-03
-	// START KGU#2 2015-11-25: New check for subroutine CALL syntax
-	public static boolean check15 = false;
-	// END KGU#2 2015-11-25
-	// START KGU#78 2015-11-25: New check for incorrect JUMP element
-	public static boolean check16 = false;
-	// END KGU#78 2015-11-25
-	// START KGU#78 2015-11-28: New check for races in PARALLEL sections
-	public static boolean check17 = false;
-	// END KGU#78 2015-11-28
+	// START KGU#239 2016-08-12: Inh. #231 + Partial redesign
+//	public static boolean check1 = false;
+//	public static boolean check2 = false;
+//	public static boolean check3 = false;
+//	public static boolean check4 = false;
+//	public static boolean check5 = false;
+//	public static boolean check6 = false;
+//	public static boolean check7 = false;
+//	public static boolean check8 = false;
+//	public static boolean check9 = false;
+//	public static boolean check10 = false;
+//	public static boolean check11 = false;
+//	public static boolean check12 = false;
+//	public static boolean check13 = false;
+//	// START KGU#3 2015-11-03: New check for enhanced FOR loop
+//	public static boolean check14 = false;
+//	// END KGU#3 2015-11-03
+//	// START KGU#2 2015-11-25: New check for subroutine CALL syntax
+//	public static boolean check15 = false;
+//	// END KGU#2 2015-11-25
+//	// START KGU#78 2015-11-25: New check for incorrect JUMP element
+//	public static boolean check16 = false;
+//	// END KGU#78 2015-11-25
+//	// START KGU#78 2015-11-28: New check for races in PARALLEL sections
+//	public static boolean check17 = false;
+//	// END KGU#78 2015-11-28
+//	// START KGU#239 2016-08-12: Enh. #231 - new chwcks for identifier name collisions
+//	public static boolean check18 = false;	// Check identifiers equal ignoring case
+//	public static boolean check19 = false;	// Check identifiers colliding with keywords
+	private static boolean[] analyserChecks = {
+		false, false, false, false,	false,
+		false, false, false, false,	false,
+		false, false, false, false,	false,
+		false, false, false, false
+		// Add another element for every new check...
+		// and don't forget to append its description to
+		// AnalyserPreferences.checkCaptions
+	};
+	public static int numberOfChecks()
+	{
+		return analyserChecks.length;
+	}
+	public static boolean check(int checkNo)
+	{
+		// nable all unknown checks by default
+		return checkNo < 1 || checkNo > analyserChecks.length
+				|| analyserChecks[checkNo-1];
+	}
+	public static void setCheck(int checkNo, boolean enable)
+	{
+		if (checkNo >= 1 && checkNo <= analyserChecks.length)
+		{
+			analyserChecks[checkNo-1] = enable;
+		}
+	}
+	// END KGU#239 2016-08-12 
+	// Mapping keyword -> generator titles
+	private static Hashtable<String, StringList> caseAwareKeywords = null;
+	private static Hashtable<String, StringList> caseUnawareKeywords = null;
+	// END KGU#239 2016-08-12
 
 	private Vector<Updater> updaters = new Vector<Updater>();
 
@@ -2336,13 +2374,26 @@ public class Root extends Element {
     
     // START KGU 2016-03-25: JLabel replaced by new class LangTextHolder
     //private String errorMsg(JLabel _label, String _rep)
-    private String errorMsg(LangTextHolder _label, String _rep)
-    // END KGU 201-03-25
+    private String errorMsg(LangTextHolder _label, String _subst)
+    // END KGU 2016-03-25
     {
             String res = _label.getText();
-            res = res.replaceAll("%", _rep);
+            res = res.replace("%", _subst);
             return res;
     }
+    
+    // START KGU#239 2016-08-12: New opportunity to insert more than one information
+    private String errorMsg(LangTextHolder _label, String[] _substs)
+    {
+        String msg = _label.getText();
+        for (int i = 0; i < _substs.length; i++)
+        {
+        	msg = msg.replace("%"+(i+1), _substs[i]);
+        }
+        return msg;
+    	
+    }
+    // END KGU#239 2016-08-12
 
     // START KGU#78 2015-11-25: We additionally supervise return mechanisms
     //private void analyse(Subqueue _node, Vector _errors, StringList _vars, StringList _uncertainVars)
@@ -2378,6 +2429,12 @@ public class Root extends Element {
     		// CHECK  #7: correct identifiers
     		// CHECK #13: Competetive return mechanisms
     		analyse_5_7_13(ele, _errors, myVars, _resultFlags);
+    		
+    		// START KGU#239 2016-08-12: Enh. #23?
+    		// CHECK #18: Variable names only differing in case
+    		// CHECK #19: Possible name collisions with reserved words
+    		analyse_18_19(ele, _errors, _vars, _uncertainVars, myVars);
+    		// END KGU#239 2016-08-12
 
     		// CHECK #10: wrong multi-line instruction
     		// CHECK #11: wrong assignment (comparison operator in assignment)
@@ -3163,13 +3220,71 @@ public class Root extends Element {
 			}
 			if (isConflict)
 			{
-				//error  = new DetectedError("Consistency risk due to concurrent access to variable «%» by several parallel threads!",(Element) _node.getElement(i));
+				//error  = new DetectedError("Consistency risk due to concurrent access to variable «%» by several parallel threads!", ele);
 				addError(_errors, new DetectedError(errorMsg(Menu.error17, key), ele), 17);
 			}
 		}
 	}
 	
-	// END KGU 2016-03-24
+	// END KGU 2016-03-24#
+	
+	// START KGU#239 2016-08-12: Enh. #23?
+	/**
+	 * CHECK #18: Variable names only differing in case
+	 * CHECK #19: Possible name collisions with reserved words
+	 * @param _ele - the element to be checked
+	 * @param _errors - the global error list
+	 * @param _vars - variables definitely introduced so far
+	 * @param _uncertainVars - variables detected but not certainly initialized so far
+	 * @param _myVars - the variables introduced by _ele
+	 */
+	private void analyse_18_19(Element _ele, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, StringList _myVars)
+	{
+		StringList[] varSets = {_vars, _uncertainVars, _myVars};
+		for (int i = 0; i < _myVars.count(); i++)
+		{
+			StringList collidingVars = new StringList();
+			String varName = _myVars.get(i);
+			for (int s = 0; s < varSets.length; s++)
+			{
+				int j = -1;
+				while ((j = varSets[s].indexOf(varName, j+1, false)) >= 0)
+				{
+					if (!varName.equals(varSets[s].get(j)))
+					{
+						collidingVars.addIfNew(varSets[s].get(j));
+					}
+				}
+			}
+			if (collidingVars.count() > 0)
+			{
+				String[] substitutions = {varName, collidingVars.concatenate("», «")};
+				// warning "Variable name «%1» may collide with variable(s) «%2» in some case-indifferent languages!"
+				addError(_errors, new DetectedError(errorMsg(Menu.error18, substitutions), _ele), 18);			
+			}
+		}
+		
+		if (check(19))	// This check will cost some time
+		{
+			for (int i = 0; i < _myVars.count(); i++)
+			{
+				StringList languages = new StringList();
+				String varName = _myVars.get(i);
+				StringList languages1 = caseAwareKeywords.get(varName);
+				StringList languages2 = caseUnawareKeywords.get(varName.toLowerCase());
+				if (languages1 != null) languages.add(languages1);
+				if (languages2 != null) languages.add(languages2);
+				if (languages.count() > 0)
+				{
+					String[] substitutions = {varName, languages.concatenate(", ")};
+					// warning "Variable name «%1» may collide with reserved names in languages like %2!"
+					addError(_errors, new DetectedError(errorMsg(Menu.error19, substitutions), _ele), 19);								
+				}
+			}
+		}
+	}
+	
+
     
     // START KGU#61 2016-03-22: Made public and static and moved to class Function
 //    private boolean testidentifier(String _str)
@@ -3229,71 +3344,85 @@ public class Root extends Element {
 
     private void addError(Vector<DetectedError> errors, DetectedError error, int errorNo)
     {
-            switch (errorNo)
-            {
-                    case 1:
-                            if (Root.check1) errors.add(error);
-                            break;
-                    case 2:
-                            if (Root.check2) errors.add(error);
-                            break;
-                    case 3:
-                            if (Root.check3) errors.add(error);
-                            break;
-                    case 4:
-                            if (Root.check4) errors.add(error);
-                            break;
-                    case 5:
-                            if (Root.check5) errors.add(error);
-                            break;
-                    case 6:
-                            if (Root.check6) errors.add(error);
-                            break;
-                    case 7:
-                            if (Root.check7) errors.add(error);
-                            break;
-                    case 8:
-                            if (Root.check8) errors.add(error);
-                            break;
-                    case 9:
-                            if (Root.check9) errors.add(error);
-                            break;
-                    case 10:
-                            if (Root.check10) errors.add(error);
-                            break;
-                    case 11:
-                            if (Root.check11) errors.add(error);
-                            break;
-                    case 12:
-                            if (Root.check12) errors.add(error);
-                            break;
-                    case 13:
-                            if (Root.check13) errors.add(error);
-                            break;
-                    // START KGU#3 2015-11-03: New checks for enhanced FOR loop        
-                    case 14:
-                            if (Root.check14) errors.add(error);
-                            break;
-                    // END KGU#3 2015-11-03
-                    // START KGU#2 2015-11-25: New checks for subroutine CALLs        
-                    case 15:
-                            if (Root.check15) errors.add(error);
-                            break;
-                    // END KGU#2 2015-11-25
-                    // START KGU#78 2015-11-25: New checks for JUMP
-                    case 16:
-                            if (Root.check16) errors.add(error);
-                            break;
-                    // END KGU#78 2015-11-25
-                    // START KGU#47 2015-11-28: New checks for PARALLEL
-                    case 17:
-                           if (Root.check17) errors.add(error);
-                           break;
-                    // END KGU#47 2015-11-28
-                    default:
-                            errors.add(error);
-                            break;
-            }
+    	// START KGU#239 2016-08-12: Enh. #231 + Code revision
+//            switch (errorNo)
+//            {
+//                    case 1:
+//                            if (Root.check1) errors.add(error);
+//                            break;
+//                    case 2:
+//                            if (Root.check2) errors.add(error);
+//                            break;
+//                    case 3:
+//                            if (Root.check3) errors.add(error);
+//                            break;
+//                    case 4:
+//                            if (Root.check4) errors.add(error);
+//                            break;
+//                    case 5:
+//                            if (Root.check5) errors.add(error);
+//                            break;
+//                    case 6:
+//                            if (Root.check6) errors.add(error);
+//                            break;
+//                    case 7:
+//                            if (Root.check7) errors.add(error);
+//                            break;
+//                    case 8:
+//                            if (Root.check8) errors.add(error);
+//                            break;
+//                    case 9:
+//                            if (Root.check9) errors.add(error);
+//                            break;
+//                    case 10:
+//                            if (Root.check10) errors.add(error);
+//                            break;
+//                    case 11:
+//                            if (Root.check11) errors.add(error);
+//                            break;
+//                    case 12:
+//                            if (Root.check12) errors.add(error);
+//                            break;
+//                    case 13:
+//                            if (Root.check13) errors.add(error);
+//                            break;
+//                    // START KGU#3 2015-11-03: New checks for enhanced FOR loop        
+//                    case 14:
+//                            if (Root.check14) errors.add(error);
+//                            break;
+//                    // END KGU#3 2015-11-03
+//                    // START KGU#2 2015-11-25: New checks for subroutine CALLs        
+//                    case 15:
+//                            if (Root.check15) errors.add(error);
+//                            break;
+//                    // END KGU#2 2015-11-25
+//                    // START KGU#78 2015-11-25: New checks for JUMP
+//                    case 16:
+//                            if (Root.check16) errors.add(error);
+//                            break;
+//                    // END KGU#78 2015-11-25
+//                    // START KGU#47 2015-11-28: New checks for PARALLEL
+//                    case 17:
+//                           if (Root.check17) errors.add(error);
+//                           break;
+//                    // END KGU#47 2015-11-28
+//                    // START KGU#47 2015-11-28: New checks for PARALLEL
+//                    case 18:
+//                           if (Root.check18) errors.add(error);
+//                           break;
+//                    case 19:
+//                        if (Root.check19) errors.add(error);
+//                        break;
+//                    // END KGU#239 2016-11-28
+//                    default:
+//                            errors.add(error);
+//                            break;
+//            }
+        if (Root.check(errorNo))
+        {
+            errors.addElement(error);
+        }
+        // END KGU#239 2016-08-12
     }
 
     public StringList getParameterNames()
@@ -3543,6 +3672,14 @@ public class Root extends Element {
             }
             // END KGU#220 2016-07-27
 
+            // START KGU#239 2016-08-12: Enh. #231 - prepare variable name collision check
+            // CHECK 19: identifier collision with reserved words
+            if (check(19) && (caseAwareKeywords == null || caseUnawareKeywords == null))
+            {
+            	initialiseKeyTables();
+            }
+            // END KGU#239 2016-08-12
+            
             // CHECK: uppercase for programname (#6)
             if(!programName.toUpperCase().equals(programName))
             {
@@ -3561,6 +3698,10 @@ public class Root extends Element {
                     error  = new DetectedError(errorMsg(Menu.error07_1,programName),this);
                     addError(errors,error,7);
             }
+			
+			// START KGU#239 2016-08-12: Enh. #231: Test for name collisions
+			analyse_18_19(this, errors, uncertainVars, uncertainVars, vars);
+			// END KGU#239 2016-08-12
 
             // CHECK: two checks in one loop: (#12 - new!) & (#7)
             for(int j=0; j<vars.count(); j++)
@@ -3673,6 +3814,61 @@ public class Root extends Element {
             return errors;
     }
 
+	// START KGU#239 2016-08-12: Enh. #231
+	/**
+	 * Initializes the lookup tables for the identifier check 19 of analyser 
+	 */
+	private static final void initialiseKeyTables()
+	{
+		// Establish the primary lookup tables
+    	caseAwareKeywords = new Hashtable<String, StringList>();
+    	caseUnawareKeywords = new Hashtable<String, StringList>();
+    	// Now add the table entries for every generator
+    	for (GENPlugin plugin: Menu.generatorPlugins)
+    	{
+    		// The reserved words the generator will provide
+    		String[] reserved = null;
+    		// Case relevance the generator will provide
+    		boolean distinguishCase = true;
+    		try
+    		{
+    			// Try to get the information from the current generator
+    			Class<?> genClass = Class.forName(plugin.className);
+    			Generator generator = (Generator)genClass.newInstance();
+    			reserved = generator.getReservedWords();
+    			distinguishCase = generator.isCaseSignificant();
+    		}
+    		catch (Exception exc) {}
+    		if (reserved != null)
+    		{
+    			Hashtable<String, StringList> table =
+    					distinguishCase ? caseAwareKeywords : caseUnawareKeywords;
+    			for (int i = 0; i < reserved.length; i++)
+    			{
+    				String key = reserved[i];
+    				if (!distinguishCase)
+    				{
+    					key = key.toLowerCase();	// normalise key for the primary lookup
+    				}
+    				// Ensure an entry in the respective primary lookup
+    				StringList users = table.get(key);
+    				if (users == null)
+    				{
+    					// First occurrance of thís key word
+    					users = StringList.getNew(plugin.title);
+    					table.put(key, users);
+    				}
+    				else
+    				{
+    					// Other generators have already exposed this keyword
+    					users.add(plugin.title);
+    				}
+    			}
+    		}
+    	}
+	}
+	// END KGU#239 2016-06-12
+    
     public static void saveToINI()
     {
             try
@@ -3680,28 +3876,37 @@ public class Root extends Element {
                     Ini ini = Ini.getInstance();
                     ini.load();
                     // analyser (see also Mainform.loadFromIni(), Diagram.analyserNSD()) 
-                    ini.setProperty("check1",(check1?"1":"0"));
-                    ini.setProperty("check2",(check2?"1":"0"));
-                    ini.setProperty("check3",(check3?"1":"0"));
-                    ini.setProperty("check4",(check4?"1":"0"));
-                    ini.setProperty("check5",(check5?"1":"0"));
-                    ini.setProperty("check6",(check6?"1":"0"));
-                    ini.setProperty("check7",(check7?"1":"0"));
-                    ini.setProperty("check8",(check8?"1":"0"));
-                    ini.setProperty("check9",(check9?"1":"0"));
-                    ini.setProperty("check10",(check10?"1":"0"));
-                    ini.setProperty("check11",(check11?"1":"0"));
-                    ini.setProperty("check12",(check12?"1":"0"));
-                    ini.setProperty("check13",(check13?"1":"0"));
-                    // START KGU#3 2015-11-03: New check for enhanced FOR loop
-                    ini.setProperty("check14",(check14?"1":"0"));
-                    // END KGU#3 2015-11-03
-        			// START KGU#2/KGU#78 2015-11-28: New checks for CALL and JUMP elements
-                    ini.setProperty("check15",(check15?"1":"0"));
-                    ini.setProperty("check16",(check16?"1":"0"));
-                    ini.setProperty("check17",(check17?"1":"0"));
-        			// END KGU#2/KGU#78 2015-11-28
-
+                    // START KGU#239 2016-08-12: Enh. #231 + Code revision
+//                    ini.setProperty("check1",(check1?"1":"0"));
+//                    ini.setProperty("check2",(check2?"1":"0"));
+//                    ini.setProperty("check3",(check3?"1":"0"));
+//                    ini.setProperty("check4",(check4?"1":"0"));
+//                    ini.setProperty("check5",(check5?"1":"0"));
+//                    ini.setProperty("check6",(check6?"1":"0"));
+//                    ini.setProperty("check7",(check7?"1":"0"));
+//                    ini.setProperty("check8",(check8?"1":"0"));
+//                    ini.setProperty("check9",(check9?"1":"0"));
+//                    ini.setProperty("check10",(check10?"1":"0"));
+//                    ini.setProperty("check11",(check11?"1":"0"));
+//                    ini.setProperty("check12",(check12?"1":"0"));
+//                    ini.setProperty("check13",(check13?"1":"0"));
+//                    // START KGU#3 2015-11-03: New check for enhanced FOR loop
+//                    ini.setProperty("check14",(check14?"1":"0"));
+//                    // END KGU#3 2015-11-03
+//        			// START KGU#2/KGU#78 2015-11-28: New checks for CALL and JUMP elements
+//                    ini.setProperty("check15",(check15?"1":"0"));
+//                    ini.setProperty("check16",(check16?"1":"0"));
+//                    ini.setProperty("check17",(check17?"1":"0"));
+//        			// END KGU#2/KGU#78 2015-11-28
+//                    // START KGU#239 2016-08-12: Enh. #231
+//                    ini.setProperty("check18",(check18?"1":"0"));
+//                    ini.setProperty("check19",(check19?"1":"0"));
+//                    // END KGU#239 2016-08-12
+                    for (int i = 0; i < analyserChecks.length; i++)
+                    {
+                    	ini.setProperty("check" + (i+1), (check(i+1) ? "1" : "0"));
+                    }
+                    // END KGU#239 2016-08-12
                     ini.save();
             }
             catch (Exception e)
@@ -3773,5 +3978,4 @@ public class Root extends Element {
 		return proceed;
 	}
 
-    
 }

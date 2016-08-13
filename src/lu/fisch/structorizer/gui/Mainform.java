@@ -358,28 +358,37 @@ public class Mainform  extends LangFrame implements NSDController
 			}
 			
 			// analyser (see also Root.saveToIni())
-			Root.check1 = ini.getProperty("check1","1").equals("1");
-			Root.check2 = ini.getProperty("check2","1").equals("1");
-			Root.check3 = ini.getProperty("check3","1").equals("1");
-			Root.check4 = ini.getProperty("check4","1").equals("1");
-			Root.check5 = ini.getProperty("check5","1").equals("1");
-			Root.check6 = ini.getProperty("check6","1").equals("1");
-			Root.check7 = ini.getProperty("check7","1").equals("1");
-			Root.check8 = ini.getProperty("check8","1").equals("1");
-			Root.check9 = ini.getProperty("check9","1").equals("1");
-			Root.check10 = ini.getProperty("check10","1").equals("1");
-			Root.check11 = ini.getProperty("check11","1").equals("1");
-			Root.check12 = ini.getProperty("check12","1").equals("1");
-			Root.check13 = ini.getProperty("check13","1").equals("1");
-			// START KGU#3 2015-11-03: New check for enhanced FOR loops
-			Root.check14 = ini.getProperty("check14","1").equals("1");
-			// END KGU#3 2015-11-03
-			// START KGU#2/KGU#78 2015-11-28: New checks for CALL and JUMP elements
-			Root.check15 = ini.getProperty("check15","1").equals("1");
-			Root.check16 = ini.getProperty("check16","1").equals("1");
-			Root.check17 = ini.getProperty("check17","1").equals("1");
-			// END KGU#2/KGU#78 2015-11-28
-
+// START KGU#239 2016-08-12: Code redesign
+//			Root.check1 = ini.getProperty("check1","1").equals("1");
+//			Root.check2 = ini.getProperty("check2","1").equals("1");
+//			Root.check3 = ini.getProperty("check3","1").equals("1");
+//			Root.check4 = ini.getProperty("check4","1").equals("1");
+//			Root.check5 = ini.getProperty("check5","1").equals("1");
+//			Root.check6 = ini.getProperty("check6","1").equals("1");
+//			Root.check7 = ini.getProperty("check7","1").equals("1");
+//			Root.check8 = ini.getProperty("check8","1").equals("1");
+//			Root.check9 = ini.getProperty("check9","1").equals("1");
+//			Root.check10 = ini.getProperty("check10","1").equals("1");
+//			Root.check11 = ini.getProperty("check11","1").equals("1");
+//			Root.check12 = ini.getProperty("check12","1").equals("1");
+//			Root.check13 = ini.getProperty("check13","1").equals("1");
+//			// START KGU#3 2015-11-03: New check for enhanced FOR loops
+//			Root.check14 = ini.getProperty("check14","1").equals("1");
+//			// END KGU#3 2015-11-03
+//			// START KGU#2/KGU#78 2015-11-28: New checks for CALL and JUMP elements
+//			Root.check15 = ini.getProperty("check15","1").equals("1");
+//			Root.check16 = ini.getProperty("check16","1").equals("1");
+//			Root.check17 = ini.getProperty("check17","1").equals("1");
+//			// END KGU#2/KGU#78 2015-11-28
+//			// START KGU#239 2016-08-12: Enh. #231 - New checks for identifier collisions
+//			Root.check15 = ini.getProperty("check18","0").equals("1");
+//			Root.check16 = ini.getProperty("check19","0").equals("1");
+//			// END KGU#2/KGU#78 2016-08-12
+			for (int i = 1; i <= Root.numberOfChecks(); i++)
+			{
+				Root.setCheck(i, ini.getProperty("check" + i, "1").equals("1"));
+			}
+// END KGU#2/KGU#78 2016-08-12
 			
 			doButtons();
 		}

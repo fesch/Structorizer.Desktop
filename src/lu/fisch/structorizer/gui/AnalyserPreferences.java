@@ -36,6 +36,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.11.03      check14 added (enhanced FOR loop support, issue #10 = KGU#3)
  *      Kay Gürtzig     2015.11.25      check15 (issue #9 = KGU#2) and check16 (issue #23 = KGU#78) added
  *      Kay Gürtzig     2015.11.28      check17 (KGU#47) for inconsistency risks in Parallel sections added
+ *      Kay Gürtzig     2016.08.12      Enh. #231: check18 and check19 added (identifier collisions),
+ *                                      checkbox management reorganised with arrays for easier maintenance
  *
  ******************************************************************************************************
  *
@@ -44,6 +46,7 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************///
 
 import lu.fisch.structorizer.locales.LangDialog;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -56,35 +59,69 @@ import javax.swing.border.*;
 @SuppressWarnings("serial")
 public class AnalyserPreferences extends LangDialog {
 
+	// DO NOT CHANGE THE ORDER OF THE STRINGS HERE - use checkboxOrder to rearrange checks! 
+	private static final String[] checkCaptions = {
+		"Check for modified loop variable.",						// 1
+		"Check for endless loop (as far as detectable!).",			// 2
+		"Check for non-initialized variables.",						// 3
+		"Check for incorrect use of the IF-statement.",				// 4
+		"Check for UPPERCASE variable names. (LUX/MEN)",			// 5
+		"Check for UPPERCASE program / sub name. (LUX/MEN)",		// 6
+		"Check for valid identifiers.",								// 7
+		"Check for assignment in conditions.",						// 8
+		"Check that the program / sub name is not equal to any other identifier.",
+		"Check for instructions with inputs and outputs.",			// 10
+		"Check for assignment errors.",								// 11
+		"Check for standardized parameter name. (LUX/MEN)",			// 12
+		"Check if, in case of a function, it returns a result.",	// 13
+		"Check for consistency of FOR loop parameters.",			// 14
+		"Check for inappropriate subroutine CALLs.",				// 15
+		"Check for incorrect JUMP element usage.",					// 16
+		"Check for inconsistency risks in PARALLEL sections.",		// 17
+		"Check that identifiers don't differ only by upper/lower case.",
+		"Check if an identifier might collide with reserved words."	// 19
+		// Just append the descriptions for new check types here and insert their
+		// numbers at the appropriate place in array checkboxOrder below.
+	};
+	// The order in which the checks (numbered from 1) are to be presented
+	private static final int[] checkboxOrder = {
+		1, 14, 2, 3, 4, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 7, 9, 18, 19, 5, 6, 12
+	};
+			
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
 	// Generated using JFormDesigner Evaluation license - Bob Fisch
 	private JPanel dialogPane;
 	private JPanel contentPanel;
-	public JCheckBox check1;
-	public JCheckBox check2;
-	public JCheckBox check3;
-	public JCheckBox check4;
-	public JCheckBox check5;
-	public JCheckBox check6;
-	public JCheckBox check7;
-	public JCheckBox check8;
-	public JCheckBox check9;
-	public JCheckBox check10;
-	public JCheckBox check11;
-	public JCheckBox check12;
-	public JCheckBox check13;
-	// START KGU#3 2015-11-03: Additional FOR loop checks
-	public JCheckBox check14;
-	// END KGU#3 2015-11-03
-	// START KGU#2 2015-11-25: Additional CALL syntax check
-	public JCheckBox check15;
-	// END KGU#2 2015-11-25
-	// START KGU#78 2015-11-25: Additional JUMP syntax check
-	public JCheckBox check16;
-	// END KGU#78 2015-11-25
-	// START KGU#47 2015-11-28: Additional PARALLEL consistency check
-	public JCheckBox check17;
-	// END KGU#47 2015-11-28
+//	public JCheckBox check1;
+//	public JCheckBox check2;
+//	public JCheckBox check3;
+//	public JCheckBox check4;
+//	public JCheckBox check5;
+//	public JCheckBox check6;
+//	public JCheckBox check7;
+//	public JCheckBox check8;
+//	public JCheckBox check9;
+//	public JCheckBox check10;
+//	public JCheckBox check11;
+//	public JCheckBox check12;
+//	public JCheckBox check13;
+//	// START KGU#3 2015-11-03: Additional FOR loop checks
+//	public JCheckBox check14;
+//	// END KGU#3 2015-11-03
+//	// START KGU#2 2015-11-25: Additional CALL syntax check
+//	public JCheckBox check15;
+//	// END KGU#2 2015-11-25
+//	// START KGU#78 2015-11-25: Additional JUMP syntax check
+//	public JCheckBox check16;
+//	// END KGU#78 2015-11-25
+//	// START KGU#47 2015-11-28: Additional PARALLEL consistency check
+//	public JCheckBox check17;
+//	// END KGU#47 2015-11-28
+//	// START KGU#239 2016-08-12: New identifier collision checks
+//	public JCheckBox check18;
+//	public JCheckBox check19;
+//	// END KGU#239 2016-08-12
+	public JCheckBox[] checkboxes = new JCheckBox[checkCaptions.length];
 	private JPanel buttonBar;
 	protected JButton okButton;
 	// JFormDesigner - End of variables declaration  //GEN-END:variables
@@ -112,31 +149,40 @@ public class AnalyserPreferences extends LangDialog {
 		// Generated using JFormDesigner Evaluation license - Bob Fisch
 		dialogPane = new JPanel();
 		contentPanel = new JPanel();
-		check1 = new JCheckBox();
-		check2 = new JCheckBox();
-		check3 = new JCheckBox();
-		check4 = new JCheckBox();
-		check5 = new JCheckBox();
-		check6 = new JCheckBox();
-		check7 = new JCheckBox();
-		check8 = new JCheckBox();
-		check9 = new JCheckBox();
-		check10 = new JCheckBox();
-		check11 = new JCheckBox();
-		check12 = new JCheckBox();
-		check13 = new JCheckBox();
-		// START KGU#3 2015-11-03: Additional For loop checks
-		check14 = new JCheckBox();
-		// END KGU#3 2015-11-03
-		// START KGU#2 2015-11-25: Additional CALL syntax check
-		check15 = new JCheckBox();;
-		// END KGU#2 2015-11-25
-		// START KGU#78 2015-11-25: Additional JUMP syntax check
-		check16 = new JCheckBox();;
-		// END KGU#78 2015-11-25
-		// START KGU#47 2015-11-28: Additional PARALLEL consistency check
-		check17 = new JCheckBox();
-		// END KGU#47 2015-11-28
+//		check1 = new JCheckBox();
+//		check2 = new JCheckBox();
+//		check3 = new JCheckBox();
+//		check4 = new JCheckBox();
+//		check5 = new JCheckBox();
+//		check6 = new JCheckBox();
+//		check7 = new JCheckBox();
+//		check8 = new JCheckBox();
+//		check9 = new JCheckBox();
+//		check10 = new JCheckBox();
+//		check11 = new JCheckBox();
+//		check12 = new JCheckBox();
+//		check13 = new JCheckBox();
+//		// START KGU#3 2015-11-03: Additional For loop checks
+//		check14 = new JCheckBox();
+//		// END KGU#3 2015-11-03
+//		// START KGU#2 2015-11-25: Additional CALL syntax check
+//		check15 = new JCheckBox();;
+//		// END KGU#2 2015-11-25
+//		// START KGU#78 2015-11-25: Additional JUMP syntax check
+//		check16 = new JCheckBox();;
+//		// END KGU#78 2015-11-25
+//		// START KGU#47 2015-11-28: Additional PARALLEL consistency check
+//		check17 = new JCheckBox();
+//		// END KGU#47 2015-11-28
+//		// START KGU#239 2016-08-12: New identifier collision checks
+//		check18 = new JCheckBox();
+//		check19 = new JCheckBox();
+//		// END KGU#239 2016-08-12
+		for (int i = 0; i < checkboxes.length; i++)
+		{
+			checkboxes[i] = new JCheckBox();
+			checkboxes[i].setText(checkCaptions[i]);
+		}
 		buttonBar = new JPanel();
 		okButton = new JButton();
 
@@ -161,81 +207,93 @@ public class AnalyserPreferences extends LangDialog {
 			
 			//======== contentPanel ========
 			{
-				contentPanel.setLayout(new GridLayout(17, 1));
+				contentPanel.setLayout(new GridLayout(checkboxes.length, 1));
 
-				//---- check1 ----
-				check1.setText("Check for modified loop variable.");
-				contentPanel.add(check1);
-
-				// START KGU#3 2015-11-03: Additional For loop checks
-				//---- check14----
-				check14.setText("Check for consistency of FOR loop parameters.");
-				contentPanel.add(check14);
-				// END KGU#3 2015-11-03
-
-				//---- check2 ----
-				check2.setText("Check for endless loop (as far as detectable!).");
-				contentPanel.add(check2);
-
-				//---- check3 ----
-				check3.setText("Check for non-initialized variables.");
-				contentPanel.add(check3);
-
-				//---- check4 ----
-				check4.setText("Check for incorrect use of the IF-statement.");
-				contentPanel.add(check4);
-
-				//---- check5 ----
-				check5.setText("Check for UPPERCASE variable names. (LUX/MEN)");
-				contentPanel.add(check5);
-
-				//---- check6 ----
-				check6.setText("Check for UPPERCASE program / sub name. (LUX/MEN)");
-				contentPanel.add(check6);
-
-				//---- check7 ----
-				check7.setText("Check for valid identifiers.");
-				contentPanel.add(check7);
-
-				//---- check8 ----
-				check8.setText("Check for assignment in conditions.");
-				contentPanel.add(check8);
-
-				//---- check9 ----
-				check9.setText("Check that the program / sub name is not equal to any other identifier.");
-				contentPanel.add(check9);
-
-				//---- check10 ----
-				check10.setText("Check for instructions with inputs and outputs.");
-				contentPanel.add(check10);
-
-				//---- check11 ----
-				check11.setText("Check for assignment errors.");
-				contentPanel.add(check11);
-				
-				//---- check12 ----
-				check12.setText("Check for standardized parameter name. (LUX/MEN)");
-				contentPanel.add(check12);
-				
-				//---- check13 ----
-				check13.setText("Check if, in case of a function, it returns a result.");
-				contentPanel.add(check13);
-
-				// START KGU#2/KGU#78 2015-11-25: Additional checks for CALL and JUMP elements
-				//---- check15 ----
-				check15.setText("Check for inappropriate subroutine CALLs.");
-				contentPanel.add(check15);
-
-				//---- check16 ----
-				check16.setText("Check for incorrect JUMP element usage.");
-				contentPanel.add(check16);
-				// END KGU#2/KGU#78 2015-11-25
-
-				// START KGU#47 2015-11-28: Additional checks for PARALLEL elements
-				//---- check17 ----
-				check17.setText("Check for inconsistency risks in PARALLEL sections.");
-				contentPanel.add(check17);
-				// END KGU#47 2015-11-28
+//				//---- check1 ----
+//				check1.setText("Check for modified loop variable.");
+//				contentPanel.add(check1);
+//
+//				// START KGU#3 2015-11-03: Additional For loop checks
+//				//---- check14----
+//				check14.setText("Check for consistency of FOR loop parameters.");
+//				contentPanel.add(check14);
+//				// END KGU#3 2015-11-03
+//
+//				//---- check2 ----
+//				check2.setText("Check for endless loop (as far as detectable!).");
+//				contentPanel.add(check2);
+//
+//				//---- check3 ----
+//				check3.setText("Check for non-initialized variables.");
+//				contentPanel.add(check3);
+//
+//				//---- check4 ----
+//				check4.setText("Check for incorrect use of the IF-statement.");
+//				contentPanel.add(check4);
+//
+//				//---- check5 ----
+//				check5.setText("Check for UPPERCASE variable names. (LUX/MEN)");
+//				contentPanel.add(check5);
+//
+//				//---- check6 ----
+//				check6.setText("Check for UPPERCASE program / sub name. (LUX/MEN)");
+//				contentPanel.add(check6);
+//
+//				//---- check7 ----
+//				check7.setText("Check for valid identifiers.");
+//				contentPanel.add(check7);
+//
+//				//---- check8 ----
+//				check8.setText("Check for assignment in conditions.");
+//				contentPanel.add(check8);
+//
+//				//---- check9 ----
+//				check9.setText("Check that the program / sub name is not equal to any other identifier.");
+//				contentPanel.add(check9);
+//
+//				//---- check10 ----
+//				check10.setText("Check for instructions with inputs and outputs.");
+//				contentPanel.add(check10);
+//
+//				//---- check11 ----
+//				check11.setText("Check for assignment errors.");
+//				contentPanel.add(check11);
+//				
+//				//---- check12 ----
+//				check12.setText("Check for standardized parameter name. (LUX/MEN)");
+//				contentPanel.add(check12);
+//				
+//				//---- check13 ----
+//				check13.setText("Check if, in case of a function, it returns a result.");
+//				contentPanel.add(check13);
+//
+//				// START KGU#2/KGU#78 2015-11-25: Additional checks for CALL and JUMP elements
+//				//---- check15 ----
+//				check15.setText("Check for inappropriate subroutine CALLs.");
+//				contentPanel.add(check15);
+//
+//				//---- check16 ----
+//				check16.setText("Check for incorrect JUMP element usage.");
+//				contentPanel.add(check16);
+//				// END KGU#2/KGU#78 2015-11-25
+//
+//				// START KGU#47 2015-11-28: Additional check for PARALLEL elements
+//				//---- check17 ----
+//				check17.setText("Check for inconsistency risks in PARALLEL sections.");
+//				contentPanel.add(check17);
+//				// END KGU#47 2015-11-28
+//				
+//				// START KGU#239 2016-08-12: New checks for identifier collisions
+//				//---- check18 and check19 ----
+//				check18.setText("Check that identifiers don't differ only by upper/lower case.");
+//				contentPanel.add(check18);
+//				check19.setText("Check if an identifier might collide with reserved words.");
+//				contentPanel.add(check19);
+//				// END KGU#239 2016-08-12
+				for (int i = 0; i < checkboxOrder.length; i++)
+				{
+					contentPanel.add(checkboxes[checkboxOrder[i]-1]);
+				}
 				
 			}
 			dialogPane.add(contentPanel, BorderLayout.CENTER);

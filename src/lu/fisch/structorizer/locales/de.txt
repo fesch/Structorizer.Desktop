@@ -263,26 +263,30 @@ Menu.error16_5.text=Ein direkter Rücksprung (return) aus einem Parallelzweig is
 Menu.error16_6.text=Falscher Parameter für diese Art von Aussprung - hier sollte eine Ganzzahlkonstante stehen.
 Menu.error16_7.text=Anweisungen nach einem Aussprung sind nicht erreichbar.
 Menu.error17.text=Konsistenzgefahr wegen konkurrierender Zugriffe auf Variable «%» aus mehreren Threads!
+Menu.error18.text=Variable «%1» könnte in manchen Sprachen mit Variable(n) «%2» zusammenfallen!
+Menu.error19.text=Der Variablenname «%1» kann in Sprachen wie %2 mit reservierten Wörtern kollidieren!
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Überprüfungs-Einstellungen
-AnalyserPreferences.check1.text=Nach Wertveränderungen der Kontrollvariablen von FOR-Schleifen suchen.
-AnalyserPreferences.check2.text=Nach Endlosschleifen suchen. (So weit möglich!)
-AnalyserPreferences.check3.text=Nach nicht initialisierten Variablen suchen.
-AnalyserPreferences.check4.text=Nach nicht korrekt verwendeten Alternativenstrukturen suchen.
-AnalyserPreferences.check5.text=Prüfen, ob alle Variablenamen großgeschrieben sind. (LUX/MEN)
-AnalyserPreferences.check6.text=Prüfen, ob der Programmname großgeschrieben ist. (LUX/MEN)
-AnalyserPreferences.check7.text=Nach nicht korrekt benannten Identifikatoren suchen.
-AnalyserPreferences.check8.text=Nach Wertzuweisungen innerhalb von Bedingungen suchen.
-AnalyserPreferences.check9.text=Testen, ob sich der Programmname von allen anderen Bezeichnern unterscheidet.
-AnalyserPreferences.check10.text=Nach fehlerhaften mehrzeiligen Anweisungen suchen.
-AnalyserPreferences.check11.text=Nach fehlerhaften Wertzuweisungen suchen.
-AnalyserPreferences.check12.text=Prüfen, ob die Parameternamen korrekt sind. (LUX/MEN)
-AnalyserPreferences.check13.text=Prüfen, ob eine Funktion stets auch einen Rückgabewert hat.
-AnalyserPreferences.check14.text=Prüfen, ob die Angaben von FOR-Schleifen konsistent sind.
-AnalyserPreferences.check15.text=Prüfen, ob Aufruf-Elemente nur einen einzelnen Routinenaufruf enthalten.
-AnalyserPreferences.check16.text=Prüfen, ob Aussprung-Elemente korrekt benutzt sind.
-AnalyserPreferences.check17.text=Prüfen, ob konkurrierende Wertzuweisungen in parallelen Zweigen vorkommen.
+AnalyserPreferences.checkboxes.0.text=Nach Wertveränderungen der Kontrollvariablen von FOR-Schleifen suchen.
+AnalyserPreferences.checkboxes.1.text=Nach Endlosschleifen suchen. (So weit möglich!)
+AnalyserPreferences.checkboxes.2.text=Nach nicht initialisierten Variablen suchen.
+AnalyserPreferences.checkboxes.3.text=Nach nicht korrekt verwendeten Alternativenstrukturen suchen.
+AnalyserPreferences.checkboxes.4.text=Prüfen, ob alle Variablenamen großgeschrieben sind. (LUX/MEN)
+AnalyserPreferences.checkboxes.5.text=Prüfen, ob der Programmname großgeschrieben ist. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=Nach nicht korrekt benannten Identifikatoren suchen.
+AnalyserPreferences.checkboxes.7.text=Nach Wertzuweisungen innerhalb von Bedingungen suchen.
+AnalyserPreferences.checkboxes.8.text=Testen, ob sich der Programmname von allen anderen Bezeichnern unterscheidet.
+AnalyserPreferences.checkboxes.9.text=Nach fehlerhaften mehrzeiligen Anweisungen suchen.
+AnalyserPreferences.checkboxes.10.text=Nach fehlerhaften Wertzuweisungen suchen.
+AnalyserPreferences.checkboxes.11.text=Prüfen, ob die Parameternamen korrekt sind. (LUX/MEN)
+AnalyserPreferences.checkboxes.12.text=Prüfen, ob eine Funktion stets auch einen Rückgabewert hat.
+AnalyserPreferences.checkboxes.13.text=Prüfen, ob die Angaben von FOR-Schleifen konsistent sind.
+AnalyserPreferences.checkboxes.14.text=Prüfen, ob Aufruf-Elemente nur einen einzelnen Routinenaufruf enthalten.
+AnalyserPreferences.checkboxes.15.text=Prüfen, ob Aussprung-Elemente korrekt benutzt sind.
+AnalyserPreferences.checkboxes.16.text=Prüfen, ob konkurrierende Wertzuweisungen in parallelen Zweigen vorkommen.
+AnalyserPreferences.checkboxes.17.text=Prüfen, ob Variablen sich nur durch Groß-/Kleinschreibung unterscheiden.
+AnalyserPreferences.checkboxes.18.text=Prüfen, ob Variablennamen mit reservierten Wörtern kollidieren könnten.
 AnalyserPreferences.okButton.text=OK
 
 

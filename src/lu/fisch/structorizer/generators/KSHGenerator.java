@@ -46,6 +46,7 @@ package lu.fisch.structorizer.generators;
  *                                              Function argument handling improved
  *      Kay Gürtzig             2016.01.08      Bugfix #96 (= KG#129): Variable names fetched
  *      Kay Gürtzig             2016-07-20      Enh. #160 (option to involve referred subroutines)
+ *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
  *
  ******************************************************************************************************
  *

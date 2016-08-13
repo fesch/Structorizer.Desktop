@@ -181,19 +181,19 @@ Menu.error13_1.text=你的函數沒有傳回任何值!
 Menu.error13_2.text=你的函數可能沒有傳回執行結果!
 
 -----[ AnalyserPreferences ]-----
-AnalyserPreferences.check1.text=請檢查迴圈計數器變數的變更.
-AnalyserPreferences.check2.text=請檢查無窮迴圈 (儘可能的檢查!)
-AnalyserPreferences.check3.text=請檢查沒有初始化的變數.
-AnalyserPreferences.check4.text=請檢查錯誤使用 IF 條件.
-AnalyserPreferences.check5.text=請檢查大寫的變數名稱. (LUX/MEN)
-AnalyserPreferences.check6.text=請檢查大寫的程式/程序名稱. (LUX/MEN)
-AnalyserPreferences.check7.text=請檢查合法的識別字.
-AnalyserPreferences.check8.text=請檢查條件中的指定敘述.
-AnalyserPreferences.check9.text=請檢查哪個程式/程序名稱不等於任何其他識別字.
-AnalyserPreferences.check10.text=請檢查是否是多命令的指令.
-AnalyserPreferences.check11.text=請檢查指定敘述的錯誤.
-AnalyserPreferences.check12.text=請檢查標準的參數名稱. (LUX/MEN)
-AnalyserPreferences.check13.text=請檢查如果是函數，是否有傳回值.
+AnalyserPreferences.checkboxes.0.text=請檢查迴圈計數器變數的變更.
+AnalyserPreferences.checkboxes.1.text=請檢查無窮迴圈 (儘可能的檢查!)
+AnalyserPreferences.checkboxes.2.text=請檢查沒有初始化的變數.
+AnalyserPreferences.checkboxes.3.text=請檢查錯誤使用 IF 條件.
+AnalyserPreferences.checkboxes.4.text=請檢查大寫的變數名稱. (LUX/MEN)
+AnalyserPreferences.checkboxes.5.text=請檢查大寫的程式/程序名稱. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=請檢查合法的識別字.
+AnalyserPreferences.checkboxes.7.text=請檢查條件中的指定敘述.
+AnalyserPreferences.checkboxes.8.text=請檢查哪個程式/程序名稱不等於任何其他識別字.
+AnalyserPreferences.checkboxes.9.text=請檢查是否是多命令的指令.
+AnalyserPreferences.checkboxes.10.text=請檢查指定敘述的錯誤.
+AnalyserPreferences.checkboxes.11.text=請檢查標準的參數名稱. (LUX/MEN)
+AnalyserPreferences.checkboxes.12.text=請檢查如果是函數，是否有傳回值.
 AnalyserPreferences.okButton.text=確定
 
 

@@ -273,26 +273,30 @@ Menu.error16_5.text=You must not directly return out of a parallel thread!
 Menu.error16_6.text=Wrong argument for this kind of JUMP (should be an integer constant)!
 Menu.error16_7.text=Instruction isn't reachable after a JUMP!
 Menu.error17.text=Consistency risk due to concurrent access to variable «%» by several parallel threads!
+Menu.error18.text=Variable «%1» may be confused with variable(s) «%2» in case-indifferent languages!
+Menu.error19.text=Variable name «%1» may collide with reserved names in languages like %2!
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Analyser preferences
-AnalyserPreferences.check1.text=Check for modified loop variable.
-AnalyserPreferences.check2.text=Check for endless loop (as far as detectable!)
-AnalyserPreferences.check3.text=Check for non-initialized variables.
-AnalyserPreferences.check4.text=Check for incorrect use of the IF-statement.
-AnalyserPreferences.check5.text=Check for UPPERCASE variable names. (LUX/MEN)
-AnalyserPreferences.check6.text=Check for UPPERCASE program / sub name. (LUX/MEN)
-AnalyserPreferences.check7.text=Check for valid identifiers.
-AnalyserPreferences.check8.text=Check for assignment in conditions.
-AnalyserPreferences.check9.text=Check that the program / sub name is not equal to any other identifier.
-AnalyserPreferences.check10.text=Check for instructions with multiple commands.
-AnalyserPreferences.check11.text=Check for assignment errors.
-AnalyserPreferences.check12.text=Check for standardized parameter name. (LUX/MEN)
-AnalyserPreferences.check13.text=Check if, in case of a function, it returns a result.
-AnalyserPreferences.check14.text=Check for consistency of FOR loop parameters.
-AnalyserPreferences.check15.text=Check for inappropriate subroutine CALLs.
-AnalyserPreferences.check16.text=Check for incorrect JUMP element usage.
-AnalyserPreferences.check17.text=Check for inconsistency risks in PARALLEL sections.
+AnalyserPreferences.checkboxes.0.text=Check for modified loop variable.
+AnalyserPreferences.checkboxes.1.text=Check for endless loop (as far as detectable!)
+AnalyserPreferences.checkboxes.2.text=Check for non-initialized variables.
+AnalyserPreferences.checkboxes.3.text=Check for incorrect use of the IF-statement.
+AnalyserPreferences.checkboxes.4.text=Check for UPPERCASE variable names. (LUX/MEN)
+AnalyserPreferences.checkboxes.5.text=Check for UPPERCASE program / sub name. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=Check for valid identifiers.
+AnalyserPreferences.checkboxes.7.text=Check for assignment in conditions.
+AnalyserPreferences.checkboxes.8.text=Check that the program / sub name is not equal to any other identifier.
+AnalyserPreferences.checkboxes.9.text=Check for instructions with multiple commands.
+AnalyserPreferences.checkboxes.10.text=Check for assignment errors.
+AnalyserPreferences.checkboxes.11.text=Check for standardized parameter name. (LUX/MEN)
+AnalyserPreferences.checkboxes.12.text=Check if, in case of a function, it returns a result.
+AnalyserPreferences.checkboxes.13.text=Check for consistency of FOR loop parameters.
+AnalyserPreferences.checkboxes.14.text=Check for inappropriate subroutine CALLs.
+AnalyserPreferences.checkboxes.15.text=Check for incorrect JUMP element usage.
+AnalyserPreferences.checkboxes.16.text=Check for inconsistency risks in PARALLEL sections.
+AnalyserPreferences.checkboxes.17.text=Check that identifiers don't differ only by upper/lower case.
+AnalyserPreferences.checkboxes.18.text=Check if an identifier might collide with reserved words.
 AnalyserPreferences.okButton.text=OK
 
 

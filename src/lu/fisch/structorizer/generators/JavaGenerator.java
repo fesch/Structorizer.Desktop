@@ -49,7 +49,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig                2015.12.21      Bugfix #41/#68/#69 (= KG#93)
  *      Kay Gürtzig                2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61) 
  *      Kay Gürtzig                2016.04.04      transforTokens() disabled due to missing difference to super 
- *      Kay Gürtzig                2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
+ *      Kay Gürtzig                2016.07.20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
+ *      Kay Gürtzig                2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
  *
  ******************************************************************************************************
  *
@@ -162,8 +163,26 @@ public class JavaGenerator extends CGenerator
 	{
 		return "break";
 	}
-
 	// END KGU#16/#47 2015-11-30
+
+	// START KGU 2016-08-12: Enh. #231 - information for analyser
+    private static final String[] reservedWords = new String[]{
+		"abstract", "assert", "boolean", "break", "byte",
+		"case", "catch", "char", "class", "const", "continue",
+		"default", "do", "double",
+		"else", "enum", "extends",
+		"false", "final", "finally", "float", "for", "goto",
+		"if", "implements", "import", "instanceof", "int", "interface",
+		"long", "native", "new", "null",
+		"package", "private", "protected", "public",
+		"return", "short", "static", "super", "switch", "synchronised",
+		"this", "throw", "throws", "transient", "true", "try",
+		"void", "volatile", "while"};
+	public String[] getReservedWords()
+	{
+		return reservedWords;
+	}
+	// END KGU 2016-08-12
 
 	/************ Code Generation **************/
 

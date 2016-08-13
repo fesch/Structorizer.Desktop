@@ -54,6 +54,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.08.03      Enh. #222: New possibility to load translations from a text file
  *      Kay Gürtzig     2016.08.04      Most persistent attributes set to final
  *      Bob Fisch       2016.08.08      Redesign of the Language choice mechanisms (#225 fixed by Kay Gürtzig)
+ *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
+ *      Kay Gürtzig     2016-08-12      Enh. #231: Analyser checks rorganised to arrays for easier maintenance
+ *                                      two new checks introduced (variable name collisions)
  *
  ******************************************************************************************************
  *
@@ -62,7 +65,6 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************///
 
 
-import lu.fisch.structorizer.locales.LangDialog;
 import java.util.*;
 import java.io.*;
 import java.awt.*;
@@ -242,6 +244,10 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuHelpAbout = new JMenuItem("About ...",IconLoader.ico017);
 	protected final JMenuItem menuHelpUpdate = new JMenuItem("Update ...",IconLoader.ico052);
 
+	// START KGU#239 2016-08-12: Enh. #231
+	// Generator plugins accessible for Analyser
+	public static Vector<GENPlugin> generatorPlugins = new Vector<GENPlugin>();
+	// END KGU#239 2016-08-12
 	// Error messages for Analyser
 	// START KGU#220 2016-07-27: Enh. as proposed in issue #207
 	public static final LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! ---> \"Diagram > Switch text/comments\".");
@@ -291,6 +297,10 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#47 2015-11-28: New check for concurrency problems
 	public static final LangTextHolder error17 = new LangTextHolder("Consistency risk due to concurrent access to variable «%» by several parallel threads!");
 	// END KGU#47 2015-11-28
+	// START KGU#239 2016-08-12: Enh. #231 - New checks for variable name collisions
+	public static final LangTextHolder error18 = new LangTextHolder("Variable name «%1» may be confused with variable(s) «%2» in some case-indifferent languages!");
+	public static final LangTextHolder error19 = new LangTextHolder("Variable name «%1» may collide with reserved names in languages like %2!");
+	// END KGU#239 2016-08-12
 
 	// START KGU#218 2016-07-28: Issue #206 - enhanced localization
 	// Dialog messages
@@ -379,10 +389,17 @@ public class Menu extends LangMenuBar implements NSDController
 		// and add them to the menu
 		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("generators.xml"));
 		GENParser genp = new GENParser();
-		Vector<GENPlugin> plugins = genp.parse(buff);
-		for(int i=0;i<plugins.size();i++)
+		// START KGU#239 2016-08-12: Enh. #231
+		//Vector<GENPlugin> plugins = genp.parse(buff);
+		//for(int i=0;i<plugins.size();i++)
+		generatorPlugins = genp.parse(buff);
+		for (int i=0; i < generatorPlugins.size(); i++)
+		// END KGU#239 2016-08-12
 		{
-			GENPlugin plugin = (GENPlugin) plugins.get(i);
+			// START KGU#239 2016-08-12: Enh. #231
+			//GENPlugin plugin = (GENPlugin) plugins.get(i);
+			GENPlugin plugin = generatorPlugins.get(i);
+			// END KGU#239 2016-08-12
 			JMenuItem pluginItem = new JMenuItem(plugin.title, IconLoader.ico004);
 			menuFileExportCode.add(pluginItem);
 			final String className = plugin.className;
@@ -865,7 +882,7 @@ public class Menu extends LangMenuBar implements NSDController
 			NSDControl.doButtons();
 		}
 	}
-
+       
 	@Override
 	public void doButtonsLocal()
 	{
@@ -1158,7 +1175,7 @@ public class Menu extends LangMenuBar implements NSDController
             sl.loadFromFile(filename);
             // paste it's content to the "preview" locale
             Locales.getInstance().setExternal(sl,filename);
-
+            
             //Locales.getInstance().setLocale(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
             //setLang(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
         }

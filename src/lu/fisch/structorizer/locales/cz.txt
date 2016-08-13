@@ -246,23 +246,23 @@ Menu.error17.text=
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=
-AnalyserPreferences.check1.text=Kontrola proměnné cyklu.
-AnalyserPreferences.check2.text=Kontrola zacyklení. (pokud to jde!))
-AnalyserPreferences.check3.text=Kontrola nenastavené proměnné.
-AnalyserPreferences.check4.text=Kontrola správnosti IF-podmínky.
-AnalyserPreferences.check5.text=Kontrola VELKÝCH PÍSMEN u proměnných. (LUX/MEN)
-AnalyserPreferences.check6.text=Kontrola VELKÝCH PÍSMEN u programů a podprogramů. (LUX/MEN)
-AnalyserPreferences.check7.text=Kontrola správnosti identifikátorů.
-AnalyserPreferences.check8.text=Kontrola přiřazení v podmínkách.
-AnalyserPreferences.check9.text=Kontrola zda jméno programu nebo podprogramu není shodné s žádným identifikátorem.
-AnalyserPreferences.check10.text=Kontrola instrukcí s více příkazy.
-AnalyserPreferences.check11.text=Kontrola chyb u přiřazení.
-AnalyserPreferences.check12.text=Kontrola standardizovaných jmen parametrů. (LUX/MEN)
-AnalyserPreferences.check13.text=Kontrola zda funkce vrací hodnotu.
-AnalyserPreferences.check14.text=
-AnalyserPreferences.check15.text=
-AnalyserPreferences.check16.text=
-AnalyserPreferences.check17.text=
+AnalyserPreferences.checkboxes.0.text=Kontrola proměnné cyklu.
+AnalyserPreferences.checkboxes.1.text=Kontrola zacyklení. (pokud to jde!))
+AnalyserPreferences.checkboxes.2.text=Kontrola nenastavené proměnné.
+AnalyserPreferences.checkboxes.3.text=Kontrola správnosti IF-podmínky.
+AnalyserPreferences.checkboxes.4.text=Kontrola VELKÝCH PÍSMEN u proměnných. (LUX/MEN)
+AnalyserPreferences.checkboxes.5.text=Kontrola VELKÝCH PÍSMEN u programů a podprogramů. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=Kontrola správnosti identifikátorů.
+AnalyserPreferences.checkboxes.7.text=Kontrola přiřazení v podmínkách.
+AnalyserPreferences.checkboxes.8.text=Kontrola zda jméno programu nebo podprogramu není shodné s žádným identifikátorem.
+AnalyserPreferences.checkboxes.9.text=Kontrola instrukcí s více příkazy.
+AnalyserPreferences.checkboxes.10.text=Kontrola chyb u přiřazení.
+AnalyserPreferences.checkboxes.11.text=Kontrola standardizovaných jmen parametrů. (LUX/MEN)
+AnalyserPreferences.checkboxes.12.text=Kontrola zda funkce vrací hodnotu.
+AnalyserPreferences.checkboxes.13.text=
+AnalyserPreferences.checkboxes.14.text=
+AnalyserPreferences.checkboxes.15.text=
+AnalyserPreferences.checkboxes.16.text=
 AnalyserPreferences.okButton.text=OK
 
 

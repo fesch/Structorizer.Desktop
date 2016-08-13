@@ -30,8 +30,8 @@ package lu.fisch.structorizer.parsers;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------		----			-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2008.04.12      First Issue
  *      Kay Gürtzig     2016.04.01      Type of field plugin specialized
  *
