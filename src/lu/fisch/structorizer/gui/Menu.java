@@ -55,8 +55,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.08.04      Most persistent attributes set to final
  *      Bob Fisch       2016.08.08      Redesign of the Language choice mechanisms (#225 fixed by Kay Gürtzig)
  *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
- *      Kay Gürtzig     2016-08-12      Enh. #231: Analyser checks rorganised to arrays for easier maintenance
+ *      Kay Gürtzig     2016.08.12      Enh. #231: Analyser checks rorganised to arrays for easier maintenance
  *                                      two new checks introduced (variable name collisions)
+ *      Kay Gürtzig     2016.09.01      Bugfix #233: CASE insertion by F10 had been averted by menu bar
  *
  ******************************************************************************************************
  *
@@ -327,6 +328,10 @@ public class Menu extends LangMenuBar implements NSDController
 	public void create()
 	{
 		JMenuBar menubar = this;
+
+		// START KGU#240 2016-09-01: Bugfix #233 - Configured key binding F10 for CASE insertion wasn't effective
+		menubar.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_F10, 0), "none");
+		// END KGU#240 2016-09-01
 
 		// Setting up Menu "File" with all submenus and shortcuts and actions
 		menubar.add(menuFile);
@@ -882,7 +887,7 @@ public class Menu extends LangMenuBar implements NSDController
 			NSDControl.doButtons();
 		}
 	}
-       
+
 	@Override
 	public void doButtonsLocal()
 	{
@@ -1156,17 +1161,17 @@ public class Menu extends LangMenuBar implements NSDController
 	
     // START KGU#232 2016-08-03: Enh. #222
     public void chooseLangFile() {
-        JFileChooser dlgOpen = new JFileChooser();
-        dlgOpen.setDialogTitle(msgOpenLangFile.getText());
-        // set directory
-        dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
-        // config dialogue
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(msgLangFile.getText(), "txt");
-        dlgOpen.addChoosableFileFilter(filter);
-        dlgOpen.setFileFilter(filter);
-        // show & get result
-        int result = dlgOpen.showOpenDialog(this);
-        // react on result
+		JFileChooser dlgOpen = new JFileChooser();
+		dlgOpen.setDialogTitle(msgOpenLangFile.getText());
+		// set directory
+		dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
+		// config dialogue
+		FileNameExtensionFilter filter = new FileNameExtensionFilter(msgLangFile.getText(), "txt");
+		dlgOpen.addChoosableFileFilter(filter);
+		dlgOpen.setFileFilter(filter);
+		// show & get result
+		int result = dlgOpen.showOpenDialog(this);
+		// react on result
         if (result == JFileChooser.APPROVE_OPTION) {
             // create a new StringList
             StringList sl = new StringList();
@@ -1178,7 +1183,7 @@ public class Menu extends LangMenuBar implements NSDController
             
             //Locales.getInstance().setLocale(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
             //setLang(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
-        }
+		}
         // START KGU#235 2016-08-09: Bugfix #225
         doButtons();
         diagram.analyse();
