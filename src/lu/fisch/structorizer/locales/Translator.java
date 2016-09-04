@@ -753,7 +753,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     }//GEN-LAST:event_button_itActionPerformed
 
     private void button_chsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_chsActionPerformed
-        loadLocale("chs",evt);
+        loadLocale("zh-cn",evt);
     }//GEN-LAST:event_button_chsActionPerformed
 
     private void button_czActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_czActionPerformed
@@ -769,7 +769,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     }//GEN-LAST:event_button_plActionPerformed
 
     private void button_chtActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_chtActionPerformed
-        loadLocale("cht",evt);
+        loadLocale("zh-tw",evt);
     }//GEN-LAST:event_button_chtActionPerformed
 
     private Locale getComposedLocale()

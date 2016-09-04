@@ -750,10 +750,10 @@ public class Menu extends LangMenuBar implements NSDController
 		menuPreferencesLanguageItalian.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("it"); } } );
 
 		menuPreferencesLanguage.add(menuPreferencesLanguageSimplifiedChinese);
-		menuPreferencesLanguageSimplifiedChinese.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("chs"); } } );
+		menuPreferencesLanguageSimplifiedChinese.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("zh-cn"); } } );
 
 		menuPreferencesLanguage.add(menuPreferencesLanguageTraditionalChinese);
-		menuPreferencesLanguageTraditionalChinese.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("cht"); } } );
+		menuPreferencesLanguageTraditionalChinese.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("zh-tw"); } } );
 
 		menuPreferencesLanguage.add(menuPreferencesLanguageCzech);
 		menuPreferencesLanguageCzech.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("cz"); } } );
@@ -1098,8 +1098,8 @@ public class Menu extends LangMenuBar implements NSDController
 			menuPreferencesLanguageSpanish.setSelected(Locales.getInstance().getLoadedLocaleName().equals("es"));
 			menuPreferencesLanguagePortugalBrazil.setSelected(Locales.getInstance().getLoadedLocaleName().equals("pt_br"));
 			menuPreferencesLanguageItalian.setSelected(Locales.getInstance().getLoadedLocaleName().equals("it"));
-			menuPreferencesLanguageSimplifiedChinese.setSelected(Locales.getInstance().getLoadedLocaleName().equals("chs"));
-			menuPreferencesLanguageTraditionalChinese.setSelected(Locales.getInstance().getLoadedLocaleName().equals("cht"));
+			menuPreferencesLanguageSimplifiedChinese.setSelected(Locales.getInstance().getLoadedLocaleName().equals("zh-cn"));
+			menuPreferencesLanguageTraditionalChinese.setSelected(Locales.getInstance().getLoadedLocaleName().equals("zh-tw"));
 			menuPreferencesLanguageCzech.setSelected(Locales.getInstance().getLoadedLocaleName().equals("cz"));
 			menuPreferencesLanguageRussian.setSelected(Locales.getInstance().getLoadedLocaleName().equals("ru"));
 			menuPreferencesLanguagePolish.setSelected(Locales.getInstance().getLoadedLocaleName().equals("pl"));

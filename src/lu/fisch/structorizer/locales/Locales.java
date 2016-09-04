@@ -63,7 +63,7 @@ import lu.fisch.utils.StringList;
  */
 public class Locales {
     // LOCALES_LIST of all locales we have
-    public static final String[] LOCALES_LIST = {"chs","cht","cz","de","en","es","fr","it","lu","nl","pl","pt_br","ru","empty","preview","external"};
+    public static final String[] LOCALES_LIST = {"zh-cn","zh-tw","cz","de","en","es","fr","it","lu","nl","pl","pt_br","ru","empty","preview","external"};
     
     // the "default" oder "master" locale
     public static final String DEFAULT_LOCALE = "en";
