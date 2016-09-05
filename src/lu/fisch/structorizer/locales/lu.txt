@@ -40,16 +40,17 @@
  *
  *      Author:         Laurent Zender
  *
- *      Description:    The lxemburgish language file
+ *      Description:    The Luxemburgish language file
  *
  ******************************************************************************************************
  *
  *      Revision List
  *
- *      Author              Date			Description
- *      ------              ----			-----------
- *      Laurent Zender      2008.01.14                  First Issue
- *      Laurent Zender      2016.07.31                  Corrections and Translations for newly added features
+ *      Author              Date            Description
+ *      ------              ----            -----------
+ *      Laurent Zender      2008.01.14      First Issue
+ *      Laurent Zender      2016.07.31      Corrections and Translations for newly added features
+ *      Kay Gürtzig         2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *
  ******************************************************************************************************
  *
@@ -139,19 +140,19 @@ Menu.menuPreferencesParser.text=Parser...
 Menu.menuPreferencesAnalyser.text=Analyser …
 Menu.menuPreferencesExport.text=Export …
 Menu.menuPreferencesLanguage.text=Sprooch
-Menu.menuPreferencesLanguageEnglish.text=Englesch
-Menu.menuPreferencesLanguageGerman.text=Däitsch
-Menu.menuPreferencesLanguageFrench.text=Franséisch
-Menu.menuPreferencesLanguageDutch.text=Hollännesch
-Menu.menuPreferencesLanguageLuxemburgish.text=Lëtzebuergesch
-Menu.menuPreferencesLanguageSpanish.text=Spuenesch
-Menu.menuPreferencesLanguageItalian.text=Italienesch
-Menu.menuPreferencesLanguagePortugalBrazil.text=Portugisesch (Brasilien)
-Menu.menuPreferencesLanguageSimplifiedChinese.text=Chinesesch (vereinfacht)
-Menu.menuPreferencesLanguageTraditionalChinese.text=Chinesesch (traditionell)
-Menu.menuPreferencesLanguageCzech.text=Tschechesch
-Menu.menuPreferencesLanguageRussian.text=Russesch
-Menu.menuPreferencesLanguagePolish.text=Polnesch
+Menu.menuPreferencesLanguageItems.en.text=Englesch
+Menu.menuPreferencesLanguageItems.de.text=Däitsch
+Menu.menuPreferencesLanguageItems.fr.text=Franséisch
+Menu.menuPreferencesLanguageItems.nl.text=Hollännesch
+Menu.menuPreferencesLanguageItems.lu.text=Lëtzebuergesch
+Menu.menuPreferencesLanguageItems.es.text=Spuenesch
+Menu.menuPreferencesLanguageItems.it.text=Italienesch
+Menu.menuPreferencesLanguageItems.pt_br.text=Portugisesch (Brasilien)
+Menu.menuPreferencesLanguageItems.zh-cn.text=Chinesesch (vereinfacht)
+Menu.menuPreferencesLanguageItems.zh-tw.text=Chinesesch (traditionell)
+Menu.menuPreferencesLanguageItems.cz.text=Tschechesch
+Menu.menuPreferencesLanguageItems.ru.text=Russesch
+Menu.menuPreferencesLanguageItems.pl.text=Polnesch
 
 Menu.menuPreferencesLookAndFeel.text=Look & Feel
 

@@ -34,6 +34,7 @@ package lu.fisch.structorizer.locales;
  *      ------          ----            -----------
  *      Bob Fisch       2016.08.02      First Issue
  *      Kay Gürtzig     2016.08.12      Mechanism to translate arrays of controls (initially for AnalyserPreferences)
+ *      Kay Gürtzig     2016.09.05      Mechanism to translate Hashtables of controls (initially for language preferences)
  *
  ******************************************************************************************************
  *
@@ -63,7 +64,7 @@ import lu.fisch.utils.StringList;
  */
 public class Locales {
     // LOCALES_LIST of all locales we have
-    public static final String[] LOCALES_LIST = {"zh-cn","zh-tw","cz","de","en","es","fr","it","lu","nl","pl","pt_br","ru","empty","preview","external"};
+    public static final String[] LOCALES_LIST = {"en","cz","de","es","fr","it","lu","nl","pl","pt_br","ru","zh-cn","zh-tw","empty","preview","external"};
     
     // the "default" oder "master" locale
     public static final String DEFAULT_LOCALE = "en";
@@ -458,6 +459,16 @@ public class Locales {
                                     		
                                     }
                                     // END KGU#239 2016-08-12
+                                    // START KGU#242 2016-09-04
+                                    else if (fieldClass.getName().equals("java.util.Hashtable") && pieces.count() > 3)
+                                    {
+                                    	Method method = fieldClass.getMethod("get", new Class[]{Object.class});
+                                    	target = method.invoke(target, piece2);
+                                		fieldClass = target.getClass();
+                                		pieces.remove(2);
+                                		piece2 = pieces.get(2);
+                                    }
+                                    // END KGU#242 2016-09-04
 
                                     if (piece2.equals("text")) {
                                         Method method = fieldClass.getMethod("setText", new Class[]{String.class});
@@ -534,7 +545,7 @@ public class Locales {
     {
         if(loadedLocaleFilename==null) return "en.txt";
         else return loadedLocaleFilename;
-    }
+}
     
     public void setExternal(StringList lines, String filename)
     {

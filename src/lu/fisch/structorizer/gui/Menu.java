@@ -58,6 +58,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.08.12      Enh. #231: Analyser checks re-organised to arrays for easier maintenance
  *                                      two new checks introduced (variable name collisions)
  *      Kay Gürtzig     2016.09.01      Bugfix #233: CASE insertion by F10 had been averted by menu bar
+ *      Kay Gürtzig     2016.09.04      Structural redesign for menuPreferencesLanguage
  *
  ******************************************************************************************************
  *
@@ -214,19 +215,9 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuPreferencesAnalyser = new JMenuItem("Analyser ...",IconLoader.ico083);
 	protected final JMenuItem menuPreferencesExport = new JMenuItem("Export ...",IconLoader.ico032);
 	protected final JMenu menuPreferencesLanguage = new JMenu("Language");
-	protected final JMenuItem menuPreferencesLanguageEnglish = new JCheckBoxMenuItem("English",IconLoader.ico046);
-	protected final JMenuItem menuPreferencesLanguageGerman = new JCheckBoxMenuItem("German",IconLoader.ico080);
-	protected final JMenuItem menuPreferencesLanguageFrench = new JCheckBoxMenuItem("French",IconLoader.ico045);
-	protected final JMenuItem menuPreferencesLanguageDutch = new JCheckBoxMenuItem("Dutch",IconLoader.ico051);
-	protected final JMenuItem menuPreferencesLanguageLuxemburgish = new JCheckBoxMenuItem("Luxemburgish",IconLoader.ico075);
-	protected final JMenuItem menuPreferencesLanguageSpanish = new JCheckBoxMenuItem("Spanish",IconLoader.ico084);
-	protected final JMenuItem menuPreferencesLanguagePortugalBrazil = new JCheckBoxMenuItem("Brazilian portuguese",IconLoader.ico085);
-	protected final JMenuItem menuPreferencesLanguageItalian = new JCheckBoxMenuItem("Italian",IconLoader.ico086);
-	protected final JMenuItem menuPreferencesLanguageSimplifiedChinese = new JCheckBoxMenuItem("Chinese (simplified)",IconLoader.ico087);
-	protected final JMenuItem menuPreferencesLanguageTraditionalChinese = new JCheckBoxMenuItem("Chinese (traditional)",IconLoader.ico094);
-	protected final JMenuItem menuPreferencesLanguageCzech = new JCheckBoxMenuItem("Czech",IconLoader.ico088);
-	protected final JMenuItem menuPreferencesLanguageRussian = new JCheckBoxMenuItem("Russian",IconLoader.ico092);
-	protected final JMenuItem menuPreferencesLanguagePolish = new JCheckBoxMenuItem("Polish",IconLoader.ico093);
+	// START KGU#242 2016-09-04: Structral redesign - generic generation of language menu items
+	protected final Hashtable<String, JCheckBoxMenuItem> menuPreferencesLanguageItems = new Hashtable<String, JCheckBoxMenuItem>();
+	// END KGU#242 2016-09-04
 	// START KGU#232 2016-08-03: Enh. #222
 	protected final JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...",IconLoader.ico114);
 	// END KGU#232 2016-08-03
@@ -729,45 +720,35 @@ public class Menu extends LangMenuBar implements NSDController
 
 		menuPreferences.add(menuPreferencesLanguage);
 		menuPreferencesLanguage.setIcon(IconLoader.ico081);
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageEnglish);
-		menuPreferencesLanguageEnglish.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("en"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageGerman);
-		menuPreferencesLanguageGerman.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("de"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageFrench);
-		(menuPreferencesLanguageFrench).addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("fr"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageDutch);
-		menuPreferencesLanguageDutch.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("nl"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageLuxemburgish);
-		menuPreferencesLanguageLuxemburgish.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("lu"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageSpanish);
-		menuPreferencesLanguageSpanish.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("es"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguagePortugalBrazil);
-		menuPreferencesLanguagePortugalBrazil.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("pt_br"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageItalian);
-		menuPreferencesLanguageItalian.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("it"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageSimplifiedChinese);
-		menuPreferencesLanguageSimplifiedChinese.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("zh-cn"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageTraditionalChinese);
-		menuPreferencesLanguageTraditionalChinese.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("zh-tw"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageCzech);
-		menuPreferencesLanguageCzech.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("cz"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageRussian);
-		menuPreferencesLanguageRussian.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("ru"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguagePolish);
-		menuPreferencesLanguagePolish.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("pl"); } } );
+		
+		// START KGU#242 2016-09-04: Redesign of the language menu item mechanism
+		for (int iLoc = 0; iLoc < Locales.LOCALES_LIST.length; iLoc++)
+		{
+			final String locName = Locales.LOCALES_LIST[iLoc];
+			if (!locName.equals("empty") && !locName.equals("preview") && !locName.equals("external"))
+			{
+				String caption = locName;
+				ImageIcon icon = IconLoader.ico046;
+				if (locName.equals("en")) { caption = "English"; icon = IconLoader.ico046; }
+				else if (locName.equals("de")) { caption = "German"; icon = IconLoader.ico080; }
+				else if (locName.equals("fr")) { caption ="French";	icon = IconLoader.ico045; }
+				else if (locName.equals("nl")) { caption ="Dutch"; icon =IconLoader.ico051;}
+				else if (locName.equals("lu")) { caption ="Luxemburgish"; icon =IconLoader.ico075;}
+				else if (locName.equals("es")) { caption ="Spanish"; icon =IconLoader.ico084;}
+				else if (locName.equals("pt_br")) { caption ="Brazilian portuguese"; icon =IconLoader.ico085;}
+				else if (locName.equals("it")) { caption ="Italian"; icon =IconLoader.ico086;}
+				else if (locName.equals("zh-cn")) { caption ="Chinese (simplified)"; icon =IconLoader.ico087;}
+				else if (locName.equals("zh-tw")) { caption ="Chinese (traditional)"; icon =IconLoader.ico094;}
+				else if (locName.equals("cz")) { caption ="Czech"; icon =IconLoader.ico088;}
+				else if (locName.equals("ru")) { caption ="Russian"; icon =IconLoader.ico092;}
+				else if (locName.equals("pl")) { caption ="Polish"; icon =IconLoader.ico093;}
+				JCheckBoxMenuItem item = new JCheckBoxMenuItem(caption, icon);
+				menuPreferencesLanguageItems.put(locName, item);
+				item.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang(locName); } } );
+				menuPreferencesLanguage.add(item);
+			}
+		}
+		// END KGU#242 2016-09-04
 
 		// START KGU#232 206-08-03: Enh. #222
 		menuPreferencesLanguage.addSeparator();
@@ -1095,20 +1076,14 @@ public class Menu extends LangMenuBar implements NSDController
 			}
 
 			// Languages
-			menuPreferencesLanguageEnglish.setSelected(Locales.getInstance().getLoadedLocaleName().equals("en"));
-			menuPreferencesLanguageGerman.setSelected(Locales.getInstance().getLoadedLocaleName().equals("de"));
-			menuPreferencesLanguageFrench.setSelected(Locales.getInstance().getLoadedLocaleName().equals("fr"));
-			menuPreferencesLanguageDutch.setSelected(Locales.getInstance().getLoadedLocaleName().equals("nl"));
-			menuPreferencesLanguageLuxemburgish.setSelected(Locales.getInstance().getLoadedLocaleName().equals("lu"));
-			menuPreferencesLanguageSpanish.setSelected(Locales.getInstance().getLoadedLocaleName().equals("es"));
-			menuPreferencesLanguagePortugalBrazil.setSelected(Locales.getInstance().getLoadedLocaleName().equals("pt_br"));
-			menuPreferencesLanguageItalian.setSelected(Locales.getInstance().getLoadedLocaleName().equals("it"));
-			menuPreferencesLanguageSimplifiedChinese.setSelected(Locales.getInstance().getLoadedLocaleName().equals("zh-cn"));
-			menuPreferencesLanguageTraditionalChinese.setSelected(Locales.getInstance().getLoadedLocaleName().equals("zh-tw"));
-			menuPreferencesLanguageCzech.setSelected(Locales.getInstance().getLoadedLocaleName().equals("cz"));
-			menuPreferencesLanguageRussian.setSelected(Locales.getInstance().getLoadedLocaleName().equals("ru"));
-			menuPreferencesLanguagePolish.setSelected(Locales.getInstance().getLoadedLocaleName().equals("pl"));
-			menuPreferencesLanguageFromFile.setSelected(Locales.getInstance().getLoadedLocaleName().equals("external"));
+			String locName = Locales.getInstance().getLoadedLocaleName();
+			// START KGU#242 2016-09-04: Structural redesign
+			for (String key: menuPreferencesLanguageItems.keySet())
+			{
+				menuPreferencesLanguageItems.get(key).setSelected(locName.equals(key));
+			}
+			// END KGU#242 2016-09-04
+			menuPreferencesLanguageFromFile.setSelected(locName.equals("external"));
 
 			// Recent file
 			menuFileOpenRecent.removeAll();
@@ -1158,6 +1133,19 @@ public class Menu extends LangMenuBar implements NSDController
     	diagram.analyse();
     }
 	// END KGU#235 2016-08-09
+//    // START KGU#242 2016-09-04
+//    public void chooseLang(ActionEvent event)
+//    {
+//    	for (String key: menuPreferencesLanguageItems.keySet())
+//    	{
+//    		if (menuPreferencesLanguageItems.get(key) == event.getSource())
+//    		{
+//    			chooseLang(key);
+//    			break;
+//    		}
+//    	}
+//    }
+//    // END KGU#242 2016-09-04
 	
     // START KGU#232 2016-08-03: Enh. #222
     public void chooseLangFile() {

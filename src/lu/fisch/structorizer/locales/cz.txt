@@ -50,6 +50,7 @@
  *      ------          ----            -----------
  *      Vaščák Vladimír 2010.11.04      Created
  *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *
  ******************************************************************************************************
  *
@@ -163,19 +164,19 @@ Menu.menuPreferencesParser.text=Rozbor ...
 Menu.menuPreferencesAnalyser.text=
 Menu.menuPreferencesExport.text=
 Menu.menuPreferencesLanguage.text=Jazyk
-Menu.menuPreferencesLanguageEnglish.text=Anglicky
-Menu.menuPreferencesLanguageGerman.text=Německy
-Menu.menuPreferencesLanguageFrench.text=Francouzsky
-Menu.menuPreferencesLanguageDutch.text=Holandsky
-Menu.menuPreferencesLanguageLuxemburgish.text=Lucembursky
-Menu.menuPreferencesLanguageSpanish.text=Španělsky
-Menu.menuPreferencesLanguageItalian.text=Italsky
-Menu.menuPreferencesLanguagePortugalBrazil.text=Brazil
-Menu.menuPreferencesLanguageSimplifiedChinese.text=Chinese (simple)
-Menu.menuPreferencesLanguageTraditionalChinese.text=Chinese (traditional)
-Menu.menuPreferencesLanguageCzech.text=Česky
-Menu.menuPreferencesLanguageRussian.text=Rusky
-Menu.menuPreferencesLanguagePolish.text=Polsky
+Menu.menuPreferencesLanguageItems.en.text=Anglicky
+Menu.menuPreferencesLanguageItems.de.text=Německy
+Menu.menuPreferencesLanguageItems.fr.text=Francouzsky
+Menu.menuPreferencesLanguageItems.nl.text=Holandsky
+Menu.menuPreferencesLanguageItems.lu.text=Lucembursky
+Menu.menuPreferencesLanguageItems.es.text=Španělsky
+Menu.menuPreferencesLanguageItems.it.text=Italsky
+Menu.menuPreferencesLanguageItems.pt_br.text=Brazil
+Menu.menuPreferencesLanguageItems.zh-cn.text=Chinese (simple)
+Menu.menuPreferencesLanguageItems.zh-tw.text=Chinese (traditional)
+Menu.menuPreferencesLanguageItems.cz.text=Česky
+Menu.menuPreferencesLanguageItems.ru.text=Rusky
+Menu.menuPreferencesLanguageItems.pl.text=Polsky
 
 Menu.menuPreferencesLookAndFeel.text=Vzhled
 

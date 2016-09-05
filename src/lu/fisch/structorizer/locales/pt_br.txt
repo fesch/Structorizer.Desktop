@@ -46,11 +46,12 @@
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------          ----                    -----------
+ *      Author          Date                Description
+ *      ------          ----                -----------
  *      PUC-Minas       2009.08.20       	First Issue
  *      PUC-Minas       2009.10.20       	Revised
  *      PUC-Minas       2016.07.30       	Revised
+ *      Kay Gürtzig     2016.09.04          Menu.menuPreferencesLanguage... key structure modified
  *
  ******************************************************************************************************
  *
@@ -175,19 +176,19 @@ Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesAnalyser.text=Analisador
 Menu.menuPreferencesExport.text=Exportar ...
 Menu.menuPreferencesLanguage.text=Idioma
-Menu.menuPreferencesLanguageEnglish.text=Inglês
-Menu.menuPreferencesLanguageGerman.text=Alemão
-Menu.menuPreferencesLanguageFrench.text=Francês
-Menu.menuPreferencesLanguageDutch.text=Holandês
-Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburguês
-Menu.menuPreferencesLanguageSpanish.text=Espanhol
-Menu.menuPreferencesLanguageItalian.text=Italiano
-Menu.menuPreferencesLanguagePortugalBrazil.text=Português (BR) 
-Menu.menuPreferencesLanguageSimplifiedChinese.text=Chinês  (simplificado)
-Menu.menuPreferencesLanguageTraditionalChinese.text=Chinês (tradicional)
-Menu.menuPreferencesLanguageCzech.text=Checo
-Menu.menuPreferencesLanguageRussian.text=Russo
-Menu.menuPreferencesLanguagePolish.text=Polonês
+Menu.menuPreferencesLanguageItems.en.text=Inglês
+Menu.menuPreferencesLanguageItems.de.text=Alemão
+Menu.menuPreferencesLanguageItems.fr.text=Francês
+Menu.menuPreferencesLanguageItems.nl.text=Holandês
+Menu.menuPreferencesLanguageItems.lu.text=Luxemburguês
+Menu.menuPreferencesLanguageItems.es.text=Espanhol
+Menu.menuPreferencesLanguageItems.it.text=Italiano
+Menu.menuPreferencesLanguageItems.pt_br.text=Português (BR) 
+Menu.menuPreferencesLanguageItems.zh-cn.text=Chinês  (simplificado)
+Menu.menuPreferencesLanguageItems.zh-tw.text=Chinês (tradicional)
+Menu.menuPreferencesLanguageItems.cz.text=Checo
+Menu.menuPreferencesLanguageItems.ru.text=Russo
+Menu.menuPreferencesLanguageItems.pl.text=Polonês
 
 Menu.menuPreferencesLookAndFeel.text=Aspecto
 

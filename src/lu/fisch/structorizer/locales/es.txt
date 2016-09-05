@@ -71,6 +71,7 @@
  *      Kay Gürtzig     2016.07.31  Enh. #128: New menu item captions for "Comments plus Text" mode
  *      Kay Gürtzig     2016.08.03  Issue #206: Several additions for Menu and Control
  *      Kay Gürtzig     2016.08.04  Enh. #222: Menu option to load translation from file
+ *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
  *
  ******************************************************************************************************
  *
@@ -184,19 +185,19 @@ Menu.menuPreferencesParser.text=Analizador ...
 Menu.menuPreferencesAnalyser.text=Comprobador ...
 Menu.menuPreferencesExport.text=Exportación ...
 Menu.menuPreferencesLanguage.text=Idioma
-Menu.menuPreferencesLanguageEnglish.text=Inglés
-Menu.menuPreferencesLanguageGerman.text=Alemán
-Menu.menuPreferencesLanguageFrench.text=Francés
-Menu.menuPreferencesLanguageDutch.text=Holandés
-Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburgés
-Menu.menuPreferencesLanguageSpanish.text=Español
-Menu.menuPreferencesLanguageItalian.text=Italiano
-Menu.menuPreferencesLanguagePortugalBrazil.text=Portugés (Brazil)
-Menu.menuPreferencesLanguageSimplifiedChinese.text=Chino (simplificado)
-Menu.menuPreferencesLanguageTraditionalChinese.text=Chino (tradicional)
-Menu.menuPreferencesLanguageCzech.text=Checo
-Menu.menuPreferencesLanguageRussian.text=Ruso
-Menu.menuPreferencesLanguagePolish.text=Polaco
+Menu.menuPreferencesLanguageItems.en.text=Inglés
+Menu.menuPreferencesLanguageItems.de.text=Alemán
+Menu.menuPreferencesLanguageItems.fr.text=Francés
+Menu.menuPreferencesLanguageItems.nl.text=Holandés
+Menu.menuPreferencesLanguageItems.lu.text=Luxemburgés
+Menu.menuPreferencesLanguageItems.es.text=Español
+Menu.menuPreferencesLanguageItems.it.text=Italiano
+Menu.menuPreferencesLanguageItems.pt_br.text=Portugés (Brazil)
+Menu.menuPreferencesLanguageItems.zh-cn.text=Chino (simplificado)
+Menu.menuPreferencesLanguageItems.zh-tw.text=Chino (tradicional)
+Menu.menuPreferencesLanguageItems.cz.text=Checo
+Menu.menuPreferencesLanguageItems.ru.text=Ruso
+Menu.menuPreferencesLanguageItems.pl.text=Polaco
 Menu.menuPreferencesLanguageFromFile.text=De un archivo ...
 Menu.menuPreferencesLanguageFromFile.tooltip=Archivos de traducción se pueden crear con el 'Traductor' en el menú 'Archivo'.
 
