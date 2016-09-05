@@ -215,8 +215,8 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuPreferencesAnalyser = new JMenuItem("Analyser ...",IconLoader.ico083);
 	protected final JMenuItem menuPreferencesExport = new JMenuItem("Export ...",IconLoader.ico032);
 	protected final JMenu menuPreferencesLanguage = new JMenu("Language");
-	// START KGU#242 2016-09-04: Structral redesign - generic generation of language menu items
-	protected final Hashtable<String, JCheckBoxMenuItem> menuPreferencesLanguageItems = new Hashtable<String, JCheckBoxMenuItem>();
+	// START KGU#242 2016-09-04: Structural redesign - generic generation of language menu items
+	protected final Hashtable<String, JCheckBoxMenuItem> menuPreferencesLanguageItems = new Hashtable<String, JCheckBoxMenuItem>(Locales.LOCALES_LIST.length);
 	// END KGU#242 2016-09-04
 	// START KGU#232 2016-08-03: Enh. #222
 	protected final JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...",IconLoader.ico114);
@@ -731,21 +731,21 @@ public class Menu extends LangMenuBar implements NSDController
 				ImageIcon icon = IconLoader.ico046;
 				if (locName.equals("en")) { caption = "English"; icon = IconLoader.ico046; }
 				else if (locName.equals("de")) { caption = "German"; icon = IconLoader.ico080; }
-				else if (locName.equals("fr")) { caption ="French";	icon = IconLoader.ico045; }
-				else if (locName.equals("nl")) { caption ="Dutch"; icon =IconLoader.ico051;}
-				else if (locName.equals("lu")) { caption ="Luxemburgish"; icon =IconLoader.ico075;}
-				else if (locName.equals("es")) { caption ="Spanish"; icon =IconLoader.ico084;}
-				else if (locName.equals("pt_br")) { caption ="Brazilian portuguese"; icon =IconLoader.ico085;}
-				else if (locName.equals("it")) { caption ="Italian"; icon =IconLoader.ico086;}
-				else if (locName.equals("zh-cn")) { caption ="Chinese (simplified)"; icon =IconLoader.ico087;}
-				else if (locName.equals("zh-tw")) { caption ="Chinese (traditional)"; icon =IconLoader.ico094;}
-				else if (locName.equals("cz")) { caption ="Czech"; icon =IconLoader.ico088;}
-				else if (locName.equals("ru")) { caption ="Russian"; icon =IconLoader.ico092;}
-				else if (locName.equals("pl")) { caption ="Polish"; icon =IconLoader.ico093;}
+				else if (locName.equals("fr")) { caption = "French";	icon = IconLoader.ico045; }
+				else if (locName.equals("nl")) { caption = "Dutch"; icon = IconLoader.ico051;}
+				else if (locName.equals("lu")) { caption = "Luxemburgish"; icon = IconLoader.ico075;}
+				else if (locName.equals("es")) { caption = "Spanish"; icon = IconLoader.ico084;}
+				else if (locName.equals("pt_br")) { caption = "Brazilian portuguese"; icon = IconLoader.ico085;}
+				else if (locName.equals("it")) { caption = "Italian"; icon = IconLoader.ico086;}
+				else if (locName.equals("zh-cn")) { caption = "Chinese (simplified)"; icon = IconLoader.ico087;}
+				else if (locName.equals("zh-tw")) { caption = "Chinese (traditional)"; icon = IconLoader.ico094;}
+				else if (locName.equals("cz")) { caption = "Czech"; icon = IconLoader.ico088;}
+				else if (locName.equals("ru")) { caption = "Russian"; icon = IconLoader.ico092;}
+				else if (locName.equals("pl")) { caption = "Polish"; icon = IconLoader.ico093;}
 				JCheckBoxMenuItem item = new JCheckBoxMenuItem(caption, icon);
-				menuPreferencesLanguageItems.put(locName, item);
 				item.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang(locName); } } );
 				menuPreferencesLanguage.add(item);
+				menuPreferencesLanguageItems.put(locName, item);
 			}
 		}
 		// END KGU#242 2016-09-04
@@ -1133,19 +1133,6 @@ public class Menu extends LangMenuBar implements NSDController
     	diagram.analyse();
     }
 	// END KGU#235 2016-08-09
-//    // START KGU#242 2016-09-04
-//    public void chooseLang(ActionEvent event)
-//    {
-//    	for (String key: menuPreferencesLanguageItems.keySet())
-//    	{
-//    		if (menuPreferencesLanguageItems.get(key) == event.getSource())
-//    		{
-//    			chooseLang(key);
-//    			break;
-//    		}
-//    	}
-//    }
-//    // END KGU#242 2016-09-04
 	
     // START KGU#232 2016-08-03: Enh. #222
     public void chooseLangFile() {
