@@ -218,9 +218,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#242 2016-09-04: Structural redesign - generic generation of language menu items
 	protected final Hashtable<String, JCheckBoxMenuItem> menuPreferencesLanguageItems = new Hashtable<String, JCheckBoxMenuItem>(Locales.LOCALES_LIST.length);
 	// END KGU#242 2016-09-04
-	// START KGU#232 2016-08-03: Enh. #222
-	protected final JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...",IconLoader.ico114);
-	// END KGU#232 2016-08-03
+	// START KGU#232 2016-08-03/2016-09-06: Enh. #222
+	protected final JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...",IconLoader.getLocaleIconImage("empty"));
+	// END KGU#232 2016-08-03/2016-09-06
 	protected final JMenu menuPreferencesLookAndFeel = new JMenu("Look & Feel");
 	protected final JMenu menuPreferencesSave = new JMenu("All preferences ...");
 	protected final JMenuItem menuPreferencesSaveAll = new JMenuItem("Save");

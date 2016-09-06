@@ -178,7 +178,7 @@ public class IconLoader {
 	public static ImageIcon ico113 = getIconImage(getURI(from+"icons/113_translater.png"));
 	// END KGU#213 2016-08-02
 	// START KGU#232 2016-08-03: Enh. #222
-	public static ImageIcon ico114 = getIconImage(getURI(from+"icons/locale_unknown.png"));
+	//public static ImageIcon ico114 = getIconImage(getURI(from+"icons/locale_unknown.png"));
 	// END KGU#232 2016-08-03
 
 	public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
@@ -294,7 +294,7 @@ public class IconLoader {
         	// END KGU#213 2016-08-02
 
         	// START KGU#232 2016-08-02: Enh. #222 - more flexible language export
-        	ico114 = getIconImage(getURI(from+"icons/locale_unknown.png"));
+        	//ico114 = getIconImage(getURI(from+"icons/locale_unknown.png"));
         	// END KGU#232 2016-08-02
 
         	turtle = getIconImage(getURI(from+"icons/turtle.png"));

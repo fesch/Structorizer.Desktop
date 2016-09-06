@@ -602,7 +602,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             }
         });
 
-        button_empty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_unknown.png"))); // NOI18N
+        button_empty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_empty.png"))); // NOI18N
         button_empty.setToolTipText("Create new file");
         button_empty.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
