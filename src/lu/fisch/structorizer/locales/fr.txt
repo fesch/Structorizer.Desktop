@@ -40,7 +40,7 @@
  *
  *      Author:         Bob Fisch
  *
- *      Description:    The french language file
+ *      Description:    The French language file
  *
  ******************************************************************************************************
  *
@@ -51,6 +51,7 @@
  *      Bob Fisch       2008.01.14      First Issue
  *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
  *      Bob Fisch       2016.08.02      Updated some strings
+ *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *
  ******************************************************************************************************
  *
@@ -164,19 +165,19 @@ Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesAnalyser.text=Analyser ...
 Menu.menuPreferencesExport.text=Exporter ...
 Menu.menuPreferencesLanguage.text=Langue
-Menu.menuPreferencesLanguageEnglish.text=Anglais
-Menu.menuPreferencesLanguageGerman.text=Allemand
-Menu.menuPreferencesLanguageFrench.text=Français
-Menu.menuPreferencesLanguageDutch.text=Néerlandais
-Menu.menuPreferencesLanguageLuxemburgish.text=Luxembourgeois
-Menu.menuPreferencesLanguageSpanish.text=Espagnol
-Menu.menuPreferencesLanguageItalian.text=Italien
-Menu.menuPreferencesLanguagePortugalBrazil.text=Portugais (brazilien)
-Menu.menuPreferencesLanguageSimplifiedChinese.text=Chinois (simplifié)
-Menu.menuPreferencesLanguageTraditionalChinese.text=Chinois (traditionnel)
-Menu.menuPreferencesLanguageCzech.text=Czech
-Menu.menuPreferencesLanguageRussian.text=Russe
-Menu.menuPreferencesLanguagePolish.text=Polonais
+Menu.menuPreferencesLanguageItems.en.text=Anglais
+Menu.menuPreferencesLanguageItems.de.text=Allemand
+Menu.menuPreferencesLanguageItems.fr.text=Français
+Menu.menuPreferencesLanguageItems.nl.text=Néerlandais
+Menu.menuPreferencesLanguageItems.lu.text=Luxembourgeois
+Menu.menuPreferencesLanguageItems.es.text=Espagnol
+Menu.menuPreferencesLanguageItems.it.text=Italien
+Menu.menuPreferencesLanguageItems.pt_br.text=Portugais (brazilien)
+Menu.menuPreferencesLanguageItems.zh-cn.text=Chinois (simplifié)
+Menu.menuPreferencesLanguageItems.zh-tw.text=Chinois (traditionnel)
+Menu.menuPreferencesLanguageItems.cz.text=Czech
+Menu.menuPreferencesLanguageItems.ru.text=Russe
+Menu.menuPreferencesLanguageItems.pl.text=Polonais
 
 Menu.menuPreferencesLookAndFeel.text=Look & Feel
 

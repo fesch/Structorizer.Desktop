@@ -56,6 +56,7 @@
  *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added   
  *      Kay Gürtzig     2016.07.27      Enh. #270: New message Menu.warning_1 (must be consistent with menu entry names!) 
  *      Andrea Maiani   2016.08.01      Updated
+ *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *
  ******************************************************************************************************
  *
@@ -159,19 +160,19 @@ Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesAnalyser.text=Analizzatore ...
 Menu.menuPreferencesExport.text=Esporta ...
 Menu.menuPreferencesLanguage.text=Lingua
-Menu.menuPreferencesLanguageEnglish.text=Inglese
-Menu.menuPreferencesLanguageGerman.text=Tedesco
-Menu.menuPreferencesLanguageFrench.text=Francese
-Menu.menuPreferencesLanguageDutch.text=Olandese
-Menu.menuPreferencesLanguageItalian.text=Italiano
-Menu.menuPreferencesLanguageSpanish.text=Spagnolo
-Menu.menuPreferencesLanguagePortugalBrazil.text=Portoghese (Brazil)
-Menu.menuPreferencesLanguageLuxemburgish.text=Lussemburghese
-Menu.menuPreferencesLanguageSimplifiedChinese.text=Cinese (semplificato)
-Menu.menuPreferencesLanguageTraditionalChinese.text=Cinese (tradizionale)
-Menu.menuPreferencesLanguageCzech.text=Ceco
-Menu.menuPreferencesLanguageRussian.text=Russo
-Menu.menuPreferencesLanguagePolish.text=Polacco
+Menu.menuPreferencesLanguageItems.en.text=Inglese
+Menu.menuPreferencesLanguageItems.de.text=Tedesco
+Menu.menuPreferencesLanguageItems.fr.text=Francese
+Menu.menuPreferencesLanguageItems.nl.text=Olandese
+Menu.menuPreferencesLanguageItems.it.text=Italiano
+Menu.menuPreferencesLanguageItems.es.text=Spagnolo
+Menu.menuPreferencesLanguageItems.pt_br.text=Portoghese (Brazil)
+Menu.menuPreferencesLanguageItems.lu.text=Lussemburghese
+Menu.menuPreferencesLanguageItems.zh-cn.text=Cinese (semplificato)
+Menu.menuPreferencesLanguageItems.zh-tw.text=Cinese (tradizionale)
+Menu.menuPreferencesLanguageItems.cz.text=Ceco
+Menu.menuPreferencesLanguageItems.ru.text=Russo
+Menu.menuPreferencesLanguageItems.pl.text=Polacco
 Menu.menuPreferencesLookAndFeel.text=Aspetto
 
 Menu.menuPreferencesSave.text=Salva tutte le impostazioni ora

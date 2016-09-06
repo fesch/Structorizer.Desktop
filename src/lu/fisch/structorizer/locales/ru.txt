@@ -55,6 +55,7 @@
  *      Kay Gürtzig     2016.03.22      Enh. #84: messages related to FOR-IN loops added, several
  *                                      missing messages inserted
  *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *
  ******************************************************************************************************
  *
@@ -156,19 +157,19 @@ Menu.menuPreferencesParser.text=Парсер ...
 Menu.menuPreferencesAnalyser.text=Анализатор ...
 Menu.menuPreferencesExport.text=Экспорт ...
 Menu.menuPreferencesLanguage.text=Язык
-Menu.menuPreferencesLanguageEnglish.text=Английский
-Menu.menuPreferencesLanguageGerman.text=Германский
-Menu.menuPreferencesLanguageFrench.text=Француский
-Menu.menuPreferencesLanguageDutch.text=Голландский
-Menu.menuPreferencesLanguageLuxemburgish.text=Люксембургский
-Menu.menuPreferencesLanguageSpanish.text=Испанский
-Menu.menuPreferencesLanguageItalian.text=Итальянский
-Menu.menuPreferencesLanguagePortugalBrazil.text=Португальский (бразильский)
-Menu.menuPreferencesLanguageSimplifiedChinese.text=Китайский (упрощен)
-Menu.menuPreferencesLanguageTraditionalChinese.text=Китайский (традиционен)
-Menu.menuPreferencesLanguageCzech.text=Чeшский
-Menu.menuPreferencesLanguageRussian.text=Русский
-Menu.menuPreferencesLanguagePolish.text=Польский
+Menu.menuPreferencesLanguageItems.en.text=Английский
+Menu.menuPreferencesLanguageItems.de.text=Германский
+Menu.menuPreferencesLanguageItems.fr.text=Француский
+Menu.menuPreferencesLanguageItems.nl.text=Голландский
+Menu.menuPreferencesLanguageItems.lu.text=Люксембургский
+Menu.menuPreferencesLanguageItems.es.text=Испанский
+Menu.menuPreferencesLanguageItems.it.text=Итальянский
+Menu.menuPreferencesLanguageItems.pt_br.text=Португальский (бразильский)
+Menu.menuPreferencesLanguageItems.zh-cn.text=Китайский (упрощен)
+Menu.menuPreferencesLanguageItems.zh-tw.text=Китайский (традиционен)
+Menu.menuPreferencesLanguageItems.cz.text=Чeшский
+Menu.menuPreferencesLanguageItems.ru.text=Русский
+Menu.menuPreferencesLanguageItems.pl.text=Польский
 
 Menu.menuPreferencesLookAndFeel.text=Внешний вид
 

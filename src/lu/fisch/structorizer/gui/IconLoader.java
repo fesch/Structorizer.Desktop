@@ -41,6 +41,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.22      Enh. #199: New icon 110_help introduced for online user guide activation
  *      Kay Gürtzig     2016-07-31      Enh. #128: New icon 111_c_plus_t introduced for "commments plus text" mode
  *      Kay Gürtzig     2016-08-02      Enh. #215: New icon 112_stopwatch introduced for breapoint count triggers
+ *      Kay Gürtzig     2016-09-05      Generic support for locale icons
  *
  ******************************************************************************************************
  *
@@ -50,15 +51,18 @@ package lu.fisch.structorizer.gui;
 
 import java.awt.*;
 import java.awt.image.*;
+import java.util.HashMap;
 
 import javax.swing.*;
+
+import lu.fisch.structorizer.locales.Locales;
 
 
 public class IconLoader {
 
 	private static String from = new String("");
 
-        protected static double scaleFactor = 1;
+	protected static double scaleFactor = 1;
 
 	// Icons
 	public static ImageIcon icoNSD = new ImageIcon(getURI(from+"icons/structorizer.png"));
@@ -100,13 +104,13 @@ public class IconLoader {
 	public static ImageIcon ico042 = getIconImage(getURI(from+"icons/042_copy.png"));
 	public static ImageIcon ico043 = getIconImage(getURI(from+"icons/043_paste.png"));
 	public static ImageIcon ico044 = getIconImage(getURI(from+"icons/044_cut.png"));
-	public static ImageIcon ico045 = getIconImage(getURI(from+"icons/045_fr.png"));
-	public static ImageIcon ico046 = getIconImage(getURI(from+"icons/046_uk.png"));
+	//public static ImageIcon ico045 = getIconImage(getURI(from+"icons/045_fr.png"));
+	//public static ImageIcon ico046 = getIconImage(getURI(from+"icons/046_uk.png"));
 	public static ImageIcon ico047 = getIconImage(getURI(from+"icons/047_casebefore.png"));
 	public static ImageIcon ico048 = getIconImage(getURI(from+"icons/048_caseafter.png"));
 	public static ImageIcon ico049 = getIconImage(getURI(from+"icons/049_callbefore.png"));
 	public static ImageIcon ico050 = getIconImage(getURI(from+"icons/050_callafter.png"));
-	public static ImageIcon ico051 = getIconImage(getURI(from+"icons/051_nl.png"));
+	//public static ImageIcon ico051 = getIconImage(getURI(from+"icons/051_nl.png"));
 	public static ImageIcon ico052 = getIconImage(getURI(from+"icons/052_update.png"));
 	
 	public static ImageIcon ico055 = getIconImage(getURI(from+"icons/055_jumpafter.png"));
@@ -124,27 +128,27 @@ public class IconLoader {
 	// END KGU#122 2016-01-03
 	
 	public static ImageIcon ico074 = getIconImage(getURI(from+"icons/074_nsd.png"));
-	public static ImageIcon ico075 = getIconImage(getURI(from+"icons/075_lu.png"));
+	//public static ImageIcon ico075 = getIconImage(getURI(from+"icons/075_lu.png"));
 	public static ImageIcon ico076 = getIconImage(getURI(from+"icons/076_latex.png"));
 	public static ImageIcon ico077 = getIconImage(getURI(from+"icons/077_bubble.png"));
 	public static ImageIcon ico078 = getIconImage(getURI(from+"icons/078_java.png"));
 	public static ImageIcon ico079 = getIconImage(getURI(from+"icons/079_marker.png"));
-	public static ImageIcon ico080 = getIconImage(getURI(from+"icons/080_de.png"));
+	//public static ImageIcon ico080 = getIconImage(getURI(from+"icons/080_de.png"));
 	public static ImageIcon ico081 = getIconImage(getURI(from+"icons/081_pen.png"));
 	public static ImageIcon ico082 = getIconImage(getURI(from+"icons/082_din.png"));
 	public static ImageIcon ico083 = getIconImage(getURI(from+"icons/083_loupe.png"));
-	public static ImageIcon ico084 = getIconImage(getURI(from+"icons/084_es.png"));
-	public static ImageIcon ico085 = getIconImage(getURI(from+"icons/085_pt_br.png"));
-	public static ImageIcon ico086 = getIconImage(getURI(from+"icons/086_it.png"));
-	public static ImageIcon ico087 = getIconImage(getURI(from+"icons/087_cn.png"));
-	public static ImageIcon ico088 = getIconImage(getURI(from+"icons/088_cz.png"));
+	//public static ImageIcon ico084 = getIconImage(getURI(from+"icons/084_es.png"));
+	//public static ImageIcon ico085 = getIconImage(getURI(from+"icons/085_pt_br.png"));
+	//public static ImageIcon ico086 = getIconImage(getURI(from+"icons/086_it.png"));
+	//public static ImageIcon ico087 = getIconImage(getURI(from+"icons/087_cn.png"));
+	//public static ImageIcon ico088 = getIconImage(getURI(from+"icons/088_cz.png"));
 
 	public static ImageIcon ico089 = getIconImage(getURI(from+"icons/089_paraAfter.png"));
 	public static ImageIcon ico090 = getIconImage(getURI(from+"icons/090_paraBefore.png"));
 	public static ImageIcon ico091 = getIconImage(getURI(from+"icons/091_conv_para.png"));
-	public static ImageIcon ico092 = getIconImage(getURI(from+"icons/092_ru.png"));
-	public static ImageIcon ico093 = getIconImage(getURI(from+"icons/093_pl.png"));
-	public static ImageIcon ico094 = getIconImage(getURI(from+"icons/094_tw.png"));
+	//public static ImageIcon ico092 = getIconImage(getURI(from+"icons/092_ru.png"));
+	//public static ImageIcon ico093 = getIconImage(getURI(from+"icons/093_pl.png"));
+	//public static ImageIcon ico094 = getIconImage(getURI(from+"icons/094_tw.png"));
 
 	public static ImageIcon ico102 = getIconImage(getURI(from+"icons/102_switch.png"));
 	
@@ -174,10 +178,14 @@ public class IconLoader {
 	public static ImageIcon ico113 = getIconImage(getURI(from+"icons/113_translater.png"));
 	// END KGU#213 2016-08-02
 	// START KGU#232 2016-08-03: Enh. #222
-	public static ImageIcon ico114 = getIconImage(getURI(from+"icons/114_unknown.png"));
+	//public static ImageIcon ico114 = getIconImage(getURI(from+"icons/locale_unknown.png"));
 	// END KGU#232 2016-08-03
 
-        public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
+	public static ImageIcon turtle = getIconImage(getURI(from+"icons/turtle.png"));
+	
+	// START KGU#242 2016-09-05
+	public static HashMap<String, ImageIcon> icoLocales = new HashMap<String, ImageIcon>();
+	// END KGU#242 2016-09-05
 
         public static void setScaleFactor(double scale)
         {
@@ -218,13 +226,13 @@ public class IconLoader {
             ico042 = getIconImage(getURI(from+"icons/042_copy.png"));
             ico043 = getIconImage(getURI(from+"icons/043_paste.png"));
             ico044 = getIconImage(getURI(from+"icons/044_cut.png"));
-            ico045 = getIconImage(getURI(from+"icons/045_fr.png"));
-            ico046 = getIconImage(getURI(from+"icons/046_uk.png"));
+            //ico045 = getIconImage(getURI(from+"icons/045_fr.png"));
+            //ico046 = getIconImage(getURI(from+"icons/046_uk.png"));
             ico047 = getIconImage(getURI(from+"icons/047_casebefore.png"));
             ico048 = getIconImage(getURI(from+"icons/048_caseafter.png"));
             ico049 = getIconImage(getURI(from+"icons/049_callbefore.png"));
             ico050 = getIconImage(getURI(from+"icons/050_callafter.png"));
-            ico051 = getIconImage(getURI(from+"icons/051_nl.png"));
+            //ico051 = getIconImage(getURI(from+"icons/051_nl.png"));
             ico052 = getIconImage(getURI(from+"icons/052_update.png"));
 
             ico055 = getIconImage(getURI(from+"icons/055_jumpafter.png"));
@@ -242,23 +250,23 @@ public class IconLoader {
         	// END KGU#122 2016-01-03
 
         	ico074 = getIconImage(getURI(from+"icons/074_nsd.png"));
-            ico075 = getIconImage(getURI(from+"icons/075_lu.png"));
+            //ico075 = getIconImage(getURI(from+"icons/075_lu.png"));
             ico076 = getIconImage(getURI(from+"icons/076_latex.png"));
             ico077 = getIconImage(getURI(from+"icons/077_bubble.png"));
             ico078 = getIconImage(getURI(from+"icons/078_java.png"));
             ico079 = getIconImage(getURI(from+"icons/079_marker.png"));
-            ico080 = getIconImage(getURI(from+"icons/080_de.png"));
+            //ico080 = getIconImage(getURI(from+"icons/080_de.png"));
             ico081 = getIconImage(getURI(from+"icons/081_pen.png"));
             ico082 = getIconImage(getURI(from+"icons/082_din.png"));
             ico083 = getIconImage(getURI(from+"icons/083_loupe.png"));
-            ico084 = getIconImage(getURI(from+"icons/084_es.png"));
-            ico085 = getIconImage(getURI(from+"icons/085_pt_br.png"));
-            ico086 = getIconImage(getURI(from+"icons/086_it.png"));
-            ico087 = getIconImage(getURI(from+"icons/087_cn.png"));
-            ico088 = getIconImage(getURI(from+"icons/088_cz.png"));
-            ico092 = getIconImage(getURI(from+"icons/092_ru.png"));
-            ico093 = getIconImage(getURI(from+"icons/093_pl.png"));
-            ico094 = getIconImage(getURI(from+"icons/094_tw.png"));
+            //ico084 = getIconImage(getURI(from+"icons/084_es.png"));
+            //ico085 = getIconImage(getURI(from+"icons/085_pt_br.png"));
+            //ico086 = getIconImage(getURI(from+"icons/086_it.png"));
+            //ico087 = getIconImage(getURI(from+"icons/087_cn.png"));
+            //ico088 = getIconImage(getURI(from+"icons/088_cz.png"));
+            //ico092 = getIconImage(getURI(from+"icons/092_ru.png"));
+            //ico093 = getIconImage(getURI(from+"icons/093_pl.png"));
+            //ico094 = getIconImage(getURI(from+"icons/094_tw.png"));
 
             // START KGU 2015-10-12: Whatever this might be good for...(?)
         	ico103 = getIconImage(getURI(from+"icons/103_breakpt.png"));
@@ -286,10 +294,17 @@ public class IconLoader {
         	// END KGU#213 2016-08-02
 
         	// START KGU#232 2016-08-02: Enh. #222 - more flexible language export
-        	ico114 = getIconImage(getURI(from+"icons/114_unknown.png"));
+        	//ico114 = getIconImage(getURI(from+"icons/locale_unknown.png"));
         	// END KGU#232 2016-08-02
 
         	turtle = getIconImage(getURI(from+"icons/turtle.png"));
+        	
+        	// START KGU#242 2016-09-05
+        	for (String key: icoLocales.keySet())
+        	{
+        		icoLocales.put(key, getIconImage(getURI(from+"icons/locale_"+key+".png")));
+        	}
+        	// END KGU#242 2016-09-05
         }
 
         public static ImageIcon getIconImage(java.net.URL url)
@@ -298,6 +313,19 @@ public class IconLoader {
             ii = scale(ii);
             return ii;
         }
+        
+        // START KGU 2016-09-06
+        public static ImageIcon getLocaleIconImage(String localeName)
+        {
+        	ImageIcon ii = icoLocales.get(localeName);
+        	if (ii == null && Locales.isNamedLocale(localeName))
+        	{
+        		ii = getIconImage(getURI(from + "icons/locale_"+localeName+".png"));
+        	}
+        	ii = scale(ii);
+        	return ii;
+        }
+        // END KGU 2016-09-06
 
         private static ImageIcon scale(ImageIcon src)
         {

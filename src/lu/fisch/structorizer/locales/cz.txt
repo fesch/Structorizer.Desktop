@@ -50,6 +50,7 @@
  *      ------          ----            -----------
  *      Vaščák Vladimír 2010.11.04      Created
  *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *
  ******************************************************************************************************
  *
@@ -163,19 +164,19 @@ Menu.menuPreferencesParser.text=Rozbor ...
 Menu.menuPreferencesAnalyser.text=
 Menu.menuPreferencesExport.text=
 Menu.menuPreferencesLanguage.text=Jazyk
-Menu.menuPreferencesLanguageEnglish.text=Anglicky
-Menu.menuPreferencesLanguageGerman.text=Německy
-Menu.menuPreferencesLanguageFrench.text=Francouzsky
-Menu.menuPreferencesLanguageDutch.text=Holandsky
-Menu.menuPreferencesLanguageLuxemburgish.text=Lucembursky
-Menu.menuPreferencesLanguageSpanish.text=Španělsky
-Menu.menuPreferencesLanguageItalian.text=Italsky
-Menu.menuPreferencesLanguagePortugalBrazil.text=Brazil
-Menu.menuPreferencesLanguageSimplifiedChinese.text=Chinese (simple)
-Menu.menuPreferencesLanguageTraditionalChinese.text=Chinese (traditional)
-Menu.menuPreferencesLanguageCzech.text=Česky
-Menu.menuPreferencesLanguageRussian.text=Rusky
-Menu.menuPreferencesLanguagePolish.text=Polsky
+Menu.menuPreferencesLanguageItems.en.text=Angličtina
+Menu.menuPreferencesLanguageItems.de.text=Němčina
+Menu.menuPreferencesLanguageItems.fr.text=Francouzština
+Menu.menuPreferencesLanguageItems.nl.text=Holandština
+Menu.menuPreferencesLanguageItems.lu.text=Lucemburština
+Menu.menuPreferencesLanguageItems.es.text=Španělština
+Menu.menuPreferencesLanguageItems.it.text=Italština
+Menu.menuPreferencesLanguageItems.pt_br.text=Brazilština
+Menu.menuPreferencesLanguageItems.zh-cn.text=Čínština (zjednodušená)
+Menu.menuPreferencesLanguageItems.zh-tw.text=Čínština (tradičná)
+Menu.menuPreferencesLanguageItems.cz.text=Čeština
+Menu.menuPreferencesLanguageItems.ru.text=Ruština
+Menu.menuPreferencesLanguageItems.pl.text=Polština
 
 Menu.menuPreferencesLookAndFeel.text=Vzhled
 

@@ -34,6 +34,7 @@ package lu.fisch.structorizer.locales;
  *      ------          ----            -----------
  *      Bob Fisch       2016.08.02      First Issue
  *      Kay Gürtzig     2016.08.12      Mechanism to translate arrays of controls (initially for AnalyserPreferences)
+ *      Kay Gürtzig     2016.09.05      Mechanism to translate Hashtables of controls (initially for language preferences)
  *
  ******************************************************************************************************
  *
@@ -62,8 +63,31 @@ import lu.fisch.utils.StringList;
  * @author robertfisch
  */
 public class Locales {
-    // LOCALES_LIST of all locales we have
-    public static final String[] LOCALES_LIST = {"zh-cn","zh-tw","cz","de","en","es","fr","it","lu","nl","pl","pt_br","ru","empty","preview","external"};
+    /**
+     * LOCALES_LIST of all locales we have and their respective English denomination
+     * Locales for actually existing languages MUST have an English language name, whereas
+     * pure technical pseudo-locales MUST NOT have a denomination
+     * Note: Order matters (preferences menu, Translator etc. will present locales in the order given here) 
+     */
+    public static final String[][] LOCALES_LIST = {
+    	{"en", "English"},
+    	{"de", "German"},
+    	{"fr", "French"},
+    	{"nl", "Hollandish"},
+    	{"lu", "Luxemburgish"},
+    	{"es", "Spanish"},
+    	{"pt_br", "Portuguese (Brazilian)"},
+    	{"it", "Italian"},
+    	{"zh-cn", "Chinese (simplified)"},
+    	{"zh-tw", "Chinese (traditional)"},
+    	{"cz", "Czech"},
+    	{"ru",	"Russian"},
+    	{"pl", "Polish"},
+    	// pseudo and auxiliary locales 
+    	{"empty", null},
+    	{"preview", null},
+    	{"external", null}
+    	};
     
     // the "default" oder "master" locale
     public static final String DEFAULT_LOCALE = "en";
@@ -176,7 +200,7 @@ public class Locales {
         StringList result = new StringList();
         
         for (int i = 0; i < LOCALES_LIST.length; i++) {
-            String localeName = LOCALES_LIST[i];
+            String localeName = LOCALES_LIST[i][0];
             if(getLocale(localeName).hasKey(keyName)) result.add(localeName);
         }
         
@@ -215,6 +239,15 @@ public class Locales {
         }
     }
     
+    public static boolean isNamedLocale(String localeName)
+    {
+        boolean found = false;
+        for (int i = 0; !found && i < LOCALES_LIST.length; i++)
+        {
+        	found = LOCALES_LIST[i][0].equals(localeName);
+        }
+    	return found;
+    }
     
     public void setLocale(String localeName)
     {
@@ -222,7 +255,8 @@ public class Locales {
         
         // if we can't find the name of the loaded locale,
         // we suppose a filepath has been passed
-        if(!Arrays.asList(LOCALES_LIST).contains(loadedLocaleName))
+        //if(!Arrays.asList(LOCALES_LIST).contains(loadedLocaleName))
+        if (!isNamedLocale(loadedLocaleName))
         {
             // let's check if it is an existing file
             if((new File(localeName)).exists())
@@ -434,89 +468,106 @@ public class Locales {
                         if (errorMessage != null) {
                             System.err.println("LANG: Error accessing element <"
                                     + pieces.get(0) + "." + pieces.get(1) + ">!\n" + errorMessage);
+                        } else if (field != null) {
+                    		// END KGU#3 2015-11-03
+                        	try {
+
+                        		Class<?> fieldClass = field.getType();
+                        		String piece2 = pieces.get(2).toLowerCase();
+
+                        		Object target = field.get(component);
+
+                        		// START KGU#239 2016-08-12: Opportunity to localize an array of controls
+                        		if (fieldClass.isArray() && pieces.count() > 3)
+                        		{
+                        			int length = Array.getLength(field.get(component));
+                        			int index = Integer.parseUnsignedInt(piece2);
+                        			if (index < length) {
+                        				target = Array.get(field.get(component), index);
+                        				fieldClass = target.getClass();
+                        				pieces.remove(2);	// Index no longer needed
+                        				pieces.set(1, pieces.get(1) + "[" + piece2 + "]");
+                        				piece2 = pieces.get(2).toLowerCase();
+                        			}
+
+                        		}
+                        		// END KGU#239 2016-08-12
+                        		// START KGU#242 2016-09-04
+                        		else if (fieldClass.getName().equals("java.util.Hashtable") && pieces.count() > 3)
+                        		{
+                        			String piece1_2 = pieces.get(1) + "[" + piece2 + "]";
+                        			Method method = fieldClass.getMethod("get", new Class[]{Object.class});
+                        			try {
+                        				target = method.invoke(target, piece2);
+                            			if (target == null)
+                            			{
+                            				System.err.println("LANG: No Element <" + pieces.get(0) + "." + piece1_2 + "> found!");
+                            			}
+                        			}
+                        			catch (Exception e) {
+                        				// FIXME: No idea why this always goes off just on startup
+                        			}
+                        			if (target != null)
+                        			{
+                        				fieldClass = target.getClass();
+                        				pieces.remove(2);	// Key no longer needed
+                         				pieces.set(1, piece1_2);
+                         				piece2 = pieces.get(2).toLowerCase();
+                        			}
+                        		}
+                        		// END KGU#242 2016-09-04
+
+                        		if (piece2.equals("text")) {
+                        			Method method = fieldClass.getMethod("setText", new Class[]{String.class});
+                        			if(target != null)
+                        				method.invoke(target, new Object[]{parts.get(1)});
+                        		} else if (piece2.equals("tooltip")) {
+                        			Method method = fieldClass.getMethod("setToolTipText", new Class[]{String.class});
+                        			if(target != null)
+                        				method.invoke(target, new Object[]{parts.get(1)});
+                        		} else if (piece2.equals("border")) {
+                        			Method method = fieldClass.getMethod("setBorder", new Class[]{Border.class});
+                        			if(target != null)
+                        				method.invoke(target, new Object[]{new TitledBorder(parts.get(1))});
+                        		} else if (piece2.equals("tab")) {
+                        			Method method = fieldClass.getMethod("setTitleAt", new Class[]{int.class, String.class});
+                        			if(target != null)
+                        				method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3)), parts.get(1)});
+                        		} else if (piece2.equals("header")) {
+                        			Method method = fieldClass.getMethod("setHeaderTitle", new Class[]{int.class, String.class});
+                        			if(target != null)
+                        				method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3)), parts.get(1)});
+                        		} // START KGU#183 2016-04-24: Enh. #173 - new support
+                        		else if (piece2.equals("mnemonic")) {
+                        			Method method = fieldClass.getMethod("setMnemonic", new Class[]{int.class});
+                        			int keyCode = KeyEvent.getExtendedKeyCodeForChar(parts.get(1).toLowerCase().charAt(0));
+                        			if (keyCode != KeyEvent.VK_UNDEFINED && target != null) {
+                        				method.invoke(target, new Object[]{Integer.valueOf(keyCode)});
+                        			}
+                        		} // END KGU#183 2016-04-24
+                        		// START KGU#156 2016-03-13: Enh. #124 - intended for JComboBoxes
+                        		else if (piece2.equals("item")) {
+                        			// The JCombobox is supposed to be equipped with enum objects providing a setText() method
+                        			// (see lu.fisch.structorizer.elements.RuntimeDataPresentMode and
+                        			// lu.fisch.structorizer.executor.Control for an example).
+                        			Method method = fieldClass.getMethod("getItemAt", new Class[]{int.class});
+                        			if(target != null)
+                        			{
+                        				Object item = method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3))});
+                        				if (item != null) {
+                        					Class<?> itemClass = item.getClass();
+                        					method = itemClass.getMethod("setText", new Class[]{String.class});
+                        					method.invoke(item, new Object[]{parts.get(1)});
+                        				}
+                        			}
+                        		}
+                        		// END KGU#156 2016-03-13
+                        	} catch (Exception e) {
+                        		System.err.println("LANG: Error while setting property <" + pieces.get(2) + "> for element <"
+                        				+ pieces.get(0) + "." + pieces.get(1) + ">!\n" + e.getMessage());
+                        	}
                         } else {
-                            try {
-                                // END KGU#3 2015-11-03
-
-                                if (field != null) {
-                                    Class<?> fieldClass = field.getType();
-                                    String piece2 = pieces.get(2).toLowerCase();
-                                    
-                                    Object target = field.get(component);
-                                    
-                                    // START KGU#239 2016-08-12: Opportunity to localize an array of controls
-                                    if (fieldClass.isArray() && pieces.count() > 3)
-                                    {
-                                    	int length = Array.getLength(field.get(component));
-                                    	int index = Integer.parseUnsignedInt(piece2);
-                                    	if (index < length) {
-                                    		target = Array.get(field.get(component), index);
-                                    		fieldClass = target.getClass();
-                                    		pieces.remove(2);
-                                    		piece2 = pieces.get(2);
-                                    	}
-                                    		
-                                    }
-                                    // END KGU#239 2016-08-12
-
-                                    if (piece2.equals("text")) {
-                                        Method method = fieldClass.getMethod("setText", new Class[]{String.class});
-                                        if(target != null)
-                                            method.invoke(target, new Object[]{parts.get(1)});
-                                    } else if (piece2.equals("tooltip")) {
-                                        Method method = fieldClass.getMethod("setToolTipText", new Class[]{String.class});
-                                        if(target != null)
-                                            method.invoke(target, new Object[]{parts.get(1)});
-                                    } else if (piece2.equals("border")) {
-                                        Method method = fieldClass.getMethod("setBorder", new Class[]{Border.class});
-                                        if(target != null)
-                                            method.invoke(target, new Object[]{new TitledBorder(parts.get(1))});
-                                    } else if (piece2.equals("tab")) {
-                                        Method method = fieldClass.getMethod("setTitleAt", new Class[]{int.class, String.class});
-                                        if(target != null)
-                                            method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3)), parts.get(1)});
-                                    } else if (piece2.equals("header")) {
-                                        Method method = fieldClass.getMethod("setHeaderTitle", new Class[]{int.class, String.class});
-                                        if(target != null)
-                                            method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3)), parts.get(1)});
-                                    } // START KGU#183 2016-04-24: Enh. #173 - new support
-                                    else if (piece2.equals("mnemonic")) {
-                                        Method method = fieldClass.getMethod("setMnemonic", new Class[]{int.class});
-                                        int keyCode = KeyEvent.getExtendedKeyCodeForChar(parts.get(1).toLowerCase().charAt(0));
-                                        if (keyCode != KeyEvent.VK_UNDEFINED && target != null) {
-                                            method.invoke(target, new Object[]{Integer.valueOf(keyCode)});
-                                        }
-                                    } // END KGU#183 2016-04-24
-                                    // START KGU#156 2016-03-13: Enh. #124 - intended for JComboBoxes
-                                    else if (piece2.equals("item")) {
-                                                                    // The JCombobox is supposed to be equipped with enum objects providing a setText() method
-                                        // (see lu.fisch.structorizer.elements.RuntimeDataPresentMode and
-                                        // lu.fisch.structorizer.executor.Control for an example).
-                                        Method method = fieldClass.getMethod("getItemAt", new Class[]{int.class});
-                                        if(target != null)
-                                        {
-                                            Object item = method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3))});
-                                            if (item != null) {
-                                                Class<?> itemClass = item.getClass();
-                                                method = itemClass.getMethod("setText", new Class[]{String.class});
-                                                method.invoke(item, new Object[]{parts.get(1)});
-                                            }
-                                        }
-                                    }
-                                    // END KGU#156 2016-03-13
-                                } else {
-                                                            // START KGU 2015-11-03: Better add the class name for more precision
-                                    //System.out.println("LANG: Field not found <"+pieces.get(1)+">");
-                                    System.err.println("LANG: Field not found <" + pieces.get(0) + "." + pieces.get(1) + ">");
-                                    // END KGU 2015-11-03
-                                }
-                            } catch (Exception e) {
-                                                    // START KGU 2015-11-03: Better add the class name for more precision
-                                //System.out.println("LANG: Error while setting field <"+pieces.get(2)+"> for element <"+pieces.get(1)+">!\n"+e.getMessage());
-                                System.err.println("LANG: Error while setting field <" + pieces.get(2) + "> for element <"
-                                        + pieces.get(0) + "." + pieces.get(1) + ">!\n" + e.getMessage());
-                                // END KGU 2015-11-03
-                            }
+                        	System.err.println("LANG: Field not found <" + pieces.get(0) + "." + pieces.get(1) + ">");
                         }
                     }
                 }
@@ -534,7 +585,7 @@ public class Locales {
     {
         if(loadedLocaleFilename==null) return "en.txt";
         else return loadedLocaleFilename;
-    }
+}
     
     public void setExternal(StringList lines, String filename)
     {

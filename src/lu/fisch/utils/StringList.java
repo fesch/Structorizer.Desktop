@@ -700,7 +700,7 @@ public class StringList {
             try
             {
                 StringBuffer buffer = new StringBuffer();
-                InputStreamReader isr = new InputStreamReader(new FileInputStream(new File(_filename)),"UTF8");
+                InputStreamReader isr = new InputStreamReader(new FileInputStream(new File(_filename)),"UTF-8");
                 Reader in = new BufferedReader(isr);
                 int ch;
                 while ((ch = in.read()) > -1)
@@ -738,7 +738,7 @@ public class StringList {
         try
         {
             FileOutputStream fos = new FileOutputStream(_filename);
-            Writer out = new OutputStreamWriter(fos, "UTF8");
+            Writer out = new OutputStreamWriter(fos, "UTF-8");
             out.write(this.getText());
             out.close();
             /*

@@ -50,6 +50,7 @@
  *      ------          ----            -----------
  *      Jerone          ???             First Issue
  *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *
  ******************************************************************************************************
  *
@@ -136,12 +137,12 @@ Menu.menuPreferencesColors.text=Kleuren ...
 Menu.menuPreferencesOptions.text=Structuren ...
 Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesLanguage.text=Talen
-Menu.menuPreferencesLanguageEnglish.text=Engels
-Menu.menuPreferencesLanguageGerman.text=Duits
-Menu.menuPreferencesLanguageFrench.text=Frans
-Menu.menuPreferencesLanguageDutch.text=Nederlands
-Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburgs
-Menu.menuPreferencesLanguageItalian.text=Italian
+Menu.menuPreferencesLanguageItems.en.text=Engels
+Menu.menuPreferencesLanguageItems.de.text=Duits
+Menu.menuPreferencesLanguageItems.fr.text=Frans
+Menu.menuPreferencesLanguageItems.nl.text=Nederlands
+Menu.menuPreferencesLanguageItems.lu.text=Luxemburgs
+Menu.menuPreferencesLanguageItems.it.text=Italian
 Menu.menuPreferencesLookAndFeel.text=Uiterlijk
 Menu.menuPreferencesSave.text=Alle instellingen nu opslaan
 // Menu "Help"

@@ -72,6 +72,7 @@
  *      Kay Gürtzig         2016.07.31  Enh. #128: New menu item captions for "Comments plus Text" mode
  *      Kay Gürtzig         2016.08.02  Enh. #215: Menu messages for break trigger (and other dialog messages)
  *      Kay Gürtzig         2016.08.04  Enh. #222: Menu option to load translation from file
+ *      Kay Gürtzig         2016.09.04  Menu.menuPreferencesLanguage... key structure modified
  *
  ******************************************************************************************************
  *
@@ -181,19 +182,19 @@ Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesAnalyser.text=Überprüfungen ...
 Menu.menuPreferencesExport.text=Export ...
 Menu.menuPreferencesLanguage.text=Sprache
-Menu.menuPreferencesLanguageEnglish.text=Englisch
-Menu.menuPreferencesLanguageGerman.text=Deutsch
-Menu.menuPreferencesLanguageFrench.text=Französisch
-Menu.menuPreferencesLanguageDutch.text=Holländisch
-Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburgisch
-Menu.menuPreferencesLanguageItalian.text=Italienisch
-Menu.menuPreferencesLanguageSpanish.text=Spanisch
-Menu.menuPreferencesLanguagePortugalBrazil.text=Portugiesisch (Brasilien)
-Menu.menuPreferencesLanguageSimplifiedChinese.text=Chinesisch (vereinfacht)
-Menu.menuPreferencesLanguageTraditionalChinese.text=Chinesisch (traditionell)
-Menu.menuPreferencesLanguageCzech.text=Tschechisch
-Menu.menuPreferencesLanguageRussian.text=Russisch
-Menu.menuPreferencesLanguagePolish.text=Polnisch
+Menu.menuPreferencesLanguageItems.en.text=Englisch
+Menu.menuPreferencesLanguageItems.de.text=Deutsch
+Menu.menuPreferencesLanguageItems.fr.text=Französisch
+Menu.menuPreferencesLanguageItems.nl.text=Holländisch
+Menu.menuPreferencesLanguageItems.lu.text=Luxemburgisch
+Menu.menuPreferencesLanguageItems.it.text=Italienisch
+Menu.menuPreferencesLanguageItems.es.text=Spanisch
+Menu.menuPreferencesLanguageItems.pt_br.text=Portugiesisch (Brasilien)
+Menu.menuPreferencesLanguageItems.zh-cn.text=Chinesisch (vereinfacht)
+Menu.menuPreferencesLanguageItems.zh-tw.text=Chinesisch (traditionell)
+Menu.menuPreferencesLanguageItems.cz.text=Tschechisch
+Menu.menuPreferencesLanguageItems.ru.text=Russisch
+Menu.menuPreferencesLanguageItems.pl.text=Polnisch
 Menu.menuPreferencesLanguageFromFile.text=Aus Datei ...
 Menu.menuPreferencesLanguageFromFile.tooltip=Sie könnnen mit dem 'Übersetzer' im Dateimenü selbst Sprachdateien erstellen.
 

@@ -46,10 +46,11 @@
  *
  *      Revision List
  *
- *      Author          Date		Description
- *      ------		----		-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2008.01.14      First Issue
  *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *
  ******************************************************************************************************
  *
@@ -136,18 +137,18 @@ Menu.menuPreferencesColors.text=Kolory ...
 Menu.menuPreferencesOptions.text=Struktury ...
 Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesLanguage.text=Język
-Menu.menuPreferencesLanguageEnglish.text=Angielski
-Menu.menuPreferencesLanguageGerman.text=Niemiecki
-Menu.menuPreferencesLanguageFrench.text=Francuski
-Menu.menuPreferencesLanguageDutch.text=Holenderski
-Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburski
-Menu.menuPreferencesLanguageSpanish.text=Hiszpański
-Menu.menuPreferencesLanguageItalian.text=Włoski
-Menu.menuPreferencesLanguagePortugalBrazil.text=Portugalski
-Menu.menuPreferencesLanguageSimplifiedChinese.text=Chiński (simplified)
-Menu.menuPreferencesLanguageTraditionalChinese.text=Chiński (traditional)
-Menu.menuPreferencesLanguageCzech.text=Czeski
-Menu.menuPreferencesLanguagePolish.text=Polski
+Menu.menuPreferencesLanguageItems.en.text=Angielski
+Menu.menuPreferencesLanguageItems.de.text=Niemiecki
+Menu.menuPreferencesLanguageItems.fr.text=Francuski
+Menu.menuPreferencesLanguageItems.nl.text=Holenderski
+Menu.menuPreferencesLanguageItems.lu.text=Luxemburski
+Menu.menuPreferencesLanguageItems.es.text=Hiszpański
+Menu.menuPreferencesLanguageItems.it.text=Włoski
+Menu.menuPreferencesLanguageItems.pt_br.text=Portugalski
+Menu.menuPreferencesLanguageItems.zh-cn.text=Chiński (uproszczony)
+Menu.menuPreferencesLanguageItems.zh-tw.text=Chiński (tradycyjny)
+Menu.menuPreferencesLanguageItems.cz.text=Czeski
+Menu.menuPreferencesLanguageItems.pl.text=Polski
 
 Menu.menuPreferencesLookAndFeel.text=Wygląd
 
