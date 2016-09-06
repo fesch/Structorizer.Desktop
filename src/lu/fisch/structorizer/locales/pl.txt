@@ -145,8 +145,8 @@ Menu.menuPreferencesLanguageItems.lu.text=Luxemburski
 Menu.menuPreferencesLanguageItems.es.text=Hiszpański
 Menu.menuPreferencesLanguageItems.it.text=Włoski
 Menu.menuPreferencesLanguageItems.pt_br.text=Portugalski
-Menu.menuPreferencesLanguageItems.zh-cn.text=Chiński (simplified)
-Menu.menuPreferencesLanguageItems.zh-tw.text=Chiński (traditional)
+Menu.menuPreferencesLanguageItems.zh-cn.text=Chiński (uproszczony)
+Menu.menuPreferencesLanguageItems.zh-tw.text=Chiński (tradycyjny)
 Menu.menuPreferencesLanguageItems.cz.text=Czeski
 Menu.menuPreferencesLanguageItems.pl.text=Polski
 

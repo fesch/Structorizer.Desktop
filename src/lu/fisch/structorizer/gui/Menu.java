@@ -724,24 +724,12 @@ public class Menu extends LangMenuBar implements NSDController
 		// START KGU#242 2016-09-04: Redesign of the language menu item mechanism
 		for (int iLoc = 0; iLoc < Locales.LOCALES_LIST.length; iLoc++)
 		{
-			final String locName = Locales.LOCALES_LIST[iLoc];
-			if (!locName.equals("empty") && !locName.equals("preview") && !locName.equals("external"))
+			final String locName = Locales.LOCALES_LIST[iLoc][0];
+			String locDescription = Locales.LOCALES_LIST[iLoc][1];
+			if (locDescription != null)
 			{
-				String caption = locName;
-				ImageIcon icon = IconLoader.ico046;
-				if (locName.equals("en")) { caption = "English"; icon = IconLoader.ico046; }
-				else if (locName.equals("de")) { caption = "German"; icon = IconLoader.ico080; }
-				else if (locName.equals("fr")) { caption = "French";	icon = IconLoader.ico045; }
-				else if (locName.equals("nl")) { caption = "Dutch"; icon = IconLoader.ico051;}
-				else if (locName.equals("lu")) { caption = "Luxemburgish"; icon = IconLoader.ico075;}
-				else if (locName.equals("es")) { caption = "Spanish"; icon = IconLoader.ico084;}
-				else if (locName.equals("pt_br")) { caption = "Brazilian portuguese"; icon = IconLoader.ico085;}
-				else if (locName.equals("it")) { caption = "Italian"; icon = IconLoader.ico086;}
-				else if (locName.equals("zh-cn")) { caption = "Chinese (simplified)"; icon = IconLoader.ico087;}
-				else if (locName.equals("zh-tw")) { caption = "Chinese (traditional)"; icon = IconLoader.ico094;}
-				else if (locName.equals("cz")) { caption = "Czech"; icon = IconLoader.ico088;}
-				else if (locName.equals("ru")) { caption = "Russian"; icon = IconLoader.ico092;}
-				else if (locName.equals("pl")) { caption = "Polish"; icon = IconLoader.ico093;}
+				String caption = locDescription;
+				ImageIcon icon = IconLoader.getLocaleIconImage(locName);
 				JCheckBoxMenuItem item = new JCheckBoxMenuItem(caption, icon);
 				item.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang(locName); } } );
 				menuPreferencesLanguage.add(item);
@@ -1153,12 +1141,9 @@ public class Menu extends LangMenuBar implements NSDController
             // load the selected file into it
             String filename = dlgOpen.getSelectedFile().getAbsoluteFile().toString();
             sl.loadFromFile(filename);
-            // paste it's content to the "preview" locale
+            // paste it's content to the "external" locale
             Locales.getInstance().setExternal(sl,filename);
-            
-            //Locales.getInstance().setLocale(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
-            //setLang(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
-		}
+        }
         // START KGU#235 2016-08-09: Bugfix #225
         doButtons();
         diagram.analyse();

@@ -63,8 +63,31 @@ import lu.fisch.utils.StringList;
  * @author robertfisch
  */
 public class Locales {
-    // LOCALES_LIST of all locales we have
-    public static final String[] LOCALES_LIST = {"en","cz","de","es","fr","it","lu","nl","pl","pt_br","ru","zh-cn","zh-tw","empty","preview","external"};
+    /**
+     * LOCALES_LIST of all locales we have and their respective English denomination
+     * Locales for actually existing languages MUST have an English language name, whereas
+     * pure technical pseudo-locales MUST NOT have a denomination
+     * Note: Order matters (preferences menu, Translator etc. will present locales in the order given here) 
+     */
+    public static final String[][] LOCALES_LIST = {
+    	{"en", "English"},
+    	{"de", "German"},
+    	{"fr", "French"},
+    	{"nl", "Hollandish"},
+    	{"lu", "Luxemburgish"},
+    	{"es", "Spanish"},
+    	{"pt_br", "Portuguese (Brazilian)"},
+    	{"it", "Italian"},
+    	{"zh-cn", "Chinese (simplified)"},
+    	{"zh-tw", "Chinese (traditional)"},
+    	{"cz", "Czech"},
+    	{"ru",	"Russian"},
+    	{"pl", "Polish"},
+    	// pseudo and auxiliary locales 
+    	{"empty", null},
+    	{"preview", null},
+    	{"external", null}
+    	};
     
     // the "default" oder "master" locale
     public static final String DEFAULT_LOCALE = "en";
@@ -177,7 +200,7 @@ public class Locales {
         StringList result = new StringList();
         
         for (int i = 0; i < LOCALES_LIST.length; i++) {
-            String localeName = LOCALES_LIST[i];
+            String localeName = LOCALES_LIST[i][0];
             if(getLocale(localeName).hasKey(keyName)) result.add(localeName);
         }
         
@@ -216,6 +239,15 @@ public class Locales {
         }
     }
     
+    public static boolean isNamedLocale(String localeName)
+    {
+        boolean found = false;
+        for (int i = 0; !found && i < LOCALES_LIST.length; i++)
+        {
+        	found = LOCALES_LIST[i][0].equals(localeName);
+        }
+    	return found;
+    }
     
     public void setLocale(String localeName)
     {
@@ -223,7 +255,8 @@ public class Locales {
         
         // if we can't find the name of the loaded locale,
         // we suppose a filepath has been passed
-        if(!Arrays.asList(LOCALES_LIST).contains(loadedLocaleName))
+        //if(!Arrays.asList(LOCALES_LIST).contains(loadedLocaleName))
+        if (!isNamedLocale(loadedLocaleName))
         {
             // let's check if it is an existing file
             if((new File(localeName)).exists())

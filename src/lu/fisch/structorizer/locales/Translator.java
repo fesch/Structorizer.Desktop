@@ -20,9 +20,32 @@
 
 package lu.fisch.structorizer.locales;
 
+/******************************************************************************************************
+*
+*      Author:         Bob Fisch
+*
+*      Description:    This class is responsible for setting up the entire menubar.
+*
+******************************************************************************************************
+*
+*      Revision List
+*
+*      Author          Date            Description
+*      ------          ----            -----------
+*      Bob Fisch       2016.08.01      First Issue
+*      Kay Gürtzig     2016.09.05      Structural redesign of locale button generation (no from the Locales list)
+*      Kay Gürtzig     2016.09.06      Opportunity to reload a saved language file to resume editing it
+*
+******************************************************************************************************
+*
+*      Comment:		/
+*
+******************************************************************************************************///
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
@@ -35,15 +58,18 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Vector;
 
+import javax.swing.GroupLayout.ParallelGroup;
+import javax.swing.GroupLayout.SequentialGroup;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
-import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 
 import lu.fisch.structorizer.gui.IconLoader;
@@ -88,6 +114,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
      * Creates new form MainFrame
      */
     private Translator() {
+        // START KGU 2016-09-05: Bugfix - We must ensure that the default locale had been loaded (to create all tabs)
+        Locales.getInstance().getDefaultLocale();
+        // END KGU 2016-09-05
+        
         initComponents();
         
         button_preview.setVisible(false);
@@ -198,20 +228,17 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     
     }
     
-    public void loadLocale(String localeName, java.awt.event.ActionEvent evt)
+    public boolean loadLocale(String localeName, java.awt.event.ActionEvent evt)
     {
         ((JButton)evt.getSource()).setName(localeName);
-        ((JButton)evt.getSource()).setToolTipText(localeName);
+        //((JButton)evt.getSource()).setToolTipText(localeName);
         
         headerText.getDocument().removeDocumentListener(this);
 
         // backup actual loadedLocale
         if(loadedLocale != null && loadedLocaleName != null)
         {
-            //button.setBackground(Color.green);
-            //JButton button = (JButton) getComponentByName(loadedLocaleName);
-            // START KGU#231 2016-08-09: Issue #220 - Check if user wants to discard changes
-            //button.setBackground(Color.green);
+            // Check if user wants to discard changes
             if ((loadedLocale.hasUnsavedChanges || loadedLocale.hasCachedChanges()) && loadedLocaleName.equals(localeName))
             {
                 int answer = JOptionPane.showConfirmDialog (null, 
@@ -225,49 +252,26 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                     loadedLocale.values.clear();
                     loadedLocale.cachedHeader.clear();
                     loadedLocale.hasUnsavedChanges = false;
+                    loadedLocale.cachedFilename = null;
                     button.setBackground(this.stdBackgroundColor);                	
                 }
+                // START KGU 2016-09-05: Bugfix - if the user doesn't want to discard changes we shouldn't continue
+                else {          
+                    headerText.getDocument().addDocumentListener(this);
+                	return false;
+                }
+                // END KGU 2016-09-05
             }
-            // END KGU#231 2016-08-09
             
-            // START KGU#231 2016-08-09: Issue #220 Don't cache
-//            button.setToolTipText(loadedLocaleName + " - cached!");
-//
-//            // cache header modifications
-//            loadedLocale.setHeader(StringList.explode(headerText.getText(), "\n"));
-//
-//            // loop through all sections in order to merge the values
-//            ArrayList<String> sectionNames = locales.getSectionNames();
-//            for (int i = 0; i < sectionNames.size(); i++) {
-//                // get the name of the section
-//                String sectionName = sectionNames.get(i);
-//                loadedLocale.values.put(sectionName, new LinkedHashMap<String, String>());
-//
-//                // fetch the corresponding table
-//                JTable table = tables.get(sectionName);
-//
-//                // get a reference to the model
-//                DefaultTableModel model = ((DefaultTableModel)table.getModel());
-//
-//                // get the strings and put them into loadedLocale
-//                for (int r = 0; r < model.getRowCount(); r++) {
-//                    // get the key
-//                    String key = ((String) model.getValueAt(r, 0)).trim();
-//                    // get the value
-//                    String value = ((String) model.getValueAt(r, 2)).trim();
-//                    // put the value
-//                    loadedLocale.values.get(sectionName).put(key, value);
-//                }
-//            }
             cacheUnsavedData();
-            // END KGU#231 2016-08-09
         }
         
         headerText.setText(locales.getLocale(localeName).getHeader().getText());
-        loadedLocale=locales.getLocale(localeName);
+        loadedLocale = locales.getLocale(localeName);
         
-        // first check if we have some cached values
+        // First check if we have some cached values
     	// START KGU#231 2016-08-09: Issue #220
+        // Take care of a modified header
     	if (loadedLocale.cachedHeader.count() > 0)
     	{
     		headerText.setText(loadedLocale.cachedHeader.getText());
@@ -275,6 +279,12 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     	// END KGU#231 2016-08-09
         if(loadedLocale.values.size()!=0)
         {
+        	// Present a different column header if the locale data were from file
+        	String column2Header = localeName;
+        	if (loadedLocale.cachedFilename != null)
+        	{
+        		column2Header += " (" + loadedLocale.cachedFilename + ")";
+        	}
             // loop through all sections
             ArrayList<String> sectionNames = locales.getSectionNames();
             for (int i = 0; i < sectionNames.size(); i++) {
@@ -285,7 +295,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 JTable table = tables.get(sectionName);
 
                 // put the label on the column
-                table.getColumnModel().getColumn(2).setHeaderValue(localeName);
+                table.getColumnModel().getColumn(2).setHeaderValue(column2Header);
                 table.getTableHeader().repaint();
 
                 // get a reference to the model
@@ -300,36 +310,34 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 }
             }
         }
-        // if not, load the ones we got from the file
-        else
-        {
-            // loop through all sections
-            ArrayList<String> sectionNames = locales.getSectionNames();
-            for (int i = 0; i < sectionNames.size(); i++) {
-                // get the name of the section
-                String sectionName = sectionNames.get(i);
+        else {
+        	// loop through all sections
+        	ArrayList<String> sectionNames = locales.getSectionNames();
+        	for (int i = 0; i < sectionNames.size(); i++) {
+        		// get the name of the section
+        		String sectionName = sectionNames.get(i);
 
-                // fetch the corresponding table
-                JTable table = tables.get(sectionName);
+        		// fetch the corresponding table
+        		JTable table = tables.get(sectionName);
 
-                // put the label on the column
-                table.getColumnModel().getColumn(2).setHeaderValue(localeName);
-                table.getTableHeader().repaint();
+        		// put the label on the column
+        		table.getColumnModel().getColumn(2).setHeaderValue(localeName);
+        		table.getTableHeader().repaint();
 
-                // get a reference to the model
-                DefaultTableModel model = ((DefaultTableModel)table.getModel());
+        		// get a reference to the model
+        		DefaultTableModel model = ((DefaultTableModel)table.getModel());
 
-                // get the needed loadedLocale and the corresponding section
-            Locale locale = locales.getLocale(localeName);
-            
-            // get the strings and put them into the right row
-            for (int r = 0; r < model.getRowCount(); r++) {
-                // get the key
-                String key = ((String) model.getValueAt(r, 0)).trim();
-                // put the value
-                model.setValueAt(locale.getValue(sectionName, key), r, 2);
-            }
-        }
+        		// get the needed loadedLocale and the corresponding section
+        		Locale locale = locales.getLocale(localeName);
+
+        		// get the strings and put them into the right row
+        		for (int r = 0; r < model.getRowCount(); r++) {
+        			// get the key
+        			String key = ((String) model.getValueAt(r, 0)).trim();
+        			// put the value
+        			model.setValueAt(locale.getValue(sectionName, key), r, 2);
+        		}
+        	}
         }
 
         // enable the buttons
@@ -341,14 +349,15 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         loadedLocaleName = localeName;
 
         headerText.getDocument().addDocumentListener(this);
+        return true;
     }
     
     // START KGU#231 2016-08-09: Issue #220
     private void cacheUnsavedData()
     {
         if (loadedLocale.hasUnsavedChanges) {
-            JButton button = (JButton) getComponentByName(loadedLocaleName);
-            button.setToolTipText(loadedLocaleName + " - cached!");
+            //JButton button = (JButton) getComponentByName(loadedLocaleName);
+            //button.setToolTipText(loadedLocaleName + " - cached!");
             
             // cache header modifications
             loadedLocale.cachedHeader = StringList.explode(headerText.getText(), "\n");
@@ -379,6 +388,59 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         }
     }
     // END KGU#231 2016-08-09
+    
+    // START KGU#244 2016-06-09: Allow to reload a translation file
+    private boolean presentLocale(Locale locale)
+    {
+        // first check if we have some cached values
+    	boolean differs = loadedLocale.getHeader().count() != locale.getHeader().count();
+    	if (!differs)
+    	{
+    		StringList header1 = loadedLocale.getHeader();
+    		StringList header2 = locale.getHeader();
+    		for (int line = 0; !differs && line < Math.min(header1.count(), header2.count()); line++)
+    		{
+    			differs = !header1.get(line).equals(header2.get(line));
+    		}
+    	}
+    	if (differs)
+    	{
+    		headerText.setText(locale.getHeader().getText());
+    	}
+    	loadedLocale.cachedFilename = locale.getFilename();
+    	String column2Header = loadedLocaleName + " (" + locale.getFilename() + ")";
+    	// loop through all sections
+    	ArrayList<String> sectionNames = locales.getSectionNames();
+    	for (int i = 0; i < sectionNames.size(); i++) {
+    		// get the name of the section
+    		String sectionName = sectionNames.get(i);
+
+    		// fetch the corresponding table
+    		JTable table = tables.get(sectionName);
+
+    		// put the label on the column
+    		table.getColumnModel().getColumn(2).setHeaderValue(column2Header);
+    		table.getTableHeader().repaint();
+
+    		// get a reference to the model
+    		DefaultTableModel model = ((DefaultTableModel)table.getModel());
+
+    		// get the strings and put them into the right row
+    		for (int r = 0; r < model.getRowCount(); r++) {
+    			// get the key
+    			String key = ((String) model.getValueAt(r, 0)).trim();
+    			// Test the value
+    			if (locale.valueDiffersFrom(key, (String)model.getValueAt(r, 2)))
+    			{
+    				differs = true;
+    			}
+    			// put the value
+    			model.setValueAt(locale.getValue(sectionName, key), r, 2);
+    		}
+    	}
+    	return differs;
+    }
+    // END KGU#244 2016-09-05
     
     private void checkMissingStrings()
     {
@@ -494,21 +556,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
-        button_fr = new javax.swing.JButton();
-        button_nl = new javax.swing.JButton();
-        button_lu = new javax.swing.JButton();
-        button_de = new javax.swing.JButton();
-        button_es = new javax.swing.JButton();
-        button_pt_br = new javax.swing.JButton();
-        button_it = new javax.swing.JButton();
-        button_chs = new javax.swing.JButton();
-        button_cz = new javax.swing.JButton();
-        button_ru = new javax.swing.JButton();
-        button_pl = new javax.swing.JButton();
-        button_cht = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         button_save = new javax.swing.JButton();
-        button_en = new javax.swing.JButton();
         button_empty = new javax.swing.JButton();
         button_preview = new javax.swing.JButton();
         tabs = new javax.swing.JTabbedPane();
@@ -525,90 +574,24 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         jPanel1.setBackground(new java.awt.Color(255, 255, 204));
         jPanel1.setPreferredSize(new java.awt.Dimension(655, 48));
 
-        button_fr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/045_fr.png"))); // NOI18N
-        button_fr.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                button_frActionPerformed(evt);
-            }
-        });
-
-        button_nl.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/051_nl.png"))); // NOI18N
-        button_nl.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                button_nlActionPerformed(evt);
-            }
-        });
-
-        button_lu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/075_lu.png"))); // NOI18N
-        button_lu.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                button_luActionPerformed(evt);
-            }
-        });
-
-        button_de.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/080_de.png"))); // NOI18N
-        button_de.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                button_deActionPerformed(evt);
-            }
-        });
-
-        button_es.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/084_es.png"))); // NOI18N
-        button_es.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                button_esActionPerformed(evt);
-            }
-        });
-
-        button_pt_br.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/085_pt_br.png"))); // NOI18N
-        button_pt_br.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                button_pt_brActionPerformed(evt);
-            }
-        });
-
-        button_it.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/086_it.png"))); // NOI18N
-        button_it.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                button_itActionPerformed(evt);
-            }
-        });
-
-        button_chs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/087_cn.png"))); // NOI18N
-        button_chs.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                button_chsActionPerformed(evt);
-            }
-        });
-
-        button_cz.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/088_cz.png"))); // NOI18N
-        button_cz.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                button_czActionPerformed(evt);
-            }
-        });
-
-        button_ru.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/092_ru.png"))); // NOI18N
-        button_ru.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                button_ruActionPerformed(evt);
-            }
-        });
-
-        button_pl.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/093_pl.png"))); // NOI18N
-        button_pl.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                button_plActionPerformed(evt);
-            }
-        });
-
-        button_cht.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/094_tw.png"))); // NOI18N
-        button_cht.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                button_chtActionPerformed(evt);
-            }
-        });
-
+        for (int i = 0; i < Locales.LOCALES_LIST.length; i++)
+        {
+        	final String localeName = Locales.LOCALES_LIST[i][0];
+        	String localeToolTip = Locales.LOCALES_LIST[i][1];
+        	if (localeToolTip != null)
+        	{
+        		javax.swing.JButton button = new javax.swing.JButton();
+        		button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_"+localeName+".png"))); // NOI18N
+        		button.setToolTipText(localeToolTip);
+        		button.addActionListener(new java.awt.event.ActionListener() {
+        			public void actionPerformed(java.awt.event.ActionEvent evt) {
+        				button_localeActionPerformed(evt, localeName);
+        			}
+        		});
+        		localeButtons.add(button);
+        	}
+        }
+        
         jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 24)); // NOI18N
         jLabel1.setText("Load");
 
@@ -619,15 +602,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             }
         });
 
-        button_en.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/046_uk.png"))); // NOI18N
-        button_en.setName(""); // NOI18N
-        button_en.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                button_enActionPerformed(evt);
-            }
-        });
-
-        button_empty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/114_unknown.png"))); // NOI18N
+        button_empty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_unknown.png"))); // NOI18N
+        button_empty.setToolTipText("Create new file");
         button_empty.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 button_emptyActionPerformed(evt);
@@ -635,6 +611,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         });
 
         button_preview.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/017_Eye.png"))); // NOI18N
+        button_preview.setToolTipText("Preview in Structorizer");
         button_preview.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 button_previewActionPerformed(evt);
@@ -643,37 +620,17 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
+        SequentialGroup sGroup = jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel1);
+        for (javax.swing.JButton button: localeButtons)
+        {
+        	sGroup = sGroup.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(button);
+        }
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(button_en)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(button_fr)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(button_nl)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(button_lu)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(button_de)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(button_es)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(button_pt_br)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(button_it)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(button_chs)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(button_cz)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(button_ru)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(button_pl)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(button_cht)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, sGroup
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(button_empty)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 289, Short.MAX_VALUE)
@@ -682,28 +639,20 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 .addComponent(button_save)
                 .addContainerGap())
         );
+        ParallelGroup pGroup = jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        		.addComponent(jLabel1)
+        		.addComponent(button_preview, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+        		.addComponent(button_empty, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+        		.addComponent(button_save, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE);
+        for (javax.swing.JButton button: localeButtons)
+        {
+        	pGroup = pGroup.addComponent(button, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE);
+        }	
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(button_preview, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(button_empty, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(button_en, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(button_save, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(button_it, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1)
-                    .addComponent(button_cht, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(button_pl, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(button_ru, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(button_cz, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(button_chs, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(button_pt_br, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(button_es, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(button_de, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(button_lu, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(button_nl, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(button_fr, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(pGroup)
                 .addContainerGap(7, Short.MAX_VALUE))
         );
 
@@ -724,53 +673,43 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void button_frActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_frActionPerformed
-        loadLocale("fr",evt);
-    }//GEN-LAST:event_button_frActionPerformed
-
-    private void button_nlActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_nlActionPerformed
-        loadLocale("nl",evt);
-    }//GEN-LAST:event_button_nlActionPerformed
-
-    private void button_luActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_luActionPerformed
-        loadLocale("lu",evt);
-    }//GEN-LAST:event_button_luActionPerformed
-
-    private void button_deActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_deActionPerformed
-        loadLocale("de",evt);
-    }//GEN-LAST:event_button_deActionPerformed
-
-    private void button_esActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_esActionPerformed
-        loadLocale("es",evt);
-    }//GEN-LAST:event_button_esActionPerformed
-
-    private void button_pt_brActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_pt_brActionPerformed
-        loadLocale("pt_br",evt);
-    }//GEN-LAST:event_button_pt_brActionPerformed
-
-    private void button_itActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_itActionPerformed
-        loadLocale("it",evt);
-    }//GEN-LAST:event_button_itActionPerformed
-
-    private void button_chsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_chsActionPerformed
-        loadLocale("zh-cn",evt);
-    }//GEN-LAST:event_button_chsActionPerformed
-
-    private void button_czActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_czActionPerformed
-        loadLocale("cz",evt);
-    }//GEN-LAST:event_button_czActionPerformed
-
-    private void button_ruActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_ruActionPerformed
-        loadLocale("ru",evt);
-    }//GEN-LAST:event_button_ruActionPerformed
-
-    private void button_plActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_plActionPerformed
-        loadLocale("pl",evt);
-    }//GEN-LAST:event_button_plActionPerformed
-
-    private void button_chtActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_chtActionPerformed
-        loadLocale("zh-tw",evt);
-    }//GEN-LAST:event_button_chtActionPerformed
+    private void button_localeActionPerformed(java.awt.event.ActionEvent evt, String localeName)
+    {
+    	// (Re-)Load the selected standard locale - with check on unsaved changes
+        boolean done = loadLocale(localeName, evt);
+        // In case of a user file to be reloaded, the file content overrides the standard
+    	if (done && (evt.getModifiers() & ActionEvent.SHIFT_MASK) != 0)
+    	{
+    		Locale loaded = makeLocaleFromChosenFile(localeName);
+    		// Override the data by the loaded locale ...
+    		boolean diffs = presentLocale(loaded);
+    		// ... and adjust the button colour accordingly
+    		((JButton)evt.getSource()).setBackground(diffs ? savedColor : stdBackgroundColor);
+    	}  
+    }
+    
+    // START KGU#244 2016-09-05: Allow reloading begun language files
+    private Locale makeLocaleFromChosenFile(String localeName) {
+    	Locale extLocale = null;
+		JFileChooser dlgOpen = new JFileChooser();
+		dlgOpen.setDialogTitle("Load saved translations for <"+localeName+"> from...");
+		// set directory
+		dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
+		// config dialogue
+		FileNameExtensionFilter filter = new FileNameExtensionFilter("Structorizer language file", "txt");
+		dlgOpen.addChoosableFileFilter(filter);
+		dlgOpen.setFileFilter(filter);
+		// show & get result
+		int result = dlgOpen.showOpenDialog(this);
+		// react on result
+        if (result == JFileChooser.APPROVE_OPTION) {
+            String filename = dlgOpen.getSelectedFile().getAbsoluteFile().toString();
+            // Create a new Locale from it
+            extLocale = (new Locale(filename));
+		}
+        return extLocale;
+    }
+    // END KGU#244 2016-09-05
 
     private Locale getComposedLocale()
     {
@@ -781,10 +720,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         locale.setHeader(StringList.explode(headerText.getText(), "\n"));
         
         // loop through all sections in order to merge the values
-        ArrayList<String> sectioNames = locales.getSectionNames();
-        for (int i = 0; i < sectioNames.size(); i++) {
+        ArrayList<String> sectionNames = locales.getSectionNames();
+        for (int i = 0; i < sectionNames.size(); i++) {
             // get the name of the section
-            String sectionName = sectioNames.get(i);
+            String sectionName = sectionNames.get(i);
             
             // fetch the corresponding table
             JTable table = tables.get(sectionName);
@@ -855,10 +794,6 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             }
         }     
     }//GEN-LAST:event_button_saveActionPerformed
-
-    private void button_enActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_enActionPerformed
-        loadLocale("en",evt);
-    }//GEN-LAST:event_button_enActionPerformed
 
     private void button_emptyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_emptyActionPerformed
         loadLocale("empty",evt);
@@ -998,21 +933,24 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton button_chs;
-    private javax.swing.JButton button_cht;
-    private javax.swing.JButton button_cz;
-    private javax.swing.JButton button_de;
+    // START KGU#242 2016-09-05
+    private Vector<javax.swing.JButton> localeButtons = new Vector<javax.swing.JButton>();
+//    private javax.swing.JButton button_chs;
+//    private javax.swing.JButton button_cht;
+//    private javax.swing.JButton button_cz;
+//    private javax.swing.JButton button_de;
+//    private javax.swing.JButton button_en;
+//    private javax.swing.JButton button_es;
+//    private javax.swing.JButton button_fr;
+//    private javax.swing.JButton button_it;
+//    private javax.swing.JButton button_lu;
+//    private javax.swing.JButton button_nl;
+//    private javax.swing.JButton button_pl;
+//    private javax.swing.JButton button_pt_br;
+//    private javax.swing.JButton button_ru;
+    // END KGU#242 2016-09-05
     private javax.swing.JButton button_empty;
-    private javax.swing.JButton button_en;
-    private javax.swing.JButton button_es;
-    private javax.swing.JButton button_fr;
-    private javax.swing.JButton button_it;
-    private javax.swing.JButton button_lu;
-    private javax.swing.JButton button_nl;
-    private javax.swing.JButton button_pl;
     private javax.swing.JButton button_preview;
-    private javax.swing.JButton button_pt_br;
-    private javax.swing.JButton button_ru;
     private javax.swing.JButton button_save;
     private javax.swing.JTextPane headerText;
     private javax.swing.JLabel jLabel1;
