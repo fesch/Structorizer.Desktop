@@ -3418,77 +3418,23 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						   Math.round(p.y+(getVisibleRect().height-analyserPreferences.getHeight())/2+this.getVisibleRect().y));
 
 		// set fields
-// START KGU#239 2016-08-12: Code redesign
-//		analyserPreferences.check1.setSelected(Root.check(1));
-//		analyserPreferences.check2.setSelected(Root.check(2));
-//		analyserPreferences.check3.setSelected(Root.check(3));
-//		analyserPreferences.check4.setSelected(Root.check(4));
-//		analyserPreferences.check5.setSelected(Root.check(5));
-//		analyserPreferences.check6.setSelected(Root.check(6));
-//		analyserPreferences.check7.setSelected(Root.check(7));
-//		analyserPreferences.check8.setSelected(Root.check(8));
-//		analyserPreferences.check9.setSelected(Root.check(9));
-//		analyserPreferences.check10.setSelected(Root.check(10));
-//		analyserPreferences.check11.setSelected(Root.check(11));
-//		analyserPreferences.check12.setSelected(Root.check(12));
-//		analyserPreferences.check13.setSelected(Root.check(13));
-//		// START KGU#3 2015-11-03: New check type for enhanced FOR loops
-//		analyserPreferences.check14.setSelected(Root.check(14));
-//		// END KGU#3 2015-11-03
-//		// START KGU#2/KGU#78 2015-11-25: New check type for enabled subroutine calls / JUMP instructions
-//		analyserPreferences.check15.setSelected(Root.check(15));	// KGU#2
-//		analyserPreferences.check16.setSelected(Root.check(16));	// KGU#78
-//		// END KGU#2/KGU#78 2015-11-25
-//		// START KGU#47 2015-11-29: New check type for PARALLEL sections
-//		analyserPreferences.check17.setSelected(Root.check(17));
-//		// END KGU#47 2015-11-29
-//		// START KGU#239 2016-08-12: New check types for identifier collisions
-//		analyserPreferences.check18.setSelected(Root.check(18));
-//		analyserPreferences.check19.setSelected(Root.check(19));
-//		// END KGU#239 2016-08-12
+		// START KGU#239 2016-08-12: Code redesign
 		for (int i = 0; i < analyserPreferences.checkboxes.length; i++)
 		{
 			analyserPreferences.checkboxes[i].setSelected(Root.check(i+1));
 		}
-// END KGU#239 2016-08-12
+		// END KGU#239 2016-08-12
 
 		analyserPreferences.pack();
 		analyserPreferences.setVisible(true);
 
 		// get fields
-// START KGU#239 2016-08-12: Code redesign
-//		Root.setCheck(1, analyserPreferences.check1.isSelected());
-//		Root.setCheck(2, analyserPreferences.check2.isSelected());
-//		Root.setCheck(3, analyserPreferences.check3.isSelected());
-//		Root.setCheck(4, analyserPreferences.check4.isSelected());
-//		Root.setCheck(5, analyserPreferences.check5.isSelected());
-//		Root.setCheck(6, analyserPreferences.check6.isSelected());
-//		Root.setCheck(7, analyserPreferences.check7.isSelected());
-//		Root.setCheck(8, analyserPreferences.check8.isSelected());
-//		Root.setCheck(9, analyserPreferences.check9.isSelected());
-//		Root.setCheck(10, analyserPreferences.check10.isSelected());
-//		Root.setCheck(11, analyserPreferences.check11.isSelected());
-//		Root.setCheck(12, analyserPreferences.check12.isSelected());
-//		Root.setCheck(13, analyserPreferences.check13.isSelected());
-//		// START KGU#3 2015-11-03: New check type for enhanced FOR loops
-//		Root.setCheck(14, analyserPreferences.check14.isSelected());
-//		// END KGU#3 2015-11-03
-//		// START KGU#2/KGU#78 2015-11-25: New check type for enabled subroutine calls / JUMP instructions
-//		Root.setCheck(15, analyserPreferences.check15.isSelected());	// KGU#2
-//		Root.setCheck(16, analyserPreferences.check16.isSelected());	// KGU#78
-//		// END KGU#2/KGU#78 2015-11-25
-//		// START KGU#47 2015-11-29: New check type for PARALLEL sections
-//		Root.setCheck(17, analyserPreferences.check17.isSelected());
-//		// END KGU#47 2015-11-29
-//		// START KGU#239 2016-08-12: Enh.#231 - New check types for identifier collisions
-//		Root.setCheck(18, analyserPreferences.check18.isSelected());
-//		Root.setCheck(19, analyserPreferences.check19.isSelected());
-//		// END KGU#2/KGU#78 2016-08-12
+		// START KGU#239 2016-08-12: Code redesign
 		for (int i = 0; i < analyserPreferences.checkboxes.length; i++)
 		{
 			Root.setCheck(i+1, analyserPreferences.checkboxes[i].isSelected());
 		}
-// END KGU#239 2016-08-12
+		// END KGU#239 2016-08-12
 
 		// save fields to ini-file
 		Root.saveToINI();

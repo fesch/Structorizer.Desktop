@@ -563,7 +563,7 @@ public class Locales {
                         		}
                         		// END KGU#239 2016-08-12
                         		// START KGU#242 2016-09-04
-                        		else if (fieldClass.getName().equals("java.util.Hashtable") && pieces.count() > 3)
+                        		else if ((fieldClass.getName().equals("java.util.HashMap") || fieldClass.getName().equals("java.util.Hashtable")) && pieces.count() > 3)
                         		{
                         			String piece1_2 = pieces.get(1) + "[" + piece2 + "]";
                         			Method method = fieldClass.getMethod("get", new Class[]{Object.class});
@@ -576,6 +576,7 @@ public class Locales {
                         			}
                         			catch (Exception e) {
                         				// FIXME: No idea why this always goes off just on startup
+                        				//System.err.println("LANG: Trouble accessing <" + pieces.get(0) + "." + piece1_2 + ">");
                         			}
                         			if (target != null)
                         			{
