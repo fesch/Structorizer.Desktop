@@ -35,6 +35,8 @@ package lu.fisch.structorizer.locales;
 *      Bob Fisch       2016.08.01      First Issue
 *      Kay Gürtzig     2016.09.05      Structural redesign of locale button generation (no from the Locales list)
 *      Kay Gürtzig     2016.09.06      Opportunity to reload a saved language file to resume editing it
+*      Kay Gürtzig     2016.09.09      Handling of unsaved changes improved, loadLocale() API modified,
+*                                      command line parameter "-test" introduced to re-allow full consistency check
 *
 ******************************************************************************************************
 *
@@ -198,19 +200,27 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 			@Override
 			public void windowClosing(WindowEvent e) 
 			{
-				boolean unsavedChanges = false;
 				String[] localeNames = locales.getNames();
-				for (int i = 0; !unsavedChanges && i < localeNames.length; i++)
+				StringList unsavedLocales = new StringList();
+				for (int i = 0; i < localeNames.length; i++)
 				{
 					if (locales.getLocale(localeNames[i]).hasUnsavedChanges)
 					{
-						unsavedChanges = true;
+						for (int j = 0; j < Locales.LOCALES_LIST.length; j++)
+						{
+							if (Locales.LOCALES_LIST[j][0].equals(localeNames[i]))
+							{
+								unsavedLocales.add("    " + localeNames[i] +
+										" (" + Locales.LOCALES_LIST[j][1] + ")");
+							}
+						}
 					}
 				}
-				if (unsavedChanges)
+				if (unsavedLocales.count() > 0)
 				{
 					int answer = JOptionPane.showConfirmDialog (null, 
-					        "There are unsaved changes! Sure to close?", 
+					        "There are unsaved changes in following locales:\n"
+							+ unsavedLocales.getText() + "\nSure to close?", 
 					        "Unsaved Changes",
 					        JOptionPane.YES_NO_OPTION,
 					        JOptionPane.QUESTION_MESSAGE);
@@ -228,7 +238,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     
     }
     
-    public boolean loadLocale(String localeName, java.awt.event.ActionEvent evt)
+    public boolean loadLocale(String localeName, java.awt.event.ActionEvent evt, boolean toLoadFromFile)
     {
         ((JButton)evt.getSource()).setName(localeName);
         //((JButton)evt.getSource()).setToolTipText(localeName);
@@ -239,10 +249,20 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         if(loadedLocale != null && loadedLocaleName != null)
         {
             // Check if user wants to discard changes
-            if ((loadedLocale.hasUnsavedChanges || loadedLocale.hasCachedChanges()) && loadedLocaleName.equals(localeName))
+            if (loadedLocaleName.equals(localeName)
+            		&&
+            		(loadedLocale.hasUnsavedChanges
+            				|| 
+            				loadedLocale.hasCachedChanges() &&
+            				!((loadedLocale.cachedFilename != null) && toLoadFromFile && !loadedLocale.hasUnsavedChanges)
+            		)
+            	||
+            	!loadedLocaleName.equals(localeName) &&
+            	locales.getLocale(localeName).hasUnsavedChanges && toLoadFromFile)
             {
+            	String question = locales.getLocale(localeName).hasUnsavedChanges ? "Do you want to discard all changes for" : "Do you want to reload the released locale";
                 int answer = JOptionPane.showConfirmDialog (null, 
-                        "Do you want to discard all changes for \"" + localeName + "\"?", 
+                        question + " \"" + localeName + "\"?", 
                         "Existing Changes",
                         JOptionPane.YES_NO_OPTION,
                         JOptionPane.QUESTION_MESSAGE);
@@ -355,7 +375,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     // START KGU#231 2016-08-09: Issue #220
     private void cacheUnsavedData()
     {
-        if (loadedLocale.hasUnsavedChanges) {
+        if (loadedLocale.hasUnsavedChanges || loadedLocale.cachedFilename != null) {
             //JButton button = (JButton) getComponentByName(loadedLocaleName);
             //button.setToolTipText(loadedLocaleName + " - cached!");
             
@@ -405,7 +425,9 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     	}
     	if (differs)
     	{
+            headerText.getDocument().removeDocumentListener(this);
     		headerText.setText(locale.getHeader().getText());
+            headerText.getDocument().addDocumentListener(this);
     	}
     	loadedLocale.cachedFilename = locale.getFilename();
     	String column2Header = loadedLocaleName + " (" + locale.getFilename() + ")";
@@ -417,6 +439,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
     		// fetch the corresponding table
     		JTable table = tables.get(sectionName);
+    		// No need to trigger property change events here, we know what we do
+            table.removePropertyChangeListener(this);
 
     		// put the label on the column
     		table.getColumnModel().getColumn(2).setHeaderValue(column2Header);
@@ -437,6 +461,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     			// put the value
     			model.setValueAt(locale.getValue(sectionName, key), r, 2);
     		}
+    		// Table loaded, from now on react to user manipulations again
+            table.addPropertyChangeListener(this);
     	}
     	return differs;
     }
@@ -464,7 +490,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             }
         } // now "keys" contains all keys from all locales
         
-        // substract default loadedLocale keys
+        // subtract default loadedLocale keys
         Locale locale = locales.getDefaultLocale();
         for (int s = 0; s < sectionNames.size(); s++) {
             // get the name of the section
@@ -596,6 +622,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         jLabel1.setText("Load");
 
         button_save.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/003_Save.png"))); // NOI18N
+        button_save.setToolTipText("Save changes");
         button_save.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 button_saveActionPerformed(evt);
@@ -603,7 +630,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         });
 
         button_empty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_empty.png"))); // NOI18N
-        button_empty.setToolTipText("Create new file");
+        button_empty.setToolTipText("Create new locale");
         button_empty.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 button_emptyActionPerformed(evt);
@@ -675,16 +702,20 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
     private void button_localeActionPerformed(java.awt.event.ActionEvent evt, String localeName)
     {
+    	boolean fromFile = (evt.getModifiers() & ActionEvent.SHIFT_MASK) != 0;
     	// (Re-)Load the selected standard locale - with check on unsaved changes
-        boolean done = loadLocale(localeName, evt);
+        boolean done = loadLocale(localeName, evt, fromFile);
         // In case of a user file to be reloaded, the file content overrides the standard
-    	if (done && (evt.getModifiers() & ActionEvent.SHIFT_MASK) != 0)
+    	if (done && fromFile)
     	{
     		Locale loaded = makeLocaleFromChosenFile(localeName);
-    		// Override the data by the loaded locale ...
-    		boolean diffs = presentLocale(loaded);
-    		// ... and adjust the button colour accordingly
-    		((JButton)evt.getSource()).setBackground(diffs ? savedColor : stdBackgroundColor);
+    		if (loaded != null)
+    		{
+    			// Override the data by the loaded locale ...
+    			boolean diffs = presentLocale(loaded);
+    			// ... and adjust the button colour accordingly
+    			((JButton)evt.getSource()).setBackground(diffs ? savedColor : stdBackgroundColor);
+    		}
     	}  
     }
     
@@ -751,8 +782,13 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         
         // now ask where to save the data
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Save as");   
-        fileChooser.setSelectedFile(new File(loadedLocaleName+".txt"));
+        fileChooser.setDialogTitle("Save as");
+        String proposedFilename = loadedLocale.cachedFilename;
+        if (proposedFilename == null)
+        {
+        	proposedFilename = loadedLocaleName+".txt";
+        }
+        fileChooser.setSelectedFile(new File(proposedFilename));
         int userSelection = fileChooser.showSaveDialog(this);
         
         if (userSelection == JFileChooser.APPROVE_OPTION) 
@@ -761,7 +797,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             
             boolean save = true;
             
-            if(fileToSave.exists() && !fileToSave.isDirectory()) { 
+            if(fileToSave.exists() && !fileToSave.isDirectory() && !fileToSave.getAbsolutePath().equals(loadedLocale.cachedFilename)) { 
                 if (JOptionPane.showConfirmDialog(this, 
                     "Are you sure to override the file <"+fileToSave.getName()+">?", "Override file?", 
                     JOptionPane.YES_NO_OPTION,
@@ -796,7 +832,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     }//GEN-LAST:event_button_saveActionPerformed
 
     private void button_emptyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_emptyActionPerformed
-        loadLocale("empty",evt);
+        loadLocale("empty", evt, false);
     }//GEN-LAST:event_button_emptyActionPerformed
 
     private void button_previewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_previewActionPerformed
@@ -923,6 +959,23 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         //</editor-fold>
         //</editor-fold>
         //</editor-fold>
+        // START KGU 2016-09-09: With command line option "-test" load all locales such that the basic tests can be run sensibly
+		boolean fullTest = false;
+		for (int i = 0; !fullTest && i < args.length; i++)
+		{
+			fullTest = args[i].equalsIgnoreCase("-test");
+		}
+        if (fullTest)
+        {
+        	for (int i = 0; i < Locales.LOCALES_LIST.length; i++)
+        	{
+        		if (Locales.LOCALES_LIST[i][1] != null)
+        		{
+        			Locales.getInstance().getLocale(Locales.LOCALES_LIST[i][0]);
+        		}
+        	}
+        }
+        // END KGU 2016-09-09
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {

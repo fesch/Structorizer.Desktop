@@ -218,7 +218,7 @@ public class Root extends Element {
 	}
 	public static boolean check(int checkNo)
 	{
-		// nable all unknown checks by default
+		// enable all unknown checks by default
 		return checkNo < 1 || checkNo > analyserChecks.length
 				|| analyserChecks[checkNo-1];
 	}
@@ -3871,48 +3871,23 @@ public class Root extends Element {
     
     public static void saveToINI()
     {
-            try
+        try
+        {
+            Ini ini = Ini.getInstance();
+            ini.load();
+            // analyser (see also Mainform.loadFromIni(), Diagram.analyserNSD()) 
+            // START KGU#239 2016-08-12: Enh. #231 + Code revision
+            for (int i = 0; i < analyserChecks.length; i++)
             {
-                    Ini ini = Ini.getInstance();
-                    ini.load();
-                    // analyser (see also Mainform.loadFromIni(), Diagram.analyserNSD()) 
-                    // START KGU#239 2016-08-12: Enh. #231 + Code revision
-//                    ini.setProperty("check1",(check1?"1":"0"));
-//                    ini.setProperty("check2",(check2?"1":"0"));
-//                    ini.setProperty("check3",(check3?"1":"0"));
-//                    ini.setProperty("check4",(check4?"1":"0"));
-//                    ini.setProperty("check5",(check5?"1":"0"));
-//                    ini.setProperty("check6",(check6?"1":"0"));
-//                    ini.setProperty("check7",(check7?"1":"0"));
-//                    ini.setProperty("check8",(check8?"1":"0"));
-//                    ini.setProperty("check9",(check9?"1":"0"));
-//                    ini.setProperty("check10",(check10?"1":"0"));
-//                    ini.setProperty("check11",(check11?"1":"0"));
-//                    ini.setProperty("check12",(check12?"1":"0"));
-//                    ini.setProperty("check13",(check13?"1":"0"));
-//                    // START KGU#3 2015-11-03: New check for enhanced FOR loop
-//                    ini.setProperty("check14",(check14?"1":"0"));
-//                    // END KGU#3 2015-11-03
-//        			// START KGU#2/KGU#78 2015-11-28: New checks for CALL and JUMP elements
-//                    ini.setProperty("check15",(check15?"1":"0"));
-//                    ini.setProperty("check16",(check16?"1":"0"));
-//                    ini.setProperty("check17",(check17?"1":"0"));
-//        			// END KGU#2/KGU#78 2015-11-28
-//                    // START KGU#239 2016-08-12: Enh. #231
-//                    ini.setProperty("check18",(check18?"1":"0"));
-//                    ini.setProperty("check19",(check19?"1":"0"));
-//                    // END KGU#239 2016-08-12
-                    for (int i = 0; i < analyserChecks.length; i++)
-                    {
-                    	ini.setProperty("check" + (i+1), (check(i+1) ? "1" : "0"));
-                    }
-                    // END KGU#239 2016-08-12
-                    ini.save();
+                ini.setProperty("check" + (i+1), (check(i+1) ? "1" : "0"));
             }
-            catch (Exception e)
-            {
-                    System.out.println(e);
-            }
+            // END KGU#239 2016-08-12
+            ini.save();
+        }
+        catch (Exception e)
+        {
+        	System.out.println(e);
+        }
     }
 
 

@@ -72,6 +72,7 @@
  *      Kay Gürtzig     2016.08.03  Issue #206: Several additions for Menu and Control
  *      Kay Gürtzig     2016.08.04  Enh. #222: Menu option to load translation from file
  *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016.09.09  Spelling of 2 language names corrected
  *
  ******************************************************************************************************
  *
@@ -189,10 +190,10 @@ Menu.menuPreferencesLanguageItems.en.text=Inglés
 Menu.menuPreferencesLanguageItems.de.text=Alemán
 Menu.menuPreferencesLanguageItems.fr.text=Francés
 Menu.menuPreferencesLanguageItems.nl.text=Holandés
-Menu.menuPreferencesLanguageItems.lu.text=Luxemburgés
+Menu.menuPreferencesLanguageItems.lu.text=Luxemburgués
 Menu.menuPreferencesLanguageItems.es.text=Español
 Menu.menuPreferencesLanguageItems.it.text=Italiano
-Menu.menuPreferencesLanguageItems.pt_br.text=Portugés (Brazil)
+Menu.menuPreferencesLanguageItems.pt_br.text=Portugués (Brazil)
 Menu.menuPreferencesLanguageItems.zh-cn.text=Chino (simplificado)
 Menu.menuPreferencesLanguageItems.zh-tw.text=Chino (tradicional)
 Menu.menuPreferencesLanguageItems.cz.text=Checo
