@@ -463,14 +463,3 @@ ExportOptionDialoge.title=导出选项 ...
 ExportOptionDialoge.jButton1.text=确定
 ExportOptionDialoge.commentsCheckBox.text=把说明作为注释导出
 ExportOptionDialoge.jLabel1.text=请选择你想激活的选项 ...
-
-
------[ Element ]-----
-// text "constants"
-preAlt = (?)
-preAltT = T
-preAltF = F
-preCase = (?)\n?\n?\nelse
-preFor = for ? <- ? to ?
-preWhile = while (?)
-preRepeat = until (?)
