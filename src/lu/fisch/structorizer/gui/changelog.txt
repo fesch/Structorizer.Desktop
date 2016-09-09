@@ -4,7 +4,7 @@ Legend:
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Version: 3.25 (2016.09.06)
+Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2
 - 01: Enh. #124: Generalized runtime data visualization <2>
 - 01: Arranger now adopts current directory from first arranged diagram <2>
@@ -106,7 +106,7 @@ Version: 3.25 (2016.09.06)
 - 17: Enh. #231: Variable name collision checks added to Analyser <2>
 - 18: Bugfix #233: Function key F10 was caught by the menu bar [Rolf Schmidt]2
 - 18: Issue #234: bash expression of ord and chr function restricted [Rolf Schmidt]2
-- 18: Locales: GUI handling in Menu and Translator redesigned <2>
+- 18: Locales: Language button handling in Menu and Translator redesigned <2>
 - 18: Locales: Translator enabled to reload edited files <2>
 
 Version: 3.24 (2016.03.14)

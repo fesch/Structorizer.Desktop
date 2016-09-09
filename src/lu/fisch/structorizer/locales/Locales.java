@@ -24,7 +24,7 @@ package lu.fisch.structorizer.locales;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    Fundamental localization manager, hold the locales and performs translations
+ *      Description:    Fundamental localization manager, holds the locales and performs translations
  *
  ******************************************************************************************************
  *
@@ -35,6 +35,7 @@ package lu.fisch.structorizer.locales;
  *      Bob Fisch       2016.08.02      First Issue
  *      Kay Gürtzig     2016.08.12      Mechanism to translate arrays of controls (initially for AnalyserPreferences)
  *      Kay Gürtzig     2016.09.05      Mechanism to translate Hashtables of controls (initially for language preferences)
+ *      Kay Gürtzig     2016.09.09      Fix in getSectionNames(), Javadoc accomplished
  *
  ******************************************************************************************************
  *
@@ -49,7 +50,6 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import javax.swing.JDialog;
@@ -148,6 +148,11 @@ public class Locales {
         */
     }
     
+    /**
+     * Returns the locale configured as default locale. If the locale hadn't been
+     * loaded before it will be loaded now.
+     * @return the default locale
+     */
     public Locale getDefaultLocale()
     {
         // get the default locale
@@ -155,17 +160,24 @@ public class Locales {
     }
     
     /**
-     * Retrieve all section names
-     * 
-     * @return  the LOCALES_LIST with the names of the sections found in all files
+     * Retrieve all section names from the locales already loaded. At least the
+     * default locale is ensured to be loaded.
+     * @return  the names of the sections found in the LOADED locales
      */
     public ArrayList<String> getSectionNames()
     {
         ArrayList<String> sections = new ArrayList<String>();
-        String[] localNames = getNames();
-        for (int i = 0; i < localNames.length; i++) {
-            String localName = localNames[i];
-            Locale locale = locales.get(localName);
+        String[] localeNames = getNames();
+        // START KGU 2016-09-09: Bugfix - We must ensure at least the default locale
+        if (localeNames.length == 0)
+        {
+        	getDefaultLocale();
+        	localeNames = getNames();
+        }
+        // END KGU 2016-09-09
+        for (int i = 0; i < localeNames.length; i++) {
+            String localeName = localeNames[i];
+            Locale locale = locales.get(localeName);
             String[] sectionNames = locale.getSectionNames();
             for (int s = 0; s < sectionNames.length; s++) {
                 String sectionName = sectionNames[s];
@@ -176,10 +188,22 @@ public class Locales {
         return sections;
     }
     
+    /**
+     * Returns a String array containing the names of all locales currently loaded.
+     * This does not necessarily comprise all locales from LOCALES_LIST!
+     * @return String list of locale names 
+     */
     public String[] getNames() {
         return locales.keySet().toArray(new String[locales.size()]);
     }
     
+    /**
+     * Returns the locale associated with the given name of the locale (language
+     * code) or the locale file. If the loacle hadn't been loaded yet then it will
+     * be loaded now - this may take time and could raise error message boxes.
+     * @param name - language code, pseudo locale name, or locale file name
+     * @return - the locale associated with the given name
+     */
     public Locale getLocale(String name)
     {
         // try to get the locale
@@ -195,6 +219,12 @@ public class Locales {
         return locale;
     }
     
+    /**
+     * Retrieves all locales providing a line with the given key (no matter whether
+     * or not there is a non-empty translation for it)
+     * @param keyName - a hierarchical dot-separated key sequence 
+     * @return list of locale names (language codes and pseudo-locale names)
+     */
     public StringList whoHasKey(String keyName)
     {
         StringList result = new StringList();
@@ -207,7 +237,10 @@ public class Locales {
         return result;
     }
     
-    
+    /**
+     * Registers the given component for translation service on locale change.
+     * @param component - a translatable GUI component
+     */
     public void register(Component component)
     {
         // register a new component
@@ -222,6 +255,10 @@ public class Locales {
         
     }
     
+    /**
+     * Removes the given component from the set of applicants for translation service 
+     * @param component - the GUI component no longer to be translated on locale change
+     */
     public void unregister(Component component)
     {
         // unregister a component
@@ -239,6 +276,11 @@ public class Locales {
         }
     }
     
+    /**
+     * Checks whether the proposed localeName is listed among LOCALES_LIST
+     * @param localeName a supposed locale name
+     * @return true iff localeName is among the configured locales
+     */
     public static boolean isNamedLocale(String localeName)
     {
         boolean found = false;
@@ -249,6 +291,11 @@ public class Locales {
     	return found;
     }
     
+    /**
+     * Makes the locale named by localeName the current locale
+     * and propagates it to all registered components
+     * @param localeName - a language code, a pseudo locale name or a locale file name
+     */
     public void setLocale(String localeName)
     {
         loadedLocaleName = localeName.replace(".txt", "");
@@ -280,6 +327,10 @@ public class Locales {
         updateComponents();
     }
     
+    /**
+     * Translates the given component according to the current locale.
+     * @param component - a GUI component
+     */
     public void setLocale(Component component)
     {
         // check if we have a loaded LocaleName
@@ -293,13 +344,26 @@ public class Locales {
         }
     }
     
+    /**
+     * Updates the "preview" locale from the given StringList, sets the locale
+     * and propagates it
+     * @param lines - the translation lines according to the locale file construction rules
+     */
     public void setLocale(StringList lines)
     {
         loadedLocaleName="preview";
         Locale locale = getLocale(loadedLocaleName);
+        // START KGU 2016-09-09: This seemed to be missing to make sense
+        locale.parseStringList(lines);
+        // END KGU 2016-09-09
         updateComponents();
     }
 
+    /**
+     * Performs the translation of the given component for the locale named by localeName
+     * @param component - a GUI component
+     * @param localeName - name of the locale (language code) or the locale file
+     */
     public void setLocale(Component component, String localeName)
     {
         localeName = localeName.replace(".txt","");
@@ -392,9 +456,15 @@ public class Locales {
     }
     
     
+    /**
+     * Performs the translation of the given component with the translation lines
+     * passed in.
+     * @param component - a GUI component
+     * @param lines - the translation lines according to the locale file construction rules
+     */
     // ----[ ATTENTION ]----
     // As this method might be called before a component is fully initialised,
-    // so before all contained components have been put there, we might get
+    // i.e. before all contained components have been put there, we might get
     // null pointers. So deal with it! ;-)
     public void setLocale(Component component, StringList lines) {
         StringList pieces;
@@ -575,18 +645,32 @@ public class Locales {
         }
     }
     
+    /**
+     * Returns the name of the current locale
+     * @return language code or pseudo locale name (or default locale name)
+     */
     public String getLoadedLocaleName()
     {
-        if(loadedLocaleName==null) return "en";
+        if(loadedLocaleName==null) return DEFAULT_LOCALE;
         else return loadedLocaleName;
     }
     
+    /**
+     * Returns the file name of locale most recently loaded from file
+     * @return a text file name
+     */
     public String getLoadedLocaleFilename()
     {
-        if(loadedLocaleFilename==null) return "en.txt";
+        if(loadedLocaleFilename==null) return DEFAULT_LOCALE + ".txt";
         else return loadedLocaleFilename;
-}
+    }
     
+    /**
+     * Updates the "external" (pseudo) locale with the translation lines passed in,
+     * makes it the current locale and propagates it
+     * @param lines - translation lines according to the locale file construction rules
+     * @param filename - the name (path) of the originating text file
+     */
     public void setExternal(StringList lines, String filename)
     {
         getLocale("external").parseStringList(lines);
