@@ -77,9 +77,11 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.28      Bugfix #208: Modification in setFunction(), setProgram(), and exportPNG()
  *                                      Bugfix #209: exportPNGmulti() corrected
  *      Kay Gürtzig     2016.07.31      Issue #158 Changes from 2016.07.25 partially withdrawn, additional restrictions
- *      Kay Gürtzig     2016-08-01      Issue #213: FOR loop transmutation implemented
+ *      Kay Gürtzig     2016.08.01      Issue #213: FOR loop transmutation implemented
  *                                      Enh. #215: Breakpoint trigger counters added (KGU#213)
- *      Kay Gürtzig     2016-08-12      Enh. #231: Analyser checks rorganised to arrays for easier maintenance
+ *      Kay Gürtzig     2016.08.12      Enh. #231: Analyser checks rorganised to arrays for easier maintenance
+ *      Kay Gürtzig     2016.09.09      Issue #213: preWhile and postWhile keywords involved in FOR loop transmutation
+ *      Kay Gürtzig     2016.09.11      Issue #213: Resulting selection wasn't highlighted
  *
  ******************************************************************************************************
  *
@@ -2218,7 +2220,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		int step = forLoop.getStepConst();
 		Element[] elements = new Element[3];
 		elements[0] = new Instruction(forLoop.getCounterVar() + asgmtOpr + forLoop.getStartValue());
-		While whileLoop = new While(forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue());
+		// START KGU#229 2016-09-09: Take care of the configured prefix and postfix
+		//While whileLoop = new While(forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue());
+		String prefix = "", postfix = "";
+		if (!D7Parser.preWhile.trim().isEmpty()) {
+			prefix = D7Parser.preWhile;
+			if (!prefix.endsWith(" ")) prefix += " ";
+		}
+		if (!D7Parser.postWhile.trim().isEmpty()) {
+			postfix = D7Parser.postWhile;
+			if (!postfix.startsWith(" ")) postfix = " " + postfix;
+		}
+		While whileLoop = new While(prefix + forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue() + postfix);
+		// END KGU#229 2016-09-09
 		elements[1] = whileLoop;
 		elements[2] = new Instruction(forLoop.getCounterVar() + asgmtOpr + forLoop.getCounterVar() + (step < 0 ? " - " : " + ") + Math.abs(forLoop.getStepConst()));
 
@@ -2246,6 +2260,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		parent.removeElement(index);
 		this.selected = new SelectedSequence(parent, index, index+1);
+		// START KGU#229 2016-09-11: selection must be made visible!
+		this.selected.setSelected(true);
+		// END KGU#229 2016-09-11
 		this.selectedUp = this.selectedDown = this.selected;
 	}
 	// END KGU#229 2016-08-01
