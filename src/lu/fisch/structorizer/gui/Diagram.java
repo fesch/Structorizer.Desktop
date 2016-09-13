@@ -3843,14 +3843,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			inputbox.txtText.setText(_data.text.getText());
 			inputbox.txtComment.setText(_data.comment.getText());
 			// START KGU#43 2015-10-12: Breakpoint support
-			inputbox.chkBreakpoint.setEnabled(getSelected() != root);
+			boolean notRoot = getSelected() != root;
+			inputbox.chkBreakpoint.setVisible(notRoot);
 			inputbox.chkBreakpoint.setSelected(_data.breakpoint);
 			// END KGU#43 2015-10-12
-			// START KGU#213 2016-08-01: Enh. #215 (revised KGU#246 2016-09-13: Bugfix #241)
-			//inputbox.lblBreakTrigger.setEnabled(getSelected() != root);
+			// START KGU#213 2016-08-01: Enh. #215
+			inputbox.lblBreakTrigger.setVisible(notRoot);
+			// START KGU#246 2016-09-13: Bugfix #241)
 			//inputbox.lblBreakTrigger.setText(inputbox.lblBreakText.getText().replace("%", Integer.toString(_data.breakTriggerCount)));
+			inputbox.lblBreakTriggerText.setVisible(notRoot);
 			// FIXME: The trouble here is that preceding lblBraekTriggerText may grow due to translation
 			inputbox.lblBreakTrigger.setText("    " + Integer.toString(_data.breakTriggerCount));
+			// END KGU#246 2016-09-13
 			// END KGU#213 2016-08-01
 
 			inputbox.OK=false;
