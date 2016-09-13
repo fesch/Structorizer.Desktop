@@ -20,34 +20,36 @@
 
 package lu.fisch.structorizer.gui;
 
-/******************************************************************************************************
-*
-*      Author:         Kay Gürtzig
-*
-*      Description:    This dialog allows editing the properties of FOR elements in a more specific way.
-*
-******************************************************************************************************
-*
-*      Revision List
-*
-*      Author           Date			Description
-*      ------			----			-----------
-*      Kay Gürtzig      2015-10-12		First Issue
-*      Kay Gürtzig      2015-11-01		Mutual text field update and error detection accomplished
-*      Kay Gürtzig      2015-12-04		frame width increased (-> 600)
-*      Kay Gürtzig      2016-03-20      Enhancement #84/#135: FOR-IN / FOREACH paradigm considered
-*      Kay Gürtzig      2016-07-14      Enh. #180: Initial focus dependent on switchTextComment mode (KGU#169)
-*
-******************************************************************************************************
-*
-*      Comment:		/
-*      - This editor has practically two and a half modes:
-*        1. Structured editing of traditional counter loops via specific fields, text automatically composed
-*        2. full text editing, editor splits it to fill the structured counter fields (strong syntax support)
-*        3. full text editing, as soon as one of the keys for FOR IN loops occurs, a FOR-IN loop is assumed
-*           (weak syntax support)  
-*
-******************************************************************************************************///
+/*
+ ******************************************************************************************************
+ *
+ *      Author:         Kay Gürtzig
+ *
+ *      Description:    This dialog allows editing the properties of FOR elements in a more specific way.
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      Kay Gürtzig     2015-10-12  First Issue
+ *      Kay Gürtzig     2015-11-01  Mutual text field update and error detection accomplished
+ *      Kay Gürtzig     2015-12-04  frame width increased (-> 600)
+ *      Kay Gürtzig     2016-03-20  Enhancement #84/#135: FOR-IN / FOREACH paradigm considered
+ *      Kay Gürtzig     2016-07-14  Enh. #180: Initial focus dependent on switchTextComment mode (KGU#169)
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:		/
+ *      - This editor has practically two and a half modes:
+ *        1. Structured editing of traditional counter loops via specific fields, text automatically composed
+ *        2. full text editing, editor splits it to fill the structured counter fields (strong syntax support)
+ *        3. full text editing, as soon as one of the keys for FOR IN loops occurs, a FOR-IN loop is assumed
+ *           (weak syntax support)  
+ *
+ ******************************************************************************************************
+ */
 
 import java.awt.Color;
 import java.awt.Frame;

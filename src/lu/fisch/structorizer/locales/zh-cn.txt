@@ -46,11 +46,11 @@
  *
  *      Revision List
  *
- *      Author          Date                Description
- *      ------		----                -----------
- *      Wang Lei        2010.05.14          First Issue
- *      Zijun Ke        2015.10.29          Several additions
- *      Kay Gürtzig     2016.09.04          Menu.menuPreferencesLanguage... key structure modified
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      Wang Lei        2010.05.14  First Issue
+ *      Zijun Ke        2015.10.29  Several additions
+ *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
  *
  ******************************************************************************************************
  *

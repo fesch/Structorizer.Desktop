@@ -72,6 +72,7 @@
  *      Kay Gürtzig     2016.08.02      Enh. #215: Menu messages for break trigger (and other dialog messages)
  *      Kay Gürtzig     2016.08.03      Enh. #222: Menu option to load translation from file
  *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016.09.13      Entries for InputBox and InputBoxFor revised (bugfix #241)
  *
  ******************************************************************************************************
  *
@@ -429,7 +430,7 @@ InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=Validate your choice.
 InputBox.btnCancel.text=Cancel
 InputBox.btnCancel.tooltip=Cancel your choice.
-InputBox.lblBreakText.text=Break at execution count: %
+InputBox.lblBreakTriggerText.text=Break at execution count:
 InputBox.chkBreakpoint.text=
 InputBox.lblText.text[elementType:Alternative]=Please enter the condition
 InputBox.lblText.text[elementType:While]=Please enter the entry condition
@@ -441,7 +442,6 @@ InputBox.title[elementType:Function]=
 InputBox.title[elementType:Instruction,getInsertionType():insert]=
 InputBox.title[elementType:Alternative,getInsertionType():insert]=
 InputBox.title[elementType:Case,getInsertionType():insert]=
-InputBox.title[elementType:For,getInsertionType():insert]=
 InputBox.title[elementType:Forever,getInsertionType():insert]=
 InputBox.title[elementType:Repeat,getInsertionType():insert]=
 InputBox.title[elementType:While,getInsertionType():insert]=
@@ -451,7 +451,6 @@ InputBox.title[elementType:Parallel,getInsertionType():insert]=
 InputBox.title[elementType:Instruction,getInsertionType():update]=
 InputBox.title[elementType:Alternative,getInsertionType():update]=
 InputBox.title[elementType:Case,getInsertionType():update]=
-InputBox.title[elementType:For,getInsertionType():update]=
 InputBox.title[elementType:Forever,getInsertionType():update]=
 InputBox.title[elementType:Repeat,getInsertionType():update]=
 InputBox.title[elementType:While,getInsertionType():update]=
@@ -459,10 +458,9 @@ InputBox.title[elementType:Call,getInsertionType():update]=
 InputBox.title[elementType:Jump,getInsertionType():update]=
 InputBox.title[elementType:Parallel,getInsertionType():update]=
 
-
 -----[ InputBox For ]-----
-InputBoxFor.class_specific.For.insert=
-InputBoxFor.class_specific.For.update=
+InputBoxFor.title[getInsertionType():insert]=
+InputBoxFor.title[getInsertionType():update]=
 InputBoxFor.lblVariable.text=
 InputBoxFor.lblStartVal.text=
 InputBoxFor.lblEndVal.text=
@@ -478,6 +476,7 @@ InputBoxFor.btnOK.tooltip=
 InputBoxFor.btnCancel.text=
 InputBoxFor.btnCancel.tooltip=
 InputBoxFor.chkBreakpoint.text=
+InputBoxFor.lblBreakTriggerText.text=Break at execution count:
 
 -----[ Preferences ]-----
 Preferences.title=Structure Preferences

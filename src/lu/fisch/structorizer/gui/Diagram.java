@@ -82,6 +82,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.08.12      Enh. #231: Analyser checks rorganised to arrays for easier maintenance
  *      Kay Gürtzig     2016.09.09      Issue #213: preWhile and postWhile keywords involved in FOR loop transmutation
  *      Kay Gürtzig     2016.09.11      Issue #213: Resulting selection wasn't highlighted
+ *      Kay Gürtzig     2016.09.13      Bugfix #241: Modification in showInputBox()
  *
  ******************************************************************************************************
  *
@@ -3845,9 +3846,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			inputbox.chkBreakpoint.setEnabled(getSelected() != root);
 			inputbox.chkBreakpoint.setSelected(_data.breakpoint);
 			// END KGU#43 2015-10-12
-			// START KGU#213 2016-08-01: Enh. #215
-			inputbox.lblBreakTrigger.setEnabled(getSelected() != root);
-			inputbox.lblBreakTrigger.setText(inputbox.lblBreakText.getText().replace("%", Integer.toString(_data.breakTriggerCount)));			
+			// START KGU#213 2016-08-01: Enh. #215 (revised KGU#246 2016-09-13: Bugfix #241)
+			//inputbox.lblBreakTrigger.setEnabled(getSelected() != root);
+			//inputbox.lblBreakTrigger.setText(inputbox.lblBreakText.getText().replace("%", Integer.toString(_data.breakTriggerCount)));
+			// FIXME: The trouble here is that preceding lblBraekTriggerText may grow due to translation
+			inputbox.lblBreakTrigger.setText("    " + Integer.toString(_data.breakTriggerCount));
 			// END KGU#213 2016-08-01
 
 			inputbox.OK=false;

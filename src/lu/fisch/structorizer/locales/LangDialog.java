@@ -19,31 +19,33 @@
  */
 package lu.fisch.structorizer.locales;
 
-/**
- * ****************************************************************************************************
+/*
+ ******************************************************************************************************
  *
- * Author: Bob Fisch
+ *     Author: Bob Fisch
  *
- * Description: This class extends a "JDialog" to support language settings
+ *     Description: This class extends a "JDialog" to support language settings
  *
  ******************************************************************************************************
  *
- * Revision List
+ *     Revision List
  *
- * Author Date	Description ------	----	----------- Bob Fisch 2008.01.14 First
- * Issue Kay Gürtzig 2015.10.14 Hook for customizable class-specific translation
- * activities added Kay Gürtzig 2016.03.13 KGU#156: Support for JComboBox added
- * on occasion of enhancement #124 Kay Gürtzig 2016.07.03 KGU#203: File
- * conversion to StringList now skips comments and empty lines Bob Fisch
- * 2016.08.02 Bugfix #218: equality signs in translations mutilated them Kay
- * Gürtzig 2016.08.03 Inheritance changed (ILangDialog added)
+ *     Author       Date        Description
+ *     ------       ----        -----------
+ *     Bob Fisch    2008.01.14  First Issue
+ *     Kay Gürtzig  2015.10.14  Hook for customizable class-specific translation activities added
+ *     Kay Gürtzig  2016.03.13  KGU#156: Support for JComboBox added on occasion of enhancement #124
+ *     Kay Gürtzig  2016.07.03  KGU#203: File conversion to StringList now skips comments and empty lines
+ *     Bob Fisch    2016.08.02  Bugfix #218: equality signs in translations mutilated them
+ *     Kay Gürtzig  2016.08.03  Inheritance changed (ILangDialog added)
  *
  ******************************************************************************************************
  *
  * Comment:	/
  *
  *****************************************************************************************************
- *///
+ */
+
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;

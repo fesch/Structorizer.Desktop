@@ -30,12 +30,13 @@ package lu.fisch.structorizer.locales;
  *
  *      Revision List
  *
- *      Author          Date            Description
- *      ------          ----            -----------
- *      Bob Fisch       2016.08.02      First Issue
- *      Kay Gürtzig     2016.08.12      Mechanism to translate arrays of controls (initially for AnalyserPreferences)
- *      Kay Gürtzig     2016.09.05      Mechanism to translate Hashtables of controls (initially for language preferences)
- *      Kay Gürtzig     2016.09.09      Fix in getSectionNames(), Javadoc accomplished
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      Bob Fisch       2016.08.02  First Issue
+ *      Kay Gürtzig     2016.08.12  Mechanism to translate arrays of controls (initially for AnalyserPreferences)
+ *      Kay Gürtzig     2016.09.05  Mechanism to translate Hashtables of controls (initially for language preferences)
+ *      Kay Gürtzig     2016.09.09  Fix in getSectionNames(), Javadoc accomplished
+ *      Kay Gürtzig     2016.09.13  Bugfix #241 in checkConditions() (KGU#246)
  *
  ******************************************************************************************************
  *
@@ -394,12 +395,26 @@ public class Locales {
             {
                 try 
                 {
-                    Method method = component.getClass().getMethod(fieldValue, new Class[]{});
-                    method.invoke(component, new Object[]{});
+                    // START KGU#246 2016-09-13: Bugfix #241
+                    //Method method = component.getClass().getMethod(fieldValue, new Class[]{});
+                    //method.invoke(component, new Object[]{});
+                    Method method = component.getClass().getMethod(fieldName.substring(0,  fieldName.length()-2), new Class[]{});
+                    Object methodResult = method.invoke(component, new Object[]{});
+                    if (methodResult instanceof String)
+                    {
+                    	fieldValue = (String)methodResult;
+                    }
+                    // END KGU#246 2016-09-13
                 }
                 catch(Exception e)
                 {
-                    errorMessage = e.getMessage();
+                    // START KGU#246 2016-09-13: Bugfix #241 For NullPointerExceptions getMessage() may return null
+                    //errorMessage = e.getMessage();
+                    if ((errorMessage = e.getMessage()) == null)
+                    {
+                    	errorMessage = e.getClass().getSimpleName();
+                    }
+                    // END KGU#246 2016-09-13
                 }
             }
             // ... of a field

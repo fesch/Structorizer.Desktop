@@ -19,33 +19,35 @@
  */
 package lu.fisch.structorizer.gui;
 
-/**
- * ****************************************************************************************************
+/*
+ ******************************************************************************************************
  *
- * Author: Bob Fisch
+ *     Author: Bob Fisch
  *
- * Description: This the dialog that allows editing the properties of any
- * element.
+ *     Description: This the dialog that allows editing the properties of any element.
  *
  ******************************************************************************************************
  *
- * Revision List
+ *     Revision List
  *
- * Author Date	Description ------	----	----------- Bob Fisch 2007.12.23 First
- * Issue Kay Gürtzig 2015.10.12 A checkbox added for breakpoint control (KGU#43)
- * Kay Gürtzig 2015.10.14 Element-class-specific language support (KGU#42) Kay
- * Gürtzig 2015.10.25 Hook for subclassing added to method create() (KGU#3) Kay
- * Gürtzig 2016.04.26 Issue #165: Focus transfer reset to Tab and Shift-Tab Kay
- * Gürtzig 2016.07.14 Enh. #180: Initial focus dependent on switchTextComment
- * mode (KGU#169) Kay Gürtzig 2016.08.02 Enh. #215: Breakpoint trigger counts
- * partially implemented
+ *     Author       Date        Description
+ *     ------       ----        -----------
+ *     Bob Fisch    2007.12.23  First Issue
+ *     Kay Gürtzig  2015.10.12  A checkbox added for breakpoint control (KGU#43)
+ *     Kay Gürtzig  2015.10.14  Element-class-specific language support (KGU#42)
+ *     Kay Gürtzig  2015.10.25  Hook for subclassing added to method create() (KGU#3)
+ *     Kay Gürtzig  2016.04.26  Issue #165: Focus transfer reset to Tab and Shift-Tab
+ *     Kay Gürtzig  2016.07.14  Enh. #180: Initial focus dependent on switchTextComment mode (KGU#169)
+ *     Kay Gürtzig  2016.08.02  Enh. #215: Breakpoint trigger counts partially implemented
+ *     Kay Gürtzig  2016.09.13  Bugfix #241: Obsolete mechanisms removed (remnants of KGU#42)
  *
  ******************************************************************************************************
  *
- * Comment:	/
+ *     Comment:	/
  *
- *****************************************************************************************************
- *///
+ ******************************************************************************************************
+ */
+
 import lu.fisch.structorizer.locales.LangDialog;
 import java.awt.*;
 import java.awt.event.*;
@@ -54,7 +56,6 @@ import javax.swing.*;
 import javax.swing.border.*;
 
 import lu.fisch.structorizer.elements.Element;
-import lu.fisch.utils.StringList;
 
 @SuppressWarnings("serial")
 public class InputBox extends LangDialog implements ActionListener, KeyListener {
@@ -84,7 +85,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     // END KGU#43 2015-10-12
     // START KGU#213 2016-08-01: Enh. #215
     //private int prevBreakTrigger = 0;
-    public LangTextHolder lblBreakText = new LangTextHolder("Break at execution count: %");
+    public JLabel lblBreakTriggerText = new JLabel("Break at execution count:");
     public JLabel lblBreakTrigger = new JLabel();
     //public JTextField txtBreakTrigger = new JTextField();
     // END KGU#213 2016-08-01
@@ -92,7 +93,6 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     // START KGU 2015-10-14: Additional information for data-specific title translation
     public String elementType = new String();	// The (lower-case) class name of the element type to be edited here
     public boolean forInsertion = false;		// If this dialog is used to setup a new element (in contrast to updating an existing element)
-    private boolean gotSpecificTitle = false;	// class-specific title translation already done? (prevents setTitle() from spoiling it)
     // END KGU 2015-10-14
 
     // START KGU#169 2016-07-14: Enh. #180: helps to enable focus control
@@ -220,20 +220,22 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         gbcPanel1.weightx = 1;
         gbcPanel1.weighty = 0;
         gbcPanel1.anchor = GridBagConstraints.NORTH;
-        gbPanel1.setConstraints(lblBreakTrigger, gbcPanel1);
-        pnPanel1.add(lblBreakTrigger);
+        gbPanel1.setConstraints(lblBreakTriggerText, gbcPanel1);
+        pnPanel1.add(lblBreakTriggerText);
+        // END KGU#213 2106-08-01
 
-//            gbcPanel1.gridx = 13;
-//            gbcPanel1.gridy = 17;
-//            gbcPanel1.gridwidth = 2;
-//            gbcPanel1.gridheight = 1;
-//            gbcPanel1.fill = GridBagConstraints.BOTH;
-//            gbcPanel1.weightx = 1;
-//            gbcPanel1.weighty = 0;
-//            gbcPanel1.anchor = GridBagConstraints.NORTH;
-//            gbPanel1.setConstraints( txtBreakTrigger, gbcPanel1 );
-//            pnPanel1.add( txtBreakTrigger );
-// END KGU#213 2106-08-01
+        // START KGU#213/KGU#245 2016-09-13: Enh. #215 + bugfix #241
+        gbcPanel1.gridx = 13;
+        gbcPanel1.gridy = 17;
+        gbcPanel1.gridwidth = 1;
+        gbcPanel1.gridheight = 1;
+        gbcPanel1.fill = GridBagConstraints.RELATIVE;
+        gbcPanel1.weightx = 1;
+        gbcPanel1.weighty = 0;
+        gbcPanel1.anchor = GridBagConstraints.CENTER;
+        gbPanel1.setConstraints( lblBreakTrigger, gbcPanel1 );
+        pnPanel1.add(lblBreakTrigger);
+        // END KGU#246 2106-09-13
         gbcPanel1.insets = new Insets(10, 10, 10, 10);
 
         //createExitButtons(gridbase)
@@ -367,21 +369,6 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     {
         return (forInsertion?"insert":"update");
     }
-
-    /**
-     * Sets the title of the Dialog if no specific translation had already taken
-     * place
-     *
-     * @param title - the title to be displayed in the dialog's border; a null
-     * value is ignored here
-     */
-    @Override
-    public void setTitle(String title) {
-        if (title != null && !this.gotSpecificTitle) {
-            super.setTitle(title);
-        }
-    }
-    // END KGU#42 2015-10-14
 
     // START KGU#61 2016-03-21: Enh. #84 - Addition to facilitate specific handling
     /**

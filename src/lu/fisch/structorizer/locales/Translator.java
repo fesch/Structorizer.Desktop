@@ -20,29 +20,31 @@
 
 package lu.fisch.structorizer.locales;
 
-/******************************************************************************************************
-*
-*      Author:         Bob Fisch
-*
-*      Description:    This class is responsible for setting up the entire menubar.
-*
-******************************************************************************************************
-*
-*      Revision List
-*
-*      Author          Date            Description
-*      ------          ----            -----------
-*      Bob Fisch       2016.08.01      First Issue
-*      Kay Gürtzig     2016.09.05      Structural redesign of locale button generation (no from the Locales list)
-*      Kay Gürtzig     2016.09.06      Opportunity to reload a saved language file to resume editing it
-*      Kay Gürtzig     2016.09.09      Handling of unsaved changes improved, loadLocale() API modified,
-*                                      command line parameter "-test" introduced to re-allow full consistency check
-*
-******************************************************************************************************
-*
-*      Comment:		/
-*
-******************************************************************************************************///
+/*
+ ******************************************************************************************************
+ *
+ *      Author:         Bob Fisch
+ *
+ *      Description:    This class is responsible for setting up the entire menubar.
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2016.08.01      First Issue
+ *      Kay Gürtzig     2016.09.05      Structural redesign of locale button generation (no from the Locales list)
+ *      Kay Gürtzig     2016.09.06      Opportunity to reload a saved language file to resume editing it
+ *      Kay Gürtzig     2016.09.09      Handling of unsaved changes improved, loadLocale() API modified,
+ *                                      command line parameter "-test" introduced to re-allow full consistency check
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:		/
+ *
+ ******************************************************************************************************
+ */
 
 import java.awt.Color;
 import java.awt.Component;
@@ -960,11 +962,12 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         //</editor-fold>
         //</editor-fold>
         // START KGU 2016-09-09: With command line option "-test" load all locales such that the basic tests can be run sensibly
-		boolean fullTest = false;
-		for (int i = 0; !fullTest && i < args.length; i++)
-		{
-			fullTest = args[i].equalsIgnoreCase("-test");
-		}
+        boolean fullTest = false;
+        for (int i = 0; !fullTest && i < args.length; i++)
+        {
+            fullTest = args[i].equalsIgnoreCase("-test");
+        	
+        }
         if (fullTest)
         {
         	for (int i = 0; i < Locales.LOCALES_LIST.length; i++)
