@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.gui;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -83,6 +84,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.09      Issue #213: preWhile and postWhile keywords involved in FOR loop transmutation
  *      Kay Gürtzig     2016.09.11      Issue #213: Resulting selection wasn't highlighted
  *      Kay Gürtzig     2016.09.13      Bugfix #241: Modification in showInputBox()
+ *      Kay Gürtzig     2016.09.15      Issue #243: Forgotten message box texts included in localization,
+ *                                      Bugfix #244: Flaws in the save logic mended
  *
  ******************************************************************************************************
  *
@@ -97,7 +100,8 @@ package lu.fisch.structorizer.gui;
  *        margin now, giving pause for consideration.
  *        Moving inwards the diagram from the selected Root will still work.
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import java.awt.*;
 import java.awt.image.*;
@@ -339,9 +343,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							else
 							{
 								// show error
-								JOptionPane.showOptionDialog(null,d7.error,
-										"Parser Error",
-										JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+								JOptionPane.showMessageDialog(null,
+										d7.error,
+										Menu.msgTitleParserError.getText(),
+										JOptionPane.ERROR_MESSAGE);
 							}
 
 							redraw();
@@ -1079,7 +1084,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// open an existing file
 		// create dialog
 		JFileChooser dlgOpen = new JFileChooser();
-		dlgOpen.setDialogTitle("Open file ...");
+		dlgOpen.setDialogTitle(Menu.msgTitleOpen.getText());
 		// set directory
 		if(root.getFile()!=null)
 		{
@@ -1165,7 +1170,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
 		if (errorMessage != null)
 		{
-			JOptionPane.showMessageDialog(this, "\"" + _filename + "\": " + errorMessage, "Loading Error",
+			JOptionPane.showMessageDialog(this, "\"" + _filename + "\": " + errorMessage, 
+					Menu.msgTitleLoadingError.getText(),
 					JOptionPane.ERROR_MESSAGE);
 		}
 		// END KGU#111 2015-12-16
@@ -1178,7 +1184,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void saveAsNSD()
 	{
 		JFileChooser dlgSave = new JFileChooser();
-		dlgSave.setDialogTitle("Save file as ...");
+		dlgSave.setDialogTitle(Menu.msgTitleSaveAs.getText());
 		// set directory
 		if(root.getFile()!=null)
 		{
@@ -1190,73 +1196,62 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 
 		// propose name
-		// START KGU 2015-10-16: D.R.Y. - there is already a suitable method
-//		String nsdName = root.getText().get(0);
-//		nsdName.replace(':', '_');
-//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
-//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
 		String nsdName = root.proposeFileName();
-		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
 		dlgSave.addChoosableFileFilter(new StructogramFilter());
-		int result = dlgSave.showSaveDialog(this);
-		if (result == JFileChooser.APPROVE_OPTION)
-		{
-			root.filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
-			if(!root.filename.substring(root.filename.length()-4, root.filename.length()).toLowerCase().equals(".nsd"))
+		
+		// START KGU#248 2016-09-15: Bugfix #244 - allow more than one chance
+		//int result = dlgSave.showSaveDialog(this);
+		int result = JFileChooser.ERROR_OPTION;
+		do {
+			result = dlgSave.showSaveDialog(this);
+		// END KGU#248 2016-9-15
+			if (result == JFileChooser.APPROVE_OPTION)
 			{
-				root.filename+=".nsd";
+				String newFilename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
+				if(!newFilename.substring(newFilename.length()-4, newFilename.length()).toLowerCase().equals(".nsd"))
+				{
+					newFilename += ".nsd";
+				}
+
+				File f = new File(newFilename);
+				boolean writeNow = true;
+				if (f.exists())
+				{
+					writeNow=false;
+					int res = JOptionPane.showConfirmDialog(
+							this,
+							Menu.msgOverwriteFile.getText(),
+							Menu.btnConfirmOverwrite.getText(),
+							JOptionPane.YES_NO_OPTION);
+					if (res == JOptionPane.YES_OPTION) writeNow=true;
+				}
+
+				if (!writeNow)
+				{
+					// START KGU#248 2016-09-15: Bugfix #244 - message no longer needed (due to new loop)
+					//JOptionPane.showMessageDialog(this, Menu.msgRepeatSaveAttempt.getText());
+					result = JFileChooser.ERROR_OPTION;
+					// END KGU#248 2016-09-15
+				}
+				else
+				{
+					root.filename = newFilename;
+					// START KGU#94 2015.12.04: out-sourced to auxiliary method
+					doSaveNSD();
+					// END KGU#94 2015-12-04
+				}
 			}
+		// START KGU#248 2016-09-15: Bugfix #244 - allow to leave the new loop
+			else
+			{
+				// User cancelled the file dialog -> leave the loop
+				result = JFileChooser.CANCEL_OPTION;
+			}
+		} while (result == JFileChooser.ERROR_OPTION);
+		// END KGU#248 2016-09-15
 
-                        File f = new File(root.filename);
-                        boolean writeNow = true;
-                        if(f.exists())
-                        {
-                            writeNow=false;
-                            int res = JOptionPane.showConfirmDialog(
-                                    this,
-                                    Menu.msgOverwriteFile.getText(),
-                                    Menu.btnConfirmOverwrite.getText(),
-                                    JOptionPane.YES_NO_OPTION);
-                            if(res==JOptionPane.YES_OPTION) writeNow=true;
-                        }
-
-                        if(writeNow==false)
-                        {
-                            JOptionPane.showMessageDialog(this, Menu.msgRepeatSaveAttempt.getText());
-                        }
-                        else
-                        {
-                        	// START KGU#94 2015.12.04: out-sourced to auxiliary method
-//                            try
-//                            {
-//                            
-//                                    FileOutputStream fos = new FileOutputStream(root.filename);
-//                                    Writer out = new OutputStreamWriter(fos, "UTF8");
-//                                    XmlGenerator xmlgen = new XmlGenerator();
-//                                    out.write(xmlgen.generateCode(root,"\t"));
-//                                    out.close();
-//                                    /*
-//                                    BTextfile outp = new BTextfile(root.filename);
-//                                    outp.rewrite();
-//                                    XmlGenerator xmlgen = new XmlGenerator();
-//                                    outp.write(xmlgen.generateCode(root,"\t"));
-//                                    //outp.write(diagram.root.getXML());
-//                                    outp.close();
-//                                    /**/
-//
-//                                    root.hasChanged=false;
-//                                    addRecentFile(root.filename);
-//                            }
-//                            catch(Exception e)
-//                            {
-//                                    JOptionPane.showOptionDialog(this,"Error while saving the file!","Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
-//                            }
-                        	doSaveNSD();
-                        	// END KGU#94 2015-12-04
-                         }
-		}
 	}
 
 	/*****************************************
@@ -1290,9 +1285,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					filename = root.proposeFileName();
 				}
 				res = JOptionPane.showOptionDialog(this,
-												   "Do you want to save the current NSD-File?\n\"" + filename + "\"",
+												   Menu.msgSaveChanges.getText() + "\n\"" + filename + "\"",
 				// END KGU#49 2015-10-18
-												   "Question",
+												   Menu.msgTitleQuestion.getText(),
 												   JOptionPane.YES_NO_OPTION,
 												   JOptionPane.QUESTION_MESSAGE,
 												   null,null,null);
@@ -1300,71 +1295,55 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			
 			if (res==0)
 			{
-				// if root has not yet been saved
-				boolean saveIt = true;
+				// Check whether root has already been loaded or saved once
+				//boolean saveIt = true;
 
 				//System.out.println(this.currentDirectory.getAbsolutePath());
 				
-				if(root.filename.equals(""))
+				if (root.filename.equals(""))
 				{
-					JFileChooser dlgSave = new JFileChooser();
-					dlgSave.setDialogTitle("Save file ...");
-					// set directory
-					if(root.getFile()!=null)
-					{
-						dlgSave.setCurrentDirectory(root.getFile());
-					}
-					else
-					{
-						dlgSave.setCurrentDirectory(currentDirectory);
-					}
-
-					// propose name
-
-					dlgSave.setSelectedFile(new File(root.proposeFileName()));
-
-					dlgSave.addChoosableFileFilter(new StructogramFilter());
-					int result = dlgSave.showSaveDialog(this);
-
-					if (result == JFileChooser.APPROVE_OPTION)
-					{
-						root.filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
-						if(!root.filename.substring(root.filename.length()-4).toLowerCase().equals(".nsd"))
-						{
-							root.filename+=".nsd";
-						}
-					}
-					else
-					{
-						saveIt = false;
-					}
+					// root has never been saved
+// START KGU#248 2016-09-15: Bugfix #244 delegate to saveAsNSD()
+//					JFileChooser dlgSave = new JFileChooser();
+//					dlgSave.setDialogTitle(Menu.msgTitleSave.getText());
+//					// set directory
+//					if (root.getFile() != null)
+//					{
+//						dlgSave.setCurrentDirectory(root.getFile());
+//					}
+//					else
+//					{
+//						dlgSave.setCurrentDirectory(currentDirectory);
+//					}
+//
+//					// propose name
+//
+//					dlgSave.setSelectedFile(new File(root.proposeFileName()));
+//
+//					dlgSave.addChoosableFileFilter(new StructogramFilter());
+//					int result = dlgSave.showSaveDialog(this);
+//
+//					if (result == JFileChooser.APPROVE_OPTION)
+//					{
+//						root.filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
+//						if(!root.filename.substring(root.filename.length()-4).toLowerCase().equals(".nsd"))
+//						{
+//							root.filename+=".nsd";
+//						}
+//					}
+//					else
+//					{
+//						saveIt = false;
+//					}
+//				}
+//
+//				if (saveIt == true)
+					saveAsNSD();
 				}
-
-				if (saveIt == true)
+				else
+// END KGU#248 2016-09-15
 				{
 					// START KGU#94 2015-12-04: Out-sourced to auxiliary method
-//					try
-//					{
-//                                                FileOutputStream fos = new FileOutputStream(root.filename);
-//                                                Writer out = new OutputStreamWriter(fos, "UTF8");
-//                                                XmlGenerator xmlgen = new XmlGenerator();
-//                                                out.write(xmlgen.generateCode(root,"\t"));
-//                                                out.close();
-//                                                /*
-//                                                BTextfile outp = new BTextfile(root.filename);
-//						outp.rewrite();
-//						XmlGenerator xmlgen = new XmlGenerator();
-//						outp.write(xmlgen.generateCode(root,"\t"));
-//						//outp.write(diagram.root.getXML());
-//						outp.close();/**/
-//
-//						root.hasChanged=false;
-//						addRecentFile(root.filename);
-//					}
-//					catch(Exception e)
-//					{
-//						JOptionPane.showOptionDialog(this,"Error while saving the file!\n"+e.getMessage(),"Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
-//					}
 					doSaveNSD();
 					// END KGU#94 2015-12-04
 				}
@@ -1439,7 +1418,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         }
         catch(Exception ex)
         {
-        	JOptionPane.showMessageDialog(this, Menu.msgErrorFileSave.getText().replace("%", ex.getMessage()), "Error",
+        	JOptionPane.showMessageDialog(this,
+        			Menu.msgErrorFileSave.getText().replace("%", ex.getMessage()),
+        			Menu.msgTitleError.getText(),
         			JOptionPane.ERROR_MESSAGE, null);
         }
         return done;
@@ -2308,7 +2289,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				{
 					JOptionPane.showMessageDialog(this,
 							Menu.msgBreakTriggerIgnored.getText(),
-							"Wrong Input",
+							Menu.msgTitleWrongInput.getText(),
 							JOptionPane.ERROR_MESSAGE);
 				}
 			}
@@ -2561,7 +2542,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch(Exception e)
 				{
-					JOptionPane.showOptionDialog(this,"Error while saving the images!","Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+					JOptionPane.showMessageDialog(this,
+							Menu.msgErrorImageSave.getText(),
+							Menu.msgTitleError.getText(), 
+							JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		}
@@ -2656,7 +2640,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch(Exception e)
 				{
-					JOptionPane.showOptionDialog(this,"Error while saving the image!","Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+					JOptionPane.showMessageDialog(this,
+							Menu.msgErrorImageSave.getText(),
+							Menu.msgTitleError.getText(),
+							JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		}
@@ -3095,7 +3082,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		String filename = "";
 
 		JFileChooser dlgOpen = new JFileChooser();
-		dlgOpen.setDialogTitle("Import Pascal Code ...");
+		dlgOpen.setDialogTitle(Menu.msgTitleImport.getText().replace("%", "Pascal"));
 		// set directory
 		if(root.getFile()!=null)
 		{
@@ -3167,7 +3154,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				//							 "Parser Error",
 				//							 JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
 				JOptionPane.showMessageDialog(null, d7.error,
-						"Parser Error", JOptionPane.ERROR_MESSAGE, null);
+						Menu.msgTitleParserError.getText(),
+						JOptionPane.ERROR_MESSAGE, null);
 				// END KGU 2016-01-11
 			}
 
@@ -3192,7 +3180,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		catch(Exception e)
 		{
-			JOptionPane.showOptionDialog(this,"Error while using generator "+_generatorClassName+"\n"+e.getMessage(),"Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+			JOptionPane.showMessageDialog(this,
+					Menu.msgErrorUsingGenerator.getText().replace("%", _generatorClassName)+"\n"+e.getMessage(),
+					Menu.msgTitleError.getText(),
+					JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
@@ -3214,8 +3205,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			ex.printStackTrace();
 			// Usually we won't get here - in case of missing network access the browser will
 			// show a message
-			JOptionPane.showMessageDialog(null, ex.getMessage(),
-					"URL Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(null,
+					ex.getMessage(),
+					Menu.msgTitleURLError.getText(),
+					JOptionPane.ERROR_MESSAGE);
 		}
 		
 	}

@@ -46,10 +46,10 @@
  *
  *      Revision List
  *
- *      Author          Date		Description
- *      ------		----		-----------
- *      Hueyan Chen     2014.07.27     	First Issue
- *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      Hueyan Chen     2014.07.27  First Issue
+ *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
  *
  ******************************************************************************************************
  *

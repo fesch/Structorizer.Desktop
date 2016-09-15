@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.gui;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -59,12 +60,14 @@ package lu.fisch.structorizer.gui;
  *                                      two new checks introduced (variable name collisions)
  *      Kay Gürtzig     2016.09.01      Bugfix #233: CASE insertion by F10 had been averted by menu bar
  *      Kay Gürtzig     2016.09.04      Structural redesign for menuPreferencesLanguage
+ *      Kay Gürtzig     2016.09.15      Issue #243: Additional text holders for forgotten message box texts
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 import java.util.*;
@@ -315,6 +318,21 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgOpenLangFile = new LangTextHolder("Open language file");
 	public static final LangTextHolder msgLangFile = new LangTextHolder("Structorizer language file");
 	// END KGU#232 2016-08-02
+	// START KGU#247 2016-09-15: Issue #243: Forgotten message box translations
+	public static final LangTextHolder msgTitleError = new LangTextHolder("Error");
+	public static final LangTextHolder msgTitleLoadingError = new LangTextHolder("Loading Error");
+	public static final LangTextHolder msgTitleParserError = new LangTextHolder("Parser Error");
+	public static final LangTextHolder msgTitleURLError = new LangTextHolder("URL Error");
+	public static final LangTextHolder msgTitleQuestion = new LangTextHolder("Question");
+	public static final LangTextHolder msgTitleWrongInput = new LangTextHolder("Wrong Input");
+	public static final LangTextHolder msgTitleOpen = new LangTextHolder("Open file ...");
+	public static final LangTextHolder msgTitleSave = new LangTextHolder("Save file ...");
+	public static final LangTextHolder msgTitleSaveAs = new LangTextHolder("Save file as ...");
+	public static final LangTextHolder msgTitleImport = new LangTextHolder("Import % code ...");
+	public static final LangTextHolder msgSaveChanges = new LangTextHolder("Do you want to save the current NSD file?");
+	public static final LangTextHolder msgErrorImageSave = new LangTextHolder("Error on saving the image(s)!");
+	public static final LangTextHolder msgErrorUsingGenerator = new LangTextHolder("Error while using % generator");
+	// END KGU#247 2016-09-15
 
 	public void create()
 	{
