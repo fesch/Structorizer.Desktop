@@ -86,6 +86,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.13      Bugfix #241: Modification in showInputBox()
  *      Kay Gürtzig     2016.09.15      Issue #243: Forgotten message box texts included in localization,
  *                                      Bugfix #244: Flaws in the save logic mended
+ *      Kay Gürtzig     2016.09.17      Issue #245: Message box for failing browser call in updateNSD() added.
  *
  ******************************************************************************************************
  *
@@ -1123,7 +1124,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Root oldRoot = this.root;
 		// END KGU#48 2015-10-17
 		// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
-		String errorMessage = "File not found!";
+		String errorMessage = Menu.msgErrorNoFile.getText();
 		// END KGU#111 2015-12-16
 		try
 		{
@@ -1163,8 +1164,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
 			//System.out.println(e.getMessage());
-			errorMessage = e.getMessage();
-			System.out.println(errorMessage);
+			errorMessage = e.getLocalizedMessage();
+			if (errorMessage == null) errorMessage = e.getMessage();
+			System.err.println(e.getMessage());
 			// END KGU#111 2015-12-16
 		}
 		// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
@@ -1418,8 +1420,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         }
         catch(Exception ex)
         {
+			String message = ex.getLocalizedMessage();
+			if (message == null) message = ex.getMessage();
         	JOptionPane.showMessageDialog(this,
-        			Menu.msgErrorFileSave.getText().replace("%", ex.getMessage()),
+        			Menu.msgErrorFileSave.getText().replace("%", message),
         			Menu.msgTitleError.getText(),
         			JOptionPane.ERROR_MESSAGE, null);
         }
@@ -3178,10 +3182,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#170 2016-04-01
 			gen.exportCode(root,currentDirectory,NSDControl.getFrame());
 		}
-		catch(Exception e)
+		catch(Exception ex)
 		{
+			String message = ex.getLocalizedMessage();
+			if (message == null) message = ex.getMessage();
 			JOptionPane.showMessageDialog(this,
-					Menu.msgErrorUsingGenerator.getText().replace("%", _generatorClassName)+"\n"+e.getMessage(),
+					Menu.msgErrorUsingGenerator.getText().replace("%", _generatorClassName)+"\n" + message,
 					Menu.msgTitleError.getText(),
 					JOptionPane.ERROR_MESSAGE);
 		}
@@ -3203,10 +3209,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		catch(Exception ex)
 		{
 			ex.printStackTrace();
-			// Usually we won't get here - in case of missing network access the browser will
-			// show a message
+			// We may get here if there is no standard browser or no standard application for web links
+			// configured (as issue #245 proved) - in case of missing network access the browser will
+			// rather show a message itself, though.
+			String message = ex.getLocalizedMessage();
+			if (message == null) message = ex.getMessage();
 			JOptionPane.showMessageDialog(null,
-					ex.getMessage(),
+					message,
 					Menu.msgTitleURLError.getText(),
 					JOptionPane.ERROR_MESSAGE);
 		}
@@ -3223,20 +3232,36 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// KGU#35 2015-07-29: Bob's code adopted with slight modification (Homepage URL put into a variable) 
 		String home = "http://structorizer.fisch.lu";
 		try {
-			JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\">Goto <a href=\"" + home + "\">" + home + "</a> to look for updates<br>and news about Structorizer.</font></html>");
+			// START KGU#247 2016-09-17: Issue #243/#245 Translation support for update window content
+			//JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\">Goto <a href=\"" + home + "\">" + home + "</a> to look for updates<br>and news about Structorizer.</font></html>");
+			JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\">" +
+					Menu.msgGotoHomepage.getText().replace("%", "<a href=\"" + home + "\">" + home + "</a>") +
+					"</font></html>");
+			// END KGU#247 2016-09-17
 			ep.addHyperlinkListener(new HyperlinkListener()
 			{
 				@Override
-				public void hyperlinkUpdate(HyperlinkEvent e)
+				public void hyperlinkUpdate(HyperlinkEvent evt)
 				{
-					if (e.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED))
+					if (evt.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED))
 					{
 						try {
-							Desktop.getDesktop().browse(e.getURL().toURI());
+							Desktop.getDesktop().browse(evt.getURL().toURI());
 						}
-						catch(Exception ee)
+						catch(Exception ex)
 						{
-							ee.printStackTrace();
+							ex.printStackTrace();
+							// START KGU 2016-09-17: Issue #245
+							// We may get here if there is no standard browser or no standard application for web links
+							// configured (as issue #245 proved) - in case of missing network access the browser will
+							// rather show a message itself, though.
+							String message = ex.getLocalizedMessage();
+							if (message == null) message = ex.getMessage();
+							JOptionPane.showMessageDialog(null,
+									message,
+									Menu.msgTitleURLError.getText(),
+									JOptionPane.ERROR_MESSAGE);
+							// END KGU 2016-09-17
 						}
 					}
 				}

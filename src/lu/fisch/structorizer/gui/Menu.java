@@ -333,6 +333,10 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgErrorImageSave = new LangTextHolder("Error on saving the image(s)!");
 	public static final LangTextHolder msgErrorUsingGenerator = new LangTextHolder("Error while using % generator");
 	// END KGU#247 2016-09-15
+	// START KGU#247 2016-09-17: Issue #243: Forgotten message box translation
+	public static final LangTextHolder msgGotoHomepage = new LangTextHolder("Go to % to look for updates and news about Structorizer.");
+	public static final LangTextHolder msgErrorNoFile = new LangTextHolder("File not found!");
+	// END KGU#247 2016-09-17
 
 	public void create()
 	{
