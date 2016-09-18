@@ -336,6 +336,7 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#247 2016-09-17: Issue #243: Forgotten message box translation
 	public static final LangTextHolder msgGotoHomepage = new LangTextHolder("Go to % to look for updates and news about Structorizer.");
 	public static final LangTextHolder msgErrorNoFile = new LangTextHolder("File not found!");
+	public static final LangTextHolder msgBrowseFailed = new LangTextHolder("Failed to show % in browser");
 	// END KGU#247 2016-09-17
 
 	public void create()

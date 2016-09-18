@@ -237,7 +237,7 @@ Menu.msgBreakTriggerPrompt.text=Specify an execution count triggering a break (0
 Menu.msgBreakTriggerIgnored.text=Input ignored - must be a cardinal number.
 Menu.msgOpenLangFile.text=Open language file
 Menu.msgLangFile.text=Structorizer language file
-Menu.msgGotoHomepage.text=Go to % to look for updates and news about Structorizer.
+Menu.msgGotoHomepage.text=Go to % to look for updates<br>and news about Structorizer.
 Menu.msgTitleError.text=Error
 Menu.msgTitleLoadingError.text=Loading Error
 Menu.msgTitleParserError.text=Parser Error
@@ -252,6 +252,7 @@ Menu.msgSaveChanges.text=Do you want to save the current NSD file?
 Menu.msgErrorImageSave.text=Error on saving the image(s)!
 Menu.msgErrorUsingGenerator.text=Error while using % generator
 Menu.msgErrorNoFile.text=File not found!
+Menu.msgBrowseFailed.text=Failed to show % in browser
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!

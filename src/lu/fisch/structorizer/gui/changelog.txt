@@ -4,13 +4,14 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.25-01 (2016.09.17)
+Current development version: 3.25-01 (2016.09.18)
 - 01: Issue #213: FOR transmutation now uses WHILE parser preferences <2>
 - 01: Issue #213: FOR transmutation result now shows selected state <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
 - 01: Bugfix #243: Forgotten translations for some message boxes [Rolf Schmidt]<2>
 - 01: Bugfix #244: Flawed logic for the save actions mended <2>
 - 01: Bugfix #246: Executor now checks conditions for Boolean results <2>
+- 01: Issue #245: Browser launching workaround for some Linux systems [Rolf Schmidt]<2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2

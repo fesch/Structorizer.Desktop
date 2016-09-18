@@ -234,7 +234,7 @@ Menu.msgBreakTriggerPrompt.text=Fije el número de ejecuciónes antes de parar (
 Menu.msgBreakTriggerIgnored.text=Valor no usable. Tiene que ser un número natural.
 Menu.msgOpenLangFile.text=Abrir archivo de traducciones
 Menu.msgLangFile.text=Structorizer archivo de idioma
-Menu.msgGotoHomepage.text=Véase % para buscar versiones nuevas y noticias sobre Structorizer.
+Menu.msgGotoHomepage.text=Véase % para buscar versiones nuevas<br>y noticias sobre Structorizer.
 Menu.msgTitleError.text=Error
 Menu.msgTitleLoadingError.text=Error leyendo
 Menu.msgTitleParserError.text=Parser Error
@@ -249,6 +249,7 @@ Menu.msgSaveChanges.text=¿Guardar cambios del diagrama en archivo?
 Menu.msgErrorImageSave.text=Error grabando imágen(es)!
 Menu.msgErrorUsingGenerator.text=Error exportando código %
 Menu.msgErrorNoFile.text=¡Archivo no encontrado!
+Menu.msgBrowseFailed.text=Mostrar % en el browser no logró.
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!

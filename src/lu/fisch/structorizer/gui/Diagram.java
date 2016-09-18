@@ -114,6 +114,7 @@ import net.iharder.dnd.*; //http://iharder.sourceforge.net/current/java/filedrop
 
 import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
@@ -3203,23 +3204,39 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void helpNSD()
 	{
+		// START KGU#250 2016-09-17: Issue #245 (defective Linux integration workaround)
+//		try {
+//			Desktop.getDesktop().browse(new URI("http://help.structorizer.fisch.lu/index.php"));
+//		}
+//		catch(Exception ex)
+//		{
+//			ex.printStackTrace();
+//			// We may get here if there is no standard browser or no standard application for web links
+//			// configured (as issue #245 proved) - in case of missing network access the browser will
+//			// rather show a message itself, though.
+//			String message = ex.getLocalizedMessage();
+//			if (message == null) message = ex.getMessage();
+//			JOptionPane.showMessageDialog(null,
+//					message,
+//					Menu.msgTitleURLError.getText(),
+//					JOptionPane.ERROR_MESSAGE);
+//		}
+		String help = "http://help.structorizer.fisch.lu/index.php";
+		boolean isLaunched = false;
 		try {
-			Desktop.getDesktop().browse(new URI("http://help.structorizer.fisch.lu/index.php"));
-		}
-		catch(Exception ex)
-		{
+			isLaunched = com.github.jjYBdx4IL.utils.awt.Desktop.browse(new URI("http://help.structorizer.fisch.lu/index.php"));
+		} catch (URISyntaxException ex) {
 			ex.printStackTrace();
-			// We may get here if there is no standard browser or no standard application for web links
-			// configured (as issue #245 proved) - in case of missing network access the browser will
-			// rather show a message itself, though.
-			String message = ex.getLocalizedMessage();
-			if (message == null) message = ex.getMessage();
-			JOptionPane.showMessageDialog(null,
-					message,
-					Menu.msgTitleURLError.getText(),
-					JOptionPane.ERROR_MESSAGE);
 		}
-		
+		if (!isLaunched)
+		{
+			String message = Menu.msgBrowseFailed.getText().replace("%", help);
+			JOptionPane.showMessageDialog(null,
+			message,
+			Menu.msgTitleURLError.getText(),
+			JOptionPane.ERROR_MESSAGE);
+		}
+		// END KGU#250 2016-09-17
 	}
 	// END KGU#208 2016-07-22
 	
@@ -3245,24 +3262,36 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				{
 					if (evt.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED))
 					{
+						// START KGU#250 2016-09-17: Issue #245 (defective Linux integration workaround)
+						//try {
+						//	Desktop.getDesktop().browse(evt.getURL().toURI());
+						//}
+						//catch(Exception ex)
+						//{
+						//	ex.printStackTrace();
+						//}
+						String errorMessage = null;
 						try {
-							Desktop.getDesktop().browse(evt.getURL().toURI());
+							if (!com.github.jjYBdx4IL.utils.awt.Desktop.browse(evt.getURL().toURI()))
+							{
+								errorMessage = Menu.msgBrowseFailed.getText().replace("%", evt.getURL().toString());
+							};
 						}
 						catch(Exception ex)
 						{
 							ex.printStackTrace();
-							// START KGU 2016-09-17: Issue #245
-							// We may get here if there is no standard browser or no standard application for web links
-							// configured (as issue #245 proved) - in case of missing network access the browser will
-							// rather show a message itself, though.
-							String message = ex.getLocalizedMessage();
-							if (message == null) message = ex.getMessage();
+							errorMessage = ex.getLocalizedMessage();
+							if (errorMessage == null) errorMessage = ex.getMessage();
+						}
+						if (errorMessage != null)
+						{
 							JOptionPane.showMessageDialog(null,
-									message,
+									errorMessage,
 									Menu.msgTitleURLError.getText(),
 									JOptionPane.ERROR_MESSAGE);
-							// END KGU 2016-09-17
+
 						}
+						// END KGU#250 2016-09-17
 					}
 				}
 			});
