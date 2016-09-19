@@ -1,25 +1,43 @@
 /*
- * This class is a MODIFIED version of the licensed original.
- * 
- * Copyright (C) 2016 jjYBdx4IL (https://github.com/jjYBdx4IL)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+    Structorizer
+    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+
+    Copyright (C) 2009  Bob Fisch
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or any
+    later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
  * ==========================================================================
- * Reductions for Structorizer done by codemanyak (https://github.com/codemanyak):
- * - Log disabled
- * - System detection in openSystemSpecific simplified
+
+    This class was derived from com.github.jjYBdx4IL.utils.awt.Desktop
+    (Copyright (C) 2016 jjYBdx4IL (https://github.com/jjYBdx4IL)), which was
+    licensed under the Apache License, Version 2.0 (the "License");
+    You may obtain a copy of that License at
+ 
+           http://www.apache.org/licenses/LICENSE-2.0
+ 
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+ 
+    Reductions for Structorizer done by codemanyak (https://github.com/codemanyak):
+    - Log disabled
+    - System detection in openSystemSpecific simplified
  */
-package com.github.jjYBdx4IL.utils.awt;
+
+package lu.fisch.utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -294,6 +312,11 @@ public class Desktop {
 
     private static boolean isKDE() {
         String gdmSession = System.getenv("GDMSESSION");
-        return gdmSession != null && gdmSession.toLowerCase().contains("kde");
+        // START KGU#250 2016-09-19: Issue #245
+        //return gdmSession != null && gdmSession.toLowerCase().contains("kde");
+        String kdeSessionUid = System.getenv("KDE_SESSION_UID");
+        return (gdmSession != null && gdmSession.toLowerCase().contains("kde"))
+        		|| (kdeSessionUid != null && !kdeSessionUid.isEmpty());
+        // END KGU#250 2016-09-19
     }
 }

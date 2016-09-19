@@ -3224,7 +3224,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		String help = "http://help.structorizer.fisch.lu/index.php";
 		boolean isLaunched = false;
 		try {
-			isLaunched = com.github.jjYBdx4IL.utils.awt.Desktop.browse(new URI("http://help.structorizer.fisch.lu/index.php"));
+			isLaunched = lu.fisch.utils.Desktop.browse(new URI("http://help.structorizer.fisch.lu/index.php"));
 		} catch (URISyntaxException ex) {
 			ex.printStackTrace();
 		}
@@ -3272,7 +3272,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						//}
 						String errorMessage = null;
 						try {
-							if (!com.github.jjYBdx4IL.utils.awt.Desktop.browse(evt.getURL().toURI()))
+							if (!lu.fisch.utils.Desktop.browse(evt.getURL().toURI()))
 							{
 								errorMessage = Menu.msgBrowseFailed.getText().replace("%", evt.getURL().toString());
 							};
