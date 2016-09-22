@@ -215,7 +215,7 @@ Menu.msgOverwriteFiles.text=
 Menu.btnConfirmOverwrite.text=
 Menu.msgRepeatSaveAttempt.text=
 Menu.msgErrorFileSave.text=
-Menu.msgBreakTriggerPrompt.text=Fissa numero di execuzioni per fermare 
+Menu.msgBreakTriggerPrompt.text=Fissa numero di execuzioni per fermare (0 = sempre)
 Menu.msgBreakTriggerIgnored.text=Valore inadatto - numero intero ≥ 0 aspettato.
 Menu.msgOpenLangFile.text=
 Menu.msgLangFile.text=

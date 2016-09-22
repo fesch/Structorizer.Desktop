@@ -90,6 +90,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016-07-27      KGU#197: Further (chiefly error) messages put under language support
  *                                      Enh. #137: Error messages now also written to text window output
  *      Kay Gürtzig     2016-09-17      Bugfix #246 (Boolean expressions) and issue #243 (more translations)
+ *      Kay Gürtzig     2016.09.22      Issue #248: Workaround for Java 7 in Linux systems (parseUnsignedInt)
  *
  ******************************************************************************************************
  *
@@ -2136,18 +2137,36 @@ public class Executor implements Runnable
 					int nLevels = 1;
 					if (tokens.count() > 1)
 					{
+						// START KGU#252 2016-09-22: Issue #248 - Java 7 workaround
+						String errorMessage = null;
+						// END KGU#252 2016-09-22
 						try {
-							nLevels = Integer.parseUnsignedInt(tokens.get(1));
+							// START KGU#252 2016-09-22: Issue #248 - Java 7 workaround
+							//nLevels = Integer.parseUnsignedInt(tokens.get(1));
+							nLevels = Integer.parseInt(tokens.get(1));
+							if (nLevels <= 0)
+							{
+								errorMessage = tokens.get(1) + " < 1";
+							}
+							// END KGU#252 2016-09-22
 						}
 						catch (NumberFormatException ex)
 						{
 							// START KGU#197 2016-07-27: Localization support (updated 2016-09-17)
 							//result = "Illegal leave argument: " + ex.getMessage();
-							String exMessage = ex.getLocalizedMessage();
-							if (exMessage == null) exMessage = ex.getMessage();
-							result = control.msgIllegalLeave.getText().replace("%1", exMessage);
+							errorMessage = ex.getLocalizedMessage();
+							if (errorMessage == null) errorMessage = ex.getMessage();
+							errorMessage = ex.getClass().getSimpleName() + " " + errorMessage;
+							// START KGU#252 2016-09-22: Issue #248: Java 7 workaround
+							//result = control.msgIllegalLeave.getText().replace("%1", errorMessage);
+							// END KGU#252 2016-09-22
 							// END KGU#197 2016-07-27
 						}
+						// START KGU#252 2016-09-22: Issue #248: Java 7 workaround
+						if (errorMessage != null) {
+							result = control.msgIllegalLeave.getText().replace("%1", errorMessage);
+						}
+						// END KGU#252 2016-09-22
 					}
 					this.leave += nLevels;
 					done = true;

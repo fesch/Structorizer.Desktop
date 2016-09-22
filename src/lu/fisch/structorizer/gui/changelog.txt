@@ -14,6 +14,7 @@ Current development version: 3.25-01 (2016.09.22)
 - 01: Issue #245: Browser launching workaround for Linux systems [Rolf Schmidt]2
 - 01: Bugfix #247: Defective BASH export of ENDLESS loops [Rolf Schmidt]2
 - 01: Issue #248: Linux workaround for setting breakpoint triggers <2>
+- 01: Issue #248: Linux workaround for number conversions in Locales and Executor <2>
 - 01: Enh. #249: New Analyser check for subroutine argument parenthesis <2>
 - 01: Analyser preferences order modified <2>
 
