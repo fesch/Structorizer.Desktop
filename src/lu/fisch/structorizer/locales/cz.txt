@@ -400,7 +400,7 @@ InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=Potvrďte svou volbu.
 InputBox.btnCancel.text=Storno
 InputBox.btnCancel.tooltip=Zrušit volbu.
-InputBox.lblBreakText.text=
+InputBox.lblBreakTriggerText.text=
 InputBox.chkBreakpoint.text=
 
 

@@ -50,7 +50,6 @@ package lu.fisch.structorizer.gui;
  */
 
 import lu.fisch.structorizer.locales.LangDialog;
-import lu.fisch.structorizer.locales.Locales;
 
 import java.awt.*;
 import java.awt.event.*;
