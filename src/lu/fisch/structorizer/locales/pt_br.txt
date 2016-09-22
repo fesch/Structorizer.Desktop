@@ -53,6 +53,7 @@
  *      PUC-Minas       2016.07.30  Revised
  *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig     2016.09.13  Entries for InputBox and InputBoxFor revised (bugfix #241)
+ *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
  *
  ******************************************************************************************************
  *
@@ -248,23 +249,23 @@ Menu.error17.text=Risco de inconsistência devido a acesso concorrente à variá
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferências do analisador
-AnalyserPreferences.checkboxes.0.text=Verificar se variável de controle é modificada.
-AnalyserPreferences.checkboxes.1.text=Verificar se repetição infinita (tanto quanto detectável!)
-AnalyserPreferences.checkboxes.2.text=Verificar se há variáveis sem valores iniciais.
-AnalyserPreferences.checkboxes.3.text=Verificar se há uso incorreto de alternativa (IF).
-AnalyserPreferences.checkboxes.4.text=Verificar se há nomes de variáveis em MAIÚSCULAS. (LUX/MEN)
-AnalyserPreferences.checkboxes.5.text=Verificar se há nomes de programas / subprogramas em MAIÚSCULAS. (LUX/MEN)
-AnalyserPreferences.checkboxes.6.text=Verificar se há identificadores válidos.
-AnalyserPreferences.checkboxes.7.text=Verificar se há atribuições em condições.
-AnalyserPreferences.checkboxes.8.text=Verificar se há nome de programa / subprograma não é igual a qualquer outro identificador.
-AnalyserPreferences.checkboxes.9.text=Verificar se há instruções com múltiplos comandos.
-AnalyserPreferences.checkboxes.10.text=Verificar se há erros em atribuições.
-AnalyserPreferences.checkboxes.11.text=Verificar se há nomes de parâmetros padronizados. (LUX/MEN)
-AnalyserPreferences.checkboxes.12.text=Verificar se há retorno, no caso de uma função.
-AnalyserPreferences.checkboxes.13.text=Verificar consistência de parâmetros da repetição (FOR).
-AnalyserPreferences.checkboxes.14.text=Verificar se há chamadas (CALLs) impróprias para subroutinas.
-AnalyserPreferences.checkboxes.15.text=Verificar se há uso incorreto de desvio (JUMP).
-AnalyserPreferences.checkboxes.16.text=Verificar se há riscos de inconsistência em seções paralelas (PARALLEL).
+AnalyserPreferences.checkboxes.1.text=Verificar se variável de controle é modificada.
+AnalyserPreferences.checkboxes.2.text=Verificar se repetição infinita (tanto quanto detectável!)
+AnalyserPreferences.checkboxes.3.text=Verificar se há variáveis sem valores iniciais.
+AnalyserPreferences.checkboxes.4.text=Verificar se há uso incorreto de alternativa (IF).
+AnalyserPreferences.checkboxes.5.text=Verificar se há nomes de variáveis em MAIÚSCULAS. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=Verificar se há nomes de programas / subprogramas em MAIÚSCULAS. (LUX/MEN)
+AnalyserPreferences.checkboxes.7.text=Verificar se há identificadores válidos.
+AnalyserPreferences.checkboxes.8.text=Verificar se há atribuições em condições.
+AnalyserPreferences.checkboxes.9.text=Verificar se há nome de programa / subprograma não é igual a qualquer outro identificador.
+AnalyserPreferences.checkboxes.10.text=Verificar se há instruções com múltiplos comandos.
+AnalyserPreferences.checkboxes.11.text=Verificar se há erros em atribuições.
+AnalyserPreferences.checkboxes.12.text=Verificar se há nomes de parâmetros padronizados. (LUX/MEN)
+AnalyserPreferences.checkboxes.13.text=Verificar se há retorno, no caso de uma função.
+AnalyserPreferences.checkboxes.14.text=Verificar consistência de parâmetros da repetição (FOR).
+AnalyserPreferences.checkboxes.15.text=Verificar se há chamadas (CALLs) impróprias para subroutinas.
+AnalyserPreferences.checkboxes.16.text=Verificar se há uso incorreto de desvio (JUMP).
+AnalyserPreferences.checkboxes.17.text=Verificar se há riscos de inconsistência em seções paralelas (PARALLEL).
 AnalyserPreferences.okButton.text=OK
 
 -----[ Diagram ]-----

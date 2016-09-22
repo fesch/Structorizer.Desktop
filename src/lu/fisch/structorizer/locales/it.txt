@@ -58,6 +58,8 @@
  *      Andrea Maiani   2016.08.01      Updated
  *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig     2016.09.13      Entries for InputBox and InputBoxFor revised (bugfix #241)
+ *      Kay Gürtzig     2016.09.22      Bugfix #241: Entries for InputBox and InputBoxFor finally revised
+ *                                      AnalyserPreferences numbering modified
  *
  ******************************************************************************************************
  *
@@ -80,6 +82,12 @@ Menu.menuFileExport.text=Esporta
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Immagine ...
 Menu.menuFileExportCode.text=Codice ...
+Menu.menuFileExportPicturePNG.text=
+Menu.menuFileExportPicturePNGmulti.text=
+Menu.menuFileExportPictureEMF.text=
+Menu.menuFileExportPictureSWF.text=
+Menu.menuFileExportPicturePDF.text=
+Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=Esporta come % code
 Menu.menuFileExportCodeFavorite.tooltip=Puoi cambiare il linguaggio preferito nelle opzioni sull export
 Menu.menuFileImport.text=Importa
@@ -87,6 +95,7 @@ Menu.menuFileImport.text=Importa
 Menu.menuFileImportPascal.text=Codice Pascal...
 Menu.menuFilePrint.text=Stampa ...
 Menu.menuFileArrange.text=Collocare in Arranger
+Menu.menuFileTranslator.text=
 Menu.menuFileQuit.text=Esci
 // Menu "Edit"
 Menu.menuEdit.text=Modifica
@@ -139,6 +148,7 @@ Menu.menuDiagramCollapse.text=Collassa
 Menu.menuDiagramExpand.text=Espandi
 // Breakpoint
 Menu.menuDiagramBreakpoint.text=Alterna breakpoint
+Menu.menuDiagramBreakTrigger.text=Condizione del breakpoint ... 
 // Diagram Appearance
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Principale
@@ -146,6 +156,8 @@ Menu.menuDiagramTypeFunction.text=Funzione
 Menu.menuDiagramNice.text=Stile box?
 Menu.menuDiagramComment.text=Mostra commenti?
 Menu.menuDiagramSwitchComments.text=Scambia testo/commenti?
+Menu.menuDiagramCommentsPlusText.text=
+Menu.menuDiagramSwitchTCTooltip.text=
 Menu.menuDiagramMarker.text=Evidenzia variabili?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Analizza struttogramma?
@@ -165,15 +177,18 @@ Menu.menuPreferencesLanguageItems.en.text=Inglese
 Menu.menuPreferencesLanguageItems.de.text=Tedesco
 Menu.menuPreferencesLanguageItems.fr.text=Francese
 Menu.menuPreferencesLanguageItems.nl.text=Olandese
-Menu.menuPreferencesLanguageItems.it.text=Italiano
-Menu.menuPreferencesLanguageItems.es.text=Spagnolo
-Menu.menuPreferencesLanguageItems.pt_br.text=Portoghese (Brazil)
 Menu.menuPreferencesLanguageItems.lu.text=Lussemburghese
+Menu.menuPreferencesLanguageItems.es.text=Spagnolo
+Menu.menuPreferencesLanguageItems.it.text=Italiano
+Menu.menuPreferencesLanguageItems.pt_br.text=Portoghese (Brazil)
 Menu.menuPreferencesLanguageItems.zh-cn.text=Cinese (semplificato)
 Menu.menuPreferencesLanguageItems.zh-tw.text=Cinese (tradizionale)
 Menu.menuPreferencesLanguageItems.cz.text=Ceco
 Menu.menuPreferencesLanguageItems.ru.text=Russo
 Menu.menuPreferencesLanguageItems.pl.text=Polacco
+Menu.menuPreferencesLanguageFromFile.text=Carica da file ...
+Menu.menuPreferencesLanguageFromFile.tooltip=
+
 Menu.menuPreferencesLookAndFeel.text=Aspetto
 
 Menu.menuPreferencesSave.text=Salva tutte le impostazioni ora
@@ -181,13 +196,46 @@ Menu.menuPreferencesSaveAll.text=Salva
 Menu.menuPreferencesSaveDump.text=Salva su file ...
 Menu.menuPreferencesSaveLoad.text=Carica da file ...
 
+// Menu "View" (not in use right now!)
+Menu.menuView.text=
 
 // Menu "Help"
 Menu.menuHelp.text=Aiuto
 Menu.menuHelp.mnemonic=a
 // Submenu of "Help"
+Menu.menuHelpOnline.text=Manuale (ingl.)
 Menu.menuHelpAbout.text=About ...
 Menu.menuHelpUpdate.text=Aggiorna ...
+
+// Dialog messages
+Menu.msgDialogExpCols.text=
+Menu.msgDialogExpRows.text=
+Menu.msgOverwriteFile.text=
+Menu.msgOverwriteFiles.text=
+Menu.btnConfirmOverwrite.text=
+Menu.msgRepeatSaveAttempt.text=
+Menu.msgErrorFileSave.text=
+Menu.msgBreakTriggerPrompt.text=Fissa numero di execuzioni per fermare 
+Menu.msgBreakTriggerIgnored.text=Valore inadatto - numero intero ≥ 0 aspettato.
+Menu.msgOpenLangFile.text=
+Menu.msgLangFile.text=
+Menu.msgGotoHomepage.text=
+Menu.msgTitleError.text=
+Menu.msgTitleLoadingError.text=
+Menu.msgTitleParserError.text=
+Menu.msgTitleURLError.text=
+Menu.msgTitleQuestion.text=
+Menu.msgTitleOpen.text=
+Menu.msgTitleSave.text=
+Menu.msgTitleSaveAs.text=
+Menu.msgTitleImport.text=
+Menu.msgTitleWrongInput.text=
+Menu.msgSaveChanges.text=
+Menu.msgErrorImageSave.text=
+Menu.msgErrorUsingGenerator.text=
+Menu.msgErrorNoFile.text=
+Menu.msgBrowseFailed.text=
+
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
 Menu.warning_1.text=Attenzione: ¡TESTI E COMMENTI SONO CAMBIATI! → Menu "Diagramma > Cambia testi/commenti?".
@@ -217,7 +265,7 @@ Menu.error13_3.text=La tua funzione sembra usare diversi meccanismi di return in
 Menu.error14_1.text=Parametri del ciclo FOR non sono consistenti con la intestazione dello medesimo!
 Menu.error14_2.text=Il passo del ciclo FOR non è una constante intera!
 Menu.error14_3.text=Il nome della variabile «%» potrebbe collidere con una delle parole chiave di un ciclo FOR
-Menu.error15.text= La CALL non è partita da «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»
+Menu.error15.text=La CALL non è partita da «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»
 Menu.error16_1.text=Un elemento JUMP potrebbe essere vuoto o partire con uno di %, possibilmente seguito da un argomento!
 Menu.error16_2.text=Un istruzione di return, a meno che non sia  in posizione finale, deve formare un elemento JUMP!
 Menu.error16_3.text=Un'istruzione di exit, leave o break è consentita solo come lemento di JUMP!
@@ -226,28 +274,32 @@ Menu.error16_5.text=Non devi mai usare return fuori da un thread parallelo!
 Menu.error16_6.text=Argomento incompatibile con questo tipo di JUMP (dovrebbe essere un intero costante)!
 Menu.error16_7.text=Istruzione non raggiungibile dopo un JUMP!
 Menu.error17.text=Rischio consistente dovuto all'accesso simultaneo della variabile «%» da diversi thread paralleli!
+Menu.error18.text=
+Menu.error19.text=
+Menu.error20.text=
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferenze dell'analizzatore
-AnalyserPreferences.checkboxes.0.text=Controlla variabile di ciclo modificata.
-AnalyserPreferences.checkboxes.1.text=Controlla cicli infiniti (finchè e rilevabile!)
-AnalyserPreferences.checkboxes.2.text=Controlla variabili non inizializzate.
-AnalyserPreferences.checkboxes.3.text=Controlla errori nell'uso della Selezione.
-AnalyserPreferences.checkboxes.4.text=Controlla nomi delle variabili in maiuscolo. (LUX/MEN)
-AnalyserPreferences.checkboxes.5.text=Controlla nomi del programma e dei sottoprogrammi in maiuscolo. (LUX/MEN)
-AnalyserPreferences.checkboxes.6.text=Controlla identificatori validi.
-AnalyserPreferences.checkboxes.7.text=Controlla assegnamenti nelle condizioni.
-AnalyserPreferences.checkboxes.8.text=Controlla che il nome del programma e quelli dei sotto programmi siano diversi da ogni altro identificatore.
-AnalyserPreferences.checkboxes.9.text=Controlla istruzioni con comandi multipli.
-AnalyserPreferences.checkboxes.10.text=Controlla errori di assegnamento.
-AnalyserPreferences.checkboxes.11.text=Controlla nomi dei parametri standardizzati. (LUX/MEN)
-AnalyserPreferences.checkboxes.12.text=Controlla se una funzione ritorna un risultato.
-AnalyserPreferences.checkboxes.13.text=Controlla se parametri del ciclo FOR si confan con la intestazione dello medesimo.
-AnalyserPreferences.checkboxes.14.text=Controlla CALL inappropiate nelle subroutine.
-AnalyserPreferences.checkboxes.15.text=Controlla usi impropri di un elemento JUMP.
-AnalyserPreferences.checkboxes.16.text=Controlla rischi di inconsistenza nelle sezioni in PARALLEL.
-AnalyserPreferences.checkboxes.17.text=
+AnalyserPreferences.checkboxes.1.text=Controlla variabile di ciclo modificata.
+AnalyserPreferences.checkboxes.2.text=Controlla cicli infiniti (finchè e rilevabile!)
+AnalyserPreferences.checkboxes.3.text=Controlla variabili non inizializzate.
+AnalyserPreferences.checkboxes.4.text=Controlla errori nell'uso della Selezione.
+AnalyserPreferences.checkboxes.5.text=Controlla nomi delle variabili in maiuscolo. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=Controlla nomi del programma e dei sottoprogrammi in maiuscolo. (LUX/MEN)
+AnalyserPreferences.checkboxes.7.text=Controlla identificatori validi.
+AnalyserPreferences.checkboxes.8.text=Controlla assegnamenti nelle condizioni.
+AnalyserPreferences.checkboxes.9.text=Controlla che il nome del programma e quelli dei sotto programmi siano diversi da ogni altro identificatore.
+AnalyserPreferences.checkboxes.10.text=Controlla istruzioni con comandi multipli.
+AnalyserPreferences.checkboxes.11.text=Controlla errori di assegnamento.
+AnalyserPreferences.checkboxes.12.text=Controlla nomi dei parametri standardizzati. (LUX/MEN)
+AnalyserPreferences.checkboxes.13.text=Controlla se una funzione ritorna un risultato.
+AnalyserPreferences.checkboxes.14.text=Controlla se parametri del ciclo FOR si confan con la intestazione dello medesimo.
+AnalyserPreferences.checkboxes.15.text=Controlla CALL inappropiate nelle subroutine.
+AnalyserPreferences.checkboxes.16.text=Controlla usi impropri di un elemento JUMP.
+AnalyserPreferences.checkboxes.17.text=Controlla rischi di inconsistenza nelle sezioni in PARALLEL.
 AnalyserPreferences.checkboxes.18.text=
+AnalyserPreferences.checkboxes.19.text=
+AnalyserPreferences.checkboxes.20.text=
 AnalyserPreferences.okButton.text=OK
 
 
@@ -287,7 +339,7 @@ Editor.btnRedo.tooltip=Ripeti l'ultima azione.
 Editor.btnCut.tooltip=Taglia l'elemento selezionato.
 Editor.btnCopy.tooltip=Copia l'elemento selezionato.
 Editor.btnPaste.tooltip=Incolla l'elemento selezionato.
-// style 
+// style
 Editor.btnNice.tooltip=Cabia lop stile di visualizzazione del diagramma.
 Editor.btnFunction.tooltip=Sottoprogramma (angoli arrotondati).
 Editor.btnProgram.tooltip=Programma (angoli retti).
@@ -303,7 +355,7 @@ Editor.btnArrange.tooltip=Aggiungi il diagramma al pannello Arranger
 // font
 Editor.btnFontUp.tooltip=Aumenta la dimensione del carattere.
 Editor.btnFontDown.tooltip=Diminuisci la dimensione del carattere.
-// copyright 
+// copyright
 Editor.btnAbout.tooltip=Mostra informazioni su Structorizer.
 // colors
 Editor.btnColor0.tooltip=Colora l'elemento selezionato con questo colore.
@@ -354,7 +406,7 @@ Editor.popupAddAfterForever.text=Ciclo ENDLESS
 Editor.popupAddAfterCall.text=Chiamata
 Editor.popupAddAfterJump.text=Salto
 Editor.popupAddAfterPara.text=Parallelo
-// Edit	
+// Edit
 Editor.popupEdit.text=Modifica
 Editor.popupDelete.text=Cancella
 Editor.popupMoveUp.text=Sposta in alto
@@ -365,9 +417,10 @@ Editor.popupCollapse.text=Collassa
 Editor.popupExpand.text=Espandi
 // Breakpoint
 Editor.popupBreakpoint.text=Alterna breakpoint
-
+Editor.popupBreakTrigger.text=
 
 -----[ InputBox ]-----
+InputBox.title=
 InputBox.lblText.text=Inserisci il testo
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Commento
@@ -379,12 +432,14 @@ InputBox.btnOK.tooltip=Valida la tua scelta.
 InputBox.btnCancel.text=Annulla
 InputBox.btnCancel.tooltip=Annulla la tua scelta.
 InputBox.chkBreakpoint.text=Breakpoint
-InputBox.lblBreakTriggerText.text=Fermare a esecuzione:
+InputBox.lblBreakTriggerText.text=Fermare a esecuzione: %
 InputBox.lblText.text[elementType:Alternative]=Inserisci la condicione
 InputBox.lblText.text[elementType:While]=Inserisci la condicione para entrar y quedar
 InputBox.lblText.text[elementType:Repeat]=Inserisci la conditione para salir
 InputBox.lblText.text[elementType:Case]=Inserisci l'espressione e le constanti della selezione
 InputBox.lblText.text[elementType:Parallel]=Nummero dei rami paralleli
+InputBox.title[elementType:Root]=
+InputBox.title[elementType:Function]=
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Inseriscire istruzioni...
 InputBox.title[elementType:Alternative,getInsertionType():insert]=Inseriscire nuova Selezione...
 InputBox.title[elementType:Case,getInsertionType():insert]=Inseriscire nuova Selezione Multipla...
@@ -404,7 +459,7 @@ InputBox.title[elementType:Call,getInsertionType():update]=Modificare chiamata..
 InputBox.title[elementType:Jump,getInsertionType():update]=Modificare salto...
 InputBox.title[elementType:Parallel,getInsertionType():update]=Modificare passaggio Parallelo...
 
------[ InputBoxFor ]-----
+-----[ InputBox For ]-----
 InputBoxFor.title[getInsertionType():insert]=Inseriscire ciclo FOR...
 InputBoxFor.title[getInsertionType():update]=Modificare ciclo FOR...
 InputBoxFor.lblVariable.text=Variable contatora
@@ -422,7 +477,7 @@ InputBoxFor.btnOK.tooltip=Valida la tua scelta.
 InputBoxFor.btnCancel.text=Annulla
 InputBoxFor.btnCancel.tooltip=Annulla la tua scelta.
 InputBoxFor.chkBreakpoint.text=Breakpoint
-InputBoxFor.lblBreakTriggerText.text=Fermare a esecuzione:
+InputBoxFor.lblBreakTriggerText.text=Fermare a esecuzione: %
 
 -----[ Preferences ]-----
 Preferences.title=Preferenze di struttura
@@ -459,6 +514,7 @@ Preferences.btnOK.tooltip=Valida le tue scelte.
 About.title=About
 About.pnlTabbed.tab.0=Implicated Persons
 About.pnlTabbed.tab.1=Changelog
+About.pnlTabbed.tab.2=Licenzi
 About.btnOK.text=OK
 About.btnOK.tooltip=Valida la tua scelta.
 
@@ -564,7 +620,7 @@ PrintPreview.btnOK.text=Stampa
 PrintPreview.btnOK.tooltip=Stampa il diagramma.
 
 -----[ ExportOptionDialoge ]-----
-ExportOptionDialoge.title=Impostazione di export ... 
+ExportOptionDialoge.title=Impostazione di export ...
 ExportOptionDialoge.noConversionCheckBox.text=Nessuna conversione del contenuto dell'espressione/istruzione.
 ExportOptionDialoge.noConversionCheckBox.tooltip=Seleziona questa opzione se il testo contenente i tuoi elementi è già rappresentato nel linguaggio prescelto.
 ExportOptionDialoge.commentsCheckBox.text=Esporta istruzioni come commenti.
@@ -578,4 +634,64 @@ ExportOptionDialoge.jLabel1.text=Per favore seleziona le opzioni che vuoi attiva
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Salva le impostazioni.
 
+-----> Arranger
+Surface.msgFileLoadError.text=
+Surface.msgSavePortable.text=
+Surface.msgSaveDialogTitle.text=
+Surface.msgSaveError.text=
+Surface.msgLoadDialogTitle.text=
+Surface.msgExtractDialogTitle.text=
+Surface.msgArrLoadError.text=
+Surface.msgExportDialogTitle.text=
+Surface.msgExportError.text=
+Surface.msgParseError.text=
+Surface.msgResetCovered.text=
+Surface.msgCoverageError.text=
+Surface.msgUnsavedDiagrams.text=
+Surface.msgUnsavedHint.text=
+Surface.msgUnsavedContinue.text=
+Surface.msgNoArrFile.text=
+
+-----> Executor
+-----[ Control ]-----
+Control.lblSpeed.text=
+Control.btnCallStack.text=
+Control.lblCallLevel.text=
+Control.chkCollectRuntimeData.text=
+Control.cbRunDataDisplay.item.0=
+Control.cbRunDataDisplay.item.1=
+Control.cbRunDataDisplay.item.2=
+Control.cbRunDataDisplay.item.3=
+Control.cbRunDataDisplay.item.4=
+Control.cbRunDataDisplay.item.5=
+Control.cbRunDataDisplay.item.6=
+Control.cbRunDataDisplay.item.7=
+Control.chkOutputToTextWindow.text=
+Control.lbStopRunningProc.text=
+Control.lbInputValue.text=
+Control.lbInputPaused.text=
+Control.lbInputCancelled.text=
+Control.lbManuallySet.text=
+Control.lbEmptyLine.text=
+Control.lbNoCorrectExpr.text=
+Control.lbReturnedResult.text=
+Control.lbOutput.text=
+Control.lbInput.text=
+Control.lbAcknowledge.text=
+Control.msgTitleError.text=
+Control.msgTitleQuestion.text=
+Control.msgTitleParallel.text=
+Control.msgNoSubroutine.text=
+Control.msgInvalidExpr.text=
+Control.msgInvalidBool.text=
+Control.msgIllFunction.text=
+Control.msgManualBreak.text=
+Control.msgIllegalLeave.text=
+Control.msgWrongExit.text=
+Control.msgExitCode.text=
+Control.msgIllegalJump.text=
+Control.msgTooManyLevels.text=
+Control.msgJumpOutParallel.text=
+Control.tblVar.header.0=
+Control.tblVar.header.1=
 

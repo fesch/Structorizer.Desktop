@@ -3500,10 +3500,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						   Math.round(p.y+(getVisibleRect().height-analyserPreferences.getHeight())/2+this.getVisibleRect().y));
 
 		// set fields
-		// START KGU#239 2016-08-12: Code redesign
-		for (int i = 0; i < analyserPreferences.checkboxes.length; i++)
+		// START KGU#239 2016-08-12: Code redesign (2016-09-22: index mapping modified)
+		for (int i = 1; i < analyserPreferences.checkboxes.length; i++)
 		{
-			analyserPreferences.checkboxes[i].setSelected(Root.check(i+1));
+			analyserPreferences.checkboxes[i].setSelected(Root.check(i));
 		}
 		// END KGU#239 2016-08-12
 
@@ -3511,10 +3511,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		analyserPreferences.setVisible(true);
 
 		// get fields
-		// START KGU#239 2016-08-12: Code redesign
-		for (int i = 0; i < analyserPreferences.checkboxes.length; i++)
+		// START KGU#239 2016-08-12: Code redesign (2016-09-22: index mapping modified)
+		for (int i = 1; i < analyserPreferences.checkboxes.length; i++)
 		{
-			Root.setCheck(i+1, analyserPreferences.checkboxes[i].isSelected());
+			Root.setCheck(i, analyserPreferences.checkboxes[i].isSelected());
 		}
 		// END KGU#239 2016-08-12
 

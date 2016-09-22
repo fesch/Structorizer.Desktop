@@ -205,12 +205,12 @@ public class Root extends Element {
 //	public static boolean check18 = false;	// Check identifiers equal ignoring case
 //	public static boolean check19 = false;	// Check identifiers colliding with keywords
 	private static boolean[] analyserChecks = {
-		false, false, false, false,	false,
-		false, false, false, false,	false,
-		false, false, false, false,	false,
-		false, false, false, false, false
+		false, false, false, false, false,	// 1 .. 5
+		false, false, false, false, false,	// 6 .. 10
+		false, false, false, false, false,	// 11 .. 15
+		false, false, false, false, false	// 16 .. 20
 		// Add another element for every new check...
-		// and don't forget to append its description to
+		// and DON'T FORGET to append its description to
 		// AnalyserPreferences.checkCaptions
 	};
 	public static int numberOfChecks()

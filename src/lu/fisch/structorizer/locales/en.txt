@@ -74,7 +74,8 @@
  *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig     2016.09.13      Entries for InputBox and InputBoxFor revised (bugfix #241)
  *      Kay Gürtzig     2016.09.15-17   Issue #243: New message translations for Menu and Control
- *      Kay Gürtzig     2016.09.22      Bugfix #241; issue #249: New messages for InputBox and Analyser 
+ *      Kay Gürtzig     2016.09.22      Bugfix #241; issue #249: New messages for InputBox and Analyser
+ *                                      AnalyserPreferences numbering modified 
  *
  ******************************************************************************************************
  *
@@ -223,6 +224,7 @@ Menu.menuView.text=
 Menu.menuHelp.text=Help
 Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
+Menu.menuHelpOnline.text=User Guide
 Menu.menuHelpAbout.text=About ...
 Menu.menuHelpUpdate.text=Update ...
 
@@ -299,26 +301,26 @@ Menu.error20.text=A subroutine header must have a (possibly empty) parameter lis
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Analyser preferences
-AnalyserPreferences.checkboxes.0.text=Check for modified loop variable.
-AnalyserPreferences.checkboxes.1.text=Check for endless loop (as far as detectable!)
-AnalyserPreferences.checkboxes.2.text=Check for non-initialized variables.
-AnalyserPreferences.checkboxes.3.text=Check for incorrect use of the IF-statement.
-AnalyserPreferences.checkboxes.4.text=Check for UPPERCASE variable names. (LUX/MEN)
-AnalyserPreferences.checkboxes.5.text=Check for UPPERCASE program / sub name. (LUX/MEN)
-AnalyserPreferences.checkboxes.6.text=Check for valid identifiers.
-AnalyserPreferences.checkboxes.7.text=Check for assignment in conditions.
-AnalyserPreferences.checkboxes.8.text=Check that the program / sub name is not equal to any other identifier.
-AnalyserPreferences.checkboxes.9.text=Check for instructions with multiple commands.
-AnalyserPreferences.checkboxes.10.text=Check for assignment errors.
-AnalyserPreferences.checkboxes.11.text=Check for standardized parameter name. (LUX/MEN)
-AnalyserPreferences.checkboxes.12.text=Check if, in case of a function, it returns a result.
-AnalyserPreferences.checkboxes.13.text=Check for consistency of FOR loop parameters.
-AnalyserPreferences.checkboxes.14.text=Check for inappropriate subroutine CALLs.
-AnalyserPreferences.checkboxes.15.text=Check for incorrect JUMP element usage.
-AnalyserPreferences.checkboxes.16.text=Check for inconsistency risks in PARALLEL sections.
-AnalyserPreferences.checkboxes.17.text=Check that identifiers don't differ only by upper/lower case.
-AnalyserPreferences.checkboxes.18.text=Check if an identifier might collide with reserved words.
-AnalyserPreferences.checkboxes.19.text=Check that a subroutine header has a parameter list.
+AnalyserPreferences.checkboxes.1.text=Check for modified loop variable.
+AnalyserPreferences.checkboxes.2.text=Check for endless loop (as far as detectable!)
+AnalyserPreferences.checkboxes.3.text=Check for non-initialized variables.
+AnalyserPreferences.checkboxes.4.text=Check for incorrect use of the IF-statement.
+AnalyserPreferences.checkboxes.5.text=Check for UPPERCASE variable names. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=Check for UPPERCASE program / sub name. (LUX/MEN)
+AnalyserPreferences.checkboxes.7.text=Check for valid identifiers.
+AnalyserPreferences.checkboxes.8.text=Check for assignment in conditions.
+AnalyserPreferences.checkboxes.9.text=Check that the program / sub name is not equal to any other identifier.
+AnalyserPreferences.checkboxes.10.text=Check for instructions with multiple commands.
+AnalyserPreferences.checkboxes.11.text=Check for assignment errors.
+AnalyserPreferences.checkboxes.12.text=Check for standardized parameter name. (LUX/MEN)
+AnalyserPreferences.checkboxes.13.text=Check if, in case of a function, it returns a result.
+AnalyserPreferences.checkboxes.14.text=Check for consistency of FOR loop parameters.
+AnalyserPreferences.checkboxes.15.text=Check for inappropriate subroutine CALLs.
+AnalyserPreferences.checkboxes.16.text=Check for incorrect JUMP element usage.
+AnalyserPreferences.checkboxes.17.text=Check for inconsistency risks in PARALLEL sections.
+AnalyserPreferences.checkboxes.18.text=Check that identifiers don't differ only by upper/lower case.
+AnalyserPreferences.checkboxes.19.text=Check if an identifier might collide with reserved words.
+AnalyserPreferences.checkboxes.20.text=Check that a subroutine header has a parameter list.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -450,8 +452,8 @@ InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=Validate your choice.
 InputBox.btnCancel.text=Cancel
 InputBox.btnCancel.tooltip=Cancel your choice.
-InputBox.lblBreakTriggerText.text=Break at execution count: %
 InputBox.chkBreakpoint.text=
+InputBox.lblBreakTriggerText.text=Break at execution count: %
 InputBox.lblText.text[elementType:Alternative]=Please enter the condition
 InputBox.lblText.text[elementType:While]=Please enter the entry condition
 InputBox.lblText.text[elementType:Repeat]=Please enter the condition to leave

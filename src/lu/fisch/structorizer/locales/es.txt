@@ -76,7 +76,8 @@
  *      Kay Gürtzig     2016.09.13  Entries for InputBox and InputBoxFor revised (bugfix #241)
  *      Kay Gürtzig     2016.09.15  Issue #243: New message translations for Menu 
  *      Kay Gürtzig     2016.09.17  Issue #243: New message translations for Control 
- *      Kay Gürtzig     2016.09.22  Bugfix #241; issue #249: New messages for InputBox and Analyser 
+ *      Kay Gürtzig     2016.09.22  Bugfix #241; issue #249: New messages for InputBox and Analyser,
+ *                                  AnalyserPreferences numbering modified. 
  *
  ******************************************************************************************************
  *
@@ -220,6 +221,7 @@ Menu.menuView.text=
 Menu.menuHelp.text=Ayuda
 Menu.menuHelp.mnemonic=y
 // Submenu of "Help"
+Menu.menuHelpOnline.text=Manual (inglés)
 Menu.menuHelpAbout.text=Acerca de ...
 Menu.menuHelpUpdate.text=Actualizar ...
 
@@ -296,26 +298,26 @@ Menu.error20.text=El ecabezamiento de un subprograma debe tener un parénthesis 
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferencias del Comprobador
-AnalyserPreferences.checkboxes.0.text=Comprobar modificación de la variable del bucle.
-AnalyserPreferences.checkboxes.1.text=Comprobar bucle sin fin (¡en la medida de lo detectable!)
-AnalyserPreferences.checkboxes.2.text=Comprobar si hay variables no inicializadas.
-AnalyserPreferences.checkboxes.3.text=Comprobar uso correcto de la declaración IF.
-AnalyserPreferences.checkboxes.4.text=Comprobar nombres de variables en MAYUSCULAS. (LUX/MEN)
-AnalyserPreferences.checkboxes.5.text=Comprobar MAYUSCULAS en el nombre de programa / subrutina. (LUX/MEN)
-AnalyserPreferences.checkboxes.6.text=Comprobación de validez de los identificadores.
-AnalyserPreferences.checkboxes.7.text=Comprobar asignaciones en condiciones.
-AnalyserPreferences.checkboxes.8.text=Comprobar que el nombre de programa / subrutina no sea igual que algún identificador.
-AnalyserPreferences.checkboxes.9.text=Comprobar instrucciones con multiples comandos.
-AnalyserPreferences.checkboxes.10.text=Comprobar errores en asignaciones.
-AnalyserPreferences.checkboxes.11.text=Comprobar por nombre de parámetro estándar. (LUX/MEN)
-AnalyserPreferences.checkboxes.12.text=Comprobar si, en caso de una función, ésta devuelve un resultado.
-AnalyserPreferences.checkboxes.13.text=Comprobar si los parámetros de bucles FOR están consistentes.
-AnalyserPreferences.checkboxes.14.text=Comprobar que llamadas contengan una sola línea de código llamando una subrutina.
-AnalyserPreferences.checkboxes.15.text=Comprobar si el uso de elementos SALTO es corrrecto.
-AnalyserPreferences.checkboxes.16.text=Comprobar que hilos paralelos no pongan a riesgo la consistencia de variables.
-AnalyserPreferences.checkboxes.17.text=Comprobar si variables difieren no solo por empleo de mayúsculas o minúsculas.
-AnalyserPreferences.checkboxes.18.text=Comprobar que no habrá colisiones de nombre entre variables y palabras claves.
-AnalyserPreferences.checkboxes.19.text=Comprobar que un subprograma tiene un paréntesis para parámetros.
+AnalyserPreferences.checkboxes.1.text=Comprobar modificación de la variable del bucle.
+AnalyserPreferences.checkboxes.2.text=Comprobar bucle sin fin (¡en la medida de lo detectable!)
+AnalyserPreferences.checkboxes.3.text=Comprobar si hay variables no inicializadas.
+AnalyserPreferences.checkboxes.4.text=Comprobar uso correcto de la declaración IF.
+AnalyserPreferences.checkboxes.5.text=Comprobar nombres de variables en MAYUSCULAS. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=Comprobar MAYUSCULAS en el nombre de programa / subrutina. (LUX/MEN)
+AnalyserPreferences.checkboxes.7.text=Comprobación de validez de los identificadores.
+AnalyserPreferences.checkboxes.8.text=Comprobar asignaciones en condiciones.
+AnalyserPreferences.checkboxes.9.text=Comprobar que el nombre de programa / subrutina no sea igual que algún identificador.
+AnalyserPreferences.checkboxes.10.text=Comprobar instrucciones con multiples comandos.
+AnalyserPreferences.checkboxes.11.text=Comprobar errores en asignaciones.
+AnalyserPreferences.checkboxes.12.text=Comprobar por nombre de parámetro estándar. (LUX/MEN)
+AnalyserPreferences.checkboxes.13.text=Comprobar si, en caso de una función, ésta devuelve un resultado.
+AnalyserPreferences.checkboxes.14.text=Comprobar si los parámetros de bucles FOR están consistentes.
+AnalyserPreferences.checkboxes.15.text=Comprobar que llamadas contengan una sola línea de código llamando una subrutina.
+AnalyserPreferences.checkboxes.16.text=Comprobar si el uso de elementos SALTO es corrrecto.
+AnalyserPreferences.checkboxes.17.text=Comprobar que hilos paralelos no pongan a riesgo la consistencia de variables.
+AnalyserPreferences.checkboxes.18.text=Comprobar si variables difieren no solo por empleo de mayúsculas o minúsculas.
+AnalyserPreferences.checkboxes.19.text=Comprobar que no habrá colisiones de nombre entre variables y palabras claves.
+AnalyserPreferences.checkboxes.20.text=Comprobar que un subprograma tiene un paréntesis para parámetros.
 AnalyserPreferences.okButton.text=Aceptar
 
 
