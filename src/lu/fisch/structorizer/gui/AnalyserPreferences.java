@@ -38,6 +38,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.11.28      check17 (KGU#47) for inconsistency risks in Parallel sections added
  *      Kay Gürtzig     2016.08.12      Enh. #231: check18 and check19 added (identifier collisions),
  *                                      checkbox management reorganised with arrays for easier maintenance
+ *      Kay Gürtzig     2016.09.21      Enh. #249: check20 added (subroutine syntax)
  *
  ******************************************************************************************************
  *
@@ -79,13 +80,14 @@ public class AnalyserPreferences extends LangDialog {
 		"Check for incorrect JUMP element usage.",					// 16
 		"Check for inconsistency risks in PARALLEL sections.",		// 17
 		"Check that identifiers don't differ only by upper/lower case.",
-		"Check if an identifier might collide with reserved words."	// 19
+		"Check if an identifier might collide with reserved words.",// 19
+		"Check that a subroutine header has a parameter list."		// 20
 		// Just append the descriptions for new check types here and insert their
 		// numbers at the appropriate place in array checkboxOrder below.
 	};
 	// The order in which the checks (numbered from 1) are to be presented
 	private static final int[] checkboxOrder = {
-		1, 14, 2, 3, 4, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 7, 9, 18, 19, 5, 6, 12
+		1, 14, 2, 3, 4, 8, 9, 10, 11, 20, 12, 13, 14, 15, 16, 17, 7, 9, 18, 19, 5, 6, 12
 	};
 			
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables

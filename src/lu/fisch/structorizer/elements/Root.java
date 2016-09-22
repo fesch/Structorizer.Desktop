@@ -74,8 +74,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.27      Issue #207: New Analyser warning in switch text/comments mode (KGU#220)
  *      Kay Gürtzig     2016.07.28      Bugfix #208: Filling of subroutine diagrams no longer exceeds border
  *                                      Bugfix KGU#222 in collectParameters()
- *      Kay Gürtzig     2016-08-12      Enh. #231: New analyser checks 18, 19; checks reorganised to arrays
+ *      Kay Gürtzig     2016.08.12      Enh. #231: New analyser checks 18, 19; checks reorganised to arrays
  *                                      for easier maintenance
+ *      Kay Gürtzig     2016.09.21      Enh. #249: New analyser check 20 (function header syntax) implemented 
  *
  ******************************************************************************************************
  *
@@ -207,7 +208,7 @@ public class Root extends Element {
 		false, false, false, false,	false,
 		false, false, false, false,	false,
 		false, false, false, false,	false,
-		false, false, false, false
+		false, false, false, false, false
 		// Add another element for every new check...
 		// and don't forget to append its description to
 		// AnalyserPreferences.checkCaptions
@@ -2950,14 +2951,15 @@ public class Root extends Element {
 	 */
 	private void analyse_15(Call ele, Vector<DetectedError> _errors)
 	{
-		String text = ele.getText().getLongString();
-		text = Element.unifyOperators(text);
-		if ( text.contains("<-") )	// FIXME: Detection within string literals!?
-		{
-			text = text.substring(text.indexOf("<-") + 2);
-		}
-		Function func = new Function(text);
-		if (!func.isFunction())
+//		String text = ele.getText().getLongString();
+//		text = Element.unifyOperators(text);
+//		if ( text.contains("<-") )	// FIXME: Detection within string literals!?
+//		{
+//			text = text.substring(text.indexOf("<-") + 2);
+//		}
+//		Function func = new Function(text);
+//		if (!func.isFunction())
+		if (!ele.isProcedureCall() && !ele.isFunctionCall())
 		{
 			//error  = new DetectedError("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!",(Element) _node.getElement(i));
 			addError(_errors, new DetectedError(errorMsg(Menu.error15, ""), ele), 15);
@@ -3283,8 +3285,23 @@ public class Root extends Element {
 			}
 		}
 	}
-	
 
+	// START KGU#253 2016-09-22: Enh. #249
+	/**
+	 * CHECK #20: Function signature check (name, parentheses)
+	 * @param _errors - the global error list
+	 */
+	private void analyse_20(Vector<DetectedError> _errors)
+	{
+		StringList paramNames = new StringList();
+		StringList paramTypes = new StringList();
+		if (!this.isProgram && !this.collectParameters(paramNames, paramTypes))
+		{
+			// warning "A subroutine header must have a (possibly empty) parameter list within parentheses."
+			addError(_errors, new DetectedError(errorMsg(Menu.error20, ""), this), 20);								
+		}
+	}
+	// END KGU#253 2016-09-22
     
     // START KGU#61 2016-03-22: Made public and static and moved to class Function
 //    private boolean testidentifier(String _str)
@@ -3535,10 +3552,21 @@ public class Root extends Element {
     	return resultType;
     }
 
-    // Extracts parameter names and types from the parenthesis content of the Root text
-    // and adds them synchronously to paramNames and paramTypes (if not null).
-    public void collectParameters(StringList paramNames, StringList paramTypes)
+    /**
+     *  Extracts parameter names and types from the parenthesis content of the Root text
+     *  and adds them synchronously to paramNames and paramTypes (if not null).
+     * @param paramNames - StringList to be expanded by the found parameter names
+     * @param paramTypes - StringList to be expanded by the found parameter types
+     * @return true iff the text contains a parameter list at all
+     */
+    // START KGU#253 2016-09-22: Enh. #249 - Find out whether there is a parameter list
+    //public void collectParameters(StringList paramNames, StringList paramTypes)
+    public boolean collectParameters(StringList paramNames, StringList paramTypes)
+    // END KGU#253 2016-09-22
     {
+        // START KGU#253 2016-09-22: Enh. #249 - is there a parameter list?
+    	boolean hasParamList = false;
+        // END KGU#253 2016-09-22
         if (!this.isProgram)
         {
         	try
@@ -3549,6 +3577,9 @@ public class Root extends Element {
         		{
         			rootText=rootText.substring(rootText.indexOf("(")+1).trim();
         			rootText=rootText.substring(0,rootText.indexOf(")")).trim();
+        	        // START KGU#253 2016-09-22: Enh. #249 - seems to be a parameter list
+        			hasParamList = true;
+        		    // END KGU#253 2016-09-22
         		}
         		// START KGU#222 2016-07-28: If there is no parentheis then we shouldn't add anything...
         		else
@@ -3607,7 +3638,9 @@ public class Root extends Element {
         		System.out.println(ex.getMessage());
         	}
         }
-    	
+        // START KGU#253 2016-09-22: Enh. #249 - is there a parameter list?
+    	return hasParamList;
+        // START KGU#253 2016-09-22
     }
     // END KGU#78 2015-11-25
     
@@ -3698,6 +3731,11 @@ public class Root extends Element {
                     error  = new DetectedError(errorMsg(Menu.error07_1,programName),this);
                     addError(errors,error,7);
             }
+			
+			// START KGU#253 2016-09-22: Enh. #249: subroutine header syntax
+			// CHECK: subroutine header syntax (#20 - new!)
+			analyse_20(errors);
+			// END KGU#253 2016-09-22
 			
 			// START KGU#239 2016-08-12: Enh. #231: Test for name collisions
 			analyse_18_19(this, errors, uncertainVars, uncertainVars, vars);

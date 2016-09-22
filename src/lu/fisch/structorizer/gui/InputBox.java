@@ -40,6 +40,7 @@ package lu.fisch.structorizer.gui;
  *     Kay Gürtzig  2016.07.14  Enh. #180: Initial focus dependent on switchTextComment mode (KGU#169)
  *     Kay Gürtzig  2016.08.02  Enh. #215: Breakpoint trigger counts partially implemented
  *     Kay Gürtzig  2016.09.13  Bugfix #241: Obsolete mechanisms removed (remnants of KGU#42)
+ *     Kay Gürtzig  2016.09.22  Bugfix #241 revised by help of a LangDialog API modification
  *
  ******************************************************************************************************
  *
@@ -49,6 +50,8 @@ package lu.fisch.structorizer.gui;
  */
 
 import lu.fisch.structorizer.locales.LangDialog;
+import lu.fisch.structorizer.locales.Locales;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -85,8 +88,8 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     // END KGU#43 2015-10-12
     // START KGU#213 2016-08-01: Enh. #215
     //private int prevBreakTrigger = 0;
-    public JLabel lblBreakTriggerText = new JLabel("Break at execution count:");
-    public JLabel lblBreakTrigger = new JLabel();
+    public JLabel lblBreakTriggerText = new JLabel("Break at execution count: %");
+    public LangTextHolder lblBreakTrigger = new LangTextHolder("0");
     //public JTextField txtBreakTrigger = new JTextField();
     // END KGU#213 2016-08-01
 
@@ -224,18 +227,18 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         pnPanel1.add(lblBreakTriggerText);
         // END KGU#213 2106-08-01
 
-        // START KGU#213/KGU#245 2016-09-13: Enh. #215 + bugfix #241
-        gbcPanel1.gridx = 13;
-        gbcPanel1.gridy = 17;
-        gbcPanel1.gridwidth = 1;
-        gbcPanel1.gridheight = 1;
-        gbcPanel1.fill = GridBagConstraints.RELATIVE;
-        gbcPanel1.weightx = 1;
-        gbcPanel1.weighty = 0;
-        gbcPanel1.anchor = GridBagConstraints.CENTER;
-        gbPanel1.setConstraints( lblBreakTrigger, gbcPanel1 );
-        pnPanel1.add(lblBreakTrigger);
-        // END KGU#246 2106-09-13
+//        // START KGU#213/KGU#245 2016-09-13: Enh. #215 + bugfix #241
+//        gbcPanel1.gridx = 13;
+//        gbcPanel1.gridy = 17;
+//        gbcPanel1.gridwidth = 1;
+//        gbcPanel1.gridheight = 1;
+//        gbcPanel1.fill = GridBagConstraints.RELATIVE;
+//        gbcPanel1.weightx = 1;
+//        gbcPanel1.weighty = 0;
+//        gbcPanel1.anchor = GridBagConstraints.CENTER;
+//        gbPanel1.setConstraints( lblBreakTrigger, gbcPanel1 );
+//        pnPanel1.add(lblBreakTrigger);
+//        // END KGU#246 2106-09-13
         gbcPanel1.insets = new Insets(10, 10, 10, 10);
 
         //createExitButtons(gridbase)
@@ -378,5 +381,17 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     public void checkConsistency() {
     }
     // END KGU#61 2016-03-21
-    
+
+    // START KGU#246 2016-09-21: Enhancement to implement issues like bugfix #241
+    /**
+     * This method is called on opening after setLocale and before re-packing.
+     * Replaces markers in translated texts.
+     */
+    @Override
+    protected void adjustLangDependentComponents()
+    {
+    	this.lblBreakTriggerText.setText(this.lblBreakTriggerText.getText().replace("%", lblBreakTrigger.getText()));
+    }
+    // END KGU#246 2016-09-21
+
 }

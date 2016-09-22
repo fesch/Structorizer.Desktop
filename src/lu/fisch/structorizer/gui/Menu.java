@@ -61,6 +61,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.01      Bugfix #233: CASE insertion by F10 had been averted by menu bar
  *      Kay Gürtzig     2016.09.04      Structural redesign for menuPreferencesLanguage
  *      Kay Gürtzig     2016.09.15      Issue #243: Additional text holders for forgotten message box texts
+ *      Kay Gürtzig     2016.09.22      New text holder / messages for Analyser 
  *
  ******************************************************************************************************
  *
@@ -296,6 +297,9 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error18 = new LangTextHolder("Variable name «%1» may be confused with variable(s) «%2» in some case-indifferent languages!");
 	public static final LangTextHolder error19 = new LangTextHolder("Variable name «%1» may collide with reserved names in languages like %2!");
 	// END KGU#239 2016-08-12
+	// START KGU#253 2016-09-21: Enh. #249 - New check for subroutine syntax.
+	public static final LangTextHolder error20 = new LangTextHolder("A subroutine header must have a (possibly empty) parameter list within parentheses.");
+	// END KGU#253 2016-09-21
 
 	// START KGU#218 2016-07-28: Issue #206 - enhanced localization
 	// Dialog messages

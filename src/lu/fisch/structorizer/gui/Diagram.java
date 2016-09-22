@@ -87,6 +87,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.15      Issue #243: Forgotten message box texts included in localization,
  *                                      Bugfix #244: Flaws in the save logic mended
  *      Kay Gürtzig     2016.09.17      Issue #245: Message box for failing browser call in updateNSD() added.
+ *      Kay Gürtzig     2016.09.21      Issue #248: Workaround for legacy Java versions (< 1.8) in editBreakTrigger()
  *
  ******************************************************************************************************
  *
@@ -2281,9 +2282,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					Integer.toString(trigger));
 			if (str != null)
 			{
+				// START KGU#252 2016-09-21: Issue 248 - Linux (Java 1.7) workaround
+				boolean isDone = false;
+				// END KGU#252 2016-09-21
 				try {
-					ele.setBreakTriggerCount(Integer.parseUnsignedInt(str));
-					// Usually the user will want to activate the breakpoint with te configuration
+					// START KGU#252 2016-09-21: Issue 248 - Linux (Java 1.7) workaround
+					//ele.setBreakTriggerCount(Integer.parseUnsignedInt(str));
+					isDone = ele.setBreakTriggerCount(Integer.parseInt(str));
+					// END KGU#252 2016-09-21
+					// We assume the intention to activate the breakpoint with the configuration
 					if (!ele.isBreakpoint())
 					{
 						ele.toggleBreakpoint();
@@ -2292,11 +2299,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch (NumberFormatException ex)
 				{
-					JOptionPane.showMessageDialog(this,
-							Menu.msgBreakTriggerIgnored.getText(),
-							Menu.msgTitleWrongInput.getText(),
-							JOptionPane.ERROR_MESSAGE);
+					// START KGU#252 2016-09-21: Issue 248 - Linux (Java 1.7) workaround
+					//JOptionPane.showMessageDialog(this,
+					//		Menu.msgBreakTriggerIgnored.getText(),
+					//		Menu.msgTitleWrongInput.getText(),
+					//		JOptionPane.ERROR_MESSAGE);
+					// END KGU#252 2016-09-21
 				}
+				// START KGU#252 2016-09-21: Issue 248 - Linux (Java 1.7) workaround
+				if (!isDone) {
+					JOptionPane.showMessageDialog(this,
+						Menu.msgBreakTriggerIgnored.getText(),
+						Menu.msgTitleWrongInput.getText(),
+						JOptionPane.ERROR_MESSAGE);
+				}
+				// END KGU#252 2016-09-21
 			}
 		}
 	}
@@ -3695,6 +3712,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//root.hasChanged=true;
 		root.setChanged();
 		// END KGU#137 2016-01-11
+		// START KGU#253 2016-09-22: Enh. #249 - (un)check parameter list
+		analyse();
+		// END KGU#253 2016-09-22
 		redraw();
 	}
 
@@ -3711,6 +3731,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//root.hasChanged=true;
 		root.setChanged();
 		// END KGU#137 2016-01-11
+		// START KGU#253 2016-09-22: Enh. #249 - (un)check parameter list
+		analyse();
+		// END KGU#253 2016-09-22
 		redraw();
 	}
 
@@ -3895,12 +3918,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			inputbox.chkBreakpoint.setSelected(_data.breakpoint);
 			// END KGU#43 2015-10-12
 			// START KGU#213 2016-08-01: Enh. #215
-			inputbox.lblBreakTrigger.setVisible(notRoot);
 			// START KGU#246 2016-09-13: Bugfix #241)
 			//inputbox.lblBreakTrigger.setText(inputbox.lblBreakText.getText().replace("%", Integer.toString(_data.breakTriggerCount)));
 			inputbox.lblBreakTriggerText.setVisible(notRoot);
-			// FIXME: The trouble here is that preceding lblBraekTriggerText may grow due to translation
-			inputbox.lblBreakTrigger.setText("    " + Integer.toString(_data.breakTriggerCount));
+			inputbox.lblBreakTrigger.setText(Integer.toString(_data.breakTriggerCount));
 			// END KGU#246 2016-09-13
 			// END KGU#213 2016-08-01
 

@@ -61,6 +61,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.07.20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
  *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (identifier collisions)
  *      Kay Gürtzig         2016.09.01      Issue #234: ord and chr function code generated only if needed and allowed
+ *      Kay Gürtzig         2016.09.21      Bugfix #247: Forever loops were exported with a defective condition.
  *
  ******************************************************************************************************
  *
@@ -736,7 +737,10 @@ public class BASHGenerator extends Generator {
 		// START KGU 2014-11-16
 		insertComment(_forever, _indent);
 		// END KGU 2014-11-16
-		code.add(_indent + "while [1]");
+		// START KGU 2016-09-21: Bugfix #247
+		//code.add(_indent + "while [1]");
+		code.add(_indent + "while [ 1 ]");
+		// END KGU 2016-09-21
 		code.add(_indent + "do");
 		generateCode(_forever.q, _indent + this.getIndent());
 		code.add(_indent + "done");
