@@ -53,7 +53,7 @@
  *      Bob Fisch       2016.08.02      Updated some strings
  *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig     2016.09.13      Entries for InputBox and InputBoxFor revised (bugfix #241)
- *      Kay Gürtzig     2016.09.22      AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016.09.22      AnalyserPreferences numbering modified, InputBoxFor augmented
  *
  ******************************************************************************************************
  *
@@ -195,7 +195,7 @@ Menu.menuView.text=
 Menu.menuHelp.text=Aide
 Menu.menuHelp.mnemonic=a
 // Submenu of "Help"
-Menu.menuHelpAbout.text=A propos de ...
+Menu.menuHelpAbout.text=À propos de ...
 Menu.menuHelpUpdate.text=Mise à jour ...
 
 // Dialog messages
@@ -402,7 +402,7 @@ InputBox.btnOK.tooltip=Valider votre choix.
 InputBox.btnCancel.text=Annuler
 InputBox.btnCancel.tooltip=Annuler votre choix.
 InputBox.lblBreakTriggerText.text=Arrêter l'exécution après % itérations
-InputBox.chkBreakpoint.text=
+InputBox.chkBreakpoint.text=Point d'arrêt actif
 InputBox.lblText.text[elementType:Alternative]=Veuillez entrer la condition
 InputBox.lblText.text[elementType:While]=Veuillez entrer la condition d'entrée
 InputBox.lblText.text[elementType:Repeat]=Veuillez entre la condition de sortie
@@ -413,21 +413,22 @@ InputBox.lblText.text[elementType:Parallel]Nombre d'exétron en parallèle
 -----[ InputBox For ]-----
 InputBoxFor.title[getInsertionType():insert]=Insérer une boucle POUR...
 InputBoxFor.title[getInsertionType():update]=Editer la boucle POUR...
-InputBoxFor.lblVariable.text=
-InputBoxFor.lblStartVal.text=
-InputBoxFor.lblEndVal.text=
-InputBoxFor.lblIncr.text=
-InputBoxFor.chkTextInput.text=
+InputBoxFor.lblVariable.text=Variable compteur
+InputBoxFor.lblStartVal.text=Valeur de démarrage
+InputBoxFor.lblEndVal.text=Valeur finale
+InputBoxFor.lblIncr.text=Incrément
+InputBoxFor.chkTextInput.text=Entrer comme texte
 InputBoxFor.chkTextInput.tooltip=
-InputBoxFor.lblComment.text=
+InputBoxFor.lblComment.text=Commentaire
 InputBoxFor.lblComment.tooltip=
-InputBoxFor.txtText.tooltip=
-InputBoxFor.txtComment.tooltip=
-InputBoxFor.btnOK.text=
-InputBoxFor.btnOK.tooltip=
-InputBoxFor.btnCancel.text=
-InputBoxFor.btnCancel.tooltip=
-InputBoxFor.chkBreakpoint.text=
+InputBoxFor.txtText.tooltip=Le contenu de l'élément.
+InputBoxFor.txtComment.tooltip=Le commentaire de l'élément.
+InputBoxFor.btnOK.text=OK
+InputBoxFor.btnOK.tooltip=Valider votre choix.
+InputBoxFor.btnCancel.text=Annuler
+InputBoxFor.btnCancel.tooltip=Annuler votre choix.
+InputBoxFor.chkBreakpoint.text=Point d'arrêt actif
+InputBoxFor.lblBreakTriggerText.text=Arrêter l'exécution après % itérations
 
 -----[ Preferences ]-----
 Preferences.title=Préférences des structures
