@@ -38,36 +38,50 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015-12-04  frame width increased (-> 600)
  *      Kay Gürtzig     2016-03-20  Enhancement #84/#135: FOR-IN / FOREACH paradigm considered
  *      Kay Gürtzig     2016-07-14  Enh. #180: Initial focus dependent on switchTextComment mode (KGU#169)
+ *      Kay Gürtzig     2016-09-23  Issue #243: Message translations, more messages
+ *      Kay Gürtzig     2016-09-24  Enh. #250 Partial GUI redesign - now loop style can actively be selected
  *
  ******************************************************************************************************
  *
  *      Comment:		/
- *      - This editor has practically two and a half modes:
+ *      - This editor has three modes:
  *        1. Structured editing of traditional counter loops via specific fields, text automatically composed
- *        2. full text editing, editor splits it to fill the structured counter fields (strong syntax support)
- *        3. full text editing, as soon as one of the keys for FOR IN loops occurs, a FOR-IN loop is assumed
- *           (weak syntax support)  
+ *        2. Structured editing as traversing loop via a variable name and a value list field, text is
+ *           automatically composed
+ *        3. full text editing, editor splits it to fill the structured counter fields (strong syntax support),
+ *           as soon as one of the keys for FOR IN loops occurs, a FOR-IN loop is assumed and the splitting
+ *           switches (weaker syntax support), and vice versa
+ *      - The user may actively switch between mode 1 and 2, usually losing most of the data, though. From mode
+ *        1 to mode 2 a conversion of the number sequence to a number list is attempted.   
  *
  ******************************************************************************************************
  */
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import javax.swing.UIManager;
 
+import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.parsers.D7Parser;
+import lu.fisch.utils.StringList;
 
 /**
  * @author kay
@@ -76,20 +90,50 @@ import lu.fisch.structorizer.parsers.D7Parser;
 @SuppressWarnings("serial")
 public class InputBoxFor extends InputBox implements ItemListener {
 	
-	protected JLabel lblVariable/* = new JLabel("Counter variable")*/;
-	protected JLabel lblStartVal/* = new JLabel("Start value")*/;
+	private static int IBF_PREFERRED_WIDTH = 600;
+	private final static int MAX_ENUMERATION_ITEMS = 25;
+
+	// START KGU#61 2016-09-23: Enh. #250 - Additional field set for FOR-IN loops
+	private boolean isTraversingLoop = false;
+	protected JRadioButton rbCounting;
+	protected JRadioButton rbTraversing;
+	// END KGU#61 2016-09-23
+
+	protected JLabel lblVarDesignation/* = new JLabel("Counter variable")*/;
+	protected JLabel lblFirstValueLabel/* = new JLabel("Start value")*/;
 	protected JLabel lblEndVal/* = new JLabel("End value")*/;
 	protected JLabel lblIncr/* = new JLabel("Increment")*/;
-	protected JLabel lblPreFor/* = new JLabel(D7Parser.preFor)*/;
+	//protected JLabel lblPreFor/* = new JLabel(D7Parser.preFor)*/;
 	protected JLabel lblPostFor/* = new JLabel(D7Parser.postFor)*/;
 	protected JLabel lblAsgnmt/* = new JLabel(" <- ")*/;
 	protected JLabel lblStepFor/* = new JLabel(D7Parser.stepFor)*/;
-	protected JLabel lblParserInfo/* = new JLabel("")*/;
+	protected JTextField txtParserInfo/* = new JTextField("")*/;
 	protected JTextField txtVariable/* = new JTextField(20)*/;
 	protected JTextField txtStartVal/* = new JTextField(10)*/;
 	protected JTextField txtEndVal/* = new JTextField(20)*/;
 	protected JTextField txtIncr/* = new JTextField(10)*/;
 	protected JCheckBox chkTextInput/* = new JCheckBox("Full Text Editing")*/;
+	// START KGU#61 2016-09-23: Enh. #250 -Additional field set for FOR-IN loops
+	//protected JLabel lblPreForIn/* = new JLabel(D7Parser.preForIn)*/;
+	protected JLabel lblpostForIn/* = new JLabel(D7Parser.postForIn)*/;
+	protected JTextField txtVariableIn/* = new JTextField(20)*/;
+	protected JTextField txtValueList/* = new JTextField(60)*/;	
+	// END KGU#61 2016-09-23
+	// START KGU#247 2016-09-23: Issue #243 Forgotten translation
+	protected LangTextHolder lblVariable = new LangTextHolder("Counter variable");
+	protected LangTextHolder lblTraversingVariable = new LangTextHolder("Element variable");
+	protected LangTextHolder lblValueList = new LangTextHolder("Value list or array");
+	protected LangTextHolder lblStartVal = new LangTextHolder("Start value");
+	protected LangTextHolder msgInvalidIncrement = new LangTextHolder("<%> is no valid integer constant");
+	protected LangTextHolder msgMissingBrace1 = new LangTextHolder("Value list must begin with '{'");
+	protected LangTextHolder msgMissingBrace2 = new LangTextHolder("Value list must end with '}'");
+	protected LangTextHolder msgSeparateWithComma = new LangTextHolder("Within braces, commas must separate values.");
+	protected LangTextHolder msgEnsureReturnedArray = new LangTextHolder("Ensure the function returns an array.");
+	protected LangTextHolder msgEnsureVariableIsArray = new LangTextHolder("Ensure that <%> is an array.");
+	protected LangTextHolder msgEnterValueList = new LangTextHolder("Enter the value list for the loop.");
+	protected LangTextHolder msgDiscardData = new LangTextHolder("Changing the loop style means to discard most of the data!%Do you really want to discard the data?");
+	protected LangTextHolder msgAttention = new LangTextHolder("ATTENTION!");
+	// END KGU#247 2016-09-23
 	
 	// START KGU#61 2016-03-20: Enh. #84/#135 - FOR-IN loop support
 	protected String forInValueList = null;
@@ -109,7 +153,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
     // START KGU#169 2016-07-14: Enh. #180 (see also: #39, #142) - helps to enable focus control
     protected void setPreferredSize()
     {
-        setSize(600, 400);   	
+        setSize(IBF_PREFERRED_WIDTH, 400);   	
     }
     // END KGU#169 2016-07-14
 
@@ -122,35 +166,67 @@ public class InputBoxFor extends InputBox implements ItemListener {
      */
 	protected int createPanelTop(JPanel _panel, GridBagLayout _gb, GridBagConstraints _gbc)
 	{
-		lblVariable = new JLabel("Counter variable");
-		lblStartVal = new JLabel("Start value");
+		lblVarDesignation = new JLabel("Counter variable");
+		lblFirstValueLabel = new JLabel("Start value");
 		lblEndVal = new JLabel("End value");
 		lblIncr = new JLabel("Increment");
-		lblPreFor = new JLabel(D7Parser.preFor);
+		//lblPreFor = new JLabel(D7Parser.preFor);
 		lblPostFor = new JLabel(D7Parser.postFor);
 		lblAsgnmt = new JLabel(" <- ");
 		lblStepFor = new JLabel(D7Parser.stepFor);
-		lblParserInfo = new JLabel("");
+		txtParserInfo = new JTextField(300);
+		txtParserInfo.setEditable(false);
+		if (UIManager.getLookAndFeel().getName().equals("Nimbus"))
+		{
+			// It shall look inactive but must still show coloured text,
+			// therefore we can't disable it.
+			// This is a lighter gray than Color.LIGHT_GRAY
+			txtParserInfo.setBackground(Color.decode("0xDEE1E5"));
+		}
 		txtVariable = new JTextField(50);
 		txtStartVal = new JTextField(20);
 		txtEndVal = new JTextField(50);
 		txtIncr = new JTextField(20);	// Width 10
 		chkTextInput = new JCheckBox("Full Text Editing");
+		// START KGU#61 2016-09-23: Enh. #250 - Additional field set for FOR-IN loops
+		//lblPreForIn = new JLabel(D7Parser.preForIn);
+		lblpostForIn = new JLabel(D7Parser.postForIn);
+		txtVariableIn = new JTextField(50);
+		txtValueList = new JTextField(120);
+		txtVariableIn.setEnabled(false);
+		txtValueList.setEnabled(false);
+		txtVariableIn.addKeyListener(this);
+		txtValueList.addKeyListener(this);
+		// END KGU#61 2016-09-23
 
 		txtVariable.addKeyListener(this);
 		txtStartVal.addKeyListener(this);
 		txtEndVal.addKeyListener(this);
 		txtIncr.addKeyListener(this);
-		chkTextInput.setSelected(false);	// TODO Will have to be set in dependence of consistency flag 
+		chkTextInput.setSelected(false); 
 		chkTextInput.addItemListener(this);
 		txtText.addKeyListener(this);
-
-	    // START KGU#169 2016-07-14: Enh. #180 - Now delegated to setPreferredSize() to be done afterwards
-		//setSize(600, 400);	// We need more width, at least on Linux
-	    // END KGU#169 2016-07-14
+		
+		// START KGU#254 2016-09-24: Enh. #250 - GUI redesign
+		rbCounting = new JRadioButton(D7Parser.preFor);
+		rbCounting.setActionCommand("FOR");
+		rbCounting.setToolTipText("Select this if you want to count through a range of numbers.");
+		
+		rbTraversing = new JRadioButton(D7Parser.preForIn.isEmpty() ? D7Parser.postFor : D7Parser.preForIn);
+		rbTraversing.setActionCommand("FOR-IN");
+		rbTraversing.setToolTipText("Select this if you want to traverse all members of a collection.");
+		
+		ButtonGroup radioGroup = new ButtonGroup();
+		radioGroup.add(rbCounting);
+		radioGroup.add(rbTraversing);
+		rbCounting.setSelected(!isTraversingLoop);
+		rbTraversing.setSelected(isTraversingLoop);
+		rbCounting.addActionListener(this);
+		rbTraversing.addActionListener(this);
+		// END KGU#254 2016-09-24
 
 		int lineNo = 1;
-
+		
 		// TODO (KGU 2015-11-01) Grid configuration halfway works under both Windows and KDE but's still not pleasant 
 		
 		_gbc.insets = new Insets(10, 5, 0, 5);
@@ -161,8 +237,8 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gbc.gridwidth = 1;
 		_gbc.fill = GridBagConstraints.NONE;
 		_gbc.anchor = GridBagConstraints.WEST;
-		_gb.setConstraints(lblVariable, _gbc);
-		_panel.add(lblVariable);
+		_gb.setConstraints(lblVarDesignation, _gbc);
+		_panel.add(lblVarDesignation);
 
 		_gbc.gridx = 8;
 		_gbc.gridy = lineNo;
@@ -170,8 +246,8 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gbc.gridwidth = 1;
 		_gbc.fill = GridBagConstraints.NONE;
 		_gbc.anchor = GridBagConstraints.WEST;
-		_gb.setConstraints(lblStartVal, _gbc);
-		_panel.add(lblStartVal);
+		_gb.setConstraints(lblFirstValueLabel, _gbc);
+		_panel.add(lblFirstValueLabel);
 
 		_gbc.gridx = 11;
 		_gbc.gridy = lineNo;
@@ -193,7 +269,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 
 		lineNo++;
 
-		_gbc.insets = new Insets(10, 10, 0, 5);
+		_gbc.insets = new Insets(5, 10, 0, 5);
 		
 		_gbc.gridx = 1;
 		_gbc.gridy = lineNo;
@@ -201,16 +277,16 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gbc.gridwidth = 1;
 		_gbc.fill = GridBagConstraints.NONE;
 		_gbc.anchor = GridBagConstraints.WEST;
-		_gb.setConstraints(lblPreFor, _gbc);
-		_panel.add(lblPreFor);
+		_gb.setConstraints(rbCounting, _gbc);
+		_panel.add(rbCounting);
 
-		_gbc.insets = new Insets(10, 5, 0, 5);
+		_gbc.insets = new Insets(5, 5, 0, 5);
 
 		_gbc.gridx = 2;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
 		_gbc.gridwidth = 5;
-		_gbc.weightx = 20;
+		_gbc.weightx = 1;
 		_gbc.fill = GridBagConstraints.HORIZONTAL;
 		_gb.setConstraints(txtVariable, _gbc);
 		_panel.add(txtVariable);
@@ -228,7 +304,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
 		_gbc.gridwidth = 2;
-		_gbc.weightx = 10;
+		_gbc.weightx = 1;
 		_gbc.fill = GridBagConstraints.HORIZONTAL;
 		_gb.setConstraints(txtStartVal, _gbc);
 		_panel.add(txtStartVal);
@@ -246,7 +322,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
 		_gbc.gridwidth = 5;
-		_gbc.weightx = 20;
+		_gbc.weightx = 1;
 		_gbc.fill = GridBagConstraints.HORIZONTAL;
 		_gb.setConstraints(txtEndVal, _gbc);
 		_panel.add(txtEndVal);
@@ -260,17 +336,64 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(lblStepFor, _gbc);
 		_panel.add(lblStepFor);
 
-		_gbc.insets = new Insets(10, 5, 0, 10);
+		_gbc.insets = new Insets(5, 5, 0, 10);
 
 		_gbc.gridx = 17;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
 		_gbc.gridwidth = 4;
-		_gbc.weightx = 10;
+		_gbc.weightx = 1;
 		_gbc.fill = GridBagConstraints.HORIZONTAL;
 		_gb.setConstraints(txtIncr, _gbc);
 		_panel.add(txtIncr);
 		
+		// START KGU#61 2016-09-23: Additional field set for FOR-IN loops
+		lineNo++;
+		
+		_gbc.insets = new Insets(0, 10, 0, 5);
+		
+		_gbc.gridx = 1;
+		_gbc.gridy = lineNo;
+		_gbc.gridheight = 1;
+		_gbc.gridwidth = 1;
+		_gbc.fill = GridBagConstraints.NONE;
+		_gbc.anchor = GridBagConstraints.WEST;
+		_gb.setConstraints(rbTraversing, _gbc);
+		_panel.add(rbTraversing);
+
+		_gbc.insets = new Insets(0, 5, 0, 5);
+
+		_gbc.gridx = 2;
+		_gbc.gridy = lineNo;
+		_gbc.gridheight = 1;
+		_gbc.gridwidth = 5;
+		_gbc.weightx = 1;
+		_gbc.fill = GridBagConstraints.HORIZONTAL;
+		_gb.setConstraints(txtVariableIn, _gbc);
+		_panel.add(txtVariableIn);
+
+		_gbc.gridx = 7;
+		_gbc.gridy = lineNo;
+		_gbc.gridheight = 1;
+		_gbc.gridwidth = 1;
+		_gbc.fill = GridBagConstraints.NONE;
+		_gbc.anchor = GridBagConstraints.WEST;
+		_gb.setConstraints(lblpostForIn, _gbc);
+		_panel.add(lblpostForIn);
+
+		_gbc.insets = new Insets(0, 5, 0, 10);
+
+		_gbc.gridx = 8;
+		_gbc.gridy = lineNo;
+		_gbc.gridheight = 1;
+		_gbc.gridwidth = GridBagConstraints.REMAINDER;
+		_gbc.weightx = 1;
+		_gbc.fill = GridBagConstraints.HORIZONTAL;
+		_gb.setConstraints(txtValueList, _gbc);
+		_panel.add(txtValueList);
+
+		// END KGU#61 2016-09-23
+
 		lineNo++;
 
 		_gbc.insets = new Insets(10, 10, 0, 10);
@@ -278,102 +401,92 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gbc.gridx = 1;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
-		_gbc.gridwidth = 9;
+		_gbc.gridwidth = 5;
 		_gbc.fill = GridBagConstraints.HORIZONTAL;
 		_gb.setConstraints(chkTextInput, _gbc);
 		_panel.add(chkTextInput);
 
-		_gbc.gridx = 10;
+		_gbc.insets = new Insets(10, 5, 0, 10);
+
+		_gbc.gridx = 8;
 		_gbc.gridy = lineNo;
 		_gbc.gridheight = 1;
-		_gbc.gridwidth = GridBagConstraints.REMAINDER;
+		_gbc.gridwidth = 13;
 		_gbc.fill = GridBagConstraints.HORIZONTAL;
-		_gbc.anchor = GridBagConstraints.WEST;
-		_gb.setConstraints(lblParserInfo, _gbc);
-		_panel.add(lblParserInfo);
+		//_gbc.anchor = GridBagConstraints.WEST;
+		_gb.setConstraints(txtParserInfo, _gbc);
+		_panel.add(txtParserInfo);
 
 		return lineNo;
 	}
-    
-    public void keyReleased(KeyEvent kevt)
-    {
-    	Object source = kevt.getSource();
-    	if (source == txtVariable || source == txtStartVal || source == txtEndVal || source == txtIncr)
-    	{
-    		int incr = this.prevTxtIncrContent;
-    		String incrStr = txtIncr.getText();
-    		if (incrStr != null)
-    		{
-    			try{
-    				incr = Integer.valueOf(incrStr);
-    				this.prevTxtIncrContent = incr;
-    			}
-    			catch (Exception ex)
-    			{
-    				txtIncr.setText(Integer.toString(this.prevTxtIncrContent));
-    			}
-    		}
-    		txtText.setText(For.composeForClause(txtVariable.getText(), txtStartVal.getText(), txtEndVal.getText(), incr, false));
-    		// START KGU#61 2016-03-20: Enh. #84/#135 - FOR-IN loop support
-    		forInValueList = null;
-    		// END KGU#61 2016-03-20
-    	}
-    	else if (source == txtText)
-    	{
-    		//String text = For.unifyOperators(txtText.getText());	// Now done by splitForClause
-    		String text = txtText.getText();
-    		String[] forFractions = For.splitForClause(text);
-    		// START KGU#61 2016-03-21: Enh. #84/#135 - check whether this is a FOR-IN loop
-    		if (forFractions.length >= 6 && forFractions[5] != null)
-    		{
-    			txtVariable.setText(forFractions[0]);
-    			forInValueList = forFractions[5];
-    			checkValueList();
-    			lblStartVal.setVisible(false);
-    			lblEndVal.setVisible(false);
-    			lblIncr.setVisible(false);
-    			lblPostFor.setForeground(Color.GRAY);
-    			lblAsgnmt.setText(D7Parser.postForIn);
-    			lblStepFor.setForeground(Color.GRAY);			
-    			txtStartVal.setText("");
-    			txtEndVal.setText("");
-    			txtIncr.setText("");
-    		}
-    		else
-    		{
-    			// END KGU#61 2016-03-21
-    			if (forFractions.length >= 3)
-    			{
-    				// START KGU#61 2016-03-21: Enh. #84/#135 - Ensure traditional field visibility
-    				lblStartVal.setVisible(true);
-    				lblEndVal.setVisible(true);
-    				lblIncr.setVisible(true);
-    				lblPostFor.setForeground(Color.BLACK);
-    				lblAsgnmt.setText(" <- ");
-    				lblStepFor.setForeground(Color.BLACK);			
-    				// END KGU#61 2016-03-21
-    				txtVariable.setText(forFractions[0]);
-    				txtStartVal.setText(forFractions[1]);
-    				txtEndVal.setText(forFractions[2]);
-    				txtIncr.setText(forFractions[3]);
-    			}
-    			if (forFractions[4].isEmpty() || forFractions[3].equals(forFractions[4]))
-    			{
-    				lblParserInfo.setText("");
-    			}
-    			else
-    			{
-    				lblParserInfo.setForeground(Color.RED);
-    				lblParserInfo.setText("<" + forFractions[4] + "> is no valid integer constant");
-    			}
-   			// START KGU#61 2016-03-21: Enh. #84/#135 (continued)
-        		forInValueList = null;
-    		}
-    		// END KGU#61 2016-03-21
-    	}
-    	super.keyReleased(kevt);
-    }
 
+	// listen to key events
+	@Override
+	public void keyReleased(KeyEvent kevt)
+	{
+		Object source = kevt.getSource();
+		if (source == txtVariable || source == txtStartVal || source == txtEndVal || source == txtIncr)
+		{
+			transferCountingToText();
+		}
+		else if (source == txtVariableIn || source == txtValueList)
+		{
+			transferTraversingToText();
+		}
+		else if (source == txtText)
+		{
+			transferTextToFields();
+			setVisibility();
+			forceMinimumSize(txtParserInfo, false);
+		}
+		super.keyReleased(kevt);
+	}
+
+	// START KGU#254 2016-09-24: Enh. #250 - GUI redesign
+	// listen to actions
+	@Override
+	public void actionPerformed(ActionEvent event) {
+		Object source = event.getSource();
+
+		if (source == rbCounting || source == rbTraversing) {
+			if (JOptionPane.showConfirmDialog(null, msgDiscardData.getText().replace("%", "\n\n"), msgAttention.getText(), JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION)
+			{
+				// Switch back the radio buttons ...
+				setIsTraversingLoop(isTraversingLoop);
+				// ... and do nothing
+				return;
+			}
+			isTraversingLoop = event.getActionCommand().equals("FOR-IN");
+			if (isTraversingLoop)
+			{
+				// Try to convert the iteration to an enumeration
+				transferCountingToTraversing();
+				transferTraversingToText();
+			}
+			else
+			{
+				txtVariable.setText(txtVariableIn.getText());
+				txtStartVal.setText("0");
+				txtEndVal.setText("0");
+				txtIncr.setText("1");
+				forInValueList = null;
+				transferCountingToText();
+			}
+			setVisibility();
+			if (isTraversingLoop) {
+				forceMinimumSize(txtValueList, true);
+			}
+		} else {
+			if (source == btnOK && isTraversingLoop)
+			{
+				// Make sure the appropriate variable name will be found
+				txtVariable.setText(txtVariableIn.getText());
+			}
+			super.actionPerformed(event);
+		}
+	}
+
+	// Listen to item state changes
 	@Override
 	public void itemStateChanged(ItemEvent iev) {
 		if (iev.getSource() == chkTextInput)
@@ -382,56 +495,210 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		}
 	}
 	
-	// TODO: Change parameter to For.ForLoopStyle
+	private void transferCountingToText()
+	{
+		int incr = this.prevTxtIncrContent;
+		String incrStr = txtIncr.getText();
+		if (incrStr != null)
+		{
+			try{
+				incr = Integer.valueOf(incrStr);
+				this.prevTxtIncrContent = incr;
+			}
+			catch (Exception ex)
+			{
+				txtIncr.setText(Integer.toString(this.prevTxtIncrContent));
+			}
+		}
+		txtText.setText(For.composeForClause(txtVariable.getText(), txtStartVal.getText(), txtEndVal.getText(), incr, false));
+		// START KGU#61 2016-03-20: Enh. #84/#135 - FOR-IN loop support
+		forInValueList = null;
+		// END KGU#61 2016-03-20    	
+	}
+
+	private void transferTraversingToText()
+	{
+		txtText.setText(For.composeForInClause(txtVariableIn.getText(), forInValueList = txtValueList.getText()));
+		checkValueList();
+		forceMinimumSize(txtParserInfo, true);
+	}
+
+	private void transferCountingToTraversing()
+	{
+		String valueList = "";
+		String start = txtStartVal.getText();
+		String end = txtEndVal.getText();
+		String incr = txtIncr.getText();
+		if (!start.isEmpty() && !end.isEmpty())
+		{
+			try {
+				int startVal = Integer.parseInt(start);
+				int endVal = Integer.parseInt(end);
+				int step = 1;
+				if (!incr.isEmpty())
+				{
+					step = Integer.parseInt(incr);
+				}
+				if (step != 0 && (Math.abs(endVal - startVal)+1)/Math.abs(step) <= MAX_ENUMERATION_ITEMS)
+				{
+					boolean first = true;
+					for (int val = startVal; (step > 0 && val <= endVal) || (step < 0 && val >= endVal); val += step)
+					{
+						if (first)
+						{
+							first = false; 
+							valueList += val;
+						}
+						else
+						{
+							valueList += ("," + val);
+						}
+					}
+				}
+			}
+			catch (NumberFormatException ex) {}    		
+		}
+		txtVariableIn.setText(txtVariable.getText());
+		txtValueList.setText(forInValueList = "{" + valueList + "}");
+		txtStartVal.setText("");
+		txtEndVal.setText("");
+		txtIncr.setText("1");
+	}
+
+	private void transferTextToFields()
+	{
+		//String text = For.unifyOperators(txtText.getText());	// Now done by splitForClause
+		String text = txtText.getText();
+		String[] forFractions = For.splitForClause(text);
+		// START KGU#61 2016-03-21: Enh. #84/#135 - check whether this is a FOR-IN loop
+		setIsTraversingLoop(forFractions.length >= 6 && forFractions[5] != null);
+		if (isTraversingLoop)
+		{
+			txtVariableIn.setText(forFractions[0]);
+			forInValueList = forFractions[5];
+			txtValueList.setText(forInValueList);
+			checkValueList();
+			//			lblStartVal.setVisible(false);
+			//			lblEndVal.setVisible(false);
+			//			lblIncr.setVisible(false);
+			//			lblPostFor.setForeground(Color.GRAY);
+			//			lblAsgnmt.setText(D7Parser.postForIn);
+			//			lblStepFor.setForeground(Color.GRAY);
+			txtVariable.setText("");
+			txtStartVal.setText("");
+			txtEndVal.setText("");
+			txtIncr.setText("");
+		}
+		else
+		{
+		// END KGU#61 2016-03-21
+			if (forFractions.length >= 3)
+			{
+				txtVariable.setText(forFractions[0]);
+				txtStartVal.setText(forFractions[1]);
+				txtEndVal.setText(forFractions[2]);
+				txtIncr.setText(forFractions[3]);
+			}
+			if (forFractions[4].isEmpty() || forFractions[3].equals(forFractions[4]) && !forFractions[3].equals("0"))
+			{
+				txtParserInfo.setText("");
+			}
+			else
+			{
+				txtParserInfo.setForeground(Color.RED);
+				// START KGU#247 2016-09-23: Issue #243: Forgotten translations
+				//lblParserInfo.setText("<" + forFractions[4] + "> is no valid integer constant");
+				txtParserInfo.setText(msgInvalidIncrement.getText().replace("%",forFractions[4]));
+				// END KGU#247 2016-09-23
+			}
+			// START KGU#61 2016-03-21: Enh. #84/#135 (continued)
+			txtVariableIn.setText("");
+			forInValueList = null;
+		}
+		// END KGU#61 2016-03-21
+
+	}
+    
 	public void enableTextFields(boolean inputAsText)
 	{
 		txtVariable.setEnabled(!inputAsText);
 		txtStartVal.setEnabled(!inputAsText);
 		txtEndVal.setEnabled(!inputAsText);
 		txtIncr.setEnabled(!inputAsText);
-		// START KGU#61 2016-03-21: Enh. #84/#135 - Ensure traditional field visibility
-		if (!inputAsText)
-		{
-			lblStartVal.setVisible(true);
-			lblEndVal.setVisible(true);
-			lblIncr.setVisible(true);
-			lblPostFor.setForeground(Color.BLACK);
-			lblAsgnmt.setText(" <- ");
-			lblStepFor.setForeground(Color.BLACK);			
-		}
-		// END KGU#61 2016-03-21
+
+		// START KGU#61 2016-09-23: Enh. #250 - Additional field set for FOR-IN loops
+		rbCounting.setEnabled(!inputAsText);
+		rbTraversing.setEnabled(!inputAsText);
+		txtVariableIn.setEnabled(!inputAsText);
+		txtValueList.setEnabled(!inputAsText);
+		setVisibility();			
+		// END KGU#61 2016-09-23
 		
 		txtText.setEnabled(inputAsText);
-		lblParserInfo.setVisible(inputAsText);
+		txtParserInfo.setVisible(inputAsText || isTraversingLoop);
+		forceMinimumSize(txtParserInfo, true);
 	}
 
 	// START KGU#61 2016-03-21: Enh. #84 - special test for FOR-IN loop
 	private void checkValueList()
 	{
-		lblParserInfo.setForeground(Color.BLACK);
-		lblParserInfo.setText("");
-		if (forInValueList.startsWith("{") && !forInValueList.endsWith("}"))
+		txtParserInfo.setForeground(Color.BLACK);
+		txtParserInfo.setText("");
+		if (forInValueList == null) forInValueList = "{}";
+		boolean startsWithBrace = forInValueList.startsWith("{");
+		boolean endsWithBrace = forInValueList.endsWith("}");
+		if (startsWithBrace && !endsWithBrace)
 		{				
-    			lblParserInfo.setForeground(Color.RED);
-    			lblParserInfo.setText("Value list must end with '}'");
+    			txtParserInfo.setForeground(Color.RED);
+				// START KGU#247 2016-09-23: Issue #243 - Forgotten translations
+    			//lblParserInfo.setText("Value list must end with '}'");
+    			txtParserInfo.setText(msgMissingBrace2.getText());
+				// END KGU#247 2016-09-23
 		}
-		else if (!forInValueList.startsWith("{") && forInValueList.endsWith("}"))
+		else if (!startsWithBrace && endsWithBrace)
 		{				
-			lblParserInfo.setForeground(Color.RED);
-			lblParserInfo.setText("Value list should begin with '{'");
+			txtParserInfo.setForeground(Color.RED);
+			// START KGU#247 2016-09-23: Issue #243 - Forgotten translations
+			//lblParserInfo.setText("Value list should begin with '{'");
+			txtParserInfo.setText(msgMissingBrace1.getText());
+			// END KGU#247 2016-09-23
 		}
 		else if ((new Function(forInValueList)).isFunction())
 		{
-			lblParserInfo.setForeground(Color.BLUE);
-			lblParserInfo.setText("Ensure the function returns an array.");			
+			txtParserInfo.setForeground(Color.BLUE);
+			// START KGU#247 2016-09-23: Issue #243 - Forgotten translations
+			//lblParserInfo.setText("Ensure the function returns an array.");			
+			txtParserInfo.setText(msgEnsureReturnedArray.getText());
+			// END KGU#247 2016-09-23
 		}
 		else if (forInValueList.isEmpty())
 		{
-			lblParserInfo.setForeground(Color.BLUE);
-			lblParserInfo.setText("Enter the value list for the loop.");			
+			txtParserInfo.setForeground(Color.BLUE);
+			// START KGU#247 2016-09-23: Issue #243 - Forgotten translations
+			//lblParserInfo.setText("Enter the value list for the loop.");			
+			txtParserInfo.setText(msgEnterValueList.getText());
+			// END KGU#247 2016-09-23
 		}
-		//lblParserInfo.setForeground(Color.decode("0x007700"));
-		//lblParserInfo.setText(values);
+		// START KGU 2016-09-23
+		else if (Function.testIdentifier(forInValueList, ""))
+		{
+			txtParserInfo.setForeground(Color.BLUE);
+			txtParserInfo.setText(msgEnsureVariableIsArray.getText().replace("%", forInValueList));
+		}
+		else if (startsWithBrace && endsWithBrace)
+		{
+			StringList elements = Element.splitExpressionList(forInValueList.substring(1, forInValueList.length()-1).trim(), ",");
+			for (int i = 0; i < elements.count(); i++)
+			{
+				if (Element.splitExpressionList(elements.get(i).trim(), " ").count() > 1)
+				{
+					txtParserInfo.setForeground(Color.RED);
+					txtParserInfo.setText(msgSeparateWithComma.getText());
+					break;
+				}
+			}
+		}
+		// END KGU 2016-09-23
 	}
 
 	/* (non-Javadoc)
@@ -445,23 +712,131 @@ public class InputBoxFor extends InputBox implements ItemListener {
     		String text = txtText.getText();
     		String[] forFractions = For.splitForClause(text);
     		// START KGU#61 2016-03-21: Enh. #84/#135 - check whether this is a FOR-IN loop
-    		if (forFractions.length >= 6 && forFractions[5] != null)
+    		setIsTraversingLoop(forFractions.length >= 6 && forFractions[5] != null);
+    		if (isTraversingLoop)
     		{
-    			txtVariable.setText(forFractions[0]);
+    			//txtVariable.setText(forFractions[0]);
+    			txtVariableIn.setText(forFractions[0]);
     			forInValueList = forFractions[5];
+    			txtValueList.setText(forInValueList);
     			checkValueList();
-    			lblStartVal.setVisible(false);
-    			lblEndVal.setVisible(false);
-    			lblIncr.setVisible(false);
-    			lblPostFor.setForeground(Color.GRAY);
-    			lblAsgnmt.setText(D7Parser.postForIn);
-    			lblStepFor.setForeground(Color.GRAY);			
+    			
     			txtStartVal.setText("");
     			txtEndVal.setText("");
     			txtIncr.setText("");
     		}		
+			setVisibility();
+			if (isLoopDataConsistent())
+			{
+				chkTextInput.setSelected(false);
+				this.enableTextFields(false);
+			}
 		}
 	}
 	// END KGU#61 2016-03-21
+	
+	// START KGU#61 2016-09-23: Enh. #250
+	private void setVisibility()
+	{
+		if (isTraversingLoop)
+		{
+			lblVarDesignation.setText(lblTraversingVariable.getText());
+			lblFirstValueLabel.setText(lblValueList.getText());
+			txtParserInfo.setVisible(true);
+			validate();
+		}
+		else
+		{
+			lblVarDesignation.setText(lblVariable.getText());
+			lblFirstValueLabel.setText(lblStartVal.getText());
+		}
+		this.lblEndVal.setVisible(!isTraversingLoop);
+		this.lblIncr.setVisible(!isTraversingLoop);
+		//this.lblPreFor.setVisible(!isTraversingLoop);
+		this.txtVariable.setVisible(!isTraversingLoop);
+		this.lblAsgnmt.setVisible(!isTraversingLoop);
+		this.txtStartVal.setVisible(!isTraversingLoop);
+		this.lblPostFor.setVisible(!isTraversingLoop);
+		this.txtEndVal.setVisible(!isTraversingLoop);
+		this.lblStepFor.setVisible(!isTraversingLoop);
+		this.txtIncr.setVisible(!isTraversingLoop);
+		
+		//this.lblPreForIn.setVisible(isTraversingLoop);
+		this.txtVariableIn.setVisible(isTraversingLoop);
+		this.lblpostForIn.setVisible(isTraversingLoop || rbCounting.getText().equals(rbTraversing.getText()));
+		this.txtValueList.setVisible(isTraversingLoop);
+	}
+	
+	public void setIsTraversingLoop(boolean isTraversing)
+	{
+		this.isTraversingLoop = isTraversing;
+		if (isTraversing) {
+			rbTraversing.setSelected(true);
+		}
+		else {
+			rbCounting.setSelected(true);
+		}
+		setVisibility();
+	}
+	
+	public For.ForLoopStyle identifyForLoopStyle()
+	{
+		return isTraversingLoop ? For.ForLoopStyle.TRAVERSAL : For.ForLoopStyle.COUNTER;
+	}
+	
+	/**
+	 * May be used to find out whether there is an equivalence between the full text
+	 * content and the loop-style-specific input fields 
+	 * @return true if full text and field contents correspond (according to the loop style)
+	 */
+	public boolean isLoopDataConsistent()
+	{
+		boolean isConsistent = true;
+		String text = txtText.getText();
+		String[] forFractions = For.splitForClause(text);
+		if (isTraversingLoop != (forFractions.length >= 6 && forFractions[5] != null))
+		{
+			isConsistent = false;
+		}
+		else if (isTraversingLoop)		
+		{
+			//txtVariable.setText(forFractions[0]);
+			isConsistent = (txtVariableIn.getText().equals(forFractions[0]))
+					&& forInValueList != null && forInValueList.equals(forFractions[5]);
+		}
+		else {
+			isConsistent = (txtVariable.getText().equals(forFractions[0]))
+					&& txtStartVal.getText().equals(forFractions[1])
+					&& txtEndVal.getText().equals(forFractions[2])
+					&& txtIncr.getText().equals(forFractions[3]);
+		}
+		return isConsistent;
+	}
+	
+	// Workaround to ensure a sufficiently wide message and value list field
+	// FIXME: Usually not works before the first editing activity.
+	private void forceMinimumSize(JTextField _textField, boolean _validate)
+	{
+		Dimension size = _textField.getMinimumSize();
+		//System.out.println("size: " + size.width + " x " + size.height);
+		size.width = Math.max(IBF_PREFERRED_WIDTH/2, size.width);
+		_textField.setMinimumSize(isTraversingLoop ? size : null);
+		if (_validate) {
+			this.validate();
+		}
+	}
+	
+    /**
+     * This method is called on opening after setLocale and before re-packing.
+     * Replaces markers in translated texts.
+     */
+    @Override
+    protected void adjustLangDependentComponents()
+    {
+    	super.adjustLangDependentComponents();
+    	setVisibility();
+    }
 
+	// END KGU#61 2016-09-23
+	
 }

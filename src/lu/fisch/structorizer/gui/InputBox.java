@@ -179,18 +179,6 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         gbPanel1.setConstraints(scrComment, gbcPanel1);
         pnPanel1.add(scrComment);
 
-            // START KGU#3 2015-10-25: Moved to addCreating() - such that it may be replaced by subclasses
-//            gbcPanel1.gridx = 1;
-//            gbcPanel1.gridy = 1;
-//            gbcPanel1.gridwidth = 18;
-//            gbcPanel1.gridheight = 1;
-//            gbcPanel1.fill = GridBagConstraints.BOTH;
-//            gbcPanel1.weightx = 1;
-//            gbcPanel1.weighty = 0;
-//            gbcPanel1.anchor = GridBagConstraints.NORTH;
-//            gbPanel1.setConstraints( lblText, gbcPanel1 );
-//            pnPanel1.add( lblText );
-        // END KGU#3 2015-10-25
         gbcPanel1.gridx = 1;
         gbcPanel1.gridy = 10;
         gbcPanel1.gridwidth = 18;
@@ -378,6 +366,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
      * etc.
      */
     public void checkConsistency() {
+    	// Basic implementation doesn't do anything
     }
     // END KGU#61 2016-03-21
 

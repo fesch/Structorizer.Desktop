@@ -75,7 +75,7 @@
  *      Kay Gürtzig     2016.09.13      Entries for InputBox and InputBoxFor revised (bugfix #241)
  *      Kay Gürtzig     2016.09.15-17   Issue #243: New message translations for Menu and Control
  *      Kay Gürtzig     2016.09.22      Bugfix #241; issue #249: New messages for InputBox and Analyser
- *                                      AnalyserPreferences numbering modified 
+ *                                      AnalyserPreferences numbering modified, InputBoxFor messages
  *
  ******************************************************************************************************
  *
@@ -483,10 +483,14 @@ InputBox.title[elementType:Parallel,getInsertionType():update]=
 -----[ InputBox For ]-----
 InputBoxFor.title[getInsertionType():insert]=
 InputBoxFor.title[getInsertionType():update]=
+InputBoxFor.rbCounting.tooltip=Select this if you want to count through a range of numbers.
+InputBoxFor.rbTraversing.tooltip=Select this if you want to traverse all members of a collection.
 InputBoxFor.lblVariable.text=
 InputBoxFor.lblStartVal.text=
 InputBoxFor.lblEndVal.text=
 InputBoxFor.lblIncr.text=
+InputBoxFor.lblTraversingVariable.text=
+InputBoxFor.lblValueList.text=
 InputBoxFor.chkTextInput.text=
 InputBoxFor.chkTextInput.tooltip=
 InputBoxFor.lblComment.text=
@@ -499,6 +503,15 @@ InputBoxFor.btnCancel.text=
 InputBoxFor.btnCancel.tooltip=
 InputBoxFor.chkBreakpoint.text=
 InputBoxFor.lblBreakTriggerText.text=Break at execution count: %
+InputBoxFor.msgInvalidIncrement.text=<%> is no valid integer constant
+InputBoxFor.msgMissingBrace1.text=Value list should begin with '{'
+InputBoxFor.msgMissingBrace2.text=Value list must end with '}'
+InputBoxFor.msgSeparateWithComma.text=Within braces, commas must separate values.
+InputBoxFor.msgEnsureReturnedArray.text=Sure that the function returns an array?
+InputBoxFor.msgEnsureVariableIsArray.text=Sure that <%> designates an array?
+InputBoxFor.msgEnterValueList.text=Enter the value list for the loop.
+InputBoxFor.msgDiscardData.text=Changing the loop style means to discard most of the data!%Do you really want to discard the data?
+InputBoxFor.msgAttention.text=ATTENTION!
 
 -----[ Preferences ]-----
 Preferences.title=Structure Preferences

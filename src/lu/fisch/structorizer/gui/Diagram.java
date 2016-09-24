@@ -88,6 +88,7 @@ package lu.fisch.structorizer.gui;
  *                                      Bugfix #244: Flaws in the save logic mended
  *      Kay Gürtzig     2016.09.17      Issue #245: Message box for failing browser call in updateNSD() added.
  *      Kay Gürtzig     2016.09.21      Issue #248: Workaround for legacy Java versions (< 1.8) in editBreakTrigger()
+ *      Kay Gürtzig     2016.09.24      Enh. #250: Several modifications around showInputBox()
  *
  ******************************************************************************************************
  *
@@ -1785,51 +1786,53 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	
 	private void preEditFor(EditData _data, For _for)
 	{
-		// START KGU#61 2016-03-21: Enh. #84 - consider FOR-IN loops
-		//boolean wasConsistent = ((For)element).isConsistent;
+		// Cache the style - we temporarily modify it to get all information
 		For.ForLoopStyle style = _for.style;
-		// END KGU#61 2016-03-12
-		// START KGU#3 2015-11-08: We must support backward compatibility
-		// For the first display shows the real contents
-		// START KGU#61 2016-03-21: Enh. #84 - Now there are three cases
-		//((For)element).isConsistent = true;^
-		_for.style = For.ForLoopStyle.COUNTER;
-		// END KGU#61 2016-03-21
-		// END KGU#3 2015-11-08
-		_data.forParts.add(_for.getCounterVar());
-		_data.forParts.add(_for.getStartValue());
-		_data.forParts.add(_for.getEndValue());
-		_data.forParts.add(Integer.toString(_for.getStepConst()));
-		// START KGU#61 2016-03-21: Enh. #84
-		//data.forPartsConsistent = ((For)element).isConsistent = wasConsistent;
+		try {
+			_for.style = For.ForLoopStyle.COUNTER;
+			_data.forParts.add(_for.getCounterVar());
+			_data.forParts.add(_for.getStartValue());
+			_data.forParts.add(_for.getEndValue());
+			_data.forParts.add(Integer.toString(_for.getStepConst()));
+		}
+		catch (Exception ex) {}
+		finally {
+			// Ensure the original style is restored
+			_data.forLoopStyle = _for.style = style;
+		}
+		// Now try to get a value list in case it's a FOR-IN loop
 		String valueList = _for.getValueList();
 		if (valueList != null)
 		{
 			_data.forParts.add(valueList);
 		}
-		_data.forLoopStyle = _for.style = style;
-		// END KGU#61 2016-03-12
 		
 	}
 	
 	private void postEditFor(EditData _data, For _for)
 	{
-		// START KGU#61 2016-03-21: Enh. #84 - consider FOR-IN loops
-		//((For)element).isConsistent = data.forPartsConsistent;
 		_for.style = _data.forLoopStyle;
-		// END KGU#61 2016-03-21
+
 		_for.setCounterVar(_data.forParts.get(0));
 		_for.setStartValue(_data.forParts.get(1));
 		_for.setEndValue(_data.forParts.get(2));
 		_for.setStepConst(_data.forParts.get(3));
-		// START KGU#61 2016-03-21: Enh. #84 - FOR-IN loop support
+
+		// FOR-IN loop support
 		if (_for.style == For.ForLoopStyle.TRAVERSAL)
 		{
-			_for.style = For.ForLoopStyle.FREETEXT;
-			_for.setValueList(_for.getValueList());
-			_for.style = For.ForLoopStyle.TRAVERSAL;
+			// START KGU#61 2016-09-24: Seemed to be nonsense
+			//_for.style = For.ForLoopStyle.FREETEXT;
+			//_for.setValueList(_for.getValueList());
+			//_for.style = For.ForLoopStyle.TRAVERSAL;
+			_for.setValueList(_data.forParts.get(4));
+			// END KGU#61 2016-09-24
 		}
-		// END KGU#61 2016-03-21		
+		// START KGU#61 2016-09-24
+		else {
+			_for.setValueList(null);
+		}
+		// END KGU#61 2016-09-24		
 	}
 
 	/*****************************************
@@ -3870,27 +3873,44 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (_elementType.equals("For"))
 			{
 				InputBoxFor ipbFor = new InputBoxFor(NSDControl.getFrame(), true);
-				if (!_isInsertion)
+				// START #61 2016-09-24: After partial redesign some things work differently, now
+				//if (!_isInsertion)
+				//{
+				if (_isInsertion)
 				{
-					ipbFor.txtVariable.setText(_data.forParts.get(0));
-					ipbFor.txtStartVal.setText(_data.forParts.get(1));
-					ipbFor.txtEndVal.setText(_data.forParts.get(2));
-					ipbFor.txtIncr.setText(_data.forParts.get(3));
-					// START KGU#61 2016-03-21: Enh. #84 - Consider FOR-IN loops
-					//ipbFor.chkTextInput.setSelected(!_data.forPartsConsistent);
-					//ipbFor.enableTextFields(!_data.forPartsConsistent);
-					if (_data.forParts.count() > 4)
+					// Split the default text to find out what style it is
+					String[] forFractions = For.splitForClause(_data.text.getLongString());
+					for (int i = 0; i < 4; i++)
 					{
-						ipbFor.forInValueList = _data.forParts.get(4);
+						_data.forParts.add(forFractions[i]);
 					}
-					boolean textMode = _data.forLoopStyle != For.ForLoopStyle.COUNTER;
-					ipbFor.chkTextInput.setSelected(textMode);
-					ipbFor.enableTextFields(textMode);
-					// END KGU#61 2016-03-21
+					if (forFractions[5] != null)
+					{
+						_data.forParts.add(forFractions[5]);
+					}
 				}
-				else {
-					ipbFor.enableTextFields(false);
+				// END KGU#61 2016-09-24
+				ipbFor.txtVariable.setText(_data.forParts.get(0));
+				ipbFor.txtStartVal.setText(_data.forParts.get(1));
+				ipbFor.txtEndVal.setText(_data.forParts.get(2));
+				ipbFor.txtIncr.setText(_data.forParts.get(3));
+				// START KGU#61 2016-03-21: Enh. #84 - Consider FOR-IN loops
+				//ipbFor.chkTextInput.setSelected(!_data.forPartsConsistent);
+				//ipbFor.enableTextFields(!_data.forPartsConsistent);
+				if (_data.forParts.count() > 4)
+				{
+					ipbFor.txtValueList.setText(ipbFor.forInValueList = _data.forParts.get(4));
+					ipbFor.txtVariableIn.setText(_data.forParts.get(0));
 				}
+				boolean textMode = _data.forLoopStyle == For.ForLoopStyle.FREETEXT;
+				ipbFor.chkTextInput.setSelected(textMode);
+				ipbFor.enableTextFields(textMode);
+				ipbFor.setIsTraversingLoop(_data.forLoopStyle == For.ForLoopStyle.TRAVERSAL);
+				// END KGU#61 2016-03-21
+//				}
+//				else {
+//					ipbFor.enableTextFields(false);
+//				}
 				inputbox = ipbFor;
 			}
 			else
@@ -3951,7 +3971,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//	//if (ok) System.out.println("Text will get focus");
 			//}
 			// END KGU KGU#91 2015-12-04
-			// START KGU#61 2016-03-21: Give InputBox an opportunity to check consistency
+			// START KGU#61 2016-03-21: Give InputBox an opportunity to check and ensure consistency
 			inputbox.checkConsistency();
 			// END KGU#61 2016-03-21
 			inputbox.setVisible(true);
@@ -3962,7 +3982,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#43 2015-10-12: Breakpoint support
 			_data.breakpoint = inputbox.chkBreakpoint.isSelected();
 			// END KGU#43 2015-10-12
-			// START KGU#213 2016-08-01: Enh. #215 (temprarily disabled again)
+			// START KGU#213 2016-08-01: Enh. #215 (temporarily disabled again)
 //			try{
 //				_data.breakTriggerCount = Integer.parseUnsignedInt(inputbox.txtBreakTrigger.getText());
 //			}
@@ -3981,15 +4001,27 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				_data.forParts.add(((InputBoxFor)inputbox).txtIncr.getText());
 				// START KGU#61 2016-03-21: Enh. #84 - consider FOR-IN loops
 				//_data.forPartsConsistent = !((InputBoxFor)inputbox).chkTextInput.isSelected();
-				if (!((InputBoxFor)inputbox).chkTextInput.isSelected())
+				// FIXME!
+				//if (!((InputBoxFor)inputbox).chkTextInput.isSelected())
+				//{
+				//	_data.forLoopStyle = For.ForLoopStyle.COUNTER;
+				//}
+				//else if (((InputBoxFor)inputbox).forInValueList != null)
+				//{
+				//	_data.forLoopStyle = For.ForLoopStyle.TRAVERSAL;
+				//	_data.forParts.add(((InputBoxFor)inputbox).forInValueList);				}
+				//else
+				//{
+				//	_data.forLoopStyle = For.ForLoopStyle.FREETEXT;
+				//}
+				_data.forLoopStyle = ((InputBoxFor)inputbox).identifyForLoopStyle();
+				if (_data.forLoopStyle == For.ForLoopStyle.TRAVERSAL)
 				{
-					_data.forLoopStyle = For.ForLoopStyle.COUNTER;
+					// (InputBoxFor)inputbox).txtVariableIn.getText() should equal (InputBoxFor)inputbox).txtVariable.getText(),
+					// such that nothing must be done about it here
+					_data.forParts.add(((InputBoxFor)inputbox).forInValueList);
 				}
-				else if (((InputBoxFor)inputbox).forInValueList != null)
-				{
-					_data.forLoopStyle = For.ForLoopStyle.TRAVERSAL;
-					_data.forParts.add(((InputBoxFor)inputbox).forInValueList);				}
-				else
+				if (((InputBoxFor)inputbox).chkTextInput.isSelected() && !((InputBoxFor)inputbox).isLoopDataConsistent())
 				{
 					_data.forLoopStyle = For.ForLoopStyle.FREETEXT;
 				}
