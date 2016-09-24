@@ -91,6 +91,7 @@ package lu.fisch.structorizer.executor;
  *                                      Enh. #137: Error messages now also written to text window output
  *      Kay Gürtzig     2016-09-17      Bugfix #246 (Boolean expressions) and issue #243 (more translations)
  *      Kay Gürtzig     2016.09.22      Issue #248: Workaround for Java 7 in Linux systems (parseUnsignedInt)
+ *      Kay Gürtzig     2016.09.25      Bugfix #251: Console window wasn't involved in look and feel update
  *
  ******************************************************************************************************
  *
@@ -352,6 +353,9 @@ public class Executor implements Runnable
 		if (mySelf != null)
 		{
 			mySelf.control.updateLookAndFeel();
+			// START KGU#255 2016-09-25: Bugfix #251
+			SwingUtilities.updateComponentTreeUI(mySelf.console);
+			// END KGU#255 2016-09-25
 		}
 	}
 	// END KGU#210/KGU#234 2016-08-08
