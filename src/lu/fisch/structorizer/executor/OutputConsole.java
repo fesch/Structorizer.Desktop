@@ -140,7 +140,6 @@ public class OutputConsole extends JFrame {
      */
     public void write(String _text, Color _colour)
     {
-    	System.out.println(textPane.getBackground().toString());
     	try {
 			this.doc.insertString(doc.getLength(), _text, doc.getStyle(_colour.toString()));
 		} catch (BadLocationException e) {
@@ -160,7 +159,7 @@ public class OutputConsole extends JFrame {
      */
     public void writeln(String _text)
     {
-    	this.write(_text + "\n", textPane.getForeground());
+    	this.write(_text + "\n");
     }
 
     /**
