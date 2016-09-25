@@ -1,8 +1,28 @@
-Legend:
+﻿Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 [Foo]2  -->     idea provided by Foo, coding done by Kay Gürtzig
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
+
+Current development version: 3.25-01 (2016.09.25)
+- 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
+- 01: Issue #213: Selected state of FOR transmutation result now visible <2>
+- 01: Bugfix #241: Translation bugs for element editor mended <2>
+- 01: Bugfix #243: Forgotten translations for some message boxes [Rolf Schmidt]<2>
+- 01: Bugfix #244: Flawed logic for the save actions mended <2>
+- 01: Bugfix #246: Executor now checks conditions for Boolean results <2>
+- 01: Issue #245: Browser launching workaround for Linux systems [Rolf Schmidt]2
+- 01: Bugfix #247: Defective BASH export of ENDLESS loops [Rolf Schmidt]2
+- 01: Issue #248: Linux workaround for setting breakpoint triggers <2>
+- 01: Issue #248: Linux workaround for number conversions in Locales and Executor <2>
+- 01: Enh. #249: New Analyser check for subroutine argument parenthesis <2>
+- 01: Analyser preferences order modified <2>
+- 01: Enh. #250: FOR/FOR-IN loop editor partially redesigned <2>
+- 01: Bugfix #251: Look and feel problems with Executor console window <2>
+- 01: Bugfix #252: Analyser check 14 should tolerate ":=" vs "<-" <2>
+- 01: Saved diagrams now prepared for #253 (keyword substitution on loading) <2>
+- 01: Bugfix #254: CASE execution failed when parser keywords were used <2>
+- 01: Enh. #255: Analyser now names the assumed loop variables if supernumerous <2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2

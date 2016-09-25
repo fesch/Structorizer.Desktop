@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.gui;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -59,12 +60,15 @@ package lu.fisch.structorizer.gui;
  *                                      two new checks introduced (variable name collisions)
  *      Kay Gürtzig     2016.09.01      Bugfix #233: CASE insertion by F10 had been averted by menu bar
  *      Kay Gürtzig     2016.09.04      Structural redesign for menuPreferencesLanguage
+ *      Kay Gürtzig     2016.09.15      Issue #243: Additional text holders for forgotten message box texts
+ *      Kay Gürtzig     2016.09.22      New text holder / messages for Analyser 
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 import java.util.*;
@@ -245,7 +249,7 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! ---> \"Diagram > Switch text/comments\".");
 	// END KGU#220 2016-07-27
 	public static final LangTextHolder error01_1 = new LangTextHolder("WARNING: No loop variable detected ...");
-	public static final LangTextHolder error01_2 = new LangTextHolder("WARNING: More than one loop variable detected ...");
+	public static final LangTextHolder error01_2 = new LangTextHolder("WARNING: More than one loop variable detected: «%»");
 	public static final LangTextHolder error01_3 = new LangTextHolder("You are not allowed to modify the loop variable «%» inside the loop!");
 	public static final LangTextHolder error02 = new LangTextHolder("No change of the variables in the condition detected. Possible endless loop ...");
 	public static final LangTextHolder error03_1= new LangTextHolder("The variable «%» has not yet been initialized!");
@@ -293,6 +297,9 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error18 = new LangTextHolder("Variable name «%1» may be confused with variable(s) «%2» in some case-indifferent languages!");
 	public static final LangTextHolder error19 = new LangTextHolder("Variable name «%1» may collide with reserved names in languages like %2!");
 	// END KGU#239 2016-08-12
+	// START KGU#253 2016-09-21: Enh. #249 - New check for subroutine syntax.
+	public static final LangTextHolder error20 = new LangTextHolder("A subroutine header must have a (possibly empty) parameter list within parentheses.");
+	// END KGU#253 2016-09-21
 
 	// START KGU#218 2016-07-28: Issue #206 - enhanced localization
 	// Dialog messages
@@ -315,6 +322,26 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgOpenLangFile = new LangTextHolder("Open language file");
 	public static final LangTextHolder msgLangFile = new LangTextHolder("Structorizer language file");
 	// END KGU#232 2016-08-02
+	// START KGU#247 2016-09-15: Issue #243: Forgotten message box translations
+	public static final LangTextHolder msgTitleError = new LangTextHolder("Error");
+	public static final LangTextHolder msgTitleLoadingError = new LangTextHolder("Loading Error");
+	public static final LangTextHolder msgTitleParserError = new LangTextHolder("Parser Error");
+	public static final LangTextHolder msgTitleURLError = new LangTextHolder("URL Error");
+	public static final LangTextHolder msgTitleQuestion = new LangTextHolder("Question");
+	public static final LangTextHolder msgTitleWrongInput = new LangTextHolder("Wrong Input");
+	public static final LangTextHolder msgTitleOpen = new LangTextHolder("Open file ...");
+	public static final LangTextHolder msgTitleSave = new LangTextHolder("Save file ...");
+	public static final LangTextHolder msgTitleSaveAs = new LangTextHolder("Save file as ...");
+	public static final LangTextHolder msgTitleImport = new LangTextHolder("Import % code ...");
+	public static final LangTextHolder msgSaveChanges = new LangTextHolder("Do you want to save the current NSD file?");
+	public static final LangTextHolder msgErrorImageSave = new LangTextHolder("Error on saving the image(s)!");
+	public static final LangTextHolder msgErrorUsingGenerator = new LangTextHolder("Error while using % generator");
+	// END KGU#247 2016-09-15
+	// START KGU#247 2016-09-17: Issue #243: Forgotten message box translation
+	public static final LangTextHolder msgGotoHomepage = new LangTextHolder("Go to % to look for updates and news about Structorizer.");
+	public static final LangTextHolder msgErrorNoFile = new LangTextHolder("File not found!");
+	public static final LangTextHolder msgBrowseFailed = new LangTextHolder("Failed to show % in browser");
+	// END KGU#247 2016-09-17
 
 	public void create()
 	{

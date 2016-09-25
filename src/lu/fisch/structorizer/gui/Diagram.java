@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.gui;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -77,9 +78,17 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.28      Bugfix #208: Modification in setFunction(), setProgram(), and exportPNG()
  *                                      Bugfix #209: exportPNGmulti() corrected
  *      Kay Gürtzig     2016.07.31      Issue #158 Changes from 2016.07.25 partially withdrawn, additional restrictions
- *      Kay Gürtzig     2016-08-01      Issue #213: FOR loop transmutation implemented
+ *      Kay Gürtzig     2016.08.01      Issue #213: FOR loop transmutation implemented
  *                                      Enh. #215: Breakpoint trigger counters added (KGU#213)
- *      Kay Gürtzig     2016-08-12      Enh. #231: Analyser checks rorganised to arrays for easier maintenance
+ *      Kay Gürtzig     2016.08.12      Enh. #231: Analyser checks rorganised to arrays for easier maintenance
+ *      Kay Gürtzig     2016.09.09      Issue #213: preWhile and postWhile keywords involved in FOR loop transmutation
+ *      Kay Gürtzig     2016.09.11      Issue #213: Resulting selection wasn't highlighted
+ *      Kay Gürtzig     2016.09.13      Bugfix #241: Modification in showInputBox()
+ *      Kay Gürtzig     2016.09.15      Issue #243: Forgotten message box texts included in localization,
+ *                                      Bugfix #244: Flaws in the save logic mended
+ *      Kay Gürtzig     2016.09.17      Issue #245: Message box for failing browser call in updateNSD() added.
+ *      Kay Gürtzig     2016.09.21      Issue #248: Workaround for legacy Java versions (< 1.8) in editBreakTrigger()
+ *      Kay Gürtzig     2016.09.24      Enh. #250: Several modifications around showInputBox()
  *
  ******************************************************************************************************
  *
@@ -94,7 +103,8 @@ package lu.fisch.structorizer.gui;
  *        margin now, giving pause for consideration.
  *        Moving inwards the diagram from the selected Root will still work.
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import java.awt.*;
 import java.awt.image.*;
@@ -106,6 +116,7 @@ import net.iharder.dnd.*; //http://iharder.sourceforge.net/current/java/filedrop
 
 import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
@@ -336,9 +347,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							else
 							{
 								// show error
-								JOptionPane.showOptionDialog(null,d7.error,
-										"Parser Error",
-										JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+								JOptionPane.showMessageDialog(null,
+										d7.error,
+										Menu.msgTitleParserError.getText(),
+										JOptionPane.ERROR_MESSAGE);
 							}
 
 							redraw();
@@ -1076,7 +1088,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// open an existing file
 		// create dialog
 		JFileChooser dlgOpen = new JFileChooser();
-		dlgOpen.setDialogTitle("Open file ...");
+		dlgOpen.setDialogTitle(Menu.msgTitleOpen.getText());
 		// set directory
 		if(root.getFile()!=null)
 		{
@@ -1115,7 +1127,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Root oldRoot = this.root;
 		// END KGU#48 2015-10-17
 		// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
-		String errorMessage = "File not found!";
+		String errorMessage = Menu.msgErrorNoFile.getText();
 		// END KGU#111 2015-12-16
 		try
 		{
@@ -1155,14 +1167,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
 			//System.out.println(e.getMessage());
-			errorMessage = e.getMessage();
-			System.out.println(errorMessage);
+			errorMessage = e.getLocalizedMessage();
+			if (errorMessage == null) errorMessage = e.getMessage();
+			System.err.println(e.getMessage());
 			// END KGU#111 2015-12-16
 		}
 		// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
 		if (errorMessage != null)
 		{
-			JOptionPane.showMessageDialog(this, "\"" + _filename + "\": " + errorMessage, "Loading Error",
+			JOptionPane.showMessageDialog(this, "\"" + _filename + "\": " + errorMessage, 
+					Menu.msgTitleLoadingError.getText(),
 					JOptionPane.ERROR_MESSAGE);
 		}
 		// END KGU#111 2015-12-16
@@ -1175,7 +1189,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void saveAsNSD()
 	{
 		JFileChooser dlgSave = new JFileChooser();
-		dlgSave.setDialogTitle("Save file as ...");
+		dlgSave.setDialogTitle(Menu.msgTitleSaveAs.getText());
 		// set directory
 		if(root.getFile()!=null)
 		{
@@ -1187,73 +1201,62 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 
 		// propose name
-		// START KGU 2015-10-16: D.R.Y. - there is already a suitable method
-//		String nsdName = root.getText().get(0);
-//		nsdName.replace(':', '_');
-//		if(nsdName.indexOf(" (")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf(" ("));}
-//		if(nsdName.indexOf("(")>=0) {nsdName=nsdName.substring(0,nsdName.indexOf("("));}
 		String nsdName = root.proposeFileName();
-		// END KGU 2015-10-16
 		dlgSave.setSelectedFile(new File(nsdName));
 
 		dlgSave.addChoosableFileFilter(new StructogramFilter());
-		int result = dlgSave.showSaveDialog(this);
-		if (result == JFileChooser.APPROVE_OPTION)
-		{
-			root.filename=dlgSave.getSelectedFile().getAbsoluteFile().toString();
-			if(!root.filename.substring(root.filename.length()-4, root.filename.length()).toLowerCase().equals(".nsd"))
+		
+		// START KGU#248 2016-09-15: Bugfix #244 - allow more than one chance
+		//int result = dlgSave.showSaveDialog(this);
+		int result = JFileChooser.ERROR_OPTION;
+		do {
+			result = dlgSave.showSaveDialog(this);
+		// END KGU#248 2016-9-15
+			if (result == JFileChooser.APPROVE_OPTION)
 			{
-				root.filename+=".nsd";
+				String newFilename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
+				if(!newFilename.substring(newFilename.length()-4, newFilename.length()).toLowerCase().equals(".nsd"))
+				{
+					newFilename += ".nsd";
+				}
+
+				File f = new File(newFilename);
+				boolean writeNow = true;
+				if (f.exists())
+				{
+					writeNow=false;
+					int res = JOptionPane.showConfirmDialog(
+							this,
+							Menu.msgOverwriteFile.getText(),
+							Menu.btnConfirmOverwrite.getText(),
+							JOptionPane.YES_NO_OPTION);
+					if (res == JOptionPane.YES_OPTION) writeNow=true;
+				}
+
+				if (!writeNow)
+				{
+					// START KGU#248 2016-09-15: Bugfix #244 - message no longer needed (due to new loop)
+					//JOptionPane.showMessageDialog(this, Menu.msgRepeatSaveAttempt.getText());
+					result = JFileChooser.ERROR_OPTION;
+					// END KGU#248 2016-09-15
+				}
+				else
+				{
+					root.filename = newFilename;
+					// START KGU#94 2015.12.04: out-sourced to auxiliary method
+					doSaveNSD();
+					// END KGU#94 2015-12-04
+				}
 			}
+		// START KGU#248 2016-09-15: Bugfix #244 - allow to leave the new loop
+			else
+			{
+				// User cancelled the file dialog -> leave the loop
+				result = JFileChooser.CANCEL_OPTION;
+			}
+		} while (result == JFileChooser.ERROR_OPTION);
+		// END KGU#248 2016-09-15
 
-                        File f = new File(root.filename);
-                        boolean writeNow = true;
-                        if(f.exists())
-                        {
-                            writeNow=false;
-                            int res = JOptionPane.showConfirmDialog(
-                                    this,
-                                    Menu.msgOverwriteFile.getText(),
-                                    Menu.btnConfirmOverwrite.getText(),
-                                    JOptionPane.YES_NO_OPTION);
-                            if(res==JOptionPane.YES_OPTION) writeNow=true;
-                        }
-
-                        if(writeNow==false)
-                        {
-                            JOptionPane.showMessageDialog(this, Menu.msgRepeatSaveAttempt.getText());
-                        }
-                        else
-                        {
-                        	// START KGU#94 2015.12.04: out-sourced to auxiliary method
-//                            try
-//                            {
-//                            
-//                                    FileOutputStream fos = new FileOutputStream(root.filename);
-//                                    Writer out = new OutputStreamWriter(fos, "UTF8");
-//                                    XmlGenerator xmlgen = new XmlGenerator();
-//                                    out.write(xmlgen.generateCode(root,"\t"));
-//                                    out.close();
-//                                    /*
-//                                    BTextfile outp = new BTextfile(root.filename);
-//                                    outp.rewrite();
-//                                    XmlGenerator xmlgen = new XmlGenerator();
-//                                    outp.write(xmlgen.generateCode(root,"\t"));
-//                                    //outp.write(diagram.root.getXML());
-//                                    outp.close();
-//                                    /**/
-//
-//                                    root.hasChanged=false;
-//                                    addRecentFile(root.filename);
-//                            }
-//                            catch(Exception e)
-//                            {
-//                                    JOptionPane.showOptionDialog(this,"Error while saving the file!","Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
-//                            }
-                        	doSaveNSD();
-                        	// END KGU#94 2015-12-04
-                         }
-		}
 	}
 
 	/*****************************************
@@ -1287,9 +1290,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					filename = root.proposeFileName();
 				}
 				res = JOptionPane.showOptionDialog(this,
-												   "Do you want to save the current NSD-File?\n\"" + filename + "\"",
+												   Menu.msgSaveChanges.getText() + "\n\"" + filename + "\"",
 				// END KGU#49 2015-10-18
-												   "Question",
+												   Menu.msgTitleQuestion.getText(),
 												   JOptionPane.YES_NO_OPTION,
 												   JOptionPane.QUESTION_MESSAGE,
 												   null,null,null);
@@ -1297,71 +1300,55 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			
 			if (res==0)
 			{
-				// if root has not yet been saved
-				boolean saveIt = true;
+				// Check whether root has already been loaded or saved once
+				//boolean saveIt = true;
 
 				//System.out.println(this.currentDirectory.getAbsolutePath());
 				
-				if(root.filename.equals(""))
+				if (root.filename.equals(""))
 				{
-					JFileChooser dlgSave = new JFileChooser();
-					dlgSave.setDialogTitle("Save file ...");
-					// set directory
-					if(root.getFile()!=null)
-					{
-						dlgSave.setCurrentDirectory(root.getFile());
-					}
-					else
-					{
-						dlgSave.setCurrentDirectory(currentDirectory);
-					}
-
-					// propose name
-
-					dlgSave.setSelectedFile(new File(root.proposeFileName()));
-
-					dlgSave.addChoosableFileFilter(new StructogramFilter());
-					int result = dlgSave.showSaveDialog(this);
-
-					if (result == JFileChooser.APPROVE_OPTION)
-					{
-						root.filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
-						if(!root.filename.substring(root.filename.length()-4).toLowerCase().equals(".nsd"))
-						{
-							root.filename+=".nsd";
-						}
-					}
-					else
-					{
-						saveIt = false;
-					}
+					// root has never been saved
+// START KGU#248 2016-09-15: Bugfix #244 delegate to saveAsNSD()
+//					JFileChooser dlgSave = new JFileChooser();
+//					dlgSave.setDialogTitle(Menu.msgTitleSave.getText());
+//					// set directory
+//					if (root.getFile() != null)
+//					{
+//						dlgSave.setCurrentDirectory(root.getFile());
+//					}
+//					else
+//					{
+//						dlgSave.setCurrentDirectory(currentDirectory);
+//					}
+//
+//					// propose name
+//
+//					dlgSave.setSelectedFile(new File(root.proposeFileName()));
+//
+//					dlgSave.addChoosableFileFilter(new StructogramFilter());
+//					int result = dlgSave.showSaveDialog(this);
+//
+//					if (result == JFileChooser.APPROVE_OPTION)
+//					{
+//						root.filename = dlgSave.getSelectedFile().getAbsoluteFile().toString();
+//						if(!root.filename.substring(root.filename.length()-4).toLowerCase().equals(".nsd"))
+//						{
+//							root.filename+=".nsd";
+//						}
+//					}
+//					else
+//					{
+//						saveIt = false;
+//					}
+//				}
+//
+//				if (saveIt == true)
+					saveAsNSD();
 				}
-
-				if (saveIt == true)
+				else
+// END KGU#248 2016-09-15
 				{
 					// START KGU#94 2015-12-04: Out-sourced to auxiliary method
-//					try
-//					{
-//                                                FileOutputStream fos = new FileOutputStream(root.filename);
-//                                                Writer out = new OutputStreamWriter(fos, "UTF8");
-//                                                XmlGenerator xmlgen = new XmlGenerator();
-//                                                out.write(xmlgen.generateCode(root,"\t"));
-//                                                out.close();
-//                                                /*
-//                                                BTextfile outp = new BTextfile(root.filename);
-//						outp.rewrite();
-//						XmlGenerator xmlgen = new XmlGenerator();
-//						outp.write(xmlgen.generateCode(root,"\t"));
-//						//outp.write(diagram.root.getXML());
-//						outp.close();/**/
-//
-//						root.hasChanged=false;
-//						addRecentFile(root.filename);
-//					}
-//					catch(Exception e)
-//					{
-//						JOptionPane.showOptionDialog(this,"Error while saving the file!\n"+e.getMessage(),"Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
-//					}
 					doSaveNSD();
 					// END KGU#94 2015-12-04
 				}
@@ -1436,7 +1423,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         }
         catch(Exception ex)
         {
-        	JOptionPane.showMessageDialog(this, Menu.msgErrorFileSave.getText().replace("%", ex.getMessage()), "Error",
+			String message = ex.getLocalizedMessage();
+			if (message == null) message = ex.getMessage();
+        	JOptionPane.showMessageDialog(this,
+        			Menu.msgErrorFileSave.getText().replace("%", message),
+        			Menu.msgTitleError.getText(),
         			JOptionPane.ERROR_MESSAGE, null);
         }
         return done;
@@ -1795,51 +1786,53 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	
 	private void preEditFor(EditData _data, For _for)
 	{
-		// START KGU#61 2016-03-21: Enh. #84 - consider FOR-IN loops
-		//boolean wasConsistent = ((For)element).isConsistent;
+		// Cache the style - we temporarily modify it to get all information
 		For.ForLoopStyle style = _for.style;
-		// END KGU#61 2016-03-12
-		// START KGU#3 2015-11-08: We must support backward compatibility
-		// For the first display shows the real contents
-		// START KGU#61 2016-03-21: Enh. #84 - Now there are three cases
-		//((For)element).isConsistent = true;^
-		_for.style = For.ForLoopStyle.COUNTER;
-		// END KGU#61 2016-03-21
-		// END KGU#3 2015-11-08
-		_data.forParts.add(_for.getCounterVar());
-		_data.forParts.add(_for.getStartValue());
-		_data.forParts.add(_for.getEndValue());
-		_data.forParts.add(Integer.toString(_for.getStepConst()));
-		// START KGU#61 2016-03-21: Enh. #84
-		//data.forPartsConsistent = ((For)element).isConsistent = wasConsistent;
+		try {
+			_for.style = For.ForLoopStyle.COUNTER;
+			_data.forParts.add(_for.getCounterVar());
+			_data.forParts.add(_for.getStartValue());
+			_data.forParts.add(_for.getEndValue());
+			_data.forParts.add(Integer.toString(_for.getStepConst()));
+		}
+		catch (Exception ex) {}
+		finally {
+			// Ensure the original style is restored
+			_data.forLoopStyle = _for.style = style;
+		}
+		// Now try to get a value list in case it's a FOR-IN loop
 		String valueList = _for.getValueList();
 		if (valueList != null)
 		{
 			_data.forParts.add(valueList);
 		}
-		_data.forLoopStyle = _for.style = style;
-		// END KGU#61 2016-03-12
 		
 	}
 	
 	private void postEditFor(EditData _data, For _for)
 	{
-		// START KGU#61 2016-03-21: Enh. #84 - consider FOR-IN loops
-		//((For)element).isConsistent = data.forPartsConsistent;
 		_for.style = _data.forLoopStyle;
-		// END KGU#61 2016-03-21
+
 		_for.setCounterVar(_data.forParts.get(0));
 		_for.setStartValue(_data.forParts.get(1));
 		_for.setEndValue(_data.forParts.get(2));
 		_for.setStepConst(_data.forParts.get(3));
-		// START KGU#61 2016-03-21: Enh. #84 - FOR-IN loop support
+
+		// FOR-IN loop support
 		if (_for.style == For.ForLoopStyle.TRAVERSAL)
 		{
-			_for.style = For.ForLoopStyle.FREETEXT;
-			_for.setValueList(_for.getValueList());
-			_for.style = For.ForLoopStyle.TRAVERSAL;
+			// START KGU#61 2016-09-24: Seemed to be nonsense
+			//_for.style = For.ForLoopStyle.FREETEXT;
+			//_for.setValueList(_for.getValueList());
+			//_for.style = For.ForLoopStyle.TRAVERSAL;
+			_for.setValueList(_data.forParts.get(4));
+			// END KGU#61 2016-09-24
 		}
-		// END KGU#61 2016-03-21		
+		// START KGU#61 2016-09-24
+		else {
+			_for.setValueList(null);
+		}
+		// END KGU#61 2016-09-24		
 	}
 
 	/*****************************************
@@ -2218,7 +2211,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		int step = forLoop.getStepConst();
 		Element[] elements = new Element[3];
 		elements[0] = new Instruction(forLoop.getCounterVar() + asgmtOpr + forLoop.getStartValue());
-		While whileLoop = new While(forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue());
+		// START KGU#229 2016-09-09: Take care of the configured prefix and postfix
+		//While whileLoop = new While(forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue());
+		String prefix = "", postfix = "";
+		if (!D7Parser.preWhile.trim().isEmpty()) {
+			prefix = D7Parser.preWhile;
+			if (!prefix.endsWith(" ")) prefix += " ";
+		}
+		if (!D7Parser.postWhile.trim().isEmpty()) {
+			postfix = D7Parser.postWhile;
+			if (!postfix.startsWith(" ")) postfix = " " + postfix;
+		}
+		While whileLoop = new While(prefix + forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue() + postfix);
+		// END KGU#229 2016-09-09
 		elements[1] = whileLoop;
 		elements[2] = new Instruction(forLoop.getCounterVar() + asgmtOpr + forLoop.getCounterVar() + (step < 0 ? " - " : " + ") + Math.abs(forLoop.getStepConst()));
 
@@ -2246,6 +2251,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		parent.removeElement(index);
 		this.selected = new SelectedSequence(parent, index, index+1);
+		// START KGU#229 2016-09-11: selection must be made visible!
+		this.selected.setSelected(true);
+		// END KGU#229 2016-09-11
 		this.selectedUp = this.selectedDown = this.selected;
 	}
 	// END KGU#229 2016-08-01
@@ -2277,9 +2285,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					Integer.toString(trigger));
 			if (str != null)
 			{
+				// START KGU#252 2016-09-21: Issue 248 - Linux (Java 1.7) workaround
+				boolean isDone = false;
+				// END KGU#252 2016-09-21
 				try {
-					ele.setBreakTriggerCount(Integer.parseUnsignedInt(str));
-					// Usually the user will want to activate the breakpoint with te configuration
+					// START KGU#252 2016-09-21: Issue 248 - Linux (Java 1.7) workaround
+					//ele.setBreakTriggerCount(Integer.parseUnsignedInt(str));
+					isDone = ele.setBreakTriggerCount(Integer.parseInt(str));
+					// END KGU#252 2016-09-21
+					// We assume the intention to activate the breakpoint with the configuration
 					if (!ele.isBreakpoint())
 					{
 						ele.toggleBreakpoint();
@@ -2288,11 +2302,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch (NumberFormatException ex)
 				{
-					JOptionPane.showMessageDialog(this,
-							Menu.msgBreakTriggerIgnored.getText(),
-							"Wrong Input",
-							JOptionPane.ERROR_MESSAGE);
+					// START KGU#252 2016-09-21: Issue 248 - Linux (Java 1.7) workaround
+					//JOptionPane.showMessageDialog(this,
+					//		Menu.msgBreakTriggerIgnored.getText(),
+					//		Menu.msgTitleWrongInput.getText(),
+					//		JOptionPane.ERROR_MESSAGE);
+					// END KGU#252 2016-09-21
 				}
+				// START KGU#252 2016-09-21: Issue 248 - Linux (Java 1.7) workaround
+				if (!isDone) {
+					JOptionPane.showMessageDialog(this,
+						Menu.msgBreakTriggerIgnored.getText(),
+						Menu.msgTitleWrongInput.getText(),
+						JOptionPane.ERROR_MESSAGE);
+				}
+				// END KGU#252 2016-09-21
 			}
 		}
 	}
@@ -2543,7 +2567,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch(Exception e)
 				{
-					JOptionPane.showOptionDialog(this,"Error while saving the images!","Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+					JOptionPane.showMessageDialog(this,
+							Menu.msgErrorImageSave.getText(),
+							Menu.msgTitleError.getText(), 
+							JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		}
@@ -2638,7 +2665,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch(Exception e)
 				{
-					JOptionPane.showOptionDialog(this,"Error while saving the image!","Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+					JOptionPane.showMessageDialog(this,
+							Menu.msgErrorImageSave.getText(),
+							Menu.msgTitleError.getText(),
+							JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		}
@@ -3077,7 +3107,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		String filename = "";
 
 		JFileChooser dlgOpen = new JFileChooser();
-		dlgOpen.setDialogTitle("Import Pascal Code ...");
+		dlgOpen.setDialogTitle(Menu.msgTitleImport.getText().replace("%", "Pascal"));
 		// set directory
 		if(root.getFile()!=null)
 		{
@@ -3149,7 +3179,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				//							 "Parser Error",
 				//							 JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
 				JOptionPane.showMessageDialog(null, d7.error,
-						"Parser Error", JOptionPane.ERROR_MESSAGE, null);
+						Menu.msgTitleParserError.getText(),
+						JOptionPane.ERROR_MESSAGE, null);
 				// END KGU 2016-01-11
 			}
 
@@ -3172,9 +3203,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#170 2016-04-01
 			gen.exportCode(root,currentDirectory,NSDControl.getFrame());
 		}
-		catch(Exception e)
+		catch(Exception ex)
 		{
-			JOptionPane.showOptionDialog(this,"Error while using generator "+_generatorClassName+"\n"+e.getMessage(),"Error",JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+			String message = ex.getLocalizedMessage();
+			if (message == null) message = ex.getMessage();
+			JOptionPane.showMessageDialog(this,
+					Menu.msgErrorUsingGenerator.getText().replace("%", _generatorClassName)+"\n" + message,
+					Menu.msgTitleError.getText(),
+					JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
@@ -3188,18 +3224,39 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 */
 	public void helpNSD()
 	{
+		// START KGU#250 2016-09-17: Issue #245 (defective Linux integration workaround)
+//		try {
+//			Desktop.getDesktop().browse(new URI("http://help.structorizer.fisch.lu/index.php"));
+//		}
+//		catch(Exception ex)
+//		{
+//			ex.printStackTrace();
+//			// We may get here if there is no standard browser or no standard application for web links
+//			// configured (as issue #245 proved) - in case of missing network access the browser will
+//			// rather show a message itself, though.
+//			String message = ex.getLocalizedMessage();
+//			if (message == null) message = ex.getMessage();
+//			JOptionPane.showMessageDialog(null,
+//					message,
+//					Menu.msgTitleURLError.getText(),
+//					JOptionPane.ERROR_MESSAGE);
+//		}
+		String help = "http://help.structorizer.fisch.lu/index.php";
+		boolean isLaunched = false;
 		try {
-			Desktop.getDesktop().browse(new URI("http://help.structorizer.fisch.lu/index.php"));
-		}
-		catch(Exception ex)
-		{
+			isLaunched = lu.fisch.utils.Desktop.browse(new URI("http://help.structorizer.fisch.lu/index.php"));
+		} catch (URISyntaxException ex) {
 			ex.printStackTrace();
-			// Usually we won't get here - in case of missing network access the browser will
-			// show a message
-			JOptionPane.showMessageDialog(null, ex.getMessage(),
-					"URL Error", JOptionPane.ERROR_MESSAGE);
 		}
-		
+		if (!isLaunched)
+		{
+			String message = Menu.msgBrowseFailed.getText().replace("%", help);
+			JOptionPane.showMessageDialog(null,
+			message,
+			Menu.msgTitleURLError.getText(),
+			JOptionPane.ERROR_MESSAGE);
+		}
+		// END KGU#250 2016-09-17
 	}
 	// END KGU#208 2016-07-22
 	
@@ -3212,21 +3269,49 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// KGU#35 2015-07-29: Bob's code adopted with slight modification (Homepage URL put into a variable) 
 		String home = "http://structorizer.fisch.lu";
 		try {
-			JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\">Goto <a href=\"" + home + "\">" + home + "</a> to look for updates<br>and news about Structorizer.</font></html>");
+			// START KGU#247 2016-09-17: Issue #243/#245 Translation support for update window content
+			//JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\">Goto <a href=\"" + home + "\">" + home + "</a> to look for updates<br>and news about Structorizer.</font></html>");
+			JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\">" +
+					Menu.msgGotoHomepage.getText().replace("%", "<a href=\"" + home + "\">" + home + "</a>") +
+					"</font></html>");
+			// END KGU#247 2016-09-17
 			ep.addHyperlinkListener(new HyperlinkListener()
 			{
 				@Override
-				public void hyperlinkUpdate(HyperlinkEvent e)
+				public void hyperlinkUpdate(HyperlinkEvent evt)
 				{
-					if (e.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED))
+					if (evt.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED))
 					{
+						// START KGU#250 2016-09-17: Issue #245 (defective Linux integration workaround)
+						//try {
+						//	Desktop.getDesktop().browse(evt.getURL().toURI());
+						//}
+						//catch(Exception ex)
+						//{
+						//	ex.printStackTrace();
+						//}
+						String errorMessage = null;
 						try {
-							Desktop.getDesktop().browse(e.getURL().toURI());
+							if (!lu.fisch.utils.Desktop.browse(evt.getURL().toURI()))
+							{
+								errorMessage = Menu.msgBrowseFailed.getText().replace("%", evt.getURL().toString());
+							};
 						}
-						catch(Exception ee)
+						catch(Exception ex)
 						{
-							ee.printStackTrace();
+							ex.printStackTrace();
+							errorMessage = ex.getLocalizedMessage();
+							if (errorMessage == null) errorMessage = ex.getMessage();
 						}
+						if (errorMessage != null)
+						{
+							JOptionPane.showMessageDialog(null,
+									errorMessage,
+									Menu.msgTitleURLError.getText(),
+									JOptionPane.ERROR_MESSAGE);
+
+						}
+						// END KGU#250 2016-09-17
 					}
 				}
 			});
@@ -3418,10 +3503,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						   Math.round(p.y+(getVisibleRect().height-analyserPreferences.getHeight())/2+this.getVisibleRect().y));
 
 		// set fields
-		// START KGU#239 2016-08-12: Code redesign
-		for (int i = 0; i < analyserPreferences.checkboxes.length; i++)
+		// START KGU#239 2016-08-12: Code redesign (2016-09-22: index mapping modified)
+		for (int i = 1; i < analyserPreferences.checkboxes.length; i++)
 		{
-			analyserPreferences.checkboxes[i].setSelected(Root.check(i+1));
+			analyserPreferences.checkboxes[i].setSelected(Root.check(i));
 		}
 		// END KGU#239 2016-08-12
 
@@ -3429,10 +3514,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		analyserPreferences.setVisible(true);
 
 		// get fields
-		// START KGU#239 2016-08-12: Code redesign
-		for (int i = 0; i < analyserPreferences.checkboxes.length; i++)
+		// START KGU#239 2016-08-12: Code redesign (2016-09-22: index mapping modified)
+		for (int i = 1; i < analyserPreferences.checkboxes.length; i++)
 		{
-			Root.setCheck(i+1, analyserPreferences.checkboxes[i].isSelected());
+			Root.setCheck(i, analyserPreferences.checkboxes[i].isSelected());
 		}
 		// END KGU#239 2016-08-12
 
@@ -3630,6 +3715,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//root.hasChanged=true;
 		root.setChanged();
 		// END KGU#137 2016-01-11
+		// START KGU#253 2016-09-22: Enh. #249 - (un)check parameter list
+		analyse();
+		// END KGU#253 2016-09-22
 		redraw();
 	}
 
@@ -3646,6 +3734,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//root.hasChanged=true;
 		root.setChanged();
 		// END KGU#137 2016-01-11
+		// START KGU#253 2016-09-22: Enh. #249 - (un)check parameter list
+		analyse();
+		// END KGU#253 2016-09-22
 		redraw();
 	}
 
@@ -3782,27 +3873,44 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (_elementType.equals("For"))
 			{
 				InputBoxFor ipbFor = new InputBoxFor(NSDControl.getFrame(), true);
-				if (!_isInsertion)
+				// START #61 2016-09-24: After partial redesign some things work differently, now
+				//if (!_isInsertion)
+				//{
+				if (_isInsertion)
 				{
-					ipbFor.txtVariable.setText(_data.forParts.get(0));
-					ipbFor.txtStartVal.setText(_data.forParts.get(1));
-					ipbFor.txtEndVal.setText(_data.forParts.get(2));
-					ipbFor.txtIncr.setText(_data.forParts.get(3));
-					// START KGU#61 2016-03-21: Enh. #84 - Consider FOR-IN loops
-					//ipbFor.chkTextInput.setSelected(!_data.forPartsConsistent);
-					//ipbFor.enableTextFields(!_data.forPartsConsistent);
-					if (_data.forParts.count() > 4)
+					// Split the default text to find out what style it is
+					String[] forFractions = For.splitForClause(_data.text.getLongString());
+					for (int i = 0; i < 4; i++)
 					{
-						ipbFor.forInValueList = _data.forParts.get(4);
+						_data.forParts.add(forFractions[i]);
 					}
-					boolean textMode = _data.forLoopStyle != For.ForLoopStyle.COUNTER;
-					ipbFor.chkTextInput.setSelected(textMode);
-					ipbFor.enableTextFields(textMode);
-					// END KGU#61 2016-03-21
+					if (forFractions[5] != null)
+					{
+						_data.forParts.add(forFractions[5]);
+					}
 				}
-				else {
-					ipbFor.enableTextFields(false);
+				// END KGU#61 2016-09-24
+				ipbFor.txtVariable.setText(_data.forParts.get(0));
+				ipbFor.txtStartVal.setText(_data.forParts.get(1));
+				ipbFor.txtEndVal.setText(_data.forParts.get(2));
+				ipbFor.txtIncr.setText(_data.forParts.get(3));
+				// START KGU#61 2016-03-21: Enh. #84 - Consider FOR-IN loops
+				//ipbFor.chkTextInput.setSelected(!_data.forPartsConsistent);
+				//ipbFor.enableTextFields(!_data.forPartsConsistent);
+				if (_data.forParts.count() > 4)
+				{
+					ipbFor.txtValueList.setText(ipbFor.forInValueList = _data.forParts.get(4));
+					ipbFor.txtVariableIn.setText(_data.forParts.get(0));
 				}
+				boolean textMode = _data.forLoopStyle == For.ForLoopStyle.FREETEXT;
+				ipbFor.chkTextInput.setSelected(textMode);
+				ipbFor.enableTextFields(textMode);
+				ipbFor.setIsTraversingLoop(_data.forLoopStyle == For.ForLoopStyle.TRAVERSAL);
+				// END KGU#61 2016-03-21
+//				}
+//				else {
+//					ipbFor.enableTextFields(false);
+//				}
 				inputbox = ipbFor;
 			}
 			else
@@ -3825,12 +3933,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			inputbox.txtText.setText(_data.text.getText());
 			inputbox.txtComment.setText(_data.comment.getText());
 			// START KGU#43 2015-10-12: Breakpoint support
-			inputbox.chkBreakpoint.setEnabled(getSelected() != root);
+			boolean notRoot = getSelected() != root;
+			inputbox.chkBreakpoint.setVisible(notRoot);
 			inputbox.chkBreakpoint.setSelected(_data.breakpoint);
 			// END KGU#43 2015-10-12
 			// START KGU#213 2016-08-01: Enh. #215
-			inputbox.lblBreakTrigger.setEnabled(getSelected() != root);
-			inputbox.lblBreakTrigger.setText(inputbox.lblBreakText.getText().replace("%", Integer.toString(_data.breakTriggerCount)));			
+			// START KGU#246 2016-09-13: Bugfix #241)
+			//inputbox.lblBreakTrigger.setText(inputbox.lblBreakText.getText().replace("%", Integer.toString(_data.breakTriggerCount)));
+			inputbox.lblBreakTriggerText.setVisible(notRoot);
+			inputbox.lblBreakTrigger.setText(Integer.toString(_data.breakTriggerCount));
+			// END KGU#246 2016-09-13
 			// END KGU#213 2016-08-01
 
 			inputbox.OK=false;
@@ -3859,7 +3971,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//	//if (ok) System.out.println("Text will get focus");
 			//}
 			// END KGU KGU#91 2015-12-04
-			// START KGU#61 2016-03-21: Give InputBox an opportunity to check consistency
+			// START KGU#61 2016-03-21: Give InputBox an opportunity to check and ensure consistency
 			inputbox.checkConsistency();
 			// END KGU#61 2016-03-21
 			inputbox.setVisible(true);
@@ -3870,7 +3982,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#43 2015-10-12: Breakpoint support
 			_data.breakpoint = inputbox.chkBreakpoint.isSelected();
 			// END KGU#43 2015-10-12
-			// START KGU#213 2016-08-01: Enh. #215 (temprarily disabled again)
+			// START KGU#213 2016-08-01: Enh. #215 (temporarily disabled again)
 //			try{
 //				_data.breakTriggerCount = Integer.parseUnsignedInt(inputbox.txtBreakTrigger.getText());
 //			}
@@ -3889,15 +4001,27 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				_data.forParts.add(((InputBoxFor)inputbox).txtIncr.getText());
 				// START KGU#61 2016-03-21: Enh. #84 - consider FOR-IN loops
 				//_data.forPartsConsistent = !((InputBoxFor)inputbox).chkTextInput.isSelected();
-				if (!((InputBoxFor)inputbox).chkTextInput.isSelected())
+				// FIXME!
+				//if (!((InputBoxFor)inputbox).chkTextInput.isSelected())
+				//{
+				//	_data.forLoopStyle = For.ForLoopStyle.COUNTER;
+				//}
+				//else if (((InputBoxFor)inputbox).forInValueList != null)
+				//{
+				//	_data.forLoopStyle = For.ForLoopStyle.TRAVERSAL;
+				//	_data.forParts.add(((InputBoxFor)inputbox).forInValueList);				}
+				//else
+				//{
+				//	_data.forLoopStyle = For.ForLoopStyle.FREETEXT;
+				//}
+				_data.forLoopStyle = ((InputBoxFor)inputbox).identifyForLoopStyle();
+				if (_data.forLoopStyle == For.ForLoopStyle.TRAVERSAL)
 				{
-					_data.forLoopStyle = For.ForLoopStyle.COUNTER;
+					// (InputBoxFor)inputbox).txtVariableIn.getText() should equal (InputBoxFor)inputbox).txtVariable.getText(),
+					// such that nothing must be done about it here
+					_data.forParts.add(((InputBoxFor)inputbox).forInValueList);
 				}
-				else if (((InputBoxFor)inputbox).forInValueList != null)
-				{
-					_data.forLoopStyle = For.ForLoopStyle.TRAVERSAL;
-					_data.forParts.add(((InputBoxFor)inputbox).forInValueList);				}
-				else
+				if (((InputBoxFor)inputbox).chkTextInput.isSelected() && !((InputBoxFor)inputbox).isLoopDataConsistent())
 				{
 					_data.forLoopStyle = For.ForLoopStyle.FREETEXT;
 				}

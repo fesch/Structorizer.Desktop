@@ -827,25 +827,39 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public LangTextHolder lbAcknowledge;
     // START KGU#197 2016-05-05
     // START KGU#197 2016-07-27
-    public LangTextHolder msgNoSubroutine = 
+    public final LangTextHolder msgNoSubroutine = 
     		new LangTextHolder("A subroutine diagram %0 (%1 parameters) could not be found!%2Consider starting the Arranger and place needed subroutine diagrams there first.");
-    public LangTextHolder msgInvalidExpr =
+    public final LangTextHolder msgInvalidExpr =
     		new LangTextHolder("<%1> is not a correct or existing expression.");
-    public LangTextHolder msgIllFunction =
+    // START KGU#249 2016-09-17: Bugfix #246 + Issue #243
+    public final LangTextHolder msgInvalidBool =
+    		new LangTextHolder("<%1> is not a valid Boolean expression.");
+    // END KGU#249 2016-09-17
+   public final LangTextHolder msgIllFunction =
     		new LangTextHolder("<%1> is not a correct function!");
-    public LangTextHolder msgManualBreak =
+    public final LangTextHolder msgManualBreak =
     		new LangTextHolder("Manual Break!");
-    public LangTextHolder msgIllegalLeave =
+    public final LangTextHolder msgIllegalLeave =
     		new LangTextHolder("Illegal leave argument: %1");
-    public LangTextHolder msgWrongExit =
+    public final LangTextHolder msgWrongExit =
     		new LangTextHolder("Wrong exit value: %1");
-    public LangTextHolder msgExitCode =
+    public final LangTextHolder msgExitCode =
     		new LangTextHolder("Program exited with code %1!");
-    public LangTextHolder msgIllegalJump =
+    public final LangTextHolder msgIllegalJump =
     		new LangTextHolder("Illegal content of a Jump (i.e. exit) instruction: <%1>!");
-    public LangTextHolder msgTooManyLevels =
+    public final LangTextHolder msgTooManyLevels =
     		new LangTextHolder("Too many levels to leave (actual depth: %1 / specified: %2)!");
-    // END KGU# 2016-07-27
+    // END KGU#197 2016-07-27
+    // START KGU#247 2016-09-17: Issue #243
+    public final LangTextHolder msgJumpOutParallel =
+    		new LangTextHolder("Illegal attempt to jump out of a parallel thread:%Thread killed!");
+    public final LangTextHolder msgTitleError =
+    		new LangTextHolder("Error");
+    public final LangTextHolder msgTitleParallel =
+    		new LangTextHolder("Parallel Execution Problem");
+    public final LangTextHolder msgTitleQuestion =
+    		new LangTextHolder("Question");
+    // END KGU#247 2016-09-17
     
     // START KGU#68 2015-11-06: Register variable value editing events
     private Object[] varUpdates = null;
