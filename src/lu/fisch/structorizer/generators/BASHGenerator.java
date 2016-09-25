@@ -175,7 +175,7 @@ public class BASHGenerator extends Generator {
 		return false;
 	}
 	// END KGU#78 2015-12-18
-	
+
 	// START KGU#241 2016-09-01: Issue #234: names of certain occurring functions detected by checkElementInformation()
 	private StringList occurringFunctions = new StringList();
 	// END KGU#241 2015-09-01
@@ -267,14 +267,14 @@ public class BASHGenerator extends Generator {
 		// We must of course identify variable names and prefix them with $ unless being an lvalue
 		int posAsgnOpr = tokens.indexOf("<-");
 		// START KGU#161 2016-03-24: Bugfix #135/#92 - variables in read instructions must not be prefixed!
-		if (tokens.contains(D7Parser.input))
+		if (tokens.contains(D7Parser.keywordMap.get("input")))
 		{
 			// Hide the text from the replacement, except for occurrences as index
 			posAsgnOpr = tokens.count();
 		}
 		// END KGU#161 2016-03-24
 		// START KGU#61 2016-03-21: Enh. #84/#135
-		if (posAsgnOpr < 0 && !D7Parser.postForIn.trim().isEmpty()) posAsgnOpr = tokens.indexOf(D7Parser.postForIn);
+		if (posAsgnOpr < 0 && !D7Parser.keywordMap.get("postForIn").trim().isEmpty()) posAsgnOpr = tokens.indexOf(D7Parser.keywordMap.get("postForIn"));
 		// END KGU#61 2016-03-21
 		// If there is an array variable (which doesn't exist in shell) left of the assignment symbol, check the index 
 		int posBracket1 = tokens.indexOf("[");
@@ -457,12 +457,13 @@ public class BASHGenerator extends Generator {
 	@Override
 	protected String transformOutput(String _interm)
 	{
-		if (_interm.matches("^" + D7Parser.output.trim() + "[ ](.*?)"))
+		String output = D7Parser.keywordMap.get("output").trim();
+		if (_interm.matches("^" + output + "[ ](.*?)"))
 		{
 			StringList expressions = 
-					Element.splitExpressionList(_interm.substring(D7Parser.output.trim().length()), ",");
+					Element.splitExpressionList(_interm.substring(output.length()), ",");
 			expressions.removeAll(" ");
-			_interm = D7Parser.output.trim() + " " + expressions.getLongString();
+			_interm = output + " " + expressions.getLongString();
 		}
 		
 		String transformed = super.transformOutput(_interm);
@@ -489,17 +490,20 @@ public class BASHGenerator extends Generator {
 			// END KGU 2014-11-06
 
 			// START KGU#78 2015-12-19: Enh. #23: We only have to ensure the correct keywords
-			if (intermed.matches("^" + Matcher.quoteReplacement(D7Parser.preLeave.trim()) + "(\\W.*|$)"))
+			String preLeave = D7Parser.keywordMap.getOrDefault("preLeave","").trim();
+			String preReturn = D7Parser.keywordMap.getOrDefault("preReturn","").trim();
+			String preExit = D7Parser.keywordMap.getOrDefault("preExit","").trim();
+			if (intermed.matches("^" + Matcher.quoteReplacement(preLeave) + "(\\W.*|$)"))
 			{
-				intermed = "break " + intermed.substring(D7Parser.preLeave.trim().length());
+				intermed = "break " + intermed.substring(preLeave.length());
 			}
-			else if (intermed.matches("^" + Matcher.quoteReplacement(D7Parser.preReturn.trim()) + "(\\W.*|$)"))
+			else if (intermed.matches("^" + Matcher.quoteReplacement(preReturn) + "(\\W.*|$)"))
 			{
-				intermed = "return " + intermed.substring(D7Parser.preReturn.trim().length());
+				intermed = "return " + intermed.substring(preReturn.length());
 			}
-			else if (intermed.matches("^" + Matcher.quoteReplacement(D7Parser.preExit.trim()) + "(\\W.*|$)"))
+			else if (intermed.matches("^" + Matcher.quoteReplacement(preExit) + "(\\W.*|$)"))
 			{
-				intermed = "exit " + intermed.substring(D7Parser.preExit.trim().length());
+				intermed = "exit " + intermed.substring(preExit.length());
 			} 
 			// END KGU#78 2015-12-19
 			
@@ -837,20 +841,20 @@ public class BASHGenerator extends Generator {
 				boolean builtInAdded = false;
 				if (occurringFunctions.contains("chr"))
 				{
-					code.add(indent);
-					insertComment("chr() - converts decimal value to its ASCII character representation", indent);
-					code.add(indent + "chr() {");
-					code.add(indent + this.getIndent() + "printf \\\\$(printf '%03o' $1)");
-					code.add(indent + "}");
+			code.add(indent);
+			insertComment("chr() - converts decimal value to its ASCII character representation", indent);
+			code.add(indent + "chr() {");
+			code.add(indent + this.getIndent() + "printf \\\\$(printf '%03o' $1)");
+			code.add(indent + "}");
 					builtInAdded = true;
 				}
 				if (occurringFunctions.contains("ord"))
 				{
 					code.add(indent);
-					insertComment("ord() - converts ASCII character to its decimal value", indent);
-					code.add(indent + "ord() {");
-					code.add(indent + this.getIndent() + "printf '%d' \"'$1\"");
-					code.add(indent + "}");
+			insertComment("ord() - converts ASCII character to its decimal value", indent);
+			code.add(indent + "ord() {");
+			code.add(indent + this.getIndent() + "printf '%d' \"'$1\"");
+			code.add(indent + "}");
 					builtInAdded = true;
 				}
 				if (builtInAdded) code.add(indent);

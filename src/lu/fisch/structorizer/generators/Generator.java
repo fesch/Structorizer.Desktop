@@ -54,6 +54,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016-08-10      Issue #227: information gathering pass introduced to control optional
  *                                      code expressions
  *                                      Bugfix #228: Unnecessary error message exporting recursive routines
+ *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.kewordMap refactoring done
  *
  ******************************************************************************************************
  *
@@ -434,11 +435,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			//transformed = transformInput(transformed);
 			//// output instruction transformation
 			//transformed = transformOutput(transformed);
-			if (transformed.indexOf(D7Parser.input.trim()) >= 0)
+			if (transformed.indexOf(D7Parser.keywordMap.get("input").trim()) >= 0)
 			{
 				transformed = transformInput(transformed);
 			}
-			if (transformed.indexOf(D7Parser.output.trim()) >= 0)
+			if (transformed.indexOf(D7Parser.keywordMap.get("output").trim()) >= 0)
 			{
 				transformed = transformOutput(transformed);
 			}
@@ -498,7 +499,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	{
 		String subst = getInputReplacer();
 		// Between the input keyword and the variable name there MUST be some blank...
-		String keyword = D7Parser.input.trim();
+		String keyword = D7Parser.keywordMap.get("input").trim();
 		if (!keyword.isEmpty() && _interm.startsWith(keyword))
 		{
 			String matcher = Matcher.quoteReplacement(keyword);
@@ -529,7 +530,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	{
 		String subst = getOutputReplacer();
 		// Between the input keyword and the variable name there MUST be some blank...
-		String keyword = D7Parser.output.trim();
+		String keyword = D7Parser.keywordMap.get("output").trim();
 		if (!keyword.isEmpty() && _interm.startsWith(keyword))
 		{
 			String matcher = Matcher.quoteReplacement(keyword);
@@ -586,9 +587,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected boolean mapJumps(Subqueue _squeue)
 	{
 		boolean surelyReturns = false;
-		String patternLeave = getKeywordPattern(D7Parser.preLeave) + "([\\W].*|$)";
-		String patternReturn = getKeywordPattern(D7Parser.preReturn) + "([\\W].*|$)";
-		String patternExit = getKeywordPattern(D7Parser.preExit) + "([\\W].*|$)";
+		String preLeave  = D7Parser.keywordMap.get("preLeave");
+		String preReturn = D7Parser.keywordMap.get("preReturn");
+		String preExit   = D7Parser.keywordMap.get("preExit");
+		String patternLeave = getKeywordPattern(preLeave) + "([\\W].*|$)";
+		String patternReturn = getKeywordPattern(preReturn) + "([\\W].*|$)";
+		String patternExit = getKeywordPattern(preExit) + "([\\W].*|$)";
 		Iterator<Element> iter = _squeue.getIterator();
 		while (iter.hasNext() && !surelyReturns)
 		{
@@ -600,7 +604,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				String jumpText = elem.getText().getLongString().trim();
 				if (jumpText.matches(patternReturn))
 				{
-					boolean hasResult = !jumpText.substring(D7Parser.preReturn.length()).trim().isEmpty();
+					boolean hasResult = !jumpText.substring(preReturn.length()).trim().isEmpty();
 					if (hasResult) this.returns = true;
 					// Further investigation would be done in vain - the remaining sequence is redundant
 					return hasResult;
@@ -621,7 +625,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				{
 					levelsUp = 1;
 					try {
-						levelsUp = Integer.parseInt(jumpText.substring(D7Parser.preLeave.length()).trim());
+						levelsUp = Integer.parseInt(jumpText.substring(D7Parser.keywordMap.get("preLeave").length()).trim());
 					}
 					catch (NumberFormatException ex)
 					{
@@ -706,7 +710,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 					String line = text.get(i);
 					if (line.matches(patternReturn))
 					{
-						boolean hasResult = !line.substring(D7Parser.preReturn.length()).trim().isEmpty();
+						boolean hasResult = !line.substring(D7Parser.keywordMap.get("preReturn").length()).trim().isEmpty();
 						if (hasResult)
 						{
 							this.returns = true;

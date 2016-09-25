@@ -4,7 +4,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.25-01 (2016.09.25)
+Current development version: 3.25-02 (2016.09.25)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
 - 01: Issue #213: Selected state of FOR transmutation result now visible <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
@@ -23,6 +23,7 @@ Current development version: 3.25-01 (2016.09.25)
 - 01: Saved diagrams now prepared for #253 (keyword substitution on loading) <2>
 - 01: Bugfix #254: CASE execution failed when parser keywords were used <2>
 - 01: Enh. #255: Analyser now names the assumed loop variables if supernumerous <2>
+- 02: Enh. #253 preparations (refactoring of parser preferences) <2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2

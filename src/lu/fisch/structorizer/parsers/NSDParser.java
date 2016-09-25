@@ -40,6 +40,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): Enhancement towards FOR-IN loops
  *      Kay Gürtzig     2016.04.14      Enh. #158 (KGU#177): method parse() cloned
  *      Kay Gürtzig     2016.09.24      Enh. #250 - Robustness of FOR loop reconstruction improved
+ *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done. 
  *
  ******************************************************************************************************
  *
@@ -280,7 +281,7 @@ public class NSDParser extends DefaultHandler {
 			{
 				// Now we try to reconstruct the value list.
 				// For this we use the post-FOR-IN separator that was valid on saving the file 
-				String currentInSep = D7Parser.postForIn;
+				String currentInSep = D7Parser.keywordMap.get("postForIn");
 				String inSep = null;
 				if (attributes.getIndex("insep")!=-1)
 				{
@@ -289,7 +290,7 @@ public class NSDParser extends DefaultHandler {
 				try {
 					if (inSep != null && !inSep.isEmpty())
 					{
-						D7Parser.postForIn = inSep;
+						D7Parser.keywordMap.put("postForIn", inSep);
 					}
 					ele.setValueList(ele.splitForClause()[5]);
 				}
@@ -297,7 +298,7 @@ public class NSDParser extends DefaultHandler {
 					System.err.println("Error on reconstructing FOR-IN loop: " + ex.getLocalizedMessage());
 				}
 				finally {
-					D7Parser.postForIn = currentInSep;
+					D7Parser.keywordMap.put("postForIn", currentInSep);
 				}
 			}
 			// END KGU#61 2016-03-21

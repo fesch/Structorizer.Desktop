@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.generators;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -40,7 +41,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2015.12.31      Bugfix #82 (KGU#118) Inconsistent FOR loops used to obstruct saving
  *      Kay Gürtzig     2016.01.08      Bugfix #99 (KGU#134) mends mis-spelling due to fix #82
  *      Kay Gürtzig     2016.03.21-22   Enh. #84 (KGU#61) mechanisms to save FOR-IN loops adequately
- *      Kay Gürtzig     2016.09.25      Enh. #253: Root element now conveys parser preferences
+ *      Kay Gürtzig     2016.09.25      Enh. #253: Root element now conveys parser preferences,
+ *                                      D7Parser.keywordMap refactoring done (going to be superfluous!)
  *
  ******************************************************************************************************
  *
@@ -239,7 +241,8 @@ public class XmlGenerator extends Generator {
     			//"\" reliable=\"" + BString.encodeToHtml(_for.checkConsistency() ? "true" : "false") +
     			"\" style=\"" + BString.encodeToHtml(_for.style.toString()) +
     			// Instead of redundantly storing the value list twice, we just save the ForIn separator...
-    			(_for.isForInLoop() ? ("\" insep=\"" + BString.encodeToHtml(D7Parser.postForIn)) : "") +
+    			// FIXME: No longer needed when enh. #253 is ready!
+    			(_for.isForInLoop() ? ("\" insep=\"" + BString.encodeToHtml(D7Parser.keywordMap.get("postForIn"))) : "") +
     			// END KGU#61 2016-03-21
     			// END KGU#3 2015-11-08
     			"\" color=\"" + _for.getHexColor()+"\">");

@@ -59,7 +59,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.03.23      Enh. #84: Support for FOREACH loops (KGU#61)
  *      Kay Gürtzig     2016-04-01      Enh. #144: Care for the new export option suppressing content conversion
  *      Kay Gürtzig     2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
- *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
+ *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done. 
  *
  ******************************************************************************************************
  *
@@ -631,6 +632,9 @@ public class PerlGenerator extends Generator {
 			boolean isEmpty = true;
 			
 			StringList lines = _jump.getText();
+			String preReturn = D7Parser.keywordMap.get("preReturn");
+			String preExit   = D7Parser.keywordMap.get("preExit");
+			String preLeave  = D7Parser.keywordMap.get("preLeave");
 			for (int i = 0; isEmpty && i < lines.count(); i++) {
 				String line = transform(lines.get(i)).trim();
 				if (!line.isEmpty())
@@ -639,13 +643,13 @@ public class PerlGenerator extends Generator {
 				}
 				// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
 				//code.add(_indent + line + ";");
-				if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
+				if (line.matches(Matcher.quoteReplacement(preReturn)+"([\\W].*|$)"))
 				{
-					code.add(_indent + "return " + line.substring(D7Parser.preReturn.length()).trim() + ";");
+					code.add(_indent + "return " + line.substring(preReturn.length()).trim() + ";");
 				}
-				else if (line.matches(Matcher.quoteReplacement(D7Parser.preExit)+"([\\W].*|$)"))
+				else if (line.matches(Matcher.quoteReplacement(preExit)+"([\\W].*|$)"))
 				{
-					code.add(_indent + "exit(" + line.substring(D7Parser.preExit.length()).trim() + ");");
+					code.add(_indent + "exit(" + line.substring(preExit.length()).trim() + ");");
 				}
 				// Has it already been matched with a loop? Then syntax must have been okay...
 				else if (this.jumpTable.containsKey(_jump))
@@ -660,7 +664,7 @@ public class PerlGenerator extends Generator {
 					}
 					code.add(_indent + "goto " + label + ";");
 				}
-				else if (line.matches(Matcher.quoteReplacement(D7Parser.preLeave)+"([\\W].*|$)"))
+				else if (line.matches(Matcher.quoteReplacement(preLeave)+"([\\W].*|$)"))
 				{
 					// Strange case: neither matched nor rejected - how can this happen?
 					// Try with an ordinary break instruction and a funny comment

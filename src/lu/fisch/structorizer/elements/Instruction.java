@@ -47,6 +47,7 @@ package lu.fisch.structorizer.elements;
  *                                      new copy constructor to support conversion (KGU#199)
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported
  *      Kay Gürtzig     2016.08.10      Issue #227: New classification methods for Input/Output
+ *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactored
  *
  ******************************************************************************************************
  *
@@ -363,9 +364,9 @@ public class Instruction extends Element {
 	public static boolean isJump(String line)
 	{
     	StringList tokens = Element.splitLexically(line, true);
-		return (tokens.indexOf(D7Parser.preReturn, !D7Parser.ignoreCase) == 0 ||
-				tokens.indexOf(D7Parser.preLeave, !D7Parser.ignoreCase) == 0 ||
-				tokens.indexOf(D7Parser.preExit, !D7Parser.ignoreCase) == 0
+		return (tokens.indexOf(D7Parser.keywordMap.get("preReturn"), !D7Parser.ignoreCase) == 0 ||
+				tokens.indexOf(D7Parser.keywordMap.get("preLeave"), !D7Parser.ignoreCase) == 0 ||
+				tokens.indexOf(D7Parser.keywordMap.get("preExit"), !D7Parser.ignoreCase) == 0
 				);
 	}
 	public boolean isJump()
@@ -406,7 +407,7 @@ public class Instruction extends Element {
 	public static boolean isOutput(String line)
 	{
     	StringList tokens = Element.splitLexically(line, true);
-		return (tokens.indexOf(D7Parser.output, !D7Parser.ignoreCase) == 0);
+		return (tokens.indexOf(D7Parser.keywordMap.get("output"), !D7Parser.ignoreCase) == 0);
 	}
 	public boolean isOutput()
 	{
@@ -423,7 +424,7 @@ public class Instruction extends Element {
 	public static boolean isInput(String line)
 	{
     	StringList tokens = Element.splitLexically(line, true);
-		return (tokens.indexOf(D7Parser.input, !D7Parser.ignoreCase) == 0);
+		return (tokens.indexOf(D7Parser.keywordMap.get("input"), !D7Parser.ignoreCase) == 0);
 	}
 	public boolean isInput()
 	{
@@ -440,7 +441,7 @@ public class Instruction extends Element {
 	public static boolean isEmptyInput(String line)
 	{
     	StringList tokens = Element.splitLexically(line, true);
-		return (tokens.count() == 1 && tokens.indexOf(D7Parser.input, !D7Parser.ignoreCase) == 0);
+		return (tokens.count() == 1 && tokens.indexOf(D7Parser.keywordMap.get("input"), !D7Parser.ignoreCase) == 0);
 	}
 	public boolean isEmptyInput()
 	{

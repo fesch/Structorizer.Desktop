@@ -67,6 +67,7 @@ package lu.fisch.structorizer.elements;
  *                                      Enh. #128: New mode E_COMMENTSPLUSTEXT
  *      Kay Gürtzig     2016.08.02      Enh. #215: Infrastructure for conditional breakpoints added.
  *      Kay Gürtzig     2016.09.21      Issue #248: API of setBreakTriggerCount() modified to prevent negative values
+ *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactored
  *
  ******************************************************************************************************
  *
@@ -170,7 +171,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.25-01";
+	public static String E_VERSION = "3.25-02";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -2016,13 +2017,13 @@ public abstract class Element {
 
 				// These markers might have changed by configuration, so don't cache them
 				StringList ioSigns = new StringList();
-				ioSigns.add(D7Parser.input.trim());
-				ioSigns.add(D7Parser.output.trim());
+				ioSigns.add(D7Parser.keywordMap.get("input").trim());
+				ioSigns.add(D7Parser.keywordMap.get("output").trim());
 				// START KGU#116 2015-12-23: Enh. #75 - highlight jump keywords
 				StringList jumpSigns = new StringList();
-				jumpSigns.add(D7Parser.preLeave.trim());
-				jumpSigns.add(D7Parser.preReturn.trim());
-				jumpSigns.add(D7Parser.preExit.trim());
+				jumpSigns.add(D7Parser.keywordMap.get("preLeave").trim());
+				jumpSigns.add(D7Parser.keywordMap.get("preReturn").trim());
+				jumpSigns.add(D7Parser.keywordMap.get("preExit").trim());
 				// END KGU#116 2015-12-23
 				
 				for(int i=0; i < parts.count(); i++)
@@ -2645,18 +2646,18 @@ public abstract class Element {
     {
     	// Collect redundant placemarkers to be deleted from the text
         StringList redundantMarkers = new StringList();
-        redundantMarkers.addByLength(D7Parser.preAlt);
-        redundantMarkers.addByLength(D7Parser.preCase);
+        redundantMarkers.addByLength(D7Parser.keywordMap.get("preAlt"));
+        redundantMarkers.addByLength(D7Parser.keywordMap.get("preCase"));
         //redundantMarkers.addByLength(D7Parser.preFor);	// will be handled separately
-        redundantMarkers.addByLength(D7Parser.preWhile);
-        redundantMarkers.addByLength(D7Parser.preRepeat);
+        redundantMarkers.addByLength(D7Parser.keywordMap.get("preWhile"));
+        redundantMarkers.addByLength(D7Parser.keywordMap.get("preRepeat"));
 
-        redundantMarkers.addByLength(D7Parser.postAlt);
-        redundantMarkers.addByLength(D7Parser.postCase);
+        redundantMarkers.addByLength(D7Parser.keywordMap.get("postAlt"));
+        redundantMarkers.addByLength(D7Parser.keywordMap.get("postCase"));
         //redundantMarkers.addByLength(D7Parser.postFor);	// will be handled separately
         //redundantMarkers.addByLength(D7Parser.stepFor);	// will be handled separately
-        redundantMarkers.addByLength(D7Parser.postWhile);
-        redundantMarkers.addByLength(D7Parser.postRepeat);
+        redundantMarkers.addByLength(D7Parser.keywordMap.get("postWhile"));
+        redundantMarkers.addByLength(D7Parser.keywordMap.get("postRepeat"));
         
         for (int i = 0; i < redundantMarkers.count(); i++)
         {

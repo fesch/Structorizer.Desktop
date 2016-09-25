@@ -50,7 +50,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig                2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61) 
  *      Kay Gürtzig                2016.04.04      transforTokens() disabled due to missing difference to super 
  *      Kay Gürtzig                2016.07.20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
- *      Kay Gürtzig                2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
+ *      Kay Gürtzig                2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig                2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
  *
  ******************************************************************************************************
  *
@@ -251,12 +252,13 @@ public class JavaGenerator extends CGenerator
 	protected String transform(String _input)
 	{
 		// START KGU#101 2015-12-12: Enh. #54 - support lists of expressions
-		if (_input.matches("^" + getKeywordPattern(D7Parser.output.trim()) + "[ ](.*?)"))
+		String outputKey = D7Parser.keywordMap.get("output").trim(); 
+		if (_input.matches("^" + getKeywordPattern(outputKey) + "[ ](.*?)"))
 		{
 			StringList expressions = 
-					Element.splitExpressionList(_input.substring(D7Parser.output.trim().length()), ",");
+					Element.splitExpressionList(_input.substring(outputKey.length()), ",");
 			// Some of the expressions might be sums, so better put parentheses around them
-			_input = D7Parser.output.trim() + " (" + expressions.getText().replace("\n", ") + (") + ")";
+			_input = outputKey + " (" + expressions.getText().replace("\n", ") + (") + ")";
 		}
 		// END KGU#101 2015-12-12
 

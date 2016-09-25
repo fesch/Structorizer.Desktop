@@ -38,6 +38,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2015.11.01      KGU#18/KGU#23 Transformation decomposed
  *      Kay Gürtzig     2015.12.18/19   KGU#2/KGU#47/KGU#78 Fixes for Call, Jump, and Parallel elements
  *      Kay Gürtzig     2016.07.20      Enh. #160 adapted (option to integrate subroutines = KGU#178)
+ *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done.
  *
  ******************************************************************************************************
  *
@@ -263,19 +264,22 @@ public class TexGenerator extends Generator {
 		}
 		else
 		// END KGU#78 2015-12-19
+		{
 			// FIXME (KGU 2015-12-19): This should not be split into several blocks
+			String preReturn = D7Parser.keywordMap.get("preReturn");
 			for(int i=0; i<_jump.getText().count(); i++)
 			{
 				// START KGU#78 2015-12-19: Enh. #23: We now distinguish exit and return boxes
 				//code.add(_indent+"\\assign{\\("+transform(_jump.getText().get(i))+"\\)}");
 				String command = "exit";	// Just the default
-				if (_indent.startsWith(D7Parser.preReturn))
+				if (_indent.startsWith(preReturn))
 				{
 					command = "return";
 				}
 				code.add(_indent+ "\\" + command + "{\\("+transform(_jump.getText().get(i))+"\\)}");
 				// END KGU#78 2015-12-19
 			}
+		}
 	}
 	
 	// START KGU#47 2015-12-19: Hadn't been generated at all - Trouble is: structure must not be recursive!

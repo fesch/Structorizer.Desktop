@@ -89,6 +89,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.17      Issue #245: Message box for failing browser call in updateNSD() added.
  *      Kay Gürtzig     2016.09.21      Issue #248: Workaround for legacy Java versions (< 1.8) in editBreakTrigger()
  *      Kay Gürtzig     2016.09.24      Enh. #250: Several modifications around showInputBox()
+ *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done.
  *
  ******************************************************************************************************
  *
@@ -2214,12 +2215,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#229 2016-09-09: Take care of the configured prefix and postfix
 		//While whileLoop = new While(forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue());
 		String prefix = "", postfix = "";
-		if (!D7Parser.preWhile.trim().isEmpty()) {
-			prefix = D7Parser.preWhile;
+		if (!D7Parser.keywordMap.get("preWhile").trim().isEmpty()) {
+			prefix = D7Parser.keywordMap.get("preWhile");
 			if (!prefix.endsWith(" ")) prefix += " ";
 		}
-		if (!D7Parser.postWhile.trim().isEmpty()) {
-			postfix = D7Parser.postWhile;
+		if (!D7Parser.keywordMap.get("postWhile").trim().isEmpty()) {
+			postfix = D7Parser.keywordMap.get("postWhile");
 			if (!postfix.startsWith(" ")) postfix = " " + postfix;
 		}
 		While whileLoop = new While(prefix + forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue() + postfix);
@@ -3416,30 +3417,30 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								Math.round(p.y+(getVisibleRect().height-parserPreferences.getHeight())/2+this.getVisibleRect().y));
 
 		// set fields
-		parserPreferences.edtAltPre.setText(D7Parser.preAlt);
-		parserPreferences.edtAltPost.setText(D7Parser.postAlt);
-		parserPreferences.edtCasePre.setText(D7Parser.preCase);
-		parserPreferences.edtCasePost.setText(D7Parser.postCase);
-		parserPreferences.edtForPre.setText(D7Parser.preFor);
-		parserPreferences.edtForPost.setText(D7Parser.postFor);
+		parserPreferences.edtAltPre.setText(D7Parser.keywordMap.get("preAlt"));
+		parserPreferences.edtAltPost.setText(D7Parser.keywordMap.get("postAlt"));
+		parserPreferences.edtCasePre.setText(D7Parser.keywordMap.get("preCase"));
+		parserPreferences.edtCasePost.setText(D7Parser.keywordMap.get("postCase"));
+		parserPreferences.edtForPre.setText(D7Parser.keywordMap.get("preFor"));
+		parserPreferences.edtForPost.setText(D7Parser.keywordMap.get("postFor"));
 		// START KGU#3 2015-11-08: New configurable separator for FOR loop step const
-		parserPreferences.edtForStep.setText(D7Parser.stepFor);
+		parserPreferences.edtForStep.setText(D7Parser.keywordMap.get("stepFor"));
 		// END KGU#3 2015-11-08
 		// START KGU#61 2016-03-21: New configurable keywords for FOR-IN loop
-		parserPreferences.edtForInPre.setText(D7Parser.preForIn);
-		parserPreferences.edtForInPost.setText(D7Parser.postForIn);
+		parserPreferences.edtForInPre.setText(D7Parser.keywordMap.get("preForIn"));
+		parserPreferences.edtForInPost.setText(D7Parser.keywordMap.get("postForIn"));
 		// END KGU#61 2016-03-21
-		parserPreferences.edtWhilePre.setText(D7Parser.preWhile);
-		parserPreferences.edtWhilePost.setText(D7Parser.postWhile);
-		parserPreferences.edtRepeatPre.setText(D7Parser.preRepeat);
-		parserPreferences.edtRepeatPost.setText(D7Parser.postRepeat);
+		parserPreferences.edtWhilePre.setText(D7Parser.keywordMap.get("preWhile"));
+		parserPreferences.edtWhilePost.setText(D7Parser.keywordMap.get("postWhile"));
+		parserPreferences.edtRepeatPre.setText(D7Parser.keywordMap.get("preRepeat"));
+		parserPreferences.edtRepeatPost.setText(D7Parser.keywordMap.get("postRepeat"));
 		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
-		parserPreferences.edtJumpLeave.setText(D7Parser.preLeave);
-		parserPreferences.edtJumpReturn.setText(D7Parser.preReturn);
-		parserPreferences.edtJumpExit.setText(D7Parser.preExit);
+		parserPreferences.edtJumpLeave.setText(D7Parser.keywordMap.get("preLeave"));
+		parserPreferences.edtJumpReturn.setText(D7Parser.keywordMap.get("preReturn"));
+		parserPreferences.edtJumpExit.setText(D7Parser.keywordMap.get("preExit"));
 		// END KGU#78 2016-03-25
-		parserPreferences.edtInput.setText(D7Parser.input);
-		parserPreferences.edtOutput.setText(D7Parser.output);
+		parserPreferences.edtInput.setText(D7Parser.keywordMap.get("input"));
+		parserPreferences.edtOutput.setText(D7Parser.keywordMap.get("output"));
 		// START KGU#165 2016-03-25: We need a transparent decision here
 		parserPreferences.chkIgnoreCase.setSelected(D7Parser.ignoreCase);
 		// END KGU#165 2016-03-25
@@ -3451,30 +3452,30 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 
 			// get fields
-			D7Parser.preAlt=parserPreferences.edtAltPre.getText();
-			D7Parser.postAlt=parserPreferences.edtAltPost.getText();
-			D7Parser.preCase=parserPreferences.edtCasePre.getText();
-			D7Parser.postCase=parserPreferences.edtCasePost.getText();
-			D7Parser.preFor=parserPreferences.edtForPre.getText();
-			D7Parser.postFor=parserPreferences.edtForPost.getText();
+			D7Parser.keywordMap.put("preAlt", parserPreferences.edtAltPre.getText());
+			D7Parser.keywordMap.put("postAlt", parserPreferences.edtAltPost.getText());
+			D7Parser.keywordMap.put("preCase", parserPreferences.edtCasePre.getText());
+			D7Parser.keywordMap.put("postCase", parserPreferences.edtCasePost.getText());
+			D7Parser.keywordMap.put("preFor", parserPreferences.edtForPre.getText());
+			D7Parser.keywordMap.put("postFor", parserPreferences.edtForPost.getText());
 			// START KGU#3 2015-11-08: New configurable separator for FOR loop step const
-			D7Parser.stepFor=parserPreferences.edtForStep.getText();
+			D7Parser.keywordMap.put("stepFor", parserPreferences.edtForStep.getText());
 			// END KGU#3 2015-11-08
 			// START KGU#61 2016-03-21: New configurable keywords for FOR-IN loop
-			D7Parser.preForIn=parserPreferences.edtForInPre.getText();
-			D7Parser.postForIn=parserPreferences.edtForInPost.getText();
+			D7Parser.keywordMap.put("preForIn", parserPreferences.edtForInPre.getText());
+			D7Parser.keywordMap.put("postForIn", parserPreferences.edtForInPost.getText());
 			// END KGU#61 2016-03-21
-			D7Parser.preWhile=parserPreferences.edtWhilePre.getText();
-			D7Parser.postWhile=parserPreferences.edtWhilePost.getText();
-			D7Parser.preRepeat=parserPreferences.edtRepeatPre.getText();
-			D7Parser.postRepeat=parserPreferences.edtRepeatPost.getText();
+			D7Parser.keywordMap.put("preWhile", parserPreferences.edtWhilePre.getText());
+			D7Parser.keywordMap.put("postWhile", parserPreferences.edtWhilePost.getText());
+			D7Parser.keywordMap.put("preRepeat", parserPreferences.edtRepeatPre.getText());
+			D7Parser.keywordMap.put("postRepeat", parserPreferences.edtRepeatPost.getText());
     		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
-    		D7Parser.preLeave=parserPreferences.edtJumpLeave.getText();
-    		D7Parser.preReturn=parserPreferences.edtJumpReturn.getText();
-    		D7Parser.preExit=parserPreferences.edtJumpExit.getText();
+    		D7Parser.keywordMap.put("preLeave", parserPreferences.edtJumpLeave.getText());
+    		D7Parser.keywordMap.put("preReturn", parserPreferences.edtJumpReturn.getText());
+    		D7Parser.keywordMap.put("preExit", parserPreferences.edtJumpExit.getText());
     		// END KGU#78 2016-03-25
-			D7Parser.input=parserPreferences.edtInput.getText();
-			D7Parser.output=parserPreferences.edtOutput.getText();
+			D7Parser.keywordMap.put("input", parserPreferences.edtInput.getText());
+			D7Parser.keywordMap.put("output", parserPreferences.edtOutput.getText());
 			// START KGU#165 2016-03-25: We need a transparent decision here
 			D7Parser.ignoreCase = parserPreferences.chkIgnoreCase.isSelected();
 			// END KGU#165 2016-03-25

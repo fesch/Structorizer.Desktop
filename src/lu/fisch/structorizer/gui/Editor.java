@@ -52,7 +52,6 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************///
 
 
-import lu.fisch.structorizer.locales.LangDialog;
 import com.kobrix.notebook.gui.AKDockLayout;
 
 import java.awt.*;
@@ -62,7 +61,6 @@ import javax.swing.*;
 
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.locales.LangPanel;
-import lu.fisch.utils.StringList;
 
 @SuppressWarnings("serial")
 public class Editor extends LangPanel implements NSDController, ComponentListener
