@@ -76,7 +76,8 @@ package lu.fisch.structorizer.elements;
  *                                      Bugfix KGU#222 in collectParameters()
  *      Kay Gürtzig     2016.08.12      Enh. #231: New analyser checks 18, 19; checks reorganised to arrays
  *                                      for easier maintenance
- *      Kay Gürtzig     2016.09.21      Enh. #249: New analyser check 20 (function header syntax) implemented 
+ *      Kay Gürtzig     2016.09.21      Enh. #249: New analyser check 20 (function header syntax) implemented
+ *      Kay Gürtzig     2016.09.25      Enh. #255: More informative analyser warning error_01_2. Dead code dropped.
  *
  ******************************************************************************************************
  *
@@ -176,34 +177,6 @@ public class Root extends Element {
 
 	// error checks for analyser (see also addError(), saveToIni(), Diagram.analyserNSD() and Mainform.loadFromIni())
 	// START KGU#239 2016-08-12: Inh. #231 + Partial redesign
-//	public static boolean check1 = false;
-//	public static boolean check2 = false;
-//	public static boolean check3 = false;
-//	public static boolean check4 = false;
-//	public static boolean check5 = false;
-//	public static boolean check6 = false;
-//	public static boolean check7 = false;
-//	public static boolean check8 = false;
-//	public static boolean check9 = false;
-//	public static boolean check10 = false;
-//	public static boolean check11 = false;
-//	public static boolean check12 = false;
-//	public static boolean check13 = false;
-//	// START KGU#3 2015-11-03: New check for enhanced FOR loop
-//	public static boolean check14 = false;
-//	// END KGU#3 2015-11-03
-//	// START KGU#2 2015-11-25: New check for subroutine CALL syntax
-//	public static boolean check15 = false;
-//	// END KGU#2 2015-11-25
-//	// START KGU#78 2015-11-25: New check for incorrect JUMP element
-//	public static boolean check16 = false;
-//	// END KGU#78 2015-11-25
-//	// START KGU#78 2015-11-28: New check for races in PARALLEL sections
-//	public static boolean check17 = false;
-//	// END KGU#78 2015-11-28
-//	// START KGU#239 2016-08-12: Enh. #231 - new chwcks for identifier name collisions
-//	public static boolean check18 = false;	// Check identifiers equal ignoring case
-//	public static boolean check19 = false;	// Check identifiers colliding with keywords
 	private static boolean[] analyserChecks = {
 		false, false, false, false, false,	// 1 .. 5
 		false, false, false, false, false,	// 6 .. 10
@@ -470,20 +443,6 @@ public class Root extends Element {
 		}
 		// END KGU#221 2016-07-27
 
-		/*
-		 if(isNice=false) then _canvas.pen.Width:=3;
-		 _canvas.pen.Color:=clBlack;
-		 _canvas.brush.Color:=drawColor;
-		 if(isProgram=true) then  _canvas.Rectangle(rect)
-		 else if(isNice=false) then
-		 begin
-		 _canvas.pen.Color:=clNone;
-		 _canvas.Rectangle(rect);
-		 end
-		 else _canvas.RoundRect(rect.Left,rect.Top,rect.Right,rect.Bottom,30,30); //(rect.right-rect.left) div 3,(rect.Bottom-rect.Top) div 3);
-		 _canvas.pen.Width:=1;
-		 */
-
 		// draw comment
 		if (E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
 		{
@@ -518,41 +477,7 @@ public class Root extends Element {
 		canvas.setFont(titleFont);
 
 		// draw text
-		// START KGU#216 2016-07-25: Bug #205 - Except the padding the differences here were wrong
-//		if (isNice==true)
-//		{
-//			for(int i=0;i<getText(false).count();i++)
-//			{
-//				canvas.setColor(Color.BLACK);
-//				writeOutVariables(canvas,
-//								  rect.left+E_PADDING,
-//							      rect.top+(i+1)*fm.getHeight()+E_PADDING,
-//								  (String) getText(false).get(i)
-//								  ,this);
-//			}
-//			// START KGU#156 2016-03-11: Enh. #124
-//			// write the run-time info if enabled
-//			this.writeOutRuntimeInfo(canvas, rect.right - (Element.E_PADDING), rect.top);
-//			// END KGU#156 2016-03-11
-//					
-//		}
-//		else
-//		{
-//			for(int i=0;i<getText(false).count();i++)
-//			{
-//				canvas.setColor(Color.BLACK);
-//				// FIXME (KGU): Why aren't the variables highlighted here? (forgotten?)
-//				canvas.writeOut(rect.left + (E_PADDING/2),
-//								rect.top + (i+1)*fm.getHeight() + (E_PADDING/2),
-//								(String) getText(false).get(i)
-//								);
-//			}
-//			// START KGU#156 2016-03-11: Enh. #124
-//			// write the run-time info if enabled
-//			this.writeOutRuntimeInfo(canvas, rect.right - (Element.E_PADDING/2), rect.top);
-//			// END KGU#156 2016-03-11
-//					
-//		}
+		// START KGU#216 2016-07-25: Bug #205 - Except the padding the differences here had been wrong
 		for(int i=0; i<getText(false).count(); i++)
 		{
 			canvas.setColor(Color.BLACK);
@@ -573,29 +498,6 @@ public class Root extends Element {
 		
 		// Draw the frame around the body
 		// START #227 2016-07-31: Enh. #128 + Code revision
-//		int headerHeight = fm.getHeight()*getText(false).count();
-//		if (isNice==true)
-//		{
-//			headerHeight += 2*E_PADDING;
-//			rect.top = _top_left.top + headerHeight;
-//			rect.bottom -= E_PADDING;
-//			rect.left = _top_left.left + E_PADDING;
-//			rect.right -= E_PADDING;
-//		}
-//		else
-//		{
-//			headerHeight += 2*(E_PADDING/2);
-//			rect.top = _top_left.top + headerHeight;
-//			rect.left = _top_left.left;
-//			// START KGU#221 2016-07-28: Bugfix #208
-//			if (!isProgram)
-//			{
-//				rect.bottom -= E_PADDING/2;
-//			}
-//			// END KGU#221 2016-07-28
-//		}
-//
-//		children.draw(_canvas, rect);
 		Rect bodyRect = _top_left.copy();
 		bodyRect.left += pt0Sub.x;
 		bodyRect.top += pt0Sub.y;
@@ -668,37 +570,6 @@ public class Root extends Element {
 		// END KGU#136 2016-03-01
 	}
 
-	// START KGU 2015-10-11: Methods merged into getElementByCoord(int _x, int _y, boolean _forSelection
-//    @Override
-//    public Element selectElementByCoord(int _x, int _y)
-//    {
-//            Element selMe = super.selectElementByCoord(_x,_y);
-//            Element selCh = children.selectElementByCoord(_x,_y);
-//            if(selCh!=null)
-//            {
-//                    selected=false;
-//                    return selCh;
-//            }
-//            else
-//            {
-//                    return selMe;
-//            }
-//    }
-//
-//    @Override
-//    public Element getElementByCoord(int _x, int _y)
-//    {
-//            Element selMe = super.getElementByCoord(_x,_y);
-//            Element selCh = children.getElementByCoord(_x,_y);
-//            if(selCh!=null)
-//            {
-//                    return selCh;
-//            }
-//            else
-//            {
-//                    return selMe;
-//            }
-//    }
 
     @Override
     public Element getElementByCoord(int _x, int _y, boolean _forSelection)
@@ -740,33 +611,6 @@ public class Root extends Element {
 		return sel;
 	}
 	// END KGU#183 2016-04-24
-	
-	// START KGU 2016-04-24: Replaced by Element.isDescendantOf(another)
-//    /**
-//     * Checks if _child is a descendant of _parent in the tree
-//     * @param _child - Element to be verified as descendant of _parent
-//     * @param _parent - Element to be verified as ancestor of _child
-//     * @return true iff _cild is a descendant of _parent
-//     */
-//	@Deprecated
-//    public boolean checkChild(Element _child, Element _parent)
-//    {
-//            Element tmp = _child;
-//            boolean res = false;
-//            if(tmp != null)
-//            {
-//                    while ((tmp.parent!=null) && (res==false))
-//                    {
-//                            if(tmp.parent==_parent)
-//                            {
-//                                    res = true;
-//                            }
-//                            tmp=tmp.parent;
-//                    }
-//            }
-//            return res;
-//    }
-	// END KGU 2016-04-24
 
     public void removeElement(Element _ele)
     {
@@ -856,23 +700,7 @@ public class Root extends Element {
     	// root may never have a breakpoint!
     	breakpoint = false;
     }
-    
-//    public void clearBreakpoints()
-//    {
-//            super.clearBreakpoints();
-//            children.clearBreakpoints();
-//    }
-//    // END KGU#43 2015-10-12
-//
-//	// START KGU#43 2015-10-13
-//	// Recursively clears all execution flags in this branch
-//	public void clearExecutionStatus()
-//	{
-//		super.clearExecutionStatus();
-//		children.clearExecutionStatus();
-//	}
-//	// END KGU#43 2015-10-13
-	
+    	
 	// START KGU#117 2016-03-06: Enh. #77
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
@@ -885,31 +713,6 @@ public class Root extends Element {
 		// END KGU#209 2016-07-22
 	}
 	// END KGU#117 2016-03-06
-
-//	// START KGU#117 2016-03-07: Enh. #77
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
-//	 */
-//	@Override
-//	public void clearRuntimeData()
-//	{
-//		super.clearRuntimeData();
-//		children.clearRuntimeData();
-//	}
-//	// END KGU#117 2016-03-07
-
-//	// START KGU#64 2015-11-03: Is to improve drawing performance
-//	/**
-//	 * Recursively clears all drawing info this subtree down
-//	 * (To be overridden by structured sub-classes!)
-//	 */
-//	@Override
-//	public void resetDrawingInfoDown()
-//	{
-//		this.resetDrawingInfo();
-//		this.children.resetDrawingInfoDown();
-//	}
-//	// END KGU#64 2015-11-03
 
     public Rect prepareDraw(Graphics _g)
     {
@@ -1410,312 +1213,7 @@ public class Root extends Element {
 
     }
 
-    // START KGU 2016-03-29: Completely rewritten
-//    /**
-//     * Gathers the names of all variables that are used by Element _ele in expressions:
-//     * HYP 1: (?) <- <used>
-//     * HYP 2: (?)[<used>] <- <used>
-//     * HYP 3: [output] <used>
-//     * This works only if _ele is different from this.
-//     * @param _ele - the element to be searched
-//     * @param _includeSelf - whether or not the own text of _ele is to be considered (otherwise only substructure)
-//     * @param _onlyEle - if true then only the text of _ele itself is searched (no substructure)
-//     * @return StringList of variable names according to the above specification
-//     */
-//    public StringList getUsedVarNames(Element _ele, boolean _includeSelf, boolean _onlyEle)
-//    {
-//            StringList varNames = new StringList();
-//
-//            if (_ele!=this)
-//            {
-//                    // get body text
-//                    StringList lines = new StringList();
-//                    if(_onlyEle==true)
-//                    {
-//                        lines.add(_ele.getText());
-//                    	// START KGU#163 2016-03-25: In case of Case the default line must be removed
-//                    	if (_ele instanceof Case && lines.count() > 1)
-//                    	{
-//                    		lines.delete(lines.count()-1);;
-//                    	}
-//                    	// END KGU#163 2016-03-25
-//                    }
-//                    else
-//                    {
-//                            // START KGU#39 2015-10-16: What exactly is expected here?
-//                            //lines = getFullText(_ele);
-//                            lines = _ele.getFullText(false);
-//                            // END KGU#39 2015-10-16
-//                            if (_includeSelf==false)
-//                            {
-//                                    for(int i=0; i<_ele.getText().count(); i++)
-//                                    {
-//                                            lines.delete(0);
-//                                    }
-//                            }
-//                            // START KGU#163 2016-03-25: The Case default line must be deleted
-//                            else if (_ele instanceof Case && _ele.getText().count() > 1)
-//                            {
-//                            	// Remove the last line
-//                            	lines.delete(_ele.getText().count() - 1);
-//                            }
-//                            // END KGU#163 2016-03-25
-//                    }
-//                    //System.out.println(lines);
-//
-//                    String patternInput = D7Parser.input.trim();
-//                    String patternOutput = D7Parser.output.trim();
-//                    String patternPreFor = D7Parser.preFor.trim();
-//                    String patternPostFor = D7Parser.postFor.trim();
-//                    String patternPreForIn = D7Parser.preForIn.trim();
-//                    String patternPostForIn = D7Parser.postForIn.trim();
-//                    String patternPreWhile = D7Parser.preFor.trim();
-//                    String patternPreRepeat = D7Parser.preFor.trim();
-//                    if (D7Parser.ignoreCase)
-//                    {
-//                    	patternInput = BString.breakup(patternInput);
-//                      	patternOutput = BString.breakup(patternOutput);
-//                      	patternPreFor = BString.breakup(patternPreFor);
-//                      	patternPostFor = BString.breakup(patternPostFor);
-//                      	patternPreForIn = BString.breakup(patternPreForIn);
-//                      	patternPostForIn = BString.breakup(patternPostForIn);
-//                      	patternPreWhile = BString.breakup(patternPreWhile);
-//                      	patternPreRepeat = BString.breakup(patternPreRepeat);
-//                    }
-//                          
-//                    for(int i=0; i<lines.count(); i++)
-//                    {
-//                            String allText = lines.get(i);
-//                            // START KGU#23 2015-10-16: We better make sure the line is trimmed (for more precise keyword detection)
-//                            allText = allText.trim();
-//                            // END KGU#23 2015-10-16
-//                            
-//                            Regex r;
-//
-//                            // modify "inc" and "dec" function (Pascal)
-//                            r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); allText=r.replaceAll(allText);
-//                            r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); allText=r.replaceAll(allText);
-//                            r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); allText=r.replaceAll(allText);
-//                            r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); allText=r.replaceAll(allText);
-//
-//                            // modify mathematically correct assignments
-//                            // START KGU 2015-11-28: Disambiguate the operator symbols all at once now
-//                            //r = new Regex("(.*?)[:][=](.*?)","$1 <- $2"); allText=r.replaceAll(allText);     // 1.29
-//                            allText = Element.unifyOperators(allText);
-//                            // END KGU 2015-11-28
-//
-//                            //
-//                            // Should use PARAMETERS HERE!!!
-//                            //
-//
-//                            // kick off text parts
-//                            allText=allText.replaceAll("(.*?)['](.*?)['](.*?)","$1$3");
-//                            allText=allText.replaceAll("(.*?)[\"](.*?)[\"](.*?)","$1$3");
-//
-//                            // The following part serves several purposes (there has been some misunderstanding in the past):
-//                            // a) case unification (in case of case independence)
-//                            // b) alignment (cuts off irrelevant parts)
-//                            // c) Some disguising / reduction (e.g. FOR-IN -> FOR)
-//                            
-//                            // input
-//                            r = new Regex(patternInput+"[ ](.*?)", D7Parser.input.trim()+" $1"); allText=r.replaceAll(allText);
-//                            // output
-//                            r = new Regex(patternOutput+"[ ](.*?)", D7Parser.output.trim()+" $1"); allText=r.replaceAll(allText);
-//
-//                            // START KGU#61 2016-03-21: Enh. #84 - for analysis purposes we replace all FOR-IN-specific keywords by FOR tokens
-//                            // for-in
-//                            if (!patternPreForIn.isEmpty()) {
-//                            	r = new Regex(patternPreForIn+"[ ](.*?\\W)"+patternPostForIn+"(\\W.*?)", D7Parser.preFor.trim()+" $1 <- $2");
-//                            }
-//                            else {
-//                            	r = new Regex("(.*?\\W)"+patternPostForIn+"(\\W.*?)","$1 <- $2");
-//                            }
-//                            allText=r.replaceAll(allText);
-//                            // END KGU#61 2016-03-21
-//                            
-//                            // START KGU#23 2015-10-16: there must be a gap between the keyword and the variable name!
-//                            // for
-//                            //r = new Regex(BString.breakup(D7Parser.preFor.trim())+"(.*?)"+D7Parser.postFor.trim()+"(.*?)",D7Parser.preFor.trim()+"$1"+D7Parser.postFor.trim()+"$2"); allText=r.replaceAll(allText);
-//                            // while
-//                            //r = new Regex(BString.breakup(D7Parser.preWhile.trim())+"(.*?)",D7Parser.preWhile.trim()+"$1"); allText=r.replaceAll(allText);
-//                            // repeat
-//                            //r = new Regex(BString.breakup(D7Parser.preRepeat.trim())+"(.*?)",D7Parser.preRepeat.trim()); allText=r.replaceAll(allText);
-//                            // for
-//                            //if(allText.indexOf(D7Parser.preFor.trim())>=0)
-//                            //{
-//                            //        allText=allText.substring(allText.indexOf(D7Parser.preFor.trim())+D7Parser.preFor.trim().length()).trim();
-//                            //}
-//                            // REPLACEMENT STARTS HERE:
-//                            
-//                            // for
-//                            if (!patternPreFor.isEmpty()) {
-//                            	r = new Regex(patternPreFor+"[ ](.*?\\W)"+patternPostFor+"(\\W.*?)", D7Parser.preFor.trim()+" $1 "+D7Parser.postFor.trim()+" $2");
-//                            }
-//                            else {
-//                            	r = new Regex("(.*?\\W)"+patternPostFor+"(\\W.*?)", "$1 "+D7Parser.postFor.trim()+" $2");
-//                            }
-//                            allText=r.replaceAll(allText);
-//                            // while
-//                            if (!patternPreWhile.isEmpty())
-//                            {
-//                            	r = new Regex(patternPreWhile+"(\\W.*?)", D7Parser.preWhile.trim()+"$1");
-//                            	allText = r.replaceAll(allText);
-//                            }
-//                            // repeat
-//                            if (!patternPreRepeat.isEmpty())
-//                            {
-//                            	// FIXME (KGU) Why is the expression after the preRepeat keyword dropped here?
-//                            	// It must be a bug because this only happens if someone uses this keyword (not necessary in a Repeat element)!
-//                            	r = new Regex(patternPreRepeat+"(.*?)", D7Parser.preRepeat.trim());
-//                            	allText = r.replaceAll(allText);
-//                            }
-//                            
-//                            // Here all the unification, alignment, reduction is done, now the actual analysis begins
-//                            
-//                            // for: cut off the "for" keyword (but why, the part left of the assignment symbol will anyway be cut off...)
-//                            if (allText.startsWith(D7Parser.preFor.trim()))	// Must be at the line's very beginning
-//                            {
-//                                    allText = allText.substring(D7Parser.preFor.trim().length()).trim();
-//                            }
-//                            // END KGU 2015-10-16
-//
-//                            // get names from assignments
-//                            // START KGU#126 2016-01-06: We can no longer expect operators to be padded
-////                            if(allText.indexOf(" <- ")>=0)
-////                            {
-////                                    int pos = allText.indexOf(" <- ");
-////
-////                                    String s = allText.substring(0, pos);
-////                                    if(allText.indexOf("[")>=0)
-////                                    {
-////                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-////                                            s=r.replaceAll(s);
-////                                    } else { s=""; }
-////
-////                                    allText=s+" "+allText.substring(pos + " <- ".length(), allText.length());
-////                            }
-//                            int asgnPos = allText.indexOf("<-");
-//                            if (asgnPos >= 0)
-//                            {
-//                                    String s = allText.substring(0, asgnPos);
-//                                    // START KGU#98 2016-01-06: This is only interesting within s
-//                                    //if (allText.indexOf("[") >= 0)
-//                                    if (s.indexOf("[") >= 0)
-//                                    // END KGU#98 2016-01-06
-//                                    {
-//                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-//                                            s = r.replaceAll(s);
-//                                    } else { s = ""; }
-//
-//                                    allText=s+" "+allText.substring(asgnPos + "<-".length(), allText.length());
-//                            }
-//                            // END KGU#126 2016-01-06
-//
-//                            // cutoff output keyword
-//                            // START KGU#23 2015-10-16: Must start at the very beginning 
-//                            //if(allText.indexOf(D7Parser.output.trim())>=0)
-//                            //{
-//                            //    allText=allText.substring(allText.indexOf(D7Parser.output.trim())+D7Parser.output.trim().length()).trim();
-//                            //}
-//                            if(allText.indexOf(D7Parser.output.trim()) == 0)
-//                            {
-//                            	allText=allText.substring(D7Parser.output.trim().length()).trim();
-//                            }
-//                            // END KGU#23 2015-10-16
-//
-//                            // and constant strings
-//                            if(allText.indexOf("'")>=0)
-//                            {
-//                                    /*r = new Regex("(.*?)['](.*?)['](.*?)","$1$3");
-//                                    allText=r.replaceAll(allText);*/
-//                                    allText=allText.replaceAll("(.*?)['](.*?)['](.*?)","$1$3");
-//                            }
-//                            if(allText.indexOf("\"")>=0)
-//                            {
-//                                    /*r = new Regex("(.*?)[\"](.*?)[\"](.*?)","$1$3");
-//                                    allText=r.replaceAll(allText);*/
-//                                    allText=allText.replaceAll("(.*?)[\"](.*?)[\"](.*?)","$1$3");
-//                            }
-//
-//                            // parse out array index
-//                            if(allText.indexOf(D7Parser.input.trim())>=0)
-//                            {
-//                                    if(allText.indexOf("[")>=0)
-//                                    {
-//                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-//                                            allText=r.replaceAll(allText);
-//                                    }
-//                                    else
-//                                    {
-//                                            allText = "";
-//                                    }
-//                            }
-//
-//                            lines.set(i,allText);
-//                    }
-//
-//                    // Analyse for used variables
-//                    // START KGU#26/KGU#65 2015-11-04: This code was practically identical to that in Element.writeOutVariables
-//                    // Moreover, we solve the erroneous in-String analysis (i.e. string literals had been scrutinized, too!) 
-//                    StringList parts = Element.splitLexically(lines.getLongString(), true);
-//                    // END KGU#26/KGU#65 2015-11-04
-//                    // START KGU#163 2016-03-25: We must catch all unknown identifiers
-//        			// Eliminate all keywords
-//        			for (int k = 0; k < this.splitKeywords.size(); k++)
-//        			{
-//        				StringList keyTokens = this.splitKeywords.get(k);
-//        				int p = -1;
-//        				while((p = parts.indexOf(keyTokens, p+1, true)) >= 0)
-//        				{
-//        					for (int d = 0; d < keyTokens.count(); d++)
-//        					{
-//        						parts.delete(p);
-//        					}
-//        				}
-//        			}
-//        			// END KGU#163 2016-03-25
-//                    // START KGU 2015-11-29: Get rid of spaces
-//                    parts.removeAll(" ");
-//                    // END KGU 2015-11-29
-//
-//                    //this.getVarNames(); // needed?  // CHECKITfile://localhost/Users/robertfisch/Desktop/TEST.nsd
-//
-//                    for(int i=0; i<parts.count(); i++)
-//                    {
-//                            String display = parts.get(i);
-//
-//                            //display = BString.replace(display, "<--","<-");	// No longer necessary, operators already unified
-//                            //display = BString.replace(display, "<-","\u2190");	// Not needed to identify variables
-//                            
-//                            if (!display.equals(""))
-//                            {
-//                                    // START KG#163 2016-03-25: Get a full list of all identifiers
-//                                    //if(this.variables.contains(display)) && !varNames.contains(display))
-//                                    if((Function.testIdentifier(display, null)
-//                                    		&& (i == parts.count() - 1 || !parts.get(i+1).equals("("))
-//                                    		|| this.variables.contains(display))
-//                                    		&& !varNames.contains(display))
-//                                    // END KG#163 2016-03-25
-//                                    {
-//                                            //System.out.println("Adding to used var names: " + display);
-//                                            varNames.add(display);
-//                                    }
-//                            }
-//                    }
-//
-///*                    // FIXME (KGU) Disable this after testing
-//                    System.out.println("Lines: "+lines.getCommaText());
-//                    System.out.println("Parts: "+parts.getCommaText());
-//                    System.out.println("Vars:  "+variables.getCommaText());
-//                    System.out.println("Used:  "+varNames.getCommaText());
-//*/                    
-//            }
-//
-//            varNames=varNames.reverse();
-//            //varNames.saveToFile("D:\\SW-Produkte\\Structorizer\\tests\\Variables_" + Root.fileCounter++ + ".txt");
-//            return varNames;
-//    }
-
+    // KGU 2016-03-29: Completely rewritten
     /**
      * Gathers the names of all variables that are used by Element _ele in expressions:
      * HYP 1: (?) <- <used>
@@ -1908,141 +1406,8 @@ public class Root extends Element {
     	//varNames.saveToFile("D:\\SW-Produkte\\Structorizer\\tests\\Variables_" + Root.fileCounter++ + ".txt");
     	return varNames;
     }
-    // END KGU 2016-03-29
 
-    // START KGU 2016-03-29 Rewritten based on tokens
-//    /**
-//     * Get the names of defined variables out of a bunch of textlines.
-//     * Note: We DON'T force identifier syntax, the variables found here may contain
-//     * language-specific characters etc.
-//     * HYP 1: VARNAME <- (?)
-//     * HYP 2: [input] VARNAME, VARNAME, VARNAME
-//     * HYP 3: for VARNAME <- (?) ...
-//     * HYP 4: foreach VARNAME in (?)
-//     * @param lines - the textlines extracted from one or more elements 
-//     * @return - the StringList of identified variable names
-//     */
-//    public StringList getVarnames(StringList lines)
-//    {
-//            StringList varNames = new StringList();
-//
-//            for(int i=0; i<lines.count();i++)
-//            {
-//                    String allText = lines.get(i);
-//                    Regex r;
-//
-//                    // modify "inc" and "dec" function (Pascal)
-//                    r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); allText=r.replaceAll(allText);
-//                    r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); allText=r.replaceAll(allText);
-//                    r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); allText=r.replaceAll(allText);
-//                    r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); allText=r.replaceAll(allText);
-//
-//                    // START KGU 2015-11-28:Disambiguate all operators at once
-//                    // modify mathematically correct assignments
-//                    //r = new Regex("(.*?)[:][=](.*?)","$1<-$2"); allText=r.replaceAll(allText);     // 1.29
-//                    allText = Element.unifyOperators(allText);
-//                    // END KGU 2015-11-28
-//
-//                    //
-//                    // Should use PARAMETERS HERE!!!
-//                    //
-//
-//                    // START KGU#102 2015-12-11: Bugfix #55 keyword replacement must not be done within identifiers
-//                    // FIXME (KGU): Is it necessary to accept the keywords case-independently (well, in Pascal it is)
-////                    // input
-////                    r = new Regex(BString.breakup(D7Parser.input.trim())+"[ ](.*?)",D7Parser.input.trim()+" $1"); allText=r.replaceAll(allText);
-////                    // output
-////                    r = new Regex(BString.breakup(D7Parser.output.trim())+"[ ](.*?)",D7Parser.output.trim()+" $1"); allText=r.replaceAll(allText);
-////                    // for
-////                    r = new Regex(BString.breakup(D7Parser.preFor.trim())+"(.*?)"+D7Parser.postFor.trim()+"(.*?)",D7Parser.preFor.trim()+"$1"+D7Parser.postFor.trim()+"$2"); allText=r.replaceAll(allText);
-////                    // while
-////                    r = new Regex(BString.breakup(D7Parser.preWhile.trim())+"(.*?)",D7Parser.preWhile.trim()+"$1"); allText=r.replaceAll(allText);
-////                    // repeat
-////                    r = new Regex(BString.breakup(D7Parser.preRepeat.trim())+"(.*?)",D7Parser.preRepeat.trim()); allText=r.replaceAll(allText);
-////                    // for
-////                    if(allText.indexOf(D7Parser.preFor.trim())>=0)
-////                    {
-////                            allText=allText.substring(allText.indexOf(D7Parser.preFor.trim())+D7Parser.preFor.trim().length()).trim();
-////                    }
-//                    // input
-//                    r = new Regex("^"+BString.breakup(D7Parser.input.trim())+"[ ](.*?)", D7Parser.input.trim()+" $1"); allText=r.replaceAll(allText);
-//                    // output
-//                    r = new Regex("^"+BString.breakup(D7Parser.output.trim())+"[ ](.*?)", D7Parser.output.trim()+" $1"); allText=r.replaceAll(allText);
-//                    // for
-//                    r = new Regex("(^|[\\W])"+BString.breakup(D7Parser.preFor.trim())+"([ ].*?)"+D7Parser.postFor.trim()+"([ ].*?)", D7Parser.preFor.trim()+"$2"+D7Parser.postFor.trim()+"$3"); allText=r.replaceAll(allText);
-//                    // while
-//                    r = new Regex("^"+BString.breakup(D7Parser.preWhile.trim())+"(.*?)", D7Parser.preWhile.trim()+"$1"); allText=r.replaceAll(allText);
-//                    // repeat
-//                    r = new Regex("^"+BString.breakup(D7Parser.preRepeat.trim())+"(.*?)", D7Parser.preRepeat.trim()); allText=r.replaceAll(allText);
-//                    // for
-//                    if(allText.matches("(^|[\\W])" + D7Parser.preFor.trim() + "[ ](.*)"))
-//                    {
-//                            allText=allText.substring(allText.indexOf(D7Parser.preFor.trim()+" ")+D7Parser.preFor.trim().length()).trim();
-//                    }
-//                    // END KGU#102 2015-12-11
-//                    // START KGU#61 2016-03-21: Enh. #84 - Also extract from FOR-IN loops
-//                    // for-in
-//                    if(allText.matches("(^|[\\W])" + D7Parser.preForIn.trim() + "[ ](.*)"))
-//                    {
-//                            allText=allText.substring(allText.indexOf(D7Parser.preForIn.trim()+" ")+D7Parser.preForIn.trim().length()).trim();
-//                    }
-//                    // in (for-in) - formally replace D7Parser by an assignment symbol
-//                    r = new Regex("(.*?[\\W])"+BString.breakup(D7Parser.postForIn.trim())+"([\\W].*?)", "$1 <- $2"); allText=r.replaceAll(allText);
-//                    // END KGU#61 2016-03-21
-//
-//                    // START KGU#126 2016-01-06: Operators can no longer be expected to be padded
-////                    if(allText.indexOf(" <- ")>=0)
-////                    {
-////                            int pos = allText.indexOf(" <- ");
-////                            allText = allText.substring(0,pos);
-////                            //System.out.println("Adding to initialised var names: " + cleanup(allText.trim()));
-////                            varNames.addOrderedIfNew(cleanup(allText.trim()));
-////                    }
-//                    if(allText.indexOf("<-")>=0)
-//                    {
-//                            int pos = allText.indexOf("<-");
-//                            allText = allText.substring(0, pos).trim();
-//                            // (KGU#141 2016-01-16: type elimination moved to cleanup())
-//                            //System.out.println("Adding to initialised var names: " + cleanup(allText.trim()));
-//                            varNames.addOrderedIfNew(cleanup(allText.trim()));
-//                    }
-//                    // END KGU#126 2016-01-06
-//
-//                    // get names from read statements
-//                    if(allText.indexOf(D7Parser.input.trim())>=0)
-//                    {
-//                            String sr=allText.substring(allText.indexOf(D7Parser.input.trim())+D7Parser.input.trim().length()).trim();
-//                            StringList str = StringList.explode(sr,",");
-//                            if(str.count()>0)
-//                            {
-//                                    for(int j=0;j<str.count();j++)
-//                                    {
-//                                              // START KGU#141 2016-01-16: Bugfix #112 - use cleanup...
-////                                            String s = str.get(j);
-////                                            // START KGU#98 2016-01-06: Better don't glue the prefix and suffix without space
-////                                            //r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1$3");
-////                                            r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
-////                                            // END KGU#98 2016-01-06
-////                                            s = r.replaceAll(s);
-//                                              String s = cleanup(str.get(j));
-//                                              // END KGU#141 2016-01-16
-//
-//                                            if(!s.trim().equals(""))
-//                                            {
-//                                                    //System.out.println("Adding to initialised var names: " + s.trim());
-//                                                    varNames.addOrderedIfNew(s.trim());
-//                                            }
-//                                    }
-//                            }
-//                    }
-//
-//
-//                    lines.set(i,allText);
-//            }
-//
-//            return varNames;
-//    }
-
+    // KGU 2016-03-29 Rewritten based on tokens
     /**
      * Get the names of defined variables out of a bunch of textlines.
      * Note: We DON'T force identifier syntax, the variables found here may contain
@@ -2141,7 +1506,6 @@ public class Root extends Element {
 
     	return varNames;
     }
-    // END KGU 2016-03-29
 
     /**
      * Extract all variable names of the entire program and store them in
@@ -2187,60 +1551,7 @@ public class Root extends Element {
             // !!
             // !! This will also detect the functionname itself if the parentheses are missing (bug?)
             // !!
-        	// START KGU 2015-11-29: Decomposed -> new method collectParameters
-//            try
-//            {
-//                    if(this.isProgram==false && _ele==this)
-//                    {
-//                            String rootText = this.getText().getText();
-//                            rootText = rootText.replace("var ", "");
-//                            if(rootText.indexOf("(")>=0)
-//                            {
-//                                    rootText=rootText.substring(rootText.indexOf("(")+1).trim();
-//                                    rootText=rootText.substring(0,rootText.indexOf(")")).trim();
-//                            }
-//
-//                            StringList params = StringList.explode(rootText,";");
-//                            if(params.count()>0)
-//                            {
-//                                    for(int i=0;i<params.count();i++)
-//                                    {
-//                                            String S = params.get(i);
-//                                            if(S.indexOf(":")>=0)
-//                                            {
-//                                                    S=S.substring(0,S.indexOf(":")).trim();
-//                                            }
-//// START KGU#18 2014-10-18 "as" must not be detected if it's a substring of some identifier
-////                                            if(S.indexOf("as")>=0)
-////                                            {
-////                                                    S=S.substring(0,S.indexOf("as")).trim();
-////                                            }
-//                                            // Actually, a sensible approach should consider any kinds of white space and delimiters...
-//                                            if(S.indexOf(" as ")>=0)
-//                                            {
-//                                                    S=S.substring(0,S.indexOf(" as ")).trim();
-//                                            }
-//// END KGU#18 2014-10-18                                            
-//                                            StringList vars = StringList.explode(S,",");
-//                                            for(int j=0;j<vars.count();j++)
-//                                            {
-//                                                    if(!vars.get(j).trim().equals(""))
-//                                                    {
-//                                                        //System.out.println("Adding: "+vars.get(j).trim());
-//                                                        varNames.add(vars.get(j).trim());
-//                                                    }
-//                                            }
-//                                    }
-//                            }
-//                    }
-//            }
-//            catch (Exception e)
-//            {
-//                    // Don't do anything if this is the entire program
-//                    if (!_entireProg) {	
-//                            System.out.println(e.getMessage());
-//                    }
-//            }
+        	// KGU 2015-11-29: Decomposed -> new method collectParameters
             if (this.isProgram==false && _ele==this && !_onlyBody)
             {
             	collectParameters(varNames, null);
@@ -2267,17 +1578,6 @@ public class Root extends Element {
                     // START KGU#39 2015-10-16
             }
             
-//            // KGU 2015-11-30: Turned out to be too simple: getFullText(true) already omits the
-//            // own "header" text unless _ele is this and this is no program
-//            if(_onlyBody==true)
-//            	
-//            {
-//                    for(int l=0;l<_ele.getText().count();l++)
-//                    {
-//                            lines.delete(0);
-//                    }
-//            }
-
             // FIXME (KGU 2016-01-16): On a merge for 3.22-22, the following change got lost
             // if (!(this instanceof Root))
             varNames.add(getVarnames(lines));
@@ -2671,7 +1971,10 @@ public class Root extends Element {
 			if (loopVars.count() > 1)
 			{
 				//error  = new DetectedError("WARNING: More than one loop variable detected ...",(Element) _node.getElement(i));
-				addError(_errors, new DetectedError(errorMsg(Menu.error01_2,""), ele), 1);
+				// START KGU#260 2016-09-25: It seems sensible to show the variable names (particularly to identify malfunction) 
+				//addError(_errors, new DetectedError(errorMsg(Menu.error01_2,""), ele), 1);
+				addError(_errors, new DetectedError(errorMsg(Menu.error01_2, loopVars.concatenate("», «")), ele), 1);
+				// END KGU#260 2016-09-25
 			}
 
 			if (modifiedVars.contains(loopVars.get(0)))
@@ -2872,29 +2175,6 @@ public class Root extends Element {
 			//String myTest = test.get(l);
 
 			// START KGU#65/KGU#126 2016-01-06: More precise analysis, though expensive
-//			// FIXME (KGU): Shouldn't we better do a lexical splitting here (see below)? 
-//			// Remove all strings delimited by '
-//			myTest=myTest.replaceAll("(.*?)['](.*?)['](.*?)","$1$3");
-//			// Remove all strings delimited by "
-//			myTest=myTest.replaceAll("(.*?)[\"](.*?)[\"](.*?)","$1$3");
-//
-//			//System.out.println(" -- "+myTest);
-//
-//			// FIXME (KGU): condition is not sound
-//			String unified = Element.unifyOperators(myTest);
-//			if (unified.contains(" == ") && !unified.contains(" <- "))
-//			{
-//				//error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
-//				error  = new DetectedError(errorMsg(Menu.error11,""), ele);
-//				addError(_errors,error,11);
-//			}
-//
-//			// CHECK: wrong multi-line instruction (#10 - new!)
-//			String myText = test.get(l);
-//			if (myText.contains(D7Parser.input.trim())) {isInput=1;}
-//			if (myText.contains(D7Parser.output.trim())) {isOutput=1;}
-//			if ( myText.contains("<-") || myText.contains(":=") || myText.contains("<--")) {isAssignment=1;}
-
 			StringList tokens = splitLexically(test.get(l), true);
 			unifyOperators(tokens, false);
 			if (tokens.contains("<-"))
@@ -2908,8 +2188,6 @@ public class Root extends Element {
 			}
 			
 			// CHECK: wrong multi-line instruction (#10 - new!)	
-//			if (myTest.startsWith(D7Parser.input.trim())) {isInput = true;}
-//			if (myTest.startsWith(D7Parser.output.trim())) {isOutput = true;}
 			if (tokens.indexOf(inputTokens, 0, !D7Parser.ignoreCase) == 0)
 			{
 				isInput = true;
@@ -2951,20 +2229,11 @@ public class Root extends Element {
 	 */
 	private void analyse_15(Call ele, Vector<DetectedError> _errors)
 	{
-//		String text = ele.getText().getLongString();
-//		text = Element.unifyOperators(text);
-//		if ( text.contains("<-") )	// FIXME: Detection within string literals!?
-//		{
-//			text = text.substring(text.indexOf("<-") + 2);
-//		}
-//		Function func = new Function(text);
-//		if (!func.isFunction())
 		if (!ele.isProcedureCall() && !ele.isFunctionCall())
 		{
 			//error  = new DetectedError("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!",(Element) _node.getElement(i));
 			addError(_errors, new DetectedError(errorMsg(Menu.error15, ""), ele), 15);
 		}
-
 	}
 
 	/**
@@ -3303,138 +2572,9 @@ public class Root extends Element {
 	}
 	// END KGU#253 2016-09-22
     
-    // START KGU#61 2016-03-22: Made public and static and moved to class Function
-//    private boolean testidentifier(String _str)
-//    {
-//            boolean result = true;
-//            _str=_str.trim();
-//            if(_str.equals(""))
-//            {
-//                    result=false;
-//            }
-//            else
-//            {
-//            	if(
-//            			('a'<=_str.toLowerCase().charAt(0) && _str.toLowerCase().charAt(0)<='z')
-//            			||
-//            			(_str.toLowerCase().charAt(0)=='_')
-//            			)
-//            	{
-//            		if (_str.length()>1)
-//            		{
-//            			// START KGU 2015-11-25: This loop and condition were obviously wrong
-//            			//for(int i=0;i<_str.length();i++)
-//            			//{
-//            			//	if(!(
-//            			//			('a'<=_str.toLowerCase().charAt(0) && _str.toLowerCase().charAt(0)<='z')
-//            			//			||
-//            			//			('0'<=_str.charAt(0) && _str.charAt(0)<='9')
-//            			//			||
-//            			//			(_str.charAt(0)=='_')
-//            			//			))
-//            			String strLower = _str.toLowerCase();
-//            			for (int i = 1; i < _str.length(); i++)
-//            			{
-//            				if (!(
-//            						('a' <= strLower.charAt(i) && strLower.charAt(i) <= 'z')
-//            						||
-//            						('0' <= strLower.charAt(i) && strLower.charAt(i) <= '9')
-//            						||
-//            						(strLower.charAt(i) == '_')
-//            						))
-//            			// END KGU 2015-11-25
-//            				{
-//            					result = false;
-//            				}
-//            			}
-//            		}
-//            	}
-//            	else
-//            	{
-//            		result = false;
-//            	}
-//
-//            }
-//            return result;
-//    }
-    // END KGU#61 2016-03-22
-
     private void addError(Vector<DetectedError> errors, DetectedError error, int errorNo)
     {
     	// START KGU#239 2016-08-12: Enh. #231 + Code revision
-//            switch (errorNo)
-//            {
-//                    case 1:
-//                            if (Root.check1) errors.add(error);
-//                            break;
-//                    case 2:
-//                            if (Root.check2) errors.add(error);
-//                            break;
-//                    case 3:
-//                            if (Root.check3) errors.add(error);
-//                            break;
-//                    case 4:
-//                            if (Root.check4) errors.add(error);
-//                            break;
-//                    case 5:
-//                            if (Root.check5) errors.add(error);
-//                            break;
-//                    case 6:
-//                            if (Root.check6) errors.add(error);
-//                            break;
-//                    case 7:
-//                            if (Root.check7) errors.add(error);
-//                            break;
-//                    case 8:
-//                            if (Root.check8) errors.add(error);
-//                            break;
-//                    case 9:
-//                            if (Root.check9) errors.add(error);
-//                            break;
-//                    case 10:
-//                            if (Root.check10) errors.add(error);
-//                            break;
-//                    case 11:
-//                            if (Root.check11) errors.add(error);
-//                            break;
-//                    case 12:
-//                            if (Root.check12) errors.add(error);
-//                            break;
-//                    case 13:
-//                            if (Root.check13) errors.add(error);
-//                            break;
-//                    // START KGU#3 2015-11-03: New checks for enhanced FOR loop        
-//                    case 14:
-//                            if (Root.check14) errors.add(error);
-//                            break;
-//                    // END KGU#3 2015-11-03
-//                    // START KGU#2 2015-11-25: New checks for subroutine CALLs        
-//                    case 15:
-//                            if (Root.check15) errors.add(error);
-//                            break;
-//                    // END KGU#2 2015-11-25
-//                    // START KGU#78 2015-11-25: New checks for JUMP
-//                    case 16:
-//                            if (Root.check16) errors.add(error);
-//                            break;
-//                    // END KGU#78 2015-11-25
-//                    // START KGU#47 2015-11-28: New checks for PARALLEL
-//                    case 17:
-//                           if (Root.check17) errors.add(error);
-//                           break;
-//                    // END KGU#47 2015-11-28
-//                    // START KGU#47 2015-11-28: New checks for PARALLEL
-//                    case 18:
-//                           if (Root.check18) errors.add(error);
-//                           break;
-//                    case 19:
-//                        if (Root.check19) errors.add(error);
-//                        break;
-//                    // END KGU#239 2016-11-28
-//                    default:
-//                            errors.add(error);
-//                            break;
-//            }
         if (Root.check(errorNo))
         {
             errors.addElement(error);
@@ -3675,22 +2815,7 @@ public class Root extends Element {
             rootVars = vars.copy();
             StringList uncertainVars = new StringList();
 
-            // START KGU 2015-11-25: This was practically what getMethodName() does
-            //String rootText = getText().getLongString();
-            //Regex r;
-            
-            //int pos;
-            //
-            //pos = rootText.indexOf("(");
-            //if (pos!=-1) rootText=rootText.substring(0,pos);
-            //pos = rootText.indexOf("[");
-            //if (pos!=-1) rootText=rootText.substring(0,pos);
-            //pos = rootText.indexOf(":");
-            //if (pos!=-1) rootText=rootText.substring(0,pos);
-            //
-            //String programName = rootText.trim();
             String programName = getMethodName();
-            // END KGU 2015-11-25
 
             DetectedError error;
             

@@ -20,11 +20,12 @@
 
 package lu.fisch.structorizer.parsers;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
- *      Description:    Class to parse a pascal file.
+ *      Description:    Class to parse a Pascal file.
  *
  ******************************************************************************************************
  *
@@ -44,6 +45,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2016-05-04      KGU#194: Bugfix - parse() now with Charset argument
  *      Kay Gürtzig     2016-05-05/09   Issue #185: Import now copes with units and multiple routines per file
  *      Kay Gürtzig     2016-07-07      Enh. #185: Identification of Calls improved on parsing
+ *      Kay Gürtzig     2016-09-25      Method getPropertyMap() added for more generic keyword handling (Enh. #253)
  *
  ******************************************************************************************************
  *
@@ -62,9 +64,9 @@ package lu.fisch.structorizer.parsers;
 import java.io.*;
 import java.nio.*;
 import java.nio.charset.*;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Vector;
 
 import goldengine.java.*;
 import lu.fisch.utils.*;
@@ -73,7 +75,12 @@ import lu.fisch.structorizer.elements.*;
 
 import com.stevesoft.pat.*;  //http://www.javaregex.com/
 
- 
+/**
+ * Class to parse a Pascal (or Delphi 7, more precisely) file, generating a Structogram.
+ * Also (ab)used for some fundamental settings of Structorizer - which will have to be
+ * decomposed as soon as more languages (e.g. OBERON) are elected for import to Structorizer.
+ * @author Bob Fisch
+ */
 public class D7Parser implements GPMessageConstants
 {
 	// START KGU#165 2016-03-25: Once and for all: It should be a transparent choice, ...
@@ -84,6 +91,7 @@ public class D7Parser implements GPMessageConstants
 	// END KGU#165 2016-03-25
 	
 	// NOTE: Don't forget to add new keywords to method getAllProperties()!
+	// FIXME (#253): All these fields should be replaced by a static Hashmap!
 	public static String preAlt = "";
 	public static String postAlt = "";
 	public static String preCase = "";
@@ -991,18 +999,59 @@ public class D7Parser implements GPMessageConstants
 	 */
 	public static String[] getAllProperties()
 	{
-		String[] keywords = {
-				D7Parser.preAlt, D7Parser.postAlt,
-				D7Parser.preCase, D7Parser.postCase,
-				D7Parser.preFor, D7Parser.postFor, D7Parser.stepFor,
-				D7Parser.preForIn, D7Parser.postForIn,
-				D7Parser.preRepeat, D7Parser.postRepeat,
-				D7Parser.preWhile, D7Parser.postWhile,
-				D7Parser.preExit, D7Parser.preLeave, D7Parser.preReturn,
-				D7Parser.input, D7Parser.output
-				};
-		return keywords;
+		String[] props = new String[]{};
+		props = getPropertyMap(false).values().toArray(props);
+//		String[] keywords = {
+//			D7Parser.preAlt, D7Parser.postAlt,
+//			D7Parser.preCase, D7Parser.postCase,
+//			D7Parser.preFor, D7Parser.postFor, D7Parser.stepFor,
+//			D7Parser.preForIn, D7Parser.postForIn,
+//			D7Parser.preRepeat, D7Parser.postRepeat,
+//			D7Parser.preWhile, D7Parser.postWhile,
+//			D7Parser.preExit, D7Parser.preLeave, D7Parser.preReturn,
+//			D7Parser.input, D7Parser.output
+//		};
+//		return keywords;
+		return props;
 	}
 	// END KGU#163 2016-03-25
+	
+	// START KGU#258 2016-09-25: Enh. #253 (temporary workaround for the needed Hashmap)
+	/**
+	 * Returns a Hashmap mapping parser preference labels likes "preAlt" to the
+	 * configured parser preference keywords
+	 * @param includeAuxiliary - whether or not non-keyword settings (like "ignoreCase") are to be included
+	 * @return the hash table with the current settings
+	 */
+	// FIXME to be replaced by a static HashMap as substitution for the single fields
+	public static final HashMap<String, String> getPropertyMap(boolean includeAuxiliary)
+	{
+		HashMap<String, String> keywordMap = new HashMap<String, String>();
+		keywordMap.put("preAlt",     D7Parser.preAlt);
+		keywordMap.put("postAlt",    D7Parser.postAlt);
+		keywordMap.put("preCase",    D7Parser.preCase);
+		keywordMap.put("postCase",   D7Parser.postCase);
+		keywordMap.put("preFor",     D7Parser.preFor);
+		keywordMap.put("postFor",    D7Parser.postFor);
+		keywordMap.put("stepFor",    D7Parser.stepFor);
+		keywordMap.put("preForIn",   D7Parser.preForIn);
+		keywordMap.put("postForIn",  D7Parser.postForIn);
+		keywordMap.put("preWhile",   D7Parser.preWhile);
+		keywordMap.put("postWhile",  D7Parser.postWhile);
+		keywordMap.put("preRepeat",  D7Parser.preRepeat);
+		keywordMap.put("postRepeat", D7Parser.postRepeat);
+		keywordMap.put("preLeave",   D7Parser.preLeave);
+		keywordMap.put("preReturn",  D7Parser.preReturn);
+		keywordMap.put("preExit",    D7Parser.preExit);
+		keywordMap.put("input",      D7Parser.input);
+		keywordMap.put("output",     D7Parser.output);
+		// The following is important for the correct search
+		if (includeAuxiliary)
+		{
+			keywordMap.put("ignoreCase",  D7Parser.ignoreCase ? "true" : "false");
+		}
+		return keywordMap;
+	}
+	// END KGU#258 2016-09-25
 
 }

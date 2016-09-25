@@ -2617,7 +2617,7 @@ public abstract class Element {
         
 //        // START KGU 2016-01-13: Bugfix #104 - planned new approach to overcome that nasty keyword/string problem
 //        // It is also too simple, e.g. in cases like  jusqu'à test = 'o'  where a false string recognition would
-//        // avert the keyvword recognition. So both will have to be done simultaneously...
+//        // avert the keyword recognition. So both will have to be done simultaneously...
 //        for (int i=0; i < redundantMarkers.count(); i++)
 //        {
 //        	StringList markerTokens = Element.splitLexically(redundantMarkers.get(i), true);

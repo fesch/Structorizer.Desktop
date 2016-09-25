@@ -249,7 +249,7 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! ---> \"Diagram > Switch text/comments\".");
 	// END KGU#220 2016-07-27
 	public static final LangTextHolder error01_1 = new LangTextHolder("WARNING: No loop variable detected ...");
-	public static final LangTextHolder error01_2 = new LangTextHolder("WARNING: More than one loop variable detected ...");
+	public static final LangTextHolder error01_2 = new LangTextHolder("WARNING: More than one loop variable detected: «%»");
 	public static final LangTextHolder error01_3 = new LangTextHolder("You are not allowed to modify the loop variable «%» inside the loop!");
 	public static final LangTextHolder error02 = new LangTextHolder("No change of the variables in the condition detected. Possible endless loop ...");
 	public static final LangTextHolder error03_1= new LangTextHolder("The variable «%» has not yet been initialized!");

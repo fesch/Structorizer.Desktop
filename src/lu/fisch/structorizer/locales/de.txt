@@ -250,8 +250,8 @@ Menu.msgBrowseFailed.text=Anzeige von % im Browser gescheitert
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
 Menu.warning_1.text=ACHTUNG: TEXTE UND KOMMENTARE IN DER ANZEIGE VERTAUSCHT! → Menüpunkt "Diagramme > Tausche Text/Kommentare".
-Menu.error01_1.text=ACHTUNG: Keine Kontrollvariable gefunden!
-Menu.error01_2.text=ACHTUNG: Mehrere Kontrollvariablen gefunden!
+Menu.error01_1.text=ACHTUNG: Keine Kontrollvariable gefunden ...
+Menu.error01_2.text=ACHTUNG: Mehrere Kontrollvariablen gefunden: «%»
 Menu.error01_3.text=Es ist nicht zulässig, die Kontrollvariable «%» im Körper der Schleife zu verändern!
 Menu.error02.text=Es wurde keine Veränderung der Kontrollvariablen festgestellt. Wahrscheinlich handelt es sich um eine Endlosschleife ...
 Menu.error03_1.text=Die Variable «%» wurde nicht initialisiert!

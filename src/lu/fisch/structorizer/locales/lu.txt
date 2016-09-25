@@ -170,7 +170,7 @@ Menu.menuHelpAbout.text=Iwwert ...
 Menu.menuHelpUpdate.text=Update. ..
 // Error messages for analyser
 Menu.error01_1.text=WARNUNG: Keng Schläifvariabel fonnt
-Menu.error01_2.text=WARNUNG: Méi wei eng Schläifvariabel fonnt
+Menu.error01_2.text=WARNUNG: Méi wei eng Schläifvariabel fonnt: «%»
 Menu.error01_3.text=D'Schläifvariabel «%» dierf net geännert ginn!
 Menu.error02.text=Keng Variabelännerung an der Konditioun fonnt. Méiglech endlos Schläif ...
 Menu.error03_1.text=D'Variabel «%» ass nach net initialiséiert ginn!

@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.executor;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -92,6 +93,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016-09-17      Bugfix #246 (Boolean expressions) and issue #243 (more translations)
  *      Kay Gürtzig     2016.09.22      Issue #248: Workaround for Java 7 in Linux systems (parseUnsignedInt)
  *      Kay Gürtzig     2016.09.25      Bugfix #251: Console window wasn't involved in look and feel update
+ *      Kay Gürtzig     2016.09.25      Bugfix #254: parser keywords for CASE elements had been ignored
  *
  ******************************************************************************************************
  *
@@ -220,7 +222,6 @@ import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.elements.Forever;
 import lu.fisch.structorizer.gui.Diagram;
 import lu.fisch.structorizer.gui.IconLoader;
-import lu.fisch.structorizer.locales.LangDialog;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
@@ -2712,14 +2713,25 @@ public class Executor implements Runnable
 
 	private String stepCase(Case element)
 	{
+		// START KGU 2016-09-25: Bugfix #254
+		String[] parserKeys = new String[]{D7Parser.preCase, D7Parser.postCase};
+		// END KGU 2016-09-25
 		String result = new String();
 		try
 		{
 			StringList text = element.getText();
-			// START KGU 2015-11-09 New unified conversion strategy ahead, so use Structorizer syntax
-			//String expression = text.get(0) + "==";
-			String expression = text.get(0) + " = ";
-			// END KGU 2015-11-09
+			// START KGU#259 2016-09-25: Bugfix #254
+			//String expression = text.get(0) + " = ";
+			StringList tokens = Element.splitLexically(text.get(0), true);
+			for (String key : parserKeys)
+			{
+				if (!key.trim().isEmpty())
+				{
+					tokens.removeAll(Element.splitLexically(key, false), !D7Parser.ignoreCase);
+				}		
+			}
+			String expression = tokens.concatenate() + " = ";
+			// END KGU#259 2016-09-25
 			boolean done = false;
 			int last = text.count() - 1;
 			if (text.get(last).trim().equals("%"))
@@ -2749,7 +2761,18 @@ public class Executor implements Runnable
 					//go = n.toString().equals("true");
 					for (int c = 0; !go && c < constants.length; c++)
 					{
-						String test = convert(expression + constants[c]);
+						// START KGU#259 2016-09-25: Bugfix #254
+						//String test = convert(expression + constants[c]);
+						tokens = Element.splitLexically(constants[c], true);
+						for (String key : parserKeys)
+						{
+							if (!key.trim().isEmpty())
+							{
+								tokens.removeAll(Element.splitLexically(key, false), !D7Parser.ignoreCase);
+							}		
+						}
+						String test = convert(expression + tokens.concatenate());
+						// END KGU#259 2016-09-25
 						Object n = interpreter.eval(test);
 						go = n.toString().equals("true");
 					}
