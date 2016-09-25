@@ -1076,7 +1076,7 @@ public class For extends Element implements ILoop {
 	public ForLoopStyle classifyStyle()
 	{
 		ForLoopStyle style = ForLoopStyle.FREETEXT;
-		// START KGU#256 2016-09-25: Bugfix #251 - we will level all assignment symbols here
+		// START KGU#256 2016-09-25: Bugfix #252 - we will level all assignment symbols here
 		//String thisText = this.getText().getLongString().trim();
 		String thisText = this.getText().getLongString().trim().replace(":=", "<-");
 		// END KGU#256 2016-09-25
@@ -1084,7 +1084,7 @@ public class For extends Element implements ILoop {
 		
 		if (D7Parser.ignoreCase)
 		{
-			// START KGU#256 2016-09-25: Bugfix #251 - we will level all assignment symbols here
+			// START KGU#256 2016-09-25: Bugfix #252 - we will level all assignment symbols here
 			//if (thisText.equalsIgnoreCase(this.composeForClause()) ||
 			//		thisText.equalsIgnoreCase(this.composeForClause(true)))
 			if (thisText.equalsIgnoreCase(this.composeForClause().replace(":=", "<-")) ||
@@ -1100,7 +1100,7 @@ public class For extends Element implements ILoop {
 		}
 		else
 		{
-			// START KGU#256 2016-09-25: Bugfix #251 - we will level all assignment symbols here
+			// START KGU#256 2016-09-25: Bugfix #252 - we will level all assignment symbols here
 			//if (thisText.equals(this.composeForClause()) ||
 			//		thisText.equals(this.composeForClause(true)))
 			if (thisText.equals(this.composeForClause().replace(":=", "<-")) ||
