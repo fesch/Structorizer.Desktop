@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.executor;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -89,6 +90,10 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.07.25      Issue #201: Look-and-Feel update, Strack trace level numbers (KGU#210)
  *      Kay Gürtzig     2016-07-27      KGU#197: Further (chiefly error) messages put under language support
  *                                      Enh. #137: Error messages now also written to text window output
+ *      Kay Gürtzig     2016-09-17      Bugfix #246 (Boolean expressions) and issue #243 (more translations)
+ *      Kay Gürtzig     2016.09.22      Issue #248: Workaround for Java 7 in Linux systems (parseUnsignedInt)
+ *      Kay Gürtzig     2016.09.25      Bugfix #251: Console window wasn't involved in look and feel update
+ *      Kay Gürtzig     2016.09.25      Bugfix #254: parser keywords for CASE elements had been ignored
  *
  ******************************************************************************************************
  *
@@ -217,7 +222,6 @@ import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.elements.Forever;
 import lu.fisch.structorizer.gui.Diagram;
 import lu.fisch.structorizer.gui.IconLoader;
-import lu.fisch.structorizer.locales.LangDialog;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
@@ -273,7 +277,7 @@ public class Executor implements Runnable
 			}
 			int res = JOptionPane.showOptionDialog(diagram,
 					   errText,
-					   "Question",
+					   mySelf.control.msgTitleQuestion.getText(),
 					   JOptionPane.YES_NO_OPTION,
 					   JOptionPane.QUESTION_MESSAGE,
 					   null,null,null);
@@ -350,6 +354,9 @@ public class Executor implements Runnable
 		if (mySelf != null)
 		{
 			mySelf.control.updateLookAndFeel();
+			// START KGU#255 2016-09-25: Bugfix #251
+			SwingUtilities.updateComponentTreeUI(mySelf.console);
+			// END KGU#255 2016-09-25
 		}
 	}
 	// END KGU#210/KGU#234 2016-08-08
@@ -607,7 +614,7 @@ public class Executor implements Runnable
 				Thread.sleep(delay);
 			} catch (InterruptedException e)
 			{
-				System.out.println(e.getMessage());
+				System.err.println(e.getMessage());
 			}
 		}
 		waitForNext();
@@ -779,9 +786,10 @@ public class Executor implements Runnable
 						// START KGU#160 2016-04-26: Issue #137 - document the arguments
 						this.console.writeln("*** Argument <" + in + "> = " + this.prepareValueForDisplay(arguments[i]), Color.CYAN);
 						// END KGU#160 2016-04-26
-											} catch (EvalError ex)
+					} catch (EvalError ex)
 					{
-						result = ex.getMessage();
+						result = ex.getLocalizedMessage();
+						if (result == null) result = ex.getMessage();
 						break;
 					}
 				// START KGU#2 (#9) 2015-11-13: If root was called then just assign the arguments
@@ -794,7 +802,8 @@ public class Executor implements Runnable
 					}
 					catch (EvalError ex)
 					{
-						result = ex.getMessage();
+						result = ex.getLocalizedMessage();
+						if (result == null) result = ex.getMessage();
 						break;
 					}
 				}
@@ -830,6 +839,7 @@ public class Executor implements Runnable
 			// MODIFIED BY GENNARO DONNARUMMA, ADDED ARRAY ERROR MSG
 			
 			String modifiedResult = result;
+			// FIXME (KGU): If the interpreter happens to provide localized messages then this won't work anymore!
 			if (result.contains("Not an array"))
 			{
 				modifiedResult = modifiedResult.concat(" or the index "
@@ -845,7 +855,7 @@ public class Executor implements Runnable
 			//		JOptionPane.ERROR_MESSAGE);
 			if (!isErrorReported)
 			{
-				JOptionPane.showMessageDialog(diagram, result, "Error",
+				JOptionPane.showMessageDialog(diagram, result, control.msgTitleError.getText(),
 						JOptionPane.ERROR_MESSAGE);
 				// START KGU#160 2016-07-27: Issue #137 - also log the result to the console
 				this.console.writeln("*** " + result, Color.RED);
@@ -1235,7 +1245,7 @@ public class Executor implements Runnable
 				Thread.sleep(delay);
 			} catch (InterruptedException e)
 			{
-				System.out.println(e.getMessage());
+				System.err.println(e.getMessage());
 			}
 		}
 		return result;
@@ -1259,7 +1269,7 @@ public class Executor implements Runnable
 				Thread.sleep(delay);
 			} catch (InterruptedException e)
 			{
-				System.out.println(e.getMessage());
+				System.err.println(e.getMessage());
 			}
 		}
 		return result;
@@ -1334,7 +1344,7 @@ public class Executor implements Runnable
 			// END KGU#57 2015-11-07
 		} catch (EvalError ex)
 		{
-			System.out.println(ex.getMessage());
+			System.err.println(ex.getMessage());
 		}
 	}
 
@@ -2007,7 +2017,8 @@ public class Executor implements Runnable
 				//END KGU#156 2016-03-11
 			} catch (EvalError ex)
 			{
-				result = ex.getMessage();
+				result = ex.getLocalizedMessage();
+				if (result == null) result = ex.getMessage();
 			}
 			i++;
 			// Among the lines of a single instruction element there is no further breakpoint check!
@@ -2070,7 +2081,8 @@ public class Executor implements Runnable
 				// END KGU#117 2016-03-08
 			} catch (EvalError ex)
 			{
-				result = ex.getMessage();
+				result = ex.getLocalizedMessage();
+				if (result == null) result = ex.getMessage();
 			}
 
 			i++;
@@ -2130,16 +2142,36 @@ public class Executor implements Runnable
 					int nLevels = 1;
 					if (tokens.count() > 1)
 					{
+						// START KGU#252 2016-09-22: Issue #248 - Java 7 workaround
+						String errorMessage = null;
+						// END KGU#252 2016-09-22
 						try {
-							nLevels = Integer.parseUnsignedInt(tokens.get(1));
+							// START KGU#252 2016-09-22: Issue #248 - Java 7 workaround
+							//nLevels = Integer.parseUnsignedInt(tokens.get(1));
+							nLevels = Integer.parseInt(tokens.get(1));
+							if (nLevels <= 0)
+							{
+								errorMessage = tokens.get(1) + " < 1";
+							}
+							// END KGU#252 2016-09-22
 						}
 						catch (NumberFormatException ex)
 						{
-							// START KGU#197 2016-07-27: Localization support
+							// START KGU#197 2016-07-27: Localization support (updated 2016-09-17)
 							//result = "Illegal leave argument: " + ex.getMessage();
-							result = control.msgIllegalLeave.getText().replace("%1",ex.getMessage());
+							errorMessage = ex.getLocalizedMessage();
+							if (errorMessage == null) errorMessage = ex.getMessage();
+							errorMessage = ex.getClass().getSimpleName() + " " + errorMessage;
+							// START KGU#252 2016-09-22: Issue #248: Java 7 workaround
+							//result = control.msgIllegalLeave.getText().replace("%1", errorMessage);
+							// END KGU#252 2016-09-22
 							// END KGU#197 2016-07-27
 						}
+						// START KGU#252 2016-09-22: Issue #248: Java 7 workaround
+						if (errorMessage != null) {
+							result = control.msgIllegalLeave.getText().replace("%1", errorMessage);
+						}
+						// END KGU#252 2016-09-22
 					}
 					this.leave += nLevels;
 					done = true;
@@ -2172,10 +2204,11 @@ public class Executor implements Runnable
 					}
 					catch (EvalError ex)
 					{
-						// START KGU#197 2016-07-27: More localization support
+						// START KGU#197 2016-07-27: More localization support (Updated 32016-09-17)
 						//result = "Wrong exit value: " + ex.getMessage();
-						result = control.msgWrongExit.getText().replace("%1",
-								ex.getMessage());
+						String exMessage = ex.getLocalizedMessage();
+						if (exMessage == null) exMessage = ex.getMessage();
+						result = control.msgWrongExit.getText().replace("%1", exMessage);
 						// END KGU#197 2016-07-27
 					}
 					if (result.isEmpty())
@@ -2201,7 +2234,8 @@ public class Executor implements Runnable
 				}
 			} catch (Exception ex)
 			{
-				result = ex.getMessage();
+				result = ex.getLocalizedMessage();
+				if (result == null) result = ex.getMessage();
 			}
 			i++;
 		}
@@ -2360,7 +2394,8 @@ public class Executor implements Runnable
 				catch (Exception e)
 				{
 					// START KGU#141 2016-01-16: We MUST raise the error here.
-					result = e.getMessage();
+					result = e.getLocalizedMessage();
+					if (result == null) result = e.getMessage();
 					// END KGU#141 2016-01-16
 				}
 			}
@@ -2614,8 +2649,10 @@ public class Executor implements Runnable
 					}
 				} catch (EvalError ex)
 				{
+					String exMessage = ex.getLocalizedMessage();
+					if (exMessage == null) exMessage = ex.getMessage();
 					result = result + (!result.isEmpty() ? "\n" : "") +
-							"PARAM " + (p+1) + ": " + ex.getMessage();
+							"PARAM " + (p+1) + ": " + exMessage;
 				}
 			}
 			// If this element is of class Call and the extracted function name
@@ -2676,14 +2713,25 @@ public class Executor implements Runnable
 
 	private String stepCase(Case element)
 	{
+		// START KGU 2016-09-25: Bugfix #254
+		String[] parserKeys = new String[]{D7Parser.preCase, D7Parser.postCase};
+		// END KGU 2016-09-25
 		String result = new String();
 		try
 		{
 			StringList text = element.getText();
-			// START KGU 2015-11-09 New unified conversion strategy ahead, so use Structorizer syntax
-			//String expression = text.get(0) + "==";
-			String expression = text.get(0) + " = ";
-			// END KGU 2015-11-09
+			// START KGU#259 2016-09-25: Bugfix #254
+			//String expression = text.get(0) + " = ";
+			StringList tokens = Element.splitLexically(text.get(0), true);
+			for (String key : parserKeys)
+			{
+				if (!key.trim().isEmpty())
+				{
+					tokens.removeAll(Element.splitLexically(key, false), !D7Parser.ignoreCase);
+				}		
+			}
+			String expression = tokens.concatenate() + " = ";
+			// END KGU#259 2016-09-25
 			boolean done = false;
 			int last = text.count() - 1;
 			if (text.get(last).trim().equals("%"))
@@ -2713,7 +2761,18 @@ public class Executor implements Runnable
 					//go = n.toString().equals("true");
 					for (int c = 0; !go && c < constants.length; c++)
 					{
-						String test = convert(expression + constants[c]);
+						// START KGU#259 2016-09-25: Bugfix #254
+						//String test = convert(expression + constants[c]);
+						tokens = Element.splitLexically(constants[c], true);
+						for (String key : parserKeys)
+						{
+							if (!key.trim().isEmpty())
+							{
+								tokens.removeAll(Element.splitLexically(key, false), !D7Parser.ignoreCase);
+							}		
+						}
+						String test = convert(expression + tokens.concatenate());
+						// END KGU#259 2016-09-25
 						Object n = interpreter.eval(test);
 						go = n.toString().equals("true");
 					}
@@ -2755,7 +2814,8 @@ public class Executor implements Runnable
 			}
 		} catch (EvalError ex)
 		{
-			result = ex.getMessage();
+			result = ex.getLocalizedMessage();
+			if (result == null) result = ex.getMessage();
 		}
 		
 		return result;
@@ -2793,14 +2853,14 @@ public class Executor implements Runnable
 
 			//System.out.println("C=  " + interpreter.get("C"));
 			//System.out.println("IF: " + s);
-			Object n = interpreter.eval(s);
+			Object cond = interpreter.eval(s);
 			//System.out.println("Res= " + n);
-			if (n == null)
+			if (cond == null || !(cond instanceof Boolean))
 			{
 				// START KGU#197 2016-07-27: Localization support
 				//result = "<" + s
 				//		+ "> is not a correct or existing expression.";
-				result = control.msgInvalidExpr.getText().replace("%1", s);
+				result = control.msgInvalidBool.getText().replace("%1", s);
 				// END KGU#197 2016-07-27
 			}
 			// if(getExec(s).equals("OK"))
@@ -2811,7 +2871,7 @@ public class Executor implements Runnable
 				//END KGU#156 2016-03-11
 				
 				Subqueue branch;
-				if (n.toString().equals("true"))
+				if (cond.toString().equals("true"))
 				{
 					branch = element.qTrue;
 				}
@@ -2851,7 +2911,8 @@ public class Executor implements Runnable
 			}
 		} catch (EvalError ex)
 		{
-			result = ex.getMessage();
+			result = ex.getLocalizedMessage();
+			if (result == null) result = ex.getMessage();
 		}
 		return result;
 	}
@@ -2896,12 +2957,12 @@ public class Executor implements Runnable
 			//int cw = 0;
 			Object cond = interpreter.eval(convertStringComparison(condStr));
 
-			if (cond == null)
+			if (cond == null || !(cond instanceof Boolean))
 			{
 				// START KGU#197 2016-07-27: Localization support
 				//result = "<" + condStr
 				//		+ "> is not a correct or existing expression.";
-				result = control.msgInvalidExpr.getText().replace("%1", condStr);
+				result = control.msgInvalidBool.getText().replace("%1", condStr);
 				// END KGU#197 2016-07-27
 			} else
 			{
@@ -3047,8 +3108,8 @@ public class Executor implements Runnable
 			// END KGU#150 2016-04-03
 
 			//int cw = 0;
-			Object n = interpreter.eval(condStr);
-			if (n == null)
+			Object cond = interpreter.eval(condStr);
+			if (cond == null)
 			{
 				// START KGU#197 2016-07-27: Localization support
 				//result = "<" + condStr
@@ -3085,14 +3146,14 @@ public class Executor implements Runnable
 						//cw++;
 						element.executed = true;
 					}
-					n = interpreter.eval(convertStringComparison(condStr));
-					if (n == null)
+					cond = interpreter.eval(convertStringComparison(condStr));
+					if (cond == null || !(cond instanceof Boolean))
 					{
 						// START KGU#197 2016-07-27: Localization support
 						//result = "<"
 						//		+ condStr
 						//		+ "> is not a correct or existing expression.";
-						result = control.msgInvalidExpr.getText().replace("%1", condStr);
+						result = control.msgInvalidBool.getText().replace("%1", condStr);
 						// END KGU#197 2016-07-27
 					}
 
@@ -3112,7 +3173,7 @@ public class Executor implements Runnable
 				//} while (!(n.toString().equals("true") && result.equals("") && (stop == false)));
 				// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
 				//} while (!(n.toString().equals("true")) && result.equals("") && (stop == false))
-				} while (!(n.toString().equals("true")) && result.equals("") && (stop == false) &&
+				} while (!(cond.toString().equals("true")) && result.equals("") && (stop == false) &&
 						!returned && leave == 0);
 				// END KGU#77/KGU#78 2015-11-25
 				// END KGU#70 2015-11-09
@@ -3537,9 +3598,14 @@ public class Executor implements Runnable
 						// ...and then of course wipe the remaining requested levels
 						leave = 0;
 						// As it is not only a user syntax error but also a flaw in the Structorizer mechanisms we better report it
-						JOptionPane.showMessageDialog(diagram, "Uncaught attempt to jump out of a parallel thread:\n\n" + 
-								instr.getText().getText().replace("\n",  "\n\t") + "\n\nThread killed!",
-								"Parallel Execution Problem", JOptionPane.WARNING_MESSAGE);
+						// START KGU#247 2016-09-17: Issue #243
+						//JOptionPane.showMessageDialog(diagram, "Uncaught attempt to jump out of a parallel thread:\n\n" + 
+						//		instr.getText().getText().replace("\n",  "\n\t") + "\n\nThread killed!",
+						//		"Parallel Execution Problem", JOptionPane.WARNING_MESSAGE);
+						JOptionPane.showMessageDialog(diagram, control.msgJumpOutParallel.getText().replace("%", "\n\n" + 
+								instr.getText().getText().replace("\n",  "\n\t") + "\n\n"),
+								control.msgTitleParallel.getText(), JOptionPane.WARNING_MESSAGE);
+						// END KGU#247 2016-09-17
 					}
 					// END KGU#78 2015-11-25
 				}                

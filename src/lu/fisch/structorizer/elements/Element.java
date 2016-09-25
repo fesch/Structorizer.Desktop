@@ -66,6 +66,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.29      Issue #211: Modification in writeOutVariables() for E_TOGGLETC mode.
  *                                      Enh. #128: New mode E_COMMENTSPLUSTEXT
  *      Kay Gürtzig     2016.08.02      Enh. #215: Infrastructure for conditional breakpoints added.
+ *      Kay Gürtzig     2016.09.21      Issue #248: API of setBreakTriggerCount() modified to prevent negative values
  *
  ******************************************************************************************************
  *
@@ -169,7 +170,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.25";
+	public static String E_VERSION = "3.25-01";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -1177,11 +1178,19 @@ public abstract class Element {
 	}
 
 	/**
-	 * Sets a new trigger count value (to be compared with the execution counter)
+	 * Sets a new trigger count value (to be compared with the execution counter).
+	 * Trigger value must not be negative. Otherwise it is ignored and the method
+	 * returns false.
 	 * @param newTriggerCount - new trigger (0 means no dependency of execution counter)
 	 */
-	public void setBreakTriggerCount(int newTriggerCount)
+	// START KGU#252 2016-09-21: Issue #248 (Linux workaround)
+	//public void setBreakTriggerCount(int newTriggerCount)
+	public boolean setBreakTriggerCount(int newTriggerCount)
+	// END KGU#252 2016-09-21
 	{
+		// START KGU#252 2016-09-21: Issue #248 (Linux workaround)
+		if (newTriggerCount < 0) return false;
+		// END KGU#252 2016-09-21
 		// After execution has begun we must face the existence of recursion clones
 		// So change must be held in a central map rather tahn being stored in an
 		// arbitrary clone of the element.. 
@@ -1196,6 +1205,9 @@ public abstract class Element {
 		{
 			this.breakTriggerCount = newTriggerCount;
 		}
+		// START KGU#252 2016-09-21: Issue #248 (Linux workaround)
+		return true;
+		// END KGU#252 2016-09-21
 	}
 	// END KGU#213 2016-08-01
 	
@@ -1438,13 +1450,12 @@ public abstract class Element {
 			{
 				Rect squareDot = markerRect.copy();
 				int height = markerRect.bottom - markerRect.top;
-				int width = markerRect.right - markerRect.left;
 				squareDot.right = squareDot.left + height;
-				for (int i = 0; i < width/(2 * height); i++)
+				while (squareDot.right <= markerRect.right)
 				{
 					_canvas.fillRect(squareDot);
-					squareDot.left += 2* height;
-					squareDot.right += 2* height;
+					squareDot.left += 2*height;
+					squareDot.right += 2*height;
 				}
 			}
 			else
@@ -2606,7 +2617,7 @@ public abstract class Element {
         
 //        // START KGU 2016-01-13: Bugfix #104 - planned new approach to overcome that nasty keyword/string problem
 //        // It is also too simple, e.g. in cases like  jusqu'à test = 'o'  where a false string recognition would
-//        // avert the keyvword recognition. So both will have to be done simultaneously...
+//        // avert the keyword recognition. So both will have to be done simultaneously...
 //        for (int i=0; i < redundantMarkers.count(); i++)
 //        {
 //        	StringList markerTokens = Element.splitLexically(redundantMarkers.get(i), true);

@@ -38,6 +38,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.11.28      check17 (KGU#47) for inconsistency risks in Parallel sections added
  *      Kay Gürtzig     2016.08.12      Enh. #231: check18 and check19 added (identifier collisions),
  *                                      checkbox management reorganised with arrays for easier maintenance
+ *      Kay Gürtzig     2016.09.21      Enh. #249: check20 added (subroutine syntax)
+ *      Kay Gürtzig     2016.09.22      checkboxes index mapping modified, duplicate entries removed from
+ *                                      checkboxOrder, order of checkboxes modified
  *
  ******************************************************************************************************
  *
@@ -79,13 +82,25 @@ public class AnalyserPreferences extends LangDialog {
 		"Check for incorrect JUMP element usage.",					// 16
 		"Check for inconsistency risks in PARALLEL sections.",		// 17
 		"Check that identifiers don't differ only by upper/lower case.",
-		"Check if an identifier might collide with reserved words."	// 19
+		"Check if an identifier might collide with reserved words.",// 19
+		"Check that a subroutine header has a parameter list."		// 20
 		// Just append the descriptions for new check types here and insert their
 		// numbers at the appropriate place in array checkboxOrder below.
+		// DON'T FORGET to add a new entry to Root.analyserChecks for every
+		// text added here (and of course the checking code itself)!
 	};
-	// The order in which the checks (numbered from 1) are to be presented
+	// The order in which the checks (numbering starts with 1) are to be presented
 	private static final int[] checkboxOrder = {
-		1, 14, 2, 3, 4, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 7, 9, 18, 19, 5, 6, 12
+		// instructions, alternatives
+		3, 10, 11, 8, 4,
+		// loops
+		1, 14, 2,
+		// functions and calls
+		20, 13,	15,
+		// jumps and parallel sections
+		16, 17,
+		// identifiers and naming conventions
+		7, 9, 18, 19, /*LUX/MEN*/ 5, 6, 12
 	};
 			
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
@@ -121,7 +136,10 @@ public class AnalyserPreferences extends LangDialog {
 //	public JCheckBox check18;
 //	public JCheckBox check19;
 //	// END KGU#239 2016-08-12
-	public JCheckBox[] checkboxes = new JCheckBox[checkCaptions.length];
+	// START KGU 2016-09-22: Dummy entry at index 0 for more consistent error numbering
+	//public JCheckBox[] checkboxes = new JCheckBox[checkCaptions.length];
+	public JCheckBox[] checkboxes = new JCheckBox[checkCaptions.length+1];
+	// END KGU 2016-09-22
 	private JPanel buttonBar;
 	protected JButton okButton;
 	// JFormDesigner - End of variables declaration  //GEN-END:variables
@@ -178,10 +196,17 @@ public class AnalyserPreferences extends LangDialog {
 //		check18 = new JCheckBox();
 //		check19 = new JCheckBox();
 //		// END KGU#239 2016-08-12
-		for (int i = 0; i < checkboxes.length; i++)
+		// START KGU 2016-09-22: New dummy entry at index position 0
+		//for (int i = 0; i < checkboxes.length; i++)
+		checkboxes[0] = null;
+		for (int i = 1; i < checkboxes.length; i++)
+		// END KGU 2016-09-22
 		{
 			checkboxes[i] = new JCheckBox();
-			checkboxes[i].setText(checkCaptions[i]);
+			// START KGU 2016-09-22: New dummy entry at index position 0
+			//checkboxes[i].setText(checkCaptions[i]);
+			checkboxes[i].setText(checkCaptions[i-1]);
+			// END KGU 2016-09-22
 		}
 		buttonBar = new JPanel();
 		okButton = new JButton();
@@ -207,7 +232,10 @@ public class AnalyserPreferences extends LangDialog {
 			
 			//======== contentPanel ========
 			{
-				contentPanel.setLayout(new GridLayout(checkboxes.length, 1));
+				// START KGU 2016-09-22: New dummy entry at index position 0
+				//contentPanel.setLayout(new GridLayout(checkboxes.length, 1));
+				contentPanel.setLayout(new GridLayout(checkboxes.length-1, 1));
+				// END KGU 2016-09-22
 
 //				//---- check1 ----
 //				check1.setText("Check for modified loop variable.");
@@ -292,7 +320,10 @@ public class AnalyserPreferences extends LangDialog {
 //				// END KGU#239 2016-08-12
 				for (int i = 0; i < checkboxOrder.length; i++)
 				{
-					contentPanel.add(checkboxes[checkboxOrder[i]-1]);
+					// START KGU 2016-09-22: New dummy entry at index position 0
+					//contentPanel.add(checkboxes[checkboxOrder[i]-1]);
+					contentPanel.add(checkboxes[checkboxOrder[i]]);
+					// END KGU 2016-09-22
 				}
 				
 			}

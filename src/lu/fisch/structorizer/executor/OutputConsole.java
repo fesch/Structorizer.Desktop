@@ -34,8 +34,9 @@ package lu.fisch.structorizer.executor;
  *      ------			----			-----------
  *      Kay Gürtzig     2016.04.08      First Issue (implementing enhancement request #137 / KGU#160)
  *      Kay Gürtzig     2016.04.12      Functionality accomplished
- *      Kay Gürtzig     2016-04-25      Scrolling to last line ensured
- *      Kay Gürtzig     2016-04-26      Converted to JTextPane in order to allow styled output
+ *      Kay Gürtzig     2016.04.25      Scrolling to last line ensured
+ *      Kay Gürtzig     2016.04.26      Converted to JTextPane in order to allow styled output
+ *      Kay Gürtzig     2016.09.25      Bugfix #251 averting Nimbus disrespect of panel settings 
  *
  ******************************************************************************************************
  *
@@ -51,6 +52,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.UIDefaults;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
@@ -85,7 +87,15 @@ public class OutputConsole extends JFrame {
     	this.setIconImage(IconLoader.ico004.getImage());
     	
     	textPane = new JTextPane();
-    	textPane.setBackground(Color.BLACK);
+    	// START KGU#255 2016-09-25: Bugfix #251 background setting diddn't work with Nimbus
+    	//textPane.setBackground(Color.BLACK);
+    	Color bgColor = Color.BLACK;
+    	UIDefaults defaults = new UIDefaults();
+    	defaults.put("TextPane[Enabled].backgroundPainter", bgColor);
+    	textPane.putClientProperty("Nimbus.Overrides", defaults);
+    	textPane.putClientProperty("Nimbus.Overrides.InheritDefaults", true);
+    	textPane.setBackground(bgColor);
+    	// END KGU#255 2016-09-25
     	textPane.setForeground(Color.WHITE);
     	JScrollPane scrText = new JScrollPane(textPane);
     	doc = textPane.getStyledDocument();
@@ -118,17 +128,7 @@ public class OutputConsole extends JFrame {
      */
     public void write(String _text)
     {
-    	try {
-			this.doc.insertString(doc.getLength(), _text, null);
-		} catch (BadLocationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    	// Scroll to end (if there is an easier way, I just didn't find it).
-    	Rectangle rect = this.textPane.getBounds();
-    	rect.y = rect.height - 1;
-    	rect.height = 1;
-    	this.textPane.scrollRectToVisible(rect);
+    	write(_text, textPane.getForeground());
     }
 
     /**
@@ -141,11 +141,11 @@ public class OutputConsole extends JFrame {
     public void write(String _text, Color _colour)
     {
     	try {
-			this.doc.insertString(doc.getLength(), _text, doc.getStyle(_colour.toString()));
-		} catch (BadLocationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+    		this.doc.insertString(doc.getLength(), _text, doc.getStyle(_colour.toString()));
+    	} catch (BadLocationException e) {
+    		// TODO Auto-generated catch block
+    		e.printStackTrace();
+    	}
     	// Scroll to end (if there is an easier way, I just didn't find it).
     	Rectangle rect = this.textPane.getBounds();
     	rect.y = rect.height - 1;
@@ -181,6 +181,5 @@ public class OutputConsole extends JFrame {
             }
         });
     }
-	
-	
+    
 }

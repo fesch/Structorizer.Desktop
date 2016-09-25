@@ -46,10 +46,12 @@
  *
  *      Revision List
  *
- *      Author          Date                Description
- *      ------		----                -----------
- *      Wang Lei        2010.05.14          First Issue
- *      Zijun Ke        2015.10.29          Several additions
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      Wang Lei        2010.05.14  First Issue
+ *      Zijun Ke        2015.10.29  Several additions
+ *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
  *
  ******************************************************************************************************
  *
@@ -148,19 +150,19 @@ Menu.menuPreferencesParser.text=解析器 ...
 Menu.menuPreferencesAnalyser.text=分析器 ...
 Menu.menuPreferencesExport.text=导出 ...
 Menu.menuPreferencesLanguage.text=语言
-Menu.menuPreferencesLanguageEnglish.text=英语
-Menu.menuPreferencesLanguageGerman.text=德语
-Menu.menuPreferencesLanguageFrench.text=法语
-Menu.menuPreferencesLanguageDutch.text=荷兰语
-Menu.menuPreferencesLanguageLuxemburgish.text=卢森堡语
-Menu.menuPreferencesLanguageSpanish.text=西班牙语
-Menu.menuPreferencesLanguagePortugalBrazil.text=葡萄牙语（巴西）
-Menu.menuPreferencesLanguageItalian.text=意大利语
-Menu.menuPreferencesLanguageSimplifiedChinese.text=简体中文
-Menu.menuPreferencesLanguageTraditionalChinese.text=繁体中文
-Menu.menuPreferencesLanguageCzech.text=捷克语
-Menu.menuPreferencesLanguageRussian.text=俄罗斯语
-Menu.menuPreferencesLanguagePolish.text=波兰语
+Menu.menuPreferencesLanguageItems.en.text=英语
+Menu.menuPreferencesLanguageItems.de.text=德语
+Menu.menuPreferencesLanguageItems.fr.text=法语
+Menu.menuPreferencesLanguageItems.nl.text=荷兰语
+Menu.menuPreferencesLanguageItems.lu.text=卢森堡语
+Menu.menuPreferencesLanguageItems.es.text=西班牙语
+Menu.menuPreferencesLanguageItems.pt_br.text=葡萄牙语（巴西）
+Menu.menuPreferencesLanguageItems.it.text=意大利语
+Menu.menuPreferencesLanguageItems.zh-cn.text=简体中文
+Menu.menuPreferencesLanguageItems.zh-tw.text=繁体中文
+Menu.menuPreferencesLanguageItems.cz.text=捷克语
+Menu.menuPreferencesLanguageItems.ru.text=俄罗斯语
+Menu.menuPreferencesLanguageItems.pl.text=波兰语
 Menu.menuPreferencesLookAndFeel.text=外观
 Menu.menuPreferencesSave.text=所有偏好设置 ...
 Menu.menuPreferencesSaveAll.text=保存
@@ -173,7 +175,7 @@ Menu.menuHelpAbout.text=关于 ...
 Menu.menuHelpUpdate.text=更新 ...
 // Error messages for analyser
 Menu.error01_1.text=WARNING: 未检测到循环变量 ...
-Menu.error01_2.text=WARNING: 检测到多于一个循环变量 ...
+Menu.error01_2.text=WARNING: 检测到多于一个循环变量: «%»
 Menu.error01_3.text=循环体内不允许修改循环变量！
 Menu.error02.text=检测到循环条件中未更改循环变量, 可能导致死循环 ...
 Menu.error03_1.text=变量未初始化！
@@ -196,19 +198,19 @@ Menu.error13_1.text=你的函数没有任何返回值！
 Menu.error13_2.text=你的函数可能没有返回值！
 
 -----[ AnalyserPreferences ]-----
-AnalyserPreferences.checkboxes.0.text=检查被修改的循环变量。
-AnalyserPreferences.checkboxes.1.text=检查无限循环(尽可能检测！)
-AnalyserPreferences.checkboxes.2.text=检查未初始化的变量。
-AnalyserPreferences.checkboxes.3.text=检查不正确的使用IF语句。
-AnalyserPreferences.checkboxes.4.text=检查大写的变量名。(LUX/MEN)
-AnalyserPreferences.checkboxes.5.text=检查大写的程序名/子程序名。(LUX/MEN)
-AnalyserPreferences.checkboxes.6.text=检查有效的标识符。
-AnalyserPreferences.checkboxes.7.text=检查条件中的赋值。
-AnalyserPreferences.checkboxes.8.text=检查程序名/子程序名不等于其他标识符。
-AnalyserPreferences.checkboxes.9.text=检查带多个命令的指令。
-AnalyserPreferences.checkboxes.10.text=检查赋值错误。
-AnalyserPreferences.checkboxes.11.text=检查标准化的参数名。(LUX/MEN)
-AnalyserPreferences.checkboxes.12.text=检查函数中是否返回结果。
+AnalyserPreferences.checkboxes.1.text=检查被修改的循环变量。
+AnalyserPreferences.checkboxes.2.text=检查无限循环(尽可能检测！)
+AnalyserPreferences.checkboxes.3.text=检查未初始化的变量。
+AnalyserPreferences.checkboxes.4.text=检查不正确的使用IF语句。
+AnalyserPreferences.checkboxes.5.text=检查大写的变量名。(LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=检查大写的程序名/子程序名。(LUX/MEN)
+AnalyserPreferences.checkboxes.7.text=检查有效的标识符。
+AnalyserPreferences.checkboxes.8.text=检查条件中的赋值。
+AnalyserPreferences.checkboxes.9.text=检查程序名/子程序名不等于其他标识符。
+AnalyserPreferences.checkboxes.10.text=检查带多个命令的指令。
+AnalyserPreferences.checkboxes.11.text=检查赋值错误。
+AnalyserPreferences.checkboxes.12.text=检查标准化的参数名。(LUX/MEN)
+AnalyserPreferences.checkboxes.13.text=检查函数中是否返回结果。
 AnalyserPreferences.okButton.text=确定
 
 
@@ -462,14 +464,3 @@ ExportOptionDialoge.title=导出选项 ...
 ExportOptionDialoge.jButton1.text=确定
 ExportOptionDialoge.commentsCheckBox.text=把说明作为注释导出
 ExportOptionDialoge.jLabel1.text=请选择你想激活的选项 ...
-
-
------[ Element ]-----
-// text "constants"
-preAlt = (?)
-preAltT = T
-preAltF = F
-preCase = (?)\n?\n?\nelse
-preFor = for ? <- ? to ?
-preWhile = while (?)
-preRepeat = until (?)

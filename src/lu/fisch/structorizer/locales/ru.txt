@@ -46,15 +46,18 @@
  *
  *      Revision List
  *
- *      Author          Date            Description
- *      ------          ----            -----------
- *      Yura Lebedev	?               Initial release
- *      Kay Gürtzig	2014.12.02	ExportOptionDialoge and further messages added
- *      Kay Gürtzig 	2015.10.06	altPadRight added to Preferences dialog
- *      Kay Gürtzig     2015.10.14	InputBox-specific part enhanced
- *      Kay Gürtzig     2016.03.22      Enh. #84: messages related to FOR-IN loops added, several
- *                                      missing messages inserted
- *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
+ *      Author          Date        Description
+ *      ------          ----		-----------
+ *      Yura Lebedev    ?           Initial release
+ *      Kay Gürtzig     2014.12.02  ExportOptionDialoge and further messages added
+ *      Kay Gürtzig     2015.10.06  altPadRight added to Preferences dialog
+ *      Kay Gürtzig     2015.10.14  InputBox-specific part enhanced
+ *      Kay Gürtzig     2016.03.22  Enh. #84: messages related to FOR-IN loops added, several
+ *                                  missing messages inserted
+ *      Kay Gürtzig     2016.04.24  Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016.09.13  Entries for InputBox and InputBoxFor revised (bugfix #241)
+ *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
  *
  ******************************************************************************************************
  *
@@ -156,19 +159,19 @@ Menu.menuPreferencesParser.text=Парсер ...
 Menu.menuPreferencesAnalyser.text=Анализатор ...
 Menu.menuPreferencesExport.text=Экспорт ...
 Menu.menuPreferencesLanguage.text=Язык
-Menu.menuPreferencesLanguageEnglish.text=Английский
-Menu.menuPreferencesLanguageGerman.text=Германский
-Menu.menuPreferencesLanguageFrench.text=Француский
-Menu.menuPreferencesLanguageDutch.text=Голландский
-Menu.menuPreferencesLanguageLuxemburgish.text=Люксембургский
-Menu.menuPreferencesLanguageSpanish.text=Испанский
-Menu.menuPreferencesLanguageItalian.text=Итальянский
-Menu.menuPreferencesLanguagePortugalBrazil.text=Португальский (бразильский)
-Menu.menuPreferencesLanguageSimplifiedChinese.text=Китайский (упрощен)
-Menu.menuPreferencesLanguageTraditionalChinese.text=Китайский (традиционен)
-Menu.menuPreferencesLanguageCzech.text=Чeшский
-Menu.menuPreferencesLanguageRussian.text=Русский
-Menu.menuPreferencesLanguagePolish.text=Польский
+Menu.menuPreferencesLanguageItems.en.text=Английский
+Menu.menuPreferencesLanguageItems.de.text=Германский
+Menu.menuPreferencesLanguageItems.fr.text=Француский
+Menu.menuPreferencesLanguageItems.nl.text=Голландский
+Menu.menuPreferencesLanguageItems.lu.text=Люксембургский
+Menu.menuPreferencesLanguageItems.es.text=Испанский
+Menu.menuPreferencesLanguageItems.it.text=Итальянский
+Menu.menuPreferencesLanguageItems.pt_br.text=Португальский (бразильский)
+Menu.menuPreferencesLanguageItems.zh-cn.text=Китайский (упрощен)
+Menu.menuPreferencesLanguageItems.zh-tw.text=Китайский (традиционен)
+Menu.menuPreferencesLanguageItems.cz.text=Чeшский
+Menu.menuPreferencesLanguageItems.ru.text=Русский
+Menu.menuPreferencesLanguageItems.pl.text=Польский
 
 Menu.menuPreferencesLookAndFeel.text=Внешний вид
 
@@ -185,7 +188,7 @@ Menu.menuHelpAbout.text=О программе ...
 Menu.menuHelpUpdate.text=Обновления ...
 // Error messages for analyser
 Menu.error01_1.text=ВНИМАНИЕ: Не обнаружено переменной цикла ...
-Menu.error01_2.text=ВНИМАНИЕ: Обнаружено более одной переменной цикла ...
+Menu.error01_2.text=ВНИМАНИЕ: Обнаружено более одной переменной цикла: «%»
 Menu.error01_3.text=Вы не можете изменить переменную цикла «%» внутри цикла!
 Menu.error02.text=Не обноружено изменение переменных в условии. Возможен бесконечный цикл ...
 Menu.error03_1.text=Переменная «%» не была инициализирована!
@@ -220,23 +223,26 @@ Menu.error17.text=Конкурирующий доступ к переменно�
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Настройки анализатора 
-AnalyserPreferences.checkboxes.0.text=Проверять изменение переменной цикла.
-AnalyserPreferences.checkboxes.1.text=Проверять конец цикла (возможен бесконечный цикл!).
-AnalyserPreferences.checkboxes.2.text=Проверять неинициализированные переменные.
-AnalyserPreferences.checkboxes.3.text=Проверять неправильное использлование оператора IF.
-AnalyserPreferences.checkboxes.4.text=Проверять переменные на наличие имен в верхнем регистре. (LUX/MEN)
-AnalyserPreferences.checkboxes.5.text=Проверять имя программы и функций на наличие имен в верхнем регистре. (LUX/MEN)
-AnalyserPreferences.checkboxes.6.text=Проверять правильность идентификаторов.
-AnalyserPreferences.checkboxes.7.text=Проверять присваивание в условиях.
-AnalyserPreferences.checkboxes.8.text=Проверять, что имя программы/функций не совпадает с любым другим идентификатором.
-AnalyserPreferences.checkboxes.9.text=Проверять инструкции с несколькими командами.
-AnalyserPreferences.checkboxes.10.text=Проверять ошибки присваивания.
-AnalyserPreferences.checkboxes.11.text=Проверять правильность имени параметра. (LUX/MEN)
-AnalyserPreferences.checkboxes.12.text=Проверять всегда ли возращается результат.
-AnalyserPreferences.checkboxes.13.text=Проверять отдельные сведения считающего цикла подходят ли к тексту.
-AnalyserPreferences.checkboxes.14.text=Проверять что каждый Вызов содержит только один вызов процедуры/функции.
-AnalyserPreferences.checkboxes.15.text=Проверять что элементы типа Выход использлованы корректным образоM.
-AnalyserPreferences.checkboxes.16.text=Проверять что не есть конкурирующий паралельный доступ к переменными.
+AnalyserPreferences.checkboxes.1.text=Проверять изменение переменной цикла.
+AnalyserPreferences.checkboxes.2.text=Проверять конец цикла (возможен бесконечный цикл!).
+AnalyserPreferences.checkboxes.3.text=Проверять неинициализированные переменные.
+AnalyserPreferences.checkboxes.4.text=Проверять неправильное использлование оператора IF.
+AnalyserPreferences.checkboxes.5.text=Проверять переменные на наличие имен в верхнем регистре. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=Проверять имя программы и функций на наличие имен в верхнем регистре. (LUX/MEN)
+AnalyserPreferences.checkboxes.7.text=Проверять правильность идентификаторов.
+AnalyserPreferences.checkboxes.8.text=Проверять присваивание в условиях.
+AnalyserPreferences.checkboxes.9.text=Проверять, что имя программы/функций не совпадает с любым другим идентификатором.
+AnalyserPreferences.checkboxes.10.text=Проверять инструкции с несколькими командами.
+AnalyserPreferences.checkboxes.11.text=Проверять ошибки присваивания.
+AnalyserPreferences.checkboxes.12.text=Проверять правильность имени параметра. (LUX/MEN)
+AnalyserPreferences.checkboxes.13.text=Проверять всегда ли возращается результат.
+AnalyserPreferences.checkboxes.14.text=Проверять отдельные сведения считающего цикла подходят ли к тексту.
+AnalyserPreferences.checkboxes.15.text=Проверять что каждый Вызов содержит только один вызов процедуры/функции.
+AnalyserPreferences.checkboxes.16.text=Проверять что элементы типа Выход использлованы корректным образоM.
+AnalyserPreferences.checkboxes.17.text=Проверять что не есть конкурирующий паралельный доступ к переменными.
+AnalyserPreferences.checkboxes.18.text=
+AnalyserPreferences.checkboxes.19.text=
+AnalyserPreferences.checkboxes.20.text=
 AnalyserPreferences.okButton.text=OK
 
 
@@ -376,7 +382,6 @@ InputBox.title[elementType:Function]=Изменить название и пар
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Добавить новую инструкцию... 
 InputBox.title[elementType:Alternative,getInsertionType():insert]=Добавить оператор IF...
 InputBox.title[elementType:Case,getInsertionType():insert]=Добавить новый оператор CASE...
-InputBox.title[elementType:For,getInsertionType():insert]=Добавить цикл FOR...
 InputBox.title[elementType:Forever,getInsertionType():insert]=Добавить цикл ENDLESS...
 InputBox.title[elementType:Repeat,getInsertionType():insert]=Добавить цикл REPEAT...
 InputBox.title[elementType:While,getInsertionType():insert]=Добавить цикл WHILE...
@@ -386,7 +391,6 @@ InputBox.title[elementType:Parallel,getInsertionType():insert]=Добавить 
 InputBox.title[elementType:Instruction,getInsertionType():update]=Изменить инструкцию... 
 InputBox.title[elementType:Alternative,getInsertionType():update]=Изменить оператор IF...
 InputBox.title[elementType:Case,getInsertionType():update]=Изменить оператор CASE...
-InputBox.title[elementType:For,getInsertionType():update]=Изменить цикл FOR...
 InputBox.title[elementType:Forever,getInsertionType():update]=Изменить цикл ENDLESS...
 InputBox.title[elementType:Repeat,getInsertionType():update]=Изменить цикл REPEAT...
 InputBox.title[elementType:While,getInsertionType():update]=Изменить цикл WHILE...
@@ -397,8 +401,8 @@ InputBox.title[elementType:Parallel,getInsertionType():update]=Изменить 
 
 
 -----[ InputBoxFor ]-----
-InputBoxFor.class_specific.For.insert=Добавить новый цикл FOR...
-InputBoxFor.class_specific.For.update=Изменить цикл FOR...
+InputBoxFor.title[getInsertionType():insert]=Добавить новый цикл FOR...
+InputBoxFor.title[getInsertionType():update]=Изменить цикл FOR...
 InputBoxFor.lblVariable.text=Переменная цикла
 InputBoxFor.lblStartVal.text=Исходная величина
 InputBoxFor.lblEndVal.text=Конечная величина

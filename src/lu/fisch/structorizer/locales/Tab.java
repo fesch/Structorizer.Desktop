@@ -113,8 +113,12 @@ class BoardTableCellRenderer extends DefaultTableCellRenderer {
         else
         if((value instanceof String && ((String) value).equals("")) || (value==null))
         {
-            if (!isSelected)
-                c.setBackground(Color.orange);
+            // START KGU#244 2016-09-06: Show an explicit deletion as well
+            boolean isDeleted = col == 2 && Translator.loadedLocale.valueDiffersFrom(key, (String)value);
+            // END KGU#244 2016-09-06
+        	if (!isSelected)
+                //c.setBackground(Color.orange);
+        	    c.setBackground(isDeleted ? Color.red : Color.orange);
             else
                 c.setBackground(Color.yellow);
         }

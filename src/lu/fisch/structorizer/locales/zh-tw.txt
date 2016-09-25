@@ -46,9 +46,11 @@
  *
  *      Revision List
  *
- *      Author          Date		Description
- *      ------		----		-----------
- *      Hueyan Chen     2014.07.27     	First Issue
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      Hueyan Chen     2014.07.27  First Issue
+ *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
  *
  ******************************************************************************************************
  *
@@ -131,17 +133,17 @@ Menu.menuPreferencesColors.text=色彩 ...
 Menu.menuPreferencesOptions.text=結構 ...
 Menu.menuPreferencesParser.text=剖析器 ...
 Menu.menuPreferencesLanguage.text=語言
-Menu.menuPreferencesLanguageEnglish.text=英文
-Menu.menuPreferencesLanguageGerman.text=德文
-Menu.menuPreferencesLanguageFrench.text=法文
-Menu.menuPreferencesLanguageDutch.text=荷蘭文
-Menu.menuPreferencesLanguageLuxemburgish.text=盧森堡文
-Menu.menuPreferencesLanguageSpanish.text=西班牙文
-Menu.menuPreferencesLanguageItalian.text=義大利文
-Menu.menuPreferencesLanguagePortugalBrazil.text=葡萄牙巴西文
-Menu.menuPreferencesLanguageSimplifiedChinese.text=簡體中文
-Menu.menuPreferencesLanguageTraditionalChinese.text=繁體中文
-Menu.menuPreferencesLanguageCzech.text=捷克文
+Menu.menuPreferencesLanguageItems.en.text=英文
+Menu.menuPreferencesLanguageItems.de.text=德文
+Menu.menuPreferencesLanguageItems.fr.text=法文
+Menu.menuPreferencesLanguageItems.nl.text=荷蘭文
+Menu.menuPreferencesLanguageItems.lu.text=盧森堡文
+Menu.menuPreferencesLanguageItems.es.text=西班牙文
+Menu.menuPreferencesLanguageItems.it.text=義大利文
+Menu.menuPreferencesLanguageItems.pt_br.text=葡萄牙巴西文
+Menu.menuPreferencesLanguageItems.zh-cn.text=簡體中文
+Menu.menuPreferencesLanguageItems.zh-tw.text=繁體中文
+Menu.menuPreferencesLanguageItems.cz.text=捷克文
 
 Menu.menuPreferencesLookAndFeel.text=外觀
 
@@ -158,7 +160,7 @@ Menu.menuHelpAbout.text=關於 ...
 Menu.menuHelpUpdate.text=程式更新 ...
 // Error messages for analyser
 Menu.error01_1.text=警告: 沒有迴圈的計數器變數 ...
-Menu.error01_2.text=警告: 超過一個迴圈的計數器變數 ...
+Menu.error01_2.text=警告: 超過一個迴圈的計數器變數: «%»
 Menu.error01_3.text=你並不允許在迴圈中更改迴圈計數器變數 «%» !
 Menu.error02.text=沒有更改迴圈的條件變數. 可能產生無窮迴圈 ...
 Menu.error03_1.text=變數 «%» 沒有初始變數值!
@@ -181,19 +183,19 @@ Menu.error13_1.text=你的函數沒有傳回任何值!
 Menu.error13_2.text=你的函數可能沒有傳回執行結果!
 
 -----[ AnalyserPreferences ]-----
-AnalyserPreferences.checkboxes.0.text=請檢查迴圈計數器變數的變更.
-AnalyserPreferences.checkboxes.1.text=請檢查無窮迴圈 (儘可能的檢查!)
-AnalyserPreferences.checkboxes.2.text=請檢查沒有初始化的變數.
-AnalyserPreferences.checkboxes.3.text=請檢查錯誤使用 IF 條件.
-AnalyserPreferences.checkboxes.4.text=請檢查大寫的變數名稱. (LUX/MEN)
-AnalyserPreferences.checkboxes.5.text=請檢查大寫的程式/程序名稱. (LUX/MEN)
-AnalyserPreferences.checkboxes.6.text=請檢查合法的識別字.
-AnalyserPreferences.checkboxes.7.text=請檢查條件中的指定敘述.
-AnalyserPreferences.checkboxes.8.text=請檢查哪個程式/程序名稱不等於任何其他識別字.
-AnalyserPreferences.checkboxes.9.text=請檢查是否是多命令的指令.
-AnalyserPreferences.checkboxes.10.text=請檢查指定敘述的錯誤.
-AnalyserPreferences.checkboxes.11.text=請檢查標準的參數名稱. (LUX/MEN)
-AnalyserPreferences.checkboxes.12.text=請檢查如果是函數，是否有傳回值.
+AnalyserPreferences.checkboxes.1.text=請檢查迴圈計數器變數的變更.
+AnalyserPreferences.checkboxes.2.text=請檢查無窮迴圈 (儘可能的檢查!)
+AnalyserPreferences.checkboxes.3.text=請檢查沒有初始化的變數.
+AnalyserPreferences.checkboxes.4.text=請檢查錯誤使用 IF 條件.
+AnalyserPreferences.checkboxes.5.text=請檢查大寫的變數名稱. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=請檢查大寫的程式/程序名稱. (LUX/MEN)
+AnalyserPreferences.checkboxes.7.text=請檢查合法的識別字.
+AnalyserPreferences.checkboxes.8.text=請檢查條件中的指定敘述.
+AnalyserPreferences.checkboxes.9.text=請檢查哪個程式/程序名稱不等於任何其他識別字.
+AnalyserPreferences.checkboxes.10.text=請檢查是否是多命令的指令.
+AnalyserPreferences.checkboxes.11.text=請檢查指定敘述的錯誤.
+AnalyserPreferences.checkboxes.12.text=請檢查標準的參數名稱. (LUX/MEN)
+AnalyserPreferences.checkboxes.13.text=請檢查如果是函數，是否有傳回值.
 AnalyserPreferences.okButton.text=確定
 
 

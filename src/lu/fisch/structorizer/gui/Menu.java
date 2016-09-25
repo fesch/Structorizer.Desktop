@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.gui;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -55,14 +56,19 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.08.04      Most persistent attributes set to final
  *      Bob Fisch       2016.08.08      Redesign of the Language choice mechanisms (#225 fixed by Kay Gürtzig)
  *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
- *      Kay Gürtzig     2016-08-12      Enh. #231: Analyser checks rorganised to arrays for easier maintenance
+ *      Kay Gürtzig     2016.08.12      Enh. #231: Analyser checks re-organised to arrays for easier maintenance
  *                                      two new checks introduced (variable name collisions)
+ *      Kay Gürtzig     2016.09.01      Bugfix #233: CASE insertion by F10 had been averted by menu bar
+ *      Kay Gürtzig     2016.09.04      Structural redesign for menuPreferencesLanguage
+ *      Kay Gürtzig     2016.09.15      Issue #243: Additional text holders for forgotten message box texts
+ *      Kay Gürtzig     2016.09.22      New text holder / messages for Analyser 
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 import java.util.*;
@@ -213,22 +219,12 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuPreferencesAnalyser = new JMenuItem("Analyser ...",IconLoader.ico083);
 	protected final JMenuItem menuPreferencesExport = new JMenuItem("Export ...",IconLoader.ico032);
 	protected final JMenu menuPreferencesLanguage = new JMenu("Language");
-	protected final JMenuItem menuPreferencesLanguageEnglish = new JCheckBoxMenuItem("English",IconLoader.ico046);
-	protected final JMenuItem menuPreferencesLanguageGerman = new JCheckBoxMenuItem("German",IconLoader.ico080);
-	protected final JMenuItem menuPreferencesLanguageFrench = new JCheckBoxMenuItem("French",IconLoader.ico045);
-	protected final JMenuItem menuPreferencesLanguageDutch = new JCheckBoxMenuItem("Dutch",IconLoader.ico051);
-	protected final JMenuItem menuPreferencesLanguageLuxemburgish = new JCheckBoxMenuItem("Luxemburgish",IconLoader.ico075);
-	protected final JMenuItem menuPreferencesLanguageSpanish = new JCheckBoxMenuItem("Spanish",IconLoader.ico084);
-	protected final JMenuItem menuPreferencesLanguagePortugalBrazil = new JCheckBoxMenuItem("Brazilian portuguese",IconLoader.ico085);
-	protected final JMenuItem menuPreferencesLanguageItalian = new JCheckBoxMenuItem("Italian",IconLoader.ico086);
-	protected final JMenuItem menuPreferencesLanguageSimplifiedChinese = new JCheckBoxMenuItem("Chinese (simplified)",IconLoader.ico087);
-	protected final JMenuItem menuPreferencesLanguageTraditionalChinese = new JCheckBoxMenuItem("Chinese (traditional)",IconLoader.ico094);
-	protected final JMenuItem menuPreferencesLanguageCzech = new JCheckBoxMenuItem("Czech",IconLoader.ico088);
-	protected final JMenuItem menuPreferencesLanguageRussian = new JCheckBoxMenuItem("Russian",IconLoader.ico092);
-	protected final JMenuItem menuPreferencesLanguagePolish = new JCheckBoxMenuItem("Polish",IconLoader.ico093);
-	// START KGU#232 2016-08-03: Enh. #222
-	protected final JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...",IconLoader.ico114);
-	// END KGU#232 2016-08-03
+	// START KGU#242 2016-09-04: Structural redesign - generic generation of language menu items
+	protected final Hashtable<String, JCheckBoxMenuItem> menuPreferencesLanguageItems = new Hashtable<String, JCheckBoxMenuItem>(Locales.LOCALES_LIST.length);
+	// END KGU#242 2016-09-04
+	// START KGU#232 2016-08-03/2016-09-06: Enh. #222
+	protected final JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...",IconLoader.getLocaleIconImage("empty"));
+	// END KGU#232 2016-08-03/2016-09-06
 	protected final JMenu menuPreferencesLookAndFeel = new JMenu("Look & Feel");
 	protected final JMenu menuPreferencesSave = new JMenu("All preferences ...");
 	protected final JMenuItem menuPreferencesSaveAll = new JMenuItem("Save");
@@ -253,7 +249,7 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! ---> \"Diagram > Switch text/comments\".");
 	// END KGU#220 2016-07-27
 	public static final LangTextHolder error01_1 = new LangTextHolder("WARNING: No loop variable detected ...");
-	public static final LangTextHolder error01_2 = new LangTextHolder("WARNING: More than one loop variable detected ...");
+	public static final LangTextHolder error01_2 = new LangTextHolder("WARNING: More than one loop variable detected: «%»");
 	public static final LangTextHolder error01_3 = new LangTextHolder("You are not allowed to modify the loop variable «%» inside the loop!");
 	public static final LangTextHolder error02 = new LangTextHolder("No change of the variables in the condition detected. Possible endless loop ...");
 	public static final LangTextHolder error03_1= new LangTextHolder("The variable «%» has not yet been initialized!");
@@ -301,6 +297,9 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error18 = new LangTextHolder("Variable name «%1» may be confused with variable(s) «%2» in some case-indifferent languages!");
 	public static final LangTextHolder error19 = new LangTextHolder("Variable name «%1» may collide with reserved names in languages like %2!");
 	// END KGU#239 2016-08-12
+	// START KGU#253 2016-09-21: Enh. #249 - New check for subroutine syntax.
+	public static final LangTextHolder error20 = new LangTextHolder("A subroutine header must have a (possibly empty) parameter list within parentheses.");
+	// END KGU#253 2016-09-21
 
 	// START KGU#218 2016-07-28: Issue #206 - enhanced localization
 	// Dialog messages
@@ -323,10 +322,34 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgOpenLangFile = new LangTextHolder("Open language file");
 	public static final LangTextHolder msgLangFile = new LangTextHolder("Structorizer language file");
 	// END KGU#232 2016-08-02
+	// START KGU#247 2016-09-15: Issue #243: Forgotten message box translations
+	public static final LangTextHolder msgTitleError = new LangTextHolder("Error");
+	public static final LangTextHolder msgTitleLoadingError = new LangTextHolder("Loading Error");
+	public static final LangTextHolder msgTitleParserError = new LangTextHolder("Parser Error");
+	public static final LangTextHolder msgTitleURLError = new LangTextHolder("URL Error");
+	public static final LangTextHolder msgTitleQuestion = new LangTextHolder("Question");
+	public static final LangTextHolder msgTitleWrongInput = new LangTextHolder("Wrong Input");
+	public static final LangTextHolder msgTitleOpen = new LangTextHolder("Open file ...");
+	public static final LangTextHolder msgTitleSave = new LangTextHolder("Save file ...");
+	public static final LangTextHolder msgTitleSaveAs = new LangTextHolder("Save file as ...");
+	public static final LangTextHolder msgTitleImport = new LangTextHolder("Import % code ...");
+	public static final LangTextHolder msgSaveChanges = new LangTextHolder("Do you want to save the current NSD file?");
+	public static final LangTextHolder msgErrorImageSave = new LangTextHolder("Error on saving the image(s)!");
+	public static final LangTextHolder msgErrorUsingGenerator = new LangTextHolder("Error while using % generator");
+	// END KGU#247 2016-09-15
+	// START KGU#247 2016-09-17: Issue #243: Forgotten message box translation
+	public static final LangTextHolder msgGotoHomepage = new LangTextHolder("Go to % to look for updates and news about Structorizer.");
+	public static final LangTextHolder msgErrorNoFile = new LangTextHolder("File not found!");
+	public static final LangTextHolder msgBrowseFailed = new LangTextHolder("Failed to show % in browser");
+	// END KGU#247 2016-09-17
 
 	public void create()
 	{
 		JMenuBar menubar = this;
+
+		// START KGU#240 2016-09-01: Bugfix #233 - Configured key binding F10 for CASE insertion wasn't effective
+		menubar.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_F10, 0), "none");
+		// END KGU#240 2016-09-01
 
 		// Setting up Menu "File" with all submenus and shortcuts and actions
 		menubar.add(menuFile);
@@ -724,45 +747,23 @@ public class Menu extends LangMenuBar implements NSDController
 
 		menuPreferences.add(menuPreferencesLanguage);
 		menuPreferencesLanguage.setIcon(IconLoader.ico081);
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageEnglish);
-		menuPreferencesLanguageEnglish.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("en"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageGerman);
-		menuPreferencesLanguageGerman.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("de"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageFrench);
-		(menuPreferencesLanguageFrench).addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("fr"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageDutch);
-		menuPreferencesLanguageDutch.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("nl"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageLuxemburgish);
-		menuPreferencesLanguageLuxemburgish.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("lu"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageSpanish);
-		menuPreferencesLanguageSpanish.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("es"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguagePortugalBrazil);
-		menuPreferencesLanguagePortugalBrazil.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("pt_br"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageItalian);
-		menuPreferencesLanguageItalian.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("it"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageSimplifiedChinese);
-		menuPreferencesLanguageSimplifiedChinese.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("chs"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageTraditionalChinese);
-		menuPreferencesLanguageTraditionalChinese.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("cht"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageCzech);
-		menuPreferencesLanguageCzech.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("cz"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguageRussian);
-		menuPreferencesLanguageRussian.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("ru"); } } );
-
-		menuPreferencesLanguage.add(menuPreferencesLanguagePolish);
-		menuPreferencesLanguagePolish.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang("pl"); } } );
+		
+		// START KGU#242 2016-09-04: Redesign of the language menu item mechanism
+		for (int iLoc = 0; iLoc < Locales.LOCALES_LIST.length; iLoc++)
+		{
+			final String locName = Locales.LOCALES_LIST[iLoc][0];
+			String locDescription = Locales.LOCALES_LIST[iLoc][1];
+			if (locDescription != null)
+			{
+				String caption = locDescription;
+				ImageIcon icon = IconLoader.getLocaleIconImage(locName);
+				JCheckBoxMenuItem item = new JCheckBoxMenuItem(caption, icon);
+				item.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { chooseLang(locName); } } );
+				menuPreferencesLanguage.add(item);
+				menuPreferencesLanguageItems.put(locName, item);
+			}
+		}
+		// END KGU#242 2016-09-04
 
 		// START KGU#232 206-08-03: Enh. #222
 		menuPreferencesLanguage.addSeparator();
@@ -882,7 +883,7 @@ public class Menu extends LangMenuBar implements NSDController
 			NSDControl.doButtons();
 		}
 	}
-       
+
 	@Override
 	public void doButtonsLocal()
 	{
@@ -1090,20 +1091,14 @@ public class Menu extends LangMenuBar implements NSDController
 			}
 
 			// Languages
-			menuPreferencesLanguageEnglish.setSelected(Locales.getInstance().getLoadedLocaleName().equals("en"));
-			menuPreferencesLanguageGerman.setSelected(Locales.getInstance().getLoadedLocaleName().equals("de"));
-			menuPreferencesLanguageFrench.setSelected(Locales.getInstance().getLoadedLocaleName().equals("fr"));
-			menuPreferencesLanguageDutch.setSelected(Locales.getInstance().getLoadedLocaleName().equals("nl"));
-			menuPreferencesLanguageLuxemburgish.setSelected(Locales.getInstance().getLoadedLocaleName().equals("lu"));
-			menuPreferencesLanguageSpanish.setSelected(Locales.getInstance().getLoadedLocaleName().equals("es"));
-			menuPreferencesLanguagePortugalBrazil.setSelected(Locales.getInstance().getLoadedLocaleName().equals("pt_br"));
-			menuPreferencesLanguageItalian.setSelected(Locales.getInstance().getLoadedLocaleName().equals("it"));
-			menuPreferencesLanguageSimplifiedChinese.setSelected(Locales.getInstance().getLoadedLocaleName().equals("chs"));
-			menuPreferencesLanguageTraditionalChinese.setSelected(Locales.getInstance().getLoadedLocaleName().equals("cht"));
-			menuPreferencesLanguageCzech.setSelected(Locales.getInstance().getLoadedLocaleName().equals("cz"));
-			menuPreferencesLanguageRussian.setSelected(Locales.getInstance().getLoadedLocaleName().equals("ru"));
-			menuPreferencesLanguagePolish.setSelected(Locales.getInstance().getLoadedLocaleName().equals("pl"));
-			menuPreferencesLanguageFromFile.setSelected(Locales.getInstance().getLoadedLocaleName().equals("external"));
+			String locName = Locales.getInstance().getLoadedLocaleName();
+			// START KGU#242 2016-09-04: Structural redesign
+			for (String key: menuPreferencesLanguageItems.keySet())
+			{
+				menuPreferencesLanguageItems.get(key).setSelected(locName.equals(key));
+			}
+			// END KGU#242 2016-09-04
+			menuPreferencesLanguageFromFile.setSelected(locName.equals("external"));
 
 			// Recent file
 			menuFileOpenRecent.removeAll();
@@ -1156,28 +1151,25 @@ public class Menu extends LangMenuBar implements NSDController
 	
     // START KGU#232 2016-08-03: Enh. #222
     public void chooseLangFile() {
-        JFileChooser dlgOpen = new JFileChooser();
-        dlgOpen.setDialogTitle(msgOpenLangFile.getText());
-        // set directory
-        dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
-        // config dialogue
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(msgLangFile.getText(), "txt");
-        dlgOpen.addChoosableFileFilter(filter);
-        dlgOpen.setFileFilter(filter);
-        // show & get result
-        int result = dlgOpen.showOpenDialog(this);
-        // react on result
+		JFileChooser dlgOpen = new JFileChooser();
+		dlgOpen.setDialogTitle(msgOpenLangFile.getText());
+		// set directory
+		dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
+		// config dialogue
+		FileNameExtensionFilter filter = new FileNameExtensionFilter(msgLangFile.getText(), "txt");
+		dlgOpen.addChoosableFileFilter(filter);
+		dlgOpen.setFileFilter(filter);
+		// show & get result
+		int result = dlgOpen.showOpenDialog(this);
+		// react on result
         if (result == JFileChooser.APPROVE_OPTION) {
             // create a new StringList
             StringList sl = new StringList();
             // load the selected file into it
             String filename = dlgOpen.getSelectedFile().getAbsoluteFile().toString();
             sl.loadFromFile(filename);
-            // paste it's content to the "preview" locale
+            // paste it's content to the "external" locale
             Locales.getInstance().setExternal(sl,filename);
-            
-            //Locales.getInstance().setLocale(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
-            //setLang(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
         }
         // START KGU#235 2016-08-09: Bugfix #225
         doButtons();

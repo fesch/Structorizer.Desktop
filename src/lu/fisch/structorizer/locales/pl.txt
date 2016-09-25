@@ -46,10 +46,12 @@
  *
  *      Revision List
  *
- *      Author          Date		Description
- *      ------		----		-----------
+ *      Author          Date            Description
+ *      ------          ----            -----------
  *      Bob Fisch       2008.01.14      First Issue
  *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
+ *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig     2016.09.22      AnalyserPreferences numbering modified
  *
  ******************************************************************************************************
  *
@@ -136,18 +138,18 @@ Menu.menuPreferencesColors.text=Kolory ...
 Menu.menuPreferencesOptions.text=Struktury ...
 Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesLanguage.text=Język
-Menu.menuPreferencesLanguageEnglish.text=Angielski
-Menu.menuPreferencesLanguageGerman.text=Niemiecki
-Menu.menuPreferencesLanguageFrench.text=Francuski
-Menu.menuPreferencesLanguageDutch.text=Holenderski
-Menu.menuPreferencesLanguageLuxemburgish.text=Luxemburski
-Menu.menuPreferencesLanguageSpanish.text=Hiszpański
-Menu.menuPreferencesLanguageItalian.text=Włoski
-Menu.menuPreferencesLanguagePortugalBrazil.text=Portugalski
-Menu.menuPreferencesLanguageSimplifiedChinese.text=Chiński (simplified)
-Menu.menuPreferencesLanguageTraditionalChinese.text=Chiński (traditional)
-Menu.menuPreferencesLanguageCzech.text=Czeski
-Menu.menuPreferencesLanguagePolish.text=Polski
+Menu.menuPreferencesLanguageItems.en.text=Angielski
+Menu.menuPreferencesLanguageItems.de.text=Niemiecki
+Menu.menuPreferencesLanguageItems.fr.text=Francuski
+Menu.menuPreferencesLanguageItems.nl.text=Holenderski
+Menu.menuPreferencesLanguageItems.lu.text=Luxemburski
+Menu.menuPreferencesLanguageItems.es.text=Hiszpański
+Menu.menuPreferencesLanguageItems.it.text=Włoski
+Menu.menuPreferencesLanguageItems.pt_br.text=Portugalski
+Menu.menuPreferencesLanguageItems.zh-cn.text=Chiński (uproszczony)
+Menu.menuPreferencesLanguageItems.zh-tw.text=Chiński (tradycyjny)
+Menu.menuPreferencesLanguageItems.cz.text=Czeski
+Menu.menuPreferencesLanguageItems.pl.text=Polski
 
 Menu.menuPreferencesLookAndFeel.text=Wygląd
 
@@ -165,7 +167,7 @@ Menu.menuHelpAbout.text=O programie ...
 Menu.menuHelpUpdate.text=Update ...
 // Error messages for analyser
 Menu.error01_1.text=OSTRZEŻENIE: Brak zmiennej licznikowej ...
-Menu.error01_2.text=OSTRZEŻENIE: Więcej niż jedna zmienna licznikowa ...
+Menu.error01_2.text=OSTRZEŻENIE: Więcej niż jedna zmienna licznikowa: «%»
 Menu.error01_3.text=Nie wolno zmieniać zmiennej licznikowej «%» wewnątz pętli!
 Menu.error02.text=Brak zmian wyrażenia warukowego. Możliwa nieskończona pętla ...
 Menu.error03_1.text=Zmienna «%» nie ma wartości!
@@ -188,19 +190,19 @@ Menu.error13_1.text=Twoja funkcja nie ma nadanej wartości!
 Menu.error13_2.text=Twoja funcja nie może zwracać wartości!
 
 -----[ AnalyserPreferences ]-----
-AnalyserPreferences.checkboxes.0.text=Szukanie zmian zmiennej licznikowej.
-AnalyserPreferences.checkboxes.1.text=Szukanie nieskończonych pętli (na ile to możliwe!)
-AnalyserPreferences.checkboxes.2.text=Szukanie zmiennych bez wartości..
-AnalyserPreferences.checkboxes.3.text=Szukanie niewłaściwego użycia instrukcji IF.
-AnalyserPreferences.checkboxes.4.text=Szukanie zmiennych pisanych DUŻYMI literami. (LUX/MEN)
-AnalyserPreferences.checkboxes.5.text=Szukanie nazw programu/podprogramu pisanych DUŻYMI literami. (LUX/MEN)
-AnalyserPreferences.checkboxes.6.text=Szukanie poprawnych identyfikatorów.
-AnalyserPreferences.checkboxes.7.text=Szukanie przypisań w wyrażeniach warunkowych.
-AnalyserPreferences.checkboxes.8.text=Szukanie zbieżności nazw programów/podprogramów/zmiennych.
-AnalyserPreferences.checkboxes.9.text=Szukanie wielokrotnych poleceń.
-AnalyserPreferences.checkboxes.10.text=Szukanie błędów przpisania.
-AnalyserPreferences.checkboxes.11.text=Szukanie nazw argumentów. (LUX/MEN)
-AnalyserPreferences.checkboxes.12.text=Szukanie czy i co zwracają funkcje.
+AnalyserPreferences.checkboxes.1.text=Szukanie zmian zmiennej licznikowej.
+AnalyserPreferences.checkboxes.2.text=Szukanie nieskończonych pętli (na ile to możliwe!)
+AnalyserPreferences.checkboxes.3.text=Szukanie zmiennych bez wartości..
+AnalyserPreferences.checkboxes.4.text=Szukanie niewłaściwego użycia instrukcji IF.
+AnalyserPreferences.checkboxes.5.text=Szukanie zmiennych pisanych DUŻYMI literami. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=Szukanie nazw programu/podprogramu pisanych DUŻYMI literami. (LUX/MEN)
+AnalyserPreferences.checkboxes.7.text=Szukanie poprawnych identyfikatorów.
+AnalyserPreferences.checkboxes.8.text=Szukanie przypisań w wyrażeniach warunkowych.
+AnalyserPreferences.checkboxes.9.text=Szukanie zbieżności nazw programów/podprogramów/zmiennych.
+AnalyserPreferences.checkboxes.10.text=Szukanie wielokrotnych poleceń.
+AnalyserPreferences.checkboxes.11.text=Szukanie błędów przpisania.
+AnalyserPreferences.checkboxes.12.text=Szukanie nazw argumentów. (LUX/MEN)
+AnalyserPreferences.checkboxes.13.text=Szukanie czy i co zwracają funkcje.
 AnalyserPreferences.okButton.text=OK
 
 

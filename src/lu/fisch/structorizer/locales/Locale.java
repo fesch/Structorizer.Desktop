@@ -21,11 +21,16 @@
 package lu.fisch.structorizer.locales;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+
 import javax.swing.JOptionPane;
+
 import lu.fisch.utils.StringList;
 
 /**
@@ -48,6 +53,9 @@ public class Locale {
     // START KGU#231 2016-08-09: #220 
     public StringList cachedHeader = new StringList();
     // END KGU#231 2016-08-09
+    // START KGU#244 2016-09-06: Needed for a session with loaded user language file
+    public String cachedFilename = null;
+    // END KGU#244 2016-09-06
     public final LinkedHashMap<String,LinkedHashMap<String,String>> values = new LinkedHashMap<String,LinkedHashMap<String,String>>();
     
     public static void main(String[] args)
@@ -77,7 +85,7 @@ public class Locale {
         
         // "preview" and "external" as special cases, so we don't need to load
         // a file then
-        if(!_langfile.equals("external.txt") && !_langfile.equals("preview.txt")) 
+        if (!_langfile.equals("external.txt") && !_langfile.equals("preview.txt")) 
         {
             System.out.println("Loading now locale: "+_langfile);        
 
@@ -85,7 +93,20 @@ public class Locale {
             String input = new String();
             try 
             {
-                BufferedReader in = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/lu/fisch/structorizer/locales/"+_langfile), "UTF-8"));
+            	// START KGU#244 2016-09-06: Allow temporary unregistered locales from arbitrary files
+                //BufferedReader in = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("/lu/fisch/structorizer/locales/"+_langfile), "UTF-8"));
+            	File file = new File(_langfile);
+            	InputStreamReader isr = null;
+            	if (file.isAbsolute() && file.canRead())
+            	{
+            		isr = new InputStreamReader(new FileInputStream(file), "UTF-8");
+            	}
+            	else
+            	{
+            		isr = new InputStreamReader(this.getClass().getResourceAsStream("/lu/fisch/structorizer/locales/"+_langfile), "UTF-8");
+            	}
+            	BufferedReader in = new BufferedReader(isr);
+                // END KGU#244 2016-09-06
                 String str;
                 while ((str = in.readLine()) != null) 
                 {
@@ -282,7 +303,7 @@ public class Locale {
         	}
             // END KGU 2016-08-08
         }
-        return value != null;
+        return value != null && !value.isEmpty();
     }
     // END KGU#231 2016-08-08
     
@@ -390,4 +411,10 @@ public class Locale {
     }
     // END KGU#231 2016-08-09
     
+    // START KGU#244 2016-09-06: Allow loading from external text files
+    public String getFilename()
+    {
+    	return filename + "";
+    }
+    // END KGU#244 2016-09-06
 }

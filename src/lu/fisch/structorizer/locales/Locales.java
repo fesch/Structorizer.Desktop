@@ -24,16 +24,20 @@ package lu.fisch.structorizer.locales;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    Fundamental localization manager, hold the locales and performs translations
+ *      Description:    Fundamental localization manager, holds the locales and performs translations
  *
  ******************************************************************************************************
  *
  *      Revision List
  *
- *      Author          Date            Description
- *      ------          ----            -----------
- *      Bob Fisch       2016.08.02      First Issue
- *      Kay Gürtzig     2016.08.12      Mechanism to translate arrays of controls (initially for AnalyserPreferences)
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      Bob Fisch       2016.08.02  First Issue
+ *      Kay Gürtzig     2016.08.12  Mechanism to translate arrays of controls (initially for AnalyserPreferences)
+ *      Kay Gürtzig     2016.09.05  Mechanism to translate Hashtables of controls (initially for language preferences)
+ *      Kay Gürtzig     2016.09.09  Fix in getSectionNames(), Javadoc accomplished
+ *      Kay Gürtzig     2016.09.13  Bugfix #241 in checkConditions() (KGU#246)
+ *      Kay Gürtzig     2016.09.22  Issue #248: Workaround for Linux systems with Java 1.7
  *
  ******************************************************************************************************
  *
@@ -48,7 +52,6 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import javax.swing.JDialog;
@@ -62,8 +65,31 @@ import lu.fisch.utils.StringList;
  * @author robertfisch
  */
 public class Locales {
-    // LOCALES_LIST of all locales we have
-    public static final String[] LOCALES_LIST = {"chs","cht","cz","de","en","es","fr","it","lu","nl","pl","pt_br","ru","empty","preview","external"};
+    /**
+     * LOCALES_LIST of all locales we have and their respective English denomination
+     * Locales for actually existing languages MUST have an English language name, whereas
+     * pure technical pseudo-locales MUST NOT have a denomination
+     * Note: Order matters (preferences menu, Translator etc. will present locales in the order given here) 
+     */
+    public static final String[][] LOCALES_LIST = {
+    	{"en", "English"},
+    	{"de", "German"},
+    	{"fr", "French"},
+    	{"nl", "Hollandish"},
+    	{"lu", "Luxemburgish"},
+    	{"es", "Spanish"},
+    	{"pt_br", "Portuguese (Brazilian)"},
+    	{"it", "Italian"},
+    	{"zh-cn", "Chinese (simplified)"},
+    	{"zh-tw", "Chinese (traditional)"},
+    	{"cz", "Czech"},
+    	{"ru",	"Russian"},
+    	{"pl", "Polish"},
+    	// pseudo and auxiliary locales 
+    	{"empty", null},
+    	{"preview", null},
+    	{"external", null}
+    	};
     
     // the "default" oder "master" locale
     public static final String DEFAULT_LOCALE = "en";
@@ -124,6 +150,11 @@ public class Locales {
         */
     }
     
+    /**
+     * Returns the locale configured as default locale. If the locale hadn't been
+     * loaded before it will be loaded now.
+     * @return the default locale
+     */
     public Locale getDefaultLocale()
     {
         // get the default locale
@@ -131,17 +162,24 @@ public class Locales {
     }
     
     /**
-     * Retrieve all section names
-     * 
-     * @return  the LOCALES_LIST with the names of the sections found in all files
+     * Retrieve all section names from the locales already loaded. At least the
+     * default locale is ensured to be loaded.
+     * @return  the names of the sections found in the LOADED locales
      */
     public ArrayList<String> getSectionNames()
     {
         ArrayList<String> sections = new ArrayList<String>();
-        String[] localNames = getNames();
-        for (int i = 0; i < localNames.length; i++) {
-            String localName = localNames[i];
-            Locale locale = locales.get(localName);
+        String[] localeNames = getNames();
+        // START KGU 2016-09-09: Bugfix - We must ensure at least the default locale
+        if (localeNames.length == 0)
+        {
+        	getDefaultLocale();
+        	localeNames = getNames();
+        }
+        // END KGU 2016-09-09
+        for (int i = 0; i < localeNames.length; i++) {
+            String localeName = localeNames[i];
+            Locale locale = locales.get(localeName);
             String[] sectionNames = locale.getSectionNames();
             for (int s = 0; s < sectionNames.length; s++) {
                 String sectionName = sectionNames[s];
@@ -152,10 +190,22 @@ public class Locales {
         return sections;
     }
     
+    /**
+     * Returns a String array containing the names of all locales currently loaded.
+     * This does not necessarily comprise all locales from LOCALES_LIST!
+     * @return String list of locale names 
+     */
     public String[] getNames() {
         return locales.keySet().toArray(new String[locales.size()]);
     }
     
+    /**
+     * Returns the locale associated with the given name of the locale (language
+     * code) or the locale file. If the loacle hadn't been loaded yet then it will
+     * be loaded now - this may take time and could raise error message boxes.
+     * @param name - language code, pseudo locale name, or locale file name
+     * @return - the locale associated with the given name
+     */
     public Locale getLocale(String name)
     {
         // try to get the locale
@@ -171,19 +221,28 @@ public class Locales {
         return locale;
     }
     
+    /**
+     * Retrieves all locales providing a line with the given key (no matter whether
+     * or not there is a non-empty translation for it)
+     * @param keyName - a hierarchical dot-separated key sequence 
+     * @return list of locale names (language codes and pseudo-locale names)
+     */
     public StringList whoHasKey(String keyName)
     {
         StringList result = new StringList();
         
         for (int i = 0; i < LOCALES_LIST.length; i++) {
-            String localeName = LOCALES_LIST[i];
+            String localeName = LOCALES_LIST[i][0];
             if(getLocale(localeName).hasKey(keyName)) result.add(localeName);
         }
         
         return result;
     }
     
-    
+    /**
+     * Registers the given component for translation service on locale change.
+     * @param component - a translatable GUI component
+     */
     public void register(Component component)
     {
         // register a new component
@@ -198,6 +257,10 @@ public class Locales {
         
     }
     
+    /**
+     * Removes the given component from the set of applicants for translation service 
+     * @param component - the GUI component no longer to be translated on locale change
+     */
     public void unregister(Component component)
     {
         // unregister a component
@@ -215,14 +278,34 @@ public class Locales {
         }
     }
     
+    /**
+     * Checks whether the proposed localeName is listed among LOCALES_LIST
+     * @param localeName a supposed locale name
+     * @return true iff localeName is among the configured locales
+     */
+    public static boolean isNamedLocale(String localeName)
+    {
+        boolean found = false;
+        for (int i = 0; !found && i < LOCALES_LIST.length; i++)
+        {
+        	found = LOCALES_LIST[i][0].equals(localeName);
+        }
+    	return found;
+    }
     
+    /**
+     * Makes the locale named by localeName the current locale
+     * and propagates it to all registered components
+     * @param localeName - a language code, a pseudo locale name or a locale file name
+     */
     public void setLocale(String localeName)
     {
         loadedLocaleName = localeName.replace(".txt", "");
         
         // if we can't find the name of the loaded locale,
         // we suppose a filepath has been passed
-        if(!Arrays.asList(LOCALES_LIST).contains(loadedLocaleName))
+        //if(!Arrays.asList(LOCALES_LIST).contains(loadedLocaleName))
+        if (!isNamedLocale(loadedLocaleName))
         {
             // let's check if it is an existing file
             if((new File(localeName)).exists())
@@ -246,6 +329,10 @@ public class Locales {
         updateComponents();
     }
     
+    /**
+     * Translates the given component according to the current locale.
+     * @param component - a GUI component
+     */
     public void setLocale(Component component)
     {
         // check if we have a loaded LocaleName
@@ -259,13 +346,26 @@ public class Locales {
         }
     }
     
+    /**
+     * Updates the "preview" locale from the given StringList, sets the locale
+     * and propagates it
+     * @param lines - the translation lines according to the locale file construction rules
+     */
     public void setLocale(StringList lines)
     {
         loadedLocaleName="preview";
         Locale locale = getLocale(loadedLocaleName);
+        // START KGU 2016-09-09: This seemed to be missing to make sense
+        locale.parseStringList(lines);
+        // END KGU 2016-09-09
         updateComponents();
     }
 
+    /**
+     * Performs the translation of the given component for the locale named by localeName
+     * @param component - a GUI component
+     * @param localeName - name of the locale (language code) or the locale file
+     */
     public void setLocale(Component component, String localeName)
     {
         localeName = localeName.replace(".txt","");
@@ -296,12 +396,26 @@ public class Locales {
             {
                 try 
                 {
-                    Method method = component.getClass().getMethod(fieldValue, new Class[]{});
-                    method.invoke(component, new Object[]{});
+                    // START KGU#246 2016-09-13: Bugfix #241
+                    //Method method = component.getClass().getMethod(fieldValue, new Class[]{});
+                    //method.invoke(component, new Object[]{});
+                    Method method = component.getClass().getMethod(fieldName.substring(0,  fieldName.length()-2), new Class[]{});
+                    Object methodResult = method.invoke(component, new Object[]{});
+                    if (methodResult instanceof String)
+                    {
+                    	fieldValue = (String)methodResult;
+                    }
+                    // END KGU#246 2016-09-13
                 }
                 catch(Exception e)
                 {
-                    errorMessage = e.getMessage();
+                    // START KGU#246 2016-09-13: Bugfix #241 For NullPointerExceptions getMessage() may return null
+                    //errorMessage = e.getMessage();
+                    if ((errorMessage = e.getMessage()) == null)
+                    {
+                    	errorMessage = e.getClass().getSimpleName();
+                    }
+                    // END KGU#246 2016-09-13
                 }
             }
             // ... of a field
@@ -358,9 +472,15 @@ public class Locales {
     }
     
     
+    /**
+     * Performs the translation of the given component with the translation lines
+     * passed in.
+     * @param component - a GUI component
+     * @param lines - the translation lines according to the locale file construction rules
+     */
     // ----[ ATTENTION ]----
     // As this method might be called before a component is fully initialised,
-    // so before all contained components have been put there, we might get
+    // i.e. before all contained components have been put there, we might get
     // null pointers. So deal with it! ;-)
     public void setLocale(Component component, StringList lines) {
         StringList pieces;
@@ -434,89 +554,118 @@ public class Locales {
                         if (errorMessage != null) {
                             System.err.println("LANG: Error accessing element <"
                                     + pieces.get(0) + "." + pieces.get(1) + ">!\n" + errorMessage);
-                        } else {
+                        } else if (field != null) {
+                            // END KGU#3 2015-11-03
                             try {
-                                // END KGU#3 2015-11-03
 
-                                if (field != null) {
-                                    Class<?> fieldClass = field.getType();
-                                    String piece2 = pieces.get(2).toLowerCase();
-                                    
-                                    Object target = field.get(component);
-                                    
-                                    // START KGU#239 2016-08-12: Opportunity to localize an array of controls
-                                    if (fieldClass.isArray() && pieces.count() > 3)
+                                Class<?> fieldClass = field.getType();
+                                String piece2 = pieces.get(2).toLowerCase();
+
+                                Object target = field.get(component);
+
+                                // START KGU#239 2016-08-12: Opportunity to localize an array of controls
+                                if (fieldClass.isArray() && pieces.count() > 3)
+                                {
+                                    int length = Array.getLength(field.get(component));
+                                    // START KGU#252 2016-09-22: Issue #248 - workaround for Java 7
+                                    //int index = Integer.parseUnsignedInt(piece2);
+                                    //if (index < length) {
+                                    int index = Integer.parseInt(piece2);
+                                    if (index >= 0 && index < length) {
+                                	// END KGU#252 2016-09-22
+                                        target = Array.get(field.get(component), index);
+                                        fieldClass = target.getClass();
+                                        pieces.remove(2);	// Index no longer needed
+                                        pieces.set(1, pieces.get(1) + "[" + piece2 + "]");
+                                        piece2 = pieces.get(2).toLowerCase();
+                                    }
+                                    // START KGU#252 2016-09-22: Issue #248 - workaround for Java 7
+                                    else
                                     {
-                                    	int length = Array.getLength(field.get(component));
-                                    	int index = Integer.parseUnsignedInt(piece2);
-                                    	if (index < length) {
-                                    		target = Array.get(field.get(component), index);
-                                    		fieldClass = target.getClass();
-                                    		pieces.remove(2);
-                                    		piece2 = pieces.get(2);
-                                    	}
-                                    		
+                                        System.err.println("LANG: Error while setting property <" + pieces.get(3) +
+                                                "> for element <" + pieces.get(0) + "." + pieces.get(1) + "." + piece2 +
+                                                ">!\n" + "Index out of range (0..." + (length-1) + ")!");
                                     }
-                                    // END KGU#239 2016-08-12
-
-                                    if (piece2.equals("text")) {
-                                        Method method = fieldClass.getMethod("setText", new Class[]{String.class});
-                                        if(target != null)
-                                            method.invoke(target, new Object[]{parts.get(1)});
-                                    } else if (piece2.equals("tooltip")) {
-                                        Method method = fieldClass.getMethod("setToolTipText", new Class[]{String.class});
-                                        if(target != null)
-                                            method.invoke(target, new Object[]{parts.get(1)});
-                                    } else if (piece2.equals("border")) {
-                                        Method method = fieldClass.getMethod("setBorder", new Class[]{Border.class});
-                                        if(target != null)
-                                            method.invoke(target, new Object[]{new TitledBorder(parts.get(1))});
-                                    } else if (piece2.equals("tab")) {
-                                        Method method = fieldClass.getMethod("setTitleAt", new Class[]{int.class, String.class});
-                                        if(target != null)
-                                            method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3)), parts.get(1)});
-                                    } else if (piece2.equals("header")) {
-                                        Method method = fieldClass.getMethod("setHeaderTitle", new Class[]{int.class, String.class});
-                                        if(target != null)
-                                            method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3)), parts.get(1)});
-                                    } // START KGU#183 2016-04-24: Enh. #173 - new support
-                                    else if (piece2.equals("mnemonic")) {
-                                        Method method = fieldClass.getMethod("setMnemonic", new Class[]{int.class});
-                                        int keyCode = KeyEvent.getExtendedKeyCodeForChar(parts.get(1).toLowerCase().charAt(0));
-                                        if (keyCode != KeyEvent.VK_UNDEFINED && target != null) {
-                                            method.invoke(target, new Object[]{Integer.valueOf(keyCode)});
-                                        }
-                                    } // END KGU#183 2016-04-24
-                                    // START KGU#156 2016-03-13: Enh. #124 - intended for JComboBoxes
-                                    else if (piece2.equals("item")) {
-                                                                    // The JCombobox is supposed to be equipped with enum objects providing a setText() method
-                                        // (see lu.fisch.structorizer.elements.RuntimeDataPresentMode and
-                                        // lu.fisch.structorizer.executor.Control for an example).
-                                        Method method = fieldClass.getMethod("getItemAt", new Class[]{int.class});
-                                        if(target != null)
-                                        {
-                                            Object item = method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3))});
-                                            if (item != null) {
-                                                Class<?> itemClass = item.getClass();
-                                                method = itemClass.getMethod("setText", new Class[]{String.class});
-                                                method.invoke(item, new Object[]{parts.get(1)});
-                                            }
-                                        }
-                                    }
-                                    // END KGU#156 2016-03-13
-                                } else {
-                                                            // START KGU 2015-11-03: Better add the class name for more precision
-                                    //System.out.println("LANG: Field not found <"+pieces.get(1)+">");
-                                    System.err.println("LANG: Field not found <" + pieces.get(0) + "." + pieces.get(1) + ">");
-                                    // END KGU 2015-11-03
+                                	// END KGU#252 2016-09-22
                                 }
+                                // END KGU#239 2016-08-12
+                                // START KGU#242 2016-09-04
+                                else if ((fieldClass.getName().equals("java.util.HashMap") || fieldClass.getName().equals("java.util.Hashtable")) && pieces.count() > 3)
+                                {
+                                	String piece1_2 = pieces.get(1) + "[" + piece2 + "]";
+                                	Method method = fieldClass.getMethod("get", new Class[]{Object.class});
+                                	try {
+                                		target = method.invoke(target, piece2);
+                                		if (target == null)
+                                		{
+                                			System.err.println("LANG: No Element <" + pieces.get(0) + "." + piece1_2 + "> found!");
+                                		}
+                                	}
+                                	catch (Exception e) {
+                                		// FIXME: No idea why this always goes off just on startup
+                                		//System.err.println("LANG: Trouble accessing <" + pieces.get(0) + "." + piece1_2 + ">");
+                                	}
+                                	if (target != null)
+                                	{
+                                		fieldClass = target.getClass();
+                                		pieces.remove(2);	// Key no longer needed
+                                		pieces.set(1, piece1_2);
+                                		piece2 = pieces.get(2).toLowerCase();
+                                	}
+                                }
+                                // END KGU#242 2016-09-04
+
+                                if (piece2.equals("text")) {
+                                    Method method = fieldClass.getMethod("setText", new Class[]{String.class});
+                                    if(target != null)
+                                        method.invoke(target, new Object[]{parts.get(1)});
+                                } else if (piece2.equals("tooltip")) {
+                                    Method method = fieldClass.getMethod("setToolTipText", new Class[]{String.class});
+                                    if(target != null)
+                                        method.invoke(target, new Object[]{parts.get(1)});
+                                } else if (piece2.equals("border")) {
+                                    Method method = fieldClass.getMethod("setBorder", new Class[]{Border.class});
+                                    if(target != null)
+                                        method.invoke(target, new Object[]{new TitledBorder(parts.get(1))});
+                                } else if (piece2.equals("tab")) {
+                                    Method method = fieldClass.getMethod("setTitleAt", new Class[]{int.class, String.class});
+                                    if(target != null)
+                                        method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3)), parts.get(1)});
+                                } else if (piece2.equals("header")) {
+                                    Method method = fieldClass.getMethod("setHeaderTitle", new Class[]{int.class, String.class});
+                                    if(target != null)
+                                        method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3)), parts.get(1)});
+                                } // START KGU#183 2016-04-24: Enh. #173 - new support
+                                else if (piece2.equals("mnemonic")) {
+                                    Method method = fieldClass.getMethod("setMnemonic", new Class[]{int.class});
+                                    int keyCode = KeyEvent.getExtendedKeyCodeForChar(parts.get(1).toLowerCase().charAt(0));
+                                    if (keyCode != KeyEvent.VK_UNDEFINED && target != null) {
+                                        method.invoke(target, new Object[]{Integer.valueOf(keyCode)});
+                                    }
+                                } // END KGU#183 2016-04-24
+                                // START KGU#156 2016-03-13: Enh. #124 - intended for JComboBoxes
+                                else if (piece2.equals("item")) {
+                                    // The JCombobox is supposed to be equipped with enum objects providing a setText() method
+                                    // (see lu.fisch.structorizer.elements.RuntimeDataPresentMode and
+                                    // lu.fisch.structorizer.executor.Control for an example).
+                                    Method method = fieldClass.getMethod("getItemAt", new Class[]{int.class});
+                                    if(target != null)
+                                    {
+                                        Object item = method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3))});
+                                        if (item != null) {
+                                            Class<?> itemClass = item.getClass();
+                                            method = itemClass.getMethod("setText", new Class[]{String.class});
+                                            method.invoke(item, new Object[]{parts.get(1)});
+                                        }
+                                    }
+                                }
+                                // END KGU#156 2016-03-13
                             } catch (Exception e) {
-                                                    // START KGU 2015-11-03: Better add the class name for more precision
-                                //System.out.println("LANG: Error while setting field <"+pieces.get(2)+"> for element <"+pieces.get(1)+">!\n"+e.getMessage());
-                                System.err.println("LANG: Error while setting field <" + pieces.get(2) + "> for element <"
+                                System.err.println("LANG: Error while setting property <" + pieces.get(2) + "> for element <"
                                         + pieces.get(0) + "." + pieces.get(1) + ">!\n" + e.getMessage());
-                                // END KGU 2015-11-03
                             }
+                        } else {
+                            System.err.println("LANG: Field not found <" + pieces.get(0) + "." + pieces.get(1) + ">");
                         }
                     }
                 }
@@ -524,18 +673,32 @@ public class Locales {
         }
     }
     
+    /**
+     * Returns the name of the current locale
+     * @return language code or pseudo locale name (or default locale name)
+     */
     public String getLoadedLocaleName()
     {
-        if(loadedLocaleName==null) return "en";
+        if(loadedLocaleName==null) return DEFAULT_LOCALE;
         else return loadedLocaleName;
     }
     
+    /**
+     * Returns the file name of locale most recently loaded from file
+     * @return a text file name
+     */
     public String getLoadedLocaleFilename()
     {
-        if(loadedLocaleFilename==null) return "en.txt";
+        if(loadedLocaleFilename==null) return DEFAULT_LOCALE + ".txt";
         else return loadedLocaleFilename;
     }
     
+    /**
+     * Updates the "external" (pseudo) locale with the translation lines passed in,
+     * makes it the current locale and propagates it
+     * @param lines - translation lines according to the locale file construction rules
+     * @param filename - the name (path) of the originating text file
+     */
     public void setExternal(StringList lines, String filename)
     {
         getLocale("external").parseStringList(lines);

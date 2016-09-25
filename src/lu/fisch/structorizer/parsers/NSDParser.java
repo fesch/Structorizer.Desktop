@@ -30,15 +30,16 @@ package lu.fisch.structorizer.parsers;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------		----			-----------
- *      Bob Fisch       2007.12.13              First Issue
- *      Kay Gürtzig     2015.10.29              Enhancement on For loop (new attributes KGU#3)
- *      Kay Gürtzig     2015.10.29              Modification on For loop (new attribute KGU#3)
- *      Kay Gürtzig     2015.12.16              Bugfix #63 (KGU#111): Exception on parsing failure
- *      Kay Gürtzig     2016.01.08              Bugfix #99 (KGU#134): workaround for defective FOR loops
- *      Kay Gürtzig     2016.03.21              Enh. #84 (KGU#61): Enhancement towards FOR-IN loops
- *      Kay Gürtzig     2016.04.14              Enh. #158 (KGU#177): method parse() cloned
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Bob Fisch       2007.12.13      First Issue
+ *      Kay Gürtzig     2015.10.29      Enhancement on For loop (new attributes KGU#3)
+ *      Kay Gürtzig     2015.10.29      Modification on For loop (new attribute KGU#3)
+ *      Kay Gürtzig     2015.12.16      Bugfix #63 (KGU#111): Exception on parsing failure
+ *      Kay Gürtzig     2016.01.08      Bugfix #99 (KGU#134): workaround for defective FOR loops
+ *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): Enhancement towards FOR-IN loops
+ *      Kay Gürtzig     2016.04.14      Enh. #158 (KGU#177): method parse() cloned
+ *      Kay Gürtzig     2016.09.24      Enh. #250 - Robustness of FOR loop reconstruction improved
  *
  ******************************************************************************************************
  *
@@ -263,7 +264,13 @@ public class NSDParser extends DefaultHandler {
 			else if (attributes.getIndex("style")!=-1)
 			{
 				String style = attributes.getValue("style");
-				ele.style = For.ForLoopStyle.valueOf(style);	// FIXME: Exception possible?
+				try {
+					ele.style = For.ForLoopStyle.valueOf(style);
+				}
+				catch (Exception ex)
+				{
+					System.err.println("Wrong loop style in FOR loop: " + style);
+				}
 			}
 			else
 			{
@@ -279,13 +286,19 @@ public class NSDParser extends DefaultHandler {
 				{
 					inSep = attributes.getValue("insep");
 				}
-				// Note: The following three statements should perhaps form a critical section...
-				if (inSep != null && !inSep.isEmpty())
-				{
-					D7Parser.postForIn = inSep;
+				try {
+					if (inSep != null && !inSep.isEmpty())
+					{
+						D7Parser.postForIn = inSep;
+					}
+					ele.setValueList(ele.splitForClause()[5]);
 				}
-				ele.setValueList(ele.splitForClause()[5]);
-				D7Parser.postForIn = currentInSep;
+				catch (Exception ex) {
+					System.err.println("Error on reconstructing FOR-IN loop: " + ex.getLocalizedMessage());
+				}
+				finally {
+					D7Parser.postForIn = currentInSep;
+				}
 			}
 			// END KGU#61 2016-03-21
 			// END KGU#3 2015-11-08

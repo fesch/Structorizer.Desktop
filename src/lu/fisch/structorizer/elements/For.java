@@ -52,6 +52,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.05.02      Bugfix #184: constructor For(String) now supports code import (KGU#192)
  *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
+ *      Kay Gürtzig     2016.09.24      Enh. #250: Adaptations to make the new editor design work
+ *      Kay Gürtzig     2016.09.25      Issue #252: ':=' and '<-' equivalence in consistency check <2>
  *
  ******************************************************************************************************
  *
@@ -98,6 +100,9 @@ public class For extends Element implements ILoop {
 	private static String forInSeparatorPre = "§FOREACH§";
 	private static String forInSeparatorIn = "§IN§";
 	// END KGU#61 2016-03-20
+	// START KGU#254 2016-09-23: Enh. #250 - Specific key for the case preFor and preForIn are equal
+	private static String commonSeparatorPre = "§FORCOMMON§";
+	// END KGU#254 2016-09-23
 	// The following fields are dedicated for unambiguous semantics representation. If and only if the
 	// structured information of these fields is consistent field isConsistent shall be true.
 	private String counterVar = "";			// name of the counter variable
@@ -673,11 +678,14 @@ public class For extends Element implements ILoop {
 		if (this.style == ForLoopStyle.TRAVERSAL && (valList = this.valueList) == null ||
 				this.style == ForLoopStyle.FREETEXT)
 		{
-			this.setValueList(valList = this.splitForClause()[5]);
+			// START KGU#254 2016-09-24: A get method shouldn't modify the element
+			//this.setValueList(valList = this.splitForClause()[5]);
+			valList = this.splitForClause()[5];
+			// END KGU#254 2016-09-24
 		}
 		return valList;
 	}
-	// END KGU#61 206-03-22
+	// END KGU#61 2016-03-22
 	
     
 	/**
@@ -756,6 +764,12 @@ public class For extends Element implements ILoop {
 		String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy,
 				forInSeparatorPre, forInSeparatorIn};
 		// END KGU#61 2016-03-20
+		// START KGU#61 2016-09-23: Enh. #84/#135/#250 improvement
+		if (forMarkers[0].equals(forMarkers[3]))
+		{
+			forSeparators[0] = commonSeparatorPre;
+		}
+		// END KGU#61 2016-09-23
 
 		// The configured markers for the For loop are not at all redundant but the only sensible
 		// hint how to split the line into the counter variable, the initial and the final value (and possibly the step).
@@ -763,23 +777,6 @@ public class For extends Element implements ILoop {
 		// what the user might have configured (see above)
 		for (int i = 0; i < forMarkers.length; i++)
 		{
-//			//String marker = forMarkers[i];
-//			String marker = Matcher.quoteReplacement(forMarkers[i]);
-//			String separator = forSeparators[i];
-//			if (!marker.isEmpty())
-//			{
-//				String pattern = "(.*?)" + marker + "(.*)";
-//				// If it is not padded, then ensure it is properly isolated
-//				if (marker.equals(marker.trim()))
-//				{
-//					pattern = "(.*?\\W)" + marker + "(\\W.*)";
-//				}
-//				interm = interm.replaceFirst(pattern, "$1 " + separator + " $2");
-//				// Eliminate possibly remaining occurrences if padded (preserve name substrings!)
-//				interm = interm.replaceAll(pattern, "$1 " + separator + " $2");
-//			}
-//			// eliminate multiple blanks
-//			interm = BString.replace(interm, "  ", " ");
 			String marker = forMarkers[i];
 			if (!marker.isEmpty())
 			{
@@ -858,14 +855,23 @@ public class For extends Element implements ILoop {
 		//int lenBy = forSeparatorBy.length();
 		int posForIn = tokens.indexOf(forInSeparatorPre);
 		int posIn = tokens.indexOf(forInSeparatorIn);
-		//if (posFor < 0) { posFor = -lenFor; }	// Fictitious position such that posFor+lenFor becomes 0
-		//int posIni = posFor + lenFor;
 		// START KGU#61 2016-03-20: Enh. #84/#135 - must go different ways now
 		// If both forInSeparatorIn and forSeparatorTo occur then a traditional loop is assumed
-		if (posIn > 0 && posTo < 0)
+		// START KGU#61 2016-09-23: Enh. #250  More criteria combinations (if for and forin keywords are equal then
+		// posForIn will always be -1.
+		//if (posIn > 0 && posTo < 0)
+		//{
+		//	return splitForTraversal(tokens, posFor, posForIn, posIn);
+		//}
+		if (posFor < 0 && posForIn < 0)
 		{
-			return splitForTraversal(tokens, posFor, posForIn, posIn);
+			posFor = posForIn = tokens.indexOf(commonSeparatorPre);
 		}
+		if (posIn > 0 && posTo < 0 || posIn > 0 && posForIn >= 0 || posForIn >= 0 && posTo < 0)
+		{
+			return splitForTraversal(tokens, posForIn, posIn);
+		}
+		// END KGU#61 2016-09-23
 		else {
 			return splitForCounter(tokens, posFor, posTo, posBy);
 		}
@@ -918,13 +924,18 @@ public class For extends Element implements ILoop {
 		return forParts;		
 	}
 
-	private static String[] splitForTraversal(StringList _tokens, int _posFor, int _posForIn, int _posIn)
+	// START KGU#61 2016-09-23: Enh, #250 - Signature reduced by one parameter
+	//private static String[] splitForTraversal(StringList _tokens, int _posFor, int _posForIn, int _posIn)
+	private static String[] splitForTraversal(StringList _tokens, int _posForIn, int _posIn)
+	// END KGU#61 2016-09-23
 	{
 		String[] forParts = { "dummy_iterator", "", null, "", "", "{}"};
-		if (_posForIn < 0)
-		{
-			_posForIn = _posFor;
-		}
+		// START KGU#61 2016-09-23: Enh. #250 - Dropped		
+		//if (_posForIn < 0)
+		//{
+		//	_posForIn = _posFor;
+		//}
+		// END KGU#61 2016-09-23
 		forParts[0] = _tokens.subSequence(_posForIn + 1, _posIn).concatenate().trim();
 		forParts[5] = _tokens.subSequence(_posIn + 1, _tokens.count()).concatenate().trim();
 		return forParts;
@@ -1035,10 +1046,14 @@ public class For extends Element implements ILoop {
 	// START KGU#61 2016-03-20: Enh. #84/#135
 	public String composeForInClause()
 	{
-		return composeForInClause(this.counterVar, this.valueList);
+		String valueList = this.valueList;
+		// START KGU#254 2016-09-24: #250 - There should be a chance for FREETEXT loops to be recognised
+		if (valueList == null) valueList = this.getValueList();
+		// END KGU#254 2016-09-24
+		return composeForInClause(this.counterVar, valueList);
 	}
 
-	public String composeForInClause(String _iterator, String _valueList)
+	public static String composeForInClause(String _iterator, String _valueList)
 	{
 		String preForIn = D7Parser.preForIn.trim();
 		if (preForIn.isEmpty()) { preForIn = D7Parser.preFor.trim(); }
@@ -1051,22 +1066,30 @@ public class For extends Element implements ILoop {
 	 * Classifies the loop style based only on the congruence of the stored
 	 * text with the generated textes of the styles COUNTER and TRAVERSAL
 	 * (the latter being the code for FOR-IN loops).
-	 * You might also consider testing this.style (which jus returns an cached
+	 * You might also consider testing this.style (which just returns a cached
 	 * earlier classification) and this.isForInLoop(), which first checks the
 	 * cached classification and if this is FREETEXT also calls this method
 	 * in order to find out whether this complies with FOR-IN syntax.
+	 * Note that assignment operator differences will be tolerated.
 	 * @return One of the style codes COUNTER, TRAVERSAL, and FREETEXT
 	 */
 	public ForLoopStyle classifyStyle()
 	{
 		ForLoopStyle style = ForLoopStyle.FREETEXT;
-		String thisText = this.getText().getLongString().trim();
+		// START KGU#256 2016-09-25: Bugfix #252 - we will level all assignment symbols here
+		//String thisText = this.getText().getLongString().trim();
+		String thisText = this.getText().getLongString().trim().replace(":=", "<-");
+		// END KGU#256 2016-09-25
 		//System.out.println(thisText + " <-> " + this.composeForClause() + " <-> " + this.composeForInClause());
 		
 		if (D7Parser.ignoreCase)
 		{
-			if (thisText.equalsIgnoreCase(this.composeForClause()) ||
-					thisText.equalsIgnoreCase(this.composeForClause(true)))
+			// START KGU#256 2016-09-25: Bugfix #252 - we will level all assignment symbols here
+			//if (thisText.equalsIgnoreCase(this.composeForClause()) ||
+			//		thisText.equalsIgnoreCase(this.composeForClause(true)))
+			if (thisText.equalsIgnoreCase(this.composeForClause().replace(":=", "<-")) ||
+					thisText.equalsIgnoreCase(this.composeForClause(true).replace(":=", "<-")))
+			// END KGU#256 2016-09-25
 			{
 				style = ForLoopStyle.COUNTER;
 			}
@@ -1077,8 +1100,12 @@ public class For extends Element implements ILoop {
 		}
 		else
 		{
-			if (thisText.equals(this.composeForClause()) ||
-					thisText.equals(this.composeForClause(true)))
+			// START KGU#256 2016-09-25: Bugfix #252 - we will level all assignment symbols here
+			//if (thisText.equals(this.composeForClause()) ||
+			//		thisText.equals(this.composeForClause(true)))
+			if (thisText.equals(this.composeForClause().replace(":=", "<-")) ||
+					thisText.equals(this.composeForClause(true).replace(":=", "<-")))
+			// END KGU#256 2016-09-25
 			{
 				style = ForLoopStyle.COUNTER;
 			}

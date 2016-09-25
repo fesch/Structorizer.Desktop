@@ -47,7 +47,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.03      KGU#202: Localization of Arranger Surface supported
  *      Kay Gürtzig     2016.07.25      Issues #201, #202: Look-and-Feel propagation to Arranger and Executor
  *      Kay Gürtzig     2016.08.01      Enh. #128: new mode "Comments plus text" associated to Ini file
- *      Kay Gürtzig     2016.08.08      Issues #220, #224: Loak-and Feel updates for Executor and Translator
+ *      Kay Gürtzig     2016.08.08      Issues #220, #224: Look-and Feel updates for Executor and Translator
+ *      Kay Gürtzig     2016.09.09      Locales backwards compatibility precaution for release 3.25 in loadFromIni()
  *
  ******************************************************************************************************
  *
@@ -257,29 +258,34 @@ public class Mainform  extends LangFrame implements NSDController
 			ini.load();
 
 			double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1")).intValue();
-                        IconLoader.setScaleFactor(scaleFactor);
+			IconLoader.setScaleFactor(scaleFactor);
 			
-                        // position
+			// position
 			int top = Integer.valueOf(ini.getProperty("Top","0"));
 			int left = Integer.parseInt(ini.getProperty("Left","0"));
 			int width = Integer.parseInt(ini.getProperty("Width","750"));
 			int height = Integer.valueOf(ini.getProperty("Height","550"));
 
-                        // reset to defaults if wrong values
-                        if (top<0) top=0;
-                        if (left<0) left=0;
-                        if (width<=0) width=750;
-                        if (height<=0) height=550;
-
+			// reset to defaults if wrong values
+			if (top<0) top=0;
+			if (left<0) left=0;
+			if (width<=0) width=750;
+			if (height<=0) height=550;
+			
 			// language	
-                        Locales.getInstance().setLocale(ini.getProperty("Lang","en"));
-                        
-                        // colors
-                        Element.loadFromINI();
-                        updateColors();
-                        
-                        // parser
-                        D7Parser.loadFromINI();
+			String localeFileName = ini.getProperty("Lang","en");
+			// START temporary backwards compatibility precaution towards release 3.25
+			if (localeFileName.equals("chs.txt")) localeFileName = "zh-cn.txt";
+			else if (localeFileName.equalsIgnoreCase("cht.txt")) localeFileName = "zh-tw.txt";
+			// END temporary backwards compatibility precaution towards release 3.25
+			Locales.getInstance().setLocale(localeFileName);
+			
+			// colors
+			Element.loadFromINI();
+			updateColors();
+
+			// parser
+			D7Parser.loadFromINI();
 
 			// look & feel
 			laf=ini.getProperty("laf","Mac OS X");
@@ -358,37 +364,12 @@ public class Mainform  extends LangFrame implements NSDController
 			}
 			
 			// analyser (see also Root.saveToIni())
-// START KGU#239 2016-08-12: Code redesign
-//			Root.check1 = ini.getProperty("check1","1").equals("1");
-//			Root.check2 = ini.getProperty("check2","1").equals("1");
-//			Root.check3 = ini.getProperty("check3","1").equals("1");
-//			Root.check4 = ini.getProperty("check4","1").equals("1");
-//			Root.check5 = ini.getProperty("check5","1").equals("1");
-//			Root.check6 = ini.getProperty("check6","1").equals("1");
-//			Root.check7 = ini.getProperty("check7","1").equals("1");
-//			Root.check8 = ini.getProperty("check8","1").equals("1");
-//			Root.check9 = ini.getProperty("check9","1").equals("1");
-//			Root.check10 = ini.getProperty("check10","1").equals("1");
-//			Root.check11 = ini.getProperty("check11","1").equals("1");
-//			Root.check12 = ini.getProperty("check12","1").equals("1");
-//			Root.check13 = ini.getProperty("check13","1").equals("1");
-//			// START KGU#3 2015-11-03: New check for enhanced FOR loops
-//			Root.check14 = ini.getProperty("check14","1").equals("1");
-//			// END KGU#3 2015-11-03
-//			// START KGU#2/KGU#78 2015-11-28: New checks for CALL and JUMP elements
-//			Root.check15 = ini.getProperty("check15","1").equals("1");
-//			Root.check16 = ini.getProperty("check16","1").equals("1");
-//			Root.check17 = ini.getProperty("check17","1").equals("1");
-//			// END KGU#2/KGU#78 2015-11-28
-//			// START KGU#239 2016-08-12: Enh. #231 - New checks for identifier collisions
-//			Root.check15 = ini.getProperty("check18","0").equals("1");
-//			Root.check16 = ini.getProperty("check19","0").equals("1");
-//			// END KGU#2/KGU#78 2016-08-12
+			// START KGU#239 2016-08-12: Code redesign
 			for (int i = 1; i <= Root.numberOfChecks(); i++)
 			{
 				Root.setCheck(i, ini.getProperty("check" + i, "1").equals("1"));
 			}
-// END KGU#2/KGU#78 2016-08-12
+			// END KGU#2/KGU#78 2016-08-12
 			
 			doButtons();
 		}

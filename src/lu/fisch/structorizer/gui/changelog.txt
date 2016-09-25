@@ -1,17 +1,30 @@
-﻿Todo
-- "default" button to set the parser preferences [Benjamin Bartsch]
-  The filled-in default values should be dependent on the selected GUI language,
-  e.g. GUI=EN, Input will be "IN"
-       GUI=LU, Input will be "lire" ...
-- allow text formatting of elements --> must also be saved to the NSD file [David Tremain]
-
-Legend:
+﻿Legend:
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 [Foo]2  -->     idea provided by Foo, coding done by Kay Gürtzig
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Version: 3.25 (2016.08.13)
+Current development version: 3.25-01 (2016.09.25)
+- 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
+- 01: Issue #213: Selected state of FOR transmutation result now visible <2>
+- 01: Bugfix #241: Translation bugs for element editor mended <2>
+- 01: Bugfix #243: Forgotten translations for some message boxes [Rolf Schmidt]<2>
+- 01: Bugfix #244: Flawed logic for the save actions mended <2>
+- 01: Bugfix #246: Executor now checks conditions for Boolean results <2>
+- 01: Issue #245: Browser launching workaround for Linux systems [Rolf Schmidt]2
+- 01: Bugfix #247: Defective BASH export of ENDLESS loops [Rolf Schmidt]2
+- 01: Issue #248: Linux workaround for setting breakpoint triggers <2>
+- 01: Issue #248: Linux workaround for number conversions in Locales and Executor <2>
+- 01: Enh. #249: New Analyser check for subroutine argument parenthesis <2>
+- 01: Analyser preferences order modified <2>
+- 01: Enh. #250: FOR/FOR-IN loop editor partially redesigned <2>
+- 01: Bugfix #251: Look and feel problems with Executor console window <2>
+- 01: Bugfix #252: Analyser check 14 should tolerate ":=" vs "<-" <2>
+- 01: Saved diagrams now prepared for #253 (keyword substitution on loading) <2>
+- 01: Bugfix #254: CASE execution failed when parser keywords were used <2>
+- 01: Enh. #255: Analyser now names the assumed loop variables if supernumerous <2>
+
+Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2
 - 01: Enh. #124: Generalized runtime data visualization <2>
 - 01: Arranger now adopts current directory from first arranged diagram <2>
@@ -111,6 +124,10 @@ Version: 3.25 (2016.08.13)
 - 16: Bugfix #227: Oberon module export must end with full stop [K.-P. Reimers]2
 - 16: Bugfix #228: Unnecessary warning on code export of recursive routines <2>
 - 17: Enh. #231: Variable name collision checks added to Analyser <2>
+- 18: Bugfix #233: Function key F10 was caught by the menu bar [Rolf Schmidt]2
+- 18: Issue #234: bash expression of ord and chr function restricted [Rolf Schmidt]2
+- 18: Locales: Language button handling in Menu and Translator redesigned <2>
+- 18: Locales: Translator enabled to reload edited files <2>
 
 Version: 3.24 (2016.03.14)
 - 01: Bugfix #50 - added return types to signature for function export in Pascal [lhoreman]

@@ -40,16 +40,18 @@
  *
  *      Author:         Laurent Zender
  *
- *      Description:    The lxemburgish language file
+ *      Description:    The Luxemburgish language file
  *
  ******************************************************************************************************
  *
  *      Revision List
  *
- *      Author              Date			Description
- *      ------              ----			-----------
- *      Laurent Zender      2008.01.14                  First Issue
- *      Laurent Zender      2016.07.31                  Corrections and Translations for newly added features
+ *      Author              Date            Description
+ *      ------              ----            -----------
+ *      Laurent Zender      2008.01.14      First Issue
+ *      Laurent Zender      2016.07.31      Corrections and Translations for newly added features
+ *      Kay Gürtzig         2016.09.04      Menu.menuPreferencesLanguage... key structure modified
+ *      Kay Gürtzig         2016.09.22      AnalyserPreferences numbering modified
  *
  ******************************************************************************************************
  *
@@ -139,19 +141,19 @@ Menu.menuPreferencesParser.text=Parser...
 Menu.menuPreferencesAnalyser.text=Analyser …
 Menu.menuPreferencesExport.text=Export …
 Menu.menuPreferencesLanguage.text=Sprooch
-Menu.menuPreferencesLanguageEnglish.text=Englesch
-Menu.menuPreferencesLanguageGerman.text=Däitsch
-Menu.menuPreferencesLanguageFrench.text=Franséisch
-Menu.menuPreferencesLanguageDutch.text=Hollännesch
-Menu.menuPreferencesLanguageLuxemburgish.text=Lëtzebuergesch
-Menu.menuPreferencesLanguageSpanish.text=Spuenesch
-Menu.menuPreferencesLanguageItalian.text=Italienesch
-Menu.menuPreferencesLanguagePortugalBrazil.text=Portugisesch (Brasilien)
-Menu.menuPreferencesLanguageSimplifiedChinese.text=Chinesesch (vereinfacht)
-Menu.menuPreferencesLanguageTraditionalChinese.text=Chinesesch (traditionell)
-Menu.menuPreferencesLanguageCzech.text=Tschechesch
-Menu.menuPreferencesLanguageRussian.text=Russesch
-Menu.menuPreferencesLanguagePolish.text=Polnesch
+Menu.menuPreferencesLanguageItems.en.text=Englesch
+Menu.menuPreferencesLanguageItems.de.text=Däitsch
+Menu.menuPreferencesLanguageItems.fr.text=Franséisch
+Menu.menuPreferencesLanguageItems.nl.text=Hollännesch
+Menu.menuPreferencesLanguageItems.lu.text=Lëtzebuergesch
+Menu.menuPreferencesLanguageItems.es.text=Spuenesch
+Menu.menuPreferencesLanguageItems.it.text=Italienesch
+Menu.menuPreferencesLanguageItems.pt_br.text=Portugisesch (Brasilien)
+Menu.menuPreferencesLanguageItems.zh-cn.text=Chinesesch (vereinfacht)
+Menu.menuPreferencesLanguageItems.zh-tw.text=Chinesesch (traditionell)
+Menu.menuPreferencesLanguageItems.cz.text=Tschechesch
+Menu.menuPreferencesLanguageItems.ru.text=Russesch
+Menu.menuPreferencesLanguageItems.pl.text=Polnesch
 
 Menu.menuPreferencesLookAndFeel.text=Look & Feel
 
@@ -168,7 +170,7 @@ Menu.menuHelpAbout.text=Iwwert ...
 Menu.menuHelpUpdate.text=Update. ..
 // Error messages for analyser
 Menu.error01_1.text=WARNUNG: Keng Schläifvariabel fonnt
-Menu.error01_2.text=WARNUNG: Méi wei eng Schläifvariabel fonnt
+Menu.error01_2.text=WARNUNG: Méi wei eng Schläifvariabel fonnt: «%»
 Menu.error01_3.text=D'Schläifvariabel «%» dierf net geännert ginn!
 Menu.error02.text=Keng Variabelännerung an der Konditioun fonnt. Méiglech endlos Schläif ...
 Menu.error03_1.text=D'Variabel «%» ass nach net initialiséiert ginn!
@@ -204,23 +206,23 @@ Menu.error17.text=Consistency risk due to concurrent access to variable «%» by
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Analyser Astellungen
-AnalyserPreferences.checkboxes.0.text=Op verännert Schläif Variabel préiwen.
-AnalyserPreferences.checkboxes.1.text=Op endlos Schläif préiwen. (Souwäit wei méiglech!)
-AnalyserPreferences.checkboxes.2.text=Op net initialiséiert Variabel préiwen.
-AnalyserPreferences.checkboxes.3.text=Op falsch IF-Statement Benotzung préiwen.
-AnalyserPreferences.checkboxes.4.text=Op GROUSSGESCHRIWWEN Variabel Nimm préiwen. (LUX/MEN)
-AnalyserPreferences.checkboxes.5.text=Op GROUSSGESCHRIWWEN Programm / Sub Nimm préiwen. (LUX/MEN)
-AnalyserPreferences.checkboxes.6.text=Op valid Identifiers préiwen.
-AnalyserPreferences.checkboxes.7.text=Zouwäisung an den Konditiounen kontrolléieren.
-AnalyserPreferences.checkboxes.8.text=Préiwen op den Programm / Subnumm net selwecht wei aner Identifier sinn.
-AnalyserPreferences.checkboxes.9.text=Op Instruktiounen mat multipellem Befehl.
-AnalyserPreferences.checkboxes.10.text=Op Zouwäisungsfehler préiwen.
-AnalyserPreferences.checkboxes.11.text=Op Standardiséiert Parameternimm préiwen (LUX/MEN)
-AnalyserPreferences.checkboxes.12.text=Check of Funktioun en Resultat zréck gëtt.
-AnalyserPreferences.checkboxes.13.text=Op Konsistenz vun den Schläifen Parameter préiwen.
-AnalyserPreferences.checkboxes.14.text=Op feelerhaft Ennerroutine CALLs préiwen.
-AnalyserPreferences.checkboxes.15.text=Op falsch JUMP Element benotzen préiwen
-AnalyserPreferences.checkboxes.16.text=Op Inkonsistenz an PARALLEL Sektioun préiwen.
+AnalyserPreferences.checkboxes.1.text=Op verännert Schläif Variabel préiwen.
+AnalyserPreferences.checkboxes.2.text=Op endlos Schläif préiwen. (Souwäit wei méiglech!)
+AnalyserPreferences.checkboxes.3.text=Op net initialiséiert Variabel préiwen.
+AnalyserPreferences.checkboxes.4.text=Op falsch IF-Statement Benotzung préiwen.
+AnalyserPreferences.checkboxes.5.text=Op GROUSSGESCHRIWWEN Variabel Nimm préiwen. (LUX/MEN)
+AnalyserPreferences.checkboxes.6.text=Op GROUSSGESCHRIWWEN Programm / Sub Nimm préiwen. (LUX/MEN)
+AnalyserPreferences.checkboxes.7.text=Op valid Identifiers préiwen.
+AnalyserPreferences.checkboxes.8.text=Zouwäisung an den Konditiounen kontrolléieren.
+AnalyserPreferences.checkboxes.9.text=Préiwen op den Programm / Subnumm net selwecht wei aner Identifier sinn.
+AnalyserPreferences.checkboxes.10.text=Op Instruktiounen mat multipellem Befehl.
+AnalyserPreferences.checkboxes.11.text=Op Zouwäisungsfehler préiwen.
+AnalyserPreferences.checkboxes.12.text=Op Standardiséiert Parameternimm préiwen (LUX/MEN)
+AnalyserPreferences.checkboxes.13.text=Check of Funktioun en Resultat zréck gëtt.
+AnalyserPreferences.checkboxes.14.text=Op Konsistenz vun den Schläifen Parameter préiwen.
+AnalyserPreferences.checkboxes.15.text=Op feelerhaft Ennerroutine CALLs préiwen.
+AnalyserPreferences.checkboxes.16.text=Op falsch JUMP Element benotzen préiwen
+AnalyserPreferences.checkboxes.17.text=Op Inkonsistenz an PARALLEL Sektioun préiwen.
 AnalyserPreferences.okButton.text=OK
 
 

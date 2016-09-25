@@ -40,12 +40,15 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2015.12.31      Bugfix #82 (KGU#118) Inconsistent FOR loops used to obstruct saving
  *      Kay Gürtzig     2016.01.08      Bugfix #99 (KGU#134) mends mis-spelling due to fix #82
  *      Kay Gürtzig     2016.03.21-22   Enh. #84 (KGU#61) mechanisms to save FOR-IN loops adequately
+ *      Kay Gürtzig     2016.09.25      Enh. #253: Root element now conveys parser preferences
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
  ******************************************************************************************************///
+
+import java.util.Map;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
@@ -315,12 +318,29 @@ public class XmlGenerator extends Generator {
 	{
 		String pr = _root.isProgram ? "program" : "sub";
 		String ni = _root.isNice ? "nice" : "abbr";
+		
+		// START KGU#257 2016-09-25: Enh. #253
+		String pp_attributes = "";
+		
+		for (Map.Entry<String, String> entry: D7Parser.getPropertyMap(true).entrySet())
+		{
+			// Empty keywords will hardly have been used in this diagram, so it's okay to omit them
+			if (!entry.getValue().isEmpty())
+			{
+				pp_attributes += " " + entry.getKey() + "=\"" + BString.encodeToHtml(entry.getValue()) + "\"";
+			}
+		}
+		// END KGU#257 2016-09-25
 
 		code.add("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		//code.add("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");
 		// START KGU 2015-12-04: Might not be so bad an idea to write the product version into the file
 		//code.add("<root xmlns:nsd=\"http://structorizer.fisch.lu/\" text=\""+BString.encodeToHtml(_root.getText().getCommaText())+"\" comment=\""+
-		code.add("<root xmlns:nsd=\"http://structorizer.fisch.lu/\" version=\"" + Element.E_VERSION + "\" text=\"" + 
+		// START KGU#257 2016-09-25: Enh. #253: Add all current parser preferences
+		//code.add("<root xmlns:nsd=\"http://structorizer.fisch.lu/\" version=\"" + Element.E_VERSION + "\" text=\"" + 
+		code.add("<root xmlns:nsd=\"http://structorizer.fisch.lu/\" version=\"" + Element.E_VERSION + "\"" +
+								pp_attributes + " text=\"" + 
+		// END KGU#257 2016-09-25
 								BString.encodeToHtml(_root.getText().getCommaText()) + "\" comment=\"" +
 		// END KGU 2015-12-04
 								BString.encodeToHtml(_root.getComment().getCommaText())+"\" color=\""+
