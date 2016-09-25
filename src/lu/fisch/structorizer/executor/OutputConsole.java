@@ -141,11 +141,11 @@ public class OutputConsole extends JFrame {
     public void write(String _text, Color _colour)
     {
     	try {
-			this.doc.insertString(doc.getLength(), _text, doc.getStyle(_colour.toString()));
-		} catch (BadLocationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+    		this.doc.insertString(doc.getLength(), _text, doc.getStyle(_colour.toString()));
+    	} catch (BadLocationException e) {
+    		// TODO Auto-generated catch block
+    		e.printStackTrace();
+    	}
     	// Scroll to end (if there is an easier way, I just didn't find it).
     	Rectangle rect = this.textPane.getBounds();
     	rect.y = rect.height - 1;
@@ -181,6 +181,5 @@ public class OutputConsole extends JFrame {
             }
         });
     }
-	
-	
+    
 }

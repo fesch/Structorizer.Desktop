@@ -53,6 +53,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
  *      Kay Gürtzig     2016.09.24      Enh. #250: Adaptations to make the new editor design work
+ *      Kay Gürtzig     2016.09.25      Issue #252: ':=' and '<-' equivalence in consistency check <2>
  *
  ******************************************************************************************************
  *
@@ -1065,22 +1066,30 @@ public class For extends Element implements ILoop {
 	 * Classifies the loop style based only on the congruence of the stored
 	 * text with the generated textes of the styles COUNTER and TRAVERSAL
 	 * (the latter being the code for FOR-IN loops).
-	 * You might also consider testing this.style (which jus returns an cached
+	 * You might also consider testing this.style (which just returns a cached
 	 * earlier classification) and this.isForInLoop(), which first checks the
 	 * cached classification and if this is FREETEXT also calls this method
 	 * in order to find out whether this complies with FOR-IN syntax.
+	 * Note that assignment operator differences will be tolerated.
 	 * @return One of the style codes COUNTER, TRAVERSAL, and FREETEXT
 	 */
 	public ForLoopStyle classifyStyle()
 	{
 		ForLoopStyle style = ForLoopStyle.FREETEXT;
-		String thisText = this.getText().getLongString().trim();
+		// START KGU#256 2016-09-25: Bugfix #251 - we will level all assignment symbols here
+		//String thisText = this.getText().getLongString().trim();
+		String thisText = this.getText().getLongString().trim().replace(":=", "<-");
+		// END KGU#256 2016-09-25
 		//System.out.println(thisText + " <-> " + this.composeForClause() + " <-> " + this.composeForInClause());
 		
 		if (D7Parser.ignoreCase)
 		{
-			if (thisText.equalsIgnoreCase(this.composeForClause()) ||
-					thisText.equalsIgnoreCase(this.composeForClause(true)))
+			// START KGU#256 2016-09-25: Bugfix #251 - we will level all assignment symbols here
+			//if (thisText.equalsIgnoreCase(this.composeForClause()) ||
+			//		thisText.equalsIgnoreCase(this.composeForClause(true)))
+			if (thisText.equalsIgnoreCase(this.composeForClause().replace(":=", "<-")) ||
+					thisText.equalsIgnoreCase(this.composeForClause(true).replace(":=", "<-")))
+			// END KGU#256 2016-09-25
 			{
 				style = ForLoopStyle.COUNTER;
 			}
@@ -1091,8 +1100,12 @@ public class For extends Element implements ILoop {
 		}
 		else
 		{
-			if (thisText.equals(this.composeForClause()) ||
-					thisText.equals(this.composeForClause(true)))
+			// START KGU#256 2016-09-25: Bugfix #251 - we will level all assignment symbols here
+			//if (thisText.equals(this.composeForClause()) ||
+			//		thisText.equals(this.composeForClause(true)))
+			if (thisText.equals(this.composeForClause().replace(":=", "<-")) ||
+					thisText.equals(this.composeForClause(true).replace(":=", "<-")))
+			// END KGU#256 2016-09-25
 			{
 				style = ForLoopStyle.COUNTER;
 			}
