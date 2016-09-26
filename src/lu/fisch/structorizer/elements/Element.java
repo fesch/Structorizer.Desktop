@@ -171,7 +171,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.25-02";
+	public static String E_VERSION = "3.25-02alpha";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -201,15 +201,15 @@ public abstract class Element {
 	" - Jan Ollmann <bkgmjo@gmx.net>\n"+
 	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"\n"+
-	"Translations realised by\n"+
+	"Translations initially realised by\n"+
 	" - NL: Jerone <jeronevw@hotmail.com>\n"+
 	" - DE: Klaus-Peter Reimers <k_p_r@freenet.de>\n"+
 	" - LU: Laurent Zender <laurent.zender@hotmail.de>\n"+
 	" - ES: Andres Cabrera <andrescabrera20@gmail.com>\n"+
 	" - PT/BR: Theldo Cruz <cruz@pucminas.br>\n"+
 	" - IT: Andrea Maiani <andreamaiani@gmail.com>\n"+
-	" - CHS: Wang Lei <wanglei@hollysys.com>\n"+
-	" - CHT: Joe Chem <hueyan_chen@yahoo.com.tw>\n"+
+	" - ZH-CN: Wang Lei <wanglei@hollysys.com>\n"+
+	" - ZH-TW: Joe Chem <hueyan_chen@yahoo.com.tw>\n"+
 	" - CZ: Vladimír Vaščák <vascak@spszl.cz>\n"+
 	" - RU: Юра Лебедев <elita.alegator@gmail.com>\n"+
 	"\n"+
@@ -227,6 +227,7 @@ public abstract class Element {
 	" - Andreas Jenet <ajenet@gmx.de>\n"+
 	" - Jan Peter Klippel <structorizer@xtux.org>\n"+
 	" - David Tremain <DTremain@omnisource.com>\n"+
+	" - Rolf Schmidt <rolf.frogs@t-online.de>\n"+
 	
 	"\n"+
 	"File dropper class by\n"+

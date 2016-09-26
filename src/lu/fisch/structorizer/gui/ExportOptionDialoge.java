@@ -76,14 +76,8 @@ public class ExportOptionDialoge extends LangDialog
         setModal(true);
     }
 
-    // START KGU#212 2016-07-26: bugfix #204 - We need the language before pack()
-    //public ExportOptionDialoge(Frame frame)
     public ExportOptionDialoge(Frame frame) //, String langFileName)
-    // END KGU#212 2016-07-26
     {
-        // START KGU#212 2016-07-26: bugfix #204
-        //this.langFile = langFileName;
-        // END KGU#212 2016-07-26
         initComponents();
         setModal(true);
         setLocationRelativeTo(frame);

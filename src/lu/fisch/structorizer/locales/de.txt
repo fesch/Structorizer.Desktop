@@ -78,6 +78,7 @@
  *      Kay Gürtzig         2016.09.17  Issue #243: New message translations for Control 
  *      Kay Gürtzig         2016.09.22  Bugfix #241, issue #249: New messages for InputBox and Analyser
  *                                      AnalyserPreferences numbering modified, InputBoxFor messages
+ *      Kay Gürtzig         2016.09.25  Enh. #253: Section ImportOptionDialog inserted, Analyser checks reformulated
  *
  ******************************************************************************************************
  *
@@ -291,23 +292,23 @@ Menu.error20.text=Ein Unterprogrammkopf muss mindestens die Klammern einer (evtl
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Überprüfungs-Einstellungen
-AnalyserPreferences.checkboxes.1.text=Nach Wertveränderungen der Kontrollvariablen von FOR-Schleifen suchen.
-AnalyserPreferences.checkboxes.2.text=Nach Endlosschleifen suchen. (So weit möglich!)
-AnalyserPreferences.checkboxes.3.text=Nach nicht initialisierten Variablen suchen.
-AnalyserPreferences.checkboxes.4.text=Nach nicht korrekt verwendeten Alternativenstrukturen suchen.
+AnalyserPreferences.checkboxes.1.text=Manipulationen an Kontrollvariablen von FOR-Schleifen melden.
+AnalyserPreferences.checkboxes.2.text=Schleifen auf Endloszyklen untersuchen. (So weit möglich!)
+AnalyserPreferences.checkboxes.3.text=Nicht initialisierte Variablen feststellen.
+AnalyserPreferences.checkboxes.4.text=Unkorrekt verwendete Alternativenstrukturen melden.
 AnalyserPreferences.checkboxes.5.text=Prüfen, ob alle Variablenamen großgeschrieben sind. (LUX/MEN)
 AnalyserPreferences.checkboxes.6.text=Prüfen, ob der Programmname großgeschrieben ist. (LUX/MEN)
-AnalyserPreferences.checkboxes.7.text=Nach nicht korrekt benannten Identifikatoren suchen.
-AnalyserPreferences.checkboxes.8.text=Nach Wertzuweisungen innerhalb von Bedingungen suchen.
+AnalyserPreferences.checkboxes.7.text=Nicht korrekt benannte Bezeichner suchen.
+AnalyserPreferences.checkboxes.8.text=Wertzuweisungen innerhalb von Bedingungen melden.
 AnalyserPreferences.checkboxes.9.text=Testen, ob sich der Programmname von allen anderen Bezeichnern unterscheidet.
-AnalyserPreferences.checkboxes.10.text=Nach fehlerhaften mehrzeiligen Anweisungen suchen.
+AnalyserPreferences.checkboxes.10.text=Mehrzeilige Anweisungen mit verschiedenen Anweisungsarten suchen.
 AnalyserPreferences.checkboxes.11.text=Nach fehlerhaften Wertzuweisungen suchen.
 AnalyserPreferences.checkboxes.12.text=Prüfen, ob die Parameternamen korrekt sind. (LUX/MEN)
 AnalyserPreferences.checkboxes.13.text=Prüfen, ob eine Funktion stets auch einen Rückgabewert hat.
 AnalyserPreferences.checkboxes.14.text=Prüfen, ob die Angaben von FOR-Schleifen konsistent sind.
 AnalyserPreferences.checkboxes.15.text=Prüfen, ob Aufruf-Elemente nur einen einzelnen Routinenaufruf enthalten.
 AnalyserPreferences.checkboxes.16.text=Prüfen, ob Aussprung-Elemente korrekt benutzt sind.
-AnalyserPreferences.checkboxes.17.text=Prüfen, ob konkurrierende Wertzuweisungen in parallelen Zweigen vorkommen.
+AnalyserPreferences.checkboxes.17.text=Prüfen, ob in parallelen Zweigen konkurrierende Wertzuweisungen vorkommen.
 AnalyserPreferences.checkboxes.18.text=Prüfen, ob Variablen sich nur durch Groß-/Kleinschreibung unterscheiden.
 AnalyserPreferences.checkboxes.19.text=Prüfen, ob Variablennamen mit reservierten Wörtern kollidieren könnten.
 AnalyserPreferences.checkboxes.20.text=Prüfen, dass ein Unterprogramm (Kopfzeile) eine Parameterliste besitzt.
@@ -655,6 +656,16 @@ ExportOptionDialoge.chkCharsetAll.text=Alle auflisten?
 ExportOptionDialoge.jLabel1.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Speichern der gewählten Einstellungen.
+
+-----[ importOptionDialog ]-----
+ImportOptionDialog.title=Einstellungen zum Dateiladen ...
+ImportOptionDialog.lbCharset.text=Zeichensatz (Codierung):
+ImportOptionDialog.chkCharsetAll.text=Alle auflisten?
+ImportOptionDialog.chkRefactorOnLoading.text=Parser-Schlüsselworte in Diagrammen beim Laden ersetzen (refactoring).
+ImportOptionDialog.chkRefactorOnLoading.tooltip=Aktivieren Sie diese Option, um Diagramme beim Laden an die aktuell eingestellten Parser-Kennworte anpassen zu lassen.
+ImportOptionDialog.lbIntro.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
+ImportOptionDialog.btnOk.text=OK
+ImportOptionDialog.btnOk.tooltip=Speichern der gewählten Einstellungen.
 
 -----> Arranger
 Surface.msgFileLoadError.text=Dateiladefehler:

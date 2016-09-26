@@ -210,18 +210,6 @@ public class XmlGenerator extends Generator {
     	// START KGU#118 2015-12-31: Bugfix 82: "free-style" FOR loops used to obstruct saving
     	// We need some pre-processing to enhance robustness: If some of the specific fields
     	// cannot be retrieved then just omit them, they aren't strictly needed on loading.
-//		code.add(_indent+"<for text=\""+BString.encodeToHtml(_for.getText().getCommaText()) +
-//				"\" comment=\"" + BString.encodeToHtml(_for.getComment().getCommaText()) +
-//				// START KGU#3 2015-10-28: Insert new dedicated information fields
-//				"\" counterVar=\"" + BString.encodeToHtml(_for.getCounterVar()) +
-//				"\" startValue=\"" + BString.encodeToHtml(_for.getStartValue()) +
-//				"\" endValue=\"" + BString.encodeToHtml(_for.getEndValue()) +
-//				"\" stepConst=\"" + BString.encodeToHtml(_for.getStepString()) +
-//				// END KGU#3 2015-10-28
-//				// START KGU#3 2015-11-08: The reliability of the structured fields must be stored, too.
-//				"\" reliable=\"" + BString.encodeToHtml(_for.checkConsistency() ? "true" : "false") +
-//				// END KGU#3 2015-11-08
-//				"\" color=\"" + _for.getHexColor()+"\">");
     	String[] specificInfo = _for.splitForClause();
     	String specificAttributes = "";
     	for (int i = 0; i < forLoopAttributes.length; i++)
@@ -233,18 +221,10 @@ public class XmlGenerator extends Generator {
     	}
     	code.add(_indent+"<for text=\""+BString.encodeToHtml(_for.getText().getCommaText()) +
     			"\" comment=\"" + BString.encodeToHtml(_for.getComment().getCommaText()) +
-    			// START KGU#3 2015-10-28: Insert new dedicated information fields
     			specificAttributes +
-    			// END KGU#3 2015-10-28
-    			// START KGU#3 2015-11-08: The reliability of the structured fields must be stored, too.
-    			// START KGU#61 2016-03-21: Enh. #84 - Now the style is to be stored instead
-    			//"\" reliable=\"" + BString.encodeToHtml(_for.checkConsistency() ? "true" : "false") +
     			"\" style=\"" + BString.encodeToHtml(_for.style.toString()) +
-    			// Instead of redundantly storing the value list twice, we just save the ForIn separator...
-    			// FIXME: No longer needed when enh. #253 is ready!
+    			// FIXME: No longer needed beyond version 3.25-01, except for backward compatibility (temporarily)
     			(_for.isForInLoop() ? ("\" insep=\"" + BString.encodeToHtml(D7Parser.keywordMap.get("postForIn"))) : "") +
-    			// END KGU#61 2016-03-21
-    			// END KGU#3 2015-11-08
     			"\" color=\"" + _for.getHexColor()+"\">");
     	// END KGU#118 2015-12-31
 		code.add(_indent+this.getIndent()+"<qFor>");

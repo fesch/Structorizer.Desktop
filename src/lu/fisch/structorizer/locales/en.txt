@@ -76,6 +76,7 @@
  *      Kay Gürtzig     2016.09.15-17   Issue #243: New message translations for Menu and Control
  *      Kay Gürtzig     2016.09.22      Bugfix #241; issue #249: New messages for InputBox and Analyser
  *                                      AnalyserPreferences numbering modified, InputBoxFor messages
+ *      Kay Gürtzig     2016.09.25      Enh. #253: Section ImportOptionDialog inserted
  *
  ******************************************************************************************************
  *
@@ -667,6 +668,16 @@ ExportOptionDialoge.chkCharsetAll.text=List all?
 ExportOptionDialoge.jLabel1.text=Please select the options you want to activate...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Save these settings.
+
+-----[ importOptionDialog ]-----
+ImportOptionDialog.title=Import options ...
+ImportOptionDialog.lbCharset.text=Character set:
+ImportOptionDialog.chkCharsetAll.text=List all?
+ImportOptionDialog.chkRefactorOnLoading.text=Replace keywords on loading a diagram (refactoring).
+ImportOptionDialog.chkRefactorOnLoading.tooltip=Select this option if all configurable keywords in the daiagram are to be adapted to the current parser preferences.
+ImportOptionDialog.lbIntro.text=Please select the options you want to activate...
+ImportOptionDialog.btnOk.text=OK
+ImportOptionDialog.btnOk.tooltip=Save these settings.
 
 -----> Arranger
 Surface.msgFileLoadError.text=File Load Error:

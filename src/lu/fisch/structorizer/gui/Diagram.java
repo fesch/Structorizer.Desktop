@@ -89,7 +89,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.17      Issue #245: Message box for failing browser call in updateNSD() added.
  *      Kay Gürtzig     2016.09.21      Issue #248: Workaround for legacy Java versions (< 1.8) in editBreakTrigger()
  *      Kay Gürtzig     2016.09.24      Enh. #250: Several modifications around showInputBox()
- *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done.
+ *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done, importOptions() added.
  *
  ******************************************************************************************************
  *
@@ -3536,11 +3536,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         {
             Ini ini = Ini.getInstance();
             ini.load();
-            // START KGU#212 2016-07-26: bugfix #204 eod sizing needs the language
-            //ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame());
-            ExportOptionDialoge eod = new ExportOptionDialoge(
-            		NSDControl.getFrame()); //, NSDControl.getLang());
-            // END KGU#212 2016-07-26
+            ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame());
             if(ini.getProperty("genExportComments","0").equals("true"))
                 eod.commentsCheckBox.setSelected(true);
             else 
@@ -3596,6 +3592,36 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             ex.printStackTrace();
         }
     }
+
+    // END KGU#258 2016-09-26: Enh. #253
+    public void importOptions()
+    {
+        try
+        {
+            Ini ini = Ini.getInstance();
+            ini.load();
+            ImportOptionDialog iod = new ImportOptionDialog(NSDControl.getFrame());
+            iod.chkRefactorOnLoading.setSelected(ini.getProperty("impRefactorOnLoading", "false").equals("true"));
+            iod.charsetListChanged(ini.getProperty("impExportCharset", Charset.defaultCharset().name()));
+            iod.setVisible(true);
+            
+            if(iod.goOn==true)
+            {
+                ini.setProperty("impRefactorOnLoading", String.valueOf(iod.chkRefactorOnLoading.isSelected()));
+                ini.setProperty("impExportCharset", (String)iod.cbCharset.getSelectedItem());
+                ini.save();
+            }
+        } 
+        catch (FileNotFoundException ex)
+        {
+            ex.printStackTrace();
+        } 
+        catch (IOException ex)
+        {
+            ex.printStackTrace();
+        }
+    }
+    // END KGU#258 2016-09-26
 
 	public void fontNSD()
 	{

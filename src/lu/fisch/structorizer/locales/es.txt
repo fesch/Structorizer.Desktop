@@ -78,6 +78,7 @@
  *      Kay Gürtzig     2016.09.17  Issue #243: New message translations for Control 
  *      Kay Gürtzig     2016.09.22  Bugfix #241; issue #249: New messages for InputBox and Analyser,
  *                                  AnalyserPreferences numbering modified, InputBoxFor messages 
+ *      Kay Gürtzig     2016.09.25  Enh. #253: ImportOptionDialog inserted; spellings corrected; usted -> tú
  *
  ******************************************************************************************************
  *
@@ -166,7 +167,7 @@ Menu.menuDiagramCollapse.text=Reducir
 Menu.menuDiagramExpand.text=Expandir
 // Breakpoint
 Menu.menuDiagramBreakpoint.text=Poner/eliminar breakpoint
-Menu.menuDiagramBreakTrigger.text=Fije conditión de parar ...
+Menu.menuDiagramBreakTrigger.text=Fija condición de parar ...
 // Diagram Appearance
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Main
@@ -226,14 +227,14 @@ Menu.menuHelpAbout.text=Acerca de ...
 Menu.menuHelpUpdate.text=Actualizar ...
 
 // Dialog messages
-Menu.msgDialogExpCols.text=¿En cuantas columnas se debe seccionar el imagen?
-Menu.msgDialogExpRows.text=¿En cuantas estrías se debe seccionar el imagen?
+Menu.msgDialogExpCols.text=¿En cuantas columnas se debe seccionar la imagen?
+Menu.msgDialogExpRows.text=¿En cuantas estrías se debe seccionar la imagen?
 Menu.msgOverwriteFile.text=¿Grabar encima del archivo existente?
 Menu.msgOverwriteFiles.text=Archivo(s) existe(n). ¿Gravar encima?
-Menu.btnConfirmOverwrite.text=Confirme gravar
-Menu.msgRepeatSaveAttempt.text=No fue posible grabar el archivo de Vd. Trátelo de nuevo, por favor.
+Menu.btnConfirmOverwrite.text=Confirma gravar
+Menu.msgRepeatSaveAttempt.text=No fue posible grabar el archivo de Vd. Trátalo de nuevo, por favor.
 Menu.msgErrorFileSave.text=Error guardando el archivo: %!
-Menu.msgBreakTriggerPrompt.text=Fije el número de ejecuciónes antes de parar (0 = siempre)
+Menu.msgBreakTriggerPrompt.text=Fija el número de ejecuciónes antes de parar (0 = siempre)
 Menu.msgBreakTriggerIgnored.text=Valor no usable. Tiene que ser un número natural.
 Menu.msgOpenLangFile.text=Abrir archivo de traducciones
 Menu.msgLangFile.text=Structorizer archivo de idioma
@@ -275,7 +276,7 @@ Menu.error10_1.text=¡Un solo elemento de instrucción no debe contener instrucc
 Menu.error10_2.text=¡Un solo elemento de instrucción no debe contener instrucciones de entrada y salida!
 Menu.error10_3.text=¡Un solo elemento de instrucción no debe contener instrucciones de entrada y asignaciones!
 Menu.error10_4.text=¡Un solo elemento de instrucción no debe contener instrucciones de salida y asignaciones!
-Menu.error11.text=Probablemente has hecho un error de asignación. ¡Por favor comprueba esta instrucción!
+Menu.error11.text=Probablemente cometiste un error de asignación. ¡Por favor comprueba esta instrucción!
 Menu.error12.text=¡El parámetro «%» debe comenzar con la letra "p" seguido únicamente de letras MAYUSCULAS!
 Menu.error13_1.text=¡La función no retorna ningún resultado!
 Menu.error13_2.text=¡Su función no siempre retorna un resultado!
@@ -435,7 +436,7 @@ Editor.popupCollapse.text=Reducir
 Editor.popupExpand.text=Expandir
 // Breakpoint
 Editor.popupBreakpoint.text=Poner/eliminar breakpoint
-Editor.popupBreakTrigger.text=Fije la conditión de parar ...
+Editor.popupBreakTrigger.text=Fija la condición de parar ...
 
 -----[ InputBox ]-----
 InputBox.title=
@@ -480,8 +481,8 @@ InputBox.title[elementType:Parallel,getInsertionType():update]=Editar sección P
 -----[ InputBox For ]-----
 InputBoxFor.title[getInsertionType():insert]=Insertar bucle PARA...
 InputBoxFor.title[getInsertionType():update]=Editar bucle PARA...
-InputBoxFor.rbCounting.tooltip=Elija esto para contar de un número inicial hacia un número final.
-InputBoxFor.rbTraversing.tooltip=Elija esto para recorrer una colección (lista, fila) de datos.
+InputBoxFor.rbCounting.tooltip=Elige esto para contar de un número inicial hacia un número final.
+InputBoxFor.rbTraversing.tooltip=Elige esto para recorrer una colección (lista, fila) de datos.
 InputBoxFor.lblVariable.text=Variable contadora
 InputBoxFor.lblStartVal.text=Valor inicial
 InputBoxFor.lblEndVal.text=Valor final
@@ -552,7 +553,7 @@ About.btnOK.tooltip=Aceptar los cambios.
 
 -----[ FontChooser ]-----
 FontChooser.title=Fuente
-FontChooser.lblTest.tooltip=Un texto de prueba para que usted pueda ver cómo se verá más tarde en su Editor.
+FontChooser.lblTest.tooltip=Un texto de prueba para que puedas ver cómo se verá más tarde en tu Editor.
 FontChooser.lblName.text=Nombre
 FontChooser.lblName.tooltip=El nombre de la fuente a seleccionar.
 FontChooser.lblSize.text=Tamaño
@@ -621,7 +622,7 @@ ParserPreferences.lblForStep.text=Paso
 ParserPreferences.lblForIn.text=bucle PARA-EN
 ParserPreferences.lblForIn.tooltip=Palabras claves separando los parametros del bucle PARA ... EN ....
 ParserPreferences.edtForInPre.tooltip=Puede ser igual a la cual del bucle PARA (o quedar vacío - con mismo efecto).
-ParserPreferences.edtForInPost.tooltip=¡Tiene que diferar de todas las restantes palabras claves del Analizador!
+ParserPreferences.edtForInPost.tooltip=¡Tiene que diferir de todas las restantes palabras claves del Analizador!
 ParserPreferences.lblWhile.text=bucle MIENTRAS
 ParserPreferences.lblWhile.tooltip=Palabras encerrando la condición del bucle MIENTRAS
 ParserPreferences.lblRepeat.text=bucle REPETIR
@@ -632,9 +633,9 @@ ParserPreferences.lblJumpLeave.text=del bucle
 ParserPreferences.lblJumpReturn.text=de subprograma
 ParserPreferences.lblJumpExit.text=de programa
 ParserPreferences.lblInput.text=Entrada
-ParserPreferences.lblInput.tooltip=Palabra clave calificando una instruccion de entrada
+ParserPreferences.lblInput.tooltip=Palabra clave calificando una instrucción de entrada
 ParserPreferences.lblOutput.text=Salida
-ParserPreferences.lblOutput.tooltip=Palabra clave calificando una instruccion de salida
+ParserPreferences.lblOutput.tooltip=Palabra clave calificando una instrucción de salida
 ParserPreferences.chkIgnoreCase.text=Ignorar mayúsc./minúsc.
 ParserPreferences.btnOK.text=Aceptar
 ParserPreferences.btnOK.tooltip=Aceptar los cambios.
@@ -653,24 +654,34 @@ PrintPreview.btnOK.tooltip=Imprimir el diagrama.
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Preferencias de Exportación de código
 ExportOptionDialoge.noConversionCheckBox.text=No conversión del contenido de expresiones e instrucciones.
-ExportOptionDialoge.noConversionCheckBox.tooltip=Habilita esta opción si el contenido de los textos ya está escrito in la sintaxis del código de destinación..
+ExportOptionDialoge.noConversionCheckBox.tooltip=Habilita esta opción si el contenido de los textos ya está escrito en la sintaxis del código de destinación.
 ExportOptionDialoge.commentsCheckBox.text=Exportar instrucciones como comentarios.
 ExportOptionDialoge.bracesCheckBox.text=Poner abrazadera abrienda al fin de la misma linea (C/C++/Java etc.).
 ExportOptionDialoge.lineNumbersCheckBox.text=Generar números de linea con el exporte (BASIC).
-ExportOptionDialoge.chkExportSubroutines.text=Incluir empleados subprogramas.
+ExportOptionDialoge.chkExportSubroutines.text=Incluir subprogramas empleados.
 ExportOptionDialoge.lbPrefGenerator.text=Preferido código de exportación:
 ExportOptionDialoge.lbCharset.text=Codificación:
 ExportOptionDialoge.chkCharsetAll.text=Listar todas
-ExportOptionDialoge.jLabel1.text=Elije las preferencias, que quieres activar...
+ExportOptionDialoge.jLabel1.text=Elige las preferencias, que quieres activar...
 ExportOptionDialoge.jButton1.text=Aceptar
 ExportOptionDialoge.jButton1.tooltip=Aceptar los cambios.
+
+-----[ importOptionDialog ]-----
+ImportOptionDialog.title=Preferencias de Importación de archivos ...
+ImportOptionDialog.lbCharset.text=Codificación:
+ImportOptionDialog.chkCharsetAll.text=Listar todas
+ImportOptionDialog.chkRefactorOnLoading.text=Replazar palabras claves al recargando el diagrama (refactoring).
+ImportOptionDialog.chkRefactorOnLoading.tooltip=Habilita esta opción si el contenido de diagramas recargados debe ser adaptado a las preferencias del analizador automáticamente.
+ImportOptionDialog.lbIntro.text=Elige las preferencias, que quieres activar...
+ImportOptionDialog.btnOk.text=Aceptar
+ImportOptionDialog.btnOk.tooltip=Aceptar los cambios.
 
 -----> Arranger
 Surface.msgFileLoadError.text=Error abriendo archivo:
 Surface.msgSavePortable.text=¿Guardar como archivo portable y comprimido?
 Surface.msgSaveDialogTitle.text=Guarda colocado conjunto de diagramas ...
 Surface.msgSaveError.text=Error guardando la colocación:
-Surface.msgLoadDialogTitle.text=Restablezca guardado conjunto de diagramas ...
+Surface.msgLoadDialogTitle.text=Restablece guardado conjunto de diagramas ...
 Surface.msgExtractDialogTitle.text=¿Extraer a un directorio?
 Surface.msgArrLoadError.text=Error leyendo la colocación:
 Surface.msgExportDialogTitle.text=Exporta diagrama como PNG ...
@@ -679,7 +690,7 @@ Surface.msgParseError.text=NSD Parser Error:
 Surface.msgResetCovered.text=Subprograma ya marcado como cubierto. ¿Quitar marca de cobertura?
 Surface.msgCoverageError.text=No subprograma apropiado seleccionado, ¡no va a ser marcado como cubierto nada!
 Surface.msgUnsavedDiagrams.text=Estos diagramas no fueron guardados:
-Surface.msgUnsavedHint.text=Para guardarlos por Structorizer anteriormente haga un doble clic a los diagramas.
+Surface.msgUnsavedHint.text=Para guardarlos por Structorizer anteriormente haz un doble clic a los diagramas.
 Surface.msgUnsavedContinue.text=¿Continuar aun así?
 Surface.msgNoArrFile.text=Ningún Arranger archivo encontrado
 

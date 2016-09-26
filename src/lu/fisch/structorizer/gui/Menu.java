@@ -218,6 +218,7 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuPreferencesParser = new JMenuItem("Parser ...",IconLoader.ico004);
 	protected final JMenuItem menuPreferencesAnalyser = new JMenuItem("Analyser ...",IconLoader.ico083);
 	protected final JMenuItem menuPreferencesExport = new JMenuItem("Export ...",IconLoader.ico032);
+	protected final JMenuItem menuPreferencesImport = new JMenuItem("Import ...",IconLoader.ico025);
 	protected final JMenu menuPreferencesLanguage = new JMenu("Language");
 	// START KGU#242 2016-09-04: Structural redesign - generic generation of language menu items
 	protected final Hashtable<String, JCheckBoxMenuItem> menuPreferencesLanguageItems = new Hashtable<String, JCheckBoxMenuItem>(Locales.LOCALES_LIST.length);
@@ -744,6 +745,11 @@ public class Menu extends LangMenuBar implements NSDController
 
 		menuPreferences.add(menuPreferencesExport);
 		menuPreferencesExport.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportOptions(); doButtons(); } } );
+
+		// START KGU#258 2016-09-25: Enh. #253
+		menuPreferences.add(menuPreferencesImport);
+		menuPreferencesImport.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importOptions(); doButtons(); } } );
+		// END KGU#258 2016-09-25
 
 		menuPreferences.add(menuPreferencesLanguage);
 		menuPreferencesLanguage.setIcon(IconLoader.ico081);

@@ -871,44 +871,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	
 	// START KGU#238 2016-08-12: Code revision
-//	private void collectCalls(Element _ele, Vector<Call> _calls)
-//	{
-//		if (_ele instanceof Call)
-//		{
-//			_calls.add((Call)_ele);
-//		}
-//		else if (_ele instanceof Subqueue)
-//		{
-//			for (int i = 0; i < ((Subqueue)_ele).getSize(); i++)
-//			{
-//				collectCalls(((Subqueue)_ele).getElement(i), _calls);
-//			}
-//		}
-//		else if (_ele instanceof ILoop)
-//		{
-//			collectCalls(((ILoop)_ele).getBody(), _calls);
-//		}
-//		else if (_ele instanceof Alternative)
-//		{
-//			collectCalls(((Alternative)_ele).qTrue, _calls);
-//			collectCalls(((Alternative)_ele).qFalse, _calls);
-//			
-//		}
-//		else if (_ele instanceof Case)
-//		{
-//			for (int i = 0; i < ((Case)_ele).qs.size(); i++)
-//			{
-//				collectCalls(((Case)_ele).qs.get(i), _calls);
-//			}
-//		}
-//		else if (_ele instanceof Parallel)
-//		{
-//			for (int i = 0; i < ((Parallel)_ele).qs.size(); i++)
-//			{
-//				collectCalls(((Parallel)_ele).qs.get(i), _calls);
-//			}
-//		}
-//	}
 	private Vector<Call> collectCalls(Element _ele)
 	{
 		final class CallCollector implements IElementVisitor
@@ -960,43 +922,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	private final void gatherElementInformation(Element _ele)
 	{
 		// START KGU#238 2016-08-11: Code revision
-//		checkElementInformation(_ele);
-//		if (_ele instanceof Root)
-//		{
-//			gatherElementInformation(((Root)_ele).children);
-//		}
-//		else if (_ele instanceof Subqueue)
-//		{
-//			for (int i = 0; i < ((Subqueue)_ele).getSize(); i++)
-//			{
-//				gatherElementInformation(((Subqueue)_ele).getElement(i));			
-//			}
-//		}
-//		else if (_ele instanceof Alternative)
-//		{
-//			gatherElementInformation(((Alternative)_ele).qTrue);
-//			gatherElementInformation(((Alternative)_ele).qFalse);
-//		}
-//		else if (_ele instanceof Case)
-//		{
-//			Vector<Subqueue> branches = ((Case)_ele).qs;
-//			for (int i = 0; i < branches.size(); i++)
-//			{
-//				gatherElementInformation(branches.elementAt(i));
-//			}
-//		}
-//		else if (_ele instanceof ILoop)
-//		{
-//			gatherElementInformation(((ILoop)_ele).getBody());
-//		}
-//		else if (_ele instanceof Parallel)
-//		{
-//			Vector<Subqueue> branches = ((Parallel)_ele).qs;
-//			for (int i = 0; i < branches.size(); i++)
-//			{
-//				gatherElementInformation(branches.elementAt(i));
-//			}
-//		}
 		_ele.traverse(new IElementVisitor() {
 			@Override
 			public boolean visitPreOrder(Element _ele) {

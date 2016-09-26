@@ -3107,7 +3107,7 @@ public class Executor implements Runnable
 			StringList tokens = Element.splitLexically(condStr, true);
 			for (String key : new String[]{
 					D7Parser.keywordMap.get("preRepeat"),
-					D7Parser.keywordMap.get("postRepeat`")})
+					D7Parser.keywordMap.get("postRepeat")})
 			{
 				if (!key.trim().isEmpty())
 				{

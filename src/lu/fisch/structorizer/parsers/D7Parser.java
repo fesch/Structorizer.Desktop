@@ -1053,15 +1053,14 @@ public class D7Parser implements GPMessageConstants
 	public static String[] getAllProperties()
 	{
 		String[] props = new String[]{};
-		props = getPropertyMap(false).values().toArray(props);
-		return props;
+		return keywordMap.values().toArray(props);
 	}
 	// END KGU#163 2016-03-25
 	
 	// START KGU#258 2016-09-25: Enh. #253 (temporary workaround for the needed Hashmap)
 	/**
-	 * Returns a Hashmap mapping parser preference labels likes "preAlt" to the
-	 * configured parser preference keywords
+	 * Returns a Hashmap mapping parser preference labels like "preAlt" to the
+	 * configured parser preference keywords.
 	 * @param includeAuxiliary - whether or not non-keyword settings (like "ignoreCase") are to be included
 	 * @return the hash table with the current settings
 	 */
@@ -1071,7 +1070,7 @@ public class D7Parser implements GPMessageConstants
 		HashMap<String, String> keywords = keywordMap;
 		if (includeAuxiliary)
 		{
-			keywords = (HashMap<String,String>)keywordMap;
+			keywords = new HashMap<String,String>(keywordMap);
 			// The following information may be important for a correct search
 			keywords.put("ignoreCase",  Boolean.toString(ignoreCase));
 		}
