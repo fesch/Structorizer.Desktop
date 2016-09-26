@@ -62,6 +62,7 @@ import java.util.Stack;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.io.Ini;
 
 public class NSDParser extends DefaultHandler {
 
@@ -83,6 +84,7 @@ public class NSDParser extends DefaultHandler {
 	// START KGU#258 2016-09-25: Enh. #253 holds the parser preferences saved with the file (3.25-01)
 	private HashMap<String, StringList> savedParserPrefs = new HashMap<String, StringList>();
 	private boolean ignoreCase = false;
+	private boolean refactorKeywords = false;
 	// END KGU#258 2016-09-25
 
         @Override
@@ -648,6 +650,12 @@ public class NSDParser extends DefaultHandler {
 		qStack.clear();
 		cStack.clear();
 		pStack.clear();
+		
+		// START KGU#258 2016-09-26: Enh. #253
+		Ini ini = Ini.getInstance();
+		ini.load();
+		refactorKeywords = ini.getProperty("impRefactorOnLoading","false").equals("true");
+		// END KGU#258 2016-09-26
 				
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		try		
@@ -688,6 +696,9 @@ public class NSDParser extends DefaultHandler {
 	
 	private String refactorLine(String line, String[] keywords)
 	{
+		if (!refactorKeywords) return line;
+		//===================================================
+		
 		StringList tokens = Element.splitLexically(line, true);
 		boolean isModified = false;
 		// FIXME: We should order the keys by decreasing length first!
