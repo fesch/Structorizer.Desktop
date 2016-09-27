@@ -657,7 +657,7 @@ ExportOptionDialoge.jLabel1.text=Wählen Sie die Einstellungen, die Sie aktivier
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Speichern der gewählten Einstellungen.
 
------[ importOptionDialog ]-----
+-----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Einstellungen zum Dateiladen ...
 ImportOptionDialog.lbCharset.text=Zeichensatz (Codierung):
 ImportOptionDialog.chkCharsetAll.text=Alle auflisten?
@@ -706,7 +706,6 @@ Control.lbInputPaused.text=Ausführung angehalten - der Wert kann in der Variabl
 Control.lbInputCancelled.text=Eingabe abgebrochen
 Control.lbManuallySet.text=*** Manuell gesetzt: %1 <- %2 ***
 Control.lbEmptyLine.text=leere Zeile
-Control.lbNoCorrectExpr.text=<%> ist kein korrekter or existierender Ausdruck.
 Control.lbReturnedResult.text=Zurückgegebenes Resultat
 Control.lbOutput.text=Ausgabe
 Control.lbInput.text=Eingabe

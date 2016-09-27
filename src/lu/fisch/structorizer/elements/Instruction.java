@@ -68,6 +68,10 @@ import lu.fisch.utils.*;
 
 public class Instruction extends Element {
 	
+	// START KGU#258 2016-09-26: Enh. #253
+	private static final String[] relevantParserKeys = {"input", "output", "preReturn"};
+	// END KGU#258 2016-09-25
+	
 	public Instruction()
 	{
 		super();
@@ -513,4 +517,12 @@ public class Instruction extends Element {
 	public boolean traverse(IElementVisitor _visitor) {
 		return _visitor.visitPreOrder(this) && _visitor.visitPostOrder(this);
 	}
+
+	// START KGU#258 2016-09-26: Enh. #253
+	@Override
+	protected String[] getRelevantParserKeys() {
+		// TODO Auto-generated method stub
+		return relevantParserKeys;
+	}
+	// START KGU#258 2016-09-26: Enh. #253
 }

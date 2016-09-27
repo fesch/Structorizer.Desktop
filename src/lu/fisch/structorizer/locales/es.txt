@@ -666,7 +666,7 @@ ExportOptionDialoge.jLabel1.text=Elige las preferencias, que quieres activar...
 ExportOptionDialoge.jButton1.text=Aceptar
 ExportOptionDialoge.jButton1.tooltip=Aceptar los cambios.
 
------[ importOptionDialog ]-----
+-----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Preferencias de Importación de archivos ...
 ImportOptionDialog.lbCharset.text=Codificación:
 ImportOptionDialog.chkCharsetAll.text=Listar todas
@@ -715,7 +715,6 @@ Control.lbInputPaused.text=Ejecución pausando - el valor puede ser insertado en
 Control.lbInputCancelled.text=Entrada suspendida
 Control.lbManuallySet.text=*** Puesto manualmente: %1 <- %2 ***
 Control.lbEmptyLine.text=línea en blanco
-Control.lbNoCorrectExpr.text=<%> no es una expresión correcta o existente.
 Control.lbReturnedResult.text=Resultado devuelto
 Control.lbOutput.text=Salida
 Control.lbInput.text=Entrada

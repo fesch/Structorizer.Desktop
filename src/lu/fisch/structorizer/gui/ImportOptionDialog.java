@@ -91,12 +91,12 @@ public class ImportOptionDialog extends LangDialog {
         jPanel3 = new javax.swing.JPanel();
         jPanelCB = new javax.swing.JPanel();
         chkRefactorOnLoading = new javax.swing.JCheckBox();
+        chkOfferRefactoringIni = new javax.swing.JCheckBox();
         lbIntro = new javax.swing.JLabel();
         btnOk = new javax.swing.JButton();
         lbCharset = new javax.swing.JLabel();
         cbCharset = new javax.swing.JComboBox<String>();
         chkCharsetAll = new javax.swing.JCheckBox();
-        // END KGU#168 2016-04-04
 
         setTitle("Import options ...");
 
@@ -125,12 +125,12 @@ public class ImportOptionDialog extends LangDialog {
         		charsetListChanged((String)cbCharset.getSelectedItem());
         	}
         });
-        // END KGU#168 2016-04-04
 
-        // START KGU#162 2016-03-31: Enh. #144 - now option to suppress all content transformation
         chkRefactorOnLoading.setText("Replace keywords on loading a diagram (refactoring).");
         chkRefactorOnLoading.setToolTipText("Select this option if all configurable keywords in the daiagram are to be adapted to the current parser preferences.");
-        // END KGU#162 2016-03-31
+
+        chkOfferRefactoringIni.setText("Offer refactoring on loading preferences from File.");
+        chkOfferRefactoringIni.setToolTipText("Select this option if you want to be asked whether to refactor diagrams whenever you load preferences from file.");
 
         lbIntro.setText("Please select the options you want to activate ...");
 
@@ -153,10 +153,11 @@ public class ImportOptionDialog extends LangDialog {
         jPanel2.add(cbCharset);
         jPanel2.add(chkCharsetAll);
 
-        jPanelCB.setLayout(new GridLayout(2,1,4,4));
+        jPanelCB.setLayout(new GridLayout(3,1,4,4));
         jPanelCB.setBorder(new EmptyBorder(12,12,12,12));
         jPanelCB.add(jPanel2);
         jPanelCB.add(chkRefactorOnLoading, BorderLayout.CENTER);
+        jPanelCB.add(chkOfferRefactoringIni, BorderLayout.CENTER);
         
         jPanel3.setLayout(new BorderLayout());
         jPanel3.setBorder(new EmptyBorder(12,12,12,12));
@@ -268,6 +269,7 @@ public class ImportOptionDialog extends LangDialog {
     public javax.swing.JButton btnOk;
     public javax.swing.JLabel lbIntro;
     public javax.swing.JCheckBox chkRefactorOnLoading;
+    public javax.swing.JCheckBox chkOfferRefactoringIni;
     public javax.swing.JLabel lbCharset;
     public javax.swing.JComboBox<String> cbCharset;
     public javax.swing.JCheckBox chkCharsetAll;

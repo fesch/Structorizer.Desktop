@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -145,7 +146,8 @@ package lu.fisch.structorizer.elements;
  *        writeOutVariables() and getWidthOutVariables(),
  *      - minor code revision respecting 2- and 3-character operator symbols
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 import java.awt.Color;
@@ -162,6 +164,7 @@ import lu.fisch.structorizer.io.*;
 import com.stevesoft.pat.*;  //http://www.javaregex.com/
 
 import java.awt.Point;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Stack;
@@ -201,7 +204,7 @@ public abstract class Element {
 	" - Jan Ollmann <bkgmjo@gmx.net>\n"+
 	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"\n"+
-	"Translations initially realised by\n"+
+	"Translations initially provided by\n"+
 	" - NL: Jerone <jeronevw@hotmail.com>\n"+
 	" - DE: Klaus-Peter Reimers <k_p_r@freenet.de>\n"+
 	" - LU: Laurent Zender <laurent.zender@hotmail.de>\n"+
@@ -213,7 +216,7 @@ public abstract class Element {
 	" - CZ: Vladimír Vaščák <vascak@spszl.cz>\n"+
 	" - RU: Юра Лебедев <elita.alegator@gmail.com>\n"+
 	"\n"+
-	"Different good ideas and improvements provided by\n"+
+	"Different good ideas and improvements contributed by\n"+
 	" - Serge Marelli <serge.marelli@education.lu>\n"+
 	" - T1IF1 2006/2007\n"+
 	" - Gil Belling <gil.belling@education.lu>\n"+
@@ -2688,4 +2691,66 @@ public abstract class Element {
     }
     // END KGU#152 2016-03-02
     
+	// START KGU#258 2016-09-26: Enh. #253
+    /**
+     * Returns a fixed array of names of parser preferences being relevant for
+     * the current type of Element (e.g. in case of refactoring)
+     * @return Arrays of key strings for D7Parser.keywordMap
+     */
+    protected abstract String[] getRelevantParserKeys();
+    
+    /**
+     * Looks up the associated token sequence in _splitOldKeywords for any of the parser preference names
+     * provided by getRelevantParserKeys(). If there is such a token sequence then it will be
+     * replaced throughout my text by the associated current parser preference for the respective name
+     * @param _oldKeywords - a map of tokenized former non-empty parser preference keywords to be replaced
+     * @param _ignoreCase - whether case is to be ignored on comparison.
+     */
+    public void refactorKeywords(HashMap<String, StringList> _splitOldKeywords, boolean _ignoreCase)
+    {
+    	String[] relevantKeys = getRelevantParserKeys();
+    	if (relevantKeys != null && !_splitOldKeywords.isEmpty())
+    	{
+    		StringList result = new StringList();
+    		for (int i = 0; i < this.text.count(); i++)
+    		{
+    			result.add(refactorLine(text.get(i), _splitOldKeywords, relevantKeys, _ignoreCase));
+    		}
+    		this.text = result;
+    	}
+	}
+	
+	protected final String refactorLine(String line, HashMap<String, StringList> _splitOldKeys, String[] _keywords, boolean _ignoreCase)
+	{
+		StringList tokens = Element.splitLexically(line, true);
+		boolean isModified = false;
+		// FIXME: We should order the keys by decreasing length first!
+		for (int i = 0; i < _keywords.length; i++)
+		{
+			StringList splitKey = _splitOldKeys.get(_keywords[i]);
+			if (splitKey != null)
+			{
+				String subst = D7Parser.keywordMap.get(_keywords[i]);
+				int pos = -1;
+				while ((pos = tokens.indexOf(splitKey, pos+1, !_ignoreCase)) >= 0)
+				{
+					// Replace the first part of the saved keyword by the entire current keyword... 
+					tokens.set(pos, subst);
+					// ... and remove the remaining parts of the saved key
+					for (int j = 1; j < splitKey.count(); j++)
+					{
+						tokens.delete(pos+1);
+					}
+					isModified = true;
+				}
+			}
+		}
+		if (isModified)
+		{
+			line = tokens.concatenate().trim();
+		}
+		return line;
+	}
+	// END KGU#258 2016-09-25
+
 }

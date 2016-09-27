@@ -92,6 +92,9 @@ public class For extends Element implements ILoop {
 	private Point pt0Body = new Point(0,0);
 	// END KGU#136 2016-03-01
 
+	// START KGU#258 2016-09-26: Enh. #253
+	private static final String[] relevantParserKeys = {"preFor", "postFor", "stepFor", "preForIn", "postForIn"};
+	// END KGU#258 2016-09-25
 	
 	// START KGU#3 2015-10-24
 	private static String forSeparatorPre = "§FOR§";
@@ -1204,6 +1207,16 @@ public class For extends Element implements ILoop {
 		}
 		return proceed;
 	}
+
+	// START KGU#258 2016-09-26: Enh. #253
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getRelevantParserKeys()
+	 */
+	@Override
+	protected String[] getRelevantParserKeys() {
+		return relevantParserKeys;
+	}
+	// END KGU#258 2016-09-25
 
 
 }

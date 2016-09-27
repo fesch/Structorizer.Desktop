@@ -669,7 +669,7 @@ ExportOptionDialoge.jLabel1.text=Please select the options you want to activate.
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Save these settings.
 
------[ importOptionDialog ]-----
+-----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Import options ...
 ImportOptionDialog.lbCharset.text=Character set:
 ImportOptionDialog.chkCharsetAll.text=List all?
@@ -718,7 +718,6 @@ Control.lbInputPaused.text=Execution paused - you may enter the value in the var
 Control.lbInputCancelled.text=Input cancelled
 Control.lbManuallySet.text=*** Manually set: %1 <- %2 ***
 Control.lbEmptyLine.text=empty line
-Control.lbNoCorrectExpr.text=<%> is not a correct or existing expression.
 Control.lbReturnedResult.text=Returned result
 Control.lbOutput.text=Output
 Control.lbInput.text=Input

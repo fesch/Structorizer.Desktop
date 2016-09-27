@@ -90,6 +90,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.21      Issue #248: Workaround for legacy Java versions (< 1.8) in editBreakTrigger()
  *      Kay Gürtzig     2016.09.24      Enh. #250: Several modifications around showInputBox()
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done, importOptions() added.
+ *      Kay Gürtzig     2016.09.26      Enh. #253: Full support for diagram refactoring implemented.
  *
  ******************************************************************************************************
  *
@@ -136,6 +137,7 @@ import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.generators.*;
+import lu.fisch.structorizer.gui.ParserPreferences.RefactoringMode;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
@@ -3444,12 +3446,29 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#165 2016-03-25: We need a transparent decision here
 		parserPreferences.chkIgnoreCase.setSelected(D7Parser.ignoreCase);
 		// END KGU#165 2016-03-25
-
+		
 		parserPreferences.pack();
 		parserPreferences.setVisible(true);
 
 		if(parserPreferences.OK)
 		{
+			// START KGU#258 2016-09-26: Enh. #253 - prepare the old settings for a refactoring
+			HashMap<String, StringList> oldKeywordMap = null;
+			boolean wasCaseIgnored = D7Parser.ignoreCase;
+			if (parserPreferences.refactoring != ParserPreferences.RefactoringMode.NONE)
+			{
+				oldKeywordMap = new HashMap<String, StringList>();
+				for (String key: D7Parser.keywordMap.keySet())
+				{
+					String keyword = D7Parser.keywordMap.getOrDefault(key, "");
+					if (!keyword.trim().isEmpty())
+					{
+						// Complete strings aren't likely to be found in a key, so don't bother
+						oldKeywordMap.put(key, Element.splitLexically(keyword,  false));
+					}
+				}
+			}
+			// END KGU#258 2016-09-26
 
 			// get fields
 			D7Parser.keywordMap.put("preAlt", parserPreferences.edtAltPre.getText());
@@ -3482,12 +3501,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 			// save fields to ini-file
 			D7Parser.saveToINI();
+			
+			// START KGU#258 2016-09-26: Enh. #253 - now try a refactoring if specified
+			boolean redrawn = refactorDiagrams(oldKeywordMap, parserPreferences.refactoring == ParserPreferences.RefactoringMode.ALL, wasCaseIgnored);
+			// END KGU#258 2016-09-26
 
 			// START KGU#136 2016-03-31: Bugfix #97 - cached bounds may have to be invalidated
-			if (Element.E_VARHIGHLIGHT)
+			if (Element.E_VARHIGHLIGHT && !redrawn)
 			{
-				// Parser keyword chenges may have an impact on the text width
+				// Parser keyword changes may have an impact on the text width ...
 				this.resetDrawingInfo(true);
+				
+				// START KGU#258 2016-09-26: Bugfix #253 ... and Jumps and loops
+				analyse();
+				// END KGU#258 2016-09-26
+
 				// redraw diagram
 				redraw();
 			}
@@ -3495,6 +3523,109 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			
 		}
 	}
+	
+	// START KGU#258 2016-09-26: Enh. #253: A set of helper methods for refactoring 
+	public HashMap<String, StringList> offerRefactoring()
+	{
+		HashMap<String, StringList> refactoringData = null;
+		Object[] options = ParserPreferences.RefactoringMode.values();
+		int answer = JOptionPane.showOptionDialog(this,
+				"Keywords configured in the Parser Preferences are likely to be replaced.\nAre loaded diagrams to be refactored accordingly?",
+				"Offer", JOptionPane.OK_CANCEL_OPTION,
+				JOptionPane.QUESTION_MESSAGE,
+				null,
+				options, options[0]);
+		if (answer != 0 && answer != JOptionPane.CLOSED_OPTION)
+		{
+			refactoringData = new HashMap<String, StringList>();
+			for (String key: D7Parser.keywordMap.keySet())
+			{
+				String keyword = D7Parser.keywordMap.getOrDefault(key, "");
+				if (!keyword.trim().isEmpty())
+				{
+					// Complete strings aren't likely to be found in a key, so don't bother
+					refactoringData.put(key, Element.splitLexically(keyword,  false));
+				}
+			}
+			if (D7Parser.ignoreCase)
+			{
+				refactoringData.put("ignoreCase", StringList.getNew("true"));
+			}
+			if (options[answer] == ParserPreferences.RefactoringMode.ALL)
+			{
+				refactoringData.put("refactorAll", StringList.getNew("true"));
+			}
+		}
+		return refactoringData;
+	}
+	
+	public void refactorNSD(HashMap<String, StringList> refactoringData)
+	{
+		if (refactoringData != null)
+		{
+			boolean refactorAll = refactoringData.containsKey("refactorAll");
+			boolean ignoreCase = refactoringData.containsKey("ignoreCase");
+			refactorDiagrams(refactoringData, refactorAll, ignoreCase);
+		}
+	}
+	
+	private boolean refactorDiagrams(HashMap<String, StringList> oldKeywordMap, boolean refactorAll, boolean wasCaseIgnored)
+	{
+		boolean redrawn = false;
+		if (oldKeywordMap != null && !oldKeywordMap.isEmpty())
+		{
+			final class Refactorer implements IElementVisitor
+			{
+				public HashMap<String, StringList> oldMap = null;
+				boolean ignoreCase = false;
+
+				@Override
+				public boolean visitPreOrder(Element _ele) {
+					_ele.refactorKeywords(oldMap, ignoreCase);
+					return true;
+				}
+
+				@Override
+				public boolean visitPostOrder(Element _ele) {
+					// FIXME It should be okay to cut off the recursion in  post order...?
+					return true;
+				}
+				Refactorer(HashMap<String, StringList> _keyMap, boolean _caseIndifferent)
+				{
+					oldMap = _keyMap;
+					ignoreCase = _caseIndifferent;
+				}
+			};
+			root.addUndo();
+			root.traverse(new Refactorer(oldKeywordMap, wasCaseIgnored));
+			if (refactorAll && this.isArrangerOpen)
+			{
+				// Well, we hope that the roots won't change the hash code on refactoring...
+				for (Root aRoot: Arranger.getInstance().getAllRoots())
+				{
+					aRoot.addUndo();
+					aRoot.traverse(new Refactorer(oldKeywordMap, wasCaseIgnored));
+				}
+			}
+			
+			// Parser keyword changes may have an impact on the text width ...
+			this.resetDrawingInfo(true);
+			
+			// START KGU#258 2016-09-26: Bugfix #253 ... and Jumps and loops
+			analyse();
+			// END KGU#258 2016-09-26
+
+			// FIXME: This doesn't seem to work 
+			doButtons();
+			
+			// redraw diagram
+			redraw();
+			
+			redrawn = true;
+		}
+		return redrawn;
+	}
+	// END KGU#258 2016-09-26
 
 	public void analyserNSD()
 	{
@@ -3602,12 +3733,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             ini.load();
             ImportOptionDialog iod = new ImportOptionDialog(NSDControl.getFrame());
             iod.chkRefactorOnLoading.setSelected(ini.getProperty("impRefactorOnLoading", "false").equals("true"));
+            iod.chkOfferRefactoringIni.setSelected(ini.getProperty("impOfferRefactoring", "false").equals("true"));
             iod.charsetListChanged(ini.getProperty("impExportCharset", Charset.defaultCharset().name()));
             iod.setVisible(true);
             
             if(iod.goOn==true)
             {
                 ini.setProperty("impRefactorOnLoading", String.valueOf(iod.chkRefactorOnLoading.isSelected()));
+                ini.setProperty("impOfferRefactoring", String.valueOf(iod.chkOfferRefactoringIni.isSelected()));
                 ini.setProperty("impExportCharset", (String)iod.cbCharset.getSelectedItem());
                 ini.save();
             }

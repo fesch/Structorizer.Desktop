@@ -608,4 +608,10 @@ public class SelectedSequence extends Element implements IElementSequence {
 		}
 		return proceed;
 	}
+
+	@Override
+	protected String[] getRelevantParserKeys() {
+		// Nothing to refactor
+		return null;
+	}
 }

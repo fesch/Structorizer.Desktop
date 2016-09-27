@@ -111,7 +111,8 @@ public class NSDParser extends DefaultHandler {
 			// END KGU 2016-01-08
 			
 			// START KGU#258 2016-09-25: Enh. #253 - read the saved parser preferences if any
-			if (fileVersion.compareTo("3.25") > 0)
+			
+			if (fileVersion.compareTo("3.25") > 0 && refactorKeywords)
 			{
 				for (String key: D7Parser.keywordMap.keySet())
 				{
@@ -125,8 +126,10 @@ public class NSDParser extends DefaultHandler {
 				{
 					ignoreCase = attributes.getValue("ignoreCase").equals("true");
 				}
+				// If no stored keywords were found then we don't need to refactor anything
+				refactorKeywords = !savedParserPrefs.isEmpty();
 			}
-			// END KGU#258
+			// END KGU#258 2016-09-25
 			
 			// read attributes
 			root.isProgram = true;
@@ -163,8 +166,10 @@ public class NSDParser extends DefaultHandler {
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 			
 			// START KGU#258 2016-09-25: Enh. #253
-			String[] relevantKeywords = {"input", "output", "preReturn"};
-			ele.setText(refactorText(ele.getText(), relevantKeywords));
+			if (this.refactorKeywords)
+			{
+				ele.refactorKeywords(savedParserPrefs, ignoreCase);
+			}
 			// END KGU#258 2016-09-25
 			
 			// place stack
@@ -187,8 +192,10 @@ public class NSDParser extends DefaultHandler {
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 						
 			// START KGU#258 2016-09-25: Enh. #253
-			String[] relevantKeywords = {"preLeave", "preReturn", "preExit"};
-			ele.setText(refactorText(ele.getText(), relevantKeywords));
+			if (this.refactorKeywords)
+			{
+				ele.refactorKeywords(savedParserPrefs, ignoreCase);
+			}
 			// END KGU#258 2016-09-25
 			
 			// place stack
@@ -209,6 +216,8 @@ public class NSDParser extends DefaultHandler {
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 			
+			// Enh. #253: In a Call element, there isn't anything to refactor
+			
 			// place stack
 			lastE=ele;
 			stack.push(ele);
@@ -228,8 +237,10 @@ public class NSDParser extends DefaultHandler {
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 
 			// START KGU#258 2016-09-25: Enh. #253
-			String[] relevantKeywords = {"preAlt", "postAlt"};
-			ele.setText(refactorText(ele.getText(), relevantKeywords));
+			if (this.refactorKeywords)
+			{
+				ele.refactorKeywords(savedParserPrefs, ignoreCase);
+			}
 			// END KGU#258 2016-09-25
 			
 			// set children 
@@ -256,8 +267,10 @@ public class NSDParser extends DefaultHandler {
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 			
 			// START KGU#258 2016-09-25: Enh. #253
-			String[] relevantKeywords = {"preWhile", "postWhile"};
-			ele.setText(refactorText(ele.getText(), relevantKeywords));
+			if (this.refactorKeywords)
+			{
+				ele.refactorKeywords(savedParserPrefs, ignoreCase);
+			}
 			// END KGU#258 2016-09-25
 			
 			// set children
@@ -294,8 +307,10 @@ public class NSDParser extends DefaultHandler {
 			// END KGU#3 2015-10-29
 			
 			// START KGU#258 2016-09-25: Enh. #253
-			String[] relevantKeywords = {"preFor", "postFor", "stepFor", "preForIn", "postForIn"};
-			ele.setText(refactorText(ele.getText(), relevantKeywords));
+			if (this.refactorKeywords)
+			{
+				ele.refactorKeywords(savedParserPrefs, ignoreCase);
+			}
 			// END KGU#258 2016-09-25
 			
 			// START KGU#3 2015-11-08: Better management of reliability of structured fields
@@ -379,6 +394,8 @@ public class NSDParser extends DefaultHandler {
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 			
+			// Enh. #253: In a Forever loop, there isn't anything to refactor
+
 			// set children
 			ele.q.setColor(ele.getColor());
 			
@@ -401,8 +418,10 @@ public class NSDParser extends DefaultHandler {
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 					
 			// START KGU#258 2016-09-25: Enh. #253
-			String[] relevantKeywords = {"preRepeat", "postRepeat"};
-			ele.setText(refactorText(ele.getText(), relevantKeywords));
+			if (this.refactorKeywords)
+			{
+				ele.refactorKeywords(savedParserPrefs, ignoreCase);
+			}
 			// END KGU#258 2016-09-25
 			
 			// set children
@@ -428,19 +447,9 @@ public class NSDParser extends DefaultHandler {
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 
 			// START KGU#258 2016-09-25: Enh. #253
-			String[] relevantKeywords = {"preCase", "postCase"};
-			StringList text = ele.getText();
-			if (text.count() > 0)
+			if (this.refactorKeywords)
 			{
-				text.set(0, refactorLine(text.get(0), relevantKeywords));
-				relevantKeywords = new String[]{"postCase"};
-				for (int i = 1; i < text.count(); i++)
-				{
-					if (!text.get(i).equals("%"))
-					{
-						text.set(i, refactorLine(text.get(i), relevantKeywords));
-					}
-				}
+				ele.refactorKeywords(savedParserPrefs, ignoreCase);
 			}
 			// END KGU#258 2016-09-25
 			
@@ -607,6 +616,12 @@ public class NSDParser extends DefaultHandler {
 		cStack.clear();
 		pStack.clear();
 				
+		// START KGU#258 2016-09-26: Enhancement #253
+		Ini ini = Ini.getInstance();
+		ini.load();
+		this.refactorKeywords = ini.getProperty("impRefactorOnLoading","false").equals("true");
+		// END KGU#258 2016-09-26
+
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		try		
 		{
@@ -683,50 +698,4 @@ public class NSDParser extends DefaultHandler {
 	}
 	// END KGU#177 2016-04-14
 	
-	// START KGU#258 2016-09-25: Enh. #253 - This may have to be moved to Element for live refactoring
-	private StringList refactorText(StringList text, String[] keywords)
-	{
-		StringList result = new StringList();
-		for (int i = 0; i < text.count(); i++)
-		{
-			result.add(refactorLine(text.get(i), keywords));
-		}
-		return result;
-	}
-	
-	private String refactorLine(String line, String[] keywords)
-	{
-		if (!refactorKeywords) return line;
-		//===================================================
-		
-		StringList tokens = Element.splitLexically(line, true);
-		boolean isModified = false;
-		// FIXME: We should order the keys by decreasing length first!
-		for (int i = 0; i < keywords.length; i++)
-		{
-			StringList splitKey = savedParserPrefs.get(keywords[i]);
-			if (splitKey != null)
-			{
-				String subst = D7Parser.keywordMap.get(keywords[i]);
-				int pos = -1;
-				while ((pos = tokens.indexOf(splitKey, pos+1, !ignoreCase)) >= 0)
-				{
-					// Replace the first part of the saved keyword by the entire current keyword... 
-					tokens.set(pos, subst);
-					// ... and remove the remaining parts of the saved key
-					for (int j = 1; j < splitKey.count(); j++)
-					{
-						tokens.delete(pos+1);
-					}
-					isModified = true;
-				}
-			}
-		}
-		if (isModified)
-		{
-			line = tokens.concatenate().trim();
-		}
-		return line;
-	}
-	// END KGU#258 2016-09-25
 }

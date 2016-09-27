@@ -513,4 +513,13 @@ public class Forever extends Element implements ILoop {
 		return proceed;
 	}
 
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getRelevantParserKeys()
+	 */
+	@Override
+	protected String[] getRelevantParserKeys() {
+		// There is nothing to refactor
+		return null;
+	}
+
 }

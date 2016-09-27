@@ -680,4 +680,10 @@ public class Subqueue extends Element implements IElementSequence {
 		}
 		return proceed;
 	}
+
+	@Override
+	protected String[] getRelevantParserKeys() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

@@ -833,9 +833,26 @@ public class Menu extends LangMenuBar implements NSDController
                         {
                             // load some data from the INI file
                             Ini ini = Ini.getInstance();
+                            
+                        	// START KGU#258 2016-09-26: Enh. #253
+                            HashMap<String, StringList> refactoringData = null;
+                            // FIXME: change this to "false" after debugging!
+                            if (ini.getProperty("impOfferRefactoring", "false").equals("true"))
+                            {
+                                refactoringData = diagram.offerRefactoring();
+                            }
+                            // END KGU#258 2016-09-26
+                            
                             ini.load(fc.getSelectedFile().toString());
                             ini.save();
                             NSDControl.loadFromINI();
+                            
+                            // START KGU#258 2016-09-26: Enh. #253
+                            if (refactoringData != null)
+                            {
+                            	diagram.refactorNSD(refactoringData);
+                            }
+                            // END KGU#258 2016-09-26
                         }
                         catch (Exception ex)
                         {

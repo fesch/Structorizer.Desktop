@@ -2483,7 +2483,7 @@ public class Executor implements Runnable
 				Object n = interpreter.eval(out);
 				if (n == null)
 				{
-					result = control.lbNoCorrectExpr.getText().replace("%", out);
+					result = control.msgInvalidExpr.getText().replace("%1", out);
 				} else
 				{
 		// START KGU#101 2015-12-11: Fix #54 (continued)
@@ -2573,7 +2573,7 @@ public class Executor implements Runnable
 			{
 				if (resObj == null)
 				{
-					result = control.lbNoCorrectExpr.getText().replace("%", out);
+					result = control.msgInvalidExpr.getText().replace("%1", out);
 				// START KGU#133 2016-01-29: Arrays should be presented as scrollable list
 				} else if (resObj instanceof Object[])
 				{

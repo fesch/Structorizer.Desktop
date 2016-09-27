@@ -21,7 +21,8 @@
 
 package lu.fisch.structorizer.arranger;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -56,6 +57,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016-07-01      Enh. #62: Opportunity to save/load zipped arrangement (KGU#110)
  *      Kay Gürtzig     2016-07-03      Dialog message translation mechanism added (KGU#203). 
  *      Kay Gürtzig     2016.07.19      Enh. #192: File name proposals slightly modified (KGU#205)
+ *      Kay Gürtzig     2016.09.26      Enh. #253: New public method getAllRoots() added.
  *
  ******************************************************************************************************
  *
@@ -89,7 +91,8 @@ package lu.fisch.structorizer.arranger;
  *      - New interface method findSourcesByName() to prepare subroutine execution in a future effort (KGU#2)
  *      - Method saveDiagrams() added, enabling the Mainforms to save dirty diagrams before exit (KGU#49)
  *
- ******************************************************************************************************/
+ ******************************************************************************************************
+ */
 
 import java.awt.Frame;
 import java.awt.Graphics;
@@ -121,8 +124,10 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -1562,6 +1567,25 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	return functions;
     }
     // END KGU#2 2015-11-24
+    
+    // START KGU#258 2016-09-26: Enh. #253: We need to traverse all roots for refactoring
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.executor.IRoutinePool#getAllRoots()
+     */
+    @Override
+    public Set<Root> getAllRoots()
+    {
+    	Set<Root> roots = new HashSet<Root>();
+    	if (this.diagrams != null) {
+    		for (int d = 0; d < this.diagrams.size(); d++)
+    		{
+    			Diagram diagram = this.diagrams.get(d);
+    			roots.add(diagram.root);
+    		}
+    	}    
+    	return roots;
+    }
+    // END KGU#258 2016-09-26
 
 	// START KGU#117 2016-03-08: Introduced on occasion of Enhancement #77
 	/**

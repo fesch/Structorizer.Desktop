@@ -19,36 +19,38 @@
  */
 package lu.fisch.structorizer.arranger;
 
-/**
- * ****************************************************************************************************
+/*
+ *****************************************************************************************************
  *
- * Author: Bob Fisch
+ *      Author: Bob Fisch
  *
- * Description: This class offers an opportunity to graphically arrange several
- * NSD diagrams within one and the same drawing area. While related to owned
- * Structorizers, the diagrams will fully and synchronously reflect all status
- * changes (selection, execution, ...)
+ *      Description: This class offers an opportunity to graphically arrange several
+ *      NSD diagrams within one and the same drawing area. While related to owned
+ *      Structorizers, the diagrams will fully and synchronously reflect all status
+ *      changes (selection, execution, ...)
  *
  ******************************************************************************************************
  *
- * Revision List
+ *      Revision List
  *
- * Author Date	Description ------	----	----------- Bob Fisch 2009.08.18	First
- * Issue Kay Gürtzig 2015.10.18	Transient WindowsListener added enabling Surface
- * to have dirty diagrams saved before exit Kay Gürtzig 2015.11.17	Remove button
- * added (issue #35 = KGU#85) Kay Gürtzig 2015.11.19	Converted into a singleton
- * (enhancement request #9 = KGU#2) Kay Gürtzig 2015-11-24	Pin button added
- * (issue #35, KGU#88) Kay Gürtzig 2015-11-30	Remove action now also achievable
- * by pressing del button (issue #35, KGU#88) Kay Gürtzig 2015-12-21	Two new
- * buttons for saving and loading arrangements (issue #62, KGU#110) Kay Gürtzig
- * 2016-01-05	Icons for saving and loading arrangements replaced by fitting ones
- * Kay Gürtzig 2016-03-08	Bugfix #97: Methods for drawing info invalidation
- * added (KGU#155) Kay Gürtzig 2016.03.08 Method clearExecutionStatus and
- * btnSetCovered added (for Enhancement #77) Kay Gürtzig 2016.03.12 Enh. #124
- * (KGU#156): Generalized runtime data visualisation hooks Kay Gürtzig
- * 2016-04-14 Enh. #158 (KGU#177): Keys for copy and paste enabled, closing
- * mechanism modified Kay Gürtzig 2016-07-03 Dialog message translation
- * mechanism added (KGU#203).
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      Bob Fisch       2009.08.18  First Issue
+ *      Kay Gürtzig     2015.10.18  Transient WindowsListener added enabling Surface to have dirty
+ *                                  diagrams saved before exit
+ *      Kay Gürtzig     2015.11.17  Remove button added (issue #35 = KGU#85)
+ *      Kay Gürtzig     2015.11.19  Converted into a singleton (enhancement request #9 = KGU#2)
+ *      Kay Gürtzig     2015-11-24  Pin button added (issue #35, KGU#88)
+ *      Kay Gürtzig     2015-11-30  Remove action now also achievable by pressing del button (issue #35, KGU#88)
+ *      Kay Gürtzig     2015-12-21  Two new buttons for saving and loading arrangements (issue #62, KGU#110)
+ *      Kay Gürtzig     2016-01-05  Icons for saving and loading arrangements replaced by fitting ones
+ *      Kay Gürtzig     2016-03-08  Bugfix #97: Methods for drawing info invalidation added (KGU#155)
+ *      Kay Gürtzig     2016.03.08  Method clearExecutionStatus and btnSetCovered added (for Enhancement #77)
+ *      Kay Gürtzig     2016.03.12  Enh. #124 (KGU#156): Generalized runtime data visualisation hooks
+ *      Kay Gürtzig     2016-04-14  Enh. #158 (KGU#177): Keys for copy and paste enabled, closing
+ *                                  mechanism modified
+ *      Kay Gürtzig     2016-07-03  Dialog message translation mechanism added (KGU#203).
+ *      Kay Gürtzig     2016.09.26  Enh. #253: New public method getAllRoots() added.
  *
  ******************************************************************************************************
  *
@@ -61,6 +63,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
@@ -541,16 +545,35 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 	// END KGU#2 2015-11-30
 
     // START KGU#2 2015-11-24
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesByName(java.lang.String)
+     */
     @Override
     public Vector<Root> findRoutinesByName(String rootName) {
         return surface.findRoutinesByName(rootName);
     }
 
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesBySignature(java.lang.String, int)
+     */
     @Override
     public Vector<Root> findRoutinesBySignature(String rootName, int argCount) {
         return surface.findRoutinesBySignature(rootName, argCount);
     }
 	// END KGU#2 2015-11-24
+    
+    // START KGU#258 2016-09-26: Enh. #253: We need to traverse all roots for refactoring
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.executor.IRoutinePool#getAllRoots()
+     */
+    @Override
+    public Set<Root> getAllRoots()
+    {
+    	return surface.getAllRoots();
+    }
+    // END KGU#258 2016-09-26
+
+
 
     // START KGU#117 2016-03-08: Introduced on occasion of Enhancement #77
     @Override

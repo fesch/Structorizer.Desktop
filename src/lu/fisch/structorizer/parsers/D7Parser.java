@@ -71,6 +71,7 @@ import java.util.Map;
 
 import goldengine.java.*;
 import lu.fisch.utils.*;
+import lu.fisch.structorizer.gui.ParserPreferences.RefactoringMode;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.elements.*;
 
@@ -983,6 +984,7 @@ public class D7Parser implements GPMessageConstants
 				String propertyName = "Parser" + Character.toUpperCase(key.charAt(0)) + key.substring(1);
 				keywordMap.put(key, ini.getProperty(propertyName, defaultKeys.getOrDefault(propertyName, "")));
 			}
+			
 			// END KGU#258 2016-09-25
 			// START KGU#165 2016-03-25: Enhancement configurable case awareness
 			ignoreCase = ini.getProperty("ParserIgnoreCase", "true").equalsIgnoreCase("true");
