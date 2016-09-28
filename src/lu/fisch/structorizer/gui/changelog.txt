@@ -4,7 +4,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.25-01 (2016.09.25)
+Current development version: 3.25-02 (2016.09.25)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
 - 01: Issue #213: Selected state of FOR transmutation result now visible <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
@@ -19,10 +19,13 @@ Current development version: 3.25-01 (2016.09.25)
 - 01: Analyser preferences order modified <2>
 - 01: Enh. #250: FOR/FOR-IN loop editor partially redesigned <2>
 - 01: Bugfix #251: Look and feel problems with Executor console window <2>
-- 01: Bugfix #252: Analyser check 14 should tolerate ":=" vs "<-" <2>
-- 01: Saved diagrams now prepared for #253 (keyword substitution on loading) <2>
+- 01: Bugfix #252: Analyser FOR loop check (14) should tolerate ":=" vs "<-" <2>
+- 01: Saved diagrams now prepared for #253 (parser info included) <2>
 - 01: Bugfix #254: CASE execution failed when parser keywords were used <2>
 - 01: Enh. #255: Analyser now names the assumed loop variables if supernumerous <2>
+- 02: Enh. #253 Refactoring option on loading diagrams with parser info (>= 3.25-01) <2>
+- 02: Enh. #253 Refactoring option on changing parser preferences <2>
+- 02: Enh. #253 Refactoring option on loading preferences from file <2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2
@@ -203,7 +206,7 @@ Version: 3.24 (2016.03.14)
 - 17: Bugfix #97 update: Arranger updated on global drawing changes <2>
 
 Version 3.23 (2015.12.04)
-- 01: executor: fixed a bug in the repeat loop [Sylvio Tabor]
+- 01: executor: fixed a bug in the Repeat loop [Sylvio Tabor]
 - 02: executor: fixed a bug while interpreting the title [Benjamin Bartsch]
 - 03: export: split PNG export into multiple images [Moritz Schulze]
 - 04: executor: logical operator in CASE-statement [Lies Callemeyn]
@@ -211,7 +214,7 @@ Version 3.23 (2015.12.04)
 - 06: export: added comments to Pascal export [Dirk Wilhelmi]
 - 06: export: moved export options into menu [Hanspeter Thöni]
 - 07: export: added namespace "nsd" to save files [Treaki]
-- 08: added polish translation [Jacek Dzieniewicz]
+- 08: added Polish translation [Jacek Dzieniewicz]
 - 09: new drawing strategy for the IF statement [David Tremain]
 - 09: new colorizing strategy for elements [David Tremain]
 - 10: visual re-enforcement for drag & drop [David Tremain]
@@ -241,7 +244,7 @@ Version 3.23 (2015.12.04)
 - 29: Complex changes and enhancements as described (pull-request #7) <codemanyak>
 - 29: executor: breakpoints may now be placed throughout the diagram <2>
 - 29: executor: implementation for Endless loops and Parallel elements <2>
-- 29: executor: element highlighting separated from selection <2>
+- 29: executor: eexecution highlighting separated from selection <2>
 - 29: executor: variable list now updated on every pause even with delay 0 <2>
 - 29: gui: More localisation support for element editor (InputBox) <2>
 - 29: updated language files (DE,EN,ES,RU,IT) <2>
@@ -249,16 +252,16 @@ Version 3.23 (2015.12.04)
 - 29: export: Python export no longer "eats" lines within Repeat loops <2>
 - 29: comment popup: sticky popups eliminated, no element level limit <2>
 - 29: Arranger: No longer loses track when related Structorizer reloads <2>
-- 30: Several Chinese (CHS) translations added and typos eliminated <Zijun Ke>
-- 30: Issue on closing a Structorizer fixed, file update question may be cancelled. <2>
+- 30: Several Chinese (ZH-CN) translations added and typos eliminated <Zijun Ke>
+- 30: Issue on closing Structorizer fixed, file update question may be cancelled. <2>
 - 31: Major enhancement supporting cleaner For loop evaluation (issue #10) <2>
-- 31: Enhancement to allow lists of constants controlling a Case branch (issue #13) <2>
+- 31: Enhancement to allow lists of constants ruling a Case branch (issue #13) <2>
 - 31: Code export process decomposed, less redundant Generator classes <2>
 - 31: String handling improved (comparison, empty strings, quote consistency) <2>
 - 31: Variables, function names etc. within strings no longer executed <2>
 - 31: Newly created empty diagrams are no longer flagged as changed <2>
 - 31: Content of array variables now sensibly displayed on execution (issue #14) <2>
-- 31: Variable content may now effectively be edited on excution pauses (issue #15) <2>
+- 31: Variable content may now effectively be edited on execution pauses (issue #15) <2>
 - 31: Menu item File > Quit action consistent to the [x] button now (bug #16) <2>
 - 31: Phenomenon of stalling execution on syntax errors within loops fixed (bug #17) <2>
 - 31: Several fixes induced by wide-spread code rebuilding in versions 29...30 <2>
@@ -269,7 +272,7 @@ Version 3.23 (2015.12.04)
 - 32: Bugs #28, #31, and #32 fixed, all concerning element degrading on undoing/copying <2>
 - 32: More adaptive approach to either exit or dispose a Structorizer on closing <2>
 - 33: Bugfix #39 - Errors on drawing empty Case structures, confused texts and comments <2>
-- 33: Bugfix #41 - shift operators <<, >>, shl, shr hadn't been supported <2>
+- 33: Bugfix #41 - Shift operators <<, >>, shl, shr hadn't been supported <2>
 - 33: Bugfix #40 - Recent nsd files got truncated on saving errors <2>
 - 33: Bugfix #42 - Default saving directory should not be root (/) but home <2>
 
@@ -277,7 +280,7 @@ Version 3.22 (2011.11.21)
 - 01: Some fixes in Executor.java & Control.java [Kay Gürtzig]
 - 02: Save & load INI configuration to and from external file [Dirk Wilhelmi]
 - 03: Added Russian translation [Юра Лебедев]
-- 04: double clicking save files now also works for JWS [David Mancini]
+- 04: double-clicking saved files now also works for JWS [David Mancini]
 - 05: fixed a replacement issue while exporting to code [Sylvio Tabor]
 - 06: implemented show/hideTurtle in Turtleizer [Sylvio Tabor]
 - 07: do not allow ":" in parser preferences [Sylvio Tabor]
@@ -292,10 +295,10 @@ Version 3.21 [2011.06.28]
 - 06: fixing a performance problem [Laurent Haan]
 - 07: fixing an diagram copy-to-clipboard problem [Neuberger Dominik]
 - 08: visual performance updates [Bob Fisch]
-- 09: recoded auto size algorithm for alternatives [Matthias Paul]
+- 09: recoded auto-size algorithm for alternatives [Matthias Paul]
 - 09: updated drawing code to respect variable highlighting [Bob Fisch]
 - 10: dialogue for graphics export now remembers the last visited path [Matthias Paul]
-- 11: SVG export is now UTF-8 encoded [Csaba Rostagni]
+- 11: SVG export is now UTF-8-encoded [Csaba Rostagni]
 
 
 Version 3.20 [2010.11.15]
@@ -303,11 +306,11 @@ Version 3.20 [2010.11.15]
 - 02: Some more improvements to the C generator [Kay Gürtzig]
 - 03: Different other bugfixes in the generator classes [Kay Gürtzig]
 - 03: Some small changes to the variable highlighting [Kay Gürtzig]
-- 04: More bugfixes for C, C# and Java generator [Kay Gürtzig]
+- 04: More bugfixes for C, C#, and Java generator [Kay Gürtzig]
 - 05: Step-by-step didn't work in Turtleizer [Kay Gürtzig]
 - 06: Coded PHP generator [Rolf Schmidt]
 - 07: do not allow negative position [EVEGI]
-- 08: added czech language support [Vaščák Vladimír]
+- 08: added Czech language support [Vaščák Vladimír]
 
 Version 3.19 [2010.08.07]
 - Have a backup of the INI file in the current application directory.
@@ -316,11 +319,11 @@ Version 3.19 [2010.08.07]
 - Bug while printing in landscape [Albrecht Dreß]
 - UTF-8 encoded Oberon output [Thijs Zandwijk]
 - StrucTeX generator update [Matthias Plha / Klaus-Peter Reimers]
-- Added chinese translation [Wang Lei]
+- Added Chinese translation (simplified Chinese) [Wang Lei]
 - C#-Generator [Gunter Schillebeeckx]
 
 Version 3.18 [2009.12.20]
-- Update for the brazilian portuguese localization [Theldo Cruz]
+- Update for the Brazilian Portuguese localization [Theldo Cruz]
 - Gave the SVG export a new try using Freehep (bug #14) [Marcus Radisch]
 - Activated anti-aliasing (bug #20) Reinhard Schiedermeier]
 - Overwrite prompt when exporting a diagram as picture (issue #2897065) [Marcus Radisch]
@@ -331,12 +334,12 @@ Version 3.18 [2009.12.20]
 - ANALYSER: "Result" is now a good variable name for function results [FISRO]
 
 Version 3.17 [2009.10.18]
-- Brazilian portuguese localization [Theldo Cruz]
-- Bug in the executor not setting correct some variable values [FISRO]
+- Brazilian Portuguese localization [Theldo Cruz]
+- Bug in the executor not correctly setting some variable values [FISRO]
 - The keyword "var" is now supported for functions/procedures [FISRO]
 - Bug while saving diagram type (bug #15) [Marcus Radisch]
 - Bug while using "save as" (bug #15) [Marcus Radisch]
-- EXECUTOR: Problem while compairing two items (bug #18) [FISRO]
+- EXECUTOR: Problem on comparing two items (bug #18) [FISRO]
 - Show the filename in the main window title (bug #16) [Marcus Radisch]
 - EXECUTOR: Problem with the FOR loop variable (bug #19) [Jos Swennen / FISRO]
 - Problem with the path of the INI file using Vista (bug #17) [Marcus Radisch]
@@ -346,7 +349,7 @@ Version 3.16 [2009.08.22]
     * Re-added the "AppleJavaExtensions.jar" to the libraries
     * This should not interfere with other OS
     * It will not be included in the source package either ...
-- MAC: The menubar was disappearing after opening a any dialog [FISRO]
+- MAC: The menubar was disappearing after opening any dialog [FISRO]
     * This is a known apple bug with a known workaround *uff*
 - MAC: Shortcut key stopped working [FISRO]
     * I found that this was related to the previous bug, so fixing
@@ -364,7 +367,7 @@ Version 3.15 [2009.08.13]
 - Fixed a bug in class responsible for saving the preferences [FISRO]
 - Bugfixes in the C source code export [Gunter Schillebeeckx]
 - Implementation of a Java source code export [Gunter Schillebeeckx]
-- Bug fixed concerning the displaying a comment (bug #6) [Nico]
+- Bug fixed concerning the displaying of a comment (bug #6) [Nico]
 
 Version 3.14 [2009.07.06]
 - Updated NSD execution feature [FISRO]
@@ -373,13 +376,13 @@ Version 3.14 [2009.07.06]
     ° defined second "pos" function
     ° operator conversion: different from
 - The development will be continued using NetBeans instead of XCode [FISRO]
-- Bug in the EMF-export [Jan Hilsdorf]
+- Bug in the EMF export [Jan Hilsdorf]
 - Yet another scrolling bug [Bernhard Grünewaldt]
-- Generated NSD-files are now UTF-8 coded [Bernhard Grünewaldt]
+- Generated NSD files are now UTF-8-coded [Bernhard Grünewaldt]
 
 Version 3.13 [2009.05.23]
-- Corrected the C-Generator [FISRO]
-- Corrected the Perl-Generator [FISRO]
+- Corrected the C generator [FISRO]
+- Corrected the Perl generator [FISRO]
 - Added turtle drawing module [FISRO]
   * implemented procedures
     ° init()
@@ -397,8 +400,8 @@ Version 3.13 [2009.05.23]
   * use of general expressions
   * input (parameter or prompt): String, Character, Integer or Double
   * output: direct and function result
-  * java syntax => build in (BeanShell)
-  * pascal syntax:
+  * Java syntax => built in (BeanShell)
+  * Pascal syntax:
     ° standard math functions: abs, sqrt, sqr, cos, sin, tan, acos, asin, atan
     ° random functions: randomize(), random(int)
     ° compare strings with "=" (auto conversion to "equals")
@@ -408,18 +411,18 @@ Version 3.13 [2009.05.23]
     ° string procedure: delete, insert (auto convert to function)
   * pause, step-by-step & break functionality
   * live variable watch (execution table)
-- Analyzer: the use of the "return" instruction is now allowed [FISRO]
+- Analyser: the use of the "return" instruction is now allowed [FISRO]
 
 Version 3.12 [18/01/09]
-- Added a C-generator [Parveen Kumar]
+- Added a C generator [Parveen Kumar]
 - Fixed a bug for saving preferences [FISRO]
 
 Version 3.11 [14/11/08]
-- Double clicking a file under Windows which contained spaces in
-  its name did not open correctly with a double-click on it [FABFR]
+- Double-clicking a file under Windows which contained spaces in
+  its name did not open correctly [FABFR]
 
 Version 3.10 [28/09/08]
-- Added spanish translation [Andrés Cabrera]
+- Added Spanish translation [Andrés Cabrera]
 
 Version 3.09 [14/08/08]
 - Minor bug in analyzer while analyzing functions [FISRO]
@@ -430,7 +433,7 @@ Version 3.09 [14/08/08]
 - BASH Code Export [Markus Grundner]
 - Added translations for analyzer [FISRO]
 - Added source package for Eclipse [Markus Grundner]
-- Added simply command line compilation script [Klaus-Peter Reimers]
+- Added simple command line compilation script [Klaus-Peter Reimers]
 - Unification of the previous mentioned source packages [FISRO]
 - NL translated strings [Jerone]
 - Modified OBERON code generator [Klaus-Peter Reimers]
@@ -456,7 +459,7 @@ Version 3.06 [10/02/2008]
 - Add DIN / non-DIN switch [Klaus-Peter Reimers]
 - Added "ENDLESS Loop" [Klaus-Peter Reimers]
 - "Save preferences now" button [Klaus-Peter Reimers]
-- New Windows-wrapper which [FISRO]
+- New Windows wrapper which [FISRO]
 
 Version 3.05 [05/02/2008]
 - Comments / popup bug detected [Jerone]
@@ -479,15 +482,15 @@ Version 3.04 [28/01/2008]
 - German translation [Klaus-Peter Reimers]
 - Luxemburgish translation [Laurent Zender]
 - Persistent Look & Feel [Klaus-Peter Reimers]
-- Changed language file encoding to UFT-8 [FISRO]
+- Changed language file encoding to UTF-8 [FISRO]
 - Bug in undo/redo function detected [Jan Kruschwitz]
 - Print preview dialog [FISRO]
 - Mac version opens NSD-files by double-click [FISRO]
 - Scrolling bug detected [Lucas Cabeza]
 
 Version 3.03 [11/01/2008]
-- Minors bugs in the variable detection routine [FISRO]
-- Added colorization of special signs [FISRO]
+- Minor bugs in the variable detection routine [FISRO]
+- Added colorization of special symbols [FISRO]
 - Added Oberon source code generator [Klaus-Peter Reimers]
 - Program proposes filename to save [Jerone]
 - Replaced "backspace" by "delete" for removing items [Jerone]
@@ -495,7 +498,7 @@ Version 3.03 [11/01/2008]
 - Remember last file location [Jerone]
 
 Version 3.02 [07/01/2008]
-- Added Pascal input-parser [FISRO]
+- Added Pascal input parser [FISRO]
 - Added Look & Feel choice in menu (not persistent) [FISRO]
 - Modified test string in font dialog to test for symbols [FISRO]
 - Modified parser engine to load grammars from JAR file [FISRO]
@@ -527,12 +530,12 @@ Version 2.06 [01/11/2007]
 
 Version 2.05 [28/10/2007] - LINUX GTK2 & Mac
 - StrukTeX export debugging [Klaus-Peter Reimers]
-- New "About" Dialog [FISRO]
+- New "About" dialog [FISRO]
 
 Version 2.04 [25/10/2007] - LINUX GTK2 only
-- I thing that the "Umlaut" Problem has been solved
-  for GTK2. GTK does not seem to be capable in managing
-  UFT8 correctly? [FISRO]
+- I think that the "Umlaut" Problem has been solved
+  for GTK2. GTK does not seem to be capable of managing
+  UTF-8 correctly? [FISRO]
 - Added Umlaut export for StrukTeX [Klaus-Peter Reimers]
 
 Version 2.03 [20/10/2007] - LINUX only
@@ -548,10 +551,10 @@ Version 2.02 [05/09/2007] - LINUX only
 
 Version 2.01 [14/08/2007]
 - Autoscroll was not enabled [Sascha Meyer]
-  This seams not yet to work under Mac OSX (Windows & Linux = OK)
+  This seems not yet to work under Mac OSX (Windows & Linux = OK)
 - The language choice for LU was not persistent, no load from
   and save to INI file [11TG2 2006/2007 - Laurent Zender]
-- UFT8-conversion was missing for imported sourceß-code.
+- UTF-8 conversion was missing for imported source code.
 
 Version 2.00 [09/08/2007]
 - Please take also a look at the file "_D6 to Lazarus.txt"
@@ -560,41 +563,41 @@ Version 2.00 [09/08/2007]
 
 Version 1.31 [07/11/2007]
 - Case without "else"-part [Andreas Jenet]
-- JPG-Export [FISRO]
-- Bug whilo loading a CASE-statemet from a savefile [FISRO]
+- JPG export [FISRO]
+- Bug on loading a CASE statement from a savefile [FISRO]
 
 Version 1.30 [27/10/2007]
 - Bug detected in analyser [Iris Adae]
 - German Umlaute export for StrukTeX [Klaus-Peter Reimers]
-- Serious speed improuvements [FISRO]
+- Serious speed improvements [FISRO]
 - Executor now calls analyser too [FISRO]
 
 Version 1.29 [19/10/2007]
 - Allow ":=" as assignment while parsing out variable names [Sebastian Lehn]
-- BUG: "<-" are not draw correctly in version 1.28 because
+- BUG: "<-" are not drawn correctly in version 1.28 because
   of a problem in the drawing method. [FISRO]
-- rotating text for instructions by 90∞ [Michael Gerdes]
+- rotating text for instructions by 90° [Michael Gerdes]
 - language support for analyser messages [FISRO]
 - minor bugs in the analyser algorithms [FISRO]
 - StrucTeX output [Klaus-Peter Reimers]
 
 Version 1.28 [13/10/2007]
 - analyser: different minor bugs fixed [FISRO]
-- analyser: different minor improuvements [FISRO]
+- analyser: different minor improvements [FISRO]
 - activating analyser for anybody [FISRO]
-- languages files rewritten [FABFR]
+- language files rewritten [FABFR]
 - bugs when pressing CANCEL [FABFR]
 - "Initialising" screen [FABFR]
-- modified diagram for simplified sheme (not "nice") [FABFR]
-- different improuvement in the parser interpretation [FABFR]
-- missing CASE-statement while importing from source code [FABFR]
+- modified diagram for simplified scheme (not "nice") [FABFR]
+- different improvements in the parser interpretation [FABFR]
+- missing CASE statement while importing from source code [FABFR]
 - new "about" dialogs [FABFR]
 - added "changelog.txt" to about-dialog [FISRO]
 - coherent dialogs and menu entries [FABFR]
 
 Version 1.27 [???]
-- copy & paste bewteen MDI children works fine [FISRO]
-- variable names are now also extracted from methode parameters [FISRO]
+- copy & paste between MDI children works fine [FISRO]
+- variable names are now also extracted from method parameters [FISRO]
 - Added language file for LU [11TG2 2006/2007 - Laurent Zender]
 
 Version 1.26 [12/06/2007]
@@ -608,15 +611,15 @@ Version 1.26 [12/06/2007]
 - MDI: Menu integration [FISRO]
 
 Version 1.25 [05/06/2007]
-- convertion between (instruction, call, jump) [FISRO]
+- conversion between (instruction, call, jump) [FISRO]
 - analyser: read INI-file [FISRO]
-- convertion from (instruction, call, jump)
+- conversion from (instruction, call, jump)
   to (if, for, repeat, while) [FISRO]
 - user colors [Sascha Meyer]
 - made all subforms owned by the mainform
   => create an MDI application [FISRO]
-  ~> The 'utils' class is still dependant on two other
-     classes, so the mainform cannot be used indepenantly!
+  ~> The 'utils' class still depends on two other
+     classes, so the mainform cannot be used independently!
 - Wiped out a bug due to the recent owner changes [FISRO]
 - Added code the capture <ESC> during showmodal of some windows [FISRO]
 - Changed vertical lines in the case statement
@@ -626,23 +629,23 @@ Version 1.25 [05/06/2007]
   => create an MDI application [FISRO]
 
 Version 1.24 [30/05/2007]
-- analyser: Problem with non initialized
+- analyser: Problem with non-initialized
   variables in REPEAT loops [FISRO]
 - analyser: recognises "lire A,B" without
   spaces [T1IF1 2006/2007 - Tom Schons]
 - Minimum font size [T1IF1 2006/2007 - Kevin Schoup]
 - Maximum font size [T1IF1 2006/2007 - Jill Saudt]
-- Dissable MouseWheel scrolling because
+- Disable MouseWheel scrolling because
   of blank scrolling problems [T1IF1 2006/2007 - JosÈ Espinosa]
-- Adaptation of autosize algorithme when
+- Adaptation of auto-size algorithm when
   analyser is *on* [FISRO]
 - Drag & drop of an emtpy element should
   not be possible [T1IF1 2006/2007 - Tom Schons]
 - Bug in analyser while loading grammar
   files [FISRO]
 - Missing translations found [T0IF2 2006/2007 - Mike Lill]
-- Added JUMP-statement [Christian Fandel]
-- Changes call to analyser procedure in
+- Added JUMP statement [Christian Fandel]
+- Changed call to analyser procedure in
   order to speed up the entire GUI [FISRO]
 
 Version 1.23 [never published]
@@ -651,24 +654,24 @@ Version 1.23 [never published]
 - added array support
 
 Version 1.22 [23/01/2007]
-- added: application.title = NSD-title
+- added: application.title = NSD title
   [T1IF2 2006/2007 - Stephen Edwards]
-- added: mainform.caption = NSD-title [FISRO]
+- added: mainform.caption = NSD title [FISRO]
 - bugfix in schematic of the CASE
   statement [FISRO]
 - added nederlands lang-file [Tom Van Houdenhove]
 - added more strings to the language
   systems [Tom Van Houdenhove]
-- added costumisation for CASE
+- added customisation for CASE
   statement [Tom Van Houdenhove]
-- changes costumisation for IF
+- changes to customisation for IF
   statement [Tom Van Houdenhove]
-- eliminated bug in the CASE-statement [Tom Van Houdenhove]
+- eliminated bug in the CASE statement [Tom Van Houdenhove]
 - added btnCancel to InputBox [Tom Van Houdenhove]
 - bug fixed in display (red-color-bug) [FISOR]
 
 Version 1.21 [15/01/2007]
-- added case-statement [MARSE]
+- added CASE statement [MARSE]
 - added call [Prophet05]
 - small fixes in PAS2NSD [FISRO]
 - small fix in "save-as" routine [T1IF2 2006/2007 - NoÈmie Feltgen]
@@ -686,26 +689,26 @@ Version 1.19 [16/12/2006]
   wanna-be-hackers ;-) [FISRO]
 
 Version 1.18 [13/12/2006]
-- multi-lang support [Bernhard Wiesner]
-- Another small bug in the save-routine [PYRSI]
+- multi-language support [Bernhard Wiesner]
+- Another small bug in the save routine [PYRSI]
 - Langs: EN [FISRO]
          DE [FISRO]
          FR [FISRO]
 
 Version 1.17 [05/12/2006]
 - Bug detected while updating comments [FISRO]
-- Bug while saving when title contains
+- Bug on saving when title contained
   illegal characters. Solved for ":" [PYRSI]
 - First Linux-Version written in Lazarus! [FISRO]
 
 Version 1.16 [26/11/2006]
 - Copy & Paste of elements [FISRO]
 - Structorizer was unable to close
-  on a read-only marked media [MARSE]
+  on a medium marked read-only [MARSE]
 - Fixed some small bugs concerning
   element selection. [FISRO]
 - Shortcuts for inserting elements [BELGI]
-- User Check-Buttons for visual styles [SIBCL]
+- User check buttons for visual styles [SIBCL]
 - Fixed some bugs during first
   colorizer use [FISRO]
 - Added shortcut for colorizer [FISRO]
@@ -726,8 +729,8 @@ Version 1.14 [16/11/2006]
 - Switch visual style [LOEGU]
 
 Version 1.13 [13/11/2006]
-- Each element contains now
-  also a comment. [FISRO]
+- Each element also contains
+  a comment now. [FISRO]
 - An new-old bug had reappeared
   an been elominated once again [MARSE]
 
@@ -738,32 +741,32 @@ Version 1.12 [never published]
 Version 1.11 [25/10/2006]
 - <Shift-Enter> or <Return-Enter>
   for validating input [T1IF1 2006/2007]
-- Drag'n'Drop bug wipe out. [FIRSO]
-- Disable boutons if no element
+- Drag'n'Drop bug wiped out. [FISRO]
+- Disable buttons if no element
   selected [T1IF1 2006/2007]
 
 Version 1.10 [22/10/2006]
 - Undo / Redo functionality [MARSE]
 - NSD can be scrolled if larger
   then the visible area [MARSE]
-- Automatic NSD-Title or savename
+- Automatic NSD title or savename
   proposal [MARSE]
 - Fixed "const"-section recognition
   for PAS2NSD-conversion [MARSE]
 - Fixed wrong displayed dialogs at
   120 dpi font size [MARSE + GAMCA]
 - New name for new diagram [PIRSY]
-- Doubleclick on empty queue = new
+- Double-click on empty queue = new
   instruction [PIRSY]
 
 Version 1.09 [never published]
 - Dynamic increase/decrease font [FISRO]
 
 Version 1.08 [never published]
-- BMP Export of the diagramm [FISRO]
+- BMP Export of the diagram [FISRO]
 
 Version 1.07 [01/10/2006]
-- A securtiy bug has been reported
+- A security bug has been reported
   and finally sweeped out... [FISRO]
 
 Version 1.06 [27/09/2006]
@@ -773,21 +776,21 @@ Version 1.06 [27/09/2006]
   the NSD-File. [FISRO]
 
 Version 1.05 [19/09/2006]
-- I implemented a NSD-2-PAS convertion.
-  This includes a varibale auto-detection,
+- I implemented an NSD-2-PAS conversion.
+  This includes a variable auto-detection,
   which, unfortunately, does not work
-  yet with complex type. [FISRO]
+  yet with complex types. [FISRO]
 - Read-Only-INI-File Bug => fixed [MARSE]
 
 Version 1.04 [15/09/2006]
 - I finally found a working Delphi/Pascal
-  parser that with tree generation. The
+  parser that operates with tree generation. The
   PAS-2-NSD converter now works fine :-D [FISRO]
 
   Added functionality:
   * Load from source file [FISRO]
   * Create from source text [FISRO]
-  * Real-time creation qhile typing [FISRO]
+  * Real-time creation while typing [FISRO]
 
 Version 1.03 [never published]
 - First "satisfying" implementation of
@@ -797,7 +800,7 @@ Version 1.03 [never published]
 
 Version 1.02 [14/09/2006]
 - Change font.name and font.size of the
-  graph, eaven on the fly! Store information
+  graph, even on the fly! Store information
   in the INI-File. [FISRO]
 - Two types of graphs [FISRO]
   * programs (rectangle)
@@ -805,6 +808,6 @@ Version 1.02 [14/09/2006]
 
 Version 1.01 [01/09/2006]
 - Added click-to-open support, so you now
-  only need to double-click a NSD-File to
-  immediately open it. [FISRO]
+  only need to double-click an NSD-File to
+  open it immediately. [FISRO]
 

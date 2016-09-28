@@ -582,6 +582,7 @@ public class StringList {
 	}
 
 	/**
+	 * Concatenates elements with blanks between them.
 	 * @return the concatenation of all elements separated by single blanks
 	 */
 	public String getLongString()

@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.io;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -30,19 +31,20 @@ package lu.fisch.structorizer.io;
  *
  *      Revision List
  *
- *      Author              Date			Description
- *      ------              ----			-----------
- *      Bob Fisch           2008.05.02                  First Issue
- *      GENNARO DONNARUMMA  2014.02.02                  Ini in JAR support
- *      Kay Gürtzig         2016.04.26                  Jar path updated
- *      Kay Gürtzig         2016.07.22                  Bugfix: save() method now immediately closes the file 
+ *      Author              Date            Description
+ *      ------              ----            -----------
+ *      Bob Fisch           2008.05.02      First Issue
+ *      GENNARO DONNARUMMA  2014.02.02      Ini in JAR support
+ *      Kay Gürtzig         2016.04.26      Jar path updated
+ *      Kay Gürtzig         2016.07.22      Bugfix: save() method now immediately closes the file
+ *      Kay Gürtzig         2016.09.28      First comment line modified (KGU#264) 
  *
  ******************************************************************************************************
  *
  *      Comment:		
  *
- ******************************************************************************************************/
-//
+ ******************************************************************************************************
+ */
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -54,6 +56,13 @@ import java.net.URLDecoder;
 import java.util.Properties;
 import java.util.Set;
 
+import lu.fisch.structorizer.elements.Element;
+
+/**
+ * This class manages product settings as properties, saves and loads them to/from the INI-file, 
+ * @author Bob Fisch
+ *
+ */
 public class Ini
 {
 
@@ -407,7 +416,10 @@ public class Ini
 //		p.store(new FileOutputStream(_filename), "last updated "
 //				+ new java.util.Date());
 		FileOutputStream fos = new FileOutputStream(_filename);
-		p.store(fos, "last updated " + new java.util.Date());
+		// START KGU#264 2016-09-28: The date was redundant (next comment is the date, anyway), so bettre write the version
+		//p.store(fos, "last updated " + new java.util.Date());
+		p.store(fos, "version " + Element.E_VERSION);
+		// END KGU#264 2016-09-28
 		fos.close();
 		// END KGU#210 2016-07-22
 	}

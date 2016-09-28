@@ -55,7 +55,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.07.20      Enh. #160 (subroutines involved) implemented
  *      Kay Gürtzig             2016.08.10      Bugfix #227 (Modules = main programs have to end with full stop)
  *      Kay Gürtzig             2016.08.12      Two tiny embellishments
- *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
+ *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
  *
  ******************************************************************************************************
  *
@@ -344,6 +345,8 @@ public class OberonGenerator extends Generator {
 			
 			insertComment(_inst, _indent);
 
+			String inputKey = D7Parser.keywordMap.get("input").trim();
+			String outputKey = D7Parser.keywordMap.get("output");
 			for (int i=0; i<_inst.getText().count(); i++)
 			{
 				// START KGU#101/KGU#108 2015-12-20 Issue #51/#54
@@ -362,7 +365,7 @@ public class OberonGenerator extends Generator {
 					// START KGU#236 2016-08-10: Issue #227 - moved to the algorithm start now
 					//code.add(_indent + "In.Open;");
 					// END KGU#236 2016-08-10
-					if (line.substring(D7Parser.input.trim().length()).trim().isEmpty())
+					if (line.substring(inputKey.length()).trim().isEmpty())
 					{
 						code.add(_indent + "In.Char(dummyInputChar);");
 					}
@@ -375,11 +378,11 @@ public class OberonGenerator extends Generator {
 				else if (Instruction.isOutput(line))
 				{
 					insertComment("TODO: Replace \"TYPE\" by the the actual Out procedure name for this type and add a length argument where needed!", _indent);	
-					StringList expressions = Element.splitExpressionList(line.substring(D7Parser.output.length()).trim(), ",");
+					StringList expressions = Element.splitExpressionList(line.substring(outputKey.length()).trim(), ",");
 					// Produce an output isntruction for every expression (according to type)
 					for (int j = 0; j < expressions.count(); j++)
 					{
-						code.add(_indent + transform(D7Parser.output + " " + expressions.get(j)) + ";");
+						code.add(_indent + transform(outputKey + " " + expressions.get(j)) + ";");
 					}
 					code.add(_indent + "Out.Ln;");
 				}
@@ -682,18 +685,21 @@ public class OberonGenerator extends Generator {
         	}
         	// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
         	//code.add(_indent + line + ";");
-        	if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
+        	String preReturn = D7Parser.keywordMap.get("preReturn");
+        	String preExit   = D7Parser.keywordMap.get("preExit");
+        	String preLeave  = D7Parser.keywordMap.get("preLeave");
+        	if (line.matches(Matcher.quoteReplacement(preReturn)+"([\\W].*|$)"))
         	{
-        		code.add(_indent + "RETURN " + line.substring(D7Parser.preReturn.length()).trim() + ";");
+        		code.add(_indent + "RETURN " + line.substring(preReturn.length()).trim() + ";");
         	}
-        	else if (line.matches(Matcher.quoteReplacement(D7Parser.preExit)+"([\\W].*|$)"))
+        	else if (line.matches(Matcher.quoteReplacement(preExit)+"([\\W].*|$)"))
         	{
         		insertComment("FIXME: Find a solution to exit the program here!", _indent);
         		insertComment(line, _indent);
         	}
-        	else if (line.matches(Matcher.quoteReplacement(D7Parser.preLeave)+"([\\W].*|$)"))
+        	else if (line.matches(Matcher.quoteReplacement(preLeave)+"([\\W].*|$)"))
         	{
-        		String argument = line.substring(D7Parser.preLeave.length()).trim();
+        		String argument = line.substring(preLeave.length()).trim();
         		if (!argument.isEmpty() && !argument.equals("1"))
         		{
         			insertComment("FIXME: No multi-level EXIT in OBERON; reformulate your loops to leave " + argument + " levels!", _indent);

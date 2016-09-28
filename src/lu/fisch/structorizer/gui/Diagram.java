@@ -89,6 +89,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.17      Issue #245: Message box for failing browser call in updateNSD() added.
  *      Kay Gürtzig     2016.09.21      Issue #248: Workaround for legacy Java versions (< 1.8) in editBreakTrigger()
  *      Kay Gürtzig     2016.09.24      Enh. #250: Several modifications around showInputBox()
+ *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done, importOptions() added.
+ *      Kay Gürtzig     2016.09.26      Enh. #253: Full support for diagram refactoring implemented.
  *
  ******************************************************************************************************
  *
@@ -135,6 +137,7 @@ import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.generators.*;
+import lu.fisch.structorizer.gui.ParserPreferences.RefactoringMode;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
@@ -2214,12 +2217,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#229 2016-09-09: Take care of the configured prefix and postfix
 		//While whileLoop = new While(forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue());
 		String prefix = "", postfix = "";
-		if (!D7Parser.preWhile.trim().isEmpty()) {
-			prefix = D7Parser.preWhile;
+		if (!D7Parser.keywordMap.get("preWhile").trim().isEmpty()) {
+			prefix = D7Parser.keywordMap.get("preWhile");
 			if (!prefix.endsWith(" ")) prefix += " ";
 		}
-		if (!D7Parser.postWhile.trim().isEmpty()) {
-			postfix = D7Parser.postWhile;
+		if (!D7Parser.keywordMap.get("postWhile").trim().isEmpty()) {
+			postfix = D7Parser.keywordMap.get("postWhile");
 			if (!postfix.startsWith(" ")) postfix = " " + postfix;
 		}
 		While whileLoop = new While(prefix + forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue() + postfix);
@@ -3416,77 +3419,103 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								Math.round(p.y+(getVisibleRect().height-parserPreferences.getHeight())/2+this.getVisibleRect().y));
 
 		// set fields
-		parserPreferences.edtAltPre.setText(D7Parser.preAlt);
-		parserPreferences.edtAltPost.setText(D7Parser.postAlt);
-		parserPreferences.edtCasePre.setText(D7Parser.preCase);
-		parserPreferences.edtCasePost.setText(D7Parser.postCase);
-		parserPreferences.edtForPre.setText(D7Parser.preFor);
-		parserPreferences.edtForPost.setText(D7Parser.postFor);
+		parserPreferences.edtAltPre.setText(D7Parser.keywordMap.get("preAlt"));
+		parserPreferences.edtAltPost.setText(D7Parser.keywordMap.get("postAlt"));
+		parserPreferences.edtCasePre.setText(D7Parser.keywordMap.get("preCase"));
+		parserPreferences.edtCasePost.setText(D7Parser.keywordMap.get("postCase"));
+		parserPreferences.edtForPre.setText(D7Parser.keywordMap.get("preFor"));
+		parserPreferences.edtForPost.setText(D7Parser.keywordMap.get("postFor"));
 		// START KGU#3 2015-11-08: New configurable separator for FOR loop step const
-		parserPreferences.edtForStep.setText(D7Parser.stepFor);
+		parserPreferences.edtForStep.setText(D7Parser.keywordMap.get("stepFor"));
 		// END KGU#3 2015-11-08
 		// START KGU#61 2016-03-21: New configurable keywords for FOR-IN loop
-		parserPreferences.edtForInPre.setText(D7Parser.preForIn);
-		parserPreferences.edtForInPost.setText(D7Parser.postForIn);
+		parserPreferences.edtForInPre.setText(D7Parser.keywordMap.get("preForIn"));
+		parserPreferences.edtForInPost.setText(D7Parser.keywordMap.get("postForIn"));
 		// END KGU#61 2016-03-21
-		parserPreferences.edtWhilePre.setText(D7Parser.preWhile);
-		parserPreferences.edtWhilePost.setText(D7Parser.postWhile);
-		parserPreferences.edtRepeatPre.setText(D7Parser.preRepeat);
-		parserPreferences.edtRepeatPost.setText(D7Parser.postRepeat);
+		parserPreferences.edtWhilePre.setText(D7Parser.keywordMap.get("preWhile"));
+		parserPreferences.edtWhilePost.setText(D7Parser.keywordMap.get("postWhile"));
+		parserPreferences.edtRepeatPre.setText(D7Parser.keywordMap.get("preRepeat"));
+		parserPreferences.edtRepeatPost.setText(D7Parser.keywordMap.get("postRepeat"));
 		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
-		parserPreferences.edtJumpLeave.setText(D7Parser.preLeave);
-		parserPreferences.edtJumpReturn.setText(D7Parser.preReturn);
-		parserPreferences.edtJumpExit.setText(D7Parser.preExit);
+		parserPreferences.edtJumpLeave.setText(D7Parser.keywordMap.get("preLeave"));
+		parserPreferences.edtJumpReturn.setText(D7Parser.keywordMap.get("preReturn"));
+		parserPreferences.edtJumpExit.setText(D7Parser.keywordMap.get("preExit"));
 		// END KGU#78 2016-03-25
-		parserPreferences.edtInput.setText(D7Parser.input);
-		parserPreferences.edtOutput.setText(D7Parser.output);
+		parserPreferences.edtInput.setText(D7Parser.keywordMap.get("input"));
+		parserPreferences.edtOutput.setText(D7Parser.keywordMap.get("output"));
 		// START KGU#165 2016-03-25: We need a transparent decision here
 		parserPreferences.chkIgnoreCase.setSelected(D7Parser.ignoreCase);
 		// END KGU#165 2016-03-25
-
+		
 		parserPreferences.pack();
 		parserPreferences.setVisible(true);
 
 		if(parserPreferences.OK)
 		{
+			// START KGU#258 2016-09-26: Enh. #253 - prepare the old settings for a refactoring
+			HashMap<String, StringList> oldKeywordMap = null;
+			boolean wasCaseIgnored = D7Parser.ignoreCase;
+			if (parserPreferences.refactoring != ParserPreferences.RefactoringMode.NONE)
+			{
+				oldKeywordMap = new LinkedHashMap<String, StringList>();
+				for (String key: D7Parser.keywordMap.keySet())
+				{
+					String keyword = D7Parser.keywordMap.getOrDefault(key, "");
+					if (!keyword.trim().isEmpty())
+					{
+						// Complete strings aren't likely to be found in a key, so don't bother
+						oldKeywordMap.put(key, Element.splitLexically(keyword,  false));
+					}
+				}
+			}
+			// END KGU#258 2016-09-26
 
 			// get fields
-			D7Parser.preAlt=parserPreferences.edtAltPre.getText();
-			D7Parser.postAlt=parserPreferences.edtAltPost.getText();
-			D7Parser.preCase=parserPreferences.edtCasePre.getText();
-			D7Parser.postCase=parserPreferences.edtCasePost.getText();
-			D7Parser.preFor=parserPreferences.edtForPre.getText();
-			D7Parser.postFor=parserPreferences.edtForPost.getText();
+			D7Parser.keywordMap.put("preAlt", parserPreferences.edtAltPre.getText());
+			D7Parser.keywordMap.put("postAlt", parserPreferences.edtAltPost.getText());
+			D7Parser.keywordMap.put("preCase", parserPreferences.edtCasePre.getText());
+			D7Parser.keywordMap.put("postCase", parserPreferences.edtCasePost.getText());
+			D7Parser.keywordMap.put("preFor", parserPreferences.edtForPre.getText());
+			D7Parser.keywordMap.put("postFor", parserPreferences.edtForPost.getText());
 			// START KGU#3 2015-11-08: New configurable separator for FOR loop step const
-			D7Parser.stepFor=parserPreferences.edtForStep.getText();
+			D7Parser.keywordMap.put("stepFor", parserPreferences.edtForStep.getText());
 			// END KGU#3 2015-11-08
 			// START KGU#61 2016-03-21: New configurable keywords for FOR-IN loop
-			D7Parser.preForIn=parserPreferences.edtForInPre.getText();
-			D7Parser.postForIn=parserPreferences.edtForInPost.getText();
+			D7Parser.keywordMap.put("preForIn", parserPreferences.edtForInPre.getText());
+			D7Parser.keywordMap.put("postForIn", parserPreferences.edtForInPost.getText());
 			// END KGU#61 2016-03-21
-			D7Parser.preWhile=parserPreferences.edtWhilePre.getText();
-			D7Parser.postWhile=parserPreferences.edtWhilePost.getText();
-			D7Parser.preRepeat=parserPreferences.edtRepeatPre.getText();
-			D7Parser.postRepeat=parserPreferences.edtRepeatPost.getText();
+			D7Parser.keywordMap.put("preWhile", parserPreferences.edtWhilePre.getText());
+			D7Parser.keywordMap.put("postWhile", parserPreferences.edtWhilePost.getText());
+			D7Parser.keywordMap.put("preRepeat", parserPreferences.edtRepeatPre.getText());
+			D7Parser.keywordMap.put("postRepeat", parserPreferences.edtRepeatPost.getText());
     		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
-    		D7Parser.preLeave=parserPreferences.edtJumpLeave.getText();
-    		D7Parser.preReturn=parserPreferences.edtJumpReturn.getText();
-    		D7Parser.preExit=parserPreferences.edtJumpExit.getText();
+    		D7Parser.keywordMap.put("preLeave", parserPreferences.edtJumpLeave.getText());
+    		D7Parser.keywordMap.put("preReturn", parserPreferences.edtJumpReturn.getText());
+    		D7Parser.keywordMap.put("preExit", parserPreferences.edtJumpExit.getText());
     		// END KGU#78 2016-03-25
-			D7Parser.input=parserPreferences.edtInput.getText();
-			D7Parser.output=parserPreferences.edtOutput.getText();
+			D7Parser.keywordMap.put("input", parserPreferences.edtInput.getText());
+			D7Parser.keywordMap.put("output", parserPreferences.edtOutput.getText());
 			// START KGU#165 2016-03-25: We need a transparent decision here
 			D7Parser.ignoreCase = parserPreferences.chkIgnoreCase.isSelected();
 			// END KGU#165 2016-03-25
 
 			// save fields to ini-file
 			D7Parser.saveToINI();
+			
+			// START KGU#258 2016-09-26: Enh. #253 - now try a refactoring if specified
+			boolean redrawn = refactorDiagrams(oldKeywordMap, parserPreferences.refactoring == ParserPreferences.RefactoringMode.ALL, wasCaseIgnored);
+			// END KGU#258 2016-09-26
 
 			// START KGU#136 2016-03-31: Bugfix #97 - cached bounds may have to be invalidated
-			if (Element.E_VARHIGHLIGHT)
+			if (Element.E_VARHIGHLIGHT && !redrawn)
 			{
-				// Parser keyword chenges may have an impact on the text width
+				// Parser keyword changes may have an impact on the text width ...
 				this.resetDrawingInfo(true);
+				
+				// START KGU#258 2016-09-26: Bugfix #253 ... and Jumps and loops
+				analyse();
+				// END KGU#258 2016-09-26
+
 				// redraw diagram
 				redraw();
 			}
@@ -3494,6 +3523,115 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			
 		}
 	}
+	
+	// START KGU#258 2016-09-26: Enh. #253: A set of helper methods for refactoring 
+	public boolean offerRefactoring(HashMap<String, StringList> refactoringData)
+	{
+		if (refactoringData == null) return false;
+		
+		StringList replacements = new StringList();
+		for (HashMap.Entry<String,StringList> entry: refactoringData.entrySet())
+		{
+			String oldValue = entry.getValue().concatenate();
+			String newValue = D7Parser.keywordMap.getOrDefault(entry.getKey(), "");
+			if (!oldValue.equals(newValue))
+			{
+				replacements.add("   " + entry.getKey() + ": \"" + oldValue + "\" -> \"" + newValue + "\"");
+			}
+		}
+		// Only offer the question if there are relevant replacements and at least one non-empty or parked Root
+		if (replacements.count() > 0 && (root.children.getSize() > 0 || isArrangerOpen && !Arranger.getInstance().getAllRoots().isEmpty()))
+		{
+			Object[] options = ParserPreferences.RefactoringMode.values();
+			int answer = JOptionPane.showOptionDialog(this,
+					Menu.msgRefactoringOffer.getText().replace("%", "\n" + replacements.getText() + "\n"),
+					Menu.msgTitleQuestion.getText(), JOptionPane.OK_CANCEL_OPTION,
+					JOptionPane.QUESTION_MESSAGE,
+					null,
+					options, options[0]);
+			if (answer != 0 && answer != JOptionPane.CLOSED_OPTION)
+			{
+				if (D7Parser.ignoreCase)
+				{
+					refactoringData.put("ignoreCase", StringList.getNew("true"));
+				}
+				if (options[answer] == ParserPreferences.RefactoringMode.ALL)
+				{
+					refactoringData.put("refactorAll", StringList.getNew("true"));
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public void refactorNSD(HashMap<String, StringList> refactoringData)
+	{
+		if (refactoringData != null)
+		{
+			boolean refactorAll = refactoringData.containsKey("refactorAll");
+			boolean ignoreCase = refactoringData.containsKey("ignoreCase");
+			refactorDiagrams(refactoringData, refactorAll, ignoreCase);
+		}
+	}
+	
+	private boolean refactorDiagrams(HashMap<String, StringList> oldKeywordMap, boolean refactorAll, boolean wasCaseIgnored)
+	{
+		boolean redrawn = false;
+		if (oldKeywordMap != null && !oldKeywordMap.isEmpty())
+		{
+			final class Refactorer implements IElementVisitor
+			{
+				public HashMap<String, StringList> oldMap = null;
+				boolean ignoreCase = false;
+
+				@Override
+				public boolean visitPreOrder(Element _ele) {
+					_ele.refactorKeywords(oldMap, ignoreCase);
+					return true;
+				}
+
+				@Override
+				public boolean visitPostOrder(Element _ele) {
+					// FIXME It should be okay to cut off the recursion in  post order...?
+					return true;
+				}
+				Refactorer(HashMap<String, StringList> _keyMap, boolean _caseIndifferent)
+				{
+					oldMap = _keyMap;
+					ignoreCase = _caseIndifferent;
+				}
+			};
+			root.addUndo();
+			root.traverse(new Refactorer(oldKeywordMap, wasCaseIgnored));
+			if (refactorAll && this.isArrangerOpen)
+			{
+				// Well, we hope that the roots won't change the hash code on refactoring...
+				for (Root aRoot: Arranger.getInstance().getAllRoots())
+				{
+					aRoot.addUndo();
+					aRoot.traverse(new Refactorer(oldKeywordMap, wasCaseIgnored));
+				}
+			}
+			
+			// Parser keyword changes may have an impact on the text width ...
+			this.resetDrawingInfo(true);
+			
+			// START KGU#258 2016-09-26: Bugfix #253 ... and Jumps and loops
+			analyse();
+			// END KGU#258 2016-09-26
+
+			// FIXME: This doesn't seem to work 
+			doButtons();
+			
+			// redraw diagram
+			redraw();
+			
+			redrawn = true;
+		}
+		return redrawn;
+	}
+	// END KGU#258 2016-09-26
 
 	public void analyserNSD()
 	{
@@ -3535,11 +3673,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         {
             Ini ini = Ini.getInstance();
             ini.load();
-            // START KGU#212 2016-07-26: bugfix #204 eod sizing needs the language
-            //ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame());
-            ExportOptionDialoge eod = new ExportOptionDialoge(
-            		NSDControl.getFrame()); //, NSDControl.getLang());
-            // END KGU#212 2016-07-26
+            ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame());
             if(ini.getProperty("genExportComments","0").equals("true"))
                 eod.commentsCheckBox.setSelected(true);
             else 
@@ -3595,6 +3729,38 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             ex.printStackTrace();
         }
     }
+
+    // START KGU#258 2016-09-26: Enh. #253
+    public void importOptions()
+    {
+        try
+        {
+            Ini ini = Ini.getInstance();
+            ini.load();
+            ImportOptionDialog iod = new ImportOptionDialog(NSDControl.getFrame());
+            iod.chkRefactorOnLoading.setSelected(ini.getProperty("impRefactorOnLoading", "false").equals("true"));
+            iod.chkOfferRefactoringIni.setSelected(ini.getProperty("impOfferRefactoring", "true").equals("true"));
+            iod.charsetListChanged(ini.getProperty("impExportCharset", Charset.defaultCharset().name()));
+            iod.setVisible(true);
+            
+            if(iod.goOn==true)
+            {
+                ini.setProperty("impRefactorOnLoading", String.valueOf(iod.chkRefactorOnLoading.isSelected()));
+                ini.setProperty("impOfferRefactoring", String.valueOf(iod.chkOfferRefactoringIni.isSelected()));
+                ini.setProperty("impExportCharset", (String)iod.cbCharset.getSelectedItem());
+                ini.save();
+            }
+        } 
+        catch (FileNotFoundException ex)
+        {
+            ex.printStackTrace();
+        } 
+        catch (IOException ex)
+        {
+            ex.printStackTrace();
+        }
+    }
+    // END KGU#258 2016-09-26
 
 	public void fontNSD()
 	{

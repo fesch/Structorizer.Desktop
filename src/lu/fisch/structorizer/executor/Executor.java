@@ -94,6 +94,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.09.22      Issue #248: Workaround for Java 7 in Linux systems (parseUnsignedInt)
  *      Kay Gürtzig     2016.09.25      Bugfix #251: Console window wasn't involved in look and feel update
  *      Kay Gürtzig     2016.09.25      Bugfix #254: parser keywords for CASE elements had been ignored
+ *                                      Enh. #253: D7Parser.keywordMap refactoring done
  *
  ******************************************************************************************************
  *
@@ -1983,7 +1984,7 @@ public class Executor implements Runnable
 				// START KGU#65 2015-11-04: Input keyword should only trigger this if positioned at line start
 				//else if (cmd.indexOf(D7Parser.input) >= 0)
 				else if (cmd.matches(
-						this.getKeywordPattern(D7Parser.input) + "([\\W].*|$)"))
+						this.getKeywordPattern(D7Parser.keywordMap.get("input")) + "([\\W].*|$)"))
 				// END KGU#65 2015-11-04
 				{
 					result = tryInput(cmd);
@@ -1992,7 +1993,7 @@ public class Executor implements Runnable
 				// START KGU#65 2015-11-04: Output keyword should only trigger this if positioned at line start
 				//else if (cmd.indexOf(D7Parser.output) >= 0)
 				else if (cmd.matches(
-						this.getKeywordPattern(D7Parser.output) + "([\\W].*|$)"))
+						this.getKeywordPattern(D7Parser.keywordMap.get("output")) + "([\\W].*|$)"))
 				// END KGU#65 2015-11-04
 				{
 					result = tryOutput(cmd);
@@ -2003,7 +2004,7 @@ public class Executor implements Runnable
 				// but a separator would be fine...
 				//else if (cmd.indexOf("return") >= 0)
 				else if (cmd.matches(
-						this.getKeywordPattern(D7Parser.preReturn) + "([\\W].*|$)"))
+						this.getKeywordPattern(D7Parser.keywordMap.get("preReturn")) + "([\\W].*|$)"))
 				// END KGU 2015-11-11
 				{		 
 					result = tryReturn(cmd.trim());
@@ -2128,7 +2129,7 @@ public class Executor implements Runnable
 			tokens.removeAll(" ");
 			try
 			{
-				boolean startsWithLeave = tokens.indexOf(D7Parser.preLeave, !D7Parser.ignoreCase) == 0;
+				boolean startsWithLeave = tokens.indexOf(D7Parser.keywordMap.get("preLeave"), !D7Parser.ignoreCase) == 0;
 				// Single-level break? (An empty Jump is also a break!)
 				if (startsWithLeave && tokens.count() == 1 ||
 						cmd.isEmpty() && i == sl.count() - 1)
@@ -2177,13 +2178,13 @@ public class Executor implements Runnable
 					done = true;
 				}
 				// Unstructured return from the routine?
-				else if (tokens.indexOf(D7Parser.preReturn, !D7Parser.ignoreCase) == 0)
+				else if (tokens.indexOf(D7Parser.keywordMap.get("preReturn"), !D7Parser.ignoreCase) == 0)
 				{
 					result = tryReturn(convert(sl.get(i)));
 					done = true;
 				}
 				// Exit from the entire program - simply handled like an error here.
-				else if (tokens.indexOf(D7Parser.preExit, !D7Parser.ignoreCase) == 0)
+				else if (tokens.indexOf(D7Parser.keywordMap.get("preExit"), !D7Parser.ignoreCase) == 0)
 				{
 					int exitValue = 0;
 					try {
@@ -2304,7 +2305,7 @@ public class Executor implements Runnable
 					result = control.msgNoSubroutine.getText().
 							replace("%1", f.getName()).
 							replace("%2", Integer.toString(f.paramCount())).
-							replace("%0", "\n");
+							replace("\\n", "\n");
 					// END KGU#197 2016-07-27
 				}
 			}
@@ -2358,7 +2359,7 @@ public class Executor implements Runnable
 	private String tryInput(String cmd) throws EvalError
 	{
 		String result = "";
-		String in = cmd.substring(D7Parser.input.trim().length()).trim();
+		String in = cmd.substring(D7Parser.keywordMap.get("input").trim().length()).trim();
 		// START KGU#107 2015-12-13: Enh-/bug #51: Handle empty input instruction
 		if (in.isEmpty())
 		{
@@ -2467,7 +2468,7 @@ public class Executor implements Runnable
 		String result = "";
 		// KGU 2015-12-11: Instruction is supposed to start with the output keyword!
 		String out = cmd.substring(/*cmd.indexOf(D7Parser.output) +*/
-						D7Parser.output.trim().length()).trim();
+						D7Parser.keywordMap.get("output").trim().length()).trim();
 		String str = "";
 		// START KGU#107 2015-12-13: Enh-/bug #51: Handle empty output instruction
 		if (!out.isEmpty())
@@ -2482,7 +2483,7 @@ public class Executor implements Runnable
 				Object n = interpreter.eval(out);
 				if (n == null)
 				{
-					result = control.lbNoCorrectExpr.getText().replace("%", out);
+					result = control.msgInvalidExpr.getText().replace("%1", out);
 				} else
 				{
 		// START KGU#101 2015-12-11: Fix #54 (continued)
@@ -2549,7 +2550,7 @@ public class Executor implements Runnable
 	{
 		String result = "";
 		String header = control.lbReturnedResult.getText();
-		String out = cmd.substring(D7Parser.preReturn.length()).trim();
+		String out = cmd.substring(D7Parser.keywordMap.get("preReturn").length()).trim();
 		// START KGU#77 (#21) 2015-11-13: We out to allow an empty return
 		//Object n = interpreter.eval(out);
 		//if (n == null)
@@ -2572,7 +2573,7 @@ public class Executor implements Runnable
 			{
 				if (resObj == null)
 				{
-					result = control.lbNoCorrectExpr.getText().replace("%", out);
+					result = control.msgInvalidExpr.getText().replace("%1", out);
 				// START KGU#133 2016-01-29: Arrays should be presented as scrollable list
 				} else if (resObj instanceof Object[])
 				{
@@ -2683,7 +2684,7 @@ public class Executor implements Runnable
 					result = control.msgNoSubroutine.getText().
 							replace("%1", f.getName()).
 							replace("%2", Integer.toString(f.paramCount())).
-							replace("%0", "\n");
+							replace("\\n", "\n");
 					// END KGU#197 2016-07-27
 				}
 			}
@@ -2714,7 +2715,10 @@ public class Executor implements Runnable
 	private String stepCase(Case element)
 	{
 		// START KGU 2016-09-25: Bugfix #254
-		String[] parserKeys = new String[]{D7Parser.preCase, D7Parser.postCase};
+		String[] parserKeys = new String[]{
+				D7Parser.keywordMap.get("preCase"),
+				D7Parser.keywordMap.get("postCase")
+				};
 		// END KGU 2016-09-25
 		String result = new String();
 		try
@@ -2841,7 +2845,9 @@ public class Executor implements Runnable
 //
 //			s = convert(s);
 			StringList tokens = Element.splitLexically(s, true);
-			for (String key : new String[]{D7Parser.preAlt, D7Parser.postAlt})
+			for (String key : new String[]{
+					D7Parser.keywordMap.get("preAlt"),
+					D7Parser.keywordMap.get("postAlt")})
 			{
 				if (!key.trim().isEmpty())
 				{
@@ -2943,7 +2949,9 @@ public class Executor implements Runnable
 //				// END KGU#79 2015-11-12
 //				// System.out.println("WHILE: "+condStr);
 				StringList tokens = Element.splitLexically(condStr, true);
-				for (String key : new String[]{D7Parser.preWhile, D7Parser.postWhile})
+				for (String key : new String[]{
+						D7Parser.keywordMap.get("preWhile"),
+						D7Parser.keywordMap.get("postWhile")})
 				{
 					if (!key.trim().isEmpty())
 					{
@@ -3097,7 +3105,9 @@ public class Executor implements Runnable
 //			}
 //			condStr = convert(condStr, false);
 			StringList tokens = Element.splitLexically(condStr, true);
-			for (String key : new String[]{D7Parser.preRepeat, D7Parser.postRepeat})
+			for (String key : new String[]{
+					D7Parser.keywordMap.get("preRepeat"),
+					D7Parser.keywordMap.get("postRepeat")})
 			{
 				if (!key.trim().isEmpty())
 				{

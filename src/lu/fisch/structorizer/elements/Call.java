@@ -317,4 +317,13 @@ public class Call extends Instruction {
 	}
 	// END KGU#117 2016-03-07
 
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getRelevantParserKeys()
+	 */
+	@Override
+	protected String[] getRelevantParserKeys() {
+		// There is nothing to refactor
+		return null;
+	}
+
 }

@@ -617,7 +617,6 @@ Control.lbInputPaused.text=
 Control.lbInputCancelled.text=
 Control.lbManuallySet.text=
 Control.lbEmptyLine.text=
-Control.lbNoCorrectExpr.text=
 Control.lbReturnedResult.text=
 Control.lbOutput.text=
 Control.lbInput.text=

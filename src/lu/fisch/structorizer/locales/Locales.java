@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.locales;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -38,12 +39,14 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2016.09.09  Fix in getSectionNames(), Javadoc accomplished
  *      Kay Gürtzig     2016.09.13  Bugfix #241 in checkConditions() (KGU#246)
  *      Kay Gürtzig     2016.09.22  Issue #248: Workaround for Linux systems with Java 1.7
+ *      Kay Gürtzig     2016.09.28  KGU#263: Substrings "\n" in the text part now generally replaced by newline
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************/
+ ******************************************************************************************************
+ */
 
 import java.awt.Component;
 import java.awt.event.KeyEvent;
@@ -502,7 +505,7 @@ public class Locales {
 
                 // check for conditions
                 String key = parts.get(0);
-                if(!parts.get(1).trim().isEmpty() && key.contains("[") && key.endsWith("]"))
+                if(key.contains("[") && key.endsWith("]"))
                 {
                     // cut of last "]"
                     key=key.substring(0, key.length()-1);
@@ -523,6 +526,9 @@ public class Locales {
                 
                 if(condition)
                     {
+                    // START KGU#263 2016-09-28: Generally replace any found "\n" by a real newline
+                    parts.set(1, parts.get(1).replace("\\n", "\n"));
+                    // END KGU#263 2016-09-28
 
                     if (pieces.get(1).toLowerCase().equals("title")) {
                         if (component instanceof JDialog) {

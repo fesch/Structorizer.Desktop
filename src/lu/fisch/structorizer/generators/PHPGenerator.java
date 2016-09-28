@@ -52,7 +52,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.04.01      Enh. #144: Care for new option to suppress content conversion
  *      Kay Gürtzig             2016.07.19      Bugfix #191 (= KGU#204): Wrong comparison operator in FOR loops 
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178)
- *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
+ *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done. 
  *
  ******************************************************************************************************
  *
@@ -502,19 +503,24 @@ public class PHPGenerator extends Generator
 		boolean isEmpty = true;
 		
 		StringList lines = _jump.getText();
+		String preReturn = D7Parser.keywordMap.get("preReturn");
+		String preExit   = D7Parser.keywordMap.get("preExit");
+		String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
+		String preExitMatch   = Matcher.quoteReplacement(preExit)+"([\\W].*|$)";
+		String preLeaveMatch  = Matcher.quoteReplacement(D7Parser.keywordMap.get("preLeave"))+"([\\W].*|$)";
 		for (int i = 0; isEmpty && i < lines.count(); i++) {
 			String line = transform(lines.get(i)).trim();
 			if (!line.isEmpty())
 			{
 				isEmpty = false;
 			}
-			if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
+			if (line.matches(preReturnMatch))
 			{
-				code.add(_indent + "return " + line.substring(D7Parser.preReturn.length()).trim() + ";");
+				code.add(_indent + "return " + line.substring(preReturn.length()).trim() + ";");
 			}
-			else if (line.matches(Matcher.quoteReplacement(D7Parser.preExit)+"([\\W].*|$)"))
+			else if (line.matches(preExitMatch))
 			{
-				code.add(_indent + "exit(" + line.substring(D7Parser.preExit.length()).trim() + ");");
+				code.add(_indent + "exit(" + line.substring(preExit.length()).trim() + ");");
 			}
 			// Has it already been matched with a loop? Then syntax must have been okay...
 			else if (this.jumpTable.containsKey(_jump))
@@ -529,7 +535,7 @@ public class PHPGenerator extends Generator
 				}
 				code.add(_indent + "goto " + label + ";");
 			}
-			else if (line.matches(Matcher.quoteReplacement(D7Parser.preLeave)+"([\\W].*|$)"))
+			else if (line.matches(preLeaveMatch))
 			{
 				// Strange case: neither matched nor rejected - how can this happen?
 				// Try with an ordinary break instruction and a funny comment

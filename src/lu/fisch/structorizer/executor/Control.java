@@ -147,7 +147,6 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         lbInputCancelled = new LangTextHolder("Input cancelled");
         lbManuallySet = new LangTextHolder("*** Manually set: %1 <- %2 ***");
         lbEmptyLine = new LangTextHolder("empty line");
-        lbNoCorrectExpr = new LangTextHolder("<%> is not a correct or existing expression.");
         lbReturnedResult = new LangTextHolder("Returned result");
         lbOutput = new LangTextHolder("Output");
         lbInput = new LangTextHolder("Input");
@@ -820,7 +819,6 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public LangTextHolder lbInputCancelled;
     public LangTextHolder lbManuallySet;
     public LangTextHolder lbEmptyLine;
-    public LangTextHolder lbNoCorrectExpr;
     public LangTextHolder lbReturnedResult;
     public LangTextHolder lbOutput;
     public LangTextHolder lbInput;
@@ -828,14 +826,14 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // START KGU#197 2016-05-05
     // START KGU#197 2016-07-27
     public final LangTextHolder msgNoSubroutine = 
-    		new LangTextHolder("A subroutine diagram %0 (%1 parameters) could not be found!%2Consider starting the Arranger and place needed subroutine diagrams there first.");
+    		new LangTextHolder("A subroutine diagram %1 (%2 parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.");
     public final LangTextHolder msgInvalidExpr =
     		new LangTextHolder("<%1> is not a correct or existing expression.");
     // START KGU#249 2016-09-17: Bugfix #246 + Issue #243
     public final LangTextHolder msgInvalidBool =
     		new LangTextHolder("<%1> is not a valid Boolean expression.");
     // END KGU#249 2016-09-17
-   public final LangTextHolder msgIllFunction =
+    public final LangTextHolder msgIllFunction =
     		new LangTextHolder("<%1> is not a correct function!");
     public final LangTextHolder msgManualBreak =
     		new LangTextHolder("Manual Break!");

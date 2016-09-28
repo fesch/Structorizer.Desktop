@@ -40,7 +40,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.01.14      Type conversion of C overridden (KGU#16)
  *      Kay Gürtzig     2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61)
  *      Kay Gürtzig     2016.08.10      Issue #227: <iostream> only included if needed 
- *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
+ *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
  *
  ******************************************************************************************************
  *
@@ -128,11 +129,12 @@ public class CPlusPlusGenerator extends CGenerator {
 	protected String transform(String _input)
 	{
 		// START KGU#101 2015-12-11: Enh. #54 - support lists of expressions
-		if (_input.matches("^" + getKeywordPattern(D7Parser.output.trim()) + "[ ](.*?)"))
+		String outputKey = D7Parser.keywordMap.get("output").trim();
+		if (_input.matches("^" + getKeywordPattern(outputKey) + "[ ](.*?)"))
 		{
 			StringList expressions = 
-					Element.splitExpressionList(_input.substring(D7Parser.output.trim().length()), ",");
-			_input = D7Parser.output.trim() + " " + expressions.concatenate(" << ");
+					Element.splitExpressionList(_input.substring(outputKey.length()), ",");
+			_input = outputKey + " " + expressions.concatenate(" << ");
 		}
 		// END KGU#101 2015-12-11
 		

@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -54,8 +55,10 @@ package lu.fisch.structorizer.elements;
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
+import java.util.HashMap;
 import java.util.Vector;
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -83,6 +86,10 @@ public class Case extends Element
     // START KGU#227 2016-07-31: Enh. #128
     private Rect commentRect = new Rect();
     // END KGU#227 2016-07-31
+
+	// START KGU#258 2016-09-26: Enh. #253
+	private static final String[] relevantParserKeys = {"preCase", "postCase"};
+	// END KGU#258 2016-09-25
 	
     // START KGU#91 2015-12-01: Bugfix #39 - Case may NEVER EVER interchange text and comment!
 	/**
@@ -946,5 +953,36 @@ public class Case extends Element
 		}
 		return proceed;
 	}
+
+	// START KGU#258 2016-09-26: Enh. #253 - This may have to be moved to Element for live refactoring
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getRelevantParserKeys()
+	 */
+	@Override
+	protected String[] getRelevantParserKeys() {
+		return relevantParserKeys;
+	}
+
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.elements.Element#refactorKeywords(java.util.HashMap, boolean)
+     */
+	@Override
+    public void refactorKeywords(HashMap<String, StringList> _splitOldKeywords, boolean _ignoreCase)
+    {
+    	String[] relevantKeywords = getRelevantParserKeys();
+    	if (text.count() > 0)
+    	{
+    		text.set(0, refactorLine(text.get(0), _splitOldKeywords, relevantKeywords, _ignoreCase));
+    		relevantKeywords = new String[]{"postCase"};
+    		for (int i = 1; i < text.count(); i++)
+    		{
+    			if (!text.get(i).equals("%"))
+    			{
+    				text.set(i, refactorLine(text.get(i), _splitOldKeywords, relevantKeywords, _ignoreCase));
+    			}
+    		}
+    	}
+	}
+	// END KGU#258 2016-09-25
 
 }

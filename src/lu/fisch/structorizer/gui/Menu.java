@@ -218,6 +218,7 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuPreferencesParser = new JMenuItem("Parser ...",IconLoader.ico004);
 	protected final JMenuItem menuPreferencesAnalyser = new JMenuItem("Analyser ...",IconLoader.ico083);
 	protected final JMenuItem menuPreferencesExport = new JMenuItem("Export ...",IconLoader.ico032);
+	protected final JMenuItem menuPreferencesImport = new JMenuItem("Import ...",IconLoader.ico025);
 	protected final JMenu menuPreferencesLanguage = new JMenu("Language");
 	// START KGU#242 2016-09-04: Structural redesign - generic generation of language menu items
 	protected final Hashtable<String, JCheckBoxMenuItem> menuPreferencesLanguageItems = new Hashtable<String, JCheckBoxMenuItem>(Locales.LOCALES_LIST.length);
@@ -342,7 +343,11 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgErrorNoFile = new LangTextHolder("File not found!");
 	public static final LangTextHolder msgBrowseFailed = new LangTextHolder("Failed to show % in browser");
 	// END KGU#247 2016-09-17
-
+	// START KGU#258 2016-09-27: Enh. #253: Diagram keyword refactoring
+	public static final LangTextHolder msgRefactoringOffer = new LangTextHolder("Keywords configured in the Parser Preferences were replaced:%Are loaded diagrams to be refactored accordingly?");
+	public static final ParserPreferences.RefactoringMode[] itemsRefactoring = ParserPreferences.RefactoringMode.values();
+	
+	// END KGU#258 2016-09-27
 	public void create()
 	{
 		JMenuBar menubar = this;
@@ -745,9 +750,14 @@ public class Menu extends LangMenuBar implements NSDController
 		menuPreferences.add(menuPreferencesExport);
 		menuPreferencesExport.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportOptions(); doButtons(); } } );
 
+		// START KGU#258 2016-09-25: Enh. #253
+		menuPreferences.add(menuPreferencesImport);
+		menuPreferencesImport.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importOptions(); doButtons(); } } );
+		// END KGU#258 2016-09-25
+
 		menuPreferences.add(menuPreferencesLanguage);
 		menuPreferencesLanguage.setIcon(IconLoader.ico081);
-		
+
 		// START KGU#242 2016-09-04: Redesign of the language menu item mechanism
 		for (int iLoc = 0; iLoc < Locales.LOCALES_LIST.length; iLoc++)
 		{
@@ -827,9 +837,39 @@ public class Menu extends LangMenuBar implements NSDController
                         {
                             // load some data from the INI file
                             Ini ini = Ini.getInstance();
+                            
+                        	// START KGU#258 2016-09-26: Enh. #253
+                            HashMap<String, StringList> refactoringData = null;
+                            if (ini.getProperty("impOfferRefactoring", "true").equals("true"))
+                            {
+                            	refactoringData = new LinkedHashMap<String, StringList>();
+                    			for (String key: D7Parser.keywordMap.keySet())
+                    			{
+                    				String keyword = D7Parser.keywordMap.getOrDefault(key, "");
+                    				if (!keyword.trim().isEmpty())
+                    				{
+                    					// Complete strings aren't likely to be found in a key, so don't bother
+                    					refactoringData.put(key, Element.splitLexically(keyword,  false));
+                    				}
+                    				// An empty preForIn keyword is a synonym for the preFor keyword
+                    				else if (key.equals("preForIn"))
+                    				{
+                    					refactoringData.put(key, refactoringData.get("preFor"));
+                    				}
+                    			}
+                            }
+                            // END KGU#258 2016-09-26
+                            
                             ini.load(fc.getSelectedFile().toString());
                             ini.save();
                             NSDControl.loadFromINI();
+                            
+                            // START KGU#258 2016-09-26: Enh. #253
+                            if (diagram.offerRefactoring(refactoringData))
+                            {
+                            	diagram.refactorNSD(refactoringData);
+                            }
+                            // END KGU#258 2016-09-26
                         }
                         catch (Exception ex)
                         {
@@ -883,7 +923,7 @@ public class Menu extends LangMenuBar implements NSDController
 			NSDControl.doButtons();
 		}
 	}
-
+       
 	@Override
 	public void doButtonsLocal()
 	{
@@ -1151,17 +1191,17 @@ public class Menu extends LangMenuBar implements NSDController
 	
     // START KGU#232 2016-08-03: Enh. #222
     public void chooseLangFile() {
-		JFileChooser dlgOpen = new JFileChooser();
-		dlgOpen.setDialogTitle(msgOpenLangFile.getText());
-		// set directory
-		dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
-		// config dialogue
-		FileNameExtensionFilter filter = new FileNameExtensionFilter(msgLangFile.getText(), "txt");
-		dlgOpen.addChoosableFileFilter(filter);
-		dlgOpen.setFileFilter(filter);
-		// show & get result
-		int result = dlgOpen.showOpenDialog(this);
-		// react on result
+        JFileChooser dlgOpen = new JFileChooser();
+        dlgOpen.setDialogTitle(msgOpenLangFile.getText());
+        // set directory
+        dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
+        // config dialogue
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(msgLangFile.getText(), "txt");
+        dlgOpen.addChoosableFileFilter(filter);
+        dlgOpen.setFileFilter(filter);
+        // show & get result
+        int result = dlgOpen.showOpenDialog(this);
+        // react on result
         if (result == JFileChooser.APPROVE_OPTION) {
             // create a new StringList
             StringList sl = new StringList();
