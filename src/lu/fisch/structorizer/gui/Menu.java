@@ -343,7 +343,11 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgErrorNoFile = new LangTextHolder("File not found!");
 	public static final LangTextHolder msgBrowseFailed = new LangTextHolder("Failed to show % in browser");
 	// END KGU#247 2016-09-17
-
+	// START KGU#258 2016-09-27: Enh. #253: Diagram keyword refactoring
+	public static final LangTextHolder msgRefactoringOffer = new LangTextHolder("Keywords configured in the Parser Preferences were replaced:%Are loaded diagrams to be refactored accordingly?");
+	public static final ParserPreferences.RefactoringMode[] itemsRefactoring = ParserPreferences.RefactoringMode.values();
+	
+	// END KGU#258 2016-09-27
 	public void create()
 	{
 		JMenuBar menubar = this;
@@ -836,10 +840,23 @@ public class Menu extends LangMenuBar implements NSDController
                             
                         	// START KGU#258 2016-09-26: Enh. #253
                             HashMap<String, StringList> refactoringData = null;
-                            // FIXME: change this to "false" after debugging!
-                            if (ini.getProperty("impOfferRefactoring", "false").equals("true"))
+                            if (ini.getProperty("impOfferRefactoring", "true").equals("true"))
                             {
-                                refactoringData = diagram.offerRefactoring();
+                            	refactoringData = new LinkedHashMap<String, StringList>();
+                    			for (String key: D7Parser.keywordMap.keySet())
+                    			{
+                    				String keyword = D7Parser.keywordMap.getOrDefault(key, "");
+                    				if (!keyword.trim().isEmpty())
+                    				{
+                    					// Complete strings aren't likely to be found in a key, so don't bother
+                    					refactoringData.put(key, Element.splitLexically(keyword,  false));
+                    				}
+                    				// An empty preForIn keyword is a synonym for the preFor keyword
+                    				else if (key.equals("preForIn"))
+                    				{
+                    					refactoringData.put(key, refactoringData.get("preFor"));
+                    				}
+                    			}
                             }
                             // END KGU#258 2016-09-26
                             
@@ -848,7 +865,7 @@ public class Menu extends LangMenuBar implements NSDController
                             NSDControl.loadFromINI();
                             
                             // START KGU#258 2016-09-26: Enh. #253
-                            if (refactoringData != null)
+                            if (diagram.offerRefactoring(refactoringData))
                             {
                             	diagram.refactorNSD(refactoringData);
                             }

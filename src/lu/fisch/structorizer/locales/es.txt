@@ -191,6 +191,7 @@ Menu.menuPreferencesOptions.text=Estructuras ...
 Menu.menuPreferencesParser.text=Analizador ...
 Menu.menuPreferencesAnalyser.text=Comprobador ...
 Menu.menuPreferencesExport.text=Exportación ...
+Menu.menuPreferencesImport.text=Importación ...
 Menu.menuPreferencesLanguage.text=Idioma
 Menu.menuPreferencesLanguageItems.en.text=Inglés
 Menu.menuPreferencesLanguageItems.de.text=Alemán
@@ -254,6 +255,10 @@ Menu.msgErrorImageSave.text=Error grabando imágen(es)!
 Menu.msgErrorUsingGenerator.text=Error exportando código %
 Menu.msgErrorNoFile.text=¡Archivo no encontrado!
 Menu.msgBrowseFailed.text=Mostrar % en el browser no logró.
+Menu.msgRefactoringOffer.text=Configuradas palabras claves fueron reemplazadas:%¿Deben diagramas cargados ser adaptados correspondiéntemente?
+Menu.itemsRefactoring.0=ninguno
+Menu.itemsRefactoring.1=el editado
+Menu.itemsRefactoring.2=todos
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
@@ -641,6 +646,10 @@ ParserPreferences.btnOK.text=Aceptar
 ParserPreferences.btnOK.tooltip=Aceptar los cambios.
 ParserPreferences.lblErrorSign.text=¡No es permitido usar el carácter ':' dentro de un texto del Analizador!
 ParserPreferences.lblErrorSign2.text=¡El segundo texto clave para el bucle PARA-EN no debe ser igual a ningún otro texto del Analizador!
+ParserPreferences.lblRefactor.text=Adaptar diagramas:
+ParserPreferences.cbRefactor.item.0=ninguno
+ParserPreferences.cbRefactor.item.1=el editado
+ParserPreferences.cbRefactor.item.2=todos
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Previsualizar impresión
@@ -668,11 +677,16 @@ ExportOptionDialoge.jButton1.tooltip=Aceptar los cambios.
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Preferencias de Importación de archivos ...
+ImportOptionDialog.lbIntro.text=Elige las preferencias, que quieres activar...
+ImportOptionDialog.pnlCode.border=Archivos de código
+ImportOptionDialog.pnlNSD.border=Archivos NSD
+ImportOptionDialog.pnlPreference.border=Archivos de Preferencias
 ImportOptionDialog.lbCharset.text=Codificación:
 ImportOptionDialog.chkCharsetAll.text=Listar todas
-ImportOptionDialog.chkRefactorOnLoading.text=Replazar palabras claves al recargando el diagrama (refactoring).
-ImportOptionDialog.chkRefactorOnLoading.tooltip=Habilita esta opción si el contenido de diagramas recargados debe ser adaptado a las preferencias del analizador automáticamente.
-ImportOptionDialog.lbIntro.text=Elige las preferencias, que quieres activar...
+ImportOptionDialog.chkRefactorOnLoading.text=Reemplazar palabras claves al recargando diagramas (refactoring).
+ImportOptionDialog.chkRefactorOnLoading.tooltip=Habilita esta opción si el contenido de diagramas siendo recargados debe ser adaptado automáticamente a las preferencias del analizador.
+ImportOptionDialog.chkOfferRefactoringIni.text=Ofrecer sustitución de palabras claves en diagramas al cargar preferencias.
+ImportOptionDialog.chkOfferRefactoringIni.tooltip=Habilita esta opción para ser preguntado cada vez un archivo de preferencias es abierto si los diagramas deben ser adaptados.
 ImportOptionDialog.btnOk.text=Aceptar
 ImportOptionDialog.btnOk.tooltip=Aceptar los cambios.
 
@@ -699,7 +713,7 @@ Surface.msgNoArrFile.text=Ningún Arranger archivo encontrado
 Control.lblSpeed.text=Demora:
 Control.btnCallStack.text=Lote de llamadas
 Control.lblCallLevel.text=Nivel:
-Control.chkCollectRuntimeData.text=Coleccionar datos on ej.
+Control.chkCollectRuntimeData.text=Coleccionar datos on ejec.
 Control.cbRunDataDisplay.item.0=no tinción
 Control.cbRunDataDisplay.item.1=plana cobertura de test
 Control.cbRunDataDisplay.item.2=prof. cobertura de test
@@ -713,7 +727,7 @@ Control.lbStopRunningProc.text=Esta acción no está permitida mientras que un d
 Control.lbInputValue.text=Inserta un valor para <%>
 Control.lbInputPaused.text=Ejecución pausando - el valor puede ser insertado en la tabla de variables
 Control.lbInputCancelled.text=Entrada suspendida
-Control.lbManuallySet.text=*** Puesto manualmente: %1 <- %2 ***
+Control.lbManuallySet.text=*** Puesto manuálmente: %1 <- %2 ***
 Control.lbEmptyLine.text=línea en blanco
 Control.lbReturnedResult.text=Resultado devuelto
 Control.lbOutput.text=Salida
@@ -722,11 +736,11 @@ Control.msgTitleError.text=Error
 Control.msgTitleQuestion.text=Pregunta
 Control.msgTitleParallel.text=Problema en ejecución paralela
 Control.lbAcknowledge.text=Confirma, por favor, para continuar.
-Control.msgNoSubroutine.text=¡No diagrama con subprograma "%1" (%2 parameters) encontrado!%0¿Ha olvidado a abrir el Arranger y colocar necesarias subrutinas allí?
+Control.msgNoSubroutine.text=¡No diagrama con subprograma "%1" (%2 parameters) encontrado!\n¿Ha olvidado a abrir el Arranger y colocar necesarias subrutinas allí?
 Control.msgInvalidExpr.text=¡<%1> no es una expresión correcta o existente!
 Control.msgInvalidBool.text=¡<%1> no es una válida expresión lógica!
 Control.msgIllFunction.text=¡<%1> no es una función correcta!
-Control.msgManualBreak.text=¡Abortado manualmente!
+Control.msgManualBreak.text=¡Abortado manuálmente!
 Control.msgIllegalLeave.text=Argumento ilegal del salto de tipo SALIR: %1
 Control.msgWrongExit.text=Valor ilegal en abortar el programa: %1
 Control.msgExitCode.text=¡Programa abortado con código %1!

@@ -65,6 +65,7 @@ import java.io.*;
 import java.nio.*;
 import java.nio.charset.*;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -94,7 +95,7 @@ public class D7Parser implements GPMessageConstants
 	
 	// NOTE: Don't forget to add new keywords to method getAllProperties()!
 	// FIXME (#253): All these fields should be replaced by a static Hashmap!
-	public static final HashMap<String, String> keywordMap = new HashMap<String, String>();
+	public static final HashMap<String, String> keywordMap = new LinkedHashMap<String, String>();
 	static {
 		keywordMap.put("preAlt",     "");
 		keywordMap.put("postAlt",    "");

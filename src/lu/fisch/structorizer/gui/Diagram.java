@@ -3457,7 +3457,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			boolean wasCaseIgnored = D7Parser.ignoreCase;
 			if (parserPreferences.refactoring != ParserPreferences.RefactoringMode.NONE)
 			{
-				oldKeywordMap = new HashMap<String, StringList>();
+				oldKeywordMap = new LinkedHashMap<String, StringList>();
 				for (String key: D7Parser.keywordMap.keySet())
 				{
 					String keyword = D7Parser.keywordMap.getOrDefault(key, "");
@@ -3525,38 +3525,44 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	// START KGU#258 2016-09-26: Enh. #253: A set of helper methods for refactoring 
-	public HashMap<String, StringList> offerRefactoring()
+	public boolean offerRefactoring(HashMap<String, StringList> refactoringData)
 	{
-		HashMap<String, StringList> refactoringData = null;
-		Object[] options = ParserPreferences.RefactoringMode.values();
-		int answer = JOptionPane.showOptionDialog(this,
-				"Keywords configured in the Parser Preferences are likely to be replaced.\nAre loaded diagrams to be refactored accordingly?",
-				"Offer", JOptionPane.OK_CANCEL_OPTION,
-				JOptionPane.QUESTION_MESSAGE,
-				null,
-				options, options[0]);
-		if (answer != 0 && answer != JOptionPane.CLOSED_OPTION)
+		if (refactoringData == null) return false;
+		
+		StringList replacements = new StringList();
+		for (HashMap.Entry<String,StringList> entry: refactoringData.entrySet())
 		{
-			refactoringData = new HashMap<String, StringList>();
-			for (String key: D7Parser.keywordMap.keySet())
+			String oldValue = entry.getValue().concatenate();
+			String newValue = D7Parser.keywordMap.getOrDefault(entry.getKey(), "");
+			if (!oldValue.equals(newValue))
 			{
-				String keyword = D7Parser.keywordMap.getOrDefault(key, "");
-				if (!keyword.trim().isEmpty())
-				{
-					// Complete strings aren't likely to be found in a key, so don't bother
-					refactoringData.put(key, Element.splitLexically(keyword,  false));
-				}
-			}
-			if (D7Parser.ignoreCase)
-			{
-				refactoringData.put("ignoreCase", StringList.getNew("true"));
-			}
-			if (options[answer] == ParserPreferences.RefactoringMode.ALL)
-			{
-				refactoringData.put("refactorAll", StringList.getNew("true"));
+				replacements.add("   " + entry.getKey() + ": \"" + oldValue + "\" -> \"" + newValue + "\"");
 			}
 		}
-		return refactoringData;
+		// Only offer the question if there are relevant replacements and at least one non-empty or parked Root
+		if (replacements.count() > 0 && (root.children.getSize() > 0 || isArrangerOpen && !Arranger.getInstance().getAllRoots().isEmpty()))
+		{
+			Object[] options = ParserPreferences.RefactoringMode.values();
+			int answer = JOptionPane.showOptionDialog(this,
+					Menu.msgRefactoringOffer.getText().replace("%", "\n" + replacements.getText() + "\n"),
+					Menu.msgTitleQuestion.getText(), JOptionPane.OK_CANCEL_OPTION,
+					JOptionPane.QUESTION_MESSAGE,
+					null,
+					options, options[0]);
+			if (answer != 0 && answer != JOptionPane.CLOSED_OPTION)
+			{
+				if (D7Parser.ignoreCase)
+				{
+					refactoringData.put("ignoreCase", StringList.getNew("true"));
+				}
+				if (options[answer] == ParserPreferences.RefactoringMode.ALL)
+				{
+					refactoringData.put("refactorAll", StringList.getNew("true"));
+				}
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public void refactorNSD(HashMap<String, StringList> refactoringData)
@@ -3724,7 +3730,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         }
     }
 
-    // END KGU#258 2016-09-26: Enh. #253
+    // START KGU#258 2016-09-26: Enh. #253
     public void importOptions()
     {
         try
@@ -3733,7 +3739,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             ini.load();
             ImportOptionDialog iod = new ImportOptionDialog(NSDControl.getFrame());
             iod.chkRefactorOnLoading.setSelected(ini.getProperty("impRefactorOnLoading", "false").equals("true"));
-            iod.chkOfferRefactoringIni.setSelected(ini.getProperty("impOfferRefactoring", "false").equals("true"));
+            iod.chkOfferRefactoringIni.setSelected(ini.getProperty("impOfferRefactoring", "true").equals("true"));
             iod.charsetListChanged(ini.getProperty("impExportCharset", Charset.defaultCharset().name()));
             iod.setVisible(true);
             

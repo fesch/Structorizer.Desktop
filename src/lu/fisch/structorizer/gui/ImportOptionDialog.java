@@ -30,6 +30,7 @@ import java.nio.charset.Charset;
 import java.util.Set;
 
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 
 import lu.fisch.structorizer.locales.LangDialog;
 
@@ -86,10 +87,14 @@ public class ImportOptionDialog extends LangDialog {
     //@SuppressWarnings("unchecked")
     private void initComponents() {
 
-        jPanel1 = new javax.swing.JPanel();
-        jPanel2 = new javax.swing.JPanel();
-        jPanel3 = new javax.swing.JPanel();
-        jPanelCB = new javax.swing.JPanel();
+        pnlTop = new javax.swing.JPanel();
+        pnlCharSet = new javax.swing.JPanel();
+        pnlButtons = new javax.swing.JPanel();
+        pnlOptions = new javax.swing.JPanel();
+        pnlWrapper = new javax.swing.JPanel();
+        pnlCode = new javax.swing.JPanel();
+        pnlNSD = new javax.swing.JPanel();
+        pnlPreference = new javax.swing.JPanel();
         chkRefactorOnLoading = new javax.swing.JCheckBox();
         chkOfferRefactoringIni = new javax.swing.JCheckBox();
         lbIntro = new javax.swing.JLabel();
@@ -100,8 +105,8 @@ public class ImportOptionDialog extends LangDialog {
 
         setTitle("Import options ...");
 
-        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
+        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(pnlTop);
+        pnlTop.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(0, 0, Short.MAX_VALUE)
@@ -117,6 +122,7 @@ public class ImportOptionDialog extends LangDialog {
         cbCharset.setMaximumSize(
         		new Dimension(150, cbCharset.getPreferredSize().height));
         charsetListChanged(null);
+        cbCharset.setMaximumSize(cbCharset.getPreferredSize());
         chkCharsetAll.setText("List all?");
         chkCharsetAll.setMinimumSize(
         		new Dimension(chkCharsetAll.getMinimumSize().width, cbCharset.getPreferredSize().height));
@@ -128,9 +134,11 @@ public class ImportOptionDialog extends LangDialog {
 
         chkRefactorOnLoading.setText("Replace keywords on loading a diagram (refactoring).");
         chkRefactorOnLoading.setToolTipText("Select this option if all configurable keywords in the daiagram are to be adapted to the current parser preferences.");
+        chkRefactorOnLoading.setAlignmentX(LEFT_ALIGNMENT);
 
         chkOfferRefactoringIni.setText("Offer refactoring on loading preferences from File.");
         chkOfferRefactoringIni.setToolTipText("Select this option if you want to be asked whether to refactor diagrams whenever you load preferences from file.");
+        chkOfferRefactoringIni.setAlignmentX(LEFT_ALIGNMENT);
 
         lbIntro.setText("Please select the options you want to activate ...");
 
@@ -144,30 +152,49 @@ public class ImportOptionDialog extends LangDialog {
         Container content = getContentPane();
         content.setLayout(new BorderLayout());
         
-        jPanel1.setLayout(new GridLayout(3,1,4,4));
-        jPanel1.setBorder(new EmptyBorder(12,12,0,12));
-        jPanel1.add(lbIntro);
+        pnlTop.setLayout(new GridLayout(1,1,4,4));
+        pnlTop.setBorder(new EmptyBorder(12,12,0,12));
+        pnlTop.add(lbIntro);
         
-        jPanel2.setLayout(new GridLayout(1, 3, 8, 8));
-        jPanel2.add(lbCharset);
-        jPanel2.add(cbCharset);
-        jPanel2.add(chkCharsetAll);
+        pnlCharSet.setLayout(new GridLayout(1, 3, 8, 8));
+        pnlCharSet.add(lbCharset);
+        pnlCharSet.add(cbCharset);
+        pnlCharSet.add(chkCharsetAll);
+        
+        pnlCode.setBorder(new TitledBorder("Code Files"));
+        //pnlCode.setLayout(new BoxLayout(pnlCode, BoxLayout.Y_AXIS));
+        pnlCode.setLayout(new GridLayout(0, 1, 0 , 1));
+        pnlCode.add(pnlCharSet);
+        
+        pnlNSD.setBorder(new TitledBorder("NSD Files"));
+        //pnlNSD.setLayout(new BoxLayout(pnlNSD, BoxLayout.Y_AXIS));
+        pnlNSD.setLayout(new GridLayout(0, 1, 0, 1));
+        pnlNSD.add(chkRefactorOnLoading);
+        
+        pnlPreference.setBorder(new TitledBorder("Preference Files"));
+        //pnlPreference.setLayout(new BoxLayout(pnlPreference, BoxLayout.Y_AXIS));
+        pnlPreference.setLayout(new GridLayout(0, 1, 0, 1));
+        pnlPreference.add(chkOfferRefactoringIni);
 
-        jPanelCB.setLayout(new GridLayout(3,1,4,4));
-        jPanelCB.setBorder(new EmptyBorder(12,12,12,12));
-        jPanelCB.add(jPanel2);
-        jPanelCB.add(chkRefactorOnLoading, BorderLayout.CENTER);
-        jPanelCB.add(chkOfferRefactoringIni, BorderLayout.CENTER);
+        pnlOptions.setLayout(new GridLayout(3,1,4,4));
+        pnlOptions.setBorder(new EmptyBorder(12,12,12,12));
+        pnlOptions.add(pnlCode, BorderLayout.CENTER);
+        pnlOptions.add(pnlNSD, BorderLayout.CENTER);
+        pnlOptions.add(pnlPreference, BorderLayout.CENTER);
         
-        jPanel3.setLayout(new BorderLayout());
-        jPanel3.setBorder(new EmptyBorder(12,12,12,12));
-        jPanel3.add(btnOk, BorderLayout.EAST);
+        pnlButtons.setLayout(new BorderLayout());
+        pnlButtons.setBorder(new EmptyBorder(12,12,12,12));
+        pnlButtons.add(btnOk, BorderLayout.EAST);
         
-        content.add(jPanel1, BorderLayout.NORTH);
-        content.add(jPanelCB, BorderLayout.CENTER);
-        content.add(jPanel3, BorderLayout.SOUTH);
+        pnlWrapper.add(pnlOptions);
+        
+        content.add(pnlTop, BorderLayout.NORTH);
+        content.add(pnlWrapper, BorderLayout.CENTER);
+        content.add(pnlButtons, BorderLayout.SOUTH);
 
         pack();
+        
+        
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(ActionEvent evt)//GEN-FIRST:event_jButton1ActionPerformed
@@ -262,10 +289,14 @@ public class ImportOptionDialog extends LangDialog {
     public static String[] standardCharsets = {"ISO-8859-1", "UTF-8", "UTF-16", "windows-1250", "windows-1252", "US-ASCII"};
     
     // Variables declaration
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanelCB;
+    private javax.swing.JPanel pnlTop;
+    private javax.swing.JPanel pnlCharSet;
+    private javax.swing.JPanel pnlButtons;
+    private javax.swing.JPanel pnlOptions;
+    private javax.swing.JPanel pnlWrapper;
+    public javax.swing.JPanel pnlNSD;
+    public javax.swing.JPanel pnlPreference;
+    public javax.swing.JPanel pnlCode;
     public javax.swing.JButton btnOk;
     public javax.swing.JLabel lbIntro;
     public javax.swing.JCheckBox chkRefactorOnLoading;

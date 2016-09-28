@@ -2305,7 +2305,7 @@ public class Executor implements Runnable
 					result = control.msgNoSubroutine.getText().
 							replace("%1", f.getName()).
 							replace("%2", Integer.toString(f.paramCount())).
-							replace("%0", "\n");
+							replace("\\n", "\n");
 					// END KGU#197 2016-07-27
 				}
 			}
@@ -2684,7 +2684,7 @@ public class Executor implements Runnable
 					result = control.msgNoSubroutine.getText().
 							replace("%1", f.getName()).
 							replace("%2", Integer.toString(f.paramCount())).
-							replace("%0", "\n");
+							replace("\\n", "\n");
 					// END KGU#197 2016-07-27
 				}
 			}

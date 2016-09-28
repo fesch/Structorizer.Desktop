@@ -826,7 +826,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // START KGU#197 2016-05-05
     // START KGU#197 2016-07-27
     public final LangTextHolder msgNoSubroutine = 
-    		new LangTextHolder("A subroutine diagram %0 (%1 parameters) could not be found!%2Consider starting the Arranger and place needed subroutine diagrams there first.");
+    		new LangTextHolder("A subroutine diagram %1 (%2 parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.");
     public final LangTextHolder msgInvalidExpr =
     		new LangTextHolder("<%1> is not a correct or existing expression.");
     // START KGU#249 2016-09-17: Bugfix #246 + Issue #243

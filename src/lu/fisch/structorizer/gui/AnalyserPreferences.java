@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.gui;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -46,7 +47,8 @@ package lu.fisch.structorizer.gui;
  *
  *      Comment:		
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import lu.fisch.structorizer.locales.LangDialog;
 
@@ -237,87 +239,6 @@ public class AnalyserPreferences extends LangDialog {
 				contentPanel.setLayout(new GridLayout(checkboxes.length-1, 1));
 				// END KGU 2016-09-22
 
-//				//---- check1 ----
-//				check1.setText("Check for modified loop variable.");
-//				contentPanel.add(check1);
-//
-//				// START KGU#3 2015-11-03: Additional For loop checks
-//				//---- check14----
-//				check14.setText("Check for consistency of FOR loop parameters.");
-//				contentPanel.add(check14);
-//				// END KGU#3 2015-11-03
-//
-//				//---- check2 ----
-//				check2.setText("Check for endless loop (as far as detectable!).");
-//				contentPanel.add(check2);
-//
-//				//---- check3 ----
-//				check3.setText("Check for non-initialized variables.");
-//				contentPanel.add(check3);
-//
-//				//---- check4 ----
-//				check4.setText("Check for incorrect use of the IF-statement.");
-//				contentPanel.add(check4);
-//
-//				//---- check5 ----
-//				check5.setText("Check for UPPERCASE variable names. (LUX/MEN)");
-//				contentPanel.add(check5);
-//
-//				//---- check6 ----
-//				check6.setText("Check for UPPERCASE program / sub name. (LUX/MEN)");
-//				contentPanel.add(check6);
-//
-//				//---- check7 ----
-//				check7.setText("Check for valid identifiers.");
-//				contentPanel.add(check7);
-//
-//				//---- check8 ----
-//				check8.setText("Check for assignment in conditions.");
-//				contentPanel.add(check8);
-//
-//				//---- check9 ----
-//				check9.setText("Check that the program / sub name is not equal to any other identifier.");
-//				contentPanel.add(check9);
-//
-//				//---- check10 ----
-//				check10.setText("Check for instructions with inputs and outputs.");
-//				contentPanel.add(check10);
-//
-//				//---- check11 ----
-//				check11.setText("Check for assignment errors.");
-//				contentPanel.add(check11);
-//				
-//				//---- check12 ----
-//				check12.setText("Check for standardized parameter name. (LUX/MEN)");
-//				contentPanel.add(check12);
-//				
-//				//---- check13 ----
-//				check13.setText("Check if, in case of a function, it returns a result.");
-//				contentPanel.add(check13);
-//
-//				// START KGU#2/KGU#78 2015-11-25: Additional checks for CALL and JUMP elements
-//				//---- check15 ----
-//				check15.setText("Check for inappropriate subroutine CALLs.");
-//				contentPanel.add(check15);
-//
-//				//---- check16 ----
-//				check16.setText("Check for incorrect JUMP element usage.");
-//				contentPanel.add(check16);
-//				// END KGU#2/KGU#78 2015-11-25
-//
-//				// START KGU#47 2015-11-28: Additional check for PARALLEL elements
-//				//---- check17 ----
-//				check17.setText("Check for inconsistency risks in PARALLEL sections.");
-//				contentPanel.add(check17);
-//				// END KGU#47 2015-11-28
-//				
-//				// START KGU#239 2016-08-12: New checks for identifier collisions
-//				//---- check18 and check19 ----
-//				check18.setText("Check that identifiers don't differ only by upper/lower case.");
-//				contentPanel.add(check18);
-//				check19.setText("Check if an identifier might collide with reserved words.");
-//				contentPanel.add(check19);
-//				// END KGU#239 2016-08-12
 				for (int i = 0; i < checkboxOrder.length; i++)
 				{
 					// START KGU 2016-09-22: New dummy entry at index position 0

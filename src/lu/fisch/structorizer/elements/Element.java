@@ -69,6 +69,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.08.02      Enh. #215: Infrastructure for conditional breakpoints added.
  *      Kay Gürtzig     2016.09.21      Issue #248: API of setBreakTriggerCount() modified to prevent negative values
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactored
+ *      Kay Gürtzig     2016.09.28      KGU#264: Font name property renamed from "Name" to "Font".
  *
  ******************************************************************************************************
  *
@@ -174,7 +175,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.25-02alpha";
+	public static String E_VERSION = "3.25-02beta";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -1537,7 +1538,10 @@ public abstract class Element {
 			preWhile=ini.getProperty("While","tant que ()");
 			preRepeat=ini.getProperty("Repeat","jusqu'\u00E0 ()");
 			// font
-			setFont(new Font(ini.getProperty("Name","Dialog"), Font.PLAIN,Integer.valueOf(ini.getProperty("Size","12")).intValue()));
+			// START KGU#264 2016-09-28: key Name replaced by the more expressive "Font"
+			//setFont(new Font(ini.getProperty("Name","Dialog"), Font.PLAIN,Integer.valueOf(ini.getProperty("Size","12")).intValue()));
+			String fontName = ini.getProperty("Name","Dialog");	// legacy property name, will be overridden by the newer "Font" if present
+			setFont(new Font(ini.getProperty("Font",fontName), Font.PLAIN,Integer.valueOf(ini.getProperty("Size","12")).intValue()));
 			// colors
 			color0=Color.decode("0x"+ini.getProperty("color0","FFFFFF"));
 			color1=Color.decode("0x"+ini.getProperty("color1","FF8080"));
@@ -1576,7 +1580,10 @@ public abstract class Element {
 			ini.setProperty("While",preWhile);
 			ini.setProperty("Repeat",preRepeat);
 			// font
-			ini.setProperty("Name",getFont().getFamily());
+			// START KGU#264 2016-09-28: font name property renamed 
+			//ini.setProperty("Name",getFont().getFamily());
+			ini.setProperty("Font",getFont().getFamily());
+			// END KGU#264 2016-09-28
 			ini.setProperty("Size",Integer.toString(getFont().getSize()));
 			// colors
 			ini.setProperty("color0", getHexColor(color0));

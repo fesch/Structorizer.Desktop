@@ -65,7 +65,21 @@ import javax.swing.border.*;
 public class ParserPreferences extends LangDialog {
 
 	// START KGU#258 2016-09-26: Defines the impact of changes on open diagrams
-	public enum RefactoringMode {NONE, CURRENT, ALL};
+	public enum RefactoringMode {NONE("no diagram"), CURRENT("current diagram"), ALL("all diagrams");
+		private String text;
+		private RefactoringMode(String _caption)
+		{
+			text = _caption;
+		}
+		public String toString()
+		{
+			return text;
+		}
+		public void setText(String _caption)
+		{
+			text = _caption;
+		}
+	};
 	public RefactoringMode refactoring = RefactoringMode.NONE;
 	// END KGU#258 2016-09-26
 

@@ -187,6 +187,7 @@ Menu.menuPreferencesOptions.text=Strukturen ...
 Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesAnalyser.text=Überprüfungen ...
 Menu.menuPreferencesExport.text=Export ...
+Menu.menuPreferencesImport.text=Import ...
 Menu.menuPreferencesLanguage.text=Sprache
 Menu.menuPreferencesLanguageItems.en.text=Englisch
 Menu.menuPreferencesLanguageItems.de.text=Deutsch
@@ -247,6 +248,10 @@ Menu.msgErrorImageSave.text=Fehler beim Speichern als Bild(er)!
 Menu.msgErrorUsingGenerator.text=Fehler beim %-Export
 Menu.msgErrorNoFile.text=Datei nicht gefunden!
 Menu.msgBrowseFailed.text=Anzeige von % im Browser gescheitert
+Menu.msgRefactoringOffer.text=Schlüsselwörter in den Parser-Einstellungen wurden ersetzt:%Sollen geladene Diagramme entsprechend angepasst werden?
+Menu.itemsRefactoring.0=keins
+Menu.itemsRefactoring.1=aktuelles
+Menu.itemsRefactoring.2=alle
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
@@ -499,7 +504,7 @@ InputBoxFor.msgSeparateWithComma.text=Zwischen '{' und '}' sind Werte mit Kommas
 InputBoxFor.msgEnsureReturnedArray.text=Sicher, dass die Funktion ein Array zurückgibt?
 InputBoxFor.msgEnsureVariableIsArray.text=Sicher, dass <%> ein Array bezeichnet?
 InputBoxFor.msgEnterValueList.text=Bitte Wertliste für die Schleife eingeben.
-InputBoxFor.msgDiscardData.text=Den Schleifen-Stil zu ändern bedeutet, dass die meisten Schleifendaten verloren gehen!%Daten wirklich opfern?
+InputBoxFor.msgDiscardData.text=Den Schleifen-Stil zu ändern bedeutet, dass die meisten Schleifendaten verloren gehen!\nDaten wirklich opfern?
 InputBoxFor.msgAttention.text=ACHTUNG!
 
 -----[ Preferences ]-----
@@ -632,6 +637,10 @@ ParserPreferences.btnOK.text=Speichern
 ParserPreferences.btnOK.tooltip=Speichern der gewählten Einstellungen.
 ParserPreferences.lblErrorSign.text=Ein Doppelpunkt ':' darf in keiner der Parser-Einstellungen vorkommen!
 ParserPreferences.lblErrorSign2.text=Das Nach-Kennwort für FOR-IN-Schleifen darf keinem anderen Parser-Kennwort gleichen!
+ParserPreferences.lblRefactor.text=Diagramme anpassen:
+ParserPreferences.cbRefactor.item.0=keins
+ParserPreferences.cbRefactor.item.1=aktuelles
+ParserPreferences.cbRefactor.item.2=alle
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Druckvoransicht
@@ -659,11 +668,16 @@ ExportOptionDialoge.jButton1.tooltip=Speichern der gewählten Einstellungen.
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Einstellungen zum Dateiladen ...
+ImportOptionDialog.lbIntro.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
+ImportOptionDialog.pnlCode.border=Quellcode-Dateien
+ImportOptionDialog.pnlNSD.border=Diagramm-Dateien
+ImportOptionDialog.pnlPreference.border=Einstellungsdateien
 ImportOptionDialog.lbCharset.text=Zeichensatz (Codierung):
 ImportOptionDialog.chkCharsetAll.text=Alle auflisten?
 ImportOptionDialog.chkRefactorOnLoading.text=Parser-Schlüsselworte in Diagrammen beim Laden ersetzen (refactoring).
-ImportOptionDialog.chkRefactorOnLoading.tooltip=Aktivieren Sie diese Option, um Diagramme beim Laden an die aktuell eingestellten Parser-Kennworte anpassen zu lassen.
-ImportOptionDialog.lbIntro.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
+ImportOptionDialog.chkRefactorOnLoading.tooltip=Aktivieren, um Diagramme beim Laden an die aktuell eingestellten Parser-Kennworte anpassen zu lassen.
+ImportOptionDialog.chkOfferRefactoringIni.text=Diagrammanpassung beim Laden von Einstellungen anbieten.
+ImportOptionDialog.chkOfferRefactoringIni.tooltip=Aktivieren, um bei jedem Laden einer Ini-Datei gefragt zu werden, ob offene Diagramme an die neuen Parser-Einstellungen angepasst weden sollen.
 ImportOptionDialog.btnOk.text=OK
 ImportOptionDialog.btnOk.tooltip=Speichern der gewählten Einstellungen.
 
@@ -713,7 +727,7 @@ Control.lbAcknowledge.text=Zum Fortfahren bitte bestätigen.
 Control.msgTitleError.text=Fehler
 Control.msgTitleQuestion.text=Frage
 Control.msgTitleParallel.text=Problem bei Parallelausführung
-Control.msgNoSubroutine.text=Ein Diagramm mit Unterprogramm "%1" (%2 Parameter) wurde nicht gefunden!%0Platzieren Sie benötigte Unterprogramm-Diagramme zunächst im Arranger.
+Control.msgNoSubroutine.text=Ein Diagramm mit Unterprogramm "%1" (%2 Parameter) wurde nicht gefunden!\nPlatzieren Sie benötigte Unterprogramm-Diagramme zunächst im Arranger.
 Control.msgInvalidExpr.text=<%1> ist kein korrekter oder existierender Ausdruck.
 Control.msgInvalidBool.text=<%1> ist kein gültiger logischer Ausdruck.
 Control.msgIllFunction.text=<%1> ist keine korrekte Funktion!
