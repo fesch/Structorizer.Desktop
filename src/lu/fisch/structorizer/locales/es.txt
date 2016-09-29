@@ -251,7 +251,7 @@ Menu.msgTitleSaveAs.text=Guardar como ...
 Menu.msgTitleImport.text=Importar código % ...
 Menu.msgTitleWrongInput.text=Entrada inadecuada
 Menu.msgSaveChanges.text=¿Guardar cambios del diagrama en archivo?
-Menu.msgErrorImageSave.text=Error grabando imágen(es)!
+Menu.msgErrorImageSave.text=¡Error grabando imágen(es)!
 Menu.msgErrorUsingGenerator.text=Error exportando código %
 Menu.msgErrorNoFile.text=¡Archivo no encontrado!
 Menu.msgBrowseFailed.text=Mostrar % en el browser no logró.
@@ -685,8 +685,6 @@ ImportOptionDialog.lbCharset.text=Codificación:
 ImportOptionDialog.chkCharsetAll.text=Listar todas
 ImportOptionDialog.chkRefactorOnLoading.text=Reemplazar palabras claves al recargando diagramas (refactoring).
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Habilita esta opción si el contenido de diagramas siendo recargados debe ser adaptado automáticamente a las preferencias del analizador.
-ImportOptionDialog.chkOfferRefactoringIni.text=Ofrecer sustitución de palabras claves en diagramas al cargar preferencias.
-ImportOptionDialog.chkOfferRefactoringIni.tooltip=Habilita esta opción para ser preguntado cada vez un archivo de preferencias es abierto si los diagramas deben ser adaptados.
 ImportOptionDialog.btnOk.text=Aceptar
 ImportOptionDialog.btnOk.tooltip=Aceptar los cambios.
 

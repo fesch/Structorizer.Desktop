@@ -676,8 +676,6 @@ ImportOptionDialog.lbCharset.text=Zeichensatz (Codierung):
 ImportOptionDialog.chkCharsetAll.text=Alle auflisten?
 ImportOptionDialog.chkRefactorOnLoading.text=Parser-Schlüsselworte in Diagrammen beim Laden ersetzen (refactoring).
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Aktivieren, um Diagramme beim Laden an die aktuell eingestellten Parser-Kennworte anpassen zu lassen.
-ImportOptionDialog.chkOfferRefactoringIni.text=Diagrammanpassung beim Laden von Einstellungen anbieten.
-ImportOptionDialog.chkOfferRefactoringIni.tooltip=Aktivieren, um bei jedem Laden einer Ini-Datei gefragt zu werden, ob offene Diagramme an die neuen Parser-Einstellungen angepasst weden sollen.
 ImportOptionDialog.btnOk.text=OK
 ImportOptionDialog.btnOk.tooltip=Speichern der gewählten Einstellungen.
 

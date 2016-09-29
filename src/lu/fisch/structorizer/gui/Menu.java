@@ -839,24 +839,20 @@ public class Menu extends LangMenuBar implements NSDController
                             Ini ini = Ini.getInstance();
                             
                         	// START KGU#258 2016-09-26: Enh. #253
-                            HashMap<String, StringList> refactoringData = null;
-                            if (ini.getProperty("impOfferRefactoring", "true").equals("true"))
+                            HashMap<String, StringList> refactoringData = new LinkedHashMap<String, StringList>();
+                            for (String key: D7Parser.keywordMap.keySet())
                             {
-                            	refactoringData = new LinkedHashMap<String, StringList>();
-                    			for (String key: D7Parser.keywordMap.keySet())
-                    			{
-                    				String keyword = D7Parser.keywordMap.getOrDefault(key, "");
-                    				if (!keyword.trim().isEmpty())
-                    				{
-                    					// Complete strings aren't likely to be found in a key, so don't bother
-                    					refactoringData.put(key, Element.splitLexically(keyword,  false));
-                    				}
-                    				// An empty preForIn keyword is a synonym for the preFor keyword
-                    				else if (key.equals("preForIn"))
-                    				{
-                    					refactoringData.put(key, refactoringData.get("preFor"));
-                    				}
-                    			}
+                            	String keyword = D7Parser.keywordMap.getOrDefault(key, "");
+                            	if (!keyword.trim().isEmpty())
+                            	{
+                            		// Complete strings aren't likely to be found in a key, so don't bother
+                            		refactoringData.put(key, Element.splitLexically(keyword,  false));
+                            	}
+                            	// An empty preForIn keyword is a synonym for the preFor keyword
+                            	else if (key.equals("preForIn"))
+                            	{
+                            		refactoringData.put(key, refactoringData.get("preFor"));
+                            	}
                             }
                             // END KGU#258 2016-09-26
                             
