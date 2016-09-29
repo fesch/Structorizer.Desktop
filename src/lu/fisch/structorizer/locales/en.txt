@@ -688,8 +688,6 @@ ImportOptionDialog.lbCharset.text=Character set:
 ImportOptionDialog.chkCharsetAll.text=List all?
 ImportOptionDialog.chkRefactorOnLoading.text=Replace keywords on loading a diagram (refactoring).
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Select this option if all configurable keywords in the daiagram are to be adapted to the current parser preferences.
-ImportOptionDialog.chkOfferRefactoringIni.text=Offer refactoring on loading preferences from File.
-ImportOptionDialog.chkOfferRefactoringIni.tooltip=Select this option if you want to be asked whether to refactor diagrams whenever you load preferences from file.
 ImportOptionDialog.btnOk.text=OK
 ImportOptionDialog.btnOk.tooltip=Save these settings.
 

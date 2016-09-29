@@ -137,7 +137,6 @@ import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.generators.*;
-import lu.fisch.structorizer.gui.ParserPreferences.RefactoringMode;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
@@ -3137,7 +3136,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			D7Parser d7 = new D7Parser("D7Grammar.cgt");
 			// START KGU#194 2016-05-08: Bugfix #185 - mechanism for multiple roots per file
 			//Root rootNew = d7.parse(filename);
-			List<Root> newRoots = d7.parse(filename, "ISO-8859-1");
+			// START KGU#265 2016-09-28: Enh. #253 brought the Charset configuration. So make use of it.
+			//List<Root> newRoots = d7.parse(filename, "ISO-8859-1");
+			Ini ini = Ini.getInstance();
+			List<Root> newRoots = d7.parse(filename, ini.getProperty("impImportCharset", "ISO-8859-1"));
+			// END KGU#265 2016-09-28
 			// END KGU#194 2016-05-08
 			if (d7.error.equals(""))
 			{
@@ -3524,11 +3527,29 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 	
-	// START KGU#258 2016-09-26: Enh. #253: A set of helper methods for refactoring 
+	// START KGU#258 2016-09-26: Enh. #253: A set of helper methods for refactoring
+	/**
+	 * (To be called after a preference file has been loaded explicitly on user demand.)
+	 * Based on the refactoringData collected before the loading, a difference analysis
+	 * between the old and new parser preferences will be done. If changes are detected
+	 * and there are non-trivial Roots then a dialog box will be popped up showing
+	 * the changes and offering to refactor the current or all diagrams. If the user
+	 * agrees then the respective code will be added to the refactoringData and true
+	 * will be returned, otherwise false.
+	 * @param refactoringData - tokenized previous non-empty parser preferences
+	 * @return true if a refactoring makes sense, false otherwise
+	 */
 	public boolean offerRefactoring(HashMap<String, StringList> refactoringData)
 	{
+		// Since this method is always called after a preference file has been loaded,
+		// we update the preferred export code for the doButtons() call, though it
+		// has nothing to do with refactoring
+		this.prefGeneratorName = Ini.getInstance().getProperty("genExportPreferred", this.prefGeneratorName);
+		
+		// No refectoring data was collected then we are done here ...
 		if (refactoringData == null) return false;
 		
+		// Otherwise we look for differences between old and new parser preferences
 		StringList replacements = new StringList();
 		for (HashMap.Entry<String,StringList> entry: refactoringData.entrySet())
 		{
@@ -3739,15 +3760,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             ini.load();
             ImportOptionDialog iod = new ImportOptionDialog(NSDControl.getFrame());
             iod.chkRefactorOnLoading.setSelected(ini.getProperty("impRefactorOnLoading", "false").equals("true"));
-            iod.chkOfferRefactoringIni.setSelected(ini.getProperty("impOfferRefactoring", "true").equals("true"));
-            iod.charsetListChanged(ini.getProperty("impExportCharset", Charset.defaultCharset().name()));
+            iod.charsetListChanged(ini.getProperty("impImportCharset", Charset.defaultCharset().name()));
             iod.setVisible(true);
             
             if(iod.goOn==true)
             {
                 ini.setProperty("impRefactorOnLoading", String.valueOf(iod.chkRefactorOnLoading.isSelected()));
-                ini.setProperty("impOfferRefactoring", String.valueOf(iod.chkOfferRefactoringIni.isSelected()));
-                ini.setProperty("impExportCharset", (String)iod.cbCharset.getSelectedItem());
+                ini.setProperty("impImportCharset", (String)iod.cbCharset.getSelectedItem());
                 ini.save();
             }
         } 

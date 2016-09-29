@@ -96,7 +96,7 @@ public class ImportOptionDialog extends LangDialog {
         pnlNSD = new javax.swing.JPanel();
         pnlPreference = new javax.swing.JPanel();
         chkRefactorOnLoading = new javax.swing.JCheckBox();
-        chkOfferRefactoringIni = new javax.swing.JCheckBox();
+        //chkOfferRefactoringIni = new javax.swing.JCheckBox();
         lbIntro = new javax.swing.JLabel();
         btnOk = new javax.swing.JButton();
         lbCharset = new javax.swing.JLabel();
@@ -136,9 +136,9 @@ public class ImportOptionDialog extends LangDialog {
         chkRefactorOnLoading.setToolTipText("Select this option if all configurable keywords in the daiagram are to be adapted to the current parser preferences.");
         chkRefactorOnLoading.setAlignmentX(LEFT_ALIGNMENT);
 
-        chkOfferRefactoringIni.setText("Offer refactoring on loading preferences from File.");
-        chkOfferRefactoringIni.setToolTipText("Select this option if you want to be asked whether to refactor diagrams whenever you load preferences from file.");
-        chkOfferRefactoringIni.setAlignmentX(LEFT_ALIGNMENT);
+        //chkOfferRefactoringIni.setText("Offer refactoring on loading preferences from file.");
+        //chkOfferRefactoringIni.setToolTipText("Select this option if you want to be asked whether to refactor diagrams whenever you load preferences from file.");
+        //chkOfferRefactoringIni.setAlignmentX(LEFT_ALIGNMENT);
 
         lbIntro.setText("Please select the options you want to activate ...");
 
@@ -162,25 +162,22 @@ public class ImportOptionDialog extends LangDialog {
         pnlCharSet.add(chkCharsetAll);
         
         pnlCode.setBorder(new TitledBorder("Code Files"));
-        //pnlCode.setLayout(new BoxLayout(pnlCode, BoxLayout.Y_AXIS));
         pnlCode.setLayout(new GridLayout(0, 1, 0 , 1));
         pnlCode.add(pnlCharSet);
         
         pnlNSD.setBorder(new TitledBorder("NSD Files"));
-        //pnlNSD.setLayout(new BoxLayout(pnlNSD, BoxLayout.Y_AXIS));
         pnlNSD.setLayout(new GridLayout(0, 1, 0, 1));
         pnlNSD.add(chkRefactorOnLoading);
         
         pnlPreference.setBorder(new TitledBorder("Preference Files"));
-        //pnlPreference.setLayout(new BoxLayout(pnlPreference, BoxLayout.Y_AXIS));
         pnlPreference.setLayout(new GridLayout(0, 1, 0, 1));
-        pnlPreference.add(chkOfferRefactoringIni);
+        //pnlPreference.add(chkOfferRefactoringIni);
 
-        pnlOptions.setLayout(new GridLayout(3,1,4,4));
+        pnlOptions.setLayout(new GridLayout(0,1,4,4));
         pnlOptions.setBorder(new EmptyBorder(12,12,12,12));
         pnlOptions.add(pnlCode, BorderLayout.CENTER);
         pnlOptions.add(pnlNSD, BorderLayout.CENTER);
-        pnlOptions.add(pnlPreference, BorderLayout.CENTER);
+        //pnlOptions.add(pnlPreference, BorderLayout.CENTER);
         
         pnlButtons.setLayout(new BorderLayout());
         pnlButtons.setBorder(new EmptyBorder(12,12,12,12));
@@ -300,7 +297,7 @@ public class ImportOptionDialog extends LangDialog {
     public javax.swing.JButton btnOk;
     public javax.swing.JLabel lbIntro;
     public javax.swing.JCheckBox chkRefactorOnLoading;
-    public javax.swing.JCheckBox chkOfferRefactoringIni;
+    //public javax.swing.JCheckBox chkOfferRefactoringIni;
     public javax.swing.JLabel lbCharset;
     public javax.swing.JComboBox<String> cbCharset;
     public javax.swing.JCheckBox chkCharsetAll;
