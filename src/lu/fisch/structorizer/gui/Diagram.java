@@ -91,6 +91,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.24      Enh. #250: Several modifications around showInputBox()
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done, importOptions() added.
  *      Kay Gürtzig     2016.09.26      Enh. #253: Full support for diagram refactoring implemented.
+ *      Kay Gürtzig     2016.10.03      Enh. #257: CASE element transmutation (KGU#267), enh. #253 revised
  *
  ******************************************************************************************************
  *
@@ -140,6 +141,7 @@ import lu.fisch.structorizer.generators.*;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.turtle.TurtleBox;
 
 import org.freehep.graphicsio.svg.SVGGraphics2D;
@@ -1534,36 +1536,42 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#199 2016-07-06: Enh. #188: Element conversions
 	public boolean canTransmute()
 	{
-		boolean convertible = false;
+		boolean isConvertible = false;
 		if (selected != null && !selected.executed && !selected.waited)
 		{
 			if (selected instanceof Instruction)
 			{
 				Instruction instr = (Instruction)selected;
-				convertible = instr.getText().count() > 1
+				isConvertible = instr.getText().count() > 1
 						|| instr.isJump()
 						|| instr.isFunctionCall()
 						|| instr.isProcedureCall();
 			}
 			else if (selected instanceof IElementSequence && ((IElementSequence)selected).getSize() > 1)
 			{
-				convertible = true;
-				for (int i = 0; convertible && i < ((IElementSequence)selected).getSize(); i++)
+				isConvertible = true;
+				for (int i = 0; isConvertible && i < ((IElementSequence)selected).getSize(); i++)
 				{
 					if (!(((IElementSequence)selected).getElement(i) instanceof Instruction))
 					{
-						convertible = false;
+						isConvertible = false;
 					}
 				}
 			}
 			// START KGU#229 2016-08-01: Enh. #213
 			else if (selected instanceof For)
 			{
-				convertible = ((For)selected).style == For.ForLoopStyle.COUNTER;
+				isConvertible = ((For)selected).style == For.ForLoopStyle.COUNTER;
 			}
 			// END KGU#229 2016-08-01
+			// START KGU#267 2016-10-03: Enh. #257
+			else if (selected instanceof Case)
+			{
+				isConvertible = true;
+			}
+			// END KGU#267 2016-10-03
 		}
-		return convertible;
+		return isConvertible;
 	}
 	// END KGU#199 2016-07-06
 	
@@ -2057,6 +2065,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			decomposeForLoop(parent);
 		}
 		// END KGU#229 2016-08-01
+		// START KGU#267 2016-10-03: Enh. #257 - CASE decomposition
+		else if (selected instanceof Case)
+		{
+			root.addUndo();
+			decomposeCase(parent);
+		}
+		// END KGU#267 2016-10-03
 		this.doButtons();
 		redraw();
 		analyse();
@@ -2259,6 +2274,123 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		this.selectedUp = this.selectedDown = this.selected;
 	}
 	// END KGU#229 2016-08-01
+
+	// START KGU#267 2016-10-03: Enh. #257 - CASE structure decomposition
+	private void decomposeCase(Subqueue parent)
+	{
+		// Comment will be tranferred to the outermost Alternative.
+		Case caseElem = (Case)selected;
+		// List of replacing nested alternatives
+		List<Alternative> alternatives = new LinkedList<Alternative>();
+		// Possibly preceding assignment of the selection expression value
+		Instruction asgnmt = null;
+		// tokenized selection expression
+		StringList selTokens = Element.splitLexically(caseElem.getText().get(0), true);
+		// Eliminate parser preference keywords
+		String[] redundantKeywords = {D7Parser.keywordMap.get("preCase"), D7Parser.keywordMap.get("postCase")};
+		for (String keyword: redundantKeywords)
+		{
+			if (!keyword.trim().isEmpty())
+			{
+				StringList tokenizedKey = Element.splitLexically(keyword, false);
+				int pos = -1;
+				while ((pos = selTokens.indexOf(tokenizedKey, pos+1, !D7Parser.ignoreCase)) >= 0)
+				{
+					for (int i = 0; i < tokenizedKey.count(); i++)
+					{
+						selTokens.delete(pos);
+					}
+				}
+			}
+		}
+		String selector = selTokens.concatenate().trim();
+		// If the selector expression isn't just a variable then assign its value to an
+		// artificial variable first and use this as selector
+		if (!Function.testIdentifier(selector, ""))
+		{
+			asgnmt = new Instruction("discr" + caseElem.hashCode() + " <- " + selector);
+			selector = "discr" + caseElem.hashCode();
+		}
+		
+		// Take care of the configured prefix and postfix
+		String prefix = "", postfix = "";
+		if (!D7Parser.keywordMap.get("preAlt").trim().isEmpty()) {
+			prefix = D7Parser.keywordMap.get("preAlt");
+			if (!prefix.endsWith(" ")) prefix += " ";
+		}
+		if (!D7Parser.keywordMap.get("postAlt").trim().isEmpty()) {
+			postfix = D7Parser.keywordMap.get("postAlt");
+			if (!postfix.startsWith(" ")) postfix = " " + postfix;
+		}
+		
+		int nAlts = 0;	// number of alternatives created so far
+		for (int lineNo = 1; lineNo < caseElem.getText().count(); lineNo++)
+		{
+			String line = caseElem.getText().get(lineNo);
+			if (lineNo == caseElem.getText().count()-1)
+			{
+				// In case it's a "%", nothing is to be added, otherwise the last
+				// branch is to be the else path of the innermost alternative
+				if (!line.equals("%"))
+				{
+					// This should not happen before the first alternative has been created!
+					alternatives.get(nAlts-1).qFalse = caseElem.qs.get(lineNo-1);
+					alternatives.get(nAlts-1).qFalse.parent = alternatives.get(nAlts-1);
+				}
+			}
+			else 
+			{
+				String[] constants = line.split(",");
+				String cond = "";
+				for (String selConst: constants)
+				{
+					cond += " || (" + selector + " = " + selConst + ")";
+				}
+				cond = cond.substring(4).replace("||", D7Parser.keywordMap.getOrDefault("oprOr", "or"));
+				Alternative newAlt = new Alternative(prefix + cond + postfix);
+				newAlt.qTrue = caseElem.qs.get(lineNo-1);
+				newAlt.qTrue.parent = newAlt;
+				alternatives.add(newAlt);
+				if (nAlts > 0)
+				{
+					alternatives.get(nAlts-1).qFalse.addElement(newAlt);
+				}
+				nAlts++;
+			}
+		}
+
+		alternatives.get(0).setComment(caseElem.getComment());
+		Element firstSubstitutor = (asgnmt != null) ? asgnmt : alternatives.get(0);
+		if (caseElem.isBreakpoint())
+		{
+			firstSubstitutor.toggleBreakpoint();
+		}
+		firstSubstitutor.setBreakTriggerCount(caseElem.getBreakTriggerCount());
+		firstSubstitutor.setColor(caseElem.getColor());
+		for (Alternative alt: alternatives)
+		{
+			alt.setColor(caseElem.getColor());
+			alt.deeplyCovered = caseElem.deeplyCovered;
+			alt.simplyCovered = caseElem.simplyCovered;
+		}
+		alternatives.get(0).setCollapsed(caseElem.isCollapsed());
+
+		int index = parent.getIndexOf(caseElem);
+		parent.removeElement(index);
+		parent.insertElementAt(alternatives.get(0), index);
+		if (asgnmt != null)
+		{
+			parent.insertElementAt(asgnmt, index);
+			this.selected = new SelectedSequence(parent, index, index+1);
+		}
+		else 
+		{
+			this.selected = parent.getElement(index);
+		}
+		this.selected.setSelected(true);
+		this.selectedUp = this.selectedDown = this.selected;
+	}
+	// END KGU#267 2016-10-03
 
 	// START KGU#43 2015-10-12
 	/*****************************************
@@ -3420,7 +3552,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Point p = getLocationOnScreen();
 		parserPreferences.setLocation(Math.round(p.x+(getVisibleRect().width-parserPreferences.getWidth())/2+this.getVisibleRect().x),
 								Math.round(p.y+(getVisibleRect().height-parserPreferences.getHeight())/2+this.getVisibleRect().y));
-
+		
 		// set fields
 		parserPreferences.edtAltPre.setText(D7Parser.keywordMap.get("preAlt"));
 		parserPreferences.edtAltPost.setText(D7Parser.keywordMap.get("postAlt"));
@@ -3458,7 +3590,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#258 2016-09-26: Enh. #253 - prepare the old settings for a refactoring
 			HashMap<String, StringList> oldKeywordMap = null;
 			boolean wasCaseIgnored = D7Parser.ignoreCase;
-			if (parserPreferences.refactoring != ParserPreferences.RefactoringMode.NONE)
+			boolean considerRefactoring = root.children.getSize() > 0
+					|| this.isArrangerOpen && Arranger.getInstance().getAllRoots().size() > 0;
+			if (considerRefactoring)
 			{
 				oldKeywordMap = new LinkedHashMap<String, StringList>();
 				for (String key: D7Parser.keywordMap.keySet())
@@ -3506,7 +3640,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			D7Parser.saveToINI();
 			
 			// START KGU#258 2016-09-26: Enh. #253 - now try a refactoring if specified
-			boolean redrawn = refactorDiagrams(oldKeywordMap, parserPreferences.refactoring == ParserPreferences.RefactoringMode.ALL, wasCaseIgnored);
+			boolean redrawn = false;
+			if (considerRefactoring && offerRefactoring(oldKeywordMap))
+			{
+				boolean refactorAll = oldKeywordMap.containsKey("refactorAll");
+				redrawn = refactorDiagrams(oldKeywordMap, refactorAll, wasCaseIgnored);
+			}
 			// END KGU#258 2016-09-26
 
 			// START KGU#136 2016-03-31: Bugfix #97 - cached bounds may have to be invalidated
@@ -3563,7 +3702,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// Only offer the question if there are relevant replacements and at least one non-empty or parked Root
 		if (replacements.count() > 0 && (root.children.getSize() > 0 || isArrangerOpen && !Arranger.getInstance().getAllRoots().isEmpty()))
 		{
-			Object[] options = ParserPreferences.RefactoringMode.values();
+			Object[] options = Menu.RefactoringMode.values();
 			int answer = JOptionPane.showOptionDialog(this,
 					Menu.msgRefactoringOffer.getText().replace("%", "\n" + replacements.getText() + "\n"),
 					Menu.msgTitleQuestion.getText(), JOptionPane.OK_CANCEL_OPTION,
@@ -3576,7 +3715,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				{
 					refactoringData.put("ignoreCase", StringList.getNew("true"));
 				}
-				if (options[answer] == ParserPreferences.RefactoringMode.ALL)
+				if (options[answer] == Menu.RefactoringMode.ALL)
 				{
 					refactoringData.put("refactorAll", StringList.getNew("true"));
 				}

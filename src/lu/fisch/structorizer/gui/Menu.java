@@ -61,7 +61,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.01      Bugfix #233: CASE insertion by F10 had been averted by menu bar
  *      Kay Gürtzig     2016.09.04      Structural redesign for menuPreferencesLanguage
  *      Kay Gürtzig     2016.09.15      Issue #243: Additional text holders for forgotten message box texts
- *      Kay Gürtzig     2016.09.22      New text holder / messages for Analyser 
+ *      Kay Gürtzig     2016.09.22      New text holder / messages for Analyser
+ *      Kay Gürtzig     2016.09.26/03   Enh. #253: Refactoring support
  *
  ******************************************************************************************************
  *
@@ -343,11 +344,27 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgErrorNoFile = new LangTextHolder("File not found!");
 	public static final LangTextHolder msgBrowseFailed = new LangTextHolder("Failed to show % in browser");
 	// END KGU#247 2016-09-17
-	// START KGU#258 2016-09-27: Enh. #253: Diagram keyword refactoring
+	// START KGU#258 2016-10-03: Enh. #253: Diagram keyword refactoring
 	public static final LangTextHolder msgRefactoringOffer = new LangTextHolder("Keywords configured in the Parser Preferences were replaced:%Are loaded diagrams to be refactored accordingly?");
-	public static final ParserPreferences.RefactoringMode[] itemsRefactoring = ParserPreferences.RefactoringMode.values();
-	
-	// END KGU#258 2016-09-27
+	public enum RefactoringMode {NONE("no"), CURRENT("current diagram"), ALL("all diagrams");
+		private String text;
+		private RefactoringMode(String _caption)
+		{
+			text = _caption;
+		}
+		public String toString()
+		{
+			return text;
+		}
+		public void setText(String _caption)
+		{
+			text = _caption;
+		}
+	};
+	// This is needed for localization support:
+	public static final RefactoringMode[] itemsRefactoring = RefactoringMode.values();
+	// END KGU#258 2016-10-03
+
 	public void create()
 	{
 		JMenuBar menubar = this;

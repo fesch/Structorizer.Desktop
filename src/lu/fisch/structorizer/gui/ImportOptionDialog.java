@@ -297,7 +297,18 @@ public class ImportOptionDialog extends LangDialog {
     public javax.swing.JButton btnOk;
     public javax.swing.JLabel lbIntro;
     public javax.swing.JCheckBox chkRefactorOnLoading;
-    //public javax.swing.JCheckBox chkOfferRefactoringIni;
+    // START KGU#266 2016-09-30: Enh. selective loading of preferences
+//    public javax.swing.JCheckBox chkPrefFont;
+//    public javax.swing.JCheckBox chkPrefColors;
+//    public javax.swing.JCheckBox chkPrefStructures;
+//    public javax.swing.JCheckBox chkPrefParser;
+//    public javax.swing.JCheckBox chkPrefAnalyser;
+//    public javax.swing.JCheckBox chkPrefExport;
+//    public javax.swing.JCheckBox chkPrefImport;
+//    public javax.swing.JCheckBox chkPrefLanguage;
+//    public javax.swing.JCheckBox chkPrefLaF;
+//    public javax.swing.JCheckBox chkSettings;
+    // END KGU#266 2016-09-30
     public javax.swing.JLabel lbCharset;
     public javax.swing.JComboBox<String> cbCharset;
     public javax.swing.JCheckBox chkCharsetAll;

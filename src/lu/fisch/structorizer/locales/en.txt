@@ -258,10 +258,10 @@ Menu.msgErrorImageSave.text=Error on saving the image(s)!
 Menu.msgErrorUsingGenerator.text=Error while using % generator
 Menu.msgErrorNoFile.text=File not found!
 Menu.msgBrowseFailed.text=Failed to show % in browser
-Menu.msgRefactoringOffer.text=Keywords configured in the Parser Preferences were replaced:%Are loaded diagrams to be refactored accordingly?
-Menu.itemsRefactoring.0=no diagram
-Menu.itemsRefactoring.1=current diagram
-Menu.itemsRefactoring.2=all diagrams
+Menu.msgRefactoringOffer.text=Keywords configured in the Parser Preferences were replaced:%Are opened diagrams to be refactored accordingly?
+Menu.itemsRefactoring.0.text=no
+Menu.itemsRefactoring.1.text=current diagram
+Menu.itemsRefactoring.2.text=all diagrams
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
@@ -649,10 +649,6 @@ ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=Validate your choice.
 ParserPreferences.lblErrorSign.text=You are not allowed to use the character ':' in any parser string!
 ParserPreferences.lblErrorSign2.text=The second FOR-IN loop keystring must differ from any other parser token!
-ParserPreferences.lblRefactor.text=Refactor diagrams:
-ParserPreferences.cbRefactor.item.0=no diagram
-ParserPreferences.cbRefactor.item.1=current diagram
-ParserPreferences.cbRefactor.item.2=all diagrams
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Print Preview
