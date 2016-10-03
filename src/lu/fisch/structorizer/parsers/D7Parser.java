@@ -72,7 +72,6 @@ import java.util.Map;
 
 import goldengine.java.*;
 import lu.fisch.utils.*;
-import lu.fisch.structorizer.gui.ParserPreferences.RefactoringMode;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.elements.*;
 

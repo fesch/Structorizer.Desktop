@@ -63,28 +63,9 @@ import javax.swing.border.*;
  */
 @SuppressWarnings("serial")
 public class ParserPreferences extends LangDialog {
+    
+        public boolean OK = false;
 
-	// START KGU#258 2016-09-26: Defines the impact of changes on open diagrams
-	public enum RefactoringMode {NONE("no diagram"), CURRENT("current diagram"), ALL("all diagrams");
-		private String text;
-		private RefactoringMode(String _caption)
-		{
-			text = _caption;
-		}
-		public String toString()
-		{
-			return text;
-		}
-		public void setText(String _caption)
-		{
-			text = _caption;
-		}
-	};
-	public RefactoringMode refactoring = RefactoringMode.NONE;
-	// END KGU#258 2016-09-26
-
-	public boolean OK = false;
-	
 	
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
 	// Generated using JFormDesigner Evaluation license - Robert Fisch
@@ -137,10 +118,6 @@ public class ParserPreferences extends LangDialog {
 	// END KGU#78 2016-03-25
 	protected JPanel buttonBar;
 	protected JButton btnOK;
-	// START KGU#258 2016-09-26: Enh. #253
-	protected JLabel lblRefactor;
-	protected JComboBox<RefactoringMode> cbRefactor;
-	// END KGU#258 2016-09-26
 	// START KGU 2016-03-25: New general option for handling these keywords
 	protected JCheckBox chkIgnoreCase;
 	// END KGU 2016-03-25
@@ -221,10 +198,6 @@ public class ParserPreferences extends LangDialog {
 		lblJumpExit = new JLabel();
 		// END KGU#78 2016-03-25
 		buttonBar = new JPanel();
-		// START KGU#258 2016-09-26: Enh. #253
-		lblRefactor = new JLabel();
-		cbRefactor = new JComboBox<RefactoringMode>();
-		// END KGU#258 2016-09-26
 		btnOK = new JButton();
 		edtInput = new JTextField();
 		edtOutput = new JTextField();
@@ -360,49 +333,18 @@ public class ParserPreferences extends LangDialog {
 			{
 				buttonBar.setBorder(new EmptyBorder(12, 0, 0, 0));
 				buttonBar.setLayout(new GridBagLayout());
-				((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {80, 80, 80};
-				((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0, 0.0};
+				((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
+				((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
 
-				GridBagConstraints gbc = new GridBagConstraints();
-				gbc.gridx = 0;
-				gbc.gridy = 0;
-				gbc.gridwidth = 1;
-				gbc.gridheight = 1;
-				gbc.weightx = 0.0;
-				gbc.weighty = 0.0;
-				gbc.insets = new Insets(5, 0, 5, 0);
-				
 				//---- chkIgnoreCase ---
 				chkIgnoreCase.setText("Ignore case");
 				buttonBar.add(chkIgnoreCase);
-
-				gbc.gridy++;
-				//gbc.insets = new Insets(0, 0, 5, 0);
 				
-				lblRefactor.setText("Refactor diagrams");
-				buttonBar.add(lblRefactor, gbc);
-				
-				gbc.gridx++;
-				
-				// START KGU#258 2016-09-26: Enh. #253
-				for (RefactoringMode mode: RefactoringMode.values())
-				{
-					cbRefactor.addItem(mode);
-				}
-				buttonBar.add(cbRefactor, gbc);
-				// END KGU#258 2016-09-26
-				
-				//---- chkIgnoreCase ---
-				//chkIgnoreCase.setText("Ignore case");
-				//buttonBar.add(chkIgnoreCase);
-				
-				gbc.gridx++;
-
 				//---- okButton ----
 				btnOK.setText("OK");
-				buttonBar.add(btnOK, gbc /*new GridBagConstraints(2, 1, 1, 1, 0.0, 0.0,
+				buttonBar.add(btnOK, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
 					GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-					new Insets(0, 0, 5, 0), 0, 0)*/);
+					new Insets(0, 0, 5, 0), 0, 0));
 			}
 			dialogPane.add(buttonBar, BorderLayout.SOUTH);
 		}
@@ -414,15 +356,6 @@ public class ParserPreferences extends LangDialog {
 		// BOB thinks
 		
 		// add the LIST-listeners
-		ItemListener itemListener = new ItemListener()
-		{
-			@Override
-			public void itemStateChanged(ItemEvent evt) {
-				if (evt.getSource() == cbRefactor)
-				refactoring = (RefactoringMode)evt.getItem();				
-			}
-		};
-		cbRefactor.addItemListener(itemListener);
 		// add the KEY-listeners
 		KeyListener keyListener = new KeyListener()
 		{
