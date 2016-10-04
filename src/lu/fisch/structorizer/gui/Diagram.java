@@ -3702,7 +3702,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// Only offer the question if there are relevant replacements and at least one non-empty or parked Root
 		if (replacements.count() > 0 && (root.children.getSize() > 0 || isArrangerOpen && !Arranger.getInstance().getAllRoots().isEmpty()))
 		{
-			Object[] options = Menu.RefactoringMode.values();
+			String[] options = {
+					Menu.lblRefactorNone.getText(),
+					Menu.lblRefactorCurrent.getText(),
+					Menu.lblRefactorAll.getText()
+			};
 			int answer = JOptionPane.showOptionDialog(this,
 					Menu.msgRefactoringOffer.getText().replace("%", "\n" + replacements.getText() + "\n"),
 					Menu.msgTitleQuestion.getText(), JOptionPane.OK_CANCEL_OPTION,
@@ -3715,7 +3719,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				{
 					refactoringData.put("ignoreCase", StringList.getNew("true"));
 				}
-				if (options[answer] == Menu.RefactoringMode.ALL)
+				if (answer == 2)
 				{
 					refactoringData.put("refactorAll", StringList.getNew("true"));
 				}
@@ -3729,9 +3733,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	{
 		if (refactoringData != null)
 		{
-			boolean refactorAll = refactoringData.containsKey("refactorAll");
-			boolean ignoreCase = refactoringData.containsKey("ignoreCase");
-			refactorDiagrams(refactoringData, refactorAll, ignoreCase);
+			refactorDiagrams(refactoringData,
+					refactoringData.containsKey("refactorAll"),
+					refactoringData.containsKey("ignoreCase")
+					);
 		}
 	}
 	

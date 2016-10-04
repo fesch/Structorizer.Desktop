@@ -346,23 +346,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#247 2016-09-17
 	// START KGU#258 2016-10-03: Enh. #253: Diagram keyword refactoring
 	public static final LangTextHolder msgRefactoringOffer = new LangTextHolder("Keywords configured in the Parser Preferences were replaced:%Are loaded diagrams to be refactored accordingly?");
-	public enum RefactoringMode {NONE("no"), CURRENT("current diagram"), ALL("all diagrams");
-		private String text;
-		private RefactoringMode(String _caption)
-		{
-			text = _caption;
-		}
-		public String toString()
-		{
-			return text;
-		}
-		public void setText(String _caption)
-		{
-			text = _caption;
-		}
-	};
-	// This is needed for localization support:
-	public static final RefactoringMode[] itemsRefactoring = RefactoringMode.values();
+	public static final LangTextHolder lblRefactorNone = new LangTextHolder("no");
+	public static final LangTextHolder lblRefactorCurrent = new LangTextHolder("current diagram");
+	public static final LangTextHolder lblRefactorAll = new LangTextHolder("all diagrams");
 	// END KGU#258 2016-10-03
 
 	public void create()

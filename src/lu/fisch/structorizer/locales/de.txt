@@ -249,9 +249,9 @@ Menu.msgErrorUsingGenerator.text=Fehler beim %-Export
 Menu.msgErrorNoFile.text=Datei nicht gefunden!
 Menu.msgBrowseFailed.text=Anzeige von % im Browser gescheitert
 Menu.msgRefactoringOffer.text=Schlüsselwörter in den Parser-Einstellungen wurden ersetzt:%Sollen geöffnete Diagramme entsprechend angepasst werden?
-Menu.itemsRefactoring.0.text=nein
-Menu.itemsRefactoring.1.text=aktuelles
-Menu.itemsRefactoring.2.text=alle
+Menu.lblRefactorNone.text=nein
+Menu.lblRefactorCurrent.text=aktuelles
+Menu.lblRefactorAll.text=alle
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
