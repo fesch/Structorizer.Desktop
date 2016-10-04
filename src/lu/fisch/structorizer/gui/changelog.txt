@@ -27,6 +27,7 @@ Current development version: 3.25-02 (2016.10.04)
 - 02: Enh. #253: Refactoring offer on changing parser preferences <2>
 - 02: Enh. #253: Refactoring offer on loading preferences from file <2>
 - 02: Enh. #257: Decomposing transmutation of CASE elements <2>
+- 02: Bugfix #258: Saving of FOR loops wasn't robust against keyword changes <2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2

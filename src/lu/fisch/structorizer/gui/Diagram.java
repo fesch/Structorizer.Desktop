@@ -2344,7 +2344,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				String cond = "";
 				for (String selConst: constants)
 				{
-					cond += " || (" + selector + " = " + selConst + ")";
+					cond += " || (" + selector + " = " + selConst.trim() + ")";
 				}
 				cond = cond.substring(4).replace("||", D7Parser.keywordMap.getOrDefault("oprOr", "or"));
 				Alternative newAlt = new Alternative(prefix + cond + postfix);
@@ -3774,8 +3774,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// Well, we hope that the roots won't change the hash code on refactoring...
 				for (Root aRoot: Arranger.getInstance().getAllRoots())
 				{
-					aRoot.addUndo();
-					aRoot.traverse(new Refactorer(oldKeywordMap, wasCaseIgnored));
+					if (root != aRoot) {
+						aRoot.addUndo();
+						aRoot.traverse(new Refactorer(oldKeywordMap, wasCaseIgnored));
+					}
 				}
 			}
 			

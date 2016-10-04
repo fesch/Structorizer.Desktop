@@ -64,6 +64,7 @@ package lu.fisch.structorizer.elements;
 
 
 import java.awt.Point;
+import java.util.Vector;
 
 import javax.swing.ImageIcon;
 
@@ -93,7 +94,8 @@ public class For extends Element implements ILoop {
 	// END KGU#136 2016-03-01
 
 	// START KGU#258 2016-09-26: Enh. #253
-	private static final String[] relevantParserKeys = {"preFor", "postFor", "stepFor", "preForIn", "postForIn"};
+	private static final String[] relevantParserKeysCount = {"preFor", "postFor", "stepFor"};
+	private static final String[] relevantParserKeysTrav = {"preForIn", "postForIn"};
 	// END KGU#258 2016-09-25
 	
 	// START KGU#3 2015-10-24
@@ -1214,7 +1216,25 @@ public class For extends Element implements ILoop {
 	 */
 	@Override
 	protected String[] getRelevantParserKeys() {
-		return relevantParserKeys;
+		switch (this.style)
+		{
+		case COUNTER:
+			return relevantParserKeysCount;
+		case TRAVERSAL:
+			return relevantParserKeysTrav;
+		default:
+			{
+				Vector<String> keys = new Vector<String>();
+				for (String key: relevantParserKeysCount)
+				{
+					keys.add(key);
+				}
+				for (String key: relevantParserKeysTrav)
+				{
+					keys.add(key);
+				}
+				return keys.toArray(relevantParserKeysCount);
+			}
 	}
 	// END KGU#258 2016-09-25
 

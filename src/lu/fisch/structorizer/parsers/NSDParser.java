@@ -306,12 +306,33 @@ public class NSDParser extends DefaultHandler {
 			//ele.isConsistent = ele.checkConsistency();
 			// END KGU#3 2015-10-29
 			
-			// START KGU#258 2016-09-25: Enh. #253
+			// START KGU#258 2016-10-04: Enh. #253
+			boolean reliable = attributes.getIndex("reliable")!=-1 && attributes.getValue("reliable").equals("true");
+			// START KGU#61 2016-03-21: Enh. #84 - Support for FOR-INloops, new attribute
+			//ele.isConsistent = (reliable || ele.checkConsistency());
+			if (reliable)
+			{
+				ele.style = For.ForLoopStyle.COUNTER;
+				reliable = true;
+			}
+			else if (attributes.getIndex("style")!=-1)
+			{
+				String style = attributes.getValue("style");
+				try {
+					ele.style = For.ForLoopStyle.valueOf(style);
+					reliable = true;
+				}
+				catch (Exception ex)
+				{
+					System.err.println("Wrong loop style in FOR loop: " + style);
+				}
+			}
+			
 			if (this.refactorKeywords)
 			{
 				ele.refactorKeywords(savedParserPrefs, ignoreCase);
 			}
-			// END KGU#258 2016-09-25
+			// END KGU#258 2016-10-04
 			
 			// START KGU#3 2015-11-08: Better management of reliability of structured fields
 			if (got == 0)	// Seems to be an older diagram file, so try to split the text
@@ -321,26 +342,29 @@ public class NSDParser extends DefaultHandler {
 				ele.setEndValue(ele.getEndValue());
 				ele.setStepConst(ele.getStepConst());
 			}
-			boolean reliable = attributes.getIndex("reliable")!=-1 && attributes.getValue("reliable").equals("true");
+			
+			//boolean reliable = attributes.getIndex("reliable")!=-1 && attributes.getValue("reliable").equals("true");
 			// START KGU#61 2016-03-21: Enh. #84 - Support for FOR-INloops, new attribute
 			//ele.isConsistent = (reliable || ele.checkConsistency());
-			if (reliable)
+//			if (reliable)
+//			{
+//				ele.style = For.ForLoopStyle.COUNTER;
+//			}
+//			else if (attributes.getIndex("style")!=-1)
+//			{
+//				String style = attributes.getValue("style");
+//				try {
+//					ele.style = For.ForLoopStyle.valueOf(style);
+//				}
+//				catch (Exception ex)
+//				{
+//					System.err.println("Wrong loop style in FOR loop: " + style);
+//				}
+//			}
+//			else
+			if (!reliable)
 			{
-				ele.style = For.ForLoopStyle.COUNTER;
-			}
-			else if (attributes.getIndex("style")!=-1)
-			{
-				String style = attributes.getValue("style");
-				try {
-					ele.style = For.ForLoopStyle.valueOf(style);
-				}
-				catch (Exception ex)
-				{
-					System.err.println("Wrong loop style in FOR loop: " + style);
-				}
-			}
-			else
-			{
+				// This is now done with the current parser preferences - might fail.
 				ele.style = ((For)ele).classifyStyle();
 			}
 			if (ele.style == For.ForLoopStyle.TRAVERSAL)
@@ -348,22 +372,24 @@ public class NSDParser extends DefaultHandler {
 				// Now we try to reconstruct the value list.
 				// For this we use the post-FOR-IN separator that was valid on saving the file 
 				String currentInSep = D7Parser.keywordMap.get("postForIn");
-				String inSep = null;
 				if (!savedParserPrefs.containsKey("postForIn") && attributes.getIndex("insep")!=-1)
 				{
-					inSep = attributes.getValue("insep");
-				}
-				try {
-					if (inSep != null && !inSep.isEmpty())
+					// In this case it's unlikely that the FOR-IN separator has already been 
+					String inSep = attributes.getValue("insep");
+					if (inSep != null && !inSep.trim().isEmpty())
 					{
+						// Temporarily substitute the postForIn keyword with that from file
 						D7Parser.keywordMap.put("postForIn", inSep);
 					}
+				}
+				try {
 					ele.setValueList(ele.splitForClause()[5]);
 				}
 				catch (Exception ex) {
 					System.err.println("Error on reconstructing FOR-IN loop: " + ex.getLocalizedMessage());
 				}
 				finally {
+					// Make sure the current FOR-IN separator does not remain crooked
 					D7Parser.keywordMap.put("postForIn", currentInSep);
 				}
 			}

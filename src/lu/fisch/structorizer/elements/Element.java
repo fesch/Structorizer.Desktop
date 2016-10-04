@@ -2738,6 +2738,21 @@ public abstract class Element {
 			if (splitKey != null)
 			{
 				String subst = D7Parser.keywordMap.get(_keywords[i]);
+				// line shouldn't be inflated ...
+				if (!splitKey.get(0).equals(" ")) {
+					while (subst.startsWith(" ")) subst = subst.substring(1); 
+				}
+				if (!splitKey.get(splitKey.count()-1).equals(" ")) {
+					while (subst.endsWith(" ")) subst = subst.substring(0, subst.length()-1);
+				}
+				// ... but spaces must not get lost either!
+				if (splitKey.get(0).equals(" ") && !subst.startsWith(" ")) {
+					subst = " " + subst;
+				}
+				if (splitKey.count() > 1 && splitKey.get(splitKey.count()-1).equals(" ") && !subst.endsWith(" ")) {
+					subst += " ";
+				}
+				// Now seek old keyword and replace it where found
 				int pos = -1;
 				while ((pos = tokens.indexOf(splitKey, pos+1, !_ignoreCase)) >= 0)
 				{
