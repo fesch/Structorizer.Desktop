@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -55,12 +56,14 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.09.24      Enh. #250: Adaptations to make the new editor design work
  *      Kay Gürtzig     2016.09.25      Issue #252: ':=' and '<-' equivalence in consistency check
  *                                      Enh. #253: D7Parser.keywordMap refactored
+ *      Kay Gürtzig     2016.10.04      Enh. #253: Refactoring configuration revised 
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 import java.awt.Point;
@@ -1235,8 +1238,8 @@ public class For extends Element implements ILoop {
 				}
 				return keys.toArray(relevantParserKeysCount);
 			}
+		}
 	}
-	// END KGU#258 2016-09-25
-
+	// END KGU#258 2016-09-26
 
 }
