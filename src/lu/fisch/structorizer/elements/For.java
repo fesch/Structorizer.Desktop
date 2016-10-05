@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -55,15 +56,18 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.09.24      Enh. #250: Adaptations to make the new editor design work
  *      Kay Gürtzig     2016.09.25      Issue #252: ':=' and '<-' equivalence in consistency check
  *                                      Enh. #253: D7Parser.keywordMap refactored
+ *      Kay Gürtzig     2016.10.04      Enh. #253: Refactoring configuration revised 
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 import java.awt.Point;
+import java.util.Vector;
 
 import javax.swing.ImageIcon;
 
@@ -93,7 +97,8 @@ public class For extends Element implements ILoop {
 	// END KGU#136 2016-03-01
 
 	// START KGU#258 2016-09-26: Enh. #253
-	private static final String[] relevantParserKeys = {"preFor", "postFor", "stepFor", "preForIn", "postForIn"};
+	private static final String[] relevantParserKeysCount = {"preFor", "postFor", "stepFor"};
+	private static final String[] relevantParserKeysTrav = {"preForIn", "postForIn"};
 	// END KGU#258 2016-09-25
 	
 	// START KGU#3 2015-10-24
@@ -1214,9 +1219,27 @@ public class For extends Element implements ILoop {
 	 */
 	@Override
 	protected String[] getRelevantParserKeys() {
-		return relevantParserKeys;
+		switch (this.style)
+		{
+		case COUNTER:
+			return relevantParserKeysCount;
+		case TRAVERSAL:
+			return relevantParserKeysTrav;
+		default:
+			{
+				Vector<String> keys = new Vector<String>();
+				for (String key: relevantParserKeysCount)
+				{
+					keys.add(key);
+				}
+				for (String key: relevantParserKeysTrav)
+				{
+					keys.add(key);
+				}
+				return keys.toArray(relevantParserKeysCount);
+			}
+		}
 	}
-	// END KGU#258 2016-09-25
-
+	// END KGU#258 2016-09-26
 
 }

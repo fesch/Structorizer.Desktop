@@ -43,6 +43,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.03.21-22   Enh. #84 (KGU#61) mechanisms to save FOR-IN loops adequately
  *      Kay Gürtzig     2016.09.25      Enh. #253: Root element now conveys parser preferences,
  *                                      D7Parser.keywordMap refactoring done (going to be superfluous!)
+ *      Kay Gürtzig     2016.10.04      Bugfix #258: Structured FOR loop parameters weren't always preserved on saving
  *
  ******************************************************************************************************
  *
@@ -211,6 +212,29 @@ public class XmlGenerator extends Generator {
     	// We need some pre-processing to enhance robustness: If some of the specific fields
     	// cannot be retrieved then just omit them, they aren't strictly needed on loading.
     	String[] specificInfo = _for.splitForClause();
+    	// START KGU#268 2016-10-04: Bugfix #258: The approach above turned out to be too simple
+    	// The split clause is good as a basis but if the FOR loop style was identified then the
+    	// specifically stored information might be better suited (particularly if e.g. parser
+    	// keywords have been changed in the meantime. So override the split result if more precise
+    	// data is available...
+    	String info = _for.getCounterVar();
+    	if (info != null && !info.isEmpty())
+    	{
+    		specificInfo[0] = info;
+    	}
+    	if (_for.style == For.ForLoopStyle.COUNTER)
+    	{
+        	if ((info = _for.getStartValue()) != null && !info.isEmpty())
+        	{
+        		specificInfo[1] = info;
+        	}
+        	if ((info = _for.getEndValue()) != null && !info.isEmpty())
+        	{
+        		specificInfo[2] = info;
+        	}
+       		specificInfo[3] = Integer.toString(_for.getStepConst());
+    	}
+    	// END KGU#268 2016-10-04
     	String specificAttributes = "";
     	for (int i = 0; i < forLoopAttributes.length; i++)
     	{
@@ -223,7 +247,7 @@ public class XmlGenerator extends Generator {
     			"\" comment=\"" + BString.encodeToHtml(_for.getComment().getCommaText()) +
     			specificAttributes +
     			"\" style=\"" + BString.encodeToHtml(_for.style.toString()) +
-    			// FIXME: No longer needed beyond version 3.25-01, except for backward compatibility (temporarily)
+    			// FIXME: No longer needed beyond version 3.25-01, except for backward compatibility (i. e. temporarily)
     			(_for.isForInLoop() ? ("\" insep=\"" + BString.encodeToHtml(D7Parser.keywordMap.get("postForIn"))) : "") +
     			"\" color=\"" + _for.getHexColor()+"\">");
     	// END KGU#118 2015-12-31

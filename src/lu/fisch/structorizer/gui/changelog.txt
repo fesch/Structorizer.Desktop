@@ -4,7 +4,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.25-02 (2016.10.04)
+Current development version: 3.25-02 (2016.10.05)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
 - 01: Issue #213: Selected state of FOR transmutation result now visible <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
@@ -23,10 +23,12 @@ Current development version: 3.25-02 (2016.10.04)
 - 01: Saved diagrams now prepared for #253 (parser info included) <2>
 - 01: Bugfix #254: CASE execution failed when parser keywords were used <2>
 - 01: Enh. #255: Analyser now names the assumed loop variables if supernumerous <2>
-- 02: Enh. #253: Refactoring option on loading diagrams with parser info (>= 3.25-01) <2>
-- 02: Enh. #253: Refactoring option on changing parser preferences <2>
-- 02: Enh. #253: Refactoring option on loading preferences from file <2>
+- 02: Enh. #253: Refactoring option for loading diagrams (files ≥ 3.25-01) <2>
+- 02: Enh. #253: Refactoring offer on changing parser preferences <2>
+- 02: Enh. #253: Refactoring offer on loading preferences from file <2>
 - 02: Enh. #257: Decomposing transmutation of CASE elements <2>
+- 02: Bugfix #258: Saving of FOR loops wasn't robust against keyword changes <2>
+- 02: Bugfix #260: Variable name column in Executor control no longer editable <2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2
