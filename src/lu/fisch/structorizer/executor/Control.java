@@ -47,6 +47,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.07.27      KGU#197: More LangTextHolders for Executor error messages
  *      Kay Gürtzig     2016.08.03      KGU#89: Inheritance enhanced to improve language support (var table)
  *      Kay Gürtzig     2016.10.05      Bugfix #260: Editing of 1st column in variable table disabled.
+ *      Kay Gürtzig     2016.10.07      KGU#68 (issue #15) ConcurrentHashMap replaces Object[] for variable editing
  *
  ******************************************************************************************************
  *
@@ -67,7 +68,10 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.HashMap;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import javax.swing.JComboBox;
 import javax.swing.SwingUtilities;
@@ -477,11 +481,11 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         cbRunDataDisplay.setEnabled(chkCollectRuntimeData.isSelected());
         // END KGU#117 2016-03-06
         // START KGU#68 205-11-06: Enhancement - update edited values
-    	if (varsUpdated)
+    	if (!varUpdates.isEmpty())
     	{
-    		Executor.getInstance().adoptVarChanges(varUpdates);
+    		Executor.getInstance().adoptVarChanges(new HashMap<String,Object>(varUpdates));
     	}
-    	varsUpdated = false;
+    	varUpdates.clear();
     	// END KGU#68 2015-11-06
         if(Executor.getInstance().isRunning()==false)
         {
@@ -519,10 +523,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     private void btnStepActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnStepActionPerformed
     {
     	// START KGU#68 2015-11-06: Enhancement - update edited values
-    	if (varsUpdated)
+    	if (!varUpdates.isEmpty())
     	{
-    		Executor.getInstance().adoptVarChanges(varUpdates);
-    		varsUpdated = false;
+    		Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
+    		varUpdates.clear();
     	}
     	// END KGU#68 2015-11-06
         // START KGU#117 2016-03-06: Enh. #77
@@ -582,23 +586,15 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 
     public void updateVars(Vector<Vector<Object>> vars)
     {
-    	// START KGU#68 2015-11-06: We want to keep track of changed variables
-    	this.varsUpdated = false;
-    	// END KGU#68 2015-11-06
         tblVar.setGridColor(Color.LIGHT_GRAY);
         tblVar.setShowGrid(true);
         DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
         // empty the table
+        // START KGU#68 2016-10-07: Preparation for variable editing
+        varUpdates.clear();
+        // END KGU#68 2016-10-07
         while(tm.getRowCount()>0) tm.removeRow(0);
-        // START KGU#68 2015-11-06: Preparation for variable editing
-        //for(int i=0;i<vars.size();i++) tm.addRow(vars.get(i));
-        varUpdates = new Object[vars.size()];
-        for(int i=0; i<vars.size(); i++)
-        {
-        	tm.addRow(vars.get(i));
-        	varUpdates[i] = null;
-        }
-        // END KGU#68 2015-11-06
+        for(int i=0; i<vars.size(); i++) tm.addRow(vars.get(i));
     }
     
     // START KGU#2 (#9) 2015-11-14: Update method for subroutine level display
@@ -685,8 +681,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // END KGU#247 2016-09-17
     
     // START KGU#68 2015-11-06: Register variable value editing events
-    private Object[] varUpdates = null;
-    private boolean varsUpdated = false;
+    private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();
 
     @Override
 	public void propertyChange(PropertyChangeEvent pcEv) {
@@ -698,8 +693,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             Object val = tm.getValueAt(rowNr, 1);
             if (val != null)
             {
-            	varsUpdated = true;
-            	varUpdates[rowNr] = val;
+            	varUpdates.put((String)tm.getValueAt(rowNr, 0), val);
             	//System.out.println(tm.getValueAt(rowNr, 0).toString() + " <- " + val.toString());
             }
     	}

@@ -95,6 +95,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.09.25      Bugfix #251: Console window wasn't involved in look and feel update
  *      Kay Gürtzig     2016.09.25      Bugfix #254: parser keywords for CASE elements had been ignored
  *                                      Enh. #253: D7Parser.keywordMap refactoring done
+ *      Kay Gürtzig     2016.10.06      Bugfix #261: Stop didn't work immediately within multi-line instructions
+ *      Kay Gürtzig     2016.10.07      Some synchronized sections added to reduce inconsistency exception likelihood
  *
  ******************************************************************************************************
  *
@@ -191,6 +193,7 @@ import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Stack;
@@ -1746,21 +1749,20 @@ public class Executor implements Runnable
 	}
 	// END KGU#67/KGU#68 2015-11-08
 	
-	// START KGU#68 2015-11-06
-	public void adoptVarChanges(Object[] newValues)
+	// START KGU#68 2015-11-06 - 2016-10-07 modified for improved thread-safety 
+	public void adoptVarChanges(HashMap<String,Object> newValues)
 	{
 		String tmplManuallySet = control.lbManuallySet.getText();	// The message template
-		for (int i = 0; i < newValues.length; i++)
+		for (HashMap.Entry<String, Object> entry: newValues.entrySet())
 		{
-			if (newValues[i] != null)
-			{
 				try {
-					String varName = this.variables.get(i);
+					String varName = entry.getKey();
 					Object oldValue = interpreter.get(varName);
+					Object newValue = entry.getValue();
 					// START KGU#160 2016-04-12: Enh. #137 - text window output
 					// START KGU#197 2016-05-05: Language support extended
 					//this.console.writeln("*** Manually set: " + varName + " <- " + newValues[i] + " ***", Color.RED);
-					this.console.writeln(tmplManuallySet.replace("%1", varName).replace("%2", newValues[i].toString()), Color.RED);
+					this.console.writeln(tmplManuallySet.replace("%1", varName).replace("%2", newValue.toString()), Color.RED);
 					// END KGU#197 2016-05-05
 					if (isConsoleEnabled)
 					{
@@ -1771,7 +1773,7 @@ public class Executor implements Runnable
 					if (oldValue != null && oldValue.getClass().getSimpleName().equals("Object[]"))
 					{
 						// In this case an initialisation expression ("{ ..., ..., ...}") is expected
-						String asgnmt = "Object[] " + varName + " = " + newValues[i];
+						String asgnmt = "Object[] " + varName + " = " + newValue;
 						//System.out.println(asgnmt);	// FIXME (KGU) Remove this debug info after test
 						// FIXME: Nested initializers (as produced for nested arrays before) won't work here!
 						interpreter.eval(asgnmt);
@@ -1791,14 +1793,13 @@ public class Executor implements Runnable
 					}
 					else
 					{
-						//System.out.println(varName + " = " + (String)newValues[i]);	// FIXME(KGU) Remove this debug info after test
-						setVarRaw(varName, (String)newValues[i]);
+
+						setVarRaw(varName, (String)newValue);
 					}
 				}
 				catch (EvalError err) {
 					System.err.println(err.getMessage());
 				}
-			}
 		}
 	}
 	// END KGU#68 2015-11-06
@@ -2016,18 +2017,18 @@ public class Executor implements Runnable
 				// START KGU#156 2016-03-11: Enh. #124
 				element.addToExecTotalCount(1, true);	// For the instruction line
 				//END KGU#156 2016-03-11
+				// START KGU#271: 2016-10-06: Bugfix #271: Allow to step and stop within an instruction block (but no breakpoint here!) 
+				if ((i+1 < sl.count()) && result.equals("") && (stop == false) &&	!returned && leave == 0)
+				{
+					delay();
+				}
+				// END KGU#271 2016-10-06
 			} catch (EvalError ex)
 			{
 				result = ex.getLocalizedMessage();
 				if (result == null) result = ex.getMessage();
 			}
 			i++;
-			// START KGU#271: 2016-10-06: Bugfix #271: Allow to step and stop within an instruction block (but no breakpoint here!) 
-			if ((i < sl.count()) && result.equals("") && (stop == false) &&	!returned && leave == 0)
-			{
-				delay();
-			}
-			// END KGU#271 2016-10-06
 		}
 		if (result.equals(""))
 		{
@@ -2374,8 +2375,11 @@ public class Executor implements Runnable
 					JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
 			if (pressed == 1)
 			{
-				paus = true;
-				step = true;
+				synchronized(this)
+				{
+					paus = true;
+					step = true;
+				}
 				control.setButtonsForPause();
 			}
 		}
@@ -2437,8 +2441,11 @@ public class Executor implements Runnable
 				JOptionPane.showMessageDialog(diagram, control.lbInputPaused.getText(),
 						control.lbInputCancelled.getText(), JOptionPane.WARNING_MESSAGE);
 				// START KGU#197 2016-05-05
-				paus = true;
-				step = true;
+				synchronized(this)
+				{
+					paus = true;
+					step = true;
+				}
 				this.control.setButtonsForPause();
 				if (!variables.contains(in))
 				{
@@ -2540,8 +2547,11 @@ public class Executor implements Runnable
 						JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
 				if (pressed == 1)
 				{
-					paus = true;
-					step = true;
+					synchronized(this)
+					{
+						paus = true;
+						step = true;
+					}
 					control.setButtonsForPause();
 				}
 			}

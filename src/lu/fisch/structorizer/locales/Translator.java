@@ -193,50 +193,50 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         // - default loadedLocale contains duplicated strings
         checkForDuplicatedStrings();
 
-		/******************************
-		 * Set onClose event
-		 ******************************/
-		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		addWindowListener(new WindowAdapter() 
-		{
-			@Override
-			public void windowClosing(WindowEvent e) 
-			{
-				String[] localeNames = locales.getNames();
-				StringList unsavedLocales = new StringList();
-				for (int i = 0; i < localeNames.length; i++)
-				{
-					if (locales.getLocale(localeNames[i]).hasUnsavedChanges)
-					{
-						for (int j = 0; j < Locales.LOCALES_LIST.length; j++)
-						{
-							if (Locales.LOCALES_LIST[j][0].equals(localeNames[i]))
-							{
-								unsavedLocales.add("    " + localeNames[i] +
-										" (" + Locales.LOCALES_LIST[j][1] + ")");
-							}
-						}
-					}
-				}
-				if (unsavedLocales.count() > 0)
-				{
-					int answer = JOptionPane.showConfirmDialog (null, 
-					        "There are unsaved changes in following locales:\n"
-							+ unsavedLocales.getText() + "\nSure to close?", 
-					        "Unsaved Changes",
-					        JOptionPane.YES_NO_OPTION,
-					        JOptionPane.QUESTION_MESSAGE);
-					if (answer == JOptionPane.YES_OPTION)
-					{
-						dispose();
-					}
-				}
-				else
-				{
-					dispose();
-				}
-			}
-		});
+        /******************************
+         * Set onClose event
+         ******************************/
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() 
+        {
+            @Override
+            public void windowClosing(WindowEvent e) 
+            {
+                String[] localeNames = locales.getNames();
+                StringList unsavedLocales = new StringList();
+                for (int i = 0; i < localeNames.length; i++)
+                {
+                    if (locales.getLocale(localeNames[i]).hasUnsavedChanges)
+                    {
+                        for (int j = 0; j < Locales.LOCALES_LIST.length; j++)
+                        {
+                            if (Locales.LOCALES_LIST[j][0].equals(localeNames[i]))
+                            {
+                                unsavedLocales.add("    " + localeNames[i] +
+                                        " (" + Locales.LOCALES_LIST[j][1] + ")");
+                            }
+                        }
+                    }
+                }
+                if (unsavedLocales.count() > 0)
+                {
+                    int answer = JOptionPane.showConfirmDialog (null, 
+                            "There are unsaved changes in following locales:\n"
+                            + unsavedLocales.getText() + "\nSure to close?", 
+                            "Unsaved Changes",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.QUESTION_MESSAGE);
+                        if (answer == JOptionPane.YES_OPTION)
+                    {
+                        dispose();
+                    }
+                }
+                else
+                {
+                    dispose();
+                }
+            }
+        });
     
     }
     
@@ -280,7 +280,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 // START KGU 2016-09-05: Bugfix - if the user doesn't want to discard changes we shouldn't continue
                 else {          
                     headerText.getDocument().addDocumentListener(this);
-                	return false;
+                    return false;
                 }
                 // END KGU 2016-09-05
             }
@@ -534,7 +534,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             System.out.println("Section: "+sectionName);
 
             ArrayList<String> keys = locale.getKeys(sectionName);
-            
+
             while(!keys.isEmpty())
             {
                 String key = keys.get(0);
@@ -546,7 +546,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 }
             }
         }
-        
+
         if(error)
         {
             JOptionPane.showMessageDialog(this, "Duplicated string(s) detected.\nPlease read the console output!\n\nTranslator is closing now!", "Error", JOptionPane.ERROR_MESSAGE);
@@ -619,7 +619,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 localeButtons.add(button);
             }
         }
-        
+
         jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 24)); // NOI18N
         jLabel1.setText("Load");
 
@@ -757,13 +757,13 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         for (int i = 0; i < sectionNames.size(); i++) {
             // get the name of the section
             String sectionName = sectionNames.get(i);
-            
+
             // fetch the corresponding table
             JTable table = tables.get(sectionName);
 
             // get a reference to the model
             DefaultTableModel model = ((DefaultTableModel)table.getModel());
-            
+
             // get the strings and put them into loadedLocale
             for (int r = 0; r < model.getRowCount(); r++) {
                 // get the key
@@ -777,22 +777,22 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         
         return locale;
     }
-    
+
     private void button_saveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_saveActionPerformed
         // get the composed locale
         Locale locale = getComposedLocale();
-        
+
         // now ask where to save the data
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Save as");
         String proposedFilename = loadedLocale.cachedFilename;
         if (proposedFilename == null)
         {
-        	proposedFilename = loadedLocaleName+".txt";
+            proposedFilename = loadedLocaleName+".txt";
         }
         fileChooser.setSelectedFile(new File(proposedFilename));
         int userSelection = fileChooser.showSaveDialog(this);
-        
+
         if (userSelection == JFileChooser.APPROVE_OPTION) 
         {
             File fileToSave = fileChooser.getSelectedFile();
@@ -804,10 +804,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                     "Are you sure to override the file <"+fileToSave.getName()+">?", "Override file?", 
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.QUESTION_MESSAGE) == JOptionPane.NO_OPTION) {
-                save=false;
-            }
+                    save=false;
+                }
 
-            }            
+            }
             
             if(save) try
             {
@@ -819,8 +819,8 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 JButton button = (JButton) getComponentByName(loadedLocaleName);
                 if (button != null)
                 {
-                	//button.setBackground(stdBackgroundColor);
-                	button.setBackground(savedColor);
+                    //button.setBackground(stdBackgroundColor);
+                    button.setBackground(savedColor);
                 }
                 cacheUnsavedData();
                 loadedLocale.hasUnsavedChanges = false;
@@ -847,8 +847,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         Locales.getInstance().setLocale("preview");
 
         /*
-        if(NSDControl!=null)
-    {
+        if(NSDControl!=null) {
             NSDControl.setLocale(StringList.explode(locale.getText(), "\n"));
         }*/
     }//GEN-LAST:event_button_previewActionPerformed
