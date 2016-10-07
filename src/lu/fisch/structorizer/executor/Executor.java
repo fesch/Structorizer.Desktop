@@ -1968,12 +1968,12 @@ public class Executor implements Runnable
 			cmd = convert(cmd).trim();
 			try
 			{
-				// START KGU 2015-10-12: Allow to step within an instruction block (but no breakpoint here!) 
-				if (i > 0)
-				{
-					delay();
-				}
-				// END KGU 2015-10-12
+				// START KGU#271: 2016-10-06: Bugfix #271 - this was mis-placed here and had to go to the loop body end 
+//				if (i > 0)
+//				{
+//					delay();
+//				}
+				// END KGU#271 2016-10-06
 				
 				// assignment
 				if (cmd.indexOf("<-") >= 0)
@@ -2022,7 +2022,12 @@ public class Executor implements Runnable
 				if (result == null) result = ex.getMessage();
 			}
 			i++;
-			// Among the lines of a single instruction element there is no further breakpoint check!
+			// START KGU#271: 2016-10-06: Bugfix #271: Allow to step and stop within an instruction block (but no breakpoint here!) 
+			if ((i < sl.count()) && result.equals("") && (stop == false) &&	!returned && leave == 0)
+			{
+				delay();
+			}
+			// END KGU#271 2016-10-06
 		}
 		if (result.equals(""))
 		{

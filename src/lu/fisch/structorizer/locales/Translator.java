@@ -127,18 +127,18 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         button_preview.setVisible(false);
         
         // START KGU 2016-08-04: Issue #220
-		// set icon depending on OS ;-)
-		String os = System.getProperty("os.name").toLowerCase();
-		setIconImage(IconLoader.ico074.getImage());
-		if (os.indexOf("windows") != -1) 
-		{
-			setIconImage(IconLoader.ico074.getImage());
-		} 
-		else if (os.indexOf("mac") != -1) 
-		{
-			setIconImage(IconLoader.icoNSD.getImage());
-		}
-		this.setTitle("Structorizer Translator");
+        // set icon depending on OS ;-)
+        String os = System.getProperty("os.name").toLowerCase();
+        setIconImage(IconLoader.ico074.getImage());
+        if (os.indexOf("windows") != -1) 
+        {
+            setIconImage(IconLoader.ico074.getImage());
+        } 
+        else if (os.indexOf("mac") != -1) 
+        {
+            setIconImage(IconLoader.icoNSD.getImage());
+        }
+        this.setTitle("Structorizer Translator");
         setSize(1000, 500);	// with less width the save button was invisibble
         stdBackgroundColor = button_empty.getBackground();	// for resetting
         // END KGU 2016-08-04
@@ -252,30 +252,30 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         {
             // Check if user wants to discard changes
             if (loadedLocaleName.equals(localeName)
-            		&&
-            		(loadedLocale.hasUnsavedChanges
-            				|| 
-            				loadedLocale.hasCachedChanges() &&
-            				!((loadedLocale.cachedFilename != null) && toLoadFromFile && !loadedLocale.hasUnsavedChanges)
-            		)
-            	||
-            	!loadedLocaleName.equals(localeName) &&
-            	locales.getLocale(localeName).hasUnsavedChanges && toLoadFromFile)
+                    &&
+                    (loadedLocale.hasUnsavedChanges
+                            || 
+                            loadedLocale.hasCachedChanges() &&
+                            !((loadedLocale.cachedFilename != null) && toLoadFromFile && !loadedLocale.hasUnsavedChanges)
+                    )
+                ||
+                !loadedLocaleName.equals(localeName) &&
+                locales.getLocale(localeName).hasUnsavedChanges && toLoadFromFile)
             {
-            	String question = locales.getLocale(localeName).hasUnsavedChanges ? "Do you want to discard all changes for" : "Do you want to reload the released locale";
+                String question = locales.getLocale(localeName).hasUnsavedChanges ? "Do you want to discard all changes for" : "Do you want to reload the released locale";
                 int answer = JOptionPane.showConfirmDialog (null, 
                         question + " \"" + localeName + "\"?", 
                         "Existing Changes",
                         JOptionPane.YES_NO_OPTION,
                         JOptionPane.QUESTION_MESSAGE);
                 if (answer == JOptionPane.YES_OPTION) {
-                	// discard all cached changes if any
+                    // discard all cached changes if any
                     JButton button = (JButton) getComponentByName(loadedLocaleName);
                     loadedLocale.values.clear();
                     loadedLocale.cachedHeader.clear();
                     loadedLocale.hasUnsavedChanges = false;
                     loadedLocale.cachedFilename = null;
-                    button.setBackground(this.stdBackgroundColor);                	
+                    button.setBackground(this.stdBackgroundColor);
                 }
                 // START KGU 2016-09-05: Bugfix - if the user doesn't want to discard changes we shouldn't continue
                 else {          
@@ -292,21 +292,21 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         loadedLocale = locales.getLocale(localeName);
         
         // First check if we have some cached values
-    	// START KGU#231 2016-08-09: Issue #220
+        // START KGU#231 2016-08-09: Issue #220
         // Take care of a modified header
-    	if (loadedLocale.cachedHeader.count() > 0)
-    	{
-    		headerText.setText(loadedLocale.cachedHeader.getText());
-    	}
-    	// END KGU#231 2016-08-09
+        if (loadedLocale.cachedHeader.count() > 0)
+        {
+            headerText.setText(loadedLocale.cachedHeader.getText());
+        }
+        // END KGU#231 2016-08-09
         if(loadedLocale.values.size()!=0)
         {
-        	// Present a different column header if the locale data were from file
-        	String column2Header = localeName;
-        	if (loadedLocale.cachedFilename != null)
-        	{
-        		column2Header += " (" + loadedLocale.cachedFilename + ")";
-        	}
+            // Present a different column header if the locale data were from file
+            String column2Header = localeName;
+            if (loadedLocale.cachedFilename != null)
+            {
+                column2Header += " (" + loadedLocale.cachedFilename + ")";
+            }
             // loop through all sections
             ArrayList<String> sectionNames = locales.getSectionNames();
             for (int i = 0; i < sectionNames.size(); i++) {
@@ -333,33 +333,33 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             }
         }
         else {
-        	// loop through all sections
-        	ArrayList<String> sectionNames = locales.getSectionNames();
-        	for (int i = 0; i < sectionNames.size(); i++) {
-        		// get the name of the section
-        		String sectionName = sectionNames.get(i);
+            // loop through all sections
+            ArrayList<String> sectionNames = locales.getSectionNames();
+            for (int i = 0; i < sectionNames.size(); i++) {
+                // get the name of the section
+                String sectionName = sectionNames.get(i);
 
-        		// fetch the corresponding table
-        		JTable table = tables.get(sectionName);
+                // fetch the corresponding table
+                JTable table = tables.get(sectionName);
 
-        		// put the label on the column
-        		table.getColumnModel().getColumn(2).setHeaderValue(localeName);
-        		table.getTableHeader().repaint();
+                // put the label on the column
+                table.getColumnModel().getColumn(2).setHeaderValue(localeName);
+                table.getTableHeader().repaint();
 
-        		// get a reference to the model
-        		DefaultTableModel model = ((DefaultTableModel)table.getModel());
+                // get a reference to the model
+                DefaultTableModel model = ((DefaultTableModel)table.getModel());
 
-        		// get the needed loadedLocale and the corresponding section
-        		Locale locale = locales.getLocale(localeName);
+                // get the needed loadedLocale and the corresponding section
+                Locale locale = locales.getLocale(localeName);
 
-        		// get the strings and put them into the right row
-        		for (int r = 0; r < model.getRowCount(); r++) {
-        			// get the key
-        			String key = ((String) model.getValueAt(r, 0)).trim();
-        			// put the value
-        			model.setValueAt(locale.getValue(sectionName, key), r, 2);
-        		}
-        	}
+                // get the strings and put them into the right row
+                for (int r = 0; r < model.getRowCount(); r++) {
+                    // get the key
+                    String key = ((String) model.getValueAt(r, 0)).trim();
+                    // put the value
+                    model.setValueAt(locale.getValue(sectionName, key), r, 2);
+                }
+            }
         }
 
         // enable the buttons
@@ -415,58 +415,58 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     private boolean presentLocale(Locale locale)
     {
         // first check if we have some cached values
-    	boolean differs = loadedLocale.getHeader().count() != locale.getHeader().count();
-    	if (!differs)
-    	{
-    		StringList header1 = loadedLocale.getHeader();
-    		StringList header2 = locale.getHeader();
-    		for (int line = 0; !differs && line < Math.min(header1.count(), header2.count()); line++)
-    		{
-    			differs = !header1.get(line).equals(header2.get(line));
-    		}
-    	}
-    	if (differs)
-    	{
+        boolean differs = loadedLocale.getHeader().count() != locale.getHeader().count();
+        if (!differs)
+        {
+            StringList header1 = loadedLocale.getHeader();
+            StringList header2 = locale.getHeader();
+            for (int line = 0; !differs && line < Math.min(header1.count(), header2.count()); line++)
+            {
+                differs = !header1.get(line).equals(header2.get(line));
+            }
+        }
+        if (differs)
+        {
             headerText.getDocument().removeDocumentListener(this);
-    		headerText.setText(locale.getHeader().getText());
+            headerText.setText(locale.getHeader().getText());
             headerText.getDocument().addDocumentListener(this);
-    	}
-    	loadedLocale.cachedFilename = locale.getFilename();
-    	String column2Header = loadedLocaleName + " (" + locale.getFilename() + ")";
-    	// loop through all sections
-    	ArrayList<String> sectionNames = locales.getSectionNames();
-    	for (int i = 0; i < sectionNames.size(); i++) {
-    		// get the name of the section
-    		String sectionName = sectionNames.get(i);
+        }
+        loadedLocale.cachedFilename = locale.getFilename();
+        String column2Header = loadedLocaleName + " (" + locale.getFilename() + ")";
+        // loop through all sections
+        ArrayList<String> sectionNames = locales.getSectionNames();
+        for (int i = 0; i < sectionNames.size(); i++) {
+            // get the name of the section
+            String sectionName = sectionNames.get(i);
 
-    		// fetch the corresponding table
-    		JTable table = tables.get(sectionName);
-    		// No need to trigger property change events here, we know what we do
+            // fetch the corresponding table
+            JTable table = tables.get(sectionName);
+            // No need to trigger property change events here, we know what we do
             table.removePropertyChangeListener(this);
 
-    		// put the label on the column
-    		table.getColumnModel().getColumn(2).setHeaderValue(column2Header);
-    		table.getTableHeader().repaint();
+            // put the label on the column
+            table.getColumnModel().getColumn(2).setHeaderValue(column2Header);
+            table.getTableHeader().repaint();
 
-    		// get a reference to the model
-    		DefaultTableModel model = ((DefaultTableModel)table.getModel());
+            // get a reference to the model
+            DefaultTableModel model = ((DefaultTableModel)table.getModel());
 
-    		// get the strings and put them into the right row
-    		for (int r = 0; r < model.getRowCount(); r++) {
-    			// get the key
-    			String key = ((String) model.getValueAt(r, 0)).trim();
-    			// Test the value
-    			if (locale.valueDiffersFrom(key, (String)model.getValueAt(r, 2)))
-    			{
-    				differs = true;
-    			}
-    			// put the value
-    			model.setValueAt(locale.getValue(sectionName, key), r, 2);
-    		}
-    		// Table loaded, from now on react to user manipulations again
+            // get the strings and put them into the right row
+            for (int r = 0; r < model.getRowCount(); r++) {
+                // get the key
+                String key = ((String) model.getValueAt(r, 0)).trim();
+                // Test the value
+                if (locale.valueDiffersFrom(key, (String)model.getValueAt(r, 2)))
+                {
+                    differs = true;
+                }
+                // put the value
+                model.setValueAt(locale.getValue(sectionName, key), r, 2);
+            }
+            // Table loaded, from now on react to user manipulations again
             table.addPropertyChangeListener(this);
-    	}
-    	return differs;
+        }
+        return differs;
     }
     // END KGU#244 2016-09-05
     
@@ -604,20 +604,20 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
         for (int i = 0; i < Locales.LOCALES_LIST.length; i++)
         {
-        	final String localeName = Locales.LOCALES_LIST[i][0];
-        	String localeToolTip = Locales.LOCALES_LIST[i][1];
-        	if (localeToolTip != null)
-        	{
-        		javax.swing.JButton button = new javax.swing.JButton();
-        		button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_"+localeName+".png"))); // NOI18N
-        		button.setToolTipText(localeToolTip);
-        		button.addActionListener(new java.awt.event.ActionListener() {
-        			public void actionPerformed(java.awt.event.ActionEvent evt) {
-        				button_localeActionPerformed(evt, localeName);
-        			}
-        		});
-        		localeButtons.add(button);
-        	}
+            final String localeName = Locales.LOCALES_LIST[i][0];
+            String localeToolTip = Locales.LOCALES_LIST[i][1];
+            if (localeToolTip != null)
+            {
+                javax.swing.JButton button = new javax.swing.JButton();
+                button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_"+localeName+".png"))); // NOI18N
+                button.setToolTipText(localeToolTip);
+                button.addActionListener(new java.awt.event.ActionListener() {
+                    public void actionPerformed(java.awt.event.ActionEvent evt) {
+                        button_localeActionPerformed(evt, localeName);
+                    }
+                });
+                localeButtons.add(button);
+            }
         }
         
         jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 24)); // NOI18N
@@ -654,7 +654,7 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 .addComponent(jLabel1);
         for (javax.swing.JButton button: localeButtons)
         {
-        	sGroup = sGroup.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            sGroup = sGroup.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                     .addComponent(button);
         }
         jPanel1Layout.setHorizontalGroup(
@@ -669,14 +669,14 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 .addContainerGap())
         );
         ParallelGroup pGroup = jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        		.addComponent(jLabel1)
-        		.addComponent(button_preview, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-        		.addComponent(button_empty, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-        		.addComponent(button_save, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE);
+                .addComponent(jLabel1)
+                .addComponent(button_preview, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(button_empty, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(button_save, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE);
         for (javax.swing.JButton button: localeButtons)
         {
-        	pGroup = pGroup.addComponent(button, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE);
-        }	
+            pGroup = pGroup.addComponent(button, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE);
+        }
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
@@ -704,42 +704,42 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
     private void button_localeActionPerformed(java.awt.event.ActionEvent evt, String localeName)
     {
-    	boolean fromFile = (evt.getModifiers() & ActionEvent.SHIFT_MASK) != 0;
-    	// (Re-)Load the selected standard locale - with check on unsaved changes
+        boolean fromFile = (evt.getModifiers() & ActionEvent.SHIFT_MASK) != 0;
+        // (Re-)Load the selected standard locale - with check on unsaved changes
         boolean done = loadLocale(localeName, evt, fromFile);
         // In case of a user file to be reloaded, the file content overrides the standard
-    	if (done && fromFile)
-    	{
-    		Locale loaded = makeLocaleFromChosenFile(localeName);
-    		if (loaded != null)
-    		{
-    			// Override the data by the loaded locale ...
-    			boolean diffs = presentLocale(loaded);
-    			// ... and adjust the button colour accordingly
-    			((JButton)evt.getSource()).setBackground(diffs ? savedColor : stdBackgroundColor);
-    		}
-    	}  
+        if (done && fromFile)
+        {
+            Locale loaded = makeLocaleFromChosenFile(localeName);
+            if (loaded != null)
+            {
+                // Override the data by the loaded locale ...
+                boolean diffs = presentLocale(loaded);
+                // ... and adjust the button colour accordingly
+                ((JButton)evt.getSource()).setBackground(diffs ? savedColor : stdBackgroundColor);
+            }
+        }
     }
     
     // START KGU#244 2016-09-05: Allow reloading begun language files
     private Locale makeLocaleFromChosenFile(String localeName) {
-    	Locale extLocale = null;
-		JFileChooser dlgOpen = new JFileChooser();
-		dlgOpen.setDialogTitle("Load saved translations for <"+localeName+"> from...");
-		// set directory
-		dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
-		// config dialogue
-		FileNameExtensionFilter filter = new FileNameExtensionFilter("Structorizer language file", "txt");
-		dlgOpen.addChoosableFileFilter(filter);
-		dlgOpen.setFileFilter(filter);
-		// show & get result
-		int result = dlgOpen.showOpenDialog(this);
-		// react on result
+        Locale extLocale = null;
+        JFileChooser dlgOpen = new JFileChooser();
+        dlgOpen.setDialogTitle("Load saved translations for <"+localeName+"> from...");
+        // set directory
+        dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
+        // config dialogue
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Structorizer language file", "txt");
+        dlgOpen.addChoosableFileFilter(filter);
+        dlgOpen.setFileFilter(filter);
+        // show & get result
+        int result = dlgOpen.showOpenDialog(this);
+        // react on result
         if (result == JFileChooser.APPROVE_OPTION) {
             String filename = dlgOpen.getSelectedFile().getAbsoluteFile().toString();
             // Create a new Locale from it
             extLocale = (new Locale(filename));
-		}
+        }
         return extLocale;
     }
     // END KGU#244 2016-09-05
@@ -876,60 +876,60 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     
     
     // START KGU#231 2016-08-04: Issue #220
-	public void propertyChange(PropertyChangeEvent pcEv) {
-		// Check if it was triggered by the termination of some editing activity (i.e. the cell editor was dropped)
-		if (pcEv.getPropertyName().equals("tableCellEditor") && pcEv.getNewValue() == null)
-		{
-			for (String sectionName: locales.getSectionNames())
-			{
-				JTable table = tables.get(sectionName);
-				if (pcEv.getSource().equals(table))
-				{
-					int rowNr = table.getSelectedRow();
-					DefaultTableModel tm = (DefaultTableModel) table.getModel();
-					Object val = tm.getValueAt(rowNr, 2);
-					if (val != null && val instanceof String && !((String)val).trim().isEmpty())
-					{
-						flagAsUnsaved();
-						break;
-					}
-				}
-			}
-		}
-	}
-	// END KGU#231 2016-08-04
-	
-	// START KGU#231 2016-08-09: Issue #220
-	protected void flagAsUnsaved()
-	{
-		loadedLocale.hasUnsavedChanges = true;
-		JButton button = (JButton) getComponentByName(loadedLocaleName);
-		if (button != null)
-		{
-			button.setBackground(Color.green);
-		}		
-	}
-	// END KGU#231 2016-08-09
-	
-	// START KGU#233 2016-08-08: Issue #224 - Ensure the visibility of the table grids on LaF change
-	public static void updateLookAndFeel()
-	{
-		if (instance != null)
-		{
-			try {
-				javax.swing.SwingUtilities.updateComponentTreeUI(instance);
-				if (!javax.swing.UIManager.getLookAndFeel().getName().equals("Nimbus"))
-				{
-					for (JTable tbl: instance.tables.values())
-					{
-						tbl.setShowGrid(true);
-					}
-				}
-			}
-			catch (Exception ex) {}
-		}
-	}
-	// END KGU#233 2016-08-08
+    public void propertyChange(PropertyChangeEvent pcEv) {
+       // Check if it was triggered by the termination of some editing activity (i.e. the cell editor was dropped)
+        if (pcEv.getPropertyName().equals("tableCellEditor") && pcEv.getNewValue() == null)
+        {
+            for (String sectionName: locales.getSectionNames())
+            {
+                JTable table = tables.get(sectionName);
+                if (pcEv.getSource().equals(table))
+                {
+                    int rowNr = table.getSelectedRow();
+                    DefaultTableModel tm = (DefaultTableModel) table.getModel();
+                    Object val = tm.getValueAt(rowNr, 2);
+                    if (val != null && val instanceof String && !((String)val).trim().isEmpty())
+                    {
+                        flagAsUnsaved();
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    // END KGU#231 2016-08-04
+    
+    // START KGU#231 2016-08-09: Issue #220
+    protected void flagAsUnsaved()
+    {
+        loadedLocale.hasUnsavedChanges = true;
+        JButton button = (JButton) getComponentByName(loadedLocaleName);
+        if (button != null)
+        {
+            button.setBackground(Color.green);
+        }
+    }
+    // END KGU#231 2016-08-09
+
+    // START KGU#233 2016-08-08: Issue #224 - Ensure the visibility of the table grids on LaF change
+    public static void updateLookAndFeel()
+    {
+        if (instance != null)
+        {
+            try {
+                javax.swing.SwingUtilities.updateComponentTreeUI(instance);
+                if (!javax.swing.UIManager.getLookAndFeel().getName().equals("Nimbus"))
+                {
+                    for (JTable tbl: instance.tables.values())
+                    {
+                        tbl.setShowGrid(true);
+                    }
+                }
+            }
+            catch (Exception ex) {}
+        }
+    }
+    // END KGU#233 2016-08-08
 
 
     /**
@@ -966,17 +966,16 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         for (int i = 0; !fullTest && i < args.length; i++)
         {
             fullTest = args[i].equalsIgnoreCase("-test");
-        	
         }
         if (fullTest)
         {
-        	for (int i = 0; i < Locales.LOCALES_LIST.length; i++)
-        	{
-        		if (Locales.LOCALES_LIST[i][1] != null)
-        		{
-        			Locales.getInstance().getLocale(Locales.LOCALES_LIST[i][0]);
-        		}
-        	}
+            for (int i = 0; i < Locales.LOCALES_LIST.length; i++)
+            {
+                if (Locales.LOCALES_LIST[i][1] != null)
+                {
+                    Locales.getInstance().getLocale(Locales.LOCALES_LIST[i][0]);
+                }
+            }
         }
         // END KGU 2016-09-09
 
@@ -1016,18 +1015,18 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
     private javax.swing.JTabbedPane tabs;
     // End of variables declaration//GEN-END:variables
 
-	@Override
-	public void changedUpdate(DocumentEvent ev) {
-		this.flagAsUnsaved();
-	}
+    @Override
+    public void changedUpdate(DocumentEvent ev) {
+        this.flagAsUnsaved();
+    }
 
-	@Override
-	public void insertUpdate(DocumentEvent ev) {
-		this.flagAsUnsaved();
-	}
+    @Override
+    public void insertUpdate(DocumentEvent ev) {
+        this.flagAsUnsaved();
+    }
 
-	@Override
-	public void removeUpdate(DocumentEvent ev) {
-		this.flagAsUnsaved();
-	}
+    @Override
+    public void removeUpdate(DocumentEvent ev) {
+        this.flagAsUnsaved();
+    }
 }
