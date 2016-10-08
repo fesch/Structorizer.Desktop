@@ -48,6 +48,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.08.03      KGU#89: Inheritance enhanced to improve language support (var table)
  *      Kay Gürtzig     2016.10.05      Bugfix #260: Editing of 1st column in variable table disabled.
  *      Kay Gürtzig     2016.10.07      KGU#68 (issue #15) ConcurrentHashMap replaces Object[] for variable editing
+ *      Kay Gürtzig     2016.10.08      Issue #264 variable display updates caused frequent silent exceptions on rendering
  *
  ******************************************************************************************************
  *
@@ -593,8 +594,22 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         // START KGU#68 2016-10-07: Preparation for variable editing
         varUpdates.clear();
         // END KGU#68 2016-10-07
-        while(tm.getRowCount()>0) tm.removeRow(0);
-        for(int i=0; i<vars.size(); i++) tm.addRow(vars.get(i));
+        // START KGU#274 2016-10-08: Issue #264 Reduce the ArrayIndexOutOfBoundsException rate
+        //while(tm.getRowCount()>0) tm.removeRow(0);
+        //for(int i=0; i<vars.size(); i++) tm.addRow(vars.get(i));
+        int nRows = tm.getRowCount();
+        if (nRows > vars.size()) {
+        	tm.setRowCount(vars.size());
+        	nRows = vars.size();
+        }
+        for (int i = 0; i < nRows; i++) {
+        	tm.setValueAt(vars.get(i).get(0), i, 0);
+        	tm.setValueAt(vars.get(i).get(1), i, 1);
+        }
+        for (int i = nRows; i < vars.size(); i++) {
+        	tm.addRow(vars.get(i));
+        }
+        // END KGU#274 2016-10-08
     }
     
     // START KGU#2 (#9) 2015-11-14: Update method for subroutine level display
