@@ -92,6 +92,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done, importOptions() added.
  *      Kay Gürtzig     2016.09.26      Enh. #253: Full support for diagram refactoring implemented.
  *      Kay Gürtzig     2016.10.03      Enh. #257: CASE element transmutation (KGU#267), enh. #253 revised
+ *      Kay Gürtzig     2016.10.06      Minor improvements in FOR and CALL transmutations (enh. #213/#257)
+ *      Kay Gürtzig     2016.10.06      Bugfix #262: Selection and dragging problems after insertion, undo, and redo
+ *      Kay Gürtzig     2016.10.07      Bugfix #263: "Save as" now updates the current directory
  *
  ******************************************************************************************************
  *
@@ -408,7 +411,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         		//Element selEle = root.getElementByCoord(e.getX(),e.getY());
         		Element selEle = root.getElementByCoord(e.getX(), e.getY(), false);
         		// END KGU#25 2015-10-11
-				//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE MOVED >>>>> " + ((selEle != null) ? selEle : "null") + " <<<<<<<<<<<<<<<<<<<<<");
+				//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE MOVED >>>>> " + selEle + " <<<<<<<<<<<<<<<<<<<<<");
 
         		if (selEle != null &&
         				!selEle.getComment(false).getText().trim().isEmpty())
@@ -474,10 +477,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				mY = e.getY();
 				//System.out.println("DRAGGED "+mX+" "+mY);
 				/*System.out.println("DRAGGED ("+e.getX()+", "+e.getY()+") >> " +
-						bSome + " >> " + ((selectedDown != null) ? selectedDown : "null"));
+						bSome + " >> " + selectedDown);
 						/**/
 
 				bSome.setSelected(true);
+				//System.out.println("selected = " + bSome);
+				//System.out.println("selectedDown = " + selectedDown);
+				//System.out.println("selectedUp = " + selectedUp);
 				if (selectedDown != null) selectedDown.setSelected(true);
 
 				boolean doRedraw = false;
@@ -535,7 +541,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Element ele = root.getElementByCoord(e.getX(), e.getY(), true);
 			// END KGU#25 2015-10-11
 
-			// START KGU#87 2015-11-22: Maintain a selected sequence on right mouse button click 
+			// KGU#87: Maintain a selected sequence on right mouse button click 
 			if (e.getButton() == MouseEvent.BUTTON3 && selected instanceof IElementSequence &&
 					(ele == null || ((IElementSequence)selected).getIndexOf(ele) >= 0))
 			{
@@ -547,9 +553,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				selected.setSelected(true);
 				redraw();
 			}
-			else
-			// END KGU#87 2015-11-23	
-			if (ele != null)
+			else if (ele != null)
 			{
 				// START KGU#136 2016-03-02: Bugfix #97 - Selection wasn't reliable
 				ele.setSelected(true);
@@ -564,7 +568,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				selY = mouseY - topLeft.top;
 				// END KGU#136 2016-03-02
 
-				// START KGU#87 2015-11-23
+				// KGU#87: Expansion to entire subqueue (induced by Alt key held down)?
 				if (e.isAltDown() && ele.parent instanceof Subqueue &&
 						((Subqueue)ele.parent).getSize() > 1)
 				{
@@ -576,9 +580,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					selectedUp = ele;
 					redraw();						
 				}
-				else
-				// END KGU#87 2015-11-23
-				if (ele != selected)
+				else if (ele != selected)
 				{
 					// START KGU#87 2015-11-23: If an entire Subqueue had been selected, reset the flags 
 					if (selected instanceof Subqueue)
@@ -621,10 +623,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				//redraw();
 			}
-			// START KGU#180 2016-04-15: Bugfix #165 - delection didn't work properly
+			// START KGU#180 2016-04-15: Bugfix #165 - detection didn't work properly
 			else /* ele == null */
 			{
 				selected = null;
+				// FIXME: May selectedDown and selectedUp still hold a former selection? 
 				redraw();
 			}
 			// END KGU#180 2016-04-15
@@ -667,7 +670,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//selectedUp = root.selectElementByCoord(e.getX(),e.getY());
 					selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
 					// END KGU#25 2015-10-11
-					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 1 >>>>>>> " + ((selectedUp != null)?selectedUp:"null")+ " <<<<<<<<<<<<<<<<<<<<<<");
+					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 1 >>>>>>> " + selectedUp + " <<<<<<<<<<<<<<<<<<<<<<");
 					if (selectedUp != null)
 					{
 						selectedUp.setSelected(false);
@@ -718,7 +721,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//selectedUp = root.selectElementByCoord(e.getX(),e.getY());
 					selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
 					// END KGU#25 2015-10-11
-					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 2 >>>>>>> " + ((selectedUp != null)?selectedUp:"null")+ " <<<<<<<<<<<<<<<<<<<<<<");
+					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 2 >>>>>>> " + selectedUp + " <<<<<<<<<<<<<<<<<<<<<<");
 					if (selectedUp!=null) selectedUp.setSelected(false);
 					doDraw=true;
 				}
@@ -1173,7 +1176,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//System.out.println(e.getMessage());
 			errorMessage = e.getLocalizedMessage();
 			if (errorMessage == null) errorMessage = e.getMessage();
-			System.err.println(e.getMessage());
+			System.err.println("openNSD(\"" + _filename + "\"): " + (errorMessage != null ? errorMessage : e));
+			//e.printStackTrace(System.err);
 			// END KGU#111 2015-12-16
 		}
 		// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
@@ -1250,6 +1254,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#94 2015.12.04: out-sourced to auxiliary method
 					doSaveNSD();
 					// END KGU#94 2015-12-04
+		        	// START KGU#273 2016-10-07: Bugfix #263 - remember the directory as current directory
+		        	this.currentDirectory = f;
+		        	// END KGU#273 2016-10-07
 				}
 			}
 		// START KGU#248 2016-09-15: Bugfix #244 - allow to leave the new loop
@@ -1447,9 +1454,23 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#138 2016-01-11: Bugfix #102 - All elements will be replaced by copies...
 		selected = this.selectedDown = this.selectedMoved = this.selectedUp = null;
 		// END KGU#138 2016-01-11
+		// START KGU#272 2016-10-06: Bugfix #262: We must unselect root such that it may find a selected descendant
+		root.setSelected(false);
+		// END KGU#272 2016-10-06
 		// START KGU#183 2016-04-24: Issue #169 - Restore previous selection if possible
 		selected = root.findSelected();
 		// END KGU#183 2016-04-24
+		// START KGU#272 2016-10-06: Bugfix #262
+		if (selected == null)
+		{
+			selected = root;
+			root.setSelected(true);
+		}
+		else
+		{
+			selectedDown = selectedUp = selected;
+		}
+		// END KGU#272 2016-10-06
 		redraw();
 		analyse();
 	}
@@ -1463,9 +1484,23 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#138 2016-01-11: Bugfix #102 All elements will be replaced by copies...
 		selected = this.selectedDown = this.selectedMoved = this.selectedUp = null;
 		// END KGU#138 2016-01-11
+		// START KGU#272 2016-10-06: Bugfix #262: We must unselect root such that it may find a selected descendant
+		root.setSelected(false);
+		// END KGU#272 2016-10-06
 		// START KGU#183 2016-04-24: Issue #169 - Restore previous selection if possible
 		selected = root.findSelected();
 		// END KGU#183 2016-04-24
+		// START KGU#272 2016-10-06: Bugfix #262
+		if (selected == null)
+		{
+			selected = root;
+			root.setSelected(true);
+		}
+		else
+		{
+			selectedDown = selectedUp = selected;
+		}
+		// END KGU#272 2016-10-06
 		redraw();
 		analyse();
 	}
@@ -1718,6 +1753,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU#137 2016-01-11
 					((Subqueue) element).addElement(ele);
 					// START KGU#136 2016-03-01: Bugfix #97
+					// FIXME: Other parts of the diagram might be affected, too
 					element.resetDrawingInfoUp();
 					// END KGU#136 2016-03-01
 					ele.setSelected(true);
@@ -1784,6 +1820,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//root.hasChanged=true;
 					// END KGU#137 2016-01-11
 					// START KGU#136 2016-03-01: Bugfix #97
+					// FIXME: Other parts of the diagram might be affected, too
 					element.resetDrawingInfoUp();
 					// END KGU#136 2016-03-01
 					redraw();
@@ -2026,8 +2063,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				{
 					root.addBefore(getSelected(),_ele);
 				}
-				_ele.setSelected(true);
+				_ele.setSelected(true);	// FIXME: should already have been done by Root.insertElement()
 				selected=_ele;
+				// START KGU#272 2016-10-06: Bugfix #262
+				selectedDown = selectedUp = selected;
+				// END KGU#272 2016-10-06
 				redraw();
 				analyse();
 			}
@@ -2253,13 +2293,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		whileLoop.q = forLoop.getBody();
 		whileLoop.q.parent = whileLoop;
 		whileLoop.q.addElement(elements[2]);
+		whileLoop.setCollapsed(forLoop.isCollapsed());
 		for (int i = 0; i < elements.length; i++)
 		{
 			Element elem = elements[i];
 			elem.setColor(forLoop.getColor());
 			elem.deeplyCovered = forLoop.deeplyCovered;
 			elem.simplyCovered = forLoop.simplyCovered;
-			elem.setCollapsed(forLoop.isCollapsed());
 		}
 		int index = parent.getIndexOf(forLoop);
 		for (int i = 0; i < 2; i++)
@@ -2278,7 +2318,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#267 2016-10-03: Enh. #257 - CASE structure decomposition
 	private void decomposeCase(Subqueue parent)
 	{
-		// Comment will be tranferred to the outermost Alternative.
+		// Comment will be tranferred to the first replacing element
+		// (discriminator variable assignment or outermost Alternative).
 		Case caseElem = (Case)selected;
 		// List of replacing nested alternatives
 		List<Alternative> alternatives = new LinkedList<Alternative>();
@@ -2303,13 +2344,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 			}
 		}
-		String selector = selTokens.concatenate().trim();
-		// If the selector expression isn't just a variable then assign its value to an
-		// artificial variable first and use this as selector
-		if (!Function.testIdentifier(selector, ""))
+		String discriminator = selTokens.concatenate().trim();
+		// If the discriminating expression isn't just a variable then assign its value to an
+		// artificial variable first and use this as discriminator further on.
+		if (!Function.testIdentifier(discriminator, ""))
 		{
-			asgnmt = new Instruction("discr" + caseElem.hashCode() + " <- " + selector);
-			selector = "discr" + caseElem.hashCode();
+			String discrVar = "discr" + caseElem.hashCode();
+			asgnmt = new Instruction(discrVar + " <- " + discriminator);
+			discriminator = discrVar;
+			asgnmt.setColor(caseElem.getColor());
 		}
 		
 		// Take care of the configured prefix and postfix
@@ -2327,6 +2370,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		for (int lineNo = 1; lineNo < caseElem.getText().count(); lineNo++)
 		{
 			String line = caseElem.getText().get(lineNo);
+			// Specific handling of the last branch
 			if (lineNo == caseElem.getText().count()-1)
 			{
 				// In case it's a "%", nothing is to be added, otherwise the last
@@ -2340,11 +2384,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 			else 
 			{
-				String[] constants = line.split(",");
+				String[] selectors = line.split(",");
 				String cond = "";
-				for (String selConst: constants)
+				for (String selConst: selectors)
 				{
-					cond += " || (" + selector + " = " + selConst.trim() + ")";
+					cond += " || (" + discriminator + " = " + selConst.trim() + ")";
 				}
 				cond = cond.substring(4).replace("||", D7Parser.keywordMap.getOrDefault("oprOr", "or"));
 				Alternative newAlt = new Alternative(prefix + cond + postfix);
@@ -2359,14 +2403,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 		}
 
-		alternatives.get(0).setComment(caseElem.getComment());
 		Element firstSubstitutor = (asgnmt != null) ? asgnmt : alternatives.get(0);
+		firstSubstitutor.setComment(caseElem.getComment());
 		if (caseElem.isBreakpoint())
 		{
 			firstSubstitutor.toggleBreakpoint();
 		}
 		firstSubstitutor.setBreakTriggerCount(caseElem.getBreakTriggerCount());
-		firstSubstitutor.setColor(caseElem.getColor());
 		for (Alternative alt: alternatives)
 		{
 			alt.setColor(caseElem.getColor());
@@ -4520,7 +4563,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch(Exception e)
 				{
-					System.err.println(e.getMessage());
+					System.err.println("EMFSelection: " + e.getMessage());
 				}
 			}
 

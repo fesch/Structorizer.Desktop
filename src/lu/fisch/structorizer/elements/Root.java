@@ -255,6 +255,7 @@ public class Root extends Element {
     // START KGU#48 2015-10-17: Arranger support on Root replacement (e.g. by loading a new file)
     public void notifyReplaced(Root newRoot)
     {
+    	// FIXME: Something here may provoke a java.util.ConcurrentModificationException
     	//System.out.println("Trying to notify my replacement to " + updaters.size() + " Updaters..."); // FIXME (KGU) Remove after successful test!
     	Iterator<Updater> iter = updaters.iterator();
     	while (iter.hasNext())
