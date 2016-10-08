@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -67,6 +68,8 @@ package lu.fisch.structorizer.elements;
  *                                      Enh. #128: New mode E_COMMENTSPLUSTEXT
  *      Kay Gürtzig     2016.08.02      Enh. #215: Infrastructure for conditional breakpoints added.
  *      Kay Gürtzig     2016.09.21      Issue #248: API of setBreakTriggerCount() modified to prevent negative values
+ *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactored
+ *      Kay Gürtzig     2016.09.28      KGU#264: Font name property renamed from "Name" to "Font".
  *
  ******************************************************************************************************
  *
@@ -144,7 +147,8 @@ package lu.fisch.structorizer.elements;
  *        writeOutVariables() and getWidthOutVariables(),
  *      - minor code revision respecting 2- and 3-character operator symbols
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 import java.awt.Color;
@@ -161,6 +165,7 @@ import lu.fisch.structorizer.io.*;
 import com.stevesoft.pat.*;  //http://www.javaregex.com/
 
 import java.awt.Point;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Stack;
@@ -170,7 +175,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.25-01";
+	public static String E_VERSION = "3.25-02";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -200,19 +205,19 @@ public abstract class Element {
 	" - Jan Ollmann <bkgmjo@gmx.net>\n"+
 	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"\n"+
-	"Translations realised by\n"+
+	"Translations initially provided by\n"+
 	" - NL: Jerone <jeronevw@hotmail.com>\n"+
 	" - DE: Klaus-Peter Reimers <k_p_r@freenet.de>\n"+
 	" - LU: Laurent Zender <laurent.zender@hotmail.de>\n"+
 	" - ES: Andres Cabrera <andrescabrera20@gmail.com>\n"+
 	" - PT/BR: Theldo Cruz <cruz@pucminas.br>\n"+
 	" - IT: Andrea Maiani <andreamaiani@gmail.com>\n"+
-	" - CHS: Wang Lei <wanglei@hollysys.com>\n"+
-	" - CHT: Joe Chem <hueyan_chen@yahoo.com.tw>\n"+
+	" - ZH-CN: Wang Lei <wanglei@hollysys.com>\n"+
+	" - ZH-TW: Joe Chem <hueyan_chen@yahoo.com.tw>\n"+
 	" - CZ: Vladimír Vaščák <vascak@spszl.cz>\n"+
 	" - RU: Юра Лебедев <elita.alegator@gmail.com>\n"+
 	"\n"+
-	"Different good ideas and improvements provided by\n"+
+	"Different good ideas and improvements contributed by\n"+
 	" - Serge Marelli <serge.marelli@education.lu>\n"+
 	" - T1IF1 2006/2007\n"+
 	" - Gil Belling <gil.belling@education.lu>\n"+
@@ -226,6 +231,7 @@ public abstract class Element {
 	" - Andreas Jenet <ajenet@gmx.de>\n"+
 	" - Jan Peter Klippel <structorizer@xtux.org>\n"+
 	" - David Tremain <DTremain@omnisource.com>\n"+
+	" - Rolf Schmidt <rolf.frogs@t-online.de>\n"+
 	
 	"\n"+
 	"File dropper class by\n"+
@@ -1532,7 +1538,10 @@ public abstract class Element {
 			preWhile=ini.getProperty("While","tant que ()");
 			preRepeat=ini.getProperty("Repeat","jusqu'\u00E0 ()");
 			// font
-			setFont(new Font(ini.getProperty("Name","Dialog"), Font.PLAIN,Integer.valueOf(ini.getProperty("Size","12")).intValue()));
+			// START KGU#264 2016-09-28: key Name replaced by the more expressive "Font"
+			//setFont(new Font(ini.getProperty("Name","Dialog"), Font.PLAIN,Integer.valueOf(ini.getProperty("Size","12")).intValue()));
+			String fontName = ini.getProperty("Name","Dialog");	// legacy property name, will be overridden by the newer "Font" if present
+			setFont(new Font(ini.getProperty("Font",fontName), Font.PLAIN,Integer.valueOf(ini.getProperty("Size","12")).intValue()));
 			// colors
 			color0=Color.decode("0x"+ini.getProperty("color0","FFFFFF"));
 			color1=Color.decode("0x"+ini.getProperty("color1","FF8080"));
@@ -1571,7 +1580,10 @@ public abstract class Element {
 			ini.setProperty("While",preWhile);
 			ini.setProperty("Repeat",preRepeat);
 			// font
-			ini.setProperty("Name",getFont().getFamily());
+			// START KGU#264 2016-09-28: font name property renamed 
+			//ini.setProperty("Name",getFont().getFamily());
+			ini.setProperty("Font",getFont().getFamily());
+			// END KGU#264 2016-09-28
 			ini.setProperty("Size",Integer.toString(getFont().getSize()));
 			// colors
 			ini.setProperty("color0", getHexColor(color0));
@@ -2016,13 +2028,13 @@ public abstract class Element {
 
 				// These markers might have changed by configuration, so don't cache them
 				StringList ioSigns = new StringList();
-				ioSigns.add(D7Parser.input.trim());
-				ioSigns.add(D7Parser.output.trim());
+				ioSigns.add(D7Parser.keywordMap.get("input").trim());
+				ioSigns.add(D7Parser.keywordMap.get("output").trim());
 				// START KGU#116 2015-12-23: Enh. #75 - highlight jump keywords
 				StringList jumpSigns = new StringList();
-				jumpSigns.add(D7Parser.preLeave.trim());
-				jumpSigns.add(D7Parser.preReturn.trim());
-				jumpSigns.add(D7Parser.preExit.trim());
+				jumpSigns.add(D7Parser.keywordMap.get("preLeave").trim());
+				jumpSigns.add(D7Parser.keywordMap.get("preReturn").trim());
+				jumpSigns.add(D7Parser.keywordMap.get("preExit").trim());
 				// END KGU#116 2015-12-23
 				
 				for(int i=0; i < parts.count(); i++)
@@ -2645,18 +2657,18 @@ public abstract class Element {
     {
     	// Collect redundant placemarkers to be deleted from the text
         StringList redundantMarkers = new StringList();
-        redundantMarkers.addByLength(D7Parser.preAlt);
-        redundantMarkers.addByLength(D7Parser.preCase);
+        redundantMarkers.addByLength(D7Parser.keywordMap.get("preAlt"));
+        redundantMarkers.addByLength(D7Parser.keywordMap.get("preCase"));
         //redundantMarkers.addByLength(D7Parser.preFor);	// will be handled separately
-        redundantMarkers.addByLength(D7Parser.preWhile);
-        redundantMarkers.addByLength(D7Parser.preRepeat);
+        redundantMarkers.addByLength(D7Parser.keywordMap.get("preWhile"));
+        redundantMarkers.addByLength(D7Parser.keywordMap.get("preRepeat"));
 
-        redundantMarkers.addByLength(D7Parser.postAlt);
-        redundantMarkers.addByLength(D7Parser.postCase);
+        redundantMarkers.addByLength(D7Parser.keywordMap.get("postAlt"));
+        redundantMarkers.addByLength(D7Parser.keywordMap.get("postCase"));
         //redundantMarkers.addByLength(D7Parser.postFor);	// will be handled separately
         //redundantMarkers.addByLength(D7Parser.stepFor);	// will be handled separately
-        redundantMarkers.addByLength(D7Parser.postWhile);
-        redundantMarkers.addByLength(D7Parser.postRepeat);
+        redundantMarkers.addByLength(D7Parser.keywordMap.get("postWhile"));
+        redundantMarkers.addByLength(D7Parser.keywordMap.get("postRepeat"));
         
         for (int i = 0; i < redundantMarkers.count(); i++)
         {
@@ -2686,4 +2698,81 @@ public abstract class Element {
     }
     // END KGU#152 2016-03-02
     
+	// START KGU#258 2016-09-26: Enh. #253
+    /**
+     * Returns a fixed array of names of parser preferences being relevant for
+     * the current type of Element (e.g. in case of refactoring)
+     * @return Arrays of key strings for D7Parser.keywordMap
+     */
+    protected abstract String[] getRelevantParserKeys();
+    
+    /**
+     * Looks up the associated token sequence in _splitOldKeywords for any of the parser preference names
+     * provided by getRelevantParserKeys(). If there is such a token sequence then it will be
+     * replaced throughout my text by the associated current parser preference for the respective name
+     * @param _oldKeywords - a map of tokenized former non-empty parser preference keywords to be replaced
+     * @param _ignoreCase - whether case is to be ignored on comparison.
+     */
+    public void refactorKeywords(HashMap<String, StringList> _splitOldKeywords, boolean _ignoreCase)
+    {
+    	String[] relevantKeys = getRelevantParserKeys();
+    	if (relevantKeys != null && !_splitOldKeywords.isEmpty())
+    	{
+    		StringList result = new StringList();
+    		for (int i = 0; i < this.text.count(); i++)
+    		{
+    			result.add(refactorLine(text.get(i), _splitOldKeywords, relevantKeys, _ignoreCase));
+    		}
+    		this.text = result;
+    	}
+	}
+	
+	protected final String refactorLine(String line, HashMap<String, StringList> _splitOldKeys, String[] _keywords, boolean _ignoreCase)
+	{
+		StringList tokens = Element.splitLexically(line, true);
+		boolean isModified = false;
+		// FIXME: We should order the keys by decreasing length first!
+		for (int i = 0; i < _keywords.length; i++)
+		{
+			StringList splitKey = _splitOldKeys.get(_keywords[i]);
+			if (splitKey != null)
+			{
+				String subst = D7Parser.keywordMap.get(_keywords[i]);
+				// line shouldn't be inflated ...
+				if (!splitKey.get(0).equals(" ")) {
+					while (subst.startsWith(" ")) subst = subst.substring(1); 
+				}
+				if (!splitKey.get(splitKey.count()-1).equals(" ")) {
+					while (subst.endsWith(" ")) subst = subst.substring(0, subst.length()-1);
+				}
+				// ... but spaces must not get lost either!
+				if (splitKey.get(0).equals(" ") && !subst.startsWith(" ")) {
+					subst = " " + subst;
+				}
+				if (splitKey.count() > 1 && splitKey.get(splitKey.count()-1).equals(" ") && !subst.endsWith(" ")) {
+					subst += " ";
+				}
+				// Now seek old keyword and replace it where found
+				int pos = -1;
+				while ((pos = tokens.indexOf(splitKey, pos+1, !_ignoreCase)) >= 0)
+				{
+					// Replace the first part of the saved keyword by the entire current keyword... 
+					tokens.set(pos, subst);
+					// ... and remove the remaining parts of the saved key
+					for (int j = 1; j < splitKey.count(); j++)
+					{
+						tokens.delete(pos+1);
+					}
+					isModified = true;
+				}
+			}
+		}
+		if (isModified)
+		{
+			line = tokens.concatenate().trim();
+		}
+		return line;
+	}
+	// END KGU#258 2016-09-25
+
 }

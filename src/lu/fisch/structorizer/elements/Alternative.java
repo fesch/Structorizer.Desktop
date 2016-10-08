@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -53,7 +54,8 @@ package lu.fisch.structorizer.elements;
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 import java.awt.Color;
@@ -81,6 +83,10 @@ public class Alternative extends Element {
 	private Rect commentRect = new Rect();
 	// END KGU#227 2016-07-31
 
+	// START KGU#258 2016-09-26: Enh. #253
+	private static final String[] relevantParserKeys = {"preAlt", "postAlt"};
+	// END KGU#258 2016-09-25
+	
 	public Alternative()
 	{
 		super();
@@ -676,6 +682,14 @@ public class Alternative extends Element {
 			proceed = _visitor.visitPostOrder(this);
 		}
 		return proceed;
+	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getRelevantParserKeys()
+	 */
+	@Override
+	protected String[] getRelevantParserKeys() {
+		return relevantParserKeys;
 	}
 	
 }

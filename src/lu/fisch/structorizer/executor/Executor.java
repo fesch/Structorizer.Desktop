@@ -94,6 +94,9 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.09.22      Issue #248: Workaround for Java 7 in Linux systems (parseUnsignedInt)
  *      Kay Gürtzig     2016.09.25      Bugfix #251: Console window wasn't involved in look and feel update
  *      Kay Gürtzig     2016.09.25      Bugfix #254: parser keywords for CASE elements had been ignored
+ *                                      Enh. #253: D7Parser.keywordMap refactoring done
+ *      Kay Gürtzig     2016.10.06      Bugfix #261: Stop didn't work immediately within multi-line instructions
+ *      Kay Gürtzig     2016.10.07      Some synchronized sections added to reduce inconsistency exception likelihood
  *
  ******************************************************************************************************
  *
@@ -190,6 +193,7 @@ import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Stack;
@@ -588,7 +592,7 @@ public class Executor implements Runnable
 							// END KGU#99 2015-12-10
 						} catch (EvalError ex)
 						{
-							System.err.println(ex.getMessage());
+							System.err.println("Executor.convertStringComparison(\"" + str + "\"): " + ex.getMessage());
 						}
 					} // if (!s.equals(" " + eqOps[op] + " ") && (s.indexOf(eqOps[op]) >= 0))
 				} // for (int op = 0; op < eqOps.length; op++)
@@ -614,7 +618,7 @@ public class Executor implements Runnable
 				Thread.sleep(delay);
 			} catch (InterruptedException e)
 			{
-				System.err.println(e.getMessage());
+				System.err.println("Executor.delay(): " + e.getMessage());
 			}
 		}
 		waitForNext();
@@ -1245,7 +1249,7 @@ public class Executor implements Runnable
 				Thread.sleep(delay);
 			} catch (InterruptedException e)
 			{
-				System.err.println(e.getMessage());
+				System.err.println("Executor.getExec(\"" + cmd + "\"): " + e.getMessage());
 			}
 		}
 		return result;
@@ -1269,7 +1273,7 @@ public class Executor implements Runnable
 				Thread.sleep(delay);
 			} catch (InterruptedException e)
 			{
-				System.err.println(e.getMessage());
+				System.err.println("Executor.getExec(\"" + cmd + "\", " + color + "): " + e.getMessage());
 			}
 		}
 		return result;
@@ -1344,7 +1348,7 @@ public class Executor implements Runnable
 			// END KGU#57 2015-11-07
 		} catch (EvalError ex)
 		{
-			System.err.println(ex.getMessage());
+			System.err.println("Executor.initInterpreter(): " + ex.getMessage());
 		}
 	}
 
@@ -1745,58 +1749,53 @@ public class Executor implements Runnable
 	}
 	// END KGU#67/KGU#68 2015-11-08
 	
-	// START KGU#68 2015-11-06
-	public void adoptVarChanges(Object[] newValues)
+	// START KGU#68 2015-11-06 - modified 2016-10-07 for improved thread-safety
+	public void adoptVarChanges(HashMap<String,Object> newValues)
 	{
 		String tmplManuallySet = control.lbManuallySet.getText();	// The message template
-		for (int i = 0; i < newValues.length; i++)
+		for (HashMap.Entry<String, Object> entry: newValues.entrySet())
 		{
-			if (newValues[i] != null)
-			{
-				try {
-					String varName = this.variables.get(i);
-					Object oldValue = interpreter.get(varName);
-					// START KGU#160 2016-04-12: Enh. #137 - text window output
-					// START KGU#197 2016-05-05: Language support extended
-					//this.console.writeln("*** Manually set: " + varName + " <- " + newValues[i] + " ***", Color.RED);
-					this.console.writeln(tmplManuallySet.replace("%1", varName).replace("%2", newValues[i].toString()), Color.RED);
-					// END KGU#197 2016-05-05
-					if (isConsoleEnabled)
-					{
-						this.console.setVisible(true);
-					}
-					// END KGU#160 2016-04-12
-					
-					if (oldValue != null && oldValue.getClass().getSimpleName().equals("Object[]"))
-					{
-						// In this case an initialisation expression ("{ ..., ..., ...}") is expected
-						String asgnmt = "Object[] " + varName + " = " + newValues[i];
-						//System.out.println(asgnmt);	// FIXME (KGU) Remove this debug info after test
-						// FIXME: Nested initializers (as produced for nested arrays before) won't work here!
-						interpreter.eval(asgnmt);
-//						// Okay, but now we have to sort out some un-boxed strings
-//						Object[] objectArray = (Object[]) interpreter.get(varName);
-//						for (int j = 0; j < objectArray.length; j++)
+			try {
+				String varName = entry.getKey();
+				Object oldValue = interpreter.get(varName);
+				Object newValue = entry.getValue();
+				// START KGU#160 2016-04-12: Enh. #137 - text window output
+				// START KGU#197 2016-05-05: Language support extended
+				//this.console.writeln("*** Manually set: " + varName + " <- " + newValues[i] + " ***", Color.RED);
+				this.console.writeln(tmplManuallySet.replace("%1", varName).replace("%2", newValue.toString()), Color.RED);
+				// END KGU#197 2016-05-05
+				if (isConsoleEnabled)
+				{
+					this.console.setVisible(true);
+				}
+				// END KGU#160 2016-04-12
+
+				if (oldValue != null && oldValue.getClass().getSimpleName().equals("Object[]"))
+				{
+					// In this case an initialisation expression ("{ ..., ..., ...}") is expected
+					String asgnmt = "Object[] " + varName + " = " + newValue;
+					// FIXME: Nested initializers (as produced for nested arrays before) won't work here!
+					interpreter.eval(asgnmt);
+//					// Okay, but now we have to sort out some un-boxed strings
+//					Object[] objectArray = (Object[]) interpreter.get(varName);
+//					for (int j = 0; j < objectArray.length; j++)
+//					{
+//						Object content = objectArray[j];
+//						if (content != null)
 //						{
-//							Object content = objectArray[j];
-//							if (content != null)
-//							{
-//								System.out.println("Updating " + varName + "[" + j + "] = " + content.toString());
-//								this.interpreter.set("structorizer_temp", content);
-//								this.interpreter.eval(varName + "[" + j + "] = structorizer_temp");
-//							}
+//							System.out.println("Updating " + varName + "[" + j + "] = " + content.toString());
+//							this.interpreter.set("structorizer_temp", content);
+//							this.interpreter.eval(varName + "[" + j + "] = structorizer_temp");
 //						}
-						
-					}
-					else
-					{
-						//System.out.println(varName + " = " + (String)newValues[i]);	// FIXME(KGU) Remove this debug info after test
-						setVarRaw(varName, (String)newValues[i]);
-					}
+//					}
 				}
-				catch (EvalError err) {
-					System.err.println(err.getMessage());
+				else
+				{
+					setVarRaw(varName, (String)newValue);
 				}
+			}
+			catch (EvalError err) {
+				System.err.println("Executor.adoptVarChanges(" + newValues + "): " + err.getMessage());
 			}
 		}
 	}
@@ -1967,12 +1966,12 @@ public class Executor implements Runnable
 			cmd = convert(cmd).trim();
 			try
 			{
-				// START KGU 2015-10-12: Allow to step within an instruction block (but no breakpoint here!) 
-				if (i > 0)
-				{
-					delay();
-				}
-				// END KGU 2015-10-12
+				// START KGU#271: 2016-10-06: Bugfix #271 - this was mis-placed here and had to go to the loop body end 
+//				if (i > 0)
+//				{
+//					delay();
+//				}
+				// END KGU#271 2016-10-06
 				
 				// assignment
 				if (cmd.indexOf("<-") >= 0)
@@ -1983,7 +1982,7 @@ public class Executor implements Runnable
 				// START KGU#65 2015-11-04: Input keyword should only trigger this if positioned at line start
 				//else if (cmd.indexOf(D7Parser.input) >= 0)
 				else if (cmd.matches(
-						this.getKeywordPattern(D7Parser.input) + "([\\W].*|$)"))
+						this.getKeywordPattern(D7Parser.keywordMap.get("input")) + "([\\W].*|$)"))
 				// END KGU#65 2015-11-04
 				{
 					result = tryInput(cmd);
@@ -1992,7 +1991,7 @@ public class Executor implements Runnable
 				// START KGU#65 2015-11-04: Output keyword should only trigger this if positioned at line start
 				//else if (cmd.indexOf(D7Parser.output) >= 0)
 				else if (cmd.matches(
-						this.getKeywordPattern(D7Parser.output) + "([\\W].*|$)"))
+						this.getKeywordPattern(D7Parser.keywordMap.get("output")) + "([\\W].*|$)"))
 				// END KGU#65 2015-11-04
 				{
 					result = tryOutput(cmd);
@@ -2003,7 +2002,7 @@ public class Executor implements Runnable
 				// but a separator would be fine...
 				//else if (cmd.indexOf("return") >= 0)
 				else if (cmd.matches(
-						this.getKeywordPattern(D7Parser.preReturn) + "([\\W].*|$)"))
+						this.getKeywordPattern(D7Parser.keywordMap.get("preReturn")) + "([\\W].*|$)"))
 				// END KGU 2015-11-11
 				{		 
 					result = tryReturn(cmd.trim());
@@ -2015,13 +2014,18 @@ public class Executor implements Runnable
 				// START KGU#156 2016-03-11: Enh. #124
 				element.addToExecTotalCount(1, true);	// For the instruction line
 				//END KGU#156 2016-03-11
+				// START KGU#271: 2016-10-06: Bugfix #271: Allow to step and stop within an instruction block (but no breakpoint here!) 
+				if ((i+1 < sl.count()) && result.equals("") && (stop == false) &&	!returned && leave == 0)
+				{
+					delay();
+				}
+				// END KGU#271 2016-10-06
 			} catch (EvalError ex)
 			{
 				result = ex.getLocalizedMessage();
 				if (result == null) result = ex.getMessage();
 			}
 			i++;
-			// Among the lines of a single instruction element there is no further breakpoint check!
 		}
 		if (result.equals(""))
 		{
@@ -2128,7 +2132,7 @@ public class Executor implements Runnable
 			tokens.removeAll(" ");
 			try
 			{
-				boolean startsWithLeave = tokens.indexOf(D7Parser.preLeave, !D7Parser.ignoreCase) == 0;
+				boolean startsWithLeave = tokens.indexOf(D7Parser.keywordMap.get("preLeave"), !D7Parser.ignoreCase) == 0;
 				// Single-level break? (An empty Jump is also a break!)
 				if (startsWithLeave && tokens.count() == 1 ||
 						cmd.isEmpty() && i == sl.count() - 1)
@@ -2177,13 +2181,13 @@ public class Executor implements Runnable
 					done = true;
 				}
 				// Unstructured return from the routine?
-				else if (tokens.indexOf(D7Parser.preReturn, !D7Parser.ignoreCase) == 0)
+				else if (tokens.indexOf(D7Parser.keywordMap.get("preReturn"), !D7Parser.ignoreCase) == 0)
 				{
 					result = tryReturn(convert(sl.get(i)));
 					done = true;
 				}
 				// Exit from the entire program - simply handled like an error here.
-				else if (tokens.indexOf(D7Parser.preExit, !D7Parser.ignoreCase) == 0)
+				else if (tokens.indexOf(D7Parser.keywordMap.get("preExit"), !D7Parser.ignoreCase) == 0)
 				{
 					int exitValue = 0;
 					try {
@@ -2304,7 +2308,7 @@ public class Executor implements Runnable
 					result = control.msgNoSubroutine.getText().
 							replace("%1", f.getName()).
 							replace("%2", Integer.toString(f.paramCount())).
-							replace("%0", "\n");
+							replace("\\n", "\n");
 					// END KGU#197 2016-07-27
 				}
 			}
@@ -2358,7 +2362,7 @@ public class Executor implements Runnable
 	private String tryInput(String cmd) throws EvalError
 	{
 		String result = "";
-		String in = cmd.substring(D7Parser.input.trim().length()).trim();
+		String in = cmd.substring(D7Parser.keywordMap.get("input").trim().length()).trim();
 		// START KGU#107 2015-12-13: Enh-/bug #51: Handle empty input instruction
 		if (in.isEmpty())
 		{
@@ -2368,8 +2372,11 @@ public class Executor implements Runnable
 					JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
 			if (pressed == 1)
 			{
-				paus = true;
-				step = true;
+				synchronized(this)
+				{
+					paus = true;
+					step = true;
+				}
 				control.setButtonsForPause();
 			}
 		}
@@ -2431,8 +2438,11 @@ public class Executor implements Runnable
 				JOptionPane.showMessageDialog(diagram, control.lbInputPaused.getText(),
 						control.lbInputCancelled.getText(), JOptionPane.WARNING_MESSAGE);
 				// START KGU#197 2016-05-05
-				paus = true;
-				step = true;
+				synchronized(this)
+				{
+					paus = true;
+					step = true;
+				}
 				this.control.setButtonsForPause();
 				if (!variables.contains(in))
 				{
@@ -2467,7 +2477,7 @@ public class Executor implements Runnable
 		String result = "";
 		// KGU 2015-12-11: Instruction is supposed to start with the output keyword!
 		String out = cmd.substring(/*cmd.indexOf(D7Parser.output) +*/
-						D7Parser.output.trim().length()).trim();
+						D7Parser.keywordMap.get("output").trim().length()).trim();
 		String str = "";
 		// START KGU#107 2015-12-13: Enh-/bug #51: Handle empty output instruction
 		if (!out.isEmpty())
@@ -2482,7 +2492,7 @@ public class Executor implements Runnable
 				Object n = interpreter.eval(out);
 				if (n == null)
 				{
-					result = control.lbNoCorrectExpr.getText().replace("%", out);
+					result = control.msgInvalidExpr.getText().replace("%1", out);
 				} else
 				{
 		// START KGU#101 2015-12-11: Fix #54 (continued)
@@ -2534,8 +2544,11 @@ public class Executor implements Runnable
 						JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
 				if (pressed == 1)
 				{
-					paus = true;
-					step = true;
+					synchronized(this)
+					{
+						paus = true;
+						step = true;
+					}
 					control.setButtonsForPause();
 				}
 			}
@@ -2549,7 +2562,7 @@ public class Executor implements Runnable
 	{
 		String result = "";
 		String header = control.lbReturnedResult.getText();
-		String out = cmd.substring(D7Parser.preReturn.length()).trim();
+		String out = cmd.substring(D7Parser.keywordMap.get("preReturn").length()).trim();
 		// START KGU#77 (#21) 2015-11-13: We out to allow an empty return
 		//Object n = interpreter.eval(out);
 		//if (n == null)
@@ -2572,7 +2585,7 @@ public class Executor implements Runnable
 			{
 				if (resObj == null)
 				{
-					result = control.lbNoCorrectExpr.getText().replace("%", out);
+					result = control.msgInvalidExpr.getText().replace("%1", out);
 				// START KGU#133 2016-01-29: Arrays should be presented as scrollable list
 				} else if (resObj instanceof Object[])
 				{
@@ -2683,7 +2696,7 @@ public class Executor implements Runnable
 					result = control.msgNoSubroutine.getText().
 							replace("%1", f.getName()).
 							replace("%2", Integer.toString(f.paramCount())).
-							replace("%0", "\n");
+							replace("\\n", "\n");
 					// END KGU#197 2016-07-27
 				}
 			}
@@ -2714,7 +2727,10 @@ public class Executor implements Runnable
 	private String stepCase(Case element)
 	{
 		// START KGU 2016-09-25: Bugfix #254
-		String[] parserKeys = new String[]{D7Parser.preCase, D7Parser.postCase};
+		String[] parserKeys = new String[]{
+				D7Parser.keywordMap.get("preCase"),
+				D7Parser.keywordMap.get("postCase")
+				};
 		// END KGU 2016-09-25
 		String result = new String();
 		try
@@ -2841,7 +2857,9 @@ public class Executor implements Runnable
 //
 //			s = convert(s);
 			StringList tokens = Element.splitLexically(s, true);
-			for (String key : new String[]{D7Parser.preAlt, D7Parser.postAlt})
+			for (String key : new String[]{
+					D7Parser.keywordMap.get("preAlt"),
+					D7Parser.keywordMap.get("postAlt")})
 			{
 				if (!key.trim().isEmpty())
 				{
@@ -2943,7 +2961,9 @@ public class Executor implements Runnable
 //				// END KGU#79 2015-11-12
 //				// System.out.println("WHILE: "+condStr);
 				StringList tokens = Element.splitLexically(condStr, true);
-				for (String key : new String[]{D7Parser.preWhile, D7Parser.postWhile})
+				for (String key : new String[]{
+						D7Parser.keywordMap.get("preWhile"),
+						D7Parser.keywordMap.get("postWhile")})
 				{
 					if (!key.trim().isEmpty())
 					{
@@ -3097,7 +3117,9 @@ public class Executor implements Runnable
 //			}
 //			condStr = convert(condStr, false);
 			StringList tokens = Element.splitLexically(condStr, true);
-			for (String key : new String[]{D7Parser.preRepeat, D7Parser.postRepeat})
+			for (String key : new String[]{
+					D7Parser.keywordMap.get("preRepeat"),
+					D7Parser.keywordMap.get("postRepeat")})
 			{
 				if (!key.trim().isEmpty())
 				{

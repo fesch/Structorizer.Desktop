@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.generators;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -48,7 +49,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016-04-04      Enh. #150 - Pascal functions ord and chr translated
  *      Kay Gürtzig         2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                          though this is only provisional for the line numbering mode
- *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
+ *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig         2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
  *
  ******************************************************************************************************
  *
@@ -63,7 +65,7 @@ package lu.fisch.structorizer.generators;
  *      - Enhancement #10 (KGU#3): FOR loops now provide more reliable loop parameters 
  *      - Enhancement KGU#15: Support for the gathering of several case values in CASE instructions
  *
- ******************************************************************************************************///
+ ******************************************************************************************************/
 
 import java.util.regex.Matcher;
 
@@ -311,12 +313,12 @@ public class BasGenerator extends Generator
 	protected String transform(String _input)
 	{
 		// START KGU#101 2015-12-19: Enh. #54 - support lists of output expressions
-		if (_input.matches("^" + getKeywordPattern(D7Parser.output.trim()) + "[ ](.*?)"))
+		if (_input.matches("^" + getKeywordPattern(D7Parser.keywordMap.get("output").trim()) + "[ ](.*?)"))
 		{
 			// Replace commas by semicolons to avoid tabulation
 			StringList expressions = 
-					Element.splitExpressionList(_input.substring(D7Parser.output.trim().length()), ",");
-			_input = D7Parser.output.trim() + " " + expressions.getText().replace("\n", "; ");
+					Element.splitExpressionList(_input.substring(D7Parser.keywordMap.get("output").trim().length()), ",");
+			_input = D7Parser.keywordMap.get("output").trim() + " " + expressions.getText().replace("\n", "; ");
 		}
 		// END KGU#101 2015-12-19
 
@@ -702,6 +704,10 @@ public class BasGenerator extends Generator
 			boolean isEmpty = true;
 			
 			StringList lines = _jump.getText();
+			String preReturn  = D7Parser.keywordMap.get("preReturn");
+			String preExit    = D7Parser.keywordMap.get("preExit");
+			String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
+			String preExitMatch   = Matcher.quoteReplacement(preExit)+"([\\W].*|$)";
 			for (int i = 0; isEmpty && i < lines.count(); i++) {
 				String line = transform(lines.get(i)).trim();
 				if (!line.isEmpty())
@@ -710,16 +716,16 @@ public class BasGenerator extends Generator
 				}
 				// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
 				//code.add(_indent + line + ";");
-				if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
+				if (line.matches(preReturnMatch))
 				{
-					String argument = line.substring(D7Parser.preReturn.length()).trim();
+					String argument = line.substring(preReturn.length()).trim();
 					if (!argument.isEmpty())
 					{
 						//code.add(_indent + this.getLineNumber() + this.procName + " = " + argument + " : END"); 
 						code.add(this.getLineNumber() + _indent + "RETURN " + argument); 
 					}
 				}
-				else if (line.matches(Matcher.quoteReplacement(D7Parser.preExit)+"([\\W].*|$)"))
+				else if (line.matches(preExitMatch))
 				{
 					code.add(this.getLineNumber() + _indent + "STOP");
 				}

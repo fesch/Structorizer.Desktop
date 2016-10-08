@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -53,16 +54,20 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
  *      Kay Gürtzig     2016.09.24      Enh. #250: Adaptations to make the new editor design work
- *      Kay Gürtzig     2016.09.25      Issue #252: ':=' and '<-' equivalence in consistency check <2>
+ *      Kay Gürtzig     2016.09.25      Issue #252: ':=' and '<-' equivalence in consistency check
+ *                                      Enh. #253: D7Parser.keywordMap refactored
+ *      Kay Gürtzig     2016.10.04      Enh. #253: Refactoring configuration revised 
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 import java.awt.Point;
+import java.util.Vector;
 
 import javax.swing.ImageIcon;
 
@@ -91,6 +96,10 @@ public class For extends Element implements ILoop {
 	private Point pt0Body = new Point(0,0);
 	// END KGU#136 2016-03-01
 
+	// START KGU#258 2016-09-26: Enh. #253
+	private static final String[] relevantParserKeysCount = {"preFor", "postFor", "stepFor"};
+	private static final String[] relevantParserKeysTrav = {"preForIn", "postForIn"};
+	// END KGU#258 2016-09-25
 	
 	// START KGU#3 2015-10-24
 	private static String forSeparatorPre = "§FOR§";
@@ -758,8 +767,13 @@ public class For extends Element implements ILoop {
 		// ... and their replacements (in same order!)
 		//String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy};
 		// First collect the placemarkers of the for loop header ...
-		String[] forMarkers = {D7Parser.preFor, D7Parser.postFor, D7Parser.stepFor,
-				(D7Parser.preForIn.trim().isEmpty() ? D7Parser.preFor : D7Parser.preForIn), D7Parser.postForIn};
+		String[] forMarkers = {
+				D7Parser.keywordMap.get("preFor"),
+				D7Parser.keywordMap.get("postFor"),
+				D7Parser.keywordMap.get("stepFor"),
+				(D7Parser.keywordMap.get("preForIn").trim().isEmpty() ? D7Parser.keywordMap.get("preFor") : D7Parser.keywordMap.get("preForIn")),
+				D7Parser.keywordMap.get("postForIn")
+				};
 		// ... and their replacements (in same order!)
 		String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy,
 				forInSeparatorPre, forInSeparatorIn};
@@ -1020,11 +1034,13 @@ public class For extends Element implements ILoop {
 		{
 			asgnmtOpr = " := ";
 		}
-		String forClause = D7Parser.preFor.trim() + " " + _counter + asgnmtOpr + _start + " " +
-				D7Parser.postFor.trim() + " " + _end;
+		String forClause = D7Parser.keywordMap.get("preFor").trim() + " " +
+				_counter + asgnmtOpr + _start + " " +
+				D7Parser.keywordMap.get("postFor").trim() + " " + _end;
 		if (_step != 1 || _forceStep)
 		{
-			forClause = forClause + " " + D7Parser.stepFor.trim() + " " + Integer.toString(_step);
+			forClause = forClause + " " + D7Parser.keywordMap.get("stepFor").trim() + " " +
+					Integer.toString(_step);
 		}
 		// Now get rid of multiple blanks
 		forClause = BString.replace(forClause, "  ", " ");
@@ -1055,10 +1071,10 @@ public class For extends Element implements ILoop {
 
 	public static String composeForInClause(String _iterator, String _valueList)
 	{
-		String preForIn = D7Parser.preForIn.trim();
-		if (preForIn.isEmpty()) { preForIn = D7Parser.preFor.trim(); }
+		String preForIn = D7Parser.keywordMap.get("preForIn").trim();
+		if (preForIn.isEmpty()) { preForIn = D7Parser.keywordMap.get("preFor").trim(); }
 		String forClause = preForIn + " " + _iterator + " " +
-				D7Parser.postForIn.trim() + " " + _valueList;
+				D7Parser.keywordMap.get("postForIn").trim() + " " + _valueList;
 		return forClause;
 	}
 	
@@ -1197,5 +1213,33 @@ public class For extends Element implements ILoop {
 		return proceed;
 	}
 
+	// START KGU#258 2016-09-26: Enh. #253
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getRelevantParserKeys()
+	 */
+	@Override
+	protected String[] getRelevantParserKeys() {
+		switch (this.style)
+		{
+		case COUNTER:
+			return relevantParserKeysCount;
+		case TRAVERSAL:
+			return relevantParserKeysTrav;
+		default:
+			{
+				Vector<String> keys = new Vector<String>();
+				for (String key: relevantParserKeysCount)
+				{
+					keys.add(key);
+				}
+				for (String key: relevantParserKeysTrav)
+				{
+					keys.add(key);
+				}
+				return keys.toArray(relevantParserKeysCount);
+			}
+		}
+	}
+	// END KGU#258 2016-09-26
 
 }

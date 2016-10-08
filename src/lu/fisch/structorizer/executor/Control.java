@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.executor;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -45,12 +46,16 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.07.25      Issue #201: Redesign of the GUI, new Slider listening, Call Stack button
  *      Kay Gürtzig     2016.07.27      KGU#197: More LangTextHolders for Executor error messages
  *      Kay Gürtzig     2016.08.03      KGU#89: Inheritance enhanced to improve language support (var table)
+ *      Kay Gürtzig     2016.10.05      Bugfix #260: Editing of 1st column in variable table disabled.
+ *      Kay Gürtzig     2016.10.07      KGU#68 (issue #15) ConcurrentHashMap replaces Object[] for variable editing
+ *      Kay Gürtzig     2016.10.08      Issue #264 variable display updates caused frequent silent exceptions on rendering
  *
  ******************************************************************************************************
  *
  *      Comment:  /
  *         
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 
@@ -64,7 +69,10 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.HashMap;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import javax.swing.JComboBox;
 import javax.swing.SwingUtilities;
@@ -100,7 +108,6 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
      * @param new java.awt.event.Mouse 
      */
     //@SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
     	// START KGU#89 2015-11-25
@@ -147,7 +154,6 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         lbInputCancelled = new LangTextHolder("Input cancelled");
         lbManuallySet = new LangTextHolder("*** Manually set: %1 <- %2 ***");
         lbEmptyLine = new LangTextHolder("empty line");
-        lbNoCorrectExpr = new LangTextHolder("<%> is not a correct or existing expression.");
         lbReturnedResult = new LangTextHolder("Returned result");
         lbOutput = new LangTextHolder("Output");
         lbInput = new LangTextHolder("Input");
@@ -183,39 +189,9 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
                 slSpeedMouseDragged(evt);
             }
         });
-        // START KGU#210 2016-07-25: Issue #201 - subsumed by ChangeListener
-//        slSpeed.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
-//            public void propertyChange(java.beans.PropertyChangeEvent evt) {
-//                slSpeedPropertyChange(evt);
-//            }
-//        });
-//        slSpeed.addInputMethodListener(new java.awt.event.InputMethodListener() {
-//            public void inputMethodTextChanged(java.awt.event.InputMethodEvent evt) {
-//            }
-//            public void caretPositionChanged(java.awt.event.InputMethodEvent evt) {
-//                slSpeedCaretPositionChanged(evt);
-//            }
-//        });
-//        slSpeed.addMouseListener(new java.awt.event.MouseAdapter() {
-//            public void mouseReleased(java.awt.event.MouseEvent evt) {
-//                slSpeedMouseReleased(evt);
-//            }
-//            public void mouseClicked(java.awt.event.MouseEvent evt) {
-//                slSpeedMouseClicked(evt);
-//            }
-//            public void mouseExited(java.awt.event.MouseEvent evt) {
-//                slSpeedMouseExited(evt);
-//            }
-//        });
-//        slSpeed.addMouseWheelListener(new java.awt.event.MouseWheelListener() {
-//            public void mouseWheelMoved(java.awt.event.MouseWheelEvent evt) {
-//                slSpeedMouseWheelMoved(evt);
-//            }
-//        });
-        // END KGU#210 2016-07-25
+
         tblVar.addPropertyChangeListener(this);
 
-        //lblSpeed.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         // START KGU#89 2015-11-25
         //lblSpeed.setText(" Delay: 50");
         lblSpeed.setText(" Delay: ");
@@ -232,9 +208,6 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         // END KGU#117 2016-03-06
         // START KGU#165 2016-03-13: Enh. #124
         cbRunDataDisplay.addItemListener(this);
-        // Now fix the element height, the width may stay extensible
-        //cbRunDataDisplay.setMaximumSize(
-        //		new Dimension(Short.MAX_VALUE, cbRunDataDisplay.getPreferredSize().height));
         // END KGU#156 2016-03-13
 
         btnStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/stop.png"))); // NOI18N
@@ -266,15 +239,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             }
         });
 
-        // START KGU#159 2016-03-17: New possibility to show stacktrace in paused mode by double-click
-//        txtCallLevel.addMouseListener(new java.awt.event.MouseAdapter() {
-//            public void mouseReleased(java.awt.event.MouseEvent evt) {}
-//            public void mouseClicked(java.awt.event.MouseEvent evt) {
-//                txtCallLevelClicked(evt);
-//            }
-//			public void mouseExited(java.awt.event.MouseEvent evt) {}
-//        });
-//        txtCallLevel.setToolTipText("Call stack depth. Double-click to see the Call stack content (only on paused execution).");
+        // START KGU#159 2016-03-17: New possibility to show stack trace in paused mode
         btnCallStack.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCallStackActionPerformed(evt);
@@ -297,92 +262,21 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             public Class<?> getColumnClass(int columnIndex) {
                 return types [columnIndex];
             }
-        });
+            // START KGU#269 2016-10-05: Bugfix #260 - disable editing of the name column
+            @Override
+            public boolean isCellEditable(int row, int column){  
+                return (column==1);  
+            }
+            // END KGU#269 2016-10-05
+       });
         jScrollPane1.setViewportView(tblVar);
         
-//        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
-//        getContentPane().setLayout(layout);
-//        layout.setHorizontalGroup(
-//            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-//            .add(layout.createSequentialGroup()
-//                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-//                	// START KGU#89 2015-11-25: Speed label decomposed
-//                    .add(layout.createSequentialGroup()
-//                    	.add(lblSpeed /*, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 86, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE*/)
-//                    	.add(lblSpeedValue/*, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE*/))
-//                    // END KGU#89 2015-11-25
-//                    // START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
-//                    .add(layout.createSequentialGroup().add(chkOutputToTextWindow))
-//                    // END KGU#160 2016-04-12
-//                    // START KGU#117 2016-03-06: Enh. #77
-//                    .add(layout.createSequentialGroup().add(chkCollectRuntimeData))
-//                    // END KGU#117 2016-03-06
-//                    .add(layout.createSequentialGroup()
-//                        .add(btnStop)
-//                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-//                        .add(btnPlay))
-//                        // START KGU#2 (#9) 2015-11-14
-//                        .add(lblCallLevel))
-//                        // END KGU#2 (#9) 2015-11-14
-//                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-//                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-//                    	// START KGU#117 2016-03-06: Enh. #77
-//                    .add(layout.createSequentialGroup().add(cbRunDataDisplay))
-//                    	// END KGU#117 2016-03-06
-//                    .add(layout.createSequentialGroup()
-//                        .add(btnPause)
-//                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-//                        .add(btnStep))
-//                // START KGU#2 (#9) 2015-11-14
-//                		.add(txtCallLevel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 120, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-//                // END KGU#2 (#9) 2015-11-14
-//// START KGU 2015-10-12: preferred size enhanced from 83 to 120
-//                    //.add(slSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 83, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-//                    .add(slSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 120, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-//// END KGU 2015-0-12
-//                .add(jScrollPane1, 0, 0, Short.MAX_VALUE)
-//        );
-//        layout.setVerticalGroup(
-//            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-//            .add(layout.createSequentialGroup()
-//                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-//                    .add(lblSpeed, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-//                		// START KGU#89 2015-11-25: New, separate value label
-//                    .add(lblSpeedValue, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-//                		// END KGU#89 2015-11-25
-//                    .add(slSpeed, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-//                // START KGU#160 2016-04-12: Enh. #137 - Checkbox for text window output
-//                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-//                .add(chkOutputToTextWindow)
-//                // END KGU#160 2016-04-12
-//                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-//                .add(layout.createParallelGroup()
-//                    .add(chkCollectRuntimeData)
-//                    .add(cbRunDataDisplay))
-//                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-//                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-//                    .add(btnStop)
-//                    .add(btnPlay)
-//                    .add(btnPause)
-//                    .add(btnStep))
-//                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-//                // START KGU#2 (#9) 2015-11-14
-//                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-//                		.add(lblCallLevel)
-//                		.add(txtCallLevel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-//                // END KGU#2 (#9) 2015-11-14
-//                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 236, Short.MAX_VALUE))
-//        );
 
-// START KGU#210 2016-07-25: Issue #201 - new GridBagLayout-based GUI
-// Trouble is that the width gets unnecessarily large and reducing the width
-// adds extra spaces between the lines - no idea how to suppress this. It seems
-// that no specific component can be blamed.
+        // START KGU#210 2016-07-25: Issue #201 - new GridBagLayout-based GUI (easier to handle)
         GridBagLayout gbl = new GridBagLayout();
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(3,2,2,2);
         Container ctnr = getContentPane();
-        //JPanel ctnr = new JPanel();
         ctnr.setLayout(gbl);
 
         gbc.gridx = 1;
@@ -392,9 +286,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 0;
         gbc.weighty = 0;
-        //gbc.anchor = GridBagConstraints.BASELINE;
         gbl.setConstraints(lblSpeed, gbc);
-        //getContentPane().add(lblSpeed);
         ctnr.add(lblSpeed);
         
         gbc.gridx = 2;
@@ -404,9 +296,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 0;
         gbc.weighty = 0;
-        //gbc.anchor = GridBagConstraints.BASELINE;
         gbl.setConstraints(lblSpeedValue, gbc);
-        //getContentPane().add(lblSpeedValue);
         ctnr.add(lblSpeedValue);
         
         gbc.gridx = 3;
@@ -416,9 +306,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 0;
         gbc.weighty = 0;
-        //gbc.anchor = GridBagConstraints.BASELINE_LEADING;
         gbl.setConstraints(slSpeed, gbc);
-        //getContentPane().add(slSpeed);
         ctnr.add(slSpeed);
         slSpeed.setMaximumSize(new Dimension(30, 15));
         
@@ -429,9 +317,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 0;
         gbc.weighty = 0;
-        //gbc.anchor = GridBagConstraints.BASELINE_LEADING;
         gbl.setConstraints(chkOutputToTextWindow, gbc);
-        //getContentPane().add(chkOutputToTextWindow);
         ctnr.add(chkOutputToTextWindow);
         
         gbc.gridx = 1;
@@ -441,9 +327,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 0;
         gbc.weighty = 0;
-        //gbc.anchor = GridBagConstraints.BASELINE_LEADING;
         gbl.setConstraints(chkCollectRuntimeData, gbc);
-        //getContentPane().add(chkCollectRuntimeData);
         ctnr.add(chkCollectRuntimeData);
         
         gbc.gridx = 3;
@@ -453,9 +337,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 0;
         gbc.weighty = 0;
-        //gbc.anchor = GridBagConstraints.BASELINE_LEADING;
         gbl.setConstraints(cbRunDataDisplay, gbc);
-        //getContentPane().add(cbRunDataDisplay);
         ctnr.add(cbRunDataDisplay);
         
         gbc.gridx = 1;
@@ -465,9 +347,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         gbc.weighty = 0;
-        //gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(btnStop, gbc);
-        //getContentPane().add(btnStop);
         ctnr.add(btnStop);
         
         gbc.gridx = 2;
@@ -477,9 +357,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         gbc.weighty = 0;
-        //gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(btnPlay, gbc);
-        //getContentPane().add(btnPlay);
         ctnr.add(btnPlay);
         
         gbc.gridx = 3;
@@ -489,9 +367,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         gbc.weighty = 0;
-        //gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(btnPause, gbc);
-        //getContentPane().add(btnPause);
         ctnr.add(btnPause);
         
         gbc.gridx = 4;
@@ -501,9 +377,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         gbc.weighty = 0;
-        //gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(btnStep, gbc);
-        //getContentPane().add(btnStep);
         ctnr.add(btnStep);
         
         gbc.gridx = 1;
@@ -513,9 +387,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 0;
         gbc.weighty = 0;
-        //gbc.anchor = GridBagConstraints.BASELINE_LEADING;
         gbl.setConstraints(btnCallStack, gbc);
-        //getContentPane().add(lblCallLevel);
         ctnr.add(btnCallStack);
         
         gbc.gridx = 3;
@@ -525,9 +397,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 0;
         gbc.weighty = 0;
-        //gbc.anchor = GridBagConstraints.BASELINE_LEADING;
         gbl.setConstraints(lblCallLevel, gbc);
-        //getContentPane().add(lblCallLevel);
         ctnr.add(lblCallLevel);
         
         gbc.gridx = 4;
@@ -537,31 +407,24 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 0;
         gbc.weighty = 0;
-        //gbc.anchor = GridBagConstraints.BASELINE_LEADING;
         gbl.setConstraints(txtCallLevel, gbc);
-        //getContentPane().add(txtCallLevel);
         ctnr.add(txtCallLevel);
         
         gbc.gridx = 1;
         gbc.gridy = 6;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
-        //gbc.gridheight = GridBagConstraints.REMAINDER;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 0;
         gbc.weighty = 1;
-        //gbc.anchor = GridBagConstraints.BASELINE_LEADING;
         gbl.setConstraints(jScrollPane1, gbc);
-        //getContentPane().add(jScrollPane1);  
         ctnr.add(jScrollPane1);
-// END KGU#210 2016-07-25
+        // END KGU#210 2016-07-25
        
-        //getContentPane().add(ctnr);
-
         pack();
         
         setSize(350, 500);
         
-    }// </editor-fold>//GEN-END:initComponents
+    }
 
     public void init()
     {
@@ -597,17 +460,17 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // END KGU#210/KGU#234 2016-08-09
     
     private void btnStopActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnStopActionPerformed
-    {//GEN-HEADEREND:event_btnStopActionPerformed
+    {
         Executor.getInstance().setStop(true);
         // START KGU#117 2016-03-06: Enh. #77
         chkCollectRuntimeData.setEnabled(true);
         cbRunDataDisplay.setEnabled(chkCollectRuntimeData.isSelected());
         // END KGU#117 2016-03-06
         this.setVisible(false);
-    }//GEN-LAST:event_btnStopActionPerformed
+    }
 
     private void btnPlayActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnPlayActionPerformed
-    {//GEN-HEADEREND:event_btnPlayActionPerformed
+    {
         btnPause.setEnabled(true);
         btnPlay.setEnabled(false);
         btnStep.setEnabled(false);
@@ -619,11 +482,11 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         cbRunDataDisplay.setEnabled(chkCollectRuntimeData.isSelected());
         // END KGU#117 2016-03-06
         // START KGU#68 205-11-06: Enhancement - update edited values
-    	if (varsUpdated)
+    	if (!varUpdates.isEmpty())
     	{
-    		Executor.getInstance().adoptVarChanges(varUpdates);
+    		Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
     	}
-    	varsUpdated = false;
+    	varUpdates.clear();
     	// END KGU#68 2015-11-06
         if(Executor.getInstance().isRunning()==false)
         {
@@ -633,7 +496,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         {
             Executor.getInstance().setPaus(false);
         }
-    }//GEN-LAST:event_btnPlayActionPerformed
+    }
     
     // START KGU 2015-10-12: Must be possible on breakpoints
     public void setButtonsForPause()
@@ -648,7 +511,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // END KGU 2015-10-12
 
     private void btnPauseActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnPauseActionPerformed
-    {//GEN-HEADEREND:event_btnPauseActionPerformed
+    {
     	// START KGU 2015-10-12
 //        btnPause.setEnabled(false);
 //        btnPlay.setEnabled(true);
@@ -656,15 +519,15 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     	setButtonsForPause();
     	// END KGU 2015-10-12
         Executor.getInstance().setPaus(!Executor.getInstance().getPaus());
-    }//GEN-LAST:event_btnPauseActionPerformed
+    }
 
     private void btnStepActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnStepActionPerformed
-    {//GEN-HEADEREND:event_btnStepActionPerformed
+    {
     	// START KGU#68 2015-11-06: Enhancement - update edited values
-    	if (varsUpdated)
+    	if (!varUpdates.isEmpty())
     	{
-    		Executor.getInstance().adoptVarChanges(varUpdates);
-    		varsUpdated = false;
+    		Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
+    		varUpdates.clear();
     	}
     	// END KGU#68 2015-11-06
         // START KGU#117 2016-03-06: Enh. #77
@@ -679,7 +542,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         {
             Executor.getInstance().doStep();
         }
-    }//GEN-LAST:event_btnStepActionPerformed
+    }
 
     private void updateSpeed()
     {
@@ -693,28 +556,6 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         // END KGU#89 2015-11-25
     }
 
-    // START KGU#210 2016-07-25: Issue #201 - No longer needed
-//    private void slSpeedCaretPositionChanged(java.awt.event.InputMethodEvent evt)//GEN-FIRST:event_slSpeedCaretPositionChanged
-//    {//GEN-HEADEREND:event_slSpeedCaretPositionChanged
-//        updateSpeed();
-//    }//GEN-LAST:event_slSpeedCaretPositionChanged
-//
-//    private void slSpeedPropertyChange(java.beans.PropertyChangeEvent evt)//GEN-FIRST:event_slSpeedPropertyChange
-//    {//GEN-HEADEREND:event_slSpeedPropertyChange
-//        updateSpeed();
-//    }//GEN-LAST:event_slSpeedPropertyChange
-//
-//    private void slSpeedMouseClicked(java.awt.event.MouseEvent evt)//GEN-FIRST:event_slSpeedMouseClicked
-//    {//GEN-HEADEREND:event_slSpeedMouseClicked
-//        // TODO add your handling code here:
-//    }//GEN-LAST:event_slSpeedMouseClicked
-//
-//    private void slSpeedMouseExited(java.awt.event.MouseEvent evt)//GEN-FIRST:event_slSpeedMouseExited
-//    {//GEN-HEADEREND:event_slSpeedMouseExited
-//        updateSpeed();
-//    }//GEN-LAST:event_slSpeedMouseExited
-    // END KGU#210 2016-07-25
-
     private void slSpeedMouseMoved(java.awt.event.MouseEvent evt)//GEN-FIRST:event_slSpeedMouseMoved
     {//GEN-HEADEREND:event_slSpeedMouseMoved
         updateSpeed();
@@ -725,19 +566,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         updateSpeed();
     }//GEN-LAST:event_slSpeedMouseDragged
 
-    // START KGU#210 2016-07-25: Issue #201 - No longer needed
-//    private void slSpeedMouseWheelMoved(java.awt.event.MouseWheelEvent evt)//GEN-FIRST:event_slSpeedMouseWheelMoved
-//    {//GEN-HEADEREND:event_slSpeedMouseWheelMoved
-//        // TODO add your handling code here:
-//    }//GEN-LAST:event_slSpeedMouseWheelMoved
-//
-//    private void slSpeedMouseReleased(java.awt.event.MouseEvent evt)//GEN-FIRST:event_slSpeedMouseReleased
-//    {//GEN-HEADEREND:event_slSpeedMouseReleased
-//        updateSpeed();
-//    }//GEN-LAST:event_slSpeedMouseReleased
-    // END KGU#210 2016-07-25
-
-    // START KGU#159 2016-03-17: Stacktrace now permanently available on demand
+    // START KGU#159 2016-03-17: Stack trace now permanently available on demand
     // START KGU#210 2016-07-25: Fix #201 - improved usability
     //private void txtCallLevelClicked(MouseEvent evt)
     //{
@@ -753,28 +582,34 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     		Executor.getInstance().showStackTrace();
     	}    	
     }
-    // END KGU
+    // END KGU#210 2016-07-25
     // END KGU#159 2016-03-17
 
     public void updateVars(Vector<Vector<Object>> vars)
     {
-    	// START KGU#68 2015-11-06: We want to keep track of changed variables
-    	this.varsUpdated = false;
-    	// END KGU#68 2015-11-06
         tblVar.setGridColor(Color.LIGHT_GRAY);
         tblVar.setShowGrid(true);
         DefaultTableModel tm = (DefaultTableModel) tblVar.getModel();
         // empty the table
-        while(tm.getRowCount()>0) tm.removeRow(0);
-        // START KGU#68 2015-11-06: Preparation for variable editing
-        //for(int i=0;i<vars.size();i++) tm.addRow(vars.get(i));
-        varUpdates = new Object[vars.size()];
-        for(int i=0; i<vars.size(); i++)
-        {
-        	tm.addRow(vars.get(i));
-        	varUpdates[i] = null;
+        // START KGU#68 2016-10-07: Preparation for variable editing
+        varUpdates.clear();
+        // END KGU#68 2016-10-07
+        // START KGU#274 2016-10-08: Issue #264 Reduce the ArrayIndexOutOfBoundsException rate
+        //while(tm.getRowCount()>0) tm.removeRow(0);
+        //for(int i=0; i<vars.size(); i++) tm.addRow(vars.get(i));
+        int nRows = tm.getRowCount();
+        if (nRows > vars.size()) {
+        	tm.setRowCount(vars.size());
+        	nRows = vars.size();
         }
-        // END KGU#68 2015-11-06
+        for (int i = 0; i < nRows; i++) {
+        	tm.setValueAt(vars.get(i).get(0), i, 0);
+        	tm.setValueAt(vars.get(i).get(1), i, 1);
+        }
+        for (int i = nRows; i < vars.size(); i++) {
+        	tm.addRow(vars.get(i));
+        }
+        // END KGU#274 2016-10-08
     }
     
     // START KGU#2 (#9) 2015-11-14: Update method for subroutine level display
@@ -820,7 +655,6 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public LangTextHolder lbInputCancelled;
     public LangTextHolder lbManuallySet;
     public LangTextHolder lbEmptyLine;
-    public LangTextHolder lbNoCorrectExpr;
     public LangTextHolder lbReturnedResult;
     public LangTextHolder lbOutput;
     public LangTextHolder lbInput;
@@ -828,14 +662,14 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // START KGU#197 2016-05-05
     // START KGU#197 2016-07-27
     public final LangTextHolder msgNoSubroutine = 
-    		new LangTextHolder("A subroutine diagram %0 (%1 parameters) could not be found!%2Consider starting the Arranger and place needed subroutine diagrams there first.");
+    		new LangTextHolder("A subroutine diagram %1 (%2 parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.");
     public final LangTextHolder msgInvalidExpr =
     		new LangTextHolder("<%1> is not a correct or existing expression.");
     // START KGU#249 2016-09-17: Bugfix #246 + Issue #243
     public final LangTextHolder msgInvalidBool =
     		new LangTextHolder("<%1> is not a valid Boolean expression.");
     // END KGU#249 2016-09-17
-   public final LangTextHolder msgIllFunction =
+    public final LangTextHolder msgIllFunction =
     		new LangTextHolder("<%1> is not a correct function!");
     public final LangTextHolder msgManualBreak =
     		new LangTextHolder("Manual Break!");
@@ -862,8 +696,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // END KGU#247 2016-09-17
     
     // START KGU#68 2015-11-06: Register variable value editing events
-    private Object[] varUpdates = null;
-    private boolean varsUpdated = false;
+    private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();
 
     @Override
 	public void propertyChange(PropertyChangeEvent pcEv) {
@@ -875,8 +708,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             Object val = tm.getValueAt(rowNr, 1);
             if (val != null)
             {
-            	varsUpdated = true;
-            	varUpdates[rowNr] = val;
+            	varUpdates.put((String)tm.getValueAt(rowNr, 0), val);
             	//System.out.println(tm.getValueAt(rowNr, 0).toString() + " <- " + val.toString());
             }
     	}

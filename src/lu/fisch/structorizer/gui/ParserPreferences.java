@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.gui;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -41,9 +42,11 @@ package lu.fisch.structorizer.gui;
  *
  *      Comment:		I used JFormDesigner to design this window graphically.
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import lu.fisch.structorizer.locales.LangDialog;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -205,7 +208,7 @@ public class ParserPreferences extends LangDialog {
 		//lblErrorSign = new JLabel();
 		lblErrorSign = new LangTextHolder();
 
-		lblErrorSign.setText("Your are not allowed to use the sign ':' in any parser string!");
+		lblErrorSign.setText("Your are not allowed to use the character ':' in any parser string!");
 		// START KGU#61 2016-03-21: Enh. #84 - New set of keywords for FOR-IN loops
 		//lblErrorSign2 = new JLabel();
 		lblErrorSign2 = new LangTextHolder();

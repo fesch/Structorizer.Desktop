@@ -54,6 +54,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.04.01      Enh. #144: Care for new option to suppress content conversion 
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                              bugfix for routine calls (superfluous parentheses dropped)
+ *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done
  *
  ******************************************************************************************************
  *
@@ -556,21 +557,25 @@ public class PythonGenerator extends Generator
 				boolean isEmpty = true;
 
 				StringList lines = _jump.getText();
+				String preReturn = D7Parser.keywordMap.get("preReturn");
+				String preLeave  = D7Parser.keywordMap.get("preLeave");
+				String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
+				String preLeaveMatch  = Matcher.quoteReplacement(preLeave)+"([\\W].*|$)";
 				for (int i = 0; isEmpty && i < lines.count(); i++) {
 					String line = transform(lines.get(i)).trim();
 					if (!line.isEmpty())
 					{
 						isEmpty = false;
 					}
-					if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
+					if (line.matches(preReturnMatch))
 					{
-						code.add(_indent + "return " + line.substring(D7Parser.preReturn.length()).trim());
+						code.add(_indent + "return " + line.substring(preReturn.length()).trim());
 					}
-					else if (line.matches(Matcher.quoteReplacement(D7Parser.preLeave)+"([\\W].*|$)"))
+					else if (line.matches(preLeaveMatch))
 					{
 						// We may only allow one-level breaks, i. e. there must not be an argument
 						// or the argument must be 1 and a legal label must be associated.
-						String arg = line.substring(D7Parser.preLeave.length()).trim();
+						String arg = line.substring(preLeave.length()).trim();
 						Integer label = this.jumpTable.get(_jump);
 						if (label != null && label.intValue() >= 0 &&
 								(arg.isEmpty() || Integer.parseInt(arg) == 1))

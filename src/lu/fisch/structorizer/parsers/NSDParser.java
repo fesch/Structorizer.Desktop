@@ -40,6 +40,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): Enhancement towards FOR-IN loops
  *      Kay Gürtzig     2016.04.14      Enh. #158 (KGU#177): method parse() cloned
  *      Kay Gürtzig     2016.09.24      Enh. #250 - Robustness of FOR loop reconstruction improved
+ *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done. 
  *
  ******************************************************************************************************
  *
@@ -56,10 +57,12 @@ import org.xml.sax.helpers.*;
 import java.awt.Color;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Stack;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.io.Ini;
 
 public class NSDParser extends DefaultHandler {
 
@@ -77,6 +80,12 @@ public class NSDParser extends DefaultHandler {
 	private Element lastE = null;
 	
 	private String fileVersion = "";
+	
+	// START KGU#258 2016-09-25: Enh. #253 holds the parser preferences saved with the file (3.25-01)
+	private HashMap<String, StringList> savedParserPrefs = new HashMap<String, StringList>();
+	private boolean ignoreCase = false;
+	private boolean refactorKeywords = false;
+	// END KGU#258 2016-09-25
 
         @Override
 	public void startElement(String namespaceUri, String localName, String qualifiedName, Attributes attributes) throws SAXException 
@@ -93,7 +102,6 @@ public class NSDParser extends DefaultHandler {
 //			}
 			
 			// START KGU#134 2016-01-08: File version now needed for bugfix #99 
-			String version = Element.E_VERSION;
 			if (attributes.getIndex("version") != -1) { fileVersion = attributes.getValue("version"); }
 			// So we might react to some incompatibility... 
 //			if (version.indexOf("dev") != 0)
@@ -101,6 +109,27 @@ public class NSDParser extends DefaultHandler {
 //				// Unstable version ...
 //			}
 			// END KGU 2016-01-08
+			
+			// START KGU#258 2016-09-25: Enh. #253 - read the saved parser preferences if any
+			
+			if (fileVersion.compareTo("3.25") > 0 && refactorKeywords)
+			{
+				for (String key: D7Parser.keywordMap.keySet())
+				{
+					if (attributes.getIndex(key) != -1)
+					{
+						String keyword = attributes.getValue(key);
+						savedParserPrefs.put(key, Element.splitLexically(keyword, false));
+					}
+				}
+				if (attributes.getIndex("ignoreCase") != -1)
+				{
+					ignoreCase = attributes.getValue("ignoreCase").equals("true");
+				}
+				// If no stored keywords were found then we don't need to refactor anything
+				refactorKeywords = !savedParserPrefs.isEmpty();
+			}
+			// END KGU#258 2016-09-25
 			
 			// read attributes
 			root.isProgram = true;
@@ -136,6 +165,13 @@ public class NSDParser extends DefaultHandler {
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 			
+			// START KGU#258 2016-09-25: Enh. #253
+			if (this.refactorKeywords)
+			{
+				ele.refactorKeywords(savedParserPrefs, ignoreCase);
+			}
+			// END KGU#258 2016-09-25
+			
 			// place stack
 			lastE=ele;
 			stack.push(ele);
@@ -155,6 +191,13 @@ public class NSDParser extends DefaultHandler {
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 						
+			// START KGU#258 2016-09-25: Enh. #253
+			if (this.refactorKeywords)
+			{
+				ele.refactorKeywords(savedParserPrefs, ignoreCase);
+			}
+			// END KGU#258 2016-09-25
+			
 			// place stack
 			lastE=ele;
 			stack.push(ele);
@@ -173,6 +216,8 @@ public class NSDParser extends DefaultHandler {
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 			
+			// Enh. #253: In a Call element, there isn't anything to refactor
+			
 			// place stack
 			lastE=ele;
 			stack.push(ele);
@@ -190,8 +235,15 @@ public class NSDParser extends DefaultHandler {
 			
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
+
+			// START KGU#258 2016-09-25: Enh. #253
+			if (this.refactorKeywords)
+			{
+				ele.refactorKeywords(savedParserPrefs, ignoreCase);
+			}
+			// END KGU#258 2016-09-25
 			
-			// set children
+			// set children 
 			ele.qTrue.setColor(ele.getColor());
 			ele.qFalse.setColor(ele.getColor());
 			
@@ -213,6 +265,13 @@ public class NSDParser extends DefaultHandler {
 			
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
+			
+			// START KGU#258 2016-09-25: Enh. #253
+			if (this.refactorKeywords)
+			{
+				ele.refactorKeywords(savedParserPrefs, ignoreCase);
+			}
+			// END KGU#258 2016-09-25
 			
 			// set children
 			ele.q.setColor(ele.getColor());
@@ -246,6 +305,35 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("stepConst")!=-1)  {ele.setStepConst(attributes.getValue("stepConst")); got++;}
 			//ele.isConsistent = ele.checkConsistency();
 			// END KGU#3 2015-10-29
+			
+			// START KGU#258 2016-10-04: Enh. #253
+			boolean reliable = attributes.getIndex("reliable")!=-1 && attributes.getValue("reliable").equals("true");
+			// START KGU#61 2016-03-21: Enh. #84 - Support for FOR-INloops, new attribute
+			//ele.isConsistent = (reliable || ele.checkConsistency());
+			if (reliable)
+			{
+				ele.style = For.ForLoopStyle.COUNTER;
+				reliable = true;
+			}
+			else if (attributes.getIndex("style")!=-1)
+			{
+				String style = attributes.getValue("style");
+				try {
+					ele.style = For.ForLoopStyle.valueOf(style);
+					reliable = true;
+				}
+				catch (Exception ex)
+				{
+					System.err.println("Wrong loop style in FOR loop: " + style);
+				}
+			}
+			
+			if (this.refactorKeywords)
+			{
+				ele.refactorKeywords(savedParserPrefs, ignoreCase);
+			}
+			// END KGU#258 2016-10-04
+			
 			// START KGU#3 2015-11-08: Better management of reliability of structured fields
 			if (got == 0)	// Seems to be an older diagram file, so try to split the text
 			{
@@ -254,50 +342,55 @@ public class NSDParser extends DefaultHandler {
 				ele.setEndValue(ele.getEndValue());
 				ele.setStepConst(ele.getStepConst());
 			}
-			boolean reliable = attributes.getIndex("reliable")!=-1 && attributes.getValue("reliable").equals("true");
+			
+			//boolean reliable = attributes.getIndex("reliable")!=-1 && attributes.getValue("reliable").equals("true");
 			// START KGU#61 2016-03-21: Enh. #84 - Support for FOR-INloops, new attribute
 			//ele.isConsistent = (reliable || ele.checkConsistency());
-			if (reliable)
+//			if (reliable)
+//			{
+//				ele.style = For.ForLoopStyle.COUNTER;
+//			}
+//			else if (attributes.getIndex("style")!=-1)
+//			{
+//				String style = attributes.getValue("style");
+//				try {
+//					ele.style = For.ForLoopStyle.valueOf(style);
+//				}
+//				catch (Exception ex)
+//				{
+//					System.err.println("Wrong loop style in FOR loop: " + style);
+//				}
+//			}
+//			else
+			if (!reliable)
 			{
-				ele.style = For.ForLoopStyle.COUNTER;
-			}
-			else if (attributes.getIndex("style")!=-1)
-			{
-				String style = attributes.getValue("style");
-				try {
-					ele.style = For.ForLoopStyle.valueOf(style);
-				}
-				catch (Exception ex)
-				{
-					System.err.println("Wrong loop style in FOR loop: " + style);
-				}
-			}
-			else
-			{
+				// This is now done with the current parser preferences - might fail.
 				ele.style = ((For)ele).classifyStyle();
 			}
 			if (ele.style == For.ForLoopStyle.TRAVERSAL)
 			{
 				// Now we try to reconstruct the value list.
 				// For this we use the post-FOR-IN separator that was valid on saving the file 
-				String currentInSep = D7Parser.postForIn;
-				String inSep = null;
-				if (attributes.getIndex("insep")!=-1)
+				String currentInSep = D7Parser.keywordMap.get("postForIn");
+				if (!savedParserPrefs.containsKey("postForIn") && attributes.getIndex("insep")!=-1)
 				{
-					inSep = attributes.getValue("insep");
+					// In this case it's unlikely that the FOR-IN separator has already been 
+					String inSep = attributes.getValue("insep");
+					if (inSep != null && !inSep.trim().isEmpty())
+					{
+						// Temporarily substitute the postForIn keyword with that from file
+						D7Parser.keywordMap.put("postForIn", inSep);
+					}
 				}
 				try {
-					if (inSep != null && !inSep.isEmpty())
-					{
-						D7Parser.postForIn = inSep;
-					}
 					ele.setValueList(ele.splitForClause()[5]);
 				}
 				catch (Exception ex) {
 					System.err.println("Error on reconstructing FOR-IN loop: " + ex.getLocalizedMessage());
 				}
 				finally {
-					D7Parser.postForIn = currentInSep;
+					// Make sure the current FOR-IN separator does not remain crooked
+					D7Parser.keywordMap.put("postForIn", currentInSep);
 				}
 			}
 			// END KGU#61 2016-03-21
@@ -327,6 +420,8 @@ public class NSDParser extends DefaultHandler {
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 			
+			// Enh. #253: In a Forever loop, there isn't anything to refactor
+
 			// set children
 			ele.q.setColor(ele.getColor());
 			
@@ -348,6 +443,13 @@ public class NSDParser extends DefaultHandler {
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 					
+			// START KGU#258 2016-09-25: Enh. #253
+			if (this.refactorKeywords)
+			{
+				ele.refactorKeywords(savedParserPrefs, ignoreCase);
+			}
+			// END KGU#258 2016-09-25
+			
 			// set children
 			ele.q.setColor(ele.getColor());
 			
@@ -370,6 +472,13 @@ public class NSDParser extends DefaultHandler {
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
 
+			// START KGU#258 2016-09-25: Enh. #253
+			if (this.refactorKeywords)
+			{
+				ele.refactorKeywords(savedParserPrefs, ignoreCase);
+			}
+			// END KGU#258 2016-09-25
+			
 			// place stack
 			lastE=ele;
 			stack.push(ele);
@@ -533,6 +642,12 @@ public class NSDParser extends DefaultHandler {
 		cStack.clear();
 		pStack.clear();
 				
+		// START KGU#258 2016-09-26: Enhancement #253
+		Ini ini = Ini.getInstance();
+		ini.load();
+		this.refactorKeywords = ini.getProperty("impRefactorOnLoading","false").equals("true");
+		// END KGU#258 2016-09-26
+
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		try		
 		{
@@ -576,6 +691,12 @@ public class NSDParser extends DefaultHandler {
 		qStack.clear();
 		cStack.clear();
 		pStack.clear();
+		
+		// START KGU#258 2016-09-26: Enh. #253
+		Ini ini = Ini.getInstance();
+		ini.load();
+		refactorKeywords = ini.getProperty("impRefactorOnLoading","false").equals("true");
+		// END KGU#258 2016-09-26
 				
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		try		
@@ -602,4 +723,5 @@ public class NSDParser extends DefaultHandler {
 		return root;
 	}
 	// END KGU#177 2016-04-14
+	
 }

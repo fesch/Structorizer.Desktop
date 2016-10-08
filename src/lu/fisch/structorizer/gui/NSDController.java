@@ -21,7 +21,6 @@
 package lu.fisch.structorizer.gui;
 
 import javax.swing.JFrame;
-import lu.fisch.utils.StringList;
 
 /******************************************************************************************************
  *

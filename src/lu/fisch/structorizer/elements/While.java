@@ -65,6 +65,10 @@ import lu.fisch.utils.*;
 
 public class While extends Element implements ILoop {
 
+	// START KGU#258 2016-09-26: Enh. #253
+	private static final String[] relevantParserKeys = {"preWhile", "postWhile"};
+	// END KGU#258 2016-09-25
+	
 	public Subqueue q = new Subqueue();
 	
 	// START KGU#136 2016-02-27: Bugfix #97 replaced by local variable in repareDraw()
@@ -492,5 +496,12 @@ public class While extends Element implements ILoop {
 		}
 		return proceed;
 	}
+
+	// START KGU#258 2016-09-26: Enh. #253
+	@Override
+	protected String[] getRelevantParserKeys() {
+		return relevantParserKeys;
+	}
+	// END KGU#258 2016-09-25
 
 }

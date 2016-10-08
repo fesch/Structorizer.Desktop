@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -908,6 +909,12 @@ public class Parallel extends Element
 			proceed = _visitor.visitPostOrder(this);
 		}
 		return proceed;
+	}
+
+	@Override
+	protected String[] getRelevantParserKeys() {
+		// There is nothing to return
+		return null;
 	}
 
 }

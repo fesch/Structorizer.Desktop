@@ -65,8 +65,10 @@ import java.io.*;
 import java.nio.*;
 import java.nio.charset.*;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import goldengine.java.*;
 import lu.fisch.utils.*;
@@ -92,32 +94,54 @@ public class D7Parser implements GPMessageConstants
 	
 	// NOTE: Don't forget to add new keywords to method getAllProperties()!
 	// FIXME (#253): All these fields should be replaced by a static Hashmap!
-	public static String preAlt = "";
-	public static String postAlt = "";
-	public static String preCase = "";
-	public static String postCase = "";
-	public static String preFor = "for ";
-	public static String postFor = "to";
-	// START KGU#3/KGU#18/KGU#23 2015-10-20
-	// TODO Must the code below (esp. DrawNSD_R) be adapted? Or isn't it used anymore?
-	public static String stepFor = " step ";	// For consistent analysis of FOR loops
-	// END KGU#3/KGU#18/KGU#23 2015-10-20;
-	// START KGU#61 2016-03-20: Enh. #84/#135 - support and distinguish FOR-IN loops
-	public static String preForIn = "for ";	// This may be equal to preFor!
-	public static String postForIn = " in ";
-	// END KGU#61 2016-03-20
-	public static String preWhile = "while ";
-	public static String postWhile = "";
-	public static String preRepeat = "until ";
-	public static String postRepeat = "";
-	public static String input = "read ";
-	public static String output = "write ";
+	public static final HashMap<String, String> keywordMap = new LinkedHashMap<String, String>();
+	static {
+		keywordMap.put("preAlt",     "");
+		keywordMap.put("postAlt",    "");
+		keywordMap.put("preCase",    "");
+		keywordMap.put("postCase",   "");
+		keywordMap.put("preFor",     "for");
+		keywordMap.put("postFor",    "to");
+		keywordMap.put("stepFor",    "step");
+		keywordMap.put("preForIn",   "foreach");
+		keywordMap.put("postForIn",  "in");
+		keywordMap.put("preWhile",   "while");
+		keywordMap.put("postWhile",  "");
+		keywordMap.put("preRepeat",  "until");
+		keywordMap.put("postRepeat", "");
+		keywordMap.put("preLeave",   "leave");
+		keywordMap.put("preReturn",  "return");
+		keywordMap.put("preExit",    "exit");
+		keywordMap.put("input",      "read");
+		keywordMap.put("output",     "write");
+	}
 	
-	// START KGU#78 2015-11-27: Configurable keywords for Jump types prepared
-	public static String preLeave = "leave";
-	public static String preReturn = "return";
-	public static String preExit = "exit";
-	// END KGU#78 2015-11-27
+//	public static String preAlt = "";
+//	public static String postAlt = "";
+//	public static String preCase = "";
+//	public static String postCase = "";
+//	public static String preFor = "for ";
+//	public static String postFor = "to";
+//	// START KGU#3/KGU#18/KGU#23 2015-10-20
+//	// TODO Must the code below (esp. DrawNSD_R) be adapted? Or isn't it used anymore?
+//	public static String stepFor = " step ";	// For consistent analysis of FOR loops
+//	// END KGU#3/KGU#18/KGU#23 2015-10-20;
+//	// START KGU#61 2016-03-20: Enh. #84/#135 - support and distinguish FOR-IN loops
+//	public static String preForIn = "for ";	// This may be equal to preFor!
+//	public static String postForIn = " in ";
+//	// END KGU#61 2016-03-20
+//	public static String preWhile = "while ";
+//	public static String postWhile = "";
+//	public static String preRepeat = "until ";
+//	public static String postRepeat = "";
+//	public static String input = "read ";
+//	public static String output = "write ";
+//	
+//	// START KGU#78 2015-11-27: Configurable keywords for Jump types prepared
+//	public static String preLeave = "leave";
+//	public static String preReturn = "return";
+//	public static String preExit = "exit";
+//	// END KGU#78 2015-11-27
 	
 	// NOTE: Don't forget to add new keywords to getAllProperties()!
 
@@ -604,7 +628,7 @@ public class D7Parser implements GPMessageConstants
 			{
 				content = new String();
 				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
-				While ele = new While(preWhile+updateContent(content)+postWhile);
+				While ele = new While(keywordMap.get("preWhile")+updateContent(content)+keywordMap.get("postWhile"));
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = (Reduction) _reduction.getToken(3).getData();
@@ -616,7 +640,7 @@ public class D7Parser implements GPMessageConstants
 			{
 				content = new String();
 				content = getContent_R((Reduction) _reduction.getToken(3).getData(),content);
-				Repeat ele = new Repeat(preRepeat+updateContent(content)+postRepeat);
+				Repeat ele = new Repeat(keywordMap.get("preRepeat")+updateContent(content)+keywordMap.get("postRepeat"));
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = (Reduction) _reduction.getToken(1).getData();
@@ -631,18 +655,18 @@ public class D7Parser implements GPMessageConstants
 				content += ":=";
 				content = getContent_R((Reduction) _reduction.getToken(3).getData(),content);
 				content += " ";
-				content += postFor;
+				content += keywordMap.get("postFor");
 				content += " ";
 				content = getContent_R((Reduction) _reduction.getToken(5).getData(),content);
 				// START KGU#3 2016-05-02: Enh. #10 Token 4 contains the information whether it's to or downto
 				if (getContent_R((Reduction) _reduction.getToken(4).getData(), "").equals("downto"))
 				{
-					content += " " + stepFor + " -1";
+					content += " " + keywordMap.get("stepFor") + " -1";
 				}
 				// END KGU#3 2016-05-02
 				// START KGU 2016-05-02: This worked only if preFor ended with space
 				//For ele = new For(preFor+updateContent(content));
-				For ele = new For(preFor.trim() + " " + updateContent(content));
+				For ele = new For(keywordMap.get("preFor").trim() + " " + updateContent(content));
 				// END KGU 2016-05-02
 				_parentNode.addElement(ele);
 				
@@ -657,7 +681,7 @@ public class D7Parser implements GPMessageConstants
 				content = new String();
 				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
 				
-				Alternative ele = new Alternative(preAlt + updateContent(content)+postAlt);
+				Alternative ele = new Alternative(keywordMap.get("preAlt") + updateContent(content)+keywordMap.get("postAlt"));
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = (Reduction) _reduction.getToken(3).getData();
@@ -711,7 +735,7 @@ public class D7Parser implements GPMessageConstants
 					 )
 			{
 				content = new String();
-				content = preCase+getContent_R((Reduction) _reduction.getToken(1).getData(),content)+postCase;
+				content = keywordMap.get("preCase")+getContent_R((Reduction) _reduction.getToken(1).getData(),content)+keywordMap.get("postCase");
 				// am content steet elo hei den "test" dran
 				
 				// Wéivill Elementer sinn am CASE dran?
@@ -817,6 +841,8 @@ public class D7Parser implements GPMessageConstants
 		r = new Regex(BString.breakup("readln")+"(.*?)",input+" $1"); _content=r.replaceAll(_content);
 		r = new Regex(BString.breakup("read")+"(.*?)",input+" $1"); _content=r.replaceAll(_content);*/
 
+		String output = keywordMap.get("output");
+		String input = keywordMap.get("input");
 		_content = _content.replaceAll(BString.breakup("write")+"[((](.*?)[))]", output+" $1");
 		_content = _content.replaceAll(BString.breakup("writeln")+"[((](.*?)[))]", output+" $1");
 		_content = _content.replaceAll(BString.breakup("writeln")+"(.*?)", output+" $1");
@@ -908,36 +934,58 @@ public class D7Parser implements GPMessageConstants
 	
 	public static void loadFromINI()
 	{
+		final HashMap<String, String> defaultKeys = new HashMap<String, String>();
+		defaultKeys.put("ParserPreFor", "pour ");
+		defaultKeys.put("ParserPostFor", "\u00E0");
+		defaultKeys.put("ParserStepFor", ", pas = ");
+		defaultKeys.put("ParserPreForIn", "pour ");
+		defaultKeys.put("ParserPostForIn", " en ");
+		defaultKeys.put("ParserPreWhile", "tant que ");
+		defaultKeys.put("ParserPreRepeat", "jusqu'\u00E0 ");
+		defaultKeys.put("ParserPreLeave", "leave");
+		defaultKeys.put("ParserPreReturn", "return");
+		defaultKeys.put("ParserPreExit", "exit");
+		defaultKeys.put("ParserInput", "lire ");
+		defaultKeys.put("ParserOutput", "\u00E9crire");
+		
 		try
 		{
 			Ini ini = Ini.getInstance();
 			ini.load();
 
 			// elements
-			preAlt = ini.getProperty("ParserPreAlt","");
-			postAlt = ini.getProperty("ParserPostAlt","");
-			preCase = ini.getProperty("ParserPreCase","");
-			postCase = ini.getProperty("ParserPostCase","");
-			preFor = ini.getProperty("ParserPreFor","pour ");
-			postFor = ini.getProperty("ParserPostFor","\u00E0");
-			// START KGU#3 2015-11-08: Enhancement #10
-			stepFor = ini.getProperty("ParserStepFor", ", pas = ");
-			// END KGU#3 2015-11-08
-			// START KGU#61 2016-03-20: Enh. #84/#135 - support and distinguish FOR-IN loops
-			preForIn = ini.getProperty("ParserPreForIn","pour ");
-			postForIn = ini.getProperty("ParserPostForIn"," en ");
-			// END KGU#61 2016-03-20
-			preWhile = ini.getProperty("ParserPreWhile","tant que ");
-			postWhile = ini.getProperty("ParserPostWhile","");
-			preRepeat = ini.getProperty("ParserPreRepeat","jusqu'\u00E0 ");
-			postRepeat = ini.getProperty("ParserPostRepeat","");
-    		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
-			preLeave = ini.getProperty("ParserPreLeave", "leave");
-			preReturn = ini.getProperty("ParserPreReturn", "return");
-			preExit = ini.getProperty("ParserPreExit", "exit");
-    		// END KGU#78 2016-03-25
-			input = ini.getProperty("ParserInput","lire");
-			output = ini.getProperty("ParserOutput","\u00E9crire");
+			// START KGU#258 2016-09-25: Code redesign for enh. #253
+//			preAlt = ini.getProperty("ParserPreAlt","");
+//			postAlt = ini.getProperty("ParserPostAlt","");
+//			preCase = ini.getProperty("ParserPreCase","");
+//			postCase = ini.getProperty("ParserPostCase","");
+//			preFor = ini.getProperty("ParserPreFor","pour ");
+//			postFor = ini.getProperty("ParserPostFor","\u00E0");
+//			// START KGU#3 2015-11-08: Enhancement #10
+//			stepFor = ini.getProperty("ParserStepFor", ", pas = ");
+//			// END KGU#3 2015-11-08
+//			// START KGU#61 2016-03-20: Enh. #84/#135 - support and distinguish FOR-IN loops
+//			preForIn = ini.getProperty("ParserPreForIn","pour ");
+//			postForIn = ini.getProperty("ParserPostForIn"," en ");
+//			// END KGU#61 2016-03-20
+//			preWhile = ini.getProperty("ParserPreWhile","tant que ");
+//			postWhile = ini.getProperty("ParserPostWhile","");
+//			preRepeat = ini.getProperty("ParserPreRepeat","jusqu'\u00E0 ");
+//			postRepeat = ini.getProperty("ParserPostRepeat","");
+//    		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
+//			preLeave = ini.getProperty("ParserPreLeave", "leave");
+//			preReturn = ini.getProperty("ParserPreReturn", "return");
+//			preExit = ini.getProperty("ParserPreExit", "exit");
+//    		// END KGU#78 2016-03-25
+//			input = ini.getProperty("ParserInput","lire");
+//			output = ini.getProperty("ParserOutput","\u00E9crire");
+			for (String key: keywordMap.keySet())
+			{
+				String propertyName = "Parser" + Character.toUpperCase(key.charAt(0)) + key.substring(1);
+				keywordMap.put(key, ini.getProperty(propertyName, defaultKeys.getOrDefault(propertyName, "")));
+			}
+			
+			// END KGU#258 2016-09-25
 			// START KGU#165 2016-03-25: Enhancement configurable case awareness
 			ignoreCase = ini.getProperty("ParserIgnoreCase", "true").equalsIgnoreCase("true");
 			// END KGU#3 2016-03-25
@@ -955,34 +1003,41 @@ public class D7Parser implements GPMessageConstants
 		{
 			Ini ini = Ini.getInstance();
 			ini.load();			// elements
-			ini.setProperty("ParserPreAlt",preAlt);
-			ini.setProperty("ParserPostAlt",postAlt);
-			ini.setProperty("ParserPreCase",preCase);
-			ini.setProperty("ParserPostCase",postCase);
-			ini.setProperty("ParserPreFor",preFor);
-			ini.setProperty("ParserPostFor",postFor);
-			// START KGU#3 2015-11-08: Enhancement #10
-			ini.setProperty("ParserStepFor",stepFor);
-			// END KGU#3 2015-11-08
-			// START KGU#61 2016-03-20: Enh. #84/#135 - support and distinguish FOR-IN loops
-			ini.setProperty("ParserPreForIn",preForIn);
-			ini.setProperty("ParserPostForIn",postForIn);
-			// END KGU#61 2016-03-20
-			ini.setProperty("ParserPreWhile",preWhile);
-			ini.setProperty("ParserPostWhile",postWhile);
-			ini.setProperty("ParserPreRepeat",preRepeat);
-			ini.setProperty("ParserPostRepeat",postRepeat);
-    		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
-			ini.setProperty("ParserPreLeave", preLeave);
-			ini.setProperty("ParserPreReturn", preReturn);
-			ini.setProperty("ParserPreExit", preExit);
-    		// END KGU#78 2016-03-25
-			
-			ini.setProperty("ParserInput",input);
-			ini.setProperty("ParserOutput",output);
-			// START KGU#165 2016-03-25: Enhancement 
-			ini.setProperty("ParserIgnoreCase",Boolean.toString(ignoreCase));
-			// END KGU#3 2016-03-25
+			// START KGU#258 2016-09-25: Code redesign for enh. #253			
+//			ini.setProperty("ParserPreAlt",preAlt);
+//			ini.setProperty("ParserPostAlt",postAlt);
+//			ini.setProperty("ParserPreCase",preCase);
+//			ini.setProperty("ParserPostCase",postCase);
+//			ini.setProperty("ParserPreFor",preFor);
+//			ini.setProperty("ParserPostFor",postFor);
+//			// START KGU#3 2015-11-08: Enhancement #10
+//			ini.setProperty("ParserStepFor",stepFor);
+//			// END KGU#3 2015-11-08
+//			// START KGU#61 2016-03-20: Enh. #84/#135 - support and distinguish FOR-IN loops
+//			ini.setProperty("ParserPreForIn",preForIn);
+//			ini.setProperty("ParserPostForIn",postForIn);
+//			// END KGU#61 2016-03-20
+//			ini.setProperty("ParserPreWhile",preWhile);
+//			ini.setProperty("ParserPostWhile",postWhile);
+//			ini.setProperty("ParserPreRepeat",preRepeat);
+//			ini.setProperty("ParserPostRepeat",postRepeat);
+//    		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
+//			ini.setProperty("ParserPreLeave", preLeave);
+//			ini.setProperty("ParserPreReturn", preReturn);
+//			ini.setProperty("ParserPreExit", preExit);
+//    		// END KGU#78 2016-03-25
+//			
+//			ini.setProperty("ParserInput",input);
+//			ini.setProperty("ParserOutput",output);
+//			// START KGU#165 2016-03-25: Enhancement 
+//			ini.setProperty("ParserIgnoreCase",Boolean.toString(ignoreCase));
+//			// END KGU#3 2016-03-25
+			for (Map.Entry<String, String> entry: getPropertyMap(true).entrySet())
+			{
+				String propertyName = "Parser" + Character.toUpperCase(entry.getKey().charAt(0)) + entry.getKey().substring(1);
+				ini.setProperty(propertyName, entry.getValue());
+			}
+			// END KGU#258 2016-09-25
 			
 			ini.save();
 		}
@@ -1000,57 +1055,28 @@ public class D7Parser implements GPMessageConstants
 	public static String[] getAllProperties()
 	{
 		String[] props = new String[]{};
-		props = getPropertyMap(false).values().toArray(props);
-//		String[] keywords = {
-//			D7Parser.preAlt, D7Parser.postAlt,
-//			D7Parser.preCase, D7Parser.postCase,
-//			D7Parser.preFor, D7Parser.postFor, D7Parser.stepFor,
-//			D7Parser.preForIn, D7Parser.postForIn,
-//			D7Parser.preRepeat, D7Parser.postRepeat,
-//			D7Parser.preWhile, D7Parser.postWhile,
-//			D7Parser.preExit, D7Parser.preLeave, D7Parser.preReturn,
-//			D7Parser.input, D7Parser.output
-//		};
-//		return keywords;
-		return props;
+		return keywordMap.values().toArray(props);
 	}
 	// END KGU#163 2016-03-25
 	
 	// START KGU#258 2016-09-25: Enh. #253 (temporary workaround for the needed Hashmap)
 	/**
-	 * Returns a Hashmap mapping parser preference labels likes "preAlt" to the
-	 * configured parser preference keywords
+	 * Returns a Hashmap mapping parser preference labels like "preAlt" to the
+	 * configured parser preference keywords.
 	 * @param includeAuxiliary - whether or not non-keyword settings (like "ignoreCase") are to be included
 	 * @return the hash table with the current settings
 	 */
 	// FIXME to be replaced by a static HashMap as substitution for the single fields
 	public static final HashMap<String, String> getPropertyMap(boolean includeAuxiliary)
 	{
-		HashMap<String, String> keywordMap = new HashMap<String, String>();
-		keywordMap.put("preAlt",     D7Parser.preAlt);
-		keywordMap.put("postAlt",    D7Parser.postAlt);
-		keywordMap.put("preCase",    D7Parser.preCase);
-		keywordMap.put("postCase",   D7Parser.postCase);
-		keywordMap.put("preFor",     D7Parser.preFor);
-		keywordMap.put("postFor",    D7Parser.postFor);
-		keywordMap.put("stepFor",    D7Parser.stepFor);
-		keywordMap.put("preForIn",   D7Parser.preForIn);
-		keywordMap.put("postForIn",  D7Parser.postForIn);
-		keywordMap.put("preWhile",   D7Parser.preWhile);
-		keywordMap.put("postWhile",  D7Parser.postWhile);
-		keywordMap.put("preRepeat",  D7Parser.preRepeat);
-		keywordMap.put("postRepeat", D7Parser.postRepeat);
-		keywordMap.put("preLeave",   D7Parser.preLeave);
-		keywordMap.put("preReturn",  D7Parser.preReturn);
-		keywordMap.put("preExit",    D7Parser.preExit);
-		keywordMap.put("input",      D7Parser.input);
-		keywordMap.put("output",     D7Parser.output);
-		// The following is important for the correct search
+		HashMap<String, String> keywords = keywordMap;
 		if (includeAuxiliary)
 		{
-			keywordMap.put("ignoreCase",  D7Parser.ignoreCase ? "true" : "false");
+			keywords = new HashMap<String,String>(keywordMap);
+			// The following information may be important for a correct search
+			keywords.put("ignoreCase",  Boolean.toString(ignoreCase));
 		}
-		return keywordMap;
+		return keywords;
 	}
 	// END KGU#258 2016-09-25
 

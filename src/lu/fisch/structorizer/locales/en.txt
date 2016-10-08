@@ -76,6 +76,7 @@
  *      Kay Gürtzig     2016.09.15-17   Issue #243: New message translations for Menu and Control
  *      Kay Gürtzig     2016.09.22      Bugfix #241; issue #249: New messages for InputBox and Analyser
  *                                      AnalyserPreferences numbering modified, InputBoxFor messages
+ *      Kay Gürtzig     2016.09.25      Enh. #253: Section ImportOptionDialog inserted
  *
  ******************************************************************************************************
  *
@@ -193,6 +194,7 @@ Menu.menuPreferencesOptions.text=Structures ...
 Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesAnalyser.text=Analyser ...
 Menu.menuPreferencesExport.text=Export ...
+Menu.menuPreferencesImport.text=Import ...
 Menu.menuPreferencesLanguage.text=Language
 Menu.menuPreferencesLanguageItems.en.text=English
 Menu.menuPreferencesLanguageItems.de.text=German
@@ -256,6 +258,10 @@ Menu.msgErrorImageSave.text=Error on saving the image(s)!
 Menu.msgErrorUsingGenerator.text=Error while using % generator
 Menu.msgErrorNoFile.text=File not found!
 Menu.msgBrowseFailed.text=Failed to show % in browser
+Menu.msgRefactoringOffer.text=Keywords configured in the Parser Preferences were replaced:%Are opened diagrams to be refactored accordingly?
+Menu.lblRefactorNone.text=no
+Menu.lblRefactorCurrent.text=current diagram
+Menu.lblRefactorAll.text=all diagrams
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
@@ -510,7 +516,7 @@ InputBoxFor.msgSeparateWithComma.text=Within braces, commas must separate values
 InputBoxFor.msgEnsureReturnedArray.text=Sure that the function returns an array?
 InputBoxFor.msgEnsureVariableIsArray.text=Sure that <%> designates an array?
 InputBoxFor.msgEnterValueList.text=Enter the value list for the loop.
-InputBoxFor.msgDiscardData.text=Changing the loop style means to discard most of the data!%Do you really want to discard the data?
+InputBoxFor.msgDiscardData.text=Changing the loop style means to discard most of the data!\nDo you really want to discard the data?
 InputBoxFor.msgAttention.text=ATTENTION!
 
 -----[ Preferences ]-----
@@ -668,6 +674,19 @@ ExportOptionDialoge.jLabel1.text=Please select the options you want to activate.
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Save these settings.
 
+-----[ ImportOptionDialog ]-----
+ImportOptionDialog.title=Import options ...
+ImportOptionDialog.lbIntro.text=Please select the options you want to activate...
+ImportOptionDialog.pnlCode.border=Code files
+ImportOptionDialog.pnlNSD.border=NSD files
+ImportOptionDialog.pnlPreference.border=Preference files
+ImportOptionDialog.lbCharset.text=Character set:
+ImportOptionDialog.chkCharsetAll.text=List all?
+ImportOptionDialog.chkRefactorOnLoading.text=Replace keywords on loading a diagram (refactoring).
+ImportOptionDialog.chkRefactorOnLoading.tooltip=Select this option if all configurable keywords in the daiagram are to be adapted to the current parser preferences.
+ImportOptionDialog.btnOk.text=OK
+ImportOptionDialog.btnOk.tooltip=Save these settings.
+
 -----> Arranger
 Surface.msgFileLoadError.text=File Load Error:
 Surface.msgSavePortable.text=Save as portable compressed archive?
@@ -707,7 +726,6 @@ Control.lbInputPaused.text=Execution paused - you may enter the value in the var
 Control.lbInputCancelled.text=Input cancelled
 Control.lbManuallySet.text=*** Manually set: %1 <- %2 ***
 Control.lbEmptyLine.text=empty line
-Control.lbNoCorrectExpr.text=<%> is not a correct or existing expression.
 Control.lbReturnedResult.text=Returned result
 Control.lbOutput.text=Output
 Control.lbInput.text=Input
@@ -715,7 +733,7 @@ Control.lbAcknowledge.text=Please acknowledge to continue.
 Control.msgTitleError.text=Error
 Control.msgTitleQuestion.text=Question
 Control.msgTitleParallel.text=Parallel Execution Problem
-Control.msgNoSubroutine.text=A subroutine diagram "%1" (%2 parameters) could not be found!%0Consider starting the Arranger and place needed subroutine diagrams there first.
+Control.msgNoSubroutine.text=A subroutine diagram "%1" (%2 parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.
 Control.msgInvalidExpr.text=<%1> is not a correct or existing expression.
 Control.msgInvalidBool.text=<%1> is not a valid Boolean expression.
 Control.msgIllFunction.text=<%1> is not a correct function!

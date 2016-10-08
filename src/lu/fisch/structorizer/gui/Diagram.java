@@ -89,6 +89,12 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.17      Issue #245: Message box for failing browser call in updateNSD() added.
  *      Kay Gürtzig     2016.09.21      Issue #248: Workaround for legacy Java versions (< 1.8) in editBreakTrigger()
  *      Kay Gürtzig     2016.09.24      Enh. #250: Several modifications around showInputBox()
+ *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done, importOptions() added.
+ *      Kay Gürtzig     2016.09.26      Enh. #253: Full support for diagram refactoring implemented.
+ *      Kay Gürtzig     2016.10.03      Enh. #257: CASE element transmutation (KGU#267), enh. #253 revised
+ *      Kay Gürtzig     2016.10.06      Minor improvements in FOR and CALL transmutations (enh. #213/#257)
+ *      Kay Gürtzig     2016.10.06      Bugfix #262: Selection and dragging problems after insertion, undo, and redo
+ *      Kay Gürtzig     2016.10.07      Bugfix #263: "Save as" now updates the current directory
  *
  ******************************************************************************************************
  *
@@ -138,6 +144,7 @@ import lu.fisch.structorizer.generators.*;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.turtle.TurtleBox;
 
 import org.freehep.graphicsio.svg.SVGGraphics2D;
@@ -404,7 +411,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         		//Element selEle = root.getElementByCoord(e.getX(),e.getY());
         		Element selEle = root.getElementByCoord(e.getX(), e.getY(), false);
         		// END KGU#25 2015-10-11
-				//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE MOVED >>>>> " + ((selEle != null) ? selEle : "null") + " <<<<<<<<<<<<<<<<<<<<<");
+				//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE MOVED >>>>> " + selEle + " <<<<<<<<<<<<<<<<<<<<<");
 
         		if (selEle != null &&
         				!selEle.getComment(false).getText().trim().isEmpty())
@@ -470,10 +477,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				mY = e.getY();
 				//System.out.println("DRAGGED "+mX+" "+mY);
 				/*System.out.println("DRAGGED ("+e.getX()+", "+e.getY()+") >> " +
-						bSome + " >> " + ((selectedDown != null) ? selectedDown : "null"));
+						bSome + " >> " + selectedDown);
 						/**/
 
 				bSome.setSelected(true);
+				//System.out.println("selected = " + bSome);
+				//System.out.println("selectedDown = " + selectedDown);
+				//System.out.println("selectedUp = " + selectedUp);
 				if (selectedDown != null) selectedDown.setSelected(true);
 
 				boolean doRedraw = false;
@@ -531,7 +541,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			Element ele = root.getElementByCoord(e.getX(), e.getY(), true);
 			// END KGU#25 2015-10-11
 
-			// START KGU#87 2015-11-22: Maintain a selected sequence on right mouse button click 
+			// KGU#87: Maintain a selected sequence on right mouse button click 
 			if (e.getButton() == MouseEvent.BUTTON3 && selected instanceof IElementSequence &&
 					(ele == null || ((IElementSequence)selected).getIndexOf(ele) >= 0))
 			{
@@ -543,9 +553,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				selected.setSelected(true);
 				redraw();
 			}
-			else
-			// END KGU#87 2015-11-23	
-			if (ele != null)
+			else if (ele != null)
 			{
 				// START KGU#136 2016-03-02: Bugfix #97 - Selection wasn't reliable
 				ele.setSelected(true);
@@ -560,7 +568,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				selY = mouseY - topLeft.top;
 				// END KGU#136 2016-03-02
 
-				// START KGU#87 2015-11-23
+				// KGU#87: Expansion to entire subqueue (induced by Alt key held down)?
 				if (e.isAltDown() && ele.parent instanceof Subqueue &&
 						((Subqueue)ele.parent).getSize() > 1)
 				{
@@ -572,9 +580,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					selectedUp = ele;
 					redraw();						
 				}
-				else
-				// END KGU#87 2015-11-23
-				if (ele != selected)
+				else if (ele != selected)
 				{
 					// START KGU#87 2015-11-23: If an entire Subqueue had been selected, reset the flags 
 					if (selected instanceof Subqueue)
@@ -617,10 +623,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				//redraw();
 			}
-			// START KGU#180 2016-04-15: Bugfix #165 - delection didn't work properly
+			// START KGU#180 2016-04-15: Bugfix #165 - detection didn't work properly
 			else /* ele == null */
 			{
 				selected = null;
+				// FIXME: May selectedDown and selectedUp still hold a former selection? 
 				redraw();
 			}
 			// END KGU#180 2016-04-15
@@ -663,7 +670,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//selectedUp = root.selectElementByCoord(e.getX(),e.getY());
 					selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
 					// END KGU#25 2015-10-11
-					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 1 >>>>>>> " + ((selectedUp != null)?selectedUp:"null")+ " <<<<<<<<<<<<<<<<<<<<<<");
+					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 1 >>>>>>> " + selectedUp + " <<<<<<<<<<<<<<<<<<<<<<");
 					if (selectedUp != null)
 					{
 						selectedUp.setSelected(false);
@@ -714,7 +721,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//selectedUp = root.selectElementByCoord(e.getX(),e.getY());
 					selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
 					// END KGU#25 2015-10-11
-					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 2 >>>>>>> " + ((selectedUp != null)?selectedUp:"null")+ " <<<<<<<<<<<<<<<<<<<<<<");
+					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 2 >>>>>>> " + selectedUp + " <<<<<<<<<<<<<<<<<<<<<<");
 					if (selectedUp!=null) selectedUp.setSelected(false);
 					doDraw=true;
 				}
@@ -1169,7 +1176,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//System.out.println(e.getMessage());
 			errorMessage = e.getLocalizedMessage();
 			if (errorMessage == null) errorMessage = e.getMessage();
-			System.err.println(e.getMessage());
+			System.err.println("openNSD(\"" + _filename + "\"): " + (errorMessage != null ? errorMessage : e));
+			//e.printStackTrace(System.err);
 			// END KGU#111 2015-12-16
 		}
 		// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
@@ -1246,6 +1254,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#94 2015.12.04: out-sourced to auxiliary method
 					doSaveNSD();
 					// END KGU#94 2015-12-04
+		        	// START KGU#273 2016-10-07: Bugfix #263 - remember the directory as current directory
+		        	this.currentDirectory = f;
+		        	// END KGU#273 2016-10-07
 				}
 			}
 		// START KGU#248 2016-09-15: Bugfix #244 - allow to leave the new loop
@@ -1443,9 +1454,23 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#138 2016-01-11: Bugfix #102 - All elements will be replaced by copies...
 		selected = this.selectedDown = this.selectedMoved = this.selectedUp = null;
 		// END KGU#138 2016-01-11
+		// START KGU#272 2016-10-06: Bugfix #262: We must unselect root such that it may find a selected descendant
+		root.setSelected(false);
+		// END KGU#272 2016-10-06
 		// START KGU#183 2016-04-24: Issue #169 - Restore previous selection if possible
 		selected = root.findSelected();
 		// END KGU#183 2016-04-24
+		// START KGU#272 2016-10-06: Bugfix #262
+		if (selected == null)
+		{
+			selected = root;
+			root.setSelected(true);
+		}
+		else
+		{
+			selectedDown = selectedUp = selected;
+		}
+		// END KGU#272 2016-10-06
 		redraw();
 		analyse();
 	}
@@ -1459,9 +1484,23 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#138 2016-01-11: Bugfix #102 All elements will be replaced by copies...
 		selected = this.selectedDown = this.selectedMoved = this.selectedUp = null;
 		// END KGU#138 2016-01-11
+		// START KGU#272 2016-10-06: Bugfix #262: We must unselect root such that it may find a selected descendant
+		root.setSelected(false);
+		// END KGU#272 2016-10-06
 		// START KGU#183 2016-04-24: Issue #169 - Restore previous selection if possible
 		selected = root.findSelected();
 		// END KGU#183 2016-04-24
+		// START KGU#272 2016-10-06: Bugfix #262
+		if (selected == null)
+		{
+			selected = root;
+			root.setSelected(true);
+		}
+		else
+		{
+			selectedDown = selectedUp = selected;
+		}
+		// END KGU#272 2016-10-06
 		redraw();
 		analyse();
 	}
@@ -1532,36 +1571,42 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#199 2016-07-06: Enh. #188: Element conversions
 	public boolean canTransmute()
 	{
-		boolean convertible = false;
+		boolean isConvertible = false;
 		if (selected != null && !selected.executed && !selected.waited)
 		{
 			if (selected instanceof Instruction)
 			{
 				Instruction instr = (Instruction)selected;
-				convertible = instr.getText().count() > 1
+				isConvertible = instr.getText().count() > 1
 						|| instr.isJump()
 						|| instr.isFunctionCall()
 						|| instr.isProcedureCall();
 			}
 			else if (selected instanceof IElementSequence && ((IElementSequence)selected).getSize() > 1)
 			{
-				convertible = true;
-				for (int i = 0; convertible && i < ((IElementSequence)selected).getSize(); i++)
+				isConvertible = true;
+				for (int i = 0; isConvertible && i < ((IElementSequence)selected).getSize(); i++)
 				{
 					if (!(((IElementSequence)selected).getElement(i) instanceof Instruction))
 					{
-						convertible = false;
+						isConvertible = false;
 					}
 				}
 			}
 			// START KGU#229 2016-08-01: Enh. #213
 			else if (selected instanceof For)
 			{
-				convertible = ((For)selected).style == For.ForLoopStyle.COUNTER;
+				isConvertible = ((For)selected).style == For.ForLoopStyle.COUNTER;
 			}
 			// END KGU#229 2016-08-01
+			// START KGU#267 2016-10-03: Enh. #257
+			else if (selected instanceof Case)
+			{
+				isConvertible = true;
+			}
+			// END KGU#267 2016-10-03
 		}
-		return convertible;
+		return isConvertible;
 	}
 	// END KGU#199 2016-07-06
 	
@@ -1708,6 +1753,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU#137 2016-01-11
 					((Subqueue) element).addElement(ele);
 					// START KGU#136 2016-03-01: Bugfix #97
+					// FIXME: Other parts of the diagram might be affected, too
 					element.resetDrawingInfoUp();
 					// END KGU#136 2016-03-01
 					ele.setSelected(true);
@@ -1774,6 +1820,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//root.hasChanged=true;
 					// END KGU#137 2016-01-11
 					// START KGU#136 2016-03-01: Bugfix #97
+					// FIXME: Other parts of the diagram might be affected, too
 					element.resetDrawingInfoUp();
 					// END KGU#136 2016-03-01
 					redraw();
@@ -2016,8 +2063,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				{
 					root.addBefore(getSelected(),_ele);
 				}
-				_ele.setSelected(true);
+				_ele.setSelected(true);	// FIXME: should already have been done by Root.insertElement()
 				selected=_ele;
+				// START KGU#272 2016-10-06: Bugfix #262
+				selectedDown = selectedUp = selected;
+				// END KGU#272 2016-10-06
 				redraw();
 				analyse();
 			}
@@ -2055,6 +2105,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			decomposeForLoop(parent);
 		}
 		// END KGU#229 2016-08-01
+		// START KGU#267 2016-10-03: Enh. #257 - CASE decomposition
+		else if (selected instanceof Case)
+		{
+			root.addUndo();
+			decomposeCase(parent);
+		}
+		// END KGU#267 2016-10-03
 		this.doButtons();
 		redraw();
 		analyse();
@@ -2214,12 +2271,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#229 2016-09-09: Take care of the configured prefix and postfix
 		//While whileLoop = new While(forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue());
 		String prefix = "", postfix = "";
-		if (!D7Parser.preWhile.trim().isEmpty()) {
-			prefix = D7Parser.preWhile;
+		if (!D7Parser.keywordMap.get("preWhile").trim().isEmpty()) {
+			prefix = D7Parser.keywordMap.get("preWhile");
 			if (!prefix.endsWith(" ")) prefix += " ";
 		}
-		if (!D7Parser.postWhile.trim().isEmpty()) {
-			postfix = D7Parser.postWhile;
+		if (!D7Parser.keywordMap.get("postWhile").trim().isEmpty()) {
+			postfix = D7Parser.keywordMap.get("postWhile");
 			if (!postfix.startsWith(" ")) postfix = " " + postfix;
 		}
 		While whileLoop = new While(prefix + forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue() + postfix);
@@ -2236,13 +2293,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		whileLoop.q = forLoop.getBody();
 		whileLoop.q.parent = whileLoop;
 		whileLoop.q.addElement(elements[2]);
+		whileLoop.setCollapsed(forLoop.isCollapsed());
 		for (int i = 0; i < elements.length; i++)
 		{
 			Element elem = elements[i];
 			elem.setColor(forLoop.getColor());
 			elem.deeplyCovered = forLoop.deeplyCovered;
 			elem.simplyCovered = forLoop.simplyCovered;
-			elem.setCollapsed(forLoop.isCollapsed());
 		}
 		int index = parent.getIndexOf(forLoop);
 		for (int i = 0; i < 2; i++)
@@ -2257,6 +2314,126 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		this.selectedUp = this.selectedDown = this.selected;
 	}
 	// END KGU#229 2016-08-01
+
+	// START KGU#267 2016-10-03: Enh. #257 - CASE structure decomposition
+	private void decomposeCase(Subqueue parent)
+	{
+		// Comment will be tranferred to the first replacing element
+		// (discriminator variable assignment or outermost Alternative).
+		Case caseElem = (Case)selected;
+		// List of replacing nested alternatives
+		List<Alternative> alternatives = new LinkedList<Alternative>();
+		// Possibly preceding assignment of the selection expression value
+		Instruction asgnmt = null;
+		// tokenized selection expression
+		StringList selTokens = Element.splitLexically(caseElem.getText().get(0), true);
+		// Eliminate parser preference keywords
+		String[] redundantKeywords = {D7Parser.keywordMap.get("preCase"), D7Parser.keywordMap.get("postCase")};
+		for (String keyword: redundantKeywords)
+		{
+			if (!keyword.trim().isEmpty())
+			{
+				StringList tokenizedKey = Element.splitLexically(keyword, false);
+				int pos = -1;
+				while ((pos = selTokens.indexOf(tokenizedKey, pos+1, !D7Parser.ignoreCase)) >= 0)
+				{
+					for (int i = 0; i < tokenizedKey.count(); i++)
+					{
+						selTokens.delete(pos);
+					}
+				}
+			}
+		}
+		String discriminator = selTokens.concatenate().trim();
+		// If the discriminating expression isn't just a variable then assign its value to an
+		// artificial variable first and use this as discriminator further on.
+		if (!Function.testIdentifier(discriminator, ""))
+		{
+			String discrVar = "discr" + caseElem.hashCode();
+			asgnmt = new Instruction(discrVar + " <- " + discriminator);
+			discriminator = discrVar;
+			asgnmt.setColor(caseElem.getColor());
+		}
+		
+		// Take care of the configured prefix and postfix
+		String prefix = "", postfix = "";
+		if (!D7Parser.keywordMap.get("preAlt").trim().isEmpty()) {
+			prefix = D7Parser.keywordMap.get("preAlt");
+			if (!prefix.endsWith(" ")) prefix += " ";
+		}
+		if (!D7Parser.keywordMap.get("postAlt").trim().isEmpty()) {
+			postfix = D7Parser.keywordMap.get("postAlt");
+			if (!postfix.startsWith(" ")) postfix = " " + postfix;
+		}
+		
+		int nAlts = 0;	// number of alternatives created so far
+		for (int lineNo = 1; lineNo < caseElem.getText().count(); lineNo++)
+		{
+			String line = caseElem.getText().get(lineNo);
+			// Specific handling of the last branch
+			if (lineNo == caseElem.getText().count()-1)
+			{
+				// In case it's a "%", nothing is to be added, otherwise the last
+				// branch is to be the else path of the innermost alternative
+				if (!line.equals("%"))
+				{
+					// This should not happen before the first alternative has been created!
+					alternatives.get(nAlts-1).qFalse = caseElem.qs.get(lineNo-1);
+					alternatives.get(nAlts-1).qFalse.parent = alternatives.get(nAlts-1);
+				}
+			}
+			else 
+			{
+				String[] selectors = line.split(",");
+				String cond = "";
+				for (String selConst: selectors)
+				{
+					cond += " || (" + discriminator + " = " + selConst.trim() + ")";
+				}
+				cond = cond.substring(4).replace("||", D7Parser.keywordMap.getOrDefault("oprOr", "or"));
+				Alternative newAlt = new Alternative(prefix + cond + postfix);
+				newAlt.qTrue = caseElem.qs.get(lineNo-1);
+				newAlt.qTrue.parent = newAlt;
+				alternatives.add(newAlt);
+				if (nAlts > 0)
+				{
+					alternatives.get(nAlts-1).qFalse.addElement(newAlt);
+				}
+				nAlts++;
+			}
+		}
+
+		Element firstSubstitutor = (asgnmt != null) ? asgnmt : alternatives.get(0);
+		firstSubstitutor.setComment(caseElem.getComment());
+		if (caseElem.isBreakpoint())
+		{
+			firstSubstitutor.toggleBreakpoint();
+		}
+		firstSubstitutor.setBreakTriggerCount(caseElem.getBreakTriggerCount());
+		for (Alternative alt: alternatives)
+		{
+			alt.setColor(caseElem.getColor());
+			alt.deeplyCovered = caseElem.deeplyCovered;
+			alt.simplyCovered = caseElem.simplyCovered;
+		}
+		alternatives.get(0).setCollapsed(caseElem.isCollapsed());
+
+		int index = parent.getIndexOf(caseElem);
+		parent.removeElement(index);
+		parent.insertElementAt(alternatives.get(0), index);
+		if (asgnmt != null)
+		{
+			parent.insertElementAt(asgnmt, index);
+			this.selected = new SelectedSequence(parent, index, index+1);
+		}
+		else 
+		{
+			this.selected = parent.getElement(index);
+		}
+		this.selected.setSelected(true);
+		this.selectedUp = this.selectedDown = this.selected;
+	}
+	// END KGU#267 2016-10-03
 
 	// START KGU#43 2015-10-12
 	/*****************************************
@@ -3134,7 +3311,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			D7Parser d7 = new D7Parser("D7Grammar.cgt");
 			// START KGU#194 2016-05-08: Bugfix #185 - mechanism for multiple roots per file
 			//Root rootNew = d7.parse(filename);
-			List<Root> newRoots = d7.parse(filename, "ISO-8859-1");
+			// START KGU#265 2016-09-28: Enh. #253 brought the Charset configuration. So make use of it.
+			//List<Root> newRoots = d7.parse(filename, "ISO-8859-1");
+			Ini ini = Ini.getInstance();
+			List<Root> newRoots = d7.parse(filename, ini.getProperty("impImportCharset", "ISO-8859-1"));
+			// END KGU#265 2016-09-28
 			// END KGU#194 2016-05-08
 			if (d7.error.equals(""))
 			{
@@ -3414,79 +3595,112 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Point p = getLocationOnScreen();
 		parserPreferences.setLocation(Math.round(p.x+(getVisibleRect().width-parserPreferences.getWidth())/2+this.getVisibleRect().x),
 								Math.round(p.y+(getVisibleRect().height-parserPreferences.getHeight())/2+this.getVisibleRect().y));
-
+		
 		// set fields
-		parserPreferences.edtAltPre.setText(D7Parser.preAlt);
-		parserPreferences.edtAltPost.setText(D7Parser.postAlt);
-		parserPreferences.edtCasePre.setText(D7Parser.preCase);
-		parserPreferences.edtCasePost.setText(D7Parser.postCase);
-		parserPreferences.edtForPre.setText(D7Parser.preFor);
-		parserPreferences.edtForPost.setText(D7Parser.postFor);
+		parserPreferences.edtAltPre.setText(D7Parser.keywordMap.get("preAlt"));
+		parserPreferences.edtAltPost.setText(D7Parser.keywordMap.get("postAlt"));
+		parserPreferences.edtCasePre.setText(D7Parser.keywordMap.get("preCase"));
+		parserPreferences.edtCasePost.setText(D7Parser.keywordMap.get("postCase"));
+		parserPreferences.edtForPre.setText(D7Parser.keywordMap.get("preFor"));
+		parserPreferences.edtForPost.setText(D7Parser.keywordMap.get("postFor"));
 		// START KGU#3 2015-11-08: New configurable separator for FOR loop step const
-		parserPreferences.edtForStep.setText(D7Parser.stepFor);
+		parserPreferences.edtForStep.setText(D7Parser.keywordMap.get("stepFor"));
 		// END KGU#3 2015-11-08
 		// START KGU#61 2016-03-21: New configurable keywords for FOR-IN loop
-		parserPreferences.edtForInPre.setText(D7Parser.preForIn);
-		parserPreferences.edtForInPost.setText(D7Parser.postForIn);
+		parserPreferences.edtForInPre.setText(D7Parser.keywordMap.get("preForIn"));
+		parserPreferences.edtForInPost.setText(D7Parser.keywordMap.get("postForIn"));
 		// END KGU#61 2016-03-21
-		parserPreferences.edtWhilePre.setText(D7Parser.preWhile);
-		parserPreferences.edtWhilePost.setText(D7Parser.postWhile);
-		parserPreferences.edtRepeatPre.setText(D7Parser.preRepeat);
-		parserPreferences.edtRepeatPost.setText(D7Parser.postRepeat);
+		parserPreferences.edtWhilePre.setText(D7Parser.keywordMap.get("preWhile"));
+		parserPreferences.edtWhilePost.setText(D7Parser.keywordMap.get("postWhile"));
+		parserPreferences.edtRepeatPre.setText(D7Parser.keywordMap.get("preRepeat"));
+		parserPreferences.edtRepeatPost.setText(D7Parser.keywordMap.get("postRepeat"));
 		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
-		parserPreferences.edtJumpLeave.setText(D7Parser.preLeave);
-		parserPreferences.edtJumpReturn.setText(D7Parser.preReturn);
-		parserPreferences.edtJumpExit.setText(D7Parser.preExit);
+		parserPreferences.edtJumpLeave.setText(D7Parser.keywordMap.get("preLeave"));
+		parserPreferences.edtJumpReturn.setText(D7Parser.keywordMap.get("preReturn"));
+		parserPreferences.edtJumpExit.setText(D7Parser.keywordMap.get("preExit"));
 		// END KGU#78 2016-03-25
-		parserPreferences.edtInput.setText(D7Parser.input);
-		parserPreferences.edtOutput.setText(D7Parser.output);
+		parserPreferences.edtInput.setText(D7Parser.keywordMap.get("input"));
+		parserPreferences.edtOutput.setText(D7Parser.keywordMap.get("output"));
 		// START KGU#165 2016-03-25: We need a transparent decision here
 		parserPreferences.chkIgnoreCase.setSelected(D7Parser.ignoreCase);
 		// END KGU#165 2016-03-25
-
+		
 		parserPreferences.pack();
 		parserPreferences.setVisible(true);
 
 		if(parserPreferences.OK)
 		{
+			// START KGU#258 2016-09-26: Enh. #253 - prepare the old settings for a refactoring
+			HashMap<String, StringList> oldKeywordMap = null;
+			boolean wasCaseIgnored = D7Parser.ignoreCase;
+			boolean considerRefactoring = root.children.getSize() > 0
+					|| this.isArrangerOpen && Arranger.getInstance().getAllRoots().size() > 0;
+			if (considerRefactoring)
+			{
+				oldKeywordMap = new LinkedHashMap<String, StringList>();
+				for (String key: D7Parser.keywordMap.keySet())
+				{
+					String keyword = D7Parser.keywordMap.getOrDefault(key, "");
+					if (!keyword.trim().isEmpty())
+					{
+						// Complete strings aren't likely to be found in a key, so don't bother
+						oldKeywordMap.put(key, Element.splitLexically(keyword,  false));
+					}
+				}
+			}
+			// END KGU#258 2016-09-26
 
 			// get fields
-			D7Parser.preAlt=parserPreferences.edtAltPre.getText();
-			D7Parser.postAlt=parserPreferences.edtAltPost.getText();
-			D7Parser.preCase=parserPreferences.edtCasePre.getText();
-			D7Parser.postCase=parserPreferences.edtCasePost.getText();
-			D7Parser.preFor=parserPreferences.edtForPre.getText();
-			D7Parser.postFor=parserPreferences.edtForPost.getText();
+			D7Parser.keywordMap.put("preAlt", parserPreferences.edtAltPre.getText());
+			D7Parser.keywordMap.put("postAlt", parserPreferences.edtAltPost.getText());
+			D7Parser.keywordMap.put("preCase", parserPreferences.edtCasePre.getText());
+			D7Parser.keywordMap.put("postCase", parserPreferences.edtCasePost.getText());
+			D7Parser.keywordMap.put("preFor", parserPreferences.edtForPre.getText());
+			D7Parser.keywordMap.put("postFor", parserPreferences.edtForPost.getText());
 			// START KGU#3 2015-11-08: New configurable separator for FOR loop step const
-			D7Parser.stepFor=parserPreferences.edtForStep.getText();
+			D7Parser.keywordMap.put("stepFor", parserPreferences.edtForStep.getText());
 			// END KGU#3 2015-11-08
 			// START KGU#61 2016-03-21: New configurable keywords for FOR-IN loop
-			D7Parser.preForIn=parserPreferences.edtForInPre.getText();
-			D7Parser.postForIn=parserPreferences.edtForInPost.getText();
+			D7Parser.keywordMap.put("preForIn", parserPreferences.edtForInPre.getText());
+			D7Parser.keywordMap.put("postForIn", parserPreferences.edtForInPost.getText());
 			// END KGU#61 2016-03-21
-			D7Parser.preWhile=parserPreferences.edtWhilePre.getText();
-			D7Parser.postWhile=parserPreferences.edtWhilePost.getText();
-			D7Parser.preRepeat=parserPreferences.edtRepeatPre.getText();
-			D7Parser.postRepeat=parserPreferences.edtRepeatPost.getText();
+			D7Parser.keywordMap.put("preWhile", parserPreferences.edtWhilePre.getText());
+			D7Parser.keywordMap.put("postWhile", parserPreferences.edtWhilePost.getText());
+			D7Parser.keywordMap.put("preRepeat", parserPreferences.edtRepeatPre.getText());
+			D7Parser.keywordMap.put("postRepeat", parserPreferences.edtRepeatPost.getText());
     		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
-    		D7Parser.preLeave=parserPreferences.edtJumpLeave.getText();
-    		D7Parser.preReturn=parserPreferences.edtJumpReturn.getText();
-    		D7Parser.preExit=parserPreferences.edtJumpExit.getText();
+    		D7Parser.keywordMap.put("preLeave", parserPreferences.edtJumpLeave.getText());
+    		D7Parser.keywordMap.put("preReturn", parserPreferences.edtJumpReturn.getText());
+    		D7Parser.keywordMap.put("preExit", parserPreferences.edtJumpExit.getText());
     		// END KGU#78 2016-03-25
-			D7Parser.input=parserPreferences.edtInput.getText();
-			D7Parser.output=parserPreferences.edtOutput.getText();
+			D7Parser.keywordMap.put("input", parserPreferences.edtInput.getText());
+			D7Parser.keywordMap.put("output", parserPreferences.edtOutput.getText());
 			// START KGU#165 2016-03-25: We need a transparent decision here
 			D7Parser.ignoreCase = parserPreferences.chkIgnoreCase.isSelected();
 			// END KGU#165 2016-03-25
 
 			// save fields to ini-file
 			D7Parser.saveToINI();
+			
+			// START KGU#258 2016-09-26: Enh. #253 - now try a refactoring if specified
+			boolean redrawn = false;
+			if (considerRefactoring && offerRefactoring(oldKeywordMap))
+			{
+				boolean refactorAll = oldKeywordMap.containsKey("refactorAll");
+				redrawn = refactorDiagrams(oldKeywordMap, refactorAll, wasCaseIgnored);
+			}
+			// END KGU#258 2016-09-26
 
 			// START KGU#136 2016-03-31: Bugfix #97 - cached bounds may have to be invalidated
-			if (Element.E_VARHIGHLIGHT)
+			if (Element.E_VARHIGHLIGHT && !redrawn)
 			{
-				// Parser keyword chenges may have an impact on the text width
+				// Parser keyword changes may have an impact on the text width ...
 				this.resetDrawingInfo(true);
+				
+				// START KGU#258 2016-09-26: Bugfix #253 ... and Jumps and loops
+				analyse();
+				// END KGU#258 2016-09-26
+
 				// redraw diagram
 				redraw();
 			}
@@ -3494,6 +3708,140 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			
 		}
 	}
+	
+	// START KGU#258 2016-09-26: Enh. #253: A set of helper methods for refactoring
+	/**
+	 * (To be called after a preference file has been loaded explicitly on user demand.)
+	 * Based on the refactoringData collected before the loading, a difference analysis
+	 * between the old and new parser preferences will be done. If changes are detected
+	 * and there are non-trivial Roots then a dialog box will be popped up showing
+	 * the changes and offering to refactor the current or all diagrams. If the user
+	 * agrees then the respective code will be added to the refactoringData and true
+	 * will be returned, otherwise false.
+	 * @param refactoringData - tokenized previous non-empty parser preferences
+	 * @return true if a refactoring makes sense, false otherwise
+	 */
+	public boolean offerRefactoring(HashMap<String, StringList> refactoringData)
+	{
+		// Since this method is always called after a preference file has been loaded,
+		// we update the preferred export code for the doButtons() call, though it
+		// has nothing to do with refactoring
+		this.prefGeneratorName = Ini.getInstance().getProperty("genExportPreferred", this.prefGeneratorName);
+		
+		// No refectoring data was collected then we are done here ...
+		if (refactoringData == null) return false;
+		
+		// Otherwise we look for differences between old and new parser preferences
+		StringList replacements = new StringList();
+		for (HashMap.Entry<String,StringList> entry: refactoringData.entrySet())
+		{
+			String oldValue = entry.getValue().concatenate();
+			String newValue = D7Parser.keywordMap.getOrDefault(entry.getKey(), "");
+			if (!oldValue.equals(newValue))
+			{
+				replacements.add("   " + entry.getKey() + ": \"" + oldValue + "\" -> \"" + newValue + "\"");
+			}
+		}
+		// Only offer the question if there are relevant replacements and at least one non-empty or parked Root
+		if (replacements.count() > 0 && (root.children.getSize() > 0 || isArrangerOpen && !Arranger.getInstance().getAllRoots().isEmpty()))
+		{
+			String[] options = {
+					Menu.lblRefactorNone.getText(),
+					Menu.lblRefactorCurrent.getText(),
+					Menu.lblRefactorAll.getText()
+			};
+			int answer = JOptionPane.showOptionDialog(this,
+					Menu.msgRefactoringOffer.getText().replace("%", "\n" + replacements.getText() + "\n"),
+					Menu.msgTitleQuestion.getText(), JOptionPane.OK_CANCEL_OPTION,
+					JOptionPane.QUESTION_MESSAGE,
+					null,
+					options, options[0]);
+			if (answer != 0 && answer != JOptionPane.CLOSED_OPTION)
+			{
+				if (D7Parser.ignoreCase)
+				{
+					refactoringData.put("ignoreCase", StringList.getNew("true"));
+				}
+				if (answer == 2)
+				{
+					refactoringData.put("refactorAll", StringList.getNew("true"));
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public void refactorNSD(HashMap<String, StringList> refactoringData)
+	{
+		if (refactoringData != null)
+		{
+			refactorDiagrams(refactoringData,
+					refactoringData.containsKey("refactorAll"),
+					refactoringData.containsKey("ignoreCase")
+					);
+		}
+	}
+	
+	private boolean refactorDiagrams(HashMap<String, StringList> oldKeywordMap, boolean refactorAll, boolean wasCaseIgnored)
+	{
+		boolean redrawn = false;
+		if (oldKeywordMap != null && !oldKeywordMap.isEmpty())
+		{
+			final class Refactorer implements IElementVisitor
+			{
+				public HashMap<String, StringList> oldMap = null;
+				boolean ignoreCase = false;
+
+				@Override
+				public boolean visitPreOrder(Element _ele) {
+					_ele.refactorKeywords(oldMap, ignoreCase);
+					return true;
+				}
+
+				@Override
+				public boolean visitPostOrder(Element _ele) {
+					// FIXME It should be okay to cut off the recursion in  post order...?
+					return true;
+				}
+				Refactorer(HashMap<String, StringList> _keyMap, boolean _caseIndifferent)
+				{
+					oldMap = _keyMap;
+					ignoreCase = _caseIndifferent;
+				}
+			};
+			root.addUndo();
+			root.traverse(new Refactorer(oldKeywordMap, wasCaseIgnored));
+			if (refactorAll && this.isArrangerOpen)
+			{
+				// Well, we hope that the roots won't change the hash code on refactoring...
+				for (Root aRoot: Arranger.getInstance().getAllRoots())
+				{
+					if (root != aRoot) {
+						aRoot.addUndo();
+						aRoot.traverse(new Refactorer(oldKeywordMap, wasCaseIgnored));
+					}
+				}
+			}
+			
+			// Parser keyword changes may have an impact on the text width ...
+			this.resetDrawingInfo(true);
+			
+			// START KGU#258 2016-09-26: Bugfix #253 ... and Jumps and loops
+			analyse();
+			// END KGU#258 2016-09-26
+
+			// FIXME: This doesn't seem to work 
+			doButtons();
+			
+			// redraw diagram
+			redraw();
+			
+			redrawn = true;
+		}
+		return redrawn;
+	}
+	// END KGU#258 2016-09-26
 
 	public void analyserNSD()
 	{
@@ -3535,11 +3883,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         {
             Ini ini = Ini.getInstance();
             ini.load();
-            // START KGU#212 2016-07-26: bugfix #204 eod sizing needs the language
-            //ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame());
-            ExportOptionDialoge eod = new ExportOptionDialoge(
-            		NSDControl.getFrame()); //, NSDControl.getLang());
-            // END KGU#212 2016-07-26
+            ExportOptionDialoge eod = new ExportOptionDialoge(NSDControl.getFrame());
             if(ini.getProperty("genExportComments","0").equals("true"))
                 eod.commentsCheckBox.setSelected(true);
             else 
@@ -3595,6 +3939,36 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             ex.printStackTrace();
         }
     }
+
+    // START KGU#258 2016-09-26: Enh. #253
+    public void importOptions()
+    {
+        try
+        {
+            Ini ini = Ini.getInstance();
+            ini.load();
+            ImportOptionDialog iod = new ImportOptionDialog(NSDControl.getFrame());
+            iod.chkRefactorOnLoading.setSelected(ini.getProperty("impRefactorOnLoading", "false").equals("true"));
+            iod.charsetListChanged(ini.getProperty("impImportCharset", Charset.defaultCharset().name()));
+            iod.setVisible(true);
+            
+            if(iod.goOn==true)
+            {
+                ini.setProperty("impRefactorOnLoading", String.valueOf(iod.chkRefactorOnLoading.isSelected()));
+                ini.setProperty("impImportCharset", (String)iod.cbCharset.getSelectedItem());
+                ini.save();
+            }
+        } 
+        catch (FileNotFoundException ex)
+        {
+            ex.printStackTrace();
+        } 
+        catch (IOException ex)
+        {
+            ex.printStackTrace();
+        }
+    }
+    // END KGU#258 2016-09-26
 
 	public void fontNSD()
 	{
@@ -4189,7 +4563,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch(Exception e)
 				{
-					System.err.println(e.getMessage());
+					System.err.println("EMFSelection: " + e.getMessage());
 				}
 			}
 

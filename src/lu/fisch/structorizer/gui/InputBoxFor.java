@@ -103,10 +103,10 @@ public class InputBoxFor extends InputBox implements ItemListener {
 	protected JLabel lblFirstValueLabel/* = new JLabel("Start value")*/;
 	protected JLabel lblEndVal/* = new JLabel("End value")*/;
 	protected JLabel lblIncr/* = new JLabel("Increment")*/;
-	//protected JLabel lblPreFor/* = new JLabel(D7Parser.preFor)*/;
-	protected JLabel lblPostFor/* = new JLabel(D7Parser.postFor)*/;
+	//protected JLabel lblPreFor/* = new JLabel(D7Parser.keywordMap.get("preFor"))*/;
+	protected JLabel lblPostFor/* = new JLabel(D7Parser.keywordMap.get("postFor"))*/;
 	protected JLabel lblAsgnmt/* = new JLabel(" <- ")*/;
-	protected JLabel lblStepFor/* = new JLabel(D7Parser.stepFor)*/;
+	protected JLabel lblStepFor/* = new JLabel(D7Parser.keywordMap.get("steptFor"))*/;
 	protected JTextField txtParserInfo/* = new JTextField("")*/;
 	protected JTextField txtVariable/* = new JTextField(20)*/;
 	protected JTextField txtStartVal/* = new JTextField(10)*/;
@@ -114,8 +114,8 @@ public class InputBoxFor extends InputBox implements ItemListener {
 	protected JTextField txtIncr/* = new JTextField(10)*/;
 	protected JCheckBox chkTextInput/* = new JCheckBox("Full Text Editing")*/;
 	// START KGU#61 2016-09-23: Enh. #250 -Additional field set for FOR-IN loops
-	//protected JLabel lblPreForIn/* = new JLabel(D7Parser.preForIn)*/;
-	protected JLabel lblpostForIn/* = new JLabel(D7Parser.postForIn)*/;
+	//protected JLabel lblPreForIn/* = new JLabel(D7Parser.keywordMap.get("preFor")In)*/;
+	protected JLabel lblpostForIn/* = new JLabel(D7Parser.keywordMap.get("postFor")In)*/;
 	protected JTextField txtVariableIn/* = new JTextField(20)*/;
 	protected JTextField txtValueList/* = new JTextField(60)*/;	
 	// END KGU#61 2016-09-23
@@ -170,10 +170,10 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		lblFirstValueLabel = new JLabel("Start value");
 		lblEndVal = new JLabel("End value");
 		lblIncr = new JLabel("Increment");
-		//lblPreFor = new JLabel(D7Parser.preFor);
-		lblPostFor = new JLabel(D7Parser.postFor);
+		//lblPreFor = new JLabel(D7Parser.keywordMap.get("preFor"));
+		lblPostFor = new JLabel(D7Parser.keywordMap.get("postFor"));
 		lblAsgnmt = new JLabel(" <- ");
-		lblStepFor = new JLabel(D7Parser.stepFor);
+		lblStepFor = new JLabel(D7Parser.keywordMap.get("steptFor"));
 		txtParserInfo = new JTextField(300);
 		txtParserInfo.setEditable(false);
 		if (UIManager.getLookAndFeel().getName().equals("Nimbus"))
@@ -189,8 +189,8 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		txtIncr = new JTextField(20);	// Width 10
 		chkTextInput = new JCheckBox("Full Text Editing");
 		// START KGU#61 2016-09-23: Enh. #250 - Additional field set for FOR-IN loops
-		//lblPreForIn = new JLabel(D7Parser.preForIn);
-		lblpostForIn = new JLabel(D7Parser.postForIn);
+		//lblPreForIn = new JLabel(D7Parser.keywordMap.get("preFor")In);
+		lblpostForIn = new JLabel(D7Parser.keywordMap.get("postForIn"));
 		txtVariableIn = new JTextField(50);
 		txtValueList = new JTextField(120);
 		txtVariableIn.setEnabled(false);
@@ -208,11 +208,11 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		txtText.addKeyListener(this);
 		
 		// START KGU#254 2016-09-24: Enh. #250 - GUI redesign
-		rbCounting = new JRadioButton(D7Parser.preFor);
+		rbCounting = new JRadioButton(D7Parser.keywordMap.get("preFor"));
 		rbCounting.setActionCommand("FOR");
 		rbCounting.setToolTipText("Select this if you want to count through a range of numbers.");
 		
-		rbTraversing = new JRadioButton(D7Parser.preForIn.isEmpty() ? D7Parser.postFor : D7Parser.preForIn);
+		rbTraversing = new JRadioButton(D7Parser.keywordMap.get("preForIn").isEmpty() ? D7Parser.keywordMap.get("postFor") : D7Parser.keywordMap.get("preForIn"));
 		rbTraversing.setActionCommand("FOR-IN");
 		rbTraversing.setToolTipText("Select this if you want to traverse all members of a collection.");
 		
@@ -582,7 +582,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 			//			lblEndVal.setVisible(false);
 			//			lblIncr.setVisible(false);
 			//			lblPostFor.setForeground(Color.GRAY);
-			//			lblAsgnmt.setText(D7Parser.postForIn);
+			//			lblAsgnmt.setText(D7Parser.keywordMap.get("postFor")In);
 			//			lblStepFor.setForeground(Color.GRAY);
 			txtVariable.setText("");
 			txtStartVal.setText("");

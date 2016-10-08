@@ -20,7 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package lu.fisch.structorizer.executor;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
  *
@@ -30,10 +31,11 @@ package lu.fisch.structorizer.executor;
  *
  *      Revision List
  *
- *      Author           Date            Description
- *      ------           ----            -----------
- *      Kay Gürtzig      2015.11.25      First issue
- *      Kay Gürtzig      2016.03.08      Method clearExecutionStatus added (for Enhancement #77)
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2015.11.25      First issue
+ *      Kay Gürtzig     2016.03.08      Method clearExecutionStatus added (for Enhancement #77)
+ *      Kay Gürtzig     2016.09.26:     Enh. #253: New public method getAllRoots() added.
  *
  ******************************************************************************************************
  *
@@ -41,8 +43,10 @@ package lu.fisch.structorizer.executor;
  *      
  *      The interface facilitates the retrieval of callable subroutines for execution mode
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
+import java.util.Set;
 import java.util.Vector;
 
 import lu.fisch.structorizer.elements.Root;
@@ -67,6 +71,14 @@ public interface IRoutinePool {
 	 * @return a collection of Root objects meeting the specified signature
 	 */
 	public Vector<Root> findRoutinesBySignature(String rootName, int argCount);
+	
+    // START KGU#258 2016-09-26: Enh. #253: We need to traverse all roots for refactoring
+    /**
+     * Retrieves a Set of all Root objects parked in the Arranger
+     * @return the Root set
+     */
+    public Set<Root> getAllRoots();
+    // END KGU#258 2016-09-26
 
 	// START KGU#117 2016-03-08: Introduced on occasion of Enhancement #77
 	/**

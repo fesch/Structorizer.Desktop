@@ -42,6 +42,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016-07-31      Enh. #128: New icon 111_c_plus_t introduced for "commments plus text" mode
  *      Kay Gürtzig     2016-08-02      Enh. #215: New icon 112_stopwatch introduced for breapoint count triggers
  *      Kay Gürtzig     2016-09-05      Generic support for locale icons
+ *      Kay Gürtzig     2016-09-25      Enh. #253: New icon 025_import for import configuration
  *
  ******************************************************************************************************
  *
@@ -92,6 +93,10 @@ public class IconLoader {
 	public static ImageIcon ico022 = getIconImage(getURI(from+"icons/022_program.png"));
 	public static ImageIcon ico023 = getIconImage(getURI(from+"icons/023_font.png"));
 	
+	// START KGU#258 2016-09-25: Enh. #253
+	public static ImageIcon ico025 = getIconImage(getURI(from+"icons/025_import.png"));
+	// END KGU#258 2016-09-25
+
 	public static ImageIcon ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
 	public static ImageIcon ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));
 	public static ImageIcon ico033 = getIconImage(getURI(from+"icons/033_font_up.png"));
@@ -213,6 +218,10 @@ public class IconLoader {
             ico021 = getIconImage(getURI(from+"icons/021_function.png"));
             ico022 = getIconImage(getURI(from+"icons/022_program.png"));
             ico023 = getIconImage(getURI(from+"icons/023_font.png"));
+
+        	// START KGU#258 2016-09-25: Enh. #253
+            ico025 = getIconImage(getURI(from+"icons/025_import.png"));
+        	// END KGU#258 2016-09-25
 
             ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
             ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));

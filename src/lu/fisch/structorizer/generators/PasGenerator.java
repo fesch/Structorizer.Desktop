@@ -55,7 +55,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
  *      Kay Gürtzig         2016-04-30      Bugfix #181 - delimiters of string literals weren't converted (KGU#190)
  *      Kay Gürtzig         2016-07-20      Enh. #160 - optional export of called subroutines implemented
- *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
+ *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig         2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
  *
  ******************************************************************************************************
  *
@@ -85,8 +86,6 @@ package lu.fisch.structorizer.generators;
  *      - added automatic brackets for "while", "switch", "repeat" & "if"
  *
  ******************************************************************************************************///
-
-import java.util.regex.Matcher;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
@@ -385,14 +384,16 @@ public class PasGenerator extends Generator
 			
 			insertComment(_inst, _indent);
 
+			String preReturn = D7Parser.keywordMap.get("preReturn");
+			String preReturnMatch = getKeywordPattern(preReturn)+"([\\W].*|$)";
 			for (int i=0; i<_inst.getText().count(); i++)
 			{
 				// START KGU#74 2015-12-20: Bug #22 There might be a return outside of a Jump element, handle it!
 				//code.add(_indent+transform(_inst.getText().get(i))+";");
 				String line = _inst.getText().get(i).trim();
-				if (line.matches(getKeywordPattern(D7Parser.preReturn)+"([\\W].*|$)"))
+				if (line.matches(preReturnMatch))
 				{
-					String argument = line.substring(D7Parser.preReturn.length()).trim();
+					String argument = line.substring(preReturn.length()).trim();
 					if (!argument.isEmpty())
 					{
 						code.add(_indent + this.procName + " := " + transform(argument) + ";"); 
@@ -792,6 +793,10 @@ public class PasGenerator extends Generator
 			else
 			{
 			// END KGU#142 2016-01-17
+				String preReturn = D7Parser.keywordMap.get("preReturn");
+				String preExit   = D7Parser.keywordMap.get("preExit");
+				String preReturnMatch = getKeywordPattern(preReturn)+"([\\W].*|$)";
+				String preExitMatch = getKeywordPattern(preExit)+"([\\W].*|$)";
 				for (int i = 0; isEmpty && i < lines.count(); i++) {
 					String line = transform(lines.get(i)).trim();
 					if (!line.isEmpty())
@@ -800,9 +805,9 @@ public class PasGenerator extends Generator
 					}
 					// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
 					//code.add(_indent + line + ";");
-					if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
+					if (line.matches(preReturnMatch))
 					{
-						String argument = line.substring(D7Parser.preReturn.length()).trim();
+						String argument = line.substring(preReturn.length()).trim();
 						if (!argument.isEmpty())
 						{
 							code.add(_indent + this.procName + " := " + argument + ";"); 
@@ -815,30 +820,12 @@ public class PasGenerator extends Generator
 						}
 						// END KGU 2016-01-17
 					}
-					else if (line.matches(Matcher.quoteReplacement(D7Parser.preExit)+"([\\W].*|$)"))
+					else if (line.matches(preExitMatch))
 					{
-						String argument = line.substring(D7Parser.preExit.length()).trim();
+						String argument = line.substring(preExit.length()).trim();
 						if (!argument.isEmpty()) { argument = "(" + argument + ")"; }
 						code.add(_indent + "halt" + argument + ";");
 					}
-					// START KGU#142 2016-01-17: This belonged to the top (no further analysis required)
-					//				else if (this.jumpTable.containsKey(_jump))
-					//				{
-					//					Integer ref = this.jumpTable.get(_jump);
-					//					String label = "StructorizerLabel_" + ref;
-					//					if (ref.intValue() < 0)
-					//					{
-					//						insertComment("FIXME: Structorizer detected this illegal jump attempt:", _indent);
-					//						insertComment(line, _indent);
-					//						label = "__ERROR__";
-					//					}
-					//					else
-					//					{
-					//						insertComment("WARNING: Most Pascal compilers don't support jump instructions!", _indent);					
-					//					}
-					//					code.add(_indent + "goto" + " " + label + ";");
-					//				}
-					// END KGU#142 2016-01-17
 					else if (!isEmpty)
 					{
 						insertComment("FIXME: Structorizer detected the following illegal jump attempt:", _indent);
@@ -855,17 +842,6 @@ public class PasGenerator extends Generator
 			// END KGU#142 2016-01-17
 		}
     }
-
-//    @Override
-//    protected void generateCode(Subqueue _subqueue, String _indent)
-//    {
-//            // code.add(_indent+"");
-//            for(int i=0;i<_subqueue.getSize();i++)
-//            {
-//                    generateCode((Element) _subqueue.getElement(i),_indent);
-//            }
-//            // code.add(_indent+"");
-//    }
 
 	// START KGU#47 2015-11-30: Offer at least a sequential execution (which is one legal execution order)
 	protected void generateCode(Parallel _para, String _indent)

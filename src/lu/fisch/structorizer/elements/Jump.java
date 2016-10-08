@@ -117,6 +117,10 @@ import lu.fisch.structorizer.gui.IconLoader;
 
 public class Jump extends Instruction {
 
+	// START KGU#258 2016-09-26: Enh. #253
+	private static final String[] relevantParserKeys = {"preLeave", "preExit", "preReturn"};
+	// END KGU#258 2016-09-25
+	
 	public Jump()
 	{
 		super();
@@ -305,5 +309,15 @@ public class Jump extends Instruction {
     }
     // END KGU 2015-10-16
 	
+	// START KGU#258 2016-09-26: Enh. #253
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Element#getRelevantParserKeys()
+	 */
+	@Override
+	protected String[] getRelevantParserKeys() {
+		// There is nothing to refactor
+		return relevantParserKeys;
+	}
+	// END KGU#258 2016-09-25
 	
 }

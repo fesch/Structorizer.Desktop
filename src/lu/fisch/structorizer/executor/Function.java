@@ -174,8 +174,8 @@ public class Function
     /**
      * Checks identifier syntax (i.e. ASCII letters, digits, underscores, and possibly dots)
      * @param _str - the identifier candidate
-     * @param _refuseDots - whether dots like in qualified method names are allowed 
-     * @return true iff _str complies with the strict identifier syntax convention
+     * @param _alsoAllowedCharacters - a String containing additionally accepted characters (e.g. ".")
+     * @return true iff _str complies with the strict identifier syntax convention (plus allowed characters)
      */
     public static boolean testIdentifier(String _str, String _alsoAllowedChars)
     {
