@@ -11,6 +11,7 @@ import javax.swing.JTable;
  *
  * @author robertfisch
  */
+@SuppressWarnings("serial")
 public class HeaderTable extends JTable {
     public void setHeaderTitle(int column, String title)
     {

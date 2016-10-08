@@ -411,7 +411,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         		//Element selEle = root.getElementByCoord(e.getX(),e.getY());
         		Element selEle = root.getElementByCoord(e.getX(), e.getY(), false);
         		// END KGU#25 2015-10-11
-				//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE MOVED >>>>> " + ((selEle != null) ? selEle : "null") + " <<<<<<<<<<<<<<<<<<<<<");
+				//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE MOVED >>>>> " + selEle + " <<<<<<<<<<<<<<<<<<<<<");
 
         		if (selEle != null &&
         				!selEle.getComment(false).getText().trim().isEmpty())
@@ -477,13 +477,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				mY = e.getY();
 				//System.out.println("DRAGGED "+mX+" "+mY);
 				/*System.out.println("DRAGGED ("+e.getX()+", "+e.getY()+") >> " +
-						bSome + " >> " + ((selectedDown != null) ? selectedDown : "null"));
+						bSome + " >> " + selectedDown);
 						/**/
 
 				bSome.setSelected(true);
-				System.out.println("selected = " + bSome);
-				System.out.println("selectedDown = " + (selectedDown != null ? selectedDown : "null"));
-				System.out.println("selectedUp = " + (selectedUp != null ? selectedUp : "null"));
+				//System.out.println("selected = " + bSome);
+				//System.out.println("selectedDown = " + selectedDown);
+				//System.out.println("selectedUp = " + selectedUp);
 				if (selectedDown != null) selectedDown.setSelected(true);
 
 				boolean doRedraw = false;
@@ -670,7 +670,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//selectedUp = root.selectElementByCoord(e.getX(),e.getY());
 					selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
 					// END KGU#25 2015-10-11
-					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 1 >>>>>>> " + ((selectedUp != null)?selectedUp:"null")+ " <<<<<<<<<<<<<<<<<<<<<<");
+					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 1 >>>>>>> " + selectedUp + " <<<<<<<<<<<<<<<<<<<<<<");
 					if (selectedUp != null)
 					{
 						selectedUp.setSelected(false);
@@ -721,7 +721,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					//selectedUp = root.selectElementByCoord(e.getX(),e.getY());
 					selectedUp = root.getElementByCoord(e.getX(), e.getY(), true);
 					// END KGU#25 2015-10-11
-					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 2 >>>>>>> " + ((selectedUp != null)?selectedUp:"null")+ " <<<<<<<<<<<<<<<<<<<<<<");
+					//System.out.println(">>>>>>>>>>>>>>>>>>> MOUSE RELEASED 2 >>>>>>> " + selectedUp + " <<<<<<<<<<<<<<<<<<<<<<");
 					if (selectedUp!=null) selectedUp.setSelected(false);
 					doDraw=true;
 				}
@@ -1176,7 +1176,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			//System.out.println(e.getMessage());
 			errorMessage = e.getLocalizedMessage();
 			if (errorMessage == null) errorMessage = e.getMessage();
-			System.err.println(e.getMessage());
+			System.err.println("openNSD(\"" + _filename + "\"): " + (errorMessage != null ? errorMessage : e));
+			//e.printStackTrace(System.err);
 			// END KGU#111 2015-12-16
 		}
 		// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
@@ -4562,7 +4563,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				catch(Exception e)
 				{
-					System.err.println(e.getMessage());
+					System.err.println("EMFSelection: " + e.getMessage());
 				}
 			}
 

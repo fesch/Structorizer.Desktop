@@ -592,7 +592,7 @@ public class Executor implements Runnable
 							// END KGU#99 2015-12-10
 						} catch (EvalError ex)
 						{
-							System.err.println(ex.getMessage());
+							System.err.println("Executor.convertStringComparison(\"" + str + "\"): " + ex.getMessage());
 						}
 					} // if (!s.equals(" " + eqOps[op] + " ") && (s.indexOf(eqOps[op]) >= 0))
 				} // for (int op = 0; op < eqOps.length; op++)
@@ -618,7 +618,7 @@ public class Executor implements Runnable
 				Thread.sleep(delay);
 			} catch (InterruptedException e)
 			{
-				System.err.println(e.getMessage());
+				System.err.println("Executor.delay(): " + e.getMessage());
 			}
 		}
 		waitForNext();
@@ -1249,7 +1249,7 @@ public class Executor implements Runnable
 				Thread.sleep(delay);
 			} catch (InterruptedException e)
 			{
-				System.err.println(e.getMessage());
+				System.err.println("Executor.getExec(\"" + cmd + "\"): " + e.getMessage());
 			}
 		}
 		return result;
@@ -1273,7 +1273,7 @@ public class Executor implements Runnable
 				Thread.sleep(delay);
 			} catch (InterruptedException e)
 			{
-				System.err.println(e.getMessage());
+				System.err.println("Executor.getExec(\"" + cmd + "\", " + color + "): " + e.getMessage());
 			}
 		}
 		return result;
@@ -1348,7 +1348,7 @@ public class Executor implements Runnable
 			// END KGU#57 2015-11-07
 		} catch (EvalError ex)
 		{
-			System.err.println(ex.getMessage());
+			System.err.println("Executor.initInterpreter(): " + ex.getMessage());
 		}
 	}
 
@@ -1749,57 +1749,54 @@ public class Executor implements Runnable
 	}
 	// END KGU#67/KGU#68 2015-11-08
 	
-	// START KGU#68 2015-11-06 - 2016-10-07 modified for improved thread-safety 
+	// START KGU#68 2015-11-06 - modified 2016-10-07 for improved thread-safety
 	public void adoptVarChanges(HashMap<String,Object> newValues)
 	{
 		String tmplManuallySet = control.lbManuallySet.getText();	// The message template
 		for (HashMap.Entry<String, Object> entry: newValues.entrySet())
 		{
-				try {
-					String varName = entry.getKey();
-					Object oldValue = interpreter.get(varName);
-					Object newValue = entry.getValue();
-					// START KGU#160 2016-04-12: Enh. #137 - text window output
-					// START KGU#197 2016-05-05: Language support extended
-					//this.console.writeln("*** Manually set: " + varName + " <- " + newValues[i] + " ***", Color.RED);
-					this.console.writeln(tmplManuallySet.replace("%1", varName).replace("%2", newValue.toString()), Color.RED);
-					// END KGU#197 2016-05-05
-					if (isConsoleEnabled)
-					{
-						this.console.setVisible(true);
-					}
-					// END KGU#160 2016-04-12
-					
-					if (oldValue != null && oldValue.getClass().getSimpleName().equals("Object[]"))
-					{
-						// In this case an initialisation expression ("{ ..., ..., ...}") is expected
-						String asgnmt = "Object[] " + varName + " = " + newValue;
-						//System.out.println(asgnmt);	// FIXME (KGU) Remove this debug info after test
-						// FIXME: Nested initializers (as produced for nested arrays before) won't work here!
-						interpreter.eval(asgnmt);
-//						// Okay, but now we have to sort out some un-boxed strings
-//						Object[] objectArray = (Object[]) interpreter.get(varName);
-//						for (int j = 0; j < objectArray.length; j++)
-//						{
-//							Object content = objectArray[j];
-//							if (content != null)
-//							{
-//								System.out.println("Updating " + varName + "[" + j + "] = " + content.toString());
-//								this.interpreter.set("structorizer_temp", content);
-//								this.interpreter.eval(varName + "[" + j + "] = structorizer_temp");
-//							}
-//						}
-						
-					}
-					else
-					{
+			try {
+				String varName = entry.getKey();
+				Object oldValue = interpreter.get(varName);
+				Object newValue = entry.getValue();
+				// START KGU#160 2016-04-12: Enh. #137 - text window output
+				// START KGU#197 2016-05-05: Language support extended
+				//this.console.writeln("*** Manually set: " + varName + " <- " + newValues[i] + " ***", Color.RED);
+				this.console.writeln(tmplManuallySet.replace("%1", varName).replace("%2", newValue.toString()), Color.RED);
+				// END KGU#197 2016-05-05
+				if (isConsoleEnabled)
+				{
+					this.console.setVisible(true);
+				}
+				// END KGU#160 2016-04-12
 
-						setVarRaw(varName, (String)newValue);
-					}
+				if (oldValue != null && oldValue.getClass().getSimpleName().equals("Object[]"))
+				{
+					// In this case an initialisation expression ("{ ..., ..., ...}") is expected
+					String asgnmt = "Object[] " + varName + " = " + newValue;
+					// FIXME: Nested initializers (as produced for nested arrays before) won't work here!
+					interpreter.eval(asgnmt);
+//					// Okay, but now we have to sort out some un-boxed strings
+//					Object[] objectArray = (Object[]) interpreter.get(varName);
+//					for (int j = 0; j < objectArray.length; j++)
+//					{
+//						Object content = objectArray[j];
+//						if (content != null)
+//						{
+//							System.out.println("Updating " + varName + "[" + j + "] = " + content.toString());
+//							this.interpreter.set("structorizer_temp", content);
+//							this.interpreter.eval(varName + "[" + j + "] = structorizer_temp");
+//						}
+//					}
 				}
-				catch (EvalError err) {
-					System.err.println(err.getMessage());
+				else
+				{
+					setVarRaw(varName, (String)newValue);
 				}
+			}
+			catch (EvalError err) {
+				System.err.println("Executor.adoptVarChanges(" + newValues + "): " + err.getMessage());
+			}
 		}
 	}
 	// END KGU#68 2015-11-06

@@ -49,9 +49,7 @@ import javax.xml.parsers.*;
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 
-import lu.fisch.utils.*;
 import lu.fisch.structorizer.helpers.*;
-import lu.fisch.structorizer.elements.*;
 
 public class GENParser extends DefaultHandler {
 	

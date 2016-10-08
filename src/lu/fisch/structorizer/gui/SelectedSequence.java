@@ -347,7 +347,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 				res = sel;
 			}
 		}
-		//System.out.println(this + ".getElementByCoord("+_x + ", " + _y + ") returning " + (res == null ? "null" : res));
+		//System.out.println(this + ".getElementByCoord("+_x + ", " + _y + ") returning " + res);
 		return res;
 	}
 	

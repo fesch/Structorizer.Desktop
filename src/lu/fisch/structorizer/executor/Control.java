@@ -484,7 +484,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         // START KGU#68 205-11-06: Enhancement - update edited values
     	if (!varUpdates.isEmpty())
     	{
-    		Executor.getInstance().adoptVarChanges(new HashMap<String,Object>(varUpdates));
+    		Executor.getInstance().adoptVarChanges(new HashMap<String, Object>(varUpdates));
     	}
     	varUpdates.clear();
     	// END KGU#68 2015-11-06
