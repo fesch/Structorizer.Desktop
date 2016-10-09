@@ -97,6 +97,7 @@ package lu.fisch.structorizer.executor;
  *                                      Enh. #253: D7Parser.keywordMap refactoring done
  *      Kay Gürtzig     2016.10.06      Bugfix #261: Stop didn't work immediately within multi-line instructions
  *      Kay Gürtzig     2016.10.07      Some synchronized sections added to reduce inconsistency exception likelihood
+ *      Kay Gürtzig     2016.10.09      Bugfix #266: Built-in Pascal functions copy, delete, insert defectively implemented 
  *
  ******************************************************************************************************
  *
@@ -438,10 +439,16 @@ public class Executor implements Runnable
 		// NO REPLACE ANY MORE! CHARAT AND SUBSTRING MUST BE CALLED MANUALLY
 		// s = r.replaceAll(s);
 		// pascal: delete
-		r = new Regex("delete\\((.*),(.*),(.*)\\)", "$1=delete($1,$2,$3)");
+		// START KGU#275 2016-10-09: Bugfix #266 obsolete replacement obstructed assignment recognition
+		//r = new Regex("delete\\((.*),(.*),(.*)\\)", "$1=delete($1,$2,$3)");
+		r = new Regex("delete\\((.*),(.*),(.*)\\)", "$1 <- delete($1,$2,$3)");
+		// END KGU#275 2016-10-09
 		s = r.replaceAll(s);
 		// pascal: insert
-		r = new Regex("insert\\((.*),(.*),(.*)\\)", "$2=insert($1,$2,$3)");
+		// START KGU#275 2016-10-09: Bugfix #266 obsolete replacement obstructed assignment recognition
+		//r = new Regex("insert\\((.*),(.*),(.*)\\)", "$2=insert($1,$2,$3)");
+		r = new Regex("insert\\((.*),(.*),(.*)\\)", "$2 <- insert($1,$2,$3)");
+		// END KGU#275 2016-10-09
 		s = r.replaceAll(s);
 		// pascal: quotes
 		r = new Regex("([^']*?)'(([^']|'')*)'", "$1\"$2\"");
@@ -1313,13 +1320,16 @@ public class Executor implements Runnable
 			pascalFunction = "public int pos(Character subs, String s) { return s.indexOf(subs)+1; }";
 			interpreter.eval(pascalFunction);
 			// return a substring of a string
-			pascalFunction = "public String copy(String s, int start, int count) { return s.substring(start-1,start-1+count); }";
+			// START KGU#275 2016-10-09: Bugfix #266: length tolerance of copy function had to be considered
+			//pascalFunction = "public String copy(String s, int start, int count) { return s.substring(start-1,start-1+count); }";
+			pascalFunction = "public String copy(String s, int start, int count) { int end = Math.min(start-1+count, s.length()); return s.substring(start-1,end); }";
+			// END KGU#275 2016-10-09
 			interpreter.eval(pascalFunction);
 			// delete a part of a string
-			pascalFunction = "public String delete(String s, int start, int count) { return s.substring(0,start-1)+s.substring(start+count-1,s.length()); }";
+			pascalFunction = "public String delete(String s, int start, int count) { return s.substring(0,start-1)+s.substring(start+count-1); }";
 			interpreter.eval(pascalFunction);
 			// insert a string into anoter one
-			pascalFunction = "public String insert(String what, String s, int start) { return s.substring(0,start-1)+what+s.substring(start-1,s.length()); }";
+			pascalFunction = "public String insert(String what, String s, int start) { return s.substring(0,start-1)+what+s.substring(start-1); }";
 			interpreter.eval(pascalFunction);
 			// string transformation
 			pascalFunction = "public String lowercase(String s) { return s.toLowerCase(); }";
