@@ -77,6 +77,7 @@
  *      Kay Gürtzig     2016.09.22      Bugfix #241; issue #249: New messages for InputBox and Analyser
  *                                      AnalyserPreferences numbering modified, InputBoxFor messages
  *      Kay Gürtzig     2016.09.25      Enh. #253: Section ImportOptionDialog inserted
+ *      Kay Gürtzig     2016.10.11      Enh. 267: Menu.error15 divided into error15_1 and error15_2
  *
  ******************************************************************************************************
  *
@@ -292,7 +293,8 @@ Menu.error13_3.text=Your functions seems to use several competitive return mecha
 Menu.error14_1.text=The FOR loop parameters are not consistent to the loop heading text!
 Menu.error14_2.text=The FOR loop step value («%») is not a legal integer constant!
 Menu.error14_3.text=Variable name «%» may collide with one of the configured FOR loop heading keywords!
-Menu.error15.text=The CALL hasn't got form «[ <var> <- ] <routine_name>(<arg_list>)»!
+Menu.error15_1.text=The CALL hasn't got form «[ <var> <- ] <routine_name>(<arg_list>)»!
+Menu.error15_2.text=The called subroutine «%» is currently not available.
 Menu.error16_1.text=A JUMP element may be empty or start with one of %, possibly followed by an argument!	
 Menu.error16_2.text=A return instruction, unless at final position, must form a JUMP element!
 Menu.error16_3.text=An exit, leave or break instruction is only allowed as JUMP element!
@@ -746,3 +748,9 @@ Control.msgTooManyLevels.text=Too many levels to leave (actual depth: %1 / speci
 Control.msgJumpOutParallel.text=Illegal attempt to jump out of a parallel thread:%Thread killed!
 Control.tblVar.header.0=Variable Name
 Control.tblVar.header.1=Content
+
+-----[ OutputConsole ]-----
+OutputConsole.menu.text=Properties
+OutputConsole.menuFont.text=Font ...
+OutputConsole.menuFontUp.text=Enlarge font
+OutputConsole.menuFontUp.text=Diminish font

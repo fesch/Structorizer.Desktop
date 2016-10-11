@@ -60,6 +60,8 @@
  *      Kay Gürtzig     2016.09.13      Entries for InputBox and InputBoxFor revised (bugfix #241)
  *      Kay Gürtzig     2016.09.22      Bugfix #241: Entries for InputBox and InputBoxFor finally revised
  *                                      AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016.10.11      Enh. #267: Menu.error15 divided into error15_1 and error15_2
+ *                                      Enh. #268: Sub-section OutputConsole added
  *
  ******************************************************************************************************
  *
@@ -265,7 +267,8 @@ Menu.error13_3.text=La tua funzione sembra usare diversi meccanismi di return in
 Menu.error14_1.text=Parametri del ciclo FOR non sono consistenti con la intestazione dello medesimo!
 Menu.error14_2.text=Il passo del ciclo FOR non è una constante intera!
 Menu.error14_3.text=Il nome della variabile «%» potrebbe collidere con una delle parole chiave di un ciclo FOR
-Menu.error15.text=La CALL non è partita da «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»
+Menu.error15_1.text=La CALL non è partita da «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»
+Menu.error15_2.text=La subroutine chiamata «%» no è reperibile per il momento.
 Menu.error16_1.text=Un elemento JUMP potrebbe essere vuoto o partire con uno di %, possibilmente seguito da un argomento!
 Menu.error16_2.text=Un istruzione di return, a meno che non sia  in posizione finale, deve formare un elemento JUMP!
 Menu.error16_3.text=Un'istruzione di exit, leave o break è consentita solo come lemento di JUMP!
@@ -694,3 +697,8 @@ Control.msgJumpOutParallel.text=
 Control.tblVar.header.0=
 Control.tblVar.header.1=
 
+-----[ OutputConsole ]-----
+OutputConsole.menu.text=Impostazione
+OutputConsole.menuFont.text=Caratteri ...
+OutputConsole.menuFontUp.text=Aumenta caratteri
+OutputConsole.menuFontUp.text=Diminuisci caratteri

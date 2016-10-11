@@ -52,6 +52,7 @@
  *      Laurent Zender      2016.07.31      Corrections and Translations for newly added features
  *      Kay Gürtzig         2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig         2016.09.22      AnalyserPreferences numbering modified
+ *      Kay Gürtzig         2016.10.11      Enh. 267: Menu.error15 renamed into Menu.error15_1
  *
  ******************************************************************************************************
  *
@@ -195,7 +196,7 @@ Menu.error13_3.text=Your functions seems to use several competitive return mecha
 Menu.error14_1.text=The FOR loop parameters are not consistent to the loop heading text!
 Menu.error14_2.text=The FOR loop step value («%») is not a legal integer constant!
 Menu.error14_3.text=Variable name «%» may collide with one of the configured FOR loop heading keywords!
-Menu.error15.text=The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!
+Menu.error15_1.text=The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!
 Menu.error16_1.text=A JUMP element may be empty or start with one of %, possibly followed by an argument!
 Menu.error16_2.text=A return instruction, unless at final position, must form a JUMP element!
 Menu.error16_3.text=An exit, leave or break instruction is only allowed as JUMP element!

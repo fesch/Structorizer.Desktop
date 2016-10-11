@@ -58,6 +58,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016-07-03      Dialog message translation mechanism added (KGU#203). 
  *      Kay Gürtzig     2016.07.19      Enh. #192: File name proposals slightly modified (KGU#205)
  *      Kay Gürtzig     2016.09.26      Enh. #253: New public method getAllRoots() added.
+ *      Kay Gürtzig     2016.10.11      Enh. #267: New notification changes to the set of diarams now trigger analyser updates
  *
  ******************************************************************************************************
  *
@@ -230,24 +231,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	{
     		public void  filesDropped( java.io.File[] files )
     		{
-    			//boolean found = false;
-// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
-//    			for (int i = 0; i < files.length; i++)
-//    			{
-//    				String filename = files[i].toString();
-//    				if(filename.substring(filename.length()-4).toLowerCase().equals(".nsd"))
-//    				{
-//    					// open an existing file
-//    					NSDParser parser = new NSDParser();
-//    					File f = new File(filename);
-//        				Root root = parser.parse(f.toURI().toString());
-//    					
-//        				root.filename=filename;
-//        				addDiagram(root);
-//    				}
-//    			}
     			loadFiles(files);
-// END KGU#111 2015-12-17
     		}
     	});
 
@@ -296,6 +280,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	{
 			JOptionPane.showMessageDialog(this, troubles, msgFileLoadError.getText(), JOptionPane.ERROR_MESSAGE);
     	}
+		// START KGU#278 2016-10-11: Enh. #267
+    	if (nLoaded > 0) {
+    		updateAnalysers();
+    	}
+		// END KGU#278 2016-10-11
     	return nLoaded;
     }
     
@@ -674,6 +663,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     public boolean loadArrangement(Frame frame, String filename)
     {
     	boolean done = false;
+		// START KGU#278 2016-10-11: Enh. #267
+		int nLoaded = 0;
+		// END KGU#278 2016-10-11
     	
     	String errorMessage = null;
     	try
@@ -712,6 +704,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     						errorMessage = trouble;
     					}
     				}
+    	    		// START KGU#278 2016-10-11: Enh. #267
+    				else {
+    					nLoaded++;
+    				}
+    	    		// END KGU#278 2016-10-11
     			}
     		}
 
@@ -739,6 +736,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		JOptionPane.showMessageDialog(frame, msgArrLoadError.getText() + " " + errorMessage + "!",
     				"Error", JOptionPane.ERROR_MESSAGE, null);   		
     	}
+		// START KGU#278 2016-10-11: Enh. #267
+    	if (nLoaded > 0)
+    	{
+    		updateAnalysers();
+    	}
+		// END KGU#278 2016-10-11
     	return done;
     }
     // END KGU#110 2015-12-17
@@ -1023,6 +1026,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     			diagram.isPinned = true;
     		}
     		// END KGU#88 2015-12-20
+    		// START KGU#278 2016-10-11: Enh. #267
+    		updateAnalysers();
+    		// END KGU#278 2016-10-11
     		// END KGU 2015-11-30
     		repaint();
     		getDrawingRect();		// What was this good for?
@@ -1081,6 +1087,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		this.mouseSelected = null;
     		adaptLayout();
             repaint();
+    		// START KGU#278 2016-10-11: Enh. #267
+    		updateAnalysers();
+    		// END KGU#278 2016-10-11
     	}
     }
     // END KGU#85 2015-11-17
@@ -1125,6 +1134,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		addDiagram(root);
     		// The content may not have been saved or may come from a different JVM
     		root.setChanged();
+    		// START KGU#278 2016-10-11: Enh. #267
+    		updateAnalysers();
+    		// END KGU#278 2016-10-11    		
     	}
     }
     // END KGU#177 2016-04-14
@@ -1521,6 +1533,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		adaptLayout();
     		// END KGU#85 2015-11-18
     		this.repaint();
+    		// START KGU#278 2016-10-11: Enh. #267
+    		updateAnalysers();
+    		// END KGU#278 2016-10-11
     	}
     }
     // END KGU#48 2015-10-17
@@ -1607,6 +1622,28 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 	// END KGU#117 2016-03-08
     
+	// START KGU#278 2016-10-11: Enh. #267 - added for consistency of Analyser Check 15.2
+	private void updateAnalysers()
+	{
+    	if (this.diagrams != null) {
+    		// It will be a small number of Mainforms, so a Vector is okay
+    		Vector<Mainform> mainforms = new Vector<Mainform>();
+    		for (int d = 0; d < this.diagrams.size(); d++) {
+    			Diagram diagram = this.diagrams.get(d);
+    			if (diagram.root != null && diagram.mainform != null) {
+    				if (!mainforms.contains(diagram.mainform)) {
+    					mainforms.add(diagram.mainform);
+    				}
+    			}
+    		}
+        	for (int m = 0; m < mainforms.size(); m++)
+        	{
+        		mainforms.get(m).updateAnalysis();
+        	}
+    	}
+	}
+	// END KGU#278 2016-10-11
+	
     // Windows listener for the mainform
     // I need this to unregister the updater
     public void windowOpened(WindowEvent e)

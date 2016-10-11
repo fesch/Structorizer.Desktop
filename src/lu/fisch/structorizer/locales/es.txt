@@ -79,6 +79,8 @@
  *      Kay Gürtzig     2016.09.22  Bugfix #241; issue #249: New messages for InputBox and Analyser,
  *                                  AnalyserPreferences numbering modified, InputBoxFor messages 
  *      Kay Gürtzig     2016.09.25  Enh. #253: ImportOptionDialog inserted; spellings corrected; usted -> tú
+ *      Kay Gürtzig     2016.10.11  Enh. 267: Menu.error15 divided into error15_1 and error15_2
+ *                                  Enh. 268: OutputConsole sub-section added
  *
  ******************************************************************************************************
  *
@@ -289,7 +291,8 @@ Menu.error13_3.text=¡La función emplea diferentes métodos para retornar un va
 Menu.error14_1.text=¡Los componentes separados no se convienen con el texto del encabiezamiento!
 Menu.error14_2.text=¡El paso «%» del bucle FOR no es una constante entera!
 Menu.error14_3.text=El nombre de la variable «%» puede confligir con una de las palabras claves configuradas para el bucle PARA!
-Menu.error15.text=¡La LLAMADA no tiene ninguna de las formas aceptadas: [ <var> <- ] <routine_name>(<arg_list>)!
+Menu.error15_1.text=¡La LLAMADA no tiene ninguna de las formas aceptadas: [ <var> <- ] <routine_name>(<arg_list>)!
+Menu.error15_2.text=La llamada subrutina «%» ahora no está localizable.
 Menu.error16_1.text=¡Un elemento de salto (salida) debe ser vacío o empezar con uno de los comandos %!
 Menu.error16_2.text=¡Una instrucción de retorno debe ser colocado en un elemento SALTO si no es la última instrucción del diagrama!
 Menu.error16_3.text=¡Instrucciones de salida (exit, leave, o break) solo están permitidos en elementos del tipo SALTO!
@@ -743,3 +746,9 @@ Control.msgTooManyLevels.text=¡Demasiados niveles para salir (niveles reales: %
 Control.msgJumpOutParallel.text=Tentativa ilegal de saltar afuera de un brazo paralelo:%¡Brazo terminado!
 Control.tblVar.header.0=Nombre de Variable
 Control.tblVar.header.1=Contenido
+
+-----[ OutputConsole ]-----
+OutputConsole.menu.text=Propiedades
+OutputConsole.menuFont.text=Fuente ...
+OutputConsole.menuFontUp.text=Aumentar grado de letra
+OutputConsole.menuFontUp.text=Disminuir grado de letra

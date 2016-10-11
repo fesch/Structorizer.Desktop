@@ -33,6 +33,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.31      First Issue
+ *      Kay Gürtzig     2016.10.11      Minimum font size 2 dropped from the sizes array.
  *
  ******************************************************************************************************
  *
@@ -88,7 +89,7 @@ public class FontChooser extends LangDialog
 	protected JButton btnOK;
 	// JFormDesigner - End of variables declaration  //GEN-END:variables
 	
-	private String[] sizes = new String[] { "2","4","6","8","10","12","14","16","18","20","22","24","30","36","48","72" };
+	private String[] sizes = new String[] { "4","6","8","10","12","14","16","18","20","22","24","30","36","48","72" };
 
         /*
 	public FontChooser() {

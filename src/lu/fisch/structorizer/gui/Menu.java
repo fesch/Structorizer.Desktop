@@ -63,6 +63,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.15      Issue #243: Additional text holders for forgotten message box texts
  *      Kay Gürtzig     2016.09.22      New text holder / messages for Analyser
  *      Kay Gürtzig     2016.09.26/03   Enh. #253: Refactoring support
+ *      Kay Gürtzig     2016.10.11      Enh. #267: error15 renamed to error15_1, new error15_2
  *
  ******************************************************************************************************
  *
@@ -282,8 +283,12 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error14_3 = new LangTextHolder("Variable name «%» may collide with one of the configured FOR loop heading keywords!");
 	// END KGU#3 2015-11-26
 	// END KGU#3 2015-11-03
-	// START KGU#2 2015-11-25: New check for Call element syntax and Jump consistency 
-	public static final LangTextHolder error15 = new LangTextHolder("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
+	// START KGU#2 2015-11-25: New check for Call element syntax and Jump consistency
+	// START KGU#278 2016-10-11: Enh. #267: Check for subroutine availability
+	//public static final LangTextHolder error15 = new LangTextHolder("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
+	public static final LangTextHolder error15_1 = new LangTextHolder("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
+	public static final LangTextHolder error15_2 = new LangTextHolder("The called subroutine «%» is currently not available.");
+	// END KGU#278 2016-10-11
 	public static final LangTextHolder error16_1 = new LangTextHolder("A JUMP element may be empty or start with one of %, possibly followed by an argument!");	
 	public static final LangTextHolder error16_2 = new LangTextHolder("A return instruction, unless at final position, must form a JUMP element!");
 	public static final LangTextHolder error16_3 = new LangTextHolder("An exit, leave or break instruction is only allowed as JUMP element!");
@@ -760,7 +765,7 @@ public class Menu extends LangMenuBar implements NSDController
 
 		menuPreferences.add(menuPreferencesLanguage);
 		menuPreferencesLanguage.setIcon(IconLoader.ico081);
-
+		
 		// START KGU#242 2016-09-04: Redesign of the language menu item mechanism
 		for (int iLoc = 0; iLoc < Locales.LOCALES_LIST.length; iLoc++)
 		{
@@ -922,7 +927,7 @@ public class Menu extends LangMenuBar implements NSDController
 			NSDControl.doButtons();
 		}
 	}
-       
+
 	@Override
 	public void doButtonsLocal()
 	{
@@ -1190,17 +1195,17 @@ public class Menu extends LangMenuBar implements NSDController
 	
     // START KGU#232 2016-08-03: Enh. #222
     public void chooseLangFile() {
-        JFileChooser dlgOpen = new JFileChooser();
-        dlgOpen.setDialogTitle(msgOpenLangFile.getText());
-        // set directory
-        dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
-        // config dialogue
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(msgLangFile.getText(), "txt");
-        dlgOpen.addChoosableFileFilter(filter);
-        dlgOpen.setFileFilter(filter);
-        // show & get result
-        int result = dlgOpen.showOpenDialog(this);
-        // react on result
+		JFileChooser dlgOpen = new JFileChooser();
+		dlgOpen.setDialogTitle(msgOpenLangFile.getText());
+		// set directory
+		dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
+		// config dialogue
+		FileNameExtensionFilter filter = new FileNameExtensionFilter(msgLangFile.getText(), "txt");
+		dlgOpen.addChoosableFileFilter(filter);
+		dlgOpen.setFileFilter(filter);
+		// show & get result
+		int result = dlgOpen.showOpenDialog(this);
+		// react on result
         if (result == JFileChooser.APPROVE_OPTION) {
             // create a new StringList
             StringList sl = new StringList();

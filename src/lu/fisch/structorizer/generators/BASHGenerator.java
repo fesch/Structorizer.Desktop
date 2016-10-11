@@ -175,7 +175,7 @@ public class BASHGenerator extends Generator {
 		return false;
 	}
 	// END KGU#78 2015-12-18
-
+	
 	// START KGU#241 2016-09-01: Issue #234: names of certain occurring functions detected by checkElementInformation()
 	private StringList occurringFunctions = new StringList();
 	// END KGU#241 2015-09-01
@@ -841,20 +841,20 @@ public class BASHGenerator extends Generator {
 				boolean builtInAdded = false;
 				if (occurringFunctions.contains("chr"))
 				{
-			code.add(indent);
-			insertComment("chr() - converts decimal value to its ASCII character representation", indent);
-			code.add(indent + "chr() {");
-			code.add(indent + this.getIndent() + "printf \\\\$(printf '%03o' $1)");
-			code.add(indent + "}");
+					code.add(indent);
+					insertComment("chr() - converts decimal value to its ASCII character representation", indent);
+					code.add(indent + "chr() {");
+					code.add(indent + this.getIndent() + "printf \\\\$(printf '%03o' $1)");
+					code.add(indent + "}");
 					builtInAdded = true;
 				}
 				if (occurringFunctions.contains("ord"))
 				{
 					code.add(indent);
-			insertComment("ord() - converts ASCII character to its decimal value", indent);
-			code.add(indent + "ord() {");
-			code.add(indent + this.getIndent() + "printf '%d' \"'$1\"");
-			code.add(indent + "}");
+					insertComment("ord() - converts ASCII character to its decimal value", indent);
+					code.add(indent + "ord() {");
+					code.add(indent + this.getIndent() + "printf '%d' \"'$1\"");
+					code.add(indent + "}");
 					builtInAdded = true;
 				}
 				if (builtInAdded) code.add(indent);

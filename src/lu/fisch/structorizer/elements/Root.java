@@ -79,6 +79,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.09.21      Enh. #249: New analyser check 20 (function header syntax) implemented
  *      Kay Gürtzig     2016.09.25      Enh. #255: More informative analyser warning error_01_2. Dead code dropped.
  *                                      Enh. #253: D7Parser.keywordMap refactored
+ *      Kay Gürtzig     2016.10.11      Enh. #267: New analyser check for error15_2 (unavailable subroutines)
  *
  ******************************************************************************************************
  *
@@ -119,6 +120,7 @@ import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.io.*;
+import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.gui.*;
@@ -2234,8 +2236,36 @@ public class Root extends Element {
 		if (!ele.isProcedureCall() && !ele.isFunctionCall())
 		{
 			//error  = new DetectedError("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!",(Element) _node.getElement(i));
-			addError(_errors, new DetectedError(errorMsg(Menu.error15, ""), ele), 15);
+			// START KGU#278 2016-10-11: Enh. #267
+			//addError(_errors, new DetectedError(errorMsg(Menu.error15, ""), ele), 15);
+			addError(_errors, new DetectedError(errorMsg(Menu.error15_1, ""), ele), 15);
+			// END KGU#278 2016-10-11
 		}
+		// START KGU#278 2016-10-11: Enh. #267
+		else {
+			String text = ele.getText().get(0);
+			StringList tokens = Element.splitLexically(text, true);
+			Element.unifyOperators(tokens, true);
+			int asgnPos = tokens.indexOf("<-");
+			if (asgnPos > 0)
+			{
+				// This looks somewhat misleading. But we do a mere syntax check
+				text = tokens.concatenate("", asgnPos+1);
+			}
+			Function subroutine = new Function(text);
+			String subName = subroutine.getName();
+			int subArgCount = subroutine.paramCount();
+			if ((!this.getMethodName().equals(subName) || subArgCount != this.getParameterNames().count())
+					&& (!Arranger.hasInstance()
+					|| Arranger.getInstance().findRoutinesBySignature(
+							subName, subArgCount
+							).isEmpty()))
+			{
+				//error  = new DetectedError("The called subroutine «<routine_name>(<arg_count>)» is currently not available.",(Element) _node.getElement(i));
+				addError(_errors, new DetectedError(errorMsg(Menu.error15_2, subName + "(" + subArgCount + ")"), ele), 15);
+			}
+		}
+		// END KGU#278 2016-10-11
 	}
 
 	/**

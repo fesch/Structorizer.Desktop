@@ -97,7 +97,8 @@ package lu.fisch.structorizer.executor;
  *                                      Enh. #253: D7Parser.keywordMap refactoring done
  *      Kay Gürtzig     2016.10.06      Bugfix #261: Stop didn't work immediately within multi-line instructions
  *      Kay Gürtzig     2016.10.07      Some synchronized sections added to reduce inconsistency exception likelihood
- *      Kay Gürtzig     2016.10.09      Bugfix #266: Built-in Pascal functions copy, delete, insert defectively implemented 
+ *      Kay Gürtzig     2016.10.09      Bugfix #266: Built-in Pascal functions copy, delete, insert defectively implemented;
+ *                                      Issue #269: Attempts to scroll the diagram to currently executed elements (ineffective)
  *
  ******************************************************************************************************
  *
@@ -675,7 +676,7 @@ public class Executor implements Runnable
 		this.callers.clear();
 		this.stackTrace.clear();
 		this.routinePools.clear();
-		if (diagram.isArrangerOpen)
+		if (Arranger.hasInstance())
 		{
 			this.routinePools.addElement(Arranger.getInstance());
 			// START KGU#117 2016-03-08: Enh. #77
@@ -1833,6 +1834,10 @@ public class Executor implements Runnable
 		// END KGU#213 2016-08-01
 		if (atBreakpoint) {
 			control.setButtonsForPause();
+			// START KGU#276 2016-10-09: Issue #267: in paused mode we should move the focus to the current element
+			diagram.redraw(element);
+			// END KGU#276 2016-10-09
+
 			this.setPaus(true);
 		}
 		return atBreakpoint;
@@ -1844,10 +1849,18 @@ public class Executor implements Runnable
 	{
 		String result = new String();
 		element.executed = true;
-		if (delay != 0 || step)
-		{
+		// START KGU#276 2016-10-09: Issue #267: in step mode we should move the focus to the current element
+		//if (delay != 0 || step)
+		//{
+		//	diagram.redraw();
+		//}
+		if (step) {
+			diagram.redraw(element);	// Doesn't work properly...
+		}
+		else if (delay != 0) {
 			diagram.redraw();
 		}
+		// END KGU#276 2016-10-09
 		// START KGU#143 2016-01-21: Bugfix #114 - make sure no compromising editing is done
 		diagram.doButtons();
 		// END KGU#143 2016-01-21

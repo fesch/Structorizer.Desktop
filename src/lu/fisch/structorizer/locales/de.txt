@@ -79,6 +79,7 @@
  *      Kay Gürtzig         2016.09.22  Bugfix #241, issue #249: New messages for InputBox and Analyser
  *                                      AnalyserPreferences numbering modified, InputBoxFor messages
  *      Kay Gürtzig         2016.09.25  Enh. #253: Section ImportOptionDialog inserted, Analyser checks reformulated
+ *      Kay Gürtzig         2016.10.11  Enh. 267: Menu.error15 divided into error15_1 and error15_2
  *
  ******************************************************************************************************
  *
@@ -282,7 +283,8 @@ Menu.error13_3.text=Die Funktion verwendet verschiedene Wertrückgabemechanismen
 Menu.error14_1.text=Die Einzelangaben der Zählschleife und der Text passen nicht zusammen!
 Menu.error14_2.text=Die Schrittweite «%» der Zählschleife ist keine konstante Ganzzahl!
 Menu.error14_3.text=Variable «%» steht in möglichem Namenskonflikt mit einem der konfigurierten Kennwörtern für FOR-Schleifen!
-Menu.error15.text=Der Unterprogrammaufruf hat nicht die Form [ <var> <- ] <routine_name>(<arg_list>)!
+Menu.error15_1.text=Der Unterprogrammaufruf hat nicht die Form [ <var> <- ] <routine_name>(<arg_list>)!
+Menu.error15_2.text=Die aufgerufene Routine «%» ist z.Z. nicht verfügbar.
 Menu.error16_1.text=Der Aussprung muss leer sein oder mit einem der Schlüsselwörter % beginnen!
 Menu.error16_2.text=Eine return-Anweisung muss (außer am Diagrammende) ein Aussprung-Element sein!
 Menu.error16_3.text=Exit-, leave- oder break-Anweisungen sind nur als Aussprung-Elemente zulässig!
@@ -734,3 +736,9 @@ Control.msgTooManyLevels.text=Zu viele Ebenen zum Verlassen gefordert (tatsächl
 Control.msgJumpOutParallel.text=Unzulässiger Aussprung aus Parallelzweig:%Thread beendet!
 Control.tblVar.header.0=Variablenname
 Control.tblVar.header.1=Inhalt
+
+-----[ OutputConsole ]-----
+OutputConsole.menu.text=Eigenschaften
+OutputConsole.menuFont.text=Schriftart ...
+OutputConsole.menuFontUp.text=Schrift vergrößern
+OutputConsole.menuFontUp.text=Schrift verkleinern

@@ -95,6 +95,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.10.06      Minor improvements in FOR and CALL transmutations (enh. #213/#257)
  *      Kay Gürtzig     2016.10.06      Bugfix #262: Selection and dragging problems after insertion, undo, and redo
  *      Kay Gürtzig     2016.10.07      Bugfix #263: "Save as" now updates the current directory
+ *      Kay Gürtzig     2016.10.11      KGU#280: field isArrangerOpen replaced by a method (due to volatility)
  *
  ******************************************************************************************************
  *
@@ -174,8 +175,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     
     private NSDController NSDControl = null;
     
-    // START KGU#2 2015-11-24
-    public boolean isArrangerOpen = false;
+    // START KGU#2 2015-11-24 - KGU#280 2016-10-11 replaced by method consulting the Arranger class
+    // Dependent Structorizer instances may otherwise be ignorant of the Arranger availability
+    //public boolean isArrangerOpen = false;
+    static public boolean isArrangerOpen()
+    {
+    	return Arranger.hasInstance();
+    }
     // END KGU#2 2015-11-24
 
     private JList<DetectedError> errorlist = null;
@@ -837,7 +843,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// edit it
 					editNSD();
 					selected.setSelected(true);
-					redraw();
+					// START KGU#276 2016-10-11: Issue #269 Attempt to focus the associated element - failed!
+					//redraw();
+					redraw(selected);	// Doesn't work properly
+					// END KGU#276 2016-10-11
 					// do the button thing
 					if(NSDControl!=null) NSDControl.doButtons();
 				}
@@ -865,6 +874,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     }
     // END KGU#143 2016-01-21
 
+    // START KGU#276 2016-10-09: Issue #269 attempt - but doesn't work
+    /**
+     * Redraw the current diagram and scroll to the given element
+     * @param element - the element to gain the focus
+     */
+    public void redraw(Element element)
+    {
+    	redraw();	// This is to make sure the drawing rectangles are correct
+    	// FIXME Doesn't work as intended
+//		scrollRectToVisible(element.getRectOffDrawPoint().getRectangle());
+//    	redraw();	// And this is to avoid partially redrawn environment
+    }
+    // END KGU#276 2016-10-09
+    
     public void redraw()
     {
     	if (root.hightlightVars==true)
@@ -957,7 +980,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void resetDrawingInfo(boolean _all)
 	{
 		root.resetDrawingInfoDown();
-		if (this.isArrangerOpen)
+		if (isArrangerOpen())
 		{
 			Arranger.getInstance().resetDrawingInfo(this.hashCode());
 		}
@@ -2563,14 +2586,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Arranger arr = Arranger.getInstance();
 		arr.addToPool(root, NSDControl.getFrame());
 		arr.setVisible(true);
-		isArrangerOpen = true;	// Gives the Executor a hint where to find a subroutine pool
+		// KGU#280 2016-10-11: Obsolete now
+		//isArrangerOpen = true;	// Gives the Executor a hint where to find a subroutine pool
 	}
 	// END KGU#2 2015-11-19
 	
 	// START KGU#125 2016-01-06: Possibility to adopt a diagram if it's orphaned
 	public void adoptArrangedOrphanNSD(Root root)
 	{
-		if (isArrangerOpen)
+		if (isArrangerOpen())
 		{
 			Arranger arr = Arranger.getInstance();
 			arr.addToPool(root, NSDControl.getFrame());			
@@ -3634,7 +3658,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			HashMap<String, StringList> oldKeywordMap = null;
 			boolean wasCaseIgnored = D7Parser.ignoreCase;
 			boolean considerRefactoring = root.children.getSize() > 0
-					|| this.isArrangerOpen && Arranger.getInstance().getAllRoots().size() > 0;
+					|| isArrangerOpen() && Arranger.getInstance().getAllRoots().size() > 0;
 			if (considerRefactoring)
 			{
 				oldKeywordMap = new LinkedHashMap<String, StringList>();
@@ -3743,7 +3767,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 		}
 		// Only offer the question if there are relevant replacements and at least one non-empty or parked Root
-		if (replacements.count() > 0 && (root.children.getSize() > 0 || isArrangerOpen && !Arranger.getInstance().getAllRoots().isEmpty()))
+		if (replacements.count() > 0 && (root.children.getSize() > 0 || isArrangerOpen() && !Arranger.getInstance().getAllRoots().isEmpty()))
 		{
 			String[] options = {
 					Menu.lblRefactorNone.getText(),
@@ -3812,7 +3836,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			};
 			root.addUndo();
 			root.traverse(new Refactorer(oldKeywordMap, wasCaseIgnored));
-			if (refactorAll && this.isArrangerOpen)
+			if (refactorAll && isArrangerOpen())
 			{
 				// Well, we hope that the roots won't change the hash code on refactoring...
 				for (Root aRoot: Arranger.getInstance().getAllRoots())
