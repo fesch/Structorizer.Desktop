@@ -701,4 +701,4 @@ Control.tblVar.header.1=
 OutputConsole.menu.text=Impostazione
 OutputConsole.menuFont.text=Caratteri ...
 OutputConsole.menuFontUp.text=Aumenta caratteri
-OutputConsole.menuFontUp.text=Diminuisci caratteri
+OutputConsole.menuFontDown.text=Diminuisci caratteri

@@ -753,4 +753,4 @@ Control.tblVar.header.1=Content
 OutputConsole.menu.text=Properties
 OutputConsole.menuFont.text=Font ...
 OutputConsole.menuFontUp.text=Enlarge font
-OutputConsole.menuFontUp.text=Diminish font
+OutputConsole.menuFontDown.text=Diminish font

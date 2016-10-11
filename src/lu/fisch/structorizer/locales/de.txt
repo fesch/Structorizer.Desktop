@@ -741,4 +741,4 @@ Control.tblVar.header.1=Inhalt
 OutputConsole.menu.text=Eigenschaften
 OutputConsole.menuFont.text=Schriftart ...
 OutputConsole.menuFontUp.text=Schrift vergrößern
-OutputConsole.menuFontUp.text=Schrift verkleinern
+OutputConsole.menuFontDown.text=Schrift verkleinern

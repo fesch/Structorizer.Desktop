@@ -751,4 +751,4 @@ Control.tblVar.header.1=Contenido
 OutputConsole.menu.text=Propiedades
 OutputConsole.menuFont.text=Fuente ...
 OutputConsole.menuFontUp.text=Aumentar grado de letra
-OutputConsole.menuFontUp.text=Disminuir grado de letra
+OutputConsole.menuFontDown.text=Disminuir grado de letra
