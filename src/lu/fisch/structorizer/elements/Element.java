@@ -1,4 +1,4 @@
-/*
+﻿/*
     Structorizer
     A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
 
@@ -70,6 +70,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.09.21      Issue #248: API of setBreakTriggerCount() modified to prevent negative values
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactored
  *      Kay Gürtzig     2016.09.28      KGU#264: Font name property renamed from "Name" to "Font".
+ *      Kay Gürtzig     2016.10.13      Issue #270: New field "disabled" for execution and code export
  *
  ******************************************************************************************************
  *
@@ -354,6 +355,9 @@ public abstract class Element {
 	// START KGU#225 2016-07-28: Bugfix #210
 	protected int execCountIndex = -1;
 	// END KGU#225 2016-07-28
+	// START KGU#277 2016-10-13: Enh. #270: Option disable an Element from execution and export
+	public boolean disabled = false;
+	// END KGU#277 2016-10-13
 
 	// END KGU156 2016-03-10
 	
@@ -504,6 +508,9 @@ public abstract class Element {
 		// START KGU#183 2016-04-24: Issue #169
 		_ele.selected = this.selected;
 		// END KGU#183 2016-04-24
+		// START KGU#277 2016-10-13: Enh. #270
+		_ele.disabled = this.disabled;
+		// END KGU#277 2016-10-13
 		// FIXME: Shouldn't we also copy the collapsed status?
 	}
 	// END KGU#213 2016-08-01

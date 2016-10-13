@@ -4,7 +4,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.25-03 (2016.10.11)
+Current development version: 3.25-03 (2016.10.13)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
 - 01: Issue #213: Selected state of FOR transmutation result now visible <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
@@ -36,6 +36,8 @@ Current development version: 3.25-03 (2016.10.11)
 - 03: Bugfix #266: Executor failed with built-in routines copy, delete, insert <2>
 - 03: Enh. #267: New Analyser check for CALLs with unavailable subroutines <2>
 - 03: Issue #268: Executor output window no longer editable but font scalable <2>
+- 03: Enh. #270: Preparations for disabling of elements (ExecuTor, Export) <2
+- 03: Issue #271: User-defined prompt strings in input instructions (executor) <2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2

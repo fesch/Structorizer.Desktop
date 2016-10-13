@@ -99,6 +99,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.10.07      Some synchronized sections added to reduce inconsistency exception likelihood
  *      Kay Gürtzig     2016.10.09      Bugfix #266: Built-in Pascal functions copy, delete, insert defectively implemented;
  *                                      Issue #269: Attempts to scroll the diagram to currently executed elements (ineffective)
+ *      Kay Gürtzig     2016.10.12      Issue #271: Systematic support for user-defined input prompts
  *
  ******************************************************************************************************
  *
@@ -1989,7 +1990,7 @@ public class Executor implements Runnable
 			cmd = convert(cmd).trim();
 			try
 			{
-				// START KGU#271: 2016-10-06: Bugfix #271 - this was mis-placed here and had to go to the loop body end 
+				// START KGU#271: 2016-10-06: Bugfix #269 - this was mis-placed here and had to go to the loop body end 
 //				if (i > 0)
 //				{
 //					delay();
@@ -2037,7 +2038,7 @@ public class Executor implements Runnable
 				// START KGU#156 2016-03-11: Enh. #124
 				element.addToExecTotalCount(1, true);	// For the instruction line
 				//END KGU#156 2016-03-11
-				// START KGU#271: 2016-10-06: Bugfix #271: Allow to step and stop within an instruction block (but no breakpoint here!) 
+				// START KGU#271: 2016-10-06: Bugfix #261: Allow to step and stop within an instruction block (but no breakpoint here!) 
 				if ((i+1 < sl.count()) && result.equals("") && (stop == false) &&	!returned && leave == 0)
 				{
 					delay();
@@ -2386,6 +2387,18 @@ public class Executor implements Runnable
 	{
 		String result = "";
 		String in = cmd.substring(D7Parser.keywordMap.get("input").trim().length()).trim();
+		// START KGU#281: Enh. #271: Input prompt handling
+		String prompt = null;
+		if (in.startsWith("\"") || in.startsWith("\'")) {
+			StringList tokens = Element.splitLexically(in, true);
+			String delim = tokens.get(0).substring(0,1);
+			if (tokens.get(0).endsWith(delim))
+			{
+				prompt = tokens.get(0).substring(1, tokens.get(0).length()-1);
+				in = tokens.concatenate("", 1).trim();
+			}
+		}
+		// END KGU#281 2016-10-12
 		// START KGU#107 2015-12-13: Enh-/bug #51: Handle empty input instruction
 		if (in.isEmpty())
 		{
@@ -2439,16 +2452,22 @@ public class Executor implements Runnable
 			// START KGU#89 2016-03-18: More language support 
 			//String str = JOptionPane.showInputDialog(null,
 			//		"Please enter a value for <" + in + ">", null);
-			String msg = control.lbInputValue.getText();
-			msg = msg.replace("%", in);
+			// START KGU#281 2016-10-12: Enh. #271
+			//String msg = control.lbInputValue.getText();
+			//msg = msg.replace("%", in);
+			if (prompt == null) {
+				prompt = control.lbInputValue.getText();				
+				prompt = prompt.replace("%", in);
+			}
+			// END KGU#281 2016-10-12
 			// START KGU#160 2016-04-12: Enh. #137 - text window output
-			this.console.write(msg + ": ", Color.YELLOW);
+			this.console.write(prompt + (prompt.trim().endsWith(":") ? " " : ": "), Color.YELLOW);
 			if (isConsoleEnabled)
 			{
 				this.console.setVisible(true);
 			}
 			// END KGU#160 2016-04-12
-			String str = JOptionPane.showInputDialog(null, msg, null);
+			String str = JOptionPane.showInputDialog(null, prompt, null);
 			// END KGU#89 2016-03-18
 			// START KGU#84 2015-11-23: ER #36 - Allow a controlled continuation on cancelled input
 			//setVarRaw(in, str);

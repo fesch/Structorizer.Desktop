@@ -80,6 +80,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.09.25      Enh. #255: More informative analyser warning error_01_2. Dead code dropped.
  *                                      Enh. #253: D7Parser.keywordMap refactored
  *      Kay Gürtzig     2016.10.11      Enh. #267: New analyser check for error15_2 (unavailable subroutines)
+ *      Kay Gürtzig     2016.10.12      Issue #271: user-defined prompt strings in input instructions
  *
  ******************************************************************************************************
  *
@@ -1494,7 +1495,15 @@ public class Root extends Element {
     		int inpPos = tokens.indexOf(D7Parser.keywordMap.get("input"));
     		if (inpPos >= 0)
     		{
-    			String s = tokens.subSequence(inpPos + 1, tokens.count()).concatenate().trim();
+    			// START KGU#281 2016-10-12: Issue #271 - there may be a prompt string literal to be skipped
+    			//String s = tokens.subSequence(inpPos + 1, tokens.count()).concatenate().trim();
+    			inpPos++;
+    			while (inpPos < tokens.count() && (tokens.get(inpPos).trim().isEmpty() || tokens.get(inpPos).matches("^[\"\'].*[\"\']$")))
+    			{
+    				inpPos++;
+    			}
+    			String s = tokens.subSequence(inpPos, tokens.count()).concatenate().trim();
+    			// END KGU#281 2016-10-12
     			// FIXME: Why do we expect a list of variables here (excutor doesn't cope with it, anyway)?
     			// A mere splitting by comma would spoil function calls as indices etc.
     			StringList parts = Element.splitExpressionList(s, ",");

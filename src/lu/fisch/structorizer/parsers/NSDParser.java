@@ -40,7 +40,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2016.03.21      Enh. #84 (KGU#61): Enhancement towards FOR-IN loops
  *      Kay Gürtzig     2016.04.14      Enh. #158 (KGU#177): method parse() cloned
  *      Kay Gürtzig     2016.09.24      Enh. #250 - Robustness of FOR loop reconstruction improved
- *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done. 
+ *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done.
+ *      Kay Gürtzig     2016.10.13      Enh. #270: New Element property "disabled" integrated
  *
  ******************************************************************************************************
  *
@@ -161,6 +162,9 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
 			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
 			//if(attributes.getIndex("rotated")!=-1)  {if (attributes.getValue("rotated").equals("1")) {ele.rotated=true;}}
+			// START KGU#277 2016-10-13: Enh. #270
+			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("comment"));}
+			// END KGU#277 2016-10-13
 			
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
@@ -187,6 +191,9 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
 			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			// START KGU#277 2016-10-13: Enh. #270
+			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("comment"));}
+			// END KGU#277 2016-10-13
 			
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
@@ -212,6 +219,9 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
 			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			// START KGU#277 2016-10-13: Enh. #270
+			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("comment"));}
+			// END KGU#277 2016-10-13
 			
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
@@ -232,6 +242,9 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
 			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			// START KGU#277 2016-10-13: Enh. #270
+			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("comment"));}
+			// END KGU#277 2016-10-13
 			
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
@@ -262,6 +275,9 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
 			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			// START KGU#277 2016-10-13: Enh. #270
+			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("comment"));}
+			// END KGU#277 2016-10-13
 			
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
@@ -294,6 +310,9 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
 			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			// START KGU#277 2016-10-13: Enh. #270
+			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("comment"));}
+			// END KGU#277 2016-10-13
 			// START KGU#3 2015-10-29: New attributes for cleaner loop parameter analysis
 			int got = 0;
 			if(attributes.getIndex("counterVar")!=-1)  {ele.setCounterVar(attributes.getValue("counterVar")); got++;}
@@ -416,6 +435,9 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
 			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			// START KGU#277 2016-10-13: Enh. #270
+			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("comment"));}
+			// END KGU#277 2016-10-13
 			
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
@@ -439,6 +461,9 @@ public class NSDParser extends DefaultHandler {
 			if(attributes.getIndex("text")!=-1)  {ele.getText().setCommaText(attributes.getValue("text"));}
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
 			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			// START KGU#277 2016-10-13: Enh. #270
+			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("comment"));}
+			// END KGU#277 2016-10-13
 			
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
@@ -468,6 +493,9 @@ public class NSDParser extends DefaultHandler {
 			ele.qs.clear();
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
 			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			// START KGU#277 2016-10-13: Enh. #270
+			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("comment"));}
+			// END KGU#277 2016-10-13
 
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
@@ -507,6 +535,9 @@ public class NSDParser extends DefaultHandler {
 			ele.qs.clear();
 			if(attributes.getIndex("comment")!=-1)  {ele.getComment().setCommaText(attributes.getValue("comment"));}
 			if(attributes.getIndex("color")!=-1)  {if (!attributes.getValue("color").equals("")) {ele.setColor(Color.decode("0x"+attributes.getValue("color")));}}
+			// START KGU#277 2016-10-13: Enh. #270
+			if(attributes.getIndex("disabled")!=-1)  {ele.disabled = "1".equals(attributes.getValue("comment"));}
+			// END KGU#277 2016-10-13
 
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
