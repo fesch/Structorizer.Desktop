@@ -40,6 +40,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.06      Bugfix in method removeElement() for enh. #188 (element conversion)
  *      Kay Gürtzig     2016.07.21      Bugfix #197 (selection moves by cursor keys); KGU#207 (getElementByCoord() revised)
+ *      Kay Gürtzig     2016.10.13      Enh. #277: Method setDisabled(boolean) implemented
  *
  ******************************************************************************************************
  *
@@ -614,4 +615,14 @@ public class SelectedSequence extends Element implements IElementSequence {
 		// Nothing to refactor
 		return null;
 	}
+
+	// START KGU#277 2016-10-13: Enh. #270
+	@Override
+	public void setDisabled(boolean disable) {
+		for (int i = 0; i < this.getSize(); i++)
+		{
+			this.getElement(i).disabled = disable;
+		}
+	}
+	// END KGU#277 2016-10-13
 }

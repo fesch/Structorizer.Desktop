@@ -36,7 +36,7 @@ Current development version: 3.25-03 (2016.10.13)
 - 03: Bugfix #266: Executor failed with built-in routines copy, delete, insert <2>
 - 03: Enh. #267: New Analyser check for CALLs with unavailable subroutines <2>
 - 03: Issue #268: Executor output window no longer editable but font scalable <2>
-- 03: Enh. #270: Preparations for disabling of elements (ExecuTor, Export) <2
+- 03: Enh. #270: Possibility of disabling elements (Executor, Export, Analyser) <2
 - 03: Issue #271: User-defined prompt strings in input instructions (executor) <2>
 
 Version: 3.25 (2016.09.09)

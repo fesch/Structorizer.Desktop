@@ -80,6 +80,7 @@
  *                                      AnalyserPreferences numbering modified, InputBoxFor messages
  *      Kay Gürtzig         2016.09.25  Enh. #253: Section ImportOptionDialog inserted, Analyser checks reformulated
  *      Kay Gürtzig         2016.10.11  Enh. 267: Menu.error15 divided into error15_1 and error15_2
+ *      Kay Gürtzig         2016.10.13  Enh. #270: Editor.btnDisable, InputBox.chkDisabled added.
  *
  ******************************************************************************************************
  *
@@ -162,6 +163,7 @@ Menu.menuDiagramMoveDown.text=Nach unten
 Menu.menuDiagramTransmute.text=Umwandeln
 Menu.menuDiagramCollapse.text=Reduzieren
 Menu.menuDiagramExpand.text=Erweitern
+Menu.menuDiagramDisable.text=Deaktivieren
 // Breakpoint
 Menu.menuDiagramBreakpoint.text=Haltepunkt setzen/löschen
 Menu.menuDiagramBreakTrigger.text=Haltepunktauslösung festlegen...
@@ -433,6 +435,7 @@ Editor.popupTransmute.text=Umwandeln
 // Collapsing
 Editor.popupCollapse.text=Reduzieren
 Editor.popupExpand.text=Erweitern
+Editor.popupDisable.text=Deaktivieren
 // Breakpoint
 Editor.popupBreakpoint.text=Haltepunkt setzen/löschen
 Editor.popupBreakTrigger.text=Haltepunktauslösung festlegen...
@@ -449,6 +452,7 @@ InputBox.btnOK.text=Speichern
 InputBox.btnOK.tooltip=Speichern der Eintragungen.
 InputBox.btnCancel.text=Abbruch
 InputBox.btnCancel.tooltip=Verwerfen der Eintragungen.
+InputBox.chkDisabled.text=Ausführung und Export unterbunden
 InputBox.chkBreakpoint.text=Haltepunkt
 InputBox.lblBreakTriggerText.text=Halt vor %. Ausführung
 InputBox.title[elementType:Root]=Programmnamen bearbeiten...
@@ -497,6 +501,7 @@ InputBoxFor.btnOK.text=Speichern
 InputBoxFor.btnOK.tooltip=Speichern der Eintragungen.
 InputBoxFor.btnCancel.text=Abbruch
 InputBoxFor.btnCancel.tooltip=Verwerfen der Eintragungen.
+InputBoxFor.chkDisabled.text=Ausführung/Export unterbunden
 InputBoxFor.chkBreakpoint.text=Haltepunkt
 InputBoxFor.lblBreakTriggerText.text=Halt vor %. Ausführung
 InputBoxFor.msgInvalidIncrement.text=<%> ist keine gültige Ganzzahlkonstante

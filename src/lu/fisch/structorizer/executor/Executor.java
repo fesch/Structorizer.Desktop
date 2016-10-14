@@ -100,6 +100,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.10.09      Bugfix #266: Built-in Pascal functions copy, delete, insert defectively implemented;
  *                                      Issue #269: Attempts to scroll the diagram to currently executed elements (ineffective)
  *      Kay Gürtzig     2016.10.12      Issue #271: Systematic support for user-defined input prompts
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Elements may be disabled for execution ("outcommented")
  *
  ******************************************************************************************************
  *
@@ -1849,6 +1850,12 @@ public class Executor implements Runnable
 	private String step(Element element)
 	{
 		String result = new String();
+		// START KGU#277 2016-10-13: Enh. #270: skip the element if disabled
+		if (element.disabled) {
+			return result;
+		}
+		// END KGU#277 2016-10-13
+		
 		element.executed = true;
 		// START KGU#276 2016-10-09: Issue #267: in step mode we should move the focus to the current element
 		//if (delay != 0 || step)

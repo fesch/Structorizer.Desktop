@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.gui;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -43,12 +44,14 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016-08-02      Enh. #215: New icon 112_stopwatch introduced for breapoint count triggers
  *      Kay Gürtzig     2016-09-05      Generic support for locale icons
  *      Kay Gürtzig     2016-09-25      Enh. #253: New icon 025_import for import configuration
+ *      Kay Gürtzig     2016-10-13      Enh. #270: New icon 026_disable for inactive elements
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import java.awt.*;
 import java.awt.image.*;
@@ -96,6 +99,9 @@ public class IconLoader {
 	// START KGU#258 2016-09-25: Enh. #253
 	public static ImageIcon ico025 = getIconImage(getURI(from+"icons/025_import.png"));
 	// END KGU#258 2016-09-25
+	// START KGU#277 2016-10-13: Enh. #270
+	public static ImageIcon ico026 = getIconImage(getURI(from+"icons/026_disable.png"));
+	// END KGU#277 2016-10-13
 
 	public static ImageIcon ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
 	public static ImageIcon ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));
@@ -222,6 +228,9 @@ public class IconLoader {
         	// START KGU#258 2016-09-25: Enh. #253
             ico025 = getIconImage(getURI(from+"icons/025_import.png"));
         	// END KGU#258 2016-09-25
+        	// START KGU#277 2016-10-13: Enh. #270
+        	ico026 = getIconImage(getURI(from+"icons/026_disable.png"));
+        	// END KGU#277 2016-10-13
 
             ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
             ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));

@@ -50,6 +50,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.25      Issue #87: Icon for collapsed state corrected (KGU#217)
  *      Kay Gürtzig     2016.07.31      Enh. #128: New mode "comments plus text" supported, drawing code revised
  *                                      (text placement improved, had sometimes exceeded the bounds)
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
  *
  ******************************************************************************************************
  *
@@ -130,37 +131,6 @@ public class Case extends Element
     	text.setText(_text);	// Convert to a StringList
     	this.setText(text);
     	
-//            Subqueue s = null;
-//
-//            getText().setText(_text);
-//
-//            if(qs==null)
-//            {
-//                    qs = new Vector();
-//            }
-//
-//            // FIXME (KGU#91 2015-12-01): Don't allow sizes below 2 branches!
-//            if(getText().count()>1)
-//            {
-//                    while(getText().count()-1>qs.size())
-//                    {
-//                            s=new Subqueue();
-//                            s.parent=this;
-//                            qs.add(s);
-//                    }
-//                    while(getText().count()-1<qs.size())
-//                    {
-//                            qs.removeElementAt(qs.size()-1);
-//                    }/**/
-//                    /*
-//                    for(int i=0;i<text.count()-1;i++)
-//                    {
-//                            s=new Subqueue();
-//                            s.parent=this;
-//                            qs.add(s);
-//                    }
-//                    /**/
-//            }
 // END KGU#91 2015-12-01
 
     }
@@ -179,19 +149,6 @@ public class Case extends Element
 
             // START KGU#91 2015-12-01: Bugfix #39: Don't allow sizes below 2 branches!
             // And don't use method getText() here!
-            //if (getText().count() > 1)
-            //{
-            //        while (getText().count()-1 > qs.size())
-            //        {
-            //      	  s = new Subqueue();
-            //      	  s.parent = this;
-            //      	  qs.add(s);
-            //        }
-            //        while (getText().count()-1 < qs.size())
-            //        {
-            //      	  qs.removeElementAt(qs.size()-1);
-            //        }
-            //}
             while (text.count() < 3)
             {
             	text.add("?");
@@ -239,25 +196,6 @@ public class Case extends Element
     	return nLines > 1 && !getText().get(nLines-1).equals("%");
     }
     // END KGU#227 2016-07-31
-    
-//	// START KGU#64 2015-11-03: Is to improve drawing performance
-//	/**
-//	 * Recursively clears all drawing info this subtree down
-//	 * (To be overridden by structured sub-classes!)
-//	 */
-//	@Override
-//	public void resetDrawingInfoDown()
-//	{
-//		this.resetDrawingInfo();
-//		if (qs != null)
-//		{
-//			for (int i = 0; i < qs.size(); i++)
-//			{
-//				qs.get(i).resetDrawingInfoDown();
-//			}
-//		}
-//	}
-//	// END KGU#64 2015-11-03    
     
     public Rect prepareDraw(Canvas _canvas)
     {
@@ -589,6 +527,11 @@ public class Case extends Element
     		canvas.lineTo(bx, by);
     		canvas.lineTo(myrect.right, myrect.top);
     	}
+		// START KGU#277 2016-10-13: Enh. #270
+		if (this.disabled) {
+			canvas.hatchRect(myrect, 5, 10);
+		}
+		// END KGU#277 2016-10-13
 
 
     	// draw children
@@ -668,33 +611,6 @@ public class Case extends Element
     }
     // END KGU#122 2016-01-03
 
-    // START KGU 2015-10-09: On moving the cursor, substructures had been eclipsed
-	// by their containing box wrt. comment popping etc. This correction, however,
-	// might significantly slow down the mouse tracking on enabled comment popping.
-    // Just give it a try... 
-//    public Element selectElementByCoord(int _x, int _y)
-//    {
-//            Element selMe = super.selectElementByCoord(_x,_y);
-//            Element selCh = null;
-//
-//            for(int i = 0;i<qs.size();i++)
-//            {
-//                    Element pre = ((Subqueue) qs.get(i)).selectElementByCoord(_x,_y);
-//                    if(pre!=null)
-//                    {
-//                            selCh = pre;
-//                    }
-//            }
-//
-//            if(selCh!=null)
-//            {
-//                    selected=false;
-//                    selMe = selCh;
-//            }
-//
-//            return selMe;
-//    }
-
     @Override
     public Element getElementByCoord(int _x, int _y, boolean _forSelection)
     {
@@ -737,17 +653,6 @@ public class Case extends Element
     }
     // END KGU 2015-10-09
     
-//    public void setSelected(boolean _sel)
-//    {
-//            selected=_sel;
-//            /* Quatsch !
-//            for(int i = 0;i<qs.size();i++)
-//            {
-//                    ((Subqueue) qs.get(i)).setSelected(_sel);
-//            }
-//            */
-//    }
-
 	// START KGU#183 2016-04-24: Issue #169 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#findSelected()
@@ -811,54 +716,6 @@ public class Case extends Element
 		return isEqual;
 	}
 	// END KGU#117 2016-03-07
-
-//	// START KGU#43 2015-10-12
-//    @Override
-//    public void clearBreakpoints()
-//    {
-//    	super.clearBreakpoints();
-//    	if (qs!= null)
-//    	{
-//    		for (int i = 0; i < qs.size(); i++)
-//    		{
-//    			qs.get(i).clearBreakpoints();
-//    		}
-//    	}
-//    }
-//    // END KGU#43 2015-10-12
-//
-//	// START KGU#43 2015-10-13
-//    @Override
-//    public void clearExecutionStatus()
-//    {
-//    	super.clearExecutionStatus();
-//    	if (qs!= null)
-//    	{
-//    		for (int i = 0; i < qs.size(); i++)
-//    		{
-//    			qs.get(i).clearExecutionStatus();
-//    		}
-//    	}
-//    }
-//    // END KGU#43 2015-10-13
-//
-//	// START KGU#117 2016-03-07: Enh. #77
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
-//	 */
-//    @Override
-//	public void clearRuntimeData()
-//	{
-//		super.clearRuntimeData();
-//    	if (qs!= null)
-//    	{
-//    		for (int i = 0; i < qs.size(); i++)
-//    		{
-//    			qs.get(i).clearRuntimeData();
-//    		}
-//    	}
-//	}
-//	// END KGU#117 2016-03-07
 
 	// START KGU#156 2016-03-13: Enh. #124
 	protected String getRuntimeInfoString()

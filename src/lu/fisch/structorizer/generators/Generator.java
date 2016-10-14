@@ -55,6 +55,7 @@ package lu.fisch.structorizer.generators;
  *                                      code expressions
  *                                      Bugfix #228: Unnecessary error message exporting recursive routines
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.kewordMap refactoring done
+ *      Kay Gürtzig     2016.10.13      Enh. #277: Basic functionality for disabled elements (addCode()))
  *
  ******************************************************************************************************
  *
@@ -330,6 +331,27 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		}
 	}
 	// END KGU 2015-10-18
+	
+	// START KGU#277 2016-10-13: Enh. #270
+	/**
+	 * Depending on isDisabled, adds the given text either as comment or as active
+	 * source code to the code lines.
+	 * @param text - the prepared (transformed and composed) line of code
+	 * @param _indent - current indentation
+	 * @param isDisabled - whether or not the originating element is disabled.
+	 */
+	protected void addCode(String text, String _indent, boolean isDisabled)
+	{
+		if (isDisabled)
+		{
+			insertComment(text, _indent);
+		}
+		else
+		{
+			code.add(_indent + text);
+		}
+	}
+	// END KGU#277 2016-10-13
 
 	/**
 	 * Overridable general text transformation routine, performing the following steps:

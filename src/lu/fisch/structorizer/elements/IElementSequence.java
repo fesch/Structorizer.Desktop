@@ -35,6 +35,7 @@ package lu.fisch.structorizer.elements;
 *      Author           Date            Description
 *      ------           ----            -----------
 *      Kay Gürtzig      2015.11.23      First issue (KGU#87).
+*      Kay Gürtzig      2016.10.13      Enh. #277: Method setDisabled(boolean) added
 *
 ******************************************************************************************************
 *
@@ -86,5 +87,11 @@ public interface IElementSequence {
 	public abstract void removeElement(Element _element);
 	
 	public abstract void removeElement(int _index);
+	
+	/**
+	 * Sets or removes the disabled flag from all elements
+	 * @param disable - whetjer to set (true) or to remove (false) the disabled flag
+	 */
+	public abstract void setDisabled(boolean disable);
 	
 }

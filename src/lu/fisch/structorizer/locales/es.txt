@@ -81,6 +81,7 @@
  *      Kay Gürtzig     2016.09.25  Enh. #253: ImportOptionDialog inserted; spellings corrected; usted -> tú
  *      Kay Gürtzig     2016.10.11  Enh. 267: Menu.error15 divided into error15_1 and error15_2
  *                                  Enh. 268: OutputConsole sub-section added
+ *      Kay Gürtzig     2016.10.13  Enh. #270: Editor.btnDisable, InputBox.chkDisabled added.
  *
  ******************************************************************************************************
  *
@@ -167,6 +168,7 @@ Menu.menuDiagramMoveDown.text=Desplazar abajo
 Menu.menuDiagramTransmute.text=Transmutar
 Menu.menuDiagramCollapse.text=Reducir
 Menu.menuDiagramExpand.text=Expandir
+Menu.menuDiagramDisable.text=Desactivar
 // Breakpoint
 Menu.menuDiagramBreakpoint.text=Poner/eliminar breakpoint
 Menu.menuDiagramBreakTrigger.text=Fija condición de parar ...
@@ -442,6 +444,7 @@ Editor.popupTransmute.text=Transmutar
 // Collapsing
 Editor.popupCollapse.text=Reducir
 Editor.popupExpand.text=Expandir
+Editor.popupDisable.text=Disabl
 // Breakpoint
 Editor.popupBreakpoint.text=Poner/eliminar breakpoint
 Editor.popupBreakTrigger.text=Fija la condición de parar ...
@@ -459,6 +462,7 @@ InputBox.btnOK.tooltip=Aceptar los cambios.
 InputBox.btnCancel.text=Cancelar
 InputBox.btnCancel.tooltip=Cancelar los cambios.
 InputBox.lblBreakTriggerText.text=Parar antes de %a ejecución
+InputBox.chkDisabled.text=Desactivado (ejecución y exportación)
 InputBox.chkBreakpoint.text=Breakpoint
 InputBox.lblText.text[elementType:While]=Por favor ingresa la condición para entrar y quedar
 InputBox.lblText.text[elementType:Repeat]=Por favor ingresa la condición para salir
@@ -507,6 +511,7 @@ InputBoxFor.btnOK.text=Aceptar
 InputBoxFor.btnOK.tooltip=Aceptar los cambios.
 InputBoxFor.btnCancel.text=Cancelar
 InputBoxFor.btnCancel.tooltip=Cancelar los Cambios.
+InputBoxFor.chkDisabled.text=Desactivado (ejecución y exportación)
 InputBoxFor.chkBreakpoint.text=Breakpoint
 InputBoxFor.lblBreakTriggerText.text=Parar antes de %a ejecución
 InputBoxFor.msgInvalidIncrement.text=<%> no es válida constante integral.

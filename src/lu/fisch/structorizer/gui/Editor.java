@@ -44,6 +44,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.06      Enh. #188: New button and menu item for element conversion (KGU#199)
  *      Kay Gürtzig     2016.07.21      Enh. #197: Selection may be expanded by Shift-Up and Shift-Down (KGU#206)
  *      Kay Gürtzig     2016.08.02      Enh. #215: popupBreakTrigger added
+ *      Kay Gürtzig     2016.10.13      Enh. #277: New toolbar button (+ context menu item) for disabling elements
  *
  ******************************************************************************************************
  *
@@ -131,11 +132,14 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
 	protected final JButton btnTransmute = new JButton(IconLoader.ico109);
 	// END KGU#199 2016-07-06
-    // collapsing & expanding
+    // collapsing & expanding + disabling
     // START KGU#123 2016-01-04: Enh. #87 - Preparations for Fix #65
     protected final JButton btnCollapse = new JButton(IconLoader.ico106); 
     protected final JButton btnExpand = new JButton(IconLoader.ico107);    
     // END KGU#123 2016-01-04
+    // START KG#277 2016-10-13: Enh. #270
+    protected final JButton btnDisable = new JButton(IconLoader.ico026);
+    // END KGU#277 2016-10-13
 	// printing
     protected final JButton btnPrint = new JButton(IconLoader.ico041);
     // START KGU#2 2015-11-19: Arranger launch added
@@ -209,6 +213,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     protected final JMenuItem popupCollapse = new JMenuItem("Collapse", IconLoader.ico106); 
     protected final JMenuItem popupExpand = new JMenuItem("Expand", IconLoader.ico107);    
     // END KGU#123 2016-01-04
+    // START KG#277 2016-10-13: Enh. #270
+    protected final JMenuItem popupDisable = new JMenuItem("Disable", IconLoader.ico026);
+    // END KGU#277 2016-10-13
     // START KGU#43 2015-10-12: Breakpoint toggle
     protected final JMenuItem popupBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
     // END KGU#43 2015-10-12
@@ -406,6 +413,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popup.add(popupExpand);
 		popupExpand.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.expandNSD(); doButtons(); } } );
 		// END KGU#123 2016-01-03
+
+		// START KGU#277 2016-10-13: Enh. #270
+		popup.add(popupDisable);
+		popupDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); doButtons(); } } );
+		// END KGU#123 2016-10-13
 
 		// START KGU#43 2015-10-12 Add a possibility to set or unset a checkpoint on the selected Element
         popup.addSeparator();
@@ -637,6 +649,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnExpand.setFocusable(false);
 		btnExpand.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.expandNSD(); } } );
 		// END KGU#123 2016-01-04
+		// START KGU#277 2016-10-13: Enh. #270
+        toolbar.add(btnDisable);
+		btnDisable.setFocusable(false);
+		btnDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); } } );
+		// END KGU#123 2016-01-04
 
 		toolbar=newToolBar("About");
 
@@ -860,6 +877,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
 		btnExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
 		// END KGU#123 2016-01-03
+		// START KGU#277 2016-10-13: Enh. #270
+		btnDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());
+		// END KGU#277 2016-01-13
 
 		// editing
 		// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
@@ -894,6 +914,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
 		popupExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
 		// END KGU#123 2016-01-03
+		// START KGU#277 2016-10-13: Enh. #270
+		popupDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());
+		// END KGU#277 2016-01-13
 
 		// executor
 		// START KGU#143 2016-01-21: Bugfix #114 - breakpoints need a more generous enabling policy

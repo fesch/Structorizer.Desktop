@@ -64,6 +64,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.22      New text holder / messages for Analyser
  *      Kay Gürtzig     2016.09.26/03   Enh. #253: Refactoring support
  *      Kay Gürtzig     2016.10.11      Enh. #267: error15 renamed to error15_1, new error15_2
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Menu items for the disabling of elements
  *
  ******************************************************************************************************
  *
@@ -188,6 +189,9 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuDiagramCollapse = new JMenuItem("Collapse", IconLoader.ico106);
 	protected final JMenuItem menuDiagramExpand = new JMenuItem("Expand", IconLoader.ico107);
 	// END KGU#123 2016-01-03
+	// START KGU#277 2016-10-13: Enh. #270: Disbaling of elements
+	protected final JMenuItem menuDiagramDisable = new JMenuItem("Disable", IconLoader.ico026);
+	// END KGU#277 2016-10-13
 	// START KGU#143 2016-01-21: Bugfix #114 - Compensate editing restriction by accelerator4
 	protected final JMenuItem menuDiagramBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
 	// END KGU#143 2016-01-21
@@ -678,6 +682,12 @@ public class Menu extends LangMenuBar implements NSDController
 		menuDiagramExpand.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0));
 		menuDiagramExpand.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.expandNSD(); doButtons(); } } );
 
+		// START KGU#277 2016-10-13: Enh. #270
+		menuDiagram.add(menuDiagramDisable);
+		menuDiagramDisable.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_7, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuDiagramDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); doButtons(); } } );
+		// END KGU#277 2016-10-13
+
 		menuDiagram.addSeparator();
 		// END KGU#123 2016-01-03
 		
@@ -1052,6 +1062,9 @@ public class Menu extends LangMenuBar implements NSDController
 			menuDiagramCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
 			menuDiagramExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
 			// END KGU#123 2016-01-03
+			// START KGU#277 2016-10-13: Enh. #270
+			menuDiagramDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());
+			// END KGU#277 2016-01-13
 
 			// START KGU#143 2016-01-21: Bugfix #114 - breakpoint control now also here
 			// START KGU#177 2016-07-06: Enh. #158 - Collateral damage mended

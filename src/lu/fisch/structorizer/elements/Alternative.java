@@ -49,6 +49,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.21      Bugfix #198: Inconsistency between methods prepareDraw() and draw()
  *      Kay Gürtzig     2016.07.31      Enh. #128: New mode "comments plus text" supported, drawing code delegated
  *                                      Bugfix #212 (inverted logic of option altPadRight = "enlarge FALSE")
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
  *
  ******************************************************************************************************
  *
@@ -110,20 +111,6 @@ public class Alternative extends Element {
 		setText(_strings);
 	}
 	
-//	// START KGU#64 2015-11-03: Is to improve drawing performance
-//	/**
-//	 * Recursively clears all drawing info this subtree down
-//	 * (To be overridden by structured sub-classes!)
-//	 */
-//	@Override
-//	public void resetDrawingInfoDown()
-//	{
-//		this.resetDrawingInfo();
-//		qFalse.resetDrawingInfoDown();
-//		qTrue.resetDrawingInfoDown();
-//	}
-//	// END KGU#64 2015-11-03
-
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
@@ -435,7 +422,13 @@ public class Alternative extends Element {
 		canvas.lineTo(myrect.left + rTrue.right-1 + remain, myrect.bottom-1);
 		canvas.lineTo(myrect.right, myrect.top);
 		
-		// draw children
+		// START KGU#277 2016-10-13: Enh. #270
+		if (this.disabled) {
+			canvas.hatchRect(myrect, 5, 10);
+		}
+		// END KGU#277 2016-10-13
+
+			// draw children
 		myrect = _top_left.copy();
 
 		// START KGU#207 2016-07-21: Bugfix #198 - this offset difference to pt0Parting.y spoiled selection traversal 
@@ -577,38 +570,6 @@ public class Alternative extends Element {
         qTrue.setColor(_color);
     }*/
 	
-	
-//	// START KGU 2015-11-12
-//	@Override
-//	public void clearBreakpoints()
-//	{
-//		super.clearBreakpoints();
-//		this.qFalse.clearBreakpoints();
-//		this.qTrue.clearBreakpoints();
-//	}
-//	// END KGU 2015-10-12
-//	
-//	// START KGU 2015-10-13
-//	// Recursively clears all execution flags in this branch
-//	public void clearExecutionStatus()
-//	{
-//		super.clearExecutionStatus();
-//		this.qFalse.clearExecutionStatus();
-//		this.qTrue.clearExecutionStatus();
-//	}
-//	// END KGU 2015-10-13
-//
-//	// START KGU#117 2016-03-07: Enh. #77
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
-//	 */
-//	public void clearRuntimeData()
-//	{
-//		super.clearRuntimeData();
-//		this.qFalse.clearRuntimeData();
-//		this.qTrue.clearRuntimeData();
-//	}
-//	// END KGU#117 2016-03-07
 
 	// START KGU#156 2016-03-13: Enh. #124
 	protected String getRuntimeInfoString()

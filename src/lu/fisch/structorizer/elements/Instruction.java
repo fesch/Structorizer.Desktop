@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -48,12 +49,14 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported
  *      Kay Gürtzig     2016.08.10      Issue #227: New classification methods for Input/Output
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactored
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 import java.awt.Color;
@@ -97,18 +100,6 @@ public class Instruction extends Element {
 	}
 	// END KGU#199 2016-07-07
 	
-//	// START KGU#64 2015-11-03: Is to improve drawing performance
-//	/**
-//	 * Recursively clears all drawing info this subtree down
-//	 * (To be overridden by structured sub-classes!)
-//	 */
-//	@Override
-//	public void resetDrawingInfoDown()
-//	{
-//		this.resetDrawingInfo();
-//	}
-//	// END KGU#64 2015-11-03
-
 	public static Rect prepareDraw(Canvas _canvas, StringList _text, Element _element)
 	{
 		Rect rect = new Rect(0, 0, 2*(Element.E_PADDING/2), 0);
@@ -177,17 +168,6 @@ public class Instruction extends Element {
 		// END KGU 2015-10-13
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 			
-		// START KGU 2015-10-13: Became obsolete by new method getFillColor() applied above now
-//		if (_element.isCollapsed())
-//		{
-//			drawColor=Element.E_COLLAPSEDCOLOR;
-//		}
-//		if (_element.selected==true)
-//		{
-//			drawColor=Element.E_DRAWCOLOR;
-//		}
-		// END KGU 2015-10-13
-		
 		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
 		//_element.rect = _top_left.copy();
 		_element.rect = new Rect(0, 0, 
@@ -254,6 +234,11 @@ public class Instruction extends Element {
 		if (_element.haveOuterRectDrawn())
 		{
 			canvas.drawRect(_top_left);
+			// START KGU#277 2016-10-13: Enh. #270
+			if (_element.disabled) {
+				canvas.hatchRect(_top_left, 5, 10);
+			}
+			// END KGU#277 2016-10-13
 		}
 		// START KGU#122 2016-01-03: Enh. #87 - A collapsed element is to be marked by the type-specific symbol,
 		// unless it's an Instruction offspring in which case it will keep its original style, anyway.

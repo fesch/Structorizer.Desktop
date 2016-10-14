@@ -96,6 +96,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.10.06      Bugfix #262: Selection and dragging problems after insertion, undo, and redo
  *      Kay Gürtzig     2016.10.07      Bugfix #263: "Save as" now updates the current directory
  *      Kay Gürtzig     2016.10.11      KGU#280: field isArrangerOpen replaced by a method (due to volatility)
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Functionality for the disabling of elements
  *
  ******************************************************************************************************
  *
@@ -1767,6 +1768,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						ele.toggleBreakpoint();
 					}
 					// END KGU#43 2015-10-17
+					// START KGU#277 2016-10-13: Enh. #270
+					ele.disabled = data.disabled;
+					// END KGU#277 2016-10-13
 					// START KGU#213 2016-08-01: Enh. #215 (temprarily disabled again)
 					//ele.setBreakTriggerCount(data.breakTriggerCount);
 					// END KGU#213 2016-08-01
@@ -1796,7 +1800,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#213 2016-08-01: Enh. #215
 				data.breakTriggerCount = element.getBreakTriggerCount();
 				// END KGU#213 2016-08-01				
-				
+				// START KGU#277 2016-10-13: Enh. #270
+				data.disabled = element.disabled;
+				// END KGU#277 2016-10-13
+			
 				// START KGU#3 2015-10-25: Allow more sophisticated For loop editing
 				if (element instanceof For)
 				{
@@ -1831,6 +1838,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#213 2016-08-01: Enh. #215
 					//element.setBreakTriggerCount(data.breakTriggerCount);
 					// END KGU#213 2016-08-01
+					// START KGU#277 2016-10-13: Enh. #270
+					element.disabled = data.disabled;
+					// END KGU#277 2016-10-13
 					// START KGU#3 2015-10-25
 					if (element instanceof For)
 					{
@@ -2033,6 +2043,34 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		this.NSDControl.doButtons();
 	}
 	// END KGU#123 2016-01-03
+	
+	// START KGU#277 2016-10-13: Enh. #270
+	/*========================================
+	 * disable method
+	 *=======================================*/
+	public void disableNSD()
+	{
+		boolean allDisabled = true;
+		root.addUndo();
+		if (getSelected() instanceof IElementSequence)
+		{
+			IElementSequence elements = (IElementSequence)getSelected();
+			for (int i = 0; allDisabled && i < elements.getSize(); i++)
+			{
+				allDisabled = elements.getElement(i).disabled;
+			}
+			elements.setDisabled(!allDisabled);
+		}
+		else {
+			getSelected().disabled = !getSelected().disabled;
+		}
+		
+		redraw();
+		analyse();
+		this.NSDControl.doButtons();
+	}
+	
+	// END KGU#277 2016-10-13
 
 	/*****************************************
 	 * add method
@@ -2060,6 +2098,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					_ele.toggleBreakpoint();
 				}
 				// END KGU 2015-10-17
+				// START KGU#277 2016-10-13: Enh. #270
+				_ele.disabled = data.disabled;
+				// END KGU#277 2016-10-13
 				// START KGU#213 2016-08-01: Enh. #215
 				//_ele.setBreakTriggerCount(data.breakTriggerCount);
 				// END KGU#213 2016-08-01
@@ -4338,10 +4379,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#213 2016-08-01: Enh. #215
 			// START KGU#246 2016-09-13: Bugfix #241)
 			//inputbox.lblBreakTrigger.setText(inputbox.lblBreakText.getText().replace("%", Integer.toString(_data.breakTriggerCount)));
-			inputbox.lblBreakTriggerText.setVisible(notRoot);
+			// START KGU#213 2016-10-13: Enh. #215 - Make it invisible if zero
+			//inputbox.lblBreakTriggerText.setVisible(notRoot);
+			inputbox.lblBreakTriggerText.setVisible(notRoot && _data.breakTriggerCount > 0);
+			// END KGU#213 2016-10-13
 			inputbox.lblBreakTrigger.setText(Integer.toString(_data.breakTriggerCount));
 			// END KGU#246 2016-09-13
 			// END KGU#213 2016-08-01
+			// START KGU#277 2016-10-13: Enh. #270
+			inputbox.chkDisabled.setVisible(notRoot);
+			inputbox.chkDisabled.setSelected(_data.disabled);
+			// END KGU#277 2016-10-13
 
 			inputbox.OK=false;
 			// START KGU#42 2015-10-14: Pass the additional information for title translation control
@@ -4380,6 +4428,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#43 2015-10-12: Breakpoint support
 			_data.breakpoint = inputbox.chkBreakpoint.isSelected();
 			// END KGU#43 2015-10-12
+			// START KGU#277 2016-10-13: Enh. #270
+			_data.disabled = inputbox.chkDisabled.isSelected();
+			// END KGU#277 2016-10-13
 			// START KGU#213 2016-08-01: Enh. #215 (temporarily disabled again)
 //			try{
 //				_data.breakTriggerCount = Integer.parseUnsignedInt(inputbox.txtBreakTrigger.getText());

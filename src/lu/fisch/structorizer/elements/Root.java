@@ -81,6 +81,7 @@ package lu.fisch.structorizer.elements;
  *                                      Enh. #253: D7Parser.keywordMap refactored
  *      Kay Gürtzig     2016.10.11      Enh. #267: New analyser check for error15_2 (unavailable subroutines)
  *      Kay Gürtzig     2016.10.12      Issue #271: user-defined prompt strings in input instructions
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Analyser checks for disabled elements averted.
  *
  ******************************************************************************************************
  *
@@ -1726,6 +1727,9 @@ public class Root extends Element {
     	for (int i=0; i<_node.getSize(); i++)
     	{
     		Element ele = _node.getElement(i);
+    		// START KGU#277 2016-10-13: Enh. #270 - disabled elements are to be handled as if they wouldn't exist
+    		if (ele.disabled) continue;
+    		// END KGU#277 2016-10-13
     		String eleClassName = ele.getClass().getSimpleName();
     		
     		// get all set variables from actual instruction (just this level, no substructre)

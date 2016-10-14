@@ -78,6 +78,7 @@
  *                                      AnalyserPreferences numbering modified, InputBoxFor messages
  *      Kay Gürtzig     2016.09.25      Enh. #253: Section ImportOptionDialog inserted
  *      Kay Gürtzig     2016.10.11      Enh. 267: Menu.error15 divided into error15_1 and error15_2
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Editor.btnDisable, InputBox.chkDisabled added.
  *
  ******************************************************************************************************
  *
@@ -169,6 +170,7 @@ Menu.menuDiagramMoveDown.text=Move down
 Menu.menuDiagramTransmute.text=Transmute
 Menu.menuDiagramCollapse.text=Collapse
 Menu.menuDiagramExpand.text=Expand
+Menu.menuDiagramDisable.text=Disable
 // Breakpoint
 Menu.menuDiagramBreakpoint.text=Toggle breakpoint
 Menu.menuDiagramBreakTrigger.text=Specify break trigger...
@@ -444,6 +446,7 @@ Editor.popupTransmute.text=Transmute
 // Collapsing
 Editor.popupCollapse.text=Collapse
 Editor.popupExpand.text=Expand
+Editor.popupDisable.text=Disable
 // Breakpoint
 Editor.popupBreakpoint.text=Toggle breakpoint
 Editor.popupBreakTrigger.text=Specify break trigger...
@@ -460,6 +463,7 @@ InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=Validate your choice.
 InputBox.btnCancel.text=Cancel
 InputBox.btnCancel.tooltip=Cancel your choice.
+InputBox.chkDisabled.text=Disabled (execution and export)
 InputBox.chkBreakpoint.text=
 InputBox.lblBreakTriggerText.text=Break at execution count: %
 InputBox.lblText.text[elementType:Alternative]=Please enter the condition
@@ -509,7 +513,8 @@ InputBoxFor.btnOK.text=
 InputBoxFor.btnOK.tooltip=
 InputBoxFor.btnCancel.text=
 InputBoxFor.btnCancel.tooltip=
-InputBoxFor.chkBreakpoint.text=
+InputBoxFor.chkDisabled.text=Disabled (execution and export)
+InputBoxFor.chkBreakpoint.text=Breakpoint
 InputBoxFor.lblBreakTriggerText.text=Break at execution count: %
 InputBoxFor.msgInvalidIncrement.text=<%> is no valid integer constant
 InputBoxFor.msgMissingBrace1.text=Value list should begin with '{'
