@@ -334,15 +334,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	
 	// START KGU#277 2016-10-13: Enh. #270
 	/**
-	 * Depending on isDisabled, adds the given text either as comment or as active
+	 * Depending on asComment, adds the given text either as comment or as active
 	 * source code to the code lines.
 	 * @param text - the prepared (transformed and composed) line of code
 	 * @param _indent - current indentation
-	 * @param isDisabled - whether or not the originating element is disabled.
+	 * @param asComment - whether or not the code is to be commented out.
 	 */
-	protected void addCode(String text, String _indent, boolean isDisabled)
+	protected void addCode(String text, String _indent, boolean asComment)
 	{
-		if (isDisabled)
+		if (asComment)
 		{
 			insertComment(text, _indent);
 		}

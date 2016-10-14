@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.generators;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -54,6 +55,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178)
  *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
  *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done. 
+ *      Kay Gürtzig             2016.10.14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
  *
  ******************************************************************************************************
  *
@@ -104,7 +106,8 @@ package lu.fisch.structorizer.generators;
  *      - Implementation of FOR loop
  *      - Indent replaced from 2 spaces to TAB-character (TAB configurable in IDE)
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import java.util.regex.Matcher;
 
@@ -276,18 +279,16 @@ public class PHPGenerator extends Generator
     protected void generateCode(Instruction _inst, String _indent)
     {
     	// START KGU 2015-10-18: The "export instructions as comments" configuration had been ignored here
-//		insertComment(_inst, _indent);
-//		for(int i=0;i<_inst.getText().count();i++)
-//		{
-//			code.add(_indent+transform(_inst.getText().get(i))+";");
-//		}
 		if (!insertAsComment(_inst, _indent)) {
+			
+			boolean isDisabled = _inst.isDisabled();
 			
 			insertComment(_inst, _indent);
 
 			for (int i=0; i<_inst.getText().count(); i++)
 			{
-				code.add(_indent+transform(_inst.getText().get(i))+";");
+				addCode(transform(_inst.getText().get(i))+";",
+						_indent, isDisabled);
 			}
 
 		}
@@ -297,6 +298,8 @@ public class PHPGenerator extends Generator
     @Override
     protected void generateCode(Alternative _alt, String _indent)
     {
+    	boolean isDisabled = _alt.isDisabled();
+    	
 		// START KGU 2014-11-16
 		insertComment(_alt, _indent);
 		// END KGU 2014-11-16
@@ -304,22 +307,24 @@ public class PHPGenerator extends Generator
         String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
         if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 
-        code.add(_indent+"if "+condition+"");
-        code.add(_indent+"{");
+        addCode("if "+condition+"", _indent, isDisabled);
+        addCode("{", _indent, isDisabled);
         generateCode(_alt.qTrue,_indent+this.getIndent());
         if(_alt.qFalse.getSize()!=0)
         {
-                code.add(_indent+"}");
-                code.add(_indent+"else");
-                code.add(_indent+"{");
+                addCode("}", _indent, isDisabled);
+                addCode("else", _indent, isDisabled);
+                addCode("{", _indent, isDisabled);
                 generateCode(_alt.qFalse,_indent+this.getIndent());
         }
-        code.add(_indent+"}");
+        addCode("}", _indent, isDisabled);
     }
 
     @Override
     protected void generateCode(Case _case, String _indent)
     {
+    	boolean isDisabled = _case.isDisabled();
+    	
 		// START KGU 2014-11-16
 		insertComment(_case, _indent);
 		// END KGU 2014-11-16
@@ -328,8 +333,8 @@ public class PHPGenerator extends Generator
         String condition = transform(_case.getText().get(0));
         if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 
-        code.add(_indent+"switch "+condition+" ");
-        code.add(_indent+"{");
+        addCode("switch "+condition+" ", _indent, isDisabled);
+        addCode("{", _indent, isDisabled);
 
         for (int i=0; i<_case.qs.size()-1; i++)
         {
@@ -338,24 +343,26 @@ public class PHPGenerator extends Generator
         	StringList constants = StringList.explode(lines.get(i+1), ",");
         	for (int j = 0; j < constants.count(); j++)
         	{
-        		code.add(_indent + this.getIndent() + "case " + constants.get(j).trim() + ":");
+        		addCode("case " + constants.get(j).trim() + ":", _indent + this.getIndent(), isDisabled);
         	}
         	// END KGU#15 2015-11-02
         	generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent());
-        	code.add(_indent+this.getIndent()+this.getIndent()+"break;");
+        	addCode("break;", _indent+this.getIndent()+this.getIndent(), isDisabled);
         }
 
         if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
         {
-                code.add(_indent+this.getIndent()+"default:");
+            addCode("default:", _indent+this.getIndent(), isDisabled);
                 generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());
         }
-        code.add(_indent+"}");
+        addCode("}", _indent, isDisabled);
     }
 
     @Override
     protected void generateCode(For _for, String _indent)
     {
+    	boolean isDisabled = _for.isDisabled();
+    	
 		// START KGU 2014-11-16
 		insertComment(_for, _indent);
 		// END KGU 2014-11-16
@@ -369,14 +376,6 @@ public class PHPGenerator extends Generator
     	}
     	// END KGU#162 2016-04-01
     	// START KGU#61 2016-03-23: Enh. #84 - support for FOREACH loop
-//		int step = _for.getStepConst();
-//		String compOp = (step > 0) ? " >= " : " <= ";
-//		String increment = var + " += (" + step + ")";
-//		code.add(_indent + "for (" +
-//				var + " = " + transform(_for.getStartValue(), false) + "; " +
-//				var + compOp + transform(_for.getEndValue(), false) + "; " +
-//				increment +
-//				")");
     	if (_for.isForInLoop())
     	{
     		String valueList = _for.getValueList();
@@ -391,7 +390,7 @@ public class PHPGenerator extends Generator
     		}
     		// START KGU#162 2016-04-01: Enh. #144 - var syntax already handled
     		//code.add(_indent + "foreach (" + valueList + " as $" + var + ")");
-    		code.add(_indent + "foreach (" + valueList + " as " + var + ")");
+    		addCode("foreach (" + valueList + " as " + var + ")", _indent, isDisabled);
     		// END KGU#162 2016-04-01
     	
     	}
@@ -410,23 +409,25 @@ public class PHPGenerator extends Generator
 //    				increment +
 //    				")");
     		String increment = var + " += (" + step + ")";
-    		code.add(_indent + "for (" +
+    		addCode("for (" +
     				var + " = " + transform(_for.getStartValue(), false) + "; " +
     				var + compOp + transform(_for.getEndValue(), false) + "; " +
     				increment +
-    				")");
+    				")", _indent, isDisabled);
     		// END KGU#162 2016-04-01
     	}
     	// END KGU#61 2016-03-23
 		// END KGU#3 2015-11-02
-        code.add(_indent+"{");
+        addCode("{", _indent, isDisabled);
         generateCode(_for.q,_indent+this.getIndent());
-        code.add(_indent+"}");
+        addCode("}", _indent, isDisabled);
     }
 
     @Override
     protected void generateCode(While _while, String _indent)
     {
+    	boolean isDisabled = _while.isDisabled();
+    	
 		// START KGU 2014-11-16
 		insertComment(_while, _indent);
 		// END KGU 2014-11-16
@@ -434,21 +435,23 @@ public class PHPGenerator extends Generator
         String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
         if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 
-        code.add(_indent+"while "+condition+" ");
-        code.add(_indent+"{");
+        addCode("while "+condition+" ", _indent, isDisabled);
+        addCode("{", _indent, isDisabled);
         generateCode(_while.q,_indent+this.getIndent());
-        code.add(_indent+"}");
+        addCode("}", _indent, isDisabled);
     }
 
     @Override
     protected void generateCode(Repeat _repeat, String _indent)
     {
+    	boolean isDisabled = _repeat.isDisabled();
+    	
 		// START KGU 2014-11-16
 		insertComment(_repeat, _indent);
 		// END KGU 2014-11-16
 
-        code.add(_indent+"do");
-        code.add(_indent+"{");
+        addCode("do", _indent, isDisabled);
+        addCode("{", _indent, isDisabled);
         generateCode(_repeat.q,_indent+this.getIndent());
         // START KGU#162 2016-04-01: Enh. #144 - more tentative approach
         //code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+"));");
@@ -457,39 +460,45 @@ public class PHPGenerator extends Generator
         {
         	condition = "( " + condition + " )";
         }
-        code.add(_indent + "} while (!" + condition + ");");
+        addCode("} while (!" + condition + ");", _indent, isDisabled);
         // END KGU#162 2016-04-01
     }
 
     @Override
     protected void generateCode(Forever _forever, String _indent)
     {
+    	boolean isDisabled = _forever.isDisabled();
+    	
 		// START KGU 2014-11-16
 		insertComment(_forever, _indent);
 		// END KGU 2014-11-16
 
-        code.add(_indent+"while (true)");
-        code.add(_indent+"{");
+        addCode("while (true)", _indent, isDisabled);
+        addCode("{", _indent, isDisabled);
         generateCode(_forever.q,_indent+this.getIndent());
-        code.add(_indent+"}");
+        addCode("}", _indent, isDisabled);
     }
 
     @Override
     protected void generateCode(Call _call, String _indent)
     {
+    	boolean isDisabled = _call.isDisabled();
+    	
 		// START KGU 2014-11-16
 		insertComment(_call, _indent);
 		// END KGU 2014-11-16
 
         for(int i=0;i<_call.getText().count();i++)
         {
-                code.add(_indent+transform(_call.getText().get(i))+"();");
+        	addCode(transform(_call.getText().get(i))+"();", _indent, isDisabled);
         }
     }
 
     @Override
     protected void generateCode(Jump _jump, String _indent)
     {
+    	boolean isDisabled = _jump.isDisabled();
+    	
 		// START KGU 2014-11-16
 		insertComment(_jump, _indent);
 		// END KGU 2014-11-16
@@ -516,11 +525,11 @@ public class PHPGenerator extends Generator
 			}
 			if (line.matches(preReturnMatch))
 			{
-				code.add(_indent + "return " + line.substring(preReturn.length()).trim() + ";");
+				addCode("return " + line.substring(preReturn.length()).trim() + ";", _indent, isDisabled);
 			}
 			else if (line.matches(preExitMatch))
 			{
-				code.add(_indent + "exit(" + line.substring(preExit.length()).trim() + ");");
+				addCode("exit(" + line.substring(preExit.length()).trim() + ");", _indent, isDisabled);
 			}
 			// Has it already been matched with a loop? Then syntax must have been okay...
 			else if (this.jumpTable.containsKey(_jump))
@@ -533,13 +542,14 @@ public class PHPGenerator extends Generator
 					insertComment(line, _indent);
 					label = "__ERROR__";
 				}
-				code.add(_indent + "goto " + label + ";");
+				addCode("goto " + label + ";", _indent, isDisabled);
 			}
 			else if (line.matches(preLeaveMatch))
 			{
 				// Strange case: neither matched nor rejected - how can this happen?
 				// Try with an ordinary break instruction and a funny comment
-				code.add(_indent + "last;\t" + this.commentSymbolLeft() + " FIXME: Dubious occurrance of 'last' instruction!");
+				addCode("last;\t" + this.commentSymbolLeft() + " FIXME: Dubious occurrance of 'last' instruction!",
+						_indent, isDisabled);
 			}
 			else if (!isEmpty)
 			{
@@ -549,7 +559,7 @@ public class PHPGenerator extends Generator
 			// END KGU#74/KGU#78 2015-11-30
 		}
 		if (isEmpty) {
-			code.add(_indent + "last;");
+			addCode("last;", _indent, isDisabled);
 		}
 		// END KGU#78 2015-12-18
     }

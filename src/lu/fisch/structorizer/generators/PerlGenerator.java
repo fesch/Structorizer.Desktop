@@ -26,7 +26,8 @@
 
 package lu.fisch.structorizer.generators;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Jan Peter Klippel
  *
@@ -61,12 +62,14 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
  *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done. 
+ *      Kay Gürtzig     2016.10.14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
  *
  ******************************************************************************************************
  *
  *      Comment:		LGPL license (http://www.gnu.org/licenses/lgpl.html).
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 import java.util.regex.Matcher;
@@ -356,7 +359,8 @@ public class PerlGenerator extends Generator {
 	protected void appendLabel(Element elem, String _indent)
 	{
 		if (elem instanceof ILoop && this.jumpTable.containsKey(elem)) {
-			code.add(_indent + this.labelBaseName + this.jumpTable.get(elem) + ": ;");
+			addCode(this.labelBaseName + this.jumpTable.get(elem) + ": ;",
+					_indent, elem.isDisabled());
 		}
 	}
 	// ED KGU#78 2015-12-17
@@ -365,13 +369,14 @@ public class PerlGenerator extends Generator {
 
 		if (!insertAsComment(_inst, _indent))
 		{
+			boolean isDisabled = _inst.isDisabled();
 	    	insertComment(_inst, _indent);
 
 			for(int i=0;i<_inst.getText().count();i++)
 			{
 				String text = transform(_inst.getText().get(i));
 				if (!text.endsWith(";")) { text += ";"; }
-				code.add(_indent + text);
+				addCode(text, _indent, isDisabled);
 			}
 		}
 
@@ -379,7 +384,9 @@ public class PerlGenerator extends Generator {
 	
 	protected void generateCode(Alternative _alt, String _indent) {
 		
-		code.add("");
+		boolean isDisabled = _alt.isDisabled();
+		
+		addCode("", "", isDisabled);
 
 		insertComment(_alt, _indent);
 
@@ -395,20 +402,22 @@ public class PerlGenerator extends Generator {
 		
 		if(_alt.qFalse.getSize()!=0) {
 			
-			code.add(_indent+"}");
-			code.add(_indent+"else {");			
+			addCode("}", _indent, isDisabled);
+			addCode("else {", _indent, isDisabled);			
 			generateCode(_alt.qFalse,_indent+this.getIndent());
 			
 		}
 		
-		code.add(_indent+"}");
-		code.add("");
+		addCode("}", _indent, isDisabled);
+		addCode("", "", isDisabled);
 		
 	}
 	
 	protected void generateCode(Case _case, String _indent) {
 		
-		code.add("");
+		boolean isDisabled = _case.isDisabled();
+		
+		addCode("", "", isDisabled);
 
 		insertComment(_case, _indent);
 
@@ -420,12 +429,12 @@ public class PerlGenerator extends Generator {
 		{
 			selector = "( " + selector + " )";			
 		}
-		code.add(_indent+"switch " + selector + " {");
+		addCode("switch " + selector + " {", _indent, isDisabled);
 		// END KGU#162 2016-04-01
 		
 		for (int i=0; i<_case.qs.size()-1; i++)
 		{
-			code.add("");
+			addCode("", "", isDisabled);
 			// START KGU#15 2015-11-02: Support multiple constants per branch
 			//code.add(_indent+this.getIndent()+"case ("+_case.getText().get(i+1).trim()+") {");
 			String conds = _case.getText().get(i+1).trim();
@@ -437,49 +446,33 @@ public class PerlGenerator extends Generator {
 			{
 				conds = "(" + conds + ")";
 			}
-			code.add(_indent + this.getIndent() + "case " + conds +" {");
+			addCode("case " + conds +" {", _indent + this.getIndent(), isDisabled);
 			// END KGU#15 2015-11-02
 			//code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1)+"begin");
 			generateCode((Subqueue) _case.qs.get(i), _indent + this.getIndent() + this.getIndent());
-			code.add(_indent + this.getIndent()+"}");
+			addCode("}", _indent + this.getIndent(), isDisabled);
 		}
 		
 		if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
 		{
 
-			code.add("");
-			code.add(_indent + this.getIndent() + "else {");
+			addCode("", "", isDisabled);
+			addCode("else {", _indent + this.getIndent(), isDisabled);
 			generateCode((Subqueue) _case.qs.get(_case.qs.size()-1), _indent + this.getIndent() + this.getIndent());
-			code.add(_indent + this.getIndent()+"}");
+			addCode("}", _indent + this.getIndent(), isDisabled);
 		}
-		code.add(_indent+"}");
-		code.add("");
+		addCode("}", _indent, isDisabled);
+		addCode("", "", isDisabled);
 		
 	}
 	
 	
 	protected void generateCode(For _for, String _indent) {
 		
-		code.add("");
+		boolean isDisabled = _for.isDisabled();
 		
-		// STRT KGU#3 2015-11-02: Competent splitting of For clause
-//		String str = _for.getText().getText();
-//		// cut of the start of the expression
-//		if(!D7Parser.preFor.equals("")){str=BString.replace(str,D7Parser.preFor,"");}
-//		// trim blanks
-//		str=str.trim();
-//		// modify the later word
-//		if(!D7Parser.postFor.equals("")){str=BString.replace(str,D7Parser.postFor,"<=");}
-//		// do other transformations 
-//		str=transform(str);
-//		String counter = str.substring(0,str.indexOf("="));
-//		// insert the middle
-//		str=BString.replace(str,"<=",";"+counter+"<=");
-//		// complete
-//		str="for("+str+";"+counter+"++)";
-//		code.add(_indent+str+" {");
-//		//code.add(_indent+"for ("+BString.replace(transform(_for.getText().getText()),"\n","").trim()+") {");
-
+		addCode("", "", isDisabled);
+		
     	insertComment(_for, _indent);
 
     	String var = _for.getCounterVar();
@@ -497,7 +490,8 @@ public class PerlGenerator extends Generator {
     		if (items != null)
     		{
         		valueList = "@array20160323";
-    			code.add(_indent + valueList + " = (" + transform(items.concatenate(", "), false) + ")");
+    			addCode(valueList + " = (" + transform(items.concatenate(", "), false) + ")",
+    					_indent, isDisabled);
     		}
     		else
     		{
@@ -509,7 +503,7 @@ public class PerlGenerator extends Generator {
     		}
     		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
     		//code.add(_indent + "foreach $"+ var + " (" + valueList + ") {");
-    		code.add(_indent + "foreach "+ var + " (" + valueList + ") {");
+    		addCode("foreach "+ var + " (" + valueList + ") {", _indent, isDisabled);
     		// END KGU#162
     	}
     	else
@@ -525,28 +519,30 @@ public class PerlGenerator extends Generator {
     		//		increment +
     		//		") {");
     		String increment = var + " += (" + step + ")";
-    		code.add(_indent + "for (" +
+    		addCode("for (" +
     				var + " = " + transform(_for.getStartValue(), false) + "; " +
     				var + compOp + transform(_for.getEndValue(), false) + "; " +
     				increment +
-    				") {");
+    				") {", _indent, isDisabled);
     		// END KGU#162 2016-04-01
     	// START KGU#61 2016-03-23: Enh. 84 - FOREACH support (part 2)
     	}
     	// END KGU#61 2016-03-23
 		// END KGU#3 2015-11-02
 		generateCode(_for.q, _indent+this.getIndent());
-		code.add(_indent + "}");
+		addCode("}", _indent, isDisabled);
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_for, _indent);
 		// END KGU#78 2015-12-17
-		code.add("");
+		addCode("", "", isDisabled);
 	
 	}
 	
 	protected void generateCode(While _while, String _indent) {
 		
-		code.add("");
+		boolean isDisabled = _while.isDisabled();
+		
+		addCode("", "", isDisabled);
     	insertComment(_while, _indent);
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"while ("+BString.replace(transform(_while.getText().getText()),"\n","").trim()+") {");
@@ -555,25 +551,27 @@ public class PerlGenerator extends Generator {
     	{
     		condition = "( " + condition + " )";
     	}
-    	code.add(_indent + "while " + condition + " {");
+    	addCode("while " + condition + " {", _indent, isDisabled);
     	// END KGU#162 2016-04-01
 		generateCode(_while.q, _indent+this.getIndent());
-		code.add(_indent + "}");
+		addCode("}", _indent, isDisabled);
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_while, _indent);
 		// END KGU#78 2015-12-17
-		code.add("");
+		addCode("", "", isDisabled);
 		
 	}
 
 	
 	protected void generateCode(Repeat _repeat, String _indent) {
 		
-		code.add("");
+		boolean isDisabled = _repeat.isDisabled();
+		
+		addCode("", "", isDisabled);
 
 		insertComment(_repeat, _indent);
 
-		code.add(_indent+"do {");
+		addCode("do {", _indent, isDisabled);
 		generateCode(_repeat.q,_indent+this.getIndent());
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+")) {");
@@ -582,41 +580,45 @@ public class PerlGenerator extends Generator {
     	{
     		condition = "( " + condition + " )";
     	}
-    	code.add(_indent + "} while (!" + condition + ");");
+    	addCode("} while (!" + condition + ");", _indent, isDisabled);
     	// END KGU#162 2016-04-01
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_repeat, _indent);
 		// END KGU#78 2015-12-17
-		code.add("");
+		addCode("", "", isDisabled);
 		
 	}
 
 	protected void generateCode(Forever _forever, String _indent) {
 		
-		code.add("");
+		boolean isDisabled = _forever.isDisabled();
+		
+		addCode("", "", isDisabled);
 
 		insertComment(_forever, _indent);
 
-		code.add(_indent+"while (1) {");		
+		addCode("while (1) {", _indent, isDisabled);		
 		generateCode(_forever.q, _indent+this.getIndent());
-		code.add(_indent+"}");
+		addCode("}", _indent, isDisabled);
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_forever, _indent);
 		// END KGU#78 2015-12-17
-		code.add("");
+		addCode("", "", isDisabled);
 		
 	}
 	
 	protected void generateCode(Call _call, String _indent) {
 		if(!insertAsComment(_call, _indent))
+		{
+			boolean isDisabled = _call.isDisabled();
 
 			insertComment(_call, _indent);
 
 			for (int i=0; i<_call.getText().count(); i++)
 			{
-				code.add(_indent + transform(_call.getText().get(i)) + ";");
+				addCode(transform(_call.getText().get(i)) + ";", _indent, isDisabled);
 			}
-
+		}
 	}
 	
 	protected void generateCode(Jump _jump, String _indent) {
@@ -628,6 +630,7 @@ public class PerlGenerator extends Generator {
 //				code.add(_indent+transform(_jump.getText().get(i))+";");
 //			}
 		{
+			boolean isDisabled = _jump.isDisabled();
 			// In case of an empty text generate a break instruction by default.
 			boolean isEmpty = true;
 			
@@ -645,11 +648,13 @@ public class PerlGenerator extends Generator {
 				//code.add(_indent + line + ";");
 				if (line.matches(Matcher.quoteReplacement(preReturn)+"([\\W].*|$)"))
 				{
-					code.add(_indent + "return " + line.substring(preReturn.length()).trim() + ";");
+					addCode("return " + line.substring(preReturn.length()).trim() + ";",
+							_indent, isDisabled);
 				}
 				else if (line.matches(Matcher.quoteReplacement(preExit)+"([\\W].*|$)"))
 				{
-					code.add(_indent + "exit(" + line.substring(preExit.length()).trim() + ");");
+					addCode("exit(" + line.substring(preExit.length()).trim() + ");",
+							_indent, isDisabled);
 				}
 				// Has it already been matched with a loop? Then syntax must have been okay...
 				else if (this.jumpTable.containsKey(_jump))
@@ -662,13 +667,14 @@ public class PerlGenerator extends Generator {
 						insertComment(line, _indent);
 						label = "__ERROR__";
 					}
-					code.add(_indent + "goto " + label + ";");
+					addCode("goto " + label + ";", _indent, isDisabled);
 				}
 				else if (line.matches(Matcher.quoteReplacement(preLeave)+"([\\W].*|$)"))
 				{
 					// Strange case: neither matched nor rejected - how can this happen?
 					// Try with an ordinary break instruction and a funny comment
-					code.add(_indent + "last;\t" + this.commentSymbolLeft() + " FIXME: Dubious occurrance of 'last' instruction!");
+					addCode("last;\t" + this.commentSymbolLeft() + " FIXME: Dubious occurrance of 'last' instruction!",
+							_indent, isDisabled);
 				}
 				else if (!isEmpty)
 				{
@@ -678,7 +684,7 @@ public class PerlGenerator extends Generator {
 				// END KGU#74/KGU#78 2015-11-30
 			}
 			if (isEmpty) {
-				code.add(_indent + "last;");
+				addCode("last;", _indent, isDisabled);
 			}
 			
 		}
@@ -689,80 +695,38 @@ public class PerlGenerator extends Generator {
 	// START KGU#47 2015-12-17: Offer at least a sequential execution (which is one legal execution order)
 	protected void generateCode(Parallel _para, String _indent)
 	{
+		boolean isDisabled = _para.isDisabled();
+		
 		// START KGU 2014-11-16
 		insertComment(_para, _indent);
 		// END KGU 2014-11-16
 
-		code.add("");
+		addCode("", "", isDisabled);
 		insertComment("==========================================================", _indent);
 		insertComment("================= START PARALLEL SECTION =================", _indent);
 		insertComment("==========================================================", _indent);
 		insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
-		code.add(_indent + "{");
+		addCode("{", _indent, isDisabled);
 
 		for (int i = 0; i < _para.qs.size(); i++) {
-			code.add("");
+			addCode("", "", isDisabled);
 			insertComment("----------------- START THREAD " + i + " -----------------", _indent + this.getIndent());
-			code.add(_indent + this.getIndent() + "{");
+			addCode("{", _indent + this.getIndent(), isDisabled);
 			generateCode((Subqueue) _para.qs.get(i), _indent + this.getIndent() + this.getIndent());
-			code.add(_indent + this.getIndent() + "}");
+			addCode("}", _indent + this.getIndent(), isDisabled);
 			insertComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
-			code.add("");
+			addCode("", "", isDisabled);
 		}
 
-		code.add(_indent + "}");
+		addCode("}", _indent, isDisabled);
 		insertComment("==========================================================", _indent);
 		insertComment("================== END PARALLEL SECTION ==================", _indent);
 		insertComment("==========================================================", _indent);
-		code.add("");
+		addCode("", "", isDisabled);
 	}
 	// END KGU#47 2015-12-17
 	
 	
-	// START KGU 2015-11-02: Already inherited
-//	protected void generateCode(Subqueue _subqueue, String _indent) {
-//		
-//		// code.add(_indent+"");
-//		for(int i=0;i<_subqueue.getSize();i++)
-//		{
-//			generateCode((Element) _subqueue.getElement(i),_indent);
-//		}
-//		// code.add(_indent+"");
-//		
-//	}
-	// END KGU 2015-11-02
-	
-// START KGU#78 2015-12-17: Enh. #23 Root generation decomposed
-//	public String generateCode(Root _root, String _indent) {
-//		
-//		// START KGU 2015-11-02: First of all, fetch all variable names from the entire diagram
-//		varNames = _root.getVarNames();
-//		// END KGU 2015-11-02
-//		
-//		if( ! _root.isProgram ) {
-//			code.add("sub "+_root.getText().get(0)+" {");
-//		} else {
-//			
-//			code.add("#!/usr/bin/perl");
-//			code.add("");
-//			code.add("use strict;");
-//			code.add("use warnings;");
-//			
-//		}
-//		
-//		insertComment("generated by Structorizer", _indent);
-//		code.add("");
-//		insertComment("TODO declare your variables here", _indent);
-//		code.add("");
-//		generateCode(_root.children, _indent + this.getIndent());
-//		
-//		if( ! _root.isProgram ) {
-//			code.add("}");
-//		}
-//		
-//		return code.getText();
-//		
-//	}
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#generateHeader(lu.fisch.structorizer.elements.Root, java.lang.String, java.lang.String, lu.fisch.utils.StringList, lu.fisch.utils.StringList, java.lang.String)
 	 */

@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.generators;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -30,28 +31,29 @@ package lu.fisch.structorizer.generators;
  *
  *      Revision List
  *
- *      Author                     Date            Description
- *      ------                     ----            -----------
- *      Bob Fisch                  2008.11.17      First Issue
- *      Gunter Schillebeeckx       2009.08.10      Java Generator starting from C Generator
- *      Bob Fisch                  2009.08.10      Update I/O
- *      Bob Fisch                  2009.08.17      Bugfixes (see comment)
- *      Kay Gürtzig                2010.09.10      Bugfixes and cosmetics (see comment)
- *      Bob Fisch                  2011.11.07      Fixed an issue while doing replacements
- *      Kay Gürtzig                2014.10.22      Workarounds and Enhancements (see comment)
- *      Kay Gürtzig                2014.11.16      Several fixes and enhancements (see comment)
- *      Kay Gürtzig                2015.10.18      Comment generation and indentation revised
- *      Kay Gürtzig                2015.11.01      Preprocessing reorganised, FOR loop and CASE enhancements
- *      Kay Gürtzig                2015.11.30      Inheritance changed to CGenerator (KGU#16), specific
- *                                                 jump and return handling added (issue #22 = KGU#74)
- *      Kay Gürtzig                2015.12.12      Enh. #54 (KGU#101): Support for output expression lists
- *      Kay Gürtzig                2015.12.15      Bugfix #51 (=KGU#108): Cope with empty input and output
- *      Kay Gürtzig                2015.12.21      Bugfix #41/#68/#69 (= KG#93)
- *      Kay Gürtzig                2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61) 
- *      Kay Gürtzig                2016.04.04      transforTokens() disabled due to missing difference to super 
- *      Kay Gürtzig                2016.07.20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
- *      Kay Gürtzig                2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig                2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
+ *      Author                  Date            Description
+ *      ------                  ----            -----------
+ *      Bob Fisch               2008.11.17      First Issue
+ *      Gunter Schillebeeckx    2009.08.10      Java Generator starting from C Generator
+ *      Bob Fisch               2009.08.10      Update I/O
+ *      Bob Fisch               2009.08.17      Bugfixes (see comment)
+ *      Kay Gürtzig             2010.09.10      Bugfixes and cosmetics (see comment)
+ *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
+ *      Kay Gürtzig             2014.10.22      Workarounds and Enhancements (see comment)
+ *      Kay Gürtzig             2014.11.16      Several fixes and enhancements (see comment)
+ *      Kay Gürtzig             2015.10.18      Comment generation and indentation revised
+ *      Kay Gürtzig             2015.11.01      Preprocessing reorganised, FOR loop and CASE enhancements
+ *      Kay Gürtzig             2015.11.30      Inheritance changed to CGenerator (KGU#16), specific
+ *                                              jump and return handling added (issue #22 = KGU#74)
+ *      Kay Gürtzig             2015.12.12      Enh. #54 (KGU#101): Support for output expression lists
+ *      Kay Gürtzig             2015.12.15      Bugfix #51 (=KGU#108): Cope with empty input and output
+ *      Kay Gürtzig             2015.12.21      Bugfix #41/#68/#69 (= KG#93)
+ *      Kay Gürtzig             2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61) 
+ *      Kay Gürtzig             2016.04.04      transforTokens() disabled due to missing difference to super 
+ *      Kay Gürtzig             2016.07.20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
+ *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
+ *      Kay Gürtzig             2016.10.14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
  *
  ******************************************************************************************************
  *
@@ -91,7 +93,8 @@ package lu.fisch.structorizer.generators;
  *      2009.08.10
  *        - writeln() => System.out.println()
  * 
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
@@ -213,9 +216,10 @@ public class JavaGenerator extends CGenerator
 	 * Instruction to create a language-specific exit instruction (subclassable)
 	 * The exit code will be passed to the generated code.
 	 */
-	protected void insertExitInstr(String _exitCode, String _indent)
+	@Override
+	protected void insertExitInstr(String _exitCode, String _indent, boolean isDisabled)
 	{
-		code.add(_indent + "System.exit(" + _exitCode + ")");
+		addCode("System.exit(" + _exitCode + ")", _indent, isDisabled);
 	}
 	// END KGU#16/#47 2015-11-30
 
@@ -329,101 +333,6 @@ public class JavaGenerator extends CGenerator
 	}
 	// END KGU#16 2015-11-29
 
-// KGU#16 2015-11-30: Now inherited from CGenerator
-//		protected void generateCode(Instruction _inst, String _indent)
-//		{
-//			if (!insertAsComment(_inst, _indent)) {
-//
-//				insertComment(_inst, _indent);
-//
-//				for (int i=0; i<_inst.getText().count(); i++)
-//				{
-//					code.add(_indent+transform(_inst.getText().get(i))+";");
-//				}
-//
-//			}
-//		}
-		
-// KGU#16 2015-11-30: Now inherited from CGenerator
-//		protected void generateCode(Alternative _alt, String _indent)
-//		{
-//	        insertComment(_alt, _indent);
-//	        
-//	        String condition = transform(_alt.getText().getLongString()).trim();
-//	        if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
-//	        
-//	        code.add(_indent+"if " + condition + " {");
-//			generateCode(_alt.qTrue, _indent+this.getIndent());
-//			if(_alt.qFalse.getSize()!=0)
-//			{
-//				code.add(_indent + "}");
-//				code.add(_indent + "else {");
-//				generateCode(_alt.qFalse, _indent+this.getIndent());
-//			}
-//			code.add(_indent+"}");
-//		}
-		
-// KGU#16 2015-11-30: Now inherited from CGenerator
-//		protected void generateCode(Case _case, String _indent)
-//		{
-//			insertComment(_case, _indent);
-//
-//			StringList lines = _case.getText();
-//			String condition = transform(lines.get(0));
-//			if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
-//
-//			code.add(_indent+"switch "+condition+" {");
-//			
-//			for(int i=0;i<_case.qs.size()-1;i++)
-//			{
-//				// START KGU#15 2015-10-21: Support for multiple constants per branch
-//				StringList constants = StringList.explode(lines.get(i+1), ",");
-//				for (int j = 0; j < constants.count(); j++)
-//				{
-//					code.add(_indent + "case " + constants.get(j).trim() + ":");
-//				}
-//				// END KGU#15 2015-10-21
-//				generateCode((Subqueue) _case.qs.get(i),_indent + this.getIndent());
-//				code.add(_indent + this.getIndent() + "break;\n");
-//			}
-//			
-//			if(!lines.get(_case.qs.size()).trim().equals("%"))
-//			{
-//				code.add(_indent + "default:");
-//				generateCode((Subqueue) _case.qs.get(_case.qs.size()-1), _indent + this.getIndent());
-//				code.add(_indent + this.getIndent() + "break;");
-//			}
-//			code.add(_indent + "}");
-//		}
-
-// KGU#16 2015-11-30: Now inherited	from CGenerator			
-//		protected void generateCode(For _for, String _indent)
-//		{
-//	        // START KGU 2014-11-16
-//	        insertComment(_for, _indent);
-//	        // END KGU 2014-11-16
-//
-//			// START KGU#3 2015-11-01: The For element itself provides us with reliable splitting
-//	    	String var = _for.getCounterVar();
-//	    	int step = _for.getStepConst();
-//	    	String compOp = (step > 0) ? " <= " : " >= ";
-//	    	String increment = var + " += (" + step + ")";
-//	    	// START KGU#74 2015-11-30: More sophisticated jump handling
-//	    	//code.add(_indent + "for (" +
-//	    	String label = jumpTable.get(_for);
-//			String brace = optionBlockBraceNextLine() ? "" : " {";
-//	    	code.add(_indent + ((label == null) ? "" : (label + ": ")) + "for (" +
-//	    	// END KGU#74 2015-11-30
-//	    			var + " = " + transform(_for.getStartValue(), false) + "; " +
-//	    			var + compOp + transform(_for.getEndValue(), false) + "; " +
-//	    			increment +
-//	    			")" + brace);
-//	    	// END KGU#3 2015-11-01
-//	    	if (optionBlockBraceNextLine())	code.add(_indent + "{");
-//	    	generateCode(_for.q, _indent + this.getIndent());
-//	    	code.add(_indent + "}");
-//		}
-
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
 	 * We try our very best to create a working loop from a FOR-IN construct
@@ -436,6 +345,7 @@ public class JavaGenerator extends CGenerator
 	 */
 	protected boolean generateForInCode(For _for, String _indent)
 	{
+		boolean isDisabled = _for.isDisabled();
 		// We simply use the range-based loop of Java (as far as possible)
 		String var = _for.getCounterVar();
 		String valueList = _for.getValueList();
@@ -487,7 +397,7 @@ public class JavaGenerator extends CGenerator
 			String arrayName = "array20160322";
 			
 			// Extra block to encapsulate the additional variable declarations
-			code.add(_indent + "{");
+			addCode("{", _indent, isDisabled);
 			indent += this.getIndent();
 			
 			if (itemType == null)
@@ -496,7 +406,8 @@ public class JavaGenerator extends CGenerator
 				this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);
 				
 			}
-			code.add(indent + itemType + "[] " + arrayName + " = " + transform(valueList, false) + ";");
+			addCode(itemType + "[] " + arrayName + " = " + transform(valueList, false) + ";",
+					indent, isDisabled);
 			
 			valueList = arrayName;
 		}
@@ -518,147 +429,13 @@ public class JavaGenerator extends CGenerator
 
 		if (items != null)
 		{
-			code.add(_indent + "}");
+			addCode("}", _indent, isDisabled);
 		}
 		
 		return true;
 	}
 	// END KGU#61 2016-03-22
 	
-	
-// KGU#16 2015-11-30: Now inherited	from CGenerator	
-//		protected void generateCode(While _while, String _indent)
-//		{
-//	        // START KGU 2014-11-16
-//	        insertComment(_while, _indent);
-//	        // END KGU 2014-11-16
-//
-//	        String condition = transform(_while.getText().getLongString(), false).trim();
-//	        if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
-//	        
-//	    	// START KGU#78 2015-11-30: More sophisticated jump handling
-//	        //code.add(_indent+"while " + condition + " {");
-//	    	String label = jumpTable.get(_while);
-//			String brace = optionBlockBraceNextLine() ? "" : " {";
-//	    	code.add(_indent + ((label == null) ? "" : (label + ": ")) + "while " + condition + brace);
-//	    	if (optionBlockBraceNextLine())	code.add(_indent + "{");
-//	    	// END KGU#78 2015-11-30
-//			generateCode(_while.q, _indent+this.getIndent());
-//			code.add(_indent+"}");
-//		}
-		
-// KGU#16 2015-11-30: Now inherited	from CGenerator	
-//		@Override
-//		protected void generateCode(Repeat _repeat, String _indent)
-//		{
-//			// START KGU 2014-11-16
-//			insertComment(_repeat, _indent);
-//			// END KGU 2014-11-16
-//
-//			// START KGU#78 2015-11-30: More sophisticated jump handling
-//			//code.add(_indent + "do {");
-//			String label = jumpTable.get(_repeat);
-//			String brace = optionBlockBraceNextLine() ? "" : " {";
-//			code.add(_indent + ((label == null) ? "" : (label + ": ")) + "do" + brace);
-//			if (optionBlockBraceNextLine())	code.add(_indent + "{");
-//			// END KGU#78 2015-11-30
-//			generateCode(_repeat.q, _indent + this.getIndent());
-//			code.add(_indent + "} while (!(" + transform(_repeat.getText().getLongString(), false).trim() + "));");
-//		}
-		
-// KGU#16 2015-11-30: Now inherited	from CGenerator	
-//		protected void generateCode(Forever _forever, String _indent)
-//		{
-//	        // START KGU 2014-11-16
-//	        insertComment(_forever, _indent);
-//	        // END KGU 2014-11-16
-//
-//	    	// START KGU#78 2015-11-30: More sophisticated jump handling
-//	        //code.add(_indent + "while (true) {");
-//	    	String label = jumpTable.get(_forever);
-//			String brace = optionBlockBraceNextLine() ? "" : " {";
-//	    	code.add(_indent + ((label == null) ? "" : (label + ": ")) + "while (true)" + brace);
-//	    	if (optionBlockBraceNextLine())	code.add(_indent + "{");
-//	    	// END KGU#78 2015-11-30
-//			generateCode(_forever.q, _indent+this.getIndent());
-//			code.add(_indent + "}");
-//		}
-
-		
-// KGU#16 2015-11-30: Now inherited	from CGenerator	
-//		protected void generateCode(Call _call, String _indent)
-//		{
-//			if (!insertAsComment(_call, _indent)) {
-//				
-//				insertComment(_call, _indent);
-//
-//				StringList lines = _call.getText();
-//				for (int i = 0; i < lines.count(); i++)
-//				{
-//					String line = _call.getText().get(i);
-//					// KGU 2015-11-01 It was of little use, always to append a parenthesis pair
-//					if (!line.endsWith(")")) line = line + "()";
-//					// Input or Output should not occur here
-//					code.add(_indent+transform(line, false) + ";");
-//				}
-//
-//			}
-//		}
-
-// KGU#74 2015-11-30: Now inherited from CGenerator
-//		protected void generateCode(Jump _jump, String _indent)
-//		{
-//	        // START KGU 2014-11-16
-//	        insertComment(_jump, _indent);
-//	        // END KGU 2014-11-16
-//
-//			// KGU 2015-10-18: In case of an empty text generate a break instruction by default.
-//			boolean isEmpty = true;
-//			StringList lines = _jump.getText();
-//			for (int i = 0; i < lines.count() && isEmpty; i++)
-//			{
-//				String line = transform(lines.get(i), false);
-//				if (!line.trim().isEmpty()) isEmpty = false;
-//				// START KGU#78 2015-11-30: Mor sophisticated jump handling
-//				//code.add(_indent + line + ";\t// FIXME goto instructions not allowed in Java");
-//				if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
-//				{
-//					code.add(_indent + line + ";");
-//				}
-//				else if (line.matches(Matcher.quoteReplacement(D7Parser.preExit)+"([\\W].*|$)"))
-//				{
-//					code.add(_indent + "System.exit(" + line.substring(D7Parser.preExit.length()).trim() + ");");
-//				}
-//				else if (this.jumpTable.containsKey(_jump))
-//				{
-//					String label = this.jumpTable.get(_jump);
-//					code.add(_indent + "break " + label + ";");
-//				}
-//				else if (line.matches(Matcher.quoteReplacement(D7Parser.preLeave)+"([\\W].*|$)"))
-//				{
-//					// An ordinary break instruction seems to suffice
-//					isEmpty = true;
-//				}
-//				else
-//				{
-//					code.add(_indent + line + ";\t// FIXME goto instructions not allowed in Java!");
-//				}
-//				// END KGU#78 2015-11-30
-//			}
-//			if (isEmpty)
-//			{
-//				code.add(_indent + "break;");
-//			}
-//		}
-		
-
-// KGU#16 (2015-11-30): Now we only override the decomposed methods below
-//		public String generateCode(Root _root, String _indent)
-//		{
-//			...
-//			return code.getText();
-//		}
-
 	/**
 	 * Composes the heading for the program or function according to the
 	 * C language specification.

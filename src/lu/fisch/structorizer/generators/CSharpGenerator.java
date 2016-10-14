@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.generators;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -47,6 +48,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                              brace balance in non-program files fixed  
  *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
+ *      Kay Gürtzig             2016.10.14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
  *
  ******************************************************************************************************
  *
@@ -82,7 +84,8 @@ package lu.fisch.structorizer.generators;
  *      2010.08.07 - Bugfixes
  *      - none
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
@@ -159,17 +162,18 @@ public class CSharpGenerator extends CGenerator
 	 * Instruction to create a language-specific exit instruction (subclassable)
 	 * The exit code will be passed to the generated code.
 	 */
-	protected void insertExitInstr(String _exitCode, String _indent)
+	@Override
+	protected void insertExitInstr(String _exitCode, String _indent, boolean isDisabled)
 	{
 		Jump dummy = new Jump();
 		insertBlockHeading(dummy, "if (System.Windows.Forms.Application.MessageLoop)", _indent); 
 		insertComment("WinForms app", _indent + this.getIndent());
-		code.add(_indent + this.getIndent() + "System.Windows.Forms.Application.Exit();");
+		addCode(this.getIndent() + "System.Windows.Forms.Application.Exit();", _indent, isDisabled);
 		insertBlockTail(dummy, null, _indent);
 
 		insertBlockHeading(dummy, "else", _indent); 
 		insertComment("Console app", _indent + this.getIndent());
-		code.add(_indent + this.getIndent() + "System.Environment.Exit(" + _exitCode + ");");
+		addCode(this.getIndent() + "System.Environment.Exit(" + _exitCode + ");", _indent, isDisabled);
 		insertBlockTail(dummy, null, _indent);
 	}
 	// END KGU#16/#47 2015-11-30
@@ -186,6 +190,7 @@ public class CSharpGenerator extends CGenerator
 	 */
 	protected boolean generateForInCode(For _for, String _indent)
 	{
+		boolean isDisabled = _for.isDisabled();
 		// We simply use the range-based loop of Java (as far as possible)
 		String var = _for.getCounterVar();
 		String valueList = _for.getValueList();
@@ -237,7 +242,7 @@ public class CSharpGenerator extends CGenerator
 			String arrayName = "array20160322";
 			
 			// Extra block to encapsulate the additional variable declarations
-			code.add(_indent + "{");
+			addCode("{", _indent , isDisabled);
 			indent += this.getIndent();
 			
 			if (itemType == null)
@@ -246,7 +251,7 @@ public class CSharpGenerator extends CGenerator
 				this.insertComment("TODO: Find a more specific item type than object and/or prepare the elements of the array", indent);
 				
 			}
-			code.add(indent + itemType + "[] " + arrayName + " = " + transform(valueList, false) + ";");
+			addCode(itemType + "[] " + arrayName + " = " + transform(valueList, false) + ";", indent, isDisabled);
 			
 			valueList = arrayName;
 		}
@@ -268,34 +273,12 @@ public class CSharpGenerator extends CGenerator
 
 		if (items != null)
 		{
-			code.add(_indent + "}");
+			addCode("}", _indent, isDisabled);
 		}
 		
 		return true;
 	}
 	// END KGU#61 2016-03-22
-
-	// KGU#47 2015-11-30: Now inherited - exactly same behaviour as in C		
-//        // JUMP
-//        protected void generateCode(Jump _jump, String _indent)
-//        {
-//                // START KGU 2014-11-16
-//                insertComment(_jump, _indent);
-//                // END KGU 2014-11-16
-//                for(int i=0;i<_jump.getText().count();i++)
-//                {
-//                        code.add(_indent+"goto "+transform(_jump.getText().get(i))+"; // jump-instruction not recommended");
-//
-//                }
-//        }
-
-
-// KGU#16/KGU#74 Now only override the new decomposed methods below. 
-//        public String generateCode(Root _root, String _indent)
-//        {
-//			...
-//        	return code.getText();
-//        }
 
 	/**
 	 * Composes the heading for the program or function according to the

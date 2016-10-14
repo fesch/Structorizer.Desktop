@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.generators;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -58,6 +59,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.08.10      Issue #227: <stdio.h> and TODOs only included if needed 
  *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
  *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactored 
+ *      Kay Gürtzig             2016.10.14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
  *
  ******************************************************************************************************
  *
@@ -120,8 +122,8 @@ package lu.fisch.structorizer.generators;
  *      - Implementation of FOR loop
  *      - Indent replaced from 2 spaces to TAB-character (TAB configurable in IDE)
  *
- ******************************************************************************************************/
-//
+ ******************************************************************************************************
+ */
 
 import java.util.regex.Matcher;
 
@@ -253,11 +255,11 @@ public class CGenerator extends Generator {
 	 * Instruction to create a language-specific exit instruction (subclassable)
 	 * The exit code will be passed to the generated code.
 	 */
-	protected void insertExitInstr(String _exitCode, String _indent)
+	protected void insertExitInstr(String _exitCode, String _indent, boolean isDisabled)
 	{
 		// START KGU 2016-01-15: Bugfix #64 (reformulated) semicolon was missing
 		//code.add(_indent + "exit(" + _exitCode + ")");
-		code.add(_indent + "exit(" + _exitCode + ");");
+		addCode("exit(" + _exitCode + ");", _indent, isDisabled);
 		// END KGU 2016-01-15
 	}
 	// END KGU#16/#47 2015-11-30
@@ -360,32 +362,34 @@ public class CGenerator extends Generator {
 	
 	protected void insertBlockHeading(Element elem, String _headingText, String _indent)
 	{
+		boolean isDisabled = elem.isDisabled();
 		if (elem instanceof ILoop && this.jumpTable.containsKey(elem) && this.isLabelAtLoopStart())  
 		{
 				_headingText = this.labelBaseName + this.jumpTable.get(elem) + ": " + _headingText;
 		}
 		if (!this.optionBlockBraceNextLine())
 		{
-			code.add(_indent + _headingText + " {");
+			addCode(_headingText + " {", _indent, isDisabled);
 		}
 		else
 		{
-			code.add(_indent + _headingText);
-			code.add(_indent + "{");
+			addCode(_headingText, _indent, isDisabled);
+			addCode("{", _indent, isDisabled);
 		}
 	}
 
 	protected void insertBlockTail(Element elem, String _tailText, String _indent)
 	{
+		boolean isDisabled = elem.isDisabled();
 		if (_tailText == null) {
-			code.add(_indent + "}");
+			addCode("}", _indent, isDisabled);
 		}
 		else {
-			code.add(_indent + "} " + _tailText + ";");
+			addCode("} " + _tailText + ";", _indent, isDisabled);
 		}
 		
 		if (elem instanceof ILoop && this.jumpTable.containsKey(elem) && !this.isLabelAtLoopStart()) {
-			code.add(_indent + this.labelBaseName + this.jumpTable.get(elem) + ": ;");
+			addCode(this.labelBaseName + this.jumpTable.get(elem) + ": ;", _indent, isDisabled);
 		}
 	}
 	// END KGU#74 2015-11-30
@@ -396,10 +400,11 @@ public class CGenerator extends Generator {
 		if (!insertAsComment(_inst, _indent)) {
 
 			insertComment(_inst, _indent);
+			boolean isDisabled = _inst.isDisabled();
 
 			StringList lines = _inst.getText();
 			for (int i = 0; i < lines.count(); i++) {
-				code.add(_indent + transform(lines.get(i)) + ";");
+				addCode(transform(lines.get(i)) + ";", _indent, isDisabled);
 			}
 
 		}
@@ -430,6 +435,7 @@ public class CGenerator extends Generator {
 	@Override
 	protected void generateCode(Case _case, String _indent) {
 		
+		boolean isDisabled = _case.isDisabled();
 		insertComment(_case, _indent);
 		
 		StringList lines = _case.getText();
@@ -449,17 +455,17 @@ public class CGenerator extends Generator {
 			}
 			// END KGU#15 2015-10-21
 			generateCode((Subqueue) _case.qs.get(i), _indent + this.getIndent());
-			code.add(_indent + this.getIndent() + "break;");
+			addCode(this.getIndent() + "break;", _indent, isDisabled);
 		}
 
 		if (!lines.get(_case.qs.size()).trim().equals("%")) {
-			code.add(_indent + "default:");
+			addCode("default:", _indent, isDisabled);
 			Subqueue squeue = (Subqueue) _case.qs.get(_case.qs.size() - 1);
 			generateCode(squeue, _indent + this.getIndent());
 			// START KGU#71 2015-11-10: For an empty default branch, at least a
 			// semicolon is required
 			if (squeue.getSize() == 0) {
-				code.add(_indent + this.getIndent() + ";");
+				addCode(this.getIndent() + ";", _indent, isDisabled);
 			}
 			// END KGU#71 2015-11-10
 		}
@@ -523,6 +529,7 @@ public class CGenerator extends Generator {
 			boolean allInt = true;
 			boolean allDouble = true;
 			boolean allString = true;
+			boolean isDisabled = _for.isDisabled();
 			for (int i = 0; i < nItems; i++)
 			{
 				String item = items.get(i);
@@ -562,20 +569,20 @@ public class CGenerator extends Generator {
 
 			String indent = _indent + this.getIndent();
 			// Start an extra block to encapsulate the additional definitions
-			code.add(_indent + "{");
+			addCode("{", _indent, isDisabled);
 			
 			if (itemType.isEmpty())
 			{
 				// We do a dummy type definition
 				this.insertComment("TODO: Define a sensible 'ItemType' and/or prepare the elements of the array", indent);
 				itemType = "ItemType";
-				code.add(indent + "typedef void " + itemType + ";");
+				addCode("typedef void " + itemType + ";", indent, isDisabled);
 			}
 			// We define a fixed array here
-			code.add(indent + itemType + " " + arrayName +  "[" + nItems + "] = "
-					+ transform(arrayLiteral, false) + ";");
+			addCode(itemType + " " + arrayName +  "[" + nItems + "] = "
+					+ transform(arrayLiteral, false) + ";", indent, isDisabled);
 			// Definition of he loop index variable
-			code.add(indent + "int " + indexName + ";");
+			addCode("int " + indexName + ";", indent, isDisabled);
 
 			// Creation of the loop header
 			insertBlockHeading(_for, "for (" + indexName + " = 0; " +
@@ -583,8 +590,8 @@ public class CGenerator extends Generator {
 					indent);
 			
 			// Assignment of a single item to the given variable
-			code.add(indent + this.getIndent() + itemType + " " + var + " = " +
-					arrayName + "[" + indexName + "];");
+			addCode(this.getIndent() + itemType + " " + var + " = " +
+					arrayName + "[" + indexName + "];", indent, isDisabled);
 
 			// Add the loop body as is
 			generateCode(_for.q, indent + this.getIndent());
@@ -593,7 +600,7 @@ public class CGenerator extends Generator {
 			insertBlockTail(_for, null, indent);
 
 			// Close the extra block
-			code.add(_indent + "}");
+			addCode("}", _indent, isDisabled);
 			done = true;
 		}
 		else
@@ -665,12 +672,13 @@ public class CGenerator extends Generator {
  
 		if (!insertAsComment(_call, _indent)) {
 
+			boolean isDisabled = _call.isDisabled();
 			insertComment(_call, _indent);
 
 			StringList lines = _call.getText();
 			for (int i = 0; i < lines.count(); i++) {
 				// Input or Output should not occur here
-				code.add(_indent + transform(lines.get(i), false) + ";");
+				addCode(transform(lines.get(i), false) + ";", _indent, isDisabled);
 			}
 		}
 		
@@ -687,6 +695,8 @@ public class CGenerator extends Generator {
 		// code.add(_indent+transform(_jump.getText().get(i))+";");
 		// }
 		if (!insertAsComment(_jump, _indent)) {
+			
+			boolean isDisabled = _jump.isDisabled();
 
 			insertComment(_jump, _indent);
 
@@ -711,11 +721,12 @@ public class CGenerator extends Generator {
 				//code.add(_indent + line + ";");
 				if (line.matches(preReturnMatch))
 				{
-					code.add(_indent + "return " + line.substring(preReturn.length()).trim() + ";");
+					addCode("return " + line.substring(preReturn.length()).trim() + ";",
+							_indent, isDisabled);
 				}
 				else if (line.matches(preExitMatch))
 				{
-					insertExitInstr(line.substring(preExit.length()).trim(), _indent);
+					insertExitInstr(line.substring(preExit.length()).trim(), _indent, isDisabled);
 				}
 				// Has it already been matched with a loop? Then syntax must have been okay...
 				else if (this.jumpTable.containsKey(_jump))
@@ -728,13 +739,13 @@ public class CGenerator extends Generator {
 						insertComment(line, _indent);
 						label = "__ERROR__";
 					}
-					code.add(_indent + this.getMultiLevelLeaveInstr() + " " + label + ";");
+					addCode(this.getMultiLevelLeaveInstr() + " " + label + ";", _indent, isDisabled);
 				}
 				else if (line.matches(preLeaveMatch))
 				{
 					// Strange case: neither matched nor rejected - how can this happen?
 					// Try with an ordinary break instruction and a funny comment
-					code.add(_indent + "break;\t// FIXME: Dubious occurrance of break instruction!");
+					addCode("break;\t// FIXME: Dubious occurrance of break instruction!", _indent, isDisabled);
 				}
 				else if (!isEmpty)
 				{
@@ -744,7 +755,7 @@ public class CGenerator extends Generator {
 				// END KGU#74/KGU#78 2015-11-30
 			}
 			if (isEmpty) {
-				code.add(_indent + "break;");
+				addCode("break;", _indent, isDisabled);
 			}
 			// END KGU 2015-10-18
 		}
@@ -754,30 +765,31 @@ public class CGenerator extends Generator {
 	protected void generateCode(Parallel _para, String _indent)
 	{
 
+		boolean isDisabled = _para.isDisabled();
 		insertComment(_para, _indent);
 
-		code.add("");
+		addCode("", "", isDisabled);
 		insertComment("==========================================================", _indent);
 		insertComment("================= START PARALLEL SECTION =================", _indent);
 		insertComment("==========================================================", _indent);
 		insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
-		code.add(_indent + "{");
+		addCode("{", _indent, isDisabled);
 
 		for (int i = 0; i < _para.qs.size(); i++) {
-			code.add("");
+			addCode("", "", isDisabled);
 			insertComment("----------------- START THREAD " + i + " -----------------", _indent + this.getIndent());
-			code.add(_indent + this.getIndent() + "{");
+			addCode("{", _indent + this.getIndent(), isDisabled);
 			generateCode((Subqueue) _para.qs.get(i), _indent + this.getIndent() + this.getIndent());
-			code.add(_indent + this.getIndent() + "}");
+			addCode("}", _indent + this.getIndent(), isDisabled);
 			insertComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
-			code.add("");
+			addCode("", "", isDisabled);
 		}
 
-		code.add(_indent + "}");
+		addCode("}", _indent, isDisabled);
 		insertComment("==========================================================", _indent);
 		insertComment("================== END PARALLEL SECTION ==================", _indent);
 		insertComment("==========================================================", _indent);
-		code.add("");
+		addCode("", "", isDisabled);
 	}
 	// END KGU#47 2015-11-30
 	
