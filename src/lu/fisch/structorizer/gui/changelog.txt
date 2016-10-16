@@ -4,7 +4,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.25-03 (2016.10.16)
+Current development version: 3.25-03 (2016.10.17)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
 - 01: Issue #213: Selected state of FOR transmutation result now visible <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
@@ -41,7 +41,9 @@ Current development version: 3.25-03 (2016.10.16)
 - 03: Issue #272: Turtleizer now also provides a double precision mode <2>
 - 03: Issue #227: For Oberon, output of literals is now exported to proper procedure <2>
 - 03: Issue #273: Input of "true" and "false" now accepted as booelan values <2> 
-- 03: Enh. #274: On code export, Turtleizer commands now augmented with colour info <2> 
+- 03: Enh. #274: On code export, Turtleizer commands now augmented with colour info <2>
+- 03: Bugfix #275: Topological sort of subroutines involved in export fixed <2>
+- 03: Bugfix #276: Flaws in parsing value input and converting Pascal strings fixed <2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2

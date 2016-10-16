@@ -102,6 +102,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.10.12      Issue #271: Systematic support for user-defined input prompts
  *      Kay Gürtzig     2016.10.13      Enh. #270: Elements may be disabled for execution ("outcommented")
  *      Kay Gürtzig     2016.10.16      Enh. #273: Input strings "true" and "false" now accepted as boolean values
+ *                                      Bugfix #276: Raw string conversion and string display mended, undue replacements
+ *                                      of ' into " in method convert() eliminated
  *
  ******************************************************************************************************
  *
@@ -416,6 +418,17 @@ public class Executor implements Runnable
 		// START KGU#130 2015-01-08: Bugfix #95 - Conversion of div operator had been forgotten...
 		tokens.replaceAll("div", "/");		// FIXME: Operands should better be coerced to integer...
 		// END KGU#130 2015-01-08
+		// START KGU#285 2016-10-16: Bugfix #276
+		// pascal: quotes
+		for (int i = 0; i < tokens.count(); i++)
+		{
+			String token = tokens.get(i);
+			if (token.length() != 3 && token.startsWith("'") && token.endsWith("'"))
+			{
+				tokens.set(i, "\"" + token.substring(1, token.length()-1) + "\"");
+			}
+		}
+		// END KGU#285 2016-10-16
 		// Function names to be prefixed with "Math."
 		final String[] mathFunctions = {
 				"cos", "sin", "tan", "acos", "asin", "atan", "toRadians", "toDegrees",
@@ -454,10 +467,12 @@ public class Executor implements Runnable
 		r = new Regex("insert\\((.*),(.*),(.*)\\)", "$2 <- insert($1,$2,$3)");
 		// END KGU#275 2016-10-09
 		s = r.replaceAll(s);
-		// pascal: quotes
-		r = new Regex("([^']*?)'(([^']|'')*)'", "$1\"$2\"");
-		//r = new Regex("([^']*?)'(([^']|''){2,})'", "$1\"$2\"");
-		s = r.replaceAll(s);
+		// START KGU#285 2016-10-16: Bugfix #276 - this spoiled apostrophes because misplaced here
+//		// pascal: quotes
+//		r = new Regex("([^']*?)'(([^']|'')*)'", "$1\"$2\"");
+//		//r = new Regex("([^']*?)'(([^']|''){2,})'", "$1\"$2\"");
+//		s = r.replaceAll(s);
+		// END KGU#285 2016-10-16
 		// START KGU 2015-11-29: Adopted from Root.getVarNames() - can hardly be done in initialiseInterpreter() 
         // pascal: convert "inc" and "dec" procedures
         r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); s = r.replaceAll(s);
@@ -1526,7 +1541,16 @@ public class Executor implements Runnable
 						strInput.startsWith("'") && strInput.endsWith("'"))
 				{
 					this.interpreter.eval(name + " = " + rawInput);
+					setVar(name, interpreter.get(name));
 				}
+				// START KGU#285 2016-10-16: Bugfix #276
+				else if (rawInput.contains("\\"))
+				{
+					// Obviously it isn't enclosed by quotes (otherwise the previous test would have caught it
+					this.interpreter.eval(name + " = \"" + rawInput + "\"");
+					setVar(name, interpreter.get(name));					
+				}
+				// END KGU#285 2016-10-16
 				// try adding as char (only if it's not a digit)
 				else if (rawInput.length() == 1)
 				{
@@ -1534,7 +1558,7 @@ public class Executor implements Runnable
 					setVar(name, charInput);
 				}
 				// START KGU#184 2016-04-25: Enh. #174 - accept array initialisations on input
-				else if (rawInput.startsWith("{") && rawInput.endsWith("}"))
+				else if (strInput.startsWith("{") && rawInput.endsWith("}"))
 				{
 					String asgnmt = "Object[] " + name + " = " + rawInput;
 					// Nested initializers won't work here!
@@ -1543,9 +1567,9 @@ public class Executor implements Runnable
 				}
 				// END KGU#184 2016-04-25
 				// START KGU#283 2016-10-16: Enh. #273
-				else if (rawInput.equals("true") || rawInput.equals("false"))
+				else if (strInput.equals("true") || strInput.equals("false"))
 				{
-					setVar(name, Boolean.valueOf(rawInput));
+					setVar(name, Boolean.valueOf(strInput));
 				}
 				// END KGU#283 2016-10-16
 			}
@@ -1758,10 +1782,16 @@ public class Executor implements Runnable
 			}
 			else if (val instanceof String)
 			{
+				// START KGU#285 2016-10-16: Bugfix #276
+				valStr = valStr.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
+				// END KGU#285 2016-10-16
 				valStr = "\"" + valStr + "\"";
 			}
 			else if (val instanceof Character)
 			{
+				// START KGU#285 2016-10-16: Bugfix #276
+				valStr = valStr.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n");
+				// END KGU#285 2016-10-16
 				valStr = "'" + valStr + "'";
 			}
 		}
@@ -2409,6 +2439,18 @@ public class Executor implements Runnable
 			if (tokens.get(0).endsWith(delim))
 			{
 				prompt = tokens.get(0).substring(1, tokens.get(0).length()-1);
+				// START KGU#285 2016-10-16: Bugfix #276 - We should interpret contained escape sequences...
+				try {
+					String dummyVar = "prompt" + this.hashCode();
+					interpreter.eval(dummyVar + "=\"" + prompt + "\"");
+					Object res = interpreter.get(dummyVar);
+					if (res != null) {
+						prompt = res.toString();
+					}
+					interpreter.unset(dummyVar);
+				}
+				catch (EvalError ex) {}
+				// END KGU#285 2016-10-16
 				in = tokens.concatenate("", 1).trim();
 			}
 		}

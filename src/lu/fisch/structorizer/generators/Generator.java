@@ -57,6 +57,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.kewordMap refactoring done
  *      Kay Gürtzig     2016.10.13      Enh. #270: Basic functionality for disabled elements (addCode()))
  *      Kay Gürtzig     2016.10.15      Enh. #271: transformInput() and signature of getOutputReplacer() modified
+ *      Kay Gürtzig     2016.10.16      Bugfix #275: Defective subroutine registration for topological sort mended
  *
  ******************************************************************************************************
  *
@@ -870,22 +871,24 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				Root sub = foundRoots.firstElement();
 				// Is there already an entry for this root?
 				SubTopoSortEntry entry = subroutines.getOrDefault(sub, null);
+				boolean toBeCounted = false;
 				if (entry == null)
 				{
 					// No - create a new entry
 					subroutines.put(sub, new SubTopoSortEntry(_caller));
 					newSub = sub;
-					// Now count the call at the callers entry (if there is one)
-					if ((entry = subroutines.getOrDefault(_caller, null)) != null)
-					{
-						entry.nReferingTo++;
-					}
+					toBeCounted = true;
 				}
 				else
 				{
 					// Yes: add the calling routine to the set of roots to be informed
 					// (if not already registered)
-					entry.callers.add(_caller);
+					toBeCounted = entry.callers.add(_caller);
+				}
+				// Now count the call at the callers entry (if there is one)
+				if (toBeCounted && (entry = subroutines.getOrDefault(_caller, null)) != null)
+				{
+					entry.nReferingTo++;
 				}
 			}
 			// START KGU#237 2016-08-10: bugfix #228
