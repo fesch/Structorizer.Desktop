@@ -55,11 +55,18 @@ package lu.fisch.structorizer.generators;
  *                                      code expressions
  *                                      Bugfix #228: Unnecessary error message exporting recursive routines
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.kewordMap refactoring done
- *      Kay Gürtzig     2016.10.13      Enh. #277: Basic functionality for disabled elements (addCode()))
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Basic functionality for disabled elements (addCode()))
+ *      Kay Gürtzig     2016.10.15      Enh. #271: transformInput() and signature of getOutputReplacer() modified
  *
  ******************************************************************************************************
  *
- *      Comment:	
+ *      Comment:
+ *      2016.10.15 - Enhancement #271: Input instruction with integrated prompt string
+ *      - For input isntructions with prompt string (enh. #271), different inputReplacer patterns are needed
+ *        (they must e.g. derive some input instruction). Therefore an API modification for generators to
+ *        plug in became necessary: getInputReplacer() now requires a boolean argument to provide the appropriate
+ *        pattern. Method transformInput() must distinguish and handle the input instruction flavours therefore.
+ *      	
  *      2016.07.20 - Enhancement #160 - option to include called subroutines
  *      - there is no sufficient way to export a called subroutine when its call is generated, because
  *        duplicate exports must be avoided and usually a topological sorting is necessary.
@@ -185,9 +192,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
 	 * into the target code
+	 * @param withPrompt - is a prompt string to be considered?
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected abstract String getInputReplacer();
+	// START KGU#281 2016-10-15: Enh. #271
+	//protected abstract String getInputReplacer();
+	protected abstract String getInputReplacer(boolean withPrompt);
+	// END KGU#281 2016-10-15
 
 	/**
 	 * A pattern how to embed the expression (right-hand side of an output instruction)
@@ -344,7 +355,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	{
 		if (asComment)
 		{
-			insertComment(text, _indent);
+			insertComment(_indent + text, "");
 		}
 		else
 		{
@@ -519,11 +530,23 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 */
 	protected String transformInput(String _interm)
 	{
-		String subst = getInputReplacer();
+		// START KGU#281 2016-10-15: for enh. #271 (input with prompt)
+		//String subst = getInputReplacer();
+		// END KGU#281 2016-10-15
 		// Between the input keyword and the variable name there MUST be some blank...
 		String keyword = D7Parser.keywordMap.get("input").trim();
 		if (!keyword.isEmpty() && _interm.startsWith(keyword))
 		{
+			// START KGU#281 2016-10-15: for enh. #271 (input with prompt)
+			String quotes = "";
+			String tail = _interm.substring(keyword.length()).trim();
+			if (tail.startsWith("\"")) {
+				quotes = "\"";
+			}
+			else if (tail.startsWith("'")) {
+				quotes = "'";
+			}
+			// END KGU#281 2016-10-15
 			String matcher = Matcher.quoteReplacement(keyword);
 			if (Character.isJavaIdentifierPart(keyword.charAt(keyword.length()-1)))
 			{
@@ -537,7 +560,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 			// End - BFI (#51)
 			
-			_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+			// START KGU#281 2016-10-15: Enh. #271 (input instructions with prompt
+			//_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+			if (quotes.isEmpty()) {
+				String subst = getInputReplacer(false);
+				_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+			}
+			else {
+				String subst = getInputReplacer(true);
+				_interm = _interm.replaceFirst("^" + matcher + "\\h*("+quotes+".*"+quotes+")(.*)", subst);
+			}
+			// END KGU#281 2016-10-15
 		}
 		return _interm;
 	}

@@ -53,7 +53,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.07.20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
  *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
  *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
- *      Kay Gürtzig             2016.10.14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *
  ******************************************************************************************************
  *
@@ -194,12 +195,23 @@ public class JavaGenerator extends CGenerator
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
 	 * into the target code
+	 * @param withPrompt - is a prompt string to be considered?
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected String getInputReplacer()
+	// START KGU#281 2016-10-15: Enh. #271
+	//protected String getInputReplacer()
+	//{
+	//	return "$1 = (new Scanner(System.in)).nextLine()";
+	//}
+	protected String getInputReplacer(boolean withPrompt)
 	{
+		// NOTE: If you modify these patterns then you must adapt transform() too!
+		if (withPrompt) {
+			return "System.out.println($1); $2 = (new Scanner(System.in)).nextLine()";
+		}
 		return "$1 = (new Scanner(System.in)).nextLine()";
 	}
+	// END KGU#281 2016-10-15
 
 	/**
 	 * A pattern how to embed the expression (right-hand side of an output instruction)
@@ -271,8 +283,16 @@ public class JavaGenerator extends CGenerator
 		// END KGU#18/KGU#23 2015-11-01
 
 		// START KGU#108 2015-12-15: Bugfix #51: Cope with empty input and output
-		if (s.startsWith("= (new Scanner(System.in)).nextLine()")) s = s.substring(2);
+		String inpRepl = getInputReplacer(false).replace("$1", "").trim();
+		if (s.startsWith(inpRepl)) {
+			s = s.substring(2);
+		}
 		// END KGU#108 2015-12-15
+		// START KGU#281 2016-10-15: Enh. #271 cope with an empty input with prompt
+		else if (s.endsWith(";  " + inpRepl)) {
+			s = s.substring(0, s.length() - inpRepl.length()-1) + s.substring(s.length() - inpRepl.length()+2);
+		}
+		//END KGU#281
 
 
 		// Math function

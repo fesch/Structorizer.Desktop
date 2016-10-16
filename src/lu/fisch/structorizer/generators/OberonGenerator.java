@@ -58,7 +58,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.08.12      Two tiny embellishments
  *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
  *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
- *      Kay Gürtzig             2016.10.14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt string,
+ *                                              Issue #227: In obvious cases (literals) output procedure names inserted.
  *
  ******************************************************************************************************
  *
@@ -81,7 +83,8 @@ package lu.fisch.structorizer.generators;
  *      - Conversion of C-style logical operators to the Pascal-like ones added
  *      - assignment operator conversion now preserves or ensures surrounding spaces
  *
- ******************************************************************************************************/
+ ******************************************************************************************************
+ */
 
 import java.util.regex.Matcher;
 
@@ -164,12 +167,22 @@ public class OberonGenerator extends Generator {
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
 	 * into the target code
+	 * @param withPrompt - is a prompt string to be considered?
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected String getInputReplacer()
+	// START KGU#281 2016-10-15: Enh. #271
+	//protected String getInputReplacer()
+	//{
+	//	return "In.TYPE($1)";
+	//}
+	protected String getInputReplacer(boolean withPrompt)
 	{
+		if (withPrompt) {
+			return "Out.String($1); In.TYPE($2)";
+		}
 		return "In.TYPE($1)";
 	}
+	// END KGU#281 2016-10-15
 
 	/**
 	 * A pattern how to embed the expression (right-hand side of an output instruction)
@@ -178,7 +191,10 @@ public class OberonGenerator extends Generator {
 	 */
 	protected String getOutputReplacer()
 	{
-		return "Out.TYPE($1)";
+		// START KGU#236 2016-10-16: Enh. #227 - we needed a substitution marker to accomplish identified routines
+		//return "Out.TYPE($1)";
+		return "Out.TYPE($1%LEN%)";
+		// END KGU#236 2016-10-16
 	}
 
 	// START KGU#16 2015-11-30
@@ -369,15 +385,22 @@ public class OberonGenerator extends Generator {
 					// START KGU#236 2016-08-10: Issue #227 - moved to the algorithm start now
 					//code.add(_indent + "In.Open;");
 					// END KGU#236 2016-08-10
-					if (line.substring(inputKey.length()).trim().isEmpty())
-					{
-						addCode("In.Char(dummyInputChar);", _indent, isDisabled);
-					}
-					else
-					{	
+					// START KGU#281 2016-10-15: Enh. #271
+					//if (line.substring(inputKey.length()).trim().isEmpty())
+					//{
+					//	addCode("In.Char(dummyInputChar);", _indent, isDisabled);
+					//}
+					//else
+					//{	
+					//	insertComment("TODO: Replace \"TYPE\" by the the actual In procedure name for this type!", _indent);
+					//	addCode(transform(line) + ";", _indent, isDisabled);
+					//}
+					String transf = transform(line).replace("In.TYPE()", "In.Char(dummyInputChar)") + ";";
+					if (transf.contains("In.TYPE(")) {
 						insertComment("TODO: Replace \"TYPE\" by the the actual In procedure name for this type!", _indent);
-						addCode(transform(line) + ";", _indent, isDisabled);
 					}
+					addCode(transf, _indent, isDisabled);
+					// END KGU#281 2016-10-15
 				}
 				else if (Instruction.isOutput(line))
 				{
@@ -386,7 +409,33 @@ public class OberonGenerator extends Generator {
 					// Produce an output instruction for every expression (according to type)
 					for (int j = 0; j < expressions.count(); j++)
 					{
-						addCode(transform(outputKey + " " + expressions.get(j)) + ";", _indent, isDisabled);
+						// START KGU#236 2016-10-15: Issue #227 - For literals, we can of course determine the type...
+						//addCode(transform(outputKey + " " + expressions.get(j)) + ";", _indent, isDisabled);
+						String procName = "";
+						String length = "";
+						String expr = expressions.get(j);
+						try {
+							Double.parseDouble(expr);
+							procName = "Real";
+							length = ", 10";
+						}
+						catch (NumberFormatException ex) {}
+						try {
+							Integer.parseInt(expr);
+							procName = "Int";
+							length = ", 10";
+						}
+						catch (NumberFormatException ex) {}
+						if (procName.isEmpty() && (expr.startsWith("\"") || expr.startsWith("'"))
+								&& Element.splitLexically(expr, true).count() == 1) {
+							procName = "String";
+						}
+						String codeLine = transform(outputKey + " " + expressions.get(j)).replace("%LEN%", length) + ";";
+						if (!procName.isEmpty()) {
+							codeLine = codeLine.replace("Out.TYPE(", "Out."+procName+"(");
+						}
+						addCode(codeLine, _indent, isDisabled);
+						// END KGU#236 2016-10-15
 					}
 					addCode("Out.Ln;", _indent, isDisabled);
 				}

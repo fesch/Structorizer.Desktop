@@ -60,6 +60,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
  *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactored 
  *      Kay Gürtzig             2016.10.14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016.10.15      Enh. 271: Support for input instructions with prompt
  *
  ******************************************************************************************************
  *
@@ -232,18 +233,25 @@ public class CGenerator extends Generator {
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input
 	 * instruction) into the target code
-	 * 
+	 * @param withPrompt - is a prompt string to be considered?
 	 * @return a regex replacement pattern, e.g.
 	 *         "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected String getInputReplacer() {
+	// START KGU#281 2016-10-15: Enh. #271
+	//protected String getInputReplacer() {
+	//	return "scanf(\"\", &$1)";
+	//}
+	protected String getInputReplacer(boolean withPrompt) {
+		if (withPrompt) {
+			return "printf($1); scanf(\"\", &$2)";
+		}
 		return "scanf(\"\", &$1)";
 	}
+	// END KGU#281 2016-10-15
 
 	/**
 	 * A pattern how to embed the expression (right-hand side of an output
 	 * instruction) into the target code
-	 * 
 	 * @return a regex replacement pattern, e.g. "System.out.println($1);"
 	 */
 	protected String getOutputReplacer() {

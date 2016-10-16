@@ -63,7 +63,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (identifier collisions)
  *      Kay Gürtzig         2016.09.01      Issue #234: ord and chr function code generated only if needed and allowed
  *      Kay Gürtzig         2016.09.21      Bugfix #247: Forever loops were exported with a defective condition.
- *      Kay Gürtzig         2016.10.14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig         2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input with prompt
  *
  ******************************************************************************************************
  *
@@ -206,12 +207,22 @@ public class BASHGenerator extends Generator {
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
 	 * into the target code
+	 * @param withPrompt - is a prompt string to be considered?
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected String getInputReplacer()
+	// START KGU#281 2016-10-15: Enh. #271 (support for input with prompt)
+	//protected String getInputReplacer()
+	//{
+	//	return "read $1";
+	//}
+	protected String getInputReplacer(boolean withPrompt)
 	{
+		if (withPrompt) {
+			return "echo -n $1 ; read $2";
+		}
 		return "read $1";
 	}
+	// END KGU#281 2016-10-15
 
 	/**
 	 * A pattern how to embed the expression (right-hand side of an output instruction)

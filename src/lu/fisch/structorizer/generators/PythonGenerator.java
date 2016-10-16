@@ -56,7 +56,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                              bugfix for routine calls (superfluous parentheses dropped)
  *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done
- *      Kay Gürtzig             2016.10.14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *
  ******************************************************************************************************
  *
@@ -178,12 +179,22 @@ public class PythonGenerator extends Generator
 		/**
 		 * A pattern how to embed the variable (right-hand side of an input instruction)
 		 * into the target code
+		 * @param withPrompt - is a prompt string to be considered?
 		 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 		 */
-		protected String getInputReplacer()
+		// START KGU#281 2016-10-15: Enh. #281
+		//protected String getInputReplacer()
+		//{
+		//	return "$1 = input(\"$1\")";
+		//}
+		protected String getInputReplacer(boolean withPrompt)
 		{
+			if (withPrompt) {
+				return "$2 = input($1)";				
+			}
 			return "$1 = input(\"$1\")";
 		}
+		// END KGU#281 2016-10-15
 
 		/**
 		 * A pattern how to embed the expression (right-hand side of an output instruction)

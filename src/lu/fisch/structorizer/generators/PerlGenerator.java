@@ -62,7 +62,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
  *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done. 
- *      Kay Gürtzig     2016.10.14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig     2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig     2016.10.15      Enh. #271: Support for input instructions with prompt
  *
  ******************************************************************************************************
  *
@@ -166,15 +167,25 @@ public class PerlGenerator extends Generator {
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
 	 * into the target code
+	 * @param withPrompt - is a prompt string to be considered?
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected String getInputReplacer()
+	// START KGU#281 2016-10-15: Enh. #271
+	//protected String getInputReplacer()
+	//{
+	//	// START KGU#108 2015-12-22: Bugfix #51
+	//	//return "$1 = <STDIN>";
+	//	return "$1 = <STDIN>; chomp $1";
+	//	// END KGU#108 2015-12-22
+	//}
+	protected String getInputReplacer(boolean withPrompt)
 	{
-		// START KGU#108 2015-12-22: Bugfix #51
-		//return "$1 = <STDIN>";
+		if (withPrompt) {
+			return "print $1; $2 = <STDIN>; chomp $2";
+		}
 		return "$1 = <STDIN>; chomp $1";
-		// END KGU#108 2015-12-22
 	}
+	// END KGU#281 2016-10-15
 
 	/**
 	 * A pattern how to embed the expression (right-hand side of an output instruction)
@@ -272,6 +283,12 @@ public class PerlGenerator extends Generator {
 		{
 			transformed = "my $dummy = <STDIN>";
 		}
+		// START KGU#281 2016-10-16: Enh. #271
+		else
+		{
+			transformed = transformed.replace(";  = <STDIN>; chomp", "; my $dummy = <STDIN>");
+		}
+		// END KGU#281 2016-10-16
 		return transformed;
 	}
 
@@ -397,7 +414,7 @@ public class PerlGenerator extends Generator {
 		{
 			condition = "( " + condition + " )";
 		}
-		code.add(_indent+"if " + condition + " {");
+		addCode("if " + condition + " {", _indent, isDisabled);
 		generateCode(_alt.qTrue,_indent+this.getIndent());
 		
 		if(_alt.qFalse.getSize()!=0) {

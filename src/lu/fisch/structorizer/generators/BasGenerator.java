@@ -51,7 +51,8 @@ package lu.fisch.structorizer.generators;
  *                                          though this is only provisional for the line numbering mode
  *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
  *      Kay Gürtzig         2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done
- *      Kay Gürtzig         2016.10.13      Enh. #277: Handling of disabled elements added. 
+ *      Kay Gürtzig         2016.10.13      Enh. #270: Handling of disabled elements added.
+ *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input instructions with prompt
  *
  ******************************************************************************************************
  *
@@ -159,10 +160,19 @@ public class BasGenerator extends Generator
 	 * into the target code
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected String getInputReplacer()
+	// START KGU#281-10-15: Enh. #271 (support for input with prompt)
+	//protected String getInputReplacer(boolean withPrompt)
+	//{
+	//	return "INPUT $1";
+	//}
+	protected String getInputReplacer(boolean withPrompt)
 	{
+		if (withPrompt) {
+			return "PRINT $1; : INPUT $2";
+		}
 		return "INPUT $1";
 	}
+	// END KGU#281 2016-10-15
 
 	/**
 	 * A pattern how to embed the expression (right-hand side of an output instruction)
@@ -341,10 +351,10 @@ public class BasGenerator extends Generator
 //		interm = interm.replace("]", ")");
 		// END KGU 2015-12-19
 
-		// START KGU#108 2015-12-19: Bugfix #51: Cope with empty input
-		if (interm.trim().equals("INPUT"))
+		// START KGU#108 2015-12-19: Bugfix #51/Enh. #271: Cope with empty input
+		if (interm.trim().equals("INPUT") || interm.endsWith(": INPUT"))
 		{
-			interm = "SLEEP";	// waits for key hit (according to https://en.wikibooks.org/wiki/BASIC_Programming/Beginning_BASIC/User_Input)
+			interm = interm.replace("INPUT", "SLEEP");	// waits for key hit (according to https://en.wikibooks.org/wiki/BASIC_Programming/Beginning_BASIC/User_Input)
 		}
 		// END KGU#108 2015-12-19
 
@@ -376,7 +386,7 @@ public class BasGenerator extends Generator
 	{
 		if (isDisabled)
 		{
-			insertComment(text, _indent);
+			insertComment(_indent + text, "");
 		}
 		else
 		{

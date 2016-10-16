@@ -122,7 +122,7 @@ public class XmlGenerator extends Generator {
 	 * into the target code
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected String getInputReplacer()
+	protected String getInputReplacer(boolean withPrompt)
 	{
 		return "";
 	}

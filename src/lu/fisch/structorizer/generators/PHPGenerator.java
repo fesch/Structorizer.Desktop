@@ -55,7 +55,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178)
  *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
  *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done. 
- *      Kay Gürtzig             2016.10.14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *
  ******************************************************************************************************
  *
@@ -197,13 +198,24 @@ public class PHPGenerator extends Generator
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
 	 * into the target code
+	 * @param withPrompt - is a prompt string to be considered?
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected String getInputReplacer()
+	// START KGU#281 2016-10-15: Enh. #271
+	//protected String getInputReplacer()
+	//{
+	//	// This is rather nonsense but ought to help to sort this out somehow
+	//	return "$1 = \\$_GET['$1'];	// TODO form a sensible input opportunity";
+	//}
+	protected String getInputReplacer(boolean withPrompt)
 	{
+		if (withPrompt) {
+			return "$2 = \\$_GET[$1];	// TODO form a sensible input opportunity";
+		}
 		// This is rather nonsense but ought to help to sort this out somehow
 		return "$1 = \\$_GET['$1'];	// TODO form a sensible input opportunity";
 	}
+	// END KGU#281 2016-10-15
 
 	/**
 	 * A pattern how to embed the expression (right-hand side of an output instruction)
@@ -287,8 +299,15 @@ public class PHPGenerator extends Generator
 
 			for (int i=0; i<_inst.getText().count(); i++)
 			{
-				addCode(transform(_inst.getText().get(i))+";",
-						_indent, isDisabled);
+				// START KGU#281 2016-10-16: Enh. #271
+				//addCode(transform(_inst.getText().get(i))+";",
+				//		_indent, isDisabled);
+				String transf = transform(_inst.getText().get(i)) + ";";
+				if (transf.startsWith("= $_GET[")) {
+					transf = "dummyInputVar " + transf;
+				}
+				addCode(transf,	_indent, isDisabled);
+				// END KGU#281 2016-10-16
 			}
 
 		}

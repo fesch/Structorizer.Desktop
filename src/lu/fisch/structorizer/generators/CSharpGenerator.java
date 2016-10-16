@@ -48,7 +48,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                              brace balance in non-program files fixed  
  *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
- *      Kay Gürtzig             2016.10.14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *
  ******************************************************************************************************
  *
@@ -139,12 +140,22 @@ public class CSharpGenerator extends CGenerator
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
 	 * into the target code
+	 * @param withPrompt - is a prompt string to be considered?
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected String getInputReplacer()
+	// START KGU#281 2016-10-15: Enh. #271 (support for input with prompt)
+	//protected String getInputReplacer()
+	//{
+	//	return "Console.ReadLine($1)";
+	//}
+	protected String getInputReplacer(boolean withPrompt)
 	{
+		if (withPrompt) {
+			return "Console.Write($1); Console.ReadLine($2)";
+		}
 		return "Console.ReadLine($1)";
 	}
+	// END KGU#281 2016-10-15
 
 	/**
 	 * A pattern how to embed the expression (right-hand side of an output instruction)
@@ -155,7 +166,6 @@ public class CSharpGenerator extends CGenerator
 	{
 		return "Console.WriteLine($1)";
 	}
-
 
 	// START KGU#16/#47 2015-11-30
 	/**

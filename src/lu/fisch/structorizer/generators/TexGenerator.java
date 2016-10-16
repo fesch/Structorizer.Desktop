@@ -39,7 +39,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2015.12.18/19   KGU#2/KGU#47/KGU#78 Fixes for Call, Jump, and Parallel elements
  *      Kay Gürtzig     2016.07.20      Enh. #160 adapted (option to integrate subroutines = KGU#178)
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done.
- *      Kay Gürtzig     2016.10.14      Enh. 270: Disabled elements are skipped here now
+ *      Kay Gürtzig     2016.10.14      Enh. #270: Disabled elements are skipped here now
  *
  ******************************************************************************************************
  *
@@ -102,7 +102,7 @@ public class TexGenerator extends Generator {
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
     @Override
-	protected String getInputReplacer()
+	protected String getInputReplacer(boolean withPrompt)
 	{
 		return "scanf(\"\", &$1);";
 	}

@@ -50,6 +50,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.08.10      Issue #227: New classification methods for Input/Output
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactored
  *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
+ *      Kay Gürtzig     2016.10.15      Enh. #271: method isEmptyInput() had to consider prompt strings now.
  *
  ******************************************************************************************************
  *
@@ -395,7 +396,7 @@ public class Instruction extends Element {
 	// START KGU#236 2016-08-10: Issue #227: New classification for input and output
 	public static boolean isOutput(String line)
 	{
-    	StringList tokens = Element.splitLexically(line, true);
+		StringList tokens = Element.splitLexically(line, true);
 		return (tokens.indexOf(D7Parser.keywordMap.get("output"), !D7Parser.ignoreCase) == 0);
 	}
 	public boolean isOutput()
@@ -412,7 +413,7 @@ public class Instruction extends Element {
 	
 	public static boolean isInput(String line)
 	{
-    	StringList tokens = Element.splitLexically(line, true);
+		StringList tokens = Element.splitLexically(line, true);
 		return (tokens.indexOf(D7Parser.keywordMap.get("input"), !D7Parser.ignoreCase) == 0);
 	}
 	public boolean isInput()
@@ -429,8 +430,18 @@ public class Instruction extends Element {
 	
 	public static boolean isEmptyInput(String line)
 	{
-    	StringList tokens = Element.splitLexically(line, true);
-		return (tokens.count() == 1 && tokens.indexOf(D7Parser.keywordMap.get("input"), !D7Parser.ignoreCase) == 0);
+		StringList tokens = Element.splitLexically(line, true);
+		// START KGU#281 2016-10-15: Enh. #271 - had turned out to be too simple.
+		//return (tokens.count() == 1 && tokens.indexOf(D7Parser.keywordMap.get("input"), !D7Parser.ignoreCase) == 0);
+		boolean isEmptyInp = false;
+		StringList keyTokens = Element.splitLexically(D7Parser.keywordMap.get("input"), false);
+		if (tokens.indexOf(keyTokens, 0, !D7Parser.ignoreCase) == 0) {
+			tokens = tokens.subSequence(keyTokens.count(), tokens.count());
+			tokens.removeAll(" ");
+			isEmptyInp = tokens.count() == 0 || tokens.count() == 1 && (tokens.get(0).startsWith("\"") || tokens.get(0).startsWith("'"));
+		}
+		return isEmptyInp;
+		// END KGU#281 2016-10-15
 	}
 	public boolean isEmptyInput()
 	{
