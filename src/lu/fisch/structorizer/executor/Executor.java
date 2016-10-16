@@ -101,6 +101,7 @@ package lu.fisch.structorizer.executor;
  *                                      Issue #269: Attempts to scroll the diagram to currently executed elements (ineffective)
  *      Kay Gürtzig     2016.10.12      Issue #271: Systematic support for user-defined input prompts
  *      Kay Gürtzig     2016.10.13      Enh. #270: Elements may be disabled for execution ("outcommented")
+ *      Kay Gürtzig     2016.10.16      Enh. #273: Input strings "true" and "false" now accepted as boolean values
  *
  ******************************************************************************************************
  *
@@ -1541,6 +1542,12 @@ public class Executor implements Runnable
 					setVar(name, interpreter.get(name));
 				}
 				// END KGU#184 2016-04-25
+				// START KGU#283 2016-10-16: Enh. #273
+				else if (rawInput.equals("true") || rawInput.equals("false"))
+				{
+					setVar(name, Boolean.valueOf(rawInput));
+				}
+				// END KGU#283 2016-10-16
 			}
 			catch (Exception ex)
 			{
