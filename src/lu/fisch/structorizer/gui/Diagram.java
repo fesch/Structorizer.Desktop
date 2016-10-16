@@ -2499,6 +2499,59 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#267 2016-10-03
 
+	// START KGU#282 2016-10-16 (draft)
+	/*=======================================*
+	 * Turtleizer precision methods
+	 *=======================================*/
+	/**
+	 * Replaces all Turtleizer fd and bk procedure calls by the more precise
+	 * forward and backward instructions (precisionUp = true) or the other way round
+	 * in the selected elements 
+	 * @param precisionUp
+	 */
+	public void replaceTurtleizerAPI(boolean precisionUp)
+	{
+		final class TurtleizerSwitcher implements IElementVisitor 
+		{
+			private int from;
+			private final String[][] functionPairs = { {"fd", "forward"}, {"bk", "backward"}};
+			
+			public TurtleizerSwitcher(boolean upgrade)
+			{
+				this.from = upgrade ? 0 : 1;
+			}
+			
+			public boolean visitPreOrder(Element _ele)
+			{
+				if (_ele.getClass().getSimpleName().equals("Instruction")) {
+					for (int i = 0; i < _ele.getText().count(); i++) {
+						String line = _ele.getText().get(i);
+						if (Instruction.isTurtleizerMove(line)) {
+							Function fct = new Function(line);
+							for (int j = 0; j < functionPairs.length; j++) {
+								String oldName = functionPairs[j][from];
+								if (fct.getName().equals(oldName)) {
+									_ele.getText().set(i, functionPairs[j][1 - from] + line.trim().substring(oldName.length()));
+								}
+							}
+						}
+					}
+				}
+				return true;
+			}
+			public boolean visitPostOrder(Element _ele)
+			{
+				return true;
+			}
+			
+		}
+		
+		root.addUndo();
+		selected.traverse(new TurtleizerSwitcher(precisionUp));
+		
+	}
+	// END KGU#282 2016-10-16
+
 	// START KGU#43 2015-10-12
 	/*****************************************
 	 * breakpoint methods

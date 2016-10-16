@@ -79,6 +79,7 @@
  *      Kay Gürtzig     2016.09.25      Enh. #253: Section ImportOptionDialog inserted
  *      Kay Gürtzig     2016.10.11      Enh. 267: Menu.error15 divided into error15_1 and error15_2
  *      Kay Gürtzig     2016.10.13      Enh. #270: Editor.btnDisable, InputBox.chkDisabled added.
+ *      Kay Gürtzig     2016.10.16      Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
  *
  ******************************************************************************************************
  *
@@ -130,6 +131,10 @@ Menu.menuEditRedo.text=Redo
 Menu.menuEditCut.text=Cut
 Menu.menuEditCopy.text=Copy
 Menu.menuEditPaste.text=Paste
+Menu.menuUpgradeTurtle.text=To fine graphics
+Menu.menuUpgradeTurtle.tooltip=Replaces all poor Turtle commands in the selected elements by the more precise ones. 
+Menu.menuDowngradeTurtle.text=To integer graphics
+Menu.menuDowngradeTurtle.tooltip=Replaces all precise Turtle commands in the selected elements by the poorer ones. 
 Menu.menuEditCopyDiagramPNG.text=Copy PNG image
 Menu.menuEditCopyDiagramEMF.text=Copy EMF image
 // Menu "Diagram"

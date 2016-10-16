@@ -65,6 +65,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.26/03   Enh. #253: Refactoring support
  *      Kay Gürtzig     2016.10.11      Enh. #267: error15 renamed to error15_1, new error15_2
  *      Kay Gürtzig     2016.10.13      Enh. #270: Menu items for the disabling of elements
+ *      Kay Gürtzig     2016.10.16      Enh. #272: Menu items for the replacement of Turtleizer command sets
  *
  ******************************************************************************************************
  *
@@ -143,6 +144,10 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuEditPaste = new JMenuItem("Paste",IconLoader.ico043);
 	protected final JMenuItem menuEditCopyDiagramPNG = new JMenuItem("Copy bitmap diagram to clipboard",IconLoader.ico032);
 	protected final JMenuItem menuEditCopyDiagramEMF = new JMenuItem("Copy vector diagram to clipboard",IconLoader.ico032);
+	// START KGU#282 2016-10-16: Issue #272: Options to upgrade or downgrade graphics
+	protected final JMenuItem menuEditUpgradeTurtle = new JMenuItem("To fine graphics",IconLoader.ico027);
+	protected final JMenuItem menuEditDowngradeTurtle = new JMenuItem("To integer graphics",IconLoader.ico028);
+	// END KGU#282 2016-10-16
 
 	protected final JMenu menuView = new JMenu("View");
 
@@ -534,9 +539,21 @@ public class Menu extends LangMenuBar implements NSDController
 
 		menuEdit.addSeparator();
 
+		// START KGU#282 2016-10-16: Issue #272: Options to upgrade or downgrade graphics
+		menuEdit.add(menuEditUpgradeTurtle);
+		menuEditUpgradeTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, java.awt.event.InputEvent.SHIFT_MASK));
+		menuEditUpgradeTurtle.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.replaceTurtleizerAPI(true); doButtons(); } } );
+
+		menuEdit.add(menuEditDowngradeTurtle);
+		menuEditDowngradeTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuEditDowngradeTurtle.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.replaceTurtleizerAPI(false); doButtons(); } } );
+
+		menuEdit.addSeparator();
+		// END KGU#282 2016-10-16
+
 		menuEdit.add(menuEditCopyDiagramPNG);
 		menuEditCopyDiagramPNG.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		menuEditCopyDiagramPNG.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.copyToClipboardPNG(); doButtons(); } } );
+		menuEditCopyDiagramPNG.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.copyToClipboardPNG();; doButtons(); } } );
 
 		if(!System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
 		{
@@ -1007,6 +1024,12 @@ public class Menu extends LangMenuBar implements NSDController
 			menuEditUndo.setEnabled(diagram.getRoot().canUndo());
 			menuEditRedo.setEnabled(diagram.getRoot().canRedo());
 
+			// graphics up/downgrade
+			// START KGU#282 2016-10-16: Issue #272
+			menuEditUpgradeTurtle.setEnabled(conditionAny);
+			menuEditDowngradeTurtle.setEnabled(conditionAny);
+			// END KGU#282 2016-10-16
+
 			// style
 			menuDiagramTypeFunction.setSelected(!diagram.isProgram());
 			menuDiagramTypeProgram.setSelected(diagram.isProgram());
@@ -1084,7 +1107,7 @@ public class Menu extends LangMenuBar implements NSDController
 			menuEditCut.setEnabled(diagram.canCut());
 			// END KGU#143 2016-01-21
 			menuEditPaste.setEnabled(diagram.canPaste());
-
+			
 			// nice
 			menuDiagramNice.setSelected(diagram.isNice());
 

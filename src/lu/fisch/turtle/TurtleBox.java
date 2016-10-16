@@ -26,9 +26,11 @@ import java.awt.Image;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.util.Vector;
+
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+
 import lu.fisch.structorizer.executor.DelayableDiagramController;
 import lu.fisch.turtle.elements.Element;
 import lu.fisch.turtle.elements.Line;
@@ -41,6 +43,7 @@ import lu.fisch.utils.StringList;
  */
 // START KGU#97 2015-12-10: Inheritance change for enhancement request #48
 //public class TurtleBox extends JFrame implements DiagramController
+@SuppressWarnings("serial")
 public class TurtleBox extends JFrame implements DelayableDiagramController
 // END KGU#97 2015-12-10
 {
