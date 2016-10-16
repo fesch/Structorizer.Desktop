@@ -64,6 +64,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done. 
  *      Kay Gürtzig     2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig     2016.10.15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig     2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *
  ******************************************************************************************************
  *
@@ -306,70 +307,6 @@ public class PerlGenerator extends Generator {
 		return transformed;
 	}
 	// END KGU#108 2015-12-22
-
-//	// KGU 2015-11-02 Most of this now obsolete (delegated to Generator, Element), something was wrong anyway
-//    protected String transform(String _input)
-//	{
-//    	_input = super.transform(_input);
-//    	
-//    	// START KGU#62 2015-11-02: Identify and adapt variable names
-//		//System.out.println("Perl - text to be transformed: \"" + _input + "\"");
-//		// START KGU#103 2015-12-12: We must do a lexical analysis instead
-////    	for (int i = 0; i < varNames.count(); i++)
-////    	{
-////    		String varName = varNames.get(i);	// FIXME (KGU): Remove after Test!
-////    		System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
-////    		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
-////    		int pos = _input.indexOf(varName);
-////    		while (pos >= 0)
-////    		{
-////    			int posBehind = pos + varName.length();
-////    			// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
-////    			//if ((pos == 0 || !Character.isJavaIdentifierPart(_input.charAt(pos-1))) && (posBehind >= varName.length() || !Character.isJavaIdentifierPart(_input.charAt(posBehind))))
-////    	  		if ((pos == 0 || !Character.isJavaIdentifierPart(_input.charAt(pos-1)) && _input.charAt(pos-1) != '\\') &&
-////    	  				(posBehind >= _input.length() || !Character.isJavaIdentifierPart(_input.charAt(posBehind))))
-////    	  		// END KGU#103 2015-12-12
-////    			{
-////    				if (pos == 0 || _input.charAt(pos-1) != '$')
-////    				{
-////    					_input = _input.substring(0, pos) + "$" + _input.substring(pos);
-////            	  		// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
-////        				posBehind++;
-////        				// END KGU#103 2015-12-12
-////    				}
-////        	  		// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
-////    				//pos = _input.indexOf(varName, posBehind);
-////    				// END KGU#103 2015-12-12
-////    			}
-////    	  		// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
-////    	  		if (posBehind < _input.length() - varName.length())
-////    	  		{
-////    	  			pos = _input.indexOf(varName, posBehind);
-////    	  		}
-////    	  		else
-////    	  		{
-////    	  			pos = -1;
-////    	  		}
-////				// END KGU#103 2015-12-12
-////    		}
-////    		System.out.println("Perl - after replacement: \"" + _input + "\""); 	// FIXME (KGU): Remove after Test!
-////    	}
-//		StringList tokens = Element.splitLexically(_input, true);
-//    	for (int i = 0; i < varNames.count(); i++)
-//    	{
-//    		String varName = varNames.get(i);
-//    		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
-//    		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
-//    		tokens.replaceAll(varName, "$"+varName);
-//    	}
-//    	_input = tokens.getText().replace("\n", "");
-//		//System.out.println("Perl - after replacement: \"" + _input + "\""); 	// FIXME (KGU): Remove after Test!
-//		// END KGU#103 2015-12-12
-//    	// END KGU#62 2015-11-02
-//
-//		return _input.trim();
-//	}
-	// END KGU#93 2015-12-21
 	
     // START KGU#78 2015-12-17: Enh. #23 (jump translation)
     // Places a label with empty instruction into the code if elem is an exited loop
@@ -380,7 +317,7 @@ public class PerlGenerator extends Generator {
 					_indent, elem.isDisabled());
 		}
 	}
-	// ED KGU#78 2015-12-17
+	// END KGU#78 2015-12-17
 
 	protected void generateCode(Instruction _inst, String _indent) {
 
@@ -393,7 +330,13 @@ public class PerlGenerator extends Generator {
 			{
 				String text = transform(_inst.getText().get(i));
 				if (!text.endsWith(";")) { text += ";"; }
+				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
+				//code.add(_indent + text);
+				if (Instruction.isTurtleizerMove(_inst.getText().get(i))) {
+					text += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+				}
 				addCode(text, _indent, isDisabled);
+				// END KGU#277/KGU#284 2016-10-13
 			}
 		}
 

@@ -61,6 +61,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt string,
  *                                              Issue #227: In obvious cases (literals) output procedure names inserted.
+ *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *
  ******************************************************************************************************
  *
@@ -365,7 +366,6 @@ public class OberonGenerator extends Generator {
 			
 			insertComment(_inst, _indent);
 
-			String inputKey = D7Parser.keywordMap.get("input").trim();
 			String outputKey = D7Parser.keywordMap.get("output");
 			for (int i=0; i<_inst.getText().count(); i++)
 			{
@@ -466,7 +466,14 @@ public class OberonGenerator extends Generator {
 					}
 					if (!isArrayInit)
 					{
-						addCode(transline + ";", _indent, isDisabled);
+						// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
+						//code.add(_indent + transline + ";");
+						transline += ";";
+						if (Instruction.isTurtleizerMove(line)) {
+							transline += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor() + " " + this.commentSymbolRight();
+						}
+						addCode(transline, _indent, isDisabled);
+						// END KGU#277/KGU#284 2016-10-13
 					}
 					// END KGU#100 2016-01-16
 				}

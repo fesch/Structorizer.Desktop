@@ -374,6 +374,14 @@ public class Instruction extends Element {
 	{
 		return this.text.count() == 1 && Instruction.isProcedureCall(this.text.get(0));		
 	}
+	// START #274 2016-10-16 (KGU): Improved support for Code export
+	public static boolean isTurtleizerMove(String line)
+	{
+		final StringList turtleizerMovers = StringList.explode("forward,backward,fd,bk", ",");
+		Function fct = new Function(line);
+		return fct.isFunction() && turtleizerMovers.contains(fct.getName()) && fct.paramCount() == 1;
+	}
+	// END #274 2016-10-16
 	
 	public static boolean isFunctionCall(String line)
 	{

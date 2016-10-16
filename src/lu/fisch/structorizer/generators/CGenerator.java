@@ -61,6 +61,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactored 
  *      Kay Gürtzig             2016.10.14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. 271: Support for input instructions with prompt
+ *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *
  ******************************************************************************************************
  *
@@ -412,7 +413,15 @@ public class CGenerator extends Generator {
 
 			StringList lines = _inst.getText();
 			for (int i = 0; i < lines.count(); i++) {
-				addCode(transform(lines.get(i)) + ";", _indent, isDisabled);
+				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
+				//code.add(_indent + transform(lines.get(i)) + ";");
+				String line = _inst.getText().get(i);
+				String codeLine = transform(line) + ";";
+				if (Instruction.isTurtleizerMove(line)) {
+					codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+				}
+				addCode(codeLine, _indent, isDisabled);
+				// END KGU#277/KGU#284 2016-10-13
 			}
 
 		}

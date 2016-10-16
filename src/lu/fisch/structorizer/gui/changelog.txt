@@ -39,7 +39,8 @@ Current development version: 3.25-03 (2016.10.16)
 - 03: Enh. #270: Possibility of disabling elements (Executor, Export, Analyser) <2
 - 03: Issue #271: User-defined prompt strings in input instructions (exec+gen) <2>
 - 03: Issue #272: Turtleizer now also provides a double precision mode <2>
-- 03: Issue #227: For Oberon, output of literals is now exported to proper procedure <2> 
+- 03: Issue #227: For Oberon, output of literals is now exported to proper procedure <2>
+- 04: Enh. #274: On code export, Turtleizer commands now augmented with colour info <2> 
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2

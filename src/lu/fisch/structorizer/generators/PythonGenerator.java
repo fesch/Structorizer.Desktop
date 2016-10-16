@@ -58,6 +58,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done
  *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *
  ******************************************************************************************************
  *
@@ -355,7 +356,15 @@ public class PythonGenerator extends Generator
 				// END KGU 2014-11-16
 				for(int i=0;i<_inst.getText().count();i++)
 				{
-					addCode(transform(_inst.getText().get(i)), _indent, isDisabled);
+					// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
+					//code.add(_indent + transform(_inst.getText().get(i)));
+					String line = _inst.getText().get(i);
+					String codeLine = transform(line);
+					if (Instruction.isTurtleizerMove(line)) {
+						codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+					}
+					addCode(codeLine, _indent, isDisabled);
+					// END KGU#277/KGU#284 2016-10-13/16
 				}
 			}
 		}
@@ -435,29 +444,7 @@ public class PythonGenerator extends Generator
 			insertComment(_for, _indent);
 			// END KGU 2014-11-16
 
-			// START KGU#3/KGU#104 2015-12-12: ER #10 / Bugfix #59 - This was forgotten to fix
-			//String startValueStr="";
-			//String endValueStr="";
-			//String stepValueStr="";
-			//
-			//String editStr = BString.replace(transform(_for.getText().getText()),"\n","").trim();
-			//String[] word = editStr.split(" ");
-			//int nbrWords = word.length;
-			//String counterStr = word[0];
-			//if ((nbrWords-1) >= 2) startValueStr = word[2];
-			//if ((nbrWords-1) >= 4) endValueStr = word[4];
-			//if ((nbrWords-1) >= 6) {
-			//	stepValueStr = word[6]; 
-			//}
-			//else {
-			//	stepValueStr = "1";
-			//}
 			String counterStr = _for.getCounterVar();
-			// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
-//			String startValueStr = this.transform(_for.getStartValue());
-//			String endValueStr = this.transform(_for.getEndValue());
-//			String stepValueStr = _for.getStepString();
-//			code.add(_indent+"for "+counterStr+" in range("+startValueStr+", "+endValueStr+", "+stepValueStr+"):");
 			String valueList = "";
 			if (_for.isForInLoop())
 			{
@@ -476,8 +463,6 @@ public class PythonGenerator extends Generator
 				valueList = "range("+startValueStr+", "+endValueStr+", "+stepValueStr+")";
 			}
 			addCode("for "+counterStr+" in " + valueList + ":", _indent, isDisabled);
-			// END KGU#61 2016-03-22
-			// END KGU#3/KGU#104 2015-12-12
 			generateCode((Subqueue) _for.q,_indent + this.getIndent());
 			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
 			//code.add("");

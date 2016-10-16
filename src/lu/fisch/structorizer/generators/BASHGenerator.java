@@ -65,6 +65,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.09.21      Bugfix #247: Forever loops were exported with a defective condition.
  *      Kay Gürtzig         2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input with prompt
+ *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *
  ******************************************************************************************************
  *
@@ -541,10 +542,15 @@ public class BASHGenerator extends Generator {
 			// END KGU 2014-11-16
 			for(int i=0; i<_inst.getText().count(); i++)
 			{
-				// START KGU#277 2016-10-13: Enh. #270
+				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 				//code.add(_indent + transform(_inst.getText().get(i)));
-				addCode(transform(_inst.getText().get(i)), _indent, disabled);
-				// END KGU#277 2016-10-13
+				String line = _inst.getText().get(i);
+				String codeLine = transform(line);
+				if (Instruction.isTurtleizerMove(line)) {
+					codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+				}
+				addCode(codeLine, _indent, disabled);
+				// END KGU#277/KGU#284 2016-10-13
 			}
 		}
 

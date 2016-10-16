@@ -57,6 +57,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done. 
  *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *
  ******************************************************************************************************
  *
@@ -228,18 +229,6 @@ public class PHPGenerator extends Generator
 	}
 
 	// START KGU#93 2015-12-21 Bugfix #41/#68/#69
-//	/**
-//	 * Transforms assignments in the given intermediate-language code line.
-//	 * Replaces "<-" by "="
-//	 * @param _interm - a code line in intermediate syntax
-//	 * @return transformed string
-//	 */
-//	@Deprecated
-//	protected String transformAssignment(String _interm)
-//	{
-//		return _interm.replace(" <- ", " = ");
-//	}
-    
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
 	 */
@@ -263,30 +252,6 @@ public class PHPGenerator extends Generator
     
 	// END KGU#18/KGU#23 2015-11-01
 
-//	// START KGU 2015-11-02: Had to be converted to a member method
-//    //public static String transform(String _input)
-//    protected String transform(String _input)
-//    {
-//    	_input = super.transform(_input);
-//
-//    	_input=BString.replace(_input," div "," / ");
-//
-//    	// START KGU#62 2015-11-02: Identify and adapt variable names (revised KGU 2015-12-19)
-//		StringList tokens = Element.splitLexically(_input, true);
-//    	for (int i = 0; i < varNames.count(); i++)
-//    	{
-//    		String varName = varNames.get(i);
-//    		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
-//    		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
-//    		tokens.replaceAll(varName, "$"+varName);
-//    	}
-//    	_input = tokens.getText().replace("\n", "");
-//    	// END KGU#62 2015-11-02
-//
-//    	return _input.trim();
-//    }
-// END KGU#93 2015-12-21
-
     @Override
     protected void generateCode(Instruction _inst, String _indent)
     {
@@ -306,6 +271,11 @@ public class PHPGenerator extends Generator
 				if (transf.startsWith("= $_GET[")) {
 					transf = "dummyInputVar " + transf;
 				}
+				// START KGU#284 2016-10-16: Enh. #274
+				else if (Instruction.isTurtleizerMove(_inst.getText().get(i))) {
+					transf += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+				}
+				// END KGU#284 2016-10-16
 				addCode(transf,	_indent, isDisabled);
 				// END KGU#281 2016-10-16
 			}

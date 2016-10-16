@@ -60,6 +60,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
  *      Kay Gürtzig         2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *
  ******************************************************************************************************
  *
@@ -312,37 +313,6 @@ public class PasGenerator extends Generator
 	{
 		String transline = super.transform(_input);
 
-		// START KGU#93 2015-12-21: Bugfix #41/#68/#69 - overriding no longer needed		
-//            // START KGU 2014-11-16: C comparison operator required transformation, too
-//            _input=BString.replace(_input," != "," <> ");
-//            _input=BString.replace(_input," == "," = ");
-//            // END KGU 2014-11-16
-//            // START KGU 2014-11-10: logical operators required transformation, too
-//            _input=BString.replace(_input," && "," and ");
-//            _input=BString.replace(_input," || "," or ");
-//            _input=BString.replace(_input," ! "," not ");
-//            // END KGU 2014-11-10
-//            // START KGU 2014-11-16: C bit operators required transformation, too
-//            _input=BString.replace(_input," ~ "," not ");
-//            _input=BString.replace(_input," & "," and ");
-//            _input=BString.replace(_input," | "," or ");
-//            _input=BString.replace(_input,"~"," not ");
-//            _input=BString.replace(_input,"&"," and ");
-//            _input=BString.replace(_input,"|"," or ");
-//            _input=BString.replace(_input," << "," shl ");
-//            _input=BString.replace(_input," >> "," shr ");
-//            _input=BString.replace(_input,"<<"," shl ");
-//            _input=BString.replace(_input,">>"," shr ");
-//            // END KGU 2014-11-16
-//            // START KGU 2015-11-02
-//            _input = _input.replace(" % ", " mod ");
-//            // END KGU 2015-11-02
-//
-//            _input.replace("  ", " ");
-//            _input.replace("  ", " ");
-//            return _input.trim();
-// END KGU#93 2015-12-21
-
 		// START KGU#109/KGU#141 2016-01-16: Bugfix #61,#112 - suppress type specifications
 		// (This must work both in Instruction and Call elements)
 		int asgnPos = transline.indexOf(":=");
@@ -453,7 +423,14 @@ public class PasGenerator extends Generator
 					}
 					if (!isArrayInit)
 					{
-						addCode(transline + ";", _indent, isDisabled);
+						// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
+						//code.add(_indent + transline + ";");
+						transline += ";";
+						if (Instruction.isTurtleizerMove(line)) {
+							transline += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor() + " " + this.commentSymbolRight();
+						}
+						addCode(transline, _indent, isDisabled);
+						// END KGU#277/KGU#284 2016-10-13
 					}
 					// END KGU#100 2016-01-14
 				}

@@ -53,6 +53,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done
  *      Kay Gürtzig         2016.10.13      Enh. #270: Handling of disabled elements added.
  *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *
  ******************************************************************************************************
  *
@@ -456,10 +457,15 @@ public class BasGenerator extends Generator
 				if (!isArrayInit)
 				{
 				// END KGU#100 2016-01-22
-					// START KGU#277 2016-10-13: Enh. #270
+					// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 					//code.add(this.getLineNumber() + _indent + transform(_inst.getText().get(i)));
-					addCode(transform(_inst.getText().get(i)), _indent, disabled);
-					// END KGU#277 2016-10-13
+					String line = _inst.getText().get(i);
+					String codeLine = transform(line);
+					if (Instruction.isTurtleizerMove(line)) {
+						codeLine += " : " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+					}
+					addCode(codeLine, _indent, disabled);
+					// END KGU#277/KGU#284 2016-10-13/16
 				// START KGU#100 2016-01-22: Enh. #84 (continued)
 				}
 				// END KGU#100 2016-01-22				
