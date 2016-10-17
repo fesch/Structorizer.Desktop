@@ -114,9 +114,10 @@ public class CGenerator extends Generator
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
 	 * into the target code
+	 * @param withPrompt - is a prompt string to be considered?
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected String getInputReplacer()
+	protected String getInputReplacer(boolean withPrompt)
 	{
 		return "scanf(\"\", &$1)";
 	}

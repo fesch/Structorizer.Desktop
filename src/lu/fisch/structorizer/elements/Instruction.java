@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -48,12 +49,15 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported
  *      Kay Gürtzig     2016.08.10      Issue #227: New classification methods for Input/Output
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactored
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
+ *      Kay Gürtzig     2016.10.15      Enh. #271: method isEmptyInput() had to consider prompt strings now.
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 import java.awt.Color;
@@ -97,18 +101,6 @@ public class Instruction extends Element {
 	}
 	// END KGU#199 2016-07-07
 	
-//	// START KGU#64 2015-11-03: Is to improve drawing performance
-//	/**
-//	 * Recursively clears all drawing info this subtree down
-//	 * (To be overridden by structured sub-classes!)
-//	 */
-//	@Override
-//	public void resetDrawingInfoDown()
-//	{
-//		this.resetDrawingInfo();
-//	}
-//	// END KGU#64 2015-11-03
-
 	public static Rect prepareDraw(Canvas _canvas, StringList _text, Element _element)
 	{
 		Rect rect = new Rect(0, 0, 2*(Element.E_PADDING/2), 0);
@@ -177,17 +169,6 @@ public class Instruction extends Element {
 		// END KGU 2015-10-13
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 			
-		// START KGU 2015-10-13: Became obsolete by new method getFillColor() applied above now
-//		if (_element.isCollapsed())
-//		{
-//			drawColor=Element.E_COLLAPSEDCOLOR;
-//		}
-//		if (_element.selected==true)
-//		{
-//			drawColor=Element.E_DRAWCOLOR;
-//		}
-		// END KGU 2015-10-13
-		
 		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
 		//_element.rect = _top_left.copy();
 		_element.rect = new Rect(0, 0, 
@@ -254,6 +235,11 @@ public class Instruction extends Element {
 		if (_element.haveOuterRectDrawn())
 		{
 			canvas.drawRect(_top_left);
+			// START KGU#277 2016-10-13: Enh. #270
+			if (_element.disabled) {
+				canvas.hatchRect(_top_left, 5, 10);
+			}
+			// END KGU#277 2016-10-13
 		}
 		// START KGU#122 2016-01-03: Enh. #87 - A collapsed element is to be marked by the type-specific symbol,
 		// unless it's an Instruction offspring in which case it will keep its original style, anyway.
@@ -388,6 +374,14 @@ public class Instruction extends Element {
 	{
 		return this.text.count() == 1 && Instruction.isProcedureCall(this.text.get(0));		
 	}
+	// START #274 2016-10-16 (KGU): Improved support for Code export
+	public static boolean isTurtleizerMove(String line)
+	{
+		final StringList turtleizerMovers = StringList.explode("forward,backward,fd,bk", ",");
+		Function fct = new Function(line);
+		return fct.isFunction() && turtleizerMovers.contains(fct.getName()) && fct.paramCount() == 1;
+	}
+	// END #274 2016-10-16
 	
 	public static boolean isFunctionCall(String line)
 	{
@@ -410,7 +404,7 @@ public class Instruction extends Element {
 	// START KGU#236 2016-08-10: Issue #227: New classification for input and output
 	public static boolean isOutput(String line)
 	{
-    	StringList tokens = Element.splitLexically(line, true);
+		StringList tokens = Element.splitLexically(line, true);
 		return (tokens.indexOf(D7Parser.keywordMap.get("output"), !D7Parser.ignoreCase) == 0);
 	}
 	public boolean isOutput()
@@ -427,7 +421,7 @@ public class Instruction extends Element {
 	
 	public static boolean isInput(String line)
 	{
-    	StringList tokens = Element.splitLexically(line, true);
+		StringList tokens = Element.splitLexically(line, true);
 		return (tokens.indexOf(D7Parser.keywordMap.get("input"), !D7Parser.ignoreCase) == 0);
 	}
 	public boolean isInput()
@@ -444,8 +438,18 @@ public class Instruction extends Element {
 	
 	public static boolean isEmptyInput(String line)
 	{
-    	StringList tokens = Element.splitLexically(line, true);
-		return (tokens.count() == 1 && tokens.indexOf(D7Parser.keywordMap.get("input"), !D7Parser.ignoreCase) == 0);
+		StringList tokens = Element.splitLexically(line, true);
+		// START KGU#281 2016-10-15: Enh. #271 - had turned out to be too simple.
+		//return (tokens.count() == 1 && tokens.indexOf(D7Parser.keywordMap.get("input"), !D7Parser.ignoreCase) == 0);
+		boolean isEmptyInp = false;
+		StringList keyTokens = Element.splitLexically(D7Parser.keywordMap.get("input"), false);
+		if (tokens.indexOf(keyTokens, 0, !D7Parser.ignoreCase) == 0) {
+			tokens = tokens.subSequence(keyTokens.count(), tokens.count());
+			tokens.removeAll(" ");
+			isEmptyInp = tokens.count() == 0 || tokens.count() == 1 && (tokens.get(0).startsWith("\"") || tokens.get(0).startsWith("'"));
+		}
+		return isEmptyInp;
+		// END KGU#281 2016-10-15
 	}
 	public boolean isEmptyInput()
 	{

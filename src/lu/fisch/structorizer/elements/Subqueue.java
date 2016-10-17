@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -48,12 +49,14 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.06      Bugfix: changes of the element set now force drawing info invalidation
  *      Kay Gürtzig     2016.07.07      Enh. #185 + #188: Mechanism to convert Instructions to Calls
+ *      Kay Gürtzig     2016.10.13      Enh. #277: setDisabled() added.
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import java.util.Iterator;
 import java.util.Vector;
@@ -86,25 +89,6 @@ public class Subqueue extends Element implements IElementSequence {
 	// START KGU#136 2016-03-01: Bugfix #97
 	private Vector<Integer> y0Children = new Vector<Integer>();
 	// END KGU#136 2016-03-01
-	
-//	// START KGU#64 2015-11-03: Is to improve drawing performance
-//	/**
-//	 * Recursively clears all drawing info this subtree down
-//	 * (To be overridden by structured sub-classes!)
-//	 */
-//	@Override
-//	public void resetDrawingInfoDown()
-//	{
-//		this.resetDrawingInfo();
-//		if (this.children != null)
-//		{
-//			for (int i = 0; i < this.children.size(); i++)
-//			{
-//				this.children.get(i).resetDrawingInfoDown();
-//			}
-//		}
-//	}
-//	// END KGU#64 2015-11-03
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
@@ -160,12 +144,6 @@ public class Subqueue extends Element implements IElementSequence {
 		// END KGU 2015-10-13
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 		Canvas canvas = _canvas;		
-		// START KGU 2015-10-13: Became obsolete by new method getFillColor() applied above now
-//		if (selected==true)
-//		{
-//			drawColor=Element.E_DRAWCOLOR;
-//		}
-		// END KGU 2015-10-13
 		
 		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
 		//rect = _top_left.copy();
@@ -329,48 +307,14 @@ public class Subqueue extends Element implements IElementSequence {
 		return children.iterator();
 	}
 	
-	// START KGU 2015-10-15: Methods merged to Element getElementByCoord(int _x, int _y, _boolean _forSelection)
-//	@Override
-//	public Element selectElementByCoord(int _x, int _y)
-//	{
-//		Element res = super.selectElementByCoord(_x,_y);
-//		Element sel = null;
-//		for(int i=0;i<children.size();i++)
-//		{
-//			sel=((Element) children.get(i)).selectElementByCoord(_x, _y);
-//			if (sel != null)
-//			{
-//				selected=false;
-//				res = sel;
-//			}
-//		}
-//		return res;
-//	}
-//
-//	@Override
-//	public Element getElementByCoord(int _x, int _y)
-//	{
-//		Element res = super.getElementByCoord(_x,_y);
-//		Element sel = null;
-//		for(int i=0;i<children.size();i++)
-//		{
-//			sel=((Element) children.get(i)).getElementByCoord(_x, _y);
-//			if (sel != null)
-//			{
-//				res = sel;
-//			}
-//		}
-//		return res;
-//	}
 
 	@Override
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
 		Element res = super.getElementByCoord(_x, _y, _forSelection);
-    	// START KGU#207 2016-07-21: If this element isn't hit then there is no use searching the substructure
+    	// If this element isn't hit then there is no use searching the substructure
 		if (res != null || _forSelection)
 		{
-		// START KGU#207 2016-07-21
 			Element sel = null;
 			for (int i = 0; i < children.size(); i++)
 			{
@@ -388,12 +332,9 @@ public class Subqueue extends Element implements IElementSequence {
 					res = sel;
 				}
 			}
-		// START KGU#207 2016-07-21
 		}
-		// END KGU#207 2016-07-21
 		return res;
 	}
-	// END KGU 2015-10-11
 	
 	// START KGU#183 2016-04-24: Issue #169 
 	/* (non-Javadoc)
@@ -517,34 +458,6 @@ public class Subqueue extends Element implements IElementSequence {
 	}
 	// END KGU#43 2016-01-22
 
-//	// START KGU 2015-11-12
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.elements.Element#clearBreakpoints()
-//	 */
-//	@Override
-//	public void clearBreakpoints()
-//	{
-//		super.clearBreakpoints();
-//        for(int i = 0; i < children.size(); i++)
-//        {      
-//            children.get(i).clearBreakpoints();
-//        }
-//	}
-//
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.elements.Element#clearExecutionStatus()
-//	 */
-//	@Override
-//	public void clearExecutionStatus()
-//	{
-//    	super.clearExecutionStatus();
-//        for(int i = 0; i < children.size(); i++)
-//        {      
-//            children.get(i).clearExecutionStatus();
-//        }
-//	}
-	// END KGU 2015-10-12
-
 	// START KGU#143 2016-01-22: Bugfix #114 - we need a method to decide execution involvement
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#isExecuted()
@@ -565,19 +478,6 @@ public class Subqueue extends Element implements IElementSequence {
 	// END KGU#143 2016-01-22
 
 	// START KGU#117 2016-03-06: Enh. #77
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
-//	 */
-//	@Override
-//	public void clearRuntimeData()
-//	{
-//		super.clearRuntimeData();
-//        for(int i = 0; i < children.size(); i++)
-//        {      
-//            children.get(i).clearRuntimeData();
-//        }
-//	}
-
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)
 	 */
@@ -685,5 +585,13 @@ public class Subqueue extends Element implements IElementSequence {
 	protected String[] getRelevantParserKeys() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public void setDisabled(boolean disable) {
+		for (int i = 0; i < this.getSize(); i++)
+		{
+			this.getElement(i).disabled = disable;
+		}
 	}
 }

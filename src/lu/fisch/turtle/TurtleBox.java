@@ -26,9 +26,11 @@ import java.awt.Image;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.util.Vector;
+
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+
 import lu.fisch.structorizer.executor.DelayableDiagramController;
 import lu.fisch.turtle.elements.Element;
 import lu.fisch.turtle.elements.Line;
@@ -41,12 +43,16 @@ import lu.fisch.utils.StringList;
  */
 // START KGU#97 2015-12-10: Inheritance change for enhancement request #48
 //public class TurtleBox extends JFrame implements DiagramController
+@SuppressWarnings("serial")
 public class TurtleBox extends JFrame implements DelayableDiagramController
 // END KGU#97 2015-12-10
 {
     private final String TITLE = "Turtleizer";
 
     private Point pos;
+    // START #272 2016-10-16 (KGU)
+    private double posX, posY;		// exact position
+    // END #272 2016-10-16
     private Point home;
     private double angle = -90;
     private Image image = (new ImageIcon(this.getClass().getResource("turtle.png"))).getImage();
@@ -77,16 +83,24 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
 
             if(turtleHidden==false)
             {
+            	// START #272 2016-10-16
                 // fix drawing point
-                int x = (int) Math.round(pos.x - (image.getWidth(this)/2));
-                int y = (int) Math.round(pos.y - (image.getHeight(this)/2));
+                //int x = (int) Math.round(pos.x - (image.getWidth(this)/2));
+                //int y = (int) Math.round(pos.y - (image.getHeight(this)/2));
+                // fix drawing point
+                //int xRot = x+image.getWidth(this)/2;
+                //int yRot = y+image.getHeight(this)/2;
+                // fix drawing point
+                double x = posX - (image.getWidth(this)/2);
+                double y = posY - (image.getHeight(this)/2);
                 // fix rotation point
-                int xRot = x+image.getWidth(this)/2;
-                int yRot = y+image.getHeight(this)/2;
+                double xRot = x + image.getWidth(this)/2;
+                double yRot = y + image.getHeight(this)/2;
+                // END #272 2016-10-16
                 // apply rotation
                 g.rotate((270-angle)/180*Math.PI,xRot,yRot);
                 // draw the turtle
-                g.drawImage(image,x,y,this);
+                g.drawImage(image,(int)Math.round(x),(int)Math.round(y),this);
             }
         }
     };
@@ -106,6 +120,22 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
     {
         return 180+angle;
     }
+    
+    // START #272 2016-10-16 (KGU)
+    private void setPos(Point newPos)
+    {
+    	pos = newPos;
+    	posX = pos.getX();
+    	posY = pos.getY();
+    }
+    
+    private void setPos(double x, double y)
+    {
+    	posX = x;
+    	posY = y;
+    	pos = new Point((int)Math.round(x), (int)Math.round(y));
+    }
+    // END #272 2016-10-16
 
     private void init(int width, int height)
     {
@@ -118,7 +148,7 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
         this.setBounds(0,0,width,height);
         this.getContentPane().add(panel);
         //this.setVisible(true);
-        pos = new Point(panel.getWidth()/2,panel.getHeight()/2);
+        setPos(new Point(panel.getWidth()/2,panel.getHeight()/2));
         home = new Point(panel.getWidth()/2,panel.getHeight()/2);
         panel.setDoubleBuffered(true);
         panel.repaint();
@@ -130,7 +160,7 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
         super.setVisible(visible);
         elements.clear();
         angle=-90;
-        pos = new Point(panel.getWidth()/2,panel.getHeight()/2);
+        setPos(new Point(panel.getWidth()/2,panel.getHeight()/2));
         home = new Point(panel.getWidth()/2,panel.getHeight()/2);
         paint(this.getGraphics());
     }
@@ -165,24 +195,50 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
             elements.add(new Move(pos,newPos));
         }
         //System.out.println("from: ("+pos.x+","+pos.y+") => to: ("+newPos.x+","+newPos.y+")");
-        pos=newPos;
+        setPos(newPos);
         delay();
     }
 
-    public void forward(int pixels)
+    // START #272 2016-10-16 (KGU)
+//    public void forward(int pixels)
+//    {
+//        fd(pixels);
+//    }
+    public void forward(double pixels)
     {
-        fd(pixels);
+    	double newX = posX - Math.cos(angle/180*Math.PI) * pixels;
+    	double newY = posY + Math.sin(angle/180*Math.PI) * pixels;
+        Point newPos = new Point((int)Math.round(newX), (int)Math.round(newY));
+        if (penDown==true)
+        {
+            elements.add(new Line(pos, newPos, penColor));
+        }
+        else
+        {
+            elements.add(new Move(pos, newPos));
+        }
+        //System.out.println("from: ("+pos.x+","+pos.y+") => to: ("+newPos.x+","+newPos.y+")");
+        setPos(newX, newY);
+        delay();
+    	
     }
+    // END #272 2016-10-16
 
     public void bk(int pixels)
     {
         fd(-pixels);
     }
 
-    public void backward(int pixels)
+    // START #272 2016-10-16 (KGU)
+    //public void backward(int pixels)
+    //{
+    //    fd(-pixels);
+    //}
+    public void backward(double pixels)
     {
-        fd(-pixels);
+        forward(-pixels);
     }
+    // END #272 2016-10-16
 
     public void rl(double angle)
     {
@@ -207,9 +263,14 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
 
     public double getAngleToHome()
     {
-        double hypo = Math.sqrt(Math.pow((pos.x-home.x), 2)+Math.pow((pos.y-home.y),2));
-        double base = (home.x-pos.x);
-        double haut = (home.y-pos.y);
+    	// START #272 2016-10-16 (KGU)
+        //double hypo = Math.sqrt(Math.pow((pos.x-home.x), 2)+Math.pow((pos.y-home.y),2));
+        //double base = (home.x-pos.x);
+        //double haut = (home.y-pos.y);
+        double base = (home.x-posX);
+        double haut = (home.y-posY);
+        double hypo = Math.sqrt(base*base + haut*haut);
+        // END #272 2016-10-16
 
         double sinAlpha = haut/hypo;
         double cosAlpha = base/hypo;
@@ -255,7 +316,7 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
     {
         Point newPos = new Point(x,y);
         elements.add(new Move(pos,newPos));
-        pos = newPos;
+        setPos(newPos);
         delay();
    }
 
@@ -349,9 +410,15 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
         String res = new String();
         if(name!=null)
         {
-           if (name.equals("init")) { elements.clear(); angle=-90; pos=home.getLocation(); penDown(); setAnimationDelay((int) param1); }
-           else if (name.equals("forward") || name.equals("fd")) { forward((int) param1); }
-           else if (name.equals("backward") || name.equals("bk")) { backward((int) param1); }
+           if (name.equals("init")) { elements.clear(); angle=-90; setPos(home.getLocation()); penDown(); setAnimationDelay((int) param1); }
+           // START #272 2016-10-16 (KGU): Now different types (to allow to study rounding behaviour)
+           //else if (name.equals("forward") || name.equals("fd")) { forward((int) param1); }
+           //else if (name.equals("backward") || name.equals("bk")) { backward((int) param1); }
+           else if (name.equalsIgnoreCase("forward")) { forward(param1); }
+           else if (name.equalsIgnoreCase("backward")) { backward(param1); }
+           else if (name.equalsIgnoreCase("fd")) { fd((int)param1); }
+           else if (name.equalsIgnoreCase("bk")) { bk((int)param1); }
+           // END #272 2016-10-16
            // START KGU 20141007: Wrong type casting mended (led to rotation biases)
            //else if (name.equals("left") || name.equals("rl")) { left((int) param1); }
            //else if (name.equals("right") || name.equals("rr")) { right((int) param1); }

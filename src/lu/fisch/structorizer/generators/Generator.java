@@ -55,10 +55,19 @@ package lu.fisch.structorizer.generators;
  *                                      code expressions
  *                                      Bugfix #228: Unnecessary error message exporting recursive routines
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.kewordMap refactoring done
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Basic functionality for disabled elements (addCode()))
+ *      Kay Gürtzig     2016.10.15      Enh. #271: transformInput() and signature of getOutputReplacer() modified
+ *      Kay Gürtzig     2016.10.16      Bugfix #275: Defective subroutine registration for topological sort mended
  *
  ******************************************************************************************************
  *
- *      Comment:	
+ *      Comment:
+ *      2016.10.15 - Enhancement #271: Input instruction with integrated prompt string
+ *      - For input isntructions with prompt string (enh. #271), different inputReplacer patterns are needed
+ *        (they must e.g. derive some input instruction). Therefore an API modification for generators to
+ *        plug in became necessary: getInputReplacer() now requires a boolean argument to provide the appropriate
+ *        pattern. Method transformInput() must distinguish and handle the input instruction flavours therefore.
+ *      	
  *      2016.07.20 - Enhancement #160 - option to include called subroutines
  *      - there is no sufficient way to export a called subroutine when its call is generated, because
  *        duplicate exports must be avoided and usually a topological sorting is necessary.
@@ -184,9 +193,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
 	 * into the target code
+	 * @param withPrompt - is a prompt string to be considered?
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected abstract String getInputReplacer();
+	// START KGU#281 2016-10-15: Enh. #271
+	//protected abstract String getInputReplacer();
+	protected abstract String getInputReplacer(boolean withPrompt);
+	// END KGU#281 2016-10-15
 
 	/**
 	 * A pattern how to embed the expression (right-hand side of an output instruction)
@@ -330,6 +343,27 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		}
 	}
 	// END KGU 2015-10-18
+	
+	// START KGU#277 2016-10-13: Enh. #270
+	/**
+	 * Depending on asComment, adds the given text either as comment or as active
+	 * source code to the code lines.
+	 * @param text - the prepared (transformed and composed) line of code
+	 * @param _indent - current indentation
+	 * @param asComment - whether or not the code is to be commented out.
+	 */
+	protected void addCode(String text, String _indent, boolean asComment)
+	{
+		if (asComment)
+		{
+			insertComment(_indent + text, "");
+		}
+		else
+		{
+			code.add(_indent + text);
+		}
+	}
+	// END KGU#277 2016-10-13
 
 	/**
 	 * Overridable general text transformation routine, performing the following steps:
@@ -497,11 +531,23 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 */
 	protected String transformInput(String _interm)
 	{
-		String subst = getInputReplacer();
+		// START KGU#281 2016-10-15: for enh. #271 (input with prompt)
+		//String subst = getInputReplacer();
+		// END KGU#281 2016-10-15
 		// Between the input keyword and the variable name there MUST be some blank...
 		String keyword = D7Parser.keywordMap.get("input").trim();
 		if (!keyword.isEmpty() && _interm.startsWith(keyword))
 		{
+			// START KGU#281 2016-10-15: for enh. #271 (input with prompt)
+			String quotes = "";
+			String tail = _interm.substring(keyword.length()).trim();
+			if (tail.startsWith("\"")) {
+				quotes = "\"";
+			}
+			else if (tail.startsWith("'")) {
+				quotes = "'";
+			}
+			// END KGU#281 2016-10-15
 			String matcher = Matcher.quoteReplacement(keyword);
 			if (Character.isJavaIdentifierPart(keyword.charAt(keyword.length()-1)))
 			{
@@ -515,7 +561,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 			// End - BFI (#51)
 			
-			_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+			// START KGU#281 2016-10-15: Enh. #271 (input instructions with prompt
+			//_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+			if (quotes.isEmpty()) {
+				String subst = getInputReplacer(false);
+				_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+			}
+			else {
+				String subst = getInputReplacer(true);
+				_interm = _interm.replaceFirst("^" + matcher + "\\h*("+quotes+".*"+quotes+")(.*)", subst);
+			}
+			// END KGU#281 2016-10-15
 		}
 		return _interm;
 	}
@@ -815,22 +871,24 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				Root sub = foundRoots.firstElement();
 				// Is there already an entry for this root?
 				SubTopoSortEntry entry = subroutines.getOrDefault(sub, null);
+				boolean toBeCounted = false;
 				if (entry == null)
 				{
 					// No - create a new entry
 					subroutines.put(sub, new SubTopoSortEntry(_caller));
 					newSub = sub;
-					// Now count the call at the callers entry (if there is one)
-					if ((entry = subroutines.getOrDefault(_caller, null)) != null)
-					{
-						entry.nReferingTo++;
-					}
+					toBeCounted = true;
 				}
 				else
 				{
 					// Yes: add the calling routine to the set of roots to be informed
 					// (if not already registered)
-					entry.callers.add(_caller);
+					toBeCounted = entry.callers.add(_caller);
+				}
+				// Now count the call at the callers entry (if there is one)
+				if (toBeCounted && (entry = subroutines.getOrDefault(_caller, null)) != null)
+				{
+					entry.nReferingTo++;
 				}
 			}
 			// START KGU#237 2016-08-10: bugfix #228

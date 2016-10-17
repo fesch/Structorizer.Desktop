@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -33,20 +34,21 @@ package lu.fisch.structorizer.elements;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2008.04.16      First Issue
- *		
+ *		Kay Gürtzig     2016-07-27      Enh. #207: New general substitutions to support warnings introduced
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 public class DetectedError 
 {
 		private String error = new String();
 		private Element element = null;
 		
-		// Contructor
+		// Constructor
 		public DetectedError(String _error, Element _ele)
 		{
 			error=_error;

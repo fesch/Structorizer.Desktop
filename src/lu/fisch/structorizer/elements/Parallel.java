@@ -169,45 +169,6 @@ public class Parallel extends Element
     	text.setText(_text);
     	this.setText(text);
             
-//            Subqueue s = null;
-//
-//            getText().setText(_text);
-//
-//            if(qs==null)
-//            {
-//                    qs = new Vector();
-//            }
-//
-//            // we need at least one line
-//            if(getText().count()>0)
-//            {
-//                int count = 10;
-//                try
-//                {
-//                    // retrieve the number of parallel tasks
-//                    count = Integer.valueOf(getText().get(0).trim());
-//                }
-//                catch (java.lang.NumberFormatException e)
-//                {
-//                    JOptionPane.showMessageDialog(null, "Unknown number <"+getText().get(0).trim()+">.\nSetting number of tasks to 10!", "Error", JOptionPane.ERROR_MESSAGE);
-//                    setText(new StringList());
-//                    getText().add("10");
-//                    count = 10;
-//                }
-//
-//                // add subqueues
-//                while(count>qs.size())
-//                {
-//                        s=new Subqueue();
-//                        s.parent=this;
-//                        qs.add(s);
-//                }
-//                // remove subqueues
-//                while(count<qs.size())
-//                {
-//                        qs.removeElementAt(qs.size()-1);
-//                }
-//            }
 // END KGU#91 2015-12-01            
 
     }
@@ -277,25 +238,6 @@ public class Parallel extends Element
             //setText(_strings);	// Already done by super
     }
 
-//	// START KGU#64 2015-11-03: Is to improve drawing performance
-//	/**
-//	 * Recursively clears all drawing info this subtree down
-//	 * (To be overridden by structured sub-classes!)
-//	 */
-//	@Override
-//	public void resetDrawingInfoDown()
-//	{
-//		this.resetDrawingInfo();
-//		if (this.qs != null)
-//		{
-//			for (int i = 0; i < this.qs.size(); i++)
-//			{
-//				this.qs.get(i).resetDrawingInfoDown();
-//			}
-//		}
-//	}
-//	// END KGU#64 2015-11-03
-    
 	// START KGU#227 2016-07-30: Enh. #128
 	/**
 	 * Provides a subclassable left offset for drawing the text
@@ -413,33 +355,6 @@ public class Parallel extends Element
             int nTasks = Integer.valueOf(getText().get(0));
 
             // START KGU#227 2016-07-30: Enh. #128 - delegate as much as possible to Instruction
-//            Rect myrect = new Rect();
-//    		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
-//    		//Color drawColor = getColor();
-//    		Color drawColor = getFillColor();
-//    		// END KGU 2015-10-13
-//            FontMetrics fm = _canvas.getFontMetrics(Element.font);
-//
-//            Canvas canvas = _canvas;
-//            canvas.setBackground(drawColor);
-//            canvas.setColor(drawColor);
-//
-//    		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
-//    		//rect = _top_left.copy();
-//    		rect = new Rect(0, 0, 
-//    				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
-//    		Point ref = this.getDrawPoint();
-//    		this.topLeft.x = _top_left.left - ref.x;
-//    		this.topLeft.y = _top_left.top - ref.y;
-//    		// END KGU#136 2016-03-01
-//    		
-//            // fill shape
-//            canvas.setColor(drawColor);
-//            myrect = _top_left.copy();
-//            myrect.left += 1;
-//            myrect.top += 1;
-//            //myrect.right -= 1;
-//            canvas.fillRect(myrect);
             StringList headerText = new StringList();
             if (!Element.E_COMMENTSPLUSTEXT && this.isSwitchTextCommentMode())
             {
@@ -451,36 +366,6 @@ public class Parallel extends Element
             // draw shape
             Rect myrect = _top_left.copy();
             // START KGU#227 2016-07-30: Enh. #128 - All delegated to Instruction.draw(...) above
-//            myrect.bottom = _top_left.top + 2*fm.getHeight() + 4*(E_PADDING / 2);
-//            
-//            // draw comment
-//            // START KGU#172 2016-04-01: Issue #145
-//            //if (Element.E_SHOWCOMMENTS==true && !comment.getText().trim().isEmpty())
-//            if (Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().isEmpty())
-//            // END KGU#172 2016-04-01
-//            {
-//    			this.drawCommentMark(canvas, _top_left);
-//    		}
-//            // START KGU 2015-10-11
-//    		// draw breakpoint bar if necessary
-//    		this.drawBreakpointMark(canvas, myrect);
-//    		// END KGU 2015-10-11
-//
-//
-//            // draw lines
-//            canvas.setColor(Color.BLACK);
-//            
-//            // corners
-//            myrect = _top_left.copy();
-//            
-//            // START KGU#172 2016-04-01: Issue #145 - we shall show the comment in switch mode
-//            int headerHeight = 2*(E_PADDING/2);
-//            int footerHeight = 2*(E_PADDING/2);
-//            if (this.isSwitchTextCommentMode() && !this.comment.getText().trim().isEmpty())
-//            {
-//            	headerHeight += this.comment.count() * fm.getHeight();
-//            }
-//            // END KGU#172 2016-04-01
             int headerHeight = this.y0Branches;
             int footerHeight = 2*(E_PADDING/2);
             // END KGU#227 2016-07-30
@@ -520,26 +405,6 @@ public class Parallel extends Element
             _canvas.moveTo(myrect.left, myrect.bottom - footerHeight);
             _canvas.lineTo(myrect.right, myrect.bottom - footerHeight);
             // END KGU#172 2016-04-01
-            
-            // START KGU#227 2016-07-30: Enh. #128 - Obsolete code
-//            // START KGU#172 2016-04.01: Issue #145
-//            // draw the comment in switch Text / Comment mode
-//            if (this.isSwitchTextCommentMode())
-//            {
-//            	for (int ci = 0; ci < this.comment.count(); ci++)
-//            	{
-//            		writeOutVariables(_canvas, myrect.left + 2*(E_PADDING/2), 
-//            				myrect.top + E_PADDING/2 + (ci + 1) * fm.getHeight(),
-//            				this.comment.get(ci), this);
-//            	}
-//            }
-//            // END KGU#172 2016-04-01
-//
-//    		// START KGU#156 2016-03-11: Enh. #124
-//    		// write the run-time info if enabled
-//    		this.writeOutRuntimeInfo(canvas, myrect.right - (Element.E_PADDING * 2), myrect.top);
-//    		// END KGU#156 2016-03-11				
-            // END KGU#227 2016-07-30
             
             // draw children
             myrect = _top_left.copy();
@@ -624,29 +489,6 @@ public class Parallel extends Element
     // END KGU#122 2016-01-03
 
     // START KGU 2015-10-11: Merged with getElementByCoord, which had to be overridden as well for proper Comment popping
-//    @Override
-//    public Element selectElementByCoord(int _x, int _y)
-//    {
-//            Element selMe = super.selectElementByCoord(_x,_y);
-//            Element selCh = null;
-//
-//            for(int i = 0;i<qs.size();i++)
-//            {
-//                    Element pre = ((Subqueue) qs.get(i)).selectElementByCoord(_x,_y);
-//                    if(pre!=null)
-//                    {
-//                            selCh = pre;
-//                    }
-//            }
-//
-//            if(selCh!=null)
-//            {
-//                    selected=false;
-//                    selMe = selCh;
-//            }
-//
-//            return selMe;
-//    }
     @Override
     public Element getElementByCoord(int _x, int _y, boolean _forSelection)
     {
@@ -688,17 +530,6 @@ public class Parallel extends Element
     }
     // END KGU 2015-10-11
     
-//    public void setSelected(boolean _sel)
-//    {
-//            selected=_sel;
-//            /* Quatsch !
-//            for(int i = 0;i<qs.size();i++)
-//            {
-//                    ((Subqueue) qs.get(i)).setSelected(_sel);
-//            }
-//            */
-//    }
-
 	// START KGU#183 2016-04-24: Issue #169 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#findSelected()
@@ -763,58 +594,6 @@ public class Parallel extends Element
 	}
 	// END KGU#117 2016-03-07
 
-//    // START KGU 2015-10-12
-//    /* (non-Javadoc)
-//     * @see lu.fisch.structorizer.elements.Element#clearBreakpoints()
-//     */
-//    @Override
-//    public void clearBreakpoints()
-//    {
-//    	super.clearBreakpoints();
-//    	if (qs!= null)
-//    	{
-//    		for (int i = 0; i < qs.size(); i++)
-//    		{
-//    			qs.get(i).clearBreakpoints();
-//    		}
-//    	}
-//    }
-//    // END KGU 2015-10-12
-//    
-//    // START KGU 2015-10-16
-//    /* (non-Javadoc)
-//     * @see lu.fisch.structorizer.elements.Element#clearExecutionStatus()
-//     */
-//    @Override
-//    public void clearExecutionStatus()
-//    {
-//    	super.clearExecutionStatus();
-//    	if (qs!= null)
-//    	{
-//    		for (int i = 0; i < qs.size(); i++)
-//    		{
-//    			qs.get(i).clearExecutionStatus();
-//    		}
-//    	}
-//    }
-//    // END KGU 2015-10-16
-//    
-//	// START KGU#117 2016-03-06: Enh. #77
-//    /* (non-Javadoc)
-//     * @see lu.fisch.structorizer.elements.Element#clearExecutionStatus()
-//     */
-//    @Override
-//    public void clearRuntimeData()
-//    {
-//    	super.clearRuntimeData();
-//    	if (qs!= null)
-//    	{
-//    		for (int i = 0; i < qs.size(); i++)
-//    		{
-//    			qs.get(i).clearRuntimeData();
-//    		}
-//    	}
-//    }
 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#isTestCovered(boolean)

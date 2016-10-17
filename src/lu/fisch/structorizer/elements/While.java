@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -52,7 +53,8 @@ package lu.fisch.structorizer.elements;
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import java.awt.Point;
 
@@ -98,19 +100,6 @@ public class While extends Element implements ILoop {
 		setText(_strings);
 	}
 	
-//	// START KGU#64 2015-11-03: Is to improve drawing performance
-//	/**
-//	 * Recursively clears all drawing info this subtree down
-//	 * (To be overridden by structured sub-classes!)
-//	 */
-//	@Override
-//	public void resetDrawingInfoDown()
-//	{
-//		this.resetDrawingInfo();
-//		this.q.resetDrawingInfoDown();
-//	}
-//	// END KGU#64 2015-11-03
-
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
@@ -128,24 +117,6 @@ public class While extends Element implements ILoop {
 		}
 		
 		// START KGU#227 2016-07-30: Enh. #128 - Just delegate the basics to Instruction
-//		rect0.top = 0;
-//		rect0.left = 0;
-//		
-//		rect0.right = 2*(E_PADDING/2);
-//		
-//		FontMetrics fm = _canvas.getFontMetrics(font);
-//		
-//		rect0.right = (2*(E_PADDING/2));
-//		for (int i = 0; i < getText(false).count(); i++)
-//		{
-//			int lineWidth = getWidthOutVariables(_canvas,getText(false).get(i),this)+2*(E_PADDING/2);
-//			if (rect0.right < lineWidth)
-//			{
-//				rect0.right = lineWidth;
-//			}
-//		}
-//		
-//		rect0.bottom = 2*(E_PADDING/2) + getText(false).count() * fm.getHeight();
 		rect0 = Instruction.prepareDraw(_canvas, this.getText(false), this);
 		// END KGU#227 2016-07-30
 		
@@ -179,85 +150,6 @@ public class While extends Element implements ILoop {
 		}
 
 		// START KGU#227 2016-07-30: Enh. #128 - on this occasion delegate as much as possible
-//		Rect myrect = new Rect();
-//		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
-//		//Color drawColor = getColor();
-//		Color drawColor = getFillColor();
-//		// END KGU 2015-10-13
-//		FontMetrics fm = _canvas.getFontMetrics(Element.font);
-//		
-//		Canvas canvas = _canvas;
-//		canvas.setBackground(drawColor);
-//		canvas.setColor(drawColor);
-//		
-//		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
-//		//rect = _top_left.copy();
-//		rect = new Rect(0, 0, 
-//				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
-//		Point ref = this.getDrawPoint();
-//		this.topLeft.x = _top_left.left - ref.x;
-//		this.topLeft.y = _top_left.top - ref.y;
-//		// END KGU#136 2016-03-01
-//		
-//		int headerHeight = fm.getHeight() * getText(false).count() + 2*(E_PADDING / 2);
-//		
-//		// FIXME (KGU): What is this nonsense good for?
-//		// draw shape
-//		myrect = _top_left.copy();
-//		canvas.setColor(Color.BLACK);
-//		myrect.bottom = _top_left.top + headerHeight;
-//		canvas.drawRect(myrect);
-//		
-//		myrect = _top_left.copy();
-//		myrect.right = myrect.left + Element.E_PADDING;
-//		canvas.drawRect(myrect);
-//		
-//		// fill shape
-//		canvas.setColor(drawColor);
-//		myrect.left += 1;
-//		myrect.top += 1;
-//		//myrect.bottom = myrect.bottom;
-//		//myrect.right = myrect.right;
-//		canvas.fillRect(myrect);
-//	
-//		myrect = _top_left.copy();
-//		myrect.bottom = _top_left.top + headerHeight;
-//		myrect.left += 1;
-//		myrect.top += 1;
-//		//myrect.bottom = myrect.bottom;
-//		//myrect.right = myrect.right;
-//		canvas.fillRect(myrect);
-//		
-//		// draw comment
-//		if (Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
-//		{
-//			// START KGU 2015-10-11: Use an inherited helper method now
-//			this.drawCommentMark(canvas, _top_left);
-//			// END KGU 2015-10-11
-//		}
-//		// START KGU 2015-10-11
-//		// draw breakpoint bar if necessary
-//		this.drawBreakpointMark(canvas, _top_left);
-//		// END KGU 2015-10-11
-//		
-//		// START KGU#156 2016-03-11: Enh. #124
-//		// write the run-time info if enabled
-//		this.writeOutRuntimeInfo(canvas, _top_left.left + rect.right - (Element.E_PADDING / 2), _top_left.top);
-//		// END KGU#156 2016-03-11
-//						
-//		myrect = _top_left.copy();
-//		// draw text
-//		for (int i = 0; i < getText(false).count(); i++)
-//		{
-//			String text = this.getText(false).get(i);
-//			
-//			canvas.setColor(Color.BLACK);
-//			writeOutVariables(canvas,
-//							  _top_left.left + (E_PADDING / 2),
-//							_top_left.top + (E_PADDING / 2) + (i+1)*fm.getHeight(),
-//							text, this
-//							);  	
-//		}
 		Instruction.draw(_canvas, _top_left, this.getText(false), this);
 		// END KGU#227 2016-07-30
 		
@@ -281,19 +173,7 @@ public class While extends Element implements ILoop {
 	}
 	// END KGU#122 2016-01-03
 	
-	// START KGU 2015-10-11: Merged with getElementByCoord, which had to be overridden as well for proper Comment popping
-//	public Element selectElementByCoord(int _x, int _y)
-//	{
-//		Element selMe = super.selectElementByCoord(_x,_y);
-//		Element sel = q.selectElementByCoord(_x,_y);
-//		if(sel!=null) 
-//		{
-//			selected=false;
-//			selMe = sel;
-//		}
-//		
-//		return selMe;
-//	}
+	// START KGU 2015-10-11: Merged with seletElementByCoord, which had to be overridden as well for proper Comment popping
 	@Override
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
@@ -321,12 +201,6 @@ public class While extends Element implements ILoop {
 		return selMe;
 	}
 	// END KGU 2015-10-11
-	
-//	public void setSelected(boolean _sel)
-//	{
-//		selected=_sel;
-//		//q.setSelected(_sel);
-//	}
 	
 	// START KGU#183 2016-04-24: Issue #169 
 	/* (non-Javadoc)
@@ -385,36 +259,6 @@ public class While extends Element implements ILoop {
         q.setColor(_color);
     }*/
 	
-//	// START KGU#43 2015-10-12
-//	@Override
-//	public void clearBreakpoints()
-//	{
-//		super.clearBreakpoints();
-//		this.q.clearBreakpoints();
-//	}
-//	// END KGU#43 2015-10-12
-//	
-//	// START KGU#43 2015-11-09
-//	@Override
-//	public void clearExecutionStatus()
-//	{
-//		super.clearExecutionStatus();
-//		this.q.clearExecutionStatus();
-//	}
-//	// END KGU#43 2015-11-09
-//	
-//	// START KGU#117 2016-03-06: Enh. #77
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
-//	 */
-//	@Override
-//	public void clearRuntimeData()
-//	{
-//		super.clearRuntimeData();
-//		this.getBody().clearRuntimeData();
-//	}
-//	// END KGU#117 2016-03-06
-
 	// START KGU#156 2016-03-13: Enh. #124
 	protected String getRuntimeInfoString()
 	{

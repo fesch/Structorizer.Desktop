@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.generators;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -57,6 +58,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016-07-20      Enh. #160 - optional export of called subroutines implemented
  *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
  *      Kay Gürtzig         2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
+ *      Kay Gürtzig         2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *
  ******************************************************************************************************
  *
@@ -85,7 +89,8 @@ package lu.fisch.structorizer.generators;
  *      2009.08.17 - Bugfixes
  *      - added automatic brackets for "while", "switch", "repeat" & "if"
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
@@ -176,12 +181,22 @@ public class PasGenerator extends Generator
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
 	 * into the target code
+	 * @param withPrompt - is a prompt string to be considered?
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected String getInputReplacer()
+	// START KGU#281 2016-10-15: Enh. #271
+	//protected String getInputReplacer()
+	//{
+	//	return "readln($1)";
+	//}
+	protected String getInputReplacer(boolean withPrompt)
 	{
+		if (withPrompt) {
+			return "write($1); readln($2)";
+		}
 		return "readln($1)";
 	}
+	// END KGU#281 2016-10-15
 
 	/**
 	 * A pattern how to embed the expression (right-hand side of an output instruction)
@@ -298,37 +313,6 @@ public class PasGenerator extends Generator
 	{
 		String transline = super.transform(_input);
 
-		// START KGU#93 2015-12-21: Bugfix #41/#68/#69 - overriding no longer needed		
-//            // START KGU 2014-11-16: C comparison operator required transformation, too
-//            _input=BString.replace(_input," != "," <> ");
-//            _input=BString.replace(_input," == "," = ");
-//            // END KGU 2014-11-16
-//            // START KGU 2014-11-10: logical operators required transformation, too
-//            _input=BString.replace(_input," && "," and ");
-//            _input=BString.replace(_input," || "," or ");
-//            _input=BString.replace(_input," ! "," not ");
-//            // END KGU 2014-11-10
-//            // START KGU 2014-11-16: C bit operators required transformation, too
-//            _input=BString.replace(_input," ~ "," not ");
-//            _input=BString.replace(_input," & "," and ");
-//            _input=BString.replace(_input," | "," or ");
-//            _input=BString.replace(_input,"~"," not ");
-//            _input=BString.replace(_input,"&"," and ");
-//            _input=BString.replace(_input,"|"," or ");
-//            _input=BString.replace(_input," << "," shl ");
-//            _input=BString.replace(_input," >> "," shr ");
-//            _input=BString.replace(_input,"<<"," shl ");
-//            _input=BString.replace(_input,">>"," shr ");
-//            // END KGU 2014-11-16
-//            // START KGU 2015-11-02
-//            _input = _input.replace(" % ", " mod ");
-//            // END KGU 2015-11-02
-//
-//            _input.replace("  ", " ");
-//            _input.replace("  ", " ");
-//            return _input.trim();
-// END KGU#93 2015-12-21
-
 		// START KGU#109/KGU#141 2016-01-16: Bugfix #61,#112 - suppress type specifications
 		// (This must work both in Instruction and Call elements)
 		int asgnPos = transline.indexOf(":=");
@@ -374,13 +358,9 @@ public class PasGenerator extends Generator
     @Override
     protected void generateCode(Instruction _inst, String _indent)
     {
-    	// START KGU 2015-10-18: The "export instructions as comments" configuration had been ignored here
-//		insertComment(_inst, _indent);
-//		for(int i=0;i<_inst.getText().count();i++)
-//		{
-//			code.add(_indent+transform(_inst.getText().get(i))+";");
-//		}
 		if (!insertAsComment(_inst, _indent)) {
+			
+			boolean isDisabled = _inst.isDisabled();
 			
 			insertComment(_inst, _indent);
 
@@ -396,13 +376,14 @@ public class PasGenerator extends Generator
 					String argument = line.substring(preReturn.length()).trim();
 					if (!argument.isEmpty())
 					{
-						code.add(_indent + this.procName + " := " + transform(argument) + ";"); 
+						addCode(this.procName + " := " + transform(argument) + ";",
+								_indent, isDisabled); 
 					}
 					Subqueue sq = (_inst.parent == null) ? null : (Subqueue)_inst.parent;
 					if (sq == null || !(sq.parent instanceof Root) || sq.getIndexOf(_inst) != sq.getSize()-1 ||
 							i+1 < _inst.getText().count())
 					{
-						code.add(_indent + "exit;");
+						addCode("exit;", _indent, isDisabled);
 					}
 				}
 				else	// no return
@@ -433,15 +414,23 @@ public class PasGenerator extends Generator
 									_indent.length());
 							for (int el = 0; el < elements.count(); el++)
 							{
-								code.add(_indent + varName + "[indexBase_" + varName + " + " + el + "] := " + 
-										elements.get(el) + ";");
+								addCode(varName + "[indexBase_" + varName + " + " + el + "] := " + 
+										elements.get(el) + ";",
+										_indent, isDisabled);
 							}
 						}
 						
 					}
 					if (!isArrayInit)
 					{
-						code.add(_indent + transline + ";");
+						// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
+						//code.add(_indent + transline + ";");
+						transline += ";";
+						if (Instruction.isTurtleizerMove(line)) {
+							transline += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor() + " " + this.commentSymbolRight();
+						}
+						addCode(transline, _indent, isDisabled);
+						// END KGU#277/KGU#284 2016-10-13
 					}
 					// END KGU#100 2016-01-14
 				}
@@ -449,109 +438,118 @@ public class PasGenerator extends Generator
 			}
 
 		}
-		// END KGU 2015-10-18
     }
 
     @Override
     protected void generateCode(Alternative _alt, String _indent)
     {
-            // START KGU 2014-11-16
-            insertComment(_alt, _indent);
-            // END KGU 2014-11-16
-            
-            String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
-            if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
+    	boolean isDisabled = _alt.isDisabled();
 
-            code.add(_indent+"if "+condition+" then");
-            code.add(_indent+"begin");
-            generateCode(_alt.qTrue,_indent+this.getIndent());
-            if(_alt.qFalse.getSize()!=0)
-            {
-                    code.add(_indent+"end");
-                    code.add(_indent+"else");
-                    code.add(_indent+"begin");
-                    generateCode(_alt.qFalse,_indent+this.getIndent());
-            }
-            code.add(_indent+"end;");
+    	// START KGU 2014-11-16
+    	insertComment(_alt, _indent);
+    	// END KGU 2014-11-16
+
+    	String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
+    	if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
+
+    	addCode("if "+condition+" then", _indent, isDisabled);
+    	addCode("begin", _indent, isDisabled);
+    	generateCode(_alt.qTrue,_indent+this.getIndent());
+    	if(_alt.qFalse.getSize()!=0)
+    	{
+    		addCode("end", _indent, isDisabled);
+    		addCode("else", _indent, isDisabled);
+    		addCode("begin", _indent, isDisabled);
+    		generateCode(_alt.qFalse,_indent+this.getIndent());
+    	}
+    	addCode("end;", _indent, isDisabled);
     }
 
     @Override
     protected void generateCode(Case _case, String _indent)
     {
-            // START KGU 2014-11-16
-            insertComment(_case, _indent);
-            // END KGU 2014-11-16
+    	boolean isDisabled = _case.isDisabled();
 
-            String condition = transform(_case.getText().get(0));
-            if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
+    	// START KGU 2014-11-16
+    	insertComment(_case, _indent);
+    	// END KGU 2014-11-16
 
-            code.add(_indent+"case "+condition+" of");
+    	String condition = transform(_case.getText().get(0));
+    	if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
 
-            for(int i=0;i<_case.qs.size()-1;i++)
-            {
-                    code.add(_indent+this.getIndent()+_case.getText().get(i+1).trim()+":");
-                    code.add(_indent+this.getIndent()+this.getIndent()+"begin");
-                    generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent()+this.getIndent());
-                    code.add(_indent+this.getIndent()+this.getIndent()+"end;");
-            }
+    	addCode("case "+condition+" of", _indent, isDisabled);
 
-            if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
-            {
-                    code.add(_indent+this.getIndent()+"else");
-                    generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());
-            }
-            code.add(_indent+"end;");
+    	for(int i=0;i<_case.qs.size()-1;i++)
+    	{
+    		addCode(_case.getText().get(i+1).trim()+":", _indent+this.getIndent(), isDisabled);
+    		addCode("begin", _indent+this.getIndent()+this.getIndent(), isDisabled);
+    		generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent()+this.getIndent());
+    		addCode("end;", _indent+this.getIndent()+this.getIndent(), isDisabled);
+    	}
+
+    	if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+    	{
+    		addCode("else", _indent+this.getIndent(), isDisabled);
+    		generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());
+    	}
+    	addCode("end;", _indent, isDisabled);
     }
 
     @Override
     protected void generateCode(For _for, String _indent)
     {
-            // START KGU 2014-11-16
-            insertComment(_for, _indent);
-            // END KGU 2014-11-16
+    	// START KGU 2014-11-16
+    	insertComment(_for, _indent);
+    	// END KGU 2014-11-16
 
-        	// START KGU#61 2016-03-23: Enh. 84
-        	if (_for.isForInLoop() && generateForInCode(_for, _indent))
-        	{
-        		// All done
-        		return;
-        	}
-        	// END KGU#61 2016-03-23
+    	// START KGU#61 2016-03-23: Enh. 84
+    	if (_for.isForInLoop() && generateForInCode(_for, _indent))
+    	{
+    		// All done
+    		return;
+    	}
+    	// END KGU#61 2016-03-23
 
-        	// START KGU#3 2015-11-02: New reliable loop parameter mechanism
-    		//code.add(_indent+"for "+BString.replace(transform(_for.getText().getText()),"\n","").trim()+" do");
-            //code.add(_indent + "begin");
-            //generateCode(_for.q, _indent+this.getIndent());
-        	String counter = _for.getCounterVar();
-            int step = _for.getStepConst();
-            if (Math.abs(step) == 1)
-            {
-            	// We may employ a For loop
-                String incr = (step == 1) ? " to " : " downto ";
-        		code.add(_indent + "for " + counter + " := " + transform(_for.getStartValue(), false) +
-        				incr + transform(_for.getEndValue(), false) + " do");
-            }
-            else
-            {
-            	// While loop required
-            	code.add(_indent + counter + " := " + transform(_for.getStartValue(), false));
-            	code.add(_indent + "while " + counter + ((step > 0) ? " <= " : " >= ") + transform(_for.getEndValue(), false) + " do");
-            }
-            code.add(_indent + "begin");
-            generateCode(_for.q, _indent+this.getIndent());
-            if (Math.abs(step) != 1)
-            {
-            	code.add(_indent + this.getIndent() + counter + " := " + counter + ((step > 0) ? " + " : " ") + step ); 
-            }
-            // END KGU#3 2015-11-02
-            code.add(_indent + "end;");
-            
-            // START KGU#74 2015-11-30: The following instruction is goto target
-            if (this.jumpTable.containsKey(_for))
-            {
-            	code.add(_indent + "StructorizerLabel_" + this.jumpTable.get(_for).intValue() + ": ;");
-            }
-            // END KGU 2015-11-30
+    	boolean isDisabled = _for.isDisabled();
+    	// START KGU#3 2015-11-02: New reliable loop parameter mechanism
+    	//code.add(_indent+"for "+BString.replace(transform(_for.getText().getText()),"\n","").trim()+" do");
+    	//code.add(_indent + "begin");
+    	//generateCode(_for.q, _indent+this.getIndent());
+    	String counter = _for.getCounterVar();
+    	int step = _for.getStepConst();
+    	if (Math.abs(step) == 1)
+    	{
+    		// We may employ a For loop
+    		String incr = (step == 1) ? " to " : " downto ";
+    		addCode("for " + counter + " := " + transform(_for.getStartValue(), false) +
+    				incr + transform(_for.getEndValue(), false) + " do",
+    				_indent, isDisabled);
+    	}
+    	else
+    	{
+    		// While loop required
+    		addCode(counter + " := " + transform(_for.getStartValue(), false),
+    				_indent, isDisabled);
+    		addCode("while " + counter + ((step > 0) ? " <= " : " >= ") + transform(_for.getEndValue(), false) + " do",
+    				_indent, isDisabled);
+    	}
+    	addCode("begin", _indent, isDisabled);
+    	generateCode(_for.q, _indent+this.getIndent());
+    	if (Math.abs(step) != 1)
+    	{
+    		addCode(counter + " := " + counter + ((step > 0) ? " + " : " ") + step,
+    				_indent + this.getIndent(), isDisabled); 
+    	}
+    	// END KGU#3 2015-11-02
+    	addCode("end;", _indent, isDisabled);
+
+    	// START KGU#74 2015-11-30: The following instruction is goto target
+    	if (this.jumpTable.containsKey(_for))
+    	{
+    		addCode("StructorizerLabel_" + this.jumpTable.get(_for).intValue() + ": ;",
+    				_indent, isDisabled);
+    	}
+    	// END KGU 2015-11-30
     }
 
 	// START KGU#61 2016-03-23: Enh. #84 - Support for FOR-IN loops
@@ -567,6 +565,7 @@ public class PasGenerator extends Generator
 	protected boolean generateForInCode(For _for, String _indent)
 	{
 		boolean done = false;
+		boolean isDisabled = _for.isDisabled();
 		String var = _for.getCounterVar();
 		StringList items = this.extractForInListItems(_for);
 		if (items != null)
@@ -645,17 +644,20 @@ public class PasGenerator extends Generator
 			// Now we create code to fill the array with the enumerated values
 			for (int i = 0; i < nItems; i++)
 			{
-				code.add(_indent + arrayName + "[" + (i+1) + "] := " + items.get(i) + ";");
+				addCode(arrayName + "[" + (i+1) + "] := " + items.get(i) + ";",
+						_indent, isDisabled);
 			}
 			
 			// Creation of the loop header
-    		code.add(_indent + "for " + indexName + " := 1 to " + nItems + " do");
+    		addCode("for " + indexName + " := 1 to " + nItems + " do",
+    				_indent, isDisabled);
 
     		// Creation of the loop body
-            code.add(_indent + "begin");
-            code.add(_indent+this.getIndent() + var + " := " + arrayName + "[" + indexName + "];");
+            addCode("begin", _indent, isDisabled);
+            addCode(var + " := " + arrayName + "[" + indexName + "];",
+            		_indent+this.getIndent(), isDisabled);
             generateCode(_for.q, _indent+this.getIndent());
-            code.add(_indent + "end;");
+            addCode("end;", _indent, isDisabled);
 
             done = true;
 		}
@@ -667,11 +669,12 @@ public class PasGenerator extends Generator
 			this.insertComment("TODO: Rewrite this loop (there was no way to convert this automatically)", _indent);
 
 			// Creation of the loop header
-			code.add(_indent + "for " + var + " in " + transform(valueList, false) + " do");
+			addCode("for " + var + " in " + transform(valueList, false) + " do",
+					_indent, isDisabled);
 			// Add the loop body as is
-            code.add(_indent + "begin");
+            addCode("begin", _indent, isDisabled);
 			generateCode(_for.q, _indent + this.getIndent());
-            code.add(_indent + "end;");
+            addCode("end;", _indent, isDisabled);
 			
 			done = true;
 		}
@@ -682,85 +685,94 @@ public class PasGenerator extends Generator
 	@Override
     protected void generateCode(While _while, String _indent)
     {
-            // START KGU 2014-11-16
-            insertComment(_while, _indent);
-            // END KGU 2014-11-16
+		boolean isDisabled = _while.isDisabled();
+		// START KGU 2014-11-16
+		insertComment(_while, _indent);
+		// END KGU 2014-11-16
 
-            String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
-            if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
+		String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
+		if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
 
-            code.add(_indent+"while "+condition+" do");
-            code.add(_indent+"begin");
-            generateCode(_while.q,_indent+this.getIndent());
-            code.add(_indent+"end;");
+		addCode("while "+condition+" do", _indent, isDisabled);
+		addCode("begin", _indent, isDisabled);
+		generateCode(_while.q,_indent+this.getIndent());
+		addCode("end;", _indent, isDisabled);
 
-            // START KGU#74 2015-11-30: The following instruction is goto target
-            if (this.jumpTable.containsKey(_while))
-            {
-            	code.add(_indent + "StructorizerLabel_" + this.jumpTable.get(_while).intValue() + ": ;");
-            }
-            // END KGU 2015-11-30
-    }
+		// START KGU#74 2015-11-30: The following instruction is goto target
+		if (this.jumpTable.containsKey(_while))
+		{
+			addCode("StructorizerLabel_" + this.jumpTable.get(_while).intValue() + ": ;",
+					_indent, isDisabled);
+		}
+		// END KGU 2015-11-30
+	}
 
-    @Override
-    protected void generateCode(Repeat _repeat, String _indent)
-    {
-            // START KGU 2014-11-16
-            insertComment(_repeat, _indent);
-            // END KGU 2014-11-16
+	@Override
+	protected void generateCode(Repeat _repeat, String _indent)
+	{
+		boolean isDisabled = _repeat.isDisabled();
+		// START KGU 2014-11-16
+		insertComment(_repeat, _indent);
+		// END KGU 2014-11-16
 
-            String condition = BString.replace(transform(_repeat.getText().getText()),"\n","").trim();
-            if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
+		String condition = BString.replace(transform(_repeat.getText().getText()),"\n","").trim();
+		if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
 
-            code.add(_indent+"repeat");
-            generateCode(_repeat.q,_indent+this.getIndent());
-            code.add(_indent+"until "+condition+";");
+		addCode("repeat", _indent, isDisabled);
+		generateCode(_repeat.q,_indent+this.getIndent());
+		addCode(_indent+"until "+condition+";", _indent, isDisabled);
 
-            // START KGU#74 2015-11-30: The following instruction is goto target
-            if (this.jumpTable.containsKey(_repeat))
-            {
-            	code.add(_indent + "StructorizerLabel_" + this.jumpTable.get(_repeat).intValue() + ": ;");
-            }
-            // END KGU 2015-11-30
-    }
+		// START KGU#74 2015-11-30: The following instruction is goto target
+		if (this.jumpTable.containsKey(_repeat))
+		{
+			addCode("StructorizerLabel_" + this.jumpTable.get(_repeat).intValue() + ": ;",
+					_indent, isDisabled);
+		}
+		// END KGU 2015-11-30
+	}
 
-    @Override
-    protected void generateCode(Forever _forever, String _indent)
-    {
-            // START KGU 2014-11-16
-            insertComment(_forever, _indent);
-            // END KGU 2014-11-16
+	@Override
+	protected void generateCode(Forever _forever, String _indent)
+	{
+		boolean isDisabled = _forever.isDisabled();
+		// START KGU 2014-11-16
+		insertComment(_forever, _indent);
+		// END KGU 2014-11-16
 
-            code.add(_indent+"while (true) do");
-            code.add(_indent+"begin");
-            generateCode(_forever.q,_indent+this.getIndent());
-            code.add(_indent+"end;");
+		addCode("while (true) do", _indent, isDisabled);
+		addCode("begin", _indent, isDisabled);
+		generateCode(_forever.q,_indent+this.getIndent());
+		addCode("end;", _indent, isDisabled);
 
-            // START KGU#74 2015-11-30: The following instruction is goto target
-            if (this.jumpTable.containsKey(_forever))
-            {
-            	code.add(_indent + "StructorizerLabel_" + this.jumpTable.get(_forever).intValue() + ": ;");
-            }
-            // END KGU 2015-11-30
-    }
-	
-    @Override
-    protected void generateCode(Call _call, String _indent)
-    {
-            // START KGU 2014-11-16
-            insertComment(_call, _indent);
-            // END KGU 2014-11-16
+		// START KGU#74 2015-11-30: The following instruction is goto target
+		if (this.jumpTable.containsKey(_forever))
+		{
+			addCode("StructorizerLabel_" + this.jumpTable.get(_forever).intValue() + ": ;",
+					_indent, isDisabled);
+		}
+		// END KGU 2015-11-30
+	}
 
-            for(int i=0;i<_call.getText().count();i++)
-            {
-                    code.add(_indent+transform(_call.getText().get(i))+";");
-            }
+	@Override
+	protected void generateCode(Call _call, String _indent)
+	{
+		boolean isDisabled = _call.isDisabled();
+		// START KGU 2014-11-16
+		insertComment(_call, _indent);
+		// END KGU 2014-11-16
+
+    	for(int i=0;i<_call.getText().count();i++)
+    	{
+    		addCode(transform(_call.getText().get(i))+";", _indent, isDisabled);
+    	}
     }
 
     @Override
     protected void generateCode(Jump _jump, String _indent)
     {
 		if (!insertAsComment(_jump, _indent)) {
+			
+			boolean isDisabled = _jump.isDisabled();
 
 			insertComment(_jump, _indent);
 
@@ -788,7 +800,7 @@ public class PasGenerator extends Generator
 				{
 					insertComment("WARNING: Most Pascal compilers don't support jump instructions!", _indent);					
 				}
-				code.add(_indent + "goto" + " " + label + ";");
+				addCode("goto" + " " + label + ";", _indent, isDisabled);
 			}
 			else
 			{
@@ -810,13 +822,13 @@ public class PasGenerator extends Generator
 						String argument = line.substring(preReturn.length()).trim();
 						if (!argument.isEmpty())
 						{
-							code.add(_indent + this.procName + " := " + argument + ";"); 
+							addCode(this.procName + " := " + argument + ";", _indent, isDisabled); 
 						}
 						// START KGU 2016-01-17: Omit the exit if this is the last instruction of the diagram
 						//code.add(_indent + "exit;");
 						if (i < lines.count()-1 || !((_jump.parent).parent instanceof Root))
 						{
-							code.add(_indent + "exit;");
+							addCode("exit;", _indent, isDisabled);
 						}
 						// END KGU 2016-01-17
 					}
@@ -824,7 +836,7 @@ public class PasGenerator extends Generator
 					{
 						String argument = line.substring(preExit.length()).trim();
 						if (!argument.isEmpty()) { argument = "(" + argument + ")"; }
-						code.add(_indent + "halt" + argument + ";");
+						addCode("halt" + argument + ";", _indent, isDisabled);
 					}
 					else if (!isEmpty)
 					{
@@ -846,72 +858,38 @@ public class PasGenerator extends Generator
 	// START KGU#47 2015-11-30: Offer at least a sequential execution (which is one legal execution order)
 	protected void generateCode(Parallel _para, String _indent)
 	{
+		boolean isDisabled = _para.isDisabled();
+		
 		// START KGU 2014-11-16
 		insertComment(_para, _indent);
 		// END KGU 2014-11-16
 
-		code.add("");
+		addCode("", "", isDisabled);
 		insertComment("==========================================================", _indent);
 		insertComment("================= START PARALLEL SECTION =================", _indent);
 		insertComment("==========================================================", _indent);
 		insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
-		code.add(_indent + "begin");
+		addCode("begin", _indent, isDisabled);
 
 		for (int i = 0; i < _para.qs.size(); i++) {
-			code.add("");
+			addCode("", "", isDisabled);
 			insertComment("----------------- START THREAD " + i + " -----------------", _indent + this.getIndent());
-			code.add(_indent + this.getIndent() + "begin");
+			addCode("begin", _indent + this.getIndent(), isDisabled);
 			generateCode((Subqueue) _para.qs.get(i), _indent + this.getIndent() + this.getIndent());
-			code.add(_indent + this.getIndent() + "end;");
+			addCode("end;", _indent + this.getIndent(), isDisabled);
 			insertComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
-			code.add("");
+			addCode("", "", isDisabled);
 		}
 
-		code.add(_indent + "end;");
+		addCode("end;", _indent, isDisabled);
 		insertComment("==========================================================", _indent);
 		insertComment("================== END PARALLEL SECTION ==================", _indent);
 		insertComment("==========================================================", _indent);
-		code.add("");
+		addCode("", "", isDisabled);
 	}
 	// END KGU#47 2015-11-30
 
-// KGU#74 2015-11-30: Now using the decomposed sub-methods     
-//    @Override
-//    public String generateCode(Root _root, String _indent)
-//    {
-//            String pr = "program";
-//            if(_root.isProgram==false) {pr="function";}
-//
-//            // START KGU 2014-11-16
-//            insertComment(_root, _indent);
-//            // END KGU 2014-11-16
-//            // START KGU 2015-10-18
-//            insertComment("(Generated by Structorizer)", _indent);            
-//            // END KGU 2015-10-18
-//            
-//            // START KGU 2015-10-18
-//            //code.add(_indent + pr+" "+_root.getText().get(0)+";");
-//            String signature = _root.getMethodName();
-//            if (!_root.isProgram) {
-//            	insertComment("TODO declare the parameters and specify the result type!", _indent);
-//                StringList paraNames = _root.getParameterNames();
-//                signature = signature + "(" + BString.replace(paraNames.getText(), "\n", "; ") + ")";
-//            }
-//            code.add(_indent + pr + " " + signature + ";");
-//            // END KGU 2015-10-18
-//            code.add("");
-//            // START KGU 2014-11-16: comment syntax corrected
-//            //code.add("// declare your variables here");
-//            insertComment("TODO declare your variables here", _indent);
-//            // END KGU 2014-11-16
-//            code.add("");
-//            code.add(_indent + "begin");
-//            generateCode(_root.children, _indent + this.getIndent());
-//            code.add(_indent + "end.");
-//
-//            return code.getText();
-//    }
-	
+
 	// START KGU#74 2015-11-30 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#generateHeader(lu.fisch.structorizer.elements.Root, java.lang.String, java.lang.String, lu.fisch.utils.StringList, lu.fisch.utils.StringList, java.lang.String)

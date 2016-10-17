@@ -49,6 +49,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.08.01      Enh. #128: new mode "Comments plus text" associated to Ini file
  *      Kay Gürtzig     2016.08.08      Issues #220, #224: Look-and Feel updates for Executor and Translator
  *      Kay Gürtzig     2016.09.09      Locales backwards compatibility precaution for release 3.25 in loadFromIni()
+ *      Kay Gürtzig     2016.10.11      Enh. #267: New method updateAnalysis() introduced
  *
  ******************************************************************************************************
  *
@@ -616,5 +617,15 @@ public class Mainform  extends LangFrame implements NSDController
     	}
     	return done;
     }
+    
+    // START KGU#278 2016-10-11: Enh. #267 - Allows updates from Subroutine pools
+    public void updateAnalysis()
+    {
+    	if (this.diagram != null)
+    	{
+    		this.diagram.analyse();
+    	}
+    }
+    // END KGU#278 2016-10-11
 	
 }

@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.generators;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Daniel Spittank
  *
@@ -55,6 +56,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                              bugfix for routine calls (superfluous parentheses dropped)
  *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done
+ *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *
  ******************************************************************************************************
  *
@@ -92,7 +96,8 @@ package lu.fisch.structorizer.generators;
  *      2009.08.10
  *        - writeln() => System.out.println()
  * 
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import java.util.regex.Matcher;
 
@@ -175,12 +180,22 @@ public class PythonGenerator extends Generator
 		/**
 		 * A pattern how to embed the variable (right-hand side of an input instruction)
 		 * into the target code
+		 * @param withPrompt - is a prompt string to be considered?
 		 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 		 */
-		protected String getInputReplacer()
+		// START KGU#281 2016-10-15: Enh. #281
+		//protected String getInputReplacer()
+		//{
+		//	return "$1 = input(\"$1\")";
+		//}
+		protected String getInputReplacer(boolean withPrompt)
 		{
+			if (withPrompt) {
+				return "$2 = input($1)";				
+			}
 			return "$1 = input(\"$1\")";
 		}
+		// END KGU#281 2016-10-15
 
 		/**
 		 * A pattern how to embed the expression (right-hand side of an output instruction)
@@ -335,18 +350,29 @@ public class PythonGenerator extends Generator
 		protected void generateCode(Instruction _inst, String _indent)
 		{
 			if(!insertAsComment(_inst, _indent)) {
+				boolean isDisabled = _inst.isDisabled();
 				// START KGU 2014-11-16
 				insertComment(_inst, _indent);
 				// END KGU 2014-11-16
 				for(int i=0;i<_inst.getText().count();i++)
 				{
-					code.add(_indent+transform(_inst.getText().get(i)));
+					// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
+					//code.add(_indent + transform(_inst.getText().get(i)));
+					String line = _inst.getText().get(i);
+					String codeLine = transform(line);
+					if (Instruction.isTurtleizerMove(line)) {
+						codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+					}
+					addCode(codeLine, _indent, isDisabled);
+					// END KGU#277/KGU#284 2016-10-13/16
 				}
 			}
 		}
 		
 		protected void generateCode(Alternative _alt, String _indent)
 		{
+			boolean isDisabled = _alt.isDisabled();
+			
 			// START KGU 2014-11-16
 			insertComment(_alt, _indent);
 			// END KGU 2014-11-16
@@ -354,24 +380,26 @@ public class PythonGenerator extends Generator
 			String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
 			if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 
-			code.add(_indent+"if "+condition+":");
+			addCode("if "+condition+":", _indent, isDisabled);
 			generateCode((Subqueue) _alt.qTrue,_indent + this.getIndent());
 			if(_alt.qFalse.getSize()!=0)
 			{
-				code.add(_indent+"else:");
+				addCode("else:", _indent, isDisabled);
 				generateCode((Subqueue) _alt.qFalse, _indent + this.getIndent());
 			}
 			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
 			//code.add("");
 			if (code.count() > 0 && !code.get(code.count()-1).isEmpty())
 			{
-				code.add("");
+				addCode("", "", isDisabled);
 			}
 			// END KGU#54 2015-10-19
 		}
 		
 		protected void generateCode(Case _case, String _indent)
 		{
+			boolean isDisabled = _case.isDisabled();
+			
 			// START KGU 2014-11-16
 			insertComment(_case, _indent);
 			// END KGU 2014-11-16
@@ -390,53 +418,33 @@ public class PythonGenerator extends Generator
 	    			caseline = caseline + "(" + condition + ") == " + constants.get(j).trim();
 	    		}
 	    		// END KGU#15 2015-10-21
-				code.add(caseline + ") :");
+				addCode(caseline + ") :", "", isDisabled);
 				generateCode((Subqueue) _case.qs.get(i), _indent + this.getIndent());
 			}
 			
 			if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
 			{
-				code.add(_indent + "else:");
+				addCode("else:", _indent, isDisabled);
 				generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent + this.getIndent());
 			}
 			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
 			//code.add("");
 			if (code.count() > 0 && !code.get(code.count()-1).isEmpty())
 			{
-				code.add("");
+				addCode("", "", isDisabled);
 			}
 			// END KGU#54 2015-10-19
 		}
 		
 		protected void generateCode(For _for, String _indent)
 		{
+			boolean isDisabled = _for .isDisabled();
+			
 			// START KGU 2014-11-16
 			insertComment(_for, _indent);
 			// END KGU 2014-11-16
 
-			// START KGU#3/KGU#104 2015-12-12: ER #10 / Bugfix #59 - This was forgotten to fix
-			//String startValueStr="";
-			//String endValueStr="";
-			//String stepValueStr="";
-			//
-			//String editStr = BString.replace(transform(_for.getText().getText()),"\n","").trim();
-			//String[] word = editStr.split(" ");
-			//int nbrWords = word.length;
-			//String counterStr = word[0];
-			//if ((nbrWords-1) >= 2) startValueStr = word[2];
-			//if ((nbrWords-1) >= 4) endValueStr = word[4];
-			//if ((nbrWords-1) >= 6) {
-			//	stepValueStr = word[6]; 
-			//}
-			//else {
-			//	stepValueStr = "1";
-			//}
 			String counterStr = _for.getCounterVar();
-			// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
-//			String startValueStr = this.transform(_for.getStartValue());
-//			String endValueStr = this.transform(_for.getEndValue());
-//			String stepValueStr = _for.getStepString();
-//			code.add(_indent+"for "+counterStr+" in range("+startValueStr+", "+endValueStr+", "+stepValueStr+"):");
 			String valueList = "";
 			if (_for.isForInLoop())
 			{
@@ -454,21 +462,21 @@ public class PythonGenerator extends Generator
 				String stepValueStr = _for.getStepString();
 				valueList = "range("+startValueStr+", "+endValueStr+", "+stepValueStr+")";
 			}
-			code.add(_indent+"for "+counterStr+" in " + valueList + ":");
-			// END KGU#61 2016-03-22
-			// END KGU#3/KGU#104 2015-12-12
+			addCode("for "+counterStr+" in " + valueList + ":", _indent, isDisabled);
 			generateCode((Subqueue) _for.q,_indent + this.getIndent());
 			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
 			//code.add("");
 			if (code.count() > 0 && !code.get(code.count()-1).isEmpty())
 			{
-				code.add("");
+				addCode("", "", isDisabled);
 			}
 			// END KGU#54 2015-10-19
 		}
 		
 		protected void generateCode(While _while, String _indent)
 		{
+			boolean isDisabled = _while.isDisabled();
+			
 			// START KGU 2014-11-16
 			insertComment(_while, _indent);
 			// END KGU 2014-11-16
@@ -476,50 +484,55 @@ public class PythonGenerator extends Generator
 			String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
 			if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
 			
-			code.add(_indent+"while "+condition+":");
+			addCode("while "+condition+":", _indent, isDisabled);
 			generateCode((Subqueue) _while.q, _indent + this.getIndent());
 			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
 			//code.add("");
 			if (code.count() > 0 && !code.get(code.count()-1).isEmpty())
 			{
-				code.add("");
+				addCode("", "", isDisabled);
 			}
 			// END KGU#54 2015-10-19
 		}
 
         protected void generateCode(Repeat _repeat, String _indent)
         {
+        	boolean isDisabled = _repeat.isDisabled();
+        	
 			// START KGU 2014-11-16
 			insertComment(_repeat, _indent);
 			// END KGU 2014-11-16
-            code.add(_indent+"while True:");
+            addCode("while True:", _indent, isDisabled);
             generateCode((Subqueue) _repeat. q,_indent + this.getIndent());
             // START KGU#54 2015-10-19: Why should the last two rows be empty? They aren't! This strange behaviour ate code lines! 
             //code.delete(code.count()-1); // delete empty row
             //code.delete(code.count()-1); // delete empty row
             // END KGU#54 2015-10-19
-            code.add(_indent+this.getIndent()+"if "+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+":");
-            code.add(_indent+this.getIndent()+this.getIndent()+"break");
+            addCode("if "+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+":",
+            		_indent+this.getIndent(), isDisabled);
+            addCode("break", _indent+this.getIndent()+this.getIndent(), isDisabled);
 			// START KGU#54 2015-10-19: Add an empty line, but void accumulation of empty lines!
 			if (code.count() > 0 && !code.get(code.count()-1).isEmpty())
 			{
-				code.add("");
+				addCode("", "", isDisabled);
 			}
 			// END KGU#54 2015-10-19
         }
 		
 		protected void generateCode(Forever _forever, String _indent)
 		{
+			boolean isDisabled = _forever.isDisabled();
+			
 			// START KGU 2014-11-16
 			insertComment(_forever, _indent);
 			// END KGU 2014-11-16
-			code.add(_indent+"while True:");
+			addCode("while True:", _indent, isDisabled);
 			generateCode((Subqueue) _forever.q, _indent + this.getIndent());
 			// START KGU#54 2015-10-19: Avoid accumulation of empty lines!
 			//code.add("");
 			if (code.count() > 0 && !code.get(code.count()-1).isEmpty())
 			{
-				code.add("");
+				addCode("", "", isDisabled);
 			}
 			// END KGU#54 2015-10-19
 		}
@@ -528,6 +541,7 @@ public class PythonGenerator extends Generator
 		{
 			if(!insertAsComment(_call, _indent))
 			{
+				boolean isDisabled = _call.isDisabled();
 				// START KGU 2014-11-16
 				insertComment(_call, _indent);
 				// END KGU 2014-11-16
@@ -535,7 +549,7 @@ public class PythonGenerator extends Generator
 				{
 					// START KGU 2016-07-20: Bugfix the extra parentheses were nonsense
 					//code.add(_indent+transform(_call.getText().get(i))+"()");
-					code.add(_indent+transform(_call.getText().get(i)));
+					addCode(transform(_call.getText().get(i)), _indent, isDisabled);
 					// END KGU 2016-07-20
 				}
 			}
@@ -545,6 +559,7 @@ public class PythonGenerator extends Generator
 		{
 			if(!insertAsComment(_jump, _indent))
 			{
+				boolean isDisabled = _jump.isDisabled();
 				// START KGU 2014-11-16
 				insertComment(_jump, _indent);
 				// END KGU 2014-11-16
@@ -569,7 +584,8 @@ public class PythonGenerator extends Generator
 					}
 					if (line.matches(preReturnMatch))
 					{
-						code.add(_indent + "return " + line.substring(preReturn.length()).trim());
+						addCode("return " + line.substring(preReturn.length()).trim(),
+								_indent, isDisabled);
 					}
 					else if (line.matches(preLeaveMatch))
 					{
@@ -580,11 +596,12 @@ public class PythonGenerator extends Generator
 						if (label != null && label.intValue() >= 0 &&
 								(arg.isEmpty() || Integer.parseInt(arg) == 1))
 						{
-							code.add(_indent + "break");		
+							addCode("break", _indent, isDisabled);		
 						}
 						else
 						{
-							code.add(_indent + "break # FIXME: Illegal multi-level break attempted!");
+							addCode("break # FIXME: Illegal multi-level break attempted!",
+									_indent, isDisabled);
 						}
 					}
 					else if (!isEmpty)
@@ -594,7 +611,7 @@ public class PythonGenerator extends Generator
 					}
 				}
 				if (isEmpty) {
-					code.add(_indent + "break");
+					addCode("break", _indent, isDisabled);
 				}
 				// END KGU#78 2015-12-17
 			}
@@ -603,77 +620,34 @@ public class PythonGenerator extends Generator
 		// START KGU#47 2015-12-1: Offer at least a sequential execution (which is one legal execution order)
 		protected void generateCode(Parallel _para, String _indent)
 		{
+			boolean isDisabled = _para.isDisabled();
+			
 			// FIXME (KGU) Try an implementation by means of the Threading module!
 			String indentPlusOne = _indent + this.getIndent();
 			String indentPlusTwo = indentPlusOne + this.getIndent();
 			insertComment(_para, _indent);
 
-			code.add(_indent);
+			addCode("", _indent, isDisabled);
 			insertComment("==========================================================", _indent);
 			insertComment("================= START PARALLEL SECTION =================", _indent);
 			insertComment("==========================================================", _indent);
 			insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
-			code.add(indentPlusOne);
+			addCode("", indentPlusOne, isDisabled);
 
 			for (int i = 0; i < _para.qs.size(); i++) {
 				insertComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
 				generateCode((Subqueue) _para.qs.get(i), indentPlusTwo);
 				insertComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
-				code.add(indentPlusOne);
+				addCode("", indentPlusOne, isDisabled);
 			}
 
 			insertComment("==========================================================", _indent);
 			insertComment("================== END PARALLEL SECTION ==================", _indent);
 			insertComment("==========================================================", _indent);
-			code.add("");
+			addCode("", "", isDisabled);
 		}
 		// END KGU#47 2015-12-17
 
-		// START KGU#18/KGU#23 2015-11-02: Use inherited method
-//		protected void generateCode(Subqueue _subqueue, String _indent)
-//		{
-//			// code.add(_indent+"");
-//			for(int i=0;i<_subqueue.getSize();i++)
-//			{
-//				generateCode((Element) _subqueue.getElement(i),_indent);
-//			}
-//			// code.add(_indent+"");
-//		}
-		// END KGU#18/KGU#23 2015-11-02
-		
-		// START KGU#78 2015-12-17: Enh. #23 Root generation decomposed
-//		public String generateCode(Root _root, String _indent)
-//		{
-//			if(_root.isProgram==true) {
-//				code.add("#!/usr/bin/env python");
-//				insertComment(_root.getText().get(0), _indent);
-//				code.add("");
-//		        // START KGU 2015-10-18
-//				//code.add("\"\"\"This script ...\"\"\"");
-//		        insertComment(_root, "");
-//		        // END KGU 2015-10-18
-//				code.add("");
-//					
-//				Subqueue _subqueue = _root.children;
-//				for(int i=0;i<_subqueue.getSize();i++) {
-//					generateCode((Element) _subqueue.getElement(i),"");
-//				}
-//				
-//				code.add("");
-//			}
-//			else {
-//				code.add("def "+_root.getText().get(0)+"() :");
-//		        // START KGU 2014-11-16
-//				//code.add(this.getIndent()+"\"\"\"This method ...\"\"\"");
-//		        insertComment(_root, this.getIndent());
-//		        // END KGU 2014-11-16
-//
-//				generateCode(_root.children,"");
-//				code.add("");
-//			}
-//			
-//			return code.getText();
-//		}
 
 		/* (non-Javadoc)
 		 * @see lu.fisch.structorizer.generators.Generator#generateHeader(lu.fisch.structorizer.elements.Root, java.lang.String, java.lang.String, lu.fisch.utils.StringList, lu.fisch.utils.StringList, java.lang.String)

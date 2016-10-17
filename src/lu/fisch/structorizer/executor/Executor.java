@@ -97,6 +97,13 @@ package lu.fisch.structorizer.executor;
  *                                      Enh. #253: D7Parser.keywordMap refactoring done
  *      Kay Gürtzig     2016.10.06      Bugfix #261: Stop didn't work immediately within multi-line instructions
  *      Kay Gürtzig     2016.10.07      Some synchronized sections added to reduce inconsistency exception likelihood
+ *      Kay Gürtzig     2016.10.09      Bugfix #266: Built-in Pascal functions copy, delete, insert defectively implemented;
+ *                                      Issue #269: Attempts to scroll the diagram to currently executed elements (ineffective)
+ *      Kay Gürtzig     2016.10.12      Issue #271: Systematic support for user-defined input prompts
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Elements may be disabled for execution ("outcommented")
+ *      Kay Gürtzig     2016.10.16      Enh. #273: Input strings "true" and "false" now accepted as boolean values
+ *                                      Bugfix #276: Raw string conversion and string display mended, undue replacements
+ *                                      of ' into " in method convert() eliminated
  *
  ******************************************************************************************************
  *
@@ -411,6 +418,17 @@ public class Executor implements Runnable
 		// START KGU#130 2015-01-08: Bugfix #95 - Conversion of div operator had been forgotten...
 		tokens.replaceAll("div", "/");		// FIXME: Operands should better be coerced to integer...
 		// END KGU#130 2015-01-08
+		// START KGU#285 2016-10-16: Bugfix #276
+		// pascal: quotes
+		for (int i = 0; i < tokens.count(); i++)
+		{
+			String token = tokens.get(i);
+			if (token.length() != 3 && token.startsWith("'") && token.endsWith("'"))
+			{
+				tokens.set(i, "\"" + token.substring(1, token.length()-1) + "\"");
+			}
+		}
+		// END KGU#285 2016-10-16
 		// Function names to be prefixed with "Math."
 		final String[] mathFunctions = {
 				"cos", "sin", "tan", "acos", "asin", "atan", "toRadians", "toDegrees",
@@ -438,15 +456,23 @@ public class Executor implements Runnable
 		// NO REPLACE ANY MORE! CHARAT AND SUBSTRING MUST BE CALLED MANUALLY
 		// s = r.replaceAll(s);
 		// pascal: delete
-		r = new Regex("delete\\((.*),(.*),(.*)\\)", "$1=delete($1,$2,$3)");
+		// START KGU#275 2016-10-09: Bugfix #266 obsolete replacement obstructed assignment recognition
+		//r = new Regex("delete\\((.*),(.*),(.*)\\)", "$1=delete($1,$2,$3)");
+		r = new Regex("delete\\((.*),(.*),(.*)\\)", "$1 <- delete($1,$2,$3)");
+		// END KGU#275 2016-10-09
 		s = r.replaceAll(s);
 		// pascal: insert
-		r = new Regex("insert\\((.*),(.*),(.*)\\)", "$2=insert($1,$2,$3)");
+		// START KGU#275 2016-10-09: Bugfix #266 obsolete replacement obstructed assignment recognition
+		//r = new Regex("insert\\((.*),(.*),(.*)\\)", "$2=insert($1,$2,$3)");
+		r = new Regex("insert\\((.*),(.*),(.*)\\)", "$2 <- insert($1,$2,$3)");
+		// END KGU#275 2016-10-09
 		s = r.replaceAll(s);
-		// pascal: quotes
-		r = new Regex("([^']*?)'(([^']|'')*)'", "$1\"$2\"");
-		//r = new Regex("([^']*?)'(([^']|''){2,})'", "$1\"$2\"");
-		s = r.replaceAll(s);
+		// START KGU#285 2016-10-16: Bugfix #276 - this spoiled apostrophes because misplaced here
+//		// pascal: quotes
+//		r = new Regex("([^']*?)'(([^']|'')*)'", "$1\"$2\"");
+//		//r = new Regex("([^']*?)'(([^']|''){2,})'", "$1\"$2\"");
+//		s = r.replaceAll(s);
+		// END KGU#285 2016-10-16
 		// START KGU 2015-11-29: Adopted from Root.getVarNames() - can hardly be done in initialiseInterpreter() 
         // pascal: convert "inc" and "dec" procedures
         r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); s = r.replaceAll(s);
@@ -668,7 +694,7 @@ public class Executor implements Runnable
 		this.callers.clear();
 		this.stackTrace.clear();
 		this.routinePools.clear();
-		if (diagram.isArrangerOpen)
+		if (Arranger.hasInstance())
 		{
 			this.routinePools.addElement(Arranger.getInstance());
 			// START KGU#117 2016-03-08: Enh. #77
@@ -1313,13 +1339,16 @@ public class Executor implements Runnable
 			pascalFunction = "public int pos(Character subs, String s) { return s.indexOf(subs)+1; }";
 			interpreter.eval(pascalFunction);
 			// return a substring of a string
-			pascalFunction = "public String copy(String s, int start, int count) { return s.substring(start-1,start-1+count); }";
+			// START KGU#275 2016-10-09: Bugfix #266: length tolerance of copy function had to be considered
+			//pascalFunction = "public String copy(String s, int start, int count) { return s.substring(start-1,start-1+count); }";
+			pascalFunction = "public String copy(String s, int start, int count) { int end = Math.min(start-1+count, s.length()); return s.substring(start-1,end); }";
+			// END KGU#275 2016-10-09
 			interpreter.eval(pascalFunction);
 			// delete a part of a string
-			pascalFunction = "public String delete(String s, int start, int count) { return s.substring(0,start-1)+s.substring(start+count-1,s.length()); }";
+			pascalFunction = "public String delete(String s, int start, int count) { return s.substring(0,start-1)+s.substring(start+count-1); }";
 			interpreter.eval(pascalFunction);
 			// insert a string into anoter one
-			pascalFunction = "public String insert(String what, String s, int start) { return s.substring(0,start-1)+what+s.substring(start-1,s.length()); }";
+			pascalFunction = "public String insert(String what, String s, int start) { return s.substring(0,start-1)+what+s.substring(start-1); }";
 			interpreter.eval(pascalFunction);
 			// string transformation
 			pascalFunction = "public String lowercase(String s) { return s.toLowerCase(); }";
@@ -1512,7 +1541,16 @@ public class Executor implements Runnable
 						strInput.startsWith("'") && strInput.endsWith("'"))
 				{
 					this.interpreter.eval(name + " = " + rawInput);
+					setVar(name, interpreter.get(name));
 				}
+				// START KGU#285 2016-10-16: Bugfix #276
+				else if (rawInput.contains("\\"))
+				{
+					// Obviously it isn't enclosed by quotes (otherwise the previous test would have caught it
+					this.interpreter.eval(name + " = \"" + rawInput + "\"");
+					setVar(name, interpreter.get(name));					
+				}
+				// END KGU#285 2016-10-16
 				// try adding as char (only if it's not a digit)
 				else if (rawInput.length() == 1)
 				{
@@ -1520,7 +1558,7 @@ public class Executor implements Runnable
 					setVar(name, charInput);
 				}
 				// START KGU#184 2016-04-25: Enh. #174 - accept array initialisations on input
-				else if (rawInput.startsWith("{") && rawInput.endsWith("}"))
+				else if (strInput.startsWith("{") && rawInput.endsWith("}"))
 				{
 					String asgnmt = "Object[] " + name + " = " + rawInput;
 					// Nested initializers won't work here!
@@ -1528,6 +1566,12 @@ public class Executor implements Runnable
 					setVar(name, interpreter.get(name));
 				}
 				// END KGU#184 2016-04-25
+				// START KGU#283 2016-10-16: Enh. #273
+				else if (strInput.equals("true") || strInput.equals("false"))
+				{
+					setVar(name, Boolean.valueOf(strInput));
+				}
+				// END KGU#283 2016-10-16
 			}
 			catch (Exception ex)
 			{
@@ -1738,10 +1782,16 @@ public class Executor implements Runnable
 			}
 			else if (val instanceof String)
 			{
+				// START KGU#285 2016-10-16: Bugfix #276
+				valStr = valStr.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
+				// END KGU#285 2016-10-16
 				valStr = "\"" + valStr + "\"";
 			}
 			else if (val instanceof Character)
 			{
+				// START KGU#285 2016-10-16: Bugfix #276
+				valStr = valStr.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n");
+				// END KGU#285 2016-10-16
 				valStr = "'" + valStr + "'";
 			}
 		}
@@ -1823,6 +1873,10 @@ public class Executor implements Runnable
 		// END KGU#213 2016-08-01
 		if (atBreakpoint) {
 			control.setButtonsForPause();
+			// START KGU#276 2016-10-09: Issue #267: in paused mode we should move the focus to the current element
+			diagram.redraw(element);
+			// END KGU#276 2016-10-09
+
 			this.setPaus(true);
 		}
 		return atBreakpoint;
@@ -1833,11 +1887,25 @@ public class Executor implements Runnable
 	private String step(Element element)
 	{
 		String result = new String();
+		// START KGU#277 2016-10-13: Enh. #270: skip the element if disabled
+		if (element.disabled) {
+			return result;
+		}
+		// END KGU#277 2016-10-13
+		
 		element.executed = true;
-		if (delay != 0 || step)
-		{
+		// START KGU#276 2016-10-09: Issue #267: in step mode we should move the focus to the current element
+		//if (delay != 0 || step)
+		//{
+		//	diagram.redraw();
+		//}
+		if (step) {
+			diagram.redraw(element);	// Doesn't work properly...
+		}
+		else if (delay != 0) {
 			diagram.redraw();
 		}
+		// END KGU#276 2016-10-09
 		// START KGU#143 2016-01-21: Bugfix #114 - make sure no compromising editing is done
 		diagram.doButtons();
 		// END KGU#143 2016-01-21
@@ -1966,7 +2034,7 @@ public class Executor implements Runnable
 			cmd = convert(cmd).trim();
 			try
 			{
-				// START KGU#271: 2016-10-06: Bugfix #271 - this was mis-placed here and had to go to the loop body end 
+				// START KGU#271: 2016-10-06: Bugfix #269 - this was mis-placed here and had to go to the loop body end 
 //				if (i > 0)
 //				{
 //					delay();
@@ -2014,7 +2082,7 @@ public class Executor implements Runnable
 				// START KGU#156 2016-03-11: Enh. #124
 				element.addToExecTotalCount(1, true);	// For the instruction line
 				//END KGU#156 2016-03-11
-				// START KGU#271: 2016-10-06: Bugfix #271: Allow to step and stop within an instruction block (but no breakpoint here!) 
+				// START KGU#271: 2016-10-06: Bugfix #261: Allow to step and stop within an instruction block (but no breakpoint here!) 
 				if ((i+1 < sl.count()) && result.equals("") && (stop == false) &&	!returned && leave == 0)
 				{
 					delay();
@@ -2363,6 +2431,30 @@ public class Executor implements Runnable
 	{
 		String result = "";
 		String in = cmd.substring(D7Parser.keywordMap.get("input").trim().length()).trim();
+		// START KGU#281: Enh. #271: Input prompt handling
+		String prompt = null;
+		if (in.startsWith("\"") || in.startsWith("\'")) {
+			StringList tokens = Element.splitLexically(in, true);
+			String delim = tokens.get(0).substring(0,1);
+			if (tokens.get(0).endsWith(delim))
+			{
+				prompt = tokens.get(0).substring(1, tokens.get(0).length()-1);
+				// START KGU#285 2016-10-16: Bugfix #276 - We should interpret contained escape sequences...
+				try {
+					String dummyVar = "prompt" + this.hashCode();
+					interpreter.eval(dummyVar + "=\"" + prompt + "\"");
+					Object res = interpreter.get(dummyVar);
+					if (res != null) {
+						prompt = res.toString();
+					}
+					interpreter.unset(dummyVar);
+				}
+				catch (EvalError ex) {}
+				// END KGU#285 2016-10-16
+				in = tokens.concatenate("", 1).trim();
+			}
+		}
+		// END KGU#281 2016-10-12
 		// START KGU#107 2015-12-13: Enh-/bug #51: Handle empty input instruction
 		if (in.isEmpty())
 		{
@@ -2416,16 +2508,22 @@ public class Executor implements Runnable
 			// START KGU#89 2016-03-18: More language support 
 			//String str = JOptionPane.showInputDialog(null,
 			//		"Please enter a value for <" + in + ">", null);
-			String msg = control.lbInputValue.getText();
-			msg = msg.replace("%", in);
+			// START KGU#281 2016-10-12: Enh. #271
+			//String msg = control.lbInputValue.getText();
+			//msg = msg.replace("%", in);
+			if (prompt == null) {
+				prompt = control.lbInputValue.getText();				
+				prompt = prompt.replace("%", in);
+			}
+			// END KGU#281 2016-10-12
 			// START KGU#160 2016-04-12: Enh. #137 - text window output
-			this.console.write(msg + ": ", Color.YELLOW);
+			this.console.write(prompt + (prompt.trim().endsWith(":") ? " " : ": "), Color.YELLOW);
 			if (isConsoleEnabled)
 			{
 				this.console.setVisible(true);
 			}
 			// END KGU#160 2016-04-12
-			String str = JOptionPane.showInputDialog(null, msg, null);
+			String str = JOptionPane.showInputDialog(null, prompt, null);
 			// END KGU#89 2016-03-18
 			// START KGU#84 2015-11-23: ER #36 - Allow a controlled continuation on cancelled input
 			//setVarRaw(in, str);

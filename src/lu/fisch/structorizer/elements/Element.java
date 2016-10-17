@@ -70,6 +70,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.09.21      Issue #248: API of setBreakTriggerCount() modified to prevent negative values
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactored
  *      Kay Gürtzig     2016.09.28      KGU#264: Font name property renamed from "Name" to "Font".
+ *      Kay Gürtzig     2016.10.13      Issue #270: New field "disabled" for execution and code export
  *
  ******************************************************************************************************
  *
@@ -175,7 +176,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.25-02";
+	public static String E_VERSION = "3.25-03";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -354,6 +355,13 @@ public abstract class Element {
 	// START KGU#225 2016-07-28: Bugfix #210
 	protected int execCountIndex = -1;
 	// END KGU#225 2016-07-28
+	// START KGU#277 2016-10-13: Enh. #270 Option to disable an Element from execution and export
+	/**
+	 * If true then this element is to be skipped on execution and outcommented on code export!
+	 * Also see isDisabled() for recursively inherited disabled state
+	 */
+	public boolean disabled = false;
+	// END KGU#277 2016-10-13
 
 	// END KGU156 2016-03-10
 	
@@ -504,6 +512,9 @@ public abstract class Element {
 		// START KGU#183 2016-04-24: Issue #169
 		_ele.selected = this.selected;
 		// END KGU#183 2016-04-24
+		// START KGU#277 2016-10-13: Enh. #270
+		_ele.disabled = this.disabled;
+		// END KGU#277 2016-10-13
 		// FIXME: Shouldn't we also copy the collapsed status?
 	}
 	// END KGU#213 2016-08-01
@@ -2314,108 +2325,6 @@ public abstract class Element {
     	// END KGU#93 2015-12-21
     }
     
-//    // START KGU#18/KGU#23 2015-10-24 intermediate transformation added and decomposed
-//    /**
-//     * Converts the operator symbols accepted by Structorizer into padded Java operators
-//     * (note the surrounding spaces - no double spaces will exist):
-//     * - Assignment:		" <- "
-//     * - Comparison*:		" == ", " < ", " > ", " <= ", " >= ", " != "
-//     * - Logic*:			" && ", " || ", " ! ", " ^ "
-//     * - Arithmetics*:		" div " and usual Java operators without padding (e. g. " mod " -> " % ")
-//     * @param _expression an Element's text in practically unknown syntax
-//     * @param _assignmentOnly if true then only assignment operator will be unified
-//     * @return an equivalent of the _expression String with replaced operators
-//     */
-//    @Deprecated
-//    public static String unifyOperators(String _expression, boolean _assignmentOnly)
-//    {
-//    	
-//        String interm = _expression.trim();	// KGU#54
-//        // variable assignment
-//        interm = interm.replace("<--", " §ASGN§ ");
-//        interm = interm.replace("<-", " §ASGN§ ");
-//        interm = interm.replace(":=", " §ASGN§ ");
-//        
-//        if (!_assignmentOnly)
-//        {
-//        	// testing
-//        	interm = interm.replace("!=", " §UNEQ§ ");
-//        	interm = interm.replace("==", " §EQU§ ");
-//        	interm = interm.replace("<=", " §LE§ ");
-//        	interm = interm.replace(">=", " §GE§ ");
-//        	interm = interm.replace("<>", " §UNEQ§ ");
-//        	// START KGU#92 2015-12-01: Bugfix #41
-//        	interm = interm.replace("<<", " §SHL§ ");
-//        	interm = interm.replace(">>", " §SHR§ ");
-//        	// END KGU#92 2015-12-01
-//        	interm = interm.replace("<", " < ");
-//        	interm = interm.replace(">", " > ");
-//        	interm = interm.replace("=", " §EQU§ ");
-//
-//        	// Parenthesis/bracket padding as preparation for the following replacements
-//        	interm = interm.replace(")", " ) ");
-//        	interm = interm.replace("(", "( ");
-//        	interm = interm.replace("]", "] ");	// Do NOT pad '[' (would spoil the array detection)
-//        	// arithmetics and signs
-//        	interm = interm.replace("+", " +");	// Fortunately, ++ isn't accepted as working operator by the Structorizer
-//        	interm = interm.replace("-", " -");	// Fortunately, -- isn't accepted as working operator by the Structorizer
-//        	//interm = interm.replace(" div "," / ");	// We must still distinguish integer division
-//        	interm = interm.replace(" mod ", " % ");
-//        	interm = interm.replace(" MOD ", " % ");
-//        	interm = interm.replace(" mod(", " % (");
-//        	interm = interm.replace(" MOD(", " % (");
-//        	interm = interm.replace(" div(", " div (");
-//        	interm = interm.replace(" DIV ", " div ");
-//        	interm = interm.replace(" DIV(", " div (");
-//        	// START KGU#92 2015-12-01: Bugfix #41
-//        	interm = interm.replace(" shl ", " §SHL§ ");
-//        	interm = interm.replace(" shr ", " §SHR§ ");
-//        	interm = interm.replace(" SHL ", " §SHL§ ");
-//        	interm = interm.replace(" SHR ", " §SHR§ ");
-//        	// END KGU#92 2015-12-01
-//        	// Logic
-//        	interm = interm.replace( "&&", " && ");
-//        	interm = interm.replace( "||", " || ");
-//        	interm = interm.replace( " and ", " && ");
-//        	interm = interm.replace( " AND ", " && ");
-//        	interm = interm.replace( " and(", " && (");
-//        	interm = interm.replace( " AND(", " && (");
-//        	interm = interm.replace( " or ", " || ");
-//        	interm = interm.replace( " OR ", " || ");
-//        	interm = interm.replace( " or(", " || (");
-//        	interm = interm.replace( " OR(", " || (");
-//        	interm = interm.replace( " not ", " §NOT§ ");
-//        	interm = interm.replace( " NOT ", " §NOT§ ");
-//        	interm = interm.replace( " not(", " §NOT§ (");
-//        	interm = interm.replace( " NOT(", " §NOT§ (");
-//        	String lower = interm.toLowerCase();
-//        	if (lower.startsWith("not ") || lower.startsWith("not(")) {
-//        		interm = " §NOT§ " + interm.substring(3);
-//        	}
-//        	interm = interm.replace( "!", " §NOT§ ");
-//        	interm = interm.replace( " xor ", " ^ ");	// Might cause some operator preference trouble
-//        	interm = interm.replace( " XOR ", " ^ ");	// Might cause some operator preference trouble
-//        }
-//
-//        String unified = interm.replace(" §ASGN§ ", " <- ");
-//        if (!_assignmentOnly)
-//        {
-//        	unified = unified.replace(" §EQU§ ", " == ");
-//        	unified = unified.replace(" §UNEQ§ ", " != ");
-//        	unified = unified.replace(" §LE§ ", " <= ");
-//        	unified = unified.replace(" §GE§ ", " >= ");
-//        	unified = unified.replace(" §NOT§ ", " ! ");
-//        	// START KGU#92 2015-12-01: Bugfix #41
-//        	unified = unified.replace(" §SHL§ ", " << ");
-//        	unified = unified.replace(" §SHR§ ", " >> ");
-//        	// END KGU#92 2015-12-01
-//        }
-//        unified = BString.replace(unified, "  ", " ");	// shrink multiple blanks
-//        unified = BString.replace(unified, "  ", " ");	// do it again to catch odd-numbered blanks as well
-//        
-//        return unified;
-//    }
-
 	// START KGU#92 2015-12-01: Bugfix #41 Okay now, here is the new approach (still a sketch)
     /**
      * Converts the operator symbols accepted by Structorizer into intermediate operators
@@ -2517,68 +2426,7 @@ public abstract class Element {
     {
     	//final String regexMatchers = ".?*+[](){}\\^$";
     	
-//    	// Collect redundant placemarkers to be deleted from the text
-//        StringList redundantMarkers = new StringList();
-//        redundantMarkers.addByLength(D7Parser.preAlt);
-//        redundantMarkers.addByLength(D7Parser.preCase);
-//        //redundantMarkers.addByLength(D7Parser.preFor);	// will be handled separately
-//        redundantMarkers.addByLength(D7Parser.preWhile);
-//        redundantMarkers.addByLength(D7Parser.preRepeat);
-//
-//        redundantMarkers.addByLength(D7Parser.postAlt);
-//        redundantMarkers.addByLength(D7Parser.postCase);
-//        //redundantMarkers.addByLength(D7Parser.postFor);	// will be handled separately
-//        //redundantMarkers.addByLength(D7Parser.stepFor);	// will be handled separately
-//        redundantMarkers.addByLength(D7Parser.postWhile);
-//        redundantMarkers.addByLength(D7Parser.postRepeat);
-       
         String interm = " " + _text + " ";
-//
-//        //System.out.println(interm);
-//        // Now, we eliminate redundant keywords according to the Parser configuration
-//        // Unfortunately, regular expressions are of little use here, because the prefix and infix keywords may
-//        // consist of or contain Regex matchers like '?' and hence aren't suitable as part of the pattern
-//        // The harmful characters to be inhibited or masked are: .?*+[](){}\^$
-//        //System.out.println(interm);
-//        for (int i=0; i < redundantMarkers.count(); i++)
-//        {
-//        	String marker = redundantMarkers.get(i);
-//        	if (!marker.isEmpty())
-//        	{
-//        		// If the marker has not been padded then we must care for proper isolation
-//        		if (marker.equals(marker.trim()))
-//        		{
-//        			int len = marker.length();
-//        			int pos = 0;
-//        			// START KGU 2016-01-13: Bugfix #104: position fault
-//        			//while ((pos = interm.indexOf(marker, pos)) >= 0)
-//        			while ((pos = interm.indexOf(marker, pos)) > 0)
-//        			// END KGU 2016-01-13
-//        			{
-//        				if (!Character.isJavaIdentifierPart(interm.charAt(pos-1)) &&
-//        						(pos + len) < interm.length() &&
-//        						!Character.isJavaIdentifierPart(interm.charAt(pos + len)))
-//        				{
-//        					interm = interm.substring(0, pos) + interm.substring(pos + len);
-//        				}
-//        			}
-//        		}
-//        		else
-//        		{
-//        			// Already padded, so just replace it everywhere
-//        			// START KGU 2016-01-13: Bugfix #104 - padding might go away here
-//        			//interm = interm.replace( marker, ""); 
-//        			interm = interm.replace( marker, " "); 
-//        			// END KGU 2016-01-13
-//        		}
-//        		//interm = " " + interm + " ";	// Ensure the string being padded for easier matching
-//                interm = interm.replace("  ", " ");		// Reduce multiple spaces (may also spoil string literals!)
-//                // START KGU 2016-01-13: Bugfix #104 - should have been done after the loop only
-//                //interm = interm.trim();
-//                // END KGU 2016-01-13
-//        		//System.out.println("transformIntermediate: " + interm);	// FIXME (KGU): Remove or deactivate after test!
-//        	}
-//        }
         // START KGU 2016-01-13: Bugfix #104 - should have been done after the loop only
         interm = interm.trim();
         // END KGU 2016-01-13
@@ -2607,42 +2455,8 @@ public abstract class Element {
         StringList tokens = Element.splitLexically(interm, true);
         
         // START KGU#165 2016-03-26: Now keyword search with/without case
-//        for (int i = 0; i < redundantMarkers.count(); i++)
-//        {
-//        	String marker = redundantMarkers.get(i);
-//        	if (!marker.trim().isEmpty())
-//        	{
-//        		StringList markerTokens = Element.splitLexically(marker, false);
-//        		int markerLen = markerTokens.count();
-//        		int pos = -1;
-//        		while ((pos = tokens.indexOf(markerTokens, 0, !D7Parser.ignoreCase)) >= 0)
-//        		{
-//        			for (int j = 0; j < markerLen; j++)
-//        			{
-//        				tokens.delete(pos);
-//        			}
-//        		}
-//        	}
-//        }
         cutOutRedundantMarkers(tokens);
         // END KGU#165 2016-03-26
-        
-//        // START KGU 2016-01-13: Bugfix #104 - planned new approach to overcome that nasty keyword/string problem
-//        // It is also too simple, e.g. in cases like  jusqu'à test = 'o'  where a false string recognition would
-//        // avert the keyword recognition. So both will have to be done simultaneously...
-//        for (int i=0; i < redundantMarkers.count(); i++)
-//        {
-//        	StringList markerTokens = Element.splitLexically(redundantMarkers.get(i), true);
-//        	int pos = 0;
-//        	while ((pos = tokens.indexOf(markerTokens, pos, true)) >= 0)
-//        	{
-//        		for (int j = 0; j < markerTokens.count(); j++)
-//        		{
-//        			tokens.delete(pos);
-//        		}
-//        	}
-//        }
-//        // END KGU 2016-01-13
         
         unifyOperators(tokens, false);
         
@@ -2774,5 +2588,12 @@ public abstract class Element {
 		return line;
 	}
 	// END KGU#258 2016-09-25
+
+	// START KGU#277 2016-10-13: Enh. #270 - Option to disable an Element from execution and export
+	public boolean isDisabled()
+	{
+		return this.disabled || (this.parent != null && this.parent.isDisabled());
+	}
+	// END KGU#277 2016-10-13
 
 }

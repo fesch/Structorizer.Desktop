@@ -207,4 +207,13 @@ public class Function
     }
     // END KGU#61 2016-03-22
     
+    // START KGU 2016-10-16: More informative self-description
+    public String toString()
+    {
+    	return getClass().getSimpleName() + '@' + Integer.toHexString(hashCode()) +
+    			": " + this.getName() + "(" + this.parameters.concatenate(", ") + ")";
+    }
+    // END KGU# 2016-10-16
+
+    
 }

@@ -44,6 +44,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.09.25      Enh. #253: Root element now conveys parser preferences,
  *                                      D7Parser.keywordMap refactoring done (going to be superfluous!)
  *      Kay Gürtzig     2016.10.04      Bugfix #258: Structured FOR loop parameters weren't always preserved on saving
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Cared for new field "disabled"
  *
  ******************************************************************************************************
  *
@@ -121,7 +122,7 @@ public class XmlGenerator extends Generator {
 	 * into the target code
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected String getInputReplacer()
+	protected String getInputReplacer(boolean withPrompt)
 	{
 		return "";
 	}
@@ -157,7 +158,8 @@ public class XmlGenerator extends Generator {
 		//if(_inst.rotated==true) {r="1";}
 		code.add(_indent+"<instruction text=\""+BString.encodeToHtml(_inst.getText().getCommaText())+"\" comment=\""+
 												BString.encodeToHtml(_inst.getComment().getCommaText())+"\" color=\""+
-												_inst.getHexColor()+"\" rotated=\""+r+"\"></instruction>");
+												_inst.getHexColor()+"\" rotated=\""+r+"\" disabled=\""+
+												(_inst.disabled ? "1" : "0") + "\"></instruction>");
 	}
 	
     @Override
@@ -165,7 +167,7 @@ public class XmlGenerator extends Generator {
 	{
 		code.add(_indent+"<alternative text=\""+BString.encodeToHtml(_alt.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_alt.getComment().getCommaText())+"\" color=\""+
-				 _alt.getHexColor()+"\">");
+				 _alt.getHexColor()+"\" disabled=\""+ (_alt.disabled ? "1" : "0") + "\">");
 		code.add(_indent+this.getIndent()+"<qTrue>");
 		generateCode(_alt.qTrue,_indent+this.getIndent()+this.getIndent());
 		code.add(_indent+this.getIndent()+"</qTrue>");
@@ -180,7 +182,7 @@ public class XmlGenerator extends Generator {
 	{
 		code.add(_indent+"<case text=\""+BString.encodeToHtml(_case.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_case.getComment().getCommaText())+"\" color=\""+
-				 _case.getHexColor()+"\">");
+				 _case.getHexColor()+"\" disabled=\""+ (_case.disabled ? "1" : "0") + "\">");
 		for(int i=0;i<_case.qs.size();i++)
 		{
 			code.add(_indent+this.getIndent()+"<qCase>");
@@ -249,7 +251,8 @@ public class XmlGenerator extends Generator {
     			"\" style=\"" + BString.encodeToHtml(_for.style.toString()) +
     			// FIXME: No longer needed beyond version 3.25-01, except for backward compatibility (i. e. temporarily)
     			(_for.isForInLoop() ? ("\" insep=\"" + BString.encodeToHtml(D7Parser.keywordMap.get("postForIn"))) : "") +
-    			"\" color=\"" + _for.getHexColor()+"\">");
+    			"\" color=\"" + _for.getHexColor()+"\" disabled=\""+
+    			(_for.disabled ? "1" : "0") + "\">");
     	// END KGU#118 2015-12-31
 		code.add(_indent+this.getIndent()+"<qFor>");
 		generateCode(_for.q,_indent+this.getIndent()+this.getIndent());
@@ -262,7 +265,7 @@ public class XmlGenerator extends Generator {
 	{
 		code.add(_indent+"<while text=\""+BString.encodeToHtml(_while.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_while.getComment().getCommaText())+"\" color=\""+
-				 _while.getHexColor()+"\">");
+				 _while.getHexColor()+"\" disabled=\""+(_while.disabled ? "1" : "0") + "\">");
 		code.add(_indent+this.getIndent()+"<qWhile>");
 		generateCode(_while.q,_indent+this.getIndent()+this.getIndent());
 		code.add(_indent+this.getIndent()+"</qWhile>");
@@ -274,7 +277,7 @@ public class XmlGenerator extends Generator {
 	{
 		code.add(_indent+"<repeat text=\""+BString.encodeToHtml(_repeat.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_repeat.getComment().getCommaText())+"\" color=\""+
-				 _repeat.getHexColor()+"\">");
+				 _repeat.getHexColor()+"\" disabled=\""+ (_repeat.disabled ? "1" : "0") + "\">");
 		code.add(_indent+this.getIndent()+"<qRepeat>");
 		generateCode(_repeat.q,_indent+this.getIndent()+this.getIndent());
 		code.add(_indent+this.getIndent()+"</qRepeat>");
@@ -286,7 +289,7 @@ public class XmlGenerator extends Generator {
 	{
 		code.add(_indent+"<forever text=\""+BString.encodeToHtml(_forever.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_forever.getComment().getCommaText())+"\" color=\""+
-				 _forever.getHexColor()+"\">");
+				 _forever.getHexColor()+"\" disabled=\""+(_forever.disabled ? "1" : "0") + "\">");
 		code.add(_indent+this.getIndent()+"<qForever>");
 		generateCode(_forever.q,_indent+this.getIndent()+this.getIndent());
 		code.add(_indent+this.getIndent()+"</qForever>");
@@ -298,7 +301,7 @@ public class XmlGenerator extends Generator {
 	{
 		code.add(_indent+"<call text=\""+BString.encodeToHtml(_call.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_call.getComment().getCommaText())+"\" color=\""+
-				 _call.getHexColor()+"\"></call>");
+				 _call.getHexColor()+"\" disabled=\""+(_call.disabled ? "1" : "0") + "\"></call>");
 	}
 	
     @Override
@@ -306,7 +309,7 @@ public class XmlGenerator extends Generator {
 	{
 		code.add(_indent+"<jump text=\""+BString.encodeToHtml(_jump.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_jump.getComment().getCommaText())+"\" color=\""+
-				 _jump.getHexColor()+"\"></jump>");
+				 _jump.getHexColor()+"\" disabled=\""+(_jump.disabled ? "1" : "0") + "\"></jump>");
 	}
 		
 //    @Override

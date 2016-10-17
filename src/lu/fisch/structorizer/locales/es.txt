@@ -79,6 +79,10 @@
  *      Kay Gürtzig     2016.09.22  Bugfix #241; issue #249: New messages for InputBox and Analyser,
  *                                  AnalyserPreferences numbering modified, InputBoxFor messages 
  *      Kay Gürtzig     2016.09.25  Enh. #253: ImportOptionDialog inserted; spellings corrected; usted -> tú
+ *      Kay Gürtzig     2016.10.11  Enh. 267: Menu.error15 divided into error15_1 and error15_2
+ *                                  Enh. 268: OutputConsole sub-section added
+ *      Kay Gürtzig     2016.10.13  Enh. #270: Editor.btnDisable, InputBox.chkDisabled added.
+ *      Kay Gürtzig     2016.10.16  Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
  *
  ******************************************************************************************************
  *
@@ -125,6 +129,10 @@ Menu.menuEditRedo.text=Rehacer
 Menu.menuEditCut.text=Cortar
 Menu.menuEditCopy.text=Copiar
 Menu.menuEditPaste.text=Pegar
+Menu.menuEditUpgradeTurtle.text=Hacia comandos precisos
+Menu.menuEditUpgradeTurtle.tooltip=Reemplaza los comandos Turtle en los elementos seleccionados por aquellos que trabajan con numeros reales. 
+Menu.menuEditDowngradeTurtle.text=Hacia comandos integrales
+Menu.menuEditDowngradeTurtle.tooltip=Reemplaza los comandos Turtle en los elementos seleccionados por aquellos que trabajan con numeros integrales. 
 Menu.menuEditCopyDiagramPNG.text=Copiar Imagen PNG
 Menu.menuEditCopyDiagramEMF.text=Copiar Imagen EMF
 // Menu "Diagram"
@@ -165,6 +173,7 @@ Menu.menuDiagramMoveDown.text=Desplazar abajo
 Menu.menuDiagramTransmute.text=Transmutar
 Menu.menuDiagramCollapse.text=Reducir
 Menu.menuDiagramExpand.text=Expandir
+Menu.menuDiagramDisable.text=Desactivar
 // Breakpoint
 Menu.menuDiagramBreakpoint.text=Poner/eliminar breakpoint
 Menu.menuDiagramBreakTrigger.text=Fija condición de parar ...
@@ -289,7 +298,8 @@ Menu.error13_3.text=¡La función emplea diferentes métodos para retornar un va
 Menu.error14_1.text=¡Los componentes separados no se convienen con el texto del encabiezamiento!
 Menu.error14_2.text=¡El paso «%» del bucle FOR no es una constante entera!
 Menu.error14_3.text=El nombre de la variable «%» puede confligir con una de las palabras claves configuradas para el bucle PARA!
-Menu.error15.text=¡La LLAMADA no tiene ninguna de las formas aceptadas: [ <var> <- ] <routine_name>(<arg_list>)!
+Menu.error15_1.text=¡La LLAMADA no tiene ninguna de las formas aceptadas: [ <var> <- ] <routine_name>(<arg_list>)!
+Menu.error15_2.text=La llamada subrutina «%» ahora no está localizable.
 Menu.error16_1.text=¡Un elemento de salto (salida) debe ser vacío o empezar con uno de los comandos %!
 Menu.error16_2.text=¡Una instrucción de retorno debe ser colocado en un elemento SALTO si no es la última instrucción del diagrama!
 Menu.error16_3.text=¡Instrucciones de salida (exit, leave, o break) solo están permitidos en elementos del tipo SALTO!
@@ -439,6 +449,7 @@ Editor.popupTransmute.text=Transmutar
 // Collapsing
 Editor.popupCollapse.text=Reducir
 Editor.popupExpand.text=Expandir
+Editor.popupDisable.text=Disabl
 // Breakpoint
 Editor.popupBreakpoint.text=Poner/eliminar breakpoint
 Editor.popupBreakTrigger.text=Fija la condición de parar ...
@@ -456,6 +467,7 @@ InputBox.btnOK.tooltip=Aceptar los cambios.
 InputBox.btnCancel.text=Cancelar
 InputBox.btnCancel.tooltip=Cancelar los cambios.
 InputBox.lblBreakTriggerText.text=Parar antes de %a ejecución
+InputBox.chkDisabled.text=Desactivado (ejecución y exportación)
 InputBox.chkBreakpoint.text=Breakpoint
 InputBox.lblText.text[elementType:While]=Por favor ingresa la condición para entrar y quedar
 InputBox.lblText.text[elementType:Repeat]=Por favor ingresa la condición para salir
@@ -504,6 +516,7 @@ InputBoxFor.btnOK.text=Aceptar
 InputBoxFor.btnOK.tooltip=Aceptar los cambios.
 InputBoxFor.btnCancel.text=Cancelar
 InputBoxFor.btnCancel.tooltip=Cancelar los Cambios.
+InputBoxFor.chkDisabled.text=Desactivado (ejecución y exportación)
 InputBoxFor.chkBreakpoint.text=Breakpoint
 InputBoxFor.lblBreakTriggerText.text=Parar antes de %a ejecución
 InputBoxFor.msgInvalidIncrement.text=<%> no es válida constante integral.
@@ -743,3 +756,9 @@ Control.msgTooManyLevels.text=¡Demasiados niveles para salir (niveles reales: %
 Control.msgJumpOutParallel.text=Tentativa ilegal de saltar afuera de un brazo paralelo:%¡Brazo terminado!
 Control.tblVar.header.0=Nombre de Variable
 Control.tblVar.header.1=Contenido
+
+-----[ OutputConsole ]-----
+OutputConsole.menu.text=Propiedades
+OutputConsole.menuFont.text=Fuente ...
+OutputConsole.menuFontUp.text=Aumentar grado de letra
+OutputConsole.menuFontDown.text=Disminuir grado de letra

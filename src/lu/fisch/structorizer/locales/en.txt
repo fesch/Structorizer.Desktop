@@ -77,6 +77,9 @@
  *      Kay Gürtzig     2016.09.22      Bugfix #241; issue #249: New messages for InputBox and Analyser
  *                                      AnalyserPreferences numbering modified, InputBoxFor messages
  *      Kay Gürtzig     2016.09.25      Enh. #253: Section ImportOptionDialog inserted
+ *      Kay Gürtzig     2016.10.11      Enh. 267: Menu.error15 divided into error15_1 and error15_2
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Editor.btnDisable, InputBox.chkDisabled added.
+ *      Kay Gürtzig     2016.10.16      Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
  *
  ******************************************************************************************************
  *
@@ -128,6 +131,10 @@ Menu.menuEditRedo.text=Redo
 Menu.menuEditCut.text=Cut
 Menu.menuEditCopy.text=Copy
 Menu.menuEditPaste.text=Paste
+Menu.menuEditUpgradeTurtle.text=To fine graphics
+Menu.menuEditUpgradeTurtle.tooltip=Replaces all poor Turtle commands in the selected elements by the more precise ones. 
+Menu.menuEditDowngradeTurtle.text=To integer graphics
+Menu.menuEditDowngradeTurtle.tooltip=Replaces all precise Turtle commands in the selected elements by the poorer ones. 
 Menu.menuEditCopyDiagramPNG.text=Copy PNG image
 Menu.menuEditCopyDiagramEMF.text=Copy EMF image
 // Menu "Diagram"
@@ -168,6 +175,7 @@ Menu.menuDiagramMoveDown.text=Move down
 Menu.menuDiagramTransmute.text=Transmute
 Menu.menuDiagramCollapse.text=Collapse
 Menu.menuDiagramExpand.text=Expand
+Menu.menuDiagramDisable.text=Disable
 // Breakpoint
 Menu.menuDiagramBreakpoint.text=Toggle breakpoint
 Menu.menuDiagramBreakTrigger.text=Specify break trigger...
@@ -292,7 +300,8 @@ Menu.error13_3.text=Your functions seems to use several competitive return mecha
 Menu.error14_1.text=The FOR loop parameters are not consistent to the loop heading text!
 Menu.error14_2.text=The FOR loop step value («%») is not a legal integer constant!
 Menu.error14_3.text=Variable name «%» may collide with one of the configured FOR loop heading keywords!
-Menu.error15.text=The CALL hasn't got form «[ <var> <- ] <routine_name>(<arg_list>)»!
+Menu.error15_1.text=The CALL hasn't got form «[ <var> <- ] <routine_name>(<arg_list>)»!
+Menu.error15_2.text=The called subroutine «%» is currently not available.
 Menu.error16_1.text=A JUMP element may be empty or start with one of %, possibly followed by an argument!	
 Menu.error16_2.text=A return instruction, unless at final position, must form a JUMP element!
 Menu.error16_3.text=An exit, leave or break instruction is only allowed as JUMP element!
@@ -442,6 +451,7 @@ Editor.popupTransmute.text=Transmute
 // Collapsing
 Editor.popupCollapse.text=Collapse
 Editor.popupExpand.text=Expand
+Editor.popupDisable.text=Disable
 // Breakpoint
 Editor.popupBreakpoint.text=Toggle breakpoint
 Editor.popupBreakTrigger.text=Specify break trigger...
@@ -458,6 +468,7 @@ InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=Validate your choice.
 InputBox.btnCancel.text=Cancel
 InputBox.btnCancel.tooltip=Cancel your choice.
+InputBox.chkDisabled.text=Disabled (execution and export)
 InputBox.chkBreakpoint.text=
 InputBox.lblBreakTriggerText.text=Break at execution count: %
 InputBox.lblText.text[elementType:Alternative]=Please enter the condition
@@ -507,7 +518,8 @@ InputBoxFor.btnOK.text=
 InputBoxFor.btnOK.tooltip=
 InputBoxFor.btnCancel.text=
 InputBoxFor.btnCancel.tooltip=
-InputBoxFor.chkBreakpoint.text=
+InputBoxFor.chkDisabled.text=Disabled (execution and export)
+InputBoxFor.chkBreakpoint.text=Breakpoint
 InputBoxFor.lblBreakTriggerText.text=Break at execution count: %
 InputBoxFor.msgInvalidIncrement.text=<%> is no valid integer constant
 InputBoxFor.msgMissingBrace1.text=Value list should begin with '{'
@@ -746,3 +758,9 @@ Control.msgTooManyLevels.text=Too many levels to leave (actual depth: %1 / speci
 Control.msgJumpOutParallel.text=Illegal attempt to jump out of a parallel thread:%Thread killed!
 Control.tblVar.header.0=Variable Name
 Control.tblVar.header.1=Content
+
+-----[ OutputConsole ]-----
+OutputConsole.menu.text=Properties
+OutputConsole.menuFont.text=Font ...
+OutputConsole.menuFontUp.text=Enlarge font
+OutputConsole.menuFontDown.text=Diminish font

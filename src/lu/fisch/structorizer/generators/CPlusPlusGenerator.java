@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.generators;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
  *
@@ -42,6 +43,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.08.10      Issue #227: <iostream> only included if needed 
  *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
+ *      Kay Gürtzig     2016.10.15      Enh. #271: Support for input instructions with prompt
  *
  ******************************************************************************************************
  *
@@ -52,7 +54,8 @@ package lu.fisch.structorizer.generators;
  *      - root handling overridden - still too much copied code w.r.t. CGenerator, should be
  *        parameterized
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
@@ -103,21 +106,32 @@ public class CPlusPlusGenerator extends CGenerator {
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
 	 * into the target code
+	 * @param withPrompt - is a prompt string to be considered?
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine()"
 	 */
-	protected String getInputReplacer()
+	// START KGU#281 2016-10-15: Enh. #271
+	//protected String getInputReplacer()
+	//{
+	//	return "std::cin >> $1";
+	//}
+	protected String getInputReplacer(boolean withPrompt)
 	{
+		if (withPrompt) {
+			return "std::cout << $1; std::cin >> $2";
+		}
 		return "std::cin >> $1";
 	}
+	// END KGU#281 2016-10-15
 
 	/**
 	 * A pattern how to embed the expression (right-hand side of an output instruction)
 	 * into the target code
 	 * @return a regex replacement pattern, e.g. "System.out.println($1)"
 	 */
+	@Override
 	protected String getOutputReplacer()
 	{
-		return "std::cout << $1 << std::endl";
+		return "std::cout << $1";
 	}
 
 
@@ -141,7 +155,12 @@ public class CPlusPlusGenerator extends CGenerator {
 		_input = super.transform(_input);
 		
 		// START KGU#108 2015-12-13: Bugfix #51: Cope with empty input and output
-		if (_input.equals("std::cin >>")) _input = "getchar()";	// FIXME Better solution required
+		// START KGU#281 2016-10-15: Enh. #271 - needed a more precise mechanism
+		//if (_input.equals("std::cin >>")) _input = "getchar()";	// FIXME Better solution required
+		if (_input.endsWith("std::cin >>")) {
+			_input = _input.replace("std::cin >>", "getchar()");	// FIXME Better solution required
+		}
+		// END KGU#281 2016-10-15
 		_input = _input.replace("<<  <<", "<<");
 		// END KGU#108 2015-12-13
 

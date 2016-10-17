@@ -95,6 +95,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.10.06      Minor improvements in FOR and CALL transmutations (enh. #213/#257)
  *      Kay Gürtzig     2016.10.06      Bugfix #262: Selection and dragging problems after insertion, undo, and redo
  *      Kay Gürtzig     2016.10.07      Bugfix #263: "Save as" now updates the current directory
+ *      Kay Gürtzig     2016.10.11      KGU#280: field isArrangerOpen replaced by a method (due to volatility)
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Functionality for the disabling of elements
  *
  ******************************************************************************************************
  *
@@ -174,8 +176,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     
     private NSDController NSDControl = null;
     
-    // START KGU#2 2015-11-24
-    public boolean isArrangerOpen = false;
+    // START KGU#2 2015-11-24 - KGU#280 2016-10-11 replaced by method consulting the Arranger class
+    // Dependent Structorizer instances may otherwise be ignorant of the Arranger availability
+    //public boolean isArrangerOpen = false;
+    static public boolean isArrangerOpen()
+    {
+    	return Arranger.hasInstance();
+    }
     // END KGU#2 2015-11-24
 
     private JList<DetectedError> errorlist = null;
@@ -837,7 +844,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// edit it
 					editNSD();
 					selected.setSelected(true);
-					redraw();
+					// START KGU#276 2016-10-11: Issue #269 Attempt to focus the associated element - failed!
+					//redraw();
+					redraw(selected);	// Doesn't work properly
+					// END KGU#276 2016-10-11
 					// do the button thing
 					if(NSDControl!=null) NSDControl.doButtons();
 				}
@@ -865,6 +875,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     }
     // END KGU#143 2016-01-21
 
+    // START KGU#276 2016-10-09: Issue #269 attempt - but doesn't work
+    /**
+     * Redraw the current diagram and scroll to the given element
+     * @param element - the element to gain the focus
+     */
+    public void redraw(Element element)
+    {
+    	redraw();	// This is to make sure the drawing rectangles are correct
+    	// FIXME Doesn't work as intended
+//		scrollRectToVisible(element.getRectOffDrawPoint().getRectangle());
+//    	redraw();	// And this is to avoid partially redrawn environment
+    }
+    // END KGU#276 2016-10-09
+    
     public void redraw()
     {
     	if (root.hightlightVars==true)
@@ -957,7 +981,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public void resetDrawingInfo(boolean _all)
 	{
 		root.resetDrawingInfoDown();
-		if (this.isArrangerOpen)
+		if (isArrangerOpen())
 		{
 			Arranger.getInstance().resetDrawingInfo(this.hashCode());
 		}
@@ -1744,6 +1768,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						ele.toggleBreakpoint();
 					}
 					// END KGU#43 2015-10-17
+					// START KGU#277 2016-10-13: Enh. #270
+					ele.disabled = data.disabled;
+					// END KGU#277 2016-10-13
 					// START KGU#213 2016-08-01: Enh. #215 (temprarily disabled again)
 					//ele.setBreakTriggerCount(data.breakTriggerCount);
 					// END KGU#213 2016-08-01
@@ -1773,7 +1800,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#213 2016-08-01: Enh. #215
 				data.breakTriggerCount = element.getBreakTriggerCount();
 				// END KGU#213 2016-08-01				
-				
+				// START KGU#277 2016-10-13: Enh. #270
+				data.disabled = element.disabled;
+				// END KGU#277 2016-10-13
+			
 				// START KGU#3 2015-10-25: Allow more sophisticated For loop editing
 				if (element instanceof For)
 				{
@@ -1808,6 +1838,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// START KGU#213 2016-08-01: Enh. #215
 					//element.setBreakTriggerCount(data.breakTriggerCount);
 					// END KGU#213 2016-08-01
+					// START KGU#277 2016-10-13: Enh. #270
+					element.disabled = data.disabled;
+					// END KGU#277 2016-10-13
 					// START KGU#3 2015-10-25
 					if (element instanceof For)
 					{
@@ -2010,6 +2043,34 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		this.NSDControl.doButtons();
 	}
 	// END KGU#123 2016-01-03
+	
+	// START KGU#277 2016-10-13: Enh. #270
+	/*========================================
+	 * disable method
+	 *=======================================*/
+	public void disableNSD()
+	{
+		boolean allDisabled = true;
+		root.addUndo();
+		if (getSelected() instanceof IElementSequence)
+		{
+			IElementSequence elements = (IElementSequence)getSelected();
+			for (int i = 0; allDisabled && i < elements.getSize(); i++)
+			{
+				allDisabled = elements.getElement(i).disabled;
+			}
+			elements.setDisabled(!allDisabled);
+		}
+		else {
+			getSelected().disabled = !getSelected().disabled;
+		}
+		
+		redraw();
+		analyse();
+		this.NSDControl.doButtons();
+	}
+	
+	// END KGU#277 2016-10-13
 
 	/*****************************************
 	 * add method
@@ -2037,6 +2098,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					_ele.toggleBreakpoint();
 				}
 				// END KGU 2015-10-17
+				// START KGU#277 2016-10-13: Enh. #270
+				_ele.disabled = data.disabled;
+				// END KGU#277 2016-10-13
 				// START KGU#213 2016-08-01: Enh. #215
 				//_ele.setBreakTriggerCount(data.breakTriggerCount);
 				// END KGU#213 2016-08-01
@@ -2435,6 +2499,59 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#267 2016-10-03
 
+	// START KGU#282 2016-10-16 (draft)
+	/*=======================================*
+	 * Turtleizer precision methods
+	 *=======================================*/
+	/**
+	 * Replaces all Turtleizer fd and bk procedure calls by the more precise
+	 * forward and backward instructions (precisionUp = true) or the other way round
+	 * in the selected elements 
+	 * @param precisionUp
+	 */
+	public void replaceTurtleizerAPI(boolean precisionUp)
+	{
+		final class TurtleizerSwitcher implements IElementVisitor 
+		{
+			private int from;
+			private final String[][] functionPairs = { {"fd", "forward"}, {"bk", "backward"}};
+			
+			public TurtleizerSwitcher(boolean upgrade)
+			{
+				this.from = upgrade ? 0 : 1;
+			}
+			
+			public boolean visitPreOrder(Element _ele)
+			{
+				if (_ele.getClass().getSimpleName().equals("Instruction")) {
+					for (int i = 0; i < _ele.getText().count(); i++) {
+						String line = _ele.getText().get(i);
+						if (Instruction.isTurtleizerMove(line)) {
+							Function fct = new Function(line);
+							for (int j = 0; j < functionPairs.length; j++) {
+								String oldName = functionPairs[j][from];
+								if (fct.getName().equals(oldName)) {
+									_ele.getText().set(i, functionPairs[j][1 - from] + line.trim().substring(oldName.length()));
+								}
+							}
+						}
+					}
+				}
+				return true;
+			}
+			public boolean visitPostOrder(Element _ele)
+			{
+				return true;
+			}
+			
+		}
+		
+		root.addUndo();
+		selected.traverse(new TurtleizerSwitcher(precisionUp));
+		
+	}
+	// END KGU#282 2016-10-16
+
 	// START KGU#43 2015-10-12
 	/*****************************************
 	 * breakpoint methods
@@ -2563,14 +2680,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Arranger arr = Arranger.getInstance();
 		arr.addToPool(root, NSDControl.getFrame());
 		arr.setVisible(true);
-		isArrangerOpen = true;	// Gives the Executor a hint where to find a subroutine pool
+		// KGU#280 2016-10-11: Obsolete now
+		//isArrangerOpen = true;	// Gives the Executor a hint where to find a subroutine pool
 	}
 	// END KGU#2 2015-11-19
 	
 	// START KGU#125 2016-01-06: Possibility to adopt a diagram if it's orphaned
 	public void adoptArrangedOrphanNSD(Root root)
 	{
-		if (isArrangerOpen)
+		if (isArrangerOpen())
 		{
 			Arranger arr = Arranger.getInstance();
 			arr.addToPool(root, NSDControl.getFrame());			
@@ -3634,7 +3752,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			HashMap<String, StringList> oldKeywordMap = null;
 			boolean wasCaseIgnored = D7Parser.ignoreCase;
 			boolean considerRefactoring = root.children.getSize() > 0
-					|| this.isArrangerOpen && Arranger.getInstance().getAllRoots().size() > 0;
+					|| isArrangerOpen() && Arranger.getInstance().getAllRoots().size() > 0;
 			if (considerRefactoring)
 			{
 				oldKeywordMap = new LinkedHashMap<String, StringList>();
@@ -3743,7 +3861,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			}
 		}
 		// Only offer the question if there are relevant replacements and at least one non-empty or parked Root
-		if (replacements.count() > 0 && (root.children.getSize() > 0 || isArrangerOpen && !Arranger.getInstance().getAllRoots().isEmpty()))
+		if (replacements.count() > 0 && (root.children.getSize() > 0 || isArrangerOpen() && !Arranger.getInstance().getAllRoots().isEmpty()))
 		{
 			String[] options = {
 					Menu.lblRefactorNone.getText(),
@@ -3812,7 +3930,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			};
 			root.addUndo();
 			root.traverse(new Refactorer(oldKeywordMap, wasCaseIgnored));
-			if (refactorAll && this.isArrangerOpen)
+			if (refactorAll && isArrangerOpen())
 			{
 				// Well, we hope that the roots won't change the hash code on refactoring...
 				for (Root aRoot: Arranger.getInstance().getAllRoots())
@@ -4314,10 +4432,17 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#213 2016-08-01: Enh. #215
 			// START KGU#246 2016-09-13: Bugfix #241)
 			//inputbox.lblBreakTrigger.setText(inputbox.lblBreakText.getText().replace("%", Integer.toString(_data.breakTriggerCount)));
-			inputbox.lblBreakTriggerText.setVisible(notRoot);
+			// START KGU#213 2016-10-13: Enh. #215 - Make it invisible if zero
+			//inputbox.lblBreakTriggerText.setVisible(notRoot);
+			inputbox.lblBreakTriggerText.setVisible(notRoot && _data.breakTriggerCount > 0);
+			// END KGU#213 2016-10-13
 			inputbox.lblBreakTrigger.setText(Integer.toString(_data.breakTriggerCount));
 			// END KGU#246 2016-09-13
 			// END KGU#213 2016-08-01
+			// START KGU#277 2016-10-13: Enh. #270
+			inputbox.chkDisabled.setVisible(notRoot);
+			inputbox.chkDisabled.setSelected(_data.disabled);
+			// END KGU#277 2016-10-13
 
 			inputbox.OK=false;
 			// START KGU#42 2015-10-14: Pass the additional information for title translation control
@@ -4356,6 +4481,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#43 2015-10-12: Breakpoint support
 			_data.breakpoint = inputbox.chkBreakpoint.isSelected();
 			// END KGU#43 2015-10-12
+			// START KGU#277 2016-10-13: Enh. #270
+			_data.disabled = inputbox.chkDisabled.isSelected();
+			// END KGU#277 2016-10-13
 			// START KGU#213 2016-08-01: Enh. #215 (temporarily disabled again)
 //			try{
 //				_data.breakTriggerCount = Integer.parseUnsignedInt(inputbox.txtBreakTrigger.getText());

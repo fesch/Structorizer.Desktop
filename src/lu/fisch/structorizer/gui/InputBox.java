@@ -41,6 +41,7 @@ package lu.fisch.structorizer.gui;
  *     Kay Gürtzig  2016.08.02  Enh. #215: Breakpoint trigger counts partially implemented
  *     Kay Gürtzig  2016.09.13  Bugfix #241: Obsolete mechanisms removed (remnants of KGU#42)
  *     Kay Gürtzig  2016.09.22  Bugfix #241 revised by help of a LangDialog API modification
+ *     Kay Gürtzig  2016.10.13  Enh. #270: New checkbox chkDisabled
  *
  ******************************************************************************************************
  *
@@ -81,7 +82,10 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     protected JScrollPane scrText = new JScrollPane(txtText);
     protected JScrollPane scrComment = new JScrollPane(txtComment);
 
-    // Checkbox
+    // Checkboxes
+    // START KGU#277 2016-10-13: #270
+    public JCheckBox chkDisabled = new JCheckBox("Execution and export disabled");
+    // END KGU#277 2016-10-13
     // START KGU#43 2015-10-12: Additional possibility to control the breakpoint setting
     public JCheckBox chkBreakpoint = new JCheckBox("Breakpoint");
     // END KGU#43 2015-10-12
@@ -189,9 +193,25 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         gbcPanel1.anchor = GridBagConstraints.NORTH;
         gbPanel1.setConstraints(lblComment, gbcPanel1);
         pnPanel1.add(lblComment);
-        
+
+        // START KGU#277 2016-10-13: Enh. #270
         gbcPanel1.gridx = 1;
         gbcPanel1.gridy = 17;
+        gbcPanel1.gridwidth = 7;
+        gbcPanel1.gridheight = 1;
+        gbcPanel1.fill = GridBagConstraints.BOTH;
+        gbcPanel1.weightx = 1;
+        gbcPanel1.weighty = 0;
+        gbcPanel1.anchor = GridBagConstraints.NORTH;
+        gbPanel1.setConstraints(chkDisabled, gbcPanel1);
+        pnPanel1.add(chkDisabled);
+        // END KGU#277 2016-10-13
+
+        gbcPanel1.gridx = 1;
+        // START KGU#277 2016-10-13: Enh. #270
+        //gbcPanel1.gridy = 17;
+        gbcPanel1.gridy = 18;
+        // END KGU#277 2016-10-13
         gbcPanel1.gridwidth = 7;
         gbcPanel1.gridheight = 1;
         gbcPanel1.fill = GridBagConstraints.BOTH;
@@ -203,7 +223,10 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
 
         // START KGU#213 2016-08-01: Enh. #215 - conditional breakpoints
         gbcPanel1.gridx = 12;
-        gbcPanel1.gridy = 17;
+        // START KGU#277 2016-10-13: Enh. #270
+        //gbcPanel1.gridy = 17;
+        gbcPanel1.gridy = 18;
+        // END KGU#277 2016-10-13
         gbcPanel1.gridwidth = 7;
         gbcPanel1.gridheight = 1;
         gbcPanel1.fill = GridBagConstraints.BOTH;
@@ -230,7 +253,10 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
 
         //createExitButtons(gridbase)
         gbcPanel1.gridx = 1;
-        gbcPanel1.gridy = 18;
+        // START KGU#277 2016-10-13: Enh. #270
+        //gbcPanel1.gridy = 18;
+        gbcPanel1.gridy = 19;
+        // END KGU#277 2016-10-13
         gbcPanel1.gridwidth = 7;
         gbcPanel1.gridheight = 1;
         gbcPanel1.fill = GridBagConstraints.BOTH;
@@ -244,7 +270,10 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         gbcPanel1.gridx = 12;
             //gbcPanel1.gridx = 8;
         // END KGU#3 2015-10-31
-        gbcPanel1.gridy = 18;
+        // START KGU#277 2016-10-13: Enh. #270
+        //gbcPanel1.gridy = 18;
+        gbcPanel1.gridy = 19;
+        // END KGU#277 2016-10-13
         // START KGU#3 2015-10-31: The new gridwidth causes no difference here but fits better for InputBoxFor
         gbcPanel1.gridwidth = 7;
     		//gbcPanel1.gridwidth = GridBagConstraints.REMAINDER;

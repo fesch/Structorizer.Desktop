@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.gui;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -38,12 +39,14 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.10.25      Enh. #10: Fields for specific For loop support (KGU#3)
  *      Kay Gürtzig     2016.03.21      Enh. #84: Field modification to support FOR-IN loops (KGU#61)
  *      Kay Gürtzig     2016.08.01      Enh. #215: Breakpoint trigger counters added (KGU#213)
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Disabling control added (KGU#277)
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.utils.*;
@@ -68,6 +71,9 @@ public class EditData {
 	// START KGU#213 2016-08-01: Enh. #215
 	public int breakTriggerCount = 0;
 	// END KGU#213 2016-08-01
+	// START KGU#277 2016-10-13: Enh #270
+	public boolean disabled = false;
+	// END KGU#277 2016-10-13
 	
 	public boolean result = false;
 	

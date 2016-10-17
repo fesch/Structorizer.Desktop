@@ -79,7 +79,10 @@
  *      Kay Gürtzig         2016.09.22  Bugfix #241, issue #249: New messages for InputBox and Analyser
  *                                      AnalyserPreferences numbering modified, InputBoxFor messages
  *      Kay Gürtzig         2016.09.25  Enh. #253: Section ImportOptionDialog inserted, Analyser checks reformulated
- *
+ *      Kay Gürtzig         2016.10.11  Enh. 267: Menu.error15 divided into error15_1 and error15_2
+ *      Kay Gürtzig         2016.10.13  Enh. #270: Editor.btnDisable, InputBox.chkDisabled added.
+ *      Kay Gürtzig         2016.10.16  Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
+  *
  ******************************************************************************************************
  *
  *      Comment:	
@@ -120,6 +123,10 @@ Menu.menuEditRedo.text=Wiederholen
 Menu.menuEditCut.text=Ausschneiden
 Menu.menuEditCopy.text=Kopieren
 Menu.menuEditPaste.text=Einfügen
+Menu.menuEditUpgradeTurtle.text=Reelle Turtlebefehle
+Menu.menuEditUpgradeTurtle.tooltip=Ersetzt ganzzahlige Turtle-Befehle in den selektierten Elementen durch reellwertige. 
+Menu.menuEditDowngradeTurtle.text=Ganzzahlige Turtlebefehle
+Menu.menuEditDowngradeTurtle.tooltip=Ersetzt reellwertige Turtle-Befehle in den selektierten Elementen durch ganzzahlige. 
 Menu.menuEditCopyDiagramPNG.text=Als PNG Grafik kopieren
 Menu.menuEditCopyDiagramEMF.text=Als EMF Grafik kopieren
 // Menu "Diagram"
@@ -161,6 +168,7 @@ Menu.menuDiagramMoveDown.text=Nach unten
 Menu.menuDiagramTransmute.text=Umwandeln
 Menu.menuDiagramCollapse.text=Reduzieren
 Menu.menuDiagramExpand.text=Erweitern
+Menu.menuDiagramDisable.text=Deaktivieren
 // Breakpoint
 Menu.menuDiagramBreakpoint.text=Haltepunkt setzen/löschen
 Menu.menuDiagramBreakTrigger.text=Haltepunktauslösung festlegen...
@@ -282,7 +290,8 @@ Menu.error13_3.text=Die Funktion verwendet verschiedene Wertrückgabemechanismen
 Menu.error14_1.text=Die Einzelangaben der Zählschleife und der Text passen nicht zusammen!
 Menu.error14_2.text=Die Schrittweite «%» der Zählschleife ist keine konstante Ganzzahl!
 Menu.error14_3.text=Variable «%» steht in möglichem Namenskonflikt mit einem der konfigurierten Kennwörtern für FOR-Schleifen!
-Menu.error15.text=Der Unterprogrammaufruf hat nicht die Form [ <var> <- ] <routine_name>(<arg_list>)!
+Menu.error15_1.text=Der Unterprogrammaufruf hat nicht die Form [ <var> <- ] <routine_name>(<arg_list>)!
+Menu.error15_2.text=Die aufgerufene Routine «%» ist z.Z. nicht verfügbar.
 Menu.error16_1.text=Der Aussprung muss leer sein oder mit einem der Schlüsselwörter % beginnen!
 Menu.error16_2.text=Eine return-Anweisung muss (außer am Diagrammende) ein Aussprung-Element sein!
 Menu.error16_3.text=Exit-, leave- oder break-Anweisungen sind nur als Aussprung-Elemente zulässig!
@@ -431,6 +440,7 @@ Editor.popupTransmute.text=Umwandeln
 // Collapsing
 Editor.popupCollapse.text=Reduzieren
 Editor.popupExpand.text=Erweitern
+Editor.popupDisable.text=Deaktivieren
 // Breakpoint
 Editor.popupBreakpoint.text=Haltepunkt setzen/löschen
 Editor.popupBreakTrigger.text=Haltepunktauslösung festlegen...
@@ -447,6 +457,7 @@ InputBox.btnOK.text=Speichern
 InputBox.btnOK.tooltip=Speichern der Eintragungen.
 InputBox.btnCancel.text=Abbruch
 InputBox.btnCancel.tooltip=Verwerfen der Eintragungen.
+InputBox.chkDisabled.text=Ausführung und Export unterbunden
 InputBox.chkBreakpoint.text=Haltepunkt
 InputBox.lblBreakTriggerText.text=Halt vor %. Ausführung
 InputBox.title[elementType:Root]=Programmnamen bearbeiten...
@@ -495,6 +506,7 @@ InputBoxFor.btnOK.text=Speichern
 InputBoxFor.btnOK.tooltip=Speichern der Eintragungen.
 InputBoxFor.btnCancel.text=Abbruch
 InputBoxFor.btnCancel.tooltip=Verwerfen der Eintragungen.
+InputBoxFor.chkDisabled.text=Ausführung/Export unterbunden
 InputBoxFor.chkBreakpoint.text=Haltepunkt
 InputBoxFor.lblBreakTriggerText.text=Halt vor %. Ausführung
 InputBoxFor.msgInvalidIncrement.text=<%> ist keine gültige Ganzzahlkonstante
@@ -734,3 +746,9 @@ Control.msgTooManyLevels.text=Zu viele Ebenen zum Verlassen gefordert (tatsächl
 Control.msgJumpOutParallel.text=Unzulässiger Aussprung aus Parallelzweig:%Thread beendet!
 Control.tblVar.header.0=Variablenname
 Control.tblVar.header.1=Inhalt
+
+-----[ OutputConsole ]-----
+OutputConsole.menu.text=Eigenschaften
+OutputConsole.menuFont.text=Schriftart ...
+OutputConsole.menuFontUp.text=Schrift vergrößern
+OutputConsole.menuFontDown.text=Schrift verkleinern

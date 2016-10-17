@@ -101,8 +101,11 @@ public class CSharpGenerator extends Generator
 		 * into the target code
 		 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 		 */
-		protected String getInputReplacer()
+		protected String getInputReplacer(boolean withPrompt)
 		{
+			if (withPrompt) {
+				return "Console.Write($1); Console.ReadLine($2)";
+			}
 			return "Console.ReadLine($1);";
 		}
 
