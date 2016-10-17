@@ -123,10 +123,10 @@ Menu.menuEditRedo.text=Wiederholen
 Menu.menuEditCut.text=Ausschneiden
 Menu.menuEditCopy.text=Kopieren
 Menu.menuEditPaste.text=Einfügen
-Menu.menuUpgradeTurtle.text=Reelle Turtlebefehle
-Menu.menuUpgradeTurtle.tooltip=Ersetzt ganzzahlige Turtle-Befehle in den selektierten Elementen durch reellwertige. 
-Menu.menuDowngradeTurtle.text=Ganzzahlige Turtlebefehle
-Menu.menuDowngradeTurtle.tooltip=Ersetzt reellwertige Turtle-Befehle in den selektierten Elementen durch ganzzahlige. 
+Menu.menuEditUpgradeTurtle.text=Reelle Turtlebefehle
+Menu.menuEditUpgradeTurtle.tooltip=Ersetzt ganzzahlige Turtle-Befehle in den selektierten Elementen durch reellwertige. 
+Menu.menuEditDowngradeTurtle.text=Ganzzahlige Turtlebefehle
+Menu.menuEditDowngradeTurtle.tooltip=Ersetzt reellwertige Turtle-Befehle in den selektierten Elementen durch ganzzahlige. 
 Menu.menuEditCopyDiagramPNG.text=Als PNG Grafik kopieren
 Menu.menuEditCopyDiagramEMF.text=Als EMF Grafik kopieren
 // Menu "Diagram"

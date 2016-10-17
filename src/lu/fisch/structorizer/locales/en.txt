@@ -131,10 +131,10 @@ Menu.menuEditRedo.text=Redo
 Menu.menuEditCut.text=Cut
 Menu.menuEditCopy.text=Copy
 Menu.menuEditPaste.text=Paste
-Menu.menuUpgradeTurtle.text=To fine graphics
-Menu.menuUpgradeTurtle.tooltip=Replaces all poor Turtle commands in the selected elements by the more precise ones. 
-Menu.menuDowngradeTurtle.text=To integer graphics
-Menu.menuDowngradeTurtle.tooltip=Replaces all precise Turtle commands in the selected elements by the poorer ones. 
+Menu.menuEditUpgradeTurtle.text=To fine graphics
+Menu.menuEditUpgradeTurtle.tooltip=Replaces all poor Turtle commands in the selected elements by the more precise ones. 
+Menu.menuEditDowngradeTurtle.text=To integer graphics
+Menu.menuEditDowngradeTurtle.tooltip=Replaces all precise Turtle commands in the selected elements by the poorer ones. 
 Menu.menuEditCopyDiagramPNG.text=Copy PNG image
 Menu.menuEditCopyDiagramEMF.text=Copy EMF image
 // Menu "Diagram"

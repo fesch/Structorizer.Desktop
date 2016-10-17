@@ -129,10 +129,10 @@ Menu.menuEditRedo.text=Rehacer
 Menu.menuEditCut.text=Cortar
 Menu.menuEditCopy.text=Copiar
 Menu.menuEditPaste.text=Pegar
-Menu.menuUpgradeTurtle.text=Hacia comandos precisos
-Menu.menuUpgradeTurtle.tooltip=Reemplaza los comandos Turtle en los elementos seleccionados por aquellos que trabajan con numeros reales. 
-Menu.menuDowngradeTurtle.text=Hacia comandos integrales
-Menu.menuDowngradeTurtle.tooltip=Reemplaza los comandos Turtle en los elementos seleccionados por aquellos que trabajan con numeros integrales. 
+Menu.menuEditUpgradeTurtle.text=Hacia comandos precisos
+Menu.menuEditUpgradeTurtle.tooltip=Reemplaza los comandos Turtle en los elementos seleccionados por aquellos que trabajan con numeros reales. 
+Menu.menuEditDowngradeTurtle.text=Hacia comandos integrales
+Menu.menuEditDowngradeTurtle.tooltip=Reemplaza los comandos Turtle en los elementos seleccionados por aquellos que trabajan con numeros integrales. 
 Menu.menuEditCopyDiagramPNG.text=Copiar Imagen PNG
 Menu.menuEditCopyDiagramEMF.text=Copiar Imagen EMF
 // Menu "Diagram"
