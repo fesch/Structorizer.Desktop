@@ -38,6 +38,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.04.26      Converted to JTextPane in order to allow styled output
  *      Kay Gürtzig     2016.09.25      Bugfix #251 averting Nimbus disrespect of panel settings 
  *      Kay Gürtzig     2016.10.11      Enh. #268: Inheritance changed, font selecting opportunities added
+ *      Kay Gürtzig     2016.10.17      Issue #268: Font setting source and target corrected (doc's default style)
  *
  ******************************************************************************************************
  *
@@ -139,6 +140,9 @@ public class OutputConsole extends LangFrame implements ActionListener {
     	textPane.setForeground(Color.WHITE);
     	JScrollPane scrText = new JScrollPane(textPane);
     	doc = textPane.getStyledDocument();
+    	Style defStyle = doc.getStyle("default");
+    	// The standard font size (11) wasn't in the FontChooser choice list 
+    	defStyle.addAttribute(StyleConstants.FontSize, 12);
     	for (Color colour : colours)
     	{
     		Style style = doc.addStyle(colour.toString(), null);
@@ -219,19 +223,17 @@ public class OutputConsole extends LangFrame implements ActionListener {
     // START KGU#279 2016-10-11: Enh. #268 - allow to control the font size
     public int getFontSize()
     {
-    	MutableAttributeSet attrs = textPane.getInputAttributes();
+    	MutableAttributeSet attrs = doc.getStyle("default");
     	return StyleConstants.getFontSize(attrs);
     }
     
     public void setFontSize(int newFontSize)
     {
-    	MutableAttributeSet attrs = textPane.getInputAttributes();
+    	// Modify the default style
+    	doc.getStyle("default").addAttribute(StyleConstants.FontSize, newFontSize);
+		// Modify the font of the already written text
+    	MutableAttributeSet attrs = new javax.swing.text.SimpleAttributeSet();
     	StyleConstants.setFontSize(attrs, newFontSize);
-    	for (Color colour: colours)
-    	{
-    		Style style = doc.getStyle(colour.toString());
-    		style.addAttribute(StyleConstants.FontSize, newFontSize);
-    	}
     	doc.setCharacterAttributes(0, doc.getLength(), attrs, false);
     }
 
@@ -239,23 +241,22 @@ public class OutputConsole extends LangFrame implements ActionListener {
 	{
 		FontChooser fontChooser = new FontChooser(this);
 		// set fields
-    	MutableAttributeSet attrs = textPane.getInputAttributes();
-		fontChooser.setFont(doc.getFont(attrs));
+    	MutableAttributeSet stAttrs = doc.getStyle("default");
+		fontChooser.setFont(doc.getFont(stAttrs));
 		fontChooser.setVisible(true);
-
+		// Get the user selection
     	String fontName = fontChooser.getCurrentFont().getName();
     	int fontSize = fontChooser.getCurrentFont().getSize();
 
-    	// Modify the styles for new text
+    	// Modify the default style
+		Style style = doc.getStyle("default");
+		style.addAttribute(StyleConstants.FontFamily, fontName);
+		style.addAttribute(StyleConstants.FontSize, fontSize);
+
+		// Modify the font of the already written text
+    	MutableAttributeSet attrs = new javax.swing.text.SimpleAttributeSet();
     	StyleConstants.setFontFamily(attrs, fontName);
     	StyleConstants.setFontSize(attrs, fontSize);
-    	for (Color colour: colours)
-    	{
-    		Style style = doc.getStyle(colour.toString());
-    		style.addAttribute(StyleConstants.FontFamily, fontName);
-    		style.addAttribute(StyleConstants.FontSize, fontSize);
-    	}
-    	// Modify the font of the existing text
     	doc.setCharacterAttributes(0, doc.getLength(), attrs, false);
 	}
 

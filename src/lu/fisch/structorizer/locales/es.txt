@@ -268,6 +268,7 @@ Menu.msgRefactoringOffer.text=Configuradas palabras claves fueron reemplazadas:%
 Menu.lblRefactorNone.text=no
 Menu.lblRefactorCurrent.text=el editado
 Menu.lblRefactorAll.text=todos
+Menu.msgReplacementsDone.text=% instrucciones sustituidos.
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
@@ -449,7 +450,7 @@ Editor.popupTransmute.text=Transmutar
 // Collapsing
 Editor.popupCollapse.text=Reducir
 Editor.popupExpand.text=Expandir
-Editor.popupDisable.text=Disabl
+Editor.popupDisable.text=Desactivar
 // Breakpoint
 Editor.popupBreakpoint.text=Poner/eliminar breakpoint
 Editor.popupBreakTrigger.text=Fija la condición de parar ...

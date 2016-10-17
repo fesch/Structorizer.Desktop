@@ -364,6 +364,9 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder lblRefactorCurrent = new LangTextHolder("current diagram");
 	public static final LangTextHolder lblRefactorAll = new LangTextHolder("all diagrams");
 	// END KGU#258 2016-10-03
+	// START KGU#282 2016-10-17: Enh. #272
+	public static final LangTextHolder msgReplacementsDone = new LangTextHolder("% instructions replaced.");	
+	// END KGU#282 2016-10-17
 
 	public void create()
 	{

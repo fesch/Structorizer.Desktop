@@ -2499,7 +2499,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#267 2016-10-03
 
-	// START KGU#282 2016-10-16 (draft)
+	// START KGU#282 2016-10-16: Issue #272 (draft)
 	/*=======================================*
 	 * Turtleizer precision methods
 	 *=======================================*/
@@ -2514,6 +2514,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		final class TurtleizerSwitcher implements IElementVisitor 
 		{
 			private int from;
+			// START #272 2016-10-17 (KGU): detect changes (to get rid of void undo entry
+			private boolean act = false;
+			private int nChanges = 0;
+			// END #272 2016-10-17
 			private final String[][] functionPairs = { {"fd", "forward"}, {"bk", "backward"}};
 			
 			public TurtleizerSwitcher(boolean upgrade)
@@ -2531,7 +2535,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							for (int j = 0; j < functionPairs.length; j++) {
 								String oldName = functionPairs[j][from];
 								if (fct.getName().equals(oldName)) {
-									_ele.getText().set(i, functionPairs[j][1 - from] + line.trim().substring(oldName.length()));
+									// START #272 2016-10-17
+									//_ele.getText().set(i, functionPairs[j][1 - from] + line.trim().substring(oldName.length()));
+									if (this.act) {
+										_ele.getText().set(i, functionPairs[j][1 - from] + line.trim().substring(oldName.length()));
+									}
+									nChanges++;
+									// END #272 2016-10-17
 								}
 							}
 						}
@@ -2544,10 +2554,36 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				return true;
 			}
 			
+			// START #272 2016-10-17 (KGU)
+			public void activate()
+			{
+				this.nChanges = 0;
+				this.act = true;
+			}
+			
+			public int getNumberOfReplacements()
+			{
+				return nChanges;
+			}
+			// END #272 2016-10-17
+			
 		}
 		
-		root.addUndo();
-		selected.traverse(new TurtleizerSwitcher(precisionUp));
+		// START #272 2016-10-17 (KGU): Inform the user and get rid of void undo entry
+		//root.addUndo();
+		//selected.traverse(new TurtleizerSwitcher(precisionUp));
+		// First mere count run
+		TurtleizerSwitcher switcher = new TurtleizerSwitcher(precisionUp);
+		selected.traverse(switcher);
+		int nReplaced = switcher.getNumberOfReplacements();
+		if (nReplaced > 0) {
+			// There will be substitutions, so get dangerous.
+			root.addUndo();
+			switcher.activate();
+			selected.traverse(switcher);			
+		}
+		JOptionPane.showMessageDialog(this, Menu.msgReplacementsDone.getText().replace("%", Integer.toString(nReplaced)));
+		// END #272 2016-10-17
 		
 	}
 	// END KGU#282 2016-10-16
