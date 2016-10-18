@@ -79,10 +79,11 @@
  *      Kay Gürtzig         2016.09.22  Bugfix #241, issue #249: New messages for InputBox and Analyser
  *                                      AnalyserPreferences numbering modified, InputBoxFor messages
  *      Kay Gürtzig         2016.09.25  Enh. #253: Section ImportOptionDialog inserted, Analyser checks reformulated
- *      Kay Gürtzig         2016.10.11  Enh. 267: Menu.error15 divided into error15_1 and error15_2
+ *      Kay Gürtzig         2016.10.11  Enh. #267: Menu.error15 divided into error15_1 and error15_2
  *      Kay Gürtzig         2016.10.13  Enh. #270: Editor.btnDisable, InputBox.chkDisabled added.
  *      Kay Gürtzig         2016.10.16  Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
-  *
+ *      Kay Gürtzig         2016.10.18  Enh. #267: Analyser check 15 reformulated.
+ *
  ******************************************************************************************************
  *
  *      Comment:	
@@ -318,10 +319,10 @@ AnalyserPreferences.checkboxes.8.text=Wertzuweisungen innerhalb von Bedingungen 
 AnalyserPreferences.checkboxes.9.text=Testen, ob sich der Programmname von allen anderen Bezeichnern unterscheidet.
 AnalyserPreferences.checkboxes.10.text=Mehrzeilige Anweisungen mit verschiedenen Anweisungsarten suchen.
 AnalyserPreferences.checkboxes.11.text=Nach fehlerhaften Wertzuweisungen suchen.
-AnalyserPreferences.checkboxes.12.text=Prüfen, ob die Parameternamen korrekt sind. (LUX/MEN)
+AnalyserPreferences.checkboxes.12.text=Prüfen, ob Parameternamen bestimmten Vorgaben entsprechen. (LUX/MEN)
 AnalyserPreferences.checkboxes.13.text=Prüfen, ob eine Funktion stets auch einen Rückgabewert hat.
 AnalyserPreferences.checkboxes.14.text=Prüfen, ob die Angaben von FOR-Schleifen konsistent sind.
-AnalyserPreferences.checkboxes.15.text=Prüfen, ob Aufruf-Elemente nur einen einzelnen Routinenaufruf enthalten.
+AnalyserPreferences.checkboxes.15.text=Prüfen der Korrektheit von Aufruf-Elementen und der Verfügbarkeit der Routine.
 AnalyserPreferences.checkboxes.16.text=Prüfen, ob Aussprung-Elemente korrekt benutzt sind.
 AnalyserPreferences.checkboxes.17.text=Prüfen, ob in parallelen Zweigen konkurrierende Wertzuweisungen vorkommen.
 AnalyserPreferences.checkboxes.18.text=Prüfen, ob Variablen sich nur durch Groß-/Kleinschreibung unterscheiden.
