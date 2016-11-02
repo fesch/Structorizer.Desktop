@@ -50,6 +50,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.08.08      Issues #220, #224: Look-and Feel updates for Executor and Translator
  *      Kay Gürtzig     2016.09.09      Locales backwards compatibility precaution for release 3.25 in loadFromIni()
  *      Kay Gürtzig     2016.10.11      Enh. #267: New method updateAnalysis() introduced
+ *      Kay Gürtzig     2016.11.01      Issue #81: Scale factor from Ini also applied to fonts  
  *
  ******************************************************************************************************
  *
@@ -71,6 +72,7 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************///
 
 import java.io.*;
+import java.util.Set;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -234,7 +236,7 @@ public class Mainform  extends LangFrame implements NSDController
             /******************************
              * Load values from INI
              ******************************/
-            loadFromINI();
+            loadFromINI();	// Why is this done a second time here?
             Locales.getInstance().setLocale(Locales.getInstance().getLoadedLocaleName());
 
             /******************************
@@ -256,22 +258,34 @@ public class Mainform  extends LangFrame implements NSDController
 		{
 			Ini ini = Ini.getInstance();
 			ini.load();
-			ini.load();
+			ini.load();	// FIXME: Why is it done twice?
 
 			double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1")).intValue();
 			IconLoader.setScaleFactor(scaleFactor);
 			
+			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+			int defaultWidth = (int)(750 * scaleFactor);
+			int defaultHeight = (int)(550 * scaleFactor);
+			// END KGU#287 2016-11-01
 			// position
 			int top = Integer.valueOf(ini.getProperty("Top","0"));
 			int left = Integer.parseInt(ini.getProperty("Left","0"));
-			int width = Integer.parseInt(ini.getProperty("Width","750"));
-			int height = Integer.valueOf(ini.getProperty("Height","550"));
+			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+			//int width = Integer.parseInt(ini.getProperty("Width","750"));
+			//int height = Integer.valueOf(ini.getProperty("Height","550"));
+			int width = Integer.parseInt(ini.getProperty("Width", ""+defaultWidth));
+			int height = Integer.valueOf(ini.getProperty("Height",""+defaultHeight));
+			// END KGU#287 2016-11-01
 
 			// reset to defaults if wrong values
 			if (top<0) top=0;
 			if (left<0) left=0;
-			if (width<=0) width=750;
-			if (height<=0) height=550;
+			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+			//if (width<=0) width=750;
+			//if (height<=0) height=550;
+			if (width <= 0) width = defaultWidth;
+			if (height <= 0) height = defaultHeight;
+			// END KGU#287 2016-11-01
 			
 			// language	
 			String localeFileName = ini.getProperty("Lang","en");
@@ -291,6 +305,9 @@ public class Mainform  extends LangFrame implements NSDController
 			// look & feel
 			laf=ini.getProperty("laf","Mac OS X");
 			setLookAndFeel(laf);
+			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+			scaleDefaultFontSize(scaleFactor);
+			// END KGU#287 2016-11-01
 			
 			// size
 			setPreferredSize(new Dimension(width,height));
@@ -452,6 +469,34 @@ public class Mainform  extends LangFrame implements NSDController
 			System.out.println(e.getMessage());
 		}
 	}
+	
+	// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+	private static void scaleDefaultFontSize(double factor) {
+
+		Set<Object> keySet = UIManager.getLookAndFeelDefaults().keySet();
+		Object[] keys = keySet.toArray(new Object[keySet.size()]);
+
+		for (Object key : keys) {
+
+			if (key != null && key.toString().toLowerCase().contains("font")) {
+
+				Font font = UIManager.getDefaults().getFont(key);
+				if (font != null) {
+					int size = font.getSize();
+					//System.out.println(key + ": " + size);
+					// Vague attempt to prevent the font size being exponentially enlarged by repeated calls...
+					if (size < 18 && factor > 1) {
+						font = font.deriveFont((float)(size * factor));
+						UIManager.put(key, font);
+					}
+				}
+
+			}
+
+		}
+
+	}
+	// END KGU#287 2016-11-01
 	
 	/******************************
 	 * This method dispatches the

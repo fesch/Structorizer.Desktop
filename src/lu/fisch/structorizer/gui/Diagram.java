@@ -3606,7 +3606,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		try {
 			// START KGU#247 2016-09-17: Issue #243/#245 Translation support for update window content
 			//JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\">Goto <a href=\"" + home + "\">" + home + "</a> to look for updates<br>and news about Structorizer.</font></html>");
-			JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\">" +
+			double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1")).intValue();
+			int fontSize = (int)(3*scaleFactor);
+			JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\" size="+fontSize+">" +
 					Menu.msgGotoHomepage.getText().replace("%", "<a href=\"" + home + "\">" + home + "</a>") +
 					"</font></html>");
 			// END KGU#247 2016-09-17

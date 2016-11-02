@@ -47,10 +47,11 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016-03-08  Bugfix #97: Methods for drawing info invalidation added (KGU#155)
  *      Kay Gürtzig     2016.03.08  Method clearExecutionStatus and btnSetCovered added (for Enhancement #77)
  *      Kay Gürtzig     2016.03.12  Enh. #124 (KGU#156): Generalized runtime data visualisation hooks
- *      Kay Gürtzig     2016-04-14  Enh. #158 (KGU#177): Keys for copy and paste enabled, closing
+ *      Kay Gürtzig     2016.04.14  Enh. #158 (KGU#177): Keys for copy and paste enabled, closing
  *                                  mechanism modified
- *      Kay Gürtzig     2016-07-03  Dialog message translation mechanism added (KGU#203).
+ *      Kay Gürtzig     2016.07.03  Dialog message translation mechanism added (KGU#203).
  *      Kay Gürtzig     2016.09.26  Enh. #253: New public method getAllRoots() added.
+ *      Kay Gürtzig     2016.11.01  Enh. #81: Scalability of the Icons ensured
  *
  ******************************************************************************************************
  *
@@ -73,6 +74,7 @@ import javax.swing.JScrollPane;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.executor.IRoutinePool;
+import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.locales.LangFrame;
 
@@ -208,7 +210,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // START KGU#2 2015-11-24: Replace the Java default icon
         try
         {
-        setIconImage(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/arranger48.png")).getImage());
+            // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+            //setIconImage(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/arranger48.png")).getImage());
+            setIconImage(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/arranger48.png")).getImage()); // NOI18N
+            // END KGU#287 2016-11-01
         }
         catch (Error error)
         {
@@ -219,7 +224,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         toolbar.setFloatable(false);
         toolbar.setRollover(true);
 
-        btnExportPNG.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/032_make_bmp.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnExportPNG.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/032_make_bmp.png"))); // NOI18N
+        btnExportPNG.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/032_make_bmp.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnExportPNG.setText("PNG Export");
         btnExportPNG.setFocusable(false);
         btnExportPNG.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -232,7 +240,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         toolbar.add(btnExportPNG);
 
         // START KGU#110 2015-12-20: Enh. #62
-        btnSaveArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/SaveFile20x20.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnSaveArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/SaveFile20x20.png"))); // NOI18N
+        btnSaveArr.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/SaveFile20x20.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnSaveArr.setText("Save List");
         btnSaveArr.setFocusable(false);
         btnSaveArr.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -244,7 +255,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         });
         toolbar.add(btnSaveArr);
 
-        btnLoadArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/OpenFile20x20.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnLoadArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/OpenFile20x20.png"))); // NOI18N
+        btnLoadArr.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/OpenFile20x20.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnLoadArr.setText("Load List");
         btnLoadArr.setFocusable(false);
         btnLoadArr.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -257,7 +271,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         toolbar.add(btnLoadArr);
         // END KGU#110 2015-12-20
 
-        btnAddDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/101_diagram_new.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnAddDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/101_diagram_new.png"))); // NOI18N
+        btnAddDiagram.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/101_diagram_new.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnAddDiagram.setText("New Diagram");
         btnAddDiagram.setFocusable(false);
         btnAddDiagram.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -270,7 +287,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         toolbar.add(btnAddDiagram);
 
         // START KGU#88 2015-11-24: Protect a diagram against replacement
-        btnPinDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnPinDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png"))); // NOI18N
+        btnPinDiagram.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnPinDiagram.setText("Pin Diagram");
         btnPinDiagram.setToolTipText("Pin a diagram to make it immune against replacement.");
         btnPinDiagram.setFocusable(false);
@@ -285,7 +305,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // END KGU#88 2015-11-24
 
         // START KGU#117 2016-03-09: Enh. #77 - Mark a subroutine as test-covered
-        btnSetCovered.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/setCovered20x20.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnSetCovered.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/setCovered20x20.png"))); // NOI18N
+        btnSetCovered.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/setCovered20x20.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnSetCovered.setText("Set Covered");
         btnSetCovered.setToolTipText("Mark the routine diagram as test-covered for subroutine calls to it.");
         btnSetCovered.setFocusable(false);
@@ -300,7 +323,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // END KGU#117 2016-03-09
 
         // START KGU#85 2015-11-17: New opportunity to drop the selected diagram 
-        btnRemoveDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/100_diagram_drop.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnRemoveDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/100_diagram_drop.png"))); // NOI18N
+        btnRemoveDiagram.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/100_diagram_drop.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnRemoveDiagram.setText("Drop Diagram");
         btnRemoveDiagram.setFocusable(false);
         btnRemoveDiagram.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);

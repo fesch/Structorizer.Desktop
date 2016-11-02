@@ -98,14 +98,19 @@ Menu.menuFile.mnemonic=d
 // Submenus of "File"
 Menu.menuFileNew.text=Neu
 Menu.menuFileOpen.text=Öffnen ...
+Menu.menuFileOpenRecent.text=Zuletzt verwendet
 Menu.menuFileSave.text=Speichern
 Menu.menuFileSaveAs.text=Speichern unter ...
-Menu.menuFileOpenRecent.text=Zuletzt verwendet
 Menu.menuFileExport.text=Exportieren
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Bild ...
-Menu.menuFileExportPicturePNGmulti.text=PNG (gekachelt) ...
 Menu.menuFileExportCode.text=Quellcode ...
+Menu.menuFileExportPicturePNG.text=
+Menu.menuFileExportPicturePNGmulti.text=PNG (gekachelt) ...
+Menu.menuFileExportPictureEMF.text=
+Menu.menuFileExportPictureSWF.text=
+Menu.menuFileExportPicturePDF.text=
+Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=Exportieren nach %
 Menu.menuFileExportCodeFavorite.tooltip=Die bevorzugte Exportsprache kann in den Export-Einstellungen gewählt werden.
 Menu.menuFileImport.text=Importieren
@@ -125,9 +130,9 @@ Menu.menuEditCut.text=Ausschneiden
 Menu.menuEditCopy.text=Kopieren
 Menu.menuEditPaste.text=Einfügen
 Menu.menuEditUpgradeTurtle.text=Reelle Turtlebefehle
-Menu.menuEditUpgradeTurtle.tooltip=Ersetzt ganzzahlige Turtle-Befehle in den selektierten Elementen durch reellwertige. 
+Menu.menuEditUpgradeTurtle.tooltip=Ersetzt ganzzahlige Turtle-Befehle in den selektierten Elementen durch reellwertige.
 Menu.menuEditDowngradeTurtle.text=Ganzzahlige Turtlebefehle
-Menu.menuEditDowngradeTurtle.tooltip=Ersetzt reellwertige Turtle-Befehle in den selektierten Elementen durch ganzzahlige. 
+Menu.menuEditDowngradeTurtle.tooltip=Ersetzt reellwertige Turtle-Befehle in den selektierten Elementen durch ganzzahlige.
 Menu.menuEditCopyDiagramPNG.text=Als PNG Grafik kopieren
 Menu.menuEditCopyDiagramEMF.text=Als EMF Grafik kopieren
 // Menu "Diagram"
@@ -161,7 +166,6 @@ Menu.menuDiagramAddAfterForever.text=ENDLOS-Schleife
 Menu.menuDiagramAddAfterCall.text=Aufruf-Anweisung
 Menu.menuDiagramAddAfterJump.text=Aussprung-Anweisung
 Menu.menuDiagramAddAfterPara.text=Parallel-Abschnitt
-// Element manipulation
 Menu.menuDiagramEdit.text=Bearbeiten
 Menu.menuDiagramDelete.text=Löschen
 Menu.menuDiagramMoveUp.text=Nach oben
@@ -203,8 +207,8 @@ Menu.menuPreferencesLanguageItems.de.text=Deutsch
 Menu.menuPreferencesLanguageItems.fr.text=Französisch
 Menu.menuPreferencesLanguageItems.nl.text=Holländisch
 Menu.menuPreferencesLanguageItems.lu.text=Luxemburgisch
-Menu.menuPreferencesLanguageItems.it.text=Italienisch
 Menu.menuPreferencesLanguageItems.es.text=Spanisch
+Menu.menuPreferencesLanguageItems.it.text=Italienisch
 Menu.menuPreferencesLanguageItems.pt_br.text=Portugiesisch (Brasilien)
 Menu.menuPreferencesLanguageItems.zh-cn.text=Chinesisch (vereinfacht)
 Menu.menuPreferencesLanguageItems.zh-tw.text=Chinesisch (traditionell)
@@ -221,11 +225,14 @@ Menu.menuPreferencesSaveAll.text=Abspeichern
 Menu.menuPreferencesSaveDump.text=Abspeichern unter ...
 Menu.menuPreferencesSaveLoad.text=Laden ...
 
+// Menu "View" (not in use right now!)
+Menu.menuView.text=
 
 // Menu "Help"
 Menu.menuHelp.text=Hilfe
 Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
+Menu.menuHelpOnline.text=User Guide
 Menu.menuHelpAbout.text=Über Structorizer ...
 Menu.menuHelpUpdate.text=Neue Versionen ...
 
@@ -319,7 +326,7 @@ AnalyserPreferences.checkboxes.8.text=Wertzuweisungen innerhalb von Bedingungen 
 AnalyserPreferences.checkboxes.9.text=Testen, ob sich der Programmname von allen anderen Bezeichnern unterscheidet.
 AnalyserPreferences.checkboxes.10.text=Mehrzeilige Anweisungen mit verschiedenen Anweisungsarten suchen.
 AnalyserPreferences.checkboxes.11.text=Nach fehlerhaften Wertzuweisungen suchen.
-AnalyserPreferences.checkboxes.12.text=Prüfen, ob Parameternamen bestimmten Vorgaben entsprechen. (LUX/MEN)
+AnalyserPreferences.checkboxes.12.text=Prüfen, ob Parameternamen den Vorgaben entsprechen. (LUX/MEN)
 AnalyserPreferences.checkboxes.13.text=Prüfen, ob eine Funktion stets auch einen Rückgabewert hat.
 AnalyserPreferences.checkboxes.14.text=Prüfen, ob die Angaben von FOR-Schleifen konsistent sind.
 AnalyserPreferences.checkboxes.15.text=Prüfen der Korrektheit von Aufruf-Elementen und der Verfügbarkeit der Routine.
@@ -331,6 +338,7 @@ AnalyserPreferences.checkboxes.20.text=Prüfen, dass ein Unterprogramm (Kopfzeil
 AnalyserPreferences.okButton.text=OK
 
 
+
 -----[ Diagram ]-----
 // Buttons
 // I/O
@@ -338,7 +346,7 @@ Editor.btnNew.tooltip=Erzeugen eines neuen, leeren Diagrammes.
 Editor.btnOpen.tooltip=Öffnen eines bestehenden Diagrammes.
 Editor.btnSave.tooltip=Speichern des aktuellen Diagrammmes.
 // InsertBefore
-Editor.btnBeforeInst.tooltip=Einfügen einer neuen Anweisung vor dem ausgewählten Element. 
+Editor.btnBeforeInst.tooltip=Einfügen einer neuen Anweisung vor dem ausgewählten Element.
 Editor.btnBeforeAlt.tooltip=Einfügen einer neuen IF-Anweisung vor dem ausgewählten Element.
 Editor.btnBeforeFor.tooltip=Einfügen einer neuen FOR-Schleife vor dem ausgewählten Element.
 Editor.btnBeforeWhile.tooltip=Einfügen einer neuen WHILE-Schleife vor dem ausgewählten Element.
@@ -366,7 +374,7 @@ Editor.btnRedo.tooltip=Wiederholen der letzen Aktion.
 Editor.btnCut.tooltip=Ausschneiden des ausgewählten Elements.
 Editor.btnCopy.tooltip=Kopieren des ausgewählten Elements.
 Editor.btnPaste.tooltip=Einfügen des kopierten oder ausgeschnittenen Elements nach dem ausgewählten Element.
-// style 
+// style
 Editor.btnNice.tooltip=Umschalten des visuellen Stils des Diagramms.
 Editor.btnFunction.tooltip=Unterprogramm-Diagramm (gerundete Ecken).
 Editor.btnProgram.tooltip=Hauptprogramm-Diagram (kantige Ecken).
@@ -382,12 +390,8 @@ Editor.btnArrange.tooltip=Diagram zum Arranger-Tableau hinzufügen.
 // font
 Editor.btnFontUp.tooltip=Erhöhen der Zeichensatz-Größe.
 Editor.btnFontDown.tooltip=Verringern der Zeichensatz-Größe.
-// copyright 
+// copyright
 Editor.btnAbout.tooltip=Zeigen eines Informationsfensters über den Structorizer.
-// execution 
-Editor.btnTurtle.tooltip=Öffnen des Turtleizer-Fensters zum Test ...
-Editor.btnMake.tooltip=Öffnen des Debuggers zum Test ...
-Editor.btnDropBrk.tooltip=Entfernen aller Haltepunkte
 // colors
 Editor.btnColor0.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
 Editor.btnColor1.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
@@ -402,6 +406,10 @@ Editor.btnColor9.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
 // collapsing
 Editor.btnCollapse.tooltip=Reduzieren des ausgewählten Elements.
 Editor.btnExpand.tooltip=Erweitern des ausgewählten Elements.
+// turtleizer & executor
+Editor.btnTurtle.tooltip=Öffnen des Turtleizer-Fensters zum Test ...
+Editor.btnMake.tooltip=Öffnen des Debuggers zum Test ...
+Editor.btnDropBrk.tooltip=Entfernen aller Haltepunkte
 // Popup menu
 Editor.popupCut.text=Ausschneiden
 Editor.popupCopy.text=Kopieren
@@ -433,7 +441,7 @@ Editor.popupAddAfterForever.text=ENDLOS-Schleife
 Editor.popupAddAfterCall.text=Aufruf-Anweisung
 Editor.popupAddAfterJump.text=Aussprung-Anweisung
 Editor.popupAddAfterPara.text=PARALLEL-Abschnitt
-// Edit	
+// Edit
 Editor.popupEdit.text=Bearbeiten
 Editor.popupDelete.text=Löschen
 Editor.popupMoveUp.text=Nach oben bewegen
@@ -462,6 +470,11 @@ InputBox.btnCancel.tooltip=Verwerfen der Eintragungen.
 InputBox.chkDisabled.text=Ausführung und Export unterbunden
 InputBox.chkBreakpoint.text=Haltepunkt
 InputBox.lblBreakTriggerText.text=Halt vor %. Ausführung
+InputBox.lblText.text[elementType:Alternative]=Eingabe der Bedingung an dieser Stelle.
+InputBox.lblText.text[elementType:While]=Eingabe der (Wieder-)Eintrittsbedingung an dieser Stelle.
+InputBox.lblText.text[elementType:Repeat]=Eingabe der Austrittsbedingung an dieser Stelle.
+InputBox.lblText.text[elementType:Case]=Eingabe des Auswahlausdrucks und der Fallkonstanten
+InputBox.lblText.text[elementType:Parallel]=Anzahl der nebenläufigen Pfade
 InputBox.title[elementType:Root]=Programmnamen bearbeiten...
 InputBox.title[elementType:Function]=Funktionssignatur bearbeiten...
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Neue Anweisungen hinzufügen...
@@ -482,12 +495,8 @@ InputBox.title[elementType:While,getInsertionType():update]=WHILE-Schleife bearb
 InputBox.title[elementType:Call,getInsertionType():update]=Unterprogramm-CALL bearbeiten...
 InputBox.title[elementType:Jump,getInsertionType():update]=Aussprung- bzw. Austrittsanweisung bearbeiten...
 InputBox.title[elementType:Parallel,getInsertionType():update]=PARALLEL-Element bearbeiten...
-InputBox.lblText.text[elementType:Alternative]=Eingabe der Bedingung an dieser Stelle.
-InputBox.lblText.text[elementType:While]=Eingabe der (Wieder-)Eintrittsbedingung an dieser Stelle.
-InputBox.lblText.text[elementType:Repeat]=Eingabe der Austrittsbedingung an dieser Stelle.
-InputBox.lblText.text[elementType:Case]=Eingabe des Auswahlausdrucks und der Fallkonstanten
-InputBox.lblText.text[elementType:Parallel]=Anzahl der nebenläufigen Pfade
------[ InputBoxFor ]-----
+
+-----[ InputBox For ]-----
 InputBoxFor.title[getInsertionType():insert]=Neue FOR-Schleife hinzufügen...
 InputBoxFor.title[getInsertionType():update]=FOR-Schleife bearbeiten...
 InputBoxFor.rbCounting.tooltip=Wählen Sie dies, um von einem Anfangs- zu einem Endwert zu zählen.
@@ -709,8 +718,8 @@ Surface.msgNoArrFile.text=Keine Arranger-Datei (arr) gefunden
 
 -----> Executor
 -----[ Control ]-----
-Control.lblSpeed.text= Verzögerung:
-Control.btnCallStack.text=Aufrufstapel 
+Control.lblSpeed.text=Verzögerung:
+Control.btnCallStack.text=Aufrufstapel
 Control.lblCallLevel.text=Aufruftiefe:
 Control.chkCollectRuntimeData.text=Sammle Laufzeitdaten
 Control.cbRunDataDisplay.item.0=keine Färbung
@@ -754,3 +763,4 @@ OutputConsole.menu.text=Eigenschaften
 OutputConsole.menuFont.text=Schriftart ...
 OutputConsole.menuFontUp.text=Schrift vergrößern
 OutputConsole.menuFontDown.text=Schrift verkleinern
+

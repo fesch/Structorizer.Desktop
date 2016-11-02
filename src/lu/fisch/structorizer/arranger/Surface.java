@@ -145,6 +145,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Updater;
 import lu.fisch.structorizer.executor.IRoutinePool;
 import lu.fisch.structorizer.generators.XmlGenerator;
+import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.io.ArrFilter;
@@ -212,7 +213,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
                 {
                 	if (pinIcon == null)
                 	{
-                		pinIcon = new ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png")).getImage();
+                		// START KGU#287 2016-11-01: Enh. #81 (DPI awareness)
+                		//pinIcon = new ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png")).getImage();
+                        pinIcon = IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png")).getImage(); // NOI18N
+                        // END KGU#287 2016-11-01
                 	}
                 	int x = rect.right - pinIcon.getWidth(null)*3/4;
                 	int y = rect.top - pinIcon.getHeight(null)/4;

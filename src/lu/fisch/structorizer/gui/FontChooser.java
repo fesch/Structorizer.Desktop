@@ -52,7 +52,9 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************///
 
 
+import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -125,6 +127,11 @@ public class FontChooser extends LangDialog
 		lsSizes = new JList<String>(sizes);
 		buttonBar = new JPanel();
 		btnOK = new JButton();
+		
+		// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1")).intValue();
+
+		// END KGU#287 2016-11-02
 
 		//======== fontChooser ========
 		{
@@ -135,7 +142,12 @@ public class FontChooser extends LangDialog
 
 			//======== FontChooser ========
 			{
-				pnlChooser.setBorder(new EmptyBorder(12, 12, 12, 12));
+				
+				// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+				//pnlChooser.setBorder(new EmptyBorder(12, 12, 12, 12));
+				int border = (int)(12 * scaleFactor);
+				pnlChooser.setBorder(new EmptyBorder(border, border, border, border));
+				// END KGU#287 2016-11-02
 
 				// JFormDesigner evaluation mark
 				/*FontChooser.setBorder(new javax.swing.border.CompoundBorder(
@@ -148,7 +160,11 @@ public class FontChooser extends LangDialog
 
 				//======== contentPanel ========
 				{
-					contentPanel.setLayout(new BorderLayout(8, 8));
+					// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+					//contentPanel.setLayout(new BorderLayout(8, 8));
+					border = (int)(8 * scaleFactor);
+					contentPanel.setLayout(new BorderLayout(border, border));
+					// END KGU#287 2016-11-02
 
 					//---- lblTest ----
 					lblTest.setText("Test: Structorizer (Symboltest: [\u2190 - \u2205])");
@@ -156,8 +172,8 @@ public class FontChooser extends LangDialog
 
 					//======== pnlName ========
 					{
-						pnlName.setPreferredSize(new Dimension(250, 150));
-						pnlName.setLayout(new BorderLayout(8, 8));
+						pnlName.setPreferredSize(new Dimension((int)(250*scaleFactor), (int)(150*scaleFactor)));
+						pnlName.setLayout(new BorderLayout(border, border));
 
 						//---- lblName ----
 						lblName.setText("Name");
@@ -173,8 +189,8 @@ public class FontChooser extends LangDialog
 
 					//======== pnlSize ========
 					{
-						pnlSize.setPreferredSize(new Dimension(100, 150));
-						pnlSize.setLayout(new BorderLayout(8, 8));
+						pnlSize.setPreferredSize(new Dimension((int)(100*scaleFactor), (int)(150*scaleFactor)));
+						pnlSize.setLayout(new BorderLayout(border, border));
 
 						//---- lblSize ----
 						lblSize.setText("Size");
@@ -192,9 +208,12 @@ public class FontChooser extends LangDialog
 
 				//======== buttonBar ========
 				{
-					buttonBar.setBorder(new EmptyBorder(12, 0, 0, 0));
+					// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+					//buttonBar.setBorder(new EmptyBorder(12, 0, 0, 0));
+					buttonBar.setBorder(new EmptyBorder((int)(12*scaleFactor), 0, 0, 0));
+					// END KGU#287 2016-11-02
 					buttonBar.setLayout(new GridBagLayout());
-					((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
+					((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, (int)(80*scaleFactor)};
 					((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
 
 					//---- btnOK ----

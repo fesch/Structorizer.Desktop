@@ -4,7 +4,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.25-04 (2016.10.18)
+Current development version: 3.25-04 (2016.11.02)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
 - 01: Issue #213: Selected state of FOR transmutation result now visible <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
@@ -45,7 +45,8 @@ Current development version: 3.25-04 (2016.10.18)
 - 03: Bugfix #275: Topological sorting of subroutines involved in export fixed <2>
 - 03: Bugfix #276: Flaws in parsing input values and converting Pascal strings fixed <2>
 - 04: Bugfix #272: The Turtle instruction replacement produced void undo entries <2>
-- 04: Bugfix #268: Controlling the output console font sometimes changed colours <2> 
+- 04: Bugfix #268: Controlling the output console font sometimes changed colours <2>
+- 04: Issue #81: Ini-based scaling mechanism for icons, fonts, and frames in high DPI <2> 
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2
