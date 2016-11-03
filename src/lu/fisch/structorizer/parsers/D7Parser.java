@@ -982,7 +982,14 @@ public class D7Parser implements GPMessageConstants
 			for (String key: keywordMap.keySet())
 			{
 				String propertyName = "Parser" + Character.toUpperCase(key.charAt(0)) + key.substring(1);
-				keywordMap.put(key, ini.getProperty(propertyName, defaultKeys.getOrDefault(propertyName, "")));
+                                if(defaultKeys.containsKey(propertyName))
+                                {
+                                    keywordMap.put(key, ini.getProperty(propertyName, defaultKeys.get(propertyName)));
+                                }
+                                else
+                                {
+                                    keywordMap.put(key, ini.getProperty(propertyName, ""));
+                                }
 			}
 			
 			// END KGU#258 2016-09-25
