@@ -44,6 +44,7 @@ Current development version: 3.25-03 (2016.10.17)
 - 03: Enh. #274: On code export, Turtleizer commands now augmented with colour info <2>
 - 03: Bugfix #275: Topological sort of subroutines involved in export fixed <2>
 - 03: Bugfix #276: Flaws in parsing value input and converting Pascal strings fixed <2>
+- 04: Bugfix #278: java.lang.NoSuchMethodError: java.util.HashMap.getOrDefault (D7Parser.java:985) [Bob Fisch]
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2
