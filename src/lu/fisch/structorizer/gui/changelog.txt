@@ -45,10 +45,10 @@ Current development version: 3.25-05 (2016.11.07)
 - 03: Bugfix #275: Topological sorting of subroutines involved in export fixed <2>
 - 03: Bugfix #276: Flaws in parsing input values and converting Pascal strings fixed <2>
 - 04: Bugfix #278: java.lang.NoSuchMethodError: java.util.HashMap.getOrDefault [Bob Fisch]
-- 04: Bugfix #279: Further references to Java 8 method HashMap.getOrDefault replaced <2>
+- 04: Bugfix #279: Further references to method java.util.HashMap.getOrDefault replaced <2>
 - 05: Bugfix #272: The Turtle instruction replacement produced void undo entries <2>
 - 05: Bugfix #268: Controlling the output console font sometimes changed colours <2>
-- 05: Issue #81: Ini-based scaling mechanism for icons, fonts, and frames in high DPI <2> 
+- 05: Issue #81: Ini-based scaling workaround for icons, fonts, and frames in high DPI <2> 
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2
