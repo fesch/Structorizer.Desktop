@@ -250,7 +250,7 @@ public class XmlGenerator extends Generator {
     			specificAttributes +
     			"\" style=\"" + BString.encodeToHtml(_for.style.toString()) +
     			// FIXME: No longer needed beyond version 3.25-01, except for backward compatibility (i. e. temporarily)
-    			(_for.isForInLoop() ? ("\" insep=\"" + BString.encodeToHtml(D7Parser.keywordMap.get("postForIn"))) : "") +
+    			(_for.isForInLoop() ? ("\" insep=\"" + BString.encodeToHtml(D7Parser.getKeyword("postForIn"))) : "") +
     			"\" color=\"" + _for.getHexColor()+"\" disabled=\""+
     			(_for.disabled ? "1" : "0") + "\">");
     	// END KGU#118 2015-12-31

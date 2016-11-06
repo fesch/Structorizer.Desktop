@@ -71,6 +71,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactored
  *      Kay Gürtzig     2016.09.28      KGU#264: Font name property renamed from "Name" to "Font".
  *      Kay Gürtzig     2016.10.13      Issue #270: New field "disabled" for execution and code export
+ *      Kay Gürtzig     2016.11.06      Issue #279: Several modifications to circumvent direct access to D7Parser.keywordMap
  *
  ******************************************************************************************************
  *
@@ -176,7 +177,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.25-04";
+	public static String E_VERSION = "3.25-05";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -2039,13 +2040,13 @@ public abstract class Element {
 
 				// These markers might have changed by configuration, so don't cache them
 				StringList ioSigns = new StringList();
-				ioSigns.add(D7Parser.keywordMap.get("input").trim());
-				ioSigns.add(D7Parser.keywordMap.get("output").trim());
+				ioSigns.add(D7Parser.getKeywordOrDefault("input", "").trim());
+				ioSigns.add(D7Parser.getKeywordOrDefault("output", "").trim());
 				// START KGU#116 2015-12-23: Enh. #75 - highlight jump keywords
 				StringList jumpSigns = new StringList();
-				jumpSigns.add(D7Parser.keywordMap.get("preLeave").trim());
-				jumpSigns.add(D7Parser.keywordMap.get("preReturn").trim());
-				jumpSigns.add(D7Parser.keywordMap.get("preExit").trim());
+				jumpSigns.add(D7Parser.getKeywordOrDefault("preLeave", "leave").trim());
+				jumpSigns.add(D7Parser.getKeywordOrDefault("preReturn", "return").trim());
+				jumpSigns.add(D7Parser.getKeywordOrDefault("preExit", "exit").trim());
 				// END KGU#116 2015-12-23
 				
 				for(int i=0; i < parts.count(); i++)
@@ -2471,23 +2472,23 @@ public abstract class Element {
     {
     	// Collect redundant placemarkers to be deleted from the text
         StringList redundantMarkers = new StringList();
-        redundantMarkers.addByLength(D7Parser.keywordMap.get("preAlt"));
-        redundantMarkers.addByLength(D7Parser.keywordMap.get("preCase"));
+        redundantMarkers.addByLength(D7Parser.getKeyword("preAlt"));
+        redundantMarkers.addByLength(D7Parser.getKeyword("preCase"));
         //redundantMarkers.addByLength(D7Parser.preFor);	// will be handled separately
-        redundantMarkers.addByLength(D7Parser.keywordMap.get("preWhile"));
-        redundantMarkers.addByLength(D7Parser.keywordMap.get("preRepeat"));
+        redundantMarkers.addByLength(D7Parser.getKeyword("preWhile"));
+        redundantMarkers.addByLength(D7Parser.getKeyword("preRepeat"));
 
-        redundantMarkers.addByLength(D7Parser.keywordMap.get("postAlt"));
-        redundantMarkers.addByLength(D7Parser.keywordMap.get("postCase"));
+        redundantMarkers.addByLength(D7Parser.getKeyword("postAlt"));
+        redundantMarkers.addByLength(D7Parser.getKeyword("postCase"));
         //redundantMarkers.addByLength(D7Parser.postFor);	// will be handled separately
         //redundantMarkers.addByLength(D7Parser.stepFor);	// will be handled separately
-        redundantMarkers.addByLength(D7Parser.keywordMap.get("postWhile"));
-        redundantMarkers.addByLength(D7Parser.keywordMap.get("postRepeat"));
+        redundantMarkers.addByLength(D7Parser.getKeyword("postWhile"));
+        redundantMarkers.addByLength(D7Parser.getKeyword("postRepeat"));
         
         for (int i = 0; i < redundantMarkers.count(); i++)
         {
         	String marker = redundantMarkers.get(i);
-        	if (!marker.trim().isEmpty())
+        	if (marker != null && !marker.trim().isEmpty())
         	{
         		StringList markerTokens = Element.splitLexically(marker, false);
         		int markerLen = markerTokens.count();
@@ -2551,7 +2552,7 @@ public abstract class Element {
 			StringList splitKey = _splitOldKeys.get(_keywords[i]);
 			if (splitKey != null)
 			{
-				String subst = D7Parser.keywordMap.get(_keywords[i]);
+				String subst = D7Parser.getKeyword(_keywords[i]);
 				// line shouldn't be inflated ...
 				if (!splitKey.get(0).equals(" ")) {
 					while (subst.startsWith(" ")) subst = subst.substring(1); 

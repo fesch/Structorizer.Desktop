@@ -878,9 +878,12 @@ public class Menu extends LangMenuBar implements NSDController
                             
                         	// START KGU#258 2016-09-26: Enh. #253
                             HashMap<String, StringList> refactoringData = new LinkedHashMap<String, StringList>();
-                            for (String key: D7Parser.keywordMap.keySet())
+                            for (String key: D7Parser.keywordSet())
                             {
-                            	String keyword = D7Parser.keywordMap.getOrDefault(key, "");
+                            	// START KGU#288 2016-11-06: Issue #279 - getOrDefault() may not be available
+                            	//String keyword = D7Parser.keywordMap.getOrDefault(key, "");
+                            	String keyword = D7Parser.getKeywordOrDefault(key, "");
+                            	// END KGU#288 2016-11-06
                             	if (!keyword.trim().isEmpty())
                             	{
                             		// Complete strings aren't likely to be found in a key, so don't bother

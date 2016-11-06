@@ -197,29 +197,29 @@ public class JavaGenerator extends Generator
                         _input = s;
 
 
-			if(!D7Parser.keywordMap.get("preAlt").equals("")){_input=BString.replace(_input,D7Parser.keywordMap.get("preAlt"),"");}
-			if(!D7Parser.keywordMap.get("postAlt").equals("")){_input=BString.replace(_input,D7Parser.keywordMap.get("postAlt"),"");}
-			if(!D7Parser.keywordMap.get("preCase").equals("")){_input=BString.replace(_input,D7Parser.keywordMap.get("preCase"),"");}
-			if(!D7Parser.keywordMap.get("postCase").equals("")){_input=BString.replace(_input,D7Parser.keywordMap.get("postCase"),"");}
-			if(!D7Parser.keywordMap.get("preFor").equals("")){_input=BString.replace(_input,D7Parser.keywordMap.get("preFor"),"");}
-//			if(!D7Parser.keywordMap.get("postFor").equals("")){_input=BString.replace(_input,D7Parser.keywordMap.get("postFor"),"to");}
-			if(!D7Parser.keywordMap.get("postFor").equals("")){_input=BString.replace(_input,D7Parser.keywordMap.get("postFor"),"");}
-			if(!D7Parser.keywordMap.get("preWhile").equals("")){_input=BString.replace(_input,D7Parser.keywordMap.get("preWhile"),"");}
-			if(!D7Parser.keywordMap.get("postWhile").equals("")){_input=BString.replace(_input,D7Parser.keywordMap.get("postWhile"),"");}
-			if(!D7Parser.keywordMap.get("preRepeat").equals("")){_input=BString.replace(_input,D7Parser.keywordMap.get("preRepeat"),"");}
-			if(!D7Parser.keywordMap.get("postRepeat").equals("")){_input=BString.replace(_input,D7Parser.keywordMap.get("postRepeat"),"");}
+			if(!D7Parser.getKeyword("preAlt").equals("")){_input=BString.replace(_input,D7Parser.getKeyword("preAlt"),"");}
+			if(!D7Parser.getKeyword("postAlt").equals("")){_input=BString.replace(_input,D7Parser.getKeyword("postAlt"),"");}
+			if(!D7Parser.getKeyword("preCase").equals("")){_input=BString.replace(_input,D7Parser.getKeyword("preCase"),"");}
+			if(!D7Parser.getKeyword("postCase").equals("")){_input=BString.replace(_input,D7Parser.getKeyword("postCase"),"");}
+			if(!D7Parser.getKeyword("preFor").equals("")){_input=BString.replace(_input,D7Parser.getKeyword("preFor"),"");}
+//			if(!D7Parser.getKeyword("postFor").equals("")){_input=BString.replace(_input,D7Parser.getKeyword("postFor"),"to");}
+			if(!D7Parser.getKeyword("postFor").equals("")){_input=BString.replace(_input,D7Parser.getKeyword("postFor"),"");}
+			if(!D7Parser.getKeyword("preWhile").equals("")){_input=BString.replace(_input,D7Parser.getKeyword("preWhile"),"");}
+			if(!D7Parser.getKeyword("postWhile").equals("")){_input=BString.replace(_input,D7Parser.getKeyword("postWhile"),"");}
+			if(!D7Parser.getKeyword("preRepeat").equals("")){_input=BString.replace(_input,D7Parser.getKeyword("preRepeat"),"");}
+			if(!D7Parser.getKeyword("postRepeat").equals("")){_input=BString.replace(_input,D7Parser.getKeyword("postRepeat"),"");}
 			
 			/*Regex r;
-			 r = new Regex(BString.breakup(D7Parser.keywordMap.get("input"))+"[ ](.*?)","readln($1)"); _input=r.replaceAll(_input);
-			 r = new Regex(BString.breakup(D7Parser.keywordMap.get("output"))+"[ ](.*?)","writeln($1)"); _input=r.replaceAll(_input);
-			 r = new Regex(BString.breakup(D7Parser.keywordMap.get("input"))+"(.*?)","readln($1)"); _input=r.replaceAll(_input);
-			 r = new Regex(BString.breakup(D7Parser.keywordMap.get("output"))+"(.*?)","writeln($1)"); _input=r.replaceAll(_input);*/
+			 r = new Regex(BString.breakup(D7Parser.getKeyword("input"))+"[ ](.*?)","readln($1)"); _input=r.replaceAll(_input);
+			 r = new Regex(BString.breakup(D7Parser.getKeyword("output"))+"[ ](.*?)","writeln($1)"); _input=r.replaceAll(_input);
+			 r = new Regex(BString.breakup(D7Parser.getKeyword("input"))+"(.*?)","readln($1)"); _input=r.replaceAll(_input);
+			 r = new Regex(BString.breakup(D7Parser.getKeyword("output"))+"(.*?)","writeln($1)"); _input=r.replaceAll(_input);*/
 			
 			
-			if(!D7Parser.keywordMap.get("input").equals("")&&_input.indexOf(D7Parser.keywordMap.get("input")+" ")>=0){_input=BString.replace(_input,D7Parser.keywordMap.get("input")+" ","")+" = (new Scanner(System.in)).nextLine()";}
-			if(!D7Parser.keywordMap.get("output").equals("")&&_input.indexOf(D7Parser.keywordMap.get("output")+" ")>=0){_input=BString.replace(_input,D7Parser.keywordMap.get("output")+" ","System.out.println(")+")";}
-			if(!D7Parser.keywordMap.get("input").equals("")&&_input.indexOf(D7Parser.keywordMap.get("input"))>=0){_input=BString.replace(_input,D7Parser.keywordMap.get("input"),"")+" = (new Scanner(System.in)).nextLine()";}
-			if(!D7Parser.keywordMap.get("output").equals("")&&_input.indexOf(D7Parser.keywordMap.get("output"))>=0){_input=BString.replace(_input,D7Parser.keywordMap.get("output"),"System.out.println(")+")";}
+			if(!D7Parser.getKeyword("input").equals("")&&_input.indexOf(D7Parser.getKeyword("input")+" ")>=0){_input=BString.replace(_input,D7Parser.getKeyword("input")+" ","")+" = (new Scanner(System.in)).nextLine()";}
+			if(!D7Parser.getKeyword("output").equals("")&&_input.indexOf(D7Parser.getKeyword("output")+" ")>=0){_input=BString.replace(_input,D7Parser.getKeyword("output")+" ","System.out.println(")+")";}
+			if(!D7Parser.getKeyword("input").equals("")&&_input.indexOf(D7Parser.getKeyword("input"))>=0){_input=BString.replace(_input,D7Parser.getKeyword("input"),"")+" = (new Scanner(System.in)).nextLine()";}
+			if(!D7Parser.getKeyword("output").equals("")&&_input.indexOf(D7Parser.getKeyword("output"))>=0){_input=BString.replace(_input,D7Parser.getKeyword("output"),"System.out.println(")+")";}
 			
 			return _input.trim();
 		}

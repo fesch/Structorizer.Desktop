@@ -587,11 +587,11 @@ public class For extends Element implements ILoop {
 		//String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy};
 		// First collect the placemarkers of the for loop header ...
 		String[] forMarkers = {
-				D7Parser.keywordMap.get("preFor"),
-				D7Parser.keywordMap.get("postFor"),
-				D7Parser.keywordMap.get("stepFor"),
-				(D7Parser.keywordMap.get("preForIn").trim().isEmpty() ? D7Parser.keywordMap.get("preFor") : D7Parser.keywordMap.get("preForIn")),
-				D7Parser.keywordMap.get("postForIn")
+				D7Parser.getKeyword("preFor"),
+				D7Parser.getKeyword("postFor"),
+				D7Parser.getKeyword("stepFor"),
+				(D7Parser.getKeyword("preForIn").trim().isEmpty() ? D7Parser.getKeyword("preFor") : D7Parser.getKeyword("preForIn")),
+				D7Parser.getKeyword("postForIn")
 				};
 		// ... and their replacements (in same order!)
 		String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy,
@@ -853,12 +853,12 @@ public class For extends Element implements ILoop {
 		{
 			asgnmtOpr = " := ";
 		}
-		String forClause = D7Parser.keywordMap.get("preFor").trim() + " " +
+		String forClause = D7Parser.getKeyword("preFor").trim() + " " +
 				_counter + asgnmtOpr + _start + " " +
-				D7Parser.keywordMap.get("postFor").trim() + " " + _end;
+				D7Parser.getKeyword("postFor").trim() + " " + _end;
 		if (_step != 1 || _forceStep)
 		{
-			forClause = forClause + " " + D7Parser.keywordMap.get("stepFor").trim() + " " +
+			forClause = forClause + " " + D7Parser.getKeyword("stepFor").trim() + " " +
 					Integer.toString(_step);
 		}
 		// Now get rid of multiple blanks
@@ -890,10 +890,10 @@ public class For extends Element implements ILoop {
 
 	public static String composeForInClause(String _iterator, String _valueList)
 	{
-		String preForIn = D7Parser.keywordMap.get("preForIn").trim();
-		if (preForIn.isEmpty()) { preForIn = D7Parser.keywordMap.get("preFor").trim(); }
+		String preForIn = D7Parser.getKeyword("preForIn").trim();
+		if (preForIn.isEmpty()) { preForIn = D7Parser.getKeyword("preFor").trim(); }
 		String forClause = preForIn + " " + _iterator + " " +
-				D7Parser.keywordMap.get("postForIn").trim() + " " + _valueList;
+				D7Parser.getKeyword("postForIn").trim() + " " + _valueList;
 		return forClause;
 	}
 	

@@ -4,7 +4,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.25-05 (2016.11.03)
+Current development version: 3.25-05 (2016.11.07)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
 - 01: Issue #213: Selected state of FOR transmutation result now visible <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
@@ -44,7 +44,8 @@ Current development version: 3.25-05 (2016.11.03)
 - 03: Enh. #274: On code export, Turtleizer commands now augmented with colour info <2>
 - 03: Bugfix #275: Topological sorting of subroutines involved in export fixed <2>
 - 03: Bugfix #276: Flaws in parsing input values and converting Pascal strings fixed <2>
-- 04: Bugfix #278: java.lang.NoSuchMethodError: java.util.HashMap.getOrDefault (D7Parser.java:985) [Bob Fisch]
+- 04: Bugfix #278: java.lang.NoSuchMethodError: java.util.HashMap.getOrDefault [Bob Fisch]
+- 04: Bugfix #279: Further references to Java 8 method HashMap.getOrDefault replaced <2>
 - 05: Bugfix #272: The Turtle instruction replacement produced void undo entries <2>
 - 05: Bugfix #268: Controlling the output console font sometimes changed colours <2>
 - 05: Issue #81: Ini-based scaling mechanism for icons, fonts, and frames in high DPI <2> 

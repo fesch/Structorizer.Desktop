@@ -183,9 +183,9 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		lblEndVal = new JLabel("End value");
 		lblIncr = new JLabel("Increment");
 		//lblPreFor = new JLabel(D7Parser.keywordMap.get("preFor"));
-		lblPostFor = new JLabel(D7Parser.keywordMap.get("postFor"));
+		lblPostFor = new JLabel(D7Parser.getKeyword("postFor"));
 		lblAsgnmt = new JLabel(" <- ");
-		lblStepFor = new JLabel(D7Parser.keywordMap.get("steptFor"));
+		lblStepFor = new JLabel(D7Parser.getKeyword("steptFor"));
 		txtParserInfo = new JTextField(300);
 		txtParserInfo.setEditable(false);
 		if (UIManager.getLookAndFeel().getName().equals("Nimbus"))
@@ -202,7 +202,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		chkTextInput = new JCheckBox("Full Text Editing");
 		// START KGU#61 2016-09-23: Enh. #250 - Additional field set for FOR-IN loops
 		//lblPreForIn = new JLabel(D7Parser.keywordMap.get("preFor")In);
-		lblpostForIn = new JLabel(D7Parser.keywordMap.get("postForIn"));
+		lblpostForIn = new JLabel(D7Parser.getKeyword("postForIn"));
 		txtVariableIn = new JTextField(50);
 		txtValueList = new JTextField(120);
 		txtVariableIn.setEnabled(false);
@@ -220,11 +220,11 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		txtText.addKeyListener(this);
 		
 		// START KGU#254 2016-09-24: Enh. #250 - GUI redesign
-		rbCounting = new JRadioButton(D7Parser.keywordMap.get("preFor"));
+		rbCounting = new JRadioButton(D7Parser.getKeyword("preFor"));
 		rbCounting.setActionCommand("FOR");
 		rbCounting.setToolTipText("Select this if you want to count through a range of numbers.");
 		
-		rbTraversing = new JRadioButton(D7Parser.keywordMap.get("preForIn").isEmpty() ? D7Parser.keywordMap.get("postFor") : D7Parser.keywordMap.get("preForIn"));
+		rbTraversing = new JRadioButton(D7Parser.getKeyword("preForIn").isEmpty() ? D7Parser.getKeyword("postFor") : D7Parser.getKeyword("preForIn"));
 		rbTraversing.setActionCommand("FOR-IN");
 		rbTraversing.setToolTipText("Select this if you want to traverse all members of a collection.");
 		

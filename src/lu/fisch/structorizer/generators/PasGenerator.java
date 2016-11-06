@@ -364,7 +364,7 @@ public class PasGenerator extends Generator
 			
 			insertComment(_inst, _indent);
 
-			String preReturn = D7Parser.keywordMap.get("preReturn");
+			String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
 			String preReturnMatch = getKeywordPattern(preReturn)+"([\\W].*|$)";
 			for (int i=0; i<_inst.getText().count(); i++)
 			{
@@ -805,8 +805,8 @@ public class PasGenerator extends Generator
 			else
 			{
 			// END KGU#142 2016-01-17
-				String preReturn = D7Parser.keywordMap.get("preReturn");
-				String preExit   = D7Parser.keywordMap.get("preExit");
+				String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
+				String preExit   = D7Parser.getKeywordOrDefault("preExit", "exit");
 				String preReturnMatch = getKeywordPattern(preReturn)+"([\\W].*|$)";
 				String preExitMatch = getKeywordPattern(preExit)+"([\\W].*|$)";
 				for (int i = 0; isEmpty && i < lines.count(); i++) {

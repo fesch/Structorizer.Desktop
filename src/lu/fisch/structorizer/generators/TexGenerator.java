@@ -278,7 +278,7 @@ public class TexGenerator extends Generator {
 				// END KGU#78 2015-12-19
 			{
 				// FIXME (KGU 2015-12-19): This should not be split into several blocks
-				String preReturn = D7Parser.keywordMap.get("preReturn");
+				String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
 				for(int i=0; i<_jump.getText().count(); i++)
 				{
 					// START KGU#78 2015-12-19: Enh. #23: We now distinguish exit and return boxes

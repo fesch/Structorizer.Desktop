@@ -330,12 +330,12 @@ public class BasGenerator extends Generator
 	protected String transform(String _input)
 	{
 		// START KGU#101 2015-12-19: Enh. #54 - support lists of output expressions
-		if (_input.matches("^" + getKeywordPattern(D7Parser.keywordMap.get("output").trim()) + "[ ](.*?)"))
+		if (_input.matches("^" + getKeywordPattern(D7Parser.getKeyword("output").trim()) + "[ ](.*?)"))
 		{
 			// Replace commas by semicolons to avoid tabulation
 			StringList expressions = 
-					Element.splitExpressionList(_input.substring(D7Parser.keywordMap.get("output").trim().length()), ",");
-			_input = D7Parser.keywordMap.get("output").trim() + " " + expressions.getText().replace("\n", "; ");
+					Element.splitExpressionList(_input.substring(D7Parser.getKeyword("output").trim().length()), ",");
+			_input = D7Parser.getKeyword("output").trim() + " " + expressions.getText().replace("\n", "; ");
 		}
 		// END KGU#101 2015-12-19
 
@@ -822,8 +822,8 @@ public class BasGenerator extends Generator
 			boolean isEmpty = true;
 			
 			StringList lines = _jump.getText();
-			String preReturn  = D7Parser.keywordMap.get("preReturn");
-			String preExit    = D7Parser.keywordMap.get("preExit");
+			String preReturn  = D7Parser.getKeywordOrDefault("preReturn", "return");
+			String preExit    = D7Parser.getKeywordOrDefault("preExit", "exit");
 			String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
 			String preExitMatch   = Matcher.quoteReplacement(preExit)+"([\\W].*|$)";
 			for (int i = 0; isEmpty && i < lines.count(); i++) {
