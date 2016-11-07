@@ -40,6 +40,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016-07-14  Enh. #180: Initial focus dependent on switchTextComment mode (KGU#169)
  *      Kay Gürtzig     2016-09-23  Issue #243: Message translations, more messages
  *      Kay Gürtzig     2016-09-24  Enh. #250 Partial GUI redesign - now loop style can actively be selected
+ *      Kay Gürtzig     2016.11.02  Issue #81: Workaround for lacking DPI awareness
  *
  ******************************************************************************************************
  *
@@ -80,6 +81,7 @@ import javax.swing.UIManager;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.StringList;
 
@@ -151,11 +153,17 @@ public class InputBoxFor extends InputBox implements ItemListener {
 	}
 	
     // START KGU#169 2016-07-14: Enh. #180 (see also: #39, #142) - helps to enable focus control
+	@Deprecated
     protected void setPreferredSize()
     {
         setSize(IBF_PREFERRED_WIDTH, 400);   	
     }
     // END KGU#169 2016-07-14
+    // START KGU#287 2016-11-02: Issue #81 (DPI awaeness workaround)
+    protected void setPreferredSize(double scaleFactor) {
+        setSize((int)(IBF_PREFERRED_WIDTH * scaleFactor), (int)(400 * scaleFactor));        
+    }
+    // END KGU#287 2016-11-02
 
     
     /**
@@ -166,14 +174,18 @@ public class InputBoxFor extends InputBox implements ItemListener {
      */
 	protected int createPanelTop(JPanel _panel, GridBagLayout _gb, GridBagConstraints _gbc)
 	{
+        // START KGU#287 2016-11-02: Issue #81 (DPI awaeness workaround)
+		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1")).intValue();        
+        // END KGU#287 2016-11-02
+
 		lblVarDesignation = new JLabel("Counter variable");
 		lblFirstValueLabel = new JLabel("Start value");
 		lblEndVal = new JLabel("End value");
 		lblIncr = new JLabel("Increment");
 		//lblPreFor = new JLabel(D7Parser.keywordMap.get("preFor"));
-		lblPostFor = new JLabel(D7Parser.keywordMap.get("postFor"));
+		lblPostFor = new JLabel(D7Parser.getKeyword("postFor"));
 		lblAsgnmt = new JLabel(" <- ");
-		lblStepFor = new JLabel(D7Parser.keywordMap.get("steptFor"));
+		lblStepFor = new JLabel(D7Parser.getKeyword("steptFor"));
 		txtParserInfo = new JTextField(300);
 		txtParserInfo.setEditable(false);
 		if (UIManager.getLookAndFeel().getName().equals("Nimbus"))
@@ -190,7 +202,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		chkTextInput = new JCheckBox("Full Text Editing");
 		// START KGU#61 2016-09-23: Enh. #250 - Additional field set for FOR-IN loops
 		//lblPreForIn = new JLabel(D7Parser.keywordMap.get("preFor")In);
-		lblpostForIn = new JLabel(D7Parser.keywordMap.get("postForIn"));
+		lblpostForIn = new JLabel(D7Parser.getKeyword("postForIn"));
 		txtVariableIn = new JTextField(50);
 		txtValueList = new JTextField(120);
 		txtVariableIn.setEnabled(false);
@@ -208,11 +220,11 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		txtText.addKeyListener(this);
 		
 		// START KGU#254 2016-09-24: Enh. #250 - GUI redesign
-		rbCounting = new JRadioButton(D7Parser.keywordMap.get("preFor"));
+		rbCounting = new JRadioButton(D7Parser.getKeyword("preFor"));
 		rbCounting.setActionCommand("FOR");
 		rbCounting.setToolTipText("Select this if you want to count through a range of numbers.");
 		
-		rbTraversing = new JRadioButton(D7Parser.keywordMap.get("preForIn").isEmpty() ? D7Parser.keywordMap.get("postFor") : D7Parser.keywordMap.get("preForIn"));
+		rbTraversing = new JRadioButton(D7Parser.getKeyword("preForIn").isEmpty() ? D7Parser.getKeyword("postFor") : D7Parser.getKeyword("preForIn"));
 		rbTraversing.setActionCommand("FOR-IN");
 		rbTraversing.setToolTipText("Select this if you want to traverse all members of a collection.");
 		
@@ -228,8 +240,9 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		int lineNo = 1;
 		
 		// TODO (KGU 2015-11-01) Grid configuration halfway works under both Windows and KDE but's still not pleasant 
-		
-		_gbc.insets = new Insets(10, 5, 0, 5);
+
+		int border = (int)(5 * scaleFactor);
+		_gbc.insets = new Insets(2*border, border, 0, border);
 		
 		_gbc.gridx = 2;
 		_gbc.gridy = lineNo;
@@ -269,7 +282,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 
 		lineNo++;
 
-		_gbc.insets = new Insets(5, 10, 0, 5);
+		_gbc.insets = new Insets(border, 2*border, 0, border);
 		
 		_gbc.gridx = 1;
 		_gbc.gridy = lineNo;
@@ -280,7 +293,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(rbCounting, _gbc);
 		_panel.add(rbCounting);
 
-		_gbc.insets = new Insets(5, 5, 0, 5);
+		_gbc.insets = new Insets(border, border, 0, border);
 
 		_gbc.gridx = 2;
 		_gbc.gridy = lineNo;
@@ -336,7 +349,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(lblStepFor, _gbc);
 		_panel.add(lblStepFor);
 
-		_gbc.insets = new Insets(5, 5, 0, 10);
+		_gbc.insets = new Insets(border, border, 0, 2*border);
 
 		_gbc.gridx = 17;
 		_gbc.gridy = lineNo;
@@ -350,7 +363,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		// START KGU#61 2016-09-23: Additional field set for FOR-IN loops
 		lineNo++;
 		
-		_gbc.insets = new Insets(0, 10, 0, 5);
+		_gbc.insets = new Insets(0, 2*border, 0, border);
 		
 		_gbc.gridx = 1;
 		_gbc.gridy = lineNo;
@@ -361,7 +374,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(rbTraversing, _gbc);
 		_panel.add(rbTraversing);
 
-		_gbc.insets = new Insets(0, 5, 0, 5);
+		_gbc.insets = new Insets(0, border, 0, border);
 
 		_gbc.gridx = 2;
 		_gbc.gridy = lineNo;
@@ -381,7 +394,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(lblpostForIn, _gbc);
 		_panel.add(lblpostForIn);
 
-		_gbc.insets = new Insets(0, 5, 0, 10);
+		_gbc.insets = new Insets(0, border, 0, 2*border);
 
 		_gbc.gridx = 8;
 		_gbc.gridy = lineNo;
@@ -396,7 +409,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 
 		lineNo++;
 
-		_gbc.insets = new Insets(10, 10, 0, 10);
+		_gbc.insets = new Insets(2*border, 2*border, 0, 2*border);
 
 		_gbc.gridx = 1;
 		_gbc.gridy = lineNo;
@@ -406,7 +419,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(chkTextInput, _gbc);
 		_panel.add(chkTextInput);
 
-		_gbc.insets = new Insets(10, 5, 0, 10);
+		_gbc.insets = new Insets(2*border, border, 0, 2*border);
 
 		_gbc.gridx = 8;
 		_gbc.gridy = lineNo;

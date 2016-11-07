@@ -572,8 +572,8 @@ public class PythonGenerator extends Generator
 				boolean isEmpty = true;
 
 				StringList lines = _jump.getText();
-				String preReturn = D7Parser.keywordMap.get("preReturn");
-				String preLeave  = D7Parser.keywordMap.get("preLeave");
+				String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
+				String preLeave  = D7Parser.getKeywordOrDefault("preLeave", "leave");
 				String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
 				String preLeaveMatch  = Matcher.quoteReplacement(preLeave)+"([\\W].*|$)";
 				for (int i = 0; isEmpty && i < lines.count(); i++) {

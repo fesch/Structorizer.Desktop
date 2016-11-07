@@ -268,7 +268,7 @@ public class JavaGenerator extends CGenerator
 	protected String transform(String _input)
 	{
 		// START KGU#101 2015-12-12: Enh. #54 - support lists of expressions
-		String outputKey = D7Parser.keywordMap.get("output").trim(); 
+		String outputKey = D7Parser.getKeyword("output").trim(); 
 		if (_input.matches("^" + getKeywordPattern(outputKey) + "[ ](.*?)"))
 		{
 			StringList expressions = 

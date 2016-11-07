@@ -66,6 +66,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input with prompt
  *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig         2016.11.06      Issue #279: Method HashMap.getOrDefault() replaced
  *
  ******************************************************************************************************
  *
@@ -282,14 +283,14 @@ public class BASHGenerator extends Generator {
 		// We must of course identify variable names and prefix them with $ unless being an lvalue
 		int posAsgnOpr = tokens.indexOf("<-");
 		// START KGU#161 2016-03-24: Bugfix #135/#92 - variables in read instructions must not be prefixed!
-		if (tokens.contains(D7Parser.keywordMap.get("input")))
+		if (tokens.contains(D7Parser.getKeyword("input")))
 		{
 			// Hide the text from the replacement, except for occurrences as index
 			posAsgnOpr = tokens.count();
 		}
 		// END KGU#161 2016-03-24
 		// START KGU#61 2016-03-21: Enh. #84/#135
-		if (posAsgnOpr < 0 && !D7Parser.keywordMap.get("postForIn").trim().isEmpty()) posAsgnOpr = tokens.indexOf(D7Parser.keywordMap.get("postForIn"));
+		if (posAsgnOpr < 0 && !D7Parser.getKeyword("postForIn").trim().isEmpty()) posAsgnOpr = tokens.indexOf(D7Parser.getKeyword("postForIn"));
 		// END KGU#61 2016-03-21
 		// If there is an array variable (which doesn't exist in shell) left of the assignment symbol, check the index 
 		int posBracket1 = tokens.indexOf("[");
@@ -472,7 +473,7 @@ public class BASHGenerator extends Generator {
 	@Override
 	protected String transformOutput(String _interm)
 	{
-		String output = D7Parser.keywordMap.get("output").trim();
+		String output = D7Parser.getKeyword("output").trim();
 		if (_interm.matches("^" + output + "[ ](.*?)"))
 		{
 			StringList expressions = 
@@ -505,9 +506,14 @@ public class BASHGenerator extends Generator {
 			// END KGU 2014-11-06
 
 			// START KGU#78 2015-12-19: Enh. #23: We only have to ensure the correct keywords
-			String preLeave = D7Parser.keywordMap.getOrDefault("preLeave","").trim();
-			String preReturn = D7Parser.keywordMap.getOrDefault("preReturn","").trim();
-			String preExit = D7Parser.keywordMap.getOrDefault("preExit","").trim();
+			// START KGU#288 2016-11-06: Issue #279 - some JREs don't know method getOrDefault()
+			//String preLeave = D7Parser.keywordMap.getOrDefault("preLeave","").trim();
+			//String preReturn = D7Parser.keywordMap.getOrDefault("preReturn","").trim();
+			//String preExit = D7Parser.keywordMap.getOrDefault("preExit","").trim();
+			String preLeave = D7Parser.getKeywordOrDefault("preLeave","leave").trim();
+			String preReturn = D7Parser.getKeywordOrDefault("preReturn","return").trim();
+			String preExit = D7Parser.getKeywordOrDefault("preExit","exit").trim();
+			// END KGU#288 2016-11-06
 			if (intermed.matches("^" + Matcher.quoteReplacement(preLeave) + "(\\W.*|$)"))
 			{
 				intermed = "break " + intermed.substring(preLeave.length());

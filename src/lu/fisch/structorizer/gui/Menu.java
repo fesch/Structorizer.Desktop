@@ -364,6 +364,9 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder lblRefactorCurrent = new LangTextHolder("current diagram");
 	public static final LangTextHolder lblRefactorAll = new LangTextHolder("all diagrams");
 	// END KGU#258 2016-10-03
+	// START KGU#282 2016-10-17: Enh. #272
+	public static final LangTextHolder msgReplacementsDone = new LangTextHolder("% instructions replaced.");	
+	// END KGU#282 2016-10-17
 
 	public void create()
 	{
@@ -875,9 +878,12 @@ public class Menu extends LangMenuBar implements NSDController
                             
                         	// START KGU#258 2016-09-26: Enh. #253
                             HashMap<String, StringList> refactoringData = new LinkedHashMap<String, StringList>();
-                            for (String key: D7Parser.keywordMap.keySet())
+                            for (String key: D7Parser.keywordSet())
                             {
-                            	String keyword = D7Parser.keywordMap.getOrDefault(key, "");
+                            	// START KGU#288 2016-11-06: Issue #279 - getOrDefault() may not be available
+                            	//String keyword = D7Parser.keywordMap.getOrDefault(key, "");
+                            	String keyword = D7Parser.getKeywordOrDefault(key, "");
+                            	// END KGU#288 2016-11-06
                             	if (!keyword.trim().isEmpty())
                             	{
                             		// Complete strings aren't likely to be found in a key, so don't bother

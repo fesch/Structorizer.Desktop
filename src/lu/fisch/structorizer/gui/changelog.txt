@@ -4,7 +4,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.25-03 (2016.10.17)
+Current development version: 3.25-05 (2016.11.07)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
 - 01: Issue #213: Selected state of FOR transmutation result now visible <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
@@ -40,11 +40,15 @@ Current development version: 3.25-03 (2016.10.17)
 - 03: Issue #271: User-defined prompt strings in input instructions (exec+gen) <2>
 - 03: Issue #272: Turtleizer now also provides a double precision mode <2>
 - 03: Issue #227: For Oberon, output of literals is now exported to proper procedure <2>
-- 03: Issue #273: Input of "true" and "false" now accepted as booelan values <2> 
+- 03: Issue #273: Input of "true" and "false" now accepted as boolean values <2> 
 - 03: Enh. #274: On code export, Turtleizer commands now augmented with colour info <2>
-- 03: Bugfix #275: Topological sort of subroutines involved in export fixed <2>
-- 03: Bugfix #276: Flaws in parsing value input and converting Pascal strings fixed <2>
-- 04: Bugfix #278: java.lang.NoSuchMethodError: java.util.HashMap.getOrDefault (D7Parser.java:985) [Bob Fisch]
+- 03: Bugfix #275: Topological sorting of subroutines involved in export fixed <2>
+- 03: Bugfix #276: Flaws in parsing input values and converting Pascal strings fixed <2>
+- 04: Bugfix #278: java.lang.NoSuchMethodError: java.util.HashMap.getOrDefault [Bob Fisch]
+- 04: Bugfix #279: Further references to method java.util.HashMap.getOrDefault replaced <2>
+- 05: Bugfix #272: The Turtle instruction replacement produced void undo entries <2>
+- 05: Bugfix #268: Controlling the output console font sometimes changed colours <2>
+- 05: Issue #81: Ini-based scaling workaround for icons, fonts, and frames in high DPI <2> 
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2

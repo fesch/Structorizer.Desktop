@@ -115,7 +115,7 @@ public class NSDParser extends DefaultHandler {
 			
 			if (fileVersion.compareTo("3.25") > 0 && refactorKeywords)
 			{
-				for (String key: D7Parser.keywordMap.keySet())
+				for (String key: D7Parser.keywordSet())
 				{
 					if (attributes.getIndex(key) != -1)
 					{
@@ -390,7 +390,7 @@ public class NSDParser extends DefaultHandler {
 			{
 				// Now we try to reconstruct the value list.
 				// For this we use the post-FOR-IN separator that was valid on saving the file 
-				String currentInSep = D7Parser.keywordMap.get("postForIn");
+				String currentInSep = D7Parser.getKeyword("postForIn");
 				if (!savedParserPrefs.containsKey("postForIn") && attributes.getIndex("insep")!=-1)
 				{
 					// In this case it's unlikely that the FOR-IN separator has already been 
@@ -398,7 +398,7 @@ public class NSDParser extends DefaultHandler {
 					if (inSep != null && !inSep.trim().isEmpty())
 					{
 						// Temporarily substitute the postForIn keyword with that from file
-						D7Parser.keywordMap.put("postForIn", inSep);
+						D7Parser.setKeyword("postForIn", inSep);
 					}
 				}
 				try {
@@ -409,7 +409,7 @@ public class NSDParser extends DefaultHandler {
 				}
 				finally {
 					// Make sure the current FOR-IN separator does not remain crooked
-					D7Parser.keywordMap.put("postForIn", currentInSep);
+					D7Parser.setKeyword("postForIn", currentInSep);
 				}
 			}
 			// END KGU#61 2016-03-21

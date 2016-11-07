@@ -49,6 +49,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.10.05      Bugfix #260: Editing of 1st column in variable table disabled.
  *      Kay Gürtzig     2016.10.07      KGU#68 (issue #15) ConcurrentHashMap replaces Object[] for variable editing
  *      Kay Gürtzig     2016.10.08      Issue #264 variable display updates caused frequent silent exceptions on rendering
+ *      Kay Gürtzig     2016.11.01      Issue #81: Icon and frame size scaling ensured according to scaleFactor
  *
  ******************************************************************************************************
  *
@@ -85,6 +86,7 @@ import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.RuntimeDataPresentMode;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.LangTextHolder;
+import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangFrame;
 
 
@@ -210,21 +212,30 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         cbRunDataDisplay.addItemListener(this);
         // END KGU#156 2016-03-13
 
-        btnStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/stop.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/stop.png"))); // NOI18N
+        btnStop.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/stop.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnStop.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnStopActionPerformed(evt);
             }
         });
 
-        btnPlay.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/play.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnPlay.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/play.png"))); // NOI18N
+        btnPlay.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/play.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnPlay.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnPlayActionPerformed(evt);
             }
         });
 
-        btnPause.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/pause.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnPause.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/pause.png"))); // NOI18N
+        btnPause.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/pause.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnPause.setEnabled(false);
         btnPause.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -232,7 +243,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             }
         });
 
-        btnStep.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/next.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnStep.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/executor/next.png"))); // NOI18N
+        btnStep.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/executor/next.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnStep.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnStepActionPerformed(evt);
@@ -270,8 +284,11 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
             // END KGU#269 2016-10-05
        });
         jScrollPane1.setViewportView(tblVar);
-        
 
+        // START KGU#287 2016-11-02: Issue #81 (DPI awareness workarounds)
+        double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1")).intValue();
+        tblVar.setRowHeight((int)(tblVar.getRowHeight() * scaleFactor));
+        // END KGU#2987 2016-11-02
         // START KGU#210 2016-07-25: Issue #201 - new GridBagLayout-based GUI (easier to handle)
         GridBagLayout gbl = new GridBagLayout();
         GridBagConstraints gbc = new GridBagConstraints();
@@ -308,7 +325,7 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         gbc.weighty = 0;
         gbl.setConstraints(slSpeed, gbc);
         ctnr.add(slSpeed);
-        slSpeed.setMaximumSize(new Dimension(30, 15));
+        slSpeed.setMaximumSize(new Dimension((int)(30*scaleFactor), (int)(15*scaleFactor)));
         
         gbc.gridx = 1;
         gbc.gridy = 2;
@@ -422,7 +439,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
        
         pack();
         
-        setSize(350, 500);
+        // START KGU#287 2016-11-02: Issue #81 (DPI awareness)
+        //setSize(350, 500);
+        setSize((int)(350 * scaleFactor), (int)(500 * scaleFactor));
+        // END KGU#287 2016-11-02
         
     }
 

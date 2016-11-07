@@ -45,7 +45,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.05      Generic support for locale icons
  *      Kay Gürtzig     2016.09.25      Enh. #253: New icon 025_import for import configuration
  *      Kay Gürtzig     2016.10.13      Enh. #270: New icon 026_disable for inactive elements
- *      Kay Gürtzig     2016.10.16      Enh. #272: New icons 027_richTurtle and 028_poorTurtle 
+ *      Kay Gürtzig     2016.10.16      Enh. #272: New icons 027_richTurtle and 028_poorTurtle
+ *      Kay Gürtzig     2016.11.01      Issue #81: icons 089 through 091 and 113 hadn't been scaled 
  *
  ******************************************************************************************************
  *
@@ -71,7 +72,10 @@ public class IconLoader {
 
 	// Icons
 	public static ImageIcon icoNSD = new ImageIcon(getURI(from+"icons/structorizer.png"));
-	public static ImageIcon icoNSD48 = new ImageIcon(getURI(from+"icons/structorizer48.png"));
+    // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+	//public static ImageIcon icoNSD48 = new ImageIcon(getURI(from+"icons/structorizer48.png"));
+	public static ImageIcon icoNSD48 = getIconImage(getURI(from+"icons/structorizer48.png"));
+	// END KGU#287 2016-11-02
 	
 	public static ImageIcon ico001 = getIconImage(getURI(from+"icons/001_New.png"));
 	public static ImageIcon ico002 = getIconImage(getURI(from+"icons/002_Open.png"));
@@ -206,6 +210,10 @@ public class IconLoader {
         public static void setScaleFactor(double scale)
         {
             scaleFactor=scale;
+            // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+        	icoNSD48 = getIconImage(getURI(from+"icons/structorizer48.png"));
+        	// END KGU#287 2016-11-02
+
             ico001 = getIconImage(getURI(from+"icons/001_New.png"));
             ico002 = getIconImage(getURI(from+"icons/002_Open.png"));
             ico003 = getIconImage(getURI(from+"icons/003_Save.png"));
@@ -291,10 +299,20 @@ public class IconLoader {
             //ico086 = getIconImage(getURI(from+"icons/086_it.png"));
             //ico087 = getIconImage(getURI(from+"icons/087_cn.png"));
             //ico088 = getIconImage(getURI(from+"icons/088_cz.png"));
+            
+            // START KGU#287 2016-11-01: Issue #81: Scaling had been forgotten
+            ico089 = getIconImage(getURI(from+"icons/089_paraAfter.png"));
+            ico090 = getIconImage(getURI(from+"icons/090_paraBefore.png"));
+        	ico091 = getIconImage(getURI(from+"icons/091_conv_para.png"));
+            // END KGU#287 2016-11-01
+            
             //ico092 = getIconImage(getURI(from+"icons/092_ru.png"));
             //ico093 = getIconImage(getURI(from+"icons/093_pl.png"));
             //ico094 = getIconImage(getURI(from+"icons/094_tw.png"));
 
+            // START KGU#287 2016-11-02: Issue #81: Scaling had been forgotten
+        	ico102 = getIconImage(getURI(from+"icons/102_switch.png"));
+            // END KGU#287 2016-11-02            
             // START KGU 2015-10-12: Whatever this might be good for...(?)
         	ico103 = getIconImage(getURI(from+"icons/103_breakpt.png"));
         	ico104 = getIconImage(getURI(from+"icons/104_nobreakpt.png"));
@@ -319,6 +337,10 @@ public class IconLoader {
         	// START KGU#213 2016-08-02: Enh. #215 - breakpoint counting trigger
         	ico112 = getIconImage(getURI(from+"icons/112_stopwatch.png"));
         	// END KGU#213 2016-08-02
+
+            // START KGU#287 2016-11-01: Issue #81: Scaling had been forgotten
+            ico113 = getIconImage(getURI(from+"icons/113_translater.png"));
+            // END KGU#287 2016-11-01
 
         	// START KGU#232 2016-08-02: Enh. #222 - more flexible language export
         	//ico114 = getIconImage(getURI(from+"icons/locale_unknown.png"));
@@ -347,9 +369,9 @@ public class IconLoader {
         	ImageIcon ii = icoLocales.get(localeName);
         	if (ii == null && Locales.isNamedLocale(localeName))
         	{
+        		// Already comprises scaling...
         		ii = getIconImage(getURI(from + "icons/locale_"+localeName+".png"));
         	}
-        	ii = scale(ii);
         	return ii;
         }
         // END KGU 2016-09-06

@@ -722,9 +722,9 @@ public class CGenerator extends Generator {
 			boolean isEmpty = true;
 			
 			StringList lines = _jump.getText();
-			String preReturn = D7Parser.keywordMap.get("preReturn").trim();
-			String preExit   = D7Parser.keywordMap.get("preExit").trim();
-			String preLeave  = D7Parser.keywordMap.get("preLeave").trim();
+			String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return").trim();
+			String preExit   = D7Parser.getKeywordOrDefault("preExit", "exit").trim();
+			String preLeave  = D7Parser.getKeywordOrDefault("preLeave", "leave").trim();
 			String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
 			String preExitMatch   = Matcher.quoteReplacement(preExit)+"([\\W].*|$)";
 			String preLeaveMatch  = Matcher.quoteReplacement(preLeave)+"([\\W].*|$)";

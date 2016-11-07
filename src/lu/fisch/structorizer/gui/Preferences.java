@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.gui;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -33,14 +34,18 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.31      First Issue
+ *      Kay Gürtzig     2016.11.01      Issue #81 (CPI awareness): Proper scaling of all explicit sizes
  *
  ******************************************************************************************************
  *
  *      Comment:		I used JFormDesigner to design this window graphically.
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
+import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -153,8 +158,14 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 
 		//======== dialogPane ========
 		{
-			dialogPane.setBorder(new EmptyBorder(12, 12, 12, 12));
-			dialogPane.setPreferredSize(new Dimension(429, 320));
+			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+			//dialogPane.setBorder(new EmptyBorder(12, 12, 12, 12));
+			//dialogPane.setPreferredSize(new Dimension(429, 320));
+			double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1")).intValue();
+			int border = (int)(12 * scaleFactor);
+			dialogPane.setBorder(new EmptyBorder(border, border, border, border));
+			dialogPane.setPreferredSize(new Dimension((int)(429*scaleFactor), (int)(320*scaleFactor)));
+			// END KGU#287 2016-11-01
 			dialogPane.setRequestFocusEnabled(false);
 
 			// JFormDesigner evaluation mark
@@ -168,28 +179,38 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 
 			//======== contentPanel ========
 			{
-				contentPanel.setLayout(new BorderLayout(5, 5));
+				// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+				//contentPanel.setLayout(new BorderLayout(5, 5));
+				border = (int)(5 * scaleFactor);
+				contentPanel.setLayout(new BorderLayout(border, border));
+				// END KGU#287 2016-11-01
 
 				//======== pnlLeft ========
 				{
 					pnlLeft.setMaximumSize(new Dimension(2147483647, 2147483647));
-					pnlLeft.setPreferredSize(new Dimension(200, 185));
+					// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+					//pnlLeft.setPreferredSize(new Dimension(200, 185));
+					border = (int)(8 * scaleFactor);
+					pnlLeft.setPreferredSize(new Dimension((int)(200*scaleFactor), (int)(185*scaleFactor)));
+					// END KGU#287 2016-11-01
 					pnlLeft.setFocusCycleRoot(true);
-					pnlLeft.setLayout(new BorderLayout(8, 8));
+					pnlLeft.setLayout(new BorderLayout(border, border));
 
 					//======== pnlAlt ========
 					{
 						pnlAlt.setBorder(new TitledBorder("IF statement"));
-						pnlAlt.setLayout(new BorderLayout(8, 8));
+						pnlAlt.setLayout(new BorderLayout(border, border));
 
 						//======== pnlCases ========
 						{
-							pnlCases.setLayout(new BorderLayout(8, 8));
+							pnlCases.setLayout(new BorderLayout(border, border));
+							int width = (int)(95 * scaleFactor);
+							int height = (int)(44*scaleFactor);
 
 							//======== pnlAltLeft ========
 							{
-								pnlAltLeft.setPreferredSize(new Dimension(95, 44));
-								pnlAltLeft.setLayout(new BorderLayout(8, 7));
+								pnlAltLeft.setPreferredSize(new Dimension(width, height));
+								pnlAltLeft.setLayout(new BorderLayout(border, border-1));
 
 								//---- lblAltTF ----
 								lblAltT.setText("Label TRUE");
@@ -200,8 +221,8 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 
 							//======== pnlAltRight ========
 							{
-								pnlAltRight.setPreferredSize(new Dimension(95, 44));
-								pnlAltRight.setLayout(new BorderLayout(8, 8));
+								pnlAltRight.setPreferredSize(new Dimension(width, height));
+								pnlAltRight.setLayout(new BorderLayout(border, border));
 
 								//---- lblAltF ----
 								lblAltF.setText("Label FALSE");
@@ -249,14 +270,15 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 
 				//======== pnlRight ========
 				{
+					border = (int)(8 * scaleFactor);
 					pnlRight.setMaximumSize(new Dimension(2147483647, 2147483647));
-					pnlRight.setPreferredSize(new Dimension(200, 226));
-					pnlRight.setLayout(new BorderLayout(8, 8));
+					pnlRight.setPreferredSize(new Dimension((int)(200*scaleFactor), (int)(226*scaleFactor)));
+					pnlRight.setLayout(new BorderLayout(border, border));
 
 					//======== pnlFor ========
 					{
 						pnlFor.setBorder(new TitledBorder("FOR loop"));
-						pnlFor.setLayout(new BorderLayout(8, 8));
+						pnlFor.setLayout(new BorderLayout(border, border));
 
 						//---- lblFor ----
 						lblFor.setText("Default content");
@@ -268,7 +290,7 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 					//======== pnlRepeat ========
 					{
 						pnlRepeat.setBorder(new TitledBorder("REPEAT loop"));
-						pnlRepeat.setLayout(new BorderLayout(8, 8));
+						pnlRepeat.setLayout(new BorderLayout(border, border));
 
 						//---- lblRepeat ----
 						lblRepeat.setText("Default content");
@@ -281,7 +303,7 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 					{
 						pnlWhile.setBorder(new TitledBorder("WHILE loop"));
 						pnlWhile.setAutoscrolls(true);
-						pnlWhile.setLayout(new BorderLayout(8, 8));
+						pnlWhile.setLayout(new BorderLayout(border, border));
 
 						//---- lblWhile ----
 						lblWhile.setText("Default content");
@@ -296,7 +318,7 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 
 			//======== buttonBar ========
 			{
-				buttonBar.setBorder(new EmptyBorder(12, 0, 0, 0));
+				buttonBar.setBorder(new EmptyBorder((int)(12*scaleFactor), 0, 0, 0));
 				buttonBar.setLayout(new GridBagLayout());
 				((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
 				((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};

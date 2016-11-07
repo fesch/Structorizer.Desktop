@@ -1313,9 +1313,9 @@ public class Root extends Element {
     			}
     			
     			// Unify FOR-IN loops and FOR loops for the purpose of variable analysis
-    			if (!D7Parser.keywordMap.get("postForIn").trim().isEmpty())
+    			if (!D7Parser.getKeyword("postForIn").trim().isEmpty())
     			{
-    				tokens.replaceAll(D7Parser.keywordMap.get("postForIn"), "<-");
+    				tokens.replaceAll(D7Parser.getKeyword("postForIn"), "<-");
     			}
     			
     			// Here all the unification, alignment, reduction is done, now the actual analysis begins
@@ -1336,16 +1336,16 @@ public class Root extends Element {
     			}
 
     			// cutoff output keyword
-    			if (tokens.get(0).equals(D7Parser.keywordMap.get("output")))	// Must be at the line's very beginning
+    			if (tokens.get(0).equals(D7Parser.getKeyword("output")))	// Must be at the line's very beginning
     			{
     				tokens.delete(0);
     			}
 
     			// parse out array index
     			// FIXME: Optimize this!
-    			if(tokens.indexOf(D7Parser.keywordMap.get("input"))>=0)
+    			if(tokens.indexOf(D7Parser.getKeyword("input"))>=0)
     			{
-    				String s = tokens.subSequence(tokens.indexOf(D7Parser.keywordMap.get("input"))+1, tokens.count()).concatenate();
+    				String s = tokens.subSequence(tokens.indexOf(D7Parser.getKeyword("input"))+1, tokens.count()).concatenate();
     				if (s.indexOf("[") >= 0)
     				{
     					//System.out.print("Reducing \"" + s);
@@ -1475,9 +1475,9 @@ public class Root extends Element {
     		}
 
     		// Unify FOR-IN loops and FOR loops for the purpose of variable analysis
-    		if (!D7Parser.keywordMap.get("postForIn").trim().isEmpty())
+    		if (!D7Parser.getKeyword("postForIn").trim().isEmpty())
     		{
-    			tokens.replaceAll(D7Parser.keywordMap.get("postForIn"), "<-");
+    			tokens.replaceAll(D7Parser.getKeyword("postForIn"), "<-");
     		}
 
     		// Here all the unification, alignment, reduction is done, now the actual analysis begins
@@ -1493,7 +1493,7 @@ public class Root extends Element {
 
 
     		// get names from read statements
-    		int inpPos = tokens.indexOf(D7Parser.keywordMap.get("input"));
+    		int inpPos = tokens.indexOf(D7Parser.getKeyword("input"));
     		if (inpPos >= 0)
     		{
     			// START KGU#281 2016-10-12: Issue #271 - there may be a prompt string literal to be skipped
@@ -2182,8 +2182,8 @@ public class Root extends Element {
 		boolean isInput = false;
 		boolean isOutput = false;
 		boolean isAssignment = false;
-		StringList inputTokens = Element.splitLexically(D7Parser.keywordMap.get("input"), false);
-		StringList outputTokens = Element.splitLexically(D7Parser.keywordMap.get("output"), false);
+		StringList inputTokens = Element.splitLexically(D7Parser.getKeyword("input"), false);
+		StringList outputTokens = Element.splitLexically(D7Parser.getKeyword("output"), false);
 
 		// Check every instruction line...
 		for(int l=0; l<test.count(); l++)
@@ -2292,9 +2292,9 @@ public class Root extends Element {
 	private void analyse_13_16_jump(Jump ele, Vector<DetectedError> _errors, StringList _myVars, boolean[] _resultFlags)
 	{
 		StringList sl = ele.getText();
-		String preReturn = D7Parser.keywordMap.get("preReturn");
-		String preLeave = D7Parser.keywordMap.get("preLeave");
-		String preExit = D7Parser.keywordMap.get("preExit");
+		String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
+		String preLeave = D7Parser.getKeywordOrDefault("preLeave", "leave");
+		String preExit = D7Parser.getKeywordOrDefault("preExit", "exit");
 		String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "»";
 		String line = sl.get(0).trim().toLowerCase();
 
@@ -2351,7 +2351,7 @@ public class Root extends Element {
 			if (_resultFlags[1] || _resultFlags[2])
 			{
 				//error = new DetectedError("Your function seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
-				addError(_errors, new DetectedError(errorMsg(Menu.error13_3, D7Parser.keywordMap.get("preReturn")), ele), 13);                                            	
+				addError(_errors, new DetectedError(errorMsg(Menu.error13_3, D7Parser.getKeywordOrDefault("preReturn", "return")), ele), 13);                                            	
 			}
 			// Check if we are inside a Parallel construct
 			if (insideParallel)
@@ -2363,11 +2363,12 @@ public class Root extends Element {
 		else if (isLeave)
 		{
 			int levelsUp = 1;
-			if (line.length() > D7Parser.keywordMap.get("preLeave").length())
+			int keyLen = preLeave.length();
+			if (line.length() > keyLen)
 			{
 				try
 				{
-					levelsUp = Integer.parseInt(line.substring(D7Parser.keywordMap.get("preLeave").length()).trim());
+					levelsUp = Integer.parseInt(line.substring(keyLen).trim());
 				}
 				catch (Exception ex)
 				{
@@ -2382,11 +2383,11 @@ public class Root extends Element {
 				addError(_errors, new DetectedError(errorMsg(Menu.error16_4, String.valueOf(levelsDown)), ele), 16);    								
 			}
 		}
-		else if (isExit && line.length() > D7Parser.keywordMap.get("preExit").length())
+		else if (isExit && line.length() > preExit.length())
 		{
 			try
 			{
-				Integer.parseInt(line.substring(D7Parser.keywordMap.get("preExit").length()).trim());
+				Integer.parseInt(line.substring(preExit.length()).trim());
 			}
 			catch (Exception ex)
 			{
@@ -2408,13 +2409,13 @@ public class Root extends Element {
 	private void analyse_13_16_instr(Instruction ele, Vector<DetectedError> _errors, boolean _isLastElement, StringList _myVars, boolean[] _resultFlags)
 	{
 		StringList sl = ele.getText();
-		String pattern = D7Parser.keywordMap.get("preReturn");
+		String pattern = D7Parser.getKeyword("preReturn");
 		if (D7Parser.ignoreCase) pattern = pattern.toLowerCase();
 		String patternReturn = Matcher.quoteReplacement(pattern);
-		pattern = D7Parser.keywordMap.get("preLeave");
+		pattern = D7Parser.getKeyword("preLeave");
 		if (D7Parser.ignoreCase) pattern = pattern.toLowerCase();
 		String patternLeave = Matcher.quoteReplacement(pattern);
-		pattern = D7Parser.keywordMap.get("preExit");
+		pattern = D7Parser.getKeyword("preExit");
 		if (D7Parser.ignoreCase) pattern = pattern.toLowerCase();
 		String patternExit = Matcher.quoteReplacement(pattern);
 
@@ -2430,7 +2431,7 @@ public class Root extends Element {
 			boolean isJump = isLeave || isExit ||
 					line.matches("exit([\\W].*|$)") ||	// Also check hard-coded keywords
 					line.matches("break([\\W].*|$)");	// Also check hard-coded keywords
-			if (isReturn && !line.substring(D7Parser.keywordMap.get("preReturn").length()).isEmpty())
+			if (isReturn && !line.substring(D7Parser.getKeywordOrDefault("preReturn", "return").length()).isEmpty())
 				// END KGU#78 2015-11-25
 			{
 				_resultFlags[0] = true;
@@ -2439,7 +2440,7 @@ public class Root extends Element {
 				if (_resultFlags[1] || _resultFlags[2])
 				{
 					//error = new DetectedError("Your function seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
-					addError(_errors, new DetectedError(errorMsg(Menu.error13_3, D7Parser.keywordMap.get("preReturn")), ele), 13);                                            	
+					addError(_errors, new DetectedError(errorMsg(Menu.error13_3, D7Parser.getKeywordOrDefault("preReturn", "return")), ele), 13);                                            	
 				}
 				// END KGU#78 2015-11-25
 			}

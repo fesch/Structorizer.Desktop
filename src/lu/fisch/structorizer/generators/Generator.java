@@ -469,11 +469,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			//transformed = transformInput(transformed);
 			//// output instruction transformation
 			//transformed = transformOutput(transformed);
-			if (transformed.indexOf(D7Parser.keywordMap.get("input").trim()) >= 0)
+			if (transformed.indexOf(D7Parser.getKeyword("input").trim()) >= 0)
 			{
 				transformed = transformInput(transformed);
 			}
-			if (transformed.indexOf(D7Parser.keywordMap.get("output").trim()) >= 0)
+			if (transformed.indexOf(D7Parser.getKeyword("output").trim()) >= 0)
 			{
 				transformed = transformOutput(transformed);
 			}
@@ -535,7 +535,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		//String subst = getInputReplacer();
 		// END KGU#281 2016-10-15
 		// Between the input keyword and the variable name there MUST be some blank...
-		String keyword = D7Parser.keywordMap.get("input").trim();
+		String keyword = D7Parser.getKeyword("input").trim();
 		if (!keyword.isEmpty() && _interm.startsWith(keyword))
 		{
 			// START KGU#281 2016-10-15: for enh. #271 (input with prompt)
@@ -586,7 +586,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	{
 		String subst = getOutputReplacer();
 		// Between the input keyword and the variable name there MUST be some blank...
-		String keyword = D7Parser.keywordMap.get("output").trim();
+		String keyword = D7Parser.getKeyword("output").trim();
 		if (!keyword.isEmpty() && _interm.startsWith(keyword))
 		{
 			String matcher = Matcher.quoteReplacement(keyword);
@@ -643,9 +643,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected boolean mapJumps(Subqueue _squeue)
 	{
 		boolean surelyReturns = false;
-		String preLeave  = D7Parser.keywordMap.get("preLeave");
-		String preReturn = D7Parser.keywordMap.get("preReturn");
-		String preExit   = D7Parser.keywordMap.get("preExit");
+		String preLeave  = D7Parser.getKeywordOrDefault("preLeave", "leave");
+		String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
+		String preExit   = D7Parser.getKeywordOrDefault("preExit", "exit");
 		String patternLeave = getKeywordPattern(preLeave) + "([\\W].*|$)";
 		String patternReturn = getKeywordPattern(preReturn) + "([\\W].*|$)";
 		String patternExit = getKeywordPattern(preExit) + "([\\W].*|$)";
@@ -681,7 +681,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				{
 					levelsUp = 1;
 					try {
-						levelsUp = Integer.parseInt(jumpText.substring(D7Parser.keywordMap.get("preLeave").length()).trim());
+						levelsUp = Integer.parseInt(jumpText.substring(preLeave.length()).trim());
 					}
 					catch (NumberFormatException ex)
 					{
@@ -766,7 +766,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 					String line = text.get(i);
 					if (line.matches(patternReturn))
 					{
-						boolean hasResult = !line.substring(D7Parser.keywordMap.get("preReturn").length()).trim().isEmpty();
+						boolean hasResult = !line.substring(preReturn.length()).trim().isEmpty();
 						if (hasResult)
 						{
 							this.returns = true;

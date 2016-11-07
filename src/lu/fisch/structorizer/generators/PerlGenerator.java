@@ -595,9 +595,9 @@ public class PerlGenerator extends Generator {
 			boolean isEmpty = true;
 			
 			StringList lines = _jump.getText();
-			String preReturn = D7Parser.keywordMap.get("preReturn");
-			String preExit   = D7Parser.keywordMap.get("preExit");
-			String preLeave  = D7Parser.keywordMap.get("preLeave");
+			String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
+			String preExit   = D7Parser.getKeywordOrDefault("preExit", "exit");
+			String preLeave  = D7Parser.getKeywordOrDefault("preLeave", "leave");
 			for (int i = 0; isEmpty && i < lines.count(); i++) {
 				String line = transform(lines.get(i)).trim();
 				if (!line.isEmpty())

@@ -97,6 +97,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.10.07      Bugfix #263: "Save as" now updates the current directory
  *      Kay Gürtzig     2016.10.11      KGU#280: field isArrangerOpen replaced by a method (due to volatility)
  *      Kay Gürtzig     2016.10.13      Enh. #270: Functionality for the disabling of elements
+ *      Kay Gürtzig     2016.11.06      Issue #279: All references to method HashMap.getOrDefault() replaced
  *
  ******************************************************************************************************
  *
@@ -2335,12 +2336,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// START KGU#229 2016-09-09: Take care of the configured prefix and postfix
 		//While whileLoop = new While(forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue());
 		String prefix = "", postfix = "";
-		if (!D7Parser.keywordMap.get("preWhile").trim().isEmpty()) {
-			prefix = D7Parser.keywordMap.get("preWhile");
+		if (!D7Parser.getKeyword("preWhile").trim().isEmpty()) {
+			prefix = D7Parser.getKeyword("preWhile");
 			if (!prefix.endsWith(" ")) prefix += " ";
 		}
-		if (!D7Parser.keywordMap.get("postWhile").trim().isEmpty()) {
-			postfix = D7Parser.keywordMap.get("postWhile");
+		if (!D7Parser.getKeyword("postWhile").trim().isEmpty()) {
+			postfix = D7Parser.getKeyword("postWhile");
 			if (!postfix.startsWith(" ")) postfix = " " + postfix;
 		}
 		While whileLoop = new While(prefix + forLoop.getCounterVar() + (step < 0 ? " >= " : " <= ") + forLoop.getEndValue() + postfix);
@@ -2392,7 +2393,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// tokenized selection expression
 		StringList selTokens = Element.splitLexically(caseElem.getText().get(0), true);
 		// Eliminate parser preference keywords
-		String[] redundantKeywords = {D7Parser.keywordMap.get("preCase"), D7Parser.keywordMap.get("postCase")};
+		String[] redundantKeywords = {D7Parser.getKeyword("preCase"), D7Parser.getKeyword("postCase")};
 		for (String keyword: redundantKeywords)
 		{
 			if (!keyword.trim().isEmpty())
@@ -2421,12 +2422,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		
 		// Take care of the configured prefix and postfix
 		String prefix = "", postfix = "";
-		if (!D7Parser.keywordMap.get("preAlt").trim().isEmpty()) {
-			prefix = D7Parser.keywordMap.get("preAlt");
+		if (!D7Parser.getKeyword("preAlt").trim().isEmpty()) {
+			prefix = D7Parser.getKeyword("preAlt");
 			if (!prefix.endsWith(" ")) prefix += " ";
 		}
-		if (!D7Parser.keywordMap.get("postAlt").trim().isEmpty()) {
-			postfix = D7Parser.keywordMap.get("postAlt");
+		if (!D7Parser.getKeyword("postAlt").trim().isEmpty()) {
+			postfix = D7Parser.getKeyword("postAlt");
 			if (!postfix.startsWith(" ")) postfix = " " + postfix;
 		}
 		
@@ -2454,7 +2455,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				{
 					cond += " || (" + discriminator + " = " + selConst.trim() + ")";
 				}
-				cond = cond.substring(4).replace("||", D7Parser.keywordMap.getOrDefault("oprOr", "or"));
+				// START KGU#288 2016-11-06: Issue #279
+				//cond = cond.substring(4).replace("||", D7Parser.getKeywordOrDefault("oprOr", "or"));
+				cond = cond.substring(4).replace("||", D7Parser.getKeywordOrDefault("oprOr", "or"));
+				// END KGU#288 2016-11-06
 				Alternative newAlt = new Alternative(prefix + cond + postfix);
 				newAlt.qTrue = caseElem.qs.get(lineNo-1);
 				newAlt.qTrue.parent = newAlt;
@@ -2499,7 +2503,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	// END KGU#267 2016-10-03
 
-	// START KGU#282 2016-10-16 (draft)
+	// START KGU#282 2016-10-16: Issue #272 (draft)
 	/*=======================================*
 	 * Turtleizer precision methods
 	 *=======================================*/
@@ -2514,6 +2518,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		final class TurtleizerSwitcher implements IElementVisitor 
 		{
 			private int from;
+			// START #272 2016-10-17 (KGU): detect changes (to get rid of void undo entry
+			private boolean act = false;
+			private int nChanges = 0;
+			// END #272 2016-10-17
 			private final String[][] functionPairs = { {"fd", "forward"}, {"bk", "backward"}};
 			
 			public TurtleizerSwitcher(boolean upgrade)
@@ -2531,7 +2539,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							for (int j = 0; j < functionPairs.length; j++) {
 								String oldName = functionPairs[j][from];
 								if (fct.getName().equals(oldName)) {
-									_ele.getText().set(i, functionPairs[j][1 - from] + line.trim().substring(oldName.length()));
+									// START #272 2016-10-17
+									//_ele.getText().set(i, functionPairs[j][1 - from] + line.trim().substring(oldName.length()));
+									if (this.act) {
+										_ele.getText().set(i, functionPairs[j][1 - from] + line.trim().substring(oldName.length()));
+									}
+									nChanges++;
+									// END #272 2016-10-17
 								}
 							}
 						}
@@ -2544,10 +2558,36 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				return true;
 			}
 			
+			// START #272 2016-10-17 (KGU)
+			public void activate()
+			{
+				this.nChanges = 0;
+				this.act = true;
+			}
+			
+			public int getNumberOfReplacements()
+			{
+				return nChanges;
+			}
+			// END #272 2016-10-17
+			
 		}
 		
-		root.addUndo();
-		selected.traverse(new TurtleizerSwitcher(precisionUp));
+		// START #272 2016-10-17 (KGU): Inform the user and get rid of void undo entry
+		//root.addUndo();
+		//selected.traverse(new TurtleizerSwitcher(precisionUp));
+		// First mere count run
+		TurtleizerSwitcher switcher = new TurtleizerSwitcher(precisionUp);
+		selected.traverse(switcher);
+		int nReplaced = switcher.getNumberOfReplacements();
+		if (nReplaced > 0) {
+			// There will be substitutions, so get dangerous.
+			root.addUndo();
+			switcher.activate();
+			selected.traverse(switcher);			
+		}
+		JOptionPane.showMessageDialog(this, Menu.msgReplacementsDone.getText().replace("%", Integer.toString(nReplaced)));
+		// END #272 2016-10-17
 		
 	}
 	// END KGU#282 2016-10-16
@@ -3570,7 +3610,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		try {
 			// START KGU#247 2016-09-17: Issue #243/#245 Translation support for update window content
 			//JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\">Goto <a href=\"" + home + "\">" + home + "</a> to look for updates<br>and news about Structorizer.</font></html>");
-			JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\">" +
+			double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1")).intValue();
+			int fontSize = (int)(3*scaleFactor);
+			JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\" size="+fontSize+">" +
 					Menu.msgGotoHomepage.getText().replace("%", "<a href=\"" + home + "\">" + home + "</a>") +
 					"</font></html>");
 			// END KGU#247 2016-09-17
@@ -3715,30 +3757,30 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 								Math.round(p.y+(getVisibleRect().height-parserPreferences.getHeight())/2+this.getVisibleRect().y));
 		
 		// set fields
-		parserPreferences.edtAltPre.setText(D7Parser.keywordMap.get("preAlt"));
-		parserPreferences.edtAltPost.setText(D7Parser.keywordMap.get("postAlt"));
-		parserPreferences.edtCasePre.setText(D7Parser.keywordMap.get("preCase"));
-		parserPreferences.edtCasePost.setText(D7Parser.keywordMap.get("postCase"));
-		parserPreferences.edtForPre.setText(D7Parser.keywordMap.get("preFor"));
-		parserPreferences.edtForPost.setText(D7Parser.keywordMap.get("postFor"));
+		parserPreferences.edtAltPre.setText(D7Parser.getKeyword("preAlt"));
+		parserPreferences.edtAltPost.setText(D7Parser.getKeyword("postAlt"));
+		parserPreferences.edtCasePre.setText(D7Parser.getKeyword("preCase"));
+		parserPreferences.edtCasePost.setText(D7Parser.getKeyword("postCase"));
+		parserPreferences.edtForPre.setText(D7Parser.getKeyword("preFor"));
+		parserPreferences.edtForPost.setText(D7Parser.getKeyword("postFor"));
 		// START KGU#3 2015-11-08: New configurable separator for FOR loop step const
-		parserPreferences.edtForStep.setText(D7Parser.keywordMap.get("stepFor"));
+		parserPreferences.edtForStep.setText(D7Parser.getKeyword("stepFor"));
 		// END KGU#3 2015-11-08
 		// START KGU#61 2016-03-21: New configurable keywords for FOR-IN loop
-		parserPreferences.edtForInPre.setText(D7Parser.keywordMap.get("preForIn"));
-		parserPreferences.edtForInPost.setText(D7Parser.keywordMap.get("postForIn"));
+		parserPreferences.edtForInPre.setText(D7Parser.getKeyword("preForIn"));
+		parserPreferences.edtForInPost.setText(D7Parser.getKeyword("postForIn"));
 		// END KGU#61 2016-03-21
-		parserPreferences.edtWhilePre.setText(D7Parser.keywordMap.get("preWhile"));
-		parserPreferences.edtWhilePost.setText(D7Parser.keywordMap.get("postWhile"));
-		parserPreferences.edtRepeatPre.setText(D7Parser.keywordMap.get("preRepeat"));
-		parserPreferences.edtRepeatPost.setText(D7Parser.keywordMap.get("postRepeat"));
+		parserPreferences.edtWhilePre.setText(D7Parser.getKeyword("preWhile"));
+		parserPreferences.edtWhilePost.setText(D7Parser.getKeyword("postWhile"));
+		parserPreferences.edtRepeatPre.setText(D7Parser.getKeyword("preRepeat"));
+		parserPreferences.edtRepeatPost.setText(D7Parser.getKeyword("postRepeat"));
 		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
-		parserPreferences.edtJumpLeave.setText(D7Parser.keywordMap.get("preLeave"));
-		parserPreferences.edtJumpReturn.setText(D7Parser.keywordMap.get("preReturn"));
-		parserPreferences.edtJumpExit.setText(D7Parser.keywordMap.get("preExit"));
+		parserPreferences.edtJumpLeave.setText(D7Parser.getKeyword("preLeave"));
+		parserPreferences.edtJumpReturn.setText(D7Parser.getKeyword("preReturn"));
+		parserPreferences.edtJumpExit.setText(D7Parser.getKeyword("preExit"));
 		// END KGU#78 2016-03-25
-		parserPreferences.edtInput.setText(D7Parser.keywordMap.get("input"));
-		parserPreferences.edtOutput.setText(D7Parser.keywordMap.get("output"));
+		parserPreferences.edtInput.setText(D7Parser.getKeyword("input"));
+		parserPreferences.edtOutput.setText(D7Parser.getKeyword("output"));
 		// START KGU#165 2016-03-25: We need a transparent decision here
 		parserPreferences.chkIgnoreCase.setSelected(D7Parser.ignoreCase);
 		// END KGU#165 2016-03-25
@@ -3756,10 +3798,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			if (considerRefactoring)
 			{
 				oldKeywordMap = new LinkedHashMap<String, StringList>();
-				for (String key: D7Parser.keywordMap.keySet())
+				for (String key: D7Parser.keywordSet())
 				{
-					String keyword = D7Parser.keywordMap.getOrDefault(key, "");
-					if (!keyword.trim().isEmpty())
+					// START KGU#288 2016-11-06: Issue #279 - method getOrDefault may not be available
+					//String keyword = D7Parser.keywordMap.getOrDefault(key, "");
+					//if (!keyword.trim().isEmpty())
+					String keyword = D7Parser.getKeyword(key);
+					if (keyword != null && !keyword.trim().isEmpty())
+					// END KGU#288 2016-11-06
 					{
 						// Complete strings aren't likely to be found in a key, so don't bother
 						oldKeywordMap.put(key, Element.splitLexically(keyword,  false));
@@ -3769,30 +3815,30 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#258 2016-09-26
 
 			// get fields
-			D7Parser.keywordMap.put("preAlt", parserPreferences.edtAltPre.getText());
-			D7Parser.keywordMap.put("postAlt", parserPreferences.edtAltPost.getText());
-			D7Parser.keywordMap.put("preCase", parserPreferences.edtCasePre.getText());
-			D7Parser.keywordMap.put("postCase", parserPreferences.edtCasePost.getText());
-			D7Parser.keywordMap.put("preFor", parserPreferences.edtForPre.getText());
-			D7Parser.keywordMap.put("postFor", parserPreferences.edtForPost.getText());
+			D7Parser.setKeyword("preAlt", parserPreferences.edtAltPre.getText());
+			D7Parser.setKeyword("postAlt", parserPreferences.edtAltPost.getText());
+			D7Parser.setKeyword("preCase", parserPreferences.edtCasePre.getText());
+			D7Parser.setKeyword("postCase", parserPreferences.edtCasePost.getText());
+			D7Parser.setKeyword("preFor", parserPreferences.edtForPre.getText());
+			D7Parser.setKeyword("postFor", parserPreferences.edtForPost.getText());
 			// START KGU#3 2015-11-08: New configurable separator for FOR loop step const
-			D7Parser.keywordMap.put("stepFor", parserPreferences.edtForStep.getText());
+			D7Parser.setKeyword("stepFor", parserPreferences.edtForStep.getText());
 			// END KGU#3 2015-11-08
 			// START KGU#61 2016-03-21: New configurable keywords for FOR-IN loop
-			D7Parser.keywordMap.put("preForIn", parserPreferences.edtForInPre.getText());
-			D7Parser.keywordMap.put("postForIn", parserPreferences.edtForInPost.getText());
+			D7Parser.setKeyword("preForIn", parserPreferences.edtForInPre.getText());
+			D7Parser.setKeyword("postForIn", parserPreferences.edtForInPost.getText());
 			// END KGU#61 2016-03-21
-			D7Parser.keywordMap.put("preWhile", parserPreferences.edtWhilePre.getText());
-			D7Parser.keywordMap.put("postWhile", parserPreferences.edtWhilePost.getText());
-			D7Parser.keywordMap.put("preRepeat", parserPreferences.edtRepeatPre.getText());
-			D7Parser.keywordMap.put("postRepeat", parserPreferences.edtRepeatPost.getText());
+			D7Parser.setKeyword("preWhile", parserPreferences.edtWhilePre.getText());
+			D7Parser.setKeyword("postWhile", parserPreferences.edtWhilePost.getText());
+			D7Parser.setKeyword("preRepeat", parserPreferences.edtRepeatPre.getText());
+			D7Parser.setKeyword("postRepeat", parserPreferences.edtRepeatPost.getText());
     		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
-    		D7Parser.keywordMap.put("preLeave", parserPreferences.edtJumpLeave.getText());
-    		D7Parser.keywordMap.put("preReturn", parserPreferences.edtJumpReturn.getText());
-    		D7Parser.keywordMap.put("preExit", parserPreferences.edtJumpExit.getText());
+    		D7Parser.setKeyword("preLeave", parserPreferences.edtJumpLeave.getText());
+    		D7Parser.setKeyword("preReturn", parserPreferences.edtJumpReturn.getText());
+    		D7Parser.setKeyword("preExit", parserPreferences.edtJumpExit.getText());
     		// END KGU#78 2016-03-25
-			D7Parser.keywordMap.put("input", parserPreferences.edtInput.getText());
-			D7Parser.keywordMap.put("output", parserPreferences.edtOutput.getText());
+			D7Parser.setKeyword("input", parserPreferences.edtInput.getText());
+			D7Parser.setKeyword("output", parserPreferences.edtOutput.getText());
 			// START KGU#165 2016-03-25: We need a transparent decision here
 			D7Parser.ignoreCase = parserPreferences.chkIgnoreCase.isSelected();
 			// END KGU#165 2016-03-25
@@ -3854,7 +3900,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		for (HashMap.Entry<String,StringList> entry: refactoringData.entrySet())
 		{
 			String oldValue = entry.getValue().concatenate();
-			String newValue = D7Parser.keywordMap.getOrDefault(entry.getKey(), "");
+			// START KGU#288 2016-11-06: Issue #279 - Method getOrDefault() missing in OpenJDK
+			//String newValue = D7Parser.getKeywordOrDefault(entry.getKey(), "");
+			String newValue = D7Parser.getKeywordOrDefault(entry.getKey(), "");
+			// END KGU#288 2016-11-06
 			if (!oldValue.equals(newValue))
 			{
 				replacements.add("   " + entry.getKey() + ": \"" + oldValue + "\" -> \"" + newValue + "\"");

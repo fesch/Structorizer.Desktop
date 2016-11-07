@@ -501,11 +501,11 @@ public class PHPGenerator extends Generator
 		boolean isEmpty = true;
 		
 		StringList lines = _jump.getText();
-		String preReturn = D7Parser.keywordMap.get("preReturn");
-		String preExit   = D7Parser.keywordMap.get("preExit");
+		String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
+		String preExit   = D7Parser.getKeywordOrDefault("preExit", "exit");
 		String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
 		String preExitMatch   = Matcher.quoteReplacement(preExit)+"([\\W].*|$)";
-		String preLeaveMatch  = Matcher.quoteReplacement(D7Parser.keywordMap.get("preLeave"))+"([\\W].*|$)";
+		String preLeaveMatch  = Matcher.quoteReplacement(D7Parser.getKeywordOrDefault("preLeave", "leave"))+"([\\W].*|$)";
 		for (int i = 0; isEmpty && i < lines.count(); i++) {
 			String line = transform(lines.get(i)).trim();
 			if (!line.isEmpty())

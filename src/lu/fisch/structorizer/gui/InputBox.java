@@ -42,6 +42,7 @@ package lu.fisch.structorizer.gui;
  *     Kay Gürtzig  2016.09.13  Bugfix #241: Obsolete mechanisms removed (remnants of KGU#42)
  *     Kay Gürtzig  2016.09.22  Bugfix #241 revised by help of a LangDialog API modification
  *     Kay Gürtzig  2016.10.13  Enh. #270: New checkbox chkDisabled
+ *     Kay Gürtzig  2016.11.02  Issue #81: Workaround for lacking DPI awareness
  *
  ******************************************************************************************************
  *
@@ -50,6 +51,7 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************
  */
 
+import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
 
 import java.awt.*;
@@ -102,10 +104,16 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     // END KGU 2015-10-14
 
     // START KGU#169 2016-07-14: Enh. #180: helps to enable focus control
+    @Deprecated
     protected void setPreferredSize() {
         setSize(500, 400);        
     }
     // END KGU#169 2016-07-14
+    // START KGU#287 2016-11-02: Issue #81 (DPI awaeness workaround)
+    protected void setPreferredSize(double scaleFactor) {
+        setSize((int)(500 * scaleFactor), (int)(400 * scaleFactor));        
+    }
+    // END KGU#287 2016-11-02
 
     private void create() {
         // set window title
@@ -116,6 +124,11 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         // set windows size
         //setSize(500, 400);
         // END KGU#169 2016-07-14
+        
+        // START KGU#287 2016-11-02: Issue #81 (DPI awaeness workaround)
+		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1")).intValue();        
+        // END KGU#287 2016-11-02
+        
         // show form
         setVisible(false);
         // set action to perform if closed
@@ -141,14 +154,16 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         // END KGU#213 2016-08-01
         addKeyListener(this);
         
-        Border emptyBorder = BorderFactory.createEmptyBorder(4, 4, 4, 4);
+        int border = (int)(4 * scaleFactor);
+        Border emptyBorder = BorderFactory.createEmptyBorder(border, border, border, border);
         txtText.setBorder(emptyBorder);
         txtComment.setBorder(emptyBorder);
         
         JPanel pnPanel0 = new JPanel();
         GridBagLayout gbPanel0 = new GridBagLayout();
         GridBagConstraints gbcPanel0 = new GridBagConstraints();
-        gbcPanel0.insets = new Insets(10, 10, 0, 10);
+        border = (int)(10 * scaleFactor);
+        gbcPanel0.insets = new Insets(border, border, 0, border);
         pnPanel0.setLayout(gbPanel0);
 
         // START KGU#3 2015-10-24: Open opportunities for subclasses
@@ -157,7 +172,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         JPanel pnPanel1 = new JPanel();
         GridBagLayout gbPanel1 = new GridBagLayout();
         GridBagConstraints gbcPanel1 = new GridBagConstraints();
-        gbcPanel1.insets = new Insets(10, 10, 0, 10);
+        gbcPanel1.insets = new Insets(border, border, 0, border);
         pnPanel1.setLayout(gbPanel1);
             // END KGU#3 2015-10-24
         
@@ -249,7 +264,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
 //        gbPanel1.setConstraints( lblBreakTrigger, gbcPanel1 );
 //        pnPanel1.add(lblBreakTrigger);
 //        // END KGU#246 2106-09-13
-        gbcPanel1.insets = new Insets(10, 10, 10, 10);
+        gbcPanel1.insets = new Insets(border, border, border, border);
 
         //createExitButtons(gridbase)
         gbcPanel1.gridx = 1;
@@ -294,6 +309,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         // START KGU#91+KGU#169 2016-07-14: Enh. #180 (also see #39 and #142)
         this.pack();	// This makes focus control possible but must precede the size setting
         setPreferredSize();
+        setPreferredSize(scaleFactor);
         if (Element.E_TOGGLETC) {
             txtComment.requestFocusInWindow();
         } else {

@@ -366,7 +366,7 @@ public class OberonGenerator extends Generator {
 			
 			insertComment(_inst, _indent);
 
-			String outputKey = D7Parser.keywordMap.get("output");
+			String outputKey = D7Parser.getKeyword("output");
 			for (int i=0; i<_inst.getText().count(); i++)
 			{
 				// START KGU#101/KGU#108 2015-12-20 Issue #51/#54
@@ -763,9 +763,9 @@ public class OberonGenerator extends Generator {
         	}
         	// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
         	//code.add(_indent + line + ";");
-        	String preReturn = D7Parser.keywordMap.get("preReturn");
-        	String preExit   = D7Parser.keywordMap.get("preExit");
-        	String preLeave  = D7Parser.keywordMap.get("preLeave");
+        	String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
+        	String preExit   = D7Parser.getKeywordOrDefault("preExit", "exit");
+        	String preLeave  = D7Parser.getKeywordOrDefault("preLeave", "leave");
         	if (line.matches(Matcher.quoteReplacement(preReturn)+"([\\W].*|$)"))
         	{
         		addCode("RETURN " + line.substring(preReturn.length()).trim() + ";",
