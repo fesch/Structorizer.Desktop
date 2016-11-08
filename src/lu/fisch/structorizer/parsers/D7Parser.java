@@ -48,6 +48,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2016-09-25      Method getPropertyMap() added for more generic keyword handling (Enh. #253)
  *      Bob Fisch       2016-11-03      Bugfix #278 (NoSuchMethodError) in loadFromIni()
  *      Kay Gürtzig     2016-11-06      Bugfix #279: New methods keywordSet(), getKeywordOrDefault() etc.
+ *      Kay Gürtzig     2016-11-08      Bugfix #281/#282 in method setKeyword() (Java 1.8 method HashMap.replace())
  *
  ******************************************************************************************************
  *
@@ -1141,7 +1142,10 @@ public class D7Parser implements GPMessageConstants
 		if (_keyword == null) {
 			_keyword = "";
 		}
-		keywordMap.replace(_key, _keyword);
+		// Bugfix #281/#282
+		if (keywordMap.contains(_key)) {
+			keywordMap.put(_key, _keyword);
+		}
 	}
 	// END KGU#288 2016-11-06
 
