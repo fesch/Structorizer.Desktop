@@ -62,6 +62,7 @@
  *                                      AnalyserPreferences numbering modified
  *      Kay Gürtzig     2016.10.11      Enh. #267: Menu.error15 divided into error15_1 and error15_2
  *                                      Enh. #268: Sub-section OutputConsole added
+ *      Kay Gürtzig     2016.11.08      Enh. #270: Menu.menuDiagramDisable, Editor.btnDisable.tooltip etc. added
  *
  ******************************************************************************************************
  *
@@ -148,6 +149,7 @@ Menu.menuDiagramMoveDown.text=Sposta in basso
 Menu.menuDiagramTransmute.text=Trasmuta
 Menu.menuDiagramCollapse.text=Collassa
 Menu.menuDiagramExpand.text=Espandi
+Menu.menuDiagramDisable.text=Disattiva/riattiva
 // Breakpoint
 Menu.menuDiagramBreakpoint.text=Alterna breakpoint
 Menu.menuDiagramBreakTrigger.text=Condizione del breakpoint ... 
@@ -374,6 +376,7 @@ Editor.btnColor9.tooltip=Colora l'elemento selezionato con questo colore.
 // collapsing
 Editor.btnCollapse.tooltip=Collassa l'elemento selezionato.
 Editor.btnExpand.tooltip=Espandi l'elemento selezionato.
+Editor.btnDisable.tooltip=Disattiva/riattiva i elementi selezionati.
 // turtleizer & executor
 Editor.btnTurtle.tooltip=Apri Turtleizer ...
 Editor.btnMake.tooltip=Apri debugger (controllo di esecuzione) ...
@@ -418,6 +421,7 @@ Editor.popupTransmute.text=Trasmuta
 // Collapsing
 Editor.popupCollapse.text=Collassa
 Editor.popupExpand.text=Espandi
+Editor.popupDisable.text=Disattiva/riattiva
 // Breakpoint
 Editor.popupBreakpoint.text=Alterna breakpoint
 Editor.popupBreakTrigger.text=

@@ -80,9 +80,10 @@
  *                                      AnalyserPreferences numbering modified, InputBoxFor messages
  *      Kay Gürtzig         2016.09.25  Enh. #253: Section ImportOptionDialog inserted, Analyser checks reformulated
  *      Kay Gürtzig         2016.10.11  Enh. #267: Menu.error15 divided into error15_1 and error15_2
- *      Kay Gürtzig         2016.10.13  Enh. #270: Editor.btnDisable, InputBox.chkDisabled added.
+ *      Kay Gürtzig         2016.10.13  Enh. #270: Editor.popupDisable, InputBox.chkDisabled added.
  *      Kay Gürtzig         2016.10.16  Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
  *      Kay Gürtzig         2016.10.18  Enh. #267: Analyser check 15 reformulated.
+ *      Kay Gürtzig         2016.11.08  Enh. #270: Editor.btnDisable.tooltip added
  *
  ******************************************************************************************************
  *
@@ -173,7 +174,7 @@ Menu.menuDiagramMoveDown.text=Nach unten
 Menu.menuDiagramTransmute.text=Umwandeln
 Menu.menuDiagramCollapse.text=Reduzieren
 Menu.menuDiagramExpand.text=Erweitern
-Menu.menuDiagramDisable.text=Deaktivieren
+Menu.menuDiagramDisable.text=Deaktivieren/Aktivieren
 // Breakpoint
 Menu.menuDiagramBreakpoint.text=Haltepunkt setzen/löschen
 Menu.menuDiagramBreakTrigger.text=Haltepunktauslösung festlegen...
@@ -406,6 +407,7 @@ Editor.btnColor9.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
 // collapsing
 Editor.btnCollapse.tooltip=Reduzieren des ausgewählten Elements.
 Editor.btnExpand.tooltip=Erweitern des ausgewählten Elements.
+Editor.btnDisable.tooltip=(De-)Aktivieren der ausgewählten Elemente.
 // turtleizer & executor
 Editor.btnTurtle.tooltip=Öffnen des Turtleizer-Fensters zum Test ...
 Editor.btnMake.tooltip=Öffnen des Debuggers zum Test ...
@@ -450,7 +452,7 @@ Editor.popupTransmute.text=Umwandeln
 // Collapsing
 Editor.popupCollapse.text=Reduzieren
 Editor.popupExpand.text=Erweitern
-Editor.popupDisable.text=Deaktivieren
+Editor.popupDisable.text=Deaktivieren/Aktivieren
 // Breakpoint
 Editor.popupBreakpoint.text=Haltepunkt setzen/löschen
 Editor.popupBreakTrigger.text=Haltepunktauslösung festlegen...

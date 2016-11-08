@@ -78,8 +78,9 @@
  *                                      AnalyserPreferences numbering modified, InputBoxFor messages
  *      Kay Gürtzig     2016.09.25      Enh. #253: Section ImportOptionDialog inserted
  *      Kay Gürtzig     2016.10.11      Enh. 267: Menu.error15 divided into error15_1 and error15_2
- *      Kay Gürtzig     2016.10.13      Enh. #270: Editor.btnDisable, InputBox.chkDisabled added.
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Editor.popupDisable and InputBox.chkDisabled added.
  *      Kay Gürtzig     2016.10.16      Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
+ *      Kay Gürtzig     2016.11.08      Enh. #270: Editor.btnDisable.tooltip added
  *
  ******************************************************************************************************
  *
@@ -175,7 +176,7 @@ Menu.menuDiagramMoveDown.text=Move down
 Menu.menuDiagramTransmute.text=Transmute
 Menu.menuDiagramCollapse.text=Collapse
 Menu.menuDiagramExpand.text=Expand
-Menu.menuDiagramDisable.text=Disable
+Menu.menuDiagramDisable.text=Disable/enable
 // Breakpoint
 Menu.menuDiagramBreakpoint.text=Toggle breakpoint
 Menu.menuDiagramBreakTrigger.text=Specify break trigger...
@@ -408,6 +409,7 @@ Editor.btnColor9.tooltip=Colorize the selected element with this color.
 // collapsing
 Editor.btnCollapse.tooltip=Collapse the selected element.
 Editor.btnExpand.tooltip=Expand the selected element.
+Editor.btnDisable.tooltip=Disable/enable the selected element(s).
 // turtleizer & executor
 Editor.btnTurtle.tooltip=Open Turtleizer ...
 Editor.btnMake.tooltip=Open Executor ...
@@ -452,7 +454,7 @@ Editor.popupTransmute.text=Transmute
 // Collapsing
 Editor.popupCollapse.text=Collapse
 Editor.popupExpand.text=Expand
-Editor.popupDisable.text=Disable
+Editor.popupDisable.text=Disable/enable
 // Breakpoint
 Editor.popupBreakpoint.text=Toggle breakpoint
 Editor.popupBreakTrigger.text=Specify break trigger...

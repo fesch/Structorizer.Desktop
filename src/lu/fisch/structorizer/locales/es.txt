@@ -81,9 +81,10 @@
  *      Kay Gürtzig     2016.09.25  Enh. #253: ImportOptionDialog inserted; spellings corrected; usted -> tú
  *      Kay Gürtzig     2016.10.11  Enh. 267: Menu.error15 divided into error15_1 and error15_2
  *                                  Enh. 268: OutputConsole sub-section added
- *      Kay Gürtzig     2016.10.13  Enh. #270: Editor.btnDisable, InputBox.chkDisabled added.
+ *      Kay Gürtzig     2016.10.13  Enh. #270: Editor.popupDisable, InputBox.chkDisabled added.
  *      Kay Gürtzig     2016.10.16  Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
  *      Kay Gürtzig     2016.10.18  several Analyser checks (among them 15, according to enh.#267) reformulated.
+ *      Kay Gürtzig     2016.11.08  Enh. #270: Editor.btnDisable.tooltip added
  *
  ******************************************************************************************************
  *
@@ -174,7 +175,7 @@ Menu.menuDiagramMoveDown.text=Desplazar abajo
 Menu.menuDiagramTransmute.text=Transmutar
 Menu.menuDiagramCollapse.text=Reducir
 Menu.menuDiagramExpand.text=Expandir
-Menu.menuDiagramDisable.text=Desactivar
+Menu.menuDiagramDisable.text=Desactivar/Reactivar
 // Breakpoint
 Menu.menuDiagramBreakpoint.text=Poner/eliminar breakpoint
 Menu.menuDiagramBreakTrigger.text=Fija condición de parar ...
@@ -407,6 +408,7 @@ Editor.btnColor9.tooltip=Colorear el elemento seleccionado con este color.
 // collapsing
 Editor.btnCollapse.tooltip=Reducir el elemento seleccionado.
 Editor.btnExpand.tooltip=Expandir el elemento seleccionado.
+Editor.btnDisable.tooltip=Desactivar/reactivar los elementos seleccionados.
 // turtleizer & executor
 Editor.btnTurtle.tooltip=Abrir Turtleizer ...
 Editor.btnMake.tooltip=Activar Control de Ejecución ...
@@ -451,7 +453,7 @@ Editor.popupTransmute.text=Transmutar
 // Collapsing
 Editor.popupCollapse.text=Reducir
 Editor.popupExpand.text=Expandir
-Editor.popupDisable.text=Desactivar
+Editor.popupDisable.text=Desactivar/Reactivar
 // Breakpoint
 Editor.popupBreakpoint.text=Poner/eliminar breakpoint
 Editor.popupBreakTrigger.text=Fija la condición de parar ...
