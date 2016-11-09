@@ -44,6 +44,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
  *      Kay Gürtzig     2016.10.15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig     2016.11.08      Collateral damage of #271 to getOutputReplacer() mended
  *
  ******************************************************************************************************
  *
@@ -131,7 +132,7 @@ public class CPlusPlusGenerator extends CGenerator {
 	@Override
 	protected String getOutputReplacer()
 	{
-		return "std::cout << $1";
+		return "std::cout << $1 << std::endl";
 	}
 
 
