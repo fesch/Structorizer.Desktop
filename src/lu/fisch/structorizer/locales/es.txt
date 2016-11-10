@@ -85,6 +85,7 @@
  *      Kay Gürtzig     2016.10.16  Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
  *      Kay Gürtzig     2016.10.18  several Analyser checks (among them 15, according to enh.#267) reformulated.
  *      Kay Gürtzig     2016.11.08  Enh. #270: Editor.btnDisable.tooltip added
+ *      Kay Gürtzig     2016.11.10  Enh. #286: AnalyserPreferences tabs
  *
  ******************************************************************************************************
  *
@@ -317,6 +318,8 @@ Menu.error20.text=El ecabezamiento de un subprograma debe tener un parénthesis 
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferencias del Comprobador
+AnalyserPreferences.contentPanel.tab.0=Algorítmico
+AnalyserPreferences.contentPanel.tab.1=Nombres y convenciones
 AnalyserPreferences.checkboxes.1.text=Comprobar modificación de la variable del bucle.
 AnalyserPreferences.checkboxes.2.text=Comprobar bucle sin fin (¡en la medida de lo detectable!)
 AnalyserPreferences.checkboxes.3.text=Comprobar si hay variables no inicializadas.
@@ -567,10 +570,10 @@ Preferences.btnOK.tooltip=Aceptar los cambios.
 -----[ About ]-----
 About.title=Acerca de
 About.pnlTabbed.tab.0=Personas implicadas
-About.pnlTabbed.tab.1=Cambios
+About.pnlTabbed.tab.1=Diario de cambios
 About.pnlTabbed.tab.2=Licencia
 About.btnOK.text=Aceptar
-About.btnOK.tooltip=Aceptar los cambios.
+About.btnOK.tooltip=Cerrar el diálogo.
 
 
 -----[ FontChooser ]-----

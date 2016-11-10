@@ -42,6 +42,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.21      Enh. #249: check20 added (subroutine syntax)
  *      Kay Gürtzig     2016.09.22      checkboxes index mapping modified, duplicate entries removed from
  *                                      checkboxOrder, order of checkboxes modified
+ *      Kay Gürtzig     2016.11.10      Enh. #286: Tabs introduced, configuration array checkboxOrder replaced
+ *                                      by map checkboxTabs.
  *
  ******************************************************************************************************
  *
@@ -54,6 +56,8 @@ import lu.fisch.structorizer.locales.LangDialog;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.LinkedHashMap;
+import java.util.Map.Entry;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -91,53 +95,38 @@ public class AnalyserPreferences extends LangDialog {
 		// DON'T FORGET to add a new entry to Root.analyserChecks for every
 		// text added here (and of course the checking code itself)!
 	};
-	// The order in which the checks (numbering starts with 1) are to be presented
-	private static final int[] checkboxOrder = {
-		// instructions, alternatives
-		3, 10, 11, 8, 4,
-		// loops
-		1, 14, 2,
-		// functions and calls
-		20, 13,	15,
-		// jumps and parallel sections
-		16, 17,
-		// identifiers and naming conventions
-		7, 9, 18, 19, /*LUX/MEN*/ 5, 6, 12
-	};
+	// START KGU#290 2016-11-10: Enh. #286 (grouping and distribution over several tabs)
+	// The order in which the checks (numbering starts with 1, index 0 induces an
+	// empty line) are to be presented and distributed over several tabs
+	private static final LinkedHashMap<String, int[]> checkboxTabs = new LinkedHashMap<String, int[]>();
+	static {
+		checkboxTabs.put("Algorithmic", new int[]{
+				// instructions
+				3, 11,
+				0,// alternatives
+				8, 4,
+				0,// loops
+				1, 14, 2,
+				0,// functions and calls
+				20, 13,	15,
+				0,// jumps and parallel sections
+				16, 17
+		});
+		checkboxTabs.put("Naming / Conventions", new int[]{
+				// identifiers and naming conventions
+				7, 9, 18, 19,
+				0/*LUX/MEN*/,
+				5, 6, 12,
+				0,// multiple command types
+				10
+		});
+	}
+	// END KGU#290 2016-11-10
 			
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
 	// Generated using JFormDesigner Evaluation license - Bob Fisch
 	private JPanel dialogPane;
-	private JPanel contentPanel;
-//	public JCheckBox check1;
-//	public JCheckBox check2;
-//	public JCheckBox check3;
-//	public JCheckBox check4;
-//	public JCheckBox check5;
-//	public JCheckBox check6;
-//	public JCheckBox check7;
-//	public JCheckBox check8;
-//	public JCheckBox check9;
-//	public JCheckBox check10;
-//	public JCheckBox check11;
-//	public JCheckBox check12;
-//	public JCheckBox check13;
-//	// START KGU#3 2015-11-03: Additional FOR loop checks
-//	public JCheckBox check14;
-//	// END KGU#3 2015-11-03
-//	// START KGU#2 2015-11-25: Additional CALL syntax check
-//	public JCheckBox check15;
-//	// END KGU#2 2015-11-25
-//	// START KGU#78 2015-11-25: Additional JUMP syntax check
-//	public JCheckBox check16;
-//	// END KGU#78 2015-11-25
-//	// START KGU#47 2015-11-28: Additional PARALLEL consistency check
-//	public JCheckBox check17;
-//	// END KGU#47 2015-11-28
-//	// START KGU#239 2016-08-12: New identifier collision checks
-//	public JCheckBox check18;
-//	public JCheckBox check19;
-//	// END KGU#239 2016-08-12
+	private JTabbedPane contentPanel;
 	// START KGU 2016-09-22: Dummy entry at index 0 for more consistent error numbering
 	//public JCheckBox[] checkboxes = new JCheckBox[checkCaptions.length];
 	public JCheckBox[] checkboxes = new JCheckBox[checkCaptions.length+1];
@@ -168,7 +157,7 @@ public class AnalyserPreferences extends LangDialog {
 		// JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents
 		// Generated using JFormDesigner Evaluation license - Bob Fisch
 		dialogPane = new JPanel();
-		contentPanel = new JPanel();
+		contentPanel = new JTabbedPane();
 //		check1 = new JCheckBox();
 //		check2 = new JCheckBox();
 //		check3 = new JCheckBox();
@@ -234,19 +223,34 @@ public class AnalyserPreferences extends LangDialog {
 			
 			//======== contentPanel ========
 			{
-				// START KGU 2016-09-22: New dummy entry at index position 0
-				//contentPanel.setLayout(new GridLayout(checkboxes.length, 1));
-				contentPanel.setLayout(new GridLayout(checkboxes.length-1, 1));
-				// END KGU 2016-09-22
-
-				for (int i = 0; i < checkboxOrder.length; i++)
+				// START KGU#290 2016-11-10: Enh. #286 (tabs and gaps)
+				//contentPanel.setLayout(new GridLayout(checkboxes.length-1, 1));
+				//for (int i = 0; i < checkboxOrder.length; i++)
+				//{
+				//	contentPanel.add(checkboxes[checkboxOrder[i]]);
+				//}
+				for (Entry<String, int[]> entry: checkboxTabs.entrySet())
 				{
-					// START KGU 2016-09-22: New dummy entry at index position 0
-					//contentPanel.add(checkboxes[checkboxOrder[i]-1]);
-					contentPanel.add(checkboxes[checkboxOrder[i]]);
-					// END KGU 2016-09-22
+					JPanel panel = new JPanel();
+					JPanel wrapper = new JPanel();
+					int[] checklist = entry.getValue();
+					panel.setLayout(new GridLayout(checklist.length, 1));
+
+					for (int i = 0; i < checklist.length; i++)
+					{
+						int checkIndex = checklist[i];
+						if (checkIndex == 0) {
+							panel.add(new JLabel(""));
+						}
+						else {
+							panel.add(checkboxes[checkIndex]);
+						}
+					}
+					wrapper.setLayout(new BorderLayout());
+					wrapper.add(panel, BorderLayout.NORTH);	// Avoids the checkboxes being spread
+					contentPanel.addTab(entry.getKey(), wrapper);
 				}
-				
+				// END KGU#290 2016-11-10
 			}
 			dialogPane.add(contentPanel, BorderLayout.CENTER);
 

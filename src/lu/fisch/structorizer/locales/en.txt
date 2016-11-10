@@ -81,6 +81,7 @@
  *      Kay Gürtzig     2016.10.13      Enh. #270: Editor.popupDisable and InputBox.chkDisabled added.
  *      Kay Gürtzig     2016.10.16      Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
  *      Kay Gürtzig     2016.11.08      Enh. #270: Editor.btnDisable.tooltip added
+ *      Kay Gürtzig     2016.11.10      Enh. #286: AnalyserPreferences tabs
  *
  ******************************************************************************************************
  *
@@ -318,6 +319,8 @@ Menu.error20.text=A subroutine header must have a (possibly empty) parameter lis
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Analyser preferences
+AnalyserPreferences.contentPanel.tab.0=Algorithmic
+AnalyserPreferences.contentPanel.tab.1=Names / Conventions
 AnalyserPreferences.checkboxes.1.text=Check for modified loop variable.
 AnalyserPreferences.checkboxes.2.text=Check for endless loop (as far as detectable!)
 AnalyserPreferences.checkboxes.3.text=Check for non-initialized variables.
