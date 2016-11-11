@@ -44,6 +44,7 @@ package lu.fisch.structorizer.gui;
  *                                      checkboxOrder, order of checkboxes modified
  *      Kay Gürtzig     2016.11.10      Enh. #286: Tabs introduced, configuration array checkboxOrder replaced
  *                                      by map checkboxTabs.
+ *      Kay Gürtzig     2016.11.11      Issue #81: DPI-awareness workaround
  *
  ******************************************************************************************************
  *
@@ -154,39 +155,12 @@ public class AnalyserPreferences extends LangDialog {
 	}*/
 
 	private void initComponents() {
-		// JFormDesigner - Component initialization - DO NOT MODIFY  //GEN-BEGIN:initComponents
-		// Generated using JFormDesigner Evaluation license - Bob Fisch
+		// START KGU#287 2016-11-11: Issue #81
+		ImageIcon unselectedIcon = null;
+		ImageIcon selectedIcon = null;
+		// END KGU#287 2016-11-11
 		dialogPane = new JPanel();
 		contentPanel = new JTabbedPane();
-//		check1 = new JCheckBox();
-//		check2 = new JCheckBox();
-//		check3 = new JCheckBox();
-//		check4 = new JCheckBox();
-//		check5 = new JCheckBox();
-//		check6 = new JCheckBox();
-//		check7 = new JCheckBox();
-//		check8 = new JCheckBox();
-//		check9 = new JCheckBox();
-//		check10 = new JCheckBox();
-//		check11 = new JCheckBox();
-//		check12 = new JCheckBox();
-//		check13 = new JCheckBox();
-//		// START KGU#3 2015-11-03: Additional For loop checks
-//		check14 = new JCheckBox();
-//		// END KGU#3 2015-11-03
-//		// START KGU#2 2015-11-25: Additional CALL syntax check
-//		check15 = new JCheckBox();;
-//		// END KGU#2 2015-11-25
-//		// START KGU#78 2015-11-25: Additional JUMP syntax check
-//		check16 = new JCheckBox();;
-//		// END KGU#78 2015-11-25
-//		// START KGU#47 2015-11-28: Additional PARALLEL consistency check
-//		check17 = new JCheckBox();
-//		// END KGU#47 2015-11-28
-//		// START KGU#239 2016-08-12: New identifier collision checks
-//		check18 = new JCheckBox();
-//		check19 = new JCheckBox();
-//		// END KGU#239 2016-08-12
 		// START KGU 2016-09-22: New dummy entry at index position 0
 		//for (int i = 0; i < checkboxes.length; i++)
 		checkboxes[0] = null;
@@ -198,6 +172,16 @@ public class AnalyserPreferences extends LangDialog {
 			//checkboxes[i].setText(checkCaptions[i]);
 			checkboxes[i].setText(checkCaptions[i-1]);
 			// END KGU 2016-09-22
+			// START KGU#287 2016-11-11: Issue #81
+			if (unselectedIcon == null) {
+				unselectedIcon = scaleToggleIcon(checkboxes[i], false);
+			}
+			if (selectedIcon == null) {
+				selectedIcon = scaleToggleIcon(checkboxes[i], true);
+			}
+			checkboxes[i].setIcon(unselectedIcon);
+			checkboxes[i].setSelectedIcon(selectedIcon);
+			// END KGU#287 2016-11-11
 		}
 		buttonBar = new JPanel();
 		okButton = new JButton();
@@ -307,5 +291,5 @@ public class AnalyserPreferences extends LangDialog {
 		};
 		okButton.addActionListener(actionListener);
 	}
-
+	
 }

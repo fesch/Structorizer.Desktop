@@ -30,19 +30,21 @@ package lu.fisch.structorizer.gui;
  *
  *     Revision List
  *
- *     Author       Date        Description
- *     ------       ----        -----------
- *     Bob Fisch    2007.12.23  First Issue
- *     Kay Gürtzig  2015.10.12  A checkbox added for breakpoint control (KGU#43)
- *     Kay Gürtzig  2015.10.14  Element-class-specific language support (KGU#42)
- *     Kay Gürtzig  2015.10.25  Hook for subclassing added to method create() (KGU#3)
- *     Kay Gürtzig  2016.04.26  Issue #165: Focus transfer reset to Tab and Shift-Tab
- *     Kay Gürtzig  2016.07.14  Enh. #180: Initial focus dependent on switchTextComment mode (KGU#169)
- *     Kay Gürtzig  2016.08.02  Enh. #215: Breakpoint trigger counts partially implemented
- *     Kay Gürtzig  2016.09.13  Bugfix #241: Obsolete mechanisms removed (remnants of KGU#42)
- *     Kay Gürtzig  2016.09.22  Bugfix #241 revised by help of a LangDialog API modification
- *     Kay Gürtzig  2016.10.13  Enh. #270: New checkbox chkDisabled
- *     Kay Gürtzig  2016.11.02  Issue #81: Workaround for lacking DPI awareness
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      Bob Fisch       2007.12.23  First Issue
+ *      Kay Gürtzig     2015.10.12  A checkbox added for breakpoint control (KGU#43)
+ *      Kay Gürtzig     2015.10.14  Element-class-specific language support (KGU#42)
+ *      Kay Gürtzig     2015.10.25  Hook for subclassing added to method create() (KGU#3)
+ *      Kay Gürtzig     2016.04.26  Issue #165: Focus transfer reset to Tab and Shift-Tab
+ *      Kay Gürtzig     2016.07.14  Enh. #180: Initial focus dependent on switchTextComment mode (KGU#169)
+ *      Kay Gürtzig     2016.08.02  Enh. #215: Breakpoint trigger counts partially implemented
+ *      Kay Gürtzig     2016.09.13  Bugfix #241: Obsolete mechanisms removed (remnants of KGU#42)
+ *      Kay Gürtzig     2016.09.22  Bugfix #241 revised by help of a LangDialog API modification
+ *      Kay Gürtzig     2016.10.13  Enh. #270: New checkbox chkDisabled
+ *      Kay Gürtzig     2016.11.02  Issue #81: Workaround for lacking DPI awareness
+ *      Kay Gürtzig     2016.11.09  Issue #81: Scale factor no longer rounded but ensured to be >= 1
+ *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes
  *
  ******************************************************************************************************
  *
@@ -103,13 +105,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     public boolean forInsertion = false;		// If this dialog is used to setup a new element (in contrast to updating an existing element)
     // END KGU 2015-10-14
 
-    // START KGU#169 2016-07-14: Enh. #180: helps to enable focus control
-    @Deprecated
-    protected void setPreferredSize() {
-        setSize(500, 400);        
-    }
-    // END KGU#169 2016-07-14
-    // START KGU#287 2016-11-02: Issue #81 (DPI awaeness workaround)
+    // START KGU#287 2016-11-02: Enh. #180, Issue #81 (DPI awareness workaround)
     protected void setPreferredSize(double scaleFactor) {
         setSize((int)(500 * scaleFactor), (int)(400 * scaleFactor));        
     }
@@ -125,11 +121,22 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         //setSize(500, 400);
         // END KGU#169 2016-07-14
         
-        // START KGU#287 2016-11-02: Issue #81 (DPI awaeness workaround)
-		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1")).intValue();        
+        // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
+		if (scaleFactor < 1) scaleFactor = 1.0;
         // END KGU#287 2016-11-02
-        
-        // show form
+        // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
+		if (scaleFactor > 1) {
+			ImageIcon unselectedBox = scaleToggleIcon(chkDisabled, false);
+			ImageIcon selectedBox = scaleToggleIcon(chkDisabled, true);
+			chkDisabled.setIcon(unselectedBox);
+			chkDisabled.setSelectedIcon(selectedBox);
+			chkBreakpoint.setIcon(unselectedBox);
+			chkBreakpoint.setSelectedIcon(selectedBox);
+		}
+		// END KGU#287 2016-11-11
+
+		// show form
         setVisible(false);
         // set action to perform if closed
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -308,7 +315,6 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
 
         // START KGU#91+KGU#169 2016-07-14: Enh. #180 (also see #39 and #142)
         this.pack();	// This makes focus control possible but must precede the size setting
-        setPreferredSize();
         setPreferredSize(scaleFactor);
         if (Element.E_TOGGLETC) {
             txtComment.requestFocusInWindow();

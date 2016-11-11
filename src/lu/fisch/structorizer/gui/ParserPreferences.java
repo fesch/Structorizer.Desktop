@@ -37,6 +37,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.11.08      Enh. #10: step keyword setting manually added (FOR loop)
  *      Kay Gürtzig     2016.03.21      Enh. #84: FOR-IN loop settings manually added
  *      Kay Gürtzig     2016.03.23      Enh. #23: Settings for JUMP statements prepared (but not enabled)
+ *      Kay Gürtzig     2016.11.11      Issue #81: DPI-awareness workaround for checkboxes
  *
  ******************************************************************************************************
  *
@@ -338,6 +339,12 @@ public class ParserPreferences extends LangDialog {
 
 				//---- chkIgnoreCase ---
 				chkIgnoreCase.setText("Ignore case");
+		        // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaroundfor checkboxes)
+		        ImageIcon unselectedBox = scaleToggleIcon(chkIgnoreCase, false);
+		        ImageIcon selectedBox = scaleToggleIcon(chkIgnoreCase, true);
+		        chkIgnoreCase.setIcon(unselectedBox);
+		        chkIgnoreCase.setSelectedIcon(selectedBox);
+		        // END KGU#287 2016-11-11				
 				buttonBar.add(chkIgnoreCase);
 				
 				//---- okButton ----
