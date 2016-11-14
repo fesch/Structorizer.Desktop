@@ -720,6 +720,8 @@ Surface.msgUnsavedDiagrams.text=Folgende Diagramme konnten nicht gesichert werde
 Surface.msgUnsavedHint.text=Vielleicht möchten Sie die Diagramme erst per Doppelklick von einem Structorizer sichern lassen.
 Surface.msgUnsavedContinue.text=Trotzdem fortfahren?
 Surface.msgNoArrFile.text=Keine Arranger-Datei (arr) gefunden
+Surface.msgDefectiveArr.text=Defekte Anordnungsdatei.
+Surface.msgDefectiveArrz.text=Defektes portables Anordnungsarchiv.
 
 -----> Executor
 -----[ Control ]-----

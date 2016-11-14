@@ -290,7 +290,7 @@ Menu.error07_1.text=«%» is not a valid name for a program or method!
 Menu.error07_2.text=«%» is not a valid name for a parameter!
 Menu.error07_3.text=«%» is not a valid name for a variable!
 Menu.error08.text=It is not allowed to make an assignment inside a condition.
-Menu.error09.text=Your program («%») cannot have the same name as a variable or parameter!
+Menu.error09.text=Your program («%») may not share its name with a variable or parameter!
 Menu.error10_1.text=A single instruction element should not contain input/output instructions and assignments!
 Menu.error10_2.text=A single instruction element should not contain input and output instructions!
 Menu.error10_3.text=A single instruction element should not contain input instructions and assignments!
@@ -722,6 +722,8 @@ Surface.msgUnsavedDiagrams.text=Couldn't save these diagrams:
 Surface.msgUnsavedHint.text=You might want to double-click and save them via Structorizer first.
 Surface.msgUnsavedContinue.text=Continue nevertheless?
 Surface.msgNoArrFile.text=No Arranger file found
+Surface.msgDefectiveArr.text=Defective arrangement.
+Surface.msgDefectiveArrz.text=Defective portable arrangement file.
 
 -----> Executor
 -----[ Control ]-----

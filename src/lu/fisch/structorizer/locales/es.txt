@@ -721,6 +721,8 @@ Surface.msgUnsavedDiagrams.text=Estos diagramas no fueron guardados:
 Surface.msgUnsavedHint.text=Para guardarlos por Structorizer anteriormente haz un doble clic a los diagramas.
 Surface.msgUnsavedContinue.text=¿Continuar aun así?
 Surface.msgNoArrFile.text=Ningún Arranger archivo encontrado
+Surface.msgDefectiveArr.text=Colocación defectuosa.
+Surface.msgDefectiveArrz.text=Archivo portable defectuoso.
 
 -----> Executor
 -----[ Control ]-----

@@ -59,6 +59,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.07.19      Enh. #192: File name proposals slightly modified (KGU#205)
  *      Kay Gürtzig     2016.09.26      Enh. #253: New public method getAllRoots() added.
  *      Kay Gürtzig     2016.10.11      Enh. #267: New notification changes to the set of diarams now trigger analyser updates
+ *      Kay Gürtzig     2016.11.14      Enh. #289: The dragging-in of arrangement files (.arr, .arrz) enabled.
  *
  ******************************************************************************************************
  *
@@ -193,6 +194,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     public LangTextHolder msgUnsavedContinue = new LangTextHolder("Continue nevertheless?");
     public LangTextHolder msgNoArrFile = new LangTextHolder("No Arranger file found");
     // END KGU#202 2016-07-03
+    // START KGU#289 2016-11-14: Enh. #289
+    public LangTextHolder msgDefectiveArr = new LangTextHolder("Defective Arrangement.");
+    public LangTextHolder msgDefectiveArrz = new LangTextHolder("Defective Portable Arrangement.");
+    // END KGU#289 2016-11-14
 
     @Override
     public void paint(Graphics g)
@@ -300,7 +305,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     private String loadFile(String filename, Point point)
     {
     	String errorMessage = "";
-		if (filename.substring(filename.length()-4).toLowerCase().equals(".nsd"))
+    	String ext = filename.substring(Math.max(filename.lastIndexOf("."),0));
+		if (ext.equalsIgnoreCase(".nsd"))
 		{
 			// open an existing file
 			NSDParser parser = new NSDParser();
@@ -319,6 +325,35 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			// END KGU#111 2015-12-17
 		}
+		// START KGU#289 2016-11-14: Enh. #289
+		else if (ext.equalsIgnoreCase(".arr") || ext.equalsIgnoreCase(".arrz"))
+		{
+			File oldCurrDir = currentDirectory;
+			if (ext.equalsIgnoreCase(".arrz")) {
+				filename = unzipArrangement(filename, null);
+			}
+			if (filename != null)
+			{
+				try {
+				currentDirectory = new File(filename);
+				while (currentDirectory != null && !currentDirectory.isDirectory())
+				{
+					currentDirectory = currentDirectory.getParentFile();
+				}
+				if (!loadArrangement(null, filename)) {
+					errorMessage = msgDefectiveArr.getText();
+				}
+				}
+				finally {
+					currentDirectory = oldCurrDir;
+				}
+			}
+			else
+			{
+				errorMessage = msgDefectiveArrz.getText();
+			}
+		}
+		// END KGU#289 2016-11-14
     	return errorMessage;
     }
     
@@ -656,7 +691,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	}
     	return done;
     }
-
+    
     /**
      * Restores the diagram arrangement stored in arr file `filename´ if possible
      * (i.e. given the referred nsd file paths exist and the nsd files may be parsed)
@@ -737,7 +772,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	}
     	if (errorMessage != null)
     	{
-    		JOptionPane.showMessageDialog(frame, msgArrLoadError.getText() + " " + errorMessage + "!",
+    		JOptionPane.showMessageDialog(frame, msgArrLoadError.getText() + "\n" + errorMessage + "!",
     				"Error", JOptionPane.ERROR_MESSAGE, null);   		
     	}
 		// START KGU#278 2016-10-11: Enh. #267
