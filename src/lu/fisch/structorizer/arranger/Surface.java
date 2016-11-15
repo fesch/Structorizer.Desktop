@@ -60,6 +60,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.09.26      Enh. #253: New public method getAllRoots() added.
  *      Kay Gürtzig     2016.10.11      Enh. #267: New notification changes to the set of diarams now trigger analyser updates
  *      Kay Gürtzig     2016.11.14      Enh. #289: The dragging-in of arrangement files (.arr, .arrz) enabled.
+ *      Kay Gürtzig     2016.11.15      Enh. #290: Further modifications to let a Mainform insert arrangements 
  *
  ******************************************************************************************************
  *
@@ -303,6 +304,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     }
     
     private String loadFile(String filename, Point point)
+    // START KGU#289 2016-11-15: Enh. #290 (load arrangements from Structorizer)
+    {
+    	return loadFile(null, filename, point);
+    }
+    
+    private String loadFile(Mainform form, String filename, Point point)
+    // END KGU#289 2016-11-15
     {
     	String errorMessage = "";
     	String ext = filename.substring(Math.max(filename.lastIndexOf("."),0));
@@ -317,7 +325,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				Root root = parser.parse(f.toURI().toString());
 
 				root.filename = filename;
-				addDiagram(root, point);
+				// START KGU#289 2016-11-15: Enh. #290 (load from Mainform)
+				//addDiagram(root, point);
+				addDiagram(root, form, point);
+				// END KGU#289 2016-11-15
    			// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
 			}
 			catch (Exception ex) {
@@ -328,30 +339,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// START KGU#289 2016-11-14: Enh. #289
 		else if (ext.equalsIgnoreCase(".arr") || ext.equalsIgnoreCase(".arrz"))
 		{
-			File oldCurrDir = currentDirectory;
-			if (ext.equalsIgnoreCase(".arrz")) {
-				filename = unzipArrangement(filename, null);
-			}
-			if (filename != null)
-			{
-				try {
-				currentDirectory = new File(filename);
-				while (currentDirectory != null && !currentDirectory.isDirectory())
-				{
-					currentDirectory = currentDirectory.getParentFile();
-				}
-				if (!loadArrangement(null, filename)) {
-					errorMessage = msgDefectiveArr.getText();
-				}
-				}
-				finally {
-					currentDirectory = oldCurrDir;
-				}
-			}
-			else
-			{
-				errorMessage = msgDefectiveArrz.getText();
-			}
+			errorMessage = loadArrFile(form, filename);
 		}
 		// END KGU#289 2016-11-14
     	return errorMessage;
@@ -732,7 +720,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     				{
     					nsdFileName = currentDirectory.getAbsolutePath() + File.separator + nsdFileName;
     				}
-    				String trouble = loadFile(nsdFileName, point);
+    				// START KGU#289 2016-11-15: Enh. #290 (Arrangements loaded from Mainform)
+    				//String trouble = loadFile(nsdFileName, point);
+   					String trouble = loadFile((frame instanceof Mainform) ? (Mainform)frame : null, nsdFileName, point);
+    				// END KGU#289 2016-11-15
     				if (!trouble.isEmpty())
     				{
     					if (errorMessage != null)
@@ -784,6 +775,45 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	return done;
     }
     // END KGU#110 2015-12-17
+    
+    // START KGU#289 2016-11-15: Enh. #289/#290
+    /**
+     * Loads an .arr or .arrz file, associating the loaded diagrams with the given
+     * Mainform form if possible.
+     * @param form - a commanding Structorizer Mainform
+     * @param filename - path of the arrangement file to be loaded
+     * @return A rough error message if something went wrong.
+     */
+    public String loadArrFile(Mainform form, String filename)
+    {
+    	String errorMessage = "";
+		File oldCurrDir = currentDirectory;
+		if (filename.toLowerCase().endsWith(".arrz")) {
+			filename = unzipArrangement(filename, null);
+		}
+		if (filename != null)
+		{
+			try {
+			currentDirectory = new File(filename);
+			while (currentDirectory != null && !currentDirectory.isDirectory())
+			{
+				currentDirectory = currentDirectory.getParentFile();
+			}
+			if (!loadArrangement(form, filename)) {
+				errorMessage = msgDefectiveArr.getText();
+			}
+			}
+			finally {
+				currentDirectory = oldCurrDir;
+			}
+		}
+		else
+		{
+			errorMessage = msgDefectiveArrz.getText();
+		}
+    	return errorMessage;
+    }
+    // END KGU#289 2016-11-15
     
     // START KGU#110 2016-07-01: Enh. 62
     /**

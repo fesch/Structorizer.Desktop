@@ -52,6 +52,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.07.03  Dialog message translation mechanism added (KGU#203).
  *      Kay Gürtzig     2016.09.26  Enh. #253: New public method getAllRoots() added.
  *      Kay Gürtzig     2016.11.01  Enh. #81: Scalability of the Icons ensured
+ *      Kay Gürtzig     2016.11.15  Enh. #290: New opportunity to load arrangements from Structorizer
  *
  ******************************************************************************************************
  *
@@ -161,6 +162,21 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         }
     }
     // END KGU#2 2015-11-19
+
+    // START KGU#289 2016-11-15: Enh. #290 (Arrangement files oadable from Structorizer)
+    /**
+     * Has the file specified by arrFilename (may be an .arr or an .arrz file) loaded as
+     * arrangement.
+     * 
+     * @param frame - potentially an associable Mainform (Structorizer)
+     * @param filename - Name of the file to be loaded as arrangement
+     * @return error message if something went wrong
+     */
+    public String loadArrangement(Mainform form, String arrFilename)
+    {
+    	return surface.loadArrFile(form, arrFilename);
+    }
+    // END KGU#259 2016-11-15
 
     // START KGU#155 2016-03-08: Bugfix #97 extension
     /**
@@ -617,5 +633,5 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         surface.repaint();
     }
 	// END KGU#156 2016-03-10
-
+    
 }

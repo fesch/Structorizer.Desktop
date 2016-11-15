@@ -1143,7 +1143,7 @@ public class D7Parser implements GPMessageConstants
 			_keyword = "";
 		}
 		// Bugfix #281/#282
-                if (keywordMap.containsKey(_key)) {
+		if (keywordMap.containsKey(_key)) {
 			keywordMap.put(_key, _keyword);
 		}
 	}
