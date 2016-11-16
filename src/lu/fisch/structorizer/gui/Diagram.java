@@ -100,6 +100,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.06      Issue #279: All references to method HashMap.getOrDefault() replaced
  *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded, Update font only scaled if factor > 1
  *      Kay Gürtzig     2016.11.15      Enh. #290: Opportunities to load arrangements via openNSD() and FilesDrop
+ *      Kay Gürtzig     2016.11.16      Bugfix #291: upward cursor traversal ended in REPEAT loops
  *
  ******************************************************************************************************
  *
@@ -4997,7 +4998,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		case CMD_UP:
     			if (selected instanceof Repeat)
     			{
-    				y = ((Repeat)selected).getRectOffDrawPoint().bottom - 2;
+    				// START KGU#292 2016-11-16: Bugfix #291
+    				//y = ((Repeat)selected).getRectOffDrawPoint().bottom - 2;
+    				y = ((Repeat)selected).getBody().getRectOffDrawPoint().bottom - 2;
+    				// END KGU#292 2016-11-16
     			}
     			else if (selected instanceof Root)
     			{
