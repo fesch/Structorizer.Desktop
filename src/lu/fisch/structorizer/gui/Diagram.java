@@ -101,6 +101,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded, Update font only scaled if factor > 1
  *      Kay Gürtzig     2016.11.15      Enh. #290: Opportunities to load arrangements via openNSD() and FilesDrop
  *      Kay Gürtzig     2016.11.16      Bugfix #291: upward cursor traversal ended in REPEAT loops
+ *      Kay Gürtzig     2016.11.17      Bugfix #114: Prerequisites for editing and transmutation during execution revised
  *
  ******************************************************************************************************
  *
@@ -772,7 +773,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
     public void mouseClicked(MouseEvent e)
 	{
-                // select the element
+    	// select the element
 		if (e.getClickCount() == 1)
 		{
 			if (e.getSource()==this)
@@ -851,7 +852,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //					redraw();
 //					//System.out.println("Re-selected on double-click: " + selected + ((selected instanceof Subqueue) ? ((Subqueue)selected).getSize() : ""));
 //				}
-				if (selected != null && !((selected instanceof Subqueue) && ((Subqueue)selected).getSize() > 0))
+				// START KGU#143 2016-11-17: Issue #114 - don't edit elements under execution
+				//if (selected != null && !((selected instanceof Subqueue) && ((Subqueue)selected).getSize() > 0))
+				if (canEdit())
+				// END KGU#143 2016-11-17
 				// END KGU#87 2015-11-22
 				{
 					// edit it
@@ -1602,7 +1606,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//return canCopy() && !selected.executed && !selected.waited;
 		// START KGU#177 2016-07-06: Enh #158: mere re-formulation (equivalent)
 		//return canCopy() && !(selected instanceof Root) && !selected.executed && !selected.waited;
-		return canCopyNoRoot() && !selected.executed && !selected.waited;
+		return canCopyNoRoot() && !selected.isExecuted();
 		// END KGU#177 2016-07-06
 		// END KGU#177 2016-04-14
 	}
@@ -1632,12 +1636,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return canCopy() && !(selected instanceof Root);
 	}
 	// END KGU#177 2016-07-06
+	
+	// START KGU#143 2016-11-17: Issue #114: Complex condition for editability
+	public boolean canEdit()
+	{
+		return selected != null && !this.selectedIsMultiple() &&
+				(!selected.isExecuted(false) || selected instanceof Instruction && !selected.executed);
+	}
+	// END KGU#143 2016-11-17
 
 	// START KGU#199 2016-07-06: Enh. #188: Element conversions
 	public boolean canTransmute()
 	{
 		boolean isConvertible = false;
-		if (selected != null && !selected.executed && !selected.waited)
+		if (selected != null && !selected.isExecuted())
 		{
 			if (selected instanceof Instruction)
 			{

@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.25-07 (2016.11.16)
+Current development version: 3.25-07 (2016.11.18)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
 - 01: Issue #213: Selected state of FOR transmutation result now visible <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
@@ -59,6 +59,7 @@ Current development version: 3.25-07 (2016.11.16)
 - 07: Enh. #289: Arranger files (.arr, .arrz) may now be dragged into Arranger <2>
 - 07: Enh. #290: Arranger files (.arr, .arrz) loadable from Structorizer, too <2>
 - 07: Bugfix #291: REPEAT loops caught cursor up traversal <2> 
+- 07: Bugfix #114: Prerequisites for editing and transmutation during execution revised <2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2

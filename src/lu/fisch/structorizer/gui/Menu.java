@@ -66,6 +66,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.10.11      Enh. #267: error15 renamed to error15_1, new error15_2
  *      Kay Gürtzig     2016.10.13      Enh. #270: Menu items for the disabling of elements
  *      Kay Gürtzig     2016.10.16      Enh. #272: Menu items for the replacement of Turtleizer command sets
+ *      Kay Gürtzig     2016.11.17      Bugfix #114: Prerequisites for editing during execution revised
  *
  ******************************************************************************************************
  *
@@ -1073,7 +1074,10 @@ public class Menu extends LangMenuBar implements NSDController
 			// editing
 			// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
 			//menuDiagramEdit.setEnabled(conditionAny);
-			menuDiagramEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
+			// START KGU#143 2016-11-17: Bugfix #114 - unstructured elements may be edited if parent is waiting
+			//menuDiagramEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
+			menuDiagramEdit.setEnabled(diagram.canEdit());
+			// END KGU#143 2016-11-7
 			// END KGU#87 2015-11-22
 			// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
 			//menuDiagramDelete.setEnabled(diagram.canCutCopy());
