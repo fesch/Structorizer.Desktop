@@ -102,6 +102,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.15      Enh. #290: Opportunities to load arrangements via openNSD() and FilesDrop
  *      Kay Gürtzig     2016.11.16      Bugfix #291: upward cursor traversal ended in REPEAT loops
  *      Kay Gürtzig     2016.11.17      Bugfix #114: Prerequisites for editing and transmutation during execution revised
+ *      Kay Gürtzig     2016.11.18/19   Issue #269: Scroll to the element associated to a selected Analyser error
  *
  ******************************************************************************************************
  *
@@ -823,8 +824,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						// select the new one
 						selected = ele;
 						ele.setSelected(true);
+						
 						// redraw the diagram
-						redraw();
+						// START KGU#276 2016-11-18: Issue #269 - ensure the associated element be visible
+						//redraw();
+						redraw(ele);
+						// END KGU#276 2016-11-18
+						
 						// do the button thing
 						if(NSDControl!=null) NSDControl.doButtons();
 					}
@@ -892,17 +898,26 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     }
     // END KGU#143 2016-01-21
 
-    // START KGU#276 2016-10-09: Issue #269 attempt - but doesn't work
+    // START KGU#276 2016-10-09: Issue #269
     /**
-     * Redraw the current diagram and scroll to the given element
+     * Scroll to the given element and redraw the current diagram
      * @param element - the element to gain the focus
      */
     public void redraw(Element element)
     {
+    	Rectangle rect = element.getRectOffDrawPoint().getRectangle();
+    	// START KGU#276 2016-11-19: Issue #269 Ensure the element is shown left-bound
+    	if (!(element instanceof Alternative || element instanceof Case))
+    	{
+    		Rectangle visibleRect = new Rectangle();
+    		this.computeVisibleRect(visibleRect);
+    		if (rect.width > visibleRect.width) {
+    			rect.width = visibleRect.width;
+    		}
+    	}
+    	// END KGU#276 2016-11-19
+    	scrollRectToVisible(rect);
     	redraw();	// This is to make sure the drawing rectangles are correct
-    	// FIXME Doesn't work as intended
-//		scrollRectToVisible(element.getRectOffDrawPoint().getRectangle());
-//    	redraw();	// And this is to avoid partially redrawn environment
     }
     // END KGU#276 2016-10-09
     
@@ -5137,10 +5152,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		selected.setSelected(true);
 			
     		// START KGU#177 2016-04-14: Enh. #158 - scroll to the selected element
-			this.scrollRectToVisible(selected.getRectOffDrawPoint().getRectangle());
+			//redraw();
+			redraw(selected);
 			// END KGU#177 2016-04-14
 			
-			redraw();
 			// START KGU#177 2016-04-24: Bugfix - buttons haven't been updated 
 			this.doButtons();
 			// END KGU#177 2016-04-24
@@ -5185,8 +5200,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		if (newSelection)
     		{
         		selected.setSelected(true);
-    			this.scrollRectToVisible(selected.getRectOffDrawPoint().getRectangle());
-    			redraw();
+    			redraw(selected);
     			this.doButtons();
     		}
     	}
