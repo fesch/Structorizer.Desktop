@@ -50,6 +50,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.06      Bugfix: changes of the element set now force drawing info invalidation
  *      Kay Gürtzig     2016.07.07      Enh. #185 + #188: Mechanism to convert Instructions to Calls
  *      Kay Gürtzig     2016.10.13      Enh. #277: setDisabled() added.
+ *      Kay Gürtzig     2016.11.17      Bugfix #114: isExecuted() revised (signature too)
  *
  ******************************************************************************************************
  *
@@ -463,14 +464,22 @@ public class Subqueue extends Element implements IElementSequence {
 	 * @see lu.fisch.structorizer.elements.Element#isExecuted()
 	 */
 	@Override
-	public boolean isExecuted()
+	public boolean isExecuted(boolean ignored)
 	{
 		boolean involved = false;
-		for (int index = 0; !involved && index < this.getSize(); index++)
+		// START KGU#143 2016-11-17: Issue #114 - If the parent isn't in waited state then there may not be execution here
+		if (parent == null || parent.waited)
 		{
-			if (children.get(index).isExecuted())
+		// END KGU#143 2016-11-17
+			for (int index = 0; !involved && index < this.getSize(); index++)
 			{
-				involved = true;
+				// START KGU#143 2016-11-17: Issue #114 - Don't risk cyclic recursion!
+				//if (children.get(index).isExecuted())
+				if (children.get(index).isExecuted(false))
+				// END KGU#143 2016-11-17
+				{
+					involved = true;
+				}
 			}
 		}
 		return involved;

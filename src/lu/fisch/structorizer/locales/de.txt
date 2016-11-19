@@ -84,6 +84,7 @@
  *      Kay Gürtzig         2016.10.16  Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
  *      Kay Gürtzig         2016.10.18  Enh. #267: Analyser check 15 reformulated.
  *      Kay Gürtzig         2016.11.08  Enh. #270: Editor.btnDisable.tooltip added
+ *      Kay Gürtzig         2016.11.10  Enh. #286: AnalyserPreferences tabs
  *
  ******************************************************************************************************
  *
@@ -316,6 +317,8 @@ Menu.error20.text=Ein Unterprogrammkopf muss mindestens die Klammern einer (evtl
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Überprüfungs-Einstellungen
+AnalyserPreferences.contentPanel.tab.0=Algorithmisch
+AnalyserPreferences.contentPanel.tab.1=Bezeichner / Konventionen
 AnalyserPreferences.checkboxes.1.text=Manipulationen an Kontrollvariablen von FOR-Schleifen melden.
 AnalyserPreferences.checkboxes.2.text=Schleifen auf Endloszyklen untersuchen. (So weit möglich!)
 AnalyserPreferences.checkboxes.3.text=Nicht initialisierte Variablen feststellen.
@@ -717,6 +720,8 @@ Surface.msgUnsavedDiagrams.text=Folgende Diagramme konnten nicht gesichert werde
 Surface.msgUnsavedHint.text=Vielleicht möchten Sie die Diagramme erst per Doppelklick von einem Structorizer sichern lassen.
 Surface.msgUnsavedContinue.text=Trotzdem fortfahren?
 Surface.msgNoArrFile.text=Keine Arranger-Datei (arr) gefunden
+Surface.msgDefectiveArr.text=Defekte Anordnungsdatei.
+Surface.msgDefectiveArrz.text=Defektes portables Anordnungsarchiv.
 
 -----> Executor
 -----[ Control ]-----

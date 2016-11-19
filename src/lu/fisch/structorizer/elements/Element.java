@@ -177,7 +177,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.25-06";
+	public static String E_VERSION = "3.25-07";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -757,10 +757,26 @@ public abstract class Element {
 	 */
 	public boolean isExecuted()
 	{
-		return this.executed || this.waited;
+		// START KGU#143 2016-11-17: Issue #114 refinement
+		//return this.executed || this.waited;
+		return this.isExecuted(true);
+		// END KGU#143 2016-11-17
 	}
 	// END KGU#143 2016-01-22
 	
+    // START KGU#143 2016-11-17: Bugfix #114 - we need a method avoiding cyclic recursion
+	/**
+	 * Checks execution involvement.
+	 * @param checkParent - whether the waiting status of the owning Subqueue is relevant
+	 * @return true iff this or some substructure of this is currently executed. 
+	 */
+	public boolean isExecuted(boolean checkParent)
+	{
+		return this.executed || this.waited
+				|| checkParent && this.parent != null && this.parent.getClass().getSimpleName().equals("Subqueue") && this.parent.isExecuted();
+	}
+	// END KGU#143 2016-11-17
+
 	// START KGU#156 2016-03-11: Enh. #124 - We need a consistent execution step counting
 	/**
 	 * Resets all element execution counts and the derived maximum execution count as well

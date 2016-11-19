@@ -98,6 +98,11 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.10.11      KGU#280: field isArrangerOpen replaced by a method (due to volatility)
  *      Kay Gürtzig     2016.10.13      Enh. #270: Functionality for the disabling of elements
  *      Kay Gürtzig     2016.11.06      Issue #279: All references to method HashMap.getOrDefault() replaced
+ *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded, Update font only scaled if factor > 1
+ *      Kay Gürtzig     2016.11.15      Enh. #290: Opportunities to load arrangements via openNSD() and FilesDrop
+ *      Kay Gürtzig     2016.11.16      Bugfix #291: upward cursor traversal ended in REPEAT loops
+ *      Kay Gürtzig     2016.11.17      Bugfix #114: Prerequisites for editing and transmutation during execution revised
+ *      Kay Gürtzig     2016.11.18/19   Issue #269: Scroll to the element associated to a selected Analyser error
  *
  ******************************************************************************************************
  *
@@ -323,8 +328,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					for (int i = 0; i < files.length; i++)
 					{
 						String filename = files[i].toString();
+						String filenameLower = filename.toLowerCase();
 
-						if(filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".nsd"))
+						if(filenameLower.endsWith(".nsd"))
 						{
 							/*
 							// only save if something has been changed
@@ -338,14 +344,22 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							redraw();*/
 							openNSD(filename);
 						}
+						// START KGU#289 2016-11-15: Enh. #290 (Arranger file support)
+						else if (filenameLower.endsWith(".arr")
+								||
+								filenameLower.endsWith(".arrz"))
+						{
+							loadArrangement(files[i]);
+						}
+						// END KGU#289 2016-11-15
 						else if (
-								(filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".mod"))
+								filenameLower.endsWith(".mod")
 								||
-								(filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".pas"))
+								filenameLower.endsWith(".pas")
 								||
-								(filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".dpr"))
+								filenameLower.endsWith(".dpr")
 								||
-								(filename.substring(filename.length()-4, filename.length()).toLowerCase().equals(".lpr"))
+								filenameLower.endsWith(".lpr")
 								)
 						{
 							// save (only if something has been changed)
@@ -760,7 +774,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
     public void mouseClicked(MouseEvent e)
 	{
-                // select the element
+    	// select the element
 		if (e.getClickCount() == 1)
 		{
 			if (e.getSource()==this)
@@ -810,8 +824,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						// select the new one
 						selected = ele;
 						ele.setSelected(true);
+						
 						// redraw the diagram
-						redraw();
+						// START KGU#276 2016-11-18: Issue #269 - ensure the associated element be visible
+						//redraw();
+						redraw(ele);
+						// END KGU#276 2016-11-18
+						
 						// do the button thing
 						if(NSDControl!=null) NSDControl.doButtons();
 					}
@@ -839,7 +858,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //					redraw();
 //					//System.out.println("Re-selected on double-click: " + selected + ((selected instanceof Subqueue) ? ((Subqueue)selected).getSize() : ""));
 //				}
-				if (selected != null && !((selected instanceof Subqueue) && ((Subqueue)selected).getSize() > 0))
+				// START KGU#143 2016-11-17: Issue #114 - don't edit elements under execution
+				//if (selected != null && !((selected instanceof Subqueue) && ((Subqueue)selected).getSize() > 0))
+				if (canEdit())
+				// END KGU#143 2016-11-17
 				// END KGU#87 2015-11-22
 				{
 					// edit it
@@ -876,17 +898,26 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     }
     // END KGU#143 2016-01-21
 
-    // START KGU#276 2016-10-09: Issue #269 attempt - but doesn't work
+    // START KGU#276 2016-10-09: Issue #269
     /**
-     * Redraw the current diagram and scroll to the given element
+     * Scroll to the given element and redraw the current diagram
      * @param element - the element to gain the focus
      */
     public void redraw(Element element)
     {
+    	Rectangle rect = element.getRectOffDrawPoint().getRectangle();
+    	// START KGU#276 2016-11-19: Issue #269 Ensure the element is shown left-bound
+    	if (!(element instanceof Alternative || element instanceof Case))
+    	{
+    		Rectangle visibleRect = new Rectangle();
+    		this.computeVisibleRect(visibleRect);
+    		if (rect.width > visibleRect.width) {
+    			rect.width = visibleRect.width;
+    		}
+    	}
+    	// END KGU#276 2016-11-19
+    	scrollRectToVisible(rect);
     	redraw();	// This is to make sure the drawing rectangles are correct
-    	// FIXME Doesn't work as intended
-//		scrollRectToVisible(element.getRectOffDrawPoint().getRectangle());
-//    	redraw();	// And this is to avoid partially redrawn environment
     }
     // END KGU#276 2016-10-09
     
@@ -1135,6 +1166,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//dlgOpen.addChoosableFileFilter(new StructogramFilter());
 		StructogramFilter filter = new StructogramFilter();
 		dlgOpen.addChoosableFileFilter(filter);
+		// START KGU#289 2016-11-15: Enh. #290 (allow arrangement files to be selected)
+		dlgOpen.addChoosableFileFilter(new ArrFilter());
+		dlgOpen.addChoosableFileFilter(new ArrZipFilter());
+		// END KGU#289 2016-11-15
 		dlgOpen.setFileFilter(filter);
 		// END KGU 2016-01-15
 		// show & get result
@@ -1149,7 +1184,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			currentDirectory = new File(root.filename);
 			redraw();
 			*/
-			openNSD(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
+			// START KGU#289 2016-11-15: Enh. #290 (Arranger file support)
+			//openNSD(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
+			File file = dlgOpen.getSelectedFile().getAbsoluteFile();
+			if (filter.accept(file)) {
+				openNSD(file.toString());
+			}
+			else {
+				loadArrangement(file);
+			}
+			// END KGU#289 2016-11-15
 		}
 	}
 
@@ -1215,6 +1259,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#111 2015-12-16
 	}
 
+	// START KGU#289 2016-11-15: Enh. #290 (Aranger file support
+	private void loadArrangement(File arrFile)
+	{
+		Arranger arr = Arranger.getInstance();
+		String errorMsg = arr.loadArrangement((Mainform)NSDControl.getFrame(), arrFile.toString());
+		if (!errorMsg.isEmpty()) {
+			JOptionPane.showMessageDialog(this, "\"" + arrFile + "\": " + errorMsg, 
+					Menu.msgTitleLoadingError.getText(),
+					JOptionPane.ERROR_MESSAGE);			
+		}
+		else {
+			arr.setVisible(true);
+		}
+	}
+	// END KGU#289 2016-11-15
 
 	/*****************************************
 	 * SaveAs method
@@ -1562,7 +1621,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		//return canCopy() && !selected.executed && !selected.waited;
 		// START KGU#177 2016-07-06: Enh #158: mere re-formulation (equivalent)
 		//return canCopy() && !(selected instanceof Root) && !selected.executed && !selected.waited;
-		return canCopyNoRoot() && !selected.executed && !selected.waited;
+		return canCopyNoRoot() && !selected.isExecuted();
 		// END KGU#177 2016-07-06
 		// END KGU#177 2016-04-14
 	}
@@ -1592,12 +1651,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return canCopy() && !(selected instanceof Root);
 	}
 	// END KGU#177 2016-07-06
+	
+	// START KGU#143 2016-11-17: Issue #114: Complex condition for editability
+	public boolean canEdit()
+	{
+		return selected != null && !this.selectedIsMultiple() &&
+				(!selected.isExecuted(false) || selected instanceof Instruction && !selected.executed);
+	}
+	// END KGU#143 2016-11-17
 
 	// START KGU#199 2016-07-06: Enh. #188: Element conversions
 	public boolean canTransmute()
 	{
 		boolean isConvertible = false;
-		if (selected != null && !selected.executed && !selected.waited)
+		if (selected != null && !selected.isExecuted())
 		{
 			if (selected instanceof Instruction)
 			{
@@ -3610,9 +3677,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		try {
 			// START KGU#247 2016-09-17: Issue #243/#245 Translation support for update window content
 			//JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\">Goto <a href=\"" + home + "\">" + home + "</a> to look for updates<br>and news about Structorizer.</font></html>");
-			double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1")).intValue();
-			int fontSize = (int)(3*scaleFactor);
-			JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\" size="+fontSize+">" +
+			String fontAttr = "";
+			double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
+			if (scaleFactor > 1) {
+				int fontSize = (int)(3*scaleFactor);
+				fontAttr = " size="+fontSize;
+			}
+			JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\""+fontAttr+">" +
 					Menu.msgGotoHomepage.getText().replace("%", "<a href=\"" + home + "\">" + home + "</a>") +
 					"</font></html>");
 			// END KGU#247 2016-09-17
@@ -4954,7 +5025,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		case CMD_UP:
     			if (selected instanceof Repeat)
     			{
-    				y = ((Repeat)selected).getRectOffDrawPoint().bottom - 2;
+    				// START KGU#292 2016-11-16: Bugfix #291
+    				//y = ((Repeat)selected).getRectOffDrawPoint().bottom - 2;
+    				y = ((Repeat)selected).getBody().getRectOffDrawPoint().bottom - 2;
+    				// END KGU#292 2016-11-16
     			}
     			else if (selected instanceof Root)
     			{
@@ -5078,10 +5152,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		selected.setSelected(true);
 			
     		// START KGU#177 2016-04-14: Enh. #158 - scroll to the selected element
-			this.scrollRectToVisible(selected.getRectOffDrawPoint().getRectangle());
+			//redraw();
+			redraw(selected);
 			// END KGU#177 2016-04-14
 			
-			redraw();
 			// START KGU#177 2016-04-24: Bugfix - buttons haven't been updated 
 			this.doButtons();
 			// END KGU#177 2016-04-24
@@ -5126,8 +5200,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		if (newSelection)
     		{
         		selected.setSelected(true);
-    			this.scrollRectToVisible(selected.getRectOffDrawPoint().getRectangle());
-    			redraw();
+    			redraw(selected);
     			this.doButtons();
     		}
     	}

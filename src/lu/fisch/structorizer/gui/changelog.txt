@@ -1,11 +1,11 @@
-Legend:
+﻿Legend:
 -------
 [Foo]   -->     idea provided by Foo, coding done by Bob Fisch
 [Foo]2  -->     idea provided by Foo, coding done by Kay Gürtzig
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.25-06 (2016.11.08)
+Current development version: 3.25-07 (2016.11.19)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
 - 01: Issue #213: Selected state of FOR transmutation result now visible <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
@@ -50,9 +50,18 @@ Current development version: 3.25-06 (2016.11.08)
 - 05: Bugfix #272: The Turtle instruction replacement produced void undo entries <2>
 - 05: Bugfix #268: Controlling the output console font sometimes changed colours <2>
 - 05: Issue #81: Ini-based scaling workaround for icons, fonts, and frames in high DPI <2>
-- 06: Bugfix #281/#282: Again, a Java 1.8 method was the show stopper for OpenJDK <2>
+- 06: Bugfix #281/#282: Again, a Java 1.8 method was a show-stopper for OpenJDK <2>
 - 06: Enh. #270: Translations for controls disabling elements in EN, DE, ES, IT <2>
 - 06: Issue #271: Correction of C++ code export for output instructions <2>
+- 07: Enh. #286: Analyser Preferences now organized into two tabs with groups <2>
+- 07: Issue #81: Checkbox and radio button scaling implemented <2>
+- 07: Issue #288: Radio button fix in FOR loop editor <2>
+- 07: Enh. #289: Arranger files (.arr, .arrz) may now be dragged into Arranger <2>
+- 07: Enh. #290: Arranger files (.arr, .arrz) loadable from Structorizer, too <2>
+- 07: Bugfix #291: REPEAT loops caught cursor up traversal <2> 
+- 07: Bugfix #114: Prerequisites for editing and transmutation during execution revised <2>
+- 07: Issue #269: Selecting an Analyser error now scrolls to the element <2>
+- 07: Issue #269: Automatic scrolling to the element currently executed <2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2

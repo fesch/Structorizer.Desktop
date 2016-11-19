@@ -104,6 +104,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.10.16      Enh. #273: Input strings "true" and "false" now accepted as boolean values
  *                                      Bugfix #276: Raw string conversion and string display mended, undue replacements
  *                                      of ' into " in method convert() eliminated
+ *      Kay Gürtzig     2016.11.19      Issue #269: Scrolling problem eventually solved. 
  *
  ******************************************************************************************************
  *
@@ -1871,11 +1872,13 @@ public class Executor implements Runnable
 		//boolean atBreakpoint = element.isBreakpoint();
 		boolean atBreakpoint = element.triggersBreakNow();
 		// END KGU#213 2016-08-01
+		// START KGU#276 2016-11-19: Issue #267: in paused mode we should move the focus to the current element
+		if (delay > 0 || step || atBreakpoint) {
+			diagram.redraw(element);
+		}
+		// END KGU#276 2016-11-19
 		if (atBreakpoint) {
 			control.setButtonsForPause();
-			// START KGU#276 2016-10-09: Issue #267: in paused mode we should move the focus to the current element
-			diagram.redraw(element);
-			// END KGU#276 2016-10-09
 
 			this.setPaus(true);
 		}
@@ -1894,17 +1897,17 @@ public class Executor implements Runnable
 		// END KGU#277 2016-10-13
 		
 		element.executed = true;
-		// START KGU#276 2016-10-09: Issue #267: in step mode we should move the focus to the current element
-		//if (delay != 0 || step)
-		//{
-		//	diagram.redraw();
-		//}
-		if (step) {
-			diagram.redraw(element);	// Doesn't work properly...
-		}
-		else if (delay != 0) {
-			diagram.redraw();
-		}
+		// START KGU#276 2016-10-09: Issue #269: Now done in checkBreakpoint()
+//		if (delay != 0 || step)
+//		{
+//			diagram.redraw();
+//		}
+//		if (step) {
+//			diagram.redraw(element);	// Doesn't work properly...
+//		}
+//		else if (delay != 0) {
+//			diagram.redraw();
+//		}
 		// END KGU#276 2016-10-09
 		// START KGU#143 2016-01-21: Bugfix #114 - make sure no compromising editing is done
 		diagram.doButtons();
@@ -2137,7 +2140,7 @@ public class Executor implements Runnable
 					delay();
 				}
 				// END KGU 2015-10-12
-				
+
 				// assignment
 				if (cmd.indexOf("<-") >= 0)
 				{
@@ -2693,7 +2696,7 @@ public class Executor implements Runnable
 					// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
 					this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
 					// END KGU#160 2016-04-26
-					// START KGU#147 2016-01-29: This "uncoverting" copied from tryOutput() didn't make sense...
+					// START KGU#147 2016-01-29: This "unconverting" copied from tryOutput() didn't make sense...
 					//String s = unconvert(resObj.toString());
 					//JOptionPane.showMessageDialog(diagram, s,
 					//		"Returned result", JOptionPane.INFORMATION_MESSAGE);

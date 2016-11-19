@@ -63,6 +63,7 @@
  *      Kay Gürtzig     2016.10.11      Enh. #267: Menu.error15 divided into error15_1 and error15_2
  *                                      Enh. #268: Sub-section OutputConsole added
  *      Kay Gürtzig     2016.11.08      Enh. #270: Menu.menuDiagramDisable, Editor.btnDisable.tooltip etc. added
+ *      Kay Gürtzig     2016.11.10      Enh. #286: AnalyserPreferences tabs; About tab translations modified
  *
  ******************************************************************************************************
  *
@@ -285,6 +286,8 @@ Menu.error20.text=
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferenze dell'analizzatore
+AnalyserPreferences.contentPanel.tab.0=Algoritmico
+AnalyserPreferences.contentPanel.tab.1=Nomi e convenzioni
 AnalyserPreferences.checkboxes.1.text=Controlla variabile di ciclo modificata.
 AnalyserPreferences.checkboxes.2.text=Controlla cicli infiniti (finchè e rilevabile!)
 AnalyserPreferences.checkboxes.3.text=Controlla variabili non inizializzate.
@@ -519,7 +522,7 @@ Preferences.btnOK.tooltip=Valida le tue scelte.
 
 -----[ About ]-----
 About.title=About
-About.pnlTabbed.tab.0=Implicated Persons
+About.pnlTabbed.tab.0=Personi coinvolti
 About.pnlTabbed.tab.1=Changelog
 About.pnlTabbed.tab.2=Licenzi
 About.btnOK.text=OK

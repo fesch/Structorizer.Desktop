@@ -41,6 +41,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016-09-23  Issue #243: Message translations, more messages
  *      Kay Gürtzig     2016-09-24  Enh. #250 Partial GUI redesign - now loop style can actively be selected
  *      Kay Gürtzig     2016.11.02  Issue #81: Workaround for lacking DPI awareness
+ *      Kay Gürtzig     2016.11.09  Issue #81: Scale factor no longer rounded but ensured to be >= 1
+ *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes/radio buttons,
+ *                                  Bugfix #288: Behaviour on clicking the selected one of the radio buttons fixed
  *
  ******************************************************************************************************
  *
@@ -70,6 +73,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 
 import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -153,17 +157,12 @@ public class InputBoxFor extends InputBox implements ItemListener {
 	}
 	
     // START KGU#169 2016-07-14: Enh. #180 (see also: #39, #142) - helps to enable focus control
-	@Deprecated
-    protected void setPreferredSize()
-    {
-        setSize(IBF_PREFERRED_WIDTH, 400);   	
-    }
-    // END KGU#169 2016-07-14
-    // START KGU#287 2016-11-02: Issue #81 (DPI awaeness workaround)
+    // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
     protected void setPreferredSize(double scaleFactor) {
         setSize((int)(IBF_PREFERRED_WIDTH * scaleFactor), (int)(400 * scaleFactor));        
     }
     // END KGU#287 2016-11-02
+    // END KGU#169 2016-07-14
 
     
     /**
@@ -174,9 +173,12 @@ public class InputBoxFor extends InputBox implements ItemListener {
      */
 	protected int createPanelTop(JPanel _panel, GridBagLayout _gb, GridBagConstraints _gbc)
 	{
-        // START KGU#287 2016-11-02: Issue #81 (DPI awaeness workaround)
-		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1")).intValue();        
-        // END KGU#287 2016-11-02
+        // START KGU#287 2016-11-02/09: Issue #81 (DPI awaeness workaround)
+		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
+		if (scaleFactor < 1) scaleFactor = 1.0;		
+        ImageIcon unselectedBox = null;
+        ImageIcon selectedBox = null;
+        // END KGU#287 2016-11-02/09
 
 		lblVarDesignation = new JLabel("Counter variable");
 		lblFirstValueLabel = new JLabel("Start value");
@@ -216,6 +218,14 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		txtEndVal.addKeyListener(this);
 		txtIncr.addKeyListener(this);
 		chkTextInput.setSelected(false); 
+        // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
+		if (scaleFactor > 1) {
+			unselectedBox = scaleToggleIcon(chkTextInput, false);
+			selectedBox = scaleToggleIcon(chkTextInput, true);
+			chkTextInput.setIcon(unselectedBox);
+			chkTextInput.setSelectedIcon(selectedBox);
+		}
+        // END KGU#287 2016-11-11
 		chkTextInput.addItemListener(this);
 		txtText.addKeyListener(this);
 		
@@ -227,12 +237,28 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		rbTraversing = new JRadioButton(D7Parser.getKeyword("preForIn").isEmpty() ? D7Parser.getKeyword("postFor") : D7Parser.getKeyword("preForIn"));
 		rbTraversing.setActionCommand("FOR-IN");
 		rbTraversing.setToolTipText("Select this if you want to traverse all members of a collection.");
-		
+
 		ButtonGroup radioGroup = new ButtonGroup();
 		radioGroup.add(rbCounting);
 		radioGroup.add(rbTraversing);
 		rbCounting.setSelected(!isTraversingLoop);
 		rbTraversing.setSelected(isTraversingLoop);
+        // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
+		if (scaleFactor > 1) {
+			if (isTraversingLoop) {
+				unselectedBox = scaleToggleIcon(rbCounting, false);
+				selectedBox = scaleToggleIcon(rbTraversing, true);
+			}
+			else {
+				unselectedBox = scaleToggleIcon(rbTraversing, false);
+				selectedBox = scaleToggleIcon(rbCounting, true);			
+			}
+			rbCounting.setIcon(unselectedBox);
+			rbCounting.setSelectedIcon(selectedBox);
+			rbTraversing.setIcon(unselectedBox);
+			rbTraversing.setSelectedIcon(selectedBox);
+		}
+		// END KGU#287 2016-11-11
 		rbCounting.addActionListener(this);
 		rbTraversing.addActionListener(this);
 		// END KGU#254 2016-09-24
@@ -462,7 +488,11 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		Object source = event.getSource();
 
 		if (source == rbCounting || source == rbTraversing) {
-			if (JOptionPane.showConfirmDialog(null, msgDiscardData.getText().replace("%", "\n\n"), msgAttention.getText(), JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION)
+			// START KGU#291 2016-11-11: Bugfix #288 (no action on clicking the already selected mode!)
+			//if (JOptionPane.showConfirmDialog(null, msgDiscardData.getText().replace("%", "\n\n"), msgAttention.getText(), JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION)
+			if ((source == rbTraversing) == isTraversingLoop ||
+					JOptionPane.showConfirmDialog(null, msgDiscardData.getText().replace("%", "\n\n"), msgAttention.getText(), JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION)
+			// END KGU#291 2016-11-11
 			{
 				// Switch back the radio buttons ...
 				setIsTraversingLoop(isTraversingLoop);

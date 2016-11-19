@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.gui;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -45,12 +46,14 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.21      Enh. #197: Selection may be expanded by Shift-Up and Shift-Down (KGU#206)
  *      Kay Gürtzig     2016.08.02      Enh. #215: popupBreakTrigger added
  *      Kay Gürtzig     2016.10.13      Enh. #277: New toolbar button (+ context menu item) for disabling elements
+ *      Kay Gürtzig     2016.11.17      Bugfix #114: Prerequisites for editing and transmutation during execution revised
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 import com.kobrix.notebook.gui.AKDockLayout;
@@ -884,7 +887,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// editing
 		// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
 		//btnEdit.setEnabled(conditionAny);
-		btnEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
+		// START KGU#143 2016-11-17: Bugfix #114 - unstructured elements may be edited if parent is waiting
+		//btnEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
+		btnEdit.setEnabled(diagram.canEdit());
+		// END KGU#143 2016-11-17
 		// END KGU#87 2015-11-22
 		// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
 		//btnDelete.setEnabled(diagram.canCutCopy());
@@ -896,8 +902,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnTransmute.setEnabled(diagram.canTransmute());
 		// END KGU#199 2016-07-06
 		// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
-		//popuEdit.setEnabled(conditionAny);
-		popupEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
+		//popupEdit.setEnabled(conditionAny);
+		// START KGU#143 2016-11-17: Bugfix #114 - unstructured elements may be edited if parent is waiting
+		//popupEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
+		popupEdit.setEnabled(diagram.canEdit());
+		// END KGU#143 2016-11-17
 		// END KGU#87 2015-11-22
 		// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
 		//popupDelete.setEnabled(condition);

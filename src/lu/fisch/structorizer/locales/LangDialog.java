@@ -34,7 +34,8 @@ package lu.fisch.structorizer.locales;
  *     ------       ----        -----------
  *     Bob Fisch    2008.01.14  First Issue
  *     Bob Fisch    2016.08.02  Fundamentally redesigned
- *     Kay Gürtzig  2016.09.21  API enhanced (initLang(), adjustLangDependentComponents()) to facilitate bugfix #241 
+ *     Kay Gürtzig  2016.09.21  API enhanced (initLang(), adjustLangDependentComponents()) to facilitate bugfix #241
+ *     Kay Gürtzig  2016.11.11  Issue #81: Method scaleCheckBoxIcon added (DPI awareness workaround) 
  *
  ******************************************************************************************************
  *
@@ -46,8 +47,10 @@ package lu.fisch.structorizer.locales;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 
 import javax.swing.*;
+
 import lu.fisch.structorizer.gui.IconLoader;
 
 /**
@@ -120,4 +123,44 @@ public class LangDialog extends JDialog {
     	// MAY BE OVERRIDDEN BY SUBCLASSES
     }
     // END KGU#246 2016-09-21
+    
+    // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
+    /**
+     * Returns a scaled checkbox icon for JCheckbox checkbox in mode selected
+     * @param checkbox - the checkbox the icon is recested for
+     * @param selected - the kind of icon (true = selected, false = unselected)
+     * @return an ImageIcon scaled to the font size of checkbox
+     */
+    protected static ImageIcon scaleToggleIcon(JToggleButton checkbox, boolean selected)
+    {
+        boolean prevState = checkbox.isSelected();
+        FontMetrics boxFontMetrics = checkbox.getFontMetrics(checkbox.getFont());
+        Icon boxIcon = selected ? checkbox.getSelectedIcon() : checkbox.getIcon();
+        if (boxIcon == null) {
+            checkbox.setSelected(selected);
+            String propertyName = "CheckBox.icon";
+            if (checkbox instanceof JRadioButton) {
+            	propertyName = "RadioButton.icon";
+            }
+            boxIcon = UIManager.getIcon(propertyName);
+        }
+        int type = BufferedImage.TYPE_INT_ARGB;
+        BufferedImage boxImage = new BufferedImage(
+                boxIcon.getIconWidth(), boxIcon.getIconHeight(), type);
+        Graphics2D g2 = boxImage.createGraphics();
+        try {
+            boxIcon.paintIcon(checkbox, g2, 0, 0);
+        }
+        finally {
+            g2.dispose();
+        }
+        ImageIcon newBoxIcon = new ImageIcon(boxImage);
+        Image finalBoxImage = newBoxIcon.getImage().getScaledInstance(
+                boxFontMetrics.getHeight(), boxFontMetrics.getHeight(), Image.SCALE_SMOOTH
+                );
+        checkbox.setSelected(prevState);
+        return new ImageIcon(finalBoxImage);
+    }
+    // END KGU#287 2016-11-11
+
 }
