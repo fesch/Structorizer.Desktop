@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.25-07 (2016.11.19)
+Current development version: 3.25-08 (2016.11.22)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
 - 01: Issue #213: Selected state of FOR transmutation result now visible <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
@@ -62,6 +62,10 @@ Current development version: 3.25-07 (2016.11.19)
 - 07: Bugfix #114: Prerequisites for editing and transmutation during execution revised <2>
 - 07: Issue #269: Selecting an Analyser error now scrolls to the element <2>
 - 07: Issue #269: Automatic scrolling to the element currently executed <2>
+- 08: Issue #231: Traditional reserved BASIC words added to name collision checks <2>
+- 08: Issue #269: Vertical scrolling alignment for large elements improved <2>
+- 08: Issue #284: Element editor fonts now up/down-scalable by Ctrl-Numpad+/- [ebial]2
+- 08: Bugfix #293: Input and output boxes no longer popped up at odd places on screen <2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2

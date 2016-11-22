@@ -45,6 +45,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.02  Issue #81: Workaround for lacking DPI awareness
  *      Kay Gürtzig     2016.11.09  Issue #81: Scale factor no longer rounded but ensured to be >= 1
  *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes
+ *      Kay Gürtzig     2016.11.21  Issue #284: Opportunity to scale up/down the TextField fonts by Ctrl-Numpad+/-
  *
  ******************************************************************************************************
  *
@@ -58,6 +59,7 @@ import lu.fisch.structorizer.locales.LangDialog;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Vector;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -110,6 +112,11 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         setSize((int)(500 * scaleFactor), (int)(400 * scaleFactor));        
     }
     // END KGU#287 2016-11-02
+    
+    // START KGU#294 2016-11-21: Issue #284
+    // Components with fonts to be scaled independently 
+    protected Vector<JComponent> scalableComponents = new Vector<JComponent>();
+    // END KGU#294 2016-11-21
 
     private void create() {
         // set window title
@@ -165,6 +172,11 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         Border emptyBorder = BorderFactory.createEmptyBorder(border, border, border, border);
         txtText.setBorder(emptyBorder);
         txtComment.setBorder(emptyBorder);
+        
+        // START KGU#294 2016-11-21: Issue #284
+        scalableComponents.addElement(txtText);
+        scalableComponents.addElement(txtComment);
+        // END KGU#294 2016-11-21
         
         JPanel pnPanel0 = new JPanel();
         GridBagLayout gbPanel0 = new GridBagLayout();
@@ -375,6 +387,19 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
             OK = true;
             setVisible(false);
         }
+        // START KGU#294 2016-11-21: Issue #284 - Opportunity to modify JTextField font size
+        else if ((e.getKeyCode() == KeyEvent.VK_ADD || e.getKeyCode() == KeyEvent.VK_SUBTRACT) && (e.isControlDown())) {
+        	Font font = txtText.getFont();
+        	float increment = 2.0f;
+        	if (e.getKeyCode() == KeyEvent.VK_SUBTRACT) {
+        		increment = font.getSize() > 8 ? -2.0f : 0.0f;
+        	}
+        	Font newFont = font.deriveFont(font.getSize()+increment);
+        	for (JComponent comp: scalableComponents) {
+        		comp.setFont(newFont);
+        	}
+        }
+        // END KGU#294 2016-11-21
     }
     
     @Override

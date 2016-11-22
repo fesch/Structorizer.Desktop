@@ -103,6 +103,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.16      Bugfix #291: upward cursor traversal ended in REPEAT loops
  *      Kay Gürtzig     2016.11.17      Bugfix #114: Prerequisites for editing and transmutation during execution revised
  *      Kay Gürtzig     2016.11.18/19   Issue #269: Scroll to the element associated to a selected Analyser error
+ *      Kay Gürtzig     2016.11.21      Issue #269: Focus alignment improved for large elements
  *
  ******************************************************************************************************
  *
@@ -906,16 +907,26 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     public void redraw(Element element)
     {
     	Rectangle rect = element.getRectOffDrawPoint().getRectangle();
-    	// START KGU#276 2016-11-19: Issue #269 Ensure the element is shown left-bound
-    	if (!(element instanceof Alternative || element instanceof Case))
+    	Rectangle visibleRect = new Rectangle();
+    	this.computeVisibleRect(visibleRect);
+    	// START KGU#276 2016-11-19: Issue #269 Ensure wide elements be shown left-bound
+    	if (rect.width > visibleRect.width &&
+    			!(element instanceof Alternative || element instanceof Case))
     	{
-    		Rectangle visibleRect = new Rectangle();
-    		this.computeVisibleRect(visibleRect);
-    		if (rect.width > visibleRect.width) {
-    			rect.width = visibleRect.width;
-    		}
+    		rect.width = visibleRect.width;
     	}
     	// END KGU#276 2016-11-19
+    	// START KGU#276 2016-11-21: Issue #269 Ensure high elements be shown top-bound
+    	if (rect.height > visibleRect.height &&
+    			!(element instanceof Instruction || element instanceof Parallel || element instanceof Forever))
+    	{
+    		// ... except for REPEAT loops, which are to be shown bottom-aligned
+    		if (element instanceof Repeat)	{
+    			rect.y += rect.height - visibleRect.height;
+    		}
+    		rect.height = visibleRect.height;
+    	}
+    	// END KGU#276 2016-11-21
     	scrollRectToVisible(rect);
     	redraw();	// This is to make sure the drawing rectangles are correct
     }
