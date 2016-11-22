@@ -493,6 +493,7 @@ public class Executor implements Runnable
 
 		if (convertComparisons)
 		{
+			// FIXME: This should only be applied to an expression in s, not to an entire instruction line!
 			s = convertStringComparison(s);
 		}
 

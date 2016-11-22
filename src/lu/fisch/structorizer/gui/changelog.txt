@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.25-08 (2016.11.22)
+Current development version: 3.25-08 (2016.11.23)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
 - 01: Issue #213: Selected state of FOR transmutation result now visible <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
@@ -67,7 +67,10 @@ Current development version: 3.25-08 (2016.11.22)
 - 08: Issue #284: Text field fonts in element editor now interactively resizable [ebial]2
 - 08: Bugfix #293: Input and output boxes no longer popped up at odd places on screen <2>
 - 08: Font resizing accelerators unified among different dialogs and menus <2>
-- 08: Label defect in InputBoxFor (FOOR loop editor) mended <2>
+- 08: Label defect in FOR loop editor (class InputBoxFor) mended <2>
+- 08: Bugfix #294: Test coverage wasn't shown for CASE elements w/o default branch <2>
+- 08: Bugfix #295: Spurious Analyser warning "wrong assignment" in return statements <2>
+- 08: Bugfix #296: Wrong transmutation of return or output instructions <2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2

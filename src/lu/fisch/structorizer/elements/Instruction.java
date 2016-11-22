@@ -51,6 +51,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactored
  *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
  *      Kay Gürtzig     2016.10.15      Enh. #271: method isEmptyInput() had to consider prompt strings now.
+ *      Kay Gürtzig     2016.11.22      Bugfix #296: Wrong transmutation of return and output statements
  *
  ******************************************************************************************************
  *
@@ -366,9 +367,11 @@ public class Instruction extends Element {
 	
 	public static boolean isProcedureCall(String line)
 	{
-		// Be aware that this method is also used for the isFunctionCall check
-		Function fct = new Function(line);
-		return fct.isFunction();
+    	// START KGU#298 2016-11-22: Bugfix #296 - unawareness of had led to wrong transmutations
+		//Function fct = new Function(line);
+		//return fct.isFunction();
+		return !isJump(line) && !isOutput(line) && (new Function(line)).isFunction();
+    	// END KGU#298 2016-11-22
 	}
 	public boolean isProcedureCall()
 	{
@@ -391,8 +394,7 @@ public class Instruction extends Element {
 		int asgnPos = tokens.indexOf("<-");
 		if (asgnPos > 0)
 		{
-			// This looks somewhat misleading. But we do a mere syntax check
-			isFunc = isProcedureCall(tokens.concatenate("", asgnPos+1));
+			isFunc = (new Function(tokens.concatenate("", asgnPos+1))).isFunction();
 		}
 		return isFunc;
 	}
