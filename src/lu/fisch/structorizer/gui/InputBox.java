@@ -101,6 +101,11 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     public LangTextHolder lblBreakTrigger = new LangTextHolder("0");
     //public JTextField txtBreakTrigger = new JTextField();
     // END KGU#213 2016-08-01
+    
+    // START KGU#294 2016-11-22: Enh. #284
+    protected final JButton btnFontUp = new JButton(IconLoader.ico033); 
+    protected final JButton btnFontDown = new JButton(IconLoader.ico034);
+    // END KGI#294 2016-11-22
 
     // START KGU 2015-10-14: Additional information for data-specific title translation
     public String elementType = new String();	// The (lower-case) class name of the element type to be edited here
@@ -147,12 +152,16 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         setVisible(false);
         // set action to perform if closed
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        // set icon
+        // set listeners
+        // START KGU#294 2016-11-22: Issue #284
+        btnFontUp.addActionListener(this);
+        btnFontDown.addActionListener(this);
+        // END KGU#294 2016-11-22
         btnOK.addActionListener(this);
         btnCancel.addActionListener(this);
         
-        btnOK.addKeyListener(this);
-        btnCancel.addKeyListener(this);
+        btnOK.addKeyListener(this);		// ???
+        btnCancel.addKeyListener(this);	// ???
         txtText.addKeyListener(this);
         // START KGU#186 2016-04-26: Issue #163 - tab isn't really needed within the text
         txtText.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
@@ -240,6 +249,23 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         gbPanel1.setConstraints(chkDisabled, gbcPanel1);
         pnPanel1.add(chkDisabled);
         // END KGU#277 2016-10-13
+        
+        // START KGU#294 2016-11-22: Issue #284 - visible font-resizing buttons
+        JPanel fontPanel = new JPanel();
+        fontPanel.setLayout(new GridLayout(0,2));
+        fontPanel.add(btnFontUp);
+        fontPanel.add(btnFontDown);
+        gbcPanel1.gridx = 12;
+        gbcPanel1.gridy = 17;
+        gbcPanel1.gridwidth = 7;
+        gbcPanel1.gridheight = 1;
+        gbcPanel1.fill = GridBagConstraints.WEST;
+        gbcPanel1.weightx = 1;
+        gbcPanel1.weighty = 0;
+        gbcPanel1.anchor = GridBagConstraints.EAST;
+        gbPanel1.setConstraints(fontPanel, gbcPanel1);
+        pnPanel1.add(fontPanel);
+        // END KGU#294 2016-11-22
 
         gbcPanel1.gridx = 1;
         // START KGU#277 2016-10-13: Enh. #270
@@ -371,6 +397,12 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         } else if (source == btnCancel) {
             OK = false;
         }
+        // START KGU#294 2016-11-22: Issue #284
+        else if (source == btnFontUp || source == btnFontDown) {
+        	fontControl(source == btnFontUp);
+        	return;
+        }
+        // END KGU#294 2016-11-22
         setVisible(false);
     }
     
@@ -389,15 +421,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         }
         // START KGU#294 2016-11-21: Issue #284 - Opportunity to modify JTextField font size
         else if ((e.getKeyCode() == KeyEvent.VK_ADD || e.getKeyCode() == KeyEvent.VK_SUBTRACT) && (e.isControlDown())) {
-        	Font font = txtText.getFont();
-        	float increment = 2.0f;
-        	if (e.getKeyCode() == KeyEvent.VK_SUBTRACT) {
-        		increment = font.getSize() > 8 ? -2.0f : 0.0f;
-        	}
-        	Font newFont = font.deriveFont(font.getSize()+increment);
-        	for (JComponent comp: scalableComponents) {
-        		comp.setFont(newFont);
-        	}
+        	fontControl(e.getKeyCode() == KeyEvent.VK_ADD);
         }
         // END KGU#294 2016-11-21
     }
@@ -457,5 +481,20 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     	this.lblBreakTriggerText.setText(this.lblBreakTriggerText.getText().replace("%", lblBreakTrigger.getText()));
     }
     // END KGU#246 2016-09-21
+    
+    // START KGU#294 2016-11-22: Issue #284
+    public void fontControl(boolean up)
+    {
+    	Font font = txtText.getFont();
+    	float increment = 2.0f;
+    	if (!up) {
+    		increment = font.getSize() > 8 ? -2.0f : 0.0f;
+    	}
+    	Font newFont = font.deriveFont(font.getSize()+increment);
+    	for (JComponent comp: scalableComponents) {
+    		comp.setFont(newFont);
+    	}
+    }
+    // END KGU#294 2016-11-22
 
 }

@@ -47,6 +47,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.08.02      Enh. #215: popupBreakTrigger added
  *      Kay Gürtzig     2016.10.13      Enh. #277: New toolbar button (+ context menu item) for disabling elements
  *      Kay Gürtzig     2016.11.17      Bugfix #114: Prerequisites for editing and transmutation during execution revised
+ *      Kay Gürtzig     2016.11.22      Enh. #284: Key bindings for font resizing added (KGU#294)
  *
  ******************************************************************************************************
  *
@@ -288,6 +289,28 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     	
     }
     // END KGU#177 2016-04-14
+    // START KGU#294 2016-11-22: Issue #284 Unification of font resizing key bindings
+    private class FontResizeAction extends AbstractAction
+    {
+    	Diagram diagram;	// The object responsible for executing the action
+    	
+    	FontResizeAction(Diagram _diagram, String _key)
+    	{
+    		super(_key);
+    		diagram = _diagram;
+    	}
+    	
+		@Override
+		public void actionPerformed(ActionEvent ev) {
+			if (getValue(AbstractAction.NAME).equals("FONT_UP")) {
+				diagram.fontUpNSD();
+			}
+			else {
+				diagram.fontDownNSD();	
+			}
+		}
+    }
+    // END KGU#294 2016-11-22
     
     private MyToolbar newToolBar(String name)
     {
@@ -726,6 +749,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0), "PAGE_DOWN");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0), "PAGE_UP");
 		// END KGU#177 2016-04-16
+	    // START KGU#294 2016-11-22: Enh. #284
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK), "FONT_UP");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK), "FONT_DOWN");
+		// END KGU#294 2016-11-22
 		actMap.put(CursorMoveDirection.CMD_UP, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_UP));
 		actMap.put(CursorMoveDirection.CMD_DOWN, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_DOWN));
 		actMap.put(CursorMoveDirection.CMD_LEFT, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_LEFT));
@@ -739,6 +766,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		actMap.put("PAGE_DOWN", new PageScrollAction(scrollarea.getVerticalScrollBar(), false, "PAGE_DOWN"));
 		actMap.put("PAGE_UP", new PageScrollAction(scrollarea.getVerticalScrollBar(), true, "PAGE_UP"));
 		// END KGU#177 2016-04-16
+		// START KGU#294 2016-11-22: Enh. #284
+		actMap.put("FONT_DOWN", new FontResizeAction(diagram, "FONT_DOWN"));
+		actMap.put("FONT_UP", new FontResizeAction(diagram, "FONT_UP"));
+		// END KGU#294 2016-11-22
 		//scrollarea.getViewport().setBackingStoreEnabled(true);
 				
         //container.add(scrolllist,AKDockLayout.SOUTH);

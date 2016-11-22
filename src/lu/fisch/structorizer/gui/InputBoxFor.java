@@ -45,6 +45,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes/radio buttons,
  *                                  Bugfix #288: Behaviour on clicking the selected one of the radio buttons fixed
  *      Kay Gürtzig     2016.11.21  Issue #284: Opportunity to scale up/down the TextField fonts by Ctrl-Numpad+/-
+ *      Kay Gürtzig     2016.11.22  stepFor label mended; issue #284: Font resizing buttons added
  *
  ******************************************************************************************************
  *
@@ -188,7 +189,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		//lblPreFor = new JLabel(D7Parser.keywordMap.get("preFor"));
 		lblPostFor = new JLabel(D7Parser.getKeyword("postFor"));
 		lblAsgnmt = new JLabel(" <- ");
-		lblStepFor = new JLabel(D7Parser.getKeyword("steptFor"));
+		lblStepFor = new JLabel(D7Parser.getKeyword("stepFor"));
 		txtParserInfo = new JTextField(300);
 		txtParserInfo.setEditable(false);
 		if (UIManager.getLookAndFeel().getName().equals("Nimbus"))
@@ -237,6 +238,10 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		scalableComponents.addElement(txtIncr);
 		scalableComponents.addElement(txtVariableIn);
 		scalableComponents.addElement(txtValueList);
+		scalableComponents.addElement(lblAsgnmt);
+		scalableComponents.addElement(lblPostFor);
+		scalableComponents.addElement(lblStepFor);
+		scalableComponents.addElement(lblpostForIn);		
         // END KGU#294 2016-11-21
 		
 		// START KGU#254 2016-09-24: Enh. #250 - GUI redesign

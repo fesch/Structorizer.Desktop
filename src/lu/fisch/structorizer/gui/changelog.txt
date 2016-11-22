@@ -64,8 +64,10 @@ Current development version: 3.25-08 (2016.11.22)
 - 07: Issue #269: Automatic scrolling to the element currently executed <2>
 - 08: Issue #231: Traditional reserved BASIC words added to name collision checks <2>
 - 08: Issue #269: Vertical scrolling alignment for large elements improved <2>
-- 08: Issue #284: Element editor fonts now up/down-scalable by Ctrl-Numpad+/- [ebial]2
+- 08: Issue #284: Text field fonts in element editor now interactively resizable [ebial]2
 - 08: Bugfix #293: Input and output boxes no longer popped up at odd places on screen <2>
+- 08: Font resizing accelerators unified among different dialogs and menus <2>
+- 08: Label defect in InputBoxFor (FOOR loop editor) mended <2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2
