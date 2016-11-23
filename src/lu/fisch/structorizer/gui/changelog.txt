@@ -71,6 +71,7 @@ Current development version: 3.25-08 (2016.11.23)
 - 08: Bugfix #294: Test coverage wasn't shown for CASE elements w/o default branch <2>
 - 08: Bugfix #295: Spurious Analyser warning "wrong assignment" in return statements <2>
 - 08: Bugfix #296: Wrong transmutation of return or output instructions <2>
+- 08: Enh. #297: Additional pause after a diagram's last instruction in step mode <2> 
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2

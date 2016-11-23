@@ -105,7 +105,7 @@ package lu.fisch.structorizer.executor;
  *                                      Bugfix #276: Raw string conversion and string display mended, undue replacements
  *                                      of ' into " in method convert() eliminated
  *      Kay Gürtzig     2016.11.19      Issue #269: Scrolling problem eventually solved.
- *      Kay Gürtzig     2016.11.22      Bugfix #293: input and output boxes no longer popped up at odd places on screen. 
+ *      Kay Gürtzig     2016.11.22      Bugfix #293: input and output boxes no longer popped up at odd places on screen.
  *
  ******************************************************************************************************
  *
@@ -994,6 +994,11 @@ public class Executor implements Runnable
 				}
 
 			}
+			// START KGU#299 2016-11-23: Enh. #297 In step mode, this offers a last pause to inspect variables etc.
+			if (this.callers.isEmpty() && !returned) {
+				delay();
+			}
+			// END KGU 2016-11-23
 
 		}
 		// START KGU 2015-10-13: Unsets all execution flags in the diagram
@@ -2873,6 +2878,7 @@ public class Executor implements Runnable
 				if ((q == last)
 						&& !text.get(text.count() - 1).trim().equals("%"))
 				{
+					// default branch
 					go = true;
 				}
 				if (go == false)
