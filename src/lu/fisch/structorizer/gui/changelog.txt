@@ -65,7 +65,7 @@ Current development version: 3.25-08 (2016.11.24)
 - 08: Issue #231: Traditional reserved BASIC words added to name collision checks <2>
 - 08: Issue #269: Vertical scrolling alignment for large elements improved <2>
 - 08: Issue #284: Text field fonts in element editor now interactively resizable [ebial]2
-- 08: Bugfix #293: Input and output boxes no longer popped up at odd places on screen <2>
+- 08: Bugfix #293: Input and output boxes no longer pop up at odd places on screen <2>
 - 08: Font resizing accelerators unified among different dialogs and menus <2>
 - 08: Label defect in FOR loop editor (class InputBoxFor) mended <2>
 - 08: Bugfix #294: Test coverage wasn't shown for CASE elements w/o default branch <2>
