@@ -104,7 +104,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.10.16      Enh. #273: Input strings "true" and "false" now accepted as boolean values
  *                                      Bugfix #276: Raw string conversion and string display mended, undue replacements
  *                                      of ' into " in method convert() eliminated
- *      Kay Gürtzig     2016.11.19      Issue #269: Scrolling problem eventually solved. 
+ *      Kay Gürtzig     2016.11.19      Issue #269: Scrolling problem eventually solved.
+ *      Kay Gürtzig     2016.11.22      Bugfix #293: input and output boxes no longer popped up at odd places on screen.
  *
  ******************************************************************************************************
  *
@@ -492,6 +493,7 @@ public class Executor implements Runnable
 
 		if (convertComparisons)
 		{
+			// FIXME: This should only be applied to an expression in s, not to an entire instruction line!
 			s = convertStringComparison(s);
 		}
 
@@ -795,7 +797,7 @@ public class Executor implements Runnable
 					//		"Please enter a value for <" + in + ">", null);
 					String msg = control.lbInputValue.getText();
 					msg = msg.replace("%", in);
-					String str = JOptionPane.showInputDialog(null, msg, null);
+					String str = JOptionPane.showInputDialog(diagram.getParent(), msg, null);
 					// END KGU#89 2016-03-18
 					if (str == null)
 					{
@@ -886,7 +888,7 @@ public class Executor implements Runnable
 			//		JOptionPane.ERROR_MESSAGE);
 			if (!isErrorReported)
 			{
-				JOptionPane.showMessageDialog(diagram, result, control.msgTitleError.getText(),
+				JOptionPane.showMessageDialog(diagram.getParent(), result, control.msgTitleError.getText(),
 						JOptionPane.ERROR_MESSAGE);
 				// START KGU#160 2016-07-27: Issue #137 - also log the result to the console
 				this.console.writeln("*** " + result, Color.RED);
@@ -956,7 +958,7 @@ public class Executor implements Runnable
 									// START KGU#160 2016-04-26: Issue #137 - also log the result to the console
 									this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
 									// END KGU#160 2016-04-26
-									JOptionPane.showMessageDialog(diagram, resObj,
+									JOptionPane.showMessageDialog(diagram.getParent(), resObj,
 											header, JOptionPane.INFORMATION_MESSAGE);
 								}
 								else
@@ -965,7 +967,7 @@ public class Executor implements Runnable
 									this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
 									// END KGU#198 2016-05-25
 									Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
-									int pressed = JOptionPane.showOptionDialog(diagram, resObj, header,
+									int pressed = JOptionPane.showOptionDialog(diagram.getParent(), resObj, header,
 											JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
 									if (pressed == 1)
 									{
@@ -992,6 +994,11 @@ public class Executor implements Runnable
 				}
 
 			}
+			// START KGU#299 2016-11-23: Enh. #297 In step mode, this offers a last pause to inspect variables etc.
+			if (this.callers.isEmpty() && !returned) {
+				delay();
+			}
+			// END KGU 2016-11-23
 
 		}
 		// START KGU 2015-10-13: Unsets all execution flags in the diagram
@@ -2463,7 +2470,7 @@ public class Executor implements Runnable
 		{
 			// In run mode, give the user a chance to intervene
 			Object[] options = {"OK", "Pause"};	// FIXME: Provide a translation
-			int pressed = JOptionPane.showOptionDialog(diagram, control.lbAcknowledge.getText(), control.lbInput.getText(),
+			int pressed = JOptionPane.showOptionDialog(diagram.getParent(), control.lbAcknowledge.getText(), control.lbInput.getText(),
 					JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
 			if (pressed == 1)
 			{
@@ -2526,7 +2533,7 @@ public class Executor implements Runnable
 				this.console.setVisible(true);
 			}
 			// END KGU#160 2016-04-12
-			String str = JOptionPane.showInputDialog(null, prompt, null);
+			String str = JOptionPane.showInputDialog(diagram.getParent(), prompt, null);
 			// END KGU#89 2016-03-18
 			// START KGU#84 2015-11-23: ER #36 - Allow a controlled continuation on cancelled input
 			//setVarRaw(in, str);
@@ -2536,7 +2543,7 @@ public class Executor implements Runnable
 				// START KGU#197 2016-05-05: Issue #89
 				//JOptionPane.showMessageDialog(diagram, "Execution paused - you may enter the value in the variable display.",
 				//		"Input cancelled", JOptionPane.WARNING_MESSAGE);
-				JOptionPane.showMessageDialog(diagram, control.lbInputPaused.getText(),
+				JOptionPane.showMessageDialog(control, control.lbInputPaused.getText(),
 						control.lbInputCancelled.getText(), JOptionPane.WARNING_MESSAGE);
 				// START KGU#197 2016-05-05
 				synchronized(this)
@@ -2634,14 +2641,16 @@ public class Executor implements Runnable
 			// END KGU#160 2016-04-12
 			{
 				// In step mode, there is no use to offer pausing
-				JOptionPane.showMessageDialog(diagram, s, control.lbOutput.getText(),
+				// diagram is a bad anchor component since its extension is the Root rectangle (may be huge!)
+				JOptionPane.showMessageDialog(diagram.getParent(), s, control.lbOutput.getText(),
 						JOptionPane.INFORMATION_MESSAGE);
 			}
 			else
 			{
 				// In run mode, give the user a chance to intervene
 				Object[] options = {"OK", "Pause"};	// FIXME: Provide a translation
-				int pressed = JOptionPane.showOptionDialog(diagram, s, control.lbOutput.getText(),
+				// diagram is a bad anchor component since its extension is the Root rectangle (may be huge!)
+				int pressed = JOptionPane.showOptionDialog(diagram.getParent(), s, control.lbOutput.getText(),
 						JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
 				if (pressed == 1)
 				{
@@ -2700,7 +2709,7 @@ public class Executor implements Runnable
 					//String s = unconvert(resObj.toString());
 					//JOptionPane.showMessageDialog(diagram, s,
 					//		"Returned result", JOptionPane.INFORMATION_MESSAGE);
-					JOptionPane.showMessageDialog(diagram, resObj,
+					JOptionPane.showMessageDialog(diagram.getParent(), resObj,
 							header, JOptionPane.INFORMATION_MESSAGE);
 					// END KGU#147 2016-01-29					
 				// END KGU#133 2016-01-29
@@ -2711,7 +2720,7 @@ public class Executor implements Runnable
 					// END KGU#198 2016-05-25
 					// START KGU#84 2015-11-23: Enhancement to give a chance to pause (though of little use here)
 					Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
-					int pressed = JOptionPane.showOptionDialog(diagram, resObj, header,
+					int pressed = JOptionPane.showOptionDialog(diagram.getParent(), resObj, header,
 							JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
 					if (pressed == 1)
 					{
@@ -2869,6 +2878,7 @@ public class Executor implements Runnable
 				if ((q == last)
 						&& !text.get(text.count() - 1).trim().equals("%"))
 				{
+					// default branch
 					go = true;
 				}
 				if (go == false)
@@ -3725,7 +3735,7 @@ public class Executor implements Runnable
 						//JOptionPane.showMessageDialog(diagram, "Uncaught attempt to jump out of a parallel thread:\n\n" + 
 						//		instr.getText().getText().replace("\n",  "\n\t") + "\n\nThread killed!",
 						//		"Parallel Execution Problem", JOptionPane.WARNING_MESSAGE);
-						JOptionPane.showMessageDialog(diagram, control.msgJumpOutParallel.getText().replace("%", "\n\n" + 
+						JOptionPane.showMessageDialog(diagram.getParent(), control.msgJumpOutParallel.getText().replace("%", "\n\n" + 
 								instr.getText().getText().replace("\n",  "\n\t") + "\n\n"),
 								control.msgTitleParallel.getText(), JOptionPane.WARNING_MESSAGE);
 						// END KGU#247 2016-09-17

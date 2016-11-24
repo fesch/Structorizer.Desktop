@@ -82,6 +82,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.10.11      Enh. #267: New analyser check for error15_2 (unavailable subroutines)
  *      Kay Gürtzig     2016.10.12      Issue #271: user-defined prompt strings in input instructions
  *      Kay Gürtzig     2016.10.13      Enh. #270: Analyser checks for disabled elements averted.
+ *      Kay Gürtzig     2016.11.22      Bugfix #295: Spurious error11 in return statements with equality comparison
  *
  ******************************************************************************************************
  *
@@ -2184,6 +2185,9 @@ public class Root extends Element {
 		boolean isAssignment = false;
 		StringList inputTokens = Element.splitLexically(D7Parser.getKeyword("input"), false);
 		StringList outputTokens = Element.splitLexically(D7Parser.getKeyword("output"), false);
+		// START KGU#297 2016-11-22: Issue #295 - Instructions starting with the return keyword must be handled separately
+		StringList returnTokens = Element.splitLexically(D7Parser.getKeyword("preReturn"), false);
+		// END KGU#297 2016-11-22
 
 		// Check every instruction line...
 		for(int l=0; l<test.count(); l++)
@@ -2194,11 +2198,18 @@ public class Root extends Element {
 			// START KGU#65/KGU#126 2016-01-06: More precise analysis, though expensive
 			StringList tokens = splitLexically(test.get(l), true);
 			unifyOperators(tokens, false);
-			if (tokens.contains("<-"))
+			// START KGU#297 2016-11-22: Issue #295 - Instructions starting with the return keyword must be handled separately
+			//if (tokens.contains("<-"))
+			boolean isReturn = tokens.indexOf(returnTokens, 0, !D7Parser.ignoreCase) == 0;
+			// END KGU#297 2016-11-22
+			if (tokens.contains("<-") && !isReturn)
 			{
 				isAssignment = true;
 			}
-			else if (tokens.contains("=="))
+			// START KGU#297 2016-11-22: Issue #295: Instructions starting with the return keyword must be handled separately
+			//else if (tokens.contains("=="))
+			else if (!isReturn && tokens.contains("==") || isReturn && tokens.contains("<-"))
+			// END KGU#297 2016-11-22
 			{
 			        //error  = new DetectedError("You probably made an assignment error. Please check this instruction!",(Element) _node.getElement(i));
 			        addError(_errors, new DetectedError(errorMsg(Menu.error11,""), ele), 11);

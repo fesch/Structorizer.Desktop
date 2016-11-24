@@ -51,6 +51,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.31      Enh. #128: New mode "comments plus text" supported, drawing code revised
  *                                      (text placement improved, had sometimes exceeded the bounds)
  *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
+ *      Kay Gürtzig     2016.11.22      Bugfix #294: With hidden default branch, a test coverage couldn't be achieved
  *
  ******************************************************************************************************
  *
@@ -144,29 +145,31 @@ public class Case extends Element
 
             if (qs==null)
             {
-                    qs = new Vector<Subqueue>();
+                qs = new Vector<Subqueue>();
             }
 
             // START KGU#91 2015-12-01: Bugfix #39: Don't allow sizes below 2 branches!
             // And don't use method getText() here!
+            // There is always a Subqueue for the default branch, even if the default branch
+            // is suppressed. Many methods, particularly in the generators, rely upon this!
             while (text.count() < 3)
             {
-            	text.add("?");
+                text.add("?");
             }
             if (text.get(0).isEmpty())
             {
-            	text.set(0, "???");
+                text.set(0, "???");
             }
             // END KGU#91 2015-12-01
             while (text.count()-1 > qs.size())
             {
-            	s = new Subqueue();
-            	s.parent = this;
-            	qs.add(s);
+                s = new Subqueue();
+                s.parent = this;
+                qs.add(s);
             }
             while (text.count()-1 < qs.size())
             {
-            	qs.removeElementAt(qs.size()-1);
+                qs.removeElementAt(qs.size()-1);
             }
             // END KGU#91 2015-12-01
 
@@ -192,8 +195,8 @@ public class Case extends Element
     // START KGU#227 2016-07-31: Apparently helpful method
     protected boolean hasDefaultBranch()
     {
-    	int nLines = getText().count();
-    	return nLines > 1 && !getText().get(nLines-1).equals("%");
+        int nLines = text.count();
+        return nLines > 1 && !text.get(nLines-1).trim().equals("%");
     }
     // END KGU#227 2016-07-31
     
@@ -624,7 +627,12 @@ public class Case extends Element
 		// END KGU#121 2016-01-03
 			Element selCh = null;
 
-			for(int i = 0; i < qs.size(); i++)
+			// START KGU#296 2016-11-22: Bugfix #294 - ignore default branch if hidden
+			//for(int i = 0; i < qs.size(); i++)
+			int nBranches = qs.size();
+			if (!hasDefaultBranch()) nBranches--;
+			for(int i = 0; i < nBranches; i++)
+			// END KGU#296 2016-11-22
 			{
 				// START KGU#136 2016-03-01: Bugfix #97
 				//Element pre = ((Subqueue) qs.get(i)).getElementByCoord(_x,_y, _forSelection);
@@ -709,7 +717,12 @@ public class Case extends Element
 	public boolean combineRuntimeData(Element _cloneOfMine)
 	{
 		boolean isEqual = super.combineRuntimeData(_cloneOfMine);
-		for(int i = 0; isEqual && i < this.qs.size(); i++)
+		// START KGU#296 2016-11-22: Bugfix #294 - Ignore default branch if hidden.
+		//for(int i = 0; isEqual && i < this.qs.size(); i++)
+		int nBranches = this.qs.size();
+		if (!this.hasDefaultBranch()) nBranches--;
+		for(int i = 0; isEqual && i < nBranches; i++)
+		// END KGU#296 2016-11-22
 		{
 			isEqual = this.qs.get(i).combineRuntimeData(((Case)_cloneOfMine).qs.get(i));
 		}
@@ -747,7 +760,14 @@ public class Case extends Element
 		boolean covered = true;
     	if (qs!= null)
     	{
-    		for (int i = 0; covered && i < qs.size(); i++)
+    		// START KGU#296 2016-11-22: Issue #294 - suppressed default branch prevented full coverage
+    		//for (int i = 0; covered && i < qs.size(); i++)
+    		int nBranches = qs.size();
+    		if (!hasDefaultBranch()) {
+    			nBranches--;
+    		}
+    		for (int i = 0; covered && i < nBranches; i++)
+    		// END KGU#296 2016-11-22
     		{
     			covered = qs.get(i).isTestCovered(_deeply);
     		}
@@ -768,7 +788,9 @@ public class Case extends Element
     	}
     	if (qs!= null)
     	{
-    		for (int i = 0; i < qs.size(); i++)
+    		int nBranches = qs.size();
+    		if (!hasDefaultBranch()) nBranches--;
+    		for (int i = 0; i < nBranches; i++)
     		{
     			qs.get(i).addFullText(_lines, _instructionsOnly);
     		}
@@ -799,7 +821,12 @@ public class Case extends Element
 	public boolean traverse(IElementVisitor _visitor) {
 		boolean proceed = _visitor.visitPreOrder(this);
 		if (qs != null) {
-			for (int i = 0; proceed && i < qs.size(); i++)
+			// START KGU#296 2016-11-22: Bugfix #294: Avoid to traverse hidden default branch
+			//for (int i = 0; proceed && i < qs.size(); i++)
+			int nBranches = qs.size();
+			if (!hasDefaultBranch()) nBranches--;
+			for (int i = 0; proceed && i < nBranches; i++)
+			// END KGU#296 2016-11-22
 			{
 				proceed = qs.get(i).traverse(_visitor);
 			}

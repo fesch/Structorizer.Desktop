@@ -54,6 +54,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.10.13      Enh. #270: Handling of disabled elements added.
  *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig         2016.11.20      KGU#293: Some forgotten traditional keywords added to reservedWords (#231)
  *
  ******************************************************************************************************
  *
@@ -132,6 +133,9 @@ public class BasGenerator extends Generator
 		"FOR", "TO", "STEP", "NEXT",
 		"DO", "WHILE", "UNTIL", "LOOP",
 		"CALL", "RETURN", "GOTO", "GOSUB", "STOP",
+		// START KGU#293 2016-11-20
+		"INPUT", "PRINT", "READ", "DATA", "RESTORE",
+		// END KGU#293 2016-11-20
 		"AND", "OR", "NOT"};
 	public String[] getReservedWords()
 	{

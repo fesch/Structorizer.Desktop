@@ -39,6 +39,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.09.25      Bugfix #251 averting Nimbus disrespect of panel settings 
  *      Kay Gürtzig     2016.10.11      Enh. #268: Inheritance changed, font selecting opportunities added
  *      Kay Gürtzig     2016.10.17      Issue #268: Font setting source and target corrected (doc's default style)
+ *      Kay Gürtzig     2016.11.22      Enh.#284: Font resizing accelerators modified (CTRL_DOWN_MASK added)
  *
  ******************************************************************************************************
  *
@@ -51,6 +52,7 @@ import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import javax.swing.JMenu;
@@ -114,10 +116,10 @@ public class OutputConsole extends LangFrame implements ActionListener {
     	menuFont.addActionListener(this);
     	menuFontUp = new JMenuItem("Enlarge font", IconLoader.ico033);
     	menuFontUp.addActionListener(this);
-    	menuFontUp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0));
+    	menuFontUp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK));
     	menuFontDown = new JMenuItem("Diminish font", IconLoader.ico034);
     	menuFontDown.addActionListener(this);
-    	menuFontDown.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, 0));
+    	menuFontDown.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK));
     	
     	JMenuBar menuBar = new JMenuBar();
     	menuBar.add(menu);
