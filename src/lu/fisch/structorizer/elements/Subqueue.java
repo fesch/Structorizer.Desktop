@@ -51,6 +51,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.07      Enh. #185 + #188: Mechanism to convert Instructions to Calls
  *      Kay Gürtzig     2016.10.13      Enh. #277: setDisabled() added.
  *      Kay Gürtzig     2016.11.17      Bugfix #114: isExecuted() revised (signature too)
+ *      Kay Gürtzig     2016.11.25      Issue #294: Method isTestCovered adapted to refined CASE coverage rules
  *
  ******************************************************************************************************
  *
@@ -492,17 +493,24 @@ public class Subqueue extends Element implements IElementSequence {
 	 */
 	public boolean isTestCovered(boolean _deeply)
 	{
-		// An empty sequence must at least once have been passed in order to count as covered
-		if (children.isEmpty())
-		{
-			return super.isTestCovered(_deeply);
+		// START KGU#296 2016-11-25: Issue #294 - hidden default CASE branch required modification
+//		// An empty sequence must at least once have been passed in order to count as covered
+//		if (children.isEmpty())
+//		{
+//			return super.isTestCovered(_deeply);
+//		}
+//		// ... otherwise all instructions must be covered
+//		boolean covered = true;
+		boolean covered = super.isTestCovered(_deeply);
+		if (covered || children.isEmpty()) {
+			return covered;
 		}
-		// ... otherwise all instructions must be covered
-		boolean covered = true;
-        for(int i = 0; covered && i < children.size(); i++)
-        {      
-            covered = children.get(i).isTestCovered(_deeply);
-        }
+		covered = true;
+		// END KGU#296 2016-11-25
+		for(int i = 0; covered && i < children.size(); i++)
+		{      
+			covered = children.get(i).isTestCovered(_deeply);
+		}
 		return covered;
 	}
 	// END KGU#117 2016-03-06

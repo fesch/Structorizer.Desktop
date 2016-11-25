@@ -52,6 +52,7 @@ package lu.fisch.structorizer.elements;
  *                                      (text placement improved, had sometimes exceeded the bounds)
  *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
  *      Kay Gürtzig     2016.11.22      Bugfix #294: With hidden default branch, a test coverage couldn't be achieved
+ *      Kay Gürtzig     2016.11.24/25   Issue #294 refined (now distinguished among deep and shallow test coverage)
  *
  ******************************************************************************************************
  *
@@ -760,10 +761,13 @@ public class Case extends Element
 		boolean covered = true;
     	if (qs!= null)
     	{
-    		// START KGU#296 2016-11-22: Issue #294 - suppressed default branch prevented full coverage
+    		// START KGU#296 2016-11-22: Issue #294 - hidde default branch prevented full coverage
     		//for (int i = 0; covered && i < qs.size(); i++)
     		int nBranches = qs.size();
-    		if (!hasDefaultBranch()) {
+    		// START KGU#296 2016-11-24: Issue #294: For deep coverage the hidden branch is also to be checked
+    		//if (!hasDefaultBranch()) {
+    		if (!_deeply && !hasDefaultBranch()) {
+    		// END KGU#296 2016-11-24
     			nBranches--;
     		}
     		for (int i = 0; covered && i < nBranches; i++)
@@ -821,12 +825,7 @@ public class Case extends Element
 	public boolean traverse(IElementVisitor _visitor) {
 		boolean proceed = _visitor.visitPreOrder(this);
 		if (qs != null) {
-			// START KGU#296 2016-11-22: Bugfix #294: Avoid to traverse hidden default branch
-			//for (int i = 0; proceed && i < qs.size(); i++)
-			int nBranches = qs.size();
-			if (!hasDefaultBranch()) nBranches--;
-			for (int i = 0; proceed && i < nBranches; i++)
-			// END KGU#296 2016-11-22
+			for (int i = 0; proceed && i < qs.size(); i++)
 			{
 				proceed = qs.get(i).traverse(_visitor);
 			}
