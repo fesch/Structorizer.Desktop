@@ -59,6 +59,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig             2016.12.01      Bugfix #301: More precise check for parenthesis enclosing of log. conditions
  *
  ******************************************************************************************************
  *
@@ -378,7 +379,10 @@ public class PythonGenerator extends Generator
 			// END KGU 2014-11-16
 
 			String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
-			if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+			// START KGU#301 2016-12-01: Bugfix #301
+			//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+			if (!isParenthesized(condition)) condition = "(" + condition + ")";
+			// END KGU#301 2016-12-01
 
 			addCode("if "+condition+":", _indent, isDisabled);
 			generateCode((Subqueue) _alt.qTrue,_indent + this.getIndent());
@@ -482,7 +486,10 @@ public class PythonGenerator extends Generator
 			// END KGU 2014-11-16
 			
 			String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
-			if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+			// START KGU#301 2016-12-01: Bugfix #301
+			//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+			if (!isParenthesized(condition)) condition = "(" + condition + ")";
+			// END KGU#301 2016-12-01
 			
 			addCode("while "+condition+":", _indent, isDisabled);
 			generateCode((Subqueue) _while.q, _indent + this.getIndent());

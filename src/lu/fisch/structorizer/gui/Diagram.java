@@ -104,6 +104,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.17      Bugfix #114: Prerequisites for editing and transmutation during execution revised
  *      Kay Gürtzig     2016.11.18/19   Issue #269: Scroll to the element associated to a selected Analyser error
  *      Kay Gürtzig     2016.11.21      Issue #269: Focus alignment improved for large elements
+ *      Kay Gürtzig     2016.12.02      Enh. #300: Update notification mechanism
  *
  ******************************************************************************************************
  *
@@ -130,8 +131,11 @@ import java.awt.datatransfer.*;
 import net.iharder.dnd.*; //http://iharder.sourceforge.net/current/java/filedrop/
 
 import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
@@ -201,6 +205,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     // START KGU#170 2016-04-01: Enh. #144 maintain a favourite export generator
     private String prefGeneratorName = "";
     // END KGU#170 2016-04-01
+    
+    // START KGU#300 2016-12-02: Enh. #300 - update notification settings
+    public boolean retrieveVersion = false;
+    // END KGU#300 2016-12-02
 
     // recently opened files
     protected Vector<String> recentFiles = new Vector<String>();
@@ -2823,6 +2831,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		Point p = getLocationOnScreen();
 		about.setLocation(Math.round(p.x+(getVisibleRect().width-about.getWidth())/2+this.getVisibleRect().x),
 						  Math.round(p.y)+(getVisibleRect().height-about.getHeight())/2+this.getVisibleRect().y);
+		// START KGU#300 2016-12-02: Enh. #300 - Add info about newer version if enabled
+		String newVersion = this.getLatestVersionIfNewer();
+		if (newVersion != null) {
+			about.lblVersion.setText(about.lblVersion.getText() + " (" + Menu.msgNewerVersionAvail.getText().replace("%", newVersion) + ")");
+		}
+		// END KGU#300 2016-12-02
 		about.setVisible(true);
 	}
 
@@ -3682,9 +3696,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 
 	public void updateNSD()
+	// START KGU#300 2016-12-02: Enh. #300
+	{
+		updateNSD(true);
+	}
+	
+	public void updateNSD(boolean evenWithoutNewerVersion)
+	// END KGU#300 2016-12-02
 	{
 		// KGU#35 2015-07-29: Bob's code adopted with slight modification (Homepage URL put into a variable) 
-		String home = "http://structorizer.fisch.lu";
+		final String home = "http://structorizer.fisch.lu";
+		
+		// START KGU#300 2016-12-02: Enh. #300
+		String latestVersion = getLatestVersionIfNewer();
+		if (!evenWithoutNewerVersion && latestVersion == null) {
+			return;
+		}
+		// END KGU#300 2016-12-02
+		
 		try {
 			// START KGU#247 2016-09-17: Issue #243/#245 Translation support for update window content
 			//JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\">Goto <a href=\"" + home + "\">" + home + "</a> to look for updates<br>and news about Structorizer.</font></html>");
@@ -3694,7 +3723,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				int fontSize = (int)(3*scaleFactor);
 				fontAttr = " size="+fontSize;
 			}
+			// START KGU#300 2016-12-02: Enh. #300
+			String versionInfo = "";
+			if (latestVersion != null) {
+				versionInfo = Menu.msgNewerVersionAvail.getText().replace("%", latestVersion) + "<br><br>";
+			}
+			// END KGU#300 2016-12-02
 			JEditorPane ep = new JEditorPane("text/html","<html><font face=\"Arial\""+fontAttr+">" +
+					// START KGU#300 2016-12-02: Enh. #300
+					versionInfo +
+					// END KGU#300 2016-12-02
 					Menu.msgGotoHomepage.getText().replace("%", "<a href=\"" + home + "\">" + home + "</a>") +
 					"</font></html>");
 			// END KGU#247 2016-09-17
@@ -3749,6 +3787,88 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			e.printStackTrace();
 		}		
 	}
+
+	// START KGU#300 2016-12-02 Enh. #300 Support for version retrieval
+	private String retrieveLatestVersion()
+	{
+		final String http_url = "http://structorizer.fisch.lu/version.txt";
+
+		String version = null;
+		if (this.retrieveVersion) {
+			try {
+
+				URL url = new URL(http_url);
+				HttpURLConnection con = (HttpURLConnection)url.openConnection();
+
+				if (con!=null) {
+
+					BufferedReader br = 
+							new BufferedReader(
+									new InputStreamReader(con.getInputStream()));
+
+					String input;
+					while ((input = br.readLine()) != null && version == null){
+						if (input.matches("\\d+\\.\\d+([-.][0-9]+)?")) {
+							version = input;
+						}
+					}
+					br.close();
+
+				}
+
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return version;
+	}
+
+	private static int[] splitVersionString(String version)
+	{
+		StringList versionParts = StringList.explode(version, "\\.");
+		versionParts = StringList.explode(versionParts, "-");
+		int[] versionNumbers = new int[versionParts.count()];
+		for (int i = 0; i < versionParts.count(); i++) {
+			try {
+				versionNumbers[i] = Integer.parseInt(versionParts.get(i));
+			}
+			catch (NumberFormatException ex) {
+				versionNumbers[i] = 0;
+			}
+		}
+		return versionNumbers;
+	}
+	
+	public String getLatestVersionIfNewer()
+	{
+		int cmp = 0;
+		String latestVerStr = retrieveLatestVersion();
+		if (latestVerStr != null) {
+			int[] thisVersion = splitVersionString(Element.E_VERSION);
+			int[] currVersion = splitVersionString(latestVerStr);
+			int minLen = Math.min(thisVersion.length, currVersion.length);
+			for (int i = 0; i < minLen && cmp == 0; i++) {
+				if (currVersion[i] < thisVersion[i]) {
+					cmp = -1;
+				}
+				else if (currVersion[i] > thisVersion[i]) {
+					cmp = 1;
+				}
+			}
+			if (cmp == 0 && minLen < currVersion.length) {
+				cmp = 1;
+			}
+		}
+		return (cmp > 0 ? latestVerStr : null);
+	}
+	
+	public void setRetrieveVersion(boolean retrieveVersion)
+	{
+		this.retrieveVersion = retrieveVersion;
+	}
+	// END KGU#300 2016-12-02
 
 	/*****************************************
 	 * the preferences dialog methods

@@ -65,6 +65,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig     2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig     2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig     2016.12.01      Bugfix #301: More precise check for parenthesis enclosing of log. conditions
  *
  ******************************************************************************************************
  *
@@ -353,7 +354,10 @@ public class PerlGenerator extends Generator {
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"if ( "+BString.replace(transform(_alt.getText().getText()),"\n","").trim()+" ) {");
 		String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
-		if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
+		// START KGU#301 2016-12-01: Bugfix #301
+		//if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
+		if (!this.suppressTransformation || !isParenthesized(condition))
+		// END KGU#301 2016-12-01
 		{
 			condition = "( " + condition + " )";
 		}
@@ -385,7 +389,10 @@ public class PerlGenerator extends Generator {
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"switch ( "+transform(_case.getText().get(0))+" ) {");
 		String selector = transform(_case.getText().get(0));
-		if (!this.suppressTransformation || !(selector.startsWith("(") && selector.endsWith(")")))
+		// START KGU#301 2016-12-01: Bugfix #301
+		//if (!this.suppressTransformation || !(selector.startsWith("(") && selector.endsWith(")")))
+		if (!this.suppressTransformation || !isParenthesized(selector))
+		// END KGU#301 2016-12-01
 		{
 			selector = "( " + selector + " )";			
 		}
@@ -507,7 +514,10 @@ public class PerlGenerator extends Generator {
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"while ("+BString.replace(transform(_while.getText().getText()),"\n","").trim()+") {");
     	String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
-    	if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
+		// START KGU#301 2016-12-01: Bugfix #301
+		//if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
+		if (!this.suppressTransformation || !isParenthesized(condition))
+		// END KGU#301 2016-12-01
     	{
     		condition = "( " + condition + " )";
     	}
@@ -536,7 +546,10 @@ public class PerlGenerator extends Generator {
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+")) {");
     	String condition = BString.replace(transform(_repeat.getText().getText()),"\n","").trim();
-    	if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
+		// START KGU#301 2016-12-01: Bugfix #301
+		//if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
+		if (!this.suppressTransformation || !isParenthesized(condition))
+		// END KGU#301 2016-12-01
     	{
     		condition = "( " + condition + " )";
     	}

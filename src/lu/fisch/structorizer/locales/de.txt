@@ -85,6 +85,7 @@
  *      Kay Gürtzig         2016.10.18  Enh. #267: Analyser check 15 reformulated.
  *      Kay Gürtzig         2016.11.08  Enh. #270: Editor.btnDisable.tooltip added
  *      Kay Gürtzig         2016.11.10  Enh. #286: AnalyserPreferences tabs
+ *      Kay Gürtzig         2016.12.02  Enh. #300: New messages for update retrieval
  *
  ******************************************************************************************************
  *
@@ -196,6 +197,8 @@ Menu.menuDiagramWheel.text=Mausrad zum Reduzieren?
 Menu.menuPreferences.text=Einstellungen
 Menu.menuPreferences.mnemonic=s
 // Submenu of "Preferences"
+Menu.menuPreferencesNotifyUpdate.text=Neue Versionen melden
+Menu.menuPreferencesNotifyUpdate.tooltip=Structorizer erlauben, auf der Structorizer-Homepage nach Updates zu suchen und auf neue Versionen hinzuweisen.
 Menu.menuPreferencesFont.text=Zeichensätze ...
 Menu.menuPreferencesColors.text=Farben ...
 Menu.menuPreferencesOptions.text=Strukturen ...
@@ -271,6 +274,10 @@ Menu.lblRefactorNone.text=nein
 Menu.lblRefactorCurrent.text=aktuelles
 Menu.lblRefactorAll.text=alle
 Menu.msgReplacementsDone.text=% Anweisungen ersetzt.
+Menu.msgNewerVersionAvail.text=Neuere Version % zum Download verfügbar.
+Menu.msgUpdateInfoHint.text=Um über neue Versionen informiert zu werden kann im Einstellungen-Menü\ndie Online-Suche nach Updates auf der Structorizer Homepage aktiviert werden.
+Menu.lblOk.text=OK
+Menu.lblSuppressUpdateHint.text=Diesen Hinweis nicht mehr anzeigen
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!

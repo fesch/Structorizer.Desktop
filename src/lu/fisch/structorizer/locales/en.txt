@@ -82,6 +82,7 @@
  *      Kay Gürtzig     2016.10.16      Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
  *      Kay Gürtzig     2016.11.08      Enh. #270: Editor.btnDisable.tooltip added
  *      Kay Gürtzig     2016.11.10      Enh. #286: AnalyserPreferences tabs
+ *      Kay Gürtzig     2016.12.02      Enh. #300: New messages for update retrieval
  *
  ******************************************************************************************************
  *
@@ -198,6 +199,8 @@ Menu.menuDiagramWheel.text=Mouse wheel for collapsing?
 Menu.menuPreferences.text=Preferences
 Menu.menuPreferences.mnemonic=p
 // Submenu of "Preferences"
+Menu.menuPreferencesNotifyUpdate.text=Notify of new versions
+Menu.menuPreferencesNotifyUpdate.tooltip=Allow Structorizer to retrieve version info from Structorizer homepage and to inform about new releases.
 Menu.menuPreferencesFont.text=Font ...
 Menu.menuPreferencesColors.text=Colors ...
 Menu.menuPreferencesOptions.text=Structures ...
@@ -273,6 +276,10 @@ Menu.lblRefactorNone.text=no
 Menu.lblRefactorCurrent.text=current diagram
 Menu.lblRefactorAll.text=all diagrams
 Menu.msgReplacementsDone.text=% instructions replaced.
+Menu.msgNewerVersionAvail.text=Newer version % available for download.
+Menu.msgUpdateInfoHint.text=If you want to get informed about available new versions\nyou may enable version retrieval from Structorizer homepage\nin the preferences menu.
+Menu.lblOk.text=OK
+Menu.lblSuppressUpdateHint.text=Don't show this window again
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!

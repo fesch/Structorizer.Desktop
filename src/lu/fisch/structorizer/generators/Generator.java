@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.generators;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -58,6 +59,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.10.13      Enh. #270: Basic functionality for disabled elements (addCode()))
  *      Kay Gürtzig     2016.10.15      Enh. #271: transformInput() and signature of getOutputReplacer() modified
  *      Kay Gürtzig     2016.10.16      Bugfix #275: Defective subroutine registration for topological sort mended
+ *      Kay Gürtzig     2016.12.01      Bugfix #301: New method boolean isParenthesized(String)
  *
  ******************************************************************************************************
  *
@@ -83,7 +85,8 @@ package lu.fisch.structorizer.generators;
  *      - method insertComment renamed to insertAsComment (as it inserts the instruction text!)
  *      - overloaded method insertComment added to export the actual element comment
  *      
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import java.awt.Frame;
 import java.io.*;
@@ -1477,6 +1480,30 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		return code.getText();
 	}
 	// END KGU#178 2016-07-20
+	
+	// START KGU#301 2016-12-01: Bugfix #301
+	protected static boolean isParenthesized(String expression)
+	{
+		boolean isEnclosed = expression.startsWith("(") && expression.endsWith(")");
+		if (isEnclosed) {
+			StringList tokens = Element.splitLexically(expression, true);
+			int level = 0;
+			for (int i = 0; isEnclosed && i < tokens.count(); i++) {
+				String token = tokens.get(i);
+				if (token.equals("(")) {
+					level++;
+				}
+				else if (token.equals(")")) {
+					level--;
+					if (level == 0 && i < tokens.count()-1) {
+						isEnclosed = false;
+					}
+				}
+			}
+		}
+		return isEnclosed;
+	}
+	// END KGU#301 2016-12-01
 	
 	// START KGU#187 2016-04-28: Enh. 179 batch mode
 	/*****************************************
