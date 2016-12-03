@@ -75,7 +75,8 @@ Current development version: 3.25-09 (2016.12.02)
 - 09: Issue #294: Test coverage rules for CASE elements w/o default branch refined <2>
 - 09: Enh. #300: New option for online update retrieval and version notification <2>
 - 09: Bugfix #301: Parentheses handling around conditions on code export fixed <2>
-- 09: Enh. #302: New Turtleizer procedure setBackground(red, green, blue) [newboerg]2
+- 09: Enh. #302: New Turtleizer procedures setPenColor, setBackground [newboerg]2
+- 09: Bugfix #302: Effects of previous penUp and hideTurtle now undone on new start <2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2
