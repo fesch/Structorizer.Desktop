@@ -62,6 +62,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.10.14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. 271: Support for input instructions with prompt
  *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig             2016.12.01      Bugfix #301: More sophisticated test for condition enclosing by parentheses
  *
  ******************************************************************************************************
  *
@@ -435,7 +436,10 @@ public class CGenerator extends Generator {
 		
 		String condition = transform(_alt.getText().getLongString(), false)
 				.trim();
-		if (!condition.startsWith("(") || !condition.endsWith(")"))
+		// START KGU#301 2016-12-01: Bugfix #301
+		//if (!condition.startsWith("(") || !condition.endsWith(")"))
+		if (!isParenthesized(condition))
+		// END KGU#301 2016-12-01
 			condition = "(" + condition + ")";
 		
 		insertBlockHeading(_alt, "if " + condition, _indent);
@@ -457,7 +461,10 @@ public class CGenerator extends Generator {
 		
 		StringList lines = _case.getText();
 		String condition = transform(lines.get(0), false);
-		if (!condition.startsWith("(") || !condition.endsWith(")")) {
+		// START KGU#301 2016-12-01: Bugfix #301
+		//if (!condition.startsWith("(") || !condition.endsWith(")")) {
+		if (!isParenthesized(condition)) {
+		// END KGU#301 2016-12-01
 			condition = "(" + condition + ")";
 		}
 
@@ -647,7 +654,10 @@ public class CGenerator extends Generator {
 
 		String condition = transform(_while.getText().getLongString(), false)
 				.trim();
-		if (!condition.startsWith("(") || !condition.endsWith(")")) {
+		// START KGU#301 2016-12-01: Bugfix #301
+		//if (!condition.startsWith("(") || !condition.endsWith(")")) {
+		if (!isParenthesized(condition)) {
+		// END KGU#301 2016-12-01
 			condition = "(" + condition + ")";
 		}
 
@@ -668,8 +678,15 @@ public class CGenerator extends Generator {
 
 		generateCode(_repeat.q, _indent + this.getIndent());
 
-		insertBlockTail(_repeat, "while (!(" 
-				+ transform(_repeat.getText().getLongString()).trim() + "))", _indent);
+		// START KGU#301 2016-12-01: Bugfix #301
+		//insertBlockTail(_repeat, "while (!(" 
+		//		+ transform(_repeat.getText().getLongString()).trim() + "))", _indent);
+		String condition = transform(_repeat.getText().getLongString()).trim();
+		if (!isParenthesized(condition)) {
+			condition = "(" + condition + ")";
+		}
+		insertBlockTail(_repeat, "while (!" + condition + ")", _indent);
+		// END KGU#301 2016-12-01
 	}
 
 	@Override

@@ -50,7 +50,9 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.08.08      Issues #220, #224: Look-and Feel updates for Executor and Translator
  *      Kay Gürtzig     2016.09.09      Locales backwards compatibility precaution for release 3.25 in loadFromIni()
  *      Kay Gürtzig     2016.10.11      Enh. #267: New method updateAnalysis() introduced
- *      Kay Gürtzig     2016.11.01      Issue #81: Scale factor from Ini also applied to fonts  
+ *      Kay Gürtzig     2016.11.01      Issue #81: Scale factor from Ini also applied to fonts
+ *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded except for icons, ensured to be >= 1
+ *      Kay Gürtzig     2016.12.02      Enh. #300: Notification of disabled version retrieval or new versions  
  *
  ******************************************************************************************************
  *
@@ -95,6 +97,10 @@ public class Mainform  extends LangFrame implements NSDController
 	private Editor editor = null;
 	
 	private String laf = null;
+	// START KGU#300 2016-12-02: Enh. #300
+	// The version for which information about update retrieval was last suppressed
+	private String suppressUpdateHint = "";
+	// END KGU#300 2016-12-02
 	
 	// START KGU#49/KGU#66 2015-11-14: This decides whether to exit or just to dispose when being closed
 	private boolean isStandalone = true;	// The default is to exit...
@@ -260,12 +266,17 @@ public class Mainform  extends LangFrame implements NSDController
 			ini.load();
 			ini.load();	// FIXME: Why is it done twice?
 
-			double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1")).intValue();
-			IconLoader.setScaleFactor(scaleFactor);
+			// START KGU#287 2016-11-09: Issue #81 - don't allow scaling factors < 1
+			//double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1")).intValue();
+			//IconLoader.setScaleFactor(scaleFactor);
+			Double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
+			if (scaleFactor < 1) scaleFactor = 1.0;
+			IconLoader.setScaleFactor(scaleFactor.intValue());
+			// END KGU#287 2016-11-09
 			
 			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
-			int defaultWidth = (int)(750 * scaleFactor);
-			int defaultHeight = (int)(550 * scaleFactor);
+			int defaultWidth = 750 * scaleFactor.intValue();
+			int defaultHeight = 550 * scaleFactor.intValue();
 			// END KGU#287 2016-11-01
 			// position
 			int top = Integer.valueOf(ini.getProperty("Top","0"));
@@ -286,6 +297,10 @@ public class Mainform  extends LangFrame implements NSDController
 			if (width <= 0) width = defaultWidth;
 			if (height <= 0) height = defaultHeight;
 			// END KGU#287 2016-11-01
+			
+			// START KGU#300 2016-12-02: Enh. #300
+			suppressUpdateHint = ini.getProperty("suppressUpdateHint", "");
+			// END KGU#300 2016-12-02
 			
 			// language	
 			String localeFileName = ini.getProperty("Lang","en");
@@ -322,6 +337,9 @@ public class Mainform  extends LangFrame implements NSDController
 				//diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("file.separator")));
 				diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("user.home")));
 				// END KGU#95 2015-12-04
+				// START KGU#300 2016-12-02: Enh. #300
+				diagram.retrieveVersion = ini.getProperty("retrieveVersion", "false").equals("true");
+				// END KGU#300 2016-12-02
 				
 				// DIN 66261
 				if (ini.getProperty("DIN","0").equals("1")) // default = 0
@@ -416,13 +434,16 @@ public class Mainform  extends LangFrame implements NSDController
 			ini.setProperty("Width",Integer.toString(getWidth()));
 			ini.setProperty("Height",Integer.toString(getHeight()));
 
-			// current directory
+			// current directory, version retrieval
 			if(diagram!=null)
 			{
 				if(diagram.currentDirectory!=null)
 				{
 					ini.setProperty("currentDirectory",diagram.currentDirectory.getAbsolutePath());
 				}
+				// START KGU#300 2016-12-02: Enh. #300
+				ini.setProperty("retrieveVersion", Boolean.toString(diagram.retrieveVersion));
+				// END KGU#300 2016-12-02
 			}
 			
 			// language
@@ -447,6 +468,11 @@ public class Mainform  extends LangFrame implements NSDController
 			{
 				ini.setProperty("laf", laf);
 			}
+			
+			// START KGU#300 2016-12-02: Enh. #300
+			// Update hint suppression
+			ini.setProperty("suppressUpdateHint", this.suppressUpdateHint);
+			// END KGU#300 2016-12-02
 			
 			// recent files
 			if(diagram!=null)
@@ -473,6 +499,8 @@ public class Mainform  extends LangFrame implements NSDController
 	// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
 	private static void scaleDefaultFontSize(double factor) {
 
+		if (factor <= 1) return;
+		
 		Set<Object> keySet = UIManager.getLookAndFeelDefaults().keySet();
 		Object[] keys = keySet.toArray(new Object[keySet.size()]);
 
@@ -672,5 +700,27 @@ public class Mainform  extends LangFrame implements NSDController
     	}
     }
     // END KGU#278 2016-10-11
+    
+    // START KGU#300 2016-12-02: Enh. #300
+    public void notifyNewerVersion()
+    {
+    	if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
+    		if (!Element.E_VERSION.equals(this.suppressUpdateHint)) {
+    			int chosen = JOptionPane.showOptionDialog(this,
+    					Menu.msgUpdateInfoHint.getText().replace("%1", this.menu.menuPreferences.getText()).replace("%2", this.menu.menuPreferencesNotifyUpdate.getText()),
+    					Menu.lblHint.getText(),
+    					JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE,
+    					null,
+    					new String[]{Menu.lblOk.getText(), Menu.lblSuppressUpdateHint.getText()}, Menu.lblOk.getText());
+    			if (chosen != JOptionPane.OK_OPTION) {
+    				this.suppressUpdateHint = Element.E_VERSION;
+    			}
+    		}
+    	}
+    	else if (diagram != null) {
+    		diagram.updateNSD(false);
+    	}
+    }
+    // END KGU#300 2016-12-02
 	
 }

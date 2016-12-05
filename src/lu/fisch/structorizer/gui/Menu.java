@@ -67,6 +67,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.10.13      Enh. #270: Menu items for the disabling of elements
  *      Kay Gürtzig     2016.10.16      Enh. #272: Menu items for the replacement of Turtleizer command sets
  *      Kay Gürtzig     2016.11.17      Bugfix #114: Prerequisites for editing during execution revised
+ *      Kay Gürtzig     2016.12.02      Enh. #300: New menu entry to enable online update retrieval
  *
  ******************************************************************************************************
  *
@@ -221,9 +222,12 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JCheckBoxMenuItem menuDiagramCommentsPlusText = new JCheckBoxMenuItem("Comments plus texts?",IconLoader.ico111);
 	// END KGU#227 2016-07-31
 
-	// Menu "Help"
+	// Menu "Preferences"
 	protected final JMenu menuPreferences = new JMenu("Preferences");
-	// Submenu of "Help"
+	// Submenu of "Preferences"
+	// START KGU#300 2016-12-02: Enh. #300
+	protected final JCheckBoxMenuItem menuPreferencesNotifyUpdate = new JCheckBoxMenuItem("Notify of new versions?",IconLoader.ico052);
+	// END KGU#2016-12-02
 	protected final JMenuItem menuPreferencesFont = new JMenuItem("Font ...",IconLoader.ico023);
 	protected final JMenuItem menuPreferencesColors = new JMenuItem("Colors ...",IconLoader.ico031);
 	protected final JMenuItem menuPreferencesOptions = new JMenuItem("Structures ...",IconLoader.ico040);
@@ -368,6 +372,13 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#282 2016-10-17: Enh. #272
 	public static final LangTextHolder msgReplacementsDone = new LangTextHolder("% instructions replaced.");	
 	// END KGU#282 2016-10-17
+	// START KGU#300 2016-12-02: Enh. #300
+	public static final LangTextHolder msgNewerVersionAvail = new LangTextHolder("A newer version % is available for download.");
+	public static final LangTextHolder msgUpdateInfoHint = new LangTextHolder("If you want to get notified of available new versions\nyou may enable update retrieval from Structorizer homepage\nvia menu item \"%1\" > \"%2\".");
+	public static final LangTextHolder lblOk = new LangTextHolder("OK");
+	public static final LangTextHolder lblSuppressUpdateHint = new LangTextHolder("Don't show this window again");
+	public static final LangTextHolder lblHint = new LangTextHolder("Hint");
+	// END KGU#300 2016-12-02
 
 	public void create()
 	{
@@ -771,6 +782,12 @@ public class Menu extends LangMenuBar implements NSDController
 		menubar.add(menuPreferences);
 		menuPreferences.setMnemonic(KeyEvent.VK_P);
 
+		// START KGU#300 2016-12-02: Enh. #300
+		menuPreferences.add(menuPreferencesNotifyUpdate);
+		menuPreferencesNotifyUpdate.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setRetrieveVersion(menuPreferencesNotifyUpdate.isSelected()); } } );
+		menuPreferencesNotifyUpdate.setToolTipText("Allow Structorizer to retrieve version info from Structorizer homepage and to inform about new releases.");
+		// END KGU#2016-12-02
+
 		menuPreferences.add(menuPreferencesFont);
 		menuPreferencesFont.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.fontNSD(); doButtons(); } } );
 
@@ -1161,6 +1178,10 @@ public class Menu extends LangMenuBar implements NSDController
 			// control the collapsing by mouse wheel?
 			menuDiagramWheel.setSelected(diagram.getWheelCollapses());
 			// END KGU#123 2016-01-04
+			
+			// START KGU#300 2016-12-02: Enh. #300
+			menuPreferencesNotifyUpdate.setSelected(Ini.getInstance().getProperty("retrieveVersion", "false").equals("true"));
+			// END KGU#300 2016-12-02
 
 			// Look and Feel submenu
 			//System.out.println("Having: "+UIManager.getLookAndFeel().getName());

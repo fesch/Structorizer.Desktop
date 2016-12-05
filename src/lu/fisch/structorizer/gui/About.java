@@ -34,6 +34,8 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.29      First Issue
+ *      Kay Gürtzig     2016.11.02      Issue #81: Scaling as workaround for lacking DPI awareness
+ *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded.
  *
  ******************************************************************************************************
  *
@@ -91,12 +93,12 @@ public class About extends LangDialog implements ActionListener, KeyListener
 		// set windows size
 		// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
 		//setSize(650, 400);
-		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1")).intValue();
-		setSize((int)(650 * scaleFactor), (int)(400*scaleFactor));
+		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
+		setSize((int)(650 * scaleFactor), (int)(400 * scaleFactor));
 		// END KGU#287 2016-11-02
 		// show form
 		setVisible(false);
-		// set action to perfom if closed
+		// set action to perform if closed
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		// set icon
 

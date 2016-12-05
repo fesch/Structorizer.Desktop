@@ -57,7 +57,12 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
     private double angle = -90;
     private Image image = (new ImageIcon(this.getClass().getResource("turtle.png"))).getImage();
     private boolean penDown = true;
-    private Color penColor = Color.BLACK;
+    // START KGU#303 2016-12-02: Enh. #302
+    //private Color penColor = Color.BLACK;
+    private Color defaultPenColor = Color.BLACK;
+    private Color backgroundColor = Color.WHITE;
+    private Color penColor = defaultPenColor;
+    // END KGU#303 2016-12-02
     private boolean turtleHidden = false;
     private int delay = 10;
     private Vector<Element> elements = new Vector<Element>();
@@ -71,9 +76,15 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
             ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
 
             // clear background
-            g.setColor(Color.WHITE);
+            // START KGU#303 2016-12-02: Enh. #302
+            //g.setColor(Color.WHITE);
+            g.setColor(backgroundColor);
+            // END KGU#303 2016-12-02
             g.fillRect(0,0,getWidth(),getHeight());
-            g.setColor(Color.BLACK);
+            // START KGU#303 2016-12-03: Enh. #302
+            //g.setColor(Color.BLACK);
+            g.setColor(defaultPenColor);
+            // END KGU#303 2016-12-03
 
             // draw all elements
             for(Element ele : elements)
@@ -158,12 +169,38 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
     public void setVisible(boolean visible)
     {
         super.setVisible(visible);
-        elements.clear();
-        angle=-90;
-        setPos(new Point(panel.getWidth()/2,panel.getHeight()/2));
+// START KGU#303 2016-12-03: Issue #302 - replaced by reinit() call below
+//        elements.clear();
+//        angle=-90;
+//        // START KGU#303 2016-12-02: Enh. #302
+//        backgroundColor = Color.WHITE;
+//        defaultPenColor = Color.BLACK;
+//        turtleHidden = false;
+//        // END KGU#3032016-12-02
+//        setPos(new Point(panel.getWidth()/2,panel.getHeight()/2));
+// END KGU#303 2016-12-03
         home = new Point(panel.getWidth()/2,panel.getHeight()/2);
+        // START KGU#303 2016-12-03: Issue #302 - replaces disabled code above
+        reinit();
+        // END KGU#303 2016-12-03
         paint(this.getGraphics());
     }
+    
+    // START KGU#303 2016-12-03: Issue #302
+    /**
+     * Undoes all possible impacts of a previous main diagram execution  
+     */
+    private void reinit()
+    {
+        elements.clear();
+        angle = -90;
+        backgroundColor = Color.WHITE;
+        defaultPenColor = Color.BLACK;
+        turtleHidden = false;
+        setPos(home.getLocation());
+        penDown();
+    }
+    // END KGU#303 2016-12-03
 
     private void delay()
     {
@@ -260,6 +297,32 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
     {
         rr(angle);
     }
+    
+    // START KGU#303 2016-12-02: Enh. #302
+    public void setBackgroundColor(Color bgColor)
+    {
+    	backgroundColor = bgColor;
+    	panel.repaint();
+    }
+
+    public void setBackgroundColor(int red, int green, int blue)
+    {
+    	backgroundColor = new Color(Math.min(255, red), Math.min(255, green), Math.min(255, blue));
+    	delay();
+    }
+
+    public void setPenColor(Color penColor)
+    {
+    	defaultPenColor = penColor;
+    	panel.repaint();
+    }
+
+    public void setPenColor(int red, int green, int blue)
+    {
+    	defaultPenColor = new Color(Math.min(255, red), Math.min(255, green), Math.min(255, blue));
+    	delay();
+    }
+    // END KGU#303 2016-12-02
 
     public double getAngleToHome()
     {
@@ -362,21 +425,6 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
 
     private String parseFunctionParam(String str, int count)
     {
-        if (str.trim().indexOf("(")!=-1)
-        {
-            String params = str.trim().substring(str.trim().indexOf("(")+1,str.trim().indexOf(")")).trim();
-            if(!params.equals(""))
-            {
-                StringList sl = StringList.explode(params,",");
-                return sl.get(count);
-            }
-            else return null;
-        }
-        else return null;
-    }
-
-    private Double parseFunctionParamDouble(String str, int count)
-    {
         String res = null;
         if (str.trim().indexOf("(")!=-1)
         {
@@ -387,16 +435,24 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
                 res = sl.get(count);
             }
         }
-        if( res == null) { return 0.0; }
-        else if (res.equals("")) { return 0.0; }
-        else { return Double.valueOf(res); }
+        return res;
+    }
+
+    private Double parseFunctionParamDouble(String str, int count)
+    {
+        String res = parseFunctionParam(str, count);
+        if( res == null || res.isEmpty() ) { return 0.0; }
+        return Double.valueOf(res);
     }
 
     public String execute(String message, Color color)
     {
         if(color.equals(Color.WHITE))
         {
-            this.setColor(Color.BLACK);
+        	// START KGU#303 2016-12-03: Enh. #302
+            //this.setColor(Color.BLACK);
+            this.setColor(defaultPenColor);
+            // END KGU#303 2016-12-03
         }
         else this.setColor(color);
         return execute(message);
@@ -407,17 +463,36 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
         String name = parseFunctionName(message);
         double param1 = parseFunctionParamDouble(message,0);
         double param2 = parseFunctionParamDouble(message,1);
+        // START KGU#303 2016-12-02: Enh. #302
+        double param3 = parseFunctionParamDouble(message,2);
+        // END KGU#303 2016-12-02
         String res = new String();
         if(name!=null)
         {
-           if (name.equals("init")) { elements.clear(); angle=-90; setPos(home.getLocation()); penDown(); setAnimationDelay((int) param1); }
+           if (name.equals("init")) {
+// START KGU#303 2016-12-03: Issue #302 - replaced by reinit() call
+//        	   elements.clear();
+//        	   angle=-90;
+//        	   // START KGU#303 2016-12-02: Enh. #302
+//        	   backgroundColor = Color.WHITE;
+//        	   // END KGU#3032016-12-02
+//        	   // START KGU#303 2016-12-03: Enh. #302
+//        	   defaultPenColor = Color.BLACK;
+//        	   turtleHidden = false;
+//        	   // END KGU#3032016-12-03
+//        	   setPos(home.getLocation());
+//        	   penDown();
+        	   reinit();
+// END KGU#303 2016-12-03
+        	   setAnimationDelay((int) param1);
+           }
            // START #272 2016-10-16 (KGU): Now different types (to allow to study rounding behaviour)
            //else if (name.equals("forward") || name.equals("fd")) { forward((int) param1); }
            //else if (name.equals("backward") || name.equals("bk")) { backward((int) param1); }
-           else if (name.equalsIgnoreCase("forward")) { forward(param1); }
-           else if (name.equalsIgnoreCase("backward")) { backward(param1); }
-           else if (name.equalsIgnoreCase("fd")) { fd((int)param1); }
-           else if (name.equalsIgnoreCase("bk")) { bk((int)param1); }
+           else if (name.equals("forward")) { forward(param1); }
+           else if (name.equals("backward")) { backward(param1); }
+           else if (name.equals("fd")) { fd((int)param1); }
+           else if (name.equals("bk")) { bk((int)param1); }
            // END #272 2016-10-16
            // START KGU 20141007: Wrong type casting mended (led to rotation biases)
            //else if (name.equals("left") || name.equals("rl")) { left((int) param1); }
@@ -432,6 +507,10 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
            else if (name.equals("gotoy")) { gotoY((int) param1); }
            else if (name.equals("hideturtle")) { hideTurtle(); }
            else if (name.equals("showturtle")) { showTurtle(); }
+           // START KGU#303 2016-12-02: Enh. #302 - A procedure to set the backgroud colour was requested
+           else if (name.equals("setbackground")) { setBackgroundColor((int)Math.abs(param1),(int)Math.abs(param2),(int)Math.abs(param3)); }
+           else if (name.equals("setpencolor")) { setPenColor((int)Math.abs(param1),(int)Math.abs(param2),(int)Math.abs(param3)); }
+           // END KGU#303 2016-12-02
            else { res="Function <"+name+"> not implemented!"; }
         }
         

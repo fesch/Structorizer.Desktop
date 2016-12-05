@@ -58,6 +58,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig             2016.12.01      Bugfix #301: More precise check for parenthesis enclosing of log. conditions
  *
  ******************************************************************************************************
  *
@@ -293,10 +294,13 @@ public class PHPGenerator extends Generator
 		insertComment(_alt, _indent);
 		// END KGU 2014-11-16
 
-        String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
-        if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+    	String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
+    	// START KGU#301 2016-12-01: Bugfix #301
+    	//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+    	if (!isParenthesized(condition)) condition = "(" + condition + ")";
+    	// END KGU#301 2016-12-01
 
-        addCode("if "+condition+"", _indent, isDisabled);
+    	addCode("if "+condition+"", _indent, isDisabled);
         addCode("{", _indent, isDisabled);
         generateCode(_alt.qTrue,_indent+this.getIndent());
         if(_alt.qFalse.getSize()!=0)
@@ -314,37 +318,40 @@ public class PHPGenerator extends Generator
     {
     	boolean isDisabled = _case.isDisabled();
     	
-		// START KGU 2014-11-16
-		insertComment(_case, _indent);
-		// END KGU 2014-11-16
+    	// START KGU 2014-11-16
+    	insertComment(_case, _indent);
+    	// END KGU 2014-11-16
 
-        StringList lines = _case.getText();
-        String condition = transform(_case.getText().get(0));
-        if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+    	StringList lines = _case.getText();
+    	String condition = transform(_case.getText().get(0));
+    	// START KGU#301 2016-12-01: Bugfix #301
+    	//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+    	if (!isParenthesized(condition)) condition = "(" + condition + ")";
+    	// END KGU#301 2016-12-01
 
-        addCode("switch "+condition+" ", _indent, isDisabled);
-        addCode("{", _indent, isDisabled);
+    	addCode("switch "+condition+" ", _indent, isDisabled);
+    	addCode("{", _indent, isDisabled);
 
-        for (int i=0; i<_case.qs.size()-1; i++)
-        {
-        	// START KGU#15 2015-11-02: Support for multiple constants per branch
-        	//code.add(_indent+this.getIndent()+"case "+_case.getText().get(i+1).trim()+":");
-        	StringList constants = StringList.explode(lines.get(i+1), ",");
-        	for (int j = 0; j < constants.count(); j++)
-        	{
-        		addCode("case " + constants.get(j).trim() + ":", _indent + this.getIndent(), isDisabled);
-        	}
-        	// END KGU#15 2015-11-02
-        	generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent());
-        	addCode("break;", _indent+this.getIndent()+this.getIndent(), isDisabled);
-        }
+    	for (int i=0; i<_case.qs.size()-1; i++)
+    	{
+    		// START KGU#15 2015-11-02: Support for multiple constants per branch
+    		//code.add(_indent+this.getIndent()+"case "+_case.getText().get(i+1).trim()+":");
+    		StringList constants = StringList.explode(lines.get(i+1), ",");
+    		for (int j = 0; j < constants.count(); j++)
+    		{
+    			addCode("case " + constants.get(j).trim() + ":", _indent + this.getIndent(), isDisabled);
+    		}
+    		// END KGU#15 2015-11-02
+    		generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent());
+    		addCode("break;", _indent+this.getIndent()+this.getIndent(), isDisabled);
+    	}
 
-        if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
-        {
-            addCode("default:", _indent+this.getIndent(), isDisabled);
-                generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());
-        }
-        addCode("}", _indent, isDisabled);
+    	if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+    	{
+    		addCode("default:", _indent+this.getIndent(), isDisabled);
+    		generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());
+    	}
+    	addCode("}", _indent, isDisabled);
     }
 
     @Override
@@ -416,18 +423,21 @@ public class PHPGenerator extends Generator
     protected void generateCode(While _while, String _indent)
     {
     	boolean isDisabled = _while.isDisabled();
-    	
-		// START KGU 2014-11-16
-		insertComment(_while, _indent);
-		// END KGU 2014-11-16
 
-        String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
-        if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+    	// START KGU 2014-11-16
+    	insertComment(_while, _indent);
+    	// END KGU 2014-11-16
 
-        addCode("while "+condition+" ", _indent, isDisabled);
-        addCode("{", _indent, isDisabled);
-        generateCode(_while.q,_indent+this.getIndent());
-        addCode("}", _indent, isDisabled);
+    	String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
+    	// START KGU#301 2016-12-01: Bugfix #301
+    	//if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
+    	if (!isParenthesized(condition)) condition = "(" + condition + ")";
+    	// END KGU#301 2016-12-01
+
+    	addCode("while "+condition+" ", _indent, isDisabled);
+    	addCode("{", _indent, isDisabled);
+    	generateCode(_while.q,_indent+this.getIndent());
+    	addCode("}", _indent, isDisabled);
     }
 
     @Override
@@ -445,7 +455,10 @@ public class PHPGenerator extends Generator
         // START KGU#162 2016-04-01: Enh. #144 - more tentative approach
         //code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+"));");
         String condition = BString.replace(transform(_repeat.getText().getText()),"\n","").trim();
-        if (!this.suppressTransformation || !(condition.startsWith("(") && !condition.endsWith(")")))
+        // START KGU#301 2016-12-01: Bugfix #301
+        //if (!this.suppressTransformation || !(condition.startsWith("(") && !condition.endsWith(")")))
+        if (!this.suppressTransformation || !isParenthesized(condition))
+        	// END KGU#301 2016-12-01
         {
         	condition = "( " + condition + " )";
         }

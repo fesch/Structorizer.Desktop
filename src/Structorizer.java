@@ -35,6 +35,7 @@
  *      Kay Gürtzig     2016.04.28      First draft for enh. #179 - batch generator mode (KGU#187)
  *      Kay Gürtzig     2016.05.03      Prototype for enh. #179 - incl. batch parser and help (KGU#187)
  *      Kay Gürtzig     2016.05.08      Issue #185: Capability of multi-routine import per file (KGU#194)
+ *      Kay Gürtzig     2016.12.02      Enh. #300: Information about updates on start in interactive mode
  *
  ******************************************************************************************************
  *
@@ -150,10 +151,10 @@ public class Structorizer
 			int start = 0;
 			if (args.length > 0 && args[0].equals("-open"))
 				start=1;
-			// FIXME (KGU): This does not really make sense
+			// FIXME (KGU): It seems this was to address file names with spaces...
 			for (int i=start; i<args.length; i++)
 			{
-				s += args[i];
+				s += args[i] + " ";
 			}
 			//System.out.println("Opening from shell: "+s);
 			// START KGU#111 2015-12-16: Bugfix #63 - no open attempt without need
@@ -211,7 +212,9 @@ public class Structorizer
 			}
 		}/**/
 
-
+		// START KGU#300 2016-12-02
+		mainform.notifyNewerVersion();
+		// END KGU#300 2016-12-02
 	}
 	
 	// START KGU#187 2016-05-02: Enh. #179
@@ -479,5 +482,5 @@ public class Structorizer
 		System.out.println("");
 	}
 	// END KGU#187 2016-05-02
-	
+		
 }

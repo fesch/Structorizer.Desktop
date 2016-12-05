@@ -106,6 +106,7 @@ package lu.fisch.structorizer.executor;
  *                                      of ' into " in method convert() eliminated
  *      Kay Gürtzig     2016.11.19      Issue #269: Scrolling problem eventually solved.
  *      Kay Gürtzig     2016.11.22      Bugfix #293: input and output boxes no longer popped up at odd places on screen.
+ *      Kay Gürtzig     2016.11.22/25   Issue #294: Test coverage rules for CASE elements without default branch refined
  *
  ******************************************************************************************************
  *
@@ -2860,7 +2861,8 @@ public class Executor implements Runnable
 			// END KGU#259 2016-09-25
 			boolean done = false;
 			int last = text.count() - 1;
-			if (text.get(last).trim().equals("%"))
+			boolean hasDefaultBranch = !text.get(last).trim().equals("%");
+			if (!hasDefaultBranch)
 			{
 				last--;
 			}
@@ -2875,8 +2877,7 @@ public class Executor implements Runnable
 				String[] constants = text.get(q).split(",");
 				// END KGU#15 2015-10-21
 				boolean go = false;
-				if ((q == last)
-						&& !text.get(text.count() - 1).trim().equals("%"))
+				if ((q == last) && hasDefaultBranch)
 				{
 					// default branch
 					go = true;
@@ -2909,33 +2910,25 @@ public class Executor implements Runnable
 				{
 					done = true;
 					element.waited = true;
-					// START KGU#117 2016-03-07: Enh. #77 - consistent subqueue handling
-//					int i = 0;
-//					// START KGU#78 2015-11-25: Leave if a loop exit is open
-//					// START KGU#77 2015-11-11: Leave if a return statement has been executed
-//					//while ((i < element.qs.get(q - 1).children.size())
-//					//		&& result.equals("") && (stop == false))
-//					while ((i < element.qs.get(q - 1).getSize())
-//							&& result.equals("") && (stop == false) && !returned)
-//					// END KGU#77 2015-11-11
-//					{
-//						result = step(element.qs.get(q - 1).getElement(i));
-//						i++;
-//					}
 					if (result.isEmpty())
 					{
 						result = stepSubqueue(element.qs.get(q - 1), false);
 					}
-					// END KGU#117 2016-03-07
 					if (result.equals(""))
 					{
 						element.waited = false;
 					}
 				}
-
 			}
 			if (result.equals(""))
 			{
+				// START KGU#296 2016-11-25: Issue #294 - special coverage treatment for default-less CASE
+				if (!done && !hasDefaultBranch) {
+					// In run data tracking mode it is required that the suppressed default branch
+					// has been passed at least once to achieve deep test coverage
+					element.qs.get(last).deeplyCovered = true;
+				}
+				// END KGU#296 2016-11-25
 				element.executed = false;
 				element.waited = false;
 			}
