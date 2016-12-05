@@ -707,8 +707,10 @@ public class Mainform  extends LangFrame implements NSDController
     	if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
     		if (!Element.E_VERSION.equals(this.suppressUpdateHint)) {
     			int chosen = JOptionPane.showOptionDialog(this,
-    					Menu.msgUpdateInfoHint.getText(), null,
-    					JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null,
+    					Menu.msgUpdateInfoHint.getText().replace("%1", this.menu.menuPreferences.getText()).replace("%2", this.menu.menuPreferencesNotifyUpdate.getText()),
+    					Menu.lblHint.getText(),
+    					JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE,
+    					null,
     					new String[]{Menu.lblOk.getText(), Menu.lblSuppressUpdateHint.getText()}, Menu.lblOk.getText());
     			if (chosen != JOptionPane.OK_OPTION) {
     				this.suppressUpdateHint = Element.E_VERSION;

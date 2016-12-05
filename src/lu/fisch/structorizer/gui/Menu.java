@@ -374,9 +374,10 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#282 2016-10-17
 	// START KGU#300 2016-12-02: Enh. #300
 	public static final LangTextHolder msgNewerVersionAvail = new LangTextHolder("A newer version % is available for download.");
-	public static final LangTextHolder msgUpdateInfoHint = new LangTextHolder("If you want to get notified of available new versions\nyou may enable update retrieval from Structorizer homepage\nin the preferences menu.");
+	public static final LangTextHolder msgUpdateInfoHint = new LangTextHolder("If you want to get notified of available new versions\nyou may enable update retrieval from Structorizer homepage\nvia menu item \"%1\" > \"%2\".");
 	public static final LangTextHolder lblOk = new LangTextHolder("OK");
 	public static final LangTextHolder lblSuppressUpdateHint = new LangTextHolder("Don't show this window again");
+	public static final LangTextHolder lblHint = new LangTextHolder("Hint");
 	// END KGU#300 2016-12-02
 
 	public void create()

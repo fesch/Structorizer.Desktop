@@ -425,21 +425,6 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
 
     private String parseFunctionParam(String str, int count)
     {
-        if (str.trim().indexOf("(")!=-1)
-        {
-            String params = str.trim().substring(str.trim().indexOf("(")+1,str.trim().indexOf(")")).trim();
-            if(!params.equals(""))
-            {
-                StringList sl = StringList.explode(params,",");
-                return sl.get(count);
-            }
-            else return null;
-        }
-        else return null;
-    }
-
-    private Double parseFunctionParamDouble(String str, int count)
-    {
         String res = null;
         if (str.trim().indexOf("(")!=-1)
         {
@@ -450,9 +435,14 @@ public class TurtleBox extends JFrame implements DelayableDiagramController
                 res = sl.get(count);
             }
         }
-        if( res == null) { return 0.0; }
-        else if (res.equals("")) { return 0.0; }
-        else { return Double.valueOf(res); }
+        return res;
+    }
+
+    private Double parseFunctionParamDouble(String str, int count)
+    {
+        String res = parseFunctionParam(str, count);
+        if( res == null || res.isEmpty() ) { return 0.0; }
+        return Double.valueOf(res);
     }
 
     public String execute(String message, Color color)
