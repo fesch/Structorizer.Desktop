@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.25-09 (2016.12.02)
+Current development version: 3.25-10 (2016.12.07)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
 - 01: Issue #213: Selected state of FOR transmutation result now visible <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
@@ -77,6 +77,7 @@ Current development version: 3.25-09 (2016.12.02)
 - 09: Bugfix #301: Parentheses handling around conditions on code export fixed <2>
 - 09: Enh. #302: New Turtleizer procedures setPenColor, setBackground [newboerg]2
 - 09: Bugfix #302: Effects of previous penUp and hideTurtle now undone on new start <2>
+- 10: Issue #304: Menu mnemonic translation damaged the menu with legacy JavaRE <2> 
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2

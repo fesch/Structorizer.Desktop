@@ -3817,49 +3817,54 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 
 			} catch (MalformedURLException e) {
-				e.printStackTrace();
+				System.err.println("Diagram.retrievaLatestVersion: " + e.toString());
 			} catch (IOException e) {
-				e.printStackTrace();
+				System.err.println("Diagram.retrievaLatestVersion: " + e.toString());
 			}
 		}
 		return version;
 	}
 
-	private static int[] splitVersionString(String version)
-	{
-		StringList versionParts = StringList.explode(version, "\\.");
-		versionParts = StringList.explode(versionParts, "-");
-		int[] versionNumbers = new int[versionParts.count()];
-		for (int i = 0; i < versionParts.count(); i++) {
-			try {
-				versionNumbers[i] = Integer.parseInt(versionParts.get(i));
-			}
-			catch (NumberFormatException ex) {
-				versionNumbers[i] = 0;
-			}
-		}
-		return versionNumbers;
-	}
+	// START KGU#300 2016-12-06: Not actually needed
+//	private static int[] splitVersionString(String version)
+//	{
+//		StringList versionParts = StringList.explode(version, "\\.");
+//		versionParts = StringList.explode(versionParts, "-");
+//		int[] versionNumbers = new int[versionParts.count()];
+//		for (int i = 0; i < versionParts.count(); i++) {
+//			try {
+//				versionNumbers[i] = Integer.parseInt(versionParts.get(i));
+//			}
+//			catch (NumberFormatException ex) {
+//				versionNumbers[i] = 0;
+//			}
+//		}
+//		return versionNumbers;
+//	}
+	// END KGU#300 2016-12-06
 	
 	public String getLatestVersionIfNewer()
 	{
 		int cmp = 0;
 		String latestVerStr = retrieveLatestVersion();
 		if (latestVerStr != null) {
-			int[] thisVersion = splitVersionString(Element.E_VERSION);
-			int[] currVersion = splitVersionString(latestVerStr);
-			int minLen = Math.min(thisVersion.length, currVersion.length);
-			for (int i = 0; i < minLen && cmp == 0; i++) {
-				if (currVersion[i] < thisVersion[i]) {
-					cmp = -1;
-				}
-				else if (currVersion[i] > thisVersion[i]) {
-					cmp = 1;
-				}
-			}
-			if (cmp == 0 && minLen < currVersion.length) {
-				cmp = 1;
-			}
+			// START KGU#300 2016-12-06: The lexicographic comparison is quite perfect here
+//			int[] thisVersion = splitVersionString(Element.E_VERSION);
+//			int[] currVersion = splitVersionString(latestVerStr);
+//			int minLen = Math.min(thisVersion.length, currVersion.length);
+//			for (int i = 0; i < minLen && cmp == 0; i++) {
+//				if (currVersion[i] < thisVersion[i]) {
+//					cmp = -1;
+//				}
+//				else if (currVersion[i] > thisVersion[i]) {
+//					cmp = 1;
+//				}
+//			}
+//			if (cmp == 0 && minLen < currVersion.length) {
+//				cmp = 1;
+//			}
+			cmp = latestVerStr.compareTo(Element.E_VERSION);
+			// END KGU#300 2016-12-06
 		}
 		return (cmp > 0 ? latestVerStr : null);
 	}
