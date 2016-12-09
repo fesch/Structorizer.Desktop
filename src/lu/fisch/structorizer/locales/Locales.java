@@ -645,15 +645,13 @@ public class Locales {
                                 } // START KGU#184 2016-04-24: Enh. #173 - new mnemonic support (only works from Java 1.7 on)
                                 else if (piece2.equals("mnemonic")) {
                                     Method method = fieldClass.getMethod("setMnemonic", new Class[]{int.class});
-                                    // START KGU 2016-12-07: Issue #304 We must check the availability of a Java 1.7 method first.
+                                    // START KGU 2016-12-07: Issue #304 We must check the availability of a Java 1.7 method.
                                     try {
-                                        KeyEvent.class.getDeclaredMethod("getExtendedKeyCodeForChar", new Class[]{int.class});
-                                        // If we passed the reflection test above then we may go ahead... 
                                         int keyCode = KeyEvent.getExtendedKeyCodeForChar(parts.get(1).toLowerCase().charAt(0));
                                         if (keyCode != KeyEvent.VK_UNDEFINED && target != null) {
                                             method.invoke(target, new Object[]{Integer.valueOf(keyCode)});
                                         }
-                                    } catch (NoSuchMethodException ex) {
+                                    } catch (NoSuchMethodError ex) {
                                     	System.out.println("Locales: Mnemonic localization failed due to legacy JavaRE (at least 1.7 required).");
                                     }
                                     // END KGU 2016-12-07
