@@ -105,6 +105,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.18/19   Issue #269: Scroll to the element associated to a selected Analyser error
  *      Kay Gürtzig     2016.11.21      Issue #269: Focus alignment improved for large elements
  *      Kay Gürtzig     2016.12.02      Enh. #300: Update notification mechanism
+ *      Kay Gürtzig     2016.12.12      Enh, #305: Infrastructure for Arranger root list
  *
  ******************************************************************************************************
  *
@@ -197,6 +198,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     // END KGU#2 2015-11-24
 
     private JList<DetectedError> errorlist = null;
+    private JList<Root> diagramIndex = null;
 
     private Element eCopy = null;
 
@@ -233,6 +235,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         if(_editor!=null)
         {
             errorlist=_editor.errorlist;
+            diagramIndex = _editor.diagramIndex;
             NSDControl = _editor;
         }
         create(_string);
@@ -818,7 +821,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                                         if(NSDControl!=null) NSDControl.doButtons();
 				}*/
 			}
-			else
+			else if (e.getSource() == errorlist)
 			{
 				// an error list entry has been selected
 				if(errorlist.getSelectedIndex()!=-1)
@@ -851,6 +854,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU#200 2016-07-27
 				}
 			}
+			// START KGU#305 2016-12-12: Enh. #305
+			else if (e.getSource() == diagramIndex)
+			{
+				Arranger.scrollToDiagram(diagramIndex.getSelectedValue(), true);
+			}
+			// END KGU#305 2016-12-12
 		}
                 // edit the element
 		else if ((e.getClickCount() == 2))
@@ -884,7 +893,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					if(NSDControl!=null) NSDControl.doButtons();
 				}
 			}
-			else
+			else if (e.getSource() == errorlist)
 			{
 				// the error list has been clicked
 				if(errorlist.getSelectedIndex()!=-1)
@@ -897,6 +906,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					if(NSDControl!=null) NSDControl.doButtons();
 				}
 			}
+			// START KGU#305 2016-12-12: Enh. #305
+			else if (e.getSource() == diagramIndex)
+			{
+				Root selectedRoot = diagramIndex.getSelectedValue();
+				if (selectedRoot != null && selectedRoot != this.root) {
+					this.setRoot(selectedRoot, true);
+				}
+			}
+			// END KGU#305 2016-12-12
 		}
 	}
 
@@ -1378,7 +1396,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 	
 	/**
-	 * Stores unsaved changes (if any). If _checkChanges is true then the user may confirms or deny saving or cancel the
+	 * Stores unsaved changes (if any). If _checkChanges is true then the user may confirm or deny saving or cancel the
 	 * inducing request. 
 	 * @param _checkChanged - if true and the current root has unsaved changes then a user dialog will be popped up first
 	 * @return true if the user cancelled the save request
@@ -1389,13 +1407,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// only save if something has been changed
 		// START KGU#137 2016-01-11: Use the new method now
 		//if(root.hasChanged==true)
-		if (root.hasChanged())
+		if (!root.isEmpty() && root.hasChanged())
 		// END KGU#137 2016-01-11
 		{
 
 			if (_checkChanged==true)
 			{
-				// START KGU#49 2015-10-18: If induced by Arranger then it's less ambiguous to see the NSD name
+				// START KGU#49 2015-10-18: If induced by Arranger then it's less ambiguous seeing the NSD name
 				//res = JOptionPane.showOptionDialog(this,
 				//		   "Do you want to save the current NSD-File?",
 				String filename = root.filename;

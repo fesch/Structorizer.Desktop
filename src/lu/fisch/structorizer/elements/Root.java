@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -83,6 +84,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.10.12      Issue #271: user-defined prompt strings in input instructions
  *      Kay Gürtzig     2016.10.13      Enh. #270: Analyser checks for disabled elements averted.
  *      Kay Gürtzig     2016.11.22      Bugfix #295: Spurious error11 in return statements with equality comparison
+ *      Kay Gürtzig     2016.12.12      Enh. #306: New method isEmpty() for a Root without text, children, and undo entries
+ *                                      Enh. #305: Method getSignatureString() and Comparator SIGNATUR_ORDER added.
  *
  ******************************************************************************************************
  *
@@ -101,8 +104,8 @@ package lu.fisch.structorizer.elements;
  *        the recorded stack level will be set to an unreachable -1, because the saved state gets lost
  *        internally.
  *
- ******************************************************************************************************///
-
+ ******************************************************************************************************
+ */
 
 import java.util.Iterator;
 import java.util.Vector;
@@ -132,6 +135,7 @@ import com.stevesoft.pat.*;
 
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.Comparator;
 
 /**
  * @author kay
@@ -141,6 +145,22 @@ public class Root extends Element {
 	
 	// KGU 2015-10-16: Just for testing purposes
 	//private static int fileCounter = 1;
+
+	// START KGU#305 2016-12-12: Enh. #305
+	public static final Comparator<Root> SIGNATURE_ORDER =
+			new Comparator<Root>() {
+		public int compare(Root root1, Root root2)
+		{
+			String main_or_sub1 = root1.isProgram ? "M" : "S";
+			String main_or_sub2 = root2.isProgram ? "M" : "S";
+			int result = (main_or_sub1 + root1.getSignatureString(false)).compareTo(main_or_sub2 + root2.getSignatureString(true));
+			if (result == 0) {
+				result = ("" + root1.getPath()).compareTo("" + root2.getPath());
+			}
+			return result;
+		}
+	};
+	// END KGU#305 2016-12-12
 
 	// some fields
 	public boolean isNice = true;
@@ -309,6 +329,19 @@ public class Root extends Element {
 	}
 	// END KGU 2015-10-13
 	
+	// START KGU#306 2016-12-12: Enh. #306
+	public boolean isEmpty()
+	{
+		String txt = this.text.concatenate().trim();
+		boolean isEmpty = 
+				(txt.isEmpty() || txt.equals("???")) &&
+				this.comment.concatenate().trim().isEmpty() &&
+				this.children.getSize() == 0 &&
+				this.undoList.isEmpty() &&
+				this.redoList.isEmpty();
+		return isEmpty;
+	}
+	// END KGU#306 2016-12-12
 	
 	public Rect prepareDraw(Canvas _canvas)
 	{
@@ -2840,6 +2873,26 @@ public class Root extends Element {
     }
     // END KGU#78 2015-11-25
     
+    // START KGU#305 2016-12-12: Enh. #305 - representaton fo a Root list
+    /**
+     * Returns a string of the form &lt;method_name&gt;[(&lt;n_args&gt;)][: &lt;file_path&gt;].
+     * The parenthesized argument number (&lt;n_args&gt;) is only included if this is not a program,
+     * the file path appendix is only added if _addPath is true 
+     * @param _addPath - whether or not the file path is to be aded t the signature string
+     * @return the composed string
+     */
+    public String getSignatureString(boolean _addPath) {
+    	String presentation = this.getMethodName();
+    	if (!this.isProgram) {
+    		presentation += "(" + this.getParameterNames().count() + ")";
+    	}
+    	if (_addPath) {
+    		presentation += ": " + this.getPath();
+    	}
+    	return presentation;
+    }
+    // END KGU#305 2016-12-12
+	
     // START KGU#205 2016-07-19: Enh. #192 The proposed file name of subroutines should contain the argument number
     /**
      * Returns a String composed of the diagram name (actually the routine name)
@@ -2903,24 +2956,24 @@ public class Root extends Element {
             }
 
             // CHECK: correct identifier for programname (#7)
-			// START KGU#61 2016-03-22: Method outsourced
+            // START KGU#61 2016-03-22: Method outsourced
             //if(testidentifier(programName)==false)
-			if (!Function.testIdentifier(programName, null))
-			// END KGU#61 2016-03-22
+            if (!Function.testIdentifier(programName, null))
+            	// END KGU#61 2016-03-22
             {
                     //error  = new DetectedError("«"+programName+"» is not a valid name for a program or function!",this);
                     error  = new DetectedError(errorMsg(Menu.error07_1,programName),this);
                     addError(errors,error,7);
             }
-			
-			// START KGU#253 2016-09-22: Enh. #249: subroutine header syntax
-			// CHECK: subroutine header syntax (#20 - new!)
-			analyse_20(errors);
-			// END KGU#253 2016-09-22
-			
-			// START KGU#239 2016-08-12: Enh. #231: Test for name collisions
-			analyse_18_19(this, errors, uncertainVars, uncertainVars, vars);
-			// END KGU#239 2016-08-12
+
+            // START KGU#253 2016-09-22: Enh. #249: subroutine header syntax
+            // CHECK: subroutine header syntax (#20 - new!)
+            analyse_20(errors);
+            // END KGU#253 2016-09-22
+
+            // START KGU#239 2016-08-12: Enh. #231: Test for name collisions
+            analyse_18_19(this, errors, uncertainVars, uncertainVars, vars);
+            // END KGU#239 2016-08-12
 
             // CHECK: two checks in one loop: (#12 - new!) & (#7)
             for(int j=0; j<vars.count(); j++)

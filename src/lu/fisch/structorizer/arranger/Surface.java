@@ -60,7 +60,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.09.26      Enh. #253: New public method getAllRoots() added.
  *      Kay Gürtzig     2016.10.11      Enh. #267: New notification changes to the set of diarams now trigger analyser updates
  *      Kay Gürtzig     2016.11.14      Enh. #289: The dragging-in of arrangement files (.arr, .arrz) enabled.
- *      Kay Gürtzig     2016.11.15      Enh. #290: Further modifications to let a Mainform insert arrangements 
+ *      Kay Gürtzig     2016.11.15      Enh. #290: Further modifications to let a Mainform insert arrangements
+ *      Kay Gürtzig     2016.12.12      Enh. #305: New mechanism to update the Arranger indices in the related Mainforms 
  *
  ******************************************************************************************************
  *
@@ -137,7 +138,6 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
@@ -292,7 +292,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	}
 		// START KGU#278 2016-10-11: Enh. #267
     	if (nLoaded > 0) {
-    		updateAnalysers();
+    		notifyMainforms(true, true);
     	}
 		// END KGU#278 2016-10-11
     	return nLoaded;
@@ -769,7 +769,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// START KGU#278 2016-10-11: Enh. #267
     	if (nLoaded > 0)
     	{
-    		updateAnalysers();
+    		notifyMainforms(true, true);
     	}
 		// END KGU#278 2016-10-11
     	return done;
@@ -1065,7 +1065,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		}
     		// END KGU#110 2015-12-20
     		// START KGU 2016-03-14: Enh. #62
-    		// If it's the first diagram then adopt the crrent directory if possible
+    		// If it's the first diagram then adopt the current directory if possible
     		if (diagrams.isEmpty() && root.filename != null && !root.filename.isEmpty())
     		{
     			this.currentDirectory = new File(root.filename);
@@ -1096,9 +1096,17 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		}
     		// END KGU#88 2015-12-20
     		// START KGU#278 2016-10-11: Enh. #267
-    		updateAnalysers();
+    		notifyMainforms(true, true);
     		// END KGU#278 2016-10-11
     		// END KGU 2015-11-30
+    		// START KGU 2016-12-12: First unselect the selected diagram (if any)
+    		if (mouseSelected != null && mouseSelected.root != null)
+    		{
+    			mouseSelected.root.setSelected(false);
+    			mouseSelected = diagram;
+    			diagram.root.setSelected(true);
+    		}
+    		// END KGU 2016-12-12
     		repaint();
     		getDrawingRect();		// What was this good for?
     	// START KGU#2 2015-11-19
@@ -1107,19 +1115,30 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	else if (point != null)
     	{
     		diagram.point = point;
+    		// START KGU 2016-12-12: First unselect the selected diagram (if any)
+    		if (mouseSelected != null && mouseSelected.root != null)
+    		{
+    			mouseSelected.root.setSelected(false);
+    			mouseSelected = diagram;
+    			diagram.root.setSelected(true);
+    		}
+    		// END KGU 2016-12-12
     		repaint();
     		getDrawingRect();    	// What was this good for?
     	}
     	// END KGU#119 2016-01-02
     	if (form != null)
     	{
-        	// START KGU#125 2016-01-07: We allow adoption but only for orphaned diagrams
+    		// START KGU#125 2016-01-07: We allow adoption but only for orphaned diagrams
     		//diagram.mainform = form;
-        	if (diagram.mainform == null)
-        	{
-        		diagram.mainform = form;
-        	}
-        	// END KGU#125 2016-01-07
+    		if (diagram.mainform == null)
+    		{
+    			diagram.mainform = form;
+    			// START KGU#305 2016-12-12: Enh.#305
+    			form.updateArrangerIndex();
+    			// END KGU#305 2016-12-12
+    		}
+    		// END KGU#125 2016-01-07
     		root.addUpdater(this);
     	}
     	// END KGU#2 2015-11-19
@@ -1130,10 +1149,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     {
     	if (this.mouseSelected != null)
     	{
+    		boolean ask = true;
+    		Mainform form = this.mouseSelected.mainform;
     		// START KGU#194 2016-05-09: Bugfix #185 - on importing unsaved roots may linger here
     		if (this.mouseSelected.root.hasChanged())
     		{
-    			Mainform form = this.mouseSelected.mainform;
     			if (form == null || form.getRoot() != this.mouseSelected.root)
     			{
     				// Create a temporary Mainform
@@ -1148,6 +1168,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     					// User cancelled this - don't remove
     					return;
     				}
+    				form = this.mouseSelected.mainform;
+    				ask = false;
     			}
     		}
     		// END KGU#194 2016-05-09
@@ -1157,7 +1179,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		adaptLayout();
             repaint();
     		// START KGU#278 2016-10-11: Enh. #267
-    		updateAnalysers();
+    		Vector<Mainform> mainforms = notifyMainforms(true, true);
+    		if (form != null) {
+    			if (mainforms.contains(form) || form.isStandalone() || ask && !form.diagram.saveNSD(true)) {
+    				// Still connected via other diagrams or application root
+    				form.updateArrangerIndex();
+    			}
+    			else {
+    				form.dispose();
+    			}
+    		}
     		// END KGU#278 2016-10-11
     	}
     }
@@ -1204,7 +1235,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		// The content may not have been saved or may come from a different JVM
     		root.setChanged();
     		// START KGU#278 2016-10-11: Enh. #267
-    		updateAnalysers();
+    		notifyMainforms(true, true);
     		// END KGU#278 2016-10-11    		
     	}
     }
@@ -1383,6 +1414,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             			form.addWindowListener(this);
             			// With a new Mainform, refusal is not possible 
             			form.setRoot(mouseSelected.root);
+            			// START KGU#305 2016-12-12: Enh. #305
+            			form.updateArrangerIndex();
+            			// END KGU#305 2016-12-12
             		}
 
             		// change the default closing behaviour
@@ -1603,7 +1637,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		// END KGU#85 2015-11-18
     		this.repaint();
     		// START KGU#278 2016-10-11: Enh. #267
-    		updateAnalysers();
+    		notifyMainforms(true, true);
     		// END KGU#278 2016-10-11
     	}
     }
@@ -1688,15 +1722,18 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		}
     		this.repaint();
     	}
-	}
-	// END KGU#117 2016-03-08
-    
-	// START KGU#278 2016-10-11: Enh. #267 - added for consistency of Analyser Check 15.2
-	private void updateAnalysers()
-	{
+    }
+    // END KGU#117 2016-03-08
+
+    // START KGU#278 2016-10-11: Enh. #267 - added for consistency of Analyser Check 15.2
+    // START KGU#305 2016-12-12: Enh. for issue #305: More things to notify
+    //private void updateAnalyser()
+    private Vector<Mainform> notifyMainforms(boolean _analyser, boolean _index)
+    // END KGU#305 2016-12-12
+    {
+    	Vector<Mainform> mainforms = new Vector<Mainform>();
     	if (this.diagrams != null) {
     		// It will be a small number of Mainforms, so a Vector is okay
-    		Vector<Mainform> mainforms = new Vector<Mainform>();
     		for (int d = 0; d < this.diagrams.size(); d++) {
     			Diagram diagram = this.diagrams.get(d);
     			if (diagram.root != null && diagram.mainform != null) {
@@ -1705,13 +1742,19 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     				}
     			}
     		}
-        	for (int m = 0; m < mainforms.size(); m++)
-        	{
-        		mainforms.get(m).updateAnalysis();
-        	}
+    		for (int m = 0; m < mainforms.size(); m++)
+    		{
+    			if (_analyser) {
+    				mainforms.get(m).updateAnalysis();
+    			}
+    			if (_index) {
+    				mainforms.get(m).updateArrangerIndex();
+    			}        		
+    		}
     	}
+    	return mainforms;
 	}
-	// END KGU#278 2016-10-11
+	// END KGU#278 2016-10-11	
 	
     // Windows listener for the mainform
     // I need this to unregister the updater
@@ -1772,6 +1815,45 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		
 	}
 
+	// START KGU#305 2016-12-12: Enh. #305
+	/**
+	 * Scrolls to the given Root if found and selects it. If setAtTop is true then the diagram
+	 * will be raised to the top drawing level.
+	 * @param aRoot - the diagram to be focused
+	 * @param setAtTop - whether the diagram is to be drawn on top of all
+	 */
+	public void scrollToDiagram(Root aRoot, boolean setAtTop) {
+		Diagram diagr = this.findDiagram(aRoot, true);
+		if (diagr != null) {
+			if (setAtTop) {
+				this.diagrams.remove(diagr);
+				this.diagrams.add(diagr);
+				if (mouseSelected != null && mouseSelected != diagr && mouseSelected.root != null)
+				{
+					mouseSelected.root.setSelected(false);
+				}
+				mouseSelected = diagr;
+				diagr.root.setSelected(true);
+				this.repaint();
+			}
+			Rect rect = aRoot.getRect(diagr.point);
+			this.scrollRectToVisible(rect.getRectangle());
+		}
+	}
+	
+	/**
+	 * Returns the Root diagram currently selected in Arranger
+	 * @return Either a Root object or null (if none was selected)
+	 */
+	public Root getSelected() 
+	{
+		if (mouseSelected != null)
+		{
+			return mouseSelected.root;
+		}
+		return null;
+	}
+	// END KGU#305 2016-12-12
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

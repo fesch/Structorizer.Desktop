@@ -107,6 +107,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.11.19      Issue #269: Scrolling problem eventually solved.
  *      Kay Gürtzig     2016.11.22      Bugfix #293: input and output boxes no longer popped up at odd places on screen.
  *      Kay Gürtzig     2016.11.22/25   Issue #294: Test coverage rules for CASE elements without default branch refined
+ *      Kay Gürtzig     2016.12.12      Issue #307: Attempts to manipulate FOR loop variables now cause an error
  *
  ******************************************************************************************************
  *
@@ -334,6 +335,9 @@ public class Executor implements Runnable
 	private Object returnedValue = null;
 	private Vector<IRoutinePool> routinePools = new Vector<IRoutinePool>();
 	// END KGU#2 (#9) 2015-11-13
+	// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
+	private StringList forLoopVars = new StringList();
+	// END KGU#307 2016-12-12
 
 	private DiagramController diagramController = null;
 	private Interpreter interpreter;
@@ -698,6 +702,10 @@ public class Executor implements Runnable
 		this.callers.clear();
 		this.stackTrace.clear();
 		this.routinePools.clear();
+		// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
+		this.forLoopVars.clear();
+		// END KGU#307 2016-12-12
+
 		if (Arranger.hasInstance())
 		{
 			this.routinePools.addElement(Arranger.getInstance());
@@ -719,6 +727,9 @@ public class Executor implements Runnable
 		/////////////////////////////////////////////////////////
 		this.callers.clear();
 		this.stackTrace.clear();
+		// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
+		this.forLoopVars.clear();
+		// END KGU#307 2016-12-12
 		// START KGU#160 2016-04-12: Enh. #137 - Address the console window 
 		this.console.writeln("*** TERMINATED \"" + this.diagram.getRoot().getText().getLongString() +
 				"\" at " + sdf.format(System.currentTimeMillis()) + " ***", Color.GRAY);
@@ -1084,13 +1095,19 @@ public class Executor implements Runnable
 				this.variables, 
 				this.interpreter,
 				// START KGU#78 2015-11-25
-				this.loopDepth
+				this.loopDepth,
 				// END KGU#78 2015-11-25
+				// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
+				this.forLoopVars 
+				// END KGU#307 2016-12-12
 				);
 		this.callers.push(entry);
 		this.interpreter = new Interpreter();
 		this.initInterpreter();
 		this.variables = new StringList();
+		// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
+		this.forLoopVars = new StringList(); 
+		// END KGU#307 2016-12-12
 		
 		// If the found subroutine is already an active caller, then we need a new instance of it
 		if (root.isCalling)
@@ -1606,11 +1623,24 @@ public class Executor implements Runnable
 			//System.out.println(rawInput + " as int: " + ex.getMessage());
 		}
 	}
-	
+
 	// METHOD MODIFIED BY GENNARO DONNARUMMA and revised by Kay Gürtzig
 	private void setVar(String name, Object content) throws EvalError
-
+	// START KGU#307 2016-12-12: Enh. #307 - check FOR loop variable manipulation
 	{
+		setVar(name, content, this.forLoopVars.count()-1);
+	}
+
+	private void setVar(String name, Object content, int ignoreLoopStackLevel) throws EvalError
+	// END KGU#307 2016-12-12
+	{
+		// START KGU#307 2016-12-12: Enh. #307 - check FOR loop variable manipulation
+		if (this.forLoopVars.lastIndexOf(name, ignoreLoopStackLevel) >= 0)
+		{
+			throw new EvalError(control.msgForLoopManipulation.getText().replace("%", name), null, null);
+		}
+		// END KGU#307 2016-12-12		
+		
 		// START KGU#69 2015-11-09: This is only a good idea in case of raw input
 		//if (content instanceof String)
 		//{
@@ -3337,6 +3367,9 @@ public class Executor implements Runnable
 		}
 		// END KGU#61 2016-03-21
 		String result = new String();
+		// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
+		int forLoopLevel = this.forLoopVars.count();
+		// END KGU#307 2016-12-12
 		try
 		{
 			// START KGU#3 2015-10-31: Now it's time for the new intrinsic mechanism
@@ -3377,6 +3410,10 @@ public class Executor implements Runnable
 			String counter = element.getCounterVar();
 			// END KGU#3 2015-10-27
 			// complete
+			
+			// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
+			this.forLoopVars.add(counter);
+			// END KGU#307 2016-12-12
 
 			// START KGU#3 2015-10-27: Now replaced by For-intrinsic mechanisms
 //			String s = str.substring(str.indexOf("=") + 1,
@@ -3454,7 +3491,10 @@ public class Executor implements Runnable
 					(stop == false) && !returned && leave == 0)
 			// END KGU#77/KGU#78 2015-11-25
 			{
-				setVar(counter, cw);
+				// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
+				//setVar(counter, cw);
+				setVar(counter, cw, forLoopLevel-1);
+				// END KGU#307 2016-12-12
 				element.waited = true;
 
 
@@ -3520,6 +3560,11 @@ public class Executor implements Runnable
 		{
 			result = ex.getMessage();
 		}
+		// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
+		while (forLoopLevel < this.forLoopVars.count()) {
+			this.forLoopVars.remove(forLoopLevel);
+		}
+		// END KGU#307 2016-12-12
 		return result;
 	}
 	
@@ -3528,6 +3573,9 @@ public class Executor implements Runnable
 	private String stepForIn(For element)
 	{
 		String result = new String();
+		// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
+		int forLoopLevel = this.forLoopVars.count();
+		// END KGU#307 2016-12-12
 		String valueListString = element.getValueList();
 		String iterVar = element.getCounterVar();
 		Object[] valueList = null;
@@ -3613,6 +3661,9 @@ public class Executor implements Runnable
 		else
 		{
 				element.addToExecTotalCount(1, true);	// For the condition evaluation
+				// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
+				this.forLoopVars.add(iterVar);
+				// END KGU#307 2016-12-12
 
 				// Leave if any kind of Jump statement has been executed
 				loopDepth++;
@@ -3623,7 +3674,10 @@ public class Executor implements Runnable
 				{
 					try
 					{
-						setVar(iterVar, valueList[cw]);
+						// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
+						//setVar(iterVar, valueList[cw]);
+						setVar(iterVar, valueList[cw], forLoopLevel-1);
+						// END KGU#307 2016-12-12
 						element.executed = false;
 						element.waited = true;
 
@@ -3653,6 +3707,11 @@ public class Executor implements Runnable
 					leave--;
 				}
 				loopDepth--;
+				// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
+				while (forLoopLevel < this.forLoopVars.count()) {
+					this.forLoopVars.remove(forLoopLevel);
+				}
+				// END KGU#307 2016-12-12
 		}
 		if (result.equals(""))
 		{

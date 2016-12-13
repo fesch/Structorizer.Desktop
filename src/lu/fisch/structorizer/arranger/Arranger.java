@@ -53,6 +53,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.09.26  Enh. #253: New public method getAllRoots() added.
  *      Kay Gürtzig     2016.11.01  Enh. #81: Scalability of the Icons ensured
  *      Kay Gürtzig     2016.11.15  Enh. #290: New opportunity to load arrangements from Structorizer
+ *      Kay Gürtzig     2016.12.12  Enh. #305: Support for diagram list in Structorizer 
  *
  ******************************************************************************************************
  *
@@ -87,7 +88,6 @@ import lu.fisch.structorizer.locales.LangFrame;
 public class Arranger extends LangFrame implements WindowListener, KeyListener, IRoutinePool {
 
     // START KGU#177 2016-04-14: Enh. #158 - because of pasting opportunity we must take more care
-
     private boolean isStandalone = false;
 	// END KGU#177 2016-04-14
 
@@ -130,6 +130,21 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         return mySelf != null;
     }
 	// END KGU#155 2016-03-08
+    
+    // START KGU#305 2016-12-12: Enh. #305
+	/**
+	 * Scrolls to the given Root if found and selects it. If setAtTop is true then the diagram
+	 * will be raised to the top drawing level.
+	 * @param aRoot - the diagram to be focused
+	 * @param setAtTop - whether the diagram is to be drawn on top of all
+	 */
+    public static void scrollToDiagram(Root selectedRoot, boolean raiseToTop)
+    {
+    	if (mySelf != null && selectedRoot != null) {
+    		mySelf.surface.scrollToDiagram(selectedRoot, raiseToTop);
+    	}
+	}
+    // END KGU#305 2016-12-12
 
     /**
      * Creates new form Arranger
@@ -633,5 +648,16 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         surface.repaint();
     }
 	// END KGU#156 2016-03-10
-    
+
+    // START KGU#305 2016-12-12: Enh. #305
+	/**
+	 * Returns the Root diagram currently selected in Arranger
+	 * @return Either a Root object or null (if none was selected)
+	 */
+	public Root getSelected() 
+	{
+		return surface.getSelected();
+	}
+	// END KGU#305 2016-12-12
+
 }

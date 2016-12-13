@@ -52,7 +52,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.10.11      Enh. #267: New method updateAnalysis() introduced
  *      Kay Gürtzig     2016.11.01      Issue #81: Scale factor from Ini also applied to fonts
  *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded except for icons, ensured to be >= 1
- *      Kay Gürtzig     2016.12.02      Enh. #300: Notification of disabled version retrieval or new versions  
+ *      Kay Gürtzig     2016.12.02      Enh. #300: Notification of disabled version retrieval or new versions
+ *      Kay Gürtzig     2016.12.12      Enh. #305: API enhanced to support the Arranger Root index view
  *
  ******************************************************************************************************
  *
@@ -74,7 +75,9 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************///
 
 import java.io.*;
+import java.util.Collections;
 import java.util.Set;
+import java.util.Vector;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -722,5 +725,22 @@ public class Mainform  extends LangFrame implements NSDController
     	}
     }
     // END KGU#300 2016-12-02
+    
+    // START KGU#305 2016-12-12: Enh. #305 - Pass diagram list of Arranger to editor
+    public void updateArrangerIndex()
+    {
+    	Vector<Root> diagrams = new Vector<Root>();
+    	if (Arranger.hasInstance()) {
+    		diagrams.addAll(Arranger.getInstance().getAllRoots());
+    		Collections.sort(diagrams, Root.SIGNATURE_ORDER);
+    	}
+    	this.editor.updateArrangerIndex(diagrams);
+    }
+    
+    public boolean isStandalone()
+    {
+    	return this.isStandalone;
+    }
+    // END KGU#305 2016-12-12
 	
 }

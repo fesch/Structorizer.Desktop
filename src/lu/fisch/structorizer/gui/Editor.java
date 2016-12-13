@@ -48,6 +48,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.10.13      Enh. #277: New toolbar button (+ context menu item) for disabling elements
  *      Kay Gürtzig     2016.11.17      Bugfix #114: Prerequisites for editing and transmutation during execution revised
  *      Kay Gürtzig     2016.11.22      Enh. #284: Key bindings for font resizing added (KGU#294)
+ *      Kay Gürtzig     2016.12.12      Enh. #305: Scrollable list view of Roots in Arranger added
  *
  ******************************************************************************************************
  *
@@ -61,6 +62,7 @@ import com.kobrix.notebook.gui.AKDockLayout;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Vector;
 
 import javax.swing.*;
 
@@ -76,19 +78,29 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     // Toolbars
     protected MyToolbar toolbar = null;
 	
-    // Splitpane
+    // Splitpanes
     JSplitPane sp;
+    // START KGU#305 2016-12-12: Enh. #305 - add a diagram index for Arranger
+    JSplitPane sp305;
+    // END KGU#305 2016-12-12
 
-    // list
+    // lists
     DefaultListModel<DetectedError> errors = new DefaultListModel<DetectedError>();
     protected final JList<DetectedError> errorlist = new JList<DetectedError>(errors);
+    // START KGU#305 2016-12-12: Enh. #305 - add a diagram index for Arranger
+    DefaultListModel<Root> diagrams = new DefaultListModel<Root>();
+    protected final JList<Root> diagramIndex = new JList<Root>(diagrams);
+    // END KGU#305 2016-12-12
 
     // Panels
     public Diagram diagram = new Diagram(this, "???");
 	
-    // scrollarea
+    // scrollpanes
     protected final JScrollPane scrollarea = new JScrollPane(diagram);
     protected final JScrollPane scrolllist = new JScrollPane(errorlist);
+    // START KGU#305 2016-12-12: Enh. #305 - add a diagram index for Arranger
+    protected final JScrollPane scrollIndex = new JScrollPane(diagramIndex);
+    // END KGU#305 2016-12-12
 
     // Buttons
     // I/O
@@ -714,7 +726,6 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnFontDown.setFocusable(false);
 		btnFontDown.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.fontDownNSD(); doButtons(); } } );
 		
-		
 		sp = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 		this.add(sp,AKDockLayout.CENTER);
 		sp.setBorder(BorderFactory.createEmptyBorder());
@@ -726,8 +737,17 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		//Container container = this;
         //container.add(scrollarea,AKDockLayout.CENTER);
 		
-		sp.add(scrollarea);
-                scrollarea.setBackground(Color.LIGHT_GRAY);
+		// START KGU#305 2016-12-12: Enh, #305
+		//sp.add(scrollarea);
+		sp305 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+		sp.add(sp305);
+		sp305.setBorder(BorderFactory.createEmptyBorder());
+		sp305.setResizeWeight(0.99);
+		sp305.setDividerSize(5);
+		sp305.add(scrollarea);
+		// END KGU#305 2016-12-12
+		
+        scrollarea.setBackground(Color.LIGHT_GRAY);
 		scrollarea.getViewport().putClientProperty("EnableWindowBlit", Boolean.TRUE);
 		scrollarea.setWheelScrollingEnabled(true);
 		scrollarea.setDoubleBuffered(true);
@@ -771,7 +791,22 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		actMap.put("FONT_UP", new FontResizeAction(diagram, "FONT_UP"));
 		// END KGU#294 2016-11-22
 		//scrollarea.getViewport().setBackingStoreEnabled(true);
-				
+		
+		// START KGU#305 2016-12-12: Enh. #305
+		sp305.add(scrollIndex);
+		scrollIndex.setWheelScrollingEnabled(true);
+		scrollIndex.setDoubleBuffered(true);
+		scrollIndex.setBorder(BorderFactory.createEmptyBorder());
+		scrollIndex.setViewportView(diagramIndex);
+		//scrollIndex.setPreferredSize(new Dimension(50,0));
+
+		diagramIndex.setCellRenderer(new RootListCellRenderer());
+		diagramIndex.setLayoutOrientation(JList.VERTICAL);
+		diagramIndex.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);		
+		diagramIndex.addMouseListener(diagram);
+		// END KGU#305 2016-12-12
+
+		
         //container.add(scrolllist,AKDockLayout.SOUTH);
 		sp.add(scrolllist);
 		scrolllist.setWheelScrollingEnabled(true);
@@ -804,7 +839,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	
 	public void doButtonsLocal()
 	{
-                //scrollarea.setViewportView(diagram);
+		//scrollarea.setViewportView(diagram);
 
 		// conditions
 		// START KGU#143 2016-01-21: Bugfix #114 - elements involved in execution must not be edited
@@ -1030,7 +1065,30 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			sp.remove(scrolllist);
 			sp.setDividerSize(0);
 		}
-                
+		
+		// START KGU#305 2016-12-12: Enh. 305
+		// arranger
+		
+		if (/*Element.E_ARRANGER_INDEX &&*/ !diagrams.isEmpty())
+		{
+			if (sp305.getDividerSize()==0)
+			{
+				sp305.remove(scrollIndex);
+				sp305.add(scrollIndex);
+			}
+			scrollIndex.setVisible(true);
+			scrollIndex.setViewportView(diagramIndex);
+			sp305.setDividerSize(5);
+			scrollIndex.revalidate();
+		}
+		else
+		{
+			scrollIndex.setVisible(false);
+			sp305.remove(scrollIndex);
+			sp305.setDividerSize(0);
+		}
+		// END KGU#305 2016-12-12
+           
                 //
                 /*
                 for(int j=0;j<diagram.toolbars.size();j++)
@@ -1108,9 +1166,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			}
 		}
 	}
-	
-	
-	
+		
 	// ComponentListener Methods
 	public void componentHidden(ComponentEvent e) 
 	{
@@ -1158,5 +1214,28 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	{
 		NSDControll.savePreferences();
 	}
+
+    // START KGU#305 2016-12-12: Enh. #305 - Pass diagram list of Arranger to editor
+	public void updateArrangerIndex(Vector<Root> _diagrams)
+	{
+		boolean wasEmpty = this.diagrams.isEmpty();
+		this.diagrams.clear();
+		if (_diagrams != null) {
+			for (int i = 0; i < _diagrams.size(); i++) {
+				Root aRoot = _diagrams.get(i);
+				this.diagrams.addElement(aRoot);
+			}
+		}
+		if (this.diagrams.isEmpty()) {
+			this.scrollIndex.setVisible(false);
+		}
+		else if (wasEmpty) {
+			this.scrollIndex.setVisible(true);
+		}
+		this.scrollIndex.repaint();
+		this.scrollIndex.validate();
+		this.doButtonsLocal();
+	}
+    // END KGU#305 2016-12-12
 
 }

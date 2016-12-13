@@ -50,6 +50,8 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.10.07      KGU#68 (issue #15) ConcurrentHashMap replaces Object[] for variable editing
  *      Kay Gürtzig     2016.10.08      Issue #264 variable display updates caused frequent silent exceptions on rendering
  *      Kay Gürtzig     2016.11.01      Issue #81: Icon and frame size scaling ensured according to scaleFactor
+ *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded.
+ *      Kay Gürtzig     2016.12.12      Issue #307: New error message msgForLoopManipulation
  *
  ******************************************************************************************************
  *
@@ -286,7 +288,8 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         jScrollPane1.setViewportView(tblVar);
 
         // START KGU#287 2016-11-02: Issue #81 (DPI awareness workarounds)
-        double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1")).intValue();
+        double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
+        if (scaleFactor < 1) scaleFactor = 1.0; 
         tblVar.setRowHeight((int)(tblVar.getRowHeight() * scaleFactor));
         // END KGU#2987 2016-11-02
         // START KGU#210 2016-07-25: Issue #201 - new GridBagLayout-based GUI (easier to handle)
@@ -714,6 +717,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public final LangTextHolder msgTitleQuestion =
     		new LangTextHolder("Question");
     // END KGU#247 2016-09-17
+    // START KGU#307 2016-12-12: Enh. #307
+    public final LangTextHolder msgForLoopManipulation =
+    		new LangTextHolder("Illegal attempt to manipulate the FOR loop variable «%»!");
+    // END KGU#307 2016-12-12
     
     // START KGU#68 2015-11-06: Register variable value editing events
     private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();

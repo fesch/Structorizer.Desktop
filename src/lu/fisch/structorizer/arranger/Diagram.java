@@ -20,6 +20,30 @@
 
 package lu.fisch.structorizer.arranger;
 
+/*
+ *****************************************************************************************************
+ *
+ *      Author: Bob Fisch
+ *
+ *      Description: This class is just a holder for diagrams, their owners, and positions within Arranger
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      Bob Fisch       2009.08.18  First Issue
+ *      Kay Gürtzig     2015.11.24  Pinning flag added (issue #35, KGU#88)
+ *      Kay Gürtzig     2016.03.08  Bugfix #97: Method resetDrawingInfo added (KGU#155)
+ *
+ ******************************************************************************************************
+ *
+ * Comment:	/
+ *
+ *****************************************************************************************************
+ *///
+
 import java.awt.Point;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.gui.Mainform;
@@ -65,4 +89,5 @@ public class Diagram
 //		}
 	}
 	// END KGU#155 2016-03-08
+	
 }

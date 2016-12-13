@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.25-10 (2016.12.07)
+Current development version: 3.25-10 (2016.12.13)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
 - 01: Issue #213: Selected state of FOR transmutation result now visible <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
@@ -65,7 +65,7 @@ Current development version: 3.25-10 (2016.12.07)
 - 08: Issue #231: Traditional reserved BASIC words added to name collision checks <2>
 - 08: Issue #269: Vertical scrolling alignment for large elements improved <2>
 - 08: Issue #284: Text field fonts in element editor now interactively resizable [ebial]2
-- 08: Bugfix #293: Input and output boxes no longer popd up at odd places on screen <2>
+- 08: Bugfix #293: Input and output boxes no longer pop up at odd places on screen <2>
 - 08: Font resizing accelerators unified among different dialogs and menus <2>
 - 08: Label defect in FOR loop editor (class InputBoxFor) mended <2>
 - 08: Bugfix #294: Test coverage wasn't shown for CASE elements w/o default branch <2>
@@ -77,7 +77,11 @@ Current development version: 3.25-10 (2016.12.07)
 - 09: Bugfix #301: Parentheses handling around conditions on code export fixed <2>
 - 09: Enh. #302: New Turtleizer procedures setPenColor, setBackground [newboerg]2
 - 09: Bugfix #302: Effects of previous penUp and hideTurtle now undone on new start <2>
-- 10: Issue #304: Menu mnemonic translation damaged the menu with legacy JavaRE <2> 
+- 10: Issue #304: Menu mnemonic localization killed the menu on legacy JavaRE <2>
+- 10: Issue #305: Arranger diagram index added to the Structorizer GUI [newboerg]2
+- 10: Issue #306: Structorizer may load several diagrams on command line start <2>
+- 10: Issue #307: Executor error on manipulation of FOR loop variables [newboerg]2
+- 10: Bugfix #308: Collapsed REPEAT loops weren't properly drawn<2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2
@@ -657,7 +661,7 @@ Version 1.26 [12/06/2007]
 - Bug detected in the cut method [Andreas Jenet]
 - MDI: Eliminated memory bug in MDI application [FISRO]
 - MDI: First working MDI application called "Projectorizer"
-- MDI: Projet save and load works. Filetype = combined NSD
+- MDI: Project save and load works. Filetype = combined NSD
   files in XML format. Extension = nsdp [FISRO]
 - MDI: Add diagram to project [FISRO]
 - MDI: Menu integration [FISRO]
