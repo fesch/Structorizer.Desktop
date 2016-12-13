@@ -48,6 +48,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
  *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
+ *      Kay Gürtzig     2016.12.12      Bugfix #308 in haveOuterRectDrawn() - must be drawn in collapsed mode
  *
  ******************************************************************************************************
  *
@@ -109,7 +110,10 @@ public class Repeat extends Element implements ILoop {
 	// START KGU#227 2016-07-30: Enh. #128
 	protected boolean haveOuterRectDrawn()
 	{
-		return false;
+		// START KGU#308 2016-12-12: Bugfix #308
+		//return false;
+		return this.isCollapsed();
+		// END KGU#308 2016-12-12
 	}
 	// END KGU#227 2016-07-30
 

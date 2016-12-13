@@ -86,6 +86,7 @@
  *      Kay Gürtzig         2016.11.08  Enh. #270: Editor.btnDisable.tooltip added
  *      Kay Gürtzig         2016.11.10  Enh. #286: AnalyserPreferences tabs
  *      Kay Gürtzig         2016.12.02  Enh. #300: New messages for update retrieval
+ *      Kay Gürtzig         2016.12.02  Issue #307: New executor error message
  *
  ******************************************************************************************************
  *
@@ -770,6 +771,7 @@ Control.msgExitCode.text=Programm abgebrochen mit Code %1!
 Control.msgIllegalJump.text=Unzulässiger Inhalt einer Aussprung-Anweisung: <%1>!
 Control.msgTooManyLevels.text=Zu viele Ebenen zum Verlassen gefordert (tatsächliche Tiefe: %1 / angegeben: %2)!
 Control.msgJumpOutParallel.text=Unzulässiger Aussprung aus Parallelzweig:%Thread beendet!
+Control.msgForLoopManipulation.text=Unzulässige Manipulation der Zählschleifenvariablen «%»!
 Control.tblVar.header.0=Variablenname
 Control.tblVar.header.1=Inhalt
 

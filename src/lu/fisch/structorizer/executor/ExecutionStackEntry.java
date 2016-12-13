@@ -20,10 +20,6 @@
 
 package lu.fisch.structorizer.executor;
 
-import bsh.Interpreter;
-import lu.fisch.structorizer.elements.Root;
-import lu.fisch.utils.StringList;
-
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -39,6 +35,7 @@ import lu.fisch.utils.StringList;
  *      ------			----			-----------
  *      Kay Gürtzig		2015.11.13		First Issue
  *      Kay Gürtzig		2015.11.26		Extended by loopDepth (needed for the JUMP execution)
+ *      Kay Gürtzig     2016.12.12      Issue #307: Extended by forLoopVars
  *
  ******************************************************************************************************
  *
@@ -46,10 +43,17 @@ import lu.fisch.utils.StringList;
  *
  ******************************************************************************************************///
 
+import bsh.Interpreter;
+import lu.fisch.structorizer.elements.Root;
+import lu.fisch.utils.StringList;
+
 public class ExecutionStackEntry {
 	
 	public Root root;					// The caller root itself (only necessary to preserve flags?)
 	public StringList variables;		// The variable names used up to the suspending call
+	// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
+	public StringList forLoopVars;		// Hierarchy of FOR loop variables within this stack frame 
+	// END KGU#307 2016-12-12
 	public Interpreter interpreter;		// The execution context (containing variable values etc.)
 	// START KGU#78 2015-11-25
 	public int loopDepth;				// The current nesting level of loops
@@ -57,7 +61,10 @@ public class ExecutionStackEntry {
 
 	// START KGU#78 2015-11-25
 	//public ExecutionStackEntry(Root _root, StringList _variables, Interpreter _interpreter)
-	public ExecutionStackEntry(Root _root, StringList _variables, Interpreter _interpreter, int _loopDepth)
+	// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
+	//public ExecutionStackEntry(Root _root, StringList _variables, Interpreter _interpreter, int _loopDepth)
+	public ExecutionStackEntry(Root _root, StringList _variables, Interpreter _interpreter, int _loopDepth, StringList _forLoopVars)
+	// END KGU#307 2016-12-12
 	// END KGU#78 2015-11-25
 	{
 		_root.isCalling = true;
@@ -67,6 +74,9 @@ public class ExecutionStackEntry {
 		// START KGU#78 2015-11-25
 		this.loopDepth = _loopDepth;
 		// END KGU#78 2015-11-25
+		// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
+		this.forLoopVars = _forLoopVars; 
+		// END KGU#307 2016-12-12
 	}
 
 }

@@ -83,6 +83,7 @@
  *      Kay Gürtzig     2016.11.08      Enh. #270: Editor.btnDisable.tooltip added
  *      Kay Gürtzig     2016.11.10      Enh. #286: AnalyserPreferences tabs
  *      Kay Gürtzig     2016.12.02      Enh. #300: New messages for update retrieval
+ *      Kay Gürtzig     2016.12.02      Issue #307: New executor error message
  *
  ******************************************************************************************************
  *
@@ -772,6 +773,7 @@ Control.msgExitCode.text=Program exited with code %1!
 Control.msgIllegalJump.text=Illegal content of a Jump (i.e. exit) instruction: <%1>!
 Control.msgTooManyLevels.text=Too many levels to leave (actual depth: %1 / specified: %2)!
 Control.msgJumpOutParallel.text=Illegal attempt to jump out of a parallel thread:%Thread killed!
+Control.msgForLoopManipulation.text=Illegal attempt to manipulate the FOR loop variable «%»!
 Control.tblVar.header.0=Variable Name
 Control.tblVar.header.1=Content
 

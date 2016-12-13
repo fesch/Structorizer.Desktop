@@ -40,6 +40,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2016.09.13  Bugfix #241 in checkConditions() (KGU#246)
  *      Kay Gürtzig     2016.09.22  Issue #248: Workaround for Linux systems with Java 1.7
  *      Kay Gürtzig     2016.09.28  KGU#263: Substrings "\n" in the text part now generally replaced by newline
+ *      Kay Gürtzig     2016.12.07  Issue #304: Check for feasibility of mnemonic replacement via Reflection
  *
  ******************************************************************************************************
  *
@@ -641,14 +642,20 @@ public class Locales {
                                     Method method = fieldClass.getMethod("setHeaderTitle", new Class[]{int.class, String.class});
                                     if(target != null)
                                         method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3)), parts.get(1)});
-                                } // START KGU#183 2016-04-24: Enh. #173 - new support
+                                } // START KGU#184 2016-04-24: Enh. #173 - new mnemonic support (only works from Java 1.7 on)
                                 else if (piece2.equals("mnemonic")) {
                                     Method method = fieldClass.getMethod("setMnemonic", new Class[]{int.class});
-                                    int keyCode = KeyEvent.getExtendedKeyCodeForChar(parts.get(1).toLowerCase().charAt(0));
-                                    if (keyCode != KeyEvent.VK_UNDEFINED && target != null) {
-                                        method.invoke(target, new Object[]{Integer.valueOf(keyCode)});
+                                    // START KGU 2016-12-07: Issue #304 We must check the availability of a Java 1.7 method.
+                                    try {
+                                        int keyCode = KeyEvent.getExtendedKeyCodeForChar(parts.get(1).toLowerCase().charAt(0));
+                                        if (keyCode != KeyEvent.VK_UNDEFINED && target != null) {
+                                            method.invoke(target, new Object[]{Integer.valueOf(keyCode)});
+                                        }
+                                    } catch (NoSuchMethodError ex) {
+                                    	System.out.println("Locales: Mnemonic localization failed due to legacy JavaRE (at least 1.7 required).");
                                     }
-                                } // END KGU#183 2016-04-24
+                                    // END KGU 2016-12-07
+                                } // END KGU#184 2016-04-24
                                 // START KGU#156 2016-03-13: Enh. #124 - intended for JComboBoxes
                                 else if (piece2.equals("item")) {
                                     // The JCombobox is supposed to be equipped with enum objects providing a setText() method

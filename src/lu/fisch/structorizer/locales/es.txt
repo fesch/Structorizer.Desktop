@@ -87,6 +87,7 @@
  *      Kay Gürtzig     2016.11.08  Enh. #270: Editor.btnDisable.tooltip added
  *      Kay Gürtzig     2016.11.10  Enh. #286: AnalyserPreferences tabs
  *      Kay Gürtzig     2016.12.02  Enh. #300: New messages for update retrieval
+ *      Kay Gürtzig     2016.12.02  Issue #307: New executor error message
  *
  ******************************************************************************************************
  *
@@ -771,6 +772,7 @@ Control.msgExitCode.text=¡Programa abortado con código %1!
 Control.msgIllegalJump.text=¡Contenido ilegal del SALTO (instruction para salir): <%1>!
 Control.msgTooManyLevels.text=¡Demasiados niveles para salir (niveles reales: %1 / especificados: %2)!
 Control.msgJumpOutParallel.text=Tentativa ilegal de saltar afuera de un brazo paralelo:%¡Brazo terminado!
+Control.msgForLoopManipulation.text=¡Manipulación ilegal de la variable «%» de un bucle PARA!
 Control.tblVar.header.0=Nombre de Variable
 Control.tblVar.header.1=Contenido
 
