@@ -19,8 +19,6 @@
  */
 package lu.fisch.structorizer.gui;
 
-import java.awt.Color;
-
 /*******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -33,7 +31,7 @@ import java.awt.Color;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     12.12.2016      First Issue
+ *      Kay Gürtzig     2016.12.12      First Issue
  *
  ******************************************************************************************************
  *
@@ -42,6 +40,7 @@ import java.awt.Color;
  *
  ******************************************************************************************************///
 
+import java.awt.Color;
 import java.awt.Component;
 
 import javax.swing.ImageIcon;
@@ -73,12 +72,25 @@ class RootListCellRenderer extends JLabel implements ListCellRenderer<Root>{
     		if (UIManager.getLookAndFeel().getName().equals("Nimbus"))
     		{
     			// Again, a specific handling for Nimbus was necessary in order to show any difference at all.
-    			setBackground(selectedBackgroundNimbus);
-    			setForeground(Color.WHITE);
+    			if (list.isFocusOwner()) {
+    				setBackground(selectedBackgroundNimbus);
+    				setForeground(Color.WHITE);
+    			}
+    			else {
+    				setBackground(Color.WHITE);	
+    				setForeground(selectedBackgroundNimbus);
+    			}
     		}
     		else {
-                setBackground(list.getSelectionBackground()/*Color.BLUE*/);
-                setForeground(list.getSelectionForeground()/*Color.WHITE*/);    			
+    			if (list.isFocusOwner()) {
+    				setBackground(list.getSelectionBackground());
+    				setForeground(list.getSelectionForeground());
+    			}
+    			else {
+    				// Invert the selection colours
+                    setBackground(list.getSelectionForeground());
+                    setForeground(list.getSelectionBackground());    				
+    			}
     		}
         } else {
             setBackground(list.getBackground());

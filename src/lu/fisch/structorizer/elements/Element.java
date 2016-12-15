@@ -72,7 +72,6 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.09.28      KGU#264: Font name property renamed from "Name" to "Font".
  *      Kay Gürtzig     2016.10.13      Issue #270: New field "disabled" for execution and code export
  *      Kay Gürtzig     2016.11.06      Issue #279: Several modifications to circumvent direct access to D7Parser.keywordMap
- *      Kay Gürtzig     2016.12.12      Enh. #305: New scrollList flag E_ARRANGER_INDEX for Arranger index
  *
  ******************************************************************************************************
  *
@@ -178,7 +177,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.25-10";
+	public static String E_VERSION = "3.25-11";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -302,9 +301,6 @@ public abstract class Element {
 	// END KGU#227 2016-07-29
 	public static boolean E_DIN = false;			// Show FOR loops according to DIN 66261?
 	public static boolean E_ANALYSER = true;		// Analyser enabled?
-	// START KGU#305 2016-12-12: Enh. #305 (FIXME Still not used)
-	public static boolean E_ARRANGER_INDEX = false;	// Arranger index visible?
-	// END KGU#305 2016-12-12
 	// START KGU#123 2016-01-04: New toggle for Enh. #87
 	public static boolean E_WHEELCOLLAPSE = false;	// Is collapsing by mouse wheel rotation enabled?
 	// END KGU#123 2016-01-04

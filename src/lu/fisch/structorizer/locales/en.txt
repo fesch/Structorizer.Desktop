@@ -84,6 +84,8 @@
  *      Kay Gürtzig     2016.11.10      Enh. #286: AnalyserPreferences tabs
  *      Kay Gürtzig     2016.12.02      Enh. #300: New messages for update retrieval
  *      Kay Gürtzig     2016.12.02      Issue #307: New executor error message
+ *      Kay Gürtzig     2016.12.14      Issue #311: Menu reorganisation
+ *      Kay Gürtzig     2016.12.15      Enh. #310: New Saving option dialog
  *
  ******************************************************************************************************
  *
@@ -98,7 +100,7 @@
 
 -----> Structorizer
 -----[ Menu ]-----
-//Menu File
+// Menu "File"
 Menu.menuFile.text=File
 Menu.menuFile.mnemonic=f
 // Submenus of "File"
@@ -179,10 +181,6 @@ Menu.menuDiagramMoveDown.text=Move down
 Menu.menuDiagramTransmute.text=Transmute
 Menu.menuDiagramCollapse.text=Collapse
 Menu.menuDiagramExpand.text=Expand
-Menu.menuDiagramDisable.text=Disable/enable
-// Breakpoint
-Menu.menuDiagramBreakpoint.text=Toggle breakpoint
-Menu.menuDiagramBreakTrigger.text=Specify break trigger...
 // Diagram Appearance
 Menu.menuDiagramType.text=Type
 Menu.menuDiagramTypeProgram.text=Main
@@ -207,6 +205,7 @@ Menu.menuPreferencesColors.text=Colors ...
 Menu.menuPreferencesOptions.text=Structures ...
 Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesAnalyser.text=Analyser ...
+Menu.menuPreferencesSaving.text=Saving ...
 Menu.menuPreferencesExport.text=Export ...
 Menu.menuPreferencesImport.text=Import ...
 Menu.menuPreferencesLanguage.text=Language
@@ -235,6 +234,17 @@ Menu.menuPreferencesSaveLoad.text=Load from file ...
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
+
+// Menu "Debug"
+Menu.menuDebug.text=Debug
+Menu.menuDebug.mnemonic=b
+// Submenu of "Debug"
+Menu.menuDebugTurtle.text=Turtleizer ...
+Menu.menuDebugExecute.text=Executor ...
+Menu.menuDebugDropBrkpts.text=Clear breakpoints
+Menu.menuDebugBreakpoint.text=Toggle breakpoint
+Menu.menuDebugBreakTrigger.text=Specify break trigger ...
+Menu.menuDebugDisable.text=Disable/enable
 
 // Menu "Help"
 Menu.menuHelp.text=Help
@@ -281,7 +291,7 @@ Menu.msgNewerVersionAvail.text=Newer version % available for download.
 Menu.msgUpdateInfoHint.text=If you want to get notified of available new versions\nyou may enable update retrieval from Structorizer homepage\nvia menu item "%1" > "%2".
 Menu.lblOk.text=OK
 Menu.lblSuppressUpdateHint.text=Don't show this window again
-Menu.lblHint=Hint
+Menu.lblHint.txt=Hint
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
@@ -710,9 +720,20 @@ ImportOptionDialog.pnlPreference.border=Preference files
 ImportOptionDialog.lbCharset.text=Character set:
 ImportOptionDialog.chkCharsetAll.text=List all?
 ImportOptionDialog.chkRefactorOnLoading.text=Replace keywords on loading a diagram (refactoring).
-ImportOptionDialog.chkRefactorOnLoading.tooltip=Select this option if all configurable keywords in the daiagram are to be adapted to the current parser preferences.
+ImportOptionDialog.chkRefactorOnLoading.tooltip=Select this option if all configurable keywords in the diagram are to be adapted to the current parser preferences.
 ImportOptionDialog.btnOk.text=OK
 ImportOptionDialog.btnOk.tooltip=Save these settings.
+
+-----[ SaveOptionDialog ]-----
+SaveOptionDialog.title=Options for saving diagrams ...
+SaveOptionDialog.lbIntro.text=Please select the options you want to activate...
+SaveOptionDialog.pnlAutoSave.border=Auto-save options
+SaveOptionDialog.pnlBackup.border=Backup options
+SaveOptionDialog.chkAutoSaveClose.text=Auto-save during execution?
+SaveOptionDialog.chkAutoSaveExecute.text=Auto-save when going to be closed?
+SaveOptionDialog.chkBackupFile.text=Create backup file on re-saving?
+SaveOptionDialog.btnOk.text=OK
+SaveOptionDialog.btnOk.tooltip=Accept these settings.
 
 -----> Arranger
 Surface.msgFileLoadError.text=File Load Error:

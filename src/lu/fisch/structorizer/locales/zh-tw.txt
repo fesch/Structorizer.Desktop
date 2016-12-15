@@ -51,6 +51,7 @@
  *      Hueyan Chen     2014.07.27  First Issue
  *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016.12.14  Enh. #311: New menu "Debug"
  *
  ******************************************************************************************************
  *
@@ -60,7 +61,7 @@
 >>>
 -----> Structorizer
 -----[ Menu ]-----
-//Menu File
+// Menu "File"
 Menu.menuFile.text=檔案
 // Submenus of "File"
 Menu.menuFileNew.text=新增
@@ -125,13 +126,15 @@ Menu.menuDiagramNice.text=有分隔線的圖?
 Menu.menuDiagramComment.text=顯示註解?
 Menu.menuDiagramMarker.text=高亮度變數?
 Menu.menuDiagramDIN.text=DIN連接器?
-// Menu "Help"
+// Menu "Preferences"
 Menu.menuPreferences.text=選項設定
-// Submenu of "Help"
+// Submenu of "Preferences"
 Menu.menuPreferencesFont.text=字型 ...
 Menu.menuPreferencesColors.text=色彩 ...
 Menu.menuPreferencesOptions.text=結構 ...
 Menu.menuPreferencesParser.text=剖析器 ...
+Menu.menuPreferencesExport.text=匯出 ...
+Menu.menuPreferencesImport.text=匯入 ...
 Menu.menuPreferencesLanguage.text=語言
 Menu.menuPreferencesLanguageItems.en.text=英文
 Menu.menuPreferencesLanguageItems.de.text=德文
@@ -152,6 +155,16 @@ Menu.menuPreferencesSaveAll.text=儲存
 Menu.menuPreferencesSaveDump.text=儲存成檔案 ...
 Menu.menuPreferencesSaveLoad.text=從檔案載入 ...
 
+// Menu "Debug"
+Menu.menuDebug.text=調試
+Menu.menuDebug.mnemonic=
+// Submenu of "Debug"
+Menu.menuDebugTurtle.text=
+Menu.menuDebugExecute.text=偵錯​工具 ...
+Menu.menuDebugDropBrkpts.text=
+Menu.menuDebugBreakpoint.text=
+Menu.menuDebugBreakTrigger.text=
+Menu.menuDebugDisable.text=
 
 // Menu "Help"
 Menu.menuHelp.text=說明

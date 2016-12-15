@@ -1341,6 +1341,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     // START KGU#177 2016-04-14: Enh. #158 - return all diagram (file) names without saving possibility
     //public void saveDiagrams()
     public boolean saveDiagrams()
+    {
+    	return saveDiagrams(false);
+    }
+    
+    public boolean saveDiagrams(boolean goingToClose)
     // END KGU#177 2016-04-14
     {
 		// START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
@@ -1356,7 +1361,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     			Mainform form = diagram.mainform;
     			if (form != null)
     			{
-    				form.diagram.saveNSD(true);
+    				form.diagram.saveNSD(!goingToClose || !lu.fisch.structorizer.gui.Diagram.D_AUTO_SAVE_ON_CLOSE);
     			}
     			// START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
     			else if (diagram.root.filename == null || diagram.root.filename.isEmpty())

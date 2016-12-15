@@ -88,6 +88,8 @@
  *      Kay Gürtzig     2016.11.10  Enh. #286: AnalyserPreferences tabs
  *      Kay Gürtzig     2016.12.02  Enh. #300: New messages for update retrieval
  *      Kay Gürtzig     2016.12.02  Issue #307: New executor error message
+ *      Kay Gürtzig     2016.12.14  Issue #310: Menu re-organization
+ *      Kay Gürtzig     2016.12.15  Enh. #310: New Saving option dialog
  *
  ******************************************************************************************************
  *
@@ -178,10 +180,6 @@ Menu.menuDiagramMoveDown.text=Desplazar abajo
 Menu.menuDiagramTransmute.text=Transmutar
 Menu.menuDiagramCollapse.text=Reducir
 Menu.menuDiagramExpand.text=Expandir
-Menu.menuDiagramDisable.text=Desactivar/Reactivar
-// Breakpoint
-Menu.menuDiagramBreakpoint.text=Poner/eliminar breakpoint
-Menu.menuDiagramBreakTrigger.text=Fija condición de parar ...
 // Diagram Appearance
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Main
@@ -206,6 +204,7 @@ Menu.menuPreferencesColors.text=Colores ...
 Menu.menuPreferencesOptions.text=Estructuras ...
 Menu.menuPreferencesParser.text=Analizador ...
 Menu.menuPreferencesAnalyser.text=Comprobador ...
+Menu.menuPreferencesSaving.text=Guardar ...
 Menu.menuPreferencesExport.text=Exportación ...
 Menu.menuPreferencesImport.text=Importación ...
 Menu.menuPreferencesLanguage.text=Idioma
@@ -228,12 +227,23 @@ Menu.menuPreferencesLanguageFromFile.tooltip=Archivos de traducción se pueden c
 Menu.menuPreferencesLookAndFeel.text=Aspecto & Ambiente
 
 Menu.menuPreferencesSave.text=Todas las preferencias ...
-Menu.menuPreferencesSaveAll.text=Guardar
+Menu.menuPreferencesSaveAll.text=Guardar/Importar
 Menu.menuPreferencesSaveDump.text=Guardar como ...
 Menu.menuPreferencesSaveLoad.text=Importar de un archivo ...
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
+
+// Menu "Debug"
+Menu.menuDebug.text=Debug
+Menu.menuDebug.mnemonic=b
+// Submenu of "Debug"
+Menu.menuDebugTurtle.text=Turtleizer ...
+Menu.menuDebugExecute.text=Control de Ejecución ...
+Menu.menuDebugDropBrkpts.text=Eliminar todos breakpoints
+Menu.menuDebugBreakpoint.text=Poner/eliminar breakpoint
+Menu.menuDebugBreakTrigger.text=Fija condición de parar ...
+Menu.menuDebugDisable.text=Desactivar/Reactivar
 
 // Menu "Help"
 Menu.menuHelp.text=Ayuda
@@ -712,6 +722,17 @@ ImportOptionDialog.chkRefactorOnLoading.text=Reemplazar palabras claves al recar
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Habilita esta opción si el contenido de diagramas siendo recargados debe ser adaptado automáticamente a las preferencias del analizador.
 ImportOptionDialog.btnOk.text=Aceptar
 ImportOptionDialog.btnOk.tooltip=Aceptar los cambios.
+
+-----[ SaveOptionDialog ]-----
+SaveOptionDialog.title=Preferencias para guardar diagramas ...
+SaveOptionDialog.lbIntro.text=Elige las preferencias, que quieres activar...
+SaveOptionDialog.pnlAutoSave.border=Guardar automáticamente
+SaveOptionDialog.pnlBackup.border=Copia de seguridad
+SaveOptionDialog.chkAutoSaveClose.text=Guardar automáticamente al ejecutar
+SaveOptionDialog.chkAutoSaveExecute.text=Guardar automáticamente al salir
+SaveOptionDialog.chkBackupFile.text=Hacer un backup al guardar de nuevo
+SaveOptionDialog.btnOk.text=OK
+SaveOptionDialog.btnOk.tooltip=Accept these settings.
 
 -----> Arranger
 Surface.msgFileLoadError.text=Error abriendo archivo:

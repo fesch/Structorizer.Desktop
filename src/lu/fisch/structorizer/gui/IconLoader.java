@@ -46,7 +46,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.25      Enh. #253: New icon 025_import for import configuration
  *      Kay Gürtzig     2016.10.13      Enh. #270: New icon 026_disable for inactive elements
  *      Kay Gürtzig     2016.10.16      Enh. #272: New icons 027_richTurtle and 028_poorTurtle
- *      Kay Gürtzig     2016.11.01      Issue #81: icons 089 through 091 and 113 hadn't been scaled 
+ *      Kay Gürtzig     2016.11.01      Issue #81: icons 089 through 091 and 113 hadn't been scaled
+ *      Kay Gürtzig     2016.12.14      Enh. #305: New icon 029_index for the Arranger index 
  *
  ******************************************************************************************************
  *
@@ -111,6 +112,9 @@ public class IconLoader {
 	public static ImageIcon ico027 = getIconImage(getURI(from+"icons/027_richTurtle.png"));
 	public static ImageIcon ico028 = getIconImage(getURI(from+"icons/028_poorTurtle.png"));
 	// END KGU#282 2016-10-16
+	// START KGU#305 2016-12-14: Enh. #305
+	public static ImageIcon ico029 = getIconImage(getURI(from+"icons/029_index.png"));
+	// END KGU#305 2016-12-14
 
 	public static ImageIcon ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
 	public static ImageIcon ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));
@@ -248,6 +252,9 @@ public class IconLoader {
         	ico027 = getIconImage(getURI(from+"icons/027_richTurtle.png"));
         	ico028 = getIconImage(getURI(from+"icons/028_poorTurtle.png"));
         	// END KGU#282 2016-10-16
+        	// START KGU#305 2016-12-14: Enh. #305
+        	ico029 = getIconImage(getURI(from+"icons/029_index.png"));
+        	// END KGU#305 2016-12-14
 
             ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
             ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));

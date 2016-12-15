@@ -87,6 +87,8 @@
  *      Kay Gürtzig         2016.11.10  Enh. #286: AnalyserPreferences tabs
  *      Kay Gürtzig         2016.12.02  Enh. #300: New messages for update retrieval
  *      Kay Gürtzig         2016.12.02  Issue #307: New executor error message
+ *      Kay Gürtzig         2016.12.14  Issue #311: Menu re-organization
+ *      Kay Gürtzig         2016.12.15  Enh. #310: New Saving option dialog
  *
  ******************************************************************************************************
  *
@@ -177,10 +179,6 @@ Menu.menuDiagramMoveDown.text=Nach unten
 Menu.menuDiagramTransmute.text=Umwandeln
 Menu.menuDiagramCollapse.text=Reduzieren
 Menu.menuDiagramExpand.text=Erweitern
-Menu.menuDiagramDisable.text=Deaktivieren/Aktivieren
-// Breakpoint
-Menu.menuDiagramBreakpoint.text=Haltepunkt setzen/löschen
-Menu.menuDiagramBreakTrigger.text=Haltepunktauslösung festlegen...
 // Diagram Appearance
 Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=Hauptprogramm
@@ -205,6 +203,7 @@ Menu.menuPreferencesColors.text=Farben ...
 Menu.menuPreferencesOptions.text=Strukturen ...
 Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesAnalyser.text=Überprüfungen ...
+Menu.menuPreferencesSaving.text=Sichern ...
 Menu.menuPreferencesExport.text=Export ...
 Menu.menuPreferencesImport.text=Import ...
 Menu.menuPreferencesLanguage.text=Sprache
@@ -233,6 +232,17 @@ Menu.menuPreferencesSaveLoad.text=Laden ...
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
+
+// Menu "Debug"
+Menu.menuDebug.text=Debug
+Menu.menuDebug.mnemonic=b
+// Submenu of "Debug"
+Menu.menuDebugTurtle.text=Turtleizer ...
+Menu.menuDebugExecute.text=Debugger ...
+Menu.menuDebugDropBrkpts.text=Haltepunkte entfernen
+Menu.menuDebugBreakpoint.text=Haltepunkt setzen/löschen
+Menu.menuDebugBreakTrigger.text=Haltepunktauslösung festlegen...
+Menu.menuDebugDisable.text=Deaktivieren/Aktivieren
 
 // Menu "Help"
 Menu.menuHelp.text=Hilfe
@@ -279,7 +289,7 @@ Menu.msgNewerVersionAvail.text=Neuere Version % zum Download verfügbar.
 Menu.msgUpdateInfoHint.text=Um über neue Versionen informiert zu werden kann mit\nMenüpunkt "%1" > "%2"\ndie Online-Suche nach Updates auf der Structorizer-Homepage aktiviert werden.
 Menu.lblOk.text=OK
 Menu.lblSuppressUpdateHint.text=Diesen Hinweis nicht mehr anzeigen
-Menu.lblHint=Tipp
+Menu.lblHint.text=Tipp
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
@@ -711,6 +721,17 @@ ImportOptionDialog.chkRefactorOnLoading.text=Parser-Schlüsselworte in Diagramme
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Aktivieren, um Diagramme beim Laden an die aktuell eingestellten Parser-Kennworte anpassen zu lassen.
 ImportOptionDialog.btnOk.text=OK
 ImportOptionDialog.btnOk.tooltip=Speichern der gewählten Einstellungen.
+
+-----[ SaveOptionDialog ]-----
+SaveOptionDialog.title=Optionen für das Sichern von Diagrammen ...
+SaveOptionDialog.lbIntro.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
+SaveOptionDialog.pnlAutoSave.border=Automatisches Speichern
+SaveOptionDialog.pnlBackup.border=Backup-Dateien
+SaveOptionDialog.chkAutoSaveClose.text=Automatisch sichern beim Debuggen?
+SaveOptionDialog.chkAutoSaveExecute.text=Automatisch sichern beim Beenden?
+SaveOptionDialog.chkBackupFile.text=Backup-Dateien beim Zurücksichern erstellen?
+SaveOptionDialog.btnOk.text=OK
+SaveOptionDialog.btnOk.tooltip=Einstellungen übernehmen.
 
 -----> Arranger
 Surface.msgFileLoadError.text=Dateiladefehler:

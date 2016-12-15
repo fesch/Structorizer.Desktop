@@ -52,6 +52,7 @@
  *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
  *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig     2016.09.22      AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016.12.14      Enh. #311: New menu "Debug"
  *
  ******************************************************************************************************
  *
@@ -146,6 +147,18 @@ Menu.menuPreferencesLanguageItems.lu.text=Luxemburgs
 Menu.menuPreferencesLanguageItems.it.text=Italian
 Menu.menuPreferencesLookAndFeel.text=Uiterlijk
 Menu.menuPreferencesSave.text=Alle instellingen nu opslaan
+
+// Menu "Debug"
+Menu.menuDebug.text=Debug
+Menu.menuDebug.mnemonic=g
+// Submenu of "Debug"
+Menu.menuDebugTurtle.text=Turtleizer ...
+Menu.menuDebugExecute.text=Debugger ...
+Menu.menuDebugDropBrkpts.text=Clear breakpoints
+Menu.menuDebugBreakpoint.text=Toggle breakpoint
+Menu.menuDebugBreakTrigger.text=Specify break trigger ...
+Menu.menuDebugDisable.text=Disable/enable
+
 // Menu "Help"
 Menu.menuHelp.text=Help
 Menu.menuHelp.mnemonic=h

@@ -54,6 +54,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded except for icons, ensured to be >= 1
  *      Kay Gürtzig     2016.12.02      Enh. #300: Notification of disabled version retrieval or new versions
  *      Kay Gürtzig     2016.12.12      Enh. #305: API enhanced to support the Arranger Root index view
+ *      Kay Gürtzig     2016.12.15      Enh. #310: New options for saving diagrams added
  *
  ******************************************************************************************************
  *
@@ -205,7 +206,7 @@ public class Mainform  extends LangFrame implements NSDController
                             }
                             else
                             // END KGU#157
-                            if (diagram.saveNSD(true))
+                            if (diagram.saveNSD(!Diagram.D_AUTO_SAVE_ON_CLOSE))
                             {
                                     saveToINI();
                                     // START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
@@ -374,10 +375,19 @@ public class Mainform  extends LangFrame implements NSDController
 					diagram.setAnalyser(false);
 				}
                  * */
+				// START KGU#305 2016-12-14: Enh. #305
+				diagram.setArrangerIndex(ini.getProperty("index", "1").equals("1"));	// default = 1
+				// END KGU#305 2016-12-14
 				// START KGU#123 2016-01-04: Enh. #87, Bugfix #65
 				diagram.setWheelCollapses(ini.getProperty("wheelToCollapse", "0").equals("1"));
 				// END KGU#123 2016-01-04
 			}
+
+			// START KGU#309 2016-12-15: Enh. #310 new saving options
+			Diagram.D_AUTO_SAVE_ON_EXECUTE = ini.getProperty("autoSaveOnExecute", "0").equals("1");
+			Diagram.D_AUTO_SAVE_ON_CLOSE = ini.getProperty("autoSaveOnClose", "0").equals("1");
+			Diagram.D_MAKE_BACKUPS = ini.getProperty("makeBackups", "1").equals("1");
+		    // END KGU#309 20161-12-15
 			
 			// recent files
 			try
@@ -447,26 +457,35 @@ public class Mainform  extends LangFrame implements NSDController
 				// START KGU#300 2016-12-02: Enh. #300
 				ini.setProperty("retrieveVersion", Boolean.toString(diagram.retrieveVersion));
 				// END KGU#300 2016-12-02
+				// START KGU#305 2016-12-15: Enh. #305
+				ini.setProperty("index", (diagram.showArrangerIndex() ? "1" : "0"));
+				// END KGU#305 2016-12-15
 			}
 			
 			// language
 			ini.setProperty("Lang",Locales.getInstance().getLoadedLocaleFilename());
 			
 			// DIN, comments
-			ini.setProperty("DIN",(Element.E_DIN?"1":"0"));
-			ini.setProperty("showComments",(Element.E_SHOWCOMMENTS?"1":"0"));
+			ini.setProperty("DIN", (Element.E_DIN ? "1" : "0"));
+			ini.setProperty("showComments", (Element.E_SHOWCOMMENTS ? "1" : "0"));
 			// START KGU#227 2016-08-01: Enh. #128
 			ini.setProperty("commentsPlusText", Element.E_COMMENTSPLUSTEXT ? "1" : "0");
 			// END KGU#227 2016-08-01
-			ini.setProperty("switchTextComments",(Element.E_TOGGLETC?"1":"0"));
-			ini.setProperty("varHightlight",(Element.E_VARHIGHLIGHT?"1":"0"));
+			ini.setProperty("switchTextComments", (Element.E_TOGGLETC ? "1" : "0"));
+			ini.setProperty("varHightlight", (Element.E_VARHIGHLIGHT ? "1" : "0"));
 			// KGU 2016-07-27: Why has this been commented out once (before version 3.17)? See Issue #207
-			//ini.setProperty("analyser",(Element.E_ANALYSER?"1":"0"));
+			//ini.setProperty("analyser", (Element.E_ANALYSER ? "1" : "0"));
 			// START KGU#123 2016-01-04: Enh. #87
-			ini.setProperty("wheelToCollapse",(Element.E_WHEELCOLLAPSE?"1":"0"));
+			ini.setProperty("wheelToCollapse", (Element.E_WHEELCOLLAPSE ? "1" : "0"));
 			// END KGU#123 2016-01-04
 			
-			// look and feel
+		    // START KGU#309 2016-12-15: Enh. #310 new saving options
+		    ini.setProperty("autoSaveOnExecute", (Diagram.D_AUTO_SAVE_ON_EXECUTE ? "1" : "0"));
+		    ini.setProperty("autoSaveOnClose", (Diagram.D_AUTO_SAVE_ON_CLOSE ? "1" : "0"));
+		    ini.setProperty("makeBackups", (Diagram.D_MAKE_BACKUPS ? "1" : "0"));
+		    // END KGU#309 20161-12-15
+
+		    // look and feel
 			if(laf!=null)
 			{
 				ini.setProperty("laf", laf);
@@ -689,7 +708,7 @@ public class Mainform  extends LangFrame implements NSDController
     	if (this.diagram != null)	// May look somewhat paranoid, but diagram is public...
     	{
     		// KGU#88: We now reflect if the user refuses to override the former diagram
-    		done = this.diagram.setRoot(root);
+    		done = this.diagram.setRootIfNotRunning(root);
     	}
     	return done;
     }

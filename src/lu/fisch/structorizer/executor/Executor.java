@@ -1118,7 +1118,7 @@ public class Executor implements Runnable
 			cloned = true;
 		}
 		
-		this.diagram.setRoot(root, true);
+		this.diagram.setRoot(root, !Diagram.D_AUTO_SAVE_ON_EXECUTE);
 		
 		// START KGU#156 2016-03-11: Enh. #124 - detect execution counter diff.
 		int countBefore = root.getExecStepCount(true);
@@ -1162,7 +1162,7 @@ public class Executor implements Runnable
 		// START KGU#78 2015-11-25
 		this.loopDepth = entry.loopDepth;
 		// END KGU#78 2015-11-25
-		this.diagram.setRoot(entry.root);
+		this.diagram.setRoot(entry.root, !Diagram.D_AUTO_SAVE_ON_EXECUTE);
 		entry.root.isCalling = false;
 
 		// The called subroutine will certainly have returned a value...
