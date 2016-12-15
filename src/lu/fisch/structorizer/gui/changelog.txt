@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.25-11 (2016.12.15)
+Current development version: 3.25-11 (2016.12.16)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
 - 01: Issue #213: Selected state of FOR transmutation result now visible <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
@@ -86,6 +86,7 @@ Current development version: 3.25-11 (2016.12.15)
 - 11: Enh. #310: New options for saving diagrams [newboerg]<2>
 - 11: Enh. #311: Partial menu re-organisation: Debug menu <2>
 - 11: Issue #312: Focus control among work area, error list, Arranger index fixed <2>
+- 11: Bugfix #305: Arranger index now sorted Case-indifferently <2> 
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2
