@@ -729,7 +729,7 @@ SaveOptionDialog.pnlAutoSave.border=Automatisches Speichern
 SaveOptionDialog.pnlBackup.border=Backup-Dateien
 SaveOptionDialog.chkAutoSaveExecute.text=Automatisch sichern beim Debuggen?
 SaveOptionDialog.chkAutoSaveClose.text=Automatisch sichern beim Beenden?
-SaveOptionDialog.chkBackupFile.text=Backup-Dateien beim Zurücksichern erstellen?
+SaveOptionDialog.chkBackupFile.text=Beim Überschreiben Backup-Dateien erstellen?
 SaveOptionDialog.btnOk.text=OK
 SaveOptionDialog.btnOk.tooltip=Einstellungen übernehmen.
 

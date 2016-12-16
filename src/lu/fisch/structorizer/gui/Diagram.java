@@ -206,11 +206,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
     public File currentDirectory = new File(System.getProperty("user.home"));
     public File lastExportDir = null;
-    // START KGU#309 2016-12-15: Enh. #310 new saving options
-    public static boolean D_AUTO_SAVE_ON_EXECUTE = false;
-    public static boolean D_AUTO_SAVE_ON_CLOSE = false;
-    public static boolean D_MAKE_BACKUPS = true;
-    // END KGU#309 20161-12-15
     // START KGU#170 2016-04-01: Enh. #144 maintain a favourite export generator
     private String prefGeneratorName = "";
     // END KGU#170 2016-04-01
@@ -219,7 +214,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     public boolean retrieveVersion = false;
     // END KGU#300 2016-12-02
 	// START KGU#305 2016-12-12: Enh. #305
-	private boolean E_ARRANGER_INDEX = false;	// Arranger index visible?
+	private boolean show_ARRANGER_INDEX = false;	// Arranger index visible?
 	// END KGU#305 2016-12-12
 
     // recently opened files
@@ -1555,7 +1550,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             	File tmpFile = new File(filename);
             	tmpFile.renameTo(f);
             	// START KGU#309 2016-12-15: Issue #310 backup may be opted out
-            	if (!D_MAKE_BACKUPS && backUp.exists()) {
+            	if (!Element.E_MAKE_BACKUPS && backUp.exists()) {
             		backUp.delete();
             	}
             	// END KGU#309 2016-12-15
@@ -4382,16 +4377,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     public void savingOptions()
     {
     	SaveOptionDialog sod = new SaveOptionDialog(NSDControl.getFrame());
-    	sod.chkAutoSaveClose.setSelected(D_AUTO_SAVE_ON_CLOSE);
-    	sod.chkAutoSaveExecute.setSelected(D_AUTO_SAVE_ON_EXECUTE);
-    	sod.chkBackupFile.setSelected(D_MAKE_BACKUPS);
+    	sod.chkAutoSaveClose.setSelected(Element.E_AUTO_SAVE_ON_CLOSE);
+    	sod.chkAutoSaveExecute.setSelected(Element.E_AUTO_SAVE_ON_EXECUTE);
+    	sod.chkBackupFile.setSelected(Element.E_MAKE_BACKUPS);
     	sod.setVisible(true);
 
     	if(sod.goOn==true)
     	{
-    		D_AUTO_SAVE_ON_CLOSE = sod.chkAutoSaveClose.isSelected();
-    		D_AUTO_SAVE_ON_EXECUTE = sod.chkAutoSaveExecute.isSelected();
-    		D_MAKE_BACKUPS = sod.chkBackupFile.isSelected();
+    		Element.E_AUTO_SAVE_ON_CLOSE = sod.chkAutoSaveClose.isSelected();
+    		Element.E_AUTO_SAVE_ON_EXECUTE = sod.chkAutoSaveExecute.isSelected();
+    		Element.E_MAKE_BACKUPS = sod.chkBackupFile.isSelected();
     	}
     }
     // END KGU#258 2016-09-26
@@ -4602,12 +4597,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// START KGU#305 2016-12-14: Enh. #305
 	public void setArrangerIndex(boolean _showIndex)
 	{
-		this.E_ARRANGER_INDEX = _showIndex;
+		this.show_ARRANGER_INDEX = _showIndex;
 		NSDControl.doButtons();
 	}
 	public boolean showArrangerIndex()
 	{
-		return this.E_ARRANGER_INDEX;
+		return this.show_ARRANGER_INDEX;
 	}
 	// END KGU#305 216-12-14
 	

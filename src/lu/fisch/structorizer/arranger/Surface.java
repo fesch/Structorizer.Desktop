@@ -1361,7 +1361,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     			Mainform form = diagram.mainform;
     			if (form != null)
     			{
-    				form.diagram.saveNSD(!goingToClose || !lu.fisch.structorizer.gui.Diagram.D_AUTO_SAVE_ON_CLOSE);
+    				form.diagram.saveNSD(!goingToClose || !Element.E_AUTO_SAVE_ON_CLOSE);
     			}
     			// START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
     			else if (diagram.root.filename == null || diagram.root.filename.isEmpty())

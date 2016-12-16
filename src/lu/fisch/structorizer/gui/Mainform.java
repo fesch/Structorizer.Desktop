@@ -206,7 +206,7 @@ public class Mainform  extends LangFrame implements NSDController
                             }
                             else
                             // END KGU#157
-                            if (diagram.saveNSD(!Diagram.D_AUTO_SAVE_ON_CLOSE))
+                            if (diagram.saveNSD(!Element.E_AUTO_SAVE_ON_CLOSE))
                             {
                                     saveToINI();
                                     // START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
@@ -384,9 +384,9 @@ public class Mainform  extends LangFrame implements NSDController
 			}
 
 			// START KGU#309 2016-12-15: Enh. #310 new saving options
-			Diagram.D_AUTO_SAVE_ON_EXECUTE = ini.getProperty("autoSaveOnExecute", "0").equals("1");
-			Diagram.D_AUTO_SAVE_ON_CLOSE = ini.getProperty("autoSaveOnClose", "0").equals("1");
-			Diagram.D_MAKE_BACKUPS = ini.getProperty("makeBackups", "1").equals("1");
+			Element.E_AUTO_SAVE_ON_EXECUTE = ini.getProperty("autoSaveOnExecute", "0").equals("1");
+			Element.E_AUTO_SAVE_ON_CLOSE = ini.getProperty("autoSaveOnClose", "0").equals("1");
+			Element.E_MAKE_BACKUPS = ini.getProperty("makeBackups", "1").equals("1");
 		    // END KGU#309 20161-12-15
 			
 			// recent files
@@ -480,9 +480,9 @@ public class Mainform  extends LangFrame implements NSDController
 			// END KGU#123 2016-01-04
 			
 		    // START KGU#309 2016-12-15: Enh. #310 new saving options
-		    ini.setProperty("autoSaveOnExecute", (Diagram.D_AUTO_SAVE_ON_EXECUTE ? "1" : "0"));
-		    ini.setProperty("autoSaveOnClose", (Diagram.D_AUTO_SAVE_ON_CLOSE ? "1" : "0"));
-		    ini.setProperty("makeBackups", (Diagram.D_MAKE_BACKUPS ? "1" : "0"));
+		    ini.setProperty("autoSaveOnExecute", (Element.E_AUTO_SAVE_ON_EXECUTE ? "1" : "0"));
+		    ini.setProperty("autoSaveOnClose", (Element.E_AUTO_SAVE_ON_CLOSE ? "1" : "0"));
+		    ini.setProperty("makeBackups", (Element.E_MAKE_BACKUPS ? "1" : "0"));
 		    // END KGU#309 20161-12-15
 
 		    // look and feel

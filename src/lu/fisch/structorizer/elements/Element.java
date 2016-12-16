@@ -304,6 +304,11 @@ public abstract class Element {
 	// START KGU#123 2016-01-04: New toggle for Enh. #87
 	public static boolean E_WHEELCOLLAPSE = false;	// Is collapsing by mouse wheel rotation enabled?
 	// END KGU#123 2016-01-04
+    // START KGU#309 2016-12-15: Enh. #310 new saving options
+    public static boolean E_AUTO_SAVE_ON_EXECUTE = false;
+    public static boolean E_AUTO_SAVE_ON_CLOSE = false;
+    public static boolean E_MAKE_BACKUPS = true;
+    // END KGU#309 20161-12-15
 
 	// some colors
 	public static Color color0 = Color.decode("0xFFFFFF");
