@@ -146,16 +146,16 @@ public class Root extends Element {
 	// KGU 2015-10-16: Just for testing purposes
 	//private static int fileCounter = 1;
 
-	// START KGU#305 2016-12-12: Enh. #305
+	// START KGU#305 2016-12-12: Enh. #305 / 2016-12-16: Case-independent comparison
 	public static final Comparator<Root> SIGNATURE_ORDER =
 			new Comparator<Root>() {
 		public int compare(Root root1, Root root2)
 		{
 			String main_or_sub1 = root1.isProgram ? "M" : "S";
 			String main_or_sub2 = root2.isProgram ? "M" : "S";
-			int result = (main_or_sub1 + root1.getSignatureString(false)).compareTo(main_or_sub2 + root2.getSignatureString(true));
+			int result = (main_or_sub1 + root1.getSignatureString(false)).compareToIgnoreCase(main_or_sub2 + root2.getSignatureString(false));
 			if (result == 0) {
-				result = ("" + root1.getPath()).compareTo("" + root2.getPath());
+				result = ("" + root1.getPath()).compareToIgnoreCase("" + root2.getPath());
 			}
 			return result;
 		}

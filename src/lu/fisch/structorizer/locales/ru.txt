@@ -60,6 +60,7 @@
  *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
  *      Kay Gürtzig     2016.10.11  Enh. 267: Menu.error15 renamed into Menu.error15_1
  *      Kay Gürtzig     2016.10.18  Enh. #267: Analyser check 15 reformulated.
+ *      Kay Gürtzig     2016.12.14  Enh. #311: New menu "Debug"
  *
  ******************************************************************************************************
  *
@@ -69,7 +70,7 @@
 >>>
 -----> Structorizer
 -----[ Menu ]-----
-//Menu File
+// Menu "File"
 Menu.menuFile.text=Файл
 Menu.menuFile.mnemonic=ф
 // Submenus of "File"
@@ -82,11 +83,20 @@ Menu.menuFileExport.text=Экспорт
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Изображение ...
 Menu.menuFileExportCode.text=Язык (код) ...
+Menu.menuFileExportPicturePNG.text=
+Menu.menuFileExportPicturePNGmulti.text=
+Menu.menuFileExportPictureEMF.text=
+Menu.menuFileExportPictureSWF.text=
+Menu.menuFileExportPicturePDF.text=
+Menu.menuFileExportPictureSVG.text=
+Menu.lbFileExportCodeFavorite.text=
+Menu.menuFileExportCodeFavorite.tooltip=
 Menu.menuFileImport.text=Импорт
 // Submenu of "File -> Import"
 Menu.menuFileImportPascal.text=Язык Pascal ...
 Menu.menuFilePrint.text=Печать ...
 Menu.menuFileArrange.text=Распределить к Arranger
+Menu.menuFileTranslator.text=Переводчик ...
 Menu.menuFileQuit.text=Выход
 // Menu "Edit"
 Menu.menuEdit.text=Правка
@@ -97,6 +107,10 @@ Menu.menuEditRedo.text=Повторить
 Menu.menuEditCut.text=Вырезать
 Menu.menuEditCopy.text=Копировать
 Menu.menuEditPaste.text=Вставить
+Menu.menuEditUpgradeTurtle.text=
+Menu.menuEditUpgradeTurtle.tooltip=
+Menu.menuEditDowngradeTurtle.text=
+Menu.menuEditDowngradeTurtle.tooltip=
 Menu.menuEditCopyDiagramPNG.text=Копировать изображение PNG
 Menu.menuEditCopyDiagramEMF.text=Копировать изображение EMF
 // Menu "Diagram"
@@ -130,15 +144,13 @@ Menu.menuDiagramAddAfterForever.text=Цикл ENDLESS
 Menu.menuDiagramAddAfterCall.text=Вызов процедуры
 Menu.menuDiagramAddAfterJump.text=Переход (выход)
 Menu.menuDiagramAddAfterPara.text=Паралельный процесс
-// Element manipulation
 Menu.menuDiagramEdit.text=Изменить
 Menu.menuDiagramDelete.text=Удалить
 Menu.menuDiagramMoveUp.text=Вверх
 Menu.menuDiagramMoveDown.text=Вниз
+Menu.menuDiagramTransmute.text=Превратить
 Menu.menuDiagramCollapse.text=Сжать
 Menu.menuDiagramExpand.text=Увеличить
-// Breakpoint
-Menu.menuDiagramBreakpoint.text=Сменить точку останова
 // Diagram Appearance
 Menu.menuDiagramType.text=Тип
 Menu.menuDiagramTypeProgram.text=Программа
@@ -146,20 +158,26 @@ Menu.menuDiagramTypeFunction.text=Подпрограмма
 Menu.menuDiagramNice.text=Поля диаграммы
 Menu.menuDiagramComment.text=Показывать комментарии
 Menu.menuDiagramSwitchComments.text=Обменить тексты/комментарии
+Menu.menuDiagramCommentsPlusText.text=Тексты и комментарии
+Menu.menuDiagramSwitchTCTooltip.text=
 Menu.menuDiagramMarker.text=Подсвечивать переменные
 Menu.menuDiagramDIN.text=DIN
-Menu.menuDiagramAnalyser.text=Анализировать схему 
+Menu.menuDiagramAnalyser.text=Анализировать схему
 Menu.menuDiagramWheel.text=Сжать с колесой?
 // Menu "Preferences"
 Menu.menuPreferences.text=Настройки
 Menu.menuPreferences.mnemonic=н
 // Submenu of "Preferences"
+Menu.menuPreferencesNotifyUpdate.text=Известить о новых версиях
+Menu.menuPreferencesNotifyUpdate.tooltip=
 Menu.menuPreferencesFont.text=Шрифт ...
 Menu.menuPreferencesColors.text=Цвет ...
 Menu.menuPreferencesOptions.text=Структур ...
 Menu.menuPreferencesParser.text=Парсер ...
 Menu.menuPreferencesAnalyser.text=Анализатор ...
+Menu.menuPreferencesSaving.text=Сохранение ...
 Menu.menuPreferencesExport.text=Экспорт ...
+Menu.menuPreferencesImport.text=Импорт ...
 Menu.menuPreferencesLanguage.text=Язык
 Menu.menuPreferencesLanguageItems.en.text=Английский
 Menu.menuPreferencesLanguageItems.de.text=Германский
@@ -174,6 +192,8 @@ Menu.menuPreferencesLanguageItems.zh-tw.text=Китайский (традици�
 Menu.menuPreferencesLanguageItems.cz.text=Чeшский
 Menu.menuPreferencesLanguageItems.ru.text=Русский
 Menu.menuPreferencesLanguageItems.pl.text=Польский
+Menu.menuPreferencesLanguageFromFile.text=Из файла ...
+Menu.menuPreferencesLanguageFromFile.tooltip=
 
 Menu.menuPreferencesLookAndFeel.text=Внешний вид
 
@@ -182,13 +202,70 @@ Menu.menuPreferencesSaveAll.text=Сохранить
 Menu.menuPreferencesSaveDump.text=Сохранить как ...
 Menu.menuPreferencesSaveLoad.text=Ввезти из файла ...
 
+// Menu "View" (not in use right now!)
+Menu.menuView.text=
+
+// Menu "Debug"
+Menu.menuDebug.text=Выполнение
+Menu.menuDebug.mnemonic=в
+// Submenu of "Debug"
+Menu.menuDebugTurtle.text=Открыть Turtleizer ...
+Menu.menuDebugExecute.text=Выполнить ...
+Menu.menuDebugDropBrkpts.text=Удалить все точки останова
+Menu.menuDebugBreakpoint.text=Сменить точку останова
+Menu.menuDebugBreakTrigger.text=
+Menu.menuDebugDisable.text=Подавить
+
 // Menu "Help"
 Menu.menuHelp.text=Помощь
 Menu.menuHelp.mnemonic=п
 // Submenu of "Help"
+Menu.menuHelpOnline.text=Руководство пользователя ...
 Menu.menuHelpAbout.text=О программе ...
 Menu.menuHelpUpdate.text=Обновления ...
+
+// Dialog messages
+Menu.msgDialogExpCols.text=
+Menu.msgDialogExpRows.text=
+Menu.msgOverwriteFile.text=
+Menu.msgOverwriteFiles.text=
+Menu.btnConfirmOverwrite.text=
+Menu.msgRepeatSaveAttempt.text=
+Menu.msgErrorFileSave.text=
+Menu.msgBreakTriggerPrompt.text=
+Menu.msgBreakTriggerIgnored.text=
+Menu.msgOpenLangFile.text=
+Menu.msgLangFile.text=
+Menu.msgGotoHomepage.text=
+Menu.msgTitleError.text=
+Menu.msgTitleLoadingError.text=
+Menu.msgTitleParserError.text=
+Menu.msgTitleURLError.text=
+Menu.msgTitleQuestion.text=
+Menu.msgTitleOpen.text=
+Menu.msgTitleSave.text=
+Menu.msgTitleSaveAs.text=
+Menu.msgTitleImport.text=
+Menu.msgTitleWrongInput.text=
+Menu.msgSaveChanges.text=
+Menu.msgErrorImageSave.text=
+Menu.msgErrorUsingGenerator.text=
+Menu.msgErrorNoFile.text=
+Menu.msgBrowseFailed.text=
+Menu.msgRefactoringOffer.text=
+Menu.lblRefactorNone.text=
+Menu.lblRefactorCurrent.text=
+Menu.lblRefactorAll.text=
+Menu.msgReplacementsDone.text=
+Menu.msgNewerVersionAvail.text=
+Menu.msgUpdateInfoHint.text=
+Menu.lblOk.text=
+Menu.lblSuppressUpdateHint.text=
+Menu.lblHint.txt=
+
 // Error messages for analyser
+// warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
+Menu.warning_1.text=ВНИМАНИЕ: ТЕКСТЫ ОБМЕНЕНЫ С КОММЕНТАРИЯМИ! → меню "Обменить тексты/комментарии"
 Menu.error01_1.text=ВНИМАНИЕ: Не обнаружено переменной цикла ...
 Menu.error01_2.text=ВНИМАНИЕ: Обнаружено более одной переменной цикла: «%»
 Menu.error01_3.text=Вы не можете изменить переменную цикла «%» внутри цикла!
@@ -214,17 +291,25 @@ Menu.error13_2.text=Ваша функция может не вернуть ре�
 Menu.error13_3.text=Ваша функция использловает разные методы отдачи вместе: «%»!
 Menu.error14_1.text=Отдельные сведения считающего цикла не подходят к тексту!
 Menu.error14_2.text=Шаг «%» считающего цикла не является постоянным целым числом!
+Menu.error14_3.text=
 Menu.error15_1.text=Вызов процедуры не имеет форм [ <var> <- ] <routine_name>(<arg_list>)!
+Menu.error15_2.text=
 Menu.error16_1.text=Выходу надо быть пустым или начать со одном из ключевых слов %!
 Menu.error16_2.text=Инструкция return должна (разве только на конце диаграммы) быть элементом типа Выход (Переход)!
 Menu.error16_3.text=Инструкции типов exit, leave или break должны быть элементами типа Выход (Переход)!
 Menu.error16_4.text=Выход не может перепрыгнуть более этажов чем число окружаещемых цикл (%)!
 Menu.error16_5.text=Непосредственное возвращение (return) из паралельной отрасли недопустимо!
 Menu.error16_6.text=Недопустимый параметр для этого типа Выхода - здесь надо целое число.
+Menu.error16_7.text=
 Menu.error17.text=Конкурирующий доступ к переменной «%» из разных паралельных отраслей рискует консистенцией!
+Menu.error18.text=
+Menu.error19.text=
+Menu.error20.text=
 
 -----[ AnalyserPreferences ]-----
-AnalyserPreferences.title=Настройки анализатора 
+AnalyserPreferences.title=Настройки анализатора
+AnalyserPreferences.contentPanel.tab.0=Алгоритм
+AnalyserPreferences.contentPanel.tab.1=Названия / соглашения
 AnalyserPreferences.checkboxes.1.text=Проверять изменение переменной цикла.
 AnalyserPreferences.checkboxes.2.text=Проверять конец цикла (возможен бесконечный цикл!).
 AnalyserPreferences.checkboxes.3.text=Проверять неинициализированные переменные.
@@ -256,7 +341,7 @@ Editor.btnNew.tooltip=Создать новую пустую схему.
 Editor.btnOpen.tooltip=Открыть схему.
 Editor.btnSave.tooltip=Сохранить схему.
 // InsertBefore
-Editor.btnBeforeInst.tooltip=Добавить новую инструкцию перед выбранным элементом. 
+Editor.btnBeforeInst.tooltip=Добавить новую инструкцию перед выбранным элементом.
 Editor.btnBeforeAlt.tooltip=Добавить оператор IF перед выбранным элементом.
 Editor.btnBeforeFor.tooltip=Добавить цикл FOR перед выбранным элементом.
 Editor.btnBeforeWhile.tooltip=Добавить цикл WHILE перед выбранным элементом.
@@ -284,7 +369,7 @@ Editor.btnRedo.tooltip=Повторить последнее действие.
 Editor.btnCut.tooltip=Вырезать выбранный элемент.
 Editor.btnCopy.tooltip=Скопировать выбранный элемент.
 Editor.btnPaste.tooltip=Вставить скопированный или вырезанный элемент.
-// style 
+// style
 Editor.btnNice.tooltip=Переключить визуальный стиль схемы.
 Editor.btnFunction.tooltip=Подпрограмма (закругленные углы).
 Editor.btnProgram.tooltip=Программа (прямые углы).
@@ -293,17 +378,15 @@ Editor.btnEdit.tooltip=Изменить выбранный элемент.
 Editor.btnDelete.tooltip=Удалить выбранный элемент.
 Editor.btnMoveUp.tooltip=Переместить выбранный элемент на одну позицию вверх.
 Editor.btnMoveDown.tooltip=Переместить выбранный элемент на одну позицию вниз.
+Editor.btnTransmute.tooltip=
 //printing
 Editor.btnPrint.tooltip=Распечатать схему.
+Editor.btnArrange.tooltip=
 // font
 Editor.btnFontUp.tooltip=Увеличить размера шрифта.
 Editor.btnFontDown.tooltip=Уменьшить размера шрифта.
-// copyright 
+// copyright
 Editor.btnAbout.tooltip=Показать информационное сообщение о Structorizer.
-// execution 
-Editor.btnTurtle.tooltip=Открыть Turtleizer ...
-Editor.btnMake.tooltip=Выполнить ...
-Editor.btnDropBrk.tooltip=Удалить все остановочные точки
 // colors
 Editor.btnColor0.tooltip=Окрасить выбранный элемент этим цветом.
 Editor.btnColor1.tooltip=Окрасить выбранный элемент этим цветом.
@@ -318,7 +401,11 @@ Editor.btnColor9.tooltip=Окрасить выбранный элемент эт
 // collapsing
 Editor.btnCollapse.tooltip=Сжать выбранный элемент.
 Editor.btnExpand.tooltip=Увеличить выбранный элемент .
-
+Editor.btnDisable.tooltip=
+// turtleizer & executor
+Editor.btnTurtle.tooltip=Открыть Turtleizer ...
+Editor.btnMake.tooltip=Выполнить ...
+Editor.btnDropBrk.tooltip=Удалить все остановочные точки
 // Popup menu
 Editor.popupCut.text=Вырезать
 Editor.popupCopy.text=Копировать
@@ -350,19 +437,22 @@ Editor.popupAddAfterForever.text=Цикл ENDLESS
 Editor.popupAddAfterCall.text=Вызов процедуры
 Editor.popupAddAfterJump.text=Переход (Выход)
 Editor.popupAddAfterPara.text=Параллельный процесс
-// Edit	
+// Edit
 Editor.popupEdit.text=Изменить
 Editor.popupDelete.text=Удалить
 Editor.popupMoveUp.text=Переместить вверх
 Editor.popupMoveDown.text=Переместить вниз
+Editor.popupTransmute.text=Превратить
 // Collapsing
 Editor.popupCollapse.text=Сжать
 Editor.popupExpand.text=Увеличить
+Editor.popupDisable.text=
 // Breakpoint
 Editor.popupBreakpoint.text=Сменить точку останова
+Editor.popupBreakTrigger.text=
 
 -----[ InputBox ]-----
-//InputBox.title=Изменение элемента
+InputBox.title=
 InputBox.lblText.text=Пожалуйста, введите текст
 InputBox.lblText.tooltip=
 InputBox.lblComment.text=Комментарий
@@ -373,15 +463,17 @@ InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=Подтвердить ваш выбор.
 InputBox.btnCancel.text=Отменить
 InputBox.btnCancel.tooltip=Отменить ваш выбор.
+InputBox.chkDisabled.text=
 InputBox.chkBreakpoint.text=Точка останова?
+InputBox.lblBreakTriggerText.text=
 InputBox.lblText.text[elementType:Alternative]=Пожалуйста, введите условие
 InputBox.lblText.text[elementType:While]=Пожалуйста, введите условие входа
 InputBox.lblText.text[elementType:Repeat]=Пожалуйста, введите условие выхода
 InputBox.lblText.text[elementType:Case]=Пожалуйста, введите выражение выбора и случайные константы (построчно)
 InputBox.lblText.text[elementType:Parallel]=
-InputBox.title[elementType:Root]=Изменить название Программы... 
-InputBox.title[elementType:Function]=Изменить название и парaметры Подпрограммы... 
-InputBox.title[elementType:Instruction,getInsertionType():insert]=Добавить новую инструкцию... 
+InputBox.title[elementType:Root]=Изменить название Программы...
+InputBox.title[elementType:Function]=Изменить название и парaметры Подпрограммы...
+InputBox.title[elementType:Instruction,getInsertionType():insert]=Добавить новую инструкцию...
 InputBox.title[elementType:Alternative,getInsertionType():insert]=Добавить оператор IF...
 InputBox.title[elementType:Case,getInsertionType():insert]=Добавить новый оператор CASE...
 InputBox.title[elementType:Forever,getInsertionType():insert]=Добавить цикл ENDLESS...
@@ -390,7 +482,7 @@ InputBox.title[elementType:While,getInsertionType():insert]=Добавить ц�
 InputBox.title[elementType:Call,getInsertionType():insert]=Добавить новый вызов процедуры...
 InputBox.title[elementType:Jump,getInsertionType():insert]=Добавить новый JUMP...
 InputBox.title[elementType:Parallel,getInsertionType():insert]=Добавить новый "Параллельный процесс"...
-InputBox.title[elementType:Instruction,getInsertionType():update]=Изменить инструкцию... 
+InputBox.title[elementType:Instruction,getInsertionType():update]=Изменить инструкцию...
 InputBox.title[elementType:Alternative,getInsertionType():update]=Изменить оператор IF...
 InputBox.title[elementType:Case,getInsertionType():update]=Изменить оператор CASE...
 InputBox.title[elementType:Forever,getInsertionType():update]=Изменить цикл ENDLESS...
@@ -400,15 +492,17 @@ InputBox.title[elementType:Call,getInsertionType():update]=Изменить вы
 InputBox.title[elementType:Jump,getInsertionType():update]=Изменить JUMP...
 InputBox.title[elementType:Parallel,getInsertionType():update]=Изменить "Параллельный процесс"...
 
-
-
------[ InputBoxFor ]-----
+-----[ InputBox For ]-----
 InputBoxFor.title[getInsertionType():insert]=Добавить новый цикл FOR...
 InputBoxFor.title[getInsertionType():update]=Изменить цикл FOR...
+InputBoxFor.rbCounting.tooltip=
+InputBoxFor.rbTraversing.tooltip=
 InputBoxFor.lblVariable.text=Переменная цикла
 InputBoxFor.lblStartVal.text=Исходная величина
 InputBoxFor.lblEndVal.text=Конечная величина
 InputBoxFor.lblIncr.text=Шаг
+InputBoxFor.lblTraversingVariable.text=
+InputBoxFor.lblValueList.text=
 InputBoxFor.chkTextInput.text=Изменить как текст
 InputBoxFor.chkTextInput.tooltip=
 InputBoxFor.lblComment.text=Комментарий
@@ -419,8 +513,18 @@ InputBoxFor.btnOK.text=OK
 InputBoxFor.btnOK.tooltip=Подтвердить ваш выбор.
 InputBoxFor.btnCancel.text=Отменить
 InputBoxFor.btnCancel.tooltip=Отменить ваш выбор.
+InputBoxFor.chkDisabled.text=
 InputBoxFor.chkBreakpoint.text=Точка останова?
-
+InputBoxFor.lblBreakTriggerText.text=
+InputBoxFor.msgInvalidIncrement.text=
+InputBoxFor.msgMissingBrace1.text=
+InputBoxFor.msgMissingBrace2.text=
+InputBoxFor.msgSeparateWithComma.text=
+InputBoxFor.msgEnsureReturnedArray.text=
+InputBoxFor.msgEnsureVariableIsArray.text=
+InputBoxFor.msgEnterValueList.text=
+InputBoxFor.msgDiscardData.text=
+InputBoxFor.msgAttention.text=
 
 -----[ Preferences ]-----
 Preferences.title=Настройка структур
@@ -457,6 +561,7 @@ Preferences.btnOK.tooltip=Подтвердите свой выбор.
 About.title=About
 About.pnlTabbed.tab.0=Участники проекта
 About.pnlTabbed.tab.1=Изменения
+About.pnlTabbed.tab.2=
 About.btnOK.text=OK
 About.btnOK.tooltip=Подтвердите свой выбор.
 
@@ -528,16 +633,29 @@ ParserPreferences.lblCase.text=Оператор CASE
 ParserPreferences.lblCase.tooltip=
 ParserPreferences.lblFor.text=Цикл FOR
 ParserPreferences.lblFor.tooltip=
+ParserPreferences.lblForStep.text=
+ParserPreferences.lblForIn.text=
+ParserPreferences.lblForIn.tooltip=
+ParserPreferences.edtForInPre.tooltip=
+ParserPreferences.edtForInPost.tooltip=
 ParserPreferences.lblWhile.text=Цикл WHILE
 ParserPreferences.lblWhile.tooltip=
 ParserPreferences.lblRepeat.text=Цикл REPEAT
 ParserPreferences.lblRepeat.tooltip=
+ParserPreferences.lblJump.text=
+ParserPreferences.lblJump.tooltip=
+ParserPreferences.lblJumpLeave.text=
+ParserPreferences.lblJumpReturn.text=
+ParserPreferences.lblJumpExit.text=
 ParserPreferences.lblInput.text=Ввод
 ParserPreferences.lblInput.tooltip=
 ParserPreferences.lblOutput.text=Вывод
 ParserPreferences.lblOutput.tooltip=
+ParserPreferences.chkIgnoreCase.text=
 ParserPreferences.btnOK.text=OK
 ParserPreferences.btnOK.tooltip=Подтвердите свой выбор.
+ParserPreferences.lblErrorSign.text=
+ParserPreferences.lblErrorSign2.text=
 
 -----[ PrintPreview ]-----
 PrintPreview.title=Предварительный просмотр
@@ -550,7 +668,109 @@ PrintPreview.btnOK.tooltip=Распечатать схему.
 
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Настройки экспортa
+ExportOptionDialoge.noConversionCheckBox.text=
+ExportOptionDialoge.noConversionCheckBox.tooltip=
 ExportOptionDialoge.commentsCheckBox.text=Экспортировать инструкции кaк комментарии.
+ExportOptionDialoge.bracesCheckBox.text=
+ExportOptionDialoge.lineNumbersCheckBox.text=
+ExportOptionDialoge.chkExportSubroutines.text=
+ExportOptionDialoge.lbPrefGenerator.text=
+ExportOptionDialoge.lbCharset.text=
+ExportOptionDialoge.chkCharsetAll.text=
 ExportOptionDialoge.jLabel1.text=Выборите настройки, которые хочете активировать...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Сохранить настройки.
+
+-----[ ImportOptionDialog ]-----
+ImportOptionDialog.title=Настройки импортa
+ImportOptionDialog.lbIntro.text=Выборите настройки, которые хочете активировать...
+ImportOptionDialog.pnlCode.border=
+ImportOptionDialog.pnlNSD.border=
+ImportOptionDialog.pnlPreference.border=
+ImportOptionDialog.lbCharset.text=
+ImportOptionDialog.chkCharsetAll.text=
+ImportOptionDialog.chkRefactorOnLoading.text=
+ImportOptionDialog.chkRefactorOnLoading.tooltip=
+ImportOptionDialog.btnOk.text=OK
+ImportOptionDialog.btnOk.tooltip=Сохранить настройки.
+
+-----[ SaveOptionDialog ]-----
+SaveOptionDialog.title=Настройки сохранения ...
+SaveOptionDialog.lbIntro.text=Выборите настройки, которые хочете активировать...
+SaveOptionDialog.pnlAutoSave.border=
+SaveOptionDialog.pnlBackup.border=
+SaveOptionDialog.chkAutoSaveClose.text=
+SaveOptionDialog.chkAutoSaveExecute.text=
+SaveOptionDialog.chkBackupFile.text=
+SaveOptionDialog.btnOk.text=OK
+SaveOptionDialog.btnOk.tooltip=
+
+-----> Arranger
+Surface.msgFileLoadError.text=
+Surface.msgSavePortable.text=
+Surface.msgSaveDialogTitle.text=
+Surface.msgSaveError.text=
+Surface.msgLoadDialogTitle.text=
+Surface.msgExtractDialogTitle.text=
+Surface.msgArrLoadError.text=
+Surface.msgExportDialogTitle.text=
+Surface.msgExportError.text=
+Surface.msgParseError.text=
+Surface.msgResetCovered.text=
+Surface.msgCoverageError.text=
+Surface.msgUnsavedDiagrams.text=
+Surface.msgUnsavedHint.text=
+Surface.msgUnsavedContinue.text=
+Surface.msgNoArrFile.text=
+Surface.msgDefectiveArr.text=
+Surface.msgDefectiveArrz.text=
+
+-----> Executor
+-----[ Control ]-----
+Control.lblSpeed.text=
+Control.btnCallStack.text=
+Control.lblCallLevel.text=
+Control.chkCollectRuntimeData.text=
+Control.cbRunDataDisplay.item.0=
+Control.cbRunDataDisplay.item.1=
+Control.cbRunDataDisplay.item.2=
+Control.cbRunDataDisplay.item.3=
+Control.cbRunDataDisplay.item.4=
+Control.cbRunDataDisplay.item.5=
+Control.cbRunDataDisplay.item.6=
+Control.cbRunDataDisplay.item.7=
+Control.chkOutputToTextWindow.text=
+Control.lbStopRunningProc.text=
+Control.lbInputValue.text=
+Control.lbInputPaused.text=
+Control.lbInputCancelled.text=
+Control.lbManuallySet.text=
+Control.lbEmptyLine.text=
+Control.lbReturnedResult.text=
+Control.lbOutput.text=
+Control.lbInput.text=
+Control.lbAcknowledge.text=
+Control.msgTitleError.text=
+Control.msgTitleQuestion.text=
+Control.msgTitleParallel.text=
+Control.msgNoSubroutine.text=
+Control.msgInvalidExpr.text=
+Control.msgInvalidBool.text=
+Control.msgIllFunction.text=
+Control.msgManualBreak.text=
+Control.msgIllegalLeave.text=
+Control.msgWrongExit.text=
+Control.msgExitCode.text=
+Control.msgIllegalJump.text=
+Control.msgTooManyLevels.text=
+Control.msgJumpOutParallel.text=
+Control.msgForLoopManipulation.text=
+Control.tblVar.header.0=
+Control.tblVar.header.1=
+
+-----[ OutputConsole ]-----
+OutputConsole.menu.text=
+OutputConsole.menuFont.text=
+OutputConsole.menuFontUp.text=
+OutputConsole.menuFontDown.text=
+

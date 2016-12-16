@@ -66,6 +66,7 @@ import java.util.Vector;
 
 import javax.swing.*;
 
+import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.locales.LangPanel;
 
@@ -323,6 +324,31 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		}
     }
     // END KGU#294 2016-11-22
+    // START KGU#305 2016-12-15: Enh. #305 - diagramIndex should react to keys
+    private class ArrangerIndexAction extends AbstractAction
+    {
+    	//Diagram diagram;	// The object responsible for executing the action
+    	
+    	ArrangerIndexAction(boolean isDoubleClick)
+    	{
+    		super(isDoubleClick ? "DOUBLE_CLICK" : "SINGLE_CLCK");
+    	}
+    	
+		@Override
+		public void actionPerformed(ActionEvent ev) {
+			if (getValue(AbstractAction.NAME).equals("DOUBLE_CLICK")) {
+				Arranger.scrollToDiagram(diagramIndex.getSelectedValue(), true);
+			}
+			else {
+				Root selectedRoot = diagramIndex.getSelectedValue();
+				if (selectedRoot != null && selectedRoot != diagram.getRoot()) {
+					diagram.setRootIfNotRunning(selectedRoot);
+					scrollarea.requestFocusInWindow();
+				}
+			}
+		}
+    }    
+    // END KGGU#305 2016-12-15
     
     private MyToolbar newToolBar(String name)
     {
@@ -472,6 +498,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         // add toolbars
         //toolbar.setLayout(new FlowLayout(FlowLayout.LEFT,0,0));
         this.setLayout(new AKDockLayout());
+        // FIXME (KGU): Why is the static variable holding MyToolbar overwritten?
         toolbar=newToolBar("New, open, save");
 		
         // Setting up the toolbar with all buttons and actions
@@ -487,6 +514,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnSave.setFocusable(false);
 		btnSave.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.saveNSD(false); doButtons(); } } );
 		
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Print");
 
 		// printing
@@ -501,6 +529,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnArrange.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.arrangeNSD(); doButtons(); } } );
 		// END KGU#2 2015-11-24
 		
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Undo, redo");
 
 		// undo & redo
@@ -512,6 +541,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnRedo.setFocusable(false);
 		btnRedo.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.redoNSD(); doButtons(); } } );
 		
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Copy, cut, paste");
 
 		// copy & paste
@@ -526,6 +556,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnPaste.setFocusable(false);
 		btnPaste.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.pasteNSD(); doButtons(); } } );
 		
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Edit, delete, move");
 
 		// editing
@@ -548,6 +579,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnTransmute.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.transmuteNSD(); doButtons(); } } ); 
 		// END KGU#199 2016-07-06
 		
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Method, program");
 
 		// style
@@ -559,6 +591,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnProgram.setFocusable(false);
 		btnProgram.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setProgram(); doButtons(); } } );
 
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Nice");
 		
 		//toolbar.addSeparator();
@@ -566,6 +599,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnNice.setFocusable(false);
 		btnNice.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setNice(btnNice.isSelected()); doButtons(); } } );
 		
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Add before ...");
 		//toolbar.setOrientation(JToolBar.VERTICAL);
 		//this.add(toolbar,BorderLayout.WEST);
@@ -603,6 +637,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnBeforePara.setFocusable(false);
 		btnBeforePara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",false); doButtons(); } } );
 
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Add after ...");
 		//toolbar.setOrientation(JToolBar.VERTICAL);
 		//this.add(toolbar,BorderLayout.WEST);
@@ -640,6 +675,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnAfterPara.setFocusable(false);
 		btnAfterPara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",true); doButtons(); } } );
 		
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Colors ...");
 
 		// Colors
@@ -676,6 +712,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnColor9.setFocusable(false);
 
 		// START KGU#123 2016-01-04: Enh. #87 - Preparation for fix #65
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Collapsing");
 
 		// Collapse & Expand
@@ -687,12 +724,13 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnExpand.setFocusable(false);
 		btnExpand.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.expandNSD(); } } );
 		// END KGU#123 2016-01-04
-		// START KGU#277 2016-10-13: Enh. #270
-        toolbar.add(btnDisable);
-		btnDisable.setFocusable(false);
-		btnDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); } } );
+		// START KGU#277 2016-10-13: Enh. #270 / KGU#310 2016-12-14: moved to "Turtle, interprete" toolbar
+//        toolbar.add(btnDisable);
+//		btnDisable.setFocusable(false);
+//		btnDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); } } );
 		// END KGU#123 2016-01-04
 
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("About");
 
 		// About
@@ -701,7 +739,8 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnAbout.setFocusable(false);
 		btnAbout.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.aboutNSD(); } } );
 
-		toolbar=newToolBar("Turtle, interprete");
+        // FIXME (KGU): Why is the previous toolbar overwritten?
+		toolbar=newToolBar("Turtle, interpret");
 
 		// Turtle
 		//toolbar.addSeparator();
@@ -714,7 +753,13 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         toolbar.add(btnDropBrk);
 		btnDropBrk.setFocusable(false);
 		btnDropBrk.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.clearBreakpoints(); } } );
+		// START KGU#310 2016-12-14: Moved hitherto from toolbar "Collapsing"
+        toolbar.add(btnDisable);
+		btnDisable.setFocusable(false);
+		btnDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); } } );
+		// END KGU#310 2016-12-14
 
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Font ...");
 
 		// Font
@@ -753,8 +798,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		scrollarea.setDoubleBuffered(true);
 		scrollarea.setBorder(BorderFactory.createEmptyBorder());
 		scrollarea.setViewportView(diagram);
+		scrollarea.setFocusable(true);
 		// START KGU#177 2016-04-06 Enh. #158 Moving selection by cursor keys
-		InputMap inpMap = scrollarea.getInputMap(WHEN_IN_FOCUSED_WINDOW);
+		InputMap inpMap = scrollarea.getInputMap(WHEN_FOCUSED);
 		ActionMap actMap = scrollarea.getActionMap();
 		// Add key bindings to the Diagram
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), CursorMoveDirection.CMD_UP);
@@ -800,11 +846,20 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		scrollIndex.setViewportView(diagramIndex);
 		//scrollIndex.setPreferredSize(new Dimension(50,0));
 
+		//diagramIndex.setFocusable(false);
 		diagramIndex.setCellRenderer(new RootListCellRenderer());
 		diagramIndex.setLayoutOrientation(JList.VERTICAL);
 		diagramIndex.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);		
 		diagramIndex.addMouseListener(diagram);
 		// END KGU#305 2016-12-12
+		// START KGU#305 2016-12-15: Enh. #305 - react to space and enter
+		inpMap = diagramIndex.getInputMap(WHEN_FOCUSED);
+		actMap = diagramIndex.getActionMap();
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "SPACE");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "ENTER");
+		actMap.put("SPACE", new ArrangerIndexAction(true));
+		actMap.put("ENTER", new ArrangerIndexAction(false));
+		// END KGU#305 2016-12-15
 
 		
         //container.add(scrolllist,AKDockLayout.SOUTH);
@@ -815,9 +870,49 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		scrolllist.setViewportView(errorlist);
 		scrolllist.setPreferredSize(new Dimension(0,50));
 
+		// START KGU#305 2016-12-15: Issue #312 show focus
+		errorlist.setCellRenderer(new DefaultListCellRenderer() {
+		    private final Color selectedBackgroundNimbus = new Color(57,105,138);
+		    
+			@Override
+			public Component getListCellRendererComponent(JList<?> list, Object obj, int index, boolean isSelected,
+					boolean cellHasFocus) {
+				super.getListCellRendererComponent(list, obj, index, isSelected, cellHasFocus);
+		        if (isSelected) {
+		    		if (UIManager.getLookAndFeel().getName().equals("Nimbus"))
+		    		{
+		    			// Again, a specific handling for Nimbus was necessary in order to show any difference at all.
+		    			if (list.isFocusOwner()) {
+		    				setBackground(selectedBackgroundNimbus);
+		    				setForeground(Color.WHITE);
+		    			}
+		    			else {
+		    				// Invert the selection colours
+		    				setBackground(Color.WHITE);	
+		    				setForeground(selectedBackgroundNimbus);
+		    			}
+		    		}
+		    		else {
+		    			if (list.isFocusOwner()) {
+		    				setBackground(list.getSelectionBackground());
+		    				setForeground(list.getSelectionForeground());
+		    			}
+		    			else {
+		    				// Invert the selection colours
+		                    setBackground(list.getSelectionForeground());
+		                    setForeground(list.getSelectionBackground());
+		    			}
+		    		}
+		        }
+				return this;
+			}
+
+		});
+		// END KGU#305 2016-12-15
 		errorlist.setLayoutOrientation(JList.VERTICAL);
 		errorlist.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);		
 		errorlist.addMouseListener(diagram);
+		errorlist.addListSelectionListener(diagram);
 
 		//diagram.setOpaque(true);
 		diagram.addMouseListener(new PopupListener());
@@ -1069,7 +1164,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#305 2016-12-12: Enh. 305
 		// arranger
 		
-		if (/*Element.E_ARRANGER_INDEX &&*/ !diagrams.isEmpty())
+		if (diagram.showArrangerIndex() && !diagrams.isEmpty())
 		{
 			if (sp305.getDividerSize()==0)
 			{

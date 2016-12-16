@@ -145,6 +145,8 @@ import javax.swing.*;
 import javax.imageio.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
@@ -164,7 +166,7 @@ import lu.fisch.turtle.TurtleBox;
 import org.freehep.graphicsio.svg.SVGGraphics2D;
 
 @SuppressWarnings("serial")
-public class Diagram extends JPanel implements MouseMotionListener, MouseListener, Printable, MouseWheelListener, ClipboardOwner
+public class Diagram extends JPanel implements MouseMotionListener, MouseListener, Printable, MouseWheelListener, ClipboardOwner, ListSelectionListener
 {
 
 	// START KGU#48 2015-10-18: We must be capable of preserving consistency when root is replaced by the Arranger
@@ -211,6 +213,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     // START KGU#300 2016-12-02: Enh. #300 - update notification settings
     public boolean retrieveVersion = false;
     // END KGU#300 2016-12-02
+	// START KGU#305 2016-12-12: Enh. #305
+	private boolean show_ARRANGER_INDEX = false;	// Arranger index visible?
+	// END KGU#305 2016-12-12
 
     // recently opened files
     protected Vector<String> recentFiles = new Vector<String>();
@@ -254,7 +259,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * @param root the Root to set
 	 * @return false if the user refuses to adopt the Root or the Root is being executed
 	 */
-	public boolean setRoot(Root root) {
+	public boolean setRootIfNotRunning(Root root) {
 		// START KGU#157 2016-03-16: Bugfix #131 - Precaution against replacement if under execution
 		if (!this.checkRunning()) return false;	// Don't proceed if the root is being executed
 		// END KGU#157 2016-03-16
@@ -265,15 +270,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	public boolean setRoot(Root root, boolean askToSave) {
 		if (root != null)
 		{
-			if(askToSave){
-				// Save if something has been changed
-				if (!saveNSD(true))
-				{
-					// Abort this if the user cancels the save request
-					return false;
-				}
-				this.unselectAll();
+			// Save if something has been changed
+			if (!saveNSD(askToSave))
+			{
+				// Abort this if the user cancels the save request
+				return false;
 			}
+			this.unselectAll();
 
 			boolean hil = this.root.hightlightVars;
 			this.root = root;
@@ -381,7 +384,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							Root rootNew = d7.parse(filename);
 							if (d7.error.equals(""))
 							{
-								setRoot(rootNew);
+								setRootIfNotRunning(rootNew);
 								currentDirectory = new File(filename);
 								//System.out.println(root.getFullText().getText());
 							}
@@ -821,39 +824,41 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                                         if(NSDControl!=null) NSDControl.doButtons();
 				}*/
 			}
-			else if (e.getSource() == errorlist)
-			{
-				// an error list entry has been selected
-				if(errorlist.getSelectedIndex()!=-1)
-				{
-					// get the selected error
-					DetectedError err = root.errors.get(errorlist.getSelectedIndex()); 
-					Element ele = err.getElement();
-					if(ele!=null)
-					{
-						// deselect the previously selected element (if any)
-						if (selected!=null) {selected.setSelected(false);}
-						// select the new one
-						selected = ele;
-						ele.setSelected(true);
-						
-						// redraw the diagram
-						// START KGU#276 2016-11-18: Issue #269 - ensure the associated element be visible
-						//redraw();
-						redraw(ele);
-						// END KGU#276 2016-11-18
-						
-						// do the button thing
-						if(NSDControl!=null) NSDControl.doButtons();
-					}
-					// START KGU#220 2016-07-27: Draft for Enh. #207, but withdrawn
-					//else if (err.getError().equals(Menu.warning_1.getText()))
-					//{
-					//	this.toggleTextComments();
-					//}
-					// END KGU#200 2016-07-27
-				}
-			}
+			// START KGU#305 2016-12-15: Enh. #312 - content moved to method valueChanged(e) 
+//			else if (e.getSource() == errorlist)
+//			{
+//				// an error list entry has been selected
+//				if(errorlist.getSelectedIndex()!=-1)
+//				{
+//					// get the selected error
+//					DetectedError err = root.errors.get(errorlist.getSelectedIndex()); 
+//					Element ele = err.getElement();
+//					if(ele!=null)
+//					{
+//						// deselect the previously selected element (if any)
+//						if (selected!=null) {selected.setSelected(false);}
+//						// select the new one
+//						selected = ele;
+//						ele.setSelected(true);
+//						
+//						// redraw the diagram
+//						// START KGU#276 2016-11-18: Issue #269 - ensure the associated element be visible
+//						//redraw();
+//						redraw(ele);
+//						// END KGU#276 2016-11-18
+//						
+//						// do the button thing
+//						if(NSDControl!=null) NSDControl.doButtons();
+//					}
+//					// START KGU#220 2016-07-27: Draft for Enh. #207, but withdrawn
+//					//else if (err.getError().equals(Menu.warning_1.getText()))
+//					//{
+//					//	this.toggleTextComments();
+//					//}
+//					// END KGU#200 2016-07-27
+//				}
+//			}
+			// END KGU305 2016-12-15
 			// START KGU#305 2016-12-12: Enh. #305
 			else if (e.getSource() == diagramIndex)
 			{
@@ -911,8 +916,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			{
 				Root selectedRoot = diagramIndex.getSelectedValue();
 				if (selectedRoot != null && selectedRoot != this.root) {
-					this.setRoot(selectedRoot, true);
+					this.setRootIfNotRunning(selectedRoot);
 				}
+				this.getParent().getParent().requestFocusInWindow();
 			}
 			// END KGU#305 2016-12-12
 		}
@@ -1396,12 +1402,12 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 *****************************************/
 	
 	/**
-	 * Stores unsaved changes (if any). If _checkChanges is true then the user may confirm or deny saving or cancel the
+	 * Stores unsaved changes (if any). If _askToSave is true then the user may confirm or deny saving or cancel the
 	 * inducing request. 
-	 * @param _checkChanged - if true and the current root has unsaved changes then a user dialog will be popped up first
+	 * @param _askToSave - if true and the current root has unsaved changes then a user dialog will be popped up first
 	 * @return true if the user cancelled the save request
 	 */
-	public boolean saveNSD(boolean _checkChanged)
+	public boolean saveNSD(boolean _askToSave)
 	{
 		int res = 0;	// Save decision: 0 = do save, 1 = don't save, -1 = cancelled (don't leave)
 		// only save if something has been changed
@@ -1411,7 +1417,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#137 2016-01-11
 		{
 
-			if (_checkChanged==true)
+			if (_askToSave)
 			{
 				// START KGU#49 2015-10-18: If induced by Arranger then it's less ambiguous seeing the NSD name
 				//res = JOptionPane.showOptionDialog(this,
@@ -1543,6 +1549,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         		f = new File(root.filename);
             	File tmpFile = new File(filename);
             	tmpFile.renameTo(f);
+            	// START KGU#309 2016-12-15: Issue #310 backup may be opted out
+            	if (!Element.E_MAKE_BACKUPS && backUp.exists()) {
+            		backUp.delete();
+            	}
+            	// END KGU#309 2016-12-15
         	}
         	// END KGU#94 2015.12.04
         	
@@ -4362,6 +4373,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     }
     // END KGU#258 2016-09-26
 
+    // START KGU#309 2016-12-15: Enh. #310
+    public void savingOptions()
+    {
+    	SaveOptionDialog sod = new SaveOptionDialog(NSDControl.getFrame());
+    	sod.chkAutoSaveClose.setSelected(Element.E_AUTO_SAVE_ON_CLOSE);
+    	sod.chkAutoSaveExecute.setSelected(Element.E_AUTO_SAVE_ON_EXECUTE);
+    	sod.chkBackupFile.setSelected(Element.E_MAKE_BACKUPS);
+    	sod.setVisible(true);
+
+    	if(sod.goOn==true)
+    	{
+    		Element.E_AUTO_SAVE_ON_CLOSE = sod.chkAutoSaveClose.isSelected();
+    		Element.E_AUTO_SAVE_ON_EXECUTE = sod.chkAutoSaveExecute.isSelected();
+    		Element.E_MAKE_BACKUPS = sod.chkBackupFile.isSelected();
+    	}
+    }
+    // END KGU#258 2016-09-26
+
 	public void fontNSD()
 	{
 		FontChooser fontChooser = new FontChooser(NSDControl.getFrame());
@@ -4539,11 +4568,6 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		redraw();
 	}
 
-	public boolean drawComments()
-	{
-		return Element.E_SHOWCOMMENTS;
-	}
-
 	public void setHightlightVars(boolean _highlight)
 	{
 		Element.E_VARHIGHLIGHT=_highlight;	// this isn't used for drawing, actually
@@ -4566,9 +4590,21 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 	public void setAnalyser(boolean _analyse)
 	{
-		Element.E_ANALYSER=_analyse;
+		Element.E_ANALYSER = _analyse;
 		NSDControl.doButtons();
 	}
+
+	// START KGU#305 2016-12-14: Enh. #305
+	public void setArrangerIndex(boolean _showIndex)
+	{
+		this.show_ARRANGER_INDEX = _showIndex;
+		NSDControl.doButtons();
+	}
+	public boolean showArrangerIndex()
+	{
+		return this.show_ARRANGER_INDEX;
+	}
+	// END KGU#305 216-12-14
 	
 	// START KGU#123 2016-01-04: Enh. #87
 	public void toggleWheelMode()
@@ -5364,7 +5400,46 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	@Override
 	public void lostOwnership(Clipboard arg0, Transferable arg1) {
 		// TODO Auto-generated method stub
-		
 	}
+
+	// START KGU#305 2016-12-15: Issues #305, #312
+	@Override
+	public void valueChanged(ListSelectionEvent ev) {
+		if (ev.getSource() == errorlist) {
+			// an error list entry has been selected
+			if(errorlist.getSelectedIndex()!=-1)
+			{
+				// get the selected error
+				DetectedError err = root.errors.get(errorlist.getSelectedIndex()); 
+				Element ele = err.getElement();
+				if (ele != null)
+				{
+					// deselect the previously selected element (if any)
+					if (selected!=null) {selected.setSelected(false);}
+					// select the new one
+					selected = ele;
+					ele.setSelected(true);
+					
+					// redraw the diagram
+					// START KGU#276 2016-11-18: Issue #269 - ensure the associated element be visible
+					//redraw();
+					redraw(ele);
+					// END KGU#276 2016-11-18
+					
+					// do the button thing
+					if(NSDControl!=null) NSDControl.doButtons();
+					
+					errorlist.requestFocusInWindow();
+				}
+				// START KGU#220 2016-07-27: Draft for Enh. #207, but withdrawn
+				//else if (err.getError().equals(Menu.warning_1.getText()))
+				//{
+				//	this.toggleTextComments();
+				//}
+				// END KGU#200 2016-07-27
+			}
+		}
+	}
+	// END KGU#305
 
 }

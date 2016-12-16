@@ -54,6 +54,7 @@
  *      Kay Gürtzig     2016.09.13      Entries for InputBox and InputBoxFor revised (bugfix #241)
  *      Kay Gürtzig     2016.09.22      AnalyserPreferences numbering modified
  *      Kay Gürtzig     2016.10.11      Enh. 267: Menu.error15 divided into error15_1 and error15_2
+ *      Kay Gürtzig     2016.12.14      Enh. #311: New menu "Debug"
  *
  ******************************************************************************************************
  *
@@ -140,9 +141,6 @@ Menu.menuDiagramMoveDown.text=Posun dolů
 Menu.menuDiagramTransmute.text=
 Menu.menuDiagramCollapse.text=
 Menu.menuDiagramExpand.text=
-// Breakpoint
-Menu.menuDiagramBreakpoint.text=
-Menu.menuDiagramBreakTrigger.text=
 // Diagram Appearance
 Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=Hlavní program
@@ -190,6 +188,17 @@ Menu.menuPreferencesSaveLoad.text=
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
+
+// Menu "Debug"
+Menu.menuDebug.text=Debug
+Menu.menuDebug.mnemonic=b
+// Submenu of "Debug"
+Menu.menuDebugTurtle.text=Turtleizer ...
+Menu.menuDebugExecute.text=Executor ...
+Menu.menuDebugDropBrkpts.text=
+Menu.menuDebugBreakpoint.text=
+Menu.menuDebugBreakTrigger.text=
+Menu.menuDebugDisable.text=
 
 // Menu "Help"
 Menu.menuHelp.text=Nápověda

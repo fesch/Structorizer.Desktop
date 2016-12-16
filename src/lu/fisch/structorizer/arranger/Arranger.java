@@ -415,7 +415,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 //        		if (mySelf.getDefaultCloseOperation() == JFrame.EXIT_ON_CLOSE)
 //        		// END KGU#2 2015-11-19
 //        			surface.saveDiagrams();	// Allow user to save dirty diagrams
-        		if (surface.saveDiagrams())
+        		if (surface.saveDiagrams(true))
         		{
         			if (isStandalone)
         			{

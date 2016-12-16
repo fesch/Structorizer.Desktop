@@ -64,6 +64,7 @@
  *                                      Enh. #268: Sub-section OutputConsole added
  *      Kay Gürtzig     2016.11.08      Enh. #270: Menu.menuDiagramDisable, Editor.btnDisable.tooltip etc. added
  *      Kay Gürtzig     2016.11.10      Enh. #286: AnalyserPreferences tabs; About tab translations modified
+ *      Kay Gürtzig     2016.12.14      Enh. #311: New menu "Debug"
  *
  ******************************************************************************************************
  *
@@ -150,10 +151,6 @@ Menu.menuDiagramMoveDown.text=Sposta in basso
 Menu.menuDiagramTransmute.text=Trasmuta
 Menu.menuDiagramCollapse.text=Collassa
 Menu.menuDiagramExpand.text=Espandi
-Menu.menuDiagramDisable.text=Disattiva/riattiva
-// Breakpoint
-Menu.menuDiagramBreakpoint.text=Alterna breakpoint
-Menu.menuDiagramBreakTrigger.text=Condizione del breakpoint ... 
 // Diagram Appearance
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Principale
@@ -203,6 +200,17 @@ Menu.menuPreferencesSaveLoad.text=Carica da file ...
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
+
+// Menu "Debug"
+Menu.menuDebug.text=Debug
+Menu.menuDebug.mnemonic=b
+// Submenu of "Debug"
+Menu.menuDebugTurtle.text=Apri Turtleizer ...
+Menu.menuDebugExecute.text=Apri debugger ...
+Menu.menuDebugDropBrkpts.text=Cancella tutti breakpoint
+Menu.menuDebugBreakpoint.text=Alterna breakpoint
+Menu.menuDebugBreakTrigger.text=Condizione del breakpoint ...
+Menu.menuDebugDisable.text=Disattiva/riattiva
 
 // Menu "Help"
 Menu.menuHelp.text=Aiuto

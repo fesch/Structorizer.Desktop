@@ -52,6 +52,7 @@
  *      Zijun Ke        2015.10.29  Several additions
  *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016.12.14  New menu "Debug"
  *
  ******************************************************************************************************
  *
@@ -149,6 +150,7 @@ Menu.menuPreferencesOptions.text=结构 ...
 Menu.menuPreferencesParser.text=解析器 ...
 Menu.menuPreferencesAnalyser.text=分析器 ...
 Menu.menuPreferencesExport.text=导出 ...
+Menu.menuPreferencesImport.text=导入 ...
 Menu.menuPreferencesLanguage.text=语言
 Menu.menuPreferencesLanguageItems.en.text=英语
 Menu.menuPreferencesLanguageItems.de.text=德语
@@ -168,6 +170,15 @@ Menu.menuPreferencesSave.text=所有偏好设置 ...
 Menu.menuPreferencesSaveAll.text=保存
 Menu.menuPreferencesSaveLoad.text=从文件读取 ...
 Menu.menuPreferencesSaveDump.text=导出到文件 ...
+// Menu "Debug"
+Menu.menuDebug.text=调试
+// Submenu of "Debug"
+Menu.menuDebugTurtle.text=
+Menu.menuDebugExecute.text=侦错​工具 ...
+Menu.menuDebugDropBrkpts.text=
+Menu.menuDebugBreakpoint.text=
+Menu.menuDebugBreakTrigger.text=
+Menu.menuDebugDisable.text=
 // Menu "Help"
 Menu.menuHelp.text=帮助
 // Submenu of "Help"

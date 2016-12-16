@@ -55,6 +55,7 @@
  *      Kay Gürtzig     2016.09.13  Entries for InputBox and InputBoxFor revised (bugfix #241)
  *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
  *      Kay Gürtzig     2016.10.11  Enh. 267: Menu.error15 renamed into Menu.error15_1
+ *      Kay Gürtzig     2016.12.14  Enh. #311: New menu "Debug"
  *
  ******************************************************************************************************
  *
@@ -152,9 +153,6 @@ Menu.menuDiagramTransmute.text=Mudar
 Menu.menuDiagramCollapse.text=Colapsar
 Menu.menuDiagramExpand.text=Expandir
 
-// Breakpoint
-Menu.menuDiagramBreakpoint.text=Alternar breakpoint
-
 // Diagram Appearance
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Principal
@@ -202,6 +200,17 @@ Menu.menuPreferencesSaveLoad.text=Carregar do arquivo ...
 
 // Menu "View" (not in use right now!) 
 Menu.menuView.text= 
+
+// Menu "Debug"
+Menu.menuDebug.text=Debug
+Menu.menuDebug.mnemonic=b
+// Submenu of "Debug"
+Menu.menuDebugTurtle.text=Abrir Turtleizer ...
+Menu.menuDebugExecute.text=Abrir Executor ...
+Menu.menuDebugDropBrkpts.text=Remover todos os breakpoints.
+Menu.menuDebugBreakpoint.text=Aternar breakpoint
+Menu.menuDebugBreakTrigger.text=
+Menu.menuDebugDisable.text=
 
 // Menu "Help"
 Menu.menuHelp.text=Ajuda
