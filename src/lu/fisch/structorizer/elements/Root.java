@@ -153,7 +153,7 @@ public class Root extends Element {
 		{
 			String main_or_sub1 = root1.isProgram ? "M" : "S";
 			String main_or_sub2 = root2.isProgram ? "M" : "S";
-			int result = (main_or_sub1 + root1.getSignatureString(false)).compareToIgnoreCase(main_or_sub2 + root2.getSignatureString(true));
+			int result = (main_or_sub1 + root1.getSignatureString(false)).compareToIgnoreCase(main_or_sub2 + root2.getSignatureString(false));
 			if (result == 0) {
 				result = ("" + root1.getPath()).compareToIgnoreCase("" + root2.getPath());
 			}
