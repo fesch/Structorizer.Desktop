@@ -61,7 +61,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.10.11      Enh. #267: New notification changes to the set of diarams now trigger analyser updates
  *      Kay Gürtzig     2016.11.14      Enh. #289: The dragging-in of arrangement files (.arr, .arrz) enabled.
  *      Kay Gürtzig     2016.11.15      Enh. #290: Further modifications to let a Mainform insert arrangements
- *      Kay Gürtzig     2016.12.12      Enh. #305: New mechanism to update the Arranger indices in the related Mainforms 
+ *      Kay Gürtzig     2016.12.12      Enh. #305: New mechanism to update the Arranger indices in the related Mainforms
+ *      Kay Gürtzig     2016.12.17      Enh. #305: New method removeDiagram(Root)
  *
  ******************************************************************************************************
  *
@@ -146,6 +147,7 @@ import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Updater;
 import lu.fisch.structorizer.executor.IRoutinePool;
+import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.LangTextHolder;
@@ -166,6 +168,9 @@ import net.iharder.dnd.FileDrop;
 public class Surface extends LangPanel implements MouseListener, MouseMotionListener, WindowListener, Updater, IRoutinePool, ClipboardOwner {
 
     private Vector<Diagram> diagrams = new Vector<Diagram>();
+    // START KGU#305 2016-12-16: Code revision
+    private final Vector<IRoutinePoolListener> listeners = new Vector<IRoutinePoolListener>();
+    // END KGU#305 2016-12-16
 
     private Point mousePoint = null;
     private Point mouseRelativePoint = null;
@@ -292,7 +297,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	}
 		// START KGU#278 2016-10-11: Enh. #267
     	if (nLoaded > 0) {
-    		notifyMainforms(true, true);
+    		notifyChangeListeners();
     	}
 		// END KGU#278 2016-10-11
     	return nLoaded;
@@ -769,7 +774,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		// START KGU#278 2016-10-11: Enh. #267
     	if (nLoaded > 0)
     	{
-    		notifyMainforms(true, true);
+    		notifyChangeListeners();
     	}
 		// END KGU#278 2016-10-11
     	return done;
@@ -1096,7 +1101,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		}
     		// END KGU#88 2015-12-20
     		// START KGU#278 2016-10-11: Enh. #267
-    		notifyMainforms(true, true);
+    		notifyChangeListeners();
     		// END KGU#278 2016-10-11
     		// END KGU 2015-11-30
     		// START KGU 2016-12-12: First unselect the selected diagram (if any)
@@ -1134,8 +1139,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		if (diagram.mainform == null)
     		{
     			diagram.mainform = form;
-    			// START KGU#305 2016-12-12: Enh.#305
-    			form.updateArrangerIndex();
+    			// START KGU#305 2016-12-12: Enh.#305 / 2016-12-16 no longer neeeded
+    			//form.updateArrangerIndex();
     			// END KGU#305 2016-12-12
     		}
     		// END KGU#125 2016-01-07
@@ -1149,51 +1154,66 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     {
     	if (this.mouseSelected != null)
     	{
-    		boolean ask = true;
-    		Mainform form = this.mouseSelected.mainform;
-    		// START KGU#194 2016-05-09: Bugfix #185 - on importing unsaved roots may linger here
-    		if (this.mouseSelected.root.hasChanged())
-    		{
-    			if (form == null || form.getRoot() != this.mouseSelected.root)
-    			{
-    				// Create a temporary Mainform
-    				form = new Mainform(false);
-    				form.setRoot(mouseSelected.root);
-    				// Let the user decide to save it or not, or to cancel this removal 
-    				boolean goOn = form.diagram.saveNSD(true);
-    				// Destroy the temporary Mainform
-    				form.dispose();
-    				if (!goOn)
-    				{
-    					// User cancelled this - don't remove
-    					return;
-    				}
-    				form = this.mouseSelected.mainform;
-    				ask = false;
-    			}
-    		}
-    		// END KGU#194 2016-05-09
-			this.mouseSelected.root.removeUpdater(this);
-    		diagrams.remove(this.mouseSelected);
-    		this.mouseSelected = null;
-    		adaptLayout();
-            repaint();
-    		// START KGU#278 2016-10-11: Enh. #267
-    		Vector<Mainform> mainforms = notifyMainforms(true, true);
-    		if (form != null) {
-    			if (mainforms.contains(form) || form.isStandalone() || ask && !form.diagram.saveNSD(true)) {
-    				// Still connected via other diagrams or application root
-    				form.updateArrangerIndex();
-    			}
-    			else {
-    				form.dispose();
-    			}
-    		}
-    		// END KGU#278 2016-10-11
-    	}
+    		removeDiagram(this.mouseSelected);
+     	}
     }
     // END KGU#85 2015-11-17
-    
+
+    // START KGU#305 2016-12-17: Enh. #305 
+	public void removeDiagram(Root _root) {
+		Diagram diagr = findDiagram(_root, true);
+		if (diagr != null) {
+			removeDiagram(diagr);
+		}
+	}
+	
+	private void removeDiagram(Diagram diagr)
+	{
+   		boolean ask = true;
+		Mainform form = diagr.mainform;
+		// START KGU#194 2016-05-09: Bugfix #185 - on importing unsaved roots may linger here
+		if (diagr.root.hasChanged())
+		{
+			if (form == null || form.getRoot() != diagr.root)
+			{
+				// Create a temporary Mainform
+				form = new Mainform(false);
+				form.setRoot(diagr.root);
+				// Let the user decide to save it or not, or to cancel this removal 
+				boolean goOn = form.diagram.saveNSD(true);
+				// Destroy the temporary Mainform
+				form.dispose();
+				if (!goOn)
+				{
+					// User cancelled this - don't remove
+					return;
+				}
+				form = diagr.mainform;
+				ask = false;
+			}
+		}
+		// END KGU#194 2016-05-09
+		diagr.root.removeUpdater(this);
+		if (diagr == this.mouseSelected) {
+			this.mouseSelected = null;
+		}
+		diagrams.remove(diagr);
+		adaptLayout();
+        repaint();
+		// START KGU#278 2016-10-11: Enh. #267
+        notifyChangeListeners();
+		Vector<Mainform> mainforms = activeMainforms();
+		if (form != null) {
+			if (!mainforms.contains(form) && !form.isStandalone() && (!ask || form.diagram.saveNSD(true))) {
+				// Form doesn't seem necessary any longer
+				form.dispose();
+				removeChangeListener(form);
+			}
+		}
+		// END KGU#278 2016-10-11		
+	}
+	// END KGU#385 2016-12-17
+
     // END KGU#177 2016-04-14: Enh. #158: Allow to copy diagrams via clipboard (as XML)
     public void copyDiagram()
     {
@@ -1234,8 +1254,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		addDiagram(root);
     		// The content may not have been saved or may come from a different JVM
     		root.setChanged();
-    		// START KGU#278 2016-10-11: Enh. #267
-    		notifyMainforms(true, true);
+    		// START KGU#278 2016-10-11: Enh. #267 / 2016-12-16 Already done in addDiagram()
+    		//notifyChangeListeners();
     		// END KGU#278 2016-10-11    		
     	}
     }
@@ -1410,7 +1430,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             		// START KGU#88 2015-11-24: An attached Mainform might refuse to re-adopt the root
             		//if(form==null)
             		if(form==null || !form.setRoot(mouseSelected.root))
-            			// END KGU#88 2015-11-24
+            		// END KGU#88 2015-11-24
             		{
             			// START KGU#49/KGU#66 2015-11-14: Start a dependent Mainform not willing to kill us
             			//form=new Mainform();
@@ -1419,8 +1439,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             			form.addWindowListener(this);
             			// With a new Mainform, refusal is not possible 
             			form.setRoot(mouseSelected.root);
-            			// START KGU#305 2016-12-12: Enh. #305
-            			form.updateArrangerIndex();
+            			// START KGU#305 2016-12-12: Enh. #305 / 2016-12-16: no longer needed
+            			//form.updateArrangerIndex();
             			// END KGU#305 2016-12-12
             		}
 
@@ -1440,6 +1460,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             		//form.setRoot(mouseSelected.root);
             		// END KGU#88 2015-11-24
             		form.setVisible(true);
+            		// STAR KGU#305 2016-12-16: #305 code revision
+            		this.addChangeListener(form);
+            		// END KGU#305 2016-12-16
             // START KGU#158 2016-03-16: Bugfix #132 (part 2)
             	}
             	catch (Exception ex)
@@ -1642,9 +1665,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		// END KGU#85 2015-11-18
     		this.repaint();
     		// START KGU#278 2016-10-11: Enh. #267
-    		notifyMainforms(true, true);
+    		//notifyChangeListeners();
     		// END KGU#278 2016-10-11
     	}
+		// START KGU#305 2016-10-16: Enh. #305
+		notifyChangeListeners();
+		// END KGU#305 2016-10-16
     }
     // END KGU#48 2015-10-17
     
@@ -1730,11 +1756,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     }
     // END KGU#117 2016-03-08
 
-    // START KGU#278 2016-10-11: Enh. #267 - added for consistency of Analyser Check 15.2
-    // START KGU#305 2016-12-12: Enh. for issue #305: More things to notify
-    //private void updateAnalyser()
-    private Vector<Mainform> notifyMainforms(boolean _analyser, boolean _index)
-    // END KGU#305 2016-12-12
+	// START KGU#305 2016-12-16
+    /**
+     * Returns the list of all Mainform objects associated to some diagram held
+     * here.
+     * @return vector of actively associated Mainforms.
+     */
+    private Vector<Mainform> activeMainforms()
     {
     	Vector<Mainform> mainforms = new Vector<Mainform>();
     	if (this.diagrams != null) {
@@ -1747,19 +1775,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     				}
     			}
     		}
-    		for (int m = 0; m < mainforms.size(); m++)
-    		{
-    			if (_analyser) {
-    				mainforms.get(m).updateAnalysis();
-    			}
-    			if (_index) {
-    				mainforms.get(m).updateArrangerIndex();
-    			}        		
-    		}
     	}
     	return mainforms;
 	}
-	// END KGU#278 2016-10-11	
+	// END KGU#305 2016-12-16	
 	
     // Windows listener for the mainform
     // I need this to unregister the updater
@@ -1796,6 +1815,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
     public void windowClosed(WindowEvent e)
     {
+    	// START KGU#305 2016-12-16
+		if (e.getSource() instanceof Mainform) { 
+			removeChangeListener((Mainform)e.getSource());
+		}
+		// END KGU#305 2016-12-16
     }
 
     public void windowIconified(WindowEvent e)
@@ -1860,8 +1884,32 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	}
 	// END KGU#305 2016-12-12
 
+	// START KGU#305 2016-12-16: Code revision
+	@Override
+	public void addChangeListener(IRoutinePoolListener _listener) {
+		if (_listener instanceof Arranger) {
+			listeners.add(_listener);
+		}
+		else {
+			Arranger.addToChangeListeners(_listener);
+		}
+	}
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    // End of variables declaration//GEN-END:variables
+	@Override
+	public void removeChangeListener(IRoutinePoolListener _listener) {
+		if (_listener instanceof Arranger) {
+			listeners.remove(_listener);
+		}
+		else {
+			Arranger.removeFromChangeListeners(_listener);
+		}
+	}
 
-}
+	private void notifyChangeListeners() {
+		for (IRoutinePoolListener listener: listeners) {
+			listener.routinePoolChanged(this);
+		}
+	}
+	// END KGU#305 2016-12-16
+
+ }

@@ -322,6 +322,8 @@ Menu.error14_2.text=Die Schrittweite «%» der Zählschleife ist keine konstante
 Menu.error14_3.text=Variable «%» steht in möglichem Namenskonflikt mit einem der konfigurierten Kennwörtern für FOR-Schleifen!
 Menu.error15_1.text=Der Unterprogrammaufruf hat nicht die Form [ <var> <- ] <routine_name>(<arg_list>)!
 Menu.error15_2.text=Die aufgerufene Routine «%» ist z.Z. nicht verfügbar.
+Menu.error15_3.text=Mehr als eine Routine passt zu Aufruf «%».
+
 Menu.error16_1.text=Der Aussprung muss leer sein oder mit einem der Schlüsselwörter % beginnen!
 Menu.error16_2.text=Eine return-Anweisung muss (außer am Diagrammende) ein Aussprung-Element sein!
 Menu.error16_3.text=Exit-, leave- oder break-Anweisungen sind nur als Aussprung-Elemente zulässig!
@@ -793,6 +795,8 @@ Control.msgIllegalJump.text=Unzulässiger Inhalt einer Aussprung-Anweisung: <%1>
 Control.msgTooManyLevels.text=Zu viele Ebenen zum Verlassen gefordert (tatsächliche Tiefe: %1 / angegeben: %2)!
 Control.msgJumpOutParallel.text=Unzulässiger Aussprung aus Parallelzweig:%Thread beendet!
 Control.msgForLoopManipulation.text=Unzulässige Manipulation der Zählschleifenvariablen «%»!
+Control.msgInvalidFileNumberRead.text=Ungültige Dateinummer bzw. Datei nicht geöffnet zum Lesen.
+Control.msgInvalidFileNumberWrite.text=Ungülige Dateinummer bzw. Datei nicht geöffnet zum Schreiben.
 Control.tblVar.header.0=Variablenname
 Control.tblVar.header.1=Inhalt
 

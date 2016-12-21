@@ -86,6 +86,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.11.22      Bugfix #295: Spurious error11 in return statements with equality comparison
  *      Kay Gürtzig     2016.12.12      Enh. #306: New method isEmpty() for a Root without text, children, and undo entries
  *                                      Enh. #305: Method getSignatureString() and Comparator SIGNATUR_ORDER added.
+ *      Kay Gürtzig     2016.12.16      Bugfix #305: Comparator SIGNATURE_ORDER corrected
  *
  ******************************************************************************************************
  *
@@ -2312,14 +2313,20 @@ public class Root extends Element {
 			Function subroutine = new Function(text);
 			String subName = subroutine.getName();
 			int subArgCount = subroutine.paramCount();
-			if ((!this.getMethodName().equals(subName) || subArgCount != this.getParameterNames().count())
-					&& (!Arranger.hasInstance()
-					|| Arranger.getInstance().findRoutinesBySignature(
-							subName, subArgCount
-							).isEmpty()))
+			if ((!this.getMethodName().equals(subName) || subArgCount != this.getParameterNames().count()))
 			{
-				//error  = new DetectedError("The called subroutine «<routine_name>(<arg_count>)» is currently not available.",(Element) _node.getElement(i));
-				addError(_errors, new DetectedError(errorMsg(Menu.error15_2, subName + "(" + subArgCount + ")"), ele), 15);
+				int count = 0;	// Number of matching routines
+				if (Arranger.hasInstance()) {
+					count = Arranger.getInstance().findRoutinesBySignature(subName, subArgCount).size();
+				}
+				if (count == 0) {
+					//error  = new DetectedError("The called subroutine «<routine_name>(<arg_count>)» is currently not available.",(Element) _node.getElement(i));
+					addError(_errors, new DetectedError(errorMsg(Menu.error15_2, subName + "(" + subArgCount + ")"), ele), 15);
+				}
+				else if (count > 1) {
+					//error  = new DetectedError("There are several matching subroutines for «<routine_name>(<arg_count>)».",(Element) _node.getElement(i));
+					addError(_errors, new DetectedError(errorMsg(Menu.error15_3, subName + "(" + subArgCount + ")"), ele), 15);					
+				}
 			}
 		}
 		// END KGU#278 2016-10-11

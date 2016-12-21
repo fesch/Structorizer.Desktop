@@ -45,6 +45,7 @@ package lu.fisch.structorizer.generators;
  *                                      D7Parser.keywordMap refactoring done (going to be superfluous!)
  *      Kay Gürtzig     2016.10.04      Bugfix #258: Structured FOR loop parameters weren't always preserved on saving
  *      Kay Gürtzig     2016.10.13      Enh. #270: Cared for new field "disabled"
+ *      Kay Gürtzig     2016.12.21      Bugfix #317: Preserve color property of empty Subqueues
  *
  ******************************************************************************************************
  *
@@ -168,12 +169,16 @@ public class XmlGenerator extends Generator {
 		code.add(_indent+"<alternative text=\""+BString.encodeToHtml(_alt.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_alt.getComment().getCommaText())+"\" color=\""+
 				 _alt.getHexColor()+"\" disabled=\""+ (_alt.disabled ? "1" : "0") + "\">");
-		code.add(_indent+this.getIndent()+"<qTrue>");
-		generateCode(_alt.qTrue,_indent+this.getIndent()+this.getIndent());
-		code.add(_indent+this.getIndent()+"</qTrue>");
-		code.add(_indent+this.getIndent()+"<qFalse>");
-		generateCode(_alt.qFalse,_indent+this.getIndent()+this.getIndent());
-		code.add(_indent+this.getIndent()+"</qFalse>");
+    	// START KGU 2016-12-21: Bugfix #317
+		//code.add(_indent+this.getIndent()+"<qTrue>");
+		//generateCode(_alt.qTrue,_indent+this.getIndent()+this.getIndent());
+		//code.add(_indent+this.getIndent()+"</qTrue>");
+		//code.add(_indent+this.getIndent()+"<qFalse>");
+		//generateCode(_alt.qFalse,_indent+this.getIndent()+this.getIndent());
+		//code.add(_indent+this.getIndent()+"</qFalse>");
+		generateCode(_alt.qTrue, _indent+this.getIndent(), "qTrue");
+		generateCode(_alt.qFalse, _indent+this.getIndent(), "qFalse");
+	    // END KGU 2016-12-21
 		code.add(_indent+"</alternative>");
 	}
 	
@@ -185,9 +190,12 @@ public class XmlGenerator extends Generator {
 				 _case.getHexColor()+"\" disabled=\""+ (_case.disabled ? "1" : "0") + "\">");
 		for(int i=0;i<_case.qs.size();i++)
 		{
-			code.add(_indent+this.getIndent()+"<qCase>");
-			generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent());
-			code.add(_indent+this.getIndent()+"</qCase>");
+	    	// START KGU 2016-12-21: Bugfix #317
+			//code.add(_indent+this.getIndent()+"<qCase>");
+			//generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent());
+			//code.add(_indent+this.getIndent()+"</qCase>");
+			generateCode(_case.qs.get(i), _indent+this.getIndent(), "qCase");
+		    // END KGU 2016-12-21
 		}
 		code.add(_indent+"</case>");
 	}
@@ -200,9 +208,12 @@ public class XmlGenerator extends Generator {
 				 _para.getHexColor()+"\">");
 		for(int i=0;i<_para.qs.size();i++)
 		{
-			code.add(_indent+this.getIndent()+"<qPara>");
-			generateCode((Subqueue) _para.qs.get(i),_indent+this.getIndent()+this.getIndent());
-			code.add(_indent+this.getIndent()+"</qPara>");
+	    	// START KGU 2016-12-21: Bugfix #317
+			//code.add(_indent+this.getIndent()+"<qPara>");
+			//generateCode((Subqueue) _para.qs.get(i),_indent+this.getIndent()+this.getIndent());
+			//code.add(_indent+this.getIndent()+"</qPara>");
+			generateCode(_para.qs.get(i), _indent+this.getIndent(), "qPara");
+		    // END KGU 2016-12-21
 		}
 		code.add(_indent+"</parallel>");
 	}
@@ -254,9 +265,12 @@ public class XmlGenerator extends Generator {
     			"\" color=\"" + _for.getHexColor()+"\" disabled=\""+
     			(_for.disabled ? "1" : "0") + "\">");
     	// END KGU#118 2015-12-31
-		code.add(_indent+this.getIndent()+"<qFor>");
-		generateCode(_for.q,_indent+this.getIndent()+this.getIndent());
-		code.add(_indent+this.getIndent()+"</qFor>");
+    	// START KGU 2016-12-21: Bugfix #317
+		//code.add(_indent+this.getIndent()+"<qFor>");
+		//generateCode(_for.q,_indent+this.getIndent()+this.getIndent());
+		//code.add(_indent+this.getIndent()+"</qFor>");
+		generateCode(_for.q, _indent+this.getIndent(), "qFor");
+		// END KGU 2016-12-21
 		code.add(_indent+"</for>");
 	}
 	
@@ -266,9 +280,12 @@ public class XmlGenerator extends Generator {
 		code.add(_indent+"<while text=\""+BString.encodeToHtml(_while.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_while.getComment().getCommaText())+"\" color=\""+
 				 _while.getHexColor()+"\" disabled=\""+(_while.disabled ? "1" : "0") + "\">");
-		code.add(_indent+this.getIndent()+"<qWhile>");
-		generateCode(_while.q,_indent+this.getIndent()+this.getIndent());
-		code.add(_indent+this.getIndent()+"</qWhile>");
+    	// START KGU 2016-12-21: Bugfix #317
+		//code.add(_indent+this.getIndent()+"<qWhile>");
+		//generateCode(_while.q,_indent+this.getIndent()+this.getIndent());
+		//code.add(_indent+this.getIndent()+"</qWhile>");
+		generateCode(_while.q, _indent+this.getIndent(), "qWhile");
+	    // END KGU 2016-12-21
 		code.add(_indent+"</while>");
 	}
 	
@@ -278,9 +295,12 @@ public class XmlGenerator extends Generator {
 		code.add(_indent+"<repeat text=\""+BString.encodeToHtml(_repeat.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_repeat.getComment().getCommaText())+"\" color=\""+
 				 _repeat.getHexColor()+"\" disabled=\""+ (_repeat.disabled ? "1" : "0") + "\">");
-		code.add(_indent+this.getIndent()+"<qRepeat>");
-		generateCode(_repeat.q,_indent+this.getIndent()+this.getIndent());
-		code.add(_indent+this.getIndent()+"</qRepeat>");
+    	// START KGU 2016-12-21: Bugfix #317
+		//code.add(_indent+this.getIndent()+"<qRepeat>");
+		//generateCode(_repeat.q,_indent+this.getIndent()+this.getIndent());
+		//code.add(_indent+this.getIndent()+"</qRepeat>");
+		generateCode(_repeat.q, _indent+this.getIndent(), "qRepeat");
+	    // END KGU 2016-12-21
 		code.add(_indent+"</repeat>");
 	}
 	
@@ -290,9 +310,12 @@ public class XmlGenerator extends Generator {
 		code.add(_indent+"<forever text=\""+BString.encodeToHtml(_forever.getText().getCommaText())+"\" comment=\""+
 				 BString.encodeToHtml(_forever.getComment().getCommaText())+"\" color=\""+
 				 _forever.getHexColor()+"\" disabled=\""+(_forever.disabled ? "1" : "0") + "\">");
-		code.add(_indent+this.getIndent()+"<qForever>");
-		generateCode(_forever.q,_indent+this.getIndent()+this.getIndent());
-		code.add(_indent+this.getIndent()+"</qForever>");
+    	// START KGU 2016-12-21: Bugfix #317
+		//code.add(_indent+this.getIndent()+"<qForever>");
+		//generateCode(_forever.q,_indent+this.getIndent()+this.getIndent());
+		//code.add(_indent+this.getIndent()+"</qForever>");
+		generateCode(_forever.q, _indent+this.getIndent(), "qForever");
+	    // END KGU 2016-12-21
 		code.add(_indent+"</forever>");
 	}
 	
@@ -311,17 +334,19 @@ public class XmlGenerator extends Generator {
 				 BString.encodeToHtml(_jump.getComment().getCommaText())+"\" color=\""+
 				 _jump.getHexColor()+"\" disabled=\""+(_jump.disabled ? "1" : "0") + "\"></jump>");
 	}
-		
-//    @Override
-//	protected void generateCode(Subqueue _subqueue, String _indent)
-//	{
-//		// code.add(_indent+"");
-//		for(int i=0;i<_subqueue.getSize();i++)
-//		{
-//			generateCode((Element) _subqueue.getElement(i),_indent);
-//		}
-//		// code.add(_indent+"");
-//	}
+	
+	// START KGU 2016-12-21: Bugfix #315 - preserve the element colour of empty subqueues
+	protected void generateCode(Subqueue _subqueue, String _indent, String tagName)
+	{
+		String colorAttr = "";
+		if (_subqueue.getSize() == 0) {
+			colorAttr = " color=\""+_subqueue.getHexColor() + "\"";
+		}
+		code.add(_indent+"<" + tagName + colorAttr + ">");
+    	generateCode(_subqueue, _indent + this.getIndent());
+		code.add(_indent+"</" + tagName + ">");
+	}
+    // END KGU 2016-12-21
 	
     @Override
 	public String generateCode(Root _root, String _indent)
@@ -355,9 +380,12 @@ public class XmlGenerator extends Generator {
 		// END KGU 2015-12-04
 								BString.encodeToHtml(_root.getComment().getCommaText())+"\" color=\""+
 								_root.getHexColor()+"\" type=\""+pr+"\" style=\""+ni+"\">");
-		code.add(_indent+"<children>");
-		generateCode(_root.children,_indent+this.getIndent());
-		code.add(_indent+"</children>");
+		// START KGU 2016-12-21: Bugfix #317
+		//code.add(_indent+"<children>");
+		//generateCode(_root.children,_indent+this.getIndent());
+		//code.add(_indent+"</children>");
+		generateCode(_root.children, _indent, "children");
+		// END KGU 2016-12-21
 		code.add("</root>");
 		
 		return code.getText();

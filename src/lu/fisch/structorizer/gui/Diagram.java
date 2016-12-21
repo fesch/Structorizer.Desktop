@@ -1531,7 +1531,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
         	}
         	FileOutputStream fos = new FileOutputStream(filename);
         	// END KGU#94 2015-12-04
-        	Writer out = new OutputStreamWriter(fos, "UTF8");
+        	Writer out = new OutputStreamWriter(fos, "UTF-8");
         	XmlGenerator xmlgen = new XmlGenerator();
         	out.write(xmlgen.generateCode(root,"\t"));
         	out.close();

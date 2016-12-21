@@ -203,15 +203,20 @@ import java.awt.Dialog.ModalityType;
 import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.Closeable;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.Stack;
+import java.util.StringTokenizer;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -359,6 +364,9 @@ public class Executor implements Runnable
 	// START KGU#157 2016-03-16: Bugfix #131 - Precaution against a reopen attempts by different Structorizer instances
 	private Diagram reopenFor = null;	// A Structorizer instance that tried to open Control while still running
 	// END KGU#2 2016-03-16
+	// START KGU 2016-12-18: Enh. #314: Stream table for Simple file API
+	private final Vector<Closeable> openFiles = new Vector<Closeable>();
+	// END KGU 2016-12-18
 
 	private Executor(Diagram diagram, DiagramController diagramController)
 	{
@@ -624,7 +632,12 @@ public class Executor implements Runnable
 								replaced = true;								
 							}
 							// END KGU#99 2015-12-10
-						} catch (EvalError ex)
+						}
+						catch (EvalError ex)
+						{
+							System.err.println("Executor.convertStringComparison(\"" + str + "\"): " + ex.getMessage());
+						}
+						catch (Exception ex)
 						{
 							System.err.println("Executor.convertStringComparison(\"" + str + "\"): " + ex.getMessage());
 						}
@@ -705,6 +718,18 @@ public class Executor implements Runnable
 		// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
 		this.forLoopVars.clear();
 		// END KGU#307 2016-12-12
+		// START KGU 2016-12-18: Enh. #314
+		for (Closeable file: this.openFiles) {
+			if (file != null) {
+				try {
+					file.close();
+				} catch (IOException e) {
+					System.err.println("Executor.execute(); openFiles -> " + e.getLocalizedMessage());
+				}
+			}
+		}
+		this.openFiles.clear();
+		// END KGU 2016-12-18
 
 		if (Arranger.hasInstance())
 		{
@@ -730,6 +755,18 @@ public class Executor implements Runnable
 		// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
 		this.forLoopVars.clear();
 		// END KGU#307 2016-12-12
+		// START KGU 2016-12-18: Enh. #314
+		for (Closeable file: this.openFiles) {
+			if (file != null) {
+				try {
+					file.close();
+				} catch (IOException e) {
+					System.err.println("Executor.execute(); openFiles -> " + e.getLocalizedMessage());
+				}
+			}
+		}
+		this.openFiles.clear();
+		// END KGU 2016-12-18
 		// START KGU#160 2016-04-12: Enh. #137 - Address the console window 
 		this.console.writeln("*** TERMINATED \"" + this.diagram.getRoot().getText().getLongString() +
 				"\" at " + sdf.format(System.currentTimeMillis()) + " ***", Color.GRAY);
@@ -1401,11 +1438,393 @@ public class Executor implements Runnable
 			interpreter.eval(pascalFunction);
 			// END KGU#150 2016-04-03
 			// END KGU#57 2015-11-07
+			// START KGU 2016-12-18: #314: Support for simple text file API
+			interpreter.set("executorFileMap", this.openFiles);
+			interpreter.set("executorCurrentDirectory", 
+					(diagram.currentDirectory.isDirectory() ? diagram.currentDirectory : diagram.currentDirectory.getParentFile()).getAbsolutePath());
+			pascalFunction = "public int fileOpen(String filePath) { "
+					+ "int fileNo = 0; "
+					+ "java.io.File file = new java.io.File(filePath); "
+					+ "if (!file.isAbsolute()) { "
+					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
+					+ "} "
+					+ "try { java.io.FileInputStream fis = new java.io.FileInputStream(file.getAbsolutePath()); "
+					+ "java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, \"UTF-8\")); "
+					+ "fileNo = executorFileMap.size() + 1; "
+					+ "executorFileMap.add(new java.util.Scanner(reader)); "
+					+ "} "
+					+ "catch (SecurityException e) { fileNo = -3; } "
+					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
+					+ "catch (java.io.IOException e) { fileNo = -1; } "
+					+ "return fileNo; }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public int fileCreate(String filePath) { "
+					+ "int fileNo = 0; "
+					+ "java.io.File file = new java.io.File(filePath); "
+					+ "if (!file.isAbsolute()) { "
+					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
+					+ "} "
+					+ "try { java.io.FileOutputStream fos = new java.io.FileOutputStream(file.getAbsolutePath()); "
+					+ "java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, \"UTF-8\")); "
+					+ "fileNo = executorFileMap.size() + 1; "
+					+ "executorFileMap.add(writer); "
+					+ "} "
+					+ "catch (SecurityException e) { fileNo = -3; } "
+					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
+					+ "catch (java.io.IOException e) { fileNo = -1; } "
+					+ "return fileNo; }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public int fileAppend(String filePath) { "
+					+ "int fileNo = 0; "
+					+ "java.io.File file = new java.io.File(filePath); "
+					+ "if (!file.isAbsolute()) { "
+					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
+					+ "filePath = file.getAbsolutePath(); "
+					+ "} "
+					+ "java.io.BufferedWriter writer = null; "
+					+ "try { "
+					+ "if (file.exists()) { "
+					+ "java.io.File tmpFile = java.io.File.createTempFile(\"structorizer_\"+file.getName(), null); "
+					+ "if (tmpFile.exists()) { tmpFile.delete(); } "
+					+ "if (file.renameTo(tmpFile)) { "
+					+ "java.io.FileOutputStream fos = new java.io.FileOutputStream(filePath); "
+					+ "java.io.FileInputStream fis = new java.io.FileInputStream(tmpFile.getAbsolutePath()); "
+					+ "writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, \"UTF-8\")); "
+					+ "java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, \"UTF-8\")); "
+					+ "String line = null; "
+					+ "while ((line = reader.readLine()) != null) { "
+					+ "		writer.write(line); writer.newLine();"
+					+ "} "
+					+ "reader.close(); "
+					+ "tmpFile.delete(); "
+					+ "} else { fileNo = -4; } "
+					+ "} "
+					+ "else { "
+					+ "	java.io.FileOutputStream fos = new java.io.FileOutputStream(filePath); "
+					+ "	writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, \"UTF-8\")); "				
+					+ "} "
+					+ "fileNo = executorFileMap.size() + 1;"
+					+ "executorFileMap.add(writer); " 
+					+ "} "
+					+ "catch (SecurityException e) { fileNo = -3; } "
+					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
+					+ "catch (java.io.IOException e) { fileNo = -1; } "
+					+ "return fileNo; "
+					+ "}";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public void fileClose(int fileNo) { "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable file = executorFileMap.get(fileNo - 1); "
+					+ "if (file != null) { "
+					+ "try { file.close(); } "
+					+ "catch (java.io.IOException e) {} "
+					+ "executorFileMap.set(fileNo - 1, null); } "
+					+ "}"
+					+ "}";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public boolean fileEOF(int fileNo) {"
+					+ "	boolean isEOF = true; "
+					+ "	if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "		java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "		if (reader instanceof java.util.Scanner) { "
+					+ "			try { "
+					+ "				isEOF = !((java.util.Scanner)reader).hasNext();"
+					+ "			} catch (IOException e) {}"
+					+ "		}"
+					+ "	}"
+					+ "	else { throw java.io.IOException(\"" + control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "	return isEOF;"
+					+"}";
+			interpreter.eval(pascalFunction);
+			// The following is just a helper method...
+			pascalFunction = "public Object structorizerGetScannedObject(java.util.Scanner sc) {"
+					+ "Object result = null; "
+					+ "sc.useLocale(java.util.Locale.UK); "
+					+ "if (sc.hasNextInt()) { result = sc.nextInt(); } "
+					+ "else if (sc.hasNextDouble()) { result = sc.nextDouble(); } "
+					+ "else if (sc.hasNext(\"\\\\\\\".*?\\\\\\\"\")) { "
+					+ "String str = sc.next(\"\\\\\\\".*?\\\\\\\"\"); "
+					+ "result = str.substring(1, str.length() - 1); "
+					+ "} "
+					+ "else if (sc.hasNext(\"'.*?'\")) { "
+					+ "String str = sc.next(\"'.*?'\"); "
+					+ "result = str.substring(1, str.length() - 1); "
+					+ "} "
+					+ "else if (sc.hasNext(\"\\\\{.*?\\\\}\")) { "
+					+ "String token = sc.next(); "
+					+ "result = new Object[]{token.substring(1, token.length()-1)}; "
+					+ "} " 
+					+ "else if (sc.hasNext(\"\\\\\\\".*\")) { "
+					+ "String str = sc.next(); "
+					+ "while (sc.hasNext() && !sc.hasNext(\".*\\\\\\\"\")) { "
+					+ "str += \" \" + sc.next(); "
+					+ "} "
+					+ "if (sc.hasNext()) { str += \" \" + sc.next(); } "
+					+ "result = str.substring(1, str.length() - 1); "
+					+ "} "
+					+ "else if (sc.hasNext(\"'.*\")) { "
+					+ "String str = sc.next(); "
+					+ "while (sc.hasNext() && !sc.hasNext(\".*'\")) { "
+					+ "str += \" \" + sc.next(); "
+					+ "} "
+					+ "if (sc.hasNext()) { str += \" \" + sc.next(); } "
+					+ "result = str.substring(1, str.length() - 1); "
+					+ "} "
+					+ "else if (sc.hasNext(\"\\\\{.*\")) { "
+					+ "java.util.regex.Pattern oldDelim = sc.delimiter(); "
+					+ "sc.useDelimiter(\"\\\\}\"); "
+					+ "String content = sc.next().trim().substring(1); "
+					+ "sc.useDelimiter(oldDelim); "
+					+ "if (sc.hasNext(\"\\\\}\")) { sc.next(); } "
+					+ "String[] elements = content.split(\"\\\\p{javaWhitespace}*,\\\\p{javaWhitespace}*\"); "
+					+ "Object[] objects = new Object[elements.length]; "
+					+ "for (int i = 0; i < elements.length; i++) { "
+					+ "java.util.Scanner sc0 = new java.util.Scanner(elements[i]); "
+					+ "objects[i] = structorizerGetScannedObject(sc0); "
+					+ "sc0.close(); "
+					+ "} "
+					+ "result = objects;"
+					+ "}"
+					+ "else { result = sc.next(); } "
+					+ "return result; }";
+			interpreter.eval(pascalFunction);
+// KGU: The following outcommented code is for debugging the local equivalent of the function above
+//			Scanner sc = new Scanner("test 3.4 4,6 \"Alles großer Murks \" hier. {tfzz64} \"aha\" {6, 89,8, 2,DFj}\n{666}");
+//			Object obj = null;
+//			do {
+//				try {
+//				obj = this.structorizerGetScannedObject(sc);
+//				if (obj instanceof Object[]) {
+//					System.out.print("Array: ");
+//					for (int i = 0; i < ((Object[])obj).length; i++) {
+//						System.out.print(" | " + ((Object[])obj)[i]);
+//					}
+//					System.out.println("");
+//				}
+//				else System.out.println(obj.getClass().getName() + ": " + obj);
+//				}
+//				catch (java.util.NoSuchElementException ex) { obj = null; }
+//			} while (obj != null);
+//			sc.close();
+// KGU: The preceding outcommented code is for debugging the local equivalent of the function above
+			pascalFunction = "public Object fileRead(int fileNo) { "
+					+ "Object result = null; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "result = structorizerGetScannedObject((java.util.Scanner)reader); "
+					+ "ok = true;"
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return result; }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public Character fileReadChar(int fileNo) { "
+					+ "Character result = '\0'; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "java.util.Scanner sc = (java.util.Scanner)reader; "
+					+ "java.util.regex.Pattern oldDelim = sc.delimiter(); "
+					+ "sc.useDelimiter(\"\"); "
+					+ "try { "
+					+ "if (!sc.hasNext(\".\") && sc.hasNextLine()) { sc.nextLine(); result = '\\n'; }"
+					+ "else { result = sc.next(\".\").charAt(0); } "
+					+ "}"
+					+ "finally { sc.useDelimiter(oldDelim); } "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return result; }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public Integer fileReadInt(int fileNo) { "
+					+ "Integer result = null; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "result = reader.nextInt(); "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return result; }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public Double fileReadDouble(int fileNo) { "
+					+ "Double result = null; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "result = reader.nextDouble(); "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return result; }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public String fileReadLine(int fileNo) { "
+					+ "String line = null; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "line = ((java.util.Scanner)reader).nextLine(); "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return line;	}";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public void fileWrite(int fileNo, java.lang.Object data) { "
+					+ "	boolean ok = false; "
+					+ "	if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "		java.io.Closeable writer = executorFileMap.get(fileNo - 1); "
+					+ "		if (writer instanceof java.io.BufferedWriter) { "
+					+ "			((java.io.BufferedWriter)writer).write(data.toString()); "
+					+ "		ok = true;"
+					+ "	}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + control.msgInvalidFileNumberWrite.getText() + "\"); } "
+					+ "}";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public void fileWriteLine(int fileNo, java.lang.Object data) { "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable file = executorFileMap.get(fileNo - 1); "
+					+ "if (file instanceof java.io.BufferedWriter) { "
+					+ "((java.io.BufferedWriter)file).write(data.toString()); "
+					+ "((java.io.BufferedWriter)file).newLine(); "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + control.msgInvalidFileNumberWrite.getText() + "\"); } "
+					+ "}";
+			interpreter.eval(pascalFunction);
+			// END KGU 2016-12-18
+			// START TEST fileAppend
+//			int handle = fileAppend("AppendTest.txt");
+//			System.out.println("fileAppend: " + handle);
+//			interpreter.eval("fileWriteLine("+handle+", \"Bandwurm\")");
+//			interpreter.eval("fileWriteLine("+handle+", 4711)");
+//			interpreter.eval("fileClose("+handle+")");
+			// END TEST
 		} catch (EvalError ex)
 		{
+			//java.io.IOException
 			System.err.println("Executor.initInterpreter(): " + ex.getMessage());
 		}
 	}
+	
+	// Test for Interpreter routine
+//	public Object structorizerGetScannedObject(java.util.Scanner sc) {
+//		Object result = null; 
+//		sc.useLocale(java.util.Locale.UK); 
+//		if (sc.hasNextInt()) { result = sc.nextInt(); } 
+//		else if (sc.hasNextDouble()) { result = sc.nextDouble(); } 
+//		else if (sc.hasNext("\\\".*?\\\"")) { result = sc.next("\\\".*?\\\""); } 
+//		else if (sc.hasNext("\\{.*?\\}")) {
+//			String token = sc.next();
+//			result = new Object[]{token.substring(1, token.length()-1)};
+//		} 
+//		else if (sc.hasNext("\\\".*")) { 
+//			String str = sc.next(); 
+//			while (sc.hasNext() && !sc.hasNext(".*\\\"")) { 
+//				str += " " + sc.next();
+//			}
+//			if (sc.hasNext()) { str += " " + sc.next(); }
+//			result = str;
+//		}
+//		else if (sc.hasNext("\\{.*")) { 
+//			Pattern oldDelim = sc.delimiter();
+//			//sc.useDelimiter("(\\p{javaWhitespace}*,\\p{javaWhitespace}*|\\})");
+//			sc.useDelimiter("\\}");
+//			String expr = sc.next().trim().substring(1);
+//			sc.useDelimiter(oldDelim);
+//			String[] elements = expr.split("\\p{javaWhitespace}*,\\p{javaWhitespace}*");
+//			if (sc.hasNext("\\}")) { sc.next(); }
+//			Object[] objects = new Object[elements.length];
+//			for (int i = 0; i < elements.length; i++) { 
+//				java.util.Scanner sc0 = new java.util.Scanner(elements[i]);
+//				objects[i] = structorizerGetScannedObject(sc0);
+//				sc0.close();
+//			}
+//			result = objects;
+//		}
+//		else { result = sc.next(); }
+//		return result;
+//	}
+
+	public int fileAppend(String filePath)
+	{
+		int fileNo = 0;
+		java.io.File file = new java.io.File(filePath);
+		if (!file.isAbsolute()) {
+			file = diagram.currentDirectory;
+			if (!file.isDirectory()) { file = file.getParentFile(); }
+			file = new java.io.File(file.getAbsolutePath() + java.io.File.separator + filePath);
+			filePath = file.getAbsolutePath();
+		}
+		java.io.BufferedWriter writer = null;
+		System.out.println(file.getName());
+		try {
+			if (file.exists()) {
+				java.io.File tmpFile = java.io.File.createTempFile("structorizer_"+file.getName(), null);
+				if (tmpFile.exists()) { tmpFile.delete(); }
+				if (file.renameTo(tmpFile)) {
+					java.io.FileOutputStream fos = new java.io.FileOutputStream(filePath); 
+					java.io.FileInputStream fis = new java.io.FileInputStream(tmpFile.getAbsolutePath()); 
+					writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, "UTF-8")); 
+					java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, "UTF-8"));
+					String line = null; 
+					while ((line = reader.readLine()) != null) {
+						writer.write(line); writer.newLine();
+					} 
+					reader.close();
+					tmpFile.delete();
+				}
+				else {
+					fileNo = -4;
+				}
+			} 
+			else { 
+				java.io.FileOutputStream fos = new java.io.FileOutputStream(filePath); 
+				writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, "UTF-8")); 				
+			} 
+			fileNo = this.openFiles.size() + 1;
+			this.openFiles.add(writer);  
+		} 
+		catch (SecurityException e) { fileNo = -3; } 
+		catch (java.io.FileNotFoundException e) { fileNo = -2; }
+		catch (java.io.IOException e) { fileNo = -1; }
+		return fileNo;
+	}
+	
+//	public String fileRead(int fileNo)
+//	{
+//		String line = null;
+//		if (fileNo > 0 && fileNo <= this.openFiles.size()) {
+//			java.io.Closeable file = this.openFiles.get(fileNo - 1);
+//			if (file instanceof java.io.BufferedReader) {
+//				line = ((java.io.BufferedReader)file).readLine();
+//			}
+//		}
+//		return line;
+//	}
+
+//	public void fileWrite(int fileNo, String line)
+//	{
+//		if (fileNo > 0 && fileNo <= this.openFiles.size()) {
+//			java.io.Closeable file = this.openFiles.get(fileNo - 1);
+//			if (file instanceof java.io.BufferedWriter) {
+//				((java.io.BufferedWriter)file).write(line);
+//				((java.io.BufferedWriter)file).newLine();
+//			}
+//		}
+//	}
 
 	public boolean isNumeric(String input)
 	{
@@ -1418,7 +1837,7 @@ public class Executor implements Runnable
 			return false;
 		}
 	}
-
+	
 	public boolean isRunning()
 	{
 		return running;
@@ -2130,6 +2549,20 @@ public class Executor implements Runnable
 				}
 				// END KGU#271 2016-10-06
 			} catch (EvalError ex)
+			{
+				result = ex.getLocalizedMessage();
+				if (result == null) result = ex.getMessage();
+				if (result.endsWith("TargetError")) {
+					String errorText = ex.getErrorText();
+					int leftParPos = errorText.indexOf('(');
+					int rightParPos = errorText.lastIndexOf(')');
+					if (errorText.startsWith("throw") && leftParPos >= 0 && rightParPos > leftParPos) {
+						errorText = errorText.substring(leftParPos+1,  rightParPos).trim();
+					}
+					result = result.replace("TargetError", errorText);
+				}
+			}
+			catch (Exception ex)
 			{
 				result = ex.getLocalizedMessage();
 				if (result == null) result = ex.getMessage();

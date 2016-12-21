@@ -177,7 +177,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.25-11";
+	public static String E_VERSION = "3.25-12";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -234,6 +234,7 @@ public abstract class Element {
 	" - Jan Peter Klippel <structorizer@xtux.org>\n"+
 	" - David Tremain <DTremain@omnisource.com>\n"+
 	" - Rolf Schmidt <rolf.frogs@t-online.de>\n"+
+	" - Benjamin Neuberg (newboerg)\n"+
 	
 	"\n"+
 	"File dropper class by\n"+

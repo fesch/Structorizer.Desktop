@@ -324,6 +324,7 @@ Menu.error14_2.text=The FOR loop step value («%») is not a legal integer const
 Menu.error14_3.text=Variable name «%» may collide with one of the configured FOR loop heading keywords!
 Menu.error15_1.text=The CALL hasn't got form «[ <var> <- ] <routine_name>(<arg_list>)»!
 Menu.error15_2.text=The called subroutine «%» is currently not available.
+Menu.error15_3.text=There are several matching subroutines for «%».
 Menu.error16_1.text=A JUMP element may be empty or start with one of %, possibly followed by an argument!	
 Menu.error16_2.text=A return instruction, unless at final position, must form a JUMP element!
 Menu.error16_3.text=An exit, leave or break instruction is only allowed as JUMP element!
@@ -795,6 +796,8 @@ Control.msgIllegalJump.text=Illegal content of a Jump (i.e. exit) instruction: <
 Control.msgTooManyLevels.text=Too many levels to leave (actual depth: %1 / specified: %2)!
 Control.msgJumpOutParallel.text=Illegal attempt to jump out of a parallel thread:%Thread killed!
 Control.msgForLoopManipulation.text=Illegal attempt to manipulate the FOR loop variable «%»!
+Control.msgInvalidFileNumberRead.text=Invalid file number or file not open for reading.
+Control.msgInvalidFileNumberWrite.text=Invalid file number or file not open for writing.
 Control.tblVar.header.0=Variable Name
 Control.tblVar.header.1=Content
 

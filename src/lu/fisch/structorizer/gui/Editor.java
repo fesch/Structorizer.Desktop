@@ -49,6 +49,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.17      Bugfix #114: Prerequisites for editing and transmutation during execution revised
  *      Kay Gürtzig     2016.11.22      Enh. #284: Key bindings for font resizing added (KGU#294)
  *      Kay Gürtzig     2016.12.12      Enh. #305: Scrollable list view of Roots in Arranger added
+ *      Kay Gürtzig     2016.12.17      Enh. #305: Key binding <del> added to Arranger index list.
  *
  ******************************************************************************************************
  *
@@ -327,25 +328,52 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     // START KGU#305 2016-12-15: Enh. #305 - diagramIndex should react to keys
     private class ArrangerIndexAction extends AbstractAction
     {
-    	//Diagram diagram;	// The object responsible for executing the action
     	
     	ArrangerIndexAction(boolean isDoubleClick)
     	{
     		super(isDoubleClick ? "DOUBLE_CLICK" : "SINGLE_CLCK");
     	}
     	
+		// START KGU#305 2016-12-17: Also allow to remove a diagram from Arranger
+    	ArrangerIndexAction(String keyString)
+    	{
+    		super(keyString);
+    	}
+		// END KGU#305 2016-12-17
+    	
 		@Override
 		public void actionPerformed(ActionEvent ev) {
 			if (getValue(AbstractAction.NAME).equals("DOUBLE_CLICK")) {
 				Arranger.scrollToDiagram(diagramIndex.getSelectedValue(), true);
 			}
-			else {
+			// START KGU#305 2016-12-17: Also allow to remove a diagram from Arranger
+			//else {
+			else if (getValue(AbstractAction.NAME).equals("SINGLE_CLICK")) {
+			// END KGU#305 2016-12-17
 				Root selectedRoot = diagramIndex.getSelectedValue();
 				if (selectedRoot != null && selectedRoot != diagram.getRoot()) {
 					diagram.setRootIfNotRunning(selectedRoot);
 					scrollarea.requestFocusInWindow();
 				}
 			}
+			// START KGU#305 2016-12-17: Also allow to remove a diagram from Arranger
+			else if (getValue(AbstractAction.NAME).equals("DELETE") && Arranger.hasInstance()) {
+				int index = diagramIndex.getSelectedIndex();
+				Arranger.getInstance().removeDiagram(diagramIndex.getSelectedValue());
+				if (index < diagramIndex.getModel().getSize()) {
+					diagramIndex.setSelectedIndex(index);
+				}
+				else if (index > 0) {
+					diagramIndex.setSelectedIndex(index-1);
+				}
+				if (diagramIndex.getModel().getSize() > 0) {
+					diagramIndex.requestFocusInWindow();
+				}
+				else {
+					scrollarea.requestFocusInWindow();					
+				}
+			}
+			// END KGU#305 2016-12-17
 		}
     }    
     // END KGGU#305 2016-12-15
@@ -857,8 +885,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		actMap = diagramIndex.getActionMap();
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "SPACE");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "ENTER");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "DELETE");
 		actMap.put("SPACE", new ArrangerIndexAction(true));
 		actMap.put("ENTER", new ArrangerIndexAction(false));
+		actMap.put("DELETE",new ArrangerIndexAction("DELETE"));
 		// END KGU#305 2016-12-15
 
 		
