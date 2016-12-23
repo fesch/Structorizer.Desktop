@@ -34,8 +34,9 @@ package lu.fisch.structorizer.executor;
  *      ------			----			-----------
  *      Bob Fisch                       First Issue
  *      Kay Gürtzig     2015.10.27      For performance reasons, now stores name and parsed parameters
- *      Kay Gürtzig     2015.11.13      KGU#2 (Enhacement #9): No longer automatically renames to lowercase
+ *      Kay Gürtzig     2015.11.13      KGU#2 (Enhancement #9): No longer automatically renames to lowercase
  *      Kay Gürtzig     2015.12.12      KGU#106: Parameter splitting mended (using enhancement #54 = KGU#101)
+ *      Kay Gürtzig     2016.12.22      KGU#311: New auxiliary method getSourceLength()
  *
  ******************************************************************************************************
  *
@@ -215,5 +216,15 @@ public class Function
     }
     // END KGU# 2016-10-16
 
+    // START KGU#311 2016-12-22: Enh. #314 - We need the expression length for replacements
+    /**
+     * Returns the length of the original String that was parsed to this Function
+     * @return length of the code source snippet representing this function call
+     */
+    public int getSourceLength()
+    {
+    	return str.length();
+    }
+    // END KGU#311 2016-12-22
     
 }

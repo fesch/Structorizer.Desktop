@@ -1534,13 +1534,16 @@ public class Root extends Element {
     			// START KGU#281 2016-10-12: Issue #271 - there may be a prompt string literal to be skipped
     			//String s = tokens.subSequence(inpPos + 1, tokens.count()).concatenate().trim();
     			inpPos++;
-    			while (inpPos < tokens.count() && (tokens.get(inpPos).trim().isEmpty() || tokens.get(inpPos).matches("^[\"\'].*[\"\']$")))
+    			// START KGU#281 2016-12-23: Enh. #271 - allow comma between prompt and variable name
+    			//while (inpPos < tokens.count() && (tokens.get(inpPos).trim().isEmpty() || tokens.get(inpPos).matches("^[\"\'].*[\"\']$")))
+    			while (inpPos < tokens.count() && (tokens.get(inpPos).trim().isEmpty() || tokens.get(inpPos).trim().equals(",") || tokens.get(inpPos).matches("^[\"\'].*[\"\']$")))
+    			// END KGU#281 2016-12-23
     			{
     				inpPos++;
     			}
     			String s = tokens.subSequence(inpPos, tokens.count()).concatenate().trim();
     			// END KGU#281 2016-10-12
-    			// FIXME: Why do we expect a list of variables here (excutor doesn't cope with it, anyway)?
+    			// FIXME: Why do we expect a list of variables here (executor doesn't cope with it, anyway)?
     			// A mere splitting by comma would spoil function calls as indices etc.
     			StringList parts = Element.splitExpressionList(s, ",");
     			for (int p = 0; p < parts.count(); p++)

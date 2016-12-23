@@ -209,14 +209,11 @@ import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
-import java.util.Scanner;
 import java.util.Stack;
-import java.util.StringTokenizer;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -259,6 +256,15 @@ public class Executor implements Runnable
 {
 
 	private static Executor mySelf = null;
+	// START KGU#311 2016-12-22: Enh. #314 - fileAPI index
+	public static final String[] fileAPI_names = {
+		"fileOpen", "fileCreate", "fileAppend",
+		"fileClose",
+		"fileRead", "fileReadChar", "fileReadInt", "fileReadDouble", "fileReadLine",
+		"fileEOF",
+		"fileWrite", "fileWriteLine"
+	};
+	// END KGU#311 2016-12-22
 
 	public static Executor getInstance()
 	{
@@ -1532,7 +1538,7 @@ public class Executor implements Runnable
 					+ "			} catch (IOException e) {}"
 					+ "		}"
 					+ "	}"
-					+ "	else { throw java.io.IOException(\"" + control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "	else { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
 					+ "	return isEOF;"
 					+"}";
 			interpreter.eval(pascalFunction);
@@ -1617,7 +1623,7 @@ public class Executor implements Runnable
 					+ "ok = true;"
 					+ "}"
 					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
 					+ "return result; }";
 			interpreter.eval(pascalFunction);
 			pascalFunction = "public Character fileReadChar(int fileNo) { "
@@ -1637,7 +1643,7 @@ public class Executor implements Runnable
 					+ "ok = true; "
 					+ "}"
 					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
 					+ "return result; }";
 			interpreter.eval(pascalFunction);
 			pascalFunction = "public Integer fileReadInt(int fileNo) { "
@@ -1646,11 +1652,11 @@ public class Executor implements Runnable
 					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
 					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
 					+ "if (reader instanceof java.util.Scanner) { "
-					+ "result = reader.nextInt(); "
+					+ "result = ((java.util.Scanner)reader).nextInt(); "
 					+ "ok = true; "
 					+ "}"
 					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
 					+ "return result; }";
 			interpreter.eval(pascalFunction);
 			pascalFunction = "public Double fileReadDouble(int fileNo) { "
@@ -1659,11 +1665,11 @@ public class Executor implements Runnable
 					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
 					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
 					+ "if (reader instanceof java.util.Scanner) { "
-					+ "result = reader.nextDouble(); "
+					+ "result = ((java.util.Scanner)reader).nextDouble(); "
 					+ "ok = true; "
 					+ "}"
 					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
 					+ "return result; }";
 			interpreter.eval(pascalFunction);
 			pascalFunction = "public String fileReadLine(int fileNo) { "
@@ -1676,7 +1682,7 @@ public class Executor implements Runnable
 					+ "ok = true; "
 					+ "}"
 					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
 					+ "return line;	}";
 			interpreter.eval(pascalFunction);
 			pascalFunction = "public void fileWrite(int fileNo, java.lang.Object data) { "
@@ -1688,7 +1694,7 @@ public class Executor implements Runnable
 					+ "		ok = true;"
 					+ "	}"
 					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + control.msgInvalidFileNumberWrite.getText() + "\"); } "
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberWrite.getText() + "\"); } "
 					+ "}";
 			interpreter.eval(pascalFunction);
 			pascalFunction = "public void fileWriteLine(int fileNo, java.lang.Object data) { "
@@ -1701,7 +1707,7 @@ public class Executor implements Runnable
 					+ "ok = true; "
 					+ "}"
 					+ "}"
-					+ "if (!ok) { throw new java.io.IOException(\"" + control.msgInvalidFileNumberWrite.getText() + "\"); } "
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberWrite.getText() + "\"); } "
 					+ "}";
 			interpreter.eval(pascalFunction);
 			// END KGU 2016-12-18
@@ -2925,6 +2931,11 @@ public class Executor implements Runnable
 				}
 				catch (EvalError ex) {}
 				// END KGU#285 2016-10-16
+    			// START KGU#281 2016-12-23: Enh. #271 - ignore comma between prompt and variable name
+				if (tokens.count() > 1 && tokens.get(1).equals(",")) {
+					tokens.remove(1);
+				}
+				// END KGU#281 2016-12-23
 				in = tokens.concatenate("", 1).trim();
 			}
 		}

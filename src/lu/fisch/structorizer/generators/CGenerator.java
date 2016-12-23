@@ -308,6 +308,13 @@ public class CGenerator extends Generator {
 			tokens.set(pos, "(char)");
 		}
 		// END KGU#150 2016-04-03
+		// START KGU#311 2016-12-22: Enh. #314 - Structorizer file API support
+		pos = -1;
+		while ((pos = tokens.indexOf("fileRead", pos+1)) >= 0 && pos+1 < tokens.count() && tokens.get(pos+1).equals("("))
+		{
+			tokens.set(pos, "*(/*type?*/*)fileRead");
+		}
+		// END KGU#311 2016-12-22
 		return tokens.concatenate();
 	}
 	// END KGU#93 2015-12-21
@@ -861,8 +868,9 @@ public class CGenerator extends Generator {
 			// START KGU#236 2016-08-10: Issue #227
 			//code.add("#include <stdio.h>");
 			//code.add("");
-			if (this.hasInput || this.hasOutput)
+			if (this.hasInput() || this.hasOutput() || this.usesFileAPI)
 			{
+				code.add("#define _CRT_SECURE_NO_WARNINGS");	// VisualStudio precaution 
 				code.add("#include <stdio.h>");
 				code.add("");
 			}
@@ -870,6 +878,12 @@ public class CGenerator extends Generator {
 		// START KGU#178 2016-07-20: Enh. #160
 			subroutineInsertionLine = code.count();
 			subroutineIndent = _indent;
+			
+			// START KGU#311 2016-12-22: Enh. #314 - insert File API routines if necessary
+			if (this.usesFileAPI) {
+				this.insertFileAPI("c");
+			}
+			// END KGU#311 2016-12-22
 		}
 		// END KGU#178 2016-07-20
 
@@ -914,7 +928,7 @@ public class CGenerator extends Generator {
 		}
 		// END KGU 2015-11-30
 		// START KGU#236 2016-08-10: Issue #227 - don't express this information if not needed
-		if (this.hasInput) {
+		if (this.hasInput(_root)) {
 		// END KGU#236 2016-08-10
 			code.add(_indent);
 			insertComment("TODO:", _indent);
@@ -926,7 +940,7 @@ public class CGenerator extends Generator {
 					_indent);
 		// START KGU#236 2016-08-10: Issue #227
 		}
-		if (this.hasOutput) {
+		if (this.hasOutput(_root)) {
 		// END KGU#236 2016-08-10
 		code.add(_indent);
 		insertComment("TODO:", _indent);

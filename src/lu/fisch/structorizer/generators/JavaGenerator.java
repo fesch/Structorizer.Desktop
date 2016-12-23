@@ -55,6 +55,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
  *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig             2016.12.22      Enh. #314: Support for Structorizer File API
  *
  ******************************************************************************************************
  *
@@ -485,8 +486,10 @@ public class JavaGenerator extends CGenerator
 		}
 		// END KGU#178 2016-07-20
 		if (_root.isProgram==true) {
-			code.add(_indent + "import java.util.Scanner;");
-			code.add("");
+			if (topLevel && this.hasInput()) {
+				code.add(_indent + "import java.util.Scanner;");
+				code.add("");
+			}
 			insertBlockComment(_root.getComment(), _indent, "/**", " * ", " */");
 			insertBlockHeading(_root, "public class " + _procName, _indent);
 
@@ -545,6 +548,14 @@ public class JavaGenerator extends CGenerator
 			insertComment(varNames.get(v), _indent);
 		}
 		code.add(_indent);
+		// START KGU#236 2016-12-22: Issue #227
+		if (this.hasInput(_root)) {
+			insertComment("TODO: You may have to modify input instructions,", _indent);			
+			insertComment("      e.g. by replacing nextLine() with a more suitable call", _indent);
+			insertComment("      according to the variable type, say nextInt().", _indent);			
+			code.add(_indent);
+		}
+		// END KGU#236 2016-12-22
 		return _indent;
 	}
 
@@ -597,6 +608,12 @@ public class JavaGenerator extends CGenerator
 			code.add("");
 			code.add(_indent + "}");
 		}
+		
+		// START KGU#311 2016-12-22: Enh. #314 - insert File API here if necessary
+		if (topLevel && this.usesFileAPI) {
+			this.insertFileAPI("java");
+		}
+		// END KGU#311 2016-12-22
 	}
 	// END KGU 2015-12-15
 

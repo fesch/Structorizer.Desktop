@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.25-12 (2016.12.21)
+Current development version: 3.25-12 (2016.12.23)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
 - 01: Issue #213: Selected state of FOR transmutation result now visible <2>
 - 01: Bugfix #241: Translation bugs for element editor mended <2>
@@ -90,8 +90,9 @@ Current development version: 3.25-12 (2016.12.21)
 - 12: Issue #305: Clicking into the Arranger index should force Arranger visibility <2>
 - 12: Enh. #305: Key binding <del> added to Arranger index (removes diagram) <2>
 - 12: Enh. #267: New Analyser check against ambiguous CALLs (multiple matches) <2>
-- 12: Enh. #314: File I/O API introduced [newboerg]<2>
+- 12: Enh. #314: File I/O API introduced (Executor, Code export) [newboerg]<2>
 - 12: Bugfix #317: Color of empty sequences (like empty FALSE branch) now saved <2>
+- 12: Issue #271: Comma between prompt string and input variable tolerated <2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2

@@ -60,12 +60,17 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.10.15      Enh. #271: transformInput() and signature of getOutputReplacer() modified
  *      Kay Gürtzig     2016.10.16      Bugfix #275: Defective subroutine registration for topological sort mended
  *      Kay Gürtzig     2016.12.01      Bugfix #301: New method boolean isParenthesized(String)
+ *      Kay Gürtzig     2016.12.22      Enh. #314: Support for Structorizer File API, improvements for #227
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2016.12.22 - Enhancement #314: Structorizer file API support.
+ *      - This is in the most cases done by copying a set of implementing functions for the target language
+ *        into the resulting file. Generator provides two methods insertFileAPI() for this purpose.
+ *      - Generator supports this by an extended information scanning to decide whether the file API is used.
  *      2016.10.15 - Enhancement #271: Input instruction with integrated prompt string
- *      - For input isntructions with prompt string (enh. #271), different inputReplacer patterns are needed
+ *      - For input instructions with prompt string (enh. #271), different inputReplacer patterns are needed
  *        (they must e.g. derive some input instruction). Therefore an API modification for generators to
  *        plug in became necessary: getInputReplacer() now requires a boolean argument to provide the appropriate
  *        pattern. Method transformInput() must distinguish and handle the input instruction flavours therefore.
@@ -91,10 +96,12 @@ package lu.fisch.structorizer.generators;
 import java.awt.Frame;
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Matcher;
 
@@ -105,6 +112,8 @@ import com.stevesoft.pat.Regex;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Control;
+import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.parsers.D7Parser;
@@ -150,10 +159,21 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected boolean topLevel = true;
 	// END KGU#178 2016-07-19
 	// START KGU#236 2016-08-10: Issue #227: Find out whether there are I/O operations
-	protected boolean hasOutput = false;
-	protected boolean hasInput = false;
-	protected boolean hasEmptyInput = false;
+	// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
+//	protected boolean hasOutput = false;
+//	protected boolean hasInput = false;
+//	protected boolean hasEmptyInput = false;
+	private boolean hasOutput = false;
+	private boolean hasInput = false;
+	private boolean hasEmptyInput = false;
+	private Set<Root> rootsWithOutput = new HashSet<Root>();
+	private Set<Root> rootsWithInput = new HashSet<Root>();
+	private Set<Root> rootsWithEmptyInput = new HashSet<Root>();
+	// END KGU#236 2016-12-22
 	// END KGU#236 2016-08-10
+	// START KGU#311 2016-12-22: Enh. #314 - File API support
+	protected boolean usesFileAPI = false;
+	// END KGU#311 2016-12-22
 
 	// START KGU#129/KGU#61 2016-03-22: Bugfix #96 / Enh. #84 Now important for most generators
 	// Some generators must prefix variables, for some generators it's important for FOR-IN loops
@@ -248,6 +268,33 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#178 2016-07-19	
 	
+	// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
+	protected boolean hasOutput(Root _root)
+	{
+		return rootsWithOutput.contains(_root);
+	}
+	protected boolean hasInput(Root _root)
+	{
+		return rootsWithInput.contains(_root);
+	}
+	protected boolean hasEmptyInput(Root _root)
+	{
+		return rootsWithEmptyInput.contains(_root);
+	}
+	protected boolean hasOutput()
+	{
+		return !rootsWithOutput.isEmpty();
+	}
+	protected boolean hasInput()
+	{
+		return !rootsWithInput.isEmpty();
+	}
+	protected boolean hasEmptyInput()
+	{
+		return !rootsWithEmptyInput.isEmpty();
+	}
+	// END KGU#236 2016-12-22
+
 	// KGU 2014-11-16: Method renamed (formerly: insertComment)
 	// START KGU 2015-11-18: Method parameter list reduced by a comment symbol configuration
 	/**
@@ -568,11 +615,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			//_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
 			if (quotes.isEmpty()) {
 				String subst = getInputReplacer(false);
-				_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+				_interm = _interm.replaceFirst("^" + matcher + "[ ]*(.*)", subst);
 			}
 			else {
 				String subst = getInputReplacer(true);
-				_interm = _interm.replaceFirst("^" + matcher + "\\h*("+quotes+".*"+quotes+")(.*)", subst);
+				_interm = _interm.replaceFirst("^" + matcher + "\\h*("+quotes+".*"+quotes+")[, ]*(.*)", subst);
 			}
 			// END KGU#281 2016-10-15
 		}
@@ -977,6 +1024,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#237 2016-08-10
 	
+	// START KGU#236/KGU#311 2016-12-22: Issue #227, enh. #314 - we may need this more root-specificly
+	private final void gatherElementInformationRoot(Root _root)
+	{
+		hasOutput = hasInput = hasEmptyInput = false;
+		gatherElementInformation(_root);
+		if (hasOutput) rootsWithOutput.add(_root);
+		if (hasInput) rootsWithInput.add(_root);
+		if (hasEmptyInput) rootsWithEmptyInput.add(_root);
+	}
+	// END KGU#236/KGU#311 2016-12-22
 	// START KGU#236 2016-08-10: Issue #227
 	// Recursive scanning routine to gather certain information via
 	// subclassable method checkElementInformation();
@@ -1007,6 +1064,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 */
 	protected boolean checkElementInformation(Element _ele)
 	{
+		Root root = Element.getRoot(_ele);
 		if (_ele instanceof Instruction)
 		{
 			Instruction instr = (Instruction)_ele;
@@ -1016,6 +1074,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 			if (instr.isOutput()) hasOutput = true;			
 		}
+		// START KGU#311 2016-12-22: Enh. #314 - check for file API support
+		if (!usesFileAPI && _ele.getText().getText().contains("file"))
+		{
+			// Now we check more precisely
+			String text = _ele.getText().getText();
+			for (int i = 0; !usesFileAPI && i < Executor.fileAPI_names.length; i++) {
+				if (text.contains(Executor.fileAPI_names[i]))
+					usesFileAPI = true;
+			}
+		}
+		// END KGU#311 2016-12-22
 		return true;
 	}
 	// END KGU#236 2016-08-10
@@ -1229,8 +1298,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#74 2015-11-30
 	
+	/**
+	 * Entry point for interactively commanded code export. Retrieves export options,
+	 * opens a file selection dialog
+	 * @param _root - program or top-level routine diagram (call hierarchy root)
+	 * @param _currentDirectory - 
+	 * @param _frame
+	 */
 	public void exportCode(Root _root, File _currentDirectory, Frame _frame)
 	{
+		//=============== Get export options ======================
 		try
 		{
 			Ini ini = Ini.getInstance();
@@ -1268,6 +1345,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			ex.printStackTrace();
 		}
 
+		//=============== Request output file path (interactively) ======================
 		JFileChooser dlgSave = new JFileChooser();
 		dlgSave.setDialogTitle(getDialogTitle());
 
@@ -1339,6 +1417,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 		}
 			
+		//=============== Actual code generation ======================
 		if (file != null)
 		{
 			// START KGU#194 2016-05-07: Bugfix #185 - the subclass may need the filename
@@ -1364,7 +1443,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				// START KGU#178 2016-07-20: Enh. #160 - register all subroutine calls
 				if (this.optionExportSubroutines())
 				{
-					// START KGU#237 2016-08-10: Bugfix #228 - precautio for recursive top-level routine
+					// START KGU#237 2016-08-10: Bugfix #228 - precaution for recursive top-level routine
 					if (!_root.isProgram)
 					{
 						subroutines.put(_root, new SubTopoSortEntry(null));
@@ -1381,12 +1460,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				// END KGU#178 2016-07-20
 				
 				// START KGU#236 2016-08-10: Issue #227: General information gathering pass
-				gatherElementInformation(_root);
+				// START KGU#311 2016-12-22: Issue #227, Enh. #314
+				//gatherElementInformation(_root);
+				gatherElementInformationRoot(_root);
+				// END KGU#311 2016-12-22
 				if (this.optionExportSubroutines())
 				{
 					for (Root sub: subroutines.keySet())
 					{
-						gatherElementInformation(sub);
+						// START KGU#311 2016-12-22: Issue #227, Enh. #314
+						//gatherElementInformation(sub);
+						gatherElementInformationRoot(sub);
+						// END KGU#311 2016-12-22
 					}		
 				}
 				// END KGU#236 2016-08-10
@@ -1432,7 +1517,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 						"Warning", JOptionPane.WARNING_MESSAGE);		    		
 		   	}
 		   	// END KGU#178 2016-07-20
-		}
+		} // if (file != null)
 	}
 	
 	// START KGU#178 2016-07-20: Enh. #160 - Specific code for subroutine export
@@ -1480,6 +1565,48 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		return code.getText();
 	}
 	// END KGU#178 2016-07-20
+	
+	// START KGU#311 2016-12-22: Enh. #314
+	protected void insertFileAPI(String _language)
+	{
+		this.subroutineInsertionLine = insertFileAPI(_language, this.subroutineInsertionLine, this.subroutineIndent);	
+	}
+	
+	protected int insertFileAPI(String _language, int _atLine, String _indentation)
+	{
+		boolean isDone = false;
+		String error = "";
+		java.net.URL url = this.getClass().getResource("FileAPI." + _language + ".txt");
+		try {
+			java.io.FileInputStream fis = new java.io.FileInputStream(url.getPath());
+			java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, "UTF-8"));
+			String line = null;
+			boolean doInsert = false;
+			while ((line = reader.readLine()) != null) {
+				if (line.contains("===== STRUCTORIZER FILE API START =====")){
+					doInsert = true;
+					code.insert(_indentation, _atLine++);
+				}
+				if (doInsert) {
+					line = line.replace("§INVALID_HANDLE_READ§", Control.msgInvalidFileNumberRead.getText());
+					line = line.replace("§INVALID_HANDLE_WRITE§", Control.msgInvalidFileNumberWrite.getText());
+					code.insert(_indentation + line, _atLine++);
+				}
+				if (line.contains("===== STRUCTORIZER FILE API END =====")){
+					doInsert = false;
+					code.insert(_indentation, _atLine++);
+				}
+			}
+			reader.close();
+		} catch (IOException e) {
+			error = e.getLocalizedMessage();
+		}
+		if (!isDone) {
+			System.err.println("Generator.insertFileAPI(" + _language + ", ...): " + error);
+		}
+		return _atLine;
+	}
+	// END KGU#311 2016-12-22
 	
 	// START KGU#301 2016-12-01: Bugfix #301
 	protected static boolean isParenthesized(String expression)
