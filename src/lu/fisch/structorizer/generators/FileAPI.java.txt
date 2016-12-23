@@ -159,7 +159,7 @@
 				catch (java.io.IOException e) {}
 				executorFileMap.set(fileNo - 1, null); }
 		}
-		else { throw new java.io.IOException("§INVALID_HANDLE_READ§"); }
+		else { throw new java.io.IOException("fileClose: §INVALID_HANDLE_READ§"); }
 	}
 
 	/**
@@ -180,7 +180,7 @@
 				//} catch (java.io.IOException e) {}
 			}
 		}
-		else { throw new java.io.IOException("§INVALID_HANDLE_READ§"); }
+		else { throw new java.io.IOException("fileEOF: §INVALID_HANDLE_READ§"); }
 		return isEOF;
 	}
 
@@ -255,7 +255,7 @@
 				ok = true;
 			}
 		}
-		if (!ok) { throw new java.io.IOException("§INVALID_HANDLE_READ§"); }
+		if (!ok) { throw new java.io.IOException("fileRead: §INVALID_HANDLE_READ§"); }
 		return result;
 	}
 
@@ -284,7 +284,7 @@
 				ok = true;
 			}
 		}
-		if (!ok) { throw new java.io.IOException("§INVALID_HANDLE_READ§"); }
+		if (!ok) { throw new java.io.IOException("fileReadChar: §INVALID_HANDLE_READ§"); }
 		return result;
 	}
 
@@ -309,7 +309,7 @@
 				ok = true;
 			}
 		}
-		if (!ok) { throw new java.io.IOException("§INVALID_HANDLE_READ§"); }
+		if (!ok) { throw new java.io.IOException("fileReadInt: §INVALID_HANDLE_READ§"); }
 		return result;
 	}
 
@@ -335,7 +335,7 @@
 				ok = true;
 			}
 		}
-		if (!ok) { throw new java.io.IOException("§INVALID_HANDLE_READ§"); }
+		if (!ok) { throw new java.io.IOException("fileReadDouble: §INVALID_HANDLE_READ§"); }
 		return result;
 	}
 
@@ -361,7 +361,7 @@
 				ok = true;
 			}
 		}
-		if (!ok) { throw new java.io.IOException("§INVALID_HANDLE_READ§"); }
+		if (!ok) { throw new java.io.IOException("fileReadLine: §INVALID_HANDLE_READ§"); }
 		return line;
 	}
 
@@ -381,7 +381,7 @@
 				ok = true;
 			}
 		}
-		if (!ok) { throw new java.io.IOException("§INVALID_HANDLE_WRITE§"); }
+		if (!ok) { throw new java.io.IOException("fileWrite: §INVALID_HANDLE_WRITE§"); }
 	}
 
 	/**
@@ -402,7 +402,7 @@
 				ok = true;
 			}
 		}
-		if (!ok) { throw new java.io.IOException("§INVALID_HANDLE_WRITE§"); }
+		if (!ok) { throw new java.io.IOException("fileWriteLine: §INVALID_HANDLE_WRITE§"); }
 	}
 //===== STRUCTORIZER FILE API END =====
 

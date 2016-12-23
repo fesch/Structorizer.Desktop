@@ -872,6 +872,11 @@ public class CGenerator extends Generator {
 			{
 				code.add("#define _CRT_SECURE_NO_WARNINGS");	// VisualStudio precaution 
 				code.add("#include <stdio.h>");
+				if (this.usesFileAPI) {
+					code.add("#include <stdlib.h>");
+					code.add("#include <string.h>");
+					code.add("#include <errno.h>");
+				}
 				code.add("");
 			}
 			// END KGU#236 2016-08-10
