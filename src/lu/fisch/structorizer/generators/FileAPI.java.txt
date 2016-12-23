@@ -64,7 +64,7 @@
 		int fileNo = 0; 
 		java.io.File file = new java.io.File(filePath);
 		try {
-			java.io.FileInputStream fis = new java.io.FileInputStream(file.getAbsolutePath());
+			java.io.FileInputStream fis = new java.io.FileInputStream(file);
 			java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, "UTF-8"));
 			fileNo = executorFileMap.size() + 1;
 			executorFileMap.add(new java.util.Scanner(reader));
@@ -89,7 +89,7 @@
 	{
 		int fileNo = 0;
 		java.io.File file = new java.io.File(filePath);
-		try { java.io.FileOutputStream fos = new java.io.FileOutputStream(file.getAbsolutePath());
+		try { java.io.FileOutputStream fos = new java.io.FileOutputStream(file);
 		java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, "UTF-8"));
 		fileNo = executorFileMap.size() + 1;
 		executorFileMap.add(writer);
@@ -114,30 +114,10 @@
 	{
 		int fileNo = 0;
 		java.io.File file = new java.io.File(filePath);
-		java.io.BufferedWriter writer = null;
-		try {
-			if (file.exists()) {
-				java.io.File tmpFile = java.io.File.createTempFile("structorizer_", null);
-				if (tmpFile.exists()) { tmpFile.delete(); }
-				if (file.renameTo(tmpFile)) {
-					java.io.FileOutputStream fos = new java.io.FileOutputStream(filePath);
-					java.io.FileInputStream fis = new java.io.FileInputStream(tmpFile.getAbsolutePath());
-					writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, "UTF-8"));
-					java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, "UTF-8"));
-					String line = null;
-					while ((line = reader.readLine()) != null) {
-						writer.write(line); writer.newLine();
-					}
-					reader.close();
-					tmpFile.delete();
-				} else { fileNo = -4; }
-			}
-			else {
-				java.io.FileOutputStream fos = new java.io.FileOutputStream(filePath);
-				writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, "UTF-8"));				
-			}
-			fileNo = executorFileMap.size() + 1;
-			executorFileMap.add(writer);
+		try { java.io.FileOutputStream fos = new java.io.FileOutputStream(file, true);
+		java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, "UTF-8"));
+		fileNo = executorFileMap.size() + 1;
+		executorFileMap.add(writer);
 		}
 		catch (SecurityException e) { fileNo = -3; }
 		catch (java.io.FileNotFoundException e) { fileNo = -2; }
