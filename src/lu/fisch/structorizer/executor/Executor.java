@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.executor;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -108,6 +107,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.11.22      Bugfix #293: input and output boxes no longer popped up at odd places on screen.
  *      Kay Gürtzig     2016.11.22/25   Issue #294: Test coverage rules for CASE elements without default branch refined
  *      Kay Gürtzig     2016.12.12      Issue #307: Attempts to manipulate FOR loop variables now cause an error
+ *      Kay Gürtzig     2016.12.22      Enh. #314: Support for File API
  *
  ******************************************************************************************************
  *
@@ -1561,7 +1561,10 @@ public class Executor implements Runnable
 					+ "String content = sc.next().trim().substring(1); "
 					+ "sc.useDelimiter(oldDelim); "
 					+ "if (sc.hasNext(\"\\\\}\")) { sc.next(); } "
-					+ "String[] elements = content.split(\"\\\\p{javaWhitespace}*,\\\\p{javaWhitespace}*\"); "
+					+ "String[] elements = {}; "
+					+ "if (!content.isEmpty()) { "
+					+ "elements = content.split(\"\\\\p{javaWhitespace}*,\\\\p{javaWhitespace}*\"); "
+					+ "} "
 					+ "Object[] objects = new Object[elements.length]; "
 					+ "for (int i = 0; i < elements.length; i++) { "
 					+ "java.util.Scanner sc0 = new java.util.Scanner(elements[i]); "
@@ -1697,6 +1700,26 @@ public class Executor implements Runnable
 //			interpreter.eval("fileWriteLine("+handle+", 4711)");
 //			interpreter.eval("fileClose("+handle+")");
 			// END TEST
+			// START TEST fileRead
+//			int handle = fileOpen("D:/SW-Produkte/Structorizer/tests/Issue314/StructorizerFileAPI.cpp");
+//			if (handle > 0) {
+//				try {
+//					while (!fileEOF(handle)) {
+//						Object value = fileRead(handle);
+//						System.out.println(value);
+//					}
+//				} catch (IOException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//				try {
+//					fileClose(handle);
+//				} catch (IOException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//			}
+			// END TEST
 		} catch (EvalError ex)
 		{
 			//java.io.IOException
@@ -1704,7 +1727,7 @@ public class Executor implements Runnable
 		}
 	}
 	
-	// Test for Interpreter routine
+	// Test for Interpreter routines
 //	public Object structorizerGetScannedObject(java.util.Scanner sc) {
 //		Object result = null; 
 //		sc.useLocale(java.util.Locale.UK); 
@@ -1724,12 +1747,15 @@ public class Executor implements Runnable
 //			result = str;
 //		}
 //		else if (sc.hasNext("\\{.*")) { 
-//			Pattern oldDelim = sc.delimiter();
+//			java.util.regex.Pattern oldDelim = sc.delimiter();
 //			//sc.useDelimiter("(\\p{javaWhitespace}*,\\p{javaWhitespace}*|\\})");
 //			sc.useDelimiter("\\}");
 //			String expr = sc.next().trim().substring(1);
 //			sc.useDelimiter(oldDelim);
-//			String[] elements = expr.split("\\p{javaWhitespace}*,\\p{javaWhitespace}*");
+//			String[] elements = {};
+//			if (!expr.isEmpty()) {
+//				elements = expr.split("\\p{javaWhitespace}*,\\p{javaWhitespace}*");
+//			}
 //			if (sc.hasNext("\\}")) { sc.next(); }
 //			Object[] objects = new Object[elements.length];
 //			for (int i = 0; i < elements.length; i++) { 
@@ -1743,52 +1769,110 @@ public class Executor implements Runnable
 //		return result;
 //	}
 
-	public int fileAppend(String filePath)
-	{
-		int fileNo = 0;
-		java.io.File file = new java.io.File(filePath);
-		if (!file.isAbsolute()) {
-			file = diagram.currentDirectory;
-			if (!file.isDirectory()) { file = file.getParentFile(); }
-			file = new java.io.File(file.getAbsolutePath() + java.io.File.separator + filePath);
-			filePath = file.getAbsolutePath();
-		}
-		java.io.BufferedWriter writer = null;
-		System.out.println(file.getName());
-		try {
-			if (file.exists()) {
-				java.io.File tmpFile = java.io.File.createTempFile("structorizer_"+file.getName(), null);
-				if (tmpFile.exists()) { tmpFile.delete(); }
-				if (file.renameTo(tmpFile)) {
-					java.io.FileOutputStream fos = new java.io.FileOutputStream(filePath); 
-					java.io.FileInputStream fis = new java.io.FileInputStream(tmpFile.getAbsolutePath()); 
-					writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, "UTF-8")); 
-					java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, "UTF-8"));
-					String line = null; 
-					while ((line = reader.readLine()) != null) {
-						writer.write(line); writer.newLine();
-					} 
-					reader.close();
-					tmpFile.delete();
-				}
-				else {
-					fileNo = -4;
-				}
-			} 
-			else { 
-				java.io.FileOutputStream fos = new java.io.FileOutputStream(filePath); 
-				writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, "UTF-8")); 				
-			} 
-			fileNo = this.openFiles.size() + 1;
-			this.openFiles.add(writer);  
-		} 
-		catch (SecurityException e) { fileNo = -3; } 
-		catch (java.io.FileNotFoundException e) { fileNo = -2; }
-		catch (java.io.IOException e) { fileNo = -1; }
-		return fileNo;
-	}
+//	public int fileOpen(String filePath)
+//	{
+//		int fileNo = 0; 
+//		java.io.File file = new java.io.File(filePath);
+//		try {
+//			java.io.FileInputStream fis = new java.io.FileInputStream(file);
+//			java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, "UTF-8"));
+//			fileNo = this.openFiles.size() + 1;
+//			this.openFiles.add(new java.util.Scanner(reader));
+//		}
+//		catch (SecurityException e) { fileNo = -3; }
+//		catch (java.io.FileNotFoundException e) { fileNo = -2; }
+//		catch (java.io.IOException e) { fileNo = -1; }
+//		return fileNo;
+//	}
+
+//	public int fileAppend(String filePath)
+//	{
+//		int fileNo = 0;
+//		java.io.File file = new java.io.File(filePath);
+//		if (!file.isAbsolute()) {
+//			file = diagram.currentDirectory;
+//			if (!file.isDirectory()) { file = file.getParentFile(); }
+//			file = new java.io.File(file.getAbsolutePath() + java.io.File.separator + filePath);
+//			filePath = file.getAbsolutePath();
+//		}
+//		java.io.BufferedWriter writer = null;
+//		System.out.println(file.getName());
+//		try {
+//			if (file.exists()) {
+//				java.io.File tmpFile = java.io.File.createTempFile("structorizer_"+file.getName(), null);
+//				if (tmpFile.exists()) { tmpFile.delete(); }
+//				if (file.renameTo(tmpFile)) {
+//					java.io.FileOutputStream fos = new java.io.FileOutputStream(filePath); 
+//					java.io.FileInputStream fis = new java.io.FileInputStream(tmpFile.getAbsolutePath()); 
+//					writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, "UTF-8")); 
+//					java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, "UTF-8"));
+//					String line = null; 
+//					while ((line = reader.readLine()) != null) {
+//						writer.write(line); writer.newLine();
+//					} 
+//					reader.close();
+//					tmpFile.delete();
+//				}
+//				else {
+//					fileNo = -4;
+//				}
+//			} 
+//			else { 
+//				java.io.FileOutputStream fos = new java.io.FileOutputStream(filePath); 
+//				writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, "UTF-8")); 				
+//			} 
+//			fileNo = this.openFiles.size() + 1;
+//			this.openFiles.add(writer);  
+//		} 
+//		catch (SecurityException e) { fileNo = -3; } 
+//		catch (java.io.FileNotFoundException e) { fileNo = -2; }
+//		catch (java.io.IOException e) { fileNo = -1; }
+//		return fileNo;
+//	}
 	
-//	public String fileRead(int fileNo)
+//	public void fileClose(int fileNo) throws java.io.IOException
+//	{
+//		if (fileNo > 0 && fileNo <= this.openFiles.size()) {
+//			java.io.Closeable file = this.openFiles.get(fileNo - 1);
+//			if (file != null) {
+//				try { file.close(); }
+//				catch (java.io.IOException e) {}
+//				this.openFiles.set(fileNo - 1, null); }
+//		}
+//		else { throw new java.io.IOException("fileClose: §INVALID_HANDLE_READ§"); }
+//	}
+
+//	public boolean fileEOF(int fileNo) throws java.io.IOException
+//	{
+//		boolean isEOF = true;
+//		if (fileNo > 0 && fileNo <= this.openFiles.size()) {
+//			java.io.Closeable reader = this.openFiles.get(fileNo - 1);
+//			if (reader instanceof java.util.Scanner) {
+//				//try {
+//					isEOF = !((java.util.Scanner)reader).hasNext();
+//				//} catch (java.io.IOException e) {}
+//			}
+//		}
+//		else { throw new java.io.IOException("fileEOF: §INVALID_HANDLE_READ§"); }
+//		return isEOF;
+//	}
+
+//	public Object fileRead(int fileNo) throws java.io.IOException
+//	{
+//		Object result = null;
+//		boolean ok = false;
+//		if (fileNo > 0 && fileNo <= this.openFiles.size()) {
+//			java.io.Closeable reader = this.openFiles.get(fileNo - 1);
+//			if (reader instanceof java.util.Scanner) {
+//				result = structorizerGetScannedObject((java.util.Scanner)reader);
+//				ok = true;
+//			}
+//		}
+//		if (!ok) { throw new java.io.IOException("fileRead: §INVALID_HANDLE_READ§"); }
+//		return result;
+//	}
+
+//	public String fileReadLine(int fileNo) throws java.io.IOException
 //	{
 //		String line = null;
 //		if (fileNo > 0 && fileNo <= this.openFiles.size()) {

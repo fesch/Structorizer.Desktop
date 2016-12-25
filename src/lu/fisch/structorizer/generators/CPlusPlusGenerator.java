@@ -20,11 +20,7 @@
 
 package lu.fisch.structorizer.generators;
 
-import java.util.HashSet;
-import java.util.Set;
-
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
  *
@@ -48,6 +44,7 @@ import java.util.Set;
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
  *      Kay Gürtzig     2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig     2016.11.08      Collateral damage of #271 to getOutputReplacer() mended
+ *      Kay Gürtzig     2016.12.25      Enh. #314: Support for File API added.
  *
  ******************************************************************************************************
  *
@@ -58,12 +55,12 @@ import java.util.Set;
  *      - root handling overridden - still too much copied code w.r.t. CGenerator, should be
  *        parameterized
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.StringList;
 
@@ -172,6 +169,22 @@ public class CPlusPlusGenerator extends CGenerator {
 	}
 	// END KGU#101 2015-12-11
 	
+	// START KGU#311 2016-12-25: Enh. #314: Replace all API names by prefixed ones
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
+	 */
+	@Override
+	protected String transformTokens(StringList tokens)
+	{
+		if (this.usesFileAPI) {
+			for (int i = 0; i < Executor.fileAPI_names.length; i++) {
+				tokens.replaceAll(Executor.fileAPI_names[i], "StructorizerFileAPI::" + Executor.fileAPI_names[i]);
+			}
+		}
+		return super.transformTokens(tokens);
+	}
+	// END KGU#311 2016-12-25
+	
 	// START KGU#16 2016-01-14
 	@Override
 	protected String transformType(String _type, String _default) {
@@ -267,8 +280,7 @@ public class CPlusPlusGenerator extends CGenerator {
 	        // END KGU#236 2016-08-10
 			// START KGU#311 2016-12-22: Enh. #314 - support for file API
 			if (this.usesFileAPI) {
-				code.add("#include <ifstream>");
-				code.add("#include <ofstream>");				
+		        this.insertFileAPI("cpp", code.count(), "");
 			}
 			// END KGU#311 2016-12-22
 	        subroutineInsertionLine = code.count();
@@ -332,6 +344,14 @@ public class CPlusPlusGenerator extends CGenerator {
 		return _indent;
 	}
     
+	// START KGU#311 2016-12-24: Enh. #314
+	protected boolean copyFileAPIResources(String _filePath)
+	{
+		boolean isDone1 = copyFileAPIResource("hpp", "StructorizerFileAPI.h", _filePath);
+		boolean isDone2 = copyFileAPIResource("cpp", "StructorizerFileAPI.cpp", _filePath);		
+		return isDone1 && isDone2;
+	}
+	// END KGU#311 2016-12-24
 
 
 }

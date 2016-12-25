@@ -1064,7 +1064,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 */
 	protected boolean checkElementInformation(Element _ele)
 	{
-		Root root = Element.getRoot(_ele);
 		if (_ele instanceof Instruction)
 		{
 			Instruction instr = (Instruction)_ele;
@@ -1502,6 +1501,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				// END KGU#168 2016-04-04
 				outp.write(code);
 				outp.close();
+				
+				if (this.usesFileAPI) {
+					copyFileAPIResources(filename);
+				}
 			}
 			catch(Exception e)
 			{
@@ -1590,6 +1593,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				if (doInsert) {
 					line = line.replace("§INVALID_HANDLE_READ§", Control.msgInvalidFileNumberRead.getText());
 					line = line.replace("§INVALID_HANDLE_WRITE§", Control.msgInvalidFileNumberWrite.getText());
+					line = line.replace("§NO_INT_ON_FILE§", Control.msgNoIntLiteralOnFile.getText());
+					line = line.replace("§NO_DOUBLE_ON_FILE§", Control.msgNoDoubleLiteralOnFile.getText());
+					line = line.replace("§END_OF_FILE§", Control.msgEndOfFile.getText());
 					code.insert(_indentation + line, _atLine++);
 				}
 				if (line.contains("===== STRUCTORIZER FILE API END =====")){
@@ -1605,6 +1611,67 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			System.err.println("Generator.insertFileAPI(" + _language + ", ...): " + error);
 		}
 		return _atLine;
+	}
+	
+	protected boolean copyFileAPIResources(String _filePath)
+	{
+		return true;
+	}
+	
+	protected boolean copyFileAPIResource(String _language, String _targetFilename, String _targetPath)
+	{
+		boolean isDone = false;
+		String error = "";
+		File target = new File(_targetFilename);
+		if (!target.isAbsolute()) {
+			java.io.File targetDir = new java.io.File(_targetPath);
+			if (!targetDir.isDirectory()) {
+				targetDir = targetDir.getParentFile();
+			}
+			
+			target = new File(targetDir.getAbsolutePath() + File.separator + _targetFilename);
+		}
+		// Don't overwrite the file if it already exists in the target directory
+		if (!target.exists()) {
+			FileInputStream fis = null;
+			FileOutputStream fos = null;
+			java.net.URL url = this.getClass().getResource("FileAPI." + _language + ".txt");
+			try {
+				fis = new FileInputStream(url.getPath());
+				fos = new FileOutputStream(target);
+				BufferedReader reader = new BufferedReader(new InputStreamReader(fis, "UTF-8"));
+				BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos, "UTF-8"));
+				String line = null;
+				while ((line = reader.readLine()) != null) {
+					if (!line.contains("===== STRUCTORIZER FILE API")){
+						line = line.replace("§INVALID_HANDLE_READ§", Control.msgInvalidFileNumberRead.getText());
+						line = line.replace("§INVALID_HANDLE_WRITE§", Control.msgInvalidFileNumberWrite.getText());
+						line = line.replace("§NO_INT_ON_FILE§", Control.msgNoIntLiteralOnFile.getText());
+						line = line.replace("§NO_DOUBLE_ON_FILE§", Control.msgNoDoubleLiteralOnFile.getText());
+						line = line.replace("§END_OF_FILE§", Control.msgEndOfFile.getText());
+						// TODO copy the file, replacing the messages
+						writer.write(line); writer.newLine();
+					}
+				}
+				writer.close();
+				reader.close();
+				isDone = true;
+			} catch (IOException e) {
+				error = e.getLocalizedMessage();
+			}
+			finally {
+				if (fis != null) {
+					try { fis.close(); } catch (IOException e) {}
+				}
+				if (fos != null) {
+					try { fos.close(); } catch (IOException e) {}
+				}
+			}
+			if (!isDone) {
+				System.err.println("Generator.copyFileAPIResource(" + _language + ", ...): " + error);
+			}
+		}
+		return isDone;
 	}
 	// END KGU#311 2016-12-22
 	

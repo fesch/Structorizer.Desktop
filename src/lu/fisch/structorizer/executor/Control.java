@@ -721,12 +721,18 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public final LangTextHolder msgForLoopManipulation =
     		new LangTextHolder("Illegal attempt to manipulate the FOR loop variable «%»!");
     // END KGU#307 2016-12-12
-    // START KGU 2016-12-18: Enh. #314
+    // START KGU#311 2016-12-18/24: Enh. #314 Error messages for File API
     public static final LangTextHolder msgInvalidFileNumberRead =
     		new LangTextHolder("Invalid file number or file not open for reading.");
     public static final LangTextHolder msgInvalidFileNumberWrite =
     		new LangTextHolder("Invalid file number or file not open for writing.");
-    // END KGU 2016-12-18
+    public static final LangTextHolder msgNoIntLiteralOnFile =
+    		new LangTextHolder("No integer value readable from file!");
+    public static final LangTextHolder msgNoDoubleLiteralOnFile =
+    		new LangTextHolder("No floating-point value readable from file!");    
+    public static final LangTextHolder msgEndOfFile =
+    		new LangTextHolder("Attempt to read data past end of file!");    
+    // END KGU#311 2016-12-18/24
     
     // START KGU#68 2015-11-06: Register variable value editing events
     private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();

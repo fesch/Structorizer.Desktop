@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.generators;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -63,6 +62,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.10.15      Enh. 271: Support for input instructions with prompt
  *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig             2016.12.01      Bugfix #301: More sophisticated test for condition enclosing by parentheses
+ *      Kay Gürtzig             2016.12.22      Enh. #314: Support for File API
  *
  ******************************************************************************************************
  *
@@ -125,8 +125,7 @@ package lu.fisch.structorizer.generators;
  *      - Implementation of FOR loop
  *      - Indent replaced from 2 spaces to TAB-character (TAB configurable in IDE)
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import java.util.regex.Matcher;
 
