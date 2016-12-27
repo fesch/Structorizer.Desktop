@@ -280,7 +280,7 @@ public class CPlusPlusGenerator extends CGenerator {
 	        // END KGU#236 2016-08-10
 			// START KGU#311 2016-12-22: Enh. #314 - support for file API
 			if (this.usesFileAPI) {
-		        this.insertFileAPI("cpp", code.count(), "");
+		        this.insertFileAPI("cpp", code.count(), "", 0);
 			}
 			// END KGU#311 2016-12-22
 	        subroutineInsertionLine = code.count();

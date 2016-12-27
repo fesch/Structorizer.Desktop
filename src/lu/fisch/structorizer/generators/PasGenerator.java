@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.generators;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -53,14 +52,16 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.01.17      Bugfix #61/#112 - handling of type names in assignments (KGU#109/KGU#141)
  *                                          KGU#142: Bugfix for enh. #23 - empty Jumps weren't translated
  *      Kay Gürtzig         2016.03.16      Enh. #84: Minimum support for FOR-IN loops (KGU#61) 
- *      Kay Gürtzig         2016-03-31      Enh. #144 - content conversion may be switched off
- *      Kay Gürtzig         2016-04-30      Bugfix #181 - delimiters of string literals weren't converted (KGU#190)
- *      Kay Gürtzig         2016-07-20      Enh. #160 - optional export of called subroutines implemented
+ *      Kay Gürtzig         2016.03.31      Enh. #144 - content conversion may be switched off
+ *      Kay Gürtzig         2016.04.30      Bugfix #181 - delimiters of string literals weren't converted (KGU#190)
+ *      Kay Gürtzig         2016.05.05      Bugfix #51 - empty writeln instruction must not have parentheses 
+ *      Kay Gürtzig         2016.07.20      Enh. #160 - optional export of called subroutines implemented
  *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
  *      Kay Gürtzig         2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
  *      Kay Gürtzig         2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig         2016.12.26      Enh. #314: Makeshift additions to support the File API
  *
  ******************************************************************************************************
  *
@@ -89,8 +90,7 @@ package lu.fisch.structorizer.generators;
  *      2009.08.17 - Bugfixes
  *      - added automatic brackets for "while", "switch", "repeat" & "if"
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
@@ -175,6 +175,12 @@ public class PasGenerator extends Generator
 	}
 	// END KGU 2016-08-12
 
+	// START KGU#311 2016-12-26: Enh.#314 File API support
+	private static final String[] openAPINames = {"fileOpen", "fileCreate", "fileAppend"};
+	private static final String[] openProcNames = {"open", "rewrite", "append"};
+	private StringList fileVarNames = new StringList();
+	// END KGU#311 2016-12-26
+	
 	/************ Code Generation **************/
     
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
@@ -281,6 +287,14 @@ public class PasGenerator extends Generator
         tokens.replaceAll("<<"," shl ");
         tokens.replaceAll(">>"," shr ");
 		tokens.replaceAll("<-", ":=");
+		// START KGU#311 2016-12-26: Enh. #314 - Support for File API
+		if (this.usesFileAPI) {
+			tokens.replaceAll("fileWrite", "write");
+			tokens.replaceAll("fileWriteLine", "writeln");
+			tokens.replaceAll("fileEOF", "eof");
+			tokens.replaceAll("fileClose", "closeFile");
+		}
+		// END KGU#311 2016-12-26
 		// START KGU#190 2016-04-30: Bugfix #181 - String delimiters must be converted to '
 		for (int i = 0; i < tokens.count(); i++)
 		{
@@ -318,8 +332,8 @@ public class PasGenerator extends Generator
 		int asgnPos = transline.indexOf(":=");
 		if (asgnPos > 0)
 		{
-			String varName = transline.substring(0, asgnPos);
-			String expr = transline.substring(asgnPos + ":=".length());
+			String varName = transline.substring(0, asgnPos).trim();
+			String expr = transline.substring(asgnPos + ":=".length()).trim();
 			String[] typeNameIndex = this.lValueToTypeNameIndex(varName);
 			varName = typeNameIndex[1];
 			String index = typeNameIndex[2];
@@ -331,17 +345,17 @@ public class PasGenerator extends Generator
 		}
 		// END KGU#109/KGU#141 2016-01-16
 		
-		// START KGU# 2016-05-05: Bugfix
+		// START KGU#195 2016-05-05: Bugfix #51 (handling of empty output instructions)
 		if (transline.startsWith("writeln()"))
 		{
 			transline = "writeln" + transline.substring("writeln()".length());
 		}
-		// END KGU# 2016-05-05
+		// END KGU#195 2016-05-05
 		
 		return transline.trim(); 
     }
 	
-	// START KGU#61 2016-03-23: New for enh. #84
+	// START KGU#61 2016-03-23: New for enh. #84 (FOREACH loop support)
 	private void insertDeclaration(String _category, String text, int _maxIndent)
 	{
 		int posDecl = -1;
@@ -423,6 +437,28 @@ public class PasGenerator extends Generator
 					}
 					if (!isArrayInit)
 					{
+						// START KGU#311 2016-12-26: Enh. #314 - File API support
+						if (this.usesFileAPI && asgnPos > 0) {
+							boolean doneFileAPI = false;
+							String expr = transline.substring(asgnPos+1).trim();
+							String var = transline.substring(0, asgnPos).trim();
+							int posBracket = var.indexOf("[");
+							for (int k = 0; !doneFileAPI && k < openAPINames.length; k++) {
+								int posOpen = expr.indexOf(openAPINames[k] + "(");
+								if (posOpen >= 0) {
+									if (posBracket > 0) {
+										fileVarNames.addIfNew(var.substring(0, posBracket));
+									}
+									else {
+										fileVarNames.addIfNew(var);
+									}
+									StringList args = Element.splitExpressionList(expr.substring(posOpen + openAPINames[k].length()+1), ",");
+									transline = "assign(" + var + ", " + args.get(0) + "); " + openProcNames[k] + "(" + var + ")";
+									doneFileAPI = true;
+								}
+							}
+						}
+						// END KGU#311 2016-12-26
 						// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 						//code.add(_indent + transline + ";");
 						transline += ";";
@@ -439,7 +475,7 @@ public class PasGenerator extends Generator
 
 		}
     }
-
+    
     @Override
     protected void generateCode(Alternative _alt, String _indent)
     {
@@ -450,6 +486,16 @@ public class PasGenerator extends Generator
     	// END KGU 2014-11-16
 
     	String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
+    	// START KGU#311 2016-12-26: Enh. #314 File API support
+    	if (this.usesFileAPI) {
+    		StringList tokens = Element.splitLexically(condition, true);
+    		for (int i = 0; i < this.fileVarNames.count(); i++) {
+    			if (tokens.contains(this.fileVarNames.get(i))) {
+    				this.insertComment("TODO: Consider replacing this file test using IOResult!", _indent);
+    			}
+    		}
+    	}
+    	// END KGU#311 2016-12-26
     	if(!condition.startsWith("(") && !condition.endsWith(")")) condition="("+condition+")";
 
     	addCode("if "+condition+" then", _indent, isDisabled);
@@ -968,6 +1014,11 @@ public class PasGenerator extends Generator
         		subroutineInsertionLine = code.count();
         		subroutineIndent = _indent;
         		// END KGU#178 2016-07-20
+        		// START KGU#311 2016-12-26: Enh. #314
+        		if (this.usesFileAPI) {
+        			this.insertFileAPI("pas");
+        		}
+        		// END KGU#311 2016-12-26
         		code.add(_indent);
         		insertComment("TODO: Repeat the parameter and result type specifications of the INTERFACE section!", _indent);
         	}
@@ -986,7 +1037,14 @@ public class PasGenerator extends Generator
         			code.add(_indent + this.getIndent() + "StructorizerLabel_" + lb + ";");
         	}
         }
-        code.add("");
+        
+		// START KGU#311 2016-12-26: Enh. #314
+		if (topLevel && _root.isProgram && this.usesFileAPI) {
+			this.insertFileAPI("pas", code.count(), _indent, 1);
+		}
+		// END KGU#311 2016-12-26
+
+		code.add("");
         code.add(_indent + "var");
         
 		return _indent;
@@ -1009,6 +1067,11 @@ public class PasGenerator extends Generator
         {
     		subroutineInsertionLine = code.count();
     		subroutineIndent = _indent;
+    		// START KGU#311 2016-12-26: Enh. #314
+    		if (this.usesFileAPI) {
+    			this.insertFileAPI("pas", 2);
+    		}
+    		// END KGU#311 2016-12-26
     		code.add("");
         }
         // END KGU#178 2016-07-20

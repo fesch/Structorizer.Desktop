@@ -1,0 +1,129 @@
+UNIT StructorizerFileAPI;
+{
+    Structorizer
+    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+
+    Copyright (C) 2009  Bob Fisch
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or any
+    later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ }
+ 
+{******************************************************************************************************
+ *
+ *      Author:         Kay Gürtzig
+ *
+ *      Description:    File API for the PasGenerator.
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     26.12.2016      First Issue
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:
+ *      Parts of the API are directly transformed by the PasGenerator. To replace function calls by
+ *      procedure calls, however, is not possible in general. So we provide adapter functions here. 
+ *
+ ******************************************************************************************************}
+
+INTERFACE
+
+{===== STRUCTORIZER FILE API START =====}
+TYPE
+  LongIntFile = FILE OF LongInt;
+  DoubleFile = FILE OF Double;
+{===== STRUCTORIZER FILE API END =====}
+
+{ Implements base function fileRead by means of read in a Text file }
+function fileRead(var file: Text): String;
+{ Implements base function fileRead by means of read in a Text file }
+function fileReadChar(var file: Text): Char;
+{ Implements function fileReadInt by means of read in a typed file }
+function fileReadInt(var file: LongIntFile): LongInt;
+{ Implements function fileReadDouble by means of read in a typed file }
+function fileRead(var file: DoubleFile): Double;
+{ Implements base function fileRead by means of readln in a Text file }
+function fileReadLine(var file: Text): String;
+
+IMPLEMENTATION
+
+{===== STRUCTORIZER FILE API START =====}
+
+{ Implements base function fileRead by means of read in a Text file }
+function fileRead(var file: Text): String;
+
+var
+  String fileRead;
+
+begin
+  fileRead = '';
+  read(file, fileRead);
+end;
+
+{ Implements function fileReadChar by means of read in a typed file }
+function fileReadChar(var file: Text): String;
+
+var
+  String word;
+
+begin
+  word = '';
+  read(file, word);
+  fileRead = word;
+end;
+
+{ Implements base function fileReadInt by means of read in a typed file }
+function fileReadInt(var file: LongIntFile): LongInt;
+
+var
+  LongInt value;
+
+begin
+  value = 0;
+  read(file, value);
+  fileReadInt = value;
+end;
+
+{ Implements base function fileReadDouble by means of read in a typed file }
+function fileReadDouble(var file: DoubleFile): Double;
+
+var 
+  Double value;
+
+begin
+  value = 0.0;
+  read(file, value);
+  fileReadDouble = value;
+end;
+
+{ Implements base function fileRead by means of readln in a Text file }
+function fileReadLine(var file: Text): String
+
+var
+  String line;
+  
+begin
+  line = '';
+  readln(file, line);
+  fileReadLine = line;
+end;
+
+{===== STRUCTORIZER FILE API END =====}
+
+BEGIN
+END.

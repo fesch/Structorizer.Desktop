@@ -1570,14 +1570,44 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	// END KGU#178 2016-07-20
 	
 	// START KGU#311 2016-12-22: Enh. #314
+	/**
+	 * Inserts all marked sections of resource file "FileAPI.&lt;_language&gt;.txt at line
+	 * this.subroutineInsertionLine into the resulting code.
+	 * Increases this.subroutineInsertionLine by the number of lines copied.
+	 * @param _language - name or file name extension of an export language
+	 */
 	protected void insertFileAPI(String _language)
 	{
-		this.subroutineInsertionLine = insertFileAPI(_language, this.subroutineInsertionLine, this.subroutineIndent);	
+		insertFileAPI(_language, 0);	
 	}
 	
-	protected int insertFileAPI(String _language, int _atLine, String _indentation)
+	/**
+	 * Inserts marked section _sectionCount (1, 2, ...) or all sections (_sectionCount = 0) of
+	 * resource file "FileAPI.&lt;_language&gt;.txt at line this.subroutineInsertionLine into
+	 * the resulting code. 
+	 * Increases this.subroutineInsertionLine by the number of lines copied.
+	 * @param _language - name or file name extension of an export language
+	 * @param _sectionCount - number of the marked section to be copied (0 for all)
+	 */
+	protected void insertFileAPI(String _language, int _sectionCount)
+	{
+		this.subroutineInsertionLine = insertFileAPI(_language, this.subroutineInsertionLine, this.subroutineIndent, _sectionCount);	
+	}
+	
+	/**
+	 * Inserts marked section _sectionCount (1, 2, ...) or all sections (_sectionCount = 0) of
+	 * resource file "FileAPI.&lt;_language&gt;.txt at line _atLine with gien _indentation into
+	 * the resulting code 
+	 * @param _language - name or file name extension of an export language
+	 * @param _atLine - target line where the file section is to be copied to
+	 * @param _indentation - indentation string (to precede every line of the copied section) 
+	 * @param _sectionCount - number of the marked section to be copied (0 for all)
+	 * @return - line number at the end of the inserted code lines
+	 */
+	protected int insertFileAPI(String _language, int _atLine, String _indentation, int _sectionCount)
 	{
 		boolean isDone = false;
+		int sectNo = 0;
 		String error = "";
 		java.net.URL url = this.getClass().getResource("FileAPI." + _language + ".txt");
 		try {
@@ -1587,7 +1617,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			boolean doInsert = false;
 			while ((line = reader.readLine()) != null) {
 				if (line.contains("===== STRUCTORIZER FILE API START =====")){
-					doInsert = true;
+					sectNo++;
+					doInsert = _sectionCount == 0 || _sectionCount == sectNo;
 					code.insert(_indentation, _atLine++);
 				}
 				if (doInsert) {
