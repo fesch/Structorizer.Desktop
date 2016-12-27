@@ -1301,8 +1301,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * Entry point for interactively commanded code export. Retrieves export options,
 	 * opens a file selection dialog
 	 * @param _root - program or top-level routine diagram (call hierarchy root)
-	 * @param _currentDirectory - 
-	 * @param _frame
+	 * @param _currentDirectory - current Structorizer directory (as managed by Diagram)
+	 * @param _frame - the GUI Frame object responsible for this action
 	 */
 	public void exportCode(Root _root, File _currentDirectory, Frame _frame)
 	{
@@ -1596,22 +1596,21 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	
 	/**
 	 * Inserts marked section _sectionCount (1, 2, ...) or all sections (_sectionCount = 0) of
-	 * resource file "FileAPI.&lt;_language&gt;.txt at line _atLine with gien _indentation into
+	 * resource file "FileAPI.&lt;_language&gt;.txt" at line _atLine with given _indentation into
 	 * the resulting code 
 	 * @param _language - name or file name extension of an export language
 	 * @param _atLine - target line where the file section is to be copied to
 	 * @param _indentation - indentation string (to precede every line of the copied section) 
 	 * @param _sectionCount - number of the marked section to be copied (0 for all)
-	 * @return - line number at the end of the inserted code lines
+	 * @return line number at the end of the inserted code lines
 	 */
 	protected int insertFileAPI(String _language, int _atLine, String _indentation, int _sectionCount)
 	{
 		boolean isDone = false;
 		int sectNo = 0;
 		String error = "";
-		java.net.URL url = this.getClass().getResource("FileAPI." + _language + ".txt");
 		try {
-			java.io.FileInputStream fis = new java.io.FileInputStream(url.getPath());
+			java.io.InputStream fis = this.getClass().getResourceAsStream("FileAPI." + _language + ".txt");
 			java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, "UTF-8"));
 			String line = null;
 			boolean doInsert = false;
@@ -1622,6 +1621,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 					code.insert(_indentation, _atLine++);
 				}
 				if (doInsert) {
+					// Unify indentation and replace dummy messages by localized ones
 					line = line.replace("\t", this.getIndent());
 					line = line.replace("§INVALID_HANDLE_READ§", Control.msgInvalidFileNumberRead.getText());
 					line = line.replace("§INVALID_HANDLE_WRITE§", Control.msgInvalidFileNumberWrite.getText());
@@ -1636,6 +1636,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				}
 			}
 			reader.close();
+			isDone = true;
 		} catch (IOException e) {
 			error = e.getLocalizedMessage();
 		}
@@ -1645,37 +1646,56 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		return _atLine;
 	}
 	
+	/**
+	 * Routine stub that may be overridden by subclasses to command the creation of (modified) copies
+	 * of some resource files for the used FileAPI. Typically, this method is called just once after
+	 * the (recursive) code export has been mostly done.
+	 * @param _filePath - path of the target directory or of some file within it  
+	 * @return flag whether the copy has worked
+	 */
 	protected boolean copyFileAPIResources(String _filePath)
 	{
 		return true;
 	}
 	
+	/**
+	 * Creates a (modified) copy of resource file "FileAPI.&lt;_language&gt;.txt" in the _targetPath
+	 * directory with the given _targetFilename. If _targetFilename is null then the file name will
+	 * be "FileAPI"&lt;_language&gt;.
+	 * @param _language - a language-specific filename extension
+	 * @param _targetFilename - the proposed filename for the copy (should not contain path elements!)
+	 * @param _targetPath - path of the target directory or of a file within it 
+	 * @return
+	 */
 	protected boolean copyFileAPIResource(String _language, String _targetFilename, String _targetPath)
 	{
 		boolean isDone = false;
 		String error = "";
+		if (_targetFilename == null) {
+			_targetFilename = "FileAPI." + _language;
+		}
 		File target = new File(_targetFilename);
 		if (!target.isAbsolute()) {
 			java.io.File targetDir = new java.io.File(_targetPath);
 			if (!targetDir.isDirectory()) {
 				targetDir = targetDir.getParentFile();
 			}
-			
 			target = new File(targetDir.getAbsolutePath() + File.separator + _targetFilename);
 		}
 		// Don't overwrite the file if it already exists in the target directory
 		if (!target.exists()) {
-			FileInputStream fis = null;
+			InputStream fis = null;
 			FileOutputStream fos = null;
-			java.net.URL url = this.getClass().getResource("FileAPI." + _language + ".txt");
 			try {
-				fis = new FileInputStream(url.getPath());
+				fis = this.getClass().getResourceAsStream("FileAPI." + _language + ".txt");
 				fos = new FileOutputStream(target);
 				BufferedReader reader = new BufferedReader(new InputStreamReader(fis, "UTF-8"));
 				BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos, "UTF-8"));
 				String line = null;
 				while ((line = reader.readLine()) != null) {
+					// Suppress insertion markers and replace dummy messages by localized ones
 					if (!line.contains("===== STRUCTORIZER FILE API")){
+						line = line.replace("\t", this.getIndent());
 						line = line.replace("§INVALID_HANDLE_READ§", Control.msgInvalidFileNumberRead.getText());
 						line = line.replace("§INVALID_HANDLE_WRITE§", Control.msgInvalidFileNumberWrite.getText());
 						line = line.replace("§NO_INT_ON_FILE§", Control.msgNoIntLiteralOnFile.getText());
@@ -1736,8 +1756,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * batch code export methods
 	 *****************************************/
 
+	/**
+	 * Exports the diagrams given by _roots into a text file with path _targetFile.
+	 * @param _roots - vector of diagram Roots to be exported (in this order).
+	 * @param _targetFile - path of the target text file for the code export.
+	 * @param _options - String containing code letters for export options ('b','c','f','l','t','-') 
+	 * @param _charSet - name of the character set to be used.
+	 */
 	public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet)
 	{
+		// START KGU#311 2016-12-27: Enh. #314
+		boolean someRootUsesFileAPI = false;
+		// END KGU#311 2016-12-27
 		
 		if (Charset.isSupported(_charSet))
 		{
@@ -1843,6 +1873,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				this.insertComment("============================================================", "");
 				code.add("");
 			}
+			// START KGU#311 2016-12-27: Enh. #314 ensure I/O-specific additions per using root
+			this.usesFileAPI = false;
+			gatherElementInformationRoot(root);
+			if (this.usesFileAPI) { someRootUsesFileAPI = true; }
+			this.pureFilename = root.getMethodName();	// used e.g. for Pascal/Oberon UNIT/MODULE naming
+			// END KGU#311 2016-12-27
 			generateCode(root, "");
 		}
 
@@ -1861,6 +1897,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 
 			outp.write(code.getText());
 			outp.close();
+			
+			// START KGU#311 2016-12-27: Enh. #314 Allow the subclass to copy necessary resource files
+			if (someRootUsesFileAPI) {
+				copyFileAPIResources(_targetFile);
+			}
+			// END KGU#311 2016-12-27
 		}
 		catch(Exception e)
 		{
