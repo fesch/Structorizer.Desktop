@@ -86,6 +86,7 @@
  *      Kay Gürtzig     2016.12.02      Issue #307: New executor error message
  *      Kay Gürtzig     2016.12.14      Issue #311: Menu reorganisation
  *      Kay Gürtzig     2016.12.15      Enh. #310: New Saving option dialog
+ *      Kay Gürtzig     2016.12.27      Enh. #314: Control messages for the file API
  *
  ******************************************************************************************************
  *
@@ -798,6 +799,9 @@ Control.msgJumpOutParallel.text=Illegal attempt to jump out of a parallel thread
 Control.msgForLoopManipulation.text=Illegal attempt to manipulate the FOR loop variable «%»!
 Control.msgInvalidFileNumberRead.text=Invalid file number or file not open for reading.
 Control.msgInvalidFileNumberWrite.text=Invalid file number or file not open for writing.
+Control.msgNoIntLiteralOnFile.text=No integer value readable from file!
+Control.msgNoDoubleLiteralOnFile.text=No floating-point value readable from file!    
+Control.msgEndOfFile.text=Attempt to read data past end of file!    
 Control.tblVar.header.0=Variable Name
 Control.tblVar.header.1=Content
 

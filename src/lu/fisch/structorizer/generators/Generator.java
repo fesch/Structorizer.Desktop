@@ -1622,6 +1622,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 					code.insert(_indentation, _atLine++);
 				}
 				if (doInsert) {
+					line = line.replace("\t", this.getIndent());
 					line = line.replace("§INVALID_HANDLE_READ§", Control.msgInvalidFileNumberRead.getText());
 					line = line.replace("§INVALID_HANDLE_WRITE§", Control.msgInvalidFileNumberWrite.getText());
 					line = line.replace("§NO_INT_ON_FILE§", Control.msgNoIntLiteralOnFile.getText());

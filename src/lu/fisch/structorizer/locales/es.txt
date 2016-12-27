@@ -90,6 +90,7 @@
  *      Kay Gürtzig     2016.12.02  Issue #307: New executor error message
  *      Kay Gürtzig     2016.12.14  Issue #310: Menu re-organization
  *      Kay Gürtzig     2016.12.15  Enh. #310: New Saving option dialog
+ *      Kay Gürtzig     2016.12.27  Enh. #314: Control messages for the file API
  *
  ******************************************************************************************************
  *
@@ -798,7 +799,10 @@ Control.msgJumpOutParallel.text=Tentativa ilegal de saltar afuera de un brazo pa
 Control.msgForLoopManipulation.text=¡Manipulación ilegal de la variable «%» de un bucle PARA!
 Control.msgInvalidFileNumberRead.text=Nombre de archivo es inválido o archivo no es abierto para leer.
 Control.msgInvalidFileNumberWrite.text=Nombre de archivo es inválido o archivo no es abierto para escribir.
-Control.tblVar.header.0=Nombre de Variable
+Control.msgNoIntLiteralOnFile.text=¡No valor integral leible desde el archivo!
+Control.msgNoDoubleLiteralOnFile.text=¡No valor floating-point leible desde el archivo!    
+Control.msgEndOfFile.text=¡No es posible leer datos después del fin del archivo!    
+Control.tblVar.header.0=Nombre de variable
 Control.tblVar.header.1=Contenido
 
 -----[ OutputConsole ]-----
