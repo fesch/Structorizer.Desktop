@@ -52,6 +52,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.11.01      Issue #81: Icon and frame size scaling ensured according to scaleFactor
  *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded.
  *      Kay Gürtzig     2016.12.12      Issue #307: New error message msgForLoopManipulation
+ *      Kay Gürtzig     2016.12.29      KGU#317 (issues #267, #315) New message for multiple subroutines
  *
  ******************************************************************************************************
  *
@@ -685,7 +686,11 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // START KGU#197 2016-05-05
     // START KGU#197 2016-07-27
     public final LangTextHolder msgNoSubroutine = 
-    		new LangTextHolder("A subroutine diagram %1 (%2 parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.");
+    		new LangTextHolder("A subroutine diagram \"%1\" (%2 parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.");
+    // START KGU#317 2016-12-29
+    public final LangTextHolder msgAmbiguousCall =
+    		new LangTextHolder("Ambiguous CALL: Different subroutine diagrams \"%1\" (%2 parameters) found!");
+    // END KGU#317 2016-12-29
     public final LangTextHolder msgInvalidExpr =
     		new LangTextHolder("<%1> is not a correct or existing expression.");
     // START KGU#249 2016-09-17: Bugfix #246 + Issue #243

@@ -108,6 +108,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.11.22/25   Issue #294: Test coverage rules for CASE elements without default branch refined
  *      Kay Gürtzig     2016.12.12      Issue #307: Attempts to manipulate FOR loop variables now cause an error
  *      Kay Gürtzig     2016.12.22      Enh. #314: Support for File API
+ *      Kay Gürtzig     2016.12.29      Enh. #267/#315 (KGU#317): Execution abort on ambiguous CALLs
  *
  ******************************************************************************************************
  *
@@ -1294,8 +1295,9 @@ public class Executor implements Runnable
      * @param name - function name
      * @param nArgs - number of parameters of the requested function
      * @return a Root that matches the specification if uniquely found, null otherwise
+     * @throws Exception 
      */
-    public Root findSubroutineWithSignature(String name, int nArgs)
+    public Root findSubroutineWithSignature(String name, int nArgs) throws Exception
     {
     	Root subroutine = null;
     	// First test whether the current root calls itself recursively
@@ -1309,10 +1311,24 @@ public class Executor implements Runnable
     	{
     		IRoutinePool pool = iter.next();
     		Vector<Root> candidates = pool.findRoutinesBySignature(name, nArgs);
-    		for (int c = 0; subroutine == null && c < candidates.size(); c++)
+    		// START KGU#317 2016-12-29: Now the execution will be aborted on ambiguous calls
+    		//for (int c = 0; subroutine == null && c < candidates.size(); c++)
+    		for (int c = 0; c < candidates.size(); c++)
+    		// END KGU#317 2016-12-29
     		{
-    	    	// TODO Check for ambiguity (multiple matches) and raise e.g. an exception in that case
-    			subroutine = candidates.get(c);
+    	    	// START KGU#317 2016-12-29: Check for ambiguity (multiple matches) and raise e.g. an exception in that case
+    			//subroutine = candidates.get(c);
+    			if (subroutine == null) {
+    				subroutine = candidates.get(c);
+    			}
+    			else {
+    				Root cand = candidates.get(c);
+    				int similarity = subroutine.compareTo(cand); 
+    				if (similarity > 2 && similarity != 4) {
+    					throw new Exception(control.msgAmbiguousCall.getText().replace("%1", name).replace("%2", Integer.toString(nArgs)));
+    				}
+    			}
+    			// END KGU#317 2016-12-29
     			// START KGU#125 2016-01-05: Is to force updating of the diagram status
     			if (pool instanceof Updater)
     			{
@@ -2895,7 +2911,15 @@ public class Executor implements Runnable
 			{
 				//System.out.println("Looking for SUBROUTINE NSD:");
 				//System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
-				Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
+				// START KGU#317 2016-12-29
+				//Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
+				Root sub = null;
+				try {
+					sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
+				} catch (Exception ex) {
+					return ex.getMessage();	// Ambiguous call!
+				}
+				// END KGU#317 2016-12-29
 				if (sub != null)
 				{
 					Object[] args = new Object[f.paramCount()];
@@ -3325,7 +3349,15 @@ public class Executor implements Runnable
 				// FIXME: Disable the output instructions for the release version
 				//System.out.println("Looking for SUBROUTINE NSD:");
 				//System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
-				Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
+				// START KGU#317 2016-12-29: Abort execution on ambiguous calls
+				//Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
+				Root sub = null;
+				try {
+					sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
+				} catch (Exception ex) {
+					return ex.getMessage();	// Ambiguous call!
+				}
+				// END KGU#317 2016-12-29
 				if (sub != null)
 				{
 					executeCall(sub, args, (Call)element);

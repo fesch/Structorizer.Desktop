@@ -2965,6 +2965,11 @@ public class Root extends Element {
     		presentation += "(" + this.getParameterNames().count() + ")";
     	}
     	if (_addPath) {
+    		// START KGU 2016-12-29: Show changed status
+    		if (this.hasChanged()) {
+    			presentation = "*" + presentation;
+    		}
+    		// END KGU 2016-12-29
     		presentation += ": " + this.getPath();
     	}
     	return presentation;

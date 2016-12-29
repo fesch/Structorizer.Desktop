@@ -94,7 +94,8 @@ Current development version: 3.25-12 (2016.12.29)
 - 12: Enh. #315: Better equivalence check on inserting diagrams to Arranger <2>
 - 12: Bugfix #317: Color of empty sequences (like empty FALSE branch) now saved <2>
 - 12: Issue #271: Comma between prompt string and input variable tolerated <2>
-- 12: Enh. #318: Diagrams from arrz files now keep their origin and may be updated <2> 
+- 12: Enh. #318: Diagrams from arrz files now keep their origin and may be updated <2>
+- 12: Enh. #305: Arranger index now marks diagrams with unsaved changes <2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2

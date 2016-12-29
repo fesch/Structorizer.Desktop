@@ -209,7 +209,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     // END KGU#289 2016-11-14
     // START KGU#312 2016-12-29: Enh. #315 more meticulous equivalence analysis on insertion
     public final LangTextHolder titleDiagramConflict = new LangTextHolder("Diagram conflict");
-    public final LangTextHolder[] msgInsertionConflict = {
+    public LangTextHolder[] msgInsertionConflict = {
     		new LangTextHolder("There is another version of diagram \"%2\",\nat least one of them has unsaved changes."),
     		new LangTextHolder("There is an equivalent copy of diagram \"%1\"\nwith different path \"%2\"."),
     		new LangTextHolder("There is a differing diagram with signature \"%1\"\nand path \"%2\".")

@@ -790,6 +790,7 @@ Control.msgTitleError.text=Fehler
 Control.msgTitleQuestion.text=Frage
 Control.msgTitleParallel.text=Problem bei Parallelausführung
 Control.msgNoSubroutine.text=Ein Diagramm mit Unterprogramm "%1" (%2 Parameter) wurde nicht gefunden!\nPlatzieren Sie benötigte Unterprogramm-Diagramme zunächst im Arranger.
+Control.msgAmbiguousCall.text=Mehrdeutiger Aufruf: Verschiedene Unterprogramm-Diagramme "%1" (%2 Parameter) gefunden!
 Control.msgInvalidExpr.text=<%1> ist kein korrekter oder existierender Ausdruck.
 Control.msgInvalidBool.text=<%1> ist kein gültiger logischer Ausdruck.
 Control.msgIllFunction.text=<%1> ist keine korrekte Funktion!
