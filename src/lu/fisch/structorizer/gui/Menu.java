@@ -1291,7 +1291,10 @@ public class Menu extends LangMenuBar implements NSDController
 			{
 				JMenuItem mi = new JMenuItem((String) diagram.recentFiles.get(j),IconLoader.ico074);
 				final String nextFile = (String) diagram.recentFiles.get(j);
-				mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNSD(nextFile); doButtons(); } } );
+				// START KGU#316 2016-12-28: Enh. #290/#318
+				//mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNSD(nextFile); doButtons(); } } );
+				mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNsdOrArr(nextFile); doButtons(); } } );
+				// END KGU#316 2016-12-28
 				menuFileOpenRecent.add(mi);
 			}
 

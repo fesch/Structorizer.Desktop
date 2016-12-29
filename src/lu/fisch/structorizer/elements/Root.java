@@ -87,6 +87,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.12.12      Enh. #306: New method isEmpty() for a Root without text, children, and undo entries
  *                                      Enh. #305: Method getSignatureString() and Comparator SIGNATUR_ORDER added.
  *      Kay Gürtzig     2016.12.16      Bugfix #305: Comparator SIGNATURE_ORDER corrected
+ *      Kay Gürtzig     2016.12.28      Enh. #318: Support for re-saving to a arrz file
+ *      Kay Gürtzig     2016.12.29      Enh. #315: New comparison method distinguishing different equality levels
  *
  ******************************************************************************************************
  *
@@ -191,6 +193,9 @@ public class Root extends Element {
 	private Stack<Subqueue> redoList = new Stack<Subqueue>();
 
 	public String filename = "";
+	// START KGU#316 2016-12-28: Enh. #318 Consider unzipped arrz-files
+	public String shadowFilepath = null;	// temp file path of an unzipped file
+	// END KGU#316 2016-12-28
 
 	// variables
 	public StringList variables = new StringList();
@@ -861,6 +866,51 @@ public class Root extends Element {
 	}
 	// END KGU#119 2016-01-02
 	
+	// START KGU#312 2016-12-29: Enh. #315
+	/**
+	 * Equivalence check returning one of the following similarity levels:
+	 * 0: no resemblance
+     * 1: Identity (i. e. the Java Root elements are identical);
+     * 2: Exact equality (i. e. objects aren't identical but all attributes
+     *    and structure are recursively equal AND the file paths are equal
+     *    AND there are no unsaved changes in both diagrams);
+     * 3: Equal file path but unsaved changes in one or both diagrams (this
+     *    can occur if several Structorizer instances in the same application
+     *    loaded the same file independently);
+     * 4: Equal contents but different file paths (may occur if a file copy
+     *    is loaded or if a Structorizer instance just copied the diagram
+     *    with "Save as");
+     * 5: Equal signature (i. e. type, name and argument number) but different
+     *    content or structure.
+     * @param another - the Root to compare with
+     * @return a resemblance level according to the description above
+	 */
+	public int compareTo(Root another)
+	{
+		int resemblance = 0;
+		if (this == another) {
+			resemblance = 1;
+		}
+		else if (this.equals(another)) {
+			if (this.getPath().equals(another.getPath())) {
+				if (this.hasChanged() || another.hasChanged()) {
+					resemblance = 3;
+				}
+				else {
+					resemblance = 2;
+				}
+			}
+			else {
+				resemblance = 4;
+			}
+		}
+		else if (this.getSignatureString(false).equals(another.getSignatureString(false))) {
+			resemblance = 5;
+		}
+		return resemblance;
+	}
+	// END KGU#312 2016-12-29
+	
 	// START KGU#117 2016-03-07: Enh. #77
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
@@ -1070,29 +1120,47 @@ public class Root extends Element {
 
     public File getFile()
     {
-            if(filename.equals(""))
-            {
-                    return null;
-            }
-            else
-            {
-                    return new File(filename);
-            }
+    	if(filename.equals(""))
+    	{
+    		return null;
+    	}
+    	else
+    	{
+    		return new File(filename);
+    	}
     }
 
     public String getPath()
+    // START KGU#316 2016-12-28: Enh. #318 Consider unzipped file
     {
-            if (filename.equals(""))
-            {
-                    return new String();
-            }
-            else
-            {
-                    File f = new File(filename);
-                    return f.getAbsolutePath();
-            }
+    	return getPath(false);
     }
-
+    
+    public String getPath(boolean pathOfOrigin)
+    // END KGU#316 2016-12-28
+    {
+    	if (filename.equals(""))
+    	{
+    		return new String();
+    	}
+    	else
+    	{
+    		File f = new File(filename);
+    		// START KGU#316 2016-12-28: Enh. #318 Consider unzipped file
+    		if (pathOfOrigin && this.shadowFilepath != null) {
+    			while(f != null && !f.isFile()) {
+    				f = f.getParentFile();
+    			}
+    			// No Zip file found?
+    			if (f == null) {
+    				f = new File(filename);
+    			}
+    		}
+    		// END KGU#316 2016-12-28
+    		return f.getAbsolutePath();
+    	}
+    }
+    
     /*************************************
      * Extract full text of all Elements
      *************************************/

@@ -90,6 +90,7 @@
  *      Kay Gürtzig         2016.12.14  Issue #311: Menu re-organization
  *      Kay Gürtzig         2016.12.15  Enh. #310: New Saving option dialog
  *      Kay Gürtzig         2016.12.27  Enh. #314: Control messages for the file API
+ *      Kay Gürtzig         2016.12.29  Enh. #315: New Surface messages for diagram conflicts
  *
  ******************************************************************************************************
  *
@@ -755,6 +756,10 @@ Surface.msgUnsavedContinue.text=Trotzdem fortfahren?
 Surface.msgNoArrFile.text=Keine Arranger-Datei (arr) gefunden
 Surface.msgDefectiveArr.text=Defekte Anordnungsdatei.
 Surface.msgDefectiveArrz.text=Defektes portables Anordnungsarchiv.
+Surface.titleDiagramConflict.text=Diagramm-Konflikt
+Surface.msgInsertionConflict.0.text=Es gibt bereits eine Version von Diagramm "%2",\nwenigstens eine davon hat ungesicherte Änderungen.
+Surface.msgInsertionConflict.1.text=Es gibt bereits eine äquivalente Kopie des Diagramms "%1"\nmit unterschiedlichem Dateipfad "%2".
+Surface.msgInsertionConflict.2.text=Es gibt bereits ein abweichendes Diagramm mit Signatur "%1"\nund Dateipfad "%2".
 
 -----> Executor
 -----[ Control ]-----

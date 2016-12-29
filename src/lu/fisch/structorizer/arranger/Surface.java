@@ -63,6 +63,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.11.15      Enh. #290: Further modifications to let a Mainform insert arrangements
  *      Kay Gürtzig     2016.12.12      Enh. #305: New mechanism to update the Arranger indices in the related Mainforms
  *      Kay Gürtzig     2016.12.17      Enh. #305: New method removeDiagram(Root)
+ *      Kay Gürtzig     2016.12.28      Enh. #318: Shadow path for Roots unzipped (from an arrz) into a temp dir
+ *      Kay Gürtzig     2016.12.29      Enh. #315: More meticulous detection of diagram conflicts
  *
  ******************************************************************************************************
  *
@@ -152,6 +154,7 @@ import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.gui.Mainform;
+import lu.fisch.structorizer.gui.Menu;
 import lu.fisch.structorizer.io.ArrFilter;
 import lu.fisch.structorizer.io.ArrZipFilter;
 import lu.fisch.structorizer.io.PNGFilter;
@@ -204,6 +207,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     public LangTextHolder msgDefectiveArr = new LangTextHolder("Defective Arrangement.");
     public LangTextHolder msgDefectiveArrz = new LangTextHolder("Defective Portable Arrangement.");
     // END KGU#289 2016-11-14
+    // START KGU#312 2016-12-29: Enh. #315 more meticulous equivalence analysis on insertion
+    public final LangTextHolder titleDiagramConflict = new LangTextHolder("Diagram conflict");
+    public final LangTextHolder[] msgInsertionConflict = {
+    		new LangTextHolder("There is another version of diagram \"%2\",\nat least one of them has unsaved changes."),
+    		new LangTextHolder("There is an equivalent copy of diagram \"%1\"\nwith different path \"%2\"."),
+    		new LangTextHolder("There is a differing diagram with signature \"%1\"\nand path \"%2\".")
+    };
+    // END KGU#312 2016-12-29
 
     @Override
     public void paint(Graphics g)
@@ -311,10 +322,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     private String loadFile(String filename, Point point)
     // START KGU#289 2016-11-15: Enh. #290 (load arrangements from Structorizer)
     {
-    	return loadFile(null, filename, point);
+    	// START KGU#316 2016-12-28: Enh. #318
+    	//return loadFile(null, filename, point);
+    	return loadFile(null, filename, point, null);
+    	// END KGU#316 2016-12-28
     }
     
-    private String loadFile(Mainform form, String filename, Point point)
+	// START KGU#316 2016-12-28: Enh. #318 signature enhanced to keep track of unzipped files 
+    //private String loadFile(Mainform form, String filename, Point point)
+    private String loadFile(Mainform form, String filename, Point point, String unzippedFrom)
+	// END KGU#316 2016-12-28
     // END KGU#289 2016-11-15
     {
     	String errorMessage = "";
@@ -330,6 +347,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				Root root = parser.parse(f.toURI().toString());
 
 				root.filename = filename;
+				// START KGU#316 2016-12-28: Enh. #318 Allow nsd files to "reside" in arrz files
+				if (unzippedFrom != null) {
+					root.filename = unzippedFrom + File.separator + (new File(filename)).getName();
+					root.shadowFilepath = filename;
+				}
+				// END KGU#316 2016-12-28
 				// START KGU#289 2016-11-15: Enh. #290 (load from Mainform)
 				//addDiagram(root, point);
 				addDiagram(root, form, point);
@@ -352,7 +375,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     
     /**
      * Stores the current diagram arrangement to a file.
-     * Depending on the coice of the user, this file will
+     * Depending on the choice of the user, this file will
      * either be only a list of reference points and filenames (this way not being portable)
      * or be a compressed archive containing the list file as well as the referenced
      * NSD files will be produced such that it can be ported to a different location and
@@ -465,7 +488,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		//if (fileExisted)
     		if (portable)
     		{
-    			// name for the arr file to zipped into the target file
+    			// name for the arr file to be zipped into the target file
     			arrFilename = tempDir + File.separator + (new File(filename)).getName() + ".arr";
     		}
     		else if (file.exists())
@@ -612,12 +635,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     }
     
     /**
-     * Action method for the "Load List" button of the Arranger: Attempts to save the
-     * current diagram arrangement either by creating just an arr file (containing
-     * positions and file paths of all arranged diagrams) or a portable
-     * zip file containing an arr file and all referred nsd files.
-     * Signals if some of the diagrams need saving and offers a file type decision 
-     * and a consecutive file selection before.
+     * Action method for the "Load List" button of the Arranger: Attempts to load the
+     * specified (portable) arrangement file.
      * @param frame - the owning frame object. 
      * @return true iff the saving succeeded (will raise an error message else).
      */
@@ -654,6 +673,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     			// correct the filename if necessary
     			String filename = dlgOpen.getSelectedFile().getAbsoluteFile().toString();
     			
+    			// START KGU#316 2016-12-28: Enh. #318
+    			String unzippedFrom = null;
+    			// END KGU#316 2016-12-28
     			// START KGU#110 2016-07-01: Enh. # 62 - unpack a zip file first
     			if (ArrZipFilter.isArr(filename))
     			{
@@ -667,6 +689,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     					//extractTo = dlgOpen.getCurrentDirectory().getAbsolutePath();
     					extractTo = dlgOpen.getSelectedFile().getAbsolutePath();
     				}
+    				else {
+    					unzippedFrom = filename;
+    				}
     				filename = unzipArrangement(filename, extractTo);
     				if (filename != null)
     				{
@@ -678,7 +703,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     				}
     			}
     			// END KGU#110 2016-07-01
-    			done = loadArrangement(frame, filename);
+    			// START KGU#316 2016-12-28: Enh. #318
+    			//done = loadArrangement(frame, filename);
+    			done = loadArrangement(frame, filename, unzippedFrom);
+    			// END KGU#316 2016-12-28
     			currentDirectory = oldCurrDir;
     		}
     	}
@@ -690,9 +718,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
      * (i.e. given the referred nsd file paths exist and the nsd files may be parsed)
      * @param frame - owning frame component
      * @param filename - path of the arr file to be reloaded
-     * @return true if at lesst some of the referred diagrams could be arranged again.
+     * @param unzippedFrom - path of the arrz file if shadowed to temporary directory, null otherwise
+     * @return true if at lest some of the referred diagrams could be arranged again.
      */
-    public boolean loadArrangement(Frame frame, String filename)
+    // START KGU#316 2016-12-28: Enh. #318 API change to support shadow paths in unzipped Roots
+    //public boolean loadArrangement(Frame frame, String filename)
+    public boolean loadArrangement(Frame frame, String filename, String unzippedFrom)
+    // END KGU#316 2016-12-28
     {
     	boolean done = false;
 		// START KGU#278 2016-10-11: Enh. #267
@@ -702,6 +734,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	String errorMessage = null;
     	try
     	{
+			// START KGU#316 2016-12-28: Enh. #318 don't get confused by the loading of some files
+			String prevCurDirPath = this.currentDirectory.getAbsolutePath();
+			// END KGU#316 2016-12-28
     		// set up the file
     		File file = new File(filename);
     		//Pattern separator = new Pattern(",");
@@ -723,11 +758,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     				File nsd = new File(nsdFileName);
     				if (!nsd.exists() && !nsd.isAbsolute())
     				{
-    					nsdFileName = currentDirectory.getAbsolutePath() + File.separator + nsdFileName;
+    	    			// START KGU#316 2016-12-28: Enh. #318 don't get confused by the loading of some files
+    					//nsdFileName = currentDirectory.getAbsolutePath() + File.separator + nsdFileName;
+    					nsdFileName = prevCurDirPath + File.separator + nsdFileName;
+    	    			// END KGU#316 2016-12-28
     				}
     				// START KGU#289 2016-11-15: Enh. #290 (Arrangements loaded from Mainform)
     				//String trouble = loadFile(nsdFileName, point);
-   					String trouble = loadFile((frame instanceof Mainform) ? (Mainform)frame : null, nsdFileName, point);
+   					String trouble = loadFile((frame instanceof Mainform) ? (Mainform)frame : null, nsdFileName, point, unzippedFrom);
     				// END KGU#289 2016-11-15
     				if (!trouble.isEmpty())
     				{
@@ -793,7 +831,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     {
     	String errorMessage = "";
 		File oldCurrDir = currentDirectory;
+		// START KGU#316 2016-12-28: Enh. #318 Keep track of the original arrz path
+		String arrzPath = null;
+		// END KGU#316 2016-12-28
 		if (filename.toLowerCase().endsWith(".arrz")) {
+			arrzPath = filename;
 			filename = unzipArrangement(filename, null);
 		}
 		if (filename != null)
@@ -804,7 +846,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			{
 				currentDirectory = currentDirectory.getParentFile();
 			}
-			if (!loadArrangement(form, filename)) {
+			// START KGU#316 2016-12-28: Enh. #318
+			//if (!loadArrangement(form, filename)) {
+			if (!loadArrangement(form, filename, arrzPath)) {
+			// END KGU#316 2016-12-28
 				errorMessage = msgDefectiveArr.getText();
 			}
 			}
@@ -823,7 +868,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     // START KGU#110 2016-07-01: Enh. 62
     /**
      * Extracts the files contained in the zip file given by `filename´ into the
-     * directory `targetDir´ (or a temporary directory if not given)
+     * directory `targetDir´ or a temporary directory (if not given).
      * @param filename - path of the arrz file
      * @param targetDir - target directory path for the unzipping (may be null)
      * @return the path of the arr file found in the extracted archive (or otherwise null) 
@@ -834,7 +879,21 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	String arrFilename = null;
     	if (targetDir == null)
     	{
-    		targetDir = findTempDir();
+    		// START KGU#316 2016-12-28: Enh. #318
+    		//targetDir = findTempDir();
+    		boolean tmpDirCreated = false;
+    		try {
+				File tempFile = File.createTempFile("arr", null);
+				tempFile.delete();
+				targetDir = tempFile.getParent() + File.separator + (new File(filename)).getName();
+				tmpDirCreated = (new File(targetDir)).mkdirs();
+			} catch (IOException ex) {
+				System.err.println("Surface.unzipArrangement: " + ex.getLocalizedMessage());
+			}
+    		if (!tmpDirCreated) {
+				targetDir = findTempDir();
+    		}
+    		// END KGU#316 2016-12-28
     	}
     	try {
     		BufferedOutputStream dest = null;
@@ -1044,7 +1103,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	// START KGU#2 2015-11-19: Don't add a diagram that is already held here
     	// START KGU#119 2016-01-02: Bugfix #78 - Don't reload a structurally equal diagram from file
     	//Diagram diagram = findDiagram(root);
-    	Diagram diagram = findDiagram(root, form != null);	// If the Mainform is given, then it's not from file
+    	// START KGU#312 2016-12-29: Enh. #315 - more differentiated equality test
+    	//Diagram diagram = findDiagram(root, form != null);	// If the Mainform is given, then it's not from file
+    	Diagram diagram = findDiagram(root, (form != null) ? 2 : 3, true);	// If the Mainform is given, then it's not from file
+    	// END KGU#312 2016-12-29
     	// END KGU#1119 2016-01-02
     	if (diagram == null) {
     	// END KGU#2 2015-11-19
@@ -1073,7 +1135,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		// If it's the first diagram then adopt the current directory if possible
     		if (diagrams.isEmpty() && root.filename != null && !root.filename.isEmpty())
     		{
-    			this.currentDirectory = new File(root.filename);
+    			// START KGU#316 2016-12-29: Enh. #318 - get the directory of the arrz file if unzipped 
+    			//this.currentDirectory = new File(root.filename);
+    			this.currentDirectory = new File(root.getPath(true));
+    			// END KGU#316 2016-12-29
     			while (this.currentDirectory != null && !this.currentDirectory.isDirectory())
     			{
     				this.currentDirectory = this.currentDirectory.getParentFile();
@@ -1161,7 +1226,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
     // START KGU#305 2016-12-17: Enh. #305 
 	public void removeDiagram(Root _root) {
-		Diagram diagr = findDiagram(_root, true);
+		// START KGU#312 2016-12-29: Enh. #315: More meticulous equality check
+		//Diagram diagr = findDiagram(_root, true);
+		Diagram diagr = findDiagram(_root, 1);	// Test for object identity
+		// END KGU#312 2016-12-29
 		if (diagr != null) {
 			removeDiagram(diagr);
 		}
@@ -1610,7 +1678,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// START KGU#2 2015-11-19: We now need a way to identify a diagram - a root should not be twice here
     // START KGU#119 2016-01-02: Bugfix #78 Under certain circumstances, even the equality has to be avoided
     //private Diagram findDiagram(Root root)
-    private Diagram findDiagram(Root root, boolean identityCheck)
+	// START KGU#312 2016-12-29: Enh. #315 - more differentiated equivalence check
+    //private Diagram findDiagram(Root root, boolean identityCheck)
+    private Diagram findDiagram(Root root, int equalityLevel)
+    {
+    	return findDiagram(root, equalityLevel, false);
+    }
+    private Diagram findDiagram(Root root, int equalityLevel, boolean warnLevel2andAbove)
+    // END KGU#312 2016-12-29
     // END KGU#119 2016-01-02
     {
     	Diagram owner = null;
@@ -1618,14 +1693,31 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		for(int d = 0; owner == null && d < this.diagrams.size(); d++)
     		{
     			Diagram diagram = this.diagrams.get(d);
+    			// START KGU#312 2016-12-29: Enh. #315
     			// START KGU#119 2016-01-02: Bugfix #78 When loading diagrams we ought to check for equality only
     			//if (diagram.root == root)
-    			if (identityCheck && diagram.root == root ||
-    					!identityCheck && diagram.root.equals(root))
+    			//if (identityCheck && diagram.root == root ||
+    			//		!identityCheck && diagram.root.equals(root))
        			// END KGU#119 2016-01-02
-    			{
-    				owner = diagram;	// Will leave the loop
+    			//{
+    			//	owner = diagram;	// Will leave the loop
+    			//}
+    			int resemblance = diagram.root.compareTo(root);
+    			if (resemblance > 0) {
+    				if (resemblance > 2 && warnLevel2andAbove) {
+    					String message = msgInsertionConflict[resemblance-3].getText().
+    							replace("%1", root.getSignatureString(false)).
+    							replace("%2", diagram.root.filename.toString());
+    					JOptionPane.showMessageDialog(this.getParent(), message,
+    							this.titleDiagramConflict.getText(),
+    							JOptionPane.WARNING_MESSAGE);			
+    				}
+    				if (resemblance <= equalityLevel)
+    				{
+    					owner = diagram;	// Will leave the loop
+    				}
     			}
+    			// END KGU#312 2016-12-29
     		}
     	}
     	return owner;
@@ -1640,10 +1732,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     public void replaced(Root oldRoot, Root newRoot)
     {
     	// Try to find the appropriate diagram holding oldRoot
-    	// START KGU#119 2016-01-02: Bugfix #78 - we only check for identity here, not for structural equality
+    	// START KGU#119/KGU#312 2016-01-02/2016-12-29: Bugfix #78 / enh. #315 - we only check for identity here, not for structural equality
     	//Diagram owner = findDiagram(oldRoot);
-    	Diagram owner = findDiagram(oldRoot, true);
-    	// END KGU#119 2016-01-02
+    	Diagram owner = findDiagram(oldRoot, 1);	// Check for identity
+    	// END KGU#119/KGU#312 2016-01-02/2016-12-29
     	if (owner != null) {
     		oldRoot.removeUpdater(this);
     	// START KGU#88 2015-11-24: Protect the Root if diagram is pinned
@@ -1852,7 +1944,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	 * @param setAtTop - whether the diagram is to be drawn on top of all
 	 */
 	public void scrollToDiagram(Root aRoot, boolean setAtTop) {
-		Diagram diagr = this.findDiagram(aRoot, true);
+		// START KGU#312 2016-12-29: Enh. #315 - adaptation to modified signature 
+		//Diagram diagr = this.findDiagram(aRoot, true);
+		Diagram diagr = this.findDiagram(aRoot, 1);	// Check for identity here
+		// ED KGU#312 2016-12-29
 		if (diagr != null) {
 			if (setAtTop) {
 				this.diagrams.remove(diagr);
