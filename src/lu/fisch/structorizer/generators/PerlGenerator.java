@@ -66,6 +66,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig     2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig     2016.12.01      Bugfix #301: More precise check for parenthesis enclosing of log. conditions
+ *      Kay Gürtzig     2016.12.30      Bugfix KGU#62: Result variable hadn't been prefixed in return instruction
  *
  ******************************************************************************************************
  *
@@ -772,12 +773,20 @@ public class PerlGenerator extends Generator {
 			String result = "0";
 			if (isFunctionNameSet)
 			{
-				result = _root.getMethodName();
+				// START KGU#62 2016-12-30: Bugfix #57
+				//result = _root.getMethodName();
+				result = "$" + _root.getMethodName();
+				// END KGU#62 2016-12-30
 			}
 			else if (isResultSet)
 			{
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
+				// START KGU#62 2016-12-30: Bugfix
+				if (!result.startsWith("$")) {
+					result = "$" + result;
+				}
+				// END KGU#62 2016-12-30
 			}
 			code.add(_indent);
 			code.add(_indent + "return " + result + ";");
