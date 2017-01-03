@@ -87,7 +87,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.12.12      Enh. #306: New method isEmpty() for a Root without text, children, and undo entries
  *                                      Enh. #305: Method getSignatureString() and Comparator SIGNATUR_ORDER added.
  *      Kay Gürtzig     2016.12.16      Bugfix #305: Comparator SIGNATURE_ORDER corrected
- *      Kay Gürtzig     2016.12.28      Enh. #318: Support for re-saving to a arrz file
+ *      Kay Gürtzig     2016.12.28      Enh. #318: Support for re-saving to an arrz file (2017.01.03: getFile() fixed)
  *      Kay Gürtzig     2016.12.29      Enh. #315: New comparison method distinguishing different equality levels
  *
  ******************************************************************************************************
@@ -1118,6 +1118,13 @@ public class Root extends Element {
             return res;
     }
 
+    /**
+     * Returns a File object representing the existing file this diagram is stored within
+     * or proceeding from. In case this is an extracted file, it will represent the path
+     * of the containing archive. If this is not associatd to a file (e.g. never saved) or
+     * the origin file cannot be located anymore then the result will be null.
+     * @return a File object reprsenting th existing source or archive file or null
+     */
     public File getFile()
     {
     	if(filename.equals(""))
@@ -1126,7 +1133,14 @@ public class Root extends Element {
     	}
     	else
     	{
-    		return new File(filename);
+    		// START KGU#316 2017-01-03: Issue #318 - we must not return a virtual path
+    		//return new File(filename);
+    		File myFile = new File(filename);
+    		while (myFile != null && !myFile.exists()) {
+    			myFile = myFile.getParentFile();
+    		}
+    		return myFile;
+    		// END KGU#316 2017-01-03
     	}
     }
 

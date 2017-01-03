@@ -91,7 +91,7 @@ int structorizerFileAPI_getHandleIndex(int fileNo)
  * Tries to open a text file with given filePath for reading. File must exist.
  * A NULL return value indicates failure.
  * @param filePath - the path of the file (may be absolute or relative to the current directory)
- * @return a vaild file handle (> 0) on success or an eror code otherwise
+ * @return a valid file handle (> 0) on success or a (negative) error code otherwise
  */
 int fileOpen(char* filePath)
 {
@@ -113,7 +113,7 @@ int fileOpen(char* filePath)
  * be cleared (without warning!).
  * A NULL return value indicates failure.
  * @param filePath - the path of the file (may be absolute or relative to the current directory)
- * @return a vaild file handle (> 0) on success or an eror code otherwise
+ * @return a valid file handle (> 0) on success or a (negative) error code otherwise
  */
 int fileCreate(char* filePath)
 {
@@ -135,7 +135,7 @@ int fileCreate(char* filePath)
  * it will not be cleared but writing starts at previous end.
  * A NULL return value indicates failure.
  * @param filePath - the path of the file (may be absolute or relative to the current directory
- * @return a vaild file handle (> 0) on success or an eror code otherwise
+ * @return a valid file handle (> 0) on success or a (negative) error code otherwise
  */
 int fileAppend(char* filePath)
 {

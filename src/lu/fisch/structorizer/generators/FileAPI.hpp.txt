@@ -54,7 +54,7 @@ public:
 		: runtime_error(description)
 		{}
 	};
-	// Adapter class for auto-typed values read from a file. It implements automatic coversion
+	// Adapter class for auto-typed values read from a file. It implements automatic conversion
 	// to int, double, string or array values like in Structorizer.
 	// It also implements test methods in order to find out what structure the value actually
 	// represents
@@ -90,10 +90,7 @@ public:
 
 	/**
 	* Tries to open a text file with given filePath for reading. File must exist.
-	* A negative or zero return value indicates failure. Failure code explanation:
-	* 0,-1: unspecific error
-	* -2: file not found
-	* -3: insufficient permissions
+	* A negative or zero return value indicates failure.
 	* @param filePath - the path of the file (may be absolute or relative to the current directory)
 	* @return an int to be used as file handle for this API if > 0 or as error code otherwise.
 	*/
@@ -102,22 +99,16 @@ public:
 	/**
 	* Tries to create a text file with given filePath for writing. Is file exists then it will
 	* be cleared (without warning!).
-	* A negative or zero return value indicates failure. Failure code explanation:
-	* 0,-1: unspecific error
-	* -2: path to create the file within not found
-	* -3: insufficient permissions
+	* A negative or zero return value indicates failure.
 	* @param filePath - the path of the file (may be absolute or relative to the current directory)
 	* @return an int to be used as file handle for this API if > 0 or as error code otherwise.
 	*/
 	static int fileCreate(const std::string& filePath);
 
 	/**
-	* Tries to create or open a text file with given filePath for writing. If the file exists then
-	* it will not be cleared but writing starts at previous end.
-	* A negative or zero return value indicates failure. Failure code explanation:
-	* 0,-1: unspecific error
-	* -2: path to create the file within not found
-	* -3: insufficient permissions
+	* Tries to create or open a text file with given filePath for writing. If the file had existed
+	* then it will not be cleared but writing starts at previous end.
+	* A negative or zero return value indicates failure.
 	* @param filePath - the path of the file (may be absolute or relative to the current directory)
 	* @return an int to be used as file handle for this API if > 0 or as error code otherwise.
 	*/
@@ -141,10 +132,12 @@ public:
 
 	/**
 	* Reads the next token from the text file given by fileNo handle and returns it as an
-	* appropriate value of one of the classes int, double, Object[], or std::string.
+	* appropriate FileAPI_value implicitly convertible to int, double, or std::string.
 	* Throws an error if the given handle is not associated to an open text input file.
+	* The result may also be interpreted as bool value in which case false means that the
+	* value could not be interpreted as any of the known types.
 	* @param fileNo - file handle as obtained by fileOpen before
-	* @return the current object as interpreted from file input char sequence or null.
+	* @return wrapper object for the current value as interpreted from file input.
 	*/
 	static FileAPI_value fileRead(int fileNo);
 
@@ -160,7 +153,7 @@ public:
 	* Reads the next int value from the text file given by fileNo handle and returns it.
 	* Throws an error if the given handle is not associated to an open text input file.
 	* If the file input stream was exhausted (was at end of file) or if the token at reading
-	* was not interpretable as integral literal, then null will be returned.
+	* position was not interpretable as integral literal, then null will be returned.
 	* @param fileNo - file handle as obtained by fileOpen before
 	* @return the current int number as interpreted from file input char sequence or null.
 	*/
@@ -171,7 +164,7 @@ public:
 	* returns it as double.
 	* Throws an error if the given handle is not associated to an open text input file.
 	* If the file input stream was exhausted (was at end of file) or if the token at reading
-	* was not interpretable as integral literal then null will be returned.
+	* position was not interpretable as floating-point literal then null will be returned.
 	* @param fileNo - file handle as obtained by fileOpen before
 	* @return the current floating point-value from file input char sequence or null.
 	*/
@@ -182,9 +175,9 @@ public:
 	* given by fileNo handle and returns it.
 	* Throws an error if the given handle is not associated to an open text input file.
 	* If the file input stream was exhausted (was at end of file) or if the token at reading
-	* was not interpretable as integral literal then null will be returned.
+	* position was not interpretable as integral literal then null will be returned.
 	* @param fileNo - file handle as obtained by fileOpen before
-	* @return the current object as interpreted from file input char sequence or null.
+	* @return the current line from file input or null.
 	*/
 	static std::string fileReadLine(int fileNo);
 
