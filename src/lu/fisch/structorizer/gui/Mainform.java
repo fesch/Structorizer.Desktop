@@ -55,6 +55,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.12.02      Enh. #300: Notification of disabled version retrieval or new versions
  *      Kay Gürtzig     2016.12.12      Enh. #305: API enhanced to support the Arranger Root index view
  *      Kay Gürtzig     2016.12.15      Enh. #310: New options for saving diagrams added
+ *      Kay Gürtzig     2017.01.04      KGU#49: Closing a stand-alone instance now effectively warns Arranger
  *
  ******************************************************************************************************
  *
@@ -210,8 +211,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                             {
                                     saveToINI();
                                     // START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
-                                    if (isStandalone)
+                                    if (isStandalone) {
+                                            // START KGU#49 2017-01-04 Care for potential Arranger dependants
+                                            if (Arranger.hasInstance()) {
+                                            	Arranger.getInstance().windowClosing(e);
+                                            }
+                                            // END KGU#49 2017-01-04
                                             System.exit(0);	// This kills all related frames and threads as well!
+                                    }
                                     else
                                             dispose();
                                     // END KGU#49/KGU#66 (#6/#16) 2015-11-14

@@ -107,6 +107,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.12.02      Enh. #300: Update notification mechanism
  *      Kay Gürtzig     2016.12.12      Enh, #305: Infrastructure for Arranger root list
  *      Kay Gürtzig     2016.12.28      Enh. #318: Backsaving of unzipped diagrams to arrz file
+ *      Kay Gürtzig     2017.01.04      Bugfix #321: Signatures of saveNSD(), doSaveNSD(), saveAsNSD() and zipToArrz() enhanced
  *
  ******************************************************************************************************
  *
@@ -1337,6 +1338,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * SaveAs method
 	 *****************************************/
 	public void saveAsNSD()
+	// START KGU#320 2017-01-04: Bugfix #321(?) We need a possibility to save a different root
+	{
+		saveAsNSD(this.root);
+	}
+	
+	private void saveAsNSD(Root root)
+	// END KGU#320 2017-01-04
 	{
 		JFileChooser dlgSave = new JFileChooser();
 		dlgSave.setDialogTitle(Menu.msgTitleSaveAs.getText());
@@ -1397,7 +1405,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					root.shadowFilepath = null;
 					// END KGU#316 2016-12-28
 					// START KGU#94 2015.12.04: out-sourced to auxiliary method
-					doSaveNSD();
+					// START KGU#320 2017-01-04: Bugfix #321(?) Need a parameter now
+					//doSaveNSD();
+					doSaveNSD(root);
+					// END KGU#320 2017-01-04
 					// END KGU#94 2015-12-04
 		        	// START KGU#273 2016-10-07: Bugfix #263 - remember the directory as current directory
 		        	this.currentDirectory = f;
@@ -1423,9 +1434,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * Stores unsaved changes (if any). If _askToSave is true then the user may confirm or deny saving or cancel the
 	 * inducing request. 
 	 * @param _askToSave - if true and the current root has unsaved changes then a user dialog will be popped up first
-	 * @return true if the user cancelled the save request
+	 * @return true if the user did not cancel the save request
 	 */
 	public boolean saveNSD(boolean _askToSave)
+	// START KGU#320 2017-01-04: Bugfix (#321)
+	{
+		return saveNSD(this.root, _askToSave);
+	}
+	
+	public boolean saveNSD(Root root, boolean _askToSave)
+	// END KGU#320 2017-01-04
 	{
 		int res = 0;	// Save decision: 0 = do save, 1 = don't save, -1 = cancelled (don't leave)
 		// only save if something has been changed
@@ -1499,13 +1517,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //				}
 //
 //				if (saveIt == true)
-					saveAsNSD();
+					// START KGU#320 2017-01-04: Bugfix (#321)
+					//saveAsNSD();
+					saveAsNSD(root);
+					// END KGU#320 2017-01-04
 				}
 				else
 // END KGU#248 2016-09-15
 				{
 					// START KGU#94 2015-12-04: Out-sourced to auxiliary method
-					doSaveNSD();
+					// START KGU#320 2017-01-04: Bugfix (#321) had to parameterize this
+					//doSaveNSD();
+					doSaveNSD(root);
+					// END KGU#320 2017-01-04
 					// END KGU#94 2015-12-04
 				}
 			}
@@ -1514,7 +1538,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	// START KGU#94 2015-12-04: Common file writing routine (on occasion of bugfix #40)
-	private boolean doSaveNSD()
+	// START KGU#320 2017-01-03: Bugfix (#321)
+	//private boolean doSaveNSD()
+	private boolean doSaveNSD(Root root)
+	// END KGU#320 2017-01-03
 	{
 		//String[] EnvVariablesToCheck = { "TEMP", "TMP", "TMPDIR", "HOME", "HOMEPATH" };
 		boolean done = false;
@@ -1571,7 +1598,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#316 2016-12-28: Enh. #318 Let nsd files reside in arrz files
 			// if (fileExisted)
 			if (root.shadowFilepath != null) {
-				if (!zipToArrz(filename)) {
+				// START KGU#320 2017-01-04: Bugfix #321(?)
+				//if (!zipToArrz(filename)) {
+				if (!zipToArrz(root, filename)) {
+				// END KGU#320 2017-01-04
 					// If the saving to the original arrz file failed then make the shadow path the actual one
 					root.filename = filename;
 					root.shadowFilepath = null;
@@ -1621,7 +1651,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#94 2015-12-04
 	
 	// START KGU#316 2016-12-28: Enh. #318
-	private boolean zipToArrz(String tmpFilename)
+	// START KGU#320 2017-01-04: Bugfix #320 We might be forced to save a different diagram (from Arranger)
+	//private boolean zipToArrz(String tmpFilename)
+	private boolean zipToArrz(Root root, String tmpFilename)
+	// END KGU#320 2017-01-04
 	{
 		String error = null;
 		boolean isDone = false;
@@ -1677,7 +1710,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				}
 				boolean bakOk = arrzFile.renameTo(bakFile);
 				boolean zipOk = tmpZipFile.renameTo(new File(zipPath));
-				if (!Element.E_MAKE_BACKUPS) {
+				if (bakOk && zipOk && !Element.E_MAKE_BACKUPS) {
 					bakFile.delete();
 				}
 				isDone = true;

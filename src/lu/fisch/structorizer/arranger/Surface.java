@@ -65,6 +65,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.12.17      Enh. #305: New method removeDiagram(Root)
  *      Kay Gürtzig     2016.12.28      Enh. #318: Shadow path for Roots unzipped (from an arrz) into a temp dir
  *      Kay Gürtzig     2016.12.29      Enh. #315: More meticulous detection of diagram conflicts
+ *      Kay Gürtzig     2017.01.04      Bugfix #321: Make sure Mainforms save the actually iterated Roots 
  *
  ******************************************************************************************************
  *
@@ -154,7 +155,6 @@ import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.gui.Mainform;
-import lu.fisch.structorizer.gui.Menu;
 import lu.fisch.structorizer.io.ArrFilter;
 import lu.fisch.structorizer.io.ArrZipFilter;
 import lu.fisch.structorizer.io.PNGFilter;
@@ -186,30 +186,30 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     public File currentDirectory = new File(System.getProperty("user.home"));
     // END KGU#110 2015-12-21
     // START KGU#202 2016-07-03
-    public LangTextHolder msgFileLoadError = new LangTextHolder("File Load Error:");
-    public LangTextHolder msgSavePortable = new LangTextHolder("Save as portable compressed archive?");
-    public LangTextHolder msgSaveDialogTitle = new LangTextHolder("Save arranged set of diagrams ...");
-    public LangTextHolder msgSaveError = new LangTextHolder("Error on saving the arrangement:");
-    public LangTextHolder msgLoadDialogTitle = new LangTextHolder("Reload a stored arrangement of diagrams ...");
-    public LangTextHolder msgExtractDialogTitle = new LangTextHolder("Extract to a directory?");
-    public LangTextHolder msgArrLoadError = new LangTextHolder("Error on loading the arrangement:");
-    public LangTextHolder msgExportDialogTitle = new LangTextHolder("Export diagram as PNG ...");
-    public LangTextHolder msgExportError = new LangTextHolder("Error while saving the image!");
-    public LangTextHolder msgParseError = new LangTextHolder("NSD-Parser Error:");
-    public LangTextHolder msgResetCovered = new LangTextHolder("Routine is already marked as test-covered! Reset coverage mark?");
-    public LangTextHolder msgCoverageError = new LangTextHolder("No suitable routine diagram selected, cannot mark anything as covered!");
-    public LangTextHolder msgUnsavedDiagrams = new LangTextHolder("Couldn't save these diagrams:");
-    public LangTextHolder msgUnsavedHint = new LangTextHolder("You might want to double-click and save them via Structorizer first.");
-    public LangTextHolder msgUnsavedContinue = new LangTextHolder("Continue nevertheless?");
-    public LangTextHolder msgNoArrFile = new LangTextHolder("No Arranger file found");
+    public final LangTextHolder msgFileLoadError = new LangTextHolder("File Load Error:");
+    public final LangTextHolder msgSavePortable = new LangTextHolder("Save as portable compressed archive?");
+    public final LangTextHolder msgSaveDialogTitle = new LangTextHolder("Save arranged set of diagrams ...");
+    public final LangTextHolder msgSaveError = new LangTextHolder("Error on saving the arrangement:");
+    public final LangTextHolder msgLoadDialogTitle = new LangTextHolder("Reload a stored arrangement of diagrams ...");
+    public final LangTextHolder msgExtractDialogTitle = new LangTextHolder("Extract to a directory?");
+    public final LangTextHolder msgArrLoadError = new LangTextHolder("Error on loading the arrangement:");
+    public final LangTextHolder msgExportDialogTitle = new LangTextHolder("Export diagram as PNG ...");
+    public final LangTextHolder msgExportError = new LangTextHolder("Error while saving the image!");
+    public final LangTextHolder msgParseError = new LangTextHolder("NSD-Parser Error:");
+    public final LangTextHolder msgResetCovered = new LangTextHolder("Routine is already marked as test-covered! Reset coverage mark?");
+    public final LangTextHolder msgCoverageError = new LangTextHolder("No suitable routine diagram selected, cannot mark anything as covered!");
+    public final LangTextHolder msgUnsavedDiagrams = new LangTextHolder("Couldn't save these diagrams:");
+    public final LangTextHolder msgUnsavedHint = new LangTextHolder("You might want to double-click and save them via Structorizer first.");
+    public final LangTextHolder msgUnsavedContinue = new LangTextHolder("Continue nevertheless?");
+    public final LangTextHolder msgNoArrFile = new LangTextHolder("No Arranger file found");
     // END KGU#202 2016-07-03
     // START KGU#289 2016-11-14: Enh. #289
-    public LangTextHolder msgDefectiveArr = new LangTextHolder("Defective Arrangement.");
-    public LangTextHolder msgDefectiveArrz = new LangTextHolder("Defective Portable Arrangement.");
+    public final LangTextHolder msgDefectiveArr = new LangTextHolder("Defective Arrangement.");
+    public final LangTextHolder msgDefectiveArrz = new LangTextHolder("Defective Portable Arrangement.");
     // END KGU#289 2016-11-14
     // START KGU#312 2016-12-29: Enh. #315 more meticulous equivalence analysis on insertion
     public final LangTextHolder titleDiagramConflict = new LangTextHolder("Diagram conflict");
-    public LangTextHolder[] msgInsertionConflict = {
+    public final LangTextHolder[] msgInsertionConflict = {
     		new LangTextHolder("There is another version of diagram \"%2\",\nat least one of them has unsaved changes."),
     		new LangTextHolder("There is an equivalent copy of diagram \"%1\"\nwith different path \"%2\"."),
     		new LangTextHolder("There is a differing diagram with signature \"%1\"\nand path \"%2\".")
@@ -1426,7 +1426,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
      * Loops over all administered diagrams and has their respective Mainform (if still alive) saved them in case they are dirty
      * @return Whether saving is complete (or confirmed though being incomplete) 
      */
-    // START KGU#177 2016-04-14: Enh. #158 - return all diagram (file) names without saving possibility
+    // START KGU#177 2016-04-14: Enh. #158 - report all diagram (file) names without saving possibility
     //public void saveDiagrams()
     public boolean saveDiagrams()
     {
@@ -1436,47 +1436,67 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     public boolean saveDiagrams(boolean goingToClose)
     // END KGU#177 2016-04-14
     {
-		// START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
-    	boolean allDone = true;
-		StringList unsaved = new StringList();
-		// END KGU#177 2016-04-14
-    	if (this.diagrams != null)
-    	{
-    		Iterator<Diagram> iter = this.diagrams.iterator();
-    		while (iter.hasNext())
-    		{
-    			Diagram diagram = iter.next();
-    			Mainform form = diagram.mainform;
-    			if (form != null)
-    			{
-    				form.diagram.saveNSD(!goingToClose || !Element.E_AUTO_SAVE_ON_CLOSE);
-    			}
-    			// START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
-    			else if (diagram.root.filename == null || diagram.root.filename.isEmpty())
-    			{
-    				unsaved.add("( " + diagram.root.proposeFileName() + " ?)");
-    				allDone = false;
-    			}
-    			else if (diagram.root.hasChanged())
-				{
-					unsaved.add(diagram.root.filename);
-					allDone = false;
-				}
-    			// END KGU#177 2016-04-14
-			}
-    	}
-		// START KGU#177 2016-04-14: Enh. #158
-    	if (!allDone)
-    	{
-    		String message = msgUnsavedDiagrams.getText() + "\n" + unsaved.getText();
-    		int answer = JOptionPane.showConfirmDialog(this, message +
-    				"\n\n" + msgUnsavedHint.getText() + "\n" +
-    				msgUnsavedContinue.getText(), "Saving Problem",
-    				JOptionPane.WARNING_MESSAGE);
-    		allDone = answer == JOptionPane.YES_OPTION;
-    	}
-    	return allDone;
-    	// END KGU#177 2016-04-14
+        // START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
+        boolean allDone = true;
+        StringList unsaved = new StringList();
+        // END KGU#177 2016-04-14
+        if (this.diagrams != null)
+        {
+            // START KGU#320 2017-01-04: Bugfix #321
+            HashSet<Root> handledRoots = new HashSet<Root>();
+            HashSet<Mainform> mainforms = new HashSet<Mainform>();
+            // END KGU#320 2017-01-04
+            Iterator<Diagram> iter = this.diagrams.iterator();
+            while (iter.hasNext())
+            {
+                Diagram diagram = iter.next();
+                Mainform form = diagram.mainform;
+                if (form != null)
+            	{
+                    // START KGU#320 2017-01-04: Bugfix #321 (?) A Mainform may own several diagrams here!
+                    //form.diagram.saveNSD(!goingToClose || !Element.E_AUTO_SAVE_ON_CLOSE);
+                    form.diagram.saveNSD(diagram.root, !(goingToClose && Element.E_AUTO_SAVE_ON_CLOSE));
+                    mainforms.add(form);
+                    handledRoots.add(diagram.root);
+                    // END KGU#320 2017-01-04
+            	}
+                // START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
+                else if (diagram.root.filename == null || diagram.root.filename.isEmpty())
+                {
+                    unsaved.add("( " + diagram.root.proposeFileName() + " ?)");
+                    allDone = false;
+                }
+                else if (diagram.root.hasChanged())
+                {
+                    unsaved.add(diagram.root.filename);
+                    allDone = false;
+                }
+                // END KGU#177 2016-04-14
+            }
+            // START KGU#320 2017-01-04: Bugfix #321
+            // In case Arranger is closing give all dependent (and possibly doomed) Mainforms a
+            // chance to save their currently maintained Root even if this was not arranged here.
+            if (goingToClose) {
+                for (Mainform form: mainforms) {
+                    if (!form.isStandalone() && !handledRoots.contains(form.getRoot())) {
+                        form.diagram.saveNSD(!(goingToClose && Element.E_AUTO_SAVE_ON_CLOSE));
+                    }
+                }
+            }
+        	// END KGU#320 2017-01-04
+        }
+        // START KGU#177 2016-04-14: Enh. #158
+        if (!allDone)
+        {
+            String message = msgUnsavedDiagrams.getText() + "\n" + unsaved.getText();
+            int answer = JOptionPane.showConfirmDialog(this, message +
+                    "\n\n" + msgUnsavedHint.getText() + "\n" +
+                    msgUnsavedContinue.getText(), "Saving Problem",
+                    JOptionPane.WARNING_MESSAGE);
+            allDone = answer == JOptionPane.YES_OPTION;
+        }
+        return allDone;
+        // END KGU#177 2016-04-14
     }
     // END KGU#49 2015-10-18
     
@@ -1760,9 +1780,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		//notifyChangeListeners();
     		// END KGU#278 2016-10-11
     	}
-		// START KGU#305 2016-10-16: Enh. #305
-		notifyChangeListeners();
-		// END KGU#305 2016-10-16
+    	// START KGU#305 2016-10-16: Enh. #305
+    	notifyChangeListeners();
+    	// END KGU#305 2016-10-16
     }
     // END KGU#48 2015-10-17
     

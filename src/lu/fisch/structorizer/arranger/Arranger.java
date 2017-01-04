@@ -37,7 +37,7 @@ package lu.fisch.structorizer.arranger;
  *      ------          ----        -----------
  *      Bob Fisch       2009.08.18  First Issue
  *      Kay Gürtzig     2015.10.18  Transient WindowsListener added enabling Surface to have dirty
- *                                  diagrams saved before exit
+ *                                  diagrams saved before exit (KGU#49)
  *      Kay Gürtzig     2015.11.17  Remove button added (issue #35 = KGU#85)
  *      Kay Gürtzig     2015.11.19  Converted into a singleton (enhancement request #9 = KGU#2)
  *      Kay Gürtzig     2015-11-24  Pin button added (issue #35, KGU#88)
@@ -56,6 +56,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.12.12  Enh. #305: Support for diagram list in Structorizer
  *      Kay Gürtzig     2016.12.16  Issue #305: Notification redesign, visibility fix in scrollToDiagram,
  *                                  new method removeDiagram(Root)
+ *      Kay Gürtzig     2017.01.04  KGU#49: Arranger now handles windowClosing events itself (instead
+ *                                  of a transient WindowAdapter). This allows Mainform to warn Arranger
  *
  ******************************************************************************************************
  *
@@ -418,45 +420,47 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         /******************************
          * Set onClose event
          ******************************/
-        addWindowListener(new WindowAdapter() 
-        {  
-        	@Override
-        	public void windowClosing(WindowEvent e) 
-        	{
-        		// START KGU#177 2016-04-14: Enh. #158 - We want to provide an emergency exit here
-//        		// START KGU#2 2015-11-19: Only necessary if I am going to exit
-//        		if (mySelf.getDefaultCloseOperation() == JFrame.EXIT_ON_CLOSE)
-//        		// END KGU#2 2015-11-19
-//        			surface.saveDiagrams();	// Allow user to save dirty diagrams
-        		if (surface.saveDiagrams(true))
-        		{
-        			if (isStandalone)
-        			{
-        				System.exit(0);
-        			}
-        			else
-        			{
-        				dispose();
-        			}
-        		}
-        		// END KGU#177 2016-04-14
-        	}  
-
-        	@Override
-        	public void windowOpened(WindowEvent e) 
-        	{  
-        	}  
-
-        	@Override
-        	public void windowActivated(WindowEvent e)
-        	{  
-        	}
-
-        	@Override
-        	public void windowGainedFocus(WindowEvent e) 
-        	{  
-        	}  
-        });
+//        addWindowListener(new WindowAdapter() 
+//        {  
+//        	@Override
+//        	public void windowClosing(WindowEvent e) 
+//        	{
+//        		System.out.println("WindowAdapter.windowClosing()...");
+//        		// START KGU#177 2016-04-14: Enh. #158 - We want to provide an emergency exit here
+////        		// START KGU#2 2015-11-19: Only necessary if I am going to exit
+////        		if (mySelf.getDefaultCloseOperation() == JFrame.EXIT_ON_CLOSE)
+////        		// END KGU#2 2015-11-19
+////        			surface.saveDiagrams();	// Allow user to save dirty diagrams
+//        		if (surface.saveDiagrams(true))
+//        		{
+//        			if (isStandalone)
+//        			{
+//        				System.exit(0);
+//        			}
+//        			else
+//        			{
+//        				dispose();
+//        			}
+//        		}
+//        		// END KGU#177 2016-04-14
+//        	}  
+//
+//        	@Override
+//        	public void windowOpened(WindowEvent e) 
+//        	{  
+//        	}  
+//
+//        	@Override
+//        	public void windowActivated(WindowEvent e)
+//        	{  
+//        	}
+//
+//        	@Override
+//        	public void windowGainedFocus(WindowEvent e) 
+//        	{  
+//        	}  
+//        });
+        addWindowListener(this); 
         // END KGU#49 2015-10-18
 
         // START KGU#117 2016-03-09: New for Enh. #77
@@ -551,7 +555,20 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     }
 
     public void windowClosing(WindowEvent e) {
-    }
+        // START KGU#49 2017-01-04: On closing the Arranger window, the dependent Mainforms must get a chance to save their stuff!
+		if (surface.saveDiagrams(true))
+		{
+			if (isStandalone)
+			{
+				System.exit(0);
+			}
+			else
+			{
+				dispose();
+			}
+		}
+        // END KGU#49 2017-01-04
+	}
 
     public void windowClosed(WindowEvent e) {
     }

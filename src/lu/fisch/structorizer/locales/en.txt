@@ -195,6 +195,7 @@ Menu.menuDiagramSwitchTCTooltip.text=Unselect "%1" to enable this item
 Menu.menuDiagramMarker.text=Highlight variables?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Analyse structogram?
+Menu.menuDiagramIndex.text=Show Arranger index?
 Menu.menuDiagramWheel.text=Mouse wheel for collapsing?
 // Menu "Preferences"
 Menu.menuPreferences.text=Preferences

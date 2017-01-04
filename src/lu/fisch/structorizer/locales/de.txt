@@ -193,6 +193,7 @@ Menu.menuDiagramSwitchTCTooltip.text=Zum Aktivieren dieses Menüpunkts "%1" abw�
 Menu.menuDiagramMarker.text=Hervorheben von Variablen?
 Menu.menuDiagramDIN.text=DIN 66261?
 Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
+Menu.menuDiagramIndex.text=Arranger-Index anzeigen?
 Menu.menuDiagramWheel.text=Mausrad zum Reduzieren?
 // Menu "Preferences"
 Menu.menuPreferences.text=Einstellungen

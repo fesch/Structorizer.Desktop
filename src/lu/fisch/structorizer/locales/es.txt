@@ -194,6 +194,7 @@ Menu.menuDiagramSwitchTCTooltip.text=Impida opción "%1" para activar este punto
 Menu.menuDiagramMarker.text=¿Resaltar variables?
 Menu.menuDiagramDIN.text=¿DIN?
 Menu.menuDiagramAnalyser.text=¿Comprobar diagrama?
+Menu.menuDiagramIndex.text=¿Mostrar índice de Arranger?
 Menu.menuDiagramWheel.text=¿Usar rueda para reducir?
 // Menu "Preferences"
 Menu.menuPreferences.text=Preferencias
