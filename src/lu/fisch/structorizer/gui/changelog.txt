@@ -101,6 +101,7 @@ Current development version: 3.25-12 (2017.01.04)
 - 12: Bugfix #320: PHPGenerator added superfluous parentheses to correct CALLs <2>
 - 12: Closing Structorizer now warns Arranger and secondary Structorizer instances <2>
 - 12: Arranger strategy to request saving of dirty diagrams on closing fixed <2>
+- 12: Bugfix #322: C# code export of input and output instructions was wrong <2>  
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2
