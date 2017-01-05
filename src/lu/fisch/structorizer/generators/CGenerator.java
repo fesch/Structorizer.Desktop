@@ -308,10 +308,8 @@ public class CGenerator extends Generator {
 		}
 		// END KGU#150 2016-04-03
 		// START KGU#311 2016-12-22: Enh. #314 - Structorizer file API support
-		pos = -1;
-		while ((pos = tokens.indexOf("fileRead", pos+1)) >= 0 && pos+1 < tokens.count() && tokens.get(pos+1).equals("("))
-		{
-			tokens.set(pos, "*(/*type?*/*)fileRead");
+		if (this.usesFileAPI) {
+			transformFileAPITokens(tokens);
 		}
 		// END KGU#311 2016-12-22
 		return tokens.concatenate();
@@ -319,7 +317,26 @@ public class CGenerator extends Generator {
 	// END KGU#93 2015-12-21
 
 	// END KGU#18/KGU#23 2015-11-01
-    
+
+	// START KGU#311 2016-12-22: Enh. #314 - Structorizer file API support
+	/**
+	 * Subclassable submethod of transformTokens(), designed to do specific replacements or manipulations
+	 * with the subroutine names of the File API. It is called after all other token transformations are done
+	 * (immediately before re-concatenation).
+	 * This does some C-specific stuff here prefixing fileRead with pointer operators and a dummy type casting,
+	 * so subclasses should better overwrite it.
+	 * @param tokens
+	 */
+	protected void transformFileAPITokens(StringList tokens)
+	{
+		int pos = -1;
+		while ((pos = tokens.indexOf("fileRead", pos+1)) >= 0 && pos+1 < tokens.count() && tokens.get(pos+1).equals("("))
+		{
+			tokens.set(pos, "*(/*type?*/*)fileRead");
+		}
+	}
+	// END KGU#311 2016-12-22
+	
 // START KGU#18/KGU#23 2015-11-01: Obsolete    
 //    public static String transform(String _input)
 	/* (non-Javadoc)

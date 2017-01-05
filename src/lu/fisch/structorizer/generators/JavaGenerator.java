@@ -264,6 +264,17 @@ public class JavaGenerator extends CGenerator
 	// END KGU#93 2015-12-21
 
 	// END KGU#18/KGU#23 2015-11-01
+	
+	// START KGU#311 2017-01-05: Enh. #314 Don't do what the parent does.
+	/* (non-Javadoc)
+	 * Does nothing here.
+	 * @see lu.fisch.structorizer.generators.CGenerator#transformFileAPITokens(lu.fisch.utils.StringList)
+	 */
+	@Override
+	protected void transformFileAPITokens(StringList tokens)
+	{
+	}
+	// END KGU#311 2017-01-05
 
 	@Override
 	protected String transform(String _input)

@@ -94,6 +94,7 @@ import lu.fisch.utils.*;
 import java.util.regex.Matcher;
 
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.parsers.D7Parser;
 
 
@@ -223,6 +224,16 @@ public class CSharpGenerator extends CGenerator
 		return _interm;
 	}
 	// END KGU#321 2017-01-04
+
+	// START KGU#311 2017-01-05: Enh. #314 Don't do what the parent does.
+	@Override
+	protected void transformFileAPITokens(StringList tokens)
+	{
+		for (int i = 0; i < Executor.fileAPI_names.length; i++) {
+			tokens.replaceAll(Executor.fileAPI_names[i], "StructorizerFileAPI." + Executor.fileAPI_names[i]);
+		}
+	}
+	// END KGU#311 2017-01-05
 
 	// START KGU#16/#47 2015-11-30
 	/**
@@ -385,6 +396,12 @@ public class CSharpGenerator extends CGenerator
 
 			insertBlockHeading(_root, "public class "+ _procName, _indent);
 			code.add(_indent);
+			// START KGU#311 2017-01-05: Enh. #314 File API
+			if (this.usesFileAPI) {
+				this.insertFileAPI("cs", code.count(), _indent, 0);
+				code.add(_indent);
+			}
+			// END KU#311 2017-01-05
 			insertComment("TODO: Declare and initialise class and member variables here", _indent + this.getIndent());
 			code.add(_indent);
 			code.add(_indent + this.getIndent()+"/**");
@@ -395,6 +412,12 @@ public class CSharpGenerator extends CGenerator
 			code.add("");
 		}
 		else {
+			// START KGU#311 2017-01-05: Enh. #314 File API
+			if (this.topLevel && this.usesFileAPI) {
+				this.insertFileAPI("cs", code.count(), _indent, 0);
+				code.add(_indent+this.getIndent());
+			}
+			// END KU#311 2017-01-05
 			insertBlockComment(_root.getComment(), _indent+this.getIndent(), "/**", " * ", null);
 			if (_resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
 			{

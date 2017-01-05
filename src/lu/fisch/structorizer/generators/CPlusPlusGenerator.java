@@ -45,6 +45,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig     2016.11.08      Collateral damage of #271 to getOutputReplacer() mended
  *      Kay Gürtzig     2016.12.25      Enh. #314: Support for File API added.
+ *      Kay Gürtzig     2017.01.05      Enh. #314: File API intervention in transformTokens modified
  *
  ******************************************************************************************************
  *
@@ -169,21 +170,18 @@ public class CPlusPlusGenerator extends CGenerator {
 	}
 	// END KGU#101 2015-12-11
 	
-	// START KGU#311 2016-12-25: Enh. #314: Replace all API names by prefixed ones
+	// START KGU#311 2016-12-25/2017-01-05: Enh. #314: Replace all API names by prefixed ones
 	/* (non-Javadoc)
-	 * @see lu.fisch.structorizer.generators.Generator#transformTokens(lu.fisch.utils.StringList)
+	 * @see lu.fisch.structorizer.generators.CGenerator#transformFileAPITokens(lu.fisch.utils.StringList)
 	 */
 	@Override
-	protected String transformTokens(StringList tokens)
+	protected void transformFileAPITokens(StringList tokens)
 	{
-		if (this.usesFileAPI) {
-			for (int i = 0; i < Executor.fileAPI_names.length; i++) {
-				tokens.replaceAll(Executor.fileAPI_names[i], "StructorizerFileAPI::" + Executor.fileAPI_names[i]);
-			}
+		for (int i = 0; i < Executor.fileAPI_names.length; i++) {
+			tokens.replaceAll(Executor.fileAPI_names[i], "StructorizerFileAPI::" + Executor.fileAPI_names[i]);
 		}
-		return super.transformTokens(tokens);
 	}
-	// END KGU#311 2016-12-25
+	// END KGU#311 2016-12-25/2017-01-05
 	
 	// START KGU#16 2016-01-14
 	@Override

@@ -48,7 +48,7 @@
 	/**
 	 * Maps the file numbers to stream writers or scanners. For File-API-internal use only 
 	 */
-	private static java.util.Vector<java.io.Closeable> executorFileMap = new java.util.Vector<java.io.Closeable>(); 
+	private static java.util.Vector<java.io.Closeable> structorizerFileMap = new java.util.Vector<java.io.Closeable>(); 
 
 	/**
 	 * Tries to open a text file with given filePath for reading. File must exist.
@@ -66,8 +66,8 @@
 		try {
 			java.io.FileInputStream fis = new java.io.FileInputStream(file);
 			java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, "UTF-8"));
-			fileNo = executorFileMap.size() + 1;
-			executorFileMap.add(new java.util.Scanner(reader));
+			fileNo = structorizerFileMap.size() + 1;
+			structorizerFileMap.add(new java.util.Scanner(reader));
 		}
 		catch (SecurityException e) { fileNo = -3; }
 		catch (java.io.FileNotFoundException e) { fileNo = -2; }
@@ -89,10 +89,11 @@
 	{
 		int fileNo = 0;
 		java.io.File file = new java.io.File(filePath);
-		try { java.io.FileOutputStream fos = new java.io.FileOutputStream(file);
-		java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, "UTF-8"));
-		fileNo = executorFileMap.size() + 1;
-		executorFileMap.add(writer);
+		try {
+			java.io.FileOutputStream fos = new java.io.FileOutputStream(file);
+			java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, "UTF-8"));
+			fileNo = structorizerFileMap.size() + 1;
+			structorizerFileMap.add(writer);
 		}
 		catch (SecurityException e) { fileNo = -3; }
 		catch (java.io.FileNotFoundException e) { fileNo = -2; }
@@ -114,10 +115,11 @@
 	{
 		int fileNo = 0;
 		java.io.File file = new java.io.File(filePath);
-		try { java.io.FileOutputStream fos = new java.io.FileOutputStream(file, true);
-		java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, "UTF-8"));
-		fileNo = executorFileMap.size() + 1;
-		executorFileMap.add(writer);
+		try {
+			java.io.FileOutputStream fos = new java.io.FileOutputStream(file, true);
+			java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, "UTF-8"));
+			fileNo = structorizerFileMap.size() + 1;
+			structorizerFileMap.add(writer);
 		}
 		catch (SecurityException e) { fileNo = -3; }
 		catch (java.io.FileNotFoundException e) { fileNo = -2; }
@@ -132,12 +134,12 @@
 	 */
 	public static void fileClose(int fileNo) throws java.io.IOException
 	{
-		if (fileNo > 0 && fileNo <= executorFileMap.size()) {
-			java.io.Closeable file = executorFileMap.get(fileNo - 1);
+		if (fileNo > 0 && fileNo <= structorizerFileMap.size()) {
+			java.io.Closeable file = structorizerFileMap.get(fileNo - 1);
 			if (file != null) {
 				try { file.close(); }
 				catch (java.io.IOException e) {}
-				executorFileMap.set(fileNo - 1, null); }
+				structorizerFileMap.set(fileNo - 1, null); }
 		}
 		else { throw new java.io.IOException("fileClose: §INVALID_HANDLE_READ§"); }
 	}
@@ -152,8 +154,8 @@
 	public static boolean fileEOF(int fileNo) throws java.io.IOException
 	{
 		boolean isEOF = true;
-		if (fileNo > 0 && fileNo <= executorFileMap.size()) {
-			java.io.Closeable reader = executorFileMap.get(fileNo - 1);
+		if (fileNo > 0 && fileNo <= structorizerFileMap.size()) {
+			java.io.Closeable reader = structorizerFileMap.get(fileNo - 1);
 			if (reader instanceof java.util.Scanner) {
 				//try {
 					isEOF = !((java.util.Scanner)reader).hasNext();
@@ -231,8 +233,8 @@
 	{
 		Object result = null;
 		boolean ok = false;
-		if (fileNo > 0 && fileNo <= executorFileMap.size()) {
-			java.io.Closeable reader = executorFileMap.get(fileNo - 1);
+		if (fileNo > 0 && fileNo <= structorizerFileMap.size()) {
+			java.io.Closeable reader = structorizerFileMap.get(fileNo - 1);
 			if (reader instanceof java.util.Scanner) {
 				result = structorizerGetScannedObject((java.util.Scanner)reader);
 				ok = true;
@@ -251,8 +253,8 @@
 	public static Character fileReadChar(int fileNo) throws java.io.IOException {
 		Character result = '\0';
 		boolean ok = false;
-		if (fileNo > 0 && fileNo <= executorFileMap.size()) {
-			java.io.Closeable reader = executorFileMap.get(fileNo - 1);
+		if (fileNo > 0 && fileNo <= structorizerFileMap.size()) {
+			java.io.Closeable reader = structorizerFileMap.get(fileNo - 1);
 			if (reader instanceof java.util.Scanner) {
 				java.util.Scanner sc = (java.util.Scanner)reader;
 				java.util.regex.Pattern oldDelim = sc.delimiter();
@@ -283,8 +285,8 @@
 	{
 		Integer result = null;
 		boolean ok = false;
-		if (fileNo > 0 && fileNo <= executorFileMap.size()) {
-			java.io.Closeable reader = executorFileMap.get(fileNo - 1);
+		if (fileNo > 0 && fileNo <= structorizerFileMap.size()) {
+			java.io.Closeable reader = structorizerFileMap.get(fileNo - 1);
 			if (reader instanceof java.util.Scanner) {
 				if (((java.util.Scanner)reader).hasNextInt()) {
 					result = ((java.util.Scanner)reader).nextInt();
@@ -309,8 +311,8 @@
 	{ 
 		Double result = null;
 		boolean ok = false;
-		if (fileNo > 0 && fileNo <= executorFileMap.size()) {
-			java.io.Closeable reader = executorFileMap.get(fileNo - 1);
+		if (fileNo > 0 && fileNo <= structorizerFileMap.size()) {
+			java.io.Closeable reader = structorizerFileMap.get(fileNo - 1);
 			if (reader instanceof java.util.Scanner) {
 				if (((java.util.Scanner)reader).hasNextDouble()) {
 					result = ((java.util.Scanner)reader).nextDouble();
@@ -335,8 +337,8 @@
 	{
 		String line = null;
 		boolean ok = false;
-		if (fileNo > 0 && fileNo <= executorFileMap.size()) {
-			java.io.Closeable reader = executorFileMap.get(fileNo - 1);
+		if (fileNo > 0 && fileNo <= structorizerFileMap.size()) {
+			java.io.Closeable reader = structorizerFileMap.get(fileNo - 1);
 			if (reader instanceof java.util.Scanner) {
 				if (((java.util.Scanner)reader).hasNextLine()) {
 					line = ((java.util.Scanner)reader).nextLine();
@@ -357,8 +359,8 @@
 	public static void fileWrite(int fileNo, java.lang.Object data) throws java.io.IOException
 	{
 		boolean ok = false;
-		if (fileNo > 0 && fileNo <= executorFileMap.size()) {
-			java.io.Closeable writer = executorFileMap.get(fileNo - 1);
+		if (fileNo > 0 && fileNo <= structorizerFileMap.size()) {
+			java.io.Closeable writer = structorizerFileMap.get(fileNo - 1);
 			if (writer instanceof java.io.BufferedWriter) {
 				((java.io.BufferedWriter)writer).write(data.toString());
 				ok = true;
@@ -377,8 +379,8 @@
 	public static void fileWriteLine(int fileNo, java.lang.Object data) throws java.io.IOException
 	{
 		boolean ok = false;
-		if (fileNo > 0 && fileNo <= executorFileMap.size()) {
-			java.io.Closeable file = executorFileMap.get(fileNo - 1);
+		if (fileNo > 0 && fileNo <= structorizerFileMap.size()) {
+			java.io.Closeable file = structorizerFileMap.get(fileNo - 1);
 			if (file instanceof java.io.BufferedWriter) {
 				((java.io.BufferedWriter)file).write(data.toString());
 				((java.io.BufferedWriter)file).newLine();
