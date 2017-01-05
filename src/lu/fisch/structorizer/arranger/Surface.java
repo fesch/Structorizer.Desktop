@@ -65,7 +65,8 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.12.17      Enh. #305: New method removeDiagram(Root)
  *      Kay Gürtzig     2016.12.28      Enh. #318: Shadow path for Roots unzipped (from an arrz) into a temp dir
  *      Kay Gürtzig     2016.12.29      Enh. #315: More meticulous detection of diagram conflicts
- *      Kay Gürtzig     2017.01.04      Bugfix #321: Make sure Mainforms save the actually iterated Roots 
+ *      Kay Gürtzig     2017.01.04      Bugfix #321: Make sure Mainforms save the actually iterated Roots
+ *      Kay Gürtzig     2017.01.05      Enh. #319: Additional notification on test coverage status change
  *
  ******************************************************************************************************
  *
@@ -1359,6 +1360,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     			this.mouseSelected = null;
     		}
     		repaint();
+    		// START KGU#318 2017-01-05: Enh. #319 Arranger index now reflects test coverage
+    		this.notifyChangeListeners();
+    		// END KGU#318 2017-01-05
     	}
     	else
     	{

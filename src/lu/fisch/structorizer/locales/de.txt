@@ -91,6 +91,7 @@
  *      Kay Gürtzig         2016.12.15  Enh. #310: New Saving option dialog
  *      Kay Gürtzig         2016.12.27  Enh. #314: Control messages for the file API
  *      Kay Gürtzig         2016.12.29  Enh. #315: New Surface messages for diagram conflicts
+ *      Kay Gürtzig         2017.01.05  Enh. #319: Captions for the Arranger index popup menu
  *
  ******************************************************************************************************
  *
@@ -483,6 +484,11 @@ Editor.popupDisable.text=Deaktivieren/Aktivieren
 // Breakpoint
 Editor.popupBreakpoint.text=Haltepunkt setzen/löschen
 Editor.popupBreakTrigger.text=Haltepunktauslösung festlegen...
+// Arranger index
+Editor.popupIndexGet.text=Diagram holen
+Editor.popupIndexSave.text=Änderungen sichern
+Editor.popupIndexRemove.text=Entfernen
+Editor.popupIndexCovered.text=Testabdeckung an/aus
 
 -----[ InputBox ]-----
 InputBox.title=Element bearbeiten

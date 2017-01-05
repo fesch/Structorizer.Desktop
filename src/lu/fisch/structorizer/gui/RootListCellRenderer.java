@@ -32,6 +32,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2016.12.12      First Issue
+ *      Kay Gürtzig     2017.01.05      Enh. #319 - Lines with test-covered diagrams now show a different colour
  *
  ******************************************************************************************************
  *
@@ -49,6 +50,7 @@ import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import javax.swing.UIManager;
 
+import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 
 /**
@@ -66,6 +68,7 @@ class RootListCellRenderer extends JLabel implements ListCellRenderer<Root>{
 	public Component getListCellRendererComponent(JList<? extends Root> list, Root root, int index, boolean isSelected,
 			boolean cellHasFocus) {
         String s = root.getSignatureString(true);
+		boolean covered = Element.E_COLLECTRUNTIMEDATA && root.deeplyCovered; 
         setText(s);
         setIcon((root.isProgram) ? mainIcon : subIcon);
         if (isSelected) {
@@ -73,27 +76,27 @@ class RootListCellRenderer extends JLabel implements ListCellRenderer<Root>{
     		{
     			// Again, a specific handling for Nimbus was necessary in order to show any difference at all.
     			if (list.isFocusOwner()) {
-    				setBackground(selectedBackgroundNimbus);
+    				setBackground(covered ? Color.GREEN : selectedBackgroundNimbus);
     				setForeground(Color.WHITE);
     			}
     			else {
     				setBackground(Color.WHITE);	
-    				setForeground(selectedBackgroundNimbus);
+    				setForeground(covered ? Color.GREEN : selectedBackgroundNimbus);
     			}
     		}
     		else {
     			if (list.isFocusOwner()) {
-    				setBackground(list.getSelectionBackground());
+    				setBackground(covered ? Color.GREEN : list.getSelectionBackground());
     				setForeground(list.getSelectionForeground());
     			}
     			else {
     				// Invert the selection colours
                     setBackground(list.getSelectionForeground());
-                    setForeground(list.getSelectionBackground());    				
+                    setForeground(covered ? Color.GREEN : list.getSelectionBackground());    				
     			}
     		}
         } else {
-            setBackground(list.getBackground());
+            setBackground(covered ? Color.GREEN : list.getBackground());
             setForeground(list.getForeground());
         }
         setEnabled(list.isEnabled());

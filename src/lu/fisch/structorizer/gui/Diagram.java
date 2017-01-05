@@ -1301,7 +1301,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			errorMessage = e.getLocalizedMessage();
 			if (errorMessage == null) errorMessage = e.getMessage();
 			System.err.println("openNSD(\"" + _filename + "\"): " + (errorMessage != null ? errorMessage : e));
-			//e.printStackTrace(System.err);
+			if (e instanceof java.util.ConcurrentModificationException) {
+				e.printStackTrace(System.err);
+			}
 			// END KGU#111 2015-12-16
 		}
 		// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load

@@ -67,6 +67,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input with prompt
  *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig         2016.11.06      Issue #279: Method HashMap.getOrDefault() replaced
+ *      Kay Gürtzig         2017.01.05      Enh. #314: File API TODO comments added  
  *
  ******************************************************************************************************
  *
@@ -124,6 +125,7 @@ import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.BString;
@@ -183,7 +185,7 @@ public class BASHGenerator extends Generator {
 	// END KGU#78 2015-12-18
 	
 	// START KGU#241 2016-09-01: Issue #234: names of certain occurring functions detected by checkElementInformation()
-	private StringList occurringFunctions = new StringList();
+	protected StringList occurringFunctions = new StringList();
 	// END KGU#241 2015-09-01
 
 	// START KGU 2016-08-12: Enh. #231 - information for analyser
@@ -257,15 +259,17 @@ public class BASHGenerator extends Generator {
 	{
 		StringList tokens = Element.splitLexically(_ele.getText().getText(), true);
 		String[] functionNames = {"ord", "chr"};
-		for (int i = 0; i < functionNames.length && !occurringFunctions.contains(functionNames[i]); i++)
+		for (int i = 0; i < functionNames.length; i++)
 		{
-			int pos = -1;
-			while ((pos = tokens.indexOf(functionNames[i], pos+1)) >= 0 &&
-					pos+1 < tokens.count() &&
-					tokens.get(pos+1).equals("("))
-			{
-				occurringFunctions.add(functionNames[i]);
-				break;	
+			if (!occurringFunctions.contains(functionNames[i])) {
+				int pos = -1;
+				while ((pos = tokens.indexOf(functionNames[i], pos+1)) >= 0 &&
+						pos+1 < tokens.count() &&
+						tokens.get(pos+1).equals("("))
+				{
+					occurringFunctions.add(functionNames[i]);
+					break;	
+				}
 			}
 		}
 		
@@ -552,6 +556,16 @@ public class BASHGenerator extends Generator {
 				//code.add(_indent + transform(_inst.getText().get(i)));
 				String line = _inst.getText().get(i);
 				String codeLine = transform(line);
+				// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
+				if (this.usesFileAPI) {
+					for (int j = 0; j < Executor.fileAPI_names.length; j++) {
+						if (line.contains(Executor.fileAPI_names[j] + "(")) {
+							insertComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+							break;
+						}
+					}
+				}
+				// END KGU#311 2017-01-05
 				if (Instruction.isTurtleizerMove(line)) {
 					codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
 				}
@@ -573,6 +587,16 @@ public class BASHGenerator extends Generator {
 		// START KGU#132 2016-03-24: Bugfix #96/#135 second approach with [[ ]] instead of (( ))
 		//code.add(_indent+"if (( "+BString.replace(transform(_alt.getText().getText()),"\n","").trim() + " ))");
 		String condition = transform(_alt.getText().getLongString()).trim();
+		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
+		if (this.usesFileAPI) {
+			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
+				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
+					insertComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+					break;
+				}
+			}
+		}
+		// END KGU#311 2017-01-05
 		if (!this.suppressTransformation && !(condition.startsWith("((") && condition.endsWith("))")))
 		{
 			condition = "[[ " + condition + " ]]";
@@ -759,6 +783,16 @@ public class BASHGenerator extends Generator {
 		// START KGU#132/KGU#162 2016-03-31: Bugfix #96 + Enh. #144
 		//code.add(_indent+"while [[ " + transform(_while.getText().getLongString()).trim() + " ]]");
 		String condition = transform(_while.getText().getLongString()).trim();
+		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
+		if (this.usesFileAPI) {
+			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
+				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
+					insertComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+					break;
+				}
+			}
+		}
+		// END KGU#311 2017-01-05
 		if (!this.suppressTransformation && !(condition.startsWith("((") && condition.endsWith("))")))
 		{
 			condition = "[[ " + condition + " ]]";
@@ -804,6 +838,16 @@ public class BASHGenerator extends Generator {
 		// START KGU#132/KGU#162 2016-03-31: Bugfix #96 + Enh. #144
 		//code.add(_indent + "until [[ " + transform(_repeat.getText().getLongString()).trim() + " ]]");
 		String condition = transform(_repeat.getText().getLongString()).trim();
+		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
+		if (this.usesFileAPI) {
+			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
+				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
+					insertComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+					break;
+				}
+			}
+		}
+		// END KGU#311 2017-01-05
 		if (!this.suppressTransformation && !(condition.startsWith("((") && condition.endsWith("))")))
 		{
 			condition = "[[ " + condition + " ]]";
@@ -941,6 +985,17 @@ public class BASHGenerator extends Generator {
 		{
 			insertComment("(generated by Structorizer " + Element.E_VERSION + ")", indent);
 
+			// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
+			if (this.usesFileAPI) {
+				code.add(_indent);
+				insertComment("TODO The exported algorithms made use of the Structorizer File API.", _indent);
+				insertComment("     Unfortunately there are no comparable constructs in shell", _indent);
+				insertComment("     syntax for automatic conversion.", _indent);
+				insertComment("     The respective lines are marked with a TODO File API comment.", _indent);
+				insertComment("     You might try something like \"echo value >> filename\" for output", _indent);
+				insertComment("     or \"while ... do ... read var ... done < filename\" for input.", _indent);
+			}
+			// END KGU#311 2017-01-05
 			// START KGU#150 2016-04-05: Provisional support for chr and ord functions
 			// START KGU#241 2016-09-01: Issue #234 - Mechanism to introduce these definitions on demand only
 //			code.add(indent);
