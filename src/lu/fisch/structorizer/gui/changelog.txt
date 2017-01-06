@@ -103,6 +103,8 @@ Version: 3.26 (2017.01.06)
 - 12: Arranger strategy to request saving of dirty diagrams on closing fixed <2>
 - 12: Bugfix #322: C# code export of input and output instructions was wrong <2>
 - 12: Enh. #319: Context menu in Arranger index [Benjamin Neuberg]2
+- 12: Bugfix #324: Previously input arrays couldn't be replaced by scalar input <2>
+- 12: Enh. #325: Type test functions like isArray(), isNumber() etc. aded <2>
 
 Version: 3.25 (2016.09.09)
 - 01: Enh. #77: Test coverage mode highlights all code paths passed [elemhsb]2

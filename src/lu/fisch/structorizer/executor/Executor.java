@@ -109,16 +109,18 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.12.12      Issue #307: Attempts to manipulate FOR loop variables now cause an error
  *      Kay Gürtzig     2016.12.22      Enh. #314: Support for File API
  *      Kay Gürtzig     2016.12.29      Enh. #267/#315 (KGU#317): Execution abort on ambiguous CALLs
+ *      Kay Gürtzig     2017.01.06      Bugfix #324: Trouble with replacing an array by a scalar value on input
+ *                                      Enh. #325: built-in type test functions added.
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      2016-03-17 Enh. #133 (KGU#159)
- *      - Previously, a Call stack trace was only shown in cse of an execution error or manual abort.
+ *      - Previously, a Call stack trace was only shown in case of an execution error or manual abort.
  *        Now a Call stack trace may always be requested while execution hasn't ended. Only prerequisite
- *        is that the execution be paused. Then a double-click on the stext item showing the subroutine
- *        depth is sufficient. Moreover, the stacktrace will always be presented as list view (before a
- *        simple message box was used if the number of call levels didn't exceed 10.   
+ *        is that the execution be paused. Then a double-click on the text item showing the subroutine
+ *        depth is sufficient. Moreover, the stacktrace will always be presented as list view (until now
+ *        a simple message box has been used if the number of call levels didn't exceed 10).   
  *      2016-03-16/18 Bugfix #131 (KGU#157)
  *      - When the "run" (or "make") button was pressed while an execution was already running or stood
  *        paused then the Executor CALL stack, the event queues, and the connection between Diagram and
@@ -1460,6 +1462,20 @@ public class Executor implements Runnable
 			interpreter.eval(pascalFunction);
 			// END KGU#150 2016-04-03
 			// END KGU#57 2015-11-07
+			// START KGU#322 2017-01-06: Enh. #325 - reflection functions
+			pascalFunction = "public boolean isArray(Object obj) { return (obj instanceof Object[]); }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public boolean isString(Object obj) { return (obj instanceof String); }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public boolean isChar(Object obj) { return (obj instanceof Character); }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public boolean isBool(Object obj) { return (obj instanceof Boolean); }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public boolean isNumber(Object obj) { return (obj instanceof Integer) || (obj instanceof Double); }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public int length(Object[] arr) { return arr.length; }";
+			interpreter.eval(pascalFunction);
+			// END KGU#322 2017-01-06
 			// START KGU 2016-12-18: #314: Support for simple text file API
 			interpreter.set("executorFileMap", this.openFiles);
 			interpreter.set("executorCurrentDirectory", 
@@ -2226,8 +2242,26 @@ public class Executor implements Runnable
 			String[] nameParts = name.split(" ");
 			name = nameParts[nameParts.length-1];
 			// END KGU#109 2015-12-15
-			this.interpreter.set(name, content);
-
+			
+			// START KGU#322 2017-01-06: Bugfix #324 - an array assigned on input hindered scalar re-assignment
+			//this.interpreter.set(name, content);
+			try {
+				this.interpreter.set(name, content);
+			}
+			catch (EvalError ex) {
+				if (ex.getMessage().matches(".*Can't assign.*to java\\.lang\\.Object \\[\\].*")) {
+					// Stored array type is an obstacle for re-assignment, so drop it
+					this.interpreter.unset(name);
+					// Now try again
+					this.interpreter.set(name, content);
+				}
+				else {
+					// Something different, so rethrow
+					throw ex;
+				}
+			}
+			// END KGU#322 2017-01-06
+			
 			// MODIFIED BY GENNARO DONNARUMMA
 			// PREVENTING DAMAGED STRING AND CHARS
 			// FIXME (KGU): Seems superfluous or even dangerous (Addendum 2015-12-10: Now the aim became clear by issue #49)
