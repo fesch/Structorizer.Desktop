@@ -182,8 +182,8 @@ public abstract class Element {
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
-	"\n"+
-	"Having also put his fingers into the code\n"+
+        //"\n"+
+	//"Having also put his fingers into the code\n"+
 	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"\n"+
 	"Export classes written and maintained by\n"+
