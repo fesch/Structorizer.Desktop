@@ -49,6 +49,7 @@ package lu.fisch.structorizer.parsers;
  *      Bob Fisch       2016-11-03      Bugfix #278 (NoSuchMethodError) in loadFromIni()
  *      Kay Gürtzig     2016-11-06      Bugfix #279: New methods keywordSet(), getKeywordOrDefault() etc.
  *      Kay Gürtzig     2016-11-08      Bugfix #281/#282 in method setKeyword() (Java 1.8 method HashMap.replace())
+ *      Kay Gürtzig     2017-01-06      Issue #327: French default parser keywords replaced by English ones
  *
  ******************************************************************************************************
  *
@@ -940,19 +941,20 @@ public class D7Parser implements GPMessageConstants
 	public static void loadFromINI()
 	{
 		final HashMap<String, String> defaultKeys = new HashMap<String, String>();
-		defaultKeys.put("ParserPreFor", "pour ");
-		defaultKeys.put("ParserPostFor", "\u00E0");
-		defaultKeys.put("ParserStepFor", ", pas = ");
-		defaultKeys.put("ParserPreForIn", "pour ");
-		defaultKeys.put("ParserPostForIn", " en ");
-		defaultKeys.put("ParserPreWhile", "tant que ");
-		defaultKeys.put("ParserPreRepeat", "jusqu'\u00E0 ");
+		// START KGU 2017-01-06: Issue #327: Defaults changed to English
+		defaultKeys.put("ParserPreFor", "for");
+		defaultKeys.put("ParserPostFor", "to");
+		defaultKeys.put("ParserStepFor", "by");
+		defaultKeys.put("ParserPreForIn", "foreach");
+		defaultKeys.put("ParserPostForIn", "in");
+		defaultKeys.put("ParserPreWhile", "while ");
+		defaultKeys.put("ParserPreRepeat", "until ");
 		defaultKeys.put("ParserPreLeave", "leave");
 		defaultKeys.put("ParserPreReturn", "return");
 		defaultKeys.put("ParserPreExit", "exit");
-		defaultKeys.put("ParserInput", "lire ");
-		defaultKeys.put("ParserOutput", "\u00E9crire");
-		
+		defaultKeys.put("ParserInput", "INPUT");
+		defaultKeys.put("ParserOutput", "OUTPUT");
+		// END KGU 2017-01-06 #327
 		try
 		{
 			Ini ini = Ini.getInstance();

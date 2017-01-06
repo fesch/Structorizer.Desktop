@@ -86,4 +86,18 @@ public interface IRoutinePool {
 	 */
 	public void clearExecutionStatus();
 	// END KGU#117 2016-03-08
+	
+	// START KGU#305 2016-12-16: Added to establish a clear observer mechanism
+	/**
+	 * Adds _listener to the set of IRoutinePoolListeners
+	 * @param _listener
+	 */
+	public void addChangeListener(IRoutinePoolListener _listener);
+	
+	/**
+	 * Removes _listener from the set of IRoutinePoolListeners
+	 * @param _listener
+	 */
+	public void removeChangeListener(IRoutinePoolListener _listener);
+	
 }
