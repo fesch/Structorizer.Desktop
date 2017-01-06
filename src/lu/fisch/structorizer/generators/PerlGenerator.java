@@ -66,6 +66,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig     2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig     2016.12.01      Bugfix #301: More precise check for parenthesis enclosing of log. conditions
+ *      Kay Gürtzig     2016.12.30      Bugfix KGU#62: Result variable hadn't been prefixed in return instruction
+ *      Kay Gürtzig     2017.01.04      Enh. #314: Approach to translate the File API
  *
  ******************************************************************************************************
  *
@@ -162,8 +164,11 @@ public class PerlGenerator extends Generator {
 	}
 	// END KGU 2016-08-12
 	
-	
 	/************ Code Generation **************/
+	
+	// START KGU#311 2017-01-04: Enh. #314 File API analysis
+	private StringList fileVars = new StringList();
+	// END KGU#311 2017-01-04
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/**
@@ -331,6 +336,89 @@ public class PerlGenerator extends Generator {
 			{
 				String text = transform(_inst.getText().get(i));
 				if (!text.endsWith(";")) { text += ";"; }
+				// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
+				if (this.usesFileAPI) {
+					if (text.contains("fileOpen(")) {
+						String pattern = "(.*?)\\s*=\\s*fileOpen\\((.*)\\)(.*);";
+						if (text.matches(pattern)) {
+							String varName = text.replaceAll(pattern, "$1").trim();
+							fileVars.addIfNew(varName);
+							text = text.replaceAll(pattern, "open($1, \\\"<\\\", $2)$3 or die \\\"Failed to open $2\\\";");
+							text = text.replaceAll("(.*or die \\\"Failed to open )\\\"(.*)\\\"(\\\";)", "$1\\\\\\\"$2\\\\\\\"$3");
+						}
+						else {
+							this.insertComment("TODO FileAPI: Replace the fileOpen call by something like «open(my $fHandle, \"<\", \"filename\") or die \"error message\";»", _indent);
+						}
+					}
+					if (text.contains("fileCreate(")) {
+						String pattern = "(.*?)\\s*=\\s*fileCreate\\((.*)\\)(.*);";
+						if (text.matches(pattern)) {
+							String varName = text.replaceAll(pattern, "$1").trim();
+							fileVars.addIfNew(varName);
+							text = text.replaceAll(pattern, "open($1, \\\">\\\", $2)$3 or die \\\"Failed to create $2\\\";");
+							text = text.replaceAll("(.*or die \\\"Failed to create )\\\"(.*)\\\"(\\\";)", "$1\\\\\\\"$2\\\\\\\"$3");
+						}
+						else {
+							this.insertComment("TODO FileAPI: Replace the fileCreate call by something like «open(my $fHandle, \">\", \"filename\") or die \"error message\";»", _indent);
+						}
+					}
+					if (text.contains("fileAppend(")) {
+						String pattern = "(.*?)\\s*=\\s*fileAppend\\((.*)\\)(.*);";
+						if (text.matches(pattern)) {
+							String varName = text.replaceAll(pattern, "$1").trim();
+							fileVars.addIfNew(varName);
+							text = text.replaceAll(pattern, "open($1, \\\">>\\\", $2)$3 or die \\\"Failed to append to $2\\\";");
+							text = text.replaceAll("(.*or die \\\"Failed to append to )\\\"(.*)\\\"(\\\";)", "$1\\\\\\\"$2\\\\\\\"$3");
+						}
+						else {
+							this.insertComment("TODO FileAPI: Replace the fileAppend call by something like «open(my $fHandle, \">>\", \"filename\") or die \"error message\";»", _indent);
+						}
+					}
+					if (text.contains("fileRead(") || text.contains("fileReadInt(") || text.contains("fileReadDouble(") || text.contains("fileReadLine(")) {
+						String fctName = text.replaceAll(".*?fileRead(\\w*)\\(.*", "$1");
+						String pattern = "(.*?)\\s*=\\s*fileRead\\w*\\((.*)\\)(.*)";
+						if (text.matches(pattern)) {
+							if (!fctName.equals("Line")) {
+								this.insertComment("TODO FileAPI: Originally this was a fileRead" + fctName + " call, so ensure to obtain the right thing!", _indent);							
+							}
+							text = text.replaceAll(pattern, "$1 = <$2> $3");
+						}
+						else {
+							this.insertComment("TODO FileAPI: Replace the fileRead" + fctName + " call by something like «<$fileHandle>\";»", _indent);							
+						}
+					}
+					if (text.contains("fileReadChar(")) {
+						String pattern = "(.*?)\\s*=\\s*fileReadChar\\((.*)\\)(.*)";
+						if (text.matches(pattern)) {
+							text = text.replaceAll(pattern, "$1 = gect\\($2\\)$3");
+						}
+						else {
+							this.insertComment("TODO FileAPI: Replace the fileReadChar* call by something like «getc($fileHandle)\";»", _indent);
+						}
+					}
+					if (text.contains("fileWrite(")) {
+						String pattern = "(.*?)fileWrite\\(\\s*(.*)\\s*,\\s*(.*)\\s*\\)(.*)";
+						if (text.matches(pattern)) {
+							text = text.replaceAll(pattern, "print $2 $3 $4");
+						}
+						else {
+							this.insertComment("TODO FileAPI: Replace the fileWrite call by something like «print $fileHandle value;»", _indent);
+						}
+					}
+					if (text.contains("fileWriteLine(")) {
+						String pattern = "(.*?)fileWriteLine\\(\\s*(.*)\\s*,\\s*(.*)\\s*\\)(.*)";
+						if (text.matches(pattern)) {
+							text = text.replaceAll(pattern, "print $2 $3; print $2 \\\"\\\\n\\\" $4");
+						}
+						else {
+							this.insertComment("TODO FileAPI: Replace the fileWriteLine call by something like «print $fileHandle value; print $fileHandle \"\\n\";»", _indent);
+						}
+					}
+					if (text.contains("fileClose(")) {
+						text = text.replace("fileClose(", "close(");
+					}
+				}
+				// END KGU#311 2017-01-04
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 				//code.add(_indent + text);
 				if (Instruction.isTurtleizerMove(_inst.getText().get(i))) {
@@ -354,9 +442,23 @@ public class PerlGenerator extends Generator {
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"if ( "+BString.replace(transform(_alt.getText().getText()),"\n","").trim()+" ) {");
 		String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
+		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
+		if (this.usesFileAPI) {
+			if (condition.contains("fileEOF(")) {
+				this.insertComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
+			}
+			else {
+				for (int k = 0; k < this.fileVars.count(); k++) {
+					if (condition.contains(this.fileVars.get(k))) {
+						this.insertComment("TODO FileAPI: Consider replacing / dropping this now inappropriate file test.", _indent);						
+					}
+				}
+			}
+		}
+		// END KGU#311 2017-01-04
 		// START KGU#301 2016-12-01: Bugfix #301
 		//if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
-		if (!this.suppressTransformation || !isParenthesized(condition))
+		if (!this.suppressTransformation && !isParenthesized(condition))
 		// END KGU#301 2016-12-01
 		{
 			condition = "( " + condition + " )";
@@ -514,9 +616,16 @@ public class PerlGenerator extends Generator {
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"while ("+BString.replace(transform(_while.getText().getText()),"\n","").trim()+") {");
     	String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
+		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
+		if (this.usesFileAPI) {
+			if (condition.contains("fileEOF(")) {
+				this.insertComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
+			}
+		}
+		// END KGU#311 2017-01-04
 		// START KGU#301 2016-12-01: Bugfix #301
 		//if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
-		if (!this.suppressTransformation || !isParenthesized(condition))
+		if (!this.suppressTransformation && !isParenthesized(condition))
 		// END KGU#301 2016-12-01
     	{
     		condition = "( " + condition + " )";
@@ -546,9 +655,16 @@ public class PerlGenerator extends Generator {
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+")) {");
     	String condition = BString.replace(transform(_repeat.getText().getText()),"\n","").trim();
+		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
+		if (this.usesFileAPI) {
+			if (condition.contains("fileEOF(")) {
+				this.insertComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
+			}
+		}
+		// END KGU#311 2017-01-04
 		// START KGU#301 2016-12-01: Bugfix #301
 		//if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
-		if (!this.suppressTransformation || !isParenthesized(condition))
+		if (!this.suppressTransformation && !isParenthesized(condition))
 		// END KGU#301 2016-12-01
     	{
     		condition = "( " + condition + " )";
@@ -717,6 +833,17 @@ public class PerlGenerator extends Generator {
 			code.add(_indent + "#!/usr/bin/perl");
 			insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
 			insertComment("", _indent);
+			// START KGU#311 2017-01-04: Enh. #314 Desperate approach to sell the File API...
+			if (this.usesFileAPI && this.topLevel) {
+				code.add(_indent);
+				this.insertComment("TODO: This algorithm made use of the Structorizer File API,", _indent);
+				this.insertComment("      which cannot not be translated completely.", _indent);
+				this.insertComment("      Watch out for \"TODO FileAPI\" comments and try to adapt", _indent);
+				this.insertComment("      the code according to the recommendations.", _indent);
+				this.insertComment("      See e.g. http://perldoc.perl.org/perlopentut.html", _indent);
+				code.add(_indent);
+			}
+			// END KGU#311 2017-01-04
 			subroutineInsertionLine = code.count();
 		}
 		else
@@ -772,12 +899,20 @@ public class PerlGenerator extends Generator {
 			String result = "0";
 			if (isFunctionNameSet)
 			{
-				result = _root.getMethodName();
+				// START KGU#62 2016-12-30: Bugfix #57
+				//result = _root.getMethodName();
+				result = "$" + _root.getMethodName();
+				// END KGU#62 2016-12-30
 			}
 			else if (isResultSet)
 			{
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
+				// START KGU#62 2016-12-30: Bugfix
+				if (!result.startsWith("$")) {
+					result = "$" + result;
+				}
+				// END KGU#62 2016-12-30
 			}
 			code.add(_indent);
 			code.add(_indent + "return " + result + ";");

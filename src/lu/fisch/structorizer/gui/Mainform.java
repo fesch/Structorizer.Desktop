@@ -55,6 +55,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.12.02      Enh. #300: Notification of disabled version retrieval or new versions
  *      Kay Gürtzig     2016.12.12      Enh. #305: API enhanced to support the Arranger Root index view
  *      Kay Gürtzig     2016.12.15      Enh. #310: New options for saving diagrams added
+ *      Kay Gürtzig     2017.01.04      KGU#49: Closing a stand-alone instance now effectively warns Arranger
  *
  ******************************************************************************************************
  *
@@ -76,9 +77,7 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************///
 
 import java.io.*;
-import java.util.Collections;
 import java.util.Set;
-import java.util.Vector;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -90,11 +89,13 @@ import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
+import lu.fisch.structorizer.executor.IRoutinePool;
+import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.locales.LangFrame;
 import lu.fisch.structorizer.locales.Locales;
 
 @SuppressWarnings("serial")
-public class Mainform  extends LangFrame implements NSDController
+public class Mainform  extends LangFrame implements NSDController, IRoutinePoolListener
 {
 	public Diagram diagram = null;
 	private Menu menu = null;
@@ -210,8 +211,14 @@ public class Mainform  extends LangFrame implements NSDController
                             {
                                     saveToINI();
                                     // START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
-                                    if (isStandalone)
+                                    if (isStandalone) {
+                                            // START KGU#49 2017-01-04 Care for potential Arranger dependants
+                                            if (Arranger.hasInstance()) {
+                                            	Arranger.getInstance().windowClosing(e);
+                                            }
+                                            // END KGU#49 2017-01-04
                                             System.exit(0);	// This kills all related frames and threads as well!
+                                    }
                                     else
                                             dispose();
                                     // END KGU#49/KGU#66 (#6/#16) 2015-11-14
@@ -256,6 +263,9 @@ public class Mainform  extends LangFrame implements NSDController
             getEditor().revalidate();
             repaint();
             getEditor().diagram.redraw();
+            // START KGU#305 2016-12-16
+            getEditor().updateArrangerIndex(Arranger.getSortedRoots());
+            // END KGU#305 2016-12-16
 	}
 	
 
@@ -677,6 +687,9 @@ public class Mainform  extends LangFrame implements NSDController
     {
         super();
         this.isStandalone = standalone;
+        // START KGU#305 2016-12-16: Code revision
+        Arranger.addToChangeListeners(this);
+        // END KGU#305 2016-12-16
         create();
     }
     // END KGU#49/KGU#66
@@ -745,21 +758,19 @@ public class Mainform  extends LangFrame implements NSDController
     }
     // END KGU#300 2016-12-02
     
-    // START KGU#305 2016-12-12: Enh. #305 - Pass diagram list of Arranger to editor
-    public void updateArrangerIndex()
-    {
-    	Vector<Root> diagrams = new Vector<Root>();
-    	if (Arranger.hasInstance()) {
-    		diagrams.addAll(Arranger.getInstance().getAllRoots());
-    		Collections.sort(diagrams, Root.SIGNATURE_ORDER);
-    	}
-    	this.editor.updateArrangerIndex(diagrams);
-    }
-    
     public boolean isStandalone()
     {
     	return this.isStandalone;
     }
-    // END KGU#305 2016-12-12
+
+    // START KGU#305 2016-12-16: Code revision
+	@Override
+	public void routinePoolChanged(IRoutinePool _source) {
+		if (_source instanceof Arranger) {
+			this.editor.updateArrangerIndex(Arranger.getSortedRoots());
+		}
+		updateAnalysis();
+	}
+	// END KGU#305 2016-12-16
 	
 }

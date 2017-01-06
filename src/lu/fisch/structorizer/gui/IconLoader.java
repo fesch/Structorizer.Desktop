@@ -48,6 +48,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.10.16      Enh. #272: New icons 027_richTurtle and 028_poorTurtle
  *      Kay Gürtzig     2016.11.01      Issue #81: icons 089 through 091 and 113 hadn't been scaled
  *      Kay Gürtzig     2016.12.14      Enh. #305: New icon 029_index for the Arranger index 
+ *      Kay Gürtzig     2017.01.05      Enh. #319: New icons 045_remove, 046_covered for Arranger index popup
  *
  ******************************************************************************************************
  *
@@ -128,8 +129,10 @@ public class IconLoader {
 	public static ImageIcon ico042 = getIconImage(getURI(from+"icons/042_copy.png"));
 	public static ImageIcon ico043 = getIconImage(getURI(from+"icons/043_paste.png"));
 	public static ImageIcon ico044 = getIconImage(getURI(from+"icons/044_cut.png"));
-	//public static ImageIcon ico045 = getIconImage(getURI(from+"icons/045_fr.png"));
-	//public static ImageIcon ico046 = getIconImage(getURI(from+"icons/046_uk.png"));
+	// START KGU#318 2017-01-05: Enh. #319 - new icon for Aranger index
+	public static ImageIcon ico045 = getIconImage(getURI(from+"icons/045_remove.png"));
+	public static ImageIcon ico046 = getIconImage(getURI(from+"icons/046_covered.png"));
+	// END KGU#318 2017-01-05
 	public static ImageIcon ico047 = getIconImage(getURI(from+"icons/047_casebefore.png"));
 	public static ImageIcon ico048 = getIconImage(getURI(from+"icons/048_caseafter.png"));
 	public static ImageIcon ico049 = getIconImage(getURI(from+"icons/049_callbefore.png"));
@@ -268,8 +271,10 @@ public class IconLoader {
             ico042 = getIconImage(getURI(from+"icons/042_copy.png"));
             ico043 = getIconImage(getURI(from+"icons/043_paste.png"));
             ico044 = getIconImage(getURI(from+"icons/044_cut.png"));
-            //ico045 = getIconImage(getURI(from+"icons/045_fr.png"));
-            //ico046 = getIconImage(getURI(from+"icons/046_uk.png"));
+            // START KGU#318 2017-01-05: Enh. #319 - new icons for Arranger index
+            ico045 = getIconImage(getURI(from+"icons/045_remove.png"));
+            ico046 = getIconImage(getURI(from+"icons/046_covered.png"));
+            // END KGU#318 2017-01-05
             ico047 = getIconImage(getURI(from+"icons/047_casebefore.png"));
             ico048 = getIconImage(getURI(from+"icons/048_caseafter.png"));
             ico049 = getIconImage(getURI(from+"icons/049_callbefore.png"));

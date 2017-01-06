@@ -52,6 +52,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.11.01      Issue #81: Icon and frame size scaling ensured according to scaleFactor
  *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded.
  *      Kay Gürtzig     2016.12.12      Issue #307: New error message msgForLoopManipulation
+ *      Kay Gürtzig     2016.12.29      KGU#317 (issues #267, #315) New message for multiple subroutines
  *
  ******************************************************************************************************
  *
@@ -685,7 +686,11 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // START KGU#197 2016-05-05
     // START KGU#197 2016-07-27
     public final LangTextHolder msgNoSubroutine = 
-    		new LangTextHolder("A subroutine diagram %1 (%2 parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.");
+    		new LangTextHolder("A subroutine diagram \"%1\" (%2 parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.");
+    // START KGU#317 2016-12-29
+    public final LangTextHolder msgAmbiguousCall =
+    		new LangTextHolder("Ambiguous CALL: Different subroutine diagrams \"%1\" (%2 parameters) found!");
+    // END KGU#317 2016-12-29
     public final LangTextHolder msgInvalidExpr =
     		new LangTextHolder("<%1> is not a correct or existing expression.");
     // START KGU#249 2016-09-17: Bugfix #246 + Issue #243
@@ -721,6 +726,18 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public final LangTextHolder msgForLoopManipulation =
     		new LangTextHolder("Illegal attempt to manipulate the FOR loop variable «%»!");
     // END KGU#307 2016-12-12
+    // START KGU#311 2016-12-18/24: Enh. #314 Error messages for File API
+    public static final LangTextHolder msgInvalidFileNumberRead =
+    		new LangTextHolder("Invalid file number or file not open for reading.");
+    public static final LangTextHolder msgInvalidFileNumberWrite =
+    		new LangTextHolder("Invalid file number or file not open for writing.");
+    public static final LangTextHolder msgNoIntLiteralOnFile =
+    		new LangTextHolder("No integer value readable from file!");
+    public static final LangTextHolder msgNoDoubleLiteralOnFile =
+    		new LangTextHolder("No floating-point value readable from file!");    
+    public static final LangTextHolder msgEndOfFile =
+    		new LangTextHolder("Attempt to read data past end of file!");    
+    // END KGU#311 2016-12-18/24
     
     // START KGU#68 2015-11-06: Register variable value editing events
     private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();

@@ -37,7 +37,7 @@ package lu.fisch.structorizer.arranger;
  *      ------          ----        -----------
  *      Bob Fisch       2009.08.18  First Issue
  *      Kay Gürtzig     2015.10.18  Transient WindowsListener added enabling Surface to have dirty
- *                                  diagrams saved before exit
+ *                                  diagrams saved before exit (KGU#49)
  *      Kay Gürtzig     2015.11.17  Remove button added (issue #35 = KGU#85)
  *      Kay Gürtzig     2015.11.19  Converted into a singleton (enhancement request #9 = KGU#2)
  *      Kay Gürtzig     2015-11-24  Pin button added (issue #35, KGU#88)
@@ -53,7 +53,11 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.09.26  Enh. #253: New public method getAllRoots() added.
  *      Kay Gürtzig     2016.11.01  Enh. #81: Scalability of the Icons ensured
  *      Kay Gürtzig     2016.11.15  Enh. #290: New opportunity to load arrangements from Structorizer
- *      Kay Gürtzig     2016.12.12  Enh. #305: Support for diagram list in Structorizer 
+ *      Kay Gürtzig     2016.12.12  Enh. #305: Support for diagram list in Structorizer
+ *      Kay Gürtzig     2016.12.16  Issue #305: Notification redesign, visibility fix in scrollToDiagram,
+ *                                  new method removeDiagram(Root)
+ *      Kay Gürtzig     2017.01.04  KGU#49: Arranger now handles windowClosing events itself (instead
+ *                                  of a transient WindowAdapter). This allows Mainform to warn Arranger
  *
  ******************************************************************************************************
  *
@@ -63,9 +67,10 @@ package lu.fisch.structorizer.arranger;
  *///
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
@@ -76,6 +81,7 @@ import javax.swing.JScrollPane;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.executor.IRoutinePool;
+import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.locales.LangFrame;
@@ -85,7 +91,7 @@ import lu.fisch.structorizer.locales.LangFrame;
  * @author robertfisch
  */
 @SuppressWarnings("serial")
-public class Arranger extends LangFrame implements WindowListener, KeyListener, IRoutinePool {
+public class Arranger extends LangFrame implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener {
 
     // START KGU#177 2016-04-14: Enh. #158 - because of pasting opportunity we must take more care
     private boolean isStandalone = false;
@@ -141,6 +147,11 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     public static void scrollToDiagram(Root selectedRoot, boolean raiseToTop)
     {
     	if (mySelf != null && selectedRoot != null) {
+    		// START KGU#305 2016-12-16: Bugfix #305 - possibly we must wake the instance
+    		if (!mySelf.isVisible()) {
+    			mySelf.setVisible(true);
+    		}
+    		// END KGU#305 2016-12-16
     		mySelf.surface.scrollToDiagram(selectedRoot, raiseToTop);
     	}
 	}
@@ -159,6 +170,9 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         isStandalone = standalone;
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         // END KGU#177 2016-04-14
+        // START KGU#305 2016-12-16
+        surface.addChangeListener(this);
+        // END KGU#305 2016-12-16
     }
 
     /**
@@ -405,45 +419,47 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         /******************************
          * Set onClose event
          ******************************/
-        addWindowListener(new WindowAdapter() 
-        {  
-        	@Override
-        	public void windowClosing(WindowEvent e) 
-        	{
-        		// START KGU#177 2016-04-14: Enh. #158 - We want to provide an emergency exit here
-//        		// START KGU#2 2015-11-19: Only necessary if I am going to exit
-//        		if (mySelf.getDefaultCloseOperation() == JFrame.EXIT_ON_CLOSE)
-//        		// END KGU#2 2015-11-19
-//        			surface.saveDiagrams();	// Allow user to save dirty diagrams
-        		if (surface.saveDiagrams(true))
-        		{
-        			if (isStandalone)
-        			{
-        				System.exit(0);
-        			}
-        			else
-        			{
-        				dispose();
-        			}
-        		}
-        		// END KGU#177 2016-04-14
-        	}  
-
-        	@Override
-        	public void windowOpened(WindowEvent e) 
-        	{  
-        	}  
-
-        	@Override
-        	public void windowActivated(WindowEvent e)
-        	{  
-        	}
-
-        	@Override
-        	public void windowGainedFocus(WindowEvent e) 
-        	{  
-        	}  
-        });
+//        addWindowListener(new WindowAdapter() 
+//        {  
+//        	@Override
+//        	public void windowClosing(WindowEvent e) 
+//        	{
+//        		System.out.println("WindowAdapter.windowClosing()...");
+//        		// START KGU#177 2016-04-14: Enh. #158 - We want to provide an emergency exit here
+////        		// START KGU#2 2015-11-19: Only necessary if I am going to exit
+////        		if (mySelf.getDefaultCloseOperation() == JFrame.EXIT_ON_CLOSE)
+////        		// END KGU#2 2015-11-19
+////        			surface.saveDiagrams();	// Allow user to save dirty diagrams
+//        		if (surface.saveDiagrams(true))
+//        		{
+//        			if (isStandalone)
+//        			{
+//        				System.exit(0);
+//        			}
+//        			else
+//        			{
+//        				dispose();
+//        			}
+//        		}
+//        		// END KGU#177 2016-04-14
+//        	}  
+//
+//        	@Override
+//        	public void windowOpened(WindowEvent e) 
+//        	{  
+//        	}  
+//
+//        	@Override
+//        	public void windowActivated(WindowEvent e)
+//        	{  
+//        	}
+//
+//        	@Override
+//        	public void windowGainedFocus(WindowEvent e) 
+//        	{  
+//        	}  
+//        });
+        addWindowListener(this); 
         // END KGU#49 2015-10-18
 
         // START KGU#117 2016-03-09: New for Enh. #77
@@ -506,7 +522,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         });
     }
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
+    // Variables declaration
     private javax.swing.JButton btnAddDiagram;
     // START KGU#85 2015-11-17
     private javax.swing.JButton btnRemoveDiagram;
@@ -529,12 +545,29 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     // START KGU#85 2015-11-18
     private JScrollPane scrollarea;
     // END KGU#85 2015-11-18
+    // START KGU#2016-12-16
+    private static final Set<IRoutinePoolListener> listeners = new HashSet<IRoutinePoolListener>();
+    private static final Vector<Root> routines = new Vector<Root>();
+    // END KGU#2016-12-16
 
     public void windowOpened(WindowEvent e) {
     }
 
     public void windowClosing(WindowEvent e) {
-    }
+        // START KGU#49 2017-01-04: On closing the Arranger window, the dependent Mainforms must get a chance to save their stuff!
+		if (surface.saveDiagrams(true))
+		{
+			if (isStandalone)
+			{
+				System.exit(0);
+			}
+			else
+			{
+				dispose();
+			}
+		}
+        // END KGU#49 2017-01-04
+	}
 
     public void windowClosed(WindowEvent e) {
     }
@@ -629,7 +662,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     }
     // END KGU#258 2016-09-26
 
-
+    // START KGU#305 2016-12-16: Code revision
+    // Shares the sorted list of Root elements held by the Surface object 
+    public static Vector<Root> getSortedRoots()
+    {
+    	return routines;
+    }
+    // END KGU#305 2016-12-16
 
     // START KGU#117 2016-03-08: Introduced on occasion of Enhancement #77
     @Override
@@ -659,5 +698,49 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		return surface.getSelected();
 	}
 	// END KGU#305 2016-12-12
+
+	// START KGU#305 2016-12-16
+	public static void addToChangeListeners(IRoutinePoolListener _listener)
+	{
+		listeners.add(_listener);
+	}
+	
+	public static void removeFromChangeListeners(IRoutinePoolListener _listener)
+	{
+		listeners.remove(_listener);
+	}
+	
+	@Override
+	public void addChangeListener(IRoutinePoolListener _listener) {
+		addToChangeListeners(_listener);
+	}
+
+	@Override
+	public void removeChangeListener(IRoutinePoolListener _listener) {
+		removeFromChangeListeners(_listener);
+	}
+
+	@Override
+	public void routinePoolChanged(IRoutinePool _source) {
+		routines.clear();
+		routines.addAll(_source.getAllRoots());
+		Collections.sort(routines, Root.SIGNATURE_ORDER);
+		for (IRoutinePoolListener listener: listeners) {
+			listener.routinePoolChanged(this);
+		}
+	}
+	// END KGU#305 2016-12-16
+
+	// START KGU#305 2016-12-17: Enh. #305 External removal request (from  Arranger index)
+	/**
+	 * Removes the diagram given by root from the Arranger surface (if being placed there)
+	 * @param _root - the root element of the diagram to remove
+	 */
+	public void removeDiagram(Root _root) {
+		if (surface != null) {
+			surface.removeDiagram(_root);
+		}
+	}
+	// END #305 2016-12-17
 
 }

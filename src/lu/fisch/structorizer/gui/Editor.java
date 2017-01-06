@@ -49,6 +49,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.17      Bugfix #114: Prerequisites for editing and transmutation during execution revised
  *      Kay Gürtzig     2016.11.22      Enh. #284: Key bindings for font resizing added (KGU#294)
  *      Kay Gürtzig     2016.12.12      Enh. #305: Scrollable list view of Roots in Arranger added
+ *      Kay Gürtzig     2016.12.17      Enh. #305: Key binding <del> added to Arranger index list.
+ *      Kay Gürtzig     2017.01.05      Enh. #319: Context menu for Arranger index
  *
  ******************************************************************************************************
  *
@@ -239,6 +241,14 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// START KGU#213 2016-08-02: Enh. #215
 	protected final JMenuItem popupBreakTrigger = new JMenuItem("Specify break trigger...", IconLoader.ico112);
 	// END KGU#143 2016-08-02
+	
+	// START KGU#318 2017-01-05: Enh. #319 - context menu for the Arranger index
+    protected final JPopupMenu popupIndex = new JPopupMenu();
+    protected final JMenuItem popupIndexGet = new JMenuItem("Get diagram", IconLoader.ico074);
+    protected final JMenuItem popupIndexSave = new JMenuItem("Save changes", IconLoader.ico003);
+    protected final JMenuItem popupIndexRemove = new JMenuItem("Remove", IconLoader.ico045);
+    protected final JMenuItem popupIndexCovered = new JMenuItem("Test-covered on/off", IconLoader.ico046);
+	// END KGU#318 2017-01-05
     
     // START KGU#177 2016-04-06: Enh. #158
     // Action names
@@ -327,25 +337,35 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     // START KGU#305 2016-12-15: Enh. #305 - diagramIndex should react to keys
     private class ArrangerIndexAction extends AbstractAction
     {
-    	//Diagram diagram;	// The object responsible for executing the action
     	
     	ArrangerIndexAction(boolean isDoubleClick)
     	{
     		super(isDoubleClick ? "DOUBLE_CLICK" : "SINGLE_CLCK");
     	}
     	
+		// START KGU#305 2016-12-17: Also allow to remove a diagram from Arranger
+    	ArrangerIndexAction(String keyString)
+    	{
+    		super(keyString);
+    	}
+		// END KGU#305 2016-12-17
+    	
 		@Override
 		public void actionPerformed(ActionEvent ev) {
-			if (getValue(AbstractAction.NAME).equals("DOUBLE_CLICK")) {
+			if (getValue(AbstractAction.NAME).equals("SINGLE_CLICK")) {
 				Arranger.scrollToDiagram(diagramIndex.getSelectedValue(), true);
 			}
-			else {
-				Root selectedRoot = diagramIndex.getSelectedValue();
-				if (selectedRoot != null && selectedRoot != diagram.getRoot()) {
-					diagram.setRootIfNotRunning(selectedRoot);
-					scrollarea.requestFocusInWindow();
-				}
+			// START KGU#305 2016-12-17: Also allow to remove a diagram from Arranger
+			//else {
+			else if (getValue(AbstractAction.NAME).equals("DOUBLE_CLICK")) {
+			// END KGU#305 2016-12-17
+				arrangerIndexGet();
 			}
+			// START KGU#305 2016-12-17: Also allow to remove a diagram from Arranger
+			else if (getValue(AbstractAction.NAME).equals("DELETE") && Arranger.hasInstance()) {
+				arrangerIndexRemove();
+			}
+			// END KGU#305 2016-12-17
 		}
     }    
     // END KGGU#305 2016-12-15
@@ -494,6 +514,20 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popup.add(popupBreakTrigger);
         popupBreakTrigger.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.editBreakTrigger(); doButtons(); } }); 
 		// END KGU#213 2016-08-02
+
+    	// START KGU#318 2017-01-05: Enh. #319 - context menu for the Arranger index
+        popupIndex.add(popupIndexGet);
+        popupIndexGet.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {	arrangerIndexGet();	} });
+        
+        popupIndex.add(popupIndexSave);
+        popupIndexSave.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexSave(); } });
+
+        popupIndex.add(popupIndexRemove);
+        popupIndexRemove.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexRemove(); } });
+
+        popupIndex.add(popupIndexCovered);
+        popupIndexCovered.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexToggleCovered(); } });
+        // END KGU#318 2017-01-05
 
         // add toolbars
         //toolbar.setLayout(new FlowLayout(FlowLayout.LEFT,0,0));
@@ -851,14 +885,17 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		diagramIndex.setLayoutOrientation(JList.VERTICAL);
 		diagramIndex.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);		
 		diagramIndex.addMouseListener(diagram);
+		diagramIndex.addMouseListener(new PopupListener());
 		// END KGU#305 2016-12-12
 		// START KGU#305 2016-12-15: Enh. #305 - react to space and enter
 		inpMap = diagramIndex.getInputMap(WHEN_FOCUSED);
 		actMap = diagramIndex.getActionMap();
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "SPACE");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "ENTER");
-		actMap.put("SPACE", new ArrangerIndexAction(true));
-		actMap.put("ENTER", new ArrangerIndexAction(false));
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "DELETE");
+		actMap.put("SPACE", new ArrangerIndexAction(false));
+		actMap.put("ENTER", new ArrangerIndexAction(true));
+		actMap.put("DELETE",new ArrangerIndexAction("DELETE"));
 		// END KGU#305 2016-12-15
 
 		
@@ -1183,6 +1220,14 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			sp305.setDividerSize(0);
 		}
 		// END KGU#305 2016-12-12
+		
+		// START KGU#318 2017-01-05: Enh. #319
+		boolean indexSelected = scrollIndex.isVisible() && !diagramIndex.isSelectionEmpty();
+		popupIndexGet.setEnabled(indexSelected && diagramIndex.getSelectedValue() != diagram.getRoot());
+		popupIndexSave.setEnabled(indexSelected && diagramIndex.getSelectedValue().hasChanged());
+		popupIndexRemove.setEnabled(indexSelected);
+		popupIndexCovered.setEnabled(indexSelected && Element.E_COLLECTRUNTIMEDATA && !diagramIndex.getSelectedValue().isProgram);
+		// END KGU#318 2017-01-05
            
                 //
                 /*
@@ -1257,7 +1302,17 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		{
 			if (e.isPopupTrigger()) 
 			{
-				popup.show(e.getComponent(), e.getX(), e.getY());
+				// START KGU#318 2017-01-05: Enh. #319
+				//popup.show(e.getComponent(), e.getX(), e.getY());
+				if (e.getComponent() == diagram) {
+					popup.show(e.getComponent(), e.getX(), e.getY());					
+				}
+				else if (e.getComponent() == diagramIndex) {
+					doButtonsLocal();
+					diagramIndex.requestFocusInWindow();
+					popupIndex.show(e.getComponent(), e.getX(), e.getY());
+				}
+				// END KGU#318 2017-01-05
 			}
 		}
 	}
@@ -1332,5 +1387,59 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		this.doButtonsLocal();
 	}
     // END KGU#305 2016-12-12
+	
+	// START KGU#305/KGU#318 2017-01-05: Enh. #305/#319 Arranger index action methods concentrated here
+	public void arrangerIndexGet()
+	{
+		Root selectedRoot = diagramIndex.getSelectedValue();
+		if (selectedRoot != null && selectedRoot != diagram.getRoot()) {
+			diagram.setRootIfNotRunning(selectedRoot);
+			scrollarea.requestFocusInWindow();
+		}		
+	}
+
+	public void arrangerIndexSave()
+	{
+		Root selectedRoot = diagramIndex.getSelectedValue();
+		if (selectedRoot != null) {
+			diagram.saveNSD(selectedRoot, false);
+		}		
+	}
+
+	public void arrangerIndexRemove()
+	{
+		int index = diagramIndex.getSelectedIndex();
+		Arranger.getInstance().removeDiagram(diagramIndex.getSelectedValue());
+		if (index < diagramIndex.getModel().getSize()) {
+			diagramIndex.setSelectedIndex(index);
+		}
+		else if (index > 0) {
+			diagramIndex.setSelectedIndex(index-1);
+		}
+		if (diagramIndex.getModel().getSize() > 0) {
+			diagramIndex.requestFocusInWindow();
+		}
+		else {
+			scrollarea.requestFocusInWindow();					
+		}		
+	}
+	
+	public void arrangerIndexToggleCovered()
+	{
+		Root selectedRoot = diagramIndex.getSelectedValue();
+		if (selectedRoot != null && Element.E_COLLECTRUNTIMEDATA) {
+			selectedRoot.deeplyCovered = !selectedRoot.deeplyCovered;
+			// We must update/refresh both Structorizer and Arranger
+			if (selectedRoot == diagram.getRoot()) {
+				diagram.redraw();
+			}
+			else {
+				Arranger.getInstance().redraw();
+			}
+			diagramIndex.repaint();
+		}		
+		
+	}
+	// END KGU#305/KGU#318 2017-01-05
 
 }

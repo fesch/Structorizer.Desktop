@@ -106,6 +106,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.21      Issue #269: Focus alignment improved for large elements
  *      Kay Gürtzig     2016.12.02      Enh. #300: Update notification mechanism
  *      Kay Gürtzig     2016.12.12      Enh, #305: Infrastructure for Arranger root list
+ *      Kay Gürtzig     2016.12.28      Enh. #318: Backsaving of unzipped diagrams to arrz file
+ *      Kay Gürtzig     2017.01.04      Bugfix #321: Signatures of saveNSD(), doSaveNSD(), saveAsNSD() and zipToArrz() enhanced
  *
  ******************************************************************************************************
  *
@@ -140,6 +142,10 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import javax.swing.*;
 import javax.imageio.*;
@@ -1227,18 +1233,24 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			currentDirectory = new File(root.filename);
 			redraw();
 			*/
-			// START KGU#289 2016-11-15: Enh. #290 (Arranger file support)
+			// START KGU#289/KGU#316 2016-11-15/2016-12-28: Enh. #290/#318 (Arranger file support)
 			//openNSD(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
-			File file = dlgOpen.getSelectedFile().getAbsoluteFile();
-			if (filter.accept(file)) {
-				openNSD(file.toString());
-			}
-			else {
-				loadArrangement(file);
-			}
-			// END KGU#289 2016-11-15
+			openNsdOrArr(dlgOpen.getSelectedFile().getAbsoluteFile().toString());
+			// END KGU#289/KGU#316 2016-11-15/2016-12-28
 		}
 	}
+	
+	// START KGU#289/KGU#316 2016-11-15/2016-12-28: Enh. #290/#318: Better support for Arranger files
+	public void openNsdOrArr(String _filepath)
+	{
+		if (StructogramFilter.getExtension(_filepath).equals("nsd")) {
+			this.openNSD(_filepath);
+		}
+		else {
+			loadArrangement(new File(_filepath));
+		}
+	}
+	// END KGU#316 2016-12-28
 
 	public void openNSD(String _filename)
 	{
@@ -1289,7 +1301,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			errorMessage = e.getLocalizedMessage();
 			if (errorMessage == null) errorMessage = e.getMessage();
 			System.err.println("openNSD(\"" + _filename + "\"): " + (errorMessage != null ? errorMessage : e));
-			//e.printStackTrace(System.err);
+			if (e instanceof java.util.ConcurrentModificationException) {
+				e.printStackTrace(System.err);
+			}
 			// END KGU#111 2015-12-16
 		}
 		// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
@@ -1314,6 +1328,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		else {
 			arr.setVisible(true);
+			// START KGU#316 2016-12-28: Enh. #318
+			addRecentFile(arrFile.getAbsolutePath());
+			this.currentDirectory = arrFile;
+			// END KGU#316 2016-12-28
 		}
 	}
 	// END KGU#289 2016-11-15
@@ -1322,6 +1340,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * SaveAs method
 	 *****************************************/
 	public void saveAsNSD()
+	// START KGU#320 2017-01-04: Bugfix #321(?) We need a possibility to save a different root
+	{
+		saveAsNSD(this.root);
+	}
+	
+	private void saveAsNSD(Root root)
+	// END KGU#320 2017-01-04
 	{
 		JFileChooser dlgSave = new JFileChooser();
 		dlgSave.setDialogTitle(Menu.msgTitleSaveAs.getText());
@@ -1378,8 +1403,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				else
 				{
 					root.filename = newFilename;
+					// START KGU#316 2016-12-28: Enh. #318
+					root.shadowFilepath = null;
+					// END KGU#316 2016-12-28
 					// START KGU#94 2015.12.04: out-sourced to auxiliary method
-					doSaveNSD();
+					// START KGU#320 2017-01-04: Bugfix #321(?) Need a parameter now
+					//doSaveNSD();
+					doSaveNSD(root);
+					// END KGU#320 2017-01-04
 					// END KGU#94 2015-12-04
 		        	// START KGU#273 2016-10-07: Bugfix #263 - remember the directory as current directory
 		        	this.currentDirectory = f;
@@ -1405,9 +1436,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * Stores unsaved changes (if any). If _askToSave is true then the user may confirm or deny saving or cancel the
 	 * inducing request. 
 	 * @param _askToSave - if true and the current root has unsaved changes then a user dialog will be popped up first
-	 * @return true if the user cancelled the save request
+	 * @return true if the user did not cancel the save request
 	 */
 	public boolean saveNSD(boolean _askToSave)
+	// START KGU#320 2017-01-04: Bugfix (#321)
+	{
+		return saveNSD(this.root, _askToSave);
+	}
+	
+	public boolean saveNSD(Root root, boolean _askToSave)
+	// END KGU#320 2017-01-04
 	{
 		int res = 0;	// Save decision: 0 = do save, 1 = don't save, -1 = cancelled (don't leave)
 		// only save if something has been changed
@@ -1481,13 +1519,19 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //				}
 //
 //				if (saveIt == true)
-					saveAsNSD();
+					// START KGU#320 2017-01-04: Bugfix (#321)
+					//saveAsNSD();
+					saveAsNSD(root);
+					// END KGU#320 2017-01-04
 				}
 				else
 // END KGU#248 2016-09-15
 				{
 					// START KGU#94 2015-12-04: Out-sourced to auxiliary method
-					doSaveNSD();
+					// START KGU#320 2017-01-04: Bugfix (#321) had to parameterize this
+					//doSaveNSD();
+					doSaveNSD(root);
+					// END KGU#320 2017-01-04
 					// END KGU#94 2015-12-04
 				}
 			}
@@ -1496,86 +1540,197 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	// START KGU#94 2015-12-04: Common file writing routine (on occasion of bugfix #40)
-	private boolean doSaveNSD()
+	// START KGU#320 2017-01-03: Bugfix (#321)
+	//private boolean doSaveNSD()
+	private boolean doSaveNSD(Root root)
+	// END KGU#320 2017-01-03
 	{
-		String[] EnvVariablesToCheck = { "TEMP", "TMP", "TMPDIR", "HOME", "HOMEPATH" };
+		//String[] EnvVariablesToCheck = { "TEMP", "TMP", "TMPDIR", "HOME", "HOMEPATH" };
 		boolean done = false;
-        try
-        {
-        	// START KGU#94 2015.12.04: Bugfix #40 part 1
-        	// A failed saving attempt should not leave a truncated file!
-        	//FileOutputStream fos = new FileOutputStream(root.filename);
-        	String filename = root.filename;
-        	File f = new File(filename);
-        	boolean fileExisted = f.exists(); 
-        	if (fileExisted)
-        	{
-        		String tempDir = "";
-        		for (int i = 0; (tempDir == null || tempDir.isEmpty()) && i < EnvVariablesToCheck.length; i++)
-        		{
-        			tempDir = System.getenv(EnvVariablesToCheck[i]);
-        		}
-        		if ((tempDir == null || tempDir.isEmpty()) && this.currentDirectory != null)
-        		{
-        			File dir = this.currentDirectory;
-        			if (dir.isFile())
-        			{
-        				tempDir = dir.getParent();
-        			}
-        			else
-        			{
-        				tempDir = dir.getAbsolutePath();
-        			}
-        		}
-        		filename = tempDir + System.getProperty("file.separator") + "Structorizer.tmp";
-        	}
-        	FileOutputStream fos = new FileOutputStream(filename);
-        	// END KGU#94 2015-12-04
-        	Writer out = new OutputStreamWriter(fos, "UTF8");
-        	XmlGenerator xmlgen = new XmlGenerator();
-        	out.write(xmlgen.generateCode(root,"\t"));
-        	out.close();
+		try
+		{
+			// START KGU#94 2015.12.04: Bugfix #40 part 1
+			// A failed saving attempt should not leave a truncated file!
+			//FileOutputStream fos = new FileOutputStream(root.filename);
+			String filename = root.filename;
+			// START KGU#316 2016-12-28: Enh. #318
+			if (root.shadowFilepath != null) {
+				filename = root.shadowFilepath;
+			}
+			// END KGU#316 2016-12-28
+			File f = new File(filename);
+			boolean fileExisted = f.exists();
+			// START KGU#316 2016-12-28: Enh. 318
+			//if (fileExisted)
+			if (fileExisted && root.shadowFilepath == null)
+			// END KGU#316 2016-12-28
+			{
+				// START KGU#316 2016-12-28: Enh. #318 - temporary file designation simplified  
+//        		String tempDir = "";
+//        		for (int i = 0; (tempDir == null || tempDir.isEmpty()) && i < EnvVariablesToCheck.length; i++)
+//        		{
+//        			tempDir = System.getenv(EnvVariablesToCheck[i]);
+//        		}
+//        		if ((tempDir == null || tempDir.isEmpty()) && this.currentDirectory != null)
+//        		{
+//        			File dir = this.currentDirectory;
+//        			if (dir.isFile())
+//        			{
+//        				tempDir = dir.getParent();
+//        			}
+//        			else
+//        			{
+//        				tempDir = dir.getAbsolutePath();
+//        			}
+//        		}
+//        		filename = tempDir + System.getProperty("file.separator") + "Structorizer.tmp";
+				File tmpFile = File.createTempFile("Structorizer", "nsd");
+				filename = tmpFile.getAbsolutePath();
+				// END KGU#316 2016-12-28
+			}
+			FileOutputStream fos = new FileOutputStream(filename);
+			// END KGU#94 2015-12-04
+			Writer out = new OutputStreamWriter(fos, "UTF-8");
+			XmlGenerator xmlgen = new XmlGenerator();
+			out.write(xmlgen.generateCode(root,"\t"));
+			out.close();
 
-        	// START KGU#94 2015-12-04: Bugfix #40 part 2
-        	// If the NSD file had existed then replace it by the output file after having created a backup
-        	if (fileExisted)
-        	{
-        		File backUp = new File(root.filename + ".bak");
-        		if (backUp.exists())
-        		{
-        			backUp.delete();
-        		}
-        		f.renameTo(backUp);
-        		f = new File(root.filename);
-            	File tmpFile = new File(filename);
-            	tmpFile.renameTo(f);
-            	// START KGU#309 2016-12-15: Issue #310 backup may be opted out
-            	if (!Element.E_MAKE_BACKUPS && backUp.exists()) {
-            		backUp.delete();
-            	}
-            	// END KGU#309 2016-12-15
-        	}
-        	// END KGU#94 2015.12.04
-        	
+			// START KGU#94 2015-12-04: Bugfix #40 part 2
+			// If the NSD file had existed then replace it by the output file after having created a backup
+			// START KGU#316 2016-12-28: Enh. #318 Let nsd files reside in arrz files
+			// if (fileExisted)
+			if (root.shadowFilepath != null) {
+				// START KGU#320 2017-01-04: Bugfix #321(?)
+				//if (!zipToArrz(filename)) {
+				if (!zipToArrz(root, filename)) {
+				// END KGU#320 2017-01-04
+					// If the saving to the original arrz file failed then make the shadow path the actual one
+					root.filename = filename;
+					root.shadowFilepath = null;
+				}
+			}
+			else if (fileExisted)
+			// END KGU#316 201612-28
+			{
+				File backUp = new File(root.filename + ".bak");
+				if (backUp.exists())
+				{
+					backUp.delete();
+				}
+				f.renameTo(backUp);
+				f = new File(root.filename);
+				File tmpFile = new File(filename);
+				tmpFile.renameTo(f);
+				// START KGU#309 2016-12-15: Issue #310 backup may be opted out
+				if (!Element.E_MAKE_BACKUPS && backUp.exists()) {
+					backUp.delete();
+				}
+				// END KGU#309 2016-12-15
+			}
+			// END KGU#94 2015.12.04
+
 			// START KGU#137 2016-01-11: On successful saving, record the undo stack level
-        	//root.hasChanged=false;
-        	root.rememberSaved();
-        	// END KGU#137 2016-01-11
-        	addRecentFile(root.filename);
-        	done = true;
-        }
-        catch(Exception ex)
-        {
+			//root.hasChanged=false;
+			root.rememberSaved();
+			// END KGU#137 2016-01-11
+			// START KGU#316 2016-12-28: Enh. #318: Don't remember a zip-internal file path
+			//addRecentFile(root.filename);
+			addRecentFile(root.getPath(true));
+			// END KGU#316 2016-12-28
+			done = true;
+		}
+		catch(Exception ex)
+		{
 			String message = ex.getLocalizedMessage();
 			if (message == null) message = ex.getMessage();
-        	JOptionPane.showMessageDialog(this,
-        			Menu.msgErrorFileSave.getText().replace("%", message),
-        			Menu.msgTitleError.getText(),
-        			JOptionPane.ERROR_MESSAGE, null);
-        }
-        return done;
+			JOptionPane.showMessageDialog(this,
+					Menu.msgErrorFileSave.getText().replace("%", message),
+					Menu.msgTitleError.getText(),
+					JOptionPane.ERROR_MESSAGE, null);
+		}
+		return done;
 	}
 	// END KGU#94 2015-12-04
+	
+	// START KGU#316 2016-12-28: Enh. #318
+	// START KGU#320 2017-01-04: Bugfix #320 We might be forced to save a different diagram (from Arranger)
+	//private boolean zipToArrz(String tmpFilename)
+	private boolean zipToArrz(Root root, String tmpFilename)
+	// END KGU#320 2017-01-04
+	{
+		String error = null;
+		boolean isDone = false;
+		final int BUFSIZE = 2048;
+		byte[] buf = new byte[BUFSIZE];
+		int len = 0;
+
+		StringList inZipPath = new StringList();
+		File arrzFile = new File(root.filename);
+		while (arrzFile != null && !arrzFile.isFile()) {
+			inZipPath.add(arrzFile.getName());
+			arrzFile = arrzFile.getParentFile();
+		}
+		if (arrzFile == null) {
+			int posArrz = root.filename.toLowerCase().indexOf(".arrz");
+			error = ((posArrz > 0) ? root.filename.substring(0, posArrz+5) : root.filename) + ": " + Menu.msgErrorNoFile.getText();
+		}
+		else {
+			String localPath = inZipPath.reverse().concatenate(File.separator);
+
+			ZipFile zipFile = null;
+			try {
+				zipFile = new ZipFile(arrzFile);
+				File tmpZipFile = File.createTempFile("Structorizer", "zip");
+				final ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(tmpZipFile));
+				Enumeration<? extends ZipEntry> entries = zipFile.entries();
+				// Copy all but the file to be updated
+				while(entries.hasMoreElements()) {
+					ZipEntry entryIn = entries.nextElement();
+					if (!entryIn.getName().equals(localPath)) {
+						zos.putNextEntry(entryIn);
+						InputStream is = zipFile.getInputStream(entryIn);
+						while((len = is.read(buf)) > 0) {            
+							zos.write(buf, 0, len);
+						}
+						zos.closeEntry();
+					}
+				}
+				// Now add the file to be updated
+				zos.putNextEntry(new ZipEntry(localPath));
+				FileInputStream fis = new FileInputStream(tmpFilename);
+				while ((len = (fis.read(buf))) > 0) {
+					zos.write(buf, 0, len);
+				}
+				zos.closeEntry();
+				fis.close();
+				zos.close();
+				zipFile.close();
+				String zipPath = arrzFile.getAbsolutePath();
+				File bakFile = new File(zipPath + ".bak");
+				if (bakFile.exists()) {
+					bakFile.delete();
+				}
+				boolean bakOk = arrzFile.renameTo(bakFile);
+				boolean zipOk = tmpZipFile.renameTo(new File(zipPath));
+				if (bakOk && zipOk && !Element.E_MAKE_BACKUPS) {
+					bakFile.delete();
+				}
+				isDone = true;
+			} catch (ZipException ex) {
+				error = ex.getLocalizedMessage();
+			} catch (IOException ex) {
+				error = ex.getLocalizedMessage();
+			}
+		}
+		if (error != null) {
+			JOptionPane.showMessageDialog(this,
+					error,
+					Menu.msgTitleError.getText(),
+					JOptionPane.ERROR_MESSAGE, null);
+		}
+		return isDone;
+	}
+	// END KGU#316 2016-12-28
 
 	/*****************************************
 	 * Undo method

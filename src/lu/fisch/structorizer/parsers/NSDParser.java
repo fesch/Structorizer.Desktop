@@ -42,6 +42,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2016.09.24      Enh. #250 - Robustness of FOR loop reconstruction improved
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done.
  *      Kay Gürtzig     2016.10.13      Enh. #270: New Element property "disabled" integrated
+ *      Kay Gürtzig     2016.12.21      Bugfix #317: Awareness of color attributes in subqueue nodes
  *
  ******************************************************************************************************
  *
@@ -520,7 +521,12 @@ public class NSDParser extends DefaultHandler {
 			lastQ = new Subqueue();
 			// setup queue
 			lastQ.parent = cStack.peek();	// the Case element
-			lastQ.setColor(lastQ.parent.getColor());
+			// END KGU 2016-12-21: Bugfix #317
+			//lastQ.setColor(lastQ.parent.getColor());
+			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			}
+			// END KGU 2016-12-21
 			// handle stacks
 			cStack.peek().qs.addElement(lastQ);
 			qStack.push(lastQ);
@@ -555,7 +561,11 @@ public class NSDParser extends DefaultHandler {
 			lastQ = new Subqueue();
 			// setup queue
 			lastQ.parent=((Parallel) pStack.peek());
-			lastQ.setColor(lastQ.parent.getColor());
+			//lastQ.setColor(lastQ.parent.getColor());
+			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			}
+			// END KGU 2016-12-21
 			// handle stacks
 			((Parallel) pStack.peek()).qs.addElement(lastQ);
 			qStack.push(lastQ);
@@ -564,12 +574,22 @@ public class NSDParser extends DefaultHandler {
 		{
 			// handle stacks
 			lastQ = root.children;
+			// START KGU 2106-12-21: Bugfix #317
+			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			}
+			// END KGU 2016-12-21
 			qStack.push(lastQ);
 		}
 		else if (qualifiedName.equals("qTrue"))
 		{
 			// create new queue
 			lastQ = ((Alternative) lastE).qTrue;
+			// START KGU 2106-12-21: Bugfix #317
+			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			}
+			// END KGU 2016-12-21
 			ifStack.push(((Alternative) lastE).qFalse);
 			qStack.push(lastQ);
 		}
@@ -577,32 +597,66 @@ public class NSDParser extends DefaultHandler {
 		{
 			// handle stacks
 			lastQ = ifStack.pop();
+			// START KGU 2106-12-21: Bugfix #317
+			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			}
+			// END KGU 2016-12-21
 			qStack.push(lastQ);
 		}
 		else if (qualifiedName.equals("qFor"))
 		{
 			// handle stacks
 			lastQ = ((For) lastE).q;
+			// START KGU 2106-12-21: Bugfix #317
+			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			}
+			// END KGU 2016-12-21
 			qStack.push(lastQ);
 		}
 		else if (qualifiedName.equals("qForever"))
 		{
 			// handle stacks
 			lastQ = ((Forever) lastE).q;
+			// START KGU 2106-12-21: Bugfix #317
+			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			}
+			// END KGU 2016-12-21
 			qStack.push(lastQ);
 		}
 		else if (qualifiedName.equals("qWhile"))
 		{
 			// handle stacks
 			lastQ = ((While) lastE).q;
+			// START KGU 2106-12-21: Bugfix #317
+			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			}
+			// END KGU 2016-12-21
 			qStack.push(lastQ);
 		}
 		else if (qualifiedName.equals("qRepeat"))
 		{
 			// handle stacks
 			lastQ = ((Repeat) lastE).q;
+			// START KGU 2106-12-21: Bugfix #317
+			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals("")) {
+				lastQ.setColor(Color.decode("0x"+attributes.getValue("color")));
+			}
+			// END KGU 2016-12-21
 			qStack.push(lastQ);
 		}
+		// START KGU #2016-12-21: obsolete Bugfix #317 - restore color of empty subqueues
+//		else if (qualifiedName.equals("subqueue"))
+//		{
+//			if (attributes.getIndex("color")!=-1 && !attributes.getValue("color").equals(""))
+//			{
+//				qStack.peek().setColor(Color.decode("0x"+attributes.getValue("color")));
+//			} 
+//		}
+		// END KGU #2016-12-21
 	}
 	
     @Override

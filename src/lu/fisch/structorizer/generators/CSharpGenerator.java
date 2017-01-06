@@ -50,6 +50,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions) 
  *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig             2017.01.04      Bugfix #322: input and output code generation fixed 
  *
  ******************************************************************************************************
  *
@@ -89,7 +90,12 @@ package lu.fisch.structorizer.generators;
  */
 
 import lu.fisch.utils.*;
+
+import java.util.regex.Matcher;
+
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Executor;
+import lu.fisch.structorizer.parsers.D7Parser;
 
 
 public class CSharpGenerator extends CGenerator 
@@ -150,10 +156,16 @@ public class CSharpGenerator extends CGenerator
 	//}
 	protected String getInputReplacer(boolean withPrompt)
 	{
+		// START KGU##321 2017-01-04: Bugfix #322 had produced wrong syntax
+		//if (withPrompt) {
+		//	return "Console.Write($1); Console.ReadLine($2)";
+		//}
+		//return "Console.ReadLine($1)";
 		if (withPrompt) {
-			return "Console.Write($1); Console.ReadLine($2)";
+			return "Console.Write($1); $2 = Console.ReadLine()";
 		}
-		return "Console.ReadLine($1)";
+		return "$1 = Console.ReadLine()";
+		// END KGU#321 2017-01-04
 	}
 	// END KGU#281 2016-10-15
 
@@ -166,6 +178,62 @@ public class CSharpGenerator extends CGenerator
 	{
 		return "Console.WriteLine($1)";
 	}
+
+	// START KGU#321 2017-01-04: Bugfix #322 - we must split the argument list
+	/**
+	 * Detects whether the given code line starts with the configured output keystring
+	 * and if so replaces it according to the regex pattern provided by getOutputReplacer()
+	 * @param _interm - a code line in intermediate syntax
+	 * @return transformed output instruction or _interm unchanged
+	 */
+	@Override
+	protected String transformOutput(String _interm)
+	{
+		String subst = getOutputReplacer();
+		String subst0 = subst.replaceAll("Line", "");
+		// Between the input keyword and the variable name there MUST be some blank...
+		String keyword = D7Parser.getKeyword("output").trim();
+		if (!keyword.isEmpty() && _interm.startsWith(keyword))
+		{
+			String matcher = Matcher.quoteReplacement(keyword);
+			if (Character.isJavaIdentifierPart(keyword.charAt(keyword.length()-1)))
+			{
+				matcher = matcher + "[ ]";
+			}
+
+			// Start - BFI (#51 - Allow empty output instructions)
+			if(!_interm.matches("^" + matcher + "(.*)"))
+			{
+				_interm += " ";
+			}
+			// End - BFI (#51)
+			
+			String argstr = _interm.replaceFirst("^" + matcher + "(.*)", "$1");
+			StringList args = Element.splitExpressionList(argstr, ",");
+			String result = "";
+			for (int i = 0; i < args.count()-1; i++) {
+				result += subst0.replace("$1", args.get(i).trim()) + "; ";
+			}
+			if (args.count() > 1) { 
+				_interm = result + subst.replace("$1", args.get(args.count()-1));
+			}
+			else {
+				_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+			}
+		}
+		return _interm;
+	}
+	// END KGU#321 2017-01-04
+
+	// START KGU#311 2017-01-05: Enh. #314 Don't do what the parent does.
+	@Override
+	protected void transformFileAPITokens(StringList tokens)
+	{
+		for (int i = 0; i < Executor.fileAPI_names.length; i++) {
+			tokens.replaceAll(Executor.fileAPI_names[i], "StructorizerFileAPI." + Executor.fileAPI_names[i]);
+		}
+	}
+	// END KGU#311 2017-01-05
 
 	// START KGU#16/#47 2015-11-30
 	/**
@@ -328,6 +396,12 @@ public class CSharpGenerator extends CGenerator
 
 			insertBlockHeading(_root, "public class "+ _procName, _indent);
 			code.add(_indent);
+			// START KGU#311 2017-01-05: Enh. #314 File API
+			if (this.usesFileAPI) {
+				this.insertFileAPI("cs", code.count(), _indent, 0);
+				code.add(_indent);
+			}
+			// END KU#311 2017-01-05
 			insertComment("TODO: Declare and initialise class and member variables here", _indent + this.getIndent());
 			code.add(_indent);
 			code.add(_indent + this.getIndent()+"/**");
@@ -338,6 +412,12 @@ public class CSharpGenerator extends CGenerator
 			code.add("");
 		}
 		else {
+			// START KGU#311 2017-01-05: Enh. #314 File API
+			if (this.topLevel && this.usesFileAPI) {
+				this.insertFileAPI("cs", code.count(), _indent, 0);
+				code.add(_indent+this.getIndent());
+			}
+			// END KU#311 2017-01-05
 			insertBlockComment(_root.getComment(), _indent+this.getIndent(), "/**", " * ", null);
 			if (_resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
 			{

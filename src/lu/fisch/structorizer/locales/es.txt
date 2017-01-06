@@ -90,6 +90,9 @@
  *      Kay Gürtzig     2016.12.02  Issue #307: New executor error message
  *      Kay Gürtzig     2016.12.14  Issue #310: Menu re-organization
  *      Kay Gürtzig     2016.12.15  Enh. #310: New Saving option dialog
+ *      Kay Gürtzig     2016.12.27  Enh. #314: Control messages for the file API
+ *      Kay Gürtzig     2016.12.29  Enh. #315: New Surface messages for diagram conflicts
+ *      Kay Gürtzig     2017.01.05  Enh. #319: Captions for the Arranger index popup menu
  *
  ******************************************************************************************************
  *
@@ -192,6 +195,7 @@ Menu.menuDiagramSwitchTCTooltip.text=Impida opción "%1" para activar este punto
 Menu.menuDiagramMarker.text=¿Resaltar variables?
 Menu.menuDiagramDIN.text=¿DIN?
 Menu.menuDiagramAnalyser.text=¿Comprobar diagrama?
+Menu.menuDiagramIndex.text=¿Mostrar índice de Arranger?
 Menu.menuDiagramWheel.text=¿Usar rueda para reducir?
 // Menu "Preferences"
 Menu.menuPreferences.text=Preferencias
@@ -323,6 +327,8 @@ Menu.error14_2.text=¡El paso «%» del bucle FOR no es una constante entera!
 Menu.error14_3.text=El nombre de la variable «%» puede confligir con una de las palabras claves configuradas para el bucle PARA!
 Menu.error15_1.text=¡La LLAMADA no tiene ninguna de las formas aceptadas: [ <var> <- ] <routine_name>(<arg_list>)!
 Menu.error15_2.text=La llamada subrutina «%» ahora no está localizable.
+Munu.error15_3.text=Llamada ambigua: Hay más de una subrutina «%».
+
 Menu.error16_1.text=¡Un elemento de salto (salida) debe ser vacío o empezar con uno de los comandos %!
 Menu.error16_2.text=¡Una instrucción de retorno debe ser colocado en un elemento SALTO si no es la última instrucción del diagrama!
 Menu.error16_3.text=¡Instrucciones de salida (exit, leave, o break) solo están permitidos en elementos del tipo SALTO!
@@ -479,6 +485,11 @@ Editor.popupDisable.text=Desactivar/Reactivar
 // Breakpoint
 Editor.popupBreakpoint.text=Poner/eliminar breakpoint
 Editor.popupBreakTrigger.text=Fija la condición de parar ...
+// Arranger index
+Editor.popupIndexGet.text=Coger diagrama
+Editor.popupIndexSave.text=Guardar cambios
+Editor.popupIndexRemove.text=Quitar
+Editor.popupIndexCovered.text=Cambiar cobertura de test
 
 -----[ InputBox ]-----
 InputBox.title=
@@ -753,6 +764,10 @@ Surface.msgUnsavedContinue.text=¿Continuar aun así?
 Surface.msgNoArrFile.text=Ningún Arranger archivo encontrado
 Surface.msgDefectiveArr.text=Colocación defectuosa.
 Surface.msgDefectiveArrz.text=Archivo portable defectuoso.
+Surface.titleDiagramConflict.text=Conflicto entre diagramas
+Surface.msgInsertionConflict.0.text=Ya hay otra versión del diagrama "%2",\npor lo menos uno de los dos tiene cambios no guardados.
+Surface.msgInsertionConflict.1.text=Ya hay una copia equivalente del diagrama "%1"\ncon otra locación de fichero "%2".
+Surface.msgInsertionConflict.2.text=Ya hay un diagrama diferente con signatura "%1"\ncolocado en fichero "%2".
 
 -----> Executor
 -----[ Control ]-----
@@ -782,7 +797,8 @@ Control.msgTitleError.text=Error
 Control.msgTitleQuestion.text=Pregunta
 Control.msgTitleParallel.text=Problema en ejecución paralela
 Control.lbAcknowledge.text=Confirma, por favor, para continuar.
-Control.msgNoSubroutine.text=¡No diagrama con subprograma "%1" (%2 parameters) encontrado!\n¿Ha olvidado a abrir el Arranger y colocar necesarias subrutinas allí?
+Control.msgNoSubroutine.text=¡No diagrama con subprograma "%1" (%2 parámetros) encontrado!\n¿Ha olvidado a abrir el Arranger y colocar necesarias subrutinas allí?
+Control.msgAmbiguousCall.text=¡Llamada ambigua! Diferentes diagramas (subroutinas) "%1" con %2 parámetros encontrados.
 Control.msgInvalidExpr.text=¡<%1> no es una expresión correcta o existente!
 Control.msgInvalidBool.text=¡<%1> no es una válida expresión lógica!
 Control.msgIllFunction.text=¡<%1> no es una función correcta!
@@ -794,7 +810,12 @@ Control.msgIllegalJump.text=¡Contenido ilegal del SALTO (instruction para salir
 Control.msgTooManyLevels.text=¡Demasiados niveles para salir (niveles reales: %1 / especificados: %2)!
 Control.msgJumpOutParallel.text=Tentativa ilegal de saltar afuera de un brazo paralelo:%¡Brazo terminado!
 Control.msgForLoopManipulation.text=¡Manipulación ilegal de la variable «%» de un bucle PARA!
-Control.tblVar.header.0=Nombre de Variable
+Control.msgInvalidFileNumberRead.text=Nombre de archivo es inválido o archivo no es abierto para leer.
+Control.msgInvalidFileNumberWrite.text=Nombre de archivo es inválido o archivo no es abierto para escribir.
+Control.msgNoIntLiteralOnFile.text=¡No valor integral leible desde el archivo!
+Control.msgNoDoubleLiteralOnFile.text=¡No valor floating-point leible desde el archivo!    
+Control.msgEndOfFile.text=¡No es posible leer datos después del fin del archivo!    
+Control.tblVar.header.0=Nombre de variable
 Control.tblVar.header.1=Contenido
 
 -----[ OutputConsole ]-----

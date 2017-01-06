@@ -60,12 +60,17 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.10.15      Enh. #271: transformInput() and signature of getOutputReplacer() modified
  *      Kay Gürtzig     2016.10.16      Bugfix #275: Defective subroutine registration for topological sort mended
  *      Kay Gürtzig     2016.12.01      Bugfix #301: New method boolean isParenthesized(String)
+ *      Kay Gürtzig     2016.12.22      Enh. #314: Support for Structorizer File API, improvements for #227
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2016.12.22 - Enhancement #314: Structorizer file API support.
+ *      - This is in the most cases done by copying a set of implementing functions for the target language
+ *        into the resulting file. Generator provides two methods insertFileAPI() for this purpose.
+ *      - Generator supports this by an extended information scanning to decide whether the file API is used.
  *      2016.10.15 - Enhancement #271: Input instruction with integrated prompt string
- *      - For input isntructions with prompt string (enh. #271), different inputReplacer patterns are needed
+ *      - For input instructions with prompt string (enh. #271), different inputReplacer patterns are needed
  *        (they must e.g. derive some input instruction). Therefore an API modification for generators to
  *        plug in became necessary: getInputReplacer() now requires a boolean argument to provide the appropriate
  *        pattern. Method transformInput() must distinguish and handle the input instruction flavours therefore.
@@ -91,10 +96,12 @@ package lu.fisch.structorizer.generators;
 import java.awt.Frame;
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Matcher;
 
@@ -105,6 +112,8 @@ import com.stevesoft.pat.Regex;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Control;
+import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.parsers.D7Parser;
@@ -150,10 +159,21 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected boolean topLevel = true;
 	// END KGU#178 2016-07-19
 	// START KGU#236 2016-08-10: Issue #227: Find out whether there are I/O operations
-	protected boolean hasOutput = false;
-	protected boolean hasInput = false;
-	protected boolean hasEmptyInput = false;
+	// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
+//	protected boolean hasOutput = false;
+//	protected boolean hasInput = false;
+//	protected boolean hasEmptyInput = false;
+	private boolean hasOutput = false;
+	private boolean hasInput = false;
+	private boolean hasEmptyInput = false;
+	private Set<Root> rootsWithOutput = new HashSet<Root>();
+	private Set<Root> rootsWithInput = new HashSet<Root>();
+	private Set<Root> rootsWithEmptyInput = new HashSet<Root>();
+	// END KGU#236 2016-12-22
 	// END KGU#236 2016-08-10
+	// START KGU#311 2016-12-22: Enh. #314 - File API support
+	protected boolean usesFileAPI = false;
+	// END KGU#311 2016-12-22
 
 	// START KGU#129/KGU#61 2016-03-22: Bugfix #96 / Enh. #84 Now important for most generators
 	// Some generators must prefix variables, for some generators it's important for FOR-IN loops
@@ -248,6 +268,33 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#178 2016-07-19	
 	
+	// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
+	protected boolean hasOutput(Root _root)
+	{
+		return rootsWithOutput.contains(_root);
+	}
+	protected boolean hasInput(Root _root)
+	{
+		return rootsWithInput.contains(_root);
+	}
+	protected boolean hasEmptyInput(Root _root)
+	{
+		return rootsWithEmptyInput.contains(_root);
+	}
+	protected boolean hasOutput()
+	{
+		return !rootsWithOutput.isEmpty();
+	}
+	protected boolean hasInput()
+	{
+		return !rootsWithInput.isEmpty();
+	}
+	protected boolean hasEmptyInput()
+	{
+		return !rootsWithEmptyInput.isEmpty();
+	}
+	// END KGU#236 2016-12-22
+
 	// KGU 2014-11-16: Method renamed (formerly: insertComment)
 	// START KGU 2015-11-18: Method parameter list reduced by a comment symbol configuration
 	/**
@@ -568,11 +615,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			//_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
 			if (quotes.isEmpty()) {
 				String subst = getInputReplacer(false);
-				_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+				_interm = _interm.replaceFirst("^" + matcher + "[ ]*(.*)", subst);
 			}
 			else {
 				String subst = getInputReplacer(true);
-				_interm = _interm.replaceFirst("^" + matcher + "\\h*("+quotes+".*"+quotes+")(.*)", subst);
+				_interm = _interm.replaceFirst("^" + matcher + "\\h*("+quotes+".*"+quotes+")[, ]*(.*)", subst);
 			}
 			// END KGU#281 2016-10-15
 		}
@@ -977,6 +1024,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#237 2016-08-10
 	
+	// START KGU#236/KGU#311 2016-12-22: Issue #227, enh. #314 - we may need this more root-specificly
+	private final void gatherElementInformationRoot(Root _root)
+	{
+		hasOutput = hasInput = hasEmptyInput = false;
+		gatherElementInformation(_root);
+		if (hasOutput) rootsWithOutput.add(_root);
+		if (hasInput) rootsWithInput.add(_root);
+		if (hasEmptyInput) rootsWithEmptyInput.add(_root);
+	}
+	// END KGU#236/KGU#311 2016-12-22
 	// START KGU#236 2016-08-10: Issue #227
 	// Recursive scanning routine to gather certain information via
 	// subclassable method checkElementInformation();
@@ -1016,6 +1073,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 			if (instr.isOutput()) hasOutput = true;			
 		}
+		// START KGU#311 2016-12-22: Enh. #314 - check for file API support
+		if (!usesFileAPI && _ele.getText().getText().contains("file"))
+		{
+			// Now we check more precisely
+			String text = _ele.getText().getText();
+			for (int i = 0; !usesFileAPI && i < Executor.fileAPI_names.length; i++) {
+				if (text.contains(Executor.fileAPI_names[i]))
+					usesFileAPI = true;
+			}
+		}
+		// END KGU#311 2016-12-22
 		return true;
 	}
 	// END KGU#236 2016-08-10
@@ -1229,8 +1297,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#74 2015-11-30
 	
+	/**
+	 * Entry point for interactively commanded code export. Retrieves export options,
+	 * opens a file selection dialog
+	 * @param _root - program or top-level routine diagram (call hierarchy root)
+	 * @param _currentDirectory - current Structorizer directory (as managed by Diagram)
+	 * @param _frame - the GUI Frame object responsible for this action
+	 */
 	public void exportCode(Root _root, File _currentDirectory, Frame _frame)
 	{
+		//=============== Get export options ======================
 		try
 		{
 			Ini ini = Ini.getInstance();
@@ -1268,6 +1344,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			ex.printStackTrace();
 		}
 
+		//=============== Request output file path (interactively) ======================
 		JFileChooser dlgSave = new JFileChooser();
 		dlgSave.setDialogTitle(getDialogTitle());
 
@@ -1339,6 +1416,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 		}
 			
+		//=============== Actual code generation ======================
 		if (file != null)
 		{
 			// START KGU#194 2016-05-07: Bugfix #185 - the subclass may need the filename
@@ -1364,7 +1442,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				// START KGU#178 2016-07-20: Enh. #160 - register all subroutine calls
 				if (this.optionExportSubroutines())
 				{
-					// START KGU#237 2016-08-10: Bugfix #228 - precautio for recursive top-level routine
+					// START KGU#237 2016-08-10: Bugfix #228 - precaution for recursive top-level routine
 					if (!_root.isProgram)
 					{
 						subroutines.put(_root, new SubTopoSortEntry(null));
@@ -1381,12 +1459,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				// END KGU#178 2016-07-20
 				
 				// START KGU#236 2016-08-10: Issue #227: General information gathering pass
-				gatherElementInformation(_root);
+				// START KGU#311 2016-12-22: Issue #227, Enh. #314
+				//gatherElementInformation(_root);
+				gatherElementInformationRoot(_root);
+				// END KGU#311 2016-12-22
 				if (this.optionExportSubroutines())
 				{
 					for (Root sub: subroutines.keySet())
 					{
-						gatherElementInformation(sub);
+						// START KGU#311 2016-12-22: Issue #227, Enh. #314
+						//gatherElementInformation(sub);
+						gatherElementInformationRoot(sub);
+						// END KGU#311 2016-12-22
 					}		
 				}
 				// END KGU#236 2016-08-10
@@ -1417,6 +1501,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				// END KGU#168 2016-04-04
 				outp.write(code);
 				outp.close();
+				
+				if (this.usesFileAPI) {
+					copyFileAPIResources(filename);
+				}
 			}
 			catch(Exception e)
 			{
@@ -1432,7 +1520,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 						"Warning", JOptionPane.WARNING_MESSAGE);		    		
 		   	}
 		   	// END KGU#178 2016-07-20
-		}
+		} // if (file != null)
 	}
 	
 	// START KGU#178 2016-07-20: Enh. #160 - Specific code for subroutine export
@@ -1481,6 +1569,164 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#178 2016-07-20
 	
+	// START KGU#311 2016-12-22: Enh. #314
+	/**
+	 * Inserts all marked sections of resource file "FileAPI.&lt;_language&gt;.txt at line
+	 * this.subroutineInsertionLine into the resulting code.
+	 * Increases this.subroutineInsertionLine by the number of lines copied.
+	 * @param _language - name or file name extension of an export language
+	 */
+	protected void insertFileAPI(String _language)
+	{
+		insertFileAPI(_language, 0);	
+	}
+	
+	/**
+	 * Inserts marked section _sectionCount (1, 2, ...) or all sections (_sectionCount = 0) of
+	 * resource file "FileAPI.&lt;_language&gt;.txt at line this.subroutineInsertionLine into
+	 * the resulting code. 
+	 * Increases this.subroutineInsertionLine by the number of lines copied.
+	 * @param _language - name or file name extension of an export language
+	 * @param _sectionCount - number of the marked section to be copied (0 for all)
+	 */
+	protected void insertFileAPI(String _language, int _sectionCount)
+	{
+		this.subroutineInsertionLine = insertFileAPI(_language, this.subroutineInsertionLine, this.subroutineIndent, _sectionCount);	
+	}
+	
+	/**
+	 * Inserts marked section _sectionCount (1, 2, ...) or all sections (_sectionCount = 0) of
+	 * resource file "FileAPI.&lt;_language&gt;.txt" at line _atLine with given _indentation into
+	 * the resulting code 
+	 * @param _language - name or file name extension of an export language
+	 * @param _atLine - target line where the file section is to be copied to
+	 * @param _indentation - indentation string (to precede every line of the copied section) 
+	 * @param _sectionCount - number of the marked section to be copied (0 for all)
+	 * @return line number at the end of the inserted code lines
+	 */
+	protected int insertFileAPI(String _language, int _atLine, String _indentation, int _sectionCount)
+	{
+		boolean isDone = false;
+		int sectNo = 0;
+		String error = "";
+		try {
+			java.io.InputStream fis = this.getClass().getResourceAsStream("FileAPI." + _language + ".txt");
+			java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, "UTF-8"));
+			String line = null;
+			boolean doInsert = false;
+			while ((line = reader.readLine()) != null) {
+				if (line.contains("===== STRUCTORIZER FILE API START =====")){
+					sectNo++;
+					doInsert = _sectionCount == 0 || _sectionCount == sectNo;
+					code.insert(_indentation, _atLine++);
+				}
+				if (doInsert) {
+					// Unify indentation and replace dummy messages by localized ones
+					line = line.replace("\t", this.getIndent());
+					line = line.replace("§INVALID_HANDLE_READ§", Control.msgInvalidFileNumberRead.getText());
+					line = line.replace("§INVALID_HANDLE_WRITE§", Control.msgInvalidFileNumberWrite.getText());
+					line = line.replace("§NO_INT_ON_FILE§", Control.msgNoIntLiteralOnFile.getText());
+					line = line.replace("§NO_DOUBLE_ON_FILE§", Control.msgNoDoubleLiteralOnFile.getText());
+					line = line.replace("§END_OF_FILE§", Control.msgEndOfFile.getText());
+					code.insert(_indentation + line, _atLine++);
+				}
+				if (line.contains("===== STRUCTORIZER FILE API END =====")){
+					doInsert = false;
+					code.insert(_indentation, _atLine++);
+				}
+			}
+			reader.close();
+			isDone = true;
+		} catch (IOException e) {
+			error = e.getLocalizedMessage();
+		}
+		if (!isDone) {
+			System.err.println("Generator.insertFileAPI(" + _language + ", ...): " + error);
+		}
+		return _atLine;
+	}
+	
+	/**
+	 * Routine stub that may be overridden by subclasses to command the creation of (modified) copies
+	 * of some resource files for the used FileAPI. Typically, this method is called just once after
+	 * the (recursive) code export has been mostly done.
+	 * @param _filePath - path of the target directory or of some file within it  
+	 * @return flag whether the copy has worked
+	 */
+	protected boolean copyFileAPIResources(String _filePath)
+	{
+		return true;
+	}
+	
+	/**
+	 * Creates a (modified) copy of resource file "FileAPI.&lt;_language&gt;.txt" in the _targetPath
+	 * directory with the given _targetFilename. If _targetFilename is null then the file name will
+	 * be "FileAPI"&lt;_language&gt;.
+	 * @param _language - a language-specific filename extension
+	 * @param _targetFilename - the proposed filename for the copy (should not contain path elements!)
+	 * @param _targetPath - path of the target directory or of a file within it 
+	 * @return
+	 */
+	protected boolean copyFileAPIResource(String _language, String _targetFilename, String _targetPath)
+	{
+		boolean isDone = false;
+		String error = "";
+		if (_targetFilename == null) {
+			_targetFilename = "FileAPI." + _language;
+		}
+		File target = new File(_targetFilename);
+		if (!target.isAbsolute()) {
+			java.io.File targetDir = new java.io.File(_targetPath);
+			if (!targetDir.isDirectory()) {
+				targetDir = targetDir.getParentFile();
+			}
+			target = new File(targetDir.getAbsolutePath() + File.separator + _targetFilename);
+		}
+		// Don't overwrite the file if it already exists in the target directory
+		if (!target.exists()) {
+			InputStream fis = null;
+			FileOutputStream fos = null;
+			try {
+				fis = this.getClass().getResourceAsStream("FileAPI." + _language + ".txt");
+				fos = new FileOutputStream(target);
+				BufferedReader reader = new BufferedReader(new InputStreamReader(fis, "UTF-8"));
+				BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos, "UTF-8"));
+				String line = null;
+				while ((line = reader.readLine()) != null) {
+					// Suppress insertion markers and replace dummy messages by localized ones
+					if (!line.contains("===== STRUCTORIZER FILE API")){
+						line = line.replace("\t", this.getIndent());
+						line = line.replace("§INVALID_HANDLE_READ§", Control.msgInvalidFileNumberRead.getText());
+						line = line.replace("§INVALID_HANDLE_WRITE§", Control.msgInvalidFileNumberWrite.getText());
+						line = line.replace("§NO_INT_ON_FILE§", Control.msgNoIntLiteralOnFile.getText());
+						line = line.replace("§NO_DOUBLE_ON_FILE§", Control.msgNoDoubleLiteralOnFile.getText());
+						line = line.replace("§END_OF_FILE§", Control.msgEndOfFile.getText());
+						// TODO copy the file, replacing the messages
+						writer.write(line); writer.newLine();
+					}
+				}
+				writer.close();
+				reader.close();
+				isDone = true;
+			} catch (IOException e) {
+				error = e.getLocalizedMessage();
+			}
+			finally {
+				if (fis != null) {
+					try { fis.close(); } catch (IOException e) {}
+				}
+				if (fos != null) {
+					try { fos.close(); } catch (IOException e) {}
+				}
+			}
+			if (!isDone) {
+				System.err.println("Generator.copyFileAPIResource(" + _language + ", ...): " + error);
+			}
+		}
+		return isDone;
+	}
+	// END KGU#311 2016-12-22
+	
 	// START KGU#301 2016-12-01: Bugfix #301
 	protected static boolean isParenthesized(String expression)
 	{
@@ -1510,8 +1756,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * batch code export methods
 	 *****************************************/
 
+	/**
+	 * Exports the diagrams given by _roots into a text file with path _targetFile.
+	 * @param _roots - vector of diagram Roots to be exported (in this order).
+	 * @param _targetFile - path of the target text file for the code export.
+	 * @param _options - String containing code letters for export options ('b','c','f','l','t','-') 
+	 * @param _charSet - name of the character set to be used.
+	 */
 	public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet)
 	{
+		// START KGU#311 2016-12-27: Enh. #314
+		boolean someRootUsesFileAPI = false;
+		// END KGU#311 2016-12-27
 		
 		if (Charset.isSupported(_charSet))
 		{
@@ -1617,6 +1873,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				this.insertComment("============================================================", "");
 				code.add("");
 			}
+			// START KGU#311 2016-12-27: Enh. #314 ensure I/O-specific additions per using root
+			this.usesFileAPI = false;
+			gatherElementInformationRoot(root);
+			if (this.usesFileAPI) { someRootUsesFileAPI = true; }
+			this.pureFilename = root.getMethodName();	// used e.g. for Pascal/Oberon UNIT/MODULE naming
+			// END KGU#311 2016-12-27
 			generateCode(root, "");
 		}
 
@@ -1635,6 +1897,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 
 			outp.write(code.getText());
 			outp.close();
+			
+			// START KGU#311 2016-12-27: Enh. #314 Allow the subclass to copy necessary resource files
+			if (someRootUsesFileAPI) {
+				copyFileAPIResources(_targetFile);
+			}
+			// END KGU#311 2016-12-27
 		}
 		catch(Exception e)
 		{

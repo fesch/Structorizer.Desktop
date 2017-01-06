@@ -70,6 +70,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.12.02      Enh. #300: New menu entry to enable online update retrieval
  *      Kay Gürtzig     2016.12.14      Enh. #305: New menu entry to enable/disable Arranger index
  *                                      KGU#310: New Debug menu
+ *      Kay Gürtzig     2016.12.17      Enh. #267: New Analyser error15_3
  *
  ******************************************************************************************************
  *
@@ -325,6 +326,9 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error15_1 = new LangTextHolder("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
 	public static final LangTextHolder error15_2 = new LangTextHolder("The called subroutine «%» is currently not available.");
 	// END KGU#278 2016-10-11
+	// START KGU 2016-12-17
+	public static final LangTextHolder error15_3 = new LangTextHolder("There are several matching subroutines for «%».");
+	// END KGU 2016-12-17
 	public static final LangTextHolder error16_1 = new LangTextHolder("A JUMP element may be empty or start with one of %, possibly followed by an argument!");	
 	public static final LangTextHolder error16_2 = new LangTextHolder("A return instruction, unless at final position, must form a JUMP element!");
 	public static final LangTextHolder error16_3 = new LangTextHolder("An exit, leave or break instruction is only allowed as JUMP element!");
@@ -1287,7 +1291,10 @@ public class Menu extends LangMenuBar implements NSDController
 			{
 				JMenuItem mi = new JMenuItem((String) diagram.recentFiles.get(j),IconLoader.ico074);
 				final String nextFile = (String) diagram.recentFiles.get(j);
-				mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNSD(nextFile); doButtons(); } } );
+				// START KGU#316 2016-12-28: Enh. #290/#318
+				//mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNSD(nextFile); doButtons(); } } );
+				mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNsdOrArr(nextFile); doButtons(); } } );
+				// END KGU#316 2016-12-28
 				menuFileOpenRecent.add(mi);
 			}
 

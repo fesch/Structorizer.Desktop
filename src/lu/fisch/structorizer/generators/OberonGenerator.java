@@ -62,6 +62,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt string,
  *                                              Issue #227: In obvious cases (literals) output procedure names inserted.
  *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig             2016.12.22      Issue #227: input and output usage more routine-specific
  *
  ******************************************************************************************************
  *
@@ -904,15 +905,15 @@ public class OberonGenerator extends Generator {
         		code.add(_indent + "MODULE " + moduleName + ";");
         		code.add(_indent);
         		
-        		if (this.hasInput || this.hasOutput)
+        		if (this.hasInput() || this.hasOutput())
        			{
         			StringList ioModules = new StringList();
-        			if (this.hasInput) ioModules.add("In");
-        			if (this.hasOutput) ioModules.add("Out");
+        			if (this.hasInput()) ioModules.add("In");
+        			if (this.hasOutput()) ioModules.add("Out");
         			code.add(_indent + "IMPORT " + ioModules.concatenate(", ") + ";");
             		code.add(_indent);
        			}
-        		if (this.hasEmptyInput)
+        		if (this.hasEmptyInput(_root))
         		{
         			code.add(_indent + "VAR");
         			code.add(_indent + this.getIndent() + "dummyInputChar: Char;	" +
@@ -957,11 +958,11 @@ public class OberonGenerator extends Generator {
 		//{
 		//	code.add(_indent + "IMPORT In, Out");	// Later, this could be done on demand
 		//}
-		if (_root.isProgram && (this.hasInput || this.hasOutput))
+		if (_root.isProgram && (this.hasInput(_root) || this.hasOutput(_root)))
 		{
   			StringList ioModules = new StringList();
-			if (this.hasInput) ioModules.add("In");
-			if (this.hasOutput) ioModules.add("Out");
+			if (this.hasInput(_root)) ioModules.add("In");
+			if (this.hasOutput(_root)) ioModules.add("Out");
 			code.add(_indent + "IMPORT " + ioModules.concatenate(", ") + ";");
 		}
 		// END KGU#236 2016-08-10
@@ -1012,7 +1013,7 @@ public class OberonGenerator extends Generator {
 		//code.add(indentPlusOne + "dummyInputChar: Char;	" +
 		//		this.commentSymbolLeft() + " for void input " + this.commentSymbolRight());
 		boolean isProcModule = !_root.isProgram && this.optionExportSubroutines();
-		if (topLevel && this.hasEmptyInput && !isProcModule)
+		if (topLevel && this.hasEmptyInput(_root) && !isProcModule)
 		{
 			code.add(indentPlusOne + "dummyInputChar: Char;	" +
 					this.commentSymbolLeft() + " for void input " + this.commentSymbolRight());
@@ -1033,11 +1034,11 @@ public class OberonGenerator extends Generator {
 		
 		code.add(_indent + "BEGIN");
 		// START KGU#236 2016-08-10: Issue #227
-		if (topLevel && this.hasInput && !isProcModule)
+		if (topLevel && this.hasInput(_root) && !isProcModule)
 		{
 			code.add(_indent + this.getIndent() + "In.Open;");
 		}
-		if (topLevel && this.hasOutput && !isProcModule)
+		if (topLevel && this.hasOutput(_root) && !isProcModule)
 		{
 			code.add(_indent + this.getIndent() + "Out.Open;");	// This is optional, actually
 		}
@@ -1089,11 +1090,11 @@ public class OberonGenerator extends Generator {
 			// potential bunch of routines
 			code.add(_indent);
 			code.add(_indent + "BEGIN");
-			if (this.hasInput)
+			if (this.hasInput())
 			{
 				code.add(_indent + this.getIndent() + "In.Open;");
 			}
-			if (this.hasOutput)
+			if (this.hasOutput())
 			{
 				code.add(_indent + this.getIndent() + "Out.Open;");	// This is optional, actually
 			}

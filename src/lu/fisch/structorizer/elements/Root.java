@@ -86,6 +86,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.11.22      Bugfix #295: Spurious error11 in return statements with equality comparison
  *      Kay Gürtzig     2016.12.12      Enh. #306: New method isEmpty() for a Root without text, children, and undo entries
  *                                      Enh. #305: Method getSignatureString() and Comparator SIGNATUR_ORDER added.
+ *      Kay Gürtzig     2016.12.16      Bugfix #305: Comparator SIGNATURE_ORDER corrected
+ *      Kay Gürtzig     2016.12.28      Enh. #318: Support for re-saving to an arrz file (2017.01.03: getFile() fixed)
+ *      Kay Gürtzig     2016.12.29      Enh. #315: New comparison method distinguishing different equality levels
  *
  ******************************************************************************************************
  *
@@ -190,6 +193,9 @@ public class Root extends Element {
 	private Stack<Subqueue> redoList = new Stack<Subqueue>();
 
 	public String filename = "";
+	// START KGU#316 2016-12-28: Enh. #318 Consider unzipped arrz-files
+	public String shadowFilepath = null;	// temp file path of an unzipped file
+	// END KGU#316 2016-12-28
 
 	// variables
 	public StringList variables = new StringList();
@@ -860,6 +866,51 @@ public class Root extends Element {
 	}
 	// END KGU#119 2016-01-02
 	
+	// START KGU#312 2016-12-29: Enh. #315
+	/**
+	 * Equivalence check returning one of the following similarity levels:
+	 * 0: no resemblance
+     * 1: Identity (i. e. the Java Root elements are identical);
+     * 2: Exact equality (i. e. objects aren't identical but all attributes
+     *    and structure are recursively equal AND the file paths are equal
+     *    AND there are no unsaved changes in both diagrams);
+     * 3: Equal file path but unsaved changes in one or both diagrams (this
+     *    can occur if several Structorizer instances in the same application
+     *    loaded the same file independently);
+     * 4: Equal contents but different file paths (may occur if a file copy
+     *    is loaded or if a Structorizer instance just copied the diagram
+     *    with "Save as");
+     * 5: Equal signature (i. e. type, name and argument number) but different
+     *    content or structure.
+     * @param another - the Root to compare with
+     * @return a resemblance level according to the description above
+	 */
+	public int compareTo(Root another)
+	{
+		int resemblance = 0;
+		if (this == another) {
+			resemblance = 1;
+		}
+		else if (this.equals(another)) {
+			if (this.getPath().equals(another.getPath())) {
+				if (this.hasChanged() || another.hasChanged()) {
+					resemblance = 3;
+				}
+				else {
+					resemblance = 2;
+				}
+			}
+			else {
+				resemblance = 4;
+			}
+		}
+		else if (this.getSignatureString(false).equals(another.getSignatureString(false))) {
+			resemblance = 5;
+		}
+		return resemblance;
+	}
+	// END KGU#312 2016-12-29
+	
 	// START KGU#117 2016-03-07: Enh. #77
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#combineCoverage(lu.fisch.structorizer.elements.Element)
@@ -1067,31 +1118,63 @@ public class Root extends Element {
             return res;
     }
 
+    /**
+     * Returns a File object representing the existing file this diagram is stored within
+     * or proceeding from. In case this is an extracted file, it will represent the path
+     * of the containing archive. If this is not associatd to a file (e.g. never saved) or
+     * the origin file cannot be located anymore then the result will be null.
+     * @return a File object reprsenting th existing source or archive file or null
+     */
     public File getFile()
     {
-            if(filename.equals(""))
-            {
-                    return null;
-            }
-            else
-            {
-                    return new File(filename);
-            }
+    	if(filename.equals(""))
+    	{
+    		return null;
+    	}
+    	else
+    	{
+    		// START KGU#316 2017-01-03: Issue #318 - we must not return a virtual path
+    		//return new File(filename);
+    		File myFile = new File(filename);
+    		while (myFile != null && !myFile.exists()) {
+    			myFile = myFile.getParentFile();
+    		}
+    		return myFile;
+    		// END KGU#316 2017-01-03
+    	}
     }
 
     public String getPath()
+    // START KGU#316 2016-12-28: Enh. #318 Consider unzipped file
     {
-            if (filename.equals(""))
-            {
-                    return new String();
-            }
-            else
-            {
-                    File f = new File(filename);
-                    return f.getAbsolutePath();
-            }
+    	return getPath(false);
     }
-
+    
+    public String getPath(boolean pathOfOrigin)
+    // END KGU#316 2016-12-28
+    {
+    	if (filename.equals(""))
+    	{
+    		return new String();
+    	}
+    	else
+    	{
+    		File f = new File(filename);
+    		// START KGU#316 2016-12-28: Enh. #318 Consider unzipped file
+    		if (pathOfOrigin && this.shadowFilepath != null) {
+    			while(f != null && !f.isFile()) {
+    				f = f.getParentFile();
+    			}
+    			// No Zip file found?
+    			if (f == null) {
+    				f = new File(filename);
+    			}
+    		}
+    		// END KGU#316 2016-12-28
+    		return f.getAbsolutePath();
+    	}
+    }
+    
     /*************************************
      * Extract full text of all Elements
      *************************************/
@@ -1533,13 +1616,16 @@ public class Root extends Element {
     			// START KGU#281 2016-10-12: Issue #271 - there may be a prompt string literal to be skipped
     			//String s = tokens.subSequence(inpPos + 1, tokens.count()).concatenate().trim();
     			inpPos++;
-    			while (inpPos < tokens.count() && (tokens.get(inpPos).trim().isEmpty() || tokens.get(inpPos).matches("^[\"\'].*[\"\']$")))
+    			// START KGU#281 2016-12-23: Enh. #271 - allow comma between prompt and variable name
+    			//while (inpPos < tokens.count() && (tokens.get(inpPos).trim().isEmpty() || tokens.get(inpPos).matches("^[\"\'].*[\"\']$")))
+    			while (inpPos < tokens.count() && (tokens.get(inpPos).trim().isEmpty() || tokens.get(inpPos).trim().equals(",") || tokens.get(inpPos).matches("^[\"\'].*[\"\']$")))
+    			// END KGU#281 2016-12-23
     			{
     				inpPos++;
     			}
     			String s = tokens.subSequence(inpPos, tokens.count()).concatenate().trim();
     			// END KGU#281 2016-10-12
-    			// FIXME: Why do we expect a list of variables here (excutor doesn't cope with it, anyway)?
+    			// FIXME: Why do we expect a list of variables here (executor doesn't cope with it, anyway)?
     			// A mere splitting by comma would spoil function calls as indices etc.
     			StringList parts = Element.splitExpressionList(s, ",");
     			for (int p = 0; p < parts.count(); p++)
@@ -2312,14 +2398,20 @@ public class Root extends Element {
 			Function subroutine = new Function(text);
 			String subName = subroutine.getName();
 			int subArgCount = subroutine.paramCount();
-			if ((!this.getMethodName().equals(subName) || subArgCount != this.getParameterNames().count())
-					&& (!Arranger.hasInstance()
-					|| Arranger.getInstance().findRoutinesBySignature(
-							subName, subArgCount
-							).isEmpty()))
+			if ((!this.getMethodName().equals(subName) || subArgCount != this.getParameterNames().count()))
 			{
-				//error  = new DetectedError("The called subroutine «<routine_name>(<arg_count>)» is currently not available.",(Element) _node.getElement(i));
-				addError(_errors, new DetectedError(errorMsg(Menu.error15_2, subName + "(" + subArgCount + ")"), ele), 15);
+				int count = 0;	// Number of matching routines
+				if (Arranger.hasInstance()) {
+					count = Arranger.getInstance().findRoutinesBySignature(subName, subArgCount).size();
+				}
+				if (count == 0) {
+					//error  = new DetectedError("The called subroutine «<routine_name>(<arg_count>)» is currently not available.",(Element) _node.getElement(i));
+					addError(_errors, new DetectedError(errorMsg(Menu.error15_2, subName + "(" + subArgCount + ")"), ele), 15);
+				}
+				else if (count > 1) {
+					//error  = new DetectedError("There are several matching subroutines for «<routine_name>(<arg_count>)».",(Element) _node.getElement(i));
+					addError(_errors, new DetectedError(errorMsg(Menu.error15_3, subName + "(" + subArgCount + ")"), ele), 15);					
+				}
 			}
 		}
 		// END KGU#278 2016-10-11
@@ -2887,6 +2979,11 @@ public class Root extends Element {
     		presentation += "(" + this.getParameterNames().count() + ")";
     	}
     	if (_addPath) {
+    		// START KGU 2016-12-29: Show changed status
+    		if (this.hasChanged()) {
+    			presentation = "*" + presentation;
+    		}
+    		// END KGU 2016-12-29
     		presentation += ": " + this.getPath();
     	}
     	return presentation;

@@ -52,6 +52,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.10.13      Enh. #277: setDisabled() added.
  *      Kay Gürtzig     2016.11.17      Bugfix #114: isExecuted() revised (signature too)
  *      Kay Gürtzig     2016.11.25      Issue #294: Method isTestCovered adapted to refined CASE coverage rules
+ *      Kay Gürtzig     2016.12.20      Bugfix KGU#315: Flawed selection and cursor navigation after element shifts
  *
  ******************************************************************************************************
  *
@@ -290,7 +291,10 @@ public class Subqueue extends Element implements IElementSequence {
 			Element ele = children.get(_from);
 			children.removeElementAt(_from);
 			children.insertElementAt(ele, _to);
-			this.resetDrawingInfo();	// Element start points must be re-computed
+			// START KGU#315 2016-12-19: Bugfix: If we don't escalate then prepareDraw won't be done here 
+			//this.resetDrawingInfo();	// Element start points must be re-computed
+			this.resetDrawingInfoUp();	// Element start points must be re-computed
+			// END KGU#315 2016-12-19
 		}
 		return done;
 	}

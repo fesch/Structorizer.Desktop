@@ -59,10 +59,15 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig             2016.12.01      Bugfix #301: More precise check for parenthesis enclosing of log. conditions
+ *      Kay Gürtzig             2016.12.30      Issues #22, #23, KGU#62 fixed (see comment)
+ *      Kay Gürtzig             2017.01.03      Enh. #314: File API extension, bugfix #320 (CALL elements)
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2016.12.30 - Bugfixes #22/#23/KGU#62 (Kay Gürtzig)
+ *      - Forgotten result mechanism analysis and conversion introduced (partial decomposition of generateCode(Root))
+ *      - Forgotten setting of argument prefixes and revised header transformation 
  *      
  *      2015.12.21 - Bugfix #41/#68/#69 (Kay Gürtzig)
  *      - Operator replacement had induced unwanted padding and string literal modifications
@@ -117,6 +122,7 @@ import java.util.regex.Matcher;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Executor;
 
 // FIXME (KGU 2014-11-11): Variable names will have to be accomplished by a '$' prefix - this requires
 // sound lexic preprocessing (as do a lot more of the rather lavish mechanisms here)
@@ -236,21 +242,28 @@ public class PHPGenerator extends Generator
 	@Override
 	protected String transformTokens(StringList tokens)
 	{
-		// START KGU#62 2015-12-19: We must work based on a lexical analysis
-    	for (int i = 0; i < varNames.count(); i++)
-    	{
-    		String varName = varNames.get(i);
-    		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
-    		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
-    		tokens.replaceAll(varName, "$"+varName);
-    	}
+		// START KGU#62 2015-12-19: Bugfix #57 - We must work based on a lexical analysis
+		for (int i = 0; i < varNames.count(); i++)
+		{
+			String varName = varNames.get(i);
+			//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
+			//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
+			tokens.replaceAll(varName, "$"+varName);
+		}
 		// END KGU#62 2015-12-19
 		tokens.replaceAll("div", "/");
 		tokens.replaceAll("<-", "=");
+		// START KGU#311 2017-01-03: Enh. #314 File API
+		if (this.usesFileAPI) {
+			for (int i = 0; i < Executor.fileAPI_names.length; i++) {
+				tokens.replaceAll(Executor.fileAPI_names[i], "StructorizerFileAPI::" + Executor.fileAPI_names[i]);
+			}
+		}
+		// END KGU#311 2017-01-03
 		return tokens.concatenate();
 	}
 	// END KGU#93 2015-12-21
-    
+	
 	// END KGU#18/KGU#23 2015-11-01
 
     @Override
@@ -443,11 +456,11 @@ public class PHPGenerator extends Generator
     @Override
     protected void generateCode(Repeat _repeat, String _indent)
     {
-    	boolean isDisabled = _repeat.isDisabled();
-    	
-		// START KGU 2014-11-16
-		insertComment(_repeat, _indent);
-		// END KGU 2014-11-16
+        boolean isDisabled = _repeat.isDisabled();
+        
+        // START KGU 2014-11-16
+        insertComment(_repeat, _indent);
+        // END KGU 2014-11-16
 
         addCode("do", _indent, isDisabled);
         addCode("{", _indent, isDisabled);
@@ -458,7 +471,7 @@ public class PHPGenerator extends Generator
         // START KGU#301 2016-12-01: Bugfix #301
         //if (!this.suppressTransformation || !(condition.startsWith("(") && !condition.endsWith(")")))
         if (!this.suppressTransformation || !isParenthesized(condition))
-        	// END KGU#301 2016-12-01
+        // END KGU#301 2016-12-01
         {
         	condition = "( " + condition + " )";
         }
@@ -469,11 +482,11 @@ public class PHPGenerator extends Generator
     @Override
     protected void generateCode(Forever _forever, String _indent)
     {
-    	boolean isDisabled = _forever.isDisabled();
-    	
-		// START KGU 2014-11-16
-		insertComment(_forever, _indent);
-		// END KGU 2014-11-16
+        boolean isDisabled = _forever.isDisabled();
+        
+        // START KGU 2014-11-16
+        insertComment(_forever, _indent);
+        // END KGU 2014-11-16
 
         addCode("while (true)", _indent, isDisabled);
         addCode("{", _indent, isDisabled);
@@ -492,24 +505,27 @@ public class PHPGenerator extends Generator
 
         for(int i=0;i<_call.getText().count();i++)
         {
-        	addCode(transform(_call.getText().get(i))+"();", _indent, isDisabled);
+        	// START KGU#319 2017-01-03: Bugfix #320 - Obsolete postfixing removed
+        	//addCode(transform(_call.getText().get(i))+"();", _indent, isDisabled);
+        	addCode(transform(_call.getText().get(i))+";", _indent, isDisabled);
+        	// END KGU#319 2017-01-03
         }
     }
 
-    @Override
-    protected void generateCode(Jump _jump, String _indent)
-    {
-    	boolean isDisabled = _jump.isDisabled();
-    	
+	@Override
+	protected void generateCode(Jump _jump, String _indent)
+	{
+		boolean isDisabled = _jump.isDisabled();
+		
 		// START KGU 2014-11-16
 		insertComment(_jump, _indent);
 		// END KGU 2014-11-16
 
 		// START KGU#78 2015-12-18: Enh. #23 - sensible exit strategy
-        //for(int i=0;i<_jump.getText().count();i++)
-        //{
-        //        code.add(_indent+transform(_jump.getText().get(i))+";");
-        //}
+		//for(int i=0;i<_jump.getText().count();i++)
+		//{
+		//        code.add(_indent+transform(_jump.getText().get(i))+";");
+		//}
 		// In case of an empty text generate a continue instruction by default.
 		boolean isEmpty = true;
 		
@@ -536,6 +552,7 @@ public class PHPGenerator extends Generator
 			// Has it already been matched with a loop? Then syntax must have been okay...
 			else if (this.jumpTable.containsKey(_jump))
 			{
+				// FIXME (KGU 2017-01-02: PHP allows break n - but switch constructs add to the level) 
 				Integer ref = this.jumpTable.get(_jump);
 				String label = this.labelBaseName + ref;
 				if (ref.intValue() < 0)
@@ -564,37 +581,48 @@ public class PHPGenerator extends Generator
 			addCode("last;", _indent, isDisabled);
 		}
 		// END KGU#78 2015-12-18
-    }
+	}
 
     @Override
     public String generateCode(Root _root, String _indent)
     {
-		// START KGU 2015-11-02: First of all, fetch all variable names from the entire diagram
-		varNames = _root.getVarNames();
-		// END KGU 2015-11-02
-    	
+        // START KGU 2015-11-02: First of all, fetch all variable names from the entire diagram
+        varNames = _root.getVarNames();
+        // END KGU 2015-11-02
+        String procName = _root.getMethodName();
+        // START KGU#74/KGU#78 2016-12-30: Issues #22/#23: Return mechanisms hadn't been fixed here until now
+        boolean alwaysReturns = mapJumps(_root.children);
+        this.isResultSet = varNames.contains("result", false);
+        this.isFunctionNameSet = varNames.contains(procName);
+        // END KGU#74/KGU#78 2016-12-30
+        
         String pr = _root.isProgram ? "program" : "function";
-		// START KGU#178 2016-07-20: Enh. #160
+        // START KGU#178 2016-07-20: Enh. #160
         //code.add("<?php");
         //insertComment(pr+" "+_root.getMethodName() + " (generated by Structorizer)", _indent);
         if (topLevel)
         {
-	        code.add("<?php");
-	        insertComment(pr+" "+_root.getMethodName() + " (generated by Structorizer)", _indent);
-	        subroutineInsertionLine = code.count();
+            code.add("<?php");
+            insertComment(pr+" "+ procName + " (generated by Structorizer " + Element.E_VERSION + ")", _indent);
+            subroutineInsertionLine = code.count();
+            // START KGU#311 2017-01-03: Enh. #314 File API support
+            if (this.usesFileAPI) {
+            	this.insertFileAPI("php");
+            }
+            // END KGU#311 2017-01-03
         }
         code.add("");
         if (!topLevel || !subroutines.isEmpty())
         {
-            insertComment(pr+" "+_root.getMethodName(), _indent);
+            insertComment(pr + " " + procName, _indent);
         }
         // END KGU#178 2016-07-20
-		// START KGU 2014-11-16
-		insertComment(_root, "");
-		// END KGU 2014-11-16
+        // START KGU 2014-11-16
+        insertComment(_root, "");
+        // END KGU 2014-11-16
         if (_root.isProgram == true)
         {
-        	code.add("");
+            code.add("");
             insertComment("TODO declare your variables here if necessary", _indent);
             code.add("");
             insertComment("TODO Establish sensible web formulars to get the $_GET input working.", _indent);
@@ -604,14 +632,41 @@ public class PHPGenerator extends Generator
         else
         {
             String fnHeader = _root.getText().get(0).trim();
-            if(fnHeader.indexOf('(')==-1 || !fnHeader.endsWith(")")) fnHeader=fnHeader+"()";
-                code.add("function " + fnHeader);
+            // START #62 2016-12-30: Function header revision had been forgotten completely
+            //if (fnHeader.indexOf('(')==-1 || !fnHeader.endsWith(")")) fnHeader=fnHeader+"()";
+            if (this.suppressTransformation) {
+                if (fnHeader.indexOf('(')==-1 || !fnHeader.endsWith(")")) fnHeader=fnHeader+"()";
+            }
+            else {
+            	fnHeader = procName + "(";
+            	StringList argNames = _root.getParameterNames();
+            	for (int i = 0; i < argNames.count(); i++) {
+            		String argName = argNames.get(i);
+            		if (!argName.startsWith("$")) {
+            			argName = "$" + argName;
+            		}
+            		if (i > 0) {
+           			fnHeader += ", " + argName;
+            		}
+            		else {
+            			fnHeader += argName;
+            		}
+            	}
+            	fnHeader += ")";
+            }
+            // END KGU#62 2016-12-30
+            code.add("function " + fnHeader);
             code.add("{");
             insertComment("TODO declare your variables here if necessary", _indent + this.getIndent());
             code.add(_indent+"");
             insertComment("TODO Establish sensible web formulars to get the $_GET input working.", _indent + this.getIndent());
             code.add("");
             generateCode(_root.children, _indent + this.getIndent());
+            // START KGU#74/KGU#78 2016-12-30: Issues #22/#23: Return mechanisms hadn't been fixed here until now
+            if (!this.suppressTransformation) {
+            	this.generateResult(_root, _indent + this.getIndent(), alwaysReturns, varNames);
+            }
+            // END KGU#74/KGU#78 2016-12-30
             code.add("}");
         }
 
@@ -626,5 +681,38 @@ public class PHPGenerator extends Generator
         return code.getText();
     }
 
+    // START KGU#74/KGU#78 2016-12-30: Issues #22/#23 hadn't been solved for PHP...
+	/**
+	 * Creates the appropriate code for returning a required result and adds it
+	 * (after the algorithm code of the body) to this.code)
+	 * @param _root - the diagram root element
+	 * @param _indent - the current indentation string
+	 * @param alwaysReturns - whether all paths of the body already force a return
+	 * @param varNames - names of all assigned variables
+	 */
+	@Override
+	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
+	{
+		if (!_root.isProgram && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
+		{
+			String result = "0";
+			if (isFunctionNameSet)
+			{
+				result = "$" + _root.getMethodName();
+			}
+			else if (isResultSet)
+			{
+				int vx = varNames.indexOf("result", false);
+				result = varNames.get(vx);
+				if (!result.startsWith("$")) {
+					result = "$" + result;
+				}
+			}
+			code.add(_indent);
+			code.add(_indent + "return " + result + ";");
+		}
+		return _indent;
+	}
+	// END KGU#74/KGU#78 2016-12-30
 
 }

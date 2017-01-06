@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.generators;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -63,6 +62,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.10.15      Enh. 271: Support for input instructions with prompt
  *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig             2016.12.01      Bugfix #301: More sophisticated test for condition enclosing by parentheses
+ *      Kay Gürtzig             2016.12.22      Enh. #314: Support for File API
  *
  ******************************************************************************************************
  *
@@ -125,8 +125,7 @@ package lu.fisch.structorizer.generators;
  *      - Implementation of FOR loop
  *      - Indent replaced from 2 spaces to TAB-character (TAB configurable in IDE)
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import java.util.regex.Matcher;
 
@@ -308,12 +307,36 @@ public class CGenerator extends Generator {
 			tokens.set(pos, "(char)");
 		}
 		// END KGU#150 2016-04-03
+		// START KGU#311 2016-12-22: Enh. #314 - Structorizer file API support
+		if (this.usesFileAPI) {
+			transformFileAPITokens(tokens);
+		}
+		// END KGU#311 2016-12-22
 		return tokens.concatenate();
 	}
 	// END KGU#93 2015-12-21
 
 	// END KGU#18/KGU#23 2015-11-01
-    
+
+	// START KGU#311 2016-12-22: Enh. #314 - Structorizer file API support
+	/**
+	 * Subclassable submethod of transformTokens(), designed to do specific replacements or manipulations
+	 * with the subroutine names of the File API. It is called after all other token transformations are done
+	 * (immediately before re-concatenation).
+	 * This does some C-specific stuff here prefixing fileRead with pointer operators and a dummy type casting,
+	 * so subclasses should better overwrite it.
+	 * @param tokens
+	 */
+	protected void transformFileAPITokens(StringList tokens)
+	{
+		int pos = -1;
+		while ((pos = tokens.indexOf("fileRead", pos+1)) >= 0 && pos+1 < tokens.count() && tokens.get(pos+1).equals("("))
+		{
+			tokens.set(pos, "*(/*type?*/*)fileRead");
+		}
+	}
+	// END KGU#311 2016-12-22
+	
 // START KGU#18/KGU#23 2015-11-01: Obsolete    
 //    public static String transform(String _input)
 	/* (non-Javadoc)
@@ -861,15 +884,27 @@ public class CGenerator extends Generator {
 			// START KGU#236 2016-08-10: Issue #227
 			//code.add("#include <stdio.h>");
 			//code.add("");
-			if (this.hasInput || this.hasOutput)
+			if (this.hasInput() || this.hasOutput() || this.usesFileAPI)
 			{
+				code.add("#define _CRT_SECURE_NO_WARNINGS");	// VisualStudio precaution 
 				code.add("#include <stdio.h>");
+				if (this.usesFileAPI) {
+					code.add("#include <stdlib.h>");
+					code.add("#include <string.h>");
+					code.add("#include <errno.h>");
+				}
 				code.add("");
 			}
 			// END KGU#236 2016-08-10
 		// START KGU#178 2016-07-20: Enh. #160
 			subroutineInsertionLine = code.count();
 			subroutineIndent = _indent;
+			
+			// START KGU#311 2016-12-22: Enh. #314 - insert File API routines if necessary
+			if (this.usesFileAPI) {
+				this.insertFileAPI("c");
+			}
+			// END KGU#311 2016-12-22
 		}
 		// END KGU#178 2016-07-20
 
@@ -914,7 +949,7 @@ public class CGenerator extends Generator {
 		}
 		// END KGU 2015-11-30
 		// START KGU#236 2016-08-10: Issue #227 - don't express this information if not needed
-		if (this.hasInput) {
+		if (this.hasInput(_root)) {
 		// END KGU#236 2016-08-10
 			code.add(_indent);
 			insertComment("TODO:", _indent);
@@ -926,7 +961,7 @@ public class CGenerator extends Generator {
 					_indent);
 		// START KGU#236 2016-08-10: Issue #227
 		}
-		if (this.hasOutput) {
+		if (this.hasOutput(_root)) {
 		// END KGU#236 2016-08-10
 		code.add(_indent);
 		insertComment("TODO:", _indent);

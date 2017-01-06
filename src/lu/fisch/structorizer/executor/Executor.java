@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.executor;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -108,16 +107,20 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.11.22      Bugfix #293: input and output boxes no longer popped up at odd places on screen.
  *      Kay Gürtzig     2016.11.22/25   Issue #294: Test coverage rules for CASE elements without default branch refined
  *      Kay Gürtzig     2016.12.12      Issue #307: Attempts to manipulate FOR loop variables now cause an error
+ *      Kay Gürtzig     2016.12.22      Enh. #314: Support for File API
+ *      Kay Gürtzig     2016.12.29      Enh. #267/#315 (KGU#317): Execution abort on ambiguous CALLs
+ *      Kay Gürtzig     2017.01.06      Bugfix #324: Trouble with replacing an array by a scalar value on input
+ *                                      Enh. #325: built-in type test functions added.
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      2016-03-17 Enh. #133 (KGU#159)
- *      - Previously, a Call stack trace was only shown in cse of an execution error or manual abort.
+ *      - Previously, a Call stack trace was only shown in case of an execution error or manual abort.
  *        Now a Call stack trace may always be requested while execution hasn't ended. Only prerequisite
- *        is that the execution be paused. Then a double-click on the stext item showing the subroutine
- *        depth is sufficient. Moreover, the stacktrace will always be presented as list view (before a
- *        simple message box was used if the number of call levels didn't exceed 10.   
+ *        is that the execution be paused. Then a double-click on the text item showing the subroutine
+ *        depth is sufficient. Moreover, the stacktrace will always be presented as list view (until now
+ *        a simple message box has been used if the number of call levels didn't exceed 10).   
  *      2016-03-16/18 Bugfix #131 (KGU#157)
  *      - When the "run" (or "make") button was pressed while an execution was already running or stood
  *        paused then the Executor CALL stack, the event queues, and the connection between Diagram and
@@ -203,6 +206,8 @@ import java.awt.Dialog.ModalityType;
 import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.Closeable;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -254,6 +259,15 @@ public class Executor implements Runnable
 {
 
 	private static Executor mySelf = null;
+	// START KGU#311 2016-12-22: Enh. #314 - fileAPI index
+	public static final String[] fileAPI_names = {
+		"fileOpen", "fileCreate", "fileAppend",
+		"fileClose",
+		"fileRead", "fileReadChar", "fileReadInt", "fileReadDouble", "fileReadLine",
+		"fileEOF",
+		"fileWrite", "fileWriteLine"
+	};
+	// END KGU#311 2016-12-22
 
 	public static Executor getInstance()
 	{
@@ -359,6 +373,9 @@ public class Executor implements Runnable
 	// START KGU#157 2016-03-16: Bugfix #131 - Precaution against a reopen attempts by different Structorizer instances
 	private Diagram reopenFor = null;	// A Structorizer instance that tried to open Control while still running
 	// END KGU#2 2016-03-16
+	// START KGU 2016-12-18: Enh. #314: Stream table for Simple file API
+	private final Vector<Closeable> openFiles = new Vector<Closeable>();
+	// END KGU 2016-12-18
 
 	private Executor(Diagram diagram, DiagramController diagramController)
 	{
@@ -624,7 +641,12 @@ public class Executor implements Runnable
 								replaced = true;								
 							}
 							// END KGU#99 2015-12-10
-						} catch (EvalError ex)
+						}
+						catch (EvalError ex)
+						{
+							System.err.println("Executor.convertStringComparison(\"" + str + "\"): " + ex.getMessage());
+						}
+						catch (Exception ex)
 						{
 							System.err.println("Executor.convertStringComparison(\"" + str + "\"): " + ex.getMessage());
 						}
@@ -705,6 +727,18 @@ public class Executor implements Runnable
 		// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
 		this.forLoopVars.clear();
 		// END KGU#307 2016-12-12
+		// START KGU 2016-12-18: Enh. #314
+		for (Closeable file: this.openFiles) {
+			if (file != null) {
+				try {
+					file.close();
+				} catch (IOException e) {
+					System.err.println("Executor.execute(); openFiles -> " + e.getLocalizedMessage());
+				}
+			}
+		}
+		this.openFiles.clear();
+		// END KGU 2016-12-18
 
 		if (Arranger.hasInstance())
 		{
@@ -730,6 +764,18 @@ public class Executor implements Runnable
 		// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
 		this.forLoopVars.clear();
 		// END KGU#307 2016-12-12
+		// START KGU 2016-12-18: Enh. #314
+		for (Closeable file: this.openFiles) {
+			if (file != null) {
+				try {
+					file.close();
+				} catch (IOException e) {
+					System.err.println("Executor.execute(); openFiles -> " + e.getLocalizedMessage());
+				}
+			}
+		}
+		this.openFiles.clear();
+		// END KGU 2016-12-18
 		// START KGU#160 2016-04-12: Enh. #137 - Address the console window 
 		this.console.writeln("*** TERMINATED \"" + this.diagram.getRoot().getText().getLongString() +
 				"\" at " + sdf.format(System.currentTimeMillis()) + " ***", Color.GRAY);
@@ -1251,8 +1297,9 @@ public class Executor implements Runnable
      * @param name - function name
      * @param nArgs - number of parameters of the requested function
      * @return a Root that matches the specification if uniquely found, null otherwise
+     * @throws Exception 
      */
-    public Root findSubroutineWithSignature(String name, int nArgs)
+    public Root findSubroutineWithSignature(String name, int nArgs) throws Exception
     {
     	Root subroutine = null;
     	// First test whether the current root calls itself recursively
@@ -1266,10 +1313,24 @@ public class Executor implements Runnable
     	{
     		IRoutinePool pool = iter.next();
     		Vector<Root> candidates = pool.findRoutinesBySignature(name, nArgs);
-    		for (int c = 0; subroutine == null && c < candidates.size(); c++)
+    		// START KGU#317 2016-12-29: Now the execution will be aborted on ambiguous calls
+    		//for (int c = 0; subroutine == null && c < candidates.size(); c++)
+    		for (int c = 0; c < candidates.size(); c++)
+    		// END KGU#317 2016-12-29
     		{
-    	    	// TODO Check for ambiguity (multiple matches) and raise e.g. an exception in that case
-    			subroutine = candidates.get(c);
+    	    	// START KGU#317 2016-12-29: Check for ambiguity (multiple matches) and raise e.g. an exception in that case
+    			//subroutine = candidates.get(c);
+    			if (subroutine == null) {
+    				subroutine = candidates.get(c);
+    			}
+    			else {
+    				Root cand = candidates.get(c);
+    				int similarity = subroutine.compareTo(cand); 
+    				if (similarity > 2 && similarity != 4) {
+    					throw new Exception(control.msgAmbiguousCall.getText().replace("%1", name).replace("%2", Integer.toString(nArgs)));
+    				}
+    			}
+    			// END KGU#317 2016-12-29
     			// START KGU#125 2016-01-05: Is to force updating of the diagram status
     			if (pool instanceof Updater)
     			{
@@ -1401,11 +1462,470 @@ public class Executor implements Runnable
 			interpreter.eval(pascalFunction);
 			// END KGU#150 2016-04-03
 			// END KGU#57 2015-11-07
+			// START KGU#322 2017-01-06: Enh. #325 - reflection functions
+			pascalFunction = "public boolean isArray(Object obj) { return (obj instanceof Object[]); }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public boolean isString(Object obj) { return (obj instanceof String); }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public boolean isChar(Object obj) { return (obj instanceof Character); }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public boolean isBool(Object obj) { return (obj instanceof Boolean); }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public boolean isNumber(Object obj) { return (obj instanceof Integer) || (obj instanceof Double); }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public int length(Object[] arr) { return arr.length; }";
+			interpreter.eval(pascalFunction);
+			// END KGU#322 2017-01-06
+			// START KGU 2016-12-18: #314: Support for simple text file API
+			interpreter.set("executorFileMap", this.openFiles);
+			interpreter.set("executorCurrentDirectory", 
+					(diagram.currentDirectory.isDirectory() ? diagram.currentDirectory : diagram.currentDirectory.getParentFile()).getAbsolutePath());
+			pascalFunction = "public int fileOpen(String filePath) { "
+					+ "int fileNo = 0; "
+					+ "java.io.File file = new java.io.File(filePath); "
+					+ "if (!file.isAbsolute()) { "
+					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
+					+ "} "
+					+ "try { java.io.FileInputStream fis = new java.io.FileInputStream(file); "
+					+ "java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, \"UTF-8\")); "
+					+ "fileNo = executorFileMap.size() + 1; "
+					+ "executorFileMap.add(new java.util.Scanner(reader)); "
+					+ "} "
+					+ "catch (SecurityException e) { fileNo = -3; } "
+					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
+					+ "catch (java.io.IOException e) { fileNo = -1; } "
+					+ "return fileNo; }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public int fileCreate(String filePath) { "
+					+ "int fileNo = 0; "
+					+ "java.io.File file = new java.io.File(filePath); "
+					+ "if (!file.isAbsolute()) { "
+					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
+					+ "} "
+					+ "try { java.io.FileOutputStream fos = new java.io.FileOutputStream(file); "
+					+ "java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, \"UTF-8\")); "
+					+ "fileNo = executorFileMap.size() + 1; "
+					+ "executorFileMap.add(writer); "
+					+ "} "
+					+ "catch (SecurityException e) { fileNo = -3; } "
+					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
+					+ "catch (java.io.IOException e) { fileNo = -1; } "
+					+ "return fileNo; }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public int fileAppend(String filePath) { "
+					+ "int fileNo = 0; "
+					+ "java.io.File file = new java.io.File(filePath); "
+					+ "if (!file.isAbsolute()) { "
+					+ "file = new java.io.File(executorCurrentDirectory + java.io.File.separator + filePath); "
+					+ "} "
+					+ "try { java.io.FileOutputStream fos = new java.io.FileOutputStream(file, true); "
+					+ "java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, \"UTF-8\")); "
+					+ "fileNo = executorFileMap.size() + 1; "
+					+ "executorFileMap.add(writer); "
+					+ "} "
+					+ "catch (SecurityException e) { fileNo = -3; } "
+					+ "catch (java.io.FileNotFoundException e) { fileNo = -2; } "
+					+ "catch (java.io.IOException e) { fileNo = -1; } "
+					+ "return fileNo; "
+					+ "}";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public void fileClose(int fileNo) { "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable file = executorFileMap.get(fileNo - 1); "
+					+ "if (file != null) { "
+					+ "try { file.close(); } "
+					+ "catch (java.io.IOException e) {} "
+					+ "executorFileMap.set(fileNo - 1, null); } "
+					+ "}"
+					+ "}";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public boolean fileEOF(int fileNo) {"
+					+ "	boolean isEOF = true; "
+					+ "	if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "		java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "		if (reader instanceof java.util.Scanner) { "
+					+ "			try { "
+					+ "				isEOF = !((java.util.Scanner)reader).hasNext();"
+					+ "			} catch (IOException e) {}"
+					+ "		}"
+					+ "	}"
+					+ "	else { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "	return isEOF;"
+					+"}";
+			interpreter.eval(pascalFunction);
+			// The following is just a helper method...
+			pascalFunction = "public Object structorizerGetScannedObject(java.util.Scanner sc) {"
+					+ "Object result = null; "
+					+ "sc.useLocale(java.util.Locale.UK); "
+					+ "if (sc.hasNextInt()) { result = sc.nextInt(); } "
+					+ "else if (sc.hasNextDouble()) { result = sc.nextDouble(); } "
+					+ "else if (sc.hasNext(\"\\\\\\\".*?\\\\\\\"\")) { "
+					+ "String str = sc.next(\"\\\\\\\".*?\\\\\\\"\"); "
+					+ "result = str.substring(1, str.length() - 1); "
+					+ "} "
+					+ "else if (sc.hasNext(\"'.*?'\")) { "
+					+ "String str = sc.next(\"'.*?'\"); "
+					+ "result = str.substring(1, str.length() - 1); "
+					+ "} "
+					+ "else if (sc.hasNext(\"\\\\{.*?\\\\}\")) { "
+					+ "String token = sc.next(); "
+					+ "result = new Object[]{token.substring(1, token.length()-1)}; "
+					+ "} " 
+					+ "else if (sc.hasNext(\"\\\\\\\".*\")) { "
+					+ "String str = sc.next(); "
+					+ "while (sc.hasNext() && !sc.hasNext(\".*\\\\\\\"\")) { "
+					+ "str += \" \" + sc.next(); "
+					+ "} "
+					+ "if (sc.hasNext()) { str += \" \" + sc.next(); } "
+					+ "result = str.substring(1, str.length() - 1); "
+					+ "} "
+					+ "else if (sc.hasNext(\"'.*\")) { "
+					+ "String str = sc.next(); "
+					+ "while (sc.hasNext() && !sc.hasNext(\".*'\")) { "
+					+ "str += \" \" + sc.next(); "
+					+ "} "
+					+ "if (sc.hasNext()) { str += \" \" + sc.next(); } "
+					+ "result = str.substring(1, str.length() - 1); "
+					+ "} "
+					+ "else if (sc.hasNext(\"\\\\{.*\")) { "
+					+ "java.util.regex.Pattern oldDelim = sc.delimiter(); "
+					+ "sc.useDelimiter(\"\\\\}\"); "
+					+ "String content = sc.next().trim().substring(1); "
+					+ "sc.useDelimiter(oldDelim); "
+					+ "if (sc.hasNext(\"\\\\}\")) { sc.next(); } "
+					+ "String[] elements = {}; "
+					+ "if (!content.isEmpty()) { "
+					+ "elements = content.split(\"\\\\p{javaWhitespace}*,\\\\p{javaWhitespace}*\"); "
+					+ "} "
+					+ "Object[] objects = new Object[elements.length]; "
+					+ "for (int i = 0; i < elements.length; i++) { "
+					+ "java.util.Scanner sc0 = new java.util.Scanner(elements[i]); "
+					+ "objects[i] = structorizerGetScannedObject(sc0); "
+					+ "sc0.close(); "
+					+ "} "
+					+ "result = objects;"
+					+ "}"
+					+ "else { result = sc.next(); } "
+					+ "return result; }";
+			interpreter.eval(pascalFunction);
+// KGU: The following outcommented code is for debugging the local equivalent of the function above
+//			Scanner sc = new Scanner("test 3.4 4,6 \"Alles großer Murks \" hier. {tfzz64} \"aha\" {6, 89,8, 2,DFj}\n{666}");
+//			Object obj = null;
+//			do {
+//				try {
+//				obj = this.structorizerGetScannedObject(sc);
+//				if (obj instanceof Object[]) {
+//					System.out.print("Array: ");
+//					for (int i = 0; i < ((Object[])obj).length; i++) {
+//						System.out.print(" | " + ((Object[])obj)[i]);
+//					}
+//					System.out.println("");
+//				}
+//				else System.out.println(obj.getClass().getName() + ": " + obj);
+//				}
+//				catch (java.util.NoSuchElementException ex) { obj = null; }
+//			} while (obj != null);
+//			sc.close();
+// KGU: The preceding outcommented code is for debugging the local equivalent of the function above
+			pascalFunction = "public Object fileRead(int fileNo) { "
+					+ "Object result = null; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "result = structorizerGetScannedObject((java.util.Scanner)reader); "
+					+ "ok = true;"
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return result; }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public Character fileReadChar(int fileNo) { "
+					+ "Character result = '\0'; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "java.util.Scanner sc = (java.util.Scanner)reader; "
+					+ "java.util.regex.Pattern oldDelim = sc.delimiter(); "
+					+ "sc.useDelimiter(\"\"); "
+					+ "try { "
+					+ "if (!sc.hasNext(\".\") && sc.hasNextLine()) { sc.nextLine(); result = '\\n'; }"
+					+ "else { result = sc.next(\".\").charAt(0); } "
+					+ "}"
+					+ "finally { sc.useDelimiter(oldDelim); } "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return result; }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public Integer fileReadInt(int fileNo) { "
+					+ "Integer result = null; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "result = ((java.util.Scanner)reader).nextInt(); "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return result; }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public Double fileReadDouble(int fileNo) { "
+					+ "Double result = null; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "result = ((java.util.Scanner)reader).nextDouble(); "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return result; }";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public String fileReadLine(int fileNo) { "
+					+ "String line = null; "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable reader = executorFileMap.get(fileNo - 1); "
+					+ "if (reader instanceof java.util.Scanner) { "
+					+ "line = ((java.util.Scanner)reader).nextLine(); "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberRead.getText() + "\"); } "
+					+ "return line;	}";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public void fileWrite(int fileNo, java.lang.Object data) { "
+					+ "	boolean ok = false; "
+					+ "	if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "		java.io.Closeable writer = executorFileMap.get(fileNo - 1); "
+					+ "		if (writer instanceof java.io.BufferedWriter) { "
+					+ "			((java.io.BufferedWriter)writer).write(data.toString()); "
+					+ "		ok = true;"
+					+ "	}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberWrite.getText() + "\"); } "
+					+ "}";
+			interpreter.eval(pascalFunction);
+			pascalFunction = "public void fileWriteLine(int fileNo, java.lang.Object data) { "
+					+ "boolean ok = false; "
+					+ "if (fileNo > 0 && fileNo <= executorFileMap.size()) { "
+					+ "java.io.Closeable file = executorFileMap.get(fileNo - 1); "
+					+ "if (file instanceof java.io.BufferedWriter) { "
+					+ "((java.io.BufferedWriter)file).write(data.toString()); "
+					+ "((java.io.BufferedWriter)file).newLine(); "
+					+ "ok = true; "
+					+ "}"
+					+ "}"
+					+ "if (!ok) { throw new java.io.IOException(\"" + Control.msgInvalidFileNumberWrite.getText() + "\"); } "
+					+ "}";
+			interpreter.eval(pascalFunction);
+			// END KGU 2016-12-18
+			// START TEST fileAppend
+//			int handle = fileAppend("AppendTest.txt");
+//			System.out.println("fileAppend: " + handle);
+//			interpreter.eval("fileWriteLine("+handle+", \"Bandwurm\")");
+//			interpreter.eval("fileWriteLine("+handle+", 4711)");
+//			interpreter.eval("fileClose("+handle+")");
+			// END TEST
+			// START TEST fileRead
+//			int handle = fileOpen("D:/SW-Produkte/Structorizer/tests/Issue314/StructorizerFileAPI.cpp");
+//			if (handle > 0) {
+//				try {
+//					while (!fileEOF(handle)) {
+//						Object value = fileRead(handle);
+//						System.out.println(value);
+//					}
+//				} catch (IOException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//				try {
+//					fileClose(handle);
+//				} catch (IOException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//			}
+			// END TEST
 		} catch (EvalError ex)
 		{
+			//java.io.IOException
 			System.err.println("Executor.initInterpreter(): " + ex.getMessage());
 		}
 	}
+	
+	// Test for Interpreter routines
+//	public Object structorizerGetScannedObject(java.util.Scanner sc) {
+//		Object result = null; 
+//		sc.useLocale(java.util.Locale.UK); 
+//		if (sc.hasNextInt()) { result = sc.nextInt(); } 
+//		else if (sc.hasNextDouble()) { result = sc.nextDouble(); } 
+//		else if (sc.hasNext("\\\".*?\\\"")) { result = sc.next("\\\".*?\\\""); } 
+//		else if (sc.hasNext("\\{.*?\\}")) {
+//			String token = sc.next();
+//			result = new Object[]{token.substring(1, token.length()-1)};
+//		} 
+//		else if (sc.hasNext("\\\".*")) { 
+//			String str = sc.next(); 
+//			while (sc.hasNext() && !sc.hasNext(".*\\\"")) { 
+//				str += " " + sc.next();
+//			}
+//			if (sc.hasNext()) { str += " " + sc.next(); }
+//			result = str;
+//		}
+//		else if (sc.hasNext("\\{.*")) { 
+//			java.util.regex.Pattern oldDelim = sc.delimiter();
+//			//sc.useDelimiter("(\\p{javaWhitespace}*,\\p{javaWhitespace}*|\\})");
+//			sc.useDelimiter("\\}");
+//			String expr = sc.next().trim().substring(1);
+//			sc.useDelimiter(oldDelim);
+//			String[] elements = {};
+//			if (!expr.isEmpty()) {
+//				elements = expr.split("\\p{javaWhitespace}*,\\p{javaWhitespace}*");
+//			}
+//			if (sc.hasNext("\\}")) { sc.next(); }
+//			Object[] objects = new Object[elements.length];
+//			for (int i = 0; i < elements.length; i++) { 
+//				java.util.Scanner sc0 = new java.util.Scanner(elements[i]);
+//				objects[i] = structorizerGetScannedObject(sc0);
+//				sc0.close();
+//			}
+//			result = objects;
+//		}
+//		else { result = sc.next(); }
+//		return result;
+//	}
+
+//	public int fileOpen(String filePath)
+//	{
+//		int fileNo = 0; 
+//		java.io.File file = new java.io.File(filePath);
+//		try {
+//			java.io.FileInputStream fis = new java.io.FileInputStream(file);
+//			java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, "UTF-8"));
+//			fileNo = this.openFiles.size() + 1;
+//			this.openFiles.add(new java.util.Scanner(reader));
+//		}
+//		catch (SecurityException e) { fileNo = -3; }
+//		catch (java.io.FileNotFoundException e) { fileNo = -2; }
+//		catch (java.io.IOException e) { fileNo = -1; }
+//		return fileNo;
+//	}
+
+//	public int fileAppend(String filePath)
+//	{
+//		int fileNo = 0;
+//		java.io.File file = new java.io.File(filePath);
+//		if (!file.isAbsolute()) {
+//			file = diagram.currentDirectory;
+//			if (!file.isDirectory()) { file = file.getParentFile(); }
+//			file = new java.io.File(file.getAbsolutePath() + java.io.File.separator + filePath);
+//			filePath = file.getAbsolutePath();
+//		}
+//		java.io.BufferedWriter writer = null;
+//		System.out.println(file.getName());
+//		try {
+//			if (file.exists()) {
+//				java.io.File tmpFile = java.io.File.createTempFile("structorizer_"+file.getName(), null);
+//				if (tmpFile.exists()) { tmpFile.delete(); }
+//				if (file.renameTo(tmpFile)) {
+//					java.io.FileOutputStream fos = new java.io.FileOutputStream(filePath); 
+//					java.io.FileInputStream fis = new java.io.FileInputStream(tmpFile.getAbsolutePath()); 
+//					writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, "UTF-8")); 
+//					java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, "UTF-8"));
+//					String line = null; 
+//					while ((line = reader.readLine()) != null) {
+//						writer.write(line); writer.newLine();
+//					} 
+//					reader.close();
+//					tmpFile.delete();
+//				}
+//				else {
+//					fileNo = -4;
+//				}
+//			} 
+//			else { 
+//				java.io.FileOutputStream fos = new java.io.FileOutputStream(filePath); 
+//				writer = new java.io.BufferedWriter(new java.io.OutputStreamWriter(fos, "UTF-8")); 				
+//			} 
+//			fileNo = this.openFiles.size() + 1;
+//			this.openFiles.add(writer);  
+//		} 
+//		catch (SecurityException e) { fileNo = -3; } 
+//		catch (java.io.FileNotFoundException e) { fileNo = -2; }
+//		catch (java.io.IOException e) { fileNo = -1; }
+//		return fileNo;
+//	}
+	
+//	public void fileClose(int fileNo) throws java.io.IOException
+//	{
+//		if (fileNo > 0 && fileNo <= this.openFiles.size()) {
+//			java.io.Closeable file = this.openFiles.get(fileNo - 1);
+//			if (file != null) {
+//				try { file.close(); }
+//				catch (java.io.IOException e) {}
+//				this.openFiles.set(fileNo - 1, null); }
+//		}
+//		else { throw new java.io.IOException("fileClose: §INVALID_HANDLE_READ§"); }
+//	}
+
+//	public boolean fileEOF(int fileNo) throws java.io.IOException
+//	{
+//		boolean isEOF = true;
+//		if (fileNo > 0 && fileNo <= this.openFiles.size()) {
+//			java.io.Closeable reader = this.openFiles.get(fileNo - 1);
+//			if (reader instanceof java.util.Scanner) {
+//				//try {
+//					isEOF = !((java.util.Scanner)reader).hasNext();
+//				//} catch (java.io.IOException e) {}
+//			}
+//		}
+//		else { throw new java.io.IOException("fileEOF: §INVALID_HANDLE_READ§"); }
+//		return isEOF;
+//	}
+
+//	public Object fileRead(int fileNo) throws java.io.IOException
+//	{
+//		Object result = null;
+//		boolean ok = false;
+//		if (fileNo > 0 && fileNo <= this.openFiles.size()) {
+//			java.io.Closeable reader = this.openFiles.get(fileNo - 1);
+//			if (reader instanceof java.util.Scanner) {
+//				result = structorizerGetScannedObject((java.util.Scanner)reader);
+//				ok = true;
+//			}
+//		}
+//		if (!ok) { throw new java.io.IOException("fileRead: §INVALID_HANDLE_READ§"); }
+//		return result;
+//	}
+
+//	public String fileReadLine(int fileNo) throws java.io.IOException
+//	{
+//		String line = null;
+//		if (fileNo > 0 && fileNo <= this.openFiles.size()) {
+//			java.io.Closeable file = this.openFiles.get(fileNo - 1);
+//			if (file instanceof java.io.BufferedReader) {
+//				line = ((java.io.BufferedReader)file).readLine();
+//			}
+//		}
+//		return line;
+//	}
+
+//	public void fileWrite(int fileNo, String line)
+//	{
+//		if (fileNo > 0 && fileNo <= this.openFiles.size()) {
+//			java.io.Closeable file = this.openFiles.get(fileNo - 1);
+//			if (file instanceof java.io.BufferedWriter) {
+//				((java.io.BufferedWriter)file).write(line);
+//				((java.io.BufferedWriter)file).newLine();
+//			}
+//		}
+//	}
 
 	public boolean isNumeric(String input)
 	{
@@ -1418,7 +1938,7 @@ public class Executor implements Runnable
 			return false;
 		}
 	}
-
+	
 	public boolean isRunning()
 	{
 		return running;
@@ -1722,8 +2242,26 @@ public class Executor implements Runnable
 			String[] nameParts = name.split(" ");
 			name = nameParts[nameParts.length-1];
 			// END KGU#109 2015-12-15
-			this.interpreter.set(name, content);
-
+			
+			// START KGU#322 2017-01-06: Bugfix #324 - an array assigned on input hindered scalar re-assignment
+			//this.interpreter.set(name, content);
+			try {
+				this.interpreter.set(name, content);
+			}
+			catch (EvalError ex) {
+				if (ex.getMessage().matches(".*Can't assign.*to java\\.lang\\.Object \\[\\].*")) {
+					// Stored array type is an obstacle for re-assignment, so drop it
+					this.interpreter.unset(name);
+					// Now try again
+					this.interpreter.set(name, content);
+				}
+				else {
+					// Something different, so rethrow
+					throw ex;
+				}
+			}
+			// END KGU#322 2017-01-06
+			
 			// MODIFIED BY GENNARO DONNARUMMA
 			// PREVENTING DAMAGED STRING AND CHARS
 			// FIXME (KGU): Seems superfluous or even dangerous (Addendum 2015-12-10: Now the aim became clear by issue #49)
@@ -2133,6 +2671,20 @@ public class Executor implements Runnable
 			{
 				result = ex.getLocalizedMessage();
 				if (result == null) result = ex.getMessage();
+				if (result.endsWith("TargetError")) {
+					String errorText = ex.getErrorText();
+					int leftParPos = errorText.indexOf('(');
+					int rightParPos = errorText.lastIndexOf(')');
+					if (errorText.startsWith("throw") && leftParPos >= 0 && rightParPos > leftParPos) {
+						errorText = errorText.substring(leftParPos+1,  rightParPos).trim();
+					}
+					result = result.replace("TargetError", errorText);
+				}
+			}
+			catch (Exception ex)
+			{
+				result = ex.getLocalizedMessage();
+				if (result == null) result = ex.getMessage();
 			}
 			i++;
 		}
@@ -2393,7 +2945,15 @@ public class Executor implements Runnable
 			{
 				//System.out.println("Looking for SUBROUTINE NSD:");
 				//System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
-				Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
+				// START KGU#317 2016-12-29
+				//Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
+				Root sub = null;
+				try {
+					sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
+				} catch (Exception ex) {
+					return ex.getMessage();	// Ambiguous call!
+				}
+				// END KGU#317 2016-12-29
 				if (sub != null)
 				{
 					Object[] args = new Object[f.paramCount()];
@@ -2492,6 +3052,11 @@ public class Executor implements Runnable
 				}
 				catch (EvalError ex) {}
 				// END KGU#285 2016-10-16
+    			// START KGU#281 2016-12-23: Enh. #271 - ignore comma between prompt and variable name
+				if (tokens.count() > 1 && tokens.get(1).equals(",")) {
+					tokens.remove(1);
+				}
+				// END KGU#281 2016-12-23
 				in = tokens.concatenate("", 1).trim();
 			}
 		}
@@ -2818,7 +3383,15 @@ public class Executor implements Runnable
 				// FIXME: Disable the output instructions for the release version
 				//System.out.println("Looking for SUBROUTINE NSD:");
 				//System.out.println("--> " + f.getName() + " (" + f.paramCount() + " parameters)");
-				Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
+				// START KGU#317 2016-12-29: Abort execution on ambiguous calls
+				//Root sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
+				Root sub = null;
+				try {
+					sub = this.findSubroutineWithSignature(f.getName(), f.paramCount());
+				} catch (Exception ex) {
+					return ex.getMessage();	// Ambiguous call!
+				}
+				// END KGU#317 2016-12-29
 				if (sub != null)
 				{
 					executeCall(sub, args, (Call)element);

@@ -89,6 +89,9 @@
  *      Kay Gürtzig         2016.12.02  Issue #307: New executor error message
  *      Kay Gürtzig         2016.12.14  Issue #311: Menu re-organization
  *      Kay Gürtzig         2016.12.15  Enh. #310: New Saving option dialog
+ *      Kay Gürtzig         2016.12.27  Enh. #314: Control messages for the file API
+ *      Kay Gürtzig         2016.12.29  Enh. #315: New Surface messages for diagram conflicts
+ *      Kay Gürtzig         2017.01.05  Enh. #319: Captions for the Arranger index popup menu
  *
  ******************************************************************************************************
  *
@@ -191,6 +194,7 @@ Menu.menuDiagramSwitchTCTooltip.text=Zum Aktivieren dieses Menüpunkts "%1" abw�
 Menu.menuDiagramMarker.text=Hervorheben von Variablen?
 Menu.menuDiagramDIN.text=DIN 66261?
 Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
+Menu.menuDiagramIndex.text=Arranger-Index anzeigen?
 Menu.menuDiagramWheel.text=Mausrad zum Reduzieren?
 // Menu "Preferences"
 Menu.menuPreferences.text=Einstellungen
@@ -322,6 +326,8 @@ Menu.error14_2.text=Die Schrittweite «%» der Zählschleife ist keine konstante
 Menu.error14_3.text=Variable «%» steht in möglichem Namenskonflikt mit einem der konfigurierten Kennwörtern für FOR-Schleifen!
 Menu.error15_1.text=Der Unterprogrammaufruf hat nicht die Form [ <var> <- ] <routine_name>(<arg_list>)!
 Menu.error15_2.text=Die aufgerufene Routine «%» ist z.Z. nicht verfügbar.
+Menu.error15_3.text=Mehr als eine Routine passt zu Aufruf «%».
+
 Menu.error16_1.text=Der Aussprung muss leer sein oder mit einem der Schlüsselwörter % beginnen!
 Menu.error16_2.text=Eine return-Anweisung muss (außer am Diagrammende) ein Aussprung-Element sein!
 Menu.error16_3.text=Exit-, leave- oder break-Anweisungen sind nur als Aussprung-Elemente zulässig!
@@ -478,6 +484,11 @@ Editor.popupDisable.text=Deaktivieren/Aktivieren
 // Breakpoint
 Editor.popupBreakpoint.text=Haltepunkt setzen/löschen
 Editor.popupBreakTrigger.text=Haltepunktauslösung festlegen...
+// Arranger index
+Editor.popupIndexGet.text=Diagram holen
+Editor.popupIndexSave.text=Änderungen sichern
+Editor.popupIndexRemove.text=Entfernen
+Editor.popupIndexCovered.text=Testabdeckung an/aus
 
 -----[ InputBox ]-----
 InputBox.title=Element bearbeiten
@@ -752,6 +763,10 @@ Surface.msgUnsavedContinue.text=Trotzdem fortfahren?
 Surface.msgNoArrFile.text=Keine Arranger-Datei (arr) gefunden
 Surface.msgDefectiveArr.text=Defekte Anordnungsdatei.
 Surface.msgDefectiveArrz.text=Defektes portables Anordnungsarchiv.
+Surface.titleDiagramConflict.text=Diagramm-Konflikt
+Surface.msgInsertionConflict.0.text=Es gibt bereits eine Version von Diagramm "%2",\nwenigstens eine davon hat ungesicherte Änderungen.
+Surface.msgInsertionConflict.1.text=Es gibt bereits eine äquivalente Kopie des Diagramms "%1"\nmit unterschiedlichem Dateipfad "%2".
+Surface.msgInsertionConflict.2.text=Es gibt bereits ein abweichendes Diagramm mit Signatur "%1"\nund Dateipfad "%2".
 
 -----> Executor
 -----[ Control ]-----
@@ -782,6 +797,7 @@ Control.msgTitleError.text=Fehler
 Control.msgTitleQuestion.text=Frage
 Control.msgTitleParallel.text=Problem bei Parallelausführung
 Control.msgNoSubroutine.text=Ein Diagramm mit Unterprogramm "%1" (%2 Parameter) wurde nicht gefunden!\nPlatzieren Sie benötigte Unterprogramm-Diagramme zunächst im Arranger.
+Control.msgAmbiguousCall.text=Mehrdeutiger Aufruf: Verschiedene Unterprogramm-Diagramme "%1" (%2 Parameter) gefunden!
 Control.msgInvalidExpr.text=<%1> ist kein korrekter oder existierender Ausdruck.
 Control.msgInvalidBool.text=<%1> ist kein gültiger logischer Ausdruck.
 Control.msgIllFunction.text=<%1> ist keine korrekte Funktion!
@@ -793,6 +809,11 @@ Control.msgIllegalJump.text=Unzulässiger Inhalt einer Aussprung-Anweisung: <%1>
 Control.msgTooManyLevels.text=Zu viele Ebenen zum Verlassen gefordert (tatsächliche Tiefe: %1 / angegeben: %2)!
 Control.msgJumpOutParallel.text=Unzulässiger Aussprung aus Parallelzweig:%Thread beendet!
 Control.msgForLoopManipulation.text=Unzulässige Manipulation der Zählschleifenvariablen «%»!
+Control.msgInvalidFileNumberRead.text=Ungültige Dateinummer bzw. Datei nicht geöffnet zum Lesen.
+Control.msgInvalidFileNumberWrite.text=Ungülige Dateinummer bzw. Datei nicht geöffnet zum Schreiben.
+Control.msgNoIntLiteralOnFile.text=Kein Ganzzahlwert lesbar von der Datei!
+Control.msgNoDoubleLiteralOnFile.text=Kein Gleitkommawert lesbar von der Datei!    
+Control.msgEndOfFile.text=Leseversuch nach Erreichen des Dateiendes!    
 Control.tblVar.header.0=Variablenname
 Control.tblVar.header.1=Inhalt
 
