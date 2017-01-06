@@ -72,6 +72,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.09.28      KGU#264: Font name property renamed from "Name" to "Font".
  *      Kay Gürtzig     2016.10.13      Issue #270: New field "disabled" for execution and code export
  *      Kay Gürtzig     2016.11.06      Issue #279: Several modifications to circumvent direct access to D7Parser.keywordMap
+ *      Kay Gürtzig     2017-01-06      Issue #327: French default structure preferences replaced by English ones
  *
  ******************************************************************************************************
  *
@@ -1558,7 +1559,8 @@ public abstract class Element {
 			Ini ini = Ini.getInstance();
 			ini.load();
 			// elements
-			preAltT=ini.getProperty("IfTrue","V");
+			// START KGU 2017-01-06: Issue #327: Default changed to English
+			preAltT=ini.getProperty("IfTrue","T");
 			preAltF=ini.getProperty("IfFalse","F");
 			preAlt=ini.getProperty("If","()");
 			// START KGU 2016-07-31: Bugfix #212 - After corrected effect the default is also turned
@@ -1566,11 +1568,12 @@ public abstract class Element {
 			altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "false"));
 			// END KGU#228 2016-07-31
 			StringList sl = new StringList();
-			sl.setCommaText(ini.getProperty("Case","\"?\",\"?\",\"?\",\"sinon\""));
+			sl.setCommaText(ini.getProperty("Case","\"?\",\"?\",\"?\",\"default\""));
 			preCase=sl.getText();
-			preFor=ini.getProperty("For","pour ? <- ? \u00E0 ?");
-			preWhile=ini.getProperty("While","tant que ()");
-			preRepeat=ini.getProperty("Repeat","jusqu'\u00E0 ()");
+			preFor=ini.getProperty("For","for ? <- ? to ?");
+			preWhile=ini.getProperty("While","while ()");
+			preRepeat=ini.getProperty("Repeat","until ()");
+			// END KGU 2017-01-06 #327
 			// font
 			// START KGU#264 2016-09-28: key Name replaced by the more expressive "Font"
 			//setFont(new Font(ini.getProperty("Name","Dialog"), Font.PLAIN,Integer.valueOf(ini.getProperty("Size","12")).intValue()));
