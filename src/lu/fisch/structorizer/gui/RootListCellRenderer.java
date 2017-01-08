@@ -33,6 +33,7 @@ package lu.fisch.structorizer.gui;
  *      ------          ----            -----------
  *      Kay Gürtzig     2016.12.12      First Issue
  *      Kay Gürtzig     2017.01.05      Enh. #319 - Lines with test-covered diagrams now show a different colour
+ *      Kay Gürtzig     2017.01.07      Enh. #319 - "covered" status now shown by the icons instead of the text
  *
  ******************************************************************************************************
  *
@@ -62,6 +63,9 @@ import lu.fisch.structorizer.elements.Root;
 class RootListCellRenderer extends JLabel implements ListCellRenderer<Root>{
     private final static ImageIcon mainIcon = IconLoader.ico022;
     private final static ImageIcon subIcon = IconLoader.ico021;
+    // START KGU#318 2017-01-07: Enh. #319: Better than text colouring for test-covered diagrams
+    private final static ImageIcon subIconCovered = IconLoader.ico030;
+    // END KGU#318 2017-01-07
     private final static Color selectedBackgroundNimbus = new Color(57,105,138);
 
 	@Override
@@ -70,33 +74,33 @@ class RootListCellRenderer extends JLabel implements ListCellRenderer<Root>{
         String s = root.getSignatureString(true);
 		boolean covered = Element.E_COLLECTRUNTIMEDATA && root.deeplyCovered; 
         setText(s);
-        setIcon((root.isProgram) ? mainIcon : subIcon);
+        setIcon((root.isProgram) ? mainIcon : (covered ? subIconCovered : subIcon));
         if (isSelected) {
     		if (UIManager.getLookAndFeel().getName().equals("Nimbus"))
     		{
     			// Again, a specific handling for Nimbus was necessary in order to show any difference at all.
     			if (list.isFocusOwner()) {
-    				setBackground(covered ? Color.GREEN : selectedBackgroundNimbus);
+    				setBackground(selectedBackgroundNimbus);
     				setForeground(Color.WHITE);
     			}
     			else {
     				setBackground(Color.WHITE);	
-    				setForeground(covered ? Color.GREEN : selectedBackgroundNimbus);
+    				setForeground(selectedBackgroundNimbus);
     			}
     		}
     		else {
     			if (list.isFocusOwner()) {
-    				setBackground(covered ? Color.GREEN : list.getSelectionBackground());
+    				setBackground(list.getSelectionBackground());
     				setForeground(list.getSelectionForeground());
     			}
     			else {
     				// Invert the selection colours
                     setBackground(list.getSelectionForeground());
-                    setForeground(covered ? Color.GREEN : list.getSelectionBackground());    				
+                    setForeground(list.getSelectionBackground());    				
     			}
     		}
         } else {
-            setBackground(covered ? Color.GREEN : list.getBackground());
+            setBackground(list.getBackground());
             setForeground(list.getForeground());
         }
         setEnabled(list.isEnabled());

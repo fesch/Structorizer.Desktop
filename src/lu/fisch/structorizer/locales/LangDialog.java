@@ -52,6 +52,7 @@ import java.awt.image.BufferedImage;
 import javax.swing.*;
 
 import lu.fisch.structorizer.gui.IconLoader;
+import lu.fisch.structorizer.io.Ini;
 
 /**
  * Extends JDialog to facilitate language localization, also provides static
@@ -126,8 +127,9 @@ public class LangDialog extends JDialog {
     
     // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
     /**
-     * Returns a scaled checkbox icon for JCheckbox checkbox in mode selected
-     * @param checkbox - the checkbox the icon is recested for
+     * Returns a scaled checkbox icon for JCheckbox/JRadioButton checkbox
+     * in mode given by selected (checked or unchecked)
+     * @param checkbox - the checkbox the icon is requested for
      * @param selected - the kind of icon (true = selected, false = unselected)
      * @return an ImageIcon scaled to the font size of checkbox
      */
@@ -137,12 +139,15 @@ public class LangDialog extends JDialog {
         FontMetrics boxFontMetrics = checkbox.getFontMetrics(checkbox.getFont());
         Icon boxIcon = selected ? checkbox.getSelectedIcon() : checkbox.getIcon();
         if (boxIcon == null) {
-            checkbox.setSelected(selected);
-            String propertyName = "CheckBox.icon";
+            String propertyName = "CheckBox";
             if (checkbox instanceof JRadioButton) {
-            	propertyName = "RadioButton.icon";
+            	propertyName = "RadioButton";
             }
-            boxIcon = UIManager.getIcon(propertyName);
+            //if (selected) {
+            //	propertyName += "[Selected]";
+            //}
+            checkbox.setSelected(selected);
+            boxIcon = UIManager.getIcon(propertyName + ".icon");
         }
         int type = BufferedImage.TYPE_INT_ARGB;
         BufferedImage boxImage = new BufferedImage(

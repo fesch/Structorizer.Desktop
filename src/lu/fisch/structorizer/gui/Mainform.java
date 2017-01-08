@@ -56,6 +56,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.12.12      Enh. #305: API enhanced to support the Arranger Root index view
  *      Kay Gürtzig     2016.12.15      Enh. #310: New options for saving diagrams added
  *      Kay Gürtzig     2017.01.04      KGU#49: Closing a stand-alone instance now effectively warns Arranger
+ *      Kay Gürtzig     2017.01.06      Issue #312: Measure against lost focus on start.
+ *      Kay Gürtzig     2017.01.07      Enh. #101: Modified title string for dependent instances
  *
  ******************************************************************************************************
  *
@@ -114,6 +116,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	// START KGU 2016-01-10: Enhancement #101: Show version number and stand-alone status in title
 	private String titleString = "Structorizer " + Element.E_VERSION;
 	// END KGU 2016-01-10
+	// START KGU#326 2017-01-07: Enh. #101 - count the instances (for the title string)
+	private static int instanceCount = 0;
+	private int instanceNo;
+	// END KGU#326 #2017-01-07
 		
 	/******************************
  	 * Setup the Mainform
@@ -142,7 +148,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             // set window title
             // START KGU 2016-01-10: Enhancement #101 - show version number and standalone status
             //setTitle("Structorizer");
-            if (!this.isStandalone) titleString = "(" + titleString + ")";
+        	// START KGU#326 2017-01-07: Enh. #101 improved title information
+            //if (!this.isStandalone) titleString = "(" + titleString + ")";
+            if (!this.isStandalone) titleString = "[" + this.instanceNo + "] " + titleString;
+        	// END KGU#326 2017-01-07
             setTitle(titleString);
             // END KGU 2016-01-10
             // set layout (OS default)
@@ -214,7 +223,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                                     if (isStandalone) {
                                             // START KGU#49 2017-01-04 Care for potential Arranger dependants
                                             if (Arranger.hasInstance()) {
-                                            	Arranger.getInstance().windowClosing(e);
+                                                Arranger.getInstance().windowClosing(e);
                                             }
                                             // END KGU#49 2017-01-04
                                             System.exit(0);	// This kills all related frames and threads as well!
@@ -266,6 +275,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             // START KGU#305 2016-12-16
             getEditor().updateArrangerIndex(Arranger.getSortedRoots());
             // END KGU#305 2016-12-16
+            // START KGU#325 2017-01-06: Issue #312 ensure the work area getting initial focus
+            getEditor().scrollarea.requestFocusInWindow();
+            // END KGU#325 2017-01-06
 	}
 	
 
@@ -686,6 +698,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     public Mainform(boolean standalone)
     {
         super();
+    	// START KGU#326 2017-01-07: Enh. #101 improved title information
+        this.instanceNo = ++instanceCount;
+    	// END KGU#326 2017-01-07
         this.isStandalone = standalone;
         // START KGU#305 2016-12-16: Code revision
         Arranger.addToChangeListeners(this);

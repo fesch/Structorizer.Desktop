@@ -89,6 +89,7 @@
  *      Kay Gürtzig     2016.12.27      Enh. #314: Control messages for the file API
  *      Kay Gürtzig     2016.12.29      Enh. #315: New Surface messages for diagram conflicts
  *      Kay Gürtzig     2017.01.05      Enh. #319: Captions for the Arranger index popup menu
+ *      Kay Gürtzig     2017.01.07      Enh. #329: Messages for Analyser check 21
  *
  ******************************************************************************************************
  *
@@ -340,6 +341,7 @@ Menu.error17.text=Consistency risk due to concurrent access to variable «%» by
 Menu.error18.text=Variable «%1» may be confused with variable(s) «%2» in case-indifferent languages!
 Menu.error19.text=Variable name «%1» may collide with reserved names in languages like %2!
 Menu.error20.text=A subroutine header must have a (possibly empty) parameter list within parentheses.
+Menu.error21.text=Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0.
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Analyser preferences
@@ -359,12 +361,13 @@ AnalyserPreferences.checkboxes.11.text=Check for assignment errors.
 AnalyserPreferences.checkboxes.12.text=Check for standardized parameter name. (LUX/MEN)
 AnalyserPreferences.checkboxes.13.text=Check if, in case of a function, it returns a result.
 AnalyserPreferences.checkboxes.14.text=Check for consistency of FOR loop parameters.
-AnalyserPreferences.checkboxes.15.text=Check for inappropriate subroutine CALLs.
+AnalyserPreferences.checkboxes.15.text=Check for inappropriate subroutine CALLs and missing call targets.
 AnalyserPreferences.checkboxes.16.text=Check for incorrect JUMP element usage.
 AnalyserPreferences.checkboxes.17.text=Check for inconsistency risks in PARALLEL sections.
 AnalyserPreferences.checkboxes.18.text=Check that identifiers don't differ only by upper/lower case.
 AnalyserPreferences.checkboxes.19.text=Check if an identifier might collide with reserved words.
 AnalyserPreferences.checkboxes.20.text=Check that a subroutine header has a parameter list.
+AnalyserPreferences.checkboxes.21.text=Discourage use of mistakable variable names «I», «l», and «O».
 AnalyserPreferences.okButton.text=OK
 
 

@@ -49,6 +49,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.01      Issue #81: icons 089 through 091 and 113 hadn't been scaled
  *      Kay Gürtzig     2016.12.14      Enh. #305: New icon 029_index for the Arranger index 
  *      Kay Gürtzig     2017.01.05      Enh. #319: New icons 045_remove, 046_covered for Arranger index popup
+ *      Kay Gürtzig     2017.01.07      Enh. #319: New icon 030_function_green for Arranger index
  *
  ******************************************************************************************************
  *
@@ -116,6 +117,9 @@ public class IconLoader {
 	// START KGU#305 2016-12-14: Enh. #305
 	public static ImageIcon ico029 = getIconImage(getURI(from+"icons/029_index.png"));
 	// END KGU#305 2016-12-14
+	// START KGU#318 2017-01-07: Enh. #319
+	public static ImageIcon ico030 = getIconImage(getURI(from+"icons/030_function_green.png"));
+	// END KGU#318 2017-01-07
 
 	public static ImageIcon ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
 	public static ImageIcon ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));
@@ -258,6 +262,9 @@ public class IconLoader {
         	// START KGU#305 2016-12-14: Enh. #305
         	ico029 = getIconImage(getURI(from+"icons/029_index.png"));
         	// END KGU#305 2016-12-14
+        	// START KGU#318 2017-01-07: Enh. #319
+        	ico030 = getIconImage(getURI(from+"icons/030_function_green.png"));
+        	// END KGU#318 2017-01-07
 
             ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
             ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));

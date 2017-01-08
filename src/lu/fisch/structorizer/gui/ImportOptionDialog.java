@@ -30,10 +30,11 @@ package lu.fisch.structorizer.gui;
  *
  *      Revision List
  *
- *      Author          Date            Description
- *      ------          ----            -----------
- *      kay             2016.09.25      First Issue
- *      Kay Gürtzig     2016.11.11      Issue #81: DPI-awareness workaround for checkboxes
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      kay             2016.09.25  First Issue
+ *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes
+ *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *
  ******************************************************************************************************
  *
@@ -54,9 +55,11 @@ import java.nio.charset.Charset;
 import java.util.Set;
 
 import javax.swing.ImageIcon;
+import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
+import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
 
 /**
@@ -111,6 +114,10 @@ public class ImportOptionDialog extends LangDialog {
         ImageIcon unselectedBox = scaleToggleIcon(chkRefactorOnLoading, false);
         ImageIcon selectedBox = scaleToggleIcon(chkRefactorOnLoading, true);
         // END KGU#287 2016-11-11
+		// START KGU#287 2017-01-07: Bugfix #330
+		Double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
+		boolean isNimbus = UIManager.getLookAndFeel().getName().equals("Nimbus");
+		// END KGU#287 2017-01-07
 
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(pnlTop);
         pnlTop.setLayout(jPanel1Layout);
@@ -138,18 +145,30 @@ public class ImportOptionDialog extends LangDialog {
         		charsetListChanged((String)cbCharset.getSelectedItem());
         	}
         });
-        // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
-        chkCharsetAll.setIcon(unselectedBox);
-        chkCharsetAll.setSelectedIcon(selectedBox);
-        // END KGU#287 2016-11-11
+		// START KGU#287 2017-01-07: Bugfix #330
+        if (scaleFactor > 1 && !isNimbus) {
+		// END KGU#287 2017-01-07
+        	// START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
+        	chkCharsetAll.setIcon(unselectedBox);
+        	chkCharsetAll.setSelectedIcon(selectedBox);
+        	// END KGU#287 2016-11-11
+		// START KGU#287 2017-01-07: Bugfix #330
+        }
+        // END KGU#287 2017-01-07
 
         chkRefactorOnLoading.setText("Replace keywords on loading a diagram (refactoring).");
         chkRefactorOnLoading.setToolTipText("Select this option if all configurable keywords in the daiagram are to be adapted to the current parser preferences.");
         chkRefactorOnLoading.setAlignmentX(LEFT_ALIGNMENT);
-        // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
-        chkRefactorOnLoading.setIcon(unselectedBox);
-        chkRefactorOnLoading.setSelectedIcon(selectedBox);
-        // END KGU#287 2016-11-11
+		// START KGU#287 2017-01-07: Bugfix #330
+        if (scaleFactor > 1 && !isNimbus) {
+		// END KGU#287 2017-01-07
+        	// START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
+        	chkRefactorOnLoading.setIcon(unselectedBox);
+        	chkRefactorOnLoading.setSelectedIcon(selectedBox);
+        	// END KGU#287 2016-11-11
+		// START KGU#287 2017-01-07: Bugfix #330
+        }
+        // END KGU#287 2017-01-07
 
         //chkOfferRefactoringIni.setText("Offer refactoring on loading preferences from file.");
         //chkOfferRefactoringIni.setToolTipText("Select this option if you want to be asked whether to refactor diagrams whenever you load preferences from file.");

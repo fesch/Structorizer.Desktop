@@ -71,6 +71,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.12.14      Enh. #305: New menu entry to enable/disable Arranger index
  *                                      KGU#310: New Debug menu
  *      Kay Gürtzig     2016.12.17      Enh. #267: New Analyser error15_3
+ *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser error21
  *
  ******************************************************************************************************
  *
@@ -346,6 +347,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#239 2016-08-12
 	// START KGU#253 2016-09-21: Enh. #249 - New check for subroutine syntax.
 	public static final LangTextHolder error20 = new LangTextHolder("A subroutine header must have a (possibly empty) parameter list within parentheses.");
+	// END KGU#253 2016-09-21
+	// START KGU#327 2017-01-07: Enh. #329 - New check for hardly distinguishable variable names.
+	public static final LangTextHolder error21 = new LangTextHolder("Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0.");
 	// END KGU#253 2016-09-21
 
 	// START KGU#218 2016-07-28: Issue #206 - enhanced localization
@@ -767,6 +771,7 @@ public class Menu extends LangMenuBar implements NSDController
 //		// END KGU#143 2016-01-21
         // END KGU#310 2016-12-14
         
+
 		menuDiagram.add(menuDiagramType);
 
 		menuDiagramType.add(menuDiagramTypeProgram);

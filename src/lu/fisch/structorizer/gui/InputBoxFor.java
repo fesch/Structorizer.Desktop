@@ -46,6 +46,7 @@ package lu.fisch.structorizer.gui;
  *                                  Bugfix #288: Behaviour on clicking the selected one of the radio buttons fixed
  *      Kay Gürtzig     2016.11.21  Issue #284: Opportunity to scale up/down the TextField fonts by Ctrl-Numpad+/-
  *      Kay Gürtzig     2016.11.22  stepFor label mended; issue #284: Font resizing buttons added
+ *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *
  ******************************************************************************************************
  *
@@ -181,6 +182,9 @@ public class InputBoxFor extends InputBox implements ItemListener {
         ImageIcon unselectedBox = null;
         ImageIcon selectedBox = null;
         // END KGU#287 2016-11-02/09
+		// START KGU#287 2017-01-07: Bugfix #330
+		boolean isNimbus = UIManager.getLookAndFeel().getName().equals("Nimbus");
+		// END KGU#287 2017-01-07
 
 		lblVarDesignation = new JLabel("Counter variable");
 		lblFirstValueLabel = new JLabel("Start value");
@@ -221,7 +225,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		txtIncr.addKeyListener(this);
 		chkTextInput.setSelected(false); 
         // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
-		if (scaleFactor > 1) {
+		if (scaleFactor > 1 && !isNimbus) {
 			unselectedBox = scaleToggleIcon(chkTextInput, false);
 			selectedBox = scaleToggleIcon(chkTextInput, true);
 			chkTextInput.setIcon(unselectedBox);

@@ -46,6 +46,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.09  Issue #81: Scale factor no longer rounded but ensured to be >= 1
  *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes
  *      Kay Gürtzig     2016.11.21  Issue #284: Opportunity to scale up/down the TextField fonts by Ctrl-Numpad+/-
+ *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *
  ******************************************************************************************************
  *
@@ -135,10 +136,13 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         
         // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
 		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
+		// START KGU#287 2017-01-07: Bugfix #330
+		boolean isNimbus = UIManager.getLookAndFeel().getName().equals("Nimbus");
+		// END KGU#287 2017-01-07
 		if (scaleFactor < 1) scaleFactor = 1.0;
         // END KGU#287 2016-11-02
         // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
-		if (scaleFactor > 1) {
+		if (scaleFactor > 1 && !isNimbus) {
 			ImageIcon unselectedBox = scaleToggleIcon(chkDisabled, false);
 			ImageIcon selectedBox = scaleToggleIcon(chkDisabled, true);
 			chkDisabled.setIcon(unselectedBox);

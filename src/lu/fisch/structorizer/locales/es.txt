@@ -93,6 +93,7 @@
  *      Kay Gürtzig     2016.12.27  Enh. #314: Control messages for the file API
  *      Kay Gürtzig     2016.12.29  Enh. #315: New Surface messages for diagram conflicts
  *      Kay Gürtzig     2017.01.05  Enh. #319: Captions for the Arranger index popup menu
+ *      Kay Gürtzig     2017.01.07  Enh. #329: Messages for Analyser check 21
  *
  ******************************************************************************************************
  *
@@ -328,7 +329,6 @@ Menu.error14_3.text=El nombre de la variable «%» puede confligir con una de la
 Menu.error15_1.text=¡La LLAMADA no tiene ninguna de las formas aceptadas: [ <var> <- ] <routine_name>(<arg_list>)!
 Menu.error15_2.text=La llamada subrutina «%» ahora no está localizable.
 Munu.error15_3.text=Llamada ambigua: Hay más de una subrutina «%».
-
 Menu.error16_1.text=¡Un elemento de salto (salida) debe ser vacío o empezar con uno de los comandos %!
 Menu.error16_2.text=¡Una instrucción de retorno debe ser colocado en un elemento SALTO si no es la última instrucción del diagrama!
 Menu.error16_3.text=¡Instrucciones de salida (exit, leave, o break) solo están permitidos en elementos del tipo SALTO!
@@ -339,7 +339,8 @@ Menu.error16_7.text=Instrucciones después de un Salto no son alcanzables!
 Menu.error17.text=¡Varios hilos de ejecución compiten por el acceso a la variable «%» y así riesgan la consistencia!
 Menu.error18.text=¡Variable «%1» podría coincidir con variable(s) «%2» en lenguages sin distincción entre mayúsculas y minúsculas!
 Menu.error19.text=¡Variable «%1» puede collidir con palabras claves en lenguages como %2!
-Menu.error20.text=El ecabezamiento de un subprograma debe tener un parénthesis para parámetros.
+Menu.error20.text=El encabezamiento de un subprograma debe tener un parénthesis para parámetros.
+Menu.error21.text=Los nombres I (i mayúscula), l (L minúscula) y O (o mayúscula) casi no difieren entre si o de 1 o 0.
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferencias del Comprobador
@@ -365,6 +366,7 @@ AnalyserPreferences.checkboxes.17.text=Comprobar que hilos paralelos no pongan a
 AnalyserPreferences.checkboxes.18.text=Comprobar si variables difieren no solo por empleo de mayúsculas o minúsculas.
 AnalyserPreferences.checkboxes.19.text=Comprobar que no habrá colisiones de nombre entre variables y palabras claves.
 AnalyserPreferences.checkboxes.20.text=Comprobar que un subprograma tiene un paréntesis para parámetros.
+AnalyserPreferences.checkboxes.21.text=Desaconsejar el uso de los ecivocables identificadores «I», «l» und «O».
 AnalyserPreferences.okButton.text=Aceptar
 
 

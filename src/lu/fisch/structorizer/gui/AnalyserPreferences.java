@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.gui;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -45,14 +44,16 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.10      Enh. #286: Tabs introduced, configuration array checkboxOrder replaced
  *                                      by map checkboxTabs.
  *      Kay Gürtzig     2016.11.11      Issue #81: DPI-awareness workaround
+ *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser error21 (variable names I, l, O)
+ *                                      bugfix #330: Checkbox status visibility in "Nimbus" look & feel
  *
  ******************************************************************************************************
  *
  *      Comment:		
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
+import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
 
 import java.awt.*;
@@ -90,7 +91,8 @@ public class AnalyserPreferences extends LangDialog {
 		"Check for inconsistency risks in PARALLEL sections.",		// 17
 		"Check that identifiers don't differ only by upper/lower case.",
 		"Check if an identifier might collide with reserved words.",// 19
-		"Check that a subroutine header has a parameter list."		// 20
+		"Check that a subroutine header has a parameter list.",		// 20
+		"Discourage use of mistakable variable names «I», «l», and «O»."
 		// Just append the descriptions for new check types here and insert their
 		// numbers at the appropriate place in array checkboxOrder below.
 		// DON'T FORGET to add a new entry to Root.analyserChecks for every
@@ -115,7 +117,7 @@ public class AnalyserPreferences extends LangDialog {
 		});
 		checkboxTabs.put("Naming / Conventions", new int[]{
 				// identifiers and naming conventions
-				7, 9, 18, 19,
+				7, 9, 18, 19, 21,
 				0/*LUX/MEN*/,
 				5, 6, 12,
 				0,// multiple command types
@@ -158,6 +160,10 @@ public class AnalyserPreferences extends LangDialog {
 		// START KGU#287 2016-11-11: Issue #81
 		ImageIcon unselectedIcon = null;
 		ImageIcon selectedIcon = null;
+		// START KGU#287 2017-01-07: Bufix #330
+		Double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
+		boolean isNimbus = UIManager.getLookAndFeel().getName().equals("Nimbus");
+		// END KGU#287 2017-01-07
 		// END KGU#287 2016-11-11
 		dialogPane = new JPanel();
 		contentPanel = new JTabbedPane();
@@ -173,14 +179,20 @@ public class AnalyserPreferences extends LangDialog {
 			checkboxes[i].setText(checkCaptions[i-1]);
 			// END KGU 2016-09-22
 			// START KGU#287 2016-11-11: Issue #81
-			if (unselectedIcon == null) {
-				unselectedIcon = scaleToggleIcon(checkboxes[i], false);
+			// START KGU#287 2017-01-07: Bufix #330
+			if (scaleFactor > 1 && !isNimbus) {
+			// END KGU#287 2017-01-07
+				if (unselectedIcon == null) {
+					unselectedIcon = scaleToggleIcon(checkboxes[i], false);
+				}
+				if (selectedIcon == null) {
+					selectedIcon = scaleToggleIcon(checkboxes[i], true);
+				}
+				checkboxes[i].setIcon(unselectedIcon);
+				checkboxes[i].setSelectedIcon(selectedIcon);
+			// START KGU#287 2017-01-07: Bufix #330
 			}
-			if (selectedIcon == null) {
-				selectedIcon = scaleToggleIcon(checkboxes[i], true);
-			}
-			checkboxes[i].setIcon(unselectedIcon);
-			checkboxes[i].setSelectedIcon(selectedIcon);
+			// END KGU#287 2017-01-07
 			// END KGU#287 2016-11-11
 		}
 		buttonBar = new JPanel();

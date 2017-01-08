@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.gui;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -38,14 +37,15 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.03.21      Enh. #84: FOR-IN loop settings manually added
  *      Kay Gürtzig     2016.03.23      Enh. #23: Settings for JUMP statements prepared (but not enabled)
  *      Kay Gürtzig     2016.11.11      Issue #81: DPI-awareness workaround for checkboxes
+ *      Kay Gürtzig     2017.01.07      Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *
  ******************************************************************************************************
  *
  *      Comment:		I used JFormDesigner to design this window graphically.
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
+import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
 
 import java.awt.*;
@@ -65,7 +65,7 @@ import javax.swing.border.*;
 @SuppressWarnings("serial")
 public class ParserPreferences extends LangDialog {
     
-        public boolean OK = false;
+	public boolean OK = false;
 
 	
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
@@ -339,12 +339,19 @@ public class ParserPreferences extends LangDialog {
 
 				//---- chkIgnoreCase ---
 				chkIgnoreCase.setText("Ignore case");
-		        // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaroundfor checkboxes)
-		        ImageIcon unselectedBox = scaleToggleIcon(chkIgnoreCase, false);
-		        ImageIcon selectedBox = scaleToggleIcon(chkIgnoreCase, true);
-		        chkIgnoreCase.setIcon(unselectedBox);
-		        chkIgnoreCase.setSelectedIcon(selectedBox);
-		        // END KGU#287 2016-11-11				
+				// START KGU#287 2017-01-07: Bugfix #330
+				double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
+				boolean isNimbus = UIManager.getLookAndFeel().getName().equals("Nimbus");
+				if (scaleFactor > 1 && !isNimbus) {
+				// END KGU#287 2017-01-07
+					// START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaroundfor checkboxes)
+					ImageIcon unselectedBox = scaleToggleIcon(chkIgnoreCase, false);
+					ImageIcon selectedBox = scaleToggleIcon(chkIgnoreCase, true);
+					chkIgnoreCase.setIcon(unselectedBox);
+					chkIgnoreCase.setSelectedIcon(selectedBox);
+					// END KGU#287 2016-11-11				
+				// START KGU#287 2017-01-07: Bugfix #330
+				}				// END KGU#287 2017-01-07
 				buttonBar.add(chkIgnoreCase);
 				
 				//---- okButton ----
