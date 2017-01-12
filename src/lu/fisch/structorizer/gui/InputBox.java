@@ -46,6 +46,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.09  Issue #81: Scale factor no longer rounded but ensured to be >= 1
  *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes
  *      Kay Gürtzig     2016.11.21  Issue #284: Opportunity to scale up/down the TextField fonts by Ctrl-Numpad+/-
+ *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
+ *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): Basic scaling outsourced to class GUIScaler
  *
  ******************************************************************************************************
  *
@@ -135,17 +137,6 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         
         // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
 		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
-		if (scaleFactor < 1) scaleFactor = 1.0;
-        // END KGU#287 2016-11-02
-        // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
-		if (scaleFactor > 1) {
-			ImageIcon unselectedBox = scaleToggleIcon(chkDisabled, false);
-			ImageIcon selectedBox = scaleToggleIcon(chkDisabled, true);
-			chkDisabled.setIcon(unselectedBox);
-			chkDisabled.setSelectedIcon(selectedBox);
-			chkBreakpoint.setIcon(unselectedBox);
-			chkBreakpoint.setSelectedIcon(selectedBox);
-		}
 		// END KGU#287 2016-11-11
 
 		// show form
@@ -350,6 +341,10 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         container.setLayout(new BorderLayout());
         container.add(pnPanel0, BorderLayout.NORTH);
         container.add(pnPanel1, BorderLayout.CENTER);
+
+        // START KGU#287 2017-01-09: Bugfix #330  - scaling stuff outsourced to class GUIScaler
+		GUIScaler.rescaleComponents(this);
+		// END KGU#287 2017-01-09
 
         // START KGU#91+KGU#169 2016-07-14: Enh. #180 (also see #39 and #142)
         this.pack();	// This makes focus control possible but must precede the size setting

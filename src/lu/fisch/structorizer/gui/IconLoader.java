@@ -49,6 +49,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.01      Issue #81: icons 089 through 091 and 113 hadn't been scaled
  *      Kay Gürtzig     2016.12.14      Enh. #305: New icon 029_index for the Arranger index 
  *      Kay Gürtzig     2017.01.05      Enh. #319: New icons 045_remove, 046_covered for Arranger index popup
+ *      Kay Gürtzig     2017.01.07      Enh. #319: New icon 030_function_green for Arranger index
+ *      Kay Gürtzig     2017.01.11      Enh. #81: New icon 051_scale_gui for scaling preset
  *
  ******************************************************************************************************
  *
@@ -116,6 +118,9 @@ public class IconLoader {
 	// START KGU#305 2016-12-14: Enh. #305
 	public static ImageIcon ico029 = getIconImage(getURI(from+"icons/029_index.png"));
 	// END KGU#305 2016-12-14
+	// START KGU#318 2017-01-07: Enh. #319
+	public static ImageIcon ico030 = getIconImage(getURI(from+"icons/030_function_green.png"));
+	// END KGU#318 2017-01-07
 
 	public static ImageIcon ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
 	public static ImageIcon ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));
@@ -137,7 +142,9 @@ public class IconLoader {
 	public static ImageIcon ico048 = getIconImage(getURI(from+"icons/048_caseafter.png"));
 	public static ImageIcon ico049 = getIconImage(getURI(from+"icons/049_callbefore.png"));
 	public static ImageIcon ico050 = getIconImage(getURI(from+"icons/050_callafter.png"));
-	//public static ImageIcon ico051 = getIconImage(getURI(from+"icons/051_nl.png"));
+	// START KGU#287 2017-01-11: Issue #81/#330
+	public static ImageIcon ico051 = getIconImage(getURI(from+"icons/051_scale_gui.png"));
+	// END KGU#287 2017-01-11
 	public static ImageIcon ico052 = getIconImage(getURI(from+"icons/052_update.png"));
 	
 	public static ImageIcon ico055 = getIconImage(getURI(from+"icons/055_jumpafter.png"));
@@ -258,6 +265,9 @@ public class IconLoader {
         	// START KGU#305 2016-12-14: Enh. #305
         	ico029 = getIconImage(getURI(from+"icons/029_index.png"));
         	// END KGU#305 2016-12-14
+        	// START KGU#318 2017-01-07: Enh. #319
+        	ico030 = getIconImage(getURI(from+"icons/030_function_green.png"));
+        	// END KGU#318 2017-01-07
 
             ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
             ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));
@@ -279,7 +289,9 @@ public class IconLoader {
             ico048 = getIconImage(getURI(from+"icons/048_caseafter.png"));
             ico049 = getIconImage(getURI(from+"icons/049_callbefore.png"));
             ico050 = getIconImage(getURI(from+"icons/050_callafter.png"));
-            //ico051 = getIconImage(getURI(from+"icons/051_nl.png"));
+        	// START KGU#287 2017-01-11: Issue #81/#330
+        	ico051 = getIconImage(getURI(from+"icons/051_scale_gui.png"));
+        	// END KGU#287 2017-01-11
             ico052 = getIconImage(getURI(from+"icons/052_update.png"));
 
             ico055 = getIconImage(getURI(from+"icons/055_jumpafter.png"));
@@ -388,23 +400,42 @@ public class IconLoader {
         }
         // END KGU 2016-09-06
 
-        private static ImageIcon scale(ImageIcon src)
+        /**
+         * Returns an ImageIcon version of src, which is magnified by length factor this.scaleFactor
+         * @param src - the source icon
+         * @return the magnified (or diminished) icon
+         */
+        private static final ImageIcon scale(ImageIcon src)
         {
             //System.out.println(scaleFactor);
             if(scaleFactor>1)
             {
                 int w = (int)(scaleFactor*src.getIconWidth());
                 int h = (int)(scaleFactor*src.getIconHeight());
-                int type = BufferedImage.TYPE_INT_ARGB;
-                BufferedImage dst = new BufferedImage(w, h, type);
-                Graphics2D g2 = dst.createGraphics();
-                g2.drawImage(src.getImage(), 0, 0, w, h, null);
-                g2.dispose();
-                return new ImageIcon(dst);
+                return scaleTo(src, w, h);
             }
             else return src;
         }
 
+
+        /**
+         * Returns an ImageIcon version of src, which is magnified (or diminished to the
+         * given width and height
+         * @param src - the source icon
+         * @param width - the target icon width
+         * @param height - the target icon height
+         * @return the magnified (or diminished) icon
+         */
+        public static final ImageIcon scaleTo(ImageIcon src, int width, int height)
+        {
+            //System.out.println(scaleFactor);
+        	int type = BufferedImage.TYPE_INT_ARGB;
+        	BufferedImage dst = new BufferedImage(width, height, type);
+        	Graphics2D g2 = dst.createGraphics();
+        	g2.drawImage(src.getImage(), 0, 0, width, height, null);
+        	g2.dispose();
+        	return new ImageIcon(dst);
+        }
 
 	public static java.net.URL getURI(String _filename)
 	{

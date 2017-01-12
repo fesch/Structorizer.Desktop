@@ -178,12 +178,10 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.26";
+	public static String E_VERSION = "3.26-01";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
-        //"\n"+
-	//"Having also put his fingers into the code\n"+
 	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"\n"+
 	"Export classes written and maintained by\n"+
@@ -311,6 +309,9 @@ public abstract class Element {
     public static boolean E_AUTO_SAVE_ON_CLOSE = false;
     public static boolean E_MAKE_BACKUPS = true;
     // END KGU#309 20161-12-15
+    // START KGU#287 2017-01-11: Issue #81 (workaround)
+    public static double E_NEXT_SCALE_FACTOR;
+    // END KGU#287 2017-01-15
 
 	// some colors
 	public static Color color0 = Color.decode("0xFFFFFF");

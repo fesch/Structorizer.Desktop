@@ -71,6 +71,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.12.14      Enh. #305: New menu entry to enable/disable Arranger index
  *                                      KGU#310: New Debug menu
  *      Kay Gürtzig     2016.12.17      Enh. #267: New Analyser error15_3
+ *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser error21
  *
  ******************************************************************************************************
  *
@@ -254,6 +255,9 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...",IconLoader.getLocaleIconImage("empty"));
 	// END KGU#232 2016-08-03/2016-09-06
 	protected final JMenu menuPreferencesLookAndFeel = new JMenu("Look & Feel");
+	// START KGU#287 2017-01-11: Issue #81/#330
+	protected final JMenuItem menuPreferencesScalePreset = new JMenuItem("GUI Scaling ...", IconLoader.ico051);
+	// END KGU#287 2017-01-11
 	protected final JMenu menuPreferencesSave = new JMenu("All preferences ...");
 	protected final JMenuItem menuPreferencesSaveAll = new JMenuItem("Save");
 	protected final JMenuItem menuPreferencesSaveLoad = new JMenuItem("Load from file ...");
@@ -346,6 +350,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#239 2016-08-12
 	// START KGU#253 2016-09-21: Enh. #249 - New check for subroutine syntax.
 	public static final LangTextHolder error20 = new LangTextHolder("A subroutine header must have a (possibly empty) parameter list within parentheses.");
+	// END KGU#253 2016-09-21
+	// START KGU#327 2017-01-07: Enh. #329 - New check for hardly distinguishable variable names.
+	public static final LangTextHolder error21 = new LangTextHolder("Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0.");
 	// END KGU#253 2016-09-21
 
 	// START KGU#218 2016-07-28: Issue #206 - enhanced localization
@@ -767,6 +774,7 @@ public class Menu extends LangMenuBar implements NSDController
 //		// END KGU#143 2016-01-21
         // END KGU#310 2016-12-14
         
+
 		menuDiagram.add(menuDiagramType);
 
 		menuDiagramType.add(menuDiagramTypeProgram);
@@ -893,6 +901,11 @@ public class Menu extends LangMenuBar implements NSDController
 				mi.setSelected(true);
 			}
 		}
+
+		// START KGU#287 2017-01-11: Issue #81/#330
+		menuPreferences.add(menuPreferencesScalePreset);
+		menuPreferencesScalePreset.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { new GUIScaleChooser().setVisible(true); } } );
+		// END KGU#287 2017-01-11
 
 		menuPreferences.addSeparator();
 
@@ -1032,8 +1045,15 @@ public class Menu extends LangMenuBar implements NSDController
 		menuHelpUpdate.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {diagram.updateNSD(); } } );
 		menuHelpUpdate.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 
-		// Attempt to find out what provokes the NullPointerExceptions on start
-		//System.out.println("**** " + this + ".create() ready!");
+        // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
+        GUIScaler.rescaleComponents(this);
+//        if (this.getFrame() != null) {
+//        	SwingUtilities.updateComponentTreeUI(this.getFrame());
+//        }
+        // END KGU#287 2017-01-09
+
+        // Attempt to find out what provokes the NullPointerExceptions on start
+		System.out.println("**** " + this + ".create() ready!");
 	}
 
 	@Override
@@ -1286,15 +1306,21 @@ public class Menu extends LangMenuBar implements NSDController
 			menuPreferencesLanguageFromFile.setSelected(locName.equals("external"));
 
 			// Recent file
+			// START KGU#287 2017-01-11: Issue #81/#330 Assimilate the dynamic menu items in font
+			Font menuItemFont = UIManager.getFont("MenuItem.font");
+			// END KGU#287 2017-01-11
 			menuFileOpenRecent.removeAll();
 			for(int j = 0; j < diagram.recentFiles.size(); ++j)
 			{
-				JMenuItem mi = new JMenuItem((String) diagram.recentFiles.get(j),IconLoader.ico074);
 				final String nextFile = (String) diagram.recentFiles.get(j);
+				JMenuItem mi = new JMenuItem(nextFile, IconLoader.ico074);
 				// START KGU#316 2016-12-28: Enh. #290/#318
 				//mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNSD(nextFile); doButtons(); } } );
 				mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNsdOrArr(nextFile); doButtons(); } } );
 				// END KGU#316 2016-12-28
+				// START KGU#287 2017-01-11: Issue #81/#330 Assimilate the dynamic menu items in font
+				if (menuItemFont != null) mi.setFont(menuItemFont);
+				// END KGU#287 2017-01-11
 				menuFileOpenRecent.add(mi);
 			}
 

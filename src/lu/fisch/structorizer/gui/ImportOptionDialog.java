@@ -30,10 +30,12 @@ package lu.fisch.structorizer.gui;
  *
  *      Revision List
  *
- *      Author          Date            Description
- *      ------          ----            -----------
- *      kay             2016.09.25      First Issue
- *      Kay Gürtzig     2016.11.11      Issue #81: DPI-awareness workaround for checkboxes
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      kay             2016.09.25  First Issue
+ *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes
+ *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
+ *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): scaling stuff outsourced to class GUIScaler
  *
  ******************************************************************************************************
  *
@@ -53,7 +55,6 @@ import java.awt.event.ActionListener;
 import java.nio.charset.Charset;
 import java.util.Set;
 
-import javax.swing.ImageIcon;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
@@ -107,11 +108,6 @@ public class ImportOptionDialog extends LangDialog {
 
         setTitle("Import options ...");
 
-        // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaroundfor checkboxes)
-        ImageIcon unselectedBox = scaleToggleIcon(chkRefactorOnLoading, false);
-        ImageIcon selectedBox = scaleToggleIcon(chkRefactorOnLoading, true);
-        // END KGU#287 2016-11-11
-
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(pnlTop);
         pnlTop.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -138,18 +134,10 @@ public class ImportOptionDialog extends LangDialog {
         		charsetListChanged((String)cbCharset.getSelectedItem());
         	}
         });
-        // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
-        chkCharsetAll.setIcon(unselectedBox);
-        chkCharsetAll.setSelectedIcon(selectedBox);
-        // END KGU#287 2016-11-11
 
         chkRefactorOnLoading.setText("Replace keywords on loading a diagram (refactoring).");
         chkRefactorOnLoading.setToolTipText("Select this option if all configurable keywords in the daiagram are to be adapted to the current parser preferences.");
         chkRefactorOnLoading.setAlignmentX(LEFT_ALIGNMENT);
-        // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
-        chkRefactorOnLoading.setIcon(unselectedBox);
-        chkRefactorOnLoading.setSelectedIcon(selectedBox);
-        // END KGU#287 2016-11-11
 
         //chkOfferRefactoringIni.setText("Offer refactoring on loading preferences from file.");
         //chkOfferRefactoringIni.setToolTipText("Select this option if you want to be asked whether to refactor diagrams whenever you load preferences from file.");
@@ -203,6 +191,10 @@ public class ImportOptionDialog extends LangDialog {
         content.add(pnlTop, BorderLayout.NORTH);
         content.add(pnlWrapper, BorderLayout.CENTER);
         content.add(pnlButtons, BorderLayout.SOUTH);
+        
+        // START KGU#287 2017-01-09: Issues #81, #330
+        GUIScaler.rescaleComponents(this);
+        // END KGU#287 2017-01-09
 
         pack();
         

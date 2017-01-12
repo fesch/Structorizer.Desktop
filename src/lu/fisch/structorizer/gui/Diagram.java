@@ -108,6 +108,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.12.12      Enh, #305: Infrastructure for Arranger root list
  *      Kay Gürtzig     2016.12.28      Enh. #318: Backsaving of unzipped diagrams to arrz file
  *      Kay Gürtzig     2017.01.04      Bugfix #321: Signatures of saveNSD(), doSaveNSD(), saveAsNSD() and zipToArrz() enhanced
+ *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling of FileChooser for Nimbus L&F solved
  *
  ******************************************************************************************************
  *
@@ -1200,6 +1201,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// open an existing file
 		// create dialog
 		JFileChooser dlgOpen = new JFileChooser();
+		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
+		GUIScaler.rescaleComponents(dlgOpen);
+		// END KGU#287 2017-01-09
 		dlgOpen.setDialogTitle(Menu.msgTitleOpen.getText());
 		// set directory
 		if(root.getFile()!=null)
@@ -1349,6 +1353,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#320 2017-01-04
 	{
 		JFileChooser dlgSave = new JFileChooser();
+		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
+		GUIScaler.rescaleComponents(dlgSave);
+		// END KGU#287 2017-01-09
 		dlgSave.setDialogTitle(Menu.msgTitleSaveAs.getText());
 		// set directory
 		if(root.getFile()!=null)
@@ -3040,6 +3047,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as Multi-PNG ...");
+		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
+		GUIScaler.rescaleComponents(dlgSave);
+		// END KGU#287 2017-01-09
 		// set directory
 		if (lastExportDir!=null)
 		{
@@ -3208,6 +3218,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as PNG ...");
+		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
+		GUIScaler.rescaleComponents(dlgSave);
+		// END KGU#287 2017-01-09
 		// set directory
 		if (lastExportDir!=null)
 		{
@@ -3306,6 +3319,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as EMF ...");
+		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
+		GUIScaler.rescaleComponents(dlgSave);
+		// END KGU#287 2017-01-09
 		// set directory
 		if (lastExportDir!=null)
 		{
@@ -3404,6 +3420,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#41 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as SVG ...");
+		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
+		GUIScaler.rescaleComponents(dlgSave);
+		// END KGU#287 2017-01-09
 		// set directory
 		if (lastExportDir!=null)
 		{
@@ -3523,6 +3542,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as SWF ...");
+		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
+		GUIScaler.rescaleComponents(dlgSave);
+		// END KGU#287 2017-01-09
 		// set directory
 		if (lastExportDir!=null)
 		{
@@ -3621,6 +3643,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU 2015-10-11
 
 		JFileChooser dlgSave = new JFileChooser("Export diagram as PDF ...");
+		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
+		GUIScaler.rescaleComponents(dlgSave);
+		// END KGU#287 2017-01-09
 		// set directory
 		if (lastExportDir!=null)
 		{
@@ -3718,6 +3743,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		String filename = "";
 
 		JFileChooser dlgOpen = new JFileChooser();
+		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
+		GUIScaler.rescaleComponents(dlgOpen);
+		// END KGU#287 2017-01-09
 		dlgOpen.setDialogTitle(Menu.msgTitleImport.getText().replace("%", "Pascal"));
 		// set directory
 		if(root.getFile()!=null)

@@ -92,6 +92,8 @@
  *      Kay Gürtzig         2016.12.27  Enh. #314: Control messages for the file API
  *      Kay Gürtzig         2016.12.29  Enh. #315: New Surface messages for diagram conflicts
  *      Kay Gürtzig         2017.01.05  Enh. #319: Captions for the Arranger index popup menu
+ *      Kay Gürtzig         2017.01.07  Enh. #329: Messages for Analyser check 21
+ *      Kay Gürtzig         2017.01.11  Issue #81/#330: Messages for scaling Preview
  *
  ******************************************************************************************************
  *
@@ -226,7 +228,7 @@ Menu.menuPreferencesLanguageItems.ru.text=Russisch
 Menu.menuPreferencesLanguageItems.pl.text=Polnisch
 Menu.menuPreferencesLanguageFromFile.text=Aus Datei ...
 Menu.menuPreferencesLanguageFromFile.tooltip=Sie könnnen mit dem 'Übersetzer' im Dateimenü selbst Sprachdateien erstellen.
-
+Menu.menuPreferencesScalePreset.text=GUI-Skalierung ...
 Menu.menuPreferencesLookAndFeel.text=Aussehen & Bedienung
 
 Menu.menuPreferencesSave.text=Alle Einstellungen ...
@@ -327,7 +329,6 @@ Menu.error14_3.text=Variable «%» steht in möglichem Namenskonflikt mit einem 
 Menu.error15_1.text=Der Unterprogrammaufruf hat nicht die Form [ <var> <- ] <routine_name>(<arg_list>)!
 Menu.error15_2.text=Die aufgerufene Routine «%» ist z.Z. nicht verfügbar.
 Menu.error15_3.text=Mehr als eine Routine passt zu Aufruf «%».
-
 Menu.error16_1.text=Der Aussprung muss leer sein oder mit einem der Schlüsselwörter % beginnen!
 Menu.error16_2.text=Eine return-Anweisung muss (außer am Diagrammende) ein Aussprung-Element sein!
 Menu.error16_3.text=Exit-, leave- oder break-Anweisungen sind nur als Aussprung-Elemente zulässig!
@@ -339,6 +340,7 @@ Menu.error17.text=Konsistenzgefahr wegen konkurrierender Zugriffe auf Variable �
 Menu.error18.text=Variable «%1» könnte in manchen Sprachen mit Variable(n) «%2» zusammenfallen!
 Menu.error19.text=Der Variablenname «%1» kann in Sprachen wie %2 mit reservierten Wörtern kollidieren!
 Menu.error20.text=Ein Unterprogrammkopf muss mindestens die Klammern einer (evtl. leeren) Parameterliste haben.
+Menu.error21.text=Variablennamen I (großes i), l (kleines L), and O (großes o) sind voneinander bzw. von 1 oder 0 kaum unterscheidbar.
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Überprüfungs-Einstellungen
@@ -364,6 +366,7 @@ AnalyserPreferences.checkboxes.17.text=Prüfen, ob in parallelen Zweigen konkurr
 AnalyserPreferences.checkboxes.18.text=Prüfen, ob Variablen sich nur durch Groß-/Kleinschreibung unterscheiden.
 AnalyserPreferences.checkboxes.19.text=Prüfen, ob Variablennamen mit reservierten Wörtern kollidieren könnten.
 AnalyserPreferences.checkboxes.20.text=Prüfen, dass ein Unterprogramm (Kopfzeile) eine Parameterliste besitzt.
+AnalyserPreferences.checkboxes.21.text=Bei Verwendung der verwechselbaren Variablennamen «I», «l» und «O» warnen.
 AnalyserPreferences.okButton.text=OK
 
 
@@ -743,6 +746,16 @@ SaveOptionDialog.chkAutoSaveClose.text=Automatisch sichern beim Beenden?
 SaveOptionDialog.chkBackupFile.text=Beim Überschreiben Backup-Dateien erstellen?
 SaveOptionDialog.btnOk.text=OK
 SaveOptionDialog.btnOk.tooltip=Einstellungen übernehmen.
+
+-----[ GUIScaleChooser ]-----
+GUIScaleChooser.title=GUI-Skalierung
+GUIScaleChooser.txtComment.text=Dies bietet eine Voreinstellung mit Vorschau.\nEine unmittelbare Re-Skalierung de offenen Anwendung ist nicht möglich.\nDer Skalierungsfaktor wird erst beim nächsten Structorizer-Start wirksam.
+GUIScaleChooser.lblSpinner.text=Skalierungsfaktor
+GUIScaleChooser.lblTest.text=Voransicht Schriftgröße
+GUIScaleChooser.lblIcon.text=Voransicht Icon-Größe
+GUIScaleChooser.chkTest.text=Voransicht Optionselement
+GUIScaleChooser.btnOK.text=OK
+GUIScaleChooser.btnOK.tooltip=Einstellung für den nächsten Start übernehmen.
 
 -----> Arranger
 Surface.msgFileLoadError.text=Dateiladefehler:

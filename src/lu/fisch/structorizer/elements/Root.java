@@ -89,6 +89,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.12.16      Bugfix #305: Comparator SIGNATURE_ORDER corrected
  *      Kay Gürtzig     2016.12.28      Enh. #318: Support for re-saving to an arrz file (2017.01.03: getFile() fixed)
  *      Kay Gürtzig     2016.12.29      Enh. #315: New comparison method distinguishing different equality levels
+ *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser check 21 (analyse_18_19 renamed to analyse_18_19_21)
  *
  ******************************************************************************************************
  *
@@ -1868,11 +1869,12 @@ public class Root extends Element {
     		// CHECK #13: Competetive return mechanisms
     		analyse_5_7_13(ele, _errors, myVars, _resultFlags);
     		
-    		// START KGU#239 2016-08-12: Enh. #23?
+    		// START KGU#239/KGU#327 2016-08-12: Enh. #231 / # 329
     		// CHECK #18: Variable names only differing in case
     		// CHECK #19: Possible name collisions with reserved words
-    		analyse_18_19(ele, _errors, _vars, _uncertainVars, myVars);
-    		// END KGU#239 2016-08-12
+    		// CHECK #21: Mistakable variable names I, l, O
+    		analyse_18_19_21(ele, _errors, _vars, _uncertainVars, myVars);
+    		// END KGU#239/KGU#327 2016-08-12
 
     		// CHECK #10: wrong multi-line instruction
     		// CHECK #11: wrong assignment (comparison operator in assignment)
@@ -2684,13 +2686,14 @@ public class Root extends Element {
 	/**
 	 * CHECK #18: Variable names only differing in case
 	 * CHECK #19: Possible name collisions with reserved words
+	 * CHECK #21: Discourage use of variable names 'I', 'l', and 'O'
 	 * @param _ele - the element to be checked
 	 * @param _errors - the global error list
 	 * @param _vars - variables definitely introduced so far
 	 * @param _uncertainVars - variables detected but not certainly initialized so far
 	 * @param _myVars - the variables introduced by _ele
 	 */
-	private void analyse_18_19(Element _ele, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, StringList _myVars)
+	private void analyse_18_19_21(Element _ele, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, StringList _myVars)
 	{
 		StringList[] varSets = {_vars, _uncertainVars, _myVars};
 		for (int i = 0; i < _myVars.count(); i++)
@@ -2714,6 +2717,12 @@ public class Root extends Element {
 				// warning "Variable name «%1» may collide with variable(s) «%2» in some case-indifferent languages!"
 				addError(_errors, new DetectedError(errorMsg(Menu.error18, substitutions), _ele), 18);			
 			}
+			// START KGU#327 2017-01-07: Enh. #329 discourage use of 'I', 'l', and 'O'
+			if (varName.equals("I") || varName.equals("l") || varName.equals("O")) {
+				// warning "Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0."
+				addError(_errors, new DetectedError(errorMsg(Menu.error21, ""), _ele), 21);
+			}
+			// END KGU#327 2017-01-07
 		}
 		
 		if (check(19))	// This check will cost some time
@@ -3069,7 +3078,7 @@ public class Root extends Element {
             // END KGU#253 2016-09-22
 
             // START KGU#239 2016-08-12: Enh. #231: Test for name collisions
-            analyse_18_19(this, errors, uncertainVars, uncertainVars, vars);
+            analyse_18_19_21(this, errors, uncertainVars, uncertainVars, vars);
             // END KGU#239 2016-08-12
 
             // CHECK: two checks in one loop: (#12 - new!) & (#7)
