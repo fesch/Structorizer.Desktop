@@ -318,6 +318,11 @@ public class PrintPreview extends LangDialog implements Runnable{
 			e.printStackTrace();
 			System.err.println("Printing error: "+e.toString());
 		}
+		
+		// START KGU#287 2017-01-09: Issue #81 / bugfix #330: GUI scling
+		GUIScaler.rescaleComponents(this);
+		// END KGU#287 2017-01-09
+		
 		m_preview.addKeyListener(keyListener);
 
 		scrPreview.setViewportView(m_preview);

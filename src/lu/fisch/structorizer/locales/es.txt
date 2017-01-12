@@ -94,6 +94,7 @@
  *      Kay Gürtzig     2016.12.29  Enh. #315: New Surface messages for diagram conflicts
  *      Kay Gürtzig     2017.01.05  Enh. #319: Captions for the Arranger index popup menu
  *      Kay Gürtzig     2017.01.07  Enh. #329: Messages for Analyser check 21
+ *      Kay Gürtzig     2017.01.11  Issue #81/#330: Messages for scaling Preview
  *
  ******************************************************************************************************
  *
@@ -228,7 +229,7 @@ Menu.menuPreferencesLanguageItems.ru.text=Ruso
 Menu.menuPreferencesLanguageItems.pl.text=Polaco
 Menu.menuPreferencesLanguageFromFile.text=De un archivo ...
 Menu.menuPreferencesLanguageFromFile.tooltip=Archivos de traducción se pueden crear con el 'Traductor' en el menú 'Archivo'.
-
+Menu.menuPreferencesScalePreset.text=Scalar interfaz gráfica ...
 Menu.menuPreferencesLookAndFeel.text=Aspecto & Ambiente
 
 Menu.menuPreferencesSave.text=Todas las preferencias ...
@@ -744,8 +745,18 @@ SaveOptionDialog.pnlBackup.border=Copia de seguridad
 SaveOptionDialog.chkAutoSaveExecute.text=Guardar automáticamente al ejecutar
 SaveOptionDialog.chkAutoSaveClose.text=Guardar automáticamente al salir
 SaveOptionDialog.chkBackupFile.text=Hacer un backup al guardar de nuevo
-SaveOptionDialog.btnOk.text=OK
-SaveOptionDialog.btnOk.tooltip=Accept these settings.
+SaveOptionDialog.btnOk.text=Aceptar
+SaveOptionDialog.btnOk.tooltip=Aceptar los cambios.
+
+-----[ GUIScaleChooser ]-----
+GUIScaleChooser.title=Calibración de interfaz gráfica
+GUIScaleChooser.txtComment.text=Solo ofrece preajuste con previsión. No es posible re-scalar la interfaz en modo de función.\nPara poner el factor de magificación on operación hay que rearrancar Structorizer.
+GUIScaleChooser.lblSpinner.text=Factor de magnificación
+GUIScaleChooser.lblTest.text=Previsión de texto
+GUIScaleChooser.lblIcon.text=Previsión de icono
+GUIScaleChooser.chkTest.text=Previsión de elemento opción
+GUIScaleChooser.btnOK.text=Aceptar
+GUIScaleChooser.btnOk.tooltip=Aceptar los cambios.
 
 -----> Arranger
 Surface.msgFileLoadError.text=Error abriendo archivo:

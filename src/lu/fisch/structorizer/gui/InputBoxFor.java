@@ -47,6 +47,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.21  Issue #284: Opportunity to scale up/down the TextField fonts by Ctrl-Numpad+/-
  *      Kay Gürtzig     2016.11.22  stepFor label mended; issue #284: Font resizing buttons added
  *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
+ *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): Scaling stuff outsourced to class GUIScaler
  *
  ******************************************************************************************************
  *
@@ -76,7 +77,6 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 
 import javax.swing.ButtonGroup;
-import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -176,16 +176,9 @@ public class InputBoxFor extends InputBox implements ItemListener {
      */
 	protected int createPanelTop(JPanel _panel, GridBagLayout _gb, GridBagConstraints _gbc)
 	{
-        // START KGU#287 2016-11-02/09: Issue #81 (DPI awaeness workaround)
-		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
-		if (scaleFactor < 1) scaleFactor = 1.0;		
-        ImageIcon unselectedBox = null;
-        ImageIcon selectedBox = null;
-        // END KGU#287 2016-11-02/09
-		// START KGU#287 2017-01-07: Bugfix #330
-		boolean isNimbus = UIManager.getLookAndFeel().getName().equals("Nimbus");
-		// END KGU#287 2017-01-07
-
+		// START KGU#287 2016-11-11: Issue #81 (DPI awareness workaround
+		double scaleFactor = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
+		// END KGU#287 2016-11-11
 		lblVarDesignation = new JLabel("Counter variable");
 		lblFirstValueLabel = new JLabel("Start value");
 		lblEndVal = new JLabel("End value");
@@ -224,14 +217,6 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		txtEndVal.addKeyListener(this);
 		txtIncr.addKeyListener(this);
 		chkTextInput.setSelected(false); 
-        // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
-		if (scaleFactor > 1 && !isNimbus) {
-			unselectedBox = scaleToggleIcon(chkTextInput, false);
-			selectedBox = scaleToggleIcon(chkTextInput, true);
-			chkTextInput.setIcon(unselectedBox);
-			chkTextInput.setSelectedIcon(selectedBox);
-		}
-        // END KGU#287 2016-11-11
 		chkTextInput.addItemListener(this);
 		txtText.addKeyListener(this);
 		
@@ -262,22 +247,6 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		radioGroup.add(rbTraversing);
 		rbCounting.setSelected(!isTraversingLoop);
 		rbTraversing.setSelected(isTraversingLoop);
-        // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
-		if (scaleFactor > 1) {
-			if (isTraversingLoop) {
-				unselectedBox = scaleToggleIcon(rbCounting, false);
-				selectedBox = scaleToggleIcon(rbTraversing, true);
-			}
-			else {
-				unselectedBox = scaleToggleIcon(rbTraversing, false);
-				selectedBox = scaleToggleIcon(rbCounting, true);			
-			}
-			rbCounting.setIcon(unselectedBox);
-			rbCounting.setSelectedIcon(selectedBox);
-			rbTraversing.setIcon(unselectedBox);
-			rbTraversing.setSelectedIcon(selectedBox);
-		}
-		// END KGU#287 2016-11-11
 		rbCounting.addActionListener(this);
 		rbTraversing.addActionListener(this);
 		// END KGU#254 2016-09-24

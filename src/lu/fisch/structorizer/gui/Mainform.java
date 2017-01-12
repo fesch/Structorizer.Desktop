@@ -79,7 +79,6 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************///
 
 import java.io.*;
-import java.util.Set;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -108,6 +107,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	// The version for which information about update retrieval was last suppressed
 	private String suppressUpdateHint = "";
 	// END KGU#300 2016-12-02
+	// START KGU#287 2017-01-11: Issue #81/#330
+	private String preselectedScaleFactor = null;
+	// END KGU#287 2017-01-11
 	
 	// START KGU#49/KGU#66 2015-11-14: This decides whether to exit or just to dispose when being closed
 	private boolean isStandalone = true;	// The default is to exit...
@@ -218,6 +220,11 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                             // END KGU#157
                             if (diagram.saveNSD(!Element.E_AUTO_SAVE_ON_CLOSE))
                             {
+                                    // START KGU#287 2017-01-11: Issue #81/#330
+                                    if (isStandalone) {
+                                            preselectedScaleFactor = Double.toString(Element.E_NEXT_SCALE_FACTOR);
+                                    }
+                                    // END KGU#287 2017-01-11
                                     saveToINI();
                                     // START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
                                     if (isStandalone) {
@@ -292,17 +299,17 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			ini.load();
 			ini.load();	// FIXME: Why is it done twice?
 
-			// START KGU#287 2016-11-09: Issue #81 - don't allow scaling factors < 1
-			//double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1")).intValue();
-			//IconLoader.setScaleFactor(scaleFactor);
-			Double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
-			if (scaleFactor < 1) scaleFactor = 1.0;
-			IconLoader.setScaleFactor(scaleFactor.intValue());
-			// END KGU#287 2016-11-09
+			double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
+			// START KGU#287 2017-01-09 
+			//if (scaleFactor < 1) scaleFactor = 1.0;
+			//IconLoader.setScaleFactor(scaleFactor.intValue());
+			IconLoader.setScaleFactor(scaleFactor);	// The IconLoader doesn't scale down anyway
+			Element.E_NEXT_SCALE_FACTOR = scaleFactor;
+			// END KGU#287 2017-01-09
 			
 			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
-			int defaultWidth = 750 * scaleFactor.intValue();
-			int defaultHeight = 550 * scaleFactor.intValue();
+			int defaultWidth = new Double(750 * scaleFactor).intValue();
+			int defaultHeight = new Double (550 * scaleFactor).intValue();
 			// END KGU#287 2016-11-01
 			// position
 			int top = Integer.valueOf(ini.getProperty("Top","0"));
@@ -347,7 +354,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			laf=ini.getProperty("laf","Mac OS X");
 			setLookAndFeel(laf);
 			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
-			scaleDefaultFontSize(scaleFactor);
+			GUIScaler.scaleDefaultFontSize(scaleFactor);
 			// END KGU#287 2016-11-01
 			
 			// size
@@ -513,6 +520,12 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				ini.setProperty("laf", laf);
 			}
 			
+			// START KGU#287 2017-01-11: Issue #81/#330
+			if (this.preselectedScaleFactor != null) {
+				ini.setProperty("scaleFactor", this.preselectedScaleFactor);
+			}
+			// END KGU#287 2017-01-11
+			
 			// START KGU#300 2016-12-02: Enh. #300
 			// Update hint suppression
 			ini.setProperty("suppressUpdateHint", this.suppressUpdateHint);
@@ -539,36 +552,6 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			System.out.println(e.getMessage());
 		}
 	}
-	
-	// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
-	private static void scaleDefaultFontSize(double factor) {
-
-		if (factor <= 1) return;
-		
-		Set<Object> keySet = UIManager.getLookAndFeelDefaults().keySet();
-		Object[] keys = keySet.toArray(new Object[keySet.size()]);
-
-		for (Object key : keys) {
-
-			if (key != null && key.toString().toLowerCase().contains("font")) {
-
-				Font font = UIManager.getDefaults().getFont(key);
-				if (font != null) {
-					int size = font.getSize();
-					//System.out.println(key + ": " + size);
-					// Vague attempt to prevent the font size being exponentially enlarged by repeated calls...
-					if (size < 18 && factor > 1) {
-						font = font.deriveFont((float)(size * factor));
-						UIManager.put(key, font);
-					}
-				}
-
-			}
-
-		}
-
-	}
-	// END KGU#287 2016-11-01
 	
 	/******************************
 	 * This method dispatches the
@@ -611,6 +594,12 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 					try
 					{
 						UIManager.setLookAndFeel(plafs[j].getClassName());
+//						// START KGU#287 2017-01-09: Bugfix #330 on switching back to "Nimbus", several font sizes get lost - DOESN'T WORK
+//						if (_laf.equalsIgnoreCase("nimbus")) {
+//							double scaleFactor = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
+//							GUIScaler.scaleDefaultFontSize(scaleFactor);
+//						}
+//						// END KGU#287 2017-01-09
 						SwingUtilities.updateComponentTreeUI(this);
 						// START KGU#211 2016-07-25: Issue #202 - Propagation to Arranger
 						if (Arranger.hasInstance())
@@ -788,4 +777,5 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 	}
 	// END KGU#305 2016-12-16
 	
+
 }

@@ -255,6 +255,9 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...",IconLoader.getLocaleIconImage("empty"));
 	// END KGU#232 2016-08-03/2016-09-06
 	protected final JMenu menuPreferencesLookAndFeel = new JMenu("Look & Feel");
+	// START KGU#287 2017-01-11: Issue #81/#330
+	protected final JMenuItem menuPreferencesScalePreset = new JMenuItem("GUI Scaling ...", IconLoader.ico051);
+	// END KGU#287 2017-01-11
 	protected final JMenu menuPreferencesSave = new JMenu("All preferences ...");
 	protected final JMenuItem menuPreferencesSaveAll = new JMenuItem("Save");
 	protected final JMenuItem menuPreferencesSaveLoad = new JMenuItem("Load from file ...");
@@ -899,6 +902,11 @@ public class Menu extends LangMenuBar implements NSDController
 			}
 		}
 
+		// START KGU#287 2017-01-11: Issue #81/#330
+		menuPreferences.add(menuPreferencesScalePreset);
+		menuPreferencesScalePreset.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { new GUIScaleChooser().setVisible(true); } } );
+		// END KGU#287 2017-01-11
+
 		menuPreferences.addSeparator();
 
 		menuPreferences.add(menuPreferencesSave);
@@ -1037,8 +1045,15 @@ public class Menu extends LangMenuBar implements NSDController
 		menuHelpUpdate.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {diagram.updateNSD(); } } );
 		menuHelpUpdate.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 
-		// Attempt to find out what provokes the NullPointerExceptions on start
-		//System.out.println("**** " + this + ".create() ready!");
+        // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
+        GUIScaler.rescaleComponents(this);
+//        if (this.getFrame() != null) {
+//        	SwingUtilities.updateComponentTreeUI(this.getFrame());
+//        }
+        // END KGU#287 2017-01-09
+
+        // Attempt to find out what provokes the NullPointerExceptions on start
+		System.out.println("**** " + this + ".create() ready!");
 	}
 
 	@Override
@@ -1291,15 +1306,21 @@ public class Menu extends LangMenuBar implements NSDController
 			menuPreferencesLanguageFromFile.setSelected(locName.equals("external"));
 
 			// Recent file
+			// START KGU#287 2017-01-11: Issue #81/#330 Assimilate the dynamic menu items in font
+			Font menuItemFont = UIManager.getFont("MenuItem.font");
+			// END KGU#287 2017-01-11
 			menuFileOpenRecent.removeAll();
 			for(int j = 0; j < diagram.recentFiles.size(); ++j)
 			{
-				JMenuItem mi = new JMenuItem((String) diagram.recentFiles.get(j),IconLoader.ico074);
 				final String nextFile = (String) diagram.recentFiles.get(j);
+				JMenuItem mi = new JMenuItem(nextFile, IconLoader.ico074);
 				// START KGU#316 2016-12-28: Enh. #290/#318
 				//mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNSD(nextFile); doButtons(); } } );
 				mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNsdOrArr(nextFile); doButtons(); } } );
 				// END KGU#316 2016-12-28
+				// START KGU#287 2017-01-11: Issue #81/#330 Assimilate the dynamic menu items in font
+				if (menuItemFont != null) mi.setFont(menuItemFont);
+				// END KGU#287 2017-01-11
 				menuFileOpenRecent.add(mi);
 			}
 

@@ -36,6 +36,7 @@ package lu.fisch.structorizer.gui;
  *      Bob Fisch       2007.12.29      First Issue
  *      Kay Gürtzig     2016.11.02      Issue #81: Scaling as workaround for lacking DPI awareness
  *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded.
+ *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling done by GUIScaler
  *
  ******************************************************************************************************
  *
@@ -227,6 +228,11 @@ public class About extends LangDialog implements ActionListener, KeyListener
 			dialogPane.add(buttonBar, BorderLayout.SOUTH);
 		}
 		contentPane.add(dialogPane, BorderLayout.CENTER);
+
+        // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
+        GUIScaler.rescaleComponents(this);
+        // END KGU#287 2017-01-09
+        		
 		//pack();
 		setLocationRelativeTo(getOwner());
 		// JFormDesigner - End of component initialization  //GEN-END:initComponents
@@ -292,7 +298,7 @@ public class About extends LangDialog implements ActionListener, KeyListener
 	// listen to actions
 	public void actionPerformed(ActionEvent event)
 	{
-				setVisible(false);
+		setVisible(false);
 	}
 	
 	public void keyTyped(KeyEvent kevt) 

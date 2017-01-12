@@ -33,6 +33,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.31      First Issue
+ *      Kay Gürtzig     2017.01.11      Issue #81/#330. Scaling support
  *
  ******************************************************************************************************
  *
@@ -299,6 +300,11 @@ public class Colors extends LangDialog {
 			dialogPane.add(buttonBar, BorderLayout.SOUTH);
 		}
 		contentPane.add(dialogPane, BorderLayout.CENTER);
+		
+        // START KGU#287 2017-01-11: Issues #81/#330 GUI scaling
+        GUIScaler.rescaleComponents(this);
+        // END KGU#287 2017-01-11
+		
 		pack();
 		setLocationRelativeTo(getOwner());
 		// JFormDesigner - End of component initialization  //GEN-END:initComponents

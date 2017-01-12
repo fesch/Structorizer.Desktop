@@ -67,6 +67,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016.12.29      Enh. #315: More meticulous detection of diagram conflicts
  *      Kay Gürtzig     2017.01.04      Bugfix #321: Make sure Mainforms save the actually iterated Roots
  *      Kay Gürtzig     2017.01.05      Enh. #319: Additional notification on test coverage status change
+ *      Kay Gürtzig     2017.01.11      Fix KGU#328 in method replaced()
  *
  ******************************************************************************************************
  *
@@ -1760,13 +1761,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	//Diagram owner = findDiagram(oldRoot);
     	Diagram owner = findDiagram(oldRoot, 1);	// Check for identity
     	// END KGU#119/KGU#312 2016-01-02/2016-12-29
-    	if (owner != null) {
-    		oldRoot.removeUpdater(this);
+    	// START KGU#328 2017-01-11: This caused Comodification errorExceptions, oldRoot will wipe its updaters anyway
+    	//if (owner != null) {
+    	//	oldRoot.removeUpdater(this);
+    	//}
+    	// END KGU#328 2017-01-11
     	// START KGU#88 2015-11-24: Protect the Root if diagram is pinned
-    	}
+    	//if (owner != null) {
     	if (owner != null && !owner.isPinned)
+       	// END KGU#88 2015-11-24
     	{
-    	// END KGU#88 2015-11-24
     		if (owner.mainform != null) {
     			owner.root = owner.mainform.getRoot();
     			owner.root.addUpdater(this);

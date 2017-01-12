@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.gui;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -37,13 +36,13 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.01      Issue #81 (CPI awareness): Proper scaling of all explicit sizes
  *      Kay Gürtzig     2016.11.11      Issue #81: DPI-awareness workaround for checkboxes/radio buttons
  *      Kay Gürtzig     2017.01.07      Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
+ *      Kay Gürtzig     2017.01.09      Issue #81 / bugfix #330: GUI scaling stuff outsourced to class GUIScaler
  *
  ******************************************************************************************************
  *
  *      Comment:		I used JFormDesigner to design this window graphically.
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
@@ -163,7 +162,7 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
 			//dialogPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 			//dialogPane.setPreferredSize(new Dimension(429, 320));
-			double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1")).intValue();
+			double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
 			int border = (int)(12 * scaleFactor);
 			dialogPane.setBorder(new EmptyBorder(border, border, border, border));
 			dialogPane.setPreferredSize(new Dimension((int)(429*scaleFactor), (int)(320*scaleFactor)));
@@ -245,19 +244,6 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 							pnlContent.add(lblAltContent, BorderLayout.NORTH);
 							pnlContent.add(edtAlt, BorderLayout.CENTER);
 							altPadRight.setText("Enlarge FALSE");
-							// START KGU#287 2017-01-07: Bugfix #330
-							boolean isNimbus = UIManager.getLookAndFeel().getName().equals("Nimbus");
-							if (scaleFactor > 1 && !isNimbus) {
-							// END KGU#287 2017-01-07
-								// START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaroundfor checkboxes)
-								ImageIcon unselectedBox = scaleToggleIcon(altPadRight, false);
-								ImageIcon selectedBox = scaleToggleIcon(altPadRight, true);
-								altPadRight.setIcon(unselectedBox);
-								altPadRight.setSelectedIcon(selectedBox);
-								// END KGU#287 2016-11-11
-							// START KGU#287 2017-01-07: Bugfix #330
-							}
-							// END KGU#287 2017-01-07
 							pnlContent.add(altPadRight, BorderLayout.SOUTH);
 						}
 						pnlAlt.add(pnlContent, BorderLayout.CENTER);
@@ -347,6 +333,11 @@ public class Preferences extends LangDialog implements ActionListener, KeyListen
 			dialogPane.add(buttonBar, BorderLayout.SOUTH);
 		}
 		contentPane.add(dialogPane, BorderLayout.CENTER);
+		
+		// START KGU#287 2017-01-09: Issue #81 / bugfix #330: GUI scaling
+		GUIScaler.rescaleComponents(this);
+		// END KGU#287 2017-01-09
+		
 		pack();
 		setLocationRelativeTo(getOwner());
 		// JFormDesigner - End of component initialization  //GEN-END:initComponents

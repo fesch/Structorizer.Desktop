@@ -33,6 +33,7 @@ package lu.fisch.structorizer.gui;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2016.12.15      First Issue for enh. #310
+ *      Kay Gürtzig     2016.01.09      Issue #81 - DPI awareness workaround implemented
  *
  ******************************************************************************************************
  *
@@ -151,6 +152,10 @@ public class SaveOptionDialog extends LangDialog {
 	    content.add(pnlTop, BorderLayout.NORTH);
 	    content.add(pnlWrapper, BorderLayout.CENTER);
 	    content.add(pnlButtons, BorderLayout.SOUTH);
+	    
+	    // START KGU#287 2017-01-09: Issue #81 - DPI awareness workaround
+	    GUIScaler.rescaleComponents(this);
+	    // END KGU#287 2017-01-09
 
 	    pack();
 	    

@@ -41,6 +41,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.26   Bug #204: Constructor API modified to ensure language translation before pack()
  *      Kay Gürtzig     2016.11.11   Issue #81: DPI-awareness workaround for checkboxes
  *      Kay Gürtzig     2017.01.07   Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
+ *      Kay Gürtzig     2017.01.09   Bugfix #330 (issue #81): Rescaling stuff outsourced to class GUIScaler
  *
  ******************************************************************************************************
  *
@@ -60,11 +61,7 @@ import java.nio.charset.Charset;
 import java.util.Set;
 import java.util.Vector;
 
-import javax.swing.ImageIcon;
-import javax.swing.UIManager;
-
 import lu.fisch.structorizer.helpers.GENPlugin;
-import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
 import lu.fisch.structorizer.parsers.GENParser;
 
@@ -125,15 +122,6 @@ public class ExportOptionDialoge extends LangDialog
         chkExportSubroutines = new javax.swing.JCheckBox();
         // END KGU#178 2016-07-20
         
-        // START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround for checkboxes)
-        ImageIcon unselectedBox = scaleToggleIcon(noConversionCheckBox, false);
-        ImageIcon selectedBox = scaleToggleIcon(noConversionCheckBox, true);
-        // END KGU#287 2016-11-11
-		// START KGU#287 2017-01-07: Bugfix #330
-		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
-		boolean isNimbus = UIManager.getLookAndFeel().getName().equals("Nimbus");
-		// END KGU#287 2017-01-07
-
         setTitle("Export options ...");
 
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
@@ -164,16 +152,6 @@ public class ExportOptionDialoge extends LangDialog
         	}
         });
         // END KGU#168 2016-04-04
-		// START KGU#287 2017-01-07: Bugfix #330
-        if (scaleFactor > 1 && !isNimbus) {
-		// END KGU#287 2017-01-07
-        	// START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
-        	chkCharsetAll.setIcon(unselectedBox);
-        	chkCharsetAll.setSelectedIcon(selectedBox);
-        	// END KGU#287 2016-11-11
-		// START KGU#287 2017-01-07: Bugfix #330
-        }
-        // END KGU#287 2017-01-07
 
         // START KGU#171 2016-04-01: Enh. #144 - new: preferred code export language
         lbVoid.setText(" ");	// FIXME: Can we replace this by insets?
@@ -196,16 +174,6 @@ public class ExportOptionDialoge extends LangDialog
         noConversionCheckBox.setText("No conversion of the expression/instruction contents.");
         noConversionCheckBox.setToolTipText("Select this option if the text content of your elements already represents target language syntax.");
         // END KGU#162 2016-03-31
-		// START KGU#287 2017-01-07: Bugfix #330
-        if (scaleFactor > 1 && !isNimbus) {
-		// END KGU#287 2017-01-07
-        	// START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
-        	noConversionCheckBox.setIcon(unselectedBox);
-        	noConversionCheckBox.setSelectedIcon(selectedBox);
-        	// END KGU#287 2016-11-11
-		// START KGU#287 2017-01-07: Bugfix #330
-        }
-		// END KGU#287 2017-01-07
 
         commentsCheckBox.setText("Export instructions as comments.");
 //        commentsCheckBox.addActionListener(new ActionListener() {
@@ -213,16 +181,6 @@ public class ExportOptionDialoge extends LangDialog
 //                commentsCheckBoxActionPerformed(evt);
 //            }
 //        });
-		// START KGU#287 2017-01-07: Bugfix #330
-        if (scaleFactor > 1 && !isNimbus) {
-		// END KGU#287 2017-01-07
-        	// START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
-        	commentsCheckBox.setIcon(unselectedBox);
-        	commentsCheckBox.setSelectedIcon(selectedBox);
-        	// END KGU#287 2016-11-11
-		// START KGU#287 2017-01-07: Bugfix #330
-        }
-		// END KGU#287 2017-01-07
 
         jLabel1.setText("Please select the options you want to activate ...");
 
@@ -233,16 +191,6 @@ public class ExportOptionDialoge extends LangDialog
                 bracesCheckBoxActionPerformed(evt);
             }
         });
-		// START KGU#287 2017-01-07: Bugfix #330
-        if (scaleFactor > 1 && !isNimbus) {
-		// END KGU#287 2017-01-07
-        	// START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
-        	bracesCheckBox.setIcon(unselectedBox);
-        	bracesCheckBox.setSelectedIcon(selectedBox);
-        	// END KGU#287 2016-11-11
-		// START KGU#287 2017-01-07: Bugfix #330
-        }
-        // END KGU#287 2017-01-07
 
         lineNumbersCheckBox.setText("Generate line numbers on export to BASIC.");
         lineNumbersCheckBox.addActionListener(new ActionListener() {
@@ -250,16 +198,6 @@ public class ExportOptionDialoge extends LangDialog
                 lineNumbersCheckBoxActionPerformed(evt);
             }
         });
-		// START KGU#287 2017-01-07: Bugfix #330
-        if (scaleFactor > 1 && !isNimbus) {
-		// END KGU#287 2017-01-07
-        	// START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
-        	lineNumbersCheckBox.setIcon(unselectedBox);
-        	lineNumbersCheckBox.setSelectedIcon(selectedBox);
-        	// END KGU#287 2016-11-11
-		// START KGU#287 2017-01-07: Bugfix #330
-        }
-        // END KGU#287 2017-01-07
 
         chkExportSubroutines.setText("Involve called subroutines");
         chkExportSubroutines.addActionListener(new ActionListener() {
@@ -267,16 +205,6 @@ public class ExportOptionDialoge extends LangDialog
         		subroutinesCheckBoxActionPerformed(evt);
         	}
         });
-		// START KGU#287 2017-01-07: Bugfix #330
-        if (scaleFactor > 1 && !isNimbus) {
-		// END KGU#287 2017-01-07
-        	// START KGU#287 2016-11-11: Issue #81 (DPI-awareness workaround)
-        	chkExportSubroutines.setIcon(unselectedBox);
-        	chkExportSubroutines.setSelectedIcon(selectedBox);
-        	// END KGU#287 2016-11-11
-		// START KGU#287 2017-01-07: Bugfix #330
-        }
-		// END KGU#287 2017-01-07
         
         jButton1.setText("OK");
         jButton1.addActionListener(new ActionListener() {
@@ -387,7 +315,10 @@ public class ExportOptionDialoge extends LangDialog
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
         
-
+        // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
+        GUIScaler.rescaleComponents(this);
+        // END KGU#287 2017-01-09
+        
         pack();
     }// </editor-fold>//GEN-END:initComponents
 

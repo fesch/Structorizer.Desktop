@@ -954,8 +954,15 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		//diagram.setOpaque(true);
 		diagram.addMouseListener(new PopupListener());
 		
-		// Attempt to find out what provokes the NullPointerExceptions on start
-		//System.out.println("**** " + this + ".create() ready!");
+        // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
+        GUIScaler.rescaleComponents(this);
+//		if (this.getFrame() != null) {
+//			SwingUtilities.updateComponentTreeUI(this.getFrame());
+//		}
+        // END KGU#287 2017-01-09
+
+        // Attempt to find out what provokes the NullPointerExceptions on start
+		System.out.println("**** " + this + ".create() ready!");
 		
 		//doButtons();
 		//container.validate();

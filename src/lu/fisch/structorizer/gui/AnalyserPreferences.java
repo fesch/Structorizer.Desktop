@@ -46,6 +46,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.11      Issue #81: DPI-awareness workaround
  *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser error21 (variable names I, l, O)
  *                                      bugfix #330: Checkbox status visibility in "Nimbus" look & feel
+ *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling stuff outsourced to GUIScaler
  *
  ******************************************************************************************************
  *
@@ -53,7 +54,6 @@ package lu.fisch.structorizer.gui;
  *
  ******************************************************************************************************///
 
-import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
 
 import java.awt.*;
@@ -157,13 +157,6 @@ public class AnalyserPreferences extends LangDialog {
 	}*/
 
 	private void initComponents() {
-		// START KGU#287 2016-11-11: Issue #81
-		ImageIcon unselectedIcon = null;
-		ImageIcon selectedIcon = null;
-		// START KGU#287 2017-01-07: Bufix #330
-		Double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
-		boolean isNimbus = UIManager.getLookAndFeel().getName().equals("Nimbus");
-		// END KGU#287 2017-01-07
 		// END KGU#287 2016-11-11
 		dialogPane = new JPanel();
 		contentPanel = new JTabbedPane();
@@ -178,22 +171,6 @@ public class AnalyserPreferences extends LangDialog {
 			//checkboxes[i].setText(checkCaptions[i]);
 			checkboxes[i].setText(checkCaptions[i-1]);
 			// END KGU 2016-09-22
-			// START KGU#287 2016-11-11: Issue #81
-			// START KGU#287 2017-01-07: Bufix #330
-			if (scaleFactor > 1 && !isNimbus) {
-			// END KGU#287 2017-01-07
-				if (unselectedIcon == null) {
-					unselectedIcon = scaleToggleIcon(checkboxes[i], false);
-				}
-				if (selectedIcon == null) {
-					selectedIcon = scaleToggleIcon(checkboxes[i], true);
-				}
-				checkboxes[i].setIcon(unselectedIcon);
-				checkboxes[i].setSelectedIcon(selectedIcon);
-			// START KGU#287 2017-01-07: Bufix #330
-			}
-			// END KGU#287 2017-01-07
-			// END KGU#287 2016-11-11
 		}
 		buttonBar = new JPanel();
 		okButton = new JButton();
@@ -267,6 +244,11 @@ public class AnalyserPreferences extends LangDialog {
 			
 		}
 		contentPane.add(dialogPane, BorderLayout.CENTER);
+		
+		// START KGU#287 2017-01-09: Issues #81, #330
+		GUIScaler.rescaleComponents(this);
+		// END KGU#287 2017-01-09
+		
 		pack();
 		setLocationRelativeTo(getOwner());
 		// JFormDesigner - End of component initialization  //GEN-END:initComponents

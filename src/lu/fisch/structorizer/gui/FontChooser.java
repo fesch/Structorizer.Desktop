@@ -34,6 +34,8 @@ package lu.fisch.structorizer.gui;
  *      ------			----			-----------
  *      Bob Fisch       2007.12.31      First Issue
  *      Kay Gürtzig     2016.10.11      Minimum font size 2 dropped from the sizes array.
+ *      Kay Gürtzig     2016.11.02      Issue #81: Scaling Factor considered (DPI awareness workarond)
+ *      Kay Güertig     2016.11.09      Issue #81: Scaling factor no longer rounded, ensured to be >= 1
  *
  ******************************************************************************************************
  *
@@ -129,8 +131,8 @@ public class FontChooser extends LangDialog
 		btnOK = new JButton();
 		
 		// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
-		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1")).intValue();
-
+		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
+		if (scaleFactor < 1) scaleFactor = 1.0;
 		// END KGU#287 2016-11-02
 
 		//======== fontChooser ========
@@ -221,6 +223,9 @@ public class FontChooser extends LangDialog
 					buttonBar.add(btnOK, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
 						GridBagConstraints.CENTER, GridBagConstraints.BOTH,
 						new Insets(0, 0, 0, 0), 0, 0));
+			        // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
+			        GUIScaler.rescaleComponents(buttonBar);
+			        // END KGU#287 2017-01-09
 				}
 				pnlChooser.add(buttonBar, BorderLayout.SOUTH);
 			}

@@ -53,6 +53,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded.
  *      Kay Gürtzig     2016.12.12      Issue #307: New error message msgForLoopManipulation
  *      Kay Gürtzig     2016.12.29      KGU#317 (issues #267, #315) New message for multiple subroutines
+ *      Kay Gürtzig     2016.01.09      Issue #81 / bugfix #330: GUI scaling stuff outsourced to GUIScaler
  *
  ******************************************************************************************************
  *
@@ -87,6 +88,7 @@ import javax.swing.table.DefaultTableModel;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.RuntimeDataPresentMode;
+import lu.fisch.structorizer.gui.GUIScaler;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.io.Ini;
@@ -440,6 +442,11 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         gbl.setConstraints(jScrollPane1, gbc);
         ctnr.add(jScrollPane1);
         // END KGU#210 2016-07-25
+        
+        // START KGU#287 2017-01-09: Issue #81 / bugfix #330 - flexible GUI scaling
+        GUIScaler.rescaleComponents(this);
+        SwingUtilities.updateComponentTreeUI(this);
+        // END KGU#287 2017-01-09
        
         pack();
         
