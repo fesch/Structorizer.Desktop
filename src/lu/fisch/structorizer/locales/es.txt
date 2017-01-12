@@ -229,7 +229,7 @@ Menu.menuPreferencesLanguageItems.ru.text=Ruso
 Menu.menuPreferencesLanguageItems.pl.text=Polaco
 Menu.menuPreferencesLanguageFromFile.text=De un archivo ...
 Menu.menuPreferencesLanguageFromFile.tooltip=Archivos de traducción se pueden crear con el 'Traductor' en el menú 'Archivo'.
-Menu.menuPreferencesScalePreset.text=Scalar interfaz gráfica ...
+Menu.menuPreferencesScalePreset.text=Escalar interfaz gráfica ...
 Menu.menuPreferencesLookAndFeel.text=Aspecto & Ambiente
 
 Menu.menuPreferencesSave.text=Todas las preferencias ...
@@ -340,8 +340,8 @@ Menu.error16_7.text=Instrucciones después de un Salto no son alcanzables!
 Menu.error17.text=¡Varios hilos de ejecución compiten por el acceso a la variable «%» y así riesgan la consistencia!
 Menu.error18.text=¡Variable «%1» podría coincidir con variable(s) «%2» en lenguages sin distincción entre mayúsculas y minúsculas!
 Menu.error19.text=¡Variable «%1» puede collidir con palabras claves en lenguages como %2!
-Menu.error20.text=El encabezamiento de un subprograma debe tener un parénthesis para parámetros.
-Menu.error21.text=Los nombres I (i mayúscula), l (L minúscula) y O (o mayúscula) casi no difieren entre si o de 1 o 0.
+Menu.error20.text=El encabezamiento de un subprograma debe tener un paréntesis para parámetros.
+Menu.error21.text=Los nombres I (i mayúscula), l (L minúscula) y O (o mayúscula) son equivobales entre si o con 1 u 0.
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferencias del Comprobador
@@ -750,7 +750,7 @@ SaveOptionDialog.btnOk.tooltip=Aceptar los cambios.
 
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=Calibración de interfaz gráfica
-GUIScaleChooser.txtComment.text=Solo ofrece preajuste con previsión. No es posible re-scalar la interfaz en modo de función.\nPara poner el factor de magificación on operación hay que rearrancar Structorizer.
+GUIScaleChooser.txtComment.text=Solo ofrece preajuste con previsión. No es posible re-escalar la interfaz mientras operando.\nPara poner el factor de magificación en operación hay que rearrancar Structorizer.
 GUIScaleChooser.lblSpinner.text=Factor de magnificación
 GUIScaleChooser.lblTest.text=Previsión de texto
 GUIScaleChooser.lblIcon.text=Previsión de icono
