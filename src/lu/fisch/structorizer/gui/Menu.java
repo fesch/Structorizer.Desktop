@@ -862,7 +862,7 @@ public class Menu extends LangMenuBar implements NSDController
 
 		menuPreferences.add(menuPreferencesLanguage);
 		menuPreferencesLanguage.setIcon(IconLoader.ico081);
-		
+
 		// START KGU#242 2016-09-04: Redesign of the language menu item mechanism
 		for (int iLoc = 0; iLoc < Locales.LOCALES_LIST.length; iLoc++)
 		{
@@ -1053,7 +1053,7 @@ public class Menu extends LangMenuBar implements NSDController
         // END KGU#287 2017-01-09
 
         // Attempt to find out what provokes the NullPointerExceptions on start
-		System.out.println("**** " + this + ".create() ready!");
+		//System.out.println("**** " + this + ".create() ready!");
 	}
 
 	@Override
@@ -1228,7 +1228,7 @@ public class Menu extends LangMenuBar implements NSDController
 			menuEditCut.setEnabled(diagram.canCut());
 			// END KGU#143 2016-01-21
 			menuEditPaste.setEnabled(diagram.canPaste());
-			
+
 			// nice
 			menuDiagramNice.setSelected(diagram.isNice());
 
@@ -1365,17 +1365,17 @@ public class Menu extends LangMenuBar implements NSDController
 	
     // START KGU#232 2016-08-03: Enh. #222
     public void chooseLangFile() {
-		JFileChooser dlgOpen = new JFileChooser();
-		dlgOpen.setDialogTitle(msgOpenLangFile.getText());
-		// set directory
-		dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
-		// config dialogue
-		FileNameExtensionFilter filter = new FileNameExtensionFilter(msgLangFile.getText(), "txt");
-		dlgOpen.addChoosableFileFilter(filter);
-		dlgOpen.setFileFilter(filter);
-		// show & get result
-		int result = dlgOpen.showOpenDialog(this);
-		// react on result
+        JFileChooser dlgOpen = new JFileChooser();
+        dlgOpen.setDialogTitle(msgOpenLangFile.getText());
+        // set directory
+        dlgOpen.setCurrentDirectory(new File(System.getProperty("user.home")));
+        // config dialogue
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(msgLangFile.getText(), "txt");
+        dlgOpen.addChoosableFileFilter(filter);
+        dlgOpen.setFileFilter(filter);
+        // show & get result
+        int result = dlgOpen.showOpenDialog(this);
+        // react on result
         if (result == JFileChooser.APPROVE_OPTION) {
             // create a new StringList
             StringList sl = new StringList();

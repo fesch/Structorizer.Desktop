@@ -341,7 +341,7 @@ Menu.error17.text=¡Varios hilos de ejecución compiten por el acceso a la varia
 Menu.error18.text=¡Variable «%1» podría coincidir con variable(s) «%2» en lenguages sin distincción entre mayúsculas y minúsculas!
 Menu.error19.text=¡Variable «%1» puede collidir con palabras claves en lenguages como %2!
 Menu.error20.text=El encabezamiento de un subprograma debe tener un paréntesis para parámetros.
-Menu.error21.text=Los nombres I (i mayúscula), l (L minúscula) y O (o mayúscula) son equivobales entre si o con 1 u 0.
+Menu.error21.text=Los nombres I (i mayúscula), l (L minúscula) y O (o mayúscula) son equivocables entre si o con 1 u 0.
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferencias del Comprobador

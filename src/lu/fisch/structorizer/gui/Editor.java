@@ -51,6 +51,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.12.12      Enh. #305: Scrollable list view of Roots in Arranger added
  *      Kay Gürtzig     2016.12.17      Enh. #305: Key binding <del> added to Arranger index list.
  *      Kay Gürtzig     2017.01.05      Enh. #319: Context menu for Arranger index
+ *      Kay Gürtzig     2017.01.13      Bugfix #233: F6 and F8 had got kidnapped by the JSplitPanes sp and sp305
  *
  ******************************************************************************************************
  *
@@ -872,6 +873,17 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// END KGU#294 2016-11-22
 		//scrollarea.getViewport().setBackingStoreEnabled(true);
 		
+		// START KGU#239 2017-01-13: Bugfix #233 SplitPanes had snatched away accelerator keys F6 and F8
+		inpMap = sp.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F6, 0), "none");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F8, java.awt.event.InputEvent.CTRL_DOWN_MASK), inpMap.get(KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0)));
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0), "none");
+		inpMap = sp305.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F6, 0), "none");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F8, java.awt.event.InputEvent.CTRL_DOWN_MASK), inpMap.get(KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0)));
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0), "none");
+		// END KGU#239 2017-01-13
+		
 		// START KGU#305 2016-12-12: Enh. #305
 		sp305.add(scrollIndex);
 		scrollIndex.setWheelScrollingEnabled(true);
@@ -962,7 +974,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         // END KGU#287 2017-01-09
 
         // Attempt to find out what provokes the NullPointerExceptions on start
-		System.out.println("**** " + this + ".create() ready!");
+		//System.out.println("**** " + this + ".create() ready!");
 		
 		//doButtons();
 		//container.validate();

@@ -72,27 +72,27 @@ public class AnalyserPreferences extends LangDialog {
 
 	// DO NOT CHANGE THE ORDER OF THE STRINGS HERE - use checkboxOrder to rearrange checks! 
 	private static final String[] checkCaptions = {
-		"Check for modified loop variable.",						// 1
-		"Check for endless loop (as far as detectable!).",			// 2
-		"Check for non-initialized variables.",						// 3
-		"Check for incorrect use of the IF-statement.",				// 4
-		"Check for UPPERCASE variable names. (LUX/MEN)",			// 5
-		"Check for UPPERCASE program / sub name. (LUX/MEN)",		// 6
-		"Check for valid identifiers.",								// 7
-		"Check for assignment in conditions.",						// 8
-		"Check that the program / sub name is not equal to any other identifier.",
-		"Check for instructions with inputs and outputs.",			// 10
-		"Check for assignment errors.",								// 11
-		"Check for standardized parameter name. (LUX/MEN)",			// 12
-		"Check if, in case of a function, it returns a result.",	// 13
-		"Check for consistency of FOR loop parameters.",			// 14
-		"Check for inappropriate subroutine CALLs.",				// 15
-		"Check for incorrect JUMP element usage.",					// 16
-		"Check for inconsistency risks in PARALLEL sections.",		// 17
-		"Check that identifiers don't differ only by upper/lower case.",
-		"Check if an identifier might collide with reserved words.",// 19
-		"Check that a subroutine header has a parameter list.",		// 20
-		"Discourage use of mistakable variable names «I», «l», and «O»."
+		/*1*/"Check for modified loop variable.",
+		/*2*/"Check for endless loop (as far as detectable!).",
+		/*3*/"Check for non-initialized variables.",
+		/*4*/"Check for incorrect use of the IF-statement.",
+		/*5*/"Check for UPPERCASE variable names. (LUX/MEN)",
+		/*6*/"Check for UPPERCASE program / sub name. (LUX/MEN)",
+		/*7*/"Check for valid identifiers.",
+		/*8*/"Check for assignment in conditions.",
+		/*9*/"Check that the program / sub name is not equal to any other identifier.",
+		/*10*/"Check for instructions with inputs and outputs.",
+		/*11*/"Check for assignment errors.",
+		/*12*/"Check for standardized parameter name. (LUX/MEN)",
+		/*13*/"Check if, in case of a function, it returns a result.",
+		/*14*/"Check for consistency of FOR loop parameters.",
+		/*15*/"Check for inappropriate subroutine CALLs.",
+		/*16*/"Check for incorrect JUMP element usage.",
+		/*17*/"Check for inconsistency risks in PARALLEL sections.",
+		/*18*/"Check that identifiers don't differ only by upper/lower case.",
+		/*19*/"Check if an identifier might collide with reserved words.",
+		/*20*/"Check that a subroutine header has a parameter list.",
+		/*21*/"Discourage use of mistakable variable names «I», «l», and «O»."
 		// Just append the descriptions for new check types here and insert their
 		// numbers at the appropriate place in array checkboxOrder below.
 		// DON'T FORGET to add a new entry to Root.analyserChecks for every

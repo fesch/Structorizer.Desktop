@@ -1678,6 +1678,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
         adaptLayout();
         // END KGU#85 2015-11-18
         this.repaint();
+        // START KGU#330 2017-01-13: We keep redunant information to be able to trigger change notifications
+        Diagram diagr = this.findDiagram(source, 1);
+        if (diagr != null && diagr.checkSignatureChange()) {
+        	this.notifyChangeListeners();
+        }
+        // END KGU#330 2017-01-13
     }
     
 	// START KGU#155 2016-03-08: Bugfix #97 extension

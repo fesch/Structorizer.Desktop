@@ -90,6 +90,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.12.28      Enh. #318: Support for re-saving to an arrz file (2017.01.03: getFile() fixed)
  *      Kay Gürtzig     2016.12.29      Enh. #315: New comparison method distinguishing different equality levels
  *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser check 21 (analyse_18_19 renamed to analyse_18_19_21)
+ *      Kay Gürtzig     2017.01.13      Enh. #305: Notification of arranger index listeners ensured on saving (KGU#330)
  *
  ******************************************************************************************************
  *
@@ -1044,6 +1045,13 @@ public class Root extends Element {
     	// START KGU#137 2016-01-14: Bugfix #107
     	this.hasChanged = false;
     	// END KGU#137 2016-01-16
+    	// START KGU#330 2017-01-13: Enh. #305 Notify arranger index listeners
+        // inform updaters
+        for(int u = 0; u < updaters.size(); u++)
+        {
+        	updaters.get(u).update(this);
+        }
+        // END KGU#330 2017-01-13
     }
     // END KGU#137 2016-01-11
 
