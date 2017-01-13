@@ -68,6 +68,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2017.01.04      Bugfix #321: Make sure Mainforms save the actually iterated Roots
  *      Kay Gürtzig     2017.01.05      Enh. #319: Additional notification on test coverage status change
  *      Kay Gürtzig     2017.01.11      Fix KGU#328 in method replaced()
+ *      Kay Gürtzig     2017.01.13      Enh. #305 / Bugfix KGU#330: Arranger index notification on name and dirtiness change
  *
  ******************************************************************************************************
  *

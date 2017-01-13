@@ -312,6 +312,9 @@ public abstract class Element {
     // START KGU#287 2017-01-11: Issue #81 (workaround)
     public static double E_NEXT_SCALE_FACTOR;
     // END KGU#287 2017-01-15
+    // START KGU#331 2017-01-13:
+    public static boolean E_SHOW_COMPOUND_SYMBOLS = true;
+    // END KGU#331 2017-01-13
 
 	// some colors
 	public static Color color0 = Color.decode("0xFFFFFF");
@@ -1709,6 +1712,12 @@ public abstract class Element {
 
 		parts=StringList.explodeWithDelimiter(parts,"\\");
 		parts=StringList.explodeWithDelimiter(parts,"%");
+		
+		// START KGU#331 2017-01-13: Enh. #333 Precaution against unicode comparison operators
+		parts=StringList.explodeWithDelimiter(parts,"\u2260");
+		parts=StringList.explodeWithDelimiter(parts,"\u2264");
+		parts=StringList.explodeWithDelimiter(parts,"\u2265");
+		// END KGU#331 2017-01-13
 
 		// reassamble symbols
 		int i = 0;
@@ -1804,6 +1813,17 @@ public abstract class Element {
 						parts.delete(i+1);					}
 				}
 				// END KGU#26 2015-11-04
+				// START KGU#331 2017-01-13: Enh. #333 Precaution against unicode comparison operators
+				else if (parts.get(i).equals("\u2260")) {
+					parts.set(i, "<>");
+				}
+				else if (parts.get(i).equals("\u2264")) {
+					parts.set(i, "<=");
+				}
+				else if (parts.get(i).equals("\u2265")) {
+					parts.set(i, ">=");
+				}
+				// END KGU#331 2017-01-13
 			}
 			i++;
 		}
@@ -2028,6 +2048,11 @@ public abstract class Element {
 					specialSigns.add("<=");
 					specialSigns.add(">=");
 					specialSigns.add("<>");
+					// START KGU#331 2017-01-13: Enh. #333
+					specialSigns.add("\u2260");
+					specialSigns.add("\u2264");
+					specialSigns.add("\u2265");
+					// END KGU#331 2017-01-13
 					specialSigns.add("<<");
 					specialSigns.add(">>");
 					specialSigns.add("<");
@@ -2080,6 +2105,14 @@ public abstract class Element {
 					String display = parts.get(i);
 
 					display = BString.replace(display, "<-","\u2190");
+					// START KGU#331 2017-01-13: Enh. #333
+					if (E_SHOW_COMPOUND_SYMBOLS) {
+						display = BString.replace(display, "<>","\u2260");
+						display = BString.replace(display, "!=","\u2260");
+						display = BString.replace(display, "<=","\u2264");
+						display = BString.replace(display, ">=","\u2265");						
+					}
+					// END KGU#331 2017-01-13
 
 					if(!display.equals(""))
 					{

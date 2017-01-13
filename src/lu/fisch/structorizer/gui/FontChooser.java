@@ -169,7 +169,7 @@ public class FontChooser extends LangDialog
 					// END KGU#287 2016-11-02
 
 					//---- lblTest ----
-					lblTest.setText("Test: Structorizer (Symboltest: [\u2190 - \u2205])");
+					lblTest.setText("Test: Structorizer (Symboltest: [\u2190 - \u2205 - \u2260 - \u2264 - \u2265])");
 					contentPanel.add(lblTest, BorderLayout.SOUTH);
 
 					//======== pnlName ========
