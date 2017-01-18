@@ -72,7 +72,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.09.28      KGU#264: Font name property renamed from "Name" to "Font".
  *      Kay Gürtzig     2016.10.13      Issue #270: New field "disabled" for execution and code export
  *      Kay Gürtzig     2016.11.06      Issue #279: Several modifications to circumvent direct access to D7Parser.keywordMap
- *      Kay Gürtzig     2017-01-06      Issue #327: French default structure preferences replaced by English ones
+ *      Kay Gürtzig     2017.01.06      Issue #327: French default structure preferences replaced by English ones
+ *      Kay Gürtzig     2017.01.13      Issue #333: Display of compound comparison operators as unicode symbols
  *
  ******************************************************************************************************
  *
@@ -313,7 +314,7 @@ public abstract class Element {
     public static double E_NEXT_SCALE_FACTOR;
     // END KGU#287 2017-01-15
     // START KGU#331 2017-01-13:
-    public static boolean E_SHOW_COMPOUND_SYMBOLS = true;
+    public static boolean E_SHOW_UNICODE_OPERATORS = true;
     // END KGU#331 2017-01-13
 
 	// some colors
@@ -2106,7 +2107,7 @@ public abstract class Element {
 
 					display = BString.replace(display, "<-","\u2190");
 					// START KGU#331 2017-01-13: Enh. #333
-					if (E_SHOW_COMPOUND_SYMBOLS) {
+					if (E_SHOW_UNICODE_OPERATORS) {
 						display = BString.replace(display, "<>","\u2260");
 						display = BString.replace(display, "!=","\u2260");
 						display = BString.replace(display, "<=","\u2264");

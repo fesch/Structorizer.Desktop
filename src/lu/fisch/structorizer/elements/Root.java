@@ -91,6 +91,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.12.29      Enh. #315: New comparison method distinguishing different equality levels
  *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser check 21 (analyse_18_19 renamed to analyse_18_19_21)
  *      Kay Gürtzig     2017.01.13      Enh. #305: Notification of arranger index listeners ensured on saving (KGU#330)
+ *      Kay Gürtzig     2017.01.17      Enh. #335(?): Toleration of Pascal variable declarations in getUsedVarNames()
  *
  ******************************************************************************************************
  *
@@ -1449,6 +1450,7 @@ public class Root extends Element {
     			int asgnPos = tokens.indexOf("<-");
     			if (asgnPos >= 0)
     			{
+    				// Look for indexed variable as assignment target, get the indices in this case
     				String s = tokens.subSequence(0, asgnPos).concatenate();
     				if (s.indexOf("[") >= 0)
     				{
@@ -1460,6 +1462,15 @@ public class Root extends Element {
     				indices.add(tokens.subSequence(asgnPos+1, tokens.count()));
     				tokens = indices;
     			}
+    			// START KGU#332 2017-01-17: Enh. #335(?) - ignore the content of uninitialized declarations
+    			else if (tokens.indexOf("var") == 0) {
+    				int end = tokens.indexOf(":");
+    				if (end < 0) {
+    					end = tokens.count();
+    				}
+    				tokens = tokens.subSequence(1, end);
+    			}
+    			// END KGU#332 2017-01-17
 
     			// cutoff output keyword
     			if (tokens.get(0).equals(D7Parser.getKeyword("output")))	// Must be at the line's very beginning

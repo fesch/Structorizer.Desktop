@@ -111,6 +111,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.12.29      Enh. #267/#315 (KGU#317): Execution abort on ambiguous CALLs
  *      Kay Gürtzig     2017.01.06      Bugfix #324: Trouble with replacing an array by a scalar value on input
  *                                      Enh. #325: built-in type test functions added.
+ *      Kay Gürtzig     2017.01.17      Enh. #335(?): Toleration of Pascal variable declarations in stepInstruction()
  *
  ******************************************************************************************************
  *
@@ -2654,6 +2655,11 @@ public class Executor implements Runnable
 				{		 
 					result = tryReturn(cmd.trim());
 				}
+				// START KGU#332 2017-01-17: Enh. #335(?) - tolerate a Pascal variable declaration
+				else if (cmd.matches("^var.*:.*")) {
+					setVar(cmd, null);
+				}
+				// END KGU#332 2017-01-17
 				else
 				{
 					result = trySubroutine(cmd, element);

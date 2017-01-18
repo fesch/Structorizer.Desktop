@@ -749,7 +749,7 @@ SaveOptionDialog.btnOk.tooltip=Einstellungen übernehmen.
 
 -----[ GUIScaleChooser ]-----
 GUIScaleChooser.title=GUI-Skalierung
-GUIScaleChooser.txtComment.text=Dies bietet eine Voreinstellung mit Vorschau.\nEine unmittelbare Re-Skalierung de offenen Anwendung ist nicht möglich.\nDer Skalierungsfaktor wird erst beim nächsten Structorizer-Start wirksam.
+GUIScaleChooser.txtComment.text=Dies bietet eine Voreinstellung mit Vorschau.\nEine unmittelbare Re-Skalierung der offenen Anwendung ist nicht möglich.\nDer Skalierungsfaktor wird erst beim nächsten Structorizer-Start wirksam.
 GUIScaleChooser.lblSpinner.text=Skalierungsfaktor
 GUIScaleChooser.lblTest.text=Voransicht Schriftgröße
 GUIScaleChooser.lblIcon.text=Voransicht Icon-Größe

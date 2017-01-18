@@ -406,6 +406,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	{
 		if (asComment)
 		{
+			// Indentation is intentionally put inside the comment (comment encloses entire line)
 			insertComment(_indent + text, "");
 		}
 		else
