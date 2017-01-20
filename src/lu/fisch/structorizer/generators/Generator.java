@@ -61,6 +61,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.10.16      Bugfix #275: Defective subroutine registration for topological sort mended
  *      Kay Gürtzig     2016.12.01      Bugfix #301: New method boolean isParenthesized(String)
  *      Kay Gürtzig     2016.12.22      Enh. #314: Support for Structorizer File API, improvements for #227
+ *      Kay Gürtzig     2017.01.20      Bugfix #336: variable list for declaration section (loop vars in, parameters out)
  *
  ******************************************************************************************************
  *
@@ -1225,9 +1226,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		_root.collectParameters(paramNames, paramTypes);
 		String resultType = _root.getResultType();
 		// START KGU#61/KGU#129 2016-03-22: Now common field for all generator classes
-		//StringList varNames = _root.getVarNames(_root, false, true);	// FIXME: FOR loop vars are missing
-		this.varNames = _root.getVarNames(_root, false, true);	// FIXME: FOR loop vars are missing
-		// END KGU#61/KGU#129
+		//StringList varNames = _root.getVarNames(_root, false, true);	// FOR loop vars are missing
+		// START KGU#333 2017-01-20: Bugfix #336 - Correct way to include loop variables and exclude parameters
+		//this.varNames = _root.getVarNames(_root, false, true);	// FOR loop vars are missing
+		this.varNames = _root.getVarNames();
+		for (int p = 0; p < paramNames.count(); p++) {
+			this.varNames.removeAll(paramNames.get(p));
+		}
+		// END KGU#333 2017-01-20
+		// END KGU#61/KGU#129 2016-03-22
 		this.isResultSet = varNames.contains("result", false);
 		this.isFunctionNameSet = varNames.contains(procName);
 		
