@@ -39,6 +39,7 @@
  *                                      Modification in command-line concatenation
  *      Kay Gürtzig     2016.12.12      Issue #306: multiple arguments in simple command line are now
  *                                      interpreted as several files to be opened in series.
+ *      Kay Gürtzig     2017.01.27      Issue #306 + #290: Support for Arranger files in command line
  *
  ******************************************************************************************************
  *
@@ -162,18 +163,19 @@ public class Structorizer
 			// the previously loaded one to the Arranger on each consecutive load.)
 			for (int i=start; i<args.length; i++)
 			{
-				// START KGU#306 2016-12-12: This seemed to address file names with blanks...
+				// START KGU#306 2016-12-12/2017-01-27: This seemed to address file names with blanks...
 				//s += args[i];
 				String s = args[i].trim();
+				String lastExt = "";	// Last file extension
 				if (!s.isEmpty())
 				{
-					if (i > start && !mainform.diagram.getRoot().isEmpty()) {
+					if (lastExt.equals("nsd") && !mainform.diagram.getRoot().isEmpty()) {
 						// Push the previously loaded diagram to Arranger
 						mainform.diagram.arrangeNSD();
 					}
-					mainform.diagram.openNSD(s);
+					lastExt = mainform.diagram.openNsdOrArr(s);
 				}
-				// END KGU#306 2016-12-12
+				// END KGU#306 2016-12-12/2017-01-27
 			}
 			// START KGU#306 2016-12-12: Enh. #306 - Replaced with the stuff in the loop above
 //			s = s.trim();
