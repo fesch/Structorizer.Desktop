@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.26-02 (2017.01.20)
+Current development version: 3.26-02 (2017.01.27)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>
@@ -18,6 +18,7 @@ Current development version: 3.26-02 (2017.01.20)
 - 02: Enh. #333: Compound comparison operators displayed as symbols ≠, ≤, ≥ <2>
 - 02: Enh. #335: Pascal variable declarations in instructions tolerated <2>
 - 02: Bugfix #336: Variable list proposed by code generators for declaration <2>
+- 02: Issue #306: Structorizer may load several diagrams on command line start <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
@@ -93,7 +94,6 @@ Version: 3.26 (2017.01.06)
 - 09: Bugfix #302: Effects of previous penUp and hideTurtle now undone on new start <2>
 - 10: Issue #304: Menu mnemonic localization killed the menu on legacy JavaRE <2>
 - 10: Issue #305: Arranger diagram index added to the Structorizer GUI [newboerg]2
-- 10: Issue #306: Structorizer may load several diagrams on command line start <2>
 - 10: Issue #307: Executor error on manipulation of FOR loop variables [newboerg]2
 - 10: Bugfix #308: Collapsed REPEAT loops weren't properly drawn <2>
 - 11: Enh. #305: New menu item + key binding to show/hide Arranger index <2>

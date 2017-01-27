@@ -269,7 +269,7 @@ Menu.msgErrorFileSave.text=Fehler beim Sichern der Datei: %!
 Menu.msgBreakTriggerPrompt.text=Ausführungsanzahl für die Auslösung eines Haltes festlegen (0 = immer).
 Menu.msgBreakTriggerIgnored.text=Eingabe ignoriert - muss eine Kardinalzahl sein.
 Menu.msgOpenLangFile.text=Übersetzungsdatei öffnen
-Menu.msgLangFile.text=Structorizer-Übersetungsdatei
+Menu.msgLangFile.text=Structorizer-Übersetzungsdatei
 Menu.msgGotoHomepage.text=Siehe % für herunterladbare Updates<br>und Neuigkeiten über Structorizer.
 Menu.msgTitleError.text=Fehler
 Menu.msgTitleLoadingError.text=Fehler beim Laden
