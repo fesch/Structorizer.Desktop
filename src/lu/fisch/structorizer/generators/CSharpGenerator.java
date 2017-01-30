@@ -51,6 +51,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig             2017.01.04      Bugfix #322: input and output code generation fixed 
+ *      Kay Gürtzig             2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
  *
  ******************************************************************************************************
  *
@@ -449,26 +450,39 @@ public class CSharpGenerator extends CGenerator
 		return _indent + this.getIndent() + this.getIndent();
 	}
 
-	/**
-	 * Generates some preamble (i.e. comments, language declaration section etc.)
-	 * and adds it to this.code.
-	 * @param _root - the diagram root element
-	 * @param _indent - the current indentation string
-	 * @param varNames - list of variable names introduced inside the body
-	 */
+// START KGU#332 2017-01-30: Method decomposed - no need to override it anymore
+//	/**
+//	 * Generates some preamble (i.e. comments, language declaration section etc.)
+//	 * and adds it to this.code.
+//	 * @param _root - the diagram root element
+//	 * @param _indent - the current indentation string
+//	 * @param varNames - list of variable names introduced inside the body
+//	 */
+//	@Override
+//	protected String generatePreamble(Root _root, String _indent, StringList varNames)
+//	{
+//		code.add("");
+//		// Variable declaration proposals (now with all used variables listed)
+//		insertComment("TODO: Declare local variables here:", _indent);
+//		for (int v = 0; v < varNames.count(); v++)
+//		{
+//			insertComment(varNames.get(v), _indent);
+//		}
+//		code.add("");
+//		return _indent;
+//	}
+	
 	@Override
-	protected String generatePreamble(Root _root, String _indent, StringList varNames)
+	protected String makeArrayDeclaration(String _elementType, String _varName, int _maxIndex)
 	{
-		code.add("");
-		// Variable declaration proposals (now with all used variables listed)
-		insertComment("TODO: Declare local variables here:", _indent);
-		for (int v = 0; v < varNames.count(); v++)
-		{
-			insertComment(varNames.get(v), _indent);
-		}
-		code.add("");
-		return _indent;
+		return _elementType + "[] " + _varName; 
 	}
+	@Override
+	protected void generateIOComment(Root _root, String _indent)
+	{
+		// Don't write anything
+	}
+// END KGU#332 2017-01-30
 
 	/**
 	 * Creates the appropriate code for returning a required result and adds it

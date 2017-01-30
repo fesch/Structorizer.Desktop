@@ -26,6 +26,7 @@ import javax.swing.JPanel;
  *
  * @author robertfisch
  */
+@SuppressWarnings("serial")
 public class LangPanel extends JPanel {
 
     public LangPanel(LayoutManager layout, boolean isDoubleBuffered) {

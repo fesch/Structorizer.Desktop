@@ -62,6 +62,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.12.01      Bugfix #301: New method boolean isParenthesized(String)
  *      Kay Gürtzig     2016.12.22      Enh. #314: Support for Structorizer File API, improvements for #227
  *      Kay Gürtzig     2017.01.20      Bugfix #336: variable list for declaration section (loop vars in, parameters out)
+ *      Kay Gürtzig     2017.01.26      Enh. #259: Type info is now gathered for declarations support
  *
  ******************************************************************************************************
  *
@@ -123,8 +124,6 @@ import lu.fisch.structorizer.parsers.D7Parser;
 public abstract class Generator extends javax.swing.filechooser.FileFilter
 {
 	/************ Fields ***********************/
-	// START KGU#173 2016-04-04: Issue #151 - Get rid of all the hidden ExportOptionDialoge threads produced here
-	//private ExportOptionDialoge eod = null;
 	// START KGU#162 2016-03-31: Enh. #144
 	protected boolean suppressTransformation = false;
 	// END KGU#162 2016-03-31
@@ -132,7 +131,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	private boolean startBlockNextLine = false;
 	private boolean generateLineNumbers = false;
 	private String exportCharset = Charset.defaultCharset().name();
-	// END KGU#173 2016-04-04
 	// START KGU#178 2016-07-19: Enh. #160
 	private boolean exportSubroutines = false;
 	// END KGU#178 2016-07-19
@@ -575,6 +573,27 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#1 2015-11-30	
 	
+	// START KGU#261 2017-01-26: Enh. #259/#335
+	protected StringList getTransformedTypes(TypeMapEntry typeEntry)
+	{
+		StringList types = typeEntry.getTypes();
+		StringList transTypes = new StringList();
+		for (int i = 0; i < types.count(); i++) {
+			String type = types.get(i);
+			if (type.startsWith("@")) {
+				// Array type - convert the element type spec only.
+				type = "@" + transformType(type.substring(1), "???");
+			}
+			else {
+				type = transformType(type, "???");
+			}
+			transTypes.addIfNew(type);
+		}
+		transTypes.removeAll("???");
+		return transTypes;
+	}
+	// END KGU#261 2017-01-26
+	
 	/**
 	 * Detects whether the given code line starts with the configured input keystring
 	 * and if so replaces it according to the regex pattern provided by getInputReplacer()
@@ -891,7 +910,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	{
 		String valueList = _for.getValueList();
 		StringList items = null;
-		boolean isComplexObject = (new Function(valueList)).isFunction() || this.varNames.contains(valueList);
+		boolean isComplexObject = Function.isFunction(valueList) || this.varNames.contains(valueList);
 		if (valueList.startsWith("{") && valueList.endsWith("}"))
 		{
 			items = Element.splitExpressionList(valueList.substring(1, valueList.length()-1), ",");
@@ -1516,8 +1535,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 			catch(Exception e)
 			{
+				String message = e.getMessage();
+				if (message == null) {
+					message = e.getClass().getSimpleName();
+				}
 				JOptionPane.showMessageDialog(null,
-						"Error while saving the file!\n" + e.getMessage(),
+						"Error while saving the file!\n" + message,
 						"Error", JOptionPane.ERROR_MESSAGE);
 			}
 		   	// START KGU#178 2016-07-20: Enh. #160

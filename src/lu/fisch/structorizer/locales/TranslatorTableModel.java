@@ -14,6 +14,7 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author robertfisch
  */
+@SuppressWarnings("serial")
 public class TranslatorTableModel extends DefaultTableModel {
 
 	// START KGU 2016-08-04: Issue #220

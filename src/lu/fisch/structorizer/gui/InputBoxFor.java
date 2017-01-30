@@ -694,7 +694,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 			txtParserInfo.setText(msgMissingBrace1.getText());
 			// END KGU#247 2016-09-23
 		}
-		else if ((new Function(forInValueList)).isFunction())
+		else if (Function.isFunction(forInValueList))
 		{
 			txtParserInfo.setForeground(Color.BLUE);
 			// START KGU#247 2016-09-23: Issue #243 - Forgotten translations

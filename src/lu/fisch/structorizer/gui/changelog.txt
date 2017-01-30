@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.26-02 (2017.01.27)
+Current development version: 3.26-02 (2017.01.30)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>
@@ -16,10 +16,11 @@ Current development version: 3.26-02 (2017.01.27)
 - 02: Bugfix #233: Element insertion by keys F6 and F8 didn't work <2>
 - 02: Issue #305: Diagram name and dirtiness changes notified to arranger index <2>
 - 02: Enh. #333: Compound comparison operators displayed as symbols ≠, ≤, ≥ <2>
-- 02: Enh. #335: Pascal variable declarations in instructions tolerated <2>
+- 02: Enh. #335: Pascal/BASIC variable declarations in instructions tolerated <2>
 - 02: Bugfix #336: Variable list proposed by code generators for declaration <2>
 - 02: Issue #306: Possibility to start with several diagrams from command line <2>
 - 02: Enh. #290: Start from command line with Arranger files as arguments, too <2>
+- 02: Enh. #335: Type info retrieval for enhanced declarations on code export <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

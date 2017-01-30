@@ -91,7 +91,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.12.29      Enh. #315: New comparison method distinguishing different equality levels
  *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser check 21 (analyse_18_19 renamed to analyse_18_19_21)
  *      Kay Gürtzig     2017.01.13      Enh. #305: Notification of arranger index listeners ensured on saving (KGU#330)
- *      Kay Gürtzig     2017.01.17      Enh. #335(?): Toleration of Pascal variable declarations in getUsedVarNames()
+ *      Kay Gürtzig     2017.01.17      Enh. #335: Toleration of Pascal variable declarations in getUsedVarNames()
+ *      Kay Gürtzig     2017.01.30      Enh. #335: Type info mechanism established
  *
  ******************************************************************************************************
  *
@@ -118,6 +119,7 @@ import java.util.Vector;
 import java.util.Stack;
 import java.util.Hashtable;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.io.File;
 import java.awt.Color;
@@ -204,6 +206,9 @@ public class Root extends Element {
 	public StringList variables = new StringList();
 	public Vector<DetectedError> errors = new Vector<DetectedError>();
 	private StringList rootVars = new StringList();
+	// START KGU#261 2017-01-19: Enh. #259 (type map: var name -> type info)
+	private HashMap<String, TypeMapEntry> typeMap = new HashMap<String, TypeMapEntry>();
+	// END KGU#261 2017-01-19
 	// START KGU#163 2016-03-25: Added to solve the complete detection of unknown/uninitialised identifiers
 	// Pre-processed parser preference keywords to match them against tokenized strings
 	private Vector<StringList> splitKeywords = new Vector<StringList>();
@@ -950,6 +955,10 @@ public class Root extends Element {
 		// START KGU#117 2016-03-07: Enh. #77: On a substantial change, invalidate test coverage
 		this.clearRuntimeData();
 		// END KGU#117 2016-03-07
+	    // START KGU#261 2017-01-20: Enh. #259: type info will also have to be cleared
+		// FIXME: Certain explicit declarations should remain
+		this.clearTypeInfo();
+		// END KGU#261 2017-01-26
 	}
 
     public boolean canUndo()
@@ -1005,6 +1014,10 @@ public class Root extends Element {
                 	// START KGU#136 2016-03-01: Bugfix #97
                 	this.resetDrawingInfoDown();
                 	// END KGU#136 2016-03-01
+            	    // START KGU#261 2017-01-20: Enh. #259: type info will also have to be cleared
+            		// FIXME: Certain explicit declarations should remain
+            		this.clearTypeInfo();
+            		// END KGU#261 2017-01-26
             }
     }
 
@@ -1031,6 +1044,10 @@ public class Root extends Element {
                 	// START KGU#136 2016-03-01: Bugfix #97
                 	this.resetDrawingInfoDown();
                 	// END KGU#136 2016-03-01
+            	    // START KGU#261 2017-01-20: Enh. #259: type info will also have to be cleared
+            		// FIXME: Certain explicit declarations should remain
+            		this.clearTypeInfo();
+            		// END KGU#261 2017-01-26
             }
     }
 
@@ -1462,9 +1479,16 @@ public class Root extends Element {
     				indices.add(tokens.subSequence(asgnPos+1, tokens.count()));
     				tokens = indices;
     			}
-    			// START KGU#332 2017-01-17: Enh. #335(?) - ignore the content of uninitialized declarations
+    			// START KGU#332 2017-01-17: Enh. #335 - ignore the content of uninitialized declarations
     			else if (tokens.indexOf("var") == 0) {
     				int end = tokens.indexOf(":");
+    				if (end < 0) {
+    					end = tokens.count();
+    				}
+    				tokens = tokens.subSequence(1, end);
+    			}
+    			else if (tokens.indexOf("dim") == 0) {
+    				int end = tokens.indexOf("as");
     				if (end < 0) {
     					end = tokens.count();
     				}
@@ -1744,6 +1768,38 @@ public class Root extends Element {
             return varNames;
     }
     
+    // START KGU#261 2017-01-20: Enh. #259
+    public HashMap<String, TypeMapEntry> getTypeInfo()
+    {
+    	if (this.typeMap.isEmpty()) {
+    		IElementVisitor collector = new IElementVisitor() {
+
+				@Override
+				public boolean visitPreOrder(Element _ele) {
+					if (!_ele.disabled) {
+						_ele.updateTypeMap(typeMap);
+					}
+					return true;
+				}
+
+				@Override
+				public boolean visitPostOrder(Element _ele) {
+					return true;
+				}
+    			
+    		};
+    		this.traverse(collector);
+    	}
+    	return this.typeMap;
+    }
+    
+    private void clearTypeInfo()
+    {
+    	// FIXME: To be modified when GUI-based type configuration will be enabled
+    	this.typeMap.clear();
+    }
+    // END KGU#261 2017-01-20
+    
     // START BFI 2015-12-10
     public String getReturnType()
     {
@@ -1976,7 +2032,7 @@ public class Root extends Element {
     			}
     		}
     		
-    		// CHECK: Inconsistency risk due to concurent variable access by parallel threads (#17) New!
+    		// CHECK: Inconsistency risk due to concurrent variable access by parallel threads (#17) New!
     		if (eleClassName.equals("Parallel"))
     		{
     			analyse_17((Parallel) ele, _errors);

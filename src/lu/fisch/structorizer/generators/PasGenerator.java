@@ -62,6 +62,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig         2016.12.26      Enh. #314: Makeshift additions to support the File API
+ *      Kay Gürtzig         2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
  *
  ******************************************************************************************************
  *
@@ -94,6 +95,9 @@ package lu.fisch.structorizer.generators;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
+
+import java.util.HashMap;
+
 import lu.fisch.structorizer.elements.*;
 
 
@@ -365,6 +369,20 @@ public class PasGenerator extends Generator
 			posDecl = code.indexOf(seekIndent + _category);
 			seekIndent += this.getIndent();
 		}
+		// START KGU#332 2017-01-30: Enh. #335 Enables const declarations
+		if (posDecl < 0 && _category.equals("const")) {
+			seekIndent = "";
+			while (posDecl < 0 && seekIndent.length() < _maxIndent)
+			{
+				posDecl = code.indexOf(seekIndent + "var");
+				if (posDecl >= 0) {
+					code.insert("", posDecl);
+					code.insert(seekIndent + _category, posDecl);					
+				}
+				seekIndent += this.getIndent();
+			}
+		}
+		// END KGU#332 2017-01-30
 		code.insert(seekIndent + text, posDecl + 1);
 	}
 	// END KGU#61 2016-03-23
@@ -422,9 +440,9 @@ public class PasGenerator extends Generator
 							// at other positions in code, we use the standard Java
 							// index range here (though in Pascal indexing usually 
 							// starts with 1 but may vary widely). We solve the problem
-							// by providing a configurable start index variable 
+							// by providing a configurable start index constant 
 							insertComment("TODO: Check indexBase value (automatically generated)", _indent);
-							insertDeclaration("var", "indexBase_" + varName + ": Integer = 0;",
+							insertDeclaration("const", "indexBase_" + varName + ": Integer = 0;",
 									_indent.length());
 							for (int el = 0; el < elements.count(); el++)
 							{
@@ -465,7 +483,28 @@ public class PasGenerator extends Generator
 						if (Instruction.isTurtleizerMove(line)) {
 							transline += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor() + " " + this.commentSymbolRight();
 						}
-						addCode(transline, _indent, isDisabled);
+						// START KGU#261 2017-01-26: Enh. #259/#335
+						//addCode(transline, _indent, isDisabled);
+						if (!this.suppressTransformation && transline.matches("^(var|dim) .*")) {
+							if (asgnPos > 0) {
+								// First remove the "var" or "dim" key word
+								String separator = transline.startsWith("var") ? ":" : " as ";
+								transline = transline.substring(4);
+								int posColon = transline.substring(0, asgnPos).indexOf(separator);
+								if (posColon > 0) {
+									transline = transline.substring(0, posColon) + transline.substring(asgnPos);
+								}
+							}
+							else {
+								// No initialization - so ignore it here
+								// (the declaration will appear in the var section)
+								transline = null;
+							}
+						}
+						if (transline != null) {
+							addCode(transline, _indent, isDisabled);
+						}
+						// END KGU#261 2017-01-26
 						// END KGU#277/KGU#284 2016-10-13
 					}
 					// END KGU#100 2016-01-14
@@ -1056,9 +1095,42 @@ public class PasGenerator extends Generator
 	@Override
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
-        insertComment("TODO: declare your variables here", _indent + this.getIndent());
+        insertComment("TODO: check and accomplish variable declarations", _indent + this.getIndent());
+        // START KGU#261 2017-01-26: Enh. #259: Insert actual declarations if possible
+		HashMap<String, TypeMapEntry> typeMap = _root.getTypeInfo();
+		// END KGU#261 2017-01-16
 		for (int v = 0; v < _varNames.count(); v++) {
-			insertComment(_varNames.get(v), _indent + this.getIndent());
+	        // START KGU#261 2017-01-26: Enh. #259: Insert actual declarations if possible
+			//insertComment(_varNames.get(v), _indent + this.getIndent());
+			String varName = _varNames.get(v);
+			TypeMapEntry typeInfo = typeMap.get(varName); 
+			StringList types = null;
+			if (typeInfo != null) {
+				 types = getTransformedTypes(typeInfo);
+			}
+			if (types != null && types.count() == 1) {
+				String type = types.get(0);
+				if (type.startsWith("@")) {
+					// It's an array, so get its index range
+					int maxIndex = typeInfo.getMaxIndex();
+					String indexRange = "";
+					if (maxIndex > 0) {
+						indexRange = "[indexBase_" + varName +
+								"..indexBase_" + varName + "+" + maxIndex + "] ";
+					}
+					type = "array " + indexRange + "of " + type.substring(1);
+				}
+				if (type.contains("???")) {
+					insertComment(varName + ": " + type + ";", _indent + this.getIndent());
+				}
+				else {
+					code.add(_indent + this.getIndent() + varName + ": " + type + ";");
+				}
+			}
+			else {
+				insertComment(varName, _indent + this.getIndent());
+			}
+			// END KGU#261 2017-01-16
 		}
         code.add("");
         

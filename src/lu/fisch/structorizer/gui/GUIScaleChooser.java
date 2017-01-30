@@ -52,7 +52,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import lu.fisch.structorizer.elements.Element;
-import lu.fisch.structorizer.io.Ini;
 
 /******************************************************************************************************
  *
@@ -81,6 +80,7 @@ import lu.fisch.structorizer.locales.LangDialog;
  * @author codemanyak
  *
  */
+@SuppressWarnings("serial")
 public class GUIScaleChooser extends LangDialog implements ChangeListener {
 
 	protected JPanel pnlChooser = new JPanel();

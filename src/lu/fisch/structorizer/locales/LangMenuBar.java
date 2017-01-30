@@ -48,6 +48,7 @@ import javax.swing.JMenuBar;
  *
  * @author robertfisch
  */
+@SuppressWarnings("serial")
 public class LangMenuBar extends JMenuBar {
 
     public LangMenuBar() {

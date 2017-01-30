@@ -39,6 +39,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2016.09.09      Handling of unsaved changes improved, loadLocale() API modified,
  *                                      command line parameter "-test" introduced to re-allow full consistency check
  *      Kay Gürtzig     2016.11.02      Issue #81: Scaling as DPI awareness workaround
+ *      Kay Gürtzig     2016.11.09      Issue #81: scaleFactor ensured to be >= 1; table row height scaling
  *
  ******************************************************************************************************
  *
@@ -56,7 +57,6 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -128,7 +128,11 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
         //initComponents();
         Ini ini = Ini.getInstance();
-        double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1")).intValue();
+        // START KGU#287 2016-11-09: Issue #81 update: no longer rounded but ensured to be >= 1
+        //double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1")).intValue();
+        double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
+        if (scaleFactor < 1) scaleFactor = 1.0;
+        // END KGU#287 2016-11-09
         initComponents(scaleFactor);
         // END KGU#287 2016-11-02
         
@@ -183,6 +187,12 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             // START KGU 2016-08-04: Issue #220
             table.addPropertyChangeListener(this);
             // END KGU 2016-08-04
+            
+            // START KGU#287 2016-11-09: Issue #81 (DPI awareness workaround)
+            if (scaleFactor > 2.0) {
+                table.setRowHeight((int)Math.ceil(table.getRowHeight() * (scaleFactor - 1)*0.75));
+            }
+            // END KGU#287 2016-11-09
             
             // set the name
             table.getColumnModel().getColumn(1).setHeaderValue(Locales.DEFAULT_LOCALE);

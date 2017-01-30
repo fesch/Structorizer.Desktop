@@ -3736,7 +3736,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 
 	/*****************************************
-	 * export code methods
+	 * import code methods
 	 *****************************************/
 	public void importPAS()
 	{

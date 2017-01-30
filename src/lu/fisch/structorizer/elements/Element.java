@@ -74,6 +74,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.11.06      Issue #279: Several modifications to circumvent direct access to D7Parser.keywordMap
  *      Kay Gürtzig     2017.01.06      Issue #327: French default structure preferences replaced by English ones
  *      Kay Gürtzig     2017.01.13      Issue #333: Display of compound comparison operators as unicode symbols
+ *      Kay Gürtzig     2017.01.27      Enh. #335: "dim" highlighted like "var" and ":" like "as"
  *
  ******************************************************************************************************
  *
@@ -278,21 +279,6 @@ public abstract class Element {
 	public static boolean E_COLLECTRUNTIMEDATA = false;
 	public static RuntimeDataPresentMode E_RUNTIMEDATAPRESENTMODE = RuntimeDataPresentMode.NONE;	// FIXME: To be replaced by an enumeration type
 	// END KGU#117 2016-03-06
-	// START KGU#156 2016-03-10; Enh. #124
-	protected static int maxExecCount = 0;			// Maximum number of executions of any element while runEventTracking has been on
-	protected static int maxExecStepCount = 0;		// Maximum number of instructions carried out directly per element
-	protected static int maxExecTotalCount = 0;		// Maximum combined number of directly and indirectly performed instructions
-	// END KGU156 2016-03-10
-	// START KGU#225 2016-07-28: Bugfix #210
-	protected static Vector<Integer> execCounts = new Vector<Integer>();
-	// END KGU#225 2016-07-28
-	// START KGU#213 2016-08-02: Enh. #215
-	/**
-	 *  Container for temporarily (i.e. during execution) modified breakpoint count triggers
-	 *  Keys ae the indices into execCounts
-	 */
-	protected static Map<Integer, Integer> breakTriggersTemp = new Hashtable<Integer, Integer>();
-	// END KGU#213 2016-08-2
 
 	public static boolean E_VARHIGHLIGHT = false;	// Highlight variables, operators, string literals, and certain keywords? 
 	public static boolean E_SHOWCOMMENTS = true;	// Enable comment bars and comment popups? 
@@ -343,6 +329,22 @@ public abstract class Element {
 
 	public static final String COLLAPSED =  "...";
 	public static boolean altPadRight = true;
+
+	// START KGU#156 2016-03-10; Enh. #124
+	protected static int maxExecCount = 0;			// Maximum number of executions of any element while runEventTracking has been on
+	protected static int maxExecStepCount = 0;		// Maximum number of instructions carried out directly per element
+	protected static int maxExecTotalCount = 0;		// Maximum combined number of directly and indirectly performed instructions
+	// END KGU156 2016-03-10
+	// START KGU#225 2016-07-28: Bugfix #210
+	protected static Vector<Integer> execCounts = new Vector<Integer>();
+	// END KGU#225 2016-07-28
+	// START KGU#213 2016-08-02: Enh. #215
+	/**
+	 *  Container for temporarily (i.e. during execution) modified breakpoint count triggers
+	 *  Keys are the indices into execCounts
+	 */
+	protected static Map<Integer, Integer> breakTriggersTemp = new Hashtable<Integer, Integer>();
+	// END KGU#213 2016-08-2
 
 	// element attributes
 	protected StringList text = new StringList();
@@ -399,22 +401,53 @@ public abstract class Element {
 	protected boolean isRectUpToDate = false;		// Will be set and used by prepareDraw() - to be reset on changes
 	private static StringList specialSigns = null;	// Strings to be highlighted in the text (lazy initialisation)
 
+	// START KGU#261 2017-01-19: Enh. #259 prepare the variable type map
+	private static long lastId = 0;
+	/**
+	 * Change- and cloning-invariant id of this element
+	 */
+	private long id = 0;
+	private void makeNewId()
+	{
+		id = ++lastId;
+	}
+	public long getId()
+	{
+		return id;
+	}
 
+//	public Element()
+//	{
+//	}
+//
+//	public Element(String _string)
+//	{
+//		setText(_string);
+//	}
+//
+//	public Element(StringList _strings)
+//	{
+//		setText(_strings);
+//	}
 	public Element()
 	{
+		makeNewId();
 	}
 
 	public Element(String _string)
 	{
+		makeNewId();
 		setText(_string);
 	}
 
 	public Element(StringList _strings)
 	{
+		makeNewId();
 		setText(_strings);
 	}
+	// END KGU#261 2017-01-19
 
-	
+
 	/**
 	 * Resets my cached drawing info
 	 */
@@ -517,6 +550,9 @@ public abstract class Element {
 	// START KGU#213 2016-08-01: Enh. #215 - derived from Instruction
 	protected void copyDetails(Element _ele, boolean _simplyCoveredToo)
 	{
+		// START KGU#261 2017-01-19: Enh. #259 (type map)
+		_ele.id = this.id;
+		// END KGU#261 2017-01-19
 		_ele.setComment(this.getComment().copy());
 		_ele.setColor(this.getColor());
 		_ele.breakpoint = this.breakpoint;
@@ -2035,6 +2071,9 @@ public abstract class Element {
 					specialSigns.add("]");
 					specialSigns.add("\u2190");
 					specialSigns.add(":=");
+					// START KGU#332 2017-01-27: Enh. #306 "dim" as declaration keyword
+					specialSigns.add(":");
+					// END KGU#332 2017-01-27
 
 					specialSigns.add("+");
 					specialSigns.add("/");
@@ -2044,6 +2083,9 @@ public abstract class Element {
 					specialSigns.add("*");
 					specialSigns.add("-");
 					specialSigns.add("var");
+					// START KGU#332 2017-01-27: Enh. #306 "dim" as declaration keyword
+					specialSigns.add("dim");
+					// END KGU#332 2017-01-27
 					specialSigns.add("mod");
 					specialSigns.add("div");
 					specialSigns.add("<=");
@@ -2569,7 +2611,10 @@ public abstract class Element {
     public String toString()
     {
     	return getClass().getSimpleName() + '@' + Integer.toHexString(hashCode()) +
-    			"(" + (this.getText().count() > 0 ? this.getText().get(0) : "") + ")";
+    			// START KGU#261 2017-01-19: Enh. #259 (type map)
+    			//"(" + (this.getText().count() > 0 ? this.getText().get(0) : "") + ")";
+    			"(" + this.id + (this.getText().count() > 0 ? (": " + this.getText().get(0)) : "") + ")";
+    			// END KGU#261 2017-01-19
     }
     // END KGU#152 2016-03-02
     
@@ -2602,17 +2647,27 @@ public abstract class Element {
     	}
 	}
 	
-	protected final String refactorLine(String line, HashMap<String, StringList> _splitOldKeys, String[] _keywords, boolean _ignoreCase)
+	/**
+     * Looks up the associated token sequence in _splitOldKeys for any of the parser preference names
+     * provided by _prefNames. If there is such a token sequence then it will be
+     * replaced throughout my text by the associated current parser preference for the respective name
+	 * @param line - line of element text
+	 * @param _splitOldKeys - a map of tokenized former non-empty parser preference keywords to be replaced
+	 * @param _prefNames - Array of parser preference names being relevant for this kind of element
+	 * @param _ignoreCase - whether case is to be ignored on comparison
+	 * @return refactored line
+	 */
+	protected final String refactorLine(String line, HashMap<String, StringList> _splitOldKeys, String[] _prefNames, boolean _ignoreCase)
 	{
 		StringList tokens = Element.splitLexically(line, true);
 		boolean isModified = false;
 		// FIXME: We should order the keys by decreasing length first!
-		for (int i = 0; i < _keywords.length; i++)
+		for (int i = 0; i < _prefNames.length; i++)
 		{
-			StringList splitKey = _splitOldKeys.get(_keywords[i]);
+			StringList splitKey = _splitOldKeys.get(_prefNames[i]);
 			if (splitKey != null)
 			{
-				String subst = D7Parser.getKeyword(_keywords[i]);
+				String subst = D7Parser.getKeyword(_prefNames[i]);
 				// line shouldn't be inflated ...
 				if (!splitKey.get(0).equals(" ")) {
 					while (subst.startsWith(" ")) subst = subst.substring(1); 
@@ -2656,5 +2711,65 @@ public abstract class Element {
 		return this.disabled || (this.parent != null && this.parent.isDisabled());
 	}
 	// END KGU#277 2016-10-13
+
+	// START KGU#261 2017-01-19: Enh. #259 (type map)
+	public Element findElementWithId(long _id)
+	{
+		final class ElementFinder implements IElementVisitor {
+			
+			private long id;
+			private Element foundElement = null;
+
+			public ElementFinder(long _id)
+			{
+				id = _id;
+			}
+			
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				if (_ele.getId() == id) {
+					foundElement = _ele;
+					return false;
+				}
+				return true;
+			}
+
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				return true;
+			}
+			
+		}
+		ElementFinder finder = new ElementFinder(_id);
+		traverse(finder);
+		return finder.foundElement;
+	}
+	
+	/**
+	 * Adds own variable declarations (only this element, no substructure!) to the given
+	 * map (varname -> typeinfo).
+	 * @param typeMap
+	 */
+	public void updateTypeMap(HashMap<String, TypeMapEntry> typeMap)
+	{
+		// Does nothing - to be sub-classed if necessary
+	}
+	// END KGU#261 2017-01-19
+	
+	// START KGU#261 2017-01-26: Enh. #259 
+	protected void addToTypeMap(HashMap<String,TypeMapEntry> typeMap, String varName, String typeSpec, int lineNo, boolean isAssigned, boolean isCStyle)
+	{
+		if (varName != null && !typeSpec.isEmpty()) {
+			TypeMapEntry entry = typeMap.get(varName);
+			if (entry == null) {
+				// Add a new entry to the type map
+				typeMap.put(varName, new TypeMapEntry(typeSpec, this, lineNo, isAssigned, isCStyle));
+			}
+			else {
+				// add an alternative declaration to the type map entry
+				entry.addDeclaration(typeSpec, this, lineNo, isAssigned, isCStyle);
+			}
+		}				
+	}
 
 }
