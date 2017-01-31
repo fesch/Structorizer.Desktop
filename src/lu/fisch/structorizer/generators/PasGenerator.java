@@ -62,7 +62,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig         2016.12.26      Enh. #314: Makeshift additions to support the File API
- *      Kay Gürtzig         2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
+ *      Kay Gürtzig         2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support
+ *                                          Bugfix #337: Defective export of 2d assignments like a[i] <- {foo, bar} mended
  *
  ******************************************************************************************************
  *
@@ -243,6 +244,13 @@ public class PasGenerator extends Generator
 			else if (_type.equalsIgnoreCase("unsigned int")) _type = "Cardinal";
 			else if (_type.equalsIgnoreCase("unsigned long")) _type = "Cardinal";
 			else if (_type.equalsIgnoreCase("bool")) _type = "Boolean";
+			else if (_type.toLowerCase().startsWith("array")) {
+				String lower = _type.toLowerCase();
+				String elType = lower.replaceAll("^array.*?of (.*)", "$1");
+				if (!elType.trim().isEmpty()) {
+					_type = lower.replaceAll("^(array.*?of ).*", "$1") + transformType(elType, elType);
+				}
+			}
 			// To be continued if required...
 		}
 		return _type;
@@ -440,16 +448,34 @@ public class PasGenerator extends Generator
 							// at other positions in code, we use the standard Java
 							// index range here (though in Pascal indexing usually 
 							// starts with 1 but may vary widely). We solve the problem
-							// by providing a configurable start index constant 
+							// by providing a configurable start index constant
 							insertComment("TODO: Check indexBase value (automatically generated)", _indent);
-							insertDeclaration("const", "indexBase_" + varName + ": Integer = 0;",
+							// START KGU#332 2017-01-30: We must be better prepared for two-dimensional arrays
+							//insertDeclaration("var", "indexBase_" + varName + ": Integer = 0;",
+							//		_indent.length());
+							//for (int el = 0; el < elements.count(); el++)
+							//{
+							//	addCode(varName + "[indexBase_" + varName + " + " + el + "] := " + 
+							//			elements.get(el) + ";",
+							//			_indent, isDisabled);
+							//}
+							String baseName = varName;
+							if (varName.matches("\\w*\\[.*\\]")) {
+								baseName = varName.replaceAll("(\\w.*)\\[(.*)\\]", "$1_$2");
+								varName = varName.replace("]", ", ");
+							}
+							else {
+								varName = varName + "[";
+							}
+							insertDeclaration("const", "indexBase_" + baseName + " = 0;",
 									_indent.length());
 							for (int el = 0; el < elements.count(); el++)
 							{
-								addCode(varName + "[indexBase_" + varName + " + " + el + "] := " + 
+								addCode(varName + "indexBase_" + baseName + " + " + el + "] := " + 
 										elements.get(el) + ";",
 										_indent, isDisabled);
 							}
+							// END KGU#332 2017-01-30
 						}
 						
 					}
@@ -1112,11 +1138,12 @@ public class PasGenerator extends Generator
 				String type = types.get(0);
 				if (type.startsWith("@")) {
 					// It's an array, so get its index range
+					int minIndex = typeInfo.getMinIndex();
 					int maxIndex = typeInfo.getMaxIndex();
 					String indexRange = "";
 					if (maxIndex > 0) {
-						indexRange = "[indexBase_" + varName +
-								"..indexBase_" + varName + "+" + maxIndex + "] ";
+						indexRange = "[" + minIndex +
+								"..." + maxIndex + "] ";
 					}
 					type = "array " + indexRange + "of " + type.substring(1);
 				}

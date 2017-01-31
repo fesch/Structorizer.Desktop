@@ -63,6 +63,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.12.22      Enh. #314: Support for Structorizer File API, improvements for #227
  *      Kay Gürtzig     2017.01.20      Bugfix #336: variable list for declaration section (loop vars in, parameters out)
  *      Kay Gürtzig     2017.01.26      Enh. #259: Type info is now gathered for declarations support
+ *      Kay Gürtzig     2017.01.30      Bugfix #337: Mutilation of lvalues with nested index access
  *
  ******************************************************************************************************
  *
@@ -866,7 +867,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected String[] lValueToTypeNameIndex(String _lval)
 	{
 		// Avoid too much nonsense on indexed variables
-    	Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
+		// START KGU#334 2017-01-30: Bugfix #337 - lvalue was mutilated with nested index access
+    	//Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
+		String lvalPattern = "(.*?)[\\[](.*)[\\]](.*?)";
+    	Regex r = new Regex(lvalPattern,"$1 $3");
+    	// END KGU#334 2017-01-30
     	String name = r.replaceAll(_lval);
 		String type = "";
 		// Check Pascal and BASIC style of type specifications
@@ -893,11 +898,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		
 		if ((subPos = _lval.indexOf('[')) >= 0 && _lval.indexOf(']', subPos+1) >= 0)
 		{
-			// START KGU#189 2016-04-29: Bugfix for multidimensional array expressions
+			// START KGU#189 2016-04-29: Bugfix #337 for multidimensional array expressions
 			// lvalues like a[i][j] <- ... had been transformed to a[ij] <- ...
 			// Now index would become "i][j" in such a case which at least preserves syntax
 			//index = _lval.replaceAll("(.*?)[\\[](.*?)[\\]](.*?)","$2").trim();
-			index = _lval.replaceAll("(.*?)[\\[](.*)[\\]](.*?)","$2").trim();
+			index = _lval.replaceAll(lvalPattern,"$2").trim();
 			// END KGU#189 2016-04-29
 		}
 		String[] typeNameIndex = {type, name, index};
