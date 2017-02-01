@@ -52,6 +52,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
  *      Kay Gürtzig     2016.10.15      Enh. #271: method isEmptyInput() had to consider prompt strings now.
  *      Kay Gürtzig     2016.11.22      Bugfix #296: Wrong transmutation of return and output statements
+ *      Kay Gürtzig     2017.01.30      Enh. #335: More sophisticated type and declaration support    
  *
  ******************************************************************************************************
  *
@@ -64,6 +65,7 @@ package lu.fisch.structorizer.elements;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
+import java.util.HashMap;
 
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.executor.Function;
@@ -370,7 +372,7 @@ public class Instruction extends Element {
     	// START KGU#298 2016-11-22: Bugfix #296 - unawareness of had led to wrong transmutations
 		//Function fct = new Function(line);
 		//return fct.isFunction();
-		return !isJump(line) && !isOutput(line) && (new Function(line)).isFunction();
+		return !isJump(line) && !isOutput(line) && Function.isFunction(line);
     	// END KGU#298 2016-11-22
 	}
 	public boolean isProcedureCall()
@@ -394,7 +396,7 @@ public class Instruction extends Element {
 		int asgnPos = tokens.indexOf("<-");
 		if (asgnPos > 0)
 		{
-			isFunc = (new Function(tokens.concatenate("", asgnPos+1))).isFunction();
+			isFunc = Function.isFunction(tokens.concatenate("", asgnPos+1));
 		}
 		return isFunc;
 	}
@@ -463,9 +465,58 @@ public class Instruction extends Element {
 			}
 		}
 		return false;
-	}
-	
+	}	
 	// END KGU#236 2016-08-10
+
+	// START KGU#322 2016-07-06: Enh. #335
+	/**
+	 * Returns true if the current line of code is a declarationof one of the following types:
+	 * a) var &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; [&lt;- &lt;expr&gt;]
+	 * b) dim &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; [&lt;- &lt;expr&gt;]
+	 * c) &lt;type&gt; &lt;id&gt; &lt;- &lt;- &lt;expr&gt;
+	 * @param line - String comprising one line of code
+	 * @return true iff line is of one of the forms a), b), c)
+	 */
+	public static boolean isDeclaration(String line)
+	{
+    	StringList tokens = Element.splitLexically(line, true);
+    	unifyOperators(tokens, true);
+    	boolean typeA = tokens.indexOf("var") == 0 && tokens.indexOf(":") > 1;
+    	boolean typeB = tokens.indexOf("dim") == 0 && tokens.indexOf("as") > 1;
+    	int posAsgn = tokens.indexOf("<-");
+    	boolean typeC = false;
+    	if (posAsgn > 1) {
+    		tokens = tokens.subSequence(0, posAsgn);
+    		int posLBrack = tokens.indexOf("[");
+    		if (posLBrack > 0 && posLBrack < tokens.lastIndexOf("]")) {
+    			tokens = tokens.subSequence(0, posLBrack);
+    		}
+    		tokens.removeAll(" ");
+    		typeC = tokens.count() > 1;
+    	}
+		return typeA || typeB || typeC;
+	}
+	/** @return true if all non-empty lines are declarations */
+	public boolean isDeclaration()
+	{
+		boolean isDecl = true;
+		for (int i = 0; isDecl && i < this.text.count(); i++) {
+			String line = this.text.get(i).trim();
+			isDecl = line.isEmpty() || isDeclaration(line);
+		}
+		return isDecl;
+	}
+	/** @return true if at least one line is a declaration */
+	public boolean hasDeclarations()
+	{
+		boolean hasDecl = false;
+		for (int i = 0; !hasDecl && i < this.text.count(); i++) {
+			String line = this.text.get(i).trim();
+			hasDecl = !line.isEmpty() && isDeclaration(line);
+		}
+		return hasDecl;
+	}
+	// END KGU#332 2017-01-27
 
 	// START KGU#178 2016-07-19: Support for enh. #160 (export of called subroutines)
 	// (This method is plaed here instead of in class Call because it is needed
@@ -530,5 +581,152 @@ public class Instruction extends Element {
 		// TODO Auto-generated method stub
 		return relevantParserKeys;
 	}
-	// START KGU#258 2016-09-26: Enh. #253
+	// END KGU#258 2016-09-26
+	
+	// START KGU#261 2017-01-26: Enh. #259 (type map)
+	/**
+	 * Adds own variable declarations (only this element, no substructure!) to the given
+	 * map (varname -> typeinfo).
+	 * @param typeMap
+	 */
+	@Override
+	public void updateTypeMap(HashMap<String, TypeMapEntry> typeMap)
+	{
+		for (int i = 0; i < this.getText().count(); i++) {
+			updateTypeMapFromLine(typeMap, this.getText().get(i), i);
+		}
+	}
+	
+	public void updateTypeMapFromLine(HashMap<String, TypeMapEntry> typeMap, String line, int lineNo)
+	{
+		StringList tokens = Element.splitLexically(line, true);
+		String varName = null;
+		String typeSpec = "";
+		boolean isAssigned = false;
+		unifyOperators(tokens, true);
+		tokens.removeAll(" ");
+		if (tokens.count() == 0) {
+			return;
+		}
+		int posColon = tokens.indexOf(tokens.get(0).equals("dim") ? "as" : ":");
+		int posAsgnmt = tokens.indexOf("<-");
+		// First we try to extract a type description from a Pascal-style variable declaration
+		if (tokens.count() > 3 && (tokens.get(0).equals("var") || tokens.get(0).equals("dim")) && posColon >= 2) {
+			isAssigned = posAsgnmt > posColon;
+			typeSpec = tokens.concatenate(" ", posColon+1, (isAssigned ? posAsgnmt : tokens.count()));
+			// There may be one or more variable names between "var" and ':' if there is no assignment
+			for (int i = 1; i < posColon; i++)
+			{
+				if (Function.testIdentifier(tokens.get(i), null)) {
+					addToTypeMap(typeMap, tokens.get(i), typeSpec, lineNo, isAssigned, false);
+				}
+			}
+		}
+		// Next we try to extract type information from an initial assignment (without "var" keyword)
+		else if (posAsgnmt > 0 && !tokens.contains("var") && !tokens.contains("dim")) {
+			// Type information might be found left of the variable name or derivable from the initial value
+			StringList leftSide = tokens.subSequence(0, posAsgnmt);
+			StringList rightSide = tokens.subSequence(posAsgnmt+1, tokens.count());
+			isAssigned = rightSide.count() > 0;
+			// Isolate the variable name from the left-hand side of the assignment
+			varName = getAssignedVarname(leftSide);
+			boolean isCStyleDecl = Instruction.isDeclaration(line);
+			if (varName != null) {
+				int pos = leftSide.indexOf(varName);
+				typeSpec = leftSide.concatenate(" ", 0, pos);
+				while (!typeSpec.isEmpty() && (pos = leftSide.indexOf("[")) > 1) {
+					typeSpec += leftSide.concatenate("", pos, leftSide.indexOf("]")+1);
+					leftSide.remove(pos, leftSide.indexOf("]")+1);
+				}
+				if (typeSpec.isEmpty() && !typeMap.containsKey(varName)) {
+					//String expr = rightSide.concatenate(" ");
+					if (rightSide.count() >= 2 && rightSide.get(0).equals("{") && rightSide.get(rightSide.count()-1).equals("}")) {
+						StringList items = Element.splitExpressionList(rightSide.concatenate("", 1, rightSide.count()-1), ",");
+						for (int i = 0; !typeSpec.contains("???") && i < items.count(); i++) {
+							String itemType = identifyExprType(typeMap, items.get(i));
+							if (typeSpec.isEmpty()) {
+								typeSpec = itemType;
+							}
+							else if (!typeSpec.equalsIgnoreCase(itemType)) {
+								typeSpec = "???";
+							}
+						}
+						if (typeSpec.isEmpty()) {
+							typeSpec = "???";
+						}
+						typeSpec += "[" + items.count() + "]";
+					}
+					else {
+						typeSpec = identifyExprType(typeMap, rightSide.concatenate(" "));
+					}
+					while (!typeSpec.isEmpty() && (pos = leftSide.indexOf("[")) == 1) {
+						typeSpec = "array of " + typeSpec;
+						leftSide.remove(pos, leftSide.indexOf("]")+1);
+					}
+				}
+			}
+			addToTypeMap(typeMap, varName, typeSpec, lineNo, isAssigned, isCStyleDecl);
+		}
+	}
+	
+	private String identifyExprType(HashMap<String, TypeMapEntry> typeMap, String expr)
+	{
+		String typeSpec = "";	// This means no info
+		// 1. Check whether its a known typed variable
+		TypeMapEntry typeEntry = typeMap.get(expr);
+		if (typeEntry != null) {
+			StringList types = typeEntry.getTypes();
+			if (types.count() == 1) {
+				typeSpec = typeEntry.getTypes().get(0);
+			}
+		}
+		// Otherwise check if it's a built-in function with unambiguous type
+		else if (Function.isFunction(expr)) {
+			typeSpec = (new Function(expr).getResultType(""));
+		}
+		else if (expr.matches("(^\\\".*\\\"$)|(^\\\'.*\\\'$)")) {
+			typeSpec = "String";
+		}
+		// 2. If none of the approaches above succeeded check for a numeric literal
+		if (typeSpec.isEmpty()) {
+			try {
+				Double.parseDouble(expr);
+				typeSpec = "double";
+				Integer.parseInt(expr);
+				typeSpec = "int";
+			}
+			catch (NumberFormatException ex) {}
+		}
+		// Check for boolean literals
+		if (typeSpec.isEmpty() && (expr.equalsIgnoreCase("true") || expr.equalsIgnoreCase("false"))) {
+			typeSpec = "boolean";
+		}
+		return typeSpec;
+	}
+	
+	/**
+	 * Extracts the target variable name out of the given token sequence which may comprise
+	 * the entire line of an assignment or just its left part.
+	 * @param tokens - unified tokens of an assignment instruction (otherwise the result may be nonsense)
+	 * @return the extracted variable name or null
+	 */
+	public String getAssignedVarname(StringList tokens) {
+		String varName = null;
+		int posAsgn = tokens.indexOf("<-");
+		if (posAsgn > 0) {
+			tokens = tokens.subSequence(0, posAsgn);
+		}
+		int posLBracket = tokens.indexOf("[");
+		if (posLBracket > 0 && tokens.lastIndexOf("]") > posLBracket) {
+			// If it's an array element access then cut of the index expression
+			tokens = tokens.subSequence(0, posLBracket);
+		}
+		// The last token should be the variable name
+		if (tokens.count() > 0) {
+			varName = tokens.get(tokens.count()-1);
+		}
+		return varName;
+	}
+	// END KGU#261 2017-01-26
+
 }

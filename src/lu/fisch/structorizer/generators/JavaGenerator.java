@@ -56,6 +56,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig             2016.12.22      Enh. #314: Support for Structorizer File API
+ *      Kay Gürtzig             2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
+ *      Kay Gürtzig             2017.02.01      Enh. #113: Array parameter transformation
  *
  ******************************************************************************************************
  *
@@ -355,12 +357,15 @@ public class JavaGenerator extends CGenerator
 		_type = _type.replace("unsigned", "int");
 		_type = _type.replace("longreal", "double");
 		_type = _type.replace("real", "double");
-		_type = _type.replace("boole", "boolean");
-		_type = _type.replace("bool", "boolean");
+		//_type = _type.replace("boole", "boolean");
+		//_type = _type.replace("bool", "boolean");
+		if (_type.matches("(^|.*\\W+)bool(\\W+.*|$)")) {
+			_type = _type.replaceAll("(^|.*\\W+)bool(\\W+.*|$)", "$1boolean$2");
+		}
 		_type = _type.replace("character", "Character");
 		_type = _type.replace("integer", "Integer");
 		_type = _type.replace("string", "String");
-		_type = _type.replace("array[ ]([0-9]*)[ ]of char", "String");	// FIXME (KGU 2016-01-14) doesn't make much sense
+		_type = _type.replace("array[ ]?([0-9]*)[ ]of char", "String");	// FIXME (KGU 2016-01-14) doesn't make much sense
 		return _type;
 	}
 	// END KGU#16 2015-11-29
@@ -520,6 +525,9 @@ public class JavaGenerator extends CGenerator
 			{
 				code.add(_indent+this.getIndent() + " * @return ");
 				_resultType = transformType(_resultType, "int");
+				// START KGU#140 2017-02-01: Enh. #113: Proper conversion of array types
+				_resultType = this.transformArrayDeclaration(_resultType, "");
+				// END KGU#140 2017-02-01
 			}
 			else {
 				_resultType = "void";		        	
@@ -531,10 +539,12 @@ public class JavaGenerator extends CGenerator
 					+ _resultType + " " + _procName + "(";
 			// END KGU#178 2016-07-20
 			for (int p = 0; p < _paramNames.count(); p++) {
-				if (p > 0)
-					fnHeader += ", ";
-				fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " +
-						_paramNames.get(p)).trim();
+				if (p > 0) { fnHeader += ", "; }
+				// START KGU#140 2017-02-01: Enh. #113: Proper conversion of array types
+				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
+				//		_paramNames.get(p)).trim();
+				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+				// END KGU#140 2017-02-01
 			}
 			fnHeader += ")";
 			insertBlockHeading(_root, fnHeader,  _indent + this.getIndent());
@@ -543,22 +553,45 @@ public class JavaGenerator extends CGenerator
 		return _indent + this.getIndent() + this.getIndent();
 	}
 
-	/**
-	 * Generates some preamble (i.e. comments, language declaration section etc.)
-	 * and adds it to this.code.
-	 * @param _root - the diagram root element
-	 * @param _indent - the current indentation string
-	 * @param varNames - list of variable names introduced inside the body
-	 */
+	// START KGU#332 2017-01-30: Method decomposed - no need to override it anymore
+//	/**
+//	 * Generates some preamble (i.e. comments, language declaration section etc.)
+//	 * and adds it to this.code.
+//	 * @param _root - the diagram root element
+//	 * @param _indent - the current indentation string
+//	 * @param varNames - list of variable names introduced inside the body
+//	 */
+//	@Override
+//	protected String generatePreamble(Root _root, String _indent, StringList varNames)
+//	{
+//		code.add(_indent);
+//		insertComment("TODO: Declare and initialise local variables here:", _indent);
+//		for (int v = 0; v < varNames.count(); v++) {
+//			insertComment(varNames.get(v), _indent);
+//		}
+//		code.add(_indent);
+//		// START KGU#236 2016-12-22: Issue #227
+//		if (this.hasInput(_root)) {
+//			insertComment("TODO: You may have to modify input instructions,", _indent);			
+//			insertComment("      e.g. by replacing nextLine() with a more suitable call", _indent);
+//			insertComment("      according to the variable type, say nextInt().", _indent);			
+//			code.add(_indent);
+//		}
+//		// END KGU#236 2016-12-22
+//		return _indent;
+//	}
+	
 	@Override
-	protected String generatePreamble(Root _root, String _indent, StringList varNames)
+	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
 	{
-		code.add(_indent);
-		insertComment("TODO: Declare and initialise local variables here:", _indent);
-		for (int v = 0; v < varNames.count(); v++) {
-			insertComment(varNames.get(v), _indent);
+		while (_elementType.startsWith("@")) {
+			_elementType = _elementType.substring(1) + "[]";
 		}
-		code.add(_indent);
+		return _elementType + " " + _varName; 
+	}
+	@Override
+	protected void generateIOComment(Root _root, String _indent)
+	{
 		// START KGU#236 2016-12-22: Issue #227
 		if (this.hasInput(_root)) {
 			insertComment("TODO: You may have to modify input instructions,", _indent);			
@@ -567,8 +600,8 @@ public class JavaGenerator extends CGenerator
 			code.add(_indent);
 		}
 		// END KGU#236 2016-12-22
-		return _indent;
 	}
+// END KGU#332 2017-01-30
 
 	/**
 	 * Creates the appropriate code for returning a required result and adds it

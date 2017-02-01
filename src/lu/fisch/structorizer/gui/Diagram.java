@@ -109,6 +109,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.12.28      Enh. #318: Backsaving of unzipped diagrams to arrz file
  *      Kay Gürtzig     2017.01.04      Bugfix #321: Signatures of saveNSD(), doSaveNSD(), saveAsNSD() and zipToArrz() enhanced
  *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling of FileChooser for Nimbus L&F solved
+ *      Kay Gürtzig     2017.01.27      Issues #290/#306: Signature and logic of openNsdOrArr slightly modified
  *
  ******************************************************************************************************
  *
@@ -1245,14 +1246,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	// START KGU#289/KGU#316 2016-11-15/2016-12-28: Enh. #290/#318: Better support for Arranger files
-	public void openNsdOrArr(String _filepath)
+	public String openNsdOrArr(String _filepath)
 	{
-		if (StructogramFilter.getExtension(_filepath).equals("nsd")) {
-			this.openNSD(_filepath);
+		String ext = StructogramFilter.getExtension(_filepath);
+		if (ext.equalsIgnoreCase("arr") || ext.equalsIgnoreCase("arrz")) {
+			loadArrangement(new File(_filepath));			
 		}
 		else {
-			loadArrangement(new File(_filepath));
+			this.openNSD(_filepath);
 		}
+		return ext;
 	}
 	// END KGU#316 2016-12-28
 
@@ -1277,8 +1280,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				NSDParser parser = new NSDParser();
 				boolean hil = root.hightlightVars;
 				root = parser.parse(f.toURI().toString());
-				root.hightlightVars=hil;
-				root.filename=_filename;
+				root.hightlightVars = hil;
+				root.filename = _filename;
 				currentDirectory = new File(root.filename);
 				addRecentFile(root.filename);
 				// START KGU#183 2016-04-23: Issue #169
@@ -3733,7 +3736,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 
 	/*****************************************
-	 * export code methods
+	 * import code methods
 	 *****************************************/
 	public void importPAS()
 	{

@@ -58,6 +58,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.04      KGU#49: Closing a stand-alone instance now effectively warns Arranger
  *      Kay Gürtzig     2017.01.06      Issue #312: Measure against lost focus on start.
  *      Kay Gürtzig     2017.01.07      Enh. #101: Modified title string for dependent instances
+ *      Kay Gürtzig     2017.01.15      Enh. #333: New potential preference "unicodeCompOps" added to Ini
  *
  ******************************************************************************************************
  *
@@ -418,6 +419,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			Element.E_MAKE_BACKUPS = ini.getProperty("makeBackups", "1").equals("1");
 		    // END KGU#309 20161-12-15
 			
+			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
+			Element.E_SHOW_UNICODE_OPERATORS = ini.getProperty("unicodeCompOps", "1").equals("1");
+			// END KGU#331 2017-01-15
+			
 			// recent files
 			try
 			{	
@@ -514,7 +519,11 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		    ini.setProperty("makeBackups", (Element.E_MAKE_BACKUPS ? "1" : "0"));
 		    // END KGU#309 20161-12-15
 
-		    // look and feel
+			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
+		    ini.setProperty("unicodeCompOps", (Element.E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
+			// END KGU#331 2017-01-15
+
+			// look and feel
 			if(laf!=null)
 			{
 				ini.setProperty("laf", laf);

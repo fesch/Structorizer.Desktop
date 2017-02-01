@@ -51,6 +51,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig             2017.01.04      Bugfix #322: input and output code generation fixed 
+ *      Kay Gürtzig             2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
+ *      Kay Gürtzig             2017.01.31      Enh. #113: Array parameter transformation
  *
  ******************************************************************************************************
  *
@@ -405,7 +407,7 @@ public class CSharpGenerator extends CGenerator
 			insertComment("TODO: Declare and initialise class and member variables here", _indent + this.getIndent());
 			code.add(_indent);
 			code.add(_indent + this.getIndent()+"/**");
-			code.add(_indent + this.getIndent()+" * @param args");
+			code.add(_indent + this.getIndent()+" * @param args - array of command line arguments");
 			code.add(_indent + this.getIndent()+" */");
 
 			insertBlockHeading(_root, "public static void Main(string[] args)", _indent + this.getIndent());
@@ -425,6 +427,9 @@ public class CSharpGenerator extends CGenerator
 				code.add(_indent+this.getIndent() + " * @return ");
 				code.add(_indent+this.getIndent() + " */");
 				_resultType = transformType(_resultType, "int");
+				// START KGU#140 2017-01-31: Enh. #113 - Converts possible array notations
+				_resultType = transformArrayDeclaration(_resultType, "");
+				// END KGU#140 2017-01-31
 			}
 			else
 			{
@@ -437,10 +442,12 @@ public class CSharpGenerator extends CGenerator
 					+ _resultType + " " + _procName + "(";
 			// END KGU#178 2016-07-20
 			for (int p = 0; p < _paramNames.count(); p++) {
-				if (p > 0)
-					fnHeader += ", ";
-				fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
-						_paramNames.get(p)).trim();
+				if (p > 0) { fnHeader += ", "; }
+				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
+				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
+				//		_paramNames.get(p)).trim();
+				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+				// END KGU#140 2017-01-31
 			}
 			fnHeader += ")";
 			insertBlockHeading(_root, fnHeader, _indent+this.getIndent());
@@ -449,26 +456,42 @@ public class CSharpGenerator extends CGenerator
 		return _indent + this.getIndent() + this.getIndent();
 	}
 
-	/**
-	 * Generates some preamble (i.e. comments, language declaration section etc.)
-	 * and adds it to this.code.
-	 * @param _root - the diagram root element
-	 * @param _indent - the current indentation string
-	 * @param varNames - list of variable names introduced inside the body
-	 */
+// START KGU#332 2017-01-30: Method decomposed - no need to override it anymore
+//	/**
+//	 * Generates some preamble (i.e. comments, language declaration section etc.)
+//	 * and adds it to this.code.
+//	 * @param _root - the diagram root element
+//	 * @param _indent - the current indentation string
+//	 * @param varNames - list of variable names introduced inside the body
+//	 */
+//	@Override
+//	protected String generatePreamble(Root _root, String _indent, StringList varNames)
+//	{
+//		code.add("");
+//		// Variable declaration proposals (now with all used variables listed)
+//		insertComment("TODO: Declare local variables here:", _indent);
+//		for (int v = 0; v < varNames.count(); v++)
+//		{
+//			insertComment(varNames.get(v), _indent);
+//		}
+//		code.add("");
+//		return _indent;
+//	}
+	
 	@Override
-	protected String generatePreamble(Root _root, String _indent, StringList varNames)
+	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
 	{
-		code.add("");
-		// Variable declaration proposals (now with all used variables listed)
-		insertComment("TODO: Declare local variables here:", _indent);
-		for (int v = 0; v < varNames.count(); v++)
-		{
-			insertComment(varNames.get(v), _indent);
+		while (_elementType.startsWith("@")) {
+			_elementType = _elementType.substring(1) + "[]";
 		}
-		code.add("");
-		return _indent;
+		return (_elementType + " " + _varName).trim(); 
 	}
+	@Override
+	protected void generateIOComment(Root _root, String _indent)
+	{
+		// Don't write anything
+	}
+// END KGU#332 2017-01-30
 
 	/**
 	 * Creates the appropriate code for returning a required result and adds it

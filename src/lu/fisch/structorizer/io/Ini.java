@@ -216,7 +216,7 @@ public class Ini
 										+ "Java", "");
 				// filename2 = filename2.replaceFirst("\\\\Structorizer.app",
 				// "");
-				filename2 = URLDecoder.decode(filename2);
+				filename2 = URLDecoder.decode(filename2, "UTF-8");
 			}
 		} catch (Error e)
 		{

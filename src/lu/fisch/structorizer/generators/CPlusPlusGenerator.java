@@ -46,6 +46,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.11.08      Collateral damage of #271 to getOutputReplacer() mended
  *      Kay Gürtzig     2016.12.25      Enh. #314: Support for File API added.
  *      Kay Gürtzig     2017.01.05      Enh. #314: File API intervention in transformTokens modified
+ *      Kay Gürtzig     2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
+ *      Kay Gürtzig     2017.01.31      Enh. #113: Array parameter transformation
  *
  ******************************************************************************************************
  *
@@ -61,6 +63,7 @@ package lu.fisch.structorizer.generators;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.StringList;
@@ -302,15 +305,28 @@ public class CPlusPlusGenerator extends CGenerator {
         else {
 			String fnHeader = transformType(_resultType,
 					((returns || isResultSet || isFunctionNameSet) ? "int" : "void"));
+			// START KGU#140 2017-01-31: Enh. #113 - improved type recognition and transformation
+			boolean returnsArray = fnHeader.toLowerCase().contains("array") || fnHeader.contains("]");
+			if (returnsArray) {
+				fnHeader = transformArrayDeclaration(fnHeader, "");
+			}
+			// END KGU#140 2017-01-31
 			fnHeader += " " + _procName + "(";
 			for (int p = 0; p < _paramNames.count(); p++) {
-				if (p > 0)
-					fnHeader += ", ";
-				fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " +
-					_paramNames.get(p)).trim();
+				if (p > 0) { fnHeader += ", "; }
+				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
+				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
+				//		_paramNames.get(p)).trim();
+				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+				// END KGU#140 2017-01-31
 			}
 			fnHeader += ")";
 			// END KGU 2015-11-29
+			// START KGU#140 2017-01-31: Enh. #113
+			if (returnsArray) {
+				insertComment("      C++ may not permit to return arrays like this - find an other way to pass the result!", _indent);
+			}
+			// END KGU#140 2017-01-31
             insertComment("TODO Revise the return type and declare the parameters!", _indent);
             
         	code.add(fnHeader);
@@ -321,26 +337,34 @@ public class CPlusPlusGenerator extends CGenerator {
 		return _indent + this.getIndent();
 	}
 
-	/**
-	 * Generates some preamble (i.e. comments, language declaration section etc.)
-	 * and adds it to this.code.
-	 * @param _root - the diagram root element
-	 * @param _indent - the current indentation string
-	 * @param varNames - list of variable names introduced inside the body
-	 */
+// START KGU#332 2017-01-30: Method decomposed - no need to override it anymore
+//	/**
+//	 * Generates some preamble (i.e. comments, language declaration section etc.)
+//	 * and adds it to this.code.
+//	 * @param _root - the diagram root element
+//	 * @param _indent - the current indentation string
+//	 * @param varNames - list of variable names introduced inside the body
+//	 */
+//	@Override
+//	protected String generatePreamble(Root _root, String _indent, StringList varNames)
+//	{
+//		code.add(_indent);
+//		insertComment("TODO: declare your variables here:", _indent);
+//        // START KGU 2015-11-30: List the variables to be declared
+//		for (int v = 0; v < varNames.count(); v++) {
+//			insertComment(varNames.get(v), _indent);
+//		}
+//		// END KGU 2015-11-30
+//		code.add(_indent);
+//		return _indent;
+//	}
+	
 	@Override
-	protected String generatePreamble(Root _root, String _indent, StringList varNames)
+	protected void generateIOComment(Root _root, String _indent)
 	{
-		code.add(_indent);
-		insertComment("TODO: declare your variables here:", _indent);
-        // START KGU 2015-11-30: List the variables to be declared
-		for (int v = 0; v < varNames.count(); v++) {
-			insertComment(varNames.get(v), _indent);
-		}
-		// END KGU 2015-11-30
-		code.add(_indent);
-		return _indent;
+		// Don't write anything
 	}
+// END KGU#332 2017-01-30
     
 	// START KGU#311 2016-12-24: Enh. #314
 	protected boolean copyFileAPIResources(String _filePath)

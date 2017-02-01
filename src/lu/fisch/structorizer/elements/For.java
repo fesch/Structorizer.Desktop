@@ -67,6 +67,7 @@ package lu.fisch.structorizer.elements;
 
 
 import java.awt.Point;
+import java.util.HashMap;
 import java.util.Vector;
 
 import javax.swing.ImageIcon;
@@ -1060,5 +1061,20 @@ public class For extends Element implements ILoop {
 		}
 	}
 	// END KGU#258 2016-09-26
+	
+	// START KGU#261 2017-01-26: Enh. #259 (type map)
+	/**
+	 * Adds own variable declarations (only this element, no substructure!) to the given
+	 * map (varname -> typeinfo).
+	 * @param typeMap
+	 */
+	@Override
+	public void updateTypeMap(HashMap<String, TypeMapEntry> typeMap)
+	{
+		if (!this.isForInLoop()) {
+			this.addToTypeMap(typeMap, this.getCounterVar(), "int", 0, true, false);
+		}
+	}
+	// END KGU#261 2017-01-26
 
 }

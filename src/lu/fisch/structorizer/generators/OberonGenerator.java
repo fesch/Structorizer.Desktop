@@ -63,6 +63,7 @@ package lu.fisch.structorizer.generators;
  *                                              Issue #227: In obvious cases (literals) output procedure names inserted.
  *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig             2016.12.22      Issue #227: input and output usage more routine-specific
+ *      Kay Gürtzig             2016.01.30      Enh. #335, bugfix #337: More sophisticated type treatment
  *
  ******************************************************************************************************
  *
@@ -88,6 +89,7 @@ package lu.fisch.structorizer.generators;
  ******************************************************************************************************
  */
 
+import java.util.Map;
 import java.util.regex.Matcher;
 
 import lu.fisch.utils.*;
@@ -162,6 +164,10 @@ public class OberonGenerator extends Generator {
 		return true;
 	}
 	// END KGU 2016-08-12
+	
+	// START KGU#332 2017-01-30: Enh. #335
+	private Map<String,TypeMapEntry> typeMap;
+	// END KGU#332 2017-01-30
     
     /************ Code Generation **************/
 
@@ -214,6 +220,7 @@ public class OberonGenerator extends Generator {
 			if (_type.equalsIgnoreCase("long") ||
 					_type.equalsIgnoreCase("unsigned long")) _type = "LONGINT";
 			else if (_type.equalsIgnoreCase("int") ||
+					_type.equalsIgnoreCase("integer") ||
 					_type.equalsIgnoreCase("unsigned") ||
 					_type.equalsIgnoreCase("unsigned int")) _type = "INTEGER";
 			else if (_type.equalsIgnoreCase("short") ||
@@ -226,9 +233,25 @@ public class OberonGenerator extends Generator {
 					_type.equalsIgnoreCase("real")) _type = "REAL";
 			else if (_type.equalsIgnoreCase("double") ||
 					_type.equalsIgnoreCase("longreal")) _type = "LONGREAL";
-			else if (_type.equalsIgnoreCase("bool")) _type = "BOOLEAN";
+			else if (_type.equalsIgnoreCase("bool") ||
+					_type.equalsIgnoreCase("boolean")) _type = "BOOLEAN";
 			else if (_type.equalsIgnoreCase("string")) _type = "ARRAY 100 OF CHAR"; // may be too short but how can we guess?
 			// To be continued if required...
+			// START KGU#332 2017-01-30: Enh. #335
+			_type = _type.replace("array", "ARRAY");
+			_type = _type.replace(" of ", " OF ");
+			String pattern = "(.*)ARRAY\\s*?\\[\\s*[0-9]+\\s*[.][.][.]?\\s*([0-9]+)\\s*\\]\\s*OF\\s*(.*)";
+			if (_type.matches(pattern)) {
+				String upperIndex = _type.replaceFirst(pattern, "$2");
+				int nElements = Integer.parseInt(upperIndex) + 1;
+				String elementType = _type.replaceFirst(pattern,  "$3").trim();
+				_type = _type.replaceFirst(pattern, "$1ARRAY " + nElements +" OF ") + transformType(elementType, elementType);
+			}
+			else if (_type.matches(pattern = "ARRAY\\s*OF\\s*(.*)")) {
+				String elementType = _type.replaceFirst(pattern, "$1").trim();
+				_type = "ARRAY OF " + transformType(elementType, elementType);
+			}
+			// END KGU#332 2017-01-30
 		}
 		return _type;
 	}
@@ -348,6 +371,20 @@ public class OberonGenerator extends Generator {
 			posDecl = code.indexOf(seekIndent + _category);
 			seekIndent += this.getIndent();
 		}
+		// START KGU#332 2017-01-30: Enh. #335 Enables const declarations
+		if (posDecl < 0 && _category.equals("CONST")) {
+			seekIndent = "";
+			while (posDecl < 0 && seekIndent.length() < _maxIndent)
+			{
+				posDecl = code.indexOf(seekIndent + "VAR");
+				if (posDecl >= 0) {
+					code.insert("", posDecl);
+					code.insert(seekIndent + _category, posDecl);					
+				}
+				seekIndent += this.getIndent();
+			}
+		}
+		// END KGU#332 2017-01-30
 		code.insert(seekIndent + text, posDecl + 1);
 	}
 	// END KGU#61 2016-03-23
@@ -405,7 +442,6 @@ public class OberonGenerator extends Generator {
 				}
 				else if (Instruction.isOutput(line))
 				{
-					insertComment("TODO: Replace \"TYPE\" by the the actual Out procedure name for this type and add a length argument where needed!", _indent);	
 					StringList expressions = Element.splitExpressionList(line.substring(outputKey.length()).trim(), ",");
 					// Produce an output instruction for every expression (according to type)
 					for (int j = 0; j < expressions.count(); j++)
@@ -431,9 +467,37 @@ public class OberonGenerator extends Generator {
 								&& Element.splitLexically(expr, true).count() == 1) {
 							procName = "String";
 						}
+						// START KGU#332 2017-01-30: Enh. #335 Identify variable types if possible
+						if (procName.isEmpty()) {
+							TypeMapEntry typeInfo = typeMap.get(expr);
+							if (typeInfo != null) {
+								StringList types = this.getTransformedTypes(typeInfo);
+								if (types.count() == 1) {
+									String type = types.get(0);
+									if (type.equals("INTEGER") || type.equals("LONGINT") || type.equals("SHORTINT")) {
+										procName = "Int";
+										length = ", 10";
+									}
+									else if (type.equals("REAL") || type.equals("LONGREAL")) {
+										procName = "Real";
+										length = ", 10";										
+									}
+									else if (type.equalsIgnoreCase("STRING") || type.matches("ARRAY(\\s\\d+)? OF CHAR")) {
+										procName = "String";
+									}
+									else if (type.equals("CHAR")) {
+										procName = "Char";
+									}
+								}
+							}
+						}
+						// END KGU#332 2017-01-30
 						String codeLine = transform(outputKey + " " + expressions.get(j)).replace("%LEN%", length) + ";";
 						if (!procName.isEmpty()) {
 							codeLine = codeLine.replace("Out.TYPE(", "Out."+procName+"(");
+						}
+						else {
+							insertComment("TODO: Replace \"TYPE\" by the the actual Out procedure name for this type and add a length argument where needed!", _indent);
 						}
 						addCode(codeLine, _indent, isDisabled);
 						// END KGU#236 2016-10-15
@@ -473,6 +537,9 @@ public class OberonGenerator extends Generator {
 						if (Instruction.isTurtleizerMove(line)) {
 							transline += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor() + " " + this.commentSymbolRight();
 						}
+						// START KGU 2017-01-31: return must be capitalized here
+						transline = transline.replaceFirst("^" + BString.breakup(D7Parser.getKeywordOrDefault("preReturn", "return")) + "($|\\W+.*)", "RETURN$1");
+						// END KGU 2017-01-31
 						addCode(transline, _indent, isDisabled);
 						// END KGU#277/KGU#284 2016-10-13
 					}
@@ -636,7 +703,7 @@ public class OberonGenerator extends Generator {
 			if (allBoolean) itemType = "BOOLEAN";
 			else if (allInt) itemType = "INTEGER";
 			else if (allReal) itemType = "REAL";
-			else if (allString) itemType = "string";
+			else if (allString) itemType = "ARRAY 100 OF CHAR";
 			else {
 				// We do a dummy type definition
 				this.insertComment("TODO: Specify an appropriate element type for the array!", _indent);
@@ -670,7 +737,7 @@ public class OberonGenerator extends Generator {
 			String valueList = _for.getValueList();
 			// Fortunately, there is a predefined function LEN in Oberon that makes it possible
 			// to convert this in to a COUNTER loop. We just need a generic index variable
-			if ((new Function(valueList).isFunction()))
+			if (Function.isFunction(valueList))
 			{
 				// For performance reasons, it wouldn't be so good an idea to call the function all the way again
 				this.insertDeclaration("VAR", arrayName + ": ARRAY OF " + itemType + ";", _indent.length());
@@ -916,7 +983,7 @@ public class OberonGenerator extends Generator {
         		if (this.hasEmptyInput(_root))
         		{
         			code.add(_indent + "VAR");
-        			code.add(_indent + this.getIndent() + "dummyInputChar: Char;	" +
+        			code.add(_indent + this.getIndent() + "dummyInputChar: CHAR;	" +
         					this.commentSymbolLeft() + " for void input " + this.commentSymbolRight());
         			code.add(_indent);
         		}
@@ -927,27 +994,49 @@ public class OberonGenerator extends Generator {
         	
 			header += "*";	// Marked for export as default
 			String lastType = "";
+			header += "(";
 			int nParams = _paramNames.count();
 			for (int p = 0; p < nParams; p++) {
 				String type = transformType(_paramTypes.get(p), "(*type?*)");
-				if (p == 0) {
-					header += "(";
+				// START KGU#140 2017-01-31; Enh. #113 - array conversion in argument list
+				//if (p == 0) {
+				//	header += "(";
+				//}
+				//else if (type.equals("(*type?*)") || !type.equals(lastType)) {
+				if (p > 0) {
+					if (type.equals("(*type?*)") || !type.equals(lastType)) {
+				// END KGU#140 2017-01-31
+						header += ": " + lastType + "; ";
+						// START KGU#332 2017-01-31: Enh. #335 Improved type support
+						if (type.contains("ARRAY") && !_paramNames.get(p).trim().startsWith("VAR ")) {
+							header += "VAR ";
+						}
+						// END KGU#332 2017-01-31
+					}
+					else {
+						header += ", ";
+					}
+				// START KGU#140 2017-01-31; Enh. #113 - array conversion in argument list
 				}
-				else if (type.equals("(*type?*)") || !type.equals(lastType)) {
-					header += ": " + lastType + "; ";
-				}
-				else {
-					header += ", ";
-				}
+				// END KGU#140 2017-01-31
 				header += _paramNames.get(p).trim();
 				if (p+1 == nParams) {
-					header += ": " + type + ")";
+					//header += ": " + type + ")";
+					header += ": " + type;
 				}
 				lastType = type;
 			}
+			header += ")";
 			if (_resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
 			{
-				header += ": " + transformType(_resultType, "");
+				// START KGU#332 2017-01-31: Enh. #335
+				//header += ": " + transformType(_resultType, "");
+				String oberonType = transformType(_resultType, "");
+				if (oberonType.contains("ARRAY")) {
+					insertComment("TODO: Oberon doesn't permit to return arrays - pass the result in a different way!", _indent);					
+				}
+				header += ": " + oberonType;
+				// END KGI#332 2017-01-31
 			}
 		}
 		
@@ -1008,7 +1097,7 @@ public class OberonGenerator extends Generator {
 	{
 		String indentPlusOne = _indent + this.getIndent();
 		code.add(_indent + "VAR");
-		insertComment("TODO: Declare local variables here:", indentPlusOne);
+		insertComment("TODO: Check and accomplish local variable declarations:", indentPlusOne);
 		// START KGU#236 2016-08-10: Issue #227: Declare this variable only if needed
 		//code.add(indentPlusOne + "dummyInputChar: Char;	" +
 		//		this.commentSymbolLeft() + " for void input " + this.commentSymbolRight());
@@ -1019,8 +1108,44 @@ public class OberonGenerator extends Generator {
 					this.commentSymbolLeft() + " for void input " + this.commentSymbolRight());
 		}
 		// END KGU#236 2016-08-10
+        // START KGU#261 2017-01-30: Enh. #259: Insert actual declarations if possible
+		typeMap = _root.getTypeInfo();
+		// END KGU#261 2017-01-30
 		for (int v = 0; v < varNames.count(); v++) {
-			insertComment(varNames.get(v), indentPlusOne);
+	        // START KGU#332 2017-01-30: Enh. #335: Insert actual declarations if possible
+			//insertComment(varNames.get(v), indentPlusOne);
+			String varName = varNames.get(v);
+			TypeMapEntry typeInfo = typeMap.get(varName); 
+			StringList types = null;
+			if (typeInfo != null) {
+				 types = getTransformedTypes(typeInfo);
+			}
+			if (types != null && types.count() == 1) {
+				String type = types.get(0);
+				int level = 0;
+				String prefix = "";
+				while (type.startsWith("@")) {
+					// It's an array, so get its index range
+					int maxIndex = typeInfo.getMaxIndex(level++);
+					String nElements = "";
+					if (maxIndex > 0) {
+						nElements = " " + (maxIndex+1);
+					}
+					prefix += "ARRAY" + nElements + " OF ";
+					type = type.substring(1);
+				}
+				type = prefix + type;
+				if (type.contains("???")) {
+					insertComment(varName + ": " + type + ";", _indent + this.getIndent());
+				}
+				else {
+					code.add(_indent + this.getIndent() + varName + ": " + type + ";");
+				}
+			}
+			else {
+				insertComment(varName, _indent + this.getIndent());
+			}
+			// END KGU#332 2017-01-30
 		}
 		
 		// START KGU#178 2016-07-20: Enh. #160 (subroutine export integration)

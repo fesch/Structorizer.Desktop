@@ -61,6 +61,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.10.16      Bugfix #275: Defective subroutine registration for topological sort mended
  *      Kay Gürtzig     2016.12.01      Bugfix #301: New method boolean isParenthesized(String)
  *      Kay Gürtzig     2016.12.22      Enh. #314: Support for Structorizer File API, improvements for #227
+ *      Kay Gürtzig     2017.01.20      Bugfix #336: variable list for declaration section (loop vars in, parameters out)
+ *      Kay Gürtzig     2017.01.26      Enh. #259: Type info is now gathered for declarations support
+ *      Kay Gürtzig     2017.01.30      Bugfix #337: Mutilation of lvalues with nested index access
  *
  ******************************************************************************************************
  *
@@ -122,8 +125,6 @@ import lu.fisch.structorizer.parsers.D7Parser;
 public abstract class Generator extends javax.swing.filechooser.FileFilter
 {
 	/************ Fields ***********************/
-	// START KGU#173 2016-04-04: Issue #151 - Get rid of all the hidden ExportOptionDialoge threads produced here
-	//private ExportOptionDialoge eod = null;
 	// START KGU#162 2016-03-31: Enh. #144
 	protected boolean suppressTransformation = false;
 	// END KGU#162 2016-03-31
@@ -131,7 +132,6 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	private boolean startBlockNextLine = false;
 	private boolean generateLineNumbers = false;
 	private String exportCharset = Charset.defaultCharset().name();
-	// END KGU#173 2016-04-04
 	// START KGU#178 2016-07-19: Enh. #160
 	private boolean exportSubroutines = false;
 	// END KGU#178 2016-07-19
@@ -406,6 +406,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	{
 		if (asComment)
 		{
+			// Indentation is intentionally put inside the comment (comment encloses entire line)
 			insertComment(_indent + text, "");
 		}
 		else
@@ -572,6 +573,23 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		return _type;
 	}
 	// END KGU#1 2015-11-30	
+	
+	// START KGU#261 2017-01-26: Enh. #259/#335
+	protected StringList getTransformedTypes(TypeMapEntry typeEntry)
+	{
+		StringList types = typeEntry.getTypes();
+		StringList transTypes = new StringList();
+		for (int i = 0; i < types.count(); i++) {
+			String type = types.get(i);
+			int posLastAt = type.lastIndexOf('@')+1;
+			type = type.substring(0, posLastAt) + transformType(type.substring(posLastAt), "???");
+			transTypes.addIfNew(type);
+		}
+		// Get rid of completely undefined types
+		transTypes.removeAll("???");
+		return transTypes;
+	}
+	// END KGU#261 2017-01-26
 	
 	/**
 	 * Detects whether the given code line starts with the configured input keystring
@@ -845,7 +863,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected String[] lValueToTypeNameIndex(String _lval)
 	{
 		// Avoid too much nonsense on indexed variables
-    	Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
+		// START KGU#334 2017-01-30: Bugfix #337 - lvalue was mutilated with nested index access
+    	//Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
+		String lvalPattern = "(.*?)[\\[](.*)[\\]](.*?)";
+    	Regex r = new Regex(lvalPattern,"$1 $3");
+    	// END KGU#334 2017-01-30
     	String name = r.replaceAll(_lval);
 		String type = "";
 		// Check Pascal and BASIC style of type specifications
@@ -872,11 +894,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		
 		if ((subPos = _lval.indexOf('[')) >= 0 && _lval.indexOf(']', subPos+1) >= 0)
 		{
-			// START KGU#189 2016-04-29: Bugfix for multidimensional array expressions
+			// START KGU#189 2016-04-29: Bugfix #337 for multidimensional array expressions
 			// lvalues like a[i][j] <- ... had been transformed to a[ij] <- ...
 			// Now index would become "i][j" in such a case which at least preserves syntax
 			//index = _lval.replaceAll("(.*?)[\\[](.*?)[\\]](.*?)","$2").trim();
-			index = _lval.replaceAll("(.*?)[\\[](.*)[\\]](.*?)","$2").trim();
+			index = _lval.replaceAll(lvalPattern,"$2").trim();
 			// END KGU#189 2016-04-29
 		}
 		String[] typeNameIndex = {type, name, index};
@@ -889,7 +911,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	{
 		String valueList = _for.getValueList();
 		StringList items = null;
-		boolean isComplexObject = (new Function(valueList)).isFunction() || this.varNames.contains(valueList);
+		boolean isComplexObject = Function.isFunction(valueList) || this.varNames.contains(valueList);
 		if (valueList.startsWith("{") && valueList.endsWith("}"))
 		{
 			items = Element.splitExpressionList(valueList.substring(1, valueList.length()-1), ",");
@@ -1224,9 +1246,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		_root.collectParameters(paramNames, paramTypes);
 		String resultType = _root.getResultType();
 		// START KGU#61/KGU#129 2016-03-22: Now common field for all generator classes
-		//StringList varNames = _root.getVarNames(_root, false, true);	// FIXME: FOR loop vars are missing
-		this.varNames = _root.getVarNames(_root, false, true);	// FIXME: FOR loop vars are missing
-		// END KGU#61/KGU#129
+		//StringList varNames = _root.getVarNames(_root, false, true);	// FOR loop vars are missing
+		// START KGU#333 2017-01-20: Bugfix #336 - Correct way to include loop variables and exclude parameters
+		//this.varNames = _root.getVarNames(_root, false, true);	// FOR loop vars are missing
+		this.varNames = _root.getVarNames();
+		for (int p = 0; p < paramNames.count(); p++) {
+			this.varNames.removeAll(paramNames.get(p));
+		}
+		// END KGU#333 2017-01-20
+		// END KGU#61/KGU#129 2016-03-22
 		this.isResultSet = varNames.contains("result", false);
 		this.isFunctionNameSet = varNames.contains(procName);
 		
@@ -1508,8 +1536,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 			catch(Exception e)
 			{
+				String message = e.getMessage();
+				if (message == null) {
+					message = e.getClass().getSimpleName();
+				}
 				JOptionPane.showMessageDialog(null,
-						"Error while saving the file!\n" + e.getMessage(),
+						"Error while saving the file!\n" + message,
 						"Error", JOptionPane.ERROR_MESSAGE);
 			}
 		   	// START KGU#178 2016-07-20: Enh. #160

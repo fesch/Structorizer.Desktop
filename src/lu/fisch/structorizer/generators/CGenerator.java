@@ -20,6 +20,8 @@
 
 package lu.fisch.structorizer.generators;
 
+import java.util.HashMap;
+
 /******************************************************************************************************
  *
  *      Author:         Bob Fisch
@@ -63,6 +65,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig             2016.12.01      Bugfix #301: More sophisticated test for condition enclosing by parentheses
  *      Kay Gürtzig             2016.12.22      Enh. #314: Support for File API
+ *      Kay Gürtzig             2017.01.26      Enh. #259/#335: Type retrieval and improved declaration support 
+ *      Kay Gürtzig             2017.01.31      Enh. #113: Array parameter transformation
  *
  ******************************************************************************************************
  *
@@ -174,6 +178,10 @@ public class CGenerator extends Generator {
 //	}
 //	// END KGU#16 2015-11-29
 // END KGU#16 2015-12-18
+	
+	// START KGU#261/#332 2017-01-27: Enh. #259/#335
+	protected HashMap<String, TypeMapEntry> typeMap;
+	// END KGU#261/#332 2017-01-27
 	
 	// START KGU#16/KGU#74 2015-11-30: Unification of block generation (configurable)
 	/**
@@ -388,10 +396,31 @@ public class CGenerator extends Generator {
 		_type = _type.replace("boolean", "int");
 		_type = _type.replace("boole", "int");
 		_type = _type.replace("character", "char");
+		// START KGU#332 2017-01-30: Enh. #335 - more sophisticated type info
+		if (this.getClass().getSimpleName().equals("CGenerator")) {
+			_type = _type.replace("string", "char*");
+		}
+		// END KGU#332 2017-01-30
 		return _type;
 	}
 	// END KGU#16 2015-11-29
 
+	// START KGU#140 2017-01-31: Enh. #113: Advanced array transformation
+	protected String transformArrayDeclaration(String _typeDescr, String _varName)
+	{
+		String decl = "";
+		if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
+			// TypeMapEntries are really good at analysing array definitions
+			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, 0, false, false);
+			String canonType = typeInfo.getTypes().get(0);
+			decl = this.makeArrayDeclaration(canonType, _varName, typeInfo).trim();
+		}
+		else {
+			decl = (_typeDescr + " " + _varName).trim();
+		}
+		return decl;
+	}
+	// END KGU#140 2017-01-31
 	
 	protected void insertBlockHeading(Element elem, String _headingText, String _indent)
 	{
@@ -426,6 +455,13 @@ public class CGenerator extends Generator {
 		}
 	}
 	// END KGU#74 2015-11-30
+	
+	// START KGU#332 2017-01-27: Enh. #335
+	protected boolean isInternalDeclarationAllowed()
+	{
+		return false;
+	}
+	// END KGU#332 2017-01-27
 
 	@Override
 	protected void generateCode(Instruction _inst, String _indent) {
@@ -440,11 +476,58 @@ public class CGenerator extends Generator {
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 				//code.add(_indent + transform(lines.get(i)) + ";");
 				String line = _inst.getText().get(i);
-				String codeLine = transform(line) + ";";
-				if (Instruction.isTurtleizerMove(line)) {
-					codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+				// START KGU#261/KGU#332 2017-01-26: Enh. #259/#335
+				//String codeLine = transform(line) + ";";
+				//addCode(codeLine, _indent, isDisabled);
+				String codeLine = null;
+				if (!this.suppressTransformation && Instruction.isDeclaration(line)) {
+					// Pure declarations without initialization may be igmored here (the
+					// declaration will be proposed or inserted in the preamble).
+					// If there is an initialization then it must at least be generated
+					// as assignment.
+					// With declaration styles other than than C-like, this requires
+					// cutting out the keywords type specification together with the
+					// specific keywords and separators ("var"+":" / "dim"+"as").
+					// With C-style initializations, however, it depends on whether
+					// code-internal declarations are allowed (C++, C#, Java) or not
+					// (pure C): If allowed then we may just convert it as is, otherwise
+					// we must cut off the type specification (i.e. all text preceding the
+					// variable name).
+					if (Instruction.isAssignment(line)) {
+						// Things will get easier and more precise with tokenization
+						// (which must be done based on the original line)
+						StringList tokens = Element.splitLexically(line.trim(), true);
+						int posAsgn = tokens.indexOf("<-");
+						if (tokens.get(0).equalsIgnoreCase("var") || tokens.get(0).equalsIgnoreCase("dim")) {
+							String separator = tokens.get(0).equalsIgnoreCase("var") ? ":" : "as";
+							int posColon = tokens.indexOf(separator, 2, false);
+							if (posColon > 0) {
+								codeLine = transform(
+										tokens.subSequence(1, posColon).concatenate().trim() + " " +
+										tokens.subSequence(posAsgn, tokens.count()).concatenate().trim());
+							}
+						}
+						else {
+							// Must be C-style declaration
+							if (!this.isInternalDeclarationAllowed()) {
+								// Cut out leading type specification
+								String varName = _inst.getAssignedVarname(tokens);
+								int posVar = tokens.indexOf(varName);
+								tokens = tokens.subSequence(posVar, tokens.count());
+							}
+							codeLine = transform(tokens.concatenate().trim());						}
+					}
 				}
-				addCode(codeLine, _indent, isDisabled);
+				else {
+					codeLine = transform(line);
+				}
+				if (codeLine != null) {
+					if (Instruction.isTurtleizerMove(line)) {
+						codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+					}
+					addCode(codeLine + ";", _indent, isDisabled);
+				}
+				// END KGU#261 2017-01-26
 				// END KGU#277/KGU#284 2016-10-13
 			}
 
@@ -916,15 +999,28 @@ public class CGenerator extends Generator {
 			// Compose the function header
 			String fnHeader = transformType(_root.getResultType(),
 					((this.returns || this.isResultSet || this.isFunctionNameSet) ? "int" : "void"));
+			// START KGU#140 2017-01-31: Enh. #113 - improved type recognition and transformation
+			boolean returnsArray = fnHeader.toLowerCase().contains("array") || fnHeader.contains("]");
+			if (returnsArray) {
+				fnHeader = transformArrayDeclaration(fnHeader, "");
+			}
+			// END KGU#140 2017-01-31
 			fnHeader += " " + _procName + "(";
 			for (int p = 0; p < _paramNames.count(); p++) {
-				if (p > 0)
-					fnHeader += ", ";
-				fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
-						_paramNames.get(p)).trim();
+				if (p > 0) { fnHeader += ", "; }
+				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
+				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
+				//		_paramNames.get(p)).trim();
+				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+				// END KGU#140 2017-01-31
 			}
 			fnHeader += ")";
 			insertComment("TODO: Revise the return type and declare the parameters.", _indent);
+			// START KGU#140 2017-01-31: Enh. #113
+			if (returnsArray) {
+				insertComment("      C does not permit to return arrays - find an other way to pass the result!", _indent);
+			}
+			// END KGU#140 2017-01-31
 			code.add(fnHeader);
 		}
 		code.add(_indent + "{");
@@ -942,12 +1038,66 @@ public class CGenerator extends Generator {
 	@Override
 	protected String generatePreamble(Root _root, String _indent, StringList varNames)
 	{
-		insertComment("TODO: declare your variables here:", _indent);
+		insertComment("TODO: Check and accomplish variable declarations:", _indent);
+        // START KGU#261/KGU#332 2017-01-26: Enh. #259/#335: Insert actual declarations if possible
+		this.typeMap = _root.getTypeInfo();
+		// END KGU#261/KGU#332 2017-01-16
         // START KGU 2015-11-30: List the variables to be declared
 		for (int v = 0; v < varNames.count(); v++) {
-			insertComment(varNames.get(v), _indent);
+	        // START KGU#261/#332 2017-01-26: Enh. #259/#335: Insert actual declarations if possible
+			//insertComment(varNames.get(v), _indent);
+			String varName = varNames.get(v);
+			TypeMapEntry typeInfo = typeMap.get(varName); 
+			StringList types = null;
+			if (typeInfo != null) {
+				 types = getTransformedTypes(typeInfo);
+			}
+			// If the type is unambiguous and has no C-style declaration or may not be
+			// declared between instructions then add the declaration here
+			if (types != null && types.count() == 1 && 
+					(!typeInfo.isCStyleDeclaredAt(null) || !this.isInternalDeclarationAllowed())) {			
+				String decl = types.get(0);
+				if (decl.startsWith("@")) {
+					decl = makeArrayDeclaration(decl, varName, typeInfo);
+				}
+				else {
+					decl = decl + " " + varName;
+				}
+				if (decl.contains("???")) {
+					insertComment(decl + ";", _indent);
+				}
+				else {
+					code.add(_indent + decl + ";");
+				}
+			}
+			// Add a comment if there is no type info or internal declaration is not allowed
+			else if (types == null || !this.isInternalDeclarationAllowed()){
+				insertComment(varName, _indent);
+			}
+			// END KGU#261/KGU#332 2017-01-16
 		}
 		// END KGU 2015-11-30
+		// START KGU#332 2017-01-30: Decomposed to ease sub-classing
+		generateIOComment(_root, _indent);
+		// END KGU#332 2017-01-30
+		code.add(_indent);
+		return _indent;
+	}
+	
+	// START KGU#332 2017-01-30: Decomposition of geeratePreamble to ease sub-classing
+	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
+	{
+		int nLevels = _elementType.lastIndexOf('@')+1;
+		_elementType = (_elementType.substring(nLevels) + " " + _varName).trim();
+		for (int i = 0; i < nLevels; i++) {
+			int maxIndex = typeInfo.getMaxIndex(i);
+			_elementType += "[" + (maxIndex >= 0 ? Integer.toString(maxIndex+1) : (i == 0 ? "" : "/*???*/") ) + "]";
+		}
+		return _elementType;
+	}
+	
+	protected void generateIOComment(Root _root, String _indent)
+	{
 		// START KGU#236 2016-08-10: Issue #227 - don't express this information if not needed
 		if (this.hasInput(_root)) {
 		// END KGU#236 2016-08-10
@@ -973,10 +1123,9 @@ public class CGenerator extends Generator {
 				_indent);
 		// START KGU#236 2016-08-10: Issue #227
 		}
-		// END KGU#236 2016-08-10
-		code.add(_indent);
-		return _indent;
+		// END KGU#236 2016-08-10	
 	}
+	// START KGU#332 2017-01-30
 	
 	/**
 	 * Creates the appropriate code for returning a required result and adds it

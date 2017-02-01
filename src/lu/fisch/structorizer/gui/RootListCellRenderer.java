@@ -68,37 +68,37 @@ class RootListCellRenderer extends JLabel implements ListCellRenderer<Root>{
     // END KGU#318 2017-01-07
     private final static Color selectedBackgroundNimbus = new Color(57,105,138);
 
-	@Override
-	public Component getListCellRendererComponent(JList<? extends Root> list, Root root, int index, boolean isSelected,
-			boolean cellHasFocus) {
+    @Override
+    public Component getListCellRendererComponent(JList<? extends Root> list, Root root, int index, boolean isSelected,
+            boolean cellHasFocus) {
         String s = root.getSignatureString(true);
-		boolean covered = Element.E_COLLECTRUNTIMEDATA && root.deeplyCovered; 
+        boolean covered = Element.E_COLLECTRUNTIMEDATA && root.deeplyCovered; 
         setText(s);
         setIcon((root.isProgram) ? mainIcon : (covered ? subIconCovered : subIcon));
         if (isSelected) {
-    		if (UIManager.getLookAndFeel().getName().equals("Nimbus"))
-    		{
-    			// Again, a specific handling for Nimbus was necessary in order to show any difference at all.
-    			if (list.isFocusOwner()) {
-    				setBackground(selectedBackgroundNimbus);
-    				setForeground(Color.WHITE);
-    			}
-    			else {
-    				setBackground(Color.WHITE);	
-    				setForeground(selectedBackgroundNimbus);
-    			}
-    		}
-    		else {
-    			if (list.isFocusOwner()) {
-    				setBackground(list.getSelectionBackground());
-    				setForeground(list.getSelectionForeground());
-    			}
-    			else {
-    				// Invert the selection colours
+            if (UIManager.getLookAndFeel().getName().equals("Nimbus"))
+            {
+                // Again, a specific handling for Nimbus was necessary in order to show any difference at all.
+                if (list.isFocusOwner()) {
+                    setBackground(selectedBackgroundNimbus);
+                    setForeground(Color.WHITE);
+                }
+                else {
+                    setBackground(Color.WHITE);	
+                    setForeground(selectedBackgroundNimbus);
+                }
+            }
+            else {
+                if (list.isFocusOwner()) {
+                    setBackground(list.getSelectionBackground());
+                    setForeground(list.getSelectionForeground());
+                }
+                else {
+                    // Invert the selection colours
                     setBackground(list.getSelectionForeground());
                     setForeground(list.getSelectionBackground());    				
-    			}
-    		}
+                }
+            }
         } else {
             setBackground(list.getBackground());
             setForeground(list.getForeground());
@@ -107,6 +107,6 @@ class RootListCellRenderer extends JLabel implements ListCellRenderer<Root>{
         setFont(list.getFont());
         setOpaque(true);
         return this;
-	}
-	
+    }
+
 }

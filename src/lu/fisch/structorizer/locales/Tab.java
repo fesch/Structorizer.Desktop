@@ -18,6 +18,7 @@ import javax.swing.table.TableModel;
  *
  * @author robertfisch
  */
+@SuppressWarnings("serial")
 public class Tab extends javax.swing.JPanel {
 
     /**
@@ -142,6 +143,7 @@ class BoardTableCellRenderer extends DefaultTableCellRenderer {
     
 }
 
+@SuppressWarnings("serial")
 class MyRenderer extends DefaultTableCellRenderer {
 
     Color backgroundColor = getBackground();

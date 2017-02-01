@@ -68,6 +68,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2017.01.04      Bugfix #321: Make sure Mainforms save the actually iterated Roots
  *      Kay Gürtzig     2017.01.05      Enh. #319: Additional notification on test coverage status change
  *      Kay Gürtzig     2017.01.11      Fix KGU#328 in method replaced()
+ *      Kay Gürtzig     2017.01.13      Enh. #305 / Bugfix KGU#330: Arranger index notification on name and dirtiness change
  *
  ******************************************************************************************************
  *
@@ -1678,6 +1679,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
         adaptLayout();
         // END KGU#85 2015-11-18
         this.repaint();
+        // START KGU#330 2017-01-13: We keep redunant information to be able to trigger change notifications
+        Diagram diagr = this.findDiagram(source, 1);
+        if (diagr != null && diagr.checkSignatureChange()) {
+        	this.notifyChangeListeners();
+        }
+        // END KGU#330 2017-01-13
     }
     
 	// START KGU#155 2016-03-08: Bugfix #97 extension

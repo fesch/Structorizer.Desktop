@@ -62,6 +62,10 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig         2016.12.26      Enh. #314: Makeshift additions to support the File API
+ *      Kay Gürtzig         2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support
+ *                                          Bugfix #337: Defective export of 2d assignments like a[i] <- {foo, bar} mended
+ *      Kay Gürtzig         2017.01.31      Enh. #113: Array parameter transformation
+ *      Kay Gürtzig         2017.02.01      Enh. #84: indexBase constant mechanism for array initializers disabled
  *
  ******************************************************************************************************
  *
@@ -94,6 +98,9 @@ package lu.fisch.structorizer.generators;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
+
+import java.util.HashMap;
+
 import lu.fisch.structorizer.elements.*;
 
 
@@ -239,12 +246,51 @@ public class PasGenerator extends Generator
 			else if (_type.equalsIgnoreCase("unsigned int")) _type = "Cardinal";
 			else if (_type.equalsIgnoreCase("unsigned long")) _type = "Cardinal";
 			else if (_type.equalsIgnoreCase("bool")) _type = "Boolean";
+			// START KGU#140 2017-01-31: Enh. #113
+			//else if (_type.toLowerCase().startsWith("array")) {
+			//	String lower = _type.toLowerCase();
+			//	String elType = lower.replaceAll("^array.*?of (.*)", "$1");
+			//	if (!elType.trim().isEmpty()) {
+			//		_type = lower.replaceAll("^(array.*?of ).*", "$1") + transformType(elType, elType);
+			//	}
+			//}
+			else if (!_type.equalsIgnoreCase("array")) {
+				// "array" without element type is a pathologic case that might drive us into stack overflow!
+				_type = transformArrayDeclaration(_type);
+			}
+			// END KGU#140 2017-01-31
 			// To be continued if required...
 		}
 		return _type;
 	}
 	// END KGU#16 2015-11-30	
 
+	// START KGU#140 2017-01-31: Enh. #113: Advanced array transformation
+	protected String transformArrayDeclaration(String _typeDescr)
+	{
+		if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
+			// TypeMapEntries are really good at analysing array definitions
+			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, 0, false, false);
+			String canonType = typeInfo.getTypes().get(0);
+			int nLevels = canonType.lastIndexOf('@')+1;
+			String elType = (canonType.substring(nLevels)).trim();
+			elType = transformType(elType, "(*???*)");
+			_typeDescr = "";
+			for (int i = 0; i < nLevels; i++) {
+				_typeDescr += "array ";
+				int minIndex = typeInfo.getMinIndex(i);
+				int maxIndex = typeInfo.getMaxIndex(i);
+				if (minIndex >= 0 && maxIndex >= minIndex) {
+					_typeDescr += "[" + minIndex + ".." + maxIndex + "] ";
+				}
+				_typeDescr += "of ";
+			}
+			_typeDescr += elType;
+		}
+		return _typeDescr;
+	}
+	// END KGU#140 2017-01-31
+	
 	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
 //	/**
 //	 * Transforms assignments in the given intermediate-language code line.
@@ -365,6 +411,20 @@ public class PasGenerator extends Generator
 			posDecl = code.indexOf(seekIndent + _category);
 			seekIndent += this.getIndent();
 		}
+		// START KGU#332 2017-01-30: Enh. #335 Enables const declarations
+		if (posDecl < 0 && _category.equals("const")) {
+			seekIndent = "";
+			while (posDecl < 0 && seekIndent.length() < _maxIndent)
+			{
+				posDecl = code.indexOf(seekIndent + "var");
+				if (posDecl >= 0) {
+					code.insert("", posDecl);
+					code.insert(seekIndent + _category, posDecl);					
+				}
+				seekIndent += this.getIndent();
+			}
+		}
+		// END KGU#332 2017-01-30
 		code.insert(seekIndent + text, posDecl + 1);
 	}
 	// END KGU#61 2016-03-23
@@ -422,16 +482,35 @@ public class PasGenerator extends Generator
 							// at other positions in code, we use the standard Java
 							// index range here (though in Pascal indexing usually 
 							// starts with 1 but may vary widely). We solve the problem
-							// by providing a configurable start index variable 
-							insertComment("TODO: Check indexBase value (automatically generated)", _indent);
-							insertDeclaration("var", "indexBase_" + varName + ": Integer = 0;",
-									_indent.length());
+							// by providing a configurable start index constant
+							//insertComment("TODO: Check indexBase value (automatically generated)", _indent);
+							insertComment("Hint: Automatically decomposed array initialization", _indent);
+							// START KGU#332 2017-01-30: We must be better prepared for two-dimensional arrays
+							//insertDeclaration("var", "indexBase_" + varName + ": Integer = 0;",
+							//		_indent.length());
+							//for (int el = 0; el < elements.count(); el++)
+							//{
+							//	addCode(varName + "[indexBase_" + varName + " + " + el + "] := " + 
+							//			elements.get(el) + ";",
+							//			_indent, isDisabled);
+							//}
+							//String baseName = varName;
+							if (varName.matches("\\w*\\[.*\\]")) {
+								//baseName = varName.replaceAll("(\\w.*)\\[(.*)\\]", "$1_$2");
+								varName = varName.replace("]", ", ");
+							}
+							else {
+								varName = varName + "[";
+							}
+							//insertDeclaration("const", "indexBase_" + baseName + " = 0;",
+							//		_indent.length());
 							for (int el = 0; el < elements.count(); el++)
 							{
-								addCode(varName + "[indexBase_" + varName + " + " + el + "] := " + 
+								addCode(varName /*+ "indexBase_" + baseName + " + "*/ + el + "] := " + 
 										elements.get(el) + ";",
 										_indent, isDisabled);
 							}
+							// END KGU#332 2017-01-30
 						}
 						
 					}
@@ -465,7 +544,28 @@ public class PasGenerator extends Generator
 						if (Instruction.isTurtleizerMove(line)) {
 							transline += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor() + " " + this.commentSymbolRight();
 						}
-						addCode(transline, _indent, isDisabled);
+						// START KGU#261 2017-01-26: Enh. #259/#335
+						//addCode(transline, _indent, isDisabled);
+						if (!this.suppressTransformation && transline.matches("^(var|dim) .*")) {
+							if (asgnPos > 0) {
+								// First remove the "var" or "dim" key word
+								String separator = transline.startsWith("var") ? ":" : " as ";
+								transline = transline.substring(4);
+								int posColon = transline.substring(0, asgnPos).indexOf(separator);
+								if (posColon > 0) {
+									transline = transline.substring(0, posColon) + transline.substring(asgnPos);
+								}
+							}
+							else {
+								// No initialization - so ignore it here
+								// (the declaration will appear in the var section)
+								transline = null;
+							}
+						}
+						if (transline != null) {
+							addCode(transline, _indent, isDisabled);
+						}
+						// END KGU#261 2017-01-26
 						// END KGU#277/KGU#284 2016-10-13
 					}
 					// END KGU#100 2016-01-14
@@ -681,7 +781,7 @@ public class PasGenerator extends Generator
 			}
 
 			// Insert the array and index declarations
-			String range = "1..." + items.count();
+			String range = "1.." + items.count();
 			insertDeclaration("var", arrayName + ": " + "array [" + 
 					range + "] of " + itemType + ";", _indent.length());
 			insertDeclaration("var", indexName + ": " + range + ";",
@@ -1056,9 +1156,47 @@ public class PasGenerator extends Generator
 	@Override
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
-        insertComment("TODO: declare your variables here", _indent + this.getIndent());
+        insertComment("TODO: check and accomplish variable declarations", _indent + this.getIndent());
+        // START KGU#261 2017-01-26: Enh. #259: Insert actual declarations if possible
+		HashMap<String, TypeMapEntry> typeMap = _root.getTypeInfo();
+		// END KGU#261 2017-01-16
 		for (int v = 0; v < _varNames.count(); v++) {
-			insertComment(_varNames.get(v), _indent + this.getIndent());
+	        // START KGU#261 2017-01-26: Enh. #259: Insert actual declarations if possible
+			//insertComment(_varNames.get(v), _indent + this.getIndent());
+			String varName = _varNames.get(v);
+			TypeMapEntry typeInfo = typeMap.get(varName); 
+			StringList types = null;
+			if (typeInfo != null) {
+				 types = getTransformedTypes(typeInfo);
+			}
+			if (types != null && types.count() == 1) {
+				String type = types.get(0);
+				String prefix = "";
+				int level = 0;
+				while (type.startsWith("@")) {
+					// It's an array, so get its index range
+					int minIndex = typeInfo.getMinIndex(level);
+					int maxIndex = typeInfo.getMaxIndex(level++);
+					String indexRange = "";
+					if (maxIndex > 0) {
+						indexRange = "[" + minIndex +
+								".." + maxIndex + "] ";
+					}
+					prefix += "array " + indexRange + "of ";
+					type = type.substring(1);
+				}
+				type = prefix + type;
+				if (type.contains("???")) {
+					insertComment(varName + ": " + type + ";", _indent + this.getIndent());
+				}
+				else {
+					code.add(_indent + this.getIndent() + varName + ": " + type + ";");
+				}
+			}
+			else {
+				insertComment(varName, _indent + this.getIndent());
+			}
+			// END KGU#261 2017-01-16
 		}
         code.add("");
         
