@@ -64,6 +64,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.12.26      Enh. #314: Makeshift additions to support the File API
  *      Kay Gürtzig         2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support
  *                                          Bugfix #337: Defective export of 2d assignments like a[i] <- {foo, bar} mended
+ *      Kay Gürtzig         2017.01.31      Enh. #113: Array parameter transformation
  *
  ******************************************************************************************************
  *
@@ -244,19 +245,47 @@ public class PasGenerator extends Generator
 			else if (_type.equalsIgnoreCase("unsigned int")) _type = "Cardinal";
 			else if (_type.equalsIgnoreCase("unsigned long")) _type = "Cardinal";
 			else if (_type.equalsIgnoreCase("bool")) _type = "Boolean";
-			else if (_type.toLowerCase().startsWith("array")) {
-				String lower = _type.toLowerCase();
-				String elType = lower.replaceAll("^array.*?of (.*)", "$1");
-				if (!elType.trim().isEmpty()) {
-					_type = lower.replaceAll("^(array.*?of ).*", "$1") + transformType(elType, elType);
-				}
-			}
+			// START KGU#140 2017-01-31: Enh. #113
+			//else if (_type.toLowerCase().startsWith("array")) {
+			//	String lower = _type.toLowerCase();
+			//	String elType = lower.replaceAll("^array.*?of (.*)", "$1");
+			//	if (!elType.trim().isEmpty()) {
+			//		_type = lower.replaceAll("^(array.*?of ).*", "$1") + transformType(elType, elType);
+			//	}
+			//}
+			_type = transformArrayDeclaration(_type);
+			// END KGU#140 2017-01-31
 			// To be continued if required...
 		}
 		return _type;
 	}
 	// END KGU#16 2015-11-30	
 
+	// START KGU#140 2017-01-31: Enh. #113: Advanced array transformation
+	protected String transformArrayDeclaration(String _typeDescr)
+	{
+		if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
+			// TypeMapEntries are really good at analysing array definitions
+			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, 0, false, false);
+			String canonType = typeInfo.getTypes().get(0);
+			int nLevels = canonType.lastIndexOf('@')+1;
+			String elType = (canonType.substring(nLevels)).trim();
+			elType = transformType(elType, "(*???*)");
+			_typeDescr = "array ";
+			for (int i = 0; i < nLevels; i++) {
+				int minIndex = typeInfo.getMinIndex(i);
+				int maxIndex = typeInfo.getMaxIndex(i);
+				if (maxIndex >= minIndex) {
+					_typeDescr += "[" + minIndex + ".." + maxIndex + "] ";
+				}
+				_typeDescr += "of ";
+			}
+			_typeDescr += elType;
+		}
+		return _typeDescr;
+	}
+	// END KGU#140 2017-01-31
+	
 	// START KGU#93 2015-12-21: Bugfix #41/#68/#69
 //	/**
 //	 * Transforms assignments in the given intermediate-language code line.
@@ -1136,17 +1165,21 @@ public class PasGenerator extends Generator
 			}
 			if (types != null && types.count() == 1) {
 				String type = types.get(0);
-				if (type.startsWith("@")) {
+				String prefix = "";
+				int level = 0;
+				while (type.startsWith("@")) {
 					// It's an array, so get its index range
-					int minIndex = typeInfo.getMinIndex();
-					int maxIndex = typeInfo.getMaxIndex();
+					int minIndex = typeInfo.getMinIndex(level);
+					int maxIndex = typeInfo.getMaxIndex(level++);
 					String indexRange = "";
 					if (maxIndex > 0) {
 						indexRange = "[" + minIndex +
 								"..." + maxIndex + "] ";
 					}
-					type = "array " + indexRange + "of " + type.substring(1);
+					prefix += "array " + indexRange + "of ";
+					type = type.substring(1);
 				}
+				type = prefix + type;
 				if (type.contains("???")) {
 					insertComment(varName + ": " + type + ";", _indent + this.getIndent());
 				}

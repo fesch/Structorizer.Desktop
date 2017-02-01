@@ -166,7 +166,7 @@ public class OberonGenerator extends Generator {
 	// END KGU 2016-08-12
 	
 	// START KGU#332 2017-01-30: Enh. #335
-	Map<String,TypeMapEntry> typeMap;
+	private Map<String,TypeMapEntry> typeMap;
 	// END KGU#332 2017-01-30
     
     /************ Code Generation **************/
@@ -537,6 +537,9 @@ public class OberonGenerator extends Generator {
 						if (Instruction.isTurtleizerMove(line)) {
 							transline += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor() + " " + this.commentSymbolRight();
 						}
+						// START KGU 2017-01-31: return must be capitalized here
+						transline = transline.replaceFirst("^" + BString.breakup(D7Parser.getKeywordOrDefault("preReturn", "return")) + "($|\\W+.*)", "RETURN$1");
+						// END KGU 2017-01-31
 						addCode(transline, _indent, isDisabled);
 						// END KGU#277/KGU#284 2016-10-13
 					}
@@ -991,27 +994,43 @@ public class OberonGenerator extends Generator {
         	
 			header += "*";	// Marked for export as default
 			String lastType = "";
+			header += "(";
 			int nParams = _paramNames.count();
 			for (int p = 0; p < nParams; p++) {
 				String type = transformType(_paramTypes.get(p), "(*type?*)");
-				if (p == 0) {
-					header += "(";
-				}
-				else if (type.equals("(*type?*)") || !type.equals(lastType)) {
+				//if (p == 0) {
+				//	header += "(";
+				//}
+				//else if (type.equals("(*type?*)") || !type.equals(lastType)) {
+				if (p > 0 && type.equals("(*type?*)") || !type.equals(lastType)) {
 					header += ": " + lastType + "; ";
+					// START KGU#332 2017-01-31: Enh. #335 Improved type support
+					if (type.contains("ARRAY") && !_paramNames.get(p).trim().startsWith("VAR ")) {
+						header += "VAR ";
+					}
+					// END KGU#332 2017-01-31
 				}
 				else {
 					header += ", ";
 				}
 				header += _paramNames.get(p).trim();
 				if (p+1 == nParams) {
-					header += ": " + type + ")";
+					//header += ": " + type + ")";
+					header += ": " + type;
 				}
 				lastType = type;
 			}
+			header += ")";
 			if (_resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
 			{
-				header += ": " + transformType(_resultType, "");
+				// START KGU#332 2017-01-31: Enh. #335
+				//header += ": " + transformType(_resultType, "");
+				String oberonType = transformType(_resultType, "");
+				if (oberonType.contains("ARRAY")) {
+					insertComment("TODO: Oberon doesn't permit to return arrays - pass the result in a different way!", _indent);					
+				}
+				header += ": " + oberonType;
+				// END KGI#332 2017-01-31
 			}
 		}
 		
@@ -1097,15 +1116,19 @@ public class OberonGenerator extends Generator {
 			}
 			if (types != null && types.count() == 1) {
 				String type = types.get(0);
-				if (type.startsWith("@")) {
+				int level = 0;
+				String prefix = "";
+				while (type.startsWith("@")) {
 					// It's an array, so get its index range
-					int maxIndex = typeInfo.getMaxIndex();
+					int maxIndex = typeInfo.getMaxIndex(level++);
 					String nElements = "";
 					if (maxIndex > 0) {
 						nElements = " " + (maxIndex+1);
 					}
-					type = "ARRAY" + nElements + " OF " + type.substring(1);
+					prefix += "ARRAY" + nElements + " OF ";
+					type = type.substring(1);
 				}
+				type = prefix + type;
 				if (type.contains("???")) {
 					insertComment(varName + ": " + type + ";", _indent + this.getIndent());
 				}

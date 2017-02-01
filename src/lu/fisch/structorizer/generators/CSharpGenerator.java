@@ -52,6 +52,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig             2017.01.04      Bugfix #322: input and output code generation fixed 
  *      Kay Gürtzig             2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
+ *      Kay Gürtzig             2017.01.31      Enh. #113: Array parameter transformation
  *
  ******************************************************************************************************
  *
@@ -406,7 +407,7 @@ public class CSharpGenerator extends CGenerator
 			insertComment("TODO: Declare and initialise class and member variables here", _indent + this.getIndent());
 			code.add(_indent);
 			code.add(_indent + this.getIndent()+"/**");
-			code.add(_indent + this.getIndent()+" * @param args");
+			code.add(_indent + this.getIndent()+" * @param args - array of command line arguments");
 			code.add(_indent + this.getIndent()+" */");
 
 			insertBlockHeading(_root, "public static void Main(string[] args)", _indent + this.getIndent());
@@ -426,6 +427,9 @@ public class CSharpGenerator extends CGenerator
 				code.add(_indent+this.getIndent() + " * @return ");
 				code.add(_indent+this.getIndent() + " */");
 				_resultType = transformType(_resultType, "int");
+				// START KGU#140 2017-01-31: Enh. #113 - Converts possible array notations
+				_resultType = transformArrayDeclaration(_resultType, "");
+				// END KGU#140 2017-01-31
 			}
 			else
 			{
@@ -438,10 +442,12 @@ public class CSharpGenerator extends CGenerator
 					+ _resultType + " " + _procName + "(";
 			// END KGU#178 2016-07-20
 			for (int p = 0; p < _paramNames.count(); p++) {
-				if (p > 0)
-					fnHeader += ", ";
-				fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
-						_paramNames.get(p)).trim();
+				if (p > 0) { fnHeader += ", "; }
+				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
+				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
+				//		_paramNames.get(p)).trim();
+				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+				// END KGU#140 2017-01-31
 			}
 			fnHeader += ")";
 			insertBlockHeading(_root, fnHeader, _indent+this.getIndent());
@@ -473,9 +479,12 @@ public class CSharpGenerator extends CGenerator
 //	}
 	
 	@Override
-	protected String makeArrayDeclaration(String _elementType, String _varName, int _maxIndex)
+	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
 	{
-		return _elementType + "[] " + _varName; 
+		while (_elementType.startsWith("@")) {
+			_elementType = _elementType.substring(1) + "[]";
+		}
+		return (_elementType + " " + _varName).trim(); 
 	}
 	@Override
 	protected void generateIOComment(Root _root, String _indent)

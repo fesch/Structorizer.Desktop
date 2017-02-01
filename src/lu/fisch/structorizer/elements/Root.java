@@ -93,6 +93,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.01.13      Enh. #305: Notification of arranger index listeners ensured on saving (KGU#330)
  *      Kay Gürtzig     2017.01.17      Enh. #335: Toleration of Pascal variable declarations in getUsedVarNames()
  *      Kay Gürtzig     2017.01.30      Enh. #335: Type info mechanism established
+ *      Kay Gürtzig     2017.01.31      Bugfix in getParameterTypes() and getResultType() on occasion of issue #113
  *
  ******************************************************************************************************
  *
@@ -2920,40 +2921,45 @@ public class Root extends Element {
     	{
     		String rootText = getText().getLongString();
     		StringList tokens = Element.splitLexically(rootText, true);
-    		tokens.removeAll(" ");
+    		//tokens.removeAll(" ");
     		int posOpenParenth = tokens.indexOf("(");
     		int posCloseParenth = tokens.indexOf(")");
     		int posColon = tokens.indexOf(":");
     		if (posOpenParenth >= 0 && posOpenParenth < posCloseParenth)
     		{
     			// First attempt: Something after parameter list and "as" or ":"
-    			if (tokens.count() > posCloseParenth + 1 &&
-    					(tokens.get(posCloseParenth + 1).toLowerCase().equals("as")) ||
-    					(tokens.get(posCloseParenth + 1).equals(":"))
-    					)
-    			{
-    				// START KGU#135 2016-01-08: It was not meant to be split to several lines.
-    				//resultType = tokens.getText(posCloseParenth + 2);
-    				resultType = tokens.concatenate(" ", posCloseParenth + 2);
-    				// END KGU#135 2016-01-06
+    			if (tokens.count() > posCloseParenth + 1) {
+    				StringList right = tokens.subSequence(posCloseParenth + 1, tokens.count());
+    				right.removeAll(" ");
+    				if (right.count() > 0 && (right.get(0).toLowerCase().equals("as") || right.get(0).equals(":"))) {
+    					// START KGU#135 2016-01-08: It was not meant to be split to several lines.
+    					//resultType = tokens.getText(posCloseParenth + 2);
+    					resultType = tokens.concatenate("", tokens.indexOf(right.get(0), posCloseParenth + 1)+1).trim();
+    					// END KGU#135 2016-01-06
+    				}
     			}
     			// Second attempt: A keyword sequence preceding the routine name
     			// START KGU#61 2016-03-22: Method outsourced
     			//else if (posOpenParenth > 1 && testidentifier(tokens.get(posOpenParenth-1)))
-    			else if (posOpenParenth > 1 && Function.testIdentifier(tokens.get(posOpenParenth-1), null))
+    			if ((resultType == null || resultType.isEmpty()) && posOpenParenth > 1) {
+    				StringList left = tokens.subSequence(0, posOpenParenth);
+    				left.removeAll(" ");
+    				if (left.count() > 1 && Function.testIdentifier(left.get(left.count()-1), null))
     			// END KGU#61 2016-03-22
-    			{
-    				// We assume that the last token is the procedure name, the previous strings
-    				// may be the type
-    				resultType = tokens.concatenate(" ", 0, posOpenParenth - 1);
+    				{
+    					// We assume that the last token is the procedure name, the previous strings
+    					// may be the type
+    					resultType = left.concatenate(" ", 0, left.count()-1);
+    				}	
     			}
     		}
     		else if (posColon != -1)
     		{
     			// Third attempt: In case of an omitted parenthesis, the part behind the colon may be the type 
-    			resultType = tokens.concatenate(" ", posColon+1);
+    			resultType = tokens.concatenate("", posColon+1).trim();
     		}
     	}
+    	
     	return resultType;
     }
 
@@ -2972,6 +2978,9 @@ public class Root extends Element {
         // START KGU#253 2016-09-22: Enh. #249 - is there a parameter list?
     	boolean hasParamList = false;
         // END KGU#253 2016-09-22
+    	// START KGU#140 2017-01-31: Enh. #113: Better support for array arguments
+    	final String arrayPattern = "(\\w.*)(\\[.*\\])$";
+    	// END KGU#140 2017-01-31
         if (!this.isProgram)
         {
         	try
@@ -3026,10 +3035,21 @@ public class Root extends Element {
                 			}
                 			StringList tokens = StringList.explode(decl, " ");
                 			if (tokens.count() > 1) {
-                				if (type == null) {
+                				// START KGU#140 2017-01-31. Enh. #113 - this could cause wrong associations with C/Java syntax
+                				//if (type == null) {
+                				if (paramGroups.count() == 1 && posColon < 0 || type == null) {
+                				// END KGU#140 2017-01-31
                 					type = tokens.concatenate(" ", 0, tokens.count() - 1);
                 				}
                 				decl = tokens.get(tokens.count()-1);
+                				// START KGU#140 2017-01-31: Enh. #113 Cope with C-style array declarations
+                				if (decl.matches(arrayPattern)) {
+                					// Convert it into a Java-like declaration
+                					String indices = decl.replaceFirst(arrayPattern, "$2").trim();
+                					type += indices;
+                					decl = decl.replaceFirst(arrayPattern, "$1");
+                				}
+                				// END KGU#140 2017-01-31
                 			}
         					//System.out.println("Adding parameter: " + vars.get(j).trim());
         					if (paramNames != null)	paramNames.add(decl);

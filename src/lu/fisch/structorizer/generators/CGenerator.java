@@ -66,6 +66,7 @@ import java.util.HashMap;
  *      Kay Gürtzig             2016.12.01      Bugfix #301: More sophisticated test for condition enclosing by parentheses
  *      Kay Gürtzig             2016.12.22      Enh. #314: Support for File API
  *      Kay Gürtzig             2017.01.26      Enh. #259/#335: Type retrieval and improved declaration support 
+ *      Kay Gürtzig             2017.01.31      Enh. #113: Array parameter transformation
  *
  ******************************************************************************************************
  *
@@ -404,6 +405,22 @@ public class CGenerator extends Generator {
 	}
 	// END KGU#16 2015-11-29
 
+	// START KGU#140 2017-01-31: Enh. #113: Advanced array transformation
+	protected String transformArrayDeclaration(String _typeDescr, String _varName)
+	{
+		String decl = "";
+		if (_typeDescr.toLowerCase().startsWith("array") || _typeDescr.endsWith("]")) {
+			// TypeMapEntries are really good at analysing array definitions
+			TypeMapEntry typeInfo = new TypeMapEntry(_typeDescr, null, 0, false, false);
+			String canonType = typeInfo.getTypes().get(0);
+			decl = this.makeArrayDeclaration(canonType, _varName, typeInfo).trim();
+		}
+		else {
+			decl = (_typeDescr + " " + _varName).trim();
+		}
+		return decl;
+	}
+	// END KGU#140 2017-01-31
 	
 	protected void insertBlockHeading(Element elem, String _headingText, String _indent)
 	{
@@ -982,15 +999,28 @@ public class CGenerator extends Generator {
 			// Compose the function header
 			String fnHeader = transformType(_root.getResultType(),
 					((this.returns || this.isResultSet || this.isFunctionNameSet) ? "int" : "void"));
+			// START KGU#140 2017-01-31: Enh. #113 - improved type recognition and transformation
+			boolean returnsArray = fnHeader.toLowerCase().contains("array") || fnHeader.contains("]");
+			if (returnsArray) {
+				fnHeader = transformArrayDeclaration(fnHeader, "");
+			}
+			// END KGU#140 2017-01-31
 			fnHeader += " " + _procName + "(";
 			for (int p = 0; p < _paramNames.count(); p++) {
-				if (p > 0)
-					fnHeader += ", ";
-				fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
-						_paramNames.get(p)).trim();
+				if (p > 0) { fnHeader += ", "; }
+				// START KGU#140 2017-01-31: Enh. #113: Proper conversion of array types
+				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
+				//		_paramNames.get(p)).trim();
+				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+				// END KGU#140 2017-01-31
 			}
 			fnHeader += ")";
 			insertComment("TODO: Revise the return type and declare the parameters.", _indent);
+			// START KGU#140 2017-01-31: Enh. #113
+			if (returnsArray) {
+				insertComment("      C does not permit to return arrays - find an other way to pass the result!", _indent);
+			}
+			// END KGU#140 2017-01-31
 			code.add(fnHeader);
 		}
 		code.add(_indent + "{");
@@ -1028,7 +1058,7 @@ public class CGenerator extends Generator {
 					(!typeInfo.isCStyleDeclaredAt(null) || !this.isInternalDeclarationAllowed())) {			
 				String decl = types.get(0);
 				if (decl.startsWith("@")) {
-					decl = makeArrayDeclaration(decl.substring(1), varName, typeInfo.getMaxIndex());
+					decl = makeArrayDeclaration(decl, varName, typeInfo);
 				}
 				else {
 					decl = decl + " " + varName;
@@ -1055,9 +1085,15 @@ public class CGenerator extends Generator {
 	}
 	
 	// START KGU#332 2017-01-30: Decomposition of geeratePreamble to ease sub-classing
-	protected String makeArrayDeclaration(String _elementType, String _varName, int _maxIndex)
+	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
 	{
-		return _elementType + " " + _varName + "[" + (_maxIndex > 0 ? _maxIndex+1 : "") + "]"; 
+		int nLevels = _elementType.lastIndexOf('@')+1;
+		_elementType = (_elementType.substring(nLevels) + " " + _varName).trim();
+		for (int i = 0; i < nLevels; i++) {
+			int maxIndex = typeInfo.getMaxIndex(i);
+			_elementType += "[" + (maxIndex >= 0 ? Integer.toString(maxIndex+1) : (i == 0 ? "" : "/*???*/") ) + "]";
+		}
+		return _elementType;
 	}
 	
 	protected void generateIOComment(Root _root, String _indent)

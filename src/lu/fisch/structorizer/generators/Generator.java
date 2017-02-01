@@ -581,15 +581,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		StringList transTypes = new StringList();
 		for (int i = 0; i < types.count(); i++) {
 			String type = types.get(i);
-			if (type.startsWith("@")) {
-				// Array type - convert the element type spec only.
-				type = "@" + transformType(type.substring(1), "???");
-			}
-			else {
-				type = transformType(type, "???");
-			}
+			int posLastAt = type.lastIndexOf('@')+1;
+			type = type.substring(0, posLastAt) + transformType(type.substring(posLastAt), "???");
 			transTypes.addIfNew(type);
 		}
+		// Get rid of completely undefined types
 		transTypes.removeAll("???");
 		return transTypes;
 	}

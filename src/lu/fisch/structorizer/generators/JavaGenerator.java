@@ -573,9 +573,12 @@ public class JavaGenerator extends CGenerator
 //	}
 	
 	@Override
-	protected String makeArrayDeclaration(String _elementType, String _varName, int _maxIndex)
+	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
 	{
-		return _elementType + "[] " + _varName; 
+		while (_elementType.startsWith("@")) {
+			_elementType = _elementType.substring(1) + "[]";
+		}
+		return _elementType + " " + _varName; 
 	}
 	@Override
 	protected void generateIOComment(Root _root, String _indent)

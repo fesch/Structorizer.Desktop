@@ -44,6 +44,7 @@ package lu.fisch.structorizer.elements;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.Vector;
 
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
@@ -56,12 +57,18 @@ public class TypeMapEntry {
 	
 	// Declaration list node
 	class VarDeclaration {
+		private static final String arrayPattern1 = "^[Aa][Rr][Rr][Aa][Yy]\\s*?[Oo][Ff](\\s.*)";
+		private static final String arrayPattern1o = "^[Aa][Rr][Rr][Aa][Yy]\\s*?(\\d*)\\s*?[Oo][Ff](\\s.*)";	// Oberon style
+		private static final String arrayPattern2 = "^[Aa][Rr][Rr][Aa][Yy]\\s*?\\[(.*)\\]\\s*?[Oo][Ff](\\s.*)";
+		private static final String arrayPattern3 = "(.*?)\\[(.*?)\\](.*)";
+		private static final String arrayPattern4 = "^[Aa][Rr][Rr][Aa][Yy](\\W.*?\\W|\\s*?)[Oo][Ff](\\s.*)";
+		private static final String arrayPattern5 = "(.*?)\\[.*?\\]$";
+
 		public String typeDescriptor;
 		public Element definingElement;
 		public int lineNo;
-		public int[] indexRange = null;
+		public Vector<int[]> indexRanges = null;
 		public String elementType = null;
-		public boolean isArray = false;
 		public boolean isCStyle = false;
 		
 		public VarDeclaration(String _descriptor, Element _element, int _lineNo, boolean _cStyle)
@@ -69,52 +76,115 @@ public class TypeMapEntry {
 			typeDescriptor = _descriptor;
 			definingElement = _element;
 			lineNo = _lineNo;
-			isArray = (typeDescriptor.matches(".+\\[.*\\].*") || typeDescriptor.matches("(^|\\W.*)" + BString.breakup("array") + "($|\\W.*)"));
+			boolean isArray = (typeDescriptor.matches(".+\\[.*\\].*") || typeDescriptor.matches("(^|\\W.*)" + BString.breakup("array") + "($|\\W.*)"));
 			if (isArray) {
 				this.setElementType();
-				this.setIndexRange();
+				this.setIndexRanges();
 			}
 			isCStyle = _cStyle;
-		}		
+		}
+		
+		public boolean isArray()
+		{
+			return this.indexRanges != null;
+		}
+		
+		public String getCanonicalType()
+		{
+			String type = this.typeDescriptor;
+			if (this.isArray()) {
+				type = "@" + this.elementType;
+				for (int i = 1; i < this.indexRanges.size(); i++) {
+					type = "@" + type;
+				}
+			}
+			return type;
+		}
 
 		private void setElementType()
 		{
-			if (this.isArray) {
-				if (this.typeDescriptor.endsWith("]")) {
-					this.elementType = this.typeDescriptor.substring(0, this.typeDescriptor.indexOf('['));
-				}
-				else if (this.typeDescriptor.toLowerCase().matches("array.*? of .*")) {
-					int posCut = this.typeDescriptor.toLowerCase().indexOf(" of ") + 4;
-					this.elementType = this.typeDescriptor.substring(posCut);
-				}
-				else {
-					this.elementType = "???";
-				}
+			// Possible cases we have to cope with might e.g. be:
+			// array of unsigned int[12]
+			// array[1...6] of ARRAY 9 OF BOOLEAN
+			// double[5][8]
+			// array [2...9, columns]of array of char
+			String typeDescr = this.typeDescriptor;
+			while (typeDescr.matches(arrayPattern4)) {
+				typeDescr = typeDescr.replaceAll(arrayPattern4, "$2").trim();
 			}
+			while (typeDescr.matches(arrayPattern5)) {
+				typeDescr = typeDescr.replaceAll(arrayPattern5, "$1").trim();
+			}
+			if (typeDescr.isEmpty()) {
+				typeDescr = "???";
+			}
+			this.elementType = typeDescr;
 		}
 
-		private void setIndexRange()
+		private void setIndexRanges()
 		{
-			if (this.isArray) {
-				this.indexRange = new int[]{0, 0};
-				if (this.typeDescriptor.matches(".*\\[[0-9]*\\].*")) {
-					String countStr = this.typeDescriptor.replaceAll(".*\\[([0-9]*)\\].*", "$1");
-					try {
-						this.indexRange[1] = Integer.parseInt(countStr)-1;
-					}
-					catch (NumberFormatException ex) {}
+			//final String arrayPattern1 = "^" + BString.breakup("array") + "\\s*?" +  BString.breakup("of") + "(\\s.*)";
+			//final String arrayPattern1o = "^" + BString.breakup("array") + "\\s*?(\\d*)\\s*?" +  BString.breakup("of") + "(\\s.*)";	// Oberon style
+			//final String arrayPattern2 = "^" + BString.breakup("array") + "\\s*?\\[(.*)\\]\\s*?" +  BString.breakup("of") + "(\\s.*)";
+			//final String arrayPattern3 = "(.*?)\\[(.*?)\\](.*)";
+			String typeDescr = this.typeDescriptor;
+			this.indexRanges = new Vector<int[]>();
+			while (typeDescr.matches(arrayPattern1) || typeDescr.matches(arrayPattern1o) || typeDescr.matches(arrayPattern2)) {
+				if (typeDescr.matches(arrayPattern1)) {
+					typeDescr = typeDescr.replaceFirst(arrayPattern1, "$1").trim();
+					this.indexRanges.add(new int[]{0, -1});
 				}
-				else if (this.typeDescriptor.matches(".*\\[[0-9]*[.][.]+[0-9]*\\].*")) {
-					String countStr = this.typeDescriptor.replaceAll(".*\\[([0-9]*)[.][.]+([0-9]*)\\].*", "$1,$2");
-					try {
-						String[] limits = countStr.split(",");
-						this.indexRange[0] = Integer.parseInt(limits[0]);
-						this.indexRange[1] = Integer.parseInt(limits[1]);
+				else if (typeDescr.matches(arrayPattern1o)) {
+					String dimensions = typeDescr.replaceFirst(arrayPattern1o, "$1").trim();
+					typeDescr = typeDescr.replaceFirst(arrayPattern1o, "$2").trim();
+					StringList counts = StringList.explode(dimensions, ",");
+					for (int i = 0; i < counts.count(); i++) {
+						try {
+							int count = Integer.parseInt(counts.get(i));
+							this.indexRanges.add(new int[]{0, count-1});
+						}
+						catch (NumberFormatException ex) {
+							this.indexRanges.add(new int[]{0, -1});							
+						}
 					}
-					catch (NumberFormatException ex) {}
 				}
+				else {
+					String dimens = typeDescr.replaceFirst(arrayPattern2, "$1").trim();
+					typeDescr = typeDescr.replaceFirst(arrayPattern2, "$2").trim();
+					StringList ranges = StringList.explode(dimens, "\\]\\[");
+					addIndexRanges(StringList.explode(ranges, ","));
+				}
+			};
+			while (typeDescr.endsWith("]") && typeDescr.matches(arrayPattern3)) {
+				String dimens = typeDescr.replaceFirst(arrayPattern3, "$2").trim();
+				typeDescr = typeDescr.replaceFirst(arrayPattern3, "$1$3").trim();
+				addIndexRanges(StringList.explode(dimens, ","));
 			}
+			
 		}
+		
+		private void addIndexRanges(StringList ranges)
+		{
+			final String rangePattern = "^([0-9]+)[.][.][.]?([0-9]+)$";
+
+			for (int i = 0; i < ranges.count(); i++) {
+				int[] indexRange = new int[]{0, -1};
+				String range = ranges.get(i).trim();
+				if (range.matches(rangePattern)) {
+					indexRange[0] = Integer.parseInt(range.replaceAll(rangePattern, "$1"));
+					indexRange[1] = Integer.parseInt(range.replaceAll(rangePattern, "$2"));
+				}
+				else {
+					try {
+						indexRange[1] = Integer.parseInt(range) - 1;
+					}
+					catch (NumberFormatException ex) {}
+				}
+				this.indexRanges.add(indexRange);
+			}
+			
+		}
+			
 	}
 	public LinkedList<VarDeclaration> declarations = new LinkedList<VarDeclaration>();
 	// Set of accessor ids
@@ -167,11 +237,7 @@ public class TypeMapEntry {
 	{
 		StringList types = new StringList();
 		for (VarDeclaration currDecl: declarations) {
-			String type = currDecl.typeDescriptor;
-			if (currDecl.isArray) {
-				type = "@" + currDecl.elementType;
-			}
-			types.addIfNew(type);
+			types.addIfNew(currDecl.getCanonicalType());
 		}
 		return types;
 	}
@@ -194,26 +260,26 @@ public class TypeMapEntry {
 	
 	public boolean isArray()
 	{
-		return !this.declarations.isEmpty() && this.declarations.element().isArray;
+		return !this.declarations.isEmpty() && this.declarations.element().isArray();
 	}
 	
-	public int getMaxIndex()
+	public int getMaxIndex(int level)
 	{
 		int ix = -1;
 		for (VarDeclaration decl: this.declarations) {
-			if (decl.isArray && decl.indexRange[1] > ix) {
-				ix = decl.indexRange[1];
+			if (level >= 0 && decl.isArray() && level < decl.indexRanges.size() && decl.indexRanges.get(level)[1] > ix) {
+				ix = decl.indexRanges.get(level)[1];
 			}
 		}
 		return ix;
 	}
 	
-	public int getMinIndex()
+	public int getMinIndex(int level)
 	{
 		int ix = -1;
 		for (VarDeclaration decl: this.declarations) {
-			if (decl.isArray && decl.indexRange[0] > ix) {
-				ix = decl.indexRange[0];
+			if (level >= 0 && decl.isArray() && level < decl.indexRanges.size() && decl.indexRanges.get(level)[0] > ix) {
+				ix = decl.indexRanges.get(level)[0];
 			}
 		}
 		return ix;
@@ -225,13 +291,7 @@ public class TypeMapEntry {
 	@Override
     public String toString()
     {
-		String selfDescr = getClass().getSimpleName() + "(";
-		String separator = "";
-		for (VarDeclaration currDecl: declarations) {
-			selfDescr += separator + currDecl.definingElement + ": " + currDecl.typeDescriptor + (currDecl.isArray ? " (array)" : "");
-			separator = " | ";
-		}
-		return selfDescr + ")";
+		return getClass().getSimpleName() + "(" + this.getTypes().concatenate(" | ") + ")";
     }
 	
 }

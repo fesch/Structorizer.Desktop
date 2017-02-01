@@ -634,8 +634,9 @@ public class Instruction extends Element {
 			if (varName != null) {
 				int pos = leftSide.indexOf(varName);
 				typeSpec = leftSide.concatenate(" ", 0, pos);
-				if (!typeSpec.isEmpty() && (pos = leftSide.indexOf("[")) > 1) {
+				while (!typeSpec.isEmpty() && (pos = leftSide.indexOf("[")) > 1) {
 					typeSpec += leftSide.concatenate("", pos, leftSide.indexOf("]")+1);
+					leftSide.remove(pos, leftSide.indexOf("]")+1);
 				}
 				if (typeSpec.isEmpty() && !typeMap.containsKey(varName)) {
 					//String expr = rightSide.concatenate(" ");
@@ -657,9 +658,10 @@ public class Instruction extends Element {
 					}
 					else {
 						typeSpec = identifyExprType(typeMap, rightSide.concatenate(" "));
-						if (!typeSpec.isEmpty() && (pos = leftSide.indexOf("[")) == 1) {
-							typeSpec = "array of " + typeSpec;
-						}
+					}
+					while (!typeSpec.isEmpty() && (pos = leftSide.indexOf("[")) == 1) {
+						typeSpec = "array of " + typeSpec;
+						leftSide.remove(pos, leftSide.indexOf("]")+1);
 					}
 				}
 			}
