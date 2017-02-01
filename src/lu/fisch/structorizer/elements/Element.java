@@ -75,6 +75,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.01.06      Issue #327: French default structure preferences replaced by English ones
  *      Kay Gürtzig     2017.01.13      Issue #333: Display of compound comparison operators as unicode symbols
  *      Kay Gürtzig     2017.01.27      Enh. #335: "dim" highlighted like "var" and ":" like "as"
+ *      Kay Gürtzig     2017.02.01      KGU#335: Method splitLexically now reassembles floating-point literals (without sign)
  *
  ******************************************************************************************************
  *
@@ -1756,13 +1757,15 @@ public abstract class Element {
 		parts=StringList.explodeWithDelimiter(parts,"\u2265");
 		// END KGU#331 2017-01-13
 
-		// reassamble symbols
+		// reassemble symbols
 		int i = 0;
 		while (i < parts.count())
 		{
+			String thisPart = parts.get(i);
 			if (i < parts.count()-1)
 			{
-				if (parts.get(i).equals("<") && parts.get(i+1).equals("-"))
+				String nextPart = parts.get(i+1);
+				if (thisPart.equals("<") && nextPart.equals("-"))
 				{
 					parts.set(i,"<-");
 					parts.delete(i+1);
@@ -1773,52 +1776,52 @@ public abstract class Element {
 					}
 					// END KGU 2014-10-18
 				}
-				else if (parts.get(i).equals(":") && parts.get(i+1).equals("="))
+				else if (thisPart.equals(":") && nextPart.equals("="))
 				{
 					parts.set(i,":=");
 					parts.delete(i+1);
 				}
-				else if (parts.get(i).equals("!") && parts.get(i+1).equals("="))
+				else if (thisPart.equals("!") && nextPart.equals("="))
 				{
 					parts.set(i,"!=");
 					parts.delete(i+1);
 				}
 				// START KGU 2015-11-04
-				else if (parts.get(i).equals("=") && parts.get(i+1).equals("="))
+				else if (thisPart.equals("=") && nextPart.equals("="))
 				{
 					parts.set(i,"==");
 					parts.delete(i+1);
 				}
 				// END KGU 2015-11-04
-				else if (parts.get(i).equals("<"))
+				else if (thisPart.equals("<"))
 				{
-					if (parts.get(i+1).equals(">"))
+					if (nextPart.equals(">"))
 					{
 						parts.set(i,"<>");
 						parts.delete(i+1);
 					}
-					else if (parts.get(i+1).equals("="))
+					else if (nextPart.equals("="))
 					{
 						parts.set(i,"<=");
 						parts.delete(i+1);
 					}
 					// START KGU#92 2015-12-01: Bugfix #41
-					else if (parts.get(i+1).equals("<"))
+					else if (nextPart.equals("<"))
 					{
 						parts.set(i,"<<");
 						parts.delete(i+1);
 					}					
 					// END KGU#92 2015-12-01
 				}
-				else if (parts.get(i).equals(">"))
+				else if (thisPart.equals(">"))
 				{
-					if (parts.get(i+1).equals("="))
+					if (nextPart.equals("="))
 					{
 						parts.set(i,">=");
 						parts.delete(i+1);
 					}
 					// START KGU#92 2015-12-01: Bugfix #41
-					else if (parts.get(i+1).equals(">"))
+					else if (nextPart.equals(">"))
 					{
 						parts.set(i,">>");
 						parts.delete(i+1);
@@ -1826,41 +1829,58 @@ public abstract class Element {
 					// END KGU#92 2015-12-01
 				}
 				// START KGU#24 2014-10-18: Logical two-character operators should be detected, too ...
-				else if (parts.get(i).equals("&") && parts.get(i+1).equals("&"))
+				else if (thisPart.equals("&") && nextPart.equals("&"))
 				{
 					parts.set(i,"&&");
 					parts.delete(i+1);
 				}
-				else if (parts.get(i).equals("|") && parts.get(i+1).equals("|"))
+				else if (thisPart.equals("|") && nextPart.equals("|"))
 				{
 					parts.set(i,"||");
 					parts.delete(i+1);
 				}
 				// END KGU#24 2014-10-18
 				// START KGU#26 2015-11-04: Find escaped quotes
-				else if (parts.get(i).equals("\\"))
+				else if (thisPart.equals("\\"))
 				{
-					if (parts.get(i+1).equals("\""))
+					if (nextPart.equals("\""))
 					{
 						parts.set(i, "\\\"");
 						parts.delete(i+1);					}
-					else if (parts.get(i+1).equals("\\"))
+					else if (nextPart.equals("\\"))
 					{
 						parts.set(i, "\\\\");
 						parts.delete(i+1);					}
 				}
 				// END KGU#26 2015-11-04
 				// START KGU#331 2017-01-13: Enh. #333 Precaution against unicode comparison operators
-				else if (parts.get(i).equals("\u2260")) {
+				else if (thisPart.equals("\u2260")) {
 					parts.set(i, "<>");
 				}
-				else if (parts.get(i).equals("\u2264")) {
+				else if (thisPart.equals("\u2264")) {
 					parts.set(i, "<=");
 				}
-				else if (parts.get(i).equals("\u2265")) {
+				else if (thisPart.equals("\u2265")) {
 					parts.set(i, ">=");
 				}
 				// END KGU#331 2017-01-13
+				// START KGU#335 2017-02-01: Recompose floating-point literals (except those starting or ending with ".")
+				else if (thisPart.matches("[0-9]+") && nextPart.equals(".") && i+2 < parts.count()) {
+					if (parts.get(i+2).matches("[0-9]+([eE][0-9]+)?")) {
+						parts.set(i, thisPart + nextPart + parts.get(i+2));
+						parts.delete(i+1);
+						parts.delete(i+1);
+					}
+					else if (parts.get(i+2).matches("[0-9]+[eE]") &&
+							i+4 < parts.count() && parts.get(i+3).matches("[+-]") && parts.get(i+4).matches("[0-9]+")) {
+						for (int j = 1; j <= 4; j++) {
+							thisPart += parts.get(i+1);
+							parts.delete(i+1);
+						}
+						parts.set(i, thisPart);
+					}
+				}
+				// END KGU#335 2017-02-01
 			}
 			i++;
 		}

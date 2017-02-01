@@ -242,13 +242,13 @@ public class OberonGenerator extends Generator {
 			_type = _type.replace(" of ", " OF ");
 			String pattern = "(.*)ARRAY\\s*?\\[\\s*[0-9]+\\s*[.][.][.]?\\s*([0-9]+)\\s*\\]\\s*OF\\s*(.*)";
 			if (_type.matches(pattern)) {
-				String upperIndex = _type.replaceAll(pattern, "$2");
+				String upperIndex = _type.replaceFirst(pattern, "$2");
 				int nElements = Integer.parseInt(upperIndex) + 1;
-				String elementType = _type.replaceAll(pattern,  "$3").trim();
-				_type = _type.replaceAll(pattern, "$1ARRAY " + nElements +" OF ") + transformType(elementType, elementType);
+				String elementType = _type.replaceFirst(pattern,  "$3").trim();
+				_type = _type.replaceFirst(pattern, "$1ARRAY " + nElements +" OF ") + transformType(elementType, elementType);
 			}
 			else if (_type.matches(pattern = "ARRAY\\s*OF\\s*(.*)")) {
-				String elementType = _type.replaceAll(pattern,  "$1").trim();
+				String elementType = _type.replaceFirst(pattern, "$1").trim();
 				_type = "ARRAY OF " + transformType(elementType, elementType);
 			}
 			// END KGU#332 2017-01-30
@@ -703,7 +703,7 @@ public class OberonGenerator extends Generator {
 			if (allBoolean) itemType = "BOOLEAN";
 			else if (allInt) itemType = "INTEGER";
 			else if (allReal) itemType = "REAL";
-			else if (allString) itemType = "string";
+			else if (allString) itemType = "ARRAY 100 OF CHAR";
 			else {
 				// We do a dummy type definition
 				this.insertComment("TODO: Specify an appropriate element type for the array!", _indent);
@@ -983,7 +983,7 @@ public class OberonGenerator extends Generator {
         		if (this.hasEmptyInput(_root))
         		{
         			code.add(_indent + "VAR");
-        			code.add(_indent + this.getIndent() + "dummyInputChar: Char;	" +
+        			code.add(_indent + this.getIndent() + "dummyInputChar: CHAR;	" +
         					this.commentSymbolLeft() + " for void input " + this.commentSymbolRight());
         			code.add(_indent);
         		}
@@ -998,21 +998,27 @@ public class OberonGenerator extends Generator {
 			int nParams = _paramNames.count();
 			for (int p = 0; p < nParams; p++) {
 				String type = transformType(_paramTypes.get(p), "(*type?*)");
+				// START KGU#140 2017-01-31; Enh. #113 - array conversion in argument list
 				//if (p == 0) {
 				//	header += "(";
 				//}
 				//else if (type.equals("(*type?*)") || !type.equals(lastType)) {
-				if (p > 0 && type.equals("(*type?*)") || !type.equals(lastType)) {
-					header += ": " + lastType + "; ";
-					// START KGU#332 2017-01-31: Enh. #335 Improved type support
-					if (type.contains("ARRAY") && !_paramNames.get(p).trim().startsWith("VAR ")) {
-						header += "VAR ";
+				if (p > 0) {
+					if (type.equals("(*type?*)") || !type.equals(lastType)) {
+				// END KGU#140 2017-01-31
+						header += ": " + lastType + "; ";
+						// START KGU#332 2017-01-31: Enh. #335 Improved type support
+						if (type.contains("ARRAY") && !_paramNames.get(p).trim().startsWith("VAR ")) {
+							header += "VAR ";
+						}
+						// END KGU#332 2017-01-31
 					}
-					// END KGU#332 2017-01-31
+					else {
+						header += ", ";
+					}
+				// START KGU#140 2017-01-31; Enh. #113 - array conversion in argument list
 				}
-				else {
-					header += ", ";
-				}
+				// END KGU#140 2017-01-31
 				header += _paramNames.get(p).trim();
 				if (p+1 == nParams) {
 					//header += ": " + type + ")";

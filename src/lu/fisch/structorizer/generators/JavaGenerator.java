@@ -57,6 +57,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig             2016.12.22      Enh. #314: Support for Structorizer File API
  *      Kay Gürtzig             2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
+ *      Kay Gürtzig             2017.02.01      Enh. #113: Array parameter transformation
  *
  ******************************************************************************************************
  *
@@ -356,12 +357,15 @@ public class JavaGenerator extends CGenerator
 		_type = _type.replace("unsigned", "int");
 		_type = _type.replace("longreal", "double");
 		_type = _type.replace("real", "double");
-		_type = _type.replace("boole", "boolean");
-		_type = _type.replace("bool", "boolean");
+		//_type = _type.replace("boole", "boolean");
+		//_type = _type.replace("bool", "boolean");
+		if (_type.matches("(^|.*\\W+)bool(\\W+.*|$)")) {
+			_type = _type.replaceAll("(^|.*\\W+)bool(\\W+.*|$)", "$1boolean$2");
+		}
 		_type = _type.replace("character", "Character");
 		_type = _type.replace("integer", "Integer");
 		_type = _type.replace("string", "String");
-		_type = _type.replace("array[ ]([0-9]*)[ ]of char", "String");	// FIXME (KGU 2016-01-14) doesn't make much sense
+		_type = _type.replace("array[ ]?([0-9]*)[ ]of char", "String");	// FIXME (KGU 2016-01-14) doesn't make much sense
 		return _type;
 	}
 	// END KGU#16 2015-11-29
@@ -521,6 +525,9 @@ public class JavaGenerator extends CGenerator
 			{
 				code.add(_indent+this.getIndent() + " * @return ");
 				_resultType = transformType(_resultType, "int");
+				// START KGU#140 2017-02-01: Enh. #113: Proper conversion of array types
+				_resultType = this.transformArrayDeclaration(_resultType, "");
+				// END KGU#140 2017-02-01
 			}
 			else {
 				_resultType = "void";		        	
@@ -532,10 +539,12 @@ public class JavaGenerator extends CGenerator
 					+ _resultType + " " + _procName + "(";
 			// END KGU#178 2016-07-20
 			for (int p = 0; p < _paramNames.count(); p++) {
-				if (p > 0)
-					fnHeader += ", ";
-				fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " +
-						_paramNames.get(p)).trim();
+				if (p > 0) { fnHeader += ", "; }
+				// START KGU#140 2017-02-01: Enh. #113: Proper conversion of array types
+				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
+				//		_paramNames.get(p)).trim();
+				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+				// END KGU#140 2017-02-01
 			}
 			fnHeader += ")";
 			insertBlockHeading(_root, fnHeader,  _indent + this.getIndent());

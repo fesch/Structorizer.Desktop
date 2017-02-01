@@ -65,6 +65,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support
  *                                          Bugfix #337: Defective export of 2d assignments like a[i] <- {foo, bar} mended
  *      Kay Gürtzig         2017.01.31      Enh. #113: Array parameter transformation
+ *      Kay Gürtzig         2017.02.01      Enh. #84: indexBase constant mechanism for array initializers disabled
  *
  ******************************************************************************************************
  *
@@ -253,7 +254,10 @@ public class PasGenerator extends Generator
 			//		_type = lower.replaceAll("^(array.*?of ).*", "$1") + transformType(elType, elType);
 			//	}
 			//}
-			_type = transformArrayDeclaration(_type);
+			else if (!_type.equalsIgnoreCase("array")) {
+				// "array" without element type is a pathologic case that might drive us into stack overflow!
+				_type = transformArrayDeclaration(_type);
+			}
 			// END KGU#140 2017-01-31
 			// To be continued if required...
 		}
@@ -271,11 +275,12 @@ public class PasGenerator extends Generator
 			int nLevels = canonType.lastIndexOf('@')+1;
 			String elType = (canonType.substring(nLevels)).trim();
 			elType = transformType(elType, "(*???*)");
-			_typeDescr = "array ";
+			_typeDescr = "";
 			for (int i = 0; i < nLevels; i++) {
+				_typeDescr += "array ";
 				int minIndex = typeInfo.getMinIndex(i);
 				int maxIndex = typeInfo.getMaxIndex(i);
-				if (maxIndex >= minIndex) {
+				if (minIndex >= 0 && maxIndex >= minIndex) {
 					_typeDescr += "[" + minIndex + ".." + maxIndex + "] ";
 				}
 				_typeDescr += "of ";
@@ -478,7 +483,8 @@ public class PasGenerator extends Generator
 							// index range here (though in Pascal indexing usually 
 							// starts with 1 but may vary widely). We solve the problem
 							// by providing a configurable start index constant
-							insertComment("TODO: Check indexBase value (automatically generated)", _indent);
+							//insertComment("TODO: Check indexBase value (automatically generated)", _indent);
+							insertComment("Hint: Automatically decomposed array initialization", _indent);
 							// START KGU#332 2017-01-30: We must be better prepared for two-dimensional arrays
 							//insertDeclaration("var", "indexBase_" + varName + ": Integer = 0;",
 							//		_indent.length());
@@ -488,19 +494,19 @@ public class PasGenerator extends Generator
 							//			elements.get(el) + ";",
 							//			_indent, isDisabled);
 							//}
-							String baseName = varName;
+							//String baseName = varName;
 							if (varName.matches("\\w*\\[.*\\]")) {
-								baseName = varName.replaceAll("(\\w.*)\\[(.*)\\]", "$1_$2");
+								//baseName = varName.replaceAll("(\\w.*)\\[(.*)\\]", "$1_$2");
 								varName = varName.replace("]", ", ");
 							}
 							else {
 								varName = varName + "[";
 							}
-							insertDeclaration("const", "indexBase_" + baseName + " = 0;",
-									_indent.length());
+							//insertDeclaration("const", "indexBase_" + baseName + " = 0;",
+							//		_indent.length());
 							for (int el = 0; el < elements.count(); el++)
 							{
-								addCode(varName + "indexBase_" + baseName + " + " + el + "] := " + 
+								addCode(varName /*+ "indexBase_" + baseName + " + "*/ + el + "] := " + 
 										elements.get(el) + ";",
 										_indent, isDisabled);
 							}
@@ -775,7 +781,7 @@ public class PasGenerator extends Generator
 			}
 
 			// Insert the array and index declarations
-			String range = "1..." + items.count();
+			String range = "1.." + items.count();
 			insertDeclaration("var", arrayName + ": " + "array [" + 
 					range + "] of " + itemType + ";", _indent.length());
 			insertDeclaration("var", indexName + ": " + range + ";",
@@ -1174,7 +1180,7 @@ public class PasGenerator extends Generator
 					String indexRange = "";
 					if (maxIndex > 0) {
 						indexRange = "[" + minIndex +
-								"..." + maxIndex + "] ";
+								".." + maxIndex + "] ";
 					}
 					prefix += "array " + indexRange + "of ";
 					type = type.substring(1);
