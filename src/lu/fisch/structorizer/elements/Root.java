@@ -94,6 +94,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.01.17      Enh. #335: Toleration of Pascal variable declarations in getUsedVarNames()
  *      Kay Gürtzig     2017.01.30      Enh. #335: Type info mechanism established
  *      Kay Gürtzig     2017.01.31      Bugfix in getParameterTypes() and getResultType() on occasion of issue #113
+ *      Kay Gürtzig     2017.02.01      Enh. #259/#335: Parameters added to typeMap
  *
  ******************************************************************************************************
  *
@@ -1801,7 +1802,38 @@ public class Root extends Element {
     }
     // END KGU#261 2017-01-20
     
+    // START KGU#261/KGU#332 2017-02-01: Enh. #259/#335
+	/**
+	 * Adds all parameter declarations to the given map (varname -> typeinfo).
+	 * @param typeMap
+	 */
+	public void updateTypeMap(HashMap<String, TypeMapEntry> typeMap)
+	{
+		ArrayList<Param> parameters = getParams();
+		String typeSpec = null;
+		for (Param par: parameters) {
+			if ((typeSpec = par.getType()) != null) {
+				this.addToTypeMap(typeMap, par.getName(), typeSpec, 0, true, false);
+			}
+		}
+		if (!this.isProgram) {
+			typeSpec = this.getResultType();
+			if (typeSpec != null) {
+				this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, false);
+			}
+		}
+	}
+	// END KGU#261/KGU#332 2017-02-01
+
+    
     // START BFI 2015-12-10
+	/**
+	 * Obsolete method to get a type description of the result type of this (if being a
+	 * function), or null, if not available.
+	 * Use getResultType() instead!
+	 * @return informal type description or null
+	 */
+	@Deprecated
     public String getReturnType()
     {
         try 
@@ -2911,7 +2943,7 @@ public class Root extends Element {
     // START KGU#78 2015-11-25: Extracted from analyse() and rewritten
     /**
      * Returns a string representing a detected result type if this is a subroutine diagram. 
-     * @return null or a string possibly representing some datatype
+     * @return null or a string possibly representing some data type
      */
     public String getResultType()
     {

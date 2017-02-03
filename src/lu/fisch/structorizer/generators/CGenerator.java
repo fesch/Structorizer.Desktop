@@ -20,8 +20,6 @@
 
 package lu.fisch.structorizer.generators;
 
-import java.util.HashMap;
-
 /******************************************************************************************************
  *
  *      Author:         Bob Fisch
@@ -32,21 +30,21 @@ import java.util.HashMap;
  *
  *      Revision List
  *
- *      Author          		Date			Description
- *      ------					----			-----------
- *      Bob Fisch       	    2008.11.17		First Issue
- *      Gunter Schillebeeckx    2009.08.10		Bugfixes (see comment)
- *      Bob Fisch               2009.08.17		Bugfixes (see comment)
- *      Bob Fisch               2010.08-30		Different fixes asked by Kay Gürtzig
- *                                        		and Peter Ehrlich
- *      Kay Gürtzig             2010.09.10		Bugfixes and cosmetics (see comment)
- *      Bob Fisch               2011.11.07		Fixed an issue while doing replacements
- *      Kay Gürtzig             2014.11.06		Support for logical Pascal operators added
- *      Kay Gürtzig             2014.11.16		Bugfixes in operator conversion
- *      Kay Gürtzig             2015.10.18		Indentation and comment mechanisms revised, bugfix
- *      Kay Gürtzig             2015.10.21		New generator now supports multiple-case branches
- *      Kay Gürtzig             2015.11.01		Language transforming reorganised, FOR loop revision
- *      Kay Gürtzig             2015.11.10		Bugfixes KGU#71 (switch default), KGU#72 (div operators)
+ *      Author                  Date            Description
+ *      ------                  ----            -----------
+ *      Bob Fisch               2008.11.17      First Issue
+ *      Gunter Schillebeeckx    2009.08.10      Bugfixes (see comment)
+ *      Bob Fisch               2009.08.17      Bugfixes (see comment)
+ *      Bob Fisch               2010.08-30      Different fixes asked by Kay Gürtzig
+ *                                              and Peter Ehrlich
+ *      Kay Gürtzig             2010.09.10      Bugfixes and cosmetics (see comment)
+ *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
+ *      Kay Gürtzig             2014.11.06      Support for logical Pascal operators added
+ *      Kay Gürtzig             2014.11.16      Bugfixes in operator conversion
+ *      Kay Gürtzig             2015.10.18      Indentation and comment mechanisms revised, bugfix
+ *      Kay Gürtzig             2015.10.21      New generator now supports multiple-case branches
+ *      Kay Gürtzig             2015.11.01      Language transforming reorganised, FOR loop revision
+ *      Kay Gürtzig             2015.11.10      Bugfixes KGU#71 (switch default), KGU#72 (div operators)
  *      Kay Gürtzig             2015.11.10      Code style option optionBlockBraceNextLine() added,
  *                                              bugfix/enhancement #22 (KGU#74 jump and return handling)
  *      Kay Gürtzig             2015.12.13      Bugfix #51 (=KGU#108): Cope with empty input and output
@@ -131,6 +129,7 @@ import java.util.HashMap;
  *
  ******************************************************************************************************///
 
+import java.util.HashMap;
 import java.util.regex.Matcher;
 
 import lu.fisch.utils.*;

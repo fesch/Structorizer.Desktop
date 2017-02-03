@@ -59,6 +59,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.06      Issue #312: Measure against lost focus on start.
  *      Kay Gürtzig     2017.01.07      Enh. #101: Modified title string for dependent instances
  *      Kay Gürtzig     2017.01.15      Enh. #333: New potential preference "unicodeCompOps" added to Ini
+ *      Kay Gürtzig     2017.02.03      Issue #340: Redundant calls of setLocale dropped (including first loadFromIni())
  *
  ******************************************************************************************************
  *
@@ -143,7 +144,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             /******************************
              * Load values from INI
              ******************************/
-            loadFromINI();
+            // START KGU#337 2017-02-03: Issue #340 - seemed redundant (is done later again)
+            //loadFromINI();
+            // END KGU#337 2017-02-03
 
             /******************************
              * Some JFrame specific things
@@ -271,7 +274,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
              * Load values from INI
              ******************************/
             loadFromINI();	// Why is this done a second time here?
-            Locales.getInstance().setLocale(Locales.getInstance().getLoadedLocaleName());
+            // START KGU#337 2017-02-03: Issue #340 - setLocale has already been done by loadFromIni()
+            //Locales.getInstance().setLocale(Locales.getInstance().getLoadedLocaleName());
+            // END KGU#337 2017-02-03
 
             /******************************
              * Resize the toolbar

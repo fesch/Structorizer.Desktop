@@ -165,6 +165,7 @@ import lu.fisch.utils.*;
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.executor.Executor;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.io.*;
 
@@ -181,7 +182,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.26-02";
+	public static String E_VERSION = "3.26-03";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -2046,6 +2047,51 @@ public abstract class Element {
 	}
 	// END KGU#101 2015-12-11
 
+	// START KGU#261 2017-02-01: Enh. #259 (type map) - moved from Instruction hitherto
+	/**
+	 * Tries to derive the data type of expression expr by means of analysing literal
+	 * syntax, built-in functions and the types associated to variables registered in
+	 * the typeMap.
+	 * @param typeMap - current mapping of variable names to statically concluded type information 
+	 * @param expr - the expression to be categorized
+	 * @return a type description if available and unambiguous or an empty string otherwise
+	 */
+	public static String identifyExprType(HashMap<String, TypeMapEntry> typeMap, String expr)
+	{
+		String typeSpec = "";	// This means no info
+		// 1. Check whether its a known typed variable
+		TypeMapEntry typeEntry = typeMap.get(expr);
+		if (typeEntry != null) {
+			StringList types = typeEntry.getTypes();
+			if (types.count() == 1) {
+				typeSpec = typeEntry.getTypes().get(0);
+			}
+		}
+		// Otherwise check if it's a built-in function with unambiguous type
+		else if (Function.isFunction(expr)) {
+			typeSpec = (new Function(expr).getResultType(""));
+		}
+		else if (expr.matches("(^\\\".*\\\"$)|(^\\\'.*\\\'$)")) {
+			typeSpec = "String";
+		}
+		// 2. If none of the approaches above succeeded check for a numeric literal
+		if (typeSpec.isEmpty()) {
+			try {
+				Double.parseDouble(expr);
+				typeSpec = "double";
+				Integer.parseInt(expr);
+				typeSpec = "int";
+			}
+			catch (NumberFormatException ex) {}
+		}
+		// Check for boolean literals
+		if (typeSpec.isEmpty() && (expr.equalsIgnoreCase("true") || expr.equalsIgnoreCase("false"))) {
+			typeSpec = "boolean";
+		}
+		return typeSpec;
+	}
+	// END KGU#261 2017-02-01
+	
 	// START KGU#63 2015-11-03: getWidthOutVariables and writeOutVariables were nearly identical (and had to be!)
 	// Now it's two wrappers and a common algorithm -> ought to avoid duplicate work and prevents from divergence
 	public static int getWidthOutVariables(Canvas _canvas, String _text, Element _this)

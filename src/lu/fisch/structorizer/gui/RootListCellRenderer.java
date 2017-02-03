@@ -32,7 +32,6 @@ package lu.fisch.structorizer.gui;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2016.12.12      First Issue
- *      Kay Gürtzig     2017.01.05      Enh. #319 - Lines with test-covered diagrams now show a different colour
  *      Kay Gürtzig     2017.01.07      Enh. #319 - "covered" status now shown by the icons instead of the text
  *
  ******************************************************************************************************
