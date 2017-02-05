@@ -59,7 +59,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.06      Issue #312: Measure against lost focus on start.
  *      Kay Gürtzig     2017.01.07      Enh. #101: Modified title string for dependent instances
  *      Kay Gürtzig     2017.01.15      Enh. #333: New potential preference "unicodeCompOps" added to Ini
- *      Kay Gürtzig     2017.02.03      Issue #340: Redundant calls of setLocale dropped (including first loadFromIni())
+ *      Kay Gürtzig     2017.02.03      Issue #340: Redundant calls of setLocale dropped
  *
  ******************************************************************************************************
  *
@@ -144,9 +144,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             /******************************
              * Load values from INI
              ******************************/
-            // START KGU#337 2017-02-03: Issue #340 - seemed redundant (is done later again)
-            //loadFromINI();
-            // END KGU#337 2017-02-03
+            // This is required at an early moment e.g. to ensure correct scaling etc.
+            // But it doesn't reach components like Editor, Menu and Diagram, which are
+            // created later
+            loadFromINI();
 
             /******************************
              * Some JFrame specific things
@@ -185,7 +186,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
              * Setup the editor
              ******************************/
             editor = new Editor(this);
-            // get reference tot he diagram
+            // get reference to the diagram
             diagram = getEditor().diagram;
             Container container = getContentPane();
             container.setLayout(new BorderLayout());
@@ -273,7 +274,8 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             /******************************
              * Load values from INI
              ******************************/
-            loadFromINI();	// Why is this done a second time here?
+            // This has to be done a second time now, after all components were put in place
+            loadFromINI();
             // START KGU#337 2017-02-03: Issue #340 - setLocale has already been done by loadFromIni()
             //Locales.getInstance().setLocale(Locales.getInstance().getLoadedLocaleName());
             // END KGU#337 2017-02-03
@@ -284,7 +286,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
             //editor.componentResized(null);
             getEditor().revalidate();
             repaint();
-            getEditor().diagram.redraw();
+            diagram.redraw();
             // START KGU#305 2016-12-16
             getEditor().updateArrangerIndex(Arranger.getSortedRoots());
             // END KGU#305 2016-12-16
@@ -303,7 +305,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 		{
 			Ini ini = Ini.getInstance();
 			ini.load();
-			ini.load();	// FIXME: Why is it done twice?
+			ini.load();	// FIXME This seems to be repeated in order to buy time for the GUI
 
 			double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
 			// START KGU#287 2017-01-09 
@@ -369,7 +371,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			setLocation(new Point(top,left));
 			validate();
 
-			if(diagram!=null) 
+			if (diagram!=null) 
 			{
 				// current directory
 				// START KGU#95 2015-12-04: Fix #42 Don't propose the System root but the user home
@@ -431,7 +433,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			// recent files
 			try
 			{	
-				if(diagram!=null)
+				if (diagram != null)
 				{
 					for(int i=9;i>=0;i--)
 					{

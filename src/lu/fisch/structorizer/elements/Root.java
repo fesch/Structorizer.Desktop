@@ -3149,174 +3149,174 @@ public class Root extends Element {
 
     public Vector<DetectedError> analyse()
     {
-            this.getVarNames();
-            //System.out.println(this.variables);
+        this.getVarNames();
+        //System.out.println(this.variables);
 
-            Vector<DetectedError> errors = new Vector<DetectedError>();
-            StringList vars = getVarNames(this,true,false);
-            rootVars = vars.copy();
-            StringList uncertainVars = new StringList();
+        Vector<DetectedError> errors = new Vector<DetectedError>();
+        StringList vars = getVarNames(this,true,false);
+        rootVars = vars.copy();
+        StringList uncertainVars = new StringList();
 
-            String programName = getMethodName();
+        String programName = getMethodName();
 
-            DetectedError error;
-            
-            // START KGU#220 2016-07-27: Enh. #207
-            // Warn in case of switched text/comments as first report
-            if (this.isSwitchTextAndComments())
+        DetectedError error;
+
+        // START KGU#220 2016-07-27: Enh. #207
+        // Warn in case of switched text/comments as first report
+        if (this.isSwitchTextAndComments())
+        {
+            // This is a general warning without associated element - put at top
+            error = new DetectedError(errorMsg(Menu.warning_1, ""), null);
+            // Category 0 is not restricted to configuration (cannot be switched off)
+            addError(errors, error, 0);
+        }
+        // END KGU#220 2016-07-27
+
+        // START KGU#239 2016-08-12: Enh. #231 - prepare variable name collision check
+        // CHECK 19: identifier collision with reserved words
+        if (check(19) && (caseAwareKeywords == null || caseUnawareKeywords == null))
+        {
+            initialiseKeyTables();
+        }
+        // END KGU#239 2016-08-12
+
+        // CHECK: uppercase for programname (#6)
+        if(!programName.toUpperCase().equals(programName))
+        {
+            //error  = new DetectedError("The programname «"+programName+"» must be written in uppercase!",this);
+            error  = new DetectedError(errorMsg(Menu.error06,programName),this);
+            addError(errors,error,6);
+        }
+
+        // CHECK: correct identifier for programname (#7)
+        // START KGU#61 2016-03-22: Method outsourced
+        //if(testidentifier(programName)==false)
+        if (!Function.testIdentifier(programName, null))
+        // END KGU#61 2016-03-22
+        {
+            //error  = new DetectedError("«"+programName+"» is not a valid name for a program or function!",this);
+            error  = new DetectedError(errorMsg(Menu.error07_1,programName),this);
+            addError(errors,error,7);
+        }
+
+        // START KGU#253 2016-09-22: Enh. #249: subroutine header syntax
+        // CHECK: subroutine header syntax (#20 - new!)
+        analyse_20(errors);
+        // END KGU#253 2016-09-22
+
+        // START KGU#239 2016-08-12: Enh. #231: Test for name collisions
+        analyse_18_19_21(this, errors, uncertainVars, uncertainVars, vars);
+        // END KGU#239 2016-08-12
+
+        // CHECK: two checks in one loop: (#12 - new!) & (#7)
+        for(int j=0; j<vars.count(); j++)
+        {
+            String para = vars.get(j);
+            // CHECK: non-conform parameter name (#12 - new!)
+            if( !(para.charAt(0)=='p' && para.substring(1).toUpperCase().equals(para.substring(1))) )
             {
-            	// This is a general warning without associated element - put at top
-            	error = new DetectedError(errorMsg(Menu.warning_1, ""), null);
-            	// Category 0 is not restricted to configuration (cannot be switched off)
-            	addError(errors, error, 0);
-            }
-            // END KGU#220 2016-07-27
-
-            // START KGU#239 2016-08-12: Enh. #231 - prepare variable name collision check
-            // CHECK 19: identifier collision with reserved words
-            if (check(19) && (caseAwareKeywords == null || caseUnawareKeywords == null))
-            {
-            	initialiseKeyTables();
-            }
-            // END KGU#239 2016-08-12
-            
-            // CHECK: uppercase for programname (#6)
-            if(!programName.toUpperCase().equals(programName))
-            {
-                    //error  = new DetectedError("The programname «"+programName+"» must be written in uppercase!",this);
-                    error  = new DetectedError(errorMsg(Menu.error06,programName),this);
-                    addError(errors,error,6);
+                //error  = new DetectedError("The parameter «"+vars.get(j)+"» must start with the letter \"p\" followed by only uppercase letters!",this);
+                error  = new DetectedError(errorMsg(Menu.error12,para),this);
+                addError(errors,error,12);
             }
 
-            // CHECK: correct identifier for programname (#7)
+            // CHECK: correct identifiers (#7)
             // START KGU#61 2016-03-22: Method outsourced
-            //if(testidentifier(programName)==false)
-            if (!Function.testIdentifier(programName, null))
-            	// END KGU#61 2016-03-22
+            //if(testidentifier(vars.get(j))==false)
+            if (!Function.testIdentifier(vars.get(j), null))
+            // END KGU#61 2016-03-22
             {
-                    //error  = new DetectedError("«"+programName+"» is not a valid name for a program or function!",this);
-                    error  = new DetectedError(errorMsg(Menu.error07_1,programName),this);
-                    addError(errors,error,7);
+                //error  = new DetectedError("«"+vars.get(j)+"» is not a valid name for a parameter!",this);
+                error  = new DetectedError(errorMsg(Menu.error07_2,para),this);
+                addError(errors,error,7);
             }
+        }
 
-            // START KGU#253 2016-09-22: Enh. #249: subroutine header syntax
-            // CHECK: subroutine header syntax (#20 - new!)
-            analyse_20(errors);
-            // END KGU#253 2016-09-22
 
-            // START KGU#239 2016-08-12: Enh. #231: Test for name collisions
-            analyse_18_19_21(this, errors, uncertainVars, uncertainVars, vars);
-            // END KGU#239 2016-08-12
+        // CHECK: the content of the diagram
+        boolean[] resultFlags = {false, false, false};
+        analyse(this.children,errors,vars,uncertainVars, resultFlags);
 
-            // CHECK: two checks in one loop: (#12 - new!) & (#7)
-            for(int j=0; j<vars.count(); j++)
+        // Test if we have a function (return value) or not
+        // START KGU#78 2015-11-25: Delegated to a more general function
+        //String first = this.getText().get(0).trim();
+        //boolean haveFunction = first.toLowerCase().contains(") as ") || first.contains(") :") || first.contains("):");
+        boolean haveFunction = getResultType() != null;
+        // END KGU#78 2015-11-25
+
+        // CHECK: var = programname (#9)
+        if (!haveFunction && variables.contains(programName))
+        {
+            //error  = new DetectedError("Your program («"+programName+"») may not have the same name as a variable!",this);
+            error  = new DetectedError(errorMsg(Menu.error09,programName),this);
+            addError(errors,error,9);
+        }
+
+        // CHECK: sub does not return any result (#13 - new!)
+        // pre-requirement: we have a sub that returns something ...  FUNCTIONNAME () <return type>
+        // check to see if
+        // _ EITHER _
+        // the name of the sub (proposed filename) is contained in the name of the assigned variablename
+        // _ OR _
+        // the list of initialized variables contains one of "RESULT", "Result", or "Result"
+        // _ OR _
+        // every path through the algorithm end with a return instruction (with expression!)
+        if (haveFunction==true)
+        {
+            // START KGU#78 2015-11-25: Let's first gather all necessary information
+            boolean setsResultCi = vars.contains("result", false);
+//            boolean setsResultLc = false, setsResultUc = false, setsResultWc = false;
+//            if (setsResultCi)
+//            {
+//                setsResultLc = vars.contains("result", true);
+//                setsResultUc = vars.contains("RESULT", true);
+//                setsResultWc = vars.contains("Result", true);
+//            }
+            boolean setsProcNameCi = vars.contains(programName,false);	// Why case-independent?
+            boolean maySetResultCi = uncertainVars.contains("result", false);
+//            boolean maySetResultLc = false, maySetResultUc = false, maySetResultWc = false;
+//            if (maySetResultCi)
+//            {
+//            	maySetResultLc = uncertainVars.contains("result", true);
+//            	maySetResultUc = uncertainVars.contains("RESULT", true);
+//            	maySetResultWc = uncertainVars.contains("Result", true);
+//            }
+            boolean maySetProcNameCi = uncertainVars.contains(programName,false);	// Why case-independent?
+            // END KHU#78 2015-11-25
+            
+            if (!setsResultCi && !setsProcNameCi &&
+            		!maySetResultCi && !setsProcNameCi)
             {
-            	String para = vars.get(j);
-            	// CHECK: non-conform parameter name (#12 - new!)
-            	if( !(para.charAt(0)=='p' && para.substring(1).toUpperCase().equals(para.substring(1))) )
-            	{
-            		//error  = new DetectedError("The parameter «"+vars.get(j)+"» must start with the letter \"p\" followed by only uppercase letters!",this);
-            		error  = new DetectedError(errorMsg(Menu.error12,para),this);
-            		addError(errors,error,12);
-            	}
-
-            	// CHECK: correct identifiers (#7)
-            	// START KGU#61 2016-03-22: Method outsourced
-            	//if(testidentifier(vars.get(j))==false)
-            	if (!Function.testIdentifier(vars.get(j), null))
-            		// END KGU#61 2016-03-22
-            	{
-            		//error  = new DetectedError("«"+vars.get(j)+"» is not a valid name for a parameter!",this);
-            		error  = new DetectedError(errorMsg(Menu.error07_2,para),this);
-            		addError(errors,error,7);
-            	}
+            	//error  = new DetectedError("Your function does not return any result!",this);
+            	error  = new DetectedError(errorMsg(Menu.error13_1,""),this);
+            	addError(errors,error,13);
             }
-
-
-            // CHECK: the content of the diagram
-            boolean[] resultFlags = {false, false, false};
-            analyse(this.children,errors,vars,uncertainVars, resultFlags);
-
-            // Test if we have a function (return value) or not
-            // START KGU#78 2015-11-25: Delegated to a more general function
-            //String first = this.getText().get(0).trim();
-            //boolean haveFunction = first.toLowerCase().contains(") as ") || first.contains(") :") || first.contains("):");
-            boolean haveFunction = getResultType() != null;
+            else if (!setsResultCi && !setsProcNameCi &&
+            		(maySetResultCi || setsProcNameCi))
+            {
+            	//error  = new DetectedError("Your function may not return a result!",this);
+            	error  = new DetectedError(errorMsg(Menu.error13_2,""),this);
+            	addError(errors,error,13);
+            }
+            // START KGU#78 2015-11-25: Check competitive approaches
+            else if (maySetResultCi && maySetProcNameCi)
+            {
+            	//error  = new DetectedError("Your functions seems to use several competitive return mechanisms!",this);
+            	error  = new DetectedError(errorMsg(Menu.error13_3,"RESULT <-> " + programName),this);
+            	addError(errors,error,13);            		
+            }
             // END KGU#78 2015-11-25
+        }
 
-            // CHECK: var = programname (#9)
-            if (!haveFunction && variables.contains(programName))
-            {
-                    //error  = new DetectedError("Your program («"+programName+"») may not have the same name as a variable!",this);
-                    error  = new DetectedError(errorMsg(Menu.error09,programName),this);
-                    addError(errors,error,9);
-            }
+        /*
+        for(int i=0;i<errors.size();i++)
+        {
+            System.out.println((DetectedError) errors.get(i));
+        }
+        /**/
 
-            // CHECK: sub does not return any result (#13 - new!)
-            // pre-requirement: we have a sub that returns something ...  FUNCTIONNAME () <return type>
-            // check to see if
-            // _ EITHER _
-            // the name of the sub (proposed filename) is contained in the name of the assigned variablename
-            // _ OR _
-            // the list of initialized variables contains one of "RESULT", "Result", or "Result"
-            // _ OR _
-            // every path through the algorithm end with a return instruction (with expression!)
-            if (haveFunction==true)
-            {
-            	// START KGU#78 2015-11-25: Let's first gather all necessary information
-            	boolean setsResultCi = vars.contains("result", false);
-//            	boolean setsResultLc = false, setsResultUc = false, setsResultWc = false;
-//            	if (setsResultCi)
-//            	{
-//            		setsResultLc = vars.contains("result", true);
-//            		setsResultUc = vars.contains("RESULT", true);
-//            		setsResultWc = vars.contains("Result", true);
-//            	}
-            	boolean setsProcNameCi = vars.contains(programName,false);	// Why case-independent?
-            	boolean maySetResultCi = uncertainVars.contains("result", false);
-//            	boolean maySetResultLc = false, maySetResultUc = false, maySetResultWc = false;
-//            	if (maySetResultCi)
-//            	{
-//            		maySetResultLc = uncertainVars.contains("result", true);
-//            		maySetResultUc = uncertainVars.contains("RESULT", true);
-//            		maySetResultWc = uncertainVars.contains("Result", true);
-//            	}
-            	boolean maySetProcNameCi = uncertainVars.contains(programName,false);	// Why case-independent?
-            	// END KHU#78 2015-11-25
-            	
-            	if (!setsResultCi && !setsProcNameCi &&
-            			!maySetResultCi && !setsProcNameCi)
-            	{
-            		//error  = new DetectedError("Your function does not return any result!",this);
-            		error  = new DetectedError(errorMsg(Menu.error13_1,""),this);
-            		addError(errors,error,13);
-            	}
-            	else if (!setsResultCi && !setsProcNameCi &&
-            			(maySetResultCi || setsProcNameCi))
-            	{
-            		//error  = new DetectedError("Your function may not return a result!",this);
-            		error  = new DetectedError(errorMsg(Menu.error13_2,""),this);
-            		addError(errors,error,13);
-            	}
-            	// START KGU#78 2015-11-25: Check competitive approaches
-            	else if (maySetResultCi && maySetProcNameCi)
-            	{
-            		//error  = new DetectedError("Your functions seems to use several competitive return mechanisms!",this);
-            		error  = new DetectedError(errorMsg(Menu.error13_3,"RESULT <-> " + programName),this);
-            		addError(errors,error,13);            		
-            	}
-            	// END KGU#78 2015-11-25
-            }
-
-            /*
-            for(int i=0;i<errors.size();i++)
-            {
-                    System.out.println((DetectedError) errors.get(i));
-            }
-            /**/
-
-            this.errors=errors;
-            return errors;
+        this.errors=errors;
+        return errors;
     }
 
 	// START KGU#239 2016-08-12: Enh. #231

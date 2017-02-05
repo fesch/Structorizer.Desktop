@@ -41,6 +41,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2016.09.22  Issue #248: Workaround for Linux systems with Java 1.7
  *      Kay Gürtzig     2016.09.28  KGU#263: Substrings "\n" in the text part now generally replaced by newline
  *      Kay Gürtzig     2016.12.07  Issue #304: Check for feasibility of mnemonic replacement via Reflection
+ *      Kay Gürtzig     2016.02.03  Issue #340: registration without immediate update launch
  *
  ******************************************************************************************************
  *
@@ -244,10 +245,24 @@ public class Locales {
     }
     
     /**
-     * Registers the given component for translation service on locale change.
+     * Registers the given component for translation service on locale change
+     * and updates all components with the current Locale (equivalent to
+     * register(component, true))
      * @param component - a translatable GUI component
      */
     public void register(Component component)
+    // START KGU#337 2017-02-03: Issue #340 - possibility needed to register without update
+    {
+    	register(component, true);
+    }
+    
+    /**
+     * Registers the given component for translation service on locale change.
+     * @param component - a translatable GUI component
+     * @param updateImmediately - true induces an immediate update of all subcomponents
+     */
+    public void register(Component component, boolean updateImmediately)
+    // END KGU#337 2017-02-03
     {
         // register a new component
         components.add(component);
@@ -256,8 +271,13 @@ public class Locales {
         
         // set it the actual language, if possible
         //setLang(component);
+        // START KGU#337 2017-02-03: Issue #340 - possibility needed to register without update
+        //updateComponents();
+        if (updateImmediately) {
         // update all components!
-        updateComponents();
+            updateComponents();
+        }
+        // END KGU#337 2017-02-03
         
     }
     
@@ -487,6 +507,15 @@ public class Locales {
     // i.e. before all contained components have been put there, we might get
     // null pointers. So deal with it! ;-)
     public void setLocale(Component component, StringList lines) {
+//    	if (component instanceof LangMenuBar) {
+//    		System.out.println("setLocale("+component+") called!");
+//    		try {
+//    			throw new Exception("test");
+//    		}
+//    		catch (Exception e) {
+//    			e.printStackTrace();
+//    		}
+//    	}
         StringList pieces;
         StringList parts;
         
@@ -573,14 +602,14 @@ public class Locales {
                                 // START KGU#239 2016-08-12: Opportunity to localize an array of controls
                                 if (fieldClass.isArray() && pieces.count() > 3)
                                 {
-                                    int length = Array.getLength(field.get(component));
+                                    int length = Array.getLength(target);
                                     // START KGU#252 2016-09-22: Issue #248 - workaround for Java 7
                                     //int index = Integer.parseUnsignedInt(piece2);
                                     //if (index < length) {
                                     int index = Integer.parseInt(piece2);
                                     if (index >= 0 && index < length) {
                                 	// END KGU#252 2016-09-22
-                                        target = Array.get(field.get(component), index);
+                                        target = Array.get(target, index);
                                         fieldClass = target.getClass();
                                         pieces.remove(2);	// Index no longer needed
                                         pieces.set(1, pieces.get(1) + "[" + piece2 + "]");
@@ -674,8 +703,13 @@ public class Locales {
                                 }
                                 // END KGU#156 2016-03-13
                             } catch (Exception e) {
+                            	String reason = e.getMessage();
+                            	if (reason == null) {
+                            		reason = e.getClass().getSimpleName();
+                            		e.printStackTrace();
+                            	}
                                 System.err.println("LANG: Error while setting property <" + pieces.get(2) + "> for element <"
-                                        + pieces.get(0) + "." + pieces.get(1) + ">!\n" + e.getMessage());
+                                        + pieces.get(0) + "." + pieces.get(1) + ">!\n" + reason);
                             }
                         } else {
                             System.err.println("LANG: Field not found <" + pieces.get(0) + "." + pieces.get(1) + ">");
