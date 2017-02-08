@@ -323,10 +323,18 @@ public class CGenerator extends Generator {
 		// START KGU#342 2017-02-07: Bugfix #343
 		for (int i = 0; i < tokens.count(); i++) {
 			String token = tokens.get(i);
-			if (token.startsWith("'") && token.endsWith("'") && token.length() != 3) {
-				if (!(token.length() == 4 && token.charAt(1) == '\\')) {
-					tokens.set(i, '"' + token.substring(1, token.length()-1) + '"');
+			if (token.startsWith("'") && token.endsWith("'") && 
+					!(token.length() == 3 || (token.length() == 4 && token.charAt(1) == '\\'))) {
+				String internal = token.substring(1, token.length()-1);
+				// Escape all unescaped double quotes
+				pos = -1;
+				while ((pos = internal.indexOf("\"", pos+1)) >= 0) {
+					if (pos == 0 || internal.charAt(pos-1) != '\\') {
+						internal = internal.substring(0, pos) + "\\\"" + internal.substring(pos+1);
+						pos++;
+					}
 				}
+				tokens.set(i, "\"" + internal + "\"");
 			}
 		}
 		// END KGU#342 2017-02-07

@@ -1848,11 +1848,20 @@ public abstract class Element {
 					if (nextPart.equals("\""))
 					{
 						parts.set(i, "\\\"");
-						parts.delete(i+1);					}
+						parts.delete(i+1);
+					}
+					// START KGU#344 201702-08: Issue #341 - Precaution against string/character delimiter replacement
+					else if (nextPart.equals("'"))
+					{
+						parts.set(i, "\\'");
+						parts.delete(i+1);
+					}
+					// END KGU#344 2017-02-08
 					else if (nextPart.equals("\\"))
 					{
 						parts.set(i, "\\\\");
-						parts.delete(i+1);					}
+						parts.delete(i+1);
+					}
 				}
 				// END KGU#26 2015-11-04
 				// START KGU#331 2017-01-13: Enh. #333 Precaution against unicode comparison operators
@@ -2494,13 +2503,12 @@ public abstract class Element {
     
     // START KGU#18/KGU#23 2015-10-24 intermediate transformation added and decomposed
     /**
-     * Converts the operator symbols accepted by Structorizer into padded Java operators
-     * (note the surrounding spaces - no double spaces will exist):
-     * - Assignment:		" <- "
-     * - Comparison:		" == ", " < ", " > ", " <= ", " >= ", " != "
-     * - Logic:				" && ", " || ", " ! ", " ^ "
-     * - Arithmetics:		" div " and usual Java operators with or without padding
-     * @param _expression an Element's text in practically unknown syntax
+     * Converts the operator symbols accepted by Structorizer into Java operators:
+     * - Assignment:		"<-"
+     * - Comparison:		"==", "<", ">", "<=", ">=", "!="
+     * - Logic:				"&&", "||", "!", "^"
+     * - Arithmetics:		"div" and usual Java operators (e.g. "mod" -> "%")
+     * @param _expression - an Element's text in practically unknown syntax
      * @return an equivalent of the _expression String with replaced operators
      */
     public static String unifyOperators(String _expression)
@@ -2516,13 +2524,13 @@ public abstract class Element {
 	// START KGU#92 2015-12-01: Bugfix #41 Okay now, here is the new approach (still a sketch)
     /**
      * Converts the operator symbols accepted by Structorizer into intermediate operators
-     * (mostly Java operators), mostly padded:
-     * - Assignment:		" <- "
-     * - Comparison*:		" == ", " < ", " > ", " <= ", " >= ", " != "
-     * - Logic*:			" && ", " || ", " ! ", " ^ "
-     * - Arithmetics*:		" div " and usual Java operators (e. g. " mod " -> " % ")
-     * @param _tokens a tokenised line of an Element's text (in practically unknown syntax)
-     * @param _assignmentOnly if true then only assignment operator will be unified
+     * (mostly Java operators):
+     * - Assignment:		"<-"
+     * - Comparison*:		"==", "<", ">", "<=", ">=", "!="
+     * - Logic*:			"&&", "||", "!", "^"
+     * - Arithmetics*:		"div" and usual Java operators (e. g. "mod" -> "%")
+     * @param _tokens - a tokenised line of an Element's text (in practically unknown syntax)
+     * @param _assignmentOnly - if true then only assignment operator will be unified
      * @return total number of deletions / replacements
      */
     public static int unifyOperators(StringList _tokens, boolean _assignmentOnly)

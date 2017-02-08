@@ -113,6 +113,7 @@ package lu.fisch.structorizer.executor;
  *                                      Enh. #325: built-in type test functions added.
  *      Kay Gürtzig     2017.01.17      Enh. #335: Toleration of Pascal variable declarations in stepInstruction()
  *      Kay Gürtzig     2017.01.27      Enh. #335: Toleration of BASIC variable declarations in stepInstruction()
+ *      Kay Gürtzig     2017.02.08      Issue #343: Unescaped internal string delimiters escaped on string literal conversion
  *
  ******************************************************************************************************
  *
@@ -420,10 +421,26 @@ public class Executor implements Runnable
 		for (int i = 0; i < tokens.count(); i++)
 		{
 			String token = tokens.get(i);
-			if (token.length() != 3 && token.startsWith("'") && token.endsWith("'"))
+			// START KGU#342 2017-01-08: Issue #343 We must also escape all internal quotes
+			//if (token.length() != 3 && token.startsWith("'") && token.endsWith("'"))
+			//{
+			//	tokens.set(i, "\"" + token.substring(1, token.length()-1) + "\"");
+			//}
+			if (token.startsWith("'") && token.endsWith("'") &&
+					!(token.length() == 3 || token.length() == 4 && token.charAt(1) == '\\'))
 			{
-				tokens.set(i, "\"" + token.substring(1, token.length()-1) + "\"");
+				String internal = token.substring(1, token.length()-1);
+				// Escape all unescaped double quotes
+				int pos = -1;
+				while ((pos = internal.indexOf("\"", pos+1)) >= 0) {
+					if (pos == 0 || internal.charAt(pos-1) != '\\') {
+						internal = internal.substring(0, pos) + "\\\"" + internal.substring(pos+1);
+						pos++;
+					}
+				}
+				tokens.set(i, "\"" + internal + "\"");
 			}
+			// END KGU#342 2017-01-08
 		}
 		// END KGU#285 2016-10-16
 		// Function names to be prefixed with "Math."

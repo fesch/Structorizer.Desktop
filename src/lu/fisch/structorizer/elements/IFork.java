@@ -16,46 +16,44 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
+ */
 package lu.fisch.structorizer.elements;
 
-/*
- ******************************************************************************************************
+import lu.fisch.graphics.Rect;
+
+/******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
  *
- *      Description:    This interface is to facilitate unified handling of different loop types.
+ *      Description:    This interface is to facilitate unified handling of different forking element types.
  *
  ******************************************************************************************************
  *
  *      Revision List
  *
- *      Author           Date            Description
- *      ------           ----            -----------
- *      Kay Gürtzig      2015.11.30      First issue
- *      Kay Gürtzig      2016.10.13      Enh. #270: method isDisabled() added
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2017.02.08      First Issue
  *
  ******************************************************************************************************
  *
- *      Comment:		/
+ *      Comment:
  *      
- *      The interface eases the detection of different loop classes (For, While, Repeat, Forever) and
- *      the access to the incorporated Subqueue without differentiated type casting and code duplication
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 /**
  * @author Kay Gürtzig
- * Implementors of the interface are Element subclasses representing some kind of loop. This interface
- * presents the common behaviour
+ * Implementors of the interface are Element subclasses representing some kind of forking (i.e. Alternative
+ * or Selection). This interface presents the common behaviour
  */
-public interface ILoop {
-
-	public Subqueue getBody();
-	// START KGU#277 2016-10-13: Enh. #270 (needed for a generator access)
-	public boolean isDisabled();
-	// END KGU#277 2016-10-13
+public interface IFork {
 	
+	/**
+	 * Returns a copy of the (relocatable i. e. 0-bound) extension rectangle
+	 * of the head section (condition / selection expression and branch labels). 
+	 * @return a rectangle starting at (0,0) and spanning to (width, head height) 
+	 */
+	public Rect getHeadRect();
+
 }

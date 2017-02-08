@@ -110,6 +110,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.04      Bugfix #321: Signatures of saveNSD(), doSaveNSD(), saveAsNSD() and zipToArrz() enhanced
  *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling of FileChooser for Nimbus L&F solved
  *      Kay Gürtzig     2017.01.27      Issues #290/#306: Signature and logic of openNsdOrArr slightly modified
+ *      Kay Gürtzig     2017.02.08      Bugfix #198: Cursor navigation for Alternatives and CASE elements fixed
  *
  ******************************************************************************************************
  *
@@ -5423,14 +5424,20 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     				Subqueue body = ((ILoop)selected).getBody();
     				y = body.getRectOffDrawPoint().top + 2;
     			}
-    			else if (selected instanceof Alternative)
+    			// START KGU#346 2017-02-08: Issue #198 - Unification of forking elements
+    			//else if (selected instanceof Alternative)
+    			//{
+    			//	y = ((Alternative)selected).qTrue.getRectOffDrawPoint().top + 2;
+    			//}
+    			//else if (selected instanceof Case)
+    			//{
+    			//	y = ((Case)selected).qs.get(0).getRectOffDrawPoint().top + 2;
+    			//}
+    			else if (selected instanceof IFork)
     			{
-    				y = ((Alternative)selected).qTrue.getRectOffDrawPoint().top + 2;
+    				y = selRect.top + ((IFork)selected).getHeadRect().bottom + 2;
     			}
-    			else if (selected instanceof Case)
-    			{
-    				y = ((Case)selected).qs.get(0).getRectOffDrawPoint().top + 2;
-    			}
+    			// END KGU#346 2017-02-08
     			else if (selected instanceof Parallel)
     			{
     				y = ((Parallel)selected).qs.get(0).getRectOffDrawPoint().top + 2;
@@ -5457,6 +5464,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			else
     			{
     				x = selRect.left - 2;
+        			// START KGU#346 2017-02-08: Bugfix #198: It's more intuitive to stay at header y level
+    				if (selected instanceof IFork) {
+    					y = selRect.top + ((IFork)selected).getHeadRect().bottom/2;
+    				}
+        			// END KGU#346 2017-02-08
     			}
     			break;
     		case CMD_RIGHT:
@@ -5481,6 +5493,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     			else
     			{
     				x = selRect.right + 2;
+        			// START KGU#346 2017-02-08: Bugfix #198: It's more intuitive to stay at header y level
+    				if (selected instanceof IFork) {
+    					y = selRect.top + ((IFork)selected).getHeadRect().bottom/2;
+    				}
+        			// END KGU#346 2017-02-08
     			}
     			break;
     		}
