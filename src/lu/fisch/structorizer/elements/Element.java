@@ -76,6 +76,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.01.13      Issue #333: Display of compound comparison operators as unicode symbols
  *      Kay Gürtzig     2017.01.27      Enh. #335: "dim" highlighted like "var" and ":" like "as"
  *      Kay Gürtzig     2017.02.01      KGU#335: Method splitLexically now reassembles floating-point literals (without sign)
+ *      Kay Gürtzig     2017.02.07      Bugfix #341: Reconstruction of strings with mixed quotes in line fixed
  *
  ******************************************************************************************************
  *
@@ -1888,13 +1889,20 @@ public abstract class Element {
 		
 		if (_restoreStrings)
 		{
-			String[] delimiters = {"\"", "'"};
+			// START KGU#344 2017-02-07: Bugfix #341 Wrong loop inclusion
+			//String[] delimiters = {"\"", "'"};
+			final String delimiters = "\"'";
+			// END KGU#344 2017-02-07
 			// START KGU#139 2016-01-12: Bugfix #105 - apparently incomplete strings got lost
 			// We mustn't eat seemingly incomplete strings, instead we re-feed them
 			StringList parkedTokens = new StringList();
 			// END KGU#139 2016-01-12
-			for (int d = 0; d < delimiters.length; d++)
-			{
+			// START #344 2017-02-07: Bugfix #341: Wrong strategy - the token must select the start delimiter
+			//for (int d = 0; d < delimiters.length; d++)
+			//{
+			int ixDelim = -1;	// delimiter index in delimiters
+			String delim = "";	// starting delimiter for matching the closing delimiter
+			// END KGU#344 2017-02-07
 				boolean withinString = false;
 				String composed = "";
 				i = 0;
@@ -1904,7 +1912,10 @@ public abstract class Element {
 					if (withinString)
 					{
 						composed = composed + lexeme;
-						if (lexeme.equals(delimiters[d]))
+						// START KGU#344 2017-02-07: Bugfix #341
+						//if (lexeme.equals(delimiters[d]))
+						if (lexeme.equals(delim))
+						// END KGU#344 2017-02-07
 						{
 							// START KGU#139 2016-01-12: Bugfix #105
 							parkedTokens.clear();
@@ -1922,12 +1933,18 @@ public abstract class Element {
 							parts.delete(i);
 						}
 					}
-					else if (lexeme.equals(delimiters[d]))
+					// START KGU#344 2017-02-07: Bugfix #341
+					//else if (lexeme.equals(delimiters[d]))
+					else if (lexeme.length() == 1 && (ixDelim = delimiters.indexOf(lexeme)) >= 0)
+					// END KGU#344 2017-02-27
 					{
 						// START KGU#139 2016-01-12: Bugfix #105
 						parkedTokens.add(lexeme);
 						// END KGU#139 2016-01-12
 						withinString = true;
+						// START KGU#344 2017-02-07: Bugfix #341
+						delim = delimiters.substring(ixDelim, ixDelim+1);
+						// END KGU#344 2017-02-07
 						composed = lexeme+"";
 						parts.delete(i);
 					}
@@ -1936,7 +1953,9 @@ public abstract class Element {
 						i++;
 					}
 				}
-			}
+			// START KGU#344 2017-02-07: Bugfix #341 No outer loop anymore
+			//}
+			// END KGU#344 2017-02-07
 			// START KGU#139 2916-01-12: Bugfix #105
 			if (parkedTokens.count() > 0)
 			{
@@ -2515,18 +2534,9 @@ public abstract class Element {
         if (!_assignmentOnly)
         // END KGU#115 2015-12-23
         {
-        	//count += _tokens.replaceAll("=", " == ");
         	count += _tokens.replaceAll("=", "==");
-        	//count += _tokens.replaceAll("<", " < ");
-        	//count += _tokens.replaceAll(">", " > ");
-        	//count += _tokens.replaceAll("<=", " <= ");
-        	//count += _tokens.replaceAll(">=", " >= ");
-        	//count += _tokens.replaceAll("<>", " != ");
         	count += _tokens.replaceAll("<>", "!=");
-        	//count += _tokens.replaceAll("%", " % ");
-        	//count += _tokens.replaceAllCi("mod", " % ");
         	count += _tokens.replaceAllCi("mod", "%");
-        	//count += _tokens.replaceAllCi("div", " div ");
         	count += _tokens.replaceAllCi("shl", "<<");
         	count += _tokens.replaceAllCi("shr", ">>");
         	count += _tokens.replaceAllCi("and", "&&");

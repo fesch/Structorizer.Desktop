@@ -723,7 +723,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			Element elem = iter.next();
 			// If we detect a Jump element of type leave then we detect its target
 			// and label both
-			if (elem instanceof Jump)
+			if (elem instanceof Jump && !elem.isDisabled())
 			{
 				String jumpText = elem.getText().getLongString().trim();
 				if (jumpText.matches(patternReturn))
@@ -748,12 +748,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				else if (jumpText.matches(patternLeave))
 				{
 					levelsUp = 1;
-					try {
-						levelsUp = Integer.parseInt(jumpText.substring(preLeave.length()).trim());
-					}
-					catch (NumberFormatException ex)
-					{
-						System.out.println("Unsuited leave argument in Element \"" + jumpText + "\"");
+					if (jumpText.length() > preLeave.length()) {
+						try {
+							levelsUp = Integer.parseInt(jumpText.substring(preLeave.length()).trim());
+						}
+						catch (NumberFormatException ex)
+						{
+							System.out.println("Unsuited leave argument in Element \"" + jumpText + "\"");
+						}
 					}
 				}
 				// Try to find the target loop

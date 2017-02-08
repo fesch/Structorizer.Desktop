@@ -410,35 +410,6 @@ public class Executor implements Runnable
 		Regex r;
 
 		// START KGU#128 2016-01-07: Bugfix #92 - Effort via tokens to avoid replacements within string literals
-//		s = Element.unifyOperators(s);
-//		s = s.replace(" div ", " / ");		// FIXME: Operands should be coerced to integer...
-//
-//		// Convert built-in mathematical functions
-//		s = s.replace("cos(", "Math.cos(");
-//		s = s.replace("sin(", "Math.sin(");
-//		s = s.replace("tan(", "Math.tan(");
-//        // START KGU 2014-10-22: After the previous replacements the following 3 strings would never be found!
-//        //s=s.replace("acos(", "Math.acos(");
-//        //s=s.replace("asin(", "Math.asin(");
-//        //s=s.replace("atan(", "Math.atan(");
-//        // This is just a workaround; A clean approach would require a genuine lexical scanning in advance
-//        s=s.replace("aMath.cos(", "Math.acos(");
-//        s=s.replace("aMath.sin(", "Math.asin(");
-//        s=s.replace("aMath.tan(", "Math.atan(");
-//        // END KGU 2014-10-22:
-//		s = s.replace("abs(", "Math.abs(");
-//		s = s.replace("round(", "Math.round(");
-//		s = s.replace("min(", "Math.min(");
-//		s = s.replace("max(", "Math.max(");
-//		s = s.replace("ceil(", "Math.ceil(");
-//		s = s.replace("floor(", "Math.floor(");
-//		s = s.replace("exp(", "Math.exp(");
-//		s = s.replace("log(", "Math.log(");
-//		s = s.replace("sqrt(", "Math.sqrt(");
-//		s = s.replace("pow(", "Math.pow(");
-//		s = s.replace("toRadians(", "Math.toRadians(");
-//		s = s.replace("toDegrees(", "Math.toDegrees(");
-//		// s=s.replace("random(", "Math.random(");
 		StringList tokens = Element.splitLexically(s, true);
 		Element.unifyOperators(tokens, false);
 		// START KGU#130 2015-01-08: Bugfix #95 - Conversion of div operator had been forgotten...
@@ -3358,7 +3329,7 @@ public class Executor implements Runnable
 		Function f = new Function(cmd);
 		if (f.isFunction())
 		{
-			String params = new String();
+			String params = new String();	// List of evaluated arguments
 			Object[] args = new Object[f.paramCount()];
 			for (int p = 0; p < f.paramCount(); p++)
 			{
@@ -3420,7 +3391,7 @@ public class Executor implements Runnable
 				}
 				else
 				{
-					// START KGU#197 2016-07-27: Now translatable
+					// START KGU#197 2016-07-27: Now translatable message
 					//result = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
 					//		" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";
 					result = control.msgNoSubroutine.getText().
@@ -3437,12 +3408,20 @@ public class Executor implements Runnable
 				{
 					if (f.paramCount() > 0)
 					{
+						// Cut off the leading comma from the list of evaluated arguments
 						params = params.substring(1);
 					}
 					cmd = f.getName().toLowerCase() + "(" + params + ")";
 					result = getExec(cmd, element.getColor());
-				} else
+				} 
+//				else if (D7Parser.ignoreCase) {
+//					// Try as built-in subroutine with aligned case
+//					// FIXME: This does not recursively adapt the names! (So what for at all?)
+//					interpreter.eval(f.getInvokation(true));
+//				}
+				else	
 				{
+					// Try as built-in subroutine as is
 					interpreter.eval(cmd);
 				}
 			}

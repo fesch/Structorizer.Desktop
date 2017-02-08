@@ -313,7 +313,7 @@ public class JavaGenerator extends CGenerator
 		s=s.replace("cos(", "Math.cos(");
 		s=s.replace("sin(", "Math.sin(");
 		s=s.replace("tan(", "Math.tan(");
-		// START KGU 2014-10-22: After the previous replacements the following 3 strings would never be found!
+		// START KGU#17 2014-10-22: After the previous replacements the following 3 strings would never be found!
 		//s=s.replace("acos(", "Math.acos(");
 		//s=s.replace("asin(", "Math.asin(");
 		//s=s.replace("atan(", "Math.atan(");
@@ -321,7 +321,7 @@ public class JavaGenerator extends CGenerator
 		s=s.replace("aMath.cos(", "Math.acos(");
 		s=s.replace("aMath.sin(", "Math.asin(");
 		s=s.replace("aMath.tan(", "Math.atan(");
-		// END KGU 2014-10-22:
+		// END KGU#17 2014-10-22
 		s=s.replace("abs(", "Math.abs(");
 		s=s.replace("round(", "Math.round(");
 		s=s.replace("min(", "Math.min(");

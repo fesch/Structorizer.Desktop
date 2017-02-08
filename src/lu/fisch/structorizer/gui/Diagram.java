@@ -2601,6 +2601,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#199 2016-07-06
 
 	// START KGU#229 2016-08-01: Enh. #213 - FOR loop decomposition
+	// This is a transmutation helper function
 	private void decomposeForLoop(Subqueue parent)
 	{
 		// Comment will be tranferred to the While loop.
@@ -2661,6 +2662,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	// END KGU#229 2016-08-01
 
 	// START KGU#267 2016-10-03: Enh. #257 - CASE structure decomposition
+	// This is a transmutation helper function
 	private void decomposeCase(Subqueue parent)
 	{
 		// Comment will be tranferred to the first replacing element

@@ -65,6 +65,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.12.22      Enh. #314: Support for File API
  *      Kay Gürtzig             2017.01.26      Enh. #259/#335: Type retrieval and improved declaration support 
  *      Kay Gürtzig             2017.01.31      Enh. #113: Array parameter transformation
+ *      Kay Gürtzig             2017.02.06      Minor corrections in generateJump(), String delimiter conversion (#343)
  *
  ******************************************************************************************************
  *
@@ -319,6 +320,16 @@ public class CGenerator extends Generator {
 			transformFileAPITokens(tokens);
 		}
 		// END KGU#311 2016-12-22
+		// START KGU#342 2017-02-07: Bugfix #343
+		for (int i = 0; i < tokens.count(); i++) {
+			String token = tokens.get(i);
+			if (token.startsWith("'") && token.endsWith("'") && token.length() != 3) {
+				if (!(token.length() == 4 && token.charAt(1) == '\\')) {
+					tokens.set(i, '"' + token.substring(1, token.length()-1) + '"');
+				}
+			}
+		}
+		// END KGU#342 2017-02-07
 		return tokens.concatenate();
 	}
 	// END KGU#93 2015-12-21
@@ -882,9 +893,12 @@ public class CGenerator extends Generator {
 				}
 				else if (line.matches(preLeaveMatch))
 				{
-					// Strange case: neither matched nor rejected - how can this happen?
-					// Try with an ordinary break instruction and a funny comment
-					addCode("break;\t// FIXME: Dubious occurrance of break instruction!", _indent, isDisabled);
+					// START KGU 2017-02-06: The "funny comment" was irritating and dubious itself
+					// Seems to be an ordinary one-level break without need to concoct a jump statement
+					// (Are there also strange cases - neither matched nor rejected? And how could this happen?)
+					//addCode("break;\t// FIXME: Dubious occurrance of break instruction!", _indent, isDisabled);
+					addCode("break;", _indent, isDisabled);
+					// END KGU 2017-02-06
 				}
 				else if (!isEmpty)
 				{
