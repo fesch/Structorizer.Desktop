@@ -426,19 +426,23 @@ public class Executor implements Runnable
 			//{
 			//	tokens.set(i, "\"" + token.substring(1, token.length()-1) + "\"");
 			//}
-			if (token.startsWith("'") && token.endsWith("'") &&
-					!(token.length() == 3 || token.length() == 4 && token.charAt(1) == '\\'))
+			int tokenLen = token.length();
+			if (tokenLen >= 2 && (token.startsWith("'") && token.endsWith("'") || token.startsWith("\"") && token.endsWith("\"")))
 			{
-				String internal = token.substring(1, token.length()-1);
+				char delim = token.charAt(0);
+				String internal = token.substring(1, tokenLen-1);
 				// Escape all unescaped double quotes
 				int pos = -1;
 				while ((pos = internal.indexOf("\"", pos+1)) >= 0) {
 					if (pos == 0 || internal.charAt(pos-1) != '\\') {
-						internal = internal.substring(0, pos) + "\\\"" + internal.substring(pos+1);
+						internal = internal.substring(0, pos) + "\\" + internal.substring(pos);
 						pos++;
 					}
 				}
-				tokens.set(i, "\"" + internal + "\"");
+				if (!(tokenLen == 3 || tokenLen == 4 && token.charAt(1) == '\\')) {
+					delim = '\"';
+				}
+				tokens.set(i, delim + internal + delim);
 			}
 			// END KGU#342 2017-01-08
 		}
@@ -607,7 +611,10 @@ public class Executor implements Runnable
 							{
 								// START KGU#76 2016-04-25: Issue #30 support all string comparison
 								//exprs.set(i, leftParenth + neg + left + ".equals(\"" + (Character)rightO + "\")" + rightParenth);
-								exprs.set(i, leftParenth + left + ".compareTo(\"" + (Character)rightO + "\") " + compOps[op] + " 0" + rightParenth);
+								// START KGU#342 2017-02-09: Bugfix #343 - be aware of characters to be escaped
+								//exprs.set(i, leftParenth + left + ".compareTo(\"" + (Character)rightO + "\") " + compOps[op] + " 0" + rightParenth);
+								exprs.set(i, leftParenth + left + ".compareTo(\"" + this.literalFromChar((Character)rightO) + "\") " + compOps[op] + " 0" + rightParenth);
+								// END KGU#342 2017-02-09
 								// END KGU#76 2016-04-25
 								replaced = true;								
 							}
@@ -615,7 +622,10 @@ public class Executor implements Runnable
 							{
 								// START KGU#76 2016-04-25: Issue #30 support all string comparison
 								//exprs.set(i, leftParenth + neg + right + ".equals(\"" + (Character)leftO + "\")" + rightParenth);
-								exprs.set(i, leftParenth + "\"" + (Character)leftO + "\".compareTo(" + right + ") " + compOps[op] + " 0" + rightParenth);
+								// START KGU#342 2017-02-09: Bugfix #343 - be aware of characters to be escaped
+								//exprs.set(i, leftParenth + "\"" + (Character)leftO + "\".compareTo(" + right + ") " + compOps[op] + " 0" + rightParenth);
+								exprs.set(i, leftParenth + "\"" + this.literalFromChar((Character)leftO) + "\".compareTo(" + right + ") " + compOps[op] + " 0" + rightParenth);
+								// END KGU#342 2017-02-09
 								// END KGU#76 2016-04-25
 								replaced = true;								
 							}
@@ -653,6 +663,16 @@ public class Executor implements Runnable
 		return str;
 	}
 	// END KGU#57 2015-11-07
+	
+	// START KGU#342 2017-02-09: Bugfix #343
+	private String literalFromChar(char ch) {
+		String literal = Character.toString(ch);
+		if ("\"\'\\\n\t".indexOf(ch) >= 0) {
+			literal = "\\" + literal;
+		}
+		return literal;
+	}
+	// END KGU#342 2017-02-09
 
 	private void delay()
 	{
