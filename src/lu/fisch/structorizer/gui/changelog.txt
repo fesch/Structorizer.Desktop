@@ -30,6 +30,7 @@ Current development version: 3.26-03 (2017.02.09)
 - 03: Bugfix #343: Code export to C etc. now with correct string literal quotes <2>
 - 03: Analyser: Result checks (completeness, consistency) revised (KGU#343) <2>
 - 03: Bugfix #198: Further navigation flaws in IF and CASE elements mended <2>
+- 03: Enh. #344: Additional key binding Ctrl-Y for redo action [Fabian Röling]2
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>
