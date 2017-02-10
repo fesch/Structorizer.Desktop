@@ -512,8 +512,13 @@ public class Subqueue extends Element implements IElementSequence {
 		covered = true;
 		// END KGU#296 2016-11-25
 		for(int i = 0; covered && i < children.size(); i++)
-		{      
-			covered = children.get(i).isTestCovered(_deeply);
+		{
+			// START KGU#345 2017-02-07: Bugfix #342 - disabled elements must be ignored for test coverage
+			//covered = children.get(i).isTestCovered(_deeply);
+			if (!children.get(i).disabled) {
+				covered = children.get(i).isTestCovered(_deeply);
+			}
+			// END KGU#345 2017-02-07
 		}
 		return covered;
 	}

@@ -669,41 +669,6 @@ public class Instruction extends Element {
 		}
 	}
 	
-	private String identifyExprType(HashMap<String, TypeMapEntry> typeMap, String expr)
-	{
-		String typeSpec = "";	// This means no info
-		// 1. Check whether its a known typed variable
-		TypeMapEntry typeEntry = typeMap.get(expr);
-		if (typeEntry != null) {
-			StringList types = typeEntry.getTypes();
-			if (types.count() == 1) {
-				typeSpec = typeEntry.getTypes().get(0);
-			}
-		}
-		// Otherwise check if it's a built-in function with unambiguous type
-		else if (Function.isFunction(expr)) {
-			typeSpec = (new Function(expr).getResultType(""));
-		}
-		else if (expr.matches("(^\\\".*\\\"$)|(^\\\'.*\\\'$)")) {
-			typeSpec = "String";
-		}
-		// 2. If none of the approaches above succeeded check for a numeric literal
-		if (typeSpec.isEmpty()) {
-			try {
-				Double.parseDouble(expr);
-				typeSpec = "double";
-				Integer.parseInt(expr);
-				typeSpec = "int";
-			}
-			catch (NumberFormatException ex) {}
-		}
-		// Check for boolean literals
-		if (typeSpec.isEmpty() && (expr.equalsIgnoreCase("true") || expr.equalsIgnoreCase("false"))) {
-			typeSpec = "boolean";
-		}
-		return typeSpec;
-	}
-	
 	/**
 	 * Extracts the target variable name out of the given token sequence which may comprise
 	 * the entire line of an assignment or just its left part.

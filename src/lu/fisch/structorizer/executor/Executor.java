@@ -113,6 +113,7 @@ package lu.fisch.structorizer.executor;
  *                                      Enh. #325: built-in type test functions added.
  *      Kay Gürtzig     2017.01.17      Enh. #335: Toleration of Pascal variable declarations in stepInstruction()
  *      Kay Gürtzig     2017.01.27      Enh. #335: Toleration of BASIC variable declarations in stepInstruction()
+ *      Kay Gürtzig     2017.02.08      Issue #343: Unescaped internal string delimiters escaped on string literal conversion
  *
  ******************************************************************************************************
  *
@@ -410,35 +411,6 @@ public class Executor implements Runnable
 		Regex r;
 
 		// START KGU#128 2016-01-07: Bugfix #92 - Effort via tokens to avoid replacements within string literals
-//		s = Element.unifyOperators(s);
-//		s = s.replace(" div ", " / ");		// FIXME: Operands should be coerced to integer...
-//
-//		// Convert built-in mathematical functions
-//		s = s.replace("cos(", "Math.cos(");
-//		s = s.replace("sin(", "Math.sin(");
-//		s = s.replace("tan(", "Math.tan(");
-//        // START KGU 2014-10-22: After the previous replacements the following 3 strings would never be found!
-//        //s=s.replace("acos(", "Math.acos(");
-//        //s=s.replace("asin(", "Math.asin(");
-//        //s=s.replace("atan(", "Math.atan(");
-//        // This is just a workaround; A clean approach would require a genuine lexical scanning in advance
-//        s=s.replace("aMath.cos(", "Math.acos(");
-//        s=s.replace("aMath.sin(", "Math.asin(");
-//        s=s.replace("aMath.tan(", "Math.atan(");
-//        // END KGU 2014-10-22:
-//		s = s.replace("abs(", "Math.abs(");
-//		s = s.replace("round(", "Math.round(");
-//		s = s.replace("min(", "Math.min(");
-//		s = s.replace("max(", "Math.max(");
-//		s = s.replace("ceil(", "Math.ceil(");
-//		s = s.replace("floor(", "Math.floor(");
-//		s = s.replace("exp(", "Math.exp(");
-//		s = s.replace("log(", "Math.log(");
-//		s = s.replace("sqrt(", "Math.sqrt(");
-//		s = s.replace("pow(", "Math.pow(");
-//		s = s.replace("toRadians(", "Math.toRadians(");
-//		s = s.replace("toDegrees(", "Math.toDegrees(");
-//		// s=s.replace("random(", "Math.random(");
 		StringList tokens = Element.splitLexically(s, true);
 		Element.unifyOperators(tokens, false);
 		// START KGU#130 2015-01-08: Bugfix #95 - Conversion of div operator had been forgotten...
@@ -449,10 +421,30 @@ public class Executor implements Runnable
 		for (int i = 0; i < tokens.count(); i++)
 		{
 			String token = tokens.get(i);
-			if (token.length() != 3 && token.startsWith("'") && token.endsWith("'"))
+			// START KGU#342 2017-01-08: Issue #343 We must also escape all internal quotes
+			//if (token.length() != 3 && token.startsWith("'") && token.endsWith("'"))
+			//{
+			//	tokens.set(i, "\"" + token.substring(1, token.length()-1) + "\"");
+			//}
+			int tokenLen = token.length();
+			if (tokenLen >= 2 && (token.startsWith("'") && token.endsWith("'") || token.startsWith("\"") && token.endsWith("\"")))
 			{
-				tokens.set(i, "\"" + token.substring(1, token.length()-1) + "\"");
+				char delim = token.charAt(0);
+				String internal = token.substring(1, tokenLen-1);
+				// Escape all unescaped double quotes
+				int pos = -1;
+				while ((pos = internal.indexOf("\"", pos+1)) >= 0) {
+					if (pos == 0 || internal.charAt(pos-1) != '\\') {
+						internal = internal.substring(0, pos) + "\\" + internal.substring(pos);
+						pos++;
+					}
+				}
+				if (!(tokenLen == 3 || tokenLen == 4 && token.charAt(1) == '\\')) {
+					delim = '\"';
+				}
+				tokens.set(i, delim + internal + delim);
 			}
+			// END KGU#342 2017-01-08
 		}
 		// END KGU#285 2016-10-16
 		// Function names to be prefixed with "Math."
@@ -619,7 +611,10 @@ public class Executor implements Runnable
 							{
 								// START KGU#76 2016-04-25: Issue #30 support all string comparison
 								//exprs.set(i, leftParenth + neg + left + ".equals(\"" + (Character)rightO + "\")" + rightParenth);
-								exprs.set(i, leftParenth + left + ".compareTo(\"" + (Character)rightO + "\") " + compOps[op] + " 0" + rightParenth);
+								// START KGU#342 2017-02-09: Bugfix #343 - be aware of characters to be escaped
+								//exprs.set(i, leftParenth + left + ".compareTo(\"" + (Character)rightO + "\") " + compOps[op] + " 0" + rightParenth);
+								exprs.set(i, leftParenth + left + ".compareTo(\"" + this.literalFromChar((Character)rightO) + "\") " + compOps[op] + " 0" + rightParenth);
+								// END KGU#342 2017-02-09
 								// END KGU#76 2016-04-25
 								replaced = true;								
 							}
@@ -627,7 +622,10 @@ public class Executor implements Runnable
 							{
 								// START KGU#76 2016-04-25: Issue #30 support all string comparison
 								//exprs.set(i, leftParenth + neg + right + ".equals(\"" + (Character)leftO + "\")" + rightParenth);
-								exprs.set(i, leftParenth + "\"" + (Character)leftO + "\".compareTo(" + right + ") " + compOps[op] + " 0" + rightParenth);
+								// START KGU#342 2017-02-09: Bugfix #343 - be aware of characters to be escaped
+								//exprs.set(i, leftParenth + "\"" + (Character)leftO + "\".compareTo(" + right + ") " + compOps[op] + " 0" + rightParenth);
+								exprs.set(i, leftParenth + "\"" + this.literalFromChar((Character)leftO) + "\".compareTo(" + right + ") " + compOps[op] + " 0" + rightParenth);
+								// END KGU#342 2017-02-09
 								// END KGU#76 2016-04-25
 								replaced = true;								
 							}
@@ -665,6 +663,16 @@ public class Executor implements Runnable
 		return str;
 	}
 	// END KGU#57 2015-11-07
+	
+	// START KGU#342 2017-02-09: Bugfix #343
+	private String literalFromChar(char ch) {
+		String literal = Character.toString(ch);
+		if ("\"\'\\\n\t".indexOf(ch) >= 0) {
+			literal = "\\" + literal;
+		}
+		return literal;
+	}
+	// END KGU#342 2017-02-09
 
 	private void delay()
 	{
@@ -3358,7 +3366,7 @@ public class Executor implements Runnable
 		Function f = new Function(cmd);
 		if (f.isFunction())
 		{
-			String params = new String();
+			String params = new String();	// List of evaluated arguments
 			Object[] args = new Object[f.paramCount()];
 			for (int p = 0; p < f.paramCount(); p++)
 			{
@@ -3420,7 +3428,7 @@ public class Executor implements Runnable
 				}
 				else
 				{
-					// START KGU#197 2016-07-27: Now translatable
+					// START KGU#197 2016-07-27: Now translatable message
 					//result = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
 					//		" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";
 					result = control.msgNoSubroutine.getText().
@@ -3437,12 +3445,20 @@ public class Executor implements Runnable
 				{
 					if (f.paramCount() > 0)
 					{
+						// Cut off the leading comma from the list of evaluated arguments
 						params = params.substring(1);
 					}
 					cmd = f.getName().toLowerCase() + "(" + params + ")";
 					result = getExec(cmd, element.getColor());
-				} else
+				} 
+//				else if (D7Parser.ignoreCase) {
+//					// Try as built-in subroutine with aligned case
+//					// FIXME: This does not recursively adapt the names! (So what for at all?)
+//					interpreter.eval(f.getInvokation(true));
+//				}
+				else	
 				{
+					// Try as built-in subroutine as is
 					interpreter.eval(cmd);
 				}
 			}

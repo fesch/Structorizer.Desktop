@@ -52,6 +52,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.12.17      Enh. #305: Key binding <del> added to Arranger index list.
  *      Kay Gürtzig     2017.01.05      Enh. #319: Context menu for Arranger index
  *      Kay Gürtzig     2017.01.13      Bugfix #233: F6 and F8 had got kidnapped by the JSplitPanes sp and sp305
+ *      Kay Gürtzig     2017.02.09      Enh. #344: Ctrl-Y as additional redo key binding
  *
  ******************************************************************************************************
  *
@@ -854,6 +855,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK), "FONT_UP");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK), "FONT_DOWN");
 		// END KGU#294 2016-11-22
+		// START KGU#347 2017-02-09: Enh. #344 additional key binding for redo
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK), "REDO");
+		// END KGU#347 2017-02-09
 		actMap.put(CursorMoveDirection.CMD_UP, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_UP));
 		actMap.put(CursorMoveDirection.CMD_DOWN, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_DOWN));
 		actMap.put(CursorMoveDirection.CMD_LEFT, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_LEFT));
@@ -871,6 +875,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		actMap.put("FONT_DOWN", new FontResizeAction(diagram, "FONT_DOWN"));
 		actMap.put("FONT_UP", new FontResizeAction(diagram, "FONT_UP"));
 		// END KGU#294 2016-11-22
+		// START KGU#347 2017-02-09: Enh. #344 additional key binding for redo
+		actMap.put("REDO", new AbstractAction("REDO") { public void actionPerformed(ActionEvent event) { diagram.redoNSD(); doButtons(); }});
+		// END KGU#347 2017-02-09
 		//scrollarea.getViewport().setBackingStoreEnabled(true);
 		
 		// START KGU#239 2017-01-13: Bugfix #233 SplitPanes had snatched away accelerator keys F6 and F8

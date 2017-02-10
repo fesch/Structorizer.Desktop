@@ -20,8 +20,6 @@
 
 package lu.fisch.structorizer.generators;
 
-import java.util.HashMap;
-
 /******************************************************************************************************
  *
  *      Author:         Bob Fisch
@@ -32,21 +30,21 @@ import java.util.HashMap;
  *
  *      Revision List
  *
- *      Author          		Date			Description
- *      ------					----			-----------
- *      Bob Fisch       	    2008.11.17		First Issue
- *      Gunter Schillebeeckx    2009.08.10		Bugfixes (see comment)
- *      Bob Fisch               2009.08.17		Bugfixes (see comment)
- *      Bob Fisch               2010.08-30		Different fixes asked by Kay Gürtzig
- *                                        		and Peter Ehrlich
- *      Kay Gürtzig             2010.09.10		Bugfixes and cosmetics (see comment)
- *      Bob Fisch               2011.11.07		Fixed an issue while doing replacements
- *      Kay Gürtzig             2014.11.06		Support for logical Pascal operators added
- *      Kay Gürtzig             2014.11.16		Bugfixes in operator conversion
- *      Kay Gürtzig             2015.10.18		Indentation and comment mechanisms revised, bugfix
- *      Kay Gürtzig             2015.10.21		New generator now supports multiple-case branches
- *      Kay Gürtzig             2015.11.01		Language transforming reorganised, FOR loop revision
- *      Kay Gürtzig             2015.11.10		Bugfixes KGU#71 (switch default), KGU#72 (div operators)
+ *      Author                  Date            Description
+ *      ------                  ----            -----------
+ *      Bob Fisch               2008.11.17      First Issue
+ *      Gunter Schillebeeckx    2009.08.10      Bugfixes (see comment)
+ *      Bob Fisch               2009.08.17      Bugfixes (see comment)
+ *      Bob Fisch               2010.08-30      Different fixes asked by Kay Gürtzig
+ *                                              and Peter Ehrlich
+ *      Kay Gürtzig             2010.09.10      Bugfixes and cosmetics (see comment)
+ *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
+ *      Kay Gürtzig             2014.11.06      Support for logical Pascal operators added
+ *      Kay Gürtzig             2014.11.16      Bugfixes in operator conversion
+ *      Kay Gürtzig             2015.10.18      Indentation and comment mechanisms revised, bugfix
+ *      Kay Gürtzig             2015.10.21      New generator now supports multiple-case branches
+ *      Kay Gürtzig             2015.11.01      Language transforming reorganised, FOR loop revision
+ *      Kay Gürtzig             2015.11.10      Bugfixes KGU#71 (switch default), KGU#72 (div operators)
  *      Kay Gürtzig             2015.11.10      Code style option optionBlockBraceNextLine() added,
  *                                              bugfix/enhancement #22 (KGU#74 jump and return handling)
  *      Kay Gürtzig             2015.12.13      Bugfix #51 (=KGU#108): Cope with empty input and output
@@ -67,6 +65,7 @@ import java.util.HashMap;
  *      Kay Gürtzig             2016.12.22      Enh. #314: Support for File API
  *      Kay Gürtzig             2017.01.26      Enh. #259/#335: Type retrieval and improved declaration support 
  *      Kay Gürtzig             2017.01.31      Enh. #113: Array parameter transformation
+ *      Kay Gürtzig             2017.02.06      Minor corrections in generateJump(), String delimiter conversion (#343)
  *
  ******************************************************************************************************
  *
@@ -131,6 +130,7 @@ import java.util.HashMap;
  *
  ******************************************************************************************************///
 
+import java.util.HashMap;
 import java.util.regex.Matcher;
 
 import lu.fisch.utils.*;
@@ -320,6 +320,28 @@ public class CGenerator extends Generator {
 			transformFileAPITokens(tokens);
 		}
 		// END KGU#311 2016-12-22
+		// START KGU#342 2017-02-07: Bugfix #343
+		for (int i = 0; i < tokens.count(); i++) {
+			String token = tokens.get(i);
+			int tokenLen = token.length();
+			if (tokenLen >= 2 && (token.startsWith("'") && token.endsWith("\"") || token.startsWith("'") && token.endsWith("\""))) {
+				char delim = token.charAt(0);
+				String internal = token.substring(1, tokenLen-1);
+				// Escape all unescaped double quotes
+				pos = -1;
+				while ((pos = internal.indexOf("\"", pos+1)) >= 0) {
+					if (pos == 0 || internal.charAt(pos-1) != '\\') {
+						internal = internal.substring(0, pos) + "\\\"" + internal.substring(pos+1);
+						pos++;
+					}
+				}
+				if (!(tokenLen == 3 || tokenLen == 4 && token.charAt(1) == '\\')) {
+					delim = '\"';
+				}
+				tokens.set(i, delim + internal + delim);
+			}
+		}
+		// END KGU#342 2017-02-07
 		return tokens.concatenate();
 	}
 	// END KGU#93 2015-12-21
@@ -883,9 +905,12 @@ public class CGenerator extends Generator {
 				}
 				else if (line.matches(preLeaveMatch))
 				{
-					// Strange case: neither matched nor rejected - how can this happen?
-					// Try with an ordinary break instruction and a funny comment
-					addCode("break;\t// FIXME: Dubious occurrance of break instruction!", _indent, isDisabled);
+					// START KGU 2017-02-06: The "funny comment" was irritating and dubious itself
+					// Seems to be an ordinary one-level break without need to concoct a jump statement
+					// (Are there also strange cases - neither matched nor rejected? And how could this happen?)
+					//addCode("break;\t// FIXME: Dubious occurrance of break instruction!", _indent, isDisabled);
+					addCode("break;", _indent, isDisabled);
+					// END KGU 2017-02-06
 				}
 				else if (!isEmpty)
 				{

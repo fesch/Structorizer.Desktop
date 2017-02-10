@@ -87,6 +87,7 @@ public class Function
 		knownResultTypes.put("uppercase#1", "String");
 		knownResultTypes.put("pos#2", "int");
 		knownResultTypes.put("copy#3", "string");
+		knownResultTypes.put("trim#1", "String");
 		knownResultTypes.put("ord#1", "int");
 		knownResultTypes.put("chr#1", "char");
 		knownResultTypes.put("isArray#1", "boolean");
@@ -117,6 +118,9 @@ public class Function
     private boolean isFunc = false;			// basic syntactic plausibility check result
     private String name = null;				// The string before the opening parenthesis
     // END KGU#56 2015-10-27
+//    // START KGU#341 2017-02-06: Cache the case-apdapted name if there is a matching built-in function
+//    private String caseAlignedName = null;
+//    // END KGU#341 2017-02-06
 
     public Function(String exp)
     {
@@ -145,8 +149,18 @@ public class Function
         		this.parameters = Element.splitExpressionList(params, ",");
         		// END KGU#106 2015-12-12
             }
+//            // START KGU#341 2017-02-06
+//            String nPars = Integer.toString(this.parameters.count());
+//            for (String key: knownResultTypes.keySet()) {
+//                String[] parts = key.split("#");
+//                if (name.equalsIgnoreCase(parts[0]) && parts[1].equals(nPars)) {
+//                    this.caseAlignedName = parts[0];
+//                    break;
+//                }
+//            }
+//            // END KGU#341 2017-02-06
         }
-        // END KGU 2015-10-27
+        // END KGU#56 2015-10-27
     }
 
     // This is just a very general string helper function 
@@ -223,6 +237,34 @@ public class Function
         // END KGU#56 2015-10-27
         return this.name;
     }
+    
+//    // START KGU 2017-02-06: Support for case-ignorant mode
+//    /**
+//     * Returns the subroutine name unitized in case to a built-in subroutine
+//     * with otherwise matching signature if ignoreCase is true (otherwise as is)
+//     * @param ignoreCase - whether the name is to be adapted to a built-in one
+//     * @return Subroutine name adapted in case
+//     */
+//    public String getName(boolean ignoreCase)
+//    {
+//        return ignoreCase ? this.caseAlignedName : this.name;
+//    }
+//    
+//    /**
+//     * Returns the originating command with a function name unitized in case to a
+//     * built-in function if ignoreCase is true and the signature only differs in case. 
+//     * @param ignoreCase - whether the name is to be adapted to a built-in one
+//     * @return Subroutine call with adapted subroutine name
+//     */
+//    public String getInvokation(boolean ignoreCase)
+//    {
+//        String invok = this.str;
+//        if (this.isFunc && ignoreCase) {
+//    	    invok = this.getName(ignoreCase) + this.str.substring(this.name.length());
+//        }
+//        return invok;
+//    }
+//    // END KGU 2017-02-06
 
     public int paramCount()
     {
@@ -277,12 +319,30 @@ public class Function
      */
     public String getResultType(String defaultType)
     {
-    	String type = knownResultTypes.get(this.getName() + "#" + this.paramCount());
+//    	return getResultType(false, defaultType);
+    	String type = knownResultTypes.get(this.name + "#" + this.paramCount());
     	if (type == null) {
     		type = defaultType;
     	}
     	return type;
     }
+    
+//    /**
+//     * Returns the name of the result type of this subroutine call if known as
+//     * built-in function with unambiguous type.
+//     * If this is known as built-in procedure then it returns "void".
+//     * If unknown then returns the given defaultType
+//     * @param defaultType - null or some default type name for unsuccessful retrieval
+//     * @return name of the result type (Java type name)
+//     */
+//    public String getResultType(boolean ignoreCase, String defaultType)
+//    {
+//        String type = knownResultTypes.get(this.getName(ignoreCase) + "#" + this.paramCount());
+//        if (type == null) {
+//            type = defaultType;
+//        }
+//        return type;
+//    }
     // END KGU#332 2017-01-29
 
     // START KGU#61 2016-03-22: Moved hitherto from Root (was a private member method there)

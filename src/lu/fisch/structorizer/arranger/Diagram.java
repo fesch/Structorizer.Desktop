@@ -61,7 +61,7 @@ public class Diagram
     // START KGU#88 2015-11-24
     boolean isPinned = false;
     // END KGU#88 2015-11-24
-    // START KGU#330 2017-01-13: Enh. #305 We keep redunant information to be able to trigger change notifications
+    // START KGU#330 2017-01-13: Enh. #305 We keep redundant information to be able to trigger change notifications
     String signature;
     // END KGU#330 2017-01-13
 

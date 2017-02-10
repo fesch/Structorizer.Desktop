@@ -94,6 +94,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.01.17      Enh. #335: Toleration of Pascal variable declarations in getUsedVarNames()
  *      Kay Gürtzig     2017.01.30      Enh. #335: Type info mechanism established
  *      Kay Gürtzig     2017.01.31      Bugfix in getParameterTypes() and getResultType() on occasion of issue #113
+ *      Kay Gürtzig     2017.02.01      Enh. #259/#335: Parameters added to typeMap
+ *      Kay Gürtzig     2017.02.07      KGU#343: Result analysis mechanism revised
  *
  ******************************************************************************************************
  *
@@ -1801,7 +1803,38 @@ public class Root extends Element {
     }
     // END KGU#261 2017-01-20
     
+    // START KGU#261/KGU#332 2017-02-01: Enh. #259/#335
+	/**
+	 * Adds all parameter declarations to the given map (varname -> typeinfo).
+	 * @param typeMap
+	 */
+	public void updateTypeMap(HashMap<String, TypeMapEntry> typeMap)
+	{
+		ArrayList<Param> parameters = getParams();
+		String typeSpec = null;
+		for (Param par: parameters) {
+			if ((typeSpec = par.getType()) != null) {
+				this.addToTypeMap(typeMap, par.getName(), typeSpec, 0, true, false);
+			}
+		}
+		if (!this.isProgram) {
+			typeSpec = this.getResultType();
+			if (typeSpec != null) {
+				this.addToTypeMap(typeMap, this.getMethodName(), typeSpec, 0, false, false);
+			}
+		}
+	}
+	// END KGU#261/KGU#332 2017-02-01
+
+    
     // START BFI 2015-12-10
+	/**
+	 * Obsolete method to get a type description of the result type of this (if being a
+	 * function), or null, if not available.
+	 * Use getResultType() instead!
+	 * @return informal type description or null
+	 */
+	@Deprecated
     public String getReturnType()
     {
         try 
@@ -2067,8 +2100,8 @@ public class Root extends Element {
     			StringList tVars = _vars.copy();
     			StringList fVars = _vars.copy();
 
-    			analyse(((Alternative)ele).qTrue, _errors, tVars,_uncertainVars, _resultFlags);
-    			analyse(((Alternative)ele).qFalse, _errors, fVars,_uncertainVars, _resultFlags);
+    			analyse(((Alternative)ele).qTrue, _errors, tVars, _uncertainVars, _resultFlags);
+    			analyse(((Alternative)ele).qFalse, _errors, fVars, _uncertainVars, _resultFlags);
 
     			for(int v = 0; v < tVars.count(); v++)
     			{
@@ -2079,8 +2112,7 @@ public class Root extends Element {
     			for(int v = 0; v < fVars.count(); v++)
     			{
     				String varName = fVars.get(v);
-    				if (tVars.contains(varName)) { _vars.addIfNew(varName); }
-    				else if (!_vars.contains(varName)) { _uncertainVars.addIfNew(varName); }
+    				if (!_vars.contains(varName)) { _uncertainVars.addIfNew(varName); }
     			}
 
     			// if a variable is not being initialised on both of the lists,
@@ -2091,12 +2123,13 @@ public class Root extends Element {
     		else if(eleClassName.equals("Case"))
     		{
     			Case caseEle = ((Case) ele);
+				int si = caseEle.qs.size();	// Number of branches
     			StringList initialVars = _vars.copy();
     			// This Hashtable will contain strings composed of as many '1' characters as
     			// branches initialise the respective new variable - so in the end we can see
     			// which variables aren't always initialised.
     			Hashtable<String, String> myInitVars = new Hashtable<String, String>();
-    			for (int j=0; j < caseEle.qs.size(); j++)
+    			for (int j=0; j < si; j++)
     			{
     				StringList caseVars = initialVars.copy();
     				analyse((Subqueue) caseEle.qs.get(j),_errors,caseVars,_uncertainVars,_resultFlags);
@@ -2115,20 +2148,18 @@ public class Root extends Element {
     				//_vars.addIfNew(caseVars);
     			}
     			//System.out.println(myInitVars);
-    			// walk trought the hashtable and check
+    			// walk trough the hash table and check
     			Enumeration<String> keys = myInitVars.keys();
+				// adapt size if no "default"
+				if ( caseEle.getText().get(caseEle.getText().count()-1).equals("%") )
+				{
+					si--;
+				}
+				//System.out.println("SI = "+si+" = "+c.text.get(c.text.count()-1));
     			while ( keys.hasMoreElements() )
     			{
     				String key = keys.nextElement();
     				String value = myInitVars.get(key);
-
-    				int si = caseEle.qs.size();	// Number of branches
-    				// adapt size if no "default"
-    				if ( caseEle.getText().get(caseEle.getText().count()-1).equals("%") )
-    				{
-    					si--;
-    				}
-    				//System.out.println("SI = "+si+" = "+c.text.get(c.text.count()-1));
 
     				if(value.length()==si)
     				{
@@ -2273,6 +2304,11 @@ public class Root extends Element {
 			for (int j=0; j<_myUsedVars.count(); j++)
 			{
 				String myUsed = _myUsedVars.get(j);
+				// START KGU#343 2017-02-07: Ignore pseudo-variables (markers)
+				if (myUsed.startsWith("§ANALYSER§")) {
+					continue;
+				}
+				// END KGU#343 2017-02-07
 				if (!_vars.contains(myUsed) && !_uncertainVars.contains(myUsed))
 				{
 					//error  = new DetectedError("The variable «"+myUsed.get(j)+"» has not yet been initialized!",(Element) _node.getElement(i));
@@ -2291,7 +2327,7 @@ public class Root extends Element {
 	 * Three checks in one loop: (#5) & (#7) & (#13)
 	 * CHECK  #5: non-uppercase var
 	 * CHECK  #7: correct identifiers
-	 * CHECK #13: Competetive return mechanisms
+	 * CHECK #13: Competitive return mechanisms
 	 * @param ele - the element to be checked
 	 * @param _errors - the global error list
 	 * @param _myVars - the variables detected so far
@@ -2302,6 +2338,11 @@ public class Root extends Element {
 		for (int j=0; j<_myVars.count(); j++)
 		{
 			String myVar = _myVars.get(j);
+			// START KGU#343 2017-02-07: Ignore pseudo-variables (markers)
+			if (myVar.startsWith("§ANALYSER§")) {
+				continue;
+			}
+			// END KGU#343 2017-02-07
 
 			// CHECK: non-uppercase var (#5)
 			if(!myVar.toUpperCase().equals(myVar) && !rootVars.contains(myVar))
@@ -2324,7 +2365,7 @@ public class Root extends Element {
 			}
 
 			// START KGU#78 2015-11-25
-			// CHECK: Competetive return mechanisms (#13)
+			// CHECK: Competitive return mechanisms (#13)
 			if (!this.isProgram && myVar.toLowerCase().equals("result"))
 			{
 				_resultFlags[1] = true;
@@ -2497,7 +2538,7 @@ public class Root extends Element {
 
 	/**
 	 * CHECK #16: Correct usage of Jump, including return
-	 * CHECK #13: Competetive return mechanisms
+	 * CHECK #13: Competitive return mechanisms
 	 * @param ele - JUMP element to be analysed
 	 * @param _errors - global error list
 	 * @param _myVars - all variables defined or modified by this element (should be empty so far, might be extended) 
@@ -2559,8 +2600,14 @@ public class Root extends Element {
 		// CHECK: Correct usage of return (nearby check result mechanisms) (#13, #16)
 		else if (isReturn)
 		{
-			_resultFlags[0] = true;
-			_myVars.addIfNew("result");
+			// START KGU#343 2017-02-07: Disabled to suppress the warnings - may there be side-effects?
+			//_resultFlags[0] = true;
+			//_myVars.addIfNew("result");	// FIXME: This caused warnings if e.g. "Result" is used somewhere else
+			if (!line.substring(preReturn.length()).trim().isEmpty()) {
+				_resultFlags[0] = true;
+				_myVars.addIfNew("§ANALYSER§RETURNS");
+			}
+			// END KGU#343 2017-02-07
 			// START KGU#78 2015-11-25: Different result mechanisms?
 			if (_resultFlags[1] || _resultFlags[2])
 			{
@@ -2613,7 +2660,7 @@ public class Root extends Element {
 
 	/**
 	 * CHECK #16: Correct usage of return (suspecting hidden Jump)
-	 * CHECK #13: Competetive return mechanisms
+	 * CHECK #13: Competitive return mechanisms
 	 * @param ele - Instruction to be analysed
 	 * @param _errors - global error list
 	 * @param _index - position of this element within the owning Subqueue
@@ -2623,13 +2670,13 @@ public class Root extends Element {
 	private void analyse_13_16_instr(Instruction ele, Vector<DetectedError> _errors, boolean _isLastElement, StringList _myVars, boolean[] _resultFlags)
 	{
 		StringList sl = ele.getText();
-		String pattern = D7Parser.getKeyword("preReturn");
+		String pattern = D7Parser.getKeywordOrDefault("preReturn", "return");
 		if (D7Parser.ignoreCase) pattern = pattern.toLowerCase();
 		String patternReturn = Matcher.quoteReplacement(pattern);
-		pattern = D7Parser.getKeyword("preLeave");
+		pattern = D7Parser.getKeywordOrDefault("preLeave", "leave");
 		if (D7Parser.ignoreCase) pattern = pattern.toLowerCase();
 		String patternLeave = Matcher.quoteReplacement(pattern);
-		pattern = D7Parser.getKeyword("preExit");
+		pattern = D7Parser.getKeywordOrDefault("preExit", "exit");
 		if (D7Parser.ignoreCase) pattern = pattern.toLowerCase();
 		String patternExit = Matcher.quoteReplacement(pattern);
 
@@ -2649,7 +2696,10 @@ public class Root extends Element {
 				// END KGU#78 2015-11-25
 			{
 				_resultFlags[0] = true;
-				_myVars.addIfNew("result");
+				// START KGU#343 2017-02-07: This could cause case-related warnings if e.g. "Result" is used somewhere 
+				//_myVars.addIfNew("result");
+				_myVars.addIfNew("§ANALYSER§RETURNS");
+				// END KGU#343 2017-02-07
 				// START KGU#78 2015-11-25: Different result mechanisms?
 				if (_resultFlags[1] || _resultFlags[2])
 				{
@@ -2684,7 +2734,7 @@ public class Root extends Element {
 		// These hash tables will contain a binary pattern per variable name indicating
 		// which threads will modify or use the respective variable. If more than
 		// Integer.SIZE (supposed to be 32) parallel branches exist (pretty unlikely)
-		// than analysis will just give up beyond the Integer.SIZEth thread.
+		// then analysis will just give up beyond the Integer.SIZEth thread.
 		Hashtable<String,Integer> myInitVars = new Hashtable<String,Integer>();
 		Hashtable<String,Integer> myUsedVars = new Hashtable<String,Integer>();
 		Iterator<Subqueue> iter = ele.qs.iterator();
@@ -2700,6 +2750,11 @@ public class Root extends Element {
 			for (int v = 0; v < threadSetVars.count(); v++)
 			{
 				String varName = threadSetVars.get(v);
+				// START KGU#343 2017-02-07: Ignore pseudo-variables (markers)
+				if (varName.startsWith("§ANALYSER§")) {
+					continue;
+				}
+				// END KGU#343 2017-02-07
 				Integer count = myInitVars.putIfAbsent(varName, 1 << threadNo);
 				if (count != null) { myInitVars.put(varName, count.intValue() | (1 << threadNo)); }
 			}
@@ -2776,6 +2831,11 @@ public class Root extends Element {
 		{
 			StringList collidingVars = new StringList();
 			String varName = _myVars.get(i);
+			// START KGU#343 2017-02-07: Ignore pseudo-variables (markers)
+			if (varName.startsWith("§ANALYSER§")) {
+				continue;
+			}
+			// END KGU#343 2017-02-07
 			for (int s = 0; s < varSets.length; s++)
 			{
 				int j = -1;
@@ -2807,6 +2867,11 @@ public class Root extends Element {
 			{
 				StringList languages = new StringList();
 				String varName = _myVars.get(i);
+				// START KGU#343 2017-02-07: Ignore pseudo-variables (markers)
+				if (varName.startsWith("§ANALYSER§")) {
+					continue;
+				}
+				// END KGU#343 2017-02-07
 				StringList languages1 = caseAwareKeywords.get(varName);
 				StringList languages2 = caseUnawareKeywords.get(varName.toLowerCase());
 				if (languages1 != null) languages.add(languages1);
@@ -2911,7 +2976,7 @@ public class Root extends Element {
     // START KGU#78 2015-11-25: Extracted from analyse() and rewritten
     /**
      * Returns a string representing a detected result type if this is a subroutine diagram. 
-     * @return null or a string possibly representing some datatype
+     * @return null or a string possibly representing some data type
      */
     public String getResultType()
     {
@@ -3117,174 +3182,179 @@ public class Root extends Element {
 
     public Vector<DetectedError> analyse()
     {
-            this.getVarNames();
-            //System.out.println(this.variables);
+        this.getVarNames();
+        //System.out.println(this.variables);
 
-            Vector<DetectedError> errors = new Vector<DetectedError>();
-            StringList vars = getVarNames(this,true,false);
-            rootVars = vars.copy();
-            StringList uncertainVars = new StringList();
+        Vector<DetectedError> errors = new Vector<DetectedError>();
+        StringList vars = getVarNames(this,true,false);
+        rootVars = vars.copy();
+        StringList uncertainVars = new StringList();
 
-            String programName = getMethodName();
+        String programName = getMethodName();
 
-            DetectedError error;
-            
-            // START KGU#220 2016-07-27: Enh. #207
-            // Warn in case of switched text/comments as first report
-            if (this.isSwitchTextAndComments())
+        DetectedError error;
+
+        // START KGU#220 2016-07-27: Enh. #207
+        // Warn in case of switched text/comments as first report
+        if (this.isSwitchTextAndComments())
+        {
+            // This is a general warning without associated element - put at top
+            error = new DetectedError(errorMsg(Menu.warning_1, ""), null);
+            // Category 0 is not restricted to configuration (cannot be switched off)
+            addError(errors, error, 0);
+        }
+        // END KGU#220 2016-07-27
+
+        // START KGU#239 2016-08-12: Enh. #231 - prepare variable name collision check
+        // CHECK 19: identifier collision with reserved words
+        if (check(19) && (caseAwareKeywords == null || caseUnawareKeywords == null))
+        {
+            initialiseKeyTables();
+        }
+        // END KGU#239 2016-08-12
+
+        // CHECK: uppercase for programname (#6)
+        if(!programName.toUpperCase().equals(programName))
+        {
+            //error  = new DetectedError("The programname «"+programName+"» must be written in uppercase!",this);
+            error  = new DetectedError(errorMsg(Menu.error06,programName),this);
+            addError(errors,error,6);
+        }
+
+        // CHECK: correct identifier for programname (#7)
+        // START KGU#61 2016-03-22: Method outsourced
+        //if(testidentifier(programName)==false)
+        if (!Function.testIdentifier(programName, null))
+        // END KGU#61 2016-03-22
+        {
+            //error  = new DetectedError("«"+programName+"» is not a valid name for a program or function!",this);
+            error  = new DetectedError(errorMsg(Menu.error07_1,programName),this);
+            addError(errors,error,7);
+        }
+
+        // START KGU#253 2016-09-22: Enh. #249: subroutine header syntax
+        // CHECK: subroutine header syntax (#20 - new!)
+        analyse_20(errors);
+        // END KGU#253 2016-09-22
+
+        // START KGU#239 2016-08-12: Enh. #231: Test for name collisions
+        analyse_18_19_21(this, errors, uncertainVars, uncertainVars, vars);
+        // END KGU#239 2016-08-12
+
+        // CHECK: two checks in one loop: (#12 - new!) & (#7)
+        for(int j=0; j<vars.count(); j++)
+        {
+            String para = vars.get(j);
+            // CHECK: non-conform parameter name (#12 - new!)
+            if( !(para.charAt(0)=='p' && para.substring(1).toUpperCase().equals(para.substring(1))) )
             {
-            	// This is a general warning without associated element - put at top
-            	error = new DetectedError(errorMsg(Menu.warning_1, ""), null);
-            	// Category 0 is not restricted to configuration (cannot be switched off)
-            	addError(errors, error, 0);
-            }
-            // END KGU#220 2016-07-27
-
-            // START KGU#239 2016-08-12: Enh. #231 - prepare variable name collision check
-            // CHECK 19: identifier collision with reserved words
-            if (check(19) && (caseAwareKeywords == null || caseUnawareKeywords == null))
-            {
-            	initialiseKeyTables();
-            }
-            // END KGU#239 2016-08-12
-            
-            // CHECK: uppercase for programname (#6)
-            if(!programName.toUpperCase().equals(programName))
-            {
-                    //error  = new DetectedError("The programname «"+programName+"» must be written in uppercase!",this);
-                    error  = new DetectedError(errorMsg(Menu.error06,programName),this);
-                    addError(errors,error,6);
+                //error  = new DetectedError("The parameter «"+vars.get(j)+"» must start with the letter \"p\" followed by only uppercase letters!",this);
+                error  = new DetectedError(errorMsg(Menu.error12,para),this);
+                addError(errors,error,12);
             }
 
-            // CHECK: correct identifier for programname (#7)
+            // CHECK: correct identifiers (#7)
             // START KGU#61 2016-03-22: Method outsourced
-            //if(testidentifier(programName)==false)
-            if (!Function.testIdentifier(programName, null))
-            	// END KGU#61 2016-03-22
+            //if(testidentifier(vars.get(j))==false)
+            if (!Function.testIdentifier(vars.get(j), null))
+            // END KGU#61 2016-03-22
             {
-                    //error  = new DetectedError("«"+programName+"» is not a valid name for a program or function!",this);
-                    error  = new DetectedError(errorMsg(Menu.error07_1,programName),this);
-                    addError(errors,error,7);
+                //error  = new DetectedError("«"+vars.get(j)+"» is not a valid name for a parameter!",this);
+                error  = new DetectedError(errorMsg(Menu.error07_2,para),this);
+                addError(errors,error,7);
             }
-
-            // START KGU#253 2016-09-22: Enh. #249: subroutine header syntax
-            // CHECK: subroutine header syntax (#20 - new!)
-            analyse_20(errors);
-            // END KGU#253 2016-09-22
-
-            // START KGU#239 2016-08-12: Enh. #231: Test for name collisions
-            analyse_18_19_21(this, errors, uncertainVars, uncertainVars, vars);
-            // END KGU#239 2016-08-12
-
-            // CHECK: two checks in one loop: (#12 - new!) & (#7)
-            for(int j=0; j<vars.count(); j++)
-            {
-            	String para = vars.get(j);
-            	// CHECK: non-conform parameter name (#12 - new!)
-            	if( !(para.charAt(0)=='p' && para.substring(1).toUpperCase().equals(para.substring(1))) )
-            	{
-            		//error  = new DetectedError("The parameter «"+vars.get(j)+"» must start with the letter \"p\" followed by only uppercase letters!",this);
-            		error  = new DetectedError(errorMsg(Menu.error12,para),this);
-            		addError(errors,error,12);
-            	}
-
-            	// CHECK: correct identifiers (#7)
-            	// START KGU#61 2016-03-22: Method outsourced
-            	//if(testidentifier(vars.get(j))==false)
-            	if (!Function.testIdentifier(vars.get(j), null))
-            		// END KGU#61 2016-03-22
-            	{
-            		//error  = new DetectedError("«"+vars.get(j)+"» is not a valid name for a parameter!",this);
-            		error  = new DetectedError(errorMsg(Menu.error07_2,para),this);
-            		addError(errors,error,7);
-            	}
-            }
+        }
 
 
-            // CHECK: the content of the diagram
-            boolean[] resultFlags = {false, false, false};
-            analyse(this.children,errors,vars,uncertainVars, resultFlags);
+        // CHECK: the content of the diagram
+        boolean[] resultFlags = {false, false, false};
+        analyse(this.children,errors,vars,uncertainVars, resultFlags);
 
-            // Test if we have a function (return value) or not
-            // START KGU#78 2015-11-25: Delegated to a more general function
-            //String first = this.getText().get(0).trim();
-            //boolean haveFunction = first.toLowerCase().contains(") as ") || first.contains(") :") || first.contains("):");
-            boolean haveFunction = getResultType() != null;
+        // Test if we have a function (return value) or not
+        // START KGU#78 2015-11-25: Delegated to a more general function
+        //String first = this.getText().get(0).trim();
+        //boolean haveFunction = first.toLowerCase().contains(") as ") || first.contains(") :") || first.contains("):");
+        boolean haveFunction = getResultType() != null;
+        // END KGU#78 2015-11-25
+
+        // CHECK: var = programname (#9)
+        if (!haveFunction && variables.contains(programName))
+        {
+            //error  = new DetectedError("Your program («"+programName+"») may not have the same name as a variable!",this);
+            error  = new DetectedError(errorMsg(Menu.error09,programName),this);
+            addError(errors,error,9);
+        }
+
+        // CHECK: sub does not return any result (#13 - new!)
+        // pre-requirement: we have a sub that returns something ...  FUNCTIONNAME () <return type>
+        // check to see if
+        // _ EITHER _
+        // the name of the sub (proposed filename) is contained in the names of the assigned variables
+        // _ OR _
+        // the list of initialized variables contains one of "RESULT", "Result", or "Result"
+        // _ OR _
+        // every path through the algorithm ends with a return instruction (with expression!)
+        if (haveFunction==true)
+        {
+            // START KGU#78 2015-11-25: Let's first gather all necessary information
+            boolean setsResultCi = vars.contains("result", false);
+//            boolean setsResultLc = false, setsResultUc = false, setsResultWc = false;
+//            if (setsResultCi)
+//            {
+//                setsResultLc = vars.contains("result", true);
+//                setsResultUc = vars.contains("RESULT", true);
+//                setsResultWc = vars.contains("Result", true);
+//            }
+            boolean setsProcNameCi = vars.contains(programName,false);	// Why case-independent?
+            boolean maySetResultCi = uncertainVars.contains("result", false);
+//            boolean maySetResultLc = false, maySetResultUc = false, maySetResultWc = false;
+//            if (maySetResultCi)
+//            {
+//            	maySetResultLc = uncertainVars.contains("result", true);
+//            	maySetResultUc = uncertainVars.contains("RESULT", true);
+//            	maySetResultWc = uncertainVars.contains("Result", true);
+//            }
+            boolean maySetProcNameCi = uncertainVars.contains(programName,false);	// Why case-independent?
             // END KGU#78 2015-11-25
-
-            // CHECK: var = programname (#9)
-            if (!haveFunction && variables.contains(programName))
+			// START KGU#343 2017-02-07: Ignore pseudo-variables (markers)
+            boolean doesReturn = vars.contains("§ANALYSER§RETURNS");
+            boolean mayReturn = resultFlags[0];
+			// END KGU#343 2017-02-07
+            
+            
+            if (!setsResultCi && !setsProcNameCi && !doesReturn &&
+            		!maySetResultCi && !maySetProcNameCi && !mayReturn)
             {
-                    //error  = new DetectedError("Your program («"+programName+"») may not have the same name as a variable!",this);
-                    error  = new DetectedError(errorMsg(Menu.error09,programName),this);
-                    addError(errors,error,9);
+            	//error  = new DetectedError("Your function does not return any result!",this);
+            	error = new DetectedError(errorMsg(Menu.error13_1,""),this);
+            	addError(errors,error,13);
             }
-
-            // CHECK: sub does not return any result (#13 - new!)
-            // pre-requirement: we have a sub that returns something ...  FUNCTIONNAME () <return type>
-            // check to see if
-            // _ EITHER _
-            // the name of the sub (proposed filename) is contained in the name of the assigned variablename
-            // _ OR _
-            // the list of initialized variables contains one of "RESULT", "Result", or "Result"
-            // _ OR _
-            // every path through the algorithm end with a return instruction (with expression!)
-            if (haveFunction==true)
+            else if (!setsResultCi && !setsProcNameCi && !doesReturn &&
+            		(maySetResultCi || maySetProcNameCi || mayReturn))
             {
-            	// START KGU#78 2015-11-25: Let's first gather all necessary information
-            	boolean setsResultCi = vars.contains("result", false);
-//            	boolean setsResultLc = false, setsResultUc = false, setsResultWc = false;
-//            	if (setsResultCi)
-//            	{
-//            		setsResultLc = vars.contains("result", true);
-//            		setsResultUc = vars.contains("RESULT", true);
-//            		setsResultWc = vars.contains("Result", true);
-//            	}
-            	boolean setsProcNameCi = vars.contains(programName,false);	// Why case-independent?
-            	boolean maySetResultCi = uncertainVars.contains("result", false);
-//            	boolean maySetResultLc = false, maySetResultUc = false, maySetResultWc = false;
-//            	if (maySetResultCi)
-//            	{
-//            		maySetResultLc = uncertainVars.contains("result", true);
-//            		maySetResultUc = uncertainVars.contains("RESULT", true);
-//            		maySetResultWc = uncertainVars.contains("Result", true);
-//            	}
-            	boolean maySetProcNameCi = uncertainVars.contains(programName,false);	// Why case-independent?
-            	// END KHU#78 2015-11-25
-            	
-            	if (!setsResultCi && !setsProcNameCi &&
-            			!maySetResultCi && !setsProcNameCi)
-            	{
-            		//error  = new DetectedError("Your function does not return any result!",this);
-            		error  = new DetectedError(errorMsg(Menu.error13_1,""),this);
-            		addError(errors,error,13);
-            	}
-            	else if (!setsResultCi && !setsProcNameCi &&
-            			(maySetResultCi || setsProcNameCi))
-            	{
-            		//error  = new DetectedError("Your function may not return a result!",this);
-            		error  = new DetectedError(errorMsg(Menu.error13_2,""),this);
-            		addError(errors,error,13);
-            	}
-            	// START KGU#78 2015-11-25: Check competitive approaches
-            	else if (maySetResultCi && maySetProcNameCi)
-            	{
-            		//error  = new DetectedError("Your functions seems to use several competitive return mechanisms!",this);
-            		error  = new DetectedError(errorMsg(Menu.error13_3,"RESULT <-> " + programName),this);
-            		addError(errors,error,13);            		
-            	}
-            	// END KGU#78 2015-11-25
+            	//error  = new DetectedError("Your function may not return a result!",this);
+            	error = new DetectedError(errorMsg(Menu.error13_2,""),this);
+            	addError(errors,error,13);
             }
-
-            /*
-            for(int i=0;i<errors.size();i++)
+            // START KGU#78 2015-11-25: Check competitive approaches
+            else if (maySetResultCi && maySetProcNameCi)
             {
-                    System.out.println((DetectedError) errors.get(i));
+            	//error  = new DetectedError("Your functions seems to use several competitive return mechanisms!",this);
+            	error = new DetectedError(errorMsg(Menu.error13_3,"RESULT <-> " + programName),this);
+            	addError(errors,error,13);            		
             }
-            /**/
+            // END KGU#78 2015-11-25
+        }
 
-            this.errors=errors;
-            return errors;
+        /*
+        for(int i=0;i<errors.size();i++)
+        {
+            System.out.println((DetectedError) errors.get(i));
+        }
+        /**/
+
+        this.errors=errors;
+        return errors;
     }
 
 	// START KGU#239 2016-08-12: Enh. #231

@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.26-02 (2017.02.01)
+Current development version: 3.26-03 (2017.02.10)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>
@@ -23,6 +23,14 @@ Current development version: 3.26-02 (2017.02.01)
 - 02: Enh. #335: Type info retrieval for enhanced declarations on code export <2>
 - 02: Bugfix #337: Code export of 2d arrays and nested index access mended <2>
 - 02: Issue #113: More sophisticated code export w.r.t. array parameter types <2>
+- 03: Issue #340: Silent NullPointerExceptions on Structorizer/Arranger start <2>
+- 03: Wrong warnings on leave/break instruction export to C, Java etc. removed <2>
+- 03: Bugfix #341: Wrong string literal detection with single and double quotes <2>
+- 03: Bugfix #342: Disabled elements must be ignored on test coverage detection <2>
+- 03: Bugfix #343: Code export to C etc. now with correct string literal quotes <2>
+- 03: Analyser: Result checks (completeness, consistency) revised (KGU#343) <2>
+- 03: Bugfix #198: Further navigation flaws in IF and CASE elements mended <2>
+- 03: Enh. #344: Additional key binding Ctrl-Y for redo action [Fabian Röling]2
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

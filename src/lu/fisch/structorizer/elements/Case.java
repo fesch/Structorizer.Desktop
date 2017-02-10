@@ -53,6 +53,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
  *      Kay Gürtzig     2016.11.22      Bugfix #294: With hidden default branch, a test coverage couldn't be achieved
  *      Kay Gürtzig     2016.11.24/25   Issue #294 refined (now distinguished among deep and shallow test coverage)
+ *      Kay Gürtzig     2016.02.08      Issue #198: vertical cursor traversal fixed (failed in nested Calls)
+ *                                      Inheritance changed to implement o more intuitive horizontal cursor navigation
  *
  ******************************************************************************************************
  *
@@ -74,7 +76,7 @@ import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
 
-public class Case extends Element
+public class Case extends Element implements IFork
 {
 	
     public Vector<Subqueue> qs = new Vector<Subqueue>();
@@ -641,7 +643,10 @@ public class Case extends Element
 				if (i < x0Branches.size()) {
 					xOff = x0Branches.get(i);
 				}
-				Element pre = qs.get(i).getElementByCoord(_x-xOff, _y-y0Branches, _forSelection);
+				// START KGU#346 2017-02-08: Bugfix #198: Failed with higher nesting level
+				//Element pre = qs.get(i).getElementByCoord(_x-xOff, _y-y0Branches, _forSelection);
+				Element pre = qs.get(i).getElementByCoord(_x-xOff, _y-y0Branches+1, _forSelection);
+				// END KGU#346 2017-02-08
 				// END KGU#136 2016-03-01
 				if (pre!=null)
 				{
@@ -662,6 +667,18 @@ public class Case extends Element
     }
     // END KGU 2015-10-09
     
+	// START KGU#346 2017-02-08: Issue #198 Provide a relative rect for the head
+	/**
+	 * Returns a copy of the (relocatable i. e. 0-bound) extension rectangle
+	 * of the head partition (discriminating expression and branch labels). 
+	 * @return a rectangle starting at (0,0) and spanning to (width, head height) 
+	 */
+	public Rect getHeadRect()
+	{
+		return new Rect(rect.left, rect.top, rect.right, this.y0Branches);
+	}
+	// END KGU#346 2017-02-08
+
 	// START KGU#183 2016-04-24: Issue #169 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#findSelected()
