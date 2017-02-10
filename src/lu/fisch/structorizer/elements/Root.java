@@ -3326,21 +3326,21 @@ public class Root extends Element {
             		!maySetResultCi && !maySetProcNameCi && !mayReturn)
             {
             	//error  = new DetectedError("Your function does not return any result!",this);
-            	error  = new DetectedError(errorMsg(Menu.error13_1,""),this);
+            	error = new DetectedError(errorMsg(Menu.error13_1,""),this);
             	addError(errors,error,13);
             }
             else if (!setsResultCi && !setsProcNameCi && !doesReturn &&
             		(maySetResultCi || maySetProcNameCi || mayReturn))
             {
             	//error  = new DetectedError("Your function may not return a result!",this);
-            	error  = new DetectedError(errorMsg(Menu.error13_2,""),this);
+            	error = new DetectedError(errorMsg(Menu.error13_2,""),this);
             	addError(errors,error,13);
             }
             // START KGU#78 2015-11-25: Check competitive approaches
             else if (maySetResultCi && maySetProcNameCi)
             {
             	//error  = new DetectedError("Your functions seems to use several competitive return mechanisms!",this);
-            	error  = new DetectedError(errorMsg(Menu.error13_3,"RESULT <-> " + programName),this);
+            	error = new DetectedError(errorMsg(Menu.error13_3,"RESULT <-> " + programName),this);
             	addError(errors,error,13);            		
             }
             // END KGU#78 2015-11-25

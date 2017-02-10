@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.26-03 (2017.02.09)
+Current development version: 3.26-03 (2017.02.10)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>

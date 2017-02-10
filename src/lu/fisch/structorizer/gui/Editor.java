@@ -857,7 +857,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// END KGU#294 2016-11-22
 		// START KGU#347 2017-02-09: Enh. #344 additional key binding for redo
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK), "REDO");
-		// END KGU#347 2017-02-22
+		// END KGU#347 2017-02-09
 		actMap.put(CursorMoveDirection.CMD_UP, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_UP));
 		actMap.put(CursorMoveDirection.CMD_DOWN, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_DOWN));
 		actMap.put(CursorMoveDirection.CMD_LEFT, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_LEFT));
@@ -877,7 +877,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// END KGU#294 2016-11-22
 		// START KGU#347 2017-02-09: Enh. #344 additional key binding for redo
 		actMap.put("REDO", new AbstractAction("REDO") { public void actionPerformed(ActionEvent event) { diagram.redoNSD(); doButtons(); }});
-		// END KGU#347 2017-02-22
+		// END KGU#347 2017-02-09
 		//scrollarea.getViewport().setBackingStoreEnabled(true);
 		
 		// START KGU#239 2017-01-13: Bugfix #233 SplitPanes had snatched away accelerator keys F6 and F8
