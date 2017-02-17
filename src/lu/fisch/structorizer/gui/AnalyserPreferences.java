@@ -81,7 +81,7 @@ public class AnalyserPreferences extends LangDialog {
 		/*7*/"Check for valid identifiers.",
 		/*8*/"Check for assignment in conditions.",
 		/*9*/"Check that the program / sub name is not equal to any other identifier.",
-		/*10*/"Check for instructions with inputs and outputs.",
+		/*10*/"Check for mixed-type multiple-line instructions.",
 		/*11*/"Check for assignment errors.",
 		/*12*/"Check for standardized parameter name. (LUX/MEN)",
 		/*13*/"Check if, in case of a function, it returns a result.",
