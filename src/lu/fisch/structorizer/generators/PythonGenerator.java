@@ -60,6 +60,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig             2016.12.01      Bugfix #301: More precise check for parenthesis enclosing of log. conditions
  *      Kay Gürtzig             2016.12.27      Enh. #314: Support for Structorizer File API
+ *      Kay Gürtzig             2017.02.19      Enh. #348: Parallel sections translated with threading module
  *
  ******************************************************************************************************
  *
@@ -99,6 +100,7 @@ package lu.fisch.structorizer.generators;
  * 
  ******************************************************************************************************///
 
+import java.util.LinkedList;
 import java.util.regex.Matcher;
 
 import lu.fisch.utils.*;
@@ -172,7 +174,6 @@ public class PythonGenerator extends Generator
 			return false;
 		}
 		// END KGU 2016-08-12
-
 
 		/************ Code Generation **************/
 	    
@@ -623,37 +624,107 @@ public class PythonGenerator extends Generator
 			}
 		}
 		
-		// START KGU#47 2015-12-1: Offer at least a sequential execution (which is one legal execution order)
+		// START KGU#47 2015-12-17: Offer at least a sequential execution (which is one legal execution order)
 		protected void generateCode(Parallel _para, String _indent)
 		{
 			boolean isDisabled = _para.isDisabled();
+			Root root = Element.getRoot(_para);
 			
-			// FIXME (KGU) Try an implementation by means of the Threading module!
-			String indentPlusOne = _indent + this.getIndent();
-			String indentPlusTwo = indentPlusOne + this.getIndent();
+			//String indentPlusOne = _indent + this.getIndent();
+			//String indentPlusTwo = indentPlusOne + this.getIndent();
 			insertComment(_para, _indent);
 
 			addCode("", _indent, isDisabled);
-			insertComment("==========================================================", _indent);
-			insertComment("================= START PARALLEL SECTION =================", _indent);
-			insertComment("==========================================================", _indent);
-			insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
-			addCode("", indentPlusOne, isDisabled);
+			//insertComment("==========================================================", _indent);
+			//insertComment("================= START PARALLEL SECTION =================", _indent);
+			//insertComment("==========================================================", _indent);
+			//insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
+			//addCode("", indentPlusOne, isDisabled);
 
 			for (int i = 0; i < _para.qs.size(); i++) {
-				insertComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
-				generateCode((Subqueue) _para.qs.get(i), indentPlusTwo);
-				insertComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
-				addCode("", indentPlusOne, isDisabled);
+				//insertComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
+				// START KGU#348 2017-02-19: Enh. #348 Actual translation
+				//generateCode((Subqueue) _para.qs.get(i), indentPlusTwo);
+				Subqueue sq = _para.qs.get(i);
+				String threadVar = "thr" + _para.hashCode() + "_" + i;
+				String threadFunc = "thread" + _para.hashCode() + "_" + i;
+				StringList used = root.getUsedVarNames(sq, false, false);
+				String args = used.concatenate(",");
+				if (used.count() == 1) {
+					args += ",";
+				}
+				if (sq.getSize() == 1) {
+					Element el = sq.getElement(0);
+					if (el instanceof Call && ((Call)el).isProcedureCall()) {
+						threadFunc = ((Call)el).getCalledRoutine().getName();
+					}
+				}
+				addCode(threadVar + " = Thread(target=" + threadFunc + ", args=(" + args + "))", _indent, isDisabled);
+				addCode(threadVar + ".start()", _indent, isDisabled);
+				addCode("", _indent, isDisabled);
+				// END KGU#348 2017-02-19
+				//insertComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
+				//addCode("", indentPlusOne, isDisabled);
 			}
 
-			insertComment("==========================================================", _indent);
-			insertComment("================== END PARALLEL SECTION ==================", _indent);
-			insertComment("==========================================================", _indent);
-			addCode("", "", isDisabled);
+			for (int i = 0; i < _para.qs.size(); i++) {
+				String threadVar = "thr" + _para.hashCode() + "_" + i;
+				addCode(threadVar + ".join()", _indent, isDisabled);
+			}
+			//insertComment("==========================================================", _indent);
+			//insertComment("================== END PARALLEL SECTION ==================", _indent);
+			//insertComment("==========================================================", _indent);
+			addCode("", _indent, isDisabled);
 		}
 		// END KGU#47 2015-12-17
 
+		// START KGU#47/KGU#348 2017-02-19: Enh. #348
+		private void generateParallelThreadFunctions(Root _root, String _indent)
+		{
+			String indentPlusOne = _indent + this.getIndent();
+			final LinkedList<Parallel> containedParallels = new LinkedList<Parallel>();
+			_root.traverse(new IElementVisitor() {
+				@Override
+				public boolean visitPreOrder(Element _ele) {
+					return true;
+				}
+				@Override
+				public boolean visitPostOrder(Element _ele) {
+					if (_ele instanceof Parallel) {
+						containedParallels.addLast((Parallel)_ele);
+					}
+					return true;
+				}
+			});
+			for (Parallel par: containedParallels) {
+				boolean isDisabled = par.isDisabled();
+				String functNameBase = "thread" + par.hashCode() + "_";
+				int i = 0;
+				// We still don't care for synchronisation, mutual exclusion etc.
+				for (Subqueue sq: par.qs) {
+					Element el = null;
+					if (sq.getSize() == 1 && (el = sq.getElement(0)) instanceof Call && ((Call)el).isProcedureCall()) {
+						// Don't generate a thread function for single procedure calls
+						continue;
+					}
+					// Variables assigned here will be made global
+					StringList setVars = _root.getVarNames(sq, false);
+					// Variables used here without being assigned will be made arguments
+					StringList usedVars = _root.getUsedVarNames(sq, false, false);
+					for (int v = 0; v < setVars.count(); v++) {
+						usedVars.removeAll(setVars.get(v));
+					}
+					addCode("def " + functNameBase + i + "(" + usedVars.concatenate(", ") + "):", _indent, isDisabled);
+					for (int v = 0; v < setVars.count(); v++) {
+						addCode("global " + setVars.get(v), indentPlusOne, isDisabled);
+					}
+					generateCode(sq, indentPlusOne);
+					code.add(_indent);
+					i++;
+				}
+			}
+		}
+		// END KGU#47/KGU#348 2017-02-19
 
 		/* (non-Javadoc)
 		 * @see lu.fisch.structorizer.generators.Generator#generateHeader(lu.fisch.structorizer.elements.Root, java.lang.String, java.lang.String, lu.fisch.utils.StringList, lu.fisch.utils.StringList, java.lang.String)
@@ -678,6 +749,12 @@ public class PythonGenerator extends Generator
 				code.add(_indent + "#!/usr/bin/env python");
 				insertComment(_root.getText().get(0), _indent);
 				insertComment("generated by Structorizer " + Element.E_VERSION, _indent);
+				// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
+				if (this.hasParallels) {
+					code.add(_indent);
+					code.add(_indent + "from threading import Thread");
+				}
+				// END KGU#348 2017-02-19
 				subroutineInsertionLine = code.count();
 				// START KGU#311 2016-12-27: Enh. #314: File API support
 				if (this.usesFileAPI) {
@@ -695,6 +772,9 @@ public class PythonGenerator extends Generator
 				insertComment(_root, _indent);
 				code.add(_indent + "def " + _procName +"(" + _paramNames.getText().replace("\n", ", ") +") :");
 			}
+			// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
+			generateParallelThreadFunctions(_root, _indent + (_root.isProgram ? "" : this.getIndent()));
+			// END KGU#348 2017-02-19
 			return indent;
 		}
 

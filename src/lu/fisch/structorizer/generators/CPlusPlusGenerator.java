@@ -48,6 +48,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.01.05      Enh. #314: File API intervention in transformTokens modified
  *      Kay Gürtzig     2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
  *      Kay Gürtzig     2017.01.31      Enh. #113: Array parameter transformation
+ *      Kay Gürtzig     2017.02.21      Enh. #348: Parallel sections translated with <thread> library
  *
  ******************************************************************************************************
  *
@@ -60,9 +61,15 @@ package lu.fisch.structorizer.generators;
  *
  ******************************************************************************************************///
 
+import java.util.HashMap;
+import java.util.LinkedList;
+
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
+import lu.fisch.structorizer.elements.IElementVisitor;
+import lu.fisch.structorizer.elements.Parallel;
 import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.parsers.D7Parser;
@@ -241,6 +248,132 @@ public class CPlusPlusGenerator extends CGenerator {
 	}
 	// END KGU#61 2016-03-22
 	
+	// START KGU#47/KGU#348 2017-02-21: Enh. #348 - Offer a C++11 solution with class std::thread
+	@Override
+	protected void generateCode(Parallel _para, String _indent)
+	{
+
+		boolean isDisabled = _para.isDisabled();
+		Root root = Element.getRoot(_para);
+		String indentPlusOne = _indent + this.getIndent();
+
+		insertComment(_para, _indent);
+
+		addCode("", "", isDisabled);
+		insertComment("Parallel section", _indent);
+		addCode("{", _indent, isDisabled);
+
+		for (int i = 0; i < _para.qs.size(); i++) {
+			Subqueue sq = _para.qs.get(i);
+			String threadVar = "thr" + _para.hashCode() + "_" + i;
+			String threadFunc = "ThrFunc" + _para.hashCode() + "_" + i;
+			String threadFuncInst = threadFunc.toLowerCase();
+			StringList used = root.getUsedVarNames(sq, false, false).reverse();
+			StringList asgnd = root.getVarNames(sq, false, false).reverse();
+			for (int v = 0; v < asgnd.count(); v++) {
+				used.removeAll(asgnd.get(v));
+			}
+			String args = asgnd.concatenate(", ").trim();
+			if (asgnd.count() > 0) { args = "(" + args + ")"; }
+			addCode(threadFunc  + " " + threadFuncInst + args + ";", indentPlusOne, isDisabled);
+			args = used.concatenate(", ").trim();
+			addCode("std::thread " + threadVar + "(" + threadFuncInst + (args.isEmpty() ? "" : ", ") + args + ");", indentPlusOne, isDisabled);
+			addCode("", _indent, isDisabled);
+		}
+
+		for (int i = 0; i < _para.qs.size(); i++) {
+			String threadVar = "thr" + _para.hashCode() + "_" + i;
+			addCode(threadVar + ".join();", indentPlusOne, isDisabled);
+		}
+
+		addCode("}", _indent, isDisabled);
+		addCode("", "", isDisabled);
+	}
+
+	// Inserts class definitions for function objects to be used by the threads
+	private void generateParallelThreadFunctions(Root _root, String _indent)
+	{
+		String indentPlusOne = _indent + this.getIndent();
+		String indentPlusTwo = indentPlusOne + this.getIndent();
+		final LinkedList<Parallel> containedParallels = new LinkedList<Parallel>();
+		_root.traverse(new IElementVisitor() {
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				return true;
+			}
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				if (_ele instanceof Parallel) {
+					containedParallels.addLast((Parallel)_ele);
+				}
+				return true;
+			}
+		});
+		for (Parallel par: containedParallels) {
+			boolean isDisabled = par.isDisabled();
+			String functNameBase = "ThrFunc" + par.hashCode() + "_";
+			Root root = Element.getRoot(par);
+			HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
+			int i = 0;
+			// We still don't care for synchronisation, mutual exclusion etc.
+			for (Subqueue sq: par.qs) {
+				// Variables assigned here will be made reference members
+				StringList setVars = root.getVarNames(sq, false).reverse();
+				// Variables used here (without being assigned) will be made reference arguments
+				StringList usedVars = root.getUsedVarNames(sq, false, false).reverse();
+				String initList = "";
+				for (int v = 0; v < setVars.count(); v++) {
+					String varName = setVars.get(v);
+					usedVars.removeAll(varName);
+					initList += ", " + varName + "(" + varName + ")";
+				}
+				if (!initList.isEmpty()) {
+					initList = ":" + initList.substring(1);
+				}
+				addCode("class " + functNameBase + i + "{", _indent, isDisabled);
+				addCode("public:", _indent, isDisabled);
+				// Member variables (all references!)
+				String argList = this.makeArgList(setVars, typeMap);
+				if (setVars.count() > 0) {
+					String[] argDecls = argList.split(", ");
+					for (String decl: argDecls) {
+						addCode(decl + ";", indentPlusOne, isDisabled);
+					}
+					// Constructor
+					addCode(functNameBase + i + "(" + argList + ") " + initList + "{}", indentPlusOne, isDisabled);
+				}
+				// Function operator
+				argList = "(" + this.makeArgList(usedVars, typeMap) + ")";
+				addCode("void operator()" + argList + " {", indentPlusOne, isDisabled);
+				generateCode(sq, indentPlusTwo);
+				addCode("}", indentPlusOne, isDisabled);
+				addCode("};", _indent, isDisabled);
+				code.add(_indent);
+				i++;
+			}
+		}
+	}
+	
+	private String makeArgList(StringList varNames, HashMap<String, TypeMapEntry> typeMap)
+	{
+		String argList = "";
+		for (int v = 0; v < varNames.count(); v++) {
+			String varName = varNames.get(v);
+			TypeMapEntry typeEntry = typeMap.get(varName);
+			String typeSpec = "/*type?*/";
+			boolean isArray = false;
+			if (typeEntry != null) {
+				isArray = typeEntry.isArray();
+				StringList typeSpecs = this.getTransformedTypes(typeEntry);
+				if (typeSpecs.count() == 1) {
+					typeSpec = typeSpecs.get(0);
+				}
+			}
+			argList += (v > 0 ? ", " : "") + typeSpec + (isArray ? " " : "& ") + varName;
+		}
+		return argList;
+	}
+	// END KGU#47/KGU#348 2017-02-21
 	
 // KGU#74 (2015-11-30): Now we only override some of the decomposed methods below
 //    @Override
@@ -279,6 +412,11 @@ public class CPlusPlusGenerator extends CGenerator {
 				code.add("#include <iostream>");
 			}
 	        // END KGU#236 2016-08-10
+			// START KGU#348 2017-02-21: Enh. #348 Parallel support
+			if (this.hasParallels) {
+				code.add("#include <thread>");
+			}
+			// END KGU#348 2017-02-21
 			// START KGU#311 2016-12-22: Enh. #314 - support for file API
 			if (this.usesFileAPI) {
 		        this.insertFileAPI("cpp", code.count(), "", 0);
@@ -303,6 +441,7 @@ public class CPlusPlusGenerator extends CGenerator {
         if (_root.isProgram)
         	code.add(_indent + "int main(void)");
         else {
+        	// Start with the result type
 			String fnHeader = transformType(_resultType,
 					((returns || isResultSet || isFunctionNameSet) ? "int" : "void"));
 			// START KGU#140 2017-01-31: Enh. #113 - improved type recognition and transformation
@@ -333,6 +472,9 @@ public class CPlusPlusGenerator extends CGenerator {
         }
 		
 		code.add("{");
+		// START KGU#348 2017-02-21: Enh. #348 - Actual translation of Parallel sections
+		this.generateParallelThreadFunctions(_root, _indent + this.getIndent());
+		// END KGU#348 2017-02-21
 		
 		return _indent + this.getIndent();
 	}

@@ -64,6 +64,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.01.20      Bugfix #336: variable list for declaration section (loop vars in, parameters out)
  *      Kay Gürtzig     2017.01.26      Enh. #259: Type info is now gathered for declarations support
  *      Kay Gürtzig     2017.01.30      Bugfix #337: Mutilation of lvalues with nested index access
+ *      Kay Gürtzig     2017.02.19      KGU#348: Additions to support PythonGenerator in generating Parallel code
+ *      Kay Gürtzig     2017.02.20      Bugfix #349: Export missed to generate recursive subroutines and their callers 
  *
  ******************************************************************************************************
  *
@@ -174,6 +176,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	// START KGU#311 2016-12-22: Enh. #314 - File API support
 	protected boolean usesFileAPI = false;
 	// END KGU#311 2016-12-22
+	// START KGU#348 2017-02-19: Support for translation of Parallel elements
+	protected boolean hasParallels = false;
+	// END KGU#348 2017-02-19
 
 	// START KGU#129/KGU#61 2016-03-22: Bugfix #96 / Enh. #84 Now important for most generators
 	// Some generators must prefix variables, for some generators it's important for FOR-IN loops
@@ -935,11 +940,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	{
 		Root newSub = null;
 		Function called = _call.getCalledRoutine();
-		if (called != null && Arranger.hasInstance())
+		// START KGU#349 2017-02-20: Bugfix #349 - don't register directly recursive calls
+		//if (called != null && Arranger.hasInstance())
+		if (called != null && !_caller.getSignatureString(false).equals(called.getSignatureString()) && Arranger.hasInstance())
+		// END KGU#349 2017-02-20
 		{
 			Vector<Root> foundRoots = Arranger.getInstance().
 					findRoutinesBySignature(called.getName(), called.paramCount());
-			// FIXME: How to select among Roots with comaptible signature?
+			// FIXME: How to select among Roots with compatible signature?
 			if (!foundRoots.isEmpty())
 			{
 				Root sub = foundRoots.firstElement();
@@ -969,9 +977,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			else if ((newSub = getAmongSubroutines(called)) != null)
 			{
 				subroutines.get(newSub).callers.add(_caller);
-				// If we got here, then it's propably the top-level routine itself
+				// If we got here, then it's probably the top-level routine itself
 				// So better be cautious with reference counting here (lest the
-				// caling routine would be suppressed on printing)
+				// calling routine would be suppressed on printing)
 				newSub = null;	// ...and it's not a new subroutine, of course
 			}
 			// END KU#237 2016-08-10
@@ -1097,6 +1105,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 			if (instr.isOutput()) hasOutput = true;			
 		}
+		// START KGU#348 2017-02-19: Support for translation of Parallel elements
+		else if (_ele instanceof Parallel)
+		{
+			hasParallels = true;
+		}
+		// END KGU#348 2017-02-19
 		// START KGU#311 2016-12-22: Enh. #314 - check for file API support
 		if (!usesFileAPI && _ele.getText().getText().contains("file"))
 		{
@@ -1564,36 +1578,47 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		code = code.subSequence(0, this.subroutineInsertionLine);
 		topLevel = false;
 		Queue<Root> roots = new LinkedList<Root>();
-		// Initial queue filling - this is a classical topological sorting algorithm
-		for (Root sub: this.subroutines.keySet())
-		{
-			SubTopoSortEntry entry = this.subroutines.get(sub);
-			// If this routine refers to no other one, then enlist it
-			if (entry.nReferingTo == 0)
+		// START KGU#349 2017-02-20: Bugfix #349 - precaution against indirect recursion, we must export all routines
+		int minRefCount = 0;
+		while (!this.subroutines.isEmpty()) {
+		// END KGU#349 2017-02-20
+			// Initial queue filling - this is a classical topological sorting algorithm
+			for (Root sub: this.subroutines.keySet())
 			{
-				roots.add(sub);
-			}
-		}
-		// Now we have an initial queue of independent routines,
-		// so export them and enlist those dependents
-		// the prerequisites of which are thereby fulfilled.
-		while (!roots.isEmpty())
-		{
-			Root sub = roots.remove();	// get the next routine
-			
-			generateCode(sub, subroutineIndent);	// add its code
-			
-			// look for dependent routines and decrement their dependency counter
-			// (the entry for sub isn't needed any longer now)
-			for (Root caller: subroutines.remove(sub).callers)
-			{
-				SubTopoSortEntry entry = this.subroutines.get(caller);
-				// Last dependency? Then enlist the caller
-				if (entry != null && --entry.nReferingTo <= 0)
+				SubTopoSortEntry entry = this.subroutines.get(sub);
+				// If this routine refers to no other one, then enlist it
+				if (entry.nReferingTo == minRefCount)
 				{
-					roots.add(caller);
+					roots.add(sub);
 				}
 			}
+			// Now we have an initial queue of independent routines,
+			// so export them and enlist those dependents
+			// the prerequisites of which are thereby fulfilled.
+			while (!roots.isEmpty())
+			{
+				Root sub = roots.remove();	// get the next routine
+
+				generateCode(sub, subroutineIndent);	// add its code
+
+				// look for dependent routines and decrement their dependency counter
+				// (the entry for sub isn't needed any longer now)
+				for (Root caller: subroutines.remove(sub).callers)
+				{
+					SubTopoSortEntry entry = this.subroutines.get(caller);
+					// Last dependency? Then enlist the caller (if it's not already listed - in case of indirect recursion)
+					if (entry != null && --entry.nReferingTo <= 0 && !roots.contains(caller))
+					{
+						roots.add(caller);
+						// when we could add a due subroutine then there is no need anymore to tolerate routines in need of others
+						minRefCount = 0;
+					}
+				}
+			}
+			// START KGU#349 2017-02-20: Bugfix #349
+			// An indirect recursion might block have blocked the queuing of routines, so raise reference toleration level
+			minRefCount++;
+			// END KGU#349
 		}
 		code.add(outerCodeTail);
 		

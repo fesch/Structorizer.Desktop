@@ -1699,7 +1699,7 @@ public class Root extends Element {
     }
 
     /**
-     * Extract all variable names of the passed-in element _ele.
+     * Extract the names of all variables assigned or introduced within passed-in element _ele.
      * @return list of variable names
      */
     public StringList getVarNames(Element _ele)

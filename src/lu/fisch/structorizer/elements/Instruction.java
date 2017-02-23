@@ -52,7 +52,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
  *      Kay Gürtzig     2016.10.15      Enh. #271: method isEmptyInput() had to consider prompt strings now.
  *      Kay Gürtzig     2016.11.22      Bugfix #296: Wrong transmutation of return and output statements
+ *      Kay Gürtzig     2017.01.26      Enh. #259: First retrieval approach for variable types
  *      Kay Gürtzig     2017.01.30      Enh. #335: More sophisticated type and declaration support    
+ *      Kay Gürtzig     2017.02.20      Enh. #259: Retrieval of result types of called functions enabled (q&d)
  *
  ******************************************************************************************************
  *
@@ -624,7 +626,7 @@ public class Instruction extends Element {
 		}
 		// Next we try to extract type information from an initial assignment (without "var" keyword)
 		else if (posAsgnmt > 0 && !tokens.contains("var") && !tokens.contains("dim")) {
-			// Type information might be found left of the variable name or derivable from the initial value
+			// Type information might be found left of the variable name or be derivable from the initial value
 			StringList leftSide = tokens.subSequence(0, posAsgnmt);
 			StringList rightSide = tokens.subSequence(posAsgnmt+1, tokens.count());
 			isAssigned = rightSide.count() > 0;
@@ -633,32 +635,18 @@ public class Instruction extends Element {
 			boolean isCStyleDecl = Instruction.isDeclaration(line);
 			if (varName != null) {
 				int pos = leftSide.indexOf(varName);
+				// C-style type declaration left of the variable name?
 				typeSpec = leftSide.concatenate(" ", 0, pos);
+				// Check for array declaration (or array element access)
 				while (!typeSpec.isEmpty() && (pos = leftSide.indexOf("[")) > 1) {
 					typeSpec += leftSide.concatenate("", pos, leftSide.indexOf("]")+1);
 					leftSide.remove(pos, leftSide.indexOf("]")+1);
 				}
+				// No explicit type specification but new variable?
 				if (typeSpec.isEmpty() && !typeMap.containsKey(varName)) {
 					//String expr = rightSide.concatenate(" ");
-					if (rightSide.count() >= 2 && rightSide.get(0).equals("{") && rightSide.get(rightSide.count()-1).equals("}")) {
-						StringList items = Element.splitExpressionList(rightSide.concatenate("", 1, rightSide.count()-1), ",");
-						for (int i = 0; !typeSpec.contains("???") && i < items.count(); i++) {
-							String itemType = identifyExprType(typeMap, items.get(i));
-							if (typeSpec.isEmpty()) {
-								typeSpec = itemType;
-							}
-							else if (!typeSpec.equalsIgnoreCase(itemType)) {
-								typeSpec = "???";
-							}
-						}
-						if (typeSpec.isEmpty()) {
-							typeSpec = "???";
-						}
-						typeSpec += "[" + items.count() + "]";
-					}
-					else {
-						typeSpec = identifyExprType(typeMap, rightSide.concatenate(" "));
-					}
+					typeSpec = getTypeFromAssignedValue(rightSide, typeMap);
+					// Maybe it's a multidimensional array, then reformulate it as "array of [array of ...]"
 					while (!typeSpec.isEmpty() && (pos = leftSide.indexOf("[")) == 1) {
 						typeSpec = "array of " + typeSpec;
 						leftSide.remove(pos, leftSide.indexOf("]")+1);
@@ -693,5 +681,41 @@ public class Instruction extends Element {
 		return varName;
 	}
 	// END KGU#261 2017-01-26
+
+	// START KGU#261 2017-02-20: Enh. #259 Allow CALL elements to override this...
+	/**
+	 * Tries to extract type information from the right side of an assignment.
+	 * @param rightSide - tokens of the assigned expresson
+	 * @param knownTypes - the typeMap as filled so far (won't be changed here)
+	 * @return - A type specification or an empty string (no clue) or "???" (ambiguous)
+	 */
+	protected String getTypeFromAssignedValue(StringList rightSide, HashMap<String, TypeMapEntry> knownTypes)
+	{
+		String typeSpec = "";
+		// Check for array initializer expression
+		if (rightSide.count() >= 2 && rightSide.get(0).equals("{") && rightSide.get(rightSide.count()-1).equals("}")) {
+			StringList items = Element.splitExpressionList(rightSide.concatenate("", 1, rightSide.count()-1), ",");
+			// Try to identify the element type(s)
+			for (int i = 0; !typeSpec.contains("???") && i < items.count(); i++) {
+				String itemType = identifyExprType(knownTypes, items.get(i));
+				if (typeSpec.isEmpty()) {
+					typeSpec = itemType;
+				}
+				else if (!itemType.isEmpty() && !typeSpec.equalsIgnoreCase(itemType)) {
+					typeSpec = "???";
+				}
+			}
+			if (typeSpec.isEmpty()) {
+				typeSpec = "???";
+			}
+			typeSpec += "[" + items.count() + "]";
+		}
+		else {
+			// Try to derive the type from the expression
+			typeSpec = identifyExprType(knownTypes, rightSide.concatenate(" "));
+		}
+		return typeSpec;
+	}
+	// END KGU#261 2017-02-20
 
 }
