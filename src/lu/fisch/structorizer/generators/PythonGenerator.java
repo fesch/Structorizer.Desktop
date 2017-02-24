@@ -61,6 +61,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.12.01      Bugfix #301: More precise check for parenthesis enclosing of log. conditions
  *      Kay Gürtzig             2016.12.27      Enh. #314: Support for Structorizer File API
  *      Kay Gürtzig             2017.02.19      Enh. #348: Parallel sections translated with threading module
+ *      Kay Gürtzig             2017.02.23      Issue #350: getOutputReplacer() and Parallel export revised again
  *
  ******************************************************************************************************
  *
@@ -207,7 +208,10 @@ public class PythonGenerator extends Generator
 		{
 			// START KGU#108 2015-12-22: Bugfix #51, #54: Parenthesis was rather wrong (produced lists)
 			//return "print($1)";
-			return "print $1";
+			// START KGU 2017-02-23: for Python 3.5, parentheses ARE necessary, separator is to be suppressed
+			//return "print $1";
+			return "print($1, sep='')";
+			// END KGU 2017-02-23
 			// END KGU#108 2015-12-22
 		}
 
@@ -649,6 +653,10 @@ public class PythonGenerator extends Generator
 				String threadVar = "thr" + _para.hashCode() + "_" + i;
 				String threadFunc = "thread" + _para.hashCode() + "_" + i;
 				StringList used = root.getUsedVarNames(sq, false, false);
+				StringList asgnd = root.getVarNames(sq, false);
+				for (int v = 0; v < asgnd.count(); v++) {
+					used.removeAll(asgnd.get(v));
+				}
 				String args = used.concatenate(",");
 				if (used.count() == 1) {
 					args += ",";
@@ -682,6 +690,8 @@ public class PythonGenerator extends Generator
 		private void generateParallelThreadFunctions(Root _root, String _indent)
 		{
 			String indentPlusOne = _indent + this.getIndent();
+			int lineBefore = code.count();
+			StringList globals = new StringList();
 			final LinkedList<Parallel> containedParallels = new LinkedList<Parallel>();
 			_root.traverse(new IElementVisitor() {
 				@Override
@@ -716,12 +726,23 @@ public class PythonGenerator extends Generator
 					}
 					addCode("def " + functNameBase + i + "(" + usedVars.concatenate(", ") + "):", _indent, isDisabled);
 					for (int v = 0; v < setVars.count(); v++) {
-						addCode("global " + setVars.get(v), indentPlusOne, isDisabled);
+						String varName = setVars.get(v);
+						globals.addIfNew((isDisabled ? this.commentSymbolLeft() : "") + varName);
+						addCode("global " + varName, indentPlusOne, isDisabled);
 					}
 					generateCode(sq, indentPlusOne);
 					code.add(_indent);
 					i++;
 				}
+			}
+			if (globals.count() > 0) {
+				code.insert(_indent + "", lineBefore);
+				for (int v = 0; v < globals.count(); v++) {
+					String varName = globals.get(v);
+					String end = varName.startsWith(this.commentSymbolLeft()) ? this.commentSymbolRight() : "";
+					code.insert(_indent + varName + " = 0" + end, lineBefore);
+				}
+				code.insert(_indent + this.commentSymbolLeft() + " TODO: Initialize these variables globally referred to by prallel threads in a sensible way!", lineBefore);
 			}
 		}
 		// END KGU#47/KGU#348 2017-02-19
@@ -772,10 +793,19 @@ public class PythonGenerator extends Generator
 				insertComment(_root, _indent);
 				code.add(_indent + "def " + _procName +"(" + _paramNames.getText().replace("\n", ", ") +") :");
 			}
-			// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
-			generateParallelThreadFunctions(_root, _indent + (_root.isProgram ? "" : this.getIndent()));
-			// END KGU#348 2017-02-19
 			return indent;
+		}
+
+		/* (non-Javadoc)
+		 * @see lu.fisch.structorizer.generators.Generator#generatePreamble(lu.fisch.structorizer.elements.Root, java.lang.String, lu.fisch.utils.StringList)
+		 */
+		@Override
+		protected String generatePreamble(Root _root, String _indent, StringList _varNames)
+		{
+			// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
+			generateParallelThreadFunctions(_root, _indent);
+			// END KGU#348 2017-02-19
+			return _indent;
 		}
 
 		/* (non-Javadoc)
