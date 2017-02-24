@@ -36,6 +36,7 @@ Current development version: 3.26-04 (2017.02.24)
 - 04: #348 Python export now translates Parallel sections, using threading module <2>
 - 04: #348 C++ export now translates Parallel sections, using class std::thread <2>
 - 04: #348 C# export now translates Parallel sections, using System.Threading <2>
+- 04: #348 Java export now translates Parallel sections, using interface Callable <2>
 - 04: Bugfix #349: Generators hadn't coped with involved recursive subroutines <2>
 - 04: Enh. #259/#335: Type info retrieval for code export enabled across CALLs <2>
 - 04: Issue #350: OUTPUT instruction translation to Python was obsolete <2>
