@@ -53,11 +53,32 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.01.04      Bugfix #322: input and output code generation fixed 
  *      Kay Gürtzig             2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
  *      Kay Gürtzig             2017.01.31      Enh. #113: Array parameter transformation
+ *      Kay Gürtzig             2017.02.24      Enh. #348: Parallel sections translated with System.Threading
  *
  ******************************************************************************************************
  *
  *      Comment:
  *      
+ *      2017-02-24 - Issue #348
+ *      - The generator now translates Parallel sections in two phases:
+ *        1. For each of the branches of a Parallel element a Worker class is generated, named Worker<id>_<i>
+ *           where <id> is the hash code of the Parallel element and <i> is current branch number.
+ *           The Worker class has all variables assigned to in the branch as public members and all variables
+ *           merely used in the branch (without being assigned) as private members.
+ *           The constructor initializes all private members via respective arguments. The public members are
+ *           not automatically initialized.
+ *           Method DoWork is the thread start method and obtains no argument. It contains the translated
+ *           algorithm of the Parallel branch.
+ *           The generated worker classes are placed within the program class before the Main method (if the top-level
+ *           routine is a program).
+ *        2. The Parallel element itself is setup as follows. Every branch is represented by:
+ *           a) The declaration of a worker class instance;
+ *           b) the declaration of a thread instance with the DoWork method as thread start delegate;
+ *           c) the call of the Start() method of the thread.
+ *           The Parallel element is terminated as follows:
+ *           d) for every thrad the Join() method is called to wait for the termination of all threads.
+ *           e) for every thread, all public members are assigned to the local variables of the same name. 
+ *           
  *      2015-11-30 - Bugfix / enhancement #22 (KGU#47) <Kay Gürtzig>
  *      - The generator now checks in advance mechanisms of value return and premature exits in order
  *        to generate appropriate instructions
@@ -93,6 +114,8 @@ package lu.fisch.structorizer.generators;
 
 import lu.fisch.utils.*;
 
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.regex.Matcher;
 
 import lu.fisch.structorizer.elements.*;
@@ -140,8 +163,11 @@ public class CSharpGenerator extends CGenerator
 		return reservedWords;
 	}
 	// END KGU 2016-08-12
-
-	// TODO
+	
+	// START KGU#348 2017-02-24: Enh. #348: Support for Parallel section translation
+	private int subClassInsertionLine = 0;
+	// END KGU#348 2017-02-24
+	
 	/************ Code Generation **************/
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
@@ -360,6 +386,157 @@ public class CSharpGenerator extends CGenerator
 	}
 	// END KGU#61 2016-03-22
 
+	// START KGU#47/KGU#348 2017-02-24: Enh. #348 - Offer a C# solution with class Thread
+	@Override
+	protected void generateCode(Parallel _para, String _indent)
+	{
+
+		boolean isDisabled = _para.isDisabled();
+		Root root = Element.getRoot(_para);
+		String indentPlusOne = _indent + this.getIndent();
+
+		insertComment(_para, _indent);
+
+		addCode("", "", isDisabled);
+		insertComment("Parallel section", _indent);
+		addCode("{", _indent, isDisabled);
+		
+		StringList[] asgndVars = new StringList[_para.qs.size()];
+
+		for (int i = 0; i < _para.qs.size(); i++) {
+			Subqueue sq = _para.qs.get(i);
+			String threadVar = "thr" + _para.hashCode() + "_" + i;
+			String worker = "Worker" + _para.hashCode() + "_" + i;
+			String workerInst = worker.toLowerCase();
+			StringList usedVars = root.getUsedVarNames(sq, false, false).reverse();
+			asgndVars[i] = root.getVarNames(sq, false, false).reverse();
+			for (int v = 0; v < asgndVars[i].count(); v++) {
+				usedVars.removeAll(asgndVars[i].get(v));
+			}
+			
+			String args = "(" + usedVars.concatenate(", ").trim() + ")";
+			addCode(worker  + " " + workerInst + " = new " + worker + args + ";", indentPlusOne, isDisabled);
+			addCode("Thread " + threadVar + " = new Thread(" + workerInst + ".DoWork" + ");", indentPlusOne, isDisabled);
+			addCode(threadVar + ".Start();", indentPlusOne, isDisabled);
+			addCode("", _indent, isDisabled);
+		}
+
+		for (int i = 0; i < _para.qs.size(); i++) {
+			String threadVar = "thr" + _para.hashCode() + "_" + i;
+			addCode(threadVar + ".Join();", indentPlusOne, isDisabled);
+		}
+		
+		for (int i = 0; i < _para.qs.size(); i++) {
+			for (int j = 0; j < asgndVars[i].count(); j++) {
+				String workerInst = "worker" + _para.hashCode() + "_" + i;
+				String varName = asgndVars[i].get(j);
+				addCode(varName + " = " + workerInst + "." + varName + ";", indentPlusOne, isDisabled);
+			}
+		}
+
+		addCode("}", _indent, isDisabled);
+		addCode("", "", isDisabled);
+	}
+
+	// Inserts class definitions for workers to be used by the threads to this.subClassDefinitions
+	private StringList generateParallelThreadWorkers(Root _root, String _indent)
+	{
+		StringList codeBefore = this.code;
+		StringList workerDefinitions = new StringList();
+		this.code = workerDefinitions;
+		try {
+			String indentPlusOne = _indent + this.getIndent();
+			String indentPlusTwo = indentPlusOne + this.getIndent();
+			final LinkedList<Parallel> containedParallels = new LinkedList<Parallel>();
+			_root.traverse(new IElementVisitor() {
+				@Override
+				public boolean visitPreOrder(Element _ele) {
+					return true;
+				}
+				@Override
+				public boolean visitPostOrder(Element _ele) {
+					if (_ele instanceof Parallel) {
+						containedParallels.addLast((Parallel)_ele);
+					}
+					return true;
+				}
+			});
+			for (Parallel par: containedParallels) {
+				boolean isDisabled = par.isDisabled();
+				String workerNameBase = "Worker" + par.hashCode() + "_";
+				Root root = Element.getRoot(par);
+				HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
+				int i = 0;
+				// We still don't care for synchronisation, mutual exclusion etc.
+				for (Subqueue sq: par.qs) {
+					String worker = workerNameBase + i;
+					// Variables assigned here will be made public members
+					StringList setVars = root.getVarNames(sq, false).reverse();
+					// Variables used here (without being assigned) will be made private members and constructor arguments
+					StringList usedVars = root.getUsedVarNames(sq, false, false).reverse();
+					for (int v = 0; v < setVars.count(); v++) {
+						String varName = setVars.get(v);
+						usedVars.removeAll(varName);
+					}
+					addCode("class " + worker + "{", _indent, isDisabled);
+					if (setVars.count() > 0 || usedVars.count() > 0) {
+						insertComment("TODO: Check and accomplish the member declarations here", indentPlusOne);
+					}
+					if (setVars.count() > 0) {
+						insertComment("TODO: Maybe you must care for an initialization of the public members, too", indentPlusOne);
+					}
+					StringList argList = this.makeArgList(setVars, typeMap);
+					for (int j = 0; j < argList.count(); j++) {
+						addCode("public " + argList.get(j) + ";", indentPlusOne, isDisabled);
+					}
+					argList = this.makeArgList(usedVars, typeMap);
+					for (int j = 0; j < argList.count(); j++) {
+						addCode("private " + argList.get(j) + ";", indentPlusOne, isDisabled);
+					}
+					// Constructor
+					addCode("public " + worker + "(" + argList.concatenate(", ") + ")", indentPlusOne, isDisabled);
+					addCode("{", indentPlusOne, isDisabled);
+					for (int j = 0; j < usedVars.count(); j++) {
+						String memberName = usedVars.get(j);
+						addCode("this." + memberName + " = " + memberName + ";", indentPlusTwo, isDisabled);
+					}
+					addCode("}", indentPlusOne, isDisabled);
+					// Work method
+					addCode("public void DoWork()", indentPlusOne, isDisabled);
+					addCode("{", indentPlusOne, isDisabled);
+					generateCode(sq, indentPlusTwo);
+					addCode("}", indentPlusOne, isDisabled);
+					addCode("};", _indent, isDisabled);
+					code.add(_indent);
+					i++;
+				}
+			}
+		}
+		finally {
+			this.code = codeBefore;
+		}
+		return workerDefinitions;
+	}
+	
+	private StringList makeArgList(StringList varNames, HashMap<String, TypeMapEntry> typeMap)
+	{
+		StringList argList = new StringList();
+		for (int v = 0; v < varNames.count(); v++) {
+			String varName = varNames.get(v);
+			TypeMapEntry typeEntry = typeMap.get(varName);
+			String typeSpec = "/*type?*/";
+			if (typeEntry != null) {
+				StringList typeSpecs = this.getTransformedTypes(typeEntry);
+				if (typeSpecs.count() == 1) {
+					typeSpec = typeSpecs.get(0);
+				}
+			}
+			argList.add(typeSpec + " " + varName);
+		}
+		return argList;
+	}
+	// END KGU#47/KGU#348 2017-02-24
+
 	/**
 	 * Composes the heading for the program or function according to the
 	 * C language specification.
@@ -391,6 +568,11 @@ public class CSharpGenerator extends CGenerator
 		
 		if (_root.isProgram==true) {
 			code.add(_indent + "using System;");
+			// START KGU#348 2017-02-24: Enh. #348
+			if (this.hasParallels) {
+				code.add(_indent + "using System.Threading;");
+			}
+			// END KGU#348 2017-02-24
 			code.add(_indent + "");
 			// START KGU 2015-10-18
 			insertBlockComment(_root.getComment(), _indent, "/**", " * ", " */");
@@ -398,6 +580,9 @@ public class CSharpGenerator extends CGenerator
 
 			insertBlockHeading(_root, "public class "+ _procName, _indent);
 			code.add(_indent);
+			// START KGU#348 2017-02-24: Enh.#348
+			this.subClassInsertionLine = code.count();
+			// END KGU#348 2017-02-24
 			// START KGU#311 2017-01-05: Enh. #314 File API
 			if (this.usesFileAPI) {
 				this.insertFileAPI("cs", code.count(), _indent, 0);
@@ -420,6 +605,11 @@ public class CSharpGenerator extends CGenerator
 				code.add(_indent+this.getIndent());
 			}
 			// END KU#311 2017-01-05
+			// START KGU#348 2017-02-24: Enh.#348
+			if (this.topLevel) {
+				this.subClassInsertionLine = code.count();
+			}
+			// END KGU#348 2017-02-24
 			insertBlockComment(_root.getComment(), _indent+this.getIndent(), "/**", " * ", null);
 			if (_resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
 			{
@@ -453,10 +643,19 @@ public class CSharpGenerator extends CGenerator
 			insertBlockHeading(_root, fnHeader, _indent+this.getIndent());
 		}
 
+		// START KGU#348 2017-02-24: Enh. #348 - Actual translation of Parallel sections
+		StringList workers = this.generateParallelThreadWorkers(_root, _indent + this.getIndent());
+		boolean moveSubroutineInsertions = this.subroutineInsertionLine > this.subClassInsertionLine;
+		for (int i = 0; i < workers.count(); i++) {
+			this.code.insert(workers.get(i), this.subClassInsertionLine++);
+			if (moveSubroutineInsertions) this.subroutineInsertionLine++;
+		}
+		// END KGU#348 2017-02-24
+		
 		return _indent + this.getIndent() + this.getIndent();
 	}
 
-// START KGU#332 2017-01-30: Method decomposed - no need to override it anymore
+	// START KGU#332 2017-01-30: Method decomposed - no need to override it anymore
 //	/**
 //	 * Generates some preamble (i.e. comments, language declaration section etc.)
 //	 * and adds it to this.code.

@@ -472,34 +472,18 @@ public class CPlusPlusGenerator extends CGenerator {
         }
 		
 		code.add("{");
-		// START KGU#348 2017-02-21: Enh. #348 - Actual translation of Parallel sections
-		this.generateParallelThreadFunctions(_root, _indent + this.getIndent());
-		// END KGU#348 2017-02-21
-		
 		return _indent + this.getIndent();
 	}
 
 // START KGU#332 2017-01-30: Method decomposed - no need to override it anymore
-//	/**
-//	 * Generates some preamble (i.e. comments, language declaration section etc.)
-//	 * and adds it to this.code.
-//	 * @param _root - the diagram root element
-//	 * @param _indent - the current indentation string
-//	 * @param varNames - list of variable names introduced inside the body
-//	 */
-//	@Override
-//	protected String generatePreamble(Root _root, String _indent, StringList varNames)
-//	{
-//		code.add(_indent);
-//		insertComment("TODO: declare your variables here:", _indent);
-//        // START KGU 2015-11-30: List the variables to be declared
-//		for (int v = 0; v < varNames.count(); v++) {
-//			insertComment(varNames.get(v), _indent);
-//		}
-//		// END KGU 2015-11-30
-//		code.add(_indent);
-//		return _indent;
-//	}
+	@Override
+	protected String generatePreamble(Root _root, String _indent, StringList varNames)
+	{
+		// START KGU#348 2017-02-21: Enh. #348 - Actual translation of Parallel sections
+		this.generateParallelThreadFunctions(_root, _indent);
+		// END KGU#348 2017-02-21
+		return super.generatePreamble(_root, _indent, varNames);
+	}
 	
 	@Override
 	protected void generateIOComment(Root _root, String _indent)
