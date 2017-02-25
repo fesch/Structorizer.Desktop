@@ -398,7 +398,9 @@ public class CSharpGenerator extends CGenerator
 		insertComment(_para, _indent);
 
 		addCode("", "", isDisabled);
-		insertComment("Parallel section", _indent);
+		insertComment("==========================================================", _indent);
+		insertComment("================= START PARALLEL SECTION =================", _indent);
+		insertComment("==========================================================", _indent);
 		addCode("{", _indent, isDisabled);
 		
 		StringList[] asgndVars = new StringList[_para.qs.size()];
@@ -435,6 +437,9 @@ public class CSharpGenerator extends CGenerator
 		}
 
 		addCode("}", _indent, isDisabled);
+		insertComment("==========================================================", _indent);
+		insertComment("================== END PARALLEL SECTION ==================", _indent);
+		insertComment("==========================================================", _indent);
 		addCode("", "", isDisabled);
 	}
 
@@ -461,6 +466,7 @@ public class CSharpGenerator extends CGenerator
 					return true;
 				}
 			});
+			insertComment("=========== START PARALLEL WORKER DEFINITIONS ============", _indent);
 			for (Parallel par: containedParallels) {
 				boolean isDisabled = par.isDisabled();
 				String workerNameBase = "Worker" + par.hashCode() + "_";
@@ -477,6 +483,9 @@ public class CSharpGenerator extends CGenerator
 					for (int v = 0; v < setVars.count(); v++) {
 						String varName = setVars.get(v);
 						usedVars.removeAll(varName);
+					}
+					if (i > 0) {
+						code.add(_indent);
 					}
 					addCode("class " + worker + "{", _indent, isDisabled);
 					if (setVars.count() > 0 || usedVars.count() > 0) {
@@ -507,10 +516,11 @@ public class CSharpGenerator extends CGenerator
 					generateCode(sq, indentPlusTwo);
 					addCode("}", indentPlusOne, isDisabled);
 					addCode("};", _indent, isDisabled);
-					code.add(_indent);
 					i++;
 				}
 			}
+			insertComment("============ END PARALLEL WORKER DEFINITIONS =============", _indent);
+			code.add(_indent);
 		}
 		finally {
 			this.code = codeBefore;
@@ -688,7 +698,14 @@ public class CSharpGenerator extends CGenerator
 	@Override
 	protected void generateIOComment(Root _root, String _indent)
 	{
-		// Don't write anything
+		// START KGU#236 2016-12-22: Issue #227
+		if (this.hasInput(_root)) {
+			code.add(_indent);
+			insertComment("TODO: You may have to modify input instructions,", _indent);			
+			insertComment("      possibly by enclosing Console.ReadLine() calls with Parse methods", _indent);
+			insertComment("      according to the variable type, e.g. \"i = int.Parse(Console.ReadLine());\".", _indent);			
+		}
+		// END KGU#236 2016-12-22
 	}
 // END KGU#332 2017-01-30
 

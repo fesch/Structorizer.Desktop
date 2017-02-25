@@ -492,11 +492,15 @@ public class JavaGenerator extends CGenerator
 		insertComment(_para, _indent);
 
 		addCode("", "", isDisabled);
-		insertComment("Parallel section", _indent);
+		insertComment("==========================================================", _indent);
+		insertComment("================= START PARALLEL SECTION =================", _indent);
+		insertComment("==========================================================", _indent);
 		addCode("try {", _indent, isDisabled);
 		addCode("ExecutorService pool = Executors.newFixedThreadPool(" + nThreads + ");", indentPlusOne, isDisabled);
 
 		for (int i = 0; i < nThreads; i++) {
+			addCode("", _indent, isDisabled);
+			insertComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
 			Subqueue sq = _para.qs.get(i);
 			String future = "future" + _para.hashCode() + "_" + i;
 			String worker = "Worker" + _para.hashCode() + "_" + i;
@@ -507,12 +511,13 @@ public class JavaGenerator extends CGenerator
 			}
 			String args = "(" + used.concatenate(", ").trim() + ")";
 			addCode("Future<Object[]> " + future + " = pool.submit( new " + worker + args + " );", indentPlusOne, isDisabled);
-			addCode("", _indent, isDisabled);
 		}
 
+		addCode("", _indent, isDisabled);
 		addCode("Object[] results;", indentPlusOne, isDisabled);
 		HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
 		for (int i = 0; i < nThreads; i++) {
+			insertComment("----------------- AWAIT THREAD " + i + " -----------------", indentPlusOne);
 			String future = "future" + _para.hashCode() + "_" + i;
 			addCode("results = " + future + ".get();", indentPlusOne, isDisabled);
 			for (int v = 0; v < asgnd[i].count(); v++) {
@@ -533,6 +538,9 @@ public class JavaGenerator extends CGenerator
 		addCode("pool.shutdown();", indentPlusOne, isDisabled);
 		addCode("}", _indent, isDisabled);
 		addCode("catch (Exception ex) { System.err.println(ex.getMessage()); ex.printStackTrace(); }", _indent, isDisabled);
+		insertComment("==========================================================", _indent);
+		insertComment("================== END PARALLEL SECTION ==================", _indent);
+		insertComment("==========================================================", _indent);
 		addCode("", "", isDisabled);
 	}
 
@@ -555,6 +563,7 @@ public class JavaGenerator extends CGenerator
 				return true;
 			}
 		});
+		insertComment("=========== START PARALLEL WORKER DEFINITIONS ============", _indent);
 		for (Parallel par: containedParallels) {
 			boolean isDisabled = par.isDisabled();
 			String workerNameBase = "Worker" + par.hashCode() + "_";
@@ -570,6 +579,9 @@ public class JavaGenerator extends CGenerator
 				for (int v = 0; v < setVars.count(); v++) {
 					String varName = setVars.get(v);
 					usedVars.removeAll(varName);
+				}
+				if (i > 0) {
+					code.add(_indent);
 				}
 				addCode("class " + workerNameBase + i + " implements Callable<Object[]> {", _indent, isDisabled);
 				// Member variables (all references!)
@@ -595,10 +607,11 @@ public class JavaGenerator extends CGenerator
 				addCode("return results;", indentPlusTwo, isDisabled);
 				addCode("}", indentPlusOne, isDisabled);
 				addCode("};", _indent, isDisabled);
-				code.add(_indent);
 				i++;
 			}
 		}
+		insertComment("============ END PARALLEL WORKER DEFINITIONS =============", _indent);
+		code.add(_indent);		
 	}
 	
 	private StringList makeArgList(StringList varNames, HashMap<String, TypeMapEntry> typeMap)
@@ -741,10 +754,10 @@ public class JavaGenerator extends CGenerator
 	{
 		// START KGU#236 2016-12-22: Issue #227
 		if (this.hasInput(_root)) {
+			code.add(_indent);
 			insertComment("TODO: You may have to modify input instructions,", _indent);			
 			insertComment("      e.g. by replacing nextLine() with a more suitable call", _indent);
 			insertComment("      according to the variable type, say nextInt().", _indent);			
-			code.add(_indent);
 		}
 		// END KGU#236 2016-12-22
 	}

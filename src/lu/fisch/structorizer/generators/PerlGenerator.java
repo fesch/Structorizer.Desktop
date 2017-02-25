@@ -26,8 +26,7 @@
 
 package lu.fisch.structorizer.generators;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Jan Peter Klippel
  *
@@ -37,45 +36,44 @@ package lu.fisch.structorizer.generators;
  *
  *      Revision List
  *
- *      Author          Date            Description
- *      ------          ----            -----------
- *      Jan Peter Klippel 2008.04.11    First Issue
- *      Bob Fisch       2008.04.12		Added "Fields" section for generator to be used as plugin
- *      Bob Fisch       2009.01.18		Corrected the FOR-loop
- *      Bob Fisch       2011.11.07      Fixed an issue while doing replacements
- *      Kay Gürtzig     2014.12.02      Additional replacement of operator "<--" by "<-"
- *      Kay Gürtzig     2015.10.18      Indentation and comment insertion revised
- *      Kay Gürtzig     2015.11.02      Reorganisation of the transformation, input/output corrected
- *      Kay Gürtzig     2015.11.02      Variable detection and renaming introduced (KGU#62)
+ *      Author              Date        Description
+ *      ------              ----        -----------
+ *      Jan Peter Klippel   2008.04.11  First Issue
+ *      Bob Fisch           2008.04.12  Added "Fields" section for generator to be used as plugin
+ *      Bob Fisch           2009.01.18  Corrected the FOR-loop
+ *      Bob Fisch           2011.11.07  Fixed an issue while doing replacements
+ *      Kay Gürtzig         2014.12.02  Additional replacement of operator "<--" by "<-"
+ *      Kay Gürtzig         2015.10.18  Indentation and comment insertion revised
+ *      Kay Gürtzig         2015.11.02  Reorganisation of the transformation, input/output corrected
+ *      Kay Gürtzig         2015.11.02  Variable detection and renaming introduced (KGU#62)
  *                                      Code generation for Case elements (KGU#15) and For
  *                                      loops (KGU#3) revised
- *      Kay Gürtzig     2015.12.12      Bugfix #57 (KGU#103) endless loops / flaws on variable prefixing
- *      Kay Gürtzig     2015.12.17      Enh. #23 (KGU#78) jump generation revised; Root generation
+ *      Kay Gürtzig         2015.12.12  Bugfix #57 (KGU#103) endless loops / flaws on variable prefixing
+ *      Kay Gürtzig         2015.12.17  Enh. #23 (KGU#78) jump generation revised; Root generation
  *                                      decomposed according to Generator.generateCode(Root, String);
  *                                      Enh. KGU#47: Dummy implementation for Parallel element
  *                                      Fixes in FOR and REPEAT export
- *      Kay Gürtzig     2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
- *      Kay Gürtzig     2015.12.21      Bugfix #51 (= KGU#108) Didn't cope with empty input / output
- *      Kay Gürtzig     2016.03.22      Enh. #84 (= KGU#61) varNames now inherited, FOR-IN loop support
- *      Kay Gürtzig     2016.03.23      Enh. #84: Support for FOREACH loops (KGU#61)
- *      Kay Gürtzig     2016-04-01      Enh. #144: Care for the new export option suppressing content conversion
- *      Kay Gürtzig     2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
- *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done. 
- *      Kay Gürtzig     2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
- *      Kay Gürtzig     2016.10.15      Enh. #271: Support for input instructions with prompt
- *      Kay Gürtzig     2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
- *      Kay Gürtzig     2016.12.01      Bugfix #301: More precise check for parenthesis enclosing of log. conditions
- *      Kay Gürtzig     2016.12.30      Bugfix KGU#62: Result variable hadn't been prefixed in return instruction
- *      Kay Gürtzig     2017.01.04      Enh. #314: Approach to translate the File API
+ *      Kay Gürtzig         2015.12.21  Bugfix #41/#68/#69 (= KGU#93)
+ *      Kay Gürtzig         2015.12.21  Bugfix #51 (= KGU#108) Didn't cope with empty input / output
+ *      Kay Gürtzig         2016.03.22  Enh. #84 (= KGU#61) varNames now inherited, FOR-IN loop support
+ *      Kay Gürtzig         2016.03.23  Enh. #84: Support for FOREACH loops (KGU#61)
+ *      Kay Gürtzig         2016-04-01  Enh. #144: Care for the new export option suppressing content conversion
+ *      Kay Gürtzig         2016-07-20  Enh. #160: Option to involve subroutines implemented (=KGU#178) 
+ *      Kay Gürtzig         2016.08.12  Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig         2016.09.25  Enh. #253: D7Parser.keywordMap refactoring done. 
+ *      Kay Gürtzig         2016.10.14  Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig         2016.10.15  Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig         2016.10.16  Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig         2016.12.01  Bugfix #301: More precise check for parenthesis enclosing of log. conditions
+ *      Kay Gürtzig         2016.12.30  Bugfix KGU#62: Result variable hadn't been prefixed in return instruction
+ *      Kay Gürtzig         2017.01.04  Enh. #314: Approach to translate the File API
+ *      Kay Gürtzig         2017.02.25  Enh. #348: Parallel sections translated with threading module
  *
  ******************************************************************************************************
  *
  *      Comment:		LGPL license (http://www.gnu.org/licenses/lgpl.html).
  *
- ******************************************************************************************************
- */
-
+ ******************************************************************************************************///
 
 import java.util.regex.Matcher;
 
@@ -785,7 +783,12 @@ public class PerlGenerator extends Generator {
 	protected void generateCode(Parallel _para, String _indent)
 	{
 		boolean isDisabled = _para.isDisabled();
-		
+		Root root = Element.getRoot(_para);
+		int nThreads = _para.qs.size();
+		StringList[] asgndVars = new StringList[nThreads];
+		String indentPlusOne = _indent + this.getIndent();
+		String indentPlusTwo = indentPlusOne + this.getIndent();
+				
 		// START KGU 2014-11-16
 		insertComment(_para, _indent);
 		// END KGU 2014-11-16
@@ -794,16 +797,48 @@ public class PerlGenerator extends Generator {
 		insertComment("==========================================================", _indent);
 		insertComment("================= START PARALLEL SECTION =================", _indent);
 		insertComment("==========================================================", _indent);
-		insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
+		insertComment("Requires at least Perl 5.8 and version threads 2.07", _indent);
 		addCode("{", _indent, isDisabled);
 
 		for (int i = 0; i < _para.qs.size(); i++) {
 			addCode("", "", isDisabled);
-			insertComment("----------------- START THREAD " + i + " -----------------", _indent + this.getIndent());
-			addCode("{", _indent + this.getIndent(), isDisabled);
-			generateCode((Subqueue) _para.qs.get(i), _indent + this.getIndent() + this.getIndent());
-			addCode("}", _indent + this.getIndent(), isDisabled);
-			insertComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
+			insertComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
+			asgndVars[i] = root.getVarNames(_para.qs.get(i), false).reverse();
+			StringList usedVars = root.getUsedVarNames(_para.qs.get(i), false, false).reverse();
+			for (int v = 0; v < asgndVars[i].count(); v++) {
+				usedVars.removeAll(asgndVars[i].get(v));
+			}
+			addCode("my $thr" + _para.hashCode() + "_" + i + " = threads->create(sub {", indentPlusOne, isDisabled);
+			for (int v = 0; v < usedVars.count(); v++) {
+				addCode("my $" + usedVars.get(v) + " = $_[" + v + "];", indentPlusTwo, isDisabled);				
+			}
+			generateCode((Subqueue) _para.qs.get(i), indentPlusTwo);
+			if (asgndVars[i].count() > 0) {
+				addCode("return ($" + asgndVars[i].concatenate(", $") + ");", indentPlusTwo, isDisabled);
+			}
+			String argList = usedVars.concatenate(", $").trim();
+			if (!argList.isEmpty()) {
+				argList = ", ($" + argList + ")";
+			}
+			addCode("}" + argList + ");", indentPlusOne, isDisabled);
+			addCode("", "", isDisabled);
+		}
+
+		boolean hadResults = false;
+		for (int i = 0; i < _para.qs.size(); i++) {
+			addCode("", "", isDisabled);
+			insertComment("----------------- AWAIT THREAD " + i + " -----------------", indentPlusOne);
+			String resultVar = (asgndVars[i].count() > 0) ? "@results = " : "";
+			if (!resultVar.isEmpty()) {
+				if (!hadResults) {
+					resultVar = "my " + resultVar;
+					hadResults = true;
+				}
+			}
+			addCode(resultVar + "$thr" + _para.hashCode() + "_" + i + ".join();", indentPlusOne, isDisabled);
+			for (int v = 0; v < asgndVars[i].count(); v++) {
+				addCode("$" + asgndVars[i].get(v) + " = $results[" + v + "];", indentPlusOne, isDisabled);
+			}
 			addCode("", "", isDisabled);
 		}
 
@@ -833,8 +868,19 @@ public class PerlGenerator extends Generator {
 			code.add(_indent + "#!/usr/bin/perl");
 			insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
 			insertComment("", _indent);
+			if (_root.isProgram) {
+				code.add("");
+				code.add(_indent + "use strict;");
+				code.add(_indent + "use warnings;");
+			}
+			// START KGU#348 2017-02-25: Enh. #348: Support for Parallel elements
+			if (this.hasParallels) {
+				code.add(_indent + "use threads;");
+				code.add(_indent + "use threads::shared;");
+			}
+			// END KGU#348 2017-02-25
 			// START KGU#311 2017-01-04: Enh. #314 Desperate approach to sell the File API...
-			if (this.usesFileAPI && this.topLevel) {
+			if (this.usesFileAPI) {
 				code.add(_indent);
 				this.insertComment("TODO: This algorithm made use of the Structorizer File API,", _indent);
 				this.insertComment("      which cannot not be translated completely.", _indent);
@@ -858,10 +904,6 @@ public class PerlGenerator extends Generator {
 			for (int p = 0; p < _paramNames.count(); p++) {
 				code.add(indent + "my $" + _paramNames.get(p).trim() + " = $_[" + p + "];");
 			}
-		} else {
-			code.add("");
-			code.add(_indent + "use strict;");
-			code.add(_indent + "use warnings;");
 		}
 	
 		code.add("");

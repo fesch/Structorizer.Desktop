@@ -32,13 +32,7 @@ package lu.fisch.structorizer.generators;
  *
  *      Author                  Date            Description
  *      ------					----			-----------
- *      Bob Fisch               2008.11.17      First Issue
- *      Gunter Schillebeeckx    2009.08.10      Java Generator starting from C Generator
- *      Bob Fisch               2009.08.10      Update I/O
- *      Bob Fisch               2009.08.17      Bugfixes (see comment)
- *      Kay Gürtzig             2010.09.10      Bugfixes and cosmetics (see comment)
- *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
- *      Daniel Spittank         2014.02.01      Python Generator starting from Java Generator
+ *      Daniel Spittank         2014.02.01      Starting from Java Generator
  *      Kay Gürtzig             2014.11.16      Conversion of C-like logical operators and arcus functions (see comment)
  *      Kay Gürtzig             2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
  *      Kay Gürtzig             2015.10.18      Indentation and comment mechanisms revised, bugfix
@@ -639,9 +633,9 @@ public class PythonGenerator extends Generator
 			insertComment(_para, _indent);
 
 			addCode("", _indent, isDisabled);
-			//insertComment("==========================================================", _indent);
-			//insertComment("================= START PARALLEL SECTION =================", _indent);
-			//insertComment("==========================================================", _indent);
+			insertComment("==========================================================", _indent);
+			insertComment("================= START PARALLEL SECTION =================", _indent);
+			insertComment("==========================================================", _indent);
 			//insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
 			//addCode("", indentPlusOne, isDisabled);
 
@@ -679,9 +673,9 @@ public class PythonGenerator extends Generator
 				String threadVar = "thr" + _para.hashCode() + "_" + i;
 				addCode(threadVar + ".join()", _indent, isDisabled);
 			}
-			//insertComment("==========================================================", _indent);
-			//insertComment("================== END PARALLEL SECTION ==================", _indent);
-			//insertComment("==========================================================", _indent);
+			insertComment("==========================================================", _indent);
+			insertComment("================== END PARALLEL SECTION ==================", _indent);
+			insertComment("==========================================================", _indent);
 			addCode("", _indent, isDisabled);
 		}
 		// END KGU#47 2015-12-17
