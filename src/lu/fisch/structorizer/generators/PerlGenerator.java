@@ -325,6 +325,7 @@ public class PerlGenerator extends Generator {
 
 	protected void generateCode(Instruction _inst, String _indent) {
 
+		// FIXME: Access to arrays passed in as arguments must be dereferenced, i.e. "$$para[$i]"
 		if (!insertAsComment(_inst, _indent))
 		{
 			boolean isDisabled = _inst.isDisabled();
@@ -431,6 +432,7 @@ public class PerlGenerator extends Generator {
 	
 	protected void generateCode(Alternative _alt, String _indent) {
 		
+		// FIXME: Access to arrays passed in as arguments must be dereferenced, i.e. "$$para[$i]"
 		boolean isDisabled = _alt.isDisabled();
 		
 		addCode("", "", isDisabled);
@@ -479,6 +481,7 @@ public class PerlGenerator extends Generator {
 	
 	protected void generateCode(Case _case, String _indent) {
 		
+		// FIXME: Access to arrays passed in as arguments must be dereferenced, i.e. "$$para[$i]"
 		boolean isDisabled = _case.isDisabled();
 		
 		addCode("", "", isDisabled);
@@ -607,6 +610,7 @@ public class PerlGenerator extends Generator {
 	
 	protected void generateCode(While _while, String _indent) {
 		
+		// FIXME: Access to arrays passed in as arguments must be dereferenced, i.e. "$$para[$i]"
 		boolean isDisabled = _while.isDisabled();
 		
 		addCode("", "", isDisabled);
@@ -642,6 +646,7 @@ public class PerlGenerator extends Generator {
 	
 	protected void generateCode(Repeat _repeat, String _indent) {
 		
+		// FIXME: Access to arrays passed in as arguments must be dereferenced, i.e. "$$para[$i]"
 		boolean isDisabled = _repeat.isDisabled();
 		
 		addCode("", "", isDisabled);
@@ -703,6 +708,7 @@ public class PerlGenerator extends Generator {
 
 			for (int i=0; i<_call.getText().count(); i++)
 			{
+				// FIXME: Arrays must be passed as reference, i.e. "\@arr" or "\@$para"
 				addCode(transform(_call.getText().get(i)) + ";", _indent, isDisabled);
 			}
 		}
@@ -804,16 +810,22 @@ public class PerlGenerator extends Generator {
 			addCode("", "", isDisabled);
 			insertComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
 			asgndVars[i] = root.getVarNames(_para.qs.get(i), false).reverse();
+			boolean hasResults = asgndVars[i].count() > 0;
 			StringList usedVars = root.getUsedVarNames(_para.qs.get(i), false, false).reverse();
 			for (int v = 0; v < asgndVars[i].count(); v++) {
 				usedVars.removeAll(asgndVars[i].get(v));
 			}
-			addCode("my $thr" + _para.hashCode() + "_" + i + " = threads->create(sub {", indentPlusOne, isDisabled);
+			String threadVar = "$thr" + _para.hashCode() + "_" + i;
+			if (hasResults) {
+				// Define the thread in list context such that we may obtain more results
+				threadVar = "(" + threadVar + ")";
+			}
+			addCode("my " + threadVar + " = threads->create(sub {", indentPlusOne, isDisabled);
 			for (int v = 0; v < usedVars.count(); v++) {
 				addCode("my $" + usedVars.get(v) + " = $_[" + v + "];", indentPlusTwo, isDisabled);				
 			}
 			generateCode((Subqueue) _para.qs.get(i), indentPlusTwo);
-			if (asgndVars[i].count() > 0) {
+			if (hasResults) {
 				addCode("return ($" + asgndVars[i].concatenate(", $") + ");", indentPlusTwo, isDisabled);
 			}
 			String argList = usedVars.concatenate(", $").trim();
@@ -824,21 +836,14 @@ public class PerlGenerator extends Generator {
 			addCode("", "", isDisabled);
 		}
 
-		boolean hadResults = false;
 		for (int i = 0; i < _para.qs.size(); i++) {
 			addCode("", "", isDisabled);
 			insertComment("----------------- AWAIT THREAD " + i + " -----------------", indentPlusOne);
-			String resultVar = (asgndVars[i].count() > 0) ? "@results = " : "";
-			if (!resultVar.isEmpty()) {
-				if (!hadResults) {
-					resultVar = "my " + resultVar;
-					hadResults = true;
-				}
+			String resultVars = asgndVars[i].concatenate(", $").trim();
+			if (!resultVars.isEmpty()) {
+				resultVars = "($" + resultVars + ") = ";
 			}
-			addCode(resultVar + "$thr" + _para.hashCode() + "_" + i + ".join();", indentPlusOne, isDisabled);
-			for (int v = 0; v < asgndVars[i].count(); v++) {
-				addCode("$" + asgndVars[i].get(v) + " = $results[" + v + "];", indentPlusOne, isDisabled);
-			}
+			addCode(resultVars + "$thr" + _para.hashCode() + "_" + i + "->join();", indentPlusOne, isDisabled);
 			addCode("", "", isDisabled);
 		}
 
@@ -917,12 +922,12 @@ public class PerlGenerator extends Generator {
 	@Override
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
-		// Ensure all variables be private
-		if (!_root.isProgram) {
+		// Ensure all variables be declared
+		//if (!_root.isProgram) {	// This must also be done for programs!
 			for (int v = 0; v < _varNames.count(); v++) {
 				code.add(_indent + "my $" + _varNames.get(v) + ";");	// FIXME (KGU) What about lists?
 			}
-		}
+		//}
 		code.add(_indent);
 		// START KGU 2015-11-02: Now fetch all variable names from the entire diagram
 		varNames = _root.getVarNames(); // We need more variables than just the ones retrieved by super.
