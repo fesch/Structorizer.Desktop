@@ -41,6 +41,7 @@ Current development version: 3.26-04 (2017.02.26)
 - 04: Bugfix #349: Generators hadn't coped with involved recursive subroutines <2>
 - 04: Enh. #259/#335: Type info retrieval for code export enabled across CALLs <2>
 - 04: Issue #350: OUTPUT instruction translation to Python was obsolete <2>
+- 04: Perl export: variable prefixing improved w.r.t. arrays and references <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

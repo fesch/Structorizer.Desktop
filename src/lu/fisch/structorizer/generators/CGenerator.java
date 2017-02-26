@@ -1097,7 +1097,7 @@ public class CGenerator extends Generator {
 			}
 			// Add a comment if there is no type info or internal declaration is not allowed
 			else if (types == null || !this.isInternalDeclarationAllowed()){
-				insertComment(varName, _indent);
+				insertComment(varName + ";", _indent);
 			}
 			// END KGU#261/KGU#332 2017-01-16
 		}

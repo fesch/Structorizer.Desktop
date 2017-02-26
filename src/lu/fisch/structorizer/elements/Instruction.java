@@ -646,6 +646,9 @@ public class Instruction extends Element {
 				if (typeSpec.isEmpty() && !typeMap.containsKey(varName)) {
 					//String expr = rightSide.concatenate(" ");
 					typeSpec = getTypeFromAssignedValue(rightSide, typeMap);
+					if (typeSpec.isEmpty()) {
+						typeSpec = "???";
+					}
 					// Maybe it's a multidimensional array, then reformulate it as "array of [array of ...]"
 					while (!typeSpec.isEmpty() && (pos = leftSide.indexOf("[")) == 1) {
 						typeSpec = "array of " + typeSpec;

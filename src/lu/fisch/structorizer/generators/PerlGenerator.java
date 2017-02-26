@@ -68,12 +68,15 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.12.30  Bugfix KGU#62: Result variable hadn't been prefixed in return instruction
  *      Kay Gürtzig         2017.01.04  Enh. #314: Approach to translate the File API
  *      Kay Gürtzig         2017.02.25  Enh. #348: Parallel sections translated with threading module
+ *      Kay Gürtzig         2017.02.26  KGU#352: Variable prefixing revised w.r.t. arrays and references
  *
  ******************************************************************************************************
  *
  *      Comment:		LGPL license (http://www.gnu.org/licenses/lgpl.html).
  *
  ******************************************************************************************************///
+
+import java.util.HashMap;
 
 import java.util.regex.Matcher;
 
@@ -90,6 +93,7 @@ import lu.fisch.structorizer.elements.Parallel;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.BString;
@@ -167,6 +171,12 @@ public class PerlGenerator extends Generator {
 	// START KGU#311 2017-01-04: Enh. #314 File API analysis
 	private StringList fileVars = new StringList();
 	// END KGU#311 2017-01-04
+	
+	// START KGU#352 2017-02-26
+	private StringList paramNames = new StringList();
+	private HashMap<String, TypeMapEntry> typeMap = null;
+	private boolean isWithinCall = false;
+	// END KGU#352 2017-02-26
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/**
@@ -230,9 +240,38 @@ public class PerlGenerator extends Generator {
     		String varName = varNames.get(i);
     		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
     		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
-    		tokens.replaceAll(varName, "$"+varName);
+    		// START KGU#352 2017-02-26: Different approaches for arrays and references
+    		//tokens.replaceAll(varName, "$"+varName);
+    		TypeMapEntry typeEntry = this.typeMap.get(varName);
+    		if (typeEntry != null && typeEntry.isArray()) {
+        		String prefix = "";
+    			int pos = -1;
+    			if (this.paramNames.contains(varName)) {
+    				prefix = "$";	// dereference the variable
+    			}
+    			while ((pos = tokens.indexOf(varName, pos+1)) >= 0) {
+    				// Array element access?
+    				if (pos+3 < tokens.count() && tokens.get(pos+1).equals("[")) {
+    					tokens.set(pos, "$" + prefix + varName);
+    				}
+    				else if (this.isWithinCall) {
+    					// To pass an array to a subroutine we must use a reference
+    					tokens.set(pos,  "\\@" + prefix + varName);
+    				}
+    				else {
+    					tokens.set(pos,  "@" + prefix + varName);
+    				}
+    			}
+    		}
+    		else {
+    			tokens.replaceAll(varName, "$"+varName);
+    		}
+    		// END KGU#352 2017-02-26
     	}
 		// END KGU#62/KGU#103 2015-12-12
+    	// START KGU 2017-02-26
+    	tokens.replaceAll("random", "rand");
+    	// END KGU 2017-02-26
 		tokens.replaceAll("div", "/");
 		tokens.replaceAll("<-", "=");
 		// START KGU#61 2016-03-23: Enh. #84 - prepare array literals
@@ -265,6 +304,7 @@ public class PerlGenerator extends Generator {
 				String expr = _input.substring(asgnPos + "<-".length()).trim();
 				if (expr.startsWith("{") && expr.endsWith("}") && this.varNames.contains(lval))
 				{
+					// The curly braces will be replaced with parentheses by transformTokens()
 					_input = "@" + lval + " <- " + expr;				
 				}
 			}
@@ -325,7 +365,6 @@ public class PerlGenerator extends Generator {
 
 	protected void generateCode(Instruction _inst, String _indent) {
 
-		// FIXME: Access to arrays passed in as arguments must be dereferenced, i.e. "$$para[$i]"
 		if (!insertAsComment(_inst, _indent))
 		{
 			boolean isDisabled = _inst.isDisabled();
@@ -432,7 +471,6 @@ public class PerlGenerator extends Generator {
 	
 	protected void generateCode(Alternative _alt, String _indent) {
 		
-		// FIXME: Access to arrays passed in as arguments must be dereferenced, i.e. "$$para[$i]"
 		boolean isDisabled = _alt.isDisabled();
 		
 		addCode("", "", isDisabled);
@@ -481,7 +519,6 @@ public class PerlGenerator extends Generator {
 	
 	protected void generateCode(Case _case, String _indent) {
 		
-		// FIXME: Access to arrays passed in as arguments must be dereferenced, i.e. "$$para[$i]"
 		boolean isDisabled = _case.isDisabled();
 		
 		addCode("", "", isDisabled);
@@ -491,15 +528,15 @@ public class PerlGenerator extends Generator {
 		// Since Perl release 5.8.0, switch is a standard module...
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"switch ( "+transform(_case.getText().get(0))+" ) {");
-		String selector = transform(_case.getText().get(0));
+		String discriminator = transform(_case.getText().get(0));
 		// START KGU#301 2016-12-01: Bugfix #301
 		//if (!this.suppressTransformation || !(selector.startsWith("(") && selector.endsWith(")")))
-		if (!this.suppressTransformation || !isParenthesized(selector))
+		if (!this.suppressTransformation || !isParenthesized(discriminator))
 		// END KGU#301 2016-12-01
 		{
-			selector = "( " + selector + " )";			
+			discriminator = "( " + discriminator + " )";			
 		}
-		addCode("switch " + selector + " {", _indent, isDisabled);
+		addCode("switch " + discriminator + " {", _indent, isDisabled);
 		// END KGU#162 2016-04-01
 		
 		for (int i=0; i<_case.qs.size()-1; i++)
@@ -507,16 +544,16 @@ public class PerlGenerator extends Generator {
 			addCode("", "", isDisabled);
 			// START KGU#15 2015-11-02: Support multiple constants per branch
 			//code.add(_indent+this.getIndent()+"case ("+_case.getText().get(i+1).trim()+") {");
-			String conds = _case.getText().get(i+1).trim();
-			if (Element.splitExpressionList(conds, ",").count() > 1)	// Is it an enumeration of values? 
+			String selectors = _case.getText().get(i+1).trim();
+			if (Element.splitExpressionList(selectors, ",").count() > 1)	// Is it an enumeration of values? 
 			{
-				conds = "[" + conds + "]";
+				selectors = "[" + selectors + "]";
 			}
 			else
 			{
-				conds = "(" + conds + ")";
+				selectors = "(" + selectors + ")";
 			}
-			addCode("case " + conds +" {", _indent + this.getIndent(), isDisabled);
+			addCode("case " + selectors +" {", _indent + this.getIndent(), isDisabled);
 			// END KGU#15 2015-11-02
 			//code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1)+"begin");
 			generateCode((Subqueue) _case.qs.get(i), _indent + this.getIndent() + this.getIndent());
@@ -559,8 +596,8 @@ public class PerlGenerator extends Generator {
     		StringList items = this.extractForInListItems(_for);
     		if (items != null)
     		{
-        		valueList = "@array20160323";
-    			addCode(valueList + " = (" + transform(items.concatenate(", "), false) + ")",
+        		valueList = "@array" + _for.hashCode();
+    			addCode("my " + valueList + " = (" + transform(items.concatenate(", "), false) + ")",
     					_indent, isDisabled);
     		}
     		else
@@ -610,7 +647,6 @@ public class PerlGenerator extends Generator {
 	
 	protected void generateCode(While _while, String _indent) {
 		
-		// FIXME: Access to arrays passed in as arguments must be dereferenced, i.e. "$$para[$i]"
 		boolean isDisabled = _while.isDisabled();
 		
 		addCode("", "", isDisabled);
@@ -646,7 +682,6 @@ public class PerlGenerator extends Generator {
 	
 	protected void generateCode(Repeat _repeat, String _indent) {
 		
-		// FIXME: Access to arrays passed in as arguments must be dereferenced, i.e. "$$para[$i]"
 		boolean isDisabled = _repeat.isDisabled();
 		
 		addCode("", "", isDisabled);
@@ -706,11 +741,17 @@ public class PerlGenerator extends Generator {
 
 			insertComment(_call, _indent);
 
+			// START KGU#352 2017-02-26: Handle arrays as arguments appropriately
+			this.isWithinCall = true;
+			// END KGU#352 2017-02-26			
 			for (int i=0; i<_call.getText().count(); i++)
 			{
 				// FIXME: Arrays must be passed as reference, i.e. "\@arr" or "\@$para"
 				addCode(transform(_call.getText().get(i)) + ";", _indent, isDisabled);
 			}
+			// START KGU#352 2017-02-26: Handle arrays as arguments appropriately
+			this.isWithinCall = false;
+			// END KGU#352 2017-02-26			
 		}
 	}
 	
@@ -826,11 +867,16 @@ public class PerlGenerator extends Generator {
 			}
 			generateCode((Subqueue) _para.qs.get(i), indentPlusTwo);
 			if (hasResults) {
-				addCode("return ($" + asgndVars[i].concatenate(", $") + ");", indentPlusTwo, isDisabled);
+				this.isWithinCall = true;				
+				//addCode("return ($" + asgndVars[i].concatenate(", $") + ");", indentPlusTwo, isDisabled);
+				addCode("return (" + this.transform(asgndVars[i].concatenate(", ")) + ");", indentPlusTwo, isDisabled);
+				this.isWithinCall = false;
 			}
-			String argList = usedVars.concatenate(", $").trim();
+			String argList = usedVars.concatenate(", ").trim();
 			if (!argList.isEmpty()) {
-				argList = ", ($" + argList + ")";
+				this.isWithinCall = true;
+				argList = ", (" + this.transform(argList) + ")";
+				this.isWithinCall = false;
 			}
 			addCode("}" + argList + ");", indentPlusOne, isDisabled);
 			addCode("", "", isDisabled);
@@ -864,6 +910,12 @@ public class PerlGenerator extends Generator {
 			StringList _paramNames, StringList _paramTypes, String _resultType)
 	{
 		String indent = _indent;
+		// START KGU#352 2017-02-26: Cache transform-relevant information 
+		this.paramNames = _paramNames;
+		this.typeMap = _root.getTypeInfo();
+		// END KGU#352 2017-02-26
+		
+		// END KGU#352 2017-02-26
 		// START KGU#178 2016-07-20: Enh. #160 - don't add this if it's not at top level
 		//code.add(_indent + "#!/usr/bin/perl");
 		//insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
@@ -923,14 +975,22 @@ public class PerlGenerator extends Generator {
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
 		// Ensure all variables be declared
-		//if (!_root.isProgram) {	// This must also be done for programs!
-			for (int v = 0; v < _varNames.count(); v++) {
-				code.add(_indent + "my $" + _varNames.get(v) + ";");	// FIXME (KGU) What about lists?
-			}
+		// START KGU#352 2017-02-26: This must also be done for programs!
+		//if (!_root.isProgram) {
+		//	for (int v = 0; v < _varNames.count(); v++) {
+		//		code.add(_indent + "my $" + _varNames.get(v) + ";");	// FIXME (KGU) What about lists?
+		//	}
 		//}
+		for (int v = 0; v < _varNames.count(); v++) {
+			String varName = _varNames.get(v);
+			TypeMapEntry typeEntry = this.typeMap.get(varName);
+			String prefix = (typeEntry != null && typeEntry.isArray()) ? "@" : "$";
+			code.add(_indent + "my " + prefix + varName + ";");
+		}
+		// END KGU#352 2017-02-26
 		code.add(_indent);
 		// START KGU 2015-11-02: Now fetch all variable names from the entire diagram
-		varNames = _root.getVarNames(); // We need more variables than just the ones retrieved by super.
+		varNames = _root.getVarNames(); // in contrast to super we need the parameter names included again.
 		// END KGU 2015-11-02
 		return _indent;
 	}
@@ -943,24 +1003,34 @@ public class PerlGenerator extends Generator {
 	{
 		if (!_root.isProgram && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
 		{
-			String result = "0";
+			String result = "";
 			if (isFunctionNameSet)
 			{
-				// START KGU#62 2016-12-30: Bugfix #57
-				//result = _root.getMethodName();
-				result = "$" + _root.getMethodName();
-				// END KGU#62 2016-12-30
+				result = _root.getMethodName();
 			}
 			else if (isResultSet)
 			{
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
-				// START KGU#62 2016-12-30: Bugfix
-				if (!result.startsWith("$")) {
-					result = "$" + result;
-				}
-				// END KGU#62 2016-12-30
 			}
+			// START KGU#62 2017-02-26: Bugfix #57
+			if (result.isEmpty()) {
+				result = "0";
+			}
+			else if(!result.startsWith("$") && !result.startsWith("@")) {
+				String prefix = "$";
+				TypeMapEntry typeEntry = this.typeMap.get(result);
+				if (typeEntry != null && typeEntry.isArray()) {
+					if (!this.paramNames.contains(result)) {
+						prefix = "@";
+					}
+					else {
+						prefix = "@$";
+					}
+				}
+				result = prefix + result;
+			}
+			// END KGU#62 2017-02-26
 			code.add(_indent);
 			code.add(_indent + "return " + result + ";");
 		}
