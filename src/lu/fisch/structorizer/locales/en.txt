@@ -298,7 +298,7 @@ Menu.msgNewerVersionAvail.text=Newer version % available for download.
 Menu.msgUpdateInfoHint.text=If you want to get notified of available new versions\nyou may enable update retrieval from Structorizer homepage\nvia menu item "%1" > "%2".
 Menu.lblOk.text=OK
 Menu.lblSuppressUpdateHint.text=Don't show this window again
-Menu.lblHint.txt=Hint
+Menu.lblHint.text=Hint
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
