@@ -64,6 +64,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig             2016.12.22      Issue #227: input and output usage more routine-specific
  *      Kay Gürtzig             2016.01.30      Enh. #335, bugfix #337: More sophisticated type treatment
+ *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *
  ******************************************************************************************************
  *
@@ -165,12 +166,23 @@ public class OberonGenerator extends Generator {
 	}
 	// END KGU 2016-08-12
 	
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getIncludePattern()
+	 */
+	@Override
+	protected String getIncludePattern()
+	{
+		return "IMPORT %%;";
+	}
+	// END KGU#351 2017-02-26
+
+    /************ Code Generation **************/
+
 	// START KGU#332 2017-01-30: Enh. #335
 	private Map<String,TypeMapEntry> typeMap;
 	// END KGU#332 2017-01-30
     
-    /************ Code Generation **************/
-
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
@@ -972,6 +984,9 @@ public class OberonGenerator extends Generator {
         		code.add(_indent + "MODULE " + moduleName + ";");
         		code.add(_indent);
         		
+				// STARTB KGU#351 2017-02-26: Enh. #346
+				this.insertUserIncludes(_indent);
+				// END KGU#351 2017-02-26
         		if (this.hasInput() || this.hasOutput())
        			{
         			StringList ioModules = new StringList();

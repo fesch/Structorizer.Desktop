@@ -55,6 +55,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig         2016.11.20      KGU#293: Some forgotten traditional keywords added to reservedWords (#231)
+ *      Kay Gürtzig         2017.02.27      Enh. #346: Formal adaptation
  *
  ******************************************************************************************************
  *
@@ -157,6 +158,17 @@ public class BasGenerator extends Generator
 		return false;
 	}
 	// END KGU#78 2015-12-18
+	
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getIncludePattern()
+	 */
+	@Override
+	protected String getIncludePattern()
+	{
+		return null;
+	}
+	// END KGU#351 2017-02-26
 
 	/************ Code Generation **************/
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed

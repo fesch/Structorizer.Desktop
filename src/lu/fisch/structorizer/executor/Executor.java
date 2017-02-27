@@ -114,6 +114,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.01.17      Enh. #335: Toleration of Pascal variable declarations in stepInstruction()
  *      Kay Gürtzig     2017.01.27      Enh. #335: Toleration of BASIC variable declarations in stepInstruction()
  *      Kay Gürtzig     2017.02.08      Issue #343: Unescaped internal string delimiters escaped on string literal conversion
+ *      Kay Gürtzig     2017.02.17      KGU#159: Stacktrace now also shows the arguments of top-level subroutine calls
  *
  ******************************************************************************************************
  *
@@ -667,7 +668,7 @@ public class Executor implements Runnable
 	// START KGU#342 2017-02-09: Bugfix #343
 	private String literalFromChar(char ch) {
 		String literal = Character.toString(ch);
-		if ("\"\'\\\n\t".indexOf(ch) >= 0) {
+		if ("\"\'\\\b\f\n\r\t".indexOf(ch) >= 0) {
 			literal = "\\" + literal;
 		}
 		return literal;
@@ -807,7 +808,7 @@ public class Executor implements Runnable
 		Root root = diagram.getRoot();
 
 		// START KGU#159 2016-03-17: Now we permanently maintain the stacktrace, not only in case of error
-		addToStackTrace(root, arguments);
+		//addToStackTrace(root, arguments);	// KGU 2017-02-17 moved downwards, after the argument request
 		// END KGU#159 2016-03-17
 		
 		// START KGU#2 (#9) 2015-11-14
@@ -914,6 +915,10 @@ public class Executor implements Runnable
 		}
 		// END KGU#39 2015-10-16
 
+		// START KGU#159 2017-02-17: Now we permanently maintain the stacktrace, not only in case of error
+		addToStackTrace(root, arguments);
+		// END KGU#159 2017-03-17
+	
 		if (result.equals(""))
 		{
 			/////////////////////////////////////////////////////

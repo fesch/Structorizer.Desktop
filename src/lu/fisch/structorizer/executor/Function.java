@@ -227,6 +227,17 @@ public class Function
     }
     // END KGU#332 2017-01-29
     
+    // START KGU 2017-02-21: signature string uniform with Root.getSignatureString(false)
+    public String getSignatureString()
+    {
+    	String sigStr = null;
+    	if (this.isFunc) {
+    		sigStr = this.getName() + "(" + this.paramCount() + ")";
+    	}
+    	return sigStr;
+    }
+    // END KGU 2017-02-21
+    
     public String getName()
     {
     	// START KGU#56 2015-10-27: Analysis now already done by the constructor

@@ -32,13 +32,7 @@ package lu.fisch.structorizer.generators;
  *
  *      Author                  Date            Description
  *      ------					----			-----------
- *      Bob Fisch               2008.11.17      First Issue
- *      Gunter Schillebeeckx    2009.08.10      Java Generator starting from C Generator
- *      Bob Fisch               2009.08.10      Update I/O
- *      Bob Fisch               2009.08.17      Bugfixes (see comment)
- *      Kay Gürtzig             2010.09.10      Bugfixes and cosmetics (see comment)
- *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
- *      Daniel Spittank         2014.02.01      Python Generator starting from Java Generator
+ *      Daniel Spittank         2014.02.01      Starting from Java Generator
  *      Kay Gürtzig             2014.11.16      Conversion of C-like logical operators and arcus functions (see comment)
  *      Kay Gürtzig             2014.12.02      Additional replacement of long assignment operator "<--" by "<-"
  *      Kay Gürtzig             2015.10.18      Indentation and comment mechanisms revised, bugfix
@@ -60,6 +54,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig             2016.12.01      Bugfix #301: More precise check for parenthesis enclosing of log. conditions
  *      Kay Gürtzig             2016.12.27      Enh. #314: Support for Structorizer File API
+ *      Kay Gürtzig             2017.02.19      Enh. #348: Parallel sections translated with threading module
+ *      Kay Gürtzig             2017.02.23      Issue #350: getOutputReplacer() and Parallel export revised again
+ *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *
  ******************************************************************************************************
  *
@@ -99,6 +96,7 @@ package lu.fisch.structorizer.generators;
  * 
  ******************************************************************************************************///
 
+import java.util.LinkedList;
 import java.util.regex.Matcher;
 
 import lu.fisch.utils.*;
@@ -173,6 +171,16 @@ public class PythonGenerator extends Generator
 		}
 		// END KGU 2016-08-12
 
+		// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+		/* (non-Javadoc)
+		 * @see lu.fisch.structorizer.generators.Generator#getIncludePattern()
+		 */
+		@Override
+		protected String getIncludePattern()
+		{
+			return "import %";
+		}
+		// END KGU#351 2017-02-26
 
 		/************ Code Generation **************/
 	    
@@ -206,7 +214,10 @@ public class PythonGenerator extends Generator
 		{
 			// START KGU#108 2015-12-22: Bugfix #51, #54: Parenthesis was rather wrong (produced lists)
 			//return "print($1)";
-			return "print $1";
+			// START KGU 2017-02-23: for Python 3.5, parentheses ARE necessary, separator is to be suppressed
+			//return "print $1";
+			return "print($1, sep='')";
+			// END KGU 2017-02-23
 			// END KGU#108 2015-12-22
 		}
 
@@ -623,37 +634,124 @@ public class PythonGenerator extends Generator
 			}
 		}
 		
-		// START KGU#47 2015-12-1: Offer at least a sequential execution (which is one legal execution order)
+		// START KGU#47 2015-12-17: Offer at least a sequential execution (which is one legal execution order)
 		protected void generateCode(Parallel _para, String _indent)
 		{
 			boolean isDisabled = _para.isDisabled();
+			Root root = Element.getRoot(_para);
 			
-			// FIXME (KGU) Try an implementation by means of the Threading module!
-			String indentPlusOne = _indent + this.getIndent();
-			String indentPlusTwo = indentPlusOne + this.getIndent();
+			//String indentPlusOne = _indent + this.getIndent();
+			//String indentPlusTwo = indentPlusOne + this.getIndent();
 			insertComment(_para, _indent);
 
 			addCode("", _indent, isDisabled);
 			insertComment("==========================================================", _indent);
 			insertComment("================= START PARALLEL SECTION =================", _indent);
 			insertComment("==========================================================", _indent);
-			insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
-			addCode("", indentPlusOne, isDisabled);
+			//insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
+			//addCode("", indentPlusOne, isDisabled);
 
 			for (int i = 0; i < _para.qs.size(); i++) {
-				insertComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
-				generateCode((Subqueue) _para.qs.get(i), indentPlusTwo);
-				insertComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
-				addCode("", indentPlusOne, isDisabled);
+				//insertComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
+				// START KGU#348 2017-02-19: Enh. #348 Actual translation
+				//generateCode((Subqueue) _para.qs.get(i), indentPlusTwo);
+				Subqueue sq = _para.qs.get(i);
+				String threadVar = "thr" + _para.hashCode() + "_" + i;
+				String threadFunc = "thread" + _para.hashCode() + "_" + i;
+				StringList used = root.getUsedVarNames(sq, false, false);
+				StringList asgnd = root.getVarNames(sq, false);
+				for (int v = 0; v < asgnd.count(); v++) {
+					used.removeAll(asgnd.get(v));
+				}
+				String args = used.concatenate(",");
+				if (used.count() == 1) {
+					args += ",";
+				}
+				if (sq.getSize() == 1) {
+					Element el = sq.getElement(0);
+					if (el instanceof Call && ((Call)el).isProcedureCall()) {
+						threadFunc = ((Call)el).getCalledRoutine().getName();
+					}
+				}
+				addCode(threadVar + " = Thread(target=" + threadFunc + ", args=(" + args + "))", _indent, isDisabled);
+				addCode(threadVar + ".start()", _indent, isDisabled);
+				addCode("", _indent, isDisabled);
+				// END KGU#348 2017-02-19
+				//insertComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
+				//addCode("", indentPlusOne, isDisabled);
 			}
 
+			for (int i = 0; i < _para.qs.size(); i++) {
+				String threadVar = "thr" + _para.hashCode() + "_" + i;
+				addCode(threadVar + ".join()", _indent, isDisabled);
+			}
 			insertComment("==========================================================", _indent);
 			insertComment("================== END PARALLEL SECTION ==================", _indent);
 			insertComment("==========================================================", _indent);
-			addCode("", "", isDisabled);
+			addCode("", _indent, isDisabled);
 		}
 		// END KGU#47 2015-12-17
 
+		// START KGU#47/KGU#348 2017-02-19: Enh. #348
+		private void generateParallelThreadFunctions(Root _root, String _indent)
+		{
+			String indentPlusOne = _indent + this.getIndent();
+			int lineBefore = code.count();
+			StringList globals = new StringList();
+			final LinkedList<Parallel> containedParallels = new LinkedList<Parallel>();
+			_root.traverse(new IElementVisitor() {
+				@Override
+				public boolean visitPreOrder(Element _ele) {
+					return true;
+				}
+				@Override
+				public boolean visitPostOrder(Element _ele) {
+					if (_ele instanceof Parallel) {
+						containedParallels.addLast((Parallel)_ele);
+					}
+					return true;
+				}
+			});
+			for (Parallel par: containedParallels) {
+				boolean isDisabled = par.isDisabled();
+				String functNameBase = "thread" + par.hashCode() + "_";
+				int i = 0;
+				// We still don't care for synchronisation, mutual exclusion etc.
+				for (Subqueue sq: par.qs) {
+					Element el = null;
+					if (sq.getSize() == 1 && (el = sq.getElement(0)) instanceof Call && ((Call)el).isProcedureCall()) {
+						// Don't generate a thread function for single procedure calls
+						continue;
+					}
+					// Variables assigned here will be made global
+					StringList setVars = _root.getVarNames(sq, false);
+					// Variables used here without being assigned will be made arguments
+					StringList usedVars = _root.getUsedVarNames(sq, false, false);
+					for (int v = 0; v < setVars.count(); v++) {
+						usedVars.removeAll(setVars.get(v));
+					}
+					addCode("def " + functNameBase + i + "(" + usedVars.concatenate(", ") + "):", _indent, isDisabled);
+					for (int v = 0; v < setVars.count(); v++) {
+						String varName = setVars.get(v);
+						globals.addIfNew((isDisabled ? this.commentSymbolLeft() : "") + varName);
+						addCode("global " + varName, indentPlusOne, isDisabled);
+					}
+					generateCode(sq, indentPlusOne);
+					code.add(_indent);
+					i++;
+				}
+			}
+			if (globals.count() > 0) {
+				code.insert(_indent + "", lineBefore);
+				for (int v = 0; v < globals.count(); v++) {
+					String varName = globals.get(v);
+					String end = varName.startsWith(this.commentSymbolLeft()) ? this.commentSymbolRight() : "";
+					code.insert(_indent + varName + " = 0" + end, lineBefore);
+				}
+				code.insert(_indent + this.commentSymbolLeft() + " TODO: Initialize these variables globally referred to by prallel threads in a sensible way!", lineBefore);
+			}
+		}
+		// END KGU#47/KGU#348 2017-02-19
 
 		/* (non-Javadoc)
 		 * @see lu.fisch.structorizer.generators.Generator#generateHeader(lu.fisch.structorizer.elements.Root, java.lang.String, java.lang.String, lu.fisch.utils.StringList, lu.fisch.utils.StringList, java.lang.String)
@@ -678,6 +776,15 @@ public class PythonGenerator extends Generator
 				code.add(_indent + "#!/usr/bin/env python");
 				insertComment(_root.getText().get(0), _indent);
 				insertComment("generated by Structorizer " + Element.E_VERSION, _indent);
+				// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
+				if (this.hasParallels) {
+					code.add(_indent);
+					code.add(_indent + "from threading import Thread");
+				}
+				// END KGU#348 2017-02-19
+				// STARTB KGU#351 2017-02-26: Enh. #346
+				this.insertUserIncludes(indent);
+				// END KGU#351 2017-02-26
 				subroutineInsertionLine = code.count();
 				// START KGU#311 2016-12-27: Enh. #314: File API support
 				if (this.usesFileAPI) {
@@ -696,6 +803,18 @@ public class PythonGenerator extends Generator
 				code.add(_indent + "def " + _procName +"(" + _paramNames.getText().replace("\n", ", ") +") :");
 			}
 			return indent;
+		}
+
+		/* (non-Javadoc)
+		 * @see lu.fisch.structorizer.generators.Generator#generatePreamble(lu.fisch.structorizer.elements.Root, java.lang.String, lu.fisch.utils.StringList)
+		 */
+		@Override
+		protected String generatePreamble(Root _root, String _indent, StringList _varNames)
+		{
+			// START KGU#348 2017-02-19: Enh. #348 - Translation of parallel sections
+			generateParallelThreadFunctions(_root, _indent);
+			// END KGU#348 2017-02-19
+			return _indent;
 		}
 
 		/* (non-Javadoc)

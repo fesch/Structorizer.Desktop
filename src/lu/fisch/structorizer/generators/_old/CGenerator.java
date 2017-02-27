@@ -108,6 +108,17 @@ public class CGenerator extends Generator
 	}
 	// END KGU#78 2015-12-18
 
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getIncludePattern()
+	 */
+	@Override
+	protected String getIncludePattern()
+	{
+		return null;
+	}
+	// END KGU#351 2017-02-26
+
 	/************ Code Generation **************/
     
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed

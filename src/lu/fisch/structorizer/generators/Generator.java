@@ -64,6 +64,10 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.01.20      Bugfix #336: variable list for declaration section (loop vars in, parameters out)
  *      Kay Gürtzig     2017.01.26      Enh. #259: Type info is now gathered for declarations support
  *      Kay Gürtzig     2017.01.30      Bugfix #337: Mutilation of lvalues with nested index access
+ *      Kay Gürtzig     2017.02.19      KGU#348: Additions to support PythonGenerator in generating Parallel code
+ *      Kay Gürtzig     2017.02.20      Bugfix #349: Export missed to generate recursive subroutines and their callers
+ *      Kay Gürtzig     2017.02.26      Enh. #346 (mechanism to add user-configured file includes) 
+ *      Kay Gürtzig     2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *
  ******************************************************************************************************
  *
@@ -135,6 +139,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	// START KGU#178 2016-07-19: Enh. #160
 	private boolean exportSubroutines = false;
 	// END KGU#178 2016-07-19
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	private String includeFiles = "";
+	// END KGU#351 2017-02-26
+
 	protected StringList code = new StringList();
 	
 	// START KGU#194 2016-05-07: Bugfix #185 - subclasses might need filename access
@@ -174,6 +182,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	// START KGU#311 2016-12-22: Enh. #314 - File API support
 	protected boolean usesFileAPI = false;
 	// END KGU#311 2016-12-22
+	// START KGU#348 2017-02-19: Support for translation of Parallel elements
+	protected boolean hasParallels = false;
+	// END KGU#348 2017-02-19
 
 	// START KGU#129/KGU#61 2016-03-22: Bugfix #96 / Enh. #84 Now important for most generators
 	// Some generators must prefix variables, for some generators it's important for FOR-IN loops
@@ -242,6 +253,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected abstract boolean breakMatchesCase();
 	// END KGU#78 2015-12-18
 	
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/**
+	 * Returns the pattern of the target-language specific include/import/uses phrase
+	 * for user-specific file includes with a "%" character as placeholder for the
+	 * single file name or the substring "%%" if a comma-separated list is allowed.
+	 * @return String to be inserted in order to load a user-specific include file or null
+	 */
+	protected abstract String getIncludePattern();
+	// END KGU#351 2017-02-26
+	
 	/************ Code Generation **************/
 	
 	// START KGU#16 2015-12-18: Enh. #66 - Code style option for opening brace placement
@@ -268,6 +289,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#178 2016-07-19	
 	
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	protected String optionIncludeFiles()
+	{
+		return this.includeFiles;
+	}
+	// END KGU#351 2017-02-26
+
 	// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
 	protected boolean hasOutput(Root _root)
 	{
@@ -394,6 +422,38 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU 2015-10-18
 	
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	protected void insertUserIncludes(String _indent)
+	{
+		String pattern = this.getIncludePattern();
+		String includes = this.optionIncludeFiles().trim();
+		if (pattern != null && includes != null && !includes.isEmpty()) {
+			if (pattern.contains("%%")) {
+				code.add(_indent + pattern.replace("%%", includes));
+			}
+			else if (pattern.contains("%")) {
+				String[] items = includes.split(",");
+				for (int i = 0; i < items.length; i++) {
+					String item = items[i].trim();
+					if (!item.isEmpty()) {
+						code.add(_indent + pattern.replace("%", prepareIncludeItem(item)));						
+					}
+				}
+			}
+		}
+	}
+	/**
+	 * Method may preprocess an include file or module name for the import / use
+	 * clause. This version does nothing but may be overridden. 
+	 * @param _includeFileName a string from the user include configuration
+	 * @return the preprocessed string as to be actually inserted
+	 */
+	protected String prepareIncludeItem(String _includeFileName)
+	{
+		return _includeFileName;
+	}
+	// END KGU#351 2017-02-26
+
 	// START KGU#277 2016-10-13: Enh. #270
 	/**
 	 * Depending on asComment, adds the given text either as comment or as active
@@ -935,11 +995,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	{
 		Root newSub = null;
 		Function called = _call.getCalledRoutine();
-		if (called != null && Arranger.hasInstance())
+		// START KGU#349 2017-02-20: Bugfix #349 - don't register directly recursive calls
+		//if (called != null && Arranger.hasInstance())
+		if (called != null && !_caller.getSignatureString(false).equals(called.getSignatureString()) && Arranger.hasInstance())
+		// END KGU#349 2017-02-20
 		{
 			Vector<Root> foundRoots = Arranger.getInstance().
 					findRoutinesBySignature(called.getName(), called.paramCount());
-			// FIXME: How to select among Roots with comaptible signature?
+			// FIXME: How to select among Roots with compatible signature?
 			if (!foundRoots.isEmpty())
 			{
 				Root sub = foundRoots.firstElement();
@@ -969,9 +1032,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			else if ((newSub = getAmongSubroutines(called)) != null)
 			{
 				subroutines.get(newSub).callers.add(_caller);
-				// If we got here, then it's propably the top-level routine itself
+				// If we got here, then it's probably the top-level routine itself
 				// So better be cautious with reference counting here (lest the
-				// caling routine would be suppressed on printing)
+				// calling routine would be suppressed on printing)
 				newSub = null;	// ...and it's not a new subroutine, of course
 			}
 			// END KU#237 2016-08-10
@@ -1097,6 +1160,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 			if (instr.isOutput()) hasOutput = true;			
 		}
+		// START KGU#348 2017-02-19: Support for translation of Parallel elements
+		else if (_ele instanceof Parallel)
+		{
+			hasParallels = true;
+		}
+		// END KGU#348 2017-02-19
 		// START KGU#311 2016-12-22: Enh. #314 - check for file API support
 		if (!usesFileAPI && _ele.getText().getText().contains("file"))
 		{
@@ -1364,6 +1433,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			// START KGU#178 2016-07-19: Enh. #160
 			exportSubroutines = ini.getProperty("genExportSubroutines", "0").equals("true");
 			// END KGU#178 2016-07-19
+			// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+			includeFiles = ini.getProperty("genExportIncl" + this.getClass().getSimpleName(), "");
+			// END KGU#351 2017-02-26
+
 		} 
 		catch (FileNotFoundException ex)
 		{
@@ -1564,36 +1637,47 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		code = code.subSequence(0, this.subroutineInsertionLine);
 		topLevel = false;
 		Queue<Root> roots = new LinkedList<Root>();
-		// Initial queue filling - this is a classical topological sorting algorithm
-		for (Root sub: this.subroutines.keySet())
-		{
-			SubTopoSortEntry entry = this.subroutines.get(sub);
-			// If this routine refers to no other one, then enlist it
-			if (entry.nReferingTo == 0)
+		// START KGU#349 2017-02-20: Bugfix #349 - precaution against indirect recursion, we must export all routines
+		int minRefCount = 0;
+		while (!this.subroutines.isEmpty()) {
+		// END KGU#349 2017-02-20
+			// Initial queue filling - this is a classical topological sorting algorithm
+			for (Root sub: this.subroutines.keySet())
 			{
-				roots.add(sub);
-			}
-		}
-		// Now we have an initial queue of independent routines,
-		// so export them and enlist those dependents
-		// the prerequisites of which are thereby fulfilled.
-		while (!roots.isEmpty())
-		{
-			Root sub = roots.remove();	// get the next routine
-			
-			generateCode(sub, subroutineIndent);	// add its code
-			
-			// look for dependent routines and decrement their dependency counter
-			// (the entry for sub isn't needed any longer now)
-			for (Root caller: subroutines.remove(sub).callers)
-			{
-				SubTopoSortEntry entry = this.subroutines.get(caller);
-				// Last dependency? Then enlist the caller
-				if (entry != null && --entry.nReferingTo <= 0)
+				SubTopoSortEntry entry = this.subroutines.get(sub);
+				// If this routine refers to no other one, then enlist it
+				if (entry.nReferingTo == minRefCount)
 				{
-					roots.add(caller);
+					roots.add(sub);
 				}
 			}
+			// Now we have an initial queue of independent routines,
+			// so export them and enlist those dependents
+			// the prerequisites of which are thereby fulfilled.
+			while (!roots.isEmpty())
+			{
+				Root sub = roots.remove();	// get the next routine
+
+				generateCode(sub, subroutineIndent);	// add its code
+
+				// look for dependent routines and decrement their dependency counter
+				// (the entry for sub isn't needed any longer now)
+				for (Root caller: subroutines.remove(sub).callers)
+				{
+					SubTopoSortEntry entry = this.subroutines.get(caller);
+					// Last dependency? Then enlist the caller (if it's not already listed - in case of indirect recursion)
+					if (entry != null && --entry.nReferingTo <= 0 && !roots.contains(caller))
+					{
+						roots.add(caller);
+						// when we could add a due subroutine then there is no need anymore to tolerate routines in need of others
+						minRefCount = 0;
+					}
+				}
+			}
+			// START KGU#349 2017-02-20: Bugfix #349
+			// An indirect recursion might block have blocked the queuing of routines, so raise reference toleration level
+			minRefCount++;
+			// END KGU#349
 		}
 		code.add(outerCodeTail);
 		

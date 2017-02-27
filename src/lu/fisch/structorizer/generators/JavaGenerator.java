@@ -58,6 +58,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.12.22      Enh. #314: Support for Structorizer File API
  *      Kay Gürtzig             2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
  *      Kay Gürtzig             2017.02.01      Enh. #113: Array parameter transformation
+ *      Kay Gürtzig             2017.02.24      Enh. #348: Parallel sections translated with java.utils.concurrent.Callable
+ *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *
  ******************************************************************************************************
  *
@@ -102,6 +104,10 @@ package lu.fisch.structorizer.generators;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+
 import lu.fisch.structorizer.elements.*;
 
 
@@ -192,6 +198,17 @@ public class JavaGenerator extends CGenerator
 	}
 	// END KGU 2016-08-12
 
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getIncludePattern()
+	 */
+	@Override
+	protected String getIncludePattern()
+	{
+		return "import %";
+	}
+	// END KGU#351 2017-02-26
+
 	/************ Code Generation **************/
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
@@ -225,6 +242,20 @@ public class JavaGenerator extends CGenerator
 	{
 		return "System.out.println($1)";
 	}
+
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/**
+	 * Method preprocesses an include file name for the #include
+	 * clause. This version surrounds a string not enclosed in angular
+	 * brackets by quotes.
+	 * @param _includeFileName a string from the user include configuration
+	 * @return the preprocessed string as to be actually inserted
+	 */
+	protected String prepareIncludeItem(String _includeFileName)
+	{
+		return _includeFileName;
+	}
+	// END KGU#351 2017-02-26
 
 	// START KGU#16/#47 2015-11-30
 	/**
@@ -473,6 +504,161 @@ public class JavaGenerator extends CGenerator
 	}
 	// END KGU#61 2016-03-22
 	
+	// START KGU#348 2017-02-25: Enh. #348 - Offer a C++11 solution with class std::thread
+	@Override
+	protected void generateCode(Parallel _para, String _indent)
+	{
+
+		boolean isDisabled = _para.isDisabled();
+		Root root = Element.getRoot(_para);
+		String indentPlusOne = _indent + this.getIndent();
+		int nThreads = _para.qs.size();
+		StringList[] asgnd = new StringList[nThreads];
+
+		insertComment(_para, _indent);
+
+		addCode("", "", isDisabled);
+		insertComment("==========================================================", _indent);
+		insertComment("================= START PARALLEL SECTION =================", _indent);
+		insertComment("==========================================================", _indent);
+		addCode("try {", _indent, isDisabled);
+		addCode("ExecutorService pool = Executors.newFixedThreadPool(" + nThreads + ");", indentPlusOne, isDisabled);
+
+		for (int i = 0; i < nThreads; i++) {
+			addCode("", _indent, isDisabled);
+			insertComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
+			Subqueue sq = _para.qs.get(i);
+			String future = "future" + _para.hashCode() + "_" + i;
+			String worker = "Worker" + _para.hashCode() + "_" + i;
+			StringList used = root.getUsedVarNames(sq, false, false).reverse();
+			asgnd[i] = root.getVarNames(sq, false, false).reverse();
+			for (int v = 0; v < asgnd[i].count(); v++) {
+				used.removeAll(asgnd[i].get(v));
+			}
+			String args = "(" + used.concatenate(", ").trim() + ")";
+			addCode("Future<Object[]> " + future + " = pool.submit( new " + worker + args + " );", indentPlusOne, isDisabled);
+		}
+
+		addCode("", _indent, isDisabled);
+		addCode("Object[] results;", indentPlusOne, isDisabled);
+		HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
+		for (int i = 0; i < nThreads; i++) {
+			insertComment("----------------- AWAIT THREAD " + i + " -----------------", indentPlusOne);
+			String future = "future" + _para.hashCode() + "_" + i;
+			addCode("results = " + future + ".get();", indentPlusOne, isDisabled);
+			for (int v = 0; v < asgnd[i].count(); v++) {
+				String varName = asgnd[i].get(v);
+				TypeMapEntry typeEntry = typeMap.get(varName);
+				String typeSpec = "/*type?*/";
+				if (typeEntry != null) {
+					StringList typeSpecs = this.getTransformedTypes(typeEntry);
+					if (typeSpecs.count() == 1) {
+						typeSpec = typeSpecs.get(0);
+					}
+				}
+				addCode(varName + " = (" + typeSpec + ")(results[" + v + "]);", indentPlusOne, isDisabled);
+			}
+		}
+
+		// The shutdown call should be redundant here, but you never know...
+		addCode("pool.shutdown();", indentPlusOne, isDisabled);
+		addCode("}", _indent, isDisabled);
+		addCode("catch (Exception ex) { System.err.println(ex.getMessage()); ex.printStackTrace(); }", _indent, isDisabled);
+		insertComment("==========================================================", _indent);
+		insertComment("================== END PARALLEL SECTION ==================", _indent);
+		insertComment("==========================================================", _indent);
+		addCode("", "", isDisabled);
+	}
+
+	// Inserts class definitions for worker objects to be used by the threads
+	private void generateParallelThreadWorkers(Root _root, String _indent)
+	{
+		String indentPlusOne = _indent + this.getIndent();
+		String indentPlusTwo = indentPlusOne + this.getIndent();
+		final LinkedList<Parallel> containedParallels = new LinkedList<Parallel>();
+		_root.traverse(new IElementVisitor() {
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				return true;
+			}
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				if (_ele instanceof Parallel) {
+					containedParallels.addLast((Parallel)_ele);
+				}
+				return true;
+			}
+		});
+		insertComment("=========== START PARALLEL WORKER DEFINITIONS ============", _indent);
+		for (Parallel par: containedParallels) {
+			boolean isDisabled = par.isDisabled();
+			String workerNameBase = "Worker" + par.hashCode() + "_";
+			Root root = Element.getRoot(par);
+			HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
+			int i = 0;
+			// We still don't care for synchronisation, mutual exclusion etc.
+			for (Subqueue sq: par.qs) {
+				// Variables assigned and used here will be made members
+				StringList setVars = root.getVarNames(sq, false).reverse();
+				// Variables used here (without being assigned) will be made reference arguments
+				StringList usedVars = root.getUsedVarNames(sq, false, false).reverse();
+				for (int v = 0; v < setVars.count(); v++) {
+					String varName = setVars.get(v);
+					usedVars.removeAll(varName);
+				}
+				if (i > 0) {
+					code.add(_indent);
+				}
+				addCode("class " + workerNameBase + i + " implements Callable<Object[]> {", _indent, isDisabled);
+				// Member variables (all references!)
+				StringList argList = this.makeArgList(setVars, typeMap);
+				for (int v = 0; v < argList.count(); v++) {
+					addCode("private " + argList.get(v) + ";", indentPlusOne, isDisabled);
+				}
+				argList = this.makeArgList(usedVars, typeMap);
+				for (int v = 0; v < argList.count(); v++) {
+					addCode("private " + argList.get(v) + ";", indentPlusOne, isDisabled);
+				}
+				// Constructor
+				addCode("public " + workerNameBase + i + "(" + argList.concatenate(", ") + ") {", indentPlusOne, isDisabled);
+				for (int v = 0; v < usedVars.count(); v++) {
+					String memberName = usedVars.get(v);
+					addCode("this." + memberName + " = " + memberName + ";", indentPlusTwo, isDisabled);
+				}
+				addCode ("}", indentPlusOne, isDisabled);
+				// Call method
+				addCode("public Object[] call() throws Exception {", indentPlusOne, isDisabled);
+				generateCode(sq, indentPlusTwo);
+				addCode ("Object[] results = new Object[]{" + setVars.concatenate(",") + "};", indentPlusTwo, isDisabled);
+				addCode("return results;", indentPlusTwo, isDisabled);
+				addCode("}", indentPlusOne, isDisabled);
+				addCode("};", _indent, isDisabled);
+				i++;
+			}
+		}
+		insertComment("============ END PARALLEL WORKER DEFINITIONS =============", _indent);
+		code.add(_indent);		
+	}
+	
+	private StringList makeArgList(StringList varNames, HashMap<String, TypeMapEntry> typeMap)
+	{
+		StringList argList = new StringList();
+		for (int v = 0; v < varNames.count(); v++) {
+			String varName = varNames.get(v);
+			TypeMapEntry typeEntry = typeMap.get(varName);
+			String typeSpec = "/*type?*/";
+			if (typeEntry != null) {
+				StringList typeSpecs = this.getTransformedTypes(typeEntry);
+				if (typeSpecs.count() == 1) {
+					typeSpec = typeSpecs.get(0);
+				}
+			}
+			argList.add(typeSpec + " " + varName);
+		}
+		return argList;
+	}
+	// END KGU#348 2017-02-25
+
 	/**
 	 * Composes the heading for the program or function according to the
 	 * C language specification.
@@ -502,9 +688,23 @@ public class JavaGenerator extends CGenerator
 		}
 		// END KGU#178 2016-07-20
 		if (_root.isProgram==true) {
-			if (topLevel && this.hasInput()) {
-				code.add(_indent + "import java.util.Scanner;");
-				code.add("");
+			if (topLevel) {
+				if (this.hasInput()) {
+					code.add(_indent + "import java.util.Scanner;");
+					code.add("");
+				}
+				// START KGU#348 2017-02-24: Enh. #348 - support translation of Parallel elements
+				if (this.hasParallels) {
+					code.add(_indent + "import java.util.concurrent.Callable;");
+					code.add(_indent + "import java.util.concurrent.ExecutorService;");
+					code.add(_indent + "import java.util.concurrent.Executors;");
+					code.add(_indent + "import java.util.concurrent.Future;");
+					code.add("");
+				}
+				// END KGU#348 2017-02-24
+				// STARTB KGU#351 2017-02-26: Enh. #346
+				this.insertUserIncludes(_indent);
+				// END KGU#351 2017-02-26
 			}
 			insertBlockComment(_root.getComment(), _indent, "/**", " * ", " */");
 			insertBlockHeading(_root, "public class " + _procName, _indent);
@@ -561,25 +761,14 @@ public class JavaGenerator extends CGenerator
 //	 * @param _indent - the current indentation string
 //	 * @param varNames - list of variable names introduced inside the body
 //	 */
-//	@Override
-//	protected String generatePreamble(Root _root, String _indent, StringList varNames)
-//	{
-//		code.add(_indent);
-//		insertComment("TODO: Declare and initialise local variables here:", _indent);
-//		for (int v = 0; v < varNames.count(); v++) {
-//			insertComment(varNames.get(v), _indent);
-//		}
-//		code.add(_indent);
-//		// START KGU#236 2016-12-22: Issue #227
-//		if (this.hasInput(_root)) {
-//			insertComment("TODO: You may have to modify input instructions,", _indent);			
-//			insertComment("      e.g. by replacing nextLine() with a more suitable call", _indent);
-//			insertComment("      according to the variable type, say nextInt().", _indent);			
-//			code.add(_indent);
-//		}
-//		// END KGU#236 2016-12-22
-//		return _indent;
-//	}
+	@Override
+	protected String generatePreamble(Root _root, String _indent, StringList varNames)
+	{
+		// START KGU#348 2017-02-24: Enh. #348
+		this.generateParallelThreadWorkers(_root, _indent);
+		// END KGU#348 2017-02-24
+		return super.generatePreamble(_root, _indent, varNames);
+	}
 	
 	@Override
 	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
@@ -594,10 +783,10 @@ public class JavaGenerator extends CGenerator
 	{
 		// START KGU#236 2016-12-22: Issue #227
 		if (this.hasInput(_root)) {
+			code.add(_indent);
 			insertComment("TODO: You may have to modify input instructions,", _indent);			
 			insertComment("      e.g. by replacing nextLine() with a more suitable call", _indent);
 			insertComment("      according to the variable type, say nextInt().", _indent);			
-			code.add(_indent);
 		}
 		// END KGU#236 2016-12-22
 	}

@@ -45,6 +45,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.07      Enh. #188: New copy constructor to support conversion (KGU#199)
  *      Kay Gürtzig     2016.07.19      Enh. #160: New method getSignatureString()
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
+ *      Kay Gürtzig     2017.02.20      Enh. #259: Retrieval of result types of called functions enabled (q&d)
  *
  ******************************************************************************************************
  *
@@ -81,11 +82,14 @@ package lu.fisch.structorizer.elements;
  */
 
 import java.awt.Color;
+import java.util.HashMap;
+import java.util.Vector;
 
 import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
+import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.IconLoader;
 
@@ -189,7 +193,7 @@ public class Call extends Instruction {
 	
 	// START #178 2016-07-19: Enh. #160
 	/**
-	 * Returns a string of form "&lt;function_name&gt;#&lt;parameter_count&gt;"
+	 * Returns a string of form "&lt;function_name&gt;(&lt;parameter_count&gt;)"
 	 * describing the signature of the called routine if the text is conform to
 	 * the call syntax described in the user guide. Otherwise null will be returned.
 	 * @return signature string, e.g. "factorial#1", or null
@@ -200,7 +204,10 @@ public class Call extends Instruction {
 		Function fct = this.getCalledRoutine();
 		if (fct != null)
 		{
-			signature = fct.getName() + "#" + fct.paramCount();
+			// START KGU#261 2017-02-20: Unified with Root.getSignatureString(false)
+			//signature = fct.getName() + "#" + fct.paramCount();
+			signature = fct.getSignatureString();
+			// END KGU#261 2017-02-20
 		}
 		return signature;
 	}
@@ -239,4 +246,33 @@ public class Call extends Instruction {
 		return null;
 	}
 
+	// START KGU#261 2017-02-20: Enh. #259 - Allow to retrieve return type info
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Instruction#getTypeFromAssignedValue(lu.fisch.utils.StringList, java.util.HashMap)
+	 */
+	@Override
+	protected String getTypeFromAssignedValue(StringList rightSide, HashMap<String, TypeMapEntry> knownTypes)
+	{
+		String typeSpec = "";
+		Function called = this.getCalledRoutine();
+		if (called != null) {
+			String signature = called.getSignatureString();
+			Root myRoot = Element.getRoot(this);
+			if (myRoot.getSignatureString(false).equals(signature)) {
+				typeSpec = myRoot.getResultType();
+			}
+			else if (Arranger.hasInstance()) {
+				Vector<Root> routines = Arranger.getInstance().findRoutinesBySignature(called.getName(), called.paramCount());
+				if (routines.size() == 1) {
+					typeSpec = routines.get(0).getResultType();
+				}
+			}
+			if (typeSpec == null) {
+				typeSpec = "";
+			}
+		}
+		return typeSpec;
+	}
+	// END KGU#261 2017-02-20
+	
 }

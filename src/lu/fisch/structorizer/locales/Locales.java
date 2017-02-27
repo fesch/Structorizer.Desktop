@@ -42,6 +42,7 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2016.09.28  KGU#263: Substrings "\n" in the text part now generally replaced by newline
  *      Kay Gürtzig     2016.12.07  Issue #304: Check for feasibility of mnemonic replacement via Reflection
  *      Kay Gürtzig     2016.02.03  Issue #340: registration without immediate update launch
+ *      Kay Gürtzig     2017.02.27  Enh. #346: Mechanism to translate an asterisk at index position to a loop over an array
  *
  ******************************************************************************************************
  *
@@ -606,15 +607,38 @@ public class Locales {
                                     // START KGU#252 2016-09-22: Issue #248 - workaround for Java 7
                                     //int index = Integer.parseUnsignedInt(piece2);
                                     //if (index < length) {
-                                    int index = Integer.parseInt(piece2);
-                                    if (index >= 0 && index < length) {
-                                	// END KGU#252 2016-09-22
-                                        target = Array.get(target, index);
-                                        fieldClass = target.getClass();
-                                        pieces.remove(2);	// Index no longer needed
-                                        pieces.set(1, pieces.get(1) + "[" + piece2 + "]");
-                                        piece2 = pieces.get(2).toLowerCase();
+                                    // START KGU#351 2017-02-26
+                                    //int index = Integer.parseInt(piece2);
+                                    //if (index >= 0 && index < length) {
+                                	//// END KGU#252 2016-09-22
+                                    //    target = Array.get(target, index);
+                                    //    fieldClass = target.getClass();
+                                    //    pieces.remove(2);	// Index no longer needed
+                                    //    pieces.set(1, pieces.get(1) + "[" + piece2 + "]");
+                                    //    piece2 = pieces.get(2).toLowerCase();
+                                    //}
+                                    int ixStart = 0, ixEnd = 0;
+                                    if (piece2.equals("*")) {
+                                    	// All indices!
+                                    	ixEnd = length;
                                     }
+                                    else {
+                                    	ixStart = Integer.parseInt(piece2);
+                                    	ixEnd = ixStart + 1;
+                                    }
+                                    pieces.remove(2);	// Index no longer needed
+                                    pieces.set(1, pieces.get(1) + "[" + piece2 + "]");
+                                    piece2 = pieces.get(2).toLowerCase();
+                                    if (ixStart >= 0 && ixEnd <= length) {
+                                    	String piece3 = (pieces.count()>3) ? pieces.get(3) : "0";
+                                    	for (int index = ixStart; index < ixEnd; index++) {
+                                    		Object tgt = Array.get(target, index);
+                                    		this.setFieldProperty(tgt, tgt.getClass(), piece2, piece3, parts);
+                                    	}
+                                    	// Target exhausted
+                                    	target = null;
+                                    }
+                                    // END KGU#351 2017-02-26
                                     // START KGU#252 2016-09-22: Issue #248 - workaround for Java 7
                                     else
                                     {
@@ -650,57 +674,61 @@ public class Locales {
                                 	}
                                 }
                                 // END KGU#242 2016-09-04
-
-                                if (piece2.equals("text")) {
-                                    Method method = fieldClass.getMethod("setText", new Class[]{String.class});
-                                    if(target != null)
-                                        method.invoke(target, new Object[]{parts.get(1)});
-                                } else if (piece2.equals("tooltip")) {
-                                    Method method = fieldClass.getMethod("setToolTipText", new Class[]{String.class});
-                                    if(target != null)
-                                        method.invoke(target, new Object[]{parts.get(1)});
-                                } else if (piece2.equals("border")) {
-                                    Method method = fieldClass.getMethod("setBorder", new Class[]{Border.class});
-                                    if(target != null)
-                                        method.invoke(target, new Object[]{new TitledBorder(parts.get(1))});
-                                } else if (piece2.equals("tab")) {
-                                    Method method = fieldClass.getMethod("setTitleAt", new Class[]{int.class, String.class});
-                                    if(target != null)
-                                        method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3)), parts.get(1)});
-                                } else if (piece2.equals("header")) {
-                                    Method method = fieldClass.getMethod("setHeaderTitle", new Class[]{int.class, String.class});
-                                    if(target != null)
-                                        method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3)), parts.get(1)});
-                                } // START KGU#184 2016-04-24: Enh. #173 - new mnemonic support (only works from Java 1.7 on)
-                                else if (piece2.equals("mnemonic")) {
-                                    Method method = fieldClass.getMethod("setMnemonic", new Class[]{int.class});
-                                    // START KGU 2016-12-07: Issue #304 We must check the availability of a Java 1.7 method.
-                                    try {
-                                        int keyCode = KeyEvent.getExtendedKeyCodeForChar(parts.get(1).toLowerCase().charAt(0));
-                                        if (keyCode != KeyEvent.VK_UNDEFINED && target != null) {
-                                            method.invoke(target, new Object[]{Integer.valueOf(keyCode)});
-                                        }
-                                    } catch (NoSuchMethodError ex) {
-                                    	System.out.println("Locales: Mnemonic localization failed due to legacy JavaRE (at least 1.7 required).");
-                                    }
-                                    // END KGU 2016-12-07
-                                } // END KGU#184 2016-04-24
-                                // START KGU#156 2016-03-13: Enh. #124 - intended for JComboBoxes
-                                else if (piece2.equals("item")) {
-                                    // The JCombobox is supposed to be equipped with enum objects providing a setText() method
-                                    // (see lu.fisch.structorizer.elements.RuntimeDataPresentMode and
-                                    // lu.fisch.structorizer.executor.Control for an example).
-                                    Method method = fieldClass.getMethod("getItemAt", new Class[]{int.class});
-                                    if(target != null)
-                                    {
-                                        Object item = method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3))});
-                                        if (item != null) {
-                                            Class<?> itemClass = item.getClass();
-                                            method = itemClass.getMethod("setText", new Class[]{String.class});
-                                            method.invoke(item, new Object[]{parts.get(1)});
-                                        }
-                                    }
-                                }
+                                
+                                // START KGU#351 2017-02-26: Decomposition to allow index loops
+//                                if (piece2.equals("text")) {
+//                                    Method method = fieldClass.getMethod("setText", new Class[]{String.class});
+//                                    if(target != null)
+//                                        method.invoke(target, new Object[]{parts.get(1)});
+//                                } else if (piece2.equals("tooltip")) {
+//                                    Method method = fieldClass.getMethod("setToolTipText", new Class[]{String.class});
+//                                    if(target != null)
+//                                        method.invoke(target, new Object[]{parts.get(1)});
+//                                } else if (piece2.equals("border")) {
+//                                    Method method = fieldClass.getMethod("setBorder", new Class[]{Border.class});
+//                                    if(target != null)
+//                                        method.invoke(target, new Object[]{new TitledBorder(parts.get(1))});
+//                                } else if (piece2.equals("tab")) {
+//                                    Method method = fieldClass.getMethod("setTitleAt", new Class[]{int.class, String.class});
+//                                    if(target != null)
+//                                        method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3)), parts.get(1)});
+//                                } else if (piece2.equals("header")) {
+//                                    Method method = fieldClass.getMethod("setHeaderTitle", new Class[]{int.class, String.class});
+//                                    if(target != null)
+//                                        method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3)), parts.get(1)});
+//                                } // START KGU#184 2016-04-24: Enh. #173 - new mnemonic support (only works from Java 1.7 on)
+//                                else if (piece2.equals("mnemonic")) {
+//                                    Method method = fieldClass.getMethod("setMnemonic", new Class[]{int.class});
+//                                    // START KGU 2016-12-07: Issue #304 We must check the availability of a Java 1.7 method.
+//                                    try {
+//                                        int keyCode = KeyEvent.getExtendedKeyCodeForChar(parts.get(1).toLowerCase().charAt(0));
+//                                        if (keyCode != KeyEvent.VK_UNDEFINED && target != null) {
+//                                            method.invoke(target, new Object[]{Integer.valueOf(keyCode)});
+//                                        }
+//                                    } catch (NoSuchMethodError ex) {
+//                                    	System.out.println("Locales: Mnemonic localization failed due to legacy JavaRE (at least 1.7 required).");
+//                                    }
+//                                    // END KGU 2016-12-07
+//                                } // END KGU#184 2016-04-24
+//                                // START KGU#156 2016-03-13: Enh. #124 - intended for JComboBoxes
+//                                else if (piece2.equals("item")) {
+//                                    // The JCombobox is supposed to be equipped with enum objects providing a setText() method
+//                                    // (see lu.fisch.structorizer.elements.RuntimeDataPresentMode and
+//                                    // lu.fisch.structorizer.executor.Control for an example).
+//                                    Method method = fieldClass.getMethod("getItemAt", new Class[]{int.class});
+//                                    if(target != null)
+//                                    {
+//                                        Object item = method.invoke(target, new Object[]{Integer.valueOf(pieces.get(3))});
+//                                        if (item != null) {
+//                                            Class<?> itemClass = item.getClass();
+//                                            method = itemClass.getMethod("setText", new Class[]{String.class});
+//                                            method.invoke(item, new Object[]{parts.get(1)});
+//                                        }
+//                                    }
+//                                }
+                                String piece3 = (pieces.count() > 3) ? pieces.get(3) : "0";
+                                this.setFieldProperty(target, fieldClass, piece2, piece3, parts);
+                                // END KGU#351 2017-02-26
                                 // END KGU#156 2016-03-13
                             } catch (Exception e) {
                             	String reason = e.getMessage();
@@ -719,6 +747,59 @@ public class Locales {
             }
         }
     }
+    
+    // START KGU#351 2017-02-26: Outsourced from setLocale(Component, StringList)
+    private void setFieldProperty(Object _target, Class<?> _fieldClass, String _property, String _piece3, StringList _parts) throws Exception
+    {
+    	if (_target == null) {
+    		return;
+    	}
+        if (_property.equals("text")) {
+            Method method = _fieldClass.getMethod("setText", new Class[]{String.class});
+            method.invoke(_target, new Object[]{_parts.get(1)});
+        } else if (_property.equals("tooltip")) {
+            Method method = _fieldClass.getMethod("setToolTipText", new Class[]{String.class});
+            method.invoke(_target, new Object[]{_parts.get(1)});
+        } else if (_property.equals("border")) {
+            Method method = _fieldClass.getMethod("setBorder", new Class[]{Border.class});
+            method.invoke(_target, new Object[]{new TitledBorder(_parts.get(1))});
+        } else if (_property.equals("tab")) {
+            Method method = _fieldClass.getMethod("setTitleAt", new Class[]{int.class, String.class});
+            method.invoke(_target, new Object[]{Integer.valueOf(_piece3), _parts.get(1)});
+        } else if (_property.equals("header")) {
+            Method method = _fieldClass.getMethod("setHeaderTitle", new Class[]{int.class, String.class});
+            method.invoke(_target, new Object[]{Integer.valueOf(_piece3), _parts.get(1)});
+        } // START KGU#184 2016-04-24: Enh. #173 - new mnemonic support (only works from Java 1.7 on)
+        else if (_property.equals("mnemonic")) {
+            Method method = _fieldClass.getMethod("setMnemonic", new Class[]{int.class});
+            // START KGU 2016-12-07: Issue #304 We must check the availability of a Java 1.7 method.
+            try {
+                int keyCode = KeyEvent.getExtendedKeyCodeForChar(_parts.get(1).toLowerCase().charAt(0));
+                if (keyCode != KeyEvent.VK_UNDEFINED) {
+                    method.invoke(_target, new Object[]{Integer.valueOf(keyCode)});
+                }
+            } catch (NoSuchMethodError ex) {
+            	System.out.println("Locales: Mnemonic localization failed due to legacy JavaRE (at least 1.7 required).");
+            }
+            // END KGU 2016-12-07
+        } // END KGU#184 2016-04-24
+        // START KGU#156 2016-03-13: Enh. #124 - intended for JComboBoxes
+        else if (_property.equals("item")) {
+            // The JCombobox is supposed to be equipped with enum objects providing a setText() method
+            // (see lu.fisch.structorizer.elements.RuntimeDataPresentMode and
+            // lu.fisch.structorizer.executor.Control for an example).
+            Method method = _fieldClass.getMethod("getItemAt", new Class[]{int.class});
+            Object item = method.invoke(_target, new Object[]{Integer.valueOf(_piece3)});
+            if (item != null) {
+            	Class<?> itemClass = item.getClass();
+            	method = itemClass.getMethod("setText", new Class[]{String.class});
+            	method.invoke(item, new Object[]{_parts.get(1)});
+            }
+        }
+        // END KGU#156 2016-03-13
+    	
+    }
+    // END KGU#351 2017-02-26
     
     /**
      * Returns the name of the current locale
