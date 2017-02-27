@@ -91,6 +91,7 @@
  *      Kay Gürtzig     2017.01.05      Enh. #319: Captions for the Arranger index popup menu
  *      Kay Gürtzig     2017.01.07      Enh. #329: Messages for Analyser check 21
  *      Kay Gürtzig     2017.01.11      Issue #81/#330: Messages for scaling Preview
+ *      Kay Gürtzig     2017.02.26      Enh. #346: Additions for ExportOptionDialoge
  *
  ******************************************************************************************************
  *
@@ -712,6 +713,8 @@ PrintPreview.btnOK.tooltip=Print the diagram.
 
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Export options ...
+ExportOptionDialoge.tabbedPane.tab.0=General
+ExportOptionDialoge.tabbedPane.tab.1=Includes
 ExportOptionDialoge.noConversionCheckBox.text=No conversion of the expression/instruction contents.
 ExportOptionDialoge.noConversionCheckBox.tooltip=Select this option if the text content of your elements already represents target language syntax.
 ExportOptionDialoge.commentsCheckBox.text=Export instructions as comments.
@@ -724,6 +727,7 @@ ExportOptionDialoge.chkCharsetAll.text=List all?
 ExportOptionDialoge.jLabel1.text=Please select the options you want to activate...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Save these settings.
+ExportOptionDialoge.includeLists.*.tooltip=Fill in a comma-separated list of files or modules for which include/import/use clauses are to be inserted
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Import options ...

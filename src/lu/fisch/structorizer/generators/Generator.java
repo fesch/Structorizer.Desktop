@@ -65,7 +65,9 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.01.26      Enh. #259: Type info is now gathered for declarations support
  *      Kay Gürtzig     2017.01.30      Bugfix #337: Mutilation of lvalues with nested index access
  *      Kay Gürtzig     2017.02.19      KGU#348: Additions to support PythonGenerator in generating Parallel code
- *      Kay Gürtzig     2017.02.20      Bugfix #349: Export missed to generate recursive subroutines and their callers 
+ *      Kay Gürtzig     2017.02.20      Bugfix #349: Export missed to generate recursive subroutines and their callers
+ *      Kay Gürtzig     2017.02.26      Enh. #346 (mechanism to add user-configured file includes) 
+ *      Kay Gürtzig     2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *
  ******************************************************************************************************
  *
@@ -137,6 +139,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	// START KGU#178 2016-07-19: Enh. #160
 	private boolean exportSubroutines = false;
 	// END KGU#178 2016-07-19
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	private String includeFiles = "";
+	// END KGU#351 2017-02-26
+
 	protected StringList code = new StringList();
 	
 	// START KGU#194 2016-05-07: Bugfix #185 - subclasses might need filename access
@@ -247,6 +253,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected abstract boolean breakMatchesCase();
 	// END KGU#78 2015-12-18
 	
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/**
+	 * Returns the pattern of the target-language specific include/import/uses phrase
+	 * for user-specific file includes with a "%" character as placeholder for the
+	 * single file name or the substring "%%" if a comma-separated list is allowed.
+	 * @return String to be inserted in order to load a user-specific include file or null
+	 */
+	protected abstract String getIncludePattern();
+	// END KGU#351 2017-02-26
+	
 	/************ Code Generation **************/
 	
 	// START KGU#16 2015-12-18: Enh. #66 - Code style option for opening brace placement
@@ -273,6 +289,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#178 2016-07-19	
 	
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	protected String optionIncludeFiles()
+	{
+		return this.includeFiles;
+	}
+	// END KGU#351 2017-02-26
+
 	// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
 	protected boolean hasOutput(Root _root)
 	{
@@ -399,6 +422,38 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU 2015-10-18
 	
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	protected void insertUserIncludes(String _indent)
+	{
+		String pattern = this.getIncludePattern();
+		String includes = this.optionIncludeFiles().trim();
+		if (pattern != null && includes != null && !includes.isEmpty()) {
+			if (pattern.contains("%%")) {
+				code.add(_indent + pattern.replace("%%", includes));
+			}
+			else if (pattern.contains("%")) {
+				String[] items = includes.split(",");
+				for (int i = 0; i < items.length; i++) {
+					String item = items[i].trim();
+					if (!item.isEmpty()) {
+						code.add(_indent + pattern.replace("%", prepareIncludeItem(item)));						
+					}
+				}
+			}
+		}
+	}
+	/**
+	 * Method may preprocess an include file or module name for the import / use
+	 * clause. This version does nothing but may be overridden. 
+	 * @param _includeFileName a string from the user include configuration
+	 * @return the preprocessed string as to be actually inserted
+	 */
+	protected String prepareIncludeItem(String _includeFileName)
+	{
+		return _includeFileName;
+	}
+	// END KGU#351 2017-02-26
+
 	// START KGU#277 2016-10-13: Enh. #270
 	/**
 	 * Depending on asComment, adds the given text either as comment or as active
@@ -1378,6 +1433,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			// START KGU#178 2016-07-19: Enh. #160
 			exportSubroutines = ini.getProperty("genExportSubroutines", "0").equals("true");
 			// END KGU#178 2016-07-19
+			// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+			includeFiles = ini.getProperty("genExportIncl" + this.getClass().getSimpleName(), "");
+			// END KGU#351 2017-02-26
+
 		} 
 		catch (FileNotFoundException ex)
 		{

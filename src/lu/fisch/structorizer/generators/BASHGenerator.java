@@ -68,6 +68,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig         2016.11.06      Issue #279: Method HashMap.getOrDefault() replaced
  *      Kay Gürtzig         2017.01.05      Enh. #314: File API TODO comments added  
+ *      Kay Gürtzig         2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *
  ******************************************************************************************************
  *
@@ -184,6 +185,17 @@ public class BASHGenerator extends Generator {
 	}
 	// END KGU#78 2015-12-18
 	
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getIncludePattern()
+	 */
+	@Override
+	protected String getIncludePattern()
+	{
+		return ". %";
+	}
+	// END KGU#351 2017-02-26
+
 	// START KGU#241 2016-09-01: Issue #234: names of certain occurring functions detected by checkElementInformation()
 	protected StringList occurringFunctions = new StringList();
 	// END KGU#241 2015-09-01
@@ -974,6 +986,9 @@ public class BASHGenerator extends Generator {
 		if (topLevel)
 		{
 			code.add("#!/bin/bash");
+			// STARTB KGU#351 2017-02-26: Enh. #346
+			this.insertUserIncludes("");
+			// END KGU#351 2017-02-26
 		}
 		code.add("");
 

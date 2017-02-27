@@ -147,7 +147,7 @@ public class AnalyserPreferences extends LangDialog {
 
 	public AnalyserPreferences(Frame owner) {
 		super(owner);
-                setModal(true);
+		setModal(true);
 		initComponents();
 	}
 

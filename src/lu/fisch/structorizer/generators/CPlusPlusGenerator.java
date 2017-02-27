@@ -49,6 +49,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
  *      Kay Gürtzig     2017.01.31      Enh. #113: Array parameter transformation
  *      Kay Gürtzig     2017.02.21      Enh. #348: Parallel sections translated with <thread> library
+ *      Kay Gürtzig     2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *
  ******************************************************************************************************
  *
@@ -417,6 +418,9 @@ public class CPlusPlusGenerator extends CGenerator {
 				code.add("#include <thread>");
 			}
 			// END KGU#348 2017-02-21
+			// STARTB KGU#351 2017-02-26: Enh. #346
+			this.insertUserIncludes("");
+			// END KGU#351 2017-02-26
 			// START KGU#311 2016-12-22: Enh. #314 - support for file API
 			if (this.usesFileAPI) {
 		        this.insertFileAPI("cpp", code.count(), "", 0);

@@ -56,6 +56,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.12.27      Enh. #314: Support for Structorizer File API
  *      Kay Gürtzig             2017.02.19      Enh. #348: Parallel sections translated with threading module
  *      Kay Gürtzig             2017.02.23      Issue #350: getOutputReplacer() and Parallel export revised again
+ *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *
  ******************************************************************************************************
  *
@@ -169,6 +170,17 @@ public class PythonGenerator extends Generator
 			return false;
 		}
 		// END KGU 2016-08-12
+
+		// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+		/* (non-Javadoc)
+		 * @see lu.fisch.structorizer.generators.Generator#getIncludePattern()
+		 */
+		@Override
+		protected String getIncludePattern()
+		{
+			return "import %";
+		}
+		// END KGU#351 2017-02-26
 
 		/************ Code Generation **************/
 	    
@@ -770,6 +782,9 @@ public class PythonGenerator extends Generator
 					code.add(_indent + "from threading import Thread");
 				}
 				// END KGU#348 2017-02-19
+				// STARTB KGU#351 2017-02-26: Enh. #346
+				this.insertUserIncludes(indent);
+				// END KGU#351 2017-02-26
 				subroutineInsertionLine = code.count();
 				// START KGU#311 2016-12-27: Enh. #314: File API support
 				if (this.usesFileAPI) {

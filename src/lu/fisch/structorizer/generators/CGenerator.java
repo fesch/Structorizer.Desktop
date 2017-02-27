@@ -66,6 +66,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.01.26      Enh. #259/#335: Type retrieval and improved declaration support 
  *      Kay Gürtzig             2017.01.31      Enh. #113: Array parameter transformation
  *      Kay Gürtzig             2017.02.06      Minor corrections in generateJump(), String delimiter conversion (#343)
+ *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *
  ******************************************************************************************************
  *
@@ -236,6 +237,17 @@ public class CGenerator extends Generator {
 	}
 	// END KGU 2016-08-12
 
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getIncludePattern()
+	 */
+	@Override
+	protected String getIncludePattern()
+	{
+		return "#include %";
+	}
+	// END KGU#351 2017-02-26
+
 	/************ Code Generation **************/
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
@@ -266,6 +278,23 @@ public class CGenerator extends Generator {
 	protected String getOutputReplacer() {
 		return "printf(\"\", $1); printf(\"\\\\n\")";
 	}
+
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/**
+	 * Method preprocesses an include file name for the #include
+	 * clause. This version surrounds a string not enclosed in angular
+	 * brackets by quotes.
+	 * @param _includeFileName a string from the user include configuration
+	 * @return the preprocessed string as to be actually inserted
+	 */
+	protected String prepareIncludeItem(String _includeFileName)
+	{
+		if (!(_includeFileName.startsWith("<") && _includeFileName.endsWith(">"))) {
+			_includeFileName = "\"" + _includeFileName + "\"";
+		}
+		return _includeFileName;
+	}
+	// END KGU#351 2017-02-26
 
 	// START KGU#16/#47 2015-11-30
 	/**
@@ -1001,6 +1030,9 @@ public class CGenerator extends Generator {
 					code.add("#include <string.h>");
 					code.add("#include <errno.h>");
 				}
+				// STARTB KGU#351 2017-02-26: Enh. #346
+				this.insertUserIncludes("");
+				// END KGU#351 2017-02-26
 				code.add("");
 			}
 			// END KGU#236 2016-08-10

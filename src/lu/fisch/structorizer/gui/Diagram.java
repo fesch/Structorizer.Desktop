@@ -111,6 +111,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling of FileChooser for Nimbus L&F solved
  *      Kay Gürtzig     2017.01.27      Issues #290/#306: Signature and logic of openNsdOrArr slightly modified
  *      Kay Gürtzig     2017.02.08      Bugfix #198: Cursor navigation for Alternatives and CASE elements fixed
+ *      Kay Gürtzig     2017.02.27      Enh. #346: Export option dialog changes for user-specific include directives
  *
  ******************************************************************************************************
  *
@@ -4495,9 +4496,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // END KGU#170 2016-04-01
             // START KGU#168 2016-04-04: Issue #149 Charsets for export
             eod.charsetListChanged(ini.getProperty("genExportCharset", Charset.defaultCharset().name()));
-            // END KGU#168 2016-04-04
+            // END KGU#168 2016-04-04 
+            // START KGU#351 2017-02-26: Enh. #346
+            if (eod.generatorKeys != null) {
+                for (int i = 0; i < eod.targetLabels.length; i++) {
+                    String propertyName = "genExportIncl" + eod.generatorKeys.get(i);
+                    eod.includeLists[i].setText(ini.getProperty(propertyName, ""));
+                }
+            }
+            // END KGU#351 2017-02-26
+
             eod.setVisible(true);
-            
+                        
             if(eod.goOn==true)
             {
                 ini.setProperty("genExportComments", String.valueOf(eod.commentsCheckBox.isSelected()));
@@ -4519,6 +4529,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 // START KGU#168 2016-04-04: Issue #149 Charset for export
                 ini.setProperty("genExportCharset", (String)eod.cbCharset.getSelectedItem());
                 // END KGU#168 2016-04-04
+                // START KGU#351 2017-02-26: Enh. #346
+                if (eod.generatorKeys != null) {
+                    for (int i = 0; i < eod.targetLabels.length; i++) {
+                        String propertyName = "genExportIncl" + eod.generatorKeys.get(i);
+                        ini.setProperty(propertyName, eod.includeLists[i].getText().trim());
+                    }
+                }
+                // END KGU#351 2017-02-26
                 ini.save();
             }
         } 

@@ -59,6 +59,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
  *      Kay Gürtzig             2017.02.01      Enh. #113: Array parameter transformation
  *      Kay Gürtzig             2017.02.24      Enh. #348: Parallel sections translated with java.utils.concurrent.Callable
+ *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *
  ******************************************************************************************************
  *
@@ -197,6 +198,17 @@ public class JavaGenerator extends CGenerator
 	}
 	// END KGU 2016-08-12
 
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getIncludePattern()
+	 */
+	@Override
+	protected String getIncludePattern()
+	{
+		return "import %";
+	}
+	// END KGU#351 2017-02-26
+
 	/************ Code Generation **************/
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
@@ -230,6 +242,20 @@ public class JavaGenerator extends CGenerator
 	{
 		return "System.out.println($1)";
 	}
+
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/**
+	 * Method preprocesses an include file name for the #include
+	 * clause. This version surrounds a string not enclosed in angular
+	 * brackets by quotes.
+	 * @param _includeFileName a string from the user include configuration
+	 * @return the preprocessed string as to be actually inserted
+	 */
+	protected String prepareIncludeItem(String _includeFileName)
+	{
+		return _includeFileName;
+	}
+	// END KGU#351 2017-02-26
 
 	// START KGU#16/#47 2015-11-30
 	/**
@@ -676,6 +702,9 @@ public class JavaGenerator extends CGenerator
 					code.add("");
 				}
 				// END KGU#348 2017-02-24
+				// STARTB KGU#351 2017-02-26: Enh. #346
+				this.insertUserIncludes(_indent);
+				// END KGU#351 2017-02-26
 			}
 			insertBlockComment(_root.getComment(), _indent, "/**", " * ", " */");
 			insertBlockHeading(_root, "public class " + _procName, _indent);

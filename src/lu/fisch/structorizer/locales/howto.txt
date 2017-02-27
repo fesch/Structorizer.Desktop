@@ -99,6 +99,9 @@ use Structorizer locales.
     >>> The name of a checkbox held in an array:
         AnalyserPreferences.checkboxes.1.text=Comprobar modificación de la variable del bucle.
         
+    >>> The common tooltip of all text fields held in an array (asterisk means all indices):
+        ExportOptionDialoge.includeLists.*.tooltip=Fill in a comma-separated list of ... 
+        
     >>> Conditional text of a label:
         InputBox.lblText.text[elementType:Alternative]=Eingabe der Bedingung an dieser Stelle.
 

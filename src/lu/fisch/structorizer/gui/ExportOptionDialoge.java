@@ -20,6 +20,9 @@
 
 package lu.fisch.structorizer.gui;
 
+import java.awt.BorderLayout;
+import java.awt.Container;
+
 /*
  ******************************************************************************************************
  *
@@ -42,6 +45,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.11   Issue #81: DPI-awareness workaround for checkboxes
  *      Kay Gürtzig     2017.01.07   Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *      Kay Gürtzig     2017.01.09   Bugfix #330 (issue #81): Rescaling stuff outsourced to class GUIScaler
+ *      Kay Gürtzig     2017.02.27   Enh. #346: New tab for configuration of user-specific include directives
  *
  ******************************************************************************************************
  *
@@ -52,6 +56,9 @@ package lu.fisch.structorizer.gui;
 
 import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -60,6 +67,10 @@ import java.io.BufferedInputStream;
 import java.nio.charset.Charset;
 import java.util.Set;
 import java.util.Vector;
+
+import javax.swing.JLabel;
+import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
 
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.locales.LangDialog;
@@ -98,7 +109,13 @@ public class ExportOptionDialoge extends LangDialog
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel1 = new javax.swing.JPanel();
+    	// START KGU#351 2017-02-26: Enh. #346
+    	tabbedPane = new javax.swing.JTabbedPane();
+    	contentPanel0 = new javax.swing.JPanel();
+    	contentPanel1 = new javax.swing.JPanel();
+    	buttonBar = new javax.swing.JPanel();
+    	// END KGU#351 2017-02-26
+        //jPanel1 = new javax.swing.JPanel();
         // START KGU#162 2016-03-31: Enh. #144 - now option to suppress all content transformation
         noConversionCheckBox = new javax.swing.JCheckBox();
         // END KGU#162 2016-03-31
@@ -124,16 +141,16 @@ public class ExportOptionDialoge extends LangDialog
         
         setTitle("Export options ...");
 
-        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 0, Short.MAX_VALUE)
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 0, Short.MAX_VALUE)
-        );
+        //org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
+        //jPanel1.setLayout(jPanel1Layout);
+        //jPanel1Layout.setHorizontalGroup(
+        //    jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+        //    .add(0, 0, Short.MAX_VALUE)
+        //);
+        //jPanel1Layout.setVerticalGroup(
+        //    jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+        //    .add(0, 0, Short.MAX_VALUE)
+        //);
 
         // START KGU#168 2016-04-04: Issue #149
         lbVoid1.setText(" ");	// FIXME: Can we replace this by insets?
@@ -213,8 +230,13 @@ public class ExportOptionDialoge extends LangDialog
             }
         });
 
-        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
+        // START KGU#351 217-02-26: Enh. #346
+		//======== contentPanel0 ========
+        //org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
+        //getContentPane().setLayout(layout);
+        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(contentPanel0);
+        contentPanel0.setLayout(layout);
+        // END KGU#351 2017-02-26
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
@@ -227,8 +249,8 @@ public class ExportOptionDialoge extends LangDialog
                             // START KGU#178 2016-07-20: Enh. #160
                             .add(chkExportSubroutines))
                             // END KGU#178 2016-07-20
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        /*.addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)*/)
                     // START KGU#168 2016-04-04: Enh. #149
                     .add(layout.createSequentialGroup()
                     		.add(lbVoid1)
@@ -260,9 +282,9 @@ public class ExportOptionDialoge extends LangDialog
                     // END KGU#162 2016-03-31
                     .add(commentsCheckBox)
                     .add(jLabel1)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                    /*.add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(jButton1)
-                        .addContainerGap())))
+                        .addContainerGap())*/))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -310,10 +332,68 @@ public class ExportOptionDialoge extends LangDialog
                 .add(chkExportSubroutines)
                 // END KGU#178 2016-07-20
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jButton1)
+                /*.add(jButton1)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 8, Short.MAX_VALUE)
-                .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)*/)
         );
+        
+        // START KGU#351 2017-02-26: Enh. #346
+		//======== contentPanel1 ========
+		{
+			// get generator Names
+			Vector<String> generatorNames = this.getCodeGeneratorNames();
+			int nGenerators = generatorNames.size();
+			
+			this.targetLabels = new JLabel[nGenerators];
+			this.includeLists = new JTextField[nGenerators];
+	        GridBagLayout gbl = new GridBagLayout();
+	        GridBagConstraints gbc0 = new GridBagConstraints();
+	        GridBagConstraints gbc1 = new GridBagConstraints();
+			contentPanel1.setLayout(gbl);
+			gbc0.gridx = 1;
+			gbc0.gridy = 1;
+			gbc0.gridwidth = 1;
+			gbc0.gridheight = 1;
+			gbc0.fill = GridBagConstraints.BOTH;
+			gbc1.gridx = 2;
+			gbc1.gridy = 1;
+			gbc1.gridwidth = GridBagConstraints.REMAINDER;
+			gbc1.gridheight = 1;
+			gbc1.fill = GridBagConstraints.BOTH;
+
+			for (int i = 0; i < nGenerators; i++)
+			{
+				this.targetLabels[i] = new JLabel(generatorNames.get(i));
+				contentPanel1.add(targetLabels[i], gbc0);
+				this.includeLists[i] = new JTextField(20);
+				//this.includeLists[i].setPreferredSize(new Dimension(100, 20));
+				this.includeLists[i].setToolTipText("Fill in a comma-separated list of files or modules for which include/import/use clauses are to be inserted");
+				contentPanel1.add(includeLists[i], gbc1);
+				gbc0.gridy++; gbc1.gridy++;
+			}
+			
+		}
+
+		//======== buttonBar ========
+		{
+			buttonBar.setBorder(new EmptyBorder(12, 0, 0, 0));
+			buttonBar.setLayout(new GridBagLayout());
+			((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
+			((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
+
+			//---- btnOK ----
+			buttonBar.add(jButton1, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
+				GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+				new Insets(0, 0, 0, 0), 0, 0));
+		}
+		
+		Container contentPane = getContentPane();
+		contentPane.setLayout(new BorderLayout());
+		contentPane.add(tabbedPane, BorderLayout.CENTER);
+        tabbedPane.addTab("General", contentPanel0);
+        tabbedPane.addTab("Includes", contentPanel1);
+        contentPane.add(buttonBar, BorderLayout.SOUTH);
+        // END KGU#351 2017-02-26
         
         // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
         GUIScaler.rescaleComponents(this);
@@ -395,6 +475,9 @@ public class ExportOptionDialoge extends LangDialog
 		// read generators from file
 		// and add them to the Vector
     	Vector<String> generatorNames = new Vector<String>();
+    	// START KGU#351 2017-02-26: Enh. #346 - include/uses configuration
+    	this.generatorKeys = new Vector<String>();
+    	// END KGU#351 2017-02-26
 		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("generators.xml"));
 		GENParser genp = new GENParser();
 		Vector<GENPlugin> plugins = genp.parse(buff);
@@ -402,6 +485,9 @@ public class ExportOptionDialoge extends LangDialog
 		{
 			GENPlugin plugin = (GENPlugin) plugins.get(i);
 			generatorNames.add(plugin.title);
+			String genKey = plugin.className;
+			genKey = genKey.substring(genKey.lastIndexOf(".")+1);
+			generatorKeys.add(genKey);
 		}
 		return generatorNames;
     }
@@ -456,12 +542,21 @@ public class ExportOptionDialoge extends LangDialog
     public static String[] standardCharsets = {"ISO-8859-1", "UTF-8", "UTF-16", "windows-1250", "windows-1252", "US-ASCII"};
     // END KGU#168 2016-04-04
     
+	// START KGU#351 2017-02-26: Enh. #346
+	public javax.swing.JTabbedPane tabbedPane;
+	public javax.swing.JPanel contentPanel0;
+	public javax.swing.JPanel contentPanel1;
+	protected JLabel[] targetLabels;
+	protected JTextField[] includeLists = new JTextField[1];
+	public javax.swing.JPanel buttonBar;
+	public Vector<String> generatorKeys;
+	// END KGU#351 2017-02-26
     // Variables declaration - do not modify//GEN-BEGIN:variables
     public javax.swing.JCheckBox bracesCheckBox;
     public javax.swing.JCheckBox commentsCheckBox;
     public javax.swing.JButton jButton1;
     public javax.swing.JLabel jLabel1;
-    private javax.swing.JPanel jPanel1;
+    //private javax.swing.JPanel jPanel1;
     public javax.swing.JCheckBox lineNumbersCheckBox;
     // START KGU#162 2016-03-31: Enh. #144 - new option to suppress all content transformation
     public javax.swing.JCheckBox noConversionCheckBox;
