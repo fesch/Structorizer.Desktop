@@ -261,7 +261,7 @@ Menu.msgNewerVersionAvail.text=
 Menu.msgUpdateInfoHint.text=
 Menu.lblOk.text=
 Menu.lblSuppressUpdateHint.text=
-Menu.lblHint.txt=
+Menu.lblHint.text=Информация
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!

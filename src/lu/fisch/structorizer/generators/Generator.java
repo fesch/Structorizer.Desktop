@@ -1355,7 +1355,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @param _paramNames - list of the argument names
 	 * @param _paramTypes - list of corresponding type names (possibly null) 
 	 * @param _resultType - result type name (possibly null)
-	 * @return the default indentation string for the subsequent stuff
+	 * @return the default indentation string for the preamble stuff following
 	 */
 	protected String generateHeader(Root _root, String _indent, String _procName,
 			StringList _paramNames, StringList _paramTypes, String _resultType)
@@ -1367,7 +1367,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * and adds it to this.code.
 	 * @param _root - the diagram root element
 	 * @param _indent - the current indentation string
-	 * @param varNames - list of variable names introduced inside the body
+	 * @param _varNames - list of variable names introduced inside the body
+	 * @return the default indentation string for the main implementation part
 	 */
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
@@ -1378,10 +1379,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * (after the algorithm code of the body) to this.code)
 	 * @param _root - the diagram root element
 	 * @param _indent - the current indentation string
-	 * @param alwaysReturns - whether all paths of the body already force a return
-	 * @param varNames - names of all assigned variables
+	 * @param _alwaysReturns - whether all paths of the body already force a return
+	 * @param _varNames - names of all assigned variables
+	 * @return the default indentation string for the following footer
 	 */
-	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
+	protected String generateResult(Root _root, String _indent, boolean _alwaysReturns, StringList _varNames)
 	{
 		return _indent;
 	}
