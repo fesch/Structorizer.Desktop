@@ -100,7 +100,7 @@ How To Write a Generator
 		boolean isTurtleizerMove(String line).
 	3.2	void generateCode(Alternative _alt, Strin _indent)
 		Is to generate the code for the given alternative element,
-		including its branches (_alt.gTrue, _alt.qFalse), which are
+		including its branches (_alt.qTrue, _alt.qFalse), which are
 		to handled by recursive calls of generateCode() at the
 		appropriate place.
 	3.3	void generateCode(Case _case, String _indent)
