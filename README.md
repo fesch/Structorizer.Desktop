@@ -21,7 +21,7 @@ I will not draw the entire changelog here, but just a few lines that, I think so
 
 * The first version, called "Structorizer 2006", was written in "Delphi 6 PE".
 * In january 2007 I decided to rename the project to "Structorizer", as "2006" did no longer apply and a lot of new features waited to be integrated.
-* Somewhat later in 2007 I ported the project for e first time to "Lazarus". I published a Linux version as well as the source code under the terms of the PGL license and called this sub-project "openStructorizer".
+* Somewhat later in 2007 I ported the project for e first time to "Lazarus". I published a Linux version as well as the source code under the terms of the GPL license and called this sub-project "openStructorizer".
 * I got my first Mac in may 2007 and wanted to have the application run in native mode. I did a second and this time complete port of the project to "Lazarus". Waiting for the next release to be published, I renamed the old project to "Structorizer (Delphi)" and stopped both of them.
 * I will publish Windows, Linux and Mac OSX (intel) ports of the new "Structorizer (Lazarus)" project. This will be completely open-source this time!
 * After the release of the Lazarus version, major problems were detected for the Windows port. This is why I came back to the Delphi code and continued developping "Structorizer (Delphi)", which will be published as freeware.
