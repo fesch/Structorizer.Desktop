@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="._*.*|lu/fisch/structorizer/io/Ini_old.java|lu/fisch/structorizer/generators/_old/|lu/fisch/structorizer/executor/Executor_old.java|lu/fisch/structorizer/executor/Executor_old2.java|lu/fisch/structorizer/generators/structorizerFileAPI.java" kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/bsh-2.0b4.jar"/>
+	<classpathentry kind="lib" path="lib/swing-layout-1.0.3.jar"/>
+	<classpathentry kind="lib" path="lib/freehep-graphics2d-2.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/freehep-graphicsio-2.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/freehep-graphicsio-svg-2.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/freehep-io-2.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/freehep-swing-2.0.3.jar"/>
+	<classpathentry kind="lib" path="lib/freehep-util-2.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/freehep-xml-2.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/freehep.jar"/>
+	<classpathentry kind="lib" path="lib/AppleJavaExtensions.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

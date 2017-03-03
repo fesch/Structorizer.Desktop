@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Ant-Version: nonw
+Created-By: Bob Fisch
+Main-Class: Structorizer
+Class-Path: lib/freehep-graphics2d-2.1.1.jar lib/freehep-graphicsio-2.
+ 1.1.jar lib/freehep-io-2.0.2.jar lib/freehep-swing-2.0.3.jar lib/free
+ hep-util-2.0.2.jar lib/freehep.jar lib/bsh-2.0b4.jar lib/swing-layout
+ -1.0.3.jar lib/freehep-graphicsio-svg-2.1.1.jar lib/freehep-xml-2.1.1
+ .jar
+X-COMMENT: Main-Class will be added automatically by build
