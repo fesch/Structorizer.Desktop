@@ -1,0 +1,65 @@
+#!/bin/sh
+set -e
+################################################################################
+#
+#      Author:		Klaus-Peter Reimers
+#
+#      Description:	This script compiles the source code, 
+#			generates a standard java application
+#			and then runs the application
+#
+################################################################################
+#
+#      Revision List
+#
+#      Author						Date			Description
+#      ------						----			-----------
+#      Klaus-Peter Reimers      	2008.06.04      First Issue
+#      Bob Fisch					2006.06.06      Script modified to work within
+#													an Eclipse project	
+#	   Bob Fisch & Philipp Hübner	2009.07.08  	Scripting ameliorations
+#      Kay Gürtzig                  2016.12.27      More resource files copied
+#
+################################################################################
+
+# delete old class files from "lu" package
+echo Removing .class files
+find src -name '*.class' -exec rm {} \;
+find bin -name '*.class' -exec rm {} \;
+
+# change into the "src" directory
+echo Changing into src directory
+cd src
+
+# compile the generator classes (non-dependant classes)
+echo Compiling non-dependant classes
+javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar lu/fisch/structorizer/generators/*.java
+
+# compile the application itself (and all dependend classes)
+echo Compiling Structorizer
+javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar Structorizer.java
+echo Compiling Structorizer Applet
+javac -d ../bin/ -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar StructorizerApplet.java
+
+# copying some other files to binary tree
+echo Copying resources
+[ -d ../bin/lu/fisch/structorizer/gui/icons ] && rm -R ../bin/lu/fisch/structorizer/gui/icons
+mkdir ../bin/lu/fisch/structorizer/gui/icons 
+cp -R lu/fisch/structorizer/gui/icons/* ../bin/lu/fisch/structorizer/gui/icons/
+cp -R lu/fisch/structorizer/gui/*.txt ../bin/lu/fisch/structorizer/gui/
+cp -R lu/fisch/structorizer/gui/*.xml ../bin/lu/fisch/structorizer/gui/
+cp -R lu/fisch/structorizer/locales/*.txt ../bin/lu/fisch/structorizer/locales/
+cp -R lu/fisch/structorizer/generators/*.txt ../bin/lu/fisch/structorizer/generators/
+cp -R goldengine/java/*.cgt ../bin/goldengine/java/
+cp -r goldengine/java/*.grm ../bin/goldengine/java/
+
+# changing into binary directory
+echo Changing into binary directory
+cd ../bin/
+
+# run the application
+echo Running Structorizer
+java -cp .:../lib/swing-layout-1.0.3.jar:../lib/bsh-2.0b4.jar:../lib/freehep-graphics2d-2.1.1.jar:../lib/freehep-graphicsio-2.1.1.jar:../lib/freehep-io-2.0.2.jar:../lib/freehep-swing-2.0.3.jar:../lib/freehep-util-2.0.2.jar:../lib/freehep.jar:../lib/freehep-xml-2.1.1.jar:../lib/freehep-graphicsio-svg-2.1.1.jar Structorizer
+
+# move back into the folder where we started
+cd ..

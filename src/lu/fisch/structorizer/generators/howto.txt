@@ -1,6 +1,22 @@
 How To Write a Generator
 ========================
 
+There are two possible approaches to add a new generator to Structorizer:
+You might start from scratch or copy an existing generator for a language
+with as much similarities to your target language as possible and modify
+it incrementally.
+For the first approach, you should just solve steps 1 and 2 and provide a
+rough prototype implementation of the the methods listed in section 3.
+There you might simply put the target-specific keywords, blocks, and
+indentations for the respective algorithm structur element together with
+the element text (untranslated, just as is) to the code StringList, in
+order to get familiar with the way the generators work. As soon as the
+generator prototype is translatable you might plug it in (see section 7).
+Start exporting some very simple diagrams. Then you will soon see what
+must be refined and added such that the expressions and statements fit
+better into the syntax of the target language. This way you may improve
+and accomplish the outcome step by step, consider more export options etc.
+
 1	Derive a new subclass of lu.fisch.structorizer.generators.Generator.
 2	Implement the abstract configuration methods:
 	2.1	String getDialogTitle()
@@ -151,13 +167,19 @@ How To Write a Generator
 		boolean Call.isFunctionCall(String line),
 		Function getCalledRoutine() - works only for single-line Calls.
 	3.9	void generateCode(Jump _jump, String _indent)
-		Class Jump still doesn't offer some classifying methods (is
-		planned, though) such that the generator must classify leave,
-		return, and exit jumps itself. Even more imortant is the
-		jumpTable member inherited from and automatically prepared by
-		the Generator base class: it maps Jump elements and elements
-		left by a jump to reference ids such that both can be matched
-		easily or unique jump labels may be derived from.
+		Class Jump is going to offer the following classification
+		methods:
+		boolean isLeave() - returns true if it's a break/leave
+		boolean isReturn() - returns true if it's a function return
+		boolean isExit() - returns true if it's a program exit.
+		The generator may still have to analyse the code lines and
+		identify the respective keywords in order to isolate values.
+		See section 4.1 how to getb the configured keywords.
+		Even more important is the jumpTable member inherited from
+		and automatically prepared by the Generator base class: it
+		maps Jump elements and elements left by a jump (loops) to
+		reference ids such that both can be matched easily or unique
+		jump labels may be derived from.
 	3.10	void generateCode(Parallel _para, String _indent)
 		Depending on whether the language supports concurrency either
 		a working multithreading section should be derived or at least
@@ -182,7 +204,26 @@ How To Write a Generator
 			String generateResult(Root, ...),
 			void generateFooter(Root, ...).
 4.	Export options and other preferences to be considered
-	(TODO)
+	4.1	Parser Preferences
+		For certain kinds of analysis (e.g. in generateCode(Jump,...))
+		some of the configured Parser Preferences may be needed. They
+		can be retrieved by method D7Parser.getKeyword(String tag)
+		which returns the configured keyword.
+		These are the defined tags for the keyword retrieval (do never
+		check against hard-coded keywords like e.g. "break"!):
+		"preAlt", "posAlt" for Alternatives (if statements),
+		"preFor", "postFor", "stepFor" for classical FOR loops,
+		"preForIn", "postForIn" for FOR loops of FOR-IN style,
+		"preWhile", "postWhile" for WHILE lop conditions,
+		"preRepeat", "postRepeat" for REPEAT loop conditions,
+		"preCase" for the CASE discriminator,
+		"postCase" for the branch selectors of CASE elements,
+		"preLeave" for leave (or break) instructions,
+		"preReturn" for return statements,
+		"preExit" for program exit instructions,
+		"input", "output" for input and output instructions.
+	4.2	Export options
+		(TODO)
 5.	Helper methods for element text transformation
 	The most important helper methods are:
 	5.1	String transform(String) with several submethods
@@ -227,10 +268,25 @@ How To Write a Generator
 	...
 	(TODO to be continued and explained)
 6.	Setup to support the FileAPI
-	(TODO)
+	Structorizer provides an executable proprietary API for text files.
+	You may want either to replace the FileAPI routine calls by equi-
+	valent target language constructs or to provide an emulation of
+	the routines of the Structorizer FileAPI in the target language,
+	which should then be integrated in the export.
+	If you decide to implement an emulation then you should place this
+	implementation as subroutine definitions of the target language
+	into a file with name "FileAPI.xxx.txt" where "xxx" is to be replaced
+	by the file name extension of your target language. Mark the code
+	range to be inserted into the export file with
 7.	Add the generator to the plugin configuration
 	Find the resource file generators.xml in the ...structorizer.gui
 	package directory and add a new <plugin> entry with a title string
 	for the export menu and the fully qualified class name of the new
 	generator. (For future enhancement, an icon attribute is prepared
 	but still not used for the menu. So best is to leave it empty.)
+8.	Batch Mode test
+	Make sure the generator also works fine in batch mode (i.e. from
+	command line):
+	Linux:	 	structorizer.sh -x <languageTitle> <nsdFile>
+	Windows:	structorizer.bat -x <languageTitle> <nsdFile>
+
