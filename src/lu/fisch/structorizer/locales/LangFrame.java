@@ -29,6 +29,7 @@ import javax.swing.JFrame;
  *
  * @author robertfisch
  */
+@SuppressWarnings("serial")
 public class LangFrame extends JFrame {
 
     public LangFrame() throws HeadlessException {

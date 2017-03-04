@@ -60,6 +60,11 @@
  *      Kay Gürtzig     2016.09.13      Entries for InputBox and InputBoxFor revised (bugfix #241)
  *      Kay Gürtzig     2016.09.22      Bugfix #241: Entries for InputBox and InputBoxFor finally revised
  *                                      AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016.10.11      Enh. #267: Menu.error15 divided into error15_1 and error15_2
+ *                                      Enh. #268: Sub-section OutputConsole added
+ *      Kay Gürtzig     2016.11.08      Enh. #270: Menu.menuDiagramDisable, Editor.btnDisable.tooltip etc. added
+ *      Kay Gürtzig     2016.11.10      Enh. #286: AnalyserPreferences tabs; About tab translations modified
+ *      Kay Gürtzig     2016.12.14      Enh. #311: New menu "Debug"
  *
  ******************************************************************************************************
  *
@@ -146,9 +151,6 @@ Menu.menuDiagramMoveDown.text=Sposta in basso
 Menu.menuDiagramTransmute.text=Trasmuta
 Menu.menuDiagramCollapse.text=Collassa
 Menu.menuDiagramExpand.text=Espandi
-// Breakpoint
-Menu.menuDiagramBreakpoint.text=Alterna breakpoint
-Menu.menuDiagramBreakTrigger.text=Condizione del breakpoint ... 
 // Diagram Appearance
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Principale
@@ -198,6 +200,17 @@ Menu.menuPreferencesSaveLoad.text=Carica da file ...
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
+
+// Menu "Debug"
+Menu.menuDebug.text=Debug
+Menu.menuDebug.mnemonic=b
+// Submenu of "Debug"
+Menu.menuDebugTurtle.text=Apri Turtleizer ...
+Menu.menuDebugExecute.text=Apri debugger ...
+Menu.menuDebugDropBrkpts.text=Cancella tutti breakpoint
+Menu.menuDebugBreakpoint.text=Alterna breakpoint
+Menu.menuDebugBreakTrigger.text=Condizione del breakpoint ...
+Menu.menuDebugDisable.text=Disattiva/riattiva
 
 // Menu "Help"
 Menu.menuHelp.text=Aiuto
@@ -265,7 +278,9 @@ Menu.error13_3.text=La tua funzione sembra usare diversi meccanismi di return in
 Menu.error14_1.text=Parametri del ciclo FOR non sono consistenti con la intestazione dello medesimo!
 Menu.error14_2.text=Il passo del ciclo FOR non è una constante intera!
 Menu.error14_3.text=Il nome della variabile «%» potrebbe collidere con una delle parole chiave di un ciclo FOR
-Menu.error15.text=La CALL non è partita da «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»
+Menu.error15_1.text=La CALL non è partita da «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»
+Menu.error15_2.text=La subroutine chiamata «%» no è reperibile per il momento.
+Menu.error15_3.text=Chiamata ambigua: Ci sono più sottoprogrammi «%».
 Menu.error16_1.text=Un elemento JUMP potrebbe essere vuoto o partire con uno di %, possibilmente seguito da un argomento!
 Menu.error16_2.text=Un istruzione di return, a meno che non sia  in posizione finale, deve formare un elemento JUMP!
 Menu.error16_3.text=Un'istruzione di exit, leave o break è consentita solo come lemento di JUMP!
@@ -280,6 +295,8 @@ Menu.error20.text=
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferenze dell'analizzatore
+AnalyserPreferences.contentPanel.tab.0=Algoritmico
+AnalyserPreferences.contentPanel.tab.1=Nomi e convenzioni
 AnalyserPreferences.checkboxes.1.text=Controlla variabile di ciclo modificata.
 AnalyserPreferences.checkboxes.2.text=Controlla cicli infiniti (finchè e rilevabile!)
 AnalyserPreferences.checkboxes.3.text=Controlla variabili non inizializzate.
@@ -294,7 +311,7 @@ AnalyserPreferences.checkboxes.11.text=Controlla errori di assegnamento.
 AnalyserPreferences.checkboxes.12.text=Controlla nomi dei parametri standardizzati. (LUX/MEN)
 AnalyserPreferences.checkboxes.13.text=Controlla se una funzione ritorna un risultato.
 AnalyserPreferences.checkboxes.14.text=Controlla se parametri del ciclo FOR si confan con la intestazione dello medesimo.
-AnalyserPreferences.checkboxes.15.text=Controlla CALL inappropiate nelle subroutine.
+AnalyserPreferences.checkboxes.15.text=Controlla que CALL è appropiata e subroutine chiamata è conseguibile.
 AnalyserPreferences.checkboxes.16.text=Controlla usi impropri di un elemento JUMP.
 AnalyserPreferences.checkboxes.17.text=Controlla rischi di inconsistenza nelle sezioni in PARALLEL.
 AnalyserPreferences.checkboxes.18.text=
@@ -371,6 +388,7 @@ Editor.btnColor9.tooltip=Colora l'elemento selezionato con questo colore.
 // collapsing
 Editor.btnCollapse.tooltip=Collassa l'elemento selezionato.
 Editor.btnExpand.tooltip=Espandi l'elemento selezionato.
+Editor.btnDisable.tooltip=Disattiva/riattiva i elementi selezionati.
 // turtleizer & executor
 Editor.btnTurtle.tooltip=Apri Turtleizer ...
 Editor.btnMake.tooltip=Apri debugger (controllo di esecuzione) ...
@@ -415,6 +433,7 @@ Editor.popupTransmute.text=Trasmuta
 // Collapsing
 Editor.popupCollapse.text=Collassa
 Editor.popupExpand.text=Espandi
+Editor.popupDisable.text=Disattiva/riattiva
 // Breakpoint
 Editor.popupBreakpoint.text=Alterna breakpoint
 Editor.popupBreakTrigger.text=
@@ -512,7 +531,7 @@ Preferences.btnOK.tooltip=Valida le tue scelte.
 
 -----[ About ]-----
 About.title=About
-About.pnlTabbed.tab.0=Implicated Persons
+About.pnlTabbed.tab.0=Personi coinvolti
 About.pnlTabbed.tab.1=Changelog
 About.pnlTabbed.tab.2=Licenzi
 About.btnOK.text=OK
@@ -694,3 +713,8 @@ Control.msgJumpOutParallel.text=
 Control.tblVar.header.0=
 Control.tblVar.header.1=
 
+-----[ OutputConsole ]-----
+OutputConsole.menu.text=Impostazione
+OutputConsole.menuFont.text=Caratteri ...
+OutputConsole.menuFontUp.text=Aumenta caratteri
+OutputConsole.menuFontDown.text=Diminuisci caratteri

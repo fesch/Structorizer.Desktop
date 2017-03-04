@@ -1,0 +1,223 @@
+#!/usr/bin/python
+#
+#    Structorizer
+#    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+#
+#    Copyright (C) 2009  Bob Fisch
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or any
+#    later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#******************************************************************************************************
+#*
+#*      Author:         Kay Gürtzig
+#*
+#*      Description:    File API for the PythonGenerator.
+#*
+#******************************************************************************************************
+#*
+#*      Revision List
+#*
+#*      Author          Date            Description
+#*      ------          ----            -----------
+#*      Kay Gürtzig     27.12.2016      First Issue
+#*
+#******************************************************************************************************
+#*
+#*      Comment:
+#*      - Structorizer File API implemented by a Python wrapper class
+#*
+#******************************************************************************************************///
+
+#===== STRUCTORIZER FILE API START =====
+
+class StructorizerFileAPI:
+	'Facade class for the Structorizer File API, mapping it via class methods to Python constructs'
+	
+	_openFileTable = {}
+	_nFiles = 0
+	
+	@classmethod
+	def open(cls, filePath):
+		fileNo = 0
+		try:
+			fileHandle = open(filePath, "r")
+			cls._nFiles += 1
+			fileNo = cls._nFiles
+			cls._openFileTable[fileNo] = fileHandle
+		except IOError:
+			fileNo = -1
+		return fileNo
+	
+	@classmethod
+	def create(cls, filePath):
+		fileNo = 0
+		try:
+			fileHandle = open(filePath, "w")
+			cls._nFiles += 1
+			fileNo = cls._nFiles
+			cls._openFileTable[fileNo] = fileHandle
+		except IOError:
+			fileNo = -1
+		return fileNo
+	
+	@classmethod
+	def append(cls, filePath):
+		fileNo = 0
+		try:
+			fileHandle = open(filePath, "a")
+			cls._nFiles += 1
+			fileNo = cls._nFiles
+			cls._openFileTable[fileNo] = fileHandle
+		except IOError:
+			fileNo = -1
+		return fileNo
+	
+	@classmethod
+	def close(cls, fileNo):
+		fileHandle = cls._openFileTable[fileNo]
+		fileHandle.close()
+		del cls._openFileTable[fileNo]
+	
+	@classmethod
+	def isEOF(cls, fileNo):
+		fileHandle = cls._openFileTable[fileNo]
+		offset = fileHandle.tell()
+		content = fileHandle.read(1)
+		atEOF = content == ""
+		fileHandle.seek(offset, 0)
+		return atEOF
+	
+	@classmethod
+	def write(cls, fileNo, value):
+		fileHandle = cls._openFileTable[fileNo]
+		fileHandle.write(str(value))
+	
+	@classmethod
+	def writeLine(cls, fileNo, value):
+		fileHandle = cls._openFileTable[fileNo]
+		fileHandle.write(str(value)+"\n")
+	
+	@classmethod
+	def _readWord(cls, fileHandle):
+		word = ""
+		char = fileHandle.read(1)
+		if (char == ""):
+			raise IOError("End of File")
+		while (char != "" and char.isspace()):
+			char = fileHandle.read(1)
+		while (char != "" and not char.isspace()):
+			word += char
+			offset = fileHandle.tell()
+			char = fileHandle.read(1)
+			if (char.isspace()):
+				fileHandle.seek(offset, 0)
+		return word        
+	
+	@classmethod
+	def read(cls, fileNo):
+		fileHandle = cls._openFileTable[fileNo]
+		word = cls._readWord(fileHandle)
+		if (len(word) > 0 and (word[0] == '"' or word[0] == "'") and not(len(word) > 1 and word.endswith(word[0]))):
+			nextWord = cls._readWord(fileHandle)
+			if (len(word) > 0):
+				word += " " + nextWord
+			while (len(nextWord) > 0 and not(len(word) > 1 and word.endswith(word[0]))):
+				nextWord = cls._readWord(fileHandle)
+				if (len(word) > 0):
+					word += " " + nextWord
+		elif (len(word) > 0 and word[0] == '{' and not(len(word) > 1 and word.endswith('}'))):
+			nextWord = cls._readWord(fileHandle)
+			if (len(word) > 0):
+				word += " " + nextWord
+			while (len(nextWord) > 0 and not(len(word) > 1 and word.endswith('}'))):
+				nextWord = cls._readWord(fileHandle)
+				if (len(word) > 0):
+					word += " " + nextWord
+			if (word.endswith('}')):
+				word = '[' + word[0:len(word)-1] + ']'
+		try:
+			value = eval(word)
+		except:
+			value = word
+		return value
+	
+	@classmethod
+	def readLine(cls, fileNo):
+		fileHandle = cls._openFileTable[fileNo]
+		line = ""
+		char = fileHandle.read(1)
+		while (char != "" and char != '\n'):
+			line += char
+		if (char == ""):
+			raise IOError("End of File")
+		return line
+	
+	@classmethod
+	def readChar(cls, fileNo):
+		fileHandle = cls._openFileTable[fileNo]
+		return fileHandle.read(1)
+	
+	@classmethod
+	def readInt(cls, fileNo):
+		fileHandle = cls._openFileTable[fileNo]
+		word = cls._readWord(fileHandle)
+		return int(word)
+	
+	@classmethod
+	def readDouble(cls, fileNo):
+		fileHandle = cls._openFileTable[fileNo]
+		word = cls._readWord(fileHandle)
+		return float(word)
+
+# Global functions as adapters for the StructorizerFileAPI methods
+def fileOpen(filePath):
+	return StructorizerFileAPI.open(filePath)
+
+def fileCreate(filePath):
+	return StructorizerFileAPI.create(filePath)
+
+def fileAppend(filePath):
+	return StructorizerFileAPI.append(filePath)
+
+def fileClose(fileNo):
+	StructorizerFileAPI.close(fileNo)
+	return
+
+def fileEOF(fileNo):
+	return StructorizerFileAPI.isEOF(fileNo)
+
+def fileWrite(fileNo, value):
+	StructorizerFileAPI.write(fileNo, value)
+	return
+
+def fileWriteLine(fileNo, value):
+	StructorizerFileAPI.writeLine(fileNo, value)
+	return
+
+def fileRead(fileNo):
+	return StructorizerFileAPI.read(fileNo)
+
+def fileReadChar(fileNo):
+	return StructorizerFileAPI.readChar(fileNo)
+
+def fileReadInt(fileNo):
+	return StructorizerFileAPI.readInt(fileNo)
+
+def fileReadDouble(fileNo):
+	return StructorizerFileAPI.readDouble(fileNo)
+
+def fileReadLine(fileNo):
+	return StructorizerFileAPI.readLine(fileNo)
+	
+#===== STRUCTORIZER FILE API END =====

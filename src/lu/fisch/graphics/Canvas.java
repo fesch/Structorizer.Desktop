@@ -35,6 +35,7 @@ package lu.fisch.graphics;
  *      ------			----			-----------
  *      Bob Fisch       2007.12.10      First Issue
  *      Kay Gürtzig     2016.07.27      Issue #208: New public method fillRoundRect()
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Method hatchedRect() added to overlay a hatched pattern
  *
  ******************************************************************************************************
  *
@@ -48,9 +49,11 @@ import java.awt.Graphics2D;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Image;
+import java.awt.Paint;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
-
+import java.awt.image.BufferedImage;
 
 import lu.fisch.utils.*;
 
@@ -124,6 +127,29 @@ public class Canvas  {
 	{
 		canvas.fillRect(_rect.left, _rect.top, _rect.right-_rect.left, _rect.bottom-_rect.top);
 	}
+	
+	// Start KGU#277 2016-10-13: Enh. #270
+	public void hatchRect(Rect _rect, int deltaX, int deltaY)
+	{
+		hatchRect(_rect, deltaX, deltaY, Color.DARK_GRAY);
+	}
+	
+	public void hatchRect(Rect _rect, int deltaX, int deltaY, Color color)
+	{
+		BufferedImage bufferedImage =
+		        new BufferedImage(deltaX, deltaY, BufferedImage.TYPE_INT_ARGB);
+
+		Graphics2D g2 = bufferedImage.createGraphics();
+		g2.setColor(color);
+		g2.drawLine(deltaX, 0, 0, deltaY);
+
+		// paint with the texturing brush
+		Paint oldPaint = canvas.getPaint();
+		canvas.setPaint(new java.awt.TexturePaint(bufferedImage, new Rectangle(0,0,deltaX,deltaY)));
+		canvas.fill(_rect.getRectangle());
+		canvas.setPaint(oldPaint);
+	}
+	// END KGU#277 2016-10-13
 	
 	// START KGU#221 2016-07-27: Enhancement for bugfix #208
 	public void fillRoundRect(Rect _rect)

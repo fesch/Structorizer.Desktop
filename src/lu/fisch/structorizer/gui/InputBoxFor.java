@@ -40,6 +40,14 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016-07-14  Enh. #180: Initial focus dependent on switchTextComment mode (KGU#169)
  *      Kay Gürtzig     2016-09-23  Issue #243: Message translations, more messages
  *      Kay Gürtzig     2016-09-24  Enh. #250 Partial GUI redesign - now loop style can actively be selected
+ *      Kay Gürtzig     2016.11.02  Issue #81: Workaround for lacking DPI awareness
+ *      Kay Gürtzig     2016.11.09  Issue #81: Scale factor no longer rounded but ensured to be >= 1
+ *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes/radio buttons,
+ *                                  Bugfix #288: Behaviour on clicking the selected one of the radio buttons fixed
+ *      Kay Gürtzig     2016.11.21  Issue #284: Opportunity to scale up/down the TextField fonts by Ctrl-Numpad+/-
+ *      Kay Gürtzig     2016.11.22  stepFor label mended; issue #284: Font resizing buttons added
+ *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
+ *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): Scaling stuff outsourced to class GUIScaler
  *
  ******************************************************************************************************
  *
@@ -80,6 +88,7 @@ import javax.swing.UIManager;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.executor.Function;
+import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.StringList;
 
@@ -151,10 +160,11 @@ public class InputBoxFor extends InputBox implements ItemListener {
 	}
 	
     // START KGU#169 2016-07-14: Enh. #180 (see also: #39, #142) - helps to enable focus control
-    protected void setPreferredSize()
-    {
-        setSize(IBF_PREFERRED_WIDTH, 400);   	
+    // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+    protected void setPreferredSize(double scaleFactor) {
+        setSize((int)(IBF_PREFERRED_WIDTH * scaleFactor), (int)(400 * scaleFactor));        
     }
+    // END KGU#287 2016-11-02
     // END KGU#169 2016-07-14
 
     
@@ -166,14 +176,17 @@ public class InputBoxFor extends InputBox implements ItemListener {
      */
 	protected int createPanelTop(JPanel _panel, GridBagLayout _gb, GridBagConstraints _gbc)
 	{
+		// START KGU#287 2016-11-11: Issue #81 (DPI awareness workaround
+		double scaleFactor = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
+		// END KGU#287 2016-11-11
 		lblVarDesignation = new JLabel("Counter variable");
 		lblFirstValueLabel = new JLabel("Start value");
 		lblEndVal = new JLabel("End value");
 		lblIncr = new JLabel("Increment");
 		//lblPreFor = new JLabel(D7Parser.keywordMap.get("preFor"));
-		lblPostFor = new JLabel(D7Parser.keywordMap.get("postFor"));
+		lblPostFor = new JLabel(D7Parser.getKeyword("postFor"));
 		lblAsgnmt = new JLabel(" <- ");
-		lblStepFor = new JLabel(D7Parser.keywordMap.get("steptFor"));
+		lblStepFor = new JLabel(D7Parser.getKeyword("stepFor"));
 		txtParserInfo = new JTextField(300);
 		txtParserInfo.setEditable(false);
 		if (UIManager.getLookAndFeel().getName().equals("Nimbus"))
@@ -190,7 +203,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		chkTextInput = new JCheckBox("Full Text Editing");
 		// START KGU#61 2016-09-23: Enh. #250 - Additional field set for FOR-IN loops
 		//lblPreForIn = new JLabel(D7Parser.keywordMap.get("preFor")In);
-		lblpostForIn = new JLabel(D7Parser.keywordMap.get("postForIn"));
+		lblpostForIn = new JLabel(D7Parser.getKeyword("postForIn"));
 		txtVariableIn = new JTextField(50);
 		txtValueList = new JTextField(120);
 		txtVariableIn.setEnabled(false);
@@ -207,15 +220,28 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		chkTextInput.addItemListener(this);
 		txtText.addKeyListener(this);
 		
+        // START KGU#294 2016-11-21: Issue #284
+		scalableComponents.addElement(txtVariable);
+		scalableComponents.addElement(txtStartVal);
+		scalableComponents.addElement(txtEndVal);
+		scalableComponents.addElement(txtIncr);
+		scalableComponents.addElement(txtVariableIn);
+		scalableComponents.addElement(txtValueList);
+		scalableComponents.addElement(lblAsgnmt);
+		scalableComponents.addElement(lblPostFor);
+		scalableComponents.addElement(lblStepFor);
+		scalableComponents.addElement(lblpostForIn);		
+        // END KGU#294 2016-11-21
+		
 		// START KGU#254 2016-09-24: Enh. #250 - GUI redesign
-		rbCounting = new JRadioButton(D7Parser.keywordMap.get("preFor"));
+		rbCounting = new JRadioButton(D7Parser.getKeyword("preFor"));
 		rbCounting.setActionCommand("FOR");
 		rbCounting.setToolTipText("Select this if you want to count through a range of numbers.");
 		
-		rbTraversing = new JRadioButton(D7Parser.keywordMap.get("preForIn").isEmpty() ? D7Parser.keywordMap.get("postFor") : D7Parser.keywordMap.get("preForIn"));
+		rbTraversing = new JRadioButton(D7Parser.getKeyword("preForIn").isEmpty() ? D7Parser.getKeyword("postFor") : D7Parser.getKeyword("preForIn"));
 		rbTraversing.setActionCommand("FOR-IN");
 		rbTraversing.setToolTipText("Select this if you want to traverse all members of a collection.");
-		
+
 		ButtonGroup radioGroup = new ButtonGroup();
 		radioGroup.add(rbCounting);
 		radioGroup.add(rbTraversing);
@@ -228,8 +254,9 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		int lineNo = 1;
 		
 		// TODO (KGU 2015-11-01) Grid configuration halfway works under both Windows and KDE but's still not pleasant 
-		
-		_gbc.insets = new Insets(10, 5, 0, 5);
+
+		int border = (int)(5 * scaleFactor);
+		_gbc.insets = new Insets(2*border, border, 0, border);
 		
 		_gbc.gridx = 2;
 		_gbc.gridy = lineNo;
@@ -269,7 +296,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 
 		lineNo++;
 
-		_gbc.insets = new Insets(5, 10, 0, 5);
+		_gbc.insets = new Insets(border, 2*border, 0, border);
 		
 		_gbc.gridx = 1;
 		_gbc.gridy = lineNo;
@@ -280,7 +307,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(rbCounting, _gbc);
 		_panel.add(rbCounting);
 
-		_gbc.insets = new Insets(5, 5, 0, 5);
+		_gbc.insets = new Insets(border, border, 0, border);
 
 		_gbc.gridx = 2;
 		_gbc.gridy = lineNo;
@@ -336,7 +363,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(lblStepFor, _gbc);
 		_panel.add(lblStepFor);
 
-		_gbc.insets = new Insets(5, 5, 0, 10);
+		_gbc.insets = new Insets(border, border, 0, 2*border);
 
 		_gbc.gridx = 17;
 		_gbc.gridy = lineNo;
@@ -350,7 +377,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		// START KGU#61 2016-09-23: Additional field set for FOR-IN loops
 		lineNo++;
 		
-		_gbc.insets = new Insets(0, 10, 0, 5);
+		_gbc.insets = new Insets(0, 2*border, 0, border);
 		
 		_gbc.gridx = 1;
 		_gbc.gridy = lineNo;
@@ -361,7 +388,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(rbTraversing, _gbc);
 		_panel.add(rbTraversing);
 
-		_gbc.insets = new Insets(0, 5, 0, 5);
+		_gbc.insets = new Insets(0, border, 0, border);
 
 		_gbc.gridx = 2;
 		_gbc.gridy = lineNo;
@@ -381,7 +408,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(lblpostForIn, _gbc);
 		_panel.add(lblpostForIn);
 
-		_gbc.insets = new Insets(0, 5, 0, 10);
+		_gbc.insets = new Insets(0, border, 0, 2*border);
 
 		_gbc.gridx = 8;
 		_gbc.gridy = lineNo;
@@ -396,7 +423,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 
 		lineNo++;
 
-		_gbc.insets = new Insets(10, 10, 0, 10);
+		_gbc.insets = new Insets(2*border, 2*border, 0, 2*border);
 
 		_gbc.gridx = 1;
 		_gbc.gridy = lineNo;
@@ -406,7 +433,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		_gb.setConstraints(chkTextInput, _gbc);
 		_panel.add(chkTextInput);
 
-		_gbc.insets = new Insets(10, 5, 0, 10);
+		_gbc.insets = new Insets(2*border, border, 0, 2*border);
 
 		_gbc.gridx = 8;
 		_gbc.gridy = lineNo;
@@ -449,7 +476,11 @@ public class InputBoxFor extends InputBox implements ItemListener {
 		Object source = event.getSource();
 
 		if (source == rbCounting || source == rbTraversing) {
-			if (JOptionPane.showConfirmDialog(null, msgDiscardData.getText().replace("%", "\n\n"), msgAttention.getText(), JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION)
+			// START KGU#291 2016-11-11: Bugfix #288 (no action on clicking the already selected mode!)
+			//if (JOptionPane.showConfirmDialog(null, msgDiscardData.getText().replace("%", "\n\n"), msgAttention.getText(), JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION)
+			if ((source == rbTraversing) == isTraversingLoop ||
+					JOptionPane.showConfirmDialog(null, msgDiscardData.getText().replace("%", "\n\n"), msgAttention.getText(), JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION)
+			// END KGU#291 2016-11-11
 			{
 				// Switch back the radio buttons ...
 				setIsTraversingLoop(isTraversingLoop);
@@ -663,7 +694,7 @@ public class InputBoxFor extends InputBox implements ItemListener {
 			txtParserInfo.setText(msgMissingBrace1.getText());
 			// END KGU#247 2016-09-23
 		}
-		else if ((new Function(forInValueList)).isFunction())
+		else if (Function.isFunction(forInValueList))
 		{
 			txtParserInfo.setForeground(Color.BLUE);
 			// START KGU#247 2016-09-23: Issue #243 - Forgotten translations

@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -53,7 +54,8 @@ package lu.fisch.structorizer.elements;
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 import java.awt.Point;
@@ -110,19 +112,6 @@ public class Forever extends Element implements ILoop {
     }
     // END KGU#91 2015-12-02
 	
-//	// START KGU#64 2015-11-03: Is to improve drawing performance
-//	/**
-//	 * Recursively clears all drawing info this subtree down
-//	 * (To be overridden by structured sub-classes!)
-//	 */
-//	@Override
-//	public void resetDrawingInfoDown()
-//	{
-//		this.resetDrawingInfo();
-//		this.q.resetDrawingInfoDown();
-//	}
-//	// END KGU#64 2015-11-03
-	
 	public Rect prepareDraw(Canvas _canvas)
 	{
 		// START KGU#136 2016-03-01: Bugfix #97 (prepared)
@@ -140,24 +129,6 @@ public class Forever extends Element implements ILoop {
 		}
             
 		// START KGU#227 2016-07-30: Enh. #128 Just delegate the basics to Instruction
-//		rect0.top = 0;
-//		rect0.left = 0;
-//		
-//		rect0.right = 2 * (E_PADDING/2);
-//
-//		
-//		FontMetrics fm = _canvas.getFontMetrics(Element.font);
-//		
-//		for (int i = 0; i < getText(false).count(); i++)
-//		{
-//			int lineWidth = getWidthOutVariables(_canvas, getText(false).get(i), this) + 2*(E_PADDING/2);
-//			if (rect0.right < lineWidth)
-//			{
-//				rect0.right = lineWidth;
-//			}
-//		}
-//		
-//		rect0.bottom = getText(false).count() * fm.getHeight() + 2*(E_PADDING/2);
 		rect0 = Instruction.prepareDraw(_canvas, this.getText(false), this);
 		// END KGU#227 2016-07-30: Just delegate the basics to Instruction
 
@@ -191,101 +162,6 @@ public class Forever extends Element implements ILoop {
 		}
 
 		// START KGU#227 2016-07-30: Enh. #128 - on this occasion delegate as much as possible to Instruction
-//		Rect myrect = new Rect();
-//		Color drawColor = getFillColor();
-//		FontMetrics fm = _canvas.getFontMetrics(font);
-//		
-//		int headerHeight = getText(false).count() * fm.getHeight() + 2*(Element.E_PADDING / 2);
-//		
-//		Canvas canvas = _canvas;
-//		canvas.setBackground(drawColor);
-//		canvas.setColor(drawColor);
-//		
-//		// draw background
-//		myrect = _top_left.copy();
-//		canvas.fillRect(myrect);
-//		
-//		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
-//		//rect = _top_left.copy();
-//		rect = new Rect(0, 0, 
-//				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
-//		Point ref = this.getDrawPoint();
-//		this.topLeft.x = _top_left.left - ref.x;
-//		this.topLeft.y = _top_left.top - ref.y;
-//		// END KGU#136 2016-03-01
-//		
-//		// draw shape
-//		canvas.setColor(Color.BLACK);
-//		canvas.drawRect(_top_left);
-//		
-//		// START KGU 2016-07-30: What was this nonsense good for?
-////		// Upper stripe
-////		myrect = _top_left.copy();
-////		myrect.bottom = _top_left.top + headerHeight;
-////		canvas.drawRect(myrect);
-////		
-////		// Lower stripe
-////		myrect.bottom = _top_left.bottom;
-////		myrect.top = myrect.bottom - E_PADDING;
-////		canvas.drawRect(myrect);
-////		
-////		// Left stripe
-////		myrect = _top_left.copy();
-////		myrect.right = myrect.left + E_PADDING;
-////		canvas.drawRect(myrect);
-////		
-////		// fill shape
-////		// Left stripe
-////		canvas.setColor(drawColor);
-////		myrect.left += 1;
-////		myrect.top += 1;
-////		//myrect.bottom = myrect.bottom;
-////		myrect.right -= 1;
-////		canvas.fillRect(myrect);
-////		
-////		// Upper stripe
-////		myrect = _top_left.copy();
-////		myrect.bottom = _top_left.top + headerHeight;
-////		myrect.left += 1;
-////		myrect.top += 1;
-////		//myrect.bottom = myrect.bottom;
-////		myrect.right -= 1;
-////		canvas.fillRect(myrect);
-////		
-////		// Lower stripe
-////		myrect.bottom = _top_left.bottom;
-////		myrect.top = myrect.bottom - Element.E_PADDING;
-////		myrect.left += 1;
-////		myrect.top += 1;
-////		//myrect.bottom = myrect.bottom;
-////		//myrect.right = myrect.right;
-////		canvas.fillRect(myrect);
-//		// END KGU 2016-07-30
-//		
-//		// draw comment
-//		if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
-//		{
-//			this.drawCommentMark(canvas, _top_left);
-//		}
-//		// START KGU 2015-10-11
-//		// draw breakpoint bar if necessary
-//		this.drawBreakpointMark(canvas, _top_left);
-//		// END KGU 2015-10-11
-//		
-//		
-//		// draw text
-//		for(int i = 0; i < getText(false).count(); i++)
-//		{
-//			String text = this.getText(false).get(i);
-//			text = BString.replace(text, "<--","<-");
-//			
-//			canvas.setColor(Color.BLACK);
-//			writeOutVariables(canvas,
-//							  _top_left.left + (E_PADDING / 2),
-//							  _top_left.top + (E_PADDING / 2) + (i+1)*fm.getHeight(),
-//							  text,this
-//							  );  	
-//		}
 		Instruction.draw(_canvas, _top_left, this.getText(false), this);
 		// END KGU#227 2016-07-30
 		
@@ -309,19 +185,7 @@ public class Forever extends Element implements ILoop {
 	}
 	// END KGU#122 2016-01-03
 
-// START KGU 2015-10-11: Merged with getElementByCoord, which had to be overridden as well for proper Comment popping
-//	public Element selectElementByCoord(int _x, int _y)
-//	{
-//		Element selMe = super.selectElementByCoord(_x,_y);
-//		Element sel = q.selectElementByCoord(_x,_y);
-//		if(sel!=null) 
-//		{
-//			selected=false;
-//			selMe = sel;
-//		}
-//		
-//		return selMe;
-//	}
+	// START KGU 2015-10-11: Merged with selectElementByCoord
 	@Override
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
@@ -349,12 +213,6 @@ public class Forever extends Element implements ILoop {
 		return selMe;
 	}
 	// END KGU 2015-10-11
-	
-//	public void setSelected(boolean _sel)
-//	{
-//		selected=_sel;
-//		//q.setSelected(_sel);
-//	}
 	
 	// START KGU#183 2016-04-24: Issue #169 
 	/* (non-Javadoc)
@@ -405,36 +263,6 @@ public class Forever extends Element implements ILoop {
 				this.getBody().combineRuntimeData(((ILoop)_cloneOfMine).getBody());
 	}
 	// END KGU#117 2016-03-07
-
-//	// START KGU#43 2015-10-12
-//	@Override
-//	public void clearBreakpoints()
-//	{
-//		super.clearBreakpoints();
-//		this.q.clearBreakpoints();
-//	}
-//	// END KGU#43 2015-10-12
-//	
-//	// START KGU#43 2015-10-13
-//	@Override
-//	public void clearExecutionStatus()
-//	{
-//		super.clearExecutionStatus();
-//		this.q.clearExecutionStatus();
-//	}
-//	// END KGU#43 2015-10-13
-//	
-//	// START KGU#117 2016-03-06: Enh. #77
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
-//	 */
-//	@Override
-//	public void clearRuntimeData()
-//	{
-//		super.clearRuntimeData();
-//		this.getBody().clearRuntimeData();
-//	}
-//	// END KGU#117 2016-03-06
 
 	// START KGU#156 2016-03-13: Enh. #124
 	protected String getRuntimeInfoString()

@@ -36,31 +36,40 @@ package lu.fisch.structorizer.generators;
  *
  *      Revision List
  *
- *      Author          Date            Description
- *      ------          ----            -----------
- *      Jan Peter Klippel 2008.04.11    First Issue
- *      Bob Fisch       2008.04.12		Added "Fields" section for generator to be used as plugin
- *      Bob Fisch       2009.01.18		Corrected the FOR-loop
- *      Bob Fisch       2011.11.07      Fixed an issue while doing replacements
- *      Kay Gürtzig     2014.12.02      Additional replacement of operator "<--" by "<-"
- *      Kay Gürtzig     2015.10.18      Indentation and comment insertion revised
- *      Kay Gürtzig     2015.11.02      Reorganisation of the transformation, input/output corrected
- *      Kay Gürtzig     2015.11.02      Variable detection and renaming introduced (KGU#62)
+ *      Author              Date        Description
+ *      ------              ----        -----------
+ *      Jan Peter Klippel   2008.04.11  First Issue
+ *      Bob Fisch           2008.04.12  Added "Fields" section for generator to be used as plugin
+ *      Bob Fisch           2009.01.18  Corrected the FOR-loop
+ *      Bob Fisch           2011.11.07  Fixed an issue while doing replacements
+ *      Kay Gürtzig         2014.12.02  Additional replacement of operator "<--" by "<-"
+ *      Kay Gürtzig         2015.10.18  Indentation and comment insertion revised
+ *      Kay Gürtzig         2015.11.02  Reorganisation of the transformation, input/output corrected
+ *      Kay Gürtzig         2015.11.02  Variable detection and renaming introduced (KGU#62)
  *                                      Code generation for Case elements (KGU#15) and For
  *                                      loops (KGU#3) revised
- *      Kay Gürtzig     2015.12.12      Bugfix #57 (KGU#103) endless loops / flaws on variable prefixing
- *      Kay Gürtzig     2015.12.17      Enh. #23 (KGU#78) jump generation revised; Root generation
+ *      Kay Gürtzig         2015.12.12  Bugfix #57 (KGU#103) endless loops / flaws on variable prefixing
+ *      Kay Gürtzig         2015.12.17  Enh. #23 (KGU#78) jump generation revised; Root generation
  *                                      decomposed according to Generator.generateCode(Root, String);
  *                                      Enh. KGU#47: Dummy implementation for Parallel element
  *                                      Fixes in FOR and REPEAT export
- *      Kay Gürtzig     2015.12.21      Bugfix #41/#68/#69 (= KGU#93)
- *      Kay Gürtzig     2015.12.21      Bugfix #51 (= KGU#108) Didn't cope with empty input / output
- *      Kay Gürtzig     2016.03.22      Enh. #84 (= KGU#61) varNames now inherited, FOR-IN loop support
- *      Kay Gürtzig     2016.03.23      Enh. #84: Support for FOREACH loops (KGU#61)
- *      Kay Gürtzig     2016-04-01      Enh. #144: Care for the new export option suppressing content conversion
- *      Kay Gürtzig     2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
- *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done. 
+ *      Kay Gürtzig         2015.12.21  Bugfix #41/#68/#69 (= KGU#93)
+ *      Kay Gürtzig         2015.12.21  Bugfix #51 (= KGU#108) Didn't cope with empty input / output
+ *      Kay Gürtzig         2016.03.22  Enh. #84 (= KGU#61) varNames now inherited, FOR-IN loop support
+ *      Kay Gürtzig         2016.03.23  Enh. #84: Support for FOREACH loops (KGU#61)
+ *      Kay Gürtzig         2016-04-01  Enh. #144: Care for the new export option suppressing content conversion
+ *      Kay Gürtzig         2016-07-20  Enh. #160: Option to involve subroutines implemented (=KGU#178) 
+ *      Kay Gürtzig         2016.08.12  Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig         2016.09.25  Enh. #253: D7Parser.keywordMap refactoring done. 
+ *      Kay Gürtzig         2016.10.14  Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig         2016.10.15  Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig         2016.10.16  Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig         2016.12.01  Bugfix #301: More precise check for parenthesis enclosing of log. conditions
+ *      Kay Gürtzig         2016.12.30  Bugfix KGU#62: Result variable hadn't been prefixed in return instruction
+ *      Kay Gürtzig         2017.01.04  Enh. #314: Approach to translate the File API
+ *      Kay Gürtzig         2017.02.25  Enh. #348: Parallel sections translated with threading module
+ *      Kay Gürtzig         2017.02.26  KGU#352: Variable prefixing revised w.r.t. arrays and references
+ *      Kay Gürtzig         2017.02.27  Enh. #346: Insertion mechanism for user-specific include directives
  *
  ******************************************************************************************************
  *
@@ -68,6 +77,7 @@ package lu.fisch.structorizer.generators;
  *
  ******************************************************************************************************///
 
+import java.util.HashMap;
 
 import java.util.regex.Matcher;
 
@@ -84,6 +94,7 @@ import lu.fisch.structorizer.elements.Parallel;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.BString;
@@ -156,22 +167,52 @@ public class PerlGenerator extends Generator {
 	}
 	// END KGU 2016-08-12
 	
-	
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getIncludePattern()
+	 */
+	@Override
+	protected String getIncludePattern()
+	{
+		return "use %;";
+	}
+	// END KGU#351 2017-02-26
+
 	/************ Code Generation **************/
+	
+	// START KGU#311 2017-01-04: Enh. #314 File API analysis
+	private StringList fileVars = new StringList();
+	// END KGU#311 2017-01-04
+	
+	// START KGU#352 2017-02-26
+	private StringList paramNames = new StringList();
+	private HashMap<String, TypeMapEntry> typeMap = null;
+	private boolean isWithinCall = false;
+	// END KGU#352 2017-02-26
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
 	 * into the target code
+	 * @param withPrompt - is a prompt string to be considered?
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected String getInputReplacer()
+	// START KGU#281 2016-10-15: Enh. #271
+	//protected String getInputReplacer()
+	//{
+	//	// START KGU#108 2015-12-22: Bugfix #51
+	//	//return "$1 = <STDIN>";
+	//	return "$1 = <STDIN>; chomp $1";
+	//	// END KGU#108 2015-12-22
+	//}
+	protected String getInputReplacer(boolean withPrompt)
 	{
-		// START KGU#108 2015-12-22: Bugfix #51
-		//return "$1 = <STDIN>";
+		if (withPrompt) {
+			return "print $1; $2 = <STDIN>; chomp $2";
+		}
 		return "$1 = <STDIN>; chomp $1";
-		// END KGU#108 2015-12-22
 	}
+	// END KGU#281 2016-10-15
 
 	/**
 	 * A pattern how to embed the expression (right-hand side of an output instruction)
@@ -211,9 +252,38 @@ public class PerlGenerator extends Generator {
     		String varName = varNames.get(i);
     		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
     		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
-    		tokens.replaceAll(varName, "$"+varName);
+    		// START KGU#352 2017-02-26: Different approaches for arrays and references
+    		//tokens.replaceAll(varName, "$"+varName);
+    		TypeMapEntry typeEntry = this.typeMap.get(varName);
+    		if (typeEntry != null && typeEntry.isArray()) {
+        		String prefix = "";
+    			int pos = -1;
+    			if (this.paramNames.contains(varName)) {
+    				prefix = "$";	// dereference the variable
+    			}
+    			while ((pos = tokens.indexOf(varName, pos+1)) >= 0) {
+    				// Array element access?
+    				if (pos+3 < tokens.count() && tokens.get(pos+1).equals("[")) {
+    					tokens.set(pos, "$" + prefix + varName);
+    				}
+    				else if (this.isWithinCall) {
+    					// To pass an array to a subroutine we must use a reference
+    					tokens.set(pos,  "\\@" + prefix + varName);
+    				}
+    				else {
+    					tokens.set(pos,  "@" + prefix + varName);
+    				}
+    			}
+    		}
+    		else {
+    			tokens.replaceAll(varName, "$"+varName);
+    		}
+    		// END KGU#352 2017-02-26
     	}
 		// END KGU#62/KGU#103 2015-12-12
+    	// START KGU 2017-02-26
+    	tokens.replaceAll("random", "rand");
+    	// END KGU 2017-02-26
 		tokens.replaceAll("div", "/");
 		tokens.replaceAll("<-", "=");
 		// START KGU#61 2016-03-23: Enh. #84 - prepare array literals
@@ -246,6 +316,7 @@ public class PerlGenerator extends Generator {
 				String expr = _input.substring(asgnPos + "<-".length()).trim();
 				if (expr.startsWith("{") && expr.endsWith("}") && this.varNames.contains(lval))
 				{
+					// The curly braces will be replaced with parentheses by transformTokens()
 					_input = "@" + lval + " <- " + expr;				
 				}
 			}
@@ -269,6 +340,12 @@ public class PerlGenerator extends Generator {
 		{
 			transformed = "my $dummy = <STDIN>";
 		}
+		// START KGU#281 2016-10-16: Enh. #271
+		else
+		{
+			transformed = transformed.replace(";  = <STDIN>; chomp", "; my $dummy = <STDIN>");
+		}
+		// END KGU#281 2016-10-16
 		return transformed;
 	}
 
@@ -286,92 +363,119 @@ public class PerlGenerator extends Generator {
 		return transformed;
 	}
 	// END KGU#108 2015-12-22
-
-//	// KGU 2015-11-02 Most of this now obsolete (delegated to Generator, Element), something was wrong anyway
-//    protected String transform(String _input)
-//	{
-//    	_input = super.transform(_input);
-//    	
-//    	// START KGU#62 2015-11-02: Identify and adapt variable names
-//		//System.out.println("Perl - text to be transformed: \"" + _input + "\"");
-//		// START KGU#103 2015-12-12: We must do a lexical analysis instead
-////    	for (int i = 0; i < varNames.count(); i++)
-////    	{
-////    		String varName = varNames.get(i);	// FIXME (KGU): Remove after Test!
-////    		System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
-////    		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
-////    		int pos = _input.indexOf(varName);
-////    		while (pos >= 0)
-////    		{
-////    			int posBehind = pos + varName.length();
-////    			// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
-////    			//if ((pos == 0 || !Character.isJavaIdentifierPart(_input.charAt(pos-1))) && (posBehind >= varName.length() || !Character.isJavaIdentifierPart(_input.charAt(posBehind))))
-////    	  		if ((pos == 0 || !Character.isJavaIdentifierPart(_input.charAt(pos-1)) && _input.charAt(pos-1) != '\\') &&
-////    	  				(posBehind >= _input.length() || !Character.isJavaIdentifierPart(_input.charAt(posBehind))))
-////    	  		// END KGU#103 2015-12-12
-////    			{
-////    				if (pos == 0 || _input.charAt(pos-1) != '$')
-////    				{
-////    					_input = _input.substring(0, pos) + "$" + _input.substring(pos);
-////            	  		// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
-////        				posBehind++;
-////        				// END KGU#103 2015-12-12
-////    				}
-////        	  		// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
-////    				//pos = _input.indexOf(varName, posBehind);
-////    				// END KGU#103 2015-12-12
-////    			}
-////    	  		// START KGU#103 2015-12-12: Bugfix #57 Endless loop possible
-////    	  		if (posBehind < _input.length() - varName.length())
-////    	  		{
-////    	  			pos = _input.indexOf(varName, posBehind);
-////    	  		}
-////    	  		else
-////    	  		{
-////    	  			pos = -1;
-////    	  		}
-////				// END KGU#103 2015-12-12
-////    		}
-////    		System.out.println("Perl - after replacement: \"" + _input + "\""); 	// FIXME (KGU): Remove after Test!
-////    	}
-//		StringList tokens = Element.splitLexically(_input, true);
-//    	for (int i = 0; i < varNames.count(); i++)
-//    	{
-//    		String varName = varNames.get(i);
-//    		//System.out.println("Looking for " + varName + "...");	// FIXME (KGU): Remove after Test!
-//    		//_input = _input.replaceAll("(.*?[^\\$])" + varName + "([\\W$].*?)", "$1" + "\\$" + varName + "$2");
-//    		tokens.replaceAll(varName, "$"+varName);
-//    	}
-//    	_input = tokens.getText().replace("\n", "");
-//		//System.out.println("Perl - after replacement: \"" + _input + "\""); 	// FIXME (KGU): Remove after Test!
-//		// END KGU#103 2015-12-12
-//    	// END KGU#62 2015-11-02
-//
-//		return _input.trim();
-//	}
-	// END KGU#93 2015-12-21
 	
     // START KGU#78 2015-12-17: Enh. #23 (jump translation)
     // Places a label with empty instruction into the code if elem is an exited loop
 	protected void appendLabel(Element elem, String _indent)
 	{
 		if (elem instanceof ILoop && this.jumpTable.containsKey(elem)) {
-			code.add(_indent + this.labelBaseName + this.jumpTable.get(elem) + ": ;");
+			addCode(this.labelBaseName + this.jumpTable.get(elem) + ": ;",
+					_indent, elem.isDisabled());
 		}
 	}
-	// ED KGU#78 2015-12-17
+	// END KGU#78 2015-12-17
 
 	protected void generateCode(Instruction _inst, String _indent) {
 
 		if (!insertAsComment(_inst, _indent))
 		{
+			boolean isDisabled = _inst.isDisabled();
 	    	insertComment(_inst, _indent);
 
 			for(int i=0;i<_inst.getText().count();i++)
 			{
 				String text = transform(_inst.getText().get(i));
 				if (!text.endsWith(";")) { text += ";"; }
-				code.add(_indent + text);
+				// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
+				if (this.usesFileAPI) {
+					if (text.contains("fileOpen(")) {
+						String pattern = "(.*?)\\s*=\\s*fileOpen\\((.*)\\)(.*);";
+						if (text.matches(pattern)) {
+							String varName = text.replaceAll(pattern, "$1").trim();
+							fileVars.addIfNew(varName);
+							text = text.replaceAll(pattern, "open($1, \\\"<\\\", $2)$3 or die \\\"Failed to open $2\\\";");
+							text = text.replaceAll("(.*or die \\\"Failed to open )\\\"(.*)\\\"(\\\";)", "$1\\\\\\\"$2\\\\\\\"$3");
+						}
+						else {
+							this.insertComment("TODO FileAPI: Replace the fileOpen call by something like «open(my $fHandle, \"<\", \"filename\") or die \"error message\";»", _indent);
+						}
+					}
+					if (text.contains("fileCreate(")) {
+						String pattern = "(.*?)\\s*=\\s*fileCreate\\((.*)\\)(.*);";
+						if (text.matches(pattern)) {
+							String varName = text.replaceAll(pattern, "$1").trim();
+							fileVars.addIfNew(varName);
+							text = text.replaceAll(pattern, "open($1, \\\">\\\", $2)$3 or die \\\"Failed to create $2\\\";");
+							text = text.replaceAll("(.*or die \\\"Failed to create )\\\"(.*)\\\"(\\\";)", "$1\\\\\\\"$2\\\\\\\"$3");
+						}
+						else {
+							this.insertComment("TODO FileAPI: Replace the fileCreate call by something like «open(my $fHandle, \">\", \"filename\") or die \"error message\";»", _indent);
+						}
+					}
+					if (text.contains("fileAppend(")) {
+						String pattern = "(.*?)\\s*=\\s*fileAppend\\((.*)\\)(.*);";
+						if (text.matches(pattern)) {
+							String varName = text.replaceAll(pattern, "$1").trim();
+							fileVars.addIfNew(varName);
+							text = text.replaceAll(pattern, "open($1, \\\">>\\\", $2)$3 or die \\\"Failed to append to $2\\\";");
+							text = text.replaceAll("(.*or die \\\"Failed to append to )\\\"(.*)\\\"(\\\";)", "$1\\\\\\\"$2\\\\\\\"$3");
+						}
+						else {
+							this.insertComment("TODO FileAPI: Replace the fileAppend call by something like «open(my $fHandle, \">>\", \"filename\") or die \"error message\";»", _indent);
+						}
+					}
+					if (text.contains("fileRead(") || text.contains("fileReadInt(") || text.contains("fileReadDouble(") || text.contains("fileReadLine(")) {
+						String fctName = text.replaceAll(".*?fileRead(\\w*)\\(.*", "$1");
+						String pattern = "(.*?)\\s*=\\s*fileRead\\w*\\((.*)\\)(.*)";
+						if (text.matches(pattern)) {
+							if (!fctName.equals("Line")) {
+								this.insertComment("TODO FileAPI: Originally this was a fileRead" + fctName + " call, so ensure to obtain the right thing!", _indent);							
+							}
+							text = text.replaceAll(pattern, "$1 = <$2> $3");
+						}
+						else {
+							this.insertComment("TODO FileAPI: Replace the fileRead" + fctName + " call by something like «<$fileHandle>\";»", _indent);							
+						}
+					}
+					if (text.contains("fileReadChar(")) {
+						String pattern = "(.*?)\\s*=\\s*fileReadChar\\((.*)\\)(.*)";
+						if (text.matches(pattern)) {
+							text = text.replaceAll(pattern, "$1 = gect\\($2\\)$3");
+						}
+						else {
+							this.insertComment("TODO FileAPI: Replace the fileReadChar* call by something like «getc($fileHandle)\";»", _indent);
+						}
+					}
+					if (text.contains("fileWrite(")) {
+						String pattern = "(.*?)fileWrite\\(\\s*(.*)\\s*,\\s*(.*)\\s*\\)(.*)";
+						if (text.matches(pattern)) {
+							text = text.replaceAll(pattern, "print $2 $3 $4");
+						}
+						else {
+							this.insertComment("TODO FileAPI: Replace the fileWrite call by something like «print $fileHandle value;»", _indent);
+						}
+					}
+					if (text.contains("fileWriteLine(")) {
+						String pattern = "(.*?)fileWriteLine\\(\\s*(.*)\\s*,\\s*(.*)\\s*\\)(.*)";
+						if (text.matches(pattern)) {
+							text = text.replaceAll(pattern, "print $2 $3; print $2 \\\"\\\\n\\\" $4");
+						}
+						else {
+							this.insertComment("TODO FileAPI: Replace the fileWriteLine call by something like «print $fileHandle value; print $fileHandle \"\\n\";»", _indent);
+						}
+					}
+					if (text.contains("fileClose(")) {
+						text = text.replace("fileClose(", "close(");
+					}
+				}
+				// END KGU#311 2017-01-04
+				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
+				//code.add(_indent + text);
+				if (Instruction.isTurtleizerMove(_inst.getText().get(i))) {
+					text += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+				}
+				addCode(text, _indent, isDisabled);
+				// END KGU#277/KGU#284 2016-10-13
 			}
 		}
 
@@ -379,107 +483,115 @@ public class PerlGenerator extends Generator {
 	
 	protected void generateCode(Alternative _alt, String _indent) {
 		
-		code.add("");
+		boolean isDisabled = _alt.isDisabled();
+		
+		addCode("", "", isDisabled);
 
 		insertComment(_alt, _indent);
 
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"if ( "+BString.replace(transform(_alt.getText().getText()),"\n","").trim()+" ) {");
 		String condition = BString.replace(transform(_alt.getText().getText()),"\n","").trim();
-		if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
+		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
+		if (this.usesFileAPI) {
+			if (condition.contains("fileEOF(")) {
+				this.insertComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
+			}
+			else {
+				for (int k = 0; k < this.fileVars.count(); k++) {
+					if (condition.contains(this.fileVars.get(k))) {
+						this.insertComment("TODO FileAPI: Consider replacing / dropping this now inappropriate file test.", _indent);						
+					}
+				}
+			}
+		}
+		// END KGU#311 2017-01-04
+		// START KGU#301 2016-12-01: Bugfix #301
+		//if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
+		if (!this.suppressTransformation && !isParenthesized(condition))
+		// END KGU#301 2016-12-01
 		{
 			condition = "( " + condition + " )";
 		}
-		code.add(_indent+"if " + condition + " {");
+		addCode("if " + condition + " {", _indent, isDisabled);
 		generateCode(_alt.qTrue,_indent+this.getIndent());
 		
 		if(_alt.qFalse.getSize()!=0) {
 			
-			code.add(_indent+"}");
-			code.add(_indent+"else {");			
+			addCode("}", _indent, isDisabled);
+			addCode("else {", _indent, isDisabled);			
 			generateCode(_alt.qFalse,_indent+this.getIndent());
 			
 		}
 		
-		code.add(_indent+"}");
-		code.add("");
+		addCode("}", _indent, isDisabled);
+		addCode("", "", isDisabled);
 		
 	}
 	
 	protected void generateCode(Case _case, String _indent) {
 		
-		code.add("");
+		boolean isDisabled = _case.isDisabled();
+		
+		addCode("", "", isDisabled);
 
 		insertComment(_case, _indent);
 
 		// Since Perl release 5.8.0, switch is a standard module...
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"switch ( "+transform(_case.getText().get(0))+" ) {");
-		String selector = transform(_case.getText().get(0));
-		if (!this.suppressTransformation || !(selector.startsWith("(") && selector.endsWith(")")))
+		String discriminator = transform(_case.getText().get(0));
+		// START KGU#301 2016-12-01: Bugfix #301
+		//if (!this.suppressTransformation || !(selector.startsWith("(") && selector.endsWith(")")))
+		if (!this.suppressTransformation || !isParenthesized(discriminator))
+		// END KGU#301 2016-12-01
 		{
-			selector = "( " + selector + " )";			
+			discriminator = "( " + discriminator + " )";			
 		}
-		code.add(_indent+"switch " + selector + " {");
+		addCode("switch " + discriminator + " {", _indent, isDisabled);
 		// END KGU#162 2016-04-01
 		
 		for (int i=0; i<_case.qs.size()-1; i++)
 		{
-			code.add("");
+			addCode("", "", isDisabled);
 			// START KGU#15 2015-11-02: Support multiple constants per branch
 			//code.add(_indent+this.getIndent()+"case ("+_case.getText().get(i+1).trim()+") {");
-			String conds = _case.getText().get(i+1).trim();
-			if (Element.splitExpressionList(conds, ",").count() > 1)	// Is it an enumeration of values? 
+			String selectors = _case.getText().get(i+1).trim();
+			if (Element.splitExpressionList(selectors, ",").count() > 1)	// Is it an enumeration of values? 
 			{
-				conds = "[" + conds + "]";
+				selectors = "[" + selectors + "]";
 			}
 			else
 			{
-				conds = "(" + conds + ")";
+				selectors = "(" + selectors + ")";
 			}
-			code.add(_indent + this.getIndent() + "case " + conds +" {");
+			addCode("case " + selectors +" {", _indent + this.getIndent(), isDisabled);
 			// END KGU#15 2015-11-02
 			//code.add(_indent+_indent.substring(0,1)+_indent.substring(0,1)+"begin");
 			generateCode((Subqueue) _case.qs.get(i), _indent + this.getIndent() + this.getIndent());
-			code.add(_indent + this.getIndent()+"}");
+			addCode("}", _indent + this.getIndent(), isDisabled);
 		}
 		
 		if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
 		{
 
-			code.add("");
-			code.add(_indent + this.getIndent() + "else {");
+			addCode("", "", isDisabled);
+			addCode("else {", _indent + this.getIndent(), isDisabled);
 			generateCode((Subqueue) _case.qs.get(_case.qs.size()-1), _indent + this.getIndent() + this.getIndent());
-			code.add(_indent + this.getIndent()+"}");
+			addCode("}", _indent + this.getIndent(), isDisabled);
 		}
-		code.add(_indent+"}");
-		code.add("");
+		addCode("}", _indent, isDisabled);
+		addCode("", "", isDisabled);
 		
 	}
 	
 	
 	protected void generateCode(For _for, String _indent) {
 		
-		code.add("");
+		boolean isDisabled = _for.isDisabled();
 		
-		// STRT KGU#3 2015-11-02: Competent splitting of For clause
-//		String str = _for.getText().getText();
-//		// cut of the start of the expression
-//		if(!D7Parser.preFor.equals("")){str=BString.replace(str,D7Parser.preFor,"");}
-//		// trim blanks
-//		str=str.trim();
-//		// modify the later word
-//		if(!D7Parser.postFor.equals("")){str=BString.replace(str,D7Parser.postFor,"<=");}
-//		// do other transformations 
-//		str=transform(str);
-//		String counter = str.substring(0,str.indexOf("="));
-//		// insert the middle
-//		str=BString.replace(str,"<=",";"+counter+"<=");
-//		// complete
-//		str="for("+str+";"+counter+"++)";
-//		code.add(_indent+str+" {");
-//		//code.add(_indent+"for ("+BString.replace(transform(_for.getText().getText()),"\n","").trim()+") {");
-
+		addCode("", "", isDisabled);
+		
     	insertComment(_for, _indent);
 
     	String var = _for.getCounterVar();
@@ -496,8 +608,9 @@ public class PerlGenerator extends Generator {
     		StringList items = this.extractForInListItems(_for);
     		if (items != null)
     		{
-        		valueList = "@array20160323";
-    			code.add(_indent + valueList + " = (" + transform(items.concatenate(", "), false) + ")");
+        		valueList = "@array" + _for.hashCode();
+    			addCode("my " + valueList + " = (" + transform(items.concatenate(", "), false) + ")",
+    					_indent, isDisabled);
     		}
     		else
     		{
@@ -509,7 +622,7 @@ public class PerlGenerator extends Generator {
     		}
     		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
     		//code.add(_indent + "foreach $"+ var + " (" + valueList + ") {");
-    		code.add(_indent + "foreach "+ var + " (" + valueList + ") {");
+    		addCode("foreach "+ var + " (" + valueList + ") {", _indent, isDisabled);
     		// END KGU#162
     	}
     	else
@@ -525,98 +638,133 @@ public class PerlGenerator extends Generator {
     		//		increment +
     		//		") {");
     		String increment = var + " += (" + step + ")";
-    		code.add(_indent + "for (" +
+    		addCode("for (" +
     				var + " = " + transform(_for.getStartValue(), false) + "; " +
     				var + compOp + transform(_for.getEndValue(), false) + "; " +
     				increment +
-    				") {");
+    				") {", _indent, isDisabled);
     		// END KGU#162 2016-04-01
     	// START KGU#61 2016-03-23: Enh. 84 - FOREACH support (part 2)
     	}
     	// END KGU#61 2016-03-23
 		// END KGU#3 2015-11-02
 		generateCode(_for.q, _indent+this.getIndent());
-		code.add(_indent + "}");
+		addCode("}", _indent, isDisabled);
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_for, _indent);
 		// END KGU#78 2015-12-17
-		code.add("");
+		addCode("", "", isDisabled);
 	
 	}
 	
 	protected void generateCode(While _while, String _indent) {
 		
-		code.add("");
+		boolean isDisabled = _while.isDisabled();
+		
+		addCode("", "", isDisabled);
     	insertComment(_while, _indent);
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"while ("+BString.replace(transform(_while.getText().getText()),"\n","").trim()+") {");
     	String condition = BString.replace(transform(_while.getText().getText()),"\n","").trim();
-    	if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
+		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
+		if (this.usesFileAPI) {
+			if (condition.contains("fileEOF(")) {
+				this.insertComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
+			}
+		}
+		// END KGU#311 2017-01-04
+		// START KGU#301 2016-12-01: Bugfix #301
+		//if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
+		if (!this.suppressTransformation && !isParenthesized(condition))
+		// END KGU#301 2016-12-01
     	{
     		condition = "( " + condition + " )";
     	}
-    	code.add(_indent + "while " + condition + " {");
+    	addCode("while " + condition + " {", _indent, isDisabled);
     	// END KGU#162 2016-04-01
 		generateCode(_while.q, _indent+this.getIndent());
-		code.add(_indent + "}");
+		addCode("}", _indent, isDisabled);
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_while, _indent);
 		// END KGU#78 2015-12-17
-		code.add("");
+		addCode("", "", isDisabled);
 		
 	}
 
 	
 	protected void generateCode(Repeat _repeat, String _indent) {
 		
-		code.add("");
+		boolean isDisabled = _repeat.isDisabled();
+		
+		addCode("", "", isDisabled);
 
 		insertComment(_repeat, _indent);
 
-		code.add(_indent+"do {");
+		addCode("do {", _indent, isDisabled);
 		generateCode(_repeat.q,_indent+this.getIndent());
 		// START KGU#162 2016-04-01: Enh. #144 new restrictive export mode
 		//code.add(_indent+"} while (!("+BString.replace(transform(_repeat.getText().getText()),"\n","").trim()+")) {");
     	String condition = BString.replace(transform(_repeat.getText().getText()),"\n","").trim();
-    	if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
+		// START KGU#311 2017-01-04: Enh. #314 - steer the user through the File API implications
+		if (this.usesFileAPI) {
+			if (condition.contains("fileEOF(")) {
+				this.insertComment("TODO FileAPI: Replace the fileEOF test by something like «<DATA>» in combination with «$_» for the next fileRead", _indent);
+			}
+		}
+		// END KGU#311 2017-01-04
+		// START KGU#301 2016-12-01: Bugfix #301
+		//if (!this.suppressTransformation || !(condition.startsWith("(") && condition.endsWith(")")))
+		if (!this.suppressTransformation && !isParenthesized(condition))
+		// END KGU#301 2016-12-01
     	{
     		condition = "( " + condition + " )";
     	}
-    	code.add(_indent + "} while (!" + condition + ");");
+    	addCode("} while (!" + condition + ");", _indent, isDisabled);
     	// END KGU#162 2016-04-01
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_repeat, _indent);
 		// END KGU#78 2015-12-17
-		code.add("");
+		addCode("", "", isDisabled);
 		
 	}
 
 	protected void generateCode(Forever _forever, String _indent) {
 		
-		code.add("");
+		boolean isDisabled = _forever.isDisabled();
+		
+		addCode("", "", isDisabled);
 
 		insertComment(_forever, _indent);
 
-		code.add(_indent+"while (1) {");		
+		addCode("while (1) {", _indent, isDisabled);		
 		generateCode(_forever.q, _indent+this.getIndent());
-		code.add(_indent+"}");
+		addCode("}", _indent, isDisabled);
 		// START KGU#78 2015-12-17: Enh. #23 Put a trailing label if this is a jump target
 		appendLabel(_forever, _indent);
 		// END KGU#78 2015-12-17
-		code.add("");
+		addCode("", "", isDisabled);
 		
 	}
 	
 	protected void generateCode(Call _call, String _indent) {
 		if(!insertAsComment(_call, _indent))
+		{
+			boolean isDisabled = _call.isDisabled();
 
 			insertComment(_call, _indent);
 
+			// START KGU#352 2017-02-26: Handle arrays as arguments appropriately
+			this.isWithinCall = true;
+			// END KGU#352 2017-02-26			
 			for (int i=0; i<_call.getText().count(); i++)
 			{
-				code.add(_indent + transform(_call.getText().get(i)) + ";");
+				// FIXME: Arrays must be passed as reference, i.e. "\@arr" or "\@$para"
+				addCode(transform(_call.getText().get(i)) + ";", _indent, isDisabled);
 			}
-
+			// START KGU#352 2017-02-26: Handle arrays as arguments appropriately
+			this.isWithinCall = false;
+			// END KGU#352 2017-02-26			
+		}
 	}
 	
 	protected void generateCode(Jump _jump, String _indent) {
@@ -628,13 +776,14 @@ public class PerlGenerator extends Generator {
 //				code.add(_indent+transform(_jump.getText().get(i))+";");
 //			}
 		{
+			boolean isDisabled = _jump.isDisabled();
 			// In case of an empty text generate a break instruction by default.
 			boolean isEmpty = true;
 			
 			StringList lines = _jump.getText();
-			String preReturn = D7Parser.keywordMap.get("preReturn");
-			String preExit   = D7Parser.keywordMap.get("preExit");
-			String preLeave  = D7Parser.keywordMap.get("preLeave");
+			String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
+			String preExit   = D7Parser.getKeywordOrDefault("preExit", "exit");
+			String preLeave  = D7Parser.getKeywordOrDefault("preLeave", "leave");
 			for (int i = 0; isEmpty && i < lines.count(); i++) {
 				String line = transform(lines.get(i)).trim();
 				if (!line.isEmpty())
@@ -645,11 +794,13 @@ public class PerlGenerator extends Generator {
 				//code.add(_indent + line + ";");
 				if (line.matches(Matcher.quoteReplacement(preReturn)+"([\\W].*|$)"))
 				{
-					code.add(_indent + "return " + line.substring(preReturn.length()).trim() + ";");
+					addCode("return " + line.substring(preReturn.length()).trim() + ";",
+							_indent, isDisabled);
 				}
 				else if (line.matches(Matcher.quoteReplacement(preExit)+"([\\W].*|$)"))
 				{
-					code.add(_indent + "exit(" + line.substring(preExit.length()).trim() + ");");
+					addCode("exit(" + line.substring(preExit.length()).trim() + ");",
+							_indent, isDisabled);
 				}
 				// Has it already been matched with a loop? Then syntax must have been okay...
 				else if (this.jumpTable.containsKey(_jump))
@@ -662,13 +813,14 @@ public class PerlGenerator extends Generator {
 						insertComment(line, _indent);
 						label = "__ERROR__";
 					}
-					code.add(_indent + "goto " + label + ";");
+					addCode("goto " + label + ";", _indent, isDisabled);
 				}
 				else if (line.matches(Matcher.quoteReplacement(preLeave)+"([\\W].*|$)"))
 				{
 					// Strange case: neither matched nor rejected - how can this happen?
 					// Try with an ordinary break instruction and a funny comment
-					code.add(_indent + "last;\t" + this.commentSymbolLeft() + " FIXME: Dubious occurrance of 'last' instruction!");
+					addCode("last;\t" + this.commentSymbolLeft() + " FIXME: Dubious occurrance of 'last' instruction!",
+							_indent, isDisabled);
 				}
 				else if (!isEmpty)
 				{
@@ -678,7 +830,7 @@ public class PerlGenerator extends Generator {
 				// END KGU#74/KGU#78 2015-11-30
 			}
 			if (isEmpty) {
-				code.add(_indent + "last;");
+				addCode("last;", _indent, isDisabled);
 			}
 			
 		}
@@ -689,80 +841,79 @@ public class PerlGenerator extends Generator {
 	// START KGU#47 2015-12-17: Offer at least a sequential execution (which is one legal execution order)
 	protected void generateCode(Parallel _para, String _indent)
 	{
+		boolean isDisabled = _para.isDisabled();
+		Root root = Element.getRoot(_para);
+		int nThreads = _para.qs.size();
+		StringList[] asgndVars = new StringList[nThreads];
+		String indentPlusOne = _indent + this.getIndent();
+		String indentPlusTwo = indentPlusOne + this.getIndent();
+				
 		// START KGU 2014-11-16
 		insertComment(_para, _indent);
 		// END KGU 2014-11-16
 
-		code.add("");
+		addCode("", "", isDisabled);
 		insertComment("==========================================================", _indent);
 		insertComment("================= START PARALLEL SECTION =================", _indent);
 		insertComment("==========================================================", _indent);
-		insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
-		code.add(_indent + "{");
+		insertComment("Requires at least Perl 5.8 and version threads 2.07", _indent);
+		addCode("{", _indent, isDisabled);
 
 		for (int i = 0; i < _para.qs.size(); i++) {
-			code.add("");
-			insertComment("----------------- START THREAD " + i + " -----------------", _indent + this.getIndent());
-			code.add(_indent + this.getIndent() + "{");
-			generateCode((Subqueue) _para.qs.get(i), _indent + this.getIndent() + this.getIndent());
-			code.add(_indent + this.getIndent() + "}");
-			insertComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
-			code.add("");
+			addCode("", "", isDisabled);
+			insertComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
+			asgndVars[i] = root.getVarNames(_para.qs.get(i), false).reverse();
+			boolean hasResults = asgndVars[i].count() > 0;
+			StringList usedVars = root.getUsedVarNames(_para.qs.get(i), false, false).reverse();
+			for (int v = 0; v < asgndVars[i].count(); v++) {
+				usedVars.removeAll(asgndVars[i].get(v));
+			}
+			String threadVar = "$thr" + _para.hashCode() + "_" + i;
+			if (hasResults) {
+				// Define the thread in list context such that we may obtain more results
+				threadVar = "(" + threadVar + ")";
+			}
+			addCode("my " + threadVar + " = threads->create(sub {", indentPlusOne, isDisabled);
+			for (int v = 0; v < usedVars.count(); v++) {
+				addCode("my $" + usedVars.get(v) + " = $_[" + v + "];", indentPlusTwo, isDisabled);				
+			}
+			generateCode((Subqueue) _para.qs.get(i), indentPlusTwo);
+			if (hasResults) {
+				this.isWithinCall = true;				
+				//addCode("return ($" + asgndVars[i].concatenate(", $") + ");", indentPlusTwo, isDisabled);
+				addCode("return (" + this.transform(asgndVars[i].concatenate(", ")) + ");", indentPlusTwo, isDisabled);
+				this.isWithinCall = false;
+			}
+			String argList = usedVars.concatenate(", ").trim();
+			if (!argList.isEmpty()) {
+				this.isWithinCall = true;
+				argList = ", (" + this.transform(argList) + ")";
+				this.isWithinCall = false;
+			}
+			addCode("}" + argList + ");", indentPlusOne, isDisabled);
+			addCode("", "", isDisabled);
 		}
 
-		code.add(_indent + "}");
+		for (int i = 0; i < _para.qs.size(); i++) {
+			addCode("", "", isDisabled);
+			insertComment("----------------- AWAIT THREAD " + i + " -----------------", indentPlusOne);
+			String resultVars = asgndVars[i].concatenate(", $").trim();
+			if (!resultVars.isEmpty()) {
+				resultVars = "($" + resultVars + ") = ";
+			}
+			addCode(resultVars + "$thr" + _para.hashCode() + "_" + i + "->join();", indentPlusOne, isDisabled);
+			addCode("", "", isDisabled);
+		}
+
+		addCode("}", _indent, isDisabled);
 		insertComment("==========================================================", _indent);
 		insertComment("================== END PARALLEL SECTION ==================", _indent);
 		insertComment("==========================================================", _indent);
-		code.add("");
+		addCode("", "", isDisabled);
 	}
 	// END KGU#47 2015-12-17
 	
 	
-	// START KGU 2015-11-02: Already inherited
-//	protected void generateCode(Subqueue _subqueue, String _indent) {
-//		
-//		// code.add(_indent+"");
-//		for(int i=0;i<_subqueue.getSize();i++)
-//		{
-//			generateCode((Element) _subqueue.getElement(i),_indent);
-//		}
-//		// code.add(_indent+"");
-//		
-//	}
-	// END KGU 2015-11-02
-	
-// START KGU#78 2015-12-17: Enh. #23 Root generation decomposed
-//	public String generateCode(Root _root, String _indent) {
-//		
-//		// START KGU 2015-11-02: First of all, fetch all variable names from the entire diagram
-//		varNames = _root.getVarNames();
-//		// END KGU 2015-11-02
-//		
-//		if( ! _root.isProgram ) {
-//			code.add("sub "+_root.getText().get(0)+" {");
-//		} else {
-//			
-//			code.add("#!/usr/bin/perl");
-//			code.add("");
-//			code.add("use strict;");
-//			code.add("use warnings;");
-//			
-//		}
-//		
-//		insertComment("generated by Structorizer", _indent);
-//		code.add("");
-//		insertComment("TODO declare your variables here", _indent);
-//		code.add("");
-//		generateCode(_root.children, _indent + this.getIndent());
-//		
-//		if( ! _root.isProgram ) {
-//			code.add("}");
-//		}
-//		
-//		return code.getText();
-//		
-//	}
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#generateHeader(lu.fisch.structorizer.elements.Root, java.lang.String, java.lang.String, lu.fisch.utils.StringList, lu.fisch.utils.StringList, java.lang.String)
 	 */
@@ -771,6 +922,12 @@ public class PerlGenerator extends Generator {
 			StringList _paramNames, StringList _paramTypes, String _resultType)
 	{
 		String indent = _indent;
+		// START KGU#352 2017-02-26: Cache transform-relevant information 
+		this.paramNames = _paramNames;
+		this.typeMap = _root.getTypeInfo();
+		// END KGU#352 2017-02-26
+		
+		// END KGU#352 2017-02-26
 		// START KGU#178 2016-07-20: Enh. #160 - don't add this if it's not at top level
 		//code.add(_indent + "#!/usr/bin/perl");
 		//insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
@@ -780,6 +937,31 @@ public class PerlGenerator extends Generator {
 			code.add(_indent + "#!/usr/bin/perl");
 			insertComment("Generated by Structorizer " + Element.E_VERSION, _indent);
 			insertComment("", _indent);
+			//if (_root.isProgram) {
+			code.add("");
+			code.add(_indent + "use strict;");
+			code.add(_indent + "use warnings;");
+			//}
+			// STARTB KGU#351 2017-02-26: Enh. #346
+			this.insertUserIncludes(_indent);
+			// END KGU#351 2017-02-26
+			// START KGU#348 2017-02-25: Enh. #348: Support for Parallel elements
+			if (this.hasParallels) {
+				code.add(_indent + "use threads;");
+				code.add(_indent + "use threads::shared;");
+			}
+			// END KGU#348 2017-02-25
+			// START KGU#311 2017-01-04: Enh. #314 Desperate approach to sell the File API...
+			if (this.usesFileAPI) {
+				code.add(_indent);
+				this.insertComment("TODO: This algorithm made use of the Structorizer File API,", _indent);
+				this.insertComment("      which cannot not be translated completely.", _indent);
+				this.insertComment("      Watch out for \"TODO FileAPI\" comments and try to adapt", _indent);
+				this.insertComment("      the code according to the recommendations.", _indent);
+				this.insertComment("      See e.g. http://perldoc.perl.org/perlopentut.html", _indent);
+				code.add(_indent);
+			}
+			// END KGU#311 2017-01-04
 			subroutineInsertionLine = code.count();
 		}
 		else
@@ -794,10 +976,6 @@ public class PerlGenerator extends Generator {
 			for (int p = 0; p < _paramNames.count(); p++) {
 				code.add(indent + "my $" + _paramNames.get(p).trim() + " = $_[" + p + "];");
 			}
-		} else {
-			code.add("");
-			code.add(_indent + "use strict;");
-			code.add(_indent + "use warnings;");
 		}
 	
 		code.add("");
@@ -811,15 +989,23 @@ public class PerlGenerator extends Generator {
 	@Override
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
-		// Ensure all variables be private
-		if (!_root.isProgram) {
-			for (int v = 0; v < _varNames.count(); v++) {
-				code.add(_indent + "my $" + _varNames.get(v) + ";");	// FIXME (KGU) What about lists?
-			}
+		// Ensure all variables be declared
+		// START KGU#352 2017-02-26: This must also be done for programs!
+		//if (!_root.isProgram) {
+		//	for (int v = 0; v < _varNames.count(); v++) {
+		//		code.add(_indent + "my $" + _varNames.get(v) + ";");	// FIXME (KGU) What about lists?
+		//	}
+		//}
+		for (int v = 0; v < _varNames.count(); v++) {
+			String varName = _varNames.get(v);
+			TypeMapEntry typeEntry = this.typeMap.get(varName);
+			String prefix = (typeEntry != null && typeEntry.isArray()) ? "@" : "$";
+			code.add(_indent + "my " + prefix + varName + ";");
 		}
+		// END KGU#352 2017-02-26
 		code.add(_indent);
 		// START KGU 2015-11-02: Now fetch all variable names from the entire diagram
-		varNames = _root.getVarNames(); // We need more variables than just the ones retrieved by super.
+		varNames = _root.getVarNames(); // in contrast to super we need the parameter names included again.
 		// END KGU 2015-11-02
 		return _indent;
 	}
@@ -832,7 +1018,7 @@ public class PerlGenerator extends Generator {
 	{
 		if (!_root.isProgram && (returns || _root.getResultType() != null || isFunctionNameSet || isResultSet) && !alwaysReturns)
 		{
-			String result = "0";
+			String result = "";
 			if (isFunctionNameSet)
 			{
 				result = _root.getMethodName();
@@ -842,6 +1028,24 @@ public class PerlGenerator extends Generator {
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
 			}
+			// START KGU#62 2017-02-26: Bugfix #57
+			if (result.isEmpty()) {
+				result = "0";
+			}
+			else if(!result.startsWith("$") && !result.startsWith("@")) {
+				String prefix = "$";
+				TypeMapEntry typeEntry = this.typeMap.get(result);
+				if (typeEntry != null && typeEntry.isArray()) {
+					if (!this.paramNames.contains(result)) {
+						prefix = "@";
+					}
+					else {
+						prefix = "@$";
+					}
+				}
+				result = prefix + result;
+			}
+			// END KGU#62 2017-02-26
 			code.add(_indent);
 			code.add(_indent + "return " + result + ";");
 		}

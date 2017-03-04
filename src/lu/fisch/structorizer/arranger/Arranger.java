@@ -37,7 +37,7 @@ package lu.fisch.structorizer.arranger;
  *      ------          ----        -----------
  *      Bob Fisch       2009.08.18  First Issue
  *      Kay Gürtzig     2015.10.18  Transient WindowsListener added enabling Surface to have dirty
- *                                  diagrams saved before exit
+ *                                  diagrams saved before exit (KGU#49)
  *      Kay Gürtzig     2015.11.17  Remove button added (issue #35 = KGU#85)
  *      Kay Gürtzig     2015.11.19  Converted into a singleton (enhancement request #9 = KGU#2)
  *      Kay Gürtzig     2015-11-24  Pin button added (issue #35, KGU#88)
@@ -47,10 +47,17 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016-03-08  Bugfix #97: Methods for drawing info invalidation added (KGU#155)
  *      Kay Gürtzig     2016.03.08  Method clearExecutionStatus and btnSetCovered added (for Enhancement #77)
  *      Kay Gürtzig     2016.03.12  Enh. #124 (KGU#156): Generalized runtime data visualisation hooks
- *      Kay Gürtzig     2016-04-14  Enh. #158 (KGU#177): Keys for copy and paste enabled, closing
+ *      Kay Gürtzig     2016.04.14  Enh. #158 (KGU#177): Keys for copy and paste enabled, closing
  *                                  mechanism modified
- *      Kay Gürtzig     2016-07-03  Dialog message translation mechanism added (KGU#203).
+ *      Kay Gürtzig     2016.07.03  Dialog message translation mechanism added (KGU#203).
  *      Kay Gürtzig     2016.09.26  Enh. #253: New public method getAllRoots() added.
+ *      Kay Gürtzig     2016.11.01  Enh. #81: Scalability of the Icons ensured
+ *      Kay Gürtzig     2016.11.15  Enh. #290: New opportunity to load arrangements from Structorizer
+ *      Kay Gürtzig     2016.12.12  Enh. #305: Support for diagram list in Structorizer
+ *      Kay Gürtzig     2016.12.16  Issue #305: Notification redesign, visibility fix in scrollToDiagram,
+ *                                  new method removeDiagram(Root)
+ *      Kay Gürtzig     2017.01.04  KGU#49: Arranger now handles windowClosing events itself (instead
+ *                                  of a transient WindowAdapter). This allows Mainform to warn Arranger
  *
  ******************************************************************************************************
  *
@@ -60,9 +67,10 @@ package lu.fisch.structorizer.arranger;
  *///
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
@@ -73,6 +81,8 @@ import javax.swing.JScrollPane;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.executor.IRoutinePool;
+import lu.fisch.structorizer.executor.IRoutinePoolListener;
+import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.locales.LangFrame;
 
@@ -81,10 +91,9 @@ import lu.fisch.structorizer.locales.LangFrame;
  * @author robertfisch
  */
 @SuppressWarnings("serial")
-public class Arranger extends LangFrame implements WindowListener, KeyListener, IRoutinePool {
+public class Arranger extends LangFrame implements WindowListener, KeyListener, IRoutinePool, IRoutinePoolListener {
 
     // START KGU#177 2016-04-14: Enh. #158 - because of pasting opportunity we must take more care
-
     private boolean isStandalone = false;
 	// END KGU#177 2016-04-14
 
@@ -127,6 +136,26 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         return mySelf != null;
     }
 	// END KGU#155 2016-03-08
+    
+    // START KGU#305 2016-12-12: Enh. #305
+	/**
+	 * Scrolls to the given Root if found and selects it. If setAtTop is true then the diagram
+	 * will be raised to the top drawing level.
+	 * @param aRoot - the diagram to be focused
+	 * @param setAtTop - whether the diagram is to be drawn on top of all
+	 */
+    public static void scrollToDiagram(Root selectedRoot, boolean raiseToTop)
+    {
+    	if (mySelf != null && selectedRoot != null) {
+    		// START KGU#305 2016-12-16: Bugfix #305 - possibly we must wake the instance
+    		if (!mySelf.isVisible()) {
+    			mySelf.setVisible(true);
+    		}
+    		// END KGU#305 2016-12-16
+    		mySelf.surface.scrollToDiagram(selectedRoot, raiseToTop);
+    	}
+	}
+    // END KGU#305 2016-12-12
 
     /**
      * Creates new form Arranger
@@ -141,6 +170,9 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         isStandalone = standalone;
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         // END KGU#177 2016-04-14
+        // START KGU#305 2016-12-16
+        surface.addChangeListener(this);
+        // END KGU#305 2016-12-16
     }
 
     /**
@@ -159,6 +191,21 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         }
     }
     // END KGU#2 2015-11-19
+
+    // START KGU#289 2016-11-15: Enh. #290 (Arrangement files oadable from Structorizer)
+    /**
+     * Has the file specified by arrFilename (may be an .arr or an .arrz file) loaded as
+     * arrangement.
+     * 
+     * @param frame - potentially an associable Mainform (Structorizer)
+     * @param filename - Name of the file to be loaded as arrangement
+     * @return error message if something went wrong
+     */
+    public String loadArrangement(Mainform form, String arrFilename)
+    {
+    	return surface.loadArrFile(form, arrFilename);
+    }
+    // END KGU#259 2016-11-15
 
     // START KGU#155 2016-03-08: Bugfix #97 extension
     /**
@@ -208,7 +255,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // START KGU#2 2015-11-24: Replace the Java default icon
         try
         {
-        setIconImage(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/arranger48.png")).getImage());
+            // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+            //setIconImage(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/arranger48.png")).getImage());
+            setIconImage(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/arranger48.png")).getImage()); // NOI18N
+            // END KGU#287 2016-11-01
         }
         catch (Error error)
         {
@@ -219,7 +269,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         toolbar.setFloatable(false);
         toolbar.setRollover(true);
 
-        btnExportPNG.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/032_make_bmp.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnExportPNG.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/032_make_bmp.png"))); // NOI18N
+        btnExportPNG.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/032_make_bmp.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnExportPNG.setText("PNG Export");
         btnExportPNG.setFocusable(false);
         btnExportPNG.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -232,7 +285,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         toolbar.add(btnExportPNG);
 
         // START KGU#110 2015-12-20: Enh. #62
-        btnSaveArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/SaveFile20x20.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnSaveArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/SaveFile20x20.png"))); // NOI18N
+        btnSaveArr.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/SaveFile20x20.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnSaveArr.setText("Save List");
         btnSaveArr.setFocusable(false);
         btnSaveArr.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -244,7 +300,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         });
         toolbar.add(btnSaveArr);
 
-        btnLoadArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/OpenFile20x20.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnLoadArr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/OpenFile20x20.png"))); // NOI18N
+        btnLoadArr.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/OpenFile20x20.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnLoadArr.setText("Load List");
         btnLoadArr.setFocusable(false);
         btnLoadArr.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -257,7 +316,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         toolbar.add(btnLoadArr);
         // END KGU#110 2015-12-20
 
-        btnAddDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/101_diagram_new.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnAddDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/101_diagram_new.png"))); // NOI18N
+        btnAddDiagram.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/101_diagram_new.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnAddDiagram.setText("New Diagram");
         btnAddDiagram.setFocusable(false);
         btnAddDiagram.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -270,7 +332,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         toolbar.add(btnAddDiagram);
 
         // START KGU#88 2015-11-24: Protect a diagram against replacement
-        btnPinDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnPinDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png"))); // NOI18N
+        btnPinDiagram.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnPinDiagram.setText("Pin Diagram");
         btnPinDiagram.setToolTipText("Pin a diagram to make it immune against replacement.");
         btnPinDiagram.setFocusable(false);
@@ -285,7 +350,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // END KGU#88 2015-11-24
 
         // START KGU#117 2016-03-09: Enh. #77 - Mark a subroutine as test-covered
-        btnSetCovered.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/setCovered20x20.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnSetCovered.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/setCovered20x20.png"))); // NOI18N
+        btnSetCovered.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/setCovered20x20.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnSetCovered.setText("Set Covered");
         btnSetCovered.setToolTipText("Mark the routine diagram as test-covered for subroutine calls to it.");
         btnSetCovered.setFocusable(false);
@@ -300,7 +368,10 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         // END KGU#117 2016-03-09
 
         // START KGU#85 2015-11-17: New opportunity to drop the selected diagram 
-        btnRemoveDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/100_diagram_drop.png"))); // NOI18N
+        // START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+        //btnRemoveDiagram.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/100_diagram_drop.png"))); // NOI18N
+        btnRemoveDiagram.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/100_diagram_drop.png"))); // NOI18N
+        // END KGU#287 2016-11-01
         btnRemoveDiagram.setText("Drop Diagram");
         btnRemoveDiagram.setFocusable(false);
         btnRemoveDiagram.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -348,45 +419,47 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         /******************************
          * Set onClose event
          ******************************/
-        addWindowListener(new WindowAdapter() 
-        {  
-        	@Override
-        	public void windowClosing(WindowEvent e) 
-        	{
-        		// START KGU#177 2016-04-14: Enh. #158 - We want to provide an emergency exit here
-//        		// START KGU#2 2015-11-19: Only necessary if I am going to exit
-//        		if (mySelf.getDefaultCloseOperation() == JFrame.EXIT_ON_CLOSE)
-//        		// END KGU#2 2015-11-19
-//        			surface.saveDiagrams();	// Allow user to save dirty diagrams
-        		if (surface.saveDiagrams())
-        		{
-        			if (isStandalone)
-        			{
-        				System.exit(0);
-        			}
-        			else
-        			{
-        				dispose();
-        			}
-        		}
-        		// END KGU#177 2016-04-14
-        	}  
-
-        	@Override
-        	public void windowOpened(WindowEvent e) 
-        	{  
-        	}  
-
-        	@Override
-        	public void windowActivated(WindowEvent e)
-        	{  
-        	}
-
-        	@Override
-        	public void windowGainedFocus(WindowEvent e) 
-        	{  
-        	}  
-        });
+//        addWindowListener(new WindowAdapter() 
+//        {  
+//        	@Override
+//        	public void windowClosing(WindowEvent e) 
+//        	{
+//        		System.out.println("WindowAdapter.windowClosing()...");
+//        		// START KGU#177 2016-04-14: Enh. #158 - We want to provide an emergency exit here
+////        		// START KGU#2 2015-11-19: Only necessary if I am going to exit
+////        		if (mySelf.getDefaultCloseOperation() == JFrame.EXIT_ON_CLOSE)
+////        		// END KGU#2 2015-11-19
+////        			surface.saveDiagrams();	// Allow user to save dirty diagrams
+//        		if (surface.saveDiagrams(true))
+//        		{
+//        			if (isStandalone)
+//        			{
+//        				System.exit(0);
+//        			}
+//        			else
+//        			{
+//        				dispose();
+//        			}
+//        		}
+//        		// END KGU#177 2016-04-14
+//        	}  
+//
+//        	@Override
+//        	public void windowOpened(WindowEvent e) 
+//        	{  
+//        	}  
+//
+//        	@Override
+//        	public void windowActivated(WindowEvent e)
+//        	{  
+//        	}
+//
+//        	@Override
+//        	public void windowGainedFocus(WindowEvent e) 
+//        	{  
+//        	}  
+//        });
+        addWindowListener(this); 
         // END KGU#49 2015-10-18
 
         // START KGU#117 2016-03-09: New for Enh. #77
@@ -449,7 +522,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         });
     }
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
+    // Variables declaration
     private javax.swing.JButton btnAddDiagram;
     // START KGU#85 2015-11-17
     private javax.swing.JButton btnRemoveDiagram;
@@ -472,12 +545,29 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     // START KGU#85 2015-11-18
     private JScrollPane scrollarea;
     // END KGU#85 2015-11-18
+    // START KGU#2016-12-16
+    private static final Set<IRoutinePoolListener> listeners = new HashSet<IRoutinePoolListener>();
+    private static final Vector<Root> routines = new Vector<Root>();
+    // END KGU#2016-12-16
 
     public void windowOpened(WindowEvent e) {
     }
 
     public void windowClosing(WindowEvent e) {
-    }
+        // START KGU#49 2017-01-04: On closing the Arranger window, the dependent Mainforms must get a chance to save their stuff!
+		if (surface.saveDiagrams(true))
+		{
+			if (isStandalone)
+			{
+				System.exit(0);
+			}
+			else
+			{
+				dispose();
+			}
+		}
+        // END KGU#49 2017-01-04
+	}
 
     public void windowClosed(WindowEvent e) {
     }
@@ -572,7 +662,13 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
     }
     // END KGU#258 2016-09-26
 
-
+    // START KGU#305 2016-12-16: Code revision
+    // Shares the sorted list of Root elements held by the Surface object 
+    public static Vector<Root> getSortedRoots()
+    {
+    	return routines;
+    }
+    // END KGU#305 2016-12-16
 
     // START KGU#117 2016-03-08: Introduced on occasion of Enhancement #77
     @Override
@@ -591,5 +687,60 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
         surface.repaint();
     }
 	// END KGU#156 2016-03-10
+
+    // START KGU#305 2016-12-12: Enh. #305
+	/**
+	 * Returns the Root diagram currently selected in Arranger
+	 * @return Either a Root object or null (if none was selected)
+	 */
+	public Root getSelected() 
+	{
+		return surface.getSelected();
+	}
+	// END KGU#305 2016-12-12
+
+	// START KGU#305 2016-12-16
+	public static void addToChangeListeners(IRoutinePoolListener _listener)
+	{
+		listeners.add(_listener);
+	}
+	
+	public static void removeFromChangeListeners(IRoutinePoolListener _listener)
+	{
+		listeners.remove(_listener);
+	}
+	
+	@Override
+	public void addChangeListener(IRoutinePoolListener _listener) {
+		addToChangeListeners(_listener);
+	}
+
+	@Override
+	public void removeChangeListener(IRoutinePoolListener _listener) {
+		removeFromChangeListeners(_listener);
+	}
+
+	@Override
+	public void routinePoolChanged(IRoutinePool _source) {
+		routines.clear();
+		routines.addAll(_source.getAllRoots());
+		Collections.sort(routines, Root.SIGNATURE_ORDER);
+		for (IRoutinePoolListener listener: listeners) {
+			listener.routinePoolChanged(this);
+		}
+	}
+	// END KGU#305 2016-12-16
+
+	// START KGU#305 2016-12-17: Enh. #305 External removal request (from  Arranger index)
+	/**
+	 * Removes the diagram given by root from the Arranger surface (if being placed there)
+	 * @param _root - the root element of the diagram to remove
+	 */
+	public void removeDiagram(Root _root) {
+		if (surface != null) {
+			surface.removeDiagram(_root);
+		}
+	}
+	// END #305 2016-12-17
 
 }

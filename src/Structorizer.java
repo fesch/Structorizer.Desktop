@@ -35,6 +35,11 @@
  *      Kay Gürtzig     2016.04.28      First draft for enh. #179 - batch generator mode (KGU#187)
  *      Kay Gürtzig     2016.05.03      Prototype for enh. #179 - incl. batch parser and help (KGU#187)
  *      Kay Gürtzig     2016.05.08      Issue #185: Capability of multi-routine import per file (KGU#194)
+ *      Kay Gürtzig     2016.12.02      Enh. #300: Information about updates on start in interactive mode
+ *                                      Modification in command-line concatenation
+ *      Kay Gürtzig     2016.12.12      Issue #306: multiple arguments in simple command line are now
+ *                                      interpreted as several files to be opened in series.
+ *      Kay Gürtzig     2017.01.27      Issue #306 + #290: Support for Arranger files in command line
  *
  ******************************************************************************************************
  *
@@ -146,23 +151,42 @@ public class Structorizer
 
 		try
 		{
-			String s = new String();
+			//String s = new String();
 			int start = 0;
-			if (args.length > 0 && args[0].equals("-open"))
-				start=1;
-			// FIXME (KGU): This does not really make sense
+			if (args.length > 0 && args[0].equals("-open")) {
+				start = 1;
+			}
+			// FIXME (KGU 2016-12-12): This concatenation still doesn't make sense...
+			// (If the file name contained blanks then the OS should have quoted it,
+			// if the command line contained several file names, on the other hand, then
+			// they would have to be loaded separately - this could be done by moving
+			// the previously loaded one to the Arranger on each consecutive load.)
 			for (int i=start; i<args.length; i++)
 			{
-				s += args[i];
+				// START KGU#306 2016-12-12/2017-01-27: This seemed to address file names with blanks...
+				//s += args[i];
+				String s = args[i].trim();
+				String lastExt = "";	// Last file extension
+				if (!s.isEmpty())
+				{
+					if (lastExt.equals("nsd") && !mainform.diagram.getRoot().isEmpty()) {
+						// Push the previously loaded diagram to Arranger
+						mainform.diagram.arrangeNSD();
+					}
+					lastExt = mainform.diagram.openNsdOrArr(s);
+				}
+				// END KGU#306 2016-12-12/2017-01-27
 			}
-			//System.out.println("Opening from shell: "+s);
-			// START KGU#111 2015-12-16: Bugfix #63 - no open attempt without need
-			//mainform.diagram.openNSD(s);
-			if (!s.trim().isEmpty())
-			{
-				mainform.diagram.openNSD(s);
-			}
-			// END KGU#111 2015-12-16
+			// START KGU#306 2016-12-12: Enh. #306 - Replaced with the stuff in the loop above
+//			s = s.trim();
+//			// START KGU#111 2015-12-16: Bugfix #63 - no open attempt without need
+//			//mainform.diagram.openNSD(s);
+//			if (!s.isEmpty())
+//			{
+//				mainform.diagram.openNSD(s);
+//			}
+//			// END KGU#111 2015-12-16
+			// END KGU#306 2016-12-12
 			mainform.diagram.redraw();
 		}
 		catch (Exception e)
@@ -211,7 +235,9 @@ public class Structorizer
 			}
 		}/**/
 
-
+		// START KGU#300 2016-12-02
+		mainform.notifyNewerVersion();
+		// END KGU#300 2016-12-02
 	}
 	
 	// START KGU#187 2016-05-02: Enh. #179
@@ -479,5 +505,5 @@ public class Structorizer
 		System.out.println("");
 	}
 	// END KGU#187 2016-05-02
-	
+		
 }

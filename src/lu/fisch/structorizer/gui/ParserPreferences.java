@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.gui;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -37,13 +36,15 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2015.11.08      Enh. #10: step keyword setting manually added (FOR loop)
  *      Kay Gürtzig     2016.03.21      Enh. #84: FOR-IN loop settings manually added
  *      Kay Gürtzig     2016.03.23      Enh. #23: Settings for JUMP statements prepared (but not enabled)
+ *      Kay Gürtzig     2016.11.11      Issue #81: DPI-awareness workaround for checkboxes
+ *      Kay Gürtzig     2017.01.07      Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
+ *      Kay Gürtzig     2017.01.09      Issue #81 / bugfix #330: Scaling stuff outsourced to class GUIScaler
  *
  ******************************************************************************************************
  *
  *      Comment:		I used JFormDesigner to design this window graphically.
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import lu.fisch.structorizer.locales.LangDialog;
 
@@ -64,7 +65,7 @@ import javax.swing.border.*;
 @SuppressWarnings("serial")
 public class ParserPreferences extends LangDialog {
     
-        public boolean OK = false;
+	public boolean OK = false;
 
 	
 	// JFormDesigner - Variables declaration - DO NOT MODIFY  //GEN-BEGIN:variables
@@ -349,6 +350,10 @@ public class ParserPreferences extends LangDialog {
 			dialogPane.add(buttonBar, BorderLayout.SOUTH);
 		}
 		contentPane.add(dialogPane, BorderLayout.CENTER);
+		// START KGU#287 2017-01-09: Issue #81 / bugfix #330
+		GUIScaler.rescaleComponents(this);
+		// END KGU#287 2017-01-09
+
 		pack();
 		setLocationRelativeTo(getOwner());
 		// JFormDesigner - End of component initialization  //GEN-END:initComponents

@@ -70,6 +70,13 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.09.21      Issue #248: API of setBreakTriggerCount() modified to prevent negative values
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactored
  *      Kay Gürtzig     2016.09.28      KGU#264: Font name property renamed from "Name" to "Font".
+ *      Kay Gürtzig     2016.10.13      Issue #270: New field "disabled" for execution and code export
+ *      Kay Gürtzig     2016.11.06      Issue #279: Several modifications to circumvent direct access to D7Parser.keywordMap
+ *      Kay Gürtzig     2017.01.06      Issue #327: French default structure preferences replaced by English ones
+ *      Kay Gürtzig     2017.01.13      Issue #333: Display of compound comparison operators as unicode symbols
+ *      Kay Gürtzig     2017.01.27      Enh. #335: "dim" highlighted like "var" and ":" like "as"
+ *      Kay Gürtzig     2017.02.01      KGU#335: Method splitLexically now reassembles floating-point literals (without sign)
+ *      Kay Gürtzig     2017.02.07      Bugfix #341: Reconstruction of strings with mixed quotes in line fixed
  *
  ******************************************************************************************************
  *
@@ -159,6 +166,7 @@ import lu.fisch.utils.*;
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.executor.Executor;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.io.*;
 
@@ -175,12 +183,10 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.25-02";
+	public static String E_VERSION = "3.26-05";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
-	"\n"+
-	"Having also put his fingers into the code\n"+
 	" - Kay Gürtzig <kay.guertzig@fh-erfurt.de>\n"+
 	"\n"+
 	"Export classes written and maintained by\n"+
@@ -232,6 +238,7 @@ public abstract class Element {
 	" - Jan Peter Klippel <structorizer@xtux.org>\n"+
 	" - David Tremain <DTremain@omnisource.com>\n"+
 	" - Rolf Schmidt <rolf.frogs@t-online.de>\n"+
+	" - Benjamin Neuberg (newboerg)\n"+
 	
 	"\n"+
 	"File dropper class by\n"+
@@ -275,21 +282,6 @@ public abstract class Element {
 	public static boolean E_COLLECTRUNTIMEDATA = false;
 	public static RuntimeDataPresentMode E_RUNTIMEDATAPRESENTMODE = RuntimeDataPresentMode.NONE;	// FIXME: To be replaced by an enumeration type
 	// END KGU#117 2016-03-06
-	// START KGU#156 2016-03-10; Enh. #124
-	protected static int maxExecCount = 0;			// Maximum number of executions of any element while runEventTracking has been on
-	protected static int maxExecStepCount = 0;		// Maximum number of instructions carried out directly per element
-	protected static int maxExecTotalCount = 0;		// Maximum combined number of directly and indirectly performed instructions
-	// END KGU156 2016-03-10
-	// START KGU#225 2016-07-28: Bugfix #210
-	protected static Vector<Integer> execCounts = new Vector<Integer>();
-	// END KGU#225 2016-07-28
-	// START KGU#213 2016-08-02: Enh. #215
-	/**
-	 *  Container for temporarily (i.e. during execution) modified breakpoint count triggers
-	 *  Keys ae the indices into execCounts
-	 */
-	protected static Map<Integer, Integer> breakTriggersTemp = new Hashtable<Integer, Integer>();
-	// END KGU#213 2016-08-2
 
 	public static boolean E_VARHIGHLIGHT = false;	// Highlight variables, operators, string literals, and certain keywords? 
 	public static boolean E_SHOWCOMMENTS = true;	// Enable comment bars and comment popups? 
@@ -302,6 +294,17 @@ public abstract class Element {
 	// START KGU#123 2016-01-04: New toggle for Enh. #87
 	public static boolean E_WHEELCOLLAPSE = false;	// Is collapsing by mouse wheel rotation enabled?
 	// END KGU#123 2016-01-04
+    // START KGU#309 2016-12-15: Enh. #310 new saving options
+    public static boolean E_AUTO_SAVE_ON_EXECUTE = false;
+    public static boolean E_AUTO_SAVE_ON_CLOSE = false;
+    public static boolean E_MAKE_BACKUPS = true;
+    // END KGU#309 20161-12-15
+    // START KGU#287 2017-01-11: Issue #81 (workaround)
+    public static double E_NEXT_SCALE_FACTOR;
+    // END KGU#287 2017-01-15
+    // START KGU#331 2017-01-13:
+    public static boolean E_SHOW_UNICODE_OPERATORS = true;
+    // END KGU#331 2017-01-13
 
 	// some colors
 	public static Color color0 = Color.decode("0xFFFFFF");
@@ -330,6 +333,22 @@ public abstract class Element {
 	public static final String COLLAPSED =  "...";
 	public static boolean altPadRight = true;
 
+	// START KGU#156 2016-03-10; Enh. #124
+	protected static int maxExecCount = 0;			// Maximum number of executions of any element while runEventTracking has been on
+	protected static int maxExecStepCount = 0;		// Maximum number of instructions carried out directly per element
+	protected static int maxExecTotalCount = 0;		// Maximum combined number of directly and indirectly performed instructions
+	// END KGU156 2016-03-10
+	// START KGU#225 2016-07-28: Bugfix #210
+	protected static Vector<Integer> execCounts = new Vector<Integer>();
+	// END KGU#225 2016-07-28
+	// START KGU#213 2016-08-02: Enh. #215
+	/**
+	 *  Container for temporarily (i.e. during execution) modified breakpoint count triggers
+	 *  Keys are the indices into execCounts
+	 */
+	protected static Map<Integer, Integer> breakTriggersTemp = new Hashtable<Integer, Integer>();
+	// END KGU#213 2016-08-2
+
 	// element attributes
 	protected StringList text = new StringList();
 	public StringList comment = new StringList();
@@ -354,6 +373,13 @@ public abstract class Element {
 	// START KGU#225 2016-07-28: Bugfix #210
 	protected int execCountIndex = -1;
 	// END KGU#225 2016-07-28
+	// START KGU#277 2016-10-13: Enh. #270 Option to disable an Element from execution and export
+	/**
+	 * If true then this element is to be skipped on execution and outcommented on code export!
+	 * Also see isDisabled() for recursively inherited disabled state
+	 */
+	public boolean disabled = false;
+	// END KGU#277 2016-10-13
 
 	// END KGU156 2016-03-10
 	
@@ -378,22 +404,53 @@ public abstract class Element {
 	protected boolean isRectUpToDate = false;		// Will be set and used by prepareDraw() - to be reset on changes
 	private static StringList specialSigns = null;	// Strings to be highlighted in the text (lazy initialisation)
 
+	// START KGU#261 2017-01-19: Enh. #259 prepare the variable type map
+	private static long lastId = 0;
+	/**
+	 * Change- and cloning-invariant id of this element
+	 */
+	private long id = 0;
+	private void makeNewId()
+	{
+		id = ++lastId;
+	}
+	public long getId()
+	{
+		return id;
+	}
 
+//	public Element()
+//	{
+//	}
+//
+//	public Element(String _string)
+//	{
+//		setText(_string);
+//	}
+//
+//	public Element(StringList _strings)
+//	{
+//		setText(_strings);
+//	}
 	public Element()
 	{
+		makeNewId();
 	}
 
 	public Element(String _string)
 	{
+		makeNewId();
 		setText(_string);
 	}
 
 	public Element(StringList _strings)
 	{
+		makeNewId();
 		setText(_strings);
 	}
+	// END KGU#261 2017-01-19
 
-	
+
 	/**
 	 * Resets my cached drawing info
 	 */
@@ -496,6 +553,9 @@ public abstract class Element {
 	// START KGU#213 2016-08-01: Enh. #215 - derived from Instruction
 	protected void copyDetails(Element _ele, boolean _simplyCoveredToo)
 	{
+		// START KGU#261 2017-01-19: Enh. #259 (type map)
+		_ele.id = this.id;
+		// END KGU#261 2017-01-19
 		_ele.setComment(this.getComment().copy());
 		_ele.setColor(this.getColor());
 		_ele.breakpoint = this.breakpoint;
@@ -504,6 +564,9 @@ public abstract class Element {
 		// START KGU#183 2016-04-24: Issue #169
 		_ele.selected = this.selected;
 		// END KGU#183 2016-04-24
+		// START KGU#277 2016-10-13: Enh. #270
+		_ele.disabled = this.disabled;
+		// END KGU#277 2016-10-13
 		// FIXME: Shouldn't we also copy the collapsed status?
 	}
 	// END KGU#213 2016-08-01
@@ -745,10 +808,26 @@ public abstract class Element {
 	 */
 	public boolean isExecuted()
 	{
-		return this.executed || this.waited;
+		// START KGU#143 2016-11-17: Issue #114 refinement
+		//return this.executed || this.waited;
+		return this.isExecuted(true);
+		// END KGU#143 2016-11-17
 	}
 	// END KGU#143 2016-01-22
 	
+    // START KGU#143 2016-11-17: Bugfix #114 - we need a method avoiding cyclic recursion
+	/**
+	 * Checks execution involvement.
+	 * @param checkParent - whether the waiting status of the owning Subqueue is relevant
+	 * @return true iff this or some substructure of this is currently executed. 
+	 */
+	public boolean isExecuted(boolean checkParent)
+	{
+		return this.executed || this.waited
+				|| checkParent && this.parent != null && this.parent.getClass().getSimpleName().equals("Subqueue") && this.parent.isExecuted();
+	}
+	// END KGU#143 2016-11-17
+
 	// START KGU#156 2016-03-11: Enh. #124 - We need a consistent execution step counting
 	/**
 	 * Resets all element execution counts and the derived maximum execution count as well
@@ -1524,7 +1603,8 @@ public abstract class Element {
 			Ini ini = Ini.getInstance();
 			ini.load();
 			// elements
-			preAltT=ini.getProperty("IfTrue","V");
+			// START KGU 2017-01-06: Issue #327: Default changed to English
+			preAltT=ini.getProperty("IfTrue","T");
 			preAltF=ini.getProperty("IfFalse","F");
 			preAlt=ini.getProperty("If","()");
 			// START KGU 2016-07-31: Bugfix #212 - After corrected effect the default is also turned
@@ -1532,11 +1612,12 @@ public abstract class Element {
 			altPadRight = Boolean.valueOf(ini.getProperty("altPadRight", "false"));
 			// END KGU#228 2016-07-31
 			StringList sl = new StringList();
-			sl.setCommaText(ini.getProperty("Case","\"?\",\"?\",\"?\",\"sinon\""));
+			sl.setCommaText(ini.getProperty("Case","\"?\",\"?\",\"?\",\"default\""));
 			preCase=sl.getText();
-			preFor=ini.getProperty("For","pour ? <- ? \u00E0 ?");
-			preWhile=ini.getProperty("While","tant que ()");
-			preRepeat=ini.getProperty("Repeat","jusqu'\u00E0 ()");
+			preFor=ini.getProperty("For","for ? <- ? to ?");
+			preWhile=ini.getProperty("While","while ()");
+			preRepeat=ini.getProperty("Repeat","until ()");
+			// END KGU 2017-01-06 #327
 			// font
 			// START KGU#264 2016-09-28: key Name replaced by the more expressive "Font"
 			//setFont(new Font(ini.getProperty("Name","Dialog"), Font.PLAIN,Integer.valueOf(ini.getProperty("Size","12")).intValue()));
@@ -1671,14 +1752,22 @@ public abstract class Element {
 
 		parts=StringList.explodeWithDelimiter(parts,"\\");
 		parts=StringList.explodeWithDelimiter(parts,"%");
+		
+		// START KGU#331 2017-01-13: Enh. #333 Precaution against unicode comparison operators
+		parts=StringList.explodeWithDelimiter(parts,"\u2260");
+		parts=StringList.explodeWithDelimiter(parts,"\u2264");
+		parts=StringList.explodeWithDelimiter(parts,"\u2265");
+		// END KGU#331 2017-01-13
 
-		// reassamble symbols
+		// reassemble symbols
 		int i = 0;
 		while (i < parts.count())
 		{
+			String thisPart = parts.get(i);
 			if (i < parts.count()-1)
 			{
-				if (parts.get(i).equals("<") && parts.get(i+1).equals("-"))
+				String nextPart = parts.get(i+1);
+				if (thisPart.equals("<") && nextPart.equals("-"))
 				{
 					parts.set(i,"<-");
 					parts.delete(i+1);
@@ -1689,52 +1778,52 @@ public abstract class Element {
 					}
 					// END KGU 2014-10-18
 				}
-				else if (parts.get(i).equals(":") && parts.get(i+1).equals("="))
+				else if (thisPart.equals(":") && nextPart.equals("="))
 				{
 					parts.set(i,":=");
 					parts.delete(i+1);
 				}
-				else if (parts.get(i).equals("!") && parts.get(i+1).equals("="))
+				else if (thisPart.equals("!") && nextPart.equals("="))
 				{
 					parts.set(i,"!=");
 					parts.delete(i+1);
 				}
 				// START KGU 2015-11-04
-				else if (parts.get(i).equals("=") && parts.get(i+1).equals("="))
+				else if (thisPart.equals("=") && nextPart.equals("="))
 				{
 					parts.set(i,"==");
 					parts.delete(i+1);
 				}
 				// END KGU 2015-11-04
-				else if (parts.get(i).equals("<"))
+				else if (thisPart.equals("<"))
 				{
-					if (parts.get(i+1).equals(">"))
+					if (nextPart.equals(">"))
 					{
 						parts.set(i,"<>");
 						parts.delete(i+1);
 					}
-					else if (parts.get(i+1).equals("="))
+					else if (nextPart.equals("="))
 					{
 						parts.set(i,"<=");
 						parts.delete(i+1);
 					}
 					// START KGU#92 2015-12-01: Bugfix #41
-					else if (parts.get(i+1).equals("<"))
+					else if (nextPart.equals("<"))
 					{
 						parts.set(i,"<<");
 						parts.delete(i+1);
 					}					
 					// END KGU#92 2015-12-01
 				}
-				else if (parts.get(i).equals(">"))
+				else if (thisPart.equals(">"))
 				{
-					if (parts.get(i+1).equals("="))
+					if (nextPart.equals("="))
 					{
 						parts.set(i,">=");
 						parts.delete(i+1);
 					}
 					// START KGU#92 2015-12-01: Bugfix #41
-					else if (parts.get(i+1).equals(">"))
+					else if (nextPart.equals(">"))
 					{
 						parts.set(i,">>");
 						parts.delete(i+1);
@@ -1742,43 +1831,87 @@ public abstract class Element {
 					// END KGU#92 2015-12-01
 				}
 				// START KGU#24 2014-10-18: Logical two-character operators should be detected, too ...
-				else if (parts.get(i).equals("&") && parts.get(i+1).equals("&"))
+				else if (thisPart.equals("&") && nextPart.equals("&"))
 				{
 					parts.set(i,"&&");
 					parts.delete(i+1);
 				}
-				else if (parts.get(i).equals("|") && parts.get(i+1).equals("|"))
+				else if (thisPart.equals("|") && nextPart.equals("|"))
 				{
 					parts.set(i,"||");
 					parts.delete(i+1);
 				}
 				// END KGU#24 2014-10-18
 				// START KGU#26 2015-11-04: Find escaped quotes
-				else if (parts.get(i).equals("\\"))
+				else if (thisPart.equals("\\"))
 				{
-					if (parts.get(i+1).equals("\""))
+					if (nextPart.equals("\""))
 					{
 						parts.set(i, "\\\"");
-						parts.delete(i+1);					}
-					else if (parts.get(i+1).equals("\\"))
+						parts.delete(i+1);
+					}
+					// START KGU#344 201702-08: Issue #341 - Precaution against string/character delimiter replacement
+					else if (nextPart.equals("'"))
+					{
+						parts.set(i, "\\'");
+						parts.delete(i+1);
+					}
+					// END KGU#344 2017-02-08
+					else if (nextPart.equals("\\"))
 					{
 						parts.set(i, "\\\\");
-						parts.delete(i+1);					}
+						parts.delete(i+1);
+					}
 				}
 				// END KGU#26 2015-11-04
+				// START KGU#331 2017-01-13: Enh. #333 Precaution against unicode comparison operators
+				else if (thisPart.equals("\u2260")) {
+					parts.set(i, "<>");
+				}
+				else if (thisPart.equals("\u2264")) {
+					parts.set(i, "<=");
+				}
+				else if (thisPart.equals("\u2265")) {
+					parts.set(i, ">=");
+				}
+				// END KGU#331 2017-01-13
+				// START KGU#335 2017-02-01: Recompose floating-point literals (except those starting or ending with ".")
+				else if (thisPart.matches("[0-9]+") && nextPart.equals(".") && i+2 < parts.count()) {
+					if (parts.get(i+2).matches("[0-9]+([eE][0-9]+)?")) {
+						parts.set(i, thisPart + nextPart + parts.get(i+2));
+						parts.delete(i+1);
+						parts.delete(i+1);
+					}
+					else if (parts.get(i+2).matches("[0-9]+[eE]") &&
+							i+4 < parts.count() && parts.get(i+3).matches("[+-]") && parts.get(i+4).matches("[0-9]+")) {
+						for (int j = 1; j <= 4; j++) {
+							thisPart += parts.get(i+1);
+							parts.delete(i+1);
+						}
+						parts.set(i, thisPart);
+					}
+				}
+				// END KGU#335 2017-02-01
 			}
 			i++;
 		}
 		
 		if (_restoreStrings)
 		{
-			String[] delimiters = {"\"", "'"};
+			// START KGU#344 2017-02-07: Bugfix #341 Wrong loop inclusion
+			//String[] delimiters = {"\"", "'"};
+			final String delimiters = "\"'";
+			// END KGU#344 2017-02-07
 			// START KGU#139 2016-01-12: Bugfix #105 - apparently incomplete strings got lost
 			// We mustn't eat seemingly incomplete strings, instead we re-feed them
 			StringList parkedTokens = new StringList();
 			// END KGU#139 2016-01-12
-			for (int d = 0; d < delimiters.length; d++)
-			{
+			// START #344 2017-02-07: Bugfix #341: Wrong strategy - the token must select the start delimiter
+			//for (int d = 0; d < delimiters.length; d++)
+			//{
+			int ixDelim = -1;	// delimiter index in delimiters
+			String delim = "";	// starting delimiter for matching the closing delimiter
+			// END KGU#344 2017-02-07
 				boolean withinString = false;
 				String composed = "";
 				i = 0;
@@ -1788,7 +1921,10 @@ public abstract class Element {
 					if (withinString)
 					{
 						composed = composed + lexeme;
-						if (lexeme.equals(delimiters[d]))
+						// START KGU#344 2017-02-07: Bugfix #341
+						//if (lexeme.equals(delimiters[d]))
+						if (lexeme.equals(delim))
+						// END KGU#344 2017-02-07
 						{
 							// START KGU#139 2016-01-12: Bugfix #105
 							parkedTokens.clear();
@@ -1806,12 +1942,18 @@ public abstract class Element {
 							parts.delete(i);
 						}
 					}
-					else if (lexeme.equals(delimiters[d]))
+					// START KGU#344 2017-02-07: Bugfix #341
+					//else if (lexeme.equals(delimiters[d]))
+					else if (lexeme.length() == 1 && (ixDelim = delimiters.indexOf(lexeme)) >= 0)
+					// END KGU#344 2017-02-27
 					{
 						// START KGU#139 2016-01-12: Bugfix #105
 						parkedTokens.add(lexeme);
 						// END KGU#139 2016-01-12
 						withinString = true;
+						// START KGU#344 2017-02-07: Bugfix #341
+						delim = delimiters.substring(ixDelim, ixDelim+1);
+						// END KGU#344 2017-02-07
 						composed = lexeme+"";
 						parts.delete(i);
 					}
@@ -1820,7 +1962,9 @@ public abstract class Element {
 						i++;
 					}
 				}
-			}
+			// START KGU#344 2017-02-07: Bugfix #341 No outer loop anymore
+			//}
+			// END KGU#344 2017-02-07
 			// START KGU#139 2916-01-12: Bugfix #105
 			if (parkedTokens.count() > 0)
 			{
@@ -1931,6 +2075,51 @@ public abstract class Element {
 	}
 	// END KGU#101 2015-12-11
 
+	// START KGU#261 2017-02-01: Enh. #259 (type map) - moved from Instruction hitherto
+	/**
+	 * Tries to derive the data type of expression expr by means of analysing literal
+	 * syntax, built-in functions and the types associated to variables registered in
+	 * the typeMap.
+	 * @param typeMap - current mapping of variable names to statically concluded type information 
+	 * @param expr - the expression to be categorized
+	 * @return a type description if available and unambiguous or an empty string otherwise
+	 */
+	public static String identifyExprType(HashMap<String, TypeMapEntry> typeMap, String expr)
+	{
+		String typeSpec = "";	// This means no info
+		// 1. Check whether its a known typed variable
+		TypeMapEntry typeEntry = typeMap.get(expr);
+		if (typeEntry != null) {
+			StringList types = typeEntry.getTypes();
+			if (types.count() == 1) {
+				typeSpec = typeEntry.getTypes().get(0);
+			}
+		}
+		// Otherwise check if it's a built-in function with unambiguous type
+		else if (Function.isFunction(expr)) {
+			typeSpec = (new Function(expr).getResultType(""));
+		}
+		else if (expr.matches("(^\\\".*\\\"$)|(^\\\'.*\\\'$)")) {
+			typeSpec = "String";
+		}
+		// 2. If none of the approaches above succeeded check for a numeric literal
+		if (typeSpec.isEmpty()) {
+			try {
+				Double.parseDouble(expr);
+				typeSpec = "double";
+				Integer.parseInt(expr);
+				typeSpec = "int";
+			}
+			catch (NumberFormatException ex) {}
+		}
+		// Check for boolean literals
+		if (typeSpec.isEmpty() && (expr.equalsIgnoreCase("true") || expr.equalsIgnoreCase("false"))) {
+			typeSpec = "boolean";
+		}
+		return typeSpec;
+	}
+	// END KGU#261 2017-02-01
+	
 	// START KGU#63 2015-11-03: getWidthOutVariables and writeOutVariables were nearly identical (and had to be!)
 	// Now it's two wrappers and a common algorithm -> ought to avoid duplicate work and prevents from divergence
 	public static int getWidthOutVariables(Canvas _canvas, String _text, Element _this)
@@ -1976,6 +2165,9 @@ public abstract class Element {
 					specialSigns.add("]");
 					specialSigns.add("\u2190");
 					specialSigns.add(":=");
+					// START KGU#332 2017-01-27: Enh. #306 "dim" as declaration keyword
+					specialSigns.add(":");
+					// END KGU#332 2017-01-27
 
 					specialSigns.add("+");
 					specialSigns.add("/");
@@ -1985,11 +2177,19 @@ public abstract class Element {
 					specialSigns.add("*");
 					specialSigns.add("-");
 					specialSigns.add("var");
+					// START KGU#332 2017-01-27: Enh. #306 "dim" as declaration keyword
+					specialSigns.add("dim");
+					// END KGU#332 2017-01-27
 					specialSigns.add("mod");
 					specialSigns.add("div");
 					specialSigns.add("<=");
 					specialSigns.add(">=");
 					specialSigns.add("<>");
+					// START KGU#331 2017-01-13: Enh. #333
+					specialSigns.add("\u2260");
+					specialSigns.add("\u2264");
+					specialSigns.add("\u2265");
+					// END KGU#331 2017-01-13
 					specialSigns.add("<<");
 					specialSigns.add(">>");
 					specialSigns.add("<");
@@ -2028,13 +2228,13 @@ public abstract class Element {
 
 				// These markers might have changed by configuration, so don't cache them
 				StringList ioSigns = new StringList();
-				ioSigns.add(D7Parser.keywordMap.get("input").trim());
-				ioSigns.add(D7Parser.keywordMap.get("output").trim());
+				ioSigns.add(D7Parser.getKeywordOrDefault("input", "").trim());
+				ioSigns.add(D7Parser.getKeywordOrDefault("output", "").trim());
 				// START KGU#116 2015-12-23: Enh. #75 - highlight jump keywords
 				StringList jumpSigns = new StringList();
-				jumpSigns.add(D7Parser.keywordMap.get("preLeave").trim());
-				jumpSigns.add(D7Parser.keywordMap.get("preReturn").trim());
-				jumpSigns.add(D7Parser.keywordMap.get("preExit").trim());
+				jumpSigns.add(D7Parser.getKeywordOrDefault("preLeave", "leave").trim());
+				jumpSigns.add(D7Parser.getKeywordOrDefault("preReturn", "return").trim());
+				jumpSigns.add(D7Parser.getKeywordOrDefault("preExit", "exit").trim());
 				// END KGU#116 2015-12-23
 				
 				for(int i=0; i < parts.count(); i++)
@@ -2042,6 +2242,14 @@ public abstract class Element {
 					String display = parts.get(i);
 
 					display = BString.replace(display, "<-","\u2190");
+					// START KGU#331 2017-01-13: Enh. #333
+					if (E_SHOW_UNICODE_OPERATORS) {
+						display = BString.replace(display, "<>","\u2260");
+						display = BString.replace(display, "!=","\u2260");
+						display = BString.replace(display, "<=","\u2264");
+						display = BString.replace(display, ">=","\u2265");						
+					}
+					// END KGU#331 2017-01-13
 
 					if(!display.equals(""))
 					{
@@ -2295,13 +2503,12 @@ public abstract class Element {
     
     // START KGU#18/KGU#23 2015-10-24 intermediate transformation added and decomposed
     /**
-     * Converts the operator symbols accepted by Structorizer into padded Java operators
-     * (note the surrounding spaces - no double spaces will exist):
-     * - Assignment:		" <- "
-     * - Comparison:		" == ", " < ", " > ", " <= ", " >= ", " != "
-     * - Logic:				" && ", " || ", " ! ", " ^ "
-     * - Arithmetics:		" div " and usual Java operators with or without padding
-     * @param _expression an Element's text in practically unknown syntax
+     * Converts the operator symbols accepted by Structorizer into Java operators:
+     * - Assignment:		"<-"
+     * - Comparison:		"==", "<", ">", "<=", ">=", "!="
+     * - Logic:				"&&", "||", "!", "^"
+     * - Arithmetics:		"div" and usual Java operators (e.g. "mod" -> "%")
+     * @param _expression - an Element's text in practically unknown syntax
      * @return an equivalent of the _expression String with replaced operators
      */
     public static String unifyOperators(String _expression)
@@ -2314,118 +2521,16 @@ public abstract class Element {
     	// END KGU#93 2015-12-21
     }
     
-//    // START KGU#18/KGU#23 2015-10-24 intermediate transformation added and decomposed
-//    /**
-//     * Converts the operator symbols accepted by Structorizer into padded Java operators
-//     * (note the surrounding spaces - no double spaces will exist):
-//     * - Assignment:		" <- "
-//     * - Comparison*:		" == ", " < ", " > ", " <= ", " >= ", " != "
-//     * - Logic*:			" && ", " || ", " ! ", " ^ "
-//     * - Arithmetics*:		" div " and usual Java operators without padding (e. g. " mod " -> " % ")
-//     * @param _expression an Element's text in practically unknown syntax
-//     * @param _assignmentOnly if true then only assignment operator will be unified
-//     * @return an equivalent of the _expression String with replaced operators
-//     */
-//    @Deprecated
-//    public static String unifyOperators(String _expression, boolean _assignmentOnly)
-//    {
-//    	
-//        String interm = _expression.trim();	// KGU#54
-//        // variable assignment
-//        interm = interm.replace("<--", " §ASGN§ ");
-//        interm = interm.replace("<-", " §ASGN§ ");
-//        interm = interm.replace(":=", " §ASGN§ ");
-//        
-//        if (!_assignmentOnly)
-//        {
-//        	// testing
-//        	interm = interm.replace("!=", " §UNEQ§ ");
-//        	interm = interm.replace("==", " §EQU§ ");
-//        	interm = interm.replace("<=", " §LE§ ");
-//        	interm = interm.replace(">=", " §GE§ ");
-//        	interm = interm.replace("<>", " §UNEQ§ ");
-//        	// START KGU#92 2015-12-01: Bugfix #41
-//        	interm = interm.replace("<<", " §SHL§ ");
-//        	interm = interm.replace(">>", " §SHR§ ");
-//        	// END KGU#92 2015-12-01
-//        	interm = interm.replace("<", " < ");
-//        	interm = interm.replace(">", " > ");
-//        	interm = interm.replace("=", " §EQU§ ");
-//
-//        	// Parenthesis/bracket padding as preparation for the following replacements
-//        	interm = interm.replace(")", " ) ");
-//        	interm = interm.replace("(", "( ");
-//        	interm = interm.replace("]", "] ");	// Do NOT pad '[' (would spoil the array detection)
-//        	// arithmetics and signs
-//        	interm = interm.replace("+", " +");	// Fortunately, ++ isn't accepted as working operator by the Structorizer
-//        	interm = interm.replace("-", " -");	// Fortunately, -- isn't accepted as working operator by the Structorizer
-//        	//interm = interm.replace(" div "," / ");	// We must still distinguish integer division
-//        	interm = interm.replace(" mod ", " % ");
-//        	interm = interm.replace(" MOD ", " % ");
-//        	interm = interm.replace(" mod(", " % (");
-//        	interm = interm.replace(" MOD(", " % (");
-//        	interm = interm.replace(" div(", " div (");
-//        	interm = interm.replace(" DIV ", " div ");
-//        	interm = interm.replace(" DIV(", " div (");
-//        	// START KGU#92 2015-12-01: Bugfix #41
-//        	interm = interm.replace(" shl ", " §SHL§ ");
-//        	interm = interm.replace(" shr ", " §SHR§ ");
-//        	interm = interm.replace(" SHL ", " §SHL§ ");
-//        	interm = interm.replace(" SHR ", " §SHR§ ");
-//        	// END KGU#92 2015-12-01
-//        	// Logic
-//        	interm = interm.replace( "&&", " && ");
-//        	interm = interm.replace( "||", " || ");
-//        	interm = interm.replace( " and ", " && ");
-//        	interm = interm.replace( " AND ", " && ");
-//        	interm = interm.replace( " and(", " && (");
-//        	interm = interm.replace( " AND(", " && (");
-//        	interm = interm.replace( " or ", " || ");
-//        	interm = interm.replace( " OR ", " || ");
-//        	interm = interm.replace( " or(", " || (");
-//        	interm = interm.replace( " OR(", " || (");
-//        	interm = interm.replace( " not ", " §NOT§ ");
-//        	interm = interm.replace( " NOT ", " §NOT§ ");
-//        	interm = interm.replace( " not(", " §NOT§ (");
-//        	interm = interm.replace( " NOT(", " §NOT§ (");
-//        	String lower = interm.toLowerCase();
-//        	if (lower.startsWith("not ") || lower.startsWith("not(")) {
-//        		interm = " §NOT§ " + interm.substring(3);
-//        	}
-//        	interm = interm.replace( "!", " §NOT§ ");
-//        	interm = interm.replace( " xor ", " ^ ");	// Might cause some operator preference trouble
-//        	interm = interm.replace( " XOR ", " ^ ");	// Might cause some operator preference trouble
-//        }
-//
-//        String unified = interm.replace(" §ASGN§ ", " <- ");
-//        if (!_assignmentOnly)
-//        {
-//        	unified = unified.replace(" §EQU§ ", " == ");
-//        	unified = unified.replace(" §UNEQ§ ", " != ");
-//        	unified = unified.replace(" §LE§ ", " <= ");
-//        	unified = unified.replace(" §GE§ ", " >= ");
-//        	unified = unified.replace(" §NOT§ ", " ! ");
-//        	// START KGU#92 2015-12-01: Bugfix #41
-//        	unified = unified.replace(" §SHL§ ", " << ");
-//        	unified = unified.replace(" §SHR§ ", " >> ");
-//        	// END KGU#92 2015-12-01
-//        }
-//        unified = BString.replace(unified, "  ", " ");	// shrink multiple blanks
-//        unified = BString.replace(unified, "  ", " ");	// do it again to catch odd-numbered blanks as well
-//        
-//        return unified;
-//    }
-
 	// START KGU#92 2015-12-01: Bugfix #41 Okay now, here is the new approach (still a sketch)
     /**
      * Converts the operator symbols accepted by Structorizer into intermediate operators
-     * (mostly Java operators), mostly padded:
-     * - Assignment:		" <- "
-     * - Comparison*:		" == ", " < ", " > ", " <= ", " >= ", " != "
-     * - Logic*:			" && ", " || ", " ! ", " ^ "
-     * - Arithmetics*:		" div " and usual Java operators (e. g. " mod " -> " % ")
-     * @param _tokens a tokenised line of an Element's text (in practically unknown syntax)
-     * @param _assignmentOnly if true then only assignment operator will be unified
+     * (mostly Java operators):
+     * - Assignment:		"<-"
+     * - Comparison*:		"==", "<", ">", "<=", ">=", "!="
+     * - Logic*:			"&&", "||", "!", "^"
+     * - Arithmetics*:		"div" and usual Java operators (e. g. "mod" -> "%")
+     * @param _tokens - a tokenised line of an Element's text (in practically unknown syntax)
+     * @param _assignmentOnly - if true then only assignment operator will be unified
      * @return total number of deletions / replacements
      */
     public static int unifyOperators(StringList _tokens, boolean _assignmentOnly)
@@ -2437,18 +2542,9 @@ public abstract class Element {
         if (!_assignmentOnly)
         // END KGU#115 2015-12-23
         {
-        	//count += _tokens.replaceAll("=", " == ");
         	count += _tokens.replaceAll("=", "==");
-        	//count += _tokens.replaceAll("<", " < ");
-        	//count += _tokens.replaceAll(">", " > ");
-        	//count += _tokens.replaceAll("<=", " <= ");
-        	//count += _tokens.replaceAll(">=", " >= ");
-        	//count += _tokens.replaceAll("<>", " != ");
         	count += _tokens.replaceAll("<>", "!=");
-        	//count += _tokens.replaceAll("%", " % ");
-        	//count += _tokens.replaceAllCi("mod", " % ");
         	count += _tokens.replaceAllCi("mod", "%");
-        	//count += _tokens.replaceAllCi("div", " div ");
         	count += _tokens.replaceAllCi("shl", "<<");
         	count += _tokens.replaceAllCi("shr", ">>");
         	count += _tokens.replaceAllCi("and", "&&");
@@ -2517,68 +2613,7 @@ public abstract class Element {
     {
     	//final String regexMatchers = ".?*+[](){}\\^$";
     	
-//    	// Collect redundant placemarkers to be deleted from the text
-//        StringList redundantMarkers = new StringList();
-//        redundantMarkers.addByLength(D7Parser.preAlt);
-//        redundantMarkers.addByLength(D7Parser.preCase);
-//        //redundantMarkers.addByLength(D7Parser.preFor);	// will be handled separately
-//        redundantMarkers.addByLength(D7Parser.preWhile);
-//        redundantMarkers.addByLength(D7Parser.preRepeat);
-//
-//        redundantMarkers.addByLength(D7Parser.postAlt);
-//        redundantMarkers.addByLength(D7Parser.postCase);
-//        //redundantMarkers.addByLength(D7Parser.postFor);	// will be handled separately
-//        //redundantMarkers.addByLength(D7Parser.stepFor);	// will be handled separately
-//        redundantMarkers.addByLength(D7Parser.postWhile);
-//        redundantMarkers.addByLength(D7Parser.postRepeat);
-       
         String interm = " " + _text + " ";
-//
-//        //System.out.println(interm);
-//        // Now, we eliminate redundant keywords according to the Parser configuration
-//        // Unfortunately, regular expressions are of little use here, because the prefix and infix keywords may
-//        // consist of or contain Regex matchers like '?' and hence aren't suitable as part of the pattern
-//        // The harmful characters to be inhibited or masked are: .?*+[](){}\^$
-//        //System.out.println(interm);
-//        for (int i=0; i < redundantMarkers.count(); i++)
-//        {
-//        	String marker = redundantMarkers.get(i);
-//        	if (!marker.isEmpty())
-//        	{
-//        		// If the marker has not been padded then we must care for proper isolation
-//        		if (marker.equals(marker.trim()))
-//        		{
-//        			int len = marker.length();
-//        			int pos = 0;
-//        			// START KGU 2016-01-13: Bugfix #104: position fault
-//        			//while ((pos = interm.indexOf(marker, pos)) >= 0)
-//        			while ((pos = interm.indexOf(marker, pos)) > 0)
-//        			// END KGU 2016-01-13
-//        			{
-//        				if (!Character.isJavaIdentifierPart(interm.charAt(pos-1)) &&
-//        						(pos + len) < interm.length() &&
-//        						!Character.isJavaIdentifierPart(interm.charAt(pos + len)))
-//        				{
-//        					interm = interm.substring(0, pos) + interm.substring(pos + len);
-//        				}
-//        			}
-//        		}
-//        		else
-//        		{
-//        			// Already padded, so just replace it everywhere
-//        			// START KGU 2016-01-13: Bugfix #104 - padding might go away here
-//        			//interm = interm.replace( marker, ""); 
-//        			interm = interm.replace( marker, " "); 
-//        			// END KGU 2016-01-13
-//        		}
-//        		//interm = " " + interm + " ";	// Ensure the string being padded for easier matching
-//                interm = interm.replace("  ", " ");		// Reduce multiple spaces (may also spoil string literals!)
-//                // START KGU 2016-01-13: Bugfix #104 - should have been done after the loop only
-//                //interm = interm.trim();
-//                // END KGU 2016-01-13
-//        		//System.out.println("transformIntermediate: " + interm);	// FIXME (KGU): Remove or deactivate after test!
-//        	}
-//        }
         // START KGU 2016-01-13: Bugfix #104 - should have been done after the loop only
         interm = interm.trim();
         // END KGU 2016-01-13
@@ -2607,42 +2642,8 @@ public abstract class Element {
         StringList tokens = Element.splitLexically(interm, true);
         
         // START KGU#165 2016-03-26: Now keyword search with/without case
-//        for (int i = 0; i < redundantMarkers.count(); i++)
-//        {
-//        	String marker = redundantMarkers.get(i);
-//        	if (!marker.trim().isEmpty())
-//        	{
-//        		StringList markerTokens = Element.splitLexically(marker, false);
-//        		int markerLen = markerTokens.count();
-//        		int pos = -1;
-//        		while ((pos = tokens.indexOf(markerTokens, 0, !D7Parser.ignoreCase)) >= 0)
-//        		{
-//        			for (int j = 0; j < markerLen; j++)
-//        			{
-//        				tokens.delete(pos);
-//        			}
-//        		}
-//        	}
-//        }
         cutOutRedundantMarkers(tokens);
         // END KGU#165 2016-03-26
-        
-//        // START KGU 2016-01-13: Bugfix #104 - planned new approach to overcome that nasty keyword/string problem
-//        // It is also too simple, e.g. in cases like  jusqu'à test = 'o'  where a false string recognition would
-//        // avert the keyword recognition. So both will have to be done simultaneously...
-//        for (int i=0; i < redundantMarkers.count(); i++)
-//        {
-//        	StringList markerTokens = Element.splitLexically(redundantMarkers.get(i), true);
-//        	int pos = 0;
-//        	while ((pos = tokens.indexOf(markerTokens, pos, true)) >= 0)
-//        	{
-//        		for (int j = 0; j < markerTokens.count(); j++)
-//        		{
-//        			tokens.delete(pos);
-//        		}
-//        	}
-//        }
-//        // END KGU 2016-01-13
         
         unifyOperators(tokens, false);
         
@@ -2657,23 +2658,23 @@ public abstract class Element {
     {
     	// Collect redundant placemarkers to be deleted from the text
         StringList redundantMarkers = new StringList();
-        redundantMarkers.addByLength(D7Parser.keywordMap.get("preAlt"));
-        redundantMarkers.addByLength(D7Parser.keywordMap.get("preCase"));
+        redundantMarkers.addByLength(D7Parser.getKeyword("preAlt"));
+        redundantMarkers.addByLength(D7Parser.getKeyword("preCase"));
         //redundantMarkers.addByLength(D7Parser.preFor);	// will be handled separately
-        redundantMarkers.addByLength(D7Parser.keywordMap.get("preWhile"));
-        redundantMarkers.addByLength(D7Parser.keywordMap.get("preRepeat"));
+        redundantMarkers.addByLength(D7Parser.getKeyword("preWhile"));
+        redundantMarkers.addByLength(D7Parser.getKeyword("preRepeat"));
 
-        redundantMarkers.addByLength(D7Parser.keywordMap.get("postAlt"));
-        redundantMarkers.addByLength(D7Parser.keywordMap.get("postCase"));
+        redundantMarkers.addByLength(D7Parser.getKeyword("postAlt"));
+        redundantMarkers.addByLength(D7Parser.getKeyword("postCase"));
         //redundantMarkers.addByLength(D7Parser.postFor);	// will be handled separately
         //redundantMarkers.addByLength(D7Parser.stepFor);	// will be handled separately
-        redundantMarkers.addByLength(D7Parser.keywordMap.get("postWhile"));
-        redundantMarkers.addByLength(D7Parser.keywordMap.get("postRepeat"));
+        redundantMarkers.addByLength(D7Parser.getKeyword("postWhile"));
+        redundantMarkers.addByLength(D7Parser.getKeyword("postRepeat"));
         
         for (int i = 0; i < redundantMarkers.count(); i++)
         {
         	String marker = redundantMarkers.get(i);
-        	if (!marker.trim().isEmpty())
+        	if (marker != null && !marker.trim().isEmpty())
         	{
         		StringList markerTokens = Element.splitLexically(marker, false);
         		int markerLen = markerTokens.count();
@@ -2694,7 +2695,10 @@ public abstract class Element {
     public String toString()
     {
     	return getClass().getSimpleName() + '@' + Integer.toHexString(hashCode()) +
-    			"(" + (this.getText().count() > 0 ? this.getText().get(0) : "") + ")";
+    			// START KGU#261 2017-01-19: Enh. #259 (type map)
+    			//"(" + (this.getText().count() > 0 ? this.getText().get(0) : "") + ")";
+    			"(" + this.id + (this.getText().count() > 0 ? (": " + this.getText().get(0)) : "") + ")";
+    			// END KGU#261 2017-01-19
     }
     // END KGU#152 2016-03-02
     
@@ -2727,17 +2731,27 @@ public abstract class Element {
     	}
 	}
 	
-	protected final String refactorLine(String line, HashMap<String, StringList> _splitOldKeys, String[] _keywords, boolean _ignoreCase)
+	/**
+     * Looks up the associated token sequence in _splitOldKeys for any of the parser preference names
+     * provided by _prefNames. If there is such a token sequence then it will be
+     * replaced throughout my text by the associated current parser preference for the respective name
+	 * @param line - line of element text
+	 * @param _splitOldKeys - a map of tokenized former non-empty parser preference keywords to be replaced
+	 * @param _prefNames - Array of parser preference names being relevant for this kind of element
+	 * @param _ignoreCase - whether case is to be ignored on comparison
+	 * @return refactored line
+	 */
+	protected final String refactorLine(String line, HashMap<String, StringList> _splitOldKeys, String[] _prefNames, boolean _ignoreCase)
 	{
 		StringList tokens = Element.splitLexically(line, true);
 		boolean isModified = false;
 		// FIXME: We should order the keys by decreasing length first!
-		for (int i = 0; i < _keywords.length; i++)
+		for (int i = 0; i < _prefNames.length; i++)
 		{
-			StringList splitKey = _splitOldKeys.get(_keywords[i]);
+			StringList splitKey = _splitOldKeys.get(_prefNames[i]);
 			if (splitKey != null)
 			{
-				String subst = D7Parser.keywordMap.get(_keywords[i]);
+				String subst = D7Parser.getKeyword(_prefNames[i]);
 				// line shouldn't be inflated ...
 				if (!splitKey.get(0).equals(" ")) {
 					while (subst.startsWith(" ")) subst = subst.substring(1); 
@@ -2774,5 +2788,72 @@ public abstract class Element {
 		return line;
 	}
 	// END KGU#258 2016-09-25
+
+	// START KGU#277 2016-10-13: Enh. #270 - Option to disable an Element from execution and export
+	public boolean isDisabled()
+	{
+		return this.disabled || (this.parent != null && this.parent.isDisabled());
+	}
+	// END KGU#277 2016-10-13
+
+	// START KGU#261 2017-01-19: Enh. #259 (type map)
+	public Element findElementWithId(long _id)
+	{
+		final class ElementFinder implements IElementVisitor {
+			
+			private long id;
+			private Element foundElement = null;
+
+			public ElementFinder(long _id)
+			{
+				id = _id;
+			}
+			
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				if (_ele.getId() == id) {
+					foundElement = _ele;
+					return false;
+				}
+				return true;
+			}
+
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				return true;
+			}
+			
+		}
+		ElementFinder finder = new ElementFinder(_id);
+		traverse(finder);
+		return finder.foundElement;
+	}
+	
+	/**
+	 * Adds own variable declarations (only this element, no substructure!) to the given
+	 * map (varname -> typeinfo).
+	 * @param typeMap
+	 */
+	public void updateTypeMap(HashMap<String, TypeMapEntry> typeMap)
+	{
+		// Does nothing - to be sub-classed if necessary
+	}
+	// END KGU#261 2017-01-19
+	
+	// START KGU#261 2017-01-26: Enh. #259 
+	protected void addToTypeMap(HashMap<String,TypeMapEntry> typeMap, String varName, String typeSpec, int lineNo, boolean isAssigned, boolean isCStyle)
+	{
+		if (varName != null && !typeSpec.isEmpty()) {
+			TypeMapEntry entry = typeMap.get(varName);
+			if (entry == null) {
+				// Add a new entry to the type map
+				typeMap.put(varName, new TypeMapEntry(typeSpec, this, lineNo, isAssigned, isCStyle));
+			}
+			else {
+				// add an alternative declaration to the type map entry
+				entry.addDeclaration(typeSpec, this, lineNo, isAssigned, isCStyle);
+			}
+		}				
+	}
 
 }

@@ -26,7 +26,8 @@
 
 package lu.fisch.structorizer.generators;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Markus Grundner
  *
@@ -62,6 +63,12 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (identifier collisions)
  *      Kay Gürtzig         2016.09.01      Issue #234: ord and chr function code generated only if needed and allowed
  *      Kay Gürtzig         2016.09.21      Bugfix #247: Forever loops were exported with a defective condition.
+ *      Kay Gürtzig         2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input with prompt
+ *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig         2016.11.06      Issue #279: Method HashMap.getOrDefault() replaced
+ *      Kay Gürtzig         2017.01.05      Enh. #314: File API TODO comments added  
+ *      Kay Gürtzig         2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *
  ******************************************************************************************************
  *
@@ -100,7 +107,8 @@ package lu.fisch.structorizer.generators;
  *      - conversion of comparison and operators accomplished
  *      - comment export introduced 
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 import java.util.regex.Matcher;
@@ -118,6 +126,7 @@ import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.BString;
@@ -175,9 +184,20 @@ public class BASHGenerator extends Generator {
 		return false;
 	}
 	// END KGU#78 2015-12-18
+	
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getIncludePattern()
+	 */
+	@Override
+	protected String getIncludePattern()
+	{
+		return ". %";
+	}
+	// END KGU#351 2017-02-26
 
 	// START KGU#241 2016-09-01: Issue #234: names of certain occurring functions detected by checkElementInformation()
-	private StringList occurringFunctions = new StringList();
+	protected StringList occurringFunctions = new StringList();
 	// END KGU#241 2015-09-01
 
 	// START KGU 2016-08-12: Enh. #231 - information for analyser
@@ -203,12 +223,22 @@ public class BASHGenerator extends Generator {
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
 	 * into the target code
+	 * @param withPrompt - is a prompt string to be considered?
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected String getInputReplacer()
+	// START KGU#281 2016-10-15: Enh. #271 (support for input with prompt)
+	//protected String getInputReplacer()
+	//{
+	//	return "read $1";
+	//}
+	protected String getInputReplacer(boolean withPrompt)
 	{
+		if (withPrompt) {
+			return "echo -n $1 ; read $2";
+		}
 		return "read $1";
 	}
+	// END KGU#281 2016-10-15
 
 	/**
 	 * A pattern how to embed the expression (right-hand side of an output instruction)
@@ -241,15 +271,17 @@ public class BASHGenerator extends Generator {
 	{
 		StringList tokens = Element.splitLexically(_ele.getText().getText(), true);
 		String[] functionNames = {"ord", "chr"};
-		for (int i = 0; i < functionNames.length && !occurringFunctions.contains(functionNames[i]); i++)
+		for (int i = 0; i < functionNames.length; i++)
 		{
-			int pos = -1;
-			while ((pos = tokens.indexOf(functionNames[i], pos+1)) >= 0 &&
-					pos+1 < tokens.count() &&
-					tokens.get(pos+1).equals("("))
-			{
-				occurringFunctions.add(functionNames[i]);
-				break;	
+			if (!occurringFunctions.contains(functionNames[i])) {
+				int pos = -1;
+				while ((pos = tokens.indexOf(functionNames[i], pos+1)) >= 0 &&
+						pos+1 < tokens.count() &&
+						tokens.get(pos+1).equals("("))
+				{
+					occurringFunctions.add(functionNames[i]);
+					break;	
+				}
 			}
 		}
 		
@@ -267,14 +299,14 @@ public class BASHGenerator extends Generator {
 		// We must of course identify variable names and prefix them with $ unless being an lvalue
 		int posAsgnOpr = tokens.indexOf("<-");
 		// START KGU#161 2016-03-24: Bugfix #135/#92 - variables in read instructions must not be prefixed!
-		if (tokens.contains(D7Parser.keywordMap.get("input")))
+		if (tokens.contains(D7Parser.getKeyword("input")))
 		{
 			// Hide the text from the replacement, except for occurrences as index
 			posAsgnOpr = tokens.count();
 		}
 		// END KGU#161 2016-03-24
 		// START KGU#61 2016-03-21: Enh. #84/#135
-		if (posAsgnOpr < 0 && !D7Parser.keywordMap.get("postForIn").trim().isEmpty()) posAsgnOpr = tokens.indexOf(D7Parser.keywordMap.get("postForIn"));
+		if (posAsgnOpr < 0 && !D7Parser.getKeyword("postForIn").trim().isEmpty()) posAsgnOpr = tokens.indexOf(D7Parser.getKeyword("postForIn"));
 		// END KGU#61 2016-03-21
 		// If there is an array variable (which doesn't exist in shell) left of the assignment symbol, check the index 
 		int posBracket1 = tokens.indexOf("[");
@@ -457,7 +489,7 @@ public class BASHGenerator extends Generator {
 	@Override
 	protected String transformOutput(String _interm)
 	{
-		String output = D7Parser.keywordMap.get("output").trim();
+		String output = D7Parser.getKeyword("output").trim();
 		if (_interm.matches("^" + output + "[ ](.*?)"))
 		{
 			StringList expressions = 
@@ -490,9 +522,14 @@ public class BASHGenerator extends Generator {
 			// END KGU 2014-11-06
 
 			// START KGU#78 2015-12-19: Enh. #23: We only have to ensure the correct keywords
-			String preLeave = D7Parser.keywordMap.getOrDefault("preLeave","").trim();
-			String preReturn = D7Parser.keywordMap.getOrDefault("preReturn","").trim();
-			String preExit = D7Parser.keywordMap.getOrDefault("preExit","").trim();
+			// START KGU#288 2016-11-06: Issue #279 - some JREs don't know method getOrDefault()
+			//String preLeave = D7Parser.keywordMap.getOrDefault("preLeave","").trim();
+			//String preReturn = D7Parser.keywordMap.getOrDefault("preReturn","").trim();
+			//String preExit = D7Parser.keywordMap.getOrDefault("preExit","").trim();
+			String preLeave = D7Parser.getKeywordOrDefault("preLeave","leave").trim();
+			String preReturn = D7Parser.getKeywordOrDefault("preReturn","return").trim();
+			String preExit = D7Parser.getKeywordOrDefault("preExit","exit").trim();
+			// END KGU#288 2016-11-06
 			if (intermed.matches("^" + Matcher.quoteReplacement(preLeave) + "(\\W.*|$)"))
 			{
 				intermed = "break " + intermed.substring(preLeave.length());
@@ -523,10 +560,29 @@ public class BASHGenerator extends Generator {
 		if(!insertAsComment(_inst, _indent)) {
 			// START KGU 2014-11-16
 			insertComment(_inst, _indent);
+			boolean disabled = _inst.isDisabled();
 			// END KGU 2014-11-16
 			for(int i=0; i<_inst.getText().count(); i++)
 			{
-				code.add(_indent + transform(_inst.getText().get(i)));
+				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
+				//code.add(_indent + transform(_inst.getText().get(i)));
+				String line = _inst.getText().get(i);
+				String codeLine = transform(line);
+				// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
+				if (this.usesFileAPI) {
+					for (int j = 0; j < Executor.fileAPI_names.length; j++) {
+						if (line.contains(Executor.fileAPI_names[j] + "(")) {
+							insertComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+							break;
+						}
+					}
+				}
+				// END KGU#311 2017-01-05
+				if (Instruction.isTurtleizerMove(line)) {
+					codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
+				}
+				addCode(codeLine, _indent, disabled);
+				// END KGU#277/KGU#284 2016-10-13
 			}
 		}
 
@@ -543,43 +599,74 @@ public class BASHGenerator extends Generator {
 		// START KGU#132 2016-03-24: Bugfix #96/#135 second approach with [[ ]] instead of (( ))
 		//code.add(_indent+"if (( "+BString.replace(transform(_alt.getText().getText()),"\n","").trim() + " ))");
 		String condition = transform(_alt.getText().getLongString()).trim();
+		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
+		if (this.usesFileAPI) {
+			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
+				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
+					insertComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+					break;
+				}
+			}
+		}
+		// END KGU#311 2017-01-05
 		if (!this.suppressTransformation && !(condition.startsWith("((") && condition.endsWith("))")))
 		{
 			condition = "[[ " + condition + " ]]";
 		}
-		code.add(_indent + "if " + condition);
+		// START KGU#277 2016-10-13: Enh. #270
+		//code.add(_indent + "if " + condition);
+		boolean disabled = _alt.isDisabled(); 
+		addCode("if " + condition, _indent, disabled);
+		// END KGU#277 2016-10-13
 		// END KGU#132 2016-03-24
 		// END KGU#131 2016-01-08
-		code.add(_indent+"then");
+		// START KGU#277 2016-10-13: Enh. #270
+		//code.add(_indent+"then");
+		addCode("then", _indent, disabled);
+		// END KGU#277 2016-10-13
 		generateCode(_alt.qTrue,_indent+this.getIndent());
 		
 		if(_alt.qFalse.getSize()!=0) {
 			
-			code.add(_indent+"");
-			code.add(_indent+"else");			
+			// START KGU#277 2016-10-13: Enh. #270
+			//code.add(_indent+"");
+			//code.add(_indent+"else");			
+			addCode("", _indent, disabled);
+			addCode("else", _indent, disabled);			
+			// END KGU#277 2016-10-13
 			generateCode(_alt.qFalse,_indent+this.getIndent());
 			
 		}
 		
-		code.add(_indent+"fi");
-		code.add("");
+		// START KGU#277 2016-10-13: Enh. #270
+		//code.add(_indent+"fi");
+		//code.add("");
+		addCode("fi", _indent, disabled);
+		addCode("", "", disabled);
+		// END KGU#277 2016-10-13
 		
 	}
 	
 	protected void generateCode(Case _case, String _indent) {
 		
+		boolean disabled = _case.isDisabled();
 		code.add("");
 		// START KGU 2014-11-16
 		insertComment(_case, _indent);
 		// END KGU 2014-11-16
-		code.add(_indent+"case "+transform(_case.getText().get(0))+" in");
+		// START KGU#277 2016-10-14: Enh. #270
+		//code.add(_indent+"case "+transform(_case.getText().get(0))+" in");
+		addCode("case "+transform(_case.getText().get(0))+" in", _indent, disabled);
+		// END KGU#277 2016-10-14
 		
 		for(int i=0;i<_case.qs.size()-1;i++)
 		{
-			code.add("");
-			// START KGU#15 2015-11-02: Several patterns are to be separated by '|', not by ','
-			//code.add(_indent + this.getIndent() + _case.getText().get(i+1).trim() + ")");
-			code.add(_indent + this.getIndent() + _case.getText().get(i+1).trim().replace(",", "|") + ")");
+			// START KGU#277 2016-10-14: Enh. #270
+			//code.add("");
+			//code.add(_indent + this.getIndent() + _case.getText().get(i+1).trim().replace(",", "|") + ")");
+			addCode("", "", disabled);
+			addCode(this.getIndent() + _case.getText().get(i+1).trim().replace(",", "|") + ")", _indent, disabled);
+			// END KGU#277 2016-10-14
 			// START KGU#15 2015-11-02
 			generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent()+this.getIndent());
 			code.add(_indent+this.getIndent()+";;");
@@ -604,6 +691,9 @@ public class BASHGenerator extends Generator {
 		// START KGU 2014-11-16
 		insertComment(_for, _indent);
 		// END KGU 2014-11-16
+		// START KGU#277 2016-10-13: Enh. #270
+		boolean disabled = _for.isDisabled(); 
+		// END KGU#277 2016-10-13
 		// START KGU#30 2015-10-18: This resulted in nonsense if the algorithm was a real counting loop
 		// We now use C-like syntax  for ((var = sval; var < eval; var=var+incr)) ...
 		// START KGU#3 2015-11-02: And now we have a competent splitting mechanism...
@@ -641,7 +731,10 @@ public class BASHGenerator extends Generator {
 					valueList = transform(valueList);
 				}
 			}
-			code.add(_indent + "for " + counterStr + " in " + valueList);
+			// START KGU#277 2016-10-13: Enh. #270
+			//code.add(_indent + "for " + counterStr + " in " + valueList);
+			addCode("for " + counterStr + " in " + valueList, _indent, disabled);
+			// END KGU#277 2016-10-13
 		}
 		else // traditional COUNTER loop
 		{
@@ -662,17 +755,28 @@ public class BASHGenerator extends Generator {
 				incrStr = "(( " + counterStr + "=$" + counterStr + "+(" + stepValue + ") ))";
 			}
 			// END KGU#3 2015-11-02
-			code.add(_indent+"for (( "+counterStr+"="+startValueStr+"; "+
+			// START KGU#277 2016-10-13: Enh. #270
+			//code.add(_indent+"for (( "+counterStr+"="+startValueStr+"; "+
+			//		counterStr + ((stepValue > 0) ? "<=" : ">=") + endValueStr + "; " +
+			//		incrStr + " ))");
+			addCode("for (( "+counterStr+"="+startValueStr+"; "+
 					counterStr + ((stepValue > 0) ? "<=" : ">=") + endValueStr + "; " +
-					incrStr + " ))");
+					incrStr + " ))", _indent, disabled);
+			// END KGU#277 2016-10-13
 			// END KGU#30 2015-10-18
 		// START KGU#61 2016-03-21: Enh. #84/#135 (continued)
 		}
 		// END KGU#61 2016-03-21
-		code.add(_indent+"do");
+		// START KGU#277 2016-10-14: Enh. #270
+		//code.add(_indent+"do");
+		//generateCode(_for.q,_indent+this.getIndent());
+		//code.add(_indent+"done");	
+		//code.add("");
+		addCode("do", _indent, disabled);
 		generateCode(_for.q,_indent+this.getIndent());
-		code.add(_indent+"done");	
-		code.add("");
+		addCode("done", _indent, disabled);	
+		addCode("", "", disabled);
+		// END KGU#277 2016-10-14
 
 	}
 	protected void generateCode(While _while, String _indent) {
@@ -681,6 +785,9 @@ public class BASHGenerator extends Generator {
 		// START KGU 2014-11-16
 		insertComment(_while, _indent);
 		// END KGU 2014-11-16
+		// START KGU#277 2016-10-14: Enh. #270
+		boolean disabled = _while.isDisabled();
+		// END KGU#277 2016-10-14
 		// START KGU#132 2016-01-08: Bugfix #96 first approach with C-like syntax (( ))
 		//code.add(_indent+"while " + transform(_while.getText().getLongString()));
 		// START KGU#132 2016-03-24: Bugfix #96/#135 second approach with [[ ]] instead of (( ))
@@ -688,18 +795,37 @@ public class BASHGenerator extends Generator {
 		// START KGU#132/KGU#162 2016-03-31: Bugfix #96 + Enh. #144
 		//code.add(_indent+"while [[ " + transform(_while.getText().getLongString()).trim() + " ]]");
 		String condition = transform(_while.getText().getLongString()).trim();
+		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
+		if (this.usesFileAPI) {
+			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
+				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
+					insertComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+					break;
+				}
+			}
+		}
+		// END KGU#311 2017-01-05
 		if (!this.suppressTransformation && !(condition.startsWith("((") && condition.endsWith("))")))
 		{
 			condition = "[[ " + condition + " ]]";
 		}
-		code.add(_indent + "while " + condition);
+		// START KGU#277 2016-10-14: Enh. #270
+		//code.add(_indent + "while " + condition);
+		addCode("while " + condition, _indent, disabled);
+		// END KGU#277 2016-10-14
 		// END KGU#132/KGU#144 2016-03-31
 		// END KGU#132 2016-03-24
 		// END KGU#132 2016-01-08
-		code.add(_indent+"do");
+		// START KGU#277 2016-10-14: Enh. #270
+		//code.add(_indent+"do");
+		//generateCode(_while.q,_indent+this.getIndent());
+		//code.add(_indent+"done");
+		//code.add("");
+		addCode("do", _indent, disabled);
 		generateCode(_while.q,_indent+this.getIndent());
-		code.add(_indent+"done");
-		code.add("");
+		addCode("done", _indent, disabled);
+		addCode("", "", disabled);
+		// END KGU#277 2016-10-14
 		
 	}
 	
@@ -709,6 +835,9 @@ public class BASHGenerator extends Generator {
 		// START KGU 2014-11-16
 		insertComment(_repeat, _indent);
 		// END KGU 2014-11-16
+		// START KGU#277 2016-10-14: Enh. #270
+		boolean disabled = _repeat.isDisabled();
+		// END KGU#277 2016-10-14
 		// START KGU#60 2015-11-02: The do-until loop is not equivalent to a Repeat element: We must
 		// generate the loop body twice to preserve semantics!
 		insertComment("NOTE: This is an automatically inserted copy of the loop body below.", _indent);
@@ -721,18 +850,37 @@ public class BASHGenerator extends Generator {
 		// START KGU#132/KGU#162 2016-03-31: Bugfix #96 + Enh. #144
 		//code.add(_indent + "until [[ " + transform(_repeat.getText().getLongString()).trim() + " ]]");
 		String condition = transform(_repeat.getText().getLongString()).trim();
+		// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
+		if (this.usesFileAPI) {
+			for (int j = 0; j < Executor.fileAPI_names.length; j++) {
+				if (condition.contains(Executor.fileAPI_names[j] + "(")) {
+					insertComment("TODO File API: Replace the \"" + Executor.fileAPI_names[j] + "\" call by an appropriate shell construct", _indent);
+					break;
+				}
+			}
+		}
+		// END KGU#311 2017-01-05
 		if (!this.suppressTransformation && !(condition.startsWith("((") && condition.endsWith("))")))
 		{
 			condition = "[[ " + condition + " ]]";
 		}
-		code.add(_indent + "while " + condition);
+		// START KGU#277 2016-10-14: Enh. #270
+		//code.add(_indent + "while " + condition);
+		addCode("while " + condition, _indent, disabled);
+		// END KGU#277 2016-10-14
 		// END KGU#132/KGU#144 2016-03-31
 		// END KGU#132 2016-03-24
 		// END KGU#131 2016-01-08
-		code.add(_indent + "do");
+		// START KGU#277 2016-10-14: Enh. #270
+		//code.add(_indent + "do");
+		//generateCode(_repeat.q, _indent + this.getIndent());
+		//code.add(_indent + "done");
+		//code.add("");
+		addCode("do", _indent, disabled);
 		generateCode(_repeat.q, _indent + this.getIndent());
-		code.add(_indent + "done");
-		code.add("");
+		addCode("done", _indent, disabled);
+		addCode("", "", disabled);
+		// END KGU#277 2016-10-14
 		
 	}
 	protected void generateCode(Forever _forever, String _indent) {
@@ -741,14 +889,19 @@ public class BASHGenerator extends Generator {
 		// START KGU 2014-11-16
 		insertComment(_forever, _indent);
 		// END KGU 2014-11-16
-		// START KGU 2016-09-21: Bugfix #247
-		//code.add(_indent + "while [1]");
-		code.add(_indent + "while [ 1 ]");
-		// END KGU 2016-09-21
-		code.add(_indent + "do");
+		// START KGU#277 2016-10-14: Enh. #270
+		//code.add(_indent + "while [ 1 ]");
+		//code.add(_indent + "do");
+		//generateCode(_forever.q, _indent + this.getIndent());
+		//code.add(_indent + "done");
+		//code.add("");
+		boolean disabled = _forever.isDisabled();
+		addCode("while [ 1 ]", _indent, disabled);
+		addCode("do", _indent, disabled);
 		generateCode(_forever.q, _indent + this.getIndent());
-		code.add(_indent + "done");
-		code.add("");
+		addCode("done", _indent, disabled);
+		addCode("", "", disabled);
+		// END KGU#277 2016-10-14
 		
 	}
 	
@@ -757,12 +910,15 @@ public class BASHGenerator extends Generator {
 			// START KGU 2014-11-16
 			insertComment(_call, _indent);
 			// END KGU 2014-11-16
+			// START KGU#277 2016-10-14: Enh. #270
+			boolean disabled = _call.isDisabled();
+			// END KGU#277 2016-10-14
 			for(int i=0;i<_call.getText().count();i++)
 			{
-				// START KGU#164 2016-03-24: Semicolon was superfluous, 
-				//code.add(_indent+transform(_call.getText().get(i))+";");
-				code.add(_indent+transform(_call.getText().get(i)));
-				// END KGU#164 2016-03-25
+				// START KGU#277 2016-10-14: Enh. #270
+				//code.add(_indent+transform(_call.getText().get(i)));
+				addCode(transform(_call.getText().get(i)), _indent, disabled);
+				// END KGU#277 2016-10-14
 			}
 		}
 	}
@@ -772,13 +928,16 @@ public class BASHGenerator extends Generator {
 			// START KGU 2014-11-16
 			insertComment(_jump, _indent);
 			// END KGU 2014-11-16
+			// START KGU#277 2016-10-14: Enh. #270
+			boolean disabled = _jump.isDisabled();
+			// END KGU#277 2016-10-14
 			for(int i=0;i<_jump.getText().count();i++)
 			{
 				// FIXME (KGU 2016-03-25): Handle the kinds of exiting jumps!
-				// START KGU#164 2016-03-24: Semicolon was superfluous
-				//code.add(_indent+transform(_jump.getText().get(i))+";");
-				code.add(_indent+transform(_jump.getText().get(i)));
-				// END KGU#164 2016-03-24
+				// START KGU#277 2016-10-14: Enh. #270
+				//code.add(_indent+transform(_jump.getText().get(i)));
+				addCode(transform(_jump.getText().get(i)), _indent, disabled);
+				// END KGU#277 2016-10-14
 			}
 		}
 	}
@@ -786,21 +945,35 @@ public class BASHGenerator extends Generator {
 	// START KGU#174 2016-04-05: Issue #153 - export had been missing
 	protected void generateCode(Parallel _para, String _indent)
 	{
+		// START KGU#277 2016-10-14: Enh. #270
+		boolean disabled = _para.isDisabled();
+		// END KGU#277 2016-10-14
 		insertComment(_para, _indent);
 		insertComment("==========================================================", _indent);
 		insertComment("================= START PARALLEL SECTION =================", _indent);
 		insertComment("==========================================================", _indent);
 		String indent1 = _indent + this.getIndent();
 		String varName = "pids" + Integer.toHexString(_para.hashCode());
-		code.add(_indent + varName + "=\"\"");
+		// START KGU#277 2016-10-14: Enh. #270
+		//code.add(_indent + varName + "=\"\"");
+		addCode(varName + "=\"\"", _indent , disabled);
+		// END KGU#277 2016-10-14
 		for (Subqueue q : _para.qs)
 		{
-			code.add(_indent + "(");
+			// START KGU#277 2016-10-14: Enh. #270
+			//code.add(_indent + "(");
+			//generateCode(q, indent1);
+			//code.add(_indent + ") &");
+			//code.add(_indent + varName + "=\"${" + varName + "} $!\"");
+			addCode("(", _indent, disabled);
 			generateCode(q, indent1);
-			code.add(_indent + ") &");
-			code.add(_indent + varName + "=\"${" + varName + "} $!\"");
+			addCode(") &", _indent, disabled);
+			addCode(varName + "=\"${" + varName + "} $!\"", _indent, disabled);
+			// END KGU#277 2016-10-14
 		}
-		code.add(_indent + "wait ${" + varName + "}");
+		// START KGU#277 2016-10-14: Enh. #270
+		addCode("wait ${" + varName + "}", _indent, disabled);
+		// END KGU#277 2016-10-14
 		insertComment("==========================================================", _indent);
 		insertComment("================== END PARALLEL SECTION ==================", _indent);
 		insertComment("==========================================================", _indent);
@@ -813,6 +986,9 @@ public class BASHGenerator extends Generator {
 		if (topLevel)
 		{
 			code.add("#!/bin/bash");
+			// STARTB KGU#351 2017-02-26: Enh. #346
+			this.insertUserIncludes("");
+			// END KGU#351 2017-02-26
 		}
 		code.add("");
 
@@ -824,6 +1000,17 @@ public class BASHGenerator extends Generator {
 		{
 			insertComment("(generated by Structorizer " + Element.E_VERSION + ")", indent);
 
+			// START KGU#311 2017-01-05: Enh. #314: We should at least put some File API remarks
+			if (this.usesFileAPI) {
+				code.add(_indent);
+				insertComment("TODO The exported algorithms made use of the Structorizer File API.", _indent);
+				insertComment("     Unfortunately there are no comparable constructs in shell", _indent);
+				insertComment("     syntax for automatic conversion.", _indent);
+				insertComment("     The respective lines are marked with a TODO File API comment.", _indent);
+				insertComment("     You might try something like \"echo value >> filename\" for output", _indent);
+				insertComment("     or \"while ... do ... read var ... done < filename\" for input.", _indent);
+			}
+			// END KGU#311 2017-01-05
 			// START KGU#150 2016-04-05: Provisional support for chr and ord functions
 			// START KGU#241 2016-09-01: Issue #234 - Mechanism to introduce these definitions on demand only
 //			code.add(indent);
@@ -841,20 +1028,20 @@ public class BASHGenerator extends Generator {
 				boolean builtInAdded = false;
 				if (occurringFunctions.contains("chr"))
 				{
-			code.add(indent);
-			insertComment("chr() - converts decimal value to its ASCII character representation", indent);
-			code.add(indent + "chr() {");
-			code.add(indent + this.getIndent() + "printf \\\\$(printf '%03o' $1)");
-			code.add(indent + "}");
+					code.add(indent);
+					insertComment("chr() - converts decimal value to its ASCII character representation", indent);
+					code.add(indent + "chr() {");
+					code.add(indent + this.getIndent() + "printf \\\\$(printf '%03o' $1)");
+					code.add(indent + "}");
 					builtInAdded = true;
 				}
 				if (occurringFunctions.contains("ord"))
 				{
 					code.add(indent);
-			insertComment("ord() - converts ASCII character to its decimal value", indent);
-			code.add(indent + "ord() {");
-			code.add(indent + this.getIndent() + "printf '%d' \"'$1\"");
-			code.add(indent + "}");
+					insertComment("ord() - converts ASCII character to its decimal value", indent);
+					code.add(indent + "ord() {");
+					code.add(indent + this.getIndent() + "printf '%d' \"'$1\"");
+					code.add(indent + "}");
 					builtInAdded = true;
 				}
 				if (builtInAdded) code.add(indent);

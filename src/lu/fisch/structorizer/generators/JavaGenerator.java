@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.generators;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -30,28 +31,35 @@ package lu.fisch.structorizer.generators;
  *
  *      Revision List
  *
- *      Author                     Date            Description
- *      ------                     ----            -----------
- *      Bob Fisch                  2008.11.17      First Issue
- *      Gunter Schillebeeckx       2009.08.10      Java Generator starting from C Generator
- *      Bob Fisch                  2009.08.10      Update I/O
- *      Bob Fisch                  2009.08.17      Bugfixes (see comment)
- *      Kay Gürtzig                2010.09.10      Bugfixes and cosmetics (see comment)
- *      Bob Fisch                  2011.11.07      Fixed an issue while doing replacements
- *      Kay Gürtzig                2014.10.22      Workarounds and Enhancements (see comment)
- *      Kay Gürtzig                2014.11.16      Several fixes and enhancements (see comment)
- *      Kay Gürtzig                2015.10.18      Comment generation and indentation revised
- *      Kay Gürtzig                2015.11.01      Preprocessing reorganised, FOR loop and CASE enhancements
- *      Kay Gürtzig                2015.11.30      Inheritance changed to CGenerator (KGU#16), specific
- *                                                 jump and return handling added (issue #22 = KGU#74)
- *      Kay Gürtzig                2015.12.12      Enh. #54 (KGU#101): Support for output expression lists
- *      Kay Gürtzig                2015.12.15      Bugfix #51 (=KGU#108): Cope with empty input and output
- *      Kay Gürtzig                2015.12.21      Bugfix #41/#68/#69 (= KG#93)
- *      Kay Gürtzig                2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61) 
- *      Kay Gürtzig                2016.04.04      transforTokens() disabled due to missing difference to super 
- *      Kay Gürtzig                2016.07.20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
- *      Kay Gürtzig                2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig                2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
+ *      Author                  Date            Description
+ *      ------                  ----            -----------
+ *      Bob Fisch               2008.11.17      First Issue
+ *      Gunter Schillebeeckx    2009.08.10      Java Generator starting from C Generator
+ *      Bob Fisch               2009.08.10      Update I/O
+ *      Bob Fisch               2009.08.17      Bugfixes (see comment)
+ *      Kay Gürtzig             2010.09.10      Bugfixes and cosmetics (see comment)
+ *      Bob Fisch               2011.11.07      Fixed an issue while doing replacements
+ *      Kay Gürtzig             2014.10.22      Workarounds and Enhancements (see comment)
+ *      Kay Gürtzig             2014.11.16      Several fixes and enhancements (see comment)
+ *      Kay Gürtzig             2015.10.18      Comment generation and indentation revised
+ *      Kay Gürtzig             2015.11.01      Preprocessing reorganised, FOR loop and CASE enhancements
+ *      Kay Gürtzig             2015.11.30      Inheritance changed to CGenerator (KGU#16), specific
+ *                                              jump and return handling added (issue #22 = KGU#74)
+ *      Kay Gürtzig             2015.12.12      Enh. #54 (KGU#101): Support for output expression lists
+ *      Kay Gürtzig             2015.12.15      Bugfix #51 (=KGU#108): Cope with empty input and output
+ *      Kay Gürtzig             2015.12.21      Bugfix #41/#68/#69 (= KG#93)
+ *      Kay Gürtzig             2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61) 
+ *      Kay Gürtzig             2016.04.04      transforTokens() disabled due to missing difference to super 
+ *      Kay Gürtzig             2016.07.20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
+ *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
+ *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
+ *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
+ *      Kay Gürtzig             2016.12.22      Enh. #314: Support for Structorizer File API
+ *      Kay Gürtzig             2017.01.30      Enh. #259/#335: Type retrieval and improved declaration support 
+ *      Kay Gürtzig             2017.02.01      Enh. #113: Array parameter transformation
+ *      Kay Gürtzig             2017.02.24      Enh. #348: Parallel sections translated with java.utils.concurrent.Callable
+ *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *
  ******************************************************************************************************
  *
@@ -91,10 +99,15 @@ package lu.fisch.structorizer.generators;
  *      2009.08.10
  *        - writeln() => System.out.println()
  * 
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+
 import lu.fisch.structorizer.elements.*;
 
 
@@ -185,18 +198,40 @@ public class JavaGenerator extends CGenerator
 	}
 	// END KGU 2016-08-12
 
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getIncludePattern()
+	 */
+	@Override
+	protected String getIncludePattern()
+	{
+		return "import %";
+	}
+	// END KGU#351 2017-02-26
+
 	/************ Code Generation **************/
 
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
 	 * into the target code
+	 * @param withPrompt - is a prompt string to be considered?
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected String getInputReplacer()
+	// START KGU#281 2016-10-15: Enh. #271
+	//protected String getInputReplacer()
+	//{
+	//	return "$1 = (new Scanner(System.in)).nextLine()";
+	//}
+	protected String getInputReplacer(boolean withPrompt)
 	{
+		// NOTE: If you modify these patterns then you must adapt transform() too!
+		if (withPrompt) {
+			return "System.out.println($1); $2 = (new Scanner(System.in)).nextLine()";
+		}
 		return "$1 = (new Scanner(System.in)).nextLine()";
 	}
+	// END KGU#281 2016-10-15
 
 	/**
 	 * A pattern how to embed the expression (right-hand side of an output instruction)
@@ -208,14 +243,29 @@ public class JavaGenerator extends CGenerator
 		return "System.out.println($1)";
 	}
 
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/**
+	 * Method preprocesses an include file name for the #include
+	 * clause. This version surrounds a string not enclosed in angular
+	 * brackets by quotes.
+	 * @param _includeFileName a string from the user include configuration
+	 * @return the preprocessed string as to be actually inserted
+	 */
+	protected String prepareIncludeItem(String _includeFileName)
+	{
+		return _includeFileName;
+	}
+	// END KGU#351 2017-02-26
+
 	// START KGU#16/#47 2015-11-30
 	/**
 	 * Instruction to create a language-specific exit instruction (subclassable)
 	 * The exit code will be passed to the generated code.
 	 */
-	protected void insertExitInstr(String _exitCode, String _indent)
+	@Override
+	protected void insertExitInstr(String _exitCode, String _indent, boolean isDisabled)
 	{
-		code.add(_indent + "System.exit(" + _exitCode + ")");
+		addCode("System.exit(" + _exitCode + ")", _indent, isDisabled);
 	}
 	// END KGU#16/#47 2015-11-30
 
@@ -247,12 +297,23 @@ public class JavaGenerator extends CGenerator
 	// END KGU#93 2015-12-21
 
 	// END KGU#18/KGU#23 2015-11-01
+	
+	// START KGU#311 2017-01-05: Enh. #314 Don't do what the parent does.
+	/* (non-Javadoc)
+	 * Does nothing here.
+	 * @see lu.fisch.structorizer.generators.CGenerator#transformFileAPITokens(lu.fisch.utils.StringList)
+	 */
+	@Override
+	protected void transformFileAPITokens(StringList tokens)
+	{
+	}
+	// END KGU#311 2017-01-05
 
 	@Override
 	protected String transform(String _input)
 	{
 		// START KGU#101 2015-12-12: Enh. #54 - support lists of expressions
-		String outputKey = D7Parser.keywordMap.get("output").trim(); 
+		String outputKey = D7Parser.getKeyword("output").trim(); 
 		if (_input.matches("^" + getKeywordPattern(outputKey) + "[ ](.*?)"))
 		{
 			StringList expressions = 
@@ -267,15 +328,23 @@ public class JavaGenerator extends CGenerator
 		// END KGU#18/KGU#23 2015-11-01
 
 		// START KGU#108 2015-12-15: Bugfix #51: Cope with empty input and output
-		if (s.startsWith("= (new Scanner(System.in)).nextLine()")) s = s.substring(2);
+		String inpRepl = getInputReplacer(false).replace("$1", "").trim();
+		if (s.startsWith(inpRepl)) {
+			s = s.substring(2);
+		}
 		// END KGU#108 2015-12-15
+		// START KGU#281 2016-10-15: Enh. #271 cope with an empty input with prompt
+		else if (s.endsWith(";  " + inpRepl)) {
+			s = s.substring(0, s.length() - inpRepl.length()-1) + s.substring(s.length() - inpRepl.length()+2);
+		}
+		//END KGU#281
 
 
 		// Math function
 		s=s.replace("cos(", "Math.cos(");
 		s=s.replace("sin(", "Math.sin(");
 		s=s.replace("tan(", "Math.tan(");
-		// START KGU 2014-10-22: After the previous replacements the following 3 strings would never be found!
+		// START KGU#17 2014-10-22: After the previous replacements the following 3 strings would never be found!
 		//s=s.replace("acos(", "Math.acos(");
 		//s=s.replace("asin(", "Math.asin(");
 		//s=s.replace("atan(", "Math.atan(");
@@ -283,7 +352,7 @@ public class JavaGenerator extends CGenerator
 		s=s.replace("aMath.cos(", "Math.acos(");
 		s=s.replace("aMath.sin(", "Math.asin(");
 		s=s.replace("aMath.tan(", "Math.atan(");
-		// END KGU 2014-10-22:
+		// END KGU#17 2014-10-22
 		s=s.replace("abs(", "Math.abs(");
 		s=s.replace("round(", "Math.round(");
 		s=s.replace("min(", "Math.min(");
@@ -319,110 +388,18 @@ public class JavaGenerator extends CGenerator
 		_type = _type.replace("unsigned", "int");
 		_type = _type.replace("longreal", "double");
 		_type = _type.replace("real", "double");
-		_type = _type.replace("boole", "boolean");
-		_type = _type.replace("bool", "boolean");
+		//_type = _type.replace("boole", "boolean");
+		//_type = _type.replace("bool", "boolean");
+		if (_type.matches("(^|.*\\W+)bool(\\W+.*|$)")) {
+			_type = _type.replaceAll("(^|.*\\W+)bool(\\W+.*|$)", "$1boolean$2");
+		}
 		_type = _type.replace("character", "Character");
 		_type = _type.replace("integer", "Integer");
 		_type = _type.replace("string", "String");
-		_type = _type.replace("array[ ]([0-9]*)[ ]of char", "String");	// FIXME (KGU 2016-01-14) doesn't make much sense
+		_type = _type.replace("array[ ]?([0-9]*)[ ]of char", "String");	// FIXME (KGU 2016-01-14) doesn't make much sense
 		return _type;
 	}
 	// END KGU#16 2015-11-29
-
-// KGU#16 2015-11-30: Now inherited from CGenerator
-//		protected void generateCode(Instruction _inst, String _indent)
-//		{
-//			if (!insertAsComment(_inst, _indent)) {
-//
-//				insertComment(_inst, _indent);
-//
-//				for (int i=0; i<_inst.getText().count(); i++)
-//				{
-//					code.add(_indent+transform(_inst.getText().get(i))+";");
-//				}
-//
-//			}
-//		}
-		
-// KGU#16 2015-11-30: Now inherited from CGenerator
-//		protected void generateCode(Alternative _alt, String _indent)
-//		{
-//	        insertComment(_alt, _indent);
-//	        
-//	        String condition = transform(_alt.getText().getLongString()).trim();
-//	        if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
-//	        
-//	        code.add(_indent+"if " + condition + " {");
-//			generateCode(_alt.qTrue, _indent+this.getIndent());
-//			if(_alt.qFalse.getSize()!=0)
-//			{
-//				code.add(_indent + "}");
-//				code.add(_indent + "else {");
-//				generateCode(_alt.qFalse, _indent+this.getIndent());
-//			}
-//			code.add(_indent+"}");
-//		}
-		
-// KGU#16 2015-11-30: Now inherited from CGenerator
-//		protected void generateCode(Case _case, String _indent)
-//		{
-//			insertComment(_case, _indent);
-//
-//			StringList lines = _case.getText();
-//			String condition = transform(lines.get(0));
-//			if(!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
-//
-//			code.add(_indent+"switch "+condition+" {");
-//			
-//			for(int i=0;i<_case.qs.size()-1;i++)
-//			{
-//				// START KGU#15 2015-10-21: Support for multiple constants per branch
-//				StringList constants = StringList.explode(lines.get(i+1), ",");
-//				for (int j = 0; j < constants.count(); j++)
-//				{
-//					code.add(_indent + "case " + constants.get(j).trim() + ":");
-//				}
-//				// END KGU#15 2015-10-21
-//				generateCode((Subqueue) _case.qs.get(i),_indent + this.getIndent());
-//				code.add(_indent + this.getIndent() + "break;\n");
-//			}
-//			
-//			if(!lines.get(_case.qs.size()).trim().equals("%"))
-//			{
-//				code.add(_indent + "default:");
-//				generateCode((Subqueue) _case.qs.get(_case.qs.size()-1), _indent + this.getIndent());
-//				code.add(_indent + this.getIndent() + "break;");
-//			}
-//			code.add(_indent + "}");
-//		}
-
-// KGU#16 2015-11-30: Now inherited	from CGenerator			
-//		protected void generateCode(For _for, String _indent)
-//		{
-//	        // START KGU 2014-11-16
-//	        insertComment(_for, _indent);
-//	        // END KGU 2014-11-16
-//
-//			// START KGU#3 2015-11-01: The For element itself provides us with reliable splitting
-//	    	String var = _for.getCounterVar();
-//	    	int step = _for.getStepConst();
-//	    	String compOp = (step > 0) ? " <= " : " >= ";
-//	    	String increment = var + " += (" + step + ")";
-//	    	// START KGU#74 2015-11-30: More sophisticated jump handling
-//	    	//code.add(_indent + "for (" +
-//	    	String label = jumpTable.get(_for);
-//			String brace = optionBlockBraceNextLine() ? "" : " {";
-//	    	code.add(_indent + ((label == null) ? "" : (label + ": ")) + "for (" +
-//	    	// END KGU#74 2015-11-30
-//	    			var + " = " + transform(_for.getStartValue(), false) + "; " +
-//	    			var + compOp + transform(_for.getEndValue(), false) + "; " +
-//	    			increment +
-//	    			")" + brace);
-//	    	// END KGU#3 2015-11-01
-//	    	if (optionBlockBraceNextLine())	code.add(_indent + "{");
-//	    	generateCode(_for.q, _indent + this.getIndent());
-//	    	code.add(_indent + "}");
-//		}
 
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**
@@ -436,6 +413,7 @@ public class JavaGenerator extends CGenerator
 	 */
 	protected boolean generateForInCode(For _for, String _indent)
 	{
+		boolean isDisabled = _for.isDisabled();
 		// We simply use the range-based loop of Java (as far as possible)
 		String var = _for.getCounterVar();
 		String valueList = _for.getValueList();
@@ -487,7 +465,7 @@ public class JavaGenerator extends CGenerator
 			String arrayName = "array20160322";
 			
 			// Extra block to encapsulate the additional variable declarations
-			code.add(_indent + "{");
+			addCode("{", _indent, isDisabled);
 			indent += this.getIndent();
 			
 			if (itemType == null)
@@ -496,7 +474,8 @@ public class JavaGenerator extends CGenerator
 				this.insertComment("TODO: Select a more sensible item type than Object and/or prepare the elements of the array", indent);
 				
 			}
-			code.add(indent + itemType + "[] " + arrayName + " = " + transform(valueList, false) + ";");
+			addCode(itemType + "[] " + arrayName + " = " + transform(valueList, false) + ";",
+					indent, isDisabled);
 			
 			valueList = arrayName;
 		}
@@ -518,146 +497,167 @@ public class JavaGenerator extends CGenerator
 
 		if (items != null)
 		{
-			code.add(_indent + "}");
+			addCode("}", _indent, isDisabled);
 		}
 		
 		return true;
 	}
 	// END KGU#61 2016-03-22
 	
+	// START KGU#348 2017-02-25: Enh. #348 - Offer a C++11 solution with class std::thread
+	@Override
+	protected void generateCode(Parallel _para, String _indent)
+	{
+
+		boolean isDisabled = _para.isDisabled();
+		Root root = Element.getRoot(_para);
+		String indentPlusOne = _indent + this.getIndent();
+		int nThreads = _para.qs.size();
+		StringList[] asgnd = new StringList[nThreads];
+
+		insertComment(_para, _indent);
+
+		addCode("", "", isDisabled);
+		insertComment("==========================================================", _indent);
+		insertComment("================= START PARALLEL SECTION =================", _indent);
+		insertComment("==========================================================", _indent);
+		addCode("try {", _indent, isDisabled);
+		addCode("ExecutorService pool = Executors.newFixedThreadPool(" + nThreads + ");", indentPlusOne, isDisabled);
+
+		for (int i = 0; i < nThreads; i++) {
+			addCode("", _indent, isDisabled);
+			insertComment("----------------- START THREAD " + i + " -----------------", indentPlusOne);
+			Subqueue sq = _para.qs.get(i);
+			String future = "future" + _para.hashCode() + "_" + i;
+			String worker = "Worker" + _para.hashCode() + "_" + i;
+			StringList used = root.getUsedVarNames(sq, false, false).reverse();
+			asgnd[i] = root.getVarNames(sq, false, false).reverse();
+			for (int v = 0; v < asgnd[i].count(); v++) {
+				used.removeAll(asgnd[i].get(v));
+			}
+			String args = "(" + used.concatenate(", ").trim() + ")";
+			addCode("Future<Object[]> " + future + " = pool.submit( new " + worker + args + " );", indentPlusOne, isDisabled);
+		}
+
+		addCode("", _indent, isDisabled);
+		addCode("Object[] results;", indentPlusOne, isDisabled);
+		HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
+		for (int i = 0; i < nThreads; i++) {
+			insertComment("----------------- AWAIT THREAD " + i + " -----------------", indentPlusOne);
+			String future = "future" + _para.hashCode() + "_" + i;
+			addCode("results = " + future + ".get();", indentPlusOne, isDisabled);
+			for (int v = 0; v < asgnd[i].count(); v++) {
+				String varName = asgnd[i].get(v);
+				TypeMapEntry typeEntry = typeMap.get(varName);
+				String typeSpec = "/*type?*/";
+				if (typeEntry != null) {
+					StringList typeSpecs = this.getTransformedTypes(typeEntry);
+					if (typeSpecs.count() == 1) {
+						typeSpec = typeSpecs.get(0);
+					}
+				}
+				addCode(varName + " = (" + typeSpec + ")(results[" + v + "]);", indentPlusOne, isDisabled);
+			}
+		}
+
+		// The shutdown call should be redundant here, but you never know...
+		addCode("pool.shutdown();", indentPlusOne, isDisabled);
+		addCode("}", _indent, isDisabled);
+		addCode("catch (Exception ex) { System.err.println(ex.getMessage()); ex.printStackTrace(); }", _indent, isDisabled);
+		insertComment("==========================================================", _indent);
+		insertComment("================== END PARALLEL SECTION ==================", _indent);
+		insertComment("==========================================================", _indent);
+		addCode("", "", isDisabled);
+	}
+
+	// Inserts class definitions for worker objects to be used by the threads
+	private void generateParallelThreadWorkers(Root _root, String _indent)
+	{
+		String indentPlusOne = _indent + this.getIndent();
+		String indentPlusTwo = indentPlusOne + this.getIndent();
+		final LinkedList<Parallel> containedParallels = new LinkedList<Parallel>();
+		_root.traverse(new IElementVisitor() {
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				return true;
+			}
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				if (_ele instanceof Parallel) {
+					containedParallels.addLast((Parallel)_ele);
+				}
+				return true;
+			}
+		});
+		insertComment("=========== START PARALLEL WORKER DEFINITIONS ============", _indent);
+		for (Parallel par: containedParallels) {
+			boolean isDisabled = par.isDisabled();
+			String workerNameBase = "Worker" + par.hashCode() + "_";
+			Root root = Element.getRoot(par);
+			HashMap<String, TypeMapEntry> typeMap = root.getTypeInfo();
+			int i = 0;
+			// We still don't care for synchronisation, mutual exclusion etc.
+			for (Subqueue sq: par.qs) {
+				// Variables assigned and used here will be made members
+				StringList setVars = root.getVarNames(sq, false).reverse();
+				// Variables used here (without being assigned) will be made reference arguments
+				StringList usedVars = root.getUsedVarNames(sq, false, false).reverse();
+				for (int v = 0; v < setVars.count(); v++) {
+					String varName = setVars.get(v);
+					usedVars.removeAll(varName);
+				}
+				if (i > 0) {
+					code.add(_indent);
+				}
+				addCode("class " + workerNameBase + i + " implements Callable<Object[]> {", _indent, isDisabled);
+				// Member variables (all references!)
+				StringList argList = this.makeArgList(setVars, typeMap);
+				for (int v = 0; v < argList.count(); v++) {
+					addCode("private " + argList.get(v) + ";", indentPlusOne, isDisabled);
+				}
+				argList = this.makeArgList(usedVars, typeMap);
+				for (int v = 0; v < argList.count(); v++) {
+					addCode("private " + argList.get(v) + ";", indentPlusOne, isDisabled);
+				}
+				// Constructor
+				addCode("public " + workerNameBase + i + "(" + argList.concatenate(", ") + ") {", indentPlusOne, isDisabled);
+				for (int v = 0; v < usedVars.count(); v++) {
+					String memberName = usedVars.get(v);
+					addCode("this." + memberName + " = " + memberName + ";", indentPlusTwo, isDisabled);
+				}
+				addCode ("}", indentPlusOne, isDisabled);
+				// Call method
+				addCode("public Object[] call() throws Exception {", indentPlusOne, isDisabled);
+				generateCode(sq, indentPlusTwo);
+				addCode ("Object[] results = new Object[]{" + setVars.concatenate(",") + "};", indentPlusTwo, isDisabled);
+				addCode("return results;", indentPlusTwo, isDisabled);
+				addCode("}", indentPlusOne, isDisabled);
+				addCode("};", _indent, isDisabled);
+				i++;
+			}
+		}
+		insertComment("============ END PARALLEL WORKER DEFINITIONS =============", _indent);
+		code.add(_indent);		
+	}
 	
-// KGU#16 2015-11-30: Now inherited	from CGenerator	
-//		protected void generateCode(While _while, String _indent)
-//		{
-//	        // START KGU 2014-11-16
-//	        insertComment(_while, _indent);
-//	        // END KGU 2014-11-16
-//
-//	        String condition = transform(_while.getText().getLongString(), false).trim();
-//	        if (!condition.startsWith("(") || !condition.endsWith(")")) condition="("+condition+")";
-//	        
-//	    	// START KGU#78 2015-11-30: More sophisticated jump handling
-//	        //code.add(_indent+"while " + condition + " {");
-//	    	String label = jumpTable.get(_while);
-//			String brace = optionBlockBraceNextLine() ? "" : " {";
-//	    	code.add(_indent + ((label == null) ? "" : (label + ": ")) + "while " + condition + brace);
-//	    	if (optionBlockBraceNextLine())	code.add(_indent + "{");
-//	    	// END KGU#78 2015-11-30
-//			generateCode(_while.q, _indent+this.getIndent());
-//			code.add(_indent+"}");
-//		}
-		
-// KGU#16 2015-11-30: Now inherited	from CGenerator	
-//		@Override
-//		protected void generateCode(Repeat _repeat, String _indent)
-//		{
-//			// START KGU 2014-11-16
-//			insertComment(_repeat, _indent);
-//			// END KGU 2014-11-16
-//
-//			// START KGU#78 2015-11-30: More sophisticated jump handling
-//			//code.add(_indent + "do {");
-//			String label = jumpTable.get(_repeat);
-//			String brace = optionBlockBraceNextLine() ? "" : " {";
-//			code.add(_indent + ((label == null) ? "" : (label + ": ")) + "do" + brace);
-//			if (optionBlockBraceNextLine())	code.add(_indent + "{");
-//			// END KGU#78 2015-11-30
-//			generateCode(_repeat.q, _indent + this.getIndent());
-//			code.add(_indent + "} while (!(" + transform(_repeat.getText().getLongString(), false).trim() + "));");
-//		}
-		
-// KGU#16 2015-11-30: Now inherited	from CGenerator	
-//		protected void generateCode(Forever _forever, String _indent)
-//		{
-//	        // START KGU 2014-11-16
-//	        insertComment(_forever, _indent);
-//	        // END KGU 2014-11-16
-//
-//	    	// START KGU#78 2015-11-30: More sophisticated jump handling
-//	        //code.add(_indent + "while (true) {");
-//	    	String label = jumpTable.get(_forever);
-//			String brace = optionBlockBraceNextLine() ? "" : " {";
-//	    	code.add(_indent + ((label == null) ? "" : (label + ": ")) + "while (true)" + brace);
-//	    	if (optionBlockBraceNextLine())	code.add(_indent + "{");
-//	    	// END KGU#78 2015-11-30
-//			generateCode(_forever.q, _indent+this.getIndent());
-//			code.add(_indent + "}");
-//		}
-
-		
-// KGU#16 2015-11-30: Now inherited	from CGenerator	
-//		protected void generateCode(Call _call, String _indent)
-//		{
-//			if (!insertAsComment(_call, _indent)) {
-//				
-//				insertComment(_call, _indent);
-//
-//				StringList lines = _call.getText();
-//				for (int i = 0; i < lines.count(); i++)
-//				{
-//					String line = _call.getText().get(i);
-//					// KGU 2015-11-01 It was of little use, always to append a parenthesis pair
-//					if (!line.endsWith(")")) line = line + "()";
-//					// Input or Output should not occur here
-//					code.add(_indent+transform(line, false) + ";");
-//				}
-//
-//			}
-//		}
-
-// KGU#74 2015-11-30: Now inherited from CGenerator
-//		protected void generateCode(Jump _jump, String _indent)
-//		{
-//	        // START KGU 2014-11-16
-//	        insertComment(_jump, _indent);
-//	        // END KGU 2014-11-16
-//
-//			// KGU 2015-10-18: In case of an empty text generate a break instruction by default.
-//			boolean isEmpty = true;
-//			StringList lines = _jump.getText();
-//			for (int i = 0; i < lines.count() && isEmpty; i++)
-//			{
-//				String line = transform(lines.get(i), false);
-//				if (!line.trim().isEmpty()) isEmpty = false;
-//				// START KGU#78 2015-11-30: Mor sophisticated jump handling
-//				//code.add(_indent + line + ";\t// FIXME goto instructions not allowed in Java");
-//				if (line.matches(Matcher.quoteReplacement(D7Parser.preReturn)+"([\\W].*|$)"))
-//				{
-//					code.add(_indent + line + ";");
-//				}
-//				else if (line.matches(Matcher.quoteReplacement(D7Parser.preExit)+"([\\W].*|$)"))
-//				{
-//					code.add(_indent + "System.exit(" + line.substring(D7Parser.preExit.length()).trim() + ");");
-//				}
-//				else if (this.jumpTable.containsKey(_jump))
-//				{
-//					String label = this.jumpTable.get(_jump);
-//					code.add(_indent + "break " + label + ";");
-//				}
-//				else if (line.matches(Matcher.quoteReplacement(D7Parser.preLeave)+"([\\W].*|$)"))
-//				{
-//					// An ordinary break instruction seems to suffice
-//					isEmpty = true;
-//				}
-//				else
-//				{
-//					code.add(_indent + line + ";\t// FIXME goto instructions not allowed in Java!");
-//				}
-//				// END KGU#78 2015-11-30
-//			}
-//			if (isEmpty)
-//			{
-//				code.add(_indent + "break;");
-//			}
-//		}
-		
-
-// KGU#16 (2015-11-30): Now we only override the decomposed methods below
-//		public String generateCode(Root _root, String _indent)
-//		{
-//			...
-//			return code.getText();
-//		}
+	private StringList makeArgList(StringList varNames, HashMap<String, TypeMapEntry> typeMap)
+	{
+		StringList argList = new StringList();
+		for (int v = 0; v < varNames.count(); v++) {
+			String varName = varNames.get(v);
+			TypeMapEntry typeEntry = typeMap.get(varName);
+			String typeSpec = "/*type?*/";
+			if (typeEntry != null) {
+				StringList typeSpecs = this.getTransformedTypes(typeEntry);
+				if (typeSpecs.count() == 1) {
+					typeSpec = typeSpecs.get(0);
+				}
+			}
+			argList.add(typeSpec + " " + varName);
+		}
+		return argList;
+	}
+	// END KGU#348 2017-02-25
 
 	/**
 	 * Composes the heading for the program or function according to the
@@ -688,8 +688,24 @@ public class JavaGenerator extends CGenerator
 		}
 		// END KGU#178 2016-07-20
 		if (_root.isProgram==true) {
-			code.add(_indent + "import java.util.Scanner;");
-			code.add("");
+			if (topLevel) {
+				if (this.hasInput()) {
+					code.add(_indent + "import java.util.Scanner;");
+					code.add("");
+				}
+				// START KGU#348 2017-02-24: Enh. #348 - support translation of Parallel elements
+				if (this.hasParallels) {
+					code.add(_indent + "import java.util.concurrent.Callable;");
+					code.add(_indent + "import java.util.concurrent.ExecutorService;");
+					code.add(_indent + "import java.util.concurrent.Executors;");
+					code.add(_indent + "import java.util.concurrent.Future;");
+					code.add("");
+				}
+				// END KGU#348 2017-02-24
+				// STARTB KGU#351 2017-02-26: Enh. #346
+				this.insertUserIncludes(_indent);
+				// END KGU#351 2017-02-26
+			}
 			insertBlockComment(_root.getComment(), _indent, "/**", " * ", " */");
 			insertBlockHeading(_root, "public class " + _procName, _indent);
 
@@ -709,6 +725,9 @@ public class JavaGenerator extends CGenerator
 			{
 				code.add(_indent+this.getIndent() + " * @return ");
 				_resultType = transformType(_resultType, "int");
+				// START KGU#140 2017-02-01: Enh. #113: Proper conversion of array types
+				_resultType = this.transformArrayDeclaration(_resultType, "");
+				// END KGU#140 2017-02-01
 			}
 			else {
 				_resultType = "void";		        	
@@ -720,10 +739,12 @@ public class JavaGenerator extends CGenerator
 					+ _resultType + " " + _procName + "(";
 			// END KGU#178 2016-07-20
 			for (int p = 0; p < _paramNames.count(); p++) {
-				if (p > 0)
-					fnHeader += ", ";
-				fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " +
-						_paramNames.get(p)).trim();
+				if (p > 0) { fnHeader += ", "; }
+				// START KGU#140 2017-02-01: Enh. #113: Proper conversion of array types
+				//fnHeader += (transformType(_paramTypes.get(p), "/*type?*/") + " " + 
+				//		_paramNames.get(p)).trim();
+				fnHeader += transformArrayDeclaration(transformType(_paramTypes.get(p), "/*type?*/").trim(), _paramNames.get(p));
+				// END KGU#140 2017-02-01
 			}
 			fnHeader += ")";
 			insertBlockHeading(_root, fnHeader,  _indent + this.getIndent());
@@ -732,24 +753,44 @@ public class JavaGenerator extends CGenerator
 		return _indent + this.getIndent() + this.getIndent();
 	}
 
-	/**
-	 * Generates some preamble (i.e. comments, language declaration section etc.)
-	 * and adds it to this.code.
-	 * @param _root - the diagram root element
-	 * @param _indent - the current indentation string
-	 * @param varNames - list of variable names introduced inside the body
-	 */
+	// START KGU#332 2017-01-30: Method decomposed - no need to override it anymore
+//	/**
+//	 * Generates some preamble (i.e. comments, language declaration section etc.)
+//	 * and adds it to this.code.
+//	 * @param _root - the diagram root element
+//	 * @param _indent - the current indentation string
+//	 * @param varNames - list of variable names introduced inside the body
+//	 */
 	@Override
 	protected String generatePreamble(Root _root, String _indent, StringList varNames)
 	{
-		code.add(_indent);
-		insertComment("TODO: Declare and initialise local variables here:", _indent);
-		for (int v = 0; v < varNames.count(); v++) {
-			insertComment(varNames.get(v), _indent);
-		}
-		code.add(_indent);
-		return _indent;
+		// START KGU#348 2017-02-24: Enh. #348
+		this.generateParallelThreadWorkers(_root, _indent);
+		// END KGU#348 2017-02-24
+		return super.generatePreamble(_root, _indent, varNames);
 	}
+	
+	@Override
+	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)
+	{
+		while (_elementType.startsWith("@")) {
+			_elementType = _elementType.substring(1) + "[]";
+		}
+		return _elementType + " " + _varName; 
+	}
+	@Override
+	protected void generateIOComment(Root _root, String _indent)
+	{
+		// START KGU#236 2016-12-22: Issue #227
+		if (this.hasInput(_root)) {
+			code.add(_indent);
+			insertComment("TODO: You may have to modify input instructions,", _indent);			
+			insertComment("      e.g. by replacing nextLine() with a more suitable call", _indent);
+			insertComment("      according to the variable type, say nextInt().", _indent);			
+		}
+		// END KGU#236 2016-12-22
+	}
+// END KGU#332 2017-01-30
 
 	/**
 	 * Creates the appropriate code for returning a required result and adds it
@@ -800,6 +841,12 @@ public class JavaGenerator extends CGenerator
 			code.add("");
 			code.add(_indent + "}");
 		}
+		
+		// START KGU#311 2016-12-22: Enh. #314 - insert File API here if necessary
+		if (topLevel && this.usesFileAPI) {
+			this.insertFileAPI("java");
+		}
+		// END KGU#311 2016-12-22
 	}
 	// END KGU 2015-12-15
 

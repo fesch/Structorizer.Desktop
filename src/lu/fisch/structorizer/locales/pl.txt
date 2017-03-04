@@ -52,6 +52,7 @@
  *      Kay Gürtzig     2016.04.24      Issue #173: New mnemonic configurations added
  *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig     2016.09.22      AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016.12.14      Enh. #311: New menu Debug, duplicate mnemonics (p) modified
  *
  ******************************************************************************************************
  *
@@ -131,7 +132,7 @@ Menu.menuDiagramMarker.text=Wyróżnij zmienne?
 Menu.menuDiagramDIN.text=DIN?
 // Menu "Preferences"
 Menu.menuPreferences.text=Preferencje
-Menu.menuPreferences.mnemonic=p
+Menu.menuPreferences.mnemonic=f
 // Submenu of "Preferences"
 Menu.menuPreferencesFont.text=Czcionka ...
 Menu.menuPreferencesColors.text=Kolory ...
@@ -158,10 +159,20 @@ Menu.menuPreferencesSaveAll.text=Zapisz
 Menu.menuPreferencesSaveDump.text=Zapisz do pliku ...
 Menu.menuPreferencesSaveLoad.text=Odczytaj z pliku ...
 
+// Menu "Debug"
+Menu.menuDebug.text=Debug
+Menu.menuDebug.mnemonic=b
+// Submenu of "Debug"
+Menu.menuDebugTurtle.text=Turtleizer ...
+Menu.menuDebugExecute.text=Executor ...
+Menu.menuDebugDropBrkpts.text=
+Menu.menuDebugBreakpoint.text=
+Menu.menuDebugBreakTrigger.text=
+Menu.menuDebugDisable.text=
 
 // Menu "Help"
 Menu.menuHelp.text=Pomoc
-Menu.menuHelp.mnemonic=p
+Menu.menuHelp.mnemonic=m
 // Submenu of "Help"
 Menu.menuHelpAbout.text=O programie ...
 Menu.menuHelpUpdate.text=Update ...

@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.generators;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -55,10 +56,32 @@ package lu.fisch.structorizer.generators;
  *                                      code expressions
  *                                      Bugfix #228: Unnecessary error message exporting recursive routines
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.kewordMap refactoring done
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Basic functionality for disabled elements (addCode()))
+ *      Kay Gürtzig     2016.10.15      Enh. #271: transformInput() and signature of getOutputReplacer() modified
+ *      Kay Gürtzig     2016.10.16      Bugfix #275: Defective subroutine registration for topological sort mended
+ *      Kay Gürtzig     2016.12.01      Bugfix #301: New method boolean isParenthesized(String)
+ *      Kay Gürtzig     2016.12.22      Enh. #314: Support for Structorizer File API, improvements for #227
+ *      Kay Gürtzig     2017.01.20      Bugfix #336: variable list for declaration section (loop vars in, parameters out)
+ *      Kay Gürtzig     2017.01.26      Enh. #259: Type info is now gathered for declarations support
+ *      Kay Gürtzig     2017.01.30      Bugfix #337: Mutilation of lvalues with nested index access
+ *      Kay Gürtzig     2017.02.19      KGU#348: Additions to support PythonGenerator in generating Parallel code
+ *      Kay Gürtzig     2017.02.20      Bugfix #349: Export missed to generate recursive subroutines and their callers
+ *      Kay Gürtzig     2017.02.26      Enh. #346 (mechanism to add user-configured file includes) 
+ *      Kay Gürtzig     2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *
  ******************************************************************************************************
  *
- *      Comment:	
+ *      Comment:
+ *      2016.12.22 - Enhancement #314: Structorizer file API support.
+ *      - This is in the most cases done by copying a set of implementing functions for the target language
+ *        into the resulting file. Generator provides two methods insertFileAPI() for this purpose.
+ *      - Generator supports this by an extended information scanning to decide whether the file API is used.
+ *      2016.10.15 - Enhancement #271: Input instruction with integrated prompt string
+ *      - For input instructions with prompt string (enh. #271), different inputReplacer patterns are needed
+ *        (they must e.g. derive some input instruction). Therefore an API modification for generators to
+ *        plug in became necessary: getInputReplacer() now requires a boolean argument to provide the appropriate
+ *        pattern. Method transformInput() must distinguish and handle the input instruction flavours therefore.
+ *      	
  *      2016.07.20 - Enhancement #160 - option to include called subroutines
  *      - there is no sufficient way to export a called subroutine when its call is generated, because
  *        duplicate exports must be avoided and usually a topological sorting is necessary.
@@ -74,15 +97,18 @@ package lu.fisch.structorizer.generators;
  *      - method insertComment renamed to insertAsComment (as it inserts the instruction text!)
  *      - overloaded method insertComment added to export the actual element comment
  *      
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import java.awt.Frame;
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Matcher;
 
@@ -93,6 +119,8 @@ import com.stevesoft.pat.Regex;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.executor.Control;
+import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.parsers.D7Parser;
@@ -101,8 +129,6 @@ import lu.fisch.structorizer.parsers.D7Parser;
 public abstract class Generator extends javax.swing.filechooser.FileFilter
 {
 	/************ Fields ***********************/
-	// START KGU#173 2016-04-04: Issue #151 - Get rid of all the hidden ExportOptionDialoge threads produced here
-	//private ExportOptionDialoge eod = null;
 	// START KGU#162 2016-03-31: Enh. #144
 	protected boolean suppressTransformation = false;
 	// END KGU#162 2016-03-31
@@ -110,10 +136,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	private boolean startBlockNextLine = false;
 	private boolean generateLineNumbers = false;
 	private String exportCharset = Charset.defaultCharset().name();
-	// END KGU#173 2016-04-04
 	// START KGU#178 2016-07-19: Enh. #160
 	private boolean exportSubroutines = false;
 	// END KGU#178 2016-07-19
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	private String includeFiles = "";
+	// END KGU#351 2017-02-26
+
 	protected StringList code = new StringList();
 	
 	// START KGU#194 2016-05-07: Bugfix #185 - subclasses might need filename access
@@ -138,10 +167,24 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected boolean topLevel = true;
 	// END KGU#178 2016-07-19
 	// START KGU#236 2016-08-10: Issue #227: Find out whether there are I/O operations
-	protected boolean hasOutput = false;
-	protected boolean hasInput = false;
-	protected boolean hasEmptyInput = false;
+	// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
+//	protected boolean hasOutput = false;
+//	protected boolean hasInput = false;
+//	protected boolean hasEmptyInput = false;
+	private boolean hasOutput = false;
+	private boolean hasInput = false;
+	private boolean hasEmptyInput = false;
+	private Set<Root> rootsWithOutput = new HashSet<Root>();
+	private Set<Root> rootsWithInput = new HashSet<Root>();
+	private Set<Root> rootsWithEmptyInput = new HashSet<Root>();
+	// END KGU#236 2016-12-22
 	// END KGU#236 2016-08-10
+	// START KGU#311 2016-12-22: Enh. #314 - File API support
+	protected boolean usesFileAPI = false;
+	// END KGU#311 2016-12-22
+	// START KGU#348 2017-02-19: Support for translation of Parallel elements
+	protected boolean hasParallels = false;
+	// END KGU#348 2017-02-19
 
 	// START KGU#129/KGU#61 2016-03-22: Bugfix #96 / Enh. #84 Now important for most generators
 	// Some generators must prefix variables, for some generators it's important for FOR-IN loops
@@ -184,9 +227,13 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
 	 * into the target code
+	 * @param withPrompt - is a prompt string to be considered?
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected abstract String getInputReplacer();
+	// START KGU#281 2016-10-15: Enh. #271
+	//protected abstract String getInputReplacer();
+	protected abstract String getInputReplacer(boolean withPrompt);
+	// END KGU#281 2016-10-15
 
 	/**
 	 * A pattern how to embed the expression (right-hand side of an output instruction)
@@ -205,6 +252,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 */
 	protected abstract boolean breakMatchesCase();
 	// END KGU#78 2015-12-18
+	
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/**
+	 * Returns the pattern of the target-language specific include/import/uses phrase
+	 * for user-specific file includes with a "%" character as placeholder for the
+	 * single file name or the substring "%%" if a comma-separated list is allowed.
+	 * @return String to be inserted in order to load a user-specific include file or null
+	 */
+	protected abstract String getIncludePattern();
+	// END KGU#351 2017-02-26
 	
 	/************ Code Generation **************/
 	
@@ -232,6 +289,40 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#178 2016-07-19	
 	
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	protected String optionIncludeFiles()
+	{
+		return this.includeFiles;
+	}
+	// END KGU#351 2017-02-26
+
+	// START KGU#236 2016-12-22: Issue #227: root-specific analysis needed
+	protected boolean hasOutput(Root _root)
+	{
+		return rootsWithOutput.contains(_root);
+	}
+	protected boolean hasInput(Root _root)
+	{
+		return rootsWithInput.contains(_root);
+	}
+	protected boolean hasEmptyInput(Root _root)
+	{
+		return rootsWithEmptyInput.contains(_root);
+	}
+	protected boolean hasOutput()
+	{
+		return !rootsWithOutput.isEmpty();
+	}
+	protected boolean hasInput()
+	{
+		return !rootsWithInput.isEmpty();
+	}
+	protected boolean hasEmptyInput()
+	{
+		return !rootsWithEmptyInput.isEmpty();
+	}
+	// END KGU#236 2016-12-22
+
 	// KGU 2014-11-16: Method renamed (formerly: insertComment)
 	// START KGU 2015-11-18: Method parameter list reduced by a comment symbol configuration
 	/**
@@ -330,6 +421,60 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		}
 	}
 	// END KGU 2015-10-18
+	
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	protected void insertUserIncludes(String _indent)
+	{
+		String pattern = this.getIncludePattern();
+		String includes = this.optionIncludeFiles().trim();
+		if (pattern != null && includes != null && !includes.isEmpty()) {
+			if (pattern.contains("%%")) {
+				code.add(_indent + pattern.replace("%%", includes));
+			}
+			else if (pattern.contains("%")) {
+				String[] items = includes.split(",");
+				for (int i = 0; i < items.length; i++) {
+					String item = items[i].trim();
+					if (!item.isEmpty()) {
+						code.add(_indent + pattern.replace("%", prepareIncludeItem(item)));						
+					}
+				}
+			}
+		}
+	}
+	/**
+	 * Method may preprocess an include file or module name for the import / use
+	 * clause. This version does nothing but may be overridden. 
+	 * @param _includeFileName a string from the user include configuration
+	 * @return the preprocessed string as to be actually inserted
+	 */
+	protected String prepareIncludeItem(String _includeFileName)
+	{
+		return _includeFileName;
+	}
+	// END KGU#351 2017-02-26
+
+	// START KGU#277 2016-10-13: Enh. #270
+	/**
+	 * Depending on asComment, adds the given text either as comment or as active
+	 * source code to the code lines.
+	 * @param text - the prepared (transformed and composed) line of code
+	 * @param _indent - current indentation
+	 * @param asComment - whether or not the code is to be commented out.
+	 */
+	protected void addCode(String text, String _indent, boolean asComment)
+	{
+		if (asComment)
+		{
+			// Indentation is intentionally put inside the comment (comment encloses entire line)
+			insertComment(_indent + text, "");
+		}
+		else
+		{
+			code.add(_indent + text);
+		}
+	}
+	// END KGU#277 2016-10-13
 
 	/**
 	 * Overridable general text transformation routine, performing the following steps:
@@ -435,11 +580,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			//transformed = transformInput(transformed);
 			//// output instruction transformation
 			//transformed = transformOutput(transformed);
-			if (transformed.indexOf(D7Parser.keywordMap.get("input").trim()) >= 0)
+			if (transformed.indexOf(D7Parser.getKeyword("input").trim()) >= 0)
 			{
 				transformed = transformInput(transformed);
 			}
-			if (transformed.indexOf(D7Parser.keywordMap.get("output").trim()) >= 0)
+			if (transformed.indexOf(D7Parser.getKeyword("output").trim()) >= 0)
 			{
 				transformed = transformOutput(transformed);
 			}
@@ -489,6 +634,23 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#1 2015-11-30	
 	
+	// START KGU#261 2017-01-26: Enh. #259/#335
+	protected StringList getTransformedTypes(TypeMapEntry typeEntry)
+	{
+		StringList types = typeEntry.getTypes();
+		StringList transTypes = new StringList();
+		for (int i = 0; i < types.count(); i++) {
+			String type = types.get(i);
+			int posLastAt = type.lastIndexOf('@')+1;
+			type = type.substring(0, posLastAt) + transformType(type.substring(posLastAt), "???");
+			transTypes.addIfNew(type);
+		}
+		// Get rid of completely undefined types
+		transTypes.removeAll("???");
+		return transTypes;
+	}
+	// END KGU#261 2017-01-26
+	
 	/**
 	 * Detects whether the given code line starts with the configured input keystring
 	 * and if so replaces it according to the regex pattern provided by getInputReplacer()
@@ -497,11 +659,23 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 */
 	protected String transformInput(String _interm)
 	{
-		String subst = getInputReplacer();
+		// START KGU#281 2016-10-15: for enh. #271 (input with prompt)
+		//String subst = getInputReplacer();
+		// END KGU#281 2016-10-15
 		// Between the input keyword and the variable name there MUST be some blank...
-		String keyword = D7Parser.keywordMap.get("input").trim();
+		String keyword = D7Parser.getKeyword("input").trim();
 		if (!keyword.isEmpty() && _interm.startsWith(keyword))
 		{
+			// START KGU#281 2016-10-15: for enh. #271 (input with prompt)
+			String quotes = "";
+			String tail = _interm.substring(keyword.length()).trim();
+			if (tail.startsWith("\"")) {
+				quotes = "\"";
+			}
+			else if (tail.startsWith("'")) {
+				quotes = "'";
+			}
+			// END KGU#281 2016-10-15
 			String matcher = Matcher.quoteReplacement(keyword);
 			if (Character.isJavaIdentifierPart(keyword.charAt(keyword.length()-1)))
 			{
@@ -515,7 +689,17 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 			// End - BFI (#51)
 			
-			_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+			// START KGU#281 2016-10-15: Enh. #271 (input instructions with prompt
+			//_interm = _interm.replaceFirst("^" + matcher + "(.*)", subst);
+			if (quotes.isEmpty()) {
+				String subst = getInputReplacer(false);
+				_interm = _interm.replaceFirst("^" + matcher + "[ ]*(.*)", subst);
+			}
+			else {
+				String subst = getInputReplacer(true);
+				_interm = _interm.replaceFirst("^" + matcher + "\\h*("+quotes+".*"+quotes+")[, ]*(.*)", subst);
+			}
+			// END KGU#281 2016-10-15
 		}
 		return _interm;
 	}
@@ -530,7 +714,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	{
 		String subst = getOutputReplacer();
 		// Between the input keyword and the variable name there MUST be some blank...
-		String keyword = D7Parser.keywordMap.get("output").trim();
+		String keyword = D7Parser.getKeyword("output").trim();
 		if (!keyword.isEmpty() && _interm.startsWith(keyword))
 		{
 			String matcher = Matcher.quoteReplacement(keyword);
@@ -587,9 +771,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected boolean mapJumps(Subqueue _squeue)
 	{
 		boolean surelyReturns = false;
-		String preLeave  = D7Parser.keywordMap.get("preLeave");
-		String preReturn = D7Parser.keywordMap.get("preReturn");
-		String preExit   = D7Parser.keywordMap.get("preExit");
+		String preLeave  = D7Parser.getKeywordOrDefault("preLeave", "leave");
+		String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
+		String preExit   = D7Parser.getKeywordOrDefault("preExit", "exit");
 		String patternLeave = getKeywordPattern(preLeave) + "([\\W].*|$)";
 		String patternReturn = getKeywordPattern(preReturn) + "([\\W].*|$)";
 		String patternExit = getKeywordPattern(preExit) + "([\\W].*|$)";
@@ -599,7 +783,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			Element elem = iter.next();
 			// If we detect a Jump element of type leave then we detect its target
 			// and label both
-			if (elem instanceof Jump)
+			if (elem instanceof Jump && !elem.isDisabled())
 			{
 				String jumpText = elem.getText().getLongString().trim();
 				if (jumpText.matches(patternReturn))
@@ -624,12 +808,14 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				else if (jumpText.matches(patternLeave))
 				{
 					levelsUp = 1;
-					try {
-						levelsUp = Integer.parseInt(jumpText.substring(D7Parser.keywordMap.get("preLeave").length()).trim());
-					}
-					catch (NumberFormatException ex)
-					{
-						System.out.println("Unsuited leave argument in Element \"" + jumpText + "\"");
+					if (jumpText.length() > preLeave.length()) {
+						try {
+							levelsUp = Integer.parseInt(jumpText.substring(preLeave.length()).trim());
+						}
+						catch (NumberFormatException ex)
+						{
+							System.out.println("Unsuited leave argument in Element \"" + jumpText + "\"");
+						}
 					}
 				}
 				// Try to find the target loop
@@ -710,7 +896,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 					String line = text.get(i);
 					if (line.matches(patternReturn))
 					{
-						boolean hasResult = !line.substring(D7Parser.keywordMap.get("preReturn").length()).trim().isEmpty();
+						boolean hasResult = !line.substring(preReturn.length()).trim().isEmpty();
 						if (hasResult)
 						{
 							this.returns = true;
@@ -739,7 +925,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected String[] lValueToTypeNameIndex(String _lval)
 	{
 		// Avoid too much nonsense on indexed variables
-    	Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
+		// START KGU#334 2017-01-30: Bugfix #337 - lvalue was mutilated with nested index access
+    	//Regex r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$1 $3");
+		String lvalPattern = "(.*?)[\\[](.*)[\\]](.*?)";
+    	Regex r = new Regex(lvalPattern,"$1 $3");
+    	// END KGU#334 2017-01-30
     	String name = r.replaceAll(_lval);
 		String type = "";
 		// Check Pascal and BASIC style of type specifications
@@ -766,11 +956,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		
 		if ((subPos = _lval.indexOf('[')) >= 0 && _lval.indexOf(']', subPos+1) >= 0)
 		{
-			// START KGU#189 2016-04-29: Bugfix for multidimensional array expressions
+			// START KGU#189 2016-04-29: Bugfix #337 for multidimensional array expressions
 			// lvalues like a[i][j] <- ... had been transformed to a[ij] <- ...
 			// Now index would become "i][j" in such a case which at least preserves syntax
 			//index = _lval.replaceAll("(.*?)[\\[](.*?)[\\]](.*?)","$2").trim();
-			index = _lval.replaceAll("(.*?)[\\[](.*)[\\]](.*?)","$2").trim();
+			index = _lval.replaceAll(lvalPattern,"$2").trim();
 			// END KGU#189 2016-04-29
 		}
 		String[] typeNameIndex = {type, name, index};
@@ -783,7 +973,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	{
 		String valueList = _for.getValueList();
 		StringList items = null;
-		boolean isComplexObject = (new Function(valueList)).isFunction() || this.varNames.contains(valueList);
+		boolean isComplexObject = Function.isFunction(valueList) || this.varNames.contains(valueList);
 		if (valueList.startsWith("{") && valueList.endsWith("}"))
 		{
 			items = Element.splitExpressionList(valueList.substring(1, valueList.length()-1), ",");
@@ -805,41 +995,46 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	{
 		Root newSub = null;
 		Function called = _call.getCalledRoutine();
-		if (called != null && Arranger.hasInstance())
+		// START KGU#349 2017-02-20: Bugfix #349 - don't register directly recursive calls
+		//if (called != null && Arranger.hasInstance())
+		if (called != null && !_caller.getSignatureString(false).equals(called.getSignatureString()) && Arranger.hasInstance())
+		// END KGU#349 2017-02-20
 		{
 			Vector<Root> foundRoots = Arranger.getInstance().
 					findRoutinesBySignature(called.getName(), called.paramCount());
-			// FIXME: How to select among Roots with comaptible signature?
+			// FIXME: How to select among Roots with compatible signature?
 			if (!foundRoots.isEmpty())
 			{
 				Root sub = foundRoots.firstElement();
 				// Is there already an entry for this root?
 				SubTopoSortEntry entry = subroutines.getOrDefault(sub, null);
+				boolean toBeCounted = false;
 				if (entry == null)
 				{
 					// No - create a new entry
 					subroutines.put(sub, new SubTopoSortEntry(_caller));
 					newSub = sub;
-					// Now count the call at the callers entry (if there is one)
-					if ((entry = subroutines.getOrDefault(_caller, null)) != null)
-					{
-						entry.nReferingTo++;
-					}
+					toBeCounted = true;
 				}
 				else
 				{
 					// Yes: add the calling routine to the set of roots to be informed
 					// (if not already registered)
-					entry.callers.add(_caller);
+					toBeCounted = entry.callers.add(_caller);
+				}
+				// Now count the call at the callers entry (if there is one)
+				if (toBeCounted && (entry = subroutines.getOrDefault(_caller, null)) != null)
+				{
+					entry.nReferingTo++;
 				}
 			}
 			// START KGU#237 2016-08-10: bugfix #228
 			else if ((newSub = getAmongSubroutines(called)) != null)
 			{
 				subroutines.get(newSub).callers.add(_caller);
-				// If we got here, then it's propably the top-level routine itself
+				// If we got here, then it's probably the top-level routine itself
 				// So better be cautious with reference counting here (lest the
-				// caling routine would be suppressed on printing)
+				// calling routine would be suppressed on printing)
 				newSub = null;	// ...and it's not a new subroutine, of course
 			}
 			// END KU#237 2016-08-10
@@ -916,6 +1111,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#237 2016-08-10
 	
+	// START KGU#236/KGU#311 2016-12-22: Issue #227, enh. #314 - we may need this more root-specificly
+	private final void gatherElementInformationRoot(Root _root)
+	{
+		hasOutput = hasInput = hasEmptyInput = false;
+		gatherElementInformation(_root);
+		if (hasOutput) rootsWithOutput.add(_root);
+		if (hasInput) rootsWithInput.add(_root);
+		if (hasEmptyInput) rootsWithEmptyInput.add(_root);
+	}
+	// END KGU#236/KGU#311 2016-12-22
 	// START KGU#236 2016-08-10: Issue #227
 	// Recursive scanning routine to gather certain information via
 	// subclassable method checkElementInformation();
@@ -955,6 +1160,23 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 			if (instr.isOutput()) hasOutput = true;			
 		}
+		// START KGU#348 2017-02-19: Support for translation of Parallel elements
+		else if (_ele instanceof Parallel)
+		{
+			hasParallels = true;
+		}
+		// END KGU#348 2017-02-19
+		// START KGU#311 2016-12-22: Enh. #314 - check for file API support
+		if (!usesFileAPI && _ele.getText().getText().contains("file"))
+		{
+			// Now we check more precisely
+			String text = _ele.getText().getText();
+			for (int i = 0; !usesFileAPI && i < Executor.fileAPI_names.length; i++) {
+				if (text.contains(Executor.fileAPI_names[i]))
+					usesFileAPI = true;
+			}
+		}
+		// END KGU#311 2016-12-22
 		return true;
 	}
 	// END KGU#236 2016-08-10
@@ -1095,9 +1317,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		_root.collectParameters(paramNames, paramTypes);
 		String resultType = _root.getResultType();
 		// START KGU#61/KGU#129 2016-03-22: Now common field for all generator classes
-		//StringList varNames = _root.getVarNames(_root, false, true);	// FIXME: FOR loop vars are missing
-		this.varNames = _root.getVarNames(_root, false, true);	// FIXME: FOR loop vars are missing
-		// END KGU#61/KGU#129
+		//StringList varNames = _root.getVarNames(_root, false, true);	// FOR loop vars are missing
+		// START KGU#333 2017-01-20: Bugfix #336 - Correct way to include loop variables and exclude parameters
+		//this.varNames = _root.getVarNames(_root, false, true);	// FOR loop vars are missing
+		this.varNames = _root.getVarNames();
+		for (int p = 0; p < paramNames.count(); p++) {
+			this.varNames.removeAll(paramNames.get(p));
+		}
+		// END KGU#333 2017-01-20
+		// END KGU#61/KGU#129 2016-03-22
 		this.isResultSet = varNames.contains("result", false);
 		this.isFunctionNameSet = varNames.contains(procName);
 		
@@ -1127,7 +1355,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @param _paramNames - list of the argument names
 	 * @param _paramTypes - list of corresponding type names (possibly null) 
 	 * @param _resultType - result type name (possibly null)
-	 * @return the default indentation string for the subsequent stuff
+	 * @return the default indentation string for the preamble stuff following
 	 */
 	protected String generateHeader(Root _root, String _indent, String _procName,
 			StringList _paramNames, StringList _paramTypes, String _resultType)
@@ -1139,7 +1367,8 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * and adds it to this.code.
 	 * @param _root - the diagram root element
 	 * @param _indent - the current indentation string
-	 * @param varNames - list of variable names introduced inside the body
+	 * @param _varNames - list of variable names introduced inside the body
+	 * @return the default indentation string for the main implementation part
 	 */
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
@@ -1150,10 +1379,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * (after the algorithm code of the body) to this.code)
 	 * @param _root - the diagram root element
 	 * @param _indent - the current indentation string
-	 * @param alwaysReturns - whether all paths of the body already force a return
-	 * @param varNames - names of all assigned variables
+	 * @param _alwaysReturns - whether all paths of the body already force a return
+	 * @param _varNames - names of all assigned variables
+	 * @return the default indentation string for the following footer
 	 */
-	protected String generateResult(Root _root, String _indent, boolean alwaysReturns, StringList varNames)
+	protected String generateResult(Root _root, String _indent, boolean _alwaysReturns, StringList _varNames)
 	{
 		return _indent;
 	}
@@ -1168,8 +1398,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#74 2015-11-30
 	
+	/**
+	 * Entry point for interactively commanded code export. Retrieves export options,
+	 * opens a file selection dialog
+	 * @param _root - program or top-level routine diagram (call hierarchy root)
+	 * @param _currentDirectory - current Structorizer directory (as managed by Diagram)
+	 * @param _frame - the GUI Frame object responsible for this action
+	 */
 	public void exportCode(Root _root, File _currentDirectory, Frame _frame)
 	{
+		//=============== Get export options ======================
 		try
 		{
 			Ini ini = Ini.getInstance();
@@ -1197,6 +1435,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			// START KGU#178 2016-07-19: Enh. #160
 			exportSubroutines = ini.getProperty("genExportSubroutines", "0").equals("true");
 			// END KGU#178 2016-07-19
+			// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+			includeFiles = ini.getProperty("genExportIncl" + this.getClass().getSimpleName(), "");
+			// END KGU#351 2017-02-26
+
 		} 
 		catch (FileNotFoundException ex)
 		{
@@ -1207,6 +1449,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			ex.printStackTrace();
 		}
 
+		//=============== Request output file path (interactively) ======================
 		JFileChooser dlgSave = new JFileChooser();
 		dlgSave.setDialogTitle(getDialogTitle());
 
@@ -1278,6 +1521,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			}
 		}
 			
+		//=============== Actual code generation ======================
 		if (file != null)
 		{
 			// START KGU#194 2016-05-07: Bugfix #185 - the subclass may need the filename
@@ -1303,7 +1547,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				// START KGU#178 2016-07-20: Enh. #160 - register all subroutine calls
 				if (this.optionExportSubroutines())
 				{
-					// START KGU#237 2016-08-10: Bugfix #228 - precautio for recursive top-level routine
+					// START KGU#237 2016-08-10: Bugfix #228 - precaution for recursive top-level routine
 					if (!_root.isProgram)
 					{
 						subroutines.put(_root, new SubTopoSortEntry(null));
@@ -1320,12 +1564,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				// END KGU#178 2016-07-20
 				
 				// START KGU#236 2016-08-10: Issue #227: General information gathering pass
-				gatherElementInformation(_root);
+				// START KGU#311 2016-12-22: Issue #227, Enh. #314
+				//gatherElementInformation(_root);
+				gatherElementInformationRoot(_root);
+				// END KGU#311 2016-12-22
 				if (this.optionExportSubroutines())
 				{
 					for (Root sub: subroutines.keySet())
 					{
-						gatherElementInformation(sub);
+						// START KGU#311 2016-12-22: Issue #227, Enh. #314
+						//gatherElementInformation(sub);
+						gatherElementInformationRoot(sub);
+						// END KGU#311 2016-12-22
 					}		
 				}
 				// END KGU#236 2016-08-10
@@ -1356,11 +1606,19 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				// END KGU#168 2016-04-04
 				outp.write(code);
 				outp.close();
+				
+				if (this.usesFileAPI) {
+					copyFileAPIResources(filename);
+				}
 			}
 			catch(Exception e)
 			{
+				String message = e.getMessage();
+				if (message == null) {
+					message = e.getClass().getSimpleName();
+				}
 				JOptionPane.showMessageDialog(null,
-						"Error while saving the file!\n" + e.getMessage(),
+						"Error while saving the file!\n" + message,
 						"Error", JOptionPane.ERROR_MESSAGE);
 			}
 		   	// START KGU#178 2016-07-20: Enh. #160
@@ -1371,7 +1629,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 						"Warning", JOptionPane.WARNING_MESSAGE);		    		
 		   	}
 		   	// END KGU#178 2016-07-20
-		}
+		} // if (file != null)
 	}
 	
 	// START KGU#178 2016-07-20: Enh. #160 - Specific code for subroutine export
@@ -1381,36 +1639,47 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		code = code.subSequence(0, this.subroutineInsertionLine);
 		topLevel = false;
 		Queue<Root> roots = new LinkedList<Root>();
-		// Initial queue filling - this is a classical topological sorting algorithm
-		for (Root sub: this.subroutines.keySet())
-		{
-			SubTopoSortEntry entry = this.subroutines.get(sub);
-			// If this routine refers to no other one, then enlist it
-			if (entry.nReferingTo == 0)
+		// START KGU#349 2017-02-20: Bugfix #349 - precaution against indirect recursion, we must export all routines
+		int minRefCount = 0;
+		while (!this.subroutines.isEmpty()) {
+		// END KGU#349 2017-02-20
+			// Initial queue filling - this is a classical topological sorting algorithm
+			for (Root sub: this.subroutines.keySet())
 			{
-				roots.add(sub);
-			}
-		}
-		// Now we have an initial queue of independent routines,
-		// so export them and enlist those dependents
-		// the prerequisites of which are thereby fulfilled.
-		while (!roots.isEmpty())
-		{
-			Root sub = roots.remove();	// get the next routine
-			
-			generateCode(sub, subroutineIndent);	// add its code
-			
-			// look for dependent routines and decrement their dependency counter
-			// (the entry for sub isn't needed any longer now)
-			for (Root caller: subroutines.remove(sub).callers)
-			{
-				SubTopoSortEntry entry = this.subroutines.get(caller);
-				// Last dependency? Then enlist the caller
-				if (entry != null && --entry.nReferingTo <= 0)
+				SubTopoSortEntry entry = this.subroutines.get(sub);
+				// If this routine refers to no other one, then enlist it
+				if (entry.nReferingTo == minRefCount)
 				{
-					roots.add(caller);
+					roots.add(sub);
 				}
 			}
+			// Now we have an initial queue of independent routines,
+			// so export them and enlist those dependents
+			// the prerequisites of which are thereby fulfilled.
+			while (!roots.isEmpty())
+			{
+				Root sub = roots.remove();	// get the next routine
+
+				generateCode(sub, subroutineIndent);	// add its code
+
+				// look for dependent routines and decrement their dependency counter
+				// (the entry for sub isn't needed any longer now)
+				for (Root caller: subroutines.remove(sub).callers)
+				{
+					SubTopoSortEntry entry = this.subroutines.get(caller);
+					// Last dependency? Then enlist the caller (if it's not already listed - in case of indirect recursion)
+					if (entry != null && --entry.nReferingTo <= 0 && !roots.contains(caller))
+					{
+						roots.add(caller);
+						// when we could add a due subroutine then there is no need anymore to tolerate routines in need of others
+						minRefCount = 0;
+					}
+				}
+			}
+			// START KGU#349 2017-02-20: Bugfix #349
+			// An indirect recursion might block have blocked the queuing of routines, so raise reference toleration level
+			minRefCount++;
+			// END KGU#349
 		}
 		code.add(outerCodeTail);
 		
@@ -1420,13 +1689,205 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	}
 	// END KGU#178 2016-07-20
 	
+	// START KGU#311 2016-12-22: Enh. #314
+	/**
+	 * Inserts all marked sections of resource file "FileAPI.&lt;_language&gt;.txt at line
+	 * this.subroutineInsertionLine into the resulting code.
+	 * Increases this.subroutineInsertionLine by the number of lines copied.
+	 * @param _language - name or file name extension of an export language
+	 */
+	protected void insertFileAPI(String _language)
+	{
+		insertFileAPI(_language, 0);	
+	}
+	
+	/**
+	 * Inserts marked section _sectionCount (1, 2, ...) or all sections (_sectionCount = 0) of
+	 * resource file "FileAPI.&lt;_language&gt;.txt at line this.subroutineInsertionLine into
+	 * the resulting code. 
+	 * Increases this.subroutineInsertionLine by the number of lines copied.
+	 * @param _language - name or file name extension of an export language
+	 * @param _sectionCount - number of the marked section to be copied (0 for all)
+	 */
+	protected void insertFileAPI(String _language, int _sectionCount)
+	{
+		this.subroutineInsertionLine = insertFileAPI(_language, this.subroutineInsertionLine, this.subroutineIndent, _sectionCount);	
+	}
+	
+	/**
+	 * Inserts marked section _sectionCount (1, 2, ...) or all sections (_sectionCount = 0) of
+	 * resource file "FileAPI.&lt;_language&gt;.txt" at line _atLine with given _indentation into
+	 * the resulting code 
+	 * @param _language - name or file name extension of an export language
+	 * @param _atLine - target line where the file section is to be copied to
+	 * @param _indentation - indentation string (to precede every line of the copied section) 
+	 * @param _sectionCount - number of the marked section to be copied (0 for all)
+	 * @return line number at the end of the inserted code lines
+	 */
+	protected int insertFileAPI(String _language, int _atLine, String _indentation, int _sectionCount)
+	{
+		boolean isDone = false;
+		int sectNo = 0;
+		String error = "";
+		try {
+			java.io.InputStream fis = this.getClass().getResourceAsStream("FileAPI." + _language + ".txt");
+			java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(fis, "UTF-8"));
+			String line = null;
+			boolean doInsert = false;
+			while ((line = reader.readLine()) != null) {
+				if (line.contains("===== STRUCTORIZER FILE API START =====")){
+					sectNo++;
+					doInsert = _sectionCount == 0 || _sectionCount == sectNo;
+					code.insert(_indentation, _atLine++);
+				}
+				if (doInsert) {
+					// Unify indentation and replace dummy messages by localized ones
+					line = line.replace("\t", this.getIndent());
+					line = line.replace("§INVALID_HANDLE_READ§", Control.msgInvalidFileNumberRead.getText());
+					line = line.replace("§INVALID_HANDLE_WRITE§", Control.msgInvalidFileNumberWrite.getText());
+					line = line.replace("§NO_INT_ON_FILE§", Control.msgNoIntLiteralOnFile.getText());
+					line = line.replace("§NO_DOUBLE_ON_FILE§", Control.msgNoDoubleLiteralOnFile.getText());
+					line = line.replace("§END_OF_FILE§", Control.msgEndOfFile.getText());
+					code.insert(_indentation + line, _atLine++);
+				}
+				if (line.contains("===== STRUCTORIZER FILE API END =====")){
+					doInsert = false;
+					code.insert(_indentation, _atLine++);
+				}
+			}
+			reader.close();
+			isDone = true;
+		} catch (IOException e) {
+			error = e.getLocalizedMessage();
+		}
+		if (!isDone) {
+			System.err.println("Generator.insertFileAPI(" + _language + ", ...): " + error);
+		}
+		return _atLine;
+	}
+	
+	/**
+	 * Routine stub that may be overridden by subclasses to command the creation of (modified) copies
+	 * of some resource files for the used FileAPI. Typically, this method is called just once after
+	 * the (recursive) code export has been mostly done.
+	 * @param _filePath - path of the target directory or of some file within it  
+	 * @return flag whether the copy has worked
+	 */
+	protected boolean copyFileAPIResources(String _filePath)
+	{
+		return true;
+	}
+	
+	/**
+	 * Creates a (modified) copy of resource file "FileAPI.&lt;_language&gt;.txt" in the _targetPath
+	 * directory with the given _targetFilename. If _targetFilename is null then the file name will
+	 * be "FileAPI"&lt;_language&gt;.
+	 * @param _language - a language-specific filename extension
+	 * @param _targetFilename - the proposed filename for the copy (should not contain path elements!)
+	 * @param _targetPath - path of the target directory or of a file within it 
+	 * @return
+	 */
+	protected boolean copyFileAPIResource(String _language, String _targetFilename, String _targetPath)
+	{
+		boolean isDone = false;
+		String error = "";
+		if (_targetFilename == null) {
+			_targetFilename = "FileAPI." + _language;
+		}
+		File target = new File(_targetFilename);
+		if (!target.isAbsolute()) {
+			java.io.File targetDir = new java.io.File(_targetPath);
+			if (!targetDir.isDirectory()) {
+				targetDir = targetDir.getParentFile();
+			}
+			target = new File(targetDir.getAbsolutePath() + File.separator + _targetFilename);
+		}
+		// Don't overwrite the file if it already exists in the target directory
+		if (!target.exists()) {
+			InputStream fis = null;
+			FileOutputStream fos = null;
+			try {
+				fis = this.getClass().getResourceAsStream("FileAPI." + _language + ".txt");
+				fos = new FileOutputStream(target);
+				BufferedReader reader = new BufferedReader(new InputStreamReader(fis, "UTF-8"));
+				BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fos, "UTF-8"));
+				String line = null;
+				while ((line = reader.readLine()) != null) {
+					// Suppress insertion markers and replace dummy messages by localized ones
+					if (!line.contains("===== STRUCTORIZER FILE API")){
+						line = line.replace("\t", this.getIndent());
+						line = line.replace("§INVALID_HANDLE_READ§", Control.msgInvalidFileNumberRead.getText());
+						line = line.replace("§INVALID_HANDLE_WRITE§", Control.msgInvalidFileNumberWrite.getText());
+						line = line.replace("§NO_INT_ON_FILE§", Control.msgNoIntLiteralOnFile.getText());
+						line = line.replace("§NO_DOUBLE_ON_FILE§", Control.msgNoDoubleLiteralOnFile.getText());
+						line = line.replace("§END_OF_FILE§", Control.msgEndOfFile.getText());
+						// TODO copy the file, replacing the messages
+						writer.write(line); writer.newLine();
+					}
+				}
+				writer.close();
+				reader.close();
+				isDone = true;
+			} catch (IOException e) {
+				error = e.getLocalizedMessage();
+			}
+			finally {
+				if (fis != null) {
+					try { fis.close(); } catch (IOException e) {}
+				}
+				if (fos != null) {
+					try { fos.close(); } catch (IOException e) {}
+				}
+			}
+			if (!isDone) {
+				System.err.println("Generator.copyFileAPIResource(" + _language + ", ...): " + error);
+			}
+		}
+		return isDone;
+	}
+	// END KGU#311 2016-12-22
+	
+	// START KGU#301 2016-12-01: Bugfix #301
+	protected static boolean isParenthesized(String expression)
+	{
+		boolean isEnclosed = expression.startsWith("(") && expression.endsWith(")");
+		if (isEnclosed) {
+			StringList tokens = Element.splitLexically(expression, true);
+			int level = 0;
+			for (int i = 0; isEnclosed && i < tokens.count(); i++) {
+				String token = tokens.get(i);
+				if (token.equals("(")) {
+					level++;
+				}
+				else if (token.equals(")")) {
+					level--;
+					if (level == 0 && i < tokens.count()-1) {
+						isEnclosed = false;
+					}
+				}
+			}
+		}
+		return isEnclosed;
+	}
+	// END KGU#301 2016-12-01
+	
 	// START KGU#187 2016-04-28: Enh. 179 batch mode
 	/*****************************************
 	 * batch code export methods
 	 *****************************************/
 
+	/**
+	 * Exports the diagrams given by _roots into a text file with path _targetFile.
+	 * @param _roots - vector of diagram Roots to be exported (in this order).
+	 * @param _targetFile - path of the target text file for the code export.
+	 * @param _options - String containing code letters for export options ('b','c','f','l','t','-') 
+	 * @param _charSet - name of the character set to be used.
+	 */
 	public void exportCode(Vector<Root> _roots, String _targetFile, String _options, String _charSet)
 	{
+		// START KGU#311 2016-12-27: Enh. #314
+		boolean someRootUsesFileAPI = false;
+		// END KGU#311 2016-12-27
 		
 		if (Charset.isSupported(_charSet))
 		{
@@ -1532,6 +1993,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				this.insertComment("============================================================", "");
 				code.add("");
 			}
+			// START KGU#311 2016-12-27: Enh. #314 ensure I/O-specific additions per using root
+			this.usesFileAPI = false;
+			gatherElementInformationRoot(root);
+			if (this.usesFileAPI) { someRootUsesFileAPI = true; }
+			this.pureFilename = root.getMethodName();	// used e.g. for Pascal/Oberon UNIT/MODULE naming
+			// END KGU#311 2016-12-27
 			generateCode(root, "");
 		}
 
@@ -1550,6 +2017,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 
 			outp.write(code.getText());
 			outp.close();
+			
+			// START KGU#311 2016-12-27: Enh. #314 Allow the subclass to copy necessary resource files
+			if (someRootUsesFileAPI) {
+				copyFileAPIResources(_targetFile);
+			}
+			// END KGU#311 2016-12-27
 		}
 		catch(Exception e)
 		{

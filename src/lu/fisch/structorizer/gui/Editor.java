@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.gui;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -44,21 +45,32 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.06      Enh. #188: New button and menu item for element conversion (KGU#199)
  *      Kay Gürtzig     2016.07.21      Enh. #197: Selection may be expanded by Shift-Up and Shift-Down (KGU#206)
  *      Kay Gürtzig     2016.08.02      Enh. #215: popupBreakTrigger added
+ *      Kay Gürtzig     2016.10.13      Enh. #277: New toolbar button (+ context menu item) for disabling elements
+ *      Kay Gürtzig     2016.11.17      Bugfix #114: Prerequisites for editing and transmutation during execution revised
+ *      Kay Gürtzig     2016.11.22      Enh. #284: Key bindings for font resizing added (KGU#294)
+ *      Kay Gürtzig     2016.12.12      Enh. #305: Scrollable list view of Roots in Arranger added
+ *      Kay Gürtzig     2016.12.17      Enh. #305: Key binding <del> added to Arranger index list.
+ *      Kay Gürtzig     2017.01.05      Enh. #319: Context menu for Arranger index
+ *      Kay Gürtzig     2017.01.13      Bugfix #233: F6 and F8 had got kidnapped by the JSplitPanes sp and sp305
+ *      Kay Gürtzig     2017.02.09      Enh. #344: Ctrl-Y as additional redo key binding
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 import com.kobrix.notebook.gui.AKDockLayout;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Vector;
 
 import javax.swing.*;
 
+import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.locales.LangPanel;
 
@@ -71,19 +83,29 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     // Toolbars
     protected MyToolbar toolbar = null;
 	
-    // Splitpane
+    // Splitpanes
     JSplitPane sp;
+    // START KGU#305 2016-12-12: Enh. #305 - add a diagram index for Arranger
+    JSplitPane sp305;
+    // END KGU#305 2016-12-12
 
-    // list
+    // lists
     DefaultListModel<DetectedError> errors = new DefaultListModel<DetectedError>();
     protected final JList<DetectedError> errorlist = new JList<DetectedError>(errors);
+    // START KGU#305 2016-12-12: Enh. #305 - add a diagram index for Arranger
+    DefaultListModel<Root> diagrams = new DefaultListModel<Root>();
+    protected final JList<Root> diagramIndex = new JList<Root>(diagrams);
+    // END KGU#305 2016-12-12
 
     // Panels
     public Diagram diagram = new Diagram(this, "???");
 	
-    // scrollarea
+    // scrollpanes
     protected final JScrollPane scrollarea = new JScrollPane(diagram);
     protected final JScrollPane scrolllist = new JScrollPane(errorlist);
+    // START KGU#305 2016-12-12: Enh. #305 - add a diagram index for Arranger
+    protected final JScrollPane scrollIndex = new JScrollPane(diagramIndex);
+    // END KGU#305 2016-12-12
 
     // Buttons
     // I/O
@@ -131,11 +153,14 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
 	protected final JButton btnTransmute = new JButton(IconLoader.ico109);
 	// END KGU#199 2016-07-06
-    // collapsing & expanding
+    // collapsing & expanding + disabling
     // START KGU#123 2016-01-04: Enh. #87 - Preparations for Fix #65
     protected final JButton btnCollapse = new JButton(IconLoader.ico106); 
     protected final JButton btnExpand = new JButton(IconLoader.ico107);    
     // END KGU#123 2016-01-04
+    // START KG#277 2016-10-13: Enh. #270
+    protected final JButton btnDisable = new JButton(IconLoader.ico026);
+    // END KGU#277 2016-10-13
 	// printing
     protected final JButton btnPrint = new JButton(IconLoader.ico041);
     // START KGU#2 2015-11-19: Arranger launch added
@@ -209,12 +234,23 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     protected final JMenuItem popupCollapse = new JMenuItem("Collapse", IconLoader.ico106); 
     protected final JMenuItem popupExpand = new JMenuItem("Expand", IconLoader.ico107);    
     // END KGU#123 2016-01-04
+    // START KG#277 2016-10-13: Enh. #270
+    protected final JMenuItem popupDisable = new JMenuItem("Disable", IconLoader.ico026);
+    // END KGU#277 2016-10-13
     // START KGU#43 2015-10-12: Breakpoint toggle
     protected final JMenuItem popupBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
     // END KGU#43 2015-10-12
 	// START KGU#213 2016-08-02: Enh. #215
 	protected final JMenuItem popupBreakTrigger = new JMenuItem("Specify break trigger...", IconLoader.ico112);
 	// END KGU#143 2016-08-02
+	
+	// START KGU#318 2017-01-05: Enh. #319 - context menu for the Arranger index
+    protected final JPopupMenu popupIndex = new JPopupMenu();
+    protected final JMenuItem popupIndexGet = new JMenuItem("Get diagram", IconLoader.ico074);
+    protected final JMenuItem popupIndexSave = new JMenuItem("Save changes", IconLoader.ico003);
+    protected final JMenuItem popupIndexRemove = new JMenuItem("Remove", IconLoader.ico045);
+    protected final JMenuItem popupIndexCovered = new JMenuItem("Test-covered on/off", IconLoader.ico046);
+	// END KGU#318 2017-01-05
     
     // START KGU#177 2016-04-06: Enh. #158
     // Action names
@@ -278,6 +314,63 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     	
     }
     // END KGU#177 2016-04-14
+    // START KGU#294 2016-11-22: Issue #284 Unification of font resizing key bindings
+    private class FontResizeAction extends AbstractAction
+    {
+    	Diagram diagram;	// The object responsible for executing the action
+    	
+    	FontResizeAction(Diagram _diagram, String _key)
+    	{
+    		super(_key);
+    		diagram = _diagram;
+    	}
+    	
+		@Override
+		public void actionPerformed(ActionEvent ev) {
+			if (getValue(AbstractAction.NAME).equals("FONT_UP")) {
+				diagram.fontUpNSD();
+			}
+			else {
+				diagram.fontDownNSD();	
+			}
+		}
+    }
+    // END KGU#294 2016-11-22
+    // START KGU#305 2016-12-15: Enh. #305 - diagramIndex should react to keys
+    private class ArrangerIndexAction extends AbstractAction
+    {
+    	
+    	ArrangerIndexAction(boolean isDoubleClick)
+    	{
+    		super(isDoubleClick ? "DOUBLE_CLICK" : "SINGLE_CLCK");
+    	}
+    	
+		// START KGU#305 2016-12-17: Also allow to remove a diagram from Arranger
+    	ArrangerIndexAction(String keyString)
+    	{
+    		super(keyString);
+    	}
+		// END KGU#305 2016-12-17
+    	
+		@Override
+		public void actionPerformed(ActionEvent ev) {
+			if (getValue(AbstractAction.NAME).equals("SINGLE_CLICK")) {
+				Arranger.scrollToDiagram(diagramIndex.getSelectedValue(), true);
+			}
+			// START KGU#305 2016-12-17: Also allow to remove a diagram from Arranger
+			//else {
+			else if (getValue(AbstractAction.NAME).equals("DOUBLE_CLICK")) {
+			// END KGU#305 2016-12-17
+				arrangerIndexGet();
+			}
+			// START KGU#305 2016-12-17: Also allow to remove a diagram from Arranger
+			else if (getValue(AbstractAction.NAME).equals("DELETE") && Arranger.hasInstance()) {
+				arrangerIndexRemove();
+			}
+			// END KGU#305 2016-12-17
+		}
+    }    
+    // END KGGU#305 2016-12-15
     
     private MyToolbar newToolBar(String name)
     {
@@ -407,6 +500,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupExpand.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.expandNSD(); doButtons(); } } );
 		// END KGU#123 2016-01-03
 
+		// START KGU#277 2016-10-13: Enh. #270
+		popup.add(popupDisable);
+		popupDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); doButtons(); } } );
+		// END KGU#123 2016-10-13
+
 		// START KGU#43 2015-10-12 Add a possibility to set or unset a checkpoint on the selected Element
         popup.addSeparator();
 
@@ -419,9 +517,24 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         popupBreakTrigger.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.editBreakTrigger(); doButtons(); } }); 
 		// END KGU#213 2016-08-02
 
+    	// START KGU#318 2017-01-05: Enh. #319 - context menu for the Arranger index
+        popupIndex.add(popupIndexGet);
+        popupIndexGet.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {	arrangerIndexGet();	} });
+        
+        popupIndex.add(popupIndexSave);
+        popupIndexSave.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexSave(); } });
+
+        popupIndex.add(popupIndexRemove);
+        popupIndexRemove.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexRemove(); } });
+
+        popupIndex.add(popupIndexCovered);
+        popupIndexCovered.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { arrangerIndexToggleCovered(); } });
+        // END KGU#318 2017-01-05
+
         // add toolbars
         //toolbar.setLayout(new FlowLayout(FlowLayout.LEFT,0,0));
         this.setLayout(new AKDockLayout());
+        // FIXME (KGU): Why is the static variable holding MyToolbar overwritten?
         toolbar=newToolBar("New, open, save");
 		
         // Setting up the toolbar with all buttons and actions
@@ -437,6 +550,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnSave.setFocusable(false);
 		btnSave.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.saveNSD(false); doButtons(); } } );
 		
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Print");
 
 		// printing
@@ -451,6 +565,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnArrange.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.arrangeNSD(); doButtons(); } } );
 		// END KGU#2 2015-11-24
 		
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Undo, redo");
 
 		// undo & redo
@@ -462,6 +577,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnRedo.setFocusable(false);
 		btnRedo.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.redoNSD(); doButtons(); } } );
 		
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Copy, cut, paste");
 
 		// copy & paste
@@ -476,6 +592,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnPaste.setFocusable(false);
 		btnPaste.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.pasteNSD(); doButtons(); } } );
 		
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Edit, delete, move");
 
 		// editing
@@ -498,6 +615,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnTransmute.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.transmuteNSD(); doButtons(); } } ); 
 		// END KGU#199 2016-07-06
 		
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Method, program");
 
 		// style
@@ -509,6 +627,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnProgram.setFocusable(false);
 		btnProgram.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setProgram(); doButtons(); } } );
 
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Nice");
 		
 		//toolbar.addSeparator();
@@ -516,6 +635,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnNice.setFocusable(false);
 		btnNice.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setNice(btnNice.isSelected()); doButtons(); } } );
 		
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Add before ...");
 		//toolbar.setOrientation(JToolBar.VERTICAL);
 		//this.add(toolbar,BorderLayout.WEST);
@@ -553,6 +673,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnBeforePara.setFocusable(false);
 		btnBeforePara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",false); doButtons(); } } );
 
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Add after ...");
 		//toolbar.setOrientation(JToolBar.VERTICAL);
 		//this.add(toolbar,BorderLayout.WEST);
@@ -590,6 +711,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnAfterPara.setFocusable(false);
 		btnAfterPara.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.addNewElement(new Parallel(),"Add new parallel ...","",true); doButtons(); } } );
 		
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Colors ...");
 
 		// Colors
@@ -626,6 +748,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnColor9.setFocusable(false);
 
 		// START KGU#123 2016-01-04: Enh. #87 - Preparation for fix #65
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Collapsing");
 
 		// Collapse & Expand
@@ -637,7 +760,13 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnExpand.setFocusable(false);
 		btnExpand.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.expandNSD(); } } );
 		// END KGU#123 2016-01-04
+		// START KGU#277 2016-10-13: Enh. #270 / KGU#310 2016-12-14: moved to "Turtle, interprete" toolbar
+//        toolbar.add(btnDisable);
+//		btnDisable.setFocusable(false);
+//		btnDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); } } );
+		// END KGU#123 2016-01-04
 
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("About");
 
 		// About
@@ -646,7 +775,8 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnAbout.setFocusable(false);
 		btnAbout.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.aboutNSD(); } } );
 
-		toolbar=newToolBar("Turtle, interprete");
+        // FIXME (KGU): Why is the previous toolbar overwritten?
+		toolbar=newToolBar("Turtle, interpret");
 
 		// Turtle
 		//toolbar.addSeparator();
@@ -659,7 +789,13 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         toolbar.add(btnDropBrk);
 		btnDropBrk.setFocusable(false);
 		btnDropBrk.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.clearBreakpoints(); } } );
+		// START KGU#310 2016-12-14: Moved hitherto from toolbar "Collapsing"
+        toolbar.add(btnDisable);
+		btnDisable.setFocusable(false);
+		btnDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); } } );
+		// END KGU#310 2016-12-14
 
+        // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Font ...");
 
 		// Font
@@ -670,7 +806,6 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         toolbar.add(btnFontDown);
 		btnFontDown.setFocusable(false);
 		btnFontDown.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.fontDownNSD(); doButtons(); } } );
-		
 		
 		sp = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 		this.add(sp,AKDockLayout.CENTER);
@@ -683,15 +818,25 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		//Container container = this;
         //container.add(scrollarea,AKDockLayout.CENTER);
 		
-		sp.add(scrollarea);
-                scrollarea.setBackground(Color.LIGHT_GRAY);
+		// START KGU#305 2016-12-12: Enh, #305
+		//sp.add(scrollarea);
+		sp305 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+		sp.add(sp305);
+		sp305.setBorder(BorderFactory.createEmptyBorder());
+		sp305.setResizeWeight(0.99);
+		sp305.setDividerSize(5);
+		sp305.add(scrollarea);
+		// END KGU#305 2016-12-12
+		
+        scrollarea.setBackground(Color.LIGHT_GRAY);
 		scrollarea.getViewport().putClientProperty("EnableWindowBlit", Boolean.TRUE);
 		scrollarea.setWheelScrollingEnabled(true);
 		scrollarea.setDoubleBuffered(true);
 		scrollarea.setBorder(BorderFactory.createEmptyBorder());
 		scrollarea.setViewportView(diagram);
+		scrollarea.setFocusable(true);
 		// START KGU#177 2016-04-06 Enh. #158 Moving selection by cursor keys
-		InputMap inpMap = scrollarea.getInputMap(WHEN_IN_FOCUSED_WINDOW);
+		InputMap inpMap = scrollarea.getInputMap(WHEN_FOCUSED);
 		ActionMap actMap = scrollarea.getActionMap();
 		// Add key bindings to the Diagram
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), CursorMoveDirection.CMD_UP);
@@ -706,6 +851,13 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0), "PAGE_DOWN");
 		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0), "PAGE_UP");
 		// END KGU#177 2016-04-16
+	    // START KGU#294 2016-11-22: Enh. #284
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK), "FONT_UP");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK), "FONT_DOWN");
+		// END KGU#294 2016-11-22
+		// START KGU#347 2017-02-09: Enh. #344 additional key binding for redo
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK), "REDO");
+		// END KGU#347 2017-02-09
 		actMap.put(CursorMoveDirection.CMD_UP, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_UP));
 		actMap.put(CursorMoveDirection.CMD_DOWN, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_DOWN));
 		actMap.put(CursorMoveDirection.CMD_LEFT, new SelectionMoveAction(diagram, CursorMoveDirection.CMD_LEFT));
@@ -719,8 +871,53 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		actMap.put("PAGE_DOWN", new PageScrollAction(scrollarea.getVerticalScrollBar(), false, "PAGE_DOWN"));
 		actMap.put("PAGE_UP", new PageScrollAction(scrollarea.getVerticalScrollBar(), true, "PAGE_UP"));
 		// END KGU#177 2016-04-16
+		// START KGU#294 2016-11-22: Enh. #284
+		actMap.put("FONT_DOWN", new FontResizeAction(diagram, "FONT_DOWN"));
+		actMap.put("FONT_UP", new FontResizeAction(diagram, "FONT_UP"));
+		// END KGU#294 2016-11-22
+		// START KGU#347 2017-02-09: Enh. #344 additional key binding for redo
+		actMap.put("REDO", new AbstractAction("REDO") { public void actionPerformed(ActionEvent event) { diagram.redoNSD(); doButtons(); }});
+		// END KGU#347 2017-02-09
 		//scrollarea.getViewport().setBackingStoreEnabled(true);
-				
+		
+		// START KGU#239 2017-01-13: Bugfix #233 SplitPanes had snatched away accelerator keys F6 and F8
+		inpMap = sp.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F6, 0), "none");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F8, java.awt.event.InputEvent.CTRL_DOWN_MASK), inpMap.get(KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0)));
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0), "none");
+		inpMap = sp305.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F6, 0), "none");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F8, java.awt.event.InputEvent.CTRL_DOWN_MASK), inpMap.get(KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0)));
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0), "none");
+		// END KGU#239 2017-01-13
+		
+		// START KGU#305 2016-12-12: Enh. #305
+		sp305.add(scrollIndex);
+		scrollIndex.setWheelScrollingEnabled(true);
+		scrollIndex.setDoubleBuffered(true);
+		scrollIndex.setBorder(BorderFactory.createEmptyBorder());
+		scrollIndex.setViewportView(diagramIndex);
+		//scrollIndex.setPreferredSize(new Dimension(50,0));
+
+		//diagramIndex.setFocusable(false);
+		diagramIndex.setCellRenderer(new RootListCellRenderer());
+		diagramIndex.setLayoutOrientation(JList.VERTICAL);
+		diagramIndex.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);		
+		diagramIndex.addMouseListener(diagram);
+		diagramIndex.addMouseListener(new PopupListener());
+		// END KGU#305 2016-12-12
+		// START KGU#305 2016-12-15: Enh. #305 - react to space and enter
+		inpMap = diagramIndex.getInputMap(WHEN_FOCUSED);
+		actMap = diagramIndex.getActionMap();
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "SPACE");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "ENTER");
+		inpMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "DELETE");
+		actMap.put("SPACE", new ArrangerIndexAction(false));
+		actMap.put("ENTER", new ArrangerIndexAction(true));
+		actMap.put("DELETE",new ArrangerIndexAction("DELETE"));
+		// END KGU#305 2016-12-15
+
+		
         //container.add(scrolllist,AKDockLayout.SOUTH);
 		sp.add(scrolllist);
 		scrolllist.setWheelScrollingEnabled(true);
@@ -729,14 +926,61 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		scrolllist.setViewportView(errorlist);
 		scrolllist.setPreferredSize(new Dimension(0,50));
 
+		// START KGU#305 2016-12-15: Issue #312 show focus
+		errorlist.setCellRenderer(new DefaultListCellRenderer() {
+		    private final Color selectedBackgroundNimbus = new Color(57,105,138);
+		    
+			@Override
+			public Component getListCellRendererComponent(JList<?> list, Object obj, int index, boolean isSelected,
+					boolean cellHasFocus) {
+				super.getListCellRendererComponent(list, obj, index, isSelected, cellHasFocus);
+		        if (isSelected) {
+		    		if (UIManager.getLookAndFeel().getName().equals("Nimbus"))
+		    		{
+		    			// Again, a specific handling for Nimbus was necessary in order to show any difference at all.
+		    			if (list.isFocusOwner()) {
+		    				setBackground(selectedBackgroundNimbus);
+		    				setForeground(Color.WHITE);
+		    			}
+		    			else {
+		    				// Invert the selection colours
+		    				setBackground(Color.WHITE);	
+		    				setForeground(selectedBackgroundNimbus);
+		    			}
+		    		}
+		    		else {
+		    			if (list.isFocusOwner()) {
+		    				setBackground(list.getSelectionBackground());
+		    				setForeground(list.getSelectionForeground());
+		    			}
+		    			else {
+		    				// Invert the selection colours
+		                    setBackground(list.getSelectionForeground());
+		                    setForeground(list.getSelectionBackground());
+		    			}
+		    		}
+		        }
+				return this;
+			}
+
+		});
+		// END KGU#305 2016-12-15
 		errorlist.setLayoutOrientation(JList.VERTICAL);
 		errorlist.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);		
 		errorlist.addMouseListener(diagram);
+		errorlist.addListSelectionListener(diagram);
 
 		//diagram.setOpaque(true);
 		diagram.addMouseListener(new PopupListener());
 		
-		// Attempt to find out what provokes the NullPointerExceptions on start
+        // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
+        GUIScaler.rescaleComponents(this);
+//		if (this.getFrame() != null) {
+//			SwingUtilities.updateComponentTreeUI(this.getFrame());
+//		}
+        // END KGU#287 2017-01-09
+
+        // Attempt to find out what provokes the NullPointerExceptions on start
 		//System.out.println("**** " + this + ".create() ready!");
 		
 		//doButtons();
@@ -753,7 +997,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	
 	public void doButtonsLocal()
 	{
-                //scrollarea.setViewportView(diagram);
+		//scrollarea.setViewportView(diagram);
 
 		// conditions
 		// START KGU#143 2016-01-21: Bugfix #114 - elements involved in execution must not be edited
@@ -860,11 +1104,17 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
 		btnExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
 		// END KGU#123 2016-01-03
+		// START KGU#277 2016-10-13: Enh. #270
+		btnDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());
+		// END KGU#277 2016-01-13
 
 		// editing
 		// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
 		//btnEdit.setEnabled(conditionAny);
-		btnEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
+		// START KGU#143 2016-11-17: Bugfix #114 - unstructured elements may be edited if parent is waiting
+		//btnEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
+		btnEdit.setEnabled(diagram.canEdit());
+		// END KGU#143 2016-11-17
 		// END KGU#87 2015-11-22
 		// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
 		//btnDelete.setEnabled(diagram.canCutCopy());
@@ -876,8 +1126,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnTransmute.setEnabled(diagram.canTransmute());
 		// END KGU#199 2016-07-06
 		// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
-		//popuEdit.setEnabled(conditionAny);
-		popupEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
+		//popupEdit.setEnabled(conditionAny);
+		// START KGU#143 2016-11-17: Bugfix #114 - unstructured elements may be edited if parent is waiting
+		//popupEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
+		popupEdit.setEnabled(diagram.canEdit());
+		// END KGU#143 2016-11-17
 		// END KGU#87 2015-11-22
 		// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
 		//popupDelete.setEnabled(condition);
@@ -894,6 +1147,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
 		popupExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
 		// END KGU#123 2016-01-03
+		// START KGU#277 2016-10-13: Enh. #270
+		popupDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());
+		// END KGU#277 2016-01-13
 
 		// executor
 		// START KGU#143 2016-01-21: Bugfix #114 - breakpoints need a more generous enabling policy
@@ -967,7 +1223,38 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 			sp.remove(scrolllist);
 			sp.setDividerSize(0);
 		}
-                
+		
+		// START KGU#305 2016-12-12: Enh. 305
+		// arranger
+		
+		if (diagram.showArrangerIndex() && !diagrams.isEmpty())
+		{
+			if (sp305.getDividerSize()==0)
+			{
+				sp305.remove(scrollIndex);
+				sp305.add(scrollIndex);
+			}
+			scrollIndex.setVisible(true);
+			scrollIndex.setViewportView(diagramIndex);
+			sp305.setDividerSize(5);
+			scrollIndex.revalidate();
+		}
+		else
+		{
+			scrollIndex.setVisible(false);
+			sp305.remove(scrollIndex);
+			sp305.setDividerSize(0);
+		}
+		// END KGU#305 2016-12-12
+		
+		// START KGU#318 2017-01-05: Enh. #319
+		boolean indexSelected = scrollIndex.isVisible() && !diagramIndex.isSelectionEmpty();
+		popupIndexGet.setEnabled(indexSelected && diagramIndex.getSelectedValue() != diagram.getRoot());
+		popupIndexSave.setEnabled(indexSelected && diagramIndex.getSelectedValue().hasChanged());
+		popupIndexRemove.setEnabled(indexSelected);
+		popupIndexCovered.setEnabled(indexSelected && Element.E_COLLECTRUNTIMEDATA && !diagramIndex.getSelectedValue().isProgram);
+		// END KGU#318 2017-01-05
+           
                 //
                 /*
                 for(int j=0;j<diagram.toolbars.size();j++)
@@ -1041,13 +1328,21 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		{
 			if (e.isPopupTrigger()) 
 			{
-				popup.show(e.getComponent(), e.getX(), e.getY());
+				// START KGU#318 2017-01-05: Enh. #319
+				//popup.show(e.getComponent(), e.getX(), e.getY());
+				if (e.getComponent() == diagram) {
+					popup.show(e.getComponent(), e.getX(), e.getY());					
+				}
+				else if (e.getComponent() == diagramIndex) {
+					doButtonsLocal();
+					diagramIndex.requestFocusInWindow();
+					popupIndex.show(e.getComponent(), e.getX(), e.getY());
+				}
+				// END KGU#318 2017-01-05
 			}
 		}
 	}
-	
-	
-	
+		
 	// ComponentListener Methods
 	public void componentHidden(ComponentEvent e) 
 	{
@@ -1095,5 +1390,82 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	{
 		NSDControll.savePreferences();
 	}
+
+    // START KGU#305 2016-12-12: Enh. #305 - Pass diagram list of Arranger to editor
+	public void updateArrangerIndex(Vector<Root> _diagrams)
+	{
+		boolean wasEmpty = this.diagrams.isEmpty();
+		this.diagrams.clear();
+		if (_diagrams != null) {
+			for (int i = 0; i < _diagrams.size(); i++) {
+				Root aRoot = _diagrams.get(i);
+				this.diagrams.addElement(aRoot);
+			}
+		}
+		if (this.diagrams.isEmpty()) {
+			this.scrollIndex.setVisible(false);
+		}
+		else if (wasEmpty) {
+			this.scrollIndex.setVisible(true);
+		}
+		this.scrollIndex.repaint();
+		this.scrollIndex.validate();
+		this.doButtonsLocal();
+	}
+    // END KGU#305 2016-12-12
+	
+	// START KGU#305/KGU#318 2017-01-05: Enh. #305/#319 Arranger index action methods concentrated here
+	public void arrangerIndexGet()
+	{
+		Root selectedRoot = diagramIndex.getSelectedValue();
+		if (selectedRoot != null && selectedRoot != diagram.getRoot()) {
+			diagram.setRootIfNotRunning(selectedRoot);
+			scrollarea.requestFocusInWindow();
+		}		
+	}
+
+	public void arrangerIndexSave()
+	{
+		Root selectedRoot = diagramIndex.getSelectedValue();
+		if (selectedRoot != null) {
+			diagram.saveNSD(selectedRoot, false);
+		}		
+	}
+
+	public void arrangerIndexRemove()
+	{
+		int index = diagramIndex.getSelectedIndex();
+		Arranger.getInstance().removeDiagram(diagramIndex.getSelectedValue());
+		if (index < diagramIndex.getModel().getSize()) {
+			diagramIndex.setSelectedIndex(index);
+		}
+		else if (index > 0) {
+			diagramIndex.setSelectedIndex(index-1);
+		}
+		if (diagramIndex.getModel().getSize() > 0) {
+			diagramIndex.requestFocusInWindow();
+		}
+		else {
+			scrollarea.requestFocusInWindow();					
+		}		
+	}
+	
+	public void arrangerIndexToggleCovered()
+	{
+		Root selectedRoot = diagramIndex.getSelectedValue();
+		if (selectedRoot != null && Element.E_COLLECTRUNTIMEDATA) {
+			selectedRoot.deeplyCovered = !selectedRoot.deeplyCovered;
+			// We must update/refresh both Structorizer and Arranger
+			if (selectedRoot == diagram.getRoot()) {
+				diagram.redraw();
+			}
+			else {
+				Arranger.getInstance().redraw();
+			}
+			diagramIndex.repaint();
+		}		
+		
+	}
+	// END KGU#305/KGU#318 2017-01-05
 
 }

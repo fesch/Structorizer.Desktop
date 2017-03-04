@@ -19,6 +19,32 @@
  */
 package lu.fisch.structorizer.gui;
 
+/*
+ ******************************************************************************************************
+ *
+ *      Author:         Kay Gürtzig
+ *
+ *      Description:    This dialog allows to control certain settings for the file import.
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      kay             2016.09.25  First Issue
+ *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes
+ *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
+ *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): scaling stuff outsourced to class GUIScaler
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:
+ *      
+ *
+ ******************************************************************************************************/
+//
+
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -33,29 +59,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
 import lu.fisch.structorizer.locales.LangDialog;
-
-/*
- ******************************************************************************************************
- *
- *      Author:         Kay Gürtzig
- *
- *      Description:    This dialog allows to control certain settings for the file import.
- *
- ******************************************************************************************************
- *
- *      Revision List
- *
- *      Author          Date            Description
- *      ------          ----            -----------
- *      kay             2016.09.25      First Issue
- *
- ******************************************************************************************************
- *
- *      Comment:
- *      
- *
- ******************************************************************************************************/
-//
 
 /**
  * This Dialog allows to control certain settings for the file import.
@@ -188,6 +191,10 @@ public class ImportOptionDialog extends LangDialog {
         content.add(pnlTop, BorderLayout.NORTH);
         content.add(pnlWrapper, BorderLayout.CENTER);
         content.add(pnlButtons, BorderLayout.SOUTH);
+        
+        // START KGU#287 2017-01-09: Issues #81, #330
+        GUIScaler.rescaleComponents(this);
+        // END KGU#287 2017-01-09
 
         pack();
         
@@ -259,16 +266,16 @@ public class ImportOptionDialog extends LangDialog {
             }
         } catch (ClassNotFoundException ex)
         {
-            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(ImportOptionDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex)
         {
-            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(ImportOptionDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex)
         {
-            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(ImportOptionDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex)
         {
-            java.util.logging.Logger.getLogger(ExportOptionDialoge.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(ImportOptionDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 

@@ -58,6 +58,17 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2016-07-03      Dialog message translation mechanism added (KGU#203). 
  *      Kay Gürtzig     2016.07.19      Enh. #192: File name proposals slightly modified (KGU#205)
  *      Kay Gürtzig     2016.09.26      Enh. #253: New public method getAllRoots() added.
+ *      Kay Gürtzig     2016.10.11      Enh. #267: New notification changes to the set of diarams now trigger analyser updates
+ *      Kay Gürtzig     2016.11.14      Enh. #289: The dragging-in of arrangement files (.arr, .arrz) enabled.
+ *      Kay Gürtzig     2016.11.15      Enh. #290: Further modifications to let a Mainform insert arrangements
+ *      Kay Gürtzig     2016.12.12      Enh. #305: New mechanism to update the Arranger indices in the related Mainforms
+ *      Kay Gürtzig     2016.12.17      Enh. #305: New method removeDiagram(Root)
+ *      Kay Gürtzig     2016.12.28      Enh. #318: Shadow path for Roots unzipped (from an arrz) into a temp dir
+ *      Kay Gürtzig     2016.12.29      Enh. #315: More meticulous detection of diagram conflicts
+ *      Kay Gürtzig     2017.01.04      Bugfix #321: Make sure Mainforms save the actually iterated Roots
+ *      Kay Gürtzig     2017.01.05      Enh. #319: Additional notification on test coverage status change
+ *      Kay Gürtzig     2017.01.11      Fix KGU#328 in method replaced()
+ *      Kay Gürtzig     2017.01.13      Enh. #305 / Bugfix KGU#330: Arranger index notification on name and dirtiness change
  *
  ******************************************************************************************************
  *
@@ -134,7 +145,6 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
@@ -143,7 +153,9 @@ import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Updater;
 import lu.fisch.structorizer.executor.IRoutinePool;
+import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.generators.XmlGenerator;
+import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.io.ArrFilter;
@@ -162,6 +174,9 @@ import net.iharder.dnd.FileDrop;
 public class Surface extends LangPanel implements MouseListener, MouseMotionListener, WindowListener, Updater, IRoutinePool, ClipboardOwner {
 
     private Vector<Diagram> diagrams = new Vector<Diagram>();
+    // START KGU#305 2016-12-16: Code revision
+    private final Vector<IRoutinePoolListener> listeners = new Vector<IRoutinePoolListener>();
+    // END KGU#305 2016-12-16
 
     private Point mousePoint = null;
     private Point mouseRelativePoint = null;
@@ -174,23 +189,35 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     public File currentDirectory = new File(System.getProperty("user.home"));
     // END KGU#110 2015-12-21
     // START KGU#202 2016-07-03
-    public LangTextHolder msgFileLoadError = new LangTextHolder("File Load Error:");
-    public LangTextHolder msgSavePortable = new LangTextHolder("Save as portable compressed archive?");
-    public LangTextHolder msgSaveDialogTitle = new LangTextHolder("Save arranged set of diagrams ...");
-    public LangTextHolder msgSaveError = new LangTextHolder("Error on saving the arrangement:");
-    public LangTextHolder msgLoadDialogTitle = new LangTextHolder("Reload a stored arrangement of diagrams ...");
-    public LangTextHolder msgExtractDialogTitle = new LangTextHolder("Extract to a directory?");
-    public LangTextHolder msgArrLoadError = new LangTextHolder("Error on loading the arrangement:");
-    public LangTextHolder msgExportDialogTitle = new LangTextHolder("Export diagram as PNG ...");
-    public LangTextHolder msgExportError = new LangTextHolder("Error while saving the image!");
-    public LangTextHolder msgParseError = new LangTextHolder("NSD-Parser Error:");
-    public LangTextHolder msgResetCovered = new LangTextHolder("Routine is already marked as test-covered! Reset coverage mark?");
-    public LangTextHolder msgCoverageError = new LangTextHolder("No suitable routine diagram selected, cannot mark anything as covered!");
-    public LangTextHolder msgUnsavedDiagrams = new LangTextHolder("Couldn't save these diagrams:");
-    public LangTextHolder msgUnsavedHint = new LangTextHolder("You might want to double-click and save them via Structorizer first.");
-    public LangTextHolder msgUnsavedContinue = new LangTextHolder("Continue nevertheless?");
-    public LangTextHolder msgNoArrFile = new LangTextHolder("No Arranger file found");
+    public final LangTextHolder msgFileLoadError = new LangTextHolder("File Load Error:");
+    public final LangTextHolder msgSavePortable = new LangTextHolder("Save as portable compressed archive?");
+    public final LangTextHolder msgSaveDialogTitle = new LangTextHolder("Save arranged set of diagrams ...");
+    public final LangTextHolder msgSaveError = new LangTextHolder("Error on saving the arrangement:");
+    public final LangTextHolder msgLoadDialogTitle = new LangTextHolder("Reload a stored arrangement of diagrams ...");
+    public final LangTextHolder msgExtractDialogTitle = new LangTextHolder("Extract to a directory?");
+    public final LangTextHolder msgArrLoadError = new LangTextHolder("Error on loading the arrangement:");
+    public final LangTextHolder msgExportDialogTitle = new LangTextHolder("Export diagram as PNG ...");
+    public final LangTextHolder msgExportError = new LangTextHolder("Error while saving the image!");
+    public final LangTextHolder msgParseError = new LangTextHolder("NSD-Parser Error:");
+    public final LangTextHolder msgResetCovered = new LangTextHolder("Routine is already marked as test-covered! Reset coverage mark?");
+    public final LangTextHolder msgCoverageError = new LangTextHolder("No suitable routine diagram selected, cannot mark anything as covered!");
+    public final LangTextHolder msgUnsavedDiagrams = new LangTextHolder("Couldn't save these diagrams:");
+    public final LangTextHolder msgUnsavedHint = new LangTextHolder("You might want to double-click and save them via Structorizer first.");
+    public final LangTextHolder msgUnsavedContinue = new LangTextHolder("Continue nevertheless?");
+    public final LangTextHolder msgNoArrFile = new LangTextHolder("No Arranger file found");
     // END KGU#202 2016-07-03
+    // START KGU#289 2016-11-14: Enh. #289
+    public final LangTextHolder msgDefectiveArr = new LangTextHolder("Defective Arrangement.");
+    public final LangTextHolder msgDefectiveArrz = new LangTextHolder("Defective Portable Arrangement.");
+    // END KGU#289 2016-11-14
+    // START KGU#312 2016-12-29: Enh. #315 more meticulous equivalence analysis on insertion
+    public final LangTextHolder titleDiagramConflict = new LangTextHolder("Diagram conflict");
+    public final LangTextHolder[] msgInsertionConflict = {
+    		new LangTextHolder("There is another version of diagram \"%2\",\nat least one of them has unsaved changes."),
+    		new LangTextHolder("There is an equivalent copy of diagram \"%1\"\nwith different path \"%2\"."),
+    		new LangTextHolder("There is a differing diagram with signature \"%1\"\nand path \"%2\".")
+    };
+    // END KGU#312 2016-12-29
 
     @Override
     public void paint(Graphics g)
@@ -211,7 +238,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
                 {
                 	if (pinIcon == null)
                 	{
-                		pinIcon = new ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png")).getImage();
+                		// START KGU#287 2016-11-01: Enh. #81 (DPI awareness)
+                		//pinIcon = new ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png")).getImage();
+                        pinIcon = IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/pin_blue_14x20.png")).getImage(); // NOI18N
+                        // END KGU#287 2016-11-01
                 	}
                 	int x = rect.right - pinIcon.getWidth(null)*3/4;
                 	int y = rect.top - pinIcon.getHeight(null)/4;
@@ -230,24 +260,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	{
     		public void  filesDropped( java.io.File[] files )
     		{
-    			//boolean found = false;
-// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
-//    			for (int i = 0; i < files.length; i++)
-//    			{
-//    				String filename = files[i].toString();
-//    				if(filename.substring(filename.length()-4).toLowerCase().equals(".nsd"))
-//    				{
-//    					// open an existing file
-//    					NSDParser parser = new NSDParser();
-//    					File f = new File(filename);
-//        				Root root = parser.parse(f.toURI().toString());
-//    					
-//        				root.filename=filename;
-//        				addDiagram(root);
-//    				}
-//    			}
     			loadFiles(files);
-// END KGU#111 2015-12-17
     		}
     	});
 
@@ -296,6 +309,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	{
 			JOptionPane.showMessageDialog(this, troubles, msgFileLoadError.getText(), JOptionPane.ERROR_MESSAGE);
     	}
+		// START KGU#278 2016-10-11: Enh. #267
+    	if (nLoaded > 0) {
+    		notifyChangeListeners();
+    	}
+		// END KGU#278 2016-10-11
     	return nLoaded;
     }
     
@@ -305,9 +323,23 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     }
     
     private String loadFile(String filename, Point point)
+    // START KGU#289 2016-11-15: Enh. #290 (load arrangements from Structorizer)
+    {
+    	// START KGU#316 2016-12-28: Enh. #318
+    	//return loadFile(null, filename, point);
+    	return loadFile(null, filename, point, null);
+    	// END KGU#316 2016-12-28
+    }
+    
+	// START KGU#316 2016-12-28: Enh. #318 signature enhanced to keep track of unzipped files 
+    //private String loadFile(Mainform form, String filename, Point point)
+    private String loadFile(Mainform form, String filename, Point point, String unzippedFrom)
+	// END KGU#316 2016-12-28
+    // END KGU#289 2016-11-15
     {
     	String errorMessage = "";
-		if (filename.substring(filename.length()-4).toLowerCase().equals(".nsd"))
+    	String ext = filename.substring(Math.max(filename.lastIndexOf("."),0));
+		if (ext.equalsIgnoreCase(".nsd"))
 		{
 			// open an existing file
 			NSDParser parser = new NSDParser();
@@ -318,7 +350,16 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 				Root root = parser.parse(f.toURI().toString());
 
 				root.filename = filename;
-				addDiagram(root, point);
+				// START KGU#316 2016-12-28: Enh. #318 Allow nsd files to "reside" in arrz files
+				if (unzippedFrom != null) {
+					root.filename = unzippedFrom + File.separator + (new File(filename)).getName();
+					root.shadowFilepath = filename;
+				}
+				// END KGU#316 2016-12-28
+				// START KGU#289 2016-11-15: Enh. #290 (load from Mainform)
+				//addDiagram(root, point);
+				addDiagram(root, form, point);
+				// END KGU#289 2016-11-15
    			// START KGU#111 2015-12-17: Bugfix #63: We must now handle a possible exception
 			}
 			catch (Exception ex) {
@@ -326,12 +367,18 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 			}
 			// END KGU#111 2015-12-17
 		}
+		// START KGU#289 2016-11-14: Enh. #289
+		else if (ext.equalsIgnoreCase(".arr") || ext.equalsIgnoreCase(".arrz"))
+		{
+			errorMessage = loadArrFile(form, filename);
+		}
+		// END KGU#289 2016-11-14
     	return errorMessage;
     }
     
     /**
      * Stores the current diagram arrangement to a file.
-     * Depending on the coice of the user, this file will
+     * Depending on the choice of the user, this file will
      * either be only a list of reference points and filenames (this way not being portable)
      * or be a compressed archive containing the list file as well as the referenced
      * NSD files will be produced such that it can be ported to a different location and
@@ -444,7 +491,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		//if (fileExisted)
     		if (portable)
     		{
-    			// name for the arr file to zipped into the target file
+    			// name for the arr file to be zipped into the target file
     			arrFilename = tempDir + File.separator + (new File(filename)).getName() + ".arr";
     		}
     		else if (file.exists())
@@ -591,12 +638,8 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     }
     
     /**
-     * Action method for the "Load List" button of the Arranger: Attempts to save the
-     * current diagram arrangement either by creating just an arr file (containing
-     * positions and file paths of all arranged diagrams) or a portable
-     * zip file containing an arr file and all referred nsd files.
-     * Signals if some of the diagrams need saving and offers a file type decision 
-     * and a consecutive file selection before.
+     * Action method for the "Load List" button of the Arranger: Attempts to load the
+     * specified (portable) arrangement file.
      * @param frame - the owning frame object. 
      * @return true iff the saving succeeded (will raise an error message else).
      */
@@ -633,6 +676,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     			// correct the filename if necessary
     			String filename = dlgOpen.getSelectedFile().getAbsoluteFile().toString();
     			
+    			// START KGU#316 2016-12-28: Enh. #318
+    			String unzippedFrom = null;
+    			// END KGU#316 2016-12-28
     			// START KGU#110 2016-07-01: Enh. # 62 - unpack a zip file first
     			if (ArrZipFilter.isArr(filename))
     			{
@@ -646,6 +692,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     					//extractTo = dlgOpen.getCurrentDirectory().getAbsolutePath();
     					extractTo = dlgOpen.getSelectedFile().getAbsolutePath();
     				}
+    				else {
+    					unzippedFrom = filename;
+    				}
     				filename = unzipArrangement(filename, extractTo);
     				if (filename != null)
     				{
@@ -657,27 +706,40 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     				}
     			}
     			// END KGU#110 2016-07-01
-    			done = loadArrangement(frame, filename);
+    			// START KGU#316 2016-12-28: Enh. #318
+    			//done = loadArrangement(frame, filename);
+    			done = loadArrangement(frame, filename, unzippedFrom);
+    			// END KGU#316 2016-12-28
     			currentDirectory = oldCurrDir;
     		}
     	}
     	return done;
     }
-
+    
     /**
      * Restores the diagram arrangement stored in arr file `filename´ if possible
      * (i.e. given the referred nsd file paths exist and the nsd files may be parsed)
      * @param frame - owning frame component
      * @param filename - path of the arr file to be reloaded
-     * @return true if at lesst some of the referred diagrams could be arranged again.
+     * @param unzippedFrom - path of the arrz file if shadowed to temporary directory, null otherwise
+     * @return true if at lest some of the referred diagrams could be arranged again.
      */
-    public boolean loadArrangement(Frame frame, String filename)
+    // START KGU#316 2016-12-28: Enh. #318 API change to support shadow paths in unzipped Roots
+    //public boolean loadArrangement(Frame frame, String filename)
+    public boolean loadArrangement(Frame frame, String filename, String unzippedFrom)
+    // END KGU#316 2016-12-28
     {
     	boolean done = false;
+		// START KGU#278 2016-10-11: Enh. #267
+		int nLoaded = 0;
+		// END KGU#278 2016-10-11
     	
     	String errorMessage = null;
     	try
     	{
+			// START KGU#316 2016-12-28: Enh. #318 don't get confused by the loading of some files
+			String prevCurDirPath = this.currentDirectory.getAbsolutePath();
+			// END KGU#316 2016-12-28
     		// set up the file
     		File file = new File(filename);
     		//Pattern separator = new Pattern(",");
@@ -699,9 +761,15 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     				File nsd = new File(nsdFileName);
     				if (!nsd.exists() && !nsd.isAbsolute())
     				{
-    					nsdFileName = currentDirectory.getAbsolutePath() + File.separator + nsdFileName;
+    	    			// START KGU#316 2016-12-28: Enh. #318 don't get confused by the loading of some files
+    					//nsdFileName = currentDirectory.getAbsolutePath() + File.separator + nsdFileName;
+    					nsdFileName = prevCurDirPath + File.separator + nsdFileName;
+    	    			// END KGU#316 2016-12-28
     				}
-    				String trouble = loadFile(nsdFileName, point);
+    				// START KGU#289 2016-11-15: Enh. #290 (Arrangements loaded from Mainform)
+    				//String trouble = loadFile(nsdFileName, point);
+   					String trouble = loadFile((frame instanceof Mainform) ? (Mainform)frame : null, nsdFileName, point, unzippedFrom);
+    				// END KGU#289 2016-11-15
     				if (!trouble.isEmpty())
     				{
     					if (errorMessage != null)
@@ -712,6 +780,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     						errorMessage = trouble;
     					}
     				}
+    	    		// START KGU#278 2016-10-11: Enh. #267
+    				else {
+    					nLoaded++;
+    				}
+    	    		// END KGU#278 2016-10-11
     			}
     		}
 
@@ -736,17 +809,69 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	}
     	if (errorMessage != null)
     	{
-    		JOptionPane.showMessageDialog(frame, msgArrLoadError.getText() + " " + errorMessage + "!",
+    		JOptionPane.showMessageDialog(frame, msgArrLoadError.getText() + "\n" + errorMessage + "!",
     				"Error", JOptionPane.ERROR_MESSAGE, null);   		
     	}
+		// START KGU#278 2016-10-11: Enh. #267
+    	if (nLoaded > 0)
+    	{
+    		notifyChangeListeners();
+    	}
+		// END KGU#278 2016-10-11
     	return done;
     }
     // END KGU#110 2015-12-17
     
+    // START KGU#289 2016-11-15: Enh. #289/#290
+    /**
+     * Loads an .arr or .arrz file, associating the loaded diagrams with the given
+     * Mainform form if possible.
+     * @param form - a commanding Structorizer Mainform
+     * @param filename - path of the arrangement file to be loaded
+     * @return A rough error message if something went wrong.
+     */
+    public String loadArrFile(Mainform form, String filename)
+    {
+    	String errorMessage = "";
+		File oldCurrDir = currentDirectory;
+		// START KGU#316 2016-12-28: Enh. #318 Keep track of the original arrz path
+		String arrzPath = null;
+		// END KGU#316 2016-12-28
+		if (filename.toLowerCase().endsWith(".arrz")) {
+			arrzPath = filename;
+			filename = unzipArrangement(filename, null);
+		}
+		if (filename != null)
+		{
+			try {
+			currentDirectory = new File(filename);
+			while (currentDirectory != null && !currentDirectory.isDirectory())
+			{
+				currentDirectory = currentDirectory.getParentFile();
+			}
+			// START KGU#316 2016-12-28: Enh. #318
+			//if (!loadArrangement(form, filename)) {
+			if (!loadArrangement(form, filename, arrzPath)) {
+			// END KGU#316 2016-12-28
+				errorMessage = msgDefectiveArr.getText();
+			}
+			}
+			finally {
+				currentDirectory = oldCurrDir;
+			}
+		}
+		else
+		{
+			errorMessage = msgDefectiveArrz.getText();
+		}
+    	return errorMessage;
+    }
+    // END KGU#289 2016-11-15
+    
     // START KGU#110 2016-07-01: Enh. 62
     /**
      * Extracts the files contained in the zip file given by `filename´ into the
-     * directory `targetDir´ (or a temporary directory if not given)
+     * directory `targetDir´ or a temporary directory (if not given).
      * @param filename - path of the arrz file
      * @param targetDir - target directory path for the unzipping (may be null)
      * @return the path of the arr file found in the extracted archive (or otherwise null) 
@@ -757,7 +882,21 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	String arrFilename = null;
     	if (targetDir == null)
     	{
-    		targetDir = findTempDir();
+    		// START KGU#316 2016-12-28: Enh. #318
+    		//targetDir = findTempDir();
+    		boolean tmpDirCreated = false;
+    		try {
+				File tempFile = File.createTempFile("arr", null);
+				tempFile.delete();
+				targetDir = tempFile.getParent() + File.separator + (new File(filename)).getName();
+				tmpDirCreated = (new File(targetDir)).mkdirs();
+			} catch (IOException ex) {
+				System.err.println("Surface.unzipArrangement: " + ex.getLocalizedMessage());
+			}
+    		if (!tmpDirCreated) {
+				targetDir = findTempDir();
+    		}
+    		// END KGU#316 2016-12-28
     	}
     	try {
     		BufferedOutputStream dest = null;
@@ -967,7 +1106,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	// START KGU#2 2015-11-19: Don't add a diagram that is already held here
     	// START KGU#119 2016-01-02: Bugfix #78 - Don't reload a structurally equal diagram from file
     	//Diagram diagram = findDiagram(root);
-    	Diagram diagram = findDiagram(root, form != null);	// If the Mainform is given, then it's not from file
+    	// START KGU#312 2016-12-29: Enh. #315 - more differentiated equality test
+    	//Diagram diagram = findDiagram(root, form != null);	// If the Mainform is given, then it's not from file
+    	Diagram diagram = findDiagram(root, (form != null) ? 2 : 3, true);	// If the Mainform is given, then it's not from file
+    	// END KGU#312 2016-12-29
     	// END KGU#1119 2016-01-02
     	if (diagram == null) {
     	// END KGU#2 2015-11-19
@@ -993,10 +1135,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		}
     		// END KGU#110 2015-12-20
     		// START KGU 2016-03-14: Enh. #62
-    		// If it's the first diagram then adopt the crrent directory if possible
+    		// If it's the first diagram then adopt the current directory if possible
     		if (diagrams.isEmpty() && root.filename != null && !root.filename.isEmpty())
     		{
-    			this.currentDirectory = new File(root.filename);
+    			// START KGU#316 2016-12-29: Enh. #318 - get the directory of the arrz file if unzipped 
+    			//this.currentDirectory = new File(root.filename);
+    			this.currentDirectory = new File(root.getPath(true));
+    			// END KGU#316 2016-12-29
     			while (this.currentDirectory != null && !this.currentDirectory.isDirectory())
     			{
     				this.currentDirectory = this.currentDirectory.getParentFile();
@@ -1023,7 +1168,18 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     			diagram.isPinned = true;
     		}
     		// END KGU#88 2015-12-20
+    		// START KGU#278 2016-10-11: Enh. #267
+    		notifyChangeListeners();
+    		// END KGU#278 2016-10-11
     		// END KGU 2015-11-30
+    		// START KGU 2016-12-12: First unselect the selected diagram (if any)
+    		if (mouseSelected != null && mouseSelected.root != null)
+    		{
+    			mouseSelected.root.setSelected(false);
+    			mouseSelected = diagram;
+    			diagram.root.setSelected(true);
+    		}
+    		// END KGU 2016-12-12
     		repaint();
     		getDrawingRect();		// What was this good for?
     	// START KGU#2 2015-11-19
@@ -1032,19 +1188,30 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     	else if (point != null)
     	{
     		diagram.point = point;
+    		// START KGU 2016-12-12: First unselect the selected diagram (if any)
+    		if (mouseSelected != null && mouseSelected.root != null)
+    		{
+    			mouseSelected.root.setSelected(false);
+    			mouseSelected = diagram;
+    			diagram.root.setSelected(true);
+    		}
+    		// END KGU 2016-12-12
     		repaint();
     		getDrawingRect();    	// What was this good for?
     	}
     	// END KGU#119 2016-01-02
     	if (form != null)
     	{
-        	// START KGU#125 2016-01-07: We allow adoption but only for orphaned diagrams
+    		// START KGU#125 2016-01-07: We allow adoption but only for orphaned diagrams
     		//diagram.mainform = form;
-        	if (diagram.mainform == null)
-        	{
-        		diagram.mainform = form;
-        	}
-        	// END KGU#125 2016-01-07
+    		if (diagram.mainform == null)
+    		{
+    			diagram.mainform = form;
+    			// START KGU#305 2016-12-12: Enh.#305 / 2016-12-16 no longer neeeded
+    			//form.updateArrangerIndex();
+    			// END KGU#305 2016-12-12
+    		}
+    		// END KGU#125 2016-01-07
     		root.addUpdater(this);
     	}
     	// END KGU#2 2015-11-19
@@ -1055,36 +1222,69 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     {
     	if (this.mouseSelected != null)
     	{
-    		// START KGU#194 2016-05-09: Bugfix #185 - on importing unsaved roots may linger here
-    		if (this.mouseSelected.root.hasChanged())
-    		{
-    			Mainform form = this.mouseSelected.mainform;
-    			if (form == null || form.getRoot() != this.mouseSelected.root)
-    			{
-    				// Create a temporary Mainform
-    				form = new Mainform(false);
-    				form.setRoot(mouseSelected.root);
-    				// Let the user decide to save it or not, or to cancel this removal 
-    				boolean goOn = form.diagram.saveNSD(true);
-    				// Destroy the temporary Mainform
-    				form.dispose();
-    				if (!goOn)
-    				{
-    					// User cancelled this - don't remove
-    					return;
-    				}
-    			}
-    		}
-    		// END KGU#194 2016-05-09
-			this.mouseSelected.root.removeUpdater(this);
-    		diagrams.remove(this.mouseSelected);
-    		this.mouseSelected = null;
-    		adaptLayout();
-            repaint();
-    	}
+    		removeDiagram(this.mouseSelected);
+     	}
     }
     // END KGU#85 2015-11-17
-    
+
+    // START KGU#305 2016-12-17: Enh. #305 
+	public void removeDiagram(Root _root) {
+		// START KGU#312 2016-12-29: Enh. #315: More meticulous equality check
+		//Diagram diagr = findDiagram(_root, true);
+		Diagram diagr = findDiagram(_root, 1);	// Test for object identity
+		// END KGU#312 2016-12-29
+		if (diagr != null) {
+			removeDiagram(diagr);
+		}
+	}
+	
+	private void removeDiagram(Diagram diagr)
+	{
+   		boolean ask = true;
+		Mainform form = diagr.mainform;
+		// START KGU#194 2016-05-09: Bugfix #185 - on importing unsaved roots may linger here
+		if (diagr.root.hasChanged())
+		{
+			if (form == null || form.getRoot() != diagr.root)
+			{
+				// Create a temporary Mainform
+				form = new Mainform(false);
+				form.setRoot(diagr.root);
+				// Let the user decide to save it or not, or to cancel this removal 
+				boolean goOn = form.diagram.saveNSD(true);
+				// Destroy the temporary Mainform
+				form.dispose();
+				if (!goOn)
+				{
+					// User cancelled this - don't remove
+					return;
+				}
+				form = diagr.mainform;
+				ask = false;
+			}
+		}
+		// END KGU#194 2016-05-09
+		diagr.root.removeUpdater(this);
+		if (diagr == this.mouseSelected) {
+			this.mouseSelected = null;
+		}
+		diagrams.remove(diagr);
+		adaptLayout();
+        repaint();
+		// START KGU#278 2016-10-11: Enh. #267
+        notifyChangeListeners();
+		Vector<Mainform> mainforms = activeMainforms();
+		if (form != null) {
+			if (!mainforms.contains(form) && !form.isStandalone() && (!ask || form.diagram.saveNSD(true))) {
+				// Form doesn't seem necessary any longer
+				form.dispose();
+				removeChangeListener(form);
+			}
+		}
+		// END KGU#278 2016-10-11		
+	}
+	// END KGU#385 2016-12-17
+
     // END KGU#177 2016-04-14: Enh. #158: Allow to copy diagrams via clipboard (as XML)
     public void copyDiagram()
     {
@@ -1125,6 +1325,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		addDiagram(root);
     		// The content may not have been saved or may come from a different JVM
     		root.setChanged();
+    		// START KGU#278 2016-10-11: Enh. #267 / 2016-12-16 Already done in addDiagram()
+    		//notifyChangeListeners();
+    		// END KGU#278 2016-10-11    		
     	}
     }
     // END KGU#177 2016-04-14
@@ -1159,6 +1362,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     			this.mouseSelected = null;
     		}
     		repaint();
+    		// START KGU#318 2017-01-05: Enh. #319 Arranger index now reflects test coverage
+    		this.notifyChangeListeners();
+    		// END KGU#318 2017-01-05
     	}
     	else
     	{
@@ -1226,52 +1432,77 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
      * Loops over all administered diagrams and has their respective Mainform (if still alive) saved them in case they are dirty
      * @return Whether saving is complete (or confirmed though being incomplete) 
      */
-    // START KGU#177 2016-04-14: Enh. #158 - return all diagram (file) names without saving possibility
+    // START KGU#177 2016-04-14: Enh. #158 - report all diagram (file) names without saving possibility
     //public void saveDiagrams()
     public boolean saveDiagrams()
+    {
+    	return saveDiagrams(false);
+    }
+    
+    public boolean saveDiagrams(boolean goingToClose)
     // END KGU#177 2016-04-14
     {
-		// START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
-    	boolean allDone = true;
-		StringList unsaved = new StringList();
-		// END KGU#177 2016-04-14
-    	if (this.diagrams != null)
-    	{
-    		Iterator<Diagram> iter = this.diagrams.iterator();
-    		while (iter.hasNext())
-    		{
-    			Diagram diagram = iter.next();
-    			Mainform form = diagram.mainform;
-    			if (form != null)
-    			{
-    				form.diagram.saveNSD(true);
-    			}
-    			// START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
-    			else if (diagram.root.filename == null || diagram.root.filename.isEmpty())
-    			{
-    				unsaved.add("( " + diagram.root.proposeFileName() + " ?)");
-    				allDone = false;
-    			}
-    			else if (diagram.root.hasChanged())
-				{
-					unsaved.add(diagram.root.filename);
-					allDone = false;
-				}
-    			// END KGU#177 2016-04-14
-			}
-    	}
-		// START KGU#177 2016-04-14: Enh. #158
-    	if (!allDone)
-    	{
-    		String message = msgUnsavedDiagrams.getText() + "\n" + unsaved.getText();
-    		int answer = JOptionPane.showConfirmDialog(this, message +
-    				"\n\n" + msgUnsavedHint.getText() + "\n" +
-    				msgUnsavedContinue.getText(), "Saving Problem",
-    				JOptionPane.WARNING_MESSAGE);
-    		allDone = answer == JOptionPane.YES_OPTION;
-    	}
-    	return allDone;
-    	// END KGU#177 2016-04-14
+        // START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
+        boolean allDone = true;
+        StringList unsaved = new StringList();
+        // END KGU#177 2016-04-14
+        if (this.diagrams != null)
+        {
+            // START KGU#320 2017-01-04: Bugfix #321
+            HashSet<Root> handledRoots = new HashSet<Root>();
+            HashSet<Mainform> mainforms = new HashSet<Mainform>();
+            // END KGU#320 2017-01-04
+            Iterator<Diagram> iter = this.diagrams.iterator();
+            while (iter.hasNext())
+            {
+                Diagram diagram = iter.next();
+                Mainform form = diagram.mainform;
+                if (form != null)
+            	{
+                    // START KGU#320 2017-01-04: Bugfix #321 (?) A Mainform may own several diagrams here!
+                    //form.diagram.saveNSD(!goingToClose || !Element.E_AUTO_SAVE_ON_CLOSE);
+                    form.diagram.saveNSD(diagram.root, !(goingToClose && Element.E_AUTO_SAVE_ON_CLOSE));
+                    mainforms.add(form);
+                    handledRoots.add(diagram.root);
+                    // END KGU#320 2017-01-04
+            	}
+                // START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
+                else if (diagram.root.filename == null || diagram.root.filename.isEmpty())
+                {
+                    unsaved.add("( " + diagram.root.proposeFileName() + " ?)");
+                    allDone = false;
+                }
+                else if (diagram.root.hasChanged())
+                {
+                    unsaved.add(diagram.root.filename);
+                    allDone = false;
+                }
+                // END KGU#177 2016-04-14
+            }
+            // START KGU#320 2017-01-04: Bugfix #321
+            // In case Arranger is closing give all dependent (and possibly doomed) Mainforms a
+            // chance to save their currently maintained Root even if this was not arranged here.
+            if (goingToClose) {
+                for (Mainform form: mainforms) {
+                    if (!form.isStandalone() && !handledRoots.contains(form.getRoot())) {
+                        form.diagram.saveNSD(!(goingToClose && Element.E_AUTO_SAVE_ON_CLOSE));
+                    }
+                }
+            }
+        	// END KGU#320 2017-01-04
+        }
+        // START KGU#177 2016-04-14: Enh. #158
+        if (!allDone)
+        {
+            String message = msgUnsavedDiagrams.getText() + "\n" + unsaved.getText();
+            int answer = JOptionPane.showConfirmDialog(this, message +
+                    "\n\n" + msgUnsavedHint.getText() + "\n" +
+                    msgUnsavedContinue.getText(), "Saving Problem",
+                    JOptionPane.WARNING_MESSAGE);
+            allDone = answer == JOptionPane.YES_OPTION;
+        }
+        return allDone;
+        // END KGU#177 2016-04-14
     }
     // END KGU#49 2015-10-18
     
@@ -1293,7 +1524,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             		// START KGU#88 2015-11-24: An attached Mainform might refuse to re-adopt the root
             		//if(form==null)
             		if(form==null || !form.setRoot(mouseSelected.root))
-            			// END KGU#88 2015-11-24
+            		// END KGU#88 2015-11-24
             		{
             			// START KGU#49/KGU#66 2015-11-14: Start a dependent Mainform not willing to kill us
             			//form=new Mainform();
@@ -1302,6 +1533,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             			form.addWindowListener(this);
             			// With a new Mainform, refusal is not possible 
             			form.setRoot(mouseSelected.root);
+            			// START KGU#305 2016-12-12: Enh. #305 / 2016-12-16: no longer needed
+            			//form.updateArrangerIndex();
+            			// END KGU#305 2016-12-12
             		}
 
             		// change the default closing behaviour
@@ -1320,6 +1554,9 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             		//form.setRoot(mouseSelected.root);
             		// END KGU#88 2015-11-24
             		form.setVisible(true);
+            		// STAR KGU#305 2016-12-16: #305 code revision
+            		this.addChangeListener(form);
+            		// END KGU#305 2016-12-16
             // START KGU#158 2016-03-16: Bugfix #132 (part 2)
             	}
             	catch (Exception ex)
@@ -1442,6 +1679,12 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
         adaptLayout();
         // END KGU#85 2015-11-18
         this.repaint();
+        // START KGU#330 2017-01-13: We keep redunant information to be able to trigger change notifications
+        Diagram diagr = this.findDiagram(source, 1);
+        if (diagr != null && diagr.checkSignatureChange()) {
+        	this.notifyChangeListeners();
+        }
+        // END KGU#330 2017-01-13
     }
     
 	// START KGU#155 2016-03-08: Bugfix #97 extension
@@ -1467,7 +1710,14 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 	// START KGU#2 2015-11-19: We now need a way to identify a diagram - a root should not be twice here
     // START KGU#119 2016-01-02: Bugfix #78 Under certain circumstances, even the equality has to be avoided
     //private Diagram findDiagram(Root root)
-    private Diagram findDiagram(Root root, boolean identityCheck)
+	// START KGU#312 2016-12-29: Enh. #315 - more differentiated equivalence check
+    //private Diagram findDiagram(Root root, boolean identityCheck)
+    private Diagram findDiagram(Root root, int equalityLevel)
+    {
+    	return findDiagram(root, equalityLevel, false);
+    }
+    private Diagram findDiagram(Root root, int equalityLevel, boolean warnLevel2andAbove)
+    // END KGU#312 2016-12-29
     // END KGU#119 2016-01-02
     {
     	Diagram owner = null;
@@ -1475,14 +1725,31 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		for(int d = 0; owner == null && d < this.diagrams.size(); d++)
     		{
     			Diagram diagram = this.diagrams.get(d);
+    			// START KGU#312 2016-12-29: Enh. #315
     			// START KGU#119 2016-01-02: Bugfix #78 When loading diagrams we ought to check for equality only
     			//if (diagram.root == root)
-    			if (identityCheck && diagram.root == root ||
-    					!identityCheck && diagram.root.equals(root))
+    			//if (identityCheck && diagram.root == root ||
+    			//		!identityCheck && diagram.root.equals(root))
        			// END KGU#119 2016-01-02
-    			{
-    				owner = diagram;	// Will leave the loop
+    			//{
+    			//	owner = diagram;	// Will leave the loop
+    			//}
+    			int resemblance = diagram.root.compareTo(root);
+    			if (resemblance > 0) {
+    				if (resemblance > 2 && warnLevel2andAbove) {
+    					String message = msgInsertionConflict[resemblance-3].getText().
+    							replace("%1", root.getSignatureString(false)).
+    							replace("%2", diagram.root.filename.toString());
+    					JOptionPane.showMessageDialog(this.getParent(), message,
+    							this.titleDiagramConflict.getText(),
+    							JOptionPane.WARNING_MESSAGE);			
+    				}
+    				if (resemblance <= equalityLevel)
+    				{
+    					owner = diagram;	// Will leave the loop
+    				}
     			}
+    			// END KGU#312 2016-12-29
     		}
     	}
     	return owner;
@@ -1497,17 +1764,20 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     public void replaced(Root oldRoot, Root newRoot)
     {
     	// Try to find the appropriate diagram holding oldRoot
-    	// START KGU#119 2016-01-02: Bugfix #78 - we only check for identity here, not for structural equality
+    	// START KGU#119/KGU#312 2016-01-02/2016-12-29: Bugfix #78 / enh. #315 - we only check for identity here, not for structural equality
     	//Diagram owner = findDiagram(oldRoot);
-    	Diagram owner = findDiagram(oldRoot, true);
-    	// END KGU#119 2016-01-02
-    	if (owner != null) {
-    		oldRoot.removeUpdater(this);
+    	Diagram owner = findDiagram(oldRoot, 1);	// Check for identity
+    	// END KGU#119/KGU#312 2016-01-02/2016-12-29
+    	// START KGU#328 2017-01-11: This caused Comodification errorExceptions, oldRoot will wipe its updaters anyway
+    	//if (owner != null) {
+    	//	oldRoot.removeUpdater(this);
+    	//}
+    	// END KGU#328 2017-01-11
     	// START KGU#88 2015-11-24: Protect the Root if diagram is pinned
-    	}
+    	//if (owner != null) {
     	if (owner != null && !owner.isPinned)
+       	// END KGU#88 2015-11-24
     	{
-    	// END KGU#88 2015-11-24
     		if (owner.mainform != null) {
     			owner.root = owner.mainform.getRoot();
     			owner.root.addUpdater(this);
@@ -1521,7 +1791,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		adaptLayout();
     		// END KGU#85 2015-11-18
     		this.repaint();
+    		// START KGU#278 2016-10-11: Enh. #267
+    		//notifyChangeListeners();
+    		// END KGU#278 2016-10-11
     	}
+    	// START KGU#305 2016-10-16: Enh. #305
+    	notifyChangeListeners();
+    	// END KGU#305 2016-10-16
     }
     // END KGU#48 2015-10-17
     
@@ -1604,9 +1880,33 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		}
     		this.repaint();
     	}
+    }
+    // END KGU#117 2016-03-08
+
+	// START KGU#305 2016-12-16
+    /**
+     * Returns the list of all Mainform objects associated to some diagram held
+     * here.
+     * @return vector of actively associated Mainforms.
+     */
+    private Vector<Mainform> activeMainforms()
+    {
+    	Vector<Mainform> mainforms = new Vector<Mainform>();
+    	if (this.diagrams != null) {
+    		// It will be a small number of Mainforms, so a Vector is okay
+    		for (int d = 0; d < this.diagrams.size(); d++) {
+    			Diagram diagram = this.diagrams.get(d);
+    			if (diagram.root != null && diagram.mainform != null) {
+    				if (!mainforms.contains(diagram.mainform)) {
+    					mainforms.add(diagram.mainform);
+    				}
+    			}
+    		}
+    	}
+    	return mainforms;
 	}
-	// END KGU#117 2016-03-08
-    
+	// END KGU#305 2016-12-16	
+	
     // Windows listener for the mainform
     // I need this to unregister the updater
     public void windowOpened(WindowEvent e)
@@ -1642,6 +1942,11 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 
     public void windowClosed(WindowEvent e)
     {
+    	// START KGU#305 2016-12-16
+		if (e.getSource() instanceof Mainform) { 
+			removeChangeListener((Mainform)e.getSource());
+		}
+		// END KGU#305 2016-12-16
     }
 
     public void windowIconified(WindowEvent e)
@@ -1666,9 +1971,75 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		
 	}
 
+	// START KGU#305 2016-12-12: Enh. #305
+	/**
+	 * Scrolls to the given Root if found and selects it. If setAtTop is true then the diagram
+	 * will be raised to the top drawing level.
+	 * @param aRoot - the diagram to be focused
+	 * @param setAtTop - whether the diagram is to be drawn on top of all
+	 */
+	public void scrollToDiagram(Root aRoot, boolean setAtTop) {
+		// START KGU#312 2016-12-29: Enh. #315 - adaptation to modified signature 
+		//Diagram diagr = this.findDiagram(aRoot, true);
+		Diagram diagr = this.findDiagram(aRoot, 1);	// Check for identity here
+		// ED KGU#312 2016-12-29
+		if (diagr != null) {
+			if (setAtTop) {
+				this.diagrams.remove(diagr);
+				this.diagrams.add(diagr);
+				if (mouseSelected != null && mouseSelected != diagr && mouseSelected.root != null)
+				{
+					mouseSelected.root.setSelected(false);
+				}
+				mouseSelected = diagr;
+				diagr.root.setSelected(true);
+				this.repaint();
+			}
+			Rect rect = aRoot.getRect(diagr.point);
+			this.scrollRectToVisible(rect.getRectangle());
+		}
+	}
+	
+	/**
+	 * Returns the Root diagram currently selected in Arranger
+	 * @return Either a Root object or null (if none was selected)
+	 */
+	public Root getSelected() 
+	{
+		if (mouseSelected != null)
+		{
+			return mouseSelected.root;
+		}
+		return null;
+	}
+	// END KGU#305 2016-12-12
 
+	// START KGU#305 2016-12-16: Code revision
+	@Override
+	public void addChangeListener(IRoutinePoolListener _listener) {
+		if (_listener instanceof Arranger) {
+			listeners.add(_listener);
+		}
+		else {
+			Arranger.addToChangeListeners(_listener);
+		}
+	}
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    // End of variables declaration//GEN-END:variables
+	@Override
+	public void removeChangeListener(IRoutinePoolListener _listener) {
+		if (_listener instanceof Arranger) {
+			listeners.remove(_listener);
+		}
+		else {
+			Arranger.removeFromChangeListeners(_listener);
+		}
+	}
 
-}
+	private void notifyChangeListeners() {
+		for (IRoutinePoolListener listener: listeners) {
+			listener.routinePoolChanged(this);
+		}
+	}
+	// END KGU#305 2016-12-16
+
+ }

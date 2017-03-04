@@ -49,6 +49,17 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.08.01      Enh. #128: new mode "Comments plus text" associated to Ini file
  *      Kay Gürtzig     2016.08.08      Issues #220, #224: Look-and Feel updates for Executor and Translator
  *      Kay Gürtzig     2016.09.09      Locales backwards compatibility precaution for release 3.25 in loadFromIni()
+ *      Kay Gürtzig     2016.10.11      Enh. #267: New method updateAnalysis() introduced
+ *      Kay Gürtzig     2016.11.01      Issue #81: Scale factor from Ini also applied to fonts
+ *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded except for icons, ensured to be >= 1
+ *      Kay Gürtzig     2016.12.02      Enh. #300: Notification of disabled version retrieval or new versions
+ *      Kay Gürtzig     2016.12.12      Enh. #305: API enhanced to support the Arranger Root index view
+ *      Kay Gürtzig     2016.12.15      Enh. #310: New options for saving diagrams added
+ *      Kay Gürtzig     2017.01.04      KGU#49: Closing a stand-alone instance now effectively warns Arranger
+ *      Kay Gürtzig     2017.01.06      Issue #312: Measure against lost focus on start.
+ *      Kay Gürtzig     2017.01.07      Enh. #101: Modified title string for dependent instances
+ *      Kay Gürtzig     2017.01.15      Enh. #333: New potential preference "unicodeCompOps" added to Ini
+ *      Kay Gürtzig     2017.02.03      Issue #340: Redundant calls of setLocale dropped
  *
  ******************************************************************************************************
  *
@@ -81,17 +92,26 @@ import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
+import lu.fisch.structorizer.executor.IRoutinePool;
+import lu.fisch.structorizer.executor.IRoutinePoolListener;
 import lu.fisch.structorizer.locales.LangFrame;
 import lu.fisch.structorizer.locales.Locales;
 
 @SuppressWarnings("serial")
-public class Mainform  extends LangFrame implements NSDController
+public class Mainform  extends LangFrame implements NSDController, IRoutinePoolListener
 {
 	public Diagram diagram = null;
 	private Menu menu = null;
 	private Editor editor = null;
 	
 	private String laf = null;
+	// START KGU#300 2016-12-02: Enh. #300
+	// The version for which information about update retrieval was last suppressed
+	private String suppressUpdateHint = "";
+	// END KGU#300 2016-12-02
+	// START KGU#287 2017-01-11: Issue #81/#330
+	private String preselectedScaleFactor = null;
+	// END KGU#287 2017-01-11
 	
 	// START KGU#49/KGU#66 2015-11-14: This decides whether to exit or just to dispose when being closed
 	private boolean isStandalone = true;	// The default is to exit...
@@ -100,6 +120,10 @@ public class Mainform  extends LangFrame implements NSDController
 	// START KGU 2016-01-10: Enhancement #101: Show version number and stand-alone status in title
 	private String titleString = "Structorizer " + Element.E_VERSION;
 	// END KGU 2016-01-10
+	// START KGU#326 2017-01-07: Enh. #101 - count the instances (for the title string)
+	private static int instanceCount = 0;
+	private int instanceNo;
+	// END KGU#326 #2017-01-07
 		
 	/******************************
  	 * Setup the Mainform
@@ -120,6 +144,9 @@ public class Mainform  extends LangFrame implements NSDController
             /******************************
              * Load values from INI
              ******************************/
+            // This is required at an early moment e.g. to ensure correct scaling etc.
+            // But it doesn't reach components like Editor, Menu and Diagram, which are
+            // created later
             loadFromINI();
 
             /******************************
@@ -128,7 +155,10 @@ public class Mainform  extends LangFrame implements NSDController
             // set window title
             // START KGU 2016-01-10: Enhancement #101 - show version number and standalone status
             //setTitle("Structorizer");
-            if (!this.isStandalone) titleString = "(" + titleString + ")";
+        	// START KGU#326 2017-01-07: Enh. #101 improved title information
+            //if (!this.isStandalone) titleString = "(" + titleString + ")";
+            if (!this.isStandalone) titleString = "[" + this.instanceNo + "] " + titleString;
+        	// END KGU#326 2017-01-07
             setTitle(titleString);
             // END KGU 2016-01-10
             // set layout (OS default)
@@ -156,7 +186,7 @@ public class Mainform  extends LangFrame implements NSDController
              * Setup the editor
              ******************************/
             editor = new Editor(this);
-            // get reference tot he diagram
+            // get reference to the diagram
             diagram = getEditor().diagram;
             Container container = getContentPane();
             container.setLayout(new BorderLayout());
@@ -193,12 +223,23 @@ public class Mainform  extends LangFrame implements NSDController
                             }
                             else
                             // END KGU#157
-                            if (diagram.saveNSD(true))
+                            if (diagram.saveNSD(!Element.E_AUTO_SAVE_ON_CLOSE))
                             {
+                                    // START KGU#287 2017-01-11: Issue #81/#330
+                                    if (isStandalone) {
+                                            preselectedScaleFactor = Double.toString(Element.E_NEXT_SCALE_FACTOR);
+                                    }
+                                    // END KGU#287 2017-01-11
                                     saveToINI();
                                     // START KGU#49/KGU#66 (#6/#16) 2015-11-14: only EXIT if there are no owners
-                                    if (isStandalone)
+                                    if (isStandalone) {
+                                            // START KGU#49 2017-01-04 Care for potential Arranger dependants
+                                            if (Arranger.hasInstance()) {
+                                                Arranger.getInstance().windowClosing(e);
+                                            }
+                                            // END KGU#49 2017-01-04
                                             System.exit(0);	// This kills all related frames and threads as well!
+                                    }
                                     else
                                             dispose();
                                     // END KGU#49/KGU#66 (#6/#16) 2015-11-14
@@ -233,8 +274,11 @@ public class Mainform  extends LangFrame implements NSDController
             /******************************
              * Load values from INI
              ******************************/
+            // This has to be done a second time now, after all components were put in place
             loadFromINI();
-            Locales.getInstance().setLocale(Locales.getInstance().getLoadedLocaleName());
+            // START KGU#337 2017-02-03: Issue #340 - setLocale has already been done by loadFromIni()
+            //Locales.getInstance().setLocale(Locales.getInstance().getLoadedLocaleName());
+            // END KGU#337 2017-02-03
 
             /******************************
              * Resize the toolbar
@@ -242,7 +286,13 @@ public class Mainform  extends LangFrame implements NSDController
             //editor.componentResized(null);
             getEditor().revalidate();
             repaint();
-            getEditor().diagram.redraw();
+            diagram.redraw();
+            // START KGU#305 2016-12-16
+            getEditor().updateArrangerIndex(Arranger.getSortedRoots());
+            // END KGU#305 2016-12-16
+            // START KGU#325 2017-01-06: Issue #312 ensure the work area getting initial focus
+            getEditor().scrollarea.requestFocusInWindow();
+            // END KGU#325 2017-01-06
 	}
 	
 
@@ -255,22 +305,43 @@ public class Mainform  extends LangFrame implements NSDController
 		{
 			Ini ini = Ini.getInstance();
 			ini.load();
-			ini.load();
+			ini.load();	// FIXME This seems to be repeated in order to buy time for the GUI
 
-			double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1")).intValue();
-			IconLoader.setScaleFactor(scaleFactor);
+			double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
+			// START KGU#287 2017-01-09 
+			//if (scaleFactor < 1) scaleFactor = 1.0;
+			//IconLoader.setScaleFactor(scaleFactor.intValue());
+			IconLoader.setScaleFactor(scaleFactor);	// The IconLoader doesn't scale down anyway
+			Element.E_NEXT_SCALE_FACTOR = scaleFactor;
+			// END KGU#287 2017-01-09
 			
+			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+			int defaultWidth = new Double(750 * scaleFactor).intValue();
+			int defaultHeight = new Double (550 * scaleFactor).intValue();
+			// END KGU#287 2016-11-01
 			// position
 			int top = Integer.valueOf(ini.getProperty("Top","0"));
 			int left = Integer.parseInt(ini.getProperty("Left","0"));
-			int width = Integer.parseInt(ini.getProperty("Width","750"));
-			int height = Integer.valueOf(ini.getProperty("Height","550"));
+			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+			//int width = Integer.parseInt(ini.getProperty("Width","750"));
+			//int height = Integer.valueOf(ini.getProperty("Height","550"));
+			int width = Integer.parseInt(ini.getProperty("Width", ""+defaultWidth));
+			int height = Integer.valueOf(ini.getProperty("Height",""+defaultHeight));
+			// END KGU#287 2016-11-01
 
 			// reset to defaults if wrong values
 			if (top<0) top=0;
 			if (left<0) left=0;
-			if (width<=0) width=750;
-			if (height<=0) height=550;
+			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+			//if (width<=0) width=750;
+			//if (height<=0) height=550;
+			if (width <= 0) width = defaultWidth;
+			if (height <= 0) height = defaultHeight;
+			// END KGU#287 2016-11-01
+			
+			// START KGU#300 2016-12-02: Enh. #300
+			suppressUpdateHint = ini.getProperty("suppressUpdateHint", "");
+			// END KGU#300 2016-12-02
 			
 			// language	
 			String localeFileName = ini.getProperty("Lang","en");
@@ -290,6 +361,9 @@ public class Mainform  extends LangFrame implements NSDController
 			// look & feel
 			laf=ini.getProperty("laf","Mac OS X");
 			setLookAndFeel(laf);
+			// START KGU#287 2016-11-01: Issue #81 (DPI awareness)
+			GUIScaler.scaleDefaultFontSize(scaleFactor);
+			// END KGU#287 2016-11-01
 			
 			// size
 			setPreferredSize(new Dimension(width,height));
@@ -297,13 +371,16 @@ public class Mainform  extends LangFrame implements NSDController
 			setLocation(new Point(top,left));
 			validate();
 
-			if(diagram!=null) 
+			if (diagram!=null) 
 			{
 				// current directory
 				// START KGU#95 2015-12-04: Fix #42 Don't propose the System root but the user home
 				//diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("file.separator")));
 				diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("user.home")));
 				// END KGU#95 2015-12-04
+				// START KGU#300 2016-12-02: Enh. #300
+				diagram.retrieveVersion = ini.getProperty("retrieveVersion", "false").equals("true");
+				// END KGU#300 2016-12-02
 				
 				// DIN 66261
 				if (ini.getProperty("DIN","0").equals("1")) // default = 0
@@ -335,15 +412,28 @@ public class Mainform  extends LangFrame implements NSDController
 					diagram.setAnalyser(false);
 				}
                  * */
+				// START KGU#305 2016-12-14: Enh. #305
+				diagram.setArrangerIndex(ini.getProperty("index", "1").equals("1"));	// default = 1
+				// END KGU#305 2016-12-14
 				// START KGU#123 2016-01-04: Enh. #87, Bugfix #65
 				diagram.setWheelCollapses(ini.getProperty("wheelToCollapse", "0").equals("1"));
 				// END KGU#123 2016-01-04
 			}
+
+			// START KGU#309 2016-12-15: Enh. #310 new saving options
+			Element.E_AUTO_SAVE_ON_EXECUTE = ini.getProperty("autoSaveOnExecute", "0").equals("1");
+			Element.E_AUTO_SAVE_ON_CLOSE = ini.getProperty("autoSaveOnClose", "0").equals("1");
+			Element.E_MAKE_BACKUPS = ini.getProperty("makeBackups", "1").equals("1");
+		    // END KGU#309 20161-12-15
+			
+			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
+			Element.E_SHOW_UNICODE_OPERATORS = ini.getProperty("unicodeCompOps", "1").equals("1");
+			// END KGU#331 2017-01-15
 			
 			// recent files
 			try
 			{	
-				if(diagram!=null)
+				if (diagram != null)
 				{
 					for(int i=9;i>=0;i--)
 					{
@@ -398,37 +488,64 @@ public class Mainform  extends LangFrame implements NSDController
 			ini.setProperty("Width",Integer.toString(getWidth()));
 			ini.setProperty("Height",Integer.toString(getHeight()));
 
-			// current directory
+			// current directory, version retrieval
 			if(diagram!=null)
 			{
 				if(diagram.currentDirectory!=null)
 				{
 					ini.setProperty("currentDirectory",diagram.currentDirectory.getAbsolutePath());
 				}
+				// START KGU#300 2016-12-02: Enh. #300
+				ini.setProperty("retrieveVersion", Boolean.toString(diagram.retrieveVersion));
+				// END KGU#300 2016-12-02
+				// START KGU#305 2016-12-15: Enh. #305
+				ini.setProperty("index", (diagram.showArrangerIndex() ? "1" : "0"));
+				// END KGU#305 2016-12-15
 			}
 			
 			// language
 			ini.setProperty("Lang",Locales.getInstance().getLoadedLocaleFilename());
 			
 			// DIN, comments
-			ini.setProperty("DIN",(Element.E_DIN?"1":"0"));
-			ini.setProperty("showComments",(Element.E_SHOWCOMMENTS?"1":"0"));
+			ini.setProperty("DIN", (Element.E_DIN ? "1" : "0"));
+			ini.setProperty("showComments", (Element.E_SHOWCOMMENTS ? "1" : "0"));
 			// START KGU#227 2016-08-01: Enh. #128
 			ini.setProperty("commentsPlusText", Element.E_COMMENTSPLUSTEXT ? "1" : "0");
 			// END KGU#227 2016-08-01
-			ini.setProperty("switchTextComments",(Element.E_TOGGLETC?"1":"0"));
-			ini.setProperty("varHightlight",(Element.E_VARHIGHLIGHT?"1":"0"));
+			ini.setProperty("switchTextComments", (Element.E_TOGGLETC ? "1" : "0"));
+			ini.setProperty("varHightlight", (Element.E_VARHIGHLIGHT ? "1" : "0"));
 			// KGU 2016-07-27: Why has this been commented out once (before version 3.17)? See Issue #207
-			//ini.setProperty("analyser",(Element.E_ANALYSER?"1":"0"));
+			//ini.setProperty("analyser", (Element.E_ANALYSER ? "1" : "0"));
 			// START KGU#123 2016-01-04: Enh. #87
-			ini.setProperty("wheelToCollapse",(Element.E_WHEELCOLLAPSE?"1":"0"));
+			ini.setProperty("wheelToCollapse", (Element.E_WHEELCOLLAPSE ? "1" : "0"));
 			// END KGU#123 2016-01-04
 			
+		    // START KGU#309 2016-12-15: Enh. #310 new saving options
+		    ini.setProperty("autoSaveOnExecute", (Element.E_AUTO_SAVE_ON_EXECUTE ? "1" : "0"));
+		    ini.setProperty("autoSaveOnClose", (Element.E_AUTO_SAVE_ON_CLOSE ? "1" : "0"));
+		    ini.setProperty("makeBackups", (Element.E_MAKE_BACKUPS ? "1" : "0"));
+		    // END KGU#309 20161-12-15
+
+			// START KGU#331 2017-01-15: Enh. #333 Comparison operator display
+		    ini.setProperty("unicodeCompOps", (Element.E_SHOW_UNICODE_OPERATORS ? "1" : "0"));
+			// END KGU#331 2017-01-15
+
 			// look and feel
 			if(laf!=null)
 			{
 				ini.setProperty("laf", laf);
 			}
+			
+			// START KGU#287 2017-01-11: Issue #81/#330
+			if (this.preselectedScaleFactor != null) {
+				ini.setProperty("scaleFactor", this.preselectedScaleFactor);
+			}
+			// END KGU#287 2017-01-11
+			
+			// START KGU#300 2016-12-02: Enh. #300
+			// Update hint suppression
+			ini.setProperty("suppressUpdateHint", this.suppressUpdateHint);
+			// END KGU#300 2016-12-02
 			
 			// recent files
 			if(diagram!=null)
@@ -493,6 +610,12 @@ public class Mainform  extends LangFrame implements NSDController
 					try
 					{
 						UIManager.setLookAndFeel(plafs[j].getClassName());
+//						// START KGU#287 2017-01-09: Bugfix #330 on switching back to "Nimbus", several font sizes get lost - DOESN'T WORK
+//						if (_laf.equalsIgnoreCase("nimbus")) {
+//							double scaleFactor = Double.parseDouble(Ini.getInstance().getProperty("scaleFactor", "1"));
+//							GUIScaler.scaleDefaultFontSize(scaleFactor);
+//						}
+//						// END KGU#287 2017-01-09
 						SwingUtilities.updateComponentTreeUI(this);
 						// START KGU#211 2016-07-25: Issue #202 - Propagation to Arranger
 						if (Arranger.hasInstance())
@@ -580,7 +703,13 @@ public class Mainform  extends LangFrame implements NSDController
     public Mainform(boolean standalone)
     {
         super();
+    	// START KGU#326 2017-01-07: Enh. #101 improved title information
+        this.instanceNo = ++instanceCount;
+    	// END KGU#326 2017-01-07
         this.isStandalone = standalone;
+        // START KGU#305 2016-12-16: Code revision
+        Arranger.addToChangeListeners(this);
+        // END KGU#305 2016-12-16
         create();
     }
     // END KGU#49/KGU#66
@@ -612,9 +741,57 @@ public class Mainform  extends LangFrame implements NSDController
     	if (this.diagram != null)	// May look somewhat paranoid, but diagram is public...
     	{
     		// KGU#88: We now reflect if the user refuses to override the former diagram
-    		done = this.diagram.setRoot(root);
+    		done = this.diagram.setRootIfNotRunning(root);
     	}
     	return done;
     }
+    
+    // START KGU#278 2016-10-11: Enh. #267 - Allows updates from Subroutine pools
+    public void updateAnalysis()
+    {
+    	if (this.diagram != null)
+    	{
+    		this.diagram.analyse();
+    	}
+    }
+    // END KGU#278 2016-10-11
+    
+    // START KGU#300 2016-12-02: Enh. #300
+    public void notifyNewerVersion()
+    {
+    	if (!Ini.getInstance().getProperty("retrieveVersion", "false").equals("true")) {
+    		if (!Element.E_VERSION.equals(this.suppressUpdateHint)) {
+    			int chosen = JOptionPane.showOptionDialog(this,
+    					Menu.msgUpdateInfoHint.getText().replace("%1", this.menu.menuPreferences.getText()).replace("%2", this.menu.menuPreferencesNotifyUpdate.getText()),
+    					Menu.lblHint.getText(),
+    					JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE,
+    					null,
+    					new String[]{Menu.lblOk.getText(), Menu.lblSuppressUpdateHint.getText()}, Menu.lblOk.getText());
+    			if (chosen != JOptionPane.OK_OPTION) {
+    				this.suppressUpdateHint = Element.E_VERSION;
+    			}
+    		}
+    	}
+    	else if (diagram != null) {
+    		diagram.updateNSD(false);
+    	}
+    }
+    // END KGU#300 2016-12-02
+    
+    public boolean isStandalone()
+    {
+    	return this.isStandalone;
+    }
+
+    // START KGU#305 2016-12-16: Code revision
+	@Override
+	public void routinePoolChanged(IRoutinePool _source) {
+		if (_source instanceof Arranger) {
+			this.editor.updateArrangerIndex(Arranger.getSortedRoots());
+		}
+		updateAnalysis();
+	}
+	// END KGU#305 2016-12-16
 	
+
 }

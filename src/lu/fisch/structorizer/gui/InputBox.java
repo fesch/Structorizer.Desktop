@@ -30,17 +30,24 @@ package lu.fisch.structorizer.gui;
  *
  *     Revision List
  *
- *     Author       Date        Description
- *     ------       ----        -----------
- *     Bob Fisch    2007.12.23  First Issue
- *     Kay Gürtzig  2015.10.12  A checkbox added for breakpoint control (KGU#43)
- *     Kay Gürtzig  2015.10.14  Element-class-specific language support (KGU#42)
- *     Kay Gürtzig  2015.10.25  Hook for subclassing added to method create() (KGU#3)
- *     Kay Gürtzig  2016.04.26  Issue #165: Focus transfer reset to Tab and Shift-Tab
- *     Kay Gürtzig  2016.07.14  Enh. #180: Initial focus dependent on switchTextComment mode (KGU#169)
- *     Kay Gürtzig  2016.08.02  Enh. #215: Breakpoint trigger counts partially implemented
- *     Kay Gürtzig  2016.09.13  Bugfix #241: Obsolete mechanisms removed (remnants of KGU#42)
- *     Kay Gürtzig  2016.09.22  Bugfix #241 revised by help of a LangDialog API modification
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      Bob Fisch       2007.12.23  First Issue
+ *      Kay Gürtzig     2015.10.12  A checkbox added for breakpoint control (KGU#43)
+ *      Kay Gürtzig     2015.10.14  Element-class-specific language support (KGU#42)
+ *      Kay Gürtzig     2015.10.25  Hook for subclassing added to method create() (KGU#3)
+ *      Kay Gürtzig     2016.04.26  Issue #165: Focus transfer reset to Tab and Shift-Tab
+ *      Kay Gürtzig     2016.07.14  Enh. #180: Initial focus dependent on switchTextComment mode (KGU#169)
+ *      Kay Gürtzig     2016.08.02  Enh. #215: Breakpoint trigger counts partially implemented
+ *      Kay Gürtzig     2016.09.13  Bugfix #241: Obsolete mechanisms removed (remnants of KGU#42)
+ *      Kay Gürtzig     2016.09.22  Bugfix #241 revised by help of a LangDialog API modification
+ *      Kay Gürtzig     2016.10.13  Enh. #270: New checkbox chkDisabled
+ *      Kay Gürtzig     2016.11.02  Issue #81: Workaround for lacking DPI awareness
+ *      Kay Gürtzig     2016.11.09  Issue #81: Scale factor no longer rounded but ensured to be >= 1
+ *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes
+ *      Kay Gürtzig     2016.11.21  Issue #284: Opportunity to scale up/down the TextField fonts by Ctrl-Numpad+/-
+ *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
+ *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): Basic scaling outsourced to class GUIScaler
  *
  ******************************************************************************************************
  *
@@ -49,10 +56,12 @@ package lu.fisch.structorizer.gui;
  ******************************************************************************************************
  */
 
+import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Vector;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -81,7 +90,10 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     protected JScrollPane scrText = new JScrollPane(txtText);
     protected JScrollPane scrComment = new JScrollPane(txtComment);
 
-    // Checkbox
+    // Checkboxes
+    // START KGU#277 2016-10-13: #270
+    public JCheckBox chkDisabled = new JCheckBox("Execution and export disabled");
+    // END KGU#277 2016-10-13
     // START KGU#43 2015-10-12: Additional possibility to control the breakpoint setting
     public JCheckBox chkBreakpoint = new JCheckBox("Breakpoint");
     // END KGU#43 2015-10-12
@@ -91,17 +103,27 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     public LangTextHolder lblBreakTrigger = new LangTextHolder("0");
     //public JTextField txtBreakTrigger = new JTextField();
     // END KGU#213 2016-08-01
+    
+    // START KGU#294 2016-11-22: Enh. #284
+    protected final JButton btnFontUp = new JButton(IconLoader.ico033); 
+    protected final JButton btnFontDown = new JButton(IconLoader.ico034);
+    // END KGI#294 2016-11-22
 
     // START KGU 2015-10-14: Additional information for data-specific title translation
     public String elementType = new String();	// The (lower-case) class name of the element type to be edited here
     public boolean forInsertion = false;		// If this dialog is used to setup a new element (in contrast to updating an existing element)
     // END KGU 2015-10-14
 
-    // START KGU#169 2016-07-14: Enh. #180: helps to enable focus control
-    protected void setPreferredSize() {
-        setSize(500, 400);        
+    // START KGU#287 2016-11-02: Enh. #180, Issue #81 (DPI awareness workaround)
+    protected void setPreferredSize(double scaleFactor) {
+        setSize((int)(500 * scaleFactor), (int)(400 * scaleFactor));        
     }
-    // END KGU#169 2016-07-14
+    // END KGU#287 2016-11-02
+    
+    // START KGU#294 2016-11-21: Issue #284
+    // Components with fonts to be scaled independently 
+    protected Vector<JComponent> scalableComponents = new Vector<JComponent>();
+    // END KGU#294 2016-11-21
 
     private void create() {
         // set window title
@@ -112,16 +134,25 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         // set windows size
         //setSize(500, 400);
         // END KGU#169 2016-07-14
-        // show form
+        
+        // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
+		// END KGU#287 2016-11-11
+
+		// show form
         setVisible(false);
         // set action to perform if closed
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        // set icon
+        // set listeners
+        // START KGU#294 2016-11-22: Issue #284
+        btnFontUp.addActionListener(this);
+        btnFontDown.addActionListener(this);
+        // END KGU#294 2016-11-22
         btnOK.addActionListener(this);
         btnCancel.addActionListener(this);
         
-        btnOK.addKeyListener(this);
-        btnCancel.addKeyListener(this);
+        btnOK.addKeyListener(this);		// ???
+        btnCancel.addKeyListener(this);	// ???
         txtText.addKeyListener(this);
         // START KGU#186 2016-04-26: Issue #163 - tab isn't really needed within the text
         txtText.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
@@ -137,14 +168,21 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         // END KGU#213 2016-08-01
         addKeyListener(this);
         
-        Border emptyBorder = BorderFactory.createEmptyBorder(4, 4, 4, 4);
+        int border = (int)(4 * scaleFactor);
+        Border emptyBorder = BorderFactory.createEmptyBorder(border, border, border, border);
         txtText.setBorder(emptyBorder);
         txtComment.setBorder(emptyBorder);
+        
+        // START KGU#294 2016-11-21: Issue #284
+        scalableComponents.addElement(txtText);
+        scalableComponents.addElement(txtComment);
+        // END KGU#294 2016-11-21
         
         JPanel pnPanel0 = new JPanel();
         GridBagLayout gbPanel0 = new GridBagLayout();
         GridBagConstraints gbcPanel0 = new GridBagConstraints();
-        gbcPanel0.insets = new Insets(10, 10, 0, 10);
+        border = (int)(10 * scaleFactor);
+        gbcPanel0.insets = new Insets(border, border, 0, border);
         pnPanel0.setLayout(gbPanel0);
 
         // START KGU#3 2015-10-24: Open opportunities for subclasses
@@ -153,7 +191,7 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         JPanel pnPanel1 = new JPanel();
         GridBagLayout gbPanel1 = new GridBagLayout();
         GridBagConstraints gbcPanel1 = new GridBagConstraints();
-        gbcPanel1.insets = new Insets(10, 10, 0, 10);
+        gbcPanel1.insets = new Insets(border, border, 0, border);
         pnPanel1.setLayout(gbPanel1);
             // END KGU#3 2015-10-24
         
@@ -189,9 +227,42 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         gbcPanel1.anchor = GridBagConstraints.NORTH;
         gbPanel1.setConstraints(lblComment, gbcPanel1);
         pnPanel1.add(lblComment);
-        
+
+        // START KGU#277 2016-10-13: Enh. #270
         gbcPanel1.gridx = 1;
         gbcPanel1.gridy = 17;
+        gbcPanel1.gridwidth = 7;
+        gbcPanel1.gridheight = 1;
+        gbcPanel1.fill = GridBagConstraints.BOTH;
+        gbcPanel1.weightx = 1;
+        gbcPanel1.weighty = 0;
+        gbcPanel1.anchor = GridBagConstraints.NORTH;
+        gbPanel1.setConstraints(chkDisabled, gbcPanel1);
+        pnPanel1.add(chkDisabled);
+        // END KGU#277 2016-10-13
+        
+        // START KGU#294 2016-11-22: Issue #284 - visible font-resizing buttons
+        JPanel fontPanel = new JPanel();
+        fontPanel.setLayout(new GridLayout(0,2));
+        fontPanel.add(btnFontUp);
+        fontPanel.add(btnFontDown);
+        gbcPanel1.gridx = 12;
+        gbcPanel1.gridy = 17;
+        gbcPanel1.gridwidth = 7;
+        gbcPanel1.gridheight = 1;
+        gbcPanel1.fill = GridBagConstraints.WEST;
+        gbcPanel1.weightx = 1;
+        gbcPanel1.weighty = 0;
+        gbcPanel1.anchor = GridBagConstraints.EAST;
+        gbPanel1.setConstraints(fontPanel, gbcPanel1);
+        pnPanel1.add(fontPanel);
+        // END KGU#294 2016-11-22
+
+        gbcPanel1.gridx = 1;
+        // START KGU#277 2016-10-13: Enh. #270
+        //gbcPanel1.gridy = 17;
+        gbcPanel1.gridy = 18;
+        // END KGU#277 2016-10-13
         gbcPanel1.gridwidth = 7;
         gbcPanel1.gridheight = 1;
         gbcPanel1.fill = GridBagConstraints.BOTH;
@@ -203,7 +274,10 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
 
         // START KGU#213 2016-08-01: Enh. #215 - conditional breakpoints
         gbcPanel1.gridx = 12;
-        gbcPanel1.gridy = 17;
+        // START KGU#277 2016-10-13: Enh. #270
+        //gbcPanel1.gridy = 17;
+        gbcPanel1.gridy = 18;
+        // END KGU#277 2016-10-13
         gbcPanel1.gridwidth = 7;
         gbcPanel1.gridheight = 1;
         gbcPanel1.fill = GridBagConstraints.BOTH;
@@ -226,11 +300,14 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
 //        gbPanel1.setConstraints( lblBreakTrigger, gbcPanel1 );
 //        pnPanel1.add(lblBreakTrigger);
 //        // END KGU#246 2106-09-13
-        gbcPanel1.insets = new Insets(10, 10, 10, 10);
+        gbcPanel1.insets = new Insets(border, border, border, border);
 
         //createExitButtons(gridbase)
         gbcPanel1.gridx = 1;
-        gbcPanel1.gridy = 18;
+        // START KGU#277 2016-10-13: Enh. #270
+        //gbcPanel1.gridy = 18;
+        gbcPanel1.gridy = 19;
+        // END KGU#277 2016-10-13
         gbcPanel1.gridwidth = 7;
         gbcPanel1.gridheight = 1;
         gbcPanel1.fill = GridBagConstraints.BOTH;
@@ -244,7 +321,10 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         gbcPanel1.gridx = 12;
             //gbcPanel1.gridx = 8;
         // END KGU#3 2015-10-31
-        gbcPanel1.gridy = 18;
+        // START KGU#277 2016-10-13: Enh. #270
+        //gbcPanel1.gridy = 18;
+        gbcPanel1.gridy = 19;
+        // END KGU#277 2016-10-13
         // START KGU#3 2015-10-31: The new gridwidth causes no difference here but fits better for InputBoxFor
         gbcPanel1.gridwidth = 7;
     		//gbcPanel1.gridwidth = GridBagConstraints.REMAINDER;
@@ -262,9 +342,13 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         container.add(pnPanel0, BorderLayout.NORTH);
         container.add(pnPanel1, BorderLayout.CENTER);
 
+        // START KGU#287 2017-01-09: Bugfix #330  - scaling stuff outsourced to class GUIScaler
+		GUIScaler.rescaleComponents(this);
+		// END KGU#287 2017-01-09
+
         // START KGU#91+KGU#169 2016-07-14: Enh. #180 (also see #39 and #142)
         this.pack();	// This makes focus control possible but must precede the size setting
-        setPreferredSize();
+        setPreferredSize(scaleFactor);
         if (Element.E_TOGGLETC) {
             txtComment.requestFocusInWindow();
         } else {
@@ -308,6 +392,12 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
         } else if (source == btnCancel) {
             OK = false;
         }
+        // START KGU#294 2016-11-22: Issue #284
+        else if (source == btnFontUp || source == btnFontDown) {
+        	fontControl(source == btnFontUp);
+        	return;
+        }
+        // END KGU#294 2016-11-22
         setVisible(false);
     }
     
@@ -324,6 +414,11 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
             OK = true;
             setVisible(false);
         }
+        // START KGU#294 2016-11-21: Issue #284 - Opportunity to modify JTextField font size
+        else if ((e.getKeyCode() == KeyEvent.VK_ADD || e.getKeyCode() == KeyEvent.VK_SUBTRACT) && (e.isControlDown())) {
+        	fontControl(e.getKeyCode() == KeyEvent.VK_ADD);
+        }
+        // END KGU#294 2016-11-21
     }
     
     @Override
@@ -381,5 +476,20 @@ public class InputBox extends LangDialog implements ActionListener, KeyListener 
     	this.lblBreakTriggerText.setText(this.lblBreakTriggerText.getText().replace("%", lblBreakTrigger.getText()));
     }
     // END KGU#246 2016-09-21
+    
+    // START KGU#294 2016-11-22: Issue #284
+    public void fontControl(boolean up)
+    {
+    	Font font = txtText.getFont();
+    	float increment = 2.0f;
+    	if (!up) {
+    		increment = font.getSize() > 8 ? -2.0f : 0.0f;
+    	}
+    	Font newFont = font.deriveFont(font.getSize()+increment);
+    	for (JComponent comp: scalableComponents) {
+    		comp.setFont(newFont);
+    	}
+    }
+    // END KGU#294 2016-11-22
 
 }

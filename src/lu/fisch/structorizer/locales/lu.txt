@@ -52,6 +52,8 @@
  *      Laurent Zender      2016.07.31      Corrections and Translations for newly added features
  *      Kay Gürtzig         2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig         2016.09.22      AnalyserPreferences numbering modified
+ *      Kay Gürtzig         2016.10.11      Enh. 267: Menu.error15 renamed into Menu.error15_1
+ *      Kay Gürtzig         2016.12.14      Enh. #311: New menu "Debug"
  *
  ******************************************************************************************************
  *
@@ -133,6 +135,7 @@ Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Structogramm analyséieren
 // Menu "Help"
 Menu.menuPreferences.text=Astellungen
+Menu.menuPreferences.mnemonic=a
 // Submenu of "Help"
 Menu.menuPreferencesFont.text=Schrëft...
 Menu.menuPreferencesColors.text=Faarf...
@@ -162,9 +165,20 @@ Menu.menuPreferencesSaveAll.text=Späicheren
 Menu.menuPreferencesSaveDump.text=Späicheren als Datei ...
 Menu.menuPreferencesSaveLoad.text=Aus Datei lueden
 
+// Menu "Debug"
+Menu.menuDebug.text=Debug
+Menu.menuDebug.mnemonic=b
+// Submenu of "Debug"
+Menu.menuDebugTurtle.text=Turtleizer ...
+Menu.menuDebugExecute.text=Executor ...
+Menu.menuDebugDropBrkpts.text=Breakpoints läschen
+Menu.menuDebugBreakpoint.text=Breakpoint un/ausschalten
+Menu.menuDebugBreakTrigger.text=Break trigger ...
+Menu.menuDebugDisable.text=
 
 // Menu "Help"
 Menu.menuHelp.text=Hellef
+Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
 Menu.menuHelpAbout.text=Iwwert ...
 Menu.menuHelpUpdate.text=Update. ..
@@ -195,7 +209,7 @@ Menu.error13_3.text=Your functions seems to use several competitive return mecha
 Menu.error14_1.text=The FOR loop parameters are not consistent to the loop heading text!
 Menu.error14_2.text=The FOR loop step value («%») is not a legal integer constant!
 Menu.error14_3.text=Variable name «%» may collide with one of the configured FOR loop heading keywords!
-Menu.error15.text=The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!
+Menu.error15_1.text=The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!
 Menu.error16_1.text=A JUMP element may be empty or start with one of %, possibly followed by an argument!
 Menu.error16_2.text=A return instruction, unless at final position, must form a JUMP element!
 Menu.error16_3.text=An exit, leave or break instruction is only allowed as JUMP element!
@@ -292,7 +306,7 @@ Editor.btnColor9.tooltip=Dat ausgewieltend Element mat dëser Faarf fierwen.
 // turtleizer & executor
 Editor.btnTurtle.tooltip=Turtleizer opmaachen …
 Editor.btnMake.tooltip=Executor opmaachen …
-Editor.btnDropBrk.tooltip=Breakpoints läschen …
+Editor.btnDropBrk.tooltip=Breakpoints läschen
 // Popup menu
 Editor.popupCut.text=Ausschneiden
 Editor.popupCopy.text=Kopéieren

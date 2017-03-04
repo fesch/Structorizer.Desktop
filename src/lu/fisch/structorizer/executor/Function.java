@@ -20,6 +20,9 @@
 
 package lu.fisch.structorizer.executor;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /******************************************************************************************************
  *
  *      Author:         Bob Fisch
@@ -34,8 +37,10 @@ package lu.fisch.structorizer.executor;
  *      ------			----			-----------
  *      Bob Fisch                       First Issue
  *      Kay Gürtzig     2015.10.27      For performance reasons, now stores name and parsed parameters
- *      Kay Gürtzig     2015.11.13      KGU#2 (Enhacement #9): No longer automatically renames to lowercase
+ *      Kay Gürtzig     2015.11.13      KGU#2 (Enhancement #9): No longer automatically renames to lowercase
  *      Kay Gürtzig     2015.12.12      KGU#106: Parameter splitting mended (using enhancement #54 = KGU#101)
+ *      Kay Gürtzig     2016.12.22      KGU#311: New auxiliary method getSourceLength()
+ *      Kay Gürtzig     2017.01.29      Enh. #335: Enhancements for better type analysis
  *
  ******************************************************************************************************
  *
@@ -53,24 +58,85 @@ import lu.fisch.utils.StringList;
  */
 public class Function
 {
-    private String str = new String();
+	// START KGU#332 2017-01-29: Enh. #335 - result type forecast
+	private static final Map<String, String> knownResultTypes;
+	static {
+		knownResultTypes = new HashMap<String,String>();
+		//knownResultTypes.put("abs#1", "numeric");
+		//knownResultTypes.put("max#2", "numeric");
+		//knownResultTypes.put("min#2", "numeric");
+		knownResultTypes.put("round#1", "int");
+		knownResultTypes.put("ceil#1", "double");
+		knownResultTypes.put("floor#1", "double");
+		knownResultTypes.put("sqr#1", "double");
+		knownResultTypes.put("sqrt#1", "double");
+		knownResultTypes.put("exp#1", "double");
+		knownResultTypes.put("log#1", "double");
+		knownResultTypes.put("pow#2", "double");
+		knownResultTypes.put("cos#1", "double");
+		knownResultTypes.put("sin#1", "double");
+		knownResultTypes.put("tan#1", "double");
+		knownResultTypes.put("acos#1", "double");
+		knownResultTypes.put("asin#1", "double");
+		knownResultTypes.put("atan#1", "double");
+		knownResultTypes.put("toRadians#1", "double");
+		knownResultTypes.put("toDegrees#1", "double");
+		knownResultTypes.put("random#1", "int");
+		knownResultTypes.put("length#1", "int");
+		knownResultTypes.put("lowercase#1", "String");
+		knownResultTypes.put("uppercase#1", "String");
+		knownResultTypes.put("pos#2", "int");
+		knownResultTypes.put("copy#3", "string");
+		knownResultTypes.put("trim#1", "String");
+		knownResultTypes.put("ord#1", "int");
+		knownResultTypes.put("chr#1", "char");
+		knownResultTypes.put("isArray#1", "boolean");
+		knownResultTypes.put("isChar#1", "boolean");
+		knownResultTypes.put("isBool#1", "boolean");
+		knownResultTypes.put("inc#2", "void");
+		knownResultTypes.put("dec#2", "void");
+		knownResultTypes.put("randomize#0", "void");
+		knownResultTypes.put("insert#3", "void");
+		knownResultTypes.put("delete#3", "void");
+		knownResultTypes.put("fileOpen#1", "int");
+		knownResultTypes.put("fileCreate#1", "int");
+		knownResultTypes.put("fileAppend#1", "int");
+		knownResultTypes.put("fileEOF#1", "boolean");
+		//knownResultTypes.put("fileRead", "Object");
+		knownResultTypes.put("fileReadChar#1", "char");
+		knownResultTypes.put("fileReadInt#1", "int");
+		knownResultTypes.put("fileReadDouble#1", "double");
+		knownResultTypes.put("fileReadLine#1", "String");
+		knownResultTypes.put("fileWrite#2", "void");
+		knownResultTypes.put("fileWriteLine#2", "void");
+		knownResultTypes.put("fileClose#1", "void");
+	}
+	// END KGU#332 2017-01-29
+    private String str = new String();		// The original string this is derived from
     // START KGU#56 2015-10-27: Performance improvement approach (bug fixed 2015-11-09)
     private StringList parameters = null;	// parameter strings as split by commas
     private boolean isFunc = false;			// basic syntactic plausibility check result
     private String name = null;				// The string before the opening parenthesis
     // END KGU#56 2015-10-27
+//    // START KGU#341 2017-02-06: Cache the case-apdapted name if there is a matching built-in function
+//    private String caseAlignedName = null;
+//    // END KGU#341 2017-02-06
 
     public Function(String exp)
     {
         this.str = exp.trim();
         // START KGU#56 2015-10-27
-        int posLP = str.indexOf("(");
-        this.isFunc =
-        		posLP < str.indexOf(")") && posLP >=0 &&
-                countChar(str,'(') == countChar(str,')') &&
-                str.endsWith(")");
+        // START KGU#332 2017-01-29: Enh. #335 We need a more precise test
+        //int posLP = str.indexOf("(");
+        //this.isFunc =
+        //		posLP < str.indexOf(")") && posLP >=0 &&
+        //        countChar(str,'(') == countChar(str,')') &&
+        //        str.endsWith(")");
+        this.isFunc = isFunction(this.str);
+        // END KGU#332 2017-01-29
         if (this.isFunc)
         {
+            int posLP = str.indexOf("(");
         	// START KGU#2 (#9) 2015-11-13: In general, we don't want to flatten the case!
         	//this.name = str.substring(0, posLP).trim().toLowerCase();
         	this.name = str.substring(0, posLP).trim();
@@ -83,17 +149,27 @@ public class Function
         		this.parameters = Element.splitExpressionList(params, ",");
         		// END KGU#106 2015-12-12
             }
+//            // START KGU#341 2017-02-06
+//            String nPars = Integer.toString(this.parameters.count());
+//            for (String key: knownResultTypes.keySet()) {
+//                String[] parts = key.split("#");
+//                if (name.equalsIgnoreCase(parts[0]) && parts[1].equals(nPars)) {
+//                    this.caseAlignedName = parts[0];
+//                    break;
+//                }
+//            }
+//            // END KGU#341 2017-02-06
         }
-        // END KGU 2015-10-27
+        // END KGU#56 2015-10-27
     }
 
     // This is just a very general string helper function 
     public static int countChar(String s, char c)
     {
         int res = 0;
-        for(int i=0;i<s.length();i++)
+        for (int i=0; i<s.length(); i++)
         {
-            if(s.charAt(i)==c)
+            if (s.charAt(i)==c)
             {
                 res++;
             }
@@ -117,6 +193,51 @@ public class Function
     	// END KGU#56 2015-10-27
     }
 
+    // START KGU#332 2017-01-29: Enh. #335
+    /**
+     * Tests whether the passed-in expression expr may represent a subroutine call
+     * i.e. consists of an identifier followed by a parenthesized comma-separated
+     * list of argument expressions
+     * @param expr - an expression
+     * @return true if the expression has got function call syntax
+     */
+    public static boolean isFunction(String expr)
+    {
+    	expr = expr.trim();
+        int posLP = expr.indexOf("(");
+        boolean isFunc = posLP < expr.indexOf(")") && posLP >=0 &&
+        		countChar(expr,'(') == countChar(expr,')') &&
+        		expr.endsWith(")");
+        // The test above is way too easy, it would also hold for e.g. "(a+b)*(c+d)";
+        // So we restrict the result in the following
+        if (isFunc) {
+        	isFunc = testIdentifier(expr.substring(0, posLP), null);
+        	// Tokenize string between the outer parentheses 
+        	StringList tokens = Element.splitLexically(expr.substring(posLP+1, expr.length()-1), true);
+        	int parLevel = 0;	// parenthesis level, must never get < 0
+        	for (int i = 0; isFunc && i < tokens.count(); i++) {
+        		String token = tokens.get(i);
+        		if (token.equals("(")) parLevel++;
+        		else if (token.equals(")")) {
+        			isFunc = --parLevel >= 0;
+        		}
+        	}
+        }
+        return isFunc;
+    }
+    // END KGU#332 2017-01-29
+    
+    // START KGU 2017-02-21: signature string uniform with Root.getSignatureString(false)
+    public String getSignatureString()
+    {
+    	String sigStr = null;
+    	if (this.isFunc) {
+    		sigStr = this.getName() + "(" + this.paramCount() + ")";
+    	}
+    	return sigStr;
+    }
+    // END KGU 2017-02-21
+    
     public String getName()
     {
     	// START KGU#56 2015-10-27: Analysis now already done by the constructor
@@ -127,6 +248,34 @@ public class Function
         // END KGU#56 2015-10-27
         return this.name;
     }
+    
+//    // START KGU 2017-02-06: Support for case-ignorant mode
+//    /**
+//     * Returns the subroutine name unitized in case to a built-in subroutine
+//     * with otherwise matching signature if ignoreCase is true (otherwise as is)
+//     * @param ignoreCase - whether the name is to be adapted to a built-in one
+//     * @return Subroutine name adapted in case
+//     */
+//    public String getName(boolean ignoreCase)
+//    {
+//        return ignoreCase ? this.caseAlignedName : this.name;
+//    }
+//    
+//    /**
+//     * Returns the originating command with a function name unitized in case to a
+//     * built-in function if ignoreCase is true and the signature only differs in case. 
+//     * @param ignoreCase - whether the name is to be adapted to a built-in one
+//     * @return Subroutine call with adapted subroutine name
+//     */
+//    public String getInvokation(boolean ignoreCase)
+//    {
+//        String invok = this.str;
+//        if (this.isFunc && ignoreCase) {
+//    	    invok = this.getName(ignoreCase) + this.str.substring(this.name.length());
+//        }
+//        return invok;
+//    }
+//    // END KGU 2017-02-06
 
     public int paramCount()
     {
@@ -169,6 +318,43 @@ public class Function
         // END KGU#56 2015-10-27
         else return null;
     }
+    
+    // START KGU#332 2017-01-29: Enh. #335 - type map
+    /**
+     * Returns the name of the result type of this subroutine call if known as
+     * built-in function with unambiguous type.
+     * If this is known as built-in procedure then it returns "void".
+     * If unknown then returns the given defaultType
+     * @param defaultType - null or some default type name for unsuccessful retrieval
+     * @return name of the result type (Java type name)
+     */
+    public String getResultType(String defaultType)
+    {
+//    	return getResultType(false, defaultType);
+    	String type = knownResultTypes.get(this.name + "#" + this.paramCount());
+    	if (type == null) {
+    		type = defaultType;
+    	}
+    	return type;
+    }
+    
+//    /**
+//     * Returns the name of the result type of this subroutine call if known as
+//     * built-in function with unambiguous type.
+//     * If this is known as built-in procedure then it returns "void".
+//     * If unknown then returns the given defaultType
+//     * @param defaultType - null or some default type name for unsuccessful retrieval
+//     * @return name of the result type (Java type name)
+//     */
+//    public String getResultType(boolean ignoreCase, String defaultType)
+//    {
+//        String type = knownResultTypes.get(this.getName(ignoreCase) + "#" + this.paramCount());
+//        if (type == null) {
+//            type = defaultType;
+//        }
+//        return type;
+//    }
+    // END KGU#332 2017-01-29
 
     // START KGU#61 2016-03-22: Moved hitherto from Root (was a private member method there)
     /**
@@ -206,5 +392,24 @@ public class Function
     	return isIdent;
     }
     // END KGU#61 2016-03-22
+    
+    // START KGU 2016-10-16: More informative self-description
+    public String toString()
+    {
+    	return getClass().getSimpleName() + '@' + Integer.toHexString(hashCode()) +
+    			": " + this.getName() + "(" + this.parameters.concatenate(", ") + ")";
+    }
+    // END KGU# 2016-10-16
+
+    // START KGU#311 2016-12-22: Enh. #314 - We need the expression length for replacements
+    /**
+     * Returns the length of the original String that was parsed to this Function
+     * @return length of the code source snippet representing this function call
+     */
+    public int getSourceLength()
+    {
+    	return str.length();
+    }
+    // END KGU#311 2016-12-22
     
 }

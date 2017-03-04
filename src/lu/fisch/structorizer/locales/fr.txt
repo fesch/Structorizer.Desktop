@@ -54,6 +54,7 @@
  *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig     2016.09.13      Entries for InputBox and InputBoxFor revised (bugfix #241)
  *      Kay Gürtzig     2016.09.22      AnalyserPreferences numbering modified, InputBoxFor augmented
+ *      Kay Gürtzig     2016.10.11      Enh. 267: Menu.error15 divided into error15_1 and error15_2
  *
  ******************************************************************************************************
  *
@@ -140,9 +141,6 @@ Menu.menuDiagramMoveDown.text=Déplacer vers le bas
 Menu.menuDiagramTransmute.text=Transmuter
 Menu.menuDiagramCollapse.text=Collaber
 Menu.menuDiagramExpand.text=Exploser
-// Breakpoint
-Menu.menuDiagramBreakpoint.text=Basculer le point d'arrêt
-Menu.menuDiagramBreakTrigger.text=Spécifier une condition d'arrêt
 // Diagram Appearance
 Menu.menuDiagramType.text=Type de diagramme
 Menu.menuDiagramTypeProgram.text=Programme
@@ -191,6 +189,17 @@ Menu.menuPreferencesSaveLoad.text=Charger ...
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
 
+// Menu "Debug"
+Menu.menuDebug.text=Debug
+Menu.menuDebug.mnemonic=b
+// Submenu of "Debug"
+Menu.menuDebugTurtle.text=Turtelizer ...
+Menu.menuDebugExecute.text=Exécuteur ...
+Menu.menuDebugDropBrkpts.text=Suprimer les points d'arrêt
+Menu.menuDebugBreakpoint.text=Basculer le point d'arrêt
+Menu.menuDebugBreakTrigger.text=Condition d'arrêt ...
+Menu.menuDebugDisable.text=
+
 // Menu "Help"
 Menu.menuHelp.text=Aide
 Menu.menuHelp.mnemonic=a
@@ -238,7 +247,8 @@ Menu.error13_3.text=
 Menu.error14_1.text=
 Menu.error14_2.text=
 Menu.error14_3.text=
-Menu.error15.text=
+Menu.error15_1.text=
+Menu.error15_2.text=
 Menu.error16_1.text=
 Menu.error16_2.text=
 Menu.error16_3.text=
@@ -344,7 +354,7 @@ Editor.btnExpand.tooltip=Exploser l'élément sélectionné.
 // turtleizer & executor
 Editor.btnTurtle.tooltip=Ouvrir Turtelizer ...
 Editor.btnMake.tooltip=Ouvrir l'exécuteur ...
-Editor.btnDropBrk.tooltip=Supprimer les point d'arrêts.
+Editor.btnDropBrk.tooltip=Supprimer les points d'arrêt.
 // Popup menu
 Editor.popupCut.text=Couper
 Editor.popupCopy.text=Copier

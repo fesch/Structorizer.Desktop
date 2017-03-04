@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -46,12 +47,14 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Generalized runtime data visualisation
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.21      KGU#207: Slight performance improvement in getElementByCoord()
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
+ *      Kay Gürtzig     2016.12.12      Bugfix #308 in haveOuterRectDrawn() - must be drawn in collapsed mode
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************/
 
 import java.awt.Color;
 import java.awt.Point;
@@ -97,19 +100,6 @@ public class Repeat extends Element implements ILoop {
 		setText(_strings);
 	}
 	
-//	// START KGU#64 2015-11-03: Is to improve drawing performance
-//	/**
-//	 * Recursively clears all drawing info this subtree down
-//	 * (To be overridden by structured sub-classes!)
-//	 */
-//	@Override
-//	public void resetDrawingInfoDown()
-//	{
-//		this.resetDrawingInfo();
-//		this.q.resetDrawingInfoDown();
-//	}
-//	// END KGU#64 2015-11-03
-
 	// START KGU#122 2016-01-04: It makes more sense to revert the line order for Repeat (first ellipse, then condition)
 	public StringList getCollapsedText()
 	{
@@ -120,7 +110,10 @@ public class Repeat extends Element implements ILoop {
 	// START KGU#227 2016-07-30: Enh. #128
 	protected boolean haveOuterRectDrawn()
 	{
-		return false;
+		// START KGU#308 2016-12-12: Bugfix #308
+		//return false;
+		return this.isCollapsed();
+		// END KGU#308 2016-12-12
 	}
 	// END KGU#227 2016-07-30
 
@@ -153,23 +146,6 @@ public class Repeat extends Element implements ILoop {
 		}
 		
 		// START KGU#227 2016-07-30: Enh. #128 Just delegate the basics to Instruction
-//		rect0.top = 0;
-//		rect0.left = 0;
-//		
-//		rect0.right = 2*(E_PADDING/2);
-//		
-//		FontMetrics fm = _canvas.getFontMetrics(font);
-//		
-//		for (int i=0; i<getText(false).count(); i++)
-//		{
-//			int width = getWidthOutVariables(_canvas, getText(false).get(i), this) + 2*(E_PADDING/2);
-//			if (rect0.right < width)
-//			{
-//				rect0.right = width;
-//			}
-//		}
-//		
-//		rect0.bottom = 2*(E_PADDING/2) + getText(false).count()*fm.getHeight();
 		rect0 = Instruction.prepareDraw(_canvas, this.getText(false), this);
 		this.pt0Body.y = rect0.bottom;	// height of the footer
 		// END KGU#227 2016-07-30
@@ -203,97 +179,6 @@ public class Repeat extends Element implements ILoop {
 		}
 
 		// START KGU#227 2016-07-30: Enh. #128 Delegate the drawing of the text area to Instruction
-//		Rect myrect = new Rect();
-//		
-//		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
-//		//Color drawColor = getColor();
-//		Color drawColor = getFillColor();
-//		// END KGU 2015-10-13
-//		FontMetrics fm = _canvas.getFontMetrics(font);
-//		
-//		Canvas canvas = _canvas;
-//		canvas.setBackground(drawColor);
-//		canvas.setColor(drawColor);
-//		
-//		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
-//		//rect = _top_left.copy();
-//		rect = new Rect(0, 0, 
-//				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
-//		Point ref = this.getDrawPoint();
-//		this.topLeft.x = _top_left.left - ref.x;
-//		this.topLeft.y = _top_left.top - ref.y;
-//
-//		// END KGU#136 2016-03-01
-//		
-//		int footerHeight = fm.getHeight() * getText(false).count() + 2*(E_PADDING / 2);
-//		
-//		// FIXME (KGU): What's this nonsense good for?
-//		// draw shape
-//		Rect cprect = _top_left.copy();
-//		canvas.setColor(Color.BLACK);
-//		cprect.bottom = _top_left.bottom;
-//		cprect.top = cprect.bottom - footerHeight;
-//		canvas.drawRect(cprect);
-//		
-//		myrect = _top_left.copy();
-//		myrect.right=myrect.left+Element.E_PADDING;
-//		canvas.drawRect(myrect);
-//
-//		cprect.top += 1;
-//		cprect.left = myrect.right;
-//		
-//		// fill shape
-//		canvas.setColor(drawColor);
-//		myrect.left += 1;
-//		myrect.top += 1;
-//		//myrect.bottom = myrect.bottom;
-//		//myrect.right = myrect.right;
-//		canvas.fillRect(myrect);
-//		
-//		myrect = _top_left.copy();
-//		myrect.bottom = _top_left.bottom;
-//		myrect.top = myrect.bottom - footerHeight;
-//		myrect.left += 1;
-//		myrect.top += 1;
-//		//myrect.bottom=myrect.bottom;
-//		//myrect.right=myrect.right;
-//		canvas.fillRect(myrect);
-//		
-//		// draw comment
-//		if (Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
-//		{
-//			// START KGU 2015-10-11: Use an inherited helper method now
-//			this.drawCommentMark(canvas, _top_left);
-//			// END KGU 2015-10-11
-//		}
-//		// START KGU 2015-10-11
-//		// draw breakpoint bar if necessary
-//		this.drawBreakpointMark(canvas, cprect);
-//		// END KGU 2015-10-11
-//		
-//		
-//		// draw text
-//		for (int i=0; i<getText(false).count(); i++)
-//		{
-//			String text = this.getText(false).get(i);
-//			
-//			canvas.setColor(Color.BLACK);
-//			writeOutVariables(canvas,
-//							  _top_left.left + (E_PADDING / 2),
-//							myrect.top + (E_PADDING / 2) + (i+1)*fm.getHeight(),
-//							text, this
-//							);  	
-//		}
-//		
-//		// START KGU#156 2016-03-11: Enh. #124
-//		// write the run-time info if enabled
-//		this.writeOutRuntimeInfo(canvas, myrect.right - (Element.E_PADDING / 2), myrect.top);
-//		// draw children
-//		myrect.bottom = myrect.top;
-//		myrect.top = _top_left.top + pt0Body.y;
-//		myrect.left += pt0Body.x;
-//		myrect.right = _top_left.right;
-//		// END KGU#156 2016-03-11
 
 		Rect myrect = _top_left.copy();
 
@@ -301,9 +186,19 @@ public class Repeat extends Element implements ILoop {
 		_canvas.setBackground(drawColor);
 		_canvas.setColor(drawColor);
 		_canvas.fillRect(myrect);
+		// START KGU#277 2016-10-13: Enh. #270
+		if (this.disabled) {
+			_canvas.hatchRect(myrect, 5, 10);
+		}
+		// END KGU#277 2016-10-13
 		
 		myrect.top = myrect.bottom - pt0Body.y;
 		Instruction.draw(_canvas, myrect, this.getText(false), this);
+		// START KGU#277 2016-10-13: Enh. #270
+		if (this.disabled) {
+			_canvas.hatchRect(myrect, 5, 10);
+		}
+		// END KGU#277 2016-10-13
 		// Now we must correct the origin information (was set up by draw under wrong assumptions)
 		this.rect.bottom = _top_left.bottom - _top_left.top;
 		this.topLeft.y = _top_left.top - this.getDrawPoint().y;
@@ -336,19 +231,6 @@ public class Repeat extends Element implements ILoop {
 	}
 	// END KGU#122 2016-01-03
 
-	// START KGU 2015-10-11: Merged with getElementByCoord, which had to be overridden as well for proper Comment popping
-//	public Element selectElementByCoord(int _x, int _y)
-//	{
-//		Element selMe = super.selectElementByCoord(_x,_y);
-//		Element sel = q.selectElementByCoord(_x,_y);
-//		if(sel!=null) 
-//		{
-//			selected=false;
-//			selMe = sel;
-//		}
-//		
-//		return selMe;
-//	}
 	@Override
 	public Element getElementByCoord(int _x, int _y, boolean _forSelection)
 	{
@@ -372,13 +254,6 @@ public class Repeat extends Element implements ILoop {
 		
 		return selMe;
 	}
-	// END KGU 2015-10-11
-	
-//	public void setSelected(boolean _sel)
-//	{
-//		selected=_sel;
-//		//q.setSelected(_sel);
-//	}
 	
 	// START KGU#183 2016-04-24: Issue #169 
 	/* (non-Javadoc)
@@ -424,36 +299,6 @@ public class Repeat extends Element implements ILoop {
         super.setColor(_color);
         q.setColor(_color);
     }*/
-
-//	// START KGU#43 2015-10-12
-//	@Override
-//	public void clearBreakpoints()
-//	{
-//		super.clearBreakpoints();
-//		this.q.clearBreakpoints();
-//	}
-//	// END KGU#43 2015-10-12
-//
-//	// START KGU#43 2015-11-09
-//	@Override
-//	public void clearExecutionStatus()
-//	{
-//		super.clearExecutionStatus();
-//		this.q.clearExecutionStatus();
-//	}
-//	// END KGU#43 2015-11-09
-//	
-//	// START KGU#117 2016-03-06: Enh. #77
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
-//	 */
-//	@Override
-//	public void clearRuntimeData()
-//	{
-//		super.clearRuntimeData();
-//		this.getBody().clearRuntimeData();
-//	}
-//	// END KGU#117 2016-03-06
 
 	// START KGU#156 2016-03-13: Enh. #124
 	protected String getRuntimeInfoString()

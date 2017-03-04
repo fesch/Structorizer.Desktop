@@ -216,7 +216,7 @@ public class Ini
 										+ "Java", "");
 				// filename2 = filename2.replaceFirst("\\\\Structorizer.app",
 				// "");
-				filename2 = URLDecoder.decode(filename2);
+				filename2 = URLDecoder.decode(filename2, "UTF-8");
 			}
 		} catch (Error e)
 		{
@@ -416,7 +416,7 @@ public class Ini
 //		p.store(new FileOutputStream(_filename), "last updated "
 //				+ new java.util.Date());
 		FileOutputStream fos = new FileOutputStream(_filename);
-		// START KGU#264 2016-09-28: The date was redundant (next comment is the date, anyway), so bettre write the version
+		// START KGU#264 2016-09-28: The date was redundant (next comment is the date, anyway), so better write the version
 		//p.store(fos, "last updated " + new java.util.Date());
 		p.store(fos, "version " + Element.E_VERSION);
 		// END KGU#264 2016-09-28

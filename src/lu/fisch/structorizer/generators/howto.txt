@@ -1,0 +1,292 @@
+How To Write a Generator
+========================
+
+There are two possible approaches to add a new generator to Structorizer:
+You might start from scratch or copy an existing generator for a language
+with as much similarities to your target language as possible and modify
+it incrementally.
+For the first approach, you should just solve steps 1 and 2 and provide a
+rough prototype implementation of the the methods listed in section 3.
+There you might simply put the target-specific keywords, blocks, and
+indentations for the respective algorithm structur element together with
+the element text (untranslated, just as is) to the code StringList, in
+order to get familiar with the way the generators work. As soon as the
+generator prototype is translatable you might plug it in (see section 7).
+Start exporting some very simple diagrams. Then you will soon see what
+must be refined and added such that the expressions and statements fit
+better into the syntax of the target language. This way you may improve
+and accomplish the outcome step by step, consider more export options etc.
+
+1	Derive a new subclass of lu.fisch.structorizer.generators.Generator.
+2	Implement the abstract configuration methods:
+	2.1	String getDialogTitle()
+		Return a title string for the FileChooser dialog (in English!),
+		usually "Export (language name) ..."
+	2.2	String getFileDescription()
+		Return a string to be used by the file filter for the FileChooser
+		dialog.
+	2.3	String[] getFileExtensions()
+		Return a string array (type String[]) containing all source code
+		file name extensions (without dot!) to be accepted by the file
+		filter, e.g. {"cc", "cpp"} for C++.
+	2.4	String getIndent()
+		Return a string to be used for a one-level indentation in the
+		source, usually	either a tab character or a sequence of space
+		characters.
+	2.5	String getCommentSymbolLeft()
+		Return a string, which opens a delimited comment (e.g. "/*") or
+		is used to start a line comment in the target language (e.g. "//"
+		for C++). Make sure the non-abstract method getCommentRight() is
+		configured accordingly.
+	2.6	String getCommentSymbolRight()
+		Is not abstract but pre-configured to return an empty string,
+		which is perfect for line comments. If the target language doesn't
+		know line comments or if getCommentLeft() returns the left delimiter
+		of a delimited comment, then you must return the corresponding right
+		delimiter here, e.g. "*/".
+	2.7	String getInputReplacer(boolean withPrompt)
+		Depending on the value of withPrompt return
+		true)	a regular substitution pattern for input instructions
+				representing an instruction sequence where substring
+				"$1" marks the position	where to insert the prompt
+				string and substring "$2" marks the position where to
+				place the name of the variable to be input, e.g.
+				"printf($1); scanf(\"\", &$2)" for C;
+		false)	a regular substitution pattern for an input instruction
+				without output of a prompt where "$1" marks the place
+				to insert the variable name, e.g. "std::cin >> $1" for
+				C++.
+		The returned pattern should not end with an instruction separator.
+	2.8	String getOutputReplacer()
+		Return the regular replacement pattern representing an output
+		instruction causing a line feed in the end, where a substring "$1"
+		marks the place where the transformed output expression (assume
+		a single expression here, see later below) is to be placed , e.g.
+		"std::cout << $1 << std::endl" for C++.
+	2.9	String[] getReservedWords()
+		Return a string array (type String[]) containing the reserved
+		words of the target language (also see isCaseSignificant()).
+	2.10	boolean isCaseSignificant()
+		Return true if case matters for identifying reserved words
+		(also see getReservedWords() above) in the target language 
+		(e.g. true for Java, false for Pascal).
+	2.11	boolean breakMatchesCase()
+		Specify whether an instruction to leave a loop (the innermost
+		enclosing loop) like "break;" in C is available in the target
+		language AND ALSO BREAKS CASE SELECTIONS (switch constructs).
+		Return true if and only if there is an instruction that does both.
+	2.12	String getIncludePattern()
+		Return a code line for an include / import / use directive where
+		a placeholder "%%" inidcates that a comma-separated list of file
+		names or module names etc. can be inserted here, or otherwise a "%"
+		placeholder is to indicate that only a single item may be inserted
+		at that very position (such that several lines will have to be
+		generated fromthis template for a list of items).
+3	Override the substantial generator methods.
+	3.0	General remarks
+		There is a method for each structogram element type, obtaining
+		the element and the current indentation string as arguments.
+		Each of the generateCode methods is to recursively translate
+		the structure and its contents to lines of code, which are to
+		be appended to the generator's inherited code member (being a
+		StringList object). The base class Generator provides bare method
+		skeletons showing how to do the recursive descending. On
+		overriding these methods you may start from a copy of them and
+		fill it with "flesh". Usually the first action of the method
+		will be to add the element comment to the code, using method
+		insertComment(Element element, String _indent); see sections 5
+		and beyond for helper methods and further customization
+		opportunities. You will have to respect several export options
+		explained in section 4. You will find a lot of examples in the
+		existing Generator subclasses.
+	3.1	void generateCode(Instruction _inst, String _indent)
+		Is to generate the code for the given basic instruction element.
+		The code schould be enclosed by the following construct:
+		if (!insertAsComment(_inst, _indent)) {
+			// place actual generator code here
+		}
+		To translate the instruction you will now fetch the element text
+		by _inst.getText() and translate it line for line.
+		Class Instruction provides some line-classifying methods like:
+		boolean isDeclaration(String line),
+		boolean isAssignment(String line),
+		boolean isInput(String line),
+		boolean isEmptyInput(String line),
+		boolean isOutput(String line), or
+		boolean isTurtleizerMove(String line).
+	3.2	void generateCode(Alternative _alt, Strin _indent)
+		Is to generate the code for the given alternative element,
+		including its branches (_alt.qTrue, _alt.qFalse), which are
+		to handled by recursive calls of generateCode() at the
+		appropriate place.
+	3.3	void generateCode(Case _case, String _indent)
+		Is to generate the code for the given alternative element,
+		including its branches, which are elements of the Subqueue
+		Vector _case.qs and to be handled by recursive calls of
+		generateCode(). For the structure of the element text see
+		Structorizer User Guide and compare the existing Generator
+		subclasses.
+	3.4	void generateCode(For _for, String _indent)
+		A good idea is first to classify the loop style and to delegate
+		the handling of FOR-IN loops (aka foreach loops) to another
+		method:
+		if (_for.isForInLoop())
+		{
+			// Method generateForInCode returns false if it doesn't
+			// cope with the loop structure or decides that it isn't
+			// actually a FOR-IN loop but should be handled as ordinary
+			// FOR loop
+			if (generateForInCode(_for, _indent)) return;
+		}
+		The rest is straightforward. You may make use of the following
+		helper methods of the For element class (for counting loops):
+		String For.getCounterVar(),
+		String For.getStartValue(),
+		String For.getEndValue(),
+		int For.getStepConst().
+		For FOR-IN loops there are some other helper methods:
+		String For.getCounterVar(),
+		StringList Generator.extractForInListItems(For _for)
+		To replace a non-supported FOR-IN list by an equivalent
+		algorithm structure may be tricky, but there are several
+		elaborate code examples in various Generater subclasses.
+	3.5	void generateCode(While _while, String _insert)
+		A specific support for exit jumps is provided by the jumpTable
+		inherited and prepared by the base Generator class. It may be
+		used to generate jump labels (see generateCode(Jump, String)).
+	3.6	void generateCode(Repeat _repeat, String _insert)
+		A specific support for exit jumps is provided by the jumpTable
+		inherited and prepared by the base Generator class. It may be
+	3.7	void generateCode(Forever _forever, String _insert)
+		A specific support for exit jumps is provided by the jumpTable
+		inherited and prepared by the base Generator class. It may be
+	3.8	void generateCode(Call _call, String _insert)
+		Class Call offers classifying and identifying methods:
+		boolean Call.isAssignment(String line),
+		boolean Call.isProcedureCall(String line),
+		boolean Call.isFunctionCall(String line),
+		Function getCalledRoutine() - works only for single-line Calls.
+	3.9	void generateCode(Jump _jump, String _indent)
+		Class Jump is going to offer the following classification
+		methods:
+		boolean isLeave() - returns true if it's a break/leave
+		boolean isReturn() - returns true if it's a function return
+		boolean isExit() - returns true if it's a program exit.
+		The generator may still have to analyse the code lines and
+		identify the respective keywords in order to isolate values.
+		See section 4.1 how to getb the configured keywords.
+		Even more important is the jumpTable member inherited from
+		and automatically prepared by the Generator base class: it
+		maps Jump elements and elements left by a jump (loops) to
+		reference ids such that both can be matched easily or unique
+		jump labels may be derived from.
+	3.10	void generateCode(Parallel _para, String _indent)
+		Depending on whether the language supports concurrency either
+		a working multithreading section should be derived or at least
+		a sequential concatenation of the parallel branches is to be
+		produced, ideally marked with bold comments (see examples in
+		the Generator subclasses).
+	3.11	void generateCode(Root, String _indent)
+		This method builds the outer code framework for the algorithm
+		(i.e. the program, procedure or function definition), usually
+		consisting of the header, a "preamble" (containing e.g. variable
+		delarations), the implementation part, the result compilation,
+		and a footer. See Generator.generateCode(Root, String) for the
+		general template. Now you have two options:
+		a)	Either you may override generateCode(Root, String) as a
+			whole if the substructure template doesn't suit your
+			target language needs,
+		b)	or you may leave the base method as is and override the
+			submethods (see their Java doc and the exaples you may
+			find in various Generator subclasses):
+			String generateHeader(Root, ...),
+			String generatePreamble(Root, ...),
+			String generateResult(Root, ...),
+			void generateFooter(Root, ...).
+4.	Export options and other preferences to be considered
+	4.1	Parser Preferences
+		For certain kinds of analysis (e.g. in generateCode(Jump,...))
+		some of the configured Parser Preferences may be needed. They
+		can be retrieved by method D7Parser.getKeyword(String tag)
+		which returns the configured keyword.
+		These are the defined tags for the keyword retrieval (do never
+		check against hard-coded keywords like e.g. "break"!):
+		"preAlt", "posAlt" for Alternatives (if statements),
+		"preFor", "postFor", "stepFor" for classical FOR loops,
+		"preForIn", "postForIn" for FOR loops of FOR-IN style,
+		"preWhile", "postWhile" for WHILE lop conditions,
+		"preRepeat", "postRepeat" for REPEAT loop conditions,
+		"preCase" for the CASE discriminator,
+		"postCase" for the branch selectors of CASE elements,
+		"preLeave" for leave (or break) instructions,
+		"preReturn" for return statements,
+		"preExit" for program exit instructions,
+		"input", "output" for input and output instructions.
+	4.2	Export options
+		(TODO)
+5.	Helper methods for element text transformation
+	The most important helper methods are:
+	5.1	String transform(String) with several submethods
+		Either this method or its submethods (like transformTokens())
+		or both should be overridden in order to do he necessary
+		transformations of the expression syntax. It is recommended
+		to do as much as possible wth the transformTokens() method
+		which obtains and manipulates a list of lexical tokens allowing
+		more precise manipulation than e.g. with regular expressions
+		or mere string replacements.
+	5.2	void insertComment(Element _ele, String _indent)
+		Just adds the element comment from the structogram with the given
+		indentation.
+	5.3	void insertComment(String _comment, String _indent)
+		Inserts the given _comment string as comment to the code (with the
+		given indentation)
+	5.4	void insertBlockComment(StringList, _commentLines, String _indent,
+			String _start, String _cont, String _end)
+		This inserts the _commentLines as a multi-line comment block
+		with indentation _indent, where _start is the opening delimiter
+		(e.g. "/*" for C or "/**" for JavaDoc), _cont an optional
+		continuation marker for the beginnings of the intemediate comment
+		lines (e.g. " *"), and _end is the closing delimiter (e.g. "*/").
+	5.4	boolean insertAsComment(Element _ele, String _indent)
+		This inserts the instruction text as a comment if the respective
+		export option (see section 4) requires so. The result is true in
+		this case (such that no forther export activity is necessary for
+		this element) or false otherwise, meaning that a regular export
+		is to be done.
+	5.5	void code.add(String line)
+		The raw line export, the indentation must be prefix part of line,
+		a newline will automatically be added.
+	5.6	void addCode(String text, String _indent, boolean asComment)
+		Like code.add() but with separate indentation parameter (such that
+		text shall NOT contain the indentation) and an integrated opportunity
+		to add the code in translated, but "outcomented" form. The last
+		argument should typically be set with the isDisabled() property of
+		the element to be exported (method addCode has no own access to the
+		element). The comment delimiters will be placed at the line beginnings
+		wheras the outcommented code itself will be properly indented within
+		the comment.
+	...
+	(TODO to be continued and explained)
+6.	Setup to support the FileAPI
+	Structorizer provides an executable proprietary API for text files.
+	You may want either to replace the FileAPI routine calls by equi-
+	valent target language constructs or to provide an emulation of
+	the routines of the Structorizer FileAPI in the target language,
+	which should then be integrated in the export.
+	If you decide to implement an emulation then you should place this
+	implementation as subroutine definitions of the target language
+	into a file with name "FileAPI.xxx.txt" where "xxx" is to be replaced
+	by the file name extension of your target language. Mark the code
+	range to be inserted into the export file with
+7.	Add the generator to the plugin configuration
+	Find the resource file generators.xml in the ...structorizer.gui
+	package directory and add a new <plugin> entry with a title string
+	for the export menu and the fully qualified class name of the new
+	generator. (For future enhancement, an icon attribute is prepared
+	but still not used for the menu. So best is to leave it empty.)
+8.	Batch Mode test
+	Make sure the generator also works fine in batch mode (i.e. from
+	command line):
+	Linux:	 	structorizer.sh -x <languageTitle> <nsdFile>
+	Windows:	structorizer.bat -x <languageTitle> <nsdFile>
+

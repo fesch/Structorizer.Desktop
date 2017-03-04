@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.gui;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -39,16 +40,24 @@ package lu.fisch.structorizer.gui;
  *                                      element collapsing introduced
  *      Kay Gürtzig     2016.07.06      Enh. #188: New icon 109_wand introduced for element conversion
  *      Kay Gürtzig     2016.07.22      Enh. #199: New icon 110_help introduced for online user guide activation
- *      Kay Gürtzig     2016-07-31      Enh. #128: New icon 111_c_plus_t introduced for "commments plus text" mode
- *      Kay Gürtzig     2016-08-02      Enh. #215: New icon 112_stopwatch introduced for breapoint count triggers
- *      Kay Gürtzig     2016-09-05      Generic support for locale icons
- *      Kay Gürtzig     2016-09-25      Enh. #253: New icon 025_import for import configuration
+ *      Kay Gürtzig     2016.07.31      Enh. #128: New icon 111_c_plus_t introduced for "commments plus text" mode
+ *      Kay Gürtzig     2016.08.02      Enh. #215: New icon 112_stopwatch introduced for breapoint count triggers
+ *      Kay Gürtzig     2016.09.05      Generic support for locale icons
+ *      Kay Gürtzig     2016.09.25      Enh. #253: New icon 025_import for import configuration
+ *      Kay Gürtzig     2016.10.13      Enh. #270: New icon 026_disable for inactive elements
+ *      Kay Gürtzig     2016.10.16      Enh. #272: New icons 027_richTurtle and 028_poorTurtle
+ *      Kay Gürtzig     2016.11.01      Issue #81: icons 089 through 091 and 113 hadn't been scaled
+ *      Kay Gürtzig     2016.12.14      Enh. #305: New icon 029_index for the Arranger index 
+ *      Kay Gürtzig     2017.01.05      Enh. #319: New icons 045_remove, 046_covered for Arranger index popup
+ *      Kay Gürtzig     2017.01.07      Enh. #319: New icon 030_function_green for Arranger index
+ *      Kay Gürtzig     2017.01.11      Enh. #81: New icon 051_scale_gui for scaling preset
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import java.awt.*;
 import java.awt.image.*;
@@ -67,7 +76,10 @@ public class IconLoader {
 
 	// Icons
 	public static ImageIcon icoNSD = new ImageIcon(getURI(from+"icons/structorizer.png"));
-	public static ImageIcon icoNSD48 = new ImageIcon(getURI(from+"icons/structorizer48.png"));
+    // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+	//public static ImageIcon icoNSD48 = new ImageIcon(getURI(from+"icons/structorizer48.png"));
+	public static ImageIcon icoNSD48 = getIconImage(getURI(from+"icons/structorizer48.png"));
+	// END KGU#287 2016-11-02
 	
 	public static ImageIcon ico001 = getIconImage(getURI(from+"icons/001_New.png"));
 	public static ImageIcon ico002 = getIconImage(getURI(from+"icons/002_Open.png"));
@@ -96,6 +108,19 @@ public class IconLoader {
 	// START KGU#258 2016-09-25: Enh. #253
 	public static ImageIcon ico025 = getIconImage(getURI(from+"icons/025_import.png"));
 	// END KGU#258 2016-09-25
+	// START KGU#277 2016-10-13: Enh. #270
+	public static ImageIcon ico026 = getIconImage(getURI(from+"icons/026_disable.png"));
+	// END KGU#277 2016-10-13
+	// START KGU#282 2016-10-16: Enh. #272
+	public static ImageIcon ico027 = getIconImage(getURI(from+"icons/027_richTurtle.png"));
+	public static ImageIcon ico028 = getIconImage(getURI(from+"icons/028_poorTurtle.png"));
+	// END KGU#282 2016-10-16
+	// START KGU#305 2016-12-14: Enh. #305
+	public static ImageIcon ico029 = getIconImage(getURI(from+"icons/029_index.png"));
+	// END KGU#305 2016-12-14
+	// START KGU#318 2017-01-07: Enh. #319
+	public static ImageIcon ico030 = getIconImage(getURI(from+"icons/030_function_green.png"));
+	// END KGU#318 2017-01-07
 
 	public static ImageIcon ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
 	public static ImageIcon ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));
@@ -109,13 +134,17 @@ public class IconLoader {
 	public static ImageIcon ico042 = getIconImage(getURI(from+"icons/042_copy.png"));
 	public static ImageIcon ico043 = getIconImage(getURI(from+"icons/043_paste.png"));
 	public static ImageIcon ico044 = getIconImage(getURI(from+"icons/044_cut.png"));
-	//public static ImageIcon ico045 = getIconImage(getURI(from+"icons/045_fr.png"));
-	//public static ImageIcon ico046 = getIconImage(getURI(from+"icons/046_uk.png"));
+	// START KGU#318 2017-01-05: Enh. #319 - new icon for Aranger index
+	public static ImageIcon ico045 = getIconImage(getURI(from+"icons/045_remove.png"));
+	public static ImageIcon ico046 = getIconImage(getURI(from+"icons/046_covered.png"));
+	// END KGU#318 2017-01-05
 	public static ImageIcon ico047 = getIconImage(getURI(from+"icons/047_casebefore.png"));
 	public static ImageIcon ico048 = getIconImage(getURI(from+"icons/048_caseafter.png"));
 	public static ImageIcon ico049 = getIconImage(getURI(from+"icons/049_callbefore.png"));
 	public static ImageIcon ico050 = getIconImage(getURI(from+"icons/050_callafter.png"));
-	//public static ImageIcon ico051 = getIconImage(getURI(from+"icons/051_nl.png"));
+	// START KGU#287 2017-01-11: Issue #81/#330
+	public static ImageIcon ico051 = getIconImage(getURI(from+"icons/051_scale_gui.png"));
+	// END KGU#287 2017-01-11
 	public static ImageIcon ico052 = getIconImage(getURI(from+"icons/052_update.png"));
 	
 	public static ImageIcon ico055 = getIconImage(getURI(from+"icons/055_jumpafter.png"));
@@ -195,6 +224,10 @@ public class IconLoader {
         public static void setScaleFactor(double scale)
         {
             scaleFactor=scale;
+            // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+        	icoNSD48 = getIconImage(getURI(from+"icons/structorizer48.png"));
+        	// END KGU#287 2016-11-02
+
             ico001 = getIconImage(getURI(from+"icons/001_New.png"));
             ico002 = getIconImage(getURI(from+"icons/002_Open.png"));
             ico003 = getIconImage(getURI(from+"icons/003_Save.png"));
@@ -222,6 +255,19 @@ public class IconLoader {
         	// START KGU#258 2016-09-25: Enh. #253
             ico025 = getIconImage(getURI(from+"icons/025_import.png"));
         	// END KGU#258 2016-09-25
+        	// START KGU#277 2016-10-13: Enh. #270
+        	ico026 = getIconImage(getURI(from+"icons/026_disable.png"));
+        	// END KGU#277 2016-10-13
+        	// START KGU#282 2016-10-16: Enh. #272
+        	ico027 = getIconImage(getURI(from+"icons/027_richTurtle.png"));
+        	ico028 = getIconImage(getURI(from+"icons/028_poorTurtle.png"));
+        	// END KGU#282 2016-10-16
+        	// START KGU#305 2016-12-14: Enh. #305
+        	ico029 = getIconImage(getURI(from+"icons/029_index.png"));
+        	// END KGU#305 2016-12-14
+        	// START KGU#318 2017-01-07: Enh. #319
+        	ico030 = getIconImage(getURI(from+"icons/030_function_green.png"));
+        	// END KGU#318 2017-01-07
 
             ico031 = getIconImage(getURI(from+"icons/031_make_copy.png"));
             ico032 = getIconImage(getURI(from+"icons/032_make_bmp.png"));
@@ -235,13 +281,17 @@ public class IconLoader {
             ico042 = getIconImage(getURI(from+"icons/042_copy.png"));
             ico043 = getIconImage(getURI(from+"icons/043_paste.png"));
             ico044 = getIconImage(getURI(from+"icons/044_cut.png"));
-            //ico045 = getIconImage(getURI(from+"icons/045_fr.png"));
-            //ico046 = getIconImage(getURI(from+"icons/046_uk.png"));
+            // START KGU#318 2017-01-05: Enh. #319 - new icons for Arranger index
+            ico045 = getIconImage(getURI(from+"icons/045_remove.png"));
+            ico046 = getIconImage(getURI(from+"icons/046_covered.png"));
+            // END KGU#318 2017-01-05
             ico047 = getIconImage(getURI(from+"icons/047_casebefore.png"));
             ico048 = getIconImage(getURI(from+"icons/048_caseafter.png"));
             ico049 = getIconImage(getURI(from+"icons/049_callbefore.png"));
             ico050 = getIconImage(getURI(from+"icons/050_callafter.png"));
-            //ico051 = getIconImage(getURI(from+"icons/051_nl.png"));
+        	// START KGU#287 2017-01-11: Issue #81/#330
+        	ico051 = getIconImage(getURI(from+"icons/051_scale_gui.png"));
+        	// END KGU#287 2017-01-11
             ico052 = getIconImage(getURI(from+"icons/052_update.png"));
 
             ico055 = getIconImage(getURI(from+"icons/055_jumpafter.png"));
@@ -273,10 +323,20 @@ public class IconLoader {
             //ico086 = getIconImage(getURI(from+"icons/086_it.png"));
             //ico087 = getIconImage(getURI(from+"icons/087_cn.png"));
             //ico088 = getIconImage(getURI(from+"icons/088_cz.png"));
+            
+            // START KGU#287 2016-11-01: Issue #81: Scaling had been forgotten
+            ico089 = getIconImage(getURI(from+"icons/089_paraAfter.png"));
+            ico090 = getIconImage(getURI(from+"icons/090_paraBefore.png"));
+        	ico091 = getIconImage(getURI(from+"icons/091_conv_para.png"));
+            // END KGU#287 2016-11-01
+            
             //ico092 = getIconImage(getURI(from+"icons/092_ru.png"));
             //ico093 = getIconImage(getURI(from+"icons/093_pl.png"));
             //ico094 = getIconImage(getURI(from+"icons/094_tw.png"));
 
+            // START KGU#287 2016-11-02: Issue #81: Scaling had been forgotten
+        	ico102 = getIconImage(getURI(from+"icons/102_switch.png"));
+            // END KGU#287 2016-11-02            
             // START KGU 2015-10-12: Whatever this might be good for...(?)
         	ico103 = getIconImage(getURI(from+"icons/103_breakpt.png"));
         	ico104 = getIconImage(getURI(from+"icons/104_nobreakpt.png"));
@@ -301,6 +361,10 @@ public class IconLoader {
         	// START KGU#213 2016-08-02: Enh. #215 - breakpoint counting trigger
         	ico112 = getIconImage(getURI(from+"icons/112_stopwatch.png"));
         	// END KGU#213 2016-08-02
+
+            // START KGU#287 2016-11-01: Issue #81: Scaling had been forgotten
+            ico113 = getIconImage(getURI(from+"icons/113_translater.png"));
+            // END KGU#287 2016-11-01
 
         	// START KGU#232 2016-08-02: Enh. #222 - more flexible language export
         	//ico114 = getIconImage(getURI(from+"icons/locale_unknown.png"));
@@ -329,30 +393,49 @@ public class IconLoader {
         	ImageIcon ii = icoLocales.get(localeName);
         	if (ii == null && Locales.isNamedLocale(localeName))
         	{
+        		// Already comprises scaling...
         		ii = getIconImage(getURI(from + "icons/locale_"+localeName+".png"));
         	}
-        	ii = scale(ii);
         	return ii;
         }
         // END KGU 2016-09-06
 
-        private static ImageIcon scale(ImageIcon src)
+        /**
+         * Returns an ImageIcon version of src, which is magnified by length factor this.scaleFactor
+         * @param src - the source icon
+         * @return the magnified (or diminished) icon
+         */
+        private static final ImageIcon scale(ImageIcon src)
         {
             //System.out.println(scaleFactor);
             if(scaleFactor>1)
             {
                 int w = (int)(scaleFactor*src.getIconWidth());
                 int h = (int)(scaleFactor*src.getIconHeight());
-                int type = BufferedImage.TYPE_INT_ARGB;
-                BufferedImage dst = new BufferedImage(w, h, type);
-                Graphics2D g2 = dst.createGraphics();
-                g2.drawImage(src.getImage(), 0, 0, w, h, null);
-                g2.dispose();
-                return new ImageIcon(dst);
+                return scaleTo(src, w, h);
             }
             else return src;
         }
 
+
+        /**
+         * Returns an ImageIcon version of src, which is magnified (or diminished to the
+         * given width and height
+         * @param src - the source icon
+         * @param width - the target icon width
+         * @param height - the target icon height
+         * @return the magnified (or diminished) icon
+         */
+        public static final ImageIcon scaleTo(ImageIcon src, int width, int height)
+        {
+            //System.out.println(scaleFactor);
+        	int type = BufferedImage.TYPE_INT_ARGB;
+        	BufferedImage dst = new BufferedImage(width, height, type);
+        	Graphics2D g2 = dst.createGraphics();
+        	g2.drawImage(src.getImage(), 0, 0, width, height, null);
+        	g2.dispose();
+        	return new ImageIcon(dst);
+        }
 
 	public static java.net.URL getURI(String _filename)
 	{

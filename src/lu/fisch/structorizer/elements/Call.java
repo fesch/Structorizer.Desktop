@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -44,6 +45,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.07      Enh. #188: New copy constructor to support conversion (KGU#199)
  *      Kay Gürtzig     2016.07.19      Enh. #160: New method getSignatureString()
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
+ *      Kay Gürtzig     2017.02.20      Enh. #259: Retrieval of result types of called functions enabled (q&d)
  *
  ******************************************************************************************************
  *
@@ -76,14 +78,18 @@ package lu.fisch.structorizer.elements;
  *      7. Whether a returned value is required and in this case of what type will only dynamically be
  *         relevant on execution (interpreted code). There is no check in advance.
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import java.awt.Color;
+import java.util.HashMap;
+import java.util.Vector;
 
 import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
+import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.IconLoader;
 
@@ -130,31 +136,6 @@ public class Call extends Instruction {
 		// END KGU#136 2016-03-01
 
 		// START KGU#227 2016-07-30: Enh. #128 - on this occasion, we just enlarge the instruction rect width
-//		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
-//		rect0.top=0;
-//		rect0.left=0;
-//		// START KGU#91 2015-12-02: The minimum width must allow to show both vertical lines
-//		//rect.right = 2*(E_PADDING/2);
-//		rect0.right = 4*(E_PADDING/2);
-//		// END KGU#91 2015-12-02
-//		
-//		rect0.bottom=0;
-//		
-//		FontMetrics fm = _canvas.getFontMetrics(Element.font);
-//		
-//		for (int i=0; i<getText(false).count(); i++)
-//		{
-//			int lineWidth = getWidthOutVariables(_canvas,getText(false).get(i),this) + 4 * (E_PADDING/2);
-//			if (rect0.right < lineWidth)
-//			{
-//				rect0.right = lineWidth;
-//			}
-//		}
-//		rect0.bottom = 2 * (E_PADDING/2) + getText(false).count() * fm.getHeight();
-//
-//		// START KGU#136 2016-03-01: Bugfix #97
-//		isRectUpToDate = true;
-//		// END KGU#136 2016-03-01
 		super.prepareDraw(_canvas);
 		rect0.right += 2*(E_PADDING/2);
 		// END KGU#227 2016-07-30
@@ -164,56 +145,6 @@ public class Call extends Instruction {
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
 		// START KGU 2016-07-30: Just delegate the basics to super
-//		Rect myrect = new Rect();
-//		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
-//		//Color drawColor = getColor();
-//		Color drawColor = getFillColor();
-//		// END KGU 2015-10-13
-//		FontMetrics fm = _canvas.getFontMetrics(Element.font);
-//
-//		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
-//		//rect = _top_left.copy();
-//		rect = new Rect(0, 0, 
-//				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
-//		Point ref = this.getDrawPoint();
-//		this.topLeft.x = _top_left.left - ref.x;
-//		this.topLeft.y = _top_left.top - ref.y;
-//		// END KGU#136 2016-03-01
-//		
-//		Canvas canvas = _canvas;
-//		canvas.setBackground(drawColor);
-//		canvas.setColor(drawColor);
-//		
-//		myrect=_top_left.copy();
-//		
-//		canvas.fillRect(myrect);
-//		
-//		// draw comment
-//		if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
-//		{
-//			this.drawCommentMark(canvas, _top_left);
-//		}
-//		// START KGU 2015-10-11
-//		// draw breakpoint bar if necessary
-//		this.drawBreakpointMark(canvas, _top_left);
-//		// END KGU 2015-10-11
-//		
-//		// START KGU#156 2016-03-11: Enh. #124
-//		// write the run-time info if enabled
-//		this.writeOutRuntimeInfo(canvas, _top_left.left + rect.right - (Element.E_PADDING), _top_left.top);
-//		// END KGU#156 2016-03-11
-//				
-//		
-//		for(int i=0;i<getText(false).count();i++)
-//		{
-//			String text = this.getText(false).get(i);
-//			canvas.setColor(Color.BLACK);
-//			writeOutVariables(canvas,
-//					_top_left.left + 2 * (E_PADDING / 2),
-//					_top_left.top + (E_PADDING / 2) + (i+1) * fm.getHeight(),
-//					text,this
-//					);  	
-//		}
 		super.draw(_canvas, _top_left);
 		// END KGU 2016-07-30: Just delegate the basics to super
 		
@@ -255,28 +186,14 @@ public class Call extends Instruction {
 	public Element copy()
 	{
 		Element ele = new Call(this.getText().copy());
-// START KGU#199 2016-07-07: Enh. #188, D.R.Y.
-//		ele.setComment(this.getComment().copy());
-//		ele.setColor(this.getColor());
-//		// START KGU#82 (bug #31) 2015-11-14
-//		ele.breakpoint = this.breakpoint;
-//		// END KGU#82 (bug #31) 2015-11-14
-//		// START KGU#117 2016-03-07: Enh. #77
-//		ele.simplyCovered = Element.E_COLLECTRUNTIMEDATA && this.simplyCovered;
-//		ele.deeplyCovered = Element.E_COLLECTRUNTIMEDATA && this.deeplyCovered;
-//		// END KGU#117 2016-03-07
-//		// START KGU#183 2016-04-24: Issue #169
-//		ele.selected = this.selected;
-//		// END KGU#183 2016-04-24
-//		return ele;
-//	}
+		// START KGU#199 2016-07-07: Enh. #188, D.R.Y.
 		return copyDetails(ele, false, true);
+		// END KGU#199 2016-07-07
 	}
-// END KGU#199 2016-07-07
 	
 	// START #178 2016-07-19: Enh. #160
 	/**
-	 * Returns a string of form "&lt;function_name&gt;#&lt;parameter_count&gt;"
+	 * Returns a string of form "&lt;function_name&gt;(&lt;parameter_count&gt;)"
 	 * describing the signature of the called routine if the text is conform to
 	 * the call syntax described in the user guide. Otherwise null will be returned.
 	 * @return signature string, e.g. "factorial#1", or null
@@ -287,7 +204,10 @@ public class Call extends Instruction {
 		Function fct = this.getCalledRoutine();
 		if (fct != null)
 		{
-			signature = fct.getName() + "#" + fct.paramCount();
+			// START KGU#261 2017-02-20: Unified with Root.getSignatureString(false)
+			//signature = fct.getName() + "#" + fct.paramCount();
+			signature = fct.getSignatureString();
+			// END KGU#261 2017-02-20
 		}
 		return signature;
 	}
@@ -326,4 +246,33 @@ public class Call extends Instruction {
 		return null;
 	}
 
+	// START KGU#261 2017-02-20: Enh. #259 - Allow to retrieve return type info
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.Instruction#getTypeFromAssignedValue(lu.fisch.utils.StringList, java.util.HashMap)
+	 */
+	@Override
+	protected String getTypeFromAssignedValue(StringList rightSide, HashMap<String, TypeMapEntry> knownTypes)
+	{
+		String typeSpec = "";
+		Function called = this.getCalledRoutine();
+		if (called != null) {
+			String signature = called.getSignatureString();
+			Root myRoot = Element.getRoot(this);
+			if (myRoot.getSignatureString(false).equals(signature)) {
+				typeSpec = myRoot.getResultType();
+			}
+			else if (Arranger.hasInstance()) {
+				Vector<Root> routines = Arranger.getInstance().findRoutinesBySignature(called.getName(), called.paramCount());
+				if (routines.size() == 1) {
+					typeSpec = routines.get(0).getResultType();
+				}
+			}
+			if (typeSpec == null) {
+				typeSpec = "";
+			}
+		}
+		return typeSpec;
+	}
+	// END KGU#261 2017-02-20
+	
 }

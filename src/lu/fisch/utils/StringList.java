@@ -41,7 +41,8 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2016.01.08      Method replaceAllBetween() added, replaceAll etc. reduced to it.
  *      Kay Gürtzig     2016.03.26      Method subSequence() added.
  *      Kay Gürtzig     2016.04.03      Method int removeAll(StringList, int, boolean) added
- *      Bob Fisch       2016.08.01      added method "toArray()" and "remove"
+ *      Bob Fisch       2016.08.01      added method "toArray()" and "remove(int)" (which is a synonym to delete(int))
+ *      Kay Gürtzig     2017.01.31      Method remove(int,int) added. 
  *
  ******************************************************************************************************
  *
@@ -977,10 +978,18 @@ public class StringList {
     public void remove(int index)
     {
         strings.remove(index);
-    }
-    
+    } 
     // END BOB 2016-08-01
-
+    
+    // START KGU 2017-01-31
+    public void remove(int fromIndex, int toIndex)
+    {
+    	for (int count = Math.min(toIndex, this.strings.size())-fromIndex; count > 0; count--) {
+    		strings.remove(fromIndex);
+    	}
+    }
+    // END KGU 2017-01-31
+    
         
     public static void main(String[] args)
     {

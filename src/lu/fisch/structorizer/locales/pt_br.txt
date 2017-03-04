@@ -54,6 +54,8 @@
  *      Kay Gürtzig     2016.09.04  Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig     2016.09.13  Entries for InputBox and InputBoxFor revised (bugfix #241)
  *      Kay Gürtzig     2016.09.22  AnalyserPreferences numbering modified
+ *      Kay Gürtzig     2016.10.11  Enh. 267: Menu.error15 renamed into Menu.error15_1
+ *      Kay Gürtzig     2016.12.14  Enh. #311: New menu "Debug"
  *
  ******************************************************************************************************
  *
@@ -151,9 +153,6 @@ Menu.menuDiagramTransmute.text=Mudar
 Menu.menuDiagramCollapse.text=Colapsar
 Menu.menuDiagramExpand.text=Expandir
 
-// Breakpoint
-Menu.menuDiagramBreakpoint.text=Alternar breakpoint
-
 // Diagram Appearance
 Menu.menuDiagramType.text=Tipo
 Menu.menuDiagramTypeProgram.text=Principal
@@ -202,6 +201,17 @@ Menu.menuPreferencesSaveLoad.text=Carregar do arquivo ...
 // Menu "View" (not in use right now!) 
 Menu.menuView.text= 
 
+// Menu "Debug"
+Menu.menuDebug.text=Debug
+Menu.menuDebug.mnemonic=b
+// Submenu of "Debug"
+Menu.menuDebugTurtle.text=Abrir Turtleizer ...
+Menu.menuDebugExecute.text=Abrir Executor ...
+Menu.menuDebugDropBrkpts.text=Remover todos os breakpoints.
+Menu.menuDebugBreakpoint.text=Aternar breakpoint
+Menu.menuDebugBreakTrigger.text=
+Menu.menuDebugDisable.text=
+
 // Menu "Help"
 Menu.menuHelp.text=Ajuda
 Menu.menuHelp.mnemonic=h
@@ -237,7 +247,7 @@ Menu.error13_3.text=Suas funções parecem usar vários mecanismos de retorno co
 Menu.error14_1.text=Os parâmetros da repetição (FOR) não são consistentes com o texto do cabeçalho!
 Menu.error14_2.text=A valor da variação na repetição («%») não é constante inteira válida!
 Menu.error14_3.text=A variável «%» pode coincidir com outra já configurada como palavra-chave no cabeçalho da repetição (FOR)!
-Menu.error15.text=A chamada (CALL) não tem o formato «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!
+Menu.error15_1.text=A chamada (CALL) não tem o formato «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!
 Menu.error16_1.text=Um desvio (JUMP) pode estar vazio ou iniciar-se por %, possivelmente seguido por um argumento!	
 Menu.error16_2.text=A instrução para retorno, fora da última posição, deve ter o formato de um desvio (JUMP)!
 Menu.error16_3.text=Uma instrução de escape (exit, leave, break) somente é permitida como desvio (JUMP)!

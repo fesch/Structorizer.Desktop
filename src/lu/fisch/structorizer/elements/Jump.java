@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -105,7 +106,8 @@ package lu.fisch.structorizer.elements;
  *      3. A Jump element inside a Case instruction actually means a two-level break in C-like languages
  *         and hence requires a goto or a labeled break instruction.
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import java.awt.Color;
 
@@ -162,29 +164,6 @@ public class Jump extends Instruction {
 		// END KGU#136 2016-03-01
 
 		// START KGU#227 2016-07-30: Enh. #128 - on this occasion, we just enlarge the instruction rect width
-//		// KGU#136 2016-02-27: Bugfix #97 - all rect references replaced by rect0
-//		rect0.top=0;
-//		rect0.left=0;
-//		rect0.right=0;
-//		rect0.bottom=0;
-//		
-//		FontMetrics fm = _canvas.getFontMetrics(Element.font);
-//		
-//		rect0.right = 2 * (E_PADDING/2);
-//		for (int i=0; i<getText(false).count(); i++)
-//		{
-//			// FIXME (KGU): The width parameters differ from the ones in draw()!
-//			int lineWidth = getWidthOutVariables(_canvas, getText(false).get(i), this) + 3*E_PADDING;
-//			if (rect0.right < lineWidth)
-//			{
-//				rect0.right = lineWidth;
-//			}
-//		}
-//		rect0.bottom = 2*(Element.E_PADDING/2) + getText(false).count()*fm.getHeight();
-//		
-//		// START KGU#136 2016-03-01: Bugfix #97
-//		isRectUpToDate = true;
-//		// END KGU#136 2016-03-01
 		super.prepareDraw(_canvas);
 		rect0.right += (E_PADDING/2);		
 		// END KGU#227 2016-07-30
@@ -194,57 +173,6 @@ public class Jump extends Instruction {
 	public void draw(Canvas _canvas, Rect _top_left)
 	{
 		// START KGU 2016-07-30: Just delegate the basics to super
-//		Rect myrect = new Rect();
-//		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
-//		//Color drawColor = getColor();
-//		Color drawColor = getFillColor();
-//		// END KGU 2015-10-13
-//		FontMetrics fm = _canvas.getFontMetrics(Element.font);
-//		
-//		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
-//		//rect = _top_left.copy();
-//		rect = new Rect(0, 0, 
-//				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
-//		Point ref = this.getDrawPoint();
-//		this.topLeft.x = _top_left.left - ref.x;
-//		this.topLeft.y = _top_left.top - ref.y;
-//		// END KGU#136 2016-03-01
-//				
-//		Canvas canvas = _canvas;
-//		canvas.setBackground(drawColor);
-//		canvas.setColor(drawColor);
-//		
-//		myrect=_top_left.copy();
-//		
-//		canvas.fillRect(myrect);
-//		
-//		// draw comment
-//        if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
-//        {
-//			this.drawCommentMark(canvas, _top_left);
-//		}
-//        // START KGU 2015-10-11
-//		// draw breakpoint bar if necessary
-//		this.drawBreakpointMark(canvas, _top_left);
-//		// END KGU 2015-10-11
-//		
-//		// START KGU#156 2016-03-11: Enh. #124
-//		// write the run-time info if enabled
-//		this.writeOutRuntimeInfo(canvas, myrect.right - (Element.E_PADDING / 2), myrect.top);
-//		// END KGU#156 2016-03-11
-//				
-//		
-//		for(int i=0;i<getText(false).count();i++)
-//		{
-//			String text = this.getText(false).get(i);
-//			text = BString.replace(text, "<--", "<-");
-//			canvas.setColor(Color.BLACK);
-//			writeOutVariables(canvas,
-//					_top_left.left + 2 * (E_PADDING / 2),
-//					_top_left.top + (E_PADDING / 2) + (i+1)*fm.getHeight(),
-//					text, this
-//					);  	
-//		}
 		super.draw(_canvas, _top_left);
 		// END KGU 2016-07-30: Just delegate the basics to super
 
@@ -270,27 +198,10 @@ public class Jump extends Instruction {
 	public Element copy()
 	{
 		Element ele = new Jump(this.getText().copy());
-// START KGU#199 2016-07-07: Enh. #188, D.R.Y.
-//		ele.setComment(this.getComment().copy());
-//		ele.setColor(this.getColor());
-//		// START KGU#82 (bug #31) 2015-11-14
-//		ele.breakpoint = this.breakpoint;
-//		// END KGU#82 (bug #31) 2015-11-14
-//		// START KGU#117 2016-03-07: Enh. #77
-//        if (Element.E_COLLECTRUNTIMEDATA)
-//        {
-//        	// We share this object (important for recursion!)
-//        	ele.deeplyCovered = this.deeplyCovered;
-//        }
-//		// END KGU#117 2016-03-07
-//		// START KGU#183 2016-04-24: Issue #169
-//		ele.selected = this.selected;
-//		// END KGU#183 2016-04-24
-//		return ele;
-//	}
+		// START KGU#199 2016-07-07: Enh. #188, D.R.Y.
 		return copyDetails(ele, false, false);
+		// END KGU#199 2016-07-07
 	}
-// END KGU#199 2016-07-07
 	
 	
 	// START KGU 2015-10-16

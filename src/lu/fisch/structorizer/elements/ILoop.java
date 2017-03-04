@@ -20,28 +20,31 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
-*
-*      Author:         Kay Gürtzig
-*
-*      Description:    This interface is to facilitate unified handling of different loop types.
-*
-******************************************************************************************************
-*
-*      Revision List
-*
-*      Author           Date            Description
-*      ------           ----            -----------
-*      Kay Gürtzig      2015.11.30      First issue
-*
-******************************************************************************************************
-*
-*      Comment:		/
-*      
-*      The interface eases the detection of different loop classes (For, While, Repeat, Forever) and
-*      the access to the incorporated Subqueue without differentiated type casting and code duplication
-*
-******************************************************************************************************///
+/*
+ ******************************************************************************************************
+ *
+ *      Author:         Kay Gürtzig
+ *
+ *      Description:    This interface is to facilitate unified handling of different loop types.
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author           Date            Description
+ *      ------           ----            -----------
+ *      Kay Gürtzig      2015.11.30      First issue
+ *      Kay Gürtzig      2016.10.13      Enh. #270: method isDisabled() added
+ *
+ ******************************************************************************************************
+ *
+ *      Comment:		/
+ *      
+ *      The interface eases the detection of different loop classes (For, While, Repeat, Forever) and
+ *      the access to the incorporated Subqueue without differentiated type casting and code duplication
+ *
+ ******************************************************************************************************
+ */
 
 /**
  * @author Kay Gürtzig
@@ -51,5 +54,8 @@ package lu.fisch.structorizer.elements;
 public interface ILoop {
 
 	public Subqueue getBody();
+	// START KGU#277 2016-10-13: Enh. #270 (needed for a generator access)
+	public boolean isDisabled();
+	// END KGU#277 2016-10-13
 	
 }

@@ -39,6 +39,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2015.12.18/19   KGU#2/KGU#47/KGU#78 Fixes for Call, Jump, and Parallel elements
  *      Kay Gürtzig     2016.07.20      Enh. #160 adapted (option to integrate subroutines = KGU#178)
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done.
+ *      Kay Gürtzig     2016.10.14      Enh. #270: Disabled elements are skipped here now
  *
  ******************************************************************************************************
  *
@@ -93,6 +94,17 @@ public class TexGenerator extends Generator {
 	}
 	// END KGU#78 2015-12-18
 
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getIncludePattern()
+	 */
+	@Override
+	protected String getIncludePattern()
+	{
+		return null;
+	}
+	// END KGU#351 2017-02-26
+
     /************ Code Generation **************/
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/**
@@ -101,7 +113,7 @@ public class TexGenerator extends Generator {
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
     @Override
-	protected String getInputReplacer()
+	protected String getInputReplacer(boolean withPrompt)
 	{
 		return "scanf(\"\", &$1);";
 	}
@@ -157,10 +169,12 @@ public class TexGenerator extends Generator {
     @Override
 	protected void generateCode(Instruction _inst, String _indent)
 	{
-		for(int i=0;i<_inst.getText().count();i++)
-		{
-			code.add(_indent+"\\assign{\\("+transform(_inst.getText().get(i))+"\\)}");
-		}
+    	if (!_inst.disabled) {
+    		for(int i=0;i<_inst.getText().count();i++)
+    		{
+    			code.add(_indent+"\\assign{\\("+transform(_inst.getText().get(i))+"\\)}");
+    		}
+    	}
 	}
 	
     @Override
@@ -177,75 +191,83 @@ public class TexGenerator extends Generator {
 		s.add(makeIndent(_indent)+'\ifend');
 */
 		
-		code.add(_indent+"\\ifthenelse{"+Math.max(1,8-2*_alt.getText().count())+"}{"+Math.max(1,8-2*_alt.getText().count())+"}{\\("+BString.replace(transform(_alt.getText().getText()),"\n","")+"\\)}{"+Element.preAltT+"}{"+Element.preAltF+"}");
-		generateCode(_alt.qTrue,_indent+_indent.substring(0,1));
-		if(_alt.qFalse.getSize()!=0)
-		{
-			code.add(_indent+"\\change");
-			generateCode(_alt.qFalse,_indent+_indent.substring(0,1));
-		}
-                else
-                {
-                    code.add(_indent+"\\change");
-                }
-		code.add(_indent+"\\ifend");
+    	if (!_alt.disabled) {
+    		code.add(_indent+"\\ifthenelse{"+Math.max(1,8-2*_alt.getText().count())+"}{"+Math.max(1,8-2*_alt.getText().count())+"}{\\("+BString.replace(transform(_alt.getText().getText()),"\n","")+"\\)}{"+Element.preAltT+"}{"+Element.preAltF+"}");
+    		generateCode(_alt.qTrue,_indent+_indent.substring(0,1));
+    		if(_alt.qFalse.getSize()!=0)
+    		{
+    			code.add(_indent+"\\change");
+    			generateCode(_alt.qFalse,_indent+_indent.substring(0,1));
+    		}
+    		else
+    		{
+    			code.add(_indent+"\\change");
+    		}
+    		code.add(_indent+"\\ifend");
+    	}
 	}
 	
     @Override
 	protected void generateCode(Case _case, String _indent)
 	{
-		code.add(_indent+"\\case{6}{"+_case.qs.size()+"}{\\("+transform(_case.getText().get(0))+"\\)}{"+transform(_case.getText().get(1))+"}");
-		generateCode((Subqueue) _case.qs.get(0),_indent+_indent.substring(0,1)+_indent.substring(0,1)+_indent.substring(0,1));
-		
-		for(int i=1;i<_case.qs.size()-1;i++)
-		{
-			code.add(_indent+_indent.substring(0,1)+"\\switch{"+transform(_case.getText().get(i+1).trim())+"}");
-			generateCode((Subqueue) _case.qs.get(i),_indent+_indent.substring(0,1)+_indent.substring(0,1)+_indent.substring(0,1));
-		}
-		
-		if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
-		{
-			code.add(_indent+_indent.substring(0,1)+"\\switch[r]{"+transform(_case.getText().get(_case.qs.size()).trim())+"}");
-			generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+_indent.substring(0,1)+_indent.substring(0,1));
-		}
-		code.add(_indent+_indent.substring(0,1)+"\\caseend");
+    	if (!_case.disabled) {
+    		code.add(_indent+"\\case{6}{"+_case.qs.size()+"}{\\("+transform(_case.getText().get(0))+"\\)}{"+transform(_case.getText().get(1))+"}");
+    		generateCode((Subqueue) _case.qs.get(0),_indent+_indent.substring(0,1)+_indent.substring(0,1)+_indent.substring(0,1));
+
+    		for(int i=1;i<_case.qs.size()-1;i++)
+    		{
+    			code.add(_indent+_indent.substring(0,1)+"\\switch{"+transform(_case.getText().get(i+1).trim())+"}");
+    			generateCode((Subqueue) _case.qs.get(i),_indent+_indent.substring(0,1)+_indent.substring(0,1)+_indent.substring(0,1));
+    		}
+
+    		if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
+    		{
+    			code.add(_indent+_indent.substring(0,1)+"\\switch[r]{"+transform(_case.getText().get(_case.qs.size()).trim())+"}");
+    			generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+_indent.substring(0,1)+_indent.substring(0,1));
+    		}
+    		code.add(_indent+_indent.substring(0,1)+"\\caseend");
+    	}
 	}
 	
 	protected void generateCode(For _for, String _indent)
 	{
-		code.add(_indent+"\\while{\\("+BString.replace(transform(_for.getText().getText()),"\n","")+"\\)}");
-		generateCode(_for.q,_indent+_indent.substring(0,1));
-		code.add(_indent+"\\whileend");
-
-/*		code.add(_indent+"\\forever");
-		generateCode(_for.q,_indent+_indent.substring(0,1));
-		code.add(_indent+"\\foreverend");*/
+		if (!_for.disabled) {
+			code.add(_indent+"\\while{\\("+BString.replace(transform(_for.getText().getText()),"\n","")+"\\)}");
+			generateCode(_for.q,_indent+_indent.substring(0,1));
+			code.add(_indent+"\\whileend");
+		}
 	}
 	
 	protected void generateCode(While _while, String _indent)
 	{
-		code.add(_indent+"\\while{\\("+BString.replace(transform(_while.getText().getText()),"\n","")+"\\)}");
-		generateCode(_while.q,_indent+_indent.substring(0,1));
-		code.add(_indent+"\\whileend");
+		if (!_while.disabled) {
+			code.add(_indent+"\\while{\\("+BString.replace(transform(_while.getText().getText()),"\n","")+"\\)}");
+			generateCode(_while.q,_indent+_indent.substring(0,1));
+			code.add(_indent+"\\whileend");
+		}
 	}
 	
 	protected void generateCode(Repeat _repeat, String _indent)
 	{
-		code.add(_indent+"\\until{\\("+BString.replace(transform(_repeat.getText().getText()),"\n","")+"\\)}");
-		generateCode(_repeat.q,_indent+_indent.substring(0,1));
-		code.add(_indent+"\\untilend");
+		if (!_repeat.disabled) {
+			code.add(_indent+"\\until{\\("+BString.replace(transform(_repeat.getText().getText()),"\n","")+"\\)}");
+			generateCode(_repeat.q,_indent+_indent.substring(0,1));
+			code.add(_indent+"\\untilend");
+		}
 	}
 	
 	protected void generateCode(Forever _forever, String _indent)
 	{
-		 code.add(_indent+"\\forever");
-		 generateCode(_forever.q,_indent+_indent.substring(0,1));
-		 code.add(_indent+"\\foreverend");
+		if (!_forever.isDisabled()) {
+			code.add(_indent+"\\forever");
+			generateCode(_forever.q,_indent+_indent.substring(0,1));
+			code.add(_indent+"\\foreverend");
+		}
 	}
 
 	protected void generateCode(Call _call, String _indent)
 	{
-		for(int i=0;i<_call.getText().count();i++)
+		for(int i=0; !_call.disabled && i<_call.getText().count(); i++)
 		{
 			// START KGU#2 2015-12-19: Wrong command, should be \sub
 			//code.add(_indent+"\\assign{\\("+transform(_call.getText().get(i))+"\\)}");
@@ -256,28 +278,30 @@ public class TexGenerator extends Generator {
 	
 	protected void generateCode(Jump _jump, String _indent)
 	{
-		// START KGU#78 2015-12-19: Enh. #23: We now distinguish exit and return boxes
-		//code.add(_indent+"\\assign{\\("+transform(_jump.getText().get(i))+"\\)}");
-		if (_jump.getText().count() == 0 || _jump.getText().getText().trim().isEmpty())
-		{
-			code.add(_indent+ "\\exit{}");
-		}
-		else
-		// END KGU#78 2015-12-19
-		{
-			// FIXME (KGU 2015-12-19): This should not be split into several blocks
-			String preReturn = D7Parser.keywordMap.get("preReturn");
-			for(int i=0; i<_jump.getText().count(); i++)
+		if (!_jump.disabled) {
+			// START KGU#78 2015-12-19: Enh. #23: We now distinguish exit and return boxes
+			//code.add(_indent+"\\assign{\\("+transform(_jump.getText().get(i))+"\\)}");
+			if (_jump.getText().count() == 0 || _jump.getText().getText().trim().isEmpty())
 			{
-				// START KGU#78 2015-12-19: Enh. #23: We now distinguish exit and return boxes
-				//code.add(_indent+"\\assign{\\("+transform(_jump.getText().get(i))+"\\)}");
-				String command = "exit";	// Just the default
-				if (_indent.startsWith(preReturn))
-				{
-					command = "return";
-				}
-				code.add(_indent+ "\\" + command + "{\\("+transform(_jump.getText().get(i))+"\\)}");
+				code.add(_indent+ "\\exit{}");
+			}
+			else
 				// END KGU#78 2015-12-19
+			{
+				// FIXME (KGU 2015-12-19): This should not be split into several blocks
+				String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
+				for(int i=0; i<_jump.getText().count(); i++)
+				{
+					// START KGU#78 2015-12-19: Enh. #23: We now distinguish exit and return boxes
+					//code.add(_indent+"\\assign{\\("+transform(_jump.getText().get(i))+"\\)}");
+					String command = "exit";	// Just the default
+					if (_indent.startsWith(preReturn))
+					{
+						command = "return";
+					}
+					code.add(_indent+ "\\" + command + "{\\("+transform(_jump.getText().get(i))+"\\)}");
+					// END KGU#78 2015-12-19
+				}
 			}
 		}
 	}
@@ -285,8 +309,8 @@ public class TexGenerator extends Generator {
 	// START KGU#47 2015-12-19: Hadn't been generated at all - Trouble is: structure must not be recursive!
 	protected void generateCode(Parallel _para, String _indent)
 	{
-		// Ignore it if there no threads
-		if (!_para.qs.isEmpty())
+		// Ignore it if there are no threads or if the element is disabled
+		if (!_para.qs.isEmpty() && !_para.disabled)
 		{
 			// Since substructure is not allowed (at least a call would have been sensible!),
 			// we transform all thread contents into single long strings...

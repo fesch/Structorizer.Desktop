@@ -67,6 +67,7 @@ package lu.fisch.structorizer.elements;
 
 
 import java.awt.Point;
+import java.util.HashMap;
 import java.util.Vector;
 
 import javax.swing.ImageIcon;
@@ -194,24 +195,6 @@ public class For extends Element implements ILoop {
 		}
 
 		// START KGU#227 2016-07-30: Enh. #128 - Just delegate the basics to Instruction
-//		rect0.top = 0;
-//		rect0.left=0;
-//
-//		int padding = 2*(E_PADDING/2); 
-//		rect0.right = padding;
-//
-//		FontMetrics fm = _canvas.getFontMetrics(Element.font);
-//
-//		int nLines = getText(false).count();
-//		for (int i = 0; i < nLines; i++)
-//		{
-//			int lineWidth = getWidthOutVariables(_canvas, getText(false).get(i), this) + padding;
-//			if (rect0.right < lineWidth)
-//			{
-//				rect0.right = lineWidth;
-//			}
-//		}
-//		rect0.bottom = padding + nLines * fm.getHeight();
 		rect0 = Instruction.prepareDraw(_canvas, this.getText(false), this);
 		int padding = 2*(E_PADDING/2); 
 		// END KGU#227 2016-07-30: Enh. #128 Just delegate the basics to Instruction
@@ -251,133 +234,6 @@ public class For extends Element implements ILoop {
 		}
 
 		// START KGU#227 2016-07-30: Enh. #128 - on this occasion delegate as much as possible
-//		// START KGU 2015-10-12: Common beginning of both styles
-//		Rect myrect = new Rect();
-//		// START KGU 2015-10-13: All highlighting rules now encapsulated by this new method
-//		//Color drawColor = getColor();
-//		Color drawColor = getFillColor();
-//		// END KGU 2015-10-13
-//		FontMetrics fm = _canvas.getFontMetrics(font);
-//		// END KGU 2015-10-13
-//
-//		Canvas canvas = _canvas;
-//		canvas.setBackground(drawColor);
-//		canvas.setColor(drawColor);
-//
-//
-//		int headerHeight = fm.getHeight() * getText(false).count() + 2 * (Element.E_PADDING / 2);
-//
-//		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
-//		//rect = _top_left.copy();
-//		rect = new Rect(0, 0, 
-//				_top_left.right - _top_left.left, _top_left.bottom - _top_left.top);
-//		Point ref = this.getDrawPoint();
-//		this.topLeft.x = _top_left.left - ref.x;
-//		this.topLeft.y = _top_left.top - ref.y;
-//		// END KGU#136 2016-03-01
-//
-//		// FIXME: What's this nonsense good for?
-//		if(Element.E_DIN==false)
-//		{
-//			// draw background
-//			myrect = _top_left.copy();
-//			canvas.fillRect(myrect);
-//			
-//			// draw shape
-//			canvas.setColor(Color.BLACK);
-//			canvas.drawRect(_top_left);
-//			
-//			myrect = _top_left.copy();
-//			myrect.bottom = _top_left.top + headerHeight;
-//			canvas.drawRect(myrect);
-//			
-//			myrect.bottom = _top_left.bottom;
-//			myrect.top = myrect.bottom-E_PADDING;
-//			canvas.drawRect(myrect);
-//			
-//			myrect = _top_left.copy();
-//			myrect.right = myrect.left+E_PADDING;
-//			canvas.drawRect(myrect);
-//			
-//			// fill shape
-//			canvas.setColor(drawColor);
-//			myrect.left = myrect.left+1;
-//			myrect.top = myrect.top+1;
-//			myrect.bottom = myrect.bottom;
-//			myrect.right = myrect.right-1;
-//			canvas.fillRect(myrect);
-//			
-//			myrect = _top_left.copy();
-//			myrect.bottom = _top_left.top + headerHeight;
-//			myrect.left = myrect.left+1;
-//			myrect.top = myrect.top+1;
-//			myrect.bottom = myrect.bottom;
-//			myrect.right = myrect.right-1;
-//			canvas.fillRect(myrect);
-//			
-//			myrect.bottom = _top_left.bottom;
-//			myrect.top = myrect.bottom-Element.E_PADDING;
-//			myrect.left = myrect.left+1;
-//			myrect.top = myrect.top+1;
-//			myrect.bottom = myrect.bottom;
-//			myrect.right = myrect.right;
-//			canvas.fillRect(myrect);
-//		}
-//		else
-//		{
-//			// draw shape
-//			myrect = _top_left.copy();
-//			canvas.setColor(Color.BLACK);
-//			myrect.bottom = _top_left.top + headerHeight;
-//			canvas.drawRect(myrect);
-//			
-//			myrect=_top_left.copy();
-//			myrect.right = myrect.left+Element.E_PADDING;
-//			canvas.drawRect(myrect);
-//			
-//			// fill shape
-//			canvas.setColor(drawColor);
-//			myrect.left = myrect.left+1;
-//			myrect.top = myrect.top+1;
-//			myrect.bottom = myrect.bottom;
-//			myrect.right = myrect.right;
-//			canvas.fillRect(myrect);
-//			
-//			myrect = _top_left.copy();
-//			myrect.bottom = _top_left.top + headerHeight;
-//			myrect.left = myrect.left+1;
-//			myrect.top = myrect.top+1;
-//			myrect.bottom = myrect.bottom;
-//			myrect.right = myrect.right;
-//			canvas.fillRect(myrect);
-//		}
-//		
-//		// START KGU 2015-10-12: D.R.Y. - common tail of both branches re-united here
-//		if(Element.E_SHOWCOMMENTS==true && !getComment(false).getText().trim().equals(""))
-//		{
-//			this.drawCommentMark(canvas, _top_left);
-//		}
-//		// draw breakpoint bar if necessary
-//		this.drawBreakpointMark(canvas, _top_left);
-//
-//		// draw text
-//		for (int i=0; i<getText(false).count(); i++)
-//		{
-//			String text = this.getText(false).get(i);
-//			text = BString.replace(text, "<--","<-");
-//			
-//			canvas.setColor(Color.BLACK);
-//			writeOutVariables(canvas,
-//							  _top_left.left + (E_PADDING / 2),
-//							  _top_left.top + (E_PADDING / 2) + (i+1)*fm.getHeight(),
-//							  text, this
-//							  );  	
-//		}
-//		
-//		// START KGU#156 2016-03-11: Enh. #124
-//		// write the run-time info if enabled
-//		this.writeOutRuntimeInfo(canvas, _top_left.left + rect.right - (Element.E_PADDING / 2), _top_left.top);
-//		// END KGU#156 2016-03-11
 		Instruction.draw(_canvas, _top_left, this.getText(false), this);
 		// END KGU#227 2016-07-30: Enh. #128 - on this occasion delegate as much as possible
 				
@@ -436,12 +292,6 @@ public class For extends Element implements ILoop {
 		return selMe;
 	}
 
-//	public void setSelected(boolean _sel)
-//	{
-//		selected=_sel;
-//		//q.setSelected(_sel);
-//	}
-	
 	// START KGU#183 2016-04-24: Issue #169 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#findSelected()
@@ -504,36 +354,6 @@ public class For extends Element implements ILoop {
 				this.getBody().combineRuntimeData(((ILoop)_cloneOfMine).getBody());
 	}
 	// END KGU#117 2016-03-07
-
-//	// START KGU#43 2015-10-12
-//	@Override
-//	public void clearBreakpoints()
-//	{
-//		super.clearBreakpoints();
-//		this.q.clearBreakpoints();
-//	}
-//	// END KGU#43 2015-10-12
-//
-//	// START KGU#43 2015-10-13
-//	@Override
-//	public void clearExecutionStatus()
-//	{
-//		super.clearExecutionStatus();
-//		this.q.clearExecutionStatus();
-//	}
-//	// END KGU#43 2015-10-13
-//
-//	// START KGU#117 2016-03-06: Enh. #77
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
-//	 */
-//	@Override
-//	public void clearRuntimeData()
-//	{
-//		super.clearRuntimeData();
-//		this.getBody().clearRuntimeData();
-//	}
-//	// END KGU#117 2016-03-06
 
 	// START KGU#156 2016-03-13: Enh. #124
 	protected String getRuntimeInfoString()
@@ -768,11 +588,11 @@ public class For extends Element implements ILoop {
 		//String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy};
 		// First collect the placemarkers of the for loop header ...
 		String[] forMarkers = {
-				D7Parser.keywordMap.get("preFor"),
-				D7Parser.keywordMap.get("postFor"),
-				D7Parser.keywordMap.get("stepFor"),
-				(D7Parser.keywordMap.get("preForIn").trim().isEmpty() ? D7Parser.keywordMap.get("preFor") : D7Parser.keywordMap.get("preForIn")),
-				D7Parser.keywordMap.get("postForIn")
+				D7Parser.getKeyword("preFor"),
+				D7Parser.getKeyword("postFor"),
+				D7Parser.getKeyword("stepFor"),
+				(D7Parser.getKeyword("preForIn").trim().isEmpty() ? D7Parser.getKeyword("preFor") : D7Parser.getKeyword("preForIn")),
+				D7Parser.getKeyword("postForIn")
 				};
 		// ... and their replacements (in same order!)
 		String[] forSeparators = {forSeparatorPre, forSeparatorTo, forSeparatorBy,
@@ -1034,12 +854,12 @@ public class For extends Element implements ILoop {
 		{
 			asgnmtOpr = " := ";
 		}
-		String forClause = D7Parser.keywordMap.get("preFor").trim() + " " +
+		String forClause = D7Parser.getKeyword("preFor").trim() + " " +
 				_counter + asgnmtOpr + _start + " " +
-				D7Parser.keywordMap.get("postFor").trim() + " " + _end;
+				D7Parser.getKeyword("postFor").trim() + " " + _end;
 		if (_step != 1 || _forceStep)
 		{
-			forClause = forClause + " " + D7Parser.keywordMap.get("stepFor").trim() + " " +
+			forClause = forClause + " " + D7Parser.getKeyword("stepFor").trim() + " " +
 					Integer.toString(_step);
 		}
 		// Now get rid of multiple blanks
@@ -1071,10 +891,10 @@ public class For extends Element implements ILoop {
 
 	public static String composeForInClause(String _iterator, String _valueList)
 	{
-		String preForIn = D7Parser.keywordMap.get("preForIn").trim();
-		if (preForIn.isEmpty()) { preForIn = D7Parser.keywordMap.get("preFor").trim(); }
+		String preForIn = D7Parser.getKeyword("preForIn").trim();
+		if (preForIn.isEmpty()) { preForIn = D7Parser.getKeyword("preFor").trim(); }
 		String forClause = preForIn + " " + _iterator + " " +
-				D7Parser.keywordMap.get("postForIn").trim() + " " + _valueList;
+				D7Parser.getKeyword("postForIn").trim() + " " + _valueList;
 		return forClause;
 	}
 	
@@ -1241,5 +1061,20 @@ public class For extends Element implements ILoop {
 		}
 	}
 	// END KGU#258 2016-09-26
+	
+	// START KGU#261 2017-01-26: Enh. #259 (type map)
+	/**
+	 * Adds own variable declarations (only this element, no substructure!) to the given
+	 * map (varname -> typeinfo).
+	 * @param typeMap
+	 */
+	@Override
+	public void updateTypeMap(HashMap<String, TypeMapEntry> typeMap)
+	{
+		if (!this.isForInLoop()) {
+			this.addToTypeMap(typeMap, this.getCounterVar(), "int", 0, true, false);
+		}
+	}
+	// END KGU#261 2017-01-26
 
 }

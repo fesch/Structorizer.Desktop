@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.gui;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -33,20 +34,25 @@ package lu.fisch.structorizer.gui;
  *      Author          Date			Description
  *      ------			----			-----------
  *      Bob Fisch       2007.12.29      First Issue
+ *      Kay Gürtzig     2016.11.02      Issue #81: Scaling as workaround for lacking DPI awareness
+ *      Kay Gürtzig     2016.11.09      Issue #81: Scale factor no longer rounded.
+ *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling done by GUIScaler
  *
  ******************************************************************************************************
  *
  *      Comment:		I used JFormDesigner to desin this window graphically.
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 /*
  * Created by JFormDesigner on Sat Dec 29 21:36:58 CET 2007
  */
 
+import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.LangDialog;
-import java.io.*; 
 
+import java.io.*; 
 import java.awt.*;
 import java.awt.event.*;
 
@@ -86,10 +92,14 @@ public class About extends LangDialog implements ActionListener, KeyListener
 		// set layout (OS default)
 		setLayout(null);
 		// set windows size
-		setSize(650, 400);
+		// START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+		//setSize(650, 400);
+		double scaleFactor = Double.valueOf(Ini.getInstance().getProperty("scaleFactor","1"));
+		setSize((int)(650 * scaleFactor), (int)(400 * scaleFactor));
+		// END KGU#287 2016-11-02
 		// show form
 		setVisible(false);
-		// set action to perfom if closed
+		// set action to perform if closed
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		// set icon
 
@@ -113,8 +123,8 @@ public class About extends LangDialog implements ActionListener, KeyListener
 		buttonBar = new JPanel();
 		btnOK = new JButton();
 
-                txtChangelog.setFont(new Font("Courier",Font.PLAIN,10));
-                txtLicense.setFont(new Font("Courier",Font.PLAIN,12));
+		txtChangelog.setFont(new Font("Courier",Font.PLAIN,(int)(10*scaleFactor)));
+		txtLicense.setFont(new Font("Courier",Font.PLAIN,(int)(12*scaleFactor)));
 		
 		//======== this ========
 		Container contentPane = getContentPane();
@@ -122,7 +132,8 @@ public class About extends LangDialog implements ActionListener, KeyListener
 		
 		//======== dialogPane ========
 		{
-			dialogPane.setBorder(new EmptyBorder(12, 12, 12, 12));
+			int border = (int)(12 * scaleFactor);
+			dialogPane.setBorder(new EmptyBorder(border, border, border, border));
 			
 			// JFormDesigner evaluation mark
 			/*
@@ -136,7 +147,8 @@ public class About extends LangDialog implements ActionListener, KeyListener
 			
 			//======== contentPanel ========
 			{
-				contentPanel.setLayout(new BorderLayout(5, 5));
+				border = (int)(5 * scaleFactor);
+				contentPanel.setLayout(new BorderLayout(border, border));
 				
 				//======== pnlLeft ========
 				{
@@ -165,7 +177,8 @@ public class About extends LangDialog implements ActionListener, KeyListener
 					
 					//---- label2 ----
 					label2.setIcon(IconLoader.icoNSD48);
-					label2.setBorder(BorderFactory.createEmptyBorder(8,8,8,8));
+					border = (int)(8 * scaleFactor);
+					label2.setBorder(BorderFactory.createEmptyBorder(border,border,border,border));
 					pnlTop.add(label2, BorderLayout.WEST);
 				}
 				contentPanel.add(pnlTop, BorderLayout.NORTH);
@@ -200,9 +213,9 @@ public class About extends LangDialog implements ActionListener, KeyListener
 			
 			//======== buttonBar ========
 			{
-				buttonBar.setBorder(new EmptyBorder(12, 0, 0, 0));
+				buttonBar.setBorder(new EmptyBorder((int)(12 * scaleFactor), 0, 0, 0));
 				buttonBar.setLayout(new GridBagLayout());
-				((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, 80};
+				((GridBagLayout)buttonBar.getLayout()).columnWidths = new int[] {0, (int)(80*scaleFactor)};
 				((GridBagLayout)buttonBar.getLayout()).columnWeights = new double[] {1.0, 0.0};
 				
 				//---- okButton ----
@@ -215,6 +228,11 @@ public class About extends LangDialog implements ActionListener, KeyListener
 			dialogPane.add(buttonBar, BorderLayout.SOUTH);
 		}
 		contentPane.add(dialogPane, BorderLayout.CENTER);
+
+        // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
+        GUIScaler.rescaleComponents(this);
+        // END KGU#287 2017-01-09
+        		
 		//pack();
 		setLocationRelativeTo(getOwner());
 		// JFormDesigner - End of component initialization  //GEN-END:initComponents
@@ -280,7 +298,7 @@ public class About extends LangDialog implements ActionListener, KeyListener
 	// listen to actions
 	public void actionPerformed(ActionEvent event)
 	{
-				setVisible(false);
+		setVisible(false);
 	}
 	
 	public void keyTyped(KeyEvent kevt) 

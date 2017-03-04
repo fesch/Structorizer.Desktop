@@ -648,9 +648,9 @@ public class Executor_old2 implements Runnable
                         delay();
                     }
                     // input
-                    else if(cmd.indexOf(D7Parser.keywordMap.get("input"))>=0)
+                    else if(cmd.indexOf(D7Parser.getKeyword("input"))>=0)
                     {
-                        String in = cmd.substring(cmd.indexOf(D7Parser.keywordMap.get("input"))+D7Parser.keywordMap.get("input").length()).trim();
+                        String in = cmd.substring(cmd.indexOf(D7Parser.getKeyword("input"))+D7Parser.getKeyword("input").length()).trim();
                         String str = JOptionPane.showInputDialog(null, "Please enter a value for <"+in+">",null);
                         // first add as string
                         setVar(in,str);
@@ -680,9 +680,9 @@ public class Executor_old2 implements Runnable
                         catch(Exception e) {}
                     }
                     // output
-                    else if(cmd.indexOf(D7Parser.keywordMap.get("output"))>=0)
+                    else if(cmd.indexOf(D7Parser.getKeyword("output"))>=0)
                     {
-                        String out = cmd.substring(cmd.indexOf(D7Parser.keywordMap.get("output"))+D7Parser.keywordMap.get("output").length()).trim();
+                        String out = cmd.substring(cmd.indexOf(D7Parser.getKeyword("output"))+D7Parser.getKeyword("output").length()).trim();
                         Object n = interpreter.eval(out);
                         if (n==null) { result = "<"+out+"> is not a correct or existing expression."; }
                         else { String s = unconvert(n.toString()); JOptionPane.showMessageDialog(diagram, s, "Output", 0); }
@@ -835,8 +835,8 @@ public class Executor_old2 implements Runnable
                 delay();
 
                 String s = ((Alternative) element).getText().getText();
-                if(!D7Parser.keywordMap.get("preAlt").equals("")){s=BString.replace(s,D7Parser.keywordMap.get("preAlt"),"");}
-                if(!D7Parser.keywordMap.get("postAlt").equals("")){s=BString.replace(s,D7Parser.keywordMap.get("postAlt"),"");}
+                if(!D7Parser.getKeyword("preAlt").equals("")){s=BString.replace(s,D7Parser.getKeyword("preAlt"),"");}
+                if(!D7Parser.getKeyword("postAlt").equals("")){s=BString.replace(s,D7Parser.getKeyword("postAlt"),"");}
                 //s=s.replace("==", "=");
                 //s=s.replace("=", "==");
                 //s=s.replace("<==", "<=");
@@ -892,8 +892,8 @@ public class Executor_old2 implements Runnable
                 if(delay!=0){diagram.redraw();}
 
                 String s = ((While) element).getText().getText();
-         	if(!D7Parser.keywordMap.get("preWhile").equals("")){s=BString.replace(s,D7Parser.keywordMap.get("preWhile"),"");}
-       		if(!D7Parser.keywordMap.get("postWhile").equals("")){s=BString.replace(s,D7Parser.keywordMap.get("postWhile"),"");}
+         	if(!D7Parser.getKeyword("preWhile").equals("")){s=BString.replace(s,D7Parser.getKeyword("preWhile"),"");}
+       		if(!D7Parser.getKeyword("postWhile").equals("")){s=BString.replace(s,D7Parser.getKeyword("postWhile"),"");}
                 //s=s.replace("==", "=");
                 //s=s.replace("=", "==");
                 //s=s.replace("<==", "<=");
@@ -952,8 +952,8 @@ public class Executor_old2 implements Runnable
                 if(delay!=0){diagram.redraw();}
 
                 String s = ((Repeat) element).getText().getText();
-                if(!D7Parser.keywordMap.get("preRepeat").equals("")){s=BString.replace(s,D7Parser.keywordMap.get("preRepeat"),"");}
-                if(!D7Parser.keywordMap.get("postRepeat").equals("")){s=BString.replace(s,D7Parser.keywordMap.get("postRepeat"),"");}
+                if(!D7Parser.getKeyword("preRepeat").equals("")){s=BString.replace(s,D7Parser.getKeyword("preRepeat"),"");}
+                if(!D7Parser.getKeyword("postRepeat").equals("")){s=BString.replace(s,D7Parser.getKeyword("postRepeat"),"");}
                 //s=s.replace("==", "=");
                 //s=s.replace("=", "==");
                 //s=s.replace("<==", "<=");
@@ -1014,16 +1014,16 @@ public class Executor_old2 implements Runnable
 
                 String str = ((For) element).getText().getText();
                 // cut of the start of the expression
-                if (!D7Parser.keywordMap.get("preFor").equals(""))
+                if (!D7Parser.getKeyword("preFor").equals(""))
                 {
-                    str = BString.replace(str, D7Parser.keywordMap.get("preFor"), "");
+                    str = BString.replace(str, D7Parser.getKeyword("preFor"), "");
                 }
                 // trim blanks
                 str = str.trim();
                 // modify the later word
-                if (!D7Parser.keywordMap.get("postFor").equals(""))
+                if (!D7Parser.getKeyword("postFor").equals(""))
                 {
-                    str = BString.replace(str, D7Parser.keywordMap.get("postFor"), "<=");
+                    str = BString.replace(str, D7Parser.getKeyword("postFor"), "<=");
                 }
                 // do other transformations
                 //str = CGenerator.transform(str);

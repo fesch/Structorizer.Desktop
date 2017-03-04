@@ -38,6 +38,8 @@ package lu.fisch.structorizer.locales;
  *      Kay Gürtzig     2016.09.06      Opportunity to reload a saved language file to resume editing it
  *      Kay Gürtzig     2016.09.09      Handling of unsaved changes improved, loadLocale() API modified,
  *                                      command line parameter "-test" introduced to re-allow full consistency check
+ *      Kay Gürtzig     2016.11.02      Issue #81: Scaling as DPI awareness workaround
+ *      Kay Gürtzig     2016.11.09      Issue #81: scaleFactor ensured to be >= 1; table row height scaling
  *
  ******************************************************************************************************
  *
@@ -78,6 +80,7 @@ import javax.swing.table.DefaultTableModel;
 
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.NSDController;
+import lu.fisch.structorizer.io.Ini;
 import lu.fisch.utils.StringList;
 
 /**
@@ -122,7 +125,16 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         Locales.getInstance().getDefaultLocale();
         // END KGU 2016-09-05
         
-        initComponents();
+        // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+        //initComponents();
+        Ini ini = Ini.getInstance();
+        // START KGU#287 2016-11-09: Issue #81 update: no longer rounded but ensured to be >= 1
+        //double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1")).intValue();
+        double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
+        if (scaleFactor < 1) scaleFactor = 1.0;
+        // END KGU#287 2016-11-09
+        initComponents(scaleFactor);
+        // END KGU#287 2016-11-02
         
         button_preview.setVisible(false);
         
@@ -130,16 +142,20 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         // set icon depending on OS ;-)
         String os = System.getProperty("os.name").toLowerCase();
         setIconImage(IconLoader.ico074.getImage());
-        if (os.indexOf("windows") != -1) 
+        /*if (os.indexOf("windows") != -1) 
         {
             setIconImage(IconLoader.ico074.getImage());
         } 
-        else if (os.indexOf("mac") != -1) 
+        else*/
+        if (os.indexOf("mac") != -1) 
         {
             setIconImage(IconLoader.icoNSD.getImage());
         }
         this.setTitle("Structorizer Translator");
-        setSize(1000, 500);	// with less width the save button was invisibble
+        // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+        //setSize(1000, 500);	// with less width the save button was invisible
+        setSize((int)(1000*scaleFactor), (int)(500*scaleFactor));	// with less width the save button was invisible
+        // END KGU#287 2016-11-02
         stdBackgroundColor = button_empty.getBackground();	// for resetting
         // END KGU 2016-08-04
         
@@ -171,6 +187,12 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             // START KGU 2016-08-04: Issue #220
             table.addPropertyChangeListener(this);
             // END KGU 2016-08-04
+            
+            // START KGU#287 2016-11-09: Issue #81 (DPI awareness workaround)
+            if (scaleFactor > 2.0) {
+                table.setRowHeight((int)Math.ceil(table.getRowHeight() * (scaleFactor - 1)*0.75));
+            }
+            // END KGU#287 2016-11-09
             
             // set the name
             table.getColumnModel().getColumn(1).setHeaderValue(Locales.DEFAULT_LOCALE);
@@ -581,8 +603,12 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
-
+    // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+    //private void initComponents()
+    private void initComponents(double scaleFactor)
+    // END KGU#287 2016-11-02
+    {
+    	
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         button_save = new javax.swing.JButton();
@@ -596,11 +622,11 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         // START KGU 2016-08-04: Wasn't enough as size but too large as minimum size
         //setMinimumSize(new java.awt.Dimension(900, 500));
-        setMinimumSize(new java.awt.Dimension(500, 300));
+        setMinimumSize(new java.awt.Dimension((int)(500 * scaleFactor), (int)(300 * scaleFactor)));
         // END KGU 2016-08-04
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 204));
-        jPanel1.setPreferredSize(new java.awt.Dimension(655, 48));
+        jPanel1.setPreferredSize(new java.awt.Dimension((int)(655*scaleFactor), (int)(48*scaleFactor)));
 
         for (int i = 0; i < Locales.LOCALES_LIST.length; i++)
         {
@@ -609,7 +635,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             if (localeToolTip != null)
             {
                 javax.swing.JButton button = new javax.swing.JButton();
-                button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_"+localeName+".png"))); // NOI18N
+                // START KGU#287 2016-11-02:Issue #81 (DPI awareness workaround)
+                //button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_"+localeName+".png"))); // NOI18N
+                button.setIcon(IconLoader.getLocaleIconImage(localeName)); // NOI18N
+                // END KGU#287 2016-11-02
                 button.setToolTipText(localeToolTip);
                 button.addActionListener(new java.awt.event.ActionListener() {
                     public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -620,10 +649,16 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             }
         }
 
-        jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 24)); // NOI18N
+        // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround)
+        //jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 24)); // NOI18N
+        jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, (int)(24 * scaleFactor))); // NOI18N
+        // END KGU#287 2016-11-02
         jLabel1.setText("Load");
 
-        button_save.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/003_Save.png"))); // NOI18N
+        // START KGU#287 2016-11-02:Issue #81 (DPI awareness workaround)
+        //button_save.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/003_Save.png"))); // NOI18N
+        button_save.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/003_Save.png"))); // NOI18N
+        // END KGU#287 2016-11-02
         button_save.setToolTipText("Save changes");
         button_save.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -631,7 +666,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             }
         });
 
-        button_empty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_empty.png"))); // NOI18N
+        // START KGU#287 2016-11-02:Issue #81 (DPI awareness workaround)
+        //button_empty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_empty.png"))); // NOI18N
+        button_empty.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/locale_empty.png"))); // NOI18N
+        // END KGU#287 2016-11-02
         button_empty.setToolTipText("Create new locale");
         button_empty.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -639,7 +677,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
             }
         });
 
-        button_preview.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/017_Eye.png"))); // NOI18N
+        // START KGU#287 2016-11-02:Issue #81 (DPI awareness workaround)
+        //button_preview.setIcon(new javax.swing.ImageIcon(getClass().getResource("/lu/fisch/structorizer/gui/icons/017_Eye.png"))); // NOI18N
+        button_preview.setIcon(IconLoader.getIconImage(getClass().getResource("/lu/fisch/structorizer/gui/icons/017_Eye.png"))); // NOI18N
+        // END KGU#287 2016-11-02
         button_preview.setToolTipText("Preview in Structorizer");
         button_preview.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -668,14 +709,15 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
                 .addComponent(button_save)
                 .addContainerGap())
         );
+        int btnHeight = (int)(35 * scaleFactor);
         ParallelGroup pGroup = jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addComponent(jLabel1)
-                .addComponent(button_preview, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(button_empty, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(button_save, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE);
+                .addComponent(button_preview, javax.swing.GroupLayout.PREFERRED_SIZE, btnHeight, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(button_empty, javax.swing.GroupLayout.PREFERRED_SIZE, btnHeight, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(button_save, javax.swing.GroupLayout.PREFERRED_SIZE, btnHeight, javax.swing.GroupLayout.PREFERRED_SIZE);
         for (javax.swing.JButton button: localeButtons)
         {
-            pGroup = pGroup.addComponent(button, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE);
+            pGroup = pGroup.addComponent(button, javax.swing.GroupLayout.PREFERRED_SIZE, btnHeight, javax.swing.GroupLayout.PREFERRED_SIZE);
         }
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -689,7 +731,10 @@ public class Translator extends javax.swing.JFrame implements PropertyChangeList
 
         jPanel2.setLayout(new java.awt.BorderLayout());
 
-        headerText.setFont(new java.awt.Font("Monospaced", 0, 10)); // NOI18N
+        // START KGU#287 2016-11-02: Issue #81 (DPI awareness workaround
+        //headerText.setFont(new java.awt.Font("Monospaced", 0, 10)); // NOI18N
+        headerText.setFont(new java.awt.Font("Monospaced", 0, (int)(10*scaleFactor))); // NOI18N
+        // END KGU#287 2016-11-02
         jScrollPane2.setViewportView(headerText);
 
         jPanel2.add(jScrollPane2, java.awt.BorderLayout.CENTER);

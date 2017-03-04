@@ -49,6 +49,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.21      Bugfix #198: Inconsistency between methods prepareDraw() and draw()
  *      Kay Gürtzig     2016.07.31      Enh. #128: New mode "comments plus text" supported, drawing code delegated
  *                                      Bugfix #212 (inverted logic of option altPadRight = "enlarge FALSE")
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
+ *      Kay Gürtzig     2017.02.08      Bugfix #198 (KGU#346) rightward cursor navigation was flawed,
+ *                                      Inheritance changed (IFork added)
  *
  ******************************************************************************************************
  *
@@ -68,7 +71,7 @@ import lu.fisch.graphics.*;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
-public class Alternative extends Element {
+public class Alternative extends Element implements IFork {
 
 	public Subqueue qFalse = new Subqueue();
 	public Subqueue qTrue = new Subqueue();
@@ -109,20 +112,6 @@ public class Alternative extends Element {
 		qTrue.parent=this;
 		setText(_strings);
 	}
-	
-//	// START KGU#64 2015-11-03: Is to improve drawing performance
-//	/**
-//	 * Recursively clears all drawing info this subtree down
-//	 * (To be overridden by structured sub-classes!)
-//	 */
-//	@Override
-//	public void resetDrawingInfoDown()
-//	{
-//		this.resetDrawingInfo();
-//		qFalse.resetDrawingInfoDown();
-//		qTrue.resetDrawingInfoDown();
-//	}
-//	// END KGU#64 2015-11-03
 
 	public Rect prepareDraw(Canvas _canvas)
 	{
@@ -317,7 +306,7 @@ public class Alternative extends Element {
 		if (Element.altPadRight) remain=0;
 		// END KGU#228 2016-07-31
 		// START KGU#136 2016-03-07: Bugfix #122 - we must correct the else start point
-		this.pt0Parting.x = this.rTrue.right - rTrue.left + remain; 
+		this.pt0Parting.x = rTrue.right - rTrue.left + remain; 
 		// END KGU#136 2016-03-07
 
 		// the upper left corner point (with reversed y coordinates)
@@ -330,7 +319,7 @@ public class Alternative extends Element {
 		double dx = _top_left.right - _top_left.left;
 		double dy = cy;
 		// the the lowest point of the triangle
-		double ax = rTrue.right - rTrue.left + remain;
+		double ax = pt0Parting.x;
 		double ay = 0;
 		// gradient coefficient of the left traverse line
 		double coeffleft = (cy-ay)/(cx-ax);
@@ -357,13 +346,13 @@ public class Alternative extends Element {
 		{
 			String mytext = this.getText(false).get(i);
 
-                        // bottom line of the text
-                        double by = yOffset + (nLines-i-1)*fm.getHeight();
-                        // part on the left side
-                        double leftside = by/coeffleft + ax - ay/coeffleft;
-                        // the the bottom right point of this text line
-                        double bx = by/coeffright + ax - ay/coeffright;
-                        /* dbugging output
+			// bottom line of the text
+			double by = yOffset + (nLines-i-1)*fm.getHeight();
+			// part on the left side
+			double leftside = by/coeffleft + ax - ay/coeffleft;
+			// the the bottom right point of this text line
+			double bx = by/coeffright + ax - ay/coeffright;
+			/* dbugging output
                         canvas.setColor(Color.RED);
                         canvas.fillRect(new Rect(
                                 myrect.left+(int) cx-2, myrect.bottom-(int) cy-2,
@@ -371,21 +360,21 @@ public class Alternative extends Element {
                         );
                         canvas.moveTo(myrect.left+(int) leftside, myrect.bottom-(int) by);
                         canvas.lineTo(myrect.left+(int) bx, myrect.bottom-(int) by);
-                        */
-                        int boxWidth = (int) (bx-leftside);
-                        int textWidth = getWidthOutVariables(_canvas,getText(false).get(i),this);
+			 */
+			int boxWidth = (int) (bx-leftside);
+			int textWidth = getWidthOutVariables(_canvas,getText(false).get(i),this);
 
-                        canvas.setColor(Color.BLACK);
-                        writeOutVariables(canvas,
-                            _top_left.left + (E_PADDING/2) + (int) leftside + (int) (boxWidth - textWidth)/2,
-                            // START KGU#227 2016-07-31: Enh. #128
-                            //_top_left.top + (E_PADDING / 3) + (i+1)*fm.getHeight(),
-                            _top_left.top + (E_PADDING / 3) + commentRect.bottom + (i+1)*fm.getHeight(),
-                            // END KGU#227 2016-07-31
-                            mytext,this
-                        );
+			canvas.setColor(Color.BLACK);
+			writeOutVariables(canvas,
+					_top_left.left + (E_PADDING/2) + (int) leftside + (int) (boxWidth - textWidth)/2,
+					// START KGU#227 2016-07-31: Enh. #128
+					//_top_left.top + (E_PADDING / 3) + (i+1)*fm.getHeight(),
+					_top_left.top + (E_PADDING / 3) + commentRect.bottom + (i+1)*fm.getHeight(),
+					// END KGU#227 2016-07-31
+					mytext,this
+					);
 
-                        /*
+			/*
 			if(rotated==false)
 			{
 				canvas.setColor(Color.BLACK);
@@ -403,7 +392,7 @@ public class Alternative extends Element {
 				// _top_left.bottom-(E_PADDING div 2),rotated);
 				
 			}
-                         */
+			 */
 		}
 		
 		// draw symbols
@@ -435,7 +424,13 @@ public class Alternative extends Element {
 		canvas.lineTo(myrect.left + rTrue.right-1 + remain, myrect.bottom-1);
 		canvas.lineTo(myrect.right, myrect.top);
 		
-		// draw children
+		// START KGU#277 2016-10-13: Enh. #270
+		if (this.disabled) {
+			canvas.hatchRect(myrect, 5, 10);
+		}
+		// END KGU#277 2016-10-13
+
+			// draw children
 		myrect = _top_left.copy();
 
 		// START KGU#207 2016-07-21: Bugfix #198 - this offset difference to pt0Parting.y spoiled selection traversal 
@@ -484,7 +479,10 @@ public class Alternative extends Element {
 			//Element selT = qTrue.getElementByCoord(_x,_y, _forSelection);
 			//Element selF = qFalse.getElementByCoord(_x,_y, _forSelection);
 			Element selT = qTrue.getElementByCoord(_x, _y-pt0Parting.y, _forSelection);
-			Element selF = qFalse.getElementByCoord(_x-pt0Parting.x, _y-pt0Parting.y, _forSelection);
+			// START KGU#346 2017-02-08: Bugfix #198 (flawed horizontal navigation)
+			//Element selF = qFalse.getElementByCoord(_x-pt0Parting.x, _y-pt0Parting.y, _forSelection);
+			Element selF = qFalse.getElementByCoord(_x-pt0Parting.x+1, _y-pt0Parting.y, _forSelection);
+			// END KGU#346 2017-02-08
 			// END KGU#136 2016-03-01
 			if (selT != null) 
 			{
@@ -506,6 +504,18 @@ public class Alternative extends Element {
 	}
 	// END KGU 2015.10.09
 	
+	// START KGU#346 2017-02-08: Issue #198 Provide a relative rect for the head
+	/**
+	 * Returns a copy of the (relocatable i. e. 0-bound) extension rectangle
+	 * of the head partition (condition and branch labels). 
+	 * @return a rectangle starting at (0,0) and spanning to (width, head height) 
+	 */
+	public Rect getHeadRect()
+	{
+		return new Rect(rect.left, rect.top, rect.right, this.pt0Parting.y);
+	}
+	// END KGU#346 2017-02-08
+
 	// START KGU#183 2016-04-24: Issue #169 
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.elements.Element#findSelected()
@@ -577,38 +587,6 @@ public class Alternative extends Element {
         qTrue.setColor(_color);
     }*/
 	
-	
-//	// START KGU 2015-11-12
-//	@Override
-//	public void clearBreakpoints()
-//	{
-//		super.clearBreakpoints();
-//		this.qFalse.clearBreakpoints();
-//		this.qTrue.clearBreakpoints();
-//	}
-//	// END KGU 2015-10-12
-//	
-//	// START KGU 2015-10-13
-//	// Recursively clears all execution flags in this branch
-//	public void clearExecutionStatus()
-//	{
-//		super.clearExecutionStatus();
-//		this.qFalse.clearExecutionStatus();
-//		this.qTrue.clearExecutionStatus();
-//	}
-//	// END KGU 2015-10-13
-//
-//	// START KGU#117 2016-03-07: Enh. #77
-//	/* (non-Javadoc)
-//	 * @see lu.fisch.structorizer.elements.Element#clearTestCoverage()
-//	 */
-//	public void clearRuntimeData()
-//	{
-//		super.clearRuntimeData();
-//		this.qFalse.clearRuntimeData();
-//		this.qTrue.clearRuntimeData();
-//	}
-//	// END KGU#117 2016-03-07
 
 	// START KGU#156 2016-03-13: Enh. #124
 	protected String getRuntimeInfoString()

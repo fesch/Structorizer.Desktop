@@ -34,7 +34,9 @@ package lu.fisch.structorizer.locales;
  *     ------       ----        -----------
  *     Bob Fisch    2008.01.14  First Issue
  *     Bob Fisch    2016.08.02  Fundamentally redesigned
- *     Kay Gürtzig  2016.09.21  API enhanced (initLang(), adjustLangDependentComponents()) to facilitate bugfix #241 
+ *     Kay Gürtzig  2016.09.21  API enhanced (initLang(), adjustLangDependentComponents()) to facilitate bugfix #241
+ *     Kay Gürtzig  2016.11.11  Issue #81: Method scaleToggleIcon added (DPI awareness workaround)
+ *     Kay Gürtzig  2017.01.09  Issue #81/#330: Method scaleToggleButton moved to class GUIScaler 
  *
  ******************************************************************************************************
  *
@@ -48,6 +50,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.swing.*;
+
 import lu.fisch.structorizer.gui.IconLoader;
 
 /**
@@ -120,4 +123,5 @@ public class LangDialog extends JDialog {
     	// MAY BE OVERRIDDEN BY SUBCLASSES
     }
     // END KGU#246 2016-09-21
+    
 }

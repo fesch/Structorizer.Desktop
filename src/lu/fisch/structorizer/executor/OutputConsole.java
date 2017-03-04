@@ -37,6 +37,9 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.04.25      Scrolling to last line ensured
  *      Kay Gürtzig     2016.04.26      Converted to JTextPane in order to allow styled output
  *      Kay Gürtzig     2016.09.25      Bugfix #251 averting Nimbus disrespect of panel settings 
+ *      Kay Gürtzig     2016.10.11      Enh. #268: Inheritance changed, font selecting opportunities added
+ *      Kay Gürtzig     2016.10.17      Issue #268: Font setting source and target corrected (doc's default style)
+ *      Kay Gürtzig     2016.11.22      Enh.#284: Font resizing accelerators modified (CTRL_DOWN_MASK added)
  *
  ******************************************************************************************************
  *
@@ -47,25 +50,46 @@ package lu.fisch.structorizer.executor;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 
-import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.KeyStroke;
 import javax.swing.UIDefaults;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
+import lu.fisch.structorizer.gui.FontChooser;
 import lu.fisch.structorizer.gui.IconLoader;
+import lu.fisch.structorizer.locales.LangFrame;
 
 @SuppressWarnings("serial")
-public class OutputConsole extends JFrame {
+// START KGU#279 2016-10-11: Enh. #268 - inheritance change was necessary to add a menu
+public class OutputConsole extends LangFrame implements ActionListener {
+
+	static private final int MIN_FONT_SIZE = 6;
+	static private final Color[] colours = {Color.BLUE, Color.CYAN, Color.GRAY, Color.GREEN, Color.LIGHT_GRAY,
+		Color.MAGENTA, Color.ORANGE, Color.PINK, Color.RED, Color.WHITE, Color.YELLOW};
 
 	private JPanel panel;
 	private JTextPane textPane;
 	private StyledDocument doc = null;
+	// START KGU#279 2016-10-11: Enh. #268 Font change opportunity
+	public JMenu menu;
+	public JMenuItem menuFont;
+	public JMenuItem menuFontUp;
+	public JMenuItem menuFontDown;
+	// END KGU#279 2016-10-11
 	
 	public OutputConsole()
 	{
@@ -86,6 +110,25 @@ public class OutputConsole extends JFrame {
         setTitle("Structorizer Output Console");
     	this.setIconImage(IconLoader.ico004.getImage());
     	
+    	// START KGU#279 2016-10-11: Enh. #268: Font selection opportunity
+    	menu = new JMenu("Properties");
+    	menuFont = new JMenuItem("Font ...",IconLoader.ico023);
+    	menuFont.addActionListener(this);
+    	menuFontUp = new JMenuItem("Enlarge font", IconLoader.ico033);
+    	menuFontUp.addActionListener(this);
+    	menuFontUp.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, InputEvent.CTRL_DOWN_MASK));
+    	menuFontDown = new JMenuItem("Diminish font", IconLoader.ico034);
+    	menuFontDown.addActionListener(this);
+    	menuFontDown.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, InputEvent.CTRL_DOWN_MASK));
+    	
+    	JMenuBar menuBar = new JMenuBar();
+    	menuBar.add(menu);
+    	menu.add(menuFont);
+    	menu.add(menuFontUp);
+    	menu.add(menuFontDown);
+    	setJMenuBar(menuBar);
+    	// END KGU#279 2016-10-11
+    	
     	textPane = new JTextPane();
     	// START KGU#255 2016-09-25: Bugfix #251 background setting diddn't work with Nimbus
     	//textPane.setBackground(Color.BLACK);
@@ -99,13 +142,18 @@ public class OutputConsole extends JFrame {
     	textPane.setForeground(Color.WHITE);
     	JScrollPane scrText = new JScrollPane(textPane);
     	doc = textPane.getStyledDocument();
-    	Color[] colours = {Color.BLUE, Color.CYAN, Color.GRAY, Color.GREEN, Color.LIGHT_GRAY,
-    			Color.MAGENTA, Color.ORANGE, Color.PINK, Color.RED, Color.WHITE, Color.YELLOW};
+    	Style defStyle = doc.getStyle("default");
+    	// The standard font size (11) wasn't in the FontChooser choice list 
+    	defStyle.addAttribute(StyleConstants.FontSize, 12);
     	for (Color colour : colours)
     	{
     		Style style = doc.addStyle(colour.toString(), null);
     		style.addAttribute(StyleConstants.Foreground, colour);
     	}
+    	// START KGU#279 2016-10-11: Bugfix #268
+    	textPane.setEditable(false);
+    	// END KGU#279 2016-10-11
+    	
     	panel.setLayout(new BorderLayout());
     	panel.add(scrText, BorderLayout.CENTER);
     	this.add(panel, null);
@@ -174,6 +222,72 @@ public class OutputConsole extends JFrame {
     	this.write(_text + "\n", _colour);
     }
 
+    // START KGU#279 2016-10-11: Enh. #268 - allow to control the font size
+    public int getFontSize()
+    {
+    	MutableAttributeSet attrs = doc.getStyle("default");
+    	return StyleConstants.getFontSize(attrs);
+    }
+    
+    public void setFontSize(int newFontSize)
+    {
+    	// Modify the default style
+    	doc.getStyle("default").addAttribute(StyleConstants.FontSize, newFontSize);
+		// Modify the font of the already written text
+    	MutableAttributeSet attrs = new javax.swing.text.SimpleAttributeSet();
+    	StyleConstants.setFontSize(attrs, newFontSize);
+    	doc.setCharacterAttributes(0, doc.getLength(), attrs, false);
+    }
+
+	public void selectFont()
+	{
+		FontChooser fontChooser = new FontChooser(this);
+		// set fields
+    	MutableAttributeSet stAttrs = doc.getStyle("default");
+		fontChooser.setFont(doc.getFont(stAttrs));
+		fontChooser.setVisible(true);
+		// Get the user selection
+    	String fontName = fontChooser.getCurrentFont().getName();
+    	int fontSize = fontChooser.getCurrentFont().getSize();
+
+    	// Modify the default style
+		Style style = doc.getStyle("default");
+		style.addAttribute(StyleConstants.FontFamily, fontName);
+		style.addAttribute(StyleConstants.FontSize, fontSize);
+
+		// Modify the font of the already written text
+    	MutableAttributeSet attrs = new javax.swing.text.SimpleAttributeSet();
+    	StyleConstants.setFontFamily(attrs, fontName);
+    	StyleConstants.setFontSize(attrs, fontSize);
+    	doc.setCharacterAttributes(0, doc.getLength(), attrs, false);
+	}
+
+	public void fontUp()
+	{
+		setFontSize(2*((getFontSize()+1)/2) + 2);
+	}
+
+	public void fontDown()
+	{
+		setFontSize(Math.max(MIN_FONT_SIZE, 2*(getFontSize()/2) - 2));
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent actev) {
+		Object src = actev.getSource();
+		if (src == menuFont) {
+			selectFont();
+		}
+		else if (src == menuFontUp) {
+			fontUp();
+		}
+		else if (src == menuFontDown)
+		{
+			fontDown();
+		}
+	}
+	// END KGU#279 2016-10-11
+    
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
@@ -181,5 +295,5 @@ public class OutputConsole extends JFrame {
             }
         });
     }
-    
+
 }

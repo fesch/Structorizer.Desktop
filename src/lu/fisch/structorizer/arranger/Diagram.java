@@ -20,6 +20,31 @@
 
 package lu.fisch.structorizer.arranger;
 
+/*
+ *****************************************************************************************************
+ *
+ *      Author: Bob Fisch
+ *
+ *      Description: This class is just a holder for diagrams, their owners, and positions within Arranger
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date        Description
+ *      ------          ----        -----------
+ *      Bob Fisch       2009.08.18  First Issue
+ *      Kay Gürtzig     2015.11.24  Pinning flag added (issue #35, KGU#88)
+ *      Kay Gürtzig     2016.03.08  Bugfix #97: Method resetDrawingInfo added (KGU#155)
+ *      Kay Gürtzig     2017.01.13  Issue #305 (KGU#330) additional information added to trigger notification 
+ *
+ ******************************************************************************************************
+ *
+ * Comment:	/
+ *
+ *****************************************************************************************************
+ *///
+
 import java.awt.Point;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.gui.Mainform;
@@ -36,11 +61,17 @@ public class Diagram
     // START KGU#88 2015-11-24
     boolean isPinned = false;
     // END KGU#88 2015-11-24
+    // START KGU#330 2017-01-13: Enh. #305 We keep redundant information to be able to trigger change notifications
+    String signature;
+    // END KGU#330 2017-01-13
 
     public Diagram(Root root, Point point)
     {
         this.root=root;
         this.point=point;
+        // START KGU#330 2017-01-13: Enh. #305 We keep redundant information to be able to trigger change notifications
+        signature = root.getSignatureString(true);
+        // END KGU#330 2017-01-13
     }
 
     // START KGU#155 2016-03-08: Bugfix #97 extension
@@ -65,4 +96,18 @@ public class Diagram
 //		}
 	}
 	// END KGU#155 2016-03-08
+	
+    // START KGU#330 2017-01-13: Enh. #305
+	/**
+	 * Identifies notification-relevant changes (and updates the cached info)
+	 * @return true iff the signature string for the Arranger index has changed
+	 */
+	public boolean checkSignatureChange()
+	{
+		String oldSignature = this.signature;
+		this.signature = this.root.getSignatureString(true);
+		return !this.signature.equals(oldSignature);
+	}
+    // END KGU#330 2017-01-13
+	
 }

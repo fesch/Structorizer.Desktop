@@ -77,6 +77,21 @@
  *      Kay Gürtzig     2016.09.22      Bugfix #241; issue #249: New messages for InputBox and Analyser
  *                                      AnalyserPreferences numbering modified, InputBoxFor messages
  *      Kay Gürtzig     2016.09.25      Enh. #253: Section ImportOptionDialog inserted
+ *      Kay Gürtzig     2016.10.11      Enh. 267: Menu.error15 divided into error15_1 and error15_2
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Editor.popupDisable and InputBox.chkDisabled added.
+ *      Kay Gürtzig     2016.10.16      Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
+ *      Kay Gürtzig     2016.11.08      Enh. #270: Editor.btnDisable.tooltip added
+ *      Kay Gürtzig     2016.11.10      Enh. #286: AnalyserPreferences tabs
+ *      Kay Gürtzig     2016.12.02      Enh. #300: New messages for update retrieval
+ *      Kay Gürtzig     2016.12.02      Issue #307: New executor error message
+ *      Kay Gürtzig     2016.12.14      Issue #311: Menu reorganisation
+ *      Kay Gürtzig     2016.12.15      Enh. #310: New Saving option dialog
+ *      Kay Gürtzig     2016.12.27      Enh. #314: Control messages for the file API
+ *      Kay Gürtzig     2016.12.29      Enh. #315: New Surface messages for diagram conflicts
+ *      Kay Gürtzig     2017.01.05      Enh. #319: Captions for the Arranger index popup menu
+ *      Kay Gürtzig     2017.01.07      Enh. #329: Messages for Analyser check 21
+ *      Kay Gürtzig     2017.01.11      Issue #81/#330: Messages for scaling Preview
+ *      Kay Gürtzig     2017.02.26      Enh. #346: Additions for ExportOptionDialoge
  *
  ******************************************************************************************************
  *
@@ -91,7 +106,7 @@
 
 -----> Structorizer
 -----[ Menu ]-----
-//Menu File
+// Menu "File"
 Menu.menuFile.text=File
 Menu.menuFile.mnemonic=f
 // Submenus of "File"
@@ -128,6 +143,10 @@ Menu.menuEditRedo.text=Redo
 Menu.menuEditCut.text=Cut
 Menu.menuEditCopy.text=Copy
 Menu.menuEditPaste.text=Paste
+Menu.menuEditUpgradeTurtle.text=To fine graphics
+Menu.menuEditUpgradeTurtle.tooltip=Replaces all poor Turtle commands in the selected elements by the more precise ones. 
+Menu.menuEditDowngradeTurtle.text=To integer graphics
+Menu.menuEditDowngradeTurtle.tooltip=Replaces all precise Turtle commands in the selected elements by the poorer ones. 
 Menu.menuEditCopyDiagramPNG.text=Copy PNG image
 Menu.menuEditCopyDiagramEMF.text=Copy EMF image
 // Menu "Diagram"
@@ -168,9 +187,6 @@ Menu.menuDiagramMoveDown.text=Move down
 Menu.menuDiagramTransmute.text=Transmute
 Menu.menuDiagramCollapse.text=Collapse
 Menu.menuDiagramExpand.text=Expand
-// Breakpoint
-Menu.menuDiagramBreakpoint.text=Toggle breakpoint
-Menu.menuDiagramBreakTrigger.text=Specify break trigger...
 // Diagram Appearance
 Menu.menuDiagramType.text=Type
 Menu.menuDiagramTypeProgram.text=Main
@@ -183,16 +199,20 @@ Menu.menuDiagramSwitchTCTooltip.text=Unselect "%1" to enable this item
 Menu.menuDiagramMarker.text=Highlight variables?
 Menu.menuDiagramDIN.text=DIN?
 Menu.menuDiagramAnalyser.text=Analyse structogram?
+Menu.menuDiagramIndex.text=Show Arranger index?
 Menu.menuDiagramWheel.text=Mouse wheel for collapsing?
 // Menu "Preferences"
 Menu.menuPreferences.text=Preferences
 Menu.menuPreferences.mnemonic=p
 // Submenu of "Preferences"
+Menu.menuPreferencesNotifyUpdate.text=Notify of new versions
+Menu.menuPreferencesNotifyUpdate.tooltip=Allow Structorizer to retrieve version info from Structorizer homepage and to inform about new releases.
 Menu.menuPreferencesFont.text=Font ...
 Menu.menuPreferencesColors.text=Colors ...
 Menu.menuPreferencesOptions.text=Structures ...
 Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesAnalyser.text=Analyser ...
+Menu.menuPreferencesSaving.text=Saving ...
 Menu.menuPreferencesExport.text=Export ...
 Menu.menuPreferencesImport.text=Import ...
 Menu.menuPreferencesLanguage.text=Language
@@ -211,7 +231,7 @@ Menu.menuPreferencesLanguageItems.ru.text=Russian
 Menu.menuPreferencesLanguageItems.pl.text=Polish
 Menu.menuPreferencesLanguageFromFile.text=From file ...
 Menu.menuPreferencesLanguageFromFile.tooltip=You may create translation files with the 'Translator' tool in the File menu.
-
+Menu.menuPreferencesScalePreset.text=GUI Scaling ...
 Menu.menuPreferencesLookAndFeel.text=Look & Feel
 
 Menu.menuPreferencesSave.text=All preferences ...
@@ -221,6 +241,17 @@ Menu.menuPreferencesSaveLoad.text=Load from file ...
 
 // Menu "View" (not in use right now!)
 Menu.menuView.text=
+
+// Menu "Debug"
+Menu.menuDebug.text=Debug
+Menu.menuDebug.mnemonic=b
+// Submenu of "Debug"
+Menu.menuDebugTurtle.text=Turtleizer ...
+Menu.menuDebugExecute.text=Executor ...
+Menu.menuDebugDropBrkpts.text=Clear breakpoints
+Menu.menuDebugBreakpoint.text=Toggle breakpoint
+Menu.menuDebugBreakTrigger.text=Specify break trigger ...
+Menu.menuDebugDisable.text=Disable/enable
 
 // Menu "Help"
 Menu.menuHelp.text=Help
@@ -262,6 +293,12 @@ Menu.msgRefactoringOffer.text=Keywords configured in the Parser Preferences were
 Menu.lblRefactorNone.text=no
 Menu.lblRefactorCurrent.text=current diagram
 Menu.lblRefactorAll.text=all diagrams
+Menu.msgReplacementsDone.text=% instructions replaced.
+Menu.msgNewerVersionAvail.text=Newer version % available for download.
+Menu.msgUpdateInfoHint.text=If you want to get notified of available new versions\nyou may enable update retrieval from Structorizer homepage\nvia menu item "%1" > "%2".
+Menu.lblOk.text=OK
+Menu.lblSuppressUpdateHint.text=Don't show this window again
+Menu.lblHint.text=Hint
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
@@ -279,11 +316,11 @@ Menu.error07_1.text=«%» is not a valid name for a program or method!
 Menu.error07_2.text=«%» is not a valid name for a parameter!
 Menu.error07_3.text=«%» is not a valid name for a variable!
 Menu.error08.text=It is not allowed to make an assignment inside a condition.
-Menu.error09.text=Your program («%») cannot have the same name as a variable or parameter!
+Menu.error09.text=Your program («%») may not share its name with a variable or parameter!
 Menu.error10_1.text=A single instruction element should not contain input/output instructions and assignments!
 Menu.error10_2.text=A single instruction element should not contain input and output instructions!
 Menu.error10_3.text=A single instruction element should not contain input instructions and assignments!
-Menu.error10_4.text=A single instruction element should not contain ouput instructions and assignments!
+Menu.error10_4.text=A single instruction element should not contain output instructions and assignments!
 Menu.error11.text=You probably made an assignment error. Please check this instruction!
 Menu.error12.text=The parameter «%» must start with the letter "p" followed by only uppercase letters!
 Menu.error13_1.text=Your function does not return any result!
@@ -292,7 +329,9 @@ Menu.error13_3.text=Your functions seems to use several competitive return mecha
 Menu.error14_1.text=The FOR loop parameters are not consistent to the loop heading text!
 Menu.error14_2.text=The FOR loop step value («%») is not a legal integer constant!
 Menu.error14_3.text=Variable name «%» may collide with one of the configured FOR loop heading keywords!
-Menu.error15.text=The CALL hasn't got form «[ <var> <- ] <routine_name>(<arg_list>)»!
+Menu.error15_1.text=The CALL hasn't got form «[ <var> <- ] <routine_name>(<arg_list>)»!
+Menu.error15_2.text=The called subroutine «%» is currently not available.
+Menu.error15_3.text=There are several matching subroutines for «%».
 Menu.error16_1.text=A JUMP element may be empty or start with one of %, possibly followed by an argument!	
 Menu.error16_2.text=A return instruction, unless at final position, must form a JUMP element!
 Menu.error16_3.text=An exit, leave or break instruction is only allowed as JUMP element!
@@ -304,9 +343,12 @@ Menu.error17.text=Consistency risk due to concurrent access to variable «%» by
 Menu.error18.text=Variable «%1» may be confused with variable(s) «%2» in case-indifferent languages!
 Menu.error19.text=Variable name «%1» may collide with reserved names in languages like %2!
 Menu.error20.text=A subroutine header must have a (possibly empty) parameter list within parentheses.
+Menu.error21.text=Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0.
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Analyser preferences
+AnalyserPreferences.contentPanel.tab.0=Algorithmic
+AnalyserPreferences.contentPanel.tab.1=Names / Conventions
 AnalyserPreferences.checkboxes.1.text=Check for modified loop variable.
 AnalyserPreferences.checkboxes.2.text=Check for endless loop (as far as detectable!)
 AnalyserPreferences.checkboxes.3.text=Check for non-initialized variables.
@@ -316,17 +358,18 @@ AnalyserPreferences.checkboxes.6.text=Check for UPPERCASE program / sub name. (L
 AnalyserPreferences.checkboxes.7.text=Check for valid identifiers.
 AnalyserPreferences.checkboxes.8.text=Check for assignment in conditions.
 AnalyserPreferences.checkboxes.9.text=Check that the program / sub name is not equal to any other identifier.
-AnalyserPreferences.checkboxes.10.text=Check for instructions with multiple commands.
+AnalyserPreferences.checkboxes.10.text=Check for mixed-type multiple-line instructions.
 AnalyserPreferences.checkboxes.11.text=Check for assignment errors.
 AnalyserPreferences.checkboxes.12.text=Check for standardized parameter name. (LUX/MEN)
 AnalyserPreferences.checkboxes.13.text=Check if, in case of a function, it returns a result.
 AnalyserPreferences.checkboxes.14.text=Check for consistency of FOR loop parameters.
-AnalyserPreferences.checkboxes.15.text=Check for inappropriate subroutine CALLs.
+AnalyserPreferences.checkboxes.15.text=Check for inappropriate subroutine CALLs and missing call targets.
 AnalyserPreferences.checkboxes.16.text=Check for incorrect JUMP element usage.
 AnalyserPreferences.checkboxes.17.text=Check for inconsistency risks in PARALLEL sections.
 AnalyserPreferences.checkboxes.18.text=Check that identifiers don't differ only by upper/lower case.
 AnalyserPreferences.checkboxes.19.text=Check if an identifier might collide with reserved words.
 AnalyserPreferences.checkboxes.20.text=Check that a subroutine header has a parameter list.
+AnalyserPreferences.checkboxes.21.text=Discourage use of mistakable variable names «I», «l», and «O».
 AnalyserPreferences.okButton.text=OK
 
 
@@ -398,6 +441,7 @@ Editor.btnColor9.tooltip=Colorize the selected element with this color.
 // collapsing
 Editor.btnCollapse.tooltip=Collapse the selected element.
 Editor.btnExpand.tooltip=Expand the selected element.
+Editor.btnDisable.tooltip=Disable/enable the selected element(s).
 // turtleizer & executor
 Editor.btnTurtle.tooltip=Open Turtleizer ...
 Editor.btnMake.tooltip=Open Executor ...
@@ -442,9 +486,15 @@ Editor.popupTransmute.text=Transmute
 // Collapsing
 Editor.popupCollapse.text=Collapse
 Editor.popupExpand.text=Expand
+Editor.popupDisable.text=Disable/enable
 // Breakpoint
 Editor.popupBreakpoint.text=Toggle breakpoint
 Editor.popupBreakTrigger.text=Specify break trigger...
+// Arranger index
+Editor.popupIndexGet.text=Get diagram
+Editor.popupIndexSave.text=Save changes
+Editor.popupIndexRemove.text=Remove
+Editor.popupIndexCovered.text=Test-covered on/off
 
 -----[ InputBox ]-----
 InputBox.title=
@@ -458,6 +508,7 @@ InputBox.btnOK.text=OK
 InputBox.btnOK.tooltip=Validate your choice.
 InputBox.btnCancel.text=Cancel
 InputBox.btnCancel.tooltip=Cancel your choice.
+InputBox.chkDisabled.text=Disabled (execution and export)
 InputBox.chkBreakpoint.text=
 InputBox.lblBreakTriggerText.text=Break at execution count: %
 InputBox.lblText.text[elementType:Alternative]=Please enter the condition
@@ -507,7 +558,8 @@ InputBoxFor.btnOK.text=
 InputBoxFor.btnOK.tooltip=
 InputBoxFor.btnCancel.text=
 InputBoxFor.btnCancel.tooltip=
-InputBoxFor.chkBreakpoint.text=
+InputBoxFor.chkDisabled.text=Disabled (execution and export)
+InputBoxFor.chkBreakpoint.text=Breakpoint
 InputBoxFor.lblBreakTriggerText.text=Break at execution count: %
 InputBoxFor.msgInvalidIncrement.text=<%> is no valid integer constant
 InputBoxFor.msgMissingBrace1.text=Value list should begin with '{'
@@ -661,6 +713,8 @@ PrintPreview.btnOK.tooltip=Print the diagram.
 
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Export options ...
+ExportOptionDialoge.tabbedPane.tab.0=General
+ExportOptionDialoge.tabbedPane.tab.1=Includes
 ExportOptionDialoge.noConversionCheckBox.text=No conversion of the expression/instruction contents.
 ExportOptionDialoge.noConversionCheckBox.tooltip=Select this option if the text content of your elements already represents target language syntax.
 ExportOptionDialoge.commentsCheckBox.text=Export instructions as comments.
@@ -673,6 +727,7 @@ ExportOptionDialoge.chkCharsetAll.text=List all?
 ExportOptionDialoge.jLabel1.text=Please select the options you want to activate...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Save these settings.
+ExportOptionDialoge.includeLists.*.tooltip=Fill in a comma-separated list of files or modules for which include/import/use clauses are to be inserted
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Import options ...
@@ -683,9 +738,30 @@ ImportOptionDialog.pnlPreference.border=Preference files
 ImportOptionDialog.lbCharset.text=Character set:
 ImportOptionDialog.chkCharsetAll.text=List all?
 ImportOptionDialog.chkRefactorOnLoading.text=Replace keywords on loading a diagram (refactoring).
-ImportOptionDialog.chkRefactorOnLoading.tooltip=Select this option if all configurable keywords in the daiagram are to be adapted to the current parser preferences.
+ImportOptionDialog.chkRefactorOnLoading.tooltip=Select this option if all configurable keywords in the diagram are to be adapted to the current parser preferences.
 ImportOptionDialog.btnOk.text=OK
 ImportOptionDialog.btnOk.tooltip=Save these settings.
+
+-----[ SaveOptionDialog ]-----
+SaveOptionDialog.title=Options for saving diagrams ...
+SaveOptionDialog.lbIntro.text=Please select the options you want to activate...
+SaveOptionDialog.pnlAutoSave.border=Auto-save options
+SaveOptionDialog.pnlBackup.border=Backup options
+SaveOptionDialog.chkAutoSaveExecute.text=Auto-save during execution?
+SaveOptionDialog.chkAutoSaveClose.text=Auto-save when going to be closed?
+SaveOptionDialog.chkBackupFile.text=Create backup file on re-saving?
+SaveOptionDialog.btnOk.text=OK
+SaveOptionDialog.btnOk.tooltip=Accept these settings.
+
+-----[ GUIScaleChooser ]-----
+GUIScaleChooser.title=GUI Scale
+GUIScaleChooser.txtComment.text=This is just a preview. A hot scaling of the entire application isn't possible.\nThe scale factor will only be active on next Structorizer start.
+GUIScaleChooser.lblSpinner.text=Scale factor
+GUIScaleChooser.lblTest.text=Font Preview
+GUIScaleChooser.lblIcon.text=Icon Preview
+GUIScaleChooser.chkTest.text=CheckBox Preview
+GUIScaleChooser.btnOK.text=OK
+GUIScaleChooser.btnOK.tooltip=Validate your choice for next start.
 
 -----> Arranger
 Surface.msgFileLoadError.text=File Load Error:
@@ -704,6 +780,12 @@ Surface.msgUnsavedDiagrams.text=Couldn't save these diagrams:
 Surface.msgUnsavedHint.text=You might want to double-click and save them via Structorizer first.
 Surface.msgUnsavedContinue.text=Continue nevertheless?
 Surface.msgNoArrFile.text=No Arranger file found
+Surface.msgDefectiveArr.text=Defective arrangement.
+Surface.msgDefectiveArrz.text=Defective portable arrangement file.
+Surface.titleDiagramConflict.text=Diagram conflict
+Surface.msgInsertionConflict.0.text=There is another version of diagram "%2",\nat least one of them has unsaved changes.
+Surface.msgInsertionConflict.1.text=There is an equivalent copy of diagram "%1"\nwith different path "%2".
+Surface.msgInsertionConflict.2.text=There is a differing diagram with signature "%1"\nand path "%2".
 
 -----> Executor
 -----[ Control ]-----
@@ -734,6 +816,7 @@ Control.msgTitleError.text=Error
 Control.msgTitleQuestion.text=Question
 Control.msgTitleParallel.text=Parallel Execution Problem
 Control.msgNoSubroutine.text=A subroutine diagram "%1" (%2 parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.
+Control.msgAmbiguousCall.text=Ambiguous CALL: Different subroutine diagrams "%1" (%2 parameters) found!
 Control.msgInvalidExpr.text=<%1> is not a correct or existing expression.
 Control.msgInvalidBool.text=<%1> is not a valid Boolean expression.
 Control.msgIllFunction.text=<%1> is not a correct function!
@@ -744,5 +827,17 @@ Control.msgExitCode.text=Program exited with code %1!
 Control.msgIllegalJump.text=Illegal content of a Jump (i.e. exit) instruction: <%1>!
 Control.msgTooManyLevels.text=Too many levels to leave (actual depth: %1 / specified: %2)!
 Control.msgJumpOutParallel.text=Illegal attempt to jump out of a parallel thread:%Thread killed!
+Control.msgForLoopManipulation.text=Illegal attempt to manipulate the FOR loop variable «%»!
+Control.msgInvalidFileNumberRead.text=Invalid file number or file not open for reading.
+Control.msgInvalidFileNumberWrite.text=Invalid file number or file not open for writing.
+Control.msgNoIntLiteralOnFile.text=No integer value readable from file!
+Control.msgNoDoubleLiteralOnFile.text=No floating-point value readable from file!    
+Control.msgEndOfFile.text=Attempt to read data past end of file!    
 Control.tblVar.header.0=Variable Name
 Control.tblVar.header.1=Content
+
+-----[ OutputConsole ]-----
+OutputConsole.menu.text=Properties
+OutputConsole.menuFont.text=Font ...
+OutputConsole.menuFontUp.text=Enlarge font
+OutputConsole.menuFontDown.text=Diminish font

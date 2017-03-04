@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.gui;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Kay Guertzig
  *
@@ -40,12 +41,15 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.06      Bugfix in method removeElement() for enh. #188 (element conversion)
  *      Kay Gürtzig     2016.07.21      Bugfix #197 (selection moves by cursor keys); KGU#207 (getElementByCoord() revised)
+ *      Kay Gürtzig     2016.10.13      Enh. #277: Method setDisabled(boolean) implemented
+ *      Kay Gürtzig     2016.11.17      Bugfix #114: isExecuted() revised (signatures too)
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -395,8 +399,9 @@ public class SelectedSequence extends Element implements IElementSequence {
 	 * @see lu.fisch.structorizer.elements.Element#isExecuted()
 	 */
 	@Override
-	public boolean isExecuted()
+	public boolean isExecuted(boolean ignored)
 	{
+		// START KGU#143 2016-11-17: Bugfix #114 - We must assume involvement if parent is in waited element
 		boolean involved = false;
 		for (int index = this.firstIndex; !involved && index <= this.lastIndex; index++)
 		{
@@ -614,4 +619,14 @@ public class SelectedSequence extends Element implements IElementSequence {
 		// Nothing to refactor
 		return null;
 	}
+
+	// START KGU#277 2016-10-13: Enh. #270
+	@Override
+	public void setDisabled(boolean disable) {
+		for (int i = 0; i < this.getSize(); i++)
+		{
+			this.getElement(i).disabled = disable;
+		}
+	}
+	// END KGU#277 2016-10-13
 }

@@ -63,6 +63,15 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.09.15      Issue #243: Additional text holders for forgotten message box texts
  *      Kay Gürtzig     2016.09.22      New text holder / messages for Analyser
  *      Kay Gürtzig     2016.09.26/03   Enh. #253: Refactoring support
+ *      Kay Gürtzig     2016.10.11      Enh. #267: error15 renamed to error15_1, new error15_2
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Menu items for the disabling of elements
+ *      Kay Gürtzig     2016.10.16      Enh. #272: Menu items for the replacement of Turtleizer command sets
+ *      Kay Gürtzig     2016.11.17      Bugfix #114: Prerequisites for editing during execution revised
+ *      Kay Gürtzig     2016.12.02      Enh. #300: New menu entry to enable online update retrieval
+ *      Kay Gürtzig     2016.12.14      Enh. #305: New menu entry to enable/disable Arranger index
+ *                                      KGU#310: New Debug menu
+ *      Kay Gürtzig     2016.12.17      Enh. #267: New Analyser error15_3
+ *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser error21
  *
  ******************************************************************************************************
  *
@@ -141,6 +150,10 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuEditPaste = new JMenuItem("Paste",IconLoader.ico043);
 	protected final JMenuItem menuEditCopyDiagramPNG = new JMenuItem("Copy bitmap diagram to clipboard",IconLoader.ico032);
 	protected final JMenuItem menuEditCopyDiagramEMF = new JMenuItem("Copy vector diagram to clipboard",IconLoader.ico032);
+	// START KGU#282 2016-10-16: Issue #272: Options to upgrade or downgrade graphics
+	protected final JMenuItem menuEditUpgradeTurtle = new JMenuItem("To fine graphics",IconLoader.ico027);
+	protected final JMenuItem menuEditDowngradeTurtle = new JMenuItem("To integer graphics",IconLoader.ico028);
+	// END KGU#282 2016-10-16
 
 	protected final JMenu menuView = new JMenu("View");
 
@@ -187,12 +200,17 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuDiagramCollapse = new JMenuItem("Collapse", IconLoader.ico106);
 	protected final JMenuItem menuDiagramExpand = new JMenuItem("Expand", IconLoader.ico107);
 	// END KGU#123 2016-01-03
-	// START KGU#143 2016-01-21: Bugfix #114 - Compensate editing restriction by accelerator4
-	protected final JMenuItem menuDiagramBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
-	// END KGU#143 2016-01-21
-	// START KGU#213 2016-08-02: Enh. #215
-	protected final JMenuItem menuDiagramBreakTrigger = new JMenuItem("Specify break trigger...", IconLoader.ico112);
-	// END KGU#143 2016-08-02
+	// START KGU#310 2016-12-14: Renamed and moved to menu "Debug"
+//	// START KGU#277 2016-10-13: Enh. #270: Disabling of elements
+//	protected final JMenuItem menuDiagramDisable = new JMenuItem("Disable", IconLoader.ico026);
+//	// END KGU#277 2016-10-13
+//	// START KGU#143 2016-01-21: Bugfix #114 - Compensate editing restriction by accelerator4
+//	protected final JMenuItem menuDiagramBreakpoint = new JMenuItem("Toggle Breakpoint", IconLoader.ico103);
+//	// END KGU#143 2016-01-21
+//	// START KGU#213 2016-08-02: Enh. #215
+//	protected final JMenuItem menuDiagramBreakTrigger = new JMenuItem("Specify break trigger...", IconLoader.ico112);
+//	// END KGU#143 2016-08-02
+	// END KGU#310 2016-12-14
 
 	protected final JMenu menuDiagramType = new JMenu("Type");
 	protected final JCheckBoxMenuItem menuDiagramTypeProgram = new JCheckBoxMenuItem("Main",IconLoader.ico022);
@@ -209,15 +227,24 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#227 2016-07-31: Enh. #128
 	protected final JCheckBoxMenuItem menuDiagramCommentsPlusText = new JCheckBoxMenuItem("Comments plus texts?",IconLoader.ico111);
 	// END KGU#227 2016-07-31
+	// START KGU#305 2016-12-14: Enh. #305
+	protected final JCheckBoxMenuItem menuDiagramIndex = new JCheckBoxMenuItem("Show Arranger index?",IconLoader.ico029);
+	// END KGU#305 2016-12-14
 
-	// Menu "Help"
+	// Menu "Preferences"
 	protected final JMenu menuPreferences = new JMenu("Preferences");
-	// Submenu of "Help"
+	// Submenu of "Preferences"
+	// START KGU#300 2016-12-02: Enh. #300
+	protected final JCheckBoxMenuItem menuPreferencesNotifyUpdate = new JCheckBoxMenuItem("Notify of new versions?",IconLoader.ico052);
+	// END KGU#2016-12-02
 	protected final JMenuItem menuPreferencesFont = new JMenuItem("Font ...",IconLoader.ico023);
 	protected final JMenuItem menuPreferencesColors = new JMenuItem("Colors ...",IconLoader.ico031);
 	protected final JMenuItem menuPreferencesOptions = new JMenuItem("Structures ...",IconLoader.ico040);
 	protected final JMenuItem menuPreferencesParser = new JMenuItem("Parser ...",IconLoader.ico004);
 	protected final JMenuItem menuPreferencesAnalyser = new JMenuItem("Analyser ...",IconLoader.ico083);
+	// START KGU#309 2016-12-15: Enh. #310 - new options for saving diagrams
+	protected final JMenuItem menuPreferencesSaving = new JMenuItem("Saving ...",IconLoader.ico003);
+	// END KGU#309 2016-12-15
 	protected final JMenuItem menuPreferencesExport = new JMenuItem("Export ...",IconLoader.ico032);
 	protected final JMenuItem menuPreferencesImport = new JMenuItem("Import ...",IconLoader.ico025);
 	protected final JMenu menuPreferencesLanguage = new JMenu("Language");
@@ -228,10 +255,25 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuPreferencesLanguageFromFile = new JCheckBoxMenuItem("From file ...",IconLoader.getLocaleIconImage("empty"));
 	// END KGU#232 2016-08-03/2016-09-06
 	protected final JMenu menuPreferencesLookAndFeel = new JMenu("Look & Feel");
+	// START KGU#287 2017-01-11: Issue #81/#330
+	protected final JMenuItem menuPreferencesScalePreset = new JMenuItem("GUI Scaling ...", IconLoader.ico051);
+	// END KGU#287 2017-01-11
 	protected final JMenu menuPreferencesSave = new JMenu("All preferences ...");
 	protected final JMenuItem menuPreferencesSaveAll = new JMenuItem("Save");
 	protected final JMenuItem menuPreferencesSaveLoad = new JMenuItem("Load from file ...");
 	protected final JMenuItem menuPreferencesSaveDump = new JMenuItem("Save to file ...");
+
+	// START KGU#310 2016-12-14
+	// Menu "Debug"
+	protected final JMenu menuDebug = new JMenu("Debug");
+	// Submenu of "Debug"
+    protected final JMenuItem menuDebugTurtle = new JMenuItem("Turtleizer ...", IconLoader.turtle);
+    protected final JMenuItem menuDebugExecute = new JMenuItem("Executor ...", IconLoader.ico004);
+	protected final JMenuItem menuDebugBreakpoint = new JMenuItem("Toggle breakpoint", IconLoader.ico103);
+	protected final JMenuItem menuDebugBreakTrigger = new JMenuItem("Specify break trigger ...", IconLoader.ico112);
+	protected final JMenuItem menuDebugDropBrkpts = new JMenuItem("Clear breakpoints", IconLoader.ico104);
+	protected final JMenuItem menuDebugDisable = new JMenuItem("Disable", IconLoader.ico026);
+	// END KGU#310 2016-12-14
 
 	// Menu "Help"
 	protected final JMenu menuHelp = new JMenu("Help");
@@ -282,8 +324,15 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error14_3 = new LangTextHolder("Variable name «%» may collide with one of the configured FOR loop heading keywords!");
 	// END KGU#3 2015-11-26
 	// END KGU#3 2015-11-03
-	// START KGU#2 2015-11-25: New check for Call element syntax and Jump consistency 
-	public static final LangTextHolder error15 = new LangTextHolder("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
+	// START KGU#2 2015-11-25: New check for Call element syntax and Jump consistency
+	// START KGU#278 2016-10-11: Enh. #267: Check for subroutine availability
+	//public static final LangTextHolder error15 = new LangTextHolder("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
+	public static final LangTextHolder error15_1 = new LangTextHolder("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
+	public static final LangTextHolder error15_2 = new LangTextHolder("The called subroutine «%» is currently not available.");
+	// END KGU#278 2016-10-11
+	// START KGU 2016-12-17
+	public static final LangTextHolder error15_3 = new LangTextHolder("There are several matching subroutines for «%».");
+	// END KGU 2016-12-17
 	public static final LangTextHolder error16_1 = new LangTextHolder("A JUMP element may be empty or start with one of %, possibly followed by an argument!");	
 	public static final LangTextHolder error16_2 = new LangTextHolder("A return instruction, unless at final position, must form a JUMP element!");
 	public static final LangTextHolder error16_3 = new LangTextHolder("An exit, leave or break instruction is only allowed as JUMP element!");
@@ -301,6 +350,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#239 2016-08-12
 	// START KGU#253 2016-09-21: Enh. #249 - New check for subroutine syntax.
 	public static final LangTextHolder error20 = new LangTextHolder("A subroutine header must have a (possibly empty) parameter list within parentheses.");
+	// END KGU#253 2016-09-21
+	// START KGU#327 2017-01-07: Enh. #329 - New check for hardly distinguishable variable names.
+	public static final LangTextHolder error21 = new LangTextHolder("Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0.");
 	// END KGU#253 2016-09-21
 
 	// START KGU#218 2016-07-28: Issue #206 - enhanced localization
@@ -350,6 +402,16 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder lblRefactorCurrent = new LangTextHolder("current diagram");
 	public static final LangTextHolder lblRefactorAll = new LangTextHolder("all diagrams");
 	// END KGU#258 2016-10-03
+	// START KGU#282 2016-10-17: Enh. #272
+	public static final LangTextHolder msgReplacementsDone = new LangTextHolder("% instructions replaced.");	
+	// END KGU#282 2016-10-17
+	// START KGU#300 2016-12-02: Enh. #300
+	public static final LangTextHolder msgNewerVersionAvail = new LangTextHolder("A newer version % is available for download.");
+	public static final LangTextHolder msgUpdateInfoHint = new LangTextHolder("If you want to get notified of available new versions\nyou may enable update retrieval from Structorizer homepage\nvia menu item \"%1\" > \"%2\".");
+	public static final LangTextHolder lblOk = new LangTextHolder("OK");
+	public static final LangTextHolder lblSuppressUpdateHint = new LangTextHolder("Don't show this window again");
+	public static final LangTextHolder lblHint = new LangTextHolder("Hint");
+	// END KGU#300 2016-12-02
 
 	public void create()
 	{
@@ -525,9 +587,21 @@ public class Menu extends LangMenuBar implements NSDController
 
 		menuEdit.addSeparator();
 
+		// START KGU#282 2016-10-16: Issue #272: Options to upgrade or downgrade graphics
+		menuEdit.add(menuEditUpgradeTurtle);
+		menuEditUpgradeTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, java.awt.event.InputEvent.SHIFT_MASK));
+		menuEditUpgradeTurtle.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.replaceTurtleizerAPI(true); doButtons(); } } );
+
+		menuEdit.add(menuEditDowngradeTurtle);
+		menuEditDowngradeTurtle.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuEditDowngradeTurtle.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.replaceTurtleizerAPI(false); doButtons(); } } );
+
+		menuEdit.addSeparator();
+		// END KGU#282 2016-10-16
+
 		menuEdit.add(menuEditCopyDiagramPNG);
 		menuEditCopyDiagramPNG.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-		menuEditCopyDiagramPNG.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.copyToClipboardPNG(); doButtons(); } } );
+		menuEditCopyDiagramPNG.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.copyToClipboardPNG();; doButtons(); } } );
 
 		if(!System.getProperty("os.name").toLowerCase().startsWith("mac os x"))
 		{
@@ -673,22 +747,33 @@ public class Menu extends LangMenuBar implements NSDController
 		menuDiagramExpand.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0));
 		menuDiagramExpand.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.expandNSD(); doButtons(); } } );
 
+		// START KGU#310 2016-12-14: Moved to menu Debug
+//		// START KGU#277 2016-10-13: Enh. #270
+//		menuDiagram.add(menuDebugDisable);
+//		menuDebugDisable.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_7, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+//		menuDebugDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); doButtons(); } } );
+//		// END KGU#277 2016-10-13
+		// END KGU#310 2016-12-14
+
 		menuDiagram.addSeparator();
 		// END KGU#123 2016-01-03
-		
-		// START KGU#143 2016-01-21: Bugfix #114 - Compensate editing restriction by accelerator
-		menuDiagram.add(menuDiagramBreakpoint);
-    	menuDiagramBreakpoint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK));
-        menuDiagramBreakpoint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleBreakpoint(); doButtons(); } }); 
 
-		// START KGU#213 2016-08-02: Enh. #215 - new breakpoint feature
-		menuDiagram.add(menuDiagramBreakTrigger);
-    	menuDiagramBreakTrigger.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK));
-        menuDiagramBreakTrigger.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.editBreakTrigger(); doButtons(); } }); 
-		// END KGU#213 2016-08-02
-
-        menuDiagram.addSeparator();
-		// END KGU#143 2016-01-21
+		// START KGU#310 2016-12-14: Moved to menu "Debug" and renamed
+//		// START KGU#143 2016-01-21: Bugfix #114 - Compensate editing restriction by accelerator
+//		menuDiagram.add(menuDebugBreakpoint);
+//		menuDebugBreakpoint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK));
+//		menuDebugBreakpoint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleBreakpoint(); doButtons(); } }); 
+//
+//		// START KGU#213 2016-08-02: Enh. #215 - new breakpoint feature
+//		menuDiagram.add(menuDebugBreakTrigger);
+//		menuDebugBreakTrigger.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK));
+//		menuDebugBreakTrigger.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.editBreakTrigger(); doButtons(); } }); 
+//		// END KGU#213 2016-08-02
+//
+//        menuDiagram.addSeparator();
+//		// END KGU#143 2016-01-21
+        // END KGU#310 2016-12-14
+        
 
 		menuDiagram.add(menuDiagramType);
 
@@ -726,6 +811,12 @@ public class Menu extends LangMenuBar implements NSDController
 		menuDiagramAnalyser.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleAnalyser(); doButtons(); } } );
 		menuDiagramAnalyser.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0));
 		
+		// START KGU#305 2016-12-14: Enh. #305
+		menuDiagram.add(menuDiagramIndex);
+		menuDiagramIndex.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setArrangerIndex(menuDiagramIndex.isSelected()); } } );
+		menuDiagramIndex.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F3, java.awt.event.InputEvent.SHIFT_MASK));
+		// END KGU#305 2016-12-14
+
 		// START KGU#123 2016-01-04: Enh. #87
 		menuDiagram.add(menuDiagramWheel);
 		menuDiagramWheel.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleWheelMode(); doButtons(); } } );
@@ -734,6 +825,12 @@ public class Menu extends LangMenuBar implements NSDController
 		// Setting up Menu "Preferences" with all submenus and shortcuts and actions
 		menubar.add(menuPreferences);
 		menuPreferences.setMnemonic(KeyEvent.VK_P);
+
+		// START KGU#300 2016-12-02: Enh. #300
+		menuPreferences.add(menuPreferencesNotifyUpdate);
+		menuPreferencesNotifyUpdate.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.setRetrieveVersion(menuPreferencesNotifyUpdate.isSelected()); } } );
+		menuPreferencesNotifyUpdate.setToolTipText("Allow Structorizer to retrieve version info from Structorizer homepage and to inform about new releases.");
+		// END KGU#2016-12-02
 
 		menuPreferences.add(menuPreferencesFont);
 		menuPreferencesFont.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.fontNSD(); doButtons(); } } );
@@ -749,6 +846,11 @@ public class Menu extends LangMenuBar implements NSDController
 
 		menuPreferences.add(menuPreferencesAnalyser);
 		menuPreferencesAnalyser.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.analyserNSD(); doButtons(); } } );
+
+		// START KGU#309 2016-12-15: Enh. #310
+		menuPreferences.add(menuPreferencesSaving);
+		menuPreferencesSaving.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.savingOptions(); doButtons(); } } );
+		// END KGU#309 2016-12-15
 
 		menuPreferences.add(menuPreferencesExport);
 		menuPreferencesExport.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.exportOptions(); doButtons(); } } );
@@ -800,85 +902,124 @@ public class Menu extends LangMenuBar implements NSDController
 			}
 		}
 
+		// START KGU#287 2017-01-11: Issue #81/#330
+		menuPreferences.add(menuPreferencesScalePreset);
+		menuPreferencesScalePreset.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { new GUIScaleChooser().setVisible(true); } } );
+		// END KGU#287 2017-01-11
+
 		menuPreferences.addSeparator();
 
 		menuPreferences.add(menuPreferencesSave);
-                menuPreferencesSave.add(menuPreferencesSaveAll);
+		menuPreferencesSave.add(menuPreferencesSaveAll);
 		menuPreferencesSaveAll.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { NSDControl.savePreferences(); } } );
-                menuPreferencesSave.add(menuPreferencesSaveDump);
-		menuPreferencesSaveDump.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) 
-                { 
-                    NSDControl.savePreferences(); 
-                    JFileChooser fc = new JFileChooser();
-                    fc.setFileFilter(new INIFilter());
-                    if(fc.showSaveDialog(NSDControl.getFrame())==JFileChooser.APPROVE_OPTION)
-                    {
-                        // save some data from the INI file
-                        Ini ini = Ini.getInstance();
-                        try
-                        {
-                            ini.load();
-                            String fn = fc.getSelectedFile().toString();
-                            if(fn.toLowerCase().indexOf(".ini")==-1) fn+=".ini";
-                            ini.save(fn);
-                        }
-                        catch (Exception ex)
-                        {
-                            System.err.println("Error saving the configuration file ...");
-                            ex.printStackTrace();
-                        }
-                    }
-                } } );
-                menuPreferencesSave.add(menuPreferencesSaveLoad);
-                menuPreferencesSaveLoad.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) 
-                { 
-                    JFileChooser fc = new JFileChooser();
-                    fc.setFileFilter(new INIFilter());
-                    if(fc.showOpenDialog(NSDControl.getFrame())==JFileChooser.APPROVE_OPTION)
-                    {
-                        try
-                        {
-                            // load some data from the INI file
-                            Ini ini = Ini.getInstance();
-                            
-                        	// START KGU#258 2016-09-26: Enh. #253
-                            HashMap<String, StringList> refactoringData = new LinkedHashMap<String, StringList>();
-                            for (String key: D7Parser.keywordMap.keySet())
-                            {
-                            	String keyword = D7Parser.keywordMap.getOrDefault(key, "");
-                            	if (!keyword.trim().isEmpty())
-                            	{
-                            		// Complete strings aren't likely to be found in a key, so don't bother
-                            		refactoringData.put(key, Element.splitLexically(keyword,  false));
-                            	}
-                            	// An empty preForIn keyword is a synonym for the preFor keyword
-                            	else if (key.equals("preForIn"))
-                            	{
-                            		refactoringData.put(key, refactoringData.get("preFor"));
-                            	}
-                            }
-                            // END KGU#258 2016-09-26
-                            
-                            ini.load(fc.getSelectedFile().toString());
-                            ini.save();
-                            NSDControl.loadFromINI();
-                            
-                            // START KGU#258 2016-09-26: Enh. #253
-                            if (diagram.offerRefactoring(refactoringData))
-                            {
-                            	diagram.refactorNSD(refactoringData);
-                            }
-                            // END KGU#258 2016-09-26
-                        }
-                        catch (Exception ex)
-                        {
-                            System.err.println("Error loading the configuration file ...");
-                            ex.printStackTrace();
-                        }
-                    }
-                    NSDControl.savePreferences(); 
-                } } );
+		menuPreferencesSave.add(menuPreferencesSaveDump);
+		menuPreferencesSaveDump.addActionListener(new ActionListener() { 
+			public void actionPerformed(ActionEvent event) 
+			{ 
+				NSDControl.savePreferences(); 
+				JFileChooser fc = new JFileChooser();
+				fc.setFileFilter(new INIFilter());
+				if(fc.showSaveDialog(NSDControl.getFrame())==JFileChooser.APPROVE_OPTION)
+				{
+					// save some data from the INI file
+					Ini ini = Ini.getInstance();
+					try
+					{
+						ini.load();
+						String fn = fc.getSelectedFile().toString();
+						if(fn.toLowerCase().indexOf(".ini")==-1) fn+=".ini";
+						ini.save(fn);
+					}
+					catch (Exception ex)
+					{
+						System.err.println("Error saving the configuration file ...");
+						ex.printStackTrace();
+					}
+				}
+			}
+		} );
+		menuPreferencesSave.add(menuPreferencesSaveLoad);
+		menuPreferencesSaveLoad.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent event) 
+			{ 
+				JFileChooser fc = new JFileChooser();
+				fc.setFileFilter(new INIFilter());
+				if(fc.showOpenDialog(NSDControl.getFrame())==JFileChooser.APPROVE_OPTION)
+				{
+					try
+					{
+						// load some data from the INI file
+						Ini ini = Ini.getInstance();
 
+						// START KGU#258 2016-09-26: Enh. #253
+						HashMap<String, StringList> refactoringData = new LinkedHashMap<String, StringList>();
+						for (String key: D7Parser.keywordSet())
+						{
+							// START KGU#288 2016-11-06: Issue #279 - getOrDefault() may not be available
+							//String keyword = D7Parser.keywordMap.getOrDefault(key, "");
+							String keyword = D7Parser.getKeywordOrDefault(key, "");
+							// END KGU#288 2016-11-06
+							if (!keyword.trim().isEmpty())
+							{
+								// Complete strings aren't likely to be found in a key, so don't bother
+								refactoringData.put(key, Element.splitLexically(keyword,  false));
+							}
+							// An empty preForIn keyword is a synonym for the preFor keyword
+							else if (key.equals("preForIn"))
+							{
+								refactoringData.put(key, refactoringData.get("preFor"));
+							}
+						}
+						// END KGU#258 2016-09-26
+
+						ini.load(fc.getSelectedFile().toString());
+						ini.save();
+						NSDControl.loadFromINI();
+
+						// START KGU#258 2016-09-26: Enh. #253
+						if (diagram.offerRefactoring(refactoringData))
+						{
+							diagram.refactorNSD(refactoringData);
+						}
+						// END KGU#258 2016-09-26
+					}
+					catch (Exception ex)
+					{
+						System.err.println("Error loading the configuration file ...");
+						ex.printStackTrace();
+					}
+				}
+				NSDControl.savePreferences(); 
+			}
+		} );
+
+        // START KGU#310 2016-12-14: New Debug menu
+		menubar.add(menuDebug);
+		menuDebug.setMnemonic(KeyEvent.VK_B);
+		
+		menuDebug.add(menuDebugTurtle);
+		menuDebugTurtle.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.goTurtle(); } } );
+
+		menuDebug.add(menuDebugExecute);
+		menuDebugExecute.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.goRun(); } } );
+
+		menuDebug.add(menuDebugDropBrkpts);
+		menuDebugDropBrkpts.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.clearBreakpoints(); } } );
+
+		menuDebug.addSeparator();
+
+		menuDebug.add(menuDebugBreakpoint);
+		menuDebugBreakpoint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK));
+		menuDebugBreakpoint.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.toggleBreakpoint(); doButtons(); } }); 
+
+		menuDebug.add(menuDebugBreakTrigger);
+		menuDebugBreakTrigger.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK));
+		menuDebugBreakTrigger.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.editBreakTrigger(); doButtons(); } }); 
+
+		menuDebug.add(menuDebugDisable);
+		menuDebugDisable.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_7, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		menuDebugDisable.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.disableNSD(); doButtons(); } } );
+		// END KGU#310 2016-12-14
 
 		// Setting up Menu "Help" with all submenus and shortcuts and actions
 		menubar.add(menuHelp);
@@ -904,7 +1045,14 @@ public class Menu extends LangMenuBar implements NSDController
 		menuHelpUpdate.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) {diagram.updateNSD(); } } );
 		menuHelpUpdate.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 
-		// Attempt to find out what provokes the NullPointerExceptions on start
+        // START KGU#287 2017-01-09: Issues #81/#330 GUI scaling
+        GUIScaler.rescaleComponents(this);
+//        if (this.getFrame() != null) {
+//        	SwingUtilities.updateComponentTreeUI(this.getFrame());
+//        }
+        // END KGU#287 2017-01-09
+
+        // Attempt to find out what provokes the NullPointerExceptions on start
 		//System.out.println("**** " + this + ".create() ready!");
 	}
 
@@ -922,7 +1070,7 @@ public class Menu extends LangMenuBar implements NSDController
 			NSDControl.doButtons();
 		}
 	}
-       
+
 	@Override
 	public void doButtonsLocal()
 	{
@@ -992,12 +1140,20 @@ public class Menu extends LangMenuBar implements NSDController
 			menuEditUndo.setEnabled(diagram.getRoot().canUndo());
 			menuEditRedo.setEnabled(diagram.getRoot().canRedo());
 
+			// graphics up/downgrade
+			// START KGU#282 2016-10-16: Issue #272
+			menuEditUpgradeTurtle.setEnabled(conditionAny);
+			menuEditDowngradeTurtle.setEnabled(conditionAny);
+			// END KGU#282 2016-10-16
+
 			// style
 			menuDiagramTypeFunction.setSelected(!diagram.isProgram());
 			menuDiagramTypeProgram.setSelected(diagram.isProgram());
 			menuDiagramNice.setSelected(diagram.getRoot().isNice);
-			menuDiagramComment.setSelected(Element.E_SHOWCOMMENTS);
 			menuDiagramAnalyser.setSelected(Element.E_ANALYSER);
+			// START KGU#305 2016-12-14: Enh. #305
+			menuDiagramIndex.setSelected(diagram.showArrangerIndex());
+			// END KGU#305 2016-12-14
 
 			// elements
 			// START KGU#87 2015-11-22: Why enable the main entry if no action is enabled?
@@ -1029,7 +1185,10 @@ public class Menu extends LangMenuBar implements NSDController
 			// editing
 			// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
 			//menuDiagramEdit.setEnabled(conditionAny);
-			menuDiagramEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
+			// START KGU#143 2016-11-17: Bugfix #114 - unstructured elements may be edited if parent is waiting
+			//menuDiagramEdit.setEnabled(conditionAny && !diagram.selectedIsMultiple());
+			menuDiagramEdit.setEnabled(diagram.canEdit());
+			// END KGU#143 2016-11-7
 			// END KGU#87 2015-11-22
 			// START KGU#143 2016-01-21: Bugfix #114 - we must differentiate among cut and copy
 			//menuDiagramDelete.setEnabled(diagram.canCutCopy());
@@ -1047,15 +1206,18 @@ public class Menu extends LangMenuBar implements NSDController
 			menuDiagramCollapse.setEnabled(conditionNoMult && !diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());
 			menuDiagramExpand.setEnabled(conditionNoMult && diagram.getSelected().isCollapsed() || condition && diagram.selectedIsMultiple());			
 			// END KGU#123 2016-01-03
+			// START KGU#277 2016-10-13: Enh. #270
+			menuDebugDisable.setEnabled(condition && !(selected instanceof Subqueue) || diagram.selectedIsMultiple());
+			// END KGU#277 2016-01-13
 
 			// START KGU#143 2016-01-21: Bugfix #114 - breakpoint control now also here
 			// START KGU#177 2016-07-06: Enh. #158 - Collateral damage mended
 			//menuDiagramBreakpoint.setEnabled(diagram.canCopy());
-			menuDiagramBreakpoint.setEnabled(diagram.canCopyNoRoot());
+			menuDebugBreakpoint.setEnabled(diagram.canCopyNoRoot());
 			// END KGU#177 2016-07-06
 			// END KGU#143 2016-01-21
 			// START KGU#213 2016-08-02: Enh. #215 - breakpoint control enhanced
-			menuDiagramBreakTrigger.setEnabled(diagram.canCopyNoRoot() && !diagram.selectedIsMultiple());
+			menuDebugBreakTrigger.setEnabled(diagram.canCopyNoRoot() && !diagram.selectedIsMultiple());
 			// END KGU#213 2016-08-02
 
 			// copy & paste
@@ -1070,11 +1232,11 @@ public class Menu extends LangMenuBar implements NSDController
 			// nice
 			menuDiagramNice.setSelected(diagram.isNice());
 
-			// show comments?
-			menuDiagramComment.setSelected(diagram.drawComments());
-
 			// variable highlighting
 			menuDiagramMarker.setSelected(diagram.getRoot().hightlightVars);
+
+			// show comments?
+			menuDiagramComment.setSelected(Element.E_SHOWCOMMENTS);
 
 			// START KGU#227 2016-07-31: Enh. #128
 			// draw elements with both comments and diagram?
@@ -1110,6 +1272,10 @@ public class Menu extends LangMenuBar implements NSDController
 			// control the collapsing by mouse wheel?
 			menuDiagramWheel.setSelected(diagram.getWheelCollapses());
 			// END KGU#123 2016-01-04
+			
+			// START KGU#300 2016-12-02: Enh. #300
+			menuPreferencesNotifyUpdate.setSelected(Ini.getInstance().getProperty("retrieveVersion", "false").equals("true"));
+			// END KGU#300 2016-12-02
 
 			// Look and Feel submenu
 			//System.out.println("Having: "+UIManager.getLookAndFeel().getName());
@@ -1140,12 +1306,21 @@ public class Menu extends LangMenuBar implements NSDController
 			menuPreferencesLanguageFromFile.setSelected(locName.equals("external"));
 
 			// Recent file
+			// START KGU#287 2017-01-11: Issue #81/#330 Assimilate the dynamic menu items in font
+			Font menuItemFont = UIManager.getFont("MenuItem.font");
+			// END KGU#287 2017-01-11
 			menuFileOpenRecent.removeAll();
 			for(int j = 0; j < diagram.recentFiles.size(); ++j)
 			{
-				JMenuItem mi = new JMenuItem((String) diagram.recentFiles.get(j),IconLoader.ico074);
 				final String nextFile = (String) diagram.recentFiles.get(j);
-				mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNSD(nextFile); doButtons(); } } );
+				JMenuItem mi = new JMenuItem(nextFile, IconLoader.ico074);
+				// START KGU#316 2016-12-28: Enh. #290/#318
+				//mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNSD(nextFile); doButtons(); } } );
+				mi.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.openNsdOrArr(nextFile); doButtons(); } } );
+				// END KGU#316 2016-12-28
+				// START KGU#287 2017-01-11: Issue #81/#330 Assimilate the dynamic menu items in font
+				if (menuItemFont != null) mi.setFont(menuItemFont);
+				// END KGU#287 2017-01-11
 				menuFileOpenRecent.add(mi);
 			}
 

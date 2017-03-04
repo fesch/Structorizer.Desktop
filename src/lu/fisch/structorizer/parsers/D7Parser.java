@@ -46,6 +46,10 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2016-05-05/09   Issue #185: Import now copes with units and multiple routines per file
  *      Kay Gürtzig     2016-07-07      Enh. #185: Identification of Calls improved on parsing
  *      Kay Gürtzig     2016-09-25      Method getPropertyMap() added for more generic keyword handling (Enh. #253)
+ *      Bob Fisch       2016-11-03      Bugfix #278 (NoSuchMethodError) in loadFromIni()
+ *      Kay Gürtzig     2016-11-06      Bugfix #279: New methods keywordSet(), getKeywordOrDefault() etc.
+ *      Kay Gürtzig     2016-11-08      Bugfix #281/#282 in method setKeyword() (Java 1.8 method HashMap.replace())
+ *      Kay Gürtzig     2017-01-06      Issue #327: French default parser keywords replaced by English ones
  *
  ******************************************************************************************************
  *
@@ -69,6 +73,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import goldengine.java.*;
 import lu.fisch.utils.*;
@@ -92,9 +97,10 @@ public class D7Parser implements GPMessageConstants
 	public static boolean ignoreCase = true;
 	// END KGU#165 2016-03-25
 	
-	// NOTE: Don't forget to add new keywords to method getAllProperties()!
-	// FIXME (#253): All these fields should be replaced by a static Hashmap!
-	public static final HashMap<String, String> keywordMap = new LinkedHashMap<String, String>();
+	// START KGU#288 2016-11-06: Issue #279: Access limited to private, compensated by new methods
+	//public static final HashMap<String, String> keywordMap = new LinkedHashMap<String, String>();
+	private static final HashMap<String, String> keywordMap = new LinkedHashMap<String, String>();
+	// END KGU#288 2016-11-06
 	static {
 		keywordMap.put("preAlt",     "");
 		keywordMap.put("postAlt",    "");
@@ -935,19 +941,20 @@ public class D7Parser implements GPMessageConstants
 	public static void loadFromINI()
 	{
 		final HashMap<String, String> defaultKeys = new HashMap<String, String>();
-		defaultKeys.put("ParserPreFor", "pour ");
-		defaultKeys.put("ParserPostFor", "\u00E0");
-		defaultKeys.put("ParserStepFor", ", pas = ");
-		defaultKeys.put("ParserPreForIn", "pour ");
-		defaultKeys.put("ParserPostForIn", " en ");
-		defaultKeys.put("ParserPreWhile", "tant que ");
-		defaultKeys.put("ParserPreRepeat", "jusqu'\u00E0 ");
+		// START KGU 2017-01-06: Issue #327: Defaults changed to English
+		defaultKeys.put("ParserPreFor", "for");
+		defaultKeys.put("ParserPostFor", "to");
+		defaultKeys.put("ParserStepFor", "by");
+		defaultKeys.put("ParserPreForIn", "foreach");
+		defaultKeys.put("ParserPostForIn", "in");
+		defaultKeys.put("ParserPreWhile", "while ");
+		defaultKeys.put("ParserPreRepeat", "until ");
 		defaultKeys.put("ParserPreLeave", "leave");
 		defaultKeys.put("ParserPreReturn", "return");
 		defaultKeys.put("ParserPreExit", "exit");
-		defaultKeys.put("ParserInput", "lire ");
-		defaultKeys.put("ParserOutput", "\u00E9crire");
-		
+		defaultKeys.put("ParserInput", "INPUT");
+		defaultKeys.put("ParserOutput", "OUTPUT");
+		// END KGU 2017-01-06 #327
 		try
 		{
 			Ini ini = Ini.getInstance();
@@ -982,7 +989,14 @@ public class D7Parser implements GPMessageConstants
 			for (String key: keywordMap.keySet())
 			{
 				String propertyName = "Parser" + Character.toUpperCase(key.charAt(0)) + key.substring(1);
-				keywordMap.put(key, ini.getProperty(propertyName, defaultKeys.getOrDefault(propertyName, "")));
+                                if(defaultKeys.containsKey(propertyName))
+                                {
+                                    keywordMap.put(key, ini.getProperty(propertyName, defaultKeys.get(propertyName)));
+                                }
+                                else
+                                {
+                                    keywordMap.put(key, ini.getProperty(propertyName, ""));
+                                }
 			}
 			
 			// END KGU#258 2016-09-25
@@ -1066,7 +1080,6 @@ public class D7Parser implements GPMessageConstants
 	 * @param includeAuxiliary - whether or not non-keyword settings (like "ignoreCase") are to be included
 	 * @return the hash table with the current settings
 	 */
-	// FIXME to be replaced by a static HashMap as substitution for the single fields
 	public static final HashMap<String, String> getPropertyMap(boolean includeAuxiliary)
 	{
 		HashMap<String, String> keywords = keywordMap;
@@ -1079,5 +1092,63 @@ public class D7Parser implements GPMessageConstants
 		return keywords;
 	}
 	// END KGU#258 2016-09-25
+	
+	// START KGU#288 2016-11-06: New methods to facilitate bugfix #278, #279
+	/**
+	 * Returns the set of the parser preference names
+	 * @return
+	 */
+	public static Set<String> keywordSet()
+	{
+		return keywordMap.keySet();
+	}
+	
+	/**
+	 * Returns the cached keyword for parser preference _key or null
+	 * @param _key - the name of the requested parser preference
+	 * @return the cached keyword or null
+	 */
+	public static String getKeyword(String _key)
+	{
+		return keywordMap.get(_key);
+	}
+	
+	/**
+	 * Returns the cached keyword for parser preference _key or the given _defaultVal if no
+	 * entry or only an empty entry is found for _key.
+	 * @param _key - the name of the requested parser preference
+	 * @param _defaultVal - a default keyword to be returned if there is no non-empty cached value
+	 * @return the cached or default keyword
+	 */
+	public static String getKeywordOrDefault(String _key, String _defaultVal)
+	{
+		// This method circumvents the use of the Java 8 method:
+		//return keywordMap.getOrDefault(_key, _defaultVal);
+		String keyword = keywordMap.get(_key);
+		if (keyword == null || keyword.isEmpty()) {
+			keyword = _defaultVal;
+		}
+		return keyword;
+	}
+	
+	/**
+	 * Replaces the cached parser preference _key with the new keyword _keyword for this session.
+	 * Note:
+	 * 1. This does NOT influence the Ini file!
+	 * 2. Only for existing keys a new mapping may be set 
+	 * @param _key - name of the parser preference
+	 * @param _keyword - new value of the parser preference or null
+	 */
+	public static void setKeyword(String _key, String _keyword)
+	{
+		if (_keyword == null) {
+			_keyword = "";
+		}
+		// Bugfix #281/#282
+		if (keywordMap.containsKey(_key)) {
+			keywordMap.put(_key, _keyword);
+		}
+	}
+	// END KGU#288 2016-11-06
 
 }

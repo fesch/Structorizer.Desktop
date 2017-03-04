@@ -20,7 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -48,17 +49,25 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported
  *      Kay Gürtzig     2016.08.10      Issue #227: New classification methods for Input/Output
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactored
+ *      Kay Gürtzig     2016.10.13      Enh. #270: Hatched overlay texture in draw() if disabled
+ *      Kay Gürtzig     2016.10.15      Enh. #271: method isEmptyInput() had to consider prompt strings now.
+ *      Kay Gürtzig     2016.11.22      Bugfix #296: Wrong transmutation of return and output statements
+ *      Kay Gürtzig     2017.01.26      Enh. #259: First retrieval approach for variable types
+ *      Kay Gürtzig     2017.01.30      Enh. #335: More sophisticated type and declaration support    
+ *      Kay Gürtzig     2017.02.20      Enh. #259: Retrieval of result types of called functions enabled (q&d)
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
 
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
+import java.util.HashMap;
 
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.executor.Function;
@@ -97,18 +106,6 @@ public class Instruction extends Element {
 	}
 	// END KGU#199 2016-07-07
 	
-//	// START KGU#64 2015-11-03: Is to improve drawing performance
-//	/**
-//	 * Recursively clears all drawing info this subtree down
-//	 * (To be overridden by structured sub-classes!)
-//	 */
-//	@Override
-//	public void resetDrawingInfoDown()
-//	{
-//		this.resetDrawingInfo();
-//	}
-//	// END KGU#64 2015-11-03
-
 	public static Rect prepareDraw(Canvas _canvas, StringList _text, Element _element)
 	{
 		Rect rect = new Rect(0, 0, 2*(Element.E_PADDING/2), 0);
@@ -177,17 +174,6 @@ public class Instruction extends Element {
 		// END KGU 2015-10-13
 		FontMetrics fm = _canvas.getFontMetrics(Element.font);
 			
-		// START KGU 2015-10-13: Became obsolete by new method getFillColor() applied above now
-//		if (_element.isCollapsed())
-//		{
-//			drawColor=Element.E_COLLAPSEDCOLOR;
-//		}
-//		if (_element.selected==true)
-//		{
-//			drawColor=Element.E_DRAWCOLOR;
-//		}
-		// END KGU 2015-10-13
-		
 		// START KGU#136 2016-03-01: Bugfix #97 - store rect in 0-bound (relocatable) way
 		//_element.rect = _top_left.copy();
 		_element.rect = new Rect(0, 0, 
@@ -254,6 +240,11 @@ public class Instruction extends Element {
 		if (_element.haveOuterRectDrawn())
 		{
 			canvas.drawRect(_top_left);
+			// START KGU#277 2016-10-13: Enh. #270
+			if (_element.disabled) {
+				canvas.hatchRect(_top_left, 5, 10);
+			}
+			// END KGU#277 2016-10-13
 		}
 		// START KGU#122 2016-01-03: Enh. #87 - A collapsed element is to be marked by the type-specific symbol,
 		// unless it's an Instruction offspring in which case it will keep its original style, anyway.
@@ -368,9 +359,9 @@ public class Instruction extends Element {
 	public static boolean isJump(String line)
 	{
     	StringList tokens = Element.splitLexically(line, true);
-		return (tokens.indexOf(D7Parser.keywordMap.get("preReturn"), !D7Parser.ignoreCase) == 0 ||
-				tokens.indexOf(D7Parser.keywordMap.get("preLeave"), !D7Parser.ignoreCase) == 0 ||
-				tokens.indexOf(D7Parser.keywordMap.get("preExit"), !D7Parser.ignoreCase) == 0
+		return (tokens.indexOf(D7Parser.getKeyword("preReturn"), !D7Parser.ignoreCase) == 0 ||
+				tokens.indexOf(D7Parser.getKeyword("preLeave"), !D7Parser.ignoreCase) == 0 ||
+				tokens.indexOf(D7Parser.getKeyword("preExit"), !D7Parser.ignoreCase) == 0
 				);
 	}
 	public boolean isJump()
@@ -380,14 +371,24 @@ public class Instruction extends Element {
 	
 	public static boolean isProcedureCall(String line)
 	{
-		// Be aware that this method is also used for the isFunctionCall check
-		Function fct = new Function(line);
-		return fct.isFunction();
+    	// START KGU#298 2016-11-22: Bugfix #296 - unawareness of had led to wrong transmutations
+		//Function fct = new Function(line);
+		//return fct.isFunction();
+		return !isJump(line) && !isOutput(line) && Function.isFunction(line);
+    	// END KGU#298 2016-11-22
 	}
 	public boolean isProcedureCall()
 	{
 		return this.text.count() == 1 && Instruction.isProcedureCall(this.text.get(0));		
 	}
+	// START #274 2016-10-16 (KGU): Improved support for Code export
+	public static boolean isTurtleizerMove(String line)
+	{
+		final StringList turtleizerMovers = StringList.explode("forward,backward,fd,bk", ",");
+		Function fct = new Function(line);
+		return fct.isFunction() && turtleizerMovers.contains(fct.getName()) && fct.paramCount() == 1;
+	}
+	// END #274 2016-10-16
 	
 	public static boolean isFunctionCall(String line)
 	{
@@ -397,8 +398,7 @@ public class Instruction extends Element {
 		int asgnPos = tokens.indexOf("<-");
 		if (asgnPos > 0)
 		{
-			// This looks somewhat misleading. But we do a mere syntax check
-			isFunc = isProcedureCall(tokens.concatenate("", asgnPos+1));
+			isFunc = Function.isFunction(tokens.concatenate("", asgnPos+1));
 		}
 		return isFunc;
 	}
@@ -410,8 +410,8 @@ public class Instruction extends Element {
 	// START KGU#236 2016-08-10: Issue #227: New classification for input and output
 	public static boolean isOutput(String line)
 	{
-    	StringList tokens = Element.splitLexically(line, true);
-		return (tokens.indexOf(D7Parser.keywordMap.get("output"), !D7Parser.ignoreCase) == 0);
+		StringList tokens = Element.splitLexically(line, true);
+		return (tokens.indexOf(D7Parser.getKeyword("output"), !D7Parser.ignoreCase) == 0);
 	}
 	public boolean isOutput()
 	{
@@ -427,8 +427,8 @@ public class Instruction extends Element {
 	
 	public static boolean isInput(String line)
 	{
-    	StringList tokens = Element.splitLexically(line, true);
-		return (tokens.indexOf(D7Parser.keywordMap.get("input"), !D7Parser.ignoreCase) == 0);
+		StringList tokens = Element.splitLexically(line, true);
+		return (tokens.indexOf(D7Parser.getKeyword("input"), !D7Parser.ignoreCase) == 0);
 	}
 	public boolean isInput()
 	{
@@ -444,8 +444,18 @@ public class Instruction extends Element {
 	
 	public static boolean isEmptyInput(String line)
 	{
-    	StringList tokens = Element.splitLexically(line, true);
-		return (tokens.count() == 1 && tokens.indexOf(D7Parser.keywordMap.get("input"), !D7Parser.ignoreCase) == 0);
+		StringList tokens = Element.splitLexically(line, true);
+		// START KGU#281 2016-10-15: Enh. #271 - had turned out to be too simple.
+		//return (tokens.count() == 1 && tokens.indexOf(D7Parser.keywordMap.get("input"), !D7Parser.ignoreCase) == 0);
+		boolean isEmptyInp = false;
+		StringList keyTokens = Element.splitLexically(D7Parser.getKeyword("input"), false);
+		if (tokens.indexOf(keyTokens, 0, !D7Parser.ignoreCase) == 0) {
+			tokens = tokens.subSequence(keyTokens.count(), tokens.count());
+			tokens.removeAll(" ");
+			isEmptyInp = tokens.count() == 0 || tokens.count() == 1 && (tokens.get(0).startsWith("\"") || tokens.get(0).startsWith("'"));
+		}
+		return isEmptyInp;
+		// END KGU#281 2016-10-15
 	}
 	public boolean isEmptyInput()
 	{
@@ -457,9 +467,58 @@ public class Instruction extends Element {
 			}
 		}
 		return false;
-	}
-	
+	}	
 	// END KGU#236 2016-08-10
+
+	// START KGU#322 2016-07-06: Enh. #335
+	/**
+	 * Returns true if the current line of code is a declarationof one of the following types:
+	 * a) var &lt;id&gt; {, &lt;id&gt;} : &lt;type&gt; [&lt;- &lt;expr&gt;]
+	 * b) dim &lt;id&gt; {, &lt;id&gt;} as &lt;type&gt; [&lt;- &lt;expr&gt;]
+	 * c) &lt;type&gt; &lt;id&gt; &lt;- &lt;- &lt;expr&gt;
+	 * @param line - String comprising one line of code
+	 * @return true iff line is of one of the forms a), b), c)
+	 */
+	public static boolean isDeclaration(String line)
+	{
+    	StringList tokens = Element.splitLexically(line, true);
+    	unifyOperators(tokens, true);
+    	boolean typeA = tokens.indexOf("var") == 0 && tokens.indexOf(":") > 1;
+    	boolean typeB = tokens.indexOf("dim") == 0 && tokens.indexOf("as") > 1;
+    	int posAsgn = tokens.indexOf("<-");
+    	boolean typeC = false;
+    	if (posAsgn > 1) {
+    		tokens = tokens.subSequence(0, posAsgn);
+    		int posLBrack = tokens.indexOf("[");
+    		if (posLBrack > 0 && posLBrack < tokens.lastIndexOf("]")) {
+    			tokens = tokens.subSequence(0, posLBrack);
+    		}
+    		tokens.removeAll(" ");
+    		typeC = tokens.count() > 1;
+    	}
+		return typeA || typeB || typeC;
+	}
+	/** @return true if all non-empty lines are declarations */
+	public boolean isDeclaration()
+	{
+		boolean isDecl = true;
+		for (int i = 0; isDecl && i < this.text.count(); i++) {
+			String line = this.text.get(i).trim();
+			isDecl = line.isEmpty() || isDeclaration(line);
+		}
+		return isDecl;
+	}
+	/** @return true if at least one line is a declaration */
+	public boolean hasDeclarations()
+	{
+		boolean hasDecl = false;
+		for (int i = 0; !hasDecl && i < this.text.count(); i++) {
+			String line = this.text.get(i).trim();
+			hasDecl = !line.isEmpty() && isDeclaration(line);
+		}
+		return hasDecl;
+	}
+	// END KGU#332 2017-01-27
 
 	// START KGU#178 2016-07-19: Support for enh. #160 (export of called subroutines)
 	// (This method is plaed here instead of in class Call because it is needed
@@ -524,5 +583,142 @@ public class Instruction extends Element {
 		// TODO Auto-generated method stub
 		return relevantParserKeys;
 	}
-	// START KGU#258 2016-09-26: Enh. #253
+	// END KGU#258 2016-09-26
+	
+	// START KGU#261 2017-01-26: Enh. #259 (type map)
+	/**
+	 * Adds own variable declarations (only this element, no substructure!) to the given
+	 * map (varname -> typeinfo).
+	 * @param typeMap
+	 */
+	@Override
+	public void updateTypeMap(HashMap<String, TypeMapEntry> typeMap)
+	{
+		for (int i = 0; i < this.getText().count(); i++) {
+			updateTypeMapFromLine(typeMap, this.getText().get(i), i);
+		}
+	}
+	
+	public void updateTypeMapFromLine(HashMap<String, TypeMapEntry> typeMap, String line, int lineNo)
+	{
+		StringList tokens = Element.splitLexically(line, true);
+		String varName = null;
+		String typeSpec = "";
+		boolean isAssigned = false;
+		unifyOperators(tokens, true);
+		tokens.removeAll(" ");
+		if (tokens.count() == 0) {
+			return;
+		}
+		int posColon = tokens.indexOf(tokens.get(0).equals("dim") ? "as" : ":");
+		int posAsgnmt = tokens.indexOf("<-");
+		// First we try to extract a type description from a Pascal-style variable declaration
+		if (tokens.count() > 3 && (tokens.get(0).equals("var") || tokens.get(0).equals("dim")) && posColon >= 2) {
+			isAssigned = posAsgnmt > posColon;
+			typeSpec = tokens.concatenate(" ", posColon+1, (isAssigned ? posAsgnmt : tokens.count()));
+			// There may be one or more variable names between "var" and ':' if there is no assignment
+			for (int i = 1; i < posColon; i++)
+			{
+				if (Function.testIdentifier(tokens.get(i), null)) {
+					addToTypeMap(typeMap, tokens.get(i), typeSpec, lineNo, isAssigned, false);
+				}
+			}
+		}
+		// Next we try to extract type information from an initial assignment (without "var" keyword)
+		else if (posAsgnmt > 0 && !tokens.contains("var") && !tokens.contains("dim")) {
+			// Type information might be found left of the variable name or be derivable from the initial value
+			StringList leftSide = tokens.subSequence(0, posAsgnmt);
+			StringList rightSide = tokens.subSequence(posAsgnmt+1, tokens.count());
+			isAssigned = rightSide.count() > 0;
+			// Isolate the variable name from the left-hand side of the assignment
+			varName = getAssignedVarname(leftSide);
+			boolean isCStyleDecl = Instruction.isDeclaration(line);
+			if (varName != null) {
+				int pos = leftSide.indexOf(varName);
+				// C-style type declaration left of the variable name?
+				typeSpec = leftSide.concatenate(" ", 0, pos);
+				// Check for array declaration (or array element access)
+				while (!typeSpec.isEmpty() && (pos = leftSide.indexOf("[")) > 1) {
+					typeSpec += leftSide.concatenate("", pos, leftSide.indexOf("]")+1);
+					leftSide.remove(pos, leftSide.indexOf("]")+1);
+				}
+				// No explicit type specification but new variable?
+				if (typeSpec.isEmpty() && !typeMap.containsKey(varName)) {
+					//String expr = rightSide.concatenate(" ");
+					typeSpec = getTypeFromAssignedValue(rightSide, typeMap);
+					if (typeSpec.isEmpty()) {
+						typeSpec = "???";
+					}
+					// Maybe it's a multidimensional array, then reformulate it as "array of [array of ...]"
+					while (!typeSpec.isEmpty() && (pos = leftSide.indexOf("[")) == 1) {
+						typeSpec = "array of " + typeSpec;
+						leftSide.remove(pos, leftSide.indexOf("]")+1);
+					}
+				}
+			}
+			addToTypeMap(typeMap, varName, typeSpec, lineNo, isAssigned, isCStyleDecl);
+		}
+	}
+	
+	/**
+	 * Extracts the target variable name out of the given token sequence which may comprise
+	 * the entire line of an assignment or just its left part.
+	 * @param tokens - unified tokens of an assignment instruction (otherwise the result may be nonsense)
+	 * @return the extracted variable name or null
+	 */
+	public String getAssignedVarname(StringList tokens) {
+		String varName = null;
+		int posAsgn = tokens.indexOf("<-");
+		if (posAsgn > 0) {
+			tokens = tokens.subSequence(0, posAsgn);
+		}
+		int posLBracket = tokens.indexOf("[");
+		if (posLBracket > 0 && tokens.lastIndexOf("]") > posLBracket) {
+			// If it's an array element access then cut of the index expression
+			tokens = tokens.subSequence(0, posLBracket);
+		}
+		// The last token should be the variable name
+		if (tokens.count() > 0) {
+			varName = tokens.get(tokens.count()-1);
+		}
+		return varName;
+	}
+	// END KGU#261 2017-01-26
+
+	// START KGU#261 2017-02-20: Enh. #259 Allow CALL elements to override this...
+	/**
+	 * Tries to extract type information from the right side of an assignment.
+	 * @param rightSide - tokens of the assigned expresson
+	 * @param knownTypes - the typeMap as filled so far (won't be changed here)
+	 * @return - A type specification or an empty string (no clue) or "???" (ambiguous)
+	 */
+	protected String getTypeFromAssignedValue(StringList rightSide, HashMap<String, TypeMapEntry> knownTypes)
+	{
+		String typeSpec = "";
+		// Check for array initializer expression
+		if (rightSide.count() >= 2 && rightSide.get(0).equals("{") && rightSide.get(rightSide.count()-1).equals("}")) {
+			StringList items = Element.splitExpressionList(rightSide.concatenate("", 1, rightSide.count()-1), ",");
+			// Try to identify the element type(s)
+			for (int i = 0; !typeSpec.contains("???") && i < items.count(); i++) {
+				String itemType = identifyExprType(knownTypes, items.get(i));
+				if (typeSpec.isEmpty()) {
+					typeSpec = itemType;
+				}
+				else if (!itemType.isEmpty() && !typeSpec.equalsIgnoreCase(itemType)) {
+					typeSpec = "???";
+				}
+			}
+			if (typeSpec.isEmpty()) {
+				typeSpec = "???";
+			}
+			typeSpec += "[" + items.count() + "]";
+		}
+		else {
+			// Try to derive the type from the expression
+			typeSpec = identifyExprType(knownTypes, rightSide.concatenate(" "));
+		}
+		return typeSpec;
+	}
+	// END KGU#261 2017-02-20
+
 }

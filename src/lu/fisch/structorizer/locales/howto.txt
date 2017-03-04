@@ -54,6 +54,8 @@ use Structorizer locales.
             * The second part might be "title", which will then modify
               the object's title, or the name of the field that is to
               be modified.
+              (If the field happens to be an array or another indexed collection
+              then an additional integer part will have to inserted here.)
 
             * The third part is the attribute to be modified. This can
               be for now:
@@ -67,7 +69,7 @@ use Structorizer locales.
                 > header
                 > item
 
-              The last three entries have to be followed by a forth part
+              The last three entries may be followed by a forth part
               which has to be an integer and represents the index of
               the element to modify.
 
@@ -79,8 +81,8 @@ use Structorizer locales.
                                          or: method():value
                                        
               The value of the line will only be affected to the key if all
-              field:value and method():value pairs are equal. Tests are
-              string based!
+              field:value and method():value pairs match. Comparison is
+              string-based!
 
    Examples
    --------
@@ -94,6 +96,12 @@ use Structorizer locales.
     >>> The name of a tab:          
         About.pnlTabbed.tab.2=License
 
+    >>> The name of a checkbox held in an array:
+        AnalyserPreferences.checkboxes.1.text=Comprobar modificación de la variable del bucle.
+        
+    >>> The common tooltip of all text fields held in an array (asterisk means all indices):
+        ExportOptionDialoge.includeLists.*.tooltip=Fill in a comma-separated list of ... 
+        
     >>> Conditional text of a label:
         InputBox.lblText.text[elementType:Alternative]=Eingabe der Bedingung an dieser Stelle.
 

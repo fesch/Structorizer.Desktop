@@ -79,6 +79,22 @@
  *      Kay Gürtzig         2016.09.22  Bugfix #241, issue #249: New messages for InputBox and Analyser
  *                                      AnalyserPreferences numbering modified, InputBoxFor messages
  *      Kay Gürtzig         2016.09.25  Enh. #253: Section ImportOptionDialog inserted, Analyser checks reformulated
+ *      Kay Gürtzig         2016.10.11  Enh. #267: Menu.error15 divided into error15_1 and error15_2
+ *      Kay Gürtzig         2016.10.13  Enh. #270: Editor.popupDisable, InputBox.chkDisabled added.
+ *      Kay Gürtzig         2016.10.16  Enh. #272: Menu.menuEditUpgradeTurtle, Menu.menuDowngradeTurtle added
+ *      Kay Gürtzig         2016.10.18  Enh. #267: Analyser check 15 reformulated.
+ *      Kay Gürtzig         2016.11.08  Enh. #270: Editor.btnDisable.tooltip added
+ *      Kay Gürtzig         2016.11.10  Enh. #286: AnalyserPreferences tabs
+ *      Kay Gürtzig         2016.12.02  Enh. #300: New messages for update retrieval
+ *      Kay Gürtzig         2016.12.02  Issue #307: New executor error message
+ *      Kay Gürtzig         2016.12.14  Issue #311: Menu re-organization
+ *      Kay Gürtzig         2016.12.15  Enh. #310: New Saving option dialog
+ *      Kay Gürtzig         2016.12.27  Enh. #314: Control messages for the file API
+ *      Kay Gürtzig         2016.12.29  Enh. #315: New Surface messages for diagram conflicts
+ *      Kay Gürtzig         2017.01.05  Enh. #319: Captions for the Arranger index popup menu
+ *      Kay Gürtzig         2017.01.07  Enh. #329: Messages for Analyser check 21
+ *      Kay Gürtzig         2017.01.11  Issue #81/#330: Messages for scaling Preview
+ *      Kay Gürtzig         2017.02.26  Enh. #346: Additions for ExportOptionDialoge
  *
  ******************************************************************************************************
  *
@@ -94,14 +110,19 @@ Menu.menuFile.mnemonic=d
 // Submenus of "File"
 Menu.menuFileNew.text=Neu
 Menu.menuFileOpen.text=Öffnen ...
+Menu.menuFileOpenRecent.text=Zuletzt verwendet
 Menu.menuFileSave.text=Speichern
 Menu.menuFileSaveAs.text=Speichern unter ...
-Menu.menuFileOpenRecent.text=Zuletzt verwendet
 Menu.menuFileExport.text=Exportieren
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Bild ...
-Menu.menuFileExportPicturePNGmulti.text=PNG (gekachelt) ...
 Menu.menuFileExportCode.text=Quellcode ...
+Menu.menuFileExportPicturePNG.text=
+Menu.menuFileExportPicturePNGmulti.text=PNG (gekachelt) ...
+Menu.menuFileExportPictureEMF.text=
+Menu.menuFileExportPictureSWF.text=
+Menu.menuFileExportPicturePDF.text=
+Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=Exportieren nach %
 Menu.menuFileExportCodeFavorite.tooltip=Die bevorzugte Exportsprache kann in den Export-Einstellungen gewählt werden.
 Menu.menuFileImport.text=Importieren
@@ -120,6 +141,10 @@ Menu.menuEditRedo.text=Wiederholen
 Menu.menuEditCut.text=Ausschneiden
 Menu.menuEditCopy.text=Kopieren
 Menu.menuEditPaste.text=Einfügen
+Menu.menuEditUpgradeTurtle.text=Reelle Turtlebefehle
+Menu.menuEditUpgradeTurtle.tooltip=Ersetzt ganzzahlige Turtle-Befehle in den selektierten Elementen durch reellwertige.
+Menu.menuEditDowngradeTurtle.text=Ganzzahlige Turtlebefehle
+Menu.menuEditDowngradeTurtle.tooltip=Ersetzt reellwertige Turtle-Befehle in den selektierten Elementen durch ganzzahlige.
 Menu.menuEditCopyDiagramPNG.text=Als PNG Grafik kopieren
 Menu.menuEditCopyDiagramEMF.text=Als EMF Grafik kopieren
 // Menu "Diagram"
@@ -153,7 +178,6 @@ Menu.menuDiagramAddAfterForever.text=ENDLOS-Schleife
 Menu.menuDiagramAddAfterCall.text=Aufruf-Anweisung
 Menu.menuDiagramAddAfterJump.text=Aussprung-Anweisung
 Menu.menuDiagramAddAfterPara.text=Parallel-Abschnitt
-// Element manipulation
 Menu.menuDiagramEdit.text=Bearbeiten
 Menu.menuDiagramDelete.text=Löschen
 Menu.menuDiagramMoveUp.text=Nach oben
@@ -161,9 +185,6 @@ Menu.menuDiagramMoveDown.text=Nach unten
 Menu.menuDiagramTransmute.text=Umwandeln
 Menu.menuDiagramCollapse.text=Reduzieren
 Menu.menuDiagramExpand.text=Erweitern
-// Breakpoint
-Menu.menuDiagramBreakpoint.text=Haltepunkt setzen/löschen
-Menu.menuDiagramBreakTrigger.text=Haltepunktauslösung festlegen...
 // Diagram Appearance
 Menu.menuDiagramType.text=Typ
 Menu.menuDiagramTypeProgram.text=Hauptprogramm
@@ -176,16 +197,20 @@ Menu.menuDiagramSwitchTCTooltip.text=Zum Aktivieren dieses Menüpunkts "%1" abw�
 Menu.menuDiagramMarker.text=Hervorheben von Variablen?
 Menu.menuDiagramDIN.text=DIN 66261?
 Menu.menuDiagramAnalyser.text=Struktogramm überprüfen?
+Menu.menuDiagramIndex.text=Arranger-Index anzeigen?
 Menu.menuDiagramWheel.text=Mausrad zum Reduzieren?
 // Menu "Preferences"
 Menu.menuPreferences.text=Einstellungen
 Menu.menuPreferences.mnemonic=s
 // Submenu of "Preferences"
+Menu.menuPreferencesNotifyUpdate.text=Neue Versionen melden
+Menu.menuPreferencesNotifyUpdate.tooltip=Structorizer erlauben, auf der Structorizer-Homepage nach Updates zu suchen und auf neue Versionen hinzuweisen.
 Menu.menuPreferencesFont.text=Zeichensätze ...
 Menu.menuPreferencesColors.text=Farben ...
 Menu.menuPreferencesOptions.text=Strukturen ...
 Menu.menuPreferencesParser.text=Parser ...
 Menu.menuPreferencesAnalyser.text=Überprüfungen ...
+Menu.menuPreferencesSaving.text=Sichern ...
 Menu.menuPreferencesExport.text=Export ...
 Menu.menuPreferencesImport.text=Import ...
 Menu.menuPreferencesLanguage.text=Sprache
@@ -194,8 +219,8 @@ Menu.menuPreferencesLanguageItems.de.text=Deutsch
 Menu.menuPreferencesLanguageItems.fr.text=Französisch
 Menu.menuPreferencesLanguageItems.nl.text=Holländisch
 Menu.menuPreferencesLanguageItems.lu.text=Luxemburgisch
-Menu.menuPreferencesLanguageItems.it.text=Italienisch
 Menu.menuPreferencesLanguageItems.es.text=Spanisch
+Menu.menuPreferencesLanguageItems.it.text=Italienisch
 Menu.menuPreferencesLanguageItems.pt_br.text=Portugiesisch (Brasilien)
 Menu.menuPreferencesLanguageItems.zh-cn.text=Chinesisch (vereinfacht)
 Menu.menuPreferencesLanguageItems.zh-tw.text=Chinesisch (traditionell)
@@ -204,7 +229,7 @@ Menu.menuPreferencesLanguageItems.ru.text=Russisch
 Menu.menuPreferencesLanguageItems.pl.text=Polnisch
 Menu.menuPreferencesLanguageFromFile.text=Aus Datei ...
 Menu.menuPreferencesLanguageFromFile.tooltip=Sie könnnen mit dem 'Übersetzer' im Dateimenü selbst Sprachdateien erstellen.
-
+Menu.menuPreferencesScalePreset.text=GUI-Skalierung ...
 Menu.menuPreferencesLookAndFeel.text=Aussehen & Bedienung
 
 Menu.menuPreferencesSave.text=Alle Einstellungen ...
@@ -212,11 +237,25 @@ Menu.menuPreferencesSaveAll.text=Abspeichern
 Menu.menuPreferencesSaveDump.text=Abspeichern unter ...
 Menu.menuPreferencesSaveLoad.text=Laden ...
 
+// Menu "View" (not in use right now!)
+Menu.menuView.text=
+
+// Menu "Debug"
+Menu.menuDebug.text=Debug
+Menu.menuDebug.mnemonic=b
+// Submenu of "Debug"
+Menu.menuDebugTurtle.text=Turtleizer ...
+Menu.menuDebugExecute.text=Debugger ...
+Menu.menuDebugDropBrkpts.text=Haltepunkte entfernen
+Menu.menuDebugBreakpoint.text=Haltepunkt setzen/löschen
+Menu.menuDebugBreakTrigger.text=Haltepunktauslösung festlegen...
+Menu.menuDebugDisable.text=Deaktivieren/Aktivieren
 
 // Menu "Help"
 Menu.menuHelp.text=Hilfe
 Menu.menuHelp.mnemonic=h
 // Submenu of "Help"
+Menu.menuHelpOnline.text=User Guide
 Menu.menuHelpAbout.text=Über Structorizer ...
 Menu.menuHelpUpdate.text=Neue Versionen ...
 
@@ -231,7 +270,7 @@ Menu.msgErrorFileSave.text=Fehler beim Sichern der Datei: %!
 Menu.msgBreakTriggerPrompt.text=Ausführungsanzahl für die Auslösung eines Haltes festlegen (0 = immer).
 Menu.msgBreakTriggerIgnored.text=Eingabe ignoriert - muss eine Kardinalzahl sein.
 Menu.msgOpenLangFile.text=Übersetzungsdatei öffnen
-Menu.msgLangFile.text=Structorizer-Übersetungsdatei
+Menu.msgLangFile.text=Structorizer-Übersetzungsdatei
 Menu.msgGotoHomepage.text=Siehe % für herunterladbare Updates<br>und Neuigkeiten über Structorizer.
 Menu.msgTitleError.text=Fehler
 Menu.msgTitleLoadingError.text=Fehler beim Laden
@@ -252,6 +291,12 @@ Menu.msgRefactoringOffer.text=Schlüsselwörter in den Parser-Einstellungen wurd
 Menu.lblRefactorNone.text=nein
 Menu.lblRefactorCurrent.text=aktuelles
 Menu.lblRefactorAll.text=alle
+Menu.msgReplacementsDone.text=% Anweisungen ersetzt.
+Menu.msgNewerVersionAvail.text=Neuere Version % zum Download verfügbar.
+Menu.msgUpdateInfoHint.text=Um über neue Versionen informiert zu werden kann mit\nMenüpunkt "%1" > "%2"\ndie Online-Suche nach Updates auf der Structorizer-Homepage aktiviert werden.
+Menu.lblOk.text=OK
+Menu.lblSuppressUpdateHint.text=Diesen Hinweis nicht mehr anzeigen
+Menu.lblHint.text=Tipp
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
@@ -282,7 +327,9 @@ Menu.error13_3.text=Die Funktion verwendet verschiedene Wertrückgabemechanismen
 Menu.error14_1.text=Die Einzelangaben der Zählschleife und der Text passen nicht zusammen!
 Menu.error14_2.text=Die Schrittweite «%» der Zählschleife ist keine konstante Ganzzahl!
 Menu.error14_3.text=Variable «%» steht in möglichem Namenskonflikt mit einem der konfigurierten Kennwörtern für FOR-Schleifen!
-Menu.error15.text=Der Unterprogrammaufruf hat nicht die Form [ <var> <- ] <routine_name>(<arg_list>)!
+Menu.error15_1.text=Der Unterprogrammaufruf hat nicht die Form [ <var> <- ] <routine_name>(<arg_list>)!
+Menu.error15_2.text=Die aufgerufene Routine «%» ist z.Z. nicht verfügbar.
+Menu.error15_3.text=Mehr als eine Routine passt zu Aufruf «%».
 Menu.error16_1.text=Der Aussprung muss leer sein oder mit einem der Schlüsselwörter % beginnen!
 Menu.error16_2.text=Eine return-Anweisung muss (außer am Diagrammende) ein Aussprung-Element sein!
 Menu.error16_3.text=Exit-, leave- oder break-Anweisungen sind nur als Aussprung-Elemente zulässig!
@@ -294,9 +341,12 @@ Menu.error17.text=Konsistenzgefahr wegen konkurrierender Zugriffe auf Variable �
 Menu.error18.text=Variable «%1» könnte in manchen Sprachen mit Variable(n) «%2» zusammenfallen!
 Menu.error19.text=Der Variablenname «%1» kann in Sprachen wie %2 mit reservierten Wörtern kollidieren!
 Menu.error20.text=Ein Unterprogrammkopf muss mindestens die Klammern einer (evtl. leeren) Parameterliste haben.
+Menu.error21.text=Variablennamen I (großes i), l (kleines L), and O (großes o) sind voneinander bzw. von 1 oder 0 kaum unterscheidbar.
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Überprüfungs-Einstellungen
+AnalyserPreferences.contentPanel.tab.0=Algorithmisch
+AnalyserPreferences.contentPanel.tab.1=Bezeichner / Konventionen
 AnalyserPreferences.checkboxes.1.text=Manipulationen an Kontrollvariablen von FOR-Schleifen melden.
 AnalyserPreferences.checkboxes.2.text=Schleifen auf Endloszyklen untersuchen. (So weit möglich!)
 AnalyserPreferences.checkboxes.3.text=Nicht initialisierte Variablen feststellen.
@@ -308,16 +358,18 @@ AnalyserPreferences.checkboxes.8.text=Wertzuweisungen innerhalb von Bedingungen 
 AnalyserPreferences.checkboxes.9.text=Testen, ob sich der Programmname von allen anderen Bezeichnern unterscheidet.
 AnalyserPreferences.checkboxes.10.text=Mehrzeilige Anweisungen mit verschiedenen Anweisungsarten suchen.
 AnalyserPreferences.checkboxes.11.text=Nach fehlerhaften Wertzuweisungen suchen.
-AnalyserPreferences.checkboxes.12.text=Prüfen, ob die Parameternamen korrekt sind. (LUX/MEN)
+AnalyserPreferences.checkboxes.12.text=Prüfen, ob Parameternamen den Vorgaben entsprechen. (LUX/MEN)
 AnalyserPreferences.checkboxes.13.text=Prüfen, ob eine Funktion stets auch einen Rückgabewert hat.
 AnalyserPreferences.checkboxes.14.text=Prüfen, ob die Angaben von FOR-Schleifen konsistent sind.
-AnalyserPreferences.checkboxes.15.text=Prüfen, ob Aufruf-Elemente nur einen einzelnen Routinenaufruf enthalten.
+AnalyserPreferences.checkboxes.15.text=Prüfen der Korrektheit von Aufruf-Elementen und der Verfügbarkeit der Routine.
 AnalyserPreferences.checkboxes.16.text=Prüfen, ob Aussprung-Elemente korrekt benutzt sind.
 AnalyserPreferences.checkboxes.17.text=Prüfen, ob in parallelen Zweigen konkurrierende Wertzuweisungen vorkommen.
 AnalyserPreferences.checkboxes.18.text=Prüfen, ob Variablen sich nur durch Groß-/Kleinschreibung unterscheiden.
 AnalyserPreferences.checkboxes.19.text=Prüfen, ob Variablennamen mit reservierten Wörtern kollidieren könnten.
 AnalyserPreferences.checkboxes.20.text=Prüfen, dass ein Unterprogramm (Kopfzeile) eine Parameterliste besitzt.
+AnalyserPreferences.checkboxes.21.text=Bei Verwendung der verwechselbaren Variablennamen «I», «l» und «O» warnen.
 AnalyserPreferences.okButton.text=OK
+
 
 
 -----[ Diagram ]-----
@@ -327,7 +379,7 @@ Editor.btnNew.tooltip=Erzeugen eines neuen, leeren Diagrammes.
 Editor.btnOpen.tooltip=Öffnen eines bestehenden Diagrammes.
 Editor.btnSave.tooltip=Speichern des aktuellen Diagrammmes.
 // InsertBefore
-Editor.btnBeforeInst.tooltip=Einfügen einer neuen Anweisung vor dem ausgewählten Element. 
+Editor.btnBeforeInst.tooltip=Einfügen einer neuen Anweisung vor dem ausgewählten Element.
 Editor.btnBeforeAlt.tooltip=Einfügen einer neuen IF-Anweisung vor dem ausgewählten Element.
 Editor.btnBeforeFor.tooltip=Einfügen einer neuen FOR-Schleife vor dem ausgewählten Element.
 Editor.btnBeforeWhile.tooltip=Einfügen einer neuen WHILE-Schleife vor dem ausgewählten Element.
@@ -355,7 +407,7 @@ Editor.btnRedo.tooltip=Wiederholen der letzen Aktion.
 Editor.btnCut.tooltip=Ausschneiden des ausgewählten Elements.
 Editor.btnCopy.tooltip=Kopieren des ausgewählten Elements.
 Editor.btnPaste.tooltip=Einfügen des kopierten oder ausgeschnittenen Elements nach dem ausgewählten Element.
-// style 
+// style
 Editor.btnNice.tooltip=Umschalten des visuellen Stils des Diagramms.
 Editor.btnFunction.tooltip=Unterprogramm-Diagramm (gerundete Ecken).
 Editor.btnProgram.tooltip=Hauptprogramm-Diagram (kantige Ecken).
@@ -371,12 +423,8 @@ Editor.btnArrange.tooltip=Diagram zum Arranger-Tableau hinzufügen.
 // font
 Editor.btnFontUp.tooltip=Erhöhen der Zeichensatz-Größe.
 Editor.btnFontDown.tooltip=Verringern der Zeichensatz-Größe.
-// copyright 
+// copyright
 Editor.btnAbout.tooltip=Zeigen eines Informationsfensters über den Structorizer.
-// execution 
-Editor.btnTurtle.tooltip=Öffnen des Turtleizer-Fensters zum Test ...
-Editor.btnMake.tooltip=Öffnen des Debuggers zum Test ...
-Editor.btnDropBrk.tooltip=Entfernen aller Haltepunkte
 // colors
 Editor.btnColor0.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
 Editor.btnColor1.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
@@ -391,6 +439,11 @@ Editor.btnColor9.tooltip=Einfärben des ausgewählten Elements mit dieser Farbe.
 // collapsing
 Editor.btnCollapse.tooltip=Reduzieren des ausgewählten Elements.
 Editor.btnExpand.tooltip=Erweitern des ausgewählten Elements.
+Editor.btnDisable.tooltip=(De-)Aktivieren der ausgewählten Elemente.
+// turtleizer & executor
+Editor.btnTurtle.tooltip=Öffnen des Turtleizer-Fensters zum Test ...
+Editor.btnMake.tooltip=Öffnen des Debuggers zum Test ...
+Editor.btnDropBrk.tooltip=Entfernen aller Haltepunkte
 // Popup menu
 Editor.popupCut.text=Ausschneiden
 Editor.popupCopy.text=Kopieren
@@ -422,7 +475,7 @@ Editor.popupAddAfterForever.text=ENDLOS-Schleife
 Editor.popupAddAfterCall.text=Aufruf-Anweisung
 Editor.popupAddAfterJump.text=Aussprung-Anweisung
 Editor.popupAddAfterPara.text=PARALLEL-Abschnitt
-// Edit	
+// Edit
 Editor.popupEdit.text=Bearbeiten
 Editor.popupDelete.text=Löschen
 Editor.popupMoveUp.text=Nach oben bewegen
@@ -431,9 +484,15 @@ Editor.popupTransmute.text=Umwandeln
 // Collapsing
 Editor.popupCollapse.text=Reduzieren
 Editor.popupExpand.text=Erweitern
+Editor.popupDisable.text=Deaktivieren/Aktivieren
 // Breakpoint
 Editor.popupBreakpoint.text=Haltepunkt setzen/löschen
 Editor.popupBreakTrigger.text=Haltepunktauslösung festlegen...
+// Arranger index
+Editor.popupIndexGet.text=Diagram holen
+Editor.popupIndexSave.text=Änderungen sichern
+Editor.popupIndexRemove.text=Entfernen
+Editor.popupIndexCovered.text=Testabdeckung an/aus
 
 -----[ InputBox ]-----
 InputBox.title=Element bearbeiten
@@ -447,8 +506,14 @@ InputBox.btnOK.text=Speichern
 InputBox.btnOK.tooltip=Speichern der Eintragungen.
 InputBox.btnCancel.text=Abbruch
 InputBox.btnCancel.tooltip=Verwerfen der Eintragungen.
+InputBox.chkDisabled.text=Ausführung und Export unterbunden
 InputBox.chkBreakpoint.text=Haltepunkt
 InputBox.lblBreakTriggerText.text=Halt vor %. Ausführung
+InputBox.lblText.text[elementType:Alternative]=Eingabe der Bedingung an dieser Stelle.
+InputBox.lblText.text[elementType:While]=Eingabe der (Wieder-)Eintrittsbedingung an dieser Stelle.
+InputBox.lblText.text[elementType:Repeat]=Eingabe der Austrittsbedingung an dieser Stelle.
+InputBox.lblText.text[elementType:Case]=Eingabe des Auswahlausdrucks und der Fallkonstanten
+InputBox.lblText.text[elementType:Parallel]=Anzahl der nebenläufigen Pfade
 InputBox.title[elementType:Root]=Programmnamen bearbeiten...
 InputBox.title[elementType:Function]=Funktionssignatur bearbeiten...
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Neue Anweisungen hinzufügen...
@@ -469,12 +534,8 @@ InputBox.title[elementType:While,getInsertionType():update]=WHILE-Schleife bearb
 InputBox.title[elementType:Call,getInsertionType():update]=Unterprogramm-CALL bearbeiten...
 InputBox.title[elementType:Jump,getInsertionType():update]=Aussprung- bzw. Austrittsanweisung bearbeiten...
 InputBox.title[elementType:Parallel,getInsertionType():update]=PARALLEL-Element bearbeiten...
-InputBox.lblText.text[elementType:Alternative]=Eingabe der Bedingung an dieser Stelle.
-InputBox.lblText.text[elementType:While]=Eingabe der (Wieder-)Eintrittsbedingung an dieser Stelle.
-InputBox.lblText.text[elementType:Repeat]=Eingabe der Austrittsbedingung an dieser Stelle.
-InputBox.lblText.text[elementType:Case]=Eingabe des Auswahlausdrucks und der Fallkonstanten
-InputBox.lblText.text[elementType:Parallel]=Anzahl der nebenläufigen Pfade
------[ InputBoxFor ]-----
+
+-----[ InputBox For ]-----
 InputBoxFor.title[getInsertionType():insert]=Neue FOR-Schleife hinzufügen...
 InputBoxFor.title[getInsertionType():update]=FOR-Schleife bearbeiten...
 InputBoxFor.rbCounting.tooltip=Wählen Sie dies, um von einem Anfangs- zu einem Endwert zu zählen.
@@ -495,6 +556,7 @@ InputBoxFor.btnOK.text=Speichern
 InputBoxFor.btnOK.tooltip=Speichern der Eintragungen.
 InputBoxFor.btnCancel.text=Abbruch
 InputBoxFor.btnCancel.tooltip=Verwerfen der Eintragungen.
+InputBoxFor.chkDisabled.text=Ausführung/Export unterbunden
 InputBoxFor.chkBreakpoint.text=Haltepunkt
 InputBoxFor.lblBreakTriggerText.text=Halt vor %. Ausführung
 InputBoxFor.msgInvalidIncrement.text=<%> ist keine gültige Ganzzahlkonstante
@@ -649,6 +711,8 @@ PrintPreview.btnOK.tooltip=Das Diagram ausdrucken.
 
 -----[ ExportOptionDialoge ]-----
 ExportOptionDialoge.title=Einstellungen für den Code-Export
+ExportOptionDialoge.tabbedPane.tab.0=Allgemein
+ExportOptionDialoge.tabbedPane.tab.1=Includes
 ExportOptionDialoge.noConversionCheckBox.text=Keine Umwandlung der Elementinhalte (Ausdrücke, Befehle).
 ExportOptionDialoge.noConversionCheckBox.tooltip=Aktivieren Sie diese Option, wenn Ihre Struktogrammtexte bereits in der Zielsprache formuliert sind.
 ExportOptionDialoge.commentsCheckBox.text=Anweisungen als Kommentare exportieren.
@@ -661,6 +725,7 @@ ExportOptionDialoge.chkCharsetAll.text=Alle auflisten?
 ExportOptionDialoge.jLabel1.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
 ExportOptionDialoge.jButton1.text=OK
 ExportOptionDialoge.jButton1.tooltip=Speichern der gewählten Einstellungen.
+ExportOptionDialoge.includeLists.*.tooltip=Bei Bedarf kommaseparierte Datei- oder Modulnamen eintragen, for die include/import/use-Direktiven einzufügen sind.
 
 -----[ ImportOptionDialog ]-----
 ImportOptionDialog.title=Einstellungen zum Dateiladen ...
@@ -674,6 +739,27 @@ ImportOptionDialog.chkRefactorOnLoading.text=Parser-Schlüsselworte in Diagramme
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Aktivieren, um Diagramme beim Laden an die aktuell eingestellten Parser-Kennworte anpassen zu lassen.
 ImportOptionDialog.btnOk.text=OK
 ImportOptionDialog.btnOk.tooltip=Speichern der gewählten Einstellungen.
+
+-----[ SaveOptionDialog ]-----
+SaveOptionDialog.title=Optionen für das Sichern von Diagrammen ...
+SaveOptionDialog.lbIntro.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
+SaveOptionDialog.pnlAutoSave.border=Automatisches Speichern
+SaveOptionDialog.pnlBackup.border=Backup-Dateien
+SaveOptionDialog.chkAutoSaveExecute.text=Automatisch sichern beim Debuggen?
+SaveOptionDialog.chkAutoSaveClose.text=Automatisch sichern beim Beenden?
+SaveOptionDialog.chkBackupFile.text=Beim Überschreiben Backup-Dateien erstellen?
+SaveOptionDialog.btnOk.text=OK
+SaveOptionDialog.btnOk.tooltip=Einstellungen übernehmen.
+
+-----[ GUIScaleChooser ]-----
+GUIScaleChooser.title=GUI-Skalierung
+GUIScaleChooser.txtComment.text=Dies bietet eine Voreinstellung mit Vorschau.\nEine unmittelbare Re-Skalierung der offenen Anwendung ist nicht möglich.\nDer Skalierungsfaktor wird erst beim nächsten Structorizer-Start wirksam.
+GUIScaleChooser.lblSpinner.text=Skalierungsfaktor
+GUIScaleChooser.lblTest.text=Voransicht Schriftgröße
+GUIScaleChooser.lblIcon.text=Voransicht Icon-Größe
+GUIScaleChooser.chkTest.text=Voransicht Optionselement
+GUIScaleChooser.btnOK.text=OK
+GUIScaleChooser.btnOK.tooltip=Einstellung für den nächsten Start übernehmen.
 
 -----> Arranger
 Surface.msgFileLoadError.text=Dateiladefehler:
@@ -692,11 +778,17 @@ Surface.msgUnsavedDiagrams.text=Folgende Diagramme konnten nicht gesichert werde
 Surface.msgUnsavedHint.text=Vielleicht möchten Sie die Diagramme erst per Doppelklick von einem Structorizer sichern lassen.
 Surface.msgUnsavedContinue.text=Trotzdem fortfahren?
 Surface.msgNoArrFile.text=Keine Arranger-Datei (arr) gefunden
+Surface.msgDefectiveArr.text=Defekte Anordnungsdatei.
+Surface.msgDefectiveArrz.text=Defektes portables Anordnungsarchiv.
+Surface.titleDiagramConflict.text=Diagramm-Konflikt
+Surface.msgInsertionConflict.0.text=Es gibt bereits eine Version von Diagramm "%2",\nwenigstens eine davon hat ungesicherte Änderungen.
+Surface.msgInsertionConflict.1.text=Es gibt bereits eine äquivalente Kopie des Diagramms "%1"\nmit unterschiedlichem Dateipfad "%2".
+Surface.msgInsertionConflict.2.text=Es gibt bereits ein abweichendes Diagramm mit Signatur "%1"\nund Dateipfad "%2".
 
 -----> Executor
 -----[ Control ]-----
-Control.lblSpeed.text= Verzögerung:
-Control.btnCallStack.text=Aufrufstapel 
+Control.lblSpeed.text=Verzögerung:
+Control.btnCallStack.text=Aufrufstapel
 Control.lblCallLevel.text=Aufruftiefe:
 Control.chkCollectRuntimeData.text=Sammle Laufzeitdaten
 Control.cbRunDataDisplay.item.0=keine Färbung
@@ -722,6 +814,7 @@ Control.msgTitleError.text=Fehler
 Control.msgTitleQuestion.text=Frage
 Control.msgTitleParallel.text=Problem bei Parallelausführung
 Control.msgNoSubroutine.text=Ein Diagramm mit Unterprogramm "%1" (%2 Parameter) wurde nicht gefunden!\nPlatzieren Sie benötigte Unterprogramm-Diagramme zunächst im Arranger.
+Control.msgAmbiguousCall.text=Mehrdeutiger Aufruf: Verschiedene Unterprogramm-Diagramme "%1" (%2 Parameter) gefunden!
 Control.msgInvalidExpr.text=<%1> ist kein korrekter oder existierender Ausdruck.
 Control.msgInvalidBool.text=<%1> ist kein gültiger logischer Ausdruck.
 Control.msgIllFunction.text=<%1> ist keine korrekte Funktion!
@@ -732,5 +825,18 @@ Control.msgExitCode.text=Programm abgebrochen mit Code %1!
 Control.msgIllegalJump.text=Unzulässiger Inhalt einer Aussprung-Anweisung: <%1>!
 Control.msgTooManyLevels.text=Zu viele Ebenen zum Verlassen gefordert (tatsächliche Tiefe: %1 / angegeben: %2)!
 Control.msgJumpOutParallel.text=Unzulässiger Aussprung aus Parallelzweig:%Thread beendet!
+Control.msgForLoopManipulation.text=Unzulässige Manipulation der Zählschleifenvariablen «%»!
+Control.msgInvalidFileNumberRead.text=Ungültige Dateinummer bzw. Datei nicht geöffnet zum Lesen.
+Control.msgInvalidFileNumberWrite.text=Ungülige Dateinummer bzw. Datei nicht geöffnet zum Schreiben.
+Control.msgNoIntLiteralOnFile.text=Kein Ganzzahlwert lesbar von der Datei!
+Control.msgNoDoubleLiteralOnFile.text=Kein Gleitkommawert lesbar von der Datei!    
+Control.msgEndOfFile.text=Leseversuch nach Erreichen des Dateiendes!    
 Control.tblVar.header.0=Variablenname
 Control.tblVar.header.1=Inhalt
+
+-----[ OutputConsole ]-----
+OutputConsole.menu.text=Eigenschaften
+OutputConsole.menuFont.text=Schriftart ...
+OutputConsole.menuFontUp.text=Schrift vergrößern
+OutputConsole.menuFontDown.text=Schrift verkleinern
+

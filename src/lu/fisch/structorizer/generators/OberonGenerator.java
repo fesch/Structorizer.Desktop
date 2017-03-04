@@ -24,7 +24,8 @@
 
 package lu.fisch.structorizer.generators;
 
-/******************************************************************************************************
+/*
+ ******************************************************************************************************
  *
  *      Author:         Klaus-Peter Reimers
  *
@@ -57,6 +58,13 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.08.12      Two tiny embellishments
  *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
  *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
+ *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
+ *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt string,
+ *                                              Issue #227: In obvious cases (literals) output procedure names inserted.
+ *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
+ *      Kay Gürtzig             2016.12.22      Issue #227: input and output usage more routine-specific
+ *      Kay Gürtzig             2016.01.30      Enh. #335, bugfix #337: More sophisticated type treatment
+ *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *
  ******************************************************************************************************
  *
@@ -79,8 +87,10 @@ package lu.fisch.structorizer.generators;
  *      - Conversion of C-style logical operators to the Pascal-like ones added
  *      - assignment operator conversion now preserves or ensures surrounding spaces
  *
- ******************************************************************************************************///
+ ******************************************************************************************************
+ */
 
+import java.util.Map;
 import java.util.regex.Matcher;
 
 import lu.fisch.utils.*;
@@ -155,19 +165,44 @@ public class OberonGenerator extends Generator {
 		return true;
 	}
 	// END KGU 2016-08-12
-   
+	
+	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.Generator#getIncludePattern()
+	 */
+	@Override
+	protected String getIncludePattern()
+	{
+		return "IMPORT %%;";
+	}
+	// END KGU#351 2017-02-26
+
     /************ Code Generation **************/
 
+	// START KGU#332 2017-01-30: Enh. #335
+	private Map<String,TypeMapEntry> typeMap;
+	// END KGU#332 2017-01-30
+    
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
 	 * into the target code
+	 * @param withPrompt - is a prompt string to be considered?
 	 * @return a regex replacement pattern, e.g. "$1 = (new Scanner(System.in)).nextLine();"
 	 */
-	protected String getInputReplacer()
+	// START KGU#281 2016-10-15: Enh. #271
+	//protected String getInputReplacer()
+	//{
+	//	return "In.TYPE($1)";
+	//}
+	protected String getInputReplacer(boolean withPrompt)
 	{
+		if (withPrompt) {
+			return "Out.String($1); In.TYPE($2)";
+		}
 		return "In.TYPE($1)";
 	}
+	// END KGU#281 2016-10-15
 
 	/**
 	 * A pattern how to embed the expression (right-hand side of an output instruction)
@@ -176,7 +211,10 @@ public class OberonGenerator extends Generator {
 	 */
 	protected String getOutputReplacer()
 	{
-		return "Out.TYPE($1)";
+		// START KGU#236 2016-10-16: Enh. #227 - we needed a substitution marker to accomplish identified routines
+		//return "Out.TYPE($1)";
+		return "Out.TYPE($1%LEN%)";
+		// END KGU#236 2016-10-16
 	}
 
 	// START KGU#16 2015-11-30
@@ -194,6 +232,7 @@ public class OberonGenerator extends Generator {
 			if (_type.equalsIgnoreCase("long") ||
 					_type.equalsIgnoreCase("unsigned long")) _type = "LONGINT";
 			else if (_type.equalsIgnoreCase("int") ||
+					_type.equalsIgnoreCase("integer") ||
 					_type.equalsIgnoreCase("unsigned") ||
 					_type.equalsIgnoreCase("unsigned int")) _type = "INTEGER";
 			else if (_type.equalsIgnoreCase("short") ||
@@ -206,9 +245,25 @@ public class OberonGenerator extends Generator {
 					_type.equalsIgnoreCase("real")) _type = "REAL";
 			else if (_type.equalsIgnoreCase("double") ||
 					_type.equalsIgnoreCase("longreal")) _type = "LONGREAL";
-			else if (_type.equalsIgnoreCase("bool")) _type = "BOOLEAN";
+			else if (_type.equalsIgnoreCase("bool") ||
+					_type.equalsIgnoreCase("boolean")) _type = "BOOLEAN";
 			else if (_type.equalsIgnoreCase("string")) _type = "ARRAY 100 OF CHAR"; // may be too short but how can we guess?
 			// To be continued if required...
+			// START KGU#332 2017-01-30: Enh. #335
+			_type = _type.replace("array", "ARRAY");
+			_type = _type.replace(" of ", " OF ");
+			String pattern = "(.*)ARRAY\\s*?\\[\\s*[0-9]+\\s*[.][.][.]?\\s*([0-9]+)\\s*\\]\\s*OF\\s*(.*)";
+			if (_type.matches(pattern)) {
+				String upperIndex = _type.replaceFirst(pattern, "$2");
+				int nElements = Integer.parseInt(upperIndex) + 1;
+				String elementType = _type.replaceFirst(pattern,  "$3").trim();
+				_type = _type.replaceFirst(pattern, "$1ARRAY " + nElements +" OF ") + transformType(elementType, elementType);
+			}
+			else if (_type.matches(pattern = "ARRAY\\s*OF\\s*(.*)")) {
+				String elementType = _type.replaceFirst(pattern, "$1").trim();
+				_type = "ARRAY OF " + transformType(elementType, elementType);
+			}
+			// END KGU#332 2017-01-30
 		}
 		return _type;
 	}
@@ -328,6 +383,20 @@ public class OberonGenerator extends Generator {
 			posDecl = code.indexOf(seekIndent + _category);
 			seekIndent += this.getIndent();
 		}
+		// START KGU#332 2017-01-30: Enh. #335 Enables const declarations
+		if (posDecl < 0 && _category.equals("CONST")) {
+			seekIndent = "";
+			while (posDecl < 0 && seekIndent.length() < _maxIndent)
+			{
+				posDecl = code.indexOf(seekIndent + "VAR");
+				if (posDecl >= 0) {
+					code.insert("", posDecl);
+					code.insert(seekIndent + _category, posDecl);					
+				}
+				seekIndent += this.getIndent();
+			}
+		}
+		// END KGU#332 2017-01-30
 		code.insert(seekIndent + text, posDecl + 1);
 	}
 	// END KGU#61 2016-03-23
@@ -343,10 +412,11 @@ public class OberonGenerator extends Generator {
 //		}
 		if (!insertAsComment(_inst, _indent)) {
 			
+			boolean isDisabled = _inst.isDisabled();
+			
 			insertComment(_inst, _indent);
 
-			String inputKey = D7Parser.keywordMap.get("input").trim();
-			String outputKey = D7Parser.keywordMap.get("output");
+			String outputKey = D7Parser.getKeyword("output");
 			for (int i=0; i<_inst.getText().count(); i++)
 			{
 				// START KGU#101/KGU#108 2015-12-20 Issue #51/#54
@@ -365,26 +435,86 @@ public class OberonGenerator extends Generator {
 					// START KGU#236 2016-08-10: Issue #227 - moved to the algorithm start now
 					//code.add(_indent + "In.Open;");
 					// END KGU#236 2016-08-10
-					if (line.substring(inputKey.length()).trim().isEmpty())
-					{
-						code.add(_indent + "In.Char(dummyInputChar);");
-					}
-					else
-					{	
+					// START KGU#281 2016-10-15: Enh. #271
+					//if (line.substring(inputKey.length()).trim().isEmpty())
+					//{
+					//	addCode("In.Char(dummyInputChar);", _indent, isDisabled);
+					//}
+					//else
+					//{	
+					//	insertComment("TODO: Replace \"TYPE\" by the the actual In procedure name for this type!", _indent);
+					//	addCode(transform(line) + ";", _indent, isDisabled);
+					//}
+					String transf = transform(line).replace("In.TYPE()", "In.Char(dummyInputChar)") + ";";
+					if (transf.contains("In.TYPE(")) {
 						insertComment("TODO: Replace \"TYPE\" by the the actual In procedure name for this type!", _indent);
-						code.add(_indent + transform(line) + ";");
 					}
+					addCode(transf, _indent, isDisabled);
+					// END KGU#281 2016-10-15
 				}
 				else if (Instruction.isOutput(line))
 				{
-					insertComment("TODO: Replace \"TYPE\" by the the actual Out procedure name for this type and add a length argument where needed!", _indent);	
 					StringList expressions = Element.splitExpressionList(line.substring(outputKey.length()).trim(), ",");
-					// Produce an output isntruction for every expression (according to type)
+					// Produce an output instruction for every expression (according to type)
 					for (int j = 0; j < expressions.count(); j++)
 					{
-						code.add(_indent + transform(outputKey + " " + expressions.get(j)) + ";");
+						// START KGU#236 2016-10-15: Issue #227 - For literals, we can of course determine the type...
+						//addCode(transform(outputKey + " " + expressions.get(j)) + ";", _indent, isDisabled);
+						String procName = "";
+						String length = "";
+						String expr = expressions.get(j);
+						try {
+							Double.parseDouble(expr);
+							procName = "Real";
+							length = ", 10";
+						}
+						catch (NumberFormatException ex) {}
+						try {
+							Integer.parseInt(expr);
+							procName = "Int";
+							length = ", 10";
+						}
+						catch (NumberFormatException ex) {}
+						if (procName.isEmpty() && (expr.startsWith("\"") || expr.startsWith("'"))
+								&& Element.splitLexically(expr, true).count() == 1) {
+							procName = "String";
+						}
+						// START KGU#332 2017-01-30: Enh. #335 Identify variable types if possible
+						if (procName.isEmpty()) {
+							TypeMapEntry typeInfo = typeMap.get(expr);
+							if (typeInfo != null) {
+								StringList types = this.getTransformedTypes(typeInfo);
+								if (types.count() == 1) {
+									String type = types.get(0);
+									if (type.equals("INTEGER") || type.equals("LONGINT") || type.equals("SHORTINT")) {
+										procName = "Int";
+										length = ", 10";
+									}
+									else if (type.equals("REAL") || type.equals("LONGREAL")) {
+										procName = "Real";
+										length = ", 10";										
+									}
+									else if (type.equalsIgnoreCase("STRING") || type.matches("ARRAY(\\s\\d+)? OF CHAR")) {
+										procName = "String";
+									}
+									else if (type.equals("CHAR")) {
+										procName = "Char";
+									}
+								}
+							}
+						}
+						// END KGU#332 2017-01-30
+						String codeLine = transform(outputKey + " " + expressions.get(j)).replace("%LEN%", length) + ";";
+						if (!procName.isEmpty()) {
+							codeLine = codeLine.replace("Out.TYPE(", "Out."+procName+"(");
+						}
+						else {
+							insertComment("TODO: Replace \"TYPE\" by the the actual Out procedure name for this type and add a length argument where needed!", _indent);
+						}
+						addCode(codeLine, _indent, isDisabled);
+						// END KGU#236 2016-10-15
 					}
-					code.add(_indent + "Out.Ln;");
+					addCode("Out.Ln;", _indent, isDisabled);
 				}
 				else
 				{
@@ -405,15 +535,25 @@ public class OberonGenerator extends Generator {
 									expr.substring(1, expr.length()-1), ",");
 							for (int el = 0; el < elements.count(); el++)
 							{
-								code.add(_indent + varName + "[" + el + "] := " + 
-										elements.get(el) + ";");
+								addCode(varName + "[" + el + "] := " + elements.get(el) + ";",
+										_indent, isDisabled);
 							}
 						}
 						
 					}
 					if (!isArrayInit)
 					{
-						code.add(_indent + transline + ";");
+						// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
+						//code.add(_indent + transline + ";");
+						transline += ";";
+						if (Instruction.isTurtleizerMove(line)) {
+							transline += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor() + " " + this.commentSymbolRight();
+						}
+						// START KGU 2017-01-31: return must be capitalized here
+						transline = transline.replaceFirst("^" + BString.breakup(D7Parser.getKeywordOrDefault("preReturn", "return")) + "($|\\W+.*)", "RETURN$1");
+						// END KGU 2017-01-31
+						addCode(transline, _indent, isDisabled);
+						// END KGU#277/KGU#284 2016-10-13
 					}
 					// END KGU#100 2016-01-16
 				}
@@ -426,45 +566,49 @@ public class OberonGenerator extends Generator {
 	
 	protected void generateCode(Alternative _alt, String _indent)
 	{
+		boolean isDisabled = _alt.isDisabled();
         // START KGU 2014-11-16
         insertComment(_alt, _indent);
         // END KGU 2014-11-16
-		code.add(_indent+"IF "+ transform(_alt.getText().getLongString()) + " THEN");
+		addCode("IF "+ transform(_alt.getText().getLongString()) + " THEN",
+				_indent, isDisabled);
 		generateCode(_alt.qTrue, _indent+this.getIndent());
 		if (_alt.qFalse.getSize()!=0)
 		{
-			code.add(_indent+"END");
-			code.add(_indent+"ELSE");
-			generateCode(_alt.qFalse,_indent+this.getIndent());
+			addCode("END", _indent, isDisabled);
+			addCode("ELSE", _indent, isDisabled);
+			generateCode(_alt.qFalse, _indent+this.getIndent());
 		}
-		code.add(_indent+"END;");
+		addCode("END;", _indent, isDisabled);
 	}
 	
 	protected void generateCode(Case _case, String _indent)
 	{
+		boolean isDisabled = _case.isDisabled();
         // START KGU 2014-11-16
         insertComment(_case, _indent);
         // END KGU 2014-11-16
-		code.add(_indent+"CASE "+transform(_case.getText().get(0))+" OF");
+		addCode("CASE "+transform(_case.getText().get(0))+" OF", _indent, isDisabled);
 		
-		for(int i=0;i<_case.qs.size()-1;i++)
+		for (int i=0; i<_case.qs.size()-1; i++)
 		{
-			code.add(_indent+this.getIndent()+_case.getText().get(i+1).trim()+":");
+			addCode(this.getIndent() + _case.getText().get(i+1).trim() + ":",
+					_indent, isDisabled);
 			generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent());
 			// START KGU 2014-11-16: Wrong case separator replaced
 			//code.add(_indent+"END;");
-			code.add(_indent+"|");
+			addCode("|", _indent, isDisabled);
 			// END KGU 2014-11-16
 		}
 		
 		if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
 		{
-			code.add(_indent+this.getIndent()+"ELSE");
+			addCode("ELSE", _indent+this.getIndent(), isDisabled);
 			generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());
 		}
 		// START KGU 2014-11-16: Wrong indentation mended
 		//code.add(_indent+this.getIndent()+"END;");
-		code.add(_indent+"END;");
+		addCode("END;", _indent, isDisabled);
 		// END KGU 2014-11-16
 	}
 	
@@ -482,15 +626,18 @@ public class OberonGenerator extends Generator {
     	}
     	// END KGU#61 2016-03-23
 
+		boolean isDisabled = _for.isDisabled();
+		
         // START KGU#3 2015-11-02: New reliable loop parameter mechanism
 		//code.add(_indent+"FOR "+BString.replace(transform(_for.getText().getText()),"\n","")+" DO");
         int step = _for.getStepConst();
         String incr = (step == 1) ? "" : " BY "+ step;
-		code.add(_indent + "FOR " + _for.getCounterVar() + " := " + transform(_for.getStartValue(), false) +
-				" TO " + transform(_for.getEndValue(), false) + incr +" DO");
+		addCode("FOR " + _for.getCounterVar() + " := " + transform(_for.getStartValue(), false) +
+				" TO " + transform(_for.getEndValue(), false) + incr +" DO",
+				_indent, isDisabled);
 		// END KGU#3 2015-11-02
 		generateCode(_for.q,_indent+this.getIndent());
-		code.add(_indent+"END;");
+		addCode("END;", _indent, isDisabled);
 	}
 	
 	// START KGU#61 2016-03-23: Enh. #84 - Support for FOR-IN loops
@@ -513,6 +660,7 @@ public class OberonGenerator extends Generator {
 		String arrayName = "array" + postfix;
 		String indexName = "index" + postfix;
 		String itemType = "FIXME_" + postfix;
+		boolean isDisabled = _for.isDisabled();
 
 		if (items != null)
 		{
@@ -567,7 +715,7 @@ public class OberonGenerator extends Generator {
 			if (allBoolean) itemType = "BOOLEAN";
 			else if (allInt) itemType = "INTEGER";
 			else if (allReal) itemType = "REAL";
-			else if (allString) itemType = "string";
+			else if (allString) itemType = "ARRAY 100 OF CHAR";
 			else {
 				// We do a dummy type definition
 				this.insertComment("TODO: Specify an appropriate element type for the array!", _indent);
@@ -582,16 +730,17 @@ public class OberonGenerator extends Generator {
 			// Now we create code to fill the array with the enumerated values
 			for (int i = 0; i < nItems; i++)
 			{
-				code.add(_indent + arrayName + "[" + i + "] := " + items.get(i) + ";");
+				addCode(arrayName + "[" + i + "] := " + items.get(i) + ";",
+						_indent, isDisabled);
 			}
 			
 			// Creation of the loop header
-    		code.add(_indent + "FOR " + indexName + " := 0 TO " + (nItems-1) + " DO");
+    		addCode("FOR " + indexName + " := 0 TO " + (nItems-1) + " DO", _indent, isDisabled);
 
     		// Creation of the loop body
-            code.add(_indent+this.getIndent() + var + " := " + arrayName + "[" + indexName + "];");
+            addCode(var + " := " + arrayName + "[" + indexName + "];", _indent+this.getIndent(), isDisabled);
             generateCode(_for.q, _indent+this.getIndent());
-            code.add(_indent + "END;");
+            addCode("END;", _indent, isDisabled);
 
             done = true;
 		}
@@ -600,20 +749,22 @@ public class OberonGenerator extends Generator {
 			String valueList = _for.getValueList();
 			// Fortunately, there is a predefined function LEN in Oberon that makes it possible
 			// to convert this in to a COUNTER loop. We just need a generic index variable
-			if ((new Function(valueList).isFunction()))
+			if (Function.isFunction(valueList))
 			{
 				// For performance reasons, it wouldn't be so good an idea to call the function all the way again
 				this.insertDeclaration("VAR", arrayName + ": ARRAY OF " + itemType + ";", _indent.length());
-				code.add(_indent + arrayName + " := " + valueList);
+				addCode(arrayName + " := " + valueList, _indent, isDisabled);
 				valueList = arrayName;
 			}
 			insertDeclaration("VAR", indexName + ": INTEGER;", _indent.length());
 			// Creation of the loop header
-			code.add(_indent + "FOR " + indexName + " := 0 TO LEN(" + transform(valueList, false) + ")-1 DO");
-            code.add(_indent+this.getIndent() + var + " := " + valueList + "[" + indexName + "];");
+			addCode("FOR " + indexName + " := 0 TO LEN(" + transform(valueList, false) + ")-1 DO",
+					_indent, isDisabled);
+            addCode(var + " := " + valueList + "[" + indexName + "];",
+            		_indent+this.getIndent(), isDisabled);
 			// Add the loop body as is
 			generateCode(_for.q, _indent + this.getIndent());
-            code.add(_indent + "END;");
+            addCode("END;", _indent, isDisabled);
 			
 			done = true;
 		}
@@ -623,47 +774,54 @@ public class OberonGenerator extends Generator {
 
 	protected void generateCode(While _while, String _indent)
 	{
+		boolean isDisabled = _while.isDisabled();
         // START KGU 2014-11-16
         insertComment(_while, _indent);
         // END KGU 2014-11-16
-		code.add(_indent+"WHILE "+BString.replace(transform(_while.getText().getText()),"\n","")+" DO");
+		addCode("WHILE "+BString.replace(transform(_while.getText().getText()),"\n","")+" DO",
+				_indent, isDisabled);
 		generateCode(_while.q, _indent + this.getIndent());
-		code.add(_indent+"END;");
+		addCode("END;", _indent, isDisabled);
 	}
 	
 	protected void generateCode(Repeat _repeat, String _indent)
 	{
+		boolean isDisabled = _repeat.isDisabled();
         // START KGU 2014-11-16
         insertComment(_repeat, _indent);
         // END KGU 2014-11-16
-		code.add(_indent+"REPEAT");
+		addCode("REPEAT", _indent, isDisabled);
 		generateCode(_repeat.q,_indent+this.getIndent());
-		code.add(_indent+"UNTIL "+BString.replace(transform(_repeat.getText().getText()),"\n","")+";");
+		addCode("UNTIL "+BString.replace(transform(_repeat.getText().getText()),"\n","")+";",
+				_indent, isDisabled);
 	}
 	
 	protected void generateCode(Forever _forever, String _indent)
 	{
+		boolean isDisabled = _forever.isDisabled();
         // START KGU 2014-11-16
         insertComment(_forever, _indent);
         // END KGU 2014-11-16
-		code.add(_indent+"LOOP");
+		addCode("LOOP", _indent, isDisabled);
 		generateCode(_forever.q,_indent+this.getIndent());
-		code.add(_indent+"END;");
+		addCode("END;", _indent, isDisabled);
 	}
 	
 	protected void generateCode(Call _call, String _indent)
 	{
+		boolean isDisabled = _call.isDisabled();
         // START KGU 2014-11-16
         insertComment(_call, _indent);
         // END KGU 2014-11-16
 		for(int i=0;i<_call.getText().count();i++)
 		{
-			code.add(_indent+transform(_call.getText().get(i))+";");
+			addCode(transform(_call.getText().get(i))+";", _indent, isDisabled);
 		}
 	}
 	
 	protected void generateCode(Jump _jump, String _indent)
 	{
+		boolean isDisabled = _jump.isDisabled();
         // START KGU 2014-11-16
         insertComment(_jump, _indent);
         // END KGU 2014-11-16
@@ -685,12 +843,13 @@ public class OberonGenerator extends Generator {
         	}
         	// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
         	//code.add(_indent + line + ";");
-        	String preReturn = D7Parser.keywordMap.get("preReturn");
-        	String preExit   = D7Parser.keywordMap.get("preExit");
-        	String preLeave  = D7Parser.keywordMap.get("preLeave");
+        	String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
+        	String preExit   = D7Parser.getKeywordOrDefault("preExit", "exit");
+        	String preLeave  = D7Parser.getKeywordOrDefault("preLeave", "leave");
         	if (line.matches(Matcher.quoteReplacement(preReturn)+"([\\W].*|$)"))
         	{
-        		code.add(_indent + "RETURN " + line.substring(preReturn.length()).trim() + ";");
+        		addCode("RETURN " + line.substring(preReturn.length()).trim() + ";",
+        				_indent, isDisabled);
         	}
         	else if (line.matches(Matcher.quoteReplacement(preExit)+"([\\W].*|$)"))
         	{
@@ -714,7 +873,7 @@ public class OberonGenerator extends Generator {
         	}
         }
         if (isEmpty) {
-        	code.add(_indent + "EXIT;");
+        	addCode("EXIT;", _indent , isDisabled);
         }
     	// END KGU#74/KGU#78 2016-01-17
 	}
@@ -722,30 +881,31 @@ public class OberonGenerator extends Generator {
 	// START KGU#47 2015-12-20: Offer at least a sequential execution (which is one legal execution order)
 	protected void generateCode(Parallel _para, String _indent)
 	{
+		boolean isDisabled = _para.isDisabled();
 		insertComment(_para, _indent);
 
-		code.add("");
+		addCode("", "", isDisabled);
 		insertComment("==========================================================", _indent);
 		insertComment("================= START PARALLEL SECTION =================", _indent);
 		insertComment("==========================================================", _indent);
 		insertComment("TODO: add the necessary code to run the threads concurrently", _indent);
-		code.add(_indent + "BEGIN");
+		addCode("BEGIN", _indent, isDisabled);
 
 		for (int i = 0; i < _para.qs.size(); i++) {
-			code.add("");
+			addCode("", "", isDisabled);
 			insertComment("----------------- START THREAD " + i + " -----------------", _indent + this.getIndent());
-			code.add(_indent + this.getIndent() + "BEGIN");
+			addCode("BEGIN", _indent + this.getIndent(), isDisabled);
 			generateCode((Subqueue) _para.qs.get(i), _indent + this.getIndent() + this.getIndent());
-			code.add(_indent + this.getIndent() + "END;");
+			addCode("END;", _indent + this.getIndent(), isDisabled);
 			insertComment("------------------ END THREAD " + i + " ------------------", _indent + this.getIndent());
-			code.add("");
+			addCode("", "", isDisabled);
 		}
 
-		code.add(_indent + "END;");
+		addCode("END;", _indent, isDisabled);
 		insertComment("==========================================================", _indent);
 		insertComment("================== END PARALLEL SECTION ==================", _indent);
 		insertComment("==========================================================", _indent);
-		code.add("");
+		addCode("", "", isDisabled);
 	}
 	// END KGU#47 2015-12-20
 
@@ -759,7 +919,7 @@ public class OberonGenerator extends Generator {
 //		// code.add(_indent+"");
 //	}
 	
-	// START KGU 2015-12-20: Decomposition accoring to super class Generator
+	// START KGU 2015-12-20: Decomposition according to super class Generator
 //	public String generateCode(Root _root, String _indent)
 //	{
 //		String pr = "MODULE";
@@ -824,18 +984,21 @@ public class OberonGenerator extends Generator {
         		code.add(_indent + "MODULE " + moduleName + ";");
         		code.add(_indent);
         		
-        		if (this.hasInput || this.hasOutput)
+				// STARTB KGU#351 2017-02-26: Enh. #346
+				this.insertUserIncludes(_indent);
+				// END KGU#351 2017-02-26
+        		if (this.hasInput() || this.hasOutput())
        			{
         			StringList ioModules = new StringList();
-        			if (this.hasInput) ioModules.add("In");
-        			if (this.hasOutput) ioModules.add("Out");
+        			if (this.hasInput()) ioModules.add("In");
+        			if (this.hasOutput()) ioModules.add("Out");
         			code.add(_indent + "IMPORT " + ioModules.concatenate(", ") + ";");
             		code.add(_indent);
        			}
-        		if (this.hasEmptyInput)
+        		if (this.hasEmptyInput(_root))
         		{
         			code.add(_indent + "VAR");
-        			code.add(_indent + this.getIndent() + "dummyInputChar: Char;	" +
+        			code.add(_indent + this.getIndent() + "dummyInputChar: CHAR;	" +
         					this.commentSymbolLeft() + " for void input " + this.commentSymbolRight());
         			code.add(_indent);
         		}
@@ -846,27 +1009,49 @@ public class OberonGenerator extends Generator {
         	
 			header += "*";	// Marked for export as default
 			String lastType = "";
+			header += "(";
 			int nParams = _paramNames.count();
 			for (int p = 0; p < nParams; p++) {
 				String type = transformType(_paramTypes.get(p), "(*type?*)");
-				if (p == 0) {
-					header += "(";
+				// START KGU#140 2017-01-31; Enh. #113 - array conversion in argument list
+				//if (p == 0) {
+				//	header += "(";
+				//}
+				//else if (type.equals("(*type?*)") || !type.equals(lastType)) {
+				if (p > 0) {
+					if (type.equals("(*type?*)") || !type.equals(lastType)) {
+				// END KGU#140 2017-01-31
+						header += ": " + lastType + "; ";
+						// START KGU#332 2017-01-31: Enh. #335 Improved type support
+						if (type.contains("ARRAY") && !_paramNames.get(p).trim().startsWith("VAR ")) {
+							header += "VAR ";
+						}
+						// END KGU#332 2017-01-31
+					}
+					else {
+						header += ", ";
+					}
+				// START KGU#140 2017-01-31; Enh. #113 - array conversion in argument list
 				}
-				else if (type.equals("(*type?*)") || !type.equals(lastType)) {
-					header += ": " + lastType + "; ";
-				}
-				else {
-					header += ", ";
-				}
+				// END KGU#140 2017-01-31
 				header += _paramNames.get(p).trim();
 				if (p+1 == nParams) {
-					header += ": " + type + ")";
+					//header += ": " + type + ")";
+					header += ": " + type;
 				}
 				lastType = type;
 			}
+			header += ")";
 			if (_resultType != null || this.returns || this.isFunctionNameSet || this.isResultSet)
 			{
-				header += ": " + transformType(_resultType, "");
+				// START KGU#332 2017-01-31: Enh. #335
+				//header += ": " + transformType(_resultType, "");
+				String oberonType = transformType(_resultType, "");
+				if (oberonType.contains("ARRAY")) {
+					insertComment("TODO: Oberon doesn't permit to return arrays - pass the result in a different way!", _indent);					
+				}
+				header += ": " + oberonType;
+				// END KGI#332 2017-01-31
 			}
 		}
 		
@@ -877,11 +1062,11 @@ public class OberonGenerator extends Generator {
 		//{
 		//	code.add(_indent + "IMPORT In, Out");	// Later, this could be done on demand
 		//}
-		if (_root.isProgram && (this.hasInput || this.hasOutput))
+		if (_root.isProgram && (this.hasInput(_root) || this.hasOutput(_root)))
 		{
   			StringList ioModules = new StringList();
-			if (this.hasInput) ioModules.add("In");
-			if (this.hasOutput) ioModules.add("Out");
+			if (this.hasInput(_root)) ioModules.add("In");
+			if (this.hasOutput(_root)) ioModules.add("Out");
 			code.add(_indent + "IMPORT " + ioModules.concatenate(", ") + ";");
 		}
 		// END KGU#236 2016-08-10
@@ -927,19 +1112,55 @@ public class OberonGenerator extends Generator {
 	{
 		String indentPlusOne = _indent + this.getIndent();
 		code.add(_indent + "VAR");
-		insertComment("TODO: Declare local variables here:", indentPlusOne);
+		insertComment("TODO: Check and accomplish local variable declarations:", indentPlusOne);
 		// START KGU#236 2016-08-10: Issue #227: Declare this variable only if needed
 		//code.add(indentPlusOne + "dummyInputChar: Char;	" +
 		//		this.commentSymbolLeft() + " for void input " + this.commentSymbolRight());
 		boolean isProcModule = !_root.isProgram && this.optionExportSubroutines();
-		if (topLevel && this.hasEmptyInput && !isProcModule)
+		if (topLevel && this.hasEmptyInput(_root) && !isProcModule)
 		{
 			code.add(indentPlusOne + "dummyInputChar: Char;	" +
 					this.commentSymbolLeft() + " for void input " + this.commentSymbolRight());
 		}
 		// END KGU#236 2016-08-10
+        // START KGU#261 2017-01-30: Enh. #259: Insert actual declarations if possible
+		typeMap = _root.getTypeInfo();
+		// END KGU#261 2017-01-30
 		for (int v = 0; v < varNames.count(); v++) {
-			insertComment(varNames.get(v), indentPlusOne);
+	        // START KGU#332 2017-01-30: Enh. #335: Insert actual declarations if possible
+			//insertComment(varNames.get(v), indentPlusOne);
+			String varName = varNames.get(v);
+			TypeMapEntry typeInfo = typeMap.get(varName); 
+			StringList types = null;
+			if (typeInfo != null) {
+				 types = getTransformedTypes(typeInfo);
+			}
+			if (types != null && types.count() == 1) {
+				String type = types.get(0);
+				int level = 0;
+				String prefix = "";
+				while (type.startsWith("@")) {
+					// It's an array, so get its index range
+					int maxIndex = typeInfo.getMaxIndex(level++);
+					String nElements = "";
+					if (maxIndex > 0) {
+						nElements = " " + (maxIndex+1);
+					}
+					prefix += "ARRAY" + nElements + " OF ";
+					type = type.substring(1);
+				}
+				type = prefix + type;
+				if (type.contains("???")) {
+					insertComment(varName + ": " + type + ";", _indent + this.getIndent());
+				}
+				else {
+					code.add(_indent + this.getIndent() + varName + ": " + type + ";");
+				}
+			}
+			else {
+				insertComment(varName, _indent + this.getIndent());
+			}
+			// END KGU#332 2017-01-30
 		}
 		
 		// START KGU#178 2016-07-20: Enh. #160 (subroutine export integration)
@@ -953,11 +1174,11 @@ public class OberonGenerator extends Generator {
 		
 		code.add(_indent + "BEGIN");
 		// START KGU#236 2016-08-10: Issue #227
-		if (topLevel && this.hasInput && !isProcModule)
+		if (topLevel && this.hasInput(_root) && !isProcModule)
 		{
 			code.add(_indent + this.getIndent() + "In.Open;");
 		}
-		if (topLevel && this.hasOutput && !isProcModule)
+		if (topLevel && this.hasOutput(_root) && !isProcModule)
 		{
 			code.add(_indent + this.getIndent() + "Out.Open;");	// This is optional, actually
 		}
@@ -1009,11 +1230,11 @@ public class OberonGenerator extends Generator {
 			// potential bunch of routines
 			code.add(_indent);
 			code.add(_indent + "BEGIN");
-			if (this.hasInput)
+			if (this.hasInput())
 			{
 				code.add(_indent + this.getIndent() + "In.Open;");
 			}
-			if (this.hasOutput)
+			if (this.hasOutput())
 			{
 				code.add(_indent + this.getIndent() + "Out.Open;");	// This is optional, actually
 			}
