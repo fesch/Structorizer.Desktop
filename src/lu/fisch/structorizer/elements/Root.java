@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.elements;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -114,8 +113,7 @@ package lu.fisch.structorizer.elements;
  *        the recorded stack level will be set to an unreachable -1, because the saved state gets lost
  *        internally.
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import java.util.Iterator;
 import java.util.Vector;
@@ -149,8 +147,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 /**
- * @author kay
- *
+ * This class represents the "root" of a diagram or the program/sub itself.
+ * It is responsible for the behaviour of the entire diagram linked to it. 
+ * It also represents the Analyser (performing all syntactic and style checks
+ * over the diagram elements).
+ * @author Bob Fisch
  */
 public class Root extends Element {
 	
