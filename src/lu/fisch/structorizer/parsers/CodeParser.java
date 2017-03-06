@@ -56,8 +56,19 @@ import lu.fisch.structorizer.io.Ini;
 
 
 /**
- * @author kay
- *
+ * Abstract base class for all code importing classes using the GOLDParser to
+ * parse the source code based on a compiled grammar.
+ * A compiled grammar file (version 1.0, with extension cgt) given, the respectie
+ * subclass can be generated with the GOLDprog.exe tool using ParserTemplate.pgt
+ * as template file, e.g.:
+ * {@code GOLDprog.exe Ada.cgt ParserTemplate.pgt AdaParser.java} 
+ * The generated subclass woud be able to parse code but must manually be accomplished
+ * in order to build a structogram from the obtained parse tree. Override the methods
+ * {@link #buildNSD_R(Reduction, Subqueue)} and {@link #getContent_R(Reduction, String)}
+ * for that purpose.
+ * This is where the
+ * real challenge is lurking...
+ * @author Kay Gürtzig
  */
 public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 {
@@ -67,11 +78,35 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	protected Root root = null;
 	// We may obtain a collection of Roots (unit or program with subroutines)!
 	protected List<Root> subRoots = new LinkedList<Root>();
+	// START KGU#358 2017-03-06: Enh. #368 - new import option
+	protected boolean optionImportVarDecl = false;
 
 	/************ Abstract Methods *************/
+	
+	/**
+	 * Is to return a replacement for the FileChooser title. Ideally its just
+	 * the name of the source language imported by this parser.
+	 * @return Source language name to be inserted in the file open dialog title. 
+	 */
 	public abstract String getDialogTitle();
+	
+	/**
+	 * Is to return a short description of the source file type, ideally in English.
+	 * @see #getFileExtensions()
+	 * @return File type description, e.g. "Ada source files"
+	 */
 	protected abstract String getFileDescription();
+	
+	/**
+	 * Return a string array with file name extensions to be recognized and accepted
+	 * as source files of the input language of this parser. The extensions must not
+	 * start with a dot.
+	 * Correct: { "cpp", "cc" }, WRONG: { ".cpp", ".cc" } 
+	 * @see #getFileDescription()
+	 * @return the array of associated file name extensions
+	 */
 	protected abstract String[] getFileExtensions();
+	
 	/**
 	 * Parses the source code from file _textToParse, which is supposed to be encoded
 	 * with the charset _encoding, and returns a list of structograms - one for each function
@@ -84,7 +119,16 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	public abstract List<Root> parse(String textToParse, String _encoding);
 
 	/******* FileFilter Extension *********/
-	protected boolean isOK(String _filename)
+	
+	/**
+	 * Internal check for acceptable input files. The default implementation just
+	 * compares the filename extension with the extensions configured in and
+	 * provided by {@link #getFileExtensions()}. Helper method for method 
+	 * {@link #accept(File)}.
+	 * @param _filename
+	 * @return true if the import file is formally welcome. 
+	 */
+	protected final boolean isOK(String _filename)
 	{
 		boolean res = false;
 		String ext = getExtension(_filename); 
@@ -98,7 +142,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		return res;
 	}
 	
-	private static String getExtension(String s) 
+	private static final String getExtension(String s) 
 	{
 		String ext = null;
 		int i = s.lastIndexOf('.');
@@ -110,7 +154,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		return ext;
 	}
 	
-	private static String getExtension(File f) 
+	private static final String getExtension(File f) 
 	{
 		String ext = null;
 		String s = f.getName();
@@ -124,14 +168,20 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		return ext;
 	}
 	
+	/* (non-Javadoc)
+	 * @see javax.swing.filechooser.FileFilter#getDescription()
+	 */
 	@Override
-	public String getDescription() 
+	public final String getDescription() 
 	{
         return getFileDescription();
     }
 	
+	/* (non-Javadoc)
+	 * @see javax.swing.filechooser.FileFilter#accept(java.io.File)
+	 */
 	@Override
-    public boolean accept(File f) 
+    public final boolean accept(File f) 
 	{
         if (f.isDirectory()) 
 		{
@@ -146,15 +196,28 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		
         return false;
     }
-
+	
+	
+	/******* Diagram Synthesis *********/
+	
 	/**
 	 * This is the entry point for the Nassi-Shneiderman diagram construction
-	 * from the successful
-	 * @param _reduction
+	 * from the successfully established parse tree.
+	 * Retrieves the import options, sets the initial diagram type (to program)
+	 * and calls {@link #buildNSD_R(Reduction, Subqueue)}.
+	 * NOTE: If your subclass needs to to some specific initialization then
+	 * override {@link #initializeBuildNSD()}.
+	 * @see #buildNSD_R(Reduction, Subqueue)
+	 * @see #getContent_R(Reduction, String)
+	 * @param _reduction the top Reduction of the parse tree.
 	 */
-	protected void buildNSD(Reduction _reduction)
+	protected final void buildNSD(Reduction _reduction)
 	{
+		// START KGU#358 2017-03-06: Enh. #368 - consider import options!
+		this.optionImportVarDecl = Ini.getInstance().getProperty("impVarDeclarations", "false").equals("true");
+		// END KGU#358 2017-03-06
 		root.isProgram = true;
+		this.initializeBuildNSD();
 		buildNSD_R(_reduction, root.children);
 	}
 	
@@ -175,6 +238,15 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * @return the combined translated string
 	 */
 	protected abstract String getContent_R(Reduction _reduction, String _content);
+	
+	/**
+	 * Overridable method to do target-language-specific initialization before
+	 * the recursive method {@link #buildNSD_R(Reduction, Subqueue)} will be called.
+	 * Method is called in {@link #buildNSD(Reduction)}.
+	 */
+	protected void initializeBuildNSD()
+	{
+	}
 	
 	/************************
 	 * static things
@@ -234,32 +306,6 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 			Ini ini = Ini.getInstance();
 			ini.load();
 
-			// elements
-			// START KGU#258 2016-09-25: Code redesign for enh. #253
-//			preAlt = ini.getProperty("ParserPreAlt","");
-//			postAlt = ini.getProperty("ParserPostAlt","");
-//			preCase = ini.getProperty("ParserPreCase","");
-//			postCase = ini.getProperty("ParserPostCase","");
-//			preFor = ini.getProperty("ParserPreFor","pour ");
-//			postFor = ini.getProperty("ParserPostFor","\u00E0");
-//			// START KGU#3 2015-11-08: Enhancement #10
-//			stepFor = ini.getProperty("ParserStepFor", ", pas = ");
-//			// END KGU#3 2015-11-08
-//			// START KGU#61 2016-03-20: Enh. #84/#135 - support and distinguish FOR-IN loops
-//			preForIn = ini.getProperty("ParserPreForIn","pour ");
-//			postForIn = ini.getProperty("ParserPostForIn"," en ");
-//			// END KGU#61 2016-03-20
-//			preWhile = ini.getProperty("ParserPreWhile","tant que ");
-//			postWhile = ini.getProperty("ParserPostWhile","");
-//			preRepeat = ini.getProperty("ParserPreRepeat","jusqu'\u00E0 ");
-//			postRepeat = ini.getProperty("ParserPostRepeat","");
-//    		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
-//			preLeave = ini.getProperty("ParserPreLeave", "leave");
-//			preReturn = ini.getProperty("ParserPreReturn", "return");
-//			preExit = ini.getProperty("ParserPreExit", "exit");
-//    		// END KGU#78 2016-03-25
-//			input = ini.getProperty("ParserInput","lire");
-//			output = ini.getProperty("ParserOutput","\u00E9crire");
 			for (String key: keywordMap.keySet())
 			{
 				String propertyName = "Parser" + Character.toUpperCase(key.charAt(0)) + key.substring(1);
@@ -273,7 +319,6 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
                                 }
 			}
 			
-			// END KGU#258 2016-09-25
 			// START KGU#165 2016-03-25: Enhancement configurable case awareness
 			ignoreCase = ini.getProperty("ParserIgnoreCase", "true").equalsIgnoreCase("true");
 			// END KGU#3 2016-03-25
@@ -291,41 +336,11 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		{
 			Ini ini = Ini.getInstance();
 			ini.load();			// elements
-			// START KGU#258 2016-09-25: Code redesign for enh. #253			
-//			ini.setProperty("ParserPreAlt",preAlt);
-//			ini.setProperty("ParserPostAlt",postAlt);
-//			ini.setProperty("ParserPreCase",preCase);
-//			ini.setProperty("ParserPostCase",postCase);
-//			ini.setProperty("ParserPreFor",preFor);
-//			ini.setProperty("ParserPostFor",postFor);
-//			// START KGU#3 2015-11-08: Enhancement #10
-//			ini.setProperty("ParserStepFor",stepFor);
-//			// END KGU#3 2015-11-08
-//			// START KGU#61 2016-03-20: Enh. #84/#135 - support and distinguish FOR-IN loops
-//			ini.setProperty("ParserPreForIn",preForIn);
-//			ini.setProperty("ParserPostForIn",postForIn);
-//			// END KGU#61 2016-03-20
-//			ini.setProperty("ParserPreWhile",preWhile);
-//			ini.setProperty("ParserPostWhile",postWhile);
-//			ini.setProperty("ParserPreRepeat",preRepeat);
-//			ini.setProperty("ParserPostRepeat",postRepeat);
-//    		// START KGU#78 2016-03-25: Enh. #23 - Jump configurability introduced
-//			ini.setProperty("ParserPreLeave", preLeave);
-//			ini.setProperty("ParserPreReturn", preReturn);
-//			ini.setProperty("ParserPreExit", preExit);
-//    		// END KGU#78 2016-03-25
-//			
-//			ini.setProperty("ParserInput",input);
-//			ini.setProperty("ParserOutput",output);
-//			// START KGU#165 2016-03-25: Enhancement 
-//			ini.setProperty("ParserIgnoreCase",Boolean.toString(ignoreCase));
-//			// END KGU#3 2016-03-25
 			for (Map.Entry<String, String> entry: getPropertyMap(true).entrySet())
 			{
 				String propertyName = "Parser" + Character.toUpperCase(entry.getKey().charAt(0)) + entry.getKey().substring(1);
 				ini.setProperty(propertyName, entry.getValue());
 			}
-			// END KGU#258 2016-09-25
 			
 			ini.save();
 		}

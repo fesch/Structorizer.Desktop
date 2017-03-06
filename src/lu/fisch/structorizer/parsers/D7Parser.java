@@ -459,14 +459,15 @@ public class D7Parser extends CodeParser implements GPMessageConstants
 	}
 	// END KGU#195 2016-05-04
 
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.parsers.CodeParser#initializeBuildNSD()
+	 */
 	@Override
-	protected void buildNSD(Reduction _reduction)
+	protected void initializeBuildNSD()
 	{
-		root.isProgram=true;
 		// START KGU#194 2016-05-08: Bugfix #185
 		unitName = null;
 		// END KGU#194 2016-05-08
-		buildNSD_R(_reduction, root.children);
 	}
 	
 	@Override

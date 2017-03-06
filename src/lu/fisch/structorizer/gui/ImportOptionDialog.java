@@ -36,6 +36,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.11.11  Issue #81: DPI-awareness workaround for checkboxes
  *      Kay Gürtzig     2017.01.07  Bugfix #330 (issue #81): checkbox scaling suppressed for "Nimbus" l&f
  *      Kay Gürtzig     2017.01.09  Bugfix #330 (issue #81): scaling stuff outsourced to class GUIScaler
+ *      Kay Gürtzig     2017.03.06  Enh. #368: New code option to import variable declarations
  *
  ******************************************************************************************************
  *
@@ -105,6 +106,9 @@ public class ImportOptionDialog extends LangDialog {
         lbCharset = new javax.swing.JLabel();
         cbCharset = new javax.swing.JComboBox<String>();
         chkCharsetAll = new javax.swing.JCheckBox();
+        // START KGU#358 2017-03-6: Enh. #368
+        chkVarDeclarations = new javax.swing.JCheckBox();
+        // END KGU#358 2017-03-06
 
         setTitle("Import options ...");
 
@@ -134,6 +138,11 @@ public class ImportOptionDialog extends LangDialog {
         		charsetListChanged((String)cbCharset.getSelectedItem());
         	}
         });
+        
+        // START KGU#358 2017-03-6: Enh. #368
+        chkVarDeclarations.setText("Import variable declarations");
+        chkVarDeclarations.setToolTipText("This option enabled, parser will make (non-executale) instruction elements from variable declarations.");
+        // END KGU#358 2017-03-06
 
         chkRefactorOnLoading.setText("Replace keywords on loading a diagram (refactoring).");
         chkRefactorOnLoading.setToolTipText("Select this option if all configurable keywords in the daiagram are to be adapted to the current parser preferences.");
@@ -167,6 +176,9 @@ public class ImportOptionDialog extends LangDialog {
         pnlCode.setBorder(new TitledBorder("Code Files"));
         pnlCode.setLayout(new GridLayout(0, 1, 0 , 1));
         pnlCode.add(pnlCharSet);
+        // START KGU#358 2017-03-06: Enh. #368
+        pnlCode.add(chkVarDeclarations);
+        // END KGU#358 2017-03-06
         
         pnlNSD.setBorder(new TitledBorder("NSD Files"));
         pnlNSD.setLayout(new GridLayout(0, 1, 0, 1));
@@ -319,6 +331,9 @@ public class ImportOptionDialog extends LangDialog {
     public javax.swing.JLabel lbCharset;
     public javax.swing.JComboBox<String> cbCharset;
     public javax.swing.JCheckBox chkCharsetAll;
+    // START KGU#358 2017-03-06: Enh. #368
+    public javax.swing.JCheckBox chkVarDeclarations;
+    // END KGU#358 2017-03-06
     // End of variables declaration
 
 }

@@ -95,6 +95,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.01.31      Bugfix in getParameterTypes() and getResultType() on occasion of issue #113
  *      Kay Gürtzig     2017.02.01      Enh. #259/#335: Parameters added to typeMap
  *      Kay Gürtzig     2017.02.07      KGU#343: Result analysis mechanism revised
+ *      Kay Gürtzig     2017.03.06      Issue #368: Declarations are not to cause "uninitialized" warnings any longer
  *
  ******************************************************************************************************
  *
@@ -1485,18 +1486,24 @@ public class Root extends Element {
     			}
     			// START KGU#332 2017-01-17: Enh. #335 - ignore the content of uninitialized declarations
     			else if (tokens.indexOf("var") == 0) {
-    				int end = tokens.indexOf(":");
-    				if (end < 0) {
-    					end = tokens.count();
-    				}
-    				tokens = tokens.subSequence(1, end);
+    				// START KGU#358 2017-03-06: Issue #368 - declarations are no longer variable usages
+//    				int end = tokens.indexOf(":");
+//    				if (end < 0) {
+//    					end = tokens.count();
+//    				}
+//    				tokens = tokens.subSequence(1, end);
+    				tokens.clear();
+    				// END KGU#358 2017-03-06
     			}
     			else if (tokens.indexOf("dim") == 0) {
-    				int end = tokens.indexOf("as");
-    				if (end < 0) {
-    					end = tokens.count();
-    				}
-    				tokens = tokens.subSequence(1, end);
+    				// START KGU#358 2017-03-06: Issue #368 - declarations are no longer variable usages
+//    				int end = tokens.indexOf("as");
+//    				if (end < 0) {
+//    					end = tokens.count();
+//    				}
+//    				tokens = tokens.subSequence(1, end);
+    				tokens.clear();
+    				// END KGU#358 2017-03-06
     			}
     			// END KGU#332 2017-01-17
 
@@ -2613,7 +2620,7 @@ public class Root extends Element {
 			if (_resultFlags[1] || _resultFlags[2])
 			{
 				//error = new DetectedError("Your function seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
-				addError(_errors, new DetectedError(errorMsg(Menu.error13_3, D7Parser.getKeywordOrDefault("preReturn", "return")), ele), 13);                                            	
+				addError(_errors, new DetectedError(errorMsg(Menu.error13_3, D7Parser.getKeywordOrDefault("preReturn", "return")), ele), 13);
 			}
 			// Check if we are inside a Parallel construct
 			if (insideParallel)
@@ -2705,7 +2712,7 @@ public class Root extends Element {
 				if (_resultFlags[1] || _resultFlags[2])
 				{
 					//error = new DetectedError("Your function seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
-					addError(_errors, new DetectedError(errorMsg(Menu.error13_3, D7Parser.getKeywordOrDefault("preReturn", "return")), ele), 13);                                            	
+					addError(_errors, new DetectedError(errorMsg(Menu.error13_3, D7Parser.getKeywordOrDefault("preReturn", "return")), ele), 13);
 				}
 				// END KGU#78 2015-11-25
 			}

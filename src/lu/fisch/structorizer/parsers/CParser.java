@@ -69,6 +69,7 @@ import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.While;
+import lu.fisch.structorizer.io.Ini;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
@@ -77,9 +78,17 @@ public class CParser extends CodeParser implements GPMessageConstants
 
 	private final String compiledGrammar = "C-ANSI.cgt";
 	
-	// This is the substitutor for the opening brace of an array (or struct) initializer.
-	// (The C-ANSI gold grammar doesn't accept initializer expressions.)
+	/**
+	 *  This is the substitutor for the opening brace of an array (or struct) initializer.
+	 * (The C-ANSI gold grammar doesn't accept initializer expressions.)
+	 */
 	private static final String arrayIniFunc = "arrayInitializer(";
+	
+	/**
+	 * If this flag is set then program names derived from file name will be made uppercase
+	 * This default will be initialized in consistentlywith the Analyser check 
+	 */
+	private boolean optionUpperCaseProgName = false;
 	
 	@Override
 	public String getDialogTitle() {
@@ -1218,20 +1227,18 @@ public class CParser extends CodeParser implements GPMessageConstants
 		// START KGU#194 2016-07-07: Enh. #185/#188 - Try to convert calls to Call elements
 		for (Root aRoot : subRoots)
 		{
-			if (aRoot.isProgram) {
-				try {
-					aRoot.isProgram = false;
-					if (aRoot.getMethodName().equals("main") && aRoot.getParameterNames().count() == 0) {
-						String fileName = new File(textToParse).getName();
-						if (fileName.contains(".")) {
-							fileName = fileName.substring(0, fileName.indexOf('.'));
-						}
-						aRoot.setText(fileName.toUpperCase());
+			if (aRoot.getMethodName().equals("main")) {
+				if (aRoot.getParameterNames().count() == 0) {
+					String fileName = new File(textToParse).getName();
+					if (fileName.contains(".")) {
+						fileName = fileName.substring(0, fileName.indexOf('.'));
 					}
+					if (this.optionUpperCaseProgName) {
+						fileName = fileName.toUpperCase();
+					}
+					aRoot.setText(fileName);
 				}
-				finally {
-					aRoot.isProgram = true;
-				}
+				aRoot.isProgram = true;
 			}
 			aRoot.convertToCalls(signatures);
 		}
@@ -1314,15 +1321,14 @@ public class CParser extends CodeParser implements GPMessageConstants
 	}
 
 	/**
-	 * This is the entry point for the Nassi-Shneiderman diagram construction
-	 * from the successful
-	 * @param _reduction
+	 * Preselects the type of the initial diagram to be imported as function.
+	 * @see lu.fisch.structorizer.parsers.CodeParser#initializeBuildNSD()
 	 */
 	@Override
-	protected void buildNSD(Reduction _reduction)
+	protected void initializeBuildNSD()
 	{
-		root.isProgram = false;		// C programs are functions, primarily
-		buildNSD_R(_reduction, root.children);
+		root.isProgram = false;	// C programs are functions, primarily
+		this.optionUpperCaseProgName = Root.check(6);
 	}
 
 	@Override
@@ -1392,13 +1398,27 @@ public class CParser extends CodeParser implements GPMessageConstants
 				String content = getContent_R(secReduc, "");
 				if (ruleId == RuleConstants.PROD_VAR_ID) {
 					// Simple declaration - if allowed then make them to a Pascal decl.
-					content = "var " + content + ": " + type;
-					_parentNode.addElement(new Instruction(translateContent(content)));
+					if (this.optionImportVarDecl) {
+						content = "var " + content + ": " + type;
+						_parentNode.addElement(new Instruction(translateContent(content)));
+					}
 				}
 				else {
-					// Should be RuleConstants.PROD_VAR_ID_EQ, we better leave the type alone and concentarze
-					// on the initialization
-					_parentNode.addElement(new Instruction(translateContent(content)));
+					// Should be RuleConstants.PROD_VAR_ID_EQ. Now it can get tricky if arrays
+					// are involved - the executor copes with lines like
+					// int data[4] <- {2,5,6,3}. On the other hand, an import without the type
+					// but with index brackets would leave a totally wrong semantics. So we must
+					// drop both or none.
+					String varName = (String)secReduc.getToken(0).getData();
+					//String arrayTag = this.getContent_R((Reduction)thdReduc.getToken(1).getData(), "");
+					String expr = this.getContent_R((Reduction)secReduc.getToken(3).getData(), "");
+					content = translateContent(content);
+					if (this.optionImportVarDecl) {
+						_parentNode.addElement(new Instruction(type + " " + content));
+					}
+					else {
+						_parentNode.addElement(new Instruction(varName + " <- " + translateContent(expr)));
+					}
 				}
 				if (_reduction.getTokenCount() > typeIx+2) {
 					secReduc = (Reduction)_reduction.getToken(typeIx + 2).getData();	// <Var List>
@@ -1410,13 +1430,27 @@ public class CParser extends CodeParser implements GPMessageConstants
 						thdReduc = (Reduction)thdReduc.getToken(2).getData();	// <Var>
 						if (thdReduc.getParentRule().getTableIndex() == RuleConstants.PROD_VAR_ID) {
 							// Simple declaration - if allowed then make them to a Pascal decl.
-							content = "var " + content + ": " + type;
-							_parentNode.addElement(new Instruction(translateContent(content)));
+							if (this.optionImportVarDecl) {
+								content = "var " + content + ": " + type;
+								_parentNode.addElement(new Instruction(translateContent(content)));
+							}
 						}
 						else {
-							// Should be RuleConstants.PROD_VAR_ID_EQ, we better leave the type alone and concentarze
-							// on the initialization
-							_parentNode.addElement(new Instruction(translateContent(content)));
+							// Should be RuleConstants.PROD_VAR_ID_EQ. Now it can get tricky if arrays
+							// are involved - the executor copes with lines like
+							// int data[4] <- {2,5,6,3}. On the other hand, an import without the type
+							// but with index brackets would leave a totally wrong semantics. So we must
+							// drop both or none.
+							String varName = (String) thdReduc.getToken(0).getData();
+							//String arrayTag = this.getContent_R((Reduction)thdReduc.getToken(1).getData(), "");
+							String expr = this.getContent_R((Reduction)thdReduc.getToken(3).getData(), "");
+							content = translateContent(content);
+							if (this.optionImportVarDecl) {
+								_parentNode.addElement(new Instruction(type + " " + content));
+							}
+							else {
+								_parentNode.addElement(new Instruction(varName + " <- " + translateContent(expr)));
+							}
 						}
 						secReduc = (Reduction)secReduc.getToken(2).getData();	// <Var List>
 						ruleId = secReduc.getParentRule().getTableIndex();
@@ -1498,9 +1532,6 @@ public class CParser extends CodeParser implements GPMessageConstants
 				}
 				content += params + ")";
 				root.setText(content);
-				if (root.getMethodName().equals("main")) {
-					root.isProgram = true;
-				}
 				if (_reduction.getToken(bodyIndex).getKind() == SymbolTypeConstants.symbolTypeNonterminal)
 				{
 					buildNSD_R((Reduction) _reduction.getToken(bodyIndex).getData(), root.children);
@@ -1557,10 +1588,14 @@ public class CParser extends CodeParser implements GPMessageConstants
 				// We make a separate instruction out of it
 				Reduction secReduc = (Reduction) _reduction.getToken(2).getData();
 				buildNSD_R(secReduc, _parentNode);
+				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
+				_parentNode.getElement(_parentNode.getSize()-1).setColor(Element.color2);
 				
 				// get the second part - should be an ordinary condition
 				String content = getContent_R((Reduction) _reduction.getToken(4).getData(), "");
 				While ele = new While(getKeyword("preWhile")+translateContent(content)+getKeyword("postWhile"));
+				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
+				ele.setColor(Element.color2);
 				_parentNode.addElement(ele);
 				
 				// Get and convert the body
@@ -1573,6 +1608,9 @@ public class CParser extends CodeParser implements GPMessageConstants
 				// e.g. i++ or --i, so it won't be recognized as statement unless we
 				/// impose some extra status
 				buildNSD_R(secReduc, ele.q);
+				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
+				ele.q.getElement(ele.q.getSize()-1).setColor(Element.color2);
+
 			}
 			else if (
 					ruleId == RuleConstants.PROD_STM_IF_LPAREN_RPAREN

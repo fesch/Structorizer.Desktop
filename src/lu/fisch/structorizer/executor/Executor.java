@@ -103,7 +103,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.10.16      Enh. #273: Input strings "true" and "false" now accepted as boolean values
  *                                      Bugfix #276: Raw string conversion and string display mended, undue replacements
  *                                      of ' into " in method convert() eliminated
- *      Kay Gürtzig     2016.11.19      Issue #269: Scrolling problem eventually solved.
+ *      Kay Gürtzig     2016.11.19      Issue #269: Scrolling problem eventually solved. 
  *      Kay Gürtzig     2016.11.22      Bugfix #293: input and output boxes no longer popped up at odd places on screen.
  *      Kay Gürtzig     2016.11.22/25   Issue #294: Test coverage rules for CASE elements without default branch refined
  *      Kay Gürtzig     2016.12.12      Issue #307: Attempts to manipulate FOR loop variables now cause an error
@@ -115,6 +115,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.01.27      Enh. #335: Toleration of BASIC variable declarations in stepInstruction()
  *      Kay Gürtzig     2017.02.08      Issue #343: Unescaped internal string delimiters escaped on string literal conversion
  *      Kay Gürtzig     2017.02.17      KGU#159: Stacktrace now also shows the arguments of top-level subroutine calls
+ *      Kay Gürtzig     2017.03.06      Bugfix #369: Interpretation of C-style array initializations (decl.) fixed.
  *
  ******************************************************************************************************
  *
@@ -2211,6 +2212,19 @@ public class Executor implements Runnable
 			String[] nameParts = arrayname.split(" ");
 			arrayname = nameParts[nameParts.length-1];
 			// END KGU#109 2015-12-15
+		// START KGU#359 2017-03-06: Bugfix #369 for typed array initialisation like int a[3] <- {4, 9, 2}
+			if (nameParts.length > 1) {
+				// This is rather an array declaration (initialized) than an array
+				// element assignment. The important question is now, whether the
+				// expression represents an array. Then we would drop the index (but
+				// which is indeed a size) or check it against the array size.
+				name = arrayname;
+				arrayname = null;
+			}
+		}
+		if (arrayname != null) {
+			// Now all is fine here...
+		// END KGU#359 2017-03-06 
 			boolean arrayFound = this.variables.contains(arrayname);
 			int index = this.getIndexValue(name);
 			Object[] objectArray = null;
@@ -2244,6 +2258,7 @@ public class Executor implements Runnable
 			objectArray[index] = content;
 			this.interpreter.set(arrayname, objectArray);
 			this.variables.addIfNew(arrayname);
+			
 		} else // if ((name.contains("[")) && (name.contains("]")))
 		{
 			// START KGU#109 2015-12-16: Bugfix #61: Several strings suggest type specifiers

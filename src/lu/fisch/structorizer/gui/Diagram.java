@@ -113,6 +113,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.02.08      Bugfix #198: Cursor navigation for Alternatives and CASE elements fixed
  *      Kay Gürtzig     2017.02.27      Enh. #346: Export option dialog changes for user-specific include directives
  *      Kay Gürtzig     2017.03.04      Enh. #354: Code import generalized
+ *      Kay Gürtzig     2017.03.06      Enh. #368: New import option: code import of variable declarations
  *
  ******************************************************************************************************
  *
@@ -3886,15 +3887,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			dlgOpen.setFileFilter(parser);
 			pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
 			int result = dlgOpen.showOpenDialog(NSDControl.getFrame());
-			try {
-			filename=dlgOpen.getSelectedFile().getAbsoluteFile().toString();
-			}
-			catch (Exception ex) {
-				ex.printStackTrace();
-			}
 
 			if (result == JFileChooser.APPROVE_OPTION)
 			{
+				filename=dlgOpen.getSelectedFile().getAbsoluteFile().toString();
 				// load and parse source-code
 				//CParser cp = new CParser("C-ANSI.cgt");
 				// START KGU#194 2016-05-08: Bugfix #185 - mechanism for multiple roots per file
@@ -4690,12 +4686,18 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             ImportOptionDialog iod = new ImportOptionDialog(NSDControl.getFrame());
             iod.chkRefactorOnLoading.setSelected(ini.getProperty("impRefactorOnLoading", "false").equals("true"));
             iod.charsetListChanged(ini.getProperty("impImportCharset", Charset.defaultCharset().name()));
+            // START KGU#358 2017-03-06: Enh. #368
+            iod.chkVarDeclarations.setSelected(ini.getProperty("impVarDeclarations", "false").equals("true"));
+            // END KGU#358 2017-03-06
             iod.setVisible(true);
             
             if(iod.goOn==true)
             {
                 ini.setProperty("impRefactorOnLoading", String.valueOf(iod.chkRefactorOnLoading.isSelected()));
                 ini.setProperty("impImportCharset", (String)iod.cbCharset.getSelectedItem());
+                // START KGU#358 2017-03-06: Enh. #368
+                ini.setProperty("impVarDeclarations", String.valueOf(iod.chkVarDeclarations.isSelected()));
+                // END KGU#358 2017-03-06
                 ini.save();
             }
         } 
