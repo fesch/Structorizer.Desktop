@@ -34,6 +34,7 @@ package lu.fisch.structorizer.parsers;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.03.02      First Issue
+ *      Kay Gürtzig     2017.03.06      Bug in diagram synthesis mended (do-while, switch)
  *
  ******************************************************************************************************
  *
@@ -558,529 +559,529 @@ public class CParser extends CodeParser implements GPMessageConstants
                       this message can be ignored and the Reduction object will be used
                       to store the parse tree.  */
 
-				switch(parser.currentReduction().getParentRule().getTableIndex())
-				{
-				case RuleConstants.PROD_DECLS:
-					//<Decls> ::= <Decl> <Decls>
-					break;
-				case RuleConstants.PROD_DECLS2:
-					//<Decls> ::= 
-					break;
-				case RuleConstants.PROD_DECL:
-					//<Decl> ::= <Func Decl>
-					break;
-				case RuleConstants.PROD_DECL2:
-					//<Decl> ::= <Func Proto>
-					break;
-				case RuleConstants.PROD_DECL3:
-					//<Decl> ::= <Struct Decl>
-					break;
-				case RuleConstants.PROD_DECL4:
-					//<Decl> ::= <Union Decl>
-					break;
-				case RuleConstants.PROD_DECL5:
-					//<Decl> ::= <Enum Decl>
-					break;
-				case RuleConstants.PROD_DECL6:
-					//<Decl> ::= <Var Decl>
-					System.out.println("PROD_DECL6: " + parser.currentReduction().getToken(0).getData());
-					break;
-				case RuleConstants.PROD_DECL7:
-					//<Decl> ::= <Typedef Decl>
-					break;
-				case RuleConstants.PROD_FUNCPROTO_LPAREN_RPAREN_SEMI:
-					//<Func Proto> ::= <Func ID> '(' <Types> ')' ';'
-					break;
-				case RuleConstants.PROD_FUNCPROTO_LPAREN_RPAREN_SEMI2:
-					//<Func Proto> ::= <Func ID> '(' <Params> ')' ';'
-					break;
-				case RuleConstants.PROD_FUNCPROTO_LPAREN_RPAREN_SEMI3:
-					//<Func Proto> ::= <Func ID> '(' ')' ';'
-					break;
-				case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN:
-					//<Func Decl> ::= <Func ID> '(' <Params> ')' <Block>
-					break;
-				case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN2:
-					//<Func Decl> ::= <Func ID> '(' <Id List> ')' <Struct Def> <Block>
-					break;
-				case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN3:
-					//<Func Decl> ::= <Func ID> '(' ')' <Block>
-					break;
-				case RuleConstants.PROD_PARAMS_COMMA:
-					//<Params> ::= <Param> ',' <Params>
-					break;
-				case RuleConstants.PROD_PARAMS:
-					//<Params> ::= <Param>
-					break;
-				case RuleConstants.PROD_PARAM_CONST_ID:
-					//<Param> ::= const <Type> Id
-					break;
-				case RuleConstants.PROD_PARAM_ID:
-					//<Param> ::= <Type> Id
-					break;
-				case RuleConstants.PROD_TYPES_COMMA:
-					//<Types> ::= <Type> ',' <Types>
-					break;
-				case RuleConstants.PROD_TYPES:
-					//<Types> ::= <Type>
-					break;
-				case RuleConstants.PROD_IDLIST_ID_COMMA:
-					//<Id List> ::= Id ',' <Id List>
-					break;
-				case RuleConstants.PROD_IDLIST_ID:
-					//<Id List> ::= Id
-					break;
-				case RuleConstants.PROD_FUNCID_ID:
-					//<Func ID> ::= <Type> Id
-					break;
-				case RuleConstants.PROD_FUNCID_ID2:
-					//<Func ID> ::= Id
-					break;
-				case RuleConstants.PROD_TYPEDEFDECL_TYPEDEF_ID_SEMI:
-					//<Typedef Decl> ::= typedef <Type> Id ';'
-					break;
-				case RuleConstants.PROD_STRUCTDECL_STRUCT_ID_LBRACE_RBRACE_SEMI:
-					//<Struct Decl> ::= struct Id '{' <Struct Def> '}' ';'
-					break;
-				case RuleConstants.PROD_UNIONDECL_UNION_ID_LBRACE_RBRACE_SEMI:
-					//<Union Decl> ::= union Id '{' <Struct Def> '}' ';'
-					break;
-				case RuleConstants.PROD_STRUCTDEF:
-					//<Struct Def> ::= <Var Decl> <Struct Def>
-					break;
-				case RuleConstants.PROD_STRUCTDEF2:
-					//<Struct Def> ::= <Var Decl>
-					break;
-				case RuleConstants.PROD_VARDECL_SEMI:
-					//<Var Decl> ::= <Mod> <Type> <Var> <Var List> ';'
-					break;
-				case RuleConstants.PROD_VARDECL_SEMI2:
-					//<Var Decl> ::= <Type> <Var> <Var List> ';'
-					break;
-				case RuleConstants.PROD_VARDECL_SEMI3:
-					//<Var Decl> ::= <Mod> <Var> <Var List> ';'
-					break;
-				case RuleConstants.PROD_VAR_ID:
-					//<Var> ::= Id <Array>
-					break;
-				case RuleConstants.PROD_VAR_ID_EQ:
-					//<Var> ::= Id <Array> '=' <Op If>
-					break;
-				case RuleConstants.PROD_ARRAY_LBRACKET_RBRACKET:
-					//<Array> ::= '[' <Expr> ']'
-					break;
-				case RuleConstants.PROD_ARRAY_LBRACKET_RBRACKET2:
-					//<Array> ::= '[' ']'
-					break;
-				case RuleConstants.PROD_ARRAY:
-					//<Array> ::= 
-					break;
-				case RuleConstants.PROD_VARLIST_COMMA:
-					//<Var List> ::= ',' <Var Item> <Var List>
-					break;
-				case RuleConstants.PROD_VARLIST:
-					//<Var List> ::= 
-					break;
-				case RuleConstants.PROD_VARITEM:
-					//<Var Item> ::= <Pointers> <Var>
-					break;
-				case RuleConstants.PROD_MOD_EXTERN:
-					//<Mod> ::= extern
-					break;
-				case RuleConstants.PROD_MOD_STATIC:
-					//<Mod> ::= static
-					break;
-				case RuleConstants.PROD_MOD_REGISTER:
-					//<Mod> ::= register
-					break;
-				case RuleConstants.PROD_MOD_AUTO:
-					//<Mod> ::= auto
-					break;
-				case RuleConstants.PROD_MOD_VOLATILE:
-					//<Mod> ::= volatile
-					break;
-				case RuleConstants.PROD_MOD_CONST:
-					//<Mod> ::= const
-					break;
-				case RuleConstants.PROD_ENUMDECL_ENUM_ID_LBRACE_RBRACE_SEMI:
-					//<Enum Decl> ::= enum Id '{' <Enum Def> '}' ';'
-					break;
-				case RuleConstants.PROD_ENUMDEF_COMMA:
-					//<Enum Def> ::= <Enum Val> ',' <Enum Def>
-					break;
-				case RuleConstants.PROD_ENUMDEF:
-					//<Enum Def> ::= <Enum Val>
-					break;
-				case RuleConstants.PROD_ENUMVAL_ID:
-					//<Enum Val> ::= Id
-					break;
-				case RuleConstants.PROD_ENUMVAL_ID_EQ_OCTLITERAL:
-					//<Enum Val> ::= Id '=' OctLiteral
-					break;
-				case RuleConstants.PROD_ENUMVAL_ID_EQ_HEXLITERAL:
-					//<Enum Val> ::= Id '=' HexLiteral
-					break;
-				case RuleConstants.PROD_ENUMVAL_ID_EQ_DECLITERAL:
-					//<Enum Val> ::= Id '=' DecLiteral
-					break;
-				case RuleConstants.PROD_TYPE:
-					//<Type> ::= <Base> <Pointers>
-					break;
-				case RuleConstants.PROD_BASE:
-					//<Base> ::= <Sign> <Scalar>
-					break;
-				case RuleConstants.PROD_BASE_STRUCT_ID:
-					//<Base> ::= struct Id
-					break;
-				case RuleConstants.PROD_BASE_STRUCT_LBRACE_RBRACE:
-					//<Base> ::= struct '{' <Struct Def> '}'
-					break;
-				case RuleConstants.PROD_BASE_UNION_ID:
-					//<Base> ::= union Id
-					break;
-				case RuleConstants.PROD_BASE_UNION_LBRACE_RBRACE:
-					//<Base> ::= union '{' <Struct Def> '}'
-					break;
-				case RuleConstants.PROD_BASE_ENUM_ID:
-					//<Base> ::= enum Id
-					break;
-				case RuleConstants.PROD_SIGN_SIGNED:
-					//<Sign> ::= signed
-					break;
-				case RuleConstants.PROD_SIGN_UNSIGNED:
-					//<Sign> ::= unsigned
-					break;
-				case RuleConstants.PROD_SIGN:
-					//<Sign> ::= 
-					break;
-				case RuleConstants.PROD_SCALAR_CHAR:
-					//<Scalar> ::= char
-					break;
-				case RuleConstants.PROD_SCALAR_INT:
-					//<Scalar> ::= int
-					break;
-				case RuleConstants.PROD_SCALAR_SHORT:
-					//<Scalar> ::= short
-					break;
-				case RuleConstants.PROD_SCALAR_LONG:
-					//<Scalar> ::= long
-					break;
-				case RuleConstants.PROD_SCALAR_SHORT_INT:
-					//<Scalar> ::= short int
-					break;
-				case RuleConstants.PROD_SCALAR_LONG_INT:
-					//<Scalar> ::= long int
-					break;
-				case RuleConstants.PROD_SCALAR_FLOAT:
-					//<Scalar> ::= float
-					break;
-				case RuleConstants.PROD_SCALAR_DOUBLE:
-					//<Scalar> ::= double
-					break;
-				case RuleConstants.PROD_SCALAR_VOID:
-					//<Scalar> ::= void
-					break;
-				case RuleConstants.PROD_POINTERS_TIMES:
-					//<Pointers> ::= '*' <Pointers>
-					break;
-				case RuleConstants.PROD_POINTERS:
-					//<Pointers> ::= 
-					break;
-				case RuleConstants.PROD_STM:
-					//<Stm> ::= <Var Decl>
-					break;
-				case RuleConstants.PROD_STM_ID_COLON:
-					//<Stm> ::= Id ':'
-					break;
-				case RuleConstants.PROD_STM_IF_LPAREN_RPAREN:
-					//<Stm> ::= if '(' <Expr> ')' <Stm>
-					break;
-				case RuleConstants.PROD_STM_IF_LPAREN_RPAREN_ELSE:
-					//<Stm> ::= if '(' <Expr> ')' <Then Stm> else <Stm>
-					break;
-				case RuleConstants.PROD_STM_WHILE_LPAREN_RPAREN:
-					//<Stm> ::= while '(' <Expr> ')' <Stm>
-					break;
-				case RuleConstants.PROD_STM_FOR_LPAREN_SEMI_SEMI_RPAREN:
-					//<Stm> ::= for '(' <Arg> ';' <Arg> ';' <Arg> ')' <Stm>
-					break;
-				case RuleConstants.PROD_STM2:
-					//<Stm> ::= <Normal Stm>
-					break;
-				case RuleConstants.PROD_THENSTM_IF_LPAREN_RPAREN_ELSE:
-					//<Then Stm> ::= if '(' <Expr> ')' <Then Stm> else <Then Stm>
-					break;
-				case RuleConstants.PROD_THENSTM_WHILE_LPAREN_RPAREN:
-					//<Then Stm> ::= while '(' <Expr> ')' <Then Stm>
-					break;
-				case RuleConstants.PROD_THENSTM_FOR_LPAREN_SEMI_SEMI_RPAREN:
-					//<Then Stm> ::= for '(' <Arg> ';' <Arg> ';' <Arg> ')' <Then Stm>
-					break;
-				case RuleConstants.PROD_THENSTM:
-					//<Then Stm> ::= <Normal Stm>
-					break;
-				case RuleConstants.PROD_NORMALSTM_DO_WHILE_LPAREN_RPAREN:
-					//<Normal Stm> ::= do <Stm> while '(' <Expr> ')'
-					break;
-				case RuleConstants.PROD_NORMALSTM_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE:
-					//<Normal Stm> ::= switch '(' <Expr> ')' '{' <Case Stms> '}'
-					break;
-				case RuleConstants.PROD_NORMALSTM:
-					//<Normal Stm> ::= <Block>
-					break;
-				case RuleConstants.PROD_NORMALSTM_SEMI:
-					//<Normal Stm> ::= <Expr> ';'
-					break;
-				case RuleConstants.PROD_NORMALSTM_GOTO_ID_SEMI:
-					//<Normal Stm> ::= goto Id ';'
-					break;
-				case RuleConstants.PROD_NORMALSTM_BREAK_SEMI:
-					//<Normal Stm> ::= break ';'
-					break;
-				case RuleConstants.PROD_NORMALSTM_CONTINUE_SEMI:
-					//<Normal Stm> ::= continue ';'
-					break;
-				case RuleConstants.PROD_NORMALSTM_RETURN_SEMI:
-					//<Normal Stm> ::= return <Expr> ';'
-					break;
-				case RuleConstants.PROD_NORMALSTM_SEMI2:
-					//<Normal Stm> ::= ';'
-					break;
-				case RuleConstants.PROD_ARG:
-					//<Arg> ::= <Expr>
-					break;
-				case RuleConstants.PROD_ARG2:
-					//<Arg> ::= 
-					break;
-				case RuleConstants.PROD_CASESTMS_CASE_COLON:
-					//<Case Stms> ::= case <Value> ':' <Stm List> <Case Stms>
-					break;
-				case RuleConstants.PROD_CASESTMS_DEFAULT_COLON:
-					//<Case Stms> ::= default ':' <Stm List>
-					break;
-				case RuleConstants.PROD_CASESTMS:
-					//<Case Stms> ::= 
-					break;
-				case RuleConstants.PROD_BLOCK_LBRACE_RBRACE:
-					//<Block> ::= '{' <Stm List> '}'
-					break;
-				case RuleConstants.PROD_STMLIST:
-					//<Stm List> ::= <Stm> <Stm List>
-					break;
-				case RuleConstants.PROD_STMLIST2:
-					//<Stm List> ::= 
-					break;
-				case RuleConstants.PROD_EXPR_COMMA:
-					//<Expr> ::= <Expr> ',' <Op Assign>
-					break;
-				case RuleConstants.PROD_EXPR:
-					//<Expr> ::= <Op Assign>
-					break;
-				case RuleConstants.PROD_OPASSIGN_EQ:
-					//<Op Assign> ::= <Op If> '=' <Op Assign>
-					break;
-				case RuleConstants.PROD_OPASSIGN_PLUSEQ:
-					//<Op Assign> ::= <Op If> '+=' <Op Assign>
-					break;
-				case RuleConstants.PROD_OPASSIGN_MINUSEQ:
-					//<Op Assign> ::= <Op If> '-=' <Op Assign>
-					break;
-				case RuleConstants.PROD_OPASSIGN_TIMESEQ:
-					//<Op Assign> ::= <Op If> '*=' <Op Assign>
-					break;
-				case RuleConstants.PROD_OPASSIGN_DIVEQ:
-					//<Op Assign> ::= <Op If> '/=' <Op Assign>
-					break;
-				case RuleConstants.PROD_OPASSIGN_CARETEQ:
-					//<Op Assign> ::= <Op If> '^=' <Op Assign>
-					break;
-				case RuleConstants.PROD_OPASSIGN_AMPEQ:
-					//<Op Assign> ::= <Op If> '&=' <Op Assign>
-					break;
-				case RuleConstants.PROD_OPASSIGN_PIPEEQ:
-					//<Op Assign> ::= <Op If> '|=' <Op Assign>
-					break;
-				case RuleConstants.PROD_OPASSIGN_GTGTEQ:
-					//<Op Assign> ::= <Op If> '>>=' <Op Assign>
-					break;
-				case RuleConstants.PROD_OPASSIGN_LTLTEQ:
-					//<Op Assign> ::= <Op If> '<<=' <Op Assign>
-					break;
-				case RuleConstants.PROD_OPASSIGN:
-					//<Op Assign> ::= <Op If>
-					break;
-				case RuleConstants.PROD_OPIF_QUESTION_COLON:
-					//<Op If> ::= <Op Or> '?' <Op If> ':' <Op If>
-					break;
-				case RuleConstants.PROD_OPIF:
-					//<Op If> ::= <Op Or>
-					break;
-				case RuleConstants.PROD_OPOR_PIPEPIPE:
-					//<Op Or> ::= <Op Or> '||' <Op And>
-					break;
-				case RuleConstants.PROD_OPOR:
-					//<Op Or> ::= <Op And>
-					break;
-				case RuleConstants.PROD_OPAND_AMPAMP:
-					//<Op And> ::= <Op And> '&&' <Op BinOR>
-					break;
-				case RuleConstants.PROD_OPAND:
-					//<Op And> ::= <Op BinOR>
-					break;
-				case RuleConstants.PROD_OPBINOR_PIPE:
-					//<Op BinOR> ::= <Op BinOR> '|' <Op BinXOR>
-					break;
-				case RuleConstants.PROD_OPBINOR:
-					//<Op BinOR> ::= <Op BinXOR>
-					break;
-				case RuleConstants.PROD_OPBINXOR_CARET:
-					//<Op BinXOR> ::= <Op BinXOR> '^' <Op BinAND>
-					break;
-				case RuleConstants.PROD_OPBINXOR:
-					//<Op BinXOR> ::= <Op BinAND>
-					break;
-				case RuleConstants.PROD_OPBINAND_AMP:
-					//<Op BinAND> ::= <Op BinAND> '&' <Op Equate>
-					break;
-				case RuleConstants.PROD_OPBINAND:
-					//<Op BinAND> ::= <Op Equate>
-					break;
-				case RuleConstants.PROD_OPEQUATE_EQEQ:
-					//<Op Equate> ::= <Op Equate> '==' <Op Compare>
-					break;
-				case RuleConstants.PROD_OPEQUATE_EXCLAMEQ:
-					//<Op Equate> ::= <Op Equate> '!=' <Op Compare>
-					break;
-				case RuleConstants.PROD_OPEQUATE:
-					//<Op Equate> ::= <Op Compare>
-					break;
-				case RuleConstants.PROD_OPCOMPARE_LT:
-					//<Op Compare> ::= <Op Compare> '<' <Op Shift>
-					break;
-				case RuleConstants.PROD_OPCOMPARE_GT:
-					//<Op Compare> ::= <Op Compare> '>' <Op Shift>
-					break;
-				case RuleConstants.PROD_OPCOMPARE_LTEQ:
-					//<Op Compare> ::= <Op Compare> '<=' <Op Shift>
-					break;
-				case RuleConstants.PROD_OPCOMPARE_GTEQ:
-					//<Op Compare> ::= <Op Compare> '>=' <Op Shift>
-					break;
-				case RuleConstants.PROD_OPCOMPARE:
-					//<Op Compare> ::= <Op Shift>
-					break;
-				case RuleConstants.PROD_OPSHIFT_LTLT:
-					//<Op Shift> ::= <Op Shift> '<<' <Op Add>
-					break;
-				case RuleConstants.PROD_OPSHIFT_GTGT:
-					//<Op Shift> ::= <Op Shift> '>>' <Op Add>
-					break;
-				case RuleConstants.PROD_OPSHIFT:
-					//<Op Shift> ::= <Op Add>
-					break;
-				case RuleConstants.PROD_OPADD_PLUS:
-					//<Op Add> ::= <Op Add> '+' <Op Mult>
-					break;
-				case RuleConstants.PROD_OPADD_MINUS:
-					//<Op Add> ::= <Op Add> '-' <Op Mult>
-					break;
-				case RuleConstants.PROD_OPADD:
-					//<Op Add> ::= <Op Mult>
-					break;
-				case RuleConstants.PROD_OPMULT_TIMES:
-					//<Op Mult> ::= <Op Mult> '*' <Op Unary>
-					break;
-				case RuleConstants.PROD_OPMULT_DIV:
-					//<Op Mult> ::= <Op Mult> '/' <Op Unary>
-					break;
-				case RuleConstants.PROD_OPMULT_PERCENT:
-					//<Op Mult> ::= <Op Mult> '%' <Op Unary>
-					break;
-				case RuleConstants.PROD_OPMULT:
-					//<Op Mult> ::= <Op Unary>
-					break;
-				case RuleConstants.PROD_OPUNARY_EXCLAM:
-					//<Op Unary> ::= '!' <Op Unary>
-					break;
-				case RuleConstants.PROD_OPUNARY_TILDE:
-					//<Op Unary> ::= '~' <Op Unary>
-					break;
-				case RuleConstants.PROD_OPUNARY_MINUS:
-					//<Op Unary> ::= '-' <Op Unary>
-					break;
-				case RuleConstants.PROD_OPUNARY_TIMES:
-					//<Op Unary> ::= '*' <Op Unary>
-					break;
-				case RuleConstants.PROD_OPUNARY_AMP:
-					//<Op Unary> ::= '&' <Op Unary>
-					break;
-				case RuleConstants.PROD_OPUNARY_PLUSPLUS:
-					//<Op Unary> ::= '++' <Op Unary>
-					break;
-				case RuleConstants.PROD_OPUNARY_MINUSMINUS:
-					//<Op Unary> ::= '--' <Op Unary>
-					break;
-				case RuleConstants.PROD_OPUNARY_PLUSPLUS2:
-					//<Op Unary> ::= <Op Pointer> '++'
-					break;
-				case RuleConstants.PROD_OPUNARY_MINUSMINUS2:
-					//<Op Unary> ::= <Op Pointer> '--'
-					break;
-				case RuleConstants.PROD_OPUNARY_LPAREN_RPAREN:
-					//<Op Unary> ::= '(' <Type> ')' <Op Unary>
-					break;
-				case RuleConstants.PROD_OPUNARY_SIZEOF_LPAREN_RPAREN:
-					//<Op Unary> ::= sizeof '(' <Type> ')'
-					break;
-				case RuleConstants.PROD_OPUNARY_SIZEOF_LPAREN_ID_RPAREN:
-					//<Op Unary> ::= sizeof '(' Id <Pointers> ')'
-					break;
-				case RuleConstants.PROD_OPUNARY:
-					//<Op Unary> ::= <Op Pointer>
-					break;
-				case RuleConstants.PROD_OPPOINTER_DOT:
-					//<Op Pointer> ::= <Op Pointer> '.' <Value>
-					break;
-				case RuleConstants.PROD_OPPOINTER_MINUSGT:
-					//<Op Pointer> ::= <Op Pointer> '->' <Value>
-					break;
-				case RuleConstants.PROD_OPPOINTER_LBRACKET_RBRACKET:
-					//<Op Pointer> ::= <Op Pointer> '[' <Expr> ']'
-					break;
-				case RuleConstants.PROD_OPPOINTER:
-					//<Op Pointer> ::= <Value>
-					break;
-				case RuleConstants.PROD_VALUE_OCTLITERAL:
-					//<Value> ::= OctLiteral
-					break;
-				case RuleConstants.PROD_VALUE_HEXLITERAL:
-					//<Value> ::= HexLiteral
-					break;
-				case RuleConstants.PROD_VALUE_DECLITERAL:
-					//<Value> ::= DecLiteral
-					break;
-				case RuleConstants.PROD_VALUE_STRINGLITERAL:
-					//<Value> ::= StringLiteral
-					break;
-				case RuleConstants.PROD_VALUE_CHARLITERAL:
-					//<Value> ::= CharLiteral
-					break;
-				case RuleConstants.PROD_VALUE_FLOATLITERAL:
-					//<Value> ::= FloatLiteral
-					break;
-				case RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN:
-					//<Value> ::= Id '(' <Expr> ')'
-					break;
-				case RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN2:
-					//<Value> ::= Id '(' ')'
-					break;
-				case RuleConstants.PROD_VALUE_ID:
-					//<Value> ::= Id
-					break;
-				case RuleConstants.PROD_VALUE_LPAREN_RPAREN:
-					//<Value> ::= '(' <Expr> ')'
-					break;
-				}
+//				switch(parser.currentReduction().getParentRule().getTableIndex())
+//				{
+//				case RuleConstants.PROD_DECLS:
+//					//<Decls> ::= <Decl> <Decls>
+//					break;
+//				case RuleConstants.PROD_DECLS2:
+//					//<Decls> ::= 
+//					break;
+//				case RuleConstants.PROD_DECL:
+//					//<Decl> ::= <Func Decl>
+//					break;
+//				case RuleConstants.PROD_DECL2:
+//					//<Decl> ::= <Func Proto>
+//					break;
+//				case RuleConstants.PROD_DECL3:
+//					//<Decl> ::= <Struct Decl>
+//					break;
+//				case RuleConstants.PROD_DECL4:
+//					//<Decl> ::= <Union Decl>
+//					break;
+//				case RuleConstants.PROD_DECL5:
+//					//<Decl> ::= <Enum Decl>
+//					break;
+//				case RuleConstants.PROD_DECL6:
+//					//<Decl> ::= <Var Decl>
+//					System.out.println("PROD_DECL6: " + parser.currentReduction().getToken(0).getData());
+//					break;
+//				case RuleConstants.PROD_DECL7:
+//					//<Decl> ::= <Typedef Decl>
+//					break;
+//				case RuleConstants.PROD_FUNCPROTO_LPAREN_RPAREN_SEMI:
+//					//<Func Proto> ::= <Func ID> '(' <Types> ')' ';'
+//					break;
+//				case RuleConstants.PROD_FUNCPROTO_LPAREN_RPAREN_SEMI2:
+//					//<Func Proto> ::= <Func ID> '(' <Params> ')' ';'
+//					break;
+//				case RuleConstants.PROD_FUNCPROTO_LPAREN_RPAREN_SEMI3:
+//					//<Func Proto> ::= <Func ID> '(' ')' ';'
+//					break;
+//				case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN:
+//					//<Func Decl> ::= <Func ID> '(' <Params> ')' <Block>
+//					break;
+//				case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN2:
+//					//<Func Decl> ::= <Func ID> '(' <Id List> ')' <Struct Def> <Block>
+//					break;
+//				case RuleConstants.PROD_FUNCDECL_LPAREN_RPAREN3:
+//					//<Func Decl> ::= <Func ID> '(' ')' <Block>
+//					break;
+//				case RuleConstants.PROD_PARAMS_COMMA:
+//					//<Params> ::= <Param> ',' <Params>
+//					break;
+//				case RuleConstants.PROD_PARAMS:
+//					//<Params> ::= <Param>
+//					break;
+//				case RuleConstants.PROD_PARAM_CONST_ID:
+//					//<Param> ::= const <Type> Id
+//					break;
+//				case RuleConstants.PROD_PARAM_ID:
+//					//<Param> ::= <Type> Id
+//					break;
+//				case RuleConstants.PROD_TYPES_COMMA:
+//					//<Types> ::= <Type> ',' <Types>
+//					break;
+//				case RuleConstants.PROD_TYPES:
+//					//<Types> ::= <Type>
+//					break;
+//				case RuleConstants.PROD_IDLIST_ID_COMMA:
+//					//<Id List> ::= Id ',' <Id List>
+//					break;
+//				case RuleConstants.PROD_IDLIST_ID:
+//					//<Id List> ::= Id
+//					break;
+//				case RuleConstants.PROD_FUNCID_ID:
+//					//<Func ID> ::= <Type> Id
+//					break;
+//				case RuleConstants.PROD_FUNCID_ID2:
+//					//<Func ID> ::= Id
+//					break;
+//				case RuleConstants.PROD_TYPEDEFDECL_TYPEDEF_ID_SEMI:
+//					//<Typedef Decl> ::= typedef <Type> Id ';'
+//					break;
+//				case RuleConstants.PROD_STRUCTDECL_STRUCT_ID_LBRACE_RBRACE_SEMI:
+//					//<Struct Decl> ::= struct Id '{' <Struct Def> '}' ';'
+//					break;
+//				case RuleConstants.PROD_UNIONDECL_UNION_ID_LBRACE_RBRACE_SEMI:
+//					//<Union Decl> ::= union Id '{' <Struct Def> '}' ';'
+//					break;
+//				case RuleConstants.PROD_STRUCTDEF:
+//					//<Struct Def> ::= <Var Decl> <Struct Def>
+//					break;
+//				case RuleConstants.PROD_STRUCTDEF2:
+//					//<Struct Def> ::= <Var Decl>
+//					break;
+//				case RuleConstants.PROD_VARDECL_SEMI:
+//					//<Var Decl> ::= <Mod> <Type> <Var> <Var List> ';'
+//					break;
+//				case RuleConstants.PROD_VARDECL_SEMI2:
+//					//<Var Decl> ::= <Type> <Var> <Var List> ';'
+//					break;
+//				case RuleConstants.PROD_VARDECL_SEMI3:
+//					//<Var Decl> ::= <Mod> <Var> <Var List> ';'
+//					break;
+//				case RuleConstants.PROD_VAR_ID:
+//					//<Var> ::= Id <Array>
+//					break;
+//				case RuleConstants.PROD_VAR_ID_EQ:
+//					//<Var> ::= Id <Array> '=' <Op If>
+//					break;
+//				case RuleConstants.PROD_ARRAY_LBRACKET_RBRACKET:
+//					//<Array> ::= '[' <Expr> ']'
+//					break;
+//				case RuleConstants.PROD_ARRAY_LBRACKET_RBRACKET2:
+//					//<Array> ::= '[' ']'
+//					break;
+//				case RuleConstants.PROD_ARRAY:
+//					//<Array> ::= 
+//					break;
+//				case RuleConstants.PROD_VARLIST_COMMA:
+//					//<Var List> ::= ',' <Var Item> <Var List>
+//					break;
+//				case RuleConstants.PROD_VARLIST:
+//					//<Var List> ::= 
+//					break;
+//				case RuleConstants.PROD_VARITEM:
+//					//<Var Item> ::= <Pointers> <Var>
+//					break;
+//				case RuleConstants.PROD_MOD_EXTERN:
+//					//<Mod> ::= extern
+//					break;
+//				case RuleConstants.PROD_MOD_STATIC:
+//					//<Mod> ::= static
+//					break;
+//				case RuleConstants.PROD_MOD_REGISTER:
+//					//<Mod> ::= register
+//					break;
+//				case RuleConstants.PROD_MOD_AUTO:
+//					//<Mod> ::= auto
+//					break;
+//				case RuleConstants.PROD_MOD_VOLATILE:
+//					//<Mod> ::= volatile
+//					break;
+//				case RuleConstants.PROD_MOD_CONST:
+//					//<Mod> ::= const
+//					break;
+//				case RuleConstants.PROD_ENUMDECL_ENUM_ID_LBRACE_RBRACE_SEMI:
+//					//<Enum Decl> ::= enum Id '{' <Enum Def> '}' ';'
+//					break;
+//				case RuleConstants.PROD_ENUMDEF_COMMA:
+//					//<Enum Def> ::= <Enum Val> ',' <Enum Def>
+//					break;
+//				case RuleConstants.PROD_ENUMDEF:
+//					//<Enum Def> ::= <Enum Val>
+//					break;
+//				case RuleConstants.PROD_ENUMVAL_ID:
+//					//<Enum Val> ::= Id
+//					break;
+//				case RuleConstants.PROD_ENUMVAL_ID_EQ_OCTLITERAL:
+//					//<Enum Val> ::= Id '=' OctLiteral
+//					break;
+//				case RuleConstants.PROD_ENUMVAL_ID_EQ_HEXLITERAL:
+//					//<Enum Val> ::= Id '=' HexLiteral
+//					break;
+//				case RuleConstants.PROD_ENUMVAL_ID_EQ_DECLITERAL:
+//					//<Enum Val> ::= Id '=' DecLiteral
+//					break;
+//				case RuleConstants.PROD_TYPE:
+//					//<Type> ::= <Base> <Pointers>
+//					break;
+//				case RuleConstants.PROD_BASE:
+//					//<Base> ::= <Sign> <Scalar>
+//					break;
+//				case RuleConstants.PROD_BASE_STRUCT_ID:
+//					//<Base> ::= struct Id
+//					break;
+//				case RuleConstants.PROD_BASE_STRUCT_LBRACE_RBRACE:
+//					//<Base> ::= struct '{' <Struct Def> '}'
+//					break;
+//				case RuleConstants.PROD_BASE_UNION_ID:
+//					//<Base> ::= union Id
+//					break;
+//				case RuleConstants.PROD_BASE_UNION_LBRACE_RBRACE:
+//					//<Base> ::= union '{' <Struct Def> '}'
+//					break;
+//				case RuleConstants.PROD_BASE_ENUM_ID:
+//					//<Base> ::= enum Id
+//					break;
+//				case RuleConstants.PROD_SIGN_SIGNED:
+//					//<Sign> ::= signed
+//					break;
+//				case RuleConstants.PROD_SIGN_UNSIGNED:
+//					//<Sign> ::= unsigned
+//					break;
+//				case RuleConstants.PROD_SIGN:
+//					//<Sign> ::= 
+//					break;
+//				case RuleConstants.PROD_SCALAR_CHAR:
+//					//<Scalar> ::= char
+//					break;
+//				case RuleConstants.PROD_SCALAR_INT:
+//					//<Scalar> ::= int
+//					break;
+//				case RuleConstants.PROD_SCALAR_SHORT:
+//					//<Scalar> ::= short
+//					break;
+//				case RuleConstants.PROD_SCALAR_LONG:
+//					//<Scalar> ::= long
+//					break;
+//				case RuleConstants.PROD_SCALAR_SHORT_INT:
+//					//<Scalar> ::= short int
+//					break;
+//				case RuleConstants.PROD_SCALAR_LONG_INT:
+//					//<Scalar> ::= long int
+//					break;
+//				case RuleConstants.PROD_SCALAR_FLOAT:
+//					//<Scalar> ::= float
+//					break;
+//				case RuleConstants.PROD_SCALAR_DOUBLE:
+//					//<Scalar> ::= double
+//					break;
+//				case RuleConstants.PROD_SCALAR_VOID:
+//					//<Scalar> ::= void
+//					break;
+//				case RuleConstants.PROD_POINTERS_TIMES:
+//					//<Pointers> ::= '*' <Pointers>
+//					break;
+//				case RuleConstants.PROD_POINTERS:
+//					//<Pointers> ::= 
+//					break;
+//				case RuleConstants.PROD_STM:
+//					//<Stm> ::= <Var Decl>
+//					break;
+//				case RuleConstants.PROD_STM_ID_COLON:
+//					//<Stm> ::= Id ':'
+//					break;
+//				case RuleConstants.PROD_STM_IF_LPAREN_RPAREN:
+//					//<Stm> ::= if '(' <Expr> ')' <Stm>
+//					break;
+//				case RuleConstants.PROD_STM_IF_LPAREN_RPAREN_ELSE:
+//					//<Stm> ::= if '(' <Expr> ')' <Then Stm> else <Stm>
+//					break;
+//				case RuleConstants.PROD_STM_WHILE_LPAREN_RPAREN:
+//					//<Stm> ::= while '(' <Expr> ')' <Stm>
+//					break;
+//				case RuleConstants.PROD_STM_FOR_LPAREN_SEMI_SEMI_RPAREN:
+//					//<Stm> ::= for '(' <Arg> ';' <Arg> ';' <Arg> ')' <Stm>
+//					break;
+//				case RuleConstants.PROD_STM2:
+//					//<Stm> ::= <Normal Stm>
+//					break;
+//				case RuleConstants.PROD_THENSTM_IF_LPAREN_RPAREN_ELSE:
+//					//<Then Stm> ::= if '(' <Expr> ')' <Then Stm> else <Then Stm>
+//					break;
+//				case RuleConstants.PROD_THENSTM_WHILE_LPAREN_RPAREN:
+//					//<Then Stm> ::= while '(' <Expr> ')' <Then Stm>
+//					break;
+//				case RuleConstants.PROD_THENSTM_FOR_LPAREN_SEMI_SEMI_RPAREN:
+//					//<Then Stm> ::= for '(' <Arg> ';' <Arg> ';' <Arg> ')' <Then Stm>
+//					break;
+//				case RuleConstants.PROD_THENSTM:
+//					//<Then Stm> ::= <Normal Stm>
+//					break;
+//				case RuleConstants.PROD_NORMALSTM_DO_WHILE_LPAREN_RPAREN:
+//					//<Normal Stm> ::= do <Stm> while '(' <Expr> ')'
+//					break;
+//				case RuleConstants.PROD_NORMALSTM_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE:
+//					//<Normal Stm> ::= switch '(' <Expr> ')' '{' <Case Stms> '}'
+//					break;
+//				case RuleConstants.PROD_NORMALSTM:
+//					//<Normal Stm> ::= <Block>
+//					break;
+//				case RuleConstants.PROD_NORMALSTM_SEMI:
+//					//<Normal Stm> ::= <Expr> ';'
+//					break;
+//				case RuleConstants.PROD_NORMALSTM_GOTO_ID_SEMI:
+//					//<Normal Stm> ::= goto Id ';'
+//					break;
+//				case RuleConstants.PROD_NORMALSTM_BREAK_SEMI:
+//					//<Normal Stm> ::= break ';'
+//					break;
+//				case RuleConstants.PROD_NORMALSTM_CONTINUE_SEMI:
+//					//<Normal Stm> ::= continue ';'
+//					break;
+//				case RuleConstants.PROD_NORMALSTM_RETURN_SEMI:
+//					//<Normal Stm> ::= return <Expr> ';'
+//					break;
+//				case RuleConstants.PROD_NORMALSTM_SEMI2:
+//					//<Normal Stm> ::= ';'
+//					break;
+//				case RuleConstants.PROD_ARG:
+//					//<Arg> ::= <Expr>
+//					break;
+//				case RuleConstants.PROD_ARG2:
+//					//<Arg> ::= 
+//					break;
+//				case RuleConstants.PROD_CASESTMS_CASE_COLON:
+//					//<Case Stms> ::= case <Value> ':' <Stm List> <Case Stms>
+//					break;
+//				case RuleConstants.PROD_CASESTMS_DEFAULT_COLON:
+//					//<Case Stms> ::= default ':' <Stm List>
+//					break;
+//				case RuleConstants.PROD_CASESTMS:
+//					//<Case Stms> ::= 
+//					break;
+//				case RuleConstants.PROD_BLOCK_LBRACE_RBRACE:
+//					//<Block> ::= '{' <Stm List> '}'
+//					break;
+//				case RuleConstants.PROD_STMLIST:
+//					//<Stm List> ::= <Stm> <Stm List>
+//					break;
+//				case RuleConstants.PROD_STMLIST2:
+//					//<Stm List> ::= 
+//					break;
+//				case RuleConstants.PROD_EXPR_COMMA:
+//					//<Expr> ::= <Expr> ',' <Op Assign>
+//					break;
+//				case RuleConstants.PROD_EXPR:
+//					//<Expr> ::= <Op Assign>
+//					break;
+//				case RuleConstants.PROD_OPASSIGN_EQ:
+//					//<Op Assign> ::= <Op If> '=' <Op Assign>
+//					break;
+//				case RuleConstants.PROD_OPASSIGN_PLUSEQ:
+//					//<Op Assign> ::= <Op If> '+=' <Op Assign>
+//					break;
+//				case RuleConstants.PROD_OPASSIGN_MINUSEQ:
+//					//<Op Assign> ::= <Op If> '-=' <Op Assign>
+//					break;
+//				case RuleConstants.PROD_OPASSIGN_TIMESEQ:
+//					//<Op Assign> ::= <Op If> '*=' <Op Assign>
+//					break;
+//				case RuleConstants.PROD_OPASSIGN_DIVEQ:
+//					//<Op Assign> ::= <Op If> '/=' <Op Assign>
+//					break;
+//				case RuleConstants.PROD_OPASSIGN_CARETEQ:
+//					//<Op Assign> ::= <Op If> '^=' <Op Assign>
+//					break;
+//				case RuleConstants.PROD_OPASSIGN_AMPEQ:
+//					//<Op Assign> ::= <Op If> '&=' <Op Assign>
+//					break;
+//				case RuleConstants.PROD_OPASSIGN_PIPEEQ:
+//					//<Op Assign> ::= <Op If> '|=' <Op Assign>
+//					break;
+//				case RuleConstants.PROD_OPASSIGN_GTGTEQ:
+//					//<Op Assign> ::= <Op If> '>>=' <Op Assign>
+//					break;
+//				case RuleConstants.PROD_OPASSIGN_LTLTEQ:
+//					//<Op Assign> ::= <Op If> '<<=' <Op Assign>
+//					break;
+//				case RuleConstants.PROD_OPASSIGN:
+//					//<Op Assign> ::= <Op If>
+//					break;
+//				case RuleConstants.PROD_OPIF_QUESTION_COLON:
+//					//<Op If> ::= <Op Or> '?' <Op If> ':' <Op If>
+//					break;
+//				case RuleConstants.PROD_OPIF:
+//					//<Op If> ::= <Op Or>
+//					break;
+//				case RuleConstants.PROD_OPOR_PIPEPIPE:
+//					//<Op Or> ::= <Op Or> '||' <Op And>
+//					break;
+//				case RuleConstants.PROD_OPOR:
+//					//<Op Or> ::= <Op And>
+//					break;
+//				case RuleConstants.PROD_OPAND_AMPAMP:
+//					//<Op And> ::= <Op And> '&&' <Op BinOR>
+//					break;
+//				case RuleConstants.PROD_OPAND:
+//					//<Op And> ::= <Op BinOR>
+//					break;
+//				case RuleConstants.PROD_OPBINOR_PIPE:
+//					//<Op BinOR> ::= <Op BinOR> '|' <Op BinXOR>
+//					break;
+//				case RuleConstants.PROD_OPBINOR:
+//					//<Op BinOR> ::= <Op BinXOR>
+//					break;
+//				case RuleConstants.PROD_OPBINXOR_CARET:
+//					//<Op BinXOR> ::= <Op BinXOR> '^' <Op BinAND>
+//					break;
+//				case RuleConstants.PROD_OPBINXOR:
+//					//<Op BinXOR> ::= <Op BinAND>
+//					break;
+//				case RuleConstants.PROD_OPBINAND_AMP:
+//					//<Op BinAND> ::= <Op BinAND> '&' <Op Equate>
+//					break;
+//				case RuleConstants.PROD_OPBINAND:
+//					//<Op BinAND> ::= <Op Equate>
+//					break;
+//				case RuleConstants.PROD_OPEQUATE_EQEQ:
+//					//<Op Equate> ::= <Op Equate> '==' <Op Compare>
+//					break;
+//				case RuleConstants.PROD_OPEQUATE_EXCLAMEQ:
+//					//<Op Equate> ::= <Op Equate> '!=' <Op Compare>
+//					break;
+//				case RuleConstants.PROD_OPEQUATE:
+//					//<Op Equate> ::= <Op Compare>
+//					break;
+//				case RuleConstants.PROD_OPCOMPARE_LT:
+//					//<Op Compare> ::= <Op Compare> '<' <Op Shift>
+//					break;
+//				case RuleConstants.PROD_OPCOMPARE_GT:
+//					//<Op Compare> ::= <Op Compare> '>' <Op Shift>
+//					break;
+//				case RuleConstants.PROD_OPCOMPARE_LTEQ:
+//					//<Op Compare> ::= <Op Compare> '<=' <Op Shift>
+//					break;
+//				case RuleConstants.PROD_OPCOMPARE_GTEQ:
+//					//<Op Compare> ::= <Op Compare> '>=' <Op Shift>
+//					break;
+//				case RuleConstants.PROD_OPCOMPARE:
+//					//<Op Compare> ::= <Op Shift>
+//					break;
+//				case RuleConstants.PROD_OPSHIFT_LTLT:
+//					//<Op Shift> ::= <Op Shift> '<<' <Op Add>
+//					break;
+//				case RuleConstants.PROD_OPSHIFT_GTGT:
+//					//<Op Shift> ::= <Op Shift> '>>' <Op Add>
+//					break;
+//				case RuleConstants.PROD_OPSHIFT:
+//					//<Op Shift> ::= <Op Add>
+//					break;
+//				case RuleConstants.PROD_OPADD_PLUS:
+//					//<Op Add> ::= <Op Add> '+' <Op Mult>
+//					break;
+//				case RuleConstants.PROD_OPADD_MINUS:
+//					//<Op Add> ::= <Op Add> '-' <Op Mult>
+//					break;
+//				case RuleConstants.PROD_OPADD:
+//					//<Op Add> ::= <Op Mult>
+//					break;
+//				case RuleConstants.PROD_OPMULT_TIMES:
+//					//<Op Mult> ::= <Op Mult> '*' <Op Unary>
+//					break;
+//				case RuleConstants.PROD_OPMULT_DIV:
+//					//<Op Mult> ::= <Op Mult> '/' <Op Unary>
+//					break;
+//				case RuleConstants.PROD_OPMULT_PERCENT:
+//					//<Op Mult> ::= <Op Mult> '%' <Op Unary>
+//					break;
+//				case RuleConstants.PROD_OPMULT:
+//					//<Op Mult> ::= <Op Unary>
+//					break;
+//				case RuleConstants.PROD_OPUNARY_EXCLAM:
+//					//<Op Unary> ::= '!' <Op Unary>
+//					break;
+//				case RuleConstants.PROD_OPUNARY_TILDE:
+//					//<Op Unary> ::= '~' <Op Unary>
+//					break;
+//				case RuleConstants.PROD_OPUNARY_MINUS:
+//					//<Op Unary> ::= '-' <Op Unary>
+//					break;
+//				case RuleConstants.PROD_OPUNARY_TIMES:
+//					//<Op Unary> ::= '*' <Op Unary>
+//					break;
+//				case RuleConstants.PROD_OPUNARY_AMP:
+//					//<Op Unary> ::= '&' <Op Unary>
+//					break;
+//				case RuleConstants.PROD_OPUNARY_PLUSPLUS:
+//					//<Op Unary> ::= '++' <Op Unary>
+//					break;
+//				case RuleConstants.PROD_OPUNARY_MINUSMINUS:
+//					//<Op Unary> ::= '--' <Op Unary>
+//					break;
+//				case RuleConstants.PROD_OPUNARY_PLUSPLUS2:
+//					//<Op Unary> ::= <Op Pointer> '++'
+//					break;
+//				case RuleConstants.PROD_OPUNARY_MINUSMINUS2:
+//					//<Op Unary> ::= <Op Pointer> '--'
+//					break;
+//				case RuleConstants.PROD_OPUNARY_LPAREN_RPAREN:
+//					//<Op Unary> ::= '(' <Type> ')' <Op Unary>
+//					break;
+//				case RuleConstants.PROD_OPUNARY_SIZEOF_LPAREN_RPAREN:
+//					//<Op Unary> ::= sizeof '(' <Type> ')'
+//					break;
+//				case RuleConstants.PROD_OPUNARY_SIZEOF_LPAREN_ID_RPAREN:
+//					//<Op Unary> ::= sizeof '(' Id <Pointers> ')'
+//					break;
+//				case RuleConstants.PROD_OPUNARY:
+//					//<Op Unary> ::= <Op Pointer>
+//					break;
+//				case RuleConstants.PROD_OPPOINTER_DOT:
+//					//<Op Pointer> ::= <Op Pointer> '.' <Value>
+//					break;
+//				case RuleConstants.PROD_OPPOINTER_MINUSGT:
+//					//<Op Pointer> ::= <Op Pointer> '->' <Value>
+//					break;
+//				case RuleConstants.PROD_OPPOINTER_LBRACKET_RBRACKET:
+//					//<Op Pointer> ::= <Op Pointer> '[' <Expr> ']'
+//					break;
+//				case RuleConstants.PROD_OPPOINTER:
+//					//<Op Pointer> ::= <Value>
+//					break;
+//				case RuleConstants.PROD_VALUE_OCTLITERAL:
+//					//<Value> ::= OctLiteral
+//					break;
+//				case RuleConstants.PROD_VALUE_HEXLITERAL:
+//					//<Value> ::= HexLiteral
+//					break;
+//				case RuleConstants.PROD_VALUE_DECLITERAL:
+//					//<Value> ::= DecLiteral
+//					break;
+//				case RuleConstants.PROD_VALUE_STRINGLITERAL:
+//					//<Value> ::= StringLiteral
+//					break;
+//				case RuleConstants.PROD_VALUE_CHARLITERAL:
+//					//<Value> ::= CharLiteral
+//					break;
+//				case RuleConstants.PROD_VALUE_FLOATLITERAL:
+//					//<Value> ::= FloatLiteral
+//					break;
+//				case RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN:
+//					//<Value> ::= Id '(' <Expr> ')'
+//					break;
+//				case RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN2:
+//					//<Value> ::= Id '(' ')'
+//					break;
+//				case RuleConstants.PROD_VALUE_ID:
+//					//<Value> ::= Id
+//					break;
+//				case RuleConstants.PROD_VALUE_LPAREN_RPAREN:
+//					//<Value> ::= '(' <Expr> ')'
+//					break;
+//				}
 
 				//Parser.Reduction = //Object you created to store the rule
 
@@ -1341,22 +1342,9 @@ public class CParser extends CodeParser implements GPMessageConstants
 			String ruleName = _reduction.getParentRule().name();
 			int ruleId = _reduction.getParentRule().getTableIndex();
 			System.out.println("buildNSD_R(" + ruleName + ", " + _parentNode.parent + ")...");
-//			if ( 
-//				ruleName.equals("<Decl>")
-//				||
-//				ruleName.equals("<CallStmt>")
-//				||
-//				ruleName.equals("<Designator>")
-//				||
-//				ruleName.equals("<AssignmentStmt>")
-//			   )
-//			{
-//				content=new String();
-//				content=getContent_R(_reduction,content);
-//				//System.out.println(ruleName + ": " + content);
-//				_parentNode.addElement(new Instruction(updateContent(content)));
-//			}
+
 			if (
+					// Assignment or procedure call?
 					ruleId == RuleConstants.PROD_OPASSIGN_EQ
 					||
 					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN
@@ -1366,6 +1354,8 @@ public class CParser extends CodeParser implements GPMessageConstants
 					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN
 					)
 			{
+				// Simply convet it as text and create an instruction. In case of a call
+				// we'll try to transmute it after all subroutines will have been parsed.
 				String content = new String();
 				content = getContent_R(_reduction, content).trim();
 				//System.out.println(ruleName + ": " + content);
@@ -1376,6 +1366,7 @@ public class CParser extends CodeParser implements GPMessageConstants
 				_parentNode.addElement(new Instruction(translateContent(content)));
 			}
 			else if (
+					// Variable declaration with or without initialization?
 					ruleName.equals("<Var Decl>")	// var declaration			
 					)
 			{
@@ -1458,12 +1449,13 @@ public class CParser extends CodeParser implements GPMessageConstants
 				}
 			}
 			else if (
+					// JUMP instruction?
 					ruleId == RuleConstants.PROD_NORMALSTM_BREAK_SEMI
 					||
 					ruleId == RuleConstants.PROD_NORMALSTM_RETURN_SEMI
 					)
 			{
-				String content = getKeyword("preBreak");
+				String content = getKeyword("preLeave");
 				if (ruleId == RuleConstants.PROD_NORMALSTM_RETURN_SEMI) {
 					content = translateContent(getKeyword("preReturn") + " " + getContent_R((Reduction)_reduction.getToken(1).getData(), ""));
 				}
@@ -1471,6 +1463,7 @@ public class CParser extends CodeParser implements GPMessageConstants
 				_parentNode.addElement(new Jump(content.trim()));				
 			}
 			else if (
+					// Combined assignment operator expression (+=, -= etc.)?
 					ruleId >= RuleConstants.PROD_OPASSIGN_PLUSEQ
 					&&
 					ruleId <= RuleConstants.PROD_OPASSIGN_LTLTEQ
@@ -1485,28 +1478,23 @@ public class CParser extends CodeParser implements GPMessageConstants
 				_parentNode.addElement(new Instruction(translateContent(content)));
 			}
 			else if (
+					// Autoincrement / autodecrement (i++, i--, ++i, --i)
 					ruleId >= RuleConstants.PROD_OPUNARY_PLUSPLUS
 					&&
 					ruleId <= RuleConstants.PROD_OPUNARY_MINUSMINUS2
 					)
 			{
+				// Token index of the variable
 				int lvalIx = (ruleId <= RuleConstants.PROD_OPUNARY_MINUSMINUS) ? 1 : 0;
+				// Variable name
 				String lval = getContent_R((Reduction)_reduction.getToken(lvalIx).getData(), "");
+				// Operator + or - ?
 				String opr = (ruleId % 2 == RuleConstants.PROD_OPUNARY_PLUSPLUS % 2) ? " + " : " - ";
 				String content = lval + " <- " + lval + opr + "1";
 				_parentNode.addElement(new Instruction(translateContent(content)));
 			}
-
-//			else if (
-//					 ruleName.equals("<UsesClause>")
-//					 ||
-//					 ruleName.equals("<VarSection>")
-//					 ||
-//					 ruleName.equals("<ConstSection>")
-//					 )
-//			{
-//			}
 			else if (
+					// Function declaration?
 					ruleName.equals("<Func Decl>")
 					)
 			{
@@ -1541,6 +1529,7 @@ public class CParser extends CodeParser implements GPMessageConstants
 			}
 			// END KGU#194 2016-05-08
 			else if (
+					// WHILE loop?
 					ruleId == RuleConstants.PROD_STM_WHILE_LPAREN_RPAREN
 					||
 					ruleId == RuleConstants.PROD_THENSTM_WHILE_LPAREN_RPAREN
@@ -1555,21 +1544,23 @@ public class CParser extends CodeParser implements GPMessageConstants
 				buildNSD_R(secReduc,ele.q);
 			}
 			else if (
+					// REPEAT loop?
 					ruleId == RuleConstants.PROD_NORMALSTM_DO_WHILE_LPAREN_RPAREN
 					 )
 			{
 				String content = new String();
-				content = getContent_R((Reduction) _reduction.getToken(3).getData(),content);
+				content = getContent_R((Reduction) _reduction.getToken(4).getData(),content);
 				// FIXME We might look for kinds of expressions with direct negation possibility,
 				// e.g. PROD_OPEQUATE_EQEQ, PROD_OPEQUATE_EXCLAMEQ, PROD_OPCOMPARE_LT, PROD_OPCOMPARE_GT
 				// etc. where we could try to replace the reduction by its opposite.
-				Repeat ele = new Repeat(getKeyword("preRepeat") + " not (" + translateContent(content) + ")" + getKeyword("postRepeat"));
+				Repeat ele = new Repeat(getKeyword("preRepeat") + " not (" + content + ")" + getKeyword("postRepeat"));
 				_parentNode.addElement(ele);
 				
 				Reduction secReduc = (Reduction) _reduction.getToken(1).getData();
 				buildNSD_R(secReduc, ele.q);
 			}
 			else if (
+					// FOR loop?
 					 ruleId == RuleConstants.PROD_STM_FOR_LPAREN_SEMI_SEMI_RPAREN
 					 ||
 					 ruleId == RuleConstants.PROD_THENSTM_FOR_LPAREN_SEMI_SEMI_RPAREN
@@ -1613,6 +1604,7 @@ public class CParser extends CodeParser implements GPMessageConstants
 
 			}
 			else if (
+					// IF statement?
 					ruleId == RuleConstants.PROD_STM_IF_LPAREN_RPAREN
 					||
 					ruleId == RuleConstants.PROD_STM_IF_LPAREN_RPAREN_ELSE
@@ -1634,10 +1626,11 @@ public class CParser extends CodeParser implements GPMessageConstants
 				}
 			}
 			else if (
-					 ruleId == RuleConstants.PROD_CASESTMS_CASE_COLON
-					 ||
-					 ruleId == RuleConstants.PROD_CASESTMS_DEFAULT_COLON
-					 )
+					// CASE branch?
+					ruleId == RuleConstants.PROD_CASESTMS_CASE_COLON
+					||
+					ruleId == RuleConstants.PROD_CASESTMS_DEFAULT_COLON
+					)
 			{
 				Case parent = (Case) _parentNode.parent;
 				String content = new String();
@@ -1650,6 +1643,18 @@ public class CParser extends CodeParser implements GPMessageConstants
 				}
 				if (iNext == 0) { iNext = parent.getText().count()-1; }
 				boolean lastCaseWasEmpty = iNext > 1 && parent.qs.get(iNext-2).getSize() == 0;
+				int branchIx = 2;	// token id for default branch
+				// Which is the last previous branch ending with jump instruction?
+				int lastCaseWithBreak = -1;
+				for (int i = 0; i < iNext-1; i++) {
+					int size = parent.qs.get(i).getSize();
+					if (size > 0 && (parent.qs.get(i).getElement(size-1) instanceof Jump)) {
+						lastCaseWithBreak = i;
+					}
+					else {
+						break;
+					}
+				}
 				if (ruleId == RuleConstants.PROD_CASESTMS_CASE_COLON) {
 					// Get the selector constant
 					String selector = getContent_R((Reduction) _reduction.getToken(1).getData(), "");
@@ -1659,38 +1664,33 @@ public class CParser extends CodeParser implements GPMessageConstants
 						parent.getText().set(iNext - 1, selectors);
 					}
 					else {
-						// Which is the last previous branch ending with jump instruction?
-						int lastCaseWithBreak = -1;
-						for (int i = 0; i < iNext-1; i++) {
-							int size = parent.qs.get(i).getSize();
-							if (size > 0 && (parent.qs.get(i).getElement(size-1) instanceof Jump)) {
-								lastCaseWithBreak = i;
-							}
-							else {
-								break;
-							}
-						}
 						parent.getText().set(iNext, selector);
-						Reduction secReduc = (Reduction) _reduction.getToken(3).getData();
-						Subqueue sq = (Subqueue) parent.qs.get(iNext-1);
-						buildNSD_R(secReduc, sq);
-						
-						// append copies of the elements of the new case to all cases still not terminated
-						for (int i = lastCaseWithBreak+1; i < iNext-1; i++) {
-							Subqueue sq1 = parent.qs.get(i);
-							for (int j = 0; j < sq.getSize(); j++) {
-								Element el = sq.getElement(j).copy();	// FIXME: Need a new Id!
-								sq1.addElement(el);
-							}
-						}
 					}
+					branchIx = 3;
+				}
+				// Add the branch content
+				Reduction secReduc = (Reduction) _reduction.getToken(branchIx).getData();
+				Subqueue sq = (Subqueue) parent.qs.get(iNext-1);
+				buildNSD_R(secReduc, sq);
+						
+				// append copies of the elements of the new case to all cases still not terminated
+				for (int i = lastCaseWithBreak+1; i < iNext-1; i++) {
+					Subqueue sq1 = parent.qs.get(i);
+					for (int j = 0; j < sq.getSize(); j++) {
+						Element el = sq.getElement(j).copy();	// FIXME: Need a new Id!
+						sq1.addElement(el);
+					}
+				}
+				if (ruleId == RuleConstants.PROD_CASESTMS_CASE_COLON) {
+					buildNSD_R((Reduction)_reduction.getToken(branchIx+1).getData(), _parentNode);					
 				}
 			}
 			else if (
+					// CASE statement (switch)
 					 ruleId == RuleConstants.PROD_NORMALSTM_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE
 					 )
 			{
-				this.firstCaseWithoutBreak.push(0);
+				//this.firstCaseWithoutBreak.push(0);
 
 				String content = new String();
 				// Put the discriminator into the first line of content
@@ -1703,7 +1703,7 @@ public class CParser extends CodeParser implements GPMessageConstants
 				while (sr.getParentRule().getTableIndex() == RuleConstants.PROD_CASESTMS_CASE_COLON)
 				{
 					Reduction stmList = (Reduction) sr.getToken(3).getData();
-					if (stmList.getParentRule().getTableIndex() == RuleConstants.PROD_STMLIST2) {
+					if (stmList.getParentRule().getTableIndex() == RuleConstants.PROD_STMLIST) {
 						// non-empty statement list, so we will have to set up a branch
 						j++;
 						content += "\n??";
@@ -1713,14 +1713,14 @@ public class CParser extends CodeParser implements GPMessageConstants
 
 				if (sr.getParentRule().getTableIndex() == RuleConstants.PROD_CASESTMS_DEFAULT_COLON)
 				{
-					j++;
 					content += "\ndefault";
 				}
 				else {
-					j++;
 					content += "\"%";
 				}
+				j++;
 
+				// Pooh, the translation is risky...
 				Case ele = new Case(translateContent(content));
 				//ele.setText(updateContent(content));
 				_parentNode.addElement(ele);
@@ -1749,6 +1749,7 @@ public class CParser extends CodeParser implements GPMessageConstants
 				}
 
 			}
+			// Block...?
 			else
 			{
 				if (_reduction.getTokenCount()>0)
@@ -1787,7 +1788,7 @@ public class CParser extends CodeParser implements GPMessageConstants
 		}
 		
 		//_content = BString.replace(_content, ":="," \u2190 ");
-		_content = BString.replace(_content, " = "," <- ");
+		//_content = BString.replace(_content, " = "," <- "); already done by getContent_R()!
 
 		return _content.trim();
 	}
