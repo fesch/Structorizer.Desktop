@@ -1,0 +1,503 @@
+##LANGUAGE 'Java'
+##TEMPLATE-NAME 'Constants and parse procedure'
+##ENGINE-NAME 'Matthew Hawkins Engine'
+##SYSTEM-VERSION '1.0'
+##AUTHOR 'Matthew Hawkins' 
+##FILE-EXTENSION 'java'
+##NOTES
+This template creates a Structorizer Parser skeleton for Matthew Hawkins Java GOLD Parser Engine
+##END-NOTES
+##ID-CASE UPPERCASE
+##ID-SEPARATOR '_'
+##ID-SYMBOL-PREFIX 'Sym'
+##ID-RULE-PREFIX 'Prod'
+
+/*
+    Structorizer
+    A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
+
+    Copyright (C) 2009  Bob Fisch
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or any
+    later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package lu.fisch.structorizer.parsers;
+
+/**
+ ******************************************************************************************************
+ *
+ *      Author:         Kay Gürtzig (the template)
+ *
+ *      Description:    Class to parse a %Name% file.
+ *
+ ******************************************************************************************************
+ *
+ *      Revision List
+ *
+ *      Author          Date            Description
+ *      ------          ----            -----------
+ *      @author           First Issue
+ *
+ ******************************************************************************************************
+ *
+ *     Comment:
+ *
+ *     This template is based on:
+ *     Licensed Material - Property of Matthew Hawkins (hawkini@4email.net)
+ *     GOLDParser - code ported from VB - Author Devin Cook. All rights reserved.
+ *     Modifications to this code are allowed as it is a helper class to use the engine.
+ *     Template File:  StructorizerParserTemplate.pgt, based on Java-MatthewHawkins.pgt<br>
+ *     Author:         Matthew Hawkins<br>
+ *     Description:    A Sample class, takes in a file, runs the GOLDParser engine on it and
+ *                     is meant to be configured to build a structogram from the parsing result.<br>
+ *
+ ******************************************************************************************************/
+
+import java.io.*;
+import goldengine.java.*;
+
+import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.parsers.CodeParser;
+ 
+// TODO Give the class a more sensible name (e.g. CSharpParser)
+public class %Name%Parser extends CodeParser implements GPMessageConstants
+{
+
+    private final String compiledGrammar = "%Name%.cgt";
+
+    @Override
+    protected String getDialogTitle() {
+        // TODO: Revise the language name for the FileChooser title string if needed 
+        return "%Name%";
+    }
+
+    @Override
+    protected String getFileDescription() {
+        // TODO Ensure the file description for the FileChooser is meaningful
+        return "%Name% files";
+    }
+
+    @Override
+    protected String[] getFileExtensions() {
+        // TODO Fill in the usual source file extension(s) for the FileChooser
+        final String[] exts = {  };
+        return exts;
+    }
+
+    private interface SymbolConstants 
+    {
+##SYMBOLS
+       final int %ID.Padded% = %Value.Padded%;  // %Description%
+##END-SYMBOLS
+    };
+
+    private interface RuleConstants
+    {
+##RULES
+       final int %ID.Padded% = %Value.Padded%;  // %Description%
+##END-RULES
+    };
+
+    private static BufferedReader buffR;
+
+    // TODO Adapt the constructor name to the class name
+    public %Name%Parser() {
+
+        parser = new GOLDParser();
+
+        try
+        {
+            parser.loadCompiledGrammar(compiledGrammar);
+        }
+        catch(ParserException parse)
+        {
+            System.out.println("**PARSER ERROR**\n" + parse.toString());
+            System.exit(1);
+        }
+    }
+
+    /**
+     * Parses the source code from file _textToParse, which is supposed to be encoded
+     * with the charset _encoding, and returns a list of structograms - one for each function
+     * or program contained in the source file.
+     * Field `error' will either contain an empty string or an error message afterwards.
+     * @param _textToParse - file name of the C source.
+     * @param _encoding - name of the charset to be used for decoding
+     * @return A list containing composed diagrams (if successful, otherwise field error will contain an error description) 
+     */
+    public List<Root> parse(String textToParse, String _encoding) {
+    
+        // create new root
+        root = new Root();
+        error = "";
+        
+        prepareTextfile(textToParse, _encoding);
+
+        try
+        {
+            parser.openFile(textToParse + ".structorizer");
+        }
+        catch(ParserException parse)
+        {
+            System.out.println("**PARSER ERROR**\n" + parse.toString());
+            System.exit(1);
+        }
+
+        // Rolling buffer for processed tokens as retrospective context for error messages
+        // Number of empty strings = number of retained context lines 
+        String[] context = {"", "", "", "", "", "", "", "", "", ""};
+        int contextLine = 0;
+
+        boolean done = false;
+        int response = -1;
+
+        while(!done)
+        {
+            try
+            {
+                response = parser.parse();
+            }
+            catch(ParserException parse)
+            {
+                System.out.println("**PARSER ERROR**\n" + parse.toString());
+                System.exit(1);
+            }
+
+            Token theTok;
+
+            switch(response)
+            {
+            case gpMsgTokenRead:
+                /* A token was read by the parser. The Token Object can be accessed
+                   through the CurrentToken() property:  Parser.CurrentToken */
+                Token myTok = parser.currentToken();
+                //System.out.println("gpMsgTokenRead: " + (String)myTok.getData());
+                while (parser.currentLineNumber() > contextLine)
+                {
+                    context[(++contextLine) % context.length] = "";
+                }
+                context[contextLine % context.length] += ((String)myTok.getData() + " ");
+                break;
+
+            case gpMsgReduction:
+                /* This message is returned when a rule was reduced by the parse engine.
+                   The CurrentReduction property is assigned a Reduction object
+                   containing the rule and its related tokens. You can reassign this
+                   property to your own customized class. If this is not the case,
+                   this message can be ignored and the Reduction object will be used
+                   to store the parse tree.  */
+
+                switch(parser.currentReduction().getParentRule().getTableIndex())
+                {
+##RULES
+                case RuleConstants.%ID%:
+                    //%Description%
+                    break;
+##END-RULES
+                }
+
+                //Parser.Reduction = //Object you created to store the rule
+                // ************************************** log file
+                System.out.println("gpMsgReduction");
+                Reduction myRed = parser.currentReduction();
+                System.out.println(myRed.getParentRule().getText());
+                // ************************************** end log
+
+                break;
+
+            case gpMsgAccept:
+                /* The program was accepted by the parsing engine */
+                // Now it's time to assemble the structogram from the reduction tree...
+                buildNSD(parser.currentReduction());
+ 
+                // ************************************** log file
+                System.out.println("gpMsgAccept");
+                // ************************************** end log
+
+                done = true;
+
+                break;
+
+            case gpMsgLexicalError:
+                /* Place code here to handle a illegal or unrecognized token
+                   To recover, pop the token from the stack: Parser.PopInputToken */
+
+                theTok = parser.currentToken();
+                error = ("Unexpected character: " + (String)theTok.getData()+" at line "+parser.currentLineNumber());
+
+                // ************************************** log file
+                System.out.println("gpMsgLexicalError");
+                // ************************************** end log
+
+                parser.popInputToken();
+
+                break;
+
+            case gpMsgNotLoadedError:
+                /* Load the Compiled Grammar Table file first. */
+
+                // ************************************** log file
+                System.out.println("gpMsgNotLoadedError");
+                // ************************************** end log
+
+                done = true;
+
+                break;
+
+            case gpMsgSyntaxError:
+                /* This is a syntax error: the source has produced a token that was
+                   not expected by the LALR State Machine. The expected tokens are stored
+                   into the Tokens() list. To recover, push one of the
+                   expected tokens onto the parser's input queue (the first in this case):
+                   You should limit the number of times this type of recovery can take
+                   place. */
+
+                theTok = parser.currentToken();
+                error = ("Syntax Error: " + (String)theTok.getData() + " at line "+parser.currentLineNumber());
+
+                // ************************************** log file
+                System.out.println("gpMsgSyntaxError");
+                // ************************************** end log
+
+                done = true;
+
+                break;
+
+            case gpMsgCommentError:
+                /* The end of the input was reached while reading a comment.
+                   This is caused by a comment that was not terminated */
+
+                theTok = parser.currentToken();
+                error = ("Comment Error: " + (String)theTok.getData() + " at line "+parser.currentLineNumber());
+
+                // ************************************** log file
+                System.out.println("gpMsgCommentError");
+                // ************************************** end log
+
+                done = true;
+
+                break;
+
+            case gpMsgInternalError:
+                /* Something horrid happened inside the parser. You cannot recover */
+
+                // ************************************** log file
+                System.out.println("gpMsgInternalError");
+                // ************************************** end log
+
+                done = true;
+
+                break;
+            }
+        }
+
+        if (!error.isEmpty())
+        {
+            error += "\nPreceding source context:";
+            contextLine -= context.length;
+            for (int line = 0; line < context.length; line++)
+            {
+                if (++contextLine >= 0)
+                {
+                    error += "\n" + contextLine + ":   " + context[contextLine % context.length];
+                }
+            }
+        }
+
+        try
+        {
+            parser.closeFile();
+        }
+        catch(ParserException parse)
+        {
+            System.out.println("**PARSER ERROR**\n" + parse.toString());
+            System.exit(1);
+        }
+
+        // remove the temporary file
+        (new File(textToParse + ".structorizer")).delete();
+
+        // START KGU#194 2016-07-07: Enh. #185/#188 - Try to convert calls to Call elements
+        StringList signatures = new StringList();
+        for (Root subroutine : subRoots)
+        {
+            if (!subroutine.isProgram)
+            {
+                signatures.add(subroutine.getMethodName() + "#" + subroutine.getParameterNames().count());
+            }
+        }
+        // END KGU#194 2016-07-07
+        
+        // Face an empty program or unit vessel (see Bug #185)
+        if (subRoots.isEmpty() || root.children.getSize() > 0)
+        {
+            subRoots.add(0, root);
+        }
+        // Enh. #185/#188 - Try to convert calls to Call elements
+        for (Root aRoot : subRoots)
+        {
+            if (aRoot.isProgram) {
+                try {
+                    aRoot.isProgram = false;
+                    if (aRoot.getMethodName().equals("main") && aRoot.getParameterNames().count() == 0) {
+                        String fileName = new File(textToParse).getName();
+                        if (fileName.contains(".")) {
+                            fileName = fileName.substring(0, fileName.indexOf('.'));
+                        }
+                        aRoot.setText(fileName.toUpperCase());
+                    }
+                }
+                finally {
+                    aRoot.isProgram = true;
+                }
+            }
+            aRoot.convertToCalls(signatures);
+        }
+        
+        return subRoots;
+    }
+
+    /**
+     * Performs some necessary preprocessing for the text file. Actually opens the
+     * file, filters it and writes a new file _textToParse+".structorizer" to the
+     * same directory, which is then actually parsed. For the C Parser e.g. the
+     * preprocessor directives must be removed and possibly be executed (at least the
+     * defines. with #if it would get difficult).
+     * The preprocessed file will always be saved with UTF-8 encoding.
+     * @param _textToParse - name (path) of the source file
+     * @param _encoding - the expected encoding of the source file.
+     */
+    private void prepareTextfile(String _textToParse, String _encoding)
+    {
+        try
+        {
+            File file = new File(_textToParse);
+            HashMap<String, String> defines = new LinkedHashMap<String, String>();
+            DataInputStream in = new DataInputStream(new FileInputStream(_textToParse));
+            // START KGU#193 2016-05-04
+            BufferedReader br = new BufferedReader(new InputStreamReader(in, _encoding));
+            // END KGU#193 2016-05-04
+            String strLine;
+            String srcCode = new String();
+
+            //Read File Line By Line
+
+            while ((strLine = br.readLine()) != null)   
+            {
+                srcCode += strLine + "\n";
+            }
+            //Close the input stream
+            in.close();
+            
+            //////////////////////////////////////////////
+            // TODO Do the necessary preprocessing here //
+            //////////////////////////////////////////////
+
+            // trim and save as new file
+            OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(_textToParse+".structorizer"), "UTF-8");
+            ow.write(srcCode.trim()+"\n");
+            //System.out.println("==> "+filterNonAscii(pasCode.trim()+"\n"));
+            ow.close();
+        }
+        catch (Exception e) 
+        {
+            System.out.println(e.getMessage());
+        }    
+    }
+    
+    /**
+     * Recursively constructs the Nassi-Shneiderman diagram into the _parentNode
+     * from the given reduction subtree 
+     * @param _reduction - the current reduction subtree to be converted
+     * @param _parentNode - the Subqueue the emerging elements are to be added to.
+     */
+    @Override
+    protected void buildNSD_R(Reduction _reduction, Subqueue _parentNode)
+    {
+        String content = new String();
+    
+        if (_reduction.getTokenCount() > 0)
+        {
+            String ruleName = _reduction.getParentRule().name();
+            int ruleId = _reduction.getParentRule().getTableIndex();
+            //System.out.println(ruleName);
+
+            // TODO example for the syntax-driven analysis and synthesis of elements
+            if ( 
+                ruleName.equals("<Decl>")
+                ||
+                ruleName.equals("<CallStmt>")
+                ||
+                ruleName.equals("<Designator>")
+                ||
+                ruleName.equals("<AssignmentStmt>")
+               )
+            {
+//                content = new String();
+//                content = getContent_R(_reduction,content);
+//                //System.out.println(ruleName + ": " + content);
+//                _parentNode.addElement(new Instruction(translateContent(content)));
+            }
+//          ...
+            else
+            {
+                if (_reduction.getTokenCount()>0)
+                {
+                    for(int i=0; i<_reduction.getTokenCount(); i++)
+                    {
+                        if (_reduction.getToken(i).getKind()==SymbolTypeConstants.symbolTypeNonterminal)
+                        {
+                            BuildNSD_R((Reduction)_reduction.getToken(i).getData(), _parentNode);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    protected String getContent_R(Reduction _reduction, String _content)
+    {
+        for (int i=0; i<_reduction.getTokenCount(); i++)
+        {
+            Token token = _reduction.getToken(i);
+            switch (token.getKind()) 
+            {
+            case SymbolTypeConstants.symbolTypeNonterminal:
+                int ruleId = _reduction.getParentRule().getTableIndex();
+                _content = getContent_R((Reduction) token.getData(), _content);    
+                break;
+            case SymbolTypeConstants.symbolTypeTerminal:
+            {
+                int idx = token.getTableIndex();
+                switch (token.getTableIndex()) {
+                // TODO Add the necessary symbol conversion. Example:
+                //case SymbolConstants.SYM_EXCLAM:
+                //    _content += " not ";
+                //    break;
+                // etc.
+                default:
+                    toAdd = (String)token.getData();
+                    _content += toAdd;
+                }
+            }
+            break;
+            default:
+                break;
+            }
+        }
+        
+        return _content;
+    }
+}

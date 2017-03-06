@@ -112,6 +112,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.27      Issues #290/#306: Signature and logic of openNsdOrArr slightly modified
  *      Kay Gürtzig     2017.02.08      Bugfix #198: Cursor navigation for Alternatives and CASE elements fixed
  *      Kay Gürtzig     2017.02.27      Enh. #346: Export option dialog changes for user-specific include directives
+ *      Kay Gürtzig     2017.03.04      Enh. #354: Code import generalized
  *
  ******************************************************************************************************
  *
@@ -377,8 +378,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							loadArrangement(files[i]);
 						}
 						// END KGU#289 2016-11-15
+						// FIXME: Find a way to go over all the parser plugins
 						else if (
-								filenameLower.endsWith(".mod")
+								filenameLower.endsWith(".mod")	// won't work..?
 								||
 								filenameLower.endsWith(".pas")
 								||
@@ -390,7 +392,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							// save (only if something has been changed)
 							saveNSD(true);
 							// load and parse source-code
-							D7Parser d7 = new D7Parser("D7Grammar.cgt");
+							// START KGU#354 2017-03-04: Enh. #354 Signature changd
+							//D7Parser d7 = new D7Parser("D7Grammar.cgt");
+							D7Parser d7 = new D7Parser();
+							// END KGU#354 2017-03-04
 							Root rootNew = d7.parse(filename);
 							if (d7.error.equals(""))
 							{
@@ -3742,100 +3747,225 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/*****************************************
 	 * import code methods
 	 *****************************************/
-	public void importPAS()
+
+	// START KGU#354 2017-03-04: Enh. #354
+//	public void importPAS()
+//	{
+//		// only save if something has been changed
+//		saveNSD(true);
+//
+//		String filename = "";
+//
+//		JFileChooser dlgOpen = new JFileChooser();
+//		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
+//		GUIScaler.rescaleComponents(dlgOpen);
+//		// END KGU#287 2017-01-09
+//		dlgOpen.setDialogTitle(Menu.msgTitleImport.getText().replace("%", "Pascal"));
+//		// set directory
+//		if(root.getFile()!=null)
+//		{
+//			dlgOpen.setCurrentDirectory(root.getFile());
+//		}
+//		else
+//		{
+//			dlgOpen.setCurrentDirectory(currentDirectory);
+//		}
+//
+//		// START KGU 2016-04-01: Enh. #110 - select the provided filter
+//		//dlgOPen.addChoosableFileFilter(new PascalFilter());
+//		PascalFilter filter = new PascalFilter();
+//		dlgOpen.addChoosableFileFilter(filter);
+//		dlgOpen.setFileFilter(filter);
+//		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+//		// END KGU 2016-04-01
+//		int result = dlgOpen.showOpenDialog(NSDControl.getFrame());
+//		filename=dlgOpen.getSelectedFile().getAbsoluteFile().toString();
+//
+//		if (result == JFileChooser.APPROVE_OPTION)
+//		{
+//			// load and parse source-code
+//			D7Parser d7 = new D7Parser("D7Grammar.cgt");
+//			// START KGU#194 2016-05-08: Bugfix #185 - mechanism for multiple roots per file
+//			//Root rootNew = d7.parse(filename);
+//			// START KGU#265 2016-09-28: Enh. #253 brought the Charset configuration. So make use of it.
+//			//List<Root> newRoots = d7.parse(filename, "ISO-8859-1");
+//			Ini ini = Ini.getInstance();
+//			List<Root> newRoots = d7.parse(filename, ini.getProperty("impImportCharset", "ISO-8859-1"));
+//			// END KGU#265 2016-09-28
+//			// END KGU#194 2016-05-08
+//			if (d7.error.equals(""))
+//			{
+//				boolean hil = root.hightlightVars;
+//				// START KGU#194 2016-05-08: Bugfix #185 - there may be multiple routines 
+//				Root firstRoot = null;
+//				//root = rootNew;
+//				Iterator<Root> iter = newRoots.iterator();
+//				if (iter.hasNext()){
+//					firstRoot = iter.next();
+//				}
+//				while (iter.hasNext())
+//				{
+//					root = iter.next();
+//					root.hightlightVars = hil;
+//					// The Root must be marked for saving
+//					root.setChanged();
+//					// ... and be added to the Arranger
+//					this.arrangeNSD();
+//				}
+//				if (firstRoot != null)
+//				{
+//					root = firstRoot;
+//				// END KGU#194 2016-05-08
+//					root.hightlightVars = hil;
+//					// START KGU#183 2016-04-24: Enh. #169
+//					selected = root;
+//					selected.setSelected(true);
+//					// END KGU#183 2016-04-24
+//					// START KGU#192 2016-05-02: #184 - The Root must be marked for saving
+//					root.setChanged();
+//					// END KGU#192 2016-05-02
+//				// START KGU#194 2016-05-08: Bugfix #185 - multiple routines per file
+//				}
+//				// END KGU#194 2016-05-08
+//			}
+//			else
+//			{
+//				// show error
+//				// START KGU 2016-01-11: Yes and No buttons somewhat strange...
+//				//JOptionPane.showOptionDialog(null,d7.error,
+//				//							 "Parser Error",
+//				//							 JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+//				JOptionPane.showMessageDialog(null, d7.error,
+//						Menu.msgTitleParserError.getText(),
+//						JOptionPane.ERROR_MESSAGE, null);
+//				// END KGU 2016-01-11
+//			}
+//
+//			redraw();
+//			analyse();
+//		}
+//	} 
+
+	/**
+	 * Gets an instance of the given parser class, interactively selects a source file
+	 * for the chosen language parses the file and tries to build a structogram from
+	 * it.
+	 * @param _parserClassName - the fully qualified class name of the parser to e used 
+	 */
+	public void importCode(String _parserClassName)
 	{
 		// only save if something has been changed
 		saveNSD(true);
 
 		String filename = "";
 
-		JFileChooser dlgOpen = new JFileChooser();
-		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
-		GUIScaler.rescaleComponents(dlgOpen);
-		// END KGU#287 2017-01-09
-		dlgOpen.setDialogTitle(Menu.msgTitleImport.getText().replace("%", "Pascal"));
-		// set directory
-		if(root.getFile()!=null)
+		try
 		{
-			dlgOpen.setCurrentDirectory(root.getFile());
-		}
-		else
-		{
-			dlgOpen.setCurrentDirectory(currentDirectory);
-		}
+			Class<?> genClass = Class.forName(_parserClassName);
+			CodeParser parser = (CodeParser) genClass.newInstance();
+			// START KGU#170 2016-04-01: Issue #143
+			pop.setVisible(false);	// Hide the current comment popup if visible
+			// END KGU#170 2016-04-01
 
-		// START KGU 2016-04-01: Enh. #110 - select the provided filter
-		//dlgOPen.addChoosableFileFilter(new PascalFilter());
-		PascalFilter filter = new PascalFilter();
-		dlgOpen.addChoosableFileFilter(filter);
-		dlgOpen.setFileFilter(filter);
-		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
-		// END KGU 2016-04-01
-		int result = dlgOpen.showOpenDialog(NSDControl.getFrame());
-		filename=dlgOpen.getSelectedFile().getAbsoluteFile().toString();
-
-		if (result == JFileChooser.APPROVE_OPTION)
-		{
-			// load and parse source-code
-			D7Parser d7 = new D7Parser("D7Grammar.cgt");
-			// START KGU#194 2016-05-08: Bugfix #185 - mechanism for multiple roots per file
-			//Root rootNew = d7.parse(filename);
-			// START KGU#265 2016-09-28: Enh. #253 brought the Charset configuration. So make use of it.
-			//List<Root> newRoots = d7.parse(filename, "ISO-8859-1");
-			Ini ini = Ini.getInstance();
-			List<Root> newRoots = d7.parse(filename, ini.getProperty("impImportCharset", "ISO-8859-1"));
-			// END KGU#265 2016-09-28
-			// END KGU#194 2016-05-08
-			if (d7.error.equals(""))
+			JFileChooser dlgOpen = new JFileChooser();
+			// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
+			GUIScaler.rescaleComponents(dlgOpen);
+			// END KGU#287 2017-01-09
+			dlgOpen.setDialogTitle(Menu.msgTitleImport.getText().replace("%", parser.getDialogTitle()));
+			// set directory
+			if(root.getFile()!=null)
 			{
-				boolean hil = root.hightlightVars;
-				// START KGU#194 2016-05-08: Bugfix #185 - there may be multiple routines 
-				Root firstRoot = null;
-				//root = rootNew;
-				Iterator<Root> iter = newRoots.iterator();
-				if (iter.hasNext()){
-					firstRoot = iter.next();
-				}
-				while (iter.hasNext())
-				{
-					root = iter.next();
-					root.hightlightVars = hil;
-					// The Root must be marked for saving
-					root.setChanged();
-					// ... and be added to the Arranger
-					this.arrangeNSD();
-				}
-				if (firstRoot != null)
-				{
-					root = firstRoot;
-				// END KGU#194 2016-05-08
-					root.hightlightVars = hil;
-					// START KGU#183 2016-04-24: Enh. #169
-					selected = root;
-					selected.setSelected(true);
-					// END KGU#183 2016-04-24
-					// START KGU#192 2016-05-02: #184 - The Root must be marked for saving
-					root.setChanged();
-					// END KGU#192 2016-05-02
-				// START KGU#194 2016-05-08: Bugfix #185 - multiple routines per file
-				}
-				// END KGU#194 2016-05-08
+				dlgOpen.setCurrentDirectory(root.getFile());
 			}
 			else
 			{
-				// show error
-				// START KGU 2016-01-11: Yes and No buttons somewhat strange...
-				//JOptionPane.showOptionDialog(null,d7.error,
-				//							 "Parser Error",
-				//							 JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
-				JOptionPane.showMessageDialog(null, d7.error,
-						Menu.msgTitleParserError.getText(),
-						JOptionPane.ERROR_MESSAGE, null);
-				// END KGU 2016-01-11
+				dlgOpen.setCurrentDirectory(currentDirectory);
 			}
 
-			redraw();
-			analyse();
+			dlgOpen.addChoosableFileFilter(parser);
+			dlgOpen.setFileFilter(parser);
+			pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+			int result = dlgOpen.showOpenDialog(NSDControl.getFrame());
+			try {
+			filename=dlgOpen.getSelectedFile().getAbsoluteFile().toString();
+			}
+			catch (Exception ex) {
+				ex.printStackTrace();
+			}
+
+			if (result == JFileChooser.APPROVE_OPTION)
+			{
+				// load and parse source-code
+				//CParser cp = new CParser("C-ANSI.cgt");
+				// START KGU#194 2016-05-08: Bugfix #185 - mechanism for multiple roots per file
+				//Root rootNew = d7.parse(filename);
+				// START KGU#265 2016-09-28: Enh. #253 brought the Charset configuration. So make use of it.
+				//List<Root> newRoots = d7.parse(filename, "ISO-8859-1");
+				Ini ini = Ini.getInstance();
+				List<Root> newRoots = parser.parse(filename, ini.getProperty("impImportCharset", "ISO-8859-1"));
+				// END KGU#265 2016-09-28
+				// END KGU#194 2016-05-08
+				if (parser.error.equals(""))
+				{
+					boolean hil = root.hightlightVars;
+					// START KGU#194 2016-05-08: Bugfix #185 - there may be multiple routines 
+					Root firstRoot = null;
+					//root = rootNew;
+					Iterator<Root> iter = newRoots.iterator();
+					if (iter.hasNext()){
+						firstRoot = iter.next();
+					}
+					while (iter.hasNext())
+					{
+						root = iter.next();
+						root.hightlightVars = hil;
+						// The Root must be marked for saving
+						root.setChanged();
+						// ... and be added to the Arranger
+						this.arrangeNSD();
+					}
+					if (firstRoot != null)
+					{
+						root = firstRoot;
+						// END KGU#194 2016-05-08
+						root.hightlightVars = hil;
+						// START KGU#183 2016-04-24: Enh. #169
+						selected = root;
+						selected.setSelected(true);
+						// END KGU#183 2016-04-24
+						// START KGU#192 2016-05-02: #184 - The Root must be marked for saving
+						root.setChanged();
+						// END KGU#192 2016-05-02
+						// START KGU#194 2016-05-08: Bugfix #185 - multiple routines per file
+					}
+					// END KGU#194 2016-05-08
+				}
+				else
+				{
+					// show error
+					// START KGU 2016-01-11: Yes and No buttons somewhat strange...
+					//JOptionPane.showOptionDialog(null,d7.error,
+					//							 "Parser Error",
+					//							 JOptionPane.OK_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+					JOptionPane.showMessageDialog(null, parser.error,
+							Menu.msgTitleParserError.getText(),
+							JOptionPane.ERROR_MESSAGE, null);
+					// END KGU 2016-01-11
+				}
+
+				redraw();
+				analyse();
+			}
+		}
+		catch(Exception ex)
+		{
+			String message = ex.getLocalizedMessage();
+			if (message == null) message = ex.getMessage();
+			if (message == null) message = ex.toString();
+			JOptionPane.showMessageDialog(this,
+					Menu.msgErrorUsingParser.getText().replace("%", _parserClassName)+"\n" + message,
+					Menu.msgTitleError.getText(),
+					JOptionPane.ERROR_MESSAGE);
 		}
 	} 
 

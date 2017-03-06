@@ -128,8 +128,6 @@ Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=Export as % code
 Menu.menuFileExportCodeFavorite.tooltip=You may alter the favourite target language in the export preferences.
 Menu.menuFileImport.text=Import
-// Submenu of "File -> Import"
-Menu.menuFileImportPascal.text=Pascal Code ...
 Menu.menuFilePrint.text=Print ...
 Menu.menuFileArrange.text=Arrange
 Menu.menuFileTranslator.text=Translator
@@ -299,6 +297,7 @@ Menu.msgUpdateInfoHint.text=If you want to get notified of available new version
 Menu.lblOk.text=OK
 Menu.lblSuppressUpdateHint.text=Don't show this window again
 Menu.lblHint.text=Hint
+Menu.lblImportCode.text=% Code ...
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<plugins>
+    
+	<plugin title="Pascal" 				class="lu.fisch.structorizer.parsers.D7Parser" icon="" />
+	<plugin title="ANSI-C" 				class="lu.fisch.structorizer.parsers.CParser" icon="" />
+    
+</plugins>

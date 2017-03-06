@@ -30,8 +30,8 @@ package lu.fisch.structorizer.helpers;
  *
  *      Revision List
  *
- *      Author          Date			Description
- *      ------			----			-----------
+ *      Author          Date            Description
+ *      ------			----            -----------
  *      Bob Fisch       2008.04.12      First Issue
  *
  ******************************************************************************************************

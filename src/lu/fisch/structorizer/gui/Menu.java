@@ -129,7 +129,8 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#171 2016-04-01
 	protected final JMenu menuFileImport = new JMenu("Import");
 	// Submenu of "File -> Import"
-	protected final JMenuItem menuFileImportPascal = new JMenuItem("Pascal Code ...",IconLoader.ico004);
+	//protected final JMenuItem menuFileImportPascal = new JMenuItem("Pascal Code ...",IconLoader.ico004);
+	//protected final JMenuItem menuFileImportC = new JMenuItem("ANSI-C Code ...",IconLoader.ico004);
 
 	// START KGU#2 2015-11-19: New menu item to have the Arranger present the diagram
 	protected final JMenuItem menuFileArrange = new JMenuItem("Arrange", IconLoader.ico105);
@@ -288,6 +289,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// Generator plugins accessible for Analyser
 	public static Vector<GENPlugin> generatorPlugins = new Vector<GENPlugin>();
 	// END KGU#239 2016-08-12
+	// START KGU#354 2017-03-04: Enh. #354
+	public static Vector<GENPlugin> parserPlugins = new Vector<GENPlugin>();
+	// END KGU#354 2017-03-04
 	// Error messages for Analyser
 	// START KGU#220 2016-07-27: Enh. as proposed in issue #207
 	public static final LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! ---> \"Diagram > Switch text/comments\".");
@@ -391,6 +395,9 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgErrorImageSave = new LangTextHolder("Error on saving the image(s)!");
 	public static final LangTextHolder msgErrorUsingGenerator = new LangTextHolder("Error while using % generator");
 	// END KGU#247 2016-09-15
+	// START KGU#354 2017-03-04
+	public static final LangTextHolder msgErrorUsingParser = new LangTextHolder("Error while using % parser");
+	// END KGU#354 2017-03-04
 	// START KGU#247 2016-09-17: Issue #243: Forgotten message box translation
 	public static final LangTextHolder msgGotoHomepage = new LangTextHolder("Go to % to look for updates and news about Structorizer.");
 	public static final LangTextHolder msgErrorNoFile = new LangTextHolder("File not found!");
@@ -412,6 +419,9 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder lblSuppressUpdateHint = new LangTextHolder("Don't show this window again");
 	public static final LangTextHolder lblHint = new LangTextHolder("Hint");
 	// END KGU#300 2016-12-02
+	// START KGU#354 2017-03-04: Enh. #354 Now generic import menu
+	public static final LangTextHolder lblImportCode = new LangTextHolder("% Code ...");
+	// END KGU#354 2017-03-04
 
 	public void create()
 	{
@@ -448,8 +458,31 @@ public class Menu extends LangMenuBar implements NSDController
 
 		menuFile.add(menuFileImport);
 
-		menuFileImport.add(menuFileImportPascal);
-		menuFileImportPascal.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importPAS(); doButtons(); } } );
+		// START KGU#354 2017-03-04: Enh. #354
+		//menuFileImport.add(menuFileImportPascal);
+		//menuFileImportPascal.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importPAS(); doButtons(); } } );
+		// Read parsers from configuration file and add them to the menu
+		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"));
+		GENParser genp = new GENParser();
+		parserPlugins = genp.parse(buff);
+		for (int i=0; i < parserPlugins.size(); i++)
+		// END KGU#239 2016-08-12
+		{
+			// START KGU#239 2016-08-12: Enh. #231
+			//GENPlugin plugin = (GENPlugin) plugins.get(i);
+			GENPlugin plugin = parserPlugins.get(i);
+			// END KGU#239 2016-08-12
+			JMenuItem pluginItem = new JMenuItem(lblImportCode.getText().replace("%", plugin.title), IconLoader.ico004);
+			menuFileImport.add(pluginItem);
+			final String className = plugin.className;
+			pluginItem.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importCode(className); doButtons(); } } );
+		}
+		try {
+			buff.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		menuFile.add(menuFileExport);
 
@@ -480,8 +513,8 @@ public class Menu extends LangMenuBar implements NSDController
 
 		// read generators from file
 		// and add them to the menu
-		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("generators.xml"));
-		GENParser genp = new GENParser();
+		buff = new BufferedInputStream(getClass().getResourceAsStream("generators.xml"));
+		genp = new GENParser();
 		// START KGU#239 2016-08-12: Enh. #231
 		//Vector<GENPlugin> plugins = genp.parse(buff);
 		//for(int i=0;i<plugins.size();i++)

@@ -96,8 +96,6 @@ Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=Esporta come % code
 Menu.menuFileExportCodeFavorite.tooltip=Puoi cambiare il linguaggio preferito nelle opzioni sull export
 Menu.menuFileImport.text=Importa
-// Submenu of "File -> Import"
-Menu.menuFileImportPascal.text=Codice Pascal...
 Menu.menuFilePrint.text=Stampa ...
 Menu.menuFileArrange.text=Collocare in Arranger
 Menu.menuFileTranslator.text=
@@ -248,6 +246,7 @@ Menu.msgErrorImageSave.text=
 Menu.msgErrorUsingGenerator.text=
 Menu.msgErrorNoFile.text=
 Menu.msgBrowseFailed.text=
+Menu.lblImportCode.text=Codice % ...
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!

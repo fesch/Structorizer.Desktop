@@ -40,6 +40,7 @@
  *      Kay Gürtzig     2016.12.12      Issue #306: multiple arguments in simple command line are now
  *                                      interpreted as several files to be opened in series.
  *      Kay Gürtzig     2017.01.27      Issue #306 + #290: Support for Arranger files in command line
+ *      Kay Gürtzig     2017.03.04      Enh. #354: Configurable set of import parsers supported now
  *
  ******************************************************************************************************
  *
@@ -66,7 +67,7 @@ import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.helpers.GENPlugin;
-import lu.fisch.structorizer.parsers.D7Parser;
+import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.structorizer.parsers.GENParser;
 import lu.fisch.structorizer.parsers.NSDParser;
 import lu.fisch.utils.StringList;
@@ -355,27 +356,85 @@ public class Structorizer
 	 *****************************************/
 	private static void parse(String _parserName, Vector<String> _filenames, String _outFile, String _options, String _charSet)
 	{
-		String usage = "Usage: " + synopsis[2] + "\nwith PARSER = pas | pascal";
+		String usage = "Usage: " + synopsis[2] + "\nwith PARSER = pas";
 
 		String fileExt = null;
-		if (_parserName.equals("pas") || _parserName.equalsIgnoreCase("pascal"))
-		{
-			fileExt = "pas";
+		// START KGU#354 2017-03-04: Enh. #354 configurable parser plugins
+//		if (_parserName.equals("pas") || _parserName.equalsIgnoreCase("pascal"))
+//		{
+//			fileExt = "pas";
+//		}
+//		// TODO Insert further parser variants here if available...
+//		else
+//		{
+//			System.err.println(usage);
+//			System.exit(5);
+//		}
+		// We just (ab)use some class residing in package gui to fetch the plugin configuration 
+		BufferedInputStream buff = new BufferedInputStream(lu.fisch.structorizer.gui.EditData.class.getResourceAsStream("parsers.xml"));
+		GENParser genp = new GENParser();
+		Vector<GENPlugin> plugins = genp.parse(buff);
+		String parsClassName = null;
+		CodeParser parser = null;
+		// This specific test is here for backward compatibility
+		if (_parserName.equals("pas") || _parserName.equalsIgnoreCase("pascal")) {
+			parsClassName = "lu.fisch.structorizer.parsers.D7Parser";
 		}
-		// TODO Insert further parser variants here if available...
-		else
+		for (int i=0; parsClassName == null && i < plugins.size(); i++)
 		{
+			GENPlugin plugin = (GENPlugin) plugins.get(i);
+			StringList names = StringList.explode(plugin.title, "/");
+			String className = plugin.className.substring(plugin.className.lastIndexOf(".")+1);
+			usage += " |\n\t" + className;
+			if (className.equalsIgnoreCase(_parserName))
+			{
+				parsClassName = plugin.className;
+			}
+			else
+			{
+				for (int j = 0; j < names.count(); j++)
+				{
+					if (names.get(j).trim().equalsIgnoreCase(_parserName))
+						parsClassName = plugin.className;
+					usage += " | " + names.get(j).trim();
+				}
+			}
+		}
+
+		if (parsClassName == null)
+		{
+			System.err.println("*** Unknown code parser \"" + _parserName + "\"");
 			System.err.println(usage);
 			System.exit(5);
 		}
 		
-		// START KGU#193 2016-05-09: Output file name specification was ignred, optio f had to be tuned.
+		try
+		{
+			Class<?> parsClass = Class.forName(parsClassName);
+			parser = (CodeParser) parsClass.newInstance();
+		}
+		catch(java.lang.ClassNotFoundException ex)
+		{
+			System.err.println("*** Parser class " + ex.getMessage() + " not found!");
+			System.exit(5);
+		}
+		catch(Exception e)
+		{
+			System.err.println("*** Error on creating " + _parserName + "\n" + e.getMessage());
+			e.printStackTrace();
+			System.exit(5);
+		}
+		// END KGU#354 2017-03-04
+		
+		// START KGU#193 2016-05-09: Output file name specification was ignored, option f had to be tuned.
 		boolean overwrite = _options.indexOf("f") >= 0 && 
 				!(_outFile != null && !_outFile.isEmpty() && _filenames.size() > 1);
 		// END KGU#193 2016-05-09
 		
+		// START KGU#354 2017-03-03: Enh. #354 - support several parser plugins
 		// While there is only one input language candidate, a single Parser instance is enough
-		D7Parser d7 = new D7Parser("D7Grammar.cgt");
+		//D7Parser d7 = new D7Parser("D7Grammar.cgt");
+		// END KGU#354 2017-03-04
 		
 		for (String filename : _filenames)
 		{
@@ -383,21 +442,26 @@ public class Structorizer
 			//Root rootNew = null;
 			List<Root> newRoots = new LinkedList<Root>();
 			// END KGU#194 2016-05-08
-			if (fileExt.equals("pas"))
+			// START KGU#354 2017-03-04: Enh. #354
+			//if (fileExt.equals("pas"))
+			File importFile = new File(filename);
+			if (parser.accept(importFile))
+			// END KGU#354 2017-03-04
 			{
 				//D7Parser d7 = new D7Parser("D7Grammar.cgt");
 				// START KGU#194 2016-05-04: Bugfix for 3.24-11 - encoding wasn't passed
 				//rootNew = d7.parse(filename);
-				newRoots = d7.parse(filename, _charSet);
+				newRoots = parser.parse(filename, _charSet);
 				// END KGU#194 2016-05-04
-				if (!d7.error.isEmpty())
+				if (!parser.error.isEmpty())
 				{
-					System.err.println("Parser error in file " + filename + "\n" + d7.error);
+					System.err.println("Parser error in file " + filename + "\n" + parser.error);
 					continue;
 				}
 			}
-			// TODO Insert further parser variants here if available...
-			
+			else {
+				System.err.println("File " + filename + " not accpeted by " + _parserName + " parser!");
+			}
 		
 			// Now save the roots as NSD files. Derive the target file names from the source file name
 			// if _outFile isn't given.
