@@ -2250,17 +2250,17 @@ public class COBOLParser extends CodeParser
 			//System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
 
 			/* -------- Begin code example for tree analysis and build -------- */
-//			if (
-//					// Assignment or procedure call?
-//					ruleId == RuleConstants.PROD_OPASSIGN_EQ
-//					||
-//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN
-//					||
-//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN2
-//					||
-//					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN
-//					)
-//			{
+			if (
+					// Assignment or procedure call?
+					ruleId == RuleConstants.PROD_ACCEPTFROMARG_FROM_DATE
+					||
+					ruleId == RuleConstants.PROD_ACCEPTFROMARG_FROM_DATE
+					||
+					ruleId == RuleConstants.PROD_ACCEPTFROMARG_FROM_DAY
+					||
+					ruleId == RuleConstants.PROD_ACCEPTFROMARG_FROM_CONSOLE
+					)
+			{
 //				// Simply convet it as text and create an instruction. In case of a call
 //				// we'll try to transmute it after all subroutines will have been parsed.
 //				String content = new String();
@@ -2274,7 +2274,7 @@ public class COBOLParser extends CodeParser
 //			}
 //			else if (ruleHead.equals("<Decls>") {
 //				...
-//			}
+			}
 			/* -------- End code example for tree analysis and build -------- */
 			// Block...?
 			else
@@ -2360,6 +2360,12 @@ public class COBOLParser extends CodeParser
 		}
 		
 		return _content;
+	}
+
+	@Override
+	protected void subclassUpdateRoot(Root root, String sourceFileName) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	//------------------------- Postprocessor ---------------------------

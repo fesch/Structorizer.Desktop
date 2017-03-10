@@ -184,4 +184,8 @@ public class AuParser extends GOLDParser {
         }
     }
 
+    protected boolean processTokenRead() {
+    		System.out.println(this.getCurrentToken().toString());
+        return false;
+    }
 }

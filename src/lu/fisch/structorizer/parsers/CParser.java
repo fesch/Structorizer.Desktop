@@ -498,7 +498,7 @@ public class CParser extends CodeParser
 			// do the #define replacements (at least roughly...)
 			while ((strLine = br.readLine()) != null)   
 			{
-				if (strLine.matches("^#define\\s+([\\w].*)\\s+(.+)")) {
+				if (strLine.matches("^#define\\s+([\\w].*)\\s+(.+)") && !strLine.contains("(") && !strLine.contains(")")) {
 					String symbol = strLine.replaceAll("^#define\\s+([\\w].*)\\s+(.+)", "$1");
 					String subst = strLine.replaceAll("^#define\\s+([\\w].*)\\s+(.+)", "$2").trim();
 					defines.put(symbol, subst);
@@ -1440,4 +1440,5 @@ public class CParser extends CodeParser
 		}
 	}
 	
+
 }
