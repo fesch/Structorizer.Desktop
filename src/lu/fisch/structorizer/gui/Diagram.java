@@ -216,7 +216,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     private JList<DetectedError> errorlist = null;
     private JList<Root> diagramIndex = null;
 
-    private Element eCopy = null;
+    // START KGU#368 2017-03-10: Enh. #376 - Allow copy and paste among Structorizer instances
+    //private Element eCopy = null;
+    static private Element eCopy = null;
+    // END KGU#368 2017-03-10
 
     public File currentDirectory = new File(System.getProperty("user.home"));
     public File lastExportDir = null;

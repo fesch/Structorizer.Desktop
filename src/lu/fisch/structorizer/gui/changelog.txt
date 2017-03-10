@@ -45,6 +45,9 @@ Current development version: 3.27 (2017.03.10)
 - 04: Enh. #346: Configuration of include directives to be exported [Rolf Schmidt]2
 - 05: Some typos in the locale file keys mended <2>
 - 05: Bugfix #365: Improved FOR-IN loop export to C (also more conform with early C) <2>
+- 05: Enh. #376: Opportunity to move elements among diagrams [Simon Sobisch]2
+- 05: Issue #378: Charset indication in exported Python header [Rolf Schmidt]2
+- 05: Bugfix #379: Inequality operator symbol was wrong in Python export <2>
 - 06: Enh. #354: Plugin system for code import (in analogy to generators) [S. Sobisch]2
 - 06: Enh. #354: ANSI-C parser added to code import plugins <2>
 - 06: Enh. #368: New import option to load variable declarations <2>
