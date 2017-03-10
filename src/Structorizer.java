@@ -49,6 +49,8 @@
  ******************************************************************************************************///
 
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -56,15 +58,18 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
 
+import javax.swing.JMenuItem;
 import javax.swing.UIManager;
 
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.generators.Generator;
 import lu.fisch.structorizer.generators.XmlGenerator;
+import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.Mainform;
 import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.parsers.CodeParser;
@@ -100,7 +105,12 @@ public class Structorizer
 			}
 			else if (i == 0 && args[i].equals("-p") && args.length > 1)
 			{
-				parser = args[++i];
+				parser = "*";
+			}
+			// Legacy support - parsers will now be derived from the file extensions 
+			else if (i > 0 && (parser != null) && (args[i].equalsIgnoreCase("pas") || args[i].equalsIgnoreCase("pascal"))
+					&& !parser.endsWith("pas")) {
+				parser += "pas";
 			}
 			else if (args[i].equals("-o") && i+1 < args.length)
 			{
@@ -245,7 +255,7 @@ public class Structorizer
 	private static String[] synopsis = {
 		"Structorizer [NSDFILE]",
 		"Structorizer -x GENERATOR [-b] [-c] [-f] [-l] [-t] [-e CHARSET] [-] [-o OUTFILE] NSDFILE...",
-		"Structorizer -p PARSER [-f] [-e CHARSET] [-o OUTFILE] SOURCEFILE...",
+		"Structorizer -p [pas|pascal] [-f] [-e CHARSET] [-o OUTFILE] SOURCEFILE...",
 		"Structorizer -h"
 	};
 	// END KGU#187 2016-05-02
@@ -356,75 +366,49 @@ public class Structorizer
 	 *****************************************/
 	private static void parse(String _parserName, Vector<String> _filenames, String _outFile, String _options, String _charSet)
 	{
-		String usage = "Usage: " + synopsis[2] + "\nwith PARSER = pas";
+		
+		String usage = "Usage: " + synopsis[2] + "\nAccepted file extensions:";
 
 		String fileExt = null;
-		// START KGU#354 2017-03-04: Enh. #354 configurable parser plugins
-//		if (_parserName.equals("pas") || _parserName.equalsIgnoreCase("pascal"))
-//		{
-//			fileExt = "pas";
-//		}
-//		// TODO Insert further parser variants here if available...
-//		else
-//		{
-//			System.err.println(usage);
-//			System.exit(5);
-//		}
+		// START KGU#354 2017-03-10: Enh. #354 configurable parser plugins
+		// Initialize the mapping file extensions -> CodeParser
 		// We just (ab)use some class residing in package gui to fetch the plugin configuration 
 		BufferedInputStream buff = new BufferedInputStream(lu.fisch.structorizer.gui.EditData.class.getResourceAsStream("parsers.xml"));
 		GENParser genp = new GENParser();
 		Vector<GENPlugin> plugins = genp.parse(buff);
+		Vector<CodeParser> parsers = new Vector<CodeParser>();
 		String parsClassName = null;
 		CodeParser parser = null;
-		// This specific test is here for backward compatibility
-		if (_parserName.equals("pas") || _parserName.equalsIgnoreCase("pascal")) {
-			parsClassName = "lu.fisch.structorizer.parsers.D7Parser";
-		}
-		for (int i=0; parsClassName == null && i < plugins.size(); i++)
+		for (int i=0; i < plugins.size(); i++)
 		{
 			GENPlugin plugin = (GENPlugin) plugins.get(i);
-			StringList names = StringList.explode(plugin.title, "/");
-			String className = plugin.className.substring(plugin.className.lastIndexOf(".")+1);
-			usage += " |\n\t" + className;
-			if (className.equalsIgnoreCase(_parserName))
+			String className = plugin.className;
+			try
 			{
-				parsClassName = plugin.className;
-			}
-			else
-			{
-				for (int j = 0; j < names.count(); j++)
-				{
-					if (names.get(j).trim().equalsIgnoreCase(_parserName))
-						parsClassName = plugin.className;
-					usage += " | " + names.get(j).trim();
+				Class<?> parsClass = Class.forName(className);
+				parser = (CodeParser) parsClass.newInstance();
+				parsers.add(parser);
+				usage += "\n\t";
+				for (String ext: parser.getFileExtensions()) {
+					usage += ext + ", ";
 				}
+				// Get rid of last ", " 
+				if (usage.endsWith(", ")) {
+					usage = usage.substring(0, usage.length()-2) + " for " + parser.getDialogTitle();
+				}
+			}
+			catch(java.lang.ClassNotFoundException ex)
+			{
+				System.err.println("*** Parser class " + ex.getMessage() + " not found!");
+			}
+			catch(Exception e)
+			{
+				System.err.println("*** Error on creating " + _parserName + "\n" + e.getMessage());
+				e.printStackTrace();
 			}
 		}
 
-		if (parsClassName == null)
-		{
-			System.err.println("*** Unknown code parser \"" + _parserName + "\"");
-			System.err.println(usage);
-			System.exit(5);
-		}
-		
-		try
-		{
-			Class<?> parsClass = Class.forName(parsClassName);
-			parser = (CodeParser) parsClass.newInstance();
-		}
-		catch(java.lang.ClassNotFoundException ex)
-		{
-			System.err.println("*** Parser class " + ex.getMessage() + " not found!");
-			System.exit(5);
-		}
-		catch(Exception e)
-		{
-			System.err.println("*** Error on creating " + _parserName + "\n" + e.getMessage());
-			e.printStackTrace();
-			System.exit(5);
-		}
-		// END KGU#354 2017-03-04
+		// END KGU#354 2017-03-10
 		
 		// START KGU#193 2016-05-09: Output file name specification was ignored, option f had to be tuned.
 		boolean overwrite = _options.indexOf("f") >= 0 && 
@@ -432,7 +416,7 @@ public class Structorizer
 		// END KGU#193 2016-05-09
 		
 		// START KGU#354 2017-03-03: Enh. #354 - support several parser plugins
-		// While there is only one input language candidate, a single Parser instance is enough
+		// While there was only one input language candidate, a single Parser instance had been enough
 		//D7Parser d7 = new D7Parser("D7Grammar.cgt");
 		// END KGU#354 2017-03-04
 		
@@ -445,8 +429,14 @@ public class Structorizer
 			// START KGU#354 2017-03-04: Enh. #354
 			//if (fileExt.equals("pas"))
 			File importFile = new File(filename);
-			if (parser.accept(importFile))
-			// END KGU#354 2017-03-04
+			parser = null;
+			for (int p = 0; parser == null && p < parsers.size(); p++) {
+				if (parsers.get(p).accept(importFile)) {
+					parser = parsers.get(p);
+				}
+			}
+			if (parser != null)
+			// END KGU#354 2017-03-09
 			{
 				//D7Parser d7 = new D7Parser("D7Grammar.cgt");
 				// START KGU#194 2016-05-04: Bugfix for 3.24-11 - encoding wasn't passed
@@ -460,7 +450,7 @@ public class Structorizer
 				}
 			}
 			else {
-				System.err.println("File " + filename + " not accpeted by " + _parserName + " parser!");
+				System.err.println("File " + filename + " not accpeted by " + parser.getDialogTitle() + " parser!");
 			}
 		
 			// Now save the roots as NSD files. Derive the target file names from the source file name

@@ -51,10 +51,11 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017-01-06      Issue #327: French default parser keywords replaced by English ones
  *      Kay Gürtzig     2017-03-04      Enh. #354: Inheritance to CodeParser introduced, Structorizer keyword
  *                                      configuration moved to superclass CodeParser.
+ *      Kay Gürtzig     2017.03.08      Modified for GOLDParser 5.0, also required to convert (* *) comments
  *
  ******************************************************************************************************
  *
- *      Comment:		While setting up this class, I had a deep look at the following package:
+ *      Comment:		While setting up this class (v1.0), I had a deep look at the following package:
  *
  *     Licensed Material - Property of Matthew Hawkins (hawkini@myrealbox.com)
  *     GOLDParser - code ported from VB - Author Devin Cook. All rights reserved.
@@ -67,29 +68,62 @@ package lu.fisch.structorizer.parsers;
  ******************************************************************************************************///
 
 import java.io.*;
-import java.nio.*;
-import java.nio.charset.*;
-import java.util.LinkedList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Stack;
+import java.util.regex.Matcher;
 
-import goldengine.java.*;
-import lu.fisch.utils.*;
-import lu.fisch.structorizer.elements.*;
+import com.creativewidgetworks.goldparser.parser.*;
+import com.creativewidgetworks.goldparser.engine.*;
+import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
-import com.stevesoft.pat.*;  //http://www.javaregex.com/
+import lu.fisch.structorizer.elements.Alternative;
+import lu.fisch.structorizer.elements.Case;
+import lu.fisch.structorizer.elements.Element;
+import lu.fisch.structorizer.elements.For;
+import lu.fisch.structorizer.elements.Instruction;
+import lu.fisch.structorizer.elements.Jump;
+import lu.fisch.structorizer.elements.Repeat;
+import lu.fisch.structorizer.elements.Root;
+import lu.fisch.structorizer.elements.Subqueue;
+import lu.fisch.structorizer.elements.While;
+import lu.fisch.utils.BString;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
+
+import com.creativewidgetworks.goldparser.engine.ParserException;
+import com.creativewidgetworks.goldparser.parser.GOLDParser;
+import com.stevesoft.pat.Regex;
 
 /**
- * Class to parse a Pascal (or Delphi 7, more precisely) file, generating a Structogram.
- * Also (ab)used for some fundamental settings of Structorizer - which will have to be
- * decomposed as soon as more languages (e.g. OBERON) are elected for import to Structorizer.
- * @author Bob Fisch
+ * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the ObjectPascal, Pascal
+ * or Delphi 7 language.
+ * This file contains grammar-specific constants and individual routines to build
+ * structograms (Nassi-Shneiderman diagrams) from the parsing tree. 
+ * @author Kay Gürtzig
  */
-// START KGU#354 2017-03-04: Enh. 354 - inheritance changed
-//public class D7Parser implements GPMessageConstants
-public class D7Parser extends CodeParser implements GPMessageConstants
-// END KGU#354 2017-03-04
+public class D7Parser extends CodeParser
 {
-	//@Override
+
+ 	/**
+ 	 * Class to parse a Pascal (or Delphi 7, more precisely) file, generating a Structogram.
+ 	 * @author Bob Fisch
+ 	 */
+ 	public D7Parser() {
+ 	}
+
+	@Override
 	public String getDialogTitle() {
 		return "Pascal";
 	}
@@ -100,12 +134,22 @@ public class D7Parser extends CodeParser implements GPMessageConstants
 	}
 
 	//@Override
-	protected String[] getFileExtensions() {
+	public String[] getFileExtensions() {
 		final String[] exts = { "pas", "dpr", "lpr" };
 		return exts;
 	}
 
-	private final String compiledGrammar = "D7Grammar.cgt";
+	@Override
+	protected final String getCompiledGrammar()
+	{
+		return "D7Grammar.cgt";
+	}
+	
+	@Override
+	protected final String getGrammarTableName()
+	{
+		return "ObjectPascal";
+	}
 	
 	// START KGU#354 2017-03-04: Now inherited from CodeParser
 	//Root root = null;
@@ -117,37 +161,9 @@ public class D7Parser extends CodeParser implements GPMessageConstants
 	//public String error = new String();
 	// END KGU#354 2017-03-04
 	
-	GOLDParser parser = null;
-	
 	// START KGU#194 2016-05-08: Bugfix #185 - if being a unit we must retain its name
 	private String unitName = null;
 	// END KGU#194 2016-05-08
-	
-	// START KGU#354 2017-03-04: Enh. #354 - signature changed, grammar now hard-coded
-	//public D7Parser(String _compiledGrammar)
-	public D7Parser()
-	// END KGU#354 2017-03-04
-	{
-		//compiledGrammar = _compiledGrammar;
-		// create new parser
-		parser = new GOLDParser();
-		parser.setTrimReductions(true);
-		
-		
-		// load the grammar	
-		try
-        {
-            parser.loadCompiledGrammar(compiledGrammar);
-        }
-        catch(ParserException parse)
-        {
-            System.out.println("**PARSER ERROR**\n" + parse.toString());
-            System.exit(1);
-        }
-		
-		loadFromINI();
-	}
-	
 	
 	public String filterNonAscii(String inString) 
 	{
@@ -178,207 +194,12 @@ public class D7Parser extends CodeParser implements GPMessageConstants
 		return result;	
 	}
 	
-	// START KGU#193 2016-05-04
-	/**
-	 * Parses the Pascal source code from file _textToParse and returns an equivalent
-	 * structogram.
-	 * Field `error' will either contain an empty string or an error message afterwards.
-	 * For backward compatibility reasons, character encoding ISO-8859-1 is assumed.
-	 * @param _textToParse - file name of the Pascal source.
-	 * @return The composed diagram (if parsing was successful, otherwise field error will contain an error description) 
-	 */
-	public Root parse(String _textToParse)
-	{
-		return parse(_textToParse, "ISO-8859-1").get(0);
-	}
-
-	/**
-	 * Parses the Pascal source code from file _textToParse, which is supposed to be encoded
-	 * with the charset _encoding, and returns a list of structograms - one for each function
-	 * or program contained in the source file.
-	 * Field `error' will either contain an empty string or an error message afterwards.
-	 * @param _textToParse - file name of the Pascal source.
-	 * @param _encoding - name of the charset to be used for decoding
-	 * @return A list containing composed diagrams (if successful, otherwise field error will contain an error description) 
-	 */
-	public List<Root> parse(String _textToParse, String _encoding)
-	// END KGU#193 2016-05-04
-	{
-		// create new root
-		root = new Root();
-		error = "";
-
-		// prepare textfile
-		// START KGU#354 2017-03-03: Enh. #354 - delegated to submethod
-		prepareTextfile(_textToParse, _encoding);
-		// END KGU#354 2017-03-03
-
-		// try to load the compiled grammar and
-		// load the text to parse
-		try
-		{
-			//parser.loadCompiledGrammar(compiledGrammar);
-			parser.openFile(_textToParse+".structorizer");
-		}
-		catch(ParserException parse)
-		{
-			System.out.println("**PARSER ERROR**\n" + parse.toString());
-			System.exit(1);
-		}
-
-		// init some vars
-		boolean done = false;
-		int response = -1;
-		// START KGU#191 2016-04-30: Issue #182 (insufficient information for error detection)
-		// Rolling buffer for processed tokens as retrospective context for error messages
-		// Number of empty strings = number of retained context lines 
-		String[] context = {"", "", "", "", "", "", "", "", "", ""};
-		int contextLine = 0;
-		// END KGU#191 2016-04-30
-
-		// start parsing
-		while (!done)
-		{
-			try
-			{
-				//System.out.println("- Parse: before");
-				response = parser.parse();
-				//System.out.println("- Parse: after");
-			}
-			catch(ParserException parse)
-			{
-				System.err.println("**PARSER ERROR**\n" + parse.toString());
-				System.exit(1);
-			}
-
-			//System.out.println("===> "+response);
-			Token theTok = null;
-			switch(response)
-			{
-			case gpMsgLexicalError:
-				//System.err.println("gpMsgLexicalError");
-				// START KGU#191 2016-04-30: Issue #182 
-				theTok = parser.currentToken();
-				error = ("Unexpected character: " + (String)theTok.getData()+" at line "+parser.currentLineNumber());
-				// END KGU#191 2016-04-30
-				parser.popInputToken();
-				done = true;
-				break;
-
-			case gpMsgSyntaxError:
-				theTok = parser.currentToken();
-				error = ("Token not expected: " + (String)theTok.getData()+" at line "+parser.currentLineNumber());
-
-				//System.out.println("gpMsgSyntaxError");
-				done = true;
-				break;
-
-			case gpMsgReduction:
-				//System.out.println("gpMsgReduction");
-				//Reduction myRed = parser.currentReduction();
-				//System.out.println(myRed.getParentRule().getText());
-				break;
-
-			case gpMsgAccept:
-				//System.out.println("Source OK");
-				buildNSD(parser.currentReduction());
-				done = true;
-				break;
-
-			case gpMsgTokenRead:
-				//System.out.println("gpMsgTokenRead");
-				Token myTok = parser.currentToken();
-				//System.out.println((String)myTok.getData());
-				// START KGU#191 2016-04-30: Issue #182 (insufficient information for error detection)
-				while (parser.currentLineNumber() > contextLine)
-				{
-					context[(++contextLine) % context.length] = "";
-				}
-				context[contextLine % context.length] += ((String)myTok.getData() + " ");
-				// END KGU#191 2016-04-30
-				break;
-
-			case gpMsgNotLoadedError:
-				System.err.println("gpMsgNotLoadedError");
-				done = true;
-				break;
-
-			case gpMsgCommentError:
-				System.err.println("gpMsgCommentError");
-				done = true;
-				break;
-
-			case gpMsgInternalError:
-				System.err.println("gpMsgInternalError");
-				done = true;
-				break;
-
-			default:
-				//System.out.println("default");
-				break;
-
-			}
-		}
-		//System.out.println("---- done ----");
-
-		// START KGU#191 2016-04-30: Issue #182 - In error case append the context 
-		if (!error.isEmpty())
-		{
-			error += "\nPreceding source context:";
-			contextLine -= context.length;
-			for (int line = 0; line < context.length; line++)
-			{
-				if (++contextLine >= 0)
-				{
-					error += "\n" + contextLine + ":   " + context[contextLine % context.length];
-				}
-			}
-		}
-		// END KGU#191 2016-04-30
-
-		try
-		{
-			parser.closeFile();
-		}
-		catch(ParserException parsex)
-		{
-			System.err.println("**PARSER ERROR**\n" + parsex.toString());
-			System.exit(1);
-		}
-
-		//remove the temporary file
-		(new File(_textToParse+".structorizer")).delete();
-
-		// START KGU#194 2016-07-07: Enh. #185/#188 - Try to convert calls to Call elements
-		StringList signatures = new StringList();
-		for (Root subroutine : subRoots)
-		{
-			if (!subroutine.isProgram)
-			{
-				signatures.add(subroutine.getMethodName() + "#" + subroutine.getParameterNames().count());
-			}
-		}
-		// END KGU#194 2016-07-07
-		
-		// START KGU#194 2016-05-08: Bugfix #185 - face an empty program or unit vessel
-		//return root;
-		if (subRoots.isEmpty() || root.children.getSize() > 0)
-		{
-			subRoots.add(0, root);
-		}
-		// START KGU#194 2016-07-07: Enh. #185/#188 - Try to convert calls to Call elements
-		for (Root aRoot : subRoots)
-		{
-			aRoot.convertToCalls(signatures);
-		}
-		// END KGU#194 2016-07-07
-		return subRoots;
-		// END KGU#194 2016-05-08
-	}
 
 	// START KGU#354 2017-03-03: Enh. #354 - generalized import mechanism
-	private void prepareTextfile(String _textToParse, String _encoding)
+	@Override
+	protected File prepareTextfile(String _textToParse, String _encoding)
 	{
+		File interm = null;
 		try
 		{
 			DataInputStream in = new DataInputStream(new FileInputStream(_textToParse));
@@ -398,23 +219,27 @@ public class D7Parser extends CodeParser implements GPMessageConstants
 			in.close();
 
 			// filter out comments (KGU: Why? The GOLDParser can do it itself)
-			Regex r = new Regex("(.*?)[(][*](.*?)[*][)](.*?)","$1$3"); 
-			pasCode=r.replaceAll(pasCode);
-			r = new Regex("(.*?)[{](.*?)[}](.*?)","$1$3"); 
-			pasCode = r.replaceAll(pasCode);
+//			Regex r = new Regex("(.*?)[(][*](.*?)[*][)](.*?)","$1$3"); 
+//			pasCode=r.replaceAll(pasCode);
+//			r = new Regex("(.*?)[{](.*?)[}](.*?)","$1$3"); 
+//			pasCode = r.replaceAll(pasCode);
 
 			// START KGU#195 2016-05-04: Issue #185 - Workaround for mere subroutines
 			pasCode = embedSubroutineDeclaration(pasCode);
 			// END KGU#195 2016-05-04
 
 			// reset correct endings
-			r = new Regex("(.*?)[\u2190](.*?)","$1\n$2"); 
+			Regex r = new Regex("(.*?)[\u2190](.*?)","$1\n$2"); 
 			pasCode = r.replaceAll(pasCode);
+			// START KGU#354 2017-03-07: Workaround for missing second commet delimiter pair in GOLDParser 5.0
+//			pasCode = pasCode.replaceAll("(.*?)(\\(\\*)(.*?)(\\*\\))(.*?)", "$1\\{$3\\}$5");
+			// END KGU#354 2017-03-07
 
 			//System.out.println(pasCode);
 
 			// trim and save as new file
-			OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(_textToParse+".structorizer"), "ISO-8859-1");
+			interm = new File(_textToParse + ".structorizer");
+			OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "ISO-8859-1");
 			ow.write(filterNonAscii(pasCode.trim()+"\n"));
 			//System.out.println("==> "+filterNonAscii(pasCode.trim()+"\n"));
 			ow.close();
@@ -423,6 +248,7 @@ public class D7Parser extends CodeParser implements GPMessageConstants
 		{
 			System.out.println(e.getMessage());
 		}	
+		return interm;
 	}
 	// END KGU#354 2017-03-03
 	
@@ -470,70 +296,69 @@ public class D7Parser extends CodeParser implements GPMessageConstants
 		// END KGU#194 2016-05-08
 	}
 	
-	@Override
 	protected void buildNSD_R(Reduction _reduction, Subqueue _parentNode)
 	{
 		String content = new String();
 	
-		if (_reduction.getTokenCount()>0)
+		if (_reduction.size()>0)
 		{
-			String ruleName = _reduction.getParentRule().name();
-			//System.out.println(ruleName);
+			String ruleHead = _reduction.getParent().getHead().toString();
+			//System.out.println(ruleHead);
 			if ( 
-				ruleName.equals("<RefId>")
+				ruleHead.equals("<RefId>")
 				||
-				ruleName.equals("<CallStmt>")
+				ruleHead.equals("<CallStmt>")
 				||
-				ruleName.equals("<Designator>")
+				ruleHead.equals("<Designator>")
 				||
-				ruleName.equals("<AssignmentStmt>")
+				ruleHead.equals("<AssignmentStmt>")
 			   )
 			{
 				content=new String();
 				content=getContent_R(_reduction,content);
-				//System.out.println(ruleName + ": " + content);
+				//System.out.println(ruleHead + ": " + content);
 				_parentNode.addElement(new Instruction(translateContent(content)));
 			}
 			else if (
-					 ruleName.equals("<UsesClause>")
+					 ruleHead.equals("<UsesClause>")
 					 ||
-					 ruleName.equals("<VarSection>")
+					 ruleHead.equals("<VarSection>")
 					 ||
-					 ruleName.equals("<ConstSection>")
+					 ruleHead.equals("<ConstSection>")
 					 // START KGU#194 2016-05-08: Bugfix #185
 					 // UNIT Interface section can be ignored, all contained routines
 					 // must be converted from the implementation section
 					 ||
-					 ruleName.equals("<InterfaceSection>")
+					 ruleHead.equals("<InterfaceSection>")
 					 ||
-					 ruleName.equals("<InitSection>")
+					 ruleHead.equals("<InitSection>")
 					 // END KGU#194 2016-05-08
 					 )
 			{
 			}
 			// START KGU#194 2016-05-08: Bugfix #185 - we must handle unit headers
 			else if (
-					ruleName.equals("<UnitHeader>")
+					ruleHead.equals("<UnitHeader>")
 					 )
 			{
-				unitName = getContent_R((Reduction) _reduction.getToken(1).getData(), "");
+				unitName = getContent_R((Reduction) _reduction.get(1).getData(), "");
 			}
 			else if (
-					ruleName.equals("<ProcedureDecl>")
+					ruleHead.equals("<ProcedureDecl>")
 					||
-					ruleName.equals("<FunctionDecl>")
+					ruleHead.equals("<FunctionDecl>")
 					||
-					ruleName.equals("<MethodDecl>")
+					ruleHead.equals("<MethodDecl>")
 					)
 			{
 				Root prevRoot = root;	// Push the original root
 				root = new Root();	// Prepare a new root for the subroutine
 				subRoots.add(root);
-				for (int i=0; i < _reduction.getTokenCount(); i++)
+				for (int i=0; i < _reduction.size(); i++)
 				{
-					if (_reduction.getToken(i).getKind() == SymbolTypeConstants.symbolTypeNonterminal)
+					if (_reduction.get(i).getType() == SymbolType.NON_TERMINAL)
 					{
-						buildNSD_R((Reduction) _reduction.getToken(i).getData(), root.children);
+						buildNSD_R(_reduction.get(i).asReduction(), root.children);
 					}
 				}
 				// Restore the original root
@@ -541,22 +366,22 @@ public class D7Parser extends CodeParser implements GPMessageConstants
 			}
 			// END KGU#194 2016-05-08
 			else if (
-					 ruleName.equals("<ProgHeader>")
+					 ruleHead.equals("<ProgHeader>")
 					 )
 			{
 				content=new String();
-				content=getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content=getContent_R(_reduction.get(1).asReduction(), content);
 				root.setText(translateContent(content));
 			}
 			else if (
-					 ruleName.equals("<ProcHeading>")
+					 ruleHead.equals("<ProcHeading>")
 					 )
 			{
 				content = new String();
-				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content = getContent_R(_reduction.get(1).asReduction(),content);
 				
-				Reduction secReduc = (Reduction) _reduction.getToken(2).getData();
-				if (secReduc.getTokenCount()!=0)
+				Reduction secReduc = _reduction.get(2).asReduction();
+				if (secReduc.size()!=0)
 				{
 					content = getContent_R(secReduc,content);
 				}
@@ -573,20 +398,20 @@ public class D7Parser extends CodeParser implements GPMessageConstants
 				// END KGU#194 2016-05-08
 			}
 			else if (
-					 ruleName.equals("<FuncHeading>")
+					 ruleHead.equals("<FuncHeading>")
 					 )
 			{
 				content = new String();
-				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content = getContent_R(_reduction.get(1).asReduction(), content);
 				
-				Reduction secReduc = (Reduction) _reduction.getToken(2).getData();
-				if (secReduc.getTokenCount()!=0)
+				Reduction secReduc = _reduction.get(2).asReduction();
+				if (secReduc.size()!=0)
 				{
 					content = getContent_R(secReduc,content);
 				}
 				
-				secReduc = (Reduction) _reduction.getToken(4).getData();
-				if (secReduc.getTokenCount()!=0)
+				secReduc = _reduction.get(4).asReduction();
+				if (secReduc.size()!=0)
 				{
 					content += ": ";
 					content = getContent_R(secReduc,content);
@@ -604,43 +429,43 @@ public class D7Parser extends CodeParser implements GPMessageConstants
 				// END KGU#194 2016-05-08
 			}
 			else if (
-					 ruleName.equals("<WhileStatement>")
+					 ruleHead.equals("<WhileStatement>")
 					 )
 			{
 				content = new String();
-				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content = getContent_R(_reduction.get(1).asReduction(), content);
 				While ele = new While(getKeyword("preWhile")+translateContent(content)+getKeyword("postWhile"));
 				_parentNode.addElement(ele);
 				
-				Reduction secReduc = (Reduction) _reduction.getToken(3).getData();
+				Reduction secReduc = (Reduction) _reduction.get(3).getData();
 				buildNSD_R(secReduc,ele.q);
 			}
 			else if (
-					 ruleName.equals("<RepeatStatement>")
+					 ruleHead.equals("<RepeatStatement>")
 					 )
 			{
 				content = new String();
-				content = getContent_R((Reduction) _reduction.getToken(3).getData(),content);
+				content = getContent_R(_reduction.get(3).asReduction(), content);
 				Repeat ele = new Repeat(getKeyword("preRepeat")+translateContent(content)+getKeyword("postRepeat"));
 				_parentNode.addElement(ele);
 				
-				Reduction secReduc = (Reduction) _reduction.getToken(1).getData();
+				Reduction secReduc = _reduction.get(1).asReduction();
 				buildNSD_R(secReduc,ele.q);
 			}
 			else if (
-					 ruleName.equals("<ForStatement>")
+					 ruleHead.equals("<ForStatement>")
 					 )
 			{
 				content = new String();
-				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content = getContent_R(_reduction.get(1).asReduction(), content);
 				content += ":=";
-				content = getContent_R((Reduction) _reduction.getToken(3).getData(),content);
+				content = getContent_R(_reduction.get(3).asReduction(), content);
 				content += " ";
 				content += getKeyword("postFor");
 				content += " ";
-				content = getContent_R((Reduction) _reduction.getToken(5).getData(),content);
+				content = getContent_R(_reduction.get(5).asReduction(), content);
 				// START KGU#3 2016-05-02: Enh. #10 Token 4 contains the information whether it's to or downto
-				if (getContent_R((Reduction) _reduction.getToken(4).getData(), "").equals("downto"))
+				if (getContent_R(_reduction.get(4).asReduction(), "").equals("downto"))
 				{
 					content += " " + getKeyword("stepFor") + " -1";
 				}
@@ -652,33 +477,33 @@ public class D7Parser extends CodeParser implements GPMessageConstants
 				_parentNode.addElement(ele);
 				
 				// Get and convert the body
-				Reduction secReduc = (Reduction) _reduction.getToken(7).getData();
+				Reduction secReduc = _reduction.get(7).asReduction();
 				buildNSD_R(secReduc,ele.q);
 			}
 			else if (
-					 ruleName.equals("<IfStatement>")
+					 ruleHead.equals("<IfStatement>")
 					 )
 			{
 				content = new String();
-				content = getContent_R((Reduction) _reduction.getToken(1).getData(),content);
+				content = getContent_R(_reduction.get(1).asReduction(), content);
 				
 				Alternative ele = new Alternative(getKeyword("preAlt") + translateContent(content)+getKeyword("postAlt"));
 				_parentNode.addElement(ele);
 				
-				Reduction secReduc = (Reduction) _reduction.getToken(3).getData();
+				Reduction secReduc = _reduction.get(3).asReduction();
 				buildNSD_R(secReduc,ele.qTrue);
-				if(_reduction.getTokenCount()>=5)
+				if(_reduction.size()>=5)
 				{
-					secReduc = (Reduction) _reduction.getToken(5).getData();
+					secReduc = _reduction.get(5).asReduction();
 					buildNSD_R(secReduc,ele.qFalse);
 				}
 			}
 			else if (
-					 ruleName.equals("<CaseSelector>")
+					 ruleHead.equals("<CaseSelector>")
 					 )
 			{
 				content = new String();
-				content = getContent_R((Reduction) _reduction.getToken(0).getData(),content);
+				content = getContent_R(_reduction.get(0).asReduction(), content);
 				
 				// sich am parent (CASE) dat nächst fräit Element
 				boolean found = false;
@@ -689,47 +514,31 @@ public class D7Parser extends CodeParser implements GPMessageConstants
 						((Case) _parentNode.parent).getText().set(i,content);
 						found=true;
 						
-						Reduction secReduc = (Reduction) _reduction.getToken(2).getData();
+						Reduction secReduc = (Reduction) _reduction.get(2).getData();
 						buildNSD_R(secReduc,(Subqueue) ((Case) _parentNode.parent).qs.get(i-1));
 					}
 				}
 
-				/*
-				 content:='';
-				 getContent_R(R.Tokens[0].Reduction,content);
-				 
-				 // sich am parent (CASE) dat nächst fräit Element
-				 found:=false;
-				 for i:=0 to (parentnode.parent as BCase).text.Count-1 do
-				 begin
-				 if((parentnode.parent as BCase).text[i]='??')and(found=false) then
-				 begin
-				 (parentnode.parent as BCase).text[i]:=content;
-				 found:=true;
-				 DrawNSD_R(R.Tokens[2].Reduction,((parentnode.parent as BCase).qs[i-1] as BSubqueue));
-				 end;
-				 end;
-				*/
 			}
 			else if (
-					 ruleName.equals("<CaseStatement>")
+					 ruleHead.equals("<CaseStatement>")
 					 )
 			{
 				content = new String();
-				content = getKeyword("preCase")+getContent_R((Reduction) _reduction.getToken(1).getData(),content)+getKeyword("postCase");
+				content = getKeyword("preCase")+getContent_R(_reduction.get(1).asReduction(),content)+getKeyword("postCase");
 				// am content steet elo hei den "test" dran
 				
 				// Wéivill Elementer sinn am CASE dran?
-				Reduction sr = (Reduction) _reduction.getToken(3).getData();
+				Reduction sr = _reduction.get(3).asReduction();
 				int j = 0;
-				//System.out.println(sr.getParentRule().getText());  // <<<<<<<
-				while (sr.getParentRule().name().equals("<CaseList>"))
+				//System.out.println(sr.getParent().getText());  // <<<<<<<
+				while (sr.getParent().getHead().toString().equals("<CaseList>"))
 				{
 					j++;
 					content += "\n??";
-					if (sr.getTokenCount()>=1)
+					if (sr.size()>=1)
 					{
-						sr = (Reduction) sr.getToken(0).getData();
+						sr = sr.get(0).asReduction();
 					}
 					else
 					{
@@ -748,10 +557,10 @@ public class D7Parser extends CodeParser implements GPMessageConstants
 				_parentNode.addElement(ele);
 
 				// déi eenzel Elementer siche goen
-				Reduction secReduc = (Reduction) _reduction.getToken(3).getData();
+				Reduction secReduc = _reduction.get(3).asReduction();
 				buildNSD_R(secReduc,(Subqueue) ele.qs.get(0));
 				// den "otherwise"
-				secReduc = (Reduction) _reduction.getToken(4).getData();
+				secReduc = _reduction.get(4).asReduction();
 				buildNSD_R(secReduc,(Subqueue) ele.qs.get(j-1));
 				
 				// cut off else, if possible
@@ -793,13 +602,13 @@ public class D7Parser extends CodeParser implements GPMessageConstants
 			}
 			else
 			{
-				if (_reduction.getTokenCount()>0)
+				if (_reduction.size()>0)
 				{
-					for(int i=0; i<_reduction.getTokenCount(); i++)
+					for(int i=0; i<_reduction.size(); i++)
 					{
-						if (_reduction.getToken(i).getKind()==SymbolTypeConstants.symbolTypeNonterminal)
+						if (_reduction.get(i).getType()==SymbolType.NON_TERMINAL)
 						{
-							buildNSD_R((Reduction) _reduction.getToken(i).getData(),_parentNode);
+							buildNSD_R(_reduction.get(i).asReduction(), _parentNode);
 						}
 					}
 				}
@@ -847,18 +656,18 @@ public class D7Parser extends CodeParser implements GPMessageConstants
 	
 	protected String getContent_R(Reduction _reduction, String _content)
 	{
-//		if (_reduction.getTokenCount()>0)
+//		if (_reduction.size()>0)
 //		{
-			for(int i=0;i<_reduction.getTokenCount();i++)
+			for(int i=0;i<_reduction.size();i++)
 			{
-				switch (_reduction.getToken(i).getKind()) 
+				switch (_reduction.get(i).getType()) 
 				{
-					case SymbolTypeConstants.symbolTypeNonterminal:
-						_content = getContent_R((Reduction) _reduction.getToken(i).getData(), _content);	
+					case NON_TERMINAL:
+						_content = getContent_R((Reduction) _reduction.get(i).getData(), _content);	
 						break;
-					case SymbolTypeConstants.symbolTypeTerminal:
+					case CONTENT:
 						{
-							String tokenData = (String) _reduction.getToken(i).getData();
+							String tokenData = (String) _reduction.get(i).getData();
 							// START KGU 2016-05-08: Avoid keyword concatenation
 							boolean tokenIsId = !tokenData.isEmpty() && Character.isJavaIdentifierStart(tokenData.charAt(0));
 							// END KGU 2016-05-08
@@ -908,6 +717,11 @@ public class D7Parser extends CodeParser implements GPMessageConstants
 		
 		return _content;
 	}
-	
+
+	@Override
+	protected void subclassUpdateRoot(Root root, String sourceFileName) {
+		// TODO Auto-generated method stub
+		
+	}
 
 }

@@ -421,6 +421,7 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#300 2016-12-02
 	// START KGU#354 2017-03-04: Enh. #354 Now generic import menu
 	public static final LangTextHolder lblImportCode = new LangTextHolder("% Code ...");
+	public static final LangTextHolder lblCopyToClipBoard = new LangTextHolder("OK + Copy to Clipboard");
 	// END KGU#354 2017-03-04
 
 	public void create()

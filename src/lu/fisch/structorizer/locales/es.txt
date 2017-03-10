@@ -297,6 +297,7 @@ Menu.lblOk.text=Visto
 Menu.lblSuppressUpdateHint.text=Jamás mostrar esta ventanilla
 Menu.lblHint.text=Aviso
 Menu.lblImportCode.text=Código % ...
+Menu.lblCopyToClipBoard.text=Copiar en el portapapeles
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
@@ -308,8 +309,8 @@ Menu.error02.text=¡Sin cambio de las variables de la condición! Posible bucle 
 Menu.error03_1.text=¡La variable «%» no ha sido inicializada!
 Menu.error03_2.text=¡La variable «%» no siempre será inicializada!
 Menu.error04.text=¡No tienes permiso usar una declaración IF con un bloque de verdad vacío!
-Menu.error05.text=¡La variable «%» debe ser escrita en mayusculas!
-Menu.error06.text=¡El programa «%» debe ser escrita en mayusculas!
+Menu.error05.text=¡La variable «%» debe ser escrita en mayúsculas!
+Menu.error06.text=¡El programa «%» debe ser escrito en mayúsculas!
 Menu.error07_1.text=¡«%» no es un nombre válido para el programa o método!
 Menu.error07_2.text=¡«%» no es un nombre válido para el parámetro!
 Menu.error07_3.text=¡«%» no es un nombre válido para la variable!

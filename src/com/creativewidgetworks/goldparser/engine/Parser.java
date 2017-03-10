@@ -53,6 +53,7 @@ import com.creativewidgetworks.goldparser.util.FormatHelper;
  *
  * @author Devin Cook (http://www.DevinCook.com/GOLDParser)
  * @author Ralph Iden (http://www.creativewidgetworks.com), port to Java
+ * @author Kay Gürtzig (mailto:kay.guertzig@fh-erfurt.de) enable bugfix for legacy cgts
  * @version 5.0.0
  */
 public class Parser {
@@ -680,7 +681,7 @@ public class Parser {
      * either the grammar is accepted or an error occurs.
      * @return ParseMessage
      */
-    protected ParseMessage parse() {
+    public ParseMessage parse() {
         if (!tablesLoaded) {
             return ParseMessage.NOT_LOADED_ERROR;
         }
@@ -966,7 +967,10 @@ public class Parser {
      * grammar.  It is assumed that version 1.0 files have a maximum of 1 closed
      * comment block and one comment line symbol.
      */
-    private void resolveCommentGroupsForVersion1Grammars() {
+    // START KGU#354 2017-03-09: It was necessary to widen visibility in order to override it
+    //private void resolveCommentGroupsForVersion1Grammars() {
+    protected void resolveCommentGroupsForVersion1Grammars() {
+    // END KGU#354 2017-03-09
         if (isVersion1Format()) {
             Group group;
             Symbol symbolStart = null;

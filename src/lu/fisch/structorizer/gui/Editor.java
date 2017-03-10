@@ -1301,7 +1301,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 
     public JFrame getFrame()
     {
-                return NSDControll.getFrame();
+    	if (NSDControll != null) {
+    		return NSDControll.getFrame();
+    	}
+    	return null;
     }
 
     public void loadFromINI()

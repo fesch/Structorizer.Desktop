@@ -114,6 +114,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.02.27      Enh. #346: Export option dialog changes for user-specific include directives
  *      Kay Gürtzig     2017.03.04      Enh. #354: Code import generalized
  *      Kay Gürtzig     2017.03.06      Enh. #368: New import option: code import of variable declarations
+ *      Kay Gürtzig     2017.03.08      Enh. #354: file dropping generalized, new import option to save parseTree
  *
  ******************************************************************************************************
  *
@@ -169,6 +170,7 @@ import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 import lu.fisch.structorizer.io.*;
 import lu.fisch.structorizer.generators.*;
+import lu.fisch.structorizer.helpers.GENPlugin;
 import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
@@ -380,43 +382,69 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						}
 						// END KGU#289 2016-11-15
 						// FIXME: Find a way to go over all the parser plugins
-						else if (
-								filenameLower.endsWith(".mod")	// won't work..?
-								||
-								filenameLower.endsWith(".pas")
-								||
-								filenameLower.endsWith(".dpr")
-								||
-								filenameLower.endsWith(".lpr")
-								)
-						{
-							// save (only if something has been changed)
-							saveNSD(true);
-							// load and parse source-code
-							// START KGU#354 2017-03-04: Enh. #354 Signature changd
-							//D7Parser d7 = new D7Parser("D7Grammar.cgt");
-							D7Parser d7 = new D7Parser();
-							// END KGU#354 2017-03-04
-							Root rootNew = d7.parse(filename);
-							if (d7.error.equals(""))
+						else {
+							String charSet = Ini.getInstance().getProperty("impImportCharset", Charset.defaultCharset().name());
+							// START KGU#354 2017-03-08: go over all the parser plugins
+							CodeParser parser = null;
+							File theFile = new File(filename);
+							parser = findParserForFileExtension(theFile);
+							if (parser != null)
 							{
-								setRootIfNotRunning(rootNew);
-								currentDirectory = new File(filename);
-								//System.out.println(root.getFullText().getText());
-							}
-							else
-							{
-								// show error
-								JOptionPane.showMessageDialog(null,
-										d7.error,
-										Menu.msgTitleParserError.getText(),
-										JOptionPane.ERROR_MESSAGE);
+								// save (only if something has been changed)
+								saveNSD(true);
+								// load and parse source-code
+								List<Root> newRoots = parser.parse(filename, charSet);
+								if (parser.error.equals("")) {
+									boolean arrange = false;
+									for (Root rootNew: newRoots) {
+										if (arrange) {
+											arrangeNSD();
+										}
+										setRootIfNotRunning(rootNew);
+										currentDirectory = new File(filename);
+										arrange = true;
+										//System.out.println(root.getFullText().getText());
+									}
+									for (Root rootNew: newRoots) {
+										rootNew.setChanged();
+									}
+								}
+								else
+								{
+									// show error
+									// START KGU#364 2017-03-09: Allow to copy the content
+									//JOptionPane.showMessageDialog(null,
+									//		parser.error,
+									//		Menu.msgTitleParserError.getText(),
+									//		JOptionPane.ERROR_MESSAGE);
+									String[] options = {
+											Menu.lblOk.getText(),
+											Menu.lblCopyToClipBoard.getText()
+									};
+									int chosen = JOptionPane.showOptionDialog(null,
+											parser.error,
+											Menu.msgTitleParserError.getText(),
+											JOptionPane.ERROR_MESSAGE,
+											JOptionPane.YES_NO_OPTION,
+											null, options, 0);
+									if (chosen == 1) {
+										Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+										StringSelection toClip = new StringSelection(parser.error);
+										clipboard.setContents(toClip, null);									
+									}
+								}
+								redraw();
+								Container cont = getParent();
+								while (cont != null && !(cont instanceof JFrame)) {
+									cont = cont.getParent();
+								}
+								if (cont != null) {
+									((JFrame)cont).toFront();
+								}
 							}
 
-							redraw();
 						}
-
-
+						// END KGU#354 2017-03-08
 					}
 				}
 			}
@@ -443,6 +471,40 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// Attempt to find out what provokes the NullPointerExceptions on start
 		//System.out.println("**** " + this + ".create() ready!");
 	}
+    
+	// START KGU#354 2017-03-08: go over all the parser plugins
+    private CodeParser findParserForFileExtension(File file)
+    {
+    	CodeParser parser = null;
+		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"));
+		GENParser genp = new GENParser();
+		Vector<GENPlugin> parserPlugins = genp.parse(buff);
+		for (int i=0; i < parserPlugins.size() && parser == null; i++)
+		{
+			GENPlugin plugin = parserPlugins.get(i);
+			final String className = plugin.className;
+			Class<?> parserClass;
+			try {
+				parserClass = Class.forName(className);
+				parser = (CodeParser) parserClass.newInstance();
+				if (!parser.accept(file)) {
+					parser = null;
+				}
+			} catch (Exception e) {
+				// FIXME: popup message box...
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		try {
+			buff.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return parser;
+    }
+	// END KGU#354 2017-03-08
 
 	public void hideComments()
 	{
@@ -3004,6 +3066,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	/*****************************************
 	 * arrange method
 	 *****************************************/
+	/**
+	 * Push the current root to the Arranger and pin it there. If Arranger wasn't visible then
+	 * it will be (re-)opened. 
+	 */
 	public void arrangeNSD()
 	{
 		//System.out.println("Arranger button pressed!");
@@ -3956,7 +4022,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		catch(Exception ex)
 		{
 			String message = ex.getLocalizedMessage();
-			if (message == null) message = ex.getMessage();
+			if (message == null) {
+				message = ex.getMessage();
+				ex.printStackTrace();
+			}
 			if (message == null) message = ex.toString();
 			JOptionPane.showMessageDialog(this,
 					Menu.msgErrorUsingParser.getText().replace("%", _parserClassName)+"\n" + message,
@@ -4689,6 +4758,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#358 2017-03-06: Enh. #368
             iod.chkVarDeclarations.setSelected(ini.getProperty("impVarDeclarations", "false").equals("true"));
             // END KGU#358 2017-03-06
+            // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
+            iod.chkSaveParseTree.setSelected(ini.getProperty("impSaveParseTree", "false").equals("true"));
+            // END KGU#354 2017-03-08
             iod.setVisible(true);
             
             if(iod.goOn==true)
@@ -4698,6 +4770,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 // START KGU#358 2017-03-06: Enh. #368
                 ini.setProperty("impVarDeclarations", String.valueOf(iod.chkVarDeclarations.isSelected()));
                 // END KGU#358 2017-03-06
+                // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
+                ini.setProperty("impSaveParseTree", String.valueOf(iod.chkSaveParseTree.isSelected()));
+                // END KGU#354 2017-03-08
                 ini.save();
             }
         } 

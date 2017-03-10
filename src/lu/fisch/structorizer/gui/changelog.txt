@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.27 (2017.03.06)
+Current development version: 3.27 (2017.03.10)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>
@@ -43,13 +43,14 @@ Current development version: 3.27 (2017.03.06)
 - 04: Issue #350: OUTPUT instruction translation to Python was obsolete <2>
 - 04: Perl export: variable prefixing improved w.r.t. arrays and references <2>
 - 04: Enh. #346: Configuration of include directives to be exported [Rolf Schmidt]2
-- 05: Some typos in the locale file keys mended
+- 05: Some typos in the locale file keys mended <2>
 - 05: Bugfix #365: Improved FOR-IN loop export to C (also more conform with early C) <2>
-- 05: Enh. #354: Plugin system for code import (in analogy to generators) [S. Sobisch]2
-- 05: Enh. #354: ANSI-C parser added to code import plugins <2>
-- 05: Enh. #368: New import option to load variable declarations <2>
-- 05: Issue #368: Analyser no longer blames declarations of lacking initialization <2>
-- 05: Issue #369: Executor got C-style array definitions wrong (int a[2] <- {5, 2}) <2>
+- 06: Enh. #354: Plugin system for code import (in analogy to generators) [S. Sobisch]2
+- 06: Enh. #354: ANSI-C parser added to code import plugins <2>
+- 06: Enh. #368: New import option to load variable declarations <2>
+- 06: Issue #368: Analyser no longer blames declarations of lacking initialization <2>
+- 06: Issue #369: Executor got C-style array definitions wrong (int a[2] <- {5, 2}) <2>
+- 06: Issue #354: GOLDParser update to version 5.0 <2> 
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

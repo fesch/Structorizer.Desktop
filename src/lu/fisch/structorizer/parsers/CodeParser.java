@@ -41,6 +41,10 @@ package lu.fisch.structorizer.parsers;
  ******************************************************************************************************///
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -48,11 +52,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import goldengine.java.GOLDParser;
-import goldengine.java.Reduction;
+import com.creativewidgetworks.goldparser.engine.ParserException;
+import com.creativewidgetworks.goldparser.engine.Position;
+import com.creativewidgetworks.goldparser.engine.Reduction;
+import com.creativewidgetworks.goldparser.engine.Symbol;
+import com.creativewidgetworks.goldparser.engine.SymbolList;
 
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.io.Ini;
+import lu.fisch.utils.StringList;
 
 
 /**
@@ -74,14 +82,32 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 {
 	/************ Common fields *************/
 	public String error;
-	protected GOLDParser parser;
+	protected AuParser parser;
 	protected Root root = null;
 	// We may obtain a collection of Roots (unit or program with subroutines)!
 	protected List<Root> subRoots = new LinkedList<Root>();
-	// START KGU#358 2017-03-06: Enh. #368 - new import option
+	// START KGU#358 2017-03-06: Enh. #354, #368 - new import options
 	protected boolean optionImportVarDecl = false;
+	protected boolean optionSaveParseTree()
+	{
+		return Ini.getInstance().getProperty("impSaveParseTree", "false").equals("true");
+	}
+	// END KGU#358 2017-03-06
 
 	/************ Abstract Methods *************/
+	
+	/**
+	 * Is to provide the file name of the compiled grammar the parser class is made for
+	 * @return a grammar file name retrievable as resource (a cgt or egt file).
+	 */
+	protected abstract String getCompiledGrammar();
+	
+	/**
+	 * Is to return the internal name of the grammar table as given in the grammar file
+	 * parameters
+	 * @return Name string as specified inthe grammar file header
+	 */
+	protected abstract String getGrammarTableName();
 	
 	/**
 	 * Is to return a replacement for the FileChooser title. Ideally its just
@@ -105,10 +131,10 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * @see #getFileDescription()
 	 * @return the array of associated file name extensions
 	 */
-	protected abstract String[] getFileExtensions();
+	public abstract String[] getFileExtensions();
 	
 	/**
-	 * Parses the source code from file _textToParse, which is supposed to be encoded
+	 * Parses the ANSI-C source code from file _textToParse, which is supposed to be encoded
 	 * with the charset _encoding, and returns a list of structograms - one for each function
 	 * or program contained in the source file.
 	 * Field `error' will either contain an empty string or an error message afterwards.
@@ -116,7 +142,175 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * @param _encoding - name of the charset to be used for decoding
 	 * @return A list containing composed diagrams (if successful, otherwise field error will contain an error description) 
 	 */
-	public abstract List<Root> parse(String textToParse, String _encoding);
+	public List<Root> parse(String textToParse, String _encoding) {
+	
+		// AuParser is a Structorizer subclass of GOLDParser (Au = gold)
+ 		parser = new AuParser(
+ 				getClass().getResourceAsStream(getCompiledGrammar()),
+ 				getGrammarTableName(),
+ 				true);
+
+		// Controls whether or not a parse tree is returned or the program executed.
+ 		parser.setGenerateTree(optionSaveParseTree());
+
+		// create new root
+		root = new Root();
+		error = "";
+		
+		File intermediate = prepareTextfile(textToParse, _encoding);
+		
+		String sourceCode = null;
+		
+		boolean isSyntaxError = false;
+		
+        try {
+			sourceCode = loadSourceFile(intermediate.getAbsolutePath(), _encoding);
+            // Parse the source statements to see if it is syntactically correct
+            boolean parsedWithoutError = parser.parseSourceStatements(sourceCode);
+
+            // Holds the parse tree if setGenerateTree(true) was called
+            //tree = parser.getParseTree();
+            
+            // Either execute the code or print any error message
+            if (parsedWithoutError) {
+				// ************************************** log file
+				System.out.println("ACCEPT");
+				// ************************************** end log
+            	buildNSD(parser.getCurrentReduction());
+				if (this.optionSaveParseTree()) {
+					try {
+					String tree = parser.getParseTree();
+					File treeLog = new File(textToParse + ".parsetree.txt");
+					String encTree = Ini.getInstance().getProperty("genExportCharset", "UTF-8");
+					OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(treeLog), encTree);
+					ow.write(tree);
+					//System.out.println("==> "+filterNonAscii(pasCode.trim()+"\n"));
+					ow.close();
+					}
+					catch (Exception ex) {
+						System.err.println(ex.getMessage());
+					}
+				}
+            } else {
+            	isSyntaxError = true;
+                error = parser.getErrorMessage() + " in file \"" + textToParse + "\"";
+            }
+        }
+        catch (ParserException e) {
+            error = "**PARSER ERROR** with file \"" + textToParse + "\":\n" + e.getMessage();
+            e.printStackTrace();
+        }
+		catch (IOException e1) {
+			// TODO Auto-generated catch block
+            error = "**IO ERROR** on importing file \"" + textToParse + "\":\n" + e1.getMessage();
+			e1.printStackTrace();
+		}
+
+		// START KGU#191 2016-04-30: Issue #182 - In error case append the context 
+		if (isSyntaxError && intermediate != null)
+		{
+			Position pos = parser.getCurrentPosition();
+			error += "\nPreceding source context:";
+			int lineNo = pos.getLine() - 1;
+			int colNo = pos.getColumn() - 1;
+			int start = (lineNo > 10) ? lineNo -10 : 0;
+			StringList sourceLines = StringList.explode(sourceCode, "\n");
+			// Unfortunately, the lineNo obtained from the parser is not correct, i.e.
+			// it doesn't count empty lines. So there are two options for us here:
+			// a) we remove all empty lines by sourceLines.removeAll(""); and may
+			//    navigate quicker to the start but irritate the user
+			// b) We loop over all entries not counting empty lines. This way, line
+			//    numbering keeps half-way consistent with the user's counting.
+			// We decide for a), since some preprocessor lines have been dropped
+			// anyway.
+			sourceLines.removeAll("");
+			for (int i = start; i < lineNo; i++) {
+				String line = sourceLines.get(i);
+				error += String.format("\n%4d:   %s", i+1, line.replace("\t", "    "));
+			}
+			String line = sourceLines.get(lineNo);
+			if (line.length() >= colNo) {
+				line = line.substring(0, colNo) + "» " + line.substring(colNo);
+			}
+			error += String.format("\n%4d:   %s", lineNo+1,	line.replace("\t", "    "));
+			if (line.length() < colNo && lineNo+1 < sourceLines.count()) {
+				error += String.format("\n%4d:   %s", lineNo+2, sourceLines.get(lineNo+1).replaceFirst("(^\\s*)(\\S.*)", "$1»$2").replace("\t", "    "));
+			}
+			SymbolList sl = parser.getExpectedSymbols();
+			String sepa = "\n\nExpected: ";
+			String exp = "";
+			for (Symbol sym: sl) {
+				exp += sepa + sym.toString();
+				sepa = " | ";
+				if (exp.length() > 80) {
+					error += exp;
+					exp = "";
+					sepa = "\n | ";
+				}
+			}
+			error += exp;
+		}
+		// END KGU#191 2016-04-30
+
+		// remove the temporary file
+		intermediate.delete();
+		
+		// START KGU#194 2016-07-07: Enh. #185/#188 - Try to convert calls to Call elements
+		StringList signatures = new StringList();
+		for (Root subroutine : subRoots)
+		{
+			// START KGU#354 2017-03-10: Hook for subclass postprocessing
+			this.subclassUpdateRoot(subroutine, textToParse);
+			// END KGU#354 2017-03-10
+			if (!subroutine.isProgram)
+			{
+				signatures.add(subroutine.getMethodName() + "#" + subroutine.getParameterNames().count());
+			}
+		}
+		// END KGU#194 2016-07-07
+		// START KGU#354 2017-03-10: Hook for subclass postprocessing
+		if (!subRoots.contains(root)) {
+			this.subclassUpdateRoot(root, textToParse);
+		}
+		// END KGU#354 2017-03-10
+		
+		// START KGU#194 2016-05-08: Bugfix #185 - face an empty program or unit vessel
+		//return root;
+		if (subRoots.isEmpty() || root.children.getSize() > 0)
+		{
+			subRoots.add(0, root);
+		}
+		// START KGU#194 2016-07-07: Enh. #185/#188 - Try to convert calls to Call elements
+		for (Root aRoot : subRoots)
+		{
+			aRoot.convertToCalls(signatures);
+		}
+		// END KGU#194 2016-07-07
+		
+		return subRoots;
+	}
+
+	/**
+	 * Performs some necessary preprocessing for the text file. Must return a
+	 * File object associated to a temporary (and possibly modified) copy of
+	 * the file _textToParse. The copy is to be in a fix encoding.
+	 * Typically opens the file, filters it and writes a new file
+	 * _textToParse+".structorizer" to the same directory, which may then actually
+	 * be parsed.
+	 * The preprocessed file will always be saved with UTF-8 encoding.
+	 * @param _textToParse - name (path) of the source file
+	 * @param _encoding - the expected encoding of the source file.
+	 * @return A file object for the created intermediate file, null if something
+	 * went wrong.
+	 */
+	protected abstract File prepareTextfile(String _textToParse, String _encoding);
+	
+	/**
+	 * Called after the build for every created Root and allows thus to do some 
+	 * @param root
+	 * @param sourceFileName
+	 */
+	protected abstract void subclassUpdateRoot(Root root, String sourceFileName);
 
 	/******* FileFilter Extension *********/
 	
@@ -198,6 +392,21 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
     }
 	
 	
+    /**
+     * Load a source file to be interpreted by the engine.  
+     * @param filename of a source file
+     * @return source code to be interpreted
+     * @throws IOException 
+     */
+    public String loadSourceFile(String filename, String encoding) throws IOException {
+        File file = new File(filename);
+        FileInputStream fis = new FileInputStream(filename);
+        byte[] buf = new byte[(int)file.length()];
+        fis.read(buf);
+        fis.close();
+        return new String(buf);
+    }
+   
 	/******* Diagram Synthesis *********/
 	
 	/**
@@ -217,6 +426,7 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		this.optionImportVarDecl = Ini.getInstance().getProperty("impVarDeclarations", "false").equals("true");
 		// END KGU#358 2017-03-06
 		root.isProgram = true;
+		// Allow subclasses to adjust things before the recursive build process is going off.
 		this.initializeBuildNSD();
 		buildNSD_R(_reduction, root.children);
 	}

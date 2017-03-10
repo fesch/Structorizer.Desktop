@@ -80,7 +80,7 @@ DecLiteral       = {digit}+
 
 HexLiteral       = '$'{Hex Digit}+
 
-FloatLiteral     = {Digit}+.{Digit}+
+FloatLiteral     = {Digit}+'.'{Digit}+
 
 RealLiteral      = {Digit}+ ('.' {Digit}* | {Digit}*) ('E' '+' | 'E' '-' | 'E') {digit}+
 

@@ -106,9 +106,12 @@ public class ImportOptionDialog extends LangDialog {
         lbCharset = new javax.swing.JLabel();
         cbCharset = new javax.swing.JComboBox<String>();
         chkCharsetAll = new javax.swing.JCheckBox();
-        // START KGU#358 2017-03-6: Enh. #368
+        // START KGU#358 2017-03-06: Enh. #368
         chkVarDeclarations = new javax.swing.JCheckBox();
         // END KGU#358 2017-03-06
+        // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
+        chkSaveParseTree = new javax.swing.JCheckBox();
+        // END KGU#354 2017-03-08
 
         setTitle("Import options ...");
 
@@ -141,8 +144,12 @@ public class ImportOptionDialog extends LangDialog {
         
         // START KGU#358 2017-03-6: Enh. #368
         chkVarDeclarations.setText("Import variable declarations");
-        chkVarDeclarations.setToolTipText("This option enabled, parser will make (non-executale) instruction elements from variable declarations.");
+        chkVarDeclarations.setToolTipText("With this option enabled, parser will make instruction elements from variable declarations.");
         // END KGU#358 2017-03-06
+        // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
+        chkSaveParseTree.setText("Write parse tree to file after import");
+        chkSaveParseTree.setToolTipText("After a successful import you may obtain the syntax tree saved to a text file \"*.parsetree.txt\".");
+        // END KGU#354 2017-03-08
 
         chkRefactorOnLoading.setText("Replace keywords on loading a diagram (refactoring).");
         chkRefactorOnLoading.setToolTipText("Select this option if all configurable keywords in the daiagram are to be adapted to the current parser preferences.");
@@ -179,6 +186,9 @@ public class ImportOptionDialog extends LangDialog {
         // START KGU#358 2017-03-06: Enh. #368
         pnlCode.add(chkVarDeclarations);
         // END KGU#358 2017-03-06
+        // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
+        pnlCode.add(chkSaveParseTree);
+        // END KGU#354 2017-03-08
         
         pnlNSD.setBorder(new TitledBorder("NSD Files"));
         pnlNSD.setLayout(new GridLayout(0, 1, 0, 1));
@@ -334,6 +344,9 @@ public class ImportOptionDialog extends LangDialog {
     // START KGU#358 2017-03-06: Enh. #368
     public javax.swing.JCheckBox chkVarDeclarations;
     // END KGU#358 2017-03-06
+    // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
+    public javax.swing.JCheckBox chkSaveParseTree;
+    // END KGU#354 2017-03-08
     // End of variables declaration
 
 }
