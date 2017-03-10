@@ -69,6 +69,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.02.26      Enh. #346 (mechanism to add user-configured file includes) 
  *      Kay Gürtzig     2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *      Kay Gürtzig     2017.03.05      Issue #365: Support for posterior insertion of global definitions
+ *      Kay Gürtzig     2017.03.10      Issue #368: New method geExportCharset
  *
  ******************************************************************************************************
  *
@@ -315,6 +316,16 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 */
 	protected abstract String getIncludePattern();
 	// END KGU#351 2017-02-26
+	
+	// START KGU#366 2017-03-10: Bugfix #378: Allow annotations of the charset
+	/**
+	 * Returns the currently configured character set name for the file export
+	 * @return name of the character set
+	 */
+	protected String getExportCharset() {
+		return this.exportCharset;
+	}
+	// END KGU#366 2017-03-10
 	
 	/************ Code Generation **************/
 	
