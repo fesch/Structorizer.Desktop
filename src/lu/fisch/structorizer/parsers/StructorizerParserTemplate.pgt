@@ -1,4 +1,4 @@
-##LANGUAGE 'Java'
+﻿##LANGUAGE 'Java'
 ##TEMPLATE-NAME 'Program and rule handler shell'
 ##ENGINE-NAME 'Iden Java Engine'
 ##SYSTEM-VERSION '5.0'
@@ -49,7 +49,8 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     2017.03.02      First Issue (generated with GOLDprog.exe) 
+ *      Kay Gürtzig     2017.03.02      First Issue (generated with GOLDprog.exe)
+ *      Kay Gürtzig     2017.03.11      Parameter annotations and some comments corrected, indentation unified
  *
  ******************************************************************************************************
  *
@@ -57,7 +58,7 @@ package lu.fisch.structorizer.parsers;
  *     Licensed Material - Property of Ralph Iden (GOLDParser) and Mathew Hawkins (parts of the template)
  *     GOLDParser - code downloaded from https://github.com/ridencww/goldengine on 2017-03-05.<br>
  *     Modifications to this code are allowed as it is a helper class to use the engine.<br>
- *     Template File:  JStructorizerParserTemplate (with elements of both<br>
+ *     Template File:  StructorizerParserTemplate (with elements of both<br>
  *                     Java-MatthewHawkins.pgt and Java-IdenEngine.pgt)<br>
  *     Authors:        Ralph Iden, Matthew Hawkins, Bob Fisch, Kay Gürtzig<br>
  *     Description:    A Sample class, takes in a file and runs the GOLDParser engine on it.<br>
@@ -159,29 +160,29 @@ public class %Name%Parser extends CodeParser
  	@Override
 	public String[] getFileExtensions() {
 ##PARAMETERS
-		// TODO specify here the usual file name extensions for %Name% source files!";
+		// TODO specify the usual file name extensions for %Name% source files here!";
 ##END-PARAMETERS
 		final String[] exts = { "c" };
 		return exts;
 	}
 
-	//---------------------- Grammar table constants ---------------------------
+	//---------------------- Grammar table constants DON'T MODIFY! ---------------------------
 
 	// Symbolic constants naming the table indices of the symbols of the grammar 
 	private interface SymbolConstants 
 	{
 ##SYMBOLS
-       final int %ID.Padded% = %Value.Padded%;  // %Description%
+		final int %ID.Padded% = %Value.Padded%;  // %Description%
 ##END-SYMBOLS
-	}
+	};
 
 	// Symbolic constants naming the table indices of the grammar rules
-    private interface RuleConstants
-    {
+	private interface RuleConstants
+	{
 ##RULES
-       final int %ID.Padded% = %Value.Padded%;  // %Description%
+		final int %ID.Padded% = %Value.Padded%;  // %Description%
 ##END-RULES
-    };
+	};
 
 	//------------------------- Preprocessor ---------------------------
 
@@ -286,9 +287,9 @@ public class %Name%Parser extends CodeParser
 //			else if (ruleHead.equals("<Decls>") {
 //				...
 //			}
-			/* -------- End code example for tree analysis and build -------- */
-			// Block...?
-			else
+//			/* -------- End code example for tree analysis and build -------- */
+//			// Block...?
+//			else
 			{
 				if (_reduction.size()>0)
 				{

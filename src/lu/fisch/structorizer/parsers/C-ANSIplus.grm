@@ -76,18 +76,26 @@
 ! Modified 03/09/2017 (Kay Gürtzig)
 !   * Array / struct initializers introduced
 !   * void allowed as parameter list, e.g. int main(void)
-!   * 1d array declarators enabled in parameter lists, as in
+!   * 1-d array declarators enabled in parameter lists, as in
 !     int main(int argc, char* argv[])
+!
+! Modified 03/12/2017 (Kay Gürtzig)
+!   * const separated from <Mod> such that combinations of const and storage
+!     class modifiers are possible in arbitrary order.
+!   * <Typedef Decl> rule corrected (was: <Typedef Decl> ::= typedef <Type> ID ';')
+!   * block-local type declarations allowed, start symbol changed <Decls> -> <ExtDecls>
+!   * Concatenation of at least one string literal
+!
 ! -----------------------------------------------------------------------
 
 
 "Name"    = 'ANSI-Cplus' 
 "Version" = '1973'
-"Author"  = 'Dennis Ritchie, Ken Thompson, Martin Richards, Kay Gürtzig' 
+"Author"  = 'Dennis Ritchie, Ken Thompson, Martin Richards' 
 "About"   = 'C is one of the most common, and complex, programming languages in use today.'
 
 "Case Sensitive" = True
-"Start Symbol"   = <Decls>
+"Start Symbol"   = <ExtDecls>
 
 {Hex Digit}      = {Digit} + [abcdefABCDEF]
 {Oct Digit}      = [01234567]
@@ -103,7 +111,7 @@ OctLiteral       = 0{Oct Digit}*
 HexLiteral       = 0x{Hex Digit}+
 FloatLiteral     = {Digit}*'.'{Digit}+
 
-StringLiteral    = '"'( {String Ch} | '\'{Printable} )* '"'
+StringLiteral    = ( '"'( {String Ch} | '\'{Printable} )* '"' )+
 CharLiteral      = '' ( {Char Ch} | '\'{Printable} )''
 
 Id               = {Id Head}{Id Tail}*
@@ -138,17 +146,19 @@ Comment Line  = '//'
 
 !=======================================================
 
-<Decls> ::= <Decl> <Decls>
+<ExtDecls> ::= <ExtDecl> <ExtDecls>
           |
 
-<Decl>  ::= <Func Decl>
+<ExtDecl>  ::= <Func Decl>
           | <Func Proto>
-          | <Struct Decl>
+          | <Decl>
+
+<Decl>  ::= <Struct Decl>
           | <Union Decl>
           | <Enum Decl>
           | <Var Decl>    
           | <Typedef Decl>
-              
+  
 ! ===================================================================
 ! Function  Declaration
 ! ===================================================================
@@ -167,24 +177,26 @@ Comment Line  = '//'
 <Params>     ::= <Param> ',' <Params>
                | <Param>
                
-<Param>      ::= const <Type> ID <Array>
-               |       <Type> ID <Array>
+<Param>      ::= <ConstType> ID <Array>
 
-<Types>      ::= <Type>  ',' <Types>
-               | <Type> 
+<Types>      ::= <ConstType>  ',' <Types>
+               | <ConstType> 
    
 <Id List>    ::= Id ',' <Id List>
                | Id
 
-<Func ID>    ::= <Type> ID
+<Func ID>    ::= <ConstMod> <Type> ID
+               | <Mod> const <Type> ID
+               | <ConstType> ID
                | void ID
+               | <Mod> void ID
                | ID
 
 ! ===================================================================
 ! Type Declaration
 ! ===================================================================
 
-<Typedef Decl> ::= typedef <Type> ID ';'
+<Typedef Decl> ::= typedef <Var Decl>
 
 <Struct Decl>  ::= struct Id '{' <Struct Def> '}'  ';' 
 
@@ -198,9 +210,11 @@ Comment Line  = '//'
 ! Variable Declaration
 ! ===================================================================
 
-<Var Decl>     ::= <Mod> <Type> <Var> <Var List>  ';'
-                 |       <Type> <Var> <Var List>  ';'
-                 | <Mod>        <Var> <Var List>  ';'
+<Var Decl>     ::= <ConstMod> <Type>  <Var> <Var List>  ';'
+                 | <Mod> const <Type> <Var> <Var List>  ';'
+                 |       <ConstType>  <Var> <Var List>  ';'
+                 | <ConstMod>         <Var> <Var List>  ';'
+                 | const              <Var> <Var List>  ';'
              
 <Var>      ::= ID <Array>
              | ID <Array> '=' <Initializer> 
@@ -214,13 +228,14 @@ Comment Line  = '//'
 
 <Var Item> ::= <Pointers> <Var>
 
-             
+<ConstMod> ::= const <Mod>
+             | <Mod>
+ 
 <Mod>      ::= extern 
              | static
              | register
              | auto
              | volatile
-             | const   
 
 ! ===================================================================
 ! Enumerations
@@ -241,7 +256,10 @@ Comment Line  = '//'
 ! Types
 ! ===================================================================
 
-<Type>     ::= <Base> <Pointers> 
+<ConstType> ::= const <Type>
+              | <Type>
+			  
+<Type>     ::= <Base> <Pointers>
 
 <Base>     ::= <Sign> <Scalar>
              | struct Id 
@@ -249,6 +267,7 @@ Comment Line  = '//'
              | union Id
              | union '{' <Struct Def> '}' 
              | enum Id
+             | enum '{' <Enum Def> '}' 
              | void '*'
 
 <Sign>     ::= signed 
@@ -265,14 +284,18 @@ Comment Line  = '//'
              | double
  
 <Pointers> ::= '*' <Pointers>
+             | '*' const <ConstPointers>
+             |
+
+<ConstPointers> ::= '*' const <ConstPointers>
+             | '*'
              |
 
 ! ===================================================================
 ! Statements
 ! ===================================================================
 
-<Stm>        ::= <Var Decl>
-               | Id ':'                            !Label
+<Stm>        ::= Id ':'                            !Label
                | if '(' <Expr> ')' <Stm>          
                | if '(' <Expr> ')' <Then Stm> else <Stm>         
                | while '(' <Expr> ')' <Stm> 
@@ -302,7 +325,10 @@ Comment Line  = '//'
               | default ':' <Stm List>                  
               |
 
-<Block>     ::= '{' <Stm List> '}' 
+<Block>     ::= '{' <Decl Stm List> '}' 
+ 
+<Decl Stm List> ::= <Decl> <Decl Stm List>
+              |	<Stm List>
 
 <Stm List>  ::=  <Stm> <Stm List> 
               | 

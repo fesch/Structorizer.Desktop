@@ -183,7 +183,7 @@ import javax.swing.ImageIcon;
 
 public abstract class Element {
 	// Program CONSTANTS
-	public static String E_VERSION = "3.26-05";
+	public static String E_VERSION = "3.26-06";
 	public static String E_THANKS =
 	"Developed and maintained by\n"+
 	" - Robert Fisch <robert.fisch@education.lu>\n"+
@@ -2788,6 +2788,37 @@ public abstract class Element {
 		return line;
 	}
 	// END KGU#258 2016-09-25
+
+	// START KGU#301 2016-12-01: Bugfix #301
+	/**
+	 * Helper method to detect exactly whether the given {@code expression} is enclosed in parentheses.
+	 * Simply check whether it starts with "(" and ends with ")" is NOT sufficient because the expression
+	 * might look like this: {@code (4 + 8) * sqrt(3.5)}, which starts and ends with a parenthesis without
+	 * being parenthesized.  
+	 * @param expression - the expression to be analysed as string
+	 * @return true if the expression is properly parenthesized. (Which is to be ensured e.g for conditions
+	 * in C and derived languages.
+	 */
+	public static boolean isParenthesized(String expression)
+	{
+		boolean isEnclosed = expression.startsWith("(") && expression.endsWith(")");
+		if (isEnclosed) {
+			StringList tokens = Element.splitLexically(expression, true);
+			int level = 0;
+			for (int i = 1; level >= 0 && i < tokens.count()-1; i++) {
+				String token = tokens.get(i);
+				if (token.equals("(")) {
+					level++;
+				}
+				else if (token.equals(")")) {
+					level--;
+				}
+			}
+			isEnclosed = level == 0;
+		}
+		return isEnclosed;
+	}
+	// END KGU#301 2016-12-01
 
 	// START KGU#277 2016-10-13: Enh. #270 - Option to disable an Element from execution and export
 	public boolean isDisabled()
