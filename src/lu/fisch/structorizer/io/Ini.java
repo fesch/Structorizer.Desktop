@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.io;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -37,14 +36,14 @@ package lu.fisch.structorizer.io;
  *      GENNARO DONNARUMMA  2014.02.02      Ini in JAR support
  *      Kay Gürtzig         2016.04.26      Jar path updated
  *      Kay Gürtzig         2016.07.22      Bugfix: save() method now immediately closes the file
- *      Kay Gürtzig         2016.09.28      First comment line modified (KGU#264) 
+ *      Kay Gürtzig         2016.09.28      First comment line modified (KGU#264)
+ *      Kay Gürtzig         2017.03.13      Method getIniDirectory() added to support issue #372
  *
  ******************************************************************************************************
  *
  *      Comment:		
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -129,6 +128,31 @@ public class Ini
 	{
 		useAppData = puseAppData;
 	}
+	
+	// START KGU#363 2017-03-13: Enh. #372 We use the ini directory for the licenses as well
+	public static File getIniDirectory() {
+	    File iniDir = null;
+		try
+		{
+			String dirName = System.getProperty("user.home")
+					+ System.getProperty("file.separator") + ".structorizer";
+			if (useAppData)
+			{
+				dirName = Ini.getDirname();
+			}
+			iniDir = new File(dirName);
+			
+		} catch (Error e)
+		{
+			System.err.println("Ini.getIniDirectory(): " + e.getMessage());
+		} catch (Exception e)
+		{
+			System.err.println("Ini.getIniDirectory(): " + e.getMessage());
+		}
+		return iniDir;
+		
+	}
+	// END KGU#363 2017-03-13
 
 	private boolean alternateExists = false;
 	private File dir = null;
@@ -154,12 +178,7 @@ public class Ini
 		// regular INI file
 		try
 		{
-			dirname = System.getProperty("user.home")
-					+ System.getProperty("file.separator") + ".structorizer";
-			if (useAppData == true)
-			{
-				dirname = getDirname();
-			}
+			dirname = getIniDirectory().getPath();
 			filename = dirname + System.getProperty("file.separator") + ininame;
 		} catch (Error e)
 		{

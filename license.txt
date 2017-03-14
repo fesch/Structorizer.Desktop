@@ -27,19 +27,23 @@ Used third party components licenses
 [Please see the original Apple disclaimer below ...]
 
 * GOLDParser > The GOLD Freeware License Agreement (The zlib/libpng License)
-http://www.devincook.com/goldparser/about/license.htm
+http://goldparser.org/about/license.htm
 (http://www.opensource.org/licenses/zlib-license.html)
 
 * Regex Engine > LGPL
 http://www.gnu.org/copyleft/lesser.txt
 
-* FileDroppper > Public Domain
+* FileDropper > Public Domain
 
 * VectorGraphics > LGPL
 http://www.gnu.org/licenses/lgpl.html
-						
+
 * BeanShell > LGPL
 http://www.beanshell.org/license.html
+
+* Desktop (workaround) > Apache License
+Copyright 2016 jjYBdx4IL (https://github.com/jjYBdx4IL)
+http://www.apache.org/licenses/LICENSE-2.0
 
 --------------------------------------------------------------------------------
 AppleJavaExtensions

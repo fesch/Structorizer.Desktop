@@ -24,7 +24,7 @@ package lu.fisch.utils;
  *
  *      Author:         Bob Fisch
  *
- *      Description:    Stimple utility class to work with strings.
+ *      Description:    Simple utility class to work with strings.
  *
  ******************************************************************************************************
  *
@@ -35,6 +35,8 @@ package lu.fisch.utils;
  *      Bob Fisch       2003.05.10      First Issue
  *		Bob Fisch		2007.12.09		Moved to another package and adapted for Structorizer
  *		Kay Gürtzig		2015.10.31		Performance improvements
+ *      Kay Gürtzig     2017.03.13      New method pair encodeToXML and decodeFromXML added for enh. #372,
+ *                                      Some code revisions where it ached too much looking at.
  *
  ******************************************************************************************************
  *
@@ -49,9 +51,11 @@ public abstract class BString
 	{
 		
 		/**
-		 * Encodes some caracters to HTML-encoded symbols
-		 *@return The encoded string
-		 *@param str The string to encode
+		 * Encodes some characters to HTML-encoded symbols
+		 * @return The encoded string
+		 * @param str The string to encode
+		 * @see #enocodeVectorToHtml(Vector)
+		 * @see #encodeToXML(String)
 		 */
 		public static String encodeToHtml(String str)
 		{
@@ -76,52 +80,135 @@ public abstract class BString
 			return str;
 		}
 		
+		// START KGU#363 2017-03-13: Enh. #372 - workaround for XML coding of potentially very long texts
 		/**
-		 * Transform caracters behind spaces into uppercase ones
+		 * Returns a string from text where all characters with special meaning in XML and all non-
+		 * ASCII characters are converted into XML escapes. 
+		 * @param text - the source string 
+		 * @return the XML-escaped string
+		 * @see #decodeFromXML(String)
+		 * @see #encodeToHtml(String)
+		 */
+		public static String encodeToXML(String text) {
+			StringBuilder sb = new StringBuilder();
+			for(int i = 0; i < text.length(); i++){
+				char ch = text.charAt(i);
+				switch(ch){
+				case '<': sb.append("&#60;"); break;
+				case '>': sb.append("&#62;"); break;
+				case '\"': sb.append("&#34;"); break;
+				case '&': sb.append("&#38;"); break;
+				case '\'': sb.append("&#39;"); break;
+				default:
+					if(ch < 0x20 || ch > 0x7e) {
+						sb.append("&#"+((int)ch)+";");
+					}else {
+						sb.append(ch);
+					}
+				}
+			}
+			return sb.toString();
+		}
+		
+		/**
+		 * Returns a string from {@code text} where all XML-escaped character sequences of kind &amp;#&lt;int&gt;;
+		 * are converted back to the original characters with that code.
+		 * This method is less likely to be needed than {@link #encodeToXML(String)} (because usually an XML
+		 * framework will be usd to parse XML files. But well, for symmetry reasons, it's provided here.)
+		 * @see #encodeToXML(String)
+		 * @param text - the XML-escaped string 
+		 * @return the decoded original string
+		 */
+		public static String decodeFromXML(String text) {
+			int state = 0;
+			StringBuilder sb = new StringBuilder();
+			for(int i = 0; i < text.length(); i++){
+				int code = 0;
+				char ch = text.charAt(i);
+				switch (state) {
+				case 0:
+					if (ch == '&') {
+						state++;
+					}
+					else {
+						sb.append(ch);
+					}
+					break;
+				case 1:
+					if (ch == '#') {
+						state++;
+					}
+					else {
+						// possibly some specific escape names, but we will ignore them
+						state = 0;
+						sb.append("&"+ch);
+					}
+					break;
+				case 2:
+					if (Character.isDigit(ch)) {
+						code = code * 10 + (ch - '0');
+					}
+					else if (ch == ';') {
+						sb.append((char)code);
+						code = 0;
+						state = 0;
+					}
+					else {
+						sb.append("@#" + code + ch);
+						code = 0;
+						state = 0;
+					}
+				}
+			}
+			return sb.toString();
+		}
+		// END KGU#363 2017-03-13
+		
+		/**
+		 * Replaces '.' and '_' throughout the string with spaces and then turns all characters
+		 * behind spaces into upper-case ones
 		 *@return The encoded string
 		 *@param myS The string to encode
 		 */
 		public static String phrase(String myS)
 		{
 			String ret = new String();
-			String tmp1, tmp2;
-			myS=BString.replace(myS,"."," ");
-			myS=BString.replace(myS,"_"," ");
-			ret=myS.substring(0,1).toUpperCase();
-			for(int i=1;i<myS.length();i++)
+			myS = BString.replace(myS,"."," ");
+			myS = BString.replace(myS,"_"," ");
+			ret = myS.substring(0,1).toUpperCase();
+			for(int i=1; i<myS.length(); i++)
 			{
-				tmp1= new String(myS.substring(i-1,i));
-				tmp2= new String(myS.substring(i,i+1));
-				if(tmp1.equals(" ")&&!tmp2.equals(" "))
+				char tmp1 = myS.charAt(i-1);
+				char tmp2 = myS.charAt(i);
+				if (tmp1 == ' ' && tmp2 != ' ')
 				{
-					ret=ret+myS.substring(i,i+1).toUpperCase();
+					tmp2 = Character.toUpperCase(tmp2);
 				}
-				else
-				{
-					ret=ret+myS.substring(i,i+1);
-				}
+				ret += tmp2;
 			}
 			return ret;
 		}
 		
 		/**
-		 * Encodes an entrire STRING-Vector to HTML-encoded STRING-Vector
-		 *@return The encoded vector
-		 *@param vec The vector to encode
+		 * Encodes an entire STRING-Vector to HTML-encoded STRING-Vector
+		 * @return The encoded vector
+		 * @param vec The vector to encode
+		 * @see #encodeToHtml(String)
+		 * @see #encodeToXML(String)
 		 */
-		public static Vector enocodeVectorToHtml(Vector vec)
+		public static Vector<String> enocodeVectorToHtml(Vector<String> vec)
 		{
-			Vector myvec=new Vector();
-			for (int i = 0;i<vec.size();i++)
+			Vector<String> myvec=new Vector<String>();
+			for (int i = 0; i<vec.size() ;i++)
 			{
-				myvec.add(encodeToHtml((String) vec.get(i)));
+				myvec.add(encodeToHtml(vec.get(i)));
 			}
 			return myvec;
 		}
 		
 		/**
 		 * Cuts blanks at the end and at the beginning of the string. [trim]
-		 *@return The outcuted string
+		 *@return The trimmed string
 		 *@param str The string to cut out
 		 */
 		public static String cutOut(String str)
@@ -188,23 +275,24 @@ public abstract class BString
 		public static String replaceInsensitive(String str, String substr, String with)
 		{
 			String outi = new String("");
+			String strLower = str.toLowerCase();
+			String substrLower = substr.toLowerCase();
 			int width = str.length();
 			int count = 0;
 			do
 			{
-				int index = str.toLowerCase().indexOf(substr.toLowerCase(),count); 
+				int index = strLower.indexOf(substrLower,count); 
 				if (index != -1)
 				{
-					outi = outi + str.substring(count,index) + with;
+					outi += str.substring(count,index) + with;
 					count = index + substr.length();
 				}
 				else
 				{
-					outi=outi+str.substring(count,str.length());
-					count=str.length();
+					outi += str.substring(count,str.length());
+					count = str.length();
 				}
-			}
-			while (count<width);
+			} while (count<width);
 			return outi;
 		}
 
@@ -231,16 +319,17 @@ public abstract class BString
 		
 		public static boolean isPrefixOf(String pre, String str)
 		{
-			boolean ret = false;
-			if(pre.length()>str.length())
-			{
-				ret=true;
-			}
-			else
-			{
-				ret = str.substring(0,pre.length()).equals(pre);
-			}
-			return ret;
+//			boolean ret = false;
+//			if(pre.length()>str.length())
+//			{
+//				ret=true;	// This is wrong!
+//			}
+//			else
+//			{
+//				ret = str.substring(0,pre.length()).equals(pre);
+//			}
+//			return ret;
+			return str.startsWith(pre);
 		}
 		
 		public static StringList explode(String _source, String _by)

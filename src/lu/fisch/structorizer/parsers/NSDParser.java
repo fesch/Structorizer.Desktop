@@ -43,6 +43,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done.
  *      Kay Gürtzig     2016.10.13      Enh. #270: New Element property "disabled" integrated
  *      Kay Gürtzig     2016.12.21      Bugfix #317: Awareness of color attributes in subqueue nodes
+ *      Kay Gürtzig     2017.03.10      Enh. #372: Additional attributes (Simon Sobisch)
+ *      Kay Gürtzig     2017.03.13      Enh. #372: License attributes/elements handled (Simon Sobisch)
  *
  ******************************************************************************************************
  *
@@ -148,6 +150,19 @@ public class NSDParser extends DefaultHandler {
 			
 			// set system attribute - NO!
 			// if(attributes.getIndex("comment")!=-1)  {Element.E_SHOWCOMMENTS = Element.E_SHOWCOMMENTS || !attributes.getValue("comment").trim().equals("");}
+			
+			// START KGU#363 2017-03-13: Enh. #372: License stuff
+			if (attributes.getIndex("licenseName") != -1) {
+				root.licenseName = attributes.getValue("licenseName");
+			}
+			if (attributes.getIndex("license") != -1) {
+				root.licenseText = attributes.getValue("license");
+			}
+			// END KGU#363 2017-03-13
+			
+			// START KGU#363 2017-03-10: Enh. #372
+			root.fetchAuthorDates(attributes);
+			// END KGU#363 3017-03-10
 			
 			// place stack
 			lastE = root;

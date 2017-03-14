@@ -97,6 +97,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.02.07      KGU#343: Result analysis mechanism revised
  *      Kay Gürtzig     2017.03.06      Issue #368: Declarations are not to cause "uninitialized" warnings any longer
  *      Kay Gürtzig     2017.03.10      KGU#363: Enh. #372 (Simon Sobisch) new attributes author etc.
+ *      Kay Gürtzig     2017.03.10/14   KGU#363: Enh. #372 (Simon Sobisch) new license attributes
  *
  ******************************************************************************************************
  *
@@ -219,8 +220,13 @@ public class Root extends Element {
 	private Date created = null;
 	private Date modified = null;
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+	public String licenseName = null;
+	public String licenseText = null;
 	public String getAuthor() {
 		return this.author;
+	}
+	public void setAuthor(String authorName) {
+		this.author = authorName;
 	}
 	public String getModifiedBy() {
 		return this.modifiedby;
@@ -315,10 +321,16 @@ public class Root extends Element {
 		super(StringList.getNew("???"));
 		setText(StringList.getNew("???"));
 		children.parent=this;
-		// START KGU#363 2017-03-10: Enh. #372
-		author = System.getProperty("user.name");
+		// START KGU#363 2017-03-10: Enh. #372 - Author and date fields
+		author = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
+		if (author.isEmpty()) {
+			author = System.getProperty("user.name");
+		}
 		created = new Date();
 		// END KGU#363 2017-03-10
+		// START KGU#363 2017-03-14: Enh. #372 - License fields
+		licenseName = Ini.getInstance().getProperty("licenseName", "");
+		// END KGU#363 2017-03-14
 	}
 
 	public Root(StringList _strings)
@@ -326,10 +338,16 @@ public class Root extends Element {
 		super(_strings);
 		setText(_strings);
 		children.parent=this;
-		// START KGU#363 2017-03-10: Enh. #372
-		author = System.getProperty("user.name");
+		// START KGU#363 2017-03-10: Enh. #372 - Author and date fields
+		author = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
+		if (author.isEmpty()) {
+			author = System.getProperty("user.name");
+		}
 		created = new Date();
 		// END KGU#363 2017-03-10
+		// START KGU#363 2017-03-14: Enh. #372 - License fields
+		licenseName = Ini.getInstance().getProperty("licenseName", "");
+		// END KGU#363 2017-03-14
 	}
 	
     public void addUpdater(Updater updater)
@@ -379,7 +397,10 @@ public class Root extends Element {
     {
     	this.hasChanged = true;
     	// START KGU#363 2017-03-10: Enh. #372
-    	this.modifiedby = System.getProperty("user.name");
+    	this.modifiedby = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
+		if (modifiedby.trim().isEmpty()) {
+			modifiedby = System.getProperty("user.name");
+		}
     	this.modified = new Date();
     	// END KGU#363 2017-03-10
     }
@@ -928,7 +949,10 @@ public class Root extends Element {
             // START KGU#363 2017-03-10: Enh. #372
             ele.author = this.author;
             ele.created = this.created;
-            ele.modifiedby = System.getProperty("user.name");
+        	this.modifiedby = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
+    		if (modifiedby.trim().isEmpty()) {
+    			modifiedby = System.getProperty("user.name");
+    		}
             ele.modified = new Date();
             // END KGU#363 2017-03-10
             return ele;
@@ -1034,7 +1058,10 @@ public class Root extends Element {
 		this.clearTypeInfo();
 		// END KGU#261 2017-01-26
     	// START KGU#363 2017-03-10: Enh. #372
-    	this.modifiedby = System.getProperty("user.name");
+    	this.modifiedby = Ini.getInstance().getProperty("authorName", System.getProperty("user.name"));
+		if (modifiedby.trim().isEmpty()) {
+			modifiedby = System.getProperty("user.name");
+		}
     	this.modified = new Date();
     	// END KGU#363 2017-03-10
 	}

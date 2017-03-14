@@ -93,8 +93,8 @@ import lu.fisch.structorizer.parsers.D7Parser;
 import lu.fisch.utils.StringList;
 
 /**
- * @author kay
- *
+ * Enhanced and specialized element editor for FOR loops
+ * @author Kay Gürtzig
  */
 @SuppressWarnings("serial")
 public class InputBoxFor extends InputBox implements ItemListener {

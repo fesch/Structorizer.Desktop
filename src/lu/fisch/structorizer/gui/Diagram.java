@@ -116,6 +116,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.06      Enh. #368: New import option: code import of variable declarations
  *      Kay Gürtzig     2017.03.08      Enh. #354: file dropping generalized, new import option to save parseTree
  *      Kay Gürtzig     2017.03.10      Enh. #367: IF transmutation added: Swapping of the branches
+ *      Kay Gürtzig     2017.03.12      Enh. #372: Author name configurable in save options
+ *      Kay Gürtzig     2017.03.14      Enh. #372: Author name and license info editable now
  *
  ******************************************************************************************************
  *
@@ -2172,18 +2174,26 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// END KGU#61 2016-03-21
 				}
 				// END KGU#3 2015-10-25
+				// START KGU#363 2017-03-14: Enh. #372
+				else if (element instanceof Root)
+				{
+					data.authorName = ((Root)element).getAuthor();
+					data.licenseName = ((Root)element).licenseName;
+					data.licenseText = ((Root)element).licenseText;
+				}
+				// END KGU#363 2017-03-14
 
 				// START KGU#42 2015-10-14: Enhancement for easier title localisation
 				//showInputBox(data);
 				showInputBox(data, element.getClass().getSimpleName(), false);
 				// END KGU#42 2015-10-14
 
-				if(data.result==true)
+				if (data.result==true)
 				{
 					// START KGU#120 2016-01-02: Bugfix #85 - StringList changes of Root are to be undoable, too!
 					//if (!element.getClass().getSimpleName().equals("Root"))
 					// END KGU#120 2016-01-02
-						root.addUndo();
+					root.addUndo();
 					if (!(element instanceof Forever))
 					{
 						element.setText(data.text.getText());
@@ -2209,6 +2219,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						// END KGU#61 2016-03-21
 					}
 					// END KGU#3 2015-10-25
+					// START KGU#363 2017-03-14: Enh. #372
+					else if (element instanceof Root) {
+						((Root)element).setAuthor(data.authorName);
+						((Root)element).licenseName = data.licenseName;
+						((Root)element).licenseText = data.licenseText;
+					}
+					// END KGU#363 2017-03-14
 					// START KGU#137 2016-01-11: Already prepared by addUndo()
 					//root.hasChanged=true;
 					// END KGU#137 2016-01-11
@@ -2498,6 +2515,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 	
+	/*****************************************
+	 * transmute method(s)
+	 *****************************************/
+	// START KGU#199 2016-07-06: Enh. #188 - perform the possible conversion
+	public void outsourceNSD()
+	{
+	
+	}
+
 	/*****************************************
 	 * transmute method(s)
 	 *****************************************/
@@ -4842,9 +4868,14 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     public void savingOptions()
     {
     	SaveOptionDialog sod = new SaveOptionDialog(NSDControl.getFrame());
+    	Ini ini = Ini.getInstance();
     	sod.chkAutoSaveClose.setSelected(Element.E_AUTO_SAVE_ON_CLOSE);
     	sod.chkAutoSaveExecute.setSelected(Element.E_AUTO_SAVE_ON_EXECUTE);
     	sod.chkBackupFile.setSelected(Element.E_MAKE_BACKUPS);
+    	// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
+    	sod.txtAuthorName.setText(ini.getProperty("authorName", System.getProperty("user.name")));
+    	sod.cbLicenseFile.setSelectedItem(ini.getProperty("licenseName", ""));
+    	// END KGU#363 2017-03-12
     	sod.setVisible(true);
 
     	if(sod.goOn==true)
@@ -4852,6 +4883,16 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     		Element.E_AUTO_SAVE_ON_CLOSE = sod.chkAutoSaveClose.isSelected();
     		Element.E_AUTO_SAVE_ON_EXECUTE = sod.chkAutoSaveExecute.isSelected();
     		Element.E_MAKE_BACKUPS = sod.chkBackupFile.isSelected();
+        	// START KGU#363 2017-03-12: Enh. #372 Allow user-defined author string
+        	ini.setProperty("authorName", sod.txtAuthorName.getText());
+        	String licName = (String)sod.cbLicenseFile.getSelectedItem();
+        	if (licName == null) {
+        		ini.setProperty("licenseName", "");
+        	}
+        	else {
+        		ini.setProperty("licenseName", licName);
+        	}
+        	// END KGU#363 2017-03-12
     	}
     }
     // END KGU#258 2016-09-26
@@ -5180,6 +5221,23 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //				}
 				inputbox = ipbFor;
 			}
+			// START KGU#363 2017-03-13: Enh. #372
+			else if (_elementType.equals("Root")) {
+				InputBoxRoot ipbRt = new InputBoxRoot(NSDControl.getFrame(), true);
+				ipbRt.licenseInfo.rootName = root.getMethodName();
+				ipbRt.licenseInfo.licenseName = _data.licenseName;
+				ipbRt.licenseInfo.licenseText = _data.licenseText;
+				String author = _data.authorName;
+				String user = System.getProperty("user.name");
+				ipbRt.txtAuthorName.setText(author);
+				if (author != null && 
+						!author.equalsIgnoreCase(Ini.getInstance().getProperty("author", user)) &&
+						!author.equalsIgnoreCase(user)) {
+					ipbRt.txtAuthorName.setEditable(false);
+				}
+				inputbox = ipbRt;
+			}
+			// END KGU#363 2017-03-13 
 			else
 			{
 				inputbox = new InputBox(NSDControl.getFrame(), true);
@@ -5250,6 +5308,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// END KGU#61 2016-03-21
 			inputbox.setVisible(true);
 
+			// -------------------------------------------------------------------------------------
+			
 			// get fields
 			_data.text.setText(inputbox.txtText.getText());
 			_data.comment.setText(inputbox.txtComment.getText());
@@ -5306,6 +5366,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				
 			}
 			// END KGU#3 2015-10-25
+			// START KGU#363 2017-03-13: Enh. 372
+			else if (inputbox instanceof InputBoxRoot) {
+				_data.authorName = ((InputBoxRoot)inputbox).txtAuthorName.getText();
+				_data.licenseName = ((InputBoxRoot)inputbox).licenseInfo.licenseName;
+				_data.licenseText = ((InputBoxRoot)inputbox).licenseInfo.licenseText;
+			}
+			// END KGU#363 2017-03-13
 			_data.result = inputbox.OK;
 
 			inputbox.dispose();

@@ -20,6 +20,14 @@
 
 package lu.fisch.structorizer.generators;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+
 /*
  ******************************************************************************************************
  *
@@ -47,6 +55,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.10.13      Enh. #270: Cared for new field "disabled"
  *      Kay Gürtzig     2016.12.21      Bugfix #317: Preserve color property of empty Subqueues
  *      Kay Gürtzig     2017.03.10      Enh. #372: Additional attributes (Simon Sobisch)
+ *      Kay Gürtzig     2017.03.13      Enh. #372: License attributes/elements added (Simon Sobisch)
  *
  ******************************************************************************************************
  *
@@ -56,8 +65,12 @@ package lu.fisch.structorizer.generators;
 
 import java.util.Map;
 
+import javax.swing.text.BadLocationException;
+
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
+import lu.fisch.structorizer.io.Ini;
+import lu.fisch.structorizer.io.LicFilter;
 import lu.fisch.structorizer.parsers.D7Parser;
 
 public class XmlGenerator extends Generator {
@@ -393,6 +406,24 @@ public class XmlGenerator extends Generator {
 			pp_attributes += " changed=\"" + _root.getModifiedString() + "\"";
 		}
 		// END KGU#363 3017-03-10
+		// START KGU#362 2017-03-13: Enh. #372 License stuff
+		String licName = _root.licenseName;
+		if (licName == null && Ini.getInstance().getProperty("author", System.getProperty("user.name")).equals(_root.getAuthor())) {
+			// Look for a default license
+			licName = Ini.getInstance().getProperty("licenseName", "").trim();
+		}
+		if (licName != null && !licName.isEmpty()) {
+			pp_attributes += " licenseName=\"" + BString.encodeToHtml(licName) + "\"";
+
+			String licenseText = _root.licenseText; 
+			if (licenseText == null || licenseText.trim().isEmpty()) {
+				licenseText = this.loadLicenseText(licName);
+			}
+			if (licenseText != null) {
+				pp_attributes += " license=\"" + BString.encodeToXML(licenseText) + "\"";
+			}
+		}
+		// END KGU#362 2017-03-13
 
 		code.add("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		//code.add("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");
@@ -416,6 +447,49 @@ public class XmlGenerator extends Generator {
 		code.add("</root>");
 		
 		return code.getText();
+	}
+
+	private String loadLicenseText(String licName) {
+		String error = null;
+		String content = "";
+		File licDir = Ini.getIniDirectory();
+		String licFileName = LicFilter.getNamePrefix() + licName + "." + LicFilter.acceptedExtension();
+		File[] licFiles = licDir.listFiles(new LicFilter());
+		File licFile = null; 
+		for (int i = 0; licFile == null && i < licFiles.length; i++) {
+			if (licFileName.equalsIgnoreCase(licFiles[i].getName())) {
+				licFile = licFiles[i];
+			}		
+		}
+		BufferedReader br = null;
+		try {
+			InputStreamReader isr = new InputStreamReader(new FileInputStream(licFile), "UTF-8");
+			br = new BufferedReader(isr);
+			String line = null;
+			while ((line = br.readLine()) != null) {
+				content += line + '\n';
+			};
+		} catch (UnsupportedEncodingException e) {
+			error = e.getMessage();
+		} catch (FileNotFoundException e) {
+			error = e.getMessage();
+		} catch (IOException e) {
+			error = e.getMessage();
+		}
+		if (br != null) {
+			try {
+				br.close();
+			} catch (IOException e) {
+				error = e.getMessage();
+			}
+		}
+		if (error != null) {
+			System.err.println("XmlGenerator.loadLicenseText(): " + error);
+		}
+		if (content.trim().isEmpty()) {
+			content = null;
+		}
+		return content;	
 	}
 
 	@Override

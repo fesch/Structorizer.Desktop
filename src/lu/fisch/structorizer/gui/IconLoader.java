@@ -51,6 +51,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.05      Enh. #319: New icons 045_remove, 046_covered for Arranger index popup
  *      Kay Gürtzig     2017.01.07      Enh. #319: New icon 030_function_green for Arranger index
  *      Kay Gürtzig     2017.01.11      Enh. #81: New icon 051_scale_gui for scaling preset
+ *      Kay Gürtzig     2017.03.13      Enh. #372: New icons 065_paragraph through 067_commit for license editing
  *
  ******************************************************************************************************
  *
@@ -160,6 +161,11 @@ public class IconLoader {
 	public static ImageIcon ico063 = getIconImage(getURI(from+"icons/063_conv_repeat.png"));
 	public static ImageIcon ico064 = getIconImage(getURI(from+"icons/064_conv_case.png"));
 	// END KGU#122 2016-01-03
+	// START KGU#363 2017-03-13: Issue #372
+	public static ImageIcon ico065 = getIconImage(getURI(from+"icons/065_paragraph.png"));
+	public static ImageIcon ico066 = getIconImage(getURI(from+"icons/066_litterbin.png"));
+	public static ImageIcon ico067 = getIconImage(getURI(from+"icons/067_commit.png"));
+	// END KGU#363 2017-03-13
 	
 	public static ImageIcon ico074 = getIconImage(getURI(from+"icons/074_nsd.png"));
 	//public static ImageIcon ico075 = getIconImage(getURI(from+"icons/075_lu.png"));
@@ -307,6 +313,11 @@ public class IconLoader {
         	ico063 = getIconImage(getURI(from+"icons/063_conv_repeat.png"));
         	ico064 = getIconImage(getURI(from+"icons/064_conv_case.png"));
         	// END KGU#122 2016-01-03
+        	// START KGU#363 2017-03-13: Issue #372
+        	ico065 = getIconImage(getURI(from+"icons/065_paragraph.png"));
+        	ico066 = getIconImage(getURI(from+"icons/066_litterbin.png"));
+        	ico067 = getIconImage(getURI(from+"icons/067_commit.png"));
+        	// END KGU#363 2017-03-13
 
         	ico074 = getIconImage(getURI(from+"icons/074_nsd.png"));
             //ico075 = getIconImage(getURI(from+"icons/075_lu.png"));

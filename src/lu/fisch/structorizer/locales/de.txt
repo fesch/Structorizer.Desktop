@@ -96,6 +96,8 @@
  *      Kay Gürtzig         2017.01.11  Issue #81/#330: Messages for scaling Preview
  *      Kay Gürtzig         2017.02.26  Enh. #346: Additions for ExportOptionDialoge
  *      Kay Gürtzig         2017.03.08  Enh. #354, #368: New checkbox labels for ImportOptionDialog
+ *      Kay Gürtzig         2017.03.12  Enh. #372: New saving options
+ *      Kay Gürtzig         2017.03.14  Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
  *
  ******************************************************************************************************
  *
@@ -515,7 +517,6 @@ InputBox.lblText.text[elementType:While]=Eingabe der (Wieder-)Eintrittsbedingung
 InputBox.lblText.text[elementType:Repeat]=Eingabe der Austrittsbedingung an dieser Stelle.
 InputBox.lblText.text[elementType:Case]=Eingabe des Auswahlausdrucks und der Fallkonstanten
 InputBox.lblText.text[elementType:Parallel]=Anzahl der nebenläufigen Pfade
-InputBox.title[elementType:Root]=Programmnamen bearbeiten...
 InputBox.title[elementType:Function]=Funktionssignatur bearbeiten...
 InputBox.title[elementType:Instruction,getInsertionType():insert]=Neue Anweisungen hinzufügen...
 InputBox.title[elementType:Alternative,getInsertionType():insert]=Neue Verzweigung hinzufügen...
@@ -569,6 +570,48 @@ InputBoxFor.msgEnsureVariableIsArray.text=Sicher, dass <%> ein Array bezeichnet?
 InputBoxFor.msgEnterValueList.text=Bitte Wertliste für die Schleife eingeben.
 InputBoxFor.msgDiscardData.text=Den Schleifen-Stil zu ändern bedeutet, dass die meisten Schleifendaten verloren gehen!\nDaten wirklich opfern?
 InputBoxFor.msgAttention.text=ACHTUNG!
+
+-----[ InputBox Root ]-----
+InputBoxRoot.title=Angaben zum Programm bearbeiten...
+InputBoxRoot.txtText.tooltip=Programmname bzw. Funktionssignatur
+InputBoxRoot.txtComment.tooltip=Eingabe eines Kommentars an dieser Stelle.
+InputBoxRoot.btnOK.text=Speichern
+InputBoxRoot.btnOK.tooltip=Speichern der Eintragungen.
+InputBoxRoot.btnCancel.text=Abbrechen
+InputBoxRoot.btnCancel.tooltip=Verwerfen der Eintragungen.
+InputBoxRoot.lblAuthorName.text=Autor
+InputBoxRoot.btnLicenseText.text=Lizenztext
+InputBoxRoot.btnLicenseText.tooltip=Schaltfläche zum Öffnen des Editors bzw. Betrachters des Lizenztexts zur ausgewählten Lizenz.
+InputBoxRoot.cbLicenseName.tooltip=Eine Lizenz aus dem persönlichen Lizenz-Pool auswählen oder die aktuell gesetzte Lizenz behalten.
+InputBoxRoot.msgOverrideLicense.text=Aktuellen Lizenztext durch den der ausgewählten Lizenzvorlage "%" ersetzen?
+InputBoxRoot.msgLicenseChange.text=Lizenzänderung
+InputBoxRoot.msgLicenseLoadError.text=Fehler beim Laden des Lizenztexts für Lizenz "%1":\n%2!
+
+-----[ License Editor ]-----
+LicenseEditor.titleString.text=Structorizer Lizenz-Editor: %
+LicenseEditor.menuFile.text=Datei
+LicenseEditor.menuEdit.text=Bearbeiten
+LicenseEditor.menuProp.text=Eigenschaften
+LicenseEditor.menuFileCommit.text=Übernehmen
+LicenseEditor.menuFileSave.text=Speichern (im Pool)
+LicenseEditor.menuFileSaveAs.text=Speichern unter ...
+LicenseEditor.menuFileRename.text=Umbenennen ...
+LicenseEditor.menuFileReload.text=Erneut laden/Verwerfen
+LicenseEditor.menuFileDelete.text=Löschen
+LicenseEditor.menuFileQuit.text=Beenden
+LicenseEditor.menuEditUndo.text=Rückgängig
+LicenseEditor.menuEditRedo.text=Wiederholen
+LicenseEditor.menuEditClear.text=Säubern
+LicenseEditor.menuPropFont.text=Schriftart ...
+LicenseEditor.menuPropFontUp.text=Schrift vergrößern
+LicenseEditor.menuPropFontDown.text=Schrift verkleinern
+LicenseEditor.msgNewLicName.text=Neuer Lizenzname
+LicenseEditor.msgCouldntWriteLicense.text=Lizenz "%1" konnte nicht in Datei gesichert werden!\nUrsache: %2
+LicenseEditor.msgCouldntRenameLicense.text=Lizenz "%1" konnte nicht in "%2" umbenannt werden!\nMöglicherweise ist schon eine Lizenz mit dem neuen Namen vorhanden.
+LicenseEditor.msgSureToDelete.text=Wollen Sie wirklich die Lizenz "%" unwiderruflich löschen? Die Aktion ist nicht rücknehmbar!
+LicenseEditor.msgSureToDiscard.text=Wollen Sie wirklich alle ungesicherten Änderungen für Lizenz "%" verwerfen?
+LicenseEditor.msgPendingChanges.text=Es gibt ungesicherte Änderungen zur Lizenz "%".\Sollen diese vor dem Verlassen gespeichert werden?
+LicenseEditor.msgOverwriteExisting.text=Lizenz "%" existiert bereits im Pool.\nSoll sie überschrieben werden?
 
 -----[ Preferences ]-----
 Preferences.title=Struktogramm-Einstellungen
@@ -750,9 +793,11 @@ SaveOptionDialog.title=Optionen für das Sichern von Diagrammen ...
 SaveOptionDialog.lbIntro.text=Wählen Sie die Einstellungen, die Sie aktivieren möchten...
 SaveOptionDialog.pnlAutoSave.border=Automatisches Speichern
 SaveOptionDialog.pnlBackup.border=Backup-Dateien
+SaveOptionDialog.pnlFileInfo.border=Dateiinfo-Standardwerte
 SaveOptionDialog.chkAutoSaveExecute.text=Automatisch sichern beim Debuggen?
 SaveOptionDialog.chkAutoSaveClose.text=Automatisch sichern beim Beenden?
 SaveOptionDialog.chkBackupFile.text=Beim Überschreiben Backup-Dateien erstellen?
+SaveOptionDialog.lblAuthorName.text=Autorname
 SaveOptionDialog.btnOk.text=OK
 SaveOptionDialog.btnOk.tooltip=Einstellungen übernehmen.
 

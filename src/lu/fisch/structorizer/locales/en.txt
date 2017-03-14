@@ -93,6 +93,8 @@
  *      Kay Gürtzig     2017.01.11      Issue #81/#330: Messages for scaling Preview
  *      Kay Gürtzig     2017.02.26      Enh. #346: Additions for ExportOptionDialoge
  *      Kay Gürtzig     2017.03.08      Enh. #354, #368: New checkbox labels for ImportOptionDialog
+ *      Kay Gürtzig     2017.03.12      Enh. #372: New saving options
+ *      Kay Gürtzig     2017.03.14      Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
  *
  ******************************************************************************************************
  *
@@ -572,6 +574,48 @@ InputBoxFor.msgEnterValueList.text=Enter the value list for the loop.
 InputBoxFor.msgDiscardData.text=Changing the loop style means to discard most of the data!\nDo you really want to discard the data?
 InputBoxFor.msgAttention.text=ATTENTION!
 
+-----[ InputBox Root ]-----
+InputBoxRoot.title=
+InputBoxRoot.txtText.tooltip=
+InputBoxRoot.txtComment.tooltip=
+InputBoxRoot.btnOK.text=OK
+InputBoxRoot.btnOK.tooltip=
+InputBoxRoot.btnCancel.text=
+InputBoxRoot.btnCancel.tooltip=
+InputBoxRoot.lblAuthorName.text=Author
+InputBoxRoot.btnLicenseText.text=License text
+InputBoxRoot.btnLicenseText.tooltip=Press this button to open edit or review the text for the selected license.
+InputBoxRoot.cbLicenseName.tooltip=Select an available license from the personal license pool or the current one to edit it.
+InputBoxRoot.msgOverrideLicense.text=Override license text by the selected default license "%"?
+InputBoxRoot.msgLicenseChange.text=License Modification
+InputBoxRoot.msgLicenseLoadError.text=Error on loading license text for license "%1":\n%2!
+
+-----[ License Editor ]-----
+LicenseEditor.titleString.text=Structorizer License Editor: %
+LicenseEditor.menuFile.text=File
+LicenseEditor.menuEdit.text=Edit
+LicenseEditor.menuProp.text=Properties
+LicenseEditor.menuFileCommit.text=Commit
+LicenseEditor.menuFileSave.text=Save (to pool)
+LicenseEditor.menuFileSaveAs.text=Save as ...
+LicenseEditor.menuFileRename.text=Rename ...
+LicenseEditor.menuFileReload.text=Reload/Revert
+LicenseEditor.menuFileDelete.text=Delete
+LicenseEditor.menuFileQuit.text=Quit
+LicenseEditor.menuEditUndo.text=Undo
+LicenseEditor.menuEditRedo.text=Redo
+LicenseEditor.menuEditClear.text=Clear
+LicenseEditor.menuPropFont.text=Font ...
+LicenseEditor.menuPropFontUp.text=Enlarge font
+LicenseEditor.menuPropFontDown.text=Diminish font
+LicenseEditor.msgNewLicName.text=New license name
+LicenseEditor.msgCouldntWriteLicense.text=Could not write license "%1" to file!\nReason: %2
+LicenseEditor.msgCouldntRenameLicense.text=Could not rename license "%1" to "%2"!\nA license with the new name may already exist.
+LicenseEditor.msgSureToDelete.text=Are you sure to delete license "%"? This is not undoable!
+LicenseEditor.msgSureToDiscard.text=Are you sure to discard all unsaved changes for license "%"?
+LicenseEditor.msgPendingChanges.text=There are unsaved changes for license "%".\nShall they be saved before you leave?
+LicenseEditor.msgOverwriteExisting.text=License "%" already exists in the pool.\nContinue to overwrite it?
+
 -----[ Preferences ]-----
 Preferences.title=Structure Preferences
 Preferences.pnlAlt.border=IF statement
@@ -752,9 +796,13 @@ SaveOptionDialog.title=Options for saving diagrams ...
 SaveOptionDialog.lbIntro.text=Please select the options you want to activate...
 SaveOptionDialog.pnlAutoSave.border=Auto-save options
 SaveOptionDialog.pnlBackup.border=Backup options
+SaveOptionDialog.pnlFileInfo.border=File info defaults
 SaveOptionDialog.chkAutoSaveExecute.text=Auto-save during execution?
 SaveOptionDialog.chkAutoSaveClose.text=Auto-save when going to be closed?
 SaveOptionDialog.chkBackupFile.text=Create backup file on re-saving?
+SaveOptionDialog.lblAuthorName.text=Author name
+SaveOptionDialog.btnLicenseFile.text=License file
+SaveOptionDialog.btnLicenseFile.tooltip=Open the editor for the text of this license 
 SaveOptionDialog.btnOk.text=OK
 SaveOptionDialog.btnOk.tooltip=Accept these settings.
 

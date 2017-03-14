@@ -1,0 +1,102 @@
+This is just a little file that explains
+ __ __   ___   __    __  ______   ___  
+|  |  | /   \ |  |__|  ||      | /   \ 
+|  |  ||     ||  |  |  ||      ||     |
+|  _  ||  O  ||  |  |  ||_|  |_||  O  |
+|  |  ||     ||  `  '  |  |  |  |     |
+|  |  ||     | \      /   |  |  |     |
+|__|__| \___/   \_/\_/    |__|   \___/
+
+ADD A NEW LANGUAGE TO STRUCTORIZER IMPORT
+=========================================
+
+Structorizer uses the GOLD Parser version 5.0 (http://www.goldparser.org) in
+combination with a compiled grammar for the source language to derive a structogram
+from source code.
+
+You should be familiar with the concepts of grammars, parsers, and compilers and you
+should have understood the tree structure Structorizer uses to represent Nassi-7
+Shneiderman diagrams.
+
+All information you need for GOLD Parser can be found on the GOLDParser website
+(http://www.goldparser.org).
+
+1. GRAMMAR FILE
+First you need a grammar for the programming language you want to add an import for.
+A grammar file as required for GOLD Parser (grm file) is to be written in an easy-to-
+understand dialect of EBNF (Enhanced Backus-Naur Form).
+Before the grammar rules begin, some preceding lines will have to define the lexical
+tokens used by the grammar rules (e.g. number literals, identifiers etc.). These are
+(according to the Chomsky type 3 of lexic) defined by some sort of regular expressions.
+The documentation is around here: http://goldparser.org/doc/grammars/index.htm.
+Be aware that the GOLD Parser is a LALR(1) parser which makes it performant but imposes
+some restrictions to the way grammar rules are to be formed.
+In general, it is a good idea to start with some grammar for a very similar language,
+which GOLD Parser is known to work with. You may find examples in this directory and
+on the GOLD Parser homepage (http://goldparser.org/grammars/index.htm). 
+
+2. COMPILED GRAMMAR TABLE
+Convert the grammar file to a set of compiled grammar tables. For Windows, you can
+download a command-line tool GOLDbuild.exe with the following URL:
+http://goldparser.org/builder/files/GOLD-Builder-5.2.0-Cmd.zip
+Make sure to unzip all the dat files together with the GOLDbuild.exe into the same folder.
+The GOLDbuild tool analyses the grammar and constructs the decision tables for the parser
+from them. This takes some seconds and results in an egt file, which contains the tables
+for the state-driven LALR(1) parsing engine. If your grammar is for language XYZ then the
+command line will simply look like:
+GOLDbuild.exe XYZ.grm
+This will create a file XYZ.egt by default.
+If the grammar is not suited for LALR(1) parsing, however, then you will get some dozens
+or more conflict messages but no egt file. In this case you will have to reformulate the
+rules until the grammar passes the GOLDbuild process. This may get tricky if the language
+itself is intrinsicly ambiguous.
+
+3. PARSER CLASS SKELETON
+If you have luckily obtained an egt file (or have downloaded an also suited cgt file
+(which is just an older file format for GOLD parser compiled grammar tables) then you
+will have to generate a Parser skeleton for this grammar.
+Again you may use a command-line tool GOLDprog.exe you will already have downloaded together
+with GOLDbuild from http://goldparser.org/builder/files/GOLD-Builder-5.2.0-Cmd.zip.
+In order to create a meaningful parser class you should use StructorizerParserTemplate.pgt
+as the template file for GOLDprog.exe:
+GOLDprog.exe XYZ.egt StructorizerTemplate.pgt XYZParser.java
+The states and patterns in the tables are still linked to the rules. The terminals and
+rules are associated with table indices. The command-line tool GOLDprog derives more or
+less mnemonic constants in the target Java file (XYZParser.java) from the tables and the
+rule structures or token names.
+The template file contains practically the Java skeleton of the aimed Parser class, where
+certain markers specify the insertion places ande the syntax according to which the
+references to the tables are generated into the code.
+You will also find some hooks where to add the Nassi-Shneiderman diagram synthesis.
+
+4. DIAGRAM SYNTHESIS FROM SYNTAX TREE
+This all done, the diagran synthesis must be written. This is very dependent on the
+rules of the used grammar. Whereas the parsing process works bottom up, i.e. from the
+input token to the start symbol of the grammar, the diagram synthesis works top down.
+When the parsing terminated successfully, i.e. in state ACCEPT, then the recursive method
+buildNSD_R will be called with the top reduction of the grammar and the empty element
+subqueue of the new diagram root as arguments. Where you have to follow the structural
+path in order to create the corresponding diagram substructure, you will call buildNSD-R
+recursively whereas you mere need the parsed text you may call getContent_R, which you
+will also have to implement for the rule-specific reduction. The analysis of the objects
+of the Reduction class is pretty straight-forward. With method getParent() you obtain the
+corresponding production rule (including its text), e.g.
+"<WhileStatement> ::= WHILE <expression> DO <StatementSequence> END"
+The left-hand side of the rule, here "<WhileStatment>" can be obtained with getHead().
+The table index of the rule can be obtained with getTableIndex() on the production rule.
+This index can be compared with the generated rule constants to identify the rule and
+conclude its structure:
+The right-hand side of the production rule determines the structure of the Reduction
+object. Here it consists of 5 tokens (three terminal and two non-teminal ones, in the
+rule-defined order, i.e. "WHILE", <expression>, "DO", <StatementSequence>, "END"), hence
+method size() on the Reduction object would return 5. You obtain the respective tokens via
+the get() method, prividing the corresponding index (0...4). From the identfied rule you
+will know which tokens are terminals and which are non-terminals. For further analysis,
+you typically fetch the child reduction of non-terminal tokens by method asReduction()
+(on the token), for terminal tokens you will retrieve their string content by making use
+of method asString().
+The initial diagram Root is held in the member variable root of your Parser class. If you
+bump into some subroutine code (a routine declaration Reduction) zhen you will temporarily
+have to a new Root object into the collection member subRoots.
+Ideally you have a look at the existing language-specific parser classes (which are rather
+diagram synthesis classes but male use of the syntax tree generted by the actual parser.)

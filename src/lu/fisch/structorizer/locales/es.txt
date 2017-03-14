@@ -96,6 +96,8 @@
  *      Kay Gürtzig     2017.01.07  Enh. #329: Messages for Analyser check 21
  *      Kay Gürtzig     2017.01.11  Issue #81/#330: Messages for scaling Preview
  *      Kay Gürtzig     2017.02.26  Enh. #346: Additions for ExportOptionDialoge
+ *      Kay Gürtzig     2017.03.08  Enh. #354, #368: New checkbox labels for ImportOptionDialog
+ *      Kay Gürtzig     2017.03.12  Enh. #372: New saving options
  *
  ******************************************************************************************************
  *
@@ -105,7 +107,7 @@
 >>>
 -----> Structorizer
 -----[ Menu ]-----
-//Menu File
+// Menu "File"
 Menu.menuFile.text=Archivo
 Menu.menuFile.mnemonic=a
 // Submenus of "File"
@@ -141,9 +143,9 @@ Menu.menuEditCut.text=Cortar
 Menu.menuEditCopy.text=Copiar
 Menu.menuEditPaste.text=Pegar
 Menu.menuEditUpgradeTurtle.text=Hacia comandos precisos
-Menu.menuEditUpgradeTurtle.tooltip=Reemplaza los comandos Turtle en los elementos seleccionados por aquellos que trabajan con numeros reales. 
+Menu.menuEditUpgradeTurtle.tooltip=Reemplaza los comandos Turtle en los elementos seleccionados por aquellos que trabajan con numeros reales.
 Menu.menuEditDowngradeTurtle.text=Hacia comandos integrales
-Menu.menuEditDowngradeTurtle.tooltip=Reemplaza los comandos Turtle en los elementos seleccionados por aquellos que trabajan con numeros integrales. 
+Menu.menuEditDowngradeTurtle.tooltip=Reemplaza los comandos Turtle en los elementos seleccionados por aquellos que trabajan con numeros integrales.
 Menu.menuEditCopyDiagramPNG.text=Copiar Imagen PNG
 Menu.menuEditCopyDiagramEMF.text=Copiar Imagen EMF
 // Menu "Diagram"
@@ -507,9 +509,10 @@ InputBox.btnOK.text=Aceptar
 InputBox.btnOK.tooltip=Aceptar los cambios.
 InputBox.btnCancel.text=Cancelar
 InputBox.btnCancel.tooltip=Cancelar los cambios.
-InputBox.lblBreakTriggerText.text=Parar antes de %a ejecución
 InputBox.chkDisabled.text=Desactivado (ejecución y exportación)
 InputBox.chkBreakpoint.text=Breakpoint
+InputBox.lblBreakTriggerText.text=Parar antes de %a ejecución
+InputBox.lblText.text[elementType:Alternative]=Por favor ingresa la condición
 InputBox.lblText.text[elementType:While]=Por favor ingresa la condición para entrar y quedar
 InputBox.lblText.text[elementType:Repeat]=Por favor ingresa la condición para salir
 InputBox.lblText.text[elementType:Case]=Ingresa la expresión y las constantes de selección (cada en nueva linea)
@@ -534,7 +537,6 @@ InputBox.title[elementType:While,getInsertionType():update]=Editar bucle MIENTRA
 InputBox.title[elementType:Call,getInsertionType():update]=Editar LLAMADA...
 InputBox.title[elementType:Jump,getInsertionType():update]=Editar SALTO...
 InputBox.title[elementType:Parallel,getInsertionType():update]=Editar sección PARALELA...
-
 
 -----[ InputBox For ]-----
 InputBoxFor.title[getInsertionType():insert]=Insertar bucle PARA...
@@ -569,6 +571,48 @@ InputBoxFor.msgEnsureVariableIsArray.text=¿Cierto que <%> designa un array?
 InputBoxFor.msgEnterValueList.text=Inserte la lista de valores para el bucle.
 InputBoxFor.msgDiscardData.text=¡Alterando el estilo del bucle la mayoría de los datos se va a perder!%¿Cierto que quiere abandonar los datos?
 InputBoxFor.msgAttention.text=¡CUIDADO!
+
+-----[ InputBox Root ]-----
+InputBoxRoot.title=
+InputBoxRoot.txtText.tooltip=
+InputBoxRoot.txtComment.tooltip=
+InputBoxRoot.btnOK.text=
+InputBoxRoot.btnOK.tooltip=
+InputBoxRoot.btnCancel.text=
+InputBoxRoot.btnCancel.tooltip=
+InputBoxRoot.lblAuthorName.text=Autor
+InputBoxRoot.btnLicenseText.text=Texto de licencia
+InputBoxRoot.btnLicenseText.tooltip=Presar aquí para abrir el editor o para mirar el texto de la licencia eleccionada
+InputBoxRoot.cbLicenseName.tooltip=Selecciona una de las licencias disponibles o queda con la licencia asociada y adaptala
+InputBoxRoot.msgOverrideLicense.text=¿Sobrescribir el texto licencia con la seleccionada licencia disponible?
+InputBoxRoot.msgLicenseChange.text=Modificación de licencia
+InputBoxRoot.msgLicenseLoadError.text=Error cargando le contenido de la liecencia "%1":\n%2.
+
+-----[ License Editor ]-----
+LicenseEditor.titleString.text=Structorizer - Editor de licencias
+LicenseEditor.menuFile.text=Archivo
+LicenseEditor.menuEdit.text=Editar
+LicenseEditor.menuProp.text=Propiedades
+LicenseEditor.menuFileCommit.text=Asumir
+LicenseEditor.menuFileSave.text=Guardar (en el depósito)
+LicenseEditor.menuFileSaveAs.text=Guardar como ...
+LicenseEditor.menuFileRename.text=Renombrar
+LicenseEditor.menuFileReload.text=Recargar/Revocar
+LicenseEditor.menuFileDelete.text=Borrar
+LicenseEditor.menuFileQuit.text=Salir
+LicenseEditor.menuEditUndo.text=Deshacer
+LicenseEditor.menuEditRedo.text=Rehacer
+LicenseEditor.menuEditClear.text=Vaciar
+LicenseEditor.menuPropFont.text=Fuente ...
+LicenseEditor.menuPropFontUp.text=Aumentar grado de letra
+LicenseEditor.menuPropFontDown.text=Disminuir grado de letra
+LicenseEditor.msgNewLicName.text=Nombre nuevo de licencia
+LicenseEditor.msgCouldntWriteLicense.text=¡No pude guardar licencia "%1" en el deposito!\nCausa: %2
+LicenseEditor.msgCouldntRenameLicense.text=No se podía renombrar licencia "%1" a "%2".\nPosiblemente ya existe una licencia con este nombre.
+LicenseEditor.msgSureToDelete.text=¿Cierto que la licencia "%" debe ser erradicada? ¡No se puede revocar!
+LicenseEditor.msgSureToDiscard.text=¿Es cierto que todos cambios de licencia "%" sean abandonados?
+LicenseEditor.msgPendingChanges.text=Hay cambios no guardados de la licencia "%". ¿Abandonarlos?
+LicenseEditor.msgOverwriteExisting.text=Licencia "%" ya existe en el deposito. ¿Continuar sobrescribirla?
 
 -----[ Preferences ]-----
 Preferences.title=Preferencias de estructura
@@ -738,6 +782,10 @@ ImportOptionDialog.lbCharset.text=Codificación:
 ImportOptionDialog.chkCharsetAll.text=Listar todas
 ImportOptionDialog.chkRefactorOnLoading.text=Reemplazar palabras claves al recargando diagramas (refactoring).
 ImportOptionDialog.chkRefactorOnLoading.tooltip=Habilita esta opción si el contenido de diagramas siendo recargados debe ser adaptado automáticamente a las preferencias del analizador.
+ImportOptionDialog.chkVarDeclarations.text=Importar declaraciones de variables
+ImportOptionDialog.chkVarDeclarations.tooltip=Con esta preferencia, el importe va a hacer elementos inactivos de decalaraciones de variables desde el código leído.
+ImportOptionDialog.chkSaveParseTree.text=Guardar el árbol de la sintaxis
+ImportOptionDialog.chkSaveParseTree.tooltip=Después de logrado importe Structorizer puede grabar el árbol des sintaxis como texto en un archivo "*.parsetree.txt".
 ImportOptionDialog.btnOk.text=Aceptar
 ImportOptionDialog.btnOk.tooltip=Aceptar los cambios.
 
@@ -746,9 +794,13 @@ SaveOptionDialog.title=Preferencias para guardar diagramas ...
 SaveOptionDialog.lbIntro.text=Elige las preferencias, que quieres activar...
 SaveOptionDialog.pnlAutoSave.border=Guardar automáticamente
 SaveOptionDialog.pnlBackup.border=Copia de seguridad
+SaveOptionDialog.pnlFileInfo.border=Metainformación del fichero
 SaveOptionDialog.chkAutoSaveExecute.text=Guardar automáticamente al ejecutar
 SaveOptionDialog.chkAutoSaveClose.text=Guardar automáticamente al salir
 SaveOptionDialog.chkBackupFile.text=Hacer un backup al guardar de nuevo
+SaveOptionDialog.lblAuthorName.text=Nombre de autor
+SaveOptionDialog.btnLicenseFile.text=
+SaveOptionDialog.btnLicenseFile.tooltip=
 SaveOptionDialog.btnOk.text=Aceptar
 SaveOptionDialog.btnOk.tooltip=Aceptar los cambios.
 
@@ -810,10 +862,10 @@ Control.lbEmptyLine.text=línea en blanco
 Control.lbReturnedResult.text=Resultado devuelto
 Control.lbOutput.text=Salida
 Control.lbInput.text=Entrada
+Control.lbAcknowledge.text=Confirma, por favor, para continuar.
 Control.msgTitleError.text=Error
 Control.msgTitleQuestion.text=Pregunta
 Control.msgTitleParallel.text=Problema en ejecución paralela
-Control.lbAcknowledge.text=Confirma, por favor, para continuar.
 Control.msgNoSubroutine.text=¡No diagrama con subprograma "%1" (%2 parámetros) encontrado!\n¿Ha olvidado a abrir el Arranger y colocar necesarias subrutinas allí?
 Control.msgAmbiguousCall.text=¡Llamada ambigua! Diferentes diagramas (subroutinas) "%1" con %2 parámetros encontrados.
 Control.msgInvalidExpr.text=¡<%1> no es una expresión correcta o existente!
@@ -830,8 +882,8 @@ Control.msgForLoopManipulation.text=¡Manipulación ilegal de la variable «%» 
 Control.msgInvalidFileNumberRead.text=Nombre de archivo es inválido o archivo no es abierto para leer.
 Control.msgInvalidFileNumberWrite.text=Nombre de archivo es inválido o archivo no es abierto para escribir.
 Control.msgNoIntLiteralOnFile.text=¡No valor integral leible desde el archivo!
-Control.msgNoDoubleLiteralOnFile.text=¡No valor floating-point leible desde el archivo!    
-Control.msgEndOfFile.text=¡No es posible leer datos después del fin del archivo!    
+Control.msgNoDoubleLiteralOnFile.text=¡No valor floating-point leible desde el archivo!
+Control.msgEndOfFile.text=¡No es posible leer datos después del fin del archivo!
 Control.tblVar.header.0=Nombre de variable
 Control.tblVar.header.1=Contenido
 
@@ -840,3 +892,4 @@ OutputConsole.menu.text=Propiedades
 OutputConsole.menuFont.text=Fuente ...
 OutputConsole.menuFontUp.text=Aumentar grado de letra
 OutputConsole.menuFontDown.text=Disminuir grado de letra
+

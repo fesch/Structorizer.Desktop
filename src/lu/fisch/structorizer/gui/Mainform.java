@@ -227,7 +227,10 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
                             {
                                     // START KGU#287 2017-01-11: Issue #81/#330
                                     if (isStandalone) {
-                                            preselectedScaleFactor = Double.toString(Element.E_NEXT_SCALE_FACTOR);
+                                    	if (Element.E_NEXT_SCALE_FACTOR <= 0) {	// pathologic value?
+                                    		Element.E_NEXT_SCALE_FACTOR = 1.0;
+                                    	}
+                                    	preselectedScaleFactor = Double.toString(Element.E_NEXT_SCALE_FACTOR);
                                     }
                                     // END KGU#287 2017-01-11
                                     saveToINI();
@@ -309,7 +312,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 
 			double scaleFactor = Double.valueOf(ini.getProperty("scaleFactor","1"));
 			// START KGU#287 2017-01-09 
-			//if (scaleFactor < 1) scaleFactor = 1.0;
+			if (scaleFactor <= 0.5) scaleFactor = 1.0;	// Pathologic value...
 			//IconLoader.setScaleFactor(scaleFactor.intValue());
 			IconLoader.setScaleFactor(scaleFactor);	// The IconLoader doesn't scale down anyway
 			Element.E_NEXT_SCALE_FACTOR = scaleFactor;
@@ -786,7 +789,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     // START KGU#305 2016-12-16: Code revision
 	@Override
 	public void routinePoolChanged(IRoutinePool _source) {
-		if (_source instanceof Arranger) {
+		if (_source instanceof Arranger && this.editor != null) {
 			this.editor.updateArrangerIndex(Arranger.getSortedRoots());
 		}
 		updateAnalysis();
