@@ -43,6 +43,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.07      Enh. #188: New copy constructor to support conversion (KGU#199)
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
+ *      Kay Gürtzig     2017.03.03      Enh. #354: New classification methods isLeave(), isReturn(), isExit()
  *
  ******************************************************************************************************
  *
@@ -110,12 +111,14 @@ package lu.fisch.structorizer.elements;
  */
 
 import java.awt.Color;
+import java.util.regex.Matcher;
 
 import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.gui.IconLoader;
+import lu.fisch.structorizer.parsers.D7Parser;
 
 public class Jump extends Instruction {
 
@@ -230,5 +233,62 @@ public class Jump extends Instruction {
 		return relevantParserKeys;
 	}
 	// END KGU#258 2016-09-25
+	
+	// START KGU#354 2017-03-03: Enh. #354 More consistent support for generators etc.
+	/**
+	 * Checks whether the given line contains a return statement
+	 * @param line the text line to be analysed
+	 * @return true if this has one line and matches the return syntax 
+	 */
+	public static boolean isReturn(String line)
+	{
+    	StringList tokens = Element.splitLexically(line, true);
+		return (tokens.indexOf(D7Parser.getKeyword("preReturn"), !D7Parser.ignoreCase) == 0);
+	}
+	/**
+	 * Checks whether this element contains a return statement
+	 * @return true if this has one line and matches the leave syntax 
+	 */
+	public boolean isReturn()
+	{
+		return this.text.count() == 1 && isReturn(this.text.get(0));
+	}
+	/**
+	 * Checks whether the given line contains a leave statement
+	 * @param line the text line to be analysed
+	 * @return true if line matches the leave syntax 
+	 */
+	public static boolean isLeave(String line)
+	{
+    	StringList tokens = Element.splitLexically(line, true);
+		return (tokens.indexOf(D7Parser.getKeyword("preLeave"), !D7Parser.ignoreCase) == 0);
+	}
+	/**
+	 * Checks whether this element contains a leave statement
+	 * @return true if this has one line and matches the leave syntax 
+	 */
+	public boolean isLeave()
+	{
+		return this.text.count() == 0 || this.text.count() == 1 && isLeave(this.text.get(0));
+	}
+	/**
+	 * Checks whether this line contains an exit statement
+	 * @param line the text line to be analysed
+	 * @return true if the given line matches the exit syntax 
+	 */
+	public static boolean isExit(String line)
+	{
+    	StringList tokens = Element.splitLexically(line, true);
+		return (tokens.indexOf(D7Parser.getKeyword("preExit"), !D7Parser.ignoreCase) == 0);
+	}
+	/**
+	 * Checks whether this element contains an exit statement
+	 * @return true if this has one line and matches the exit syntax 
+	 */
+	public boolean isExit()
+	{
+		return this.text.count() == 1 && isExit(this.text.get(0));
+	}
+	// END KGU#354 2017-03-03
 	
 }

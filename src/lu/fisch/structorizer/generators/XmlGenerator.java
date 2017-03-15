@@ -46,6 +46,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.10.04      Bugfix #258: Structured FOR loop parameters weren't always preserved on saving
  *      Kay Gürtzig     2016.10.13      Enh. #270: Cared for new field "disabled"
  *      Kay Gürtzig     2016.12.21      Bugfix #317: Preserve color property of empty Subqueues
+ *      Kay Gürtzig     2017.03.10      Enh. #372: Additional attributes (Simon Sobisch)
  *
  ******************************************************************************************************
  *
@@ -377,6 +378,21 @@ public class XmlGenerator extends Generator {
 			}
 		}
 		// END KGU#257 2016-09-25
+		
+		// START KGU#363 2017-03-10: Enh. #372 These are no parser preferences but the mechanism is convenient
+		if (_root.getAuthor() != null) {
+			pp_attributes += " author=\"" + BString.encodeToHtml(_root.getAuthor()) + "\"";
+		}
+		if (_root.getCreated() != null) {
+			pp_attributes += " created=\"" + _root.getCreatedString() + "\"";
+		}
+		if (_root.getModifiedBy() != null) {
+			pp_attributes += " changedby=\"" + BString.encodeToHtml(_root.getModifiedBy()) + "\"";
+		}
+		if (_root.getModified() != null) {
+			pp_attributes += " changed=\"" + _root.getModifiedString() + "\"";
+		}
+		// END KGU#363 3017-03-10
 
 		code.add("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		//code.add("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");

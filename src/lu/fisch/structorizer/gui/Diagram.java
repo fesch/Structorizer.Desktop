@@ -112,6 +112,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.27      Issues #290/#306: Signature and logic of openNsdOrArr slightly modified
  *      Kay Gürtzig     2017.02.08      Bugfix #198: Cursor navigation for Alternatives and CASE elements fixed
  *      Kay Gürtzig     2017.02.27      Enh. #346: Export option dialog changes for user-specific include directives
+ *      Kay Gürtzig     2017.03.10      Enh. #367: IF transmutation added: Swapping of the branches
  *
  ******************************************************************************************************
  *
@@ -212,7 +213,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     private JList<DetectedError> errorlist = null;
     private JList<Root> diagramIndex = null;
 
-    private Element eCopy = null;
+    // START KGU#368 2017-03-10: Enh. #376 - Allow copy and paste among Structorizer instances
+    //private Element eCopy = null;
+    static private Element eCopy = null;
+    // END KGU#368 2017-03-10
 
     public File currentDirectory = new File(System.getProperty("user.home"));
     public File lastExportDir = null;
@@ -1912,6 +1916,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				isConvertible = true;
 			}
 			// END KGU#267 2016-10-03
+			// START KGU#357 2017-03-10: Enh. #367
+			else if (selected instanceof Alternative && ((Alternative)selected).qFalse.getSize() > 0) {
+				isConvertible = true;
+			}
+			// END KGU#357 2017-03-10
 		}
 		return isConvertible;
 	}
@@ -2459,11 +2468,53 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			decomposeCase(parent);
 		}
 		// END KGU#267 2016-10-03
+		// START KGU#357 2017-03-10: Enh. #367: swapping of sides
+		else if (selected instanceof Alternative && ((Alternative)selected).qFalse.getSize() > 0)
+		{
+			root.addUndo();
+			swapBranches((Alternative)selected);
+		}
+		// END KGU#357 2017-03-10
 		this.doButtons();
 		redraw();
 		analyse();
 	}
 	
+	// START KGU#357 2017-03-10: Enh. #367
+	private void swapBranches(Alternative _alt) {
+		String condition = _alt.getText().getText();
+		String negCondition = null;
+		StringList condTokens = Element.splitLexically(condition, true);
+		int length = condTokens.count();
+		String first = condTokens.get(0);
+		// Already explicitly negated?
+		if (first.equals("not") || first.equals("!")) {
+			int i = 1;
+			while (i < length && condTokens.get(i).matches("^\\s+$")) i++;
+			if (i == length-1) {
+				// Obviously a single negated token, so drop the operator
+				negCondition = condTokens.get(i); 
+			}
+			else if (i < length && Element.isParenthesized(condTokens.subSequence(i, length).concatenate())) {
+				negCondition = condTokens.subSequence(i+1, length-1).concatenate();
+			}
+		}
+		if (negCondition == null) {
+			if (!Element.isParenthesized(condition)) {
+				condition = "(" + condition + ")";
+			}
+			negCondition = "not " + condition;
+		}
+		_alt.setText(negCondition);
+		Subqueue temp = _alt.qFalse;
+		_alt.qFalse = _alt.qTrue;
+		_alt.qTrue = temp;
+		_alt.resetDrawingInfoDown();
+		redraw();
+		analyse();
+	}
+	// END KGU#357 2017-03-10
+
 	private void transmuteToSequence(Subqueue parent)
 	{
 		// Comment will be split as follows:

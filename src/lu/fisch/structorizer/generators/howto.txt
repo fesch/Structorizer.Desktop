@@ -174,7 +174,7 @@ and accomplish the outcome step by step, consider more export options etc.
 		boolean isExit() - returns true if it's a program exit.
 		The generator may still have to analyse the code lines and
 		identify the respective keywords in order to isolate values.
-		See section 4.1 how to getb the configured keywords.
+		See section 4.1 how to get the configured keywords.
 		Even more important is the jumpTable member inherited from
 		and automatically prepared by the Generator base class: it
 		maps Jump elements and elements left by a jump (loops) to
@@ -190,7 +190,7 @@ and accomplish the outcome step by step, consider more export options etc.
 		This method builds the outer code framework for the algorithm
 		(i.e. the program, procedure or function definition), usually
 		consisting of the header, a "preamble" (containing e.g. variable
-		delarations), the implementation part, the result compilation,
+		declarations), the implementation part, the result compilation,
 		and a footer. See Generator.generateCode(Root, String) for the
 		general template. Now you have two options:
 		a)	Either you may override generateCode(Root, String) as a

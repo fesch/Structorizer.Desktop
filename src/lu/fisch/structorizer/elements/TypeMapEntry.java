@@ -32,6 +32,7 @@ package lu.fisch.structorizer.elements;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.01.19      First Issue (enh. #259)
+ *      Kay Gürtzig     2017.03.05      Method isArray(boolean) added and JavaDoc updated
  *
  ******************************************************************************************************
  *
@@ -55,7 +56,10 @@ import lu.fisch.utils.StringList;
  */
 public class TypeMapEntry {
 	
-	// Declaration list node
+	/**
+	 * Internal declaration list node of TypeMapEntry. Don't manipulate this directly
+	 * @author Kay Gürtzig
+	 */
 	class VarDeclaration {
 		private static final String arrayPattern1 = "^[Aa][Rr][Rr][Aa][Yy]\\s*?[Oo][Ff](\\s.*)";
 		private static final String arrayPattern1o = "^[Aa][Rr][Rr][Aa][Yy]\\s*?(\\d*)\\s*?[Oo][Ff](\\s.*)";	// Oberon style
@@ -84,11 +88,22 @@ public class TypeMapEntry {
 			isCStyle = _cStyle;
 		}
 		
+		/**
+		 * Indicates whether this declaration bear some evidence of an array structure
+		 * @return true if this refes to an indexed type.
+		 */
 		public boolean isArray()
 		{
 			return this.indexRanges != null;
 		}
 		
+		/**
+		 * Returns a type string with canonicalized structure information, i.e.
+		 * the original element type name, prefixed with as many '&#64;' characters
+		 * as there are index levels if it is an array type.
+		 * @see TypeMapEntry#getTypes()
+		 * @return type string, possibly prefixed with one or more '&#64;' characters. 
+		 */
 		public String getCanonicalType()
 		{
 			String type = this.typeDescriptor;
@@ -191,6 +206,16 @@ public class TypeMapEntry {
 	public Set<Element> modifiers = new HashSet<Element>();
 	public Set<Element> references = new HashSet<Element>();
 	
+	/**
+	 * Analyses the given declaration information and creates a corrsponding
+	 * entry (with a single declaration record).
+	 * @see #addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _cStyle, boolean _initialized) 
+	 * @param _descriptor - the found type-describing or -specifying string
+	 * @param _element - the originating Structorizer element
+	 * @param _lineNo - the line number within the element text
+	 * @param _cStyle - whether it's a C-style declaration or initialization
+	 * @param _initialized - whether the variable is initialized or assigned here
+	 */
 	public TypeMapEntry(String _descriptor, Element _element, int _lineNo, boolean _cStyle, boolean _initialized)
 	{
 		declarations.add(new VarDeclaration(_descriptor, _element, _lineNo, _cStyle));
@@ -199,6 +224,16 @@ public class TypeMapEntry {
 		}
 	}
 	
+	/**
+	 * Analyses the given declaration information and adds a corresponding
+	 * declaration info to this entry.
+	 * @param _descriptor - the found type-describing or -specifying string
+	 * @param _element - the originating Structorizer element
+	 * @param _lineNo - the line number within the element text
+	 * @param _cStyle - whether it's a C-style declaration or initialization
+	 * @param _initialized - whether the variable is initialized or assigned here
+	 * @return indicates whether the new declaration substantially differs from previous ones
+	 */
 	public boolean addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _cStyle, boolean _initialized)
 	{
 		boolean differs = false;
@@ -222,6 +257,11 @@ public class TypeMapEntry {
 		return differs;
 	}
 	
+	/**
+	 * Checks whether there is a unique type specification or if the determined
+	 * type strings are equal (case-indifferently).
+	 * @return true if the gathered type information is consistent, else otherwise 
+	 */
 	public boolean isConflictFree()
 	{
 		String typeDescr = null;
@@ -233,6 +273,12 @@ public class TypeMapEntry {
 		return true;
 	}
 	
+	/**
+	 * Returns a StringList containing the type specifications of all detected
+	 * declarations or assignments in canonicalized form (a prefix "&#64;" stands
+	 * for one array dimension level). 
+	 * @return StringList of differing canonicalized type descriptions
+	 */
 	public StringList getTypes()
 	{
 		StringList types = new StringList();
@@ -258,11 +304,45 @@ public class TypeMapEntry {
 		return false;
 	}
 	
+	/**
+	 * Indicates whether at least the first declaration states that the type
+	 * is an array (this may be in conflict with other declarations, though)
+	 * @see #isArray(boolean)
+	 * @return true if there is some evidence of an array structure
+	 */
 	public boolean isArray()
 	{
 		return !this.declarations.isEmpty() && this.declarations.element().isArray();
 	}
 	
+	/**
+	 * Indicates whether there is some evidence for an array structure. If
+	 * _allDeclarations is true then the result will only be true if all of
+	 * the found declarations support the array property, otherwise it would be
+	 * enough that one of the declarations shows array structure. 
+	 * @see #isArray()
+	 * @_allDeclarations - whether all declarations must support the assumption 
+	 * @return true if there is enough evidence of an array structure
+	 */
+	public boolean isArray(boolean _allDeclarations)
+	{
+		for (VarDeclaration decl: this.declarations) {
+			if (_allDeclarations && !decl.isArray()) {
+				return false;
+			}
+			else if (!_allDeclarations && decl.isArray()) {
+				return true;
+			}
+		}
+		return !_allDeclarations;
+	}
+	
+	/**
+	 * Returns the maximum index of array dimension 'level' found over all
+	 * declarations or -1 if there is no substantial range information.
+	 * @param level - dimension index (0 for outermost)
+	 * @return maximum index found among array declarations of the given level
+	 */
 	public int getMaxIndex(int level)
 	{
 		int ix = -1;
@@ -274,6 +354,12 @@ public class TypeMapEntry {
 		return ix;
 	}
 	
+	/**
+	 * Returns the minimum index of array dimension 'level' found over all
+	 * declarations or -1 if there is no substantial range information.
+	 * @param level - dimension index (0 for outermost)
+	 * @return maximum index found among array declarations of the given level
+	 */
 	public int getMinIndex(int level)
 	{
 		int ix = -1;

@@ -330,7 +330,7 @@ Menu.error14_2.text=¡El paso «%» del bucle FOR no es una constante entera!
 Menu.error14_3.text=El nombre de la variable «%» puede confligir con una de las palabras claves configuradas para el bucle PARA!
 Menu.error15_1.text=¡La LLAMADA no tiene ninguna de las formas aceptadas: [ <var> <- ] <routine_name>(<arg_list>)!
 Menu.error15_2.text=La llamada subrutina «%» ahora no está localizable.
-Munu.error15_3.text=Llamada ambigua: Hay más de una subrutina «%».
+Menu.error15_3.text=Llamada ambigua: Hay más de una subrutina «%».
 Menu.error16_1.text=¡Un elemento de salto (salida) debe ser vacío o empezar con uno de los comandos %!
 Menu.error16_2.text=¡Una instrucción de retorno debe ser colocado en un elemento SALTO si no es la última instrucción del diagrama!
 Menu.error16_3.text=¡Instrucciones de salida (exit, leave, o break) solo están permitidos en elementos del tipo SALTO!
@@ -760,7 +760,7 @@ GUIScaleChooser.lblTest.text=Previsión de texto
 GUIScaleChooser.lblIcon.text=Previsión de icono
 GUIScaleChooser.chkTest.text=Previsión de elemento opción
 GUIScaleChooser.btnOK.text=Aceptar
-GUIScaleChooser.btnOk.tooltip=Aceptar los cambios.
+GUIScaleChooser.btnOK.tooltip=Aceptar los cambios.
 
 -----> Arranger
 Surface.msgFileLoadError.text=Error abriendo archivo:

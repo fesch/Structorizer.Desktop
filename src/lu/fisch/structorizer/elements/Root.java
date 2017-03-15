@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.elements;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -96,6 +95,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.01.31      Bugfix in getParameterTypes() and getResultType() on occasion of issue #113
  *      Kay Gürtzig     2017.02.01      Enh. #259/#335: Parameters added to typeMap
  *      Kay Gürtzig     2017.02.07      KGU#343: Result analysis mechanism revised
+ *      Kay Gürtzig     2017.03.10      KGU#363: Enh. #372 (Simon Sobisch) new attributes author etc.
  *
  ******************************************************************************************************
  *
@@ -114,8 +114,7 @@ package lu.fisch.structorizer.elements;
  *        the recorded stack level will be set to an unreachable -1, because the saved state gets lost
  *        internally.
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import java.util.Iterator;
 import java.util.Vector;
@@ -124,7 +123,12 @@ import java.util.Hashtable;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.regex.Matcher;
+
+import org.xml.sax.Attributes;
+
 import java.io.File;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -147,10 +151,14 @@ import com.stevesoft.pat.*;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 
 /**
- * @author kay
- *
+ * This class represents the "root" of a diagram or the program/sub itself.
+ * It is responsible for the behaviour of the entire diagram linked to it. 
+ * It also represents the Analyser (performing all syntactic and style checks
+ * over the diagram elements).
+ * @author Bob Fisch
  */
 public class Root extends Element {
 	
@@ -204,6 +212,50 @@ public class Root extends Element {
 	// START KGU#316 2016-12-28: Enh. #318 Consider unzipped arrz-files
 	public String shadowFilepath = null;	// temp file path of an unzipped file
 	// END KGU#316 2016-12-28
+	// START KGU#363 2017-03-10: Enh. #372
+	private String author = null;
+	private String modifiedby = null;
+	private Date created = null;
+	private Date modified = null;
+	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+	public String getAuthor() {
+		return this.author;
+	}
+	public String getModifiedBy() {
+		return this.modifiedby;
+	}
+	public Date getCreated() {
+		return this.created;
+	}
+	public String getCreatedString() {
+		return dateFormat.format(this.created);
+	}
+	public Date getModified() {
+		return this.modified;
+	}
+	public String getModifiedString() {
+		return dateFormat.format(this.modified);
+	}
+	public void fetchAuthorDates(Attributes attributes)
+	{
+		if(attributes.getIndex("author")!=-1)  {
+			this.author = attributes.getValue("author");
+		}
+		if(attributes.getIndex("created")!=-1)  {
+			try {
+				this.created = this.dateFormat.parse(attributes.getValue("created"));
+			} catch (ParseException e) {}
+		}
+		if(attributes.getIndex("changedby")!=-1)  {
+			this.modifiedby = attributes.getValue("changedby") ; 
+		}
+		if(attributes.getIndex("modified")!=-1)  {
+			try {
+				this.modified = this.dateFormat.parse(attributes.getValue("modified"));
+			} catch (ParseException e) {} 
+		}
+	}
+	// END KGU#363 2017-03-10
 
 	// variables
 	public StringList variables = new StringList();
@@ -262,6 +314,10 @@ public class Root extends Element {
 		super(StringList.getNew("???"));
 		setText(StringList.getNew("???"));
 		children.parent=this;
+		// START KGU#363 2017-03-10: Enh. #372
+		author = System.getProperty("user.name");
+		created = new Date();
+		// END KGU#363 2017-03-10
 	}
 
 	public Root(StringList _strings)
@@ -269,6 +325,10 @@ public class Root extends Element {
 		super(_strings);
 		setText(_strings);
 		children.parent=this;
+		// START KGU#363 2017-03-10: Enh. #372
+		author = System.getProperty("user.name");
+		created = new Date();
+		// END KGU#363 2017-03-10
 	}
 	
     public void addUpdater(Updater updater)
@@ -317,6 +377,10 @@ public class Root extends Element {
     public void setChanged()
     {
     	this.hasChanged = true;
+    	// START KGU#363 2017-03-10: Enh. #372
+    	this.modifiedby = System.getProperty("user.name");
+    	this.modified = new Date();
+    	// END KGU#363 2017-03-10
     }
 
     /**
@@ -860,6 +924,12 @@ public class Root extends Element {
             ele.children.parent = ele;
             //ele.updaters = this.updaters;	// FIXME: Risks of this?
             // END KGU#2 (#9) 2015-11-13
+            // START KGU#363 2017-03-10: Enh. #372
+            ele.author = this.author;
+            ele.created = this.created;
+            ele.modifiedby = System.getProperty("user.name");
+            ele.modified = new Date();
+            // END KGU#363 2017-03-10
             return ele;
     }
     
@@ -962,6 +1032,10 @@ public class Root extends Element {
 		// FIXME: Certain explicit declarations should remain
 		this.clearTypeInfo();
 		// END KGU#261 2017-01-26
+    	// START KGU#363 2017-03-10: Enh. #372
+    	this.modifiedby = System.getProperty("user.name");
+    	this.modified = new Date();
+    	// END KGU#363 2017-03-10
 	}
 
     public boolean canUndo()

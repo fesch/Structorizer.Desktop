@@ -67,10 +67,17 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.01.31      Enh. #113: Array parameter transformation
  *      Kay Gürtzig             2017.02.06      Minor corrections in generateJump(), String delimiter conversion (#343)
  *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig             2017.03.05      Bugfix #365: Fundamental revision of generateForInCode(), see comment.
+ *      Kay Gürtzig             2017.03.15      Bugfix #181/#382: String delimiter transformation didn't work 
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      
+ *      2017.03.05 - Bugfix #365 (Kay Gürtzig)
+ *      - Improved FOR-IN loop export applying the now available typeMap information.
+ *      - generic names no longer with constant suffix but with loop-specific hash code, allowing global distinction
+ *      - generic type definitions now global (old ANSI C didn't support local type definitions (relevant for reimport)
  *
  *      2016.04.01 - Enh. #144 (Kay Gürtzig)
  *      - A new export option suppresses conversion of text content and restricts the export
@@ -353,7 +360,10 @@ public class CGenerator extends Generator {
 		for (int i = 0; i < tokens.count(); i++) {
 			String token = tokens.get(i);
 			int tokenLen = token.length();
-			if (tokenLen >= 2 && (token.startsWith("'") && token.endsWith("\"") || token.startsWith("'") && token.endsWith("\""))) {
+			// START KGU#190 2017-03-15: Bugfix #181/#382 - String delimiter conversion had failed
+			//if (tokenLen >= 2 && (token.startsWith("'") && token.endsWith("\"") || token.startsWith("\"") && token.endsWith("'"))) {
+			if (tokenLen >= 2 && (token.startsWith("'") && token.endsWith("'") || token.startsWith("\"") && token.endsWith("\""))) {
+			// END KGU#190 2017-03-15
 				char delim = token.charAt(0);
 				String internal = token.substring(1, tokenLen-1);
 				// Escape all unescaped double quotes
@@ -513,6 +523,38 @@ public class CGenerator extends Generator {
 		return false;
 	}
 	// END KGU#332 2017-01-27
+	
+	// START KGU#355 2017-03-05: Bugfix #365 - Old C needs global type definitions
+	private StringList typeDefs = new StringList();
+	private int globalDefinitionInsertionLine = 0;
+	private void addGlobalTypeDef(String _typeDef, String _comment, boolean _asComment)
+	{
+		StringList realCode = this.code;
+		try {
+			this.code = this.typeDefs;
+			if (_comment != null && !_comment.isEmpty()) {
+				this.insertComment(_comment, this.subroutineIndent);
+			}
+			addCode(_typeDef + ";", this.subroutineIndent, _asComment);
+		}
+		finally {
+			this.code = realCode;
+		}
+	}
+	@Override
+	protected String insertGlobalDefs(String _code) {
+		if (this.typeDefs.count() > 0) {
+			StringList outerCodeTail = code.subSequence(this.globalDefinitionInsertionLine, code.count());
+			code = code.subSequence(0, this.globalDefinitionInsertionLine);
+			code.add(this.subroutineIndent);
+			code.add(this.typeDefs);
+			code.add(this.subroutineIndent);
+			code.add(outerCodeTail);
+			_code = code.getText();
+		}
+		return _code;
+	}
+	// END KGU#355 2017-03-05
 
 	@Override
 	protected void generateCode(Instruction _inst, String _indent) {
@@ -700,78 +742,117 @@ public class CGenerator extends Generator {
 		boolean done = false;
 		String var = _for.getCounterVar();
 		String valueList = _for.getValueList();
+		TypeMapEntry typeInfo = this.typeMap.get(valueList);
 		StringList items = this.extractForInListItems(_for);
+		String itemVar = var;
+		String itemType = "";
+		String nameSuffix = Integer.toString(_for.hashCode());
+		String arrayName = "array" + nameSuffix;
+		String indexName = "index" + nameSuffix;
+		String indent = _indent + this.getIndent();
+		String startValStr = "0";
+		String endValStr = "???";
+		boolean isDisabled = _for.isDisabled();
 		if (items != null)
 		{
 			// Good question is: how do we guess the element type and what do we
-			// do if items are heterogenous? We will just try three types: int,
-			// double and C-strings, and if none of them match we add a TODO comment.
+			// do if items are heterogenous? We will make use of the typeMap and
+			// hope to get sensible information. Otherwise we add a TODO comment.
 			int nItems = items.count();
 			boolean allInt = true;
 			boolean allDouble = true;
 			boolean allString = true;
-			boolean isDisabled = _for.isDisabled();
+			StringList itemTypes = new StringList();
 			for (int i = 0; i < nItems; i++)
 			{
 				String item = items.get(i);
-				if (allInt)
-				{
-					try {
-						Integer.parseInt(item);
-					}
-					catch (NumberFormatException ex)
-					{
-						allInt = false;
-					}
+				String type = Element.identifyExprType(this.typeMap, item);
+				itemTypes.add(this.transformType(type, "int"));
+				if (!type.equals("int") && !type.equals("boolean")) {
+					allInt = false;
 				}
-				if (allDouble)
-				{
-					try {
-						Double.parseDouble(item);
-					}
-					catch (NumberFormatException ex)
-					{
-						allDouble = false;
-					}
+				if (!type.equals("double")) {
+					allDouble = false;
 				}
-				if (allString)
-				{
-					allString = item.startsWith("\"") && item.endsWith("\"") &&
-							!item.substring(1, item.length()-1).contains("\"");
+				if (!type.equals("String")) {
+					allString = false;
 				}
 			}
-			String itemType = "";
 			if (allInt) itemType = "int";
 			else if (allDouble) itemType = "double";
 			else if (allString) itemType = "char*";
 			String arrayLiteral = "{" + items.concatenate(", ") + "}";
-			String arrayName = "array20160322";
-			String indexName = "index20160322";
 
-			String indent = _indent + this.getIndent();
 			// Start an extra block to encapsulate the additional definitions
 			addCode("{", _indent, isDisabled);
 			
 			if (itemType.isEmpty())
 			{
-				// We do a dummy type definition
-				this.insertComment("TODO: Define a sensible 'ItemType' and/or prepare the elements of the array", indent);
-				itemType = "ItemType";
-				addCode("typedef void " + itemType + ";", indent, isDisabled);
+				if (nItems <= 1) {
+					itemType = "int";	// the default...
+				}
+				else {
+					itemType = "union ItemTyp" + nameSuffix;
+					// We create a dummy type definition
+					String typeDef = itemType + " {";
+					for (int i = 0; i < nItems; i++) {
+						typeDef += itemTypes.get(i) + " comp" + i + "; ";
+					}
+					typeDef += "}";
+					this.addGlobalTypeDef(typeDef, "TODO: Define a sensible 'ItemType' for the loop further down", isDisabled);
+					this.insertComment("TODO: Prepare the elements of the array according to defined type (or conversely).", indent);
+				}
 			}
 			// We define a fixed array here
 			addCode(itemType + " " + arrayName +  "[" + nItems + "] = "
 					+ transform(arrayLiteral, false) + ";", indent, isDisabled);
+			
+			endValStr = Integer.toString(nItems);
+		}
+		else if (typeInfo != null && typeInfo.isArray()) {
+			String limitName = "count" + nameSuffix;
+			StringList typeDecls = getTransformedTypes(typeInfo);
+			if (typeDecls.count() == 1) {
+				itemType = typeDecls.get(0).substring(1);
+				int lastAt = itemType.lastIndexOf('@');
+				if (lastAt >= 0) {
+					itemType = itemType.substring(lastAt+1);
+					for (int i = 0; i <= lastAt; i++) {
+						itemVar += "[]";
+					}
+				}
+			}
+			startValStr = Integer.toString(Math.max(0, typeInfo.getMinIndex(0)));
+			int endVal = typeInfo.getMaxIndex(0);
+			if (endVal > -1) {
+				endValStr = Integer.toString(endVal + 1);
+			}
+			arrayName = valueList;
+			
+			// Start an extra block to encapsulate the additional definitions
+			addCode("{", _indent, isDisabled);
+
+			if (endValStr.equals("???")) {
+				this.insertComment("TODO: Find out and fill in the number of elements of the array " + valueList + " here!", _indent);
+			}
+			addCode("int " + limitName + " = " + endValStr +";", indent, isDisabled);
+
+			endValStr = limitName;
+		}
+		
+		if (items != null || typeInfo != null) {
+			
 			// Definition of he loop index variable
 			addCode("int " + indexName + ";", indent, isDisabled);
 
 			// Creation of the loop header
-			insertBlockHeading(_for, "for (" + indexName + " = 0; " +
-					indexName + " < " + nItems + "; " + indexName + "++)",
+			insertBlockHeading(
+					_for, "for (" + indexName + " = " + startValStr + "; " +
+					indexName + " < " + endValStr + "; " + indexName + "++)",
 					indent);
 			
 			// Assignment of a single item to the given variable
-			addCode(this.getIndent() + itemType + " " + var + " = " +
+			addCode(this.getIndent() + itemType + " " + itemVar + " = " +
 					arrayName + "[" + indexName + "];", indent, isDisabled);
 
 			// Add the loop body as is
@@ -786,6 +867,7 @@ public class CGenerator extends Generator {
 		}
 		else
 		{
+			// END KGU#355 2017-03-05
 			// We have no strategy here, no idea how to find out the number and type of elements,
 			// no idea how to iterate the members, so we leave it similar to C# and just add a TODO comment...
 			this.insertComment("TODO: Rewrite this loop (there was no way to convert this automatically)", _indent);
@@ -1039,6 +1121,11 @@ public class CGenerator extends Generator {
 		// START KGU#178 2016-07-20: Enh. #160
 			subroutineInsertionLine = code.count();
 			subroutineIndent = _indent;
+			
+			// START KGU#355 2017-03-05: Bugfix #365 - Old C needs global type definitions
+			// Global types will have to be inserted before FileAPI and subroutines
+			globalDefinitionInsertionLine = subroutineInsertionLine;
+			// END KGU#355 2017-03-05
 			
 			// START KGU#311 2016-12-22: Enh. #314 - insert File API routines if necessary
 			if (this.usesFileAPI) {
