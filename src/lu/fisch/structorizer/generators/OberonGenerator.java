@@ -65,6 +65,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.12.22      Issue #227: input and output usage more routine-specific
  *      Kay Gürtzig             2016.01.30      Enh. #335, bugfix #337: More sophisticated type treatment
  *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig             2017.03.15      Bugfix #382: FOR-IN loop value list items hadn't been transformed 
  *
  ******************************************************************************************************
  *
@@ -730,7 +731,10 @@ public class OberonGenerator extends Generator {
 			// Now we create code to fill the array with the enumerated values
 			for (int i = 0; i < nItems; i++)
 			{
-				addCode(arrayName + "[" + i + "] := " + items.get(i) + ";",
+				// START KGU#369 2017-03-15: Bugfix #382 item transformation had been missing
+				//addCode(arrayName + "[" + i + "] := " + items.get(i) + ";",
+				addCode(arrayName + "[" + i + "] := " + transform(items.get(i)) + ";",
+				// END KGU#369 2017-03-15
 						_indent, isDisabled);
 			}
 			

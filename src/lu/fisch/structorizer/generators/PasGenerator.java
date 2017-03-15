@@ -67,6 +67,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017.01.31      Enh. #113: Array parameter transformation
  *      Kay Gürtzig         2017.02.01      Enh. #84: indexBase constant mechanism for array initializers disabled
  *      Kay Gürtzig         2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig         2017.03.15      Bugfix #382: FOR-IN loop value list items hadn't been transformed 
  *
  ******************************************************************************************************
  *
@@ -802,7 +803,10 @@ public class PasGenerator extends Generator
 			// Now we create code to fill the array with the enumerated values
 			for (int i = 0; i < nItems; i++)
 			{
-				addCode(arrayName + "[" + (i+1) + "] := " + items.get(i) + ";",
+				// START KGU#369 2017-03-15: Bugfix #382 item transformation had been missing
+				//addCode(arrayName + "[" + (i+1) + "] := " + items.get(i) + ";",
+				addCode(arrayName + "[" + (i+1) + "] := " + transform(items.get(i)) + ";",
+				// END KGU#369 2017-03-15
 						_indent, isDisabled);
 			}
 			

@@ -56,6 +56,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
  *      Kay Gürtzig         2016.11.20      KGU#293: Some forgotten traditional keywords added to reservedWords (#231)
  *      Kay Gürtzig         2017.02.27      Enh. #346: Formal adaptation
+ *      Kay Gürtzig         2017.03.15      Bugfix #382: FOR-IN loop value list items hadn't been transformed 
  *
  ******************************************************************************************************
  *
@@ -670,6 +671,9 @@ public class BasGenerator extends Generator
 					allString = item.startsWith("\"") && item.endsWith("\"") &&
 							!item.substring(1, item.length()-1).contains("\"");
 				}
+				// START KGU#368 2017-03-15: Bugfix #382
+				items.set(i, transform(item));
+				// END KGU#368 2017-03-15
 			}
 			
 			// Create some generic and unique variable names

@@ -2472,24 +2472,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 */
 	protected static boolean isParenthesized(String expression)
 	{
-		boolean isEnclosed = expression.startsWith("(") && expression.endsWith(")");
-		if (isEnclosed) {
-			StringList tokens = Element.splitLexically(expression, true);
-			int level = 0;
-			for (int i = 0; isEnclosed && i < tokens.count(); i++) {
-				String token = tokens.get(i);
-				if (token.equals("(")) {
-					level++;
-				}
-				else if (token.equals(")")) {
-					level--;
-					if (level == 0 && i < tokens.count()-1) {
-						isEnclosed = false;
-					}
-				}
-			}
-		}
-		return isEnclosed;
+		return Element.isParenthesized(expression);
 	}
 	// END KGU#301 2016-12-01
 	

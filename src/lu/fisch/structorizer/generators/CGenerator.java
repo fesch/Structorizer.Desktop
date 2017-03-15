@@ -68,6 +68,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.02.06      Minor corrections in generateJump(), String delimiter conversion (#343)
  *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *      Kay Gürtzig             2017.03.05      Bugfix #365: Fundamental revision of generateForInCode(), see comment.
+ *      Kay Gürtzig             2017.03.15      Bugfix #181/#382: String delimiter transformation didn't work 
  *
  ******************************************************************************************************
  *
@@ -359,7 +360,10 @@ public class CGenerator extends Generator {
 		for (int i = 0; i < tokens.count(); i++) {
 			String token = tokens.get(i);
 			int tokenLen = token.length();
-			if (tokenLen >= 2 && (token.startsWith("'") && token.endsWith("\"") || token.startsWith("'") && token.endsWith("\""))) {
+			// START KGU#190 2017-03-15: Bugfix #181/#382 - String delimiter conversion had failed
+			//if (tokenLen >= 2 && (token.startsWith("'") && token.endsWith("\"") || token.startsWith("\"") && token.endsWith("'"))) {
+			if (tokenLen >= 2 && (token.startsWith("'") && token.endsWith("'") || token.startsWith("\"") && token.endsWith("\""))) {
+			// END KGU#190 2017-03-15
 				char delim = token.charAt(0);
 				String internal = token.substring(1, tokenLen-1);
 				// Escape all unescaped double quotes
