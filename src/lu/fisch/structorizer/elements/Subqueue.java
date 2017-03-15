@@ -620,4 +620,12 @@ public class Subqueue extends Element implements IElementSequence {
 			this.getElement(i).disabled = disable;
 		}
 	}
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.IElementSequence#getSubqueue()
+	 */
+	@Override
+	public Subqueue getSubqueue() {
+		return this;
+	}
 }

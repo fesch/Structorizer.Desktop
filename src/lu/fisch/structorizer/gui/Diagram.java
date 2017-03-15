@@ -118,6 +118,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.10      Enh. #367: IF transmutation added: Swapping of the branches
  *      Kay Gürtzig     2017.03.12      Enh. #372: Author name configurable in save options
  *      Kay Gürtzig     2017.03.14      Enh. #372: Author name and license info editable now
+ *      Kay Gürtzig     2017.03.15      Enh, #354: New menu strategy for code import - selection by FilChooser
  *
  ******************************************************************************************************
  *
@@ -163,6 +164,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.filechooser.FileFilter;
 
 import org.freehep.graphicsio.emf.*;
 import org.freehep.graphicsio.pdf.*;
@@ -229,9 +231,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
     // START KGU#170 2016-04-01: Enh. #144 maintain a favourite export generator
     private String prefGeneratorName = "";
     // END KGU#170 2016-04-01
+    // START KGU#354 207-03-15: Enh. #354 CodeParser cache
+	private static Vector<CodeParser> parsers = null;
+	// END KGU#354 2017-03-15
     
     // START KGU#300 2016-12-02: Enh. #300 - update notification settings
-    public boolean retrieveVersion = false;
+    // KGU#300 2017-03-15: turned static
+    public static boolean retrieveVersion = false;
     // END KGU#300 2016-12-02
 	// START KGU#305 2016-12-12: Enh. #305
 	private boolean show_ARRANGER_INDEX = false;	// Arranger index visible?
@@ -3994,46 +4000,58 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	 * Gets an instance of the given parser class, interactively selects a source file
 	 * for the chosen language parses the file and tries to build a structogram from
 	 * it.
-	 * @param _parserClassName - the fully qualified class name of the parser to e used 
 	 */
-	public void importCode(String _parserClassName)
+	public void importCode(/*String _parserClassName*/)
 	{
 		// only save if something has been changed
 		saveNSD(true);
 
-		String filename = "";
+		CodeParser parser = null;
 
-		try
+		// START KGU#354 2017-03-14: Enh. #354
+		this.retrieveParsers();
+
+		JFileChooser dlgOpen = new JFileChooser();
+		// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
+		GUIScaler.rescaleComponents(dlgOpen);
+		// END KGU#287 2017-01-09
+		dlgOpen.setDialogTitle(Menu.msgTitleImport.getText());
+		// set directory
+		if(root.getFile()!=null)
 		{
-			Class<?> genClass = Class.forName(_parserClassName);
-			CodeParser parser = (CodeParser) genClass.newInstance();
-			// START KGU#170 2016-04-01: Issue #143
-			pop.setVisible(false);	// Hide the current comment popup if visible
-			// END KGU#170 2016-04-01
+			dlgOpen.setCurrentDirectory(root.getFile());
+		}
+		else
+		{
+			dlgOpen.setCurrentDirectory(currentDirectory);
+		}
 
-			JFileChooser dlgOpen = new JFileChooser();
-			// START KGU#287 2017-01-09: Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
-			GUIScaler.rescaleComponents(dlgOpen);
-			// END KGU#287 2017-01-09
-			dlgOpen.setDialogTitle(Menu.msgTitleImport.getText().replace("%", parser.getDialogTitle()));
-			// set directory
-			if(root.getFile()!=null)
-			{
-				dlgOpen.setCurrentDirectory(root.getFile());
+		for (CodeParser psr: parsers) {
+			dlgOpen.addChoosableFileFilter(psr);				
+		}
+		//dlgOpen.setFileFilter(parser);
+
+		pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
+		int result = dlgOpen.showOpenDialog(NSDControl.getFrame());
+
+		if (result == JFileChooser.APPROVE_OPTION)
+		{
+			File file = dlgOpen.getSelectedFile().getAbsoluteFile();
+
+			// Identify a suited or the selected parser
+			javax.swing.filechooser.FileFilter filter = dlgOpen.getFileFilter();
+
+			parser = identifyParser(file, filter);
+			
+			if (parser == null) {
+				JOptionPane.showMessageDialog(this, 
+						Menu.msgImportCancelled.getText().replaceAll("%", file.getPath()));
+				return;
 			}
-			else
-			{
-				dlgOpen.setCurrentDirectory(currentDirectory);
-			}
 
-			dlgOpen.addChoosableFileFilter(parser);
-			dlgOpen.setFileFilter(parser);
-			pop.setVisible(false);	// Issue #143: Hide the current comment popup if visible
-			int result = dlgOpen.showOpenDialog(NSDControl.getFrame());
-
-			if (result == JFileChooser.APPROVE_OPTION)
+			try
 			{
-				filename=dlgOpen.getSelectedFile().getAbsoluteFile().toString();
+
 				// load and parse source-code
 				//CParser cp = new CParser("C-ANSI.cgt");
 				// START KGU#194 2016-05-08: Bugfix #185 - mechanism for multiple roots per file
@@ -4041,7 +4059,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#265 2016-09-28: Enh. #253 brought the Charset configuration. So make use of it.
 				//List<Root> newRoots = d7.parse(filename, "ISO-8859-1");
 				Ini ini = Ini.getInstance();
-				List<Root> newRoots = parser.parse(filename, ini.getProperty("impImportCharset", "ISO-8859-1"));
+				List<Root> newRoots = parser.parse(file.getAbsolutePath(), ini.getProperty("impImportCharset", "ISO-8859-1"));
 				// END KGU#265 2016-09-28
 				// END KGU#194 2016-05-08
 				if (parser.error.equals(""))
@@ -4091,25 +4109,119 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							JOptionPane.ERROR_MESSAGE, null);
 					// END KGU 2016-01-11
 				}
-
+			}
+			catch(Exception ex)
+			{
+				String message = ex.getLocalizedMessage();
+				if (message == null) {
+					message = ex.getMessage();
+					ex.printStackTrace();
+				}
+				if (message == null) message = ex.toString();
+				JOptionPane.showMessageDialog(this,
+						Menu.msgErrorUsingParser.getText().replace("%", parser.getDialogTitle())+"\n" + message,
+						Menu.msgTitleError.getText(),
+						JOptionPane.ERROR_MESSAGE);
+			}
+			finally {
 				redraw();
 				analyse();
 			}
 		}
-		catch(Exception ex)
-		{
-			String message = ex.getLocalizedMessage();
-			if (message == null) {
-				message = ex.getMessage();
-				ex.printStackTrace();
-			}
-			if (message == null) message = ex.toString();
-			JOptionPane.showMessageDialog(this,
-					Menu.msgErrorUsingParser.getText().replace("%", _parserClassName)+"\n" + message,
-					Menu.msgTitleError.getText(),
-					JOptionPane.ERROR_MESSAGE);
-		}
 	} 
+
+	// START KGU#354 2017-03-15: Enh. #354 - auxiliary methods
+	
+	// Tries to disambiguate the parser for the given file
+	private CodeParser identifyParser(File file, FileFilter usedFilter) {
+		CodeParser parser = null;
+		
+		Vector<CodeParser> candidates = new Vector<CodeParser>();
+
+		// We are better prepared for the ambiguous case...
+		int nr0 = 1, nr = 1;
+		final String format = "\n    %2d: %s";
+		String choice0 = "";	// Choice among all available parsers
+		String choice = "";		// Choice over concurrent parsers
+		for (CodeParser psr: parsers)
+		{
+			String descr = psr.getDescription();
+			choice0 += String.format(format, nr0++, descr);
+			if (usedFilter == psr) {
+				parser = psr;
+				break;
+			}
+			else if (psr.accept(file)) {
+				candidates.add(psr);
+				choice += String.format(format, nr++, descr);
+			}
+		}
+
+		if (parser == null) {
+			if (candidates.size() == 1) {
+				parser = candidates.get(0);
+			}
+			else {
+				if (candidates.isEmpty()) {
+					choice = choice0;
+					candidates = parsers;
+				}
+				int index = -1;
+				choice = Menu.msgSelectParser.getText().replace("%1", choice).replaceAll("%2", file.getName());
+				do {
+					String sel = JOptionPane.showInputDialog(null, choice, null);
+					if (sel == null) {
+						index = 0;
+					}
+					try {
+						index = Integer.parseInt(sel);
+						if (index < 0 || index > candidates.size()) {
+							index = -1;
+						}
+					}
+					catch (NumberFormatException ex) {}
+				} while (index < 0);
+				if (index > 0) {
+					parser = candidates.get(index-1);
+				}
+			}
+		}
+		return parser;
+	}
+
+	// Lazy initialization method for static field parsers
+	private void retrieveParsers() {
+		if (parsers != null) {
+			return;
+		}
+		parsers = new Vector<CodeParser>();
+		String errors = "";
+		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"));
+		GENParser genp = new GENParser();
+		Vector<GENPlugin> parserPlugins = genp.parse(buff);
+		for (int i=0; i < parserPlugins.size(); i++)
+		// END KGU#239 2016-08-12
+		{
+			GENPlugin plugin = parserPlugins.get(i);
+			final String className = plugin.className;
+			try {
+				Class<?> genClass = Class.forName(className);
+				parsers.add((CodeParser) genClass.newInstance());
+			} catch (Exception ex) {
+				errors += "\n" + plugin.title + ": " + ex.getLocalizedMessage();
+			}
+		}
+		try {
+			buff.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if (!errors.isEmpty()) {
+			errors = Menu.msgTitleLoadingError.getText() + errors;
+			JOptionPane.showMessageDialog(this, errors, Menu.msgTitleParserError.getText(), JOptionPane.ERROR_MESSAGE);
+		}
+	}
+	// END KGU#354 2017-03-15
 
 	/*****************************************
 	 * export code methods
@@ -4285,7 +4397,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		final String http_url = "http://structorizer.fisch.lu/version.txt";
 
 		String version = null;
-		if (this.retrieveVersion) {
+		if (retrieveVersion) {
 			try {
 
 				URL url = new URL(http_url);
@@ -4360,9 +4472,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		return (cmp > 0 ? latestVerStr : null);
 	}
 	
-	public void setRetrieveVersion(boolean retrieveVersion)
+	public void setRetrieveVersion(boolean _retrieveVersion)
 	{
-		this.retrieveVersion = retrieveVersion;
+		retrieveVersion = _retrieveVersion;
 	}
 	// END KGU#300 2016-12-02
 

@@ -131,10 +131,13 @@ Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=Export as % code
 Menu.menuFileExportCodeFavorite.tooltip=You may alter the favourite target language in the export preferences.
 Menu.menuFileImport.text=Import
+// Submenu of "File -> Import"
+Menu.menuFileImportCode.text=Source Code ...
 Menu.menuFilePrint.text=Print ...
 Menu.menuFileArrange.text=Arrange
 Menu.menuFileTranslator.text=Translator
 Menu.menuFileQuit.text=Quit
+
 // Menu "Edit"
 Menu.menuEdit.text=Edit
 Menu.menuEdit.mnemonic=e
@@ -283,7 +286,7 @@ Menu.msgTitleQuestion.text=Question
 Menu.msgTitleOpen.text=Open file ...
 Menu.msgTitleSave.text=Save file ...
 Menu.msgTitleSaveAs.text=Save file as ...
-Menu.msgTitleImport.text=Import % code ...
+Menu.msgTitleImport.text=Code import - select a file type filter ...
 Menu.msgTitleWrongInput.text=Wrong Input
 Menu.msgSaveChanges.text=Do you want to save the current NSD file?
 Menu.msgErrorImageSave.text=Error on saving the image(s)!
@@ -300,8 +303,9 @@ Menu.msgUpdateInfoHint.text=If you want to get notified of available new version
 Menu.lblOk.text=OK
 Menu.lblSuppressUpdateHint.text=Don't show this window again
 Menu.lblHint.text=Hint
-Menu.lblImportCode.text=% Code ...
 Menu.lblCopyToClipBoard.text=OK + Copy to Clipboard
+Menu.msgSelectParser.text=The source file type of "%2" is ambiguous. Please select an import language:%1\nEnter the most appropriate index please.
+Menu.msgImportCancelled.text=Code import for file "%" cancelled.
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!

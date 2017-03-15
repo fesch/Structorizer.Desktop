@@ -93,5 +93,11 @@ public interface IElementSequence {
 	 * @param disable - whetjer to set (true) or to remove (false) the disabled flag
 	 */
 	public abstract void setDisabled(boolean disable);
+
+	/**
+	 * Returns the common parenting Subqueue of all the elements contained.
+	 * @return a Subqueue (may even be this!)
+	 */
+	public abstract Subqueue getSubqueue();
 	
 }

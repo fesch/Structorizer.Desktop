@@ -90,6 +90,9 @@ Menu.lbFileExportCodeFavorite.text=Exportar como código %
 Menu.menuFileExportCodeFavorite.tooltip=É possível escolher a linguagem nas preferências para exportação. 
 Menu.menuFileImport.text=Importar
 
+// Submenu of "File -> Import"
+Menu.menuFileImportCode.text=Código ...
+
 Menu.menuFilePrint.text=Imprimir ...
 Menu.menuFileArrange.text=Organizar
 Menu.menuFileQuit.text=Sair

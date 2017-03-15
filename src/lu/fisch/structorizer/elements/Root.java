@@ -3608,5 +3608,47 @@ public class Root extends Element {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	// START KGU#365 2017-03-14: Enh.#380: Mechanism to derive subroutines from diagram-snippets
+	public Root outsourceToSubroutine(IElementSequence elements, String name, String result)
+	{
+		Root subroutine = null;
+		int nElements = elements.getSize();
+		if (nElements > 0) {
+			Subqueue parent = elements.getSubqueue();
+			subroutine = new Root();
+			// Find the start position of the element sequence
+			int startIx = -1;
+			Element startEl = elements.getElement(0);
+			for (int i = 0; startIx < 0 && i <= parent.getSize() - nElements; i++) {
+				if (parent.getElement(i) == startEl) {
+					startIx = i;
+				}
+			}
+			for (int i = 0; i < nElements; i++) {
+				subroutine.children.addElement(parent.getElement(startIx));
+				parent.removeElement(startIx);
+			}
+			StringList args = new StringList();
+			StringList unusedVars = subroutine.getUninitializedVars(subroutine.children, args);
+			Call call = new Call((result != null ? result + " <- " : "" ) + name + "(" + args + ")");
+			parent.insertElementAt(call, startIx);
+		}
+		return subroutine;
+	}
+	
+	/**
+	 * This is practically a very lean version of the analyse method. e simply don't create
+	 * Analyser warnings but collect variable names which are somewhere used without (unconditioned)
+	 * initialization. These are candidates for parameters.
+	 * @param children2
+	 * @param args
+	 * @return
+	 */
+	private StringList getUninitializedVars(Subqueue children2, StringList args) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	// END KGU#365 2017-03-14
 
 }

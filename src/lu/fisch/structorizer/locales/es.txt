@@ -98,6 +98,8 @@
  *      Kay Gürtzig     2017.02.26  Enh. #346: Additions for ExportOptionDialoge
  *      Kay Gürtzig     2017.03.08  Enh. #354, #368: New checkbox labels for ImportOptionDialog
  *      Kay Gürtzig     2017.03.12  Enh. #372: New saving options
+ *      Kay Gürtzig     2017.03.12  Enh. #372: New saving options
+ *      Kay Gürtzig     2017.03.14  Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
  *
  ******************************************************************************************************
  *
@@ -129,6 +131,8 @@ Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=Exportar código %
 Menu.menuFileExportCodeFavorite.tooltip=El código preferido se puede configurar an las Preferencias de Exportación.
 Menu.menuFileImport.text=Importar
+// Submenu of "File -> Import"
+Menu.menuFileImportCode.text=Código ...
 Menu.menuFilePrint.text=Imprimir ...
 Menu.menuFileArrange.text=Colocar en el Arranger
 Menu.menuFileTranslator.text=Traductor
@@ -281,7 +285,7 @@ Menu.msgTitleQuestion.text=Pregunta
 Menu.msgTitleOpen.text=Abrir ...
 Menu.msgTitleSave.text=Guardar ...
 Menu.msgTitleSaveAs.text=Guardar como ...
-Menu.msgTitleImport.text=Importar código % ...
+Menu.msgTitleImport.text=Importar código - Escoge un filtro apropiado para archivos ...
 Menu.msgTitleWrongInput.text=Entrada inadecuada
 Menu.msgSaveChanges.text=¿Guardar cambios del diagrama en archivo?
 Menu.msgErrorImageSave.text=¡Error grabando imágen(es)!
@@ -298,8 +302,9 @@ Menu.msgUpdateInfoHint.text=Para ser informado sobre nuevas versiones\nse puede 
 Menu.lblOk.text=Visto
 Menu.lblSuppressUpdateHint.text=Jamás mostrar esta ventanilla
 Menu.lblHint.text=Aviso
-Menu.lblImportCode.text=Código % ...
 Menu.lblCopyToClipBoard.text=Copiar en el portapapeles
+Menu.msgSelectParser.text=Tipo de código del fichero "%2" es ambiguo. Escoge el idioma para el importe de código, por favor:%1\nIngresa el número más apropiado, por favor.
+Menu.msgImportCancelled.text=Importe de código para fichero "%" cancelado.
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
@@ -799,8 +804,8 @@ SaveOptionDialog.chkAutoSaveExecute.text=Guardar automáticamente al ejecutar
 SaveOptionDialog.chkAutoSaveClose.text=Guardar automáticamente al salir
 SaveOptionDialog.chkBackupFile.text=Hacer un backup al guardar de nuevo
 SaveOptionDialog.lblAuthorName.text=Nombre de autor
-SaveOptionDialog.btnLicenseFile.text=
-SaveOptionDialog.btnLicenseFile.tooltip=
+SaveOptionDialog.btnLicenseFile.text=Licencia (editor)
+SaveOptionDialog.btnLicenseFile.tooltip=Abre el editor ara el contenido (texto) de la licencia seleccionada
 SaveOptionDialog.btnOk.text=Aceptar
 SaveOptionDialog.btnOk.tooltip=Aceptar los cambios.
 

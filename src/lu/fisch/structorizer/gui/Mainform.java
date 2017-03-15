@@ -60,6 +60,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.07      Enh. #101: Modified title string for dependent instances
  *      Kay Gürtzig     2017.01.15      Enh. #333: New potential preference "unicodeCompOps" added to Ini
  *      Kay Gürtzig     2017.02.03      Issue #340: Redundant calls of setLocale dropped
+ *      Kay Gürtzig     2017.03.15      Enh. #300: turned retrieveVersion to static
  *
  ******************************************************************************************************
  *
@@ -374,6 +375,9 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			setLocation(new Point(top,left));
 			validate();
 
+			// START KGU#300 2016-12-02: Enh. #300
+			Diagram.retrieveVersion = ini.getProperty("retrieveVersion", "false").equals("true");
+			// END KGU#300 2016-12-02
 			if (diagram!=null) 
 			{
 				// current directory
@@ -381,9 +385,6 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				//diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("file.separator")));
 				diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("user.home")));
 				// END KGU#95 2015-12-04
-				// START KGU#300 2016-12-02: Enh. #300
-				diagram.retrieveVersion = ini.getProperty("retrieveVersion", "false").equals("true");
-				// END KGU#300 2016-12-02
 				
 				// DIN 66261
 				if (ini.getProperty("DIN","0").equals("1")) // default = 0
@@ -498,14 +499,14 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				{
 					ini.setProperty("currentDirectory",diagram.currentDirectory.getAbsolutePath());
 				}
-				// START KGU#300 2016-12-02: Enh. #300
-				ini.setProperty("retrieveVersion", Boolean.toString(diagram.retrieveVersion));
-				// END KGU#300 2016-12-02
 				// START KGU#305 2016-12-15: Enh. #305
 				ini.setProperty("index", (diagram.showArrangerIndex() ? "1" : "0"));
 				// END KGU#305 2016-12-15
 			}
-			
+			// START KGU#300 2016-12-02: Enh. #300
+			ini.setProperty("retrieveVersion", Boolean.toString(Diagram.retrieveVersion));
+			// END KGU#300 2016-12-02
+		
 			// language
 			ini.setProperty("Lang",Locales.getInstance().getLoadedLocaleFilename());
 			

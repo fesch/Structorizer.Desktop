@@ -629,4 +629,15 @@ public class SelectedSequence extends Element implements IElementSequence {
 		}
 	}
 	// END KGU#277 2016-10-13
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.elements.IElementSequence#getSubqueue()
+	 */
+	@Override
+	public Subqueue getSubqueue() {
+		if (this.getSize() > 0) {
+			return (Subqueue)this.getElement(0).parent;
+		}
+		return null;
+	}
 }

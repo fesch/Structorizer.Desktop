@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.26-06 (2017.03.14)
+Current development version: 3.26-06 (2017.03.15)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>
@@ -55,7 +55,7 @@ Current development version: 3.26-06 (2017.03.14)
 - 06: Enh. #368: New import option to load variable declarations <2>
 - 06: Issue #368: Analyser no longer blames declarations of lacking initialization <2>
 - 06: Issue #369: Executor got C-style array definitions wrong (int a[2] <- {5, 2}) <2>
-- 06: Issue #354: GOLDParser update to version 5.0 <2>
+- 06: Issue #354: GOLDParser update to version 5.0, unique menu item for import <2>
 - 06: Issue #372: Author name now configurable, license editor added [Simon Sobisch]2
 
 Version: 3.26 (2017.01.06)

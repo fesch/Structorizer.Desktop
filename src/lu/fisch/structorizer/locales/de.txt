@@ -129,6 +129,8 @@ Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=Exportieren nach %
 Menu.menuFileExportCodeFavorite.tooltip=Die bevorzugte Exportsprache kann in den Export-Einstellungen gewählt werden.
 Menu.menuFileImport.text=Importieren
+// Submenu of "File -> Import"
+Menu.menuFileImportCode.text=Quell-Code ...
 Menu.menuFilePrint.text=Drucken ...
 Menu.menuFileArrange.text=Im Arranger anordnen
 Menu.menuFileTranslator.text=Übersetzer
@@ -281,7 +283,7 @@ Menu.msgTitleQuestion.text=Frage
 Menu.msgTitleOpen.text=Öffnen ...
 Menu.msgTitleSave.text=Speicher ...
 Menu.msgTitleSaveAs.text=Speichern unter ...
-Menu.msgTitleImport.text=%-Quellcode importieren ...
+Menu.msgTitleImport.text=Quellcode importieren - bitte geeigneten Dateityp-Filter wählen ...
 Menu.msgTitleWrongInput.text=Falsche Eingabe
 Menu.msgSaveChanges.text=Möchten Sie die aktuelle Diagramm-Datei speichern?
 Menu.msgErrorImageSave.text=Fehler beim Speichern als Bild(er)!
@@ -298,8 +300,9 @@ Menu.msgUpdateInfoHint.text=Um über neue Versionen informiert zu werden kann mi
 Menu.lblOk.text=OK
 Menu.lblSuppressUpdateHint.text=Diesen Hinweis nicht mehr anzeigen
 Menu.lblHint.text=Tipp
-Menu.lblImportCode.text=% Code ...
 Menu.lblCopyToClipBoard.text=OK, Text -> Zwischenablage
+Menu.msgSelectParser.text=Die Quellcode-Sprache von "%2" ist nicht eindeutig. Bitte Import-Sprache wählen:%1\nGeeignetste Nummer eingeben, bitte.
+Menu.msgImportCancelled.text=Code-Import für Datei "%" abgebrochen.
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!

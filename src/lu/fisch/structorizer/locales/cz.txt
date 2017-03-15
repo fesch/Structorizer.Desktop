@@ -86,6 +86,8 @@ Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=
 Menu.menuFileExportCodeFavorite.tooltip=
 Menu.menuFileImport.text=Import
+// Submenu of "File -> Import"
+Menu.menuFileImportCode.text=Programovací Kod ...
 Menu.menuFilePrint.text=Tisk ...
 Menu.menuFileArrange.text=
 Menu.menuFileTranslator.text=
@@ -215,7 +217,6 @@ Menu.msgRepeatSaveAttempt.text=
 Menu.msgErrorFileSave.text=
 Menu.msgBreakTriggerPrompt.text=
 Menu.msgBreakTriggerIgnored.text=
-Menu.lblImportCode.text=% ...
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!

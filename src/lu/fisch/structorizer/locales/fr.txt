@@ -86,6 +86,8 @@ Menu.menuFileExportPictureSVG.text=
 Menu.lbFileExportCodeFavorite.text=Exporter en tant que code %
 Menu.menuFileExportCodeFavorite.tooltip=Vous pouvez modifier votre langage de programmation d'export préféré dans les options.
 Menu.menuFileImport.text=Importer
+// Submenu of "File -> Import"
+Menu.menuFileImportCode.text=Code source ...
 Menu.menuFilePrint.text=Imprimer ...
 Menu.menuFileArrange.text=Arranger
 Menu.menuFileTranslator.text=Traducteur
@@ -215,7 +217,6 @@ Menu.msgRepeatSaveAttempt.text=
 Menu.msgErrorFileSave.text=
 Menu.msgBreakTriggerPrompt.text=
 Menu.msgBreakTriggerIgnored.text=
-Menu.lblImportCode.text=Code source % ...
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
