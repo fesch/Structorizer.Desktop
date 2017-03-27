@@ -34,7 +34,8 @@ package lu.fisch.structorizer.parsers;
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.03.02      First Issue
  *      Kay Gürtzig     2017.03.06      Bug in diagram synthesis mended (do-while, switch)
- *      Kay Gürtzig     2017.03.26      Fix #357: New temp file mechanism for the prepared text file
+ *      Kay Gürtzig     2017.03.26      Fix #384: New temp file mechanism for the prepared text file
+ *      Kay Gürtzig     2017.03.27      Issue #354: number literal suffixes and scanf import fixed
  *
  ******************************************************************************************************
  *
@@ -1388,8 +1389,8 @@ public class CParser extends CodeParser
 			// Forget the format string
 			if (_name.equals("scanf")) {
 				_args.remove(0);
-				for (int i = 1; i < _args.count(); i++) {
-					String varItem = _args.get(i);
+				for (int i = 0; i < _args.count(); i++) {
+					String varItem = _args.get(i).trim();
 					if (varItem.startsWith("&")) {
 						_args.set(i, varItem.substring(1));
 					}
@@ -1445,7 +1446,7 @@ public class CParser extends CodeParser
 				break;
 			case CONTENT:
 			{
-				String toAdd = "";
+				String toAdd = token.asString();
 				int idx = token.getTableIndex();
 				switch (idx) {
 				case SymbolConstants.SYM_EXCLAM:
@@ -1489,8 +1490,18 @@ public class CParser extends CodeParser
 				case SymbolConstants.SYM_TILDE:
 					_content += " " + token.asString() + " ";
 					break;
+				case SymbolConstants.SYM_DECLITERAL:
+				case SymbolConstants.SYM_HEXLITERAL:
+				case SymbolConstants.SYM_OCTLITERAL:
+				case SymbolConstants.SYM_FLOATLITERAL:
+					// Remove type-specific suffixes
+					if (toAdd.matches(".*?[uUlL]+")) {
+						toAdd = toAdd.replaceAll("(.*?)[uUlL]+", "$1");
+					}
+					else if (idx == SymbolConstants.SYM_FLOATLITERAL && toAdd.matches(".+?[fF]")) {
+						toAdd = toAdd.replaceAll("(.+?)[fF]", "$1");
+					}
 				default:
-					toAdd = token.asString();
 					if (toAdd.matches("^\\w.*") && _content.matches(".*\\w$") || _content.matches(".*[,;]$")) {
 						_content += " ";
 					}
