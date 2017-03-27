@@ -1255,7 +1255,7 @@ public class Menu extends LangMenuBar implements NSDController
 			menuDiagramTransmute.setEnabled(diagram.canTransmute());
 			// END KGU#199 2016-07-07
 			// START KGU#365 2017-03-26: Enh. #380 - We allow subroutine generation
-			menuDiagramOutsource.setEnabled(diagram.selectedIsMultiple());
+			menuDiagramOutsource.setEnabled(diagram.canCut());
 			// END KGU#365 2017-03-26
 			
 			
