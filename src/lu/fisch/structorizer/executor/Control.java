@@ -54,6 +54,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.12.12      Issue #307: New error message msgForLoopManipulation
  *      Kay Gürtzig     2016.12.29      KGU#317 (issues #267, #315) New message for multiple subroutines
  *      Kay Gürtzig     2016.01.09      Issue #81 / bugfix #330: GUI scaling stuff outsourced to GUIScaler
+ *      Kay Gürtzig     2017.03.27      Issue #356: Sensible reaction to the close button ('X') implemented
  *
  ******************************************************************************************************
  *
@@ -745,6 +746,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public static final LangTextHolder msgEndOfFile =
     		new LangTextHolder("Attempt to read data past end of file!");    
     // END KGU#311 2016-12-18/24
+    // START KGU#372 2017-03-27: Enh. #356
+    public static final LangTextHolder msgUseStopButton =
+    		new LangTextHolder("There is a running or pending execution!\nUse the STOP button to abort and close.");
+    // END KGU#372 2017-03-27
     
     // START KGU#68 2015-11-06: Register variable value editing events
     private final ConcurrentMap<String, Object> varUpdates = new ConcurrentHashMap<String, Object>();
@@ -818,4 +823,14 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 	    // END KGU#160 2016-04-12
 	}
 	// END KGU#117 2016-03-08
+	
+	// START KGU#372 2017-03-27: Enh. #356
+	/**
+	 * Allows programmatically to press the STOP button.
+	 */
+	public void clickStopButton()
+	{
+		this.btnStop.doClick();
+	}
+	// END KGU#372 2017-03-27
 }

@@ -896,7 +896,8 @@ Control.msgInvalidFileNumberRead.text=Invalid file number or file not open for r
 Control.msgInvalidFileNumberWrite.text=Invalid file number or file not open for writing.
 Control.msgNoIntLiteralOnFile.text=No integer value readable from file!
 Control.msgNoDoubleLiteralOnFile.text=No floating-point value readable from file!    
-Control.msgEndOfFile.text=Attempt to read data past end of file!    
+Control.msgEndOfFile.text=Attempt to read data past end of file!
+Control.msgUseStopButton.text=There is a running or pending execution!\nUse the STOP button to abort and close.
 Control.tblVar.header.0=Variable Name
 Control.tblVar.header.1=Content
 

@@ -890,7 +890,8 @@ Control.msgInvalidFileNumberRead.text=Ungültige Dateinummer bzw. Datei nicht ge
 Control.msgInvalidFileNumberWrite.text=Ungülige Dateinummer bzw. Datei nicht geöffnet zum Schreiben.
 Control.msgNoIntLiteralOnFile.text=Kein Ganzzahlwert lesbar von der Datei!
 Control.msgNoDoubleLiteralOnFile.text=Kein Gleitkommawert lesbar von der Datei!    
-Control.msgEndOfFile.text=Leseversuch nach Erreichen des Dateiendes!    
+Control.msgEndOfFile.text=Leseversuch nach Erreichen des Dateiendes!
+Control.msgUseStopButton.text=Ein Debugging ist in Ausführung oder pausierend!\nZum Abbrechen und Schließen bitte STOP-Taste verwenden.
 Control.tblVar.header.0=Variablenname
 Control.tblVar.header.1=Inhalt
 

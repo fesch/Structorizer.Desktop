@@ -865,7 +865,7 @@ Control.cbRunDataDisplay.item.5=hechas operaciones, log.
 Control.cbRunDataDisplay.item.6=acum. operaciones, lin.
 Control.cbRunDataDisplay.item.7=acum. operaciones, log.
 Control.chkOutputToTextWindow.text=Salidas a ventana
-Control.lbStopRunningProc.text=Esta acción no está permitida mientras que un diagrama está ejecutido.\n¿Quiere abortar la ejecución?
+Control.lbStopRunningProc.text=Esta acción no está permitida mientras que un diagrama está ejecutido.\n¿Quieres abortar la ejecución?
 Control.lbInputValue.text=Inserta un valor para <%>
 Control.lbInputPaused.text=Ejecución pausando - el valor puede ser insertado en la tabla de variables
 Control.lbInputCancelled.text=Entrada suspendida
@@ -896,6 +896,7 @@ Control.msgInvalidFileNumberWrite.text=Nombre de archivo es inválido o archivo 
 Control.msgNoIntLiteralOnFile.text=¡No valor integral leible desde el archivo!
 Control.msgNoDoubleLiteralOnFile.text=¡No valor floating-point leible desde el archivo!
 Control.msgEndOfFile.text=¡No es posible leer datos después del fin del archivo!
+Control.msgUseStopButton.text=¡Una ejecución está en progreso o pausando!\nUsa el botón STOP para abortarla y cerrar.
 Control.tblVar.header.0=Nombre de variable
 Control.tblVar.header.1=Contenido
 

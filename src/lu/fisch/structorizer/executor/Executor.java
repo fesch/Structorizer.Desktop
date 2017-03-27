@@ -116,6 +116,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.02.08      Issue #343: Unescaped internal string delimiters escaped on string literal conversion
  *      Kay Gürtzig     2017.02.17      KGU#159: Stacktrace now also shows the arguments of top-level subroutine calls
  *      Kay Gürtzig     2017.03.06      Bugfix #369: Interpretation of C-style array initializations (decl.) fixed.
+ *      Kay Gürtzig     2017.03.27      Issue #356: Sensible reaction to the close button ('X') implemented
  *
  ******************************************************************************************************
  *
@@ -211,6 +212,8 @@ import java.awt.Dialog.ModalityType;
 import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.Closeable;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -274,11 +277,21 @@ public class Executor implements Runnable
 	};
 	// END KGU#311 2016-12-22
 
+	/**
+	 * Returns the singleton instance if there is one
+	 * @return the existing instance or null.
+	 */
 	public static Executor getInstance()
 	{
 		return mySelf;
 	}
 
+	/**
+	 * Ensures there is a (singleton) instance and returns it
+	 * @param diagram - the Diagram instance requesting the instance (also used for conflict detection)
+	 * @param diagramController - possibly an additional effector for execution 
+	 * @return the sole instance of this class.
+	 */
 	public static Executor getInstance(Diagram diagram,
 			DiagramController diagramController)
 	{
@@ -386,6 +399,43 @@ public class Executor implements Runnable
 	{
 		this.diagram = diagram;
 		this.diagramController = diagramController;
+		// START KGU#372 2017-03-27: Enh. #356: Show at least an information on closing attempt
+		this.control.addWindowListener(new WindowListener() {
+
+			@Override
+			public void windowActivated(WindowEvent evt) {}
+
+			@Override
+			public void windowClosed(WindowEvent evt) {}
+
+			@Override
+			public void windowClosing(WindowEvent evt) {
+				if (evt.getSource() == control) {	// should be the only possible source but...
+					if (running) {
+						JOptionPane.showMessageDialog(null, Control.msgUseStopButton.getText(),
+								mySelf.getClass().getSimpleName() + ": " + mySelf.diagram.getRoot().getSignatureString(false),
+								JOptionPane.WARNING_MESSAGE);
+					}
+					else {
+						control.clickStopButton();
+					}
+				}
+			}
+
+			@Override
+			public void windowDeactivated(WindowEvent evt) {}
+
+			@Override
+			public void windowDeiconified(WindowEvent evt) {}
+
+			@Override
+			public void windowIconified(WindowEvent evt) {}
+
+			@Override
+			public void windowOpened(WindowEvent evt) {}
+			
+		});
+		// END KGU#372 2017-03-27
 	}
 
 	// START KGU#210/KGU#234 2016-08-08: Issue #201 - Ensure GUI consistency

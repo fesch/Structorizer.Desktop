@@ -54,6 +54,7 @@ Current development version: 3.26-06 (2017.03.27)
 - 06: Issue #346: Specified includes for C weren't always exported <2>
 - 06: Enh. #354: Plugin system for code import (in analogy to generators) [S. Sobisch]2
 - 06: Enh. #354: ANSI-C parser added to code import plugins <2>
+- 06: Enh. #356: Sensible reaction on the attempt to close the Executor [S. Sobisch]2
 - 06: Enh. #368: New import option to load variable declarations <2>
 - 06: Issue #368: Analyser no longer blames declarations of lacking initialization <2>
 - 06: Issue #369: Executor got C-style array definitions wrong (int a[2] <- {5, 2}) <2>
