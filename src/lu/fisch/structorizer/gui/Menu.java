@@ -73,6 +73,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.12.17      Enh. #267: New Analyser error15_3
  *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser error21
  *      Kay Gürtzig     2017.03.15      Enh. #354: All code import merged to a single menu item
+ *      Kay Gürtzig     2017.03.23      Enh. #380: New menu entry to convert a sequence in a subroutine
  *
  ******************************************************************************************************
  *
@@ -201,6 +202,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
 	protected final JMenuItem menuDiagramTransmute = new JMenuItem("Transmute", IconLoader.ico109);
 	// END KGU#199 2016-07-06
+	// START KGU#365 2017-03-23: Enh. #380 - conversion of sequence in a subroutine
+	protected final JMenuItem menuDiagramOutsource = new JMenuItem("Outsource", IconLoader.ico068);
+	// END KGU#365 2017-03-23
 	// START KGU#123 2016-01-03: New menu items for collapsing/expanding (addresses #65)
 	protected final JMenuItem menuDiagramCollapse = new JMenuItem("Collapse", IconLoader.ico106);
 	protected final JMenuItem menuDiagramExpand = new JMenuItem("Expand", IconLoader.ico107);
@@ -781,6 +785,11 @@ public class Menu extends LangMenuBar implements NSDController
 		menuDiagramTransmute.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		menuDiagramTransmute.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.transmuteNSD(); doButtons(); } } );;
 		// END KGU#199 2016-07-06
+		// START KGU#365 2017-03-23: Enh. #380 - conversion of sequence in a subroutine
+		menuDiagram.add(menuDiagramOutsource);
+		menuDiagramOutsource.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, KeyEvent.CTRL_DOWN_MASK));
+		menuDiagramOutsource.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.outsourceNSD(); doButtons(); } } );;
+		// END KGU#365 2017-03-23
 		
 		menuDiagram.addSeparator();
 
@@ -1245,6 +1254,9 @@ public class Menu extends LangMenuBar implements NSDController
 			// START KGU#199 2016-07-07: Enh. #188 - We allow instruction conversion
 			menuDiagramTransmute.setEnabled(diagram.canTransmute());
 			// END KGU#199 2016-07-07
+			// START KGU#365 2017-03-26: Enh. #380 - We allow subroutine generation
+			menuDiagramOutsource.setEnabled(diagram.selectedIsMultiple());
+			// END KGU#365 2017-03-26
 			
 			
 			// START KGU#123 2016-01-03: We allow multiple selection for collapsing

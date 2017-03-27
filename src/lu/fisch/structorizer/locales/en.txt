@@ -95,6 +95,7 @@
  *      Kay Gürtzig     2017.03.08      Enh. #354, #368: New checkbox labels for ImportOptionDialog
  *      Kay Gürtzig     2017.03.12      Enh. #372: New saving options
  *      Kay Gürtzig     2017.03.14      Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
+ *      Kay Gürtzig     2017.03.27      Enh. #380: Messages for outsourcing of element sequences
  *
  ******************************************************************************************************
  *
@@ -189,6 +190,8 @@ Menu.menuDiagramDelete.text=Delete
 Menu.menuDiagramMoveUp.text=Move up
 Menu.menuDiagramMoveDown.text=Move down
 Menu.menuDiagramTransmute.text=Transmute
+Menu.menuDiagramOutsource.text=Outsource
+Menu.menuDiagramOutsource.tooltip=Outsource the selected element sequence to a new subroutine.
 Menu.menuDiagramCollapse.text=Collapse
 Menu.menuDiagramExpand.text=Expand
 // Diagram Appearance
@@ -426,6 +429,7 @@ Editor.btnDelete.tooltip=Delete the selected element.
 Editor.btnMoveUp.tooltip=Move the selected element one position up.
 Editor.btnMoveDown.tooltip=Move the selected element one position down.
 Editor.btnTransmute.tooltip=Transmute instructions to Calls or Jumps, merge or split sequences
+Editor.btnOutsource.tooltip=Outsource the selected element sequence to a new subroutine.
 //printing
 Editor.btnPrint.tooltip=Print the diagram.
 Editor.btnArrange.tooltip=Add the diagram to the Arranger panel
@@ -490,11 +494,13 @@ Editor.popupDelete.text=Delete
 Editor.popupMoveUp.text=Move up
 Editor.popupMoveDown.text=Move down
 Editor.popupTransmute.text=Transmute
+Editor.popupOutsource.text=Outsource
+Editor.popupOutsource.tooltip=Outsource the selected element sequence to a new subroutine.
 // Collapsing
 Editor.popupCollapse.text=Collapse
 Editor.popupExpand.text=Expand
 Editor.popupDisable.text=Disable/enable
-// Breakpoint
+// Debug
 Editor.popupBreakpoint.text=Toggle breakpoint
 Editor.popupBreakTrigger.text=Specify break trigger...
 // Arranger index

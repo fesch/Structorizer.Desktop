@@ -43,6 +43,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2016.07.21      Bugfix #197 (selection moves by cursor keys); KGU#207 (getElementByCoord() revised)
  *      Kay Gürtzig     2016.10.13      Enh. #277: Method setDisabled(boolean) implemented
  *      Kay Gürtzig     2016.11.17      Bugfix #114: isExecuted() revised (signatures too)
+ *      Kay Gürtzig     2017.03.26      Enh. #380: Methods addElement() and insertElementAt() now substantially implemented
  *
  ******************************************************************************************************
  *
@@ -553,14 +554,21 @@ public class SelectedSequence extends Element implements IElementSequence {
 
 	@Override
 	public void addElement(Element _element) {
-		// TODO Auto-generated method stub
-		
+		// START KGU#365 2017-03-26: Enh. #380 - we accomplish this implementation
+		((Subqueue)this.parent).insertElementAt(_element, ++this.lastIndex);
+		this.resetDrawingInfo();
+		// END KGU#365 2017-03-26
 	}
 
 	@Override
 	public void insertElementAt(Element _element, int _where) {
-		// TODO Auto-generated method stub
-		
+		// START KGU#365 2017-03-26: Enh. #380 - we accomplish this implementation
+		if (_where <= this.getSize()) {
+			((Subqueue)this.parent).insertElementAt(_element, this.firstIndex + _where);
+			this.lastIndex++;
+			this.resetDrawingInfo();
+		}
+		// END KGU#365 2017-03-26
 	}
 	
 	// START KGU#43 2016-01-22: Method to control the breakpoint property of the sub-elements

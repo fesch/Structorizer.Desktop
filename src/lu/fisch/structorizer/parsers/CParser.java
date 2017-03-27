@@ -20,10 +20,7 @@
 
 package lu.fisch.structorizer.parsers;
 
-import java.awt.Color;
-
-/**
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
  *
@@ -37,6 +34,7 @@ import java.awt.Color;
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.03.02      First Issue
  *      Kay Gürtzig     2017.03.06      Bug in diagram synthesis mended (do-while, switch)
+ *      Kay Gürtzig     2017.03.26      Fix #357: New temp file mechanism for the prepared text file
  *
  ******************************************************************************************************
  *
@@ -50,16 +48,13 @@ import java.awt.Color;
  *
  ******************************************************************************************************/
 
+import java.awt.Color;
 import java.io.*;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Stack;
 import java.util.regex.Matcher;
 
-import com.creativewidgetworks.goldparser.parser.*;
 import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
@@ -73,7 +68,6 @@ import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.While;
-import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
 /**
@@ -609,10 +603,11 @@ public class CParser extends CodeParser
 			//System.out.println(srcCode);
 
 			// trim and save as new file
-			interm = new File(_textToParse + ".structorizer");
+			//interm = new File(_textToParse + ".structorizer");
+			interm = File.createTempFile("Structorizer", "c");
 			OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "UTF-8");
 			ow.write(srcCode.trim()+"\n");
-			//System.out.println("==> "+filterNonAscii(pasCode.trim()+"\n"));
+			//System.out.println("==> "+filterNonAscii(srcCode.trim()+"\n"));
 			ow.close();
 		}
 		catch (Exception e) 

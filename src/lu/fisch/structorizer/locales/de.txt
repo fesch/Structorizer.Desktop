@@ -98,6 +98,7 @@
  *      Kay Gürtzig         2017.03.08  Enh. #354, #368: New checkbox labels for ImportOptionDialog
  *      Kay Gürtzig         2017.03.12  Enh. #372: New saving options
  *      Kay Gürtzig         2017.03.14  Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
+ *      Kay Gürtzig         2017.03.27  Enh. #380: Messages for outsourcing of element sequences
  *
  ******************************************************************************************************
  *
@@ -186,6 +187,8 @@ Menu.menuDiagramDelete.text=Löschen
 Menu.menuDiagramMoveUp.text=Nach oben
 Menu.menuDiagramMoveDown.text=Nach unten
 Menu.menuDiagramTransmute.text=Umwandeln
+Menu.menuDiagramOutsource.text=Auslagern
+Menu.menuDiagramOutsource.tooltip=Ausgewählte Elementfolge in neues Unterdiagramm auslagern.
 Menu.menuDiagramCollapse.text=Reduzieren
 Menu.menuDiagramExpand.text=Erweitern
 // Diagram Appearance
@@ -423,6 +426,7 @@ Editor.btnDelete.tooltip=Löschen des ausgewählten Elements.
 Editor.btnMoveUp.tooltip=Bewegen des ausgewählten Elements um eine Position nach oben.
 Editor.btnMoveDown.tooltip=Bewegen des ausgewählten Elements um eine Position nach unten.
 Editor.btnTransmute.tooltip=Anweisung in Aufruf oder Aussprung wandeln, zusammenfassen oder zerlegen.
+Editor.btnOutsource.tooltip=Ausgewählte Elementfolge in neues Unterdiagramm auslagern.
 //printing
 Editor.btnPrint.tooltip=Drucken des Diagramms.
 Editor.btnArrange.tooltip=Diagram zum Arranger-Tableau hinzufügen.
@@ -487,6 +491,8 @@ Editor.popupDelete.text=Löschen
 Editor.popupMoveUp.text=Nach oben bewegen
 Editor.popupMoveDown.text=Nach unten bewegen
 Editor.popupTransmute.text=Umwandeln
+Editor.popupOutsource.text=Auslagern
+Editor.popupOutsource.tooltip=Ausgewählte Elementfolge in neues Unterdiagramm auslagern.
 // Collapsing
 Editor.popupCollapse.text=Reduzieren
 Editor.popupExpand.text=Erweitern

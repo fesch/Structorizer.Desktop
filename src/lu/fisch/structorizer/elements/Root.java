@@ -98,6 +98,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.03.06      Issue #368: Declarations are not to cause "uninitialized" warnings any longer
  *      Kay Gürtzig     2017.03.10      KGU#363: Enh. #372 (Simon Sobisch) new attributes author etc.
  *      Kay Gürtzig     2017.03.10/14   KGU#363: Enh. #372 (Simon Sobisch) new license attributes
+ *      Kay Gürtzig     2017.03.14/26   Enh. #380: Method outsourceToSubroutine supports automatic derival of subroutines
  *
  ******************************************************************************************************
  *
@@ -1098,32 +1099,45 @@ public class Root extends Element {
 
     public void undo()
     {
-            if (undoList.size()>0)
-            {
-                    // START KGU#137 2016-01-11: Bugfix #103 - rely on undoList level comparison 
-                    //this.hasChanged=true;
-                    // END KGU#137 2016-01-11
-                    redoList.add((Subqueue)children.copy());
-            		// START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes in the stack top
-            		redoList.peek().setText(this.text.copy());
-            		redoList.peek().setComment(this.comment.copy());
-            		// END KGU#120 2016-01-02
-                    children = undoList.pop();
-                    children.parent=this;
-            		// START KGU#120 2016-01-02: Bugfix #85 - restore my StringList attributes from stack
-            		this.setText(children.getText().copy());
-            		this.setComment(children.getComment().copy());
-            		children.text.clear();
-            		children.comment.clear();
-            		// END KGU#120 2016-01-02
-                	// START KGU#136 2016-03-01: Bugfix #97
-                	this.resetDrawingInfoDown();
-                	// END KGU#136 2016-03-01
-            	    // START KGU#261 2017-01-20: Enh. #259: type info will also have to be cleared
-            		// FIXME: Certain explicit declarations should remain
-            		this.clearTypeInfo();
-            		// END KGU#261 2017-01-26
+    // START KGU#365 2017-03-19: Enh. #380 we need an undo without redo
+        undo(true);
+    }
+    
+    public void undo(boolean redoable)
+    {
+    // END KGU#365 2017-03-19
+        if (undoList.size()>0)
+        {
+            // START KGU#137 2016-01-11: Bugfix #103 - rely on undoList level comparison 
+            //this.hasChanged=true;
+            // END KGU#137 2016-01-11
+            // START KGU#365 2017-03-19: Enh. #380
+            if (redoable) {
+            // END KGU#365 2017-03-19
+                redoList.add((Subqueue)children.copy());
+            	// START KGU#120 2016-01-02: Bugfix #85 - park my StringList attributes in the stack top
+            	redoList.peek().setText(this.text.copy());
+            	redoList.peek().setComment(this.comment.copy());
+            	// END KGU#120 2016-01-02
+            // START KGU#365 2017-03-19: Enh. #380
             }
+            // END KGU#365 2017-03-19
+            children = undoList.pop();
+            children.parent=this;
+            // START KGU#120 2016-01-02: Bugfix #85 - restore my StringList attributes from stack
+            this.setText(children.getText().copy());
+            this.setComment(children.getComment().copy());
+            children.text.clear();
+            children.comment.clear();
+            // END KGU#120 2016-01-02
+            // START KGU#136 2016-03-01: Bugfix #97
+            this.resetDrawingInfoDown();
+            // END KGU#136 2016-03-01
+            // START KGU#261 2017-01-20: Enh. #259: type info will also have to be cleared
+            // FIXME: Certain explicit declarations should remain
+            this.clearTypeInfo();
+            // END KGU#261 2017-01-26
+        }
     }
 
     public void redo()
@@ -3609,45 +3623,241 @@ public class Root extends Element {
 		return null;
 	}
 	
-	// START KGU#365 2017-03-14: Enh.#380: Mechanism to derive subroutines from diagram-snippets
+	// START KGU#365 2017-03-14: Enh. #380: Mechanism to derive subroutines from diagram-snippets
+	/**
+	 * Replaces the given {@code elements} from this diagram by a subroutine call and
+	 * returns the new subroutine formed out of these elements.
+	 * Tries to derive the necessary arguments and places them in the parameter lists
+	 * of both the subroutine and the call.
+	 * The heuristic retrieval of necessary results is incomplete (it still cannot detect
+	 * mere updates of variables that had existed before). In case several result values
+	 * are detected, then an array of them will be returned. This may cause trouble for export
+	 * languages like C (where array can't be returned that easily) or strongly typed languages
+	 * (where a record/struct might have been necessary instead).
+	 * @param elements - an element sequence from this Root
+	 * @param name - the name for the new subroutine
+	 * @param result - name of the result variable (if any) 
+	 * @return a new Root formed from the given elements or null if {@code elements} was
+	 * empty or didn't belong to this Root. 
+	 */
 	public Root outsourceToSubroutine(IElementSequence elements, String name, String result)
 	{
 		Root subroutine = null;
 		int nElements = elements.getSize();
 		if (nElements > 0) {
-			Subqueue parent = elements.getSubqueue();
-			subroutine = new Root();
-			// Find the start position of the element sequence
-			int startIx = -1;
-			Element startEl = elements.getElement(0);
-			for (int i = 0; startIx < 0 && i <= parent.getSize() - nElements; i++) {
-				if (parent.getElement(i) == startEl) {
-					startIx = i;
-				}
+			HashMap<String, TypeMapEntry> types = this.getTypeInfo();
+			StringList uninitializedVars0 = new StringList();
+			this.getUninitializedVars(this.children, new StringList(), uninitializedVars0);
+			if (Element.getRoot(elements.getSubqueue()) != this) {
+				return null;
 			}
+			subroutine = new Root();
+			subroutine.isProgram = false;
 			for (int i = 0; i < nElements; i++) {
-				subroutine.children.addElement(parent.getElement(startIx));
-				parent.removeElement(startIx);
+				subroutine.children.addElement(elements.getElement(0));
+				elements.removeElement(0);
 			}
 			StringList args = new StringList();
-			StringList unusedVars = subroutine.getUninitializedVars(subroutine.children, args);
-			Call call = new Call((result != null ? result + " <- " : "" ) + name + "(" + args + ")");
-			parent.insertElementAt(call, startIx);
+			subroutine.getUninitializedVars(subroutine.children, new StringList(), args);
+			StringList uninitializedVars1 = new StringList();
+			this.getUninitializedVars(this.children, new StringList(), uninitializedVars1);
+			// Identify new uninitialized variables as potential results (which is not sufficient!)
+			StringList results = new StringList();
+			for (int i = 0; i < uninitializedVars1.count(); i++) {
+				String varName = uninitializedVars1.get(i);
+				if (!uninitializedVars0.contains(varName)) {
+					results.add(varName);
+				}
+			}
+			if (results.count() == 0 && result != null) {
+				results.add(result);
+			}
+			else if (results.count() > 1 && result == null) {
+				result = "arr" + subroutine.hashCode();
+			}
+			String signature = name + "(";
+			for (int i = 0; i < args.count(); i++) {
+				String argName = args.get(i);
+				TypeMapEntry entry = types.get(argName);
+				signature += ((i > 0) ? "; " : "") + argName;
+				if (entry != null && entry.isConflictFree()) {
+					String prefix = "";
+					String type = entry.getTypes().get(0);
+					while (type.startsWith("@")) {
+						prefix += "array of ";
+						type = type.substring(1);
+					}
+					signature += ": " + prefix + type;
+				}
+			}
+			signature += ")";
+			
+			// Result composition
+			String resAsgnmt = null;
+			if (results.count() == 1 && (result == null || result.equals(results.get(0)))) {
+				result = results.get(0);
+				TypeMapEntry entry = types.get(result);
+				if (entry != null && entry.isConflictFree()) {
+					String prefix = "";
+					String type = entry.getTypes().get(0);
+					while (type.startsWith("@")) {
+						prefix += "array of ";
+						type = type.substring(1);
+					}
+					signature += ": " + prefix + type;
+				}
+				resAsgnmt = name + " <- " + result;				
+			}
+			else if (results.count() > 0) {
+				signature += ": array";
+				resAsgnmt = name + " <- {" + results.concatenate(", ") + "}";
+			}
+			subroutine.setText(signature);
+			subroutine.setChanged();
+			if (resAsgnmt != null) {
+				subroutine.children.addElement(new Instruction(resAsgnmt));
+			}
+			Call call = new Call((result != null ? result + " <- " : "" ) + name + "(" + args.concatenate(", ") + ")");
+			elements.addElement(call);
+			if (results.count() > 1 || results.count() == 1 && !result.equals(results.get(0))) {
+				StringList asgnmts = new StringList();
+				for (int i = 0; i < results.count(); i++) {
+					asgnmts.add(results.get(i) + " <- " + result + "[" + i + "]");
+				}
+				elements.addElement(new Instruction(asgnmts));
+			}
 		}
 		return subroutine;
 	}
 	
 	/**
-	 * This is practically a very lean version of the analyse method. e simply don't create
+	 * This is practically a very lean version of the {@link #analyse()} method. We simply don't create
 	 * Analyser warnings but collect variable names which are somewhere used without (unconditioned)
 	 * initialization. These are candidates for parameters.
-	 * @param children2
-	 * @param args
-	 * @return
+	 * @param _node - The Subqueue recursively to be scrutinized for variables
+	 * @param _vars - Names of variables, which had been introduced before (will be enhanced here)
+	 * @param _args - collects the names of not always initialized variables (potential arguments) 
 	 */
-	private StringList getUninitializedVars(Subqueue children2, StringList args) {
-		// TODO Auto-generated method stub
-		return null;
+	private void getUninitializedVars(Subqueue _node, StringList _vars, StringList _args) {
+		
+		for (int i=0; i<_node.getSize(); i++)
+		{
+			Element ele = _node.getElement(i);
+			if (ele.disabled) continue;
+			
+			String eleClassName = ele.getClass().getSimpleName();
+
+			// get all set variables from actual instruction (just this level, no substructure)
+			StringList myVars = getVarNames(ele);
+			// Find uninitialized variables (except REPEAT)
+			StringList myUsedVars = getUsedVarNames(_node.getElement(i),true,true);
+
+			if (!eleClassName.equals("Repeat"))
+			{
+				for (int j=0; j<myUsedVars.count(); j++)
+				{
+					String myUsed = myUsedVars.get(j);
+					// START KGU#343 2017-02-07: Ignore pseudo-variables (markers)
+					if (myUsed.startsWith("§ANALYSER§")) {
+						continue;
+					}
+					// END KGU#343 2017-02-07
+					if (!_vars.contains(myUsed))
+					{
+						_args.addIfNew(myUsed);
+					}
+				}
+			}
+
+			// add detected vars to initialised vars
+			_vars.addIfNew(myVars);
+
+			// continue analysis for subelements
+			if (ele instanceof ILoop)
+			{
+				getUninitializedVars(((ILoop) ele).getBody(), _vars, _args);
+			}
+			else if (eleClassName.equals("Parallel"))
+			{
+				StringList initialVars = _vars.copy();
+				Iterator<Subqueue> iter = ((Parallel)ele).qs.iterator();
+				while (iter.hasNext())
+				{
+					// For the thread, propagate only variables known before the parallel section
+					StringList threadVars = initialVars.copy();
+					getUninitializedVars(iter.next(), threadVars, _args);
+					// Any variable introduced by one of the threads will be known after all threads have terminated
+					_vars.addIfNew(threadVars);
+				}
+			}
+			else if(eleClassName.equals("Alternative"))
+			{
+				StringList tVars = _vars.copy();
+				StringList fVars = _vars.copy();
+
+				getUninitializedVars(((Alternative)ele).qTrue, tVars, _args);
+				getUninitializedVars(((Alternative)ele).qFalse, fVars, _args);
+
+				for(int v = 0; v < tVars.count(); v++)
+				{
+					String varName = tVars.get(v);
+					if (fVars.contains(varName)) { _vars.addIfNew(varName); }
+				}
+			}
+			else if(eleClassName.equals("Case"))
+			{
+				Case caseEle = ((Case) ele);
+				int nBranches = caseEle.qs.size();	// Number of branches
+				StringList initialVars = _vars.copy();
+				// An entry of this Hashtable will contain the number of the branches
+				// having initialized the variable represeneted by the key - so in the
+				// end we can see which variables aren't always initialized.
+				Hashtable<String, Integer> myInitVars = new Hashtable<String, Integer>();
+				// adapt size if there is no "default" branch
+				if ( caseEle.getText().get(caseEle.getText().count()-1).equals("%") )
+				{
+					nBranches--;
+				}
+				for (int j=0; j < nBranches; j++)
+				{
+					StringList caseVars = initialVars.copy();
+					getUninitializedVars((Subqueue) caseEle.qs.get(j),caseVars,_args);
+					for(int v = 0; v<caseVars.count(); v++)
+					{
+						String varName = caseVars.get(v);
+						if(myInitVars.containsKey(varName))
+						{
+							myInitVars.put(varName, myInitVars.get(varName) + 1);
+						}
+						else
+						{
+							myInitVars.put(varName, 1);
+						}
+					}
+					//_vars.addIfNew(caseVars);
+				}
+				//System.out.println(myInitVars);
+				// walk trough the hash table and check
+				Enumeration<String> keys = myInitVars.keys();
+				//System.out.println("SI = "+si+" = "+c.text.get(c.text.count()-1));
+				while ( keys.hasMoreElements() )
+				{
+					String key = keys.nextElement();
+					int value = myInitVars.get(key);
+
+					if(value >= nBranches)
+					{
+						_vars.addIfNew(key);
+					}
+					else
+					{
+						_args.addIfNew(key);
+					}
+				}
+			}
+
+
+		} // for(int i=0; i < _node.size(); i++)...
 	}
 	// END KGU#365 2017-03-14
 

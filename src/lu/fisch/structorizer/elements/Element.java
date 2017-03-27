@@ -239,6 +239,7 @@ public abstract class Element {
 	" - David Tremain <DTremain@omnisource.com>\n"+
 	" - Rolf Schmidt <rolf.frogs@t-online.de>\n"+
 	" - Benjamin Neuberg (newboerg)\n"+
+	" - Simon Sobisch (Gitmensch)\n"+
 	
 	"\n"+
 	"File dropper class by\n"+

@@ -52,6 +52,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017-03-04      Enh. #354: Inheritance to CodeParser introduced, Structorizer keyword
  *                                      configuration moved to superclass CodeParser.
  *      Kay Gürtzig     2017.03.08      Modified for GOLDParser 5.0, also required to convert (* *) comments
+ *      Kay Gürtzig     2017.03.26      Fix #357: New temp file mechanism for the prepared text file
  *
  ******************************************************************************************************
  *
@@ -68,23 +69,14 @@ package lu.fisch.structorizer.parsers;
  ******************************************************************************************************///
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Stack;
-import java.util.regex.Matcher;
 
-import com.creativewidgetworks.goldparser.parser.*;
 import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Case;
-import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Instruction;
-import lu.fisch.structorizer.elements.Jump;
 import lu.fisch.structorizer.elements.Repeat;
 import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
@@ -93,7 +85,6 @@ import lu.fisch.utils.BString;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -102,8 +93,6 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 
-import com.creativewidgetworks.goldparser.engine.ParserException;
-import com.creativewidgetworks.goldparser.parser.GOLDParser;
 import com.stevesoft.pat.Regex;
 
 /**
@@ -238,7 +227,8 @@ public class D7Parser extends CodeParser
 			//System.out.println(pasCode);
 
 			// trim and save as new file
-			interm = new File(_textToParse + ".structorizer");
+			//interm = new File(_textToParse + ".structorizer");
+			interm = File.createTempFile("Structorizer", "pas");
 			OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "ISO-8859-1");
 			ow.write(filterNonAscii(pasCode.trim()+"\n"));
 			//System.out.println("==> "+filterNonAscii(pasCode.trim()+"\n"));

@@ -53,6 +53,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.05      Enh. #319: Context menu for Arranger index
  *      Kay Gürtzig     2017.01.13      Bugfix #233: F6 and F8 had got kidnapped by the JSplitPanes sp and sp305
  *      Kay Gürtzig     2017.02.09      Enh. #344: Ctrl-Y as additional redo key binding
+ *      Kay Gürtzig     2017.03.27      Enh. #380: New button/popup menu item to convert a sequence in a subroutine
  *
  ******************************************************************************************************
  *
@@ -153,6 +154,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
 	protected final JButton btnTransmute = new JButton(IconLoader.ico109);
 	// END KGU#199 2016-07-06
+	// START KGU#365 2017-03-27: Enh. #380 - conversion of sequence in a subroutine
+	protected final JButton btnOutsource = new JButton(IconLoader.ico068);
+	// END KGU#365 2017-03-27
     // collapsing & expanding + disabling
     // START KGU#123 2016-01-04: Enh. #87 - Preparations for Fix #65
     protected final JButton btnCollapse = new JButton(IconLoader.ico106); 
@@ -230,6 +234,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 	// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
 	protected final JMenuItem popupTransmute = new JMenuItem("Transmute", IconLoader.ico109);
 	// END KGU#199 2016-07-06
+	// START KGU#365 2017-03-23: Enh. #380 - conversion of sequence in a subroutine
+	protected final JMenuItem popupOutsource = new JMenuItem("Outsource", IconLoader.ico068);
+	// END KGU#365 2017-03-23
     // START KGU#123 2016-01-04: Enh. #87 - Preparations for Fix #65
     protected final JMenuItem popupCollapse = new JMenuItem("Collapse", IconLoader.ico106); 
     protected final JMenuItem popupExpand = new JMenuItem("Expand", IconLoader.ico107);    
@@ -490,6 +497,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupTransmute.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.transmuteNSD(); doButtons(); } } );
 		// END KGU#199 2016-07-06
 
+		// START KGU#365 2017-03-27: Enh. #380 - conversion of sequence in a subroutine
+		popup.add(popupOutsource);
+		popupOutsource.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.outsourceNSD(); doButtons(); } } );;
+		// END KGU#365 2017-03-27
+
         // START KGU#123 2016-01-03: Enh. #87 - New menu items (addressing Bug #65)
 		popup.addSeparator();
 
@@ -613,6 +625,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         toolbar.add(btnTransmute);
         btnTransmute.setFocusable(false);
 		btnTransmute.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.transmuteNSD(); doButtons(); } } ); 
+		// END KGU#199 2016-07-06
+		// START KGU#365 2017-03-27: Enh. #380 - We allow subroutine generation
+        toolbar.add(btnOutsource);
+        btnOutsource.setFocusable(false);
+		btnOutsource.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.outsourceNSD(); doButtons(); } } ); 
 		// END KGU#199 2016-07-06
 		
         // FIXME (KGU): Why is the previous toolbar overwritten?
@@ -1125,6 +1142,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
 		btnTransmute.setEnabled(diagram.canTransmute());
 		// END KGU#199 2016-07-06
+		// START KGU#365 2017-03-27: Enh. #380 - We allow subroutine generation
+		btnOutsource.setEnabled(diagram.selectedIsMultiple());
+		// END KGU#365 2017-03-27
 		// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
 		//popupEdit.setEnabled(conditionAny);
 		// START KGU#143 2016-11-17: Bugfix #114 - unstructured elements may be edited if parent is waiting
@@ -1141,6 +1161,9 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		// START KGU#199 2016-07-06: Enh. #188 - We allow instruction conversion
 		popupTransmute.setEnabled(diagram.canTransmute());
 		// END KGU#199 2016-07-06
+		// START KGU#365 2017-03-27: Enh. #380 - We allow subroutine generation
+		popupOutsource.setEnabled(diagram.selectedIsMultiple());
+		// END KGU#365 2017-03-27
 		
 		// START KGU#123 2016-01-03: Enh. #87 - We allow multiple selection for collapsing
 		// collapse & expand - for multiple selection always allowed, otherwise only if a change would occur

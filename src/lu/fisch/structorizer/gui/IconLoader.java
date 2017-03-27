@@ -52,6 +52,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.07      Enh. #319: New icon 030_function_green for Arranger index
  *      Kay Gürtzig     2017.01.11      Enh. #81: New icon 051_scale_gui for scaling preset
  *      Kay Gürtzig     2017.03.13      Enh. #372: New icons 065_paragraph through 067_commit for license editing
+ *      Kay Gürtzig     2017.03.23      Enh. #380: Icon 068 for the conversion of a sequence to a subroutine
  *
  ******************************************************************************************************
  *
@@ -166,6 +167,9 @@ public class IconLoader {
 	public static ImageIcon ico066 = getIconImage(getURI(from+"icons/066_litterbin.png"));
 	public static ImageIcon ico067 = getIconImage(getURI(from+"icons/067_commit.png"));
 	// END KGU#363 2017-03-13
+	// START KGU#365 2017-03-23: Issue #380
+	public static ImageIcon ico068 = getIconImage(getURI(from+"icons/068_seq2sub.png"));
+	// END KGU#365 2017-03-23
 	
 	public static ImageIcon ico074 = getIconImage(getURI(from+"icons/074_nsd.png"));
 	//public static ImageIcon ico075 = getIconImage(getURI(from+"icons/075_lu.png"));
@@ -318,6 +322,9 @@ public class IconLoader {
         	ico066 = getIconImage(getURI(from+"icons/066_litterbin.png"));
         	ico067 = getIconImage(getURI(from+"icons/067_commit.png"));
         	// END KGU#363 2017-03-13
+        	// START KGU#365 2017-03-23: Issue #380
+        	ico068 = getIconImage(getURI(from+"icons/068_seq2sub.png"));
+        	// END KGU#365 2017-03-23
 
         	ico074 = getIconImage(getURI(from+"icons/074_nsd.png"));
             //ico075 = getIconImage(getURI(from+"icons/075_lu.png"));

@@ -100,6 +100,7 @@
  *      Kay Gürtzig     2017.03.12  Enh. #372: New saving options
  *      Kay Gürtzig     2017.03.12  Enh. #372: New saving options
  *      Kay Gürtzig     2017.03.14  Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
+ *      Kay Gürtzig     2017.03.27  Enh. #380: Messages for outsourcing of element sequences
  *
  ******************************************************************************************************
  *
@@ -188,6 +189,8 @@ Menu.menuDiagramDelete.text=Borrar
 Menu.menuDiagramMoveUp.text=Desplazar arriba
 Menu.menuDiagramMoveDown.text=Desplazar abajo
 Menu.menuDiagramTransmute.text=Transmutar
+Menu.menuDiagramOutsource.text=Delegar
+Menu.menuDiagramOutsource.tooltip=Delegar secuencia seleccionada a un subprograma nuevo.
 Menu.menuDiagramCollapse.text=Reducir
 Menu.menuDiagramExpand.text=Expandir
 // Diagram Appearance
@@ -425,6 +428,7 @@ Editor.btnDelete.tooltip=Borrar elementos seleccionados.
 Editor.btnMoveUp.tooltip=Desplazar elemento seleccionado una posición arriba.
 Editor.btnMoveDown.tooltip=Desplazar elemento seleccionado una posición abajo.
 Editor.btnTransmute.tooltip=Transmutar instrucción en Salto o Llamada o dividirla o combinarlas.
+Editor.btnOutsource.tooltip=Delegar secuencia seleccionada a un subprograma nuevo.
 //printing
 Editor.btnPrint.tooltip=Imprimir el diagrama.
 Editor.btnArrange.tooltip=Añadir el diagrama al Arranger.
@@ -489,6 +493,8 @@ Editor.popupDelete.text=Borrar
 Editor.popupMoveUp.text=Desplazar Arriba
 Editor.popupMoveDown.text=Desplazar Abajo
 Editor.popupTransmute.text=Transmutar
+Editor.popupOutsource.text=Delegar
+Editor.popupOutsource.tooltip=Delegar secuencia seleccionada a un subprograma nuevo.
 // Collapsing
 Editor.popupCollapse.text=Reducir
 Editor.popupExpand.text=Expandir

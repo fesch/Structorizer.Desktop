@@ -32,6 +32,7 @@ package lu.fisch.structorizer.parsers;
  *      Author          Date            Description
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.03.04      First Issue
+ *      Kay Gürtzig     2017.03.25      Fix #357: Precaution against failed file preparation
  *
  ******************************************************************************************************
  *
@@ -157,7 +158,23 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		root = new Root();
 		error = "";
 		
-		File intermediate = prepareTextfile(textToParse, _encoding);
+		// START KGU#370 2017-03-25: Fix #357 - precaution against preparation failure
+		//File intermediate = prepareTextfile(textToParse, _encoding);
+		File intermediate = null;
+		try {
+			intermediate = prepareTextfile(textToParse, _encoding);
+		}
+		catch (Exception ex) {
+			if ((error = ex.getMessage()) == null) {
+				error = ex.toString();
+			}
+			error = ":\n" + error;
+		}
+		if (intermediate == null) {
+			error = "**FILE PREPARATION ERROR** on file \"" + textToParse + "\"" + error;
+			return subRoots;	// It doesn't make sense to continue here (BTW subRoots is supposed to be empty)
+		}
+		// END KGU#370 2017-03-25
 		
 		String sourceCode = null;
 		
@@ -294,14 +311,13 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * Performs some necessary preprocessing for the text file. Must return a
 	 * File object associated to a temporary (and possibly modified) copy of
 	 * the file _textToParse. The copy is to be in a fix encoding.
-	 * Typically opens the file, filters it and writes a new file
-	 * _textToParse+".structorizer" to the same directory, which may then actually
-	 * be parsed.
+	 * Typically opens the file, filters it and writes a new temporary file,
+	 * which may then actually be parsed, to a suited directory.
 	 * The preprocessed file will always be saved with UTF-8 encoding.
 	 * @param _textToParse - name (path) of the source file
 	 * @param _encoding - the expected encoding of the source file.
-	 * @return A file object for the created intermediate file, null if something
-	 * went wrong.
+	 * @return A temporary file object for the created intermediate file, null
+	 * if something went wrong.
 	 */
 	protected abstract File prepareTextfile(String _textToParse, String _encoding);
 	

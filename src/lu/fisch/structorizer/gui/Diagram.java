@@ -118,7 +118,8 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.10      Enh. #367: IF transmutation added: Swapping of the branches
  *      Kay Gürtzig     2017.03.12      Enh. #372: Author name configurable in save options
  *      Kay Gürtzig     2017.03.14      Enh. #372: Author name and license info editable now
- *      Kay Gürtzig     2017.03.15      Enh, #354: New menu strategy for code import - selection by FilChooser
+ *      Kay Gürtzig     2017.03.15      Enh. #354: New menu strategy for code import - selection by FilChooser
+ *      Kay Gürtzig     2017.03.19/27   Enh. #380: New function to outsource subsequences to routines
  *
  ******************************************************************************************************
  *
@@ -2522,13 +2523,44 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	}
 	
 	/*****************************************
-	 * transmute method(s)
+	 * subroutine derivation method(s)
 	 *****************************************/
-	// START KGU#199 2016-07-06: Enh. #188 - perform the possible conversion
+	// START KGU#365 2017-03-19: Enh. #380 - perform the possible conversion
 	public void outsourceNSD()
 	{
-	
+		if (this.selected != null) {
+			IElementSequence elements = null;
+			if (!this.selectedIsMultiple()) {
+				elements = new SelectedSequence(this.selected, this.selected);
+			}
+			else {
+				elements = (IElementSequence)this.selected;
+			}
+			// FIXME Add localization
+			String subroutineName = JOptionPane.showInputDialog("Name of the subroutine: ");
+			if (subroutineName != null) {
+				root.addUndo();
+				selected.setSelected(false);
+				Root sub = root.outsourceToSubroutine(elements, subroutineName, null);
+				if (sub != null) {
+					// adopt presentation properties from root
+					sub.hightlightVars = root.hightlightVars;
+					sub.isNice = root.isNice;
+					Arranger arr = Arranger.getInstance();
+					arr.addToPool(sub, NSDControl.getFrame());
+					arr.setVisible(true);
+				}
+				else {
+					// Something failed, so undo the temporary changes without redo option
+					root.undo(false);
+				}
+				selected.setSelected(true);
+				redraw();
+				analyse();
+			}
+		}
 	}
+	// END KGU#365 2017-03-19
 
 	/*****************************************
 	 * transmute method(s)
