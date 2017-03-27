@@ -59,7 +59,7 @@ Again you may use a command-line tool GOLDprog.exe you will already have downloa
 with GOLDbuild from http://goldparser.org/builder/files/GOLD-Builder-5.2.0-Cmd.zip.
 In order to create a meaningful parser class you should use StructorizerParserTemplate.pgt
 as the template file for GOLDprog.exe:
-GOLDprog.exe XYZ.egt StructorizerTemplate.pgt XYZParser.java
+GOLDprog.exe XYZ.egt StructorizerParserTemplate.pgt XYZParser.java
 The states and patterns in the tables are still linked to the rules. The terminals and
 rules are associated with table indices. The command-line tool GOLDprog derives more or
 less mnemonic constants in the target Java file (XYZParser.java) from the tables and the

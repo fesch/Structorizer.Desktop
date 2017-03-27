@@ -1677,7 +1677,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 //        			}
 //        		}
 //        		filename = tempDir + System.getProperty("file.separator") + "Structorizer.tmp";
-				File tmpFile = File.createTempFile("Structorizer", "nsd");
+				File tmpFile = File.createTempFile("Structorizer", ".nsd");
 				filename = tmpFile.getAbsolutePath();
 				// END KGU#316 2016-12-28
 			}

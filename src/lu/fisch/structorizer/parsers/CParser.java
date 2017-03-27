@@ -360,117 +360,119 @@ public class CParser extends CodeParser
 		final int PROD_SCALAR_LONG                                  =  80;  // <Scalar> ::= long
 		final int PROD_SCALAR_SHORT_INT                             =  81;  // <Scalar> ::= short int
 		final int PROD_SCALAR_LONG_INT                              =  82;  // <Scalar> ::= long int
-		final int PROD_SCALAR_FLOAT                                 =  83;  // <Scalar> ::= float
-		final int PROD_SCALAR_DOUBLE                                =  84;  // <Scalar> ::= double
-		final int PROD_POINTERS_TIMES                               =  85;  // <Pointers> ::= '*' <Pointers>
-		final int PROD_POINTERS_TIMES_CONST                         =  86;  // <Pointers> ::= '*' const <ConstPointers>
-		final int PROD_POINTERS                                     =  87;  // <Pointers> ::= 
-		final int PROD_CONSTPOINTERS_TIMES_CONST                    =  88;  // <ConstPointers> ::= '*' const <ConstPointers>
-		final int PROD_CONSTPOINTERS_TIMES                          =  89;  // <ConstPointers> ::= '*'
-		final int PROD_CONSTPOINTERS                                =  90;  // <ConstPointers> ::= 
-		final int PROD_STM_ID_COLON                                 =  91;  // <Stm> ::= Id ':'
-		final int PROD_STM_IF_LPAREN_RPAREN                         =  92;  // <Stm> ::= if '(' <Expr> ')' <Stm>
-		final int PROD_STM_IF_LPAREN_RPAREN_ELSE                    =  93;  // <Stm> ::= if '(' <Expr> ')' <Then Stm> else <Stm>
-		final int PROD_STM_WHILE_LPAREN_RPAREN                      =  94;  // <Stm> ::= while '(' <Expr> ')' <Stm>
-		final int PROD_STM_FOR_LPAREN_SEMI_SEMI_RPAREN              =  95;  // <Stm> ::= for '(' <Arg> ';' <Arg> ';' <Arg> ')' <Stm>
-		final int PROD_STM                                          =  96;  // <Stm> ::= <Normal Stm>
-		final int PROD_THENSTM_IF_LPAREN_RPAREN_ELSE                =  97;  // <Then Stm> ::= if '(' <Expr> ')' <Then Stm> else <Then Stm>
-		final int PROD_THENSTM_WHILE_LPAREN_RPAREN                  =  98;  // <Then Stm> ::= while '(' <Expr> ')' <Then Stm>
-		final int PROD_THENSTM_FOR_LPAREN_SEMI_SEMI_RPAREN          =  99;  // <Then Stm> ::= for '(' <Arg> ';' <Arg> ';' <Arg> ')' <Then Stm>
-		final int PROD_THENSTM                                      = 100;  // <Then Stm> ::= <Normal Stm>
-		final int PROD_NORMALSTM_DO_WHILE_LPAREN_RPAREN             = 101;  // <Normal Stm> ::= do <Stm> while '(' <Expr> ')'
-		final int PROD_NORMALSTM_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE = 102;  // <Normal Stm> ::= switch '(' <Expr> ')' '{' <Case Stms> '}'
-		final int PROD_NORMALSTM                                    = 103;  // <Normal Stm> ::= <Block>
-		final int PROD_NORMALSTM_SEMI                               = 104;  // <Normal Stm> ::= <Expr> ';'
-		final int PROD_NORMALSTM_GOTO_ID_SEMI                       = 105;  // <Normal Stm> ::= goto Id ';'
-		final int PROD_NORMALSTM_BREAK_SEMI                         = 106;  // <Normal Stm> ::= break ';'
-		final int PROD_NORMALSTM_CONTINUE_SEMI                      = 107;  // <Normal Stm> ::= continue ';'
-		final int PROD_NORMALSTM_RETURN_SEMI                        = 108;  // <Normal Stm> ::= return <Expr> ';'
-		final int PROD_NORMALSTM_SEMI2                              = 109;  // <Normal Stm> ::= ';'
-		final int PROD_ARG                                          = 110;  // <Arg> ::= <Expr>
-		final int PROD_ARG2                                         = 111;  // <Arg> ::= 
-		final int PROD_CASESTMS_CASE_COLON                          = 112;  // <Case Stms> ::= case <Value> ':' <Stm List> <Case Stms>
-		final int PROD_CASESTMS_DEFAULT_COLON                       = 113;  // <Case Stms> ::= default ':' <Stm List>
-		final int PROD_CASESTMS                                     = 114;  // <Case Stms> ::= 
-		final int PROD_BLOCK_LBRACE_RBRACE                          = 115;  // <Block> ::= '{' <Decl Stm List> '}'
-		final int PROD_DECLSTMLIST                                  = 116;  // <Decl Stm List> ::= <Decl> <Decl Stm List>
-		final int PROD_DECLSTMLIST2                                 = 117;  // <Decl Stm List> ::= <Stm List>
-		final int PROD_STMLIST                                      = 118;  // <Stm List> ::= <Stm> <Stm List>
-		final int PROD_STMLIST2                                     = 119;  // <Stm List> ::= 
-		final int PROD_INITIALIZER                                  = 120;  // <Initializer> ::= <Op If>
-		final int PROD_INITIALIZER_LBRACE_RBRACE                    = 121;  // <Initializer> ::= '{' <ExprIni> '}'
-		final int PROD_EXPR_COMMA                                   = 122;  // <Expr> ::= <Expr> ',' <Op Assign>
-		final int PROD_EXPR                                         = 123;  // <Expr> ::= <Op Assign>
-		final int PROD_EXPRINI_COMMA                                = 124;  // <ExprIni> ::= <ExprIni> ',' <Initializer>
-		final int PROD_EXPRINI                                      = 125;  // <ExprIni> ::= <Initializer>
-		final int PROD_OPASSIGN_EQ                                  = 126;  // <Op Assign> ::= <Op If> '=' <Op Assign>
-		final int PROD_OPASSIGN_PLUSEQ                              = 127;  // <Op Assign> ::= <Op If> '+=' <Op Assign>
-		final int PROD_OPASSIGN_MINUSEQ                             = 128;  // <Op Assign> ::= <Op If> '-=' <Op Assign>
-		final int PROD_OPASSIGN_TIMESEQ                             = 129;  // <Op Assign> ::= <Op If> '*=' <Op Assign>
-		final int PROD_OPASSIGN_DIVEQ                               = 130;  // <Op Assign> ::= <Op If> '/=' <Op Assign>
-		final int PROD_OPASSIGN_CARETEQ                             = 131;  // <Op Assign> ::= <Op If> '^=' <Op Assign>
-		final int PROD_OPASSIGN_AMPEQ                               = 132;  // <Op Assign> ::= <Op If> '&=' <Op Assign>
-		final int PROD_OPASSIGN_PIPEEQ                              = 133;  // <Op Assign> ::= <Op If> '|=' <Op Assign>
-		final int PROD_OPASSIGN_GTGTEQ                              = 134;  // <Op Assign> ::= <Op If> '>>=' <Op Assign>
-		final int PROD_OPASSIGN_LTLTEQ                              = 135;  // <Op Assign> ::= <Op If> '<<=' <Op Assign>
-		final int PROD_OPASSIGN                                     = 136;  // <Op Assign> ::= <Op If>
-		final int PROD_OPIF_QUESTION_COLON                          = 137;  // <Op If> ::= <Op Or> '?' <Op If> ':' <Op If>
-		final int PROD_OPIF                                         = 138;  // <Op If> ::= <Op Or>
-		final int PROD_OPOR_PIPEPIPE                                = 139;  // <Op Or> ::= <Op Or> '||' <Op And>
-		final int PROD_OPOR                                         = 140;  // <Op Or> ::= <Op And>
-		final int PROD_OPAND_AMPAMP                                 = 141;  // <Op And> ::= <Op And> '&&' <Op BinOR>
-		final int PROD_OPAND                                        = 142;  // <Op And> ::= <Op BinOR>
-		final int PROD_OPBINOR_PIPE                                 = 143;  // <Op BinOR> ::= <Op BinOR> '|' <Op BinXOR>
-		final int PROD_OPBINOR                                      = 144;  // <Op BinOR> ::= <Op BinXOR>
-		final int PROD_OPBINXOR_CARET                               = 145;  // <Op BinXOR> ::= <Op BinXOR> '^' <Op BinAND>
-		final int PROD_OPBINXOR                                     = 146;  // <Op BinXOR> ::= <Op BinAND>
-		final int PROD_OPBINAND_AMP                                 = 147;  // <Op BinAND> ::= <Op BinAND> '&' <Op Equate>
-		final int PROD_OPBINAND                                     = 148;  // <Op BinAND> ::= <Op Equate>
-		final int PROD_OPEQUATE_EQEQ                                = 149;  // <Op Equate> ::= <Op Equate> '==' <Op Compare>
-		final int PROD_OPEQUATE_EXCLAMEQ                            = 150;  // <Op Equate> ::= <Op Equate> '!=' <Op Compare>
-		final int PROD_OPEQUATE                                     = 151;  // <Op Equate> ::= <Op Compare>
-		final int PROD_OPCOMPARE_LT                                 = 152;  // <Op Compare> ::= <Op Compare> '<' <Op Shift>
-		final int PROD_OPCOMPARE_GT                                 = 153;  // <Op Compare> ::= <Op Compare> '>' <Op Shift>
-		final int PROD_OPCOMPARE_LTEQ                               = 154;  // <Op Compare> ::= <Op Compare> '<=' <Op Shift>
-		final int PROD_OPCOMPARE_GTEQ                               = 155;  // <Op Compare> ::= <Op Compare> '>=' <Op Shift>
-		final int PROD_OPCOMPARE                                    = 156;  // <Op Compare> ::= <Op Shift>
-		final int PROD_OPSHIFT_LTLT                                 = 157;  // <Op Shift> ::= <Op Shift> '<<' <Op Add>
-		final int PROD_OPSHIFT_GTGT                                 = 158;  // <Op Shift> ::= <Op Shift> '>>' <Op Add>
-		final int PROD_OPSHIFT                                      = 159;  // <Op Shift> ::= <Op Add>
-		final int PROD_OPADD_PLUS                                   = 160;  // <Op Add> ::= <Op Add> '+' <Op Mult>
-		final int PROD_OPADD_MINUS                                  = 161;  // <Op Add> ::= <Op Add> '-' <Op Mult>
-		final int PROD_OPADD                                        = 162;  // <Op Add> ::= <Op Mult>
-		final int PROD_OPMULT_TIMES                                 = 163;  // <Op Mult> ::= <Op Mult> '*' <Op Unary>
-		final int PROD_OPMULT_DIV                                   = 164;  // <Op Mult> ::= <Op Mult> '/' <Op Unary>
-		final int PROD_OPMULT_PERCENT                               = 165;  // <Op Mult> ::= <Op Mult> '%' <Op Unary>
-		final int PROD_OPMULT                                       = 166;  // <Op Mult> ::= <Op Unary>
-		final int PROD_OPUNARY_EXCLAM                               = 167;  // <Op Unary> ::= '!' <Op Unary>
-		final int PROD_OPUNARY_TILDE                                = 168;  // <Op Unary> ::= '~' <Op Unary>
-		final int PROD_OPUNARY_MINUS                                = 169;  // <Op Unary> ::= '-' <Op Unary>
-		final int PROD_OPUNARY_TIMES                                = 170;  // <Op Unary> ::= '*' <Op Unary>
-		final int PROD_OPUNARY_AMP                                  = 171;  // <Op Unary> ::= '&' <Op Unary>
-		final int PROD_OPUNARY_PLUSPLUS                             = 172;  // <Op Unary> ::= '++' <Op Unary>
-		final int PROD_OPUNARY_MINUSMINUS                           = 173;  // <Op Unary> ::= '--' <Op Unary>
-		final int PROD_OPUNARY_PLUSPLUS2                            = 174;  // <Op Unary> ::= <Op Pointer> '++'
-		final int PROD_OPUNARY_MINUSMINUS2                          = 175;  // <Op Unary> ::= <Op Pointer> '--'
-		final int PROD_OPUNARY_LPAREN_RPAREN                        = 176;  // <Op Unary> ::= '(' <Type> ')' <Op Unary>
-		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN                 = 177;  // <Op Unary> ::= sizeof '(' <Type> ')'
-		final int PROD_OPUNARY_SIZEOF_LPAREN_ID_RPAREN              = 178;  // <Op Unary> ::= sizeof '(' Id <Pointers> ')'
-		final int PROD_OPUNARY                                      = 179;  // <Op Unary> ::= <Op Pointer>
-		final int PROD_OPPOINTER_DOT                                = 180;  // <Op Pointer> ::= <Op Pointer> '.' <Value>
-		final int PROD_OPPOINTER_MINUSGT                            = 181;  // <Op Pointer> ::= <Op Pointer> '->' <Value>
-		final int PROD_OPPOINTER_LBRACKET_RBRACKET                  = 182;  // <Op Pointer> ::= <Op Pointer> '[' <Expr> ']'
-		final int PROD_OPPOINTER                                    = 183;  // <Op Pointer> ::= <Value>
-		final int PROD_VALUE_OCTLITERAL                             = 184;  // <Value> ::= OctLiteral
-		final int PROD_VALUE_HEXLITERAL                             = 185;  // <Value> ::= HexLiteral
-		final int PROD_VALUE_DECLITERAL                             = 186;  // <Value> ::= DecLiteral
-		final int PROD_VALUE_STRINGLITERAL                          = 187;  // <Value> ::= StringLiteral
-		final int PROD_VALUE_CHARLITERAL                            = 188;  // <Value> ::= CharLiteral
-		final int PROD_VALUE_FLOATLITERAL                           = 189;  // <Value> ::= FloatLiteral
-		final int PROD_VALUE_ID_LPAREN_RPAREN                       = 190;  // <Value> ::= Id '(' <Expr> ')'
-		final int PROD_VALUE_ID_LPAREN_RPAREN2                      = 191;  // <Value> ::= Id '(' ')'
-		final int PROD_VALUE_ID                                     = 192;  // <Value> ::= Id
-		final int PROD_VALUE_LPAREN_RPAREN                          = 193;  // <Value> ::= '(' <Expr> ')'
+		final int PROD_SCALAR_LONG_LONG                             =  83;  // <Scalar> ::= long long
+		final int PROD_SCALAR_LONG_LONG_INT                         =  84;  // <Scalar> ::= long long int
+		final int PROD_SCALAR_FLOAT                                 =  85;  // <Scalar> ::= float
+		final int PROD_SCALAR_DOUBLE                                =  86;  // <Scalar> ::= double
+		final int PROD_POINTERS_TIMES                               =  87;  // <Pointers> ::= '*' <Pointers>
+		final int PROD_POINTERS_TIMES_CONST                         =  88;  // <Pointers> ::= '*' const <ConstPointers>
+		final int PROD_POINTERS                                     =  89;  // <Pointers> ::= 
+		final int PROD_CONSTPOINTERS_TIMES_CONST                    =  90;  // <ConstPointers> ::= '*' const <ConstPointers>
+		final int PROD_CONSTPOINTERS_TIMES                          =  91;  // <ConstPointers> ::= '*'
+		final int PROD_CONSTPOINTERS                                =  92;  // <ConstPointers> ::= 
+		final int PROD_STM_ID_COLON                                 =  93;  // <Stm> ::= Id ':'
+		final int PROD_STM_IF_LPAREN_RPAREN                         =  94;  // <Stm> ::= if '(' <Expr> ')' <Stm>
+		final int PROD_STM_IF_LPAREN_RPAREN_ELSE                    =  95;  // <Stm> ::= if '(' <Expr> ')' <Then Stm> else <Stm>
+		final int PROD_STM_WHILE_LPAREN_RPAREN                      =  96;  // <Stm> ::= while '(' <Expr> ')' <Stm>
+		final int PROD_STM_FOR_LPAREN_SEMI_SEMI_RPAREN              =  97;  // <Stm> ::= for '(' <Arg> ';' <Arg> ';' <Arg> ')' <Stm>
+		final int PROD_STM                                          =  98;  // <Stm> ::= <Normal Stm>
+		final int PROD_THENSTM_IF_LPAREN_RPAREN_ELSE                =  99;  // <Then Stm> ::= if '(' <Expr> ')' <Then Stm> else <Then Stm>
+		final int PROD_THENSTM_WHILE_LPAREN_RPAREN                  = 100;  // <Then Stm> ::= while '(' <Expr> ')' <Then Stm>
+		final int PROD_THENSTM_FOR_LPAREN_SEMI_SEMI_RPAREN          = 101;  // <Then Stm> ::= for '(' <Arg> ';' <Arg> ';' <Arg> ')' <Then Stm>
+		final int PROD_THENSTM                                      = 102;  // <Then Stm> ::= <Normal Stm>
+		final int PROD_NORMALSTM_DO_WHILE_LPAREN_RPAREN             = 103;  // <Normal Stm> ::= do <Stm> while '(' <Expr> ')'
+		final int PROD_NORMALSTM_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE = 104;  // <Normal Stm> ::= switch '(' <Expr> ')' '{' <Case Stms> '}'
+		final int PROD_NORMALSTM                                    = 105;  // <Normal Stm> ::= <Block>
+		final int PROD_NORMALSTM_SEMI                               = 106;  // <Normal Stm> ::= <Expr> ';'
+		final int PROD_NORMALSTM_GOTO_ID_SEMI                       = 107;  // <Normal Stm> ::= goto Id ';'
+		final int PROD_NORMALSTM_BREAK_SEMI                         = 108;  // <Normal Stm> ::= break ';'
+		final int PROD_NORMALSTM_CONTINUE_SEMI                      = 109;  // <Normal Stm> ::= continue ';'
+		final int PROD_NORMALSTM_RETURN_SEMI                        = 110;  // <Normal Stm> ::= return <Expr> ';'
+		final int PROD_NORMALSTM_SEMI2                              = 111;  // <Normal Stm> ::= ';'
+		final int PROD_ARG                                          = 112;  // <Arg> ::= <Expr>
+		final int PROD_ARG2                                         = 113;  // <Arg> ::= 
+		final int PROD_CASESTMS_CASE_COLON                          = 114;  // <Case Stms> ::= case <Value> ':' <Stm List> <Case Stms>
+		final int PROD_CASESTMS_DEFAULT_COLON                       = 115;  // <Case Stms> ::= default ':' <Stm List>
+		final int PROD_CASESTMS                                     = 116;  // <Case Stms> ::= 
+		final int PROD_BLOCK_LBRACE_RBRACE                          = 117;  // <Block> ::= '{' <Decl Stm List> '}'
+		final int PROD_DECLSTMLIST                                  = 118;  // <Decl Stm List> ::= <Decl> <Decl Stm List>
+		final int PROD_DECLSTMLIST2                                 = 119;  // <Decl Stm List> ::= <Stm List>
+		final int PROD_STMLIST                                      = 120;  // <Stm List> ::= <Stm> <Stm List>
+		final int PROD_STMLIST2                                     = 121;  // <Stm List> ::= 
+		final int PROD_INITIALIZER                                  = 122;  // <Initializer> ::= <Op If>
+		final int PROD_INITIALIZER_LBRACE_RBRACE                    = 123;  // <Initializer> ::= '{' <ExprIni> '}'
+		final int PROD_EXPR_COMMA                                   = 124;  // <Expr> ::= <Expr> ',' <Op Assign>
+		final int PROD_EXPR                                         = 125;  // <Expr> ::= <Op Assign>
+		final int PROD_EXPRINI_COMMA                                = 126;  // <ExprIni> ::= <ExprIni> ',' <Initializer>
+		final int PROD_EXPRINI                                      = 127;  // <ExprIni> ::= <Initializer>
+		final int PROD_OPASSIGN_EQ                                  = 128;  // <Op Assign> ::= <Op If> '=' <Op Assign>
+		final int PROD_OPASSIGN_PLUSEQ                              = 129;  // <Op Assign> ::= <Op If> '+=' <Op Assign>
+		final int PROD_OPASSIGN_MINUSEQ                             = 130;  // <Op Assign> ::= <Op If> '-=' <Op Assign>
+		final int PROD_OPASSIGN_TIMESEQ                             = 131;  // <Op Assign> ::= <Op If> '*=' <Op Assign>
+		final int PROD_OPASSIGN_DIVEQ                               = 132;  // <Op Assign> ::= <Op If> '/=' <Op Assign>
+		final int PROD_OPASSIGN_CARETEQ                             = 133;  // <Op Assign> ::= <Op If> '^=' <Op Assign>
+		final int PROD_OPASSIGN_AMPEQ                               = 134;  // <Op Assign> ::= <Op If> '&=' <Op Assign>
+		final int PROD_OPASSIGN_PIPEEQ                              = 135;  // <Op Assign> ::= <Op If> '|=' <Op Assign>
+		final int PROD_OPASSIGN_GTGTEQ                              = 136;  // <Op Assign> ::= <Op If> '>>=' <Op Assign>
+		final int PROD_OPASSIGN_LTLTEQ                              = 137;  // <Op Assign> ::= <Op If> '<<=' <Op Assign>
+		final int PROD_OPASSIGN                                     = 138;  // <Op Assign> ::= <Op If>
+		final int PROD_OPIF_QUESTION_COLON                          = 139;  // <Op If> ::= <Op Or> '?' <Op If> ':' <Op If>
+		final int PROD_OPIF                                         = 140;  // <Op If> ::= <Op Or>
+		final int PROD_OPOR_PIPEPIPE                                = 141;  // <Op Or> ::= <Op Or> '||' <Op And>
+		final int PROD_OPOR                                         = 142;  // <Op Or> ::= <Op And>
+		final int PROD_OPAND_AMPAMP                                 = 143;  // <Op And> ::= <Op And> '&&' <Op BinOR>
+		final int PROD_OPAND                                        = 144;  // <Op And> ::= <Op BinOR>
+		final int PROD_OPBINOR_PIPE                                 = 145;  // <Op BinOR> ::= <Op BinOR> '|' <Op BinXOR>
+		final int PROD_OPBINOR                                      = 146;  // <Op BinOR> ::= <Op BinXOR>
+		final int PROD_OPBINXOR_CARET                               = 147;  // <Op BinXOR> ::= <Op BinXOR> '^' <Op BinAND>
+		final int PROD_OPBINXOR                                     = 148;  // <Op BinXOR> ::= <Op BinAND>
+		final int PROD_OPBINAND_AMP                                 = 149;  // <Op BinAND> ::= <Op BinAND> '&' <Op Equate>
+		final int PROD_OPBINAND                                     = 150;  // <Op BinAND> ::= <Op Equate>
+		final int PROD_OPEQUATE_EQEQ                                = 151;  // <Op Equate> ::= <Op Equate> '==' <Op Compare>
+		final int PROD_OPEQUATE_EXCLAMEQ                            = 152;  // <Op Equate> ::= <Op Equate> '!=' <Op Compare>
+		final int PROD_OPEQUATE                                     = 153;  // <Op Equate> ::= <Op Compare>
+		final int PROD_OPCOMPARE_LT                                 = 154;  // <Op Compare> ::= <Op Compare> '<' <Op Shift>
+		final int PROD_OPCOMPARE_GT                                 = 155;  // <Op Compare> ::= <Op Compare> '>' <Op Shift>
+		final int PROD_OPCOMPARE_LTEQ                               = 156;  // <Op Compare> ::= <Op Compare> '<=' <Op Shift>
+		final int PROD_OPCOMPARE_GTEQ                               = 157;  // <Op Compare> ::= <Op Compare> '>=' <Op Shift>
+		final int PROD_OPCOMPARE                                    = 158;  // <Op Compare> ::= <Op Shift>
+		final int PROD_OPSHIFT_LTLT                                 = 159;  // <Op Shift> ::= <Op Shift> '<<' <Op Add>
+		final int PROD_OPSHIFT_GTGT                                 = 160;  // <Op Shift> ::= <Op Shift> '>>' <Op Add>
+		final int PROD_OPSHIFT                                      = 161;  // <Op Shift> ::= <Op Add>
+		final int PROD_OPADD_PLUS                                   = 162;  // <Op Add> ::= <Op Add> '+' <Op Mult>
+		final int PROD_OPADD_MINUS                                  = 163;  // <Op Add> ::= <Op Add> '-' <Op Mult>
+		final int PROD_OPADD                                        = 164;  // <Op Add> ::= <Op Mult>
+		final int PROD_OPMULT_TIMES                                 = 165;  // <Op Mult> ::= <Op Mult> '*' <Op Unary>
+		final int PROD_OPMULT_DIV                                   = 166;  // <Op Mult> ::= <Op Mult> '/' <Op Unary>
+		final int PROD_OPMULT_PERCENT                               = 167;  // <Op Mult> ::= <Op Mult> '%' <Op Unary>
+		final int PROD_OPMULT                                       = 168;  // <Op Mult> ::= <Op Unary>
+		final int PROD_OPUNARY_EXCLAM                               = 169;  // <Op Unary> ::= '!' <Op Unary>
+		final int PROD_OPUNARY_TILDE                                = 170;  // <Op Unary> ::= '~' <Op Unary>
+		final int PROD_OPUNARY_MINUS                                = 171;  // <Op Unary> ::= '-' <Op Unary>
+		final int PROD_OPUNARY_TIMES                                = 172;  // <Op Unary> ::= '*' <Op Unary>
+		final int PROD_OPUNARY_AMP                                  = 173;  // <Op Unary> ::= '&' <Op Unary>
+		final int PROD_OPUNARY_PLUSPLUS                             = 174;  // <Op Unary> ::= '++' <Op Unary>
+		final int PROD_OPUNARY_MINUSMINUS                           = 175;  // <Op Unary> ::= '--' <Op Unary>
+		final int PROD_OPUNARY_PLUSPLUS2                            = 176;  // <Op Unary> ::= <Op Pointer> '++'
+		final int PROD_OPUNARY_MINUSMINUS2                          = 177;  // <Op Unary> ::= <Op Pointer> '--'
+		final int PROD_OPUNARY_LPAREN_RPAREN                        = 178;  // <Op Unary> ::= '(' <Type> ')' <Op Unary>
+		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN                 = 179;  // <Op Unary> ::= sizeof '(' <Type> ')'
+		final int PROD_OPUNARY_SIZEOF_LPAREN_ID_RPAREN              = 180;  // <Op Unary> ::= sizeof '(' Id <Pointers> ')'
+		final int PROD_OPUNARY                                      = 181;  // <Op Unary> ::= <Op Pointer>
+		final int PROD_OPPOINTER_DOT                                = 182;  // <Op Pointer> ::= <Op Pointer> '.' <Value>
+		final int PROD_OPPOINTER_MINUSGT                            = 183;  // <Op Pointer> ::= <Op Pointer> '->' <Value>
+		final int PROD_OPPOINTER_LBRACKET_RBRACKET                  = 184;  // <Op Pointer> ::= <Op Pointer> '[' <Expr> ']'
+		final int PROD_OPPOINTER                                    = 185;  // <Op Pointer> ::= <Value>
+		final int PROD_VALUE_OCTLITERAL                             = 186;  // <Value> ::= OctLiteral
+		final int PROD_VALUE_HEXLITERAL                             = 187;  // <Value> ::= HexLiteral
+		final int PROD_VALUE_DECLITERAL                             = 188;  // <Value> ::= DecLiteral
+		final int PROD_VALUE_STRINGLITERAL                          = 189;  // <Value> ::= StringLiteral
+		final int PROD_VALUE_CHARLITERAL                            = 190;  // <Value> ::= CharLiteral
+		final int PROD_VALUE_FLOATLITERAL                           = 191;  // <Value> ::= FloatLiteral
+		final int PROD_VALUE_ID_LPAREN_RPAREN                       = 192;  // <Value> ::= Id '(' <Expr> ')'
+		final int PROD_VALUE_ID_LPAREN_RPAREN2                      = 193;  // <Value> ::= Id '(' ')'
+		final int PROD_VALUE_ID                                     = 194;  // <Value> ::= Id
+		final int PROD_VALUE_LPAREN_RPAREN                          = 195;  // <Value> ::= '(' <Expr> ')'
 	};
 
 	/**
@@ -606,7 +608,7 @@ public class CParser extends CodeParser
 
 			// trim and save as new file
 			//interm = new File(_textToParse + ".structorizer");
-			interm = File.createTempFile("Structorizer", "c");
+			interm = File.createTempFile("Structorizer", ".c");
 			OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "UTF-8");
 			ow.write(srcCode.trim()+"\n");
 			//System.out.println("==> "+filterNonAscii(srcCode.trim()+"\n"));

@@ -106,10 +106,10 @@
 {String Ch}      = {Printable} - ["]
 {Char Ch}        = {Printable} - ['']
 
-DecLiteral       = [123456789]{digit}*
-OctLiteral       = 0{Oct Digit}*
-HexLiteral       = 0x{Hex Digit}+
-FloatLiteral     = {Digit}*'.'{Digit}+
+DecLiteral       = [123456789]{digit}*([uU]([lL][lL]?) | [lL][lL]?[uU]?)?
+OctLiteral       = 0{Oct Digit}*([uU]([lL][lL]?) | [lL][lL]?[uU]?)?
+HexLiteral       = 0[xX]{Hex Digit}+([uU]([lL][lL]?) | [lL][lL]?[uU]?)?
+FloatLiteral     = {Digit}*'.'{Digit}+[fF]?
 
 StringLiteral    = ( '"'( {String Ch} | '\'{Printable} )* '"' )+
 CharLiteral      = '' ( {Char Ch} | '\'{Printable} )''
@@ -280,6 +280,8 @@ Comment Line  = '//'
              | long
              | short int
              | long int
+             | long long
+             | long long int
              | float
              | double
  

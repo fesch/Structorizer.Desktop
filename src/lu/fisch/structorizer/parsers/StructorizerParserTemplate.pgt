@@ -34,8 +34,7 @@ intended to be used for code import parsers of Structorizer.
 
 package lu.fisch.structorizer.parsers;
 
-/**
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
  *
@@ -223,7 +222,7 @@ public class %Name%Parser extends CodeParser
 			//System.out.println(srcCode);
 
 			// trim and save as new file
-			interm = new File(_textToParse + ".structorizer");
+			interm = File.createTempFile("Structorizer", ".txt");
 			OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "UTF-8");
 			ow.write(srcCode.trim()+"\n");
 			ow.close();

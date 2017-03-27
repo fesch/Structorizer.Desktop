@@ -228,7 +228,7 @@ public class D7Parser extends CodeParser
 
 			// trim and save as new file
 			//interm = new File(_textToParse + ".structorizer");
-			interm = File.createTempFile("Structorizer", "pas");
+			interm = File.createTempFile("Structorizer", ".pas");
 			OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "ISO-8859-1");
 			ow.write(filterNonAscii(pasCode.trim()+"\n"));
 			//System.out.println("==> "+filterNonAscii(pasCode.trim()+"\n"));
