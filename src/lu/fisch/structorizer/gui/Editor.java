@@ -1143,7 +1143,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		btnTransmute.setEnabled(diagram.canTransmute());
 		// END KGU#199 2016-07-06
 		// START KGU#365 2017-03-27: Enh. #380 - We allow subroutine generation
-		btnOutsource.setEnabled(diagram.selectedIsMultiple());
+		btnOutsource.setEnabled(diagram.canCut());
 		// END KGU#365 2017-03-27
 		// START KGU#87 2015-11-22: Don't allow editing if multiple elements are selected
 		//popupEdit.setEnabled(conditionAny);
@@ -1162,7 +1162,7 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		popupTransmute.setEnabled(diagram.canTransmute());
 		// END KGU#199 2016-07-06
 		// START KGU#365 2017-03-27: Enh. #380 - We allow subroutine generation
-		popupOutsource.setEnabled(diagram.selectedIsMultiple());
+		popupOutsource.setEnabled(diagram.canCut());
 		// END KGU#365 2017-03-27
 		
 		// START KGU#123 2016-01-03: Enh. #87 - We allow multiple selection for collapsing
