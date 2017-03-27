@@ -2536,11 +2536,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			else {
 				elements = (IElementSequence)this.selected;
 			}
-			// FIXME Add localization
-			String subroutineName = JOptionPane.showInputDialog("Name of the subroutine: ");
+			String subroutineName = JOptionPane.showInputDialog(Menu.msgSubroutineName.getText() + ": ");
 			if (subroutineName != null) {
 				root.addUndo();
 				selected.setSelected(false);
+				// FIXME May we involve the user in argument and result value identification?
 				Root sub = root.outsourceToSubroutine(elements, subroutineName, null);
 				if (sub != null) {
 					// adopt presentation properties from root

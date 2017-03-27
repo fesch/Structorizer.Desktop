@@ -433,6 +433,9 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgSelectParser = new LangTextHolder("The source file type of \"%2\" is ambiguous. Please select an import language:%1\nEnter the most appropriate index please.");
 	public static final LangTextHolder msgImportCancelled = new LangTextHolder("Code import for file \"%\" cancelled.");
 	// END KGU#354 2017-03-04
+	// START KGU#365 2017-03-27: Enh. #380
+	public static final LangTextHolder msgSubroutineName = new LangTextHolder("Name of the subroutine");
+	// END KGU#365 2017-03-27
 
 	public void create()
 	{

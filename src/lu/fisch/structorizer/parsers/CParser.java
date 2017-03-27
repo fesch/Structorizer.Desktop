@@ -501,6 +501,7 @@ public class CParser extends CodeParser
 			{"size_t", "unsigned long"},
 			{"time_t", "unsigned long"}
 		};
+		final String definePattern = "^#define\\s+([\\w].*)\\s+(.+)";
 		File interm = null;
 		try
 		{
@@ -518,12 +519,13 @@ public class CParser extends CodeParser
 			// do the #define replacements (at least roughly...)
 			while ((strLine = br.readLine()) != null)   
 			{
-				if (strLine.matches("^#define\\s+([\\w].*)\\s+(.+)") && !strLine.contains("(") && !strLine.contains(")")) {
-					String symbol = strLine.replaceAll("^#define\\s+([\\w].*)\\s+(.+)", "$1");
-					String subst = strLine.replaceAll("^#define\\s+([\\w].*)\\s+(.+)", "$2").trim();
+				String trimmedLine = strLine.trim();
+				if (trimmedLine.matches(definePattern) && !trimmedLine.contains("(") && !trimmedLine.contains(")")) {
+					String symbol = trimmedLine.replaceAll(definePattern, "$1");
+					String subst = trimmedLine.replaceAll(definePattern, "$2").trim();
 					defines.put(symbol, subst);
 				}
-				else if (!strLine.startsWith("#")) {
+				else if (!trimmedLine.startsWith("#")) {
 					// The grammar doesn't cope with customer-defined type names nor library-defined ones, so we will have to
 					// replace as many as possible of them in advance.
 					// We cannot guess however, what's included since include files won't be available for us.

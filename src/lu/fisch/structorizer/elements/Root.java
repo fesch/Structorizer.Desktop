@@ -3641,27 +3641,44 @@ public class Root extends Element {
 	 * empty or didn't belong to this Root. 
 	 */
 	public Root outsourceToSubroutine(IElementSequence elements, String name, String result)
-	{
+	{ 
+		// FIXME: The result value mechanism is the most complex and vague part here:
+		// We cannot assume that a single (and possibly scalar) return value is
+		// sufficient. At least the following cases have to be considered:
+		// 1. Variables set within elements (and still used afterwards outside);
+		// 2. Non-scalar variables passed to some subroutine call within elements;
+		// 3. Array variables with element assignments to them within elements.
+		// It woud be fine if the caller (Diagram) could do this analysis in advance
+		// and pass the committed result variable names in.
+		// In any case, if the number of committed result items is larger than 1,
+		// then we will have to gather them into a data structure (i.e. an array)
+		// in order to return all off them. After the call, the content of the
+		// returned data structure (array) will have to be scattered again.
+		
 		Root subroutine = null;
 		int nElements = elements.getSize();
 		if (nElements > 0) {
 			HashMap<String, TypeMapEntry> types = this.getTypeInfo();
+			// Identify uninitialized variables before the outsourcing (for comparison)
 			StringList uninitializedVars0 = new StringList();
 			this.getUninitializedVars(this.children, new StringList(), uninitializedVars0);
 			if (Element.getRoot(elements.getSubqueue()) != this) {
 				return null;
 			}
+			// Create the new subroutine and move the elements to it
 			subroutine = new Root();
 			subroutine.isProgram = false;
 			for (int i = 0; i < nElements; i++) {
 				subroutine.children.addElement(elements.getElement(0));
 				elements.removeElement(0);
 			}
+			// Uninitialized variables within the subroutine are potential arguments...
 			StringList args = new StringList();
 			subroutine.getUninitializedVars(subroutine.children, new StringList(), args);
+			// Identify uninitialized variables in root after the outsourcing
 			StringList uninitializedVars1 = new StringList();
 			this.getUninitializedVars(this.children, new StringList(), uninitializedVars1);
-			// Identify new uninitialized variables as potential results (which is not sufficient!)
+			// New uninitialized variables in root are certain results (which is not sufficient!)
 			StringList results = new StringList();
 			for (int i = 0; i < uninitializedVars1.count(); i++) {
 				String varName = uninitializedVars1.get(i);
@@ -3675,6 +3692,8 @@ public class Root extends Element {
 			else if (results.count() > 1 && result == null) {
 				result = "arr" + subroutine.hashCode();
 			}
+			// FIXME: There should be a hook for interactive argument reordering
+			// Compose the subroutine signature
 			String signature = name + "(";
 			for (int i = 0; i < args.count(); i++) {
 				String argName = args.get(i);
@@ -3692,7 +3711,7 @@ public class Root extends Element {
 			}
 			signature += ")";
 			
-			// Result composition
+			// Result composition (both within the subroutine and for the call)
 			String resAsgnmt = null;
 			if (results.count() == 1 && (result == null || result.equals(results.get(0)))) {
 				result = results.get(0);

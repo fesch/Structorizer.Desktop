@@ -69,7 +69,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.02.26      Enh. #346 (mechanism to add user-configured file includes) 
  *      Kay Gürtzig     2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *      Kay Gürtzig     2017.03.05      Issue #365: Support for posterior insertion of global definitions
- *      Kay Gürtzig     2017.03.10      Issue #368: New method geExportCharset
+ *      Kay Gürtzig     2017.03.10      Issue #368: New method getExportCharset
  *
  ******************************************************************************************************
  *
