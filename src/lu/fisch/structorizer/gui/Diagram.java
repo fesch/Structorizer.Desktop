@@ -4077,7 +4077,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			
 			if (parser == null) {
 				JOptionPane.showMessageDialog(this, 
-						Menu.msgImportCancelled.getText().replaceAll("%", file.getPath()));
+						Menu.msgImportCancelled.getText().replace("%", file.getPath()));
 				return;
 			}
 
