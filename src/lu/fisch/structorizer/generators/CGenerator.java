@@ -57,7 +57,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.07.20      Enh. #160: Option to involve subroutines implemented (=KGU#178)
  *      Kay Gürtzig             2016.08.10      Issue #227: <stdio.h> and TODOs only included if needed 
  *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactored 
+ *      Kay Gürtzig             2016.09.25      Enh. #253: CodeParser.keywordMap refactored 
  *      Kay Gürtzig             2016.10.14      Enh. 270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. 271: Support for input instructions with prompt
  *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
@@ -69,6 +69,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *      Kay Gürtzig             2017.03.05      Bugfix #365: Fundamental revision of generateForInCode(), see comment.
  *      Kay Gürtzig             2017.03.15      Bugfix #181/#382: String delimiter transformation didn't work 
+ *      Kay Gürtzig             2017.03.15      Issue #346: Insertion mechanism was misplaced (depended on others)
  *
  ******************************************************************************************************
  *
@@ -978,9 +979,9 @@ public class CGenerator extends Generator {
 			boolean isEmpty = true;
 			
 			StringList lines = _jump.getText();
-			String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return").trim();
-			String preExit   = D7Parser.getKeywordOrDefault("preExit", "exit").trim();
-			String preLeave  = D7Parser.getKeywordOrDefault("preLeave", "leave").trim();
+			String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return").trim();
+			String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit").trim();
+			String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave").trim();
 			String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
 			String preExitMatch   = Matcher.quoteReplacement(preExit)+"([\\W].*|$)";
 			String preLeaveMatch  = Matcher.quoteReplacement(preLeave)+"([\\W].*|$)";
@@ -1112,11 +1113,11 @@ public class CGenerator extends Generator {
 					code.add("#include <string.h>");
 					code.add("#include <errno.h>");
 				}
-				// STARTB KGU#351 2017-02-26: Enh. #346
-				this.insertUserIncludes("");
-				// END KGU#351 2017-02-26
 				code.add("");
 			}
+			// STARTB KGU#351 2017-02-26: Enh. #346 / KGU#3512017-03-17 had been mis-placed
+			this.insertUserIncludes("");
+			// END KGU#351 2017-02-26
 			// END KGU#236 2016-08-10
 		// START KGU#178 2016-07-20: Enh. #160
 			subroutineInsertionLine = code.count();

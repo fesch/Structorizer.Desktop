@@ -50,7 +50,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                          though this is only provisional for the line numbering mode
  *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig         2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done
+ *      Kay Gürtzig         2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done
  *      Kay Gürtzig         2016.10.13      Enh. #270: Handling of disabled elements added.
  *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
@@ -347,12 +347,12 @@ public class BasGenerator extends Generator
 	protected String transform(String _input)
 	{
 		// START KGU#101 2015-12-19: Enh. #54 - support lists of output expressions
-		if (_input.matches("^" + getKeywordPattern(D7Parser.getKeyword("output").trim()) + "[ ](.*?)"))
+		if (_input.matches("^" + getKeywordPattern(CodeParser.getKeyword("output").trim()) + "[ ](.*?)"))
 		{
 			// Replace commas by semicolons to avoid tabulation
 			StringList expressions = 
-					Element.splitExpressionList(_input.substring(D7Parser.getKeyword("output").trim().length()), ",");
-			_input = D7Parser.getKeyword("output").trim() + " " + expressions.getText().replace("\n", "; ");
+					Element.splitExpressionList(_input.substring(CodeParser.getKeyword("output").trim().length()), ",");
+			_input = CodeParser.getKeyword("output").trim() + " " + expressions.getText().replace("\n", "; ");
 		}
 		// END KGU#101 2015-12-19
 
@@ -842,8 +842,8 @@ public class BasGenerator extends Generator
 			boolean isEmpty = true;
 			
 			StringList lines = _jump.getText();
-			String preReturn  = D7Parser.getKeywordOrDefault("preReturn", "return");
-			String preExit    = D7Parser.getKeywordOrDefault("preExit", "exit");
+			String preReturn  = CodeParser.getKeywordOrDefault("preReturn", "return");
+			String preExit    = CodeParser.getKeywordOrDefault("preExit", "exit");
 			String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
 			String preExitMatch   = Matcher.quoteReplacement(preExit)+"([\\W].*|$)";
 			for (int i = 0; isEmpty && i < lines.count(); i++) {

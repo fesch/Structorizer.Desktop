@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.elements;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -60,8 +59,7 @@ package lu.fisch.structorizer.elements;
  *
  *      Comment:		/
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 
 import java.awt.Color;
@@ -71,7 +69,7 @@ import java.util.HashMap;
 
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.executor.Function;
-import lu.fisch.structorizer.parsers.D7Parser;
+import lu.fisch.structorizer.parsers.CodeParser;
 //import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.utils.*;
 
@@ -359,9 +357,9 @@ public class Instruction extends Element {
 	public static boolean isJump(String line)
 	{
     	StringList tokens = Element.splitLexically(line, true);
-		return (tokens.indexOf(D7Parser.getKeyword("preReturn"), !D7Parser.ignoreCase) == 0 ||
-				tokens.indexOf(D7Parser.getKeyword("preLeave"), !D7Parser.ignoreCase) == 0 ||
-				tokens.indexOf(D7Parser.getKeyword("preExit"), !D7Parser.ignoreCase) == 0
+		return (tokens.indexOf(CodeParser.getKeyword("preReturn"), !CodeParser.ignoreCase) == 0 ||
+				tokens.indexOf(CodeParser.getKeyword("preLeave"), !CodeParser.ignoreCase) == 0 ||
+				tokens.indexOf(CodeParser.getKeyword("preExit"), !CodeParser.ignoreCase) == 0
 				);
 	}
 	public boolean isJump()
@@ -411,7 +409,7 @@ public class Instruction extends Element {
 	public static boolean isOutput(String line)
 	{
 		StringList tokens = Element.splitLexically(line, true);
-		return (tokens.indexOf(D7Parser.getKeyword("output"), !D7Parser.ignoreCase) == 0);
+		return (tokens.indexOf(CodeParser.getKeyword("output"), !CodeParser.ignoreCase) == 0);
 	}
 	public boolean isOutput()
 	{
@@ -428,7 +426,7 @@ public class Instruction extends Element {
 	public static boolean isInput(String line)
 	{
 		StringList tokens = Element.splitLexically(line, true);
-		return (tokens.indexOf(D7Parser.getKeyword("input"), !D7Parser.ignoreCase) == 0);
+		return (tokens.indexOf(CodeParser.getKeyword("input"), !CodeParser.ignoreCase) == 0);
 	}
 	public boolean isInput()
 	{
@@ -446,10 +444,10 @@ public class Instruction extends Element {
 	{
 		StringList tokens = Element.splitLexically(line, true);
 		// START KGU#281 2016-10-15: Enh. #271 - had turned out to be too simple.
-		//return (tokens.count() == 1 && tokens.indexOf(D7Parser.keywordMap.get("input"), !D7Parser.ignoreCase) == 0);
+		//return (tokens.count() == 1 && tokens.indexOf(CodeParser.keywordMap.get("input"), !CodeParser.ignoreCase) == 0);
 		boolean isEmptyInp = false;
-		StringList keyTokens = Element.splitLexically(D7Parser.getKeyword("input"), false);
-		if (tokens.indexOf(keyTokens, 0, !D7Parser.ignoreCase) == 0) {
+		StringList keyTokens = Element.splitLexically(CodeParser.getKeyword("input"), false);
+		if (tokens.indexOf(keyTokens, 0, !CodeParser.ignoreCase) == 0) {
 			tokens = tokens.subSequence(keyTokens.count(), tokens.count());
 			tokens.removeAll(" ");
 			isEmptyInp = tokens.count() == 0 || tokens.count() == 1 && (tokens.get(0).startsWith("\"") || tokens.get(0).startsWith("'"));

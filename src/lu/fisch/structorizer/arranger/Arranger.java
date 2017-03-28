@@ -58,6 +58,7 @@ package lu.fisch.structorizer.arranger;
  *                                  new method removeDiagram(Root)
  *      Kay Gürtzig     2017.01.04  KGU#49: Arranger now handles windowClosing events itself (instead
  *                                  of a transient WindowAdapter). This allows Mainform to warn Arranger
+ *      Kay Gürtzig     2017.03.28  Enh. #386: New method saveAll()
  *
  ******************************************************************************************************
  *
@@ -555,7 +556,7 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 
     public void windowClosing(WindowEvent e) {
         // START KGU#49 2017-01-04: On closing the Arranger window, the dependent Mainforms must get a chance to save their stuff!
-		if (surface.saveDiagrams(true))
+		if (surface.saveDiagrams(true, false))
 		{
 			if (isStandalone)
 			{
@@ -742,5 +743,14 @@ public class Arranger extends LangFrame implements WindowListener, KeyListener, 
 		}
 	}
 	// END #305 2016-12-17
+
+	// START KGU#373 2017-03-28: Enh. #386
+	/**
+	 * Saves unsaved changes of all held diagrams 
+	 */
+	public void saveAll() {
+		this.surface.saveDiagrams(false, true);
+	}
+	// END KGU#373 2017-03-28
 
 }

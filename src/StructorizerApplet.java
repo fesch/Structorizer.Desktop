@@ -35,8 +35,7 @@ import lu.fisch.structorizer.gui.Menu;
 import lu.fisch.structorizer.gui.NSDController;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.locales.Locales;
-import lu.fisch.structorizer.parsers.D7Parser;
-import lu.fisch.utils.StringList;
+import lu.fisch.structorizer.parsers.CodeParser;
 
 public class StructorizerApplet extends JApplet  implements NSDController
 {
@@ -161,7 +160,7 @@ public class StructorizerApplet extends JApplet  implements NSDController
                         updateColors();
                         
                         // parser
-                        D7Parser.loadFromINI();
+                        CodeParser.loadFromINI();
 
                         // look & feel
 			laf=ini.getProperty("laf","Mac OS X");

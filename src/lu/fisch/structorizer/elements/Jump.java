@@ -118,7 +118,7 @@ import javax.swing.ImageIcon;
 import lu.fisch.graphics.*;
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.gui.IconLoader;
-import lu.fisch.structorizer.parsers.D7Parser;
+import lu.fisch.structorizer.parsers.CodeParser;
 
 public class Jump extends Instruction {
 
@@ -243,7 +243,7 @@ public class Jump extends Instruction {
 	public static boolean isReturn(String line)
 	{
     	StringList tokens = Element.splitLexically(line, true);
-		return (tokens.indexOf(D7Parser.getKeyword("preReturn"), !D7Parser.ignoreCase) == 0);
+		return (tokens.indexOf(CodeParser.getKeyword("preReturn"), !CodeParser.ignoreCase) == 0);
 	}
 	/**
 	 * Checks whether this element contains a return statement
@@ -261,7 +261,7 @@ public class Jump extends Instruction {
 	public static boolean isLeave(String line)
 	{
     	StringList tokens = Element.splitLexically(line, true);
-		return (tokens.indexOf(D7Parser.getKeyword("preLeave"), !D7Parser.ignoreCase) == 0);
+		return (tokens.indexOf(CodeParser.getKeyword("preLeave"), !CodeParser.ignoreCase) == 0);
 	}
 	/**
 	 * Checks whether this element contains a leave statement
@@ -279,7 +279,7 @@ public class Jump extends Instruction {
 	public static boolean isExit(String line)
 	{
     	StringList tokens = Element.splitLexically(line, true);
-		return (tokens.indexOf(D7Parser.getKeyword("preExit"), !D7Parser.ignoreCase) == 0);
+		return (tokens.indexOf(CodeParser.getKeyword("preExit"), !CodeParser.ignoreCase) == 0);
 	}
 	/**
 	 * Checks whether this element contains an exit statement

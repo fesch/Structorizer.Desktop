@@ -26,8 +26,7 @@
 
 package lu.fisch.structorizer.generators;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Markus Grundner
  *
@@ -107,8 +106,7 @@ package lu.fisch.structorizer.generators;
  *      - conversion of comparison and operators accomplished
  *      - comment export introduced 
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 
 import java.util.regex.Matcher;
@@ -128,7 +126,7 @@ import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.While;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
-import lu.fisch.structorizer.parsers.D7Parser;
+import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
@@ -184,7 +182,7 @@ public class BASHGenerator extends Generator {
 		return false;
 	}
 	// END KGU#78 2015-12-18
-	
+
 	// START KGU#351 2017-02-26: Enh. #346 - include / import / uses config
 	/* (non-Javadoc)
 	 * @see lu.fisch.structorizer.generators.Generator#getIncludePattern()
@@ -299,14 +297,14 @@ public class BASHGenerator extends Generator {
 		// We must of course identify variable names and prefix them with $ unless being an lvalue
 		int posAsgnOpr = tokens.indexOf("<-");
 		// START KGU#161 2016-03-24: Bugfix #135/#92 - variables in read instructions must not be prefixed!
-		if (tokens.contains(D7Parser.getKeyword("input")))
+		if (tokens.contains(CodeParser.getKeyword("input")))
 		{
 			// Hide the text from the replacement, except for occurrences as index
 			posAsgnOpr = tokens.count();
 		}
 		// END KGU#161 2016-03-24
 		// START KGU#61 2016-03-21: Enh. #84/#135
-		if (posAsgnOpr < 0 && !D7Parser.getKeyword("postForIn").trim().isEmpty()) posAsgnOpr = tokens.indexOf(D7Parser.getKeyword("postForIn"));
+		if (posAsgnOpr < 0 && !CodeParser.getKeyword("postForIn").trim().isEmpty()) posAsgnOpr = tokens.indexOf(CodeParser.getKeyword("postForIn"));
 		// END KGU#61 2016-03-21
 		// If there is an array variable (which doesn't exist in shell) left of the assignment symbol, check the index 
 		int posBracket1 = tokens.indexOf("[");
@@ -364,7 +362,7 @@ public class BASHGenerator extends Generator {
 		}
 		else if (tokens.count() > 0)
 		{
-			String[] keywords = D7Parser.getAllProperties();
+			String[] keywords = CodeParser.getAllProperties();
 			boolean startsWithKeyword = false;
 			String firstToken = tokens.get(0);
 			for (int kwi = 0; !startsWithKeyword && kwi < keywords.length; kwi++)
@@ -489,7 +487,7 @@ public class BASHGenerator extends Generator {
 	@Override
 	protected String transformOutput(String _interm)
 	{
-		String output = D7Parser.getKeyword("output").trim();
+		String output = CodeParser.getKeyword("output").trim();
 		if (_interm.matches("^" + output + "[ ](.*?)"))
 		{
 			StringList expressions = 
@@ -523,12 +521,12 @@ public class BASHGenerator extends Generator {
 
 			// START KGU#78 2015-12-19: Enh. #23: We only have to ensure the correct keywords
 			// START KGU#288 2016-11-06: Issue #279 - some JREs don't know method getOrDefault()
-			//String preLeave = D7Parser.keywordMap.getOrDefault("preLeave","").trim();
-			//String preReturn = D7Parser.keywordMap.getOrDefault("preReturn","").trim();
-			//String preExit = D7Parser.keywordMap.getOrDefault("preExit","").trim();
-			String preLeave = D7Parser.getKeywordOrDefault("preLeave","leave").trim();
-			String preReturn = D7Parser.getKeywordOrDefault("preReturn","return").trim();
-			String preExit = D7Parser.getKeywordOrDefault("preExit","exit").trim();
+			//String preLeave = CodeParser.keywordMap.getOrDefault("preLeave","").trim();
+			//String preReturn = CodeParser.keywordMap.getOrDefault("preReturn","").trim();
+			//String preExit = CodeParser.keywordMap.getOrDefault("preExit","").trim();
+			String preLeave = CodeParser.getKeywordOrDefault("preLeave","leave").trim();
+			String preReturn = CodeParser.getKeywordOrDefault("preReturn","return").trim();
+			String preExit = CodeParser.getKeywordOrDefault("preExit","exit").trim();
 			// END KGU#288 2016-11-06
 			if (intermed.matches("^" + Matcher.quoteReplacement(preLeave) + "(\\W.*|$)"))
 			{
@@ -1028,20 +1026,20 @@ public class BASHGenerator extends Generator {
 				boolean builtInAdded = false;
 				if (occurringFunctions.contains("chr"))
 				{
-					code.add(indent);
-					insertComment("chr() - converts decimal value to its ASCII character representation", indent);
-					code.add(indent + "chr() {");
-					code.add(indent + this.getIndent() + "printf \\\\$(printf '%03o' $1)");
-					code.add(indent + "}");
+			code.add(indent);
+			insertComment("chr() - converts decimal value to its ASCII character representation", indent);
+			code.add(indent + "chr() {");
+			code.add(indent + this.getIndent() + "printf \\\\$(printf '%03o' $1)");
+			code.add(indent + "}");
 					builtInAdded = true;
 				}
 				if (occurringFunctions.contains("ord"))
 				{
 					code.add(indent);
-					insertComment("ord() - converts ASCII character to its decimal value", indent);
-					code.add(indent + "ord() {");
-					code.add(indent + this.getIndent() + "printf '%d' \"'$1\"");
-					code.add(indent + "}");
+			insertComment("ord() - converts ASCII character to its decimal value", indent);
+			code.add(indent + "ord() {");
+			code.add(indent + this.getIndent() + "printf '%d' \"'$1\"");
+			code.add(indent + "}");
 					builtInAdded = true;
 				}
 				if (builtInAdded) code.add(indent);

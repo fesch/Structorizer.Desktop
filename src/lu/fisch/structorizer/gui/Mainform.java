@@ -360,7 +360,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			updateColors();
 
 			// parser
-			D7Parser.loadFromINI();
+			CodeParser.loadFromINI();
 
 			// look & feel
 			laf=ini.getProperty("laf","Mac OS X");
@@ -651,7 +651,7 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
     {
             //System.out.println("Saving");
             saveToINI();
-            D7Parser.saveToINI();
+            CodeParser.saveToINI();
             Element.saveToINI();
             Root.saveToINI();
     }

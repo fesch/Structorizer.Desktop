@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.generators;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -52,7 +51,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.04.04      transforTokens() disabled due to missing difference to super 
  *      Kay Gürtzig             2016.07.20      Enh. #160: Option to involve subroutines implemented (=KGU#178) 
  *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
+ *      Kay Gürtzig             2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done 
  *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig             2016.12.22      Enh. #314: Support for Structorizer File API
@@ -99,8 +98,7 @@ package lu.fisch.structorizer.generators;
  *      2009.08.10
  *        - writeln() => System.out.println()
  * 
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
@@ -313,7 +311,7 @@ public class JavaGenerator extends CGenerator
 	protected String transform(String _input)
 	{
 		// START KGU#101 2015-12-12: Enh. #54 - support lists of expressions
-		String outputKey = D7Parser.getKeyword("output").trim(); 
+		String outputKey = CodeParser.getKeyword("output").trim(); 
 		if (_input.matches("^" + getKeywordPattern(outputKey) + "[ ](.*?)"))
 		{
 			StringList expressions = 

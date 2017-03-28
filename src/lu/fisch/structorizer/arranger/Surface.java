@@ -1436,10 +1436,17 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     //public void saveDiagrams()
     public boolean saveDiagrams()
     {
-    	return saveDiagrams(false);
+    	return saveDiagrams(false, false);
     }
     
-    public boolean saveDiagrams(boolean goingToClose)
+    /**
+     * Loops over all administered dirty diagrams and has their respective Mainform (if still alive)
+     * saved them. Otherwise uses a temporary Mainform.
+     * @param goingToClose - whether the application is going to close
+     * @param dontAsk - if questions are to be suppressed
+     * @return
+     */
+    public boolean saveDiagrams(boolean goingToClose, boolean dontAsk)
     // END KGU#177 2016-04-14
     {
         // START KGU#177 2016-04-14: Enh. #158 - a pasted diagram may not have been saved, so warn
@@ -1461,7 +1468,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
             	{
                     // START KGU#320 2017-01-04: Bugfix #321 (?) A Mainform may own several diagrams here!
                     //form.diagram.saveNSD(!goingToClose || !Element.E_AUTO_SAVE_ON_CLOSE);
-                    form.diagram.saveNSD(diagram.root, !(goingToClose && Element.E_AUTO_SAVE_ON_CLOSE));
+                    form.diagram.saveNSD(diagram.root, !dontAsk && !(goingToClose && Element.E_AUTO_SAVE_ON_CLOSE));
                     mainforms.add(form);
                     handledRoots.add(diagram.root);
                     // END KGU#320 2017-01-04

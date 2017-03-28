@@ -99,6 +99,7 @@
  *      Kay Gürtzig         2017.03.12  Enh. #372: New saving options
  *      Kay Gürtzig         2017.03.14  Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
  *      Kay Gürtzig         2017.03.27  Enh. #380: Messages for outsourcing of element sequences
+ *      Kay Gürtzig         2017.03.28  Issue #370: New Menu messages for enhanced refactoring options
  *
  ******************************************************************************************************
  *
@@ -117,6 +118,7 @@ Menu.menuFileOpen.text=Öffnen ...
 Menu.menuFileOpenRecent.text=Zuletzt verwendet
 Menu.menuFileSave.text=Speichern
 Menu.menuFileSaveAs.text=Speichern unter ...
+Menu.menuFileSaveAll.text=Alle speichern
 Menu.menuFileExport.text=Exportieren
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Bild ...
@@ -297,6 +299,17 @@ Menu.msgRefactoringOffer.text=Schlüsselwörter in den Parser-Einstellungen wurd
 Menu.lblRefactorNone.text=nein
 Menu.lblRefactorCurrent.text=aktuelles
 Menu.lblRefactorAll.text=alle
+Menu.msgDiscardParserPrefs.text=Wirklich alle neuen Parser-Einstellungen verwerfen?
+Menu.msgAdaptStructPrefs.text=Struktur-Default-Texte an neue Parser-Einstellungen anpassen?
+Menu.msgKeywordsDiffer.text=Ursprünglicher Schlüsselwortkontext des geladenen Diagramms wich von den aktuellen Parser-Einstellungen ab:%1\nDas automatische Anpassen beim Laden ist ausgestellt.\n\nSie haben nun folgende Möglichkeiten:\n%2
+Menu.msgRefactorNow.text=Das Diagramm kann jetzt an die Parser-Einstellungen angepasst werden (empfohlen)
+Menu.msgAdoptPreferences.text=Sie können die mit dem Diagramm geladenen Schlüsselwörter als neue Parser-Einstellungen übernehmen\n   (was allerdings das Anpassen aller anderen geladenen Diagramme bewirkt!)
+Menu.msgLeaveAsIs.text=Sie können das Diagramm unverändert lassen, wodurch jedoch das Debuggen behindert wird\n   und Exporte fehlerhaft werden können (Anpassen kann nachgeholt werden)
+Menu.msgAllowChanges.text=Sie können die Veränderung des Diagramms zulassen, wobei allerdings die Schlüsselwortinformationen unwiederbringlich verloren gehen
+Menu.lblRefactorNow.text=Diagram angleichen
+Menu.lblAdoptPreferences.text=Schlüsselwörter übernehmen
+Menu.lblLeaveAsIs.text=Diagramm so belassen
+Menu.lblAllowChanges.text=Diagrammänderung erlauben
 Menu.msgReplacementsDone.text=% Anweisungen ersetzt.
 Menu.msgNewerVersionAvail.text=Neuere Version % zum Download verfügbar.
 Menu.msgUpdateInfoHint.text=Um über neue Versionen informiert zu werden kann mit\nMenüpunkt "%1" > "%2"\ndie Online-Suche nach Updates auf der Structorizer-Homepage aktiviert werden.
@@ -388,6 +401,7 @@ AnalyserPreferences.okButton.text=OK
 Editor.btnNew.tooltip=Erzeugen eines neuen, leeren Diagrammes.
 Editor.btnOpen.tooltip=Öffnen eines bestehenden Diagrammes.
 Editor.btnSave.tooltip=Speichern des aktuellen Diagrammmes.
+Editor.btnSaveAll.tooltip=Alle neuen und geänderten Diagramme sichern.
 // InsertBefore
 Editor.btnBeforeInst.tooltip=Einfügen einer neuen Anweisung vor dem ausgewählten Element.
 Editor.btnBeforeAlt.tooltip=Einfügen einer neuen IF-Anweisung vor dem ausgewählten Element.

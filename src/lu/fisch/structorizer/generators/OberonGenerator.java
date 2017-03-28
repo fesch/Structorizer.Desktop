@@ -24,8 +24,7 @@
 
 package lu.fisch.structorizer.generators;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Klaus-Peter Reimers
  *
@@ -57,7 +56,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.08.10      Bugfix #227 (Modules = main programs have to end with full stop)
  *      Kay Gürtzig             2016.08.12      Two tiny embellishments
  *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
+ *      Kay Gürtzig             2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done 
  *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt string,
  *                                              Issue #227: In obvious cases (literals) output procedure names inserted.
@@ -88,8 +87,7 @@ package lu.fisch.structorizer.generators;
  *      - Conversion of C-style logical operators to the Pascal-like ones added
  *      - assignment operator conversion now preserves or ensures surrounding spaces
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -178,12 +176,12 @@ public class OberonGenerator extends Generator {
 	}
 	// END KGU#351 2017-02-26
 
-    /************ Code Generation **************/
+	/************ Code Generation **************/
 
 	// START KGU#332 2017-01-30: Enh. #335
 	private Map<String,TypeMapEntry> typeMap;
 	// END KGU#332 2017-01-30
-    
+
 	// START KGU#18/KGU#23 2015-11-01 Transformation decomposed
 	/**
 	 * A pattern how to embed the variable (right-hand side of an input instruction)
@@ -417,17 +415,17 @@ public class OberonGenerator extends Generator {
 			
 			insertComment(_inst, _indent);
 
-			String outputKey = D7Parser.getKeyword("output");
+			String outputKey = CodeParser.getKeyword("output");
 			for (int i=0; i<_inst.getText().count(); i++)
 			{
 				// START KGU#101/KGU#108 2015-12-20 Issue #51/#54
 				//code.add(_indent+transform(_inst.getText().get(i))+";");
 				String line = _inst.getText().get(i);
 				// START KGU#236 2016-08-10: Issue #227: Simplification by delegation
-//				String matcherInput = "^" + getKeywordPattern(D7Parser.input);
-//				String matcherOutput = "^" + getKeywordPattern(D7Parser.output);
-//				if (Character.isJavaIdentifierPart(D7Parser.input.charAt(D7Parser.input.length()-1))) { matcherInput += "[ ]"; }
-//				if (Character.isJavaIdentifierPart(D7Parser.output.charAt(D7Parser.output.length()-1))) { matcherOutput += "[ ]"; }
+//				String matcherInput = "^" + getKeywordPattern(CodeParser.input);
+//				String matcherOutput = "^" + getKeywordPattern(CodeParser.output);
+//				if (Character.isJavaIdentifierPart(CodeParser.input.charAt(CodeParser.input.length()-1))) { matcherInput += "[ ]"; }
+//				if (Character.isJavaIdentifierPart(CodeParser.output.charAt(CodeParser.output.length()-1))) { matcherOutput += "[ ]"; }
 //				boolean isInput = (line.trim()+" ").matches(matcherInput + "(.*)");			// only non-empty input instructions relevant  
 //				boolean isOutput = (line.trim()+" ").matches(matcherOutput + "(.*)"); 	// also empty output instructions relevant
 				// END KGU#236 2016-08-10
@@ -551,7 +549,7 @@ public class OberonGenerator extends Generator {
 							transline += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor() + " " + this.commentSymbolRight();
 						}
 						// START KGU 2017-01-31: return must be capitalized here
-						transline = transline.replaceFirst("^" + BString.breakup(D7Parser.getKeywordOrDefault("preReturn", "return")) + "($|\\W+.*)", "RETURN$1");
+						transline = transline.replaceFirst("^" + BString.breakup(CodeParser.getKeywordOrDefault("preReturn", "return")) + "($|\\W+.*)", "RETURN$1");
 						// END KGU 2017-01-31
 						addCode(transline, _indent, isDisabled);
 						// END KGU#277/KGU#284 2016-10-13
@@ -847,9 +845,9 @@ public class OberonGenerator extends Generator {
         	}
         	// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
         	//code.add(_indent + line + ";");
-        	String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
-        	String preExit   = D7Parser.getKeywordOrDefault("preExit", "exit");
-        	String preLeave  = D7Parser.getKeywordOrDefault("preLeave", "leave");
+        	String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
+        	String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit");
+        	String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave");
         	if (line.matches(Matcher.quoteReplacement(preReturn)+"([\\W].*|$)"))
         	{
         		addCode("RETURN " + line.substring(preReturn.length()).trim() + ";",

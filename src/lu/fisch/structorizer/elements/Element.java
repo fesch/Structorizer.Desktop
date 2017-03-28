@@ -58,7 +58,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.03.06      Enh. #77 (KGU#117): Fields for test coverage tracking added
  *      Kay Gürtzig     2016.03.10      Enh. #124 (KGU#156): Counter fields for histographic tracking added
  *      Kay Gürtzig     2016.03.12      Enh. #124 (KGU#156): Runtime data collection accomplished
- *      Kay Gürtzig     2016.03.26      KGU#165: New option D7Parser.ignoreCase introduced
+ *      Kay Gürtzig     2016.03.26      KGU#165: New option CodeParser.ignoreCase introduced
  *      Kay Gürtzig     2016.04.24      Issue #169: Method findSelected() introduced, copy() modified (KGU#183)
  *      Kay Gürtzig     2016.07.07      Enh. #188: Modification of getText(boolean) to cope with transmutation,
  *                                      Enh. #185: new abstract method convertToCalls() for code import
@@ -68,10 +68,10 @@ package lu.fisch.structorizer.elements;
  *                                      Enh. #128: New mode E_COMMENTSPLUSTEXT
  *      Kay Gürtzig     2016.08.02      Enh. #215: Infrastructure for conditional breakpoints added.
  *      Kay Gürtzig     2016.09.21      Issue #248: API of setBreakTriggerCount() modified to prevent negative values
- *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactored
+ *      Kay Gürtzig     2016.09.25      Enh. #253: CodeParser.keywordMap refactored
  *      Kay Gürtzig     2016.09.28      KGU#264: Font name property renamed from "Name" to "Font".
  *      Kay Gürtzig     2016.10.13      Issue #270: New field "disabled" for execution and code export
- *      Kay Gürtzig     2016.11.06      Issue #279: Several modifications to circumvent direct access to D7Parser.keywordMap
+ *      Kay Gürtzig     2016.11.06      Issue #279: Several modifications to circumvent direct access to CodeParser.keywordMap
  *      Kay Gürtzig     2017.01.06      Issue #327: French default structure preferences replaced by English ones
  *      Kay Gürtzig     2017.01.13      Issue #333: Display of compound comparison operators as unicode symbols
  *      Kay Gürtzig     2017.01.27      Enh. #335: "dim" highlighted like "var" and ":" like "as"
@@ -2229,13 +2229,13 @@ public abstract class Element {
 
 				// These markers might have changed by configuration, so don't cache them
 				StringList ioSigns = new StringList();
-				ioSigns.add(D7Parser.getKeywordOrDefault("input", "").trim());
-				ioSigns.add(D7Parser.getKeywordOrDefault("output", "").trim());
+				ioSigns.add(CodeParser.getKeywordOrDefault("input", "").trim());
+				ioSigns.add(CodeParser.getKeywordOrDefault("output", "").trim());
 				// START KGU#116 2015-12-23: Enh. #75 - highlight jump keywords
 				StringList jumpSigns = new StringList();
-				jumpSigns.add(D7Parser.getKeywordOrDefault("preLeave", "leave").trim());
-				jumpSigns.add(D7Parser.getKeywordOrDefault("preReturn", "return").trim());
-				jumpSigns.add(D7Parser.getKeywordOrDefault("preExit", "exit").trim());
+				jumpSigns.add(CodeParser.getKeywordOrDefault("preLeave", "leave").trim());
+				jumpSigns.add(CodeParser.getKeywordOrDefault("preReturn", "return").trim());
+				jumpSigns.add(CodeParser.getKeywordOrDefault("preExit", "exit").trim());
 				// END KGU#116 2015-12-23
 				
 				for(int i=0; i < parts.count(); i++)
@@ -2273,7 +2273,7 @@ public abstract class Element {
 						// if this part has to be colored with io color
 						// START KGU#165 2016-03-25: consider the new option
 						//else if(ioSigns.contains(display))
-						else if(ioSigns.contains(display, !D7Parser.ignoreCase))
+						else if(ioSigns.contains(display, !CodeParser.ignoreCase))
 							// END KGU#165 2016-03-25
 						{
 							// set color
@@ -2285,7 +2285,7 @@ public abstract class Element {
 						// START KGU#116 2015-12-23: Enh. #75
 						// START KGU#165 2016-03-25: cosider the new option
 						//else if(jumpSigns.contains(display))
-						else if(jumpSigns.contains(display, !D7Parser.ignoreCase))
+						else if(jumpSigns.contains(display, !CodeParser.ignoreCase))
 							// END KGU#165 2016-03-25
 						{
 							// set color
@@ -2659,18 +2659,18 @@ public abstract class Element {
     {
     	// Collect redundant placemarkers to be deleted from the text
         StringList redundantMarkers = new StringList();
-        redundantMarkers.addByLength(D7Parser.getKeyword("preAlt"));
-        redundantMarkers.addByLength(D7Parser.getKeyword("preCase"));
-        //redundantMarkers.addByLength(D7Parser.preFor);	// will be handled separately
-        redundantMarkers.addByLength(D7Parser.getKeyword("preWhile"));
-        redundantMarkers.addByLength(D7Parser.getKeyword("preRepeat"));
+        redundantMarkers.addByLength(CodeParser.getKeyword("preAlt"));
+        redundantMarkers.addByLength(CodeParser.getKeyword("preCase"));
+        //redundantMarkers.addByLength(CodeParser.preFor);	// will be handled separately
+        redundantMarkers.addByLength(CodeParser.getKeyword("preWhile"));
+        redundantMarkers.addByLength(CodeParser.getKeyword("preRepeat"));
 
-        redundantMarkers.addByLength(D7Parser.getKeyword("postAlt"));
-        redundantMarkers.addByLength(D7Parser.getKeyword("postCase"));
-        //redundantMarkers.addByLength(D7Parser.postFor);	// will be handled separately
-        //redundantMarkers.addByLength(D7Parser.stepFor);	// will be handled separately
-        redundantMarkers.addByLength(D7Parser.getKeyword("postWhile"));
-        redundantMarkers.addByLength(D7Parser.getKeyword("postRepeat"));
+        redundantMarkers.addByLength(CodeParser.getKeyword("postAlt"));
+        redundantMarkers.addByLength(CodeParser.getKeyword("postCase"));
+        //redundantMarkers.addByLength(CodeParser.postFor);	// will be handled separately
+        //redundantMarkers.addByLength(CodeParser.stepFor);	// will be handled separately
+        redundantMarkers.addByLength(CodeParser.getKeyword("postWhile"));
+        redundantMarkers.addByLength(CodeParser.getKeyword("postRepeat"));
         
         for (int i = 0; i < redundantMarkers.count(); i++)
         {
@@ -2680,7 +2680,7 @@ public abstract class Element {
         		StringList markerTokens = Element.splitLexically(marker, false);
         		int markerLen = markerTokens.count();
         		int pos = -1;
-        		while ((pos = _tokens.indexOf(markerTokens, 0, !D7Parser.ignoreCase)) >= 0)
+        		while ((pos = _tokens.indexOf(markerTokens, 0, !CodeParser.ignoreCase)) >= 0)
         		{
         			for (int j = 0; j < markerLen; j++)
         			{
@@ -2707,7 +2707,7 @@ public abstract class Element {
     /**
      * Returns a fixed array of names of parser preferences being relevant for
      * the current type of Element (e.g. in case of refactoring)
-     * @return Arrays of key strings for D7Parser.keywordMap
+     * @return Arrays of key strings for CodeParser.keywordMap
      */
     protected abstract String[] getRelevantParserKeys();
     
@@ -2752,7 +2752,7 @@ public abstract class Element {
 			StringList splitKey = _splitOldKeys.get(_prefNames[i]);
 			if (splitKey != null)
 			{
-				String subst = D7Parser.getKeyword(_prefNames[i]);
+				String subst = CodeParser.getKeyword(_prefNames[i]);
 				// line shouldn't be inflated ...
 				if (!splitKey.get(0).equals(" ")) {
 					while (subst.startsWith(" ")) subst = subst.substring(1); 

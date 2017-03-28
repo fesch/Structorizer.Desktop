@@ -45,6 +45,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2016.12.21      Bugfix #317: Awareness of color attributes in subqueue nodes
  *      Kay Gürtzig     2017.03.10      Enh. #372: Additional attributes (Simon Sobisch)
  *      Kay Gürtzig     2017.03.13      Enh. #372: License attributes/elements handled (Simon Sobisch)
+ *      Kay Gürtzig     2017.03.28      Issue #370: Default value of refactorKeywords turned to true,
+ *                                      mechanism to preserve storedParserPrefs otherwise
  *
  ******************************************************************************************************
  *
@@ -88,7 +90,10 @@ public class NSDParser extends DefaultHandler {
 	// START KGU#258 2016-09-25: Enh. #253 holds the parser preferences saved with the file (3.25-01)
 	private HashMap<String, StringList> savedParserPrefs = new HashMap<String, StringList>();
 	private boolean ignoreCase = false;
-	private boolean refactorKeywords = false;
+	// START KGU#362 2017-03-28: Issue #370 - default value flipped
+	//private boolean refactorKeywords = false;
+	private boolean refactorKeywords = true;
+	// END KGU#362 2017-03-28
 	// END KGU#258 2016-09-25
 
         @Override
@@ -115,10 +120,12 @@ public class NSDParser extends DefaultHandler {
 			// END KGU 2016-01-08
 			
 			// START KGU#258 2016-09-25: Enh. #253 - read the saved parser preferences if any
-			
-			if (fileVersion.compareTo("3.25") > 0 && refactorKeywords)
+			// START KGU#362 2017-03-28: Issue #370 - avoid to lose original keyword information
+			//if (fileVersion.compareTo("3.25") > 0 && refactorKeywords)
+			if (fileVersion.compareTo("3.25") > 0)
+			// END KGU#362 2017-03-28
 			{
-				for (String key: D7Parser.keywordSet())
+				for (String key: CodeParser.keywordSet())
 				{
 					if (attributes.getIndex(key) != -1)
 					{
@@ -131,9 +138,27 @@ public class NSDParser extends DefaultHandler {
 					ignoreCase = attributes.getValue("ignoreCase").equals("true");
 				}
 				// If no stored keywords were found then we don't need to refactor anything
-				refactorKeywords = !savedParserPrefs.isEmpty();
+				if (savedParserPrefs.isEmpty()) {
+					refactorKeywords = false;
+				}
 			}
 			// END KGU#258 2016-09-25
+			// START KGU#362 2017-03-28: Issue #370 - avoid to lose original keyword information
+			if (!refactorKeywords && !savedParserPrefs.isEmpty()) {
+				for (String key: CodeParser.keywordSet()) {
+					String current = CodeParser.getKeyword(key);
+					StringList loaded = savedParserPrefs.get(key);
+					if (loaded != null) {
+						String loadedStr = loaded.concatenate();
+						if (!(CodeParser.ignoreCase && loadedStr.equalsIgnoreCase(current) || loadedStr.equals(current))) {
+							savedParserPrefs.put("ignoreCase", StringList.getNew(Boolean.toString(ignoreCase)));
+							root.storedParserPrefs = savedParserPrefs;
+							break;
+						}
+					}
+				}
+			}
+			// END KGU#362 2017-03-28
 			
 			// read attributes
 			root.isProgram = true;
@@ -745,7 +770,10 @@ public class NSDParser extends DefaultHandler {
 		// START KGU#258 2016-09-26: Enhancement #253
 		Ini ini = Ini.getInstance();
 		ini.load();
-		this.refactorKeywords = ini.getProperty("impRefactorOnLoading","false").equals("true");
+		// START KGU#362 2017-03-28: Issue #370 - default value set to true
+		//this.refactorKeywords = ini.getProperty("impRefactorOnLoading","false").equals("true");
+		this.refactorKeywords = !ini.getProperty("impRefactorOnLoading","true").equals("false");
+		// END KGU#362 2017-03-28
 		// END KGU#258 2016-09-26
 
 		SAXParserFactory factory = SAXParserFactory.newInstance();
@@ -795,7 +823,10 @@ public class NSDParser extends DefaultHandler {
 		// START KGU#258 2016-09-26: Enh. #253
 		Ini ini = Ini.getInstance();
 		ini.load();
-		refactorKeywords = ini.getProperty("impRefactorOnLoading","false").equals("true");
+		// START KGU#362 2017-03-28: Issue #370 - default value set to true
+		//this.refactorKeywords = ini.getProperty("impRefactorOnLoading","false").equals("true");
+		this.refactorKeywords = !ini.getProperty("impRefactorOnLoading","true").equals("false");
+		// END KGU#362 2017-03-28
 		// END KGU#258 2016-09-26
 				
 		SAXParserFactory factory = SAXParserFactory.newInstance();

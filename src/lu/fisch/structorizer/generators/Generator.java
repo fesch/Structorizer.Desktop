@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.generators;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -55,7 +54,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016-08-10      Issue #227: information gathering pass introduced to control optional
  *                                      code expressions
  *                                      Bugfix #228: Unnecessary error message exporting recursive routines
- *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.kewordMap refactoring done
+ *      Kay Gürtzig     2016.09.25      Enh. #253: CodeParser.kewordMap refactoring done
  *      Kay Gürtzig     2016.10.13      Enh. #270: Basic functionality for disabled elements (addCode()))
  *      Kay Gürtzig     2016.10.15      Enh. #271: transformInput() and signature of getOutputReplacer() modified
  *      Kay Gürtzig     2016.10.16      Bugfix #275: Defective subroutine registration for topological sort mended
@@ -99,8 +98,7 @@ package lu.fisch.structorizer.generators;
  *      - method insertComment renamed to insertAsComment (as it inserts the instruction text!)
  *      - overloaded method insertComment added to export the actual element comment
  *      
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import java.awt.Frame;
 import java.io.*;
@@ -125,7 +123,7 @@ import lu.fisch.structorizer.executor.Control;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.io.Ini;
-import lu.fisch.structorizer.parsers.D7Parser;
+import lu.fisch.structorizer.parsers.CodeParser;
 
 
 public abstract class Generator extends javax.swing.filechooser.FileFilter
@@ -762,7 +760,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		// START KGU 2016-03-29: Unify all parser keywords
 		// This is somewhat redundant because most of the keywords have already been cut out
 		// but it's still needed for the meaningful ones.
-		String[] keywords = D7Parser.getAllProperties();
+		String[] keywords = CodeParser.getAllProperties();
 		for (int kw = 0; kw < keywords.length; kw++)
 		{    				
 			if (keywords[kw].trim().length() > 0)
@@ -770,7 +768,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 				StringList keyTokens = this.splitKeywords.elementAt(kw);
 				int keyLength = keyTokens.count();
 				int pos = -1;
-				while ((pos = tokens.indexOf(keyTokens, pos + 1, !D7Parser.ignoreCase)) >= 0)
+				while ((pos = tokens.indexOf(keyTokens, pos + 1, !CodeParser.ignoreCase)) >= 0)
 				{
 					// Replace the first token of the keyword by the entire keyword
 					tokens.set(pos, keywords[kw]);
@@ -803,11 +801,11 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			//transformed = transformInput(transformed);
 			//// output instruction transformation
 			//transformed = transformOutput(transformed);
-			if (transformed.indexOf(D7Parser.getKeyword("input").trim()) >= 0)
+			if (transformed.indexOf(CodeParser.getKeyword("input").trim()) >= 0)
 			{
 				transformed = transformInput(transformed);
 			}
-			if (transformed.indexOf(D7Parser.getKeyword("output").trim()) >= 0)
+			if (transformed.indexOf(CodeParser.getKeyword("output").trim()) >= 0)
 			{
 				transformed = transformOutput(transformed);
 			}
@@ -906,7 +904,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		//String subst = getInputReplacer();
 		// END KGU#281 2016-10-15
 		// Between the input keyword and the variable name there MUST be some blank...
-		String keyword = D7Parser.getKeyword("input").trim();
+		String keyword = CodeParser.getKeyword("input").trim();
 		if (!keyword.isEmpty() && _interm.startsWith(keyword))
 		{
 			// START KGU#281 2016-10-15: for enh. #271 (input with prompt)
@@ -961,7 +959,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	{
 		String subst = getOutputReplacer();
 		// Between the input keyword and the variable name there MUST be some blank...
-		String keyword = D7Parser.getKeyword("output").trim();
+		String keyword = CodeParser.getKeyword("output").trim();
 		if (!keyword.isEmpty() && _interm.startsWith(keyword))
 		{
 			String matcher = Matcher.quoteReplacement(keyword);
@@ -986,15 +984,15 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	// START KGU#165 2016-04-03: Support keyword case sensitivity
 	/**
 	 * Returns an appropriate match string for the given parser preference string
-	 * (where {@link D7Parser#ignoreCase} is paid attention to)
-	 * @see lu.fisch.structorizer.parsers.D7Parser#getKeyword(String)
+	 * (where {@link CodeParser#ignoreCase} is paid attention to)
+	 * @see lu.fisch.structorizer.parsers.CodeParser#getKeyword(String)
 	 * @param keyword - parser preference string
 	 * @return match pattern
 	 */
 	protected static String getKeywordPattern(String keyword)
 	{
 		String pattern = Matcher.quoteReplacement(keyword);
-		if (D7Parser.ignoreCase)
+		if (CodeParser.ignoreCase)
 		{
 			pattern = BString.breakup(pattern);
 		}
@@ -1024,9 +1022,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected boolean mapJumps(Subqueue _squeue)
 	{
 		boolean surelyReturns = false;
-		String preLeave  = D7Parser.getKeywordOrDefault("preLeave", "leave");
-		String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
-		String preExit   = D7Parser.getKeywordOrDefault("preExit", "exit");
+		String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave");
+		String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
+		String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit");
 		String patternLeave = getKeywordPattern(preLeave) + "([\\W].*|$)";
 		String patternReturn = getKeywordPattern(preReturn) + "([\\W].*|$)";
 		String patternExit = getKeywordPattern(preExit) + "([\\W].*|$)";
@@ -2101,7 +2099,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 
 			// START KGU 2016-03-29: Pre-processed match patterns for better identification of complicated keywords
 			this.splitKeywords.clear();
-			String[] keywords = D7Parser.getAllProperties();
+			String[] keywords = CodeParser.getAllProperties();
 			for (int k = 0; k < keywords.length; k++)
 			{
 				this.splitKeywords.add(Element.splitLexically(keywords[k], false));
@@ -2577,9 +2575,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			_targetFile = nameParts.concatenate(".");
 		}
 
-		D7Parser.loadFromINI();
+		CodeParser.loadFromINI();
 		this.splitKeywords.clear();
-		String[] keywords = D7Parser.getAllProperties();
+		String[] keywords = CodeParser.getAllProperties();
 		for (int k = 0; k < keywords.length; k++)
 		{
 			this.splitKeywords.add(Element.splitLexically(keywords[k], false));

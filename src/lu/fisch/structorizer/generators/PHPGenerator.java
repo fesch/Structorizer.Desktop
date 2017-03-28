@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.generators;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -54,7 +53,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.07.19      Bugfix #191 (= KGU#204): Wrong comparison operator in FOR loops 
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178)
  *      Kay Gürtzig             2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done. 
+ *      Kay Gürtzig             2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done. 
  *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
@@ -115,8 +114,7 @@ package lu.fisch.structorizer.generators;
  *      - Implementation of FOR loop
  *      - Indent replaced from 2 spaces to TAB-character (TAB configurable in IDE)
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import java.util.regex.Matcher;
 
@@ -542,11 +540,11 @@ public class PHPGenerator extends Generator
 		boolean isEmpty = true;
 		
 		StringList lines = _jump.getText();
-		String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
-		String preExit   = D7Parser.getKeywordOrDefault("preExit", "exit");
+		String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
+		String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit");
 		String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
 		String preExitMatch   = Matcher.quoteReplacement(preExit)+"([\\W].*|$)";
-		String preLeaveMatch  = Matcher.quoteReplacement(D7Parser.getKeywordOrDefault("preLeave", "leave"))+"([\\W].*|$)";
+		String preLeaveMatch  = Matcher.quoteReplacement(CodeParser.getKeywordOrDefault("preLeave", "leave"))+"([\\W].*|$)";
 		for (int i = 0; isEmpty && i < lines.count(); i++) {
 			String line = transform(lines.get(i)).trim();
 			if (!line.isEmpty())

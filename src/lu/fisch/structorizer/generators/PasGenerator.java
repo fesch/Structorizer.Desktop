@@ -57,7 +57,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.05.05      Bugfix #51 - empty writeln instruction must not have parentheses 
  *      Kay Gürtzig         2016.07.20      Enh. #160 - optional export of called subroutines implemented
  *      Kay Gürtzig         2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig         2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
+ *      Kay Gürtzig         2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done 
  *      Kay Gürtzig         2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig         2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig         2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
@@ -451,7 +451,7 @@ public class PasGenerator extends Generator
 			
 			insertComment(_inst, _indent);
 
-			String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
+			String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
 			String preReturnMatch = getKeywordPattern(preReturn)+"([\\W].*|$)";
 			for (int i=0; i<_inst.getText().count(); i++)
 			{
@@ -967,8 +967,8 @@ public class PasGenerator extends Generator
 			else
 			{
 			// END KGU#142 2016-01-17
-				String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
-				String preExit   = D7Parser.getKeywordOrDefault("preExit", "exit");
+				String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
+				String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit");
 				String preReturnMatch = getKeywordPattern(preReturn)+"([\\W].*|$)";
 				String preExitMatch = getKeywordPattern(preExit)+"([\\W].*|$)";
 				for (int i = 0; isEmpty && i < lines.count(); i++) {

@@ -54,6 +54,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.13      Bugfix #233: F6 and F8 had got kidnapped by the JSplitPanes sp and sp305
  *      Kay Gürtzig     2017.02.09      Enh. #344: Ctrl-Y as additional redo key binding
  *      Kay Gürtzig     2017.03.27      Enh. #380: New button/popup menu item to convert a sequence in a subroutine
+ *      Kay Gürtzig     2017.03.28      Enh. #387: New "Save All" button
  *
  ******************************************************************************************************
  *
@@ -112,7 +113,10 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
     // I/O
     protected final JButton btnNew = new JButton(IconLoader.ico001); 
     protected final JButton btnOpen = new JButton(IconLoader.ico002); 
-    protected final JButton btnSave = new JButton(IconLoader.ico003); 
+    protected final JButton btnSave = new JButton(IconLoader.ico003);
+    // START KGU#373 2017-03-28: Enh. #387
+    protected final JButton btnSaveAll = new JButton(IconLoader.ico069);
+    // END KGU#373 2017-03-38
     // InsertBefore
     protected final JButton btnBeforeInst = new JButton(IconLoader.ico007); 
     protected final JButton btnBeforeAlt = new JButton(IconLoader.ico008); 
@@ -561,6 +565,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
         toolbar.add(btnSave);
 		btnSave.setFocusable(false);
 		btnSave.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.saveNSD(false); doButtons(); } } );
+	    // START KGU#373 2017-03-28: Enh. #387
+        toolbar.add(btnSaveAll);
+		btnSaveAll.setFocusable(false);
+		btnSaveAll.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.saveAllNSD(); doButtons(); } } );
+	    // END KGU#373 2017-03-38
 		
         // FIXME (KGU): Why is the previous toolbar overwritten?
 		toolbar=newToolBar("Print");
@@ -1049,8 +1058,11 @@ public class Editor extends LangPanel implements NSDController, ComponentListene
 		
 		// START KGU#137 2016-01-11: Bugfix #103 - Reflect the "saveworthyness" of the diagram
 		// save
-		btnSave.setEnabled(diagram.getRoot().hasChanged());
+		btnSave.setEnabled(diagram.canSave(false));
 		// END KGU#137 2016-01-11
+	    // START KGU#373 2017-03-28: Enh. #387
+		btnSaveAll.setEnabled(diagram.canSave(true));
+	    // END KGU#373 2017-03-38
 		
 		// undo & redo
 		btnUndo.setEnabled(diagram.getRoot().canUndo());

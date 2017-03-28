@@ -48,7 +48,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2016.04.01      Enh. #144: Care for new option to suppress content conversion 
  *      Kay Gürtzig             2016-07-20      Enh. #160: Option to involve subroutines implemented (=KGU#178),
  *                                              bugfix for routine calls (superfluous parentheses dropped)
- *      Kay Gürtzig             2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done
+ *      Kay Gürtzig             2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done
  *      Kay Gürtzig             2016.10.14      Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig             2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig             2016.10.16      Enh. #274: Colour info for Turtleizer procedures added
@@ -592,8 +592,8 @@ public class PythonGenerator extends Generator
 				boolean isEmpty = true;
 
 				StringList lines = _jump.getText();
-				String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
-				String preLeave  = D7Parser.getKeywordOrDefault("preLeave", "leave");
+				String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
+				String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave");
 				String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
 				String preLeaveMatch  = Matcher.quoteReplacement(preLeave)+"([\\W].*|$)";
 				for (int i = 0; isEmpty && i < lines.count(); i++) {

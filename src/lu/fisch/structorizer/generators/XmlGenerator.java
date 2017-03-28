@@ -20,16 +20,7 @@
 
 package lu.fisch.structorizer.generators;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -50,12 +41,13 @@ import java.io.UnsupportedEncodingException;
  *      Kay Gürtzig     2016.01.08      Bugfix #99 (KGU#134) mends mis-spelling due to fix #82
  *      Kay Gürtzig     2016.03.21-22   Enh. #84 (KGU#61) mechanisms to save FOR-IN loops adequately
  *      Kay Gürtzig     2016.09.25      Enh. #253: Root element now conveys parser preferences,
- *                                      D7Parser.keywordMap refactoring done (going to be superfluous!)
+ *                                      CodeParser.keywordMap refactoring done (going to be superfluous!)
  *      Kay Gürtzig     2016.10.04      Bugfix #258: Structured FOR loop parameters weren't always preserved on saving
  *      Kay Gürtzig     2016.10.13      Enh. #270: Cared for new field "disabled"
  *      Kay Gürtzig     2016.12.21      Bugfix #317: Preserve color property of empty Subqueues
  *      Kay Gürtzig     2017.03.10      Enh. #372: Additional attributes (Simon Sobisch)
  *      Kay Gürtzig     2017.03.13      Enh. #372: License attributes/elements added (Simon Sobisch)
+ *      Kay Gürtzig     2017.03.28      Enh. #370: Alternative keyword set may be saved (un-refactored diagrams)
  *
  ******************************************************************************************************
  *
@@ -63,15 +55,21 @@ import java.io.UnsupportedEncodingException;
  *
  ******************************************************************************************************///
 
-import java.util.Map;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 
-import javax.swing.text.BadLocationException;
+import java.util.Map;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.io.Ini;
 import lu.fisch.structorizer.io.LicFilter;
-import lu.fisch.structorizer.parsers.D7Parser;
+import lu.fisch.structorizer.parsers.CodeParser;
 
 public class XmlGenerator extends Generator {
 
@@ -286,7 +284,7 @@ public class XmlGenerator extends Generator {
     			specificAttributes +
     			"\" style=\"" + BString.encodeToHtml(_for.style.toString()) +
     			// FIXME: No longer needed beyond version 3.25-01, except for backward compatibility (i. e. temporarily)
-    			(_for.isForInLoop() ? ("\" insep=\"" + BString.encodeToHtml(D7Parser.getKeyword("postForIn"))) : "") +
+    			(_for.isForInLoop() ? ("\" insep=\"" + BString.encodeToHtml(CodeParser.getKeyword("postForIn"))) : "") +
     			"\" color=\"" + _for.getHexColor()+"\" disabled=\""+
     			(_for.disabled ? "1" : "0") + "\">");
     	// END KGU#118 2015-12-31
@@ -382,13 +380,23 @@ public class XmlGenerator extends Generator {
 		// START KGU#257 2016-09-25: Enh. #253
 		String pp_attributes = "";
 		
-		for (Map.Entry<String, String> entry: D7Parser.getPropertyMap(true).entrySet())
+		for (Map.Entry<String, String> entry: CodeParser.getPropertyMap(true).entrySet())
 		{
 			// Empty keywords will hardly have been used in this diagram, so it's okay to omit them
-			if (!entry.getValue().isEmpty())
-			{
-				pp_attributes += " " + entry.getKey() + "=\"" + BString.encodeToHtml(entry.getValue()) + "\"";
+			// START KGU#362 2017-03-28: Enh. #370 - Special care for un-refactored diagrams
+			//if (!entry.getValue().isEmpty())
+			//{
+			//	pp_attributes += " " + entry.getKey() + "=\"" + BString.encodeToHtml(entry.getValue()) + "\"";
+			//}
+			String value = entry.getValue();
+			if (_root.storedParserPrefs != null && _root.storedParserPrefs.containsKey(entry.getKey())) {
+				value = _root.storedParserPrefs.get(entry.getKey()).concatenate();
 			}
+			if (!value.isEmpty())
+			{
+				pp_attributes += " " + entry.getKey() + "=\"" + BString.encodeToHtml(value) + "\"";
+			}
+			// END KGU#362 2017-03-28
 		}
 		// END KGU#257 2016-09-25
 		

@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.gui;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -74,13 +73,13 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser error21
  *      Kay Gürtzig     2017.03.15      Enh. #354: All code import merged to a single menu item
  *      Kay Gürtzig     2017.03.23      Enh. #380: New menu entry to convert a sequence in a subroutine
+ *      Kay Gürtzig     2017.03.28      Enh. #387: New menu entry "Save All"
  *
  ******************************************************************************************************
  *
  *      Comment:		/
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 
 import java.util.*;
@@ -113,6 +112,9 @@ public class Menu extends LangMenuBar implements NSDController
 	protected final JMenuItem menuFileNew = new JMenuItem("New", IconLoader.ico001);
 	protected final JMenuItem menuFileSave = new JMenuItem("Save", IconLoader.ico003);
 	protected final JMenuItem menuFileSaveAs = new JMenuItem("Save As ...", IconLoader.ico003);
+	// START KGU#373 2017-03-28: Enh. #387
+	protected final JMenuItem menuFileSaveAll = new JMenuItem("Save All", IconLoader.ico069);
+	//  END KGU#373 2017-03-28
 	protected final JMenuItem menuFileOpen = new JMenuItem("Open ...", IconLoader.ico002);
 	protected final JMenuItem menuFileOpenRecent = new JMenu("Open Recent File");
 	protected final JMenu menuFileExport = new JMenu("Export");
@@ -417,6 +419,23 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder lblRefactorCurrent = new LangTextHolder("current diagram");
 	public static final LangTextHolder lblRefactorAll = new LangTextHolder("all diagrams");
 	// END KGU#258 2016-10-03
+	// START KGU#362 2017-03-28: Enh. #370
+	public static final LangTextHolder msgDiscardParserPrefs = new LangTextHolder("Sure to discard new parser preferences?");
+	public static final LangTextHolder msgAdaptStructPrefs = new LangTextHolder("Adapt Structure preferences to Parser preferences?");
+	public static final LangTextHolder msgKeywordsDiffer = new LangTextHolder("This is a diagram, the original keyword context of which differs from current Parser Preferences:%1\n"
+			+ "You have opted against automatic refactoring on loading.\n\n"
+			+ "Now you have the following opportunities:\n%2");
+	public static final LangTextHolder msgRefactorNow = new LangTextHolder("The diagram may be refactored now (recommended)");
+	public static final LangTextHolder msgAdoptPreferences = new LangTextHolder("You may adopt the keywords loaded with the diagram as new Parser Preferences\n"
+			+ "   (which would induce refactoring of all other open diagrams!)");
+	public static final LangTextHolder msgLeaveAsIs = new LangTextHolder("You may leave the diagram as is, which may prevent its\n"
+			+ "   debugging and cause defective export");
+	public static final LangTextHolder msgAllowChanges = new LangTextHolder("Allow the modification, thus losing the original keyword information");
+	public static final LangTextHolder lblRefactorNow = new LangTextHolder("Refactor diagram");
+	public static final LangTextHolder lblAdoptPreferences = new LangTextHolder("Adopt keywords");
+	public static final LangTextHolder lblLeaveAsIs = new LangTextHolder("Leave diagram as is");
+	public static final LangTextHolder lblAllowChanges = new LangTextHolder("Allow to change now");
+	// END KGU#362 2017-03-28
 	// START KGU#282 2016-10-17: Enh. #272
 	public static final LangTextHolder msgReplacementsDone = new LangTextHolder("% instructions replaced.");	
 	// END KGU#282 2016-10-17
@@ -460,6 +479,12 @@ public class Menu extends LangMenuBar implements NSDController
 		menuFile.add(menuFileSaveAs);
 		menuFileSaveAs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, (java.awt.event.InputEvent.SHIFT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
 		menuFileSaveAs.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.saveAsNSD(); doButtons(); } } );
+
+		// START KGU#373 2017-03-28: Enh. #387
+		menuFile.add(menuFileSaveAll);
+		menuFileSaveAll.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, (java.awt.event.InputEvent.ALT_DOWN_MASK | java.awt.event.InputEvent.CTRL_DOWN_MASK)));
+		menuFileSaveAll.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.saveAllNSD(); doButtons(); } } );
+		//  END KGU#373 2017-03-28
 
 		menuFile.add(menuFileOpen);
 		menuFileOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
@@ -1011,11 +1036,11 @@ public class Menu extends LangMenuBar implements NSDController
 
 						// START KGU#258 2016-09-26: Enh. #253
 						HashMap<String, StringList> refactoringData = new LinkedHashMap<String, StringList>();
-						for (String key: D7Parser.keywordSet())
+						for (String key: CodeParser.keywordSet())
 						{
 							// START KGU#288 2016-11-06: Issue #279 - getOrDefault() may not be available
-							//String keyword = D7Parser.keywordMap.getOrDefault(key, "");
-							String keyword = D7Parser.getKeywordOrDefault(key, "");
+							//String keyword = CodeParser.keywordMap.getOrDefault(key, "");
+							String keyword = CodeParser.getKeywordOrDefault(key, "");
 							// END KGU#288 2016-11-06
 							if (!keyword.trim().isEmpty())
 							{
@@ -1187,8 +1212,11 @@ public class Menu extends LangMenuBar implements NSDController
 
 			// START KGU#137 2016-01-11: Bugfix #103 - Reflect the "saveworthyness" of the diagram
 			// save
-			menuFileSave.setEnabled(diagram.getRoot().hasChanged());
+			menuFileSave.setEnabled(diagram.canSave(false));
 			// END KGU#137 2016-01-11
+		    // START KGU#373 2017-03-28: Enh. #387
+			menuFileSaveAll.setEnabled(diagram.canSave(true));
+		    // END KGU#373 2017-03-38
 			// START KGU#170 2016-04-01: Enh. #144 - update the favourite export item text
 			String itemText = lbFileExportCodeFavorite.getText().replace("%", diagram.getPreferredGeneratorName());
 			this.menuFileExportCodeFavorite.setText(itemText);

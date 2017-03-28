@@ -101,6 +101,7 @@
  *      Kay Gürtzig     2017.03.12  Enh. #372: New saving options
  *      Kay Gürtzig     2017.03.14  Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
  *      Kay Gürtzig     2017.03.27  Enh. #380: Messages for outsourcing of element sequences
+ *      Kay Gürtzig     2017.03.28  Issue #370: New Menu messages for enhanced refactoring options
  *
  ******************************************************************************************************
  *
@@ -119,6 +120,7 @@ Menu.menuFileOpen.text=Abrir ...
 Menu.menuFileOpenRecent.text=Reciéntemente usado
 Menu.menuFileSave.text=Guardar
 Menu.menuFileSaveAs.text=Guardar como ...
+Menu.menuFileSaveAll.text=Guardar todo
 Menu.menuFileExport.text=Exportar
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Imagen ...
@@ -299,6 +301,17 @@ Menu.msgRefactoringOffer.text=Configuradas palabras claves fueron reemplazadas:%
 Menu.lblRefactorNone.text=no
 Menu.lblRefactorCurrent.text=el editado
 Menu.lblRefactorAll.text=todos
+Menu.msgDiscardParserPrefs.text=¿Seguro a revertir las nuevas preferencias del analisador?
+Menu.msgAdaptStructPrefs.text=¿Adaptar las preferencias de estructuras a las del analisador?
+Menu.msgKeywordsDiffer.text=Este diagrama usa otras palabras claves que están configuradas para el Analisador:%1\nHas impedido la adapatación automática durante el importe.\n\nAhora tienes las opciónes siguientes:\n%2
+Menu.msgRefactorNow.text=El diagrama puede ser adaptado ahora misma (recomendado)
+Menu.msgAdoptPreferences.text=Puedes adquirir las palabras claves del diagrama cargado como nuevas preferencias del Analisador\n   (¡inducirá la adaptación de todos los otros diagramas abiertos!)
+Menu.msgLeaveAsIs.text=Puedes dejar el diagrama como está, así probablemente impidiendo su ejecución\n   y causando exportación defectiva (puedes adaptarlo más tarde)
+Menu.msgAllowChanges.text=Puedes permitir cambios del diagrama, aunque así se pierde la información sobre las palabras claves irreversiblemente
+Menu.lblRefactorNow.text=Adaptar diagrama
+Menu.lblAdoptPreferences.text=Asumir las palabras
+Menu.lblLeaveAsIs.text=Dejar diagrama así
+Menu.lblAllowChanges.text=Permitir cambios
 Menu.msgReplacementsDone.text=% instrucciones sustituidos.
 Menu.msgNewerVersionAvail.text=Versión más nueva % lista para descaragar.
 Menu.msgUpdateInfoHint.text=Para ser informado sobre nuevas versiones\nse puede activar la búsqueda de actualizaciones desde el sitio web de Structorizer\nvia menú "%1" > "%2".
@@ -390,6 +403,7 @@ AnalyserPreferences.okButton.text=Aceptar
 Editor.btnNew.tooltip=Crear un nuevo diagrama en blanco.
 Editor.btnOpen.tooltip=Abrir un diagrama existente.
 Editor.btnSave.tooltip=Guardar diagrama actual.
+Editor.btnSaveAll.tooltip=Guardar todos diagramas nuevos o cambiados.
 // InsertBefore
 Editor.btnBeforeInst.tooltip=Insertar nueva instrucción antes del elemento seleccionado.
 Editor.btnBeforeAlt.tooltip=Insertar nueva declaración SI antes del elemento seleccionado.

@@ -41,7 +41,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2016.03.23      Enh. #84: Support for FOR-IN loops (KGU#61)
  *      Kay Gürtzig     2016.08.10      Issue #227: <iostream> only included if needed 
  *      Kay Gürtzig     2016.08.12      Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig     2016.09.25      Enh. #253: D7Parser.keywordMap refactoring done 
+ *      Kay Gürtzig     2016.09.25      Enh. #253: CodeParser.keywordMap refactoring done 
  *      Kay Gürtzig     2016.10.15      Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig     2016.11.08      Collateral damage of #271 to getOutputReplacer() mended
  *      Kay Gürtzig     2016.12.25      Enh. #314: Support for File API added.
@@ -73,7 +73,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.executor.Executor;
-import lu.fisch.structorizer.parsers.D7Parser;
+import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.StringList;
 
 public class CPlusPlusGenerator extends CGenerator {
@@ -156,7 +156,7 @@ public class CPlusPlusGenerator extends CGenerator {
 	protected String transform(String _input)
 	{
 		// START KGU#101 2015-12-11: Enh. #54 - support lists of expressions
-		String outputKey = D7Parser.getKeyword("output").trim();
+		String outputKey = CodeParser.getKeyword("output").trim();
 		if (_input.matches("^" + getKeywordPattern(outputKey) + "[ ](.*?)"))
 		{
 			StringList expressions = 

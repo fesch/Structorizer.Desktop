@@ -60,7 +60,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016-04-01  Enh. #144: Care for the new export option suppressing content conversion
  *      Kay Gürtzig         2016-07-20  Enh. #160: Option to involve subroutines implemented (=KGU#178) 
  *      Kay Gürtzig         2016.08.12  Enh. #231: Additions for Analyser checks 18 and 19 (variable name collisions)
- *      Kay Gürtzig         2016.09.25  Enh. #253: D7Parser.keywordMap refactoring done. 
+ *      Kay Gürtzig         2016.09.25  Enh. #253: CodeParser.keywordMap refactoring done. 
  *      Kay Gürtzig         2016.10.14  Enh. #270: Handling of disabled elements (code.add(...) --> addCode(..))
  *      Kay Gürtzig         2016.10.15  Enh. #271: Support for input instructions with prompt
  *      Kay Gürtzig         2016.10.16  Enh. #274: Colour info for Turtleizer procedures added
@@ -96,7 +96,7 @@ import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.elements.While;
-import lu.fisch.structorizer.parsers.D7Parser;
+import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
@@ -781,9 +781,9 @@ public class PerlGenerator extends Generator {
 			boolean isEmpty = true;
 			
 			StringList lines = _jump.getText();
-			String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
-			String preExit   = D7Parser.getKeywordOrDefault("preExit", "exit");
-			String preLeave  = D7Parser.getKeywordOrDefault("preLeave", "leave");
+			String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
+			String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit");
+			String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave");
 			for (int i = 0; isEmpty && i < lines.count(); i++) {
 				String line = transform(lines.get(i)).trim();
 				if (!line.isEmpty())
@@ -1021,12 +1021,20 @@ public class PerlGenerator extends Generator {
 			String result = "";
 			if (isFunctionNameSet)
 			{
-				result = _root.getMethodName();
+				// START KGU#62 2016-12-30: Bugfix #57
+				//result = _root.getMethodName();
+				result = "$" + _root.getMethodName();
+				// END KGU#62 2016-12-30
 			}
 			else if (isResultSet)
 			{
 				int vx = varNames.indexOf("result", false);
 				result = varNames.get(vx);
+				// START KGU#62 2016-12-30: Bugfix
+				if (!result.startsWith("$")) {
+					result = "$" + result;
+				}
+				// END KGU#62 2016-12-30
 			}
 			// START KGU#62 2017-02-26: Bugfix #57
 			if (result.isEmpty()) {

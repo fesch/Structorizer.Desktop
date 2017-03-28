@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.generators;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -110,8 +109,7 @@ package lu.fisch.structorizer.generators;
  *      2010.08.07 - Bugfixes
  *      - none
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import lu.fisch.utils.*;
 
@@ -121,7 +119,7 @@ import java.util.regex.Matcher;
 
 import lu.fisch.structorizer.elements.*;
 import lu.fisch.structorizer.executor.Executor;
-import lu.fisch.structorizer.parsers.D7Parser;
+import lu.fisch.structorizer.parsers.CodeParser;
 
 
 public class CSharpGenerator extends CGenerator 
@@ -232,7 +230,7 @@ public class CSharpGenerator extends CGenerator
 		String subst = getOutputReplacer();
 		String subst0 = subst.replaceAll("Line", "");
 		// Between the input keyword and the variable name there MUST be some blank...
-		String keyword = D7Parser.getKeyword("output").trim();
+		String keyword = CodeParser.getKeyword("output").trim();
 		if (!keyword.isEmpty() && _interm.startsWith(keyword))
 		{
 			String matcher = Matcher.quoteReplacement(keyword);

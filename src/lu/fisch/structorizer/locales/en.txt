@@ -96,6 +96,7 @@
  *      Kay Gürtzig     2017.03.12      Enh. #372: New saving options
  *      Kay Gürtzig     2017.03.14      Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
  *      Kay Gürtzig     2017.03.27      Enh. #380: Messages for outsourcing of element sequences
+ *      Kay Gürtzig     2017.03.28      Issue #370: New Menu messages for enhanced refactoring options
  *
  ******************************************************************************************************
  *
@@ -119,6 +120,7 @@ Menu.menuFileOpen.text=Open ...
 Menu.menuFileOpenRecent.text=Open Recent File
 Menu.menuFileSave.text=Save
 Menu.menuFileSaveAs.text=Save As ...
+Menu.menuFileSaveAll.text=Save All
 Menu.menuFileExport.text=Export
 // Submenu of "File -> Export"
 Menu.menuFileExportPicture.text=Picture ...
@@ -300,6 +302,17 @@ Menu.msgRefactoringOffer.text=Keywords configured in the Parser Preferences were
 Menu.lblRefactorNone.text=no
 Menu.lblRefactorCurrent.text=current diagram
 Menu.lblRefactorAll.text=all diagrams
+Menu.msgDiscardParserPrefs.text=Sure to discard new parser preferences?
+Menu.msgAdaptStructPrefs.text=Adapt Structure preferences to Parser preferences?
+Menu.msgKeywordsDiffer.text=This is a diagram, the original keyword context of which differs from current Parser Preferences:%1\nYou have opted against automatic refactoring on import.\n\nNow you have the following opportunities:\n%2
+Menu.msgRefactorNow.text=The diagram may be refactored now (recommended)
+Menu.msgAdoptPreferences.text=You may adopt the keywords loaded with the diagram as new Parser Preferences\n   (which would induce refactoring of all other open diagrams!)
+Menu.msgLeaveAsIs.text=You may leave the diagram as is, which may prevent its\n   debugging and cause defective export (you may refactor it later, though)
+Menu.msgAllowChanges.text=Allow the modification, thus losing the original keyword information irreversibly
+Menu.lblRefactorNow.text=Refactor diagram
+Menu.lblAdoptPreferences.text=Adopt keywords
+Menu.lblLeaveAsIs.text=Leave diagram as is
+Menu.lblAllowChanges.text=Allow to change now
 Menu.msgReplacementsDone.text=% instructions replaced.
 Menu.msgNewerVersionAvail.text=Newer version % available for download.
 Menu.msgUpdateInfoHint.text=If you want to get notified of available new versions\nyou may enable update retrieval from Structorizer homepage\nvia menu item "%1" > "%2".
@@ -390,7 +403,8 @@ AnalyserPreferences.okButton.text=OK
 // I/O
 Editor.btnNew.tooltip=Create a new blank diagram.
 Editor.btnOpen.tooltip=Open an existing diagram.
-Editor.btnSave.tooltip=Save the actual diagram.
+Editor.btnSave.tooltip=Save the current diagram.
+Editor.btnSaveAll.tooltip=Save all diagrams with unsaved changes.
 // InsertBefore
 Editor.btnBeforeInst.tooltip=Insert a new instruction before the selected element. 
 Editor.btnBeforeAlt.tooltip=Insert a new IF statement before the selected element.

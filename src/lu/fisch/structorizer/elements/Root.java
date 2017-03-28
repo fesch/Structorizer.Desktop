@@ -78,7 +78,7 @@ package lu.fisch.structorizer.elements;
  *                                      for easier maintenance
  *      Kay Gürtzig     2016.09.21      Enh. #249: New analyser check 20 (function header syntax) implemented
  *      Kay Gürtzig     2016.09.25      Enh. #255: More informative analyser warning error_01_2. Dead code dropped.
- *                                      Enh. #253: D7Parser.keywordMap refactored
+ *                                      Enh. #253: CodeParser.keywordMap refactored
  *      Kay Gürtzig     2016.10.11      Enh. #267: New analyser check for error15_2 (unavailable subroutines)
  *      Kay Gürtzig     2016.10.12      Issue #271: user-defined prompt strings in input instructions
  *      Kay Gürtzig     2016.10.13      Enh. #270: Analyser checks for disabled elements averted.
@@ -215,6 +215,9 @@ public class Root extends Element {
 	// START KGU#316 2016-12-28: Enh. #318 Consider unzipped arrz-files
 	public String shadowFilepath = null;	// temp file path of an unzipped file
 	// END KGU#316 2016-12-28
+	// START KGU#362 2017-03-28: Issue #370 - retain original keywords if not refactored - makes Root readonly!
+	public HashMap<String, StringList> storedParserPrefs = null;
+	// END KGU#362 2017-03-28
 	// START KGU#363 2017-03-10: Enh. #372
 	private String author = null;
 	private String modifiedby = null;
@@ -1536,7 +1539,7 @@ public class Root extends Element {
     		}
     		//System.out.println(lines);
 
-			String[] keywords = D7Parser.getAllProperties();
+			String[] keywords = CodeParser.getAllProperties();
 			StringList parts = new StringList();
     		
     		for(int i=0; i<lines.count(); i++)
@@ -1564,7 +1567,7 @@ public class Root extends Element {
         				StringList keyTokens = this.splitKeywords.elementAt(kw);
             			int keyLength = keyTokens.count();
         				int pos = -1;
-        				while ((pos = tokens.indexOf(keyTokens, pos + 1, !D7Parser.ignoreCase)) >= 0)
+        				while ((pos = tokens.indexOf(keyTokens, pos + 1, !CodeParser.ignoreCase)) >= 0)
         				{
         					tokens.set(pos, keywords[kw]);
         					for (int j=1; j < keyLength; j++)
@@ -1576,9 +1579,9 @@ public class Root extends Element {
     			}
     			
     			// Unify FOR-IN loops and FOR loops for the purpose of variable analysis
-    			if (!D7Parser.getKeyword("postForIn").trim().isEmpty())
+    			if (!CodeParser.getKeyword("postForIn").trim().isEmpty())
     			{
-    				tokens.replaceAll(D7Parser.getKeyword("postForIn"), "<-");
+    				tokens.replaceAll(CodeParser.getKeyword("postForIn"), "<-");
     			}
     			
     			// Here all the unification, alignment, reduction is done, now the actual analysis begins
@@ -1622,16 +1625,16 @@ public class Root extends Element {
     			// END KGU#332 2017-01-17
 
     			// cutoff output keyword
-    			if (tokens.get(0).equals(D7Parser.getKeyword("output")))	// Must be at the line's very beginning
+    			if (tokens.get(0).equals(CodeParser.getKeyword("output")))	// Must be at the line's very beginning
     			{
     				tokens.delete(0);
     			}
 
     			// parse out array index
     			// FIXME: Optimize this!
-    			if(tokens.indexOf(D7Parser.getKeyword("input"))>=0)
+    			if(tokens.indexOf(CodeParser.getKeyword("input"))>=0)
     			{
-    				String s = tokens.subSequence(tokens.indexOf(D7Parser.getKeyword("input"))+1, tokens.count()).concatenate();
+    				String s = tokens.subSequence(tokens.indexOf(CodeParser.getKeyword("input"))+1, tokens.count()).concatenate();
     				if (s.indexOf("[") >= 0)
     				{
     					//System.out.print("Reducing \"" + s);
@@ -1717,7 +1720,7 @@ public class Root extends Element {
 
     	// START KGU#163 2016-03-25: Pre-processed match patterns for identifier search
     	this.splitKeywords.clear();
-    	String[] keywords = D7Parser.getAllProperties();
+    	String[] keywords = CodeParser.getAllProperties();
     	for (int k = 0; k < keywords.length; k++)
     	{
     		this.splitKeywords.add(Element.splitLexically(keywords[k], false));
@@ -1749,7 +1752,7 @@ public class Root extends Element {
     				StringList keyTokens = this.splitKeywords.elementAt(kw);
     				int keyLength = keyTokens.count();
     				int pos = -1;
-    				while ((pos = tokens.indexOf(keyTokens, pos + 1, !D7Parser.ignoreCase)) >= 0)
+    				while ((pos = tokens.indexOf(keyTokens, pos + 1, !CodeParser.ignoreCase)) >= 0)
     				{
     					tokens.set(pos, keywords[kw]);
     					for (int j=1; j < keyLength; j++)
@@ -1761,9 +1764,9 @@ public class Root extends Element {
     		}
 
     		// Unify FOR-IN loops and FOR loops for the purpose of variable analysis
-    		if (!D7Parser.getKeyword("postForIn").trim().isEmpty())
+    		if (!CodeParser.getKeyword("postForIn").trim().isEmpty())
     		{
-    			tokens.replaceAll(D7Parser.getKeyword("postForIn"), "<-");
+    			tokens.replaceAll(CodeParser.getKeyword("postForIn"), "<-");
     		}
 
     		// Here all the unification, alignment, reduction is done, now the actual analysis begins
@@ -1779,7 +1782,7 @@ public class Root extends Element {
 
 
     		// get names from read statements
-    		int inpPos = tokens.indexOf(D7Parser.getKeyword("input"));
+    		int inpPos = tokens.indexOf(CodeParser.getKeyword("input"));
     		if (inpPos >= 0)
     		{
     			// START KGU#281 2016-10-12: Issue #271 - there may be a prompt string literal to be skipped
@@ -2543,10 +2546,10 @@ public class Root extends Element {
 		boolean isInput = false;
 		boolean isOutput = false;
 		boolean isAssignment = false;
-		StringList inputTokens = Element.splitLexically(D7Parser.getKeyword("input"), false);
-		StringList outputTokens = Element.splitLexically(D7Parser.getKeyword("output"), false);
+		StringList inputTokens = Element.splitLexically(CodeParser.getKeyword("input"), false);
+		StringList outputTokens = Element.splitLexically(CodeParser.getKeyword("output"), false);
 		// START KGU#297 2016-11-22: Issue #295 - Instructions starting with the return keyword must be handled separately
-		StringList returnTokens = Element.splitLexically(D7Parser.getKeyword("preReturn"), false);
+		StringList returnTokens = Element.splitLexically(CodeParser.getKeyword("preReturn"), false);
 		// END KGU#297 2016-11-22
 
 		// Check every instruction line...
@@ -2560,7 +2563,7 @@ public class Root extends Element {
 			unifyOperators(tokens, false);
 			// START KGU#297 2016-11-22: Issue #295 - Instructions starting with the return keyword must be handled separately
 			//if (tokens.contains("<-"))
-			boolean isReturn = tokens.indexOf(returnTokens, 0, !D7Parser.ignoreCase) == 0;
+			boolean isReturn = tokens.indexOf(returnTokens, 0, !CodeParser.ignoreCase) == 0;
 			// END KGU#297 2016-11-22
 			if (tokens.contains("<-") && !isReturn)
 			{
@@ -2576,11 +2579,11 @@ public class Root extends Element {
 			}
 			
 			// CHECK: wrong multi-line instruction (#10 - new!)	
-			if (tokens.indexOf(inputTokens, 0, !D7Parser.ignoreCase) == 0)
+			if (tokens.indexOf(inputTokens, 0, !CodeParser.ignoreCase) == 0)
 			{
 				isInput = true;
 			}
-			if (tokens.indexOf(outputTokens, 0, !D7Parser.ignoreCase) == 0)
+			if (tokens.indexOf(outputTokens, 0, !CodeParser.ignoreCase) == 0)
 			{
 				isOutput = true;
 			}
@@ -2669,14 +2672,14 @@ public class Root extends Element {
 	private void analyse_13_16_jump(Jump ele, Vector<DetectedError> _errors, StringList _myVars, boolean[] _resultFlags)
 	{
 		StringList sl = ele.getText();
-		String preReturn = D7Parser.getKeywordOrDefault("preReturn", "return");
-		String preLeave = D7Parser.getKeywordOrDefault("preLeave", "leave");
-		String preExit = D7Parser.getKeywordOrDefault("preExit", "exit");
+		String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
+		String preLeave = CodeParser.getKeywordOrDefault("preLeave", "leave");
+		String preExit = CodeParser.getKeywordOrDefault("preExit", "exit");
 		String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "»";
 		String line = sl.get(0).trim().toLowerCase();
 
 		// Preparation
-		if (D7Parser.ignoreCase) {
+		if (CodeParser.ignoreCase) {
 			preReturn = preReturn.toLowerCase();
 			preLeave = preLeave.toLowerCase();
 			preExit = preExit.toLowerCase();
@@ -2734,7 +2737,7 @@ public class Root extends Element {
 			if (_resultFlags[1] || _resultFlags[2])
 			{
 				//error = new DetectedError("Your function seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
-				addError(_errors, new DetectedError(errorMsg(Menu.error13_3, D7Parser.getKeywordOrDefault("preReturn", "return")), ele), 13);
+				addError(_errors, new DetectedError(errorMsg(Menu.error13_3, CodeParser.getKeywordOrDefault("preReturn", "return")), ele), 13);
 			}
 			// Check if we are inside a Parallel construct
 			if (insideParallel)
@@ -2792,14 +2795,14 @@ public class Root extends Element {
 	private void analyse_13_16_instr(Instruction ele, Vector<DetectedError> _errors, boolean _isLastElement, StringList _myVars, boolean[] _resultFlags)
 	{
 		StringList sl = ele.getText();
-		String pattern = D7Parser.getKeywordOrDefault("preReturn", "return");
-		if (D7Parser.ignoreCase) pattern = pattern.toLowerCase();
+		String pattern = CodeParser.getKeywordOrDefault("preReturn", "return");
+		if (CodeParser.ignoreCase) pattern = pattern.toLowerCase();
 		String patternReturn = Matcher.quoteReplacement(pattern);
-		pattern = D7Parser.getKeywordOrDefault("preLeave", "leave");
-		if (D7Parser.ignoreCase) pattern = pattern.toLowerCase();
+		pattern = CodeParser.getKeywordOrDefault("preLeave", "leave");
+		if (CodeParser.ignoreCase) pattern = pattern.toLowerCase();
 		String patternLeave = Matcher.quoteReplacement(pattern);
-		pattern = D7Parser.getKeywordOrDefault("preExit", "exit");
-		if (D7Parser.ignoreCase) pattern = pattern.toLowerCase();
+		pattern = CodeParser.getKeywordOrDefault("preExit", "exit");
+		if (CodeParser.ignoreCase) pattern = pattern.toLowerCase();
 		String patternExit = Matcher.quoteReplacement(pattern);
 
 		for(int ls=0; ls<sl.count(); ls++)
@@ -2807,14 +2810,14 @@ public class Root extends Element {
 			String line = sl.get(ls).trim().toLowerCase();
 			// START KGU#78 2015-11-25: Make sure a potential result is following a return keyword
 			//if(line.toLowerCase().indexOf("return")==0)
-			if (D7Parser.ignoreCase) line = line.toLowerCase();
+			if (CodeParser.ignoreCase) line = line.toLowerCase();
 			boolean isReturn = line.matches(Matcher.quoteReplacement(patternReturn) + "([\\W].*|$)");
 			boolean isLeave = line.matches(Matcher.quoteReplacement(patternLeave) + "([\\W].*|$)");
 			boolean isExit = line.matches(Matcher.quoteReplacement(patternExit) + "([\\W].*|$)");
 			boolean isJump = isLeave || isExit ||
 					line.matches("exit([\\W].*|$)") ||	// Also check hard-coded keywords
 					line.matches("break([\\W].*|$)");	// Also check hard-coded keywords
-			if (isReturn && !line.substring(D7Parser.getKeywordOrDefault("preReturn", "return").length()).isEmpty())
+			if (isReturn && !line.substring(CodeParser.getKeywordOrDefault("preReturn", "return").length()).isEmpty())
 				// END KGU#78 2015-11-25
 			{
 				_resultFlags[0] = true;
@@ -2826,7 +2829,7 @@ public class Root extends Element {
 				if (_resultFlags[1] || _resultFlags[2])
 				{
 					//error = new DetectedError("Your function seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
-					addError(_errors, new DetectedError(errorMsg(Menu.error13_3, D7Parser.getKeywordOrDefault("preReturn", "return")), ele), 13);
+					addError(_errors, new DetectedError(errorMsg(Menu.error13_3, CodeParser.getKeywordOrDefault("preReturn", "return")), ele), 13);
 				}
 				// END KGU#78 2015-11-25
 			}
