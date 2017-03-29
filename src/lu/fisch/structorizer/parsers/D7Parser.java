@@ -76,6 +76,7 @@ import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Case;
+import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Repeat;
@@ -95,6 +96,8 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 
 import com.stevesoft.pat.Regex;
+
+import java.awt.Color;
 
 /**
  * Code import parser class of Structorizer 3.27, based on GOLDParser 5.0 for the ObjectPascal, Pascal
@@ -951,6 +954,7 @@ public class D7Parser extends CodeParser
 					}
 					asgnmt = new Instruction(translateContent(content));
 					asgnmt.setComment("constant!");
+					asgnmt.setColor(Color.decode("0xFFC0FF"));
 					// NO BREAK HERE!
 				case RuleConstants.PROD_VARDECL_COLON_SEMI:
 				case RuleConstants.PROD_VARDECL_COLON:
@@ -961,7 +965,7 @@ public class D7Parser extends CodeParser
 						}
 						content = getContent_R(typeRule, "var " + idList + ": ");
 						Instruction decl = new Instruction(translateContent(content));
-						//decl.disabled = true;
+						decl.setColor(Color.decode("0x80FF80"));
 						_parentNode.addElement(decl);
 					}
 					if (asgnmt != null) {
@@ -972,6 +976,7 @@ public class D7Parser extends CodeParser
 					content = getContent_R(_reduction.get(2).asReduction(), idList + " <- ");
 					asgnmt = new Instruction(translateContent(content));
 					asgnmt.setComment("constant!");
+					asgnmt.setColor(Color.decode("0xFFC0FF"));
 					_parentNode.addElement(asgnmt);
 					break;
 				default:;
