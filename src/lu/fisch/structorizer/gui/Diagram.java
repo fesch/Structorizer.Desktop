@@ -1510,6 +1510,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				if (Arranger.hasInstance()) {
 					Arranger.getInstance().redraw();
 				}
+				
+				offerStructPrefAdaptation(splitPrefs);
 			}
 			goAhead = true;
 			break;
@@ -5036,7 +5038,8 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 	private void offerStructPrefAdaptation(HashMap<String, StringList> refactoringData)
 	{
 		if (JOptionPane.showConfirmDialog(this,
-				Menu.msgAdaptStructPrefs.getText()) == JOptionPane.OK_OPTION) {
+				Menu.msgAdaptStructPrefs.getText(), Menu.msgTitleQuestion.getText(),
+				JOptionPane.YES_NO_OPTION) == JOptionPane.OK_OPTION) {
 			Element.preAlt = replacePref(Element.preAlt,
 					refactoringData, "preAlt", "postAlt");
 			Element.preWhile = replacePref(Element.preWhile,
