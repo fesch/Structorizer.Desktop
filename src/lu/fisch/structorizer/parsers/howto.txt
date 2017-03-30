@@ -1,14 +1,16 @@
 This is just a little file that explains
- __ __   ___   __    __  ______   ___  
-|  |  | /   \ |  |__|  ||      | /   \ 
-|  |  ||     ||  |  |  ||      ||     |
-|  _  ||  O  ||  |  |  ||_|  |_||  O  |
-|  |  ||     ||  `  '  |  |  |  |     |
-|  |  ||     | \      /   |  |  |     |
-|__|__| \___/   \_/\_/    |__|   \___/
+ __ __   ___   __    __    ______   ___  
+|  |  | /   \ |  |__|  |  |      | /   \ 
+|  |  ||     ||  |  |  |  |      ||     |
+|  _  ||  O  ||  |  |  |  |_|  |_||  O  |
+|  |  ||     ||  `  '  |    |  |  |     |
+|  |  ||     | \      /     |  |  |     |
+|__|__| \___/   \_/\_/      |__|   \___/
 
 ADD A NEW LANGUAGE TO STRUCTORIZER IMPORT
 =========================================
+Author:      Kay Gürtzig
+Last update: 2017-03-30
 
 Structorizer uses the GOLD Parser version 5.0 (http://www.goldparser.org) in
 combination with a compiled grammar for the source language to derive a structogram
@@ -52,51 +54,71 @@ rules until the grammar passes the GOLDbuild process. This may get tricky if the
 itself is intrinsicly ambiguous.
 
 3. PARSER CLASS SKELETON
-If you have luckily obtained an egt file (or have downloaded an also suited cgt file
-(which is just an older file format for GOLD parser compiled grammar tables) then you
+If you have luckily obtained an egt file (or have downloaded an also suited cgt file -
+which is just an older file format for GOLD parser compiled grammar tables) then you
 will have to generate a Parser skeleton for this grammar.
-Again you may use a command-line tool GOLDprog.exe you will already have downloaded together
-with GOLDbuild from http://goldparser.org/builder/files/GOLD-Builder-5.2.0-Cmd.zip.
+Again you may use a command-line tool GOLDprog.exe downloaded together with GOLDbuild
+from http://goldparser.org/builder/files/GOLD-Builder-5.2.0-Cmd.zip.
 In order to create a meaningful parser class you should use StructorizerParserTemplate.pgt
 as the template file for GOLDprog.exe:
 GOLDprog.exe XYZ.egt StructorizerParserTemplate.pgt XYZParser.java
-The states and patterns in the tables are still linked to the rules. The terminals and
-rules are associated with table indices. The command-line tool GOLDprog derives more or
-less mnemonic constants in the target Java file (XYZParser.java) from the tables and the
-rule structures or token names.
-The template file contains practically the Java skeleton of the aimed Parser class, where
-certain markers specify the insertion places ande the syntax according to which the
-references to the tables are generated into the code.
-You will also find some hooks where to add the Nassi-Shneiderman diagram synthesis.
+The states and patterns in the tables are linked to the rules. The command-line tool
+GOLDprog derives more or less mnemonic constants for the table indices of symbols and
+rules and places them as interface members in the target Java file (XYZParser.java).
+(The template file practically contains the Java skeleton of the aimed Parser class,
+where certain ## markers specify the insertion places and the syntax according to which
+the table index references are generated into the code.)
+You will also find some hooks where to add the Nassi-Shneiderman diagram synthesis
+(methods initializeBuildNSD, buildNSD_R, getContent_R).
 
 4. DIAGRAM SYNTHESIS FROM SYNTAX TREE
 This all done, the diagran synthesis must be written. This is very dependent on the
 rules of the used grammar. Whereas the parsing process works bottom up, i.e. from the
 input token to the start symbol of the grammar, the diagram synthesis works top down.
-When the parsing terminated successfully, i.e. in state ACCEPT, then the recursive method
-buildNSD_R will be called with the top reduction of the grammar and the empty element
-subqueue of the new diagram root as arguments. Where you have to follow the structural
-path in order to create the corresponding diagram substructure, you will call buildNSD-R
-recursively whereas you mere need the parsed text you may call getContent_R, which you
-will also have to implement for the rule-specific reduction. The analysis of the objects
-of the Reduction class is pretty straight-forward. With method getParent() you obtain the
-corresponding production rule (including its text), e.g.
-"<WhileStatement> ::= WHILE <expression> DO <StatementSequence> END"
-The left-hand side of the rule, here "<WhileStatment>" can be obtained with getHead().
+When the parsing terminated successfully, i.e. in state ACCEPT, then at first method
+initializeBuildNSD is called in order to give you the opportunity to do some language-
+specific preparation. Just override this method if there is something to prepare.
+Next the recursive method buildNSD_R will be called with the top Reduction of the
+grammar and the empty element subqueue of the new diagram root as arguments. The usual
+way to implement it is to pick all Reductions representing some algorithmic entities
+to be converted in diagram elements and handle them correspondingly, skip all Reductions
+being meaninglsess for Structorizer, and just recursively traverse the remaining Reductions
+with buildNSD_R (else branch).
+Where you need the mere parsed text you may call getContent_R on a Reduction instead,
+which you will also have to implement for the respective rule-specific Reduction.
+The analysis of the element Tokens of the Reduction class is pretty straight-forward.
+With method getParent() you obtain the corresponding production rule (including its text,
+e.g. "<WhileStatement> ::= WHILE <expression> DO <StatementSequence> END"). The left-
+hand side of the rule, here "<WhileStatment>" can be obtained with getHead().
 The table index of the rule can be obtained with getTableIndex() on the production rule.
-This index can be compared with the generated rule constants to identify the rule and
-conclude its structure:
+This index may be compared with the generated members of interface RuleConstants to
+identify the rule and conclude its structure:
 The right-hand side of the production rule determines the structure of the Reduction
-object. Here it consists of 5 tokens (three terminal and two non-teminal ones, in the
-rule-defined order, i.e. "WHILE", <expression>, "DO", <StatementSequence>, "END"), hence
-method size() on the Reduction object would return 5. You obtain the respective tokens via
-the get() method, prividing the corresponding index (0...4). From the identfied rule you
-will know which tokens are terminals and which are non-terminals. For further analysis,
-you typically fetch the child reduction of non-terminal tokens by method asReduction()
-(on the token), for terminal tokens you will retrieve their string content by making use
-of method asString().
+elements. In the example above it consists of 5 Tokens (three of type CONTENT (terminal)
+and and two of type NON_TERMINAL, in the rule-defined order, i.e. "WHILE", <expression>,
+"DO", <StatementSequence>, "END"), hence method size() on the Reduction object would
+return 5. You obtain the respective tokens via the get() method, prividing the respective
+index (0...4). From the identfied rule you will know which tokens are terminals and which
+are non-terminals. For further analysis, you typically fetch the child reduction of non-
+terminal tokens by method asReduction() (on the token), for terminal tokens you will
+retrieve their string content by making use of method asString().
 The initial diagram Root is held in the member variable root of your Parser class. If you
-bump into some subroutine code (a routine declaration Reduction) zhen you will temporarily
-have to a new Root object into the collection member subRoots.
-Ideally you have a look at the existing language-specific parser classes (which are rather
-diagram synthesis classes but male use of the syntax tree generted by the actual parser.)
+bump into some subroutine code (a routine declaration Reduction) then you will temporarily
+have to move root into the collection subRoots and add an new Root object, putting it
+into slot root.
+Ideally, you have a look at the already existing language-specific parser classes (which
+are rather diagram synthesis classes by the way) how they make use of the Reduction tree
+generated by the actual generic parser.
+
+Import options are available via members named "option..." of the parent class CodeParser:
+- optionImportVarDecl indicates whether variable declarations are to be imported or not
+- optionSaveParseTree() indicates whether the parse tree is to be saved (no action needed,
+  already handled by the parent class!).
+
+The parent class, CodeParser, provides some standard colors that may be used to mark up
+certain kinds of elements:
+- colorConst for constant definitions
+- colorDecl for mere variable declarations (if imported at all)
+- colorGlobal for global definitions (in case of files with multiple routines)
+- colorMisc for miscellaneous source language-specific mark-ups (e.g. for related elements
+  emerging from a single source code construct like a for(...;...;...) loop in C).

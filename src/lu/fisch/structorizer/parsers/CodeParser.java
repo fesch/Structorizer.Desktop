@@ -19,6 +19,8 @@
  */
 package lu.fisch.structorizer.parsers;
 
+import java.awt.Color;
+
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -33,6 +35,7 @@ package lu.fisch.structorizer.parsers;
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.03.04      First Issue
  *      Kay Gürtzig     2017.03.25      Fix #357: Precaution against failed file preparation
+ *      Kay Gürtzig     2017.03.30      Standard colours for declarations, constant definitions and global stuff
  *
  ******************************************************************************************************
  *
@@ -82,18 +85,70 @@ import lu.fisch.utils.StringList;
 public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 {
 	/************ Common fields *************/
+	
+	/**
+	 * String field holding the message of error occurred during parsing or build phase
+	 * for later evaluation (empty if there was no error) 
+	 */
 	public String error;
+	/**
+	 * The generic LALR(1) parser providing the parse tree
+	 */
 	protected AuParser parser;
+	/**
+	 *  Currently built diagram Root
+	 */
 	protected Root root = null;
-	// We may obtain a collection of Roots (unit or program with subroutines)!
+	/**
+	 * List of the Roots of (all) imported diagrams - we may obtain a collection
+	 * of Roots (unit or program with subroutines)!
+	 */
 	protected List<Root> subRoots = new LinkedList<Root>();
 	// START KGU#358 2017-03-06: Enh. #354, #368 - new import options
+	/**
+	 * Value of the import option to import mere variable declarations
+	 * @see #optionSaveParseTree()
+	 */
 	protected boolean optionImportVarDecl = false;
+	/**
+	 * Returns the value of the import option to save the obtained parse tree
+	 * @return true iff the parse tree is to be saved as text file
+	 * @see #optionImportVarDecl
+	 */
 	protected boolean optionSaveParseTree()
 	{
 		return Ini.getInstance().getProperty("impSaveParseTree", "false").equals("true");
 	}
 	// END KGU#358 2017-03-06
+	
+	/**
+	 * Standard element colour for imported constant definitios
+	 * @see #colorDecl
+	 * @see #colorGlobal
+	 * @see #colorMisc
+	 */
+	protected static final Color colorConst = Color.decode("0xFFC0FF");
+	/**
+	 * Standard element colour for imported variable declarations (without initialization)
+	 * @see #colorConst
+	 * @see #colorGlobal
+	 * @see #colorMisc
+	 */
+	protected static final Color colorDecl = Color.decode("0xC0FFC0");
+	/**
+	 * Standard element colour for imported global declarations or definitions
+	 * @see #colorConst
+	 * @see #colorDecl
+	 * @see #colorMisc
+	 */
+	protected static final Color colorGlobal = Color.decode("0xC0FFFF");
+	/**
+	 * Standard element colour for miscellaneous mark-ups
+	 * @see #colorConst
+	 * @see #colorDecl
+	 * @see #colorGlobal
+	 */
+	protected static final Color colorMisc = Color.decode("0xFFFFC0");
 
 	/************ Abstract Methods *************/
 	
@@ -126,8 +181,8 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	
 	/**
 	 * Return a string array with file name extensions to be recognized and accepted
-	 * as source files of the input language of this parser. The extensions must not
-	 * start with a dot.
+	 * as source files of the input language of this parser.<br>
+	 * The extensions must not start with a dot!
 	 * Correct: { "cpp", "cc" }, WRONG: { ".cpp", ".cc" } 
 	 * @see #getFileDescription()
 	 * @return the array of associated file name extensions

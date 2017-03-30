@@ -993,7 +993,7 @@ public class CParser extends CodeParser
 				String content = getContent_R(_reduction.get(4).asReduction(), "");
 				While ele = new While(getKeyword("preWhile")+translateContent(content)+getKeyword("postWhile"));
 				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
-				ele.setColor(Element.color2);
+				ele.setColor(colorMisc);
 				_parentNode.addElement(ele);
 				
 				// Get and convert the body
@@ -1007,7 +1007,7 @@ public class CParser extends CodeParser
 				/// impose some extra status
 				buildNSD_R(secReduc, ele.q);
 				// Mark all offsprings of the FOR loop with a (by default) yellowish colour
-				ele.q.getElement(ele.q.getSize()-1).setColor(Element.color2);
+				ele.q.getElement(ele.q.getSize()-1).setColor(colorMisc);
 
 			}
 			else if (
@@ -1130,10 +1130,10 @@ public class CParser extends CodeParser
 				Element instr = new Instruction(translateContent(content));
 				if (_parentNode.parent instanceof Root && ((Root)_parentNode.parent).getMethodName().equals("???")) {
 					instr.setComment("globally declared!");
-					instr.setColor(Color.CYAN);
+					instr.setColor(colorGlobal);
 				}
 				else {
-					instr.setColor(Element.color3);	// local declarations with a smooth green
+					instr.setColor(colorDecl);	// local declarations with a smooth green
 				}
 				_parentNode.addElement(instr);
 			}
@@ -1173,7 +1173,7 @@ public class CParser extends CodeParser
 			}
 			if (_parentNode.parent instanceof Root && ((Root)_parentNode.parent).getMethodName().equals("???")) {
 				instr.setComment("globally declared!");
-				instr.setColor(Color.CYAN);
+				instr.setColor(colorGlobal);
 			}
 			_parentNode.addElement(instr);
 		}

@@ -965,7 +965,7 @@ public class D7Parser extends CodeParser
 						}
 						content = getContent_R(typeRule, "var " + idList + ": ");
 						Instruction decl = new Instruction(translateContent(content));
-						decl.setColor(Color.decode("0x80FF80"));
+						decl.setColor(colorDecl);
 						_parentNode.addElement(decl);
 					}
 					if (asgnmt != null) {
@@ -976,7 +976,7 @@ public class D7Parser extends CodeParser
 					content = getContent_R(_reduction.get(2).asReduction(), idList + " <- ");
 					asgnmt = new Instruction(translateContent(content));
 					asgnmt.setComment("constant!");
-					asgnmt.setColor(Color.decode("0xFFC0FF"));
+					asgnmt.setColor(colorConst);
 					_parentNode.addElement(asgnmt);
 					break;
 				default:;
