@@ -76,7 +76,6 @@ import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
 import lu.fisch.structorizer.elements.Alternative;
 import lu.fisch.structorizer.elements.Case;
-import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.Instruction;
 import lu.fisch.structorizer.elements.Repeat;
@@ -146,6 +145,7 @@ public class D7Parser extends CodeParser
 	
 	// START KGU#358 2017-03-29: Enh. #368 - rule constants inserted to facilitate build phase
 	// Symbolic constants naming the table indices of the grammar rules
+	@SuppressWarnings("unused")
     private interface RuleConstants
     {
        final int PROD_LCONST_DECLITERAL                           =   0;  // <LCONST> ::= DecLiteral

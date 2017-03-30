@@ -168,6 +168,7 @@ public class %Name%Parser extends CodeParser
 	//---------------------- Grammar table constants DON'T MODIFY! ---------------------------
 
 	// Symbolic constants naming the table indices of the symbols of the grammar 
+	@SuppressWarnings("unused")
 	private interface SymbolConstants 
 	{
 ##SYMBOLS
@@ -176,6 +177,7 @@ public class %Name%Parser extends CodeParser
 	};
 
 	// Symbolic constants naming the table indices of the grammar rules
+	@SuppressWarnings("unused")
 	private interface RuleConstants
 	{
 ##RULES

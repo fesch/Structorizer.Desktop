@@ -123,6 +123,7 @@ public class CParser extends CodeParser
 	//------------------- Grammar table constants DON'T MODIFY! ---------------------------
 	
 	// Symbolic constants naming the table indices of the symbols of the grammar 
+	@SuppressWarnings("unused")
 	private interface SymbolConstants 
 	{
 		final int SYM_EOF           =   0;  // (EOF)
@@ -277,6 +278,7 @@ public class CParser extends CodeParser
 	};
 
 	// Symbolic constants naming the table indices of the grammar rules
+	@SuppressWarnings("unused")
 	private interface RuleConstants
 	{
 		final int PROD_EXTDECLS                                     =   0;  // <ExtDecls> ::= <ExtDecl> <ExtDecls>
@@ -512,14 +514,13 @@ public class CParser extends CodeParser
 		{
 			File file = new File(_textToParse);
 			HashMap<String, String> defines = new LinkedHashMap<String, String>();
-			DataInputStream in = new DataInputStream(new FileInputStream(_textToParse));
+			DataInputStream in = new DataInputStream(new FileInputStream(file));
 			// START KGU#193 2016-05-04
 			BufferedReader br = new BufferedReader(new InputStreamReader(in, _encoding));
 			// END KGU#193 2016-05-04
 			String strLine;
 			String srcCode = new String();
 			//Read File Line By Line
-			int nLines = 0;
 			// Preprocessor directives are not tolerated by the grammar, so drop them or try to
 			// do the #define replacements (at least roughly...)
 			while ((strLine = br.readLine()) != null)   
@@ -541,13 +542,12 @@ public class CParser extends CodeParser
 						}
 					}
 					srcCode += strLine + "\n";
-					nLines++;
 				}
 			}
 			//Close the input stream
 			in.close();
 
-			for (Entry entry: defines.entrySet()) {
+			for (Entry<String, String> entry: defines.entrySet()) {
 				if (debugprint) {
 					System.out.println("CParser.prepareTextfile(): " + Matcher.quoteReplacement((String)entry.getValue()));
 				}
@@ -662,7 +662,6 @@ public class CParser extends CodeParser
 					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN2
 					)
 			{
-				boolean done = false;
 				String content = "";
 				String procName = _reduction.get(0).asString();
 				StringList arguments = null;
@@ -1272,7 +1271,6 @@ public class CParser extends CodeParser
 		//    [break;]	// To be removed after all branches are complete
 		// }
 		// The first (easier) approach here is to copy/append instr41; instr42; (and instr0;)
-		String content = new String();
 		int nLines = _case.getText().count();
 		int iNext = 0;	// line index of the next free selector entry
 		// buildCase(...) had marked all selector lines (but the default) with "??"
@@ -1343,7 +1341,6 @@ public class CParser extends CodeParser
 	{
 		//content = content.replaceAll(BString.breakup("printf")+"[ ((](.*?)[))]", output+" $1");
 		String content = getKeyword("output") + " ";
-		Reduction secRule = null;
 		if (_args != null) {
 			int nExpr = _args.count();
 			// Find the format mask
@@ -1369,7 +1366,7 @@ public class CParser extends CodeParser
 				_args = newExprList;
 			}
 			else {
-				// Drop an endstanding newline since Structorizer produces a newline automatically
+				// Drop an end-standing newline since Structorizer produces a newline automatically
 				String last = _args.get(nExpr - 1);
 				if (last.equals("\"\n\"")) {
 					_args.remove(--nExpr);
@@ -1443,7 +1440,6 @@ public class CParser extends CodeParser
 			switch (token.getType()) 
 			{
 			case NON_TERMINAL:
-				int ruleId = _reduction.getParent().getTableIndex();
 				_content = getContent_R(token.asReduction(), _content);	
 				break;
 			case CONTENT:

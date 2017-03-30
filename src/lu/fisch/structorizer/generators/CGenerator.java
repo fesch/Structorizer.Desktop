@@ -70,6 +70,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.03.05      Bugfix #365: Fundamental revision of generateForInCode(), see comment.
  *      Kay Gürtzig             2017.03.15      Bugfix #181/#382: String delimiter transformation didn't work 
  *      Kay Gürtzig             2017.03.15      Issue #346: Insertion mechanism was misplaced (depended on others)
+ *      Kay Gürtzig             2017.03.30      Issue #365: FOR-IN loop code generation revised again
  *
  ******************************************************************************************************
  *
@@ -525,9 +526,10 @@ public class CGenerator extends Generator {
 	}
 	// END KGU#332 2017-01-27
 	
-	// START KGU#355 2017-03-05: Bugfix #365 - Old C needs global type definitions
+	// START KGU#355 2017-03-05: Bugfix #365 - Old C needs global type definitions (no, this was an "alternative fact"!)
 	private StringList typeDefs = new StringList();
 	private int globalDefinitionInsertionLine = 0;
+	@SuppressWarnings("unused")
 	private void addGlobalTypeDef(String _typeDef, String _comment, boolean _asComment)
 	{
 		StringList realCode = this.code;
@@ -772,7 +774,10 @@ public class CGenerator extends Generator {
 				if (!type.equals("int") && !type.equals("boolean")) {
 					allInt = false;
 				}
-				if (!type.equals("double")) {
+				// START KGU#355 2017-03-30: #365 - allow type conversion
+				//if (!type.equals("double")) {
+				if (!type.equals("int") && !type.equals("boolean") && !type.equals("double")) {
+				// END KGU#355 2017-03-30
 					allDouble = false;
 				}
 				if (!type.equals("String")) {
@@ -796,11 +801,26 @@ public class CGenerator extends Generator {
 					itemType = "union ItemTyp" + nameSuffix;
 					// We create a dummy type definition
 					String typeDef = itemType + " {";
+					// START KGU#355 2017-03-30: #365 - initializers needs selectors
+					// and we overwrite the array literal
+					arrayLiteral = "{";
+					// END KGU#355 2017-03-30
 					for (int i = 0; i < nItems; i++) {
 						typeDef += itemTypes.get(i) + " comp" + i + "; ";
+						// START KGU#355 2017-03-30: #365 - initializers needs selectors
+						if (i > 0) arrayLiteral += ", ";
+						arrayLiteral += ".comp" + i + "<-" + items.get(i);
+						// END KGU#355 2017-03-30
 					}
-					typeDef += "}";
-					this.addGlobalTypeDef(typeDef, "TODO: Define a sensible 'ItemType' for the loop further down", isDisabled);
+					// START KGU#355 2017-03-30: #365 - initializers needs selectors
+					//typeDef += "}";
+					typeDef = typeDef.trim() + "};";
+					arrayLiteral += "}";
+					// END KGU#355 2017-03-30
+					// START KGU#355 2017-03-30: #365 - it was not correct that types must be defined globally
+					//this.addGlobalTypeDef(typeDef, "TODO: Define a sensible 'ItemType' for the loop further down", isDisabled);
+					this.addCode(typeDef, indent, isDisabled);
+					// END KGU#355 2017-03-30
 					this.insertComment("TODO: Prepare the elements of the array according to defined type (or conversely).", indent);
 				}
 			}
@@ -853,6 +873,9 @@ public class CGenerator extends Generator {
 					indent);
 			
 			// Assignment of a single item to the given variable
+			if (itemType.startsWith("union ")) {
+				this.insertComment("TODO: Extract the value from the appropriate component here and care for type conversion!", _indent);
+			}
 			addCode(this.getIndent() + itemType + " " + itemVar + " = " +
 					arrayName + "[" + indexName + "];", indent, isDisabled);
 
