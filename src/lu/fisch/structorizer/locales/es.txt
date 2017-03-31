@@ -102,6 +102,7 @@
  *      Kay Gürtzig     2017.03.14  Enh. #372: Messages for LicenseEditor, InputBoxRoot and others
  *      Kay Gürtzig     2017.03.27  Enh. #380: Messages for outsourcing of element sequences
  *      Kay Gürtzig     2017.03.28  Issue #370: New Menu messages for enhanced refactoring options
+ *      Kay Gürtzig     2017.03.30  Enh. #388: Constancy violation messages for Control added
  *
  ******************************************************************************************************
  *
@@ -911,6 +912,8 @@ Control.msgNoIntLiteralOnFile.text=¡No valor integral leible desde el archivo!
 Control.msgNoDoubleLiteralOnFile.text=¡No valor floating-point leible desde el archivo!
 Control.msgEndOfFile.text=¡No es posible leer datos después del fin del archivo!
 Control.msgUseStopButton.text=¡Una ejecución está en progreso o pausando!\nUsa el botón STOP para abortarla y cerrar.
+Control.msgConstantRedefinition.text=¡Intento ilegal de redefinir or modificar constante «%»!
+Control.msgConstantArrayElement.text=¡No es posible hacer constante un elemento «%» de un array colocando un valor!
 Control.tblVar.header.0=Nombre de variable
 Control.tblVar.header.1=Contenido
 

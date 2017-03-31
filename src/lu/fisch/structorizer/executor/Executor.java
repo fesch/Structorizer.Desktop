@@ -117,6 +117,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.02.17      KGU#159: Stacktrace now also shows the arguments of top-level subroutine calls
  *      Kay Gürtzig     2017.03.06      Bugfix #369: Interpretation of C-style array initializations (decl.) fixed.
  *      Kay Gürtzig     2017.03.27      Issue #356: Sensible reaction to the close button ('X') implemented
+ *      Kay Gürtzig     2017.03.30      Enh. #388: Concept of constants implemented
  *
  ******************************************************************************************************
  *
@@ -384,6 +385,9 @@ public class Executor implements Runnable
 	private int leave = 0;		// Number of loop levels to unwind
 	// END KGU#78 2015-11-25
 	private StringList variables = new StringList();
+	// START KGU#375 2017-03-30: Enh. #388 Support the concept of variables
+	private HashMap<String, Object> constants = new HashMap<String, Object>();
+	// END KGU#375 2017-03-30
 	// START KGU#2 2015-11-24: It is crucial to know whether an error had been reported on a lower level
 	private boolean isErrorReported = false;
 	private StringList stackTrace = new StringList();
@@ -789,6 +793,9 @@ public class Executor implements Runnable
 		// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
 		this.forLoopVars.clear();
 		// END KGU#307 2016-12-12
+		// START KGU#375 2017-03-30: Enh. #388: Keep track of constants
+		this.constants.clear();
+		// END KGU#375 2017-03-30
 		// START KGU 2016-12-18: Enh. #314
 		for (Closeable file: this.openFiles) {
 			if (file != null) {
@@ -896,6 +903,9 @@ public class Executor implements Runnable
 		// END KGU#39 2015-10-16 (1/2)
 			StringList params = root.getParameterNames();
 			//System.out.println("Having: "+params.getCommaText());
+			// START KGU#375 2017-03-30: Enh. #388 - support a constant concept
+			StringList pTypes = root.getParameterTypes();
+			// END KGU#375 2017-03-30
 			// START KGU#2 2015-12-05: New mechanism of getParameterNames() made reverting wrong
 			//params=params.reverse();
 			// END KGU#2 2015-12-05
@@ -907,6 +917,10 @@ public class Executor implements Runnable
 			for (int i = 0; i < params.count(); i++)
 			{
 				String in = params.get(i);
+				// START KGU#375 2017-03-30: Enh. #388 - support a constant concept
+				String type = pTypes.get(i);
+				boolean isConstant = type != null && (type.toLowerCase() + " ").startsWith("const ");
+				// END KGU#375 2017-03-30
 				
 				// START KGU#2 (#9) 2015-11-13: If root was not called then ask the user for values
 				if (noArguments)
@@ -931,7 +945,15 @@ public class Executor implements Runnable
 					try
 					{
 						// START KGU#69 2015-11-08 What we got here is to be regarded as raw input
-						setVarRaw(in, str);
+						// START KGU#375 2017-03-30: Enh. 388: Support a constant concept
+						//setVarRaw(in, str);
+						if (isConstant) {
+							setVarRaw("const " + in, str);
+						}
+						else {
+							setVarRaw(in, str);
+						}
+						// END KGU#375 2017-03-30
 						// END KGU#69 2015-11-08
 						// START KGU#2 2015-11-24: We might need the values for a stacktrace
 						arguments[i] = interpreter.get(in);
@@ -951,7 +973,15 @@ public class Executor implements Runnable
 				{
 					try
 					{
-						setVar(in, arguments[i]);
+						// START KGU#375 2017-03-30: Enh. 388: Support a constant concept
+						//setVar(in, arguments[i]);
+						if (isConstant) {
+							setVar("const " + in, arguments[i]);
+						}
+						else {
+							setVar(in, arguments[i]);
+						}
+						// END KGU#375 2017-03-30
 					}
 					catch (EvalError ex)
 					{
@@ -1791,6 +1821,16 @@ public class Executor implements Runnable
 					+ "}";
 			interpreter.eval(pascalFunction);
 			// END KGU 2016-12-18
+			// START KGU#375 2017-03-30: Enh. #388 Workaround for missing support of Object[].clone() in bsh-2.0b4.jar
+			pascalFunction = "public Object[] copyArray(Object[] sourceArray) {"
+					+ "Object[] targetArray = new Object[sourceArray.length];"
+					+ "for (int i = 0; i < sourceArray.length; i++) {"
+					+ "targetArray[i] = sourceArray[i];"
+					+ "}"
+					+ "return targetArray;"
+					+ "}";
+			interpreter.eval(pascalFunction);
+			// END KGU#375 2017-03-30
 			// START TEST fileAppend
 //			int handle = fileAppend("AppendTest.txt");
 //			System.out.println("fileAppend: " + handle);
@@ -2220,12 +2260,100 @@ public class Executor implements Runnable
 	private void setVar(String name, Object content, int ignoreLoopStackLevel) throws EvalError
 	// END KGU#307 2016-12-12
 	{
+		// START KGU#375 2017-03-30: Enh. #388 - Perform a clear case analysis instead of some heuristic poking
+		// There are the following sensible cases w.r.t. name here:
+		// a) [const] <id>
+		// b) <id>'['<expr>']'
+		// c) [const] <typespec1> <id>
+		// d) [const] <typespec1> <id>'['[<expr>]']'  - implicit C-style array declaration (questionable)
+		// e) [const|var] <id> : <typespec2>
+		// f) [const|dim] <id> as <typespec2>
+		// ILLEGAL (not supported here):
+		// g) const <id>'['<expr>']'  - single elements can't be const
+		// h) [const] <id>'['']'  - C-style array declaration: redundant if array value is assigned, wrong otherwise
+		// i) <id>'['<expr>(','<expr>)+']'
+		// j) <id>'['<expr>']'('['<expr>']')+
+		// <typespec1> ::=
+		//    {<modifier>} <typeid> |
+		//    {<modifier>} <typeid> ('['']')+   - Java-style array type (questionable)
+		// <typespec2> ::=
+		//    <id> |
+		//    array ['['<range>']'] of <typespec2> |
+		// <range> ::= <id> | <intliteral> .. <intliteral>
+		boolean isConstant = false;
+		String indexStr = null;
+		StringList tokens = Element.splitLexically(name, true);
+		tokens.removeAll(" ");
+		int nTokens = tokens.count();
+		if (tokens.get(0).equalsIgnoreCase("const")) {
+			// a), c), d), e), f) ?
+			isConstant = true;
+			// Drop type information
+			int posColon = tokens.indexOf(":");
+			if (posColon < 0) posColon = tokens.indexOf("as", false);
+			if (posColon < 0) posColon = nTokens;
+			tokens = tokens.subSequence(1, posColon);
+			nTokens = tokens.count();
+			name = tokens.get(nTokens-1);
+		}
+		if (tokens.get(0).equalsIgnoreCase("var")) {
+			// e)
+			// Drop type information
+			int posColon = tokens.indexOf(":");
+			if (posColon < 0) posColon = nTokens;
+			tokens = tokens.subSequence(1, posColon);
+			nTokens = tokens.count();
+			name = tokens.get(nTokens-1);
+		}
+		else if (tokens.get(0).equalsIgnoreCase("dim")) {
+			// f)
+			// Drop type information
+			int posColon = tokens.indexOf("as", false);
+			if (posColon < 0) posColon = nTokens;
+			tokens = tokens.subSequence(1, posColon);
+			nTokens = tokens.count();
+			name = tokens.get(nTokens-1);
+		}
+		// Now it must be some C or Java style declaration or just a plain variable (possibly indexed)
+		else if (tokens.get(nTokens-1).equals("]")) {
+			// b) indexed variable or d) a C-style array declaration?
+			int posLBrack = tokens.indexOf("[");
+			if (posLBrack < 1) {
+				throw new EvalError(control.msgInvalidExpr.getText().replace("%1", tokens.concatenate(" ")), null, null);
+			}
+			else {
+				name = tokens.get(posLBrack-1);
+				if (posLBrack == 1) {
+					indexStr = tokens.concatenate(" ");
+					if (isConstant) {
+						throw new EvalError(control.msgConstantArrayElement.getText().replace("%", indexStr), null, null);
+					}
+				}
+			}
+		}
+		else {
+			// The standard case: a)
+			name = tokens.get(nTokens-1);
+		}
+		
+		// FIXME: name still contains type and other modifiers, so this check may fail!
 		// START KGU#307 2016-12-12: Enh. #307 - check FOR loop variable manipulation
 		if (this.forLoopVars.lastIndexOf(name, ignoreLoopStackLevel) >= 0)
 		{
 			throw new EvalError(control.msgForLoopManipulation.getText().replace("%", name), null, null);
 		}
-		// END KGU#307 2016-12-12		
+		// END KGU#307 2016-12-12
+		
+		// START KGU#375 2017-03-30: Enh. #388 - check redefinition of constant
+		if (this.isConstant(name)) {
+			throw new EvalError(control.msgConstantRedefinition.getText().replace("%", name), null, null);
+		}
+		
+		// Avoid sharing an array if the target is a constant (while the source may not be) 
+		if (isConstant && content instanceof Object[]) {
+			content = ((Object[])content).clone();
+		}
+		// END KGU#375 2017-03-30
 		
 		// START KGU#69 2015-11-09: This is only a good idea in case of raw input
 		//if (content instanceof String)
@@ -2254,42 +2382,49 @@ public class Executor implements Runnable
 		// MODIFIED BY GENNARO DONNARUMMA, ARRAY SUPPORT ADDED
 		// Fundamentally revised by Kay Gürtzig 2015-11-08
 
-		String arrayname = null;
-		if ((name.contains("[")) && (name.contains("]")))
-		{
-			arrayname = name.substring(0, name.indexOf("["));
-			// START KGU#109 2015-12-16: Bugfix #61: Several strings suggest type specifiers
-			String[] nameParts = arrayname.split(" ");
-			arrayname = nameParts[nameParts.length-1];
-			// END KGU#109 2015-12-15
-		// START KGU#359 2017-03-06: Bugfix #369 for typed array initialisation like int a[3] <- {4, 9, 2}
-			if (nameParts.length > 1) {
-				// This is rather an array declaration (initialized) than an array
-				// element assignment. The important question is now, whether the
-				// expression represents an array. Then we would drop the index (but
-				// which is indeed a size) or check it against the array size.
-				name = arrayname;
-				arrayname = null;
-			}
-		}
-		if (arrayname != null) {
-			// Now all is fine here...
-		// END KGU#359 2017-03-06 
-			boolean arrayFound = this.variables.contains(arrayname);
-			int index = this.getIndexValue(name);
+		// START KGU#375 2017-03-30: Enh. #388 - replaced by preparing code above
+//		String arrayname = null;
+//		if ((name.contains("[")) && (name.contains("]")))
+//		{
+//			arrayname = name.substring(0, name.indexOf("["));
+//			// START KGU#109 2015-12-16: Bugfix #61: Several strings suggest type specifiers
+//			String[] nameParts = arrayname.split(" ");
+//			arrayname = nameParts[nameParts.length-1];
+//			// END KGU#109 2015-12-15
+//		// START KGU#359 2017-03-06: Bugfix #369 for typed array initialisation like int a[3] <- {4, 9, 2}
+//			if (nameParts.length > 1) {
+//				// This is rather a C-style array declaration (initialized) than an array
+//				// element assignment. The important question is now, whether the
+//				// expression represents an array. Then we would drop the "index"
+//				// (which is indeed a size) or check it against the array size.
+//				name = arrayname;
+//				arrayname = null;
+//			}
+//		}
+//		if (arrayname != null) {
+//		// Now all is fine here...
+//		// END KGU#359 2017-03-06 
+//			boolean arrayFound = this.variables.contains(arrayname);
+//			int index = this.getIndexValue(name);
+		if (indexStr != null) {
+		// END KGU#375 2017-03-30
+			boolean arrayFound = this.variables.contains(name);
+			int index = this.getIndexValue(indexStr);
 			Object[] objectArray = null;
 			int oldSize = 0;
 			if (arrayFound)
 			{
 				try {
 					// If it hasn't been an array then we'll get an error here
-					objectArray = (Object[]) this.interpreter.get(arrayname);
+					//objectArray = (Object[]) this.interpreter.get(arrayname);
+					objectArray = (Object[]) this.interpreter.get(name);
 					oldSize = objectArray.length;
 				}
 				catch (Exception ex)
 				{
 					// Produce a meaningful EvalError instead
-					this.interpreter.eval(arrayname + "[" + index + "] = " + prepareValueForDisplay(content));
+					//this.interpreter.eval(arrayname + "[" + index + "] = " + prepareValueForDisplay(content));
+					this.interpreter.eval(name + "[" + index + "] = " + prepareValueForDisplay(content));
 				}
 			}
 			if (index > oldSize - 1) // This includes the case of oldSize = 0
@@ -2306,22 +2441,26 @@ public class Executor implements Runnable
 				}
 			}
 			objectArray[index] = content;
-			this.interpreter.set(arrayname, objectArray);
-			this.variables.addIfNew(arrayname);
+			//this.interpreter.set(arrayname, objectArray);
+			//this.variables.addIfNew(arrayname);
+			this.interpreter.set(name, objectArray);
+			this.variables.addIfNew(name);
 			
 		} else // if ((name.contains("[")) && (name.contains("]")))
 		{
-			// START KGU#109 2015-12-16: Bugfix #61: Several strings suggest type specifiers
-			// START KGU#109 2016-01-15: Bugfix #61,#107: There might also be a colon...
-			int colonPos = name.indexOf(":");	// Check Pascal and BASIC style as well
-			if (colonPos > 0 || (colonPos = name.indexOf(" as ")) > 0)
-			{
-				name = name.substring(0, colonPos).trim();
-			}
-			// END KGU#109 2016-01-15
-			String[] nameParts = name.split(" ");
-			name = nameParts[nameParts.length-1];
-			// END KGU#109 2015-12-15
+			// START KGU#375 2017-03-30: Enh. #388 - this has all been done already now
+//			// START KGU#109 2015-12-16: Bugfix #61: Several strings suggest type specifiers
+//			// START KGU#109 2016-01-15: Bugfix #61,#107: There might also be a colon...
+//			int colonPos = name.indexOf(":");	// Check Pascal and BASIC style as well
+//			if (colonPos > 0 || (colonPos = name.indexOf(" as ")) > 0)
+//			{
+//				name = name.substring(0, colonPos).trim();
+//			}
+//			// END KGU#109 2016-01-15
+//			String[] nameParts = name.split(" ");
+//			name = nameParts[nameParts.length-1];
+//			// END KGU#109 2015-12-15
+			// END KGU#375 2017-03-30
 			
 			// START KGU#322 2017-01-06: Bugfix #324 - an array assigned on input hindered scalar re-assignment
 			//this.interpreter.set(name, content);
@@ -2368,6 +2507,11 @@ public class Executor implements Runnable
 			}
 			// END KGU#99 2015-12-10
 			this.variables.addIfNew(name);
+			// START KGU#375 2017-03-30: Enh. #388
+			if (isConstant) {
+				this.constants.put(name, interpreter.get(name));
+			}
+			// END KGU#375 2017-03-30
 		}
 		
 		// START KGU#20 2015-10-13: In step mode, variable display should be updated even if delay is set to 0
@@ -2507,6 +2651,13 @@ public class Executor implements Runnable
 		}
 	}
 	// END KGU#68 2015-11-06
+	
+	// START KGU#375 2017-03-30: Auxiliary callback for Control
+	public boolean isConstant(String varName)
+	{
+		return this.constants.containsKey(varName.trim());
+	}
+	// END KGU#375 2017-03-30
 
 	public void start(boolean useSteps)
 	{
@@ -2700,8 +2851,11 @@ public class Executor implements Runnable
 //				}
 				// END KGU#271 2016-10-06
 				
-				// assignment
-				if (cmd.indexOf("<-") >= 0)
+				// assignment?
+				// START KGU#377 2017-03-30: Bugfix
+				//if (cmd.indexOf("<-") >= 0)
+				if (Element.splitLexically(cmd, true).contains("<-"))
+				// END KGU#377 2017-03-30: Bugfix
 				{
 					result = tryAssignment(cmd, element);
 				}
@@ -2825,8 +2979,11 @@ public class Executor implements Runnable
 				}
 				// END KGU 2015-10-12
 
-				// assignment
-				if (cmd.indexOf("<-") >= 0)
+				// assignment?
+				// START KGU#377 2017-03-30: Bugfix
+				//if (cmd.indexOf("<-") >= 0)
+				if (Element.splitLexically(cmd, true).contains("<-"))
+				// END KGU#377 2017-03-30: Bugfix
 				{
 					result = tryAssignment(cmd, element);
 				}
@@ -3028,9 +3185,25 @@ public class Executor implements Runnable
 		// right-hand side. This makes it relatively easy to detect and prepare the very subroutine call,
 		// in contrast to possible occurrences of such foreign function calls at arbitrary expression depths,
 		// combined, nested etc.
-		String varName = cmd.substring(0, cmd.indexOf("<-")).trim();
-		String expression = cmd.substring(
-				cmd.indexOf("<-") + 2, cmd.length()).trim();
+		// START KGU#375 2017-03-30: Enh. #388 - be constant-aware (clone constant arrays in the expression)
+//		String varName = cmd.substring(0, cmd.indexOf("<-")).trim();
+//		String expression = cmd.substring(
+//				cmd.indexOf("<-") + 2, cmd.length()).trim();
+		StringList tokens = Element.splitLexically(cmd, true);
+		int posAsgnOpr = tokens.indexOf("<-");
+		String varName = tokens.subSequence(0, posAsgnOpr).concatenate().trim();
+		tokens.remove(0, posAsgnOpr+1);
+		// Watch out for constant arrays
+		for (int i = 0; i < tokens.count(); i++) {
+			String token = tokens.get(i);
+			if (this.constants.get(token) instanceof Object[]) {
+				// Let a constant array be replaced by its clone, so we avoid structure
+				// sharing, which would break the assurance of constancy.
+				tokens.set(i, "copyArray(" + token + ")");
+			}
+		}
+		String expression = tokens.concatenate().trim();
+		// END KGU#375 2017-03-30
 		// START KGU#2 2015-10-18: cross-NSD subroutine execution?
 		if (instr instanceof Call)
 		{
@@ -3199,6 +3372,11 @@ public class Executor implements Runnable
 				}
 			}
 			// END KGU#33 2014-12-05
+			// START KGU#375 2017-03-30: Enh. #388 - support of constants
+			if (this.isConstant(in)) {
+				result = control.msgConstantRedefinition.getText().replaceAll("%", in);
+			}
+			// END KGU#375 2017-03-30
 			// START KGU#141 2016-01-16: Bugfix #112 - nothing more to do than exiting
 			if (!result.isEmpty())
 			{

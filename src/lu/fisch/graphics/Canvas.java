@@ -161,9 +161,11 @@ public class Canvas  {
 	public void writeOut(int _x, int _y, String _text)
 	{
 		String display = new String(_text);
-		
-		display = BString.replace(display, "<--","<-");
-		display = BString.replace(display, "<-","\u2190");
+
+		// START KGU#377 2017-03-30: Bugfix - already done in better quality
+//		display = BString.replace(display, "<--","<-");
+//		display = BString.replace(display, "<-","\u2190");
+		// END KGU#377 2017-03-30
 		
 		canvas.drawString(display, _x, _y);
 	}

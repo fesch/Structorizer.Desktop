@@ -99,6 +99,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.03.10      KGU#363: Enh. #372 (Simon Sobisch) new attributes author etc.
  *      Kay Gürtzig     2017.03.10/14   KGU#363: Enh. #372 (Simon Sobisch) new license attributes
  *      Kay Gürtzig     2017.03.14/26   Enh. #380: Method outsourceToSubroutine supports automatic derival of subroutines
+ *      Kay Gürtzig     2017.03.30      Enh. #388: const retrieval (method collectParameters() modified)
  *
  ******************************************************************************************************
  *
@@ -268,9 +269,19 @@ public class Root extends Element {
 	}
 	// END KGU#363 2017-03-10
 
-	// variables
+	/**
+	 * Names of variables defined within this diagram
+	 */
 	public StringList variables = new StringList();
+	/**
+	 * Names and cached values of detected constants among the {@link #variables} 
+	 */
+	public HashMap<String, Object> constants = new HashMap<String, Object>();
+	/**
+	 * Vector containing Element-related Analyser complaints
+	 */
 	public Vector<DetectedError> errors = new Vector<DetectedError>();
+	
 	private StringList rootVars = new StringList();
 	// START KGU#261 2017-01-19: Enh. #259 (type map: var name -> type info)
 	private HashMap<String, TypeMapEntry> typeMap = new HashMap<String, TypeMapEntry>();
@@ -3185,7 +3196,7 @@ public class Root extends Element {
         			hasParamList = true;
         		    // END KGU#253 2016-09-22
         		}
-        		// START KGU#222 2016-07-28: If there is no parentheis then we shouldn't add anything...
+        		// START KGU#222 2016-07-28: If there is no parenthesis then we shouldn't add anything...
         		else
         		{
         			rootText = "";
@@ -3217,6 +3228,7 @@ public class Root extends Element {
         				String decl = vars.get(j).trim();
         				if (!decl.isEmpty())
         				{
+            				String prefix = "";	// KGU#375 2017-03-30: New for enh. #388 (constants)
                				// START KGU#109 2016-01-15: Bugfix #61/#107 - we must split every "varName" by ' '.
                 			if (type == null && (posColon = decl.indexOf(" as ")) >= 0)
                 			{
@@ -3231,6 +3243,11 @@ public class Root extends Element {
                 				// END KGU#140 2017-01-31
                 					type = tokens.concatenate(" ", 0, tokens.count() - 1);
                 				}
+                				// START KGU#375 2017-03-30: New for enh. #388 (constants)
+                				else if (tokens.get(0).equals("const")) {
+                					prefix = "const ";
+                				}
+                				// END KGU#375 2017-03-30
                 				decl = tokens.get(tokens.count()-1);
                 				// START KGU#140 2017-01-31: Enh. #113 Cope with C-style array declarations
                 				if (decl.matches(arrayPattern)) {
@@ -3243,7 +3260,10 @@ public class Root extends Element {
                 			}
         					//System.out.println("Adding parameter: " + vars.get(j).trim());
         					if (paramNames != null)	paramNames.add(decl);
-        					if (paramTypes != null)	paramTypes.add(type);
+            				// START KGU#375 2017-03-30: New for enh. #388 (constants)
+        					//if (paramTypes != null)	paramTypes.add(type);
+        					if (paramTypes != null)	paramTypes.add(prefix + type);
+            				// END KGU#375 2017-03-30
         				}
         			}
         		}

@@ -77,6 +77,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.01.27      Enh. #335: "dim" highlighted like "var" and ":" like "as"
  *      Kay Gürtzig     2017.02.01      KGU#335: Method splitLexically now reassembles floating-point literals (without sign)
  *      Kay Gürtzig     2017.02.07      Bugfix #341: Reconstruction of strings with mixed quotes in line fixed
+ *      Kay Gürtzig     2017.03.30      Bugfix #333 (defective operator substitution), enh. #388 (const keyword)
  *
  ******************************************************************************************************
  *
@@ -2181,12 +2182,16 @@ public abstract class Element {
 					// START KGU#332 2017-01-27: Enh. #306 "dim" as declaration keyword
 					specialSigns.add("dim");
 					// END KGU#332 2017-01-27
+					// START KGU#375 2017-03-30: Enh. #388 "const" as declaration keyword
+					specialSigns.add("const");
+					// END KGU#375 2017-03-30
 					specialSigns.add("mod");
 					specialSigns.add("div");
-					specialSigns.add("<=");
-					specialSigns.add(">=");
-					specialSigns.add("<>");
 					// START KGU#331 2017-01-13: Enh. #333
+					//specialSigns.add("<=");
+					//specialSigns.add(">=");
+					//specialSigns.add("<>");
+					//specialSigns.add("!=");
 					specialSigns.add("\u2260");
 					specialSigns.add("\u2264");
 					specialSigns.add("\u2265");
@@ -2196,7 +2201,6 @@ public abstract class Element {
 					specialSigns.add("<");
 					specialSigns.add(">");
 					specialSigns.add("==");
-					specialSigns.add("!=");
 					specialSigns.add("=");
 					specialSigns.add("!");
 					// START KGU#24 2014-10-18
@@ -2237,20 +2241,33 @@ public abstract class Element {
 				jumpSigns.add(CodeParser.getKeywordOrDefault("preReturn", "return").trim());
 				jumpSigns.add(CodeParser.getKeywordOrDefault("preExit", "exit").trim());
 				// END KGU#116 2015-12-23
-				
+
+				// START KGU#377 2017-03-30: Bugfix #333
+				parts.replaceAll("<-","\u2190");
+				if (E_SHOW_UNICODE_OPERATORS) {
+					parts.replaceAll("<>","\u2260");
+					parts.replaceAll("!=","\u2260");
+					parts.replaceAll("<=","\u2264");
+					parts.replaceAll(">=","\u2265");						
+				}
+				// END KGU#377 2017-03-30
+
 				for(int i=0; i < parts.count(); i++)
 				{
 					String display = parts.get(i);
 
-					display = BString.replace(display, "<-","\u2190");
-					// START KGU#331 2017-01-13: Enh. #333
-					if (E_SHOW_UNICODE_OPERATORS) {
-						display = BString.replace(display, "<>","\u2260");
-						display = BString.replace(display, "!=","\u2260");
-						display = BString.replace(display, "<=","\u2264");
-						display = BString.replace(display, ">=","\u2265");						
-					}
+					// START KGU#377 2017-03-30: Bugfix #333
+//					display = BString.replace(display, "<-","\u2190");
+//					// START KGU#331 2017-01-13: Enh. #333
+//					if (E_SHOW_UNICODE_OPERATORS) {
+//						display = BString.replace(display, "<>","\u2260");
+//						display = BString.replace(display, "!=","\u2260");
+//						display = BString.replace(display, "<=","\u2264");
+//						display = BString.replace(display, ">=","\u2265");						
+//					}
 					// END KGU#331 2017-01-13
+					// END KGU#331 2017-01-13
+					// END KGU#377 2017-03-30
 
 					if(!display.equals(""))
 					{

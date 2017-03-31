@@ -55,6 +55,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.12.29      KGU#317 (issues #267, #315) New message for multiple subroutines
  *      Kay Gürtzig     2016.01.09      Issue #81 / bugfix #330: GUI scaling stuff outsourced to GUIScaler
  *      Kay Gürtzig     2017.03.27      Issue #356: Sensible reaction to the close button ('X') implemented
+ *      Kay Gürtzig     2017.03.30      Enh. #388: Support for the display of constants
  *
  ******************************************************************************************************
  *
@@ -66,6 +67,7 @@ package lu.fisch.structorizer.executor;
 
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -81,9 +83,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import javax.swing.JComboBox;
+import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import lu.fisch.structorizer.arranger.Arranger;
@@ -109,6 +113,35 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         this.setDefaultCloseOperation(Control.DO_NOTHING_ON_CLOSE);
     }
 
+    // START KGU#375 2017-03-30: Enh. #388 Distinguished display for constants
+    private class MyCellRenderer extends DefaultTableCellRenderer {
+
+        private final Color backgroundColor = getBackground();
+        private final Color constColor = Color.decode("0xFFD0FF");
+        private final Color constColorSel = Color.decode("0xFF80FF");
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) 
+        {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            DefaultTableModel model = (DefaultTableModel) table.getModel();
+            String varName = model.getValueAt(row, 0).toString();
+            if (Executor.getInstance().isConstant(varName)) {
+            	if (isSelected) {
+            		c.setBackground(constColorSel);
+            	}
+            	else {
+            		c.setBackground(constColor);
+            	}
+            }
+            else if (!isSelected) {
+            	c.setBackground(backgroundColor);
+            }
+            return c;
+        }
+    }
+    // END KGU#375 2017-03-30
+    
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -199,6 +232,9 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         });
 
         tblVar.addPropertyChangeListener(this);
+        // START KGU#375 2017-03-30: Enh. #388 Distinguished display for constants
+        tblVar.setDefaultRenderer(Object.class, new MyCellRenderer());
+        // END KGU#375 2017-03-30
 
         // START KGU#89 2015-11-25
         //lblSpeed.setText(" Delay: 50");
@@ -734,6 +770,12 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public final LangTextHolder msgForLoopManipulation =
     		new LangTextHolder("Illegal attempt to manipulate the FOR loop variable «%»!");
     // END KGU#307 2016-12-12
+    // START KGU#375 2017-03-30: Enh. #388
+    public final LangTextHolder msgConstantRedefinition =
+    		new LangTextHolder("Illegal attempt to redefine constant «%»!");
+    public final LangTextHolder msgConstantArrayElement =
+    		new LangTextHolder("An array element «%» may not be made a constant by assignment!");
+    // END KGU#375 2017-03-30
     // START KGU#311 2016-12-18/24: Enh. #314 Error messages for File API
     public static final LangTextHolder msgInvalidFileNumberRead =
     		new LangTextHolder("Invalid file number or file not open for reading.");
