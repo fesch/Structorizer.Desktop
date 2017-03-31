@@ -1,4 +1,4 @@
-! -----------------------------------------------------------------------
+﻿! -----------------------------------------------------------------------
 ! ANSI C
 !
 ! The C programming language evolved at Bell Labs from a series of 
@@ -258,7 +258,7 @@ Comment Line  = '//'
 
 <ConstType> ::= const <Type>
               | <Type>
-			  
+              
 <Type>     ::= <Base> <Pointers>
 
 <Base>     ::= <Sign> <Scalar>
@@ -269,6 +269,35 @@ Comment Line  = '//'
              | enum Id
              | enum '{' <Enum Def> '}' 
              | void '*'
+             | user_type_001
+             | user_type_002
+             | user_type_003
+             | user_type_004
+             | user_type_005
+             | user_type_006
+             | user_type_007
+             | user_type_009
+             | user_type_010
+             | user_type_011
+             | user_type_012
+             | user_type_013
+             | user_type_014
+             | user_type_015
+             | user_type_016
+             | user_type_017
+             | user_type_018
+             | user_type_019
+             | user_type_020
+             | user_type_021
+             | user_type_022
+             | user_type_023
+             | user_type_024
+             | user_type_025
+             | user_type_026
+             | user_type_027
+             | user_type_028
+             | user_type_029
+             | user_type_030
 
 <Sign>     ::= signed 
              | unsigned
@@ -331,7 +360,7 @@ Comment Line  = '//'
 <Block>     ::= '{' <Decl Stm List> '}' 
  
 <Decl Stm List> ::= <Decl> <Decl Stm List>
-              |	<Stm List>
+              | <Stm List>
 
 <Stm List>  ::=  <Stm> <Stm List> 
               | 

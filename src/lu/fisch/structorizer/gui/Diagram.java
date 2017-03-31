@@ -4383,6 +4383,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						JOptionPane.ERROR_MESSAGE);
 			}
 			finally {
+				doButtons();
 				redraw();
 				analyse();
 			}

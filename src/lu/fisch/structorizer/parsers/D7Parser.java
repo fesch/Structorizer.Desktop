@@ -54,6 +54,7 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.03.08      Modified for GOLDParser 5.0, also required to convert (* *) comments
  *      Kay Gürtzig     2017.03.26      Fix #357: New temp file mechanism for the prepared text file
  *      Kay Gürtzig     2017.03.29      Enh. #368: Evaluation of constant definitions and var declarations enabled
+ *      Kay Gürtzig     2017.03.31      Enh. #388: new constants concept in Structorizer supported
  *
  ******************************************************************************************************
  *
@@ -952,6 +953,9 @@ public class D7Parser extends CodeParser
 					for (int i = 0; i < ids.length; i++) {
 						content += "\n" + ids[i] + value;
 					}
+					if (ruleId == RuleConstants.PROD_CONSTANTDECL_COLON_EQ_SEMI) {
+						content = "const " + content;
+					}
 					asgnmt = new Instruction(translateContent(content));
 					asgnmt.setComment("constant!");
 					asgnmt.setColor(Color.decode("0xFFC0FF"));
@@ -973,7 +977,7 @@ public class D7Parser extends CodeParser
 					}
 					break;
 				case RuleConstants.PROD_CONSTANTDECL_EQ_SEMI:
-					content = getContent_R(_reduction.get(2).asReduction(), idList + " <- ");
+					content = getContent_R(_reduction.get(2).asReduction(), "const " + idList + " <- ");
 					asgnmt = new Instruction(translateContent(content));
 					asgnmt.setComment("constant!");
 					asgnmt.setColor(colorConst);
