@@ -74,6 +74,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.15      Enh. #354: All code import merged to a single menu item
  *      Kay Gürtzig     2017.03.23      Enh. #380: New menu entry to convert a sequence in a subroutine
  *      Kay Gürtzig     2017.03.28      Enh. #387: New menu entry "Save All"
+ *      Kay Gürtzig     2017.04.04      Enh. #388: New Analyser error for constant definitions (no. 22)
  *
  ******************************************************************************************************
  *
@@ -367,7 +368,10 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#253 2016-09-21
 	// START KGU#327 2017-01-07: Enh. #329 - New check for hardly distinguishable variable names.
 	public static final LangTextHolder error21 = new LangTextHolder("Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0.");
-	// END KGU#253 2016-09-21
+	// END KGU#327 2017-01-07
+	// START KGU#375 2017-04-04: Enh. #388 - New check for constants depending on non-constant values.
+	public static final LangTextHolder error22 = new LangTextHolder("Constant «%1» depends on apparently non-constant value(s) %2.");
+	// END KGU#375 2017-04-04
 
 	// START KGU#218 2016-07-28: Issue #206 - enhanced localization
 	// Dialog messages

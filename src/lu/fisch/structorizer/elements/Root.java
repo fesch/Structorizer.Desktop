@@ -100,6 +100,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.03.10/14   KGU#363: Enh. #372 (Simon Sobisch) new license attributes
  *      Kay Gürtzig     2017.03.14/26   Enh. #380: Method outsourceToSubroutine supports automatic derival of subroutines
  *      Kay Gürtzig     2017.03.30      Enh. #388: const retrieval (method collectParameters() modified)
+ *      Kay Gürtzig     2017.04.04      Enh. #388: New Analyser check for constant definitions (no. 22),
+ *                                      method getUsedVarNames decomposed
  *
  ******************************************************************************************************
  *
@@ -274,9 +276,9 @@ public class Root extends Element {
 	 */
 	public StringList variables = new StringList();
 	/**
-	 * Names and cached values of detected constants among the {@link #variables} 
+	 * Names and cached value expressions of detected constants among the {@link #variables} 
 	 */
-	public HashMap<String, Object> constants = new HashMap<String, Object>();
+	public HashMap<String, String> constants = new HashMap<String, String>();
 	/**
 	 * Vector containing Element-related Analyser complaints
 	 */
@@ -298,7 +300,8 @@ public class Root extends Element {
 		false, false, false, false, false,	// 1 .. 5
 		false, false, false, false, false,	// 6 .. 10
 		false, false, false, false, false,	// 11 .. 15
-		false, false, false, false, false	// 16 .. 20
+		false, false, false, false, false,	// 16 .. 20
+		false, false                        // 21 .. 22
 		// Add another element for every new check...
 		// and DON'T FORGET to append its description to
 		// AnalyserPreferences.checkCaptions
@@ -1498,11 +1501,11 @@ public class Root extends Element {
 
     // KGU 2016-03-29: Completely rewritten
     /**
-     * Gathers the names of all variables that are used by Element _ele in expressions:
-     * HYP 1: (?) <- <used>
-     * HYP 2: (?)[<used>] <- <used>
-     * HYP 3: [output] <used>
-     * This works only if _ele is different from this.
+     * Gathers the names of all variables that are used by Element _ele in expressions:<br/>
+     * HYP 1: (?) &lt;- (?) &lt;used&gt; (?)<br/>
+     * HYP 2: (?)'['&lt;used&gt;']' &lt;- (?) &lt;used&gt; (?)<br/>
+     * HYP 3: output (?) &lt;used&gt; (?)<br/>
+     * Note: This works only if _ele is different from this.<br/>
      * @param _ele - the element to be searched
      * @param _includeSelf - whether or not the own text of _ele is to be considered (otherwise only substructure)
      * @param _onlyEle - if true then only the text of _ele itself is searched (no substructure)
@@ -1513,11 +1516,11 @@ public class Root extends Element {
     	//if (_ele instanceof Repeat) System.out.println("getUsedVarNames(" + _ele + ", " + _includeSelf + ", " + _onlyEle + ")");
     	StringList varNames = new StringList();
 
-    	if (_ele!=this)
+    	if (_ele != this)
     	{
     		// get body text
     		StringList lines = new StringList();
-    		if(_onlyEle==true)
+    		if (_onlyEle)
     		{
     			lines.add(_ele.getText());
     			// START KGU#163 2016-03-25: In case of Case the default line must be removed
@@ -1555,177 +1558,342 @@ public class Root extends Element {
     		
     		for(int i=0; i<lines.count(); i++)
     		{
-    			String allText = lines.get(i).trim();
-
-    			Regex r;
-
-    			// modify "inc" and "dec" function (Pascal)
-    			r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); allText=r.replaceAll(allText);
-    			r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); allText=r.replaceAll(allText);
-    			r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); allText=r.replaceAll(allText);
-    			r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); allText=r.replaceAll(allText);
-
-    			StringList tokens = Element.splitLexically(allText, true);
-
-    			Element.unifyOperators(tokens, false);
-
-    			// Replace all split keywords by the respective configured strings
-    			// This replacement will be aware of the case sensitivity preference
-    			for (int kw = 0; kw < keywords.length; kw++)
-    			{    				
-        			if (keywords[kw].trim().length() > 0)
-        			{
-        				StringList keyTokens = this.splitKeywords.elementAt(kw);
-            			int keyLength = keyTokens.count();
-        				int pos = -1;
-        				while ((pos = tokens.indexOf(keyTokens, pos + 1, !CodeParser.ignoreCase)) >= 0)
-        				{
-        					tokens.set(pos, keywords[kw]);
-        					for (int j=1; j < keyLength; j++)
-        					{
-        						tokens.delete(pos+1);
-        					}
-        				}
-        			}
-    			}
-    			
-    			// Unify FOR-IN loops and FOR loops for the purpose of variable analysis
-    			if (!CodeParser.getKeyword("postForIn").trim().isEmpty())
-    			{
-    				tokens.replaceAll(CodeParser.getKeyword("postForIn"), "<-");
-    			}
-    			
-    			// Here all the unification, alignment, reduction is done, now the actual analysis begins
-
-    			int asgnPos = tokens.indexOf("<-");
-    			if (asgnPos >= 0)
-    			{
-    				// Look for indexed variable as assignment target, get the indices in this case
-    				String s = tokens.subSequence(0, asgnPos).concatenate();
-    				if (s.indexOf("[") >= 0)
-    				{
-    					r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-    					s = r.replaceAll(s);
-    				} else { s = ""; }
-
-    				StringList indices = Element.splitLexically(s, true);
-    				indices.add(tokens.subSequence(asgnPos+1, tokens.count()));
-    				tokens = indices;
-    			}
-    			// START KGU#332 2017-01-17: Enh. #335 - ignore the content of uninitialized declarations
-    			else if (tokens.indexOf("var") == 0) {
-    				// START KGU#358 2017-03-06: Issue #368 - declarations are no longer variable usages
-//    				int end = tokens.indexOf(":");
-//    				if (end < 0) {
-//    					end = tokens.count();
+    			// START KGU#375 2017-04-04: Enh. #388 method decomposed
+//    			String allText = lines.get(i).trim();
+//    			Regex r;
+//
+//    			// modify "inc" and "dec" function (Pascal)
+//    			r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); allText=r.replaceAll(allText);
+//    			r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); allText=r.replaceAll(allText);
+//    			r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); allText=r.replaceAll(allText);
+//    			r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); allText=r.replaceAll(allText);
+//
+//    			StringList tokens = Element.splitLexically(allText, true);
+//
+//    			Element.unifyOperators(tokens, false);
+//
+//    			// Replace all split keywords by the respective configured strings
+//    			// This replacement will be aware of the case sensitivity preference
+//    			for (int kw = 0; kw < keywords.length; kw++)
+//    			{    				
+//        			if (keywords[kw].trim().length() > 0)
+//        			{
+//        				StringList keyTokens = this.splitKeywords.elementAt(kw);
+//            			int keyLength = keyTokens.count();
+//        				int pos = -1;
+//        				while ((pos = tokens.indexOf(keyTokens, pos + 1, !CodeParser.ignoreCase)) >= 0)
+//        				{
+//        					tokens.set(pos, keywords[kw]);
+//        					for (int j=1; j < keyLength; j++)
+//        					{
+//        						tokens.delete(pos+1);
+//        					}
+//        				}
+//        			}
+//    			}
+//    			
+//    			// Unify FOR-IN loops and FOR loops for the purpose of variable analysis
+//    			if (!CodeParser.getKeyword("postForIn").trim().isEmpty())
+//    			{
+//    				tokens.replaceAll(CodeParser.getKeyword("postForIn"), "<-");
+//    			}
+//    			
+//    			// Here all the unification, alignment, reduction is done, now the actual analysis begins
+//
+//    			int asgnPos = tokens.indexOf("<-");
+//    			if (asgnPos >= 0)
+//    			{
+//    				// Look for indexed variable as assignment target, get the indices in this case
+//    				String s = tokens.subSequence(0, asgnPos).concatenate();
+//    				if (s.indexOf("[") >= 0)
+//    				{
+//    					r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
+//    					s = r.replaceAll(s);
+//    				} else { s = ""; }
+//
+//    				StringList indices = Element.splitLexically(s, true);
+//    				indices.add(tokens.subSequence(asgnPos+1, tokens.count()));
+//    				tokens = indices;
+//    			}
+//    			// START KGU#332 2017-01-17: Enh. #335 - ignore the content of uninitialized declarations
+//    			else if (tokens.indexOf("var") == 0) {
+//    				// START KGU#358 2017-03-06: Issue #368 - declarations are no longer variable usages
+////    				int end = tokens.indexOf(":");
+////    				if (end < 0) {
+////    					end = tokens.count();
+////    				}
+////    				tokens = tokens.subSequence(1, end);
+//    				tokens.clear();
+//    				// END KGU#358 2017-03-06
+//    			}
+//    			else if (tokens.indexOf("dim") == 0) {
+//    				// START KGU#358 2017-03-06: Issue #368 - declarations are no longer variable usages
+////    				int end = tokens.indexOf("as");
+////    				if (end < 0) {
+////    					end = tokens.count();
+////    				}
+////    				tokens = tokens.subSequence(1, end);
+//    				tokens.clear();
+//    				// END KGU#358 2017-03-06
+//    			}
+//    			// END KGU#332 2017-01-17
+//    			// START KGU#375 2017-03-31: Enh. #388 constant definitions can hardly be variable usages
+//    			// (not at least in the absence of an assignment symbol!)
+//    			else if (tokens.indexOf("const") == 0) {
+//    				tokens.clear();
+//    			}
+//    			// END #375 2017-03-31
+//
+//    			// cutoff output keyword
+//    			if (tokens.get(0).equals(CodeParser.getKeyword("output")))	// Must be at the line's very beginning
+//    			{
+//    				tokens.delete(0);
+//    			}
+//
+//    			// parse out array index
+//    			// FIXME: Optimize this!
+//    			if(tokens.indexOf(CodeParser.getKeyword("input"))>=0)
+//    			{
+//    				String s = tokens.subSequence(tokens.indexOf(CodeParser.getKeyword("input"))+1, tokens.count()).concatenate();
+//    				if (s.indexOf("[") >= 0)
+//    				{
+//    					//System.out.print("Reducing \"" + s);
+//    					r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
+//    					s = r.replaceAll(s);
+//    					//System.out.println("\" to \"" + s + "\"");
 //    				}
-//    				tokens = tokens.subSequence(1, end);
-    				tokens.clear();
-    				// END KGU#358 2017-03-06
-    			}
-    			else if (tokens.indexOf("dim") == 0) {
-    				// START KGU#358 2017-03-06: Issue #368 - declarations are no longer variable usages
-//    				int end = tokens.indexOf("as");
-//    				if (end < 0) {
-//    					end = tokens.count();
+//    				else 
+//    				{
+//    					s = ""; 
 //    				}
-//    				tokens = tokens.subSequence(1, end);
-    				tokens.clear();
-    				// END KGU#358 2017-03-06
-    			}
-    			// END KGU#332 2017-01-17
-
-    			// cutoff output keyword
-    			if (tokens.get(0).equals(CodeParser.getKeyword("output")))	// Must be at the line's very beginning
-    			{
-    				tokens.delete(0);
-    			}
-
-    			// parse out array index
-    			// FIXME: Optimize this!
-    			if(tokens.indexOf(CodeParser.getKeyword("input"))>=0)
-    			{
-    				String s = tokens.subSequence(tokens.indexOf(CodeParser.getKeyword("input"))+1, tokens.count()).concatenate();
-    				if (s.indexOf("[") >= 0)
-    				{
-    					//System.out.print("Reducing \"" + s);
-    					r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
-    					s = r.replaceAll(s);
-    					//System.out.println("\" to \"" + s + "\"");
-    				}
-    				else 
-    				{
-    					s = ""; 
-    				}
-    				// Only the indices are relevant here
-    				tokens = Element.splitLexically(s, true);
-    			}
-
-    			//lines.set(i, allText);
-    			parts.add(tokens);
+//    				// Only the indices are relevant here
+//    				tokens = Element.splitLexically(s, true);
+//    			}
+//
+//    			//lines.set(i, allText);
+//    			parts.add(tokens);
+    			parts.addIfNew(getUsedVarNames(lines.get(i).trim(), keywords));
+    			// END KGU#375 2017-04-04
     		}
     		
+    		// START KGU#375 2017-04-04: Enh. #388 - now already done by getUsedVarName(String, String[])
     		// START KGU 2015-11-29: Get rid of spaces
-    		parts.removeAll(" ");
+    		//parts.removeAll(" ");
     		// END KGU 2015-11-29
-    		
     		// Eliminate all keywords
-    		for (int kw = 0; kw < keywords.length; kw++)
-    		{
-    			parts.removeAll(keywords[kw]);
-    		}
-    		for (int kw = 0; kw < this.operatorsAndLiterals.length; kw++)
-    		{
-    			int pos = -1;
-    			while ((pos = parts.indexOf(operatorsAndLiterals[kw], false)) >= 0)
-    			{
-    				parts.delete(pos);
-    			}
-    		}
-
-    		for(int i=0; i<parts.count(); i++)
-    		{
-    			String display = parts.get(i);
-
-    			//display = BString.replace(display, "<--","<-");	// No longer necessary, operators already unified
-    			//display = BString.replace(display, "<-","\u2190");	// Not needed to identify variables
-
-    			if (!display.equals(""))
-    			{
-    				// START KG#163 2016-03-25: Get a full list of all identifiers
-    				//if(this.variables.contains(display)) && !varNames.contains(display))
-    				if((Function.testIdentifier(display, null)
-    						&& (i == parts.count() - 1 || !parts.get(i+1).equals("("))
-    						|| this.variables.contains(display))
-    						&& !varNames.contains(display))
-    					// END KG#163 2016-03-25
-    				{
-    					//System.out.println("Adding to used var names: " + display);
-    					varNames.add(display);
-    				}
-    			}
-    		}
+    		//for (int kw = 0; kw < keywords.length; kw++)
+    		//{
+    		//	parts.removeAll(keywords[kw]);
+    		//}
+    		//for (int kw = 0; kw < this.operatorsAndLiterals.length; kw++)
+    		//{
+    		//	int pos = -1;
+    		//	while ((pos = parts.indexOf(operatorsAndLiterals[kw], false)) >= 0)
+    		//	{
+    		//		parts.delete(pos);
+    		//	}
+    		//}
+    		//for(int i=0; i<parts.count(); i++)
+    		//{
+    		//	String token = parts.get(i);
+    		//
+    		//	//token = BString.replace(token, "<--","<-");	// No longer necessary, operators already unified
+    		//	//token = BString.replace(token, "<-","\u2190");	// Not needed to identify variables
+    		//
+    		//	if (!token.equals("") && !varNames.contains(token))
+    		//	{
+    		//		// START KG#163 2016-03-25: Get a full list of all identifiers
+    		//		//if(this.variables.contains(token)) && !varNames.contains(token))
+    		//		if((Function.testIdentifier(token, null)
+    		//				&& (i == parts.count() - 1 || !parts.get(i+1).equals("("))
+    		//				|| this.variables.contains(token)))
+    		//			// END KG#163 2016-03-25
+    		//		{
+    		//			//System.out.println("Adding to used var names: " + token);
+    		//			varNames.add(token);
+    		//		}
+    		//	}
+    		//}
+    		varNames.addIfNew(parts);
+    		// END KGU#375 2017-04-04
 
     	}
 
-    	varNames=varNames.reverse();
+    	varNames = varNames.reverse();
     	//varNames.saveToFile("D:\\SW-Produkte\\Structorizer\\tests\\Variables_" + Root.fileCounter++ + ".txt");
     	return varNames;
     }
+    
+    // START KGU#375 2017-04-04: Enh. #388 getUsedVarNames decomposed on occasion of analyse_22
+    /**
+     * Gathers the names of all variables that are used in text line _line in expressions:<br/>
+     * HYP 1: (?) &lt;- (?) &lt;used&gt; (?)<br/>
+     * HYP 2: (?)'['&lt;used&gt;']' &lt;- (?) &lt;used&gt; (?)<br/>
+     * HYP 3: output (?) &lt;used&gt; (?)<br/>
+     * Note: This works only if _ele is different from this.<br/>
+     * @param line - the element text line to be analysed
+     * @param _keywords the set of parser keywords (if available)
+     * @return StringList of used variable names according to the above specification
+     */
+    private StringList getUsedVarNames(String _line, String[] _keywords)
+    {
+    	if (_keywords == null) {
+    		_keywords = CodeParser.getAllProperties();
+    	}
+		Regex r;
+
+		// modify "inc" and "dec" function (Pascal)
+		r = new Regex(BString.breakup("inc")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 + $2"); _line = r.replaceAll(_line);
+		r = new Regex(BString.breakup("inc")+"[(](.*?)[)](.*?)","$1 <- $1 + 1"); _line = r.replaceAll(_line);
+		r = new Regex(BString.breakup("dec")+"[(](.*?)[,](.*?)[)](.*?)","$1 <- $1 - $2"); _line = r.replaceAll(_line);
+		r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); _line = r.replaceAll(_line);
+
+		StringList tokens = Element.splitLexically(_line, true);
+
+		Element.unifyOperators(tokens, false);
+
+		// Replace all split keywords by the respective configured strings
+		// This replacement will be aware of the case sensitivity preference
+		for (int kw = 0; kw < _keywords.length; kw++)
+		{    				
+			if (_keywords[kw].trim().length() > 0)
+			{
+				StringList keyTokens = this.splitKeywords.elementAt(kw);
+    			int keyLength = keyTokens.count();
+				int pos = -1;
+				while ((pos = tokens.indexOf(keyTokens, pos + 1, !CodeParser.ignoreCase)) >= 0)
+				{
+					tokens.set(pos, _keywords[kw]);
+					for (int j=1; j < keyLength; j++)
+					{
+						tokens.delete(pos+1);
+					}
+				}
+			}
+		}
+		
+		// Unify FOR-IN loops and FOR loops for the purpose of variable analysis
+		if (!CodeParser.getKeyword("postForIn").trim().isEmpty())
+		{
+			tokens.replaceAll(CodeParser.getKeyword("postForIn"), "<-");
+		}
+		
+		// Here all the unification, alignment, reduction is done, now the actual analysis begins
+
+		int asgnPos = tokens.indexOf("<-");
+		if (asgnPos >= 0)
+		{
+			// Look for indexed variable as assignment target, get the indices in this case
+			String s = tokens.subSequence(0, asgnPos).concatenate();
+			if (s.indexOf("[") >= 0)
+			{
+				r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
+				s = r.replaceAll(s);
+			} else { s = ""; }
+
+			StringList indices = Element.splitLexically(s, true);
+			indices.add(tokens.subSequence(asgnPos+1, tokens.count()));
+			tokens = indices;
+		}
+		// START KGU#332 2017-01-17: Enh. #335 - ignore the content of uninitialized declarations
+		else if (tokens.indexOf("var") == 0) {
+			// START KGU#358 2017-03-06: Issue #368 - declarations are no longer variable usages
+			tokens.clear();
+			// END KGU#358 2017-03-06
+		}
+		else if (tokens.indexOf("dim") == 0) {
+			// START KGU#358 2017-03-06: Issue #368 - declarations are no longer variable usages
+			tokens.clear();
+			// END KGU#358 2017-03-06
+		}
+		// END KGU#332 2017-01-17
+		// START KGU#375 2017-03-31: Enh. #388 constant definitions can hardly be variable usages
+		// (not at least in the absence of an assignment symbol!)
+		else if (tokens.indexOf("const") == 0) {
+			tokens.clear();
+		}
+		// END #375 2017-03-31
+
+		// cutoff output keyword
+		if (tokens.get(0).equals(CodeParser.getKeyword("output")))	// Must be at the line's very beginning
+		{
+			tokens.delete(0);
+		}
+
+		// parse out array index
+		// FIXME: Optimize this!
+		if(tokens.indexOf(CodeParser.getKeyword("input"))>=0)
+		{
+			String s = tokens.subSequence(tokens.indexOf(CodeParser.getKeyword("input"))+1, tokens.count()).concatenate();
+			if (s.indexOf("[") >= 0)
+			{
+				//System.out.print("Reducing \"" + s);
+				r = new Regex("(.*?)[\\[](.*?)[\\]](.*?)","$2");
+				s = r.replaceAll(s);
+				//System.out.println("\" to \"" + s + "\"");
+			}
+			else 
+			{
+				s = ""; 
+			}
+			// Only the indices are relevant here
+			tokens = Element.splitLexically(s, true);
+		}
+
+		tokens.removeAll(" ");
+		// Eliminate all keywords
+		for (int kw = 0; kw < _keywords.length; kw++)
+		{
+			tokens.removeAll(_keywords[kw]);
+		}
+		for (int kw = 0; kw < this.operatorsAndLiterals.length; kw++)
+		{
+			int pos = -1;
+			while ((pos = tokens.indexOf(operatorsAndLiterals[kw], false)) >= 0)
+			{
+				tokens.delete(pos);
+			}
+		}
+		int i = 0;
+		while(i < tokens.count())
+		{
+			String token = tokens.get(i);
+			if((Function.testIdentifier(token, null)
+					&& (i == tokens.count() - 1 || !tokens.get(i+1).equals("("))
+					|| this.variables.contains(token)))
+				// END KG#163 2016-03-25
+			{
+				// keep the id
+				//System.out.println("Adding to used var names: " + token);
+				i++;
+			}
+			else {
+				// no id or variable name, so drop it
+				tokens.remove(i);
+			}
+		}
+		return tokens;
+    }
+    // END KGU#375 2017-04-04
 
     // KGU 2016-03-29 Rewritten based on tokens
     /**
-     * Get the names of defined variables out of a bunch of textlines.
+     * Get the names of defined variables out of a bunch of text lines.<br/>
      * Note: We DON'T force identifier syntax, the variables found here may contain
-     * language-specific characters etc.
-     * HYP 1: VARNAME <- (?)
-     * HYP 2: [input] VARNAME, VARNAME, VARNAME
-     * HYP 3: for VARNAME <- (?) ...
-     * HYP 4: foreach VARNAME in (?)
-     * @param lines - the textlines extracted from one or more elements 
+     * language-specific characters etc.<br/>
+     * HYP 1: [const] [&lt;type&gt;] VARNAME &lt;- (?)<br/>
+     * HYP 2: [input] VARNAME, VARNAME, VARNAME<br/>
+     * HYP 3: for VARNAME &lt;- (?) ...<br/>
+     * HYP 4: foreach VARNAME in (?)<br/>
+     * In case of HYP 1 also registers the name as constant definition in constantDefs
+     * if the name hadn't been occurred earlier as variable or constant.
+     * 
+     * @param lines - the text lines extracted from one or more elements 
+     * @param constantDefs - a map of constant definitions
      * @return - the StringList of identified variable names
+     * @see #constants
      */
-    public StringList getVarnames(StringList lines)
+    public StringList getVarNames(StringList lines, HashMap<String, String> constantDefs)
     {
     	StringList varNames = new StringList();
 
@@ -1783,12 +1951,18 @@ public class Root extends Element {
     		// Here all the unification, alignment, reduction is done, now the actual analysis begins
 
     		int asgnPos = tokens.indexOf("<-");
-    		if (asgnPos >= 0)
+    		if (asgnPos > 0)
     		{
     			String s = tokens.subSequence(0, asgnPos).concatenate();
     			// (KGU#141 2016-01-16: type elimination moved to cleanup())
     			//System.out.println("Adding to initialised var names: " + cleanup(allText.trim()));
-    			varNames.addOrderedIfNew(cleanup(s.trim()));
+    			String varName = cleanup(s.trim());
+    			boolean wasNew = varNames.addOrderedIfNew(varName);
+    			// START KGU#375 2017-03-31: Enh. #388 collect constant definitions
+    			// Register it as constant if marked as such and not having been declared before
+    			if (tokens.get(0).equals("const") && wasNew && !constantDefs.containsKey(varName)) {
+    				constantDefs.put(varName, tokens.subSequence(asgnPos+1, tokens.count()).concatenate().trim());
+    			}
     		}
 
 
@@ -1860,6 +2034,7 @@ public class Root extends Element {
     {
 
             StringList varNames = new StringList();
+            StringList argTypes = new StringList();
 
             // check root text for variable names
             // !!
@@ -1871,7 +2046,13 @@ public class Root extends Element {
         	// KGU 2015-11-29: Decomposed -> new method collectParameters
             if (this.isProgram==false && _ele==this && !_onlyBody)
             {
-            	collectParameters(varNames, null);
+            	collectParameters(varNames, argTypes);
+            	for (int i = 0; i < varNames.count(); i++) {
+            		String type = argTypes.get(i); 
+            		if (type != null && (type.trim() + " ").startsWith("const")) {
+            			this.constants.put(varNames.get(i), null);
+            		}
+            	}
             }
 
             // get body text
@@ -1897,7 +2078,7 @@ public class Root extends Element {
             
             // FIXME (KGU 2016-01-16): On a merge for 3.22-22, the following change got lost
             // if (!(this instanceof Root))
-            varNames.add(getVarnames(lines));
+            varNames.add(getVarNames(lines, this.constants));
 
             varNames=varNames.reverse();	// FIXME (KGU): What is intended by reversing?
             if (_entireProg) {
@@ -2084,9 +2265,10 @@ public class Root extends Element {
      * @param _errors - the collected errors (may be enhanced by the call)
      * @param _vars - names of variables being set within the subtree
      * @param _uncertainVars - names of variables being set in some branch of the subtree 
+     * @param _constants - constants defined hitherto
      * @param _resultFlags - a boolean array: {usesReturn?, usesResult?, usesProcName?}
      */
-    private void analyse(Subqueue _node, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, boolean[] _resultFlags)
+    private void analyse(Subqueue _node, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, HashMap<String, String> _constants, boolean[] _resultFlags)
     {
     	//this.getVarNames();
     	
@@ -2126,12 +2308,16 @@ public class Root extends Element {
     		if(ele.getClass().getSimpleName().equals("Instruction"))
     		{
     			analyse_10_11(ele, _errors);
+				// START KGU#375 2017-04-04: Enh. #388
+				analyse_22((Instruction)ele, _errors, _vars, _uncertainVars, _constants);
+				// END KGU#375 2017-04-04
     		}
 
     		// CHECK: non-initialised var (except REPEAT)  (#3)
-    		StringList myUsed = getUsedVarNames(_node.getElement(i),true,true);
+    		StringList myUsed = getUsedVarNames(ele, true, true);
     		if (!eleClassName.equals("Repeat"))
     		{
+    			// FIXME: linewise test for Instruction elements needed
     			analyse_3(ele, _errors, _vars, _uncertainVars, myUsed);
     		}
 
@@ -2211,7 +2397,7 @@ public class Root extends Element {
     		// continue analysis for subelements
     		if (ele instanceof ILoop)
     		{
-    			analyse(((ILoop) ele).getBody(), _errors, _vars, _uncertainVars, _resultFlags);
+    			analyse(((ILoop) ele).getBody(), _errors, _vars, _uncertainVars, _constants, _resultFlags);
     		
     			if (ele instanceof Repeat)
     			{
@@ -2226,7 +2412,7 @@ public class Root extends Element {
     			{
     				// For the thread, propagate only variables known before the parallel section
     				StringList threadVars = initialVars.copy();
-    				analyse(iter.next(), _errors, threadVars, _uncertainVars, _resultFlags);
+    				analyse(iter.next(), _errors, threadVars, _uncertainVars, _constants, _resultFlags);
     				// Any variable introduced by one of the threads will be known after all threads have terminated
     				_vars.addIfNew(threadVars);
     			}
@@ -2236,8 +2422,8 @@ public class Root extends Element {
     			StringList tVars = _vars.copy();
     			StringList fVars = _vars.copy();
 
-    			analyse(((Alternative)ele).qTrue, _errors, tVars, _uncertainVars, _resultFlags);
-    			analyse(((Alternative)ele).qFalse, _errors, fVars, _uncertainVars, _resultFlags);
+    			analyse(((Alternative)ele).qTrue, _errors, tVars, _uncertainVars, _constants, _resultFlags);
+    			analyse(((Alternative)ele).qFalse, _errors, fVars, _uncertainVars, _constants, _resultFlags);
 
     			for(int v = 0; v < tVars.count(); v++)
     			{
@@ -2268,7 +2454,7 @@ public class Root extends Element {
     			for (int j=0; j < si; j++)
     			{
     				StringList caseVars = initialVars.copy();
-    				analyse((Subqueue) caseEle.qs.get(j),_errors,caseVars,_uncertainVars,_resultFlags);
+    				analyse((Subqueue) caseEle.qs.get(j),_errors,caseVars,_uncertainVars,_constants, _resultFlags);
     				for(int v = 0; v<caseVars.count(); v++)
     				{
     					String varName = caseVars.get(v);
@@ -3039,6 +3225,44 @@ public class Root extends Element {
 	}
 	// END KGU#253 2016-09-22
     
+	/**
+	 * CHECK #22: constants dpending on non-constants
+	 * @param _instr - Instruction element to be analysed
+	 * @param _errors - global error list
+	 * @param _vars - variables with certain initialisation
+	 * @param _uncertainVars - variables with uncertain initialisation (e.g. in a branch)
+	 */
+	private void analyse_22(Instruction _instr, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, HashMap<String, String> _definedConsts)
+	{
+		StringList knownVars = _vars.copy();
+		String[] keywords = CodeParser.getAllProperties();
+		for (int i = 0; i < _instr.getText().count(); i++) {
+			String line = _instr.getText().get(i);
+			if (line.startsWith("const ")) {
+				StringList myUsedVars = getUsedVarNames(line.substring("const ".length()), keywords);
+				StringList nonConst = new StringList();
+				for (int j = 0; j < myUsedVars.count(); j++)
+				{
+					String myUsed = myUsedVars.get(j);
+					if (!knownVars.contains(myUsed) && !_uncertainVars.contains(myUsed) || !_definedConsts.containsKey(myUsed)) {
+						nonConst.add(myUsed);
+					}
+				}
+				StringList myDefs = getVarNames(StringList.getNew(line), _definedConsts);
+				if (myDefs.count() > 0 && nonConst.count() > 0) {
+					//error  = new DetectedError("The constant «"+myDefs.get(0)+"» depends on non-constant values: "+"!",(Element) _node.getElement(i));
+					addError(_errors, new DetectedError(errorMsg(Menu.error22, new String[]{myDefs.get(0), "«" + nonConst.concatenate("», «") + "»"}), _instr), 22);
+					// It's an insecure constant, so drop it from the analysis map
+					_definedConsts.remove(myDefs.get(0));
+				}
+				knownVars.add(myDefs);
+			}
+			else {
+				knownVars.add(getVarNames(StringList.getNew(line), _definedConsts));
+			}
+		}
+	}
+
     private void addError(Vector<DetectedError> errors, DetectedError error, int errorNo)
     {
     	// START KGU#239 2016-08-12: Enh. #231 + Code revision
@@ -3331,9 +3555,17 @@ public class Root extends Element {
         //System.out.println(this.variables);
 
         Vector<DetectedError> errors = new Vector<DetectedError>();
+        // Retrieve the parameter names in the effect
         StringList vars = getVarNames(this,true,false);
         rootVars = vars.copy();
         StringList uncertainVars = new StringList();
+        HashMap<String, String> definedConsts = new HashMap<String, String>();
+        for (int v = 0; v < vars.count(); v++) {
+        	String para = vars.get(v);
+        	if (this.constants.containsKey(para)) {
+        		definedConsts.put(para, this.constants.get(para));
+        	}
+        }
 
         String programName = getMethodName();
 
@@ -3413,7 +3645,7 @@ public class Root extends Element {
 
         // CHECK: the content of the diagram
         boolean[] resultFlags = {false, false, false};
-        analyse(this.children,errors,vars,uncertainVars, resultFlags);
+        analyse(this.children, errors, vars, uncertainVars, definedConsts, resultFlags);
 
         // Test if we have a function (return value) or not
         // START KGU#78 2015-11-25: Delegated to a more general function

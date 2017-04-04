@@ -369,6 +369,7 @@ Menu.error18.text=Variable «%1» may be confused with variable(s) «%2» in cas
 Menu.error19.text=Variable name «%1» may collide with reserved names in languages like %2!
 Menu.error20.text=A subroutine header must have a (possibly empty) parameter list within parentheses.
 Menu.error21.text=Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0.
+Menu.error22.text=Constant «%1» depends on apparently non-constant value(s) %2.
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Analyser preferences
@@ -395,6 +396,7 @@ AnalyserPreferences.checkboxes.18.text=Check that identifiers don't differ only 
 AnalyserPreferences.checkboxes.19.text=Check if an identifier might collide with reserved words.
 AnalyserPreferences.checkboxes.20.text=Check that a subroutine header has a parameter list.
 AnalyserPreferences.checkboxes.21.text=Discourage use of mistakable variable names «I», «l», and «O».
+AnalyserPreferences.checkboxes.22.text=Check that constants depend on constant values only.
 AnalyserPreferences.okButton.text=OK
 
 

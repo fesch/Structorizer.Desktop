@@ -43,6 +43,7 @@ package lu.fisch.utils;
  *      Kay Gürtzig     2016.04.03      Method int removeAll(StringList, int, boolean) added
  *      Bob Fisch       2016.08.01      added method "toArray()" and "remove(int)" (which is a synonym to delete(int))
  *      Kay Gürtzig     2017.01.31      Method remove(int,int) added. 
+ *      Kay Gürtzig     2017.03.31      Methods addOrderedIfNew and addByLengthIfNew revised (now with return value)
  *
  ******************************************************************************************************
  *
@@ -198,28 +199,25 @@ public class StringList {
 
 	public void addOrdered(String _string)
 	{
-		if (count()==0)
+		addOrdered(_string, false);
+	}
+	
+	private boolean addOrdered(String _string, boolean _onlyIfNew)
+	{
+		for (int i=0; i < strings.size(); i++)
 		{
-			add(_string);
-		}
-		else
-		{
-			boolean inserted = false;
-			for (int i=0; i<strings.size(); i++)
-			{
-				if ((strings.get(i)).compareTo(_string)>0)
-				{
-					strings.insertElementAt(_string,i);
-					inserted = true;
-					break;
-				}
+			int comp = (strings.get(i)).compareTo(_string);
+			if (comp == 0 && _onlyIfNew) {
+				return false;
 			}
+			else if (comp >= 0) {
+				strings.insertElementAt(_string, i);
+				return true;
+			}
+		}
 
-			if(inserted==false)
-			{
-				add(_string);
-			}
-		}
+		add(_string);
+		return true;
 	}
 
 	/**
@@ -232,85 +230,62 @@ public class StringList {
 	 */
 	public void addByLength(String _string)
 	{
+		boolean inserted = false;
 		if (!_string.equals(""))
 		{
-			if(count()==0)
+			for(int i=0;i<strings.size();i++)
+			{
+				// FIXME: Shouldn't strings of the same length be ordered lexicographically?
+				if ((strings.get(i)).length()<_string.length())
+				{
+					strings.insertElementAt(_string,i);
+					inserted = true;
+					break;
+				}
+			}
+
+			if (inserted==false)
 			{
 				add(_string);
 			}
-			else
-			{
-				boolean inserted = false;
-				for(int i=0;i<strings.size();i++)
-				{
-					if ((strings.get(i)).length()<_string.length())
-					{
-						strings.insertElementAt(_string,i);
-						inserted = true;
-						break;
-					}
-				}
-
-				if(inserted==false)
-				{
-					add(_string);
-				}
-			}
 		}
 	}
 
-	public void addIfNew(String _string)
+	/**
+	 * Inserts the string _string if it had not been
+	 * contained in this StringList. 
+	 * @param _string - The string to be added
+	 * @return true if the string was new
+	 */
+	public boolean addIfNew(String _string)
 	{
-		if(!strings.contains(_string))
+		if (!strings.contains(_string))
 		{
 			add(_string);
+			return true;
 		}
-		/*
-		boolean found = false;
-		for(int i=0;i<strings.size();i++)
-		{
-			if(((String) strings.get(i)).equals(_string))
-			{
-				found=true;
-			}
-		}
-		if(found==false)
-		{
-			add(_string);
-		}
-		*/
+		return false;
 	}
 
-	public void addOrderedIfNew(String _string)
+	/**
+	 * Inserts the string _string (in lexicographic order) if it had not been
+	 * contained in this StringList. 
+	 * @param _string - The string to be added
+	 * @return true if the string was new
+	 */
+	public boolean addOrderedIfNew(String _string)
 	{
-		boolean found = false;
-		for(int i=0; i<strings.size(); i++)
-		{
-			if((strings.get(i)).equals(_string))
-			{
-				found=true;
-			}
-		}
-		if(found==false)
-		{
-			addOrdered(_string);
-		}
+		return addOrdered(_string, true);
 	}
 
-	public void addByLengthIfNew(String _string)
+	public boolean addByLengthIfNew(String _string)
 	{
-		boolean found = false;
-		for(int i=0;i<strings.size();i++)
-		{
-			if((strings.get(i)).equals(_string))
-			{
-				found=true;
-			}
-		}
-		if(found==false)
+		boolean found = strings.contains(_string);
+		if (!found)
 		{
 			addByLength(_string);
 		}
+		return !found;
 	}
 
 	public void add(StringList _stringList)
@@ -321,15 +296,24 @@ public class StringList {
 		}
 	}
 
-	public void addIfNew(StringList _stringList)
+	/**
+	 * Adds each elements of _stringList that had not been
+	 * contained in this StringList.
+	 * @param _string - The string to be added
+	 * @return true if some of the strings of _stringList was added
+	 */
+	public boolean addIfNew(StringList _stringList)
 	{
+		boolean someInserted = false;
 		for(int i=0;i<_stringList.count();i++)
 		{
 			if(!strings.contains(_stringList.get(i)))
 			{
 			   strings.add(_stringList.get(i));
+			   someInserted = true;
 			}
 		}
+		return someInserted;
 	}
 
 	// START KGU 2015-11-04: New, more performant and informative searchers 
@@ -819,12 +803,41 @@ public class StringList {
      * @return number of deletions
      */
     public int removeAll(String _string)
+    // START KGU#375 2017-04-04: For regularity, new method to remove case-independently
+//    {
+//    	int nRemoved = 0;
+//    	int i = 0;
+//    	while (i < count())
+//    	{
+//    		if (strings.get(i).equals(_string))
+//    		{
+//    			strings.removeElementAt(i);
+//    			nRemoved++;
+//    		}
+//    		else
+//    		{
+//        		i++;    			
+//    		}
+//    	}
+//    	return nRemoved;
+//    }
+    {
+    	return removeAll(_string, true);
+    }
+    
+    /**
+     * Removes all elements being exactly or case-insensitively equal to the given string _string
+     * @param _string - the searched string
+     * @param _matchCase - if the string is be compared exactly (or case-ignoringly)
+     * @return number of deletions
+     */
+    public int removeAll(String _string, boolean _matchCase)
     {
     	int nRemoved = 0;
     	int i = 0;
     	while (i < count())
     	{
-    		if (strings.get(i).equals(_string))
+    		if (_matchCase && strings.get(i).equals(_string) || strings.get(i).equalsIgnoreCase(_string))
     		{
     			strings.removeElementAt(i);
     			nRemoved++;
@@ -836,9 +849,10 @@ public class StringList {
     	}
     	return nRemoved;
     }
+    // END KGU#375 2017-04-04
     // END KGU 2015-11-25
     
-    // START KGU 2018-04-03: New methods to ease case-independent manipulations
+    // START KGU 2016-04-03: New methods to ease case-independent manipulations
     /**
      * Removes all subsequences being equal to _subList, either case-independently
      * or not, according to the _matchCase argument

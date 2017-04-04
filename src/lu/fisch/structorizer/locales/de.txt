@@ -366,6 +366,7 @@ Menu.error18.text=Variable «%1» könnte in manchen Sprachen mit Variable(n) «
 Menu.error19.text=Der Variablenname «%1» kann in Sprachen wie %2 mit reservierten Wörtern kollidieren!
 Menu.error20.text=Ein Unterprogrammkopf muss mindestens die Klammern einer (evtl. leeren) Parameterliste haben.
 Menu.error21.text=Variablennamen I (großes i), l (kleines L), and O (großes o) sind voneinander bzw. von 1 oder 0 kaum unterscheidbar.
+Menu.error22.text=Konstante «%1» hängt von offenbar nichtkonstanten Werten %2 ab.
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Überprüfungs-Einstellungen
@@ -392,6 +393,7 @@ AnalyserPreferences.checkboxes.18.text=Prüfen, ob Variablen sich nur durch Gro�
 AnalyserPreferences.checkboxes.19.text=Prüfen, ob Variablennamen mit reservierten Wörtern kollidieren könnten.
 AnalyserPreferences.checkboxes.20.text=Prüfen, dass ein Unterprogramm (Kopfzeile) eine Parameterliste besitzt.
 AnalyserPreferences.checkboxes.21.text=Bei Verwendung der verwechselbaren Variablennamen «I», «l» und «O» warnen.
+AnalyserPreferences.checkboxes.22.text=Prüfen, dass Konstanten nur von konstanten Werten abhängen.
 AnalyserPreferences.okButton.text=OK
 
 

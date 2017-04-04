@@ -47,6 +47,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.01.07      Enh. #329: New Analyser error21 (variable names I, l, O)
  *                                      bugfix #330: Checkbox status visibility in "Nimbus" look & feel
  *      Kay Gürtzig     2017.01.09      Bugfix #330: Scaling stuff outsourced to GUIScaler
+ *      Kay Gürtzig     2017.04.04      Enh. #388: New check for constant definitions (no. 22)
  *
  ******************************************************************************************************
  *
@@ -92,7 +93,8 @@ public class AnalyserPreferences extends LangDialog {
 		/*18*/"Check that identifiers don't differ only by upper/lower case.",
 		/*19*/"Check if an identifier might collide with reserved words.",
 		/*20*/"Check that a subroutine header has a parameter list.",
-		/*21*/"Discourage use of mistakable variable names «I», «l», and «O»."
+		/*21*/"Discourage use of mistakable variable names «I», «l», and «O».",
+		/*22*/"Check that constants depend on constant values only."
 		// Just append the descriptions for new check types here and insert their
 		// numbers at the appropriate place in array checkboxOrder below.
 		// DON'T FORGET to add a new entry to Root.analyserChecks for every
@@ -105,7 +107,7 @@ public class AnalyserPreferences extends LangDialog {
 	static {
 		checkboxTabs.put("Algorithmic", new int[]{
 				// instructions
-				3, 11,
+				3, 11, 22,
 				0,// alternatives
 				8, 4,
 				0,// loops

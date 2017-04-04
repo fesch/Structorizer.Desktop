@@ -368,6 +368,7 @@ Menu.error18.text=¡Variable «%1» podría coincidir con variable(s) «%2» en 
 Menu.error19.text=¡Variable «%1» puede collidir con palabras claves en lenguages como %2!
 Menu.error20.text=El encabezamiento de un subprograma debe tener un paréntesis para parámetros.
 Menu.error21.text=Los nombres I (i mayúscula), l (L minúscula) y O (o mayúscula) son equivocables entre si o con 1 u 0.
+Menu.error22.text=Constante «%1» depende de valor(es) %2 que no aparece(n) constante(s).
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferencias del Comprobador
@@ -394,6 +395,7 @@ AnalyserPreferences.checkboxes.18.text=Comprobar si variables difieren no solo p
 AnalyserPreferences.checkboxes.19.text=Comprobar que no habrá colisiones de nombre entre variables y palabras claves.
 AnalyserPreferences.checkboxes.20.text=Comprobar que un subprograma tiene un paréntesis para parámetros.
 AnalyserPreferences.checkboxes.21.text=Desaconsejar el uso de los ecivocables identificadores «I», «l» und «O».
+AnalyserPreferences.checkboxes.22.text=Comprobar que constantes solo dependen de valores constantes.
 AnalyserPreferences.okButton.text=Aceptar
 
 

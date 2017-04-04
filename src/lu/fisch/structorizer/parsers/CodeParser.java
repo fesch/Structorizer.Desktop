@@ -127,28 +127,28 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * @see #colorGlobal
 	 * @see #colorMisc
 	 */
-	protected static final Color colorConst = Color.decode("0xFFC0FF");
+	protected static final Color colorConst = Color.decode("0xFFE0FF");
 	/**
 	 * Standard element colour for imported variable declarations (without initialization)
 	 * @see #colorConst
 	 * @see #colorGlobal
 	 * @see #colorMisc
 	 */
-	protected static final Color colorDecl = Color.decode("0xC0FFC0");
+	protected static final Color colorDecl = Color.decode("0xE0FFE0");
 	/**
 	 * Standard element colour for imported global declarations or definitions
 	 * @see #colorConst
 	 * @see #colorDecl
 	 * @see #colorMisc
 	 */
-	protected static final Color colorGlobal = Color.decode("0xC0FFFF");
+	protected static final Color colorGlobal = Color.decode("0xE0FFFF");
 	/**
 	 * Standard element colour for miscellaneous mark-ups
 	 * @see #colorConst
 	 * @see #colorDecl
 	 * @see #colorGlobal
 	 */
-	protected static final Color colorMisc = Color.decode("0xFFFFC0");
+	protected static final Color colorMisc = Color.decode("0xFFFFE0");
 
 	/************ Abstract Methods *************/
 	
