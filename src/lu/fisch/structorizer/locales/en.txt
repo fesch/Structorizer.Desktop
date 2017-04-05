@@ -98,6 +98,7 @@
  *      Kay Gürtzig     2017.03.27      Enh. #380: Messages for outsourcing of element sequences
  *      Kay Gürtzig     2017.03.28      Issue #370: New Menu messages for enhanced refactoring options
  *      Kay Gürtzig     2017.03.30      Enh. #388: Constancy violation messages for Control added
+ *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *
  ******************************************************************************************************
  *
@@ -332,20 +333,21 @@ Menu.error01_1.text=WARNING: No loop variable detected ...
 Menu.error01_2.text=WARNING: More than one loop variable detected: «%»
 Menu.error01_3.text=You are not allowed to modify the loop variable «%» inside the loop!
 Menu.error02.text=No change of the variables in the condition detected. Possible endless loop ...
-Menu.error03_1.text=The variable «%» has not yet been initialized!
-Menu.error03_2.text=The variable «%» may not have been initialized!
+Menu.error03_1.text=The variable «%1» has not yet been initialized%2!
+Menu.error03_2.text=The variable «%1» may not have been initialized%2!
 Menu.error04.text=You are not allowed to use an IF-statement with an empty TRUE-block!
 Menu.error05.text=The variable «%» must be written in uppercase!
 Menu.error06.text=The program name «%» must be written in uppercase!
 Menu.error07_1.text=«%» is not a valid name for a program or method!
 Menu.error07_2.text=«%» is not a valid name for a parameter!
-Menu.error07_3.text=«%» is not a valid name for a variable!
+Menu.error07_3.text=«%» is not a valid name for a variable or constant!
 Menu.error08.text=It is not allowed to make an assignment inside a condition.
 Menu.error09.text=Your program («%») may not share its name with a variable or parameter!
 Menu.error10_1.text=A single instruction element should not contain input/output instructions and assignments!
 Menu.error10_2.text=A single instruction element should not contain input and output instructions!
 Menu.error10_3.text=A single instruction element should not contain input instructions and assignments!
 Menu.error10_4.text=A single instruction element should not contain output instructions and assignments!
+Menu.error10_5.text=A single instruction element should not mix constant definitions with other instructions!
 Menu.error11.text=You probably made an assignment error. Please check this instruction!
 Menu.error12.text=The parameter «%» must start with the letter "p" followed by only uppercase letters!
 Menu.error13_1.text=Your function does not return any result!
@@ -369,7 +371,8 @@ Menu.error18.text=Variable «%1» may be confused with variable(s) «%2» in cas
 Menu.error19.text=Variable name «%1» may collide with reserved names in languages like %2!
 Menu.error20.text=A subroutine header must have a (possibly empty) parameter list within parentheses.
 Menu.error21.text=Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0.
-Menu.error22.text=Constant «%1» depends on apparently non-constant value(s) %2.
+Menu.error22.text=Constant «%1» depends on apparently non-constant value(s): «%2».
+Menu.errorLineReference.text= (line %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Analyser preferences

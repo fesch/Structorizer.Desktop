@@ -65,6 +65,7 @@
  *      Kay Gürtzig     2016.11.08      Enh. #270: Menu.menuDiagramDisable, Editor.btnDisable.tooltip etc. added
  *      Kay Gürtzig     2016.11.10      Enh. #286: AnalyserPreferences tabs; About tab translations modified
  *      Kay Gürtzig     2016.12.14      Enh. #311: New menu "Debug"
+ *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *
  ******************************************************************************************************
  *
@@ -256,20 +257,21 @@ Menu.error01_1.text=Attenzione: Variabile di ciclo non trovate ...
 Menu.error01_2.text=Attenzione: Trovate più di una variabile di ciclo: «%»
 Menu.error01_3.text=Non ti è permesso modificare la variabile del cilco «%» all'interno di esso!
 Menu.error02.text=Cambio del valore di verità della condizione non trovato. Possibile ciclo infinito ...
-Menu.error03_1.text=La variabile «%» non è ancora stata inizializzata!
-Menu.error03_2.text=La variabile «%» può non essere stata ancora inizializzata!
+Menu.error03_1.text=La variabile «%1» non è ancora stata inizializzata%2!
+Menu.error03_2.text=La variabile «%1» può non essere stata ancora inizializzata%2!
 Menu.error04.text=Non ti è permesso usare una Selezione con un blocco di istruzioni V vuoto!
 Menu.error05.text=La variabile «%» deve essere scritta in maiuscolo!
 Menu.error06.text=Il nome del programma «%» deve essere scritta in maiuscolo!
 Menu.error07_1.text=«%» non è un nome valido per un programma o un metodo!
 Menu.error07_2.text=«%» non è un nome valido per un parametero!
-Menu.error07_3.text=«%» non è un nome valido per una variabile!
+Menu.error07_3.text=«%» non è un nome valido per una variabile o una constante!
 Menu.error08.text=Non ti è permesso fare un assegnamento dentro una condizione!
 Menu.error09.text=Il tuo programma («%») non può avere lo stesso nome di una variabile o di un parametero!
 Menu.error10_1.text=Una singola istruzione non potrebbe contenere istruzioni di input/output e assegnamenti!
 Menu.error10_2.text=Una singola istruzione non potrebbe contenere più istruzioni di input e output!
-Menu.error10_3.text=Una singola istruzione non potrebbe contenere istruzioni di input ed assegnamenti!
+Menu.error10_3.text=Una singola istruzione non potrebbe contenere istruzioni di input e assegnamenti!
 Menu.error10_4.text=Una singola istruzione non potrebbe contenere istruzioni di output e assegnamenti!
+Menu.error10_5.text=Una singola istruzione non potrebbe contenere definizioni di constanti e altri istruzioni!
 Menu.error11.text=Hai probabilmente commesso un errore di assegnamento. Leggi questa istruzione!
 Menu.error12.text=Il parametro «%» deve iniziare con la lettera "p" seguita da sole lettere maiuscole!
 Menu.error13_1.text=La tua funzione non ritorna alcun valore!
@@ -292,6 +294,9 @@ Menu.error17.text=Rischio consistente dovuto all'accesso simultaneo della variab
 Menu.error18.text=
 Menu.error19.text=
 Menu.error20.text=
+Menu.error21.text=
+Menu.error22.text=
+Menu.errorLineReference.text= (riga %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Preferenze dell'analizzatore

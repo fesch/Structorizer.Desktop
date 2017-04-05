@@ -101,6 +101,7 @@
  *      Kay Gürtzig         2017.03.27  Enh. #380: Messages for outsourcing of element sequences
  *      Kay Gürtzig         2017.03.28  Issue #370: New Menu messages for enhanced refactoring options
  *      Kay Gürtzig         2017.03.30  Enh. #388: Constancy violation messages for Control added
+ *      Kay Gürtzig         2017.04.05  Additions for enh. #388 and #390 (constant definition checks)
  *
  ******************************************************************************************************
  *
@@ -329,20 +330,21 @@ Menu.error01_1.text=ACHTUNG: Keine Kontrollvariable gefunden ...
 Menu.error01_2.text=ACHTUNG: Mehrere Kontrollvariablen gefunden: «%»
 Menu.error01_3.text=Es ist nicht zulässig, die Kontrollvariable «%» im Körper der Schleife zu verändern!
 Menu.error02.text=Es wurde keine Veränderung der Kontrollvariablen festgestellt. Wahrscheinlich handelt es sich um eine Endlosschleife ...
-Menu.error03_1.text=Die Variable «%» wurde nicht initialisiert!
-Menu.error03_2.text=Die Variable «%» wurde nicht in jedem Fall initialisiert!
+Menu.error03_1.text=Die Variable «%1»%2 wurde nicht initialisiert!
+Menu.error03_2.text=Die Variable «%1»%2 wurde nicht in jedem Fall initialisiert!
 Menu.error04.text=Der linke Zweig einer Alternativenstruktur darf nicht leer sein!
-Menu.error05.text=Die Variable «%» muss großgeschrieben werden!
-Menu.error06.text=Der Programmname «%» muss großgeschrieben werden!
+Menu.error05.text=Die Variable «%» soll großgeschrieben werden!
+Menu.error06.text=Der Programmname «%» soll großgeschrieben werden!
 Menu.error07_1.text=«%» ist kein korrekter Name für ein Programm oder eine Funktion/Methode!
 Menu.error07_2.text=«%» ist kein korrekter Name für einen Parameter!
-Menu.error07_3.text=«%» ist kein korrekter Name für eine Variable!
+Menu.error07_3.text=«%» ist kein korrekter Name für eine Variable oder Konstante!
 Menu.error08.text=In einer Bedingung darf keine Wertzuweisung erfolgen!
 Menu.error09.text=Der Programmname («%») darf nicht identisch mit dem Namen einer Variablen oder eines Parameters sein!
 Menu.error10_1.text=Eine Anweisung soll nicht zugleich Eingaben, Ausgaben und Wertzuweisungen beinhalten!
 Menu.error10_2.text=Eine Anweisung soll nicht zugleich Eingaben und Ausgaben beinhalten!
 Menu.error10_3.text=Eine Anweisung soll nicht zugleich Eingaben und Wertzuweisungen beinhalten!
 Menu.error10_4.text=Eine Anweisung soll nicht zugleich Ausgaben und Wertzuweisungen beinhalten!
+Menu.error10_5.text=Ein Anweisungselement sollte Konstantendefinitonen nicht mit anderen Anweisungen mischen!
 Menu.error11.text=Wertzuweisung scheint fehlerhaft. Anweisung überprüfen ...
 Menu.error12.text=Der Parameter «%» muss mit dem Buchstaben "p" anfangen, gefolgt nur von Großbuchstaben!
 Menu.error13_1.text=Die Funktion hat keinen Rückgabewert!
@@ -366,7 +368,8 @@ Menu.error18.text=Variable «%1» könnte in manchen Sprachen mit Variable(n) «
 Menu.error19.text=Der Variablenname «%1» kann in Sprachen wie %2 mit reservierten Wörtern kollidieren!
 Menu.error20.text=Ein Unterprogrammkopf muss mindestens die Klammern einer (evtl. leeren) Parameterliste haben.
 Menu.error21.text=Variablennamen I (großes i), l (kleines L), and O (großes o) sind voneinander bzw. von 1 oder 0 kaum unterscheidbar.
-Menu.error22.text=Konstante «%1» hängt von offenbar nichtkonstanten Werten %2 ab.
+Menu.error22.text=Konstante «%1» hängt von offenbar nichtkonstanten Werten ab: «%2».
+Menu.errorLineReference.text= (Zeile %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Überprüfungs-Einstellungen

@@ -53,6 +53,7 @@
  *      Kay Gürtzig     2016.09.04      Menu.menuPreferencesLanguage... key structure modified
  *      Kay Gürtzig     2016.09.22      AnalyserPreferences numbering modified
  *      Kay Gürtzig     2016.12.14      Enh. #311: New menu Debug, duplicate mnemonics (p) modified
+ *      Kay Gürtzig     2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *
  ******************************************************************************************************
  *
@@ -184,24 +185,26 @@ Menu.error01_1.text=OSTRZEŻENIE: Brak zmiennej licznikowej ...
 Menu.error01_2.text=OSTRZEŻENIE: Więcej niż jedna zmienna licznikowa: «%»
 Menu.error01_3.text=Nie wolno zmieniać zmiennej licznikowej «%» wewnątz pętli!
 Menu.error02.text=Brak zmian wyrażenia warukowego. Możliwa nieskończona pętla ...
-Menu.error03_1.text=Zmienna «%» nie ma wartości!
-Menu.error03_2.text=Zmienna «%» może nie mieć wartości!
+Menu.error03_1.text=Zmienna «%1» nie ma wartości%2!
+Menu.error03_2.text=Zmienna «%1» może nie mieć wartości%2!
 Menu.error04.text=Nie wolno używać polecenia IF bez wyrażenia warunkowego!
 Menu.error05.text=Nazwa zmiennej «%» musi być napisana dużymi literami!
 Menu.error06.text=Nazwa programu «%» musi być napisana dużymi literami!
 Menu.error07_1.text=«%» to niewłaściwa nazwa programu lub podprogramu!
 Menu.error07_2.text=«%» to niewłaściwa nazwa argumentu!
-Menu.error07_3.text=«%» to niewłaściwa nazwa zmiennej!
+Menu.error07_3.text=«%» to niewłaściwa nazwa zmiennej o stałi!
 Menu.error08.text=Proszę nie umieszczać instrukcji przypisania w wyrażeniu warunkowym.
 Menu.error09.text=Twój program («%») nie może mieć takiej samej nazwy jak zmienna lub argument!
 Menu.error10_1.text=Pojedynczy blok nie może zawierać jednocześnie instrukcji wejścia/wyjścia i przypisania!
 Menu.error10_2.text=Pojedynczy blok nie może zawierać jednocześnie instrukcji wejścia i wyjścia!
 Menu.error10_3.text=Pojedynczy blok nie może zawierać jednocześnie instrukcji wejścia i przypisania!
 Menu.error10_4.text=Pojedynczy blok nie może zawierać jednocześnie instrukcji wyjścia i przypisania!
+Menu.error10_5.text=Pojedynczy blok nie może zawierać jednocześnie definicji stał i inni instrukcji!
 Menu.error11.text=Prawdopodobny błąd przypisania. Proszę sprawdzić tę instrukcję!
 Menu.error12.text=Argument «%» musi zaczynać się od litery "p" a następne litery powinny być duże!
 Menu.error13_1.text=Twoja funkcja nie ma nadanej wartości!
 Menu.error13_2.text=Twoja funcja nie może zwracać wartości!
+Menu.errorLineReference.text= (wiersz %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.checkboxes.1.text=Szukanie zmian zmiennej licznikowej.

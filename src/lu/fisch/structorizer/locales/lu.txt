@@ -54,6 +54,7 @@
  *      Kay Gürtzig         2016.09.22      AnalyserPreferences numbering modified
  *      Kay Gürtzig         2016.10.11      Enh. 267: Menu.error15 renamed into Menu.error15_1
  *      Kay Gürtzig         2016.12.14      Enh. #311: New menu "Debug"
+ *      Kay Gürtzig         2017.04.05      Additions for enh. #388 and #390 (constant definition checks)
  *
  ******************************************************************************************************
  *
@@ -190,20 +191,21 @@ Menu.error01_1.text=WARNUNG: Keng Schläifvariabel fonnt
 Menu.error01_2.text=WARNUNG: Méi wei eng Schläifvariabel fonnt: «%»
 Menu.error01_3.text=D'Schläifvariabel «%» dierf net geännert ginn!
 Menu.error02.text=Keng Variabelännerung an der Konditioun fonnt. Méiglech endlos Schläif ...
-Menu.error03_1.text=D'Variabel «%» ass nach net initialiséiert ginn!
-Menu.error03_2.text=D'Variabel «%» ass méiglecherweis nach net initialiséiert ginn!
+Menu.error03_1.text=D'Variabel «%1» ass nach net initialiséiert ginn%2!
+Menu.error03_2.text=D'Variabel «%1» ass méiglecherweis nach net initialiséiert ginn%2!
 Menu.error04.text=En IF-statement dierf net mat engem eidelen TRUE-Block benotzt ginn!
 Menu.error05.text=D'Variabel «%» muss grouss geschriwwen sinn!
 Menu.error06.text=Den Programmnumm «%» muss grouss geschriwwen sinn!
 Menu.error07_1.text=«%» ass keen validen Numm fir en Programm oder eng Method!
 Menu.error07_2.text=«%» ass keen validen Numm fir en Parameter!
-Menu.error07_3.text=«%» ass keen validen Numm fir eng Variabel
+Menu.error07_3.text=«%» ass keen validen Numm fir eng Variabel oder eng Konstant!
 Menu.error08.text=Et dierf keng Zouwäisung an enger Konditioun gemaach ginn.
 Menu.error09.text=Den Programm («%») dierf net den selwechten Numm wei eng Variabel oder en Parameter hunn!
 Menu.error10_1.text=En eenzelt Instruktiouns Element sollt keng Agang/Ausgang Instruktiounen oder Zouwäisungen enthalen!
 Menu.error10_2.text=En eenzelt Instruktiouns Element sollt keng Agang/Ausgang Instruktiounen enthalen!
 Menu.error10_3.text=En eenzelt Instruktiouns Element sollt keng Agang Instruktiounen oder Zouwäisungen enthalen!
 Menu.error10_4.text=En eenzelt Instruktiouns Element sollt keng Ausgang Instruktiounen oder Zouwäisungen enthalen!
+Menu.error10_5.text=En eenzelt Instruktiouns Element sollt keng Konstant Definitiounen an anere Instruktiounen enthalen!
 Menu.error11.text=Wahrscheinlech Zouwäisungsfehler! W.E.G. d'Instruktioun kontrolléieren!
 Menu.error12.text=Den Parameter muss mat engem "p" ufänken an dierf ab dann nëmmen nach Grouss buchstaawen enthalen!
 Menu.error13_1.text=Funktioun gëtt keen Resultat zréck!
@@ -220,6 +222,7 @@ Menu.error16_4.text=Cannot leave or break more loop levels than being nested in 
 Menu.error16_5.text=You must not directly return out of a parallel thread!
 Menu.error16_6.text=Wrong argument for this kind of JUMP (should be an integer constant)!
 Menu.error17.text=Consistency risk due to concurrent access to variable «%» by several parallel threads!
+Menu.errorLineReference.text= (Zeil %)
 
 -----[ AnalyserPreferences ]-----
 AnalyserPreferences.title=Analyser Astellungen

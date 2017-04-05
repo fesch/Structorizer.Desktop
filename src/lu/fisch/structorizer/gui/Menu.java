@@ -311,8 +311,12 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error01_2 = new LangTextHolder("WARNING: More than one loop variable detected: «%»");
 	public static final LangTextHolder error01_3 = new LangTextHolder("You are not allowed to modify the loop variable «%» inside the loop!");
 	public static final LangTextHolder error02 = new LangTextHolder("No change of the variables in the condition detected. Possible endless loop ...");
-	public static final LangTextHolder error03_1= new LangTextHolder("The variable «%» has not yet been initialized!");
-	public static final LangTextHolder error03_2 = new LangTextHolder("The variable «%» may not have been initialized!");
+	// START KGU#375 2017-04-05: Enh. #390 Mor precise informaton for multi-line instructions
+	//public static final LangTextHolder error03_1= new LangTextHolder("The variable «%» has not yet been initialized!");
+	//public static final LangTextHolder error03_2 = new LangTextHolder("The variable «%» may not have been initialized!");
+	public static final LangTextHolder error03_1= new LangTextHolder("The variable «%1» has not yet been initialized%2!");
+	public static final LangTextHolder error03_2 = new LangTextHolder("The variable «%1» may not have been initialized%2!");
+	// END KGU#375 2017-04-05
 	public static final LangTextHolder error04 = new LangTextHolder("You are not allowed to use an IF-statement with an empty TRUE-block!");
 	public static final LangTextHolder error05 = new LangTextHolder("The variable «%» must be written in uppercase!");
 	public static final LangTextHolder error06 = new LangTextHolder("The programname «%» must be written in uppercase!");
@@ -325,6 +329,9 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error10_2 = new LangTextHolder("A single instruction element should not contain input and output instructions!");
 	public static final LangTextHolder error10_3 = new LangTextHolder("A single instruction element should not contain input instructions and assignments!");
 	public static final LangTextHolder error10_4 = new LangTextHolder("A single instruction element should not contain ouput instructions and assignments!");
+	// START KGU#375 2017-04-05: Enh. #388
+	public static final LangTextHolder error10_5 = new LangTextHolder("A single instruction element should not mix constant definitions with other instructions!");
+	// END KGU#375 2017-04-05
 	public static final LangTextHolder error11 = new LangTextHolder("You probably made an assignment error. Please check this instruction!");
 	public static final LangTextHolder error12 = new LangTextHolder("The parameter «%» must start with the letter \"p\" followed by only uppercase letters!");
 	public static final LangTextHolder error13_1 = new LangTextHolder("Your function does not return any result!");
@@ -371,6 +378,7 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#327 2017-01-07
 	// START KGU#375 2017-04-04: Enh. #388 - New check for constants depending on non-constant values.
 	public static final LangTextHolder error22 = new LangTextHolder("Constant «%1» depends on apparently non-constant value(s) %2.");
+	public static final LangTextHolder errorLineReference = new LangTextHolder(" (line %)");
 	// END KGU#375 2017-04-04
 
 	// START KGU#218 2016-07-28: Issue #206 - enhanced localization

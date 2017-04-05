@@ -101,7 +101,8 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.03.14/26   Enh. #380: Method outsourceToSubroutine supports automatic derival of subroutines
  *      Kay Gürtzig     2017.03.30      Enh. #388: const retrieval (method collectParameters() modified)
  *      Kay Gürtzig     2017.04.04      Enh. #388: New Analyser check for constant definitions (no. 22),
- *                                      method getUsedVarNames decomposed
+ *                                      method getUsedVarNames decomposed, check no. 10 enhanced.
+ *      Kay Gürtzig     2017.04.05      Issue #390: Improved initialization check for multi-line instructions
  *
  ******************************************************************************************************
  *
@@ -2314,12 +2315,35 @@ public class Root extends Element {
     		}
 
     		// CHECK: non-initialised var (except REPEAT)  (#3)
-    		StringList myUsed = getUsedVarNames(ele, true, true);
-    		if (!eleClassName.equals("Repeat"))
+    		// START KGU#375 2017-04-05: Enh. #388 linewise analysis for Instruction elements
+//    		StringList myUsed = getUsedVarNames(ele, true, true);
+//    		if (!eleClassName.equals("Repeat"))
+//    		{
+//    			// FIXME: linewise test for Instruction elements needed
+//    			analyse_3(ele, _errors, _vars, _uncertainVars, myUsed);
+//    		}
+    		StringList myUsed = new StringList();
+    		if (eleClassName.equals("Instruction"))
     		{
-    			// FIXME: linewise test for Instruction elements needed
-    			analyse_3(ele, _errors, _vars, _uncertainVars, myUsed);
+    			@SuppressWarnings("unchecked")
+				HashMap<String, String> constantDefs = (HashMap<String, String>)_constants.clone();
+    			String[] keywords = CodeParser.getAllProperties();
+    			StringList initVars = _vars.copy();
+    			for (int j = 0; j < ele.getText().count(); j++) {
+    				String line = ele.getText().get(j);
+    				myUsed = getUsedVarNames(line, keywords);
+    				analyse_3(ele, _errors, initVars, _uncertainVars, myUsed, -1);
+    				initVars.add(this.getVarNames(StringList.getNew(line), constantDefs));
+    			}
     		}
+    		else {
+    			myUsed = getUsedVarNames(ele, true, true);
+        		if (!eleClassName.equals("Repeat"))
+        		{
+        			analyse_3(ele, _errors, _vars, _uncertainVars, myUsed, -1);
+        		}
+    		}
+    		// END KGU#375 2017-04-05
 
     		/*////// AHHHHHHHH ////////
                             getUsedVarNames should also parse for new variable names,
@@ -2401,7 +2425,7 @@ public class Root extends Element {
     		
     			if (ele instanceof Repeat)
     			{
-        			analyse_3(ele, _errors, _vars, _uncertainVars, myUsed);
+        			analyse_3(ele, _errors, _vars, _uncertainVars, myUsed, -1);
     			}
     		}
     		else if (eleClassName.equals("Parallel"))
@@ -2620,8 +2644,9 @@ public class Root extends Element {
 	 * @param _vars - variables with certain initialisation 
 	 * @param _uncertainVars - variables with uncertain initialisation (e.g. in a branch)
 	 * @param _myUsedVars - variables used but not defined by this element
+	 * @param lineNo TODO
 	 */
-	private void analyse_3(Element ele, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, StringList _myUsedVars)
+	private void analyse_3(Element ele, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, StringList _myUsedVars, int lineNo)
 	{
 			for (int j=0; j<_myUsedVars.count(); j++)
 			{
@@ -2631,15 +2656,27 @@ public class Root extends Element {
 					continue;
 				}
 				// END KGU#343 2017-02-07
+				// START KGU##375 2017-04-05: Enh. #388
+				String lineRef = "";
+				if (lineNo >= 0) {
+					lineRef = Menu.errorLineReference.getText().replace("%", Integer.toString(lineNo+1));
+				}
+				// END KGU#375 2017-04-05
 				if (!_vars.contains(myUsed) && !_uncertainVars.contains(myUsed))
 				{
 					//error  = new DetectedError("The variable «"+myUsed.get(j)+"» has not yet been initialized!",(Element) _node.getElement(i));
-					addError(_errors, new DetectedError(errorMsg(Menu.error03_1, myUsed), ele), 3);
+					// START KGU##375 2017-04-05: Enh. #388
+					//addError(_errors, new DetectedError(errorMsg(Menu.error03_1, myUsed), ele), 3);
+					addError(_errors, new DetectedError(errorMsg(Menu.error03_1, new String[]{myUsed, lineRef}), ele), 3);
+					// END KGU#375 2017-04-05
 				}
 				else if (_uncertainVars.contains(myUsed))
 				{
 					//error  = new DetectedError("The variable «"+myUsed.get(j)+"» may not have been initialized!",(Element) _node.getElement(i));
-					addError(_errors, new DetectedError(errorMsg(Menu.error03_2, myUsed), ele), 3);
+					// START KGU##375 2017-04-05: Enh. #388
+					//addError(_errors, new DetectedError(errorMsg(Menu.error03_2, myUsed), ele), 3);
+					addError(_errors, new DetectedError(errorMsg(Menu.error03_2, new String[]{myUsed, lineRef}), ele), 3);
+					// END KGU#375 2017-04-05
 				}
 			}
 	}
@@ -2743,6 +2780,9 @@ public class Root extends Element {
 		boolean isInput = false;
 		boolean isOutput = false;
 		boolean isAssignment = false;
+		// START KGU#375 2017-04-05: Enh. #388
+		boolean isConstant = false;
+		// END KGU#375 2017-04-05
 		StringList inputTokens = Element.splitLexically(CodeParser.getKeyword("input"), false);
 		StringList outputTokens = Element.splitLexically(CodeParser.getKeyword("output"), false);
 		// START KGU#297 2016-11-22: Issue #295 - Instructions starting with the return keyword must be handled separately
@@ -2756,7 +2796,7 @@ public class Root extends Element {
 			//String myTest = test.get(l);
 
 			// START KGU#65/KGU#126 2016-01-06: More precise analysis, though expensive
-			StringList tokens = splitLexically(test.get(l), true);
+			StringList tokens = splitLexically(test.get(l).trim(), true);
 			unifyOperators(tokens, false);
 			// START KGU#297 2016-11-22: Issue #295 - Instructions starting with the return keyword must be handled separately
 			//if (tokens.contains("<-"))
@@ -2764,7 +2804,15 @@ public class Root extends Element {
 			// END KGU#297 2016-11-22
 			if (tokens.contains("<-") && !isReturn)
 			{
-				isAssignment = true;
+				// START KGU#375 2017-04-05: Enh. #388
+				//isAssignment = true;
+				if (tokens.get(0).equals("const")) {
+					isConstant = true;
+				}
+				else {
+					isAssignment = true;
+				}
+				// END KGU#375 2017-04-05
 			}
 			// START KGU#297 2016-11-22: Issue #295: Instructions starting with the return keyword must be handled separately
 			//else if (tokens.contains("=="))
@@ -2788,7 +2836,14 @@ public class Root extends Element {
 
 		}
 		// CHECK: wrong multi-line instruction (#10 - new!)
-		if (isInput && isOutput && isAssignment)
+		// START KGU#375 2017-04-05: Enh. #388
+		//if (isInput && isOutput && isAssignment) {
+		if (isConstant && (isInput || isOutput || isAssignment)) {
+			//error  = new DetectedError("A single element should not mix constant definitions with other instructions!",(Element) _node.getElement(i));
+			addError(_errors, new DetectedError(errorMsg(Menu.error10_5,""), ele), 10);
+		}
+		else if (isInput && isOutput && isAssignment)
+		// END KGU#375 2017-04-05
 		{
 			//error  = new DetectedError("A single instruction element should not contain input/output instructions and assignments!",(Element) _node.getElement(i));
 			addError(_errors, new DetectedError(errorMsg(Menu.error10_1,""), ele), 10);
@@ -3251,7 +3306,7 @@ public class Root extends Element {
 				StringList myDefs = getVarNames(StringList.getNew(line), _definedConsts);
 				if (myDefs.count() > 0 && nonConst.count() > 0) {
 					//error  = new DetectedError("The constant «"+myDefs.get(0)+"» depends on non-constant values: "+"!",(Element) _node.getElement(i));
-					addError(_errors, new DetectedError(errorMsg(Menu.error22, new String[]{myDefs.get(0), "«" + nonConst.concatenate("», «") + "»"}), _instr), 22);
+					addError(_errors, new DetectedError(errorMsg(Menu.error22, new String[]{myDefs.get(0), nonConst.concatenate("», «")}), _instr), 22);
 					// It's an insecure constant, so drop it from the analysis map
 					_definedConsts.remove(myDefs.get(0));
 				}
