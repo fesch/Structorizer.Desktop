@@ -120,6 +120,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.15      Enh. #354: New menu strategy for code import - selection by FilChooser
  *      Kay Gürtzig     2017.03.19/27   Enh. #380: New function to outsource subsequences to routines
  *      Kay Gürtzig     2017.03.28      Issue #370: Improved dialog strategies for refactoring (parser preferences)
+ *      Kay Gürtzig     2017.04.11      Enh. #389: Modifications in CALL transmutation
  *
  ******************************************************************************************************
  *
@@ -2912,6 +2913,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		{
 			elem = new Call(instr);
 		}
+		// START KGU#376 2017-04-11. Enh. #389 - also support import calls
+		else if (instr.isImportCall()) {
+			elem = new Call(instr);
+		}
+		// END KGU#376 2017-04-11
 		else if (instr.isJump())
 		{
 			elem = new Jump(instr);

@@ -75,6 +75,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.23      Enh. #380: New menu entry to convert a sequence in a subroutine
  *      Kay Gürtzig     2017.03.28      Enh. #387: New menu entry "Save All"
  *      Kay Gürtzig     2017.04.04      Enh. #388: New Analyser error for constant definitions (no. 22)
+ *      Kay Gürtzig     2017.04.11      Enh. #389: Additional messages for analysis of import calls
  *
  ******************************************************************************************************
  *
@@ -350,11 +351,14 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#278 2016-10-11: Enh. #267: Check for subroutine availability
 	//public static final LangTextHolder error15 = new LangTextHolder("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
 	public static final LangTextHolder error15_1 = new LangTextHolder("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!");
-	public static final LangTextHolder error15_2 = new LangTextHolder("The called subroutine «%» is currently not available.");
+	public static final LangTextHolder error15_2 = new LangTextHolder("The called diagram «%» is currently not available.");
 	// END KGU#278 2016-10-11
 	// START KGU 2016-12-17
-	public static final LangTextHolder error15_3 = new LangTextHolder("There are several matching subroutines for «%».");
+	public static final LangTextHolder error15_3 = new LangTextHolder("There are several diagrams matching signature «%».");
 	// END KGU 2016-12-17
+	// START KGU#376 2017-04-11: Enh. #389
+	public static final LangTextHolder error15_4 = new LangTextHolder("Diagram «%» is rather unsuited for an import call as it makes use of return.");
+	// END KGU#376 2017-04-11
 	public static final LangTextHolder error16_1 = new LangTextHolder("A JUMP element may be empty or start with one of %, possibly followed by an argument!");	
 	public static final LangTextHolder error16_2 = new LangTextHolder("A return instruction, unless at final position, must form a JUMP element!");
 	public static final LangTextHolder error16_3 = new LangTextHolder("An exit, leave or break instruction is only allowed as JUMP element!");
@@ -368,7 +372,8 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#47 2015-11-28
 	// START KGU#239 2016-08-12: Enh. #231 - New checks for variable name collisions
 	public static final LangTextHolder error18 = new LangTextHolder("Variable name «%1» may be confused with variable(s) «%2» in some case-indifferent languages!");
-	public static final LangTextHolder error19 = new LangTextHolder("Variable name «%1» may collide with reserved names in languages like %2!");
+	public static final LangTextHolder error19_1 = new LangTextHolder("Variable name «%1» may collide with reserved names in languages like %2!");
+	public static final LangTextHolder error19_2 = new LangTextHolder("Variable name «%» is reserved in Structorizer and is likely to cause trouble on execution!");
 	// END KGU#239 2016-08-12
 	// START KGU#253 2016-09-21: Enh. #249 - New check for subroutine syntax.
 	public static final LangTextHolder error20 = new LangTextHolder("A subroutine header must have a (possibly empty) parameter list within parentheses.");

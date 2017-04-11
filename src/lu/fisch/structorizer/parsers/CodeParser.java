@@ -19,8 +19,6 @@
  */
 package lu.fisch.structorizer.parsers;
 
-import java.awt.Color;
-
 /******************************************************************************************************
  *
  *      Author:         Kay Gürtzig
@@ -36,6 +34,7 @@ import java.awt.Color;
  *      Kay Gürtzig     2017.03.04      First Issue
  *      Kay Gürtzig     2017.03.25      Fix #357: Precaution against failed file preparation
  *      Kay Gürtzig     2017.03.30      Standard colours for declarations, constant definitions and global stuff
+ *      Kay Gürtzig     2017.04.11      Mechanism to revert file preparator replacements in the syntax error display  
  *
  ******************************************************************************************************
  *
@@ -43,6 +42,8 @@ import java.awt.Color;
  *      
  *
  ******************************************************************************************************///
+
+import java.awt.Color;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -54,7 +55,9 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Matcher;
 
 import com.creativewidgetworks.goldparser.engine.ParserException;
 import com.creativewidgetworks.goldparser.engine.Position;
@@ -149,6 +152,17 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * @see #colorGlobal
 	 */
 	protected static final Color colorMisc = Color.decode("0xFFFFE0");
+	
+	// START KGU 2017-04-11
+	/**
+	 * Identifier replacement map to be filled by the file preparation method if identiiers
+	 * had to be replaced by other symbols or generic identifiers in order to allow the soure
+	 * file to pass the parsing.
+	 * Must map the substitutes to the original identifiers such that the replacements may be
+	 * reverted on error display.   
+	 */
+	protected HashMap<String, String> replacedIds = new HashMap<String, String>();
+	// END KGU 2017-04-11
 
 	/************ Abstract Methods *************/
 	
@@ -297,17 +311,23 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 			// anyway.
 			sourceLines.removeAll("");
 			for (int i = start; i < lineNo; i++) {
-				String line = sourceLines.get(i);
+				// START KGU 2017-04-11
+				//String line = sourceLines.get(i);
+				String line = undoIdReplacements(sourceLines.get(i));
+				// END KGU 2017-04-11
 				error += String.format("\n%4d:   %s", i+1, line.replace("\t", "    "));
 			}
 			String line = sourceLines.get(lineNo);
 			if (line.length() >= colNo) {
-				line = line.substring(0, colNo) + "» " + line.substring(colNo);
+				// START KGU 2017-04-11
+				//line = line.substring(0, colNo) + "» " + line.substring(colNo);
+				line = undoIdReplacements(line.substring(0, colNo) + "» " + line.substring(colNo));
+				// END KGU 2017-04-11
 			}
 			error += String.format("\n%4d:   %s", lineNo+1,	line.replace("\t", "    "));
-			if (line.length() < colNo && lineNo+1 < sourceLines.count()) {
-				error += String.format("\n%4d:   %s", lineNo+2, sourceLines.get(lineNo+1).replaceFirst("(^\\s*)(\\S.*)", "$1»$2").replace("\t", "    "));
-			}
+//			if (line.length() < colNo && lineNo+1 < sourceLines.count()) {
+//				error += String.format("\n%4d:   %s", lineNo+2, sourceLines.get(lineNo+1).replaceFirst("(^\\s*)(\\S.*)", "$1»$2").replace("\t", "    "));
+//			}
 			SymbolList sl = parser.getExpectedSymbols();
 			String sepa = "\n\nExpected: ";
 			String exp = "";
@@ -361,6 +381,24 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		
 		return subRoots;
 	}
+
+	// START KGU 2017-04-11
+	/**
+	 * Replaces all strings being keys in this.replacedIds by their respective mapped
+	 * strings in the given line (i.e. actually tries to revert all performed substitutions) 
+	 * @param line a source line or content string possibly with identifiers replaced by the file preparer
+	 * @return line with reverted identifier substitutions
+	 */
+	protected String undoIdReplacements(String line) {
+		for (Entry<String,String> entry: this.replacedIds.entrySet()) {
+			String pattern = "(^|.*\\W)" + entry.getKey() + "(\\W.*|$)";
+			if (line.matches(pattern)) {
+				line = line.replaceAll(pattern, "$1" + Matcher.quoteReplacement(entry.getValue()) + "$2");
+			}
+		}
+		return line;
+	}
+	// END KGU 2017-04-11
 
 	/**
 	 * Performs some necessary preprocessing for the text file. Must return a
@@ -561,6 +599,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		keywordMap.put("preLeave",   "leave");
 		keywordMap.put("preReturn",  "return");
 		keywordMap.put("preExit",    "exit");
+		// START KGU#376 017-04-11: Enh. #389
+		keywordMap.put("preImport",  "import");
+		// END KGU#376 2017-04-11
 		keywordMap.put("input",      "read");
 		keywordMap.put("output",     "write");
 	}
@@ -582,6 +623,9 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		defaultKeys.put("ParserInput", "INPUT");
 		defaultKeys.put("ParserOutput", "OUTPUT");
 		// END KGU 2017-01-06 #327
+		// START KGU#376 017-04-11: Enh. #389
+		defaultKeys.put("ParserPreImport", "import");
+		// END KGU#376 2017-04-11
 		try
 		{
 			Ini ini = Ini.getInstance();

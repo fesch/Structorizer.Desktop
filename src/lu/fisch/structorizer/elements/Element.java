@@ -2241,6 +2241,9 @@ public abstract class Element {
 				jumpSigns.add(CodeParser.getKeywordOrDefault("preReturn", "return").trim());
 				jumpSigns.add(CodeParser.getKeywordOrDefault("preExit", "exit").trim());
 				// END KGU#116 2015-12-23
+				// START KGU#376 2017-04-11: Enh. #389 - highlight call keyword
+				jumpSigns.add(CodeParser.getKeywordOrDefault("preImport", "import").trim());
+				// END KGU#376 2017-04-11
 
 				// START KGU#377 2017-03-30: Bugfix #333
 				parts.replaceAll("<-","\u2190");

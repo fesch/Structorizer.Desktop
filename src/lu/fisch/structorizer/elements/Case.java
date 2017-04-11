@@ -804,18 +804,20 @@ public class Case extends Element implements IFork
 	@Override
     protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
-    	if (!_instructionsOnly) {
-    		_lines.add(this.getText());	// Text of the condition
-    	}
-    	if (qs!= null)
-    	{
-    		int nBranches = qs.size();
-    		if (!hasDefaultBranch()) nBranches--;
-    		for (int i = 0; i < nBranches; i++)
-    		{
-    			qs.get(i).addFullText(_lines, _instructionsOnly);
-    		}
-    	}
+		if (!this.isDisabled()) {
+			if (!_instructionsOnly) {
+				_lines.add(this.getText());	// Text of the condition
+			}
+			if (qs!= null)
+			{
+				int nBranches = qs.size();
+				if (!hasDefaultBranch()) nBranches--;
+				for (int i = 0; i < nBranches; i++)
+				{
+					qs.get(i).addFullText(_lines, _instructionsOnly);
+				}
+			}
+		}
     }
     // END KGU 2015-10-16
 

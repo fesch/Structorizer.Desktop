@@ -86,6 +86,23 @@
 !   * block-local type declarations allowed, start symbol changed <Decls> -> <ExtDecls>
 !   * Concatenation of at least one string literal
 !
+! Modified 03/31/2017 (Kay Gürtzig)
+!   * floating-point literals and type suffixes for number literals (F, L, LL) introduced
+!   * type prefix L for string literals introduced.
+!   * user_type_### workaround introduced to allow a preprocessor to circumvent the
+!     missing identifier table support in GOLDParser which would be necessary to allow
+!     user-defined type names (Id cannot be added to the <Base> alternatives without
+!     blowing up the entire grammar due to inherent language ambiguities - C is definitely
+!     not context-free!). A preprocessor must detect all type names introduced by typedef
+!     and replace them by "user_type_001", "user_type_002" etc. throughout the subsequent
+!     lines of the block which are reserved words for user-specific types.
+!     On "executing" the obtained parse tree the replacements must of course be reverted.
+!
+! Modified 04/11/2017 (Kay Gürtzig)
+!   * Rules <Struct Decl>, <Union Decl>, and <Enum Decl> enhanced: ';' replaced by <Decl End>
+!     in order to allow combined struct/union/enum and variable declarations (was easier here
+!     than in <Var Decl>)
+!
 ! -----------------------------------------------------------------------
 
 
@@ -198,13 +215,16 @@ Comment Line  = '//'
 
 <Typedef Decl> ::= typedef <Var Decl>
 
-<Struct Decl>  ::= struct Id '{' <Struct Def> '}'  ';' 
+<Struct Decl>  ::= struct Id '{' <Struct Def> '}' <Decl End>
 
-<Union Decl>   ::= union Id '{' <Struct Def> '}'  ';' 
+<Union Decl>   ::= union Id '{' <Struct Def> '}' <Decl End> 
 
 
 <Struct Def>   ::= <Var Decl> <Struct Def>
                  | <Var Decl>
+ 
+<Decl End> ::= ';'
+             | <Var Item> <Var List> ';'
 
 ! ===================================================================
 ! Variable Declaration
@@ -241,7 +261,7 @@ Comment Line  = '//'
 ! Enumerations
 ! ===================================================================
 
-<Enum Decl>    ::= enum Id '{' <Enum Def> '}'  ';'
+<Enum Decl>    ::= enum Id '{' <Enum Def> '}' <Decl End>
  
 <Enum Def>     ::= <Enum Val> ',' <Enum Def>
                  | <Enum Val>
@@ -269,7 +289,9 @@ Comment Line  = '//'
              | enum Id
              | enum '{' <Enum Def> '}' 
              | void '*'
-             | user_type_001
+             | <User Type>        ! Nasty workaround for the impossibility to place Id here
+
+<User Type> ::= user_type_001
              | user_type_002
              | user_type_003
              | user_type_004

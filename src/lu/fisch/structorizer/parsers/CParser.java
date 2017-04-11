@@ -37,6 +37,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.03.26      Fix #384: New temp file mechanism for the prepared text file
  *      Kay Gürtzig     2017.03.27      Issue #354: number literal suffixes and scanf import fixed
  *      Kay Gürtzig     2017.03.31      Enh. #388: import of constants supported
+ *      Kay Gürtzig     2017.04.11      Enh. #389: Global definitions now induce import CALLs to a global program,
+ *                                      typedef mechanism implemented, grammar enhancements 
  *
  ******************************************************************************************************
  *
@@ -55,12 +57,15 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
+import java.util.Stack;
+import java.util.Vector;
 import java.util.regex.Matcher;
 
 import com.creativewidgetworks.goldparser.engine.*;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
 
 import lu.fisch.structorizer.elements.Alternative;
+import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Case;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.ILoop;
@@ -257,54 +262,56 @@ public class CParser extends CodeParser
 		final int SYM_CONSTPOINTERS = 127;  // <ConstPointers>
 		final int SYM_CONSTTYPE     = 128;  // <ConstType>
 		final int SYM_DECL          = 129;  // <Decl>
-		final int SYM_DECLSTMLIST   = 130;  // <Decl Stm List>
-		final int SYM_ENUMDECL      = 131;  // <Enum Decl>
-		final int SYM_ENUMDEF       = 132;  // <Enum Def>
-		final int SYM_ENUMVAL       = 133;  // <Enum Val>
-		final int SYM_EXPR          = 134;  // <Expr>
-		final int SYM_EXPRINI       = 135;  // <ExprIni>
-		final int SYM_EXTDECL       = 136;  // <ExtDecl>
-		final int SYM_EXTDECLS      = 137;  // <ExtDecls>
-		final int SYM_FUNCDECL      = 138;  // <Func Decl>
-		final int SYM_FUNCID        = 139;  // <Func ID>
-		final int SYM_FUNCPROTO     = 140;  // <Func Proto>
-		final int SYM_IDLIST        = 141;  // <Id List>
-		final int SYM_INITIALIZER   = 142;  // <Initializer>
-		final int SYM_MOD           = 143;  // <Mod>
-		final int SYM_NORMALSTM     = 144;  // <Normal Stm>
-		final int SYM_OPADD         = 145;  // <Op Add>
-		final int SYM_OPAND         = 146;  // <Op And>
-		final int SYM_OPASSIGN      = 147;  // <Op Assign>
-		final int SYM_OPBINAND      = 148;  // <Op BinAND>
-		final int SYM_OPBINOR       = 149;  // <Op BinOR>
-		final int SYM_OPBINXOR      = 150;  // <Op BinXOR>
-		final int SYM_OPCOMPARE     = 151;  // <Op Compare>
-		final int SYM_OPEQUATE      = 152;  // <Op Equate>
-		final int SYM_OPIF          = 153;  // <Op If>
-		final int SYM_OPMULT        = 154;  // <Op Mult>
-		final int SYM_OPOR          = 155;  // <Op Or>
-		final int SYM_OPPOINTER     = 156;  // <Op Pointer>
-		final int SYM_OPSHIFT       = 157;  // <Op Shift>
-		final int SYM_OPUNARY       = 158;  // <Op Unary>
-		final int SYM_PARAM         = 159;  // <Param>
-		final int SYM_PARAMS        = 160;  // <Params>
-		final int SYM_POINTERS      = 161;  // <Pointers>
-		final int SYM_SCALAR        = 162;  // <Scalar>
-		final int SYM_SIGN          = 163;  // <Sign>
-		final int SYM_STM           = 164;  // <Stm>
-		final int SYM_STMLIST       = 165;  // <Stm List>
-		final int SYM_STRUCTDECL    = 166;  // <Struct Decl>
-		final int SYM_STRUCTDEF     = 167;  // <Struct Def>
-		final int SYM_THENSTM       = 168;  // <Then Stm>
-		final int SYM_TYPE          = 169;  // <Type>
-		final int SYM_TYPEDEFDECL   = 170;  // <Typedef Decl>
-		final int SYM_TYPES         = 171;  // <Types>
-		final int SYM_UNIONDECL     = 172;  // <Union Decl>
-		final int SYM_VALUE         = 173;  // <Value>
-		final int SYM_VAR           = 174;  // <Var>
-		final int SYM_VARDECL       = 175;  // <Var Decl>
-		final int SYM_VARITEM       = 176;  // <Var Item>
-		final int SYM_VARLIST       = 177;  // <Var List>
+		final int SYM_DECLEND       = 130;  // <Decl End>
+		final int SYM_DECLSTMLIST   = 131;  // <Decl Stm List>
+		final int SYM_ENUMDECL      = 132;  // <Enum Decl>
+		final int SYM_ENUMDEF       = 133;  // <Enum Def>
+		final int SYM_ENUMVAL       = 134;  // <Enum Val>
+		final int SYM_EXPR          = 135;  // <Expr>
+		final int SYM_EXPRINI       = 136;  // <ExprIni>
+		final int SYM_EXTDECL       = 137;  // <ExtDecl>
+		final int SYM_EXTDECLS      = 138;  // <ExtDecls>
+		final int SYM_FUNCDECL      = 139;  // <Func Decl>
+		final int SYM_FUNCID        = 140;  // <Func ID>
+		final int SYM_FUNCPROTO     = 141;  // <Func Proto>
+		final int SYM_IDLIST        = 142;  // <Id List>
+		final int SYM_INITIALIZER   = 143;  // <Initializer>
+		final int SYM_MOD           = 144;  // <Mod>
+		final int SYM_NORMALSTM     = 145;  // <Normal Stm>
+		final int SYM_OPADD         = 146;  // <Op Add>
+		final int SYM_OPAND         = 147;  // <Op And>
+		final int SYM_OPASSIGN      = 148;  // <Op Assign>
+		final int SYM_OPBINAND      = 149;  // <Op BinAND>
+		final int SYM_OPBINOR       = 150;  // <Op BinOR>
+		final int SYM_OPBINXOR      = 151;  // <Op BinXOR>
+		final int SYM_OPCOMPARE     = 152;  // <Op Compare>
+		final int SYM_OPEQUATE      = 153;  // <Op Equate>
+		final int SYM_OPIF          = 154;  // <Op If>
+		final int SYM_OPMULT        = 155;  // <Op Mult>
+		final int SYM_OPOR          = 156;  // <Op Or>
+		final int SYM_OPPOINTER     = 157;  // <Op Pointer>
+		final int SYM_OPSHIFT       = 158;  // <Op Shift>
+		final int SYM_OPUNARY       = 159;  // <Op Unary>
+		final int SYM_PARAM         = 160;  // <Param>
+		final int SYM_PARAMS        = 161;  // <Params>
+		final int SYM_POINTERS      = 162;  // <Pointers>
+		final int SYM_SCALAR        = 163;  // <Scalar>
+		final int SYM_SIGN          = 164;  // <Sign>
+		final int SYM_STM           = 165;  // <Stm>
+		final int SYM_STMLIST       = 166;  // <Stm List>
+		final int SYM_STRUCTDECL    = 167;  // <Struct Decl>
+		final int SYM_STRUCTDEF     = 168;  // <Struct Def>
+		final int SYM_THENSTM       = 169;  // <Then Stm>
+		final int SYM_TYPE          = 170;  // <Type>
+		final int SYM_TYPEDEFDECL   = 171;  // <Typedef Decl>
+		final int SYM_TYPES         = 172;  // <Types>
+		final int SYM_UNIONDECL     = 173;  // <Union Decl>
+		final int SYM_USERTYPE      = 174;  // <User Type>
+		final int SYM_VALUE         = 175;  // <Value>
+		final int SYM_VAR           = 176;  // <Var>
+		final int SYM_VARDECL       = 177;  // <Var Decl>
+		final int SYM_VARITEM       = 178;  // <Var Item>
+		final int SYM_VARLIST       = 179;  // <Var List>
 	};
 
 	// Symbolic constants naming the table indices of the grammar rules
@@ -343,202 +350,208 @@ public class CParser extends CodeParser
 		final int PROD_FUNCID_VOID_ID2                              =  29;  // <Func ID> ::= <Mod> void Id
 		final int PROD_FUNCID_ID3                                   =  30;  // <Func ID> ::= Id
 		final int PROD_TYPEDEFDECL_TYPEDEF                          =  31;  // <Typedef Decl> ::= typedef <Var Decl>
-		final int PROD_STRUCTDECL_STRUCT_ID_LBRACE_RBRACE_SEMI      =  32;  // <Struct Decl> ::= struct Id '{' <Struct Def> '}' ';'
-		final int PROD_UNIONDECL_UNION_ID_LBRACE_RBRACE_SEMI        =  33;  // <Union Decl> ::= union Id '{' <Struct Def> '}' ';'
+		final int PROD_STRUCTDECL_STRUCT_ID_LBRACE_RBRACE           =  32;  // <Struct Decl> ::= struct Id '{' <Struct Def> '}' <Decl End>
+		final int PROD_UNIONDECL_UNION_ID_LBRACE_RBRACE             =  33;  // <Union Decl> ::= union Id '{' <Struct Def> '}' <Decl End>
 		final int PROD_STRUCTDEF                                    =  34;  // <Struct Def> ::= <Var Decl> <Struct Def>
 		final int PROD_STRUCTDEF2                                   =  35;  // <Struct Def> ::= <Var Decl>
-		final int PROD_VARDECL_SEMI                                 =  36;  // <Var Decl> ::= <ConstMod> <Type> <Var> <Var List> ';'
-		final int PROD_VARDECL_CONST_SEMI                           =  37;  // <Var Decl> ::= <Mod> const <Type> <Var> <Var List> ';'
-		final int PROD_VARDECL_SEMI2                                =  38;  // <Var Decl> ::= <ConstType> <Var> <Var List> ';'
-		final int PROD_VARDECL_SEMI3                                =  39;  // <Var Decl> ::= <ConstMod> <Var> <Var List> ';'
-		final int PROD_VARDECL_CONST_SEMI2                          =  40;  // <Var Decl> ::= const <Var> <Var List> ';'
-		final int PROD_VAR_ID                                       =  41;  // <Var> ::= Id <Array>
-		final int PROD_VAR_ID_EQ                                    =  42;  // <Var> ::= Id <Array> '=' <Initializer>
-		final int PROD_ARRAY_LBRACKET_RBRACKET                      =  43;  // <Array> ::= '[' <Expr> ']'
-		final int PROD_ARRAY_LBRACKET_RBRACKET2                     =  44;  // <Array> ::= '[' ']'
-		final int PROD_ARRAY                                        =  45;  // <Array> ::= 
-		final int PROD_VARLIST_COMMA                                =  46;  // <Var List> ::= ',' <Var Item> <Var List>
-		final int PROD_VARLIST                                      =  47;  // <Var List> ::= 
-		final int PROD_VARITEM                                      =  48;  // <Var Item> ::= <Pointers> <Var>
-		final int PROD_CONSTMOD_CONST                               =  49;  // <ConstMod> ::= const <Mod>
-		final int PROD_CONSTMOD                                     =  50;  // <ConstMod> ::= <Mod>
-		final int PROD_MOD_EXTERN                                   =  51;  // <Mod> ::= extern
-		final int PROD_MOD_STATIC                                   =  52;  // <Mod> ::= static
-		final int PROD_MOD_REGISTER                                 =  53;  // <Mod> ::= register
-		final int PROD_MOD_AUTO                                     =  54;  // <Mod> ::= auto
-		final int PROD_MOD_VOLATILE                                 =  55;  // <Mod> ::= volatile
-		final int PROD_ENUMDECL_ENUM_ID_LBRACE_RBRACE_SEMI          =  56;  // <Enum Decl> ::= enum Id '{' <Enum Def> '}' ';'
-		final int PROD_ENUMDEF_COMMA                                =  57;  // <Enum Def> ::= <Enum Val> ',' <Enum Def>
-		final int PROD_ENUMDEF                                      =  58;  // <Enum Def> ::= <Enum Val>
-		final int PROD_ENUMVAL_ID                                   =  59;  // <Enum Val> ::= Id
-		final int PROD_ENUMVAL_ID_EQ_OCTLITERAL                     =  60;  // <Enum Val> ::= Id '=' OctLiteral
-		final int PROD_ENUMVAL_ID_EQ_HEXLITERAL                     =  61;  // <Enum Val> ::= Id '=' HexLiteral
-		final int PROD_ENUMVAL_ID_EQ_DECLITERAL                     =  62;  // <Enum Val> ::= Id '=' DecLiteral
-		final int PROD_CONSTTYPE_CONST                              =  63;  // <ConstType> ::= const <Type>
-		final int PROD_CONSTTYPE                                    =  64;  // <ConstType> ::= <Type>
-		final int PROD_TYPE                                         =  65;  // <Type> ::= <Base> <Pointers>
-		final int PROD_BASE                                         =  66;  // <Base> ::= <Sign> <Scalar>
-		final int PROD_BASE_STRUCT_ID                               =  67;  // <Base> ::= struct Id
-		final int PROD_BASE_STRUCT_LBRACE_RBRACE                    =  68;  // <Base> ::= struct '{' <Struct Def> '}'
-		final int PROD_BASE_UNION_ID                                =  69;  // <Base> ::= union Id
-		final int PROD_BASE_UNION_LBRACE_RBRACE                     =  70;  // <Base> ::= union '{' <Struct Def> '}'
-		final int PROD_BASE_ENUM_ID                                 =  71;  // <Base> ::= enum Id
-		final int PROD_BASE_ENUM_LBRACE_RBRACE                      =  72;  // <Base> ::= enum '{' <Enum Def> '}'
-		final int PROD_BASE_VOID_TIMES                              =  73;  // <Base> ::= void '*'
-		final int PROD_BASE_USER_TYPE_001                           =  74;  // <Base> ::= 'user_type_001'
-		final int PROD_BASE_USER_TYPE_002                           =  75;  // <Base> ::= 'user_type_002'
-		final int PROD_BASE_USER_TYPE_003                           =  76;  // <Base> ::= 'user_type_003'
-		final int PROD_BASE_USER_TYPE_004                           =  77;  // <Base> ::= 'user_type_004'
-		final int PROD_BASE_USER_TYPE_005                           =  78;  // <Base> ::= 'user_type_005'
-		final int PROD_BASE_USER_TYPE_006                           =  79;  // <Base> ::= 'user_type_006'
-		final int PROD_BASE_USER_TYPE_007                           =  80;  // <Base> ::= 'user_type_007'
-		final int PROD_BASE_USER_TYPE_009                           =  81;  // <Base> ::= 'user_type_009'
-		final int PROD_BASE_USER_TYPE_010                           =  82;  // <Base> ::= 'user_type_010'
-		final int PROD_BASE_USER_TYPE_011                           =  83;  // <Base> ::= 'user_type_011'
-		final int PROD_BASE_USER_TYPE_012                           =  84;  // <Base> ::= 'user_type_012'
-		final int PROD_BASE_USER_TYPE_013                           =  85;  // <Base> ::= 'user_type_013'
-		final int PROD_BASE_USER_TYPE_014                           =  86;  // <Base> ::= 'user_type_014'
-		final int PROD_BASE_USER_TYPE_015                           =  87;  // <Base> ::= 'user_type_015'
-		final int PROD_BASE_USER_TYPE_016                           =  88;  // <Base> ::= 'user_type_016'
-		final int PROD_BASE_USER_TYPE_017                           =  89;  // <Base> ::= 'user_type_017'
-		final int PROD_BASE_USER_TYPE_018                           =  90;  // <Base> ::= 'user_type_018'
-		final int PROD_BASE_USER_TYPE_019                           =  91;  // <Base> ::= 'user_type_019'
-		final int PROD_BASE_USER_TYPE_020                           =  92;  // <Base> ::= 'user_type_020'
-		final int PROD_BASE_USER_TYPE_021                           =  93;  // <Base> ::= 'user_type_021'
-		final int PROD_BASE_USER_TYPE_022                           =  94;  // <Base> ::= 'user_type_022'
-		final int PROD_BASE_USER_TYPE_023                           =  95;  // <Base> ::= 'user_type_023'
-		final int PROD_BASE_USER_TYPE_024                           =  96;  // <Base> ::= 'user_type_024'
-		final int PROD_BASE_USER_TYPE_025                           =  97;  // <Base> ::= 'user_type_025'
-		final int PROD_BASE_USER_TYPE_026                           =  98;  // <Base> ::= 'user_type_026'
-		final int PROD_BASE_USER_TYPE_027                           =  99;  // <Base> ::= 'user_type_027'
-		final int PROD_BASE_USER_TYPE_028                           = 100;  // <Base> ::= 'user_type_028'
-		final int PROD_BASE_USER_TYPE_029                           = 101;  // <Base> ::= 'user_type_029'
-		final int PROD_BASE_USER_TYPE_030                           = 102;  // <Base> ::= 'user_type_030'
-		final int PROD_SIGN_SIGNED                                  = 103;  // <Sign> ::= signed
-		final int PROD_SIGN_UNSIGNED                                = 104;  // <Sign> ::= unsigned
-		final int PROD_SIGN                                         = 105;  // <Sign> ::= 
-		final int PROD_SCALAR_CHAR                                  = 106;  // <Scalar> ::= char
-		final int PROD_SCALAR_WCHAR_T                               = 107;  // <Scalar> ::= 'wchar_t'
-		final int PROD_SCALAR_INT                                   = 108;  // <Scalar> ::= int
-		final int PROD_SCALAR_SHORT                                 = 109;  // <Scalar> ::= short
-		final int PROD_SCALAR_LONG                                  = 110;  // <Scalar> ::= long
-		final int PROD_SCALAR_SHORT_INT                             = 111;  // <Scalar> ::= short int
-		final int PROD_SCALAR_LONG_INT                              = 112;  // <Scalar> ::= long int
-		final int PROD_SCALAR_LONG_LONG                             = 113;  // <Scalar> ::= long long
-		final int PROD_SCALAR_LONG_LONG_INT                         = 114;  // <Scalar> ::= long long int
-		final int PROD_SCALAR_FLOAT                                 = 115;  // <Scalar> ::= float
-		final int PROD_SCALAR_DOUBLE                                = 116;  // <Scalar> ::= double
-		final int PROD_POINTERS_TIMES                               = 117;  // <Pointers> ::= '*' <Pointers>
-		final int PROD_POINTERS_TIMES_CONST                         = 118;  // <Pointers> ::= '*' const <ConstPointers>
-		final int PROD_POINTERS                                     = 119;  // <Pointers> ::= 
-		final int PROD_CONSTPOINTERS_TIMES_CONST                    = 120;  // <ConstPointers> ::= '*' const <ConstPointers>
-		final int PROD_CONSTPOINTERS_TIMES                          = 121;  // <ConstPointers> ::= '*'
-		final int PROD_CONSTPOINTERS                                = 122;  // <ConstPointers> ::= 
-		final int PROD_STM_ID_COLON                                 = 123;  // <Stm> ::= Id ':'
-		final int PROD_STM_IF_LPAREN_RPAREN                         = 124;  // <Stm> ::= if '(' <Expr> ')' <Stm>
-		final int PROD_STM_IF_LPAREN_RPAREN_ELSE                    = 125;  // <Stm> ::= if '(' <Expr> ')' <Then Stm> else <Stm>
-		final int PROD_STM_WHILE_LPAREN_RPAREN                      = 126;  // <Stm> ::= while '(' <Expr> ')' <Stm>
-		final int PROD_STM_FOR_LPAREN_SEMI_SEMI_RPAREN              = 127;  // <Stm> ::= for '(' <Arg> ';' <Arg> ';' <Arg> ')' <Stm>
-		final int PROD_STM                                          = 128;  // <Stm> ::= <Normal Stm>
-		final int PROD_THENSTM_IF_LPAREN_RPAREN_ELSE                = 129;  // <Then Stm> ::= if '(' <Expr> ')' <Then Stm> else <Then Stm>
-		final int PROD_THENSTM_WHILE_LPAREN_RPAREN                  = 130;  // <Then Stm> ::= while '(' <Expr> ')' <Then Stm>
-		final int PROD_THENSTM_FOR_LPAREN_SEMI_SEMI_RPAREN          = 131;  // <Then Stm> ::= for '(' <Arg> ';' <Arg> ';' <Arg> ')' <Then Stm>
-		final int PROD_THENSTM                                      = 132;  // <Then Stm> ::= <Normal Stm>
-		final int PROD_NORMALSTM_DO_WHILE_LPAREN_RPAREN             = 133;  // <Normal Stm> ::= do <Stm> while '(' <Expr> ')'
-		final int PROD_NORMALSTM_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE = 134;  // <Normal Stm> ::= switch '(' <Expr> ')' '{' <Case Stms> '}'
-		final int PROD_NORMALSTM                                    = 135;  // <Normal Stm> ::= <Block>
-		final int PROD_NORMALSTM_SEMI                               = 136;  // <Normal Stm> ::= <Expr> ';'
-		final int PROD_NORMALSTM_GOTO_ID_SEMI                       = 137;  // <Normal Stm> ::= goto Id ';'
-		final int PROD_NORMALSTM_BREAK_SEMI                         = 138;  // <Normal Stm> ::= break ';'
-		final int PROD_NORMALSTM_CONTINUE_SEMI                      = 139;  // <Normal Stm> ::= continue ';'
-		final int PROD_NORMALSTM_RETURN_SEMI                        = 140;  // <Normal Stm> ::= return <Expr> ';'
-		final int PROD_NORMALSTM_SEMI2                              = 141;  // <Normal Stm> ::= ';'
-		final int PROD_ARG                                          = 142;  // <Arg> ::= <Expr>
-		final int PROD_ARG2                                         = 143;  // <Arg> ::= 
-		final int PROD_CASESTMS_CASE_COLON                          = 144;  // <Case Stms> ::= case <Value> ':' <Stm List> <Case Stms>
-		final int PROD_CASESTMS_DEFAULT_COLON                       = 145;  // <Case Stms> ::= default ':' <Stm List>
-		final int PROD_CASESTMS                                     = 146;  // <Case Stms> ::= 
-		final int PROD_BLOCK_LBRACE_RBRACE                          = 147;  // <Block> ::= '{' <Decl Stm List> '}'
-		final int PROD_DECLSTMLIST                                  = 148;  // <Decl Stm List> ::= <Decl> <Decl Stm List>
-		final int PROD_DECLSTMLIST2                                 = 149;  // <Decl Stm List> ::= <Stm List>
-		final int PROD_STMLIST                                      = 150;  // <Stm List> ::= <Stm> <Stm List>
-		final int PROD_STMLIST2                                     = 151;  // <Stm List> ::= 
-		final int PROD_INITIALIZER                                  = 152;  // <Initializer> ::= <Op If>
-		final int PROD_INITIALIZER_LBRACE_RBRACE                    = 153;  // <Initializer> ::= '{' <ExprIni> '}'
-		final int PROD_EXPR_COMMA                                   = 154;  // <Expr> ::= <Expr> ',' <Op Assign>
-		final int PROD_EXPR                                         = 155;  // <Expr> ::= <Op Assign>
-		final int PROD_EXPRINI_COMMA                                = 156;  // <ExprIni> ::= <ExprIni> ',' <Initializer>
-		final int PROD_EXPRINI                                      = 157;  // <ExprIni> ::= <Initializer>
-		final int PROD_OPASSIGN_EQ                                  = 158;  // <Op Assign> ::= <Op If> '=' <Op Assign>
-		final int PROD_OPASSIGN_PLUSEQ                              = 159;  // <Op Assign> ::= <Op If> '+=' <Op Assign>
-		final int PROD_OPASSIGN_MINUSEQ                             = 160;  // <Op Assign> ::= <Op If> '-=' <Op Assign>
-		final int PROD_OPASSIGN_TIMESEQ                             = 161;  // <Op Assign> ::= <Op If> '*=' <Op Assign>
-		final int PROD_OPASSIGN_DIVEQ                               = 162;  // <Op Assign> ::= <Op If> '/=' <Op Assign>
-		final int PROD_OPASSIGN_CARETEQ                             = 163;  // <Op Assign> ::= <Op If> '^=' <Op Assign>
-		final int PROD_OPASSIGN_AMPEQ                               = 164;  // <Op Assign> ::= <Op If> '&=' <Op Assign>
-		final int PROD_OPASSIGN_PIPEEQ                              = 165;  // <Op Assign> ::= <Op If> '|=' <Op Assign>
-		final int PROD_OPASSIGN_GTGTEQ                              = 166;  // <Op Assign> ::= <Op If> '>>=' <Op Assign>
-		final int PROD_OPASSIGN_LTLTEQ                              = 167;  // <Op Assign> ::= <Op If> '<<=' <Op Assign>
-		final int PROD_OPASSIGN                                     = 168;  // <Op Assign> ::= <Op If>
-		final int PROD_OPIF_QUESTION_COLON                          = 169;  // <Op If> ::= <Op Or> '?' <Op If> ':' <Op If>
-		final int PROD_OPIF                                         = 170;  // <Op If> ::= <Op Or>
-		final int PROD_OPOR_PIPEPIPE                                = 171;  // <Op Or> ::= <Op Or> '||' <Op And>
-		final int PROD_OPOR                                         = 172;  // <Op Or> ::= <Op And>
-		final int PROD_OPAND_AMPAMP                                 = 173;  // <Op And> ::= <Op And> '&&' <Op BinOR>
-		final int PROD_OPAND                                        = 174;  // <Op And> ::= <Op BinOR>
-		final int PROD_OPBINOR_PIPE                                 = 175;  // <Op BinOR> ::= <Op BinOR> '|' <Op BinXOR>
-		final int PROD_OPBINOR                                      = 176;  // <Op BinOR> ::= <Op BinXOR>
-		final int PROD_OPBINXOR_CARET                               = 177;  // <Op BinXOR> ::= <Op BinXOR> '^' <Op BinAND>
-		final int PROD_OPBINXOR                                     = 178;  // <Op BinXOR> ::= <Op BinAND>
-		final int PROD_OPBINAND_AMP                                 = 179;  // <Op BinAND> ::= <Op BinAND> '&' <Op Equate>
-		final int PROD_OPBINAND                                     = 180;  // <Op BinAND> ::= <Op Equate>
-		final int PROD_OPEQUATE_EQEQ                                = 181;  // <Op Equate> ::= <Op Equate> '==' <Op Compare>
-		final int PROD_OPEQUATE_EXCLAMEQ                            = 182;  // <Op Equate> ::= <Op Equate> '!=' <Op Compare>
-		final int PROD_OPEQUATE                                     = 183;  // <Op Equate> ::= <Op Compare>
-		final int PROD_OPCOMPARE_LT                                 = 184;  // <Op Compare> ::= <Op Compare> '<' <Op Shift>
-		final int PROD_OPCOMPARE_GT                                 = 185;  // <Op Compare> ::= <Op Compare> '>' <Op Shift>
-		final int PROD_OPCOMPARE_LTEQ                               = 186;  // <Op Compare> ::= <Op Compare> '<=' <Op Shift>
-		final int PROD_OPCOMPARE_GTEQ                               = 187;  // <Op Compare> ::= <Op Compare> '>=' <Op Shift>
-		final int PROD_OPCOMPARE                                    = 188;  // <Op Compare> ::= <Op Shift>
-		final int PROD_OPSHIFT_LTLT                                 = 189;  // <Op Shift> ::= <Op Shift> '<<' <Op Add>
-		final int PROD_OPSHIFT_GTGT                                 = 190;  // <Op Shift> ::= <Op Shift> '>>' <Op Add>
-		final int PROD_OPSHIFT                                      = 191;  // <Op Shift> ::= <Op Add>
-		final int PROD_OPADD_PLUS                                   = 192;  // <Op Add> ::= <Op Add> '+' <Op Mult>
-		final int PROD_OPADD_MINUS                                  = 193;  // <Op Add> ::= <Op Add> '-' <Op Mult>
-		final int PROD_OPADD                                        = 194;  // <Op Add> ::= <Op Mult>
-		final int PROD_OPMULT_TIMES                                 = 195;  // <Op Mult> ::= <Op Mult> '*' <Op Unary>
-		final int PROD_OPMULT_DIV                                   = 196;  // <Op Mult> ::= <Op Mult> '/' <Op Unary>
-		final int PROD_OPMULT_PERCENT                               = 197;  // <Op Mult> ::= <Op Mult> '%' <Op Unary>
-		final int PROD_OPMULT                                       = 198;  // <Op Mult> ::= <Op Unary>
-		final int PROD_OPUNARY_EXCLAM                               = 199;  // <Op Unary> ::= '!' <Op Unary>
-		final int PROD_OPUNARY_TILDE                                = 200;  // <Op Unary> ::= '~' <Op Unary>
-		final int PROD_OPUNARY_MINUS                                = 201;  // <Op Unary> ::= '-' <Op Unary>
-		final int PROD_OPUNARY_TIMES                                = 202;  // <Op Unary> ::= '*' <Op Unary>
-		final int PROD_OPUNARY_AMP                                  = 203;  // <Op Unary> ::= '&' <Op Unary>
-		final int PROD_OPUNARY_PLUSPLUS                             = 204;  // <Op Unary> ::= '++' <Op Unary>
-		final int PROD_OPUNARY_MINUSMINUS                           = 205;  // <Op Unary> ::= '--' <Op Unary>
-		final int PROD_OPUNARY_PLUSPLUS2                            = 206;  // <Op Unary> ::= <Op Pointer> '++'
-		final int PROD_OPUNARY_MINUSMINUS2                          = 207;  // <Op Unary> ::= <Op Pointer> '--'
-		final int PROD_OPUNARY_LPAREN_RPAREN                        = 208;  // <Op Unary> ::= '(' <Type> ')' <Op Unary>
-		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN                 = 209;  // <Op Unary> ::= sizeof '(' <Type> ')'
-		final int PROD_OPUNARY_SIZEOF_LPAREN_ID_RPAREN              = 210;  // <Op Unary> ::= sizeof '(' Id <Pointers> ')'
-		final int PROD_OPUNARY                                      = 211;  // <Op Unary> ::= <Op Pointer>
-		final int PROD_OPPOINTER_DOT                                = 212;  // <Op Pointer> ::= <Op Pointer> '.' <Value>
-		final int PROD_OPPOINTER_MINUSGT                            = 213;  // <Op Pointer> ::= <Op Pointer> '->' <Value>
-		final int PROD_OPPOINTER_LBRACKET_RBRACKET                  = 214;  // <Op Pointer> ::= <Op Pointer> '[' <Expr> ']'
-		final int PROD_OPPOINTER                                    = 215;  // <Op Pointer> ::= <Value>
-		final int PROD_VALUE_OCTLITERAL                             = 216;  // <Value> ::= OctLiteral
-		final int PROD_VALUE_HEXLITERAL                             = 217;  // <Value> ::= HexLiteral
-		final int PROD_VALUE_DECLITERAL                             = 218;  // <Value> ::= DecLiteral
-		final int PROD_VALUE_STRINGLITERAL                          = 219;  // <Value> ::= StringLiteral
-		final int PROD_VALUE_CHARLITERAL                            = 220;  // <Value> ::= CharLiteral
-		final int PROD_VALUE_FLOATLITERAL                           = 221;  // <Value> ::= FloatLiteral
-		final int PROD_VALUE_ID_LPAREN_RPAREN                       = 222;  // <Value> ::= Id '(' <Expr> ')'
-		final int PROD_VALUE_ID_LPAREN_RPAREN2                      = 223;  // <Value> ::= Id '(' ')'
-		final int PROD_VALUE_ID                                     = 224;  // <Value> ::= Id
-		final int PROD_VALUE_LPAREN_RPAREN                          = 225;  // <Value> ::= '(' <Expr> ')'
+		final int PROD_DECLEND_SEMI                                 =  36;  // <Decl End> ::= ';'
+		final int PROD_DECLEND_SEMI2                                =  37;  // <Decl End> ::= <Var Item> <Var List> ';'
+		final int PROD_VARDECL_SEMI                                 =  38;  // <Var Decl> ::= <ConstMod> <Type> <Var> <Var List> ';'
+		final int PROD_VARDECL_CONST_SEMI                           =  39;  // <Var Decl> ::= <Mod> const <Type> <Var> <Var List> ';'
+		final int PROD_VARDECL_SEMI2                                =  40;  // <Var Decl> ::= <ConstType> <Var> <Var List> ';'
+		final int PROD_VARDECL_SEMI3                                =  41;  // <Var Decl> ::= <ConstMod> <Var> <Var List> ';'
+		final int PROD_VARDECL_CONST_SEMI2                          =  42;  // <Var Decl> ::= const <Var> <Var List> ';'
+		final int PROD_VAR_ID                                       =  43;  // <Var> ::= Id <Array>
+		final int PROD_VAR_ID_EQ                                    =  44;  // <Var> ::= Id <Array> '=' <Initializer>
+		final int PROD_ARRAY_LBRACKET_RBRACKET                      =  45;  // <Array> ::= '[' <Expr> ']'
+		final int PROD_ARRAY_LBRACKET_RBRACKET2                     =  46;  // <Array> ::= '[' ']'
+		final int PROD_ARRAY                                        =  47;  // <Array> ::= 
+		final int PROD_VARLIST_COMMA                                =  48;  // <Var List> ::= ',' <Var Item> <Var List>
+		final int PROD_VARLIST                                      =  49;  // <Var List> ::= 
+		final int PROD_VARITEM                                      =  50;  // <Var Item> ::= <Pointers> <Var>
+		final int PROD_CONSTMOD_CONST                               =  51;  // <ConstMod> ::= const <Mod>
+		final int PROD_CONSTMOD                                     =  52;  // <ConstMod> ::= <Mod>
+		final int PROD_MOD_EXTERN                                   =  53;  // <Mod> ::= extern
+		final int PROD_MOD_STATIC                                   =  54;  // <Mod> ::= static
+		final int PROD_MOD_REGISTER                                 =  55;  // <Mod> ::= register
+		final int PROD_MOD_AUTO                                     =  56;  // <Mod> ::= auto
+		final int PROD_MOD_VOLATILE                                 =  57;  // <Mod> ::= volatile
+		final int PROD_ENUMDECL_ENUM_ID_LBRACE_RBRACE               =  58;  // <Enum Decl> ::= enum Id '{' <Enum Def> '}' <Decl End>
+		final int PROD_ENUMDEF_COMMA                                =  59;  // <Enum Def> ::= <Enum Val> ',' <Enum Def>
+		final int PROD_ENUMDEF                                      =  60;  // <Enum Def> ::= <Enum Val>
+		final int PROD_ENUMVAL_ID                                   =  61;  // <Enum Val> ::= Id
+		final int PROD_ENUMVAL_ID_EQ_OCTLITERAL                     =  62;  // <Enum Val> ::= Id '=' OctLiteral
+		final int PROD_ENUMVAL_ID_EQ_HEXLITERAL                     =  63;  // <Enum Val> ::= Id '=' HexLiteral
+		final int PROD_ENUMVAL_ID_EQ_DECLITERAL                     =  64;  // <Enum Val> ::= Id '=' DecLiteral
+		final int PROD_CONSTTYPE_CONST                              =  65;  // <ConstType> ::= const <Type>
+		final int PROD_CONSTTYPE                                    =  66;  // <ConstType> ::= <Type>
+		final int PROD_TYPE                                         =  67;  // <Type> ::= <Base> <Pointers>
+		final int PROD_BASE                                         =  68;  // <Base> ::= <Sign> <Scalar>
+		final int PROD_BASE_STRUCT_ID                               =  69;  // <Base> ::= struct Id
+		final int PROD_BASE_STRUCT_LBRACE_RBRACE                    =  70;  // <Base> ::= struct '{' <Struct Def> '}'
+		final int PROD_BASE_UNION_ID                                =  71;  // <Base> ::= union Id
+		final int PROD_BASE_UNION_LBRACE_RBRACE                     =  72;  // <Base> ::= union '{' <Struct Def> '}'
+		final int PROD_BASE_ENUM_ID                                 =  73;  // <Base> ::= enum Id
+		final int PROD_BASE_ENUM_LBRACE_RBRACE                      =  74;  // <Base> ::= enum '{' <Enum Def> '}'
+		final int PROD_BASE_VOID_TIMES                              =  75;  // <Base> ::= void '*'
+		final int PROD_BASE2                                        =  76;  // <Base> ::= <User Type>
+		final int PROD_USERTYPE_USER_TYPE_001                       =  77;  // <User Type> ::= 'user_type_001'
+		final int PROD_USERTYPE_USER_TYPE_002                       =  78;  // <User Type> ::= 'user_type_002'
+		final int PROD_USERTYPE_USER_TYPE_003                       =  79;  // <User Type> ::= 'user_type_003'
+		final int PROD_USERTYPE_USER_TYPE_004                       =  80;  // <User Type> ::= 'user_type_004'
+		final int PROD_USERTYPE_USER_TYPE_005                       =  81;  // <User Type> ::= 'user_type_005'
+		final int PROD_USERTYPE_USER_TYPE_006                       =  82;  // <User Type> ::= 'user_type_006'
+		final int PROD_USERTYPE_USER_TYPE_007                       =  83;  // <User Type> ::= 'user_type_007'
+		final int PROD_USERTYPE_USER_TYPE_009                       =  84;  // <User Type> ::= 'user_type_009'
+		final int PROD_USERTYPE_USER_TYPE_010                       =  85;  // <User Type> ::= 'user_type_010'
+		final int PROD_USERTYPE_USER_TYPE_011                       =  86;  // <User Type> ::= 'user_type_011'
+		final int PROD_USERTYPE_USER_TYPE_012                       =  87;  // <User Type> ::= 'user_type_012'
+		final int PROD_USERTYPE_USER_TYPE_013                       =  88;  // <User Type> ::= 'user_type_013'
+		final int PROD_USERTYPE_USER_TYPE_014                       =  89;  // <User Type> ::= 'user_type_014'
+		final int PROD_USERTYPE_USER_TYPE_015                       =  90;  // <User Type> ::= 'user_type_015'
+		final int PROD_USERTYPE_USER_TYPE_016                       =  91;  // <User Type> ::= 'user_type_016'
+		final int PROD_USERTYPE_USER_TYPE_017                       =  92;  // <User Type> ::= 'user_type_017'
+		final int PROD_USERTYPE_USER_TYPE_018                       =  93;  // <User Type> ::= 'user_type_018'
+		final int PROD_USERTYPE_USER_TYPE_019                       =  94;  // <User Type> ::= 'user_type_019'
+		final int PROD_USERTYPE_USER_TYPE_020                       =  95;  // <User Type> ::= 'user_type_020'
+		final int PROD_USERTYPE_USER_TYPE_021                       =  96;  // <User Type> ::= 'user_type_021'
+		final int PROD_USERTYPE_USER_TYPE_022                       =  97;  // <User Type> ::= 'user_type_022'
+		final int PROD_USERTYPE_USER_TYPE_023                       =  98;  // <User Type> ::= 'user_type_023'
+		final int PROD_USERTYPE_USER_TYPE_024                       =  99;  // <User Type> ::= 'user_type_024'
+		final int PROD_USERTYPE_USER_TYPE_025                       = 100;  // <User Type> ::= 'user_type_025'
+		final int PROD_USERTYPE_USER_TYPE_026                       = 101;  // <User Type> ::= 'user_type_026'
+		final int PROD_USERTYPE_USER_TYPE_027                       = 102;  // <User Type> ::= 'user_type_027'
+		final int PROD_USERTYPE_USER_TYPE_028                       = 103;  // <User Type> ::= 'user_type_028'
+		final int PROD_USERTYPE_USER_TYPE_029                       = 104;  // <User Type> ::= 'user_type_029'
+		final int PROD_USERTYPE_USER_TYPE_030                       = 105;  // <User Type> ::= 'user_type_030'
+		final int PROD_SIGN_SIGNED                                  = 106;  // <Sign> ::= signed
+		final int PROD_SIGN_UNSIGNED                                = 107;  // <Sign> ::= unsigned
+		final int PROD_SIGN                                         = 108;  // <Sign> ::= 
+		final int PROD_SCALAR_CHAR                                  = 109;  // <Scalar> ::= char
+		final int PROD_SCALAR_WCHAR_T                               = 110;  // <Scalar> ::= 'wchar_t'
+		final int PROD_SCALAR_INT                                   = 111;  // <Scalar> ::= int
+		final int PROD_SCALAR_SHORT                                 = 112;  // <Scalar> ::= short
+		final int PROD_SCALAR_LONG                                  = 113;  // <Scalar> ::= long
+		final int PROD_SCALAR_SHORT_INT                             = 114;  // <Scalar> ::= short int
+		final int PROD_SCALAR_LONG_INT                              = 115;  // <Scalar> ::= long int
+		final int PROD_SCALAR_LONG_LONG                             = 116;  // <Scalar> ::= long long
+		final int PROD_SCALAR_LONG_LONG_INT                         = 117;  // <Scalar> ::= long long int
+		final int PROD_SCALAR_FLOAT                                 = 118;  // <Scalar> ::= float
+		final int PROD_SCALAR_DOUBLE                                = 119;  // <Scalar> ::= double
+		final int PROD_POINTERS_TIMES                               = 120;  // <Pointers> ::= '*' <Pointers>
+		final int PROD_POINTERS_TIMES_CONST                         = 121;  // <Pointers> ::= '*' const <ConstPointers>
+		final int PROD_POINTERS                                     = 122;  // <Pointers> ::= 
+		final int PROD_CONSTPOINTERS_TIMES_CONST                    = 123;  // <ConstPointers> ::= '*' const <ConstPointers>
+		final int PROD_CONSTPOINTERS_TIMES                          = 124;  // <ConstPointers> ::= '*'
+		final int PROD_CONSTPOINTERS                                = 125;  // <ConstPointers> ::= 
+		final int PROD_STM_ID_COLON                                 = 126;  // <Stm> ::= Id ':'
+		final int PROD_STM_IF_LPAREN_RPAREN                         = 127;  // <Stm> ::= if '(' <Expr> ')' <Stm>
+		final int PROD_STM_IF_LPAREN_RPAREN_ELSE                    = 128;  // <Stm> ::= if '(' <Expr> ')' <Then Stm> else <Stm>
+		final int PROD_STM_WHILE_LPAREN_RPAREN                      = 129;  // <Stm> ::= while '(' <Expr> ')' <Stm>
+		final int PROD_STM_FOR_LPAREN_SEMI_SEMI_RPAREN              = 130;  // <Stm> ::= for '(' <Arg> ';' <Arg> ';' <Arg> ')' <Stm>
+		final int PROD_STM                                          = 131;  // <Stm> ::= <Normal Stm>
+		final int PROD_THENSTM_IF_LPAREN_RPAREN_ELSE                = 132;  // <Then Stm> ::= if '(' <Expr> ')' <Then Stm> else <Then Stm>
+		final int PROD_THENSTM_WHILE_LPAREN_RPAREN                  = 133;  // <Then Stm> ::= while '(' <Expr> ')' <Then Stm>
+		final int PROD_THENSTM_FOR_LPAREN_SEMI_SEMI_RPAREN          = 134;  // <Then Stm> ::= for '(' <Arg> ';' <Arg> ';' <Arg> ')' <Then Stm>
+		final int PROD_THENSTM                                      = 135;  // <Then Stm> ::= <Normal Stm>
+		final int PROD_NORMALSTM_DO_WHILE_LPAREN_RPAREN             = 136;  // <Normal Stm> ::= do <Stm> while '(' <Expr> ')'
+		final int PROD_NORMALSTM_SWITCH_LPAREN_RPAREN_LBRACE_RBRACE = 137;  // <Normal Stm> ::= switch '(' <Expr> ')' '{' <Case Stms> '}'
+		final int PROD_NORMALSTM                                    = 138;  // <Normal Stm> ::= <Block>
+		final int PROD_NORMALSTM_SEMI                               = 139;  // <Normal Stm> ::= <Expr> ';'
+		final int PROD_NORMALSTM_GOTO_ID_SEMI                       = 140;  // <Normal Stm> ::= goto Id ';'
+		final int PROD_NORMALSTM_BREAK_SEMI                         = 141;  // <Normal Stm> ::= break ';'
+		final int PROD_NORMALSTM_CONTINUE_SEMI                      = 142;  // <Normal Stm> ::= continue ';'
+		final int PROD_NORMALSTM_RETURN_SEMI                        = 143;  // <Normal Stm> ::= return <Expr> ';'
+		final int PROD_NORMALSTM_SEMI2                              = 144;  // <Normal Stm> ::= ';'
+		final int PROD_ARG                                          = 145;  // <Arg> ::= <Expr>
+		final int PROD_ARG2                                         = 146;  // <Arg> ::= 
+		final int PROD_CASESTMS_CASE_COLON                          = 147;  // <Case Stms> ::= case <Value> ':' <Stm List> <Case Stms>
+		final int PROD_CASESTMS_DEFAULT_COLON                       = 148;  // <Case Stms> ::= default ':' <Stm List>
+		final int PROD_CASESTMS                                     = 149;  // <Case Stms> ::= 
+		final int PROD_BLOCK_LBRACE_RBRACE                          = 150;  // <Block> ::= '{' <Decl Stm List> '}'
+		final int PROD_DECLSTMLIST                                  = 151;  // <Decl Stm List> ::= <Decl> <Decl Stm List>
+		final int PROD_DECLSTMLIST2                                 = 152;  // <Decl Stm List> ::= <Stm List>
+		final int PROD_STMLIST                                      = 153;  // <Stm List> ::= <Stm> <Stm List>
+		final int PROD_STMLIST2                                     = 154;  // <Stm List> ::= 
+		final int PROD_INITIALIZER                                  = 155;  // <Initializer> ::= <Op If>
+		final int PROD_INITIALIZER_LBRACE_RBRACE                    = 156;  // <Initializer> ::= '{' <ExprIni> '}'
+		final int PROD_EXPR_COMMA                                   = 157;  // <Expr> ::= <Expr> ',' <Op Assign>
+		final int PROD_EXPR                                         = 158;  // <Expr> ::= <Op Assign>
+		final int PROD_EXPRINI_COMMA                                = 159;  // <ExprIni> ::= <ExprIni> ',' <Initializer>
+		final int PROD_EXPRINI                                      = 160;  // <ExprIni> ::= <Initializer>
+		final int PROD_OPASSIGN_EQ                                  = 161;  // <Op Assign> ::= <Op If> '=' <Op Assign>
+		final int PROD_OPASSIGN_PLUSEQ                              = 162;  // <Op Assign> ::= <Op If> '+=' <Op Assign>
+		final int PROD_OPASSIGN_MINUSEQ                             = 163;  // <Op Assign> ::= <Op If> '-=' <Op Assign>
+		final int PROD_OPASSIGN_TIMESEQ                             = 164;  // <Op Assign> ::= <Op If> '*=' <Op Assign>
+		final int PROD_OPASSIGN_DIVEQ                               = 165;  // <Op Assign> ::= <Op If> '/=' <Op Assign>
+		final int PROD_OPASSIGN_CARETEQ                             = 166;  // <Op Assign> ::= <Op If> '^=' <Op Assign>
+		final int PROD_OPASSIGN_AMPEQ                               = 167;  // <Op Assign> ::= <Op If> '&=' <Op Assign>
+		final int PROD_OPASSIGN_PIPEEQ                              = 168;  // <Op Assign> ::= <Op If> '|=' <Op Assign>
+		final int PROD_OPASSIGN_GTGTEQ                              = 169;  // <Op Assign> ::= <Op If> '>>=' <Op Assign>
+		final int PROD_OPASSIGN_LTLTEQ                              = 170;  // <Op Assign> ::= <Op If> '<<=' <Op Assign>
+		final int PROD_OPASSIGN                                     = 171;  // <Op Assign> ::= <Op If>
+		final int PROD_OPIF_QUESTION_COLON                          = 172;  // <Op If> ::= <Op Or> '?' <Op If> ':' <Op If>
+		final int PROD_OPIF                                         = 173;  // <Op If> ::= <Op Or>
+		final int PROD_OPOR_PIPEPIPE                                = 174;  // <Op Or> ::= <Op Or> '||' <Op And>
+		final int PROD_OPOR                                         = 175;  // <Op Or> ::= <Op And>
+		final int PROD_OPAND_AMPAMP                                 = 176;  // <Op And> ::= <Op And> '&&' <Op BinOR>
+		final int PROD_OPAND                                        = 177;  // <Op And> ::= <Op BinOR>
+		final int PROD_OPBINOR_PIPE                                 = 178;  // <Op BinOR> ::= <Op BinOR> '|' <Op BinXOR>
+		final int PROD_OPBINOR                                      = 179;  // <Op BinOR> ::= <Op BinXOR>
+		final int PROD_OPBINXOR_CARET                               = 180;  // <Op BinXOR> ::= <Op BinXOR> '^' <Op BinAND>
+		final int PROD_OPBINXOR                                     = 181;  // <Op BinXOR> ::= <Op BinAND>
+		final int PROD_OPBINAND_AMP                                 = 182;  // <Op BinAND> ::= <Op BinAND> '&' <Op Equate>
+		final int PROD_OPBINAND                                     = 183;  // <Op BinAND> ::= <Op Equate>
+		final int PROD_OPEQUATE_EQEQ                                = 184;  // <Op Equate> ::= <Op Equate> '==' <Op Compare>
+		final int PROD_OPEQUATE_EXCLAMEQ                            = 185;  // <Op Equate> ::= <Op Equate> '!=' <Op Compare>
+		final int PROD_OPEQUATE                                     = 186;  // <Op Equate> ::= <Op Compare>
+		final int PROD_OPCOMPARE_LT                                 = 187;  // <Op Compare> ::= <Op Compare> '<' <Op Shift>
+		final int PROD_OPCOMPARE_GT                                 = 188;  // <Op Compare> ::= <Op Compare> '>' <Op Shift>
+		final int PROD_OPCOMPARE_LTEQ                               = 189;  // <Op Compare> ::= <Op Compare> '<=' <Op Shift>
+		final int PROD_OPCOMPARE_GTEQ                               = 190;  // <Op Compare> ::= <Op Compare> '>=' <Op Shift>
+		final int PROD_OPCOMPARE                                    = 191;  // <Op Compare> ::= <Op Shift>
+		final int PROD_OPSHIFT_LTLT                                 = 192;  // <Op Shift> ::= <Op Shift> '<<' <Op Add>
+		final int PROD_OPSHIFT_GTGT                                 = 193;  // <Op Shift> ::= <Op Shift> '>>' <Op Add>
+		final int PROD_OPSHIFT                                      = 194;  // <Op Shift> ::= <Op Add>
+		final int PROD_OPADD_PLUS                                   = 195;  // <Op Add> ::= <Op Add> '+' <Op Mult>
+		final int PROD_OPADD_MINUS                                  = 196;  // <Op Add> ::= <Op Add> '-' <Op Mult>
+		final int PROD_OPADD                                        = 197;  // <Op Add> ::= <Op Mult>
+		final int PROD_OPMULT_TIMES                                 = 198;  // <Op Mult> ::= <Op Mult> '*' <Op Unary>
+		final int PROD_OPMULT_DIV                                   = 199;  // <Op Mult> ::= <Op Mult> '/' <Op Unary>
+		final int PROD_OPMULT_PERCENT                               = 200;  // <Op Mult> ::= <Op Mult> '%' <Op Unary>
+		final int PROD_OPMULT                                       = 201;  // <Op Mult> ::= <Op Unary>
+		final int PROD_OPUNARY_EXCLAM                               = 202;  // <Op Unary> ::= '!' <Op Unary>
+		final int PROD_OPUNARY_TILDE                                = 203;  // <Op Unary> ::= '~' <Op Unary>
+		final int PROD_OPUNARY_MINUS                                = 204;  // <Op Unary> ::= '-' <Op Unary>
+		final int PROD_OPUNARY_TIMES                                = 205;  // <Op Unary> ::= '*' <Op Unary>
+		final int PROD_OPUNARY_AMP                                  = 206;  // <Op Unary> ::= '&' <Op Unary>
+		final int PROD_OPUNARY_PLUSPLUS                             = 207;  // <Op Unary> ::= '++' <Op Unary>
+		final int PROD_OPUNARY_MINUSMINUS                           = 208;  // <Op Unary> ::= '--' <Op Unary>
+		final int PROD_OPUNARY_PLUSPLUS2                            = 209;  // <Op Unary> ::= <Op Pointer> '++'
+		final int PROD_OPUNARY_MINUSMINUS2                          = 210;  // <Op Unary> ::= <Op Pointer> '--'
+		final int PROD_OPUNARY_LPAREN_RPAREN                        = 211;  // <Op Unary> ::= '(' <Type> ')' <Op Unary>
+		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN                 = 212;  // <Op Unary> ::= sizeof '(' <Type> ')'
+		final int PROD_OPUNARY_SIZEOF_LPAREN_ID_RPAREN              = 213;  // <Op Unary> ::= sizeof '(' Id <Pointers> ')'
+		final int PROD_OPUNARY                                      = 214;  // <Op Unary> ::= <Op Pointer>
+		final int PROD_OPPOINTER_DOT                                = 215;  // <Op Pointer> ::= <Op Pointer> '.' <Value>
+		final int PROD_OPPOINTER_MINUSGT                            = 216;  // <Op Pointer> ::= <Op Pointer> '->' <Value>
+		final int PROD_OPPOINTER_LBRACKET_RBRACKET                  = 217;  // <Op Pointer> ::= <Op Pointer> '[' <Expr> ']'
+		final int PROD_OPPOINTER                                    = 218;  // <Op Pointer> ::= <Value>
+		final int PROD_VALUE_OCTLITERAL                             = 219;  // <Value> ::= OctLiteral
+		final int PROD_VALUE_HEXLITERAL                             = 220;  // <Value> ::= HexLiteral
+		final int PROD_VALUE_DECLITERAL                             = 221;  // <Value> ::= DecLiteral
+		final int PROD_VALUE_STRINGLITERAL                          = 222;  // <Value> ::= StringLiteral
+		final int PROD_VALUE_CHARLITERAL                            = 223;  // <Value> ::= CharLiteral
+		final int PROD_VALUE_FLOATLITERAL                           = 224;  // <Value> ::= FloatLiteral
+		final int PROD_VALUE_ID_LPAREN_RPAREN                       = 225;  // <Value> ::= Id '(' <Expr> ')'
+		final int PROD_VALUE_ID_LPAREN_RPAREN2                      = 226;  // <Value> ::= Id '(' ')'
+		final int PROD_VALUE_ID                                     = 227;  // <Value> ::= Id
+		final int PROD_VALUE_LPAREN_RPAREN                          = 228;  // <Value> ::= '(' <Expr> ')'
 	};
 
+	private enum PreprocState {TEXT, TYPEDEF, ENUMTYPE, STRUCTUNIONTYPE, COMPLIST, /*ENUMLIST, STRUCTLIST,*/ TYPEID};
+	private StringList typedefs = new StringList();
+	
 	/**
 	 * Constructs a parser for language ANSI-C, loads the grammar as resource and
 	 * specifies whether to generate the parse tree as string
@@ -613,55 +626,169 @@ public class CParser extends CodeParser
 				srcCode = srcCode.replaceAll("(.*?\\W)" + entry.getKey() + "(\\W.*?)", "$1"+ Matcher.quoteReplacement((String)entry.getValue()) + "$2");
 			}
 			
+			// Now we try to replace all type names introduced by typedef declarations
+			// because the grammar doesn't cope with user-defined type ids.
+			// In a first step we gather all type names defined via typedef in a
+			// StringList mapping them by their index to generic type ids being
+			// defined in the grammar ("user_type_##"). It will be a rudimentary parsing
+			// i.e. we don't consider anything except typedef declarations and we expect
+			// a syntactically correct construct. If something
+			// strange occurs then we just ignore the text until we bump into another
+			// typedef keyword.
+			// In the second step we replace all identifiers occurring in the map with
+			// their associated generic name.
+			// TODO in future this will have to care of the block scope...
+			
+			typedefs.clear();
+			Vector<Integer[]> blockRanges = new Vector<Integer[]>();
+			
+			Stack<Character> parenthStack = new Stack<Character>();
+			Stack<Integer> blockStarts = new Stack<Integer>();
+			int blockStartLine = -1;
+			int typedefLevel = -1;
+			int indexDepth = 0;
+			PreprocState state = PreprocState.TEXT;
+			String lastId = null;
+			char expected = '\0';
+			
+			StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(srcCode));
+			tokenizer.quoteChar('"');
+			tokenizer.quoteChar('\'');
+			tokenizer.slashStarComments(true);
+			tokenizer.slashSlashComments(true);
+			tokenizer.parseNumbers();
+			tokenizer.eolIsSignificant(true);
+			
+			while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
+				String word = null;
+				System.out.print("(" + tokenizer.lineno() + ")");
+				switch (tokenizer.ttype) {
+				case StreamTokenizer.TT_EOL:
+					System.out.println("**newline**");
+					break;
+				case StreamTokenizer.TT_NUMBER:
+					System.out.println("number: " + tokenizer.nval);
+					break;
+				case StreamTokenizer.TT_WORD:
+					System.out.println("word: " + tokenizer.sval);
+					word = tokenizer.sval;
+					if (state == PreprocState.TYPEDEF) {
+						if (word.equals("enum")) {
+							state = PreprocState.ENUMTYPE;
+						}
+						else if (word.equals("struct") || word.equals("union")) {
+							state = PreprocState.STRUCTUNIONTYPE;
+						}
+						else {
+							lastId = word;	// Might be the defined type id if no identifier will follow
+						}
+					}
+					else if (state == PreprocState.TYPEID && indexDepth == 0) {
+						typedefs.add(word);
+						blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+					}
+					else if (word.equals("typedef")) {
+						typedefLevel = blockStarts.size();
+						state = PreprocState.TYPEDEF;
+					}
+					// in case of ENUMTYPE or STRUCTUNIONTYPE just skip the id
+					break;
+				case '\'':
+					System.out.println("character: '" + tokenizer.sval + "'");
+					break;
+				case '"':
+					System.out.println("string: \"" + tokenizer.sval + "\"");
+					break;
+				case '{':
+					blockStarts.add(tokenizer.lineno());
+					if (state == PreprocState.STRUCTUNIONTYPE || state == PreprocState.ENUMTYPE) {
+						state = PreprocState.COMPLIST;
+					}
+					parenthStack.push('}');
+					break;
+				case '(':
+					parenthStack.push(')');
+					break;
+				case '[':	// FIXME: Handle index lists in typedefs!
+					if (state == PreprocState.TYPEID) {
+						indexDepth++;
+					}
+					parenthStack.push(']');
+					break;
+				case '}':
+					blockStartLine = blockStarts.pop();
+					// Store the start and current line no as block range if there are typedefs on this block level
+					int blockEndLine = tokenizer.lineno();
+					Integer[] entry;
+					for (int i = blockRanges.size()-1; i >= 0 && (entry = blockRanges.get(i))[1] >= blockStartLine; i--) {
+						if (entry[1] == blockStartLine && entry[1] < entry[0]) {
+							entry[1] = blockEndLine;
+						}
+					}
+					if (state == PreprocState.COMPLIST && typedefLevel == blockStarts.size()) {
+						// After the closing brace, type ids are expected to follow
+						state = PreprocState.TYPEID;
+					}
+				case ')':
+				case ']':	// Handle index lists in typedef!s
+				{
+					if (parenthStack.isEmpty() || tokenizer.ttype != (expected = parenthStack.pop().charValue())) {
+						System.err.println("**FILE PREPARATION TROUBLE** in line " + tokenizer.lineno()
+						+ " of file \"" + _textToParse + "\": unmatched '" + (char)tokenizer.ttype
+						+ "' (expected: '" + (expected == '\0' ? '\u25a0' : expected) + "')!");
+					}
+					else if (tokenizer.ttype == ']' && state == PreprocState.TYPEID) {
+						indexDepth--;
+					}
+				}
+					break;
+				case '*':
+					if (state == PreprocState.TYPEDEF) {
+						state = PreprocState.TYPEID;
+					}
+					break;
+				case ',':
+					if (state == PreprocState.TYPEDEF && lastId != null) {
+						typedefs.add(lastId);
+						blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+						state = PreprocState.TYPEID;
+					}
+					break;
+				case ';':
+					if (state == PreprocState.TYPEDEF && lastId != null) {
+						typedefs.add(lastId);
+						blockRanges.add(new Integer[]{tokenizer.lineno()+1, (blockStarts.isEmpty() ? -1 : blockStarts.peek())});
+						state = PreprocState.TEXT;
+					}
+					else if (state == PreprocState.TYPEID) {
+						state = PreprocState.TEXT;						
+					}
+				default:
+					char tokenChar = (char)tokenizer.ttype;
+					System.out.println("other: " + tokenChar);
+				}
+			}
+			
 			StringList srcLines = StringList.explode(srcCode, "\n");
-			// The analysis of typedefs may fail of course if some array definitions or other complex structures
-			// are involved. A typedef is not a simple #define! Actually, we would need a grammar to analyse typedefs...
-			// But the ANSI-C grammar had even been defective in its <Typedef Decl> rule (it had only expected a single
-			// ID after the type specification!).
-			// FIXME
-			// The first trouble is that a typedef may comprise an arbitrary number of lines. So we will restrict to
-			// single-line typedefs here.
-			// FIXME
-			// The next trouble is that the grammar now also allows block-local typedefs such that we should restrict
-			// the replacements to the next block end, which is extremely difficult here, regarding comments, string
-			// literals, any kind of braces. For the moment, we hope hat the same identifiers won't occur in other
-			// blocks (which is rather optimistic).
-			final String pattern = "(.*)(([*]*)\\s*([a-zA-Z_]\\w*)(\\[.*?\\])*)$";
-			for (int i = 0; i < srcLines.count(); i++) {
-				strLine = srcLines.get(i);
-				if (strLine.startsWith("typedef") && strLine.endsWith(";")) {
-					// We assume the following cases:
-					// At the end of the typedef there may be a comma-separated list of "<Pointers> ID <Array>", i.e.
-					// strings matching the following regular pattern: (.*)(([*]*)\s*([a-zA-Z_]\w*)(\[.*?\])*)$
-					String typedef = strLine.substring("typedef".length(), strLine.length()-1) + ",";
-					HashMap<String, String> decls = new HashMap<String, String>();
-					while (typedef.matches(pattern)) {
-						String typeId = typedef.replaceFirst(pattern, "$4");
-						String pointers = typedef.replaceFirst(pattern, "$3");
-						String arrays = typedef.replaceFirst(pattern, "$5").trim();
-						while (arrays.contains("[")) {
-							arrays = arrays.substring(arrays.indexOf("[")+1);
-							pointers += "*";	// This is not of course correct for #dimensions > 1, but it's near enough
-						}
-						decls.put(typeId, pointers);
-						typedef = typedef.replaceFirst(pattern, "$1").trim();
-					}
-					for (Entry<String, String> entry: decls.entrySet()) {
-						entry.setValue(typedef + entry.getValue());
-					}
-					if (!decls.isEmpty()) {
-						// FIXME: This has nearly cubic complexity!
-						for (int j = i+1; j < srcLines.count(); j++) {
-							String line = srcLines.get(j);
-							for (Entry<String, String> entry: decls.entrySet()) {
-								if (line.matches("(^|.*\\W)" + entry.getKey() + "(\\W.*|$)"))
-								line = line.replaceAll("(^|.*\\W)" + entry.getKey() + "(\\W.*|$)", "$1"+Matcher.quoteReplacement(entry.getValue())+"$2");
-								srcLines.set(j, line);
-							}
-						}
+			// Now we replace the detected user-specific type names by the respective generic ones.
+			for (int i = 0; i < typedefs.count(); i++) {
+				String typeName = typedefs.get(i);
+				Integer[] range = blockRanges.get(i);
+				// Global range?
+				if (range[1] < 0) {
+					range[1] = srcLines.count()-1;
+				}
+				String pattern = "(^|.*?\\W)("+typeName+")(\\W.*?|$)";
+				String subst = String.format("user_type_%03d", i+1);
+				this.replacedIds.put(subst, typeName);
+				subst = "$1" + subst + "$3";
+				for (int j = range[0]; j <= range[1]; j++) {
+					if (srcLines.get(j).matches(pattern)) {
+						srcLines.set(j, srcLines.get(j).replaceAll(pattern, subst));
 					}
 				}
 			}
+			srcCode = srcLines.concatenate("\n");
 
 //			Regex r = new Regex("(.*\\()\\s*?void\\s*?(\\).*)", "$1$2");
 //			srcCode = r.replaceAll(srcCode);
@@ -770,6 +897,17 @@ public class CParser extends CodeParser
 			{
 				// If declaration import is allowed then we make an instruction in
 				// Pascal syntax out of it.
+				String rootName = root.getMethodName();
+				Subqueue parentNode = _parentNode;
+				boolean isGlobal = rootName.equals("???"); 
+				if (isGlobal) {
+					if (this.globalRoot == null) {
+						this.globalRoot = root;
+//						this.globalRoot.setText("global");
+//						subRoots.add(this.globalRoot);
+					}
+					parentNode = this.globalRoot.children;
+				}
 				boolean isConstant = false;
 				int typeIx = -1;	// token index of the type description
 				switch (ruleId) {
@@ -800,7 +938,7 @@ public class CParser extends CodeParser
 				}
 				// Now concern on the first declaration of the list
 				Reduction secReduc = _reduction.get(_reduction.size() - 3).asReduction();
-				buildDeclOrAssignment(secReduc, type, _parentNode);
+				buildDeclOrAssignment(secReduc, type, parentNode);
 //				if (_reduction.size() > typeIx+2) {
 					if (debugprint) {
 						System.out.println("\tanalyzing <Var List> ...");
@@ -813,7 +951,7 @@ public class CParser extends CodeParser
 						// Get the pointers part
 						String pointers = getContent_R(thdReduc.get(0).asReduction(), "");
 						// Delegate the sub-reduction <Var>
-						buildDeclOrAssignment(secReduc.get(1).asReduction(), type+pointers, _parentNode);
+						buildDeclOrAssignment(secReduc.get(1).asReduction(), type+pointers, parentNode);
 						// Get the list tail
 						secReduc = secReduc.get(2).asReduction();	// <Var List>
 						ruleId = secReduc.getParent().getTableIndex();
@@ -825,32 +963,54 @@ public class CParser extends CodeParser
 			}
 			else if (
 					// Type definitions
-						ruleId == RuleConstants.PROD_STRUCTDECL_STRUCT_ID_LBRACE_RBRACE_SEMI
+						ruleId == RuleConstants.PROD_STRUCTDECL_STRUCT_ID_LBRACE_RBRACE
 						||
-						ruleId == RuleConstants.PROD_UNIONDECL_UNION_ID_LBRACE_RBRACE_SEMI
+						ruleId == RuleConstants.PROD_UNIONDECL_UNION_ID_LBRACE_RBRACE
+						||
+						ruleId == RuleConstants.PROD_ENUMDECL_ENUM_ID_LBRACE_RBRACE
 						||
 						ruleId == RuleConstants.PROD_TYPEDEFDECL_TYPEDEF
 					)
 			{
-				// Union and struct definitions may only be global in this grammar. If we don't handle
-				// them then their components would be made variable declarations.
-				// We might create disabled declaration instructions for them instead, but where to place
-				// them? Create a dummy diagram for type definitions? Well, maybe Or better collect them
-				// for the main program? The latter makes some sense. So we will park them in a "globalRoot"
+				// If we don't handle struct and union definitions then their components would be made
+				// variable declarations.
+				// We will create disabled declaration instructions for all type declarations instead.
+				// For global type definitions we will create a dummy "import" diagram for global stuff
+				// (enh. #389).
+				// Moreover, a grammar enhancement of 2017-04-11 now supports the combination of a type
+				// definition with variable declarations. So we will have to handle them as well.
 				String rootName = root.getMethodName();
-				if (this.globalRoot == null) {
-					if (rootName.equals("main") || rootName.equals("???")) {
+				Subqueue parentNode = _parentNode;
+				boolean isGlobal = rootName.equals("???"); 
+				if (isGlobal) {
+					if (this.globalRoot == null) {
 						this.globalRoot = root;
+						//subRoots.add(this.globalRoot);
 					}
-					else {
-						this.globalRoot = new Root();
-						this.globalRoot.isProgram = false;
-					}
+					parentNode = this.globalRoot.children;
 				}
 				String content = this.getContent_R(_reduction, "");
-				Instruction decl = new Instruction(content);
+				int insertAt = parentNode.getSize();
+				if (ruleId != RuleConstants.PROD_TYPEDEFDECL_TYPEDEF) {
+					Reduction varDecl = _reduction.get(5).asReduction();
+					// Does it contain variable declarations?
+					if (varDecl.getParent().getTableIndex() == RuleConstants.PROD_DECLEND_SEMI2) {
+						String type = content.substring(0, content.indexOf("{")).trim();
+						this.buildDeclOrAssignment(varDecl.get(0).asReduction(), type, _parentNode);
+						varDecl = varDecl.get(1).asReduction();
+						while (varDecl.getParent().getTableIndex() == RuleConstants.PROD_VARLIST_COMMA) {
+							this.buildDeclOrAssignment(varDecl.get(1).asReduction(), type, _parentNode);
+							varDecl = varDecl.get(2).asReduction();
+						}
+						content = this.getContent_R(_reduction.get(3).asReduction(), type + " {") + "}";
+					}
+				}
+				Instruction decl = new Instruction(translateContent(content));
 				decl.disabled = true;
-				this.globalRoot.children.addElement(decl);
+				if (isGlobal) {
+					decl.setColor(colorGlobal);
+				}
+				parentNode.insertElementAt(decl, insertAt);
 			}
 			else if (
 					// BREAK instruction
@@ -1236,7 +1396,7 @@ public class CParser extends CodeParser
 			content = translateContent(content);
 			Element instr = null;
 			if (this.optionImportVarDecl) {
-				instr = new Instruction(_type + " " + content);
+				instr = new Instruction(translateContent(_type) + " " + content);
 				if (isConstant) {
 					instr.setColor(colorConst);
 				}
@@ -1505,6 +1665,9 @@ public class CParser extends CodeParser
 		//_content = BString.replace(_content, ":="," \u2190 ");
 		//_content = BString.replace(_content, " = "," <- "); already done by getContent_R()!
 
+		// START KGU 2017-04-11
+		_content = undoIdReplacements(_content);
+		// END KGU 2017-04-11
 		return _content.trim();
 	}
 	
@@ -1641,6 +1804,7 @@ public class CParser extends CodeParser
 			if (this.optionUpperCaseProgName) {
 				fileName = fileName.toUpperCase();
 			}
+			fileName = fileName.replace(" ", "_");
 			if (aRoot.getParameterNames().count() > 0) {
 				String header = aRoot.getText().getText();
 				header = header.replaceFirst("(.*?)main([((].*)", "$1" + fileName + "$2");
@@ -1648,24 +1812,21 @@ public class CParser extends CodeParser
 			}
 			else {
 				aRoot.setText(fileName);
+				aRoot.isProgram = true;
 			}
-			aRoot.isProgram = true;
-			// Are there some global definitions to be taken over?
-			if (this.root.getText().getText().equals("???")) {
-				for (int i = this.root.children.getSize(); i > 0; i--) {
-					aRoot.children.insertElementAt(this.root.children.getElement(i-1), 0);
-				}
-				this.root.children.clear();
-			}
-			// Are there some more global definitions to be taken over?
-			if (this.globalRoot != null && this.globalRoot != aRoot) {
-				for (int i = this.globalRoot.children.getSize(); i > 0; i--) {
-					aRoot.children.insertElementAt(this.globalRoot.children.getElement(i-1), 0);
-				}
-				this.globalRoot.children.clear();
-				this.globalRoot = null;
+			// Are there some global definitions to be imported?
+			if (this.globalRoot != null) {
+				this.globalRoot.setText(fileName + "Globals");
+				this.globalRoot.isProgram = true;
 			}
 		}
+		// START KGU#376 2017-04-11: enh. #389 import mechanism for globals
+		if (this.globalRoot != null && this.globalRoot != aRoot) {
+			Call importCall = new Call(getKeywordOrDefault("preImport", "import") + " " + this.globalRoot.getMethodName());
+			importCall.setColor(colorGlobal);
+			aRoot.children.insertElementAt(importCall, 0);
+		}
+		// END KGU#376 2017-04-11
 	}
 	
 

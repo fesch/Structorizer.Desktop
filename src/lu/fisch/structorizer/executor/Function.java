@@ -360,7 +360,7 @@ public class Function
     /**
      * Checks identifier syntax (i.e. ASCII letters, digits, underscores, and possibly dots)
      * @param _str - the identifier candidate
-     * @param _alsoAllowedCharacters - a String containing additionally accepted characters (e.g. ".")
+     * @param _alsoAllowedChars - a String containing additionally accepted characters (e.g. ".") or null
      * @return true iff _str complies with the strict identifier syntax convention (plus allowed characters)
      */
     public static boolean testIdentifier(String _str, String _alsoAllowedChars)

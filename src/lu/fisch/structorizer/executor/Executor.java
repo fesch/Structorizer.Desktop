@@ -118,6 +118,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.03.06      Bugfix #369: Interpretation of C-style array initializations (decl.) fixed.
  *      Kay Gürtzig     2017.03.27      Issue #356: Sensible reaction to the close button ('X') implemented
  *      Kay Gürtzig     2017.03.30      Enh. #388: Concept of constants implemented
+ *      Kay Gürtzig     2017.04.11      Enh. #389: Implementation of import calls (without context change)
  *
  ******************************************************************************************************
  *
@@ -825,6 +826,9 @@ public class Executor implements Runnable
 				"\" at " + sdf.format(System.currentTimeMillis()) + " ***", Color.GRAY);
 		if (this.isConsoleEnabled) this.console.setVisible(true);
 		// END KGU#160 2016-04-12
+		// START KGU#376 2017-04-11: Enh. #389 - Must no longer be done by execute(arguments)
+		initInterpreter();
+		// END KGU#376 2017-04-11
 		/////////////////////////////////////////////////////////
 		this.execute(null);	// The actual top-level execution
 		/////////////////////////////////////////////////////////
@@ -889,7 +893,9 @@ public class Executor implements Runnable
 		// Reset all execution state remnants (just for sure)
 		diagram.clearExecutionStatus();
 		// END KGU 2015-10-11/13
-		initInterpreter();
+		// START KGU#376 2017-04-11: Enh. #389 - Must no longer done here but in execute() and executeCall()
+		//initInterpreter();
+		// END KGU#376 2017-04-11
 		String result = "";
 		returned = false;
 		// START KGU#78 2015-11-25
@@ -1065,7 +1071,7 @@ public class Executor implements Runnable
 			// END KGU#2 2015-11-24	
 		} else
 		{
-			if ((root.isProgram == false) && (returned == false))
+			if ((!root.isProgram) && (returned == false))
 			{
 				StringList posres = new StringList();
 				posres.add(root.getMethodName());
@@ -1244,12 +1250,18 @@ public class Executor implements Runnable
 				// END KGU#307 2016-12-12
 				);
 		this.callers.push(entry);
-		this.interpreter = new Interpreter();
-		this.initInterpreter();
-		this.variables = new StringList();
-		// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
-		this.forLoopVars = new StringList(); 
-		// END KGU#307 2016-12-12
+		// START KGU#376 2017-04-11: keep the od context with import calls
+		if (!subRoot.isProgram) {
+		// END KGU#376 2017-04-11
+			this.initInterpreter();
+			this.variables = new StringList();
+			// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
+			this.forLoopVars = new StringList(); 
+			// END KGU#307 2016-12-12
+			// loopDepth wil be set 0 by the execut(arguments) call below
+		// START KGU#376 2017-04-11: keep the old context with import calls
+		}
+		// END KGU#376 2017-04-11
 		
 		// If the found subroutine is already an active caller, then we need a new instance of it
 		if (root.isCalling)
@@ -1298,12 +1310,20 @@ public class Executor implements Runnable
 		// END KG#117 2016-03-07
 		
 		this.callers.pop();	// Should be the entry still held by variable entry
-					
-		this.variables = entry.variables;
-		this.interpreter = entry.interpreter;
-		// START KGU#78 2015-11-25
-		this.loopDepth = entry.loopDepth;
-		// END KGU#78 2015-11-25
+		
+		// START KGU#376 2017-04-11: Enh. #389 don't restore after an import call
+		if (!subRoot.isProgram) {
+		// END KGU#376 2017-04-11
+			this.variables = entry.variables;
+			this.interpreter = entry.interpreter;
+			// START KGU#78 2015-11-25
+			this.loopDepth = entry.loopDepth;
+			// END KGU#78 2015-11-25
+		// START KGU#376 2017-04-11: keep the old context with import calls
+			this.forLoopVars = entry.forLoopVars;
+		}
+		// END KGU#376 2017-04-11
+		
 		this.diagram.setRoot(entry.root, !Element.E_AUTO_SAVE_ON_EXECUTE);
 		entry.root.isCalling = false;
 
@@ -1389,6 +1409,17 @@ public class Executor implements Runnable
 	// END KGU#2 2015-11-24
 	
     /**
+     * Searches all known pools for a unique program diagram with given name 
+     * @param name - program name
+     * @return a Root with given name if uniquely found, null otherwise
+     * @throws Exception
+     */
+	public Root findProgramWithName(String name) throws Exception
+	{
+		return findDiagramWithSignature(name, -1);
+	}
+	
+    /**
      * Searches all known pools for subroutines with a signature compatible to name(arg1, arg2, ..., arg_nArgs) 
      * @param name - function name
      * @param nArgs - number of parameters of the requested function
@@ -1404,11 +1435,31 @@ public class Executor implements Runnable
     	{
     		subroutine = root;
     	}
+    	if (subroutine == null) {
+    		subroutine = findDiagramWithSignature(name, nArgs);
+    	}
+    	return subroutine;
+    }
+    
+    private Root findDiagramWithSignature(String name, int nArgs) throws Exception
+    {
+    	Root diagr = null;
     	Iterator<IRoutinePool> iter = this.routinePools.iterator();
-    	while (subroutine == null && iter.hasNext())
+    	while (diagr == null && iter.hasNext())
     	{
     		IRoutinePool pool = iter.next();
-    		Vector<Root> candidates = pool.findRoutinesBySignature(name, nArgs);
+    		Vector<Root> candidates = null;
+    		if (nArgs >= 0) {
+    			candidates = pool.findRoutinesBySignature(name, nArgs);
+    		}
+    		else {
+    			candidates = new Vector<Root>();
+    			for (Root cand: pool.findDiagramsByName(name)) {
+    				if (cand.isProgram) {
+    					candidates.add(cand);
+    				}
+    			}
+    		}
     		// START KGU#317 2016-12-29: Now the execution will be aborted on ambiguous calls
     		//for (int c = 0; subroutine == null && c < candidates.size(); c++)
     		for (int c = 0; c < candidates.size(); c++)
@@ -1416,27 +1467,27 @@ public class Executor implements Runnable
     		{
     	    	// START KGU#317 2016-12-29: Check for ambiguity (multiple matches) and raise e.g. an exception in that case
     			//subroutine = candidates.get(c);
-    			if (subroutine == null) {
-    				subroutine = candidates.get(c);
+    			if (diagr == null) {
+    				diagr = candidates.get(c);
     			}
     			else {
     				Root cand = candidates.get(c);
-    				int similarity = subroutine.compareTo(cand); 
+    				int similarity = diagr.compareTo(cand); 
     				if (similarity > 2 && similarity != 4) {
-    					throw new Exception(control.msgAmbiguousCall.getText().replace("%1", name).replace("%2", Integer.toString(nArgs)));
+    					throw new Exception(control.msgAmbiguousCall.getText().replace("%1", name).replace("%2", (nArgs < 0 ? "--" : Integer.toString(nArgs))));
     				}
     			}
     			// END KGU#317 2016-12-29
     			// START KGU#125 2016-01-05: Is to force updating of the diagram status
     			if (pool instanceof Updater)
     			{
-    				subroutine.addUpdater((Updater)pool);
+    				diagr.addUpdater((Updater)pool);
     			}
-    			diagram.adoptArrangedOrphanNSD(subroutine);
+    			diagram.adoptArrangedOrphanNSD(diagr);
     			// END KGU#125 2016-01-05
     		}
     	}
-    	return subroutine;
+    	return diagr;
     }
 	// END KGU#2 (#9) 2015-11-13
 
@@ -3710,8 +3761,40 @@ public class Executor implements Runnable
 					interpreter.eval(cmd);
 				}
 			}
-		} else
-		{
+		}
+		// START KGU#376 2017-04-11: Enh. #389
+		else if (element instanceof Call && element.isImportCall()) {
+			Root imp = null;
+			String diagrName = ((Call)element).getSignatureString();
+			try {
+				imp = this.findProgramWithName(diagrName);
+			} catch (Exception ex) {
+				return ex.getMessage();	// Ambiguous call!
+			}
+			// END KGU#317 2016-12-29
+			if (imp != null)
+			{
+				executeCall(imp, null, (Call)element);
+				// START KGU#117 2016-03-10: Enh. #77
+				if (Element.E_COLLECTRUNTIMEDATA)
+				{
+					element.simplyCovered = true;
+				}
+				// END KGU#117 2016-03-10
+			}
+			else
+			{
+				// START KGU#197 2016-07-27: Now translatable message
+				//result = "A subroutine diagram " + f.getName() + " (" + f.paramCount() + 
+				//		" parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.";
+				result = control.msgNoProgDiagram.getText().
+						replace("%", diagrName);
+				// END KGU#197 2016-07-27
+			}
+			
+		}
+		// END KGU#376 2017-04-11
+		else {
 			result = "<" + cmd + "> is not a correct function!";
 		}
 		return result;

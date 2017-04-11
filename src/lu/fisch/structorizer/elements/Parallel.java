@@ -645,7 +645,7 @@ public class Parallel extends Element
 //		{
 //			_lines.add(this.getText());
 //		}
-    	if (qs!= null)
+    	if (qs!= null && !this.isDisabled())
     	{
     		for (int i = 0; i < qs.size(); i++)
     		{

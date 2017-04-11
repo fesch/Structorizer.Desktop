@@ -20,8 +20,7 @@
 
 package lu.fisch.structorizer.elements;
 
-/*
- ******************************************************************************************************
+/******************************************************************************************************
  *
  *      Author:         Bob Fisch
  *
@@ -107,11 +106,9 @@ package lu.fisch.structorizer.elements;
  *      3. A Jump element inside a Case instruction actually means a two-level break in C-like languages
  *         and hence requires a goto or a labeled break instruction.
  *
- ******************************************************************************************************
- */
+ ******************************************************************************************************///
 
 import java.awt.Color;
-import java.util.regex.Matcher;
 
 import javax.swing.ImageIcon;
 
@@ -216,7 +213,7 @@ public class Jump extends Instruction {
     protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
 		// In a jump instruction no variables ought to be introduced - so we ignore this text on _instructionsOnly
-		if (!_instructionsOnly)
+		if (!this.isDisabled() && !_instructionsOnly)
 		{
 			_lines.add(this.getText());
 		}

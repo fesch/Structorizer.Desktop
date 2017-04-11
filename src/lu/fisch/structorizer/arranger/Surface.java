@@ -1810,10 +1810,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     
     // START KGU#2 2015-10-17: Prepares the execution of a registered NSD as subroutine
     /* (non-Javadoc)
-     * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesByName(java.lang.String)
+     * @see lu.fisch.structorizer.executor.IRoutinePool#findDiagramsByName(java.lang.String)
      */
     @Override
-    public Vector<Root> findRoutinesByName(String rootName)
+    public Vector<Root> findDiagramsByName(String rootName)
     {
     	Vector<Root> functions = new Vector<Root>();
     	if (this.diagrams != null) {
@@ -1830,6 +1830,23 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     }
     // END KGU#2 2015-10-17
     
+    // START KGU#376 2017-04-11: Enh. #389 - Support for import calls
+    /* (non-Javadoc)
+     * @see lu.fisch.structorizer.executor.IRoutinePool#findProgramsByName(java.lang.String)
+     */
+    @Override
+    public Vector<Root> findProgramsByName(String rootName)
+    {
+    	Vector<Root> progrs = new Vector<Root>();
+    	for (Root root: this.findDiagramsByName(rootName)) {
+    		if (root.isProgram) {
+    			progrs.add(root);
+    		}
+    	}
+    	return progrs;
+    }
+    // END KGU#376 2017-04-11
+
     // START KGU#2 2015-11-24
     /* (non-Javadoc)
      * @see lu.fisch.structorizer.executor.IRoutinePool#findRoutinesBySignature(java.lang.String, int)
@@ -1837,7 +1854,7 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     @Override
     public Vector<Root> findRoutinesBySignature(String rootName, int argCount)
     {
-    	Vector<Root> functionsAny = findRoutinesByName(rootName);
+    	Vector<Root> functionsAny = findDiagramsByName(rootName);
     	Vector<Root> functions = new Vector<Root>();
     	for (int i = 0; i < functionsAny.size(); i++)
     	{

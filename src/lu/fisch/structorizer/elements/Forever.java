@@ -302,7 +302,9 @@ public class Forever extends Element implements ILoop {
 	@Override
     protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
-		this.q.addFullText(_lines, _instructionsOnly);
+		if (!this.isDisabled()) {
+			this.q.addFullText(_lines, _instructionsOnly);
+		}
     }
     // END KGU 2015-10-16
 

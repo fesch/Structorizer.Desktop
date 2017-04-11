@@ -312,7 +312,9 @@ public class Instruction extends Element {
 	@Override
     protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
-   		_lines.add(this.getText());
+		if (!this.isDisabled()) {
+			_lines.add(this.getText());
+		}
     }
     // END KGU 2015-10-16
 
@@ -405,6 +407,20 @@ public class Instruction extends Element {
 		return this.text.count() == 1 && Instruction.isFunctionCall(this.text.get(0));
 	}
 	// END KGU#199 2016-07-06
+	
+	// START KGU#376 2017-04-11: Enh. #389
+	public static boolean isImportCall(String line)
+	{
+		final String importKey = CodeParser.getKeywordOrDefault("preImport", "import").trim() + " ";
+		return line.startsWith( importKey ) &&
+				Function.testIdentifier(line.substring( importKey.length() ).trim(), null);
+	}
+	public boolean isImportCall()
+	{
+		return this.text.count() == 1 && Instruction.isImportCall(this.text.get(0));
+	}
+	// END KGU#376 2017-04-11
+	
 	// START KGU#236 2016-08-10: Issue #227: New classification for input and output
 	public static boolean isOutput(String line)
 	{

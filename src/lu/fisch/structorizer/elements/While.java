@@ -297,12 +297,14 @@ public class While extends Element implements ILoop {
 	@Override
     protected void addFullText(StringList _lines, boolean _instructionsOnly)
     {
-		// The own text contains just a condition (i.e. a logical expression), not an instruction
-		if (!_instructionsOnly)
-		{
-			_lines.add(this.getText());
+		if (!this.isDisabled()) {
+			// The own text contains just a condition (i.e. a logical expression), not an instruction
+			if (!_instructionsOnly)
+			{
+				_lines.add(this.getText());
+			}
+			this.q.addFullText(_lines, _instructionsOnly);
 		}
-		this.q.addFullText(_lines, _instructionsOnly);
     }
     // END KGU 2015-10-16
 

@@ -103,6 +103,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.04.04      Enh. #388: New Analyser check for constant definitions (no. 22),
  *                                      method getUsedVarNames decomposed, check no. 10 enhanced.
  *      Kay Gürtzig     2017.04.05      Issue #390: Improved initialization check for multi-line instructions
+ *      Kay Gürtzig     2017.04.11      Enh. #389: Analyser additions for import calls implemented
  *
  ******************************************************************************************************
  *
@@ -124,11 +125,13 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.util.Iterator;
+import java.util.Set;
 import java.util.Vector;
 import java.util.Stack;
 import java.util.Hashtable;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.regex.Matcher;
 
 import org.xml.sax.Attributes;
@@ -329,6 +332,9 @@ public class Root extends Element {
 	private static Hashtable<String, StringList> caseAwareKeywords = null;
 	private static Hashtable<String, StringList> caseUnawareKeywords = null;
 	// END KGU#239 2016-08-12
+	// START KGU#239 2017-04-11: Some structorizer-internal keywords are also to be checked against
+	private static Set<String> structorizerKeywords = new HashSet<String>();
+	// END KGU#239 2017-04-11
 
 	private Vector<Updater> updaters = new Vector<Updater>();
 
@@ -1814,6 +1820,11 @@ public class Root extends Element {
 			tokens.clear();
 		}
 		// END #375 2017-03-31
+		// START KGU#376 2017-04-11: Enh. #389: New CALL flavour
+		else if (tokens.indexOf(CodeParser.getKeyword("preImport")) == 0) {
+			tokens.clear();
+		}
+		// END KGU#376 2017-04-11
 
 		// cutoff output keyword
 		if (tokens.get(0).equals(CodeParser.getKeyword("output")))	// Must be at the line's very beginning
@@ -2058,11 +2069,11 @@ public class Root extends Element {
 
             // get body text
             StringList lines;
-            if(_onlyEle==true && !_onlyBody)
+            if(_onlyEle && !_onlyBody && !(_ele instanceof Call && ((Call)_ele).isImportCall()))
             {
                     lines = _ele.getText().copy();
             }
-            else if(_entireProg)
+            else if (_entireProg)
             {
                     // START KGU#39 2015-10-16: Use object methods now
                     //lines = getFullText();
@@ -2306,7 +2317,7 @@ public class Root extends Element {
 
     		// CHECK #10: wrong multi-line instruction
     		// CHECK #11: wrong assignment (comparison operator in assignment)
-    		if(ele.getClass().getSimpleName().equals("Instruction"))
+    		if (eleClassName.equals("Instruction"))
     		{
     			analyse_10_11(ele, _errors);
 				// START KGU#375 2017-04-04: Enh. #388
@@ -2386,8 +2397,9 @@ public class Root extends Element {
     		// END KGU#78 2015-11-25
 
     		// add detected vars to initialised vars
-    		_vars.addIfNew(myVars);
-
+    		if (!(ele instanceof Call && ((Call)ele).isImportCall())) {
+    			_vars.addIfNew(myVars);
+    		}
 
     		// CHECK: endless loop (#2)
     		if (eleClassName.equals("While")
@@ -2478,8 +2490,8 @@ public class Root extends Element {
     			for (int j=0; j < si; j++)
     			{
     				StringList caseVars = initialVars.copy();
-    				analyse((Subqueue) caseEle.qs.get(j),_errors,caseVars,_uncertainVars,_constants, _resultFlags);
-    				for(int v = 0; v<caseVars.count(); v++)
+    				analyse((Subqueue) caseEle.qs.get(j),_errors, caseVars, _uncertainVars, _constants, _resultFlags);
+    				for(int v = 0; v < caseVars.count(); v++)
     				{
     					String varName = caseVars.get(v);
     					if(myInitVars.containsKey(varName))
@@ -2521,7 +2533,24 @@ public class Root extends Element {
     			}
     			// look at the comment for the IF-structure
     		}
-    		
+    		// START KGU#376 2017-04-11: Enh. #389
+    		else if ((ele instanceof Call && ((Call)ele).isImportCall())) {
+				// Get all lines of the called routine
+				String name = ((Call)ele).getSignatureString();
+				if (Arranger.hasInstance()) {
+					Vector<Root> roots = Arranger.getInstance().findProgramsByName(name);
+					if (roots.size() == 1) {
+						boolean[] subResultFlags = new boolean[]{false, false, false};
+						// We are not interested in internal errors but in the imported variables and constants
+		    			analyse(roots.get(0).children, new Vector<DetectedError>(), _vars, _uncertainVars, _constants, subResultFlags);
+		    			if (subResultFlags[0]) {
+		    				//error  = new DetectedError("The constant «"+myDefs.get(0)+"» depends on non-constant values: "+"!",(Element) _node.getElement(i));
+							addError(_errors, new DetectedError(errorMsg(Menu.error15_4, name), ele), 15);    				
+		    			}
+					}
+				}		
+    		}
+    		// END KGU#376 2017-04-11
     		
     	} // for(int i=0; i < _node.size(); i++)...
     }
@@ -2872,7 +2901,10 @@ public class Root extends Element {
 	 */
 	private void analyse_15(Call ele, Vector<DetectedError> _errors)
 	{
-		if (!ele.isProcedureCall() && !ele.isFunctionCall())
+		// START KGU#376 2017-04-11: Enh. #389 - new call type
+		//if (!ele.isProcedureCall() && !ele.isFunctionCall())
+		if (!ele.isProcedureCall() && !ele.isFunctionCall() && !ele.isImportCall())
+		// END KGU#376 2017-04-11
 		{
 			//error  = new DetectedError("The CALL hasn't got form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)»!",(Element) _node.getElement(i));
 			// START KGU#278 2016-10-11: Enh. #267
@@ -2881,17 +2913,38 @@ public class Root extends Element {
 			// END KGU#278 2016-10-11
 		}
 		// START KGU#278 2016-10-11: Enh. #267
-		else {
-			String text = ele.getText().get(0);
-			StringList tokens = Element.splitLexically(text, true);
-			Element.unifyOperators(tokens, true);
-			int asgnPos = tokens.indexOf("<-");
-			if (asgnPos > 0)
-			{
-				// This looks somewhat misleading. But we do a mere syntax check
-				text = tokens.concatenate("", asgnPos+1);
+		// START KGU#376 2017-04-11: Enh. #389
+		else if (ele.isImportCall()) {
+			String name = ele.getSignatureString();
+			int count = 0;	// Number of matching routines
+			if (Arranger.hasInstance()) {
+				count = Arranger.getInstance().findProgramsByName(name).size();
 			}
-			Function subroutine = new Function(text);
+			if (count == 0) {
+				//error  = new DetectedError("The called subroutine «<routine_name>(<arg_count>)» is currently not available.",(Element) _node.getElement(i));
+				addError(_errors, new DetectedError(errorMsg(Menu.error15_2, name), ele), 15);
+			}
+			else if (count > 1) {
+				//error  = new DetectedError("There are several matching subroutines for «<routine_name>(<arg_count>)».",(Element) _node.getElement(i));
+				addError(_errors, new DetectedError(errorMsg(Menu.error15_3, name), ele), 15);					
+			}
+			
+		}
+		// END KGU#376 2017-04-11
+		else {
+			// START KGU 2017-04-11: We have high-level support here!
+			//String text = ele.getText().get(0);
+			//StringList tokens = Element.splitLexically(text, true);
+			//Element.unifyOperators(tokens, true);
+			//int asgnPos = tokens.indexOf("<-");
+			//if (asgnPos > 0)
+			//{
+			//	// This looks somewhat misleading. But we do a mere syntax check
+			//	text = tokens.concatenate("", asgnPos+1);
+			//}
+			//Function subroutine = new Function(text);
+			Function subroutine = ele.getCalledRoutine();
+			// END KGU 2017-04-11
 			String subName = subroutine.getName();
 			int subArgCount = subroutine.paramCount();
 			if ((!this.getMethodName().equals(subName) || subArgCount != this.getParameterNames().count()))
@@ -3257,8 +3310,13 @@ public class Root extends Element {
 				{
 					String[] substitutions = {varName, languages.concatenate(", ")};
 					// warning "Variable name «%1» may collide with reserved names in languages like %2!"
-					addError(_errors, new DetectedError(errorMsg(Menu.error19, substitutions), _ele), 19);								
+					addError(_errors, new DetectedError(errorMsg(Menu.error19_1, substitutions), _ele), 19);								
 				}
+				// START KGU#239 2017-04-11
+				if (structorizerKeywords.contains(varName)) {
+					addError(_errors, new DetectedError(errorMsg(Menu.error19_2, varName), _ele), 19);
+				}
+				// END KGU#239 2017-04-11
 			}
 		}
 	}
@@ -3606,6 +3664,12 @@ public class Root extends Element {
 
     public Vector<DetectedError> analyse()
     {
+    	structorizerKeywords.clear();
+    	structorizerKeywords.add("global");
+    	for (String keyword: CodeParser.getAllProperties()) {
+    		structorizerKeywords.add(keyword);
+    	}
+    	
         this.getVarNames();
         //System.out.println(this.variables);
 
