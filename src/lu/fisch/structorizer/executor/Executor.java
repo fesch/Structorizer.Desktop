@@ -119,6 +119,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.03.27      Issue #356: Sensible reaction to the close button ('X') implemented
  *      Kay Gürtzig     2017.03.30      Enh. #388: Concept of constants implemented
  *      Kay Gürtzig     2017.04.11      Enh. #389: Implementation of import calls (without context change)
+ *      Kay Gürtzig     2017.04.12      Bugfix #391: Control button activation fixed for step mode
  *
  ******************************************************************************************************
  *
@@ -1133,7 +1134,10 @@ public class Executor implements Runnable
 									{
 										paus = true;
 										step = true;
-										control.setButtonsForPause();
+										// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
+										//control.setButtonsForPause();
+										control.setButtonsForPause(false);	// This avoids interference with the pause button
+										// END KGU#379 2017-04-12
 									}
 								}
 								// END KGU#84 2015-11-23
@@ -1191,7 +1195,7 @@ public class Executor implements Runnable
 		btnPause.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent event) 
 			{
-				step = true; paus = true; control.setButtonsForPause();
+				step = true; paus = true; control.setButtonsForPause(true);
 				if (event.getSource() instanceof JButton)
 				{
 					Container parent = ((JButton)(event.getSource())).getParent();
@@ -2736,8 +2740,10 @@ public class Executor implements Runnable
 		}
 		// END KGU#276 2016-11-19
 		if (atBreakpoint) {
-			control.setButtonsForPause();
-
+			// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
+			//control.setButtonsForPause();
+			control.setButtonsForPause(false);	// This avoids interference with the pause button
+			// END KGU#379 2017-04-12
 			this.setPaus(true);
 		}
 		return atBreakpoint;
@@ -3393,7 +3399,10 @@ public class Executor implements Runnable
 					paus = true;
 					step = true;
 				}
-				control.setButtonsForPause();
+				// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
+				//control.setButtonsForPause();
+				control.setButtonsForPause(false);	// This avoids interference with the pause button
+				// END KGU#379 2017-04-12
 			}
 		}
 		else
@@ -3470,7 +3479,10 @@ public class Executor implements Runnable
 					paus = true;
 					step = true;
 				}
-				this.control.setButtonsForPause();
+				// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
+				//control.setButtonsForPause();
+				control.setButtonsForPause(false);	// This avoids interference with the pause button
+				// END KGU#379 2017-04-12
 				if (!variables.contains(in))
 				{
 					// If the variable hasn't been used before, we must create it now
@@ -3578,7 +3590,10 @@ public class Executor implements Runnable
 						paus = true;
 						step = true;
 					}
-					control.setButtonsForPause();
+					// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
+					//control.setButtonsForPause();
+					control.setButtonsForPause(false);	// This avoids interference with the pause button
+					// END KGU#379 2017-04-12
 				}
 			}
 			// END KGU#84 2015-11-23
@@ -3643,9 +3658,14 @@ public class Executor implements Runnable
 							JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
 					if (pressed == 1)
 					{
-						paus = true;
-						step = true;
-						control.setButtonsForPause();
+						synchronized(this) {
+							paus = true;
+							step = true;
+						}
+						// START KGU#379 2017-04-12: Bugfix #391 moved to waitForNext()
+						//control.setButtonsForPause();
+						control.setButtonsForPause(false);	// This avoids interference with the pause button
+						// END KGU#379 2017-04-12
 					}
 					// END KGU#84 2015-11-23
 				}
@@ -4781,6 +4801,12 @@ public class Executor implements Runnable
 
 	private void waitForNext()
 	{
+		// START KGU#379 2017-04-12: Bugfix #391: This is the proper place to prepare the buttons for pause mode
+		// Well, maybe it is better put into the synchronized block?
+		if (getPaus()) {
+			control.setButtonsForPause(true);
+		}
+		// END KGU#379 2017-04-12
 		synchronized (this)
 		{
 			while (paus == true)

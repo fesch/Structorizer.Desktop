@@ -56,6 +56,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2016.01.09      Issue #81 / bugfix #330: GUI scaling stuff outsourced to GUIScaler
  *      Kay Gürtzig     2017.03.27      Issue #356: Sensible reaction to the close button ('X') implemented
  *      Kay Gürtzig     2017.03.30      Enh. #388: Support for the display of constants
+ *      Kay Gürtzig     2017.04.12      Bugfix #391: Defective button control in step mode fixed.
  *
  ******************************************************************************************************
  *
@@ -567,14 +568,24 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     }
     
     // START KGU 2015-10-12: Must be possible on breakpoints
-    public void setButtonsForPause()
+    // START KGU#379 2017-04-12: Bugfix #391 Signature change (new argument allButtons)
+    //public void setButtonsForPause()
+    public void setButtonsForPause(boolean allButtons)
+    // END KGU#379 2017-04-12
     {
+    	System.out.println("setButtonsForPause()");
         btnPause.setEnabled(false);
-        btnPlay.setEnabled(true);
-        btnStep.setEnabled(true);
-        // START KGU#210 2016-07-25: Issue #201 - new Call stack display strategy
-        btnCallStack.setEnabled(true);
-        // END KGU#210 2016-07-25
+        // START KGU#379 2017-04-12: Bugfix #391
+        if (allButtons) {
+        // END KGU#379 2017-04-12
+            btnPlay.setEnabled(true);
+            btnStep.setEnabled(true);
+            // START KGU#210 2016-07-25: Issue #201 - new Call stack display strategy
+            btnCallStack.setEnabled(true);
+            // END KGU#210 2016-07-25
+        // START KGU#379 2017-04-12: Bugfix #391
+        }
+        // END KGU#379 2017-04-12
     }
     // END KGU 2015-10-12
 
@@ -584,13 +595,23 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
 //        btnPause.setEnabled(false);
 //        btnPlay.setEnabled(true);
 //        btnStep.setEnabled(true);
-    	setButtonsForPause();
+    	// START KGU#379 2017-04-12: Bugfix #391 It's sufficient just to disable the pause button for now
+		setButtonsForPause(false);
+		// END KGU#379 2017-04-12
     	// END KGU 2015-10-12
         Executor.getInstance().setPaus(!Executor.getInstance().getPaus());
     }
 
     private void btnStepActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_btnStepActionPerformed
     {
+    	// START KGU#379 2017-04-12: Bugfix #391 - buttons weren't properly handled in step mode
+    	// Buttons will be switched back in Executor.waitForNext()
+    	// Attention: the pause button must not be enabled here because it has toggling effect, hence it
+    	// would turn step mode into run mode if pressed during step execution!
+        btnStep.setEnabled(false);
+        btnPlay.setEnabled(false);
+        btnCallStack.setEnabled(false);
+        // END KGU#379 2017-04-12
     	// START KGU#68 2015-11-06: Enhancement - update edited values
     	if (!varUpdates.isEmpty())
     	{
