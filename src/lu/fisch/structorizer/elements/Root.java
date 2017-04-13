@@ -98,12 +98,13 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.03.06      Issue #368: Declarations are not to cause "uninitialized" warnings any longer
  *      Kay Gürtzig     2017.03.10      KGU#363: Enh. #372 (Simon Sobisch) new attributes author etc.
  *      Kay Gürtzig     2017.03.10/14   KGU#363: Enh. #372 (Simon Sobisch) new license attributes
- *      Kay Gürtzig     2017.03.14/26   Enh. #380: Method outsourceToSubroutine supports automatic derival of subroutines
+ *      Kay Gürtzig     2017.03.14/26   Enh. #380: Method outsourceToSubroutine() supports automatic derival of subroutines
  *      Kay Gürtzig     2017.03.30      Enh. #388: const retrieval (method collectParameters() modified)
  *      Kay Gürtzig     2017.04.04      Enh. #388: New Analyser check for constant definitions (no. 22),
  *                                      method getUsedVarNames decomposed, check no. 10 enhanced.
  *      Kay Gürtzig     2017.04.05      Issue #390: Improved initialization check for multi-line instructions
  *      Kay Gürtzig     2017.04.11      Enh. #389: Analyser additions for import calls implemented
+ *      Kay Gürtzig     2017.04.13      Enh. #380: Method outsourceToSubroutine() improved
  *
  ******************************************************************************************************
  *
@@ -4069,22 +4070,26 @@ public class Root extends Element {
 			}
 			// FIXME: There should be a hook for interactive argument reordering
 			// Compose the subroutine signature
-			String signature = name + "(";
+			StringList argSpecs = new StringList();
+			boolean argTypes = false;
 			for (int i = 0; i < args.count(); i++) {
-				String argName = args.get(i);
-				TypeMapEntry entry = types.get(argName);
-				signature += ((i > 0) ? "; " : "") + argName;
+				String argSpec = args.get(i);
+				TypeMapEntry entry = types.get(argSpec);
 				if (entry != null && entry.isConflictFree()) {
 					String prefix = "";
 					String type = entry.getTypes().get(0);
-					while (type.startsWith("@")) {
-						prefix += "array of ";
-						type = type.substring(1);
+					if (!type.equals("???")) {
+						while (type.startsWith("@")) {
+							prefix += "array of ";
+							type = type.substring(1);
+						}
+						argSpec += ": " + prefix + type;
+						argTypes = true;
 					}
-					signature += ": " + prefix + type;
 				}
+				argSpecs.add(argSpec);
 			}
-			signature += ")";
+			String signature = name + "(" + argSpecs.concatenate(argTypes ? "; " : ", ") + ")";
 			
 			// Result composition (both within the subroutine and for the call)
 			String resAsgnmt = null;
@@ -4094,13 +4099,17 @@ public class Root extends Element {
 				if (entry != null && entry.isConflictFree()) {
 					String prefix = "";
 					String type = entry.getTypes().get(0);
-					while (type.startsWith("@")) {
-						prefix += "array of ";
-						type = type.substring(1);
+					if (!type.equals("???")) {
+						while (type.startsWith("@")) {
+							prefix += "array of ";
+							type = type.substring(1);
+						}
+						signature += ": " + prefix + type;
 					}
-					signature += ": " + prefix + type;
 				}
-				resAsgnmt = name + " <- " + result;				
+				if (!result.equals(name) && !result.equalsIgnoreCase("result")) {
+					resAsgnmt = name + " <- " + result;
+				}
 			}
 			else if (results.count() > 0) {
 				signature += ": array";

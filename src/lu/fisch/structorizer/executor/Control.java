@@ -570,10 +570,16 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     // START KGU 2015-10-12: Must be possible on breakpoints
     // START KGU#379 2017-04-12: Bugfix #391 Signature change (new argument allButtons)
     //public void setButtonsForPause()
+    /**
+     * Enables / disables the player buttons appropriately for paused state i.e. the
+     * Pause button will be disabled whereas Play, Step, and CallStack buttons will
+     * be enabled. By passing false as argument, only the Pause button will be enabled,
+     * the other buttons would keep their state.
+     * @param allButtons - if not true then only the Pause button will be influenced
+     */
     public void setButtonsForPause(boolean allButtons)
     // END KGU#379 2017-04-12
     {
-    	System.out.println("setButtonsForPause()");
         btnPause.setEnabled(false);
         // START KGU#379 2017-04-12: Bugfix #391
         if (allButtons) {
