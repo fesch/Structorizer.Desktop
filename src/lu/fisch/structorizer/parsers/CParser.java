@@ -1714,6 +1714,12 @@ public class CParser extends CodeParser
 				case SymbolConstants.SYM_EXCLAMEQ:
 					_content += " <> ";
 					break;
+				case SymbolConstants.SYM_LBRACE:
+					_content += " {";
+					break;
+				case SymbolConstants.SYM_RBRACE:
+					_content += "} ";
+					break;
 				case SymbolConstants.SYM_MINUS:
 				case SymbolConstants.SYM_PLUS:
 				case SymbolConstants.SYM_TIMES:

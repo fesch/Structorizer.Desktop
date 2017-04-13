@@ -71,6 +71,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.03.15      Bugfix #181/#382: String delimiter transformation didn't work 
  *      Kay Gürtzig             2017.03.15      Issue #346: Insertion mechanism was misplaced (depended on others)
  *      Kay Gürtzig             2017.03.30      Issue #365: FOR-IN loop code generation revised again
+ *      Kay Gürtzig             2017.04.12      Enh. #388: Handling of constants
+ *      Kay Gürtzig             2017.04.13      Enh. #389: Preparation for subclass-dependent handling of import CALLs
  *
  ******************************************************************************************************
  *
@@ -141,10 +143,13 @@ package lu.fisch.structorizer.generators;
  ******************************************************************************************************///
 
 import java.util.HashMap;
+import java.util.Vector;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 
 import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
+import lu.fisch.structorizer.arranger.Arranger;
 import lu.fisch.structorizer.elements.*;
 
 public class CGenerator extends Generator {
@@ -453,12 +458,26 @@ public class CGenerator extends Generator {
 	protected String transformType(String _type, String _default) {
 		if (_type == null)
 			_type = _default;
-		_type = _type.toLowerCase();
-		_type = _type.replace("integer", "int");
-		_type = _type.replace("real", "double");
-		_type = _type.replace("boolean", "int");
-		_type = _type.replace("boole", "int");
-		_type = _type.replace("character", "char");
+		// START KGU 2017-04-12: We must not generally flatten the case (consider user types!)
+		//_type = _type.toLowerCase();
+		//_type = _type.replace("integer", "int");
+		//_type = _type.replace("real", "double");
+		//_type = _type.replace("boolean", "int");
+		//_type = _type.replace("boole", "int");
+		//_type = _type.replace("character", "char");
+		_type = _type.replaceAll("(^|.*\\W)(I" + BString.breakup("nt") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("integer") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(L" + BString.breakup("ong") + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("longint") + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(D" + BString.breakup("ouble") + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("real") + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(F" + BString.breakup("loat") + ")($|\\W.*)", "$1float$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("boolean") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("boole") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("bool") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(C" + BString.breakup("har") + ")($|\\W.*)", "$1char$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("character") + ")($|\\W.*)", "$1char$3");
+		// END KGU 2017-04-12
 		// START KGU#332 2017-01-30: Enh. #335 - more sophisticated type info
 		if (this.getClass().getSimpleName().equals("CGenerator")) {
 			_type = _type.replace("string", "char*");
@@ -520,6 +539,11 @@ public class CGenerator extends Generator {
 	// END KGU#74 2015-11-30
 	
 	// START KGU#332 2017-01-27: Enh. #335
+	/**
+	 * States whether constant definitions or varaible declarations may occur anywhere in
+	 * the code or only at block beginning
+	 * @return true if declarations may be mixed among instructions
+	 */
 	protected boolean isInternalDeclarationAllowed()
 	{
 		return false;
@@ -577,12 +601,12 @@ public class CGenerator extends Generator {
 				//addCode(codeLine, _indent, isDisabled);
 				String codeLine = null;
 				if (!this.suppressTransformation && Instruction.isDeclaration(line)) {
-					// Pure declarations without initialization may be igmored here (the
+					// Pure declarations without initialization may be ignored here (the
 					// declaration will be proposed or inserted in the preamble).
 					// If there is an initialization then it must at least be generated
 					// as assignment.
 					// With declaration styles other than than C-like, this requires
-					// cutting out the keywords type specification together with the
+					// cutting out the type specification together with the
 					// specific keywords and separators ("var"+":" / "dim"+"as").
 					// With C-style initializations, however, it depends on whether
 					// code-internal declarations are allowed (C++, C#, Java) or not
@@ -594,24 +618,57 @@ public class CGenerator extends Generator {
 						// (which must be done based on the original line)
 						StringList tokens = Element.splitLexically(line.trim(), true);
 						int posAsgn = tokens.indexOf("<-");
+						// START KGU#375 2017-04-12: Enh. #388 special treatment of constants
+						if (tokens.get(0).equals("const") && !this.isInternalDeclarationAllowed()) {
+							// Should already have been defined
+							continue;
+						}
+						// END KGU#375 2017-04-12
 						if (tokens.get(0).equalsIgnoreCase("var") || tokens.get(0).equalsIgnoreCase("dim")) {
 							String separator = tokens.get(0).equalsIgnoreCase("var") ? ":" : "as";
 							int posColon = tokens.indexOf(separator, 2, false);
 							if (posColon > 0) {
 								codeLine = transform(
+										// variable name
 										tokens.subSequence(1, posColon).concatenate().trim() + " " +
+										// value
 										tokens.subSequence(posAsgn, tokens.count()).concatenate().trim());
+								// START KGU#332 2017-04-13: Enh. #335
+								if (this.isInternalDeclarationAllowed()) {
+									String type = tokens.subSequence(posColon+1, posAsgn).concatenate().trim();
+									codeLine = transform(transformType(type, "")) + " " + codeLine;
+								}
+								// END KGU#332 2017-04-13
 							}
 						}
 						else {
 							// Must be C-style declaration
+							// START KGU#375 2017-04-13: Bugfix on occasion of enh. #388
+							boolean done = false;
+							StringList pureTokens = tokens.copy();
+							pureTokens.removeAll(" ");
+							String varName = _inst.getAssignedVarname(pureTokens);
+							// END KGU#375 2017-04-13
 							if (!this.isInternalDeclarationAllowed()) {
 								// Cut out leading type specification
-								String varName = _inst.getAssignedVarname(tokens);
 								int posVar = tokens.indexOf(varName);
 								tokens = tokens.subSequence(posVar, tokens.count());
 							}
-							codeLine = transform(tokens.concatenate().trim());						}
+							// START KGU#375 2017-04-13: Enh. #388
+							//codeLine = transform(tokens.concatenate().trim());
+							else if (tokens.get(0).equals("const")) {
+								// We try to enrich or accomplish defective type information
+								Root root = Element.getRoot(_inst);
+								if (root.constants.get(varName) != null) {
+									this.insertDeclaration(root, varName, _indent, true);
+									done = true;
+								}
+							}
+							if (!done) {
+								codeLine = transform(tokens.concatenate().trim());
+							}
+							// END KGU#375 2017-04-13
+						}
 					}
 				}
 				else {
@@ -971,15 +1028,55 @@ public class CGenerator extends Generator {
 
 			boolean isDisabled = _call.isDisabled();
 			insertComment(_call, _indent);
-
+			// In theory, here should be only one line, but we better be prepared...
 			StringList lines = _call.getText();
 			for (int i = 0; i < lines.count(); i++) {
+				String line = lines.get(i);
+				// START KGU#376 2017-04-13: Enh. #389 handle import calls
+				if (!isDisabled && Call.isImportCall(lines.get(i))) {
+					generateImportCode(_call, line, _indent);
+				}
+				else
+				// END KGU#376 2017-04-13
 				// Input or Output should not occur here
-				addCode(transform(lines.get(i), false) + ";", _indent, isDisabled);
+				addCode(transform(line, false) + ";", _indent, isDisabled);
 			}
 		}
 		
 	}
+
+	// START KGU#376 2017-04-13: Enh. #389 support for import CALLS
+	/**
+	 * Subclassable code generator for an import CALL line. The CGenerator will
+	 * rely on the preamble generator to have already coded the important constant
+	 * definitions and variable declarations. So it just creates a comment line.
+	 * Subclasses may do something more meaningful here.
+	 * @param _call - the origination CALL element
+	 * @param _line - the current line with import CALL syntax
+	 * @param _indent - indentation string
+	 */
+	protected void generateImportCode(Call _call, String _line, String _indent) {
+		// Do nothing but place it as comment here. The important contents
+		// (constant definitions and variable declarations) will already have
+		// been put to the preamble.
+		boolean done = false;
+		String diagrName = _call.getSignatureString();
+		if (this.isInternalDeclarationAllowed() && Arranger.hasInstance()) {
+			Vector<Root> roots = Arranger.getInstance().findDiagramsByName(diagrName);
+			if (roots.size() == 1) {
+				Root imported = roots.get(0);
+				imported.getVarNames();	// This also initializes the constants information we may need here
+				insertComment("*** START " + _line + " *** ", _indent);		
+				generateCode(imported.children, _indent);
+				insertComment("*** END " + _line + " *** ", _indent);		
+				done = true;
+			}
+		}
+		if (!done) {
+			insertComment(_line, _indent);		
+		}
+	}
+	// END KGU#376 2017-04-13
 
 	@Override
 	protected void generateCode(Jump _jump, String _indent)
@@ -1203,45 +1300,70 @@ public class CGenerator extends Generator {
 	 * @param _indent - the current indentation string
 	 * @param varNames - list of variable names introduced inside the body
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	protected String generatePreamble(Root _root, String _indent, StringList varNames)
 	{
 		insertComment("TODO: Check and accomplish variable declarations:", _indent);
         // START KGU#261/KGU#332 2017-01-26: Enh. #259/#335: Insert actual declarations if possible
-		this.typeMap = _root.getTypeInfo();
+		// START KGU#375 2017-04-12: Enh. #388 - we want to add new information but this is not to have an impact on _root 
+		//this.typeMap = _root.getTypeInfo();
+		this.typeMap = (HashMap<String, TypeMapEntry>) _root.getTypeInfo().clone();
+		// END KGU#375 2017-04-12
 		// END KGU#261/KGU#332 2017-01-16
+		// START KGU#375 2017-04-12: Enh. #388 special treatment of constants
+		for (String constName: _root.constants.keySet()) {
+			insertDeclaration(_root, constName, _indent, !this.isInternalDeclarationAllowed());			
+		}
+		// END KGU#375 2017-04-12
         // START KGU 2015-11-30: List the variables to be declared
 		for (int v = 0; v < varNames.count(); v++) {
 	        // START KGU#261/#332 2017-01-26: Enh. #259/#335: Insert actual declarations if possible
 			//insertComment(varNames.get(v), _indent);
 			String varName = varNames.get(v);
-			TypeMapEntry typeInfo = typeMap.get(varName); 
-			StringList types = null;
-			if (typeInfo != null) {
-				 types = getTransformedTypes(typeInfo);
+// START KGU#375 2017-04-12: Enh. #388 outsourced to avoid duplicate mechanism for constants
+//			TypeMapEntry typeInfo = typeMap.get(varName); 
+//			StringList types = null;
+//			if (typeInfo != null) {
+//				 types = getTransformedTypes(typeInfo);
+//			}
+//			// If the type is unambiguous and has no C-style declaration or may not be
+//			// declared between instructions then add the declaration here
+//			if (types != null && types.count() == 1 && 
+//					(!typeInfo.isCStyleDeclaredAt(null) || !this.isInternalDeclarationAllowed())) {			
+//				String decl = types.get(0);
+//				if (decl.startsWith("@")) {
+//					decl = makeArrayDeclaration(decl, varName, typeInfo);
+//				}
+//				else {
+//					decl = decl + " " + varName;
+//				}
+//				// START KGU#375 2017-04-12: Enh. #388 support for constant definitions
+//				if (_root.constants.containsKey(varName)) {
+//					if (!decl.contains("const ")) {
+//						decl = "const " + decl;
+//					}
+//					String value = _root.constants.get(varName);
+//					if (value != null) {
+//						decl += " = " + value;
+//					}
+//				}
+//				// END KGU#375 2017-04-12
+//				if (decl.contains("???")) {
+//					insertComment(decl + ";", _indent);
+//				}
+//				else {
+//					code.add(_indent + decl + ";");
+//				}
+//			}
+//			// Add a comment if there is no type info or internal declaration is not allowed
+//			else if (types == null || !this.isInternalDeclarationAllowed()){
+//				insertComment(varName + ";", _indent);
+//			}
+			if (!_root.constants.containsKey(varName)) {
+				insertDeclaration(_root, varName, _indent, !this.isInternalDeclarationAllowed());
 			}
-			// If the type is unambiguous and has no C-style declaration or may not be
-			// declared between instructions then add the declaration here
-			if (types != null && types.count() == 1 && 
-					(!typeInfo.isCStyleDeclaredAt(null) || !this.isInternalDeclarationAllowed())) {			
-				String decl = types.get(0);
-				if (decl.startsWith("@")) {
-					decl = makeArrayDeclaration(decl, varName, typeInfo);
-				}
-				else {
-					decl = decl + " " + varName;
-				}
-				if (decl.contains("???")) {
-					insertComment(decl + ";", _indent);
-				}
-				else {
-					code.add(_indent + decl + ";");
-				}
-			}
-			// Add a comment if there is no type info or internal declaration is not allowed
-			else if (types == null || !this.isInternalDeclarationAllowed()){
-				insertComment(varName + ";", _indent);
-			}
+// END KGU#375 2017-04-12
 			// END KGU#261/KGU#332 2017-01-16
 		}
 		// END KGU 2015-11-30
@@ -1251,6 +1373,69 @@ public class CGenerator extends Generator {
 		code.add(_indent);
 		return _indent;
 	}
+	
+	// START KGU#375 2017-04-12: Enh. #388 common preparation of constants and variables
+	protected void insertDeclaration(Root _root, String _name, String _indent, boolean _fullDecl)
+	{
+		TypeMapEntry typeInfo = typeMap.get(_name); 
+		StringList types = null;
+		String constValue = _root.constants.get(_name);
+		String transfConst = transformType("const", "");
+		if (typeInfo != null) {
+			 types = getTransformedTypes(typeInfo);
+		}
+		// START KGU#375 2017-04-12: Enh. #388: Might be an imported constant
+		else if (constValue != null) {
+			String type = Element.identifyExprType(typeMap, constValue);
+			if (!type.isEmpty()) {
+				types = StringList.getNew(transformType(type, "int"));
+				// We place a faked workaround entry
+				typeMap.put(_name, new TypeMapEntry(type, _root, 0, true, true));
+			}
+		}
+		// END KGU#375 2017-04-12
+		// If the type is unambiguous and has no C-style declaration or may not be
+		// declared between instructions then add the declaration here
+		if (types != null && types.count() == 1 && 
+				(typeInfo != null && !typeInfo.isCStyleDeclaredAt(null) || _fullDecl)) {			
+			String decl = types.get(0).trim();
+			// START KGU#375 2017-04-12: Enh. #388
+			if (decl.equals(transfConst) && constValue != null) {
+				// The actual type spec is missing but we try to extract it from the value
+				decl += " " + Element.identifyExprType(typeMap, constValue);
+				decl = decl.trim();
+			}
+			// END KGU#375 2017-04-12
+			if (decl.startsWith("@")) {
+				decl = makeArrayDeclaration(decl, _name, typeInfo);
+			}
+			else {
+				decl = decl + " " + _name;
+			}
+			// START KGU#375 2017-04-12: Enh. #388 support for constant definitions
+			if (_root.constants.containsKey(_name)) {
+				if (!decl.contains(transfConst + " ")) {
+					decl = transfConst + " " + decl;
+				}
+				if (constValue != null) {
+					decl += " = " + transform(constValue);
+				}
+			}
+			// END KGU#375 2017-04-12
+			if (decl.contains("???")) {
+				insertComment(decl + ";", _indent);
+			}
+			else {
+				code.add(_indent + decl + ";");
+			}
+		}
+		// Add a comment if there is no type info or internal declaration is not allowed
+		else if (types == null || _fullDecl){
+			insertComment(_name + ";", _indent);
+		}
+		// END KGU#261/KGU#332 2017-01-16
+	}
+	// END KGU#375 2017-04-12
 	
 	// START KGU#332 2017-01-30: Decomposition of geeratePreamble to ease sub-classing
 	protected String makeArrayDeclaration(String _elementType, String _varName, TypeMapEntry typeInfo)

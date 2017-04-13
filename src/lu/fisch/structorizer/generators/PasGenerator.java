@@ -67,7 +67,8 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2017.01.31      Enh. #113: Array parameter transformation
  *      Kay Gürtzig         2017.02.01      Enh. #84: indexBase constant mechanism for array initializers disabled
  *      Kay Gürtzig         2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
- *      Kay Gürtzig         2017.03.15      Bugfix #382: FOR-IN loop value list items hadn't been transformed 
+ *      Kay Gürtzig         2017.03.15      Bugfix #382: FOR-IN loop value list items hadn't been transformed
+ *      Kay Gürtzig         2017.04.12      Enh. #388: Support for export of constant definitions added 
  *
  ******************************************************************************************************
  *
@@ -102,6 +103,7 @@ import lu.fisch.utils.*;
 import lu.fisch.structorizer.parsers.*;
 
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 import lu.fisch.structorizer.elements.*;
 
@@ -259,6 +261,10 @@ public class PasGenerator extends Generator
 			else if (_type.equalsIgnoreCase("unsigned int")) _type = "Cardinal";
 			else if (_type.equalsIgnoreCase("unsigned long")) _type = "Cardinal";
 			else if (_type.equalsIgnoreCase("bool")) _type = "Boolean";
+			// START KGU 2017-04-12: cope with C strings here
+			else if (_type.equalsIgnoreCase("char*")) _type = "String";
+			else if (_type.equalsIgnoreCase("char *")) _type = "String";
+			// END KGU 2017-04-12
 			// START KGU#140 2017-01-31: Enh. #113
 			//else if (_type.toLowerCase().startsWith("array")) {
 			//	String lower = _type.toLowerCase();
@@ -1169,7 +1175,9 @@ public class PasGenerator extends Generator
 		// END KGU#311 2016-12-26
 
 		code.add("");
-        code.add(_indent + "var");
+		// START KGU#375 2017-04-12: Enh. #388 now passed to generatePreamble
+        //code.add(_indent + "var");
+        // END KGU#375 2017-04-12
         
 		return _indent;
 	}
@@ -1180,47 +1188,70 @@ public class PasGenerator extends Generator
 	@Override
 	protected String generatePreamble(Root _root, String _indent, StringList _varNames)
 	{
-        insertComment("TODO: check and accomplish variable declarations", _indent + this.getIndent());
-        // START KGU#261 2017-01-26: Enh. #259: Insert actual declarations if possible
-		HashMap<String, TypeMapEntry> typeMap = _root.getTypeInfo();
-		// END KGU#261 2017-01-16
-		for (int v = 0; v < _varNames.count(); v++) {
-	        // START KGU#261 2017-01-26: Enh. #259: Insert actual declarations if possible
-			//insertComment(_varNames.get(v), _indent + this.getIndent());
-			String varName = _varNames.get(v);
-			TypeMapEntry typeInfo = typeMap.get(varName); 
-			StringList types = null;
-			if (typeInfo != null) {
-				 types = getTransformedTypes(typeInfo);
+		// START KGU#375 2017-04-12: Enh. #388 now passed to generatePreamble
+		if (!_root.constants.isEmpty()) {
+			// _root.constants is expected to be a LinkedHashMap, such that topological
+			// ordering should not be necessary
+			code.add(_indent + "const");
+			insertComment("TODO: check and accomplish constant definitions", _indent + this.getIndent());
+			for (Entry<String, String> constEntry: _root.constants.entrySet()) {
+				code.add(_indent + this.getIndent() + constEntry.getKey() + " = " + transform(constEntry.getValue()) + ";");	
 			}
-			if (types != null && types.count() == 1) {
-				String type = types.get(0);
-				String prefix = "";
-				int level = 0;
-				while (type.startsWith("@")) {
-					// It's an array, so get its index range
-					int minIndex = typeInfo.getMinIndex(level);
-					int maxIndex = typeInfo.getMaxIndex(level++);
-					String indexRange = "";
-					if (maxIndex > 0) {
-						indexRange = "[" + minIndex +
-								".." + maxIndex + "] ";
-					}
-					prefix += "array " + indexRange + "of ";
-					type = type.substring(1);
+			code.add("");
+		}
+		
+		if (_varNames.count() > _root.constants.size()) {
+			code.add(_indent + "var");
+        // END KGU#375 2017-04-12
+			insertComment("TODO: check and accomplish variable declarations", _indent + this.getIndent());
+			// START KGU#261 2017-01-26: Enh. #259: Insert actual declarations if possible
+			HashMap<String, TypeMapEntry> typeMap = _root.getTypeInfo();
+			// END KGU#261 2017-01-16
+			for (int v = 0; v < _varNames.count(); v++) {
+				// START KGU#261 2017-01-26: Enh. #259: Insert actual declarations if possible
+				//insertComment(_varNames.get(v), _indent + this.getIndent());
+				String varName = _varNames.get(v);
+				// START KGU#375 2017-04-12: Enh. #388 constants have already been defined
+				if (_root.constants.containsKey(varName)) {
+					continue;
 				}
-				type = prefix + type;
-				if (type.contains("???")) {
-					insertComment(varName + ": " + type + ";", _indent + this.getIndent());
+				// END KGU#375 2017-04-12
+				TypeMapEntry typeInfo = typeMap.get(varName); 
+				StringList types = null;
+				if (typeInfo != null) {
+					types = getTransformedTypes(typeInfo);
+				}
+				if (types != null && types.count() == 1) {
+					String type = types.get(0);
+					String prefix = "";
+					int level = 0;
+					while (type.startsWith("@")) {
+						// It's an array, so get its index range
+						int minIndex = typeInfo.getMinIndex(level);
+						int maxIndex = typeInfo.getMaxIndex(level++);
+						String indexRange = "";
+						if (maxIndex > 0) {
+							indexRange = "[" + minIndex +
+									".." + maxIndex + "] ";
+						}
+						prefix += "array " + indexRange + "of ";
+						type = type.substring(1);
+					}
+					type = prefix + type;
+					if (type.contains("???")) {
+						insertComment(varName + ": " + type + ";", _indent + this.getIndent());
+					}
+					else {
+						code.add(_indent + this.getIndent() + varName + ": " + type + ";");
+					}
 				}
 				else {
-					code.add(_indent + this.getIndent() + varName + ": " + type + ";");
+					insertComment(varName, _indent + this.getIndent());
 				}
+				// END KGU#261 2017-01-16
+			// START KGU#375 2017-04-12: Enh. #388
 			}
-			else {
-				insertComment(varName, _indent + this.getIndent());
-			}
-			// END KGU#261 2017-01-16
+			// END KGU#375 2017-04-12
 		}
         code.add("");
         

@@ -50,6 +50,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.01.31      Enh. #113: Array parameter transformation
  *      Kay Gürtzig     2017.02.21      Enh. #348: Parallel sections translated with <thread> library
  *      Kay Gürtzig     2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig     2017.04.12      Issue #335: transformType() revised and isInternalDeclarationAllowed() corrected
  *
  ******************************************************************************************************
  *
@@ -64,7 +65,10 @@ package lu.fisch.structorizer.generators;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Vector;
 
+import lu.fisch.structorizer.arranger.Arranger;
+import lu.fisch.structorizer.elements.Call;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.For;
 import lu.fisch.structorizer.elements.IElementVisitor;
@@ -74,6 +78,7 @@ import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.structorizer.elements.TypeMapEntry;
 import lu.fisch.structorizer.executor.Executor;
 import lu.fisch.structorizer.parsers.CodeParser;
+import lu.fisch.utils.BString;
 import lu.fisch.utils.StringList;
 
 public class CPlusPlusGenerator extends CGenerator {
@@ -199,17 +204,44 @@ public class CPlusPlusGenerator extends CGenerator {
 	protected String transformType(String _type, String _default) {
 		if (_type == null)
 			_type = _default;
-		_type = _type.toLowerCase();
-		_type = _type.replace("integer", "int");
-		_type = _type.replace("real", "double");
-		_type = _type.replace("boolean", "bool");
-		_type = _type.replace("boole", "bool");
-		_type = _type.replace("character", "char");
-		_type = _type.replace("String", "string");
-		_type = _type.replace("char[]", "string");
+		// START KGU 2017-04-12: We must not generally flatten the case (consider user types!)
+		//_type = _type.toLowerCase();
+		//_type = _type.replace("integer", "int");
+		//_type = _type.replace("real", "double");
+		//_type = _type.replace("boolean", "bool");
+		//_type = _type.replace("boole", "bool");
+		//_type = _type.replace("character", "char");
+		//_type = _type.replace("String", "string");
+		//_type = _type.replace("char[]", "string");
+		_type = _type.replaceAll("(^|.*\\W)(I" + BString.breakup("nt") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("integer") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(L" + BString.breakup("ong") + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("longint") + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(D" + BString.breakup("ouble") + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("real") + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(F" + BString.breakup("loat") + ")($|\\W.*)", "$1float$3");
+		_type = _type.replaceAll("(^|.*\\W)" + BString.breakup("boolean") + "($|\\W.*)", "bool");
+		_type = _type.replaceAll("(^|.*\\W)" + BString.breakup("boole") + "($|\\W.*)", "bool");
+		_type = _type.replaceAll("(^|.*\\W)(B" + BString.breakup("ool") + ")($|\\W.*)", "$1bool$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("String") + ")($|\\W.*)", "$1string$3");
+		_type = _type.replaceAll("(^|.*\\W)(C" + BString.breakup("har") + ")($|\\W.*)", "$1char$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("character") + ")($|\\W.*)", "$1char$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("char") + "\\[\\])($|\\W.*)", "$1string$3");
+		// END KGU 2017-04-12
 		return _type;
 	}
 	// END KGU#16 2016-01-14
+	
+	// START KGU#332 2017-04-12: Enh. #335
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#isInternalDeclarationAllowed()
+	 */
+	@Override
+	protected boolean isInternalDeclarationAllowed()
+	{
+		return true;
+	}
+	// END KGU#332 2017-04-12
 
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**

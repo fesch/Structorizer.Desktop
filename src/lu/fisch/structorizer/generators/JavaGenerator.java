@@ -59,6 +59,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.02.01      Enh. #113: Array parameter transformation
  *      Kay Gürtzig             2017.02.24      Enh. #348: Parallel sections translated with java.utils.concurrent.Callable
  *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig             2017.04.12      Issue #335: transformType() revised and isInternalDeclarationAllowed() corrected
  *
  ******************************************************************************************************
  *
@@ -377,27 +378,66 @@ public class JavaGenerator extends CGenerator
 	protected String transformType(String _type, String _default) {
 		if (_type == null)
 			_type = _default;
-		_type = _type.toLowerCase();
-		_type = _type.replace("short int", "int");
-		_type = _type.replace("short", "int");
-		_type = _type.replace("unsigned int", "int");
-		_type = _type.replace("unsigned long", "long");
-		_type = _type.replace("unsigned char", "char");
-		_type = _type.replace("unsigned", "int");
-		_type = _type.replace("longreal", "double");
-		_type = _type.replace("real", "double");
-		//_type = _type.replace("boole", "boolean");
-		//_type = _type.replace("bool", "boolean");
-		if (_type.matches("(^|.*\\W+)bool(\\W+.*|$)")) {
-			_type = _type.replaceAll("(^|.*\\W+)bool(\\W+.*|$)", "$1boolean$2");
+		// START KGU 2017-04-12: We must not generally flatten the case (consider user types!)
+//		_type = _type.toLowerCase();
+//		_type = _type.replace("short int", "int");
+//		_type = _type.replace("short", "int");
+//		_type = _type.replace("unsigned int", "int");
+//		_type = _type.replace("unsigned long", "long");
+//		_type = _type.replace("unsigned char", "char");
+//		_type = _type.replace("unsigned", "int");
+//		_type = _type.replace("longreal", "double");
+//		_type = _type.replace("real", "double");
+//		//_type = _type.replace("boole", "boolean");
+//		//_type = _type.replace("bool", "boolean");
+//		if (_type.matches("(^|.*\\W)bool(\\W.*|$)")) {
+//			_type = _type.replaceAll("(^|.*\\W)bool(\\W.*|$)", "$1boolean$2");
+//		}
+//		_type = _type.replace("character", "Character");
+//		_type = _type.replace("integer", "Integer");
+//		_type = _type.replace("string", "String");
+//		_type = _type.replace("array[ ]?([0-9]*)[ ]of char", "String");	// FIXME (KGU 2016-01-14) doesn't make much sense
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("short int") + ")($|\\W.*)", "$1short$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("long int") + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("long long") + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(S" + BString.breakup("hort") + ")($|\\W.*)", "$short$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned int") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned long") + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned char") + ")($|\\W.*)", "$1byte$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("signed char") + ")($|\\W.*)", "$1byte$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(I" + BString.breakup("nt") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("integer") + ")($|\\W.*)", "$1int$3");
+		_type = _type.replaceAll("(^|.*\\W)(L" + BString.breakup("ong") + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("longint") + ")($|\\W.*)", "$1long$3");
+		_type = _type.replaceAll("(^|.*\\W)(D" + BString.breakup("ouble") + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("longreal") + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("real") + ")($|\\W.*)", "$1double$3");
+		_type = _type.replaceAll("(^|.*\\W)(F" + BString.breakup("loat") + ")($|\\W.*)", "$1float$3");
+		_type = _type.replaceAll("(^|.*\\W)(C" + BString.breakup("har") + ")($|\\W.*)", "$1char$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("character") + ")($|\\W.*)", "$1Character$3");
+		_type = _type.replaceAll("(^|.*\\W)(B" + BString.breakup("oolean") + ")($|\\W.*)", "$1boolean$3");
+		if (_type.matches("(^|.*\\W)(" + BString.breakup("bool") + "[eE]?)(\\W.*|$)")) {
+			_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("bool") + "[eE]?)(\\W.*|$)", "$1boolean$3");
 		}
-		_type = _type.replace("character", "Character");
-		_type = _type.replace("integer", "Integer");
-		_type = _type.replace("string", "String");
-		_type = _type.replace("array[ ]?([0-9]*)[ ]of char", "String");	// FIXME (KGU 2016-01-14) doesn't make much sense
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("string") + ")($|\\W.*)", "$1String$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("array") + "\\s*?\\[[0-9]*\\]\\s*?" + BString.breakup("of") + "\\s+char)(\\W.*)", "$1String$3");
+		_type = _type.replaceAll("(^|.*\\W)(" + BString.breakup("const") + ")($|\\W.*)", "$1final$3");
+		// END KGU 2017-04-12
 		return _type;
 	}
 	// END KGU#16 2015-11-29
+
+	// START KGU#332 2017-04-13: Enh. #335
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#isInternalDeclarationAllowed()
+	 */
+	@Override
+	protected boolean isInternalDeclarationAllowed()
+	{
+		return true;
+	}
+	// END KGU#332 2017-04-13
 
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**

@@ -675,9 +675,9 @@ public class Instruction extends Element {
 	}
 	
 	/**
-	 * Extracts the target variable name out of the given token sequence which may comprise
+	 * Extracts the target variable name out of the given blank-free token sequence which may comprise
 	 * the entire line of an assignment or just its left part.
-	 * @param tokens - unified tokens of an assignment instruction (otherwise the result may be nonsense)
+	 * @param tokens - unified tokens of an assignment instruction without whitespace (otherwise the result may be nonsense)
 	 * @return the extracted variable name or null
 	 */
 	public String getAssignedVarname(StringList tokens) {
@@ -702,7 +702,7 @@ public class Instruction extends Element {
 	// START KGU#261 2017-02-20: Enh. #259 Allow CALL elements to override this...
 	/**
 	 * Tries to extract type information from the right side of an assignment.
-	 * @param rightSide - tokens of the assigned expresson
+	 * @param rightSide - tokens of the assigned expression
 	 * @param knownTypes - the typeMap as filled so far (won't be changed here)
 	 * @return - A type specification or an empty string (no clue) or "???" (ambiguous)
 	 */

@@ -125,6 +125,7 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.Vector;
 import java.util.Stack;
@@ -282,7 +283,7 @@ public class Root extends Element {
 	/**
 	 * Names and cached value expressions of detected constants among the {@link #variables} 
 	 */
-	public HashMap<String, String> constants = new HashMap<String, String>();
+	public LinkedHashMap<String, String> constants = new LinkedHashMap<String, String>();
 	/**
 	 * Vector containing Element-related Analyser complaints
 	 */
@@ -3339,7 +3340,7 @@ public class Root extends Element {
 	// END KGU#253 2016-09-22
     
 	/**
-	 * CHECK #22: constants dpending on non-constants
+	 * CHECK #22: constants depending on non-constants
 	 * @param _instr - Instruction element to be analysed
 	 * @param _errors - global error list
 	 * @param _vars - variables with certain initialisation
@@ -3678,7 +3679,7 @@ public class Root extends Element {
         StringList vars = getVarNames(this,true,false);
         rootVars = vars.copy();
         StringList uncertainVars = new StringList();
-        HashMap<String, String> definedConsts = new HashMap<String, String>();
+        HashMap<String, String> definedConsts = new LinkedHashMap<String, String>();
         for (int v = 0; v < vars.count(); v++) {
         	String para = vars.get(v);
         	if (this.constants.containsKey(para)) {

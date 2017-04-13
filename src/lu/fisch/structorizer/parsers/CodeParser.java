@@ -155,11 +155,12 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	
 	// START KGU 2017-04-11
 	/**
-	 * Identifier replacement map to be filled by the file preparation method if identiiers
-	 * had to be replaced by other symbols or generic identifiers in order to allow the soure
+	 * Identifier replacement map to be filled by the file preparation method if identifiers
+	 * had to be replaced by other symbols or generic identifiers in order to allow the source
 	 * file to pass the parsing.
 	 * Must map the substitutes to the original identifiers such that the replacements may be
-	 * reverted on error display.   
+	 * reverted on error display.
+	 * @see #prepareTextfile(String, String)   
 	 */
 	protected HashMap<String, String> replacedIds = new HashMap<String, String>();
 	// END KGU 2017-04-11
@@ -402,15 +403,16 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 
 	/**
 	 * Performs some necessary preprocessing for the text file. Must return a
-	 * File object associated to a temporary (and possibly modified) copy of
+	 * {@link java.io.File} object associated to a temporary (and possibly modified) copy of
 	 * the file _textToParse. The copy is to be in a fix encoding.
 	 * Typically opens the file, filters it and writes a new temporary file,
 	 * which may then actually be parsed, to a suited directory.
 	 * The preprocessed file will always be saved with UTF-8 encoding.
 	 * @param _textToParse - name (path) of the source file
 	 * @param _encoding - the expected encoding of the source file.
-	 * @return A temporary file object for the created intermediate file, null
+	 * @return A temporary {@link java.io.File} object for the created intermediate file, null
 	 * if something went wrong.
+	 * @see #replacedIds
 	 */
 	protected abstract File prepareTextfile(String _textToParse, String _encoding);
 	
