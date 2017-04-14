@@ -1411,6 +1411,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 		catch (Exception e)
 		{
+			e.printStackTrace();
 			// START KGU#111 2015-12-16: Bugfix #63: No error messages on failed load
 			//System.out.println(e.getMessage());
 			errorMessage = e.getLocalizedMessage();
@@ -2750,6 +2751,40 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			else {
 				elements = (IElementSequence)this.selected;
 			}
+			// START KGU#365 2017-04-14: We must at least warn if return or unmatched leave instructins are contained
+			List<Jump> jumps = findUnsatisfiedJumps(elements);
+			if (!jumps.isEmpty()) {
+				String jumpTexts = "";
+				for (Jump jmp: jumps) {
+					String jumpLine = jmp.getText().getLongString().trim();
+					if (jumpLine.isEmpty()) {
+						jumpLine = "(" + CodeParser.getKeywordOrDefault("preLeave", "leave") + ")";
+					}
+					jumpTexts += "\n \u25CF " + jumpLine;
+				}
+				Element.troubleMakers.addAll(jumps);
+				int answer = JOptionPane.YES_OPTION;
+				try {
+					redraw();
+					String[] options = new String[]{Menu.lblYes.getText(), Menu.lblNo.getText()};
+					answer = JOptionPane.showOptionDialog(this,
+							Menu.msgJumpsOutwardsScope.getText().replace("%", jumpTexts), 
+							Menu.msgTitleWarning.getText(),
+							JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
+							null,
+							options,
+							options[1]
+							);
+				}
+				finally {
+					Element.troubleMakers.clear();
+					redraw();
+				}
+				if (answer != JOptionPane.YES_OPTION) {
+					return;
+				}
+			}
+			// END KGU#365 2017-04-14
 			String subroutineName = JOptionPane.showInputDialog(Menu.msgSubroutineName.getText() + ": ");
 			if (subroutineName != null) {
 				try {
@@ -2779,6 +2814,49 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 	// END KGU#365 2017-03-19
+
+	// START KGU#365 2017-04-14: Enh. #380
+	private List<Jump> findUnsatisfiedJumps(IElementSequence elements) {
+		final class JumpFinder implements IElementVisitor {
+			
+			private Subqueue scope = null;
+			private List<Jump> foundJumps = new LinkedList<Jump>();
+
+			public JumpFinder(Subqueue scope)
+			{
+				this.scope = scope;
+			}
+			
+			public List<Jump> getJumps() {
+				return foundJumps;
+			}
+			
+			@Override
+			public boolean visitPreOrder(Element _ele) {
+				if (_ele instanceof Jump) {
+					Jump jmp = (Jump)_ele;
+					if (jmp.isReturn() || jmp.isLeave() && jmp.getLeftLoop(scope) == null) {
+						this.foundJumps.add(jmp);
+					}
+				}
+				return true;
+			}
+
+			@Override
+			public boolean visitPostOrder(Element _ele) {
+				return true;
+			}
+			
+		}
+		
+		Subqueue scope = elements.getSubqueue();
+		JumpFinder finder = new JumpFinder(scope);
+		scope.traverse(finder);
+		return finder.getJumps();
+		
+	}
+	// END KGU#65 2017-04-14
+
 
 	/*****************************************
 	 * transmute method(s)

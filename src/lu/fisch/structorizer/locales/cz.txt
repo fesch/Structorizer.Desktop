@@ -258,6 +258,7 @@ Menu.error16_4.text=
 Menu.error16_5.text=
 Menu.error16_6.text=
 Menu.error16_7.text=
+Menu.error16_8.text=
 Menu.error17.text=
 Menu.errorLineReference.text= (řádek %)
 

@@ -73,6 +73,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.03.30      Issue #365: FOR-IN loop code generation revised again
  *      Kay Gürtzig             2017.04.12      Enh. #388: Handling of constants
  *      Kay Gürtzig             2017.04.13      Enh. #389: Preparation for subclass-dependent handling of import CALLs
+ *      Kay Gürtzig             2017.04.14      Bugfix #394: Export of Jump elements (esp. leave) revised
  *
  ******************************************************************************************************
  *
@@ -737,8 +738,22 @@ public class CGenerator extends Generator {
 				code.add(_indent + "case " + constants.get(j).trim() + ":");
 			}
 			// END KGU#15 2015-10-21
-			generateCode((Subqueue) _case.qs.get(i), _indent + this.getIndent());
-			addCode(this.getIndent() + "break;", _indent, isDisabled);
+			// START KGU#380 2017-04-14: Bugfix #394 - Avoid redundant break instructions
+			//generateCode((Subqueue) _case.qs.get(i), _indent + this.getIndent());
+			//addCode(this.getIndent() + "break;", _indent, isDisabled);
+			Subqueue sq = _case.qs.get(i);
+			generateCode(sq, _indent + this.getIndent());
+			Element lastEl = null;
+			for (int j = sq.getSize() - 1; lastEl == null && j >= 0; j--) {
+				if ((lastEl = sq.getElement(j)).disabled) {
+					lastEl = null;
+				}
+			}
+			Integer label = null;
+			if (lastEl == null || !(lastEl instanceof Jump) || (label = this.jumpTable.get(lastEl)) != null && label == -1) {
+				addCode(this.getIndent() + "break;", _indent, isDisabled);
+			}
+			// END KGU#380 2017-04-14
 		}
 
 		if (!lines.get(_case.qs.size()).trim().equals("%")) {
@@ -826,7 +841,7 @@ public class CGenerator extends Generator {
 			for (int i = 0; i < nItems; i++)
 			{
 				String item = items.get(i);
-				String type = Element.identifyExprType(this.typeMap, item);
+				String type = Element.identifyExprType(this.typeMap, item, false);
 				itemTypes.add(this.transformType(type, "int"));
 				if (!type.equals("int") && !type.equals("boolean")) {
 					allInt = false;
@@ -1094,31 +1109,41 @@ public class CGenerator extends Generator {
 
 			insertComment(_jump, _indent);
 
+			// START KGU#380 2017-04-14: Bugfix #394 Done in another way now
 			// KGU 2015-10-18: In case of an empty text generate a break
 			// instruction by default.
-			boolean isEmpty = true;
+			//boolean isEmpty = true;
+			// END KGU#380 207-04-14
 			
 			StringList lines = _jump.getText();
+			boolean isEmpty = lines.getLongString().trim().isEmpty();
 			String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return").trim();
 			String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit").trim();
-			String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave").trim();
-			String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
-			String preExitMatch   = Matcher.quoteReplacement(preExit)+"([\\W].*|$)";
-			String preLeaveMatch  = Matcher.quoteReplacement(preLeave)+"([\\W].*|$)";
-			for (int i = 0; isEmpty && i < lines.count(); i++) {
-				String line = transform(lines.get(i)).trim();
-				if (!line.isEmpty())
-				{
-					isEmpty = false;
-				}
+			// START KGU#380 2017-04-14: Bugfix #394 - We don't consider superfluous lines anymore
+			//String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave").trim();
+			//String preReturnMatch = Matcher.quoteReplacement(preReturn)+"([\\W].*|$)";
+			//String preExitMatch   = Matcher.quoteReplacement(preExit)+"([\\W].*|$)";
+			//String preLeaveMatch  = Matcher.quoteReplacement(preLeave)+"([\\W].*|$)";
+			//for (int i = 0; isEmpty && i < lines.count(); i++) {
+			//	String line = transform(lines.get(i)).trim();
+			//	if (!line.isEmpty())
+			//	{
+			//		isEmpty = false;
+			//	}
+			String line = "";
+			if (!isEmpty) {
+				line = lines.get(0).trim();
+			}
 				// START KGU#74/KGU#78 2015-11-30: More sophisticated jump handling
 				//code.add(_indent + line + ";");
-				if (line.matches(preReturnMatch))
+				//if (line.matches(preReturnMatch))
+				if (_jump.isReturn())
 				{
 					addCode("return " + line.substring(preReturn.length()).trim() + ";",
 							_indent, isDisabled);
 				}
-				else if (line.matches(preExitMatch))
+				//else if (line.matches(preExitMatch))
+				else if (_jump.isExit())
 				{
 					insertExitInstr(line.substring(preExit.length()).trim(), _indent, isDisabled);
 				}
@@ -1135,7 +1160,8 @@ public class CGenerator extends Generator {
 					}
 					addCode(this.getMultiLevelLeaveInstr() + " " + label + ";", _indent, isDisabled);
 				}
-				else if (line.matches(preLeaveMatch))
+				//else if (line.matches(preLeaveMatch))
+				else if (_jump.isLeave())
 				{
 					// START KGU 2017-02-06: The "funny comment" was irritating and dubious itself
 					// Seems to be an ordinary one-level break without need to concoct a jump statement
@@ -1151,11 +1177,12 @@ public class CGenerator extends Generator {
 				}
 				// END KGU#74/KGU#78 2015-11-30
 			}
-			if (isEmpty) {
-				addCode("break;", _indent, isDisabled);
-			}
-			// END KGU 2015-10-18
-		}
+//			if (isEmpty) {
+//				addCode("break;", _indent, isDisabled);
+//			}
+//			// END KGU 2015-10-18
+//		}
+		// END KGU#380 207-04-14
 	}
 
 	// START KGU#47 2015-11-30: Offer at least a sequential execution (which is one legal execution order)
@@ -1386,7 +1413,7 @@ public class CGenerator extends Generator {
 		}
 		// START KGU#375 2017-04-12: Enh. #388: Might be an imported constant
 		else if (constValue != null) {
-			String type = Element.identifyExprType(typeMap, constValue);
+			String type = Element.identifyExprType(typeMap, constValue, false);
 			if (!type.isEmpty()) {
 				types = StringList.getNew(transformType(type, "int"));
 				// We place a faked workaround entry
@@ -1402,7 +1429,7 @@ public class CGenerator extends Generator {
 			// START KGU#375 2017-04-12: Enh. #388
 			if (decl.equals(transfConst) && constValue != null) {
 				// The actual type spec is missing but we try to extract it from the value
-				decl += " " + Element.identifyExprType(typeMap, constValue);
+				decl += " " + Element.identifyExprType(typeMap, constValue, false);
 				decl = decl.trim();
 			}
 			// END KGU#375 2017-04-12

@@ -33,6 +33,7 @@ package lu.fisch.structorizer.elements;
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.01.19      First Issue (enh. #259)
  *      Kay Gürtzig     2017.03.05      Method isArray(boolean) added and JavaDoc updated
+ *      Kay Gürtzig     2017.04.14      Issue #394: Method variants of getCanonicalType() and getTypes() 
  *
  ******************************************************************************************************
  *
@@ -106,6 +107,23 @@ public class TypeMapEntry {
 		 */
 		public String getCanonicalType()
 		{
+			return getCanonicalType(false);
+		}
+		
+		// START KGU#380 2017-04-14: Issue #394: Improved type comparison opportunities
+		/**
+		 * Returns a type string with canonicalized structure information and - if
+		 * {@code canonicalizeTypeNames} is true - type identifiers (as far as
+		 * possible, i.e. type names like "integer", "real" etc. apparently designating
+		 * standard types will be replaced by corresponding Java type names), all
+		 * prefixed with as many '&#64;' characters as there are index levels if it
+		 * is an array type.
+		 * @param canonicalizeTypeNames - specifies whether type names are to be unified, too
+		 * @see TypeMapEntry#getTypes()
+		 * @return type string, possibly prefixed with one or more '&#64;' characters. 
+		 */
+		public String getCanonicalType(boolean canonicalizeTypeNames)
+		{
 			String type = this.typeDescriptor;
 			if (this.isArray()) {
 				type = "@" + this.elementType;
@@ -113,8 +131,37 @@ public class TypeMapEntry {
 					type = "@" + type;
 				}
 			}
+			if (canonicalizeTypeNames) {
+				// (copied from JavaGenerator.transformType()
+				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("short int") + ")($|\\W.*)", "$1short$3");
+				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("long int") + ")($|\\W.*)", "$1long$3");
+				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("long long") + ")($|\\W.*)", "$1long$3");
+				type = type.replaceAll("(^|.*\\W)(S" + BString.breakup("hort") + ")($|\\W.*)", "$short$3");
+				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned int") + ")($|\\W.*)", "$1int$3");
+				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned long") + ")($|\\W.*)", "$1long$3");
+				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned char") + ")($|\\W.*)", "$1byte$3");
+				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("signed char") + ")($|\\W.*)", "$1byte$3");
+				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned") + ")($|\\W.*)", "$1int$3");
+				type = type.replaceAll("(^|.*\\W)(I" + BString.breakup("nt") + ")($|\\W.*)", "$1int$3");
+				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("integer") + ")($|\\W.*)", "$1int$3");
+				type = type.replaceAll("(^|.*\\W)(L" + BString.breakup("ong") + ")($|\\W.*)", "$1long$3");
+				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("longint") + ")($|\\W.*)", "$1long$3");
+				type = type.replaceAll("(^|.*\\W)(D" + BString.breakup("ouble") + ")($|\\W.*)", "$1double$3");
+				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("longreal") + ")($|\\W.*)", "$1double$3");
+				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("real") + ")($|\\W.*)", "$1double$3");
+				type = type.replaceAll("(^|.*\\W)(F" + BString.breakup("loat") + ")($|\\W.*)", "$1float$3");
+				type = type.replaceAll("(^|.*\\W)(C" + BString.breakup("har") + ")($|\\W.*)", "$1char$3");
+				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("character") + ")($|\\W.*)", "$1Character$3");
+				type = type.replaceAll("(^|.*\\W)(B" + BString.breakup("oolean") + ")($|\\W.*)", "$1boolean$3");
+				if (type.matches("(^|.*\\W)(" + BString.breakup("bool") + "[eE]?)(\\W.*|$)")) {
+					type = type.replaceAll("(^|.*\\W)(" + BString.breakup("bool") + "[eE]?)(\\W.*|$)", "$1boolean$3");
+				}
+				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("string") + ")($|\\W.*)", "$1String$3");
+				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("const") + ")($|\\W.*)", "$1final$3");
+			}
 			return type;
 		}
+		// END KGU#380 2017-04-14
 
 		private void setElementType()
 		{
@@ -276,17 +323,34 @@ public class TypeMapEntry {
 	/**
 	 * Returns a StringList containing the type specifications of all detected
 	 * declarations or assignments in canonicalized form (a prefix "&#64;" stands
-	 * for one array dimension level). 
+	 * for one array dimension level). Type names are preserved as declared.
 	 * @return StringList of differing canonicalized type descriptions
 	 */
 	public StringList getTypes()
 	{
+		return getTypes(false);
+	}
+	
+	// START KGU#380 2017-04-14: Issue #394: Improved type comparison opportunities
+	/**
+	 * Returns a StringList containing the type specifications of all detected
+	 * declarations or assignments in canonicalized form (a prefix "&#64;" stands
+	 * for one array dimension level).<br/>
+	 * If {@code canonicalizeTypeNames} is true then type identifiers apparently
+	 * designating standard types (like "integer", "real" etc.) will be replaced
+	 * by corresponding Java type names. 
+	 * @param canonicalizeTypeNames - specifies whether type names are to be unified, too
+	 * @return StringList of differing canonicalized type descriptions
+	 */
+	public StringList getTypes(boolean canonicalizeTypeNames)
+	{
 		StringList types = new StringList();
 		for (VarDeclaration currDecl: declarations) {
-			types.addIfNew(currDecl.getCanonicalType());
+			types.addIfNew(currDecl.getCanonicalType(canonicalizeTypeNames));
 		}
 		return types;
 	}
+	// END KGU#380 2017-04-14
 	
 	/**
 	 * Checks if there is a C-style declaration for this variable in _element

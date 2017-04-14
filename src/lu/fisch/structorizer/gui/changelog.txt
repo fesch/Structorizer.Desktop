@@ -5,7 +5,7 @@
 <Foo>   -->     idea AND coding done by Foo
 <2>     -->     idea and coding done by Kay Gürtzig
 
-Current development version: 3.26-06 (2017.04.13)
+Current development version: 3.26-06 (2017.04.14)
 - 01: Issue #312: Work area now ensured to get initial focus <2>
 - 01: Issue #319: Arranger index indicates "covered" status via icon now <2>
 - 01: Issue #101: A dependent Structorizer now shows instance number in title <2>
@@ -69,6 +69,8 @@ Current development version: 3.26-06 (2017.04.13)
 - 06: Enh. #390: Improved variable initialization check in multi-line instructions <2>
 - 06: Bugfix #391: Debugger button control was defective in step mode <2>
 - 06: Enh. #335/#388/#389: generators for Pascal, C, C++, and Java revised <2>
+- 06: Bugfix #394: Defective export of leave instructions in CASE elements to C etc. <2>
+- 06: Enh. #394: Loosened parameter restriction for exit instructions <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

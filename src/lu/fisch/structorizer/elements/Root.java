@@ -105,6 +105,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.04.05      Issue #390: Improved initialization check for multi-line instructions
  *      Kay Gürtzig     2017.04.11      Enh. #389: Analyser additions for import calls implemented
  *      Kay Gürtzig     2017.04.13      Enh. #380: Method outsourceToSubroutine() improved
+ *      Kay Gürtzig     2017.04.14      Issues #23, #380, #394: analyse_13_16_jump() radically revised
  *
  ******************************************************************************************************
  *
@@ -127,6 +128,7 @@ package lu.fisch.structorizer.elements;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 import java.util.Stack;
@@ -2992,9 +2994,9 @@ public class Root extends Element {
 			preExit = preExit.toLowerCase();
 			line = line.toLowerCase();
 		}
-		boolean isReturn = line.matches(Matcher.quoteReplacement(preReturn) + "([\\W].*|$)");
-		boolean isLeave = line.matches(Matcher.quoteReplacement(preLeave) + "([\\W].*|$)");
-		boolean isExit = line.matches(Matcher.quoteReplacement(preExit) + "([\\W].*|$)");
+		boolean isReturn = ele.isReturn();
+		boolean isLeave = ele.isLeave();
+		boolean isExit = ele.isExit();
 		boolean isJump = isLeave || isExit ||
 				line.matches("exit([\\W].*|$)") ||	// Also check hard-coded keywords
 				line.matches("break([\\W].*|$)");	// Also check hard-coded keywords
@@ -3003,26 +3005,16 @@ public class Root extends Element {
 		int pos = -1;
 		if (parent instanceof Subqueue && (pos = ((Subqueue)parent).getIndexOf(ele)) < ((Subqueue)parent).getSize()-1)
 		{
-			//error = new DetectedError("Your function seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
+			//error = new DetectedError("Instruction isn't reachable after a JUMP!",((Subqueue)parent).getElement(pos+1)));
 			addError(_errors, new DetectedError(errorMsg(Menu.error16_7, ""), ((Subqueue)parent).getElement(pos+1)), 16);	
 		}
 		// END KGU#179 2016-04-12
-		// Count the nested loops
-		int levelsDown = 0;
-		// Routines and Parallel sections cannot be penetrated by leave or break
-		while (parent != null && !(parent instanceof Root) && !(parent instanceof Parallel))
-		{
-			if (parent instanceof While ||
-					parent instanceof Repeat ||
-					parent instanceof For ||
-					parent instanceof Forever)
-			{
-				levelsDown++;
-			}
-			parent = parent.parent;
-		}
-		boolean insideParallel = parent instanceof Parallel;
 
+		// START KGU#78/KGU#365 2017-04-14: Enh. #23, #380 - completely rewritten
+		
+		// Routines and Parallel sections cannot be penetrated by leave or break
+		boolean insideParallel = false;
+		
 		// CHECK: Incorrect Jump syntax?
 		if (sl.count() > 1 || !(isJump || isReturn || line.isEmpty()))
 		{
@@ -3044,50 +3036,70 @@ public class Root extends Element {
 			if (_resultFlags[1] || _resultFlags[2])
 			{
 				//error = new DetectedError("Your function seems to use several competitive return mechanisms!",(Element) _node.getElement(i));
-				addError(_errors, new DetectedError(errorMsg(Menu.error13_3, CodeParser.getKeywordOrDefault("preReturn", "return")), ele), 13);
+				addError(_errors, new DetectedError(errorMsg(Menu.error13_3, preReturn), ele), 13);
 			}
 			// Check if we are inside a Parallel construct
-			if (insideParallel)
+			while (parent != null && !(parent instanceof Root) && !(parent instanceof Parallel))
 			{
-				//error = new DetectedError("You must not directly return out of a parallel thread!",(Element) _node.getElement(i));
-				addError(_errors, new DetectedError(errorMsg(Menu.error16_5, ""), ele), 16);                                            							
+				parent = parent.parent;
 			}
+			insideParallel = (parent != null && parent instanceof Parallel);
 		}
+		// CHECK: Leave levels feasible (#16) 
 		else if (isLeave)
 		{
-			int levelsUp = 1;
-			int keyLen = preLeave.length();
-			if (line.length() > keyLen)
-			{
-				try
-				{
-					levelsUp = Integer.parseInt(line.substring(keyLen).trim());
-				}
-				catch (Exception ex)
-				{
-					//error = new DetectedError("Wrong argument for this kind of JUMP (should be an integer constant)!",(Element) _node.getElement(i));
-					addError(_errors, new DetectedError(errorMsg(Menu.error16_6, ""), ele), 16);    					    							
-				}
-			}
-			// Compare the number of nested loops we are in with the requested jump levels
-			if (levelsUp < 1 || levelsUp > levelsDown)
-			{
-				//error = new DetectedError("Cannot leave or break more loop levels than being nested in!",(Element) _node.getElement(i));
-				addError(_errors, new DetectedError(errorMsg(Menu.error16_4, String.valueOf(levelsDown)), ele), 16);    								
-			}
-		}
-		else if (isExit && line.length() > preExit.length())
-		{
-			try
-			{
-				Integer.parseInt(line.substring(preExit.length()).trim());
-			}
-			catch (Exception ex)
+			int levelsUp = ele.getLevelsUp();
+			List<Element> loopsToLeave = ele.getLeftStructures(null, false, true);
+			if (levelsUp < 0 || loopsToLeave == null)
 			{
 				//error = new DetectedError("Wrong argument for this kind of JUMP (should be an integer constant)!",(Element) _node.getElement(i));
-				addError(_errors, new DetectedError(errorMsg(Menu.error16_6, ""), ele), 16);    					    							
+				addError(_errors, new DetectedError(errorMsg(Menu.error16_6, preLeave), ele), 16);    					    							
+			}
+			else {
+				int levelsDown = loopsToLeave.size();
+				if (levelsDown > 0 && loopsToLeave.get(levelsDown-1) instanceof Parallel) {
+					insideParallel = true;
+					levelsDown--;
+				}
+				// Compare the number of nested loops we are in with the requested jump levels
+				if (levelsUp < 1 || levelsUp > levelsDown)
+				{
+					//error = new DetectedError("Cannot leave or break more loop levels than being nested in!",(Element) _node.getElement(i));
+					addError(_errors, new DetectedError(errorMsg(Menu.error16_4, String.valueOf(levelsDown)), ele), 16);    								
+				}
 			}
 		}
+		// CHECK: Exit argument ok?
+		else if (isExit && line.length() > preExit.length())
+		{
+			// START KGU 2017-04-14: Syntactical restriction loosened
+			//try
+			//{
+			//	Integer.parseInt(line.substring(preExit.length()).trim());
+			//}
+			//catch (Exception ex)
+			//{
+			//	//error = new DetectedError("Wrong argument for this kind of JUMP (should be an integer constant)!",(Element) _node.getElement(i));
+			//	addError(_errors, new DetectedError(errorMsg(Menu.error16_6, ""), ele), 16);    					    							
+			//}
+			String expr = line.substring(preExit.length()).trim();
+			String exprType = Element.identifyExprType(this.getTypeInfo(), expr, true);
+			if (!exprType.equalsIgnoreCase("int")) {
+				// error = new DetectedError("Wrong argument for this kind of JUMP (should be an integer constant)!",(Element) _node.getElement(i));
+				addError(_errors, new DetectedError(errorMsg(Menu.error16_8, preExit), ele), 16);    					    							
+				
+			}
+			// END KGU 2017-04-14
+		}
+		
+		if (insideParallel)
+		{
+			// error = new DetectedError("You must not directly return out of a parallel thread!",(Element) _node.getElement(i));
+			addError(_errors, new DetectedError(errorMsg(Menu.error16_5, new String[]{preReturn, preLeave}), ele), 16);                                            							
+		}
+		
+		// END KGU#78/KGU#365 2017-04-14
+		
 	}
 
 	/**
@@ -3102,15 +3114,12 @@ public class Root extends Element {
 	private void analyse_13_16_instr(Instruction ele, Vector<DetectedError> _errors, boolean _isLastElement, StringList _myVars, boolean[] _resultFlags)
 	{
 		StringList sl = ele.getText();
-		String pattern = CodeParser.getKeywordOrDefault("preReturn", "return");
-		if (CodeParser.ignoreCase) pattern = pattern.toLowerCase();
-		String patternReturn = Matcher.quoteReplacement(pattern);
-		pattern = CodeParser.getKeywordOrDefault("preLeave", "leave");
-		if (CodeParser.ignoreCase) pattern = pattern.toLowerCase();
-		String patternLeave = Matcher.quoteReplacement(pattern);
-		pattern = CodeParser.getKeywordOrDefault("preExit", "exit");
-		if (CodeParser.ignoreCase) pattern = pattern.toLowerCase();
-		String patternExit = Matcher.quoteReplacement(pattern);
+		String preReturn =  CodeParser.getKeywordOrDefault("preReturn", "return");
+		String preLeave = CodeParser.getKeywordOrDefault("preLeave", "leave");
+		String preExit = CodeParser.getKeywordOrDefault("preExit", "exit");
+		String patternReturn = Matcher.quoteReplacement(CodeParser.ignoreCase ? preReturn.toLowerCase() : preReturn);
+		String patternLeave = Matcher.quoteReplacement(CodeParser.ignoreCase ? preLeave.toLowerCase() : preLeave);
+		String patternExit = Matcher.quoteReplacement(CodeParser.ignoreCase ? preExit.toLowerCase() : preExit);
 
 		for(int ls=0; ls<sl.count(); ls++)
 		{
@@ -3150,7 +3159,12 @@ public class Root extends Element {
 			{
 				//error = new DetectedError("An exit, leave or break instruction is only allowed as JUMP element!",(Element) _node.getElement(i));
 				//error = new DetectedError("A return instruction, unless at final position, must form a JUMP element!",(Element) _node.getElement(i));
-				addError(_errors, new DetectedError(errorMsg((isReturn ? Menu.error16_2 : Menu.error16_3), line), ele), 16);
+				if (isReturn) {
+					addError(_errors, new DetectedError(errorMsg(Menu.error16_2, preReturn), ele), 16);
+				}
+				else {
+					addError(_errors, new DetectedError(errorMsg(Menu.error16_3, new String[]{preLeave, preExit}), ele), 16);
+				}
 			}
 			// END KGU#78 2015-11-25
 		}
@@ -4071,42 +4085,25 @@ public class Root extends Element {
 			// FIXME: There should be a hook for interactive argument reordering
 			// Compose the subroutine signature
 			StringList argSpecs = new StringList();
-			boolean argTypes = false;
+			boolean argTypesFound = false;
 			for (int i = 0; i < args.count(); i++) {
 				String argSpec = args.get(i);
-				TypeMapEntry entry = types.get(argSpec);
-				if (entry != null && entry.isConflictFree()) {
-					String prefix = "";
-					String type = entry.getTypes().get(0);
-					if (!type.equals("???")) {
-						while (type.startsWith("@")) {
-							prefix += "array of ";
-							type = type.substring(1);
-						}
-						argSpec += ": " + prefix + type;
-						argTypes = true;
-					}
+				String typeDecl = makeTypeDeclaration(argSpec, types);
+				if (!typeDecl.isEmpty()) {
+					argSpec += typeDecl;
+					argTypesFound = true;
 				}
 				argSpecs.add(argSpec);
 			}
-			String signature = name + "(" + argSpecs.concatenate(argTypes ? "; " : ", ") + ")";
+			String signature = name + "("
+					+ argSpecs.concatenate(argTypesFound ? "; " : ", ")
+					+ ")";
 			
 			// Result composition (both within the subroutine and for the call)
 			String resAsgnmt = null;
 			if (results.count() == 1 && (result == null || result.equals(results.get(0)))) {
 				result = results.get(0);
-				TypeMapEntry entry = types.get(result);
-				if (entry != null && entry.isConflictFree()) {
-					String prefix = "";
-					String type = entry.getTypes().get(0);
-					if (!type.equals("???")) {
-						while (type.startsWith("@")) {
-							prefix += "array of ";
-							type = type.substring(1);
-						}
-						signature += ": " + prefix + type;
-					}
-				}
+				signature += makeTypeDeclaration(result, types);
 				if (!result.equals(name) && !result.equalsIgnoreCase("result")) {
 					resAsgnmt = name + " <- " + result;
 				}
@@ -4133,6 +4130,23 @@ public class Root extends Element {
 		return subroutine;
 	}
 	
+	// Tries to derive a type association in Pascal syntax for varName
+	private String makeTypeDeclaration(String varName, HashMap<String, TypeMapEntry> types) {
+		String typeDecl = "";
+		TypeMapEntry entry = types.get(varName);
+		if (entry != null && entry.isConflictFree()) {
+			String prefix = "";
+			String type = entry.getTypes().get(0);
+			if (!type.equals("???")) {
+				while (type.startsWith("@")) {
+					prefix += "array of ";
+					type = type.substring(1);
+				}
+				typeDecl += ": " + prefix + type;
+			}
+		}
+		return typeDecl;
+	}
 	/**
 	 * This is practically a very lean version of the {@link #analyse()} method. We simply don't create
 	 * Analyser warnings but collect variable names which are somewhere used without (unconditioned)

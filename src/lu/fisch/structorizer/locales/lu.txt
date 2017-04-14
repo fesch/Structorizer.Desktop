@@ -216,11 +216,13 @@ Menu.error14_2.text=The FOR loop step value («%») is not a legal integer const
 Menu.error14_3.text=Variable name «%» may collide with one of the configured FOR loop heading keywords!
 Menu.error15_1.text=The CALL has neither form «[ <var> " + "\u2190" +" ] <routine_name>(<arg_list>)» nor «import <progr_name>»!
 Menu.error16_1.text=A JUMP element may be empty or start with one of %, possibly followed by an argument!
-Menu.error16_2.text=A return instruction, unless at final position, must form a JUMP element!
-Menu.error16_3.text=An exit, leave or break instruction is only allowed as JUMP element!
+Menu.error16_2.text=A «%» instruction, unless at final position, must form a JUMP element!
+Menu.error16_3.text=A «%1» or «%2» instruction is only allowed as JUMP element!
 Menu.error16_4.text=Cannot leave or break more loop levels than being nested in (%)!
-Menu.error16_5.text=You must not directly return out of a parallel thread!
-Menu.error16_6.text=Wrong argument for this kind of JUMP (should be an integer constant)!
+Menu.error16_5.text=You must not directly jump (%1, %2) out of a parallel thread!
+Menu.error16_6.text=Illegal argument for a «%» JUMP (must be an integer constant)!
+Menu.error16_7.text=Instruction isn't reachable after a JUMP!
+Menu.error16_8.text=The argument for this «%» JUMP might be unsuited (should be an integer value)!
 Menu.error17.text=Consistency risk due to concurrent access to variable «%» by several parallel threads!
 Menu.errorLineReference.text= (Zeil %)
 

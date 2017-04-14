@@ -43,6 +43,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.07.07      Enh. #188: New copy constructor to support conversion (KGU#199)
  *      Kay Gürtzig     2016.07.30      Enh. #128: New mode "comments plus text" supported, drawing code delegated
  *      Kay Gürtzig     2017.03.03      Enh. #354: New classification methods isLeave(), isReturn(), isExit()
+ *      Kay Gürtzig     2017.04.14      Issues #23,#380,#394: new jump analysis helper methods
  *
  ******************************************************************************************************
  *
@@ -109,6 +110,8 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.awt.Color;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.swing.ImageIcon;
 
@@ -210,15 +213,15 @@ public class Jump extends Instruction {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly)
-    {
+	protected void addFullText(StringList _lines, boolean _instructionsOnly)
+	{
 		// In a jump instruction no variables ought to be introduced - so we ignore this text on _instructionsOnly
 		if (!this.isDisabled() && !_instructionsOnly)
 		{
 			_lines.add(this.getText());
 		}
-    }
-    // END KGU 2015-10-16
+	}
+	// END KGU 2015-10-16
 	
 	// START KGU#258 2016-09-26: Enh. #253
 	/* (non-Javadoc)
@@ -248,7 +251,7 @@ public class Jump extends Instruction {
 	 */
 	public boolean isReturn()
 	{
-		return this.text.count() == 1 && isReturn(this.text.get(0));
+		return this.text.count() == 1 && isReturn(this.text.get(0).trim());
 	}
 	/**
 	 * Checks whether the given line contains a leave statement
@@ -266,7 +269,7 @@ public class Jump extends Instruction {
 	 */
 	public boolean isLeave()
 	{
-		return this.text.count() == 0 || this.text.count() == 1 && isLeave(this.text.get(0));
+		return this.text.getLongString().trim().isEmpty() || this.text.count() == 1 && isLeave(this.text.get(0).trim());
 	}
 	/**
 	 * Checks whether this line contains an exit statement
@@ -284,8 +287,119 @@ public class Jump extends Instruction {
 	 */
 	public boolean isExit()
 	{
-		return this.text.count() == 1 && isExit(this.text.get(0));
+		return this.text.count() == 1 && isExit(this.text.get(0).trim());
 	}
 	// END KGU#354 2017-03-03
+	
+	// START KGU#78/KGU#365 3017-04-14: Enh. #23, #380: leave analyses unified here
+	/**
+	 * In case of a leave jump returns the specified number of loop levels to leave,
+	 * otherwise 0.
+	 * If the returned level specification is not a positive integer value then a
+	 * negative value will be returned.  
+	 * @return number of loop levels > 0 or 0 (wrong JUmp type) or negative (wrong specification)
+	 */
+	public int getLevelsUp()
+	{
+		int levelsUp = 0;
+		if (this.isLeave()) {
+			StringList tokens = Element.splitLexically(getText().get(0), true);
+			if (tokens.count() > 0) {
+				tokens.remove(0);
+			}
+			String expr = tokens.concatenate().trim();
+			if (expr.isEmpty()) {
+				levelsUp = 1;
+			}
+			else {
+				try {
+					if ((levelsUp = Integer.parseInt(expr)) == 0) {
+						levelsUp = -1;
+					}
+				}
+				catch (NumberFormatException ex) {
+					levelsUp = -1;
+				}
+			}
+		}
+		return levelsUp;
+	}
+	
+	/**
+	 * Returns the outermost loop this leave Jump intends to leave or null if it
+	 * is no leave Jump or if the loop level specification is wrong.
+	 * @param _scope
+	 * @return either the outermost one of the left loops or null
+	 * @see #isLeave()
+	 * @see #getLevelsUp()
+	 * @see #getLeftStructures(Subqueue, boolean, boolean)
+	 */
+	public Element getLeftLoop(Subqueue _scope)
+	{
+		Element leftLoop = null;
+		List<Element> leftLoopChain = getLeftStructures(_scope, false, false);
+		if (leftLoopChain != null && !leftLoopChain.isEmpty()) {
+			int levelsUp = this.getLevelsUp();
+			if (levelsUp > 0 && leftLoopChain.size() >= levelsUp) {
+				leftLoop = leftLoopChain.get(levelsUp-1);
+			}
+		}
+		return leftLoop;
+	}
+	
+	/**
+	 * Identifies the chain of relevant structured elements (loops, actually, i.e. elements
+	 * implementing the {@link ILoop} interface) to be left by this Jump.
+	 * The result will be null if this is not a Jump of leave flavour.<br/>
+	 * The result may contain less loop elements than specified if the actual nesting
+	 * depth falls short of the specified number of if the given {@code _scope} or a
+	 * {@link Parallel} element limit the reachable hierarchy.<br/>
+	 * If {@code _includeCase} is true then {@link Case} structures along the path are
+	 * also included in the resulting list, which may cause that the length of the
+	 * result may be greater than the specified number of levels to leave.<br/>
+	 * Likewise, if {@code _addLimitingParallel} is true and the reach is limited by
+	 * an enclosing {@link #Parallel} element then this stopper will be appended to the
+	 * result instead of further loops. 
+	 * @param _scope - a {@link Subqueue} limiting the hierarchy path or null
+	 * @param _includeCase - specifies whether enclosing {@link Case} structures are
+	 * also to be inserted into the list.
+	 * @param _addLimitingParallel - specifies whether a {@link Parallel} structure
+	 * blocking the upper hierarchy to be left is to be appended to the list (which
+	 * will not contain as many loops as specified then).
+	 * @return a list of loops (and possibly {@link Case} and {@link Parallel} elements)
+	 * or {@code null}.
+	 * @see #isLeave()
+	 * @see #getLevelsUp()
+	 * @see #getLeftLoop(Subqueue)
+	 */
+	public List<Element> getLeftStructures(Subqueue _scope, boolean _includeCase, boolean _addLimitingParallel)
+	{
+		List<Element> structuresLeft = null;
+		if (this.isLeave()) {
+			int levelsUp = this.getLevelsUp();
+			structuresLeft = new LinkedList<Element>();
+			Element parent = this.parent;
+			while (levelsUp > 0 && parent != null && !(parent instanceof Root)
+					&& !(parent instanceof Parallel)
+					&& (_scope == null || parent != _scope))
+			{
+				if (parent instanceof ILoop)
+				{
+					structuresLeft.add(parent);
+					levelsUp--;
+				}
+				else if (_includeCase && parent instanceof Case)
+				{
+					structuresLeft.add(parent);
+				}
+				parent = parent.parent;
+			}
+			if (_addLimitingParallel && parent != null && parent instanceof Parallel) {
+				structuresLeft.add(parent);
+			}
+		}		
+		return structuresLeft;
+	}
+	// END KGU#78/KGU#365 2017-04-14
 	
 }

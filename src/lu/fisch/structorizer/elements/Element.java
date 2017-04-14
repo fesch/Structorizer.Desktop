@@ -78,6 +78,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.02.01      KGU#335: Method splitLexically now reassembles floating-point literals (without sign)
  *      Kay Gürtzig     2017.02.07      Bugfix #341: Reconstruction of strings with mixed quotes in line fixed
  *      Kay Gürtzig     2017.03.30      Bugfix #333 (defective operator substitution), enh. #388 (const keyword)
+ *      Kay Gürtzig     2017.04.14      Enh. #380: New highlighting mechanism troubleMakers / E_TROUBLECOLOR
  *
  ******************************************************************************************************
  *
@@ -175,8 +176,10 @@ import com.stevesoft.pat.*;  //http://www.javaregex.com/
 
 import java.awt.Point;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
 
@@ -279,6 +282,9 @@ public abstract class Element {
 	// START KGU#43 2015-10-11: New fix color for breakpoint marking
 	public static Color E_BREAKPOINTCOLOR = Color.RED;			// Colour of the breakpoint bar at element top
 	// END KGU#43 2015-10-11
+	// START KGU#365 2017-04-14: Enh. #380 Introduced to highlight trouble-making elements during GUI activities
+	public static final Color E_TROUBLECOLOR = Color.RED;
+	// END KGU#365 2017-04-14
 	// START KGU#117 2016-03-06: Test coverage colour and mode for Enh. #77
 	public static Color E_TESTCOVEREDCOLOR = Color.GREEN;
 	public static boolean E_COLLECTRUNTIMEDATA = false;
@@ -351,7 +357,15 @@ public abstract class Element {
 	protected static Map<Integer, Integer> breakTriggersTemp = new Hashtable<Integer, Integer>();
 	// END KGU#213 2016-08-2
 
-	// element attributes
+	// START KGU#365 2017-04-14: Enh. #380 - New mechanism to mark trouble-making elements
+	/**
+	 * Set for quick highlighting element that cause trouble in some complex GUI activities.
+	 * Intended to be highlighted in the E_TROUBLECOLOR with high fill color priority
+	 */
+	public static final Set<Element> troubleMakers = new HashSet<Element>();
+	// END KGU#365 2017-04-14
+	
+//	element attributes
 	protected StringList text = new StringList();
 	public StringList comment = new StringList();
         
@@ -1090,6 +1104,11 @@ public abstract class Element {
 		else if (this.executed) {
 			return Element.E_RUNNINGCOLOR;
 		}
+		// START KGU#365 2017-04-14: Enh. #380
+		else if (troubleMakers.contains(this)) {
+			return Element.E_TROUBLECOLOR;
+		}
+		// END KGU#365 2017-04-14
 		else if (this.selected) {
 			return Element.E_DRAWCOLOR;
 		}
@@ -2084,9 +2103,10 @@ public abstract class Element {
 	 * the typeMap.
 	 * @param typeMap - current mapping of variable names to statically concluded type information 
 	 * @param expr - the expression to be categorized
+	 * @param canonicalizeTypeNames TODO
 	 * @return a type description if available and unambiguous or an empty string otherwise
 	 */
-	public static String identifyExprType(HashMap<String, TypeMapEntry> typeMap, String expr)
+	public static String identifyExprType(HashMap<String, TypeMapEntry> typeMap, String expr, boolean canonicalizeTypeNames)
 	{
 		String typeSpec = "";	// This means no info
 		// 1. Check whether its a known typed variable

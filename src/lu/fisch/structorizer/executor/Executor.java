@@ -120,6 +120,7 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.03.30      Enh. #388: Concept of constants implemented
  *      Kay Gürtzig     2017.04.11      Enh. #389: Implementation of import calls (without context change)
  *      Kay Gürtzig     2017.04.12      Bugfix #391: Control button activation fixed for step mode
+ *      Kay Gürtzig     2017.04.14      Issue #380/#394: Jump execution code revised on occasion of these bugfixes
  *
  ******************************************************************************************************
  *
@@ -3078,140 +3079,99 @@ public class Executor implements Runnable
 	}
 	// END KGU#2 2015-11-14
 
-	// START KGU#78 2015-11-25: Separate dedicated implementation for JUMPS
+	// START KGU#78 2015-11-25: Separate dedicated implementation for JUMPs
 	private String stepJump(Jump element)
 	{
 		String result = new String();
 
 		StringList sl = element.getText();
-		int i = 0;
 		boolean done = false;
 
-		// START KGU#127 2016-01-07: Bugfix #91 - without a single line the exit didn't work
-		if (sl.count() == 0)
-		{
-			done = true;
-			this.leave++;
+		// START KGU#380 2017-04-14: #394 Radically rewritten and simplified (no multi-line evaluation anymore)
+		// Leave?
+		if (element.isLeave()) {
+			int nLevels = element.getLevelsUp();
+			if (nLevels < 1) {
+				String argument = sl.get(0).trim().substring(CodeParser.getKeyword("preLeave").length()).trim();
+				result = control.msgIllegalLeave.getText().replace("%1", argument);				
+			}
+			else {
+				this.leave += nLevels;
+				done = true;
+			}
 		}
-		// END KGU#127 2016-01-07
-		while ((i < sl.count()) && !done && result.equals("") && (stop == false) && !returned)
-		{
-			String cmd = sl.get(i).trim();
-			StringList tokens = Element.splitLexically(cmd.toLowerCase(), true);
-			tokens.removeAll(" ");
-			try
-			{
-				boolean startsWithLeave = tokens.indexOf(CodeParser.getKeywordOrDefault("preLeave", "leave"), !CodeParser.ignoreCase) == 0;
-				// Single-level break? (An empty Jump is also a break!)
-				if (startsWithLeave && tokens.count() == 1 ||
-						cmd.isEmpty() && i == sl.count() - 1)
-				{
-					this.leave++;
-					done = true;
-				}
-				// Multi-level leave?
-				else if (startsWithLeave)
-				{
-					int nLevels = 1;
-					if (tokens.count() > 1)
-					{
-						// START KGU#252 2016-09-22: Issue #248 - Java 7 workaround
-						String errorMessage = null;
-						// END KGU#252 2016-09-22
-						try {
-							// START KGU#252 2016-09-22: Issue #248 - Java 7 workaround
-							//nLevels = Integer.parseUnsignedInt(tokens.get(1));
-							nLevels = Integer.parseInt(tokens.get(1));
-							if (nLevels <= 0)
-							{
-								errorMessage = tokens.get(1) + " < 1";
-							}
-							// END KGU#252 2016-09-22
-						}
-						catch (NumberFormatException ex)
-						{
-							// START KGU#197 2016-07-27: Localization support (updated 2016-09-17)
-							//result = "Illegal leave argument: " + ex.getMessage();
-							errorMessage = ex.getLocalizedMessage();
-							if (errorMessage == null) errorMessage = ex.getMessage();
-							errorMessage = ex.getClass().getSimpleName() + " " + errorMessage;
-							// START KGU#252 2016-09-22: Issue #248: Java 7 workaround
-							//result = control.msgIllegalLeave.getText().replace("%1", errorMessage);
-							// END KGU#252 2016-09-22
-							// END KGU#197 2016-07-27
-						}
-						// START KGU#252 2016-09-22: Issue #248: Java 7 workaround
-						if (errorMessage != null) {
-							result = control.msgIllegalLeave.getText().replace("%1", errorMessage);
-						}
-						// END KGU#252 2016-09-22
-					}
-					this.leave += nLevels;
-					done = true;
-				}
-				// Unstructured return from the routine?
-				else if (tokens.indexOf(CodeParser.getKeywordOrDefault("preReturn", "return"), !CodeParser.ignoreCase) == 0)
-				{
-					result = tryReturn(convert(sl.get(i)));
-					done = true;
-				}
-				// Exit from the entire program - simply handled like an error here.
-				else if (tokens.indexOf(CodeParser.getKeywordOrDefault("preExit", "exit"), !CodeParser.ignoreCase) == 0)
-				{
-					int exitValue = 0;
-					try {
-						
-						Object n = interpreter.eval(tokens.get(1));
-						if (n instanceof Integer)
-						{
-							exitValue = ((Integer) n).intValue();
-						}
-						else
-						{
-							// START KGU#197 2016-07-27: More localization support
-							//result = "Inappropriate exit value: <" + (n == null ? tokens.get(1) : n.toString()) + ">";
-							result = control.msgWrongExit.getText().replace("%1",
-									"<" + (n == null ? tokens.get(1) : n.toString()) + ">");
-							// END KGU#197 2016-07-27
-						}
-					}
-					catch (EvalError ex)
-					{
-						// START KGU#197 2016-07-27: More localization support (Updated 32016-09-17)
-						//result = "Wrong exit value: " + ex.getMessage();
-						String exMessage = ex.getLocalizedMessage();
-						if (exMessage == null) exMessage = ex.getMessage();
-						result = control.msgWrongExit.getText().replace("%1", exMessage);
-						// END KGU#197 2016-07-27
-					}
-					if (result.isEmpty())
-					{
-						// START KGU#197 2016-07-27: More localization support
-						//result = "Program exited with code " + exitValue + "!";
-						result = control.msgExitCode.getText().replace("%1",
-								Integer.toString(exitValue));
-						// END KGU#197 2016-07-27
-						// START KGU#117 2016-03-07: Enh. #77
-						element.checkTestCoverage(true);
-						// END KGU#117 2016-03-07
-					}
-					done = true;
-				}
-				// Anything else is an error
-				else if (!cmd.isEmpty())
-				{
-					// START KGU#197 2016-07-27: More localization support
-					//result = "Illegal content of a Jump (i.e. exit) instruction: <" + cmd + ">!";
-					result = control.msgIllegalJump.getText().replace("%1", cmd);
-					// END KGU#197 2016-07-27
-				}
-			} catch (Exception ex)
+		// Unstructured return?
+		else if (element.isReturn()) {
+			try {
+				result = tryReturn(convert(sl.get(0)));
+				done = true;			
+			}
+			catch (Exception ex)
 			{
 				result = ex.getLocalizedMessage();
 				if (result == null) result = ex.getMessage();
 			}
-			i++;
 		}
+		// Exit from entire program?
+		else if (element.isExit()) {
+			StringList tokens = Element.splitLexically(sl.get(0).trim(), true);
+			// START KGU#365/KGU#380 2017-04-14: Issues #380, #394 Allow arbitrary integer expressions now
+			//tokens.removeAll("");
+			tokens.remove(0);	// Get rid of the keyword...
+			String expr = tokens.concatenate();
+			// END KGU#380 2017-04-14
+			// Get exit value
+			int exitValue = 0;
+			try {
+				// START KGU 2017-04-14: #394 Allow arbitrary integer expressions now
+				//Object n = interpreter.eval(tokens.get(1));
+				Object n = interpreter.eval(expr);
+				// END KGU 2017-04-14
+				if (n instanceof Integer)
+				{
+					exitValue = ((Integer) n).intValue();
+				}
+				else
+				{
+					// START KGU#197 2016-07-27: More localization support
+					//result = "Inappropriate exit value: <" + (n == null ? tokens.get(1) : n.toString()) + ">";
+					result = control.msgWrongExit.getText().replace("%1",
+							"<" + (n == null ? expr : n.toString()) + ">");
+					// END KGU#197 2016-07-27
+				}
+			}
+			catch (EvalError ex)
+			{
+				// START KGU#197 2016-07-27: More localization support (Updated 32016-09-17)
+				//result = "Wrong exit value: " + ex.getMessage();
+				String exMessage = ex.getLocalizedMessage();
+				if (exMessage == null) exMessage = ex.getMessage();
+				result = control.msgWrongExit.getText().replace("%1", exMessage);
+				// END KGU#197 2016-07-27
+			}
+			if (result.isEmpty())
+			{
+				// START KGU#197 2016-07-27: More localization support
+				//result = "Program exited with code " + exitValue + "!";
+				result = control.msgExitCode.getText().replace("%1",
+						Integer.toString(exitValue));
+				// END KGU#197 2016-07-27
+				// START KGU#117 2016-03-07: Enh. #77
+				element.checkTestCoverage(true);
+				// END KGU#117 2016-03-07
+			}
+			done = true;
+		}
+		// Anything else is an error
+		else
+		{
+			// START KGU#197 2016-07-27: More localization support
+			//result = "Illegal content of a Jump (i.e. exit) instruction: <" + cmd + ">!";
+			result = control.msgIllegalJump.getText().replace("%1", sl.concatenate(" <nl> "));
+			// END KGU#197 2016-07-27
+		}
+		// END KGU#380 2017-04-14
+			
 		if (done && leave > loopDepth)
 		{
 			// START KGU#197 2016-07-27: More localization support

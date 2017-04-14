@@ -360,12 +360,13 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder error15_4 = new LangTextHolder("Diagram «%» is rather unsuited for an import call as it makes use of return.");
 	// END KGU#376 2017-04-11
 	public static final LangTextHolder error16_1 = new LangTextHolder("A JUMP element may be empty or start with one of %, possibly followed by an argument!");	
-	public static final LangTextHolder error16_2 = new LangTextHolder("A return instruction, unless at final position, must form a JUMP element!");
-	public static final LangTextHolder error16_3 = new LangTextHolder("An exit, leave or break instruction is only allowed as JUMP element!");
+	public static final LangTextHolder error16_2 = new LangTextHolder("A % instruction, unless at final position, must form a JUMP element!");
+	public static final LangTextHolder error16_3 = new LangTextHolder("A %1 or %2 instruction is only allowed as JUMP element!");
 	public static final LangTextHolder error16_4 = new LangTextHolder("Cannot leave or break more loop levels than being nested in («%»)!");
-	public static final LangTextHolder error16_5 = new LangTextHolder("You must not directly return out of a parallel thread!");
-	public static final LangTextHolder error16_6 = new LangTextHolder("Wrong argument for this kind of JUMP (should be an integer constant)!");
+	public static final LangTextHolder error16_5 = new LangTextHolder("You must not directly jump (%1, %2) out of a parallel thread!");
+	public static final LangTextHolder error16_6 = new LangTextHolder("Illegal argument for a «%» JUMP (must be an integer constant)!");
 	public static final LangTextHolder error16_7 = new LangTextHolder("Instruction isn't reachable after a JUMP!");
+	public static final LangTextHolder error16_8 = new LangTextHolder("The argument for this «%» JUMP might be unsuited (should be an integer value).");
 	// END KGU#2 2015-11-25
 	// START KGU#47 2015-11-28: New check for concurrency problems
 	public static final LangTextHolder error17 = new LangTextHolder("Consistency risk due to concurrent access to variable «%» by several parallel threads!");
@@ -409,6 +410,7 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#232 2016-08-02
 	// START KGU#247 2016-09-15: Issue #243: Forgotten message box translations
 	public static final LangTextHolder msgTitleError = new LangTextHolder("Error");
+	public static final LangTextHolder msgTitleWarning = new LangTextHolder("Warning");
 	public static final LangTextHolder msgTitleLoadingError = new LangTextHolder("Loading Error");
 	public static final LangTextHolder msgTitleParserError = new LangTextHolder("Parser Error");
 	public static final LangTextHolder msgTitleURLError = new LangTextHolder("URL Error");
@@ -471,6 +473,14 @@ public class Menu extends LangMenuBar implements NSDController
 	// END KGU#354 2017-03-04
 	// START KGU#365 2017-03-27: Enh. #380
 	public static final LangTextHolder msgSubroutineName = new LangTextHolder("Name of the subroutine");
+	public static final LangTextHolder msgJumpsOutwardsScope = new LangTextHolder(
+			"There are JUMP instructions among the selected elements targeting outwards.\n"
+			+ "To outsource them would compromise the logic of the program or result in defective code!\n"
+			+ "The respective JUMPs are listed below and shown RED in the diagram:\n"
+			+ "%\n\n"
+			+ "Do you really still insist on continuing?");
+	public static final LangTextHolder lblYes = new LangTextHolder("Yes");
+	public static final LangTextHolder lblNo = new LangTextHolder("No");
 	// END KGU#365 2017-03-27
 
 	public void create()

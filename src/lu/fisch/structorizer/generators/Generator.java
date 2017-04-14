@@ -69,6 +69,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
  *      Kay Gürtzig     2017.03.05      Issue #365: Support for posterior insertion of global definitions
  *      Kay Gürtzig     2017.03.10      Issue #368: New method getExportCharset
+ *      Kay Gürtzig     2017.04.14      Bugfix #394: Jump map generation revised
  *
  ******************************************************************************************************
  *
@@ -107,6 +108,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Vector;
@@ -1022,12 +1024,12 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	protected boolean mapJumps(Subqueue _squeue)
 	{
 		boolean surelyReturns = false;
-		String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave");
+//		String preLeave  = CodeParser.getKeywordOrDefault("preLeave", "leave");
 		String preReturn = CodeParser.getKeywordOrDefault("preReturn", "return");
-		String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit");
-		String patternLeave = getKeywordPattern(preLeave) + "([\\W].*|$)";
+//		String preExit   = CodeParser.getKeywordOrDefault("preExit", "exit");
+//		String patternLeave = getKeywordPattern(preLeave) + "([\\W].*|$)";
 		String patternReturn = getKeywordPattern(preReturn) + "([\\W].*|$)";
-		String patternExit = getKeywordPattern(preExit) + "([\\W].*|$)";
+//		String patternExit = getKeywordPattern(preExit) + "([\\W].*|$)";
 		Iterator<Element> iter = _squeue.getIterator();
 		while (iter.hasNext() && !surelyReturns)
 		{
@@ -1037,78 +1039,116 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 			if (elem instanceof Jump && !elem.isDisabled())
 			{
 				String jumpText = elem.getText().getLongString().trim();
-				if (jumpText.matches(patternReturn))
+				// START KGU#380 2017-04-14: Bugfix #394 Code revision, simplification
+				//if (jumpText.matches(patternReturn))
+				
+				Jump jump = (Jump)elem;
+				if (jump.isReturn())
+				// END KGU#380 2017-04-14
 				{
 					boolean hasResult = !jumpText.substring(preReturn.length()).trim().isEmpty();
 					if (hasResult) this.returns = true;
 					// Further investigation would be done in vain - the remaining sequence is redundant
 					return hasResult;
 				}
-				else if (jumpText.matches(patternExit))
+				// START KGU#380 2017-04-14: Bugfix #394 - Code revision, simplification
+				//else if (jumpText.matches(patternExit))
+				else if (jump.isExit())
+				// END KGU#380 2017-04-14
 				{
 					// Doesn't return a regular result but we won't get to the end, so a default return is
 					// not required, we handle this as if a result would have been returned.
-					surelyReturns = true;
+					//surelyReturns = true;
+					return true;
 				}
-				// Get the number of requested exit levels
-				int levelsUp = 0;
-				if (jumpText.isEmpty())
-				{
-					levelsUp = 1;
-				}
-				else if (jumpText.matches(patternLeave))
-				{
-					levelsUp = 1;
-					if (jumpText.length() > preLeave.length()) {
-						try {
-							levelsUp = Integer.parseInt(jumpText.substring(preLeave.length()).trim());
-						}
-						catch (NumberFormatException ex)
-						{
-							System.out.println("Unsuited leave argument in Element \"" + jumpText + "\"");
-						}
-					}
-				}
-				// Try to find the target loop
-				// START KGU#78 2015-12-18: Enh. #23 specific handling only required if there is a break instruction
-				//boolean simpleBreak = levelsUp == 1;	// For special handling of Case context
-				// Simple break instructions usually require special handling of Case context
-				boolean simpleBreak = levelsUp == 1 && this.breakMatchesCase();
-				// END KGU#78 2015-12-18
-				Element parent = elem.parent;
-				while (parent != null && !(parent instanceof Parallel) && levelsUp > 0)
-				{
-					if (parent instanceof ILoop)
-					{
-						if (--levelsUp == 0 && !simpleBreak)	// Target reached?
-						{
+// START KGU#380 2017-04-14: Bugfix #394 - Code revision, simplification
+//				// Get the number of requested exit levels
+//				int levelsUp = 0;
+//				if (jumpText.isEmpty())
+//				{
+//					levelsUp = 1;
+//				}
+//				else if (jumpText.matches(patternLeave))
+//				{
+//					levelsUp = 1;
+//					if (jumpText.length() > preLeave.length()) {
+//						try {
+//							levelsUp = Integer.parseInt(jumpText.substring(preLeave.length()).trim());
+//						}
+//						catch (NumberFormatException ex)
+//						{
+//							System.out.println("Unsuited leave argument in Element \"" + jumpText + "\"");
+//						}
+//					}
+//				}
+//				// Try to find the target loop
+//				// START KGU#78 2015-12-18: Enh. #23 specific handling only required if there is a break instruction
+//				//boolean simpleBreak = levelsUp == 1;	// For special handling of Case context
+//				// Simple break instructions usually require special handling of Case context
+//				boolean simpleBreak = levelsUp == 1 && this.breakMatchesCase();
+//				// END KGU#78 2015-12-18
+//				Element parent = elem.parent;
+//				while (parent != null && !(parent instanceof Parallel) && levelsUp > 0)
+//				{
+//					if (parent instanceof ILoop)
+//					{
+//						if (--levelsUp == 0 && !simpleBreak)	// Target reached?
+//						{
+//							// Is target loop already associated with a label?
+//							Integer label = this.jumpTable.get(parent);
+//							if (label == null)
+//							{
+//								// If not then associate it with a label
+//								label = this.labelCount++;
+//								this.jumpTable.put(parent, label);
+//							}
+//							this.jumpTable.put(elem, label);
+//						}
+//					}
+//					else if (parent instanceof Case)
+//					{
+//						// If we were within a selection (switch) then we must use "goto" to get out
+//						simpleBreak = false;
+//					}
+//					parent = parent.parent;
+//				}
+//				if (levelsUp > 0)
+				else if (jump.isLeave()) {
+					Element targetLoop = jump.getLeftLoop(null);
+					if (targetLoop != null) {
+						List<Element> leftStructures = jump.getLeftStructures(null, this.breakMatchesCase(), false);
+						boolean simpleBreak = leftStructures.size() == 1 && this.breakMatchesCase();
+						if (!simpleBreak) {
 							// Is target loop already associated with a label?
-							Integer label = this.jumpTable.get(parent);
+							Integer label = this.jumpTable.get(targetLoop);
 							if (label == null)
 							{
 								// If not then associate it with a label
 								label = this.labelCount++;
-								this.jumpTable.put(parent, label);
+								this.jumpTable.put(targetLoop, label);
 							}
 							this.jumpTable.put(elem, label);
 						}
 					}
-					else if (parent instanceof Case)
-					{
-						// If we were within a selection (switch) then we must use "goto" to get out
-						simpleBreak = false;
+					else {
+						// Target couldn't be found, so mark the jump with an error marker
+						this.jumpTable.put(elem, -1);						
 					}
-					parent = parent.parent;
+					// After an unconditional leave further instructions at this level are redundant  
+					return surelyReturns;
 				}
-				if (levelsUp > 0)
+				else	// No recognized jump type
+// END KGU#380 2017-04-14
 				{
 					// Target couldn't be found, so mark the jump with an error marker
 					this.jumpTable.put(elem, -1);
 				}
-				else {
-					// After an unconditional jump, the remaining instructions are redundant
-					return surelyReturns;
-				}
+// START KGU#380 2017-04-14: Bugfix #394 - No longer needed
+//				else {
+//					// After an unconditional jump, the remaining instructions are redundant
+//					return surelyReturns;
+//				}
+// END KGU#380 2017-04-14
 			}
 			// No jump: then only recursively descend
 			else if (elem instanceof Alternative)

@@ -283,6 +283,7 @@ Menu.msgOpenLangFile.text=Übersetzungsdatei öffnen
 Menu.msgLangFile.text=Structorizer-Übersetzungsdatei
 Menu.msgGotoHomepage.text=Siehe % für herunterladbare Updates<br>und Neuigkeiten über Structorizer.
 Menu.msgTitleError.text=Fehler
+Menu.msgTitleWarning.text=WARNUNG
 Menu.msgTitleLoadingError.text=Fehler beim Laden
 Menu.msgTitleParserError.text=Parser-Fehler
 Menu.msgTitleURLError.text=URL-Fehler
@@ -316,12 +317,19 @@ Menu.msgReplacementsDone.text=% Anweisungen ersetzt.
 Menu.msgNewerVersionAvail.text=Neuere Version % zum Download verfügbar.
 Menu.msgUpdateInfoHint.text=Um über neue Versionen informiert zu werden kann mit\nMenüpunkt "%1" > "%2"\ndie Online-Suche nach Updates auf der Structorizer-Homepage aktiviert werden.
 Menu.lblOk.text=OK
+Menu.lblYes.text=Ja, fortsetzen
+Menu.lblNo.text=Nein, abbrechen
 Menu.lblSuppressUpdateHint.text=Diesen Hinweis nicht mehr anzeigen
 Menu.lblHint.text=Tipp
 Menu.lblCopyToClipBoard.text=OK, Text -> Zwischenablage
 Menu.msgSelectParser.text=Die Quellcode-Sprache von "%2" ist nicht eindeutig. Bitte Import-Sprache wählen:%1\nGeeignetste Nummer eingeben, bitte.
 Menu.msgImportCancelled.text=Code-Import für Datei "%" abgebrochen.
 Menu.msgSubroutineName.text=Name des neuen Unterprogramms
+Menu.msgJumpsOutwardsScope.text=Im ausgewählten Diagrammabschnitt gibt es Aussprunganweisungen nach außerhalb.\n"
+			+ "Sie auszugliedern würde die Programmlogik zerstören bzw. einen fehlerhaften Algrithmus erzeugen!\n"
+			+ "Die betreffenden Aussprünge sind unten aufgelistet und im Diagram ROT markiert:\n"
+			+ "%\n\n"
+			+ "Trotzdem Ausgliederung fortsetzen?
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
@@ -358,12 +366,13 @@ Menu.error15_2.text=Das aufgerufene Diagramm «%» ist z.Z. nicht verfügbar.
 Menu.error15_3.text=Mehr als ein Diagramm passt zu Aufruf «%».
 Menu.error15_4.text=Diagramm «%» ist eher ungeeignet für einen Importaufruf, da es Rücksprünge verwendet.
 Menu.error16_1.text=Der Aussprung muss leer sein oder mit einem der Schlüsselwörter % beginnen!
-Menu.error16_2.text=Eine return-Anweisung muss (außer am Diagrammende) ein Aussprung-Element sein!
-Menu.error16_3.text=Exit-, leave- oder break-Anweisungen sind nur als Aussprung-Elemente zulässig!
+Menu.error16_2.text=Eine «%»-Anweisung muss (außer am Diagrammende) ein Aussprung-Element sein!
+Menu.error16_3.text=«%1»- oder «%2»-Anweisungen sind nur als Aussprung-Elemente zulässig!
 Menu.error16_4.text=Ein Aussprung ist nur um höchstens die Anzahl der umgebenden Schleifen (%) zulässig!
-Menu.error16_5.text=Ein direkter Rücksprung (return) aus einem Parallelzweig ist unzulässig!
-Menu.error16_6.text=Falscher Parameter für diese Art von Aussprung - hier sollte eine Ganzzahlkonstante stehen.
+Menu.error16_5.text=Ein direkter Aussprung (%1, %2) aus einem Parallelzweig ist unzulässig!
+Menu.error16_6.text=Unzulässiger Parameter für Schleifenaussprung - nur Ganzzahlkonstante erlaubt.
 Menu.error16_7.text=Anweisungen nach einem Aussprung sind nicht erreichbar.
+Menu.error16_8.text=Möglicherweise ungeeigneter Parameter für «%»-Befehl (solle ein Ganzzahlwert sein)!
 Menu.error17.text=Konsistenzgefahr wegen konkurrierender Zugriffe auf Variable «%» aus mehreren Threads!
 Menu.error18.text=Variable «%1» könnte in manchen Sprachen mit Variable(n) «%2» zusammenfallen!
 Menu.error19_1.text=Der Variablenname «%1» kann in Sprachen wie %2 mit reservierten Wörtern kollidieren!

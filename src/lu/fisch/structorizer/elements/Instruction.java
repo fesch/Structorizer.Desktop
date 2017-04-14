@@ -714,7 +714,7 @@ public class Instruction extends Element {
 			StringList items = Element.splitExpressionList(rightSide.concatenate("", 1, rightSide.count()-1), ",");
 			// Try to identify the element type(s)
 			for (int i = 0; !typeSpec.contains("???") && i < items.count(); i++) {
-				String itemType = identifyExprType(knownTypes, items.get(i));
+				String itemType = identifyExprType(knownTypes, items.get(i), false);
 				if (typeSpec.isEmpty()) {
 					typeSpec = itemType;
 				}
@@ -729,7 +729,7 @@ public class Instruction extends Element {
 		}
 		else {
 			// Try to derive the type from the expression
-			typeSpec = identifyExprType(knownTypes, rightSide.concatenate(" "));
+			typeSpec = identifyExprType(knownTypes, rightSide.concatenate(" "), false);
 		}
 		return typeSpec;
 	}
