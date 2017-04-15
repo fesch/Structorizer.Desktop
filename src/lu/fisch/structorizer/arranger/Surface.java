@@ -356,6 +356,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 					root.shadowFilepath = filename;
 				}
 				// END KGU#316 2016-12-28
+				// START KGU#382 2017-04-15: Ensure highlighting mode has effect
+				root.hightlightVars = Element.E_VARHIGHLIGHT;
+				root.getVarNames();	// Initialise the variable table, otherwise the highlighting won't work
+				// END KGU#382 2017-04-15
 				// START KGU#289 2016-11-15: Enh. #290 (load from Mainform)
 				//addDiagram(root, point);
 				addDiagram(root, form, point);

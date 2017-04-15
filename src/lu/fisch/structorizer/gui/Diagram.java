@@ -120,7 +120,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.15      Enh. #354: New menu strategy for code import - selection by FilChooser
  *      Kay Gürtzig     2017.03.19/27   Enh. #380: New function to outsource subsequences to routines
  *      Kay Gürtzig     2017.03.28      Issue #370: Improved dialog strategies for refactoring (parser preferences)
- *      Kay Gürtzig     2017.04.11      Enh. #389: Modifications in CALL transmutation
+ *      Kay Gürtzig     2017.04.11/15   Enh. #389: Modifications in CALL transmutation and canTransmute()
  *
  ******************************************************************************************************
  *
@@ -2120,6 +2120,9 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				Instruction instr = (Instruction)selected;
 				isConvertible = instr.getText().count() > 1
 						|| instr.isJump()
+						// START KGU#376 2017-04-15: Enh. #389 accept new call type, too
+						|| instr.isImportCall()
+						// END KGU#376 2017-04-15
 						|| instr.isFunctionCall()
 						|| instr.isProcedureCall();
 			}
@@ -2799,6 +2802,7 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 					// adopt presentation properties from root
 					sub.hightlightVars = root.hightlightVars;
 					sub.isNice = root.isNice;
+					sub.getVarNames();	// just to prepare proper drawing.
 					Arranger arr = Arranger.getInstance();
 					arr.addToPool(sub, NSDControl.getFrame());
 					arr.setVisible(true);
