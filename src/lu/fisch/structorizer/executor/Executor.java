@@ -4510,6 +4510,9 @@ public class Executor implements Runnable
 				problem = ex.getMessage();
 			}
 		}
+		// There are no built-in functions returning an array and external function calls
+		// aren't allowed at this position, hence it's relatively safe to conclude
+		// an item enumeration from the occurrence of a comma.
 		if (value == null && valueListString.contains(","))
 		{
 			try

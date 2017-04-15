@@ -56,7 +56,9 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.09.24      Enh. #250: Adaptations to make the new editor design work
  *      Kay Gürtzig     2016.09.25      Issue #252: ':=' and '<-' equivalence in consistency check
  *                                      Enh. #253: CodeParser.keywordMap refactored
- *      Kay Gürtzig     2016.10.04      Enh. #253: Refactoring configuration revised 
+ *      Kay Gürtzig     2016.10.04      Enh. #253: Refactoring configuration revised
+ *      Kay Gürtzig     2017.01.26      Enh. #259: Type retrieval support added (for counting loops)
+ *      Kay Gürtzig     2017.04.14      Enh. #259: Approach to guess FOR-IN loop variable type too
  *
  ******************************************************************************************************
  *
@@ -73,6 +75,7 @@ import java.util.Vector;
 import javax.swing.ImageIcon;
 
 import lu.fisch.graphics.*;
+import lu.fisch.structorizer.executor.Function;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.parsers.CodeParser;
 import lu.fisch.utils.*;
@@ -499,7 +502,7 @@ public class For extends Element implements ILoop {
 	
 	// START KGU#61 2016-03-22: Enh. #84/#135
 	/**
-	 * Retrieves the set or list of values to be traversed (For-In style)
+	 * Retrieves the string representing the set or list of values to be traversed (For-In style)
 	 * @return string representing the array variable or literal
 	 */
 	public String getValueList()
@@ -518,6 +521,43 @@ public class For extends Element implements ILoop {
 	}
 	// END KGU#61 2016-03-22
 	
+	// START KGU 2017-04-14
+	/**
+	 * Tries to identify  the string representing the set or list of values to be traversed (For-In style)
+	 * @return a StringList containing string representations of the items of the value list - or null
+	 */
+	public StringList getValueListItems()
+	{
+		StringList valueItems = null;
+		String valueListString = this.getValueList();
+		if (valueListString != null) {
+			valueListString = valueListString.trim();
+			boolean hadBraces = valueListString.startsWith("{") && valueListString.endsWith("}");
+			StringList valueListTokens = splitLexically(valueListString, true);
+			// There are no built-in functions returning an array and external function calls
+			// aren't allowed at this position, hence it's relatively safe to conclude
+			// an item enumeration from the occurrence of a comma.
+			if (valueListTokens.contains(",")) {
+				if (hadBraces)
+				{
+					valueListString = valueListString.substring(1, valueListString.length()-1);
+				}
+				valueItems = splitExpressionList(valueListString, ",");
+			}
+			else if (valueListTokens.contains(" ")) {
+				valueItems = splitExpressionList(valueListString, " ");
+			}
+			
+			if (valueItems != null && valueItems.count() == 1 && !hadBraces && Function.testIdentifier(valueItems.get(0), ".")) {
+				// Now we get into trouble: It ought to be an array variable, which we cannot evaluate here
+				// So what do we return?
+				// We just return null to avoid misunderstandings
+				valueItems = null;
+			}
+		}
+		return valueItems;
+	}
+	// END KGU 2017-04-14
     
 	/**
 	 * @param counterVar the counterVar to set
@@ -1076,6 +1116,38 @@ public class For extends Element implements ILoop {
 		if (!this.isForInLoop()) {
 			this.addToTypeMap(typeMap, this.getCounterVar(), "int", 0, true, false);
 		}
+		// START KGU#261 2017-04-14: Enh. #259 Try to make as much sense of the value list as possible
+		else {
+			StringList valueItems = this.getValueListItems();
+			String typeSpec = "";
+			if (valueItems != null) {
+				// Try to identify the element type(s)
+				for (int i = 0; !typeSpec.contains("???") && i < valueItems.count(); i++) {
+					String itemType = identifyExprType(typeMap, valueItems.get(i), true);
+					if (typeSpec.isEmpty()) {
+						typeSpec = itemType;
+					}
+					else if (!itemType.isEmpty() && !typeSpec.equalsIgnoreCase(itemType)) {
+						typeSpec = TypeMapEntry.combineTypes(itemType, typeSpec, true);
+					}
+				}
+				if (!typeSpec.isEmpty() && !typeSpec.equals("???")) {
+					this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec, 0, true, false);
+				}
+			}
+			else {
+				String valueListString = this.getValueList();
+				if (valueListString != null) {
+					// Try to derive the type from the expression
+					typeSpec = identifyExprType(typeMap, valueListString, false);
+					if (!typeSpec.isEmpty() && typeSpec.startsWith("@")) {
+						// nibble one array level off as the loop variable is of the element type
+						this.addToTypeMap(typeMap, this.getCounterVar(), typeSpec.substring(1), 0, true, false);						
+					}
+				}
+			}
+		}
+		// END KGU#261 2017-04-14
 	}
 	// END KGU#261 2017-01-26
 

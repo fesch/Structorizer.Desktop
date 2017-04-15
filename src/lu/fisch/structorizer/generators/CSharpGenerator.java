@@ -54,6 +54,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig             2017.01.31      Enh. #113: Array parameter transformation
  *      Kay Gürtzig             2017.02.24      Enh. #348: Parallel sections translated with System.Threading
  *      Kay Gürtzig             2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig             2017.04.14      Enh. #335: Method isInternalDeclarationAllowed() duly overridden
  *
  ******************************************************************************************************
  *
@@ -307,6 +308,17 @@ public class CSharpGenerator extends CGenerator
 		insertBlockTail(dummy, null, _indent);
 	}
 	// END KGU#16/#47 2015-11-30
+
+	// START KGU#332 2017-04-14: Enh. #335
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.generators.CGenerator#isInternalDeclarationAllowed()
+	 */
+	@Override
+	protected boolean isInternalDeclarationAllowed()
+	{
+		return true;
+	}
+	// END KGU#332 2017-04-14
 
 	// START KGU#61 2016-03-22: Enh. #84 - Support for FOR-IN loops
 	/**

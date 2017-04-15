@@ -2097,13 +2097,18 @@ public abstract class Element {
 	// END KGU#101 2015-12-11
 
 	// START KGU#261 2017-02-01: Enh. #259 (type map) - moved from Instruction hitherto
+	// KGU 2017-04-14: signature enhanced by argument canonicalizeTypeNames
 	/**
-	 * Tries to derive the data type of expression expr by means of analysing literal
+	 * Tries to derive the data type of expression {@code expr} by means of analysing literal
 	 * syntax, built-in functions and the types associated to variables registered in
-	 * the typeMap.
+	 * the {@code typeMap}.<br/>
+	 * The returned type description (if not empty) will be structurally canonicalized (i.e. array
+	 * levels will be symbolized by a sequence of "@" prefixes, the element type names may also be
+	 * heuristically canonicalized to assumed Java equivalents.
 	 * @param typeMap - current mapping of variable names to statically concluded type information 
 	 * @param expr - the expression to be categorized
-	 * @param canonicalizeTypeNames TODO
+	 * @param canonicalizeTypeNames - specifies whether contained type names are to be canonicalized
+	 * (i.e. replaced by guessed Java equivalents) 
 	 * @return a type description if available and unambiguous or an empty string otherwise
 	 */
 	public static String identifyExprType(HashMap<String, TypeMapEntry> typeMap, String expr, boolean canonicalizeTypeNames)
@@ -2112,7 +2117,7 @@ public abstract class Element {
 		// 1. Check whether its a known typed variable
 		TypeMapEntry typeEntry = typeMap.get(expr);
 		if (typeEntry != null) {
-			StringList types = typeEntry.getTypes();
+			StringList types = typeEntry.getTypes(canonicalizeTypeNames);
 			if (types.count() == 1) {
 				typeSpec = typeEntry.getTypes().get(0);
 			}

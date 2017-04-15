@@ -33,7 +33,8 @@ package lu.fisch.structorizer.elements;
  *      ------          ----            -----------
  *      Kay Gürtzig     2017.01.19      First Issue (enh. #259)
  *      Kay Gürtzig     2017.03.05      Method isArray(boolean) added and JavaDoc updated
- *      Kay Gürtzig     2017.04.14      Issue #394: Method variants of getCanonicalType() and getTypes() 
+ *      Kay Gürtzig     2017.04.14      Issue #394: Method variants of getCanonicalType() and getTypes(),
+ *                                      argument mixup fixed, type assimilation support 
  *
  ******************************************************************************************************
  *
@@ -132,32 +133,7 @@ public class TypeMapEntry {
 				}
 			}
 			if (canonicalizeTypeNames) {
-				// (copied from JavaGenerator.transformType()
-				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("short int") + ")($|\\W.*)", "$1short$3");
-				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("long int") + ")($|\\W.*)", "$1long$3");
-				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("long long") + ")($|\\W.*)", "$1long$3");
-				type = type.replaceAll("(^|.*\\W)(S" + BString.breakup("hort") + ")($|\\W.*)", "$short$3");
-				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned int") + ")($|\\W.*)", "$1int$3");
-				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned long") + ")($|\\W.*)", "$1long$3");
-				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned char") + ")($|\\W.*)", "$1byte$3");
-				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("signed char") + ")($|\\W.*)", "$1byte$3");
-				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned") + ")($|\\W.*)", "$1int$3");
-				type = type.replaceAll("(^|.*\\W)(I" + BString.breakup("nt") + ")($|\\W.*)", "$1int$3");
-				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("integer") + ")($|\\W.*)", "$1int$3");
-				type = type.replaceAll("(^|.*\\W)(L" + BString.breakup("ong") + ")($|\\W.*)", "$1long$3");
-				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("longint") + ")($|\\W.*)", "$1long$3");
-				type = type.replaceAll("(^|.*\\W)(D" + BString.breakup("ouble") + ")($|\\W.*)", "$1double$3");
-				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("longreal") + ")($|\\W.*)", "$1double$3");
-				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("real") + ")($|\\W.*)", "$1double$3");
-				type = type.replaceAll("(^|.*\\W)(F" + BString.breakup("loat") + ")($|\\W.*)", "$1float$3");
-				type = type.replaceAll("(^|.*\\W)(C" + BString.breakup("har") + ")($|\\W.*)", "$1char$3");
-				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("character") + ")($|\\W.*)", "$1Character$3");
-				type = type.replaceAll("(^|.*\\W)(B" + BString.breakup("oolean") + ")($|\\W.*)", "$1boolean$3");
-				if (type.matches("(^|.*\\W)(" + BString.breakup("bool") + "[eE]?)(\\W.*|$)")) {
-					type = type.replaceAll("(^|.*\\W)(" + BString.breakup("bool") + "[eE]?)(\\W.*|$)", "$1boolean$3");
-				}
-				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("string") + ")($|\\W.*)", "$1String$3");
-				type = type.replaceAll("(^|.*\\W)(" + BString.breakup("const") + ")($|\\W.*)", "$1final$3");
+				type = canonicalizeType(type);
 			}
 			return type;
 		}
@@ -253,17 +229,26 @@ public class TypeMapEntry {
 	public Set<Element> modifiers = new HashSet<Element>();
 	public Set<Element> references = new HashSet<Element>();
 	
+	private static final String[] canonicalNumericTypes = {
+			"byte",
+			"short",
+			"int",
+			"long",
+			"float",
+			"double"
+	};
+	
 	/**
 	 * Analyses the given declaration information and creates a corrsponding
 	 * entry (with a single declaration record).
-	 * @see #addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _cStyle, boolean _initialized) 
+	 * @see #addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _initialized, boolean _cStyle) 
 	 * @param _descriptor - the found type-describing or -specifying string
 	 * @param _element - the originating Structorizer element
 	 * @param _lineNo - the line number within the element text
-	 * @param _cStyle - whether it's a C-style declaration or initialization
 	 * @param _initialized - whether the variable is initialized or assigned here
+	 * @param _cStyle - whether it's a C-style declaration or initialization
 	 */
-	public TypeMapEntry(String _descriptor, Element _element, int _lineNo, boolean _cStyle, boolean _initialized)
+	public TypeMapEntry(String _descriptor, Element _element, int _lineNo, boolean _initialized, boolean _cStyle)
 	{
 		declarations.add(new VarDeclaration(_descriptor, _element, _lineNo, _cStyle));
 		if (_initialized) {
@@ -272,16 +257,52 @@ public class TypeMapEntry {
 	}
 	
 	/**
+	 * Tries to map the given type name to a unified type name for easer comparison.
+	 * The unified type names are similar to elementary C or Java type names but
+	 * strictly lower-case
+	 * @param type - a type-designating string
+	 * @return a replacement type name or the original type name (if no match was found)
+	 */
+	public static String canonicalizeType(String type) {
+		// (copied from JavaGenerator.transformType()
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("short int") + ")($|\\W.*)", "$1short$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("long int") + ")($|\\W.*)", "$1long$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("long long") + ")($|\\W.*)", "$1long$3");
+		type = type.replaceAll("(^|.*\\W)(S" + BString.breakup("hort") + ")($|\\W.*)", "$short$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned int") + ")($|\\W.*)", "$1int$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned long") + ")($|\\W.*)", "$1long$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned char") + ")($|\\W.*)", "$1byte$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("signed char") + ")($|\\W.*)", "$1byte$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("unsigned") + ")($|\\W.*)", "$1int$3");
+		type = type.replaceAll("(^|.*\\W)(I" + BString.breakup("nt") + ")($|\\W.*)", "$1int$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("integer") + ")($|\\W.*)", "$1int$3");
+		type = type.replaceAll("(^|.*\\W)(L" + BString.breakup("ong") + ")($|\\W.*)", "$1long$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("longint") + ")($|\\W.*)", "$1long$3");
+		type = type.replaceAll("(^|.*\\W)(D" + BString.breakup("ouble") + ")($|\\W.*)", "$1double$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("longreal") + ")($|\\W.*)", "$1double$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("real") + ")($|\\W.*)", "$1double$3");
+		type = type.replaceAll("(^|.*\\W)(F" + BString.breakup("loat") + ")($|\\W.*)", "$1float$3");
+		type = type.replaceAll("(^|.*\\W)(C" + BString.breakup("har") + ")($|\\W.*)", "$1char$3");
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("character") + ")($|\\W.*)", "$1char$3");
+		type = type.replaceAll("(^|.*\\W)(B" + BString.breakup("oolean") + ")($|\\W.*)", "$1boolean$3");
+		if (type.matches("(^|.*\\W)(" + BString.breakup("bool") + "[eE]?)(\\W.*|$)")) {
+			type = type.replaceAll("(^|.*\\W)(" + BString.breakup("bool") + "[eE]?)(\\W.*|$)", "$1boolean$3");
+		}
+		type = type.replaceAll("(^|.*\\W)(" + BString.breakup("string") + ")($|\\W.*)", "$1string$3");
+		return type;
+	}
+
+	/**
 	 * Analyses the given declaration information and adds a corresponding
 	 * declaration info to this entry.
 	 * @param _descriptor - the found type-describing or -specifying string
 	 * @param _element - the originating Structorizer element
 	 * @param _lineNo - the line number within the element text
-	 * @param _cStyle - whether it's a C-style declaration or initialization
 	 * @param _initialized - whether the variable is initialized or assigned here
+	 * @param _cStyle - whether it's a C-style declaration or initialization
 	 * @return indicates whether the new declaration substantially differs from previous ones
 	 */
-	public boolean addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _cStyle, boolean _initialized)
+	public boolean addDeclaration(String _descriptor, Element _element, int _lineNo, boolean _initialized, boolean _cStyle)
 	{
 		boolean differs = false;
 		boolean isNew = true;
@@ -443,5 +464,45 @@ public class TypeMapEntry {
     {
 		return getClass().getSimpleName() + "(" + this.getTypes().concatenate(" | ") + ")";
     }
+
+	/**
+	 * Tries to find a common compatible canonical type for {@code type1} and {@code type2}
+	 * by aligning to the respective larger type, e.g. short -&gt; int -&gt; long -&gt; float
+	 * or char -&gt; String.   
+	 * @param type1 - a type-designating string
+	 * @param type2 - a type-designating sring
+	 * @param canonicalized - to be set true if both type names have already been canonicalized
+	 * (or if they must not be caninicalized). 
+	 * @return either common type name or "???" if both are incompatible
+	 */
+	public static String combineTypes(String type1, String type2, boolean canonicalized) {
+		if (!canonicalized) {
+			type1 = canonicalizeType(type1);
+			type2 = canonicalizeType(type2);
+		}
+		if (!type1.equals(type2)) {
+			int typeIx1 = -1, typeIx2 = -1;
+			for (int i = 0; i < canonicalNumericTypes.length && (typeIx1 < 0 || typeIx2 < 0); i++) {
+				if (typeIx1 < 0 && type1.equals(canonicalNumericTypes[i])) {
+					typeIx1 = i;
+				}
+				if (typeIx2 < 0 && type2.equals(canonicalNumericTypes[i])) {
+					typeIx2 = i;
+				}
+			}
+			if (typeIx1 >= 0 && typeIx2 >= 0) {
+				type1 = canonicalNumericTypes[Math.max(typeIx1, typeIx2)];
+			}
+			else if (type1.equals("char") && type2.equals("string")
+					|| type1.equals("string") && type2.equals("char")) {
+				// We try an automatic conversion
+				type1 = "string";
+			}
+			else {
+				type1 = "???";
+			}
+		}
+		return type1;
+	}
 	
 }
