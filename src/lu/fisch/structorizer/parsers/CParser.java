@@ -39,6 +39,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.03.31      Enh. #388: import of constants supported
  *      Kay Gürtzig     2017.04.11      Enh. #389: Global definitions now induce import CALLs to a global program,
  *                                      typedef mechanism implemented, grammar enhancements 
+ *      Kay Gürtzig     2017.04.16      Issues #354, #389: Grammar revisions, correction in synthesis of
+ *                                      function declarations, mechanism to ensure sensible naming of the global Root
  *
  ******************************************************************************************************
  *
@@ -56,6 +58,7 @@ import java.awt.Color;
 import java.io.*;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Stack;
 import java.util.Vector;
@@ -86,6 +89,9 @@ import lu.fisch.utils.StringList;
 public class CParser extends CodeParser
 {
 	
+	// DEfault diagram name for an importable program diagram with global definitions
+	private static final String defaultGlobalName = "GlobalDefinitions";
+
 	// This is a switch for debugging - if set to true then the build process will be logged to System.out
 	private boolean debugprint = true;
 	
@@ -257,61 +263,62 @@ public class CParser extends CodeParser
 		final int SYM_ARRAY         = 122;  // <Array>
 		final int SYM_BASE          = 123;  // <Base>
 		final int SYM_BLOCK         = 124;  // <Block>
-		final int SYM_CASESTMS      = 125;  // <Case Stms>
-		final int SYM_CONSTMOD      = 126;  // <ConstMod>
-		final int SYM_CONSTPOINTERS = 127;  // <ConstPointers>
-		final int SYM_CONSTTYPE     = 128;  // <ConstType>
-		final int SYM_DECL          = 129;  // <Decl>
-		final int SYM_DECLEND       = 130;  // <Decl End>
-		final int SYM_DECLSTMLIST   = 131;  // <Decl Stm List>
-		final int SYM_ENUMDECL      = 132;  // <Enum Decl>
-		final int SYM_ENUMDEF       = 133;  // <Enum Def>
-		final int SYM_ENUMVAL       = 134;  // <Enum Val>
-		final int SYM_EXPR          = 135;  // <Expr>
-		final int SYM_EXPRINI       = 136;  // <ExprIni>
-		final int SYM_EXTDECL       = 137;  // <ExtDecl>
-		final int SYM_EXTDECLS      = 138;  // <ExtDecls>
-		final int SYM_FUNCDECL      = 139;  // <Func Decl>
-		final int SYM_FUNCID        = 140;  // <Func ID>
-		final int SYM_FUNCPROTO     = 141;  // <Func Proto>
-		final int SYM_IDLIST        = 142;  // <Id List>
-		final int SYM_INITIALIZER   = 143;  // <Initializer>
-		final int SYM_MOD           = 144;  // <Mod>
-		final int SYM_NORMALSTM     = 145;  // <Normal Stm>
-		final int SYM_OPADD         = 146;  // <Op Add>
-		final int SYM_OPAND         = 147;  // <Op And>
-		final int SYM_OPASSIGN      = 148;  // <Op Assign>
-		final int SYM_OPBINAND      = 149;  // <Op BinAND>
-		final int SYM_OPBINOR       = 150;  // <Op BinOR>
-		final int SYM_OPBINXOR      = 151;  // <Op BinXOR>
-		final int SYM_OPCOMPARE     = 152;  // <Op Compare>
-		final int SYM_OPEQUATE      = 153;  // <Op Equate>
-		final int SYM_OPIF          = 154;  // <Op If>
-		final int SYM_OPMULT        = 155;  // <Op Mult>
-		final int SYM_OPOR          = 156;  // <Op Or>
-		final int SYM_OPPOINTER     = 157;  // <Op Pointer>
-		final int SYM_OPSHIFT       = 158;  // <Op Shift>
-		final int SYM_OPUNARY       = 159;  // <Op Unary>
-		final int SYM_PARAM         = 160;  // <Param>
-		final int SYM_PARAMS        = 161;  // <Params>
-		final int SYM_POINTERS      = 162;  // <Pointers>
-		final int SYM_SCALAR        = 163;  // <Scalar>
-		final int SYM_SIGN          = 164;  // <Sign>
-		final int SYM_STM           = 165;  // <Stm>
-		final int SYM_STMLIST       = 166;  // <Stm List>
-		final int SYM_STRUCTDECL    = 167;  // <Struct Decl>
-		final int SYM_STRUCTDEF     = 168;  // <Struct Def>
-		final int SYM_THENSTM       = 169;  // <Then Stm>
-		final int SYM_TYPE          = 170;  // <Type>
-		final int SYM_TYPEDEFDECL   = 171;  // <Typedef Decl>
-		final int SYM_TYPES         = 172;  // <Types>
-		final int SYM_UNIONDECL     = 173;  // <Union Decl>
-		final int SYM_USERTYPE      = 174;  // <User Type>
-		final int SYM_VALUE         = 175;  // <Value>
-		final int SYM_VAR           = 176;  // <Var>
-		final int SYM_VARDECL       = 177;  // <Var Decl>
-		final int SYM_VARITEM       = 178;  // <Var Item>
-		final int SYM_VARLIST       = 179;  // <Var List>
+		final int SYM_CALLID        = 125;  // <Call Id>
+		final int SYM_CASESTMS      = 126;  // <Case Stms>
+		final int SYM_CONSTMOD      = 127;  // <ConstMod>
+		final int SYM_CONSTPOINTERS = 128;  // <ConstPointers>
+		final int SYM_CONSTTYPE     = 129;  // <ConstType>
+		final int SYM_DECL          = 130;  // <Decl>
+		final int SYM_DECLEND       = 131;  // <Decl End>
+		final int SYM_DECLSTMLIST   = 132;  // <Decl Stm List>
+		final int SYM_ENUMDECL      = 133;  // <Enum Decl>
+		final int SYM_ENUMDEF       = 134;  // <Enum Def>
+		final int SYM_ENUMVAL       = 135;  // <Enum Val>
+		final int SYM_EXPR          = 136;  // <Expr>
+		final int SYM_EXPRINI       = 137;  // <ExprIni>
+		final int SYM_EXTDECL       = 138;  // <ExtDecl>
+		final int SYM_EXTDECLS      = 139;  // <ExtDecls>
+		final int SYM_FUNCDECL      = 140;  // <Func Decl>
+		final int SYM_FUNCID        = 141;  // <Func ID>
+		final int SYM_FUNCPROTO     = 142;  // <Func Proto>
+		final int SYM_IDLIST        = 143;  // <Id List>
+		final int SYM_INITIALIZER   = 144;  // <Initializer>
+		final int SYM_MOD           = 145;  // <Mod>
+		final int SYM_NORMALSTM     = 146;  // <Normal Stm>
+		final int SYM_OPADD         = 147;  // <Op Add>
+		final int SYM_OPAND         = 148;  // <Op And>
+		final int SYM_OPASSIGN      = 149;  // <Op Assign>
+		final int SYM_OPBINAND      = 150;  // <Op BinAND>
+		final int SYM_OPBINOR       = 151;  // <Op BinOR>
+		final int SYM_OPBINXOR      = 152;  // <Op BinXOR>
+		final int SYM_OPCOMPARE     = 153;  // <Op Compare>
+		final int SYM_OPEQUATE      = 154;  // <Op Equate>
+		final int SYM_OPIF          = 155;  // <Op If>
+		final int SYM_OPMULT        = 156;  // <Op Mult>
+		final int SYM_OPOR          = 157;  // <Op Or>
+		final int SYM_OPPOINTER     = 158;  // <Op Pointer>
+		final int SYM_OPSHIFT       = 159;  // <Op Shift>
+		final int SYM_OPUNARY       = 160;  // <Op Unary>
+		final int SYM_PARAM         = 161;  // <Param>
+		final int SYM_PARAMS        = 162;  // <Params>
+		final int SYM_POINTERS      = 163;  // <Pointers>
+		final int SYM_SCALAR        = 164;  // <Scalar>
+		final int SYM_SIGN          = 165;  // <Sign>
+		final int SYM_STM           = 166;  // <Stm>
+		final int SYM_STMLIST       = 167;  // <Stm List>
+		final int SYM_STRUCTDECL    = 168;  // <Struct Decl>
+		final int SYM_STRUCTDEF     = 169;  // <Struct Def>
+		final int SYM_THENSTM       = 170;  // <Then Stm>
+		final int SYM_TYPE          = 171;  // <Type>
+		final int SYM_TYPEDEFDECL   = 172;  // <Typedef Decl>
+		final int SYM_TYPES         = 173;  // <Types>
+		final int SYM_UNIONDECL     = 174;  // <Union Decl>
+		final int SYM_USERTYPE      = 175;  // <User Type>
+		final int SYM_VALUE         = 176;  // <Value>
+		final int SYM_VAR           = 177;  // <Var>
+		final int SYM_VARDECL       = 178;  // <Var Decl>
+		final int SYM_VARITEM       = 179;  // <Var Item>
+		final int SYM_VARLIST       = 180;  // <Var List>
 	};
 
 	// Symbolic constants naming the table indices of the grammar rules
@@ -531,26 +538,30 @@ public class CParser extends CodeParser
 		final int PROD_OPUNARY_MINUSMINUS2                          = 210;  // <Op Unary> ::= <Op Pointer> '--'
 		final int PROD_OPUNARY_LPAREN_RPAREN                        = 211;  // <Op Unary> ::= '(' <Type> ')' <Op Unary>
 		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN                 = 212;  // <Op Unary> ::= sizeof '(' <Type> ')'
-		final int PROD_OPUNARY_SIZEOF_LPAREN_ID_RPAREN              = 213;  // <Op Unary> ::= sizeof '(' Id <Pointers> ')'
+		final int PROD_OPUNARY_SIZEOF_LPAREN_RPAREN2                = 213;  // <Op Unary> ::= sizeof '(' <Pointers> <Op Pointer> ')'
 		final int PROD_OPUNARY                                      = 214;  // <Op Unary> ::= <Op Pointer>
-		final int PROD_OPPOINTER_DOT                                = 215;  // <Op Pointer> ::= <Op Pointer> '.' <Value>
-		final int PROD_OPPOINTER_MINUSGT                            = 216;  // <Op Pointer> ::= <Op Pointer> '->' <Value>
+		final int PROD_OPPOINTER_DOT                                = 215;  // <Op Pointer> ::= <Op Pointer> '.' <Call Id>
+		final int PROD_OPPOINTER_MINUSGT                            = 216;  // <Op Pointer> ::= <Op Pointer> '->' <Call Id>
 		final int PROD_OPPOINTER_LBRACKET_RBRACKET                  = 217;  // <Op Pointer> ::= <Op Pointer> '[' <Expr> ']'
 		final int PROD_OPPOINTER                                    = 218;  // <Op Pointer> ::= <Value>
-		final int PROD_VALUE_OCTLITERAL                             = 219;  // <Value> ::= OctLiteral
-		final int PROD_VALUE_HEXLITERAL                             = 220;  // <Value> ::= HexLiteral
-		final int PROD_VALUE_DECLITERAL                             = 221;  // <Value> ::= DecLiteral
-		final int PROD_VALUE_STRINGLITERAL                          = 222;  // <Value> ::= StringLiteral
-		final int PROD_VALUE_CHARLITERAL                            = 223;  // <Value> ::= CharLiteral
-		final int PROD_VALUE_FLOATLITERAL                           = 224;  // <Value> ::= FloatLiteral
-		final int PROD_VALUE_ID_LPAREN_RPAREN                       = 225;  // <Value> ::= Id '(' <Expr> ')'
-		final int PROD_VALUE_ID_LPAREN_RPAREN2                      = 226;  // <Value> ::= Id '(' ')'
-		final int PROD_VALUE_ID                                     = 227;  // <Value> ::= Id
-		final int PROD_VALUE_LPAREN_RPAREN                          = 228;  // <Value> ::= '(' <Expr> ')'
+		final int PROD_CALLID_ID_LPAREN_RPAREN                      = 219;  // <Call Id> ::= Id '(' <Expr> ')'
+		final int PROD_CALLID_ID_LPAREN_RPAREN2                     = 220;  // <Call Id> ::= Id '(' ')'
+		final int PROD_CALLID_ID                                    = 221;  // <Call Id> ::= Id
+		final int PROD_VALUE_OCTLITERAL                             = 222;  // <Value> ::= OctLiteral
+		final int PROD_VALUE_HEXLITERAL                             = 223;  // <Value> ::= HexLiteral
+		final int PROD_VALUE_DECLITERAL                             = 224;  // <Value> ::= DecLiteral
+		final int PROD_VALUE_STRINGLITERAL                          = 225;  // <Value> ::= StringLiteral
+		final int PROD_VALUE_CHARLITERAL                            = 226;  // <Value> ::= CharLiteral
+		final int PROD_VALUE_FLOATLITERAL                           = 227;  // <Value> ::= FloatLiteral
+		final int PROD_VALUE                                        = 228;  // <Value> ::= <Call Id>
+		final int PROD_VALUE_LPAREN_RPAREN                          = 229;  // <Value> ::= '(' <Expr> ')'
 	};
 
 	private enum PreprocState {TEXT, TYPEDEF, ENUMTYPE, STRUCTUNIONTYPE, COMPLIST, /*ENUMLIST, STRUCTLIST,*/ TYPEID};
 	private StringList typedefs = new StringList();
+	
+	// Import Call elements with provisional Name, which have to be renamed as soon as the name gets known
+	private LinkedList<Call> provisionalImportCalls = new LinkedList<Call>();
 	
 	/**
 	 * Constructs a parser for language ANSI-C, loads the grammar as resource and
@@ -844,15 +855,15 @@ public class CParser extends CodeParser
 			
 			if (
 					// Procedure call?
-					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN
+					ruleId == RuleConstants.PROD_CALLID_ID_LPAREN_RPAREN
 					||
-					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN2
+					ruleId == RuleConstants.PROD_CALLID_ID_LPAREN_RPAREN2
 					)
 			{
 				String content = "";
 				String procName = _reduction.get(0).asString();
 				StringList arguments = null;
-				if (ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN) {
+				if (ruleId == RuleConstants.PROD_CALLID_ID_LPAREN_RPAREN) {
 					arguments = this.getExpressionList(_reduction.get(2).asReduction());
 				}
 				if (procName.equals("exit")) {
@@ -1113,14 +1124,20 @@ public class CParser extends CodeParser
 				int funcId = secReduc.getParent().getTableIndex();
 				switch (funcId) {
 				case RuleConstants.PROD_FUNCID_ID:
-				case RuleConstants.PROD_FUNCID_CONST_ID:
 					typeIx = 1;
+					nameIx = 2;
+					break;
+				case RuleConstants.PROD_FUNCID_CONST_ID:
+					typeIx = 2;
+					nameIx = 3;
+					break;
 				case RuleConstants.PROD_FUNCID_VOID_ID2:
+					typeIx = 1;
 					nameIx = 2;
 					break;
 				case RuleConstants.PROD_FUNCID_ID2:
-					typeIx = 0;
 				case RuleConstants.PROD_FUNCID_VOID_ID:
+					typeIx = 0;
 					nameIx = 1;
 					break;
 				case RuleConstants.PROD_FUNCID_ID3:
@@ -1135,7 +1152,13 @@ public class CParser extends CodeParser
 				String content = new String();
 				// Is there a type specification different from void?
 				if (typeIx >= 0) {
-					content = getContent_R(secReduc.get(typeIx).asReduction(), content).trim() + " ";
+					Token typeToken = secReduc.get(typeIx);
+					if (typeToken.getType() == SymbolType.CONTENT) {
+						content += typeToken.asString();
+					}
+					else {
+						content = getContent_R(secReduc.get(typeIx).asReduction(), content).trim() + " ";
+					}
 					content = content.replace("const ", "");
 				}
 				content += funcName + "(";
@@ -1822,18 +1845,38 @@ public class CParser extends CodeParser
 			}
 			// Are there some global definitions to be imported?
 			if (this.globalRoot != null) {
-				this.globalRoot.setText(fileName + "Globals");
+				String progName = fileName + "Globals";
+				this.globalRoot.setText(progName);
 				this.globalRoot.isProgram = true;
+				for (Call provCall: this.provisionalImportCalls) {
+					provCall.setText(provCall.getText().get(0).replace("???", progName));
+				}
+				this.provisionalImportCalls.clear();
 			}
 		}
 		// START KGU#376 2017-04-11: enh. #389 import mechanism for globals
 		if (this.globalRoot != null && this.globalRoot != aRoot) {
-			Call importCall = new Call(getKeywordOrDefault("preImport", "import") + " " + this.globalRoot.getMethodName());
+			String globalName = this.globalRoot.getMethodName();
+			Call importCall = new Call(getKeywordOrDefault("preImport", "import") + " " + (globalName.equals("???") ? defaultGlobalName : globalName));
 			importCall.setColor(colorGlobal);
 			aRoot.children.insertElementAt(importCall, 0);
+			if (globalName.equals("???")) {
+				this.provisionalImportCalls.add(importCall);
+			}
 		}
 		// END KGU#376 2017-04-11
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see lu.fisch.structorizer.parsers.CodeParser#postProcess(java.lang.String)
+	 */
+	protected void subclassPostProcess(String textToParse)
+	{
+		// May there was no main function but global definitions
+		if (this.globalRoot != null && this.globalRoot.getMethodName().equals("???") && this.globalRoot.children.getSize() > 0) {
+			this.globalRoot.setText(defaultGlobalName);
+			this.globalRoot.isProgram = true;
+		}
+	}
 
 }

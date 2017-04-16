@@ -34,7 +34,8 @@ package lu.fisch.structorizer.parsers;
  *      Kay Gürtzig     2017.03.04      First Issue
  *      Kay Gürtzig     2017.03.25      Fix #357: Precaution against failed file preparation
  *      Kay Gürtzig     2017.03.30      Standard colours for declarations, constant definitions and global stuff
- *      Kay Gürtzig     2017.04.11      Mechanism to revert file preparator replacements in the syntax error display  
+ *      Kay Gürtzig     2017.04.11      Mechanism to revert file preparator replacements in the syntax error display
+ *      Kay Gürtzig     2017.04.16      New hook method postProcess(String textToParse) for sub classes
  *
  ******************************************************************************************************
  *
@@ -211,7 +212,13 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 	 * Field `error' will either contain an empty string or an error message afterwards.
 	 * @param _textToParse - file name of the C source.
 	 * @param _encoding - name of the charset to be used for decoding
-	 * @return A list containing composed diagrams (if successful, otherwise field error will contain an error description) 
+	 * @return A list containing composed diagrams (if successful, otherwise field error will contain an error description)
+	 * @see #prepareTextfile(String, String)
+	 * @see #initializeBuildNSD()
+	 * @see #buildNSD_R(Reduction, Subqueue)
+	 * @see #getContent_R(Reduction, String)
+	 * @see #subclassUpdateRoot(Root, String)
+	 * @see #subclassPostProcess(String) 
 	 */
 	public List<Root> parse(String textToParse, String _encoding) {
 	
@@ -380,13 +387,34 @@ public abstract class CodeParser extends javax.swing.filechooser.FileFilter
 		}
 		// END KGU#194 2016-07-07
 		
+		// Sub-classable postprocessing
+		try {
+			subclassPostProcess(textToParse);
+		}
+		catch (Exception ex) {
+			if ((error = ex.getMessage()) == null) {
+				error = ex.toString();
+			}
+			error = ":\n" + error;
+		}
+
 		return subRoots;
+	}
+
+	/**
+	 * Allows subclasses to do some finishing work after all general stuff after parsing and
+	 * NSD synthesis is practically done.
+	 * @param textToParse - path of the parsed source file
+	 */
+	protected void subclassPostProcess(String textToParse)
+	{
 	}
 
 	// START KGU 2017-04-11
 	/**
 	 * Replaces all strings being keys in this.replacedIds by their respective mapped
-	 * strings in the given line (i.e. actually tries to revert all performed substitutions) 
+	 * strings in the given line (i.e. actually tries to revert all performed substitutions).
+	 * (Method is called in situations when the original text is required).
 	 * @param line a source line or content string possibly with identifiers replaced by the file preparer
 	 * @return line with reverted identifier substitutions
 	 */

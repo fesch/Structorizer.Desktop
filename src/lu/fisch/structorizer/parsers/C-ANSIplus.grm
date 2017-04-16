@@ -123,12 +123,12 @@
 {String Ch}      = {Printable} - ["]
 {Char Ch}        = {Printable} - ['']
 
-DecLiteral       = [123456789]{digit}*([uU]([lL][lL]?) | [lL][lL]?[uU]?)?
-OctLiteral       = 0{Oct Digit}*([uU]([lL][lL]?) | [lL][lL]?[uU]?)?
-HexLiteral       = 0[xX]{Hex Digit}+([uU]([lL][lL]?) | [lL][lL]?[uU]?)?
+DecLiteral       = [123456789]{digit}*([uU]([lL][lL]?)? | [lL][lL]?[uU]?)?
+OctLiteral       = 0{Oct Digit}*([uU]([lL][lL]?)? | [lL][lL]?[uU]?)?
+HexLiteral       = 0[xX]{Hex Digit}+([uU]([lL][lL]?)? | [lL][lL]?[uU]?)?
 FloatLiteral     = {Digit}*'.'{Digit}+([eE]('+'|'-')?{Digit}+)?[fFlL]?
 
-StringLiteral    = 'L'? ( '"'( {String Ch} | '\'{Printable} )* '"' )+
+StringLiteral    = 'L'? ( '"'( {String Ch} | '\'{Printable} )* '"' {Whitespace}* )+
 CharLiteral      = '' ( {Char Ch} | '\'{Printable} )''
 
 Id               = {Id Head}{Id Tail}*
@@ -466,21 +466,24 @@ Comment Line  = '//'
                | <Op Pointer> '--'
                | '(' <Type> ')' <Op Unary>   !CAST
                | sizeof '(' <Type> ')'
-               | sizeof '(' ID <Pointers> ')'
+!               | sizeof '(' ID <Pointers> ')'  !  Awkward attempt to allow type ids here which aren't elsewhere
+               | sizeof '(' <Pointers> <Op Pointer> ')'
                | <Op Pointer>
 
-<Op Pointer> ::= <Op Pointer> '.' <Value>
-               | <Op Pointer> '->' <Value>
+<Op Pointer> ::= <Op Pointer> '.' <Call Id>
+               | <Op Pointer> '->' <Call Id>
                | <Op Pointer> '[' <Expr> ']'
                | <Value>
 
+<Call Id>    ::= Id '(' <Expr> ')'
+               | Id '(' ')'          
+               | Id
+   
 <Value>      ::= OctLiteral
                | HexLiteral
                | DecLiteral  
                | StringLiteral
                | CharLiteral
                | FloatLiteral
-               | Id '(' <Expr> ')'
-               | Id '(' ')'          
-               | Id
+               | <Call Id>
                | '(' <Expr> ')'
