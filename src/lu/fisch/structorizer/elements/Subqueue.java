@@ -53,6 +53,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2016.11.17      Bugfix #114: isExecuted() revised (signature too)
  *      Kay Gürtzig     2016.11.25      Issue #294: Method isTestCovered adapted to refined CASE coverage rules
  *      Kay Gürtzig     2016.12.20      Bugfix KGU#315: Flawed selection and cursor navigation after element shifts
+ *      Kay Gürtzig     2016.04.18      Bugfix #386: New method isNoOP().
  *
  ******************************************************************************************************
  *
@@ -628,4 +629,27 @@ public class Subqueue extends Element implements IElementSequence {
 	public Subqueue getSubqueue() {
 		return this;
 	}
+	
+	// START KGU#383 2017-04-18: Bugfix #386
+	/**
+	 * Returns true if this contains only insructions with empty text (e.g. mere
+	 * comments without implementation). This may be important to know for code
+	 * export.
+	 * @return true if no substantial instruction is contained.
+	 */
+	public boolean isNoOp()
+	{
+		for (int i = 0; i < this.getSize(); i++) {
+			Element ele = this.getElement(i);
+			if (!ele.isDisabled() && (
+					!(ele instanceof Instruction)
+					|| (ele instanceof Jump)
+					|| !ele.getText().getLongString().trim().isEmpty())
+					) {
+				return false;
+			}
+		}
+		return true;
+	}
+	// END KGU#383 2017-04-18
 }

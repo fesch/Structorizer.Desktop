@@ -70,6 +70,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.03.05      Issue #365: Support for posterior insertion of global definitions
  *      Kay Gürtzig     2017.03.10      Issue #368: New method getExportCharset
  *      Kay Gürtzig     2017.04.14      Bugfix #394: Jump map generation revised
+ *      Kay Gürtzig     2017.04.18      Bugfix #386 required to lift he "final" from generateCode(Subqueue...)
  *
  ******************************************************************************************************
  *
@@ -1848,8 +1849,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	
 	/**
 	 * This method does not generate anything itself, it just delegates
-	 * the job to the methods for the contained elements.
-	 * It is NOT to be overridden!
+	 * the job to the methods for the contained elements.<br/>
+	 * Should NOT be overridden by subclasses except if inevitable. (Then
+	 * super ought to be called before or after he specific enhancements.)
 	 * @see #generateCode(Instruction, String)
 	 * @see #generateCode(Alternative, String)
 	 * @see #generateCode(Case, String)
@@ -1864,7 +1866,10 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * @param _subqueue - the {@link lu.fisch.structorizer.elements.Subqueue}
 	 * @param _indent - the indentation string valid for the given element's level
 	 */
-	protected final void generateCode(Subqueue _subqueue, String _indent)
+	// START KGU#383 2017-04-18: Bugfix #386: For an elegant fixing 'final' restriction lifted
+	//protected final void generateCode(Subqueue _subqueue, String _indent)
+	protected void generateCode(Subqueue _subqueue, String _indent)
+	// END KGU#383 2017-04-18
 	{
 		// code.add(_indent+"");
 		for(int i=0; i<_subqueue.getSize(); i++)

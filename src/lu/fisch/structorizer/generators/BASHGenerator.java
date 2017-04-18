@@ -68,6 +68,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig         2016.11.06      Issue #279: Method HashMap.getOrDefault() replaced
  *      Kay Gürtzig         2017.01.05      Enh. #314: File API TODO comments added  
  *      Kay Gürtzig         2017.02.27      Enh. #346: Insertion mechanism for user-specific include directives
+ *      Kay Gürtzig         2017.04.18      Bugfix #386: Algorithmically empty Subqueues must produce a ':' line
  *
  ******************************************************************************************************
  *
@@ -553,6 +554,19 @@ public class BASHGenerator extends Generator {
         // END KGU#114 2015-12-22
 	}
 	
+	/* (non-Javadoc)
+	 * Generates a ":" line if the Subqueue contains only empty instructions
+	 * @see lu.fisch.structorizer.generators.Generator#generateCode(lu.fisch.structorizer.elements.Subqueue, java.lang.String)
+	 */
+	protected void generateCode(Subqueue _subqueue, String _indent)
+	{
+		super.generateCode(_subqueue, _indent);
+		if (_subqueue.isNoOp()) {
+			addCode(":", _indent, _subqueue.isDisabled());
+		}
+	}
+
+	
 	protected void generateCode(Instruction _inst, String _indent) {
 		
 		if(!insertAsComment(_inst, _indent)) {
@@ -560,7 +574,8 @@ public class BASHGenerator extends Generator {
 			insertComment(_inst, _indent);
 			boolean disabled = _inst.isDisabled();
 			// END KGU 2014-11-16
-			for(int i=0; i<_inst.getText().count(); i++)
+			int nLines = _inst.getText().count();
+			for (int i = 0; i < nLines; i++)
 			{
 				// START KGU#277/KGU#284 2016-10-13/16: Enh. #270 + Enh. #274
 				//code.add(_indent + transform(_inst.getText().get(i)));
@@ -579,7 +594,12 @@ public class BASHGenerator extends Generator {
 				if (Instruction.isTurtleizerMove(line)) {
 					codeLine += " " + this.commentSymbolLeft() + " color = " + _inst.getHexColor();
 				}
-				addCode(codeLine, _indent, disabled);
+				// START KGU#383 2017-04-18: Bugfix #386 - suppress sole empty line
+				//addCode(codeLine, _indent, disabled);
+				if (!codeLine.trim().isEmpty() || nLines > 1) {
+					addCode(codeLine, _indent, disabled);
+				}
+				// END KGU#383 2017-04-18
 				// END KGU#277/KGU#284 2016-10-13
 			}
 		}
@@ -588,7 +608,10 @@ public class BASHGenerator extends Generator {
 
 	protected void generateCode(Alternative _alt, String _indent) {
 		
-		code.add("");
+		boolean disabled = _alt.isDisabled();
+		if (code.count() > 0 && !code.get(code.count()-1).trim().isEmpty()) {
+			addCode("", "", disabled);
+		}
 		// START KGU 2014-11-16
 		insertComment(_alt, _indent);
 		// END KGU 2014-11-16
@@ -613,7 +636,6 @@ public class BASHGenerator extends Generator {
 		}
 		// START KGU#277 2016-10-13: Enh. #270
 		//code.add(_indent + "if " + condition);
-		boolean disabled = _alt.isDisabled(); 
 		addCode("if " + condition, _indent, disabled);
 		// END KGU#277 2016-10-13
 		// END KGU#132 2016-03-24
@@ -629,7 +651,9 @@ public class BASHGenerator extends Generator {
 			// START KGU#277 2016-10-13: Enh. #270
 			//code.add(_indent+"");
 			//code.add(_indent+"else");			
-			addCode("", _indent, disabled);
+			if (!code.get(code.count()-1).trim().isEmpty()) {
+				addCode("", "", disabled);
+			}
 			addCode("else", _indent, disabled);			
 			// END KGU#277 2016-10-13
 			generateCode(_alt.qFalse,_indent+this.getIndent());
@@ -648,7 +672,9 @@ public class BASHGenerator extends Generator {
 	protected void generateCode(Case _case, String _indent) {
 		
 		boolean disabled = _case.isDisabled();
-		code.add("");
+		if (code.count() > 0 && !code.get(code.count()-1).trim().isEmpty()) {
+			addCode("", "", disabled);
+		}
 		// START KGU 2014-11-16
 		insertComment(_case, _indent);
 		// END KGU 2014-11-16
@@ -657,7 +683,7 @@ public class BASHGenerator extends Generator {
 		addCode("case "+transform(_case.getText().get(0))+" in", _indent, disabled);
 		// END KGU#277 2016-10-14
 		
-		for(int i=0;i<_case.qs.size()-1;i++)
+		for (int i=0; i<_case.qs.size()-1; i++)
 		{
 			// START KGU#277 2016-10-14: Enh. #270
 			//code.add("");
@@ -667,31 +693,32 @@ public class BASHGenerator extends Generator {
 			// END KGU#277 2016-10-14
 			// START KGU#15 2015-11-02
 			generateCode((Subqueue) _case.qs.get(i),_indent+this.getIndent()+this.getIndent()+this.getIndent());
-			code.add(_indent+this.getIndent()+";;");
+			addCode(";;", _indent + this.getIndent(), disabled);
 		}
 		
 		if(!_case.getText().get(_case.qs.size()).trim().equals("%"))
 		{
-			code.add("");
-			code.add(_indent+this.getIndent()+"*)");
+			addCode("", "", disabled);
+			addCode("*)", _indent+this.getIndent(), disabled);
 			generateCode((Subqueue) _case.qs.get(_case.qs.size()-1),_indent+this.getIndent()+this.getIndent());
-			code.add(_indent+this.getIndent()+";;");
+			addCode(";;", _indent+this.getIndent(), disabled);
 		}
-		code.add(_indent+"esac");
-		code.add("");
-		
+		addCode("esac", _indent, disabled);
+		addCode("", "", disabled);
 	}
 	
 	
 	protected void generateCode(For _for, String _indent) {
 
-		code.add("");
-		// START KGU 2014-11-16
-		insertComment(_for, _indent);
-		// END KGU 2014-11-16
 		// START KGU#277 2016-10-13: Enh. #270
 		boolean disabled = _for.isDisabled(); 
 		// END KGU#277 2016-10-13
+		if (code.count() > 0 && !code.get(code.count()-1).trim().isEmpty()) {
+			addCode("", "", disabled);
+		}
+		// START KGU 2014-11-16
+		insertComment(_for, _indent);
+		// END KGU 2014-11-16
 		// START KGU#30 2015-10-18: This resulted in nonsense if the algorithm was a real counting loop
 		// We now use C-like syntax  for ((var = sval; var < eval; var=var+incr)) ...
 		// START KGU#3 2015-11-02: And now we have a competent splitting mechanism...
@@ -779,13 +806,15 @@ public class BASHGenerator extends Generator {
 	}
 	protected void generateCode(While _while, String _indent) {
 		
-		code.add("");
-		// START KGU 2014-11-16
-		insertComment(_while, _indent);
-		// END KGU 2014-11-16
 		// START KGU#277 2016-10-14: Enh. #270
 		boolean disabled = _while.isDisabled();
 		// END KGU#277 2016-10-14
+		if (code.count() > 0 && !code.get(code.count()-1).trim().isEmpty()) {
+			addCode("", "", disabled);
+		}
+		// START KGU 2014-11-16
+		insertComment(_while, _indent);
+		// END KGU 2014-11-16
 		// START KGU#132 2016-01-08: Bugfix #96 first approach with C-like syntax (( ))
 		//code.add(_indent+"while " + transform(_while.getText().getLongString()));
 		// START KGU#132 2016-03-24: Bugfix #96/#135 second approach with [[ ]] instead of (( ))
@@ -829,13 +858,15 @@ public class BASHGenerator extends Generator {
 	
 	protected void generateCode(Repeat _repeat, String _indent) {
 		
-		code.add("");
-		// START KGU 2014-11-16
-		insertComment(_repeat, _indent);
-		// END KGU 2014-11-16
 		// START KGU#277 2016-10-14: Enh. #270
 		boolean disabled = _repeat.isDisabled();
 		// END KGU#277 2016-10-14
+		if (code.count() > 0 && !code.get(code.count()-1).trim().isEmpty()) {
+			addCode("", "", disabled);
+		}
+		// START KGU 2014-11-16
+		insertComment(_repeat, _indent);
+		// END KGU 2014-11-16
 		// START KGU#60 2015-11-02: The do-until loop is not equivalent to a Repeat element: We must
 		// generate the loop body twice to preserve semantics!
 		insertComment("NOTE: This is an automatically inserted copy of the loop body below.", _indent);
@@ -883,7 +914,13 @@ public class BASHGenerator extends Generator {
 	}
 	protected void generateCode(Forever _forever, String _indent) {
 		
-		code.add("");
+		// START KGU#277 2016-10-14: Enh. #270
+		//code.add("");
+		boolean disabled = _forever.isDisabled();
+		if (code.count() > 0 && !code.get(code.count()-1).trim().isEmpty()) {
+			addCode("", "", disabled);
+		}
+		// END KGU#277 2016-10-14
 		// START KGU 2014-11-16
 		insertComment(_forever, _indent);
 		// END KGU 2014-11-16
@@ -893,7 +930,6 @@ public class BASHGenerator extends Generator {
 		//generateCode(_forever.q, _indent + this.getIndent());
 		//code.add(_indent + "done");
 		//code.add("");
-		boolean disabled = _forever.isDisabled();
 		addCode("while [ 1 ]", _indent, disabled);
 		addCode("do", _indent, disabled);
 		generateCode(_forever.q, _indent + this.getIndent());
