@@ -75,6 +75,8 @@ Current development version: 3.26-06 (2017.04.22)
 - 06: Enh. #354: ANSI-C grammar accomplished, CParser revised <2>
 - 06: Bugfix #386: BASH export of No-Op branches or loop bodies [Rolf Schmidt]2
 - 06: Enh. #389: New analyser option "check faulty diagram import calls" <2>
+- 06: Issue #62: Arranger should ask before an existing arr(z) file is overwritten <2>
+- 06: Issue #318: Saving arrangements failed if some diagrams reside in an arrz <2>
 
 Version: 3.26 (2017.01.06)
 - 01: Issue #213: FOR transmutation now inserts WHILE parser preferences <2>

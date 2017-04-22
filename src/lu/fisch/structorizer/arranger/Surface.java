@@ -69,6 +69,7 @@ package lu.fisch.structorizer.arranger;
  *      Kay Gürtzig     2017.01.05      Enh. #319: Additional notification on test coverage status change
  *      Kay Gürtzig     2017.01.11      Fix KGU#328 in method replaced()
  *      Kay Gürtzig     2017.01.13      Enh. #305 / Bugfix KGU#330: Arranger index notification on name and dirtiness change
+ *      Kay Gürtzig     2017.04.22      Enh. #62, #318: Confirmation before overwriting a file, shadow paths considered
  *
  ******************************************************************************************************
  *
@@ -158,6 +159,7 @@ import lu.fisch.structorizer.generators.XmlGenerator;
 import lu.fisch.structorizer.gui.IconLoader;
 import lu.fisch.structorizer.gui.LangTextHolder;
 import lu.fisch.structorizer.gui.Mainform;
+import lu.fisch.structorizer.gui.Menu;
 import lu.fisch.structorizer.io.ArrFilter;
 import lu.fisch.structorizer.io.ArrZipFilter;
 import lu.fisch.structorizer.io.PNGFilter;
@@ -218,6 +220,10 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     		new LangTextHolder("There is a differing diagram with signature \"%1\"\nand path \"%2\".")
     };
     // END KGU#312 2016-12-29
+    // START KGU#385 2017-04-22: Enh. #62
+	public static final LangTextHolder msgOverwriteFile = new LangTextHolder("Overwrite existing file \"%\"?");
+	public static final LangTextHolder msgConfirmOverwrite = new LangTextHolder("Confirm Overwrite");
+	// END KGU#385 2017-04-22
 
     @Override
     public void paint(Graphics g)
@@ -440,7 +446,24 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
     			{
     				filename = filename.substring(0, filename.length()-extension.length()-1);
     			}
-    			done = saveArrangement(frame, filename, extension, portable);
+    			// START KGU#385 2017-04-22: Enh. #62
+    			//done = saveArrangement(frame, filename, extension, portable);
+				boolean writeNow = true;
+				File f = new File(filename + "." + extension);
+				if (f.exists())
+				{
+					writeNow = false;
+					int res = JOptionPane.showConfirmDialog(
+							this,
+							msgOverwriteFile.getText().replace("%", f.getAbsolutePath()),
+							msgConfirmOverwrite.getText(),
+							JOptionPane.YES_NO_OPTION);
+					writeNow = (res == JOptionPane.YES_OPTION);
+				}
+				if (writeNow) {
+					done = saveArrangement(frame, filename, extension, portable);
+				}
+    			// END KGU#385 2017-04-22
     			// END KGU#110 2016-06-29
     		}
     	}
@@ -611,7 +634,13 @@ public class Surface extends LangPanel implements MouseListener, MouseMotionList
 		for (int d = 0; d < this.diagrams.size(); d++)
 		{
 			Diagram diagr = this.diagrams.get(d);
-			String path = diagr.root.getPath();
+			// START KGU#316 2017-04-22: Enh. #318: Files might be zipped
+			//String path = diagr.root.getPath();
+			String path = diagr.root.shadowFilepath;
+			if (path == null) {
+				path = diagr.root.getPath();
+			}
+			// END KGU#316 2017-04-22
 			if (!path.isEmpty())
 			{
 				filePaths.add(path);

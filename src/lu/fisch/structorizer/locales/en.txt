@@ -884,6 +884,8 @@ Surface.titleDiagramConflict.text=Diagram conflict
 Surface.msgInsertionConflict.0.text=There is another version of diagram "%2",\nat least one of them has unsaved changes.
 Surface.msgInsertionConflict.1.text=There is an equivalent copy of diagram "%1"\nwith different path "%2".
 Surface.msgInsertionConflict.2.text=There is a differing diagram with signature "%1"\nand path "%2".
+Surface.msgOverwriteFile.text=Overwrite existing file "%"?
+Surface.msgConfirmOverwrite.text=Confirm Overwrite
 
 -----> Executor
 -----[ Control ]-----

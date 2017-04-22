@@ -882,6 +882,8 @@ Surface.titleDiagramConflict.text=Diagramm-Konflikt
 Surface.msgInsertionConflict.0.text=Es gibt bereits eine Version von Diagramm "%2",\nwenigstens eine davon hat ungesicherte Änderungen.
 Surface.msgInsertionConflict.1.text=Es gibt bereits eine äquivalente Kopie des Diagramms "%1"\nmit unterschiedlichem Dateipfad "%2".
 Surface.msgInsertionConflict.2.text=Es gibt bereits ein abweichendes Diagramm mit Signatur "%1"\nund Dateipfad "%2".
+Surfcae.msgOverwriteFile.text=Bestehende Datei "%" überschreiben?
+Surface.msgConfirmOverwrite.text=Überschreiben bestätigen
 
 -----> Executor
 -----[ Control ]-----

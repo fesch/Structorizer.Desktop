@@ -1068,6 +1068,11 @@ public class Executor implements Runnable
 		// START KGU#39 2015-10-16
 		}
 		// END KGU#39 2015-10-16
+		// START KGU#376 2017-04-22: Enh. #389 - without arguments, we must also show the new context 
+		try {
+			this.updateVariableDisplay();
+		} catch (EvalError ex) {}
+		// END KGU#376 2017-04-22
 
 		// START KGU#159 2017-02-17: Now we permanently maintain the stacktrace, not only in case of error
 		addToStackTrace(root, arguments);
