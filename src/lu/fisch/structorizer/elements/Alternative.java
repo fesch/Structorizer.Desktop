@@ -64,6 +64,7 @@ package lu.fisch.structorizer.elements;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
+import java.util.HashSet;
 
 import javax.swing.ImageIcon;
 
@@ -624,14 +625,14 @@ public class Alternative extends Element implements IFork {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> implicatedRoots)
     {
 		if (!this.isDisabled()) {
 			if (!_instructionsOnly) {
 				_lines.add(this.getText());	// Text of the condition
 			}
-			this.qTrue.addFullText(_lines, _instructionsOnly);
-			this.qFalse.addFullText(_lines, _instructionsOnly);
+			this.qTrue.addFullText(_lines, _instructionsOnly, implicatedRoots);
+			this.qFalse.addFullText(_lines, _instructionsOnly, implicatedRoots);
 		}
     }
     // END KGU 2015-10-16

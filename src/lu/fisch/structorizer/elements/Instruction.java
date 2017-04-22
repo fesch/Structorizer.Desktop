@@ -54,6 +54,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.01.26      Enh. #259: First retrieval approach for variable types
  *      Kay Gürtzig     2017.01.30      Enh. #335: More sophisticated type and declaration support    
  *      Kay Gürtzig     2017.02.20      Enh. #259: Retrieval of result types of called functions enabled (q&d)
+ *      Kay Gürtzig     2017-04-11      Enh. #289: Methods isImportCall() introduced
  *
  ******************************************************************************************************
  *
@@ -66,6 +67,7 @@ import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import lu.fisch.graphics.*;
 import lu.fisch.structorizer.executor.Function;
@@ -310,7 +312,7 @@ public class Instruction extends Element {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> implicatedRoots)
     {
 		if (!this.isDisabled()) {
 			_lines.add(this.getText());

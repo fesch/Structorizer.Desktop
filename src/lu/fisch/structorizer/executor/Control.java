@@ -233,9 +233,6 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         });
 
         tblVar.addPropertyChangeListener(this);
-        // START KGU#375 2017-03-30: Enh. #388 Distinguished display for constants
-        tblVar.setDefaultRenderer(Object.class, new MyCellRenderer());
-        // END KGU#375 2017-03-30
 
         // START KGU#89 2015-11-25
         //lblSpeed.setText(" Delay: 50");
@@ -486,13 +483,18 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
         SwingUtilities.updateComponentTreeUI(this);
         // END KGU#287 2017-01-09
        
+        // START KGU#375 2017-03-30: Enh. #388 Distinguished display for constants
+        // We must do this as late as possible, otherwise "Nimbus" tends to ignore this
+        tblVar.setDefaultRenderer(Object.class, new MyCellRenderer());
+        // END KGU#375 2017-03-30
+        
         pack();
         
         // START KGU#287 2016-11-02: Issue #81 (DPI awareness)
         //setSize(350, 500);
         setSize((int)(350 * scaleFactor), (int)(500 * scaleFactor));
         // END KGU#287 2016-11-02
-        
+
     }
 
     public void init()
@@ -523,6 +525,8 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     		{
     			tblVar.setShowGrid(true);
     		}
+    		// Make sure look and feel "Nimbus" doesn't sabotage the cell renderer setting
+    		tblVar.setDefaultRenderer(Object.class, new MyCellRenderer());
     	}
     	catch (Exception ex) {}
     }
@@ -754,6 +758,10 @@ public class Control extends LangFrame implements PropertyChangeListener, ItemLi
     public LangTextHolder lbOutput;
     public LangTextHolder lbInput;
     public LangTextHolder lbAcknowledge;
+    // START KGU 2017-04-21
+    public final LangTextHolder lbOk = new LangTextHolder("OK");
+    public final LangTextHolder lbPause = new LangTextHolder("Pause");
+    // END KGU 2017-04-21
     // START KGU#197 2016-07-27
     public final LangTextHolder msgNoSubroutine = 
     		new LangTextHolder("A subroutine diagram \"%1\" (%2 parameters) could not be found!\nConsider starting the Arranger and place needed subroutine diagrams there first.");

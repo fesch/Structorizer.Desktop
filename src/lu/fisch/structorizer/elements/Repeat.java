@@ -58,6 +58,7 @@ package lu.fisch.structorizer.elements;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.util.HashSet;
 
 import javax.swing.ImageIcon;
 
@@ -336,7 +337,7 @@ public class Repeat extends Element implements ILoop {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> implicatedRoots)
     {
 		if (!this.isDisabled()) {
 			// The own text contains just a condition (i.e. a logical expression), not an instruction
@@ -344,7 +345,7 @@ public class Repeat extends Element implements ILoop {
 			{
 				_lines.add(this.getText());
 			}
-			this.q.addFullText(_lines, _instructionsOnly);
+			this.q.addFullText(_lines, _instructionsOnly, implicatedRoots);
 		}
     }
     // END KGU 2015-10-16

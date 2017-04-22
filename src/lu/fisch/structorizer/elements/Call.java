@@ -93,6 +93,7 @@ package lu.fisch.structorizer.elements;
 
 import java.awt.Color;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Vector;
 
 import javax.swing.ImageIcon;
@@ -211,7 +212,7 @@ public class Call extends Instruction {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> _implicatedRoots)
     {
 		if (!this.isDisabled()) {
 			if (this.isImportCall()) {
@@ -220,12 +221,12 @@ public class Call extends Instruction {
 				if (Arranger.hasInstance()) {
 					Vector<Root> roots = Arranger.getInstance().findProgramsByName(name);
 					if (roots.size() == 1) {
-						roots.get(0).addFullText(_lines, _instructionsOnly);
+						roots.get(0).addFullText(_lines, _instructionsOnly, _implicatedRoots);
 					}
 				}		
 			}
 			else {
-				super.addFullText(_lines, _instructionsOnly);
+				super.addFullText(_lines, _instructionsOnly, _implicatedRoots);
 			}
 		}
     }

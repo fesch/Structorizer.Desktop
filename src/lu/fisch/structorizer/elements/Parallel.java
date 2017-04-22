@@ -20,6 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
+import java.util.HashSet;
+
 /*
  ******************************************************************************************************
  *
@@ -638,7 +640,7 @@ public class Parallel extends Element
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> implicatedRoots)
     {
 		// Under no circumstances, the text may contain an instruction or even variable declaration (it's just the number of threads) 
 //		if (!_instructionsOnly)
@@ -649,7 +651,7 @@ public class Parallel extends Element
     	{
     		for (int i = 0; i < qs.size(); i++)
     		{
-    			qs.get(i).addFullText(_lines, _instructionsOnly);
+    			qs.get(i).addFullText(_lines, _instructionsOnly, implicatedRoots);
     		}
     	}		
     }

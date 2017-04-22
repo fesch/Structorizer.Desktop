@@ -76,6 +76,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.28      Enh. #387: New menu entry "Save All"
  *      Kay Gürtzig     2017.04.04      Enh. #388: New Analyser error for constant definitions (no. 22)
  *      Kay Gürtzig     2017.04.11      Enh. #389: Additional messages for analysis of import calls
+ *      Kay Gürtzig     2017.04.20      Enh. #388: Second error (error22_2) for constant analysis
  *
  ******************************************************************************************************
  *
@@ -356,9 +357,6 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU 2016-12-17
 	public static final LangTextHolder error15_3 = new LangTextHolder("There are several diagrams matching signature «%».");
 	// END KGU 2016-12-17
-	// START KGU#376 2017-04-11: Enh. #389
-	public static final LangTextHolder error15_4 = new LangTextHolder("Diagram «%» is rather unsuited for an import call as it makes use of return.");
-	// END KGU#376 2017-04-11
 	public static final LangTextHolder error16_1 = new LangTextHolder("A JUMP element may be empty or start with one of %, possibly followed by an argument!");	
 	public static final LangTextHolder error16_2 = new LangTextHolder("A % instruction, unless at final position, must form a JUMP element!");
 	public static final LangTextHolder error16_3 = new LangTextHolder("A %1 or %2 instruction is only allowed as JUMP element!");
@@ -382,10 +380,19 @@ public class Menu extends LangMenuBar implements NSDController
 	// START KGU#327 2017-01-07: Enh. #329 - New check for hardly distinguishable variable names.
 	public static final LangTextHolder error21 = new LangTextHolder("Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0.");
 	// END KGU#327 2017-01-07
-	// START KGU#375 2017-04-04: Enh. #388 - New check for constants depending on non-constant values.
-	public static final LangTextHolder error22 = new LangTextHolder("Constant «%1» depends on apparently non-constant value(s) %2.");
+	// START KGU#375 2017-04-04: Enh. #388 - New check for constants depending on non-constant values or be redefined.
+	public static final LangTextHolder error22_1 = new LangTextHolder("Constant «%1» depends on apparently non-constant value(s) %2.");
+	public static final LangTextHolder error22_2 = new LangTextHolder("Attempt to modify the value of constant «%»!");
 	public static final LangTextHolder errorLineReference = new LangTextHolder(" (line %)");
 	// END KGU#375 2017-04-04
+	// START KGU#376 2017-04-11/21: Enh. #389 
+	public static final LangTextHolder error23_1 = new LangTextHolder("Diagram «%» is rather unsuited for an import call as it makes use of return.");
+	public static final LangTextHolder error23_2 = new LangTextHolder("Import of diagram «%1» is recursive!");
+	public static final LangTextHolder error23_3 = new LangTextHolder("Import of diagram «%1» will be ignored here because it had already been imported: %2");
+	public static final LangTextHolder error23_4 = new LangTextHolder("Name conflict between local and imported variable or constant «%»!");
+	public static final LangTextHolder error23_5 = new LangTextHolder("Import Calls («%1») ought to be placed at the very beginning of the diagram («%2»)!");
+	public static final LangTextHolder error23_6 = new LangTextHolder("An % instruction must form a CALL element!");
+	// END KGU#376 2017-04-11/21
 
 	// START KGU#218 2016-07-28: Issue #206 - enhanced localization
 	// Dialog messages

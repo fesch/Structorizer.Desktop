@@ -2530,7 +2530,10 @@ public abstract class Element {
     {
     	// The default...
     	StringList sl = new StringList();
-    	this.addFullText(sl, _instructionsOnly);
+    	// START KGU#376 2017-04-21: Enh. #389 - We must prevent cyclic recursion
+    	//this.addFullText(sl, _instructionsOnly);
+    	this.addFullText(sl, _instructionsOnly, null);
+    	// END KGU#376 2017-04-21
     	return sl;
     }
     
@@ -2543,8 +2546,9 @@ public abstract class Element {
      * (To be overridden by structured subclasses)
      * @param _lines - the StringList to append to 
      * @param _instructionsOnly - if true then texts not possibly containing variable declarations are omitted
+     * @param implicatedRoots - set of already recursively involved Roots (to beware of cyclic recursion) 
      */
-    protected abstract void addFullText(StringList _lines, boolean _instructionsOnly);
+    protected abstract void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> implicatedRoots);
     // END KGU 2015-10-16
     
     // START KGU#18/KGU#23 2015-10-24 intermediate transformation added and decomposed

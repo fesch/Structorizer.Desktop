@@ -310,7 +310,8 @@ Menu.error19_1.text=
 Menu.error19_2.text=
 Menu.error20.text=
 Menu.error21.text=
-Menu.error22.text=Постоянная «%1» зависит от данных по-видимому не постоянных: «%2»!
+Menu.error22_1.text=Постоянная «%1» зависит от данных по-видимому не постоянных: «%2»!
+Menu.error22_2.text=Не разрешается изменить постоянную «%»!
 Menu.errorLineReference.text= (строка %)
 
 -----[ AnalyserPreferences ]-----
@@ -332,13 +333,13 @@ AnalyserPreferences.checkboxes.12.text=Проверять правильност
 AnalyserPreferences.checkboxes.13.text=Проверять всегда ли возращается результат.
 AnalyserPreferences.checkboxes.14.text=Проверять отдельные сведения считающего цикла подходят ли к тексту.
 AnalyserPreferences.checkboxes.15.text=Проверять что каждый Вызов подходящен и вызыванная подпрограмма найдётся.
-AnalyserPreferences.checkboxes.16.text=Проверять что элементы типа Выход использлованы корректным образоM.
+AnalyserPreferences.checkboxes.16.text=Проверять что элементы типа Выход использлованы корректным образом.
 AnalyserPreferences.checkboxes.17.text=Проверять что не есть конкурирующий паралельный доступ к переменными.
 AnalyserPreferences.checkboxes.18.text=
 AnalyserPreferences.checkboxes.19.text=
 AnalyserPreferences.checkboxes.20.text=
 AnalyserPreferences.checkboxes.21.text=
-AnalyserPreferences.checkboxes.22.text=Проверять что постоянные только зависят от данных постоянных.
+AnalyserPreferences.checkboxes.22.text=Проверять что постоянные только зависят от данных постоянных и не изменются.
 AnalyserPreferences.okButton.text=OK
 
 

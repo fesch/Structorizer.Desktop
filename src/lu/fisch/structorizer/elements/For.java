@@ -70,6 +70,7 @@ package lu.fisch.structorizer.elements;
 
 import java.awt.Point;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Vector;
 
 import javax.swing.ImageIcon;
@@ -394,7 +395,7 @@ public class For extends Element implements ILoop {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> implicatedRoots)
     {
 		if (!this.isDisabled()) {
 			// START KGU#3 2015-11-30: Fine tuning
@@ -404,7 +405,7 @@ public class For extends Element implements ILoop {
 				_lines.add(this.getText());
 			}
 			// END KGU#3 2015-11-30
-			this.q.addFullText(_lines, _instructionsOnly);
+			this.q.addFullText(_lines, _instructionsOnly, implicatedRoots);
 		}
     }
     // END KGU 2015-10-16

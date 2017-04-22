@@ -121,10 +121,16 @@ package lu.fisch.structorizer.executor;
  *      Kay Gürtzig     2017.04.11      Enh. #389: Implementation of import calls (without context change)
  *      Kay Gürtzig     2017.04.12      Bugfix #391: Control button activation fixed for step mode
  *      Kay Gürtzig     2017.04.14      Issue #380/#394: Jump execution code revised on occasion of these bugfixes
+ *      Kay Gürtzig     2017.04.22      Code revision KGU#384: execution context bundled into Executor.context
  *
  ******************************************************************************************************
  *
  *      Comment:
+ *      2017-04-22 Code revision (KGU#384)
+ *      - The execution context as to be pushed to call stack had been distributed over numerous attributes
+ *        and were bundled to an ExecutionStackEntry held in attribute context (the class ExecutionStackEntry
+ *        is likely to be renamed to ExecutionContext). This was to simplify the call mechanisms and regain
+ *        overview and control.
  *      2016-03-17 Enh. #133 (KGU#159)
  *      - Previously, a Call stack trace was only shown in case of an execution error or manual abort.
  *        Now a Call stack trace may always be requested while execution hasn't ended. Only prerequisite
@@ -223,7 +229,9 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -269,6 +277,25 @@ import com.stevesoft.pat.Regex;
  */
 public class Executor implements Runnable
 {
+	// START KGU#376 2017-04-20: Enh. #389
+	/**
+	 * Context record for an imported Root in order to fetch the defined constants
+	 * and global/staic variables (as well as - in future - defined types or the like).
+	 * This prototye version just contains the BeanShell interpreter used at the
+	 * initial execution ad hence bearing values etc. and a list of variable names.
+	 * Supports enhancement #389
+	 * @author Kay Gürtzig
+	 * @see Executor#importMap
+	 */
+	private class ImportInfo {
+		public final Interpreter interpreter;
+		public final StringList variableNames;
+		public ImportInfo(Interpreter _interpr, StringList _varNames) {
+			interpreter = _interpr;
+			variableNames = _varNames;
+		}
+	};
+	// END KGU#376 2017-04-20
 
 	private static Executor mySelf = null;
 	// START KGU#311 2016-12-22: Enh. #314 - fileAPI index
@@ -366,30 +393,49 @@ public class Executor implements Runnable
 
 	private Diagram diagram = null;
 	
+	// START KGU#376 2017-04-20: Enh. #389 - we need info about all imported Roots
+	/**
+	 * Maps all Roots ever called as import during current execution to their
+	 * execution results, represented by an ImportInfo object, such that whenever
+	 * the same Root will be requested for import again, we may just retrieve its
+	 * results here.
+	 * @see ExecutionStackEntry#importList 
+	 */
+	private final HashMap<Root, ImportInfo> importMap = new HashMap<Root, ImportInfo>();
+	//private StringList importList = new StringList();	// KGU#384 2017-04-22: -> context
+	// END KGU#376 2017-04-20
+	// START KGU#384 2017-04-22: Redesign of the execution context
+	/**
+	 * Execution context cartridge containing all context to be pushed to callers stack on calls
+	 */
+	private ExecutionStackEntry context;
+	// END KGU#376 2017-04-20
 	// START KGU#2 (#9) 2015-11-13: We need a stack of calling parents
 	private Stack<ExecutionStackEntry> callers = new Stack<ExecutionStackEntry>();
-	private Object returnedValue = null;
+	//private Object returnedValue = null;	// KGU#384 2017-04-22 -> context
 	private Vector<IRoutinePool> routinePools = new Vector<IRoutinePool>();
 	// END KGU#2 (#9) 2015-11-13
 	// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
-	private StringList forLoopVars = new StringList();
+	//private StringList forLoopVars = new StringList();	// KGU#384 2017-04-22 -> context
 	// END KGU#307 2016-12-12
 
 	private DiagramController diagramController = null;
-	private Interpreter interpreter;
+	// START KGU#384 2017-04-22: Context redesign -> this.context
+	//private Interpreter interpreter;
+	//private boolean returned = false;
+	// END KGU#384 2017-04-22
 
 	private boolean paus = false;
-	private boolean returned = false;
 	private boolean running = false;
 	private boolean step = false;
 	private boolean stop = false;
 	// START KGU#78 2015-11-25: JUMP enhancement (#35)
-	private int loopDepth = 0;	// Level of nested loops
+	//private int loopDepth = 0;	// Level of nested loops KGU#384 207-04-22 -> context
 	private int leave = 0;		// Number of loop levels to unwind
 	// END KGU#78 2015-11-25
-	private StringList variables = new StringList();
+	//private StringList variables = new StringList();	// KGU#384 2017-04-22 -> context
 	// START KGU#375 2017-03-30: Enh. #388 Support the concept of variables
-	private HashMap<String, Object> constants = new HashMap<String, Object>();
+	//private HashMap<String, Object> constants = new HashMap<String, Object>();	// KGU#384 2017-04-22 -> context
 	// END KGU#375 2017-03-30
 	// START KGU#2 2015-11-24: It is crucial to know whether an error had been reported on a lower level
 	private boolean isErrorReported = false;
@@ -498,6 +544,13 @@ public class Executor implements Runnable
 						pos++;
 					}
 				}
+				// START KGU 2017-04-22 unescaping of double single quotes - no, doesn't make sense
+				//if (token.startsWith("'") && internal.length() > 2) {
+				//	int intLen = internal.length();
+				//	internal = internal.replace("''", "'");
+				//	tokenLen -= (intLen - internal.length());
+				//}
+				// END KGU 2017-04-22
 				if (!(tokenLen == 3 || tokenLen == 4 && token.charAt(1) == '\\')) {
 					delim = '\"';
 				}
@@ -558,7 +611,9 @@ public class Executor implements Runnable
         r = new Regex(BString.breakup("dec")+"[(](.*?)[)](.*?)","$1 <- $1 - 1"); s = r.replaceAll(s);
         // END KGU 2015-11-29
 		
-		s = s.replace("''", "'");	// FIXME (KGU 2015-11-29): Looks like an unwanted relic!
+        // START KGU 2017-04-22: now done above in the string token conversion
+		//s = s.replace("''", "'");	// (KGU 2015-11-29): Looks like an unwanted relic!
+        // END KGU 2017-04-22
 		// pascal: randomize
 		s = s.replace("randomize()", "randomize");
 		s = s.replace("randomize", "randomize()");
@@ -652,8 +707,8 @@ public class Executor implements Runnable
 						try
 						{
 							int pos = -1;	// some character position
-							Object leftO = interpreter.eval(left);
-							Object rightO = interpreter.eval(right);
+							Object leftO = context.interpreter.eval(left);
+							Object rightO = context.interpreter.eval(right);
 							String neg = (op > 0) ? "!" : "";
 							// First the obvious case: two String expressions
 							if ((leftO instanceof String) && (rightO instanceof String))
@@ -790,14 +845,18 @@ public class Executor implements Runnable
 	public void execute()
 	// START KGU#2 (#9) 2015-11-13: We need a recursively applicable version
 	{
+		Root root = this.diagram.getRoot();
 		this.callers.clear();
 		this.stackTrace.clear();
 		this.routinePools.clear();
+		// START KGU#376 2017-04-22: Enh. #389
+		this.importMap.clear();
+		// END KGU#376 2017-04-22
 		// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
-		this.forLoopVars.clear();
+		//this.forLoopVars.clear();	// KGU#384 2017-04-22 -> new context
 		// END KGU#307 2016-12-12
 		// START KGU#375 2017-03-30: Enh. #388: Keep track of constants
-		this.constants.clear();
+		//this.constants.clear();	// KGU#384 2017-04-22 -> new context
 		// END KGU#375 2017-03-30
 		// START KGU 2016-12-18: Enh. #314
 		for (Closeable file: this.openFiles) {
@@ -820,24 +879,25 @@ public class Executor implements Runnable
 			// END KGU#117 2016-03-08
 		}
 		this.isErrorReported = false;
-		this.diagram.getRoot().isCalling = false;
+		root.isCalling = false;
 		// START KGU#160 2016-04-12: Enh. #137 - Address the console window 
 		this.console.clear();
 		SimpleDateFormat sdf = new SimpleDateFormat();
-		this.console.writeln("*** STARTED \"" + this.diagram.getRoot().getText().getLongString() +
+		this.console.writeln("*** STARTED \"" + root.getText().getLongString() +
 				"\" at " + sdf.format(System.currentTimeMillis()) + " ***", Color.GRAY);
 		if (this.isConsoleEnabled) this.console.setVisible(true);
 		// END KGU#160 2016-04-12
-		// START KGU#376 2017-04-11: Enh. #389 - Must no longer be done by execute(arguments)
+		// START KGU#384 2017-04-22
+		this.context = new ExecutionStackEntry(root, null);
 		initInterpreter();
-		// END KGU#376 2017-04-11
+		// END KGU#384 2017-04-22
 		/////////////////////////////////////////////////////////
 		this.execute(null);	// The actual top-level execution
 		/////////////////////////////////////////////////////////
 		this.callers.clear();
 		this.stackTrace.clear();
 		// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
-		this.forLoopVars.clear();
+		this.context.forLoopVars.clear();
 		// END KGU#307 2016-12-12
 		// START KGU 2016-12-18: Enh. #314
 		for (Closeable file: this.openFiles) {
@@ -852,7 +912,7 @@ public class Executor implements Runnable
 		this.openFiles.clear();
 		// END KGU 2016-12-18
 		// START KGU#160 2016-04-12: Enh. #137 - Address the console window 
-		this.console.writeln("*** TERMINATED \"" + this.diagram.getRoot().getText().getLongString() +
+		this.console.writeln("*** TERMINATED \"" + root.getText().getLongString() +
 				"\" at " + sdf.format(System.currentTimeMillis()) + " ***", Color.GRAY);
 		if (this.isConsoleEnabled) this.console.setVisible(true);
 		// END KGU#160 2016-04-12
@@ -869,7 +929,10 @@ public class Executor implements Runnable
 		boolean successful = true;
 	// END KGU#2 (#9) 2015-11-13
 		
-		Root root = diagram.getRoot();
+		// START KGU#384 2017-04-22: execution context redesign
+		//Root root = diagram.getRoot();
+		Root root = context.root;
+		// END 2017-04-22
 
 		// START KGU#159 2016-03-17: Now we permanently maintain the stacktrace, not only in case of error
 		//addToStackTrace(root, arguments);	// KGU 2017-02-17 moved downwards, after the argument request
@@ -899,11 +962,13 @@ public class Executor implements Runnable
 		//initInterpreter();
 		// END KGU#376 2017-04-11
 		String result = "";
-		returned = false;
+		// START KGU#384 2017-04-22: Holding all execution context in this.context now
+		//returned = false;
 		// START KGU#78 2015-11-25
-		loopDepth = 0;
+		//loopDepth = 0;
 		leave = 0;
 		// END KGU#78 2015-11-25
+		// END KGU#384 207-04-22
 
 		// START KGU#39 2015-10-16 (1/2): It made absolutely no sense to look for parameters if root is a program
 		if (!root.isProgram)
@@ -964,7 +1029,7 @@ public class Executor implements Runnable
 						// END KGU#375 2017-03-30
 						// END KGU#69 2015-11-08
 						// START KGU#2 2015-11-24: We might need the values for a stacktrace
-						arguments[i] = interpreter.get(in);
+						arguments[i] = context.interpreter.get(in);
 						// END KGU#2 2015-11-24
 						// START KGU#160 2016-04-26: Issue #137 - document the arguments
 						this.console.writeln("*** Argument <" + in + "> = " + this.prepareValueForDisplay(arguments[i]), Color.CYAN);
@@ -1073,8 +1138,9 @@ public class Executor implements Runnable
 			// END KGU#2 2015-11-24	
 		} else
 		{
-			if ((!root.isProgram) && (returned == false))
+			if ((!root.isProgram) && (context.returned == false))
 			{
+				// Possible result variable names
 				StringList posres = new StringList();
 				posres.add(root.getMethodName());
 				posres.add("result");
@@ -1084,15 +1150,15 @@ public class Executor implements Runnable
 				try
 				{
 					int i = 0;
-					while ((i < posres.count()) && (!returned))
+					while ((i < posres.count()) && (!context.returned))
 					{
-						Object resObj = interpreter.get(posres.get(i));
+						Object resObj = context.interpreter.get(posres.get(i));
 						if (resObj != null)
 						{
 							// START KGU#2 (#9) 2015-11-13: Only tell the user if this wasn't called
 							//JOptionPane.showMessageDialog(diagram, n,
 							//		"Returned result", 0);
-							this.returnedValue = resObj;
+							context.returnedValue = resObj;
 							if (this.callers.isEmpty())
 							{
 								// START KGU#197 2016-05-25: Translate the headline!
@@ -1128,7 +1194,10 @@ public class Executor implements Runnable
 									// START KGU#198 2016-05-25: Issue #137 - also log the result to the console
 									this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
 									// END KGU#198 2016-05-25
-									Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
+									Object[] options = {
+											control.lbOk.getText(),
+											control.lbPause.getText()
+											};
 									int pressed = JOptionPane.showOptionDialog(diagram.getParent(), resObj, header,
 											JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
 									if (pressed == 1)
@@ -1148,7 +1217,7 @@ public class Executor implements Runnable
 							delay();
 							// END KGU#148 2016-01-29							
 							// END KGU#2 (#9) 2015-11-13
-							returned = true;
+							context.returned = true;
 						}
 						i++;
 					}
@@ -1160,7 +1229,7 @@ public class Executor implements Runnable
 
 			}
 			// START KGU#299 2016-11-23: Enh. #297 In step mode, this offers a last pause to inspect variables etc.
-			if (this.callers.isEmpty() && !returned) {
+			if (this.callers.isEmpty() && !context.returned) {
 				delay();
 			}
 			// END KGU 2016-11-23
@@ -1242,31 +1311,54 @@ public class Executor implements Runnable
 		boolean cloned = false;
 		Root root = subRoot;
 		Object resultObject = null;
-		Root oldRoot = this.diagram.getRoot();
-		ExecutionStackEntry entry = new ExecutionStackEntry(
-				oldRoot,
-				this.variables, 
-				this.interpreter,
-				// START KGU#78 2015-11-25
-				this.loopDepth,
-				// END KGU#78 2015-11-25
-				// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
-				this.forLoopVars 
-				// END KGU#307 2016-12-12
-				);
-		this.callers.push(entry);
-		// START KGU#376 2017-04-11: keep the od context with import calls
-		if (!subRoot.isProgram) {
-		// END KGU#376 2017-04-11
-			this.initInterpreter();
-			this.variables = new StringList();
-			// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
-			this.forLoopVars = new StringList(); 
-			// END KGU#307 2016-12-12
-			// loopDepth wil be set 0 by the execut(arguments) call below
-		// START KGU#376 2017-04-11: keep the old context with import calls
+		// START KGU#384 2017-04-22: Replaced by the ExecutionContext cartridge
+//		Root oldRoot = this.diagram.getRoot();
+//		ExecutionStackEntry entry = new ExecutionStackEntry(
+//				oldRoot,
+//				this.variables, 
+//				this.interpreter,
+//				// START KGU#78 2015-11-25
+//				this.loopDepth,
+//				// END KGU#78 2015-11-25
+//				// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
+//				this.forLoopVars,
+//				// END KGU#307 2016-12-12
+//				// START KGU#375/KGU#376 2017-04-21: Enh. #388, #389
+//				this.constants,
+//				this.importList
+//				// END KGU#375, KGU#376 2017-04-21
+//				);
+		this.callers.push(this.context);
+		// END KGU#384 2017-04-22
+		// START KGU#376 2017-04-21: Update all current imports before sub execution
+		for (int i = 0; i < context.importList.count(); i++) {
+			String impName = context.importList.get(i);
+			// FIXME This retrieval is a little awkward - maybe the importList should be a set of Root
+			for (Root impRoot: this.importMap.keySet()) {
+				if (impRoot.getMethodName().equals(impName)) {
+					ImportInfo info = this.importMap.get(impRoot);
+					this.copyInterpreterContents(context.interpreter, info.interpreter, info.variableNames, null, impRoot.constants.keySet(), true);
+				}
+			}
 		}
-		// END KGU#376 2017-04-11
+		// START KGU#384 2017-04-22 Is done below now, when setting up the new context
+//		if (!subRoot.isProgram) {
+//			// It's not an import, so start with a new importList 
+//			this.importList = new StringList();
+//		}
+		// END KGU#384 2017-04-22
+		// END KGU#376 2017-04-21
+		// START KGU#384 2017-04-22: Now delegated to execute(Object[])
+//		this.initInterpreter();
+//		this.variables = new StringList();	// FIXME -> Map<String, Set<Interpreter>>
+//		// START KGU#375 2017-04-21: Enh. #388: Need also a new constants enviroment
+//		this.constants = new HashMap<String, Object>();
+//		// END KGU#375 2017-04-21
+//		// START KGU#307 2016-12-12: Issue #307: Keep track of FOR loop variables
+//		this.forLoopVars = new StringList(); 
+//		// END KGU#307 2016-12-12
+//		// loopDepth will be set 0 by the execut(arguments) call below
+		// END KGU#384 2017-04-22
 		
 		// If the found subroutine is already an active caller, then we need a new instance of it
 		if (root.isCalling)
@@ -1276,13 +1368,28 @@ public class Executor implements Runnable
 			// Remaining initialisations will be done by this.execute(...).
 			cloned = true;
 		}
+		// START KGU#384 2017-04-22: Execution context redesign
+		if (root.isProgram) {
+			// For an import Call continue the importList recursively
+			this.context = new ExecutionStackEntry(root, this.context.importList);
+		}
+		else {
+			// For a subroutine call, start with a new import list
+			this.context = new ExecutionStackEntry(root);
+		}
+		initInterpreter();
+		// END KGU#384 2017-04-22
 		
 		this.diagram.setRoot(root, !Element.E_AUTO_SAVE_ON_EXECUTE);
 		
 		// START KGU#156 2016-03-11: Enh. #124 - detect execution counter diff.
 		int countBefore = root.getExecStepCount(true);
 		// END KGU#156 2016-03-11
-		/*boolean done =*/ this.execute(arguments);
+		
+		/////////////////////////////////////////////////////////
+		this.execute(arguments);	// Actual execution of the subroutine or import
+		/////////////////////////////////////////////////////////
+		
 		// START KGU#156 2016-03-11; Enh. #124
 		caller.addToExecTotalCount(root.getExecStepCount(true) - countBefore, true);
 		if (cloned || root.isTestCovered(true))	
@@ -1306,37 +1413,73 @@ public class Executor implements Runnable
 		}
 		// END KG#117 2016-03-07
 		
-		// START KGU#117 2016-03-07: Enh. #77
-		// For recursive calls the coverage must be combined
-		if (cloned && Element.E_COLLECTRUNTIMEDATA)
-		{
-			subRoot.combineRuntimeData(root);
-		}
-		// END KG#117 2016-03-07
+		ExecutionStackEntry entry = this.callers.pop();	// former context
 		
-		this.callers.pop();	// Should be the entry still held by variable entry
-		
-		// START KGU#376 2017-04-11: Enh. #389 don't restore after an import call
-		if (!subRoot.isProgram) {
-		// END KGU#376 2017-04-11
-			this.variables = entry.variables;
-			this.interpreter = entry.interpreter;
-			// START KGU#78 2015-11-25
-			this.loopDepth = entry.loopDepth;
-			// END KGU#78 2015-11-25
-		// START KGU#376 2017-04-11: keep the old context with import calls
-			this.forLoopVars = entry.forLoopVars;
+//		// START KGU#376 2017-04-21: Enh. #389 don't restore after an import call
+		// FIXME: Restore but cache the Interpreter with all variables and copy contents before
+		if (subRoot.isProgram) {
+			// It was an import Call, so we have to import the definitions and values 
+			// FIXME: Derive a sensible type StringList from subRoot.getTypeInfo() 
+			this.copyInterpreterContents(context.interpreter, entry.interpreter,
+					this.context.variables, null, entry.root.constants.keySet(), false);
+			entry.variables.addIfNew(context.variables);
+			for (Entry<String, Object> constEntry: context.constants.entrySet()) {
+				if (!entry.constants.containsKey(constEntry.getKey())) {
+					entry.constants.put(constEntry.getKey(), constEntry.getValue());
+				}
+			}	
+			this.importMap.put(subRoot, new ImportInfo(this.context.interpreter, this.context.variables));
+			context.importList.addIfNew(subRoot.getMethodName());
+			// TODO: Check this for necessity and soundness!
+			for (Entry<String, String> constEntry: subRoot.constants.entrySet()) {
+				if (!entry.root.constants.containsKey(constEntry.getKey())) {
+					entry.root.constants.put(constEntry.getKey(), constEntry.getValue());
+				}
+			}
 		}
-		// END KGU#376 2017-04-11
+		else {
+			// Subroutines may have updated definitions from import diagrams - we must get aware of these changes 
+			for (int i = 0; i < context.importList.count(); i++) {
+				String impName = context.importList.get(i);
+				// FIXME This retrieval is a little awkward - maybe the importList should be a set of Root
+				for (Root impRoot: this.importMap.keySet()) {
+					if (impRoot.getMethodName().equals(impName)) {
+						ImportInfo info = this.importMap.get(impRoot);
+						if (this.copyInterpreterContents(context.interpreter, info.interpreter, info.variableNames, null, impRoot.constants.keySet(), true)
+								&& entry.importList.contains(impName)) {
+							this.copyInterpreterContents(info.interpreter, entry.interpreter, info.variableNames, null, impRoot.constants.keySet(), true);
+						}
+					}
+				}
+			}
+		}
+//		// END KGU#376 2017-04-21
+		// START KGU#384 2017-04-22: Now done at once with the entire context cartridge
+//		this.variables = entry.variables;
+//		// START KGU#375 2017-04-21: Enh. #388: Need also a new constants enviroment
+//		this.constants = entry.constants;
+//		// END KGU#375 2017-04-21
+//		this.interpreter = entry.interpreter;
+//		// START KGU#78 2015-11-25
+//		this.loopDepth = entry.loopDepth;
+//		// END KGU#78 2015-11-25
+//		this.forLoopVars = entry.forLoopVars;
+		// END KGU#384 2017-08-22
 		
 		this.diagram.setRoot(entry.root, !Element.E_AUTO_SAVE_ON_EXECUTE);
 		entry.root.isCalling = false;
 
+		// START KGU#376 2017-04-21: Enh. #389
 		// The called subroutine will certainly have returned a value...
-		resultObject = this.returnedValue;
+		resultObject = this.context.returnedValue;
 		// ... but definitively not THIS calling routine!
-		this.returned = false;
-		this.returnedValue = null;
+		// FIXME: Shouldn't we have cached the previous values in entry?
+		
+		// START KGU#384 2017-04-22: Now done at once with the entire context cartridge
+		//this.returned = false; 
+		//this.returnedValue = null;
+		this.context = entry;
+		// END KGU#384 2017-08-22
 		
 		try 
 		{
@@ -1551,12 +1694,15 @@ public class Executor implements Runnable
 			return paus;
 		}
 	}
-
+	
 	private void initInterpreter()
 	{
 		try
 		{
-			interpreter = new Interpreter();
+			// STRT KGU#384 2017-04-22: Redesign of execution context
+			//interpreter = new Interpreter();
+			Interpreter interpreter = this.context.interpreter;
+			// END KGU#384 2017-04-22
 			String pascalFunction;
 			// random
 			pascalFunction = "public int random(int max) { return (int) (Math.random()*max); }";
@@ -2089,6 +2235,74 @@ public class Executor implements Runnable
 //		}
 //	}
 
+	// START KGU#376 2017-04-20: Enh. #389 - we need to copy interpreter contents 
+	/**
+	 * Copies the type declarations specified by <code>_typedefs</code>, the constants specified
+	 * by <code>_constNames</code> and the values of the variables specified by <code>_varNames</code>
+	 * from the <code>_source</code> interpreter context to the <code>_target</code> interpreter context.
+	 * @param _source - the source interpreter
+	 * @param _target - the target interpreter
+	 * @param _varNames - names of the variables to be considered
+	 * @param _typedefs - names of the typedefinitions to be involved (still not implemented)
+	 * @param _constNames - names of the constants to be included
+	 * @param _overwrite - whereas defined constants are never overwritten, for variables this argument
+	 * may aloow to update the values of already existing values (default is false)
+	 * @return true if there was at least one copied entity
+	 */
+	private boolean copyInterpreterContents(Interpreter _source, Interpreter _target, StringList _varNames, StringList _typedefs, Set<String> _constNames, boolean _overwrite)
+	{
+		boolean somethingCopied = false;
+		if (_typedefs != null) {
+			for (int i = 0; i < _typedefs.count(); i++) {
+				try {
+					_target.eval(_typedefs.get(i));
+				} catch (EvalError e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		for (int i = 0; i < _varNames.count(); i++) {
+			String varName = _varNames.get(i);
+			try {
+				if (!_constNames.contains(varName) && _overwrite || _target.get(varName) == null) {
+					Object val = _source.get(_varNames.get(i));
+					// Here we try to avoid hat all specific values are boxed to
+					// Object.
+					if (val instanceof Boolean) {
+						_target.set(varName, ((Boolean)val).booleanValue());
+						somethingCopied = true;
+					}
+					else if (val instanceof Integer) {
+						_target.set(varName, ((Integer)val).intValue());
+						somethingCopied = true;
+					}
+					else if (val instanceof Long) {
+						_target.set(varName, ((Long)val).longValue());
+						somethingCopied = true;
+					}
+					else if (val instanceof Float) {
+						_target.set(varName, ((Float)val).floatValue());
+						somethingCopied = true;
+					}
+					else if (val instanceof Double) {
+						_target.set(varName, ((Double)val).doubleValue());
+						somethingCopied = true;
+					}
+					else {
+						_target.set(varName, val);
+						somethingCopied = true;
+					}
+				}
+			} catch (EvalError e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return somethingCopied;
+	}
+	// END KGU#376 2017-04-20
+
 	public boolean isNumeric(String input)
 	{
 		try
@@ -2248,15 +2462,15 @@ public class Executor implements Runnable
 				if (strInput.startsWith("\"") && strInput.endsWith("\"") ||
 						strInput.startsWith("'") && strInput.endsWith("'"))
 				{
-					this.interpreter.eval(name + " = " + rawInput);
-					setVar(name, interpreter.get(name));
+					context.interpreter.eval(name + " = " + rawInput);
+					setVar(name, context.interpreter.get(name));
 				}
 				// START KGU#285 2016-10-16: Bugfix #276
 				else if (rawInput.contains("\\"))
 				{
 					// Obviously it isn't enclosed by quotes (otherwise the previous test would have caught it
-					this.interpreter.eval(name + " = \"" + rawInput + "\"");
-					setVar(name, interpreter.get(name));					
+					context.interpreter.eval(name + " = \"" + rawInput + "\"");
+					setVar(name, context.interpreter.get(name));					
 				}
 				// END KGU#285 2016-10-16
 				// try adding as char (only if it's not a digit)
@@ -2270,8 +2484,8 @@ public class Executor implements Runnable
 				{
 					String asgnmt = "Object[] " + name + " = " + rawInput;
 					// Nested initializers won't work here!
-					interpreter.eval(asgnmt);
-					setVar(name, interpreter.get(name));
+					context.interpreter.eval(asgnmt);
+					setVar(name, context.interpreter.get(name));
 				}
 				// END KGU#184 2016-04-25
 				// START KGU#283 2016-10-16: Enh. #273
@@ -2310,7 +2524,7 @@ public class Executor implements Runnable
 	private void setVar(String name, Object content) throws EvalError
 	// START KGU#307 2016-12-12: Enh. #307 - check FOR loop variable manipulation
 	{
-		setVar(name, content, this.forLoopVars.count()-1);
+		setVar(name, content, context.forLoopVars.count()-1);
 	}
 
 	private void setVar(String name, Object content, int ignoreLoopStackLevel) throws EvalError
@@ -2394,7 +2608,7 @@ public class Executor implements Runnable
 		
 		// FIXME: name still contains type and other modifiers, so this check may fail!
 		// START KGU#307 2016-12-12: Enh. #307 - check FOR loop variable manipulation
-		if (this.forLoopVars.lastIndexOf(name, ignoreLoopStackLevel) >= 0)
+		if (context.forLoopVars.lastIndexOf(name, ignoreLoopStackLevel) >= 0)
 		{
 			throw new EvalError(control.msgForLoopManipulation.getText().replace("%", name), null, null);
 		}
@@ -2464,7 +2678,7 @@ public class Executor implements Runnable
 //			int index = this.getIndexValue(name);
 		if (indexStr != null) {
 		// END KGU#375 2017-03-30
-			boolean arrayFound = this.variables.contains(name);
+			boolean arrayFound = context.variables.contains(name);
 			int index = this.getIndexValue(indexStr);
 			Object[] objectArray = null;
 			int oldSize = 0;
@@ -2473,14 +2687,14 @@ public class Executor implements Runnable
 				try {
 					// If it hasn't been an array then we'll get an error here
 					//objectArray = (Object[]) this.interpreter.get(arrayname);
-					objectArray = (Object[]) this.interpreter.get(name);
+					objectArray = (Object[]) context.interpreter.get(name);
 					oldSize = objectArray.length;
 				}
 				catch (Exception ex)
 				{
 					// Produce a meaningful EvalError instead
 					//this.interpreter.eval(arrayname + "[" + index + "] = " + prepareValueForDisplay(content));
-					this.interpreter.eval(name + "[" + index + "] = " + prepareValueForDisplay(content));
+					context.interpreter.eval(name + "[" + index + "] = " + prepareValueForDisplay(content));
 				}
 			}
 			if (index > oldSize - 1) // This includes the case of oldSize = 0
@@ -2499,8 +2713,8 @@ public class Executor implements Runnable
 			objectArray[index] = content;
 			//this.interpreter.set(arrayname, objectArray);
 			//this.variables.addIfNew(arrayname);
-			this.interpreter.set(name, objectArray);
-			this.variables.addIfNew(name);
+			context.interpreter.set(name, objectArray);
+			context.variables.addIfNew(name);
 			
 		} else // if ((name.contains("[")) && (name.contains("]")))
 		{
@@ -2521,14 +2735,14 @@ public class Executor implements Runnable
 			// START KGU#322 2017-01-06: Bugfix #324 - an array assigned on input hindered scalar re-assignment
 			//this.interpreter.set(name, content);
 			try {
-				this.interpreter.set(name, content);
+				context.interpreter.set(name, content);
 			}
 			catch (EvalError ex) {
 				if (ex.getMessage().matches(".*Can't assign.*to java\\.lang\\.Object \\[\\].*")) {
 					// Stored array type is an obstacle for re-assignment, so drop it
-					this.interpreter.unset(name);
+					context.interpreter.unset(name);
 					// Now try again
-					this.interpreter.set(name, content);
+					context.interpreter.set(name, content);
 				}
 				else {
 					// Something different, so rethrow
@@ -2556,16 +2770,16 @@ public class Executor implements Runnable
 			if (! (content instanceof String || content instanceof Character || content instanceof Object[]))
 			{
 				try {
-					this.interpreter.eval(name + " = " + content);	// Avoid the variable content to be an object
+					context.interpreter.eval(name + " = " + content);	// Avoid the variable content to be an object
 				}
 				catch (EvalError ex)	// Just ignore an error (if we may rely on the previously set content to survive)
 				{}
 			}
 			// END KGU#99 2015-12-10
-			this.variables.addIfNew(name);
+			context.variables.addIfNew(name);
 			// START KGU#375 2017-03-30: Enh. #388
 			if (isConstant) {
-				this.constants.put(name, interpreter.get(name));
+				context.constants.put(name, context.interpreter.get(name));
 			}
 			// END KGU#375 2017-03-30
 		}
@@ -2600,13 +2814,13 @@ public class Executor implements Runnable
 	private void updateVariableDisplay() throws EvalError
 	{
 		Vector<Vector<Object>> vars = new Vector<Vector<Object>>();
-		for (int i = 0; i < this.variables.count(); i++)
+		for (int i = 0; i < context.variables.count(); i++)
 		{
 			Vector<Object> myVar = new Vector<Object>();
-			myVar.add(this.variables.get(i));	// Variable name
+			myVar.add(context.variables.get(i));	// Variable name
 			// START KGU#67 2015-11-08: We had to find a solution for displaying arrays in a sensible way
 			//myVar.add(this.interpreter.get(this.variables.get(i)));
-			Object val = this.interpreter.get(this.variables.get(i));
+			Object val = context.interpreter.get(context.variables.get(i));
 			String valStr = prepareValueForDisplay(val);
 			myVar.add(valStr);					// Variable value as string
 			// END KGU#67 2015-11-08
@@ -2664,7 +2878,7 @@ public class Executor implements Runnable
 		{
 			try {
 				String varName = entry.getKey();
-				Object oldValue = interpreter.get(varName);
+				Object oldValue = context.interpreter.get(varName);
 				Object newValue = entry.getValue();
 				// START KGU#160 2016-04-12: Enh. #137 - text window output
 				// START KGU#197 2016-05-05: Language support extended
@@ -2682,7 +2896,7 @@ public class Executor implements Runnable
 					// In this case an initialisation expression ("{ ..., ..., ...}") is expected
 					String asgnmt = "Object[] " + varName + " = " + newValue;
 					// FIXME: Nested initializers (as produced for nested arrays before) won't work here!
-					interpreter.eval(asgnmt);
+					context.interpreter.eval(asgnmt);
 //					// Okay, but now we have to sort out some un-boxed strings
 //					Object[] objectArray = (Object[]) interpreter.get(varName);
 //					for (int j = 0; j < objectArray.length; j++)
@@ -2711,7 +2925,7 @@ public class Executor implements Runnable
 	// START KGU#375 2017-03-30: Auxiliary callback for Control
 	public boolean isConstant(String varName)
 	{
-		return this.constants.containsKey(varName.trim());
+		return context.constants.containsKey(varName.trim());
 	}
 	// END KGU#375 2017-03-30
 
@@ -2720,7 +2934,9 @@ public class Executor implements Runnable
 		paus = useSteps;
 		step = useSteps;
 		stop = false;
-		variables = new StringList();
+		// START KGU#384 2017-04-22: execution context redesign - no longer an attribute
+		//this.variables = new StringList();
+		// END KGU#384 2017-04-22
 		control.updateVars(new Vector<Vector<Object>>());
 		
 		running = true;
@@ -2875,7 +3091,7 @@ public class Executor implements Runnable
 		// END KGU#117 2016-03-07
 
 		// START KGU#148 2016-01-29: Moved to execute
-//		delay(); // FIXME Specific pause for root after the last instruction of the program/function
+//		delay();
 //		if (result.equals(""))
 //		{
 //			element.clearExecutionStatus();
@@ -2894,7 +3110,7 @@ public class Executor implements Runnable
 		// START KGU#77/KGU#78 2015-11-25: Leave if some kind of leave statement has been executed
 		//while ((i < sl.count()) && result.equals("") && (stop == false))
 		while ((i < sl.count()) && result.equals("") && (stop == false) &&
-				!returned && leave == 0)
+				!context.returned && leave == 0)
 		// END KGU#77/KGU#78 2015-11-25
 		{
 			String cmd = sl.get(i);
@@ -2968,7 +3184,8 @@ public class Executor implements Runnable
 				element.addToExecTotalCount(1, true);	// For the instruction line
 				//END KGU#156 2016-03-11
 				// START KGU#271: 2016-10-06: Bugfix #261: Allow to step and stop within an instruction block (but no breakpoint here!) 
-				if ((i+1 < sl.count()) && result.equals("") && (stop == false) &&	!returned && leave == 0)
+				if ((i+1 < sl.count()) && result.equals("") && (stop == false)
+						&& !context.returned && leave == 0)
 				{
 					delay();
 				}
@@ -3017,7 +3234,7 @@ public class Executor implements Runnable
 
 		// START KGU#77 2015-11-11: Leave if a return statement has been executed
 		//while ((i < sl.count()) && result.equals("") && (stop == false))
-		while ((i < sl.count()) && result.equals("") && (stop == false) && !returned)
+		while ((i < sl.count()) && result.equals("") && (stop == false) && !context.returned)
 		// END KGU#77 2015-11-11
 		{
 			String cmd = sl.get(i);
@@ -3125,7 +3342,7 @@ public class Executor implements Runnable
 			try {
 				// START KGU 2017-04-14: #394 Allow arbitrary integer expressions now
 				//Object n = interpreter.eval(tokens.get(1));
-				Object n = interpreter.eval(expr);
+				Object n = context.interpreter.eval(expr);
 				// END KGU 2017-04-14
 				if (n instanceof Integer)
 				{
@@ -3172,12 +3389,12 @@ public class Executor implements Runnable
 		}
 		// END KGU#380 2017-04-14
 			
-		if (done && leave > loopDepth)
+		if (done && leave > context.loopDepth)
 		{
 			// START KGU#197 2016-07-27: More localization support
-			result = "Too many levels to leave (actual depth: " + loopDepth + " / specified: " + leave + ")!";
+			result = "Too many levels to leave (actual depth: " + context.loopDepth + " / specified: " + leave + ")!";
 			result = control.msgTooManyLevels.getText().
-					replace("%1", Integer.toString(loopDepth)).
+					replace("%1", Integer.toString(context.loopDepth)).
 					replace("%2", Integer.toString(leave));
 			// END KGU#197 2016-07-27
 		}			
@@ -3213,7 +3430,7 @@ public class Executor implements Runnable
 		// Watch out for constant arrays
 		for (int i = 0; i < tokens.count(); i++) {
 			String token = tokens.get(i);
-			if (this.constants.get(token) instanceof Object[]) {
+			if (context.constants.get(token) instanceof Object[]) {
 				// Let a constant array be replaced by its clone, so we avoid structure
 				// sharing, which would break the assurance of constancy.
 				tokens.set(i, "copyArray(" + token + ")");
@@ -3243,7 +3460,7 @@ public class Executor implements Runnable
 					Object[] args = new Object[f.paramCount()];
 					for (int p = 0; p < f.paramCount(); p++)
 					{
-						args[p] = interpreter.eval(f.getParam(p));
+						args[p] = context.interpreter.eval(f.getParam(p));
 					}
 					value = executeCall(sub, args, (Call)instr);
 					// START KGU#117 2016-03-10: Enh. #77
@@ -3278,16 +3495,16 @@ public class Executor implements Runnable
 		// START KGU#100 2016-01-14: Enh. #84 - accept array assignments with syntax array <- {val1, val2, ..., valN}
 		else if (expression.startsWith("{") && expression.endsWith("}"))
 		{
-			interpreter.eval("Object[] tmp20160114kgu = " + expression);
-			value = interpreter.get("tmp20160114kgu");
-			interpreter.unset("tmp20160114kgu");
+			context.interpreter.eval("Object[] tmp20160114kgu = " + expression);
+			value = context.interpreter.get("tmp20160114kgu");
+			context.interpreter.unset("tmp20160114kgu");
 		}
 		// END KGU#100 2016-01-14
 		else		
 		{
 			//cmd = cmd.replace("<-", "=");
 		
-			value = interpreter.eval(expression);
+			value = context.interpreter.eval(expression);
 		}
 		
 		if (value != null)
@@ -3327,12 +3544,12 @@ public class Executor implements Runnable
 				// START KGU#285 2016-10-16: Bugfix #276 - We should interpret contained escape sequences...
 				try {
 					String dummyVar = "prompt" + this.hashCode();
-					interpreter.eval(dummyVar + "=\"" + prompt + "\"");
-					Object res = interpreter.get(dummyVar);
+					context.interpreter.eval(dummyVar + "=\"" + prompt + "\"");
+					Object res = context.interpreter.get(dummyVar);
 					if (res != null) {
 						prompt = res.toString();
 					}
-					interpreter.unset(dummyVar);
+					context.interpreter.unset(dummyVar);
 				}
 				catch (EvalError ex) {}
 				// END KGU#285 2016-10-16
@@ -3349,7 +3566,10 @@ public class Executor implements Runnable
 		if (in.isEmpty())
 		{
 			// In run mode, give the user a chance to intervene
-			Object[] options = {"OK", "Pause"};	// FIXME: Provide a translation
+			Object[] options = {
+					control.lbOk.getText(),
+					control.lbPause.getText()
+					};
 			int pressed = JOptionPane.showOptionDialog(diagram.getParent(), control.lbAcknowledge.getText(), control.lbInput.getText(),
 					JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
 			if (pressed == 1)
@@ -3443,7 +3663,7 @@ public class Executor implements Runnable
 				//control.setButtonsForPause();
 				control.setButtonsForPause(false);	// This avoids interference with the pause button
 				// END KGU#379 2017-04-12
-				if (!variables.contains(in))
+				if (!context.variables.contains(in))
 				{
 					// If the variable hasn't been used before, we must create it now
 					setVar(in, null);
@@ -3488,7 +3708,7 @@ public class Executor implements Runnable
 			{
 				out = outExpressions.get(i);
 		// END KGU#101 2015-12-11
-				Object n = interpreter.eval(out);
+				Object n = context.interpreter.eval(out);
 				if (n == null)
 				{
 					result = control.msgInvalidExpr.getText().replace("%1", out);
@@ -3539,7 +3759,10 @@ public class Executor implements Runnable
 			else
 			{
 				// In run mode, give the user a chance to intervene
-				Object[] options = {"OK", "Pause"};	// FIXME: Provide a translation
+				Object[] options = {
+						control.lbOk.getText(),
+						control.lbPause.getText()
+						};
 				// diagram is a bad anchor component since its extension is the Root rectangle (may be huge!)
 				int pressed = JOptionPane.showOptionDialog(diagram.getParent(), s, control.lbOutput.getText(),
 						JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
@@ -3583,7 +3806,7 @@ public class Executor implements Runnable
 		Object resObj = null;
 		if (!out.isEmpty())
 		{
-			resObj = interpreter.eval(out);
+			resObj = context.interpreter.eval(out);
 			// If this diagram is executed at top level then show the return value
 			if (this.callers.empty())
 			{
@@ -3613,7 +3836,10 @@ public class Executor implements Runnable
 					this.console.writeln("*** " + header + ": " + this.prepareValueForDisplay(resObj), Color.CYAN);
 					// END KGU#198 2016-05-25
 					// START KGU#84 2015-11-23: Enhancement to give a chance to pause (though of little use here)
-					Object[] options = {"OK", "Pause"};		// FIXME: Provide a translation
+					Object[] options = {
+							control.lbOk.getText(),
+							control.lbPause.getText()
+							};
 					int pressed = JOptionPane.showOptionDialog(diagram.getParent(), resObj, header,
 							JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, null);
 					if (pressed == 1)
@@ -3632,9 +3858,9 @@ public class Executor implements Runnable
 			}
 		}
 		
-		this.returnedValue = resObj;
+		context.returnedValue = resObj;
 		// END KGU#77 (#21) 2015-11-13
-		returned = true;
+		context.returned = true;
 		return result;
 	}
 
@@ -3651,7 +3877,7 @@ public class Executor implements Runnable
 			{
 				try
 				{
-					args[p] = interpreter.eval(f.getParam(p));
+					args[p] = context.interpreter.eval(f.getParam(p));
 					if (args[p] == null)
 					{
 						if (!result.isEmpty())
@@ -3738,7 +3964,7 @@ public class Executor implements Runnable
 				else	
 				{
 					// Try as built-in subroutine as is
-					interpreter.eval(cmd);
+					context.interpreter.eval(cmd);
 				}
 			}
 		}
@@ -3754,13 +3980,38 @@ public class Executor implements Runnable
 			// END KGU#317 2016-12-29
 			if (imp != null)
 			{
-				executeCall(imp, null, (Call)element);
-				// START KGU#117 2016-03-10: Enh. #77
-				if (Element.E_COLLECTRUNTIMEDATA)
-				{
-					element.simplyCovered = true;
+				// START KGU#376 207-04-21: Enh. ä389
+				// Has this import already been executed -then just adopt the results
+				if (this.importMap.containsKey(imp)) {
+					ImportInfo impInfo = this.importMap.get(imp);
+					this.copyInterpreterContents(impInfo.interpreter, context.interpreter,
+							imp.variables, null, imp.constants.keySet(), false);
+					// FIXME adopt the imported typedefs if any
+					context.variables.addIfNew(impInfo.variableNames);
+					for (String constName: imp.constants.keySet()) {
+						if (!context.constants.containsKey(constName)) {
+							context.constants.put(constName, impInfo.interpreter.get(constName));
+						}
+					}
+					try 
+					{
+						updateVariableDisplay();
+					}
+					catch (EvalError ex) {}
 				}
-				// END KGU#117 2016-03-10
+				else {
+				// END KGU#376 2017-04-21
+					executeCall(imp, null, (Call)element);
+					// START KGU#117 2016-03-10: Enh. #77
+					if (Element.E_COLLECTRUNTIMEDATA)
+					{
+						element.simplyCovered = true;
+					}
+					// END KGU#117 2016-03-10
+				// START KGU#376 207-04-21: Enh. ä389
+				}
+				context.importList.addIfNew(diagrName);
+				// END KGU#376 2017-04-21
 			}
 			else
 			{
@@ -3847,7 +4098,7 @@ public class Executor implements Runnable
 						}
 						String test = convert(expression + tokens.concatenate());
 						// END KGU#259 2016-09-25
-						Object n = interpreter.eval(test);
+						Object n = context.interpreter.eval(test);
 						go = n.toString().equals("true");
 					}
 					// END KGU#15 2015-10-21
@@ -3921,7 +4172,7 @@ public class Executor implements Runnable
 
 			//System.out.println("C=  " + interpreter.get("C"));
 			//System.out.println("IF: " + s);
-			Object cond = interpreter.eval(s);
+			Object cond = context.interpreter.eval(s);
 			//System.out.println("Res= " + n);
 			if (cond == null || !(cond instanceof Boolean))
 			{
@@ -4025,7 +4276,7 @@ public class Executor implements Runnable
 			}
 
 			//int cw = 0;
-			Object cond = interpreter.eval(convertStringComparison(condStr));
+			Object cond = context.interpreter.eval(convertStringComparison(condStr));
 
 			if (cond == null || !(cond instanceof Boolean))
 			{
@@ -4043,9 +4294,9 @@ public class Executor implements Runnable
 				// START KGU#77/KGU#78 2015-11-25: Leave if any kind of Jump statement has been executed
 				//while (cond.toString().equals("true") && result.equals("")
 				//		&& (stop == false))
-				loopDepth++;
+				context.loopDepth++;
 				while (cond.toString().equals("true") && result.equals("")
-						&& (stop == false) && !returned && leave == 0)
+						&& (stop == false) && !context.returned && leave == 0)
 				// END KGU#77/KGU#78 2015-11-25
 				{
 
@@ -4095,7 +4346,7 @@ public class Executor implements Runnable
 						delay();
 						// END KGU 2015-10-13
 					}
-					cond = interpreter.eval(convertStringComparison(condStr));
+					cond = context.interpreter.eval(convertStringComparison(condStr));
 					if (cond == null)
 					{
 						// START KGU#197 2016-07-27: Localization support
@@ -4118,7 +4369,7 @@ public class Executor implements Runnable
 				{
 					leave--;
 				}
-				loopDepth--;
+				context.loopDepth--;
 				// END KGU#78 2015-11-25
 			}
 			if (result.equals(""))
@@ -4180,7 +4431,7 @@ public class Executor implements Runnable
 			// END KGU#150 2016-04-03
 
 			//int cw = 0;
-			Object cond = interpreter.eval(condStr);
+			Object cond = context.interpreter.eval(condStr);
 			if (cond == null)
 			{
 				// START KGU#197 2016-07-27: Localization support
@@ -4191,7 +4442,7 @@ public class Executor implements Runnable
 			} else
 			{
 				// START KGU#78 2015-11-25: In order to handle exits we must know the nesting depth
-				loopDepth++;
+				context.loopDepth++;
 				// END KGU#78
 				do
 				{
@@ -4218,7 +4469,7 @@ public class Executor implements Runnable
 						//cw++;
 						element.executed = true;
 					}
-					cond = interpreter.eval(convertStringComparison(condStr));
+					cond = context.interpreter.eval(convertStringComparison(condStr));
 					if (cond == null || !(cond instanceof Boolean))
 					{
 						// START KGU#197 2016-07-27: Localization support
@@ -4246,7 +4497,7 @@ public class Executor implements Runnable
 				// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
 				//} while (!(n.toString().equals("true")) && result.equals("") && (stop == false))
 				} while (!(cond.toString().equals("true")) && result.equals("") && (stop == false) &&
-						!returned && leave == 0);
+						!context.returned && leave == 0);
 				// END KGU#77/KGU#78 2015-11-25
 				// END KGU#70 2015-11-09
 				// START KGU#78 2015-11-25: If there are open leave requests then nibble one off
@@ -4254,7 +4505,7 @@ public class Executor implements Runnable
 				{
 					leave--;
 				}
-				loopDepth--;
+				context.loopDepth--;
 				// END KGU#78 2015-11-25
 			}
 
@@ -4284,7 +4535,7 @@ public class Executor implements Runnable
 		// END KGU#61 2016-03-21
 		String result = new String();
 		// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
-		int forLoopLevel = this.forLoopVars.count();
+		int forLoopLevel = context.forLoopVars.count();
 		// END KGU#307 2016-12-12
 		try
 		{
@@ -4328,7 +4579,7 @@ public class Executor implements Runnable
 			// complete
 			
 			// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
-			this.forLoopVars.add(counter);
+			context.forLoopVars.add(counter);
 			// END KGU#307 2016-12-12
 
 			// START KGU#3 2015-10-27: Now replaced by For-intrinsic mechanisms
@@ -4337,7 +4588,7 @@ public class Executor implements Runnable
 			String s = element.getStartValue(); 
 			// END KGU#3 2015-10-27
 			s = convert(s);
-			Object n = interpreter.eval(s);
+			Object n = context.interpreter.eval(s);
 			if (n == null)
 			{
 				// START KGU#197 2016-07-27: Localization support
@@ -4369,7 +4620,7 @@ public class Executor implements Runnable
 			// END KGU#3 2015-10-27
 			s = convert(s);
 			
-			n = interpreter.eval(s);
+			n = context.interpreter.eval(s);
 			if (n == null)
 			{
 				// START KGU#197 2016-07-27: Localization support
@@ -4402,9 +4653,9 @@ public class Executor implements Runnable
 			int cw = ival;
 			// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
 			//while (((sval >= 0) ? (cw <= fval) : (cw >= fval)) && result.equals("") && (stop == false))
-			loopDepth++;
+			context.loopDepth++;
 			while (((sval >= 0) ? (cw <= fval) : (cw >= fval)) && result.equals("") &&
-					(stop == false) && !returned && leave == 0)
+					(stop == false) && !context.returned && leave == 0)
 			// END KGU#77/KGU#78 2015-11-25
 			{
 				// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
@@ -4465,7 +4716,7 @@ public class Executor implements Runnable
 			{
 				leave--;
 			}
-			loopDepth--;
+			context.loopDepth--;
 			// END KGU#78 2015-11-25
 			if (result.equals(""))
 			{
@@ -4477,8 +4728,8 @@ public class Executor implements Runnable
 			result = ex.getMessage();
 		}
 		// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
-		while (forLoopLevel < this.forLoopVars.count()) {
-			this.forLoopVars.remove(forLoopLevel);
+		while (forLoopLevel < context.forLoopVars.count()) {
+			context.forLoopVars.remove(forLoopLevel);
 		}
 		// END KGU#307 2016-12-12
 		return result;
@@ -4490,7 +4741,7 @@ public class Executor implements Runnable
 	{
 		String result = new String();
 		// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
-		int forLoopLevel = this.forLoopVars.count();
+		int forLoopLevel = context.forLoopVars.count();
 		// END KGU#307 2016-12-12
 		String valueListString = element.getValueList();
 		String iterVar = element.getCounterVar();
@@ -4501,9 +4752,9 @@ public class Executor implements Runnable
 		{
 			try
 			{
-				interpreter.eval("Object[] tmp20160321kgu = " + valueListString);
-				value = interpreter.get("tmp20160321kgu");
-				interpreter.unset("tmp20160321kgu");
+				context.interpreter.eval("Object[] tmp20160321kgu = " + valueListString);
+				value = context.interpreter.get("tmp20160321kgu");
+				context.interpreter.unset("tmp20160321kgu");
 			}
 			catch (EvalError ex)
 			{
@@ -4517,9 +4768,9 @@ public class Executor implements Runnable
 		{
 			try
 			{
-				interpreter.eval("Object[] tmp20160321kgu = {" + valueListString + "}");
-				value = interpreter.get("tmp20160321kgu");
-				interpreter.unset("tmp20160321kgu");
+				context.interpreter.eval("Object[] tmp20160321kgu = {" + valueListString + "}");
+				value = context.interpreter.get("tmp20160321kgu");
+				context.interpreter.unset("tmp20160321kgu");
 			}
 			catch (EvalError ex)
 			{
@@ -4531,7 +4782,7 @@ public class Executor implements Runnable
 		{
 			try
 			{
-				value = interpreter.eval(valueListString);
+				value = context.interpreter.eval(valueListString);
 			}
 			catch (EvalError ex)
 			{
@@ -4544,9 +4795,9 @@ public class Executor implements Runnable
 			StringList tokens = Element.splitExpressionList(valueListString, " ");
 			try
 			{
-				interpreter.eval("Object[] tmp20160321kgu = {" + tokens.concatenate(",") + "}");
-				value = interpreter.get("tmp20160321kgu");
-				interpreter.unset("tmp20160321kgu");
+				context.interpreter.eval("Object[] tmp20160321kgu = {" + tokens.concatenate(",") + "}");
+				value = context.interpreter.get("tmp20160321kgu");
+				context.interpreter.unset("tmp20160321kgu");
 			}
 			catch (EvalError ex)
 			{
@@ -4581,15 +4832,15 @@ public class Executor implements Runnable
 		{
 				element.addToExecTotalCount(1, true);	// For the condition evaluation
 				// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
-				this.forLoopVars.add(iterVar);
+				context.forLoopVars.add(iterVar);
 				// END KGU#307 2016-12-12
 
 				// Leave if any kind of Jump statement has been executed
-				loopDepth++;
+				context.loopDepth++;
 				int cw = 0;
 
 				while (cw < valueList.length && result.equals("")
-						&& (stop == false) && !returned && leave == 0)
+						&& (stop == false) && !context.returned && leave == 0)
 				{
 					try
 					{
@@ -4625,10 +4876,10 @@ public class Executor implements Runnable
 				{
 					leave--;
 				}
-				loopDepth--;
+				context.loopDepth--;
 				// START KGU#307 2016-12-12: Issue #307 - prepare warnings on loop variable manipulations
-				while (forLoopLevel < this.forLoopVars.count()) {
-					this.forLoopVars.remove(forLoopLevel);
+				while (forLoopLevel < context.forLoopVars.count()) {
+					context.forLoopVars.remove(forLoopLevel);
 				}
 				// END KGU#307 2016-12-12
 		}
@@ -4651,7 +4902,7 @@ public class Executor implements Runnable
 		String result = new String();
 		try
 		{
-			int outerLoopDepth = this.loopDepth;
+			int outerLoopDepth = context.loopDepth;
 			int nThreads = element.qs.size();
 			// For each of the parallel "threads" fetch a subqueue's Element iterator...
 			Vector<Iterator<Element> > undoneThreads = new Vector<Iterator<Element>>();
@@ -4668,9 +4919,9 @@ public class Executor implements Runnable
 			// The first condition holds if there is at least one unexhausted "thread"
 			// START KGU#77/KGU#78 2015-11-25: Leave if some kind of Jump statement has been executed
 			//while (!undoneThreads.isEmpty() && result.equals("") && (stop == false))
-			loopDepth = 0;	// Loop exits may not penetrate the Parallel section
+			context.loopDepth = 0;	// Loop exits may not penetrate the Parallel section
 			while (!undoneThreads.isEmpty() && result.equals("") && (stop == false) &&
-					!returned && leave == 0)
+					!context.returned && leave == 0)
 			// END KGU#77/KGU#78 2015-11-25
 			{
 				// Pick one of the "threads" by chance
@@ -4714,7 +4965,7 @@ public class Executor implements Runnable
 					// END KGU#78 2015-11-25
 				}                
 			}
-			this.loopDepth = outerLoopDepth;	// Restore the original context
+			context.loopDepth = outerLoopDepth;	// Restore the original context
 			if (result.equals(""))
 			{
 				// Recursively reset all `waited´ flags of the subqueues now finished
@@ -4734,7 +4985,7 @@ public class Executor implements Runnable
 		
 		int i = 0;
 		while ((i < sq.getSize())
-				&& result.equals("") && (stop == false) && !returned
+				&& result.equals("") && (stop == false) && !context.returned
 				&& (!checkLeave || leave == 0))
 		{
 			// START KGU#156 2016-03-11: Enh. #124
@@ -4815,7 +5066,7 @@ public class Executor implements Runnable
 		try
 		{
 			//index = Integer.parseInt(ind);		// KGU: This was nonsense - usually no literal here
-			index = (Integer) this.interpreter.eval(ind);
+			index = (Integer) context.interpreter.eval(ind);
 		}
 		catch (Exception e)
 		{

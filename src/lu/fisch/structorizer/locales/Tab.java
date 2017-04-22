@@ -143,16 +143,16 @@ class BoardTableCellRenderer extends DefaultTableCellRenderer {
     
 }
 
-@SuppressWarnings("serial")
-class MyRenderer extends DefaultTableCellRenderer {
-
-    Color backgroundColor = getBackground();
-
-    @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) 
-    {
-        Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        DefaultTableModel model = (DefaultTableModel) table.getModel();
-        return c;
-    }
-}
+//@SuppressWarnings("serial")
+//class MyRenderer extends DefaultTableCellRenderer {
+//
+//    Color backgroundColor = getBackground();
+//
+//    @Override
+//    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) 
+//    {
+//        Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+//        DefaultTableModel model = (DefaultTableModel) table.getModel();
+//        return c;
+//    }
+//}

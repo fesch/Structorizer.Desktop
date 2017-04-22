@@ -362,7 +362,6 @@ Menu.error14_3.text=El nombre de la variable «%» puede confligir con una de la
 Menu.error15_1.text=¡La LLAMADA no tiene ninguna de las formas aceptadas: «[ <var> <- ] <routine_name>(<arg_list>)» o «import <progr_name>»!
 Menu.error15_2.text=El llamado diagrama «%» ahora no está localizable.
 Menu.error15_3.text=Llamada ambigua: Hay más de un diagrama con signatura «%».
-Menu.error15_4.text=Diagrama «%» no es apropiado para ser llamado como inclusión porque puede saltar afuera.
 Menu.error16_1.text=¡Un elemento de salto (salida) debe ser vacío o empezar con uno de los comandos %!
 Menu.error16_2.text=¡Una instrucción de retorno debe ser colocado en un elemento SALTO si no es la última instrucción del diagrama!
 Menu.error16_3.text=¡Instrucciones «%1» o «%2» solo están permitidos en elementos del tipo SALTO!
@@ -377,7 +376,14 @@ Menu.error19_1.text=¡Variable «%1» puede collidir con palabras claves en leng
 Menu.error19_2.text=¡El nombre «%1» está reservado en Structorizer y puede provocar problemas on ejecución!
 Menu.error20.text=El encabezamiento de un subprograma debe tener un paréntesis para parámetros.
 Menu.error21.text=Los nombres I (i mayúscula), l (L minúscula) y O (o mayúscula) son equivocables entre si o con 1 u 0.
-Menu.error22.text=Constante «%1» depende de valor(es) «%2» que no aparece(n) constante(s).
+Menu.error22_1.text=Constante «%1» depende de valor(es) «%2» que no aparece(n) constante(s).
+Menu.error22_2.text=¡Modificar el valor de constante «%» no es permitido!
+Menu.error23_1.text=Diagrama «%» no es apropiado para ser llamado como inclusión porque puede saltar afuera.
+Menu.error23_2.text=¡El importe de diagrama «%» es recursivo!
+Menu.error23_3.text=Este importe será ignorado aquí porque el diagrama «%1» ya está importado por: %2.
+Menu.error23_4.text=Conflicto: ¡Para la variable o constante «%» existen ambos una declaración local y un importe!
+Menu.error23_5.text=¡Importes («%1») deben estar puestos en el inicio del diagrama («%2»)!
+Menu.error23_6.text=¡Un comando «%» tiene que formar un elemento de tipo LLAMADA!
 Menu.errorLineReference.text= (línea %)
 
 -----[ AnalyserPreferences ]-----
@@ -405,7 +411,8 @@ AnalyserPreferences.checkboxes.18.text=Comprobar si variables difieren no solo p
 AnalyserPreferences.checkboxes.19.text=Comprobar que no habrá colisiones de nombre entre variables y palabras claves.
 AnalyserPreferences.checkboxes.20.text=Comprobar que un subprograma tiene un paréntesis para parámetros.
 AnalyserPreferences.checkboxes.21.text=Desaconsejar el uso de los ecivocables identificadores «I», «l» und «O».
-AnalyserPreferences.checkboxes.22.text=Comprobar que constantes solo dependen de valores constantes.
+AnalyserPreferences.checkboxes.22.text=Comprobar que constantes no son comprometidas.
+AnalyserPreferences.checkboxes.23.text=Comprobar que llamadas de importe no están defectivos.
 AnalyserPreferences.okButton.text=Aceptar
 
 

@@ -55,6 +55,7 @@ package lu.fisch.structorizer.gui;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Point;
+import java.util.HashSet;
 import java.util.Vector;
 
 import lu.fisch.graphics.Canvas;
@@ -62,6 +63,7 @@ import lu.fisch.graphics.Rect;
 import lu.fisch.structorizer.elements.Element;
 import lu.fisch.structorizer.elements.IElementSequence;
 import lu.fisch.structorizer.elements.IElementVisitor;
+import lu.fisch.structorizer.elements.Root;
 import lu.fisch.structorizer.elements.Subqueue;
 import lu.fisch.utils.StringList;
 
@@ -505,7 +507,7 @@ public class SelectedSequence extends Element implements IElementSequence {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-	protected void addFullText(StringList _lines, boolean _instructionsOnly) {
+	protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> implicatedRoots) {
 		// This class will hardly be object of code generation
 	}
 

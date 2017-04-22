@@ -106,6 +106,7 @@ package lu.fisch.structorizer.elements;
  *      Kay Gürtzig     2017.04.11      Enh. #389: Analyser additions for import calls implemented
  *      Kay Gürtzig     2017.04.13      Enh. #380: Method outsourceToSubroutine() improved
  *      Kay Gürtzig     2017.04.14      Issues #23, #380, #394: analyse_13_16_jump() radically revised
+ *      Kay Gürtzig     2017.04.21      Enh. #389: import checks re-organized to a new check group 23
  *
  ******************************************************************************************************
  *
@@ -129,6 +130,7 @@ package lu.fisch.structorizer.elements;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
 import java.util.Stack;
@@ -283,10 +285,22 @@ public class Root extends Element {
 	 * Names of variables defined within this diagram
 	 */
 	public StringList variables = new StringList();
+	// START KGU#375 2017-03-31: Enh. #388
 	/**
 	 * Names and cached value expressions of detected constants among the {@link #variables} 
 	 */
 	public LinkedHashMap<String, String> constants = new LinkedHashMap<String, String>();
+	// END KGU#375 2017-03-31
+	// START KGU#376 2017-04-20: Enh. #389 (re-implementation)
+	/**
+	 * Maps the names imported Roots already analysed to their respectiv first import path
+	 */
+	public HashMap<String, StringList> analysedImports = new HashMap<String, StringList>();
+	/**
+	 * Stack of the nested imports currently being analysed, for cyclic recursion check
+	 */
+	private StringList importStack = new StringList();
+	// END KGU#376 2017-04-20
 	/**
 	 * Vector containing Element-related Analyser complaints
 	 */
@@ -309,7 +323,7 @@ public class Root extends Element {
 		false, false, false, false, false,	// 6 .. 10
 		false, false, false, false, false,	// 11 .. 15
 		false, false, false, false, false,	// 16 .. 20
-		false, false                        // 21 .. 22
+		false, false, false                 // 21 .. 23
 		// Add another element for every new check...
 		// and DON'T FORGET to append its description to
 		// AnalyserPreferences.checkCaptions
@@ -1358,16 +1372,29 @@ public class Root extends Element {
      * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
      */
     @Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> _implicatedRoots)
     {
     	// Whereas a subroutine diagram is likely to hold parameter declarations in the header,
     	// (such that we ought to deliver its header for the variable detection), this doesn't
     	// hold for programs.
-    	if (!this.isProgram && !_instructionsOnly)
-    	{
-    		_lines.add(this.getText());
+    	// START KGU#376 2017-04-21: Enh. #389 - beware of cyclic recursion
+		//if (!this.isProgram && !_instructionsOnly)
+		//{
+		//	_lines.add(this.getText());
+		//}
+		//this.children.addFullText(_lines, _instructionsOnly);
+    	if (_implicatedRoots == null || !_implicatedRoots.contains(this)) {
+    		if (!this.isProgram && !_instructionsOnly)
+    		{
+    			_lines.add(this.getText());
+    		}
+    		if (_implicatedRoots == null) {
+    			_implicatedRoots = new HashSet<Root>();
+    		}
+    		_implicatedRoots.add(this);
+    		this.children.addFullText(_lines, _instructionsOnly, _implicatedRoots);
     	}
-    	this.children.addFullText(_lines, _instructionsOnly);
+    	// END KGU#376 2017-04-21
     }
     // END KGU 2015-10-16
 
@@ -1742,7 +1769,7 @@ public class Root extends Element {
      * HYP 2: (?)'['&lt;used&gt;']' &lt;- (?) &lt;used&gt; (?)<br/>
      * HYP 3: output (?) &lt;used&gt; (?)<br/>
      * Note: This works only if _ele is different from this.<br/>
-     * @param line - the element text line to be analysed
+     * @param _line - the element text line to be analysed
      * @param _keywords the set of parser keywords (if available)
      * @return StringList of used variable names according to the above specification
      */
@@ -2073,7 +2100,10 @@ public class Root extends Element {
 
             // get body text
             StringList lines;
-            if(_onlyEle && !_onlyBody && !(_ele instanceof Call && ((Call)_ele).isImportCall()))
+//            // START KGU#376 2017-04-11: Enh. #389 - withdrawn 2017-04-20
+            if(_onlyEle && !_onlyBody)
+//            if(_onlyEle && !_onlyBody && !(_ele instanceof Call && ((Call)_ele).isImportCall()))
+//            // END KGU#376 2017-04-11
             {
                     lines = _ele.getText().copy();
             }
@@ -2395,15 +2425,18 @@ public class Root extends Element {
 			else if (ele instanceof Instruction)	// May also be a subclass (except Call and Jump)!
     		{
     		// END KGU#78 2015-11-25
-				analyse_13_16_instr((Instruction)ele, _errors, i == _node.getSize()-1, myVars, _resultFlags);
+				analyse_13_16_23_instr((Instruction)ele, _errors, i == _node.getSize()-1, myVars, _resultFlags);
     		// START KGU#78 2015-11-25
     		}
     		// END KGU#78 2015-11-25
 
     		// add detected vars to initialised vars
-    		if (!(ele instanceof Call && ((Call)ele).isImportCall())) {
-    			_vars.addIfNew(myVars);
-    		}
+//    		// START KGU#376 2017-04-11: Enh. #389 - withdrawn 2017-04-20
+			_vars.addIfNew(myVars);
+//    		if (!(ele instanceof Call && ((Call)ele).isImportCall())) {
+//    			_vars.addIfNew(myVars);
+//    		}
+//    		// END KGU#376 2017-04-20
 
     		// CHECK: endless loop (#2)
     		if (eleClassName.equals("While")
@@ -2537,22 +2570,9 @@ public class Root extends Element {
     			}
     			// look at the comment for the IF-structure
     		}
-    		// START KGU#376 2017-04-11: Enh. #389
+    		// START KGU#376 2017-04-11: Enh. #389 - revised 2017-04-20
     		else if ((ele instanceof Call && ((Call)ele).isImportCall())) {
-				// Get all lines of the called routine
-				String name = ((Call)ele).getSignatureString();
-				if (Arranger.hasInstance()) {
-					Vector<Root> roots = Arranger.getInstance().findProgramsByName(name);
-					if (roots.size() == 1) {
-						boolean[] subResultFlags = new boolean[]{false, false, false};
-						// We are not interested in internal errors but in the imported variables and constants
-		    			analyse(roots.get(0).children, new Vector<DetectedError>(), _vars, _uncertainVars, _constants, subResultFlags);
-		    			if (subResultFlags[0]) {
-		    				//error  = new DetectedError("The constant «"+myDefs.get(0)+"» depends on non-constant values: "+"!",(Element) _node.getElement(i));
-							addError(_errors, new DetectedError(errorMsg(Menu.error15_4, name), ele), 15);    				
-		    			}
-					}
-				}		
+    			analyse_23((Call)ele, _errors, _vars, _uncertainVars, _constants);
     		}
     		// END KGU#376 2017-04-11
     		
@@ -2932,11 +2952,10 @@ public class Root extends Element {
 				//error  = new DetectedError("There are several matching subroutines for «<routine_name>(<arg_count>)».",(Element) _node.getElement(i));
 				addError(_errors, new DetectedError(errorMsg(Menu.error15_3, name), ele), 15);					
 			}
-			
 		}
 		// END KGU#376 2017-04-11
 		else {
-			// START KGU 2017-04-11: We have high-level support here!
+			// START KGU 2017-04-11: We have methods of higher level here!
 			//String text = ele.getText().get(0);
 			//StringList tokens = Element.splitLexically(text, true);
 			//Element.unifyOperators(tokens, true);
@@ -2985,21 +3004,22 @@ public class Root extends Element {
 		String preLeave = CodeParser.getKeywordOrDefault("preLeave", "leave");
 		String preExit = CodeParser.getKeywordOrDefault("preExit", "exit");
 		String jumpKeywords = "«" + preLeave + "», «" + preReturn +	"», «" + preExit + "»";
-		String line = sl.get(0).trim().toLowerCase();
+		String line = sl.get(0).trim();
+		String lineComp = line;
 
 		// Preparation
 		if (CodeParser.ignoreCase) {
 			preReturn = preReturn.toLowerCase();
 			preLeave = preLeave.toLowerCase();
 			preExit = preExit.toLowerCase();
-			line = line.toLowerCase();
+			lineComp = line.toLowerCase();
 		}
 		boolean isReturn = ele.isReturn();
 		boolean isLeave = ele.isLeave();
 		boolean isExit = ele.isExit();
 		boolean isJump = isLeave || isExit ||
-				line.matches("exit([\\W].*|$)") ||	// Also check hard-coded keywords
-				line.matches("break([\\W].*|$)");	// Also check hard-coded keywords
+				lineComp.matches("exit([\\W].*|$)") ||	// Also check hard-coded keywords
+				lineComp.matches("break([\\W].*|$)");	// Also check hard-coded keywords
 		Element parent = ele.parent;
 		// START KGU#179 2016-04-12: Enh. #161 New check for unreachable instructions
 		int pos = -1;
@@ -3105,21 +3125,28 @@ public class Root extends Element {
 	/**
 	 * CHECK #16: Correct usage of return (suspecting hidden Jump)
 	 * CHECK #13: Competitive return mechanisms
+	 * CHECK #23: Correct usage of import
 	 * @param ele - Instruction to be analysed
 	 * @param _errors - global error list
 	 * @param _index - position of this element within the owning Subqueue
 	 * @param _myVars - all variables defined or modified by this element (should be empty so far, might be extended) 
 	 * @param _resultFlags - 3 flags for (0) return, (1) result, and (2) function name
 	 */
-	private void analyse_13_16_instr(Instruction ele, Vector<DetectedError> _errors, boolean _isLastElement, StringList _myVars, boolean[] _resultFlags)
+	private void analyse_13_16_23_instr(Instruction ele, Vector<DetectedError> _errors, boolean _isLastElement, StringList _myVars, boolean[] _resultFlags)
 	{
 		StringList sl = ele.getText();
-		String preReturn =  CodeParser.getKeywordOrDefault("preReturn", "return");
-		String preLeave = CodeParser.getKeywordOrDefault("preLeave", "leave");
-		String preExit = CodeParser.getKeywordOrDefault("preExit", "exit");
+		String preReturn =  CodeParser.getKeywordOrDefault("preReturn", "return").trim();
+		String preLeave = CodeParser.getKeywordOrDefault("preLeave", "leave").trim();
+		String preExit = CodeParser.getKeywordOrDefault("preExit", "exit").trim();
+		// START KGU#376 2017-04-22: Enh. #389
+		String preImport = CodeParser.getKeywordOrDefault("preImport", "import").trim();
+		// END KGU#376 2017-04-22
 		String patternReturn = Matcher.quoteReplacement(CodeParser.ignoreCase ? preReturn.toLowerCase() : preReturn);
 		String patternLeave = Matcher.quoteReplacement(CodeParser.ignoreCase ? preLeave.toLowerCase() : preLeave);
 		String patternExit = Matcher.quoteReplacement(CodeParser.ignoreCase ? preExit.toLowerCase() : preExit);
+		// START KGU#376 2017-04-22: Enh. #389
+		String patternImport = Matcher.quoteReplacement(CodeParser.ignoreCase ? preImport.toLowerCase() : preImport);
+		// END KGU#376 2017-04-22
 
 		for(int ls=0; ls<sl.count(); ls++)
 		{
@@ -3130,6 +3157,9 @@ public class Root extends Element {
 			boolean isReturn = line.matches(Matcher.quoteReplacement(patternReturn) + "([\\W].*|$)");
 			boolean isLeave = line.matches(Matcher.quoteReplacement(patternLeave) + "([\\W].*|$)");
 			boolean isExit = line.matches(Matcher.quoteReplacement(patternExit) + "([\\W].*|$)");
+			// START KGU#376 2017-04-22: Enh. #389
+			boolean isImport = line.matches(Matcher.quoteReplacement(patternImport) + "[\\W].*");
+			// END KGU#376 2017-04-22
 			boolean isJump = isLeave || isExit ||
 					line.matches("exit([\\W].*|$)") ||	// Also check hard-coded keywords
 					line.matches("break([\\W].*|$)");	// Also check hard-coded keywords
@@ -3167,6 +3197,12 @@ public class Root extends Element {
 				}
 			}
 			// END KGU#78 2015-11-25
+			// START KGU#376 2017-04-22: Enh. #389 New test (#23)
+			if (isImport && !(ele instanceof Call)) {
+				//error = new DetectedError("An import instruction must form a CALL element!",(Element) _node.getElement(i));
+				addError(_errors, new DetectedError(errorMsg(Menu.error23_6, preImport), ele), 23);				
+			}
+			// END KGU#376 2017-04-22
 		}
 	}
 
@@ -3355,11 +3391,12 @@ public class Root extends Element {
 	// END KGU#253 2016-09-22
     
 	/**
-	 * CHECK #22: constants depending on non-constants
+	 * CHECK #22: constants depending on non-constants and constant modifications
 	 * @param _instr - Instruction element to be analysed
 	 * @param _errors - global error list
 	 * @param _vars - variables with certain initialisation
 	 * @param _uncertainVars - variables with uncertain initialisation (e.g. in a branch)
+	 * @param _definedConsts - constant definitions registered so far
 	 */
 	private void analyse_22(Instruction _instr, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, HashMap<String, String> _definedConsts)
 	{
@@ -3379,18 +3416,124 @@ public class Root extends Element {
 				}
 				StringList myDefs = getVarNames(StringList.getNew(line), _definedConsts);
 				if (myDefs.count() > 0 && nonConst.count() > 0) {
-					//error  = new DetectedError("The constant «"+myDefs.get(0)+"» depends on non-constant values: "+"!",(Element) _node.getElement(i));
-					addError(_errors, new DetectedError(errorMsg(Menu.error22, new String[]{myDefs.get(0), nonConst.concatenate("», «")}), _instr), 22);
+					//error  = new DetectedError("The constant «"+myDefs.get(0)+"» depends on non-constant values: "+"!", _instr);
+					addError(_errors, new DetectedError(errorMsg(Menu.error22_1, new String[]{myDefs.get(0), nonConst.concatenate("», «")}), _instr), 22);
 					// It's an insecure constant, so drop it from the analysis map
 					_definedConsts.remove(myDefs.get(0));
 				}
 				knownVars.add(myDefs);
 			}
 			else {
-				knownVars.add(getVarNames(StringList.getNew(line), _definedConsts));
+				// START KGU#375 2017-04-20: Enh. #388 - Warning on attempts to redefine constants
+				//knownVars.add(getVarNames(StringList.getNew(line), _definedConsts));
+				Set<String> formerConstants = new HashSet<String>();
+				formerConstants.addAll(_definedConsts.keySet());
+				StringList myDefs = getVarNames(StringList.getNew(line), _definedConsts);
+				for (int j = 0; j < myDefs.count(); j++) {
+					String varName = myDefs.get(j);
+					if (formerConstants.contains(varName)) {
+						//error  = new DetectedError("Attempt to modify the value of constant «"+varName+"»!", _instr);
+						addError(_errors, new DetectedError(errorMsg(Menu.error22_2, varName), _instr), 22);						
+					}
+				}
+				// END KGU#375 2017-04-20
 			}
 		}
 	}
+	
+	/**
+	 * CHECK #23: Import calls
+	 * @param _call - Import call to be analysed
+	 * @param _errors - global error list
+	 * @param _vars - variables with certain initialisation
+	 * @param _uncertainVars - variables with uncertain initialisation (e.g. in a branch)
+	 * @param _constants - incremental constant definition map
+	 */
+	private void analyse_23(Call _call, Vector<DetectedError> _errors, StringList _vars, StringList _uncertainVars, HashMap<String, String> _constants)
+	{
+		Subqueue node = (Subqueue)_call.parent;
+		// Check correct placement (must be at the beginning of the diagram
+		boolean misplaced = !(node.parent instanceof Root);
+		if (!misplaced) {
+			for (int j = 0; !misplaced && j < node.getIndexOf(_call); j++) {
+				Element el0 = node.getElement(j);
+				if (!el0.isDisabled() && (!(el0 instanceof Call) || !((Call)el0).isImportCall())) {
+					misplaced = true;
+				}
+			}
+		}
+		if (misplaced) {
+			//error  = new DetectedError("Import calls () must be placed at the very beginning of the diagram!", ele);
+			String[] data = new String[]{_call.getText().getLongString(), getRoot(_call).getMethodName()};
+			addError(_errors, new DetectedError(errorMsg(Menu.error23_5, data), _call), 23);
+		}
+		// Get all lines of the called routine
+		String name = (_call).getSignatureString();
+		if (this.isProgram && name.equals(this.getMethodName())
+				|| this.importStack.contains(name)) {
+			//error  = new DetectedError("Import of diagram «%1» is recursive! (Recursion path: %1 <- %2)");
+			addError(_errors, new DetectedError(errorMsg(Menu.error23_2, name), _call), 23);    				
+			
+		}
+		else if (this.analysedImports.containsKey(name)) {
+			//error  = new DetectedError("Import of diagram «%1» will be ignored here because it had already been imported: %2");
+			StringList path = this.analysedImports.get(name);
+			addError(_errors, new DetectedError(errorMsg(Menu.error23_3, new String[]{name, path.concatenate("<-")}), _call), 23);    									
+		}
+		else if (Arranger.hasInstance()) {
+			Vector<Root> roots = Arranger.getInstance().findProgramsByName(name);
+			if (roots.size() == 1) {
+				Root importedRoot = roots.get(0);
+				Vector<DetectedError> impErrors = new Vector<DetectedError>();
+				boolean[] subResultFlags = new boolean[]{false, false, false};
+				// We are not interested in internal errors but in the imported variables and constants
+				// START KGU#376 2017-04-20: Enh. #389 - new semantic approach: no access to this context
+    			//analyse(roots.get(0).children, new Vector<DetectedError>(), _vars, _uncertainVars, _constants, subResultFlags);
+				StringList importedVars = new StringList();
+				StringList importedUncVars = new StringList();
+				this.importStack.add(name);
+    			analyse(importedRoot.children, impErrors, importedVars, importedUncVars, _constants, subResultFlags);
+    			this.analysedImports.put(name, this.importStack.copy());
+    			this.importStack.remove(this.importStack.count()-1);
+    			// END KGU#376 2017-04-20
+    			if (subResultFlags[0]) {
+    				//error  = new DetectedError("Diagram «%» is rather unsuited for an import call as it makes use of return.",(Element) _node.getElement(i));
+					addError(_errors, new DetectedError(errorMsg(Menu.error23_1, name), _call), 23);    				
+    			}
+    			// Now associate all sub-analysis results with the Call element
+    			for (DetectedError err: impErrors) {
+    				addError(_errors, new DetectedError(name + ": " + err.getError(), _call), 23);    				
+    			}
+    			// Add analysis for name conflicts and uncertain variables
+    			for (int j = 0; j < importedVars.count(); j++) {
+    				String varName = importedVars.get(j);
+    				if (!_vars.addIfNew(varName) || _uncertainVars.contains(varName)) {
+	    				//error  = new DetectedError("There is a name conflict between local and imported variable «%»!",(Element) _node.getElement(i));
+						addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), _call), 23);    						    					
+    				}
+    			}
+    			for (int j = 0; j < importedUncVars.count(); j++) {
+    				String varName = importedUncVars.get(j);
+    				//error  = new DetectedError("The variable «%1» may not have been initialized%2!",(Element) _node.getElement(i));
+					addError(_errors, new DetectedError(errorMsg(Menu.error03_2, new String[]{varName, ""}), _call), 3);    						    					
+    				if (_vars.contains(varName) || !_uncertainVars.addIfNew(varName)) {
+	    				//error  = new DetectedError("There is a name conflict between local and imported variable «%»!",(Element) _node.getElement(i));
+						addError(_errors, new DetectedError(errorMsg(Menu.error23_4, varName), _call), 23);    						    					
+    				}
+    			}
+    			for (Entry<String, String> constEntry: importedRoot.constants.entrySet()) {
+    				if (!_constants.containsKey(constEntry.getKey())) {
+    					_constants.put(constEntry.getKey(), constEntry.getValue());
+    					if (!this.constants.containsKey(constEntry.getKey())) {
+    						this.constants.put(constEntry.getKey(), constEntry.getValue());		    						    					
+    					}
+    				}
+    			}
+			}
+		}		
+		
+	}
+
 
     private void addError(Vector<DetectedError> errors, DetectedError error, int errorNo)
     {
@@ -3686,11 +3829,16 @@ public class Root extends Element {
     		structorizerKeywords.add(keyword);
     	}
     	
-        this.getVarNames();
+    	// START KGU#376 2017-04-20: Enh. #389
+    	this.analysedImports.clear();
+    	this.importStack.clear();
+    	// END KGU#376 2017-04-20
+    	
+        this.getVarNames();	// also fills this.constants if not already done
         //System.out.println(this.variables);
 
         Vector<DetectedError> errors = new Vector<DetectedError>();
-        // Retrieve the parameter names in the effect
+        // Retrieve the parameter names (in the effect)
         StringList vars = getVarNames(this,true,false);
         rootVars = vars.copy();
         StringList uncertainVars = new StringList();
@@ -3716,6 +3864,25 @@ public class Root extends Element {
             addError(errors, error, 0);
         }
         // END KGU#220 2016-07-27
+        
+		// START KGU#376 2017-04-20: Enh. #389 - alternative implementation approach
+//        for (String rootName: this.importedRoots) {
+//			// Get all lines of the imported root
+//			if (Arranger.hasInstance()) {
+//				Vector<Root> roots = Arranger.getInstance().findProgramsByName(rootName);
+//				if (roots.size() == 1) {
+//					boolean[] subResultFlags = new boolean[]{false, false, false};
+//					// We are not interested in internal errors but in the imported variables and constants
+//	    			analyse(roots.get(0).children, new Vector<DetectedError>(), vars, uncertainVars, constants, subResultFlags);
+//				}
+//				else {
+//					// The diagram «%» to be imported is currently not available.
+//		            addError(errors, new DetectedError(errorMsg(Menu.error15_4, rootName), this), 15);					
+//				}
+//			}		
+//        }
+		// END KGU#376 2017-04-11
+
 
         // START KGU#239 2016-08-12: Enh. #231 - prepare variable name collision check
         // CHECK 19: identifier collision with reserved words
@@ -3725,7 +3892,7 @@ public class Root extends Element {
         }
         // END KGU#239 2016-08-12
 
-        // CHECK: uppercase for programname (#6)
+        // CHECK: upper-case for program name (#6)
         if(!programName.toUpperCase().equals(programName))
         {
             //error  = new DetectedError("The programname «"+programName+"» must be written in uppercase!",this);

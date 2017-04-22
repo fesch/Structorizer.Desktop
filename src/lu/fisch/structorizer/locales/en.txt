@@ -363,7 +363,6 @@ Menu.error14_3.text=Variable name «%» may collide with one of the configured F
 Menu.error15_1.text=The CALL has neither form «[ <var> <- ] <routine_name>(<arg_list>)» nor «import <progr_name>»!
 Menu.error15_2.text=The called diagram «%» is currently not available.
 Menu.error15_3.text=There are several diagrams matching signature «%».
-Menu.error15_4.text=Diagram «%» is rather unsuited for an import call as it makes use of return.
 Menu.error16_1.text=A JUMP element may be empty or start with one of %, possibly followed by an argument!	
 Menu.error16_2.text=A % instruction, unless at final position, must form a JUMP element!
 Menu.error16_3.text=A %1 or %2 instruction is only allowed as JUMP element!
@@ -378,7 +377,14 @@ Menu.error19_1.text=Variable name «%1» may collide with reserved names in lang
 Menu.error19_2.text=Variable name «%» is reserved in Structorizer and is likely to cause trouble on execution!
 Menu.error20.text=A subroutine header must have a (possibly empty) parameter list within parentheses.
 Menu.error21.text=Variable names I (upper-case i), l (lower-case L), and O (upper-case o) are hard to distinguish from each other, 1, or 0.
-Menu.error22.text=Constant «%1» depends on apparently non-constant value(s): «%2».
+Menu.error22_1.text=Constant «%1» depends on apparently non-constant value(s): «%2».
+Menu.error22_2.text=Attempt to modify the value of constant «%»!
+Menu.error23_1.text=Diagram «%» is rather unsuited for an import call as it makes use of return.
+Menu.error23_2.text=Import of diagram «%» is recursive!
+Menu.error23_3.text=Import will be ignored here because diagram «%1» had already been imported: %2.
+Menu.error23_4.text=Name conflict between local and imported variable or constant «%»!
+Menu.error23_5.text=Import Calls («%1») ought to be placed at the very beginning of the diagram («%2»)!
+Menu.error23_6.text=An «%» instruction must form a CALL element!
 Menu.errorLineReference.text= (line %)
 
 -----[ AnalyserPreferences ]-----
@@ -406,7 +412,8 @@ AnalyserPreferences.checkboxes.18.text=Check that identifiers don't differ only 
 AnalyserPreferences.checkboxes.19.text=Check if an identifier might collide with reserved words.
 AnalyserPreferences.checkboxes.20.text=Check that a subroutine header has a parameter list.
 AnalyserPreferences.checkboxes.21.text=Discourage use of mistakable variable names «I», «l», and «O».
-AnalyserPreferences.checkboxes.22.text=Check that constants depend on constant values only.
+AnalyserPreferences.checkboxes.22.text=Check for possible violations of constants.
+AnalyserPreferences.checkboxes.23.text=Check for faulty diagram imports.
 AnalyserPreferences.okButton.text=OK
 
 

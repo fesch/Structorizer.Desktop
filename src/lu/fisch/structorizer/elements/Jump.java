@@ -110,6 +110,7 @@ package lu.fisch.structorizer.elements;
  ******************************************************************************************************///
 
 import java.awt.Color;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -213,7 +214,7 @@ public class Jump extends Instruction {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-	protected void addFullText(StringList _lines, boolean _instructionsOnly)
+	protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> implicatedRoots)
 	{
 		// In a jump instruction no variables ought to be introduced - so we ignore this text on _instructionsOnly
 		if (!this.isDisabled() && !_instructionsOnly)

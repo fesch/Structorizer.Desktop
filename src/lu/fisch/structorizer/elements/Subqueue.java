@@ -20,6 +20,8 @@
 
 package lu.fisch.structorizer.elements;
 
+import java.util.HashSet;
+
 /*
  ******************************************************************************************************
  *
@@ -530,12 +532,12 @@ public class Subqueue extends Element implements IElementSequence {
 	 * @see lu.fisch.structorizer.elements.Element#addFullText(lu.fisch.utils.StringList, boolean)
 	 */
 	@Override
-    protected void addFullText(StringList _lines, boolean _instructionsOnly)
+    protected void addFullText(StringList _lines, boolean _instructionsOnly, HashSet<Root> implicatedRoots)
     {
 		// No own text is to be considered here
         for(int i = 0; i < children.size(); i++)
         {      
-            children.get(i).addFullText(_lines, _instructionsOnly);
+            children.get(i).addFullText(_lines, _instructionsOnly, implicatedRoots);
         }
     }
     // END KGU 2015-10-16

@@ -94,7 +94,8 @@ public class AnalyserPreferences extends LangDialog {
 		/*19*/"Check if an identifier might collide with reserved words.",
 		/*20*/"Check that a subroutine header has a parameter list.",
 		/*21*/"Discourage use of mistakable variable names «I», «l», and «O».",
-		/*22*/"Check that constants depend on constant values only."
+		/*22*/"Check for possible violations of constants.",
+		/*23*/"Check for faulty diagram imports"
 		// Just append the descriptions for new check types here and insert their
 		// numbers at the appropriate place in array checkboxOrder below.
 		// DON'T FORGET to add a new entry to Root.analyserChecks for every
@@ -113,7 +114,7 @@ public class AnalyserPreferences extends LangDialog {
 				0,// loops
 				1, 14, 2,
 				0,// functions and calls
-				20, 13,	15,
+				20, 13,	15, 23,
 				0,// jumps and parallel sections
 				16, 17
 		});
