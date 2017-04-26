@@ -87,6 +87,7 @@ package lu.fisch.structorizer.gui;
 
 import java.util.*;
 import java.io.*;
+import java.net.URL;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -106,6 +107,8 @@ import lu.fisch.utils.StringList;
 @SuppressWarnings("serial")
 public class Menu extends LangMenuBar implements NSDController
 {
+	public enum PluginType { GENERATOR, PARSER, IMPORTER };
+	
 	private Diagram diagram = null;
 	private NSDController NSDControl = null;
 
@@ -138,9 +141,9 @@ public class Menu extends LangMenuBar implements NSDController
 	// Submenu of "File -> Import"
 	// START KGU#354 2017-03-14: Enh. #354 We use one unified menu item for all code import now
 	//protected final JMenuItem menuFileImportPascal = new JMenuItem("Pascal Code ...",IconLoader.ico004);
-	//protected final JMenuItem menuFileImportC = new JMenuItem("ANSI-C Code ...",IconLoader.ico004);
 	protected final JMenuItem menuFileImportCode = new JMenuItem("Source Code ...", IconLoader.ico004);
 	// END KGU#354 2017-03-14
+	protected final JMenuItem menuFileImportNSDEd = new JMenuItem("Foreign NSD editor file ...", IconLoader.ico074);
 
 	// START KGU#2 2015-11-19: New menu item to have the Arranger present the diagram
 	protected final JMenuItem menuFileArrange = new JMenuItem("Arrange", IconLoader.ico105);
@@ -302,9 +305,6 @@ public class Menu extends LangMenuBar implements NSDController
 	// Generator plugins accessible for Analyser
 	public static Vector<GENPlugin> generatorPlugins = new Vector<GENPlugin>();
 	// END KGU#239 2016-08-12
-	// START KGU#354 2017-03-04: Enh. #354
-	public static Vector<GENPlugin> parserPlugins = new Vector<GENPlugin>();
-	// END KGU#354 2017-03-04
 	// Error messages for Analyser
 	// START KGU#220 2016-07-27: Enh. as proposed in issue #207
 	public static final LangTextHolder warning_1 = new LangTextHolder("WARNING: TEXTS AND COMMENTS ARE EXCHANGED IN DISPLAY! ---> \"Diagram > Switch text/comments\".");
@@ -426,7 +426,8 @@ public class Menu extends LangMenuBar implements NSDController
 	public static final LangTextHolder msgTitleOpen = new LangTextHolder("Open file ...");
 	public static final LangTextHolder msgTitleSave = new LangTextHolder("Save file ...");
 	public static final LangTextHolder msgTitleSaveAs = new LangTextHolder("Save file as ...");
-	public static final LangTextHolder msgTitleImport = new LangTextHolder("Code import - choose a file filter ...");
+	public static final LangTextHolder msgTitleImport = new LangTextHolder("Code import - choose source file (mind the file filter!) ...");
+	public static final LangTextHolder msgTitleNSDImport = new LangTextHolder("Import a diagram file from % ...");
 	public static final LangTextHolder msgSaveChanges = new LangTextHolder("Do you want to save the current NSD file?");
 	public static final LangTextHolder msgErrorImageSave = new LangTextHolder("Error on saving the image(s)!");
 	public static final LangTextHolder msgErrorUsingGenerator = new LangTextHolder("Error while using % generator");
@@ -535,33 +536,17 @@ public class Menu extends LangMenuBar implements NSDController
 		//menuFileImport.add(menuFileImportPascal);
 		//menuFileImportPascal.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importPAS(); doButtons(); } } );
 //		// Read parsers from configuration file and add them to the menu
-//		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("parsers.xml"));
-//		GENParser genp = new GENParser();
-//		parserPlugins = genp.parse(buff);
-//		for (int i=0; i < parserPlugins.size(); i++)
-//		// END KGU#239 2016-08-12
-//		{
-//			// START KGU#239 2016-08-12: Enh. #231
-//			//GENPlugin plugin = (GENPlugin) plugins.get(i);
-//			GENPlugin plugin = parserPlugins.get(i);
-//			// END KGU#239 2016-08-12
-//			JMenuItem pluginItem = new JMenuItem(lblImportCode.getText().replace("%", plugin.title), IconLoader.ico004);
-//			menuFileImport.add(pluginItem);
-//			final String className = plugin.className;
-//			pluginItem.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importCode(className); doButtons(); } } );
-//		}
-//		try {
-//			buff.close();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		//addPluginMenuItems(menuFileImportCode, "parsers.xml", IconLoader.ico004, PluginType.PARSER);
 		// END KGU#354 2017-03-04
 		// START KGU#354 2017-03-14: Enh. #354 We turn back to a single menu entry and leave selection to the FileChooser
 		menuFileImport.add(menuFileImportCode);
 		menuFileImportCode.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importCode(); } });
 		menuFileImportCode.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I,(java.awt.event.InputEvent.SHIFT_MASK | (Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()))));
 		// END KGU#354 2017-03-14
+
+		// START KGU#386 2017-04-26
+		addPluginMenuItems(menuFileImport, PluginType.IMPORTER, IconLoader.ico074);
+		// END KGU#386 2017-04-26
 
 		menuFile.add(menuFileExport);
 
@@ -589,27 +574,41 @@ public class Menu extends LangMenuBar implements NSDController
 
 		menuFileExport.add(menuFileExportCode);
 		menuFileExportCode.setIcon(IconLoader.ico004);
-
-		// read generators from file
-		// and add them to the menu
-		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("generators.xml"));
-		GENParser genp = new GENParser();
-		// START KGU#239 2016-08-12: Enh. #231
-		//Vector<GENPlugin> plugins = genp.parse(buff);
-		//for(int i=0;i<plugins.size();i++)
-		generatorPlugins = genp.parse(buff);
-		for (int i=0; i < generatorPlugins.size(); i++)
-		// END KGU#239 2016-08-12
-		{
-			// START KGU#239 2016-08-12: Enh. #231
-			//GENPlugin plugin = (GENPlugin) plugins.get(i);
-			GENPlugin plugin = generatorPlugins.get(i);
-			// END KGU#239 2016-08-12
-			JMenuItem pluginItem = new JMenuItem(plugin.title, IconLoader.ico004);
-			menuFileExportCode.add(pluginItem);
-			final String className = plugin.className;
-			pluginItem.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.export(className); doButtons(); } } );
-		}
+		// START KGU#386 2017-04-26: Plugin evaluation outsourced
+//		// read generators from file
+//		// and add them to the menu
+//		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream("generators.xml"));
+//		GENParser genp = new GENParser();
+//		// START KGU#239 2016-08-12: Enh. #231
+//		//Vector<GENPlugin> plugins = genp.parse(buff);
+//		//for(int i=0;i<plugins.size();i++)
+//		generatorPlugins = genp.parse(buff);
+//		for (int i=0; i < generatorPlugins.size(); i++)
+//		// END KGU#239 2016-08-12
+//		{
+//			// START KGU#239 2016-08-12: Enh. #231
+//			//GENPlugin plugin = (GENPlugin) plugins.get(i);
+//			GENPlugin plugin = generatorPlugins.get(i);
+//			// END KGU#239 2016-08-12
+//			// START KGU 2017-04-23
+//			//JMenuItem pluginItem = new JMenuItem(plugin.title, IconLoader.ico004);
+//			ImageIcon icon = IconLoader.ico004;	// The default icon
+//			if (plugin.icon != null && !plugin.icon.isEmpty()) {
+//				try {
+//					URL iconFile = this.getClass().getResource(plugin.icon);
+//					if (iconFile != null) {
+//						icon = new ImageIcon(this.getClass().getResource(plugin.icon));
+//					}
+//				}
+//				catch (Exception ex) {}
+//			}
+//			JMenuItem pluginItem = new JMenuItem(plugin.title, icon);
+//			// END KGU 2017-04-23
+//			menuFileExportCode.add(pluginItem);
+//			final String className = plugin.className;
+//			pluginItem.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.export(className); doButtons(); } } );
+//		}
+		generatorPlugins = this.addPluginMenuItems(menuFileExportCode, PluginType.GENERATOR, IconLoader.ico004);
 		
 		// START KGU#171 2016-04-01: Enh. #144 - accelerated export to favourite target language
 		menuFile.add(menuFileExportCodeFavorite);
@@ -1514,4 +1513,63 @@ public class Menu extends LangMenuBar implements NSDController
         // END KGU#235 2016-08-09
     }
     // END KGU#232 2016-08-03
+    
+    // START KGU#386 2017-04-26
+    private Vector<GENPlugin> addPluginMenuItems(JMenu _menu, PluginType _type, ImageIcon _defaultIcon)
+    {
+		// read generators from file
+    	String fileName = "void.xml";
+    	switch (_type) {
+    	case GENERATOR:
+    		fileName = "generators.xml";
+    		break;
+    	case PARSER:
+    		fileName = "parsers.xml";
+    		break;
+    	case IMPORTER:
+    		fileName = "importers.xml";
+    		break;
+    	}
+		// and add them to the menu
+		BufferedInputStream buff = new BufferedInputStream(getClass().getResourceAsStream(fileName));
+		GENParser genp = new GENParser();
+		Vector<GENPlugin> plugins = genp.parse(buff);
+		for (int i = 0; i < plugins.size(); i++)
+		{
+			GENPlugin plugin = plugins.get(i);
+			ImageIcon icon = _defaultIcon;	// The default icon
+			if (plugin.icon != null && !plugin.icon.isEmpty()) {
+				try {
+					URL iconFile = this.getClass().getResource(plugin.icon);
+					if (iconFile != null) {
+						icon = new ImageIcon(this.getClass().getResource(plugin.icon));
+					}
+				}
+				catch (Exception ex) {}
+			}
+			JMenuItem pluginItem = new JMenuItem(plugin.title, icon);
+			_menu.add(pluginItem);
+			final String className = plugin.className;
+			
+			ActionListener listener = null;
+			switch (_type) {
+			case GENERATOR:
+				listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.export(className); doButtons(); } };
+				break;
+			case PARSER:
+				listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importCode(/*className*/); doButtons(); } };
+				break;
+			case IMPORTER:
+				listener = new ActionListener() { public void actionPerformed(ActionEvent event) { diagram.importNSD(className); doButtons(); } };
+				break;
+			}
+			if (listener != null) {
+				pluginItem.addActionListener(listener);
+			}
+		}
+		
+		return plugins;
+    }
+    // END KGU#386 2017-04-26
+    
 }

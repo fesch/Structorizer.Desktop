@@ -17,6 +17,7 @@ intended to be used for code import parsers of Structorizer.
     A little tool which you can use to create Nassi-Schneiderman Diagrams (NSD)
 
     Copyright (C) 2009  Bob Fisch
+    Copyright (C) 2017  StructorizerParserTemplate.pgt: Kay Gürtzig
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,7 +40,7 @@ package lu.fisch.structorizer.parsers;
  *      Author:         Kay Gürtzig
  *
 ##PARAMETERS
- *      Description:    Class to parse an %Name% file and build structograms from the reduction tree.
+ *      Description:    Class to parse a %Name% file and build structograms from the reduction tree.
 ##END-PARAMETERS
  *
  ******************************************************************************************************
@@ -57,7 +58,7 @@ package lu.fisch.structorizer.parsers;
  *     Licensed Material - Property of Ralph Iden (GOLDParser) and Mathew Hawkins (parts of the template)
  *     GOLDParser - code downloaded from https://github.com/ridencww/goldengine on 2017-03-05.<br>
  *     Modifications to this code are allowed as it is a helper class to use the engine.<br>
- *     Template File:  StructorizerParserTemplate (with elements of both<br>
+ *     Template File:  StructorizerParserTemplate.pgt (with elements of both<br>
  *                     Java-MatthewHawkins.pgt and Java-IdenEngine.pgt)<br>
  *     Authors:        Ralph Iden, Matthew Hawkins, Bob Fisch, Kay Gürtzig<br>
  *     Description:    A Sample class, takes in a file and runs the GOLDParser engine on it.<br>
@@ -129,7 +130,7 @@ public class %Name%Parser extends CodeParser
 	 */
 	private boolean optionUpperCaseProgName = false;
 
-	//---------------------------- Constructor ---------------------------
+	//------------------------------ Constructor -----------------------------
 
 	/**
 ##PARAMETERS
@@ -185,12 +186,12 @@ public class %Name%Parser extends CodeParser
 ##END-RULES
 	};
 
-	//------------------------- Preprocessor ---------------------------
+	//----------------------------- Preprocessor -----------------------------
 
 	/**
 	 * Performs some necessary preprocessing for the text file. Actually opens the
-	 * file, filters it and writes a new file _textToParse+".structorizer" to the
-	 * same directory, which is then actually parsed.
+	 * file, filters it and writes a new temporary file "Structorizer.{defaultExt}",
+	 * which is then actually parsed.
 	 * The preprocessed file will always be saved with UTF-8 encoding.
 	 * @param _textToParse - name (path) of the source file
 	 * @param _encoding - the expected encoding of the source file.
@@ -204,7 +205,7 @@ public class %Name%Parser extends CodeParser
 		{
 			File file = new File(_textToParse);
 			HashMap<String, String> defines = new LinkedHashMap<String, String>();
-			DataInputStream in = new DataInputStream(new FileInputStream(_textToParse));
+			DataInputStream in = new DataInputStream(new FileInputStream(file));
 			// START KGU#193 2016-05-04
 			BufferedReader br = new BufferedReader(new InputStreamReader(in, _encoding));
 			// END KGU#193 2016-05-04
@@ -224,14 +225,17 @@ public class %Name%Parser extends CodeParser
 			//System.out.println(srcCode);
 
 			// trim and save as new file
-			interm = File.createTempFile("Structorizer", ".txt");
+			interm = File.createTempFile("Structorizer", "." + getFileExtensions()[0]);
 			OutputStreamWriter ow = new OutputStreamWriter(new FileOutputStream(interm), "UTF-8");
 			ow.write(srcCode.trim()+"\n");
 			ow.close();
 		}
 		catch (Exception e) 
 		{
-			System.out.println(e.getMessage());
+##PARAMETERS
+			System.err.println("%Name%Parser.prepareTextfile() -> " + e.getMessage());
+##END-PARAMETERS
+			e.printStackTrace();	
 		}
 		return interm;
 	}
@@ -274,7 +278,7 @@ public class %Name%Parser extends CodeParser
 //					ruleId == RuleConstants.PROD_VALUE_ID_LPAREN_RPAREN
 //					)
 //			{
-//				// Simply convet it as text and create an instruction. In case of a call
+//				// Simply convert it as text and create an instruction. In case of a call
 //				// we'll try to transmute it after all subroutines will have been parsed.
 //				String content = new String();
 //				content = getContent_R(_reduction, content).trim();
@@ -373,6 +377,12 @@ public class %Name%Parser extends CodeParser
 		}
 		
 		return _content;
+	}
+
+	@Override
+	protected void subclassUpdateRoot(Root root, String sourceFileName) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	//------------------------- Postprocessor ---------------------------

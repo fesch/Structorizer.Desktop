@@ -16,38 +16,67 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
+package lu.fisch.structorizer.parsers;
 
-package lu.fisch.structorizer.helpers;
+import java.io.File;
+import java.io.IOException;
+
+import org.xml.sax.SAXException;
+
+import lu.fisch.structorizer.elements.Root;
 
 /******************************************************************************************************
  *
- *      Author:         Bob Fisch
+ *      Author:         Kay Gürtzig
  *
- *      Description:    Parse plugin-file
+ *      Description:    Interface for foreign NSD format importers
  *
  ******************************************************************************************************
  *
  *      Revision List
  *
  *      Author          Date            Description
- *      ------			----            -----------
- *      Bob Fisch       2008.04.12      First Issue
- *      Kay Gürtzig     2017.04.23      Enh. #231 configuration of reserved words in the target language
+ *      ------          ----            -----------
+ *      Kay Gürtzig     2017.04.26      First Issue
  *
  ******************************************************************************************************
  *
- *      Comment:		/
+ *      Comment:
+ *      
  *
  ******************************************************************************************************///
 
-public class GENPlugin 
-{
-	public String className = null;
-	public String icon = null;
-	public String title = null;
-	// START KGU#239 2017-04-23: Enh. #231
-	public String[] reservedWords = null;
-	public boolean caseMatters = true;
-	// END KGU#239 2017-04-23
+/**
+ * @author Kay Gürtzig
+ *
+ */
+public interface INSDImporter {
+
+	/**
+	 * Returns a title for dialog message references
+	 * @return the importer name for dialog
+	 */
+	public String getDialogTitle();
+
+	/**
+	 * Returns a description of the file type for the file chooser
+	 * @return file description text
+	 */
+	public String getFileDescription();
+
+	/**
+	 * Returns expected file name extensions for the file filter 
+	 * @return list of extensions (without dot!)
+	 */
+	public String[] getFileExtensions();
+
+	/**
+	 * Returns a suitable FileFilter matching the parameters provided by
+	 * {@link #getFileDescription()} and {@link #getFileExtensions()}.
+	 * @return
+	 */
+	public javax.swing.filechooser.FileFilter getFileFilter();
+	
+	public Root parse(String _filename) throws SAXException, IOException;
 }

@@ -242,6 +242,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
     public File currentDirectory = new File(System.getProperty("user.home"));
     public File lastExportDir = null;
+    // START KGU#354 2017-04-26: Enh. #354 also remember the last import folder
+    public File lastCodeExportDir = null;
+    public File lastCodeImportDir = null;
+    public String lastImportFilter = "";
+    // END KGU#354 2017-04-26
     // START KGU#170 2016-04-01: Enh. #144 maintain a favourite export generator
     private String prefGeneratorName = "";
     // END KGU#170 2016-04-01
@@ -4242,6 +4247,53 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 
 
 	/*****************************************
+	 * Import method
+	 *****************************************/
+	public void importNSD(String _className)
+	{
+		// START KGU 2015-10-17: This will be done by openNSD(String) anyway - once is enough!
+		// only save if something has been changed
+		//saveNSD(true);
+		// END KGU 2015-10-17
+
+		if (!this.checkRunning()) return;	// Don't proceed if the root is being executed
+
+		// open an existing file
+		// create dialog
+		JFileChooser dlgOpen = new JFileChooser();
+		// Bugfix #330 Ensure Label items etc. be scaled for L&F "Nimbus"
+		GUIScaler.rescaleComponents(dlgOpen);
+		INSDImporter parser = null;
+		try {
+			Class<?> impClass = Class.forName(_className);
+			parser = (INSDImporter) impClass.newInstance();
+
+			dlgOpen.setDialogTitle(Menu.msgTitleNSDImport.getText().replace("%", parser.getDialogTitle()));
+			// set directory
+			dlgOpen.setCurrentDirectory(currentDirectory);
+			// config dialogue
+			FileFilter filter = parser.getFileFilter();
+			dlgOpen.addChoosableFileFilter(filter);
+			dlgOpen.setFileFilter(filter);
+			// show & get result
+			int result = dlgOpen.showOpenDialog(this);
+			// react to result
+			if (result == JFileChooser.APPROVE_OPTION)
+			{
+				boolean hil = root.hightlightVars;
+				// FIXME: Replace this with a generalized version of openNSD(String)
+				root = parser.parse(dlgOpen.getSelectedFile().toURI().toString());
+				root.hightlightVars = hil;
+				currentDirectory = dlgOpen.getSelectedFile();
+				redraw();
+			}
+		} catch (Exception ex) {
+			JOptionPane.showMessageDialog(this, ex.getMessage(), Menu.msgTitleError.getText(), JOptionPane.ERROR_MESSAGE);
+			ex.printStackTrace();
+		}
+	}
+	
+	/*****************************************
 	 * import code methods
 	 *****************************************/
 
@@ -4364,17 +4416,28 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		// END KGU#287 2017-01-09
 		dlgOpen.setDialogTitle(Menu.msgTitleImport.getText());
 		// set directory
-		if(root.getFile()!=null)
+		// START KGU#354 2017-04-26: Enh. #354
+		//if(root.getFile()!=null)
+		//{
+		//	dlgOpen.setCurrentDirectory(root.getFile());
+		//}
+		File importDir = this.lastCodeImportDir;
+		if (importDir != null || (importDir = root.getFile()) != null)
 		{
-			dlgOpen.setCurrentDirectory(root.getFile());
+			dlgOpen.setCurrentDirectory(importDir);
 		}
+		// END KGU#354 2017-04-26
 		else
 		{
 			dlgOpen.setCurrentDirectory(currentDirectory);
 		}
 
 		for (CodeParser psr: parsers) {
-			dlgOpen.addChoosableFileFilter(psr);				
+			dlgOpen.addChoosableFileFilter(psr);
+			// START KGU#354 2017-04-26: Enh. #354 GUI improvement 
+			if (psr.getDialogTitle().equals(this.lastImportFilter)) {
+				dlgOpen.setFileFilter(psr);
+			}
 		}
 		//dlgOpen.setFileFilter(parser);
 
@@ -4395,6 +4458,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						Menu.msgImportCancelled.getText().replace("%", file.getPath()));
 				return;
 			}
+			
+			// START KGU#354 2017-04-26: Enh. #354
+			this.lastImportFilter = parser.getDialogTitle();
+			this.lastCodeImportDir = file.getParentFile();
+			// END KGU#354 2017-04-26
 
 			try
 			{
@@ -4583,7 +4651,13 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 			// START KGU#170 2016-04-01: Issue #143
 			pop.setVisible(false);	// Hide the current comment popup if visible
 			// END KGU#170 2016-04-01
-			gen.exportCode(root,currentDirectory,NSDControl.getFrame());
+			// START KGU 2017-04-26: Remember the export directory
+			//gen.exportCode(root, currentDirectory, NSDControl.getFrame());
+			this.lastCodeExportDir = 
+					gen.exportCode(root,
+							(lastCodeExportDir != null ? lastCodeExportDir : currentDirectory),
+							NSDControl.getFrame());
+			// END KGU 2017-04-26
 		}
 		catch(Exception ex)
 		{
@@ -6606,5 +6680,5 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 		}
 	}
 	// END KGU#305
-
+	
 }

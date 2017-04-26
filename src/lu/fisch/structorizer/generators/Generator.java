@@ -71,6 +71,7 @@ package lu.fisch.structorizer.generators;
  *      Kay Gürtzig     2017.03.10      Issue #368: New method getExportCharset
  *      Kay Gürtzig     2017.04.14      Bugfix #394: Jump map generation revised
  *      Kay Gürtzig     2017.04.18      Bugfix #386 required to lift he "final" from generateCode(Subqueue...)
+ *      Kay Gürtzig     2017.04.26      Signature of method exportCode() modified to return the used directory
  *
  ******************************************************************************************************
  *
@@ -2011,11 +2012,18 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 	 * Entry point for interactively commanded code export. Retrieves export options,
 	 * opens a file selection dialog
 	 * @param _root - program or top-level routine diagram (call hierarchy root)
-	 * @param _currentDirectory - current Structorizer directory (as managed by Diagram)
+	 * @param _proposedDirectory - last export or current Structorizer directory (as managed by Diagram)
 	 * @param _frame - the GUI Frame object responsible for this action
+	 * @return the chosen target directory
 	 */
-	public void exportCode(Root _root, File _currentDirectory, Frame _frame)
+	// START KGU 2017-04-26
+	//public void exportCode(Root _root, File _currentDirectory, Frame _frame)
+	public File exportCode(Root _root, File _proposedDirectory, Frame _frame)
+	// END KGU 2017-04-26
 	{
+		// START KGU 2017-04-26
+		File exportDir = _proposedDirectory;
+		// END KGU 2017-04-26
 		//=============== Get export options ======================
 		try
 		{
@@ -2069,7 +2077,7 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		}
 		else
 		{
-			dlgSave.setCurrentDirectory(_currentDirectory);
+			dlgSave.setCurrentDirectory(_proposedDirectory);
 		}
 
 		// propose name
@@ -2133,6 +2141,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		//=============== Actual code generation ======================
 		if (file != null)
 		{
+			// START KGU 2017-04-26
+			exportDir = file.getParentFile();
+			// END KGU 2017-04-26
 			// START KGU#194 2016-05-07: Bugfix #185 - the subclass may need the filename
 			pureFilename = file.getName();
 			int dotPos = pureFilename.indexOf(".");
@@ -2243,6 +2254,9 @@ public abstract class Generator extends javax.swing.filechooser.FileFilter
 		   	}
 		   	// END KGU#178 2016-07-20
 		} // if (file != null)
+		// START KGU 2017-04-26
+		return exportDir;
+		// END KGU 2017-04-26
 	}
 	
 	// START KGU#355 2017-03-05: Bugfix #365

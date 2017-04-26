@@ -120,8 +120,8 @@
 {Id Head}        = {Letter} + [_] 
 {Id Tail}        = {Id Head} + {Digit}
 
-{String Ch}      = {Printable} - ["]
-{Char Ch}        = {Printable} - ['']
+{String Ch}      = {All Printable} - ["]
+{Char Ch}        = {All Printable} - ['']
 
 DecLiteral       = [123456789]{digit}*([uU]([lL][lL]?)? | [lL][lL]?[uU]?)?
 OctLiteral       = 0{Oct Digit}*([uU]([lL][lL]?)? | [lL][lL]?[uU]?)?

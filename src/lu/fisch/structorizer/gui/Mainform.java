@@ -385,6 +385,11 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 				//diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("file.separator")));
 				diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("user.home")));
 				// END KGU#95 2015-12-04
+				// START KGU#354 2071-04-26: Enh. #354 Also retain the other directories
+				diagram.lastCodeExportDir = new File(ini.getProperty("lastExportDirectory", System.getProperty("user.home")));
+				diagram.lastCodeImportDir = new File(ini.getProperty("lastImportDirectory", System.getProperty("user.home")));
+				diagram.lastImportFilter = ini.getProperty("lastImportDirectory", "");
+				// END KGU#354 2017-04-26
 				
 				// DIN 66261
 				if (ini.getProperty("DIN","0").equals("1")) // default = 0
@@ -497,7 +502,12 @@ public class Mainform  extends LangFrame implements NSDController, IRoutinePoolL
 			{
 				if(diagram.currentDirectory!=null)
 				{
-					ini.setProperty("currentDirectory",diagram.currentDirectory.getAbsolutePath());
+					ini.setProperty("currentDirectory", diagram.currentDirectory.getAbsolutePath());
+					// START KGU#354 2071-04-26: Enh. #354 Also retain the other directories
+					ini.setProperty("lastExportDirectory", diagram.lastCodeExportDir.getAbsolutePath());
+					ini.setProperty("lastImportDirectory", diagram.lastCodeImportDir.getAbsolutePath());
+					ini.setProperty("lastImportFilter", diagram.lastImportFilter);
+					// END KGU#354 2017-04-26
 				}
 				// START KGU#305 2016-12-15: Enh. #305
 				ini.setProperty("index", (diagram.showArrangerIndex() ? "1" : "0"));

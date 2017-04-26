@@ -168,8 +168,13 @@ public class StructorizerApplet extends JApplet  implements NSDController
 			
 			if(diagram!=null) 
 			{
-				// current directory
+				// current directories
 				diagram.currentDirectory = new File(ini.getProperty("currentDirectory", System.getProperty("file.separator")));
+				// START KGU#354 2071-04-26: Enh. #354 Also retain the other directories
+				diagram.lastCodeExportDir = new File(ini.getProperty("lastExportDirectory", System.getProperty("file.separator")));
+				diagram.lastCodeImportDir = new File(ini.getProperty("lastImportDirectory", System.getProperty("file.separator")));
+				diagram.lastImportFilter = ini.getProperty("lastImportDirectory", "");
+				// END KGU#354 2017-04-26
 				
 				// din
 				if (ini.getProperty("DIN","0").equals("1")) // default = 0

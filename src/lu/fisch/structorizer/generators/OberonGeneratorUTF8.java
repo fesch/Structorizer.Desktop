@@ -21,8 +21,9 @@ import lu.fisch.utils.BString;
  */
 public class OberonGeneratorUTF8 extends OberonGenerator
 {
-	public void exportCode(Root _root, File _currentDirectory, Frame frame)
+	public File exportCode(Root _root, File _currentDirectory, Frame frame)
 	{
+		File exportDir = _currentDirectory;
 		boolean saveIt = true;
 
 		JFileChooser dlgSave = new JFileChooser();
@@ -69,6 +70,7 @@ public class OberonGeneratorUTF8 extends OberonGenerator
 		if (saveIt == true)
 		{
 			File file = new File(filename);
+			exportDir = file.getParentFile();
                         boolean writeDown = true;
 
                         if(file.exists())
@@ -100,5 +102,6 @@ public class OberonGeneratorUTF8 extends OberonGenerator
                             }
                         }
 		}
+		return exportDir;
 	}
 }

@@ -4049,18 +4049,27 @@ public class Root extends Element {
     	for (GENPlugin plugin: Menu.generatorPlugins)
     	{
     		// The reserved words the generator will provide
-    		String[] reserved = null;
+    		// START KGU#239 2017-04-23: Enh. #231 Alternatively configurable in the plugin
+    		//String[] reserved = null;
+    		//boolean distinguishCase = true;
+    		String[] reserved = plugin.reservedWords/**/;
     		// Case relevance the generator will provide
-    		boolean distinguishCase = true;
-    		try
-    		{
-    			// Try to get the information from the current generator
-    			Class<?> genClass = Class.forName(plugin.className);
-    			Generator generator = (Generator)genClass.newInstance();
-    			reserved = generator.getReservedWords();
-    			distinguishCase = generator.isCaseSignificant();
+    		boolean distinguishCase = plugin.caseMatters;
+    		if (reserved == null) {
+    		// END KGU#239 2017-04-23
+    			// The plugin file has no information about resrved words, so get it from the class
+    			try
+    			{
+    				// Try to get the information from the current generator
+    				Class<?> genClass = Class.forName(plugin.className);
+    				Generator generator = (Generator)genClass.newInstance();
+    				reserved = generator.getReservedWords();
+    				distinguishCase = generator.isCaseSignificant();
+    			}
+    			catch (Exception exc) {}
+    		// START KGU#239 2017-04-23: Enh. #231 Alternatively configurable in the plugin
     		}
-    		catch (Exception exc) {}
+    		// END KGU#239 2017-04-23
     		if (reserved != null)
     		{
     			Hashtable<String, StringList> table =
@@ -4088,6 +4097,13 @@ public class Root extends Element {
     			}
     		}
     	}
+    	// Now buy the GUI some time to accomplish its initialisation
+//    	try {
+//    	    Thread.sleep(500);
+//    	} catch(InterruptedException ex) {
+//    		System.out.println("Root.initialiseKeyTables(): sleep failed.");
+//    	    Thread.currentThread().interrupt();
+//    	}
 	}
 	// END KGU#239 2016-06-12
     

@@ -111,7 +111,7 @@ public class CPlusPlusGenerator extends CGenerator {
 		"asm", "bool", "catch", "calss", "const_cast", "delete", "dynamic_cast",
 		"explicit", "false", "friend", "inline", "mutable", "namespace", "new", "nullptr",
 		"operator", "private", "public", "protected", "reinterpret_cast",
-		"staic_cast", "template", "this", "throw", "true", "try", "typeid", "typename",
+		"static_cast", "template", "this", "throw", "true", "try", "typeid", "typename",
 		"using", "virtual", "wchar_t"};
 	public String[] getReservedWords()
 	{

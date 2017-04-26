@@ -41,6 +41,7 @@ package lu.fisch.structorizer.parsers;
  *                                      typedef mechanism implemented, grammar enhancements 
  *      Kay Gürtzig     2017.04.16      Issues #354, #389: Grammar revisions, correction in synthesis of
  *                                      function declarations, mechanism to ensure sensible naming of the global Root
+ *      Kay Gürtzig     2017.04.26      prepareTextfile() now eliminates void casts (the grammar doesn't cope with them) 
  *
  ******************************************************************************************************
  *
@@ -587,6 +588,7 @@ public class CParser extends CodeParser
 	@Override
 	protected File prepareTextfile(String _textToParse, String _encoding)
 	{
+		final String voidCastPattern = "(^\\s*|.*?\\W+\\s*)\\(\\s*void\\s*\\)(.*?)";
 		final String[][] typeReplacements = new String[][] {
 			{"size_t", "unsigned long"},
 			{"time_t", "unsigned long"}
@@ -623,6 +625,9 @@ public class CParser extends CodeParser
 						if (strLine.matches(search)) {
 							strLine = strLine.replaceAll(search, "$1" + pair[1] + "$2");
 						}
+					}
+					if (strLine.matches(voidCastPattern)) {
+						strLine = strLine.replaceAll(voidCastPattern, "$1$2");
 					}
 					srcCode += strLine + "\n";
 				}
