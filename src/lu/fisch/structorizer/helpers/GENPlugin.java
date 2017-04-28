@@ -46,6 +46,9 @@ public class GENPlugin
 	public String className = null;
 	public String icon = null;
 	public String title = null;
+	// START KGU#386 2017-04-28
+	public String info = null;
+	// END KGU#386 2017-04-28
 	// START KGU#239 2017-04-23: Enh. #231
 	public String[] reservedWords = null;
 	public boolean caseMatters = true;

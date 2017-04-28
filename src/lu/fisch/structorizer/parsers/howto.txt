@@ -10,7 +10,7 @@ This is just a little file that explains
 ADD A NEW LANGUAGE TO STRUCTORIZER IMPORT
 =========================================
 Author:      Kay Gürtzig
-Last update: 2017-03-30
+Last update: 2017-04-28
 
 Structorizer uses the GOLD Parser version 5.0 (http://www.goldparser.org) in
 combination with a compiled grammar for the source language to derive a structogram
@@ -36,6 +36,8 @@ some restrictions to the way grammar rules are to be formed.
 In general, it is a good idea to start with some grammar for a very similar language,
 which GOLD Parser is known to work with. You may find examples in this directory and
 on the GOLD Parser homepage (http://goldparser.org/grammars/index.htm). 
+To set up the grammar, the graphical GOLD Builder tool is recommended. It provides an
+excellent diagnosis for conflicting rules.
 
 2. COMPILED GRAMMAR TABLE
 Convert the grammar file to a set of compiled grammar tables. For Windows, you can
@@ -72,7 +74,7 @@ You will also find some hooks where to add the Nassi-Shneiderman diagram synthes
 (methods initializeBuildNSD, buildNSD_R, getContent_R).
 
 4. DIAGRAM SYNTHESIS FROM SYNTAX TREE
-This all done, the diagran synthesis must be written. This is very dependent on the
+This all done, the diagram synthesis must be written. This is very dependent on the
 rules of the used grammar. Whereas the parsing process works bottom up, i.e. from the
 input token to the start symbol of the grammar, the diagram synthesis works top down.
 When the parsing terminated successfully, i.e. in state ACCEPT, then at first method
@@ -122,3 +124,9 @@ certain kinds of elements:
 - colorGlobal for global definitions (in case of files with multiple routines)
 - colorMisc for miscellaneous source language-specific mark-ups (e.g. for related elements
   emerging from a single source code construct like a for(...;...;...) loop in C).
+  
+5. BATCH MODE TEST
+It may facilitate the final tests to run the parser in batch mode (i.e. from command line):
+	Linux:	 	structorizer.sh -p -v <logDir> <sourceFile> ...
+	Windows:	structorizer.bat -p -v <logDir> <sourceFile> ...
+

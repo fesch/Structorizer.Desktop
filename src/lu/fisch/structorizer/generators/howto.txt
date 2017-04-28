@@ -78,10 +78,15 @@ and accomplish the outcome step by step, consider more export options etc.
 	2.9	String[] getReservedWords()
 		Return a string array (type String[]) containing the reserved
 		words of the target language (also see isCaseSignificant()).
+		You may return an empty String array if you provide the set of
+		words in the plugin file generators.xml instead (see 7).
 	2.10	boolean isCaseSignificant()
 		Return true if case matters for identifying reserved words
 		(also see getReservedWords() above) in the target language 
 		(e.g. true for Java, false for Pascal).
+		If the reserved words (see 2.9) are configured in the plugin file
+		(see 7) then you should also configure the handling of letter
+		case in the plugin file generators.xml (see 7).
 	2.11	boolean breakMatchesCase()
 		Specify whether an instruction to leave a loop (the innermost
 		enclosing loop) like "break;" in C is available in the target
@@ -299,8 +304,16 @@ and accomplish the outcome step by step, consider more export options etc.
 	Find the resource file generators.xml in the ...structorizer.gui
 	package directory and add a new <plugin> entry with a title string
 	for the export menu and the fully qualified class name of the new
-	generator. (For future enhancement, an icon attribute is prepared
-	but still not used for the menu. So best is to leave it empty.)
+	generator. (If you like, you may also provide the file path for a
+	16x16 pixel icon file.)
+	You may use the attribute reserved_words to provide a comma-separated
+	list of reserved words for this language. It will only be used by the
+	Analyser, though. The configuration in the plugin file is favourized
+	upon the configuration in the Generator class (cf. 2.9).
+	If letter case does NOT matter (like in Pascal) you ought to provide
+	an attribute case_matters="0"; the default is that case matters (as
+	in C, Java etc.), so you may omit the attribute or write:
+	case_matters="1".  
 	
 8.	Batch Mode test
 	Make sure the generator also works fine in batch mode (i.e. from

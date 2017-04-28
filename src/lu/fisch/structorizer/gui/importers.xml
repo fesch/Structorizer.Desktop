@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <plugins>
     
-	<plugin title="Struktogrammeditor" 	class="lu.fisch.structorizer.parsers.StrkParser" icon="icons/editor_strk.png" />
+	<plugin title="Struktogrammeditor" 	class="lu.fisch.structorizer.parsers.StrkParser" icon="icons/editor_strk.png" info="http://whiledo.de" />
     
 </plugins>

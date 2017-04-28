@@ -326,11 +326,8 @@ Menu.lblCopyToClipBoard.text=OK, Text -> Zwischenablage
 Menu.msgSelectParser.text=Die Quellcode-Sprache von "%2" ist nicht eindeutig. Bitte Import-Sprache wählen:%1\nGeeignetste Nummer eingeben, bitte.
 Menu.msgImportCancelled.text=Code-Import für Datei "%" abgebrochen.
 Menu.msgSubroutineName.text=Name des neuen Unterprogramms
-Menu.msgJumpsOutwardsScope.text=Im ausgewählten Diagrammabschnitt gibt es Aussprunganweisungen nach außerhalb.\n"
-			+ "Sie auszugliedern würde die Programmlogik zerstören bzw. einen fehlerhaften Algrithmus erzeugen!\n"
-			+ "Die betreffenden Aussprünge sind unten aufgelistet und im Diagram ROT markiert:\n"
-			+ "%\n\n"
-			+ "Trotzdem Ausgliederung fortsetzen?
+Menu.msgJumpsOutwardsScope.text=Im ausgewählten Diagrammabschnitt gibt es Aussprunganweisungen nach außerhalb.\nSie auszugliedern würde die Programmlogik zerstören bzw. einen fehlerhaften Algrithmus erzeugen!\nDie betreffenden Aussprünge sind unten aufgelistet und im Diagram ROT markiert:\n%\n\nTrotzdem Ausgliederung fortsetzen?
+Menu.msgImportTooltip.text=Von dem Nassi-Shneiderman-Editor aus % erzeugte Diagrammdateien
 
 // Error messages for analyser
 // warning_1 must be consistent with Menu.menuDiagram.text and Menu.menuDiagramSwitchComments.text!
@@ -836,6 +833,10 @@ ImportOptionDialog.chkSaveParseTree.text=Nach dem Import Syntaxbaum als Textdate
 ImportOptionDialog.chkSaveParseTree.tooltip=Nach erfolgreichem Code-Import kann der Syntaxbaum der Quelldatei in eine Textdatei "*.parsetree.txt" gesichert werden.
 ImportOptionDialog.btnOk.text=OK
 ImportOptionDialog.btnOk.tooltip=Speichern der gewählten Einstellungen.
+ImportOptionDialog.chkLogDir.text=Protokolliere in Verzeichnis
+ImportOptionDialog.chkLogDir.tooltip=Ausgabe einer Importprotokolldatei je Import ein-/ausschalten
+ImportOptionDialog.txtLogDir.tooltip=Der leere Pfad steht für das Herkunftsverzeichnis der Quellcode-Datei, "." für das aktuelle Verzeichnis.
+ImportOptionDialog.btnLogDir.tooltip=Verzeichnispfad auswählen.
 
 -----[ SaveOptionDialog ]-----
 SaveOptionDialog.title=Optionen für das Sichern von Diagrammen ...

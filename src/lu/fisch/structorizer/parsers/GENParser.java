@@ -34,6 +34,7 @@ package lu.fisch.structorizer.parsers;
  *      ------          ----            -----------
  *      Bob Fisch       2008.04.12      First Issue
  *      Kay Gürtzig     2016.04.01      Type of field plugin specialized
+ *      Kay Gürtzig     2017.04.23      Enh. #231: reserved words configuration moved to plugin file
  *
  ******************************************************************************************************
  *
@@ -65,6 +66,15 @@ public class GENParser extends DefaultHandler {
 			if(attributes.getIndex("class")!=-1)  {plugin.className=attributes.getValue("class");}
 			if(attributes.getIndex("title")!=-1)  {plugin.title=attributes.getValue("title");}
 			if(attributes.getIndex("icon")!=-1)  {plugin.icon=attributes.getValue("icon");}
+			// START KGU#386 2017-04-28: Enh.
+			if(attributes.getIndex("info")!=-1)  {plugin.info=attributes.getValue("info");}
+			// END KGU#386 2017-04-28
+			// START KGU#239 2017-04-23: Enh. #231
+			if(attributes.getIndex("case_matters")!=-1)  {plugin.caseMatters=!attributes.getValue("case_matters").equals("0");}
+			if(attributes.getIndex("reserved_words") != -1) {
+				plugin.reservedWords = attributes.getValue("reserved_words").split(",");
+			}
+			// END KGU#239 2017-04-23
 			
 			plugins.add(plugin);
 		}
