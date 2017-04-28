@@ -32,7 +32,8 @@ package lu.fisch.structorizer.parsers;
  *
  *      Author          Date            Description
  *      ------          ----            -----------
- *      Kay Gürtzig     09.03.2017      First Issue
+ *      Kay Gürtzig     2017.03.09      First Issue
+ *      Kay Gürtzig     2017.04.27      File logging option added
  *
  ******************************************************************************************************
  *
@@ -48,13 +49,16 @@ package lu.fisch.structorizer.parsers;
  ******************************************************************************************************///
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 
 import com.creativewidgetworks.goldparser.engine.Group;
 import com.creativewidgetworks.goldparser.engine.Parser;
 import com.creativewidgetworks.goldparser.engine.Reduction;
 import com.creativewidgetworks.goldparser.engine.Symbol;
 import com.creativewidgetworks.goldparser.engine.SymbolList;
+import com.creativewidgetworks.goldparser.engine.Token;
 import com.creativewidgetworks.goldparser.engine.enums.AdvanceMode;
 import com.creativewidgetworks.goldparser.engine.enums.EndingMode;
 import com.creativewidgetworks.goldparser.engine.enums.SymbolType;
@@ -83,6 +87,10 @@ import com.creativewidgetworks.goldparser.util.ResourceHelper;
  * @author Kay Gürtzig
  */
 public class AuParser extends GOLDParser {
+	
+	// START KGU#354 2017-04-27: Enh. #354
+	OutputStreamWriter logFile = null;
+	// END KGU#354 2017-04-27
 
 	/**
 	 * 
@@ -118,6 +126,19 @@ public class AuParser extends GOLDParser {
 		// Auto-generated constructor stub
 		super(cgtFile, rulesPackage, trimReductions);
 	}
+
+	// START KGU#354 2017-04-27: Enh. #354
+	/**
+	 * @param cgtFile - the (extended) compiled grammar as input stream
+	 * @param rulesPackage - name/path of the compiled grammar table 
+	 * @param trimReductions - whether reductions paths are to be shortened sensibly 
+	 * @param logger - An open output stream for logging or null 
+	 */
+	public AuParser(InputStream cgtFile, String rulesPackage, boolean trimReductions, OutputStreamWriter logger) {
+		super(cgtFile, rulesPackage, trimReductions);
+		logFile = logger;
+	}
+	// END KGU#354 2017-04-27
 
     /**
      * Inserts Group objects into the group table so comments can be processed in a 
@@ -185,7 +206,24 @@ public class AuParser extends GOLDParser {
     }
 
     protected boolean processTokenRead() {
-    		System.out.println(this.getCurrentToken().toString());
-        return false;
+    	if (logFile != null) {
+    		try {
+    			Token token = this.getCurrentToken();
+    			String tokenStr = token.toString();
+    			logFile.write("Token " + tokenStr + "\tat " + this.getCurrentPosition().toString().trim());
+    			if (!tokenStr.equals("(NewLine)") && !tokenStr.matches("^'.'$")) {
+    				logFile.write(": " + token.asString() );
+    			}
+    			logFile.write("\n");
+    		} catch (IOException e) {
+    		// TODO Auto-generated catch block
+    		e.printStackTrace();
+    		}
+    	}
+    	return false;
+    }
+    
+    public Token getCurrentToken() {
+    	return super.getCurrentToken();
     }
 }

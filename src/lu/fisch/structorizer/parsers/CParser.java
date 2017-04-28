@@ -41,7 +41,8 @@ package lu.fisch.structorizer.parsers;
  *                                      typedef mechanism implemented, grammar enhancements 
  *      Kay Gürtzig     2017.04.16      Issues #354, #389: Grammar revisions, correction in synthesis of
  *                                      function declarations, mechanism to ensure sensible naming of the global Root
- *      Kay Gürtzig     2017.04.26      prepareTextfile() now eliminates void casts (the grammar doesn't cope with them) 
+ *      Kay Gürtzig     2017.04.26      prepareTextfile() now eliminates void casts (the grammar doesn't cope with them)
+ *      Kay Gürtzig     2017.04.27      Enh. #354: Bugs in procedure and expression list evaluation fixed
  *
  ******************************************************************************************************
  *
@@ -93,9 +94,6 @@ public class CParser extends CodeParser
 	// DEfault diagram name for an importable program diagram with global definitions
 	private static final String defaultGlobalName = "GlobalDefinitions";
 
-	// This is a switch for debugging - if set to true then the build process will be logged to System.out
-	private boolean debugprint = true;
-	
 	//---------------------- Grammar specification ---------------------------
 
 	@Override
@@ -636,9 +634,9 @@ public class CParser extends CodeParser
 			in.close();
 
 			for (Entry<String, String> entry: defines.entrySet()) {
-				if (debugprint) {
-					System.out.println("CParser.prepareTextfile(): " + Matcher.quoteReplacement((String)entry.getValue()));
-				}
+//				if (logFile != null) {
+//					logFile.write("CParser.prepareTextfile(): " + Matcher.quoteReplacement((String)entry.getValue()) + "\n");
+//				}
 				srcCode = srcCode.replaceAll("(.*?\\W)" + entry.getKey() + "(\\W.*?)", "$1"+ Matcher.quoteReplacement((String)entry.getValue()) + "$2");
 			}
 			
@@ -677,16 +675,24 @@ public class CParser extends CodeParser
 			
 			while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
 				String word = null;
-				System.out.print("(" + tokenizer.lineno() + ")");
+				if (logFile != null) {
+					logFile.write("[" + tokenizer.lineno() + "]: ");
+				}
 				switch (tokenizer.ttype) {
 				case StreamTokenizer.TT_EOL:
-					System.out.println("**newline**");
+					if (logFile != null) {
+						logFile.write("**newline**");
+					}
 					break;
 				case StreamTokenizer.TT_NUMBER:
-					System.out.println("number: " + tokenizer.nval);
+					if (logFile != null) {
+						logFile.write("number: " + tokenizer.nval);
+					}
 					break;
 				case StreamTokenizer.TT_WORD:
-					System.out.println("word: " + tokenizer.sval);
+					if (logFile != null) {
+						logFile.write("word: " + tokenizer.sval);
+					}
 					word = tokenizer.sval;
 					if (state == PreprocState.TYPEDEF) {
 						if (word.equals("enum")) {
@@ -710,10 +716,14 @@ public class CParser extends CodeParser
 					// in case of ENUMTYPE or STRUCTUNIONTYPE just skip the id
 					break;
 				case '\'':
-					System.out.println("character: '" + tokenizer.sval + "'");
+					if (logFile != null) {
+						logFile.write("character: '" + tokenizer.sval + "'");
+					}
 					break;
 				case '"':
-					System.out.println("string: \"" + tokenizer.sval + "\"");
+					if (logFile != null) {
+						logFile.write("string: \"" + tokenizer.sval + "\"");
+					}
 					break;
 				case '{':
 					blockStarts.add(tokenizer.lineno());
@@ -749,9 +759,13 @@ public class CParser extends CodeParser
 				case ']':	// Handle index lists in typedef!s
 				{
 					if (parenthStack.isEmpty() || tokenizer.ttype != (expected = parenthStack.pop().charValue())) {
-						System.err.println("**FILE PREPARATION TROUBLE** in line " + tokenizer.lineno()
+						String errText = "**FILE PREPARATION TROUBLE** in line " + tokenizer.lineno()
 						+ " of file \"" + _textToParse + "\": unmatched '" + (char)tokenizer.ttype
-						+ "' (expected: '" + (expected == '\0' ? '\u25a0' : expected) + "')!");
+						+ "' (expected: '" + (expected == '\0' ? '\u25a0' : expected) + "')!";
+						System.err.println(errText);
+						if (logFile != null) {
+							logFile.write(errText);
+						}
 					}
 					else if (tokenizer.ttype == ']' && state == PreprocState.TYPEID) {
 						indexDepth--;
@@ -781,7 +795,12 @@ public class CParser extends CodeParser
 					}
 				default:
 					char tokenChar = (char)tokenizer.ttype;
-					System.out.println("other: " + tokenChar);
+					if (logFile != null) {
+						logFile.write("other: " + tokenChar);
+					}
+				}
+				if (logFile != null) {
+					logFile.write("\n");
 				}
 			}
 			
@@ -854,8 +873,12 @@ public class CParser extends CodeParser
 			String rule = _reduction.getParent().toString();
 			String ruleName = _reduction.getParent().getHead().toString();
 			int ruleId = _reduction.getParent().getTableIndex();
-			if (debugprint) {
-				System.out.println("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...");
+			if (logFile != null) {
+				try {
+					logFile.write("buildNSD_R(" + rule + ", " + _parentNode.parent + ")...\n");
+				} catch (IOException e) {
+					System.err.println("buildNSD_R(): error writing to log file: " + e.getMessage());
+				}
 			}
 			
 			if (
@@ -870,6 +893,9 @@ public class CParser extends CodeParser
 				StringList arguments = null;
 				if (ruleId == RuleConstants.PROD_CALLID_ID_LPAREN_RPAREN) {
 					arguments = this.getExpressionList(_reduction.get(2).asReduction());
+				}
+				else {
+					arguments = new StringList();
 				}
 				if (procName.equals("exit")) {
 					content = getKeywordOrDefault("preExit", "exit");
@@ -956,8 +982,12 @@ public class CParser extends CodeParser
 				Reduction secReduc = _reduction.get(_reduction.size() - 3).asReduction();
 				buildDeclOrAssignment(secReduc, type, parentNode);
 //				if (_reduction.size() > typeIx+2) {
-					if (debugprint) {
-						System.out.println("\tanalyzing <Var List> ...");
+					if (logFile != null) {
+						try {
+							logFile.write("\tanalyzing <Var List> ...\n");
+						} catch (IOException e) {
+							System.err.println("buildNSD_R(): error writing to log file: " + e.getMessage());
+						}
 					}
 //					secReduc = _reduction.get(typeIx + 2).asReduction();	// <Var List>
 					secReduc = _reduction.get(_reduction.size()-2).asReduction();	// <Var List>
@@ -972,8 +1002,12 @@ public class CParser extends CodeParser
 						secReduc = secReduc.get(2).asReduction();	// <Var List>
 						ruleId = secReduc.getParent().getTableIndex();
 					}
-					if (debugprint) {
-						System.out.println("\t<Var List> done.");
+					if (logFile != null) {
+						try {
+							logFile.write("\t<Var List> done.\n");
+						} catch (IOException e) {
+							System.err.println("buildNSD_R(): error writing to log file: " + e.getMessage());
+						}
 					}
 //				}
 			}
@@ -1378,8 +1412,12 @@ public class CParser extends CodeParser
 		int ruleId = _reduc.getParent().getTableIndex();
 		String content = getContent_R(_reduc, "");	// Default???
 		if (ruleId == RuleConstants.PROD_VAR_ID) {
-			if (debugprint) {
-				System.out.println("\ttrying PROD_VAR_ID ...");
+			if (logFile != null) {
+				try {
+					logFile.write("\ttrying PROD_VAR_ID ...\n");
+				} catch (IOException e) {
+					System.err.println("buildDeclOrAssignment: error writing to log file: " + e.getMessage());
+				}
 			}
 			// Simple declaration - if allowed then make it to a Pascal decl.
 			if (this.optionImportVarDecl) {
@@ -1396,8 +1434,12 @@ public class CParser extends CodeParser
 			}
 		}
 		else if (ruleId == RuleConstants.PROD_VARITEM) {
-			if (debugprint) {
-				System.out.println("\ttrying PROD_VARITEM ...");
+			if (logFile != null) {
+				try {
+					logFile.write("\ttrying PROD_VARITEM ...\n");
+				} catch (IOException e) {
+					System.err.println("buildDeclOrAssignment: error writing to log file: " + e.getMessage());
+				}
 			}
 			// This should be the <Pointers> token...
 			String ptype = this.getContent_R(_reduc.get(0).asReduction(), _type);
@@ -1406,8 +1448,12 @@ public class CParser extends CodeParser
 		}
 		else if (ruleId == RuleConstants.PROD_VAR_ID_EQ) {
 			// assignment
-			if (debugprint) {
-				System.out.println("\ttrying PROD_VAR_ID_EQ ...");
+			if (logFile != null) {
+				try {
+					logFile.write("\ttrying PROD_VAR_ID_EQ ...\n");
+				} catch (IOException e) {
+					System.err.println("buildDeclOrAssignment: error writing to log file: " + e.getMessage());
+				}
 			}
 			// Should be RuleConstants.PROD_VAR_ID_EQ. Now it can get tricky if arrays
 			// are involved - remember this is a declaration rule!
@@ -1441,8 +1487,12 @@ public class CParser extends CodeParser
 			}
 			_parentNode.addElement(instr);
 		}
-		else if (debugprint) {
-			System.out.println("\tfallen back with rule " + ruleId + " (" + _reduc.getParent().toString() + ")");
+		else if (logFile != null) {
+			try {
+				logFile.write("\tfallen back with rule " + ruleId + " (" + _reduc.getParent().toString() + ")\n");
+			} catch (IOException e) {
+				System.err.println("buildNSD_R(): error writing to log file: " + e.getMessage());
+			}
 		}
 	}
 	
@@ -1626,7 +1676,7 @@ public class CParser extends CodeParser
 					newExprList.add('"' + formatStr + '"');
 				}
 				if (i < _args.count()) {
-					newExprList.add(_args.concatenate(", "));
+					newExprList.add(_args.subSequence(i, _args.count()).concatenate(", "));
 				}
 				_args = newExprList;
 			}
@@ -1702,6 +1752,9 @@ public class CParser extends CodeParser
 	@Override
 	protected String getContent_R(Reduction _reduction, String _content)
 	{
+		// If we haden't to replace some things here, we might as well
+		// have used token.asString(), it seems (instead of passing the
+		// token as reduction to this method).
 		for(int i=0; i<_reduction.size(); i++)
 		{
 			Token token = _reduction.get(i);
@@ -1805,7 +1858,10 @@ public class CParser extends CodeParser
 	{
 		StringList exprList = new StringList();
 		String ruleHead = _reduc.getParent().getHead().toString();
-		while (ruleHead.equals("<Expr>") || ruleHead.equals("<ExprIni>")) {
+		if (ruleHead.equals("<Value>")) {
+			exprList.add(getContent_R(_reduc, ""));
+		}
+		else while (ruleHead.equals("<Expr>") || ruleHead.equals("<ExprIni>")) {
 			// Get the content from right to left to avoid recursion
 			exprList.add(getContent_R(_reduc.get(_reduc.size()-1).asReduction(), ""));
 			if (_reduc.size() > 1) {

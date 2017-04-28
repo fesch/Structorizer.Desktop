@@ -121,6 +121,7 @@ package lu.fisch.structorizer.gui;
  *      Kay Gürtzig     2017.03.19/27   Enh. #380: New function to outsource subsequences to routines
  *      Kay Gürtzig     2017.03.28      Issue #370: Improved dialog strategies for refactoring (parser preferences)
  *      Kay Gürtzig     2017.04.11/15   Enh. #389: Modifications in CALL transmutation and canTransmute()
+ *      Kay Gürtzig     2017.04.27      Enh. #354: New Import option log directory
  *
  ******************************************************************************************************
  *
@@ -414,7 +415,15 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 						// END KGU#289 2016-11-15
 						// FIXME: Find a way to go over all the parser plugins
 						else {
-							String charSet = Ini.getInstance().getProperty("impImportCharset", Charset.defaultCharset().name());
+							Ini ini = Ini.getInstance();
+							String charSet = ini.getProperty("impImportCharset", Charset.defaultCharset().name());
+							// START KGU#354 2017-04-27: Enh. #354
+							boolean isVerbose = ini.getProperty("impLogToDir", "false").equals("true");
+							String logPath = null;
+							if (isVerbose) {
+								logPath = ini.getProperty("impLogDir", "");
+							}
+							// END KGU#354 2017-04-27				
 							// START KGU#354 2017-03-08: go over all the parser plugins
 							CodeParser parser = null;
 							File theFile = new File(filename);
@@ -423,8 +432,25 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 							{
 								// save (only if something has been changed)
 								saveNSD(true);
+								// START KGU#354 2017-04-27: Enh. #354
+								if (isVerbose) {
+									if (logPath.isEmpty()) {
+										logPath = theFile.getParent();
+									}
+									else if (logPath.equals(".")) {
+										if (currentDirectory != null) {
+											if (!currentDirectory.isDirectory()) {
+												logPath = currentDirectory.getParent();
+											}
+											else {
+												logPath = currentDirectory.getPath();
+											}
+										}
+									}
+								}
+								// END KGU#354 2017-04-27				
 								// load and parse source-code
-								List<Root> newRoots = parser.parse(filename, charSet);
+								List<Root> newRoots = parser.parse(filename, charSet, logPath);
 								if (parser.error.equals("")) {
 									boolean arrange = false;
 									for (Root rootNew: newRoots) {
@@ -4474,7 +4500,32 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
 				// START KGU#265 2016-09-28: Enh. #253 brought the Charset configuration. So make use of it.
 				//List<Root> newRoots = d7.parse(filename, "ISO-8859-1");
 				Ini ini = Ini.getInstance();
-				List<Root> newRoots = parser.parse(file.getAbsolutePath(), ini.getProperty("impImportCharset", "ISO-8859-1"));
+				// START KGU#354 2017-04-27: Enh. #354
+				boolean isVerbose = ini.getProperty("impLogToDir", "false").equals("true");
+				String logPath = null;
+				if (isVerbose) {
+					logPath = ini.getProperty("impLogDir", "");
+					if (logPath.isEmpty()) {
+						logPath = file.getParent();
+					}
+					else if (logPath.equals(".")) {
+						if (currentDirectory != null) {
+							if (!currentDirectory.isDirectory()) {
+								logPath = currentDirectory.getParent();
+							}
+							else {
+								logPath = currentDirectory.getPath();
+							}
+						}
+					}
+				}
+				// END KGU#354 2017-04-27				
+				List<Root> newRoots = parser.parse(file.getAbsolutePath(),
+						ini.getProperty("impImportCharset", "ISO-8859-1"),
+						// START KGU#354 2017-04-27: Enh. #354
+						logPath
+						// END KGU#354 2017-04-27
+						);
 				// END KGU#265 2016-09-28
 				// END KGU#194 2016-05-08
 				if (parser.error.equals(""))
@@ -5529,6 +5580,11 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
             // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
             iod.chkSaveParseTree.setSelected(ini.getProperty("impSaveParseTree", "false").equals("true"));
             // END KGU#354 2017-03-08
+            // START KGU#354 2017-04-27: Enh. #354 - new option to log to a specified directory
+            iod.chkLogDir.setSelected(ini.getProperty("impLogToDir", "false").equals("true"));
+            iod.txtLogDir.setText(ini.getProperty("impLogDir", ""));
+            iod.doLogButtons();
+            // END KGU#354 2017-04-27
             iod.setVisible(true);
             
             if(iod.goOn==true)
@@ -5541,6 +5597,10 @@ public class Diagram extends JPanel implements MouseMotionListener, MouseListene
                 // START KGU#354 2017-03-08: Enh. #354 - new option to save the parse tree
                 ini.setProperty("impSaveParseTree", String.valueOf(iod.chkSaveParseTree.isSelected()));
                 // END KGU#354 2017-03-08
+                // START KGU#354 2017-04-27: Enh. #354 - new option to log to a specified directory
+                ini.setProperty("impLogToDir", String.valueOf(iod.chkLogDir.isSelected()));
+                ini.setProperty("impLogDir", iod.txtLogDir.getText());
+                // END KGU#354 2017-04-27
                 ini.save();
             }
         } 

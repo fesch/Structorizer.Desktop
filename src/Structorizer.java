@@ -41,6 +41,7 @@
  *                                      interpreted as several files to be opened in series.
  *      Kay Gürtzig     2017.01.27      Issue #306 + #290: Support for Arranger files in command line
  *      Kay Gürtzig     2017.03.04      Enh. #354: Configurable set of import parsers supported now
+ *      Kay Gürtzig     2017.04.27      Enh. #354: Verbose option (-v with log directory) for batch import
  *
  ******************************************************************************************************
  *
@@ -85,6 +86,9 @@ public class Structorizer
 		String options = "";
 		String outFileName = null;
 		String charSet = "UTF-8";
+		// START KGU#354 2017-04-27:Enh. #354
+		String logDir = null;
+		// END KGU#354 2017-04-27
 		//System.out.println("arg 0: " + args[0]);
 		if (args.length == 1 && args[0].equals("-h"))
 		{
@@ -115,6 +119,12 @@ public class Structorizer
 			{
 				charSet = args[++i];
 			}
+			// START KGU#354 2017-04-27: Enh. #354 verbose mode?
+			else if (args[i].equals("-v") && i+1 < args.length)
+			{
+				logDir = args[++i];
+			}
+			// END KGU#354 2017-04-27
 			// Target standard output?
 			else if (args[i].equals("-"))
 			{
@@ -137,7 +147,10 @@ public class Structorizer
 		}
 		else if (parser != null)
 		{
-			Structorizer.parse(parser, fileNames, outFileName, options, charSet);
+			// START KGU#354 2017-04-27: Enh. #354 verbose mode
+			//Structorizer.parse(parser, fileNames, outFileName, options, charSet);
+			Structorizer.parse(parser, fileNames, outFileName, options, charSet, logDir);
+			// END KGU#354 2017-04-27
 			return;
 		}
 		// END KGU#187 2016-04-28
@@ -250,7 +263,7 @@ public class Structorizer
 	private static String[] synopsis = {
 		"Structorizer [NSDFILE]",
 		"Structorizer -x GENERATOR [-b] [-c] [-f] [-l] [-t] [-e CHARSET] [-] [-o OUTFILE] NSDFILE...",
-		"Structorizer -p [pas|pascal] [-f] [-e CHARSET] [-o OUTFILE] SOURCEFILE...",
+		"Structorizer -p [pas|pascal] [-f] [-v LOGPATH] [-e CHARSET] [-o OUTFILE] SOURCEFILE...",
 		"Structorizer -h"
 	};
 	// END KGU#187 2016-05-02
@@ -358,8 +371,9 @@ public class Structorizer
 	// START KGU#187 2016-04-29: Enh. #179 - for symmetry reasons also allow a parsing in batch mode
 	/*****************************************
 	 * batch code import methods
+	 * @param _logDir TODO
 	 *****************************************/
-	private static void parse(String _parserName, Vector<String> _filenames, String _outFile, String _options, String _charSet)
+	private static void parse(String _parserName, Vector<String> _filenames, String _outFile, String _options, String _charSet, String _logDir)
 	{
 		
 		String usage = "Usage: " + synopsis[2] + "\nAccepted file extensions:";
@@ -372,7 +386,7 @@ public class Structorizer
 		GENParser genp = new GENParser();
 		Vector<GENPlugin> plugins = genp.parse(buff);
 		Vector<CodeParser> parsers = new Vector<CodeParser>();
-		String parsClassName = null;
+		//String parsClassName = null;
 		CodeParser parser = null;
 		for (int i=0; i < plugins.size(); i++)
 		{
@@ -436,7 +450,10 @@ public class Structorizer
 				//D7Parser d7 = new D7Parser("D7Grammar.cgt");
 				// START KGU#194 2016-05-04: Bugfix for 3.24-11 - encoding wasn't passed
 				//rootNew = d7.parse(filename);
-				newRoots = parser.parse(filename, _charSet);
+				// START KGU#354 2017-04-27: Enh. #354 pass in the log directory path
+				//newRoots = parser.parse(filename, _charSet);
+				newRoots = parser.parse(filename, _charSet, _logDir);
+				// END KGU#354 2017-04-27
 				// END KGU#194 2016-05-04
 				if (!parser.error.isEmpty())
 				{
@@ -445,7 +462,7 @@ public class Structorizer
 				}
 			}
 			else {
-				System.err.println("File " + filename + " not accpeted by " + parser.getDialogTitle() + " parser!");
+				System.err.println("File " + filename + " not accpeted by any parser!");
 			}
 		
 			// Now save the roots as NSD files. Derive the target file names from the source file name
