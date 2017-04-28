@@ -17,7 +17,7 @@ combination with a compiled grammar for the source language to derive a structog
 from source code.
 
 You should be familiar with the concepts of grammars, parsers, and compilers and you
-should have understood the tree structure Structorizer uses to represent Nassi-7
+should have understood the tree structure Structorizer uses to represent Nassi-
 Shneiderman diagrams.
 
 All information you need for GOLD Parser can be found on the GOLDParser website
@@ -44,7 +44,7 @@ Convert the grammar file to a set of compiled grammar tables. For Windows, you c
 download a command-line tool GOLDbuild.exe with the following URL:
 http://goldparser.org/builder/files/GOLD-Builder-5.2.0-Cmd.zip
 Make sure to unzip all the dat files together with the GOLDbuild.exe into the same folder.
-The GOLDbuild tool analyses the grammar and constructs the decision tables for the parser
+The GOLDbuild tool analyzes the grammar and constructs the decision tables for the parser
 from them. This takes some seconds and results in an egt file, which contains the tables
 for the state-driven LALR(1) parsing engine. If your grammar is for language XYZ then the
 command line will simply look like:
@@ -53,7 +53,7 @@ This will create a file XYZ.egt by default.
 If the grammar is not suited for LALR(1) parsing, however, then you will get some dozens
 or more conflict messages but no egt file. In this case you will have to reformulate the
 rules until the grammar passes the GOLDbuild process. This may get tricky if the language
-itself is intrinsicly ambiguous.
+itself is intrinsically ambiguous.
 
 3. PARSER CLASS SKELETON
 If you have luckily obtained an egt file (or have downloaded an also suited cgt file -
@@ -81,10 +81,10 @@ When the parsing terminated successfully, i.e. in state ACCEPT, then at first me
 initializeBuildNSD is called in order to give you the opportunity to do some language-
 specific preparation. Just override this method if there is something to prepare.
 Next the recursive method buildNSD_R will be called with the top Reduction of the
-grammar and the empty element subqueue of the new diagram root as arguments. The usual
+grammar and the empty element sub-queue of the new diagram root as arguments. The usual
 way to implement it is to pick all Reductions representing some algorithmic entities
 to be converted in diagram elements and handle them correspondingly, skip all Reductions
-being meaninglsess for Structorizer, and just recursively traverse the remaining Reductions
+being meaningless for Structorizer, and just recursively traverse the remaining Reductions
 with buildNSD_R (else branch).
 Where you need the mere parsed text you may call getContent_R on a Reduction instead,
 which you will also have to implement for the respective rule-specific Reduction.
@@ -99,8 +99,8 @@ The right-hand side of the production rule determines the structure of the Reduc
 elements. In the example above it consists of 5 Tokens (three of type CONTENT (terminal)
 and and two of type NON_TERMINAL, in the rule-defined order, i.e. "WHILE", <expression>,
 "DO", <StatementSequence>, "END"), hence method size() on the Reduction object would
-return 5. You obtain the respective tokens via the get() method, prividing the respective
-index (0...4). From the identfied rule you will know which tokens are terminals and which
+return 5. You obtain the respective tokens via the get() method, providing the respective
+index (0...4). From the identified rule you will know which tokens are terminals and which
 are non-terminals. For further analysis, you typically fetch the child reduction of non-
 terminal tokens by method asReduction() (on the token), for terminal tokens you will
 retrieve their string content by making use of method asString().
@@ -127,6 +127,6 @@ certain kinds of elements:
   
 5. BATCH MODE TEST
 It may facilitate the final tests to run the parser in batch mode (i.e. from command line):
-	Linux:	 	structorizer.sh -p -v <logDir> <sourceFile> ...
-	Windows:	structorizer.bat -p -v <logDir> <sourceFile> ...
+	Linux:	 	structorizer.sh  -p -v <logDir> <sourceFile> ...
+	Windows: 	structorizer.bat -p -v <logDir> <sourceFile> ...
 

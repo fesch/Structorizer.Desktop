@@ -211,7 +211,7 @@ public class AuParser extends GOLDParser {
     			Token token = this.getCurrentToken();
     			String tokenStr = token.toString();
     			logFile.write("Token " + tokenStr + "\tat " + this.getCurrentPosition().toString().trim());
-    			if (!tokenStr.equals("(NewLine)") && !tokenStr.matches("^'.'$")) {
+    			if (!tokenStr.equals("(NewLine)") && !tokenStr.equals("(Whitespace)") && !tokenStr.matches("^'.'$")) {
     				logFile.write(": " + token.asString() );
     			}
     			logFile.write("\n");
